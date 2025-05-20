@@ -63,6 +63,9 @@ public class GridManager : MonoBehaviour
     
     public TerrainManager terrainManager;
 
+    [Header("Demand System")]
+    public DemandManager demandManager;
+
     void Start()
     {
         roadTilePrefabs = new List<GameObject>
@@ -79,6 +82,11 @@ public class GridManager : MonoBehaviour
             roadTilePrefabElbowDownLeft,
             roadTilePrefabElbowDownRight
         };
+
+        if (demandManager == null)
+        {
+            demandManager = FindObjectOfType<DemandManager>();
+        }
 
         CreateGrid();
     }
@@ -521,7 +529,66 @@ public class GridManager : MonoBehaviour
 
     bool canPlaceZone(ZoneAttributes zoneAttributes, Vector3 gridPosition)
     {
-        return zoneAttributes != null && cityStats.CanAfford(zoneAttributes.ConstructionCost) && canPlaceBuilding(gridPosition, 1);
+        if (zoneAttributes == null)
+            return false;
+            
+        if (!cityStats.CanAfford(zoneAttributes.ConstructionCost))
+            return false;
+            
+        if (!canPlaceBuilding(gridPosition, 1))
+            return false;
+            
+        // Manual zone placement is always allowed - the restrictions are on building spawning
+        return true;
+    }
+
+    public string GetDemandFeedback(Zone.ZoneType zoneType)
+    {
+        if (demandManager == null)
+            return "";
+            
+        float demandLevel = demandManager.GetDemandLevel(zoneType);
+        bool canGrow = demandManager.CanZoneTypeGrow(zoneType);
+        
+        // Check if it's a residential building type
+        Zone.ZoneType buildingType = GetBuildingZoneType(zoneType);
+        bool isResidential = IsResidentialBuilding(buildingType);
+        bool hasJobsAvailable = !isResidential || demandManager.CanPlaceResidentialBuilding();
+        
+        // Check if it's a commercial/industrial building type
+        bool needsResidential = IsCommercialOrIndustrialBuilding(buildingType);
+        bool hasResidentialSupport = !needsResidential || demandManager.CanPlaceCommercialOrIndustrialBuilding(buildingType);
+        
+        string feedback = "";
+        
+        if (canGrow && hasJobsAvailable && hasResidentialSupport)
+        {
+            feedback = $"✓ Demand: {demandLevel:F0}%";
+        }
+        else if (!canGrow)
+        {
+            feedback = $"✗ Low Demand: {demandLevel:F0}%";
+        }
+        else if (!hasJobsAvailable)
+        {
+            feedback = $"✗ No Jobs Available (Demand: {demandLevel:F0}%)";
+        }
+        else if (!hasResidentialSupport)
+        {
+            feedback = $"✗ Need Residents First (Demand: {demandLevel:F0}%)";
+        }
+        
+        return feedback;
+    }
+
+    private bool IsCommercialOrIndustrialBuilding(Zone.ZoneType zoneType)
+    {
+        return (zoneType == Zone.ZoneType.CommercialLightBuilding ||
+                zoneType == Zone.ZoneType.CommercialMediumBuilding ||
+                zoneType == Zone.ZoneType.CommercialHeavyBuilding ||
+                zoneType == Zone.ZoneType.IndustrialLightBuilding ||
+                zoneType == Zone.ZoneType.IndustrialMediumBuilding ||
+                zoneType == Zone.ZoneType.IndustrialHeavyBuilding);
     }
 
     void DestroyCellChildren(GameObject cell, Vector2 gridPosition)
@@ -668,34 +735,136 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    // Updated: Check demand and job requirements ONLY for auto-building spawning, not manual placement
     public void PlaceZonedBuildings(Zone.ZoneType zoningType)
     {
-        if (!cityStats.GetCityPowerAvailability())
-        {
-            return;
-        }
-
+        Debug.Log($"--- Attempting to place {zoningType} buildings ---");
+        
+        // Check if we have zoned sections available
         if (availableZoneSections.Count == 0)
         {
+            Debug.Log($"No available zone sections for {zoningType}");
             return;
         }
-
+        
         var sectionResult = GetRandomAvailableSection(zoningType);
-
         if (!sectionResult.HasValue || sectionResult.Value.size == 0)
         {
+            Debug.Log($"No suitable sections found for {zoningType}");
+            return;
+        }
+        
+        Zone.ZoneType buildingZoneType = GetBuildingZoneType(zoningType);
+        Debug.Log($"Building type: {buildingZoneType}");
+        
+        if (IsResidentialBuilding(buildingZoneType))
+        {
+            int availableJobs = demandManager != null ? demandManager.GetAvailableJobs() : 0;
+            Debug.Log($"Residential building check - Available jobs: {availableJobs}");
+            
+            if (!CanPlaceResidentialBuilding())
+            {
+                Debug.Log($"Cannot place {buildingZoneType}: No jobs available for new residents");
+                return;
+            }
+            
+            // For residential auto-spawning, check if demand allows growth
+            if (demandManager != null && !demandManager.GetResidentialDemand().canGrow)
+            {
+                Debug.Log($"Cannot auto-spawn {zoningType} building: Insufficient residential demand (Level: {demandManager.GetDemandLevel(zoningType):F1})");
+                return;
+            }
+        }
+        else
+        {
+            // Check for commercial/industrial buildings
+            if (!CanPlaceCommercialOrIndustrialBuilding(buildingZoneType))
+            {
+                Debug.Log($"Cannot place {buildingZoneType}: No residential support");
+                return;
+            }
+            
+            // For commercial/industrial, check normal demand
+            if (!CanZoneTypeGrowBasedOnDemand(zoningType))
+            {
+                Debug.Log($"Cannot place {zoningType} building: Insufficient demand (Level: {demandManager.GetDemandLevel(zoningType):F1})");
+                return;
+            }
+        }
+        
+        if (!cityStats.GetCityPowerAvailability())
+        {
+            Debug.Log($"Cannot place {zoningType} building: Insufficient power");
             return;
         }
 
         Vector2[] section = sectionResult.Value.section;
-        // building size is sqrt of section size
         int buildingSize = (int)Math.Sqrt(section.Length);
         
-        Zone.ZoneType buildingZoneType = GetBuildingZoneType(zoningType);
-
         ZoneAttributes zoneAttributes = GetZoneAttributes(buildingZoneType);
 
+        Debug.Log($"All checks passed! Placing {buildingZoneType} with {section.Length} cells");
         PlaceZoneBuilding(section, buildingZoneType, zoneAttributes, zoningType, buildingSize);
+        
+        Debug.Log($"Successfully placed {buildingZoneType} (Demand: {demandManager?.GetDemandLevel(zoningType):F1})");
+    }
+
+    private bool CanPlaceResidentialBuilding()
+    {
+        if (demandManager == null) return true;
+        
+        return demandManager.CanPlaceResidentialBuilding();
+    }
+
+    private bool CanPlaceCommercialOrIndustrialBuilding(Zone.ZoneType buildingType)
+    {
+        if (demandManager == null) return true;
+        
+        return demandManager.CanPlaceCommercialOrIndustrialBuilding(buildingType);
+    }
+
+    public bool IsResidentialBuilding(Zone.ZoneType zoneType)
+    {
+        return (zoneType == Zone.ZoneType.ResidentialLightBuilding ||
+                zoneType == Zone.ZoneType.ResidentialMediumBuilding ||
+                zoneType == Zone.ZoneType.ResidentialHeavyBuilding);
+    }
+
+     private bool CanZoneTypeGrowBasedOnDemand(Zone.ZoneType zoningType)
+    {
+        if (demandManager == null)
+        {
+            return true; // If no demand manager, allow all growth
+        }
+        
+        return demandManager.CanZoneTypeGrow(zoningType);
+    }
+
+    private Zone.ZoneType GetDemandZoneType(Zone.ZoneType zoningType)
+    {
+        switch (zoningType)
+        {
+            // Residential
+            case Zone.ZoneType.ResidentialLightZoning:
+            case Zone.ZoneType.ResidentialMediumZoning:
+            case Zone.ZoneType.ResidentialHeavyZoning:
+                return Zone.ZoneType.ResidentialLightZoning; // Use light as representative
+                
+            // Commercial
+            case Zone.ZoneType.CommercialLightZoning:
+            case Zone.ZoneType.CommercialMediumZoning:
+            case Zone.ZoneType.CommercialHeavyZoning:
+                return Zone.ZoneType.CommercialLightZoning; // Use light as representative
+                
+            // Industrial
+            case Zone.ZoneType.IndustrialLightZoning:
+            case Zone.ZoneType.IndustrialMediumZoning:
+            case Zone.ZoneType.IndustrialHeavyZoning:
+                return Zone.ZoneType.IndustrialLightZoning; // Use light as representative
+                
+            default:
+                return zoningType;
+        }
     }
 
     private Zone.ZoneType GetBuildingZoneType(Zone.ZoneType zoningType)

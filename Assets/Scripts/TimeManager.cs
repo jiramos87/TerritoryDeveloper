@@ -37,7 +37,7 @@ public class TimeManager : MonoBehaviour
             currentDate = currentDate.AddDays(1);
             timeElapsed = 0f;
 
-            // cityStats.PerformDailyUpdates();
+            cityStats.PerformDailyUpdates();
             gridManager.CalculateAvailableSquareZonedSections();
             PlaceAllZonedBuildings();
 

@@ -570,6 +570,13 @@ public class CityStats : MonoBehaviour
     public void PerformDailyUpdates()
     {
         currentDate = timeManager.GetCurrentDate();
+
+       // Add these lines to existing method
+       EmploymentManager employment = FindObjectOfType<EmploymentManager>();
+       StatisticsManager stats = FindObjectOfType<StatisticsManager>();
+       
+       if (employment != null) employment.UpdateEmployment();
+       if (stats != null) stats.UpdateStatistics();
     }
 
     public bool GetCityPowerAvailability()
@@ -689,6 +696,8 @@ public class CityStats : MonoBehaviour
         cityPowerOutput = 0;
         cityName = "City";
     }
+
+    public EmploymentManager GetEmploymentManager() { return FindObjectOfType<EmploymentManager>(); }
 }
 
 [System.Serializable]

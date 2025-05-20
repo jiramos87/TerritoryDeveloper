@@ -7,6 +7,11 @@ public class BuildingSelectorMenuController : MonoBehaviour
     public CursorManager cursorManager;
     public GameObject popupPanel;
 
+    public void Start()
+    {
+        popupPanel.SetActive(false);
+    }
+
     public void ShowPopup(List<BuildingSelectorMenuManager.ItemType> items, System.Action<BuildingSelectorMenuManager.ItemType> onItemSelected, string type)
     {
         TogglePopup(type);

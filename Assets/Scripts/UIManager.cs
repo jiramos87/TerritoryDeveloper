@@ -60,6 +60,22 @@ public class UIManager : MonoBehaviour
 
     public Text GameSavedText;
 
+    [Header("Employment UI")]
+   public Text unemploymentRateText;
+   public Text totalJobsText;
+   public Text demandResidentialText;
+   public Text demandCommercialText;
+   public Text demandIndustrialText;
+
+   [Header("Demand UI")]
+    public Text demandFeedbackText; // Shows demand status for selected zone
+    public GameObject demandWarningPanel; // Warning when placing zones with low demand
+
+    [Header("Enhanced Employment UI")]
+    public Text totalJobsCreatedText; // Total jobs created by buildings
+    public Text availableJobsText; // Jobs available (not taken by residents)
+    public Text jobsTakenText; // Jobs taken by residents
+  
     void Start()
     {
         if (cityStats == null)
@@ -95,15 +111,170 @@ public class UIManager : MonoBehaviour
     {
         populationText.text = "Population: " + cityStats.population;
         moneyText.text = "Money: $" + cityStats.money;
-        buttonMoneyText.text = "Money: $" + cityStats.money;
+        buttonMoneyText.text = "$" + cityStats.money.ToString();
         happinessText.text = "Happiness: " + cityStats.happiness;
         cityPowerOutputText.text = "City Power Output: " + cityStats.cityPowerOutput + " MW";
         cityPowerConsumptionText.text = "City Power Consumption: " + cityStats.cityPowerConsumption + " MW";
-        dateText.text = "Date: " + timeManager.GetCurrentDate().Date;
+        dateText.text = timeManager.GetCurrentDate().Date.ToString();
         residentialTaxText.text = "Residential Tax: " + economyManager.GetResidentialTax() + "%";
         commercialTaxText.text = "Commercial Tax: " + economyManager.GetCommercialTax() + "%";
         industrialTaxText.text = "Industrial Tax: " + economyManager.GetIndustrialTax() + "%";
         gridCoordinatesText.text = "Grid Coordinates: " + "x: " + gridManager.mouseGridPosition.x + ", y: " + gridManager.mouseGridPosition.y;
+
+        EmploymentManager employment = FindObjectOfType<EmploymentManager>();
+        DemandManager demand = FindObjectOfType<DemandManager>();
+        StatisticsManager stats = FindObjectOfType<StatisticsManager>();
+        
+        if (employment != null)
+        {
+            unemploymentRateText.text = "Unemployment: " + employment.unemploymentRate.ToString("F1") + "%";
+            
+            // Show available jobs (not total jobs)
+            totalJobsText.text = "Available Jobs: " + employment.GetAvailableJobs();
+            
+            // Show additional job information if UI elements exist
+            if (totalJobsCreatedText != null)
+                totalJobsCreatedText.text = "Total Jobs: " + employment.GetTotalJobs();
+            if (availableJobsText != null)
+                availableJobsText.text = "Available: " + employment.GetAvailableJobs();
+            if (jobsTakenText != null)
+                jobsTakenText.text = "Taken by Residents: " + employment.GetJobsTakenByResidents();
+        }
+        
+        if (demand != null)
+        {
+            demandResidentialText.text = "R Demand: " + demand.GetResidentialDemand().demandStatus + 
+                " (" + demand.GetResidentialDemand().demandLevel.ToString("F0") + ")";
+            demandCommercialText.text = "C Demand: " + demand.GetCommercialDemand().demandStatus + 
+                " (" + demand.GetCommercialDemand().demandLevel.ToString("F0") + ")";
+            demandIndustrialText.text = "I Demand: " + demand.GetIndustrialDemand().demandStatus + 
+                " (" + demand.GetIndustrialDemand().demandLevel.ToString("F0") + ")";
+        }
+        
+        // Update demand feedback for selected zone type
+        UpdateDemandFeedback();
+    }
+
+    private void UpdateDemandFeedback()
+    {
+        if (demandFeedbackText == null || gridManager == null) return;
+        
+        Zone.ZoneType selectedZone = GetSelectedZoneType();
+        if (selectedZone == Zone.ZoneType.Grass || selectedZone == Zone.ZoneType.Road)
+        {
+            demandFeedbackText.text = "";
+            return;
+        }
+        
+        string feedback = gridManager.GetDemandFeedback(selectedZone);
+        demandFeedbackText.text = feedback;
+        
+        // Enhanced color coding for demand levels
+        if (feedback.Contains("✓"))
+        {
+            demandFeedbackText.color = Color.green;
+        }
+        else if (feedback.Contains("No Jobs Available"))
+        {
+            demandFeedbackText.color = Color.red; // Critical error - no jobs for residents
+        }
+        else if (feedback.Contains("Need Residents"))
+        {
+            demandFeedbackText.color = Color.yellow; // Warning color for residential requirement
+        }
+        else if (feedback.Contains("✗"))
+        {
+            demandFeedbackText.color = Color.red;
+        }
+        else
+        {
+            demandFeedbackText.color = Color.white;
+        }
+    }
+
+    public void ShowDemandWarning(Zone.ZoneType zoneType, float demandLevel)
+    {
+        if (demandWarningPanel != null)
+        {
+            demandWarningPanel.SetActive(true);
+            
+            Text warningText = demandWarningPanel.GetComponentInChildren<Text>();
+            if (warningText != null)
+            {
+                string message = "";
+                
+                // Check if it's residential that needs jobs
+                Zone.ZoneType buildingType = GetBuildingTypeFromZoning(zoneType);
+                if (IsResidential(buildingType) && 
+                    gridManager.demandManager != null && 
+                    !gridManager.demandManager.CanPlaceResidentialBuilding())
+                {
+                    message = $"Cannot place {zoneType}\nNo jobs available for residents!\nBuild commercial/industrial buildings first.";
+                }
+                // Check if it's a commercial/industrial that needs residents
+                else if (IsCommercialOrIndustrial(buildingType) && 
+                    gridManager.demandManager != null && 
+                    !gridManager.demandManager.CanPlaceCommercialOrIndustrialBuilding(buildingType))
+                {
+                    message = $"Cannot place {zoneType}\nNeed residential buildings first!\nCommercial/Industrial requires residents to operate.";
+                }
+                else if (demandLevel < 0)
+                {
+                    message = $"Warning: Low demand for {zoneType}\nDemand Level: {demandLevel:F0}%\nBuildings may not develop quickly.";
+                }
+                else
+                {
+                    message = $"Placing {zoneType}\nDemand Level: {demandLevel:F0}%";
+                }
+                
+                warningText.text = message;
+            }
+            
+            // Auto-hide warning after 4 seconds (longer for important messages)
+            Invoke("HideDemandWarning", 4f);
+        }
+    }
+
+    public void HideDemandWarning()
+    {
+        if (demandWarningPanel != null)
+        {
+            demandWarningPanel.SetActive(false);
+        }
+    }
+
+    private Zone.ZoneType GetBuildingTypeFromZoning(Zone.ZoneType zoneType)
+    {
+        switch (zoneType)
+        {
+            case Zone.ZoneType.ResidentialLightZoning: return Zone.ZoneType.ResidentialLightBuilding;
+            case Zone.ZoneType.ResidentialMediumZoning: return Zone.ZoneType.ResidentialMediumBuilding;
+            case Zone.ZoneType.ResidentialHeavyZoning: return Zone.ZoneType.ResidentialHeavyBuilding;
+            case Zone.ZoneType.CommercialLightZoning: return Zone.ZoneType.CommercialLightBuilding;
+            case Zone.ZoneType.CommercialMediumZoning: return Zone.ZoneType.CommercialMediumBuilding;
+            case Zone.ZoneType.CommercialHeavyZoning: return Zone.ZoneType.CommercialHeavyBuilding;
+            case Zone.ZoneType.IndustrialLightZoning: return Zone.ZoneType.IndustrialLightBuilding;
+            case Zone.ZoneType.IndustrialMediumZoning: return Zone.ZoneType.IndustrialMediumBuilding;
+            case Zone.ZoneType.IndustrialHeavyZoning: return Zone.ZoneType.IndustrialHeavyBuilding;
+            default: return zoneType;
+        }
+    }
+
+    private bool IsResidential(Zone.ZoneType zoneType)
+    {
+        return zoneType == Zone.ZoneType.ResidentialLightBuilding ||
+               zoneType == Zone.ZoneType.ResidentialMediumBuilding ||
+               zoneType == Zone.ZoneType.ResidentialHeavyBuilding;
+    }
+    
+    private bool IsCommercialOrIndustrial(Zone.ZoneType zoneType)
+    {
+        return zoneType == Zone.ZoneType.CommercialLightBuilding ||
+               zoneType == Zone.ZoneType.CommercialMediumBuilding ||
+               zoneType == Zone.ZoneType.CommercialHeavyBuilding ||
+               zoneType == Zone.ZoneType.IndustrialLightBuilding ||
+               zoneType == Zone.ZoneType.IndustrialMediumBuilding ||
+               zoneType == Zone.ZoneType.IndustrialHeavyBuilding;
     }
 
     public void OnLightResidentialButtonClicked()
@@ -112,6 +283,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnMediumResidentialButtonClicked()
@@ -120,6 +292,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnHeavyResidentialButtonClicked()
@@ -128,6 +301,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnLightCommercialButtonClicked()
@@ -136,6 +310,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnMediumCommercialButtonClicked()
@@ -144,6 +319,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnHeavyCommercialButtonClicked()
@@ -152,6 +328,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnLightIndustrialButtonClicked()
@@ -160,6 +337,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnMediumIndustrialButtonClicked()
@@ -168,6 +346,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnHeavyIndustrialButtonClicked()
@@ -176,6 +355,41 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        CheckAndShowDemandFeedback(selectedZoneType);
+    }
+
+    private void CheckAndShowDemandFeedback(Zone.ZoneType zoneType)
+    {
+        if (gridManager != null && gridManager.demandManager != null)
+        {
+            float demandLevel = gridManager.demandManager.GetDemandLevel(zoneType);
+            bool canGrow = gridManager.demandManager.CanZoneTypeGrow(zoneType);
+            
+            // Check residential requirements for commercial/industrial
+            Zone.ZoneType buildingType = GetBuildingTypeFromZoning(zoneType);
+            bool needsResidential = IsCommercialOrIndustrial(buildingType);
+            bool hasResidentialSupport = !needsResidential || 
+                gridManager.demandManager.CanPlaceCommercialOrIndustrialBuilding(buildingType);
+            
+            // Check job requirements for residential
+            bool needsJobs = IsResidential(buildingType);
+            bool hasJobsAvailable = !needsJobs || 
+                gridManager.demandManager.CanPlaceResidentialBuilding();
+            
+            // Show warning for various conditions
+            if (!hasJobsAvailable)
+            {
+                ShowDemandWarning(zoneType, demandLevel);
+            }
+            else if (!hasResidentialSupport)
+            {
+                ShowDemandWarning(zoneType, demandLevel);
+            }
+            else if (!canGrow && demandLevel < -10f)
+            {
+                ShowDemandWarning(zoneType, demandLevel);
+            }
+        }
     }
 
     public void OnTwoWayRoadButtonClicked()
