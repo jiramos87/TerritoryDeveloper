@@ -33,22 +33,44 @@ public class CursorManager : MonoBehaviour
         Cursor.SetCursor(detailsTexture, hotSpot, CursorMode.Auto);
     }
 
-    public void ShowBuildingPreview(GameObject buildingPrefab)
+    public void ShowBuildingPreview(GameObject buildingPrefab, int buildingSize = 1)
     {
-        if (previewInstance != null)
-        {
-            Destroy(previewInstance); // Remove any existing preview instance
+        try {
+            if (previewInstance != null)
+            {
+                Destroy(previewInstance);
+            }
+
+            // Instantiate a preview of the buildingPrefab
+            previewInstance = Instantiate(buildingPrefab);
+
+            // Get the SpriteRenderer component
+            SpriteRenderer spriteRenderer = previewInstance.GetComponent<SpriteRenderer>();
+            if (spriteRenderer == null)
+            {
+                spriteRenderer = previewInstance.GetComponentInChildren<SpriteRenderer>();
+            }
+
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = new Color(1, 1, 1, 0.5f); // Set transparency
+                // Set a high sorting order to ensure preview appears on top
+                spriteRenderer.sortingOrder = 10000;
+            }
+            else
+            {
+                Debug.LogError("No SpriteRenderer found on building prefab or its children!");
+            }
+
+            // Optionally disable colliders or other components
+            Collider2D[] colliders = previewInstance.GetComponentsInChildren<Collider2D>();
+            foreach (var col in colliders)
+            {
+                col.enabled = false; // Disable collision for the preview
+            }   
         }
-
-        // Instantiate a preview of the buildingPrefab
-        previewInstance = Instantiate(buildingPrefab);
-        previewInstance.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 0.5f); // Set transparency
-
-        // Optionally disable colliders or other components
-        Collider2D[] colliders = previewInstance.GetComponentsInChildren<Collider2D>();
-        foreach (var col in colliders)
-        {
-            col.enabled = false; // Disable collision for the preview
+        catch (System.Exception ex) {
+            Debug.LogError($"Error in ShowBuildingPreview: {ex.Message}\n{ex.StackTrace}");
         }
     }
 
@@ -56,13 +78,25 @@ public class CursorManager : MonoBehaviour
     {
         if (previewInstance != null)
         {
-            // Follow the mouse position with the preview instance
             Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            mousePosition.z = 0; // Adjust z-axis if necessary
+            mousePosition.z = 0;
 
             Vector2 gridPosition = gridManager.GetGridPosition(mousePosition);
+            
+            UIManager uiManager = FindObjectOfType<UIManager>();
+            int buildingSize = 1;
+            
+            if (uiManager != null && uiManager.GetSelectedBuilding() != null)
+            {
+                buildingSize = uiManager.GetSelectedBuilding().BuildingSize;
+            }
 
             Vector2 worldPosition = gridManager.GetWorldPosition((int)gridPosition.x, (int)gridPosition.y);
+            
+            if (buildingSize > 1 && buildingSize % 2 == 0)
+            {
+                worldPosition.x += 0.5f;
+            }
 
             previewInstance.transform.position = worldPosition;
         }

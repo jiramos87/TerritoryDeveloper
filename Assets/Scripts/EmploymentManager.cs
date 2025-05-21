@@ -108,14 +108,12 @@ public class EmploymentManager : MonoBehaviour
         {
             int newCommercialJobs = CalculateJobsFromNewBuildings(Zone.ZoneType.CommercialLightBuilding, newCommercialBuildings);
             commercialJobs.AddJobs(newCommercialJobs);
-            Debug.Log($"Added {newCommercialJobs} commercial jobs from {newCommercialBuildings} new buildings");
         }
         
         if (newIndustrialBuildings > 0)
         {
             int newIndustrialJobs = CalculateJobsFromNewBuildings(Zone.ZoneType.IndustrialLightBuilding, newIndustrialBuildings);
             industrialJobs.AddJobs(newIndustrialJobs);
-            Debug.Log($"Added {newIndustrialJobs} industrial jobs from {newIndustrialBuildings} new buildings");
         }
         
         // New residents consume jobs
@@ -133,8 +131,6 @@ public class EmploymentManager : MonoBehaviour
                 
                 commercialJobs.AddResidents(commercialJobsTaken, 1.0f); // 1.0f means all considered as jobs
                 industrialJobs.AddResidents(industrialJobsTaken, 1.0f);
-                
-                Debug.Log($"New residents took {commercialJobsTaken} commercial and {industrialJobsTaken} industrial jobs");
             }
         }
         

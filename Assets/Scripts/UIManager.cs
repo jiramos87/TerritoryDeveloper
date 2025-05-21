@@ -75,6 +75,17 @@ public class UIManager : MonoBehaviour
     public Text totalJobsCreatedText; // Total jobs created by buildings
     public Text availableJobsText; // Jobs available (not taken by residents)
     public Text jobsTakenText; // Jobs taken by residents
+
+    public Text cityWaterOutputText;
+    public Text cityWaterConsumptionText;
+
+    public GameObject waterPumpPrefab;
+
+    [Header("Insufficient Funds Warning")]
+    public GameObject insufficientFundsPanel;
+    public Text insufficientFundsText;
+    public float tooltipDisplayTime = 3f;
+    private Coroutine hideTooltipCoroutine;
   
     void Start()
     {
@@ -115,6 +126,13 @@ public class UIManager : MonoBehaviour
         happinessText.text = "Happiness: " + cityStats.happiness;
         cityPowerOutputText.text = "City Power Output: " + cityStats.cityPowerOutput + " MW";
         cityPowerConsumptionText.text = "City Power Consumption: " + cityStats.cityPowerConsumption + " MW";
+        
+        // Add water information
+        if (cityWaterOutputText != null)
+            cityWaterOutputText.text = "City Water Output: " + cityStats.cityWaterOutput + " kL";
+        if (cityWaterConsumptionText != null)
+            cityWaterConsumptionText.text = "City Water Consumption: " + cityStats.cityWaterConsumption + " kL";
+        
         dateText.text = timeManager.GetCurrentDate().Date.ToString();
         residentialTaxText.text = "Residential Tax: " + economyManager.GetResidentialTax() + "%";
         commercialTaxText.text = "Commercial Tax: " + economyManager.GetCommercialTax() + "%";
@@ -415,17 +433,16 @@ public class UIManager : MonoBehaviour
         ClearSelectedZoneType();
         
         GameObject powerPlantObject = Instantiate(powerPlantAPrefab);
-
         PowerPlant powerPlant = powerPlantObject.AddComponent<PowerPlant>();
-
+        
         powerPlant.Initialize("Power Plant A", 10000, 100, 50, 25, 3, 10000, powerPlantAPrefab);
-
+        
         selectedBuilding = powerPlant;
-
+        
         cursorManager.SetDefaultCursor();
-
-        cursorManager.ShowBuildingPreview(powerPlantAPrefab);
-
+        
+        cursorManager.ShowBuildingPreview(powerPlantAPrefab, 3);
+        
         bulldozeMode = false;
     }
 
@@ -506,6 +523,15 @@ public class UIManager : MonoBehaviour
         detailsHappinessText.text = "Happiness: " + cell.GetHappiness();
         detailsPowerOutputText.text = "Power Output: " + cell.GetPowerOutput() + " MW";
         detailsPowerConsumptionText.text = "Power Consumption: " + cell.GetPowerConsumption() + " MW";
+        
+        // Add water consumption information
+        if (detailsPopupController.waterConsumptionText != null)
+            detailsPopupController.waterConsumptionText.text = "Water Consumption: " + cell.GetWaterConsumption() + " kL";
+        
+        // Add water output information for water plants
+        if (cell.waterPlant != null && detailsPopupController.waterOutputText != null)
+            detailsPopupController.waterOutputText.text = "Water Output: " + cell.waterPlant.WaterOutput + " kL";
+        
         // detailsDateBuiltText.text = "Date Built: " + timeManager.GetCurrentDate();
         detailsBuildingTypeText.text = "Building Type: " + cell.GetBuildingType();
         detailsImage.sprite = cell.GetCellPrefab().GetComponent<SpriteRenderer>().sprite;
@@ -578,5 +604,76 @@ public class UIManager : MonoBehaviour
     {
         cursorManager.SetDefaultCursor();
         cursorManager.RemovePreview();
+    }
+
+    public void OnMediumWaterPumpPlantButtonClicked()
+    {
+        try {
+            ClearSelectedZoneType();
+            
+            if (waterPumpPrefab == null) {
+                return;
+            }
+
+            GameObject waterPlantObject = Instantiate(waterPumpPrefab);
+            WaterPlant waterPlant = waterPlantObject.GetComponent<WaterPlant>();
+            if (waterPlant == null) {
+                waterPlant = waterPlantObject.AddComponent<WaterPlant>();
+            }
+            
+            waterPlant.Initialize("Water Pump", 8000, 80, 30, 20, 2, 8000, waterPumpPrefab);
+
+            selectedBuilding = waterPlant;
+        
+            cursorManager.SetDefaultCursor();
+            cursorManager.ShowBuildingPreview(waterPumpPrefab, 2);
+            bulldozeMode = false;
+        }
+        catch (System.Exception ex) {
+            Debug.LogError($"Error in OnWaterPumpPlantButtonClicked: {ex.Message}\n{ex.StackTrace}");
+        }
+    }
+
+    public void OnPlaceWaterButtonClicked()
+    {
+        selectedZoneType = Zone.ZoneType.Water;
+        cursorManager.SetDefaultCursor();
+        bulldozeMode = false;
+        ClearSelectedBuilding();
+    }
+
+    public void ShowInsufficientFundsTooltip(string itemType, int cost)
+    {
+        if (insufficientFundsPanel == null || insufficientFundsText == null) return;
+        
+        insufficientFundsText.text = $"Cannot afford {itemType}!\nCost: ${cost}\nAvailable: ${cityStats.money}";
+        insufficientFundsPanel.SetActive(true);
+        
+        // Cancel any existing hide coroutine
+        if (hideTooltipCoroutine != null)
+            StopCoroutine(hideTooltipCoroutine);
+        
+        // Start a new hide coroutine
+        hideTooltipCoroutine = StartCoroutine(HideTooltipAfterDelay());
+    }
+
+    private System.Collections.IEnumerator HideTooltipAfterDelay()
+    {
+        yield return new WaitForSeconds(tooltipDisplayTime);
+        insufficientFundsPanel.SetActive(false);
+        hideTooltipCoroutine = null;
+    }
+
+    // Use this to hide the tooltip manually if needed
+    public void HideInsufficientFundsTooltip()
+    {
+        if (insufficientFundsPanel != null)
+            insufficientFundsPanel.SetActive(false);
+        
+        if (hideTooltipCoroutine != null)
+        {
+            StopCoroutine(hideTooltipCoroutine);
+            hideTooltipCoroutine = null;
+        }
     }
 }

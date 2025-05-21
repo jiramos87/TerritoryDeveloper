@@ -53,11 +53,13 @@ public class ZoneManager : MonoBehaviour
 
     public List<GameObject> roadPrefabs;
     public List<GameObject> grassPrefabs;
+    public List<GameObject> waterPrefabs;
 
     private Dictionary<(Zone.ZoneType, int), List<GameObject>> zonePrefabs;
 
     public GridManager gridManager;
     public PowerPlant powerPlantManager;
+    public WaterPlant waterPlantManager;
 
     void Start()
     {
@@ -99,7 +101,9 @@ public class ZoneManager : MonoBehaviour
             { (Zone.ZoneType.IndustrialLightZoning, 1), industrialLightZoningPrefabs },
             { (Zone.ZoneType.IndustrialMediumZoning, 1), industrialMediumZoningPrefabs },
             { (Zone.ZoneType.IndustrialHeavyZoning, 1), industrialHeavyZoningPrefabs },
-            { (Zone.ZoneType.Grass, 1), grassPrefabs }
+            { (Zone.ZoneType.Grass, 1), grassPrefabs },
+            { (Zone.ZoneType.Road, 1), roadPrefabs },
+            { (Zone.ZoneType.Water, 1), waterPrefabs }
         };
     }
 
@@ -119,12 +123,24 @@ public class ZoneManager : MonoBehaviour
         return grassPrefabs[0];
     }
 
+    public GameObject GetWaterPrefab()
+    {
+        return waterPrefabs[0];
+    }
+
     public GameObject FindPrefabByName(string prefabName)
     {
         string trimmedName = prefabName.Replace("(Clone)", "");
 
         List<GameObject> roadPrefabs = gridManager.GetRoadPrefabs();
         List<GameObject> powerPlantPrefabs = powerPlantManager.GetPowerPlantPrefabs();
+        List<GameObject> waterPlantPrefabs = waterPlantManager.GetWaterPlantPrefabs();
+
+        if (roadPrefabs == null || powerPlantPrefabs == null || waterPlantPrefabs == null)
+        {
+            Debug.LogWarning("One or more prefab lists are null.");
+            return null;
+        }
 
         foreach (var prefabList in zonePrefabs.Values)
         {
@@ -146,6 +162,14 @@ public class ZoneManager : MonoBehaviour
         }
 
         foreach (var prefab in powerPlantPrefabs)
+        {
+            if (prefab.name == trimmedName)
+            {
+                return prefab;
+            }
+        }
+
+        foreach (var prefab in waterPlantPrefabs)
         {
             if (prefab.name == trimmedName)
             {

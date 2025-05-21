@@ -21,7 +21,6 @@ public class BuildingSelectorMenuManager : MonoBehaviour
 
     public void PopulateItems(List<ItemType> itemList, Action<ItemType> onItemSelected, string type)
     {
-
         foreach (Transform child in content)
         {
             Destroy(child.gameObject);

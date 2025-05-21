@@ -24,6 +24,7 @@ public class Zone : MonoBehaviour
       IndustrialHeavyZoning,
       Road,
       Grass,
+      Water,
       None,
       Building
     }
@@ -33,6 +34,7 @@ public class Zone : MonoBehaviour
       Zoning,
       Road,
       Grass,
+      Water,
       Building
     }
     public ZoneType zoneType;

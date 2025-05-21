@@ -14,7 +14,7 @@ public class BuildingSelectorMenuController : MonoBehaviour
 
     public void ShowPopup(List<BuildingSelectorMenuManager.ItemType> items, System.Action<BuildingSelectorMenuManager.ItemType> onItemSelected, string type)
     {
-        TogglePopup(type);
+        OpenPopup();
         menuManager.PopulateItems(items, onItemSelected, type);
 
         cursorManager.SetDefaultCursor();

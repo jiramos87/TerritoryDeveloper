@@ -9,7 +9,7 @@ public class GridManager : MonoBehaviour
     public int width, height;
     public float tileWidth = 1f; // Full width of the tile
     public float tileHeight = 0.5f; // Effective height due to isometric perspective
-    private GameObject[,] gridArray;
+    public GameObject[,] gridArray;
 
     public ZoneManager zoneManager;
     public UIManager uiManager;
@@ -65,6 +65,8 @@ public class GridManager : MonoBehaviour
 
     [Header("Demand System")]
     public DemandManager demandManager;
+
+    public WaterManager waterManager;
 
     void Start()
     {
@@ -205,6 +207,8 @@ public class GridManager : MonoBehaviour
                 return ZoneAttributes.Road;
             case Zone.ZoneType.Grass:
                 return ZoneAttributes.Grass;
+            case Zone.ZoneType.Water:
+                return ZoneAttributes.Water;
             default:
                 return null;
         }
@@ -237,7 +241,7 @@ public class GridManager : MonoBehaviour
                 HandleShowTileDetails(mouseGridPosition);
             }
 
-            if (IsInRoadDrawingMode())
+            if (IsInRoadDrawingMode() || IsInWaterPlacementMode())
             {
                 HandleRaycast(mouseGridPosition);
             }
@@ -246,6 +250,11 @@ public class GridManager : MonoBehaviour
         {
             Debug.LogError("Update error: " + ex);
         }
+    }
+
+    bool IsInWaterPlacementMode()
+    {
+        return uiManager.GetSelectedZoneType() == Zone.ZoneType.Water;
     }
 
     void HandleBulldozerMode(Vector2 gridPosition)
@@ -311,6 +320,15 @@ public class GridManager : MonoBehaviour
         {
             PowerPlant powerPlant = cellComponent.powerPlant;
             cityStats.UnregisterPowerPlant(powerPlant);
+        }
+        
+        if (buildingType == "WaterPlant")
+        {
+            WaterPlant waterPlant = cellComponent.waterPlant;
+            if (waterManager != null && waterPlant != null)
+            {
+                waterManager.UnregisterWaterPlant(waterPlant);
+            }
         }
 
         if (buildingType == null && zoneType != Zone.ZoneType.Grass)
@@ -391,23 +409,48 @@ public class GridManager : MonoBehaviour
 
     void HandleRaycast(Vector2 gridPosition)
     {
-          GameObject cell = gridArray[(int)gridPosition.x, (int)gridPosition.y];
+        GameObject cell = gridArray[(int)gridPosition.x, (int)gridPosition.y];
 
-          Zone.ZoneType selectedZoneType = uiManager.GetSelectedZoneType();
-          IBuilding selectedBuilding = uiManager.GetSelectedBuilding();
+        Zone.ZoneType selectedZoneType = uiManager.GetSelectedZoneType();
+        IBuilding selectedBuilding = uiManager.GetSelectedBuilding();
 
-          if (selectedZoneType == Zone.ZoneType.Road)
-          {
-              HandleRoadDrawing(gridPosition);
-          }
-          else if (selectedBuilding != null)
-          {
-              HandleBuildingPlacement(gridPosition, selectedBuilding);
-          }
-          else if (isInZoningMode())
-          {
-              HandleZoning(mouseGridPosition);
-          }
+        if (selectedZoneType == Zone.ZoneType.Road)
+        {
+            HandleRoadDrawing(gridPosition);
+        }
+        else if (selectedZoneType == Zone.ZoneType.Water)
+        {
+            HandleWaterPlacement(gridPosition);
+        }
+        else if (selectedBuilding != null)
+        {
+            HandleBuildingPlacement(gridPosition, selectedBuilding);
+        }
+        else if (isInZoningMode())
+        {
+            HandleZoning(mouseGridPosition);
+        }
+    }
+
+    void HandleWaterPlacement(Vector2 gridPosition)
+    {
+        if (Input.GetMouseButton(0))
+        {
+            // Check if player can afford water placement
+            if (!cityStats.CanAfford(ZoneAttributes.Water.ConstructionCost))
+            {
+                uiManager.ShowInsufficientFundsTooltip("Water", ZoneAttributes.Water.ConstructionCost);
+                return;
+            }
+            
+            if (waterManager != null)
+            {
+                waterManager.PlaceWater((int)gridPosition.x, (int)gridPosition.y);
+                
+                // Deduct cost for water placement
+                cityStats.RemoveMoney(ZoneAttributes.Water.ConstructionCost);
+            }
+        }
     }
 
     private bool isInZoningMode()
@@ -633,6 +676,16 @@ public class GridManager : MonoBehaviour
 
         var zoneAttributes = GetZoneAttributes(selectedZoneType);
 
+        // Check if player can afford the zone
+        if (zoneAttributes == null)
+            return;
+            
+        if (!cityStats.CanAfford(zoneAttributes.ConstructionCost))
+        {
+            uiManager.ShowInsufficientFundsTooltip(selectedZoneType.ToString(), zoneAttributes.ConstructionCost);
+            return;
+        }
+        
         if (canPlaceZone(zoneAttributes, gridPosition))
         {
             GameObject cell = gridArray[(int)gridPosition.x, (int)gridPosition.y];
@@ -735,12 +788,8 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    // Updated: Check demand and job requirements ONLY for auto-building spawning, not manual placement
     public void PlaceZonedBuildings(Zone.ZoneType zoningType)
     {
-        Debug.Log($"--- Attempting to place {zoningType} buildings ---");
-        
-        // Check if we have zoned sections available
         if (availableZoneSections.Count == 0)
         {
             Debug.Log($"No available zone sections for {zoningType}");
@@ -750,12 +799,10 @@ public class GridManager : MonoBehaviour
         var sectionResult = GetRandomAvailableSection(zoningType);
         if (!sectionResult.HasValue || sectionResult.Value.size == 0)
         {
-            Debug.Log($"No suitable sections found for {zoningType}");
             return;
         }
         
         Zone.ZoneType buildingZoneType = GetBuildingZoneType(zoningType);
-        Debug.Log($"Building type: {buildingZoneType}");
         
         if (IsResidentialBuilding(buildingZoneType))
         {
@@ -792,14 +839,22 @@ public class GridManager : MonoBehaviour
             }
         }
         
+        // Check both power and water availability
         if (!cityStats.GetCityPowerAvailability())
         {
             Debug.Log($"Cannot place {zoningType} building: Insufficient power");
             return;
         }
+        
+        // Check water availability
+        if (waterManager != null && !waterManager.GetCityWaterAvailability())
+        {
+            Debug.Log($"Cannot place {zoningType} building: Insufficient water");
+            return;
+        }
 
         Vector2[] section = sectionResult.Value.section;
-        int buildingSize = (int)Math.Sqrt(section.Length);
+        int buildingSize = (int)System.Math.Sqrt(section.Length);
         
         ZoneAttributes zoneAttributes = GetZoneAttributes(buildingZoneType);
 
@@ -1038,7 +1093,7 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    private int SetTileSortingOrder(GameObject tile, Zone.ZoneType zoneType = Zone.ZoneType.Grass)
+    public int SetTileSortingOrder(GameObject tile, Zone.ZoneType zoneType = Zone.ZoneType.Grass)
     {
         Vector3 gridPos = GetGridPosition(tile.transform.position);
         int x = (int)gridPos.x;
@@ -1316,6 +1371,23 @@ public class GridManager : MonoBehaviour
 
     void DrawRoadLine(bool calculateCost = true)
     {
+        if (calculateCost)
+        {
+            int totalCost = CalculateTotalCost(previewRoadGridPositions.Count);
+            
+            // Check if player can afford the road
+            if (!cityStats.CanAfford(totalCost))
+            {
+                uiManager.ShowInsufficientFundsTooltip("Road", totalCost);
+                ClearPreview();
+                isDrawingRoad = false;
+                return;
+            }
+            
+            // Deduct the cost if we can afford it
+            cityStats.RemoveMoney(totalCost);
+        }
+        
         for (int i = 0; i < previewRoadGridPositions.Count; i++)
         {
             Vector2 gridPos = previewRoadGridPositions[i];
@@ -1327,12 +1399,7 @@ public class GridManager : MonoBehaviour
 
         if (calculateCost)
         {
-            int totalCost = CalculateTotalCost(previewRoadGridPositions.Count);
-
-            cityStats.RemoveMoney(totalCost);
-
             int roadPowerConsumption = previewRoadGridPositions.Count * ZoneAttributes.Road.PowerConsumption;
-
             cityStats.AddPowerConsumption(roadPowerConsumption);
         }
     }
@@ -1529,8 +1596,27 @@ public class GridManager : MonoBehaviour
 
     bool canPlaceBuilding(Vector2 gridPosition, int buildingSize)
     {
+        if (buildingSize == 0)
+            return false;
+        
+        int offsetX = 0;
+        int offsetY = 0;
+        
+        if (buildingSize % 2 == 0)
+        {
+            offsetX = 0;
+            offsetY = 0;
+        }
+        else
+        {
+            offsetX = buildingSize / 2;
+            offsetY = buildingSize / 2;
+        }
+        
+
         if (!terrainManager.CanPlaceBuilding((int)gridPosition.x, (int)gridPosition.y, buildingSize))
         {
+            Debug.Log("Terrain manager says cannot place building here at " + gridPosition);
             return false;
         }
 
@@ -1538,21 +1624,57 @@ public class GridManager : MonoBehaviour
         {
             for (int y = 0; y < buildingSize; y++)
             {
-                int gridX = (int)gridPosition.x + x - buildingSize / 2;
-                int gridY = (int)gridPosition.y + y - buildingSize / 2;
+                int gridX = (int)gridPosition.x + x - offsetX;
+                int gridY = (int)gridPosition.y + y - offsetY;
+                
+                if (gridX < 0 || gridX >= width || gridY < 0 || gridY >= height)
+                {
+                    Debug.Log($"Cell ({gridX}, {gridY}) is outside the grid bounds");
+                    return false;
+                }
 
                 Cell cell = gridArray[gridX, gridY].GetComponent<Cell>();
 
                 if (cell.zoneType != Zone.ZoneType.Grass)
                 {
+                    Debug.Log($"Cell ({gridX}, {gridY}) is not grass. Type: {cell.zoneType}");
                     return false;
                 }
             }
         }
+        
+        if (uiManager.GetSelectedBuilding() != null && 
+            uiManager.GetSelectedBuilding() is WaterPlant)
+        {
+            bool adjacentToWater = false;
+            
+            for (int x = 0; x < buildingSize; x++)
+            {
+                for (int y = 0; y < buildingSize; y++)
+                {
+                    int gridX = (int)gridPosition.x + x - offsetX;
+                    int gridY = (int)gridPosition.y + y - offsetY;
+                    
+                    if (waterManager != null && waterManager.IsAdjacentToWater(gridX, gridY))
+                    {
+                        adjacentToWater = true;
+                        break;
+                    }
+                }
+                if (adjacentToWater) break;
+            }
+            
+            if (!adjacentToWater)
+            {
+                Debug.Log("Water plant must be adjacent to water");
+                return false;
+            }
+        }
+        
         return true;
     }
 
-    void UpdatePlacedBuildingCellAttributes(Cell cell, int buildingSize, PowerPlant powerPlant, GameObject buildingPrefab, Zone.ZoneType zoneType = Zone.ZoneType.Building, GameObject building = null)
+    void UpdatePlacedBuildingCellAttributes(Cell cell, int buildingSize, PowerPlant powerPlant, WaterPlant waterPlant, GameObject buildingPrefab, Zone.ZoneType zoneType = Zone.ZoneType.Building, GameObject building = null)
     {
         cell.occupiedBuilding = building;
         cell.buildingSize = buildingSize;
@@ -1565,6 +1687,12 @@ public class GridManager : MonoBehaviour
             cell.buildingType = "PowerPlant";
             cell.powerPlant = powerPlant;
         }
+        
+        if (waterPlant != null)
+        {
+            cell.buildingType = "WaterPlant";
+            cell.waterPlant = waterPlant;
+        }
     }
 
     void SetCellAsBuildingPivot(Cell cell)
@@ -1572,26 +1700,48 @@ public class GridManager : MonoBehaviour
         cell.isPivot = true;
     }
 
-    void UpdateBuildingTilesAttributes(Vector2 gridPos, GameObject building, int buildingSize, PowerPlant powerPlant, GameObject buildingPrefab)
-    {   
+    void UpdateBuildingTilesAttributes(Vector2 gridPos, GameObject building, int buildingSize, PowerPlant powerPlant, WaterPlant waterPlant, GameObject buildingPrefab)
+    {
+        Debug.Log($"UpdateBuildingTilesAttributes for size {buildingSize} building at {gridPos}");
+        
+        int offsetX = 0;
+        int offsetY = 0;
+        
+        // Determine the proper offset based on building size
+        if (buildingSize % 2 == 0)
+        {
+            // Even-sized buildings - use cursor position as the top-left corner
+            offsetX = 0;
+            offsetY = 0;
+        }
+        else
+        {
+            // Odd-sized buildings - center the building on the cursor position
+            offsetX = buildingSize / 2;
+            offsetY = buildingSize / 2;
+        }
         
         for (int x = 0; x < buildingSize; x++)
         {
             for (int y = 0; y < buildingSize; y++)
             {
-                int gridX = (int)gridPos.x + x - buildingSize / 2;
-                int gridY = (int)gridPos.y + y - buildingSize / 2;
+                int gridX = (int)gridPos.x + x - offsetX;
+                int gridY = (int)gridPos.y + y - offsetY;
 
-                GameObject gridCell = gridArray[gridX, gridY];
-
-                Cell cell = gridCell.GetComponent<Cell>();
-
-                UpdatePlacedBuildingCellAttributes(cell, buildingSize, powerPlant, buildingPrefab, Zone.ZoneType.Building, building);
-
-                if (gridX == gridPos.x && gridY == gridPos.y)
+                // Ensure we're within grid bounds
+                if (gridX >= 0 && gridX < width && gridY >= 0 && gridY < height)
                 {
-                    DestroyCellChildren(gridCell, new Vector2(gridX, gridY));
-                    SetCellAsBuildingPivot(cell);
+                    GameObject gridCell = gridArray[gridX, gridY];
+                    Cell cell = gridCell.GetComponent<Cell>();
+
+                    UpdatePlacedBuildingCellAttributes(cell, buildingSize, powerPlant, waterPlant, buildingPrefab, Zone.ZoneType.Building, building);
+
+                    if (gridX == gridPos.x && gridY == gridPos.y)
+                    {
+                        DestroyCellChildren(gridCell, new Vector2(gridX, gridY));
+                        SetCellAsBuildingPivot(cell);
+                        Debug.Log($"Set pivot cell at ({gridX}, {gridY})");
+                    }
                 }
             }
         }
@@ -1599,30 +1749,81 @@ public class GridManager : MonoBehaviour
 
     void HandleBuildingPlacementAttributesUpdate(IBuilding iBuilding, Vector2 gridPos, GameObject building, GameObject buildingPrefab)
     {
+        Debug.Log("HandleBuildingPlacementAttributesUpdate called");
+        
         int buildingSize = iBuilding.BuildingSize;
         PowerPlant powerPlant = iBuilding.GameObjectReference.GetComponent<PowerPlant>();
+        WaterPlant waterPlant = iBuilding.GameObjectReference.GetComponent<WaterPlant>();
+
+        Debug.Log($"PowerPlant: {powerPlant}, WaterPlant: {waterPlant}");
 
         if (powerPlant != null)
         {
+            Debug.Log("Registering power plant");
             cityStats.RegisterPowerPlant(powerPlant);
         }
         
-        UpdateBuildingTilesAttributes(gridPos, building, buildingSize, powerPlant, buildingPrefab);
+        if (waterPlant != null && waterManager != null)
+        {
+            Debug.Log("Registering water plant with WaterManager");
+            waterManager.RegisterWaterPlant(waterPlant);
+            
+            // Also update city stats for water output
+            cityStats.cityWaterOutput = waterManager.GetTotalWaterOutput();
+            Debug.Log($"City water output updated to: {cityStats.cityWaterOutput}");
+        }
+        
+        UpdateBuildingTilesAttributes(gridPos, building, buildingSize, powerPlant, waterPlant, buildingPrefab);
 
         cursorManager.RemovePreview(); 
+        
+        Debug.Log("Building attributes update completed");
     }
 
     void PlaceBuildingTile(IBuilding iBuilding, Vector2 gridPos)
     {
+        Debug.Log($"PlaceBuildingTile called for building size {iBuilding.BuildingSize} at position {gridPos}");
+        
         GameObject buildingPrefab = iBuilding.Prefab;
-        Vector2 position = GetWorldPosition((int)gridPos.x, (int)gridPos.y);
-
+        int buildingSize = iBuilding.BuildingSize;
+        
+        // Calculate the adjusted grid position for the actual pivot cell
+        Vector2 pivotGridPos = new Vector2(gridPos.x, gridPos.y);
+        
+        // Get the world position for the pivot cell
+        Vector2 position = GetWorldPosition((int)pivotGridPos.x, (int)pivotGridPos.y);
+        
+        // For even-sized buildings, adjust the visual position slightly
+        if (buildingSize > 1 && buildingSize % 2 == 0)
+        {
+            position.x += tileWidth / 4f; // Small visual adjustment for even-sized buildings
+        }
+        
+        Debug.Log($"Creating building at world position {position}");
+        
+        // Create the building
         GameObject building = Instantiate(buildingPrefab, position, Quaternion.identity);
-        building.transform.SetParent(gridArray[(int)gridPos.x, (int)gridPos.y].transform);
+        building.transform.SetParent(gridArray[(int)pivotGridPos.x, (int)pivotGridPos.y].transform);
 
+        // adjust the building's position to match the grid cell based on its size
+
+        if (buildingSize > 1 && buildingSize % 2 == 0)
+        {
+            building.transform.position += new Vector3(tileWidth / 4f, 0, 0);
+        }
+
+        Debug.Log($"Building instantiated: {building.name}");
+
+        // Set sorting order - make sure building appears on top
         int sortingOrder = SetTileSortingOrder(building, Zone.ZoneType.Building);
-        gridArray[(int)gridPos.x, (int)gridPos.y].GetComponent<Cell>().sortingOrder = sortingOrder;
-        HandleBuildingPlacementAttributesUpdate(iBuilding, gridPos, building, buildingPrefab);
+        gridArray[(int)pivotGridPos.x, (int)pivotGridPos.y].GetComponent<Cell>().sortingOrder = sortingOrder;
+        
+        Debug.Log($"Building sorting order set to: {sortingOrder}");
+        
+        // Update building attributes and occupied cells
+        HandleBuildingPlacementAttributesUpdate(iBuilding, pivotGridPos, building, buildingPrefab);
+        
+        Debug.Log("Building placement completed");
     }
 
     void LoadBuildingTile(GameObject prefab, Vector2 gridPos, int buildingSize)
@@ -1636,8 +1837,22 @@ public class GridManager : MonoBehaviour
 
     void PlaceBuilding(Vector2 gridPos, IBuilding iBuilding)
     {
+        // First check if we can afford the building
+        if (!cityStats.CanAfford(iBuilding.ConstructionCost))
+        {
+            Debug.Log($"Cannot afford building: ${iBuilding.ConstructionCost}");
+            uiManager.ShowInsufficientFundsTooltip("building", iBuilding.ConstructionCost);
+            return;
+        }
+        Debug.Log("Can afford building, proceeding to place it.");
+        
         if (canPlaceBuilding(gridPos, iBuilding.BuildingSize))
         {
+            Debug.Log("Placing building at " + gridPos);
+            // Deduct the cost BEFORE placing the building
+            cityStats.RemoveMoney(iBuilding.ConstructionCost);
+            
+            // Then place the building
             PlaceBuildingTile(iBuilding, gridPos);
         }
         else
@@ -1803,7 +2018,7 @@ public class GridManager : MonoBehaviour
         if (tilePrefab != null)
         {
             PlaceZoneBuildingTile(tilePrefab, cell, cellData.buildingSize);
-            UpdatePlacedBuildingCellAttributes(cell.GetComponent<Cell>(), cellData.buildingSize, cellData.powerPlant, tilePrefab, zoneType, null);
+            UpdatePlacedBuildingCellAttributes(cell.GetComponent<Cell>(), cellData.buildingSize, cellData.powerPlant, cellData.waterPlant, tilePrefab, zoneType, null);
         }
 
         addZonedTileToList(new Vector2(cellData.x, cellData.y), zoneType);

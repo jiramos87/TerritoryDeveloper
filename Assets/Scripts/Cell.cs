@@ -9,6 +9,7 @@ public class Cell : MonoBehaviour
     public int population;
     public int powerOutput;
     public int powerConsumption;
+    public int waterConsumption; // Added water consumption
     public string buildingType;
     public int buildingSize;
     public int x;
@@ -17,6 +18,7 @@ public class Cell : MonoBehaviour
     public string prefabName;
     public bool isPivot;
     public PowerPlant powerPlant { get; set; }
+    public WaterPlant waterPlant { get; set; } // Added water plant
 
     public Zone.ZoneType zoneType;
 
@@ -40,10 +42,12 @@ public class Cell : MonoBehaviour
         population = 0;
         powerOutput = 0;
         powerConsumption = 0;
+        waterConsumption = 0; // Initialize water consumption
         happiness = 0;
         buildingType = "Grass";
         buildingSize = 1;
         powerPlant = null;
+        waterPlant = null; // Initialize water plant
         prefab = grassPrefab;
         prefabName = grassPrefab.name;
         occupiedBuildingName = "";
@@ -74,6 +78,11 @@ public class Cell : MonoBehaviour
     public int GetPowerConsumption()
     {
         return powerConsumption;
+    }
+    
+    public int GetWaterConsumption()
+    {
+        return waterConsumption;
     }
 
     public int GetHappiness()
@@ -111,6 +120,7 @@ public class Cell : MonoBehaviour
             population = population,
             powerOutput = powerOutput,
             powerConsumption = powerConsumption,
+            waterConsumption = waterConsumption, // Add water consumption
             buildingType = buildingType,
             buildingSize = buildingSize,
             x = x,
@@ -121,7 +131,9 @@ public class Cell : MonoBehaviour
             occupiedBuildingName = occupiedBuilding != null ? occupiedBuilding.name : "",
             isPivot = isPivot,
             sortingOrder = sortingOrder,
-            height = height
+            height = height,
+            powerPlant = powerPlant,
+            waterPlant = waterPlant // Add water plant
         };
 
         return cellData;
@@ -136,6 +148,7 @@ public class Cell : MonoBehaviour
         population = cellData.population;
         powerOutput = cellData.powerOutput;
         powerConsumption = cellData.powerConsumption;
+        waterConsumption = cellData.waterConsumption; // Set water consumption
         buildingType = cellData.buildingType;
         buildingSize = cellData.buildingSize;
         x = cellData.x;
@@ -146,6 +159,8 @@ public class Cell : MonoBehaviour
         occupiedBuildingName = cellData.occupiedBuildingName;
         isPivot = cellData.isPivot;
         height = cellData.height;
+        powerPlant = cellData.powerPlant;
+        waterPlant = cellData.waterPlant; // Set water plant
     }
 
     public int GetSortingOrder()

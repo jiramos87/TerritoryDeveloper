@@ -6,6 +6,7 @@ public class TerrainManager : MonoBehaviour
     public GridManager gridManager;
     private HeightMap heightMap;
     public ZoneManager zoneManager;
+    public WaterManager waterManager;
     
     // References to slope prefabs
     public GameObject northSlopePrefab;
@@ -35,6 +36,16 @@ public class TerrainManager : MonoBehaviour
         heightMap = new HeightMap(gridManager.width, gridManager.height);
         LoadInitialHeightMap();
         ApplyHeightMapToGrid();
+        // Initialize water map after height map
+        if (waterManager != null)
+        {
+            waterManager.InitializeWaterMap();
+        }
+    }
+
+    public HeightMap GetHeightMap()
+    {
+        return heightMap;
     }
 
     private void LoadInitialHeightMap()
@@ -250,8 +261,8 @@ public class TerrainManager : MonoBehaviour
         {
             for (int dy = 0; dy < size; dy++)
             {
-                int checkX = x + dx;
-                int checkY = y + dy;
+                int checkX = x + dx - size/2;
+                int checkY = y + dy - size/2;
                 
                 if (!heightMap.IsValidPosition(checkX, checkY))
                     return false;
@@ -260,6 +271,10 @@ public class TerrainManager : MonoBehaviour
                     return false;
                     
                 if (RequiresSlope(checkX, checkY))
+                    return false;
+                    
+                // Check that no water tiles exist on the building footprint
+                if (waterManager != null && waterManager.IsWaterAt(checkX, checkY))
                     return false;
             }
         }

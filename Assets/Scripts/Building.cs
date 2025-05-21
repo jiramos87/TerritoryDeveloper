@@ -1,12 +1,14 @@
 using UnityEngine;
 
-public class Building : MonoBehaviour
+public class Building
 {
-    public enum BuildingType { Power, Water, Fire, Police, Hospital, School, Park }
-    public BuildingType buildingType;
-
-    void Start()
+    public enum BuildingType
     {
-        // Initialize building-specific properties
+        None,
+        Residential,
+        Commercial,
+        Industrial,
+        Power,
+        Water // Added Water type
     }
 }

@@ -50,6 +50,11 @@ public class CityStats : MonoBehaviour
 
     public string cityName;
 
+    public int cityWaterConsumption;
+    public int cityWaterOutput;
+
+    public WaterManager waterManager;
+
     void Start()
     {
         population = 0;
@@ -61,6 +66,8 @@ public class CityStats : MonoBehaviour
         grassCount = 0;
         cityPowerConsumption = 0;
         cityPowerOutput = 0;
+        cityWaterConsumption = 0;
+        cityWaterOutput = 0;
         cityName = "City";
     }
 
@@ -591,6 +598,7 @@ public class CityStats : MonoBehaviour
         AddHappiness(zoneAttributes.Happiness);
         AddZoneBuildingCount(zoneType);
         AddPowerConsumption(zoneAttributes.PowerConsumption);
+        AddWaterConsumption(zoneAttributes.WaterConsumption);
     }
 
     public void HandleBuildingDemolition(Zone.ZoneType zoneType, ZoneAttributes zoneAttributes)
@@ -600,6 +608,7 @@ public class CityStats : MonoBehaviour
         AddHappiness(-zoneAttributes.Happiness);
         RemoveZoneBuildingCount(zoneType);
         RemovePowerConsumption(zoneAttributes.PowerConsumption);
+        RemoveWaterConsumption(zoneAttributes.WaterConsumption);
     }
 
     public CityStatsData GetCityStatsData()
@@ -638,6 +647,8 @@ public class CityStats : MonoBehaviour
             grassCount = grassCount,
             cityPowerConsumption = cityPowerConsumption,
             cityPowerOutput = cityPowerOutput,
+            cityWaterConsumption = cityWaterConsumption,
+            cityWaterOutput = cityWaterOutput,
             cityName = cityName
         };
 
@@ -678,6 +689,8 @@ public class CityStats : MonoBehaviour
         grassCount = cityStatsData.grassCount;
         cityPowerConsumption = cityStatsData.cityPowerConsumption;
         cityPowerOutput = cityStatsData.cityPowerOutput;
+        cityWaterConsumption = cityStatsData.cityWaterConsumption;
+        cityWaterOutput = cityStatsData.cityWaterOutput;
         cityName = cityStatsData.cityName;
     }
 
@@ -698,6 +711,54 @@ public class CityStats : MonoBehaviour
     }
 
     public EmploymentManager GetEmploymentManager() { return FindObjectOfType<EmploymentManager>(); }
+
+    public void AddWaterConsumption(int value)
+    {
+        cityWaterConsumption += value;
+        if (waterManager != null)
+        {
+            waterManager.AddWaterConsumption(value);
+        }
+    }
+
+    public void RemoveWaterConsumption(int value)
+    {
+        cityWaterConsumption -= value;
+        if (waterManager != null)
+        {
+            waterManager.RemoveWaterConsumption(value);
+        }
+    }
+    
+    public int GetTotalWaterConsumption()
+    {
+        return cityWaterConsumption;
+    }
+    
+    public int GetTotalWaterOutput()
+    {
+        return cityWaterOutput;
+    }
+    
+    public bool GetCityWaterAvailability()
+    {
+        // Sync with water manager
+        if (waterManager != null)
+        {
+            cityWaterOutput = waterManager.GetTotalWaterOutput();
+            cityWaterConsumption = waterManager.GetTotalWaterConsumption();
+        }
+        
+        return cityWaterOutput > cityWaterConsumption;
+    }
+
+    public void UpdateWaterOutput()
+    {
+        if (waterManager != null)
+        {
+            cityWaterOutput = waterManager.GetTotalWaterOutput();
+        }
+    }
 }
 
 [System.Serializable]
@@ -735,5 +796,7 @@ public struct CityStatsData
     public int grassCount;
     public int cityPowerConsumption;
     public int cityPowerOutput;
+    public int cityWaterConsumption;
+    public int cityWaterOutput;
     public string cityName;
 }

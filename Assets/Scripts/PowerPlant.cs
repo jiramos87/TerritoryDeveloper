@@ -10,20 +10,14 @@ public class PowerPlant : MonoBehaviour, IBuilding
     private int productivity;
 
     public int ConstructionCost { get; private set; }
-
     public int InitialMaintenanceCost { get; private set; }
     public int MaxWorkers { get; private set; }
     public int InitialWorkers { get; private set; }
     public int BuildingSize { get; private set; }
-
     public int BaseOutput { get; private set; }
-
     public GameObject Prefab { get; private set; }
-
     public GameObject powerPlantNuclearPrefab;
-
     public Building.BuildingType BuildingType { get; private set; }
-
     private Animator animator;
 
     public void Initialize(string type, int constructionCost, int initialMaintenanceCost, int maxWorkers, int initialWorkers, int size, int baseOutput, GameObject prefab)

@@ -1,3 +1,4 @@
+
 [System.Serializable]
 public class CellData
 {
@@ -7,8 +8,10 @@ public class CellData
     public bool hasRoadAtBottom;
     public int population;
     public PowerPlant powerPlant;
+    public WaterPlant waterPlant; // Added water plant
     public int powerOutput;
     public int powerConsumption;
+    public int waterConsumption; // Added water consumption
     public string buildingType;
     public int buildingSize;
     public int x;
