@@ -68,6 +68,8 @@ public class GridManager : MonoBehaviour
 
     public WaterManager waterManager;
 
+    public GameNotificationManager GameNotificationManager;
+
     void Start()
     {
         roadTilePrefabs = new List<GameObject>
@@ -88,6 +90,11 @@ public class GridManager : MonoBehaviour
         if (demandManager == null)
         {
             demandManager = FindObjectOfType<DemandManager>();
+        }
+
+        if (GameNotificationManager == null)
+        {
+            GameNotificationManager = FindObjectOfType<GameNotificationManager>();
         }
 
         CreateGrid();
@@ -721,7 +728,7 @@ public class GridManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("Cannot place zone here.");
+            GameNotificationManager.PostError("Cannot place zone here.");
         }
     }
 
@@ -792,7 +799,6 @@ public class GridManager : MonoBehaviour
     {
         if (availableZoneSections.Count == 0)
         {
-            Debug.Log($"No available zone sections for {zoningType}");
             return;
         }
         
@@ -807,34 +813,27 @@ public class GridManager : MonoBehaviour
         if (IsResidentialBuilding(buildingZoneType))
         {
             int availableJobs = demandManager != null ? demandManager.GetAvailableJobs() : 0;
-            Debug.Log($"Residential building check - Available jobs: {availableJobs}");
-            
+
             if (!CanPlaceResidentialBuilding())
             {
-                Debug.Log($"Cannot place {buildingZoneType}: No jobs available for new residents");
                 return;
             }
             
-            // For residential auto-spawning, check if demand allows growth
             if (demandManager != null && !demandManager.GetResidentialDemand().canGrow)
             {
-                Debug.Log($"Cannot auto-spawn {zoningType} building: Insufficient residential demand (Level: {demandManager.GetDemandLevel(zoningType):F1})");
                 return;
             }
         }
         else
         {
-            // Check for commercial/industrial buildings
             if (!CanPlaceCommercialOrIndustrialBuilding(buildingZoneType))
             {
-                Debug.Log($"Cannot place {buildingZoneType}: No residential support");
                 return;
             }
             
             // For commercial/industrial, check normal demand
             if (!CanZoneTypeGrowBasedOnDemand(zoningType))
             {
-                Debug.Log($"Cannot place {zoningType} building: Insufficient demand (Level: {demandManager.GetDemandLevel(zoningType):F1})");
                 return;
             }
         }
@@ -842,14 +841,12 @@ public class GridManager : MonoBehaviour
         // Check both power and water availability
         if (!cityStats.GetCityPowerAvailability())
         {
-            Debug.Log($"Cannot place {zoningType} building: Insufficient power");
             return;
         }
         
         // Check water availability
         if (waterManager != null && !waterManager.GetCityWaterAvailability())
         {
-            Debug.Log($"Cannot place {zoningType} building: Insufficient water");
             return;
         }
 
@@ -858,10 +855,7 @@ public class GridManager : MonoBehaviour
         
         ZoneAttributes zoneAttributes = GetZoneAttributes(buildingZoneType);
 
-        Debug.Log($"All checks passed! Placing {buildingZoneType} with {section.Length} cells");
         PlaceZoneBuilding(section, buildingZoneType, zoneAttributes, zoningType, buildingSize);
-        
-        Debug.Log($"Successfully placed {buildingZoneType} (Demand: {demandManager?.GetDemandLevel(zoningType):F1})");
     }
 
     private bool CanPlaceResidentialBuilding()
@@ -1616,7 +1610,6 @@ public class GridManager : MonoBehaviour
 
         if (!terrainManager.CanPlaceBuilding((int)gridPosition.x, (int)gridPosition.y, buildingSize))
         {
-            Debug.Log("Terrain manager says cannot place building here at " + gridPosition);
             return false;
         }
 
@@ -1629,7 +1622,6 @@ public class GridManager : MonoBehaviour
                 
                 if (gridX < 0 || gridX >= width || gridY < 0 || gridY >= height)
                 {
-                    Debug.Log($"Cell ({gridX}, {gridY}) is outside the grid bounds");
                     return false;
                 }
 
@@ -1637,7 +1629,6 @@ public class GridManager : MonoBehaviour
 
                 if (cell.zoneType != Zone.ZoneType.Grass)
                 {
-                    Debug.Log($"Cell ({gridX}, {gridY}) is not grass. Type: {cell.zoneType}");
                     return false;
                 }
             }
@@ -1666,7 +1657,7 @@ public class GridManager : MonoBehaviour
             
             if (!adjacentToWater)
             {
-                Debug.Log("Water plant must be adjacent to water");
+                GameNotificationManager.Instance.PostBuildingPlacementError("Water plant must be adjacent to water");
                 return false;
             }
         }
@@ -1702,7 +1693,6 @@ public class GridManager : MonoBehaviour
 
     void UpdateBuildingTilesAttributes(Vector2 gridPos, GameObject building, int buildingSize, PowerPlant powerPlant, WaterPlant waterPlant, GameObject buildingPrefab)
     {
-        Debug.Log($"UpdateBuildingTilesAttributes for size {buildingSize} building at {gridPos}");
         
         int offsetX = 0;
         int offsetY = 0;
@@ -1740,7 +1730,6 @@ public class GridManager : MonoBehaviour
                     {
                         DestroyCellChildren(gridCell, new Vector2(gridX, gridY));
                         SetCellAsBuildingPivot(cell);
-                        Debug.Log($"Set pivot cell at ({gridX}, {gridY})");
                     }
                 }
             }
@@ -1748,42 +1737,29 @@ public class GridManager : MonoBehaviour
     }
 
     void HandleBuildingPlacementAttributesUpdate(IBuilding iBuilding, Vector2 gridPos, GameObject building, GameObject buildingPrefab)
-    {
-        Debug.Log("HandleBuildingPlacementAttributesUpdate called");
-        
+    {      
         int buildingSize = iBuilding.BuildingSize;
         PowerPlant powerPlant = iBuilding.GameObjectReference.GetComponent<PowerPlant>();
         WaterPlant waterPlant = iBuilding.GameObjectReference.GetComponent<WaterPlant>();
 
-        Debug.Log($"PowerPlant: {powerPlant}, WaterPlant: {waterPlant}");
-
         if (powerPlant != null)
         {
-            Debug.Log("Registering power plant");
             cityStats.RegisterPowerPlant(powerPlant);
         }
         
         if (waterPlant != null && waterManager != null)
         {
-            Debug.Log("Registering water plant with WaterManager");
             waterManager.RegisterWaterPlant(waterPlant);
-            
-            // Also update city stats for water output
             cityStats.cityWaterOutput = waterManager.GetTotalWaterOutput();
-            Debug.Log($"City water output updated to: {cityStats.cityWaterOutput}");
         }
         
         UpdateBuildingTilesAttributes(gridPos, building, buildingSize, powerPlant, waterPlant, buildingPrefab);
 
-        cursorManager.RemovePreview(); 
-        
-        Debug.Log("Building attributes update completed");
+        cursorManager.RemovePreview();
     }
 
     void PlaceBuildingTile(IBuilding iBuilding, Vector2 gridPos)
     {
-        Debug.Log($"PlaceBuildingTile called for building size {iBuilding.BuildingSize} at position {gridPos}");
-        
         GameObject buildingPrefab = iBuilding.Prefab;
         int buildingSize = iBuilding.BuildingSize;
         
@@ -1799,8 +1775,6 @@ public class GridManager : MonoBehaviour
             position.x += tileWidth / 4f; // Small visual adjustment for even-sized buildings
         }
         
-        Debug.Log($"Creating building at world position {position}");
-        
         // Create the building
         GameObject building = Instantiate(buildingPrefab, position, Quaternion.identity);
         building.transform.SetParent(gridArray[(int)pivotGridPos.x, (int)pivotGridPos.y].transform);
@@ -1812,18 +1786,10 @@ public class GridManager : MonoBehaviour
             building.transform.position += new Vector3(tileWidth / 4f, 0, 0);
         }
 
-        Debug.Log($"Building instantiated: {building.name}");
-
-        // Set sorting order - make sure building appears on top
         int sortingOrder = SetTileSortingOrder(building, Zone.ZoneType.Building);
         gridArray[(int)pivotGridPos.x, (int)pivotGridPos.y].GetComponent<Cell>().sortingOrder = sortingOrder;
-        
-        Debug.Log($"Building sorting order set to: {sortingOrder}");
-        
-        // Update building attributes and occupied cells
+
         HandleBuildingPlacementAttributesUpdate(iBuilding, pivotGridPos, building, buildingPrefab);
-        
-        Debug.Log("Building placement completed");
     }
 
     void LoadBuildingTile(GameObject prefab, Vector2 gridPos, int buildingSize)
@@ -1837,27 +1803,29 @@ public class GridManager : MonoBehaviour
 
     void PlaceBuilding(Vector2 gridPos, IBuilding iBuilding)
     {
-        // First check if we can afford the building
         if (!cityStats.CanAfford(iBuilding.ConstructionCost))
         {
-            Debug.Log($"Cannot afford building: ${iBuilding.ConstructionCost}");
             uiManager.ShowInsufficientFundsTooltip("building", iBuilding.ConstructionCost);
             return;
         }
-        Debug.Log("Can afford building, proceeding to place it.");
         
         if (canPlaceBuilding(gridPos, iBuilding.BuildingSize))
         {
-            Debug.Log("Placing building at " + gridPos);
             // Deduct the cost BEFORE placing the building
             cityStats.RemoveMoney(iBuilding.ConstructionCost);
             
             // Then place the building
             PlaceBuildingTile(iBuilding, gridPos);
+
+            GameNotificationManager.Instance.PostBuildingConstructed(
+                iBuilding.Prefab.name
+            );
         }
         else
         {
-            Debug.Log("Cannot place building here, area is not available.");
+            GameNotificationManager.Instance.PostBuildingPlacementError(
+                "Cannot place building here, area is not available."
+            );
         }
     }
 

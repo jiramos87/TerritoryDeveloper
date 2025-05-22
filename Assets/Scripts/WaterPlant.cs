@@ -24,7 +24,6 @@ public class WaterPlant : MonoBehaviour, IBuilding
 
     public void Initialize(string type, int constructionCost, int initialMaintenanceCost, int maxWorkers, int initialWorkers, int size, int baseOutput, GameObject prefab)
     {
-        Debug.Log($"WaterPlant Initialize called with type: {type}, constructionCost: {constructionCost}, size: {size}");
         
         try {
             ConstructionCost = constructionCost;
@@ -42,8 +41,6 @@ public class WaterPlant : MonoBehaviour, IBuilding
 
             // Initialize water output
             UpdateWaterOutput();
-
-            Debug.Log($"WaterPlant successfully initialized. WaterOutput: {waterOutput}, BuildingSize: {BuildingSize}");
         }
         catch (System.Exception ex) {
             Debug.LogError($"Error in WaterPlant.Initialize: {ex.Message}\n{ex.StackTrace}");

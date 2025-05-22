@@ -137,7 +137,7 @@ public class UIManager : MonoBehaviour
         residentialTaxText.text = "Residential Tax: " + economyManager.GetResidentialTax() + "%";
         commercialTaxText.text = "Commercial Tax: " + economyManager.GetCommercialTax() + "%";
         industrialTaxText.text = "Industrial Tax: " + economyManager.GetIndustrialTax() + "%";
-        gridCoordinatesText.text = "Grid Coordinates: " + "x: " + gridManager.mouseGridPosition.x + ", y: " + gridManager.mouseGridPosition.y;
+        gridCoordinatesText.text = "x: " + gridManager.mouseGridPosition.x + ", y: " + gridManager.mouseGridPosition.y;
 
         EmploymentManager employment = FindObjectOfType<EmploymentManager>();
         DemandManager demand = FindObjectOfType<DemandManager>();

@@ -41,7 +41,7 @@ public class WaterMap
         {
             return;
         }
-        Debug.Log($"Setting water at ({x}, {y}) to {isWater}");
+
         waterCells[x, y] = isWater;
     }
 

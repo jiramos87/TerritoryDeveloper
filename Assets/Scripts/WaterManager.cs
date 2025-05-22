@@ -56,7 +56,6 @@ public class WaterManager : MonoBehaviour
         if (gridManager != null)
         {
             waterMap = new WaterMap(gridManager.width, gridManager.height);
-            Debug.Log("WaterMap initialized with dimensions: " + gridManager.width + "x" + gridManager.height);
             // First apply predefined water cells from the matrix
             InitializeWaterBodiesFromMatrix();
             
@@ -81,7 +80,7 @@ public class WaterManager : MonoBehaviour
             
         int width = Mathf.Min(gridManager.width, initialWaterCells.GetLength(0));
         int height = Mathf.Min(gridManager.height, initialWaterCells.GetLength(1));
-        Debug.Log("Initializing water bodies from matrix with dimensions: " + width + "x" + height);
+
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
@@ -103,21 +102,18 @@ public class WaterManager : MonoBehaviour
     public void PlaceWater(int x, int y)
     {
         if (waterMap == null) {
-          Debug.Log("WaterMap is not initialized");
           return;
         }
         
         if (!waterMap.IsValidPosition(x, y))
         {
-            Debug.Log($"Invalid position ({x}, {y}) for water placement");
             return;
         }
         
         // Update the grid cell to display water
         GameObject cell = gridManager.gridArray[x, y];
-        Debug.Log("cell at " + x + ", " + y + ": " + cell);
+
         Cell cellComponent = cell.GetComponent<Cell>();
-        Debug.Log("cellComponent at " + x + ", " + y + ": " + cellComponent);
         // Destroy existing children
         foreach (Transform child in cell.transform)
         {
@@ -129,7 +125,7 @@ public class WaterManager : MonoBehaviour
         
         // Place water tile
         GameObject waterPrefab = GetRandomWaterPrefab();
-        Debug.Log("waterPrefab: " + waterPrefab);
+
         if (waterPrefab == null) return;
         
         Vector2 worldPos = gridManager.GetWorldPosition(x, y);
@@ -225,7 +221,6 @@ public class WaterManager : MonoBehaviour
             {
                if (waterMap.IsWater(x, y))
                 {
-                    Debug.Log($"Updating water visuals at ({x}, {y})");
                     PlaceWater(x, y);
                 }
             }

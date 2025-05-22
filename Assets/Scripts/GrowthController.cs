@@ -36,7 +36,6 @@ public class GrowthController : MonoBehaviour
         {
             if (!demandManager.CanZoneTypeGrow(zoneType))
             {
-                Debug.Log($"Auto-growth blocked for {zoneType}: Insufficient demand");
                 return;
             }
         }
@@ -66,11 +65,6 @@ public class GrowthController : MonoBehaviour
                     
                     suitableLocations.Remove(location);
                 }
-            }
-            
-            if (placedZones > 0)
-            {
-                Debug.Log($"Auto-growth placed {placedZones} {zoneType} zones (Demand: {GetDemandLevel(zoneType):F1})");
             }
         }
     }
@@ -268,8 +262,6 @@ public class GrowthController : MonoBehaviour
         // Since we can't directly set the UI selection, we'll call the zone placement method directly
         // This is a simplified implementation - in a real scenario, you might want to implement
         // a direct placement method in GridManager that bypasses UI
-        
-        Debug.Log($"Auto-placed {zoneType} at position {position}");
         
         // TODO: Implement actual zone placement using GridManager methods
         // For now, this is a placeholder that would need to integrate with your existing zone placement system
