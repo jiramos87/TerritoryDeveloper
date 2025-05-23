@@ -25,6 +25,13 @@ public class TerrainManager : MonoBehaviour
     public const int MIN_HEIGHT = 0;
     public const int MAX_HEIGHT = 20;
     public const int SEA_LEVEL = 0;
+    
+    // Sorting order constants for different object types
+    public const int TERRAIN_BASE_ORDER = 0;
+    public const int SLOPE_OFFSET = -1;
+    public const int BUILDING_OFFSET = 10; // Buildings should be above terrain
+    public const int DEPTH_MULTIPLIER = 100;
+    public const int HEIGHT_MULTIPLIER = 1000;
 
     public void StartTerrainGeneration()
     {
@@ -120,10 +127,7 @@ public class TerrainManager : MonoBehaviour
         SpriteRenderer sr = existingTile.GetComponent<SpriteRenderer>();
         if (sr != null)
         {
-            // Give more weight to height in sorting order
-            int baseOrder = -(y * 10 + x) - 100;
-            int heightOrder = height * 1000; // Increased multiplier for height
-            sr.sortingOrder = baseOrder + heightOrder; // Changed to addition to bring higher tiles to front
+            sr.sortingOrder = CalculateTerrainSortingOrder(x, y, height);
         }
     }
 
@@ -185,23 +189,92 @@ public class TerrainManager : MonoBehaviour
             SpriteRenderer sr = slope.GetComponent<SpriteRenderer>();
             if (sr != null)
             {
-                int baseOrder = -(y * 10 + x) - 100;
-                int heightOrder = currentHeight * 1000;
-                sr.sortingOrder = baseOrder + heightOrder - 1; // Slopes should be slightly behind tiles of same height
+                sr.sortingOrder = CalculateSlopeSortingOrder(x, y, currentHeight);
             }
         }
     }
 
-    private int CalculateIsometricSortingOrder(int x, int y, int height)
+    /// <summary>
+    /// Calculate sorting order for terrain tiles
+    /// </summary>
+    /// <param name="x">Grid X coordinate</param>
+    /// <param name="y">Grid Y coordinate</param>
+    /// <param name="height">Terrain height</param>
+    /// <returns>Sorting order value</returns>
+    public int CalculateTerrainSortingOrder(int x, int y, int height)
     {
-        // Higher (x + y) means further back in isometric view
+        // In isometric view, objects further back (higher x+y) should render first (lower sorting order)
         int isometricDepth = x + y;
-        // Base sorting order determined by isometric depth
-        int baseOrder = -isometricDepth * 100;
-        // Height adjustment (higher tiles should appear on top)
-        int heightAdjustment = height * 1000;  // Multiply by larger number to ensure height takes precedence
+        int depthOrder = -isometricDepth * DEPTH_MULTIPLIER;
         
-        return baseOrder - heightAdjustment;
+        // Higher terrain should render on top of lower terrain at same depth
+        int heightOrder = height * HEIGHT_MULTIPLIER;
+        
+        return TERRAIN_BASE_ORDER + depthOrder + heightOrder;
+    }
+
+    /// <summary>
+    /// Calculate sorting order for slope tiles (slightly behind terrain)
+    /// </summary>
+    /// <param name="x">Grid X coordinate</param>
+    /// <param name="y">Grid Y coordinate</param>
+    /// <param name="height">Terrain height</param>
+    /// <returns>Sorting order value</returns>
+    public int CalculateSlopeSortingOrder(int x, int y, int height)
+    {
+        return CalculateTerrainSortingOrder(x, y, height) + SLOPE_OFFSET;
+    }
+
+    /// <summary>
+    /// Calculate sorting order for buildings (should be above terrain)
+    /// Call this method from your building placement code
+    /// </summary>
+    /// <param name="x">Grid X coordinate</param>
+    /// <param name="y">Grid Y coordinate</param>
+    /// <param name="height">Terrain height at building location</param>
+    /// <returns>Sorting order value</returns>
+    public int CalculateBuildingSortingOrder(int x, int y, int height)
+    {
+        return CalculateTerrainSortingOrder(x, y, height) + BUILDING_OFFSET;
+    }
+
+    /// <summary>
+    /// Calculate sorting order for any object type at given position
+    /// </summary>
+    /// <param name="x">Grid X coordinate</param>
+    /// <param name="y">Grid Y coordinate</param>
+    /// <param name="objectType">Type of object (terrain, building, etc.)</param>
+    /// <returns>Sorting order value</returns>
+    public int CalculateSortingOrder(int x, int y, ObjectType objectType)
+    {
+        int height = heightMap.GetHeight(x, y);
+        
+        switch (objectType)
+        {
+            case ObjectType.Terrain:
+                return CalculateTerrainSortingOrder(x, y, height);
+            case ObjectType.Slope:
+                return CalculateSlopeSortingOrder(x, y, height);
+            case ObjectType.Building:
+                return CalculateBuildingSortingOrder(x, y, height);
+            case ObjectType.Road:
+                return CalculateTerrainSortingOrder(x, y, height) + 5; // Roads slightly above terrain
+            case ObjectType.Utility:
+                return CalculateTerrainSortingOrder(x, y, height) + 8; // Utilities above roads
+            default:
+                return CalculateTerrainSortingOrder(x, y, height);
+        }
+    }
+
+    // Enum for different object types (add this to help with sorting)
+    public enum ObjectType
+    {
+        Terrain,
+        Slope,
+        Road,
+        Utility,
+        Building,
+        Effect
     }
 
     private GameObject DetermineSlopePrefab(int x, int y)
