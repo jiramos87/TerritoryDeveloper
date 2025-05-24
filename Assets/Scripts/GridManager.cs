@@ -69,8 +69,44 @@ public class GridManager : MonoBehaviour
     public WaterManager waterManager;
 
     public GameNotificationManager GameNotificationManager;
+    public ForestManager forestManager;
 
-    void Start()
+    // void Start()
+    // {
+    //     roadTilePrefabs = new List<GameObject>
+    //     {
+    //         roadTilePrefab1,
+    //         roadTilePrefab2,
+    //         roadTilePrefabCrossing,
+    //         roadTilePrefabTIntersectionUp,
+    //         roadTilePrefabTIntersectionDown,
+    //         roadTilePrefabTIntersectionLeft,
+    //         roadTilePrefabTIntersectionRight,
+    //         roadTilePrefabElbowUpLeft,
+    //         roadTilePrefabElbowUpRight,
+    //         roadTilePrefabElbowDownLeft,
+    //         roadTilePrefabElbowDownRight
+    //     };
+
+    //     if (demandManager == null)
+    //     {
+    //         demandManager = FindObjectOfType<DemandManager>();
+    //     }
+
+    //     if (GameNotificationManager == null)
+    //     {
+    //         GameNotificationManager = FindObjectOfType<GameNotificationManager>();
+    //     }
+
+    //     if (forestManager == null)
+    //     {
+    //         forestManager = FindObjectOfType<ForestManager>();
+    //     }
+
+    //     CreateGrid();
+    // }
+
+    public void InitializeGrid()
     {
         roadTilePrefabs = new List<GameObject>
         {
@@ -95,6 +131,11 @@ public class GridManager : MonoBehaviour
         if (GameNotificationManager == null)
         {
             GameNotificationManager = FindObjectOfType<GameNotificationManager>();
+        }
+
+        if (forestManager == null)
+        {
+            forestManager = FindObjectOfType<ForestManager>();
         }
 
         CreateGrid();
@@ -125,12 +166,17 @@ public class GridManager : MonoBehaviour
                 cellComponent.population = 0;
                 cellComponent.powerConsumption = 0;
                 cellComponent.powerOutput = 0;
+                cellComponent.waterConsumption = 0;
                 cellComponent.happiness = 0;
                 cellComponent.buildingType = null;
                 cellComponent.buildingSize = 1;
                 cellComponent.powerPlant = null;
                 cellComponent.height = 1; // Set initial height
-
+                cellComponent.waterPlant = null;
+                cellComponent.occupiedBuilding = null;
+                cellComponent.isPivot = false;
+                cellComponent.sortingOrder = 0;
+                cellComponent.desirability = 0;
                 GameObject tilePrefab = zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass, 1);
 
                 cellComponent.prefab = tilePrefab;
@@ -167,7 +213,7 @@ public class GridManager : MonoBehaviour
             }
         }
 
-        terrainManager.StartTerrainGeneration();
+        Debug.Log("Grid created with size: " + width + "x" + height);
     }
 
     ZoneAttributes GetZoneAttributes(Zone.ZoneType zoneType)
@@ -420,6 +466,7 @@ public class GridManager : MonoBehaviour
 
         Zone.ZoneType selectedZoneType = uiManager.GetSelectedZoneType();
         IBuilding selectedBuilding = uiManager.GetSelectedBuilding();
+        IForest selectedForest = uiManager.GetSelectedForest();
 
         if (selectedZoneType == Zone.ZoneType.Road)
         {
@@ -432,6 +479,10 @@ public class GridManager : MonoBehaviour
         else if (selectedBuilding != null)
         {
             HandleBuildingPlacement(gridPosition, selectedBuilding);
+        }
+        else if (selectedForest != null)
+        {
+            HandleForestPlacement(gridPosition, selectedForest);
         }
         else if (isInZoningMode())
         {
@@ -565,6 +616,14 @@ public class GridManager : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             PlaceBuilding(gridPosition, selectedBuilding);
+        }
+    }
+
+    void HandleForestPlacement(Vector3 gridPosition, IForest selectedForest)
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            forestManager.PlaceForest(gridPosition, selectedForest);
         }
     }
         
@@ -1090,6 +1149,7 @@ public class GridManager : MonoBehaviour
     public int SetTileSortingOrder(GameObject tile, Zone.ZoneType zoneType = Zone.ZoneType.Grass)
     {
         Vector3 gridPos = GetGridPosition(tile.transform.position);
+
         int x = (int)gridPos.x;
         int y = (int)gridPos.y;
         Cell cell = gridArray[x, y].GetComponent<Cell>();

@@ -55,6 +55,22 @@ public class TerrainManager : MonoBehaviour
         return heightMap;
     }
 
+    public void InitializeHeightMap()
+    {
+        heightMap = new HeightMap(gridManager.width, gridManager.height);
+        LoadInitialHeightMap();
+
+        // for (int x = 0; x < gridManager.width; x++)
+        // {
+        //     for (int y = 0; y < gridManager.height; y++)
+        //     {
+        //         heightMap.SetHeight(x, y, SEA_LEVEL);
+        //     }
+        // }
+
+        ApplyHeightMapToGrid();
+    }
+
     private void LoadInitialHeightMap()
     {
         int[,] initialHeights = new int[,] {
@@ -84,7 +100,6 @@ public class TerrainManager : MonoBehaviour
 
     private void ApplyHeightMapToGrid()
     {
-        // Process from top-right to bottom-left for proper isometric layering
         for (int sum = 0; sum < gridManager.width + gridManager.height - 1; sum++)
         {
             for (int x = 0; x < gridManager.width; x++)

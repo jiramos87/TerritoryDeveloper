@@ -55,6 +55,11 @@ public class CityStats : MonoBehaviour
 
     public WaterManager waterManager;
 
+    [Header("Forest Statistics")]
+    public int forestCellCount;
+    public float forestCoveragePercentage;
+    public ForestManager forestManager;
+
     void Start()
     {
         population = 0;
@@ -69,6 +74,13 @@ public class CityStats : MonoBehaviour
         cityWaterConsumption = 0;
         cityWaterOutput = 0;
         cityName = "City";
+
+        // Initialize forest statistics
+        forestCellCount = 0;
+        forestCoveragePercentage = 0f;
+        
+        if (forestManager == null)
+            forestManager = FindObjectOfType<ForestManager>();
     }
 
     public void AddPopulation(int value)
@@ -377,7 +389,6 @@ public class CityStats : MonoBehaviour
         grassCount++;
     }
 
-
     public void AddZoneBuildingCount(Zone.ZoneType zoneType)
     {
         switch (zoneType)
@@ -584,6 +595,9 @@ public class CityStats : MonoBehaviour
        
        if (employment != null) employment.UpdateEmployment();
        if (stats != null) stats.UpdateStatistics();
+
+       // Update forest statistics
+       UpdateForestStatistics();
     }
 
     public bool GetCityPowerAvailability()
@@ -609,6 +623,44 @@ public class CityStats : MonoBehaviour
         RemoveZoneBuildingCount(zoneType);
         RemovePowerConsumption(zoneAttributes.PowerConsumption);
         RemoveWaterConsumption(zoneAttributes.WaterConsumption);
+    }
+
+    /// <summary>
+    /// Update forest statistics (called by ForestManager)
+    /// </summary>
+    public void UpdateForestStats(ForestStatistics forestStats)
+    {
+        forestCellCount = forestStats.totalForestCells;
+        forestCoveragePercentage = forestStats.forestCoveragePercentage;
+    }
+
+    /// <summary>
+    /// Update forest statistics from ForestManager
+    /// </summary>
+    private void UpdateForestStatistics()
+    {
+        if (forestManager != null)
+        {
+            var forestStats = forestManager.GetForestStatistics();
+            UpdateForestStats(forestStats);
+        }
+    }
+
+    /// <summary>
+    /// Get forest-based happiness bonus
+    /// </summary>
+    public int GetForestHappinessBonus()
+    {
+        // Each forest cell provides +1 happiness, with diminishing returns
+        float bonus = forestCellCount * 1.0f;
+        
+        // Apply diminishing returns for large forests
+        if (forestCellCount > 20)
+        {
+            bonus = 20f + (forestCellCount - 20) * 0.5f;
+        }
+        
+        return Mathf.RoundToInt(bonus);
     }
 
     public CityStatsData GetCityStatsData()
@@ -649,7 +701,10 @@ public class CityStats : MonoBehaviour
             cityPowerOutput = cityPowerOutput,
             cityWaterConsumption = cityWaterConsumption,
             cityWaterOutput = cityWaterOutput,
-            cityName = cityName
+            cityName = cityName,
+            // Forest statistics
+            forestCellCount = forestCellCount,
+            forestCoveragePercentage = forestCoveragePercentage
         };
 
         return cityStatsData;
@@ -692,6 +747,10 @@ public class CityStats : MonoBehaviour
         cityWaterConsumption = cityStatsData.cityWaterConsumption;
         cityWaterOutput = cityStatsData.cityWaterOutput;
         cityName = cityStatsData.cityName;
+
+        // Restore forest statistics
+        forestCellCount = cityStatsData.forestCellCount;
+        forestCoveragePercentage = cityStatsData.forestCoveragePercentage;
     }
 
     public void ResetCityStats()
@@ -708,6 +767,10 @@ public class CityStats : MonoBehaviour
         cityPowerConsumption = 0;
         cityPowerOutput = 0;
         cityName = "City";
+
+        // Reset forest statistics
+        forestCellCount = 0;
+        forestCoveragePercentage = 0f;
     }
 
     public EmploymentManager GetEmploymentManager() { return FindObjectOfType<EmploymentManager>(); }
@@ -759,6 +822,10 @@ public class CityStats : MonoBehaviour
             cityWaterOutput = waterManager.GetTotalWaterOutput();
         }
     }
+
+    // Forest-related public getters
+    public int GetForestCellCount() => forestCellCount;
+    public float GetForestCoveragePercentage() => forestCoveragePercentage;
 }
 
 [System.Serializable]
@@ -799,4 +866,8 @@ public struct CityStatsData
     public int cityWaterConsumption;
     public int cityWaterOutput;
     public string cityName;
+
+    // Forest statistics
+    public int forestCellCount;
+    public float forestCoveragePercentage;
 }

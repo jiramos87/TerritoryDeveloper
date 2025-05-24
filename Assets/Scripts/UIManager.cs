@@ -35,12 +35,12 @@ public class UIManager : MonoBehaviour
     public Text detailsDateBuiltText;
     public Text detailsBuildingTypeText;
     public Text detailsSortingOrderText;
-
     public Image detailsImage;
 
+    [Header("Selected types")]
     private Zone.ZoneType selectedZoneType;
-
     private IBuilding selectedBuilding;
+    private IForest selectedForest;
 
     public GameObject powerPlantAPrefab;
     public DetailsPopupController detailsPopupController;
@@ -86,7 +86,13 @@ public class UIManager : MonoBehaviour
     public Text insufficientFundsText;
     public float tooltipDisplayTime = 3f;
     private Coroutine hideTooltipCoroutine;
-  
+
+    public GameObject denseForestPrefab;
+    public GameObject mediumForestPrefab;
+    public GameObject sparseForestPrefab;
+
+    private ForestSelectionData selectedForestData;
+
     void Start()
     {
         if (cityStats == null)
@@ -120,18 +126,15 @@ public class UIManager : MonoBehaviour
 
     public void UpdateUI()
     {
-        populationText.text = "Population: " + cityStats.population;
-        moneyText.text = "Money: $" + cityStats.money;
-        buttonMoneyText.text = "$" + cityStats.money.ToString();
-        happinessText.text = "Happiness: " + cityStats.happiness;
-        cityPowerOutputText.text = "City Power Output: " + cityStats.cityPowerOutput + " MW";
-        cityPowerConsumptionText.text = "City Power Consumption: " + cityStats.cityPowerConsumption + " MW";
-        
-        // Add water information
-        if (cityWaterOutputText != null)
-            cityWaterOutputText.text = "City Water Output: " + cityStats.cityWaterOutput + " kL";
-        if (cityWaterConsumptionText != null)
-            cityWaterConsumptionText.text = "City Water Consumption: " + cityStats.cityWaterConsumption + " kL";
+        populationText.text = cityStats.population.ToString();
+        moneyText.text = cityStats.money.ToString();
+        buttonMoneyText.text = cityStats.money.ToString();
+        happinessText.text = cityStats.happiness.ToString();
+
+        cityPowerOutputText.text = cityStats.cityPowerOutput.ToString() + " MW";
+        cityPowerConsumptionText.text = cityStats.cityPowerConsumption.ToString() + " MW";
+        cityWaterOutputText.text = cityStats.cityWaterOutput.ToString() + " kL";
+        cityWaterConsumptionText.text = cityStats.cityWaterConsumption.ToString() + " kL";
         
         dateText.text = timeManager.GetCurrentDate().Date.ToString();
         residentialTaxText.text = "Residential Tax: " + economyManager.GetResidentialTax() + "%";
@@ -145,27 +148,24 @@ public class UIManager : MonoBehaviour
         
         if (employment != null)
         {
-            unemploymentRateText.text = "Unemployment: " + employment.unemploymentRate.ToString("F1") + "%";
+            unemploymentRateText.text = employment.unemploymentRate.ToString("F1") + "%";
+            totalJobsText.text = employment.GetAvailableJobs().ToString();
             
-            // Show available jobs (not total jobs)
-            totalJobsText.text = "Available Jobs: " + employment.GetAvailableJobs();
-            
-            // Show additional job information if UI elements exist
             if (totalJobsCreatedText != null)
-                totalJobsCreatedText.text = "Total Jobs: " + employment.GetTotalJobs();
+                totalJobsCreatedText.text = employment.GetTotalJobs().ToString();
             if (availableJobsText != null)
-                availableJobsText.text = "Available: " + employment.GetAvailableJobs();
+                availableJobsText.text = employment.GetAvailableJobs().ToString();
             if (jobsTakenText != null)
-                jobsTakenText.text = "Taken by Residents: " + employment.GetJobsTakenByResidents();
+                jobsTakenText.text = employment.GetJobsTakenByResidents().ToString();
         }
         
         if (demand != null)
         {
-            demandResidentialText.text = "R Demand: " + demand.GetResidentialDemand().demandStatus + 
+            demandResidentialText.text = demand.GetResidentialDemand().demandStatus + 
                 " (" + demand.GetResidentialDemand().demandLevel.ToString("F0") + ")";
-            demandCommercialText.text = "C Demand: " + demand.GetCommercialDemand().demandStatus + 
+            demandCommercialText.text = demand.GetCommercialDemand().demandStatus + 
                 " (" + demand.GetCommercialDemand().demandLevel.ToString("F0") + ")";
-            demandIndustrialText.text = "I Demand: " + demand.GetIndustrialDemand().demandStatus + 
+            demandIndustrialText.text = demand.GetIndustrialDemand().demandStatus + 
                 " (" + demand.GetIndustrialDemand().demandLevel.ToString("F0") + ")";
         }
         
@@ -301,6 +301,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -310,6 +311,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -319,6 +321,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -328,6 +331,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -337,6 +341,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -346,15 +351,18 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnLightIndustrialButtonClicked()
     {
+        Debug.Log("Light Industrial Button Clicked");
         selectedZoneType = Zone.ZoneType.IndustrialLightZoning;
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -364,6 +372,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -373,6 +382,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -416,6 +426,7 @@ public class UIManager : MonoBehaviour
         // cursorManager.SetRoadCursor();
 
         ClearSelectedBuilding();
+        ClearSelectedForest();
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
     }
@@ -426,11 +437,13 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        ClearSelectedForest();
     }
 
     public void OnNuclearPowerPlantButtonClicked()
     {
         ClearSelectedZoneType();
+        ClearSelectedForest();
         
         GameObject powerPlantObject = Instantiate(powerPlantAPrefab);
         PowerPlant powerPlant = powerPlantObject.AddComponent<PowerPlant>();
@@ -461,6 +474,17 @@ public class UIManager : MonoBehaviour
         selectedBuilding = null;
     }
 
+    void ClearSelectedForest()
+    {
+        selectedForest = null;
+        selectedForestData = new ForestSelectionData
+        {
+            forestType = Forest.ForestType.None,
+            prefab = null
+        };
+    }
+
+
     void ClearSelectedZoneType()
     {
         selectedZoneType = Zone.ZoneType.Grass;
@@ -470,6 +494,7 @@ public class UIManager : MonoBehaviour
     {
         ClearSelectedBuilding();
         ClearSelectedZoneType();
+        ClearSelectedForest();
         cursorManager.SetBullDozerCursor();
         bulldozeMode = true;
     }
@@ -640,6 +665,7 @@ public class UIManager : MonoBehaviour
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
         ClearSelectedBuilding();
+        ClearSelectedForest();
     }
 
     public void ShowInsufficientFundsTooltip(string itemType, int cost)
@@ -676,4 +702,119 @@ public class UIManager : MonoBehaviour
             hideTooltipCoroutine = null;
         }
     }
+
+    public void OnForestButtonClicked(Forest.ForestType forestType)
+    {
+        ClearSelectedZoneType();
+        ClearSelectedBuilding();
+        
+        // Don't instantiate yet - just prepare the forest data
+        ForestSelectionData forestData = new ForestSelectionData
+        {
+            forestType = forestType,
+            prefab = GetForestPrefabForType(forestType)
+        };
+        
+        selectedForestData = forestData; // Store selection data instead of instance
+        selectedForest = null; // Clear any existing instance
+
+        cursorManager.SetDefaultCursor();
+        cursorManager.ShowBuildingPreview(forestData.prefab, 0);
+        bulldozeMode = false;
+    }
+
+    /// <summary>
+    /// Get the appropriate prefab for forest type
+    /// </summary>
+    public GameObject GetForestPrefabForType(Forest.ForestType forestType)
+    {
+        switch (forestType)
+        {
+            case Forest.ForestType.Sparse:
+                return sparseForestPrefab;
+            case Forest.ForestType.Medium:
+                return mediumForestPrefab;
+            case Forest.ForestType.Dense:
+                return denseForestPrefab; // Your existing dense forest prefab
+            default:
+                return denseForestPrefab;
+        }
+    }
+
+    /// <summary>
+    /// Create forest instance only when actually placing
+    /// </summary>
+    public IForest CreateForestInstance(Forest.ForestType forestType)
+    {
+        GameObject forestPrefab = GetForestPrefabForType(forestType);
+        GameObject forestObject = Instantiate(forestPrefab);
+        
+        // Move it off-screen initially to prevent visual issues
+        forestObject.transform.position = new Vector3(-1000, -1000, 0);
+        
+        IForest forest = null;
+        
+        switch (forestType)
+        {
+            case Forest.ForestType.Sparse:
+                forest = forestObject.GetComponent<SparseForest>();
+                if (forest == null)
+                    forest = forestObject.AddComponent<SparseForest>();
+                ((SparseForest)forest).Initialize();
+                break;
+                
+            case Forest.ForestType.Medium:
+                forest = forestObject.GetComponent<MediumForest>();
+                if (forest == null)
+                    forest = forestObject.AddComponent<MediumForest>();
+                ((MediumForest)forest).Initialize();
+                break;
+                
+            case Forest.ForestType.Dense:
+                forest = forestObject.GetComponent<DenseForest>();
+                if (forest == null)
+                    forest = forestObject.AddComponent<DenseForest>();
+                ((DenseForest)forest).Initialize();
+                break;
+        }
+        
+        return forest;
+    }
+
+    /// <summary>
+    /// Specific methods for backward compatibility
+    /// </summary>
+    public void OnSparseForestButtonClicked()
+    {
+        OnForestButtonClicked(Forest.ForestType.Sparse);
+    }
+
+    public void OnMediumForestButtonClicked()
+    {
+        OnForestButtonClicked(Forest.ForestType.Medium);
+    }
+
+    public void OnDenseForestButtonClicked()
+    {
+        OnForestButtonClicked(Forest.ForestType.Dense);
+    }
+
+    /// <summary>
+    /// Get currently selected forest, creating instance if needed
+    /// </summary>
+    public IForest GetSelectedForest()
+    {
+        if (selectedForest == null && selectedForestData.forestType != Forest.ForestType.None)
+        {
+            selectedForest = CreateForestInstance(selectedForestData.forestType);
+        }
+        return selectedForest;
+    }
+}
+
+[System.Serializable]
+public struct ForestSelectionData
+{
+    public Forest.ForestType forestType;
+    public GameObject prefab;
 }
