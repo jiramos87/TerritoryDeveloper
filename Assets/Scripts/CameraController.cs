@@ -7,6 +7,8 @@ public class CameraController : MonoBehaviour
     public float[] zoomLevels = new float[] { 2f, 5f, 10f, 15f, 20f, 30f };
     private int currentZoomLevel = 0;
     private Camera mainCamera;
+    public float startZoomLevel = 5f;
+    public GridManager gridManager; // Reference to the GridManager if needed
 
     void Start()
     {
@@ -15,6 +17,16 @@ public class CameraController : MonoBehaviour
         {
             Debug.LogError("Main Camera not found.");
         }
+        // Set the initial zoom level
+        if (zoomLevels.Length > 0)
+        {
+            currentZoomLevel = Mathf.Clamp(System.Array.IndexOf(zoomLevels, startZoomLevel), 0, zoomLevels.Length - 1);
+            mainCamera.orthographicSize = zoomLevels[currentZoomLevel];
+        }
+        else
+        {
+            Debug.LogWarning("No zoom levels defined.");
+        }
     }
 
     void Update()
@@ -22,6 +34,20 @@ public class CameraController : MonoBehaviour
         HandleMovement();
         HandleZoom();
         HandleScrollZoom();
+    }
+
+    public void MoveCameraToMapCenter()
+    {
+      if (gridManager != null)
+        {
+            Vector3 centerWorldPosition = gridManager.GetWorldPosition(gridManager.width / 2, gridManager.height / 2);
+            Vector3 gridCenter = new Vector3(centerWorldPosition.x, centerWorldPosition.y, mainCamera.transform.position.z);
+            mainCamera.transform.position = gridCenter;
+        }
+        else
+        {
+            Debug.LogWarning("GridManager reference is not set.");
+        }
     }
 
     private void HandleMovement()

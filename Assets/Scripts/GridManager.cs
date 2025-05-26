@@ -71,6 +71,8 @@ public class GridManager : MonoBehaviour
     public GameNotificationManager GameNotificationManager;
     public ForestManager forestManager;
 
+    public CameraController cameraController;
+
     // void Start()
     // {
     //     roadTilePrefabs = new List<GameObject>
@@ -139,6 +141,8 @@ public class GridManager : MonoBehaviour
         }
 
         CreateGrid();
+
+        cameraController.MoveCameraToMapCenter();
     }
 
     void CreateGrid()
@@ -212,8 +216,6 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
-
-        Debug.Log("Grid created with size: " + width + "x" + height);
     }
 
     ZoneAttributes GetZoneAttributes(Zone.ZoneType zoneType)
@@ -354,14 +356,63 @@ public class GridManager : MonoBehaviour
         cell.GetComponent<Cell>().sortingOrder = sortingOrder;
     }
 
-    void BulldozeTile (GameObject cell)
+    void BulldozeTile(GameObject cell)
+    {
+        Cell cellComponent = cell.GetComponent<Cell>();
+        
+        RestoreCellAttributes(cellComponent);
+        
+        DestroyCellChildren(cell, new Vector2(cellComponent.x, cellComponent.y));
+        
+        RestoreTile(cell);
+        
+        // Show the bulldoze animation
+        if (uiManager != null)
+        {
+            uiManager.ShowDemolitionAnimation(cell);
+        }
+    }
+
+    void BulldozeBuildingTiles(GameObject cell)
     {
         Cell cellComponent = cell.GetComponent<Cell>();
 
+        int buildingSize = cellComponent.buildingSize;
+
+        // Show animation before demolishing for better visual effect
+        if (uiManager != null)
+        {
+            uiManager.ShowDemolitionAnimationCentered(cell, buildingSize);
+        }
+
+        if (buildingSize > 1)
+        {
+            for (int x = 0; x < buildingSize; x++)
+            {
+                for (int y = 0; y < buildingSize; y++)
+                {
+                    int gridX = (int)cellComponent.x + x - buildingSize / 2;
+                    int gridY = (int)cellComponent.y + y - buildingSize / 2;
+
+                    GameObject adjacentCell = gridArray[gridX, gridY];
+
+                    BulldozeTileWithoutAnimation(adjacentCell); // Don't show animation for each tile
+                }
+            }
+        }
+        else
+        {
+            BulldozeTileWithoutAnimation(cell);
+        }
+    }
+
+    // Create a version without animation for multi-tile cleanup
+    void BulldozeTileWithoutAnimation(GameObject cell)
+    {
+        Cell cellComponent = cell.GetComponent<Cell>();
+        
         RestoreCellAttributes(cellComponent);
-
         DestroyCellChildren(cell, new Vector2(cellComponent.x, cellComponent.y));
-
         RestoreTile(cell);
     }
 
@@ -387,31 +438,6 @@ public class GridManager : MonoBehaviour
         if (buildingType == null && zoneType != Zone.ZoneType.Grass)
         {
             cityStats.HandleBuildingDemolition(zoneType, GetZoneAttributes(zoneType));
-        }
-    }
-
-    void BulldozeBuildingTiles(GameObject cell)
-    {
-      Cell cellComponent = cell.GetComponent<Cell>();
-      int buildingSize = cellComponent.buildingSize;
-
-        if (buildingSize > 1)
-        {
-            for (int x = 0; x < buildingSize; x++)
-            {
-                for (int y = 0; y < buildingSize; y++)
-                {
-                    int gridX = (int)cellComponent.x + x - buildingSize / 2;
-                    int gridY = (int)cellComponent.y + y - buildingSize / 2;
-
-                    GameObject adjacentCell = gridArray[gridX, gridY];
-
-                    BulldozeTile(adjacentCell);
-                }
-            }
-        } else
-        {
-            BulldozeTile(cell);
         }
     }
 

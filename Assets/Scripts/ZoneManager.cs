@@ -110,9 +110,7 @@ public class ZoneManager : MonoBehaviour
     public GameObject GetRandomZonePrefab(Zone.ZoneType zoneType, int size = 1)
     {
         var key = (zoneType, size);
-        Debug.Log($"Key: {key}" + $" ZoneType: {zoneType} Size: {size}");
-        Debug.Log($"Zone Prefabs Count: {zonePrefabs.Count}");
-        Debug.Log("Zone Prefabs key: " + zonePrefabs[key]);
+
         if (!zonePrefabs.ContainsKey(key)) return null;
 
         List<GameObject> prefabs = zonePrefabs[key];

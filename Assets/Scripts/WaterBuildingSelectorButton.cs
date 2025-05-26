@@ -24,11 +24,6 @@ public class WaterBuildingSelectorButton : MonoBehaviour
         if (uiManager == null)
         {
             Debug.LogError("UIManager reference is missing in WaterBuildingSelectorButton!");
-            uiManager = FindObjectOfType<UIManager>();
-            if (uiManager != null)
-            {
-                Debug.Log("Found UIManager in scene");
-            }
         }
     }
     

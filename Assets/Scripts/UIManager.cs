@@ -43,6 +43,10 @@ public class UIManager : MonoBehaviour
     private IForest selectedForest;
 
     public GameObject powerPlantAPrefab;
+  
+    [Header("Demolition Animation")]
+    [SerializeField] private GameObject demolitionExplosionPrefab;
+
     public DetailsPopupController detailsPopupController;
 
     public bool bulldozeMode;
@@ -93,6 +97,7 @@ public class UIManager : MonoBehaviour
 
     private ForestSelectionData selectedForestData;
 
+
     void Start()
     {
         if (cityStats == null)
@@ -128,7 +133,7 @@ public class UIManager : MonoBehaviour
     {
         populationText.text = cityStats.population.ToString();
         moneyText.text = cityStats.money.ToString();
-        buttonMoneyText.text = cityStats.money.ToString();
+        buttonMoneyText.text = "$" + cityStats.money.ToString();
         happinessText.text = cityStats.happiness.ToString();
 
         cityPowerOutputText.text = cityStats.cityPowerOutput.ToString() + " MW";
@@ -357,7 +362,6 @@ public class UIManager : MonoBehaviour
 
     public void OnLightIndustrialButtonClicked()
     {
-        Debug.Log("Light Industrial Button Clicked");
         selectedZoneType = Zone.ZoneType.IndustrialLightZoning;
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
@@ -809,6 +813,69 @@ public class UIManager : MonoBehaviour
             selectedForest = CreateForestInstance(selectedForestData.forestType);
         }
         return selectedForest;
+    }
+
+    public void ShowDemolitionAnimation(GameObject cell)
+    {
+        if (demolitionExplosionPrefab == null)
+        {
+            Debug.LogWarning("Demolition explosion prefab not assigned in UIManager");
+            return;
+        }
+        
+        if (cell == null)
+        {
+            Debug.LogWarning("Cannot show demolition animation: cell is null");
+            return;
+        }
+        
+        // Get the world position of the cell
+        Vector3 explosionPosition = cell.transform.position;
+        explosionPosition.y += 0.1f; // Slight offset above ground
+        
+        // Instantiate the explosion animation
+        GameObject explosion = Instantiate(demolitionExplosionPrefab, explosionPosition, Quaternion.identity);
+        
+        // Initialize the animation (the DemolitionAnimation script will handle AnimatorManager registration)
+        DemolitionAnimation demolitionAnim = explosion.GetComponent<DemolitionAnimation>();
+        if (demolitionAnim != null)
+        {
+            demolitionAnim.Initialize(explosionPosition);
+        }
+    }
+
+    /// <summary>
+    /// Shows demolition animation for multi-tile buildings at the center position
+    /// </summary>
+    /// <param name="centerCell">The center cell of the building being demolished</param>
+    /// <param name="buildingSize">Size of the building for positioning</param>
+    public void ShowDemolitionAnimationCentered(GameObject centerCell, int buildingSize)
+    {
+        if (demolitionExplosionPrefab == null || centerCell == null)
+        {
+            ShowDemolitionAnimation(centerCell);
+            return;
+        }
+        
+        Vector3 explosionPosition = centerCell.transform.position;
+        
+        // Center the explosion for larger buildings
+        if (buildingSize > 1)
+        {
+            float gridSpacing = 1.0f; // Adjust based on your grid spacing
+            explosionPosition.x += (buildingSize - 1) * gridSpacing * 0.5f;
+            explosionPosition.z += (buildingSize - 1) * gridSpacing * 0.5f;
+        }
+        
+        explosionPosition.y += 0.1f;
+        
+        GameObject explosion = Instantiate(demolitionExplosionPrefab, explosionPosition, Quaternion.identity);
+        
+        DemolitionAnimation demolitionAnim = explosion.GetComponent<DemolitionAnimation>();
+        if (demolitionAnim != null)
+        {
+            demolitionAnim.Initialize(explosionPosition);
+        }
     }
 }
 
