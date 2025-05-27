@@ -8,10 +8,17 @@ public class UIManager : MonoBehaviour
     public CityStats cityStats;
     public CursorManager cursorManager;
     public GridManager gridManager;
-
     public TimeManager timeManager;
-
     public EconomyManager economyManager;
+    public DetailsPopupController detailsPopupController;
+    public GameManager gameManager;
+    public BuildingSelectorMenuController buildingSelectorMenuController;
+
+    public bool bulldozeMode;
+    public bool detailsMode;
+    public string saveName;
+    private string saveFolderPath;
+    public float tooltipDisplayTime = 3f;
 
     public Text populationText;
     public Text moneyText;
@@ -19,13 +26,10 @@ public class UIManager : MonoBehaviour
     public Text gridCoordinatesText;
     public Text cityPowerOutputText;
     public Text cityPowerConsumptionText;
-
     public Text dateText;
-
     public Text residentialTaxText;
     public Text commercialTaxText;
     public Text industrialTaxText;
-
     public Text buttonMoneyText;
     public Text detailsNameText;
     public Text detailsOccupancyText;
@@ -35,68 +39,43 @@ public class UIManager : MonoBehaviour
     public Text detailsDateBuiltText;
     public Text detailsBuildingTypeText;
     public Text detailsSortingOrderText;
+    public Text GameSavedText;
+    public Text unemploymentRateText;
+    public Text totalJobsText;
+    public Text demandResidentialText;
+    public Text demandCommercialText;
+    public Text demandIndustrialText;
+    public Text demandFeedbackText;
+    public Text totalJobsCreatedText;
+    public Text availableJobsText;
+    public Text jobsTakenText;
+    public Text cityWaterOutputText;
+    public Text cityWaterConsumptionText;
+    public Text insufficientFundsText;
+
     public Image detailsImage;
 
     [Header("Selected types")]
     private Zone.ZoneType selectedZoneType;
     private IBuilding selectedBuilding;
     private IForest selectedForest;
+    private ForestSelectionData selectedForestData;
+    private Coroutine hideTooltipCoroutine;
 
     public GameObject powerPlantAPrefab;
+    public GameObject savedGameButtonPrefab;
+    public GameObject waterPumpPrefab;
+    public GameObject denseForestPrefab;
+    public GameObject mediumForestPrefab;
+    public GameObject sparseForestPrefab;
   
     [Header("Demolition Animation")]
     [SerializeField] private GameObject demolitionExplosionPrefab;
 
-    public DetailsPopupController detailsPopupController;
-
-    public bool bulldozeMode;
-    public bool detailsMode;
-
-    public GameManager gameManager;
-
-    public string saveName;
-
     public GameObject loadGameMenu;
     public Transform savedGamesListContainer;
-    public GameObject savedGameButtonPrefab;
-
-    private string saveFolderPath;
-
-    public Text GameSavedText;
-
-    [Header("Employment UI")]
-   public Text unemploymentRateText;
-   public Text totalJobsText;
-   public Text demandResidentialText;
-   public Text demandCommercialText;
-   public Text demandIndustrialText;
-
-   [Header("Demand UI")]
-    public Text demandFeedbackText; // Shows demand status for selected zone
-    public GameObject demandWarningPanel; // Warning when placing zones with low demand
-
-    [Header("Enhanced Employment UI")]
-    public Text totalJobsCreatedText; // Total jobs created by buildings
-    public Text availableJobsText; // Jobs available (not taken by residents)
-    public Text jobsTakenText; // Jobs taken by residents
-
-    public Text cityWaterOutputText;
-    public Text cityWaterConsumptionText;
-
-    public GameObject waterPumpPrefab;
-
-    [Header("Insufficient Funds Warning")]
+    public GameObject demandWarningPanel;
     public GameObject insufficientFundsPanel;
-    public Text insufficientFundsText;
-    public float tooltipDisplayTime = 3f;
-    private Coroutine hideTooltipCoroutine;
-
-    public GameObject denseForestPrefab;
-    public GameObject mediumForestPrefab;
-    public GameObject sparseForestPrefab;
-
-    private ForestSelectionData selectedForestData;
-
 
     void Start()
     {
@@ -876,6 +855,43 @@ public class UIManager : MonoBehaviour
         {
             demolitionAnim.Initialize(explosionPosition);
         }
+    }
+
+    public void ExitBulldozeMode()
+    {
+        bulldozeMode = false;
+        cursorManager.SetDefaultCursor();
+        cursorManager.RemovePreview();
+        ClearSelectedBuilding();
+        ClearSelectedZoneType();
+        ClearSelectedForest();
+    }
+
+    public void ExitDetailsMode()
+    {
+        detailsMode = false;
+        cursorManager.SetDefaultCursor();
+        cursorManager.RemovePreview();
+        ClearSelectedBuilding();
+        ClearSelectedZoneType();
+        ClearSelectedForest();
+    }
+
+    public bool IsBuildingPlacementMode()
+    {
+        return selectedBuilding != null || selectedForest != null || selectedZoneType != Zone.ZoneType.Grass;
+    }
+
+    public void ExitBuildingPlacementMode()
+    {
+        selectedBuilding = null;
+        selectedForest = null;
+        selectedZoneType = Zone.ZoneType.Grass;
+        cursorManager.SetDefaultCursor();
+        cursorManager.RemovePreview();
+        bulldozeMode = false;
+        buildingSelectorMenuController.ClosePopup();
+        buildingSelectorMenuController.DeselectAndUnpressAllButtons();
     }
 }
 

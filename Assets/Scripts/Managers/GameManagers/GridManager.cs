@@ -6,124 +6,67 @@ using System;
 
 public class GridManager : MonoBehaviour
 {
+    public ZoneManager zoneManager;
+    public UIManager uiManager;
+    public CityStats cityStats;
+    public CursorManager cursorManager;
+    public TerrainManager terrainManager;
+    public DemandManager demandManager;
+    public WaterManager waterManager;
+    public GameNotificationManager GameNotificationManager;
+    public ForestManager forestManager;
+    public CameraController cameraController;
+    public RoadManager roadManager;
+    public BuildingSelectorMenuController buildingSelectorMenuController;
+
     public int width, height;
     public float tileWidth = 1f; // Full width of the tile
     public float tileHeight = 0.5f; // Effective height due to isometric perspective
     public GameObject[,] gridArray;
-
-    public ZoneManager zoneManager;
-    public UIManager uiManager;
-
-    public CityStats cityStats;
-    public CursorManager cursorManager;
-
-    public GameObject roadTilePrefab1;
-    public GameObject roadTilePrefab2;
-    public GameObject roadTilePrefabCrossing;
-    public GameObject roadTilePrefabTIntersectionUp;
-    public GameObject roadTilePrefabTIntersectionDown;
-    public GameObject roadTilePrefabTIntersectionLeft;
-    public GameObject roadTilePrefabTIntersectionRight;
-    public GameObject roadTilePrefabElbowUpLeft;
-    public GameObject roadTilePrefabElbowUpRight;
-    public GameObject roadTilePrefabElbowDownLeft;
-    public GameObject roadTilePrefabElbowDownRight;
-
-    public List<GameObject> roadTilePrefabs;
-    private Vector2 startPosition;
-    private bool isDrawingRoad = false;
-
-    private bool isPlacingBuilding = false;
-
-    private List<GameObject> previewRoadTiles = new List<GameObject>();
-
-    private List<Vector2> previewRoadGridPositions = new List<Vector2>();
-    private List<Vector2> adjacentRoadTiles = new List<Vector2>();
-
-    private List<Vector2> zonedResidentialLightPositions = new List<Vector2>();
-    private List<Vector2> zonedResidentialMediumPositions = new List<Vector2>();
-    private List<Vector2> zonedResidentialHeavyPositions = new List<Vector2>();
-
-    private List<Vector2> zonedCommercialLightPositions = new List<Vector2>();
-    private List<Vector2> zonedCommercialMediumPositions = new List<Vector2>();
-    private List<Vector2> zonedCommercialHeavyPositions = new List<Vector2>();
-
-    private List<Vector2> zonedIndustrialLightPositions = new List<Vector2>();
-    private List<Vector2> zonedIndustrialMediumPositions = new List<Vector2>();
-    private List<Vector2> zonedIndustrialHeavyPositions = new List<Vector2>();
-
     public Vector2 mouseGridPosition;
-
-    private bool isZoning = false;
-    private Vector2 zoningStartGridPosition;
-    private Vector2 zoningEndGridPosition;
-    private List<GameObject> previewZoningTiles = new List<GameObject>();
-    private Dictionary<Zone.ZoneType, List<List<Vector2>>> availableZoneSections =
-      new Dictionary<Zone.ZoneType, List<List<Vector2>>>(); // Dictionary to store available zone sections
-    
-    public TerrainManager terrainManager;
-
-    [Header("Demand System")]
-    public DemandManager demandManager;
-
-    public WaterManager waterManager;
-
-    public GameNotificationManager GameNotificationManager;
-    public ForestManager forestManager;
-
-    public CameraController cameraController;
-
-    // void Start()
-    // {
-    //     roadTilePrefabs = new List<GameObject>
-    //     {
-    //         roadTilePrefab1,
-    //         roadTilePrefab2,
-    //         roadTilePrefabCrossing,
-    //         roadTilePrefabTIntersectionUp,
-    //         roadTilePrefabTIntersectionDown,
-    //         roadTilePrefabTIntersectionLeft,
-    //         roadTilePrefabTIntersectionRight,
-    //         roadTilePrefabElbowUpLeft,
-    //         roadTilePrefabElbowUpRight,
-    //         roadTilePrefabElbowDownLeft,
-    //         roadTilePrefabElbowDownRight
-    //     };
-
-    //     if (demandManager == null)
-    //     {
-    //         demandManager = FindObjectOfType<DemandManager>();
-    //     }
-
-    //     if (GameNotificationManager == null)
-    //     {
-    //         GameNotificationManager = FindObjectOfType<GameNotificationManager>();
-    //     }
-
-    //     if (forestManager == null)
-    //     {
-    //         forestManager = FindObjectOfType<ForestManager>();
-    //     }
-
-    //     CreateGrid();
-    // }
 
     public void InitializeGrid()
     {
-        roadTilePrefabs = new List<GameObject>
+        if (zoneManager == null)
         {
-            roadTilePrefab1,
-            roadTilePrefab2,
-            roadTilePrefabCrossing,
-            roadTilePrefabTIntersectionUp,
-            roadTilePrefabTIntersectionDown,
-            roadTilePrefabTIntersectionLeft,
-            roadTilePrefabTIntersectionRight,
-            roadTilePrefabElbowUpLeft,
-            roadTilePrefabElbowUpRight,
-            roadTilePrefabElbowDownLeft,
-            roadTilePrefabElbowDownRight
-        };
+            zoneManager = FindObjectOfType<ZoneManager>();
+        }
+
+        if (uiManager == null)
+        {
+            uiManager = FindObjectOfType<UIManager>();
+        }
+
+        if (cityStats == null)
+        {
+            cityStats = FindObjectOfType<CityStats>();
+        }
+
+        if (cursorManager == null)
+        {
+            cursorManager = FindObjectOfType<CursorManager>();
+        }
+
+        if (terrainManager == null)
+        {
+            terrainManager = FindObjectOfType<TerrainManager>();
+        }
+
+        if (waterManager == null)
+        {
+            waterManager = FindObjectOfType<WaterManager>();
+        }
+
+        if (cameraController == null)
+        {
+            cameraController = FindObjectOfType<CameraController>();
+        }
+
+        if (roadManager == null)
+        {
+            roadManager = FindObjectOfType<RoadManager>();
+            roadManager.Initialize();
+        }
 
         if (demandManager == null)
         {
@@ -141,8 +84,14 @@ public class GridManager : MonoBehaviour
         }
 
         CreateGrid();
+        Debug.Log("Grid created with dimensions: " + width + "x" + height);
 
-        cameraController.MoveCameraToMapCenter();
+
+        Vector3 centerWorldPosition = GetWorldPosition(
+            width / 2, height / 2
+        );
+
+        cameraController.MoveCameraToMapCenter(centerWorldPosition);
     }
 
     void CreateGrid()
@@ -155,11 +104,9 @@ public class GridManager : MonoBehaviour
             {
                 GameObject gridCell = new GameObject($"Cell_{x}_{y}");
                         
-                // Calculate the isometric position with height consideration
                 float posX = (x - y) * (tileWidth / 2);
                 float posY = (x + y) * (tileHeight / 2);
                 
-                // The cell's position will be updated by TerrainManager when heights are applied
                 gridCell.transform.position = new Vector3(posX, posY, 0);
                 gridCell.transform.SetParent(transform);
 
@@ -189,7 +136,6 @@ public class GridManager : MonoBehaviour
 
                 gridArray[x, y] = gridCell;
 
-                // Instantiate a random zone tile
                 GameObject zoneTile = Instantiate(
                     tilePrefab,
                     gridCell.transform.position,
@@ -200,14 +146,12 @@ public class GridManager : MonoBehaviour
                 int sortingOrder = SetTileSortingOrder(zoneTile, Zone.ZoneType.Grass);
                 cellComponent.sortingOrder = sortingOrder;
 
-                // Ensure the zoneTile has a PolygonCollider2D
                 PolygonCollider2D polygonCollider = zoneTile.GetComponent<PolygonCollider2D>();
                 if (polygonCollider == null)
                 {
                     polygonCollider = zoneTile.AddComponent<PolygonCollider2D>();
                 }
 
-                // Ensure the zoneTile has a Zone component
                 Zone zoneComponent = zoneTile.GetComponent<Zone>();
                 if (zoneComponent == null)
                 {
@@ -218,57 +162,6 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    ZoneAttributes GetZoneAttributes(Zone.ZoneType zoneType)
-    {
-        switch (zoneType)
-        {
-            case Zone.ZoneType.ResidentialLightZoning:
-                return ZoneAttributes.ResidentialLightZoning;
-            case Zone.ZoneType.ResidentialMediumZoning:
-                return ZoneAttributes.ResidentialMediumZoning;
-            case Zone.ZoneType.ResidentialHeavyZoning:
-                return ZoneAttributes.ResidentialHeavyZoning;
-            case Zone.ZoneType.ResidentialLightBuilding:
-                return ZoneAttributes.ResidentialLightBuilding;
-            case Zone.ZoneType.ResidentialMediumBuilding:
-                return ZoneAttributes.ResidentialMediumBuilding;
-            case Zone.ZoneType.ResidentialHeavyBuilding:
-                return ZoneAttributes.ResidentialHeavyBuilding;
-            case Zone.ZoneType.CommercialLightZoning:
-                return ZoneAttributes.CommercialLightZoning;
-            case Zone.ZoneType.CommercialMediumZoning:
-                return ZoneAttributes.CommercialMediumZoning;
-            case Zone.ZoneType.CommercialHeavyZoning:
-                return ZoneAttributes.CommercialHeavyZoning;
-            case Zone.ZoneType.CommercialLightBuilding:
-                return ZoneAttributes.CommercialLightBuilding;
-            case Zone.ZoneType.CommercialMediumBuilding:
-                return ZoneAttributes.CommercialMediumBuilding;
-            case Zone.ZoneType.CommercialHeavyBuilding:
-                return ZoneAttributes.CommercialHeavyBuilding;
-            case Zone.ZoneType.IndustrialLightZoning:
-                return ZoneAttributes.IndustrialLightZoning;
-            case Zone.ZoneType.IndustrialMediumZoning:
-                return ZoneAttributes.IndustrialMediumZoning;
-            case Zone.ZoneType.IndustrialHeavyZoning:
-                return ZoneAttributes.IndustrialHeavyZoning;
-            case Zone.ZoneType.IndustrialLightBuilding:
-                return ZoneAttributes.IndustrialLightBuilding;
-            case Zone.ZoneType.IndustrialMediumBuilding:
-                return ZoneAttributes.IndustrialMediumBuilding;
-            case Zone.ZoneType.IndustrialHeavyBuilding:
-                return ZoneAttributes.IndustrialHeavyBuilding;
-            case Zone.ZoneType.Road:
-                return ZoneAttributes.Road;
-            case Zone.ZoneType.Grass:
-                return ZoneAttributes.Grass;
-            case Zone.ZoneType.Water:
-                return ZoneAttributes.Water;
-            default:
-                return null;
-        }
-    }
-
     void Update()
     {
         try
@@ -276,6 +169,23 @@ public class GridManager : MonoBehaviour
             if (EventSystem.current.IsPointerOverGameObject())
             {
                 return;
+            }
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (uiManager.isBulldozeMode())
+                {
+                    uiManager.ExitBulldozeMode();
+                }
+                else if (uiManager.IsDetailsMode())
+                {
+                    uiManager.ExitDetailsMode();
+                }
+                else if (uiManager.IsBuildingPlacementMode())
+                {
+                    uiManager.ExitBuildingPlacementMode();
+                }
+                buildingSelectorMenuController.DeselectAndUnpressAllButtons();
             }
 
             Vector2 worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -296,10 +206,8 @@ public class GridManager : MonoBehaviour
                 HandleShowTileDetails(mouseGridPosition);
             }
 
-            if (IsInRoadDrawingMode() || IsInWaterPlacementMode())
-            {
-                HandleRaycast(mouseGridPosition);
-            }
+            HandleRaycast(mouseGridPosition);
+
         }
         catch (System.Exception ex)
         {
@@ -437,7 +345,7 @@ public class GridManager : MonoBehaviour
 
         if (buildingType == null && zoneType != Zone.ZoneType.Grass)
         {
-            cityStats.HandleBuildingDemolition(zoneType, GetZoneAttributes(zoneType));
+            cityStats.HandleBuildingDemolition(zoneType, zoneManager.GetZoneAttributes(zoneType));
         }
     }
 
@@ -461,31 +369,6 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    bool IsInRoadDrawingMode()
-    {
-        return uiManager.GetSelectedZoneType() == Zone.ZoneType.Road ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.ResidentialLightZoning ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.ResidentialMediumZoning ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.ResidentialHeavyZoning ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.ResidentialLightBuilding ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.ResidentialMediumBuilding ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.ResidentialHeavyBuilding ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.CommercialLightZoning ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.CommercialMediumZoning ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.CommercialHeavyZoning ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.CommercialLightBuilding ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.CommercialMediumBuilding ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.CommercialHeavyBuilding ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.IndustrialLightZoning ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.IndustrialMediumZoning ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.IndustrialHeavyZoning ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.IndustrialLightBuilding ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.IndustrialMediumBuilding ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.IndustrialHeavyBuilding ||
-          uiManager.GetSelectedZoneType() == Zone.ZoneType.Grass ||
-          uiManager.GetSelectedBuilding() != null;
-    }
-
     void HandleRaycast(Vector2 gridPosition)
     {
         GameObject cell = gridArray[(int)gridPosition.x, (int)gridPosition.y];
@@ -496,7 +379,7 @@ public class GridManager : MonoBehaviour
 
         if (selectedZoneType == Zone.ZoneType.Road)
         {
-            HandleRoadDrawing(gridPosition);
+            roadManager.HandleRoadDrawing(gridPosition);
         }
         else if (selectedZoneType == Zone.ZoneType.Water)
         {
@@ -512,7 +395,7 @@ public class GridManager : MonoBehaviour
         }
         else if (isInZoningMode())
         {
-            HandleZoning(mouseGridPosition);
+            zoneManager.HandleZoning(mouseGridPosition);
         }
     }
 
@@ -544,99 +427,6 @@ public class GridManager : MonoBehaviour
           uiManager.GetSelectedZoneType() != Zone.ZoneType.None;
     }
 
-    void HandleZoning(Vector2 gridPosition)
-    {
-        if (Input.GetMouseButtonDown(0) && !isZoning)
-        {
-            StartZoning(gridPosition);
-        }
-        else if (Input.GetMouseButton(0) && isZoning)
-        {
-            UpdateZoningPreview(gridPosition);
-        }
-        else if (Input.GetMouseButtonUp(0) && isZoning)
-        {
-            PlaceZoning(gridPosition);
-        }
-    }
-
-    void StartZoning(Vector2 gridPosition)
-    {
-        isZoning = true;
-        zoningStartGridPosition = gridPosition;
-        zoningEndGridPosition = gridPosition;
-        ClearPreviewTiles();
-    }
-
-    void UpdateZoningPreview(Vector2 gridPosition)
-    {
-        zoningEndGridPosition = gridPosition;
-        ClearPreviewTiles();
-
-        Vector2Int start = Vector2Int.FloorToInt(zoningStartGridPosition);
-        Vector2Int end = Vector2Int.FloorToInt(zoningEndGridPosition);
-
-        Vector2Int topLeft = new Vector2Int(Mathf.Min(start.x, end.x), Mathf.Max(start.y, end.y));
-        Vector2Int bottomRight = new Vector2Int(Mathf.Max(start.x, end.x), Mathf.Min(start.y, end.y));
-
-        for (int x = topLeft.x; x <= bottomRight.x; x++)
-        {
-            for (int y = bottomRight.y; y <= topLeft.y; y++)
-            {
-                if (canPlaceZone(GetZoneAttributes(uiManager.GetSelectedZoneType()), new Vector2(x, y)))
-                {
-                    Vector2 worldPos = GetWorldPosition(x, y);
-
-                    GameObject zoningPrefab = zoneManager.GetRandomZonePrefab(uiManager.GetSelectedZoneType());
-
-                    GameObject previewZoningTile = Instantiate(
-                      zoningPrefab,
-                      worldPos,
-                      Quaternion.identity
-                    );
-                    previewZoningTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 0.5f); // Set transparency
-                    previewZoningTiles.Add(previewZoningTile);
-                }
-            }
-        }
-    }
-
-    void PlaceZoning(Vector2 gridPosition)
-    {
-        isZoning = false;
-        ClearPreviewTiles();
-
-        // Calculate the rectangle corners
-        Vector2Int start = Vector2Int.FloorToInt(zoningStartGridPosition);
-        Vector2Int end = Vector2Int.FloorToInt(zoningEndGridPosition);
-
-        Vector2Int topLeft = new Vector2Int(Mathf.Min(start.x, end.x), Mathf.Max(start.y, end.y));
-        Vector2Int bottomRight = new Vector2Int(Mathf.Max(start.x, end.x), Mathf.Min(start.y, end.y));
-
-        // Place definitive zoning tiles
-        for (int x = topLeft.x; x <= bottomRight.x; x++)
-        {
-            for (int y = bottomRight.y; y <= topLeft.y; y++)
-            {
-                if (canPlaceZone(GetZoneAttributes(uiManager.GetSelectedZoneType()), new Vector2(x, y)))
-                {
-                    PlaceZone(new Vector2(x, y));
-                }
-            }
-        }
-
-        CalculateAvailableSquareZonedSections();
-    }
-
-    void ClearPreviewTiles()
-    {
-        foreach (var tile in previewZoningTiles)
-        {
-            Destroy(tile);
-        }
-        previewZoningTiles.Clear();
-    }
-
     void HandleBuildingPlacement(Vector3 gridPosition, IBuilding selectedBuilding)
     {
         if (Input.GetMouseButtonDown(0))
@@ -652,30 +442,6 @@ public class GridManager : MonoBehaviour
             forestManager.PlaceForest(gridPosition, selectedForest);
         }
     }
-        
-
-    void HandleTilePlacement(Vector3 gridPosition)
-    {
-        if (Input.GetMouseButtonDown(0))
-        {
-            PlaceZone(gridPosition);
-        }
-    }
-
-    bool canPlaceZone(ZoneAttributes zoneAttributes, Vector3 gridPosition)
-    {
-        if (zoneAttributes == null)
-            return false;
-            
-        if (!cityStats.CanAfford(zoneAttributes.ConstructionCost))
-            return false;
-            
-        if (!canPlaceBuilding(gridPosition, 1))
-            return false;
-            
-        // Manual zone placement is always allowed - the restrictions are on building spawning
-        return true;
-    }
 
     public string GetDemandFeedback(Zone.ZoneType zoneType)
     {
@@ -686,12 +452,12 @@ public class GridManager : MonoBehaviour
         bool canGrow = demandManager.CanZoneTypeGrow(zoneType);
         
         // Check if it's a residential building type
-        Zone.ZoneType buildingType = GetBuildingZoneType(zoneType);
-        bool isResidential = IsResidentialBuilding(buildingType);
+        Zone.ZoneType buildingType = zoneManager.GetBuildingZoneType(zoneType);
+        bool isResidential = zoneManager.IsResidentialBuilding(buildingType);
         bool hasJobsAvailable = !isResidential || demandManager.CanPlaceResidentialBuilding();
         
         // Check if it's a commercial/industrial building type
-        bool needsResidential = IsCommercialOrIndustrialBuilding(buildingType);
+        bool needsResidential = zoneManager.IsCommercialOrIndustrialBuilding(buildingType);
         bool hasResidentialSupport = !needsResidential || demandManager.CanPlaceCommercialOrIndustrialBuilding(buildingType);
         
         string feedback = "";
@@ -716,17 +482,7 @@ public class GridManager : MonoBehaviour
         return feedback;
     }
 
-    private bool IsCommercialOrIndustrialBuilding(Zone.ZoneType zoneType)
-    {
-        return (zoneType == Zone.ZoneType.CommercialLightBuilding ||
-                zoneType == Zone.ZoneType.CommercialMediumBuilding ||
-                zoneType == Zone.ZoneType.CommercialHeavyBuilding ||
-                zoneType == Zone.ZoneType.IndustrialLightBuilding ||
-                zoneType == Zone.ZoneType.IndustrialMediumBuilding ||
-                zoneType == Zone.ZoneType.IndustrialHeavyBuilding);
-    }
-
-    void DestroyCellChildren(GameObject cell, Vector2 gridPosition)
+    public void DestroyCellChildren(GameObject cell, Vector2 gridPosition)
     {
 
         if (cell.transform.childCount > 0)
@@ -737,7 +493,7 @@ public class GridManager : MonoBehaviour
 
                 if (zone && zone.zoneCategory == Zone.ZoneCategory.Zoning)
                 {
-                    removeZonedPositionFromList(gridPosition, zone.zoneType);
+                    zoneManager.removeZonedPositionFromList(gridPosition, zone.zoneType);
                 }
 
                 DestroyImmediate(child.gameObject);
@@ -745,290 +501,7 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    void UpdatePlacedZoneCellAttributes(GameObject cell, Zone.ZoneType selectedZoneType, GameObject zonePrefab, ZoneAttributes zoneAttributes)
-    {
-        Cell cellComponent = cell.GetComponent<Cell>();
-        cellComponent.zoneType = selectedZoneType;
-        cellComponent.population = zoneAttributes.Population;
-        cellComponent.powerConsumption = zoneAttributes.PowerConsumption;
-        cellComponent.happiness = zoneAttributes.Happiness;
-        cellComponent.prefab = zonePrefab;
-        cellComponent.prefabName = zonePrefab.name;
-        cellComponent.buildingType = null;
-        cellComponent.buildingSize = 1;
-        cellComponent.powerPlant = null;
-        cellComponent.occupiedBuilding = null;
-        cellComponent.isPivot = false;
-    }
-
-    void PlaceZone(Vector3 gridPosition)
-    {
-        Vector2 worldPosition = GetWorldPosition((int)gridPosition.x, (int)gridPosition.y);
-        Zone.ZoneType selectedZoneType = uiManager.GetSelectedZoneType();
-
-        var zoneAttributes = GetZoneAttributes(selectedZoneType);
-
-        // Check if player can afford the zone
-        if (zoneAttributes == null)
-            return;
-            
-        if (!cityStats.CanAfford(zoneAttributes.ConstructionCost))
-        {
-            uiManager.ShowInsufficientFundsTooltip(selectedZoneType.ToString(), zoneAttributes.ConstructionCost);
-            return;
-        }
-        
-        if (canPlaceZone(zoneAttributes, gridPosition))
-        {
-            GameObject cell = gridArray[(int)gridPosition.x, (int)gridPosition.y];
-
-            DestroyCellChildren(cell, gridPosition);
-
-            GameObject zonePrefab = zoneManager.GetRandomZonePrefab(selectedZoneType);
-            
-            if (zonePrefab == null)
-            {
-                return;
-            }
-
-            GameObject zoneTile = Instantiate(
-              zonePrefab,
-              worldPosition,
-              Quaternion.identity
-            );
-            zoneTile.transform.SetParent(cell.transform);
-
-            Zone zone = zoneTile.AddComponent<Zone>();
-            zone.zoneType = selectedZoneType;
-            zone.zoneCategory = Zone.ZoneCategory.Zoning;
-
-            UpdatePlacedZoneCellAttributes(cell, selectedZoneType, zonePrefab, zoneAttributes);
-
-            int sortingOrder = SetTileSortingOrder(zoneTile, selectedZoneType);
-            cell.GetComponent<Cell>().sortingOrder = sortingOrder;
-
-            addZonedTileToList(gridPosition, selectedZoneType);
-
-            cityStats.AddZoneBuildingCount(selectedZoneType);
-        }
-        else
-        {
-            GameNotificationManager.PostError("Cannot place zone here.");
-        }
-    }
-
-    public void addZonedTileToList(Vector2 zonedPosition, Zone.ZoneType zoneType)
-    {
-        switch (zoneType)
-        {
-            case Zone.ZoneType.ResidentialLightZoning:
-                zonedResidentialLightPositions.Add(zonedPosition);
-                break;
-            case Zone.ZoneType.ResidentialMediumZoning:
-                zonedResidentialMediumPositions.Add(zonedPosition);
-                break;
-            case Zone.ZoneType.ResidentialHeavyZoning:
-                zonedResidentialHeavyPositions.Add(zonedPosition);
-                break;
-            case Zone.ZoneType.CommercialLightZoning:
-                zonedCommercialLightPositions.Add(zonedPosition);
-                break;
-            case Zone.ZoneType.CommercialMediumZoning:
-                zonedCommercialMediumPositions.Add(zonedPosition);
-                break;
-            case Zone.ZoneType.CommercialHeavyZoning:
-                zonedCommercialHeavyPositions.Add(zonedPosition);
-                break;
-            case Zone.ZoneType.IndustrialLightZoning:
-                zonedIndustrialLightPositions.Add(zonedPosition);
-                break;
-            case Zone.ZoneType.IndustrialMediumZoning:
-                zonedIndustrialMediumPositions.Add(zonedPosition);
-                break;
-            case Zone.ZoneType.IndustrialHeavyZoning:
-                zonedIndustrialHeavyPositions.Add(zonedPosition);
-                break;
-            default:
-                break;
-        }
-    }
-
-    private Vector2[] GetZonedPositions(Zone.ZoneType zoneType)
-    {
-        switch (zoneType)
-        {
-            case Zone.ZoneType.ResidentialLightZoning:
-                return zonedResidentialLightPositions.ToArray();
-            case Zone.ZoneType.ResidentialMediumZoning:
-                return zonedResidentialMediumPositions.ToArray();
-            case Zone.ZoneType.ResidentialHeavyZoning:
-                return zonedResidentialHeavyPositions.ToArray();
-            case Zone.ZoneType.CommercialLightZoning:
-                return zonedCommercialLightPositions.ToArray();
-            case Zone.ZoneType.CommercialMediumZoning:
-                return zonedCommercialMediumPositions.ToArray();
-            case Zone.ZoneType.CommercialHeavyZoning:
-                return zonedCommercialHeavyPositions.ToArray();
-            case Zone.ZoneType.IndustrialLightZoning:
-                return zonedIndustrialLightPositions.ToArray();
-            case Zone.ZoneType.IndustrialMediumZoning:
-                return zonedIndustrialMediumPositions.ToArray();
-            case Zone.ZoneType.IndustrialHeavyZoning:
-                return zonedIndustrialHeavyPositions.ToArray();
-            default:
-                return new Vector2[0];
-        }
-    }
-
-    public void PlaceZonedBuildings(Zone.ZoneType zoningType)
-    {
-        if (availableZoneSections.Count == 0)
-        {
-            return;
-        }
-        
-        var sectionResult = GetRandomAvailableSection(zoningType);
-        if (!sectionResult.HasValue || sectionResult.Value.size == 0)
-        {
-            return;
-        }
-        
-        Zone.ZoneType buildingZoneType = GetBuildingZoneType(zoningType);
-        
-        if (IsResidentialBuilding(buildingZoneType))
-        {
-            int availableJobs = demandManager != null ? demandManager.GetAvailableJobs() : 0;
-
-            if (!CanPlaceResidentialBuilding())
-            {
-                return;
-            }
-            
-            if (demandManager != null && !demandManager.GetResidentialDemand().canGrow)
-            {
-                return;
-            }
-        }
-        else
-        {
-            if (!CanPlaceCommercialOrIndustrialBuilding(buildingZoneType))
-            {
-                return;
-            }
-            
-            // For commercial/industrial, check normal demand
-            if (!CanZoneTypeGrowBasedOnDemand(zoningType))
-            {
-                return;
-            }
-        }
-        
-        // Check both power and water availability
-        if (!cityStats.GetCityPowerAvailability())
-        {
-            return;
-        }
-        
-        // Check water availability
-        if (waterManager != null && !waterManager.GetCityWaterAvailability())
-        {
-            return;
-        }
-
-        Vector2[] section = sectionResult.Value.section;
-        int buildingSize = (int)System.Math.Sqrt(section.Length);
-        
-        ZoneAttributes zoneAttributes = GetZoneAttributes(buildingZoneType);
-
-        PlaceZoneBuilding(section, buildingZoneType, zoneAttributes, zoningType, buildingSize);
-    }
-
-    private bool CanPlaceResidentialBuilding()
-    {
-        if (demandManager == null) return true;
-        
-        return demandManager.CanPlaceResidentialBuilding();
-    }
-
-    private bool CanPlaceCommercialOrIndustrialBuilding(Zone.ZoneType buildingType)
-    {
-        if (demandManager == null) return true;
-        
-        return demandManager.CanPlaceCommercialOrIndustrialBuilding(buildingType);
-    }
-
-    public bool IsResidentialBuilding(Zone.ZoneType zoneType)
-    {
-        return (zoneType == Zone.ZoneType.ResidentialLightBuilding ||
-                zoneType == Zone.ZoneType.ResidentialMediumBuilding ||
-                zoneType == Zone.ZoneType.ResidentialHeavyBuilding);
-    }
-
-     private bool CanZoneTypeGrowBasedOnDemand(Zone.ZoneType zoningType)
-    {
-        if (demandManager == null)
-        {
-            return true; // If no demand manager, allow all growth
-        }
-        
-        return demandManager.CanZoneTypeGrow(zoningType);
-    }
-
-    private Zone.ZoneType GetDemandZoneType(Zone.ZoneType zoningType)
-    {
-        switch (zoningType)
-        {
-            // Residential
-            case Zone.ZoneType.ResidentialLightZoning:
-            case Zone.ZoneType.ResidentialMediumZoning:
-            case Zone.ZoneType.ResidentialHeavyZoning:
-                return Zone.ZoneType.ResidentialLightZoning; // Use light as representative
-                
-            // Commercial
-            case Zone.ZoneType.CommercialLightZoning:
-            case Zone.ZoneType.CommercialMediumZoning:
-            case Zone.ZoneType.CommercialHeavyZoning:
-                return Zone.ZoneType.CommercialLightZoning; // Use light as representative
-                
-            // Industrial
-            case Zone.ZoneType.IndustrialLightZoning:
-            case Zone.ZoneType.IndustrialMediumZoning:
-            case Zone.ZoneType.IndustrialHeavyZoning:
-                return Zone.ZoneType.IndustrialLightZoning; // Use light as representative
-                
-            default:
-                return zoningType;
-        }
-    }
-
-    private Zone.ZoneType GetBuildingZoneType(Zone.ZoneType zoningType)
-    {
-        switch (zoningType)
-        {
-            case Zone.ZoneType.ResidentialLightZoning:
-                return Zone.ZoneType.ResidentialLightBuilding;
-            case Zone.ZoneType.ResidentialMediumZoning:
-                return Zone.ZoneType.ResidentialMediumBuilding;
-            case Zone.ZoneType.ResidentialHeavyZoning:
-                return Zone.ZoneType.ResidentialHeavyBuilding;
-            case Zone.ZoneType.CommercialLightZoning:
-                return Zone.ZoneType.CommercialLightBuilding;
-            case Zone.ZoneType.CommercialMediumZoning:
-                return Zone.ZoneType.CommercialMediumBuilding;
-            case Zone.ZoneType.CommercialHeavyZoning:
-                return Zone.ZoneType.CommercialHeavyBuilding;
-            case Zone.ZoneType.IndustrialLightZoning:
-                return Zone.ZoneType.IndustrialLightBuilding;
-            case Zone.ZoneType.IndustrialMediumZoning:
-                return Zone.ZoneType.IndustrialMediumBuilding;
-            case Zone.ZoneType.IndustrialHeavyZoning:
-                return Zone.ZoneType.IndustrialHeavyBuilding;
-            default:
-                return Zone.ZoneType.Grass;
-        }
-    }
-
-    void UpdateCellAttributes(Cell cellComponent, Zone.ZoneType selectedZoneType, ZoneAttributes zoneAttributes, GameObject prefab, int buildingSize)
+    public void UpdateCellAttributes(Cell cellComponent, Zone.ZoneType selectedZoneType, ZoneAttributes zoneAttributes, GameObject prefab, int buildingSize)
     {
         cellComponent.zoneType = selectedZoneType;
         cellComponent.population = zoneAttributes.Population;
@@ -1039,74 +512,6 @@ public class GridManager : MonoBehaviour
         cellComponent.buildingType = prefab.name;
         cellComponent.buildingSize = buildingSize;
         cellComponent.isPivot = false;
-    }
-
-    void PlaceZoneBuildingTile(GameObject prefab, GameObject gridCell, int buildingSize = 1)
-    {
-        Cell cell = gridCell.GetComponent<Cell>();
-
-        if (buildingSize > 1 && !cell.isPivot)
-        {
-            return;
-        }
-
-        Vector3 worldPosition = gridCell.transform.position;
-
-        if (buildingSize > 1 && cell.zoneType != Zone.ZoneType.Building)
-        {
-          Vector3 offset = new Vector3(0, -(buildingSize - 1) * tileHeight / 2, 0);
-          worldPosition -= offset;
-        }
-
-        DestroyCellChildren(gridCell, new Vector2(cell.x, cell.y));
-
-        GameObject zoneTile = Instantiate(
-          prefab,
-          worldPosition,
-          Quaternion.identity
-        );
-        zoneTile.transform.SetParent(gridCell.transform);
-
-        cell.isPivot = true;
-
-        int sortingOrder = SetTileSortingOrder(zoneTile, cell.zoneType);
-
-        cell.sortingOrder = sortingOrder;
-    }
-
-    void UpdateZonedBuildingPlacementStats(Zone.ZoneType selectedZoneType, ZoneAttributes zoneAttributes)
-    {
-        cityStats.HandleZoneBuildingPlacement(selectedZoneType, zoneAttributes);
-
-        cityStats.AddPowerConsumption(zoneAttributes.PowerConsumption);
-    }
-
-    void PlaceZoneBuilding(Vector2[] section, Zone.ZoneType selectedZoneType, ZoneAttributes zoneAttributes, Zone.ZoneType zoningType, int buildingSize)
-    {
-        GameObject prefab = zoneManager.GetRandomZonePrefab(selectedZoneType, buildingSize);
-
-        if (prefab == null)
-        {
-            return;
-        }
-
-        foreach (Vector2 zonedPosition in section)
-        {
-            GameObject cell = gridArray[(int)zonedPosition.x, (int)zonedPosition.y];
-
-            DestroyCellChildren(cell, zonedPosition);
-
-            UpdateCellAttributes(cell.GetComponent<Cell>(), selectedZoneType, zoneAttributes, prefab, buildingSize);
-
-            removeZonedPositionFromList(zonedPosition, zoningType);
-        }
-
-        Vector2 firstPosition = section[0];
-        gridArray[(int)firstPosition.x, (int)firstPosition.y].GetComponent<Cell>().isPivot = true;
-
-        PlaceZoneBuildingTile(prefab, gridArray[(int)firstPosition.x, (int)firstPosition.y], buildingSize);
-
-        UpdateZonedBuildingPlacementStats(selectedZoneType, zoneAttributes);
     }
 
     private Vector2 FindCenterPosition(Vector2[] section)
@@ -1124,52 +529,6 @@ public class GridManager : MonoBehaviour
         y /= section.Length;
 
         return new Vector2(x, y);
-    }
-
-    void removeZonedPositionFromList(Vector2 zonedPosition, Zone.ZoneType zoneType)
-    {
-        switch (zoneType)
-        {
-            case Zone.ZoneType.ResidentialLightZoning:
-                zonedResidentialLightPositions.Remove(zonedPosition);
-                break;
-            case Zone.ZoneType.ResidentialMediumZoning:
-                zonedResidentialMediumPositions.Remove(zonedPosition);
-                break;
-            case Zone.ZoneType.ResidentialHeavyZoning:
-                zonedResidentialHeavyPositions.Remove(zonedPosition);
-                break;
-            case Zone.ZoneType.CommercialLightZoning:
-                zonedCommercialLightPositions.Remove(zonedPosition);
-                break;
-            case Zone.ZoneType.CommercialMediumZoning:
-                zonedCommercialMediumPositions.Remove(zonedPosition);
-                break;
-            case Zone.ZoneType.CommercialHeavyZoning:
-                zonedCommercialHeavyPositions.Remove(zonedPosition);
-                break;
-            case Zone.ZoneType.IndustrialLightZoning:
-                zonedIndustrialLightPositions.Remove(zonedPosition);
-                break;
-            case Zone.ZoneType.IndustrialMediumZoning:
-                zonedIndustrialMediumPositions.Remove(zonedPosition);
-                break;
-            case Zone.ZoneType.IndustrialHeavyZoning:
-                zonedIndustrialHeavyPositions.Remove(zonedPosition);
-                break;
-        }
-    }
-
-    void RemoveZonedSectionFromList(Vector2[] zonedPositions, Zone.ZoneType zoneType)
-    {
-        if (availableZoneSections.ContainsKey(zoneType))
-        {
-            var sectionToRemove = availableZoneSections[zoneType].FirstOrDefault(section => section.SequenceEqual(zonedPositions));
-            if (sectionToRemove != null)
-            {
-                availableZoneSections[zoneType].Remove(sectionToRemove);
-            }
-        }
     }
 
     public int SetTileSortingOrder(GameObject tile, Zone.ZoneType zoneType = Zone.ZoneType.Grass)
@@ -1196,39 +555,6 @@ public class GridManager : MonoBehaviour
         }
     }
 
-
-    void HandleRoadDrawing(Vector2 gridPosition)
-    {
-        if (!terrainManager.CanPlaceRoad((int)gridPosition.x, (int)gridPosition.y))
-        {
-            return;
-        }
-
-        if (Input.GetMouseButtonDown(0))
-        {
-            isDrawingRoad = true;
-            startPosition = gridPosition;
-        }
-        else if (isDrawingRoad && Input.GetMouseButton(0))
-        {
-            Vector3 currentMousePosition = gridPosition;
-            DrawPreviewLine(startPosition, currentMousePosition);
-        }
-        
-        if (Input.GetMouseButtonUp(0) && isDrawingRoad)
-        {
-            isDrawingRoad = false;
-            DrawRoadLine(true);
-            ClearPreview(true);
-        }
-
-        if (Input.GetMouseButtonDown(1))
-        {
-            isDrawingRoad = false;
-            ClearPreview();
-        }
-    }
-
     public Vector2 GetGridPosition(Vector2 worldPoint)
     {
         float posX = worldPoint.x / (tileWidth / 2);
@@ -1251,112 +577,15 @@ public class GridManager : MonoBehaviour
         return new Vector2(posX, posY);
     }
 
-    void DrawPreviewLine(Vector2 start, Vector2 end)
-    {
-        ClearPreview();
-        List<Vector2> path = GetLine(start, end);
 
-        for (int i = 0; i < path.Count; i++)
+    public GameObject GetGridCell(Vector2 gridPos)
+    {
+        if (gridPos.x < 0 || gridPos.x >= gridArray.GetLength(0) ||
+            gridPos.y < 0 || gridPos.y >= gridArray.GetLength(1))
         {
-            Vector2 gridPos = path[i];
-
-            DrawPreviewRoadTile(gridPos, path, i, true);
+            return null;
         }
-    }
-
-    Vector2[] GetRoadColliderPoints()
-    {
-        Vector2[] points = new Vector2[4];
-        points[0] = new Vector2(-0.5f, 0f);
-        points[1] = new Vector2(0f, 0.25f);
-        points[2] = new Vector2(0.5f, 0f);
-        points[3] = new Vector2(0f, -0.25f);
-
-        return points;
-    }
-
-    void SetPreviewTileCollider(GameObject previewTile)
-    {
-        PolygonCollider2D collider = previewTile.AddComponent<PolygonCollider2D>();
-        collider.points = GetRoadColliderPoints();
-        collider.isTrigger = true;
-    }
-
-    void SetRoadTileZoneDetails(GameObject roadTile)
-    {
-        Zone zone = roadTile.AddComponent<Zone>();
-        zone.zoneType = Zone.ZoneType.Road;
-    }
-
-    void SetPreviewRoadTileDetails(GameObject previewTile)
-    {
-      SetPreviewTileCollider(previewTile);
-      int sortingOrder = SetTileSortingOrder(previewTile, Zone.ZoneType.Road);
-
-      SetRoadTileZoneDetails(previewTile);
-      previewTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 0.5f);
-    }
-
-    void DrawPreviewRoadTile(Vector2 gridPos, List<Vector2> path, int i, bool isCenterRoadTile = true)
-    {
-      Vector2 prevGridPos = i == 0 ? (path.Count > 1 ? path[1] : gridPos) : path[i - 1];
-
-      bool isPreview = true;
-
-      GameObject roadPrefab = GetCorrectRoadPrefab(prevGridPos, gridPos, isCenterRoadTile, isPreview);
-
-      Vector2 worldPos = GetWorldPosition((int)gridPos.x, (int)gridPos.y);
-
-      GameObject previewTile = Instantiate(
-          roadPrefab,
-          worldPos,
-          Quaternion.identity
-      );
-
-      SetPreviewRoadTileDetails(previewTile);
-      
-      previewRoadTiles.Add(previewTile);
-
-      previewRoadGridPositions.Add(new Vector2(gridPos.x, gridPos.y));
-
-      GameObject cell = gridArray[(int)gridPos.x, (int)gridPos.y];
-
-      previewTile.transform.SetParent(cell.transform);
-    }
-
-    bool isAdjacentRoadInPreview(Vector2 gridPos)
-    {
-        foreach (Vector2 previewGridPos in previewRoadGridPositions)
-        {
-            if (gridPos == previewGridPos)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    void UpdateAdjacentRoadPrefabs(Vector2 gridPos, int i)
-    {
-        foreach (Vector2 adjacentRoadTile in adjacentRoadTiles)
-        {
-            bool isAdjacent = true;
-
-            if (!isAdjacentRoadInPreview(adjacentRoadTile))
-            {
-                PlaceRoadTile(adjacentRoadTile, i, isAdjacent);
-            }
-        }
-    }
-
-    void ClearPreview(bool isEnd = false)
-    {
-        foreach (GameObject previewTile in previewRoadTiles)
-        {
-            Destroy(previewTile);
-        }
-        previewRoadTiles.Clear();
-        previewRoadGridPositions.Clear();
+        return gridArray[(int)gridPos.x, (int)gridPos.y];
     }
 
     void DestroyPreviousZoning(GameObject cell)
@@ -1368,255 +597,6 @@ public class GridManager : MonoBehaviour
                 DestroyImmediate(child.gameObject);
             }
         }
-    }
-
-    void DestroyPreviousRoadTile(GameObject cell, Vector2 gridPos)
-    {
-        if (cell.transform.childCount > 0)
-        {
-            if (cell.GetComponent<Cell>().zoneType == Zone.ZoneType.Road)
-            {
-                DestroyImmediate(cell.transform.GetChild(0).gameObject);
-            }
-
-            foreach (Transform child in cell.transform)
-            {
-                Zone zone = child.GetComponent<Zone>();
-                if (zone != null)
-                {
-                    DestroyImmediate(child.gameObject);
-                    if (zone.zoneCategory == Zone.ZoneCategory.Zoning)
-                    {
-                        removeZonedPositionFromList(gridPos, zone.zoneType);
-                    }
-                }
-            }
-        }
-    }
-
-    void UpdateRoadCellAttributes(GameObject cell, GameObject roadTile, Zone.ZoneType zoneType)
-    {
-        Cell cellComponent = cell.GetComponent<Cell>();
-        cellComponent.zoneType = zoneType;
-        cellComponent.prefab = roadTile;
-        cellComponent.prefabName = roadTile.name;
-        cellComponent.buildingType = "Road";
-        cellComponent.powerPlant = null;
-        cellComponent.population = 0;
-        cellComponent.powerConsumption = 0;
-        cellComponent.happiness = 0;
-        cellComponent.isPivot = false;
-    }
-
-    void PlaceRoadTile(Vector2 gridPos, int i = 0, bool isAdjacent = false)
-    {
-        GameObject cell = gridArray[(int)gridPos.x, (int)gridPos.y];
-        
-        bool isCenterRoadTile = !isAdjacent;
-        bool isPreview = false;
-
-        Vector2 prevGridPos = isAdjacent
-            ? (i == 0 ? gridPos : previewRoadGridPositions[i - 1])
-            : new Vector2(0, 0);
-
-        GameObject correctRoadPrefab = GetCorrectRoadPrefab(
-            prevGridPos,
-            gridPos,
-            isCenterRoadTile,
-            isPreview
-        );
-
-        DestroyPreviousRoadTile(cell, gridPos);
-
-        GameObject roadTile = Instantiate(
-            correctRoadPrefab,
-            GetWorldPosition((int)gridPos.x, (int)gridPos.y),
-            Quaternion.identity
-        );
-
-        roadTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 1);
-
-        Zone.ZoneType zoneType = Zone.ZoneType.Road;
-
-        Zone zone = roadTile.AddComponent<Zone>();
-        zone.zoneType = zoneType;
-
-        UpdateRoadCellAttributes(cell, roadTile, zoneType);
-
-        int sortingOrder = SetTileSortingOrder(roadTile, zoneType);
-        cell.GetComponent<Cell>().sortingOrder = sortingOrder;
-
-        roadTile.transform.SetParent(cell.transform);
-    }
-
-    void DrawRoadLine(bool calculateCost = true)
-    {
-        if (calculateCost)
-        {
-            int totalCost = CalculateTotalCost(previewRoadGridPositions.Count);
-            
-            // Check if player can afford the road
-            if (!cityStats.CanAfford(totalCost))
-            {
-                uiManager.ShowInsufficientFundsTooltip("Road", totalCost);
-                ClearPreview();
-                isDrawingRoad = false;
-                return;
-            }
-            
-            // Deduct the cost if we can afford it
-            cityStats.RemoveMoney(totalCost);
-        }
-        
-        for (int i = 0; i < previewRoadGridPositions.Count; i++)
-        {
-            Vector2 gridPos = previewRoadGridPositions[i];
-
-            PlaceRoadTile(gridPos, i, false);
-
-            UpdateAdjacentRoadPrefabs(gridPos, i);
-        }
-
-        if (calculateCost)
-        {
-            int roadPowerConsumption = previewRoadGridPositions.Count * ZoneAttributes.Road.PowerConsumption;
-            cityStats.AddPowerConsumption(roadPowerConsumption);
-        }
-    }
-
-    GameObject GetCorrectRoadPrefab(Vector2 prevGridPos, Vector2 currGridPos, bool isCenterRoadTile = true, bool isPreview = false)
-    {
-        Vector2 direction = currGridPos - prevGridPos;
-        if (isPreview)
-        {
-          
-          if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-          {
-              return roadTilePrefab2;
-          }
-          else
-          {
-              return roadTilePrefab1;
-          }
-        }
-
-        bool hasLeft = IsRoadAt(currGridPos + new Vector2(-1, 0));
-        bool hasRight = IsRoadAt(currGridPos + new Vector2(1, 0));
-        bool hasUp = IsRoadAt(currGridPos + new Vector2(0, 1));
-        bool hasDown = IsRoadAt(currGridPos + new Vector2(0, -1));
-
-        if (isCenterRoadTile) {
-          UpdateAdjacentRoadTilesArray(currGridPos, hasLeft, hasRight, hasUp, hasDown, isPreview);
-        }
-
-        if (hasLeft && hasRight && hasUp && hasDown)
-        {
-            return roadTilePrefabCrossing;
-        }
-        else if (hasLeft && hasRight && hasUp && !hasDown)
-        {
-            return roadTilePrefabTIntersectionDown;
-        }
-        else if (hasLeft && hasRight && hasDown && !hasUp)
-        {
-            return roadTilePrefabTIntersectionUp;
-        }
-        else if (hasUp && hasDown && hasLeft && !hasRight)
-        {
-            return roadTilePrefabTIntersectionRight;
-        }
-        else if (hasUp && hasDown && hasRight && !hasLeft)
-        {
-            return roadTilePrefabTIntersectionLeft;
-        }
-        else if (hasLeft && hasUp && !hasRight && !hasDown)
-        {
-            return roadTilePrefabElbowDownRight;
-        }
-        else if (hasRight && hasUp && !hasLeft && !hasDown)
-        {
-            return roadTilePrefabElbowDownLeft;
-        }
-        else if (hasLeft && hasDown && !hasRight && !hasUp)
-        {
-            return roadTilePrefabElbowUpRight;
-        }
-        else if (hasRight && hasDown && !hasLeft && !hasUp)
-        {
-            return roadTilePrefabElbowUpLeft;
-        }
-        else if (hasLeft || hasRight)
-        {
-          return roadTilePrefab2;
-        }
-
-        else if (hasUp || hasDown)
-        {
-          return roadTilePrefab1;
-        }
-
-        // If no intersection or elbow, fall back to horizontal/vertical
-
-        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-        {
-            return roadTilePrefab2;
-        }
-        else
-        {
-            return roadTilePrefab1;
-        }
-    }
-
-    void UpdateAdjacentRoadTilesArray(Vector2 currGridPos, bool hasLeft, bool hasRight, bool hasUp, bool hasDown, bool isPreview)
-    {
-        adjacentRoadTiles.Clear();
-
-        if (hasLeft)
-        {
-            adjacentRoadTiles.Add(new Vector2(currGridPos.x - 1, currGridPos.y));
-        }
-        if (hasRight)
-        {
-            adjacentRoadTiles.Add(new Vector2(currGridPos.x + 1, currGridPos.y));
-        }
-        if (hasUp)
-        {
-            adjacentRoadTiles.Add(new Vector2(currGridPos.x, currGridPos.y + 1));
-        }
-        if (hasDown)
-        {
-            adjacentRoadTiles.Add(new Vector2(currGridPos.x, currGridPos.y - 1));
-        }
-    }
-
-    bool IsAnyChildRoad(int gridX, int gridY)
-    {
-        var cell = gridArray[gridX, gridY];
-        if (cell == null || cell.transform.childCount == 0) return false;
-        
-        var cellComponent = cell.GetComponent<Cell>();
-        if (cellComponent?.zoneType == Zone.ZoneType.Road) return true;
-        
-        return cell.transform
-            .Cast<Transform>()
-            .Select(child => child.GetComponent<Zone>())
-            .Any(zone => zone != null && zone.zoneType == Zone.ZoneType.Road);
-    }
-
-    bool IsRoadAt(Vector2 gridPos)
-    {
-        bool isRoad = false;
-        int gridX = Mathf.RoundToInt(gridPos.x);
-        int gridY = Mathf.RoundToInt(gridPos.y);
-
-        if (gridX >= 0 && gridX < width && gridY >= 0 && gridY < height)
-        {
-            isRoad = IsAnyChildRoad(gridX, gridY);
-
-            return isRoad;
-        }
-
-        return false;
     }
 
     bool IsWithinGrid(Vector2 position)
@@ -1632,49 +612,7 @@ public class GridManager : MonoBehaviour
         return false;
     }
 
-    int CalculateTotalCost(int tilesCount)
-    {
-        return tilesCount * 50;
-    }
-
-    List<Vector2> GetLine(Vector2 start, Vector2 end)
-    {
-        List<Vector2> line = new List<Vector2>();
-
-        int x0 = (int)start.x;
-        int y0 = (int)start.y;
-        int x1 = (int)end.x;
-        int y1 = (int)end.y;
-
-        int dx = Mathf.Abs(x1 - x0);
-        int dy = Mathf.Abs(y1 - y0);
-        int sx = x0 < x1 ? 1 : -1;
-        int sy = y0 < y1 ? 1 : -1;
-        int err = dx - dy;
-
-        while (true)
-        {
-            line.Add(new Vector2(x0, y0));
-
-            if (x0 == x1 && y0 == y1) break;
-
-            int e2 = err * 2;
-            if (e2 > -dy)
-            {
-                err -= dy;
-                x0 += sx;
-            }
-            if (e2 < dx)
-            {
-                err += dx;
-                y0 += sy;
-            }
-        }
-
-        return line;
-    }
-
-    bool canPlaceBuilding(Vector2 gridPosition, int buildingSize)
+    public bool canPlaceBuilding(Vector2 gridPosition, int buildingSize)
     {
         if (buildingSize == 0)
             return false;
@@ -1915,167 +853,20 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    private Vector2[] GetRandomAvailableSizeSection(Zone.ZoneType zoneType, int buildingSize)
-    {
-        if (availableZoneSections.ContainsKey(zoneType) && availableZoneSections[zoneType].Count > 0)
-        {
-            // Find sections that fit the building size
-            var possibleSections = availableZoneSections[zoneType].Where(section => buildingSize * buildingSize <= section.Count).ToList();
-
-            if (possibleSections.Count > 0)
-            {
-                int randomIndex = UnityEngine.Random.Range(0, possibleSections.Count);
-
-                return possibleSections[randomIndex].ToArray();
-            }
-        }
-        return null;
-    }
-
-    private (int size, Vector2[] section)? GetRandomAvailableSection(Zone.ZoneType zoneType)
-    {
-        Dictionary<int, Vector2[]> availableSections = new Dictionary<int, Vector2[]>();
-
-        for (int i = 1; i <= 3; i++)
-        {
-            Vector2[] section = GetRandomAvailableSizeSection(zoneType, i);
-
-            if (section != null && section.Length > 0)
-            {
-                availableSections.Add(i, section);
-            }
-        }
-
-        if (availableSections.Count > 0)
-        {
-            int randomSize = availableSections.Keys.ElementAt(UnityEngine.Random.Range(0, availableSections.Keys.Count));
-
-            return (randomSize, availableSections[randomSize]);
-        }
-
-        return (0, null);
-    }
-
-    public void CalculateAvailableSquareZonedSections()
-    {
-        availableZoneSections.Clear();
-        var validZoneTypes = GetValidZoneTypes();
-        
-        foreach (Zone.ZoneType zoneType in validZoneTypes)
-        {
-            List<List<Vector2>> sections = CalculateSectionsForZoneType(zoneType);
-            availableZoneSections.Add(zoneType, sections);
-        }
-    }
-
-    private IEnumerable<Zone.ZoneType> GetValidZoneTypes()
-    {
-        var excludedTypes = new[]
-        {
-            Zone.ZoneType.None, Zone.ZoneType.Road, Zone.ZoneType.Building,
-            Zone.ZoneType.ResidentialLightBuilding, Zone.ZoneType.ResidentialMediumBuilding,
-            Zone.ZoneType.ResidentialHeavyBuilding, Zone.ZoneType.CommercialLightBuilding,
-            Zone.ZoneType.CommercialMediumBuilding, Zone.ZoneType.CommercialHeavyBuilding,
-            Zone.ZoneType.IndustrialLightBuilding, Zone.ZoneType.IndustrialMediumBuilding,
-            Zone.ZoneType.IndustrialHeavyBuilding
-        };
-
-        return Enum.GetValues(typeof(Zone.ZoneType))
-                  .Cast<Zone.ZoneType>()
-                  .Where(type => !excludedTypes.Contains(type));
-    }
-
-    private List<List<Vector2>> CalculateSectionsForZoneType(Zone.ZoneType zoneType)
-    {
-        List<List<Vector2>> sections = new List<List<Vector2>>();
-        
-        for (int size = 1; size <= 3; size++)
-        {
-            var zonedPositions = GetZonedPositions(zoneType).ToList();
-            if (!zonedPositions.Any()) continue;
-            
-            sections.AddRange(CalculateSectionsForSize(zonedPositions, size));
-        }
-        
-        return sections;
-    }
-
-    private List<List<Vector2>> CalculateSectionsForSize(List<Vector2> zonedPositions, int size)
-    {
-        List<List<Vector2>> sections = new List<List<Vector2>>();
-        
-        for (int i = zonedPositions.Count - 1; i >= 0; i--)
-        {
-            Vector2 start = zonedPositions[i];
-            List<Vector2> section = GetSquareSection(start, size, zonedPositions);
-            
-            if (section.Count == size * size)
-            {
-                sections.Add(section);
-                foreach (var pos in section)
-                {
-                    zonedPositions.Remove(pos);
-                }
-            }
-        }
-        
-        return sections;
-    }
-
-// Helper method to get square sections of a given size
-    private List<Vector2> GetSquareSection(Vector2 start, int size, List<Vector2> availablePositions)
-    {
-        List<Vector2> section = new List<Vector2>();
-
-        for (int x = 0; x < size; x++)
-        {
-            for (int y = 0; y < size; y++)
-            {
-                Vector2 newPosition = new Vector2(start.x + x, start.y + y);
-                if (availablePositions.Contains(newPosition))
-                {
-                    section.Add(newPosition);
-                }
-            }
-        }
-
-        return section;
-    }
-
-    public List<CellData> GetGridData()
-    {
-        List<CellData> gridData = new List<CellData>();
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                GameObject cell = gridArray[x, y];
-                Cell cellComponent = cell.GetComponent<Cell>();
-
-                CellData cellData = cellComponent.GetCellData();
-
-                gridData.Add(cellData);
-            }
-        }
-
-        return gridData;
-    }
-
     void RestoreGridCell(CellData cellData, GameObject cell)
     {
         cell.GetComponent<Cell>().SetCellData(cellData);
 
-        Zone.ZoneType zoneType = GetZoneTypeFromZoneTypeString(cellData.zoneType);
+        Zone.ZoneType zoneType = zoneManager.GetZoneTypeFromZoneTypeString(cellData.zoneType);
 
         GameObject tilePrefab = zoneManager.FindPrefabByName(cellData.prefabName);
         if (tilePrefab != null)
         {
-            PlaceZoneBuildingTile(tilePrefab, cell, cellData.buildingSize);
+            zoneManager.PlaceZoneBuildingTile(tilePrefab, cell, cellData.buildingSize);
             UpdatePlacedBuildingCellAttributes(cell.GetComponent<Cell>(), cellData.buildingSize, cellData.powerPlant, cellData.waterPlant, tilePrefab, zoneType, null);
         }
 
-        addZonedTileToList(new Vector2(cellData.x, cellData.y), zoneType);
+        zoneManager.addZonedTileToList(new Vector2(cellData.x, cellData.y), zoneType);
 
         PowerPlant powerPlant = cellData.powerPlant;
         if (powerPlant != null)
@@ -2093,17 +884,7 @@ public class GridManager : MonoBehaviour
             RestoreGridCell(cellData, cell);
         }
 
-        CalculateAvailableSquareZonedSections();
-    }
-
-    public List<GameObject> GetRoadPrefabs()
-    {
-        return roadTilePrefabs;
-    }
-
-    private Zone.ZoneType GetZoneTypeFromZoneTypeString(string zoneTypeString)
-    {
-        return (Zone.ZoneType)Enum.Parse(typeof(Zone.ZoneType), zoneTypeString);
+        zoneManager.CalculateAvailableSquareZonedSections();
     }
 
     public void ResetGrid()
@@ -2113,17 +894,7 @@ public class GridManager : MonoBehaviour
             Destroy(cell);
         }
 
-        zonedResidentialLightPositions.Clear();
-        zonedResidentialMediumPositions.Clear();
-        zonedResidentialHeavyPositions.Clear();
-        zonedCommercialLightPositions.Clear();
-        zonedCommercialMediumPositions.Clear();
-        zonedCommercialHeavyPositions.Clear();
-        zonedIndustrialLightPositions.Clear();
-        zonedIndustrialMediumPositions.Clear();
-        zonedIndustrialHeavyPositions.Clear();
-
-        availableZoneSections.Clear();
+        zoneManager.ClearZonedPositions();
 
         CreateGrid();
     }
@@ -2139,5 +910,19 @@ public class GridManager : MonoBehaviour
             return cellComponent;
         }
         return null;
+    }
+
+    public List<CellData> GetGridData()
+    {
+        List<CellData> gridData = new List<CellData>();
+
+        foreach (GameObject cell in gridArray)
+        {
+            Cell cellComponent = cell.GetComponent<Cell>();
+            CellData cellData = cellComponent.GetCellData();
+            gridData.Add(cellData);
+        }
+
+        return gridData;
     }
 }

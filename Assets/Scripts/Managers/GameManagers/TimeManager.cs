@@ -2,12 +2,15 @@ using UnityEngine;
 
 public class TimeManager : MonoBehaviour
 {
+    [Header("UI References")]
     public UIManager uiManager;
+    public SpeedButtonsController speedButtonsController; // Add this field
 
     public CityStats cityStats;
     public EconomyManager economyManager;
     public GridManager gridManager;
     public AnimatorManager animatorManager;
+    public ZoneManager zoneManager;
     public float[] timeSpeeds = new float[] { 0f, 0.50f, 1.0f, 2.0f, 4.0f };
     private int currentTimeSpeedIndex = 0;
 
@@ -17,12 +20,8 @@ public class TimeManager : MonoBehaviour
 
     void Start()
     {
-        currentDate = new System.DateTime(2024, 8, 27); // Starting date
-
-        // Trim the time to only include the date, not the time
-
+        currentDate = new System.DateTime(2024, 8, 27);
         currentDate = currentDate.Date;
-
         uiManager.UpdateUI();
     }
 
@@ -38,12 +37,11 @@ public class TimeManager : MonoBehaviour
             timeElapsed = 0f;
 
             cityStats.PerformDailyUpdates();
-            gridManager.CalculateAvailableSquareZonedSections();
+            zoneManager.CalculateAvailableSquareZonedSections();
             PlaceAllZonedBuildings();
 
             if (currentDate.Day == 1)
             {
-                // Trigger any daily updates, like income, expenses, power usage, etc.
                 cityStats.PerformMonthlyUpdates();
                 economyManager.ProcessDailyEconomy();
             }
@@ -53,19 +51,14 @@ public class TimeManager : MonoBehaviour
 
     void PlaceAllZonedBuildings()
     {
-        gridManager.PlaceZonedBuildings(Zone.ZoneType.ResidentialLightZoning);
-        gridManager.PlaceZonedBuildings(Zone.ZoneType.ResidentialMediumZoning);
-        gridManager.PlaceZonedBuildings(Zone.ZoneType.ResidentialHeavyZoning);
-        gridManager.PlaceZonedBuildings(Zone.ZoneType.CommercialLightZoning);
-        gridManager.PlaceZonedBuildings(Zone.ZoneType.CommercialMediumZoning);
-        gridManager.PlaceZonedBuildings(Zone.ZoneType.CommercialHeavyZoning);
-        gridManager.PlaceZonedBuildings(Zone.ZoneType.IndustrialLightZoning);
-        gridManager.PlaceZonedBuildings(Zone.ZoneType.IndustrialMediumZoning);
-    }
-
-    private void UpdateCityStatsForDay()
-    {
-        // Update logic for daily city stats like power consumption and income generation
+        zoneManager.PlaceZonedBuildings(Zone.ZoneType.ResidentialLightZoning);
+        zoneManager.PlaceZonedBuildings(Zone.ZoneType.ResidentialMediumZoning);
+        zoneManager.PlaceZonedBuildings(Zone.ZoneType.ResidentialHeavyZoning);
+        zoneManager.PlaceZonedBuildings(Zone.ZoneType.CommercialLightZoning);
+        zoneManager.PlaceZonedBuildings(Zone.ZoneType.CommercialMediumZoning);
+        zoneManager.PlaceZonedBuildings(Zone.ZoneType.CommercialHeavyZoning);
+        zoneManager.PlaceZonedBuildings(Zone.ZoneType.IndustrialLightZoning);
+        zoneManager.PlaceZonedBuildings(Zone.ZoneType.IndustrialMediumZoning);
     }
 
     public void HandleOnKeyInput()
@@ -96,18 +89,38 @@ public class TimeManager : MonoBehaviour
     {
         currentTimeSpeedIndex = (currentTimeSpeedIndex + 1) % timeSpeeds.Length;
         timeMultiplier = timeSpeeds[currentTimeSpeedIndex];
+        
+        // Update button states when speed changes
+        if (speedButtonsController != null)
+        {
+            speedButtonsController.OnSpeedChangedExternally(currentTimeSpeedIndex);
+        }
+    }
+
+    public void SetTimeSpeedIndex(int index)
+    {
+        if (index < 0 || index >= timeSpeeds.Length)
+        {
+            Debug.LogWarning($"Invalid speed index: {index}");
+            return;
+        }
+        
+        currentTimeSpeedIndex = index;
+        timeMultiplier = timeSpeeds[currentTimeSpeedIndex];
+        animatorManager.SetAnimatorSpeed(timeMultiplier);
+        
+        // Update button visual states when speed changes via keyboard
+        if (speedButtonsController != null)
+        {
+            speedButtonsController.OnSpeedChangedExternally(currentTimeSpeedIndex);
+        }
+        
+        Debug.Log($"Time speed set to index {index} (multiplier: {timeMultiplier})");
     }
 
     public System.DateTime GetCurrentDate()
     {
         return currentDate;
-    }
-
-    public void SetTimeSpeedIndex(int index)
-    {
-        currentTimeSpeedIndex = index;
-        timeMultiplier = timeSpeeds[currentTimeSpeedIndex];
-        animatorManager.SetAnimatorSpeed(timeMultiplier);
     }
 
     public float GetCurrentTimeMultiplier()

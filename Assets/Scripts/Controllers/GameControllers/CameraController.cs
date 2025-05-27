@@ -36,18 +36,11 @@ public class CameraController : MonoBehaviour
         HandleScrollZoom();
     }
 
-    public void MoveCameraToMapCenter()
+    public void MoveCameraToMapCenter(Vector3 centerWorldPosition)
     {
-      if (gridManager != null)
-        {
-            Vector3 centerWorldPosition = gridManager.GetWorldPosition(gridManager.width / 2, gridManager.height / 2);
-            Vector3 gridCenter = new Vector3(centerWorldPosition.x, centerWorldPosition.y, mainCamera.transform.position.z);
-            mainCamera.transform.position = gridCenter;
-        }
-        else
-        {
-            Debug.LogWarning("GridManager reference is not set.");
-        }
+        Vector3 gridCenter = new Vector3(centerWorldPosition.x, centerWorldPosition.y, mainCamera.transform.position.z);
+        mainCamera.transform.position = gridCenter;
+        Debug.Log($"Camera moved to center position: {gridCenter}");
     }
 
     private void HandleMovement()
