@@ -8,7 +8,8 @@ public class CameraController : MonoBehaviour
     private int currentZoomLevel = 0;
     private Camera mainCamera;
     public float startZoomLevel = 5f;
-    public GridManager gridManager; // Reference to the GridManager if needed
+    public GridManager gridManager;
+    public CameraButtonsController cameraButtonsController;
 
     void Start()
     {
@@ -52,7 +53,7 @@ public class CameraController : MonoBehaviour
         mainCamera.transform.Translate(movement);
     }
 
-    private void ZoomIn()
+    public void ZoomIn()
     {
         if (currentZoomLevel > 0)
         {
@@ -61,7 +62,7 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    private void ZoomOut()
+    public void ZoomOut()
     {
         if (currentZoomLevel < zoomLevels.Length - 1)
         {
