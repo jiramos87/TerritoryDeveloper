@@ -44,7 +44,7 @@ public class PowerPlant : MonoBehaviour, IBuilding
         }
     }
 
-    public GameObject GameObjectReference => gameObject; 
+    public GameObject GameObjectReference => gameObject;
 
     public int PowerOutput => powerOutput;
 

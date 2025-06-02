@@ -11,7 +11,7 @@ public class CommercialZoningSelectorButton : MonoBehaviour
     {
         uiManager.RestoreMouseCursor();
         popupController.ShowPopup(commercialZoningItems, OnCommercialZoningTypeSelected, "Commercial");
-    
+
         OnCommercialZoningTypeSelected(commercialZoningItems[0]);
     }
 

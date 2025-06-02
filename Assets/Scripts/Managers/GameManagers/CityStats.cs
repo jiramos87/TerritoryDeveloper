@@ -4,6 +4,8 @@ using System.Collections.Generic;
 public class CityStats : MonoBehaviour
 {
     public TimeManager timeManager;
+    public WaterManager waterManager;
+    public ForestManager forestManager;
 
     public System.DateTime currentDate;
 
@@ -53,12 +55,9 @@ public class CityStats : MonoBehaviour
     public int cityWaterConsumption;
     public int cityWaterOutput;
 
-    public WaterManager waterManager;
-
     [Header("Forest Statistics")]
     public int forestCellCount;
     public float forestCoveragePercentage;
-    public ForestManager forestManager;
 
     void Start()
     {
@@ -78,13 +77,13 @@ public class CityStats : MonoBehaviour
         // Initialize forest statistics
         forestCellCount = 0;
         forestCoveragePercentage = 0f;
-        
+
         if (forestManager == null)
             forestManager = FindObjectOfType<ForestManager>();
     }
 
     public void AddPopulation(int value)
-    {      
+    {
         population += value;
     }
 
@@ -537,7 +536,7 @@ public class CityStats : MonoBehaviour
         {
             totalPowerOutput += plant.PowerOutput;
         }
-        
+
         cityPowerOutput = totalPowerOutput;
     }
 
@@ -582,22 +581,22 @@ public class CityStats : MonoBehaviour
 
     public void PerformMonthlyUpdates()
     {
-        
+
     }
 
     public void PerformDailyUpdates()
     {
         currentDate = timeManager.GetCurrentDate();
 
-       // Add these lines to existing method
-       EmploymentManager employment = FindObjectOfType<EmploymentManager>();
-       StatisticsManager stats = FindObjectOfType<StatisticsManager>();
-       
-       if (employment != null) employment.UpdateEmployment();
-       if (stats != null) stats.UpdateStatistics();
+        // Add these lines to existing method
+        EmploymentManager employment = FindObjectOfType<EmploymentManager>();
+        StatisticsManager stats = FindObjectOfType<StatisticsManager>();
 
-       // Update forest statistics
-       UpdateForestStatistics();
+        if (employment != null) employment.UpdateEmployment();
+        if (stats != null) stats.UpdateStatistics();
+
+        // Update forest statistics
+        UpdateForestStatistics();
     }
 
     public bool GetCityPowerAvailability()
@@ -653,13 +652,13 @@ public class CityStats : MonoBehaviour
     {
         // Each forest cell provides +1 happiness, with diminishing returns
         float bonus = forestCellCount * 1.0f;
-        
+
         // Apply diminishing returns for large forests
         if (forestCellCount > 20)
         {
             bonus = 20f + (forestCellCount - 20) * 0.5f;
         }
-        
+
         return Mathf.RoundToInt(bonus);
     }
 
@@ -792,17 +791,17 @@ public class CityStats : MonoBehaviour
             waterManager.RemoveWaterConsumption(value);
         }
     }
-    
+
     public int GetTotalWaterConsumption()
     {
         return cityWaterConsumption;
     }
-    
+
     public int GetTotalWaterOutput()
     {
         return cityWaterOutput;
     }
-    
+
     public bool GetCityWaterAvailability()
     {
         // Sync with water manager
@@ -811,7 +810,7 @@ public class CityStats : MonoBehaviour
             cityWaterOutput = waterManager.GetTotalWaterOutput();
             cityWaterConsumption = waterManager.GetTotalWaterConsumption();
         }
-        
+
         return cityWaterOutput > cityWaterConsumption;
     }
 

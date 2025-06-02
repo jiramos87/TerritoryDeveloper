@@ -24,8 +24,9 @@ public class WaterPlant : MonoBehaviour, IBuilding
 
     public void Initialize(string type, int constructionCost, int initialMaintenanceCost, int maxWorkers, int initialWorkers, int size, int baseOutput, GameObject prefab)
     {
-        
-        try {
+
+        try
+        {
             ConstructionCost = constructionCost;
             InitialMaintenanceCost = initialMaintenanceCost;
             MaxWorkers = maxWorkers;
@@ -42,7 +43,8 @@ public class WaterPlant : MonoBehaviour, IBuilding
             // Initialize water output
             UpdateWaterOutput();
         }
-        catch (System.Exception ex) {
+        catch (System.Exception ex)
+        {
             Debug.LogError($"Error in WaterPlant.Initialize: {ex.Message}\n{ex.StackTrace}");
         }
     }
@@ -84,7 +86,7 @@ public class WaterPlant : MonoBehaviour, IBuilding
         float activeMultiplier = active ? 1f : 0f;
         float productivityPercent = productivity / 100f;
         float workersPercent = (float)currentWorkers / MaxWorkers;
-        
+
         waterOutput = Mathf.RoundToInt(activeMultiplier * productivityPercent * workersPercent * BaseOutput);
     }
 

@@ -148,7 +148,7 @@ public class GrowthManager : MonoBehaviour
             return false;
         
         // Check terrain constraints (reuse existing method from GridManager)
-        if (!gridManager.terrainManager.CanPlaceBuilding((int)position.x, (int)position.y, 1))
+        if (!gridManager.terrainManager.CanPlaceBuildingInTerrain((int)position.x, (int)position.y, 1))
             return false;
         
         // Check overcrowding if enabled

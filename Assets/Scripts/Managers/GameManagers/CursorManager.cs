@@ -35,7 +35,8 @@ public class CursorManager : MonoBehaviour
 
     public void ShowBuildingPreview(GameObject buildingPrefab, int buildingSize = 1)
     {
-        try {
+        try
+        {
             if (previewInstance != null)
             {
                 Destroy(previewInstance);
@@ -43,8 +44,7 @@ public class CursorManager : MonoBehaviour
 
             // Instantiate a preview of the buildingPrefab
             previewInstance = Instantiate(buildingPrefab);
-            Debug.Log($"Preview instance created for {buildingPrefab.name}");
-            Debug.Log("Preview instance position: " + previewInstance.transform.position);
+
             // Get the SpriteRenderer component
             SpriteRenderer spriteRenderer = previewInstance.GetComponent<SpriteRenderer>();
             if (spriteRenderer == null)
@@ -68,9 +68,10 @@ public class CursorManager : MonoBehaviour
             foreach (var col in colliders)
             {
                 col.enabled = false; // Disable collision for the preview
-            }   
+            }
         }
-        catch (System.Exception ex) {
+        catch (System.Exception ex)
+        {
             Debug.LogError($"Error in ShowBuildingPreview: {ex.Message}\n{ex.StackTrace}");
         }
     }
@@ -83,17 +84,17 @@ public class CursorManager : MonoBehaviour
             mousePosition.z = 0;
 
             Vector2 gridPosition = gridManager.GetGridPosition(mousePosition);
-            
+
             UIManager uiManager = FindObjectOfType<UIManager>();
             int buildingSize = 1;
-            
+
             if (uiManager != null && uiManager.GetSelectedBuilding() != null)
             {
                 buildingSize = uiManager.GetSelectedBuilding().BuildingSize;
             }
 
             Vector2 worldPosition = gridManager.GetWorldPosition((int)gridPosition.x, (int)gridPosition.y);
-            
+
             if (buildingSize > 1 && buildingSize % 2 == 0)
             {
                 worldPosition.x += 0.5f;

@@ -18,7 +18,7 @@ public class GameSaveManager : MonoBehaviour
     public void SaveGame(string customSaveName = null)
     {
         GameSaveData saveData = new GameSaveData();
-        saveData.cityName = cityStats.cityName; 
+        saveData.cityName = cityStats.cityName;
         saveData.realWorldSaveTime = DateTime.Now;
         saveData.saveName = customSaveName ?? $"{saveData.cityName}_{saveData.realWorldSaveTime:yyyyMMdd_HHmmss}";
 

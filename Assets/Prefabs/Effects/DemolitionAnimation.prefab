@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7793615841506880068}
   - component: {fileID: 7317605102770297961}
   - component: {fileID: 4238072392534386871}
-  - component: {fileID: 7068129171103224602}
+  - component: {fileID: 3215725171617920268}
   m_Layer: 0
   m_Name: DemolitionAnimation
   m_TagString: Untagged
@@ -107,7 +107,7 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &7068129171103224602
+--- !u!114 &3215725171617920268
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -119,5 +119,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bfdb8a0e9acc400a981c4a4b0665451, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 4238072392534386871}
+  animator: {fileID: 0}
   animationDuration: 0.42

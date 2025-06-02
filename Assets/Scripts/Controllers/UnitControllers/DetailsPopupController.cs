@@ -4,12 +4,12 @@ using UnityEngine.UI;
 
 public class DetailsPopupController : MonoBehaviour
 {
-  public GameObject detailsPanel;
-  public Text waterConsumptionText;
-  public Text waterOutputText;
+    public GameObject detailsPanel;
+    public Text waterConsumptionText;
+    public Text waterOutputText;
 
-  public void ShowDetails()
-  {
-    detailsPanel.SetActive(true);
-  }
+    public void ShowDetails()
+    {
+        detailsPanel.SetActive(true);
+    }
 }

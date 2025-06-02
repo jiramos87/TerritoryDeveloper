@@ -39,20 +39,16 @@ public class SpeedButtonsController : MonoBehaviour
         if (speed2Button != null) allSpeedButtons.Add(speed2Button);
         if (speed3Button != null) allSpeedButtons.Add(speed3Button);
         if (speed4Button != null) allSpeedButtons.Add(speed4Button);
-        
-        Debug.Log($"Initialized {allSpeedButtons.Count} speed buttons for state management");
     }
     
     public void OnPauseButtonClick()
     {
-        Debug.Log("Pause button clicked");
         timeManager.SetTimeSpeedIndex(0);
         UpdateButtonStates(0);
     }
 
     public void OnSpeed1ButtonClick()
     {
-        Debug.Log("Speed 1 button clicked");
         timeManager.SetTimeSpeedIndex(1);
         UpdateButtonStates(1);
     }
@@ -102,8 +98,6 @@ public class SpeedButtonsController : MonoBehaviour
             SetButtonToSelectedState(selectedButton);
             currentlySelectedButton = selectedButton;
         }
-        
-        Debug.Log($"Updated button states - selected speed: {selectedSpeedIndex}");
     }
     
     /// <summary>
@@ -139,8 +133,6 @@ public class SpeedButtonsController : MonoBehaviour
         
         // Force the button to normal state
         button.OnDeselect(null);
-        
-        Debug.Log($"Set button {button.name} to normal state");
     }
     
     /// <summary>
@@ -158,8 +150,6 @@ public class SpeedButtonsController : MonoBehaviour
         
         // Trigger the selected state
         button.OnSelect(null);
-        
-        Debug.Log($"Set button {button.name} to selected state");
     }
     
     /// <summary>

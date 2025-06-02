@@ -416,8 +416,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 473613646}
   m_HandleRect: {fileID: 473613645}
   m_Direction: 0
-  m_Value: 1
-  m_Size: 0.9999999
+  m_Value: 0
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -460,6 +460,89 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 62444059}
   m_CullTransparentMesh: 1
+--- !u!1 &72477283
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 72477284}
+  - component: {fileID: 72477285}
+  m_Layer: 0
+  m_Name: CityStats
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &72477284
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 72477283}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 938947611}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &72477285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 72477283}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 395bf2953753e4a6c8e49ec358890199, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeManager: {fileID: 1231479808}
+  waterManager: {fileID: 1132506491}
+  forestManager: {fileID: 1916953178}
+  population: 0
+  money: 0
+  happiness: 0
+  residentialZoneCount: 0
+  residentialBuildingCount: 0
+  commercialZoneCount: 0
+  commercialBuildingCount: 0
+  industrialZoneCount: 0
+  industrialBuildingCount: 0
+  residentialLightBuildingCount: 0
+  residentialLightZoningCount: 0
+  residentialMediumBuildingCount: 0
+  residentialMediumZoningCount: 0
+  residentialHeavyBuildingCount: 0
+  residentialHeavyZoningCount: 0
+  commercialLightBuildingCount: 0
+  commercialLightZoningCount: 0
+  commercialMediumBuildingCount: 0
+  commercialMediumZoningCount: 0
+  commercialHeavyBuildingCount: 0
+  commercialHeavyZoningCount: 0
+  industrialLightBuildingCount: 0
+  industrialLightZoningCount: 0
+  industrialMediumBuildingCount: 0
+  industrialMediumZoningCount: 0
+  industrialHeavyBuildingCount: 0
+  industrialHeavyZoningCount: 0
+  roadCount: 0
+  grassCount: 0
+  cityPowerConsumption: 0
+  cityPowerOutput: 0
+  cityName: 
+  cityWaterConsumption: 0
+  cityWaterOutput: 0
+  forestCellCount: 0
+  forestCoveragePercentage: 0
 --- !u!1 &76646277
 GameObject:
   m_ObjectHideFlags: 0
@@ -542,7 +625,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 515320933}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: OnRaiseCommercialTaxButtonClicked
         m_Mode: 1
@@ -680,7 +763,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 81380779}
-  - component: {fileID: 81380778}
+  - component: {fileID: 81380780}
   m_Layer: 0
   m_Name: CameraController
   m_TagString: Untagged
@@ -688,7 +771,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &81380778
+--- !u!4 &81380779
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 81380777}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 605.95404, y: 371.02213, z: -3.4897077}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1724498777}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &81380780
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -711,22 +809,7 @@ MonoBehaviour:
   - 30
   startZoomLevel: 5
   gridManager: {fileID: 1880690383}
-  cameraButtonsController: {fileID: 0}
---- !u!4 &81380779
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 81380777}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 605.95404, y: 371.02213, z: -3.4897077}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1724498777}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  cameraButtonsController: {fileID: 1281450407}
 --- !u!1 &148715192
 GameObject:
   m_ObjectHideFlags: 0
@@ -738,6 +821,7 @@ GameObject:
   - component: {fileID: 148715193}
   - component: {fileID: 148715195}
   - component: {fileID: 148715194}
+  - component: {fileID: 148715196}
   m_Layer: 5
   m_Name: LoadGameMenuPanel
   m_TagString: Untagged
@@ -804,6 +888,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 148715192}
   m_CullTransparentMesh: 1
+--- !u!114 &148715196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 148715192}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6262e909c21649bba32ec68ee2fa213, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &161325756
 GameObject:
   m_ObjectHideFlags: 0
@@ -839,10 +935,10 @@ RectTransform:
   - {fileID: 366043616}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -941.4659}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &161325758
 MonoBehaviour:
@@ -908,8 +1004,8 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 171708675}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -719.5197}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -917,7 +1013,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -360, y: 0.6999359}
+  m_AnchoredPosition: {x: -360.2, y: 0.2}
   m_SizeDelta: {x: 40.96, y: 40.96}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &171708677
@@ -964,7 +1060,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 515320933}
+      - m_Target: {fileID: 515320935}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: OnSaveGameButtonClicked
         m_Mode: 1
@@ -1973,10 +2069,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 1072.253, y: -54.489414}
+  m_SizeDelta: {x: 805.5806, y: 95.34716}
   m_Pivot: {x: 0.71987516, y: 0.5}
 --- !u!114 &385853329
 MonoBehaviour:
@@ -2284,10 +2380,10 @@ RectTransform:
   - {fileID: 659669716}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -482.1627}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &406563767
 MonoBehaviour:
@@ -2362,10 +2458,10 @@ RectTransform:
   - {fileID: 757384524}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -826.6401}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &448274079
 MonoBehaviour:
@@ -2602,7 +2698,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 515320933}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: OnLowerResidentialTaxButtonClicked
         m_Mode: 1
@@ -2759,7 +2855,7 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 461958275}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.00000011920929, y: 0}
+  m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
@@ -2969,7 +3065,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 515320934}
-  - component: {fileID: 515320933}
+  - component: {fileID: 515320935}
   m_Layer: 0
   m_Name: UIManager
   m_TagString: Untagged
@@ -2977,7 +3073,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &515320933
+--- !u!4 &515320934
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 515320932}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 444.2802, y: 302.74573, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 938947611}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &515320935
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2989,14 +3100,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a562b16ebcb294d1eaf19f16c4ef5e2d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cityStats: {fileID: 890915146}
-  cursorManager: {fileID: 2043502343}
+  zoneManager: {fileID: 955926521}
+  cursorManager: {fileID: 2043502345}
   gridManager: {fileID: 1880690383}
-  timeManager: {fileID: 1231479806}
-  economyManager: {fileID: 678270590}
+  timeManager: {fileID: 1231479808}
+  economyManager: {fileID: 678270592}
   detailsPopupController: {fileID: 1158038489}
-  gameManager: {fileID: 724627293}
+  gameManager: {fileID: 724627295}
   buildingSelectorMenuController: {fileID: 1975260509}
+  cityStats: {fileID: 72477285}
   bulldozeMode: 0
   detailsMode: 0
   saveName: 
@@ -3038,28 +3150,13 @@ MonoBehaviour:
   savedGameButtonPrefab: {fileID: 5235823869393589878, guid: 6bdba24c190044053a91d51edf15a42b, type: 3}
   waterPumpPrefab: {fileID: 6076960314507618842, guid: e79cbc7fc0e8749759309cf1c80bddb5, type: 3}
   denseForestPrefab: {fileID: 4992091394876696714, guid: c25f6bc74509e409cb9fb8256b872db3, type: 3}
-  mediumForestPrefab: {fileID: 0}
-  sparseForestPrefab: {fileID: 0}
+  mediumForestPrefab: {fileID: 4992091394876696714, guid: c25f6bc74509e409cb9fb8256b872db3, type: 3}
+  sparseForestPrefab: {fileID: 4992091394876696714, guid: c25f6bc74509e409cb9fb8256b872db3, type: 3}
   demolitionExplosionPrefab: {fileID: 2226997682190568393, guid: 466e2369996d1447c83307e633ab5e3a, type: 3}
   loadGameMenu: {fileID: 148715192}
   savedGamesListContainer: {fileID: 1303387424}
   demandWarningPanel: {fileID: 2014187735}
   insufficientFundsPanel: {fileID: 2036862804}
---- !u!4 &515320934
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 515320932}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 444.2802, y: 302.74573, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 938947611}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &524023764
 GameObject:
   m_ObjectHideFlags: 0
@@ -3069,7 +3166,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 524023766}
-  - component: {fileID: 524023765}
+  - component: {fileID: 524023767}
   m_Layer: 0
   m_Name: GameNotificationManager
   m_TagString: Untagged
@@ -3077,7 +3174,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &524023765
+--- !u!4 &524023766
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 524023764}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1594.2268, y: 373.63712, z: -4.7590666}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 938947611}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &524023767
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3099,21 +3211,6 @@ MonoBehaviour:
   warningColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   infoColor: {r: 1, g: 1, b: 1, a: 1}
   successColor: {r: 0, g: 1, b: 0, a: 1}
---- !u!4 &524023766
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 524023764}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1594.2268, y: 373.63712, z: -4.7590666}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 938947611}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &527006393
 GameObject:
   m_ObjectHideFlags: 0
@@ -3605,7 +3702,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 515320933}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: OnRaiseIndustrialTaxButtonClicked
         m_Mode: 1
@@ -3910,7 +4007,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   popupController: {fileID: 1421362056}
-  uiManager: {fileID: 515320933}
+  uiManager: {fileID: 515320935}
 --- !u!1 &645748806
 GameObject:
   m_ObjectHideFlags: 0
@@ -3946,10 +4043,10 @@ RectTransform:
   - {fileID: 1091617896}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -711.8143}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &645748808
 MonoBehaviour:
@@ -4183,7 +4280,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 678270591}
-  - component: {fileID: 678270590}
+  - component: {fileID: 678270592}
   m_Layer: 0
   m_Name: EconomyManager
   m_TagString: Untagged
@@ -4191,26 +4288,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &678270590
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 678270589}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: adb100f088f2f402b965b7d127e51484, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cityStats: {fileID: 890915146}
-  timeManager: {fileID: 1231479806}
-  residentialIncomeTax: 10
-  commercialIncomeTax: 10
-  industrialIncomeTax: 10
-  minTaxRate: 0
-  maxTaxRate: 50
-  gameNotificationManager: {fileID: 524023765}
 --- !u!4 &678270591
 Transform:
   m_ObjectHideFlags: 0
@@ -4226,6 +4303,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 938947611}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &678270592
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 678270589}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adb100f088f2f402b965b7d127e51484, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cityStats: {fileID: 72477285}
+  timeManager: {fileID: 1231479808}
+  gameNotificationManager: {fileID: 524023767}
+  residentialIncomeTax: 10
+  commercialIncomeTax: 10
+  industrialIncomeTax: 10
+  minTaxRate: 0
+  maxTaxRate: 50
 --- !u!1 &686057057
 GameObject:
   m_ObjectHideFlags: 0
@@ -4407,7 +4504,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 104.15948, y: 0}
+  m_AnchoredPosition: {x: 104.16394, y: 0}
   m_SizeDelta: {x: -686.71, y: -4.9274}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &709582277
@@ -4485,10 +4582,10 @@ RectTransform:
   - {fileID: 701606471}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -309.92398}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &712687008
 MonoBehaviour:
@@ -4537,7 +4634,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 724627294}
-  - component: {fileID: 724627293}
+  - component: {fileID: 724627295}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -4545,18 +4642,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &724627293
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 724627292}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6262e909c21649bba32ec68ee2fa213, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &724627294
 Transform:
   m_ObjectHideFlags: 0
@@ -4572,6 +4657,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 938947611}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &724627295
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724627292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6262e909c21649bba32ec68ee2fa213, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &732492394
 GameObject:
   m_ObjectHideFlags: 0
@@ -4733,7 +4830,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 515320933}
+      - m_Target: {fileID: 515320935}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: OnLoadButtonClicked
         m_Mode: 1
@@ -5045,7 +5142,7 @@ GameObject:
   - component: {fileID: 776649736}
   - component: {fileID: 776649735}
   - component: {fileID: 776649734}
-  - component: {fileID: 776649733}
+  - component: {fileID: 776649737}
   m_Layer: 5
   m_Name: ResidentialZoningSelectorButton
   m_TagString: Untagged
@@ -5072,30 +5169,6 @@ RectTransform:
   m_AnchoredPosition: {x: -140.5, y: -0.11989021}
   m_SizeDelta: {x: 45, y: 45}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &776649733
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 776649731}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 17d95825bfbaa4745a91b4fecefc6b93, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  popupController: {fileID: 1975260509}
-  residentialZoningItems:
-  - name: Light
-    icon: {fileID: 21300000, guid: 34135603a4f1b477bb95e4d6c3afeb4a, type: 3}
-    price: 2
-  - name: Medium
-    icon: {fileID: 21300000, guid: d01ced24bf4ab4a41a191ee660ec2063, type: 3}
-    price: 4
-  - name: Heavy
-    icon: {fileID: 21300000, guid: ada76e2b1f1854f0a82e09384271cbfb, type: 3}
-    price: 6
-  uiManager: {fileID: 515320933}
 --- !u!114 &776649734
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5140,7 +5213,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 776649733}
+      - m_Target: {fileID: 776649737}
         m_TargetAssemblyTypeName: ResidentialZoningSelectorButton, Assembly-CSharp
         m_MethodName: OnResidentialZoningButtonClick
         m_Mode: 1
@@ -5190,6 +5263,30 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 776649731}
   m_CullTransparentMesh: 1
+--- !u!114 &776649737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 776649731}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17d95825bfbaa4745a91b4fecefc6b93, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  popupController: {fileID: 1975260509}
+  residentialZoningItems:
+  - name: Light
+    icon: {fileID: 21300000, guid: 34135603a4f1b477bb95e4d6c3afeb4a, type: 3}
+    price: 1
+  - name: Medium
+    icon: {fileID: 21300000, guid: d01ced24bf4ab4a41a191ee660ec2063, type: 3}
+    price: 3
+  - name: Heavy
+    icon: {fileID: 21300000, guid: 2bc91073ff7cd49d2a5eca0f2c6d487b, type: 3}
+    price: 2
+  uiManager: {fileID: 515320935}
 --- !u!1 &780805573
 GameObject:
   m_ObjectHideFlags: 0
@@ -5225,10 +5322,10 @@ RectTransform:
   - {fileID: 938977937}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -195.09818}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &780805575
 MonoBehaviour:
@@ -5540,10 +5637,10 @@ RectTransform:
   - {fileID: 1301908935}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -596.98846}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &841182462
 MonoBehaviour:
@@ -5869,89 +5966,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 880813365}
   m_CullTransparentMesh: 1
---- !u!1 &890915145
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 890915147}
-  - component: {fileID: 890915146}
-  m_Layer: 0
-  m_Name: CityStats
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &890915146
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 890915145}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 395bf2953753e4a6c8e49ec358890199, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  timeManager: {fileID: 1231479806}
-  population: 0
-  money: 0
-  happiness: 0
-  residentialZoneCount: 0
-  residentialBuildingCount: 0
-  commercialZoneCount: 0
-  commercialBuildingCount: 0
-  industrialZoneCount: 0
-  industrialBuildingCount: 0
-  residentialLightBuildingCount: 0
-  residentialLightZoningCount: 0
-  residentialMediumBuildingCount: 0
-  residentialMediumZoningCount: 0
-  residentialHeavyBuildingCount: 0
-  residentialHeavyZoningCount: 0
-  commercialLightBuildingCount: 0
-  commercialLightZoningCount: 0
-  commercialMediumBuildingCount: 0
-  commercialMediumZoningCount: 0
-  commercialHeavyBuildingCount: 0
-  commercialHeavyZoningCount: 0
-  industrialLightBuildingCount: 0
-  industrialLightZoningCount: 0
-  industrialMediumBuildingCount: 0
-  industrialMediumZoningCount: 0
-  industrialHeavyBuildingCount: 0
-  industrialHeavyZoningCount: 0
-  roadCount: 0
-  grassCount: 0
-  cityPowerConsumption: 0
-  cityPowerOutput: 0
-  cityName: 
-  cityWaterConsumption: 0
-  cityWaterOutput: 0
-  waterManager: {fileID: 1132506489}
-  forestCellCount: 0
-  forestCoveragePercentage: 0
-  forestManager: {fileID: 1916953176}
---- !u!4 &890915147
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 890915145}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 298.25604, y: 495.631, z: -1.9711478}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 938947611}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &900489266
 GameObject:
   m_ObjectHideFlags: 0
@@ -6114,7 +6128,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 470750413}
   m_Direction: 0
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.99996656
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -6186,12 +6200,11 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2043502344}
   - {fileID: 2064853468}
   - {fileID: 1770571921}
   - {fileID: 1880690382}
-  - {fileID: 2043502344}
   - {fileID: 515320934}
-  - {fileID: 890915147}
   - {fileID: 1231479807}
   - {fileID: 678270591}
   - {fileID: 1871997441}
@@ -6205,6 +6218,7 @@ Transform:
   - {fileID: 1916953177}
   - {fileID: 955926520}
   - {fileID: 1313145026}
+  - {fileID: 72477284}
   m_Father: {fileID: 1745906816}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &938977936
@@ -6368,7 +6382,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 515320933}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: OnLowerCommercialTaxButtonClicked
         m_Mode: 1
@@ -6463,14 +6477,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridManager: {fileID: 1880690383}
-  powerPlantManager: {fileID: 1515061135}
+  powerPlantManager: {fileID: 1515061137}
   waterPlantManager: {fileID: 1195857781}
   roadManager: {fileID: 1313145027}
-  cityStats: {fileID: 890915146}
-  uiManager: {fileID: 515320933}
-  gameNotificationManager: {fileID: 524023765}
-  demandManager: {fileID: 2064853467}
-  waterManager: {fileID: 1132506489}
+  cityStats: {fileID: 72477285}
+  uiManager: {fileID: 515320935}
+  gameNotificationManager: {fileID: 524023767}
+  demandManager: {fileID: 2064853469}
+  waterManager: {fileID: 1132506491}
   lightResidential1x1Prefabs:
   - {fileID: 6407699466507457254, guid: 8940a389d4d2c469ba715ad515e5cfe5, type: 3}
   lightResidential2x2Prefabs: []
@@ -6516,7 +6530,7 @@ MonoBehaviour:
   commercialHeavyZoningPrefabs:
   - {fileID: 902911616048353791, guid: 02052cd4a52cc4aa0af11925202d7763, type: 3}
   industrialLightZoningPrefabs:
-  - {fileID: 5297083546230540010, guid: f2949ea80c4bd4963b705297e57733cd, type: 3}
+  - {fileID: 8749439238386827594, guid: ba9a6c0ab2c8145f78e0ad8497927a56, type: 3}
   industrialMediumZoningPrefabs:
   - {fileID: 424137768955328944, guid: 2532fed4df7b2428cbeb85f7781c3adf, type: 3}
   industrialHeavyZoningPrefabs:
@@ -6697,7 +6711,7 @@ GameObject:
   - component: {fileID: 974819144}
   - component: {fileID: 974819143}
   - component: {fileID: 974819142}
-  - component: {fileID: 974819141}
+  - component: {fileID: 974819145}
   m_Layer: 5
   m_Name: WaterBuildingSelectorButton
   m_TagString: Untagged
@@ -6724,24 +6738,6 @@ RectTransform:
   m_AnchoredPosition: {x: 88.799965, y: -0.51988983}
   m_SizeDelta: {x: 30, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &974819141
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 974819139}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fcd418d5d710f415fa579cd2e084fb05, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  popupController: {fileID: 1975260509}
-  waterBuildingItems:
-  - name: Medium Water Pump
-    icon: {fileID: 21300000, guid: df0a468f0e820464d95ccc56a8ea4558, type: 3}
-    price: 8000
-  uiManager: {fileID: 515320933}
 --- !u!114 &974819142
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6786,7 +6782,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 974819141}
+      - m_Target: {fileID: 974819145}
         m_TargetAssemblyTypeName: WaterBuildingSelectorButton, Assembly-CSharp
         m_MethodName: OnWaterBuildingsButtonClick
         m_Mode: 1
@@ -6836,6 +6832,24 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 974819139}
   m_CullTransparentMesh: 1
+--- !u!114 &974819145
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 974819139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcd418d5d710f415fa579cd2e084fb05, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  popupController: {fileID: 1975260509}
+  waterBuildingItems:
+  - name: Medium Water Pump
+    icon: {fileID: 21300000, guid: df0a468f0e820464d95ccc56a8ea4558, type: 3}
+    price: 6000
+  uiManager: {fileID: 515320935}
 --- !u!1 &1008787585
 GameObject:
   m_ObjectHideFlags: 0
@@ -6871,10 +6885,10 @@ RectTransform:
   - {fileID: 297639453}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -769.2272}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1008787587
 MonoBehaviour:
@@ -6996,7 +7010,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 515320933}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: OnRaiseResidentialTaxButtonClicked
         m_Mode: 1
@@ -7196,7 +7210,7 @@ MonoBehaviour:
   - name: Nuclear plant
     icon: {fileID: 21300000, guid: bfd2cdc7f5ca347a18ecbb987f771e8d, type: 3}
     price: 10000
-  uiManager: {fileID: 515320933}
+  uiManager: {fileID: 515320935}
 --- !u!1 &1025031819
 GameObject:
   m_ObjectHideFlags: 0
@@ -7232,10 +7246,10 @@ RectTransform:
   - {fileID: 861216964}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -539.57556}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1025031821
 MonoBehaviour:
@@ -7363,7 +7377,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1079921492}
-  - component: {fileID: 1079921491}
+  - component: {fileID: 1079921493}
   m_Layer: 0
   m_Name: StatisticsManager
   m_TagString: Untagged
@@ -7371,7 +7385,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1079921491
+--- !u!4 &1079921492
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1079921490}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 806.97437, y: 81.63013, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 938947611}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1079921493
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -7431,21 +7460,6 @@ MonoBehaviour:
     previousValue: 0
     changeRate: 0
     trend: 0
---- !u!4 &1079921492
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1079921490}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 806.97437, y: 81.63013, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 938947611}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1091617895
 GameObject:
   m_ObjectHideFlags: 0
@@ -7612,7 +7626,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1097666052}
-  - component: {fileID: 1097666051}
+  - component: {fileID: 1097666053}
   m_Layer: 0
   m_Name: TerrainManager
   m_TagString: Untagged
@@ -7620,33 +7634,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1097666051
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1097666050}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2554f07997e242c2adef24969c46277, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gridManager: {fileID: 1880690383}
-  zoneManager: {fileID: 955926521}
-  waterManager: {fileID: 1132506489}
-  northSlopePrefab: {fileID: 2224226690306160349, guid: 13ba652f4fa174f1a9494270ca4c2c4d, type: 3}
-  southSlopePrefab: {fileID: 5133952661624202745, guid: 31d00874101db436f831e2bb1dcfa7a8, type: 3}
-  eastSlopePrefab: {fileID: 7113445838966405979, guid: 53a114ba05b164640870000d897d0ae8, type: 3}
-  westSlopePrefab: {fileID: 1320511209846950595, guid: f8d9880fc255347a2b91fd68d5884e2c, type: 3}
-  northEastSlopePrefab: {fileID: 314956755288790748, guid: aa60ece343405456087c0e5ef028ef36, type: 3}
-  northWestSlopePrefab: {fileID: 2878678499177400542, guid: be209671e43a0411a904da5387f76a66, type: 3}
-  southEastSlopePrefab: {fileID: 9066508454761111616, guid: 7ea11928026f5445aabceb6db04b14a0, type: 3}
-  southWestSlopePrefab: {fileID: 4496486681609493812, guid: 41a382e8bac164b1a9db9f90752fe6c8, type: 3}
-  northEastUpslopePrefab: {fileID: 8393299228354214456, guid: 896570ebc44ef4f18b857f6729df5227, type: 3}
-  northWestUpslopePrefab: {fileID: 6652725620969799647, guid: e919387993c184ea08fd205af2d9f757, type: 3}
-  southEastUpslopePrefab: {fileID: 6107455444412750235, guid: 669b2368b50174fc2b0b91cb40c33a54, type: 3}
-  southWestUpslopePrefab: {fileID: 863019582703072255, guid: 542577f3f0d634860be0887a0495125e, type: 3}
 --- !u!4 &1097666052
 Transform:
   m_ObjectHideFlags: 0
@@ -7662,6 +7649,33 @@ Transform:
   m_Children: []
   m_Father: {fileID: 938947611}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1097666053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097666050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2554f07997e242c2adef24969c46277, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gridManager: {fileID: 1880690383}
+  zoneManager: {fileID: 955926521}
+  waterManager: {fileID: 1132506491}
+  northSlopePrefab: {fileID: 2224226690306160349, guid: 13ba652f4fa174f1a9494270ca4c2c4d, type: 3}
+  southSlopePrefab: {fileID: 5133952661624202745, guid: 31d00874101db436f831e2bb1dcfa7a8, type: 3}
+  eastSlopePrefab: {fileID: 7113445838966405979, guid: 53a114ba05b164640870000d897d0ae8, type: 3}
+  westSlopePrefab: {fileID: 1320511209846950595, guid: f8d9880fc255347a2b91fd68d5884e2c, type: 3}
+  northEastSlopePrefab: {fileID: 314956755288790748, guid: aa60ece343405456087c0e5ef028ef36, type: 3}
+  northWestSlopePrefab: {fileID: 2878678499177400542, guid: be209671e43a0411a904da5387f76a66, type: 3}
+  southEastSlopePrefab: {fileID: 9066508454761111616, guid: 7ea11928026f5445aabceb6db04b14a0, type: 3}
+  southWestSlopePrefab: {fileID: 4496486681609493812, guid: 41a382e8bac164b1a9db9f90752fe6c8, type: 3}
+  northEastUpslopePrefab: {fileID: 8393299228354214456, guid: 896570ebc44ef4f18b857f6729df5227, type: 3}
+  northWestUpslopePrefab: {fileID: 6652725620969799647, guid: e919387993c184ea08fd205af2d9f757, type: 3}
+  southEastUpslopePrefab: {fileID: 6107455444412750235, guid: 669b2368b50174fc2b0b91cb40c33a54, type: 3}
+  southWestUpslopePrefab: {fileID: 863019582703072255, guid: 542577f3f0d634860be0887a0495125e, type: 3}
 --- !u!1 &1125915284
 GameObject:
   m_ObjectHideFlags: 0
@@ -7803,7 +7817,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1132506490}
-  - component: {fileID: 1132506489}
+  - component: {fileID: 1132506491}
   m_Layer: 0
   m_Name: WaterManager
   m_TagString: Untagged
@@ -7811,24 +7825,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1132506489
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1132506488}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 02f753effef5f4b589676360fad69dc9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gridManager: {fileID: 1880690383}
-  terrainManager: {fileID: 1097666051}
-  zoneManager: {fileID: 955926521}
-  waterTilePrefabs:
-  - {fileID: 4185789789968399324, guid: a31e41505bf854bc4a20112f64d7df11, type: 3}
-  seaLevel: 0
 --- !u!4 &1132506490
 Transform:
   m_ObjectHideFlags: 0
@@ -7844,6 +7840,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 938947611}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1132506491
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1132506488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02f753effef5f4b589676360fad69dc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gridManager: {fileID: 1880690383}
+  terrainManager: {fileID: 1097666053}
+  zoneManager: {fileID: 955926521}
+  waterTilePrefabs:
+  - {fileID: 4185789789968399324, guid: a31e41505bf854bc4a20112f64d7df11, type: 3}
+  seaLevel: 0
 --- !u!1 &1140593662
 GameObject:
   m_ObjectHideFlags: 0
@@ -7853,7 +7867,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1140593664}
-  - component: {fileID: 1140593663}
+  - component: {fileID: 1140593665}
   m_Layer: 0
   m_Name: BuildingSelectorMenuManager
   m_TagString: Untagged
@@ -7861,21 +7875,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1140593663
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1140593662}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6852295852c944d759bdc62a8532c479, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  itemButtonPrefab: {fileID: 624494626664334750, guid: 096dd929ea7fe42199f037651281ca35, type: 3}
-  content: {fileID: 709582275}
-  populatedWith: 
 --- !u!4 &1140593664
 Transform:
   m_ObjectHideFlags: 0
@@ -7891,6 +7890,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 532393302}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1140593665
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1140593662}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6852295852c944d759bdc62a8532c479, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  itemButtonPrefab: {fileID: 624494626664334750, guid: 096dd929ea7fe42199f037651281ca35, type: 3}
+  content: {fileID: 709582275}
+  populatedWith: 
 --- !u!1 &1158038488
 GameObject:
   m_ObjectHideFlags: 0
@@ -8289,9 +8303,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d603936193fb4594b32033c0f46506f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terrainManager: {fileID: 1097666051}
-  waterManager: {fileID: 1132506489}
-  forestManager: {fileID: 1916953176}
+  terrainManager: {fileID: 1097666053}
+  waterManager: {fileID: 1132506491}
+  forestManager: {fileID: 1916953178}
   gridManager: {fileID: 1880690383}
   zoneManager: {fileID: 955926521}
   initializeOnStart: 1
@@ -8378,7 +8392,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 515320933}
+      - m_Target: {fileID: 515320935}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: OnNewGameButtonClicked
         m_Mode: 1
@@ -8510,7 +8524,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 515320933}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: OnLowerIndustrialTaxButtonClicked
         m_Mode: 1
@@ -8569,7 +8583,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1231479807}
-  - component: {fileID: 1231479806}
+  - component: {fileID: 1231479808}
   m_Layer: 0
   m_Name: TimeManager
   m_TagString: Untagged
@@ -8577,31 +8591,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1231479806
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1231479805}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e39aec02f972c48dfbba486ab3f06ffd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  uiManager: {fileID: 515320933}
-  speedButtonsController: {fileID: 1367649255}
-  cityStats: {fileID: 890915146}
-  economyManager: {fileID: 678270590}
-  gridManager: {fileID: 1880690383}
-  animatorManager: {fileID: 1871997440}
-  zoneManager: {fileID: 955926521}
-  timeSpeeds:
-  - 0
-  - 1
-  - 2
-  - 4
-  - 8
 --- !u!4 &1231479807
 Transform:
   m_ObjectHideFlags: 0
@@ -8617,6 +8606,31 @@ Transform:
   m_Children: []
   m_Father: {fileID: 938947611}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1231479808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1231479805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e39aec02f972c48dfbba486ab3f06ffd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiManager: {fileID: 515320935}
+  speedButtonsController: {fileID: 1367649255}
+  cityStats: {fileID: 72477285}
+  economyManager: {fileID: 678270592}
+  gridManager: {fileID: 1880690383}
+  animatorManager: {fileID: 1871997442}
+  zoneManager: {fileID: 955926521}
+  timeSpeeds:
+  - 0
+  - 0.5
+  - 1
+  - 2
+  - 4
 --- !u!1 &1236385711
 GameObject:
   m_ObjectHideFlags: 0
@@ -8713,7 +8727,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1253988704
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8816,7 +8830,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 395bf2953753e4a6c8e49ec358890199, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  timeManager: {fileID: 1231479806}
+  timeManager: {fileID: 1231479808}
+  waterManager: {fileID: 1132506491}
+  forestManager: {fileID: 1916953178}
   population: 0
   money: 0
   happiness: 0
@@ -8851,10 +8867,8 @@ MonoBehaviour:
   cityName: 
   cityWaterConsumption: 0
   cityWaterOutput: 0
-  waterManager: {fileID: 1132506489}
   forestCellCount: 0
   forestCoveragePercentage: 0
-  forestManager: {fileID: 1916953176}
 --- !u!114 &1253988709
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8955,7 +8969,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21850bfd477d6402bae9116b8a8bbd15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cameraController: {fileID: 81380778}
+  cameraController: {fileID: 81380780}
   zoomInButton: {fileID: 1687470283}
   zoomOutButton: {fileID: 1425233212}
 --- !u!1 &1294226875
@@ -9233,10 +9247,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40e2df8bc8df44c80bf35134113f0d9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terrainManager: {fileID: 1097666051}
+  terrainManager: {fileID: 1097666053}
   gridManager: {fileID: 1880690383}
-  cityStats: {fileID: 890915146}
-  uiManager: {fileID: 515320933}
+  cityStats: {fileID: 72477285}
+  uiManager: {fileID: 515320935}
   zoneManager: {fileID: 955926521}
   roadTilePrefabs: []
   roadTilePrefab1: {fileID: 985362822682053019, guid: f352b1a1987d5475fb6ca00d317d21da, type: 3}
@@ -9285,10 +9299,10 @@ RectTransform:
   - {fileID: 323551594}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -998.8788}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1313366840
 MonoBehaviour:
@@ -9558,7 +9572,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1a30e9a48c23474bb24dd0914c2081f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  timeManager: {fileID: 1231479806}
+  timeManager: {fileID: 1231479808}
   pauseButton: {fileID: 1125915286}
   speed1Button: {fileID: 854348732}
   speed2Button: {fileID: 1769093473}
@@ -9722,10 +9736,10 @@ RectTransform:
   - {fileID: 241017102}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -252.51108}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1421946062
 MonoBehaviour:
@@ -10065,7 +10079,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1515061136}
-  - component: {fileID: 1515061135}
+  - component: {fileID: 1515061137}
   m_Layer: 0
   m_Name: PowerPlant
   m_TagString: Untagged
@@ -10073,19 +10087,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1515061135
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1515061134}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 11a5631f87e9a4db4bdb4d678ed1902a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  powerPlantNuclearPrefab: {fileID: 5639871321760385905, guid: a465414ff1b1a4fcf9ddeb43da98a8e7, type: 3}
 --- !u!4 &1515061136
 Transform:
   m_ObjectHideFlags: 0
@@ -10101,6 +10102,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 532393302}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1515061137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1515061134}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11a5631f87e9a4db4bdb4d678ed1902a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  powerPlantNuclearPrefab: {fileID: 5639871321760385905, guid: a465414ff1b1a4fcf9ddeb43da98a8e7, type: 3}
 --- !u!1 &1532666323
 GameObject:
   m_ObjectHideFlags: 0
@@ -10414,10 +10428,10 @@ RectTransform:
   - {fileID: 391968202}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -884.053}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1571193229
 MonoBehaviour:
@@ -10832,10 +10846,10 @@ RectTransform:
   - {fileID: 1628017427}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -654.40137}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1613042645
 MonoBehaviour:
@@ -11103,14 +11117,14 @@ MonoBehaviour:
   commercialZoningItems:
   - name: Light
     icon: {fileID: 21300000, guid: 0a4757295c3c349568f776e9fa4b0034, type: 3}
-    price: 2
+    price: 1
   - name: Medium
     icon: {fileID: 21300000, guid: 40884ea0b87134225899bbdb75b0382e, type: 3}
-    price: 4
+    price: 2
   - name: Heavy
     icon: {fileID: 21300000, guid: 3acbea86c09784331bac2d88984f3ee0, type: 3}
-    price: 6
-  uiManager: {fileID: 515320933}
+    price: 3
+  uiManager: {fileID: 515320935}
 --- !u!1 &1628017426
 GameObject:
   m_ObjectHideFlags: 0
@@ -11411,7 +11425,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1688708271}
-  - component: {fileID: 1688708270}
+  - component: {fileID: 1688708272}
   m_Layer: 0
   m_Name: EmploymentManager
   m_TagString: Untagged
@@ -11419,7 +11433,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1688708270
+--- !u!4 &1688708271
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1688708269}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 806.97437, y: 81.63013, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 938947611}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1688708272
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -11454,23 +11483,8 @@ MonoBehaviour:
   workingAgeRatio: 0.7
   jobSeekingRatio: 0.9
   jobsPerResidentialBuilding: 0.8
-  cityStats: {fileID: 890915146}
-  demandManager: {fileID: 2064853467}
---- !u!4 &1688708271
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1688708269}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 806.97437, y: 81.63013, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 938947611}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  cityStats: {fileID: 72477285}
+  demandManager: {fileID: 2064853469}
 --- !u!1 &1695496941
 GameObject:
   m_ObjectHideFlags: 0
@@ -11667,7 +11681,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -22.999512, y: -166.00006}
+  m_AnchoredPosition: {x: -22.999512, y: -166.00008}
   m_SizeDelta: {x: -235.22, y: -573.0851}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1710728776
@@ -11720,8 +11734,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57442814c7ded468ea6602a9747a199f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  menuManager: {fileID: 1140593663}
-  cursorManager: {fileID: 2043502343}
+  menuManager: {fileID: 1140593665}
+  cursorManager: {fileID: 2043502345}
   popupPanel: {fileID: 1710728774}
 --- !u!1 &1713158177
 GameObject:
@@ -11735,7 +11749,7 @@ GameObject:
   - component: {fileID: 1713158182}
   - component: {fileID: 1713158181}
   - component: {fileID: 1713158180}
-  - component: {fileID: 1713158179}
+  - component: {fileID: 1713158183}
   m_Layer: 5
   m_Name: IndustrialZoningSelectorButton
   m_TagString: Untagged
@@ -11762,30 +11776,6 @@ RectTransform:
   m_AnchoredPosition: {x: -39.60006, y: -0.11989021}
   m_SizeDelta: {x: 45, y: 45}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1713158179
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1713158177}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9888bfdd227448a28b975aac700306b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  popupController: {fileID: 1975260509}
-  industrialZoningItems:
-  - name: Light
-    icon: {fileID: 21300000, guid: c4623aa14589947219e9c775c78b575e, type: 3}
-    price: 2
-  - name: Medium
-    icon: {fileID: 21300000, guid: f5d831c458e784f96a0841ca38fda99b, type: 3}
-    price: 4
-  - name: Heavy
-    icon: {fileID: 21300000, guid: de80f9e4de5e44fc4882a52c136621e3, type: 3}
-    price: 6
-  uiManager: {fileID: 515320933}
 --- !u!114 &1713158180
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11830,7 +11820,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1713158179}
+      - m_Target: {fileID: 1713158183}
         m_TargetAssemblyTypeName: IndustrialZoningSelectorButton, Assembly-CSharp
         m_MethodName: OnIndustrialZoningButtonClick
         m_Mode: 1
@@ -11880,6 +11870,30 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1713158177}
   m_CullTransparentMesh: 1
+--- !u!114 &1713158183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1713158177}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9888bfdd227448a28b975aac700306b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  popupController: {fileID: 1975260509}
+  industrialZoningItems:
+  - name: Light
+    icon: {fileID: 21300000, guid: c4623aa14589947219e9c775c78b575e, type: 3}
+    price: 1
+  - name: Medium
+    icon: {fileID: 21300000, guid: f5d831c458e784f96a0841ca38fda99b, type: 3}
+    price: 2
+  - name: Heavy
+    icon: {fileID: 21300000, guid: de80f9e4de5e44fc4882a52c136621e3, type: 3}
+    price: 3
+  uiManager: {fileID: 515320935}
 --- !u!1 &1714832940
 GameObject:
   m_ObjectHideFlags: 0
@@ -12214,10 +12228,10 @@ RectTransform:
   - {fileID: 24643459}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -367.33688}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1758786763
 MonoBehaviour:
@@ -12486,7 +12500,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1770571921}
-  - component: {fileID: 1770571920}
+  - component: {fileID: 1770571922}
   m_Layer: 0
   m_Name: GameSaveManager
   m_TagString: Untagged
@@ -12494,23 +12508,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1770571920
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1770571919}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8a82a7106150940be9558c365ed655d9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  saveName: 
-  cityName: 
-  gridManager: {fileID: 1880690383}
-  cityStats: {fileID: 890915146}
-  timeManager: {fileID: 1231479806}
 --- !u!4 &1770571921
 Transform:
   m_ObjectHideFlags: 0
@@ -12526,6 +12523,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 938947611}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1770571922
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1770571919}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a82a7106150940be9558c365ed655d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  saveName: 
+  cityName: 
+  gridManager: {fileID: 1880690383}
+  cityStats: {fileID: 72477285}
+  timeManager: {fileID: 1231479808}
 --- !u!1 &1796741940
 GameObject:
   m_ObjectHideFlags: 0
@@ -12552,8 +12566,8 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1796741940}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -342.7659}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12561,7 +12575,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -220.60007, y: -0.4}
+  m_AnchoredPosition: {x: -233, y: -0}
   m_SizeDelta: {x: 45, y: 45}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1796741942
@@ -12608,7 +12622,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 515320933}
+      - m_Target: {fileID: 515320935}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: OnBulldozeButtonClicked
         m_Mode: 1
@@ -12693,10 +12707,10 @@ RectTransform:
   - {fileID: 1346853129}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -424.7498}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1805487330
 MonoBehaviour:
@@ -13057,7 +13071,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1871997441}
-  - component: {fileID: 1871997440}
+  - component: {fileID: 1871997442}
   m_Layer: 0
   m_Name: AnimatorManager
   m_TagString: Untagged
@@ -13065,19 +13079,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1871997440
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1871997439}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01919c765e189414792f08077eb8a489, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  timeManager: {fileID: 1231479806}
 --- !u!4 &1871997441
 Transform:
   m_ObjectHideFlags: 0
@@ -13093,6 +13094,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 938947611}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1871997442
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1871997439}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 332a41ec6d3ab4a50add9338581d0bd4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  timeManager: {fileID: 1231479808}
 --- !u!1 &1880690380
 GameObject:
   m_ObjectHideFlags: 0
@@ -13138,15 +13152,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   zoneManager: {fileID: 955926521}
-  uiManager: {fileID: 515320933}
-  cityStats: {fileID: 890915146}
-  cursorManager: {fileID: 2043502343}
-  terrainManager: {fileID: 1097666051}
-  demandManager: {fileID: 2064853467}
-  waterManager: {fileID: 1132506489}
-  GameNotificationManager: {fileID: 524023765}
-  forestManager: {fileID: 1916953176}
-  cameraController: {fileID: 81380778}
+  uiManager: {fileID: 515320935}
+  cityStats: {fileID: 72477285}
+  cursorManager: {fileID: 2043502345}
+  terrainManager: {fileID: 1097666053}
+  demandManager: {fileID: 2064853469}
+  waterManager: {fileID: 1132506491}
+  GameNotificationManager: {fileID: 524023767}
+  forestManager: {fileID: 1916953178}
+  cameraController: {fileID: 81380780}
   roadManager: {fileID: 1313145027}
   buildingSelectorMenuController: {fileID: 1975260509}
   width: 20
@@ -13244,7 +13258,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1916953177}
-  - component: {fileID: 1916953176}
+  - component: {fileID: 1916953178}
   m_Layer: 0
   m_Name: ForestManager
   m_TagString: Untagged
@@ -13252,29 +13266,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1916953176
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1916953175}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 21eddf7d5cb7e4708adabdc142be3de3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gridManager: {fileID: 1880690383}
-  waterManager: {fileID: 1132506489}
-  cityStats: {fileID: 890915146}
-  economyManager: {fileID: 678270590}
-  uiManager: {fileID: 515320933}
-  gameNotificationManager: {fileID: 524023765}
-  sparseForestPrefab: {fileID: 0}
-  mediumForestPrefab: {fileID: 0}
-  denseForestPrefab: {fileID: 4992091394876696714, guid: c25f6bc74509e409cb9fb8256b872db3, type: 3}
-  desirabilityPerAdjacentForest: 2
-  demandBoostPercentage: 0.5
 --- !u!4 &1916953177
 Transform:
   m_ObjectHideFlags: 0
@@ -13290,6 +13281,29 @@ Transform:
   m_Children: []
   m_Father: {fileID: 938947611}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1916953178
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1916953175}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21eddf7d5cb7e4708adabdc142be3de3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gridManager: {fileID: 1880690383}
+  waterManager: {fileID: 1132506491}
+  cityStats: {fileID: 72477285}
+  economyManager: {fileID: 678270592}
+  uiManager: {fileID: 515320935}
+  gameNotificationManager: {fileID: 524023767}
+  sparseForestPrefab: {fileID: 4992091394876696714, guid: c25f6bc74509e409cb9fb8256b872db3, type: 3}
+  mediumForestPrefab: {fileID: 4992091394876696714, guid: c25f6bc74509e409cb9fb8256b872db3, type: 3}
+  denseForestPrefab: {fileID: 4992091394876696714, guid: c25f6bc74509e409cb9fb8256b872db3, type: 3}
+  desirabilityPerAdjacentForest: 2
+  demandBoostPercentage: 0.5
 --- !u!1 &1918051079
 GameObject:
   m_ObjectHideFlags: 0
@@ -13456,7 +13470,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2052042584}
   m_HandleRect: {fileID: 2052042583}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -13766,8 +13780,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57442814c7ded468ea6602a9747a199f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  menuManager: {fileID: 1140593663}
-  cursorManager: {fileID: 2043502343}
+  menuManager: {fileID: 1140593665}
+  cursorManager: {fileID: 2043502345}
   popupPanel: {fileID: 1710728774}
 --- !u!4 &1975260510
 Transform:
@@ -14062,10 +14076,10 @@ RectTransform:
   - {fileID: 835377402}
   m_Father: {fileID: 1253988704}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 442.7903, y: -137.68527}
+  m_SizeDelta: {x: 805.5806, y: 57.4129}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2007708315
 MonoBehaviour:
@@ -14265,7 +14279,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2043502344}
-  - component: {fileID: 2043502343}
+  - component: {fileID: 2043502345}
   m_Layer: 0
   m_Name: CursorManager
   m_TagString: Untagged
@@ -14273,7 +14287,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2043502343
+--- !u!4 &2043502344
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2043502342}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.3729248, y: 5.6048203, z: -1.5098119}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 938947611}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2043502345
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -14287,24 +14316,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cursorTexture: {fileID: 2800000, guid: 4cc8ba484070847328594d0a49125900, type: 3}
   bulldozerTexture: {fileID: 2800000, guid: 86facc3aeb3f249ac86535afa0beb740, type: 3}
-  detailsTexture: {fileID: 0}
+  detailsTexture: {fileID: 2800000, guid: 4cc8ba484070847328594d0a49125900, type: 3}
   hotSpot: {x: 0, y: 0}
   gridManager: {fileID: 1880690383}
---- !u!4 &2043502344
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2043502342}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.3729287, y: 5.604817, z: -1.5098119}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 938947611}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2048424069
 GameObject:
   m_ObjectHideFlags: 0
@@ -14317,7 +14331,7 @@ GameObject:
   - component: {fileID: 2048424074}
   - component: {fileID: 2048424073}
   - component: {fileID: 2048424072}
-  - component: {fileID: 2048424071}
+  - component: {fileID: 2048424075}
   m_Layer: 5
   m_Name: EnviromentalSelectorButton
   m_TagString: Untagged
@@ -14344,24 +14358,6 @@ RectTransform:
   m_AnchoredPosition: {x: 224.49998, y: -0.51988983}
   m_SizeDelta: {x: 30, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &2048424071
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2048424069}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2212920ba6f0548a089bc0dc72bf324e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  popupController: {fileID: 1975260509}
-  uiManager: {fileID: 515320933}
-  environmentalItems:
-  - name: Dense forest
-    icon: {fileID: 21300000, guid: 61b41ed73b0544db79a49c17ce4d2530, type: 3}
-    price: 0
 --- !u!114 &2048424072
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14406,7 +14402,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2048424071}
+      - m_Target: {fileID: 2048424075}
         m_TargetAssemblyTypeName: EnvironmentalSelectorButton, Assembly-CSharp
         m_MethodName: OnEnvironmentalButtonClick
         m_Mode: 1
@@ -14456,6 +14452,30 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2048424069}
   m_CullTransparentMesh: 1
+--- !u!114 &2048424075
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2048424069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2212920ba6f0548a089bc0dc72bf324e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  popupController: {fileID: 1975260509}
+  uiManager: {fileID: 515320935}
+  environmentalItems:
+  - name: Dense forest
+    icon: {fileID: 21300000, guid: 61b41ed73b0544db79a49c17ce4d2530, type: 3}
+    price: 0
+  - name: Water
+    icon: {fileID: 21300000, guid: 436689d6b7f0b407c98526beec23b2f7, type: 3}
+    price: 1
+  - name: Grass
+    icon: {fileID: 21300000, guid: 1e8dc177708574c0db67fcbfb92770f5, type: 3}
+    price: 1
 --- !u!1 &2052042582
 GameObject:
   m_ObjectHideFlags: 0
@@ -14833,15 +14853,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 2062039107}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 08e3c5e90e6074d738ad415255c9a0d8, type: 3}
+  m_Script: {fileID: 11500000, guid: fc53ebb22fb0b4017a124e2f7f83b20d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   popupController: {fileID: 1975260509}
   roadItems:
   - name: Two-way road
-    icon: {fileID: 21300000, guid: e8ab9d330ac724136be86c56ed75702a, type: 3}
-    price: 50
-  uiManager: {fileID: 515320933}
+    icon: {fileID: 21300000, guid: 6d06b507105f545ab8f712def38c72a8, type: 3}
+    price: 20
+  uiManager: {fileID: 515320935}
 --- !u!1 &2064853466
 GameObject:
   m_ObjectHideFlags: 0
@@ -14851,7 +14871,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2064853468}
-  - component: {fileID: 2064853467}
+  - component: {fileID: 2064853469}
   m_Layer: 0
   m_Name: DemandManager
   m_TagString: Untagged
@@ -14859,7 +14879,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2064853467
+--- !u!4 &2064853468
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064853466}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 806.97437, y: 81.63013, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 938947611}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2064853469
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -14886,7 +14921,7 @@ MonoBehaviour:
   startingResidentialDemand: 10
   startingIndustrialDemand: 10
   startingCommercialDemand: 0
-  demandSensitivity: 1
+  demandSensitivity: 2
   demandDecayRate: 0.1
   forestDemandBoostPerCell: 0.5
   desirabilityDemandMultiplier: 0.1
@@ -14899,23 +14934,8 @@ MonoBehaviour:
     newCommercialBuildings: 0
     newIndustrialBuildings: 0
   autoGrowthEnabled: 1
-  growthThreshold: 60
-  growthCooldown: 5
---- !u!4 &2064853468
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2064853466}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 806.97437, y: 81.63013, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 938947611}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  growthThreshold: 5
+  growthCooldown: 3
 --- !u!1 &2101985693
 GameObject:
   m_ObjectHideFlags: 0
@@ -15177,7 +15197,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   popupController: {fileID: 1421362056}
-  uiManager: {fileID: 515320933}
+  uiManager: {fileID: 515320935}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -26,19 +26,15 @@ public class CameraButtonsController : MonoBehaviour
 
         if (zoomInButton != null) allCameraButtons.Add(zoomInButton);
         if (zoomOutButton != null) allCameraButtons.Add(zoomOutButton);
-
-        Debug.Log($"Initialized {allCameraButtons.Count} camera buttons for state management");
     }
 
     public void OnZoomInClick()
     {
-        Debug.Log("Zoom In button clicked");
         cameraController.ZoomIn();
     }
 
     public void OnZoomOutClick()
     {
-        Debug.Log("Zoom Out button clicked");
         cameraController.ZoomOut();
     }
 

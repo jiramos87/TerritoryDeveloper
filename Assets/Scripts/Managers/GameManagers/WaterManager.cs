@@ -294,6 +294,7 @@ public class WaterManager : MonoBehaviour
     
     public bool IsAdjacentToWater(int x, int y)
     {
+        Debug.Log("IsAdjacentToWater: " + x + ", " + y);
         if (waterMap == null) return false;
         
         // Check if any adjacent cell has water

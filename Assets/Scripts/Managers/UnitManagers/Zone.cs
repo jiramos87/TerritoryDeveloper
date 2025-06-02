@@ -39,7 +39,7 @@ public class Zone : MonoBehaviour
         Forest, // New forest category
         Building
     }
-    
+
     public ZoneType zoneType;
     public ZoneCategory zoneCategory;
 
@@ -47,6 +47,7 @@ public class Zone : MonoBehaviour
     {
         // Initialize zone-specific properties
         SetZoneCategoryFromType();
+        Debug.Log("Start Zone zoneType: " + zoneType + " zoneCategory: " + zoneCategory);
     }
 
     /// <summary>
@@ -68,7 +69,7 @@ public class Zone : MonoBehaviour
             case ZoneType.Building:
                 zoneCategory = ZoneCategory.Building;
                 break;
-                
+
             case ZoneType.ResidentialLightZoning:
             case ZoneType.ResidentialMediumZoning:
             case ZoneType.ResidentialHeavyZoning:
@@ -80,23 +81,23 @@ public class Zone : MonoBehaviour
             case ZoneType.IndustrialHeavyZoning:
                 zoneCategory = ZoneCategory.Zoning;
                 break;
-                
+
             case ZoneType.Road:
                 zoneCategory = ZoneCategory.Road;
                 break;
-                
+
             case ZoneType.Grass:
                 zoneCategory = ZoneCategory.Grass;
                 break;
-                
+
             case ZoneType.Water:
                 zoneCategory = ZoneCategory.Water;
                 break;
-                
+
             case ZoneType.Forest:
                 zoneCategory = ZoneCategory.Forest;
                 break;
-                
+
             default:
                 zoneCategory = ZoneCategory.Grass;
                 break;
@@ -116,8 +117,8 @@ public class Zone : MonoBehaviour
     /// </summary>
     public bool IsEnvironmental()
     {
-        return zoneCategory == ZoneCategory.Forest || 
-               zoneCategory == ZoneCategory.Water || 
+        return zoneCategory == ZoneCategory.Forest ||
+               zoneCategory == ZoneCategory.Water ||
                zoneCategory == ZoneCategory.Grass;
     }
 

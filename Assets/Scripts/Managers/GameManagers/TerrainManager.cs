@@ -340,7 +340,7 @@ public class TerrainManager : MonoBehaviour
         // Implementation for terrain modification
     }
 
-    public bool CanPlaceBuilding(int x, int y, int size)
+    public bool CanPlaceBuildingInTerrain(int x, int y, int size)
     {
         // Check if all tiles in the building footprint are at the same height
         int baseHeight = heightMap.GetHeight(x, y);

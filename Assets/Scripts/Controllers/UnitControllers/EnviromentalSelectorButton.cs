@@ -6,7 +6,7 @@ public class EnvironmentalSelectorButton : MonoBehaviour
     [Header("UI References")]
     public BuildingSelectorMenuController popupController; // Reference to the PopupController
     public UIManager uiManager; // Reference to the UIManager
-    
+
     [Header("Environmental Items")]
     public List<BuildingSelectorMenuManager.ItemType> environmentalItems; // List of environmental items
 
@@ -14,7 +14,7 @@ public class EnvironmentalSelectorButton : MonoBehaviour
     {
         uiManager.RestoreMouseCursor();
         popupController.ShowPopup(environmentalItems, OnEnvironmentalTypeSelected, "Environmental");
-        
+
         // Default to first item (trees)
         if (environmentalItems.Count > 0)
         {
@@ -30,26 +30,26 @@ public class EnvironmentalSelectorButton : MonoBehaviour
             case "Sparse trees":
                 uiManager.OnSparseForestButtonClicked();
                 break;
-                
+
             case "Medium forest":
             case "Medium trees":
                 uiManager.OnMediumForestButtonClicked();
                 break;
-                
+
             case "Dense forest":
             case "Dense trees":
             case "Trees":
                 uiManager.OnDenseForestButtonClicked();
                 break;
-                    
+
             case "Water":
                 uiManager.OnPlaceWaterButtonClicked();
                 break;
-                    
+
             case "Grass":
                 uiManager.OnGrassButtonClicked();
                 break;
-                    
+
             default:
                 Debug.LogWarning($"Unknown environmental type selected: {selectedItem.name}");
                 break;

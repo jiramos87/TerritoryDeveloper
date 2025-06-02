@@ -5,36 +5,37 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Manages in-game notifications for game logic events, providing persistent 
+/// Manages in-game notifications for game logic events, providing persistent
 /// message display in the UI for player feedback on actions and system states.
 /// </summary>
 public class GameNotificationManager : MonoBehaviour
 {
+    // Singleton instance
+    public static GameNotificationManager Instance { get; private set; }
+
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI notificationText;
     [SerializeField] private GameObject notificationPanel;
-    
+
     [Header("Notification Settings")]
     [SerializeField] private float notificationDuration = 3.0f;
     [SerializeField] private float fadeInDuration = 0.3f;
     [SerializeField] private float fadeOutDuration = 0.5f;
     [SerializeField] private int maxQueueSize = 5;
-    
+
     [Header("Message Categories")]
     [SerializeField] private Color errorColor = Color.red;
     [SerializeField] private Color warningColor = Color.yellow;
     [SerializeField] private Color infoColor = Color.white;
     [SerializeField] private Color successColor = Color.green;
-    
-    // Singleton instance
-    public static GameNotificationManager Instance { get; private set; }
-    
+
+
     // Notification queue and state management
     private Queue<NotificationMessage> messageQueue = new Queue<NotificationMessage>();
     private bool isDisplayingMessage = false;
     private Coroutine currentDisplayCoroutine;
     private CanvasGroup notificationCanvasGroup;
-    
+
     /// <summary>
     /// Represents different types of notifications with appropriate styling
     /// </summary>
@@ -45,7 +46,7 @@ public class GameNotificationManager : MonoBehaviour
         Warning,
         Error
     }
-    
+
     /// <summary>
     /// Internal structure for queued notification messages
     /// </summary>
@@ -54,7 +55,7 @@ public class GameNotificationManager : MonoBehaviour
         public string message;
         public NotificationType type;
         public float duration;
-        
+
         public NotificationMessage(string message, NotificationType type, float duration)
         {
             this.message = message;
@@ -62,7 +63,7 @@ public class GameNotificationManager : MonoBehaviour
             this.duration = duration;
         }
     }
-    
+
     void Awake()
     {
         // Singleton pattern implementation
@@ -77,7 +78,7 @@ public class GameNotificationManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-    
+
     /// <summary>
     /// Initialize UI components and ensure proper setup
     /// </summary>
@@ -89,11 +90,11 @@ public class GameNotificationManager : MonoBehaviour
         {
             notificationCanvasGroup = notificationPanel.AddComponent<CanvasGroup>();
         }
-        
+
         // Start with notifications hidden
         notificationPanel.SetActive(false);
         notificationCanvasGroup.alpha = 0f;
-        
+
         // Validate required components
         if (notificationText == null)
         {
@@ -104,7 +105,7 @@ public class GameNotificationManager : MonoBehaviour
             Debug.LogError("GameNotificationManager: notificationPanel is not assigned!");
         }
     }
-    
+
     /// <summary>
     /// Post an informational notification message
     /// </summary>
@@ -113,7 +114,7 @@ public class GameNotificationManager : MonoBehaviour
     {
         PostNotification(message, NotificationType.Info);
     }
-    
+
     /// <summary>
     /// Post a success notification message
     /// </summary>
@@ -122,7 +123,7 @@ public class GameNotificationManager : MonoBehaviour
     {
         PostNotification(message, NotificationType.Success);
     }
-    
+
     /// <summary>
     /// Post a warning notification message
     /// </summary>
@@ -131,7 +132,7 @@ public class GameNotificationManager : MonoBehaviour
     {
         PostNotification(message, NotificationType.Warning);
     }
-    
+
     /// <summary>
     /// Post an error notification message
     /// </summary>
@@ -140,7 +141,7 @@ public class GameNotificationManager : MonoBehaviour
     {
         PostNotification(message, NotificationType.Error);
     }
-    
+
     /// <summary>
     /// Post a notification with custom duration
     /// </summary>
@@ -155,26 +156,26 @@ public class GameNotificationManager : MonoBehaviour
             Debug.LogWarning("GameNotificationManager: Attempted to post empty notification message");
             return;
         }
-        
+
         // Create notification message
         NotificationMessage notification = new NotificationMessage(message, type, customDuration);
-        
+
         // Add to queue (remove oldest if queue is full)
         if (messageQueue.Count >= maxQueueSize)
         {
             messageQueue.Dequeue();
             Debug.LogWarning("GameNotificationManager: Message queue full, removing oldest message");
         }
-        
+
         messageQueue.Enqueue(notification);
-        
+
         // Start displaying if not already doing so
         if (!isDisplayingMessage)
         {
             StartNextNotification();
         }
     }
-    
+
     /// <summary>
     /// Post a notification with default duration
     /// </summary>
@@ -184,7 +185,7 @@ public class GameNotificationManager : MonoBehaviour
     {
         PostNotification(message, type, notificationDuration);
     }
-    
+
     /// <summary>
     /// Start displaying the next notification in the queue
     /// </summary>
@@ -195,18 +196,18 @@ public class GameNotificationManager : MonoBehaviour
             isDisplayingMessage = false;
             return;
         }
-        
+
         isDisplayingMessage = true;
         NotificationMessage nextMessage = messageQueue.Dequeue();
-        
+
         if (currentDisplayCoroutine != null)
         {
             StopCoroutine(currentDisplayCoroutine);
         }
-        
+
         currentDisplayCoroutine = StartCoroutine(DisplayNotificationCoroutine(nextMessage));
     }
-    
+
     /// <summary>
     /// Coroutine to handle the full lifecycle of displaying a notification
     /// </summary>
@@ -215,22 +216,22 @@ public class GameNotificationManager : MonoBehaviour
     {
         // Setup message content and styling
         SetupNotificationDisplay(notification);
-        
+
         // Fade in
         notificationPanel.SetActive(true);
         yield return StartCoroutine(FadeCanvasGroup(notificationCanvasGroup, 0f, 1f, fadeInDuration));
-        
+
         // Display duration
         yield return new WaitForSeconds(notification.duration);
-        
+
         // Fade out
         yield return StartCoroutine(FadeCanvasGroup(notificationCanvasGroup, 1f, 0f, fadeOutDuration));
         notificationPanel.SetActive(false);
-        
+
         // Start next notification
         StartNextNotification();
     }
-    
+
     /// <summary>
     /// Configure the notification display based on message type and content
     /// </summary>
@@ -239,7 +240,7 @@ public class GameNotificationManager : MonoBehaviour
     {
         // Set message text
         notificationText.text = notification.message;
-        
+
         // Set color based on notification type
         switch (notification.type)
         {
@@ -257,7 +258,7 @@ public class GameNotificationManager : MonoBehaviour
                 break;
         }
     }
-    
+
     /// <summary>
     /// Utility coroutine for fading CanvasGroup alpha values
     /// </summary>
@@ -268,7 +269,7 @@ public class GameNotificationManager : MonoBehaviour
     private IEnumerator FadeCanvasGroup(CanvasGroup canvasGroup, float startAlpha, float endAlpha, float duration)
     {
         float elapsedTime = 0f;
-        
+
         while (elapsedTime < duration)
         {
             float alpha = Mathf.Lerp(startAlpha, endAlpha, elapsedTime / duration);
@@ -276,27 +277,27 @@ public class GameNotificationManager : MonoBehaviour
             elapsedTime += Time.deltaTime;
             yield return null;
         }
-        
+
         canvasGroup.alpha = endAlpha;
     }
-    
+
     /// <summary>
     /// Clear all pending notifications from the queue
     /// </summary>
     public void ClearNotificationQueue()
     {
         messageQueue.Clear();
-        
+
         if (currentDisplayCoroutine != null)
         {
             StopCoroutine(currentDisplayCoroutine);
             currentDisplayCoroutine = null;
         }
-        
+
         notificationPanel.SetActive(false);
         isDisplayingMessage = false;
     }
-    
+
     /// <summary>
     /// Get the current number of pending notifications
     /// </summary>
@@ -305,9 +306,9 @@ public class GameNotificationManager : MonoBehaviour
     {
         return messageQueue.Count;
     }
-    
+
     #region Convenience Methods for Common Game Events
-    
+
     /// <summary>
     /// Post insufficient funds notification
     /// </summary>
@@ -318,7 +319,7 @@ public class GameNotificationManager : MonoBehaviour
         string message = $"Insufficient funds for {itemType}. Need ${cost:N0}";
         PostError(message);
     }
-    
+
     /// <summary>
     /// Post building placement error notification
     /// </summary>
@@ -328,7 +329,7 @@ public class GameNotificationManager : MonoBehaviour
         string message = $"Cannot place building: {reason}";
         PostWarning(message);
     }
-    
+
     /// <summary>
     /// Post successful building construction notification
     /// </summary>
@@ -338,7 +339,7 @@ public class GameNotificationManager : MonoBehaviour
         string message = $"{buildingName} constructed successfully";
         PostSuccess(message);
     }
-    
+
     /// <summary>
     /// Post zone growth notification
     /// </summary>
@@ -349,7 +350,7 @@ public class GameNotificationManager : MonoBehaviour
         string message = $"{count} new {zoneType} building{(count > 1 ? "s" : "")} constructed";
         PostInfo(message);
     }
-    
+
     /// <summary>
     /// Post economic event notification
     /// </summary>
@@ -360,6 +361,6 @@ public class GameNotificationManager : MonoBehaviour
         NotificationType type = isPositive ? NotificationType.Success : NotificationType.Warning;
         PostNotification(eventDescription, type);
     }
-    
+
     #endregion
 }

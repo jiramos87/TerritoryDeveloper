@@ -9,17 +9,16 @@ public class EconomyManager : MonoBehaviour
     [Header("Manager References")]
     public CityStats cityStats;
     public TimeManager timeManager;
+    public GameNotificationManager gameNotificationManager;
 
     [Header("Tax Rates")]
     public int residentialIncomeTax = 10;
     public int commercialIncomeTax = 10;
     public int industrialIncomeTax = 10;
-    
+
     [Header("Tax Rate Limits")]
     public int minTaxRate = 0;
     public int maxTaxRate = 50;
-
-    public GameNotificationManager gameNotificationManager;
 
     void Start()
     {
@@ -54,9 +53,9 @@ public class EconomyManager : MonoBehaviour
         int industrialIncome = cityStats.industrialZoneCount * industrialIncomeTax;
 
         int totalTaxIncome = residentialIncome + commercialIncome + industrialIncome;
-        
+
         cityStats.AddMoney(totalTaxIncome);
-        
+
         gameNotificationManager.PostInfo(
             "Monthly Tax Collection" +
             $"Collected ${totalTaxIncome} in taxes this month.\n" +
@@ -285,7 +284,7 @@ public class EconomyManager : MonoBehaviour
     public void SetTaxRate(Zone.ZoneType zoneType, int newRate)
     {
         newRate = Mathf.Clamp(newRate, minTaxRate, maxTaxRate);
-        
+
         if (IsResidentialZone(zoneType))
         {
             residentialIncomeTax = newRate;
@@ -447,7 +446,7 @@ public class EconomyManager : MonoBehaviour
     public string GetZoneDensity(Zone.ZoneType zoneType)
     {
         string zoneTypeName = zoneType.ToString();
-        
+
         if (zoneTypeName.Contains("Light"))
             return "Light";
         else if (zoneTypeName.Contains("Medium"))
@@ -531,7 +530,7 @@ public struct EconomicSummary
     public int commercialTaxRate;
     public int industrialTaxRate;
     public float economicHealth;
-    
+
     // Additional zone information
     public int totalResidentialZones;
     public int totalCommercialZones;

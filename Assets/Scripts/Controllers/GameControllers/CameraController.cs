@@ -1,3 +1,4 @@
+
 using UnityEngine;
 
 public class CameraController : MonoBehaviour
@@ -11,38 +12,109 @@ public class CameraController : MonoBehaviour
     public GridManager gridManager;
     public CameraButtonsController cameraButtonsController;
 
-    void Start()
+    /// <summary>
+    /// Initialize camera early in the lifecycle
+    /// </summary>
+    void Awake()
     {
+        InitializeCamera();
+    }
+
+    /// <summary>
+    /// Initialize camera and zoom settings
+    /// </summary>
+    private void InitializeCamera()
+    {
+        // Get main camera reference
         mainCamera = Camera.main;
+
         if (mainCamera == null)
         {
-            Debug.LogError("Main Camera not found.");
+            // If Camera.main doesn't work, try to find camera on this GameObject
+            mainCamera = GetComponent<Camera>();
         }
+
+        if (mainCamera == null)
+        {
+            // As last resort, find any camera in the scene
+            mainCamera = FindObjectOfType<Camera>();
+        }
+
+        if (mainCamera == null)
+        {
+            Debug.LogError("CameraController: No camera found! Make sure there's a camera in the scene with MainCamera tag.");
+            return;
+        }
+
         // Set the initial zoom level
         if (zoomLevels.Length > 0)
         {
             currentZoomLevel = Mathf.Clamp(System.Array.IndexOf(zoomLevels, startZoomLevel), 0, zoomLevels.Length - 1);
+            if (currentZoomLevel == -1) // startZoomLevel not found in array
+            {
+                currentZoomLevel = 0;
+            }
             mainCamera.orthographicSize = zoomLevels[currentZoomLevel];
         }
         else
         {
-            Debug.LogWarning("No zoom levels defined.");
+            Debug.LogWarning("CameraController: No zoom levels defined.");
+        }
+
+        Debug.Log("CameraController: Camera initialized successfully");
+    }
+
+    void Start()
+    {
+        // Ensure camera is initialized (should already be done in Awake)
+        if (mainCamera == null)
+        {
+            InitializeCamera();
         }
     }
 
     void Update()
     {
-        HandleMovement();
-        HandleZoom();
-        HandleScrollZoom();
+        // Only handle input if camera is properly initialized
+        if (mainCamera != null)
+        {
+            HandleMovement();
+            HandleZoom();
+            HandleScrollZoom();
+        }
     }
 
+    /// <summary>
+    /// Move camera to the center of the map
+    /// </summary>
+    /// <param name="centerWorldPosition">World position to center the camera on</param>
     public void MoveCameraToMapCenter(Vector3 centerWorldPosition)
     {
-        Vector3 gridCenter = new Vector3(centerWorldPosition.x, centerWorldPosition.y, mainCamera.transform.position.z);
+        Debug.Log("MoveCameraToMapCenter centerWorldPosition: " + centerWorldPosition);
+
+        // Ensure camera is initialized before moving it
+        if (mainCamera == null)
+        {
+            InitializeCamera();
+        }
+
+        if (mainCamera == null)
+        {
+            Debug.LogError("CameraController: Cannot move camera - mainCamera is still null!");
+            return;
+        }
+
+        // Move camera to center position while preserving Z coordinate
+        Vector3 gridCenter = new Vector3(
+            centerWorldPosition.x,
+            centerWorldPosition.y,
+            mainCamera.transform.position.z
+        );
+
         mainCamera.transform.position = gridCenter;
-        Debug.Log($"Camera moved to center position: {gridCenter}");
+        Debug.Log("CameraController: Camera moved to " + gridCenter);
     }
+
 
     private void HandleMovement()
     {

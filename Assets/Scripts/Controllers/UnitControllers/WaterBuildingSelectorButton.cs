@@ -6,7 +6,7 @@ public class WaterBuildingSelectorButton : MonoBehaviour
     public BuildingSelectorMenuController popupController;
     public List<BuildingSelectorMenuManager.ItemType> waterBuildingItems;
     public UIManager uiManager;
-    
+
     void Start()
     {
         // Ensure we have at least one water building item
@@ -14,51 +14,54 @@ public class WaterBuildingSelectorButton : MonoBehaviour
         {
             Debug.LogError("No water building items assigned to WaterBuildingSelectorButton!");
         }
-        
+
         // Validate references
         if (popupController == null)
         {
             Debug.LogError("PopupController reference is missing in WaterBuildingSelectorButton!");
         }
-        
+
         if (uiManager == null)
         {
             Debug.LogError("UIManager reference is missing in WaterBuildingSelectorButton!");
         }
     }
-    
+
     public void OnWaterBuildingsButtonClick()
-    {  
-        try {
+    {
+        try
+        {
             if (uiManager == null)
             {
                 return;
             }
-            
+
             uiManager.RestoreMouseCursor();
-            
+
             if (popupController == null)
             {
                 return;
             }
-            
+
             if (waterBuildingItems == null || waterBuildingItems.Count == 0)
             {
                 return;
             }
-            
+
             popupController.ShowPopup(waterBuildingItems, OnWaterBuildingSelected, "Water");
 
             OnWaterBuildingSelected(waterBuildingItems[0]);
         }
-        catch (System.Exception ex) {
+        catch (System.Exception ex)
+        {
             Debug.LogError($"Error in OnWaterBuildingsButtonClick: {ex.Message}\n{ex.StackTrace}");
         }
     }
 
     private void OnWaterBuildingSelected(BuildingSelectorMenuManager.ItemType selectedItem)
     {
-        try {
+        try
+        {
             switch (selectedItem.name)
             {
                 case "Medium Water Pump":
@@ -76,7 +79,8 @@ public class WaterBuildingSelectorButton : MonoBehaviour
                     break;
             }
         }
-        catch (System.Exception ex) {
+        catch (System.Exception ex)
+        {
             Debug.LogError($"Error in OnWaterBuildingSelected: {ex.Message}\n{ex.StackTrace}");
         }
     }

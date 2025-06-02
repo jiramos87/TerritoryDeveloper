@@ -21,6 +21,7 @@ public class DataPopupController : MonoBehaviour
 
     public void ToggleTaxes()
     {
+        Debug.Log("ToggleTaxes");
         statsPanel.SetActive(false); // Hide the stats panel
         taxPanel.SetActive(!taxPanel.activeSelf); // Toggle the tax panel visibility
     }

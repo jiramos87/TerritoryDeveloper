@@ -9,11 +9,11 @@ public class CityStatsUIController : MonoBehaviour
 {
     [Header("UI References")]
     [SerializeField] private UIDocument uiDocument;
-    
+
     [Header("Game System References")]
     [SerializeField] private CityStats cityStats;
     [SerializeField] private EconomyManager economyManager;
-    
+
     // Auto-find system references if not manually assigned
     void Awake()
     {
@@ -22,13 +22,13 @@ public class CityStatsUIController : MonoBehaviour
             cityStats = FindObjectOfType<CityStats>();
         if (economyManager == null)
             economyManager = FindObjectOfType<EconomyManager>();
-            
+
         if (cityStats == null)
             Debug.LogWarning("CityStats not found! Please assign manually or ensure CityStats exists in scene.");
         if (economyManager == null)
             Debug.LogWarning("EconomyManager not found! Please assign manually or ensure EconomyManager exists in scene.");
     }
-    
+
     // UI Element references
     private Label populationLabel;
     private Label happinessLabel;
@@ -87,7 +87,7 @@ public class CityStatsUIController : MonoBehaviour
         statsContainer.Add(happinessLabel);
         statsContainer.Add(treasuryLabel);
         statsContainer.Add(unemploymentLabel);
-        
+
         root.Add(statsContainer);
         root.Add(toggleStatsButton);
     }
@@ -99,14 +99,14 @@ public class CityStatsUIController : MonoBehaviour
     {
         var label = new Label($"{statName}: {initialValue}");
         label.name = $"{statName.ToLower()}-label";
-        
+
         // Style the label
         label.style.fontSize = 16;
         label.style.color = Color.white;
         label.style.marginBottom = 5;
         label.style.paddingLeft = 10;
         label.style.paddingRight = 10;
-        
+
         return label;
     }
 
@@ -218,16 +218,16 @@ public class CityStatsUIController : MonoBehaviour
     private int GetPopulation()
     {
         // Try different common method names - uncomment the one that matches your implementation
-        
+
         // Option 1: If you have a direct population field/property
         // return cityStats.totalPopulation;
-        
+
         // Option 2: If you have a GetTotalPopulation method
         // return cityStats.GetTotalPopulation();
-        
+
         // Option 3: If you calculate from residential buildings
         // return cityStats.CalculatePopulation();
-        
+
         // Placeholder - replace with your actual implementation
         return 0;
     }
@@ -238,16 +238,16 @@ public class CityStatsUIController : MonoBehaviour
     private float GetHappiness()
     {
         // Try different common method names - uncomment the one that matches your implementation
-        
+
         // Option 1: If you have a happiness field/property
         // return cityStats.averageHappiness;
-        
+
         // Option 2: If you have a GetAverageHappiness method
         // return cityStats.GetAverageHappiness();
-        
+
         // Option 3: If you calculate happiness differently
         // return cityStats.CalculateHappiness();
-        
+
         // Placeholder - replace with your actual implementation
         return 50.0f;
     }
@@ -258,17 +258,17 @@ public class CityStatsUIController : MonoBehaviour
     private int GetTreasury()
     {
         // Try different common method names - uncomment the one that matches your implementation
-        
+
         // Option 1: If you have a treasury field/property
         // return economyManager.treasury;
-        
+
         // Option 2: If you have a GetTreasury method
         // return economyManager.GetTreasury();
-        
+
         // Option 3: If it's named differently
         // return economyManager.GetCurrentMoney();
         // return economyManager.money;
-        
+
         // Placeholder - replace with your actual implementation
         return 10000;
     }
@@ -279,15 +279,15 @@ public class CityStatsUIController : MonoBehaviour
     private float GetUnemploymentRate()
     {
         // Try different approaches - uncomment the one that matches your implementation
-        
+
         // Option 1: If you have a direct unemployment rate method
         // return cityStats.GetUnemploymentRate();
-        
+
         // Option 2: If you calculate from jobs and population
         // int totalJobs = cityStats.GetTotalJobs();
         // int population = cityStats.GetWorkingPopulation();
         // return population > 0 ? ((population - totalJobs) / (float)population) * 100f : 0f;
-        
+
         // Placeholder - replace with your actual implementation
         return 5.0f;
     }
@@ -348,7 +348,7 @@ public class CityStatsUIController : MonoBehaviour
         var customLabel = CreateStatLabel(statName, value);
         if (textColor != default(Color))
             customLabel.style.color = textColor;
-        
+
         statsContainer.Add(customLabel);
     }
 

@@ -39,8 +39,6 @@ public class BuildingSelectorMenuController : MonoBehaviour
         // Add any other selector button types here as you create them
         // CommercialBuildingsSelectButton[] commercialButtons = FindObjectsOfType<CommercialBuildingsSelectButton>();
         // etc.
-
-        Debug.Log($"Cached {allSelectorButtons.Count} selector buttons for deselection");
     }
 
     public void ShowPopup(List<BuildingSelectorMenuManager.ItemType> items, System.Action<BuildingSelectorMenuManager.ItemType> onItemSelected, string type)
@@ -89,7 +87,6 @@ public class BuildingSelectorMenuController : MonoBehaviour
     /// </summary>
     public void DeselectAndUnpressAllButtons()
     {
-        Debug.Log("Deselecting and unpressing all buttons");
 
         // Clear any selected object in the EventSystem
         if (EventSystem.current != null)
@@ -112,8 +109,6 @@ public class BuildingSelectorMenuController : MonoBehaviour
         {
             ResetButtonVisualState(button);
         }
-
-        Debug.Log($"Reset visual state for {allSelectorButtons.Count} selector buttons and {popupButtons.Length} popup buttons");
     }
 
     /// <summary>
@@ -131,8 +126,6 @@ public class BuildingSelectorMenuController : MonoBehaviour
         
         // Force immediate state transition to Normal
         button.targetGraphic.CrossFadeColor(button.colors.normalColor, 0f, true, true);
-        
-        Debug.Log($"Reset button visual state: {button.name}");
     }
 
     /// <summary>

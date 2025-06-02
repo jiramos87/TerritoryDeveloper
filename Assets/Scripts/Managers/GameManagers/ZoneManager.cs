@@ -90,50 +90,79 @@ public class ZoneManager : MonoBehaviour
     private Dictionary<Zone.ZoneType, List<List<Vector2>>> availableZoneSections =
       new Dictionary<Zone.ZoneType, List<List<Vector2>>>();
 
-    void Start()
+    private bool isInitialized = false;
+
+    /// <summary>
+    /// Initialize zone prefabs dictionary early in the Unity lifecycle
+    /// </summary>
+    void Awake()
     {
+        InitializeZonePrefabs();
+    }
+
+    /// <summary>
+    /// Initialize the zone prefabs dictionary
+    /// </summary>
+    public void InitializeZonePrefabs()
+    {
+        if (isInitialized) return;
+
         zonePrefabs = new Dictionary<(Zone.ZoneType, int), List<GameObject>>
         {
-            { (Zone.ZoneType.ResidentialLightBuilding, 1), lightResidential1x1Prefabs },
-            { (Zone.ZoneType.ResidentialLightBuilding, 2), lightResidential2x2Prefabs },
-            { (Zone.ZoneType.ResidentialLightBuilding, 3), lightResidential3x3Prefabs },
-            { (Zone.ZoneType.ResidentialMediumBuilding, 1), mediumResidential1x1Prefabs },
-            { (Zone.ZoneType.ResidentialMediumBuilding, 2), mediumResidential2x2Prefabs },
-            { (Zone.ZoneType.ResidentialMediumBuilding, 3), mediumResidential3x3Prefabs },
-            { (Zone.ZoneType.ResidentialHeavyBuilding, 1), heavyResidential1x1Prefabs },
-            { (Zone.ZoneType.ResidentialHeavyBuilding, 2), heavyResidential2x2Prefabs },
-            { (Zone.ZoneType.ResidentialHeavyBuilding, 3), heavyResidential3x3Prefabs },
-            { (Zone.ZoneType.CommercialLightBuilding, 1), lightCommercial1x1Prefabs },
-            { (Zone.ZoneType.CommercialLightBuilding, 2), lightCommercial2x2Prefabs },
-            { (Zone.ZoneType.CommercialLightBuilding, 3), lightCommercial3x3Prefabs },
-            { (Zone.ZoneType.CommercialMediumBuilding, 1), mediumCommercial1x1Prefabs },
-            { (Zone.ZoneType.CommercialMediumBuilding, 2), mediumCommercial2x2Prefabs },
-            { (Zone.ZoneType.CommercialMediumBuilding, 3), mediumCommercial3x3Prefabs },
-            { (Zone.ZoneType.CommercialHeavyBuilding, 1), heavyCommercial1x1Prefabs },
-            { (Zone.ZoneType.CommercialHeavyBuilding, 2), heavyCommercial2x2Prefabs },
-            { (Zone.ZoneType.CommercialHeavyBuilding, 3), heavyCommercial3x3Prefabs },
-            { (Zone.ZoneType.IndustrialLightBuilding, 1), lightIndustrial1x1Prefabs },
-            { (Zone.ZoneType.IndustrialLightBuilding, 2), lightIndustrial2x2Prefabs },
-            { (Zone.ZoneType.IndustrialLightBuilding, 3), lightIndustrial3x3Prefabs },
-            { (Zone.ZoneType.IndustrialMediumBuilding, 1), mediumIndustrial1x1Prefabs },
-            { (Zone.ZoneType.IndustrialMediumBuilding, 2), mediumIndustrial2x2Prefabs },
-            { (Zone.ZoneType.IndustrialMediumBuilding, 3), mediumIndustrial3x3Prefabs },
-            { (Zone.ZoneType.IndustrialHeavyBuilding, 1), heavyIndustrial1x1Prefabs },
-            { (Zone.ZoneType.IndustrialHeavyBuilding, 2), heavyIndustrial2x2Prefabs },
-            { (Zone.ZoneType.IndustrialHeavyBuilding, 3), heavyIndustrial3x3Prefabs },
-            { (Zone.ZoneType.ResidentialLightZoning, 1), residentialLightZoningPrefabs },
-            { (Zone.ZoneType.ResidentialMediumZoning, 1), residentialMediumZoningPrefabs },
-            { (Zone.ZoneType.ResidentialHeavyZoning, 1), residentialHeavyZoningPrefabs },
-            { (Zone.ZoneType.CommercialLightZoning, 1), commercialLightZoningPrefabs },
-            { (Zone.ZoneType.CommercialMediumZoning, 1), commercialMediumZoningPrefabs },
-            { (Zone.ZoneType.CommercialHeavyZoning, 1), commercialHeavyZoningPrefabs },
-            { (Zone.ZoneType.IndustrialLightZoning, 1), industrialLightZoningPrefabs },
-            { (Zone.ZoneType.IndustrialMediumZoning, 1), industrialMediumZoningPrefabs },
-            { (Zone.ZoneType.IndustrialHeavyZoning, 1), industrialHeavyZoningPrefabs },
-            { (Zone.ZoneType.Grass, 1), grassPrefabs },
-            { (Zone.ZoneType.Road, 1), roadPrefabs },
-            { (Zone.ZoneType.Water, 1), waterPrefabs }
+            { (Zone.ZoneType.ResidentialLightBuilding, 1), lightResidential1x1Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.ResidentialLightBuilding, 2), lightResidential2x2Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.ResidentialLightBuilding, 3), lightResidential3x3Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.ResidentialMediumBuilding, 1), mediumResidential1x1Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.ResidentialMediumBuilding, 2), mediumResidential2x2Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.ResidentialMediumBuilding, 3), mediumResidential3x3Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.ResidentialHeavyBuilding, 1), heavyResidential1x1Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.ResidentialHeavyBuilding, 2), heavyResidential2x2Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.ResidentialHeavyBuilding, 3), heavyResidential3x3Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.CommercialLightBuilding, 1), lightCommercial1x1Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.CommercialLightBuilding, 2), lightCommercial2x2Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.CommercialLightBuilding, 3), lightCommercial3x3Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.CommercialMediumBuilding, 1), mediumCommercial1x1Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.CommercialMediumBuilding, 2), mediumCommercial2x2Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.CommercialMediumBuilding, 3), mediumCommercial3x3Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.CommercialHeavyBuilding, 1), heavyCommercial1x1Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.CommercialHeavyBuilding, 2), heavyCommercial2x2Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.CommercialHeavyBuilding, 3), heavyCommercial3x3Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.IndustrialLightBuilding, 1), lightIndustrial1x1Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.IndustrialLightBuilding, 2), lightIndustrial2x2Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.IndustrialLightBuilding, 3), lightIndustrial3x3Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.IndustrialMediumBuilding, 1), mediumIndustrial1x1Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.IndustrialMediumBuilding, 2), mediumIndustrial2x2Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.IndustrialMediumBuilding, 3), mediumIndustrial3x3Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.IndustrialHeavyBuilding, 1), heavyIndustrial1x1Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.IndustrialHeavyBuilding, 2), heavyIndustrial2x2Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.IndustrialHeavyBuilding, 3), heavyIndustrial3x3Prefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.ResidentialLightZoning, 1), residentialLightZoningPrefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.ResidentialMediumZoning, 1), residentialMediumZoningPrefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.ResidentialHeavyZoning, 1), residentialHeavyZoningPrefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.CommercialLightZoning, 1), commercialLightZoningPrefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.CommercialMediumZoning, 1), commercialMediumZoningPrefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.CommercialHeavyZoning, 1), commercialHeavyZoningPrefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.IndustrialLightZoning, 1), industrialLightZoningPrefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.IndustrialMediumZoning, 1), industrialMediumZoningPrefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.IndustrialHeavyZoning, 1), industrialHeavyZoningPrefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.Grass, 1), grassPrefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.Road, 1), roadPrefabs ?? new List<GameObject>() },
+            { (Zone.ZoneType.Water, 1), waterPrefabs ?? new List<GameObject>() }
         };
+
+        isInitialized = true;
+        Debug.Log("ZoneManager: Zone prefabs dictionary initialized with " + zonePrefabs.Count + " entries");
+    }
+
+    void Start()
+    {
+        // Ensure initialization happened (should already be done in Awake, but double-check)
+        if (!isInitialized)
+        {
+            InitializeZonePrefabs();
+        }
+
+        Debug.Log("Start ZoneManager zonePrefabs: " + zonePrefabs.Count + " entries");
     }
 
     public ZoneAttributes GetZoneAttributes(Zone.ZoneType zoneType)
@@ -189,12 +218,26 @@ public class ZoneManager : MonoBehaviour
 
     public GameObject GetRandomZonePrefab(Zone.ZoneType zoneType, int size = 1)
     {
+        // Ensure initialization if somehow it wasn't called
+        if (!isInitialized)
+        {
+            InitializeZonePrefabs();
+        }
+
         var key = (zoneType, size);
 
-        if (!zonePrefabs.ContainsKey(key)) return null;
+        if (!zonePrefabs.ContainsKey(key))
+        {
+            Debug.LogWarning($"ZoneManager: No prefabs found for zone type {zoneType} with size {size}");
+            return null;
+        }
 
         List<GameObject> prefabs = zonePrefabs[key];
-        if (prefabs.Count == 0) return null;
+        if (prefabs == null || prefabs.Count == 0)
+        {
+            Debug.LogWarning($"ZoneManager: Prefab list for {zoneType} size {size} is null or empty");
+            return null;
+        }
 
         return prefabs[UnityEngine.Random.Range(0, prefabs.Count)];
     }
@@ -332,13 +375,13 @@ public class ZoneManager : MonoBehaviour
     {
         if (zoneAttributes == null)
             return false;
-            
+
         if (!cityStats.CanAfford(zoneAttributes.ConstructionCost))
             return false;
-            
+
         if (!gridManager.canPlaceBuilding(gridPosition, 1))
             return false;
-            
+
         // Manual zone placement is always allowed - the restrictions are on building spawning
         return true;
     }
@@ -374,7 +417,7 @@ public class ZoneManager : MonoBehaviour
     {
         availableZoneSections.Clear();
         var validZoneTypes = GetValidZoneTypes();
-        
+
         foreach (Zone.ZoneType zoneType in validZoneTypes)
         {
             List<List<Vector2>> sections = CalculateSectionsForZoneType(zoneType);
@@ -402,15 +445,15 @@ public class ZoneManager : MonoBehaviour
     private List<List<Vector2>> CalculateSectionsForZoneType(Zone.ZoneType zoneType)
     {
         List<List<Vector2>> sections = new List<List<Vector2>>();
-        
+
         for (int size = 1; size <= 3; size++)
         {
             var zonedPositions = GetZonedPositions(zoneType).ToList();
             if (!zonedPositions.Any()) continue;
-            
+
             sections.AddRange(CalculateSectionsForSize(zonedPositions, size));
         }
-        
+
         return sections;
     }
 
@@ -444,12 +487,12 @@ public class ZoneManager : MonoBehaviour
     private List<List<Vector2>> CalculateSectionsForSize(List<Vector2> zonedPositions, int size)
     {
         List<List<Vector2>> sections = new List<List<Vector2>>();
-        
+
         for (int i = zonedPositions.Count - 1; i >= 0; i--)
         {
             Vector2 start = zonedPositions[i];
             List<Vector2> section = GetSquareSection(start, size, zonedPositions);
-            
+
             if (section.Count == size * size)
             {
                 sections.Add(section);
@@ -459,7 +502,7 @@ public class ZoneManager : MonoBehaviour
                 }
             }
         }
-        
+
         return sections;
     }
 
@@ -493,13 +536,13 @@ public class ZoneManager : MonoBehaviour
         // Check if player can afford the zone
         if (zoneAttributes == null)
             return;
-            
+
         if (!cityStats.CanAfford(zoneAttributes.ConstructionCost))
         {
             uiManager.ShowInsufficientFundsTooltip(selectedZoneType.ToString(), zoneAttributes.ConstructionCost);
             return;
         }
-        
+
         if (canPlaceZone(zoneAttributes, gridPosition))
         {
             GameObject cell = gridManager.GetGridCell(gridPosition);
@@ -507,7 +550,7 @@ public class ZoneManager : MonoBehaviour
             gridManager.DestroyCellChildren(cell, gridPosition);
 
             GameObject zonePrefab = GetRandomZonePrefab(selectedZoneType);
-            
+
             if (zonePrefab == null)
             {
                 return;
@@ -572,22 +615,22 @@ public class ZoneManager : MonoBehaviour
                 break;
         }
     }
-   
+
     public void PlaceZonedBuildings(Zone.ZoneType zoningType)
     {
         if (availableZoneSections.Count == 0)
         {
             return;
         }
-        
+
         var sectionResult = GetRandomAvailableSection(zoningType);
         if (!sectionResult.HasValue || sectionResult.Value.size == 0)
         {
             return;
         }
-        
+
         Zone.ZoneType buildingZoneType = GetBuildingZoneType(zoningType);
-        
+
         if (IsResidentialBuilding(buildingZoneType))
         {
             int availableJobs = demandManager != null ? demandManager.GetAvailableJobs() : 0;
@@ -596,7 +639,7 @@ public class ZoneManager : MonoBehaviour
             {
                 return;
             }
-            
+
             if (demandManager != null && !demandManager.GetResidentialDemand().canGrow)
             {
                 return;
@@ -608,20 +651,20 @@ public class ZoneManager : MonoBehaviour
             {
                 return;
             }
-            
+
             // For commercial/industrial, check normal demand
             if (!CanZoneTypeGrowBasedOnDemand(zoningType))
             {
                 return;
             }
         }
-        
+
         // Check both power and water availability
         if (!cityStats.GetCityPowerAvailability())
         {
             return;
         }
-        
+
         // Check water availability
         if (waterManager != null && !waterManager.GetCityWaterAvailability())
         {
@@ -630,7 +673,7 @@ public class ZoneManager : MonoBehaviour
 
         Vector2[] section = sectionResult.Value.section;
         int buildingSize = (int)System.Math.Sqrt(section.Length);
-        
+
         ZoneAttributes zoneAttributes = GetZoneAttributes(buildingZoneType);
 
         PlaceZoneBuilding(section, buildingZoneType, zoneAttributes, zoningType, buildingSize);
@@ -724,7 +767,7 @@ public class ZoneManager : MonoBehaviour
     private bool CanPlaceResidentialBuilding()
     {
         if (demandManager == null) return true;
-        
+
         return demandManager.CanPlaceResidentialBuilding();
     }
 
@@ -732,7 +775,7 @@ public class ZoneManager : MonoBehaviour
     private bool CanPlaceCommercialOrIndustrialBuilding(Zone.ZoneType buildingType)
     {
         if (demandManager == null) return true;
-        
+
         return demandManager.CanPlaceCommercialOrIndustrialBuilding(buildingType);
     }
 
@@ -742,7 +785,7 @@ public class ZoneManager : MonoBehaviour
         {
             return true; // If no demand manager, allow all growth
         }
-        
+
         return demandManager.CanZoneTypeGrow(zoningType);
     }
 
@@ -837,8 +880,8 @@ public class ZoneManager : MonoBehaviour
 
         if (buildingSize > 1 && cell.zoneType != Zone.ZoneType.Building)
         {
-          Vector3 offset = new Vector3(0, -(buildingSize - 1) * gridManager.tileHeight / 2, 0);
-          worldPosition -= offset;
+            Vector3 offset = new Vector3(0, -(buildingSize - 1) * gridManager.tileHeight / 2, 0);
+            worldPosition -= offset;
         }
 
         gridManager.DestroyCellChildren(gridCell, new Vector2(cell.x, cell.y));
@@ -882,19 +925,19 @@ public class ZoneManager : MonoBehaviour
             case Zone.ZoneType.ResidentialMediumZoning:
             case Zone.ZoneType.ResidentialHeavyZoning:
                 return Zone.ZoneType.ResidentialLightZoning; // Use light as representative
-                
+
             // Commercial
             case Zone.ZoneType.CommercialLightZoning:
             case Zone.ZoneType.CommercialMediumZoning:
             case Zone.ZoneType.CommercialHeavyZoning:
                 return Zone.ZoneType.CommercialLightZoning; // Use light as representative
-                
+
             // Industrial
             case Zone.ZoneType.IndustrialLightZoning:
             case Zone.ZoneType.IndustrialMediumZoning:
             case Zone.ZoneType.IndustrialHeavyZoning:
                 return Zone.ZoneType.IndustrialLightZoning; // Use light as representative
-                
+
             default:
                 return zoningType;
         }
@@ -912,7 +955,8 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
-    public void ClearZonedPositions() {
+    public void ClearZonedPositions()
+    {
         zonedResidentialLightPositions.Clear();
         zonedResidentialMediumPositions.Clear();
         zonedResidentialHeavyPositions.Clear();

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 public class UIManager : MonoBehaviour
 {
-    public CityStats cityStats;
+    public ZoneManager zoneManager;
     public CursorManager cursorManager;
     public GridManager gridManager;
     public TimeManager timeManager;
@@ -13,6 +13,9 @@ public class UIManager : MonoBehaviour
     public DetailsPopupController detailsPopupController;
     public GameManager gameManager;
     public BuildingSelectorMenuController buildingSelectorMenuController;
+    public CityStats cityStats;
+
+
 
     public bool bulldozeMode;
     public bool detailsMode;
@@ -68,7 +71,7 @@ public class UIManager : MonoBehaviour
     public GameObject denseForestPrefab;
     public GameObject mediumForestPrefab;
     public GameObject sparseForestPrefab;
-  
+
     [Header("Demolition Animation")]
     [SerializeField] private GameObject demolitionExplosionPrefab;
 
@@ -79,11 +82,14 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
+        Debug.Log("Start UIManager cityStats: " + cityStats);
         if (cityStats == null)
         {
             Debug.LogError("CityStats component not found.");
+            cityStats = FindObjectOfType<CityStats>();
         }
-
+        Debug.Log("cityStats: " + cityStats);
+        Debug.Log("Zone.ZoneType.Grass: " + Zone.ZoneType.Grass);
         selectedZoneType = Zone.ZoneType.Grass;
         bulldozeMode = false;
 
@@ -119,7 +125,7 @@ public class UIManager : MonoBehaviour
         cityPowerConsumptionText.text = cityStats.cityPowerConsumption.ToString() + " MW";
         cityWaterOutputText.text = cityStats.cityWaterOutput.ToString() + " kL";
         cityWaterConsumptionText.text = cityStats.cityWaterConsumption.ToString() + " kL";
-        
+
         dateText.text = timeManager.GetCurrentDate().Date.ToString();
         residentialTaxText.text = "Residential Tax: " + economyManager.GetResidentialTax() + "%";
         commercialTaxText.text = "Commercial Tax: " + economyManager.GetCommercialTax() + "%";
@@ -129,12 +135,12 @@ public class UIManager : MonoBehaviour
         EmploymentManager employment = FindObjectOfType<EmploymentManager>();
         DemandManager demand = FindObjectOfType<DemandManager>();
         StatisticsManager stats = FindObjectOfType<StatisticsManager>();
-        
+
         if (employment != null)
         {
             unemploymentRateText.text = employment.unemploymentRate.ToString("F1") + "%";
             totalJobsText.text = employment.GetAvailableJobs().ToString();
-            
+
             if (totalJobsCreatedText != null)
                 totalJobsCreatedText.text = employment.GetTotalJobs().ToString();
             if (availableJobsText != null)
@@ -142,17 +148,17 @@ public class UIManager : MonoBehaviour
             if (jobsTakenText != null)
                 jobsTakenText.text = employment.GetJobsTakenByResidents().ToString();
         }
-        
+
         if (demand != null)
         {
-            demandResidentialText.text = demand.GetResidentialDemand().demandStatus + 
+            demandResidentialText.text = demand.GetResidentialDemand().demandStatus +
                 " (" + demand.GetResidentialDemand().demandLevel.ToString("F0") + ")";
-            demandCommercialText.text = demand.GetCommercialDemand().demandStatus + 
+            demandCommercialText.text = demand.GetCommercialDemand().demandStatus +
                 " (" + demand.GetCommercialDemand().demandLevel.ToString("F0") + ")";
-            demandIndustrialText.text = demand.GetIndustrialDemand().demandStatus + 
+            demandIndustrialText.text = demand.GetIndustrialDemand().demandStatus +
                 " (" + demand.GetIndustrialDemand().demandLevel.ToString("F0") + ")";
         }
-        
+
         // Update demand feedback for selected zone type
         UpdateDemandFeedback();
     }
@@ -160,17 +166,17 @@ public class UIManager : MonoBehaviour
     private void UpdateDemandFeedback()
     {
         if (demandFeedbackText == null || gridManager == null) return;
-        
+
         Zone.ZoneType selectedZone = GetSelectedZoneType();
         if (selectedZone == Zone.ZoneType.Grass || selectedZone == Zone.ZoneType.Road)
         {
             demandFeedbackText.text = "";
             return;
         }
-        
+
         string feedback = gridManager.GetDemandFeedback(selectedZone);
         demandFeedbackText.text = feedback;
-        
+
         // Enhanced color coding for demand levels
         if (feedback.Contains("✓"))
         {
@@ -199,23 +205,23 @@ public class UIManager : MonoBehaviour
         if (demandWarningPanel != null)
         {
             demandWarningPanel.SetActive(true);
-            
+
             Text warningText = demandWarningPanel.GetComponentInChildren<Text>();
             if (warningText != null)
             {
                 string message = "";
-                
+
                 // Check if it's residential that needs jobs
                 Zone.ZoneType buildingType = GetBuildingTypeFromZoning(zoneType);
-                if (IsResidential(buildingType) && 
-                    gridManager.demandManager != null && 
+                if (IsResidential(buildingType) &&
+                    gridManager.demandManager != null &&
                     !gridManager.demandManager.CanPlaceResidentialBuilding())
                 {
                     message = $"Cannot place {zoneType}\nNo jobs available for residents!\nBuild commercial/industrial buildings first.";
                 }
                 // Check if it's a commercial/industrial that needs residents
-                else if (IsCommercialOrIndustrial(buildingType) && 
-                    gridManager.demandManager != null && 
+                else if (IsCommercialOrIndustrial(buildingType) &&
+                    gridManager.demandManager != null &&
                     !gridManager.demandManager.CanPlaceCommercialOrIndustrialBuilding(buildingType))
                 {
                     message = $"Cannot place {zoneType}\nNeed residential buildings first!\nCommercial/Industrial requires residents to operate.";
@@ -228,10 +234,10 @@ public class UIManager : MonoBehaviour
                 {
                     message = $"Placing {zoneType}\nDemand Level: {demandLevel:F0}%";
                 }
-                
+
                 warningText.text = message;
             }
-            
+
             // Auto-hide warning after 4 seconds (longer for important messages)
             Invoke("HideDemandWarning", 4f);
         }
@@ -268,7 +274,7 @@ public class UIManager : MonoBehaviour
                zoneType == Zone.ZoneType.ResidentialMediumBuilding ||
                zoneType == Zone.ZoneType.ResidentialHeavyBuilding;
     }
-    
+
     private bool IsCommercialOrIndustrial(Zone.ZoneType zoneType)
     {
         return zoneType == Zone.ZoneType.CommercialLightBuilding ||
@@ -375,18 +381,18 @@ public class UIManager : MonoBehaviour
         {
             float demandLevel = gridManager.demandManager.GetDemandLevel(zoneType);
             bool canGrow = gridManager.demandManager.CanZoneTypeGrow(zoneType);
-            
+
             // Check residential requirements for commercial/industrial
             Zone.ZoneType buildingType = GetBuildingTypeFromZoning(zoneType);
             bool needsResidential = IsCommercialOrIndustrial(buildingType);
-            bool hasResidentialSupport = !needsResidential || 
+            bool hasResidentialSupport = !needsResidential ||
                 gridManager.demandManager.CanPlaceCommercialOrIndustrialBuilding(buildingType);
-            
+
             // Check job requirements for residential
             bool needsJobs = IsResidential(buildingType);
-            bool hasJobsAvailable = !needsJobs || 
+            bool hasJobsAvailable = !needsJobs ||
                 gridManager.demandManager.CanPlaceResidentialBuilding();
-            
+
             // Show warning for various conditions
             if (!hasJobsAvailable)
             {
@@ -427,18 +433,18 @@ public class UIManager : MonoBehaviour
     {
         ClearSelectedZoneType();
         ClearSelectedForest();
-        
+
         GameObject powerPlantObject = Instantiate(powerPlantAPrefab);
         PowerPlant powerPlant = powerPlantObject.AddComponent<PowerPlant>();
         Debug.Log("powerPlant: " + powerPlant);
         powerPlant.Initialize("Power Plant A", 10000, 100, 50, 25, 3, 10000, powerPlantAPrefab);
-        
+
         selectedBuilding = powerPlant;
-        
+
         cursorManager.SetDefaultCursor();
-        
+
         cursorManager.ShowBuildingPreview(powerPlantAPrefab, 3);
-        
+
         bulldozeMode = false;
     }
 
@@ -484,7 +490,7 @@ public class UIManager : MonoBehaviour
 
     public bool isBulldozeMode()
     {
-      return bulldozeMode;
+        return bulldozeMode;
     }
 
     public void OnDetailsButtonClicked()
@@ -531,15 +537,15 @@ public class UIManager : MonoBehaviour
         detailsHappinessText.text = "Happiness: " + cell.GetHappiness();
         detailsPowerOutputText.text = "Power Output: " + cell.GetPowerOutput() + " MW";
         detailsPowerConsumptionText.text = "Power Consumption: " + cell.GetPowerConsumption() + " MW";
-        
+
         // Add water consumption information
         if (detailsPopupController.waterConsumptionText != null)
             detailsPopupController.waterConsumptionText.text = "Water Consumption: " + cell.GetWaterConsumption() + " kL";
-        
+
         // Add water output information for water plants
         if (cell.waterPlant != null && detailsPopupController.waterOutputText != null)
             detailsPopupController.waterOutputText.text = "Water Output: " + cell.waterPlant.WaterOutput + " kL";
-        
+
         // detailsDateBuiltText.text = "Date Built: " + timeManager.GetCurrentDate();
         detailsBuildingTypeText.text = "Building Type: " + cell.GetBuildingType();
         detailsImage.sprite = cell.GetCellPrefab().GetComponent<SpriteRenderer>().sprite;
@@ -595,6 +601,7 @@ public class UIManager : MonoBehaviour
 
     public void OnLoadGameButtonClicked(string saveFilePath)
     {
+        Debug.Log("OnLoadGameButtonClicked saveFilePath: " + saveFilePath);
         gameManager.LoadGame(saveFilePath); // Call the game manager to load the game
     }
 
@@ -616,28 +623,32 @@ public class UIManager : MonoBehaviour
 
     public void OnMediumWaterPumpPlantButtonClicked()
     {
-        try {
+        try
+        {
             ClearSelectedZoneType();
-            
-            if (waterPumpPrefab == null) {
+
+            if (waterPumpPrefab == null)
+            {
                 return;
             }
 
             GameObject waterPlantObject = Instantiate(waterPumpPrefab);
             WaterPlant waterPlant = waterPlantObject.GetComponent<WaterPlant>();
-            if (waterPlant == null) {
+            if (waterPlant == null)
+            {
                 waterPlant = waterPlantObject.AddComponent<WaterPlant>();
             }
-            
+
             waterPlant.Initialize("Water Pump", 8000, 80, 30, 20, 2, 8000, waterPumpPrefab);
 
             selectedBuilding = waterPlant;
-        
+
             cursorManager.SetDefaultCursor();
             cursorManager.ShowBuildingPreview(waterPumpPrefab, 2);
             bulldozeMode = false;
         }
-        catch (System.Exception ex) {
+        catch (System.Exception ex)
+        {
             Debug.LogError($"Error in OnWaterPumpPlantButtonClicked: {ex.Message}\n{ex.StackTrace}");
         }
     }
@@ -654,14 +665,14 @@ public class UIManager : MonoBehaviour
     public void ShowInsufficientFundsTooltip(string itemType, int cost)
     {
         if (insufficientFundsPanel == null || insufficientFundsText == null) return;
-        
+
         insufficientFundsText.text = $"Cannot afford {itemType}!\nCost: ${cost}\nAvailable: ${cityStats.money}";
         insufficientFundsPanel.SetActive(true);
-        
+
         // Cancel any existing hide coroutine
         if (hideTooltipCoroutine != null)
             StopCoroutine(hideTooltipCoroutine);
-        
+
         // Start a new hide coroutine
         hideTooltipCoroutine = StartCoroutine(HideTooltipAfterDelay());
     }
@@ -678,7 +689,7 @@ public class UIManager : MonoBehaviour
     {
         if (insufficientFundsPanel != null)
             insufficientFundsPanel.SetActive(false);
-        
+
         if (hideTooltipCoroutine != null)
         {
             StopCoroutine(hideTooltipCoroutine);
@@ -690,14 +701,14 @@ public class UIManager : MonoBehaviour
     {
         ClearSelectedZoneType();
         ClearSelectedBuilding();
-        
+
         // Don't instantiate yet - just prepare the forest data
         ForestSelectionData forestData = new ForestSelectionData
         {
             forestType = forestType,
             prefab = GetForestPrefabForType(forestType)
         };
-        
+
         selectedForestData = forestData; // Store selection data instead of instance
         selectedForest = null; // Clear any existing instance
 
@@ -731,12 +742,12 @@ public class UIManager : MonoBehaviour
     {
         GameObject forestPrefab = GetForestPrefabForType(forestType);
         GameObject forestObject = Instantiate(forestPrefab);
-        
+
         // Move it off-screen initially to prevent visual issues
         forestObject.transform.position = new Vector3(-1000, -1000, 0);
-        
+
         IForest forest = null;
-        
+
         switch (forestType)
         {
             case Forest.ForestType.Sparse:
@@ -745,14 +756,14 @@ public class UIManager : MonoBehaviour
                     forest = forestObject.AddComponent<SparseForest>();
                 ((SparseForest)forest).Initialize();
                 break;
-                
+
             case Forest.ForestType.Medium:
                 forest = forestObject.GetComponent<MediumForest>();
                 if (forest == null)
                     forest = forestObject.AddComponent<MediumForest>();
                 ((MediumForest)forest).Initialize();
                 break;
-                
+
             case Forest.ForestType.Dense:
                 forest = forestObject.GetComponent<DenseForest>();
                 if (forest == null)
@@ -760,7 +771,7 @@ public class UIManager : MonoBehaviour
                 ((DenseForest)forest).Initialize();
                 break;
         }
-        
+
         return forest;
     }
 
@@ -801,20 +812,20 @@ public class UIManager : MonoBehaviour
             Debug.LogWarning("Demolition explosion prefab not assigned in UIManager");
             return;
         }
-        
+
         if (cell == null)
         {
             Debug.LogWarning("Cannot show demolition animation: cell is null");
             return;
         }
-        
+
         // Get the world position of the cell
         Vector3 explosionPosition = cell.transform.position;
         explosionPosition.y += 0.1f; // Slight offset above ground
-        
+
         // Instantiate the explosion animation
         GameObject explosion = Instantiate(demolitionExplosionPrefab, explosionPosition, Quaternion.identity);
-        
+
         // Initialize the animation (the DemolitionAnimation script will handle AnimatorManager registration)
         DemolitionAnimation demolitionAnim = explosion.GetComponent<DemolitionAnimation>();
         if (demolitionAnim != null)
@@ -835,9 +846,9 @@ public class UIManager : MonoBehaviour
             ShowDemolitionAnimation(centerCell);
             return;
         }
-        
+
         Vector3 explosionPosition = centerCell.transform.position;
-        
+
         // Center the explosion for larger buildings
         if (buildingSize > 1)
         {
@@ -845,11 +856,11 @@ public class UIManager : MonoBehaviour
             explosionPosition.x += (buildingSize - 1) * gridSpacing * 0.5f;
             explosionPosition.z += (buildingSize - 1) * gridSpacing * 0.5f;
         }
-        
+
         explosionPosition.y += 0.1f;
-        
+
         GameObject explosion = Instantiate(demolitionExplosionPrefab, explosionPosition, Quaternion.identity);
-        
+
         DemolitionAnimation demolitionAnim = explosion.GetComponent<DemolitionAnimation>();
         if (demolitionAnim != null)
         {
