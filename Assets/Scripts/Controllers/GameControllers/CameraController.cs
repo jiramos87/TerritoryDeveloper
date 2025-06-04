@@ -60,8 +60,6 @@ public class CameraController : MonoBehaviour
         {
             Debug.LogWarning("CameraController: No zoom levels defined.");
         }
-
-        Debug.Log("CameraController: Camera initialized successfully");
     }
 
     void Start()

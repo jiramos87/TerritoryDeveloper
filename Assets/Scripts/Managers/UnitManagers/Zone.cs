@@ -47,7 +47,6 @@ public class Zone : MonoBehaviour
     {
         // Initialize zone-specific properties
         SetZoneCategoryFromType();
-        Debug.Log("Start Zone zoneType: " + zoneType + " zoneCategory: " + zoneCategory);
     }
 
     /// <summary>

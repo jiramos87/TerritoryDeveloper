@@ -1,10 +1,12 @@
 using UnityEngine;
 
-public class HeightMap
+public class HeightMap : MonoBehaviour
 {
     private int[,] heights;
     private int width;
     private int height;
+
+    private GridManager gridManager;
 
     public HeightMap(int width, int height)
     {
@@ -16,6 +18,7 @@ public class HeightMap
 
     private void InitializeHeights()
     {
+        gridManager = FindObjectOfType<GridManager>();
         // Initialize all heights to 1 (or whatever base height you prefer)
         for (int x = 0; x < width; x++)
         {
@@ -38,8 +41,8 @@ public class HeightMap
         {
             for (int y = 0; y < height; y++)
             {
-                heights[x, y] = Mathf.Clamp(newHeights[x, y], 
-                    TerrainManager.MIN_HEIGHT, 
+                heights[x, y] = Mathf.Clamp(newHeights[x, y],
+                    TerrainManager.MIN_HEIGHT,
                     TerrainManager.MAX_HEIGHT);
             }
         }
@@ -61,8 +64,8 @@ public class HeightMap
             return;
         }
 
-        heights[x, y] = Mathf.Clamp(newHeight, 
-            TerrainManager.MIN_HEIGHT, 
+        heights[x, y] = Mathf.Clamp(newHeight,
+            TerrainManager.MIN_HEIGHT,
             TerrainManager.MAX_HEIGHT);
     }
 
@@ -185,6 +188,16 @@ public class HeightMap
 
         // Return true if the tile is either consistently sloping up or down
         return (higherCount > 0 && lowerCount == 0) || (lowerCount > 0 && higherCount == 0);
+    }
+
+    public int getHeightWithBorder(int x, int y)
+    {
+        if (x < 0 || y < 0 || x >= width || y >= height)
+        {
+            return -1;
+        }
+
+        return GetHeight(x, y);
     }
 }
 

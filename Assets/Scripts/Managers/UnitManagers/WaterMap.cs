@@ -29,7 +29,6 @@ public class WaterMap
     {
         if (!IsValidPosition(x, y))
         {
-            Debug.LogError($"Invalid position: ({x}, {y})");
             return false;
         }
         return waterCells[x, y];

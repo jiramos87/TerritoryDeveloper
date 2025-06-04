@@ -151,7 +151,6 @@ public class ZoneManager : MonoBehaviour
         };
 
         isInitialized = true;
-        Debug.Log("ZoneManager: Zone prefabs dictionary initialized with " + zonePrefabs.Count + " entries");
     }
 
     void Start()
@@ -161,8 +160,6 @@ public class ZoneManager : MonoBehaviour
         {
             InitializeZonePrefabs();
         }
-
-        Debug.Log("Start ZoneManager zonePrefabs: " + zonePrefabs.Count + " entries");
     }
 
     public ZoneAttributes GetZoneAttributes(Zone.ZoneType zoneType)
@@ -218,7 +215,6 @@ public class ZoneManager : MonoBehaviour
 
     public GameObject GetRandomZonePrefab(Zone.ZoneType zoneType, int size = 1)
     {
-        // Ensure initialization if somehow it wasn't called
         if (!isInitialized)
         {
             InitializeZonePrefabs();
@@ -228,14 +224,12 @@ public class ZoneManager : MonoBehaviour
 
         if (!zonePrefabs.ContainsKey(key))
         {
-            Debug.LogWarning($"ZoneManager: No prefabs found for zone type {zoneType} with size {size}");
             return null;
         }
 
         List<GameObject> prefabs = zonePrefabs[key];
         if (prefabs == null || prefabs.Count == 0)
         {
-            Debug.LogWarning($"ZoneManager: Prefab list for {zoneType} size {size} is null or empty");
             return null;
         }
 

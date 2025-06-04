@@ -91,35 +91,22 @@ public class GridManager : MonoBehaviour
         {
             forestManager = FindObjectOfType<ForestManager>();
         }
-        Debug.Log("InitializeGrid zoneManager: " + zoneManager);
-        Debug.Log("InitializeGrid uiManager: " + uiManager);
-        Debug.Log("InitializeGrid forestManager: " + forestManager);
-        Debug.Log("InitializeGrid waterManager: " + waterManager);
-        Debug.Log("InitializeGrid cityStats: " + cityStats);
-        Debug.Log("InitializeGrid cursorManager: " + cursorManager);
-        Debug.Log("InitializeGrid terrainManager: " + terrainManager);
-        Debug.Log("InitializeGrid demandManager: " + demandManager);
-        Debug.Log("InitializeGrid GameNotificationManager: " + GameNotificationManager);
-        Debug.Log("InitializeGrid roadManager: " + roadManager);
 
         CreateGrid();
-        Debug.Log("CreateGrid gridArray: " + gridArray);
-        Debug.Log("CreateGrid width: " + width + " height: " + height);
+
         Vector3 centerWorldPosition = GetWorldPosition(
             width / 2, height / 2
         );
-        Debug.Log("CreateGrid centerWorldPosition: " + centerWorldPosition);
+
         cameraController.MoveCameraToMapCenter(centerWorldPosition);
     }
 
     void CreateGrid()
     {
-        Debug.Log("CreateGrid");
         if (!zoneManager)
         {
             zoneManager = FindObjectOfType<ZoneManager>();
         }
-        Debug.Log("CreateGrid zoneManager: " + zoneManager);
 
         gridArray = new GameObject[width, height];
 
@@ -147,7 +134,7 @@ public class GridManager : MonoBehaviour
                 cellComponent.buildingType = null;
                 cellComponent.buildingSize = 1;
                 cellComponent.powerPlant = null;
-                cellComponent.height = 1; // Set initial height
+                cellComponent.height = 1;
                 cellComponent.waterPlant = null;
                 cellComponent.occupiedBuilding = null;
                 cellComponent.isPivot = false;
@@ -158,7 +145,7 @@ public class GridManager : MonoBehaviour
                 cellComponent.prefab = tilePrefab;
                 cellComponent.prefabName = tilePrefab.name;
                 cellComponent.isPivot = false;
-                Debug.Log("x: " + x + " y: " + y + " gridCell: " + gridCell);
+
                 gridArray[x, y] = gridCell;
 
                 GameObject zoneTile = Instantiate(
@@ -562,22 +549,56 @@ public class GridManager : MonoBehaviour
 
         int x = (int)gridPos.x;
         int y = (int)gridPos.y;
+        if (x < 0 || x >= width || y < 0 || y >= height)
+        {
+            return -1001;
+        }
+
         Cell cell = gridArray[x, y].GetComponent<Cell>();
-
         SpriteRenderer sr = tile.GetComponent<SpriteRenderer>();
-        var sortingOrder = 0;
 
+        int baseSortingOrder = (y * width + x);
+
+        int sortingOrder;
         switch (zoneType)
         {
             case Zone.ZoneType.Grass:
-                sortingOrder = -1001 - (cell.height * 100); // Adjust based on height
-                sr.sortingOrder = sortingOrder;
-                return sortingOrder;
+                sortingOrder = -(baseSortingOrder + 100000);
+                break;
             default:
-                sortingOrder = -(y * 10 + x) - 100 - (cell.height * 100); // Adjust based on height
-                sr.sortingOrder = sortingOrder;
-                return sortingOrder;
+                sortingOrder = -(baseSortingOrder + 50000);
+                break;
         }
+        if ((x == 13 || x == 14 || x == 15) && (y == 0 || y == 1 || y == 2))
+            Debug.Log("SetTileSortingOrder x: " + x + " y: " + y + " zoneType: " + zoneType + " baseSortingOrder: " + baseSortingOrder + " height: " + cell.height + " sortingOrder: " + sortingOrder);
+
+        sr.sortingOrder = sortingOrder;
+        cell.sortingOrder = sortingOrder;
+        return sortingOrder;
+    }
+
+    public int SetResortSeaLevelOrder(GameObject tile, Vector2 gridPosition)
+    {
+        int x = (int)gridPosition.x;
+        int y = (int)gridPosition.y;
+
+        // Water should consider height for proper intersection with terrain
+        Cell cell = gridArray[x, y].GetComponent<Cell>();
+
+        int baseSortingOrder = (y * width + x);
+
+        // Water renders before most objects but after base terrain
+        int sortingOrder = -(baseSortingOrder + 75000);
+
+        SpriteRenderer sr = tile.GetComponent<SpriteRenderer>();
+
+        if (sr != null)
+        {
+            sr.sortingOrder = sortingOrder;
+        }
+
+        cell.sortingOrder = sortingOrder;
+        return sortingOrder;
     }
 
     public Vector2 GetGridPosition(Vector2 worldPoint)
@@ -613,6 +634,12 @@ public class GridManager : MonoBehaviour
         return gridArray[(int)gridPos.x, (int)gridPos.y];
     }
 
+    public void SetCellHeight(Vector2 gridPos, int height)
+    {
+        Cell cell = gridArray[(int)gridPos.x, (int)gridPos.y].GetComponent<Cell>();
+        cell.height = height;
+    }
+
     void DestroyPreviousZoning(GameObject cell)
     {
         if (cell.transform.childCount > 0)
@@ -639,12 +666,11 @@ public class GridManager : MonoBehaviour
 
     public bool canPlaceBuilding(Vector2 gridPosition, int buildingSize)
     {
-        Debug.Log("canPlaceBuilding buildingSize: " + buildingSize + " gridPosition: " + gridPosition);
         if (buildingSize == 0)
         {
             return false;
         }
-        Debug.Log("buildingSize is not 0");
+
         int offsetX = 0;
         int offsetY = 0;
 
@@ -659,12 +685,11 @@ public class GridManager : MonoBehaviour
             offsetY = buildingSize / 2;
         }
 
-        Debug.Log("building offsetX: " + offsetX + " offsetY: " + offsetY);
-        if (!terrainManager.CanPlaceBuildingInTerrain((int)gridPosition.x, (int)gridPosition.y, buildingSize))
+        if (!terrainManager.CanPlaceBuildingInTerrain(gridPosition, buildingSize))
         {
             return false;
         }
-        Debug.Log("building can be placed in terrain");
+
         for (int x = 0; x < buildingSize; x++)
         {
             for (int y = 0; y < buildingSize; y++)
@@ -685,7 +710,7 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
-        Debug.Log("waterManager: " + waterManager);
+
         if (waterManager != null && uiManager.GetSelectedBuilding() != null &&
             uiManager.GetSelectedBuilding() is WaterPlant)
         {
@@ -856,19 +881,16 @@ public class GridManager : MonoBehaviour
 
     void PlaceBuilding(Vector2 gridPos, IBuilding iBuilding)
     {
-        Debug.Log("PlaceBuilding waterManager: " + waterManager + "iBuilding: " + iBuilding);
         if (!cityStats.CanAfford(iBuilding.ConstructionCost))
         {
             uiManager.ShowInsufficientFundsTooltip("building", iBuilding.ConstructionCost);
             return;
         }
-        Debug.Log("building can be afforded");
+
         if (canPlaceBuilding(gridPos, iBuilding.BuildingSize))
         {
-            // Deduct the cost BEFORE placing the building
             cityStats.RemoveMoney(iBuilding.ConstructionCost);
 
-            // Then place the building
             PlaceBuildingTile(iBuilding, gridPos);
 
             GameNotificationManager.Instance.PostBuildingConstructed(
@@ -954,5 +976,14 @@ public class GridManager : MonoBehaviour
         }
 
         return gridData;
+    }
+
+    public bool isBorderCell(int x, int y)
+    {
+        if (x == 0 || x == width - 1 || y == 0 || y == height - 1)
+        {
+            return true;
+        }
+        return false;
     }
 }

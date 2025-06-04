@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
 /// GeographyManager coordinates the initialization and management of all geographical features:
@@ -43,31 +44,28 @@ public class GeographyManager : MonoBehaviour
 
     public void InitializeGeography()
     {
-        Debug.Log("InitializeGeography");
         if (gridManager != null)
         {
             gridManager.InitializeGrid();
         }
-        Debug.Log("InitializeGeography gridManager: " + gridManager);
 
         if (terrainManager != null)
         {
             terrainManager.InitializeHeightMap();
         }
-        Debug.Log("InitializeGeography terrainManager: " + terrainManager);
+
         if (waterManager != null)
         {
             waterManager.InitializeWaterMap();
         }
-        Debug.Log("InitializeGeography waterManager: " + waterManager);
+
         if (forestManager != null)
         {
             forestManager.InitializeForestMap();
         }
-        Debug.Log("InitializeGeography forestManager: " + forestManager);
-        currentGeographyData = CreateGeographyData();
-        Debug.Log("InitializeGeography currentGeographyData: " + currentGeographyData);
 
+        currentGeographyData = CreateGeographyData();
+        ReCalculateSortingOrderBasedOnHeight();
     }
 
     private GeographyData CreateGeographyData()
@@ -109,50 +107,112 @@ public class GeographyManager : MonoBehaviour
     {
         currentGeographyData = geographyData;
 
-        Debug.Log("GeographyManager: Loading geography from saved data...");
-
-        // Load terrain data
         if (geographyData.hasTerrainData && terrainManager != null)
         {
-            Debug.Log("GeographyManager: Loading terrain data...");
             terrainManager.InitializeHeightMap();
         }
 
-        // Load water data
         if (geographyData.hasWaterData && waterManager != null)
         {
-            Debug.Log($"GeographyManager: Loading water data ({geographyData.waterCellCount} water cells)...");
             waterManager.InitializeWaterMap();
         }
 
-        // Load forest data
         if (geographyData.hasForestData && forestManager != null)
         {
-            Debug.Log($"GeographyManager: Loading forest data ({geographyData.forestCellCount} forest cells)...");
             forestManager.InitializeForestMap();
         }
 
-        Debug.Log("GeographyManager: Geography loading complete!");
+        ReCalculateSortingOrderBasedOnHeight();
+    }
+
+    private void ReCalculateSortingOrderBasedOnHeight()
+    {
+        Debug.Log("ReCalculateSortingOrderBasedOnHeight - Starting recalculation");
+        if (gridManager == null)
+        {
+            Debug.LogError("GridManager is null, cannot recalculate sorting orders");
+            return;
+        }
+
+        int updatedCells = 0;
+
+        for (int x = 0; x < gridManager.width; x++)
+        {
+            for (int y = 0; y < gridManager.height; y++)
+            {
+                GameObject cell = gridManager.gridArray[x, y];
+                Cell cellComponent = cell.GetComponent<Cell>();
+
+                if (cellComponent == null)
+                {
+                    Debug.LogWarning($"Cell component missing at ({x}, {y})");
+                    continue;
+                }
+
+                // Skip cells marked as invalid
+                if (cellComponent.sortingOrder == -1001)
+                {
+                    continue;
+                }
+
+                // Handle both direct cell rendering and child object rendering
+                List<GameObject> objectsToSort = new List<GameObject>();
+
+                // Add the cell itself if it has a sprite renderer
+                if (cell.GetComponent<SpriteRenderer>() != null)
+                {
+                    objectsToSort.Add(cell);
+                }
+
+                // Add all children with sprite renderers
+                for (int i = 0; i < cell.transform.childCount; i++)
+                {
+                    GameObject child = cell.transform.GetChild(i).gameObject;
+                    if (child.GetComponent<SpriteRenderer>() != null)
+                    {
+                        objectsToSort.Add(child);
+                    }
+                }
+
+                // Sort each object
+                foreach (GameObject obj in objectsToSort)
+                {
+                    int oldSortingOrder = obj.GetComponent<SpriteRenderer>().sortingOrder;
+                    int newSortingOrder;
+
+                    if (cellComponent.height == 0)
+                    {
+                        newSortingOrder = gridManager.SetResortSeaLevelOrder(obj, new Vector2(x, y));
+                        if (oldSortingOrder != newSortingOrder)
+                        {
+                            updatedCells++;
+                        }
+                    }
+                    // else
+                    // {
+                    //     Zone.ZoneType zoneType = cellComponent.zoneType;
+                    //     newSortingOrder = gridManager.SetTileSortingOrder(obj, zoneType);
+                    // }
+
+
+                }
+            }
+        }
+
+        Debug.Log($"ReCalculateSortingOrderBasedOnHeight - Completed. Updated {updatedCells} cells.");
     }
 
     public void ResetGeography()
     {
-        Debug.Log("GeographyManager: Resetting geography...");
-
-        // Reset forest data properly by removing all forests through ForestManager
         if (forestManager != null && forestManager.GetForestMap() != null)
         {
             ClearAllForests();
         }
-
-        // Reset water data
         if (waterManager != null && waterManager.GetWaterMap() != null)
         {
             // Water manager would need a ClearAllWater method similar to forest
             Debug.Log("GeographyManager: Water reset not implemented yet");
         }
-
-        // Note: Terrain is typically not reset as it's more structural
 
         currentGeographyData = new GeographyData();
 
@@ -168,18 +228,12 @@ public class GeographyManager : MonoBehaviour
         if (forestMap == null)
             return;
 
-        Debug.Log("GeographyManager: Clearing all forests...");
-
-        // Get all forest positions before clearing
         var allForests = forestMap.GetAllForests();
 
-        // Remove each forest properly through ForestManager
         foreach (var forestPos in allForests)
         {
             forestManager.RemoveForestFromCell(forestPos.x, forestPos.y, false);
         }
-
-        Debug.Log($"GeographyManager: Cleared {allForests.Count} forest cells");
     }
 
     public void ClearForestsOfType(Forest.ForestType forestType)
@@ -191,23 +245,16 @@ public class GeographyManager : MonoBehaviour
         if (forestMap == null)
             return;
 
-        Debug.Log($"GeographyManager: Clearing all {forestType} forests...");
-
-        // Get all forests of the specified type
         var forestsOfType = forestMap.GetAllForestsOfType(forestType);
 
-        // Remove each forest properly through ForestManager
         foreach (var forestPos in forestsOfType)
         {
             forestManager.RemoveForestFromCell(forestPos.x, forestPos.y, false);
         }
-
-        Debug.Log($"GeographyManager: Cleared {forestsOfType.Count} {forestType} forest cells");
     }
 
     public GeographyData GetCurrentGeographyData()
     {
-        // Update with current state
         currentGeographyData = CreateGeographyData();
         return currentGeographyData;
     }
@@ -222,12 +269,10 @@ public class GeographyManager : MonoBehaviour
         switch (placementType)
         {
             case PlacementType.Forest:
-                // Trees cannot be placed on water or existing forests
                 if (waterManager != null && waterManager.IsWaterAt(x, y))
                     return false;
                 if (forestManager != null && forestManager.IsForestAt(x, y))
                     return false;
-                // Check for buildings
                 if (gridManager != null && gridManager.gridArray != null)
                 {
                     GameObject cell = gridManager.gridArray[x, y];
@@ -238,7 +283,6 @@ public class GeographyManager : MonoBehaviour
                 return true;
 
             case PlacementType.Water:
-                // Water cannot be placed on existing water or forests
                 if (waterManager != null && waterManager.IsWaterAt(x, y))
                     return false;
                 if (forestManager != null && forestManager.IsForestAt(x, y))
@@ -246,19 +290,16 @@ public class GeographyManager : MonoBehaviour
                 return true;
 
             case PlacementType.Building:
-                // Buildings can be placed on most terrain but will remove trees
                 if (waterManager != null && waterManager.IsWaterAt(x, y))
                     return false;
                 return true;
 
             case PlacementType.Zone:
-                // Zones can be placed anywhere except water
                 if (waterManager != null && waterManager.IsWaterAt(x, y))
                     return false;
                 return true;
 
             case PlacementType.Infrastructure:
-                // Infrastructure (roads, power lines) can be placed anywhere except water
                 if (waterManager != null && waterManager.IsWaterAt(x, y))
                     return false;
                 return true;

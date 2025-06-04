@@ -7,7 +7,7 @@ public class TerrainManager : MonoBehaviour
     private HeightMap heightMap;
     public ZoneManager zoneManager;
     public WaterManager waterManager;
-    
+
     // References to slope prefabs
     public GameObject northSlopePrefab;
     public GameObject southSlopePrefab;
@@ -22,10 +22,26 @@ public class TerrainManager : MonoBehaviour
     public GameObject southEastUpslopePrefab;
     public GameObject southWestUpslopePrefab;
 
+    // Water-slope prefabs
+    public GameObject northSlopeWaterPrefab;
+    public GameObject southSlopeWaterPrefab;
+    public GameObject eastSlopeWaterPrefab;
+    public GameObject westSlopeWaterPrefab;
+    public GameObject northEastSlopeWaterPrefab;
+    public GameObject northWestSlopeWaterPrefab;
+    public GameObject southEastSlopeWaterPrefab;
+    public GameObject southWestSlopeWaterPrefab;
+    public GameObject northEastUpslopeWaterPrefab;
+    public GameObject northWestUpslopeWaterPrefab;
+    public GameObject southEastUpslopeWaterPrefab;
+    public GameObject southWestUpslopeWaterPrefab;
+
+    public GameObject seaLevelWaterPrefab;
+
     public const int MIN_HEIGHT = 0;
     public const int MAX_HEIGHT = 20;
     public const int SEA_LEVEL = 0;
-    
+
     // Sorting order constants for different object types
     public const int TERRAIN_BASE_ORDER = 0;
     public const int SLOPE_OFFSET = -1;
@@ -59,41 +75,32 @@ public class TerrainManager : MonoBehaviour
     {
         heightMap = new HeightMap(gridManager.width, gridManager.height);
         LoadInitialHeightMap();
-
-        // for (int x = 0; x < gridManager.width; x++)
-        // {
-        //     for (int y = 0; y < gridManager.height; y++)
-        //     {
-        //         heightMap.SetHeight(x, y, SEA_LEVEL);
-        //     }
-        // }
-
         ApplyHeightMapToGrid();
     }
 
     private void LoadInitialHeightMap()
     {
         int[,] initialHeights = new int[,] {
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1},
-          {1, 1, 2, 3, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1},
-          {1, 1, 2, 3, 3, 3, 2, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1},
-          {1, 1, 2, 3, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2},
-          {1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 2, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 0, 1, 1, 2, 1, 1, 1, 1, 1},
+          {1, 1, 2, 3, 3, 3, 2, 1, 1, 1, 1, 0, 1, 1, 2, 1, 1, 1, 1, 1},
+          {1, 1, 2, 3, 3, 3, 2, 1, 1, 1, 1, 0, 1, 2, 2, 1, 1, 1, 1, 1},
+          {1, 1, 2, 3, 3, 3, 2, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 2, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 2, 2, 2, 2},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 2, 1, 2},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 2},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 2},
+          {1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1},
+          {1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1},
+          {2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 0, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 2, 1, 0, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 0, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1},
         };
         heightMap.SetHeights(initialHeights);
     }
@@ -124,6 +131,11 @@ public class TerrainManager : MonoBehaviour
             PlaceSlope(x, y);
         }
 
+        if (currentHeight == SEA_LEVEL)
+        {
+            ModifyWaterSlopeInAdjacentNeighbors(x, y);
+        }
+
         if (currentHeight > 1) // If it's flat but elevated
         {
             UpdateElevatedTilePosition(x, y, currentHeight);
@@ -138,7 +150,7 @@ public class TerrainManager : MonoBehaviour
 
         Transform existingTile = cell.gameObject.transform.GetChild(0);
         existingTile.position = new Vector3(worldPos.x, worldPos.y, 0);
-        
+
         SpriteRenderer sr = existingTile.GetComponent<SpriteRenderer>();
         if (sr != null)
         {
@@ -158,17 +170,17 @@ public class TerrainManager : MonoBehaviour
     private bool RequiresSlope(int x, int y)
     {
         int currentHeight = heightMap.GetHeight(x, y);
-        
+
         // Check all 8 surrounding tiles
         for (int dx = -1; dx <= 1; dx++)
         {
             for (int dy = -1; dy <= 1; dy++)
             {
                 if (dx == 0 && dy == 0) continue;
-                
+
                 int nx = x + dx;
                 int ny = y + dy;
-                
+
                 if (heightMap.IsValidPosition(nx, ny))
                 {
                     int neighborHeight = heightMap.GetHeight(nx, ny);
@@ -187,12 +199,12 @@ public class TerrainManager : MonoBehaviour
     {
         int currentHeight = heightMap.GetHeight(x, y);
         GameObject slopePrefab = DetermineSlopePrefab(x, y);
-        
+
         if (slopePrefab != null)
         {
             Cell cell = gridManager.GetCell(x, y);
             DestroyCellChildren(cell);
-            
+
             Vector2 worldPos = gridManager.GetWorldPosition(x, y);
             GameObject slope = Instantiate(
                 slopePrefab,
@@ -200,13 +212,139 @@ public class TerrainManager : MonoBehaviour
                 Quaternion.identity
             );
             slope.transform.SetParent(cell.gameObject.transform);
-            
+
             SpriteRenderer sr = slope.GetComponent<SpriteRenderer>();
             if (sr != null)
             {
                 sr.sortingOrder = CalculateSlopeSortingOrder(x, y, currentHeight);
             }
         }
+    }
+
+    private void ModifyWaterSlopeInAdjacentNeighbors(int x, int y)
+    {
+        PlaceSeaLevelWater(x, y);
+        // check all 8 neighbors
+
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                if (dx == 0 && dy == 0) continue;
+
+                int nx = x + dx;
+                int ny = y + dy;
+
+                if (heightMap.IsValidPosition(nx, ny))
+                {
+                    int neighborHeight = heightMap.GetHeight(nx, ny);
+
+                    if (neighborHeight == SEA_LEVEL)
+                    {
+                        continue;
+                    }
+                    GameObject waterSlopePrefab = DetermineWaterSlopePrefab(nx, ny);
+                    if (waterSlopePrefab == null)
+                    {
+                        continue;
+                    }
+
+                    PlaceWaterSlope(nx, ny, waterSlopePrefab);
+                }
+            }
+        }
+    }
+
+    private void PlaceSeaLevelWater(int x, int y)
+    {
+        GameObject seaLevelWater = seaLevelWaterPrefab;
+        if (seaLevelWater == null)
+        {
+            return;
+        }
+
+        Cell cell = gridManager.GetCell(x, y);
+        DestroyCellChildren(cell);
+
+        Vector2 worldPos = gridManager.GetWorldPosition(x, y);
+        GameObject seaLevelWaterObject = Instantiate(
+            seaLevelWater,
+            worldPos,
+            Quaternion.identity
+        );
+
+        seaLevelWaterObject.transform.SetParent(cell.gameObject.transform);
+        cell.zoneType = Zone.ZoneType.Water;
+        cell.height = 0;
+    }
+
+    private void PlaceWaterSlope(int x, int y, GameObject waterSlopePrefab)
+    {
+        Cell cell = gridManager.GetCell(x, y);
+        DestroyCellChildren(cell);
+
+        // modify the height of the cell to be 0
+        gridManager.SetCellHeight(new Vector2(x, y), 0);
+
+        Vector2 worldPos = gridManager.GetWorldPosition(x, y);
+        GameObject slope = Instantiate(
+            waterSlopePrefab,
+            worldPos,
+            Quaternion.identity
+        );
+
+        slope.transform.SetParent(cell.gameObject.transform);
+    }
+
+    private GameObject DetermineWaterSlopePrefab(int x, int y)
+    {
+        int heightAtNorth = heightMap.getHeightWithBorder(x + 1, y);
+        int heightAtSouth = heightMap.getHeightWithBorder(x - 1, y);
+        int heightAtWest = heightMap.getHeightWithBorder(x, y + 1);
+        int heightAtEast = heightMap.getHeightWithBorder(x, y - 1);
+
+        int heightAtNorthEast = heightMap.getHeightWithBorder(x + 1, y - 1);
+        int heightAtNorthWest = heightMap.getHeightWithBorder(x + 1, y + 1);
+        int heightAtSouthEast = heightMap.getHeightWithBorder(x - 1, y + 1);
+        int heightAtSouthWest = heightMap.getHeightWithBorder(x - 1, y - 1);
+
+        bool hasSeaLevelAtNorth = heightAtNorth == SEA_LEVEL;
+        bool hasSeaLevelAtSouth = heightAtSouth == SEA_LEVEL;
+        bool hasSeaLevelAtWest = heightAtWest == SEA_LEVEL;
+        bool hasSeaLevelAtEast = heightAtEast == SEA_LEVEL;
+
+        bool hasSeaLevelAtNorthEast = heightAtNorthEast == SEA_LEVEL;
+        bool hasSeaLevelAtNorthWest = heightAtNorthWest == SEA_LEVEL;
+        bool hasSeaLevelAtSouthEast = heightAtSouthEast == SEA_LEVEL;
+        bool hasSeaLevelAtSouthWest = heightAtSouthWest == SEA_LEVEL;
+
+        if (hasSeaLevelAtWest && heightAtSouth == -1) return westSlopeWaterPrefab;
+        if (hasSeaLevelAtEast && heightAtSouth == -1) return eastSlopeWaterPrefab;
+        if (hasSeaLevelAtNorth && heightAtSouth == -1) return northSlopeWaterPrefab;
+        if (hasSeaLevelAtSouth && heightAtNorth == -1) return southSlopeWaterPrefab;
+        if (hasSeaLevelAtWest && heightAtNorth == -1) return westSlopeWaterPrefab;
+        if (hasSeaLevelAtEast && heightAtNorth == -1) return eastSlopeWaterPrefab;
+        if (hasSeaLevelAtNorth && heightAtWest == -1) return northSlopePrefab;
+        if (hasSeaLevelAtSouth && heightAtWest == -1) return southSlopePrefab;
+        if (hasSeaLevelAtWest && heightAtEast == -1) return westSlopePrefab;
+        if (hasSeaLevelAtEast && heightAtWest == -1) return eastSlopePrefab;
+
+        if (hasSeaLevelAtNorth && hasSeaLevelAtWest) return northEastSlopeWaterPrefab;
+        if (hasSeaLevelAtNorth && hasSeaLevelAtEast) return northWestSlopeWaterPrefab;
+        if (hasSeaLevelAtSouth && hasSeaLevelAtWest) return southEastSlopeWaterPrefab;
+        if (hasSeaLevelAtSouth && hasSeaLevelAtEast) return southWestSlopeWaterPrefab;
+
+        if (hasSeaLevelAtNorth) return northSlopeWaterPrefab;
+        if (hasSeaLevelAtSouth) return southSlopeWaterPrefab;
+        if (hasSeaLevelAtWest) return westSlopeWaterPrefab;
+        if (hasSeaLevelAtEast) return eastSlopeWaterPrefab;
+
+        if (hasSeaLevelAtNorthEast) return northEastSlopeWaterPrefab;
+        if (hasSeaLevelAtNorthWest) return northWestSlopeWaterPrefab;
+        if (hasSeaLevelAtSouthEast) return southEastSlopeWaterPrefab;
+        if (hasSeaLevelAtSouthWest) return southWestSlopeWaterPrefab;
+
+        return null;
     }
 
     /// <summary>
@@ -221,10 +359,10 @@ public class TerrainManager : MonoBehaviour
         // In isometric view, objects further back (higher x+y) should render first (lower sorting order)
         int isometricDepth = x + y;
         int depthOrder = -isometricDepth * DEPTH_MULTIPLIER;
-        
+
         // Higher terrain should render on top of lower terrain at same depth
         int heightOrder = height * HEIGHT_MULTIPLIER;
-        
+
         return TERRAIN_BASE_ORDER + depthOrder + heightOrder;
     }
 
@@ -263,7 +401,7 @@ public class TerrainManager : MonoBehaviour
     public int CalculateSortingOrder(int x, int y, ObjectType objectType)
     {
         int height = heightMap.GetHeight(x, y);
-        
+
         switch (objectType)
         {
             case ObjectType.Terrain:
@@ -310,7 +448,7 @@ public class TerrainManager : MonoBehaviour
         bool hasSouthSlope = southHeight > currentHeight;
         bool hasEastSlope = eastHeight > currentHeight;
         bool hasWestSlope = westHeight > currentHeight;
-        
+
         bool hasNorthEastSlope = neHeight > currentHeight;
         bool hasNorthWestSlope = nwHeight > currentHeight;
         bool hasSouthEastSlope = seHeight > currentHeight;
@@ -340,33 +478,33 @@ public class TerrainManager : MonoBehaviour
         // Implementation for terrain modification
     }
 
-    public bool CanPlaceBuildingInTerrain(int x, int y, int size)
+    public bool CanPlaceBuildingInTerrain(Vector2 gridPosition, int size)
     {
         // Check if all tiles in the building footprint are at the same height
-        int baseHeight = heightMap.GetHeight(x, y);
-        
+        int baseHeight = heightMap.GetHeight((int)gridPosition.x, (int)gridPosition.y);
+
         for (int dx = 0; dx < size; dx++)
         {
             for (int dy = 0; dy < size; dy++)
             {
-                int checkX = x + dx - size/2;
-                int checkY = y + dy - size/2;
-                
+                int checkX = (int)gridPosition.x + dx - size / 2;
+                int checkY = (int)gridPosition.y + dy - size / 2;
+
                 if (!heightMap.IsValidPosition(checkX, checkY))
                     return false;
-                    
+
                 if (heightMap.GetHeight(checkX, checkY) != baseHeight)
                     return false;
-                    
+
                 if (RequiresSlope(checkX, checkY))
                     return false;
-                    
+
                 // Check that no water tiles exist on the building footprint
                 if (waterManager != null && waterManager.IsWaterAt(checkX, checkY))
                     return false;
             }
         }
-        
+
         return true;
     }
 
@@ -379,7 +517,7 @@ public class TerrainManager : MonoBehaviour
     void OnDrawGizmos()
     {
         if (heightMap == null) return;
-        
+
         for (int x = 0; x < gridManager.width; x++)
         {
             for (int y = 0; y < gridManager.height; y++)

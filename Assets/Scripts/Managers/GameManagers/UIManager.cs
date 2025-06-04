@@ -82,14 +82,11 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("Start UIManager cityStats: " + cityStats);
         if (cityStats == null)
         {
-            Debug.LogError("CityStats component not found.");
             cityStats = FindObjectOfType<CityStats>();
         }
-        Debug.Log("cityStats: " + cityStats);
-        Debug.Log("Zone.ZoneType.Grass: " + Zone.ZoneType.Grass);
+
         selectedZoneType = Zone.ZoneType.Grass;
         bulldozeMode = false;
 
@@ -436,7 +433,7 @@ public class UIManager : MonoBehaviour
 
         GameObject powerPlantObject = Instantiate(powerPlantAPrefab);
         PowerPlant powerPlant = powerPlantObject.AddComponent<PowerPlant>();
-        Debug.Log("powerPlant: " + powerPlant);
+
         powerPlant.Initialize("Power Plant A", 10000, 100, 50, 25, 3, 10000, powerPlantAPrefab);
 
         selectedBuilding = powerPlant;
@@ -601,7 +598,6 @@ public class UIManager : MonoBehaviour
 
     public void OnLoadGameButtonClicked(string saveFilePath)
     {
-        Debug.Log("OnLoadGameButtonClicked saveFilePath: " + saveFilePath);
         gameManager.LoadGame(saveFilePath); // Call the game manager to load the game
     }
 
@@ -809,13 +805,11 @@ public class UIManager : MonoBehaviour
     {
         if (demolitionExplosionPrefab == null)
         {
-            Debug.LogWarning("Demolition explosion prefab not assigned in UIManager");
             return;
         }
 
         if (cell == null)
         {
-            Debug.LogWarning("Cannot show demolition animation: cell is null");
             return;
         }
 
