@@ -88,7 +88,6 @@ public class CameraController : MonoBehaviour
     /// <param name="centerWorldPosition">World position to center the camera on</param>
     public void MoveCameraToMapCenter(Vector3 centerWorldPosition)
     {
-        Debug.Log("MoveCameraToMapCenter centerWorldPosition: " + centerWorldPosition);
 
         // Ensure camera is initialized before moving it
         if (mainCamera == null)
@@ -110,7 +109,6 @@ public class CameraController : MonoBehaviour
         );
 
         mainCamera.transform.position = gridCenter;
-        Debug.Log("CameraController: Camera moved to " + gridCenter);
     }
 
 

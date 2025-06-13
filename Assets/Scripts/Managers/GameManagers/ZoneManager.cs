@@ -349,7 +349,8 @@ public class ZoneManager : MonoBehaviour
             {
                 if (canPlaceZone(GetZoneAttributes(uiManager.GetSelectedZoneType()), new Vector2(x, y)))
                 {
-                    Vector2 worldPos = gridManager.GetWorldPosition(x, y);
+                    Cell cell = gridManager.GetCell(x, y);
+                    Vector2 worldPos = cell.transformPosition;
 
                     GameObject zoningPrefab = GetRandomZonePrefab(uiManager.GetSelectedZoneType());
 
@@ -522,7 +523,8 @@ public class ZoneManager : MonoBehaviour
 
     void PlaceZone(Vector3 gridPosition)
     {
-        Vector2 worldPosition = gridManager.GetWorldPosition((int)gridPosition.x, (int)gridPosition.y);
+        Cell cell = gridManager.GetCell((int)gridPosition.x, (int)gridPosition.y);
+        Vector2 worldPosition = cell.transformPosition;
         Zone.ZoneType selectedZoneType = uiManager.GetSelectedZoneType();
 
         var zoneAttributes = GetZoneAttributes(selectedZoneType);
@@ -539,9 +541,7 @@ public class ZoneManager : MonoBehaviour
 
         if (canPlaceZone(zoneAttributes, gridPosition))
         {
-            GameObject cell = gridManager.GetGridCell(gridPosition);
-
-            gridManager.DestroyCellChildren(cell, gridPosition);
+            gridManager.DestroyCellChildren(cell.gameObject, gridPosition);
 
             GameObject zonePrefab = GetRandomZonePrefab(selectedZoneType);
 
@@ -555,7 +555,6 @@ public class ZoneManager : MonoBehaviour
               worldPosition,
               Quaternion.identity
             );
-            zoneTile.transform.SetParent(cell.transform);
 
             Zone zone = zoneTile.AddComponent<Zone>();
             zone.zoneType = selectedZoneType;
@@ -563,8 +562,7 @@ public class ZoneManager : MonoBehaviour
 
             UpdatePlacedZoneCellAttributes(cell, selectedZoneType, zonePrefab, zoneAttributes);
 
-            int sortingOrder = gridManager.SetTileSortingOrder(zoneTile, selectedZoneType);
-            cell.GetComponent<Cell>().sortingOrder = sortingOrder;
+            gridManager.SetTileSortingOrder(zoneTile, selectedZoneType);
 
             addZonedTileToList(gridPosition, selectedZoneType);
 
@@ -870,7 +868,7 @@ public class ZoneManager : MonoBehaviour
             return;
         }
 
-        Vector3 worldPosition = gridCell.transform.position;
+        Vector3 worldPosition = cell.transformPosition;
 
         if (buildingSize > 1 && cell.zoneType != Zone.ZoneType.Building)
         {
@@ -885,18 +883,14 @@ public class ZoneManager : MonoBehaviour
           worldPosition,
           Quaternion.identity
         );
-        zoneTile.transform.SetParent(gridCell.transform);
 
         cell.isPivot = true;
 
-        int sortingOrder = gridManager.SetTileSortingOrder(zoneTile, cell.zoneType);
-
-        cell.sortingOrder = sortingOrder;
+        gridManager.SetTileSortingOrder(zoneTile, cell.zoneType);
     }
 
-    void UpdatePlacedZoneCellAttributes(GameObject cell, Zone.ZoneType selectedZoneType, GameObject zonePrefab, ZoneAttributes zoneAttributes)
+    void UpdatePlacedZoneCellAttributes(Cell cellComponent, Zone.ZoneType selectedZoneType, GameObject zonePrefab, ZoneAttributes zoneAttributes)
     {
-        Cell cellComponent = cell.GetComponent<Cell>();
         cellComponent.zoneType = selectedZoneType;
         cellComponent.population = zoneAttributes.Population;
         cellComponent.powerConsumption = zoneAttributes.PowerConsumption;

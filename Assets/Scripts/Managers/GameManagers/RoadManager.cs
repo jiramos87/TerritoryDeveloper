@@ -27,6 +27,8 @@ public class RoadManager : MonoBehaviour
     public GameObject roadTilePrefabElbowUpRight;
     public GameObject roadTilePrefabElbowDownLeft;
     public GameObject roadTilePrefabElbowDownRight;
+    public GameObject roadTileBridgeVertical;
+    public GameObject roadTileBridgeHorizontal;
     private List<GameObject> previewRoadTiles = new List<GameObject>();
     private List<Vector2> previewRoadGridPositions = new List<Vector2>();
     private List<Vector2> adjacentRoadTiles = new List<Vector2>();
@@ -45,7 +47,9 @@ public class RoadManager : MonoBehaviour
             roadTilePrefabElbowUpLeft,
             roadTilePrefabElbowUpRight,
             roadTilePrefabElbowDownLeft,
-            roadTilePrefabElbowDownRight
+            roadTilePrefabElbowDownRight,
+            roadTileBridgeVertical,
+            roadTileBridgeHorizontal
         };
     }
 
@@ -66,7 +70,7 @@ public class RoadManager : MonoBehaviour
             Vector3 currentMousePosition = gridPosition;
             DrawPreviewLine(startPosition, currentMousePosition);
         }
-        
+
         if (Input.GetMouseButtonUp(0) && isDrawingRoad)
         {
             isDrawingRoad = false;
@@ -86,7 +90,7 @@ public class RoadManager : MonoBehaviour
         if (calculateCost)
         {
             int totalCost = CalculateTotalCost(previewRoadGridPositions.Count);
-            
+
             // Check if player can afford the road
             if (!cityStats.CanAfford(totalCost))
             {
@@ -95,11 +99,11 @@ public class RoadManager : MonoBehaviour
                 isDrawingRoad = false;
                 return;
             }
-            
+
             // Deduct the cost if we can afford it
             cityStats.RemoveMoney(totalCost);
         }
-        
+
         for (int i = 0; i < previewRoadGridPositions.Count; i++)
         {
             Vector2 gridPos = previewRoadGridPositions[i];
@@ -214,7 +218,20 @@ public class RoadManager : MonoBehaviour
 
         GameObject roadPrefab = GetCorrectRoadPrefab(prevGridPos, gridPos, isCenterRoadTile, isPreview);
 
-        Vector2 worldPos = gridManager.GetWorldPosition((int)gridPos.x, (int)gridPos.y);
+        Cell cell = gridManager.GetGridCell(gridPos).GetComponent<Cell>();
+        int roadPlacedAtHeight = 0;
+        int terrainHeight = cell.GetCellInstanceHeight();
+        Vector2 worldPos;
+
+        if (terrainHeight == 0)
+        {
+            roadPlacedAtHeight = 1;
+            worldPos = gridManager.GetWorldPositionVector((int)gridPos.x, (int)gridPos.y, roadPlacedAtHeight);
+        }
+        else
+        {
+            worldPos = gridManager.GetWorldPosition((int)gridPos.x, (int)gridPos.y);
+        }
 
         GameObject previewTile = Instantiate(
             roadPrefab,
@@ -223,30 +240,39 @@ public class RoadManager : MonoBehaviour
         );
 
         SetPreviewRoadTileDetails(previewTile);
-        
+
         previewRoadTiles.Add(previewTile);
 
         previewRoadGridPositions.Add(new Vector2(gridPos.x, gridPos.y));
 
-        GameObject cell = gridManager.GetGridCell(gridPos);
-
-        previewTile.transform.SetParent(cell.transform);
+        previewTile.transform.SetParent(cell.gameObject.transform);
     }
 
     GameObject GetCorrectRoadPrefab(Vector2 prevGridPos, Vector2 currGridPos, bool isCenterRoadTile = true, bool isPreview = false)
     {
         Vector2 direction = currGridPos - prevGridPos;
+        Cell cell = gridManager.GetGridCell(currGridPos).GetComponent<Cell>();
+        int height = cell.GetCellInstanceHeight();
+
         if (isPreview)
         {
-          
-          if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-          {
-              return roadTilePrefab2;
-          }
-          else
-          {
-              return roadTilePrefab1;
-          }
+
+            if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+            {
+                if (height == 0)
+                {
+                    return roadTileBridgeHorizontal;
+                }
+                return roadTilePrefab2;
+            }
+            else
+            {
+                if (height == 0)
+                {
+                    return roadTileBridgeVertical;
+                }
+                return roadTilePrefab1;
+            }
         }
 
         bool hasLeft = IsRoadAt(currGridPos + new Vector2(-1, 0));
@@ -254,8 +280,9 @@ public class RoadManager : MonoBehaviour
         bool hasUp = IsRoadAt(currGridPos + new Vector2(0, 1));
         bool hasDown = IsRoadAt(currGridPos + new Vector2(0, -1));
 
-        if (isCenterRoadTile) {
-          UpdateAdjacentRoadTilesArray(currGridPos, hasLeft, hasRight, hasUp, hasDown, isPreview);
+        if (isCenterRoadTile)
+        {
+            UpdateAdjacentRoadTilesArray(currGridPos, hasLeft, hasRight, hasUp, hasDown, isPreview);
         }
 
         if (hasLeft && hasRight && hasUp && hasDown)
@@ -296,22 +323,38 @@ public class RoadManager : MonoBehaviour
         }
         else if (hasLeft || hasRight)
         {
-          return roadTilePrefab2;
+            if (height == 0)
+            {
+                return roadTileBridgeHorizontal;
+            }
+            return roadTilePrefab2;
         }
 
         else if (hasUp || hasDown)
         {
-          return roadTilePrefab1;
+            if (height == 0)
+            {
+                return roadTileBridgeVertical;
+            }
+            return roadTilePrefab1;
         }
 
         // If no intersection or elbow, fall back to horizontal/vertical
 
         if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
         {
+            if (height == 0)
+            {
+                return roadTileBridgeHorizontal;
+            }
             return roadTilePrefab2;
         }
         else
         {
+            if (height == 0)
+            {
+                return roadTileBridgeVertical;
+            }
             return roadTilePrefab1;
         }
     }
@@ -336,10 +379,10 @@ public class RoadManager : MonoBehaviour
     {
         var cell = gridManager.GetGridCell(new Vector2(gridX, gridY));
         if (cell == null || cell.transform.childCount == 0) return false;
-        
+
         var cellComponent = cell.GetComponent<Cell>();
         if (cellComponent?.zoneType == Zone.ZoneType.Road) return true;
-        
+
         return cell.transform
             .Cast<Transform>()
             .Select(child => child.GetComponent<Zone>())
@@ -371,7 +414,7 @@ public class RoadManager : MonoBehaviour
     void SetPreviewRoadTileDetails(GameObject previewTile)
     {
         SetPreviewTileCollider(previewTile);
-        int sortingOrder = gridManager.SetTileSortingOrder(previewTile, Zone.ZoneType.Road);
+        gridManager.SetTileSortingOrder(previewTile, Zone.ZoneType.Road);
 
         SetRoadTileZoneDetails(previewTile);
         previewTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 0.5f);
@@ -404,7 +447,7 @@ public class RoadManager : MonoBehaviour
     void PlaceRoadTile(Vector2 gridPos, int i = 0, bool isAdjacent = false)
     {
         GameObject cell = gridManager.GetGridCell(gridPos);
-        
+
         bool isCenterRoadTile = !isAdjacent;
         bool isPreview = false;
 
@@ -421,11 +464,28 @@ public class RoadManager : MonoBehaviour
 
         DestroyPreviousRoadTile(cell, gridPos);
 
+        Cell cellComponent = cell.GetComponent<Cell>();
+        int roadPlacedAtHeight = 0;
+        int terrainHeight = cellComponent.GetCellInstanceHeight();
+
+        Vector2 worldPos;
+        if (terrainHeight == 0)
+        {
+            roadPlacedAtHeight = 1;
+            worldPos = gridManager.GetWorldPositionVector((int)gridPos.x, (int)gridPos.y, roadPlacedAtHeight);
+        }
+        else
+        {
+            worldPos = gridManager.GetWorldPosition((int)gridPos.x, (int)gridPos.y);
+        }
+
         GameObject roadTile = Instantiate(
             correctRoadPrefab,
-            gridManager.GetWorldPosition((int)gridPos.x, (int)gridPos.y),
+            worldPos,
             Quaternion.identity
         );
+
+        roadTile.transform.SetParent(cellComponent.gameObject.transform);
 
         roadTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 1);
 
@@ -434,12 +494,9 @@ public class RoadManager : MonoBehaviour
         Zone zone = roadTile.AddComponent<Zone>();
         zone.zoneType = zoneType;
 
-        UpdateRoadCellAttributes(cell, roadTile, zoneType);
+        UpdateRoadCellAttributes(cellComponent, roadTile, zoneType);
 
-        int sortingOrder = gridManager.SetTileSortingOrder(roadTile, zoneType);
-        cell.GetComponent<Cell>().sortingOrder = sortingOrder;
-
-        roadTile.transform.SetParent(cell.transform);
+        gridManager.SetTileSortingOrder(roadTile, zoneType);
     }
 
     void DestroyPreviousRoadTile(GameObject cell, Vector2 gridPos)
@@ -467,9 +524,8 @@ public class RoadManager : MonoBehaviour
     }
 
 
-    void UpdateRoadCellAttributes(GameObject cell, GameObject roadTile, Zone.ZoneType zoneType)
+    void UpdateRoadCellAttributes(Cell cellComponent, GameObject roadTile, Zone.ZoneType zoneType)
     {
-        Cell cellComponent = cell.GetComponent<Cell>();
         cellComponent.zoneType = zoneType;
         cellComponent.prefab = roadTile;
         cellComponent.prefabName = roadTile.name;

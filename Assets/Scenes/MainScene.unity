@@ -4504,7 +4504,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 104.16394, y: 0}
+  m_AnchoredPosition: {x: 104.15964, y: 0}
   m_SizeDelta: {x: -686.71, y: -4.9274}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &709582277
@@ -6128,7 +6128,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 470750413}
   m_Direction: 0
   m_Value: 0
-  m_Size: 0.99996656
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -7676,6 +7676,19 @@ MonoBehaviour:
   northWestUpslopePrefab: {fileID: 6652725620969799647, guid: e919387993c184ea08fd205af2d9f757, type: 3}
   southEastUpslopePrefab: {fileID: 6107455444412750235, guid: 669b2368b50174fc2b0b91cb40c33a54, type: 3}
   southWestUpslopePrefab: {fileID: 863019582703072255, guid: 542577f3f0d634860be0887a0495125e, type: 3}
+  northSlopeWaterPrefab: {fileID: 2758391836601424495, guid: e3011a3eed537439c9dcc2da5cefcf1e, type: 3}
+  southSlopeWaterPrefab: {fileID: 6055832870273790934, guid: 5e5a9ddba117a434c822437131cdbb6c, type: 3}
+  eastSlopeWaterPrefab: {fileID: 1400978566876258819, guid: 6f0a5756a79184631a0cbf1ec9131604, type: 3}
+  westSlopeWaterPrefab: {fileID: 7549371735853844249, guid: 9dad5aff4a352443dacf77c61f0cd66a, type: 3}
+  northEastSlopeWaterPrefab: {fileID: 8800971785281342900, guid: 75146c43737934984a55059ed0158114, type: 3}
+  northWestSlopeWaterPrefab: {fileID: 6714688156968387047, guid: 7d30c0a45f179462daf6be4f97ea58c6, type: 3}
+  southEastSlopeWaterPrefab: {fileID: 6154556702523763435, guid: d20b9441b1a8a4976acaa34b13eb31ef, type: 3}
+  southWestSlopeWaterPrefab: {fileID: 3597008618780671284, guid: 2334d851ff8984d31a75993a33eeadd2, type: 3}
+  northEastUpslopeWaterPrefab: {fileID: 9019178619069177773, guid: b0cda54140b9a4ac3b8e9c5887779fd7, type: 3}
+  northWestUpslopeWaterPrefab: {fileID: 1106770982510219462, guid: 8b9a41e5824334877b1b0ec353c5e1de, type: 3}
+  southEastUpslopeWaterPrefab: {fileID: 8808602844539512836, guid: b730393b247ff43eabb129208f2b876d, type: 3}
+  southWestUpslopeWaterPrefab: {fileID: 7144387256651429150, guid: 2af97bd91f51142bdaad26ed9c55a38f, type: 3}
+  seaLevelWaterPrefab: {fileID: 3176668870032135925, guid: 14af9dcc8387e4a58add2d580e2afbc1, type: 3}
 --- !u!1 &1125915284
 GameObject:
   m_ObjectHideFlags: 0
@@ -11681,7 +11694,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -22.999512, y: -166.00008}
+  m_AnchoredPosition: {x: -22.99939, y: -166.00006}
   m_SizeDelta: {x: -235.22, y: -573.0851}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1710728776

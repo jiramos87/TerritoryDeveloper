@@ -49,11 +49,6 @@ public class GeographyManager : MonoBehaviour
             gridManager.InitializeGrid();
         }
 
-        if (terrainManager != null)
-        {
-            terrainManager.InitializeHeightMap();
-        }
-
         if (waterManager != null)
         {
             waterManager.InitializeWaterMap();
@@ -125,21 +120,18 @@ public class GeographyManager : MonoBehaviour
         ReCalculateSortingOrderBasedOnHeight();
     }
 
-    private void ReCalculateSortingOrderBasedOnHeight()
+    public void ReCalculateSortingOrderBasedOnHeight()
     {
-        Debug.Log("ReCalculateSortingOrderBasedOnHeight - Starting recalculation");
         if (gridManager == null)
         {
-            Debug.LogError("GridManager is null, cannot recalculate sorting orders");
             return;
         }
-
-        int updatedCells = 0;
 
         for (int x = 0; x < gridManager.width; x++)
         {
             for (int y = 0; y < gridManager.height; y++)
             {
+
                 GameObject cell = gridManager.gridArray[x, y];
                 Cell cellComponent = cell.GetComponent<Cell>();
 
@@ -149,22 +141,18 @@ public class GeographyManager : MonoBehaviour
                     continue;
                 }
 
-                // Skip cells marked as invalid
                 if (cellComponent.sortingOrder == -1001)
                 {
                     continue;
                 }
 
-                // Handle both direct cell rendering and child object rendering
                 List<GameObject> objectsToSort = new List<GameObject>();
 
-                // Add the cell itself if it has a sprite renderer
                 if (cell.GetComponent<SpriteRenderer>() != null)
                 {
                     objectsToSort.Add(cell);
                 }
 
-                // Add all children with sprite renderers
                 for (int i = 0; i < cell.transform.childCount; i++)
                 {
                     GameObject child = cell.transform.GetChild(i).gameObject;
@@ -173,33 +161,15 @@ public class GeographyManager : MonoBehaviour
                         objectsToSort.Add(child);
                     }
                 }
-
-                // Sort each object
                 foreach (GameObject obj in objectsToSort)
                 {
                     int oldSortingOrder = obj.GetComponent<SpriteRenderer>().sortingOrder;
-                    int newSortingOrder;
-
-                    if (cellComponent.height == 0)
-                    {
-                        newSortingOrder = gridManager.SetResortSeaLevelOrder(obj, new Vector2(x, y));
-                        if (oldSortingOrder != newSortingOrder)
-                        {
-                            updatedCells++;
-                        }
-                    }
-                    // else
-                    // {
-                    //     Zone.ZoneType zoneType = cellComponent.zoneType;
-                    //     newSortingOrder = gridManager.SetTileSortingOrder(obj, zoneType);
-                    // }
-
-
+                    int newSortingOrder = terrainManager.CalculateTerrainSortingOrder(x, y, cellComponent.height);
+                    obj.GetComponent<SpriteRenderer>().sortingOrder = newSortingOrder;
+                    cellComponent.sortingOrder = newSortingOrder;
                 }
             }
         }
-
-        Debug.Log($"ReCalculateSortingOrderBasedOnHeight - Completed. Updated {updatedCells} cells.");
     }
 
     public void ResetGeography()

@@ -14,40 +14,41 @@ public class ForestManager : MonoBehaviour
     public EconomyManager economyManager;
     public UIManager uiManager;
     public GameNotificationManager gameNotificationManager;
-    
+    public TerrainManager terrainManager;
+
     [Header("Forest Prefabs")]
     public GameObject sparseForestPrefab;
     public GameObject mediumForestPrefab;
     public GameObject denseForestPrefab;
-    
+
     [Header("Forest Configuration")]
     public float desirabilityPerAdjacentForest = 2.0f; // Desirability bonus per adjacent forest
     public float demandBoostPercentage = 0.5f; // Percentage increase in demand per forest cell
-    
+
     private ForestMap forestMap;
     private Dictionary<Forest.ForestType, int> forestTypeCounts;
-    
+
     // Define the initial forest cells matrix (ForestType values)
     private Forest.ForestType[,] initialForestCells = new Forest.ForestType[,] {
         {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
-        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.Dense, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
-        {Forest.ForestType.None, Forest.ForestType.Dense, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
-        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
-        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.Dense, Forest.ForestType.Dense, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
-        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.Dense, Forest.ForestType.Dense, Forest.ForestType.Dense, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
-        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.Dense, Forest.ForestType.Dense, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
-        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
-        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
-        {Forest.ForestType.None, Forest.ForestType.Dense, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
         {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
         {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
         {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
         {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
         {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
-        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.Dense, Forest.ForestType.Dense, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
-        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.Dense, Forest.ForestType.Dense, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
-        {Forest.ForestType.None, Forest.ForestType.Dense, Forest.ForestType.Dense, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.Dense, Forest.ForestType.Dense, Forest.ForestType.Dense, Forest.ForestType.Dense, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
-        {Forest.ForestType.None, Forest.ForestType.Dense, Forest.ForestType.Dense, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.Dense, Forest.ForestType.Dense, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
+        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
+        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
+        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
+        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
+        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
+        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
+        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
+        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
+        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
+        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
+        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
+        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
+        {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None},
         {Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None, Forest.ForestType.None}
     };
 
@@ -64,7 +65,9 @@ public class ForestManager : MonoBehaviour
 
         if (uiManager == null)
             uiManager = FindObjectOfType<UIManager>();
-            
+        if (terrainManager == null)
+            terrainManager = FindObjectOfType<TerrainManager>();
+
         InitializeForestTypeCounts();
     }
 
@@ -84,16 +87,16 @@ public class ForestManager : MonoBehaviour
         if (gridManager != null)
         {
             forestMap = new ForestMap(gridManager.width, gridManager.height);
-            
+
             // Initialize from predefined matrix
             forestMap.InitializeFromMatrix(initialForestCells);
-            
+
             // Apply forest visuals to the grid
             UpdateForestVisuals();
-            
+
             // Update statistics
             UpdateForestStatistics();
-            
+
             // Calculate initial desirability for all cells
             UpdateAllCellDesirability();
         }
@@ -111,10 +114,24 @@ public class ForestManager : MonoBehaviour
         return forestMap.GetForestType(x, y);
     }
 
-    public bool PlaceForest(Vector3 gridPosition, IForest selectedForest)
+    public bool PlaceForest(Vector2 gridPosition, IForest selectedForest)
     {
         int x = (int)gridPosition.x;
         int y = (int)gridPosition.y;
+
+        if (!gridManager.IsValidGridPosition(gridPosition))
+        {
+            Debug.LogWarning($"Cannot place forest at invalid position: ({x}, {y})");
+            return false;
+        }
+
+        Cell cellComponent = gridManager.GetCell(x, y);
+
+        if (cellComponent == null)
+        {
+            Debug.LogError($"Cell component is null at position: ({x}, {y})");
+            return false;
+        }
 
         if (forestMap == null || !forestMap.IsValidPosition(x, y))
             return false;
@@ -124,21 +141,16 @@ public class ForestManager : MonoBehaviour
 
         if (!CanAffordForest(selectedForest))
         {
-            Debug.Log($"Insufficient funds to place {selectedForest.ForestType} forest! Cost: {selectedForest.ConstructionCost}");
             gameNotificationManager.PostInfo($"Insufficient funds to place {selectedForest.ForestType} forest! Cost: {selectedForest.ConstructionCost}");
             return false;
         }
 
         if (!HasSufficientWaterForForest(selectedForest))
         {
-            Debug.Log($"Insufficient water to place {selectedForest.ForestType} forest! Required: {selectedForest.WaterConsumption}");
             gameNotificationManager.PostInfo($"Insufficient water to place {selectedForest.ForestType} forest! Required: {selectedForest.WaterConsumption}");
             return false;
         }
 
-        GameObject cell = gridManager.gridArray[x, y];
-        Cell cellComponent = cell.GetComponent<Cell>();
-        
         GameObject forestPrefab = uiManager.GetForestPrefabForType(selectedForest.ForestType);
 
         if (forestPrefab == null)
@@ -147,36 +159,38 @@ public class ForestManager : MonoBehaviour
             return false;
         }
 
-        Vector2 worldPos = gridManager.GetWorldPosition(x, y);
+        Vector2 worldPos = cellComponent.transformPosition;
+
+        int height = cellComponent.GetCellInstanceHeight();
+
         GameObject forestObject = Instantiate(forestPrefab, worldPos, Quaternion.identity);
-        
-        forestObject.transform.SetParent(cell.transform);
-        
-        // Pass grid coordinates and cell height for proper isometric sorting
-        SetForestSortingOrder(forestObject, x, y, cellComponent.height);
-        
+
+        forestObject.transform.SetParent(cellComponent.gameObject.transform);
+
+        gridManager.SetTileSortingOrder(forestObject, Zone.ZoneType.Grass);
+
         cellComponent.SetTree(true, selectedForest.ForestType.ToString(), forestObject);
-      
+
         forestMap.SetForestType(x, y, selectedForest.ForestType);
-        
+
         if (selectedForest.ConstructionCost > 0)
         {
             economyManager.SpendMoney(selectedForest.ConstructionCost);
         }
-        
+
         if (selectedForest.WaterConsumption > 0)
         {
             waterManager.AddWaterConsumption(selectedForest.WaterConsumption);
         }
-        
+
         UpdateAdjacentDesirability(x, y, true);
         UpdateForestStatistics();
-        
+
         if (selectedForest.GameObjectReference != null && selectedForest.GameObjectReference != forestObject)
         {
             Destroy(selectedForest.GameObjectReference);
         }
-        
+
         return true;
     }
 
@@ -192,17 +206,17 @@ public class ForestManager : MonoBehaviour
         // Get the cell and remove forest
         GameObject cell = gridManager.gridArray[x, y];
         Cell cellComponent = cell.GetComponent<Cell>();
-        
+
         // Store water consumption for refund calculation
         int waterToRefund = GetWaterConsumptionForForestType(currentType);
         int costToRefund = GetConstructionCostForForestType(currentType);
-        
+
         // Remove the forest GameObject
         cellComponent.SetTree(false);
-        
+
         // Update forest map
         forestMap.SetForestType(x, y, Forest.ForestType.None);
-        
+
         // Refund costs if requested (not for automatic building removal)
         if (refundCost)
         {
@@ -215,13 +229,13 @@ public class ForestManager : MonoBehaviour
                 economyManager.AddMoney(costToRefund / 2); // 50% refund
             }
         }
-        
+
         // Update adjacent cell desirability
         UpdateAdjacentDesirability(x, y, false);
-        
+
         // Update statistics
         UpdateForestStatistics();
-        
+
         return true;
     }
 
@@ -238,7 +252,7 @@ public class ForestManager : MonoBehaviour
         // Cannot place on buildings (check if cell has occupied building)
         GameObject cell = gridManager.gridArray[x, y];
         Cell cellComponent = cell.GetComponent<Cell>();
-        
+
         if (cellComponent.occupiedBuilding != null)
             return false;
 
@@ -286,7 +300,7 @@ public class ForestManager : MonoBehaviour
     {
         GameObject cell = gridManager.gridArray[x, y];
         Cell cellComponent = cell.GetComponent<Cell>();
-        
+
         // Don't place if cell already has a tree
         if (cellComponent.hasTree)
             return;
@@ -294,30 +308,30 @@ public class ForestManager : MonoBehaviour
         GameObject forestPrefab = GetPrefabForForestType(forestType);
         if (forestPrefab == null) return;
 
-        Vector2 worldPos = gridManager.GetWorldPosition(x, y);
+        Vector2 worldPos = cellComponent.transformPosition;
         GameObject forestObject = Instantiate(forestPrefab, worldPos, Quaternion.identity);
-        
-        forestObject.transform.SetParent(cell.transform);
+
+        forestObject.transform.SetParent(cellComponent.gameObject.transform);
         SetForestSortingOrder(forestObject, x, y, cellComponent.height);
-        
+
         cellComponent.SetTree(true, forestType.ToString(), forestObject);
     }
 
     private void UpdateAdjacentDesirability(int centerX, int centerY, bool forestAdded)
     {
         var adjacentPositions = forestMap.GetPositionsAdjacentToForest(centerX, centerY);
-        
+
         foreach (var pos in adjacentPositions)
         {
             GameObject cell = gridManager.gridArray[pos.x, pos.y];
             Cell cellComponent = cell.GetComponent<Cell>();
-            
+
             // Update close forest count
             if (forestAdded)
                 cellComponent.closeForestCount++;
             else
                 cellComponent.closeForestCount = Mathf.Max(0, cellComponent.closeForestCount - 1);
-            
+
             // Recalculate desirability
             cellComponent.UpdateDesirability();
         }
@@ -333,10 +347,10 @@ public class ForestManager : MonoBehaviour
             {
                 GameObject cell = gridManager.gridArray[x, y];
                 Cell cellComponent = cell.GetComponent<Cell>();
-                
+
                 // Calculate adjacent forest count
                 cellComponent.closeForestCount = forestMap.GetAdjacentForestCount(x, y);
-                
+
                 // Update desirability
                 cellComponent.UpdateDesirability();
             }
@@ -349,25 +363,25 @@ public class ForestManager : MonoBehaviour
 
         // Count each forest type
         forestTypeCounts = forestMap.GetForestTypeCounts();
-        
+
         int totalForestCells = 0;
         foreach (var count in forestTypeCounts.Values)
         {
             totalForestCells += count;
         }
-        
+
         // Update CityStats with forest information
         if (cityStats.GetComponent<CityStats>())
         {
-            cityStats.SendMessage("UpdateForestStats", 
-                new ForestStatistics 
-                { 
+            cityStats.SendMessage("UpdateForestStats",
+                new ForestStatistics
+                {
                     totalForestCells = totalForestCells,
                     forestCoveragePercentage = forestMap.GetForestCoveragePercentage(),
                     sparseForestCount = forestTypeCounts[Forest.ForestType.Dense],
                     mediumForestCount = forestTypeCounts[Forest.ForestType.Dense],
                     denseForestCount = forestTypeCounts[Forest.ForestType.Dense]
-                }, 
+                },
                 SendMessageOptions.DontRequireReceiver);
         }
     }
@@ -436,7 +450,7 @@ public class ForestManager : MonoBehaviour
         if (spriteRenderer != null)
         {
             int baseSortingOrder = -(y * 10 + x) - (cellHeight * 100);
-            
+
             spriteRenderer.sortingOrder = baseSortingOrder - 50;
         }
     }
@@ -445,9 +459,9 @@ public class ForestManager : MonoBehaviour
     {
         if (forestMap == null)
         {
-            return new ForestStatistics 
-            { 
-                totalForestCells = 0, 
+            return new ForestStatistics
+            {
+                totalForestCells = 0,
                 forestCoveragePercentage = 0f,
                 sparseForestCount = 0,
                 mediumForestCount = 0,

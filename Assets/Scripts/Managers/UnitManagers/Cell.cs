@@ -11,7 +11,7 @@ public class Cell : MonoBehaviour
     public bool hasRoadAtTop;
     public bool hasRoadAtRight;
     public bool hasRoadAtBottom;
-    
+
     [Header("Building Properties")]
     public int population;
     public int powerOutput;
@@ -32,6 +32,7 @@ public class Cell : MonoBehaviour
     public int y;
     public int sortingOrder;
     public int height;
+    public Vector2 transformPosition;
 
     [Header("Forest Properties")]
     public Forest.ForestType forestType = Forest.ForestType.None; // Updated from hasTree
@@ -48,41 +49,41 @@ public class Cell : MonoBehaviour
 
     private string occupiedBuildingName;
 
-    void Start()
+    public Cell(CellData cellData)
     {
-        ZoneManager zoneManager = FindObjectOfType<ZoneManager>();
-        GameObject grassPrefab = zoneManager.GetGrassPrefab();
-        
-        // Initialize default values
-        zoneType = Zone.ZoneType.Grass;
-        hasRoadAtLeft = false;
-        hasRoadAtTop = false;
-        hasRoadAtRight = false;
-        hasRoadAtBottom = false;
-        population = 0;
-        powerOutput = 0;
-        powerConsumption = 0;
-        waterConsumption = 0;
-        happiness = 0;
-        buildingType = "Grass";
-        buildingSize = 1;
-        powerPlant = null;
-        waterPlant = null;
-        prefab = grassPrefab;
-        prefabName = grassPrefab.name;
-        occupiedBuildingName = "";
-        isPivot = false;
-        height = 1;
-        
-        // Initialize forest properties
-        forestType = Forest.ForestType.None;
-        forestPrefabName = "";
-        forestObject = null;
-        
-        // Initialize desirability properties
-        desirability = 0f;
-        closeForestCount = 0;
-        closeWaterCount = 0;
+        this.x = cellData.x;
+        this.y = cellData.y;
+        this.height = cellData.height;
+        this.sortingOrder = cellData.sortingOrder;
+        this.transformPosition = cellData.transformPosition;
+        this.prefab = cellData.prefab;
+        this.prefabName = cellData.prefabName;
+        this.zoneType = (Zone.ZoneType)System.Enum.Parse(typeof(Zone.ZoneType), cellData.zoneType);
+        this.occupiedBuildingName = cellData.occupiedBuildingName;
+        this.isPivot = cellData.isPivot;
+        this.sortingOrder = cellData.sortingOrder;
+        this.transformPosition = cellData.transformPosition;
+        this.prefab = cellData.prefab;
+        this.prefabName = cellData.prefabName;
+        this.forestType = (Forest.ForestType)System.Enum.Parse(typeof(Forest.ForestType), cellData.forestType);
+        this.forestPrefabName = cellData.forestPrefabName;
+        this.desirability = cellData.desirability;
+        this.closeForestCount = cellData.closeForestCount;
+        this.closeWaterCount = cellData.closeWaterCount;
+        this.hasRoadAtLeft = cellData.hasRoadAtLeft;
+        this.hasRoadAtTop = cellData.hasRoadAtTop;
+        this.hasRoadAtRight = cellData.hasRoadAtRight;
+        this.hasRoadAtBottom = cellData.hasRoadAtBottom;
+        this.population = cellData.population;
+        this.powerOutput = cellData.powerOutput;
+        this.powerConsumption = cellData.powerConsumption;
+        this.waterConsumption = cellData.waterConsumption;
+        this.buildingType = cellData.buildingType;
+        this.buildingSize = cellData.buildingSize;
+        this.happiness = cellData.happiness;
+        this.occupiedBuilding = cellData.occupiedBuilding;
+        this.powerPlant = cellData.powerPlant;
+        this.waterPlant = cellData.waterPlant;
     }
 
     #region Building Property Getters
@@ -110,7 +111,7 @@ public class Cell : MonoBehaviour
     {
         return powerConsumption;
     }
-    
+
     public int GetWaterConsumption()
     {
         return waterConsumption;
@@ -144,6 +145,22 @@ public class Cell : MonoBehaviour
     {
         return sortingOrder;
     }
+
+    public void SetCellInstanceHeight(int height)
+    {
+        this.height = height;
+    }
+
+    public int GetCellInstanceHeight()
+    {
+        return this.height;
+    }
+
+    public void SetCellInstanceSortingOrder(int sortingOrder)
+    {
+        this.sortingOrder = sortingOrder;
+    }
+
     #endregion
 
     #region Forest Methods
@@ -171,7 +188,7 @@ public class Cell : MonoBehaviour
         forestType = newForestType;
         forestPrefabName = prefabName;
         forestObject = forestGameObject;
-        
+
         if (forestType == Forest.ForestType.None)
         {
             // Clean up forest references when forest is removed
@@ -261,7 +278,7 @@ public class Cell : MonoBehaviour
         // Base desirability calculation
         float forestDesirability = closeForestCount * 2.0f; // Each adjacent forest adds 2.0 desirability
         float waterDesirability = closeWaterCount * 3.0f;   // Each adjacent water adds 3.0 desirability (future)
-        
+
         desirability = forestDesirability + waterDesirability;
     }
 
@@ -298,43 +315,8 @@ public class Cell : MonoBehaviour
     /// </summary>
     public CellData GetCellData()
     {
-        CellData cellData = new CellData
-        {
-            hasRoadAtLeft = hasRoadAtLeft,
-            hasRoadAtTop = hasRoadAtTop,
-            hasRoadAtRight = hasRoadAtRight,
-            hasRoadAtBottom = hasRoadAtBottom,
-            population = population,
-            powerOutput = powerOutput,
-            powerConsumption = powerConsumption,
-            waterConsumption = waterConsumption,
-            buildingType = buildingType,
-            buildingSize = buildingSize,
-            x = x,
-            y = y,
-            happiness = happiness,
-            prefabName = prefabName,
-            zoneType = zoneType.ToString(),
-            occupiedBuildingName = occupiedBuilding != null ? occupiedBuilding.name : "",
-            isPivot = isPivot,
-            sortingOrder = sortingOrder,
-            height = height,
-            powerPlant = powerPlant,
-            waterPlant = waterPlant,
-            
-            // Forest properties (updated)
-            forestType = forestType.ToString(), // Store as string for serialization
-            forestPrefabName = forestPrefabName,
-            
-            // Backward compatibility for old save files
-            hasTree = HasForest(),
-            treePrefabName = forestPrefabName,
-            
-            // Desirability properties
-            desirability = desirability,
-            closeForestCount = closeForestCount,
-            closeWaterCount = closeWaterCount
-        };
+        CellData cellData = new CellData(x, y, height);
+        cellData.SetDefaults();
 
         return cellData;
     }
@@ -357,6 +339,7 @@ public class Cell : MonoBehaviour
         x = cellData.x;
         y = cellData.y;
         happiness = cellData.happiness;
+        prefab = cellData.prefab;
         prefabName = cellData.prefabName;
         zoneType = (Zone.ZoneType)System.Enum.Parse(typeof(Zone.ZoneType), cellData.zoneType);
         occupiedBuildingName = cellData.occupiedBuildingName;
@@ -364,7 +347,9 @@ public class Cell : MonoBehaviour
         height = cellData.height;
         powerPlant = cellData.powerPlant;
         waterPlant = cellData.waterPlant;
-        
+        transformPosition = cellData.transformPosition;
+        sortingOrder = cellData.sortingOrder;
+
         // Forest properties (updated with backward compatibility)
         if (!string.IsNullOrEmpty(cellData.forestType))
         {
@@ -393,7 +378,7 @@ public class Cell : MonoBehaviour
                 forestPrefabName = "";
             }
         }
-        
+
         // Desirability properties
         desirability = cellData.desirability;
         closeForestCount = cellData.closeForestCount;

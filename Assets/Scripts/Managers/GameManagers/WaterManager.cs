@@ -25,11 +25,11 @@ public class WaterManager : MonoBehaviour
         {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
         {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
         {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-        {false, false, false, false, false, false, true, true, true, false, false, false, false, false, false, false, false, false, false, false},
-        {false, false, false, false, false, true, true, true, true, true, false, false, false, false, false, false, false, false, false, false},
-        {false, false, false, false, true, true, true, true, true, true, true, false, false, false, false, false, false, false, false, false},
-        {false, false, false, false, false, true, true, true, true, true, false, false, false, false, false, false, false, false, false, false},
-        {false, false, false, false, false, false, true, true, true, false, false, false, false, false, false, false, false, false, false, false},
+        {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+        {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+        {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+        {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+        {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
         {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
         {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
         {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false},
@@ -129,17 +129,13 @@ public class WaterManager : MonoBehaviour
 
         if (waterPrefab == null) return;
 
-        Vector2 worldPos = gridManager.GetWorldPosition(x, y);
+        Vector2 worldPos = cellComponent.transformPosition;
 
         GameObject waterTile = GameObject.Instantiate(
             waterPrefab,
             worldPos,
             Quaternion.identity
         );
-
-        // Set parent
-        waterTile.transform.SetParent(cell.transform);
-
         // Set up animation
         // Animator animator = waterTile.GetComponent<Animator>();
         // if (animator != null)
@@ -156,9 +152,7 @@ public class WaterManager : MonoBehaviour
         zone.zoneType = Zone.ZoneType.Water;
         zone.zoneCategory = Zone.ZoneCategory.Water;
 
-        // Set sorting order
-        int sortingOrder = gridManager.SetTileSortingOrder(waterTile, Zone.ZoneType.Water);
-        cellComponent.sortingOrder = sortingOrder;
+        gridManager.SetTileSortingOrder(waterTile, Zone.ZoneType.Water);
     }
 
     // Rest of the existing WaterManager methods remain the same
@@ -198,24 +192,19 @@ public class WaterManager : MonoBehaviour
             Quaternion.identity
         );
 
-        // Set parent
-        grassTile.transform.SetParent(cell.transform);
-
         // Configure zone properties
         Zone zone = grassTile.AddComponent<Zone>();
         zone.zoneType = Zone.ZoneType.Grass;
         zone.zoneCategory = Zone.ZoneCategory.Grass;
 
         // Set sorting order
-        int sortingOrder = gridManager.SetTileSortingOrder(grassTile, Zone.ZoneType.Grass);
-        cellComponent.sortingOrder = sortingOrder;
+        gridManager.SetTileSortingOrder(grassTile, Zone.ZoneType.Grass);
     }
 
     public void UpdateWaterVisuals()
     {
         if (waterMap == null || gridManager == null) return;
-        Debug.Log("UpdateWaterVisuals gridManager.width: " + gridManager.width + " gridManager.height: " + gridManager.height);
-        // Update all water cells in the grid
+
         for (int x = 0; x < gridManager.width; x++)
         {
             for (int y = 0; y < gridManager.height; y++)
@@ -305,7 +294,7 @@ public class WaterManager : MonoBehaviour
             int nx = x + dx[i];
             int ny = y + dy[i];
 
-            if (waterMap.IsValidPosition(nx, ny) && waterMap.IsWater(nx, ny))
+            if (waterMap.IsValidPosition(nx, ny) && (waterMap.IsWater(nx, ny) || terrainManager.GetHeightMap().GetHeight(nx, ny) == 0))
             {
                 return true;
             }

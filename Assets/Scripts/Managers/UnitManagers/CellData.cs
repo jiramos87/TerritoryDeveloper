@@ -12,7 +12,7 @@ public class CellData
     public bool hasRoadAtTop;
     public bool hasRoadAtRight;
     public bool hasRoadAtBottom;
-    
+
     [Header("Building Properties")]
     public int population;
     public int powerOutput;
@@ -23,111 +23,77 @@ public class CellData
     public int happiness;
     public string prefabName;
     public string zoneType;
+    public GameObject occupiedBuilding;
     public string occupiedBuildingName;
     public bool isPivot;
     public PowerPlant powerPlant;
     public WaterPlant waterPlant;
-    
+    public Vector2 transformPosition;
     [Header("Grid Position")]
     public int x;
     public int y;
     public int sortingOrder;
     public int height;
-    
+
     [Header("Forest Properties - New System")]
     public string forestType; // Store Forest.ForestType as string for serialization
     public string forestPrefabName;
-    
+
     [Header("Forest Properties - Backward Compatibility")]
     public bool hasTree; // Keep for backward compatibility with old saves
     public string treePrefabName; // Keep for backward compatibility with old saves
-    
+
     [Header("Desirability Properties")]
     public float desirability;
     public int closeForestCount;
     public int closeWaterCount;
-    
-    /// <summary>
-    /// Default constructor
-    /// </summary>
-    public CellData()
-    {
-        // Initialize with default values
-        hasRoadAtLeft = false;
-        hasRoadAtTop = false;
-        hasRoadAtRight = false;
-        hasRoadAtBottom = false;
-        population = 0;
-        powerOutput = 0;
-        powerConsumption = 0;
-        waterConsumption = 0;
-        buildingType = "Grass";
-        buildingSize = 1;
-        happiness = 0;
-        prefabName = "";
-        zoneType = "Grass";
-        occupiedBuildingName = "";
-        isPivot = false;
-        powerPlant = null;
-        waterPlant = null;
-        x = 0;
-        y = 0;
-        sortingOrder = 0;
-        height = 1;
-        
-        // Forest properties
-        forestType = Forest.ForestType.None.ToString();
-        forestPrefabName = "";
-        hasTree = false;
-        treePrefabName = "";
-        
-        // Desirability properties
-        desirability = 0f;
-        closeForestCount = 0;
-        closeWaterCount = 0;
-    }
-    
+    public GameObject prefab;
+
     /// <summary>
     /// Constructor with parameters for easy creation
     /// </summary>
-    public CellData(int x, int y, string buildingType = "Grass", Zone.ZoneType zoneType = Zone.ZoneType.Grass)
+    public CellData(int x, int y, int height = 1)
     {
+        SetDefaults();
         this.x = x;
         this.y = y;
-        this.buildingType = buildingType;
-        this.zoneType = zoneType.ToString();
-        
-        // Initialize other properties with defaults
-        hasRoadAtLeft = false;
-        hasRoadAtTop = false;
-        hasRoadAtRight = false;
-        hasRoadAtBottom = false;
-        population = 0;
-        powerOutput = 0;
-        powerConsumption = 0;
-        waterConsumption = 0;
-        buildingSize = 1;
-        happiness = 0;
-        prefabName = "";
-        occupiedBuildingName = "";
-        isPivot = false;
-        powerPlant = null;
-        waterPlant = null;
-        sortingOrder = 0;
-        height = 1;
-        
-        // Forest properties
-        forestType = Forest.ForestType.None.ToString();
-        forestPrefabName = "";
-        hasTree = false;
-        treePrefabName = "";
-        
-        // Desirability properties
-        desirability = 0f;
-        closeForestCount = 0;
-        closeWaterCount = 0;
+        this.height = height;
     }
-    
+
+    public void SetDefaults()
+    {
+        this.height = 1;
+        this.sortingOrder = 0;
+        this.transformPosition = new Vector2(0, 0);
+        this.prefab = null;
+        this.forestType = Forest.ForestType.None.ToString();
+        this.forestPrefabName = "";
+        this.hasTree = false;
+        this.treePrefabName = "";
+        this.desirability = 0f;
+        this.closeForestCount = 0;
+        this.closeWaterCount = 0;
+        this.prefab = null;
+        this.hasRoadAtLeft = false;
+        this.hasRoadAtTop = false;
+        this.hasRoadAtRight = false;
+        this.hasRoadAtBottom = false;
+        this.population = 0;
+        this.powerOutput = 0;
+        this.powerConsumption = 0;
+        this.waterConsumption = 0;
+        this.buildingType = "Grass";
+        this.buildingSize = 1;
+        this.happiness = 0;
+        this.prefabName = "";
+        this.zoneType = Zone.ZoneType.Grass.ToString();
+        this.occupiedBuildingName = "";
+        this.isPivot = false;
+        this.powerPlant = null;
+        this.waterPlant = null;
+        this.occupiedBuilding = null;
+    }
+
     /// <summary>
     /// Get the forest type as enum (with error handling)
     /// </summary>
@@ -138,23 +104,23 @@ public class CellData
             // Check backward compatibility
             return hasTree ? Forest.ForestType.Medium : Forest.ForestType.None;
         }
-        
+
         if (System.Enum.TryParse(forestType, out Forest.ForestType result))
         {
             return result;
         }
-        
+
         // Default fallback
         return Forest.ForestType.None;
     }
-    
+
     /// <summary>
     /// Set the forest type from enum
     /// </summary>
     public void SetForestType(Forest.ForestType newForestType)
     {
         forestType = newForestType.ToString();
-        
+
         // Update backward compatibility fields
         hasTree = newForestType != Forest.ForestType.None;
         if (!hasTree)
@@ -163,7 +129,7 @@ public class CellData
             forestPrefabName = "";
         }
     }
-    
+
     /// <summary>
     /// Get the zone type as enum
     /// </summary>
@@ -175,7 +141,7 @@ public class CellData
         }
         return Zone.ZoneType.Grass; // Default fallback
     }
-    
+
     /// <summary>
     /// Set the zone type from enum
     /// </summary>
@@ -183,7 +149,7 @@ public class CellData
     {
         zoneType = newZoneType.ToString();
     }
-    
+
     /// <summary>
     /// Check if this cell has any forest
     /// </summary>
@@ -191,7 +157,7 @@ public class CellData
     {
         return GetForestType() != Forest.ForestType.None;
     }
-    
+
     /// <summary>
     /// Validate and fix any inconsistent data
     /// </summary>
@@ -199,22 +165,22 @@ public class CellData
     {
         // Ensure population is not negative
         population = Mathf.Max(0, population);
-        
+
         // Ensure power values are not negative
         powerOutput = Mathf.Max(0, powerOutput);
         powerConsumption = Mathf.Max(0, powerConsumption);
         waterConsumption = Mathf.Max(0, waterConsumption);
-        
+
         // Ensure building size is at least 1
         buildingSize = Mathf.Max(1, buildingSize);
-        
+
         // Ensure height is at least 1
         height = Mathf.Max(1, height);
-        
+
         // Ensure forest counts are not negative
         closeForestCount = Mathf.Max(0, closeForestCount);
         closeWaterCount = Mathf.Max(0, closeWaterCount);
-        
+
         // Sync backward compatibility fields
         Forest.ForestType currentForestType = GetForestType();
         hasTree = currentForestType != Forest.ForestType.None;
@@ -222,7 +188,7 @@ public class CellData
         {
             treePrefabName = forestPrefabName;
         }
-        
+
         // Ensure string fields are not null
         if (buildingType == null) buildingType = "Grass";
         if (prefabName == null) prefabName = "";
@@ -232,14 +198,14 @@ public class CellData
         if (forestPrefabName == null) forestPrefabName = "";
         if (treePrefabName == null) treePrefabName = "";
     }
-    
+
     /// <summary>
     /// Create a copy of this CellData
     /// </summary>
     public CellData Clone()
     {
-        CellData clone = new CellData();
-        
+        CellData clone = new CellData(x, y, height);
+
         // Copy all fields
         clone.hasRoadAtLeft = hasRoadAtLeft;
         clone.hasRoadAtTop = hasRoadAtTop;
@@ -262,18 +228,18 @@ public class CellData
         clone.y = y;
         clone.sortingOrder = sortingOrder;
         clone.height = height;
-        
+
         // Forest properties
         clone.forestType = forestType;
         clone.forestPrefabName = forestPrefabName;
         clone.hasTree = hasTree;
         clone.treePrefabName = treePrefabName;
-        
+
         // Desirability properties
         clone.desirability = desirability;
         clone.closeForestCount = closeForestCount;
         clone.closeWaterCount = closeWaterCount;
-        
+
         return clone;
     }
 }

@@ -45,7 +45,7 @@ public class TimeManager : MonoBehaviour
                 cityStats.PerformMonthlyUpdates();
                 economyManager.ProcessDailyEconomy();
             }
-            uiManager.UpdateUI();      
+            uiManager.UpdateUI();
         }
     }
 
@@ -89,7 +89,7 @@ public class TimeManager : MonoBehaviour
     {
         currentTimeSpeedIndex = (currentTimeSpeedIndex + 1) % timeSpeeds.Length;
         timeMultiplier = timeSpeeds[currentTimeSpeedIndex];
-        
+
         // Update button states when speed changes
         if (speedButtonsController != null)
         {
@@ -104,18 +104,16 @@ public class TimeManager : MonoBehaviour
             Debug.LogWarning($"Invalid speed index: {index}");
             return;
         }
-        
+
         currentTimeSpeedIndex = index;
         timeMultiplier = timeSpeeds[currentTimeSpeedIndex];
         animatorManager.SetAnimatorSpeed(timeMultiplier);
-        
+
         // Update button visual states when speed changes via keyboard
         if (speedButtonsController != null)
         {
             speedButtonsController.OnSpeedChangedExternally(currentTimeSpeedIndex);
         }
-        
-        Debug.Log($"Time speed set to index {index} (multiplier: {timeMultiplier})");
     }
 
     public System.DateTime GetCurrentDate()
