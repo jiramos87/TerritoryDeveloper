@@ -3117,6 +3117,7 @@ MonoBehaviour:
   moneyText: {fileID: 938977938}
   happinessText: {fileID: 241017103}
   gridCoordinatesText: {fileID: 1664159915}
+  cellDataText: {fileID: 1925919943}
   cityPowerOutputText: {fileID: 701606472}
   cityPowerConsumptionText: {fileID: 24643460}
   dateText: {fileID: 1560571897}
@@ -3543,7 +3544,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -396, y: -182.7}
+  m_AnchoredPosition: {x: -396, y: -150.1}
   m_SizeDelta: {x: -798.7911, y: -476.6543}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &551518333
@@ -4504,7 +4505,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 104.15964, y: 0}
+  m_AnchoredPosition: {x: 104.16036, y: 0}
   m_SizeDelta: {x: -686.71, y: -4.9274}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &709582277
@@ -6128,7 +6129,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 470750413}
   m_Direction: 0
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.9992915
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -6485,6 +6486,7 @@ MonoBehaviour:
   gameNotificationManager: {fileID: 524023767}
   demandManager: {fileID: 2064853469}
   waterManager: {fileID: 1132506491}
+  terrainManager: {fileID: 0}
   lightResidential1x1Prefabs:
   - {fileID: 6407699466507457254, guid: 8940a389d4d2c469ba715ad515e5cfe5, type: 3}
   lightResidential2x2Prefabs: []
@@ -8077,6 +8079,7 @@ RectTransform:
   - {fileID: 148715193}
   - {fileID: 2036862805}
   - {fileID: 1664159914}
+  - {fileID: 1925919945}
   - {fileID: 551518332}
   m_Father: {fileID: 618271636}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -9277,6 +9280,12 @@ MonoBehaviour:
   roadTilePrefabElbowUpRight: {fileID: 6738022233385431236, guid: 92b11a697a53a47808ff427ac0694dc7, type: 3}
   roadTilePrefabElbowDownLeft: {fileID: 2248830645727879500, guid: 2e78a8bb7edd94f4b805c8e548de0740, type: 3}
   roadTilePrefabElbowDownRight: {fileID: 3629512970404794100, guid: 44dd8011f8ebf4b3287454740cbb1fdb, type: 3}
+  roadTileBridgeVertical: {fileID: 7977071897597719018, guid: 80607ff13e6854a75b214e28be833171, type: 3}
+  roadTileBridgeHorizontal: {fileID: 5185164840966594375, guid: 3287f753c9bb44d9ead9a1b5da6438e5, type: 3}
+  roadTileEastSlope: {fileID: 3073276243273949243, guid: 5a87071100d714064b41cb96e6915f6e, type: 3}
+  roadTileWestSlope: {fileID: 7600213185375130094, guid: 654bf84f17f6a49089638b6887343ec9, type: 3}
+  roadTileNorthSlope: {fileID: 2117187168310379363, guid: 9f6de98a9622c4b16be8f09a02e738a1, type: 3}
+  roadTileSouthSlope: {fileID: 5440428406509484118, guid: 6efbe87f2612e495e972d723441e0a79, type: 3}
 --- !u!1 &1313366838
 GameObject:
   m_ObjectHideFlags: 0
@@ -11251,7 +11260,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -395.999, y: -231.9}
+  m_AnchoredPosition: {x: -395.999, y: -193.8}
   m_SizeDelta: {x: 122.3723, y: 42.911}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1664159915
@@ -11694,7 +11703,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -22.99939, y: -166.00006}
+  m_AnchoredPosition: {x: -22.999512, y: -166}
   m_SizeDelta: {x: -235.22, y: -573.0851}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1710728776
@@ -13180,7 +13189,12 @@ MonoBehaviour:
   height: 20
   tileWidth: 1
   tileHeight: 0.5
+  halfWidth: 0
+  halfHeight: 0
   mouseGridPosition: {x: 0, y: 0}
+  mouseGridHeight: 0
+  mouseGridSortingOrder: 0
+  isInitialized: 0
 --- !u!1 &1888940540
 GameObject:
   m_ObjectHideFlags: 0
@@ -13312,6 +13326,7 @@ MonoBehaviour:
   economyManager: {fileID: 678270592}
   uiManager: {fileID: 515320935}
   gameNotificationManager: {fileID: 524023767}
+  terrainManager: {fileID: 0}
   sparseForestPrefab: {fileID: 4992091394876696714, guid: c25f6bc74509e409cb9fb8256b872db3, type: 3}
   mediumForestPrefab: {fileID: 4992091394876696714, guid: c25f6bc74509e409cb9fb8256b872db3, type: 3}
   denseForestPrefab: {fileID: 4992091394876696714, guid: c25f6bc74509e409cb9fb8256b872db3, type: 3}
@@ -13401,6 +13416,85 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1918051079}
   m_CullTransparentMesh: 1
+--- !u!1 &1925919942
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1925919945}
+  - component: {fileID: 1925919944}
+  - component: {fileID: 1925919943}
+  m_Layer: 5
+  m_Name: CellDataText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1925919943
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1925919942}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.9150943, g: 0.867613, b: 0.867613, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FontData:
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_FontSize: 10
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 0
+    m_MaxSize: 40
+    m_Alignment: 3
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: 
+--- !u!222 &1925919944
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1925919942}
+  m_CullTransparentMesh: 1
+--- !u!224 &1925919945
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1925919942}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1192010272}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -395.999, y: -223}
+  m_SizeDelta: {x: 122.3723, y: 42.911}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1937074662
 GameObject:
   m_ObjectHideFlags: 0

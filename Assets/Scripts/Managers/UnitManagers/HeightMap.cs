@@ -13,21 +13,21 @@ public class HeightMap : MonoBehaviour
         this.width = width;
         this.height = height;
         heights = new int[width, height];
-        InitializeHeights();
+        // InitializeHeights();
     }
 
-    private void InitializeHeights()
-    {
-        gridManager = FindObjectOfType<GridManager>();
-        // Initialize all heights to 1 (or whatever base height you prefer)
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                heights[x, y] = 1;
-            }
-        }
-    }
+    // private void InitializeHeights()
+    // {
+    //     gridManager = FindObjectOfType<GridManager>();
+    //     // Initialize all heights to 1 (or whatever base height you prefer)
+    //     for (int x = 0; x < width; x++)
+    //     {
+    //         for (int y = 0; y < height; y++)
+    //         {
+    //             heights[x, y] = 1;
+    //         }
+    //     }
+    // }
 
     public void SetHeights(int[,] newHeights)
     {

@@ -152,7 +152,7 @@ public class WaterManager : MonoBehaviour
         zone.zoneType = Zone.ZoneType.Water;
         zone.zoneCategory = Zone.ZoneCategory.Water;
 
-        gridManager.SetTileSortingOrder(waterTile, Zone.ZoneType.Water);
+        gridManager.SetTileSortingOrder(waterTile);
     }
 
     // Rest of the existing WaterManager methods remain the same
@@ -198,7 +198,7 @@ public class WaterManager : MonoBehaviour
         zone.zoneCategory = Zone.ZoneCategory.Grass;
 
         // Set sorting order
-        gridManager.SetTileSortingOrder(grassTile, Zone.ZoneType.Grass);
+        gridManager.SetTileSortingOrder(grassTile);
     }
 
     public void UpdateWaterVisuals()

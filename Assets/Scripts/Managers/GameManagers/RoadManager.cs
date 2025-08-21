@@ -29,6 +29,10 @@ public class RoadManager : MonoBehaviour
     public GameObject roadTilePrefabElbowDownRight;
     public GameObject roadTileBridgeVertical;
     public GameObject roadTileBridgeHorizontal;
+    public GameObject roadTileEastSlope;
+    public GameObject roadTileWestSlope;
+    public GameObject roadTileNorthSlope;
+    public GameObject roadTileSouthSlope;
     private List<GameObject> previewRoadTiles = new List<GameObject>();
     private List<Vector2> previewRoadGridPositions = new List<Vector2>();
     private List<Vector2> adjacentRoadTiles = new List<Vector2>();
@@ -239,7 +243,7 @@ public class RoadManager : MonoBehaviour
             Quaternion.identity
         );
 
-        SetPreviewRoadTileDetails(previewTile);
+        SetPreviewRoadTileDetails(previewTile, cell);
 
         previewRoadTiles.Add(previewTile);
 
@@ -259,82 +263,116 @@ public class RoadManager : MonoBehaviour
 
             if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
             {
+                // Horizontal road
                 if (height == 0)
                 {
                     return roadTileBridgeHorizontal;
+                }
+                if (cell.terrainSlope == "south" || cell.terrainSlope == "southEast")
+                {
+                    return roadTileSouthSlope;
+                }
+                if (cell.terrainSlope == "north" || cell.terrainSlope == "northWest")
+                {
+                    return roadTileNorthSlope;
                 }
                 return roadTilePrefab2;
             }
             else
             {
+                // Vertical road
                 if (height == 0)
                 {
                     return roadTileBridgeVertical;
+                }
+                if (cell.terrainSlope == "east" || cell.terrainSlope == "northEast")
+                {
+                    return roadTileEastSlope;
+                }
+                if (cell.terrainSlope == "west" || cell.terrainSlope == "southWest")
+                {
+                    return roadTileWestSlope;
                 }
                 return roadTilePrefab1;
             }
         }
 
-        bool hasLeft = IsRoadAt(currGridPos + new Vector2(-1, 0));
-        bool hasRight = IsRoadAt(currGridPos + new Vector2(1, 0));
-        bool hasUp = IsRoadAt(currGridPos + new Vector2(0, 1));
-        bool hasDown = IsRoadAt(currGridPos + new Vector2(0, -1));
+        bool hasSouthRoad = IsRoadAt(currGridPos + new Vector2(-1, 0));
+        bool hasNorthRoad = IsRoadAt(currGridPos + new Vector2(1, 0));
+        bool hasWestRoad = IsRoadAt(currGridPos + new Vector2(0, 1));
+        bool hasEastRoad = IsRoadAt(currGridPos + new Vector2(0, -1));
 
         if (isCenterRoadTile)
         {
-            UpdateAdjacentRoadTilesArray(currGridPos, hasLeft, hasRight, hasUp, hasDown, isPreview);
+            UpdateAdjacentRoadTilesArray(currGridPos, hasSouthRoad, hasNorthRoad, hasWestRoad, hasEastRoad, isPreview);
         }
 
-        if (hasLeft && hasRight && hasUp && hasDown)
+        if (hasSouthRoad && hasNorthRoad && hasWestRoad && hasEastRoad)
         {
             return roadTilePrefabCrossing;
         }
-        else if (hasLeft && hasRight && hasUp && !hasDown)
+        else if (hasSouthRoad && hasNorthRoad && hasWestRoad && !hasEastRoad)
         {
             return roadTilePrefabTIntersectionDown;
         }
-        else if (hasLeft && hasRight && hasDown && !hasUp)
+        else if (hasSouthRoad && hasNorthRoad && hasEastRoad && !hasWestRoad)
         {
             return roadTilePrefabTIntersectionUp;
         }
-        else if (hasUp && hasDown && hasLeft && !hasRight)
+        else if (hasWestRoad && hasEastRoad && hasSouthRoad && !hasNorthRoad)
         {
             return roadTilePrefabTIntersectionRight;
         }
-        else if (hasUp && hasDown && hasRight && !hasLeft)
+        else if (hasWestRoad && hasEastRoad && hasNorthRoad && !hasSouthRoad)
         {
             return roadTilePrefabTIntersectionLeft;
         }
-        else if (hasLeft && hasUp && !hasRight && !hasDown)
+        else if (hasSouthRoad && hasWestRoad && !hasNorthRoad && !hasEastRoad)
         {
             return roadTilePrefabElbowDownRight;
         }
-        else if (hasRight && hasUp && !hasLeft && !hasDown)
+        else if (hasNorthRoad && hasWestRoad && !hasSouthRoad && !hasEastRoad)
         {
             return roadTilePrefabElbowDownLeft;
         }
-        else if (hasLeft && hasDown && !hasRight && !hasUp)
+        else if (hasSouthRoad && hasEastRoad && !hasNorthRoad && !hasWestRoad)
         {
             return roadTilePrefabElbowUpRight;
         }
-        else if (hasRight && hasDown && !hasLeft && !hasUp)
+        else if (hasNorthRoad && hasEastRoad && !hasSouthRoad && !hasWestRoad)
         {
             return roadTilePrefabElbowUpLeft;
         }
-        else if (hasLeft || hasRight)
+        else if (hasSouthRoad || hasNorthRoad)
         {
             if (height == 0)
             {
                 return roadTileBridgeHorizontal;
             }
+            if (cell.terrainSlope == "south" || cell.terrainSlope == "southEast")
+            {
+                return roadTileSouthSlope;
+            }
+            if (cell.terrainSlope == "north" || cell.terrainSlope == "northWest")
+            {
+                return roadTileNorthSlope;
+            }
             return roadTilePrefab2;
         }
 
-        else if (hasUp || hasDown)
+        else if (hasWestRoad || hasEastRoad)
         {
             if (height == 0)
             {
                 return roadTileBridgeVertical;
+            }
+            if (cell.terrainSlope == "east" || cell.terrainSlope == "northEast")
+            {
+                return roadTileEastSlope;
+            }
+            if (cell.terrainSlope == "west" || cell.terrainSlope == "southWest")
+            {
+                return roadTileWestSlope;
             }
             return roadTilePrefab1;
         }
@@ -347,6 +385,14 @@ public class RoadManager : MonoBehaviour
             {
                 return roadTileBridgeHorizontal;
             }
+            if (cell.terrainSlope == "south" || cell.terrainSlope == "southWest")
+            {
+                return roadTileSouthSlope;
+            }
+            if (cell.terrainSlope == "north" || cell.terrainSlope == "northEast")
+            {
+                return roadTileNorthSlope;
+            }
             return roadTilePrefab2;
         }
         else
@@ -354,6 +400,14 @@ public class RoadManager : MonoBehaviour
             if (height == 0)
             {
                 return roadTileBridgeVertical;
+            }
+            if (cell.terrainSlope == "east" || cell.terrainSlope == "northEast")
+            {
+                return roadTileEastSlope;
+            }
+            if (cell.terrainSlope == "west" || cell.terrainSlope == "southWest")
+            {
+                return roadTileWestSlope;
             }
             return roadTilePrefab1;
         }
@@ -389,32 +443,33 @@ public class RoadManager : MonoBehaviour
             .Any(zone => zone != null && zone.zoneType == Zone.ZoneType.Road);
     }
 
-    void UpdateAdjacentRoadTilesArray(Vector2 currGridPos, bool hasLeft, bool hasRight, bool hasUp, bool hasDown, bool isPreview)
+    void UpdateAdjacentRoadTilesArray(Vector2 currGridPos, bool hasSouthRoad, bool hasNorthRoad, bool hasWestRoad, bool hasEastRoad, bool isPreview)
     {
         adjacentRoadTiles.Clear();
 
-        if (hasLeft)
+        if (hasSouthRoad)
         {
             adjacentRoadTiles.Add(new Vector2(currGridPos.x - 1, currGridPos.y));
         }
-        if (hasRight)
+        if (hasNorthRoad)
         {
             adjacentRoadTiles.Add(new Vector2(currGridPos.x + 1, currGridPos.y));
         }
-        if (hasUp)
+        if (hasWestRoad)
         {
             adjacentRoadTiles.Add(new Vector2(currGridPos.x, currGridPos.y + 1));
         }
-        if (hasDown)
+        if (hasEastRoad)
         {
             adjacentRoadTiles.Add(new Vector2(currGridPos.x, currGridPos.y - 1));
         }
     }
 
-    void SetPreviewRoadTileDetails(GameObject previewTile)
+    void SetPreviewRoadTileDetails(GameObject previewTile, Cell cell)
     {
         SetPreviewTileCollider(previewTile);
-        gridManager.SetTileSortingOrder(previewTile, Zone.ZoneType.Road);
+
+        gridManager.SetTileSortingOrder(previewTile);
 
         SetRoadTileZoneDetails(previewTile);
         previewTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 0.5f);
@@ -496,7 +551,7 @@ public class RoadManager : MonoBehaviour
 
         UpdateRoadCellAttributes(cellComponent, roadTile, zoneType);
 
-        gridManager.SetTileSortingOrder(roadTile, zoneType);
+        gridManager.SetTileSortingOrder(roadTile);
     }
 
     void DestroyPreviousRoadTile(GameObject cell, Vector2 gridPos)

@@ -15,6 +15,7 @@ public class ZoneManager : MonoBehaviour
     public GameNotificationManager gameNotificationManager;
     public DemandManager demandManager;
     public WaterManager waterManager;
+    public TerrainManager terrainManager;
 
     public List<GameObject> lightResidential1x1Prefabs;
     public List<GameObject> lightResidential2x2Prefabs;
@@ -97,6 +98,7 @@ public class ZoneManager : MonoBehaviour
     /// </summary>
     void Awake()
     {
+        terrainManager = GameObject.Find("TerrainManager").GetComponent<TerrainManager>();
         InitializeZonePrefabs();
     }
 
@@ -311,6 +313,7 @@ public class ZoneManager : MonoBehaviour
         }
         else if (Input.GetMouseButtonUp(0) && isZoning)
         {
+            Debug.Log("PlaceZoning conditions met");
             PlaceZoning(gridPosition);
         }
     }
@@ -323,7 +326,7 @@ public class ZoneManager : MonoBehaviour
         ClearPreviewTiles();
     }
 
-    void ClearPreviewTiles()
+    public void ClearPreviewTiles()
     {
         foreach (var tile in previewZoningTiles)
         {
@@ -562,7 +565,7 @@ public class ZoneManager : MonoBehaviour
 
             UpdatePlacedZoneCellAttributes(cell, selectedZoneType, zonePrefab, zoneAttributes);
 
-            gridManager.SetTileSortingOrder(zoneTile, selectedZoneType);
+            gridManager.SetTileSortingOrder(zoneTile);
 
             addZonedTileToList(gridPosition, selectedZoneType);
 
@@ -886,7 +889,7 @@ public class ZoneManager : MonoBehaviour
 
         cell.isPivot = true;
 
-        gridManager.SetTileSortingOrder(zoneTile, cell.zoneType);
+        gridManager.SetTileSortingOrder(zoneTile);
     }
 
     void UpdatePlacedZoneCellAttributes(Cell cellComponent, Zone.ZoneType selectedZoneType, GameObject zonePrefab, ZoneAttributes zoneAttributes)

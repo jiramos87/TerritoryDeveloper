@@ -23,6 +23,7 @@ public class CellData
     public int happiness;
     public string prefabName;
     public string zoneType;
+    public string terrainSlope;
     public GameObject occupiedBuilding;
     public string occupiedBuildingName;
     public bool isPivot;
@@ -92,6 +93,7 @@ public class CellData
         this.powerPlant = null;
         this.waterPlant = null;
         this.occupiedBuilding = null;
+        this.terrainSlope = "flat";
     }
 
     /// <summary>
@@ -228,6 +230,7 @@ public class CellData
         clone.y = y;
         clone.sortingOrder = sortingOrder;
         clone.height = height;
+        clone.terrainSlope = terrainSlope;
 
         // Forest properties
         clone.forestType = forestType;

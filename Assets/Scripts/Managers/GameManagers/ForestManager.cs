@@ -167,7 +167,7 @@ public class ForestManager : MonoBehaviour
 
         forestObject.transform.SetParent(cellComponent.gameObject.transform);
 
-        gridManager.SetTileSortingOrder(forestObject, Zone.ZoneType.Grass);
+        gridManager.SetTileSortingOrder(forestObject);
 
         cellComponent.SetTree(true, selectedForest.ForestType.ToString(), forestObject);
 

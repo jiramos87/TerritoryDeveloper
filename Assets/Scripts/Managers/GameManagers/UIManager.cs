@@ -288,6 +288,7 @@ public class UIManager : MonoBehaviour
         selectedZoneType = Zone.ZoneType.ResidentialLightZoning;
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
+        zoneManager.ClearPreviewTiles();
         ClearSelectedBuilding();
         ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
@@ -298,6 +299,7 @@ public class UIManager : MonoBehaviour
         selectedZoneType = Zone.ZoneType.ResidentialMediumZoning;
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
+        zoneManager.ClearPreviewTiles();
         ClearSelectedBuilding();
         ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
@@ -308,6 +310,7 @@ public class UIManager : MonoBehaviour
         selectedZoneType = Zone.ZoneType.ResidentialHeavyZoning;
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
+        zoneManager.ClearPreviewTiles();
         ClearSelectedBuilding();
         ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
@@ -318,6 +321,7 @@ public class UIManager : MonoBehaviour
         selectedZoneType = Zone.ZoneType.CommercialLightZoning;
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
+        zoneManager.ClearPreviewTiles();
         ClearSelectedBuilding();
         ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
@@ -328,6 +332,7 @@ public class UIManager : MonoBehaviour
         selectedZoneType = Zone.ZoneType.CommercialMediumZoning;
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
+        zoneManager.ClearPreviewTiles();
         ClearSelectedBuilding();
         ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
@@ -338,6 +343,7 @@ public class UIManager : MonoBehaviour
         selectedZoneType = Zone.ZoneType.CommercialHeavyZoning;
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
+        zoneManager.ClearPreviewTiles();
         ClearSelectedBuilding();
         ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
@@ -348,6 +354,7 @@ public class UIManager : MonoBehaviour
         selectedZoneType = Zone.ZoneType.IndustrialLightZoning;
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
+        zoneManager.ClearPreviewTiles();
         ClearSelectedBuilding();
         ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
@@ -358,6 +365,7 @@ public class UIManager : MonoBehaviour
         selectedZoneType = Zone.ZoneType.IndustrialMediumZoning;
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
+        zoneManager.ClearPreviewTiles();
         ClearSelectedBuilding();
         ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
@@ -368,6 +376,7 @@ public class UIManager : MonoBehaviour
         selectedZoneType = Zone.ZoneType.IndustrialHeavyZoning;
         cursorManager.SetDefaultCursor();
         bulldozeMode = false;
+        zoneManager.ClearPreviewTiles();
         ClearSelectedBuilding();
         ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);

@@ -127,6 +127,7 @@ public class TerrainManager : MonoBehaviour
         cell.transformPosition = newWorldPos;
 
         int sortingOrder = CalculateTerrainSortingOrder(x, y, newHeight);
+
         cell.sortingOrder = sortingOrder;
         SpriteRenderer sr = cell.gameObject.GetComponent<SpriteRenderer>();
         if (sr != null)
@@ -157,6 +158,10 @@ public class TerrainManager : MonoBehaviour
 
     private bool RequiresSlope(int x, int y, int currentHeight)
     {
+        if (currentHeight == 0)
+        {
+            return false;
+        }
         for (int dx = -1; dx <= 1; dx++)
         {
             for (int dy = -1; dy <= 1; dy++)
@@ -183,7 +188,14 @@ public class TerrainManager : MonoBehaviour
     private void PlaceSlope(int x, int y)
     {
         int currentHeight = heightMap.GetHeight(x, y);
-        GameObject slopePrefab = DetermineSlopePrefab(x, y);
+
+        var slopeResult = DetermineSlopePrefab(x, y);
+        if (!slopeResult.HasValue)
+        {
+            return;
+        }
+
+        var (key, slopePrefab) = slopeResult.Value;
 
         if (slopePrefab != null)
         {
@@ -197,6 +209,7 @@ public class TerrainManager : MonoBehaviour
                 Quaternion.identity
             );
             slope.transform.SetParent(cell.gameObject.transform);
+            cell.terrainSlope = key;
 
             SpriteRenderer sr = slope.GetComponent<SpriteRenderer>();
             if (sr != null)
@@ -219,6 +232,7 @@ public class TerrainManager : MonoBehaviour
 
                 if (heightMap.IsValidPosition(nx, ny))
                 {
+
                     int neighborHeight = heightMap.GetHeight(nx, ny);
 
                     if (neighborHeight == SEA_LEVEL)
@@ -244,29 +258,103 @@ public class TerrainManager : MonoBehaviour
         GameObject seaLevelWater = seaLevelWaterPrefab;
         if (seaLevelWater == null)
         {
+            Debug.Log("seaLevelWaterPrefab is null for position " + x + ", " + y);
             return;
         }
 
         Cell cell = gridManager.GetCell(x, y);
+        if (cell == null)
+        {
+            Debug.Log("cell is null for position " + x + ", " + y);
+            return;
+        }
+        if (cell.gameObject == null || cell.gameObject.transform == null)
+        {
+            Debug.Log("cell.gameObject or cell.gameObject.transform is null for position " + x + ", " + y);
+            return;
+        }
+        bool isDebugCell = (x == 0 && y == 11);
+        if (isDebugCell)
+        {
+            Debug.Log($"[DEBUG] Placing sea level water for position ({x}, {y})");
+            Debug.Log($"[DEBUG] Cell: {cell.name}, Pre children count: {cell.gameObject.transform.childCount}");
+            Debug.Log($"[DEBUG] Cell active: {cell.gameObject.activeInHierarchy}");
+
+            if (cell.gameObject.transform.childCount > 0)
+            {
+                Debug.Log($"[DEBUG] First child: {cell.gameObject.transform.GetChild(0).name}");
+            }
+        }
         DestroyCellChildren(cell);
+        if (isDebugCell)
+        {
+            Debug.Log($"[DEBUG] After destroying children, count: {cell.gameObject.transform.childCount}");
+        }
 
         Vector2 worldPos = cell.transformPosition;
         GameObject seaLevelWaterObject = Instantiate(
             seaLevelWater,
-            worldPos,
+            new Vector3(worldPos.x, worldPos.y, 0f),
             Quaternion.identity
         );
 
-        seaLevelWaterObject.transform.SetParent(cell.gameObject.transform);
+        if (seaLevelWaterObject == null)
+        {
+            Debug.Log("seaLevelWaterObject is null for position " + x + ", " + y);
+            return;
+        }
+
+        if (isDebugCell)
+        {
+            Debug.Log($"[DEBUG] Instantiated object: {seaLevelWaterObject.name}");
+            Debug.Log($"[DEBUG] Object active: {seaLevelWaterObject.activeInHierarchy}");
+            Debug.Log($"[DEBUG] Object position: {seaLevelWaterObject.transform.position}");
+        }
+
+        // Set parent with explicit world position staying
+        Transform parentTransform = cell.gameObject.transform;
+        Transform childTransform = seaLevelWaterObject.transform;
+
+        // Store world position before parenting
+        Vector3 worldPosition = childTransform.position;
+
+        // Set parent
+        childTransform.SetParent(parentTransform, false); // worldPositionStays = false for local positioning
+
+        // Restore position if needed (adjust based on your coordinate system needs)
+        childTransform.position = worldPosition;
+
+        if (isDebugCell)
+        {
+            Debug.Log($"[DEBUG] After SetParent - Cell children count: {parentTransform.childCount}");
+            Debug.Log($"[DEBUG] Child transform parent: {(childTransform.parent != null ? childTransform.parent.name : "NULL")}");
+            Debug.Log($"[DEBUG] Child active after parenting: {seaLevelWaterObject.activeInHierarchy}");
+
+            // Verify the child is actually there
+            for (int i = 0; i < parentTransform.childCount; i++)
+            {
+                Debug.Log($"[DEBUG] Child {i}: {parentTransform.GetChild(i).name}");
+            }
+        }
+
+        // Update cell properties
         cell.zoneType = Zone.ZoneType.Water;
         gridManager.SetCellHeight(new Vector2(x, y), 0);
-        Cell updatedCell = gridManager.GetCell(x, y);
-        gridManager.SetResortSeaLevelOrder(seaLevelWaterObject, updatedCell);
+
+        // Set sorting order
+        gridManager.SetTileSortingOrder(seaLevelWaterObject);
+
+        if (isDebugCell)
+        {
+            Debug.Log($"[DEBUG] Final cell children count: {cell.gameObject.transform.childCount}");
+            Debug.Log($"[DEBUG] Water object still exists: {seaLevelWaterObject != null}");
+        }
     }
 
     private void PlaceWaterSlope(int x, int y, GameObject waterSlopePrefab)
     {
         Cell cell = gridManager.GetCell(x, y);
+
         DestroyCellChildren(cell);
 
         // modify the height of the cell to be 0
@@ -280,7 +368,11 @@ public class TerrainManager : MonoBehaviour
             Quaternion.identity
         );
 
-        gridManager.SetResortSeaLevelOrder(slope, updatedCell);
+        int sortingOrder = gridManager.SetTileSortingOrder(slope.gameObject);
+        if (x == 0 && y == 10)
+        {
+            Debug.Log("placing water slope for position " + x + ", " + y + " with new sorting order " + sortingOrder);
+        }
     }
 
     private GameObject DetermineWaterSlopePrefab(int x, int y)
@@ -470,9 +562,9 @@ public class TerrainManager : MonoBehaviour
         int depthOrder = -isometricDepth * DEPTH_MULTIPLIER;
 
         // Higher terrain should render on top of lower terrain at same depth
-        int heightOrder = height * HEIGHT_MULTIPLIER;
+        // int heightOrder = height * HEIGHT_MULTIPLIER;
 
-        return TERRAIN_BASE_ORDER + depthOrder + heightOrder;
+        return TERRAIN_BASE_ORDER + depthOrder;
     }
 
     /// <summary>
@@ -539,7 +631,7 @@ public class TerrainManager : MonoBehaviour
         Effect
     }
 
-    private GameObject DetermineSlopePrefab(int x, int y)
+    private (string key, GameObject prefab)? DetermineSlopePrefab(int x, int y)
     {
         int currentHeight = heightMap.GetHeight(x, y);
 
@@ -563,20 +655,20 @@ public class TerrainManager : MonoBehaviour
         bool hasSouthEastSlope = seHeight > currentHeight;
         bool hasSouthWestSlope = swHeight > currentHeight;
 
-        if (hasWestSlope && hasNorthSlope) return southEastUpslopePrefab;
-        if (hasWestSlope && hasSouthSlope) return northEastUpslopePrefab;
-        if (hasEastSlope && hasNorthSlope) return southWestUpslopePrefab;
-        if (hasEastSlope && hasSouthSlope) return northWestUpslopePrefab;
+        if (hasWestSlope && hasNorthSlope) return ("southEast", southEastUpslopePrefab);
+        if (hasWestSlope && hasSouthSlope) return ("northEast", northEastUpslopePrefab);
+        if (hasEastSlope && hasNorthSlope) return ("southWest", southWestUpslopePrefab);
+        if (hasEastSlope && hasSouthSlope) return ("northWest", northWestUpslopePrefab);
 
-        if (hasNorthSlope) return southSlopePrefab;
-        if (hasSouthSlope) return northSlopePrefab;
-        if (hasEastSlope) return westSlopePrefab;
-        if (hasWestSlope) return eastSlopePrefab;
+        if (hasNorthSlope) return ("south", southSlopePrefab);
+        if (hasSouthSlope) return ("north", northSlopePrefab);
+        if (hasEastSlope) return ("west", westSlopePrefab);
+        if (hasWestSlope) return ("east", eastSlopePrefab);
 
-        if (hasNorthWestSlope) return southEastSlopePrefab;
-        if (hasNorthEastSlope) return southWestSlopePrefab;
-        if (hasSouthWestSlope) return northEastSlopePrefab;
-        if (hasSouthEastSlope) return northWestSlopePrefab;
+        if (hasNorthWestSlope) return ("southEast", southEastSlopePrefab);
+        if (hasNorthEastSlope) return ("southWest", southWestSlopePrefab);
+        if (hasSouthWestSlope) return ("northEast", northEastSlopePrefab);
+        if (hasSouthEastSlope) return ("northWest", northWestSlopePrefab);
 
         return null;
     }

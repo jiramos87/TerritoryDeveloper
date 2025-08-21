@@ -141,20 +141,18 @@ public class GridManager : MonoBehaviour
                 Cell cellComponent = gridCell.AddComponent<Cell>();
                 cellComponent.SetCellData(cellData);
 
-                gridArray[x, y] = gridCell;
-
                 GameObject zoneTile = Instantiate(
                     tilePrefab,
                     gridCell.transform.position,
                     Quaternion.identity
                 );
-                SetTileSortingOrder(zoneTile, Zone.ZoneType.Grass);
+
+                zoneTile.transform.SetParent(gridCell.transform);
+
+                gridCell.AddComponent<SpriteRenderer>();
 
                 PolygonCollider2D polygonCollider = zoneTile.GetComponent<PolygonCollider2D>();
-                if (polygonCollider == null)
-                {
-                    polygonCollider = zoneTile.AddComponent<PolygonCollider2D>();
-                }
+                polygonCollider = zoneTile.AddComponent<PolygonCollider2D>();
 
                 Zone zoneComponent = zoneTile.GetComponent<Zone>();
                 if (zoneComponent == null)
@@ -162,6 +160,15 @@ public class GridManager : MonoBehaviour
                     zoneComponent = zoneTile.AddComponent<Zone>();
                     zoneComponent.zoneType = Zone.ZoneType.Grass;
                 }
+
+                gridArray[x, y] = gridCell;
+
+                int sortingOrder = SetTileSortingOrder(gridCell);
+                if (x == 0 && y == 10)
+                {
+                    Debug.Log("setting initial sorting order for gridCell " + gridCell + " with sorting order " + sortingOrder + " gridArray[x, y] is " + gridArray[x, y]);
+                }
+
             }
         }
     }
@@ -202,8 +209,6 @@ public class GridManager : MonoBehaviour
 
             Vector2 worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
-            // USE: Height-aware grid position calculation
-            // mouseGridPosition = GetGridPosition(worldPoint);
             Cell mouseGridCell = GetMouseGridCell(worldPoint);
             if (mouseGridCell == null)
             {
@@ -293,7 +298,7 @@ public class GridManager : MonoBehaviour
             Quaternion.identity
         );
 
-        int sortingOrder = SetTileSortingOrder(zoneTile, Zone.ZoneType.Grass);
+        SetTileSortingOrder(zoneTile);
     }
 
     void BulldozeTile(GameObject cell)
@@ -452,6 +457,7 @@ public class GridManager : MonoBehaviour
 
     private bool isInZoningMode()
     {
+        Debug.Log("isInZoningMode: selected zone type: " + uiManager.GetSelectedZoneType());
         return uiManager.GetSelectedZoneType() != Zone.ZoneType.Grass &&
           uiManager.GetSelectedZoneType() != Zone.ZoneType.Road &&
           uiManager.GetSelectedZoneType() != Zone.ZoneType.None;
@@ -561,7 +567,7 @@ public class GridManager : MonoBehaviour
         return new Vector2(x, y);
     }
 
-    public int SetTileSortingOrder(GameObject tile, Zone.ZoneType zoneType = Zone.ZoneType.Grass)
+    public int SetTileSortingOrder(GameObject tile)
     {
         Vector3 gridPos = GetGridPosition(tile.transform.position);
 
@@ -576,18 +582,7 @@ public class GridManager : MonoBehaviour
         tile.transform.SetParent(cell.gameObject.transform);
         SpriteRenderer sr = tile.GetComponent<SpriteRenderer>();
 
-        int baseSortingOrder = (y * width + x);
-
-        int sortingOrder;
-        switch (zoneType)
-        {
-            case Zone.ZoneType.Grass:
-                sortingOrder = -(baseSortingOrder + 100000);
-                break;
-            default:
-                sortingOrder = -(baseSortingOrder + 50000);
-                break;
-        }
+        int sortingOrder = terrainManager.CalculateTerrainSortingOrder(x, y, cell.height);
         sr.sortingOrder = sortingOrder;
         cell.SetCellInstanceSortingOrder(sortingOrder);
         return sortingOrder;
@@ -627,17 +622,15 @@ public class GridManager : MonoBehaviour
     public Cell GetCellFromWorldPoint(Vector2 worldPoint, Vector2 gridPos)
     {
         Collider2D[] hits = Physics2D.OverlapPointAll(worldPoint);
-        if (hits.Length == 0)
-        {
-            return null;
-        }
 
         Vector2 highestSortingOrderTransformPosition = Vector2.zero;
         int highestSortingOrder = int.MinValue;
+        Cell parentOfHitGrid = null;
 
         foreach (Collider2D hit in hits)
         {
             SpriteRenderer spriteRenderer = hit.GetComponent<SpriteRenderer>();
+
             if (spriteRenderer == null)
                 continue;
 
@@ -647,30 +640,18 @@ public class GridManager : MonoBehaviour
             {
                 highestSortingOrder = sortingOrder;
                 highestSortingOrderTransformPosition = hit.transform.position;
+                if (hit.transform.parent != null)
+                {
+                    parentOfHitGrid = hit.transform.parent.GetComponent<Cell>();
+                }
             }
         }
 
-        // look in the vecinity downwards in the gridArray for the cell with the cell.transformPosition == highestSortingOrderTransformPosition
-        for (int i = 0; i < 5; i++)
+        if (parentOfHitGrid == null)
         {
-            Vector2 currentPosition = new Vector2(gridPos.x - i, gridPos.y - i);
-            GameObject gridArrayCell = GetGridCell(currentPosition);
-            if (gridArrayCell == null)
-            {
-                continue;
-            }
-            Cell cell = gridArrayCell.GetComponent<Cell>();
-
-            if (cell == null)
-            {
-                continue;
-            }
-            if (cell.transformPosition == highestSortingOrderTransformPosition)
-            {
-                return cell;
-            }
+            return null;
         }
-        return null;
+        return parentOfHitGrid;
     }
 
     public Vector2 GetGridPositionWithHeight(Vector2 mouseWorldPoint)
@@ -948,33 +929,25 @@ public class GridManager : MonoBehaviour
         GameObject buildingPrefab = iBuilding.Prefab;
         int buildingSize = iBuilding.BuildingSize;
 
-        // Calculate the adjusted grid position for the actual pivot cell
         Vector2 pivotGridPos = new Vector2(gridPos.x, gridPos.y);
 
         Cell cell = gridArray[(int)pivotGridPos.x, (int)pivotGridPos.y].GetComponent<Cell>();
 
-        // Get the world position for the pivot cell
         Vector2 position = cell.transformPosition;
 
-        // For even-sized buildings, adjust the visual position slightly
         if (buildingSize > 1 && buildingSize % 2 == 0)
         {
-            position.x += tileWidth / 4f; // Small visual adjustment for even-sized buildings
+            position.x += tileWidth / 4f;
         }
 
-        // Create the building
         GameObject building = Instantiate(buildingPrefab, position, Quaternion.identity);
         building.transform.SetParent(gridArray[(int)pivotGridPos.x, (int)pivotGridPos.y].transform);
 
-        // adjust the building's position to match the grid cell based on its size
-
-        int sortingOrder = SetTileSortingOrder(building, Zone.ZoneType.Building);
+        SetTileSortingOrder(building);
         if (buildingSize > 1 && buildingSize % 2 == 0)
         {
             building.transform.position += new Vector3(tileWidth / 4f, 0, 0);
         }
-
-        gridArray[(int)pivotGridPos.x, (int)pivotGridPos.y].GetComponent<Cell>().sortingOrder = sortingOrder;
 
         HandleBuildingPlacementAttributesUpdate(iBuilding, pivotGridPos, building, buildingPrefab);
     }
@@ -986,8 +959,7 @@ public class GridManager : MonoBehaviour
         GameObject building = Instantiate(prefab, worldPos, Quaternion.identity);
         building.transform.SetParent(cell.gameObject.transform);
 
-        int sortingOrder = SetTileSortingOrder(building, Zone.ZoneType.Building);
-        gridArray[(int)gridPos.x, (int)gridPos.y].GetComponent<Cell>().sortingOrder = sortingOrder;
+        SetTileSortingOrder(building);
     }
 
     void PlaceBuilding(Vector2 gridPos, IBuilding iBuilding)

@@ -32,6 +32,7 @@ public class Cell : MonoBehaviour
     public int y;
     public int sortingOrder;
     public int height;
+    public string terrainSlope;
     public Vector2 transformPosition;
 
     [Header("Forest Properties")]
@@ -84,6 +85,7 @@ public class Cell : MonoBehaviour
         this.occupiedBuilding = cellData.occupiedBuilding;
         this.powerPlant = cellData.powerPlant;
         this.waterPlant = cellData.waterPlant;
+        this.terrainSlope = cellData.terrainSlope;
     }
 
     #region Building Property Getters
@@ -349,6 +351,7 @@ public class Cell : MonoBehaviour
         waterPlant = cellData.waterPlant;
         transformPosition = cellData.transformPosition;
         sortingOrder = cellData.sortingOrder;
+        terrainSlope = cellData.terrainSlope;
 
         // Forest properties (updated with backward compatibility)
         if (!string.IsNullOrEmpty(cellData.forestType))
