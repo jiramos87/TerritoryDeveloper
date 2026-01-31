@@ -164,7 +164,15 @@ public class GeographyManager : MonoBehaviour
                 foreach (GameObject obj in objectsToSort)
                 {
                     int oldSortingOrder = obj.GetComponent<SpriteRenderer>().sortingOrder;
-                    int newSortingOrder = terrainManager.CalculateTerrainSortingOrder(x, y, cellComponent.height);
+                    int newSortingOrder;
+                    if (terrainManager != null && terrainManager.IsWaterSlopeObject(obj))
+                    {
+                        newSortingOrder = terrainManager.CalculateWaterSlopeSortingOrder(x, y);
+                    }
+                    else
+                    {
+                        newSortingOrder = terrainManager.CalculateTerrainSortingOrder(x, y, cellComponent.height);
+                    }
                     obj.GetComponent<SpriteRenderer>().sortingOrder = newSortingOrder;
                     cellComponent.sortingOrder = newSortingOrder;
                 }

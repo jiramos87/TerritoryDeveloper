@@ -261,7 +261,14 @@ public class TerrainManager : MonoBehaviour
         cell.zoneType = Zone.ZoneType.Water;
         gridManager.SetCellHeight(new Vector2(x, y), 0);
         Cell updatedCell = gridManager.GetCell(x, y);
-        gridManager.SetResortSeaLevelOrder(seaLevelWaterObject, updatedCell);
+
+        int sortingOrder = CalculateTerrainSortingOrder(x, y, SEA_LEVEL);
+        SpriteRenderer sr = seaLevelWaterObject.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.sortingOrder = sortingOrder;
+        }
+        updatedCell.sortingOrder = sortingOrder;
     }
 
     private void PlaceWaterSlope(int x, int y, GameObject waterSlopePrefab)
@@ -279,8 +286,15 @@ public class TerrainManager : MonoBehaviour
             worldPos,
             Quaternion.identity
         );
+        slope.transform.SetParent(cell.gameObject.transform);
 
-        gridManager.SetResortSeaLevelOrder(slope, updatedCell);
+        int sortingOrder = CalculateWaterSlopeSortingOrder(x, y);
+        SpriteRenderer sr = slope.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.sortingOrder = sortingOrder;
+        }
+        updatedCell.sortingOrder = sortingOrder;
     }
 
     private GameObject DetermineWaterSlopePrefab(int x, int y)
@@ -305,16 +319,38 @@ public class TerrainManager : MonoBehaviour
         bool hasSeaLevelAtSouthEast = heightAtSouthEast == SEA_LEVEL;
         bool hasSeaLevelAtSouthWest = heightAtSouthWest == SEA_LEVEL;
 
-        if (hasSeaLevelAtWest && heightAtSouth == -1) return westSlopeWaterPrefab;
-        if (hasSeaLevelAtEast && heightAtSouth == -1) return eastSlopeWaterPrefab;
-        if (hasSeaLevelAtNorth && heightAtSouth == -1) return northSlopeWaterPrefab;
-        if (hasSeaLevelAtSouth && heightAtNorth == -1) return southSlopeWaterPrefab;
-        if (hasSeaLevelAtWest && heightAtNorth == -1) return westSlopeWaterPrefab;
-        if (hasSeaLevelAtEast && heightAtNorth == -1) return eastSlopeWaterPrefab;
-        if (hasSeaLevelAtNorth && heightAtWest == -1) return northSlopeWaterPrefab;
-        if (hasSeaLevelAtSouth && heightAtWest == -1) return southSlopeWaterPrefab;
-        if (hasSeaLevelAtEast && heightAtWest == -1) return eastSlopeWaterPrefab;
-        if (hasSeaLevelAtWest && heightAtEast == -1) return westSlopeWaterPrefab;
+        bool isAtNorthBorder = !heightMap.IsValidPosition(x + 1, y);
+        bool isAtSouthBorder = !heightMap.IsValidPosition(x - 1, y);
+        bool isAtWestBorder = !heightMap.IsValidPosition(x, y + 1);
+        bool isAtEastBorder = !heightMap.IsValidPosition(x, y - 1);
+
+        if (isAtSouthBorder)
+        {
+            if (hasSeaLevelAtWest) return westSlopeWaterPrefab;
+            if (hasSeaLevelAtEast) return eastSlopeWaterPrefab;
+            if (hasSeaLevelAtNorth) return northSlopeWaterPrefab;
+        }
+
+        if (isAtNorthBorder)
+        {
+            if (hasSeaLevelAtWest) return westSlopeWaterPrefab;
+            if (hasSeaLevelAtEast) return eastSlopeWaterPrefab;
+            if (hasSeaLevelAtSouth) return southSlopeWaterPrefab;
+        }
+
+        if (isAtWestBorder)
+        {
+            if (hasSeaLevelAtNorth) return northSlopeWaterPrefab;
+            if (hasSeaLevelAtSouth) return southSlopeWaterPrefab;
+            if (hasSeaLevelAtEast) return eastSlopeWaterPrefab;
+        }
+
+        if (isAtEastBorder)
+        {
+            if (hasSeaLevelAtNorth) return northSlopeWaterPrefab;
+            if (hasSeaLevelAtSouth) return southSlopeWaterPrefab;
+            if (hasSeaLevelAtWest) return westSlopeWaterPrefab;
+        }
 
 
         if (hasSeaLevelAtEast)
@@ -475,6 +511,12 @@ public class TerrainManager : MonoBehaviour
         return TERRAIN_BASE_ORDER + depthOrder + heightOrder;
     }
 
+    public int CalculateWaterSlopeSortingOrder(int x, int y)
+    {
+        const int WATER_SLOPE_OFFSET = 1;
+        return CalculateTerrainSortingOrder(x, y, SEA_LEVEL) + WATER_SLOPE_OFFSET;
+    }
+
     /// <summary>
     /// Calculate sorting order for slope tiles (slightly behind terrain)
     /// </summary>
@@ -537,6 +579,37 @@ public class TerrainManager : MonoBehaviour
         Utility,
         Building,
         Effect
+    }
+
+    public bool IsWaterSlopeObject(GameObject obj)
+    {
+        return IsPrefabInstance(obj, northSlopeWaterPrefab)
+            || IsPrefabInstance(obj, southSlopeWaterPrefab)
+            || IsPrefabInstance(obj, eastSlopeWaterPrefab)
+            || IsPrefabInstance(obj, westSlopeWaterPrefab)
+            || IsPrefabInstance(obj, northEastSlopeWaterPrefab)
+            || IsPrefabInstance(obj, northWestSlopeWaterPrefab)
+            || IsPrefabInstance(obj, southEastSlopeWaterPrefab)
+            || IsPrefabInstance(obj, southWestSlopeWaterPrefab)
+            || IsPrefabInstance(obj, northEastUpslopeWaterPrefab)
+            || IsPrefabInstance(obj, northWestUpslopeWaterPrefab)
+            || IsPrefabInstance(obj, southEastUpslopeWaterPrefab)
+            || IsPrefabInstance(obj, southWestUpslopeWaterPrefab);
+    }
+
+    public bool IsSeaLevelWaterObject(GameObject obj)
+    {
+        return IsPrefabInstance(obj, seaLevelWaterPrefab);
+    }
+
+    private bool IsPrefabInstance(GameObject obj, GameObject prefab)
+    {
+        if (obj == null || prefab == null)
+        {
+            return false;
+        }
+
+        return obj.name.StartsWith(prefab.name);
     }
 
     private GameObject DetermineSlopePrefab(int x, int y)

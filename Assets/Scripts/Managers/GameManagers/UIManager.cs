@@ -27,7 +27,6 @@ public class UIManager : MonoBehaviour
     public Text moneyText;
     public Text happinessText;
     public Text gridCoordinatesText;
-    public Text cellDataText;
     public Text cityPowerOutputText;
     public Text cityPowerConsumptionText;
     public Text dateText;
@@ -129,7 +128,6 @@ public class UIManager : MonoBehaviour
         commercialTaxText.text = "Commercial Tax: " + economyManager.GetCommercialTax() + "%";
         industrialTaxText.text = "Industrial Tax: " + economyManager.GetIndustrialTax() + "%";
         gridCoordinatesText.text = "x: " + gridManager.mouseGridPosition.x + ", y: " + gridManager.mouseGridPosition.y;
-        cellDataText.text = "height: " + gridManager.mouseGridHeight + ", sortingOrder: " + gridManager.mouseGridSortingOrder;
         EmploymentManager employment = FindObjectOfType<EmploymentManager>();
         DemandManager demand = FindObjectOfType<DemandManager>();
         StatisticsManager stats = FindObjectOfType<StatisticsManager>();
