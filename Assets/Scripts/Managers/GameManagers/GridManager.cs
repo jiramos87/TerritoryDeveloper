@@ -300,16 +300,19 @@ public class GridManager : MonoBehaviour
     {
         Cell cellComponent = cell.GetComponent<Cell>();
 
+        // Capture sorting order BEFORE demolition resets it
+        int preSortingOrder = cellComponent.sortingOrder;
+
         RestoreCellAttributes(cellComponent);
 
         DestroyCellChildren(cell, new Vector2(cellComponent.x, cellComponent.y));
 
         RestoreTile(cell);
 
-        // Show the bulldoze animation
+        // Show the bulldoze animation using the pre-captured sorting order
         if (uiManager != null)
         {
-            uiManager.ShowDemolitionAnimation(cell);
+            uiManager.ShowDemolitionAnimation(cell, preSortingOrder);
         }
     }
 
@@ -319,10 +322,13 @@ public class GridManager : MonoBehaviour
 
         int buildingSize = cellComponent.buildingSize;
 
+        // Capture sorting order BEFORE demolition resets it
+        int preSortingOrder = cellComponent.sortingOrder;
+
         // Show animation before demolishing for better visual effect
         if (uiManager != null)
         {
-            uiManager.ShowDemolitionAnimationCentered(cell, buildingSize);
+            uiManager.ShowDemolitionAnimationCentered(cell, buildingSize, preSortingOrder);
         }
 
         if (buildingSize > 1)

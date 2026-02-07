@@ -48,6 +48,7 @@ public class TerrainManager : MonoBehaviour
     public const int TERRAIN_BASE_ORDER = 0;
     public const int SLOPE_OFFSET = -1;
     public const int BUILDING_OFFSET = 10; // Buildings should be above terrain
+    public const int EFFECT_OFFSET = 30; // Effects should be above terrain
     public const int DEPTH_MULTIPLIER = 100;
     public const int HEIGHT_MULTIPLIER = 1000;
 

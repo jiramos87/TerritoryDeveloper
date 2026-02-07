@@ -3107,6 +3107,7 @@ MonoBehaviour:
   economyManager: {fileID: 678270592}
   detailsPopupController: {fileID: 1158038489}
   gameManager: {fileID: 724627295}
+  terrainManager: {fileID: 1097666053}
   buildingSelectorMenuController: {fileID: 1975260509}
   cityStats: {fileID: 72477285}
   bulldozeMode: 0
@@ -4504,7 +4505,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 104.15964, y: 0}
+  m_AnchoredPosition: {x: 104.15943, y: 0}
   m_SizeDelta: {x: -686.71, y: -4.9274}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &709582277
@@ -7689,6 +7690,8 @@ MonoBehaviour:
   southEastUpslopeWaterPrefab: {fileID: 8808602844539512836, guid: b730393b247ff43eabb129208f2b876d, type: 3}
   southWestUpslopeWaterPrefab: {fileID: 7144387256651429150, guid: 2af97bd91f51142bdaad26ed9c55a38f, type: 3}
   seaLevelWaterPrefab: {fileID: 3176668870032135925, guid: 14af9dcc8387e4a58add2d580e2afbc1, type: 3}
+  southCliffWallPrefab: {fileID: 5564609725091321451, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
+  eastCliffWallPrefab: {fileID: 2327040077204098500, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
 --- !u!1 &1125915284
 GameObject:
   m_ObjectHideFlags: 0
@@ -9277,6 +9280,8 @@ MonoBehaviour:
   roadTilePrefabElbowUpRight: {fileID: 6738022233385431236, guid: 92b11a697a53a47808ff427ac0694dc7, type: 3}
   roadTilePrefabElbowDownLeft: {fileID: 2248830645727879500, guid: 2e78a8bb7edd94f4b805c8e548de0740, type: 3}
   roadTilePrefabElbowDownRight: {fileID: 3629512970404794100, guid: 44dd8011f8ebf4b3287454740cbb1fdb, type: 3}
+  roadTileBridgeVertical: {fileID: 7977071897597719018, guid: 80607ff13e6854a75b214e28be833171, type: 3}
+  roadTileBridgeHorizontal: {fileID: 5185164840966594375, guid: 3287f753c9bb44d9ead9a1b5da6438e5, type: 3}
 --- !u!1 &1313366838
 GameObject:
   m_ObjectHideFlags: 0
@@ -11694,7 +11699,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -22.99939, y: -166.00006}
+  m_AnchoredPosition: {x: -22.999207, y: -166.00005}
   m_SizeDelta: {x: -235.22, y: -573.0851}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1710728776
@@ -13180,7 +13185,12 @@ MonoBehaviour:
   height: 20
   tileWidth: 1
   tileHeight: 0.5
+  halfWidth: 0
+  halfHeight: 0
   mouseGridPosition: {x: 0, y: 0}
+  mouseGridHeight: 0
+  mouseGridSortingOrder: 0
+  isInitialized: 0
 --- !u!1 &1888940540
 GameObject:
   m_ObjectHideFlags: 0
@@ -13312,6 +13322,7 @@ MonoBehaviour:
   economyManager: {fileID: 678270592}
   uiManager: {fileID: 515320935}
   gameNotificationManager: {fileID: 524023767}
+  terrainManager: {fileID: 0}
   sparseForestPrefab: {fileID: 4992091394876696714, guid: c25f6bc74509e409cb9fb8256b872db3, type: 3}
   mediumForestPrefab: {fileID: 4992091394876696714, guid: c25f6bc74509e409cb9fb8256b872db3, type: 3}
   denseForestPrefab: {fileID: 4992091394876696714, guid: c25f6bc74509e409cb9fb8256b872db3, type: 3}
@@ -15211,6 +15222,120 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   popupController: {fileID: 1421362056}
   uiManager: {fileID: 515320935}
+--- !u!1001 &225269993355938469
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2327040077204098500, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+      propertyPath: m_Name
+      value: CliffEastPrefab
+      objectReference: {fileID: 0}
+    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 129.90584
+      objectReference: {fileID: 0}
+    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 66.61322
+      objectReference: {fileID: 0}
+    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.1225784
+      objectReference: {fileID: 0}
+    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+--- !u!1001 &470321188288407191
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 129.90584
+      objectReference: {fileID: 0}
+    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 66.61322
+      objectReference: {fileID: 0}
+    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.1225784
+      objectReference: {fileID: 0}
+    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5564609725091321451, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
+      propertyPath: m_Name
+      value: CliffSouthPrefab
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -15220,3 +15345,5 @@ SceneRoots:
   - {fileID: 1578206894}
   - {fileID: 1365380895}
   - {fileID: 648978211}
+  - {fileID: 225269993355938469}
+  - {fileID: 470321188288407191}

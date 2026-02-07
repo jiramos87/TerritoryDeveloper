@@ -12,6 +12,8 @@ public class UIManager : MonoBehaviour
     public EconomyManager economyManager;
     public DetailsPopupController detailsPopupController;
     public GameManager gameManager;
+
+    public TerrainManager terrainManager;
     public BuildingSelectorMenuController buildingSelectorMenuController;
     public CityStats cityStats;
 
@@ -800,27 +802,28 @@ public class UIManager : MonoBehaviour
         return selectedForest;
     }
 
-    public void ShowDemolitionAnimation(GameObject cell)
+    public void ShowDemolitionAnimation(GameObject cell, int preCapturedSortingOrder)
     {
-        if (demolitionExplosionPrefab == null)
+        if (demolitionExplosionPrefab == null || cell == null)
         {
             return;
         }
 
-        if (cell == null)
-        {
-            return;
-        }
-
-        // Get the world position of the cell
         Cell centerCell = cell.GetComponent<Cell>();
         Vector3 explosionPosition = centerCell.transformPosition;
-        explosionPosition.y += 0.1f; // Slight offset above ground
+        explosionPosition.y += 0.1f;
 
-        // Instantiate the explosion animation
+        // NOT parented to cell so it won't be destroyed during demolition cleanup
         GameObject explosion = Instantiate(demolitionExplosionPrefab, explosionPosition, Quaternion.identity);
 
-        // Initialize the animation (the DemolitionAnimation script will handle AnimatorManager registration)
+        // Use the pre-captured sorting order (from before demolition reset)
+        SpriteRenderer sr = explosion.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.sortingLayerName = "Effects";
+            sr.sortingOrder = preCapturedSortingOrder + 1;
+        }
+
         DemolitionAnimation demolitionAnim = explosion.GetComponent<DemolitionAnimation>();
         if (demolitionAnim != null)
         {
@@ -833,11 +836,11 @@ public class UIManager : MonoBehaviour
     /// </summary>
     /// <param name="centerCell">The center cell of the building being demolished</param>
     /// <param name="buildingSize">Size of the building for positioning</param>
-    public void ShowDemolitionAnimationCentered(GameObject centerCell, int buildingSize)
+    public void ShowDemolitionAnimationCentered(GameObject centerCell, int buildingSize, int preCapturedSortingOrder)
     {
         if (demolitionExplosionPrefab == null || centerCell == null)
         {
-            ShowDemolitionAnimation(centerCell);
+            ShowDemolitionAnimation(centerCell, preCapturedSortingOrder);
             return;
         }
         Cell cell = centerCell.GetComponent<Cell>();
@@ -855,6 +858,13 @@ public class UIManager : MonoBehaviour
         explosionPosition.y += 0.1f;
 
         GameObject explosion = Instantiate(demolitionExplosionPrefab, explosionPosition, Quaternion.identity);
+
+        SpriteRenderer sr = explosion.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.sortingLayerName = "Effects";
+            sr.sortingOrder = preCapturedSortingOrder + 1;
+        }
 
         DemolitionAnimation demolitionAnim = explosion.GetComponent<DemolitionAnimation>();
         if (demolitionAnim != null)
