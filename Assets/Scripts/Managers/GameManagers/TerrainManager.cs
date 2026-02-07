@@ -37,6 +37,8 @@ public class TerrainManager : MonoBehaviour
     public GameObject southWestUpslopeWaterPrefab;
 
     public GameObject seaLevelWaterPrefab;
+    public GameObject southCliffWallPrefab;
+    public GameObject eastCliffWallPrefab;
 
     public const int MIN_HEIGHT = 0;
     public const int MAX_HEIGHT = 5;
@@ -144,6 +146,8 @@ public class TerrainManager : MonoBehaviour
             ModifyWaterSlopeInAdjacentNeighbors(x, y);
             return;
         }
+
+        PlaceCliffWalls(x, y);
     }
 
     private void DestroyCellChildren(Cell cell)
@@ -295,6 +299,97 @@ public class TerrainManager : MonoBehaviour
             sr.sortingOrder = sortingOrder;
         }
         updatedCell.sortingOrder = sortingOrder;
+    }
+
+    private void PlaceCliffWalls(int x, int y)
+    {
+        int currentHeight = heightMap.GetHeight(x, y);
+        if (currentHeight <= SEA_LEVEL)
+        {
+            return;
+        }
+
+        Cell cell = gridManager.GetCell(x, y);
+        RemoveExistingCliffWalls(cell);
+
+        if (NeedsCliffWallSouth(x, y, currentHeight))
+        {
+            PlaceCliffWallPrefab(cell, southCliffWallPrefab, x, y, currentHeight);
+        }
+
+        if (NeedsCliffWallEast(x, y, currentHeight))
+        {
+            PlaceCliffWallPrefab(cell, eastCliffWallPrefab, x, y, currentHeight);
+        }
+    }
+
+    private bool NeedsCliffWallSouth(int x, int y, int currentHeight)
+    {
+        if (!heightMap.IsValidPosition(x - 1, y) || !heightMap.IsValidPosition(x + 1, y))
+        {
+            return false;
+        }
+
+        int heightAtSouth = heightMap.GetHeight(x - 1, y);
+        if (currentHeight - heightAtSouth > 1)
+        {
+            return true;
+        }
+
+        int heightAtNorth = heightMap.GetHeight(x + 1, y);
+        return heightAtSouth == SEA_LEVEL && currentHeight == 1 && heightAtNorth == 2;
+    }
+
+    private bool NeedsCliffWallEast(int x, int y, int currentHeight)
+    {
+        if (!heightMap.IsValidPosition(x, y - 1) || !heightMap.IsValidPosition(x, y + 1))
+        {
+            return false;
+        }
+
+        int heightAtEast = heightMap.GetHeight(x, y - 1);
+        if (currentHeight - heightAtEast > 1)
+        {
+            return true;
+        }
+
+        int heightAtWest = heightMap.GetHeight(x, y + 1);
+        return heightAtEast == SEA_LEVEL && currentHeight == 1 && heightAtWest == 2;
+    }
+
+    private void PlaceCliffWallPrefab(Cell cell, GameObject prefab, int x, int y, int currentHeight)
+    {
+        if (prefab == null)
+        {
+            return;
+        }
+
+        GameObject cliffWall = Instantiate(prefab, cell.transformPosition, Quaternion.identity);
+        cliffWall.transform.SetParent(cell.gameObject.transform);
+
+        SpriteRenderer sr = cliffWall.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.sortingOrder = CalculateTerrainSortingOrder(x, y, currentHeight) + SLOPE_OFFSET;
+        }
+    }
+
+    private void RemoveExistingCliffWalls(Cell cell)
+    {
+        if (cell == null)
+        {
+            return;
+        }
+
+        for (int i = cell.transform.childCount - 1; i >= 0; i--)
+        {
+            GameObject child = cell.transform.GetChild(i).gameObject;
+            if (IsPrefabInstance(child, southCliffWallPrefab)
+                || IsPrefabInstance(child, eastCliffWallPrefab))
+            {
+                DestroyImmediate(child);
+            }
+        }
     }
 
     private GameObject DetermineWaterSlopePrefab(int x, int y)
