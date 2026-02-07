@@ -265,7 +265,13 @@ public class GridManager : MonoBehaviour
     void HandleBulldozerClick(Vector2 gridPosition)
     {
         GameObject cell = gridArray[(int)gridPosition.x, (int)gridPosition.y];
-        Zone.ZoneType zoneType = cell.GetComponent<Cell>().zoneType;
+        Cell cellComponent = cell.GetComponent<Cell>();
+        Zone.ZoneType zoneType = cellComponent.zoneType;
+
+        if (!CanBulldoze(cellComponent))
+        {
+            return;
+        }
 
         HandleBulldozeTile(zoneType, cell);
     }
@@ -394,6 +400,37 @@ public class GridManager : MonoBehaviour
         HandleBuildingStatsReset(cellComponent, zoneType);
 
         BulldozeBuildingTiles(cell);
+    }
+
+    bool CanBulldoze(Cell cell)
+    {
+        if (cell == null)
+        {
+            return false;
+        }
+
+        if (cell.forestType != Forest.ForestType.None)
+        {
+            return true;
+        }
+
+        switch (cell.zoneType)
+        {
+            case Zone.ZoneType.Road:
+            case Zone.ZoneType.Building:
+            case Zone.ZoneType.ResidentialLightBuilding:
+            case Zone.ZoneType.ResidentialMediumBuilding:
+            case Zone.ZoneType.ResidentialHeavyBuilding:
+            case Zone.ZoneType.CommercialLightBuilding:
+            case Zone.ZoneType.CommercialMediumBuilding:
+            case Zone.ZoneType.CommercialHeavyBuilding:
+            case Zone.ZoneType.IndustrialLightBuilding:
+            case Zone.ZoneType.IndustrialMediumBuilding:
+            case Zone.ZoneType.IndustrialHeavyBuilding:
+                return true;
+            default:
+                return false;
+        }
     }
 
     void HandleShowTileDetails(Vector2 gridPosition)

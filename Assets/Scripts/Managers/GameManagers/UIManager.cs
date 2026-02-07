@@ -285,91 +285,64 @@ public class UIManager : MonoBehaviour
 
     public void OnLightResidentialButtonClicked()
     {
+        ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.ResidentialLightZoning;
-        cursorManager.SetDefaultCursor();
-        bulldozeMode = false;
-        ClearSelectedBuilding();
-        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnMediumResidentialButtonClicked()
     {
+        ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.ResidentialMediumZoning;
-        cursorManager.SetDefaultCursor();
-        bulldozeMode = false;
-        ClearSelectedBuilding();
-        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnHeavyResidentialButtonClicked()
     {
+        ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.ResidentialHeavyZoning;
-        cursorManager.SetDefaultCursor();
-        bulldozeMode = false;
-        ClearSelectedBuilding();
-        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnLightCommercialButtonClicked()
     {
+        ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.CommercialLightZoning;
-        cursorManager.SetDefaultCursor();
-        bulldozeMode = false;
-        ClearSelectedBuilding();
-        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnMediumCommercialButtonClicked()
     {
+        ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.CommercialMediumZoning;
-        cursorManager.SetDefaultCursor();
-        bulldozeMode = false;
-        ClearSelectedBuilding();
-        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnHeavyCommercialButtonClicked()
     {
+        ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.CommercialHeavyZoning;
-        cursorManager.SetDefaultCursor();
-        bulldozeMode = false;
-        ClearSelectedBuilding();
-        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnLightIndustrialButtonClicked()
     {
+        ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.IndustrialLightZoning;
-        cursorManager.SetDefaultCursor();
-        bulldozeMode = false;
-        ClearSelectedBuilding();
-        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnMediumIndustrialButtonClicked()
     {
+        ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.IndustrialMediumZoning;
-        cursorManager.SetDefaultCursor();
-        bulldozeMode = false;
-        ClearSelectedBuilding();
-        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
     public void OnHeavyIndustrialButtonClicked()
     {
+        ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.IndustrialHeavyZoning;
-        cursorManager.SetDefaultCursor();
-        bulldozeMode = false;
-        ClearSelectedBuilding();
-        ClearSelectedForest();
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -409,28 +382,20 @@ public class UIManager : MonoBehaviour
 
     public void OnTwoWayRoadButtonClicked()
     {
+        ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.Road;
         // cursorManager.SetRoadCursor();
-
-        ClearSelectedBuilding();
-        ClearSelectedForest();
-        cursorManager.SetDefaultCursor();
-        bulldozeMode = false;
     }
 
     public void OnGrassButtonClicked()
     {
+        ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.Grass;
-        cursorManager.SetDefaultCursor();
-        bulldozeMode = false;
-        ClearSelectedBuilding();
-        ClearSelectedForest();
     }
 
     public void OnNuclearPowerPlantButtonClicked()
     {
-        ClearSelectedZoneType();
-        ClearSelectedForest();
+        ClearCurrentTool();
 
         GameObject powerPlantObject = Instantiate(powerPlantAPrefab);
         PowerPlant powerPlant = powerPlantObject.AddComponent<PowerPlant>();
@@ -439,11 +404,7 @@ public class UIManager : MonoBehaviour
 
         selectedBuilding = powerPlant;
 
-        cursorManager.SetDefaultCursor();
-
         cursorManager.ShowBuildingPreview(powerPlantAPrefab, 3);
-
-        bulldozeMode = false;
     }
 
     public Zone.ZoneType GetSelectedZoneType()
@@ -477,11 +438,25 @@ public class UIManager : MonoBehaviour
         selectedZoneType = Zone.ZoneType.Grass;
     }
 
+    private void ClearCurrentTool()
+    {
+        bulldozeMode = false;
+        detailsMode = false;
+        selectedBuilding = null;
+        selectedForest = null;
+        selectedForestData = new ForestSelectionData
+        {
+            forestType = Forest.ForestType.None,
+            prefab = null
+        };
+        selectedZoneType = Zone.ZoneType.Grass;
+        cursorManager.SetDefaultCursor();
+        cursorManager.RemovePreview();
+    }
+
     public void OnBulldozeButtonClicked()
     {
-        ClearSelectedBuilding();
-        ClearSelectedZoneType();
-        ClearSelectedForest();
+        ClearCurrentTool();
         cursorManager.SetBullDozerCursor();
         bulldozeMode = true;
     }
@@ -493,8 +468,14 @@ public class UIManager : MonoBehaviour
 
     public void OnDetailsButtonClicked()
     {
+        bool wasDetailsMode = detailsMode;
+        ClearCurrentTool();
+        if (wasDetailsMode)
+        {
+            return;
+        }
+        detailsMode = true;
         cursorManager.SetDetailsCursor();
-        detailsMode = !detailsMode;
     }
 
     public void OnRaiseResidentialTaxButtonClicked()
@@ -622,7 +603,7 @@ public class UIManager : MonoBehaviour
     {
         try
         {
-            ClearSelectedZoneType();
+            ClearCurrentTool();
 
             if (waterPumpPrefab == null)
             {
@@ -640,9 +621,7 @@ public class UIManager : MonoBehaviour
 
             selectedBuilding = waterPlant;
 
-            cursorManager.SetDefaultCursor();
             cursorManager.ShowBuildingPreview(waterPumpPrefab, 2);
-            bulldozeMode = false;
         }
         catch (System.Exception ex)
         {
@@ -652,11 +631,8 @@ public class UIManager : MonoBehaviour
 
     public void OnPlaceWaterButtonClicked()
     {
+        ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.Water;
-        cursorManager.SetDefaultCursor();
-        bulldozeMode = false;
-        ClearSelectedBuilding();
-        ClearSelectedForest();
     }
 
     public void ShowInsufficientFundsTooltip(string itemType, int cost)
@@ -696,8 +672,7 @@ public class UIManager : MonoBehaviour
 
     public void OnForestButtonClicked(Forest.ForestType forestType)
     {
-        ClearSelectedZoneType();
-        ClearSelectedBuilding();
+        ClearCurrentTool();
 
         // Don't instantiate yet - just prepare the forest data
         ForestSelectionData forestData = new ForestSelectionData
@@ -709,9 +684,7 @@ public class UIManager : MonoBehaviour
         selectedForestData = forestData; // Store selection data instead of instance
         selectedForest = null; // Clear any existing instance
 
-        cursorManager.SetDefaultCursor();
         cursorManager.ShowBuildingPreview(forestData.prefab, 0);
-        bulldozeMode = false;
     }
 
     /// <summary>
@@ -875,22 +848,12 @@ public class UIManager : MonoBehaviour
 
     public void ExitBulldozeMode()
     {
-        bulldozeMode = false;
-        cursorManager.SetDefaultCursor();
-        cursorManager.RemovePreview();
-        ClearSelectedBuilding();
-        ClearSelectedZoneType();
-        ClearSelectedForest();
+        ClearCurrentTool();
     }
 
     public void ExitDetailsMode()
     {
-        detailsMode = false;
-        cursorManager.SetDefaultCursor();
-        cursorManager.RemovePreview();
-        ClearSelectedBuilding();
-        ClearSelectedZoneType();
-        ClearSelectedForest();
+        ClearCurrentTool();
     }
 
     public bool IsBuildingPlacementMode()
@@ -900,12 +863,7 @@ public class UIManager : MonoBehaviour
 
     public void ExitBuildingPlacementMode()
     {
-        selectedBuilding = null;
-        selectedForest = null;
-        selectedZoneType = Zone.ZoneType.Grass;
-        cursorManager.SetDefaultCursor();
-        cursorManager.RemovePreview();
-        bulldozeMode = false;
+        ClearCurrentTool();
         buildingSelectorMenuController.ClosePopup();
         buildingSelectorMenuController.DeselectAndUnpressAllButtons();
     }
