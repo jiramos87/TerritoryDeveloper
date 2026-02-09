@@ -17,6 +17,9 @@ public class UIManager : MonoBehaviour
     public BuildingSelectorMenuController buildingSelectorMenuController;
     public CityStats cityStats;
 
+    private GameObject ghostPreviewPrefab;
+    private int ghostPreviewSize = 1;
+
 
 
     public bool bulldozeMode;
@@ -287,6 +290,7 @@ public class UIManager : MonoBehaviour
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.ResidentialLightZoning;
+        SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -294,6 +298,7 @@ public class UIManager : MonoBehaviour
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.ResidentialMediumZoning;
+        SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -301,6 +306,7 @@ public class UIManager : MonoBehaviour
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.ResidentialHeavyZoning;
+        SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -308,6 +314,7 @@ public class UIManager : MonoBehaviour
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.CommercialLightZoning;
+        SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -315,6 +322,7 @@ public class UIManager : MonoBehaviour
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.CommercialMediumZoning;
+        SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -322,6 +330,7 @@ public class UIManager : MonoBehaviour
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.CommercialHeavyZoning;
+        SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -329,6 +338,7 @@ public class UIManager : MonoBehaviour
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.IndustrialLightZoning;
+        SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -336,6 +346,7 @@ public class UIManager : MonoBehaviour
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.IndustrialMediumZoning;
+        SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -343,6 +354,7 @@ public class UIManager : MonoBehaviour
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.IndustrialHeavyZoning;
+        SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
     }
 
@@ -385,6 +397,10 @@ public class UIManager : MonoBehaviour
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.Road;
         // cursorManager.SetRoadCursor();
+        if (gridManager != null && gridManager.roadManager != null)
+        {
+            SetGhostPreview(gridManager.roadManager.roadTilePrefab1, 1);
+        }
     }
 
     public void OnGrassButtonClicked()
@@ -450,8 +466,40 @@ public class UIManager : MonoBehaviour
             prefab = null
         };
         selectedZoneType = Zone.ZoneType.Grass;
+        ghostPreviewPrefab = null;
+        ghostPreviewSize = 1;
         cursorManager.SetDefaultCursor();
         cursorManager.RemovePreview();
+    }
+
+    private void SetGhostPreview(GameObject prefab, int size)
+    {
+        if (prefab == null)
+        {
+            ghostPreviewPrefab = null;
+            ghostPreviewSize = 1;
+            cursorManager.RemovePreview();
+            return;
+        }
+
+        ghostPreviewPrefab = prefab;
+        ghostPreviewSize = size;
+        cursorManager.ShowBuildingPreview(prefab, size);
+    }
+
+    public void HideGhostPreview()
+    {
+        cursorManager.RemovePreview();
+    }
+
+    public void RestoreGhostPreview()
+    {
+        if (ghostPreviewPrefab == null)
+        {
+            return;
+        }
+
+        cursorManager.ShowBuildingPreview(ghostPreviewPrefab, ghostPreviewSize);
     }
 
     public void OnBulldozeButtonClicked()
@@ -684,7 +732,7 @@ public class UIManager : MonoBehaviour
         selectedForestData = forestData; // Store selection data instead of instance
         selectedForest = null; // Clear any existing instance
 
-        cursorManager.ShowBuildingPreview(forestData.prefab, 0);
+        SetGhostPreview(forestData.prefab, 0);
     }
 
     /// <summary>

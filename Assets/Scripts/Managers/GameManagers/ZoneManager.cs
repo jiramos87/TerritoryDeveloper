@@ -321,6 +321,10 @@ public class ZoneManager : MonoBehaviour
         zoningStartGridPosition = gridPosition;
         zoningEndGridPosition = gridPosition;
         ClearPreviewTiles();
+        if (uiManager != null)
+        {
+            uiManager.HideGhostPreview();
+        }
     }
 
     void ClearPreviewTiles()
@@ -406,6 +410,11 @@ public class ZoneManager : MonoBehaviour
         }
 
         CalculateAvailableSquareZonedSections();
+
+        if (uiManager != null)
+        {
+            uiManager.RestoreGhostPreview();
+        }
     }
 
     public void CalculateAvailableSquareZonedSections()

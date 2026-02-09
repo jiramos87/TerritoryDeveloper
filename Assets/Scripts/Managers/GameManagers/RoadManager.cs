@@ -64,6 +64,10 @@ public class RoadManager : MonoBehaviour
         {
             isDrawingRoad = true;
             startPosition = gridPosition;
+            if (uiManager != null)
+            {
+                uiManager.HideGhostPreview();
+            }
         }
         else if (isDrawingRoad && Input.GetMouseButton(0))
         {
@@ -76,12 +80,20 @@ public class RoadManager : MonoBehaviour
             isDrawingRoad = false;
             DrawRoadLine(true);
             ClearPreview(true);
+            if (uiManager != null)
+            {
+                uiManager.RestoreGhostPreview();
+            }
         }
 
         if (Input.GetMouseButtonDown(1))
         {
             isDrawingRoad = false;
             ClearPreview();
+            if (uiManager != null)
+            {
+                uiManager.RestoreGhostPreview();
+            }
         }
     }
 
