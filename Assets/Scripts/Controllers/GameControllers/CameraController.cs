@@ -27,6 +27,7 @@ public class CameraController : MonoBehaviour
     {
         // Get main camera reference
         mainCamera = Camera.main;
+        Camera.main.backgroundColor = Color.black;
 
         if (mainCamera == null)
         {

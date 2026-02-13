@@ -299,7 +299,23 @@ public class GridManager : MonoBehaviour
             Quaternion.identity
         );
 
-        int sortingOrder = SetTileSortingOrder(zoneTile, Zone.ZoneType.Grass);
+        zoneTile.transform.SetParent(cell.transform);
+
+        int sortingOrder;
+        if (terrainManager != null)
+        {
+            sortingOrder = terrainManager.CalculateTerrainSortingOrder((int)cellComponent.x, (int)cellComponent.y, cellComponent.height);
+            SpriteRenderer sr = zoneTile.GetComponent<SpriteRenderer>();
+            if (sr != null)
+            {
+                sr.sortingOrder = sortingOrder;
+            }
+            cellComponent.SetCellInstanceSortingOrder(sortingOrder);
+        }
+        else
+        {
+            sortingOrder = SetTileSortingOrder(zoneTile, Zone.ZoneType.Grass);
+        }
     }
 
     void BulldozeTile(GameObject cell)

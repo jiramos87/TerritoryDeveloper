@@ -46,6 +46,27 @@ public class ForestMap
             }
         }
     }
+
+    /// <summary>
+    /// Initialize the forest map from an integer matrix.
+    /// 0 = None, 1 = Sparse, 2 = Medium, 3 = Dense. Values outside 0-3 are treated as None.
+    /// </summary>
+    public void InitializeFromIntMatrix(int[,] initialForestCells)
+    {
+        if (initialForestCells == null) return;
+
+        int matrixWidth = initialForestCells.GetLength(1);
+        int matrixHeight = initialForestCells.GetLength(0);
+
+        for (int y = 0; y < Mathf.Min(height, matrixHeight); y++)
+        {
+            for (int x = 0; x < Mathf.Min(width, matrixWidth); x++)
+            {
+                int value = Mathf.Clamp(initialForestCells[y, x], 0, 3);
+                forestGrid[x, y] = (Forest.ForestType)value;
+            }
+        }
+    }
     
     /// <summary>
     /// Check if position is within valid bounds

@@ -843,6 +843,9 @@ public class ZoneManager : MonoBehaviour
         foreach (Vector2 zonedPosition in section)
         {
             GameObject cell = gridManager.GetGridCell(zonedPosition);
+            Cell cellComponent = cell.GetComponent<Cell>();
+            if (cellComponent != null)
+                cellComponent.RemoveForestForBuilding();
 
             gridManager.DestroyCellChildren(cell, zonedPosition);
 

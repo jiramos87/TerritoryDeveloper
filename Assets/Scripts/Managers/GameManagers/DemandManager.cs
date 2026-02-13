@@ -13,12 +13,12 @@ public class DemandData
 
     public void UpdateStatus()
     {
-        if (demandLevel > 75f) demandStatus = "Very High Demand";
-        else if (demandLevel > 50f) demandStatus = "High Demand";
-        else if (demandLevel > 25f) demandStatus = "Moderate Demand";
+        if (demandLevel > 75f) demandStatus = "Very High";
+        else if (demandLevel > 50f) demandStatus = "High";
+        else if (demandLevel > 25f) demandStatus = "Moderate";
         else if (demandLevel > -25f) demandStatus = "Balanced";
-        else if (demandLevel > -50f) demandStatus = "Low Demand";
-        else if (demandLevel > -75f) demandStatus = "Very Low Demand";
+        else if (demandLevel > -50f) demandStatus = "Low";
+        else if (demandLevel > -75f) demandStatus = "Very Low";
         else demandStatus = "Oversupplied";
     }
 }
