@@ -205,6 +205,24 @@ public class TerrainManager : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// Returns true if this cell has at least one neighbor at sea level (height 0).
+    /// Used to allow water plants on coastal slope tiles.
+    /// </summary>
+    private bool IsAdjacentToWaterHeight(int x, int y)
+    {
+        int[] dx = { -1, 0, 1, 0 };
+        int[] dy = { 0, 1, 0, -1 };
+        for (int i = 0; i < 4; i++)
+        {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+            if (heightMap.IsValidPosition(nx, ny) && heightMap.GetHeight(nx, ny) == SEA_LEVEL)
+                return true;
+        }
+        return false;
+    }
+
     private void PlaceSlope(int x, int y)
     {
         int currentHeight = heightMap.GetHeight(x, y);
@@ -776,17 +794,26 @@ public class TerrainManager : MonoBehaviour
         // Implementation for terrain modification
     }
 
-    public bool CanPlaceBuildingInTerrain(Vector2 gridPosition, int size)
+    /// <param name="allowCoastalSlope">When true, allows placement on tiles that have slope only due to being adjacent to water (e.g. for water plants).</param>
+    public bool CanPlaceBuildingInTerrain(Vector2 gridPosition, int size, bool allowCoastalSlope = false)
     {
-        // Check if all tiles in the building footprint are at the same height
+        int offsetX, offsetY;
+        if (gridManager != null)
+            gridManager.GetBuildingFootprintOffset(size, out offsetX, out offsetY);
+        else
+        {
+            offsetX = size % 2 == 0 ? 0 : size / 2;
+            offsetY = size % 2 == 0 ? 0 : size / 2;
+        }
+
         int baseHeight = heightMap.GetHeight((int)gridPosition.x, (int)gridPosition.y);
 
         for (int dx = 0; dx < size; dx++)
         {
             for (int dy = 0; dy < size; dy++)
             {
-                int checkX = (int)gridPosition.x + dx - size / 2;
-                int checkY = (int)gridPosition.y + dy - size / 2;
+                int checkX = (int)gridPosition.x + dx - offsetX;
+                int checkY = (int)gridPosition.y + dy - offsetY;
 
                 if (!heightMap.IsValidPosition(checkX, checkY))
                     return false;
@@ -795,9 +822,11 @@ public class TerrainManager : MonoBehaviour
                     return false;
 
                 if (RequiresSlope(checkX, checkY, baseHeight))
-                    return false;
+                {
+                    if (!allowCoastalSlope || !IsAdjacentToWaterHeight(checkX, checkY))
+                        return false;
+                }
 
-                // Check that no water tiles exist on the building footprint
                 if (waterManager != null && waterManager.IsWaterAt(checkX, checkY))
                     return false;
             }
@@ -808,8 +837,9 @@ public class TerrainManager : MonoBehaviour
 
     public bool CanPlaceRoad(int x, int y)
     {
-        // Implementation for road placement validation
-        return true; // Temporary - roads can be placed anywhere for now
+        if (gridManager != null && gridManager.IsCellOccupiedByBuilding(x, y))
+            return false;
+        return true;
     }
 
     void OnDrawGizmos()

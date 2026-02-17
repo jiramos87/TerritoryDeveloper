@@ -176,9 +176,11 @@ public class ForestManager : MonoBehaviour
         UpdateAdjacentDesirability(x, y, true);
         UpdateForestStatistics();
 
-        if (selectedForest.GameObjectReference != null && selectedForest.GameObjectReference != forestObject)
+        // Only destroy the template instance if it's still valid (not already destroyed)
+        var forestMono = selectedForest as MonoBehaviour;
+        if (forestMono != null && forestMono.gameObject != forestObject)
         {
-            Destroy(selectedForest.GameObjectReference);
+            Destroy(forestMono.gameObject);
         }
 
         return true;

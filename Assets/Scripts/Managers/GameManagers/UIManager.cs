@@ -3,6 +3,15 @@ using UnityEngine.UI;
 using System.IO;
 using System.Collections.Generic;
 
+public enum PopupType
+{
+    LoadGame,
+    Details,
+    BuildingSelector,
+    StatsPanel,
+    TaxPanel
+}
+
 public class UIManager : MonoBehaviour
 {
     public ZoneManager zoneManager;
@@ -61,6 +70,13 @@ public class UIManager : MonoBehaviour
     public Text cityWaterConsumptionText;
     public Text insufficientFundsText;
 
+    [Header("Debug (optional)")]
+    [SerializeField] private GameDebugInfoBuilder gameDebugInfoBuilder;
+    [Tooltip("If set, use full debug text (coordinates + cell + placement). Otherwise only coordinates.")]
+    [SerializeField] private bool useFullDebugText = true;
+    [Tooltip("Optional. If set, shows cell debug info (height, zone, water, etc.) when tile details are open.")]
+    [SerializeField] private Text detailsDebugText;
+
     public Image detailsImage;
 
     [Header("Selected types")]
@@ -85,6 +101,10 @@ public class UIManager : MonoBehaviour
     public GameObject demandWarningPanel;
     public GameObject insufficientFundsPanel;
 
+    [Header("Pop-up stack (Esc: close last opened, then close all)")]
+    [SerializeField] private DataPopupController dataPopupController;
+    private Stack<PopupType> popupStack = new Stack<PopupType>();
+
     void Start()
     {
         if (cityStats == null)
@@ -105,15 +125,69 @@ public class UIManager : MonoBehaviour
             UpdateUI();
         }
 
-        // Check if the Escape key is pressed
+        // Esc: close last opened pop-up, or close all if none in stack
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            // Check if the load game panel is currently active
-            if (loadGameMenu.activeSelf)
+            if (popupStack.Count > 0)
             {
-                CloseLoadGameMenu();
+                PopupType last = popupStack.Pop();
+                ClosePopup(last);
+            }
+            else
+            {
+                CloseAllPopups();
             }
         }
+    }
+
+    /// <summary>Call when a pop-up is opened so Esc closes last-opened first.</summary>
+    public void RegisterPopupOpened(PopupType type)
+    {
+        popupStack.Push(type);
+    }
+
+    private void ClosePopup(PopupType type)
+    {
+        switch (type)
+        {
+            case PopupType.LoadGame:
+                CloseLoadGameMenu();
+                break;
+            case PopupType.Details:
+                if (detailsPopupController != null)
+                    detailsPopupController.CloseDetails();
+                break;
+            case PopupType.BuildingSelector:
+                if (buildingSelectorMenuController != null)
+                {
+                    buildingSelectorMenuController.ClosePopup();
+                    buildingSelectorMenuController.DeselectAndUnpressAllButtons();
+                }
+                break;
+            case PopupType.StatsPanel:
+                if (dataPopupController != null)
+                    dataPopupController.CloseStats();
+                break;
+            case PopupType.TaxPanel:
+                if (dataPopupController != null)
+                    dataPopupController.CloseTaxes();
+                break;
+        }
+    }
+
+    private void CloseAllPopups()
+    {
+        CloseLoadGameMenu();
+        if (detailsPopupController != null)
+            detailsPopupController.CloseDetails();
+        if (buildingSelectorMenuController != null)
+        {
+            buildingSelectorMenuController.ClosePopup();
+            buildingSelectorMenuController.DeselectAndUnpressAllButtons();
+        }
+        var dataPopup = dataPopupController != null ? dataPopupController : FindObjectOfType<DataPopupController>();
+        if (dataPopup != null)
+            dataPopup.CloseAll();
     }
 
     public void UpdateUI()
@@ -132,7 +206,17 @@ public class UIManager : MonoBehaviour
         residentialTaxText.text = "Residential Tax: " + economyManager.GetResidentialTax() + "%";
         commercialTaxText.text = "Commercial Tax: " + economyManager.GetCommercialTax() + "%";
         industrialTaxText.text = "Industrial Tax: " + economyManager.GetIndustrialTax() + "%";
-        gridCoordinatesText.text = "x: " + gridManager.mouseGridPosition.x + ", y: " + gridManager.mouseGridPosition.y;
+
+        if (gridCoordinatesText != null)
+        {
+            if (gameDebugInfoBuilder == null)
+                gameDebugInfoBuilder = FindObjectOfType<GameDebugInfoBuilder>();
+            if (gameDebugInfoBuilder != null && useFullDebugText && gridManager != null)
+                gridCoordinatesText.text = gameDebugInfoBuilder.GetFullDebugText(gridManager.mouseGridPosition);
+            else if (gridManager != null)
+                gridCoordinatesText.text = "x: " + gridManager.mouseGridPosition.x + ", y: " + gridManager.mouseGridPosition.y;
+        }
+
         EmploymentManager employment = FindObjectOfType<EmploymentManager>();
         DemandManager demand = FindObjectOfType<DemandManager>();
         StatisticsManager stats = FindObjectOfType<StatisticsManager>();
@@ -559,6 +643,7 @@ public class UIManager : MonoBehaviour
     public void ShowTileDetails(Cell cell)
     {
         detailsPopupController.ShowDetails();
+        RegisterPopupOpened(PopupType.Details);
         detailsNameText.text = cell.GetBuildingName();
         detailsOccupancyText.text = "Occupancy: " + cell.GetPopulation();
         detailsHappinessText.text = "Happiness: " + cell.GetHappiness();
@@ -577,6 +662,9 @@ public class UIManager : MonoBehaviour
         detailsBuildingTypeText.text = "Building Type: " + cell.GetBuildingType();
         detailsImage.sprite = cell.GetCellPrefab().GetComponent<SpriteRenderer>().sprite;
         detailsSortingOrderText.text = "Sorting Order: " + cell.GetSortingOrder();
+
+        if (gameDebugInfoBuilder != null && detailsDebugText != null)
+            detailsDebugText.text = gameDebugInfoBuilder.GetCellUnderCursorInfo(new Vector2(cell.x, cell.y));
     }
 
     public bool IsDetailsMode()
@@ -602,6 +690,7 @@ public class UIManager : MonoBehaviour
     public void OnLoadButtonClicked()
     {
         loadGameMenu.SetActive(true);
+        RegisterPopupOpened(PopupType.LoadGame);
 
         foreach (Transform child in savedGamesListContainer)
         {
@@ -816,6 +905,10 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public IForest GetSelectedForest()
     {
+        // Treat destroyed Unity object as null so we create a fresh instance
+        if ((selectedForest as UnityEngine.Object) == null)
+            selectedForest = null;
+
         if (selectedForest == null && selectedForestData.forestType != Forest.ForestType.None)
         {
             selectedForest = CreateForestInstance(selectedForestData.forestType);

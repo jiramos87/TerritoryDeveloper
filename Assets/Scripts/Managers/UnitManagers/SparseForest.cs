@@ -26,7 +26,7 @@ public class SparseForest : MonoBehaviour, IForest
         ForestSize = 1; // Single cell
     }
 
-    public GameObject GameObjectReference => gameObject;
+    public GameObject GameObjectReference => this == null ? null : gameObject;
 
     /// <summary>
     /// Get water consumption for this forest type

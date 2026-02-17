@@ -8,6 +8,7 @@ public class BuildingSelectorMenuController : MonoBehaviour
     public BuildingSelectorMenuManager menuManager;
     public CursorManager cursorManager;
     public GameObject popupPanel;
+    [SerializeField] private UIManager uiManager;
 
     // Keep track of all selector buttons that can be pressed
     private List<Button> allSelectorButtons = new List<Button>();
@@ -70,6 +71,8 @@ public class BuildingSelectorMenuController : MonoBehaviour
     private void OpenPopup()
     {
         popupPanel.SetActive(true);
+        if (uiManager == null) uiManager = FindObjectOfType<UIManager>();
+        if (uiManager != null) uiManager.RegisterPopupOpened(PopupType.BuildingSelector);
     }
 
     public void ClosePopup()

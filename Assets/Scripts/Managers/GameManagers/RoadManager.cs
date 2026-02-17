@@ -458,6 +458,9 @@ public class RoadManager : MonoBehaviour
 
     void PlaceRoadTile(Vector2 gridPos, int i = 0, bool isAdjacent = false)
     {
+        if (gridManager.IsCellOccupiedByBuilding((int)gridPos.x, (int)gridPos.y))
+            return;
+
         GameObject cell = gridManager.GetGridCell(gridPos);
 
         bool isCenterRoadTile = !isAdjacent;
@@ -477,6 +480,7 @@ public class RoadManager : MonoBehaviour
         DestroyPreviousRoadTile(cell, gridPos);
 
         Cell cellComponent = cell.GetComponent<Cell>();
+        cellComponent.RemoveForestForBuilding();
         int roadPlacedAtHeight = 0;
         int terrainHeight = cellComponent.GetCellInstanceHeight();
 
@@ -508,18 +512,13 @@ public class RoadManager : MonoBehaviour
 
         UpdateRoadCellAttributes(cellComponent, roadTile, zoneType);
 
-        gridManager.SetTileSortingOrder(roadTile, zoneType);
+        gridManager.SetRoadSortingOrder(roadTile, (int)gridPos.x, (int)gridPos.y);
     }
 
     void DestroyPreviousRoadTile(GameObject cell, Vector2 gridPos)
     {
         if (cell.transform.childCount > 0)
         {
-            if (cell.GetComponent<Cell>().zoneType == Zone.ZoneType.Road)
-            {
-                DestroyImmediate(cell.transform.GetChild(0).gameObject);
-            }
-
             foreach (Transform child in cell.transform)
             {
                 Zone zone = child.GetComponent<Zone>();

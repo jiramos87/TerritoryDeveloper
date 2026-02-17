@@ -185,19 +185,18 @@ public class Cell : MonoBehaviour
     /// </summary>
     public void SetForest(Forest.ForestType newForestType, string prefabName = "", GameObject forestGameObject = null)
     {
+        GameObject toDestroy = (newForestType == Forest.ForestType.None && forestObject != null) ? forestObject : null;
+
         forestType = newForestType;
         forestPrefabName = prefabName;
         forestObject = forestGameObject;
 
         if (forestType == Forest.ForestType.None)
         {
-            // Clean up forest references when forest is removed
             forestPrefabName = "";
-            if (forestObject != null)
-            {
-                Destroy(forestObject);
-                forestObject = null;
-            }
+            forestObject = null;
+            if (toDestroy != null)
+                Destroy(toDestroy);
         }
     }
 

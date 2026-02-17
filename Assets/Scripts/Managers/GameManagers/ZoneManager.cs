@@ -491,18 +491,21 @@ public class ZoneManager : MonoBehaviour
     private List<List<Vector2>> CalculateSectionsForSize(List<Vector2> zonedPositions, int size)
     {
         List<List<Vector2>> sections = new List<List<Vector2>>();
+        var usedPositions = new HashSet<Vector2>();
 
         for (int i = zonedPositions.Count - 1; i >= 0; i--)
         {
             Vector2 start = zonedPositions[i];
-            List<Vector2> section = GetSquareSection(start, size, zonedPositions);
+            if (usedPositions.Contains(start)) continue;
+
+            List<Vector2> section = GetSquareSection(start, size, zonedPositions, usedPositions);
 
             if (section.Count == size * size)
             {
                 sections.Add(section);
                 foreach (var pos in section)
                 {
-                    zonedPositions.Remove(pos);
+                    usedPositions.Add(pos);
                 }
             }
         }
@@ -511,16 +514,17 @@ public class ZoneManager : MonoBehaviour
     }
 
     // Helper method to get square sections of a given size
-    private List<Vector2> GetSquareSection(Vector2 start, int size, List<Vector2> availablePositions)
+    private List<Vector2> GetSquareSection(Vector2 start, int size, List<Vector2> availablePositions, HashSet<Vector2> excludedPositions = null)
     {
         List<Vector2> section = new List<Vector2>();
+        excludedPositions = excludedPositions ?? new HashSet<Vector2>();
 
         for (int x = 0; x < size; x++)
         {
             for (int y = 0; y < size; y++)
             {
                 Vector2 newPosition = new Vector2(start.x + x, start.y + y);
-                if (availablePositions.Contains(newPosition))
+                if (availablePositions.Contains(newPosition) && !excludedPositions.Contains(newPosition))
                 {
                     section.Add(newPosition);
                 }
@@ -550,7 +554,7 @@ public class ZoneManager : MonoBehaviour
 
         if (canPlaceZone(zoneAttributes, gridPosition))
         {
-            gridManager.DestroyCellChildren(cell.gameObject, gridPosition);
+            gridManager.DestroyCellChildrenExceptForest(cell.gameObject, gridPosition);
 
             GameObject zonePrefab = GetRandomZonePrefab(selectedZoneType);
 
@@ -571,7 +575,7 @@ public class ZoneManager : MonoBehaviour
 
             UpdatePlacedZoneCellAttributes(cell, selectedZoneType, zonePrefab, zoneAttributes);
 
-            gridManager.SetTileSortingOrder(zoneTile, selectedZoneType);
+            gridManager.SetZoningTileSortingOrder(zoneTile, (int)gridPosition.x, (int)gridPosition.y);
 
             addZonedTileToList(gridPosition, selectedZoneType);
 
@@ -898,7 +902,7 @@ public class ZoneManager : MonoBehaviour
 
         cell.isPivot = true;
 
-        gridManager.SetTileSortingOrder(zoneTile, cell.zoneType);
+        gridManager.SetZoneBuildingSortingOrder(zoneTile, (int)cell.x, (int)cell.y);
     }
 
     void UpdatePlacedZoneCellAttributes(Cell cellComponent, Zone.ZoneType selectedZoneType, GameObject zonePrefab, ZoneAttributes zoneAttributes)

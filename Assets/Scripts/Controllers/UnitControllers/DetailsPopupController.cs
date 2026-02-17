@@ -12,4 +12,15 @@ public class DetailsPopupController : MonoBehaviour
     {
         detailsPanel.SetActive(true);
     }
+
+    public void CloseDetails()
+    {
+        if (detailsPanel != null)
+            detailsPanel.SetActive(false);
+    }
+
+    public bool IsOpen()
+    {
+        return detailsPanel != null && detailsPanel.activeSelf;
+    }
 }

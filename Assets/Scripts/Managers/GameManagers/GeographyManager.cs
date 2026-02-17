@@ -161,9 +161,9 @@ public class GeographyManager : MonoBehaviour
                         objectsToSort.Add(child);
                     }
                 }
+                int maxCellSortingOrder = cellComponent.sortingOrder;
                 foreach (GameObject obj in objectsToSort)
                 {
-                    int oldSortingOrder = obj.GetComponent<SpriteRenderer>().sortingOrder;
                     int newSortingOrder;
                     if (terrainManager != null && terrainManager.IsWaterSlopeObject(obj))
                     {
@@ -171,11 +171,38 @@ public class GeographyManager : MonoBehaviour
                     }
                     else
                     {
-                        newSortingOrder = terrainManager.CalculateTerrainSortingOrder(x, y, cellComponent.height);
+                        int terrainOrder = terrainManager != null
+                            ? terrainManager.CalculateTerrainSortingOrder(x, y, cellComponent.height)
+                            : 0;
+                        if (cellComponent.forestObject != null && cellComponent.forestObject == obj)
+                        {
+                            newSortingOrder = terrainOrder + 5;
+                        }
+                        else
+                        {
+                            Zone zone = obj.GetComponent<Zone>();
+                            if (zone != null)
+                            {
+                                if (zone.zoneCategory == Zone.ZoneCategory.Zoning)
+                                    newSortingOrder = terrainOrder + 0;
+                                else if (zone.zoneType == Zone.ZoneType.Road)
+                                    newSortingOrder = terrainOrder + 3;
+                                else if (zone.zoneCategory == Zone.ZoneCategory.Building)
+                                    newSortingOrder = terrainOrder + 10;
+                                else
+                                    newSortingOrder = terrainOrder;
+                            }
+                            else
+                            {
+                                newSortingOrder = terrainOrder;
+                            }
+                        }
                     }
                     obj.GetComponent<SpriteRenderer>().sortingOrder = newSortingOrder;
-                    cellComponent.sortingOrder = newSortingOrder;
+                    if (newSortingOrder > maxCellSortingOrder)
+                        maxCellSortingOrder = newSortingOrder;
                 }
+                cellComponent.sortingOrder = maxCellSortingOrder;
             }
         }
     }
@@ -279,6 +306,8 @@ public class GeographyManager : MonoBehaviour
 
             case PlacementType.Infrastructure:
                 if (waterManager != null && waterManager.IsWaterAt(x, y))
+                    return false;
+                if (gridManager != null && gridManager.IsCellOccupiedByBuilding(x, y))
                     return false;
                 return true;
 

@@ -21,7 +21,7 @@ public class DenseForest : MonoBehaviour, IForest
       ForestSize = 1; // Example value
   }
 
-  public GameObject GameObjectReference => gameObject;
+  public GameObject GameObjectReference => this == null ? null : gameObject;
 
   public int GetWaterConsumption()
   {
