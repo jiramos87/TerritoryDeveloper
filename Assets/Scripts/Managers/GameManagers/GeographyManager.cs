@@ -120,6 +120,225 @@ public class GeographyManager : MonoBehaviour
         ReCalculateSortingOrderBasedOnHeight();
     }
 
+    const int RoadSortingOffset = 3;
+
+    /// <summary>
+    /// If cell (x, y) is immediately east of a multi-cell building (i.e. x == that building's maxFx+1),
+    /// returns true and the building's current sorting order so we can draw this cell's content on top (buildingOrder+1).
+    /// </summary>
+    private bool TryGetEastAdjacentBuildingOrder(int x, int y, out int buildingOrder)
+    {
+        buildingOrder = 0;
+        if (gridManager == null || x <= 0) return false;
+        int width = gridManager.width;
+        int height = gridManager.height;
+        if (y < 0 || y >= height) return false;
+
+        int westX = x - 1;
+        GameObject westCellObj = gridManager.gridArray[westX, y];
+        Cell westCell = westCellObj != null ? westCellObj.GetComponent<Cell>() : null;
+        if (westCell == null || westCell.buildingSize <= 1) return false;
+
+        GameObject pivotObj = gridManager.GetBuildingPivotCell(westCell);
+        if (pivotObj == null) return false;
+        Cell pivotCell = pivotObj.GetComponent<Cell>();
+        if (pivotCell == null || pivotCell.buildingSize <= 1) return false;
+
+        gridManager.GetBuildingFootprintOffset(pivotCell.buildingSize, out int offsetX, out int offsetY);
+        int maxFx = (int)pivotCell.x - offsetX + pivotCell.buildingSize - 1;
+        if (westX != maxFx) return false;
+
+        buildingOrder = pivotCell.sortingOrder;
+        return true;
+    }
+
+    /// <summary>
+    /// If cell (x, y) is immediately south of a multi-cell building (i.e. (x+1, y) is the building's minFx column),
+    /// returns true and the building's current sorting order so we can draw this cell's content on top (buildingOrder+1).
+    /// </summary>
+    private bool TryGetSouthAdjacentBuildingOrder(int x, int y, out int buildingOrder)
+    {
+        buildingOrder = 0;
+        if (gridManager == null) return false;
+        int width = gridManager.width;
+        int height = gridManager.height;
+        if (x < 0 || x >= width - 1 || y < 0 || y >= height) return false;
+
+        int northX = x + 1;
+        GameObject northCellObj = gridManager.gridArray[northX, y];
+        Cell northCell = northCellObj != null ? northCellObj.GetComponent<Cell>() : null;
+        if (northCell == null || northCell.buildingSize <= 1) return false;
+
+        GameObject pivotObj = gridManager.GetBuildingPivotCell(northCell);
+        if (pivotObj == null) return false;
+        Cell pivotCell = pivotObj.GetComponent<Cell>();
+        if (pivotCell == null || pivotCell.buildingSize <= 1) return false;
+
+        gridManager.GetBuildingFootprintOffset(pivotCell.buildingSize, out int offsetX, out int offsetY);
+        int minFx = (int)pivotCell.x - offsetX;
+        if (northX != minFx) return false;
+
+        buildingOrder = pivotCell.sortingOrder;
+        return true;
+    }
+
+    /// <summary>
+    /// If cell (x, y) is immediately west of a multi-cell building (i.e. (x, y+1) is the building's minFy row),
+    /// returns true and the building's current sorting order so we can draw this cell's content on top (buildingOrder+1).
+    /// </summary>
+    private bool TryGetWestAdjacentBuildingOrder(int x, int y, out int buildingOrder)
+    {
+        buildingOrder = 0;
+        if (gridManager == null) return false;
+        int width = gridManager.width;
+        int height = gridManager.height;
+        if (x < 0 || x >= width || y < 0 || y >= height - 1) return false;
+
+        int eastY = y + 1;
+        GameObject eastCellObj = gridManager.gridArray[x, eastY];
+        Cell eastCell = eastCellObj != null ? eastCellObj.GetComponent<Cell>() : null;
+        if (eastCell == null || eastCell.buildingSize <= 1) return false;
+
+        GameObject pivotObj = gridManager.GetBuildingPivotCell(eastCell);
+        if (pivotObj == null) return false;
+        Cell pivotCell = pivotObj.GetComponent<Cell>();
+        if (pivotCell == null || pivotCell.buildingSize <= 1) return false;
+
+        gridManager.GetBuildingFootprintOffset(pivotCell.buildingSize, out int offsetX, out int offsetY);
+        int minFy = (int)pivotCell.y - offsetY;
+        if (eastY != minFy) return false;
+
+        buildingOrder = pivotCell.sortingOrder;
+        return true;
+    }
+
+    /// <summary>
+    /// Returns the maximum sorting order that any content on the cell at (x,y) would have.
+    /// Used so the building can place itself behind "front" adjacent cells.
+    /// </summary>
+    private int GetCellMaxContentSortingOrder(int x, int y)
+    {
+        if (gridManager == null || terrainManager == null) return int.MinValue;
+        int width = gridManager.width;
+        int height = gridManager.height;
+        if (x < 0 || x >= width || y < 0 || y >= height) return int.MinValue;
+
+        GameObject cellObj = gridManager.gridArray[x, y];
+        Cell cell = cellObj != null ? cellObj.GetComponent<Cell>() : null;
+        if (cell == null) return int.MinValue;
+
+        int terrainOrder = terrainManager.CalculateTerrainSortingOrder(x, y, cell.height);
+        int maxOrder = terrainOrder;
+
+        if (cellObj.GetComponent<SpriteRenderer>() != null)
+            maxOrder = Mathf.Max(maxOrder, terrainOrder);
+
+        for (int i = 0; i < cellObj.transform.childCount; i++)
+        {
+            GameObject child = cellObj.transform.GetChild(i).gameObject;
+            if (child.GetComponent<SpriteRenderer>() == null) continue;
+
+            int order;
+            if (terrainManager.IsWaterSlopeObject(child))
+                order = terrainManager.CalculateWaterSlopeSortingOrder(x, y);
+            else if (cell.forestObject != null && cell.forestObject == child)
+                order = terrainOrder + 5;
+            else
+            {
+                Zone zone = child.GetComponent<Zone>();
+                if (zone != null)
+                {
+                    if (zone.zoneCategory == Zone.ZoneCategory.Zoning) order = terrainOrder + 0;
+                    else if (zone.zoneType == Zone.ZoneType.Road) order = terrainOrder + RoadSortingOffset;
+                    else if (zone.zoneCategory == Zone.ZoneCategory.Building) order = terrainOrder + 10;
+                    else order = terrainOrder;
+                }
+                else
+                    order = terrainOrder;
+            }
+            maxOrder = Mathf.Max(maxOrder, order);
+        }
+        return maxOrder;
+    }
+
+    /// <summary>
+    /// Returns the maximum sorting order over a multi-cell building's footprint, capped so the building
+    /// draws behind "front" adjacent cells (left and top) so forest/terrain can draw on top.
+    /// </summary>
+    private int GetMultiCellBuildingMaxSortingOrder(int pivotX, int pivotY, int buildingSize)
+    {
+        if (gridManager == null || terrainManager == null || buildingSize <= 1)
+            return terrainManager != null ? terrainManager.CalculateTerrainSortingOrder(pivotX, pivotY, 0) + 10 : 0;
+
+        gridManager.GetBuildingFootprintOffset(buildingSize, out int offsetX, out int offsetY);
+        int minFx = pivotX - offsetX;
+        int minFy = pivotY - offsetY;
+        int maxFx = minFx + buildingSize - 1;
+        int maxFy = minFy + buildingSize - 1;
+
+        int maxOrder = int.MinValue;
+        int width = gridManager.width;
+        int height = gridManager.height;
+
+        for (int x = 0; x < buildingSize; x++)
+        {
+            for (int y = 0; y < buildingSize; y++)
+            {
+                int gridX = pivotX + x - offsetX;
+                int gridY = pivotY + y - offsetY;
+                if (gridX < 0 || gridX >= width || gridY < 0 || gridY >= height) continue;
+
+                GameObject cellObj = gridManager.gridArray[gridX, gridY];
+                Cell cell = cellObj != null ? cellObj.GetComponent<Cell>() : null;
+                if (cell == null) continue;
+
+                int cellHeight = cell.height;
+                if (terrainManager.GetHeightMap() != null)
+                    cellHeight = terrainManager.GetHeightMap().GetHeight(gridX, gridY);
+
+                int order = terrainManager.CalculateBuildingSortingOrder(gridX, gridY, cellHeight);
+                if (order > maxOrder) maxOrder = order;
+            }
+        }
+
+        // Front = left or top. Back = south-east face only: right column (ax==maxFx+1, ay>=minFy) and bottom row (ay==maxFy+1).
+        int minFrontAdjacentContentOrder = int.MaxValue;
+        int maxBackAdjacentContentOrder = int.MinValue;
+        for (int ax = minFx - 1; ax <= maxFx + 1; ax++)
+        {
+            for (int ay = minFy - 1; ay <= maxFy + 1; ay++)
+            {
+                if (ax >= minFx && ax <= maxFx && ay >= minFy && ay <= maxFy) continue;
+                if (ax < 0 || ax >= width || ay < 0 || ay >= height) continue;
+                int contentOrder = GetCellMaxContentSortingOrder(ax, ay);
+                if (contentOrder == int.MinValue) continue;
+                bool isFront = (ax < minFx) || (ay < minFy);
+                bool isBackSouthEast = (ax == maxFx + 1 && ay >= minFy && ay <= maxFy + 1) || (ay == maxFy + 1 && ax >= minFx && ax <= maxFx + 1);
+                if (isFront && contentOrder < minFrontAdjacentContentOrder)
+                    minFrontAdjacentContentOrder = contentOrder;
+                if (isBackSouthEast && contentOrder > maxBackAdjacentContentOrder)
+                    maxBackAdjacentContentOrder = contentOrder;
+            }
+        }
+        // Apply floor first so we're always in front of back south-east tiles
+        if (maxBackAdjacentContentOrder != int.MinValue)
+        {
+            int orderInFrontOfBack = maxBackAdjacentContentOrder + 1;
+            if (orderInFrontOfBack > maxOrder)
+                maxOrder = orderInFrontOfBack;
+        }
+        // Cap only when it wouldn't hide the building (same logic as GridManager)
+        if (minFrontAdjacentContentOrder != int.MaxValue)
+        {
+            int orderBehindFront = minFrontAdjacentContentOrder - 1;
+            bool skipCapForVisibility = orderBehindFront < maxOrder && maxOrder > minFrontAdjacentContentOrder;
+            if (orderBehindFront < maxOrder && !skipCapForVisibility)
+                maxOrder = orderBehindFront;
+        }
+
+        return maxOrder != int.MinValue ? maxOrder : terrainManager.CalculateTerrainSortingOrder(pivotX, pivotY, 0) + 10;
+    }
+
     public void ReCalculateSortingOrderBasedOnHeight()
     {
         if (gridManager == null)
@@ -188,7 +407,13 @@ public class GeographyManager : MonoBehaviour
                                 else if (zone.zoneType == Zone.ZoneType.Road)
                                     newSortingOrder = terrainOrder + 3;
                                 else if (zone.zoneCategory == Zone.ZoneCategory.Building)
-                                    newSortingOrder = terrainOrder + 10;
+                                {
+                                    // Multi-cell buildings: use max order over footprint so the whole building renders in front of adjacent terrain/forest
+                                    if (cellComponent.buildingSize > 1)
+                                        newSortingOrder = GetMultiCellBuildingMaxSortingOrder(x, y, cellComponent.buildingSize);
+                                    else
+                                        newSortingOrder = terrainOrder + 10;
+                                }
                                 else
                                     newSortingOrder = terrainOrder;
                             }
@@ -197,6 +422,14 @@ public class GeographyManager : MonoBehaviour
                                 newSortingOrder = terrainOrder;
                             }
                         }
+                        // Cells east of a multi-cell building: draw their content (forest, grass) on top of the building
+                        if (TryGetEastAdjacentBuildingOrder(x, y, out int eastBuildingOrder))
+                            newSortingOrder = Mathf.Max(newSortingOrder, eastBuildingOrder + 1);
+                        // Cells south or west of a multi-cell building: same boost so front-adjacent content draws on top
+                        if (TryGetSouthAdjacentBuildingOrder(x, y, out int southBuildingOrder))
+                            newSortingOrder = Mathf.Max(newSortingOrder, southBuildingOrder + 1);
+                        if (TryGetWestAdjacentBuildingOrder(x, y, out int westBuildingOrder))
+                            newSortingOrder = Mathf.Max(newSortingOrder, westBuildingOrder + 1);
                     }
                     obj.GetComponent<SpriteRenderer>().sortingOrder = newSortingOrder;
                     if (newSortingOrder > maxCellSortingOrder)

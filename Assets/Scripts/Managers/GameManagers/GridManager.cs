@@ -287,6 +287,54 @@ public class GridManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Returns the maximum sorting order that any content on the cell at (x,y) would have
+    /// (terrain, forest +5, road +3, building +10, etc.). Used so the building can place itself
+    /// behind "front" adjacent cells and let forest/terrain draw on top.
+    /// </summary>
+    private int GetCellMaxContentSortingOrder(int x, int y)
+    {
+        if (x < 0 || x >= width || y < 0 || y >= height) return int.MinValue;
+        if (terrainManager == null) return int.MinValue;
+
+        GameObject cellObj = gridArray[x, y];
+        Cell cell = cellObj != null ? cellObj.GetComponent<Cell>() : null;
+        if (cell == null) return int.MinValue;
+
+        int terrainOrder = terrainManager.CalculateTerrainSortingOrder(x, y, cell.height);
+        int maxOrder = terrainOrder;
+
+        if (cell.GetComponent<SpriteRenderer>() != null)
+            maxOrder = Mathf.Max(maxOrder, terrainOrder);
+
+        for (int i = 0; i < cellObj.transform.childCount; i++)
+        {
+            GameObject child = cellObj.transform.GetChild(i).gameObject;
+            if (child.GetComponent<SpriteRenderer>() == null) continue;
+
+            int order;
+            if (terrainManager.IsWaterSlopeObject(child))
+                order = terrainManager.CalculateWaterSlopeSortingOrder(x, y);
+            else if (cell.forestObject != null && cell.forestObject == child)
+                order = terrainOrder + 5;
+            else
+            {
+                Zone zone = child.GetComponent<Zone>();
+                if (zone != null)
+                {
+                    if (zone.zoneCategory == Zone.ZoneCategory.Zoning) order = terrainOrder + 0;
+                    else if (zone.zoneType == Zone.ZoneType.Road) order = terrainOrder + ROAD_SORTING_OFFSET;
+                    else if (zone.zoneCategory == Zone.ZoneCategory.Building) order = terrainOrder + 10;
+                    else order = terrainOrder;
+                }
+                else
+                    order = terrainOrder;
+            }
+            maxOrder = Mathf.Max(maxOrder, order);
+        }
+        return maxOrder;
+    }
+
+    /// <summary>
     /// Returns the pivot cell for a multi-cell building. If the given cell is part of the building footprint, finds and returns the pivot cell (isPivot=true).
     /// </summary>
     public GameObject GetBuildingPivotCell(Cell cell)
@@ -850,7 +898,13 @@ public class GridManager : MonoBehaviour
             return;
         }
         GetBuildingFootprintOffset(buildingSize, out int offsetX, out int offsetY);
+        int minFx = pivotX - offsetX;
+        int minFy = pivotY - offsetY;
+        int maxFx = minFx + buildingSize - 1;
+        int maxFy = minFy + buildingSize - 1;
+
         int maxOrder = int.MinValue;
+
         for (int x = 0; x < buildingSize; x++)
         {
             for (int y = 0; y < buildingSize; y++)
@@ -868,6 +922,43 @@ public class GridManager : MonoBehaviour
             }
         }
         if (maxOrder == int.MinValue) return;
+
+        // Front = left or top. Back = south-east face only: right column (ax==maxFx+1, ay>=minFy) and bottom row (ay==maxFy+1).
+        // This explicitly excludes top-right corner (e.g. 29,8) so the floor is driven only by (29,9),(29,10),(29,11) and bottom row.
+        int minFrontAdjacentContentOrder = int.MaxValue;
+        int maxBackAdjacentContentOrder = int.MinValue;
+        for (int ax = minFx - 1; ax <= maxFx + 1; ax++)
+        {
+            for (int ay = minFy - 1; ay <= maxFy + 1; ay++)
+            {
+                if (ax >= minFx && ax <= maxFx && ay >= minFy && ay <= maxFy) continue;
+                if (ax < 0 || ax >= width || ay < 0 || ay >= height) continue;
+                int contentOrder = GetCellMaxContentSortingOrder(ax, ay);
+                if (contentOrder == int.MinValue) continue;
+                bool isFront = (ax < minFx) || (ay < minFy);
+                bool isBackSouthEast = (ax == maxFx + 1 && ay >= minFy && ay <= maxFy + 1) || (ay == maxFy + 1 && ax >= minFx && ax <= maxFx + 1);
+                if (isFront && contentOrder < minFrontAdjacentContentOrder)
+                    minFrontAdjacentContentOrder = contentOrder;
+                if (isBackSouthEast && contentOrder > maxBackAdjacentContentOrder)
+                    maxBackAdjacentContentOrder = contentOrder;
+            }
+        }
+        // Apply floor first so we're always in front of back south-east tiles
+        if (maxBackAdjacentContentOrder != int.MinValue)
+        {
+            int orderInFrontOfBack = maxBackAdjacentContentOrder + 1;
+            if (orderInFrontOfBack > maxOrder)
+                maxOrder = orderInFrontOfBack;
+        }
+        // Cap (go behind front row) only when it wouldn't hide the building. If current maxOrder is already > front content, skip cap so building stays visible.
+        if (minFrontAdjacentContentOrder != int.MaxValue)
+        {
+            int orderBehindFront = minFrontAdjacentContentOrder - 1;
+            bool skipCapForVisibility = orderBehindFront < maxOrder && maxOrder > minFrontAdjacentContentOrder;
+            if (orderBehindFront < maxOrder && !skipCapForVisibility)
+                maxOrder = orderBehindFront;
+        }
+
         SpriteRenderer[] renderers = tile.GetComponentsInChildren<SpriteRenderer>();
         foreach (SpriteRenderer sr in renderers)
         {
@@ -1357,11 +1448,11 @@ public class GridManager : MonoBehaviour
                     cell.RemoveForestForBuilding();
                     UpdatePlacedBuildingCellAttributes(cell, buildingSize, powerPlant, waterPlant, buildingPrefab, Zone.ZoneType.Building, building);
 
-                    if (gridX == gridPos.x && gridY == gridPos.y)
-                    {
-                        DestroyCellChildren(gridCell, new Vector2(gridX, gridY), building);
+                    // Destroy children of every footprint cell (grass, etc.). On pivot cell, exclude the building.
+                    bool isPivot = (gridX == gridPos.x && gridY == gridPos.y);
+                    DestroyCellChildren(gridCell, new Vector2(gridX, gridY), isPivot ? building : null);
+                    if (isPivot)
                         SetCellAsBuildingPivot(cell);
-                    }
                 }
             }
         }
