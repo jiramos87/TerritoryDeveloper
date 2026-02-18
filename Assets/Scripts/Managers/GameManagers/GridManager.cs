@@ -1049,6 +1049,36 @@ public class GridManager : MonoBehaviour
         return GetWorldPositionVector(cell.x, cell.y, height);
     }
 
+    /// <summary>
+    /// Returns the world position where a building should be placed (preview and actual placement).
+    /// For size 1 uses pivot cell; for size > 1 uses center of footprint so preview and placement match.
+    /// </summary>
+    public Vector2 GetBuildingPlacementWorldPosition(Vector2 gridPos, int buildingSize)
+    {
+        Cell pivotCell = gridArray[(int)gridPos.x, (int)gridPos.y].GetComponent<Cell>();
+        if (buildingSize <= 1)
+            return pivotCell.transformPosition;
+
+        GetBuildingFootprintOffset(buildingSize, out int offsetX, out int offsetY);
+        Vector2 sum = Vector2.zero;
+        int count = 0;
+        for (int x = 0; x < buildingSize; x++)
+        {
+            for (int y = 0; y < buildingSize; y++)
+            {
+                int gridX = (int)gridPos.x + x - offsetX;
+                int gridY = (int)gridPos.y + y - offsetY;
+                if (gridX >= 0 && gridX < width && gridY >= 0 && gridY < height)
+                {
+                    Cell c = gridArray[gridX, gridY].GetComponent<Cell>();
+                    sum += GetCellWorldPosition(c);
+                    count++;
+                }
+            }
+        }
+        return count > 0 ? sum / count : pivotCell.transformPosition;
+    }
+
     public GameObject GetGridCell(Vector2 gridPos)
     {
         if (gridPos.x < 0 || gridPos.x >= gridArray.GetLength(0) ||
@@ -1101,6 +1131,130 @@ public class GridManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Returns true if the cell is water: either in WaterMap or at sea level (height 0).
+    /// Uses height map when valid; otherwise falls back to the Cell's height from the grid (same source as terrain visuals).
+    /// </summary>
+    private bool IsCellWater(int x, int y)
+    {
+        bool fromWaterMap = waterManager != null && waterManager.IsWaterAt(x, y);
+
+        int h = -1;
+        var heightMap = terrainManager != null ? terrainManager.GetHeightMap() : null;
+        bool validHeightMap = heightMap != null && heightMap.IsValidPosition(x, y);
+        if (validHeightMap)
+            h = heightMap.GetHeight(x, y);
+
+        bool fromHeightMap = validHeightMap && h == TerrainManager.SEA_LEVEL;
+
+        bool fromCellHeight = false;
+        if (!fromHeightMap && x >= 0 && x < width && y >= 0 && y < height)
+        {
+            Cell cell = gridArray[x, y].GetComponent<Cell>();
+            if (cell != null)
+            {
+                h = cell.GetCellInstanceHeight();
+                fromCellHeight = h == TerrainManager.SEA_LEVEL;
+            }
+        }
+
+        if (fromWaterMap) return true;
+        if (fromHeightMap || fromCellHeight) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// Returns true if at least one cell in the perimeter ring around the building footprint is water.
+    /// Perimeter = full ring around the footprint rectangle (includes diagonal corners of the ring).
+    /// </summary>
+    private bool HasWaterInFootprintPerimeter(Vector2 gridPosition, int buildingSize)
+    {
+        GetBuildingFootprintOffset(buildingSize, out int offsetX, out int offsetY);
+        int minFx = (int)gridPosition.x - offsetX;
+        int minFy = (int)gridPosition.y - offsetY;
+        int maxFx = minFx + buildingSize - 1;
+        int maxFy = minFy + buildingSize - 1;
+
+        for (int px = minFx - 1; px <= maxFx + 1; px++)
+        {
+            for (int py = minFy - 1; py <= maxFy + 1; py++)
+            {
+                if (px >= minFx && px <= maxFx && py >= minFy && py <= maxFy)
+                    continue;
+                if (px >= 0 && px < width && py >= 0 && py < height)
+                {
+                    if (IsCellWater(px, py))
+                        return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Validates water plant placement for any footprint size (1x1, 2x2, 3x3, etc.).
+    /// Allows water tiles in footprint; requires at least one land tile and adjacency to water (water in perimeter ring).
+    /// </summary>
+    private bool TryValidateWaterPlantPlacement(Vector2 gridPosition, int buildingSize, out string failReason)
+    {
+        failReason = null;
+        GetBuildingFootprintOffset(buildingSize, out int offsetX, out int offsetY);
+
+        for (int x = 0; x < buildingSize; x++)
+        {
+            for (int y = 0; y < buildingSize; y++)
+            {
+                int gridX = (int)gridPosition.x + x - offsetX;
+                int gridY = (int)gridPosition.y + y - offsetY;
+                if (gridX < 0 || gridX >= width || gridY < 0 || gridY >= height)
+                {
+                    failReason = "Footprint out of grid bounds.";
+                    return false;
+                }
+            }
+        }
+
+        if (!terrainManager.CanPlaceBuildingInTerrain(gridPosition, buildingSize, out failReason, true, true))
+            return false;
+
+        bool hasLandTile = false;
+        for (int x = 0; x < buildingSize; x++)
+        {
+            for (int y = 0; y < buildingSize; y++)
+            {
+                int gridX = (int)gridPosition.x + x - offsetX;
+                int gridY = (int)gridPosition.y + y - offsetY;
+                if (waterManager == null || !waterManager.IsWaterAt(gridX, gridY))
+                {
+                    hasLandTile = true;
+                    Cell cell = gridArray[gridX, gridY].GetComponent<Cell>();
+                    if (cell.zoneType != Zone.ZoneType.Grass)
+                    {
+                        failReason = $"Tile ({gridX},{gridY}) is not Grass (current: {cell.zoneType}).";
+                        return false;
+                    }
+                }
+            }
+        }
+
+        if (!hasLandTile)
+        {
+            failReason = "Water plant must have at least one land tile in footprint.";
+            return false;
+        }
+
+        if (waterManager != null)
+        {
+            if (!HasWaterInFootprintPerimeter(gridPosition, buildingSize))
+            {
+                failReason = "Water plant must be adjacent to water.";
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// Validates building placement and optionally returns the first failure reason.
     /// </summary>
     private bool TryValidateBuildingPlacement(Vector2 gridPosition, int buildingSize, bool isWaterPlant, out string failReason)
@@ -1113,12 +1267,16 @@ public class GridManager : MonoBehaviour
             return false;
         }
 
-        bool allowCoastalSlope = isWaterPlant;
+        if (isWaterPlant)
+            return TryValidateWaterPlantPlacement(gridPosition, buildingSize, out failReason);
+
+        bool allowCoastalSlope = false;
         GetBuildingFootprintOffset(buildingSize, out int offsetX, out int offsetY);
 
-        if (!terrainManager.CanPlaceBuildingInTerrain(gridPosition, buildingSize, allowCoastalSlope))
+        if (!terrainManager.CanPlaceBuildingInTerrain(gridPosition, buildingSize, out failReason, allowCoastalSlope, false))
         {
-            failReason = "Terrain: slope, water in footprint, height mismatch, or out of bounds.";
+            if (string.IsNullOrEmpty(failReason))
+                failReason = "Terrain: slope, water in footprint, height mismatch, or out of bounds.";
             return false;
         }
 
@@ -1141,30 +1299,6 @@ public class GridManager : MonoBehaviour
                     failReason = $"Tile ({gridX},{gridY}) is not Grass (current: {cell.zoneType}).";
                     return false;
                 }
-            }
-        }
-
-        if (waterManager != null && isWaterPlant)
-        {
-            bool adjacentToWater = false;
-            for (int x = 0; x < buildingSize; x++)
-            {
-                for (int y = 0; y < buildingSize; y++)
-                {
-                    int gridX = (int)gridPosition.x + x - offsetX;
-                    int gridY = (int)gridPosition.y + y - offsetY;
-                    if (waterManager.IsAdjacentToWater(gridX, gridY))
-                    {
-                        adjacentToWater = true;
-                        break;
-                    }
-                }
-                if (adjacentToWater) break;
-            }
-            if (!adjacentToWater)
-            {
-                failReason = "Water plant must be adjacent to water.";
-                return false;
             }
         }
 
@@ -1260,28 +1394,12 @@ public class GridManager : MonoBehaviour
         GameObject buildingPrefab = iBuilding.Prefab;
         int buildingSize = iBuilding.BuildingSize;
 
-        // Calculate the adjusted grid position for the actual pivot cell
         Vector2 pivotGridPos = new Vector2(gridPos.x, gridPos.y);
+        Vector2 position = GetBuildingPlacementWorldPosition(pivotGridPos, buildingSize);
 
-        Cell cell = gridArray[(int)pivotGridPos.x, (int)pivotGridPos.y].GetComponent<Cell>();
-
-        // Get the world position for the pivot cell
-        Vector2 position = cell.transformPosition;
-
-        // For even-sized buildings, adjust the visual position slightly
-        if (buildingSize > 1 && buildingSize % 2 == 0)
-        {
-            position.x += tileWidth / 4f; // Small visual adjustment for even-sized buildings
-        }
-
-        // Create the building
-        GameObject building = Instantiate(buildingPrefab, position, Quaternion.identity);
+        Vector3 worldPosition = new Vector3(position.x, position.y, 0f);
+        GameObject building = Instantiate(buildingPrefab, worldPosition, Quaternion.identity);
         building.transform.SetParent(gridArray[(int)pivotGridPos.x, (int)pivotGridPos.y].transform);
-
-        if (buildingSize > 1 && buildingSize % 2 == 0)
-        {
-            building.transform.position += new Vector3(tileWidth / 4f, 0, 0);
-        }
 
         SetZoneBuildingSortingOrder(building, (int)pivotGridPos.x, (int)pivotGridPos.y, buildingSize);
 
@@ -1290,10 +1408,12 @@ public class GridManager : MonoBehaviour
 
     void LoadBuildingTile(GameObject prefab, Vector2 gridPos, int buildingSize)
     {
-        Cell cell = gridArray[(int)gridPos.x, (int)gridPos.y].GetComponent<Cell>();
-        Vector2 worldPos = GetCellWorldPosition(cell);
-        GameObject building = Instantiate(prefab, worldPos, Quaternion.identity);
-        building.transform.SetParent(cell.gameObject.transform);
+        Cell pivotCell = gridArray[(int)gridPos.x, (int)gridPos.y].GetComponent<Cell>();
+        Vector2 worldPos = GetBuildingPlacementWorldPosition(gridPos, buildingSize);
+
+        Vector3 position = new Vector3(worldPos.x, worldPos.y, 0f);
+        GameObject building = Instantiate(prefab, position, Quaternion.identity);
+        building.transform.SetParent(pivotCell.gameObject.transform);
 
         SetZoneBuildingSortingOrder(building, (int)gridPos.x, (int)gridPos.y, buildingSize);
     }

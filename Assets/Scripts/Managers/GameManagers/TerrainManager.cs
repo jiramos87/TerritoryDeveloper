@@ -206,19 +206,23 @@ public class TerrainManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns true if this cell has at least one neighbor at sea level (height 0).
-    /// Used to allow water plants on coastal slope tiles.
+    /// Returns true if this cell has at least one neighbor (including diagonals) at sea level (height 0).
+    /// Used to allow water plants on coastal slope tiles. Uses 8 neighbors to match RequiresSlope,
+    /// so cells that only touch water diagonally are still considered coastal.
     /// </summary>
     private bool IsAdjacentToWaterHeight(int x, int y)
     {
-        int[] dx = { -1, 0, 1, 0 };
-        int[] dy = { 0, 1, 0, -1 };
-        for (int i = 0; i < 4; i++)
+        for (int dx = -1; dx <= 1; dx++)
         {
-            int nx = x + dx[i];
-            int ny = y + dy[i];
-            if (heightMap.IsValidPosition(nx, ny) && heightMap.GetHeight(nx, ny) == SEA_LEVEL)
-                return true;
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                if (dx == 0 && dy == 0) continue;
+
+                int nx = x + dx;
+                int ny = y + dy;
+                if (heightMap.IsValidPosition(nx, ny) && heightMap.GetHeight(nx, ny) == SEA_LEVEL)
+                    return true;
+            }
         }
         return false;
     }
@@ -794,9 +798,12 @@ public class TerrainManager : MonoBehaviour
         // Implementation for terrain modification
     }
 
+    /// <param name="failReason">When the method returns false, contains the specific reason for failure.</param>
     /// <param name="allowCoastalSlope">When true, allows placement on tiles that have slope only due to being adjacent to water (e.g. for water plants).</param>
-    public bool CanPlaceBuildingInTerrain(Vector2 gridPosition, int size, bool allowCoastalSlope = false)
+    /// <param name="allowWaterInFootprint">When true, water tiles in the footprint are allowed (e.g. for water plants); they are skipped for height/slope checks.</param>
+    public bool CanPlaceBuildingInTerrain(Vector2 gridPosition, int size, out string failReason, bool allowCoastalSlope = false, bool allowWaterInFootprint = false)
     {
+        failReason = null;
         int offsetX, offsetY;
         if (gridManager != null)
             gridManager.GetBuildingFootprintOffset(size, out offsetX, out offsetY);
@@ -806,7 +813,9 @@ public class TerrainManager : MonoBehaviour
             offsetY = size % 2 == 0 ? 0 : size / 2;
         }
 
-        int baseHeight = heightMap.GetHeight((int)gridPosition.x, (int)gridPosition.y);
+        int? landBaseHeight = null;
+        if (!allowWaterInFootprint)
+            landBaseHeight = heightMap.GetHeight((int)gridPosition.x, (int)gridPosition.y);
 
         for (int dx = 0; dx < size; dx++)
         {
@@ -816,20 +825,56 @@ public class TerrainManager : MonoBehaviour
                 int checkY = (int)gridPosition.y + dy - offsetY;
 
                 if (!heightMap.IsValidPosition(checkX, checkY))
-                    return false;
-
-                if (heightMap.GetHeight(checkX, checkY) != baseHeight)
-                    return false;
-
-                if (RequiresSlope(checkX, checkY, baseHeight))
                 {
-                    if (!allowCoastalSlope || !IsAdjacentToWaterHeight(checkX, checkY))
-                        return false;
+                    failReason = "Out of bounds.";
+                    return false;
                 }
 
-                if (waterManager != null && waterManager.IsWaterAt(checkX, checkY))
+                bool isWater = waterManager != null && waterManager.IsWaterAt(checkX, checkY);
+                if (allowWaterInFootprint && isWater)
+                    continue;
+
+                int cellHeight = heightMap.GetHeight(checkX, checkY);
+                if (allowWaterInFootprint)
+                {
+                    if (!landBaseHeight.HasValue)
+                        landBaseHeight = cellHeight;
+                    if (cellHeight != landBaseHeight.Value)
+                    {
+                        failReason = "Height mismatch in footprint.";
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (cellHeight != landBaseHeight.Value)
+                    {
+                        failReason = "Height mismatch in footprint.";
+                        return false;
+                    }
+                }
+
+                if (RequiresSlope(checkX, checkY, landBaseHeight ?? cellHeight))
+                {
+                    if (!allowCoastalSlope || !IsAdjacentToWaterHeight(checkX, checkY))
+                    {
+                        failReason = "Slope not allowed here.";
+                        return false;
+                    }
+                }
+
+                if (!allowWaterInFootprint && isWater)
+                {
+                    failReason = "Water in footprint.";
                     return false;
+                }
             }
+        }
+
+        if (allowWaterInFootprint && !landBaseHeight.HasValue)
+        {
+            failReason = "Water plant must have at least one land tile in footprint.";
+            return false;
         }
 
         return true;

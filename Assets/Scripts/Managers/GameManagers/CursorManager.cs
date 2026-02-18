@@ -135,14 +135,8 @@ public class CursorManager : MonoBehaviour
                 return;
             }
 
-            // This now correctly positions at the height-adjusted cell
-            Vector2 newWorldPos = cell.transformPosition;
-
-            if (buildingSize > 1 && buildingSize % 2 == 0)
-            {
-                newWorldPos.x += 0.5f;
-            }
-
+            // Use same position as placement so preview and final building align
+            Vector2 newWorldPos = gridManager.GetBuildingPlacementWorldPosition(gridPosition, buildingSize);
             previewInstance.transform.position = newWorldPos;
         }
 
