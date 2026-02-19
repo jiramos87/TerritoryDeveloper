@@ -9,6 +9,7 @@ public class CursorManager : MonoBehaviour
     public Vector2 hotSpot;
     private GameObject previewInstance;
     public GridManager gridManager;
+    private GameObject currentRoadGhostPrefab;
     private Texture2D activeCursorTexture;
     private Vector2 activeCursorHotSpot;
     private bool isOverUI;
@@ -63,6 +64,7 @@ public class CursorManager : MonoBehaviour
     {
         try
         {
+            currentRoadGhostPrefab = null;
             if (previewInstance != null)
             {
                 Destroy(previewInstance);
@@ -114,30 +116,50 @@ public class CursorManager : MonoBehaviour
             if (!gridManager.IsValidGridPosition(gridPosition))
             {
                 previewInstance.SetActive(false);
+                UpdateCursorForUIHover();
                 return;
             }
 
             previewInstance.SetActive(true);
 
             UIManager uiManager = FindObjectOfType<UIManager>();
-            int buildingSize = 1;
 
-            if (uiManager != null && uiManager.GetSelectedBuilding() != null)
+            if (uiManager != null && uiManager.GetSelectedZoneType() == Zone.ZoneType.Road && gridManager.roadManager != null)
             {
-                buildingSize = uiManager.GetSelectedBuilding().BuildingSize;
+                gridManager.roadManager.GetRoadGhostPreviewForCell(gridPosition, out GameObject roadPrefab, out Vector2 worldPos, out int sortingOrder);
+                if (roadPrefab != currentRoadGhostPrefab)
+                {
+                    currentRoadGhostPrefab = roadPrefab;
+                    Destroy(previewInstance);
+                    previewInstance = Instantiate(roadPrefab);
+                    SpriteRenderer sr = previewInstance.GetComponent<SpriteRenderer>();
+                    if (sr == null) sr = previewInstance.GetComponentInChildren<SpriteRenderer>();
+                    if (sr != null) sr.color = new Color(1, 1, 1, 0.5f);
+                    foreach (var col in previewInstance.GetComponentsInChildren<Collider2D>())
+                        col.enabled = false;
+                }
+                previewInstance.transform.position = new Vector3(worldPos.x, worldPos.y, 0f);
+                SpriteRenderer[] renderers = previewInstance.GetComponentsInChildren<SpriteRenderer>();
+                foreach (SpriteRenderer sr in renderers)
+                    if (sr != null) sr.sortingOrder = sortingOrder;
             }
-
-            Cell cell = gridManager.GetCell((int)gridPosition.x, (int)gridPosition.y);
-
-            if (cell == null)
+            else
             {
-                previewInstance.SetActive(false);
-                return;
+                currentRoadGhostPrefab = null;
+                int buildingSize = 1;
+                if (uiManager != null && uiManager.GetSelectedBuilding() != null)
+                    buildingSize = uiManager.GetSelectedBuilding().BuildingSize;
+                Cell cell = gridManager.GetCell((int)gridPosition.x, (int)gridPosition.y);
+                if (cell == null)
+                {
+                    previewInstance.SetActive(false);
+                }
+                else
+                {
+                    Vector2 newWorldPos = gridManager.GetBuildingPlacementWorldPosition(gridPosition, buildingSize);
+                    previewInstance.transform.position = newWorldPos;
+                }
             }
-
-            // Use same position as placement so preview and final building align
-            Vector2 newWorldPos = gridManager.GetBuildingPlacementWorldPosition(gridPosition, buildingSize);
-            previewInstance.transform.position = newWorldPos;
         }
 
         UpdateCursorForUIHover();
@@ -221,9 +243,11 @@ public class CursorManager : MonoBehaviour
     }
     public void RemovePreview()
     {
+        currentRoadGhostPrefab = null;
         if (previewInstance != null)
         {
             Destroy(previewInstance);
+            previewInstance = null;
         }
     }
 }

@@ -991,6 +991,16 @@ public class GridManager : MonoBehaviour
     const int ROAD_SORTING_OFFSET = 3;
 
     /// <summary>
+    /// Returns the sorting order to use for a road tile at (x, y) at the given height (e.g. 1 for bridge over water).
+    /// </summary>
+    public int GetRoadSortingOrderForCell(int x, int y, int height)
+    {
+        if (x < 0 || x >= width || y < 0 || y >= height) return 0;
+        if (terrainManager == null) return 0;
+        return terrainManager.CalculateTerrainSortingOrder(x, y, height) + ROAD_SORTING_OFFSET;
+    }
+
+    /// <summary>
     /// Sets sorting order for a road tile using TerrainManager so it renders below forest and buildings.
     /// </summary>
     public void SetRoadSortingOrder(GameObject tile, int x, int y)

@@ -465,6 +465,48 @@ public class RoadManager : MonoBehaviour
         return GetSlopePrefabForDirection(slopeDir.Value);
     }
 
+    /// <summary>
+    /// Returns the correct road prefab, world position and sorting order for the single-cell ghost preview at the given grid position.
+    /// Used when hovering with the road tool (no line drawn): slope cells get slope prefab, water gets bridge at height 1, else flat road.
+    /// </summary>
+    public void GetRoadGhostPreviewForCell(Vector2 gridPos, out GameObject prefab, out Vector2 worldPos, out int sortingOrder)
+    {
+        int x = (int)gridPos.x;
+        int y = (int)gridPos.y;
+        prefab = roadTilePrefab1;
+        worldPos = gridManager.GetWorldPosition(x, y);
+        sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, 0);
+
+        GameObject cellObj = gridManager.GetGridCell(gridPos);
+        if (cellObj == null) return;
+
+        Cell cell = cellObj.GetComponent<Cell>();
+        if (cell == null) return;
+
+        int height = cell.GetCellInstanceHeight();
+
+        if (height == 0)
+        {
+            prefab = roadTileBridgeVertical;
+            worldPos = gridManager.GetWorldPositionVector(x, y, 1);
+            sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, 1);
+            return;
+        }
+
+        GameObject slopePrefab = TryGetSlopePrefabForCell(gridPos, height);
+        if (slopePrefab != null)
+        {
+            prefab = slopePrefab;
+            worldPos = gridManager.GetWorldPosition(x, y);
+            sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, height);
+            return;
+        }
+
+        prefab = roadTilePrefab1;
+        worldPos = gridManager.GetWorldPosition(x, y);
+        sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, height);
+    }
+
     bool IsRoadAt(Vector2 gridPos)
     {
         bool isRoad = false;
