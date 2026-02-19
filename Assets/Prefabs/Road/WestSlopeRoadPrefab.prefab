@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &4992091394876696714
+--- !u!1 &6985533469710874351
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,38 +8,38 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 8973610386059071829}
-  - component: {fileID: 7760275381642067996}
-  - component: {fileID: 3500891489313014076}
+  - component: {fileID: 468236299731769650}
+  - component: {fileID: 6927747870919479198}
+  - component: {fileID: 2416535758385767026}
   m_Layer: 0
-  m_Name: Forest1-64
+  m_Name: WestSlopeRoadPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &8973610386059071829
+--- !u!4 &468236299731769650
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4992091394876696714}
+  m_GameObject: {fileID: 6985533469710874351}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 421.93585, y: 357.79797, z: 2.4849176}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &7760275381642067996
+--- !u!212 &6927747870919479198
 SpriteRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4992091394876696714}
+  m_GameObject: {fileID: 6985533469710874351}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -74,7 +74,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 61b41ed73b0544db79a49c17ce4d2530, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e6fea3eb598df46ec8461d11519745ac, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -85,13 +85,13 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!60 &3500891489313014076
+--- !u!60 &2416535758385767026
 PolygonCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4992091394876696714}
+  m_GameObject: {fileID: 6985533469710874351}
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
@@ -129,8 +129,12 @@ PolygonCollider2D:
   m_AutoTiling: 0
   m_Points:
     m_Paths:
-    - - {x: 0.0056751296, y: -0.25203642}
-      - {x: 0.5019327, y: 0.0050116833}
-      - {x: 0.000032752752, y: 0.26084244}
-      - {x: -0.47933057, y: 0.004602249}
+    - - {x: -0.015625, y: 0.296875}
+      - {x: -0.5, y: 0.0625}
+      - {x: -0.5, y: -0.0625}
+      - {x: -0.0625, y: -0.28125}
+      - {x: 0.015625, y: -0.28125}
+      - {x: 0.5, y: -0.046875}
+      - {x: 0.5, y: 0.28125}
+      - {x: 0.25, y: 0.296875}
   m_UseDelaunayMesh: 0

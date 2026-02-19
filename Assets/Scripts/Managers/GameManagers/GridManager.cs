@@ -404,11 +404,25 @@ public class GridManager : MonoBehaviour
         cellComponent.prefab = zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass);
         cellComponent.prefabName = cellComponent.prefab.name;
         cellComponent.isPivot = false;
+        cellComponent.SetTree(false);
     }
 
     void RestoreTile(GameObject cell)
     {
         Cell cellComponent = cell.GetComponent<Cell>();
+
+        // Ensure only one grass child: remove any existing grass tiles before adding the new one
+        List<Transform> toDestroy = new List<Transform>();
+        for (int i = 0; i < cell.transform.childCount; i++)
+        {
+            Transform child = cell.transform.GetChild(i);
+            Zone zone = child.GetComponent<Zone>();
+            if (zone != null && zone.zoneType == Zone.ZoneType.Grass)
+                toDestroy.Add(child);
+        }
+        foreach (Transform t in toDestroy)
+            DestroyImmediate(t.gameObject);
+
         GameObject zoneTile = Instantiate(
             zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass),
             cellComponent.transformPosition,
@@ -440,6 +454,9 @@ public class GridManager : MonoBehaviour
 
         // Capture sorting order BEFORE demolition resets it
         int preSortingOrder = cellComponent.sortingOrder;
+
+        if (cellComponent.forestType != Forest.ForestType.None && forestManager != null)
+            forestManager.RemoveForestFromCell((int)cellComponent.x, (int)cellComponent.y);
 
         RestoreCellAttributes(cellComponent);
 
@@ -504,6 +521,9 @@ public class GridManager : MonoBehaviour
     void BulldozeTileWithoutAnimation(GameObject cell)
     {
         Cell cellComponent = cell.GetComponent<Cell>();
+
+        if (cellComponent.forestType != Forest.ForestType.None && forestManager != null)
+            forestManager.RemoveForestFromCell((int)cellComponent.x, (int)cellComponent.y);
 
         RestoreCellAttributes(cellComponent);
         DestroyCellChildren(cell, new Vector2(cellComponent.x, cellComponent.y));
@@ -1033,53 +1053,105 @@ public class GridManager : MonoBehaviour
         return new Vector2(gridX, gridY);
     }
 
+    /// <summary>
+    /// Gets the screen-space bounds of the cell's base tile (first child with Zone Grass/Road or Zoning and SpriteRenderer).
+    /// Fallback: rect from cell.transformPosition and tile size when no such child exists.
+    /// </summary>
+    private bool TryGetCellBaseTileScreenBounds(Cell cell, Camera cam, out Rect screenRect)
+    {
+        screenRect = new Rect(0, 0, 0, 0);
+        if (cell == null || cam == null) return false;
+
+        SpriteRenderer tileRenderer = null;
+        for (int i = 0; i < cell.gameObject.transform.childCount; i++)
+        {
+            Transform child = cell.gameObject.transform.GetChild(i);
+            Zone zone = child.GetComponent<Zone>();
+            SpriteRenderer sr = child.GetComponent<SpriteRenderer>();
+            if (zone == null || sr == null) continue;
+            if (zone.zoneType == Zone.ZoneType.Grass || zone.zoneType == Zone.ZoneType.Road || zone.zoneCategory == Zone.ZoneCategory.Zoning)
+            {
+                tileRenderer = sr;
+                break;
+            }
+        }
+
+        Bounds worldBounds;
+        if (tileRenderer != null)
+        {
+            worldBounds = tileRenderer.bounds;
+        }
+        else
+        {
+            Vector2 center = cell.transformPosition;
+            worldBounds = new Bounds(center, new Vector3(tileWidth, tileHeight, 0f));
+        }
+
+        Vector3 worldMin = worldBounds.min;
+        Vector3 worldMax = worldBounds.max;
+        Vector3 p0 = cam.WorldToScreenPoint(new Vector3(worldMin.x, worldMin.y, 0f));
+        Vector3 p1 = cam.WorldToScreenPoint(new Vector3(worldMax.x, worldMin.y, 0f));
+        Vector3 p2 = cam.WorldToScreenPoint(new Vector3(worldMin.x, worldMax.y, 0f));
+        Vector3 p3 = cam.WorldToScreenPoint(new Vector3(worldMax.x, worldMax.y, 0f));
+
+        float minX = Mathf.Min(p0.x, p1.x, p2.x, p3.x);
+        float maxX = Mathf.Max(p0.x, p1.x, p2.x, p3.x);
+        float minY = Mathf.Min(p0.y, p1.y, p2.y, p3.y);
+        float maxY = Mathf.Max(p0.y, p1.y, p2.y, p3.y);
+
+        // Inset rect toward center so hit areas don't overlap with neighbors (isometric AABB overlap).
+        const float insetFactor = 0.75f;
+        float width = maxX - minX;
+        float height = maxY - minY;
+        float insetW = width * (1f - insetFactor) * 0.5f;
+        float insetH = height * (1f - insetFactor) * 0.5f;
+        minX += insetW;
+        maxX -= insetW;
+        minY += insetH;
+        maxY -= insetH;
+
+        screenRect = Rect.MinMaxRect(minX, minY, maxX, maxY);
+        return true;
+    }
+
     public Cell GetCellFromWorldPoint(Vector2 worldPoint, Vector2 gridPos)
     {
-        Collider2D[] hits = Physics2D.OverlapPointAll(worldPoint);
-        if (hits.Length == 0)
-        {
-            return null;
-        }
+        Camera cam = Camera.main;
+        if (cam == null) return null;
 
-        Vector2 highestSortingOrderTransformPosition = Vector2.zero;
-        int highestSortingOrder = int.MinValue;
+        int gridX = (int)gridPos.x;
+        int gridY = (int)gridPos.y;
 
-        foreach (Collider2D hit in hits)
-        {
-            SpriteRenderer spriteRenderer = hit.GetComponent<SpriteRenderer>();
-            if (spriteRenderer == null)
-                continue;
-
-            int sortingOrder = spriteRenderer.sortingOrder;
-
-            if (sortingOrder > highestSortingOrder)
-            {
-                highestSortingOrder = sortingOrder;
-                highestSortingOrderTransformPosition = hit.transform.position;
-            }
-        }
-
-        // look in the vecinity downwards in the gridArray for the cell with the cell.transformPosition == highestSortingOrderTransformPosition
+        // 5 candidate cells: center + 4 cross neighbors
+        List<Cell> candidates = new List<Cell>();
+        int[] dx = { 0, 1, -1, 0, 0 };
+        int[] dy = { 0, 0, 0, 1, -1 };
         for (int i = 0; i < 5; i++)
         {
-            Vector2 currentPosition = new Vector2(gridPos.x - i, gridPos.y - i);
-            GameObject gridArrayCell = GetGridCell(currentPosition);
-            if (gridArrayCell == null)
-            {
-                continue;
-            }
-            Cell cell = gridArrayCell.GetComponent<Cell>();
+            GameObject go = GetGridCell(new Vector2(gridX + dx[i], gridY + dy[i]));
+            if (go == null) continue;
+            Cell c = go.GetComponent<Cell>();
+            if (c != null) candidates.Add(c);
+        }
 
-            if (cell == null)
-            {
+        Vector2 mouseScreen = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+        Cell best = null;
+        int bestOrder = int.MinValue;
+
+        foreach (Cell cell in candidates)
+        {
+            if (!TryGetCellBaseTileScreenBounds(cell, cam, out Rect screenRect))
                 continue;
-            }
-            if (cell.transformPosition == highestSortingOrderTransformPosition)
+            if (!screenRect.Contains(mouseScreen))
+                continue;
+            if (cell.sortingOrder > bestOrder)
             {
-                return cell;
+                bestOrder = cell.sortingOrder;
+                best = cell;
             }
         }
-        return null;
+
+        return best;
     }
 
     public Vector2 GetGridPositionWithHeight(Vector2 mouseWorldPoint)

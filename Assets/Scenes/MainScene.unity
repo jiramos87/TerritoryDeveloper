@@ -1386,8 +1386,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -2.849088, y: 86.76001}
-  m_SizeDelta: {x: 115.8421, y: 36.7828}
+  m_AnchoredPosition: {x: -1.8897, y: 23.9207}
+  m_SizeDelta: {x: 177.2423, y: 162.4612}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &249946671
 MonoBehaviour:
@@ -3245,6 +3245,7 @@ MonoBehaviour:
   savedGamesListContainer: {fileID: 1303387424}
   demandWarningPanel: {fileID: 2014187735}
   insufficientFundsPanel: {fileID: 2036862804}
+  dataPopupController: {fileID: 0}
 --- !u!1 &524023764
 GameObject:
   m_ObjectHideFlags: 0
@@ -9371,6 +9372,10 @@ MonoBehaviour:
   roadTilePrefabElbowDownRight: {fileID: 3629512970404794100, guid: 44dd8011f8ebf4b3287454740cbb1fdb, type: 3}
   roadTileBridgeVertical: {fileID: 7977071897597719018, guid: 80607ff13e6854a75b214e28be833171, type: 3}
   roadTileBridgeHorizontal: {fileID: 5185164840966594375, guid: 3287f753c9bb44d9ead9a1b5da6438e5, type: 3}
+  roadTilePrefabEastSlope: {fileID: 370137173812514920, guid: b5347a43b034248c5a8fc3cbad05020e, type: 3}
+  roadTilePrefabWestSlope: {fileID: 6985533469710874351, guid: 3b3645037547e48698d804d6ff0e3883, type: 3}
+  roadTilePrefabNorthSlope: {fileID: 1701793348943209742, guid: fd7c95c40117742b5941d84b8ab20819, type: 3}
+  roadTilePrefabSouthSlope: {fileID: 8362750369103064960, guid: db1a2f3435ab449ca9ed8edc3348fa74, type: 3}
 --- !u!1 &1313366838
 GameObject:
   m_ObjectHideFlags: 0
@@ -9808,6 +9813,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   statsPanel: {fileID: 1253988703}
   taxPanel: {fileID: 1094778208}
+  uiManager: {fileID: 0}
 --- !u!1 &1421946060
 GameObject:
   m_ObjectHideFlags: 0
@@ -11923,6 +11929,7 @@ MonoBehaviour:
   menuManager: {fileID: 1140593665}
   cursorManager: {fileID: 2043502345}
   popupPanel: {fileID: 1710728774}
+  uiManager: {fileID: 0}
 --- !u!1 &1713158177
 GameObject:
   m_ObjectHideFlags: 0
@@ -13975,6 +13982,7 @@ MonoBehaviour:
   menuManager: {fileID: 1140593665}
   cursorManager: {fileID: 2043502345}
   popupPanel: {fileID: 1710728774}
+  uiManager: {fileID: 0}
 --- !u!4 &1975260510
 Transform:
   m_ObjectHideFlags: 0
@@ -15390,120 +15398,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   popupController: {fileID: 1421362056}
   uiManager: {fileID: 515320935}
---- !u!1001 &225269993355938469
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 2327040077204098500, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
-      propertyPath: m_Name
-      value: CliffEastPrefab
-      objectReference: {fileID: 0}
-    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 51
-      objectReference: {fileID: 0}
-    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 66.61322
-      objectReference: {fileID: 0}
-    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -1.1225784
-      objectReference: {fileID: 0}
-    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8824246959082497042, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
---- !u!1001 &470321188288407191
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 51
-      objectReference: {fileID: 0}
-    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 66.61322
-      objectReference: {fileID: 0}
-    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -1.1225784
-      objectReference: {fileID: 0}
-    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5197910541888407060, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5564609725091321451, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
-      propertyPath: m_Name
-      value: CliffSouthPrefab
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -15513,5 +15407,3 @@ SceneRoots:
   - {fileID: 1578206894}
   - {fileID: 1365380895}
   - {fileID: 648978211}
-  - {fileID: 225269993355938469}
-  - {fileID: 470321188288407191}

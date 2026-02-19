@@ -29,6 +29,10 @@ public class RoadManager : MonoBehaviour
     public GameObject roadTilePrefabElbowDownRight;
     public GameObject roadTileBridgeVertical;
     public GameObject roadTileBridgeHorizontal;
+    public GameObject roadTilePrefabEastSlope;
+    public GameObject roadTilePrefabWestSlope;
+    public GameObject roadTilePrefabNorthSlope;
+    public GameObject roadTilePrefabSouthSlope;
     private List<GameObject> previewRoadTiles = new List<GameObject>();
     private List<Vector2> previewRoadGridPositions = new List<Vector2>();
     private List<Vector2> adjacentRoadTiles = new List<Vector2>();
@@ -49,7 +53,11 @@ public class RoadManager : MonoBehaviour
             roadTilePrefabElbowDownLeft,
             roadTilePrefabElbowDownRight,
             roadTileBridgeVertical,
-            roadTileBridgeHorizontal
+            roadTileBridgeHorizontal,
+            roadTilePrefabEastSlope,
+            roadTilePrefabWestSlope,
+            roadTilePrefabNorthSlope,
+            roadTilePrefabSouthSlope
         };
     }
 
@@ -228,7 +236,7 @@ public class RoadManager : MonoBehaviour
 
         bool isPreview = true;
 
-        GameObject roadPrefab = GetCorrectRoadPrefab(prevGridPos, gridPos, isCenterRoadTile, isPreview);
+        GameObject roadPrefab = GetCorrectRoadPrefab(prevGridPos, gridPos, isCenterRoadTile, isPreview, path, i);
 
         Cell cell = gridManager.GetGridCell(gridPos).GetComponent<Cell>();
         int roadPlacedAtHeight = 0;
@@ -260,7 +268,7 @@ public class RoadManager : MonoBehaviour
         previewTile.transform.SetParent(cell.gameObject.transform);
     }
 
-    GameObject GetCorrectRoadPrefab(Vector2 prevGridPos, Vector2 currGridPos, bool isCenterRoadTile = true, bool isPreview = false)
+    GameObject GetCorrectRoadPrefab(Vector2 prevGridPos, Vector2 currGridPos, bool isCenterRoadTile = true, bool isPreview = false, List<Vector2> path = null, int pathIndex = -1)
     {
         Vector2 direction = currGridPos - prevGridPos;
         Cell cell = gridManager.GetGridCell(currGridPos).GetComponent<Cell>();
@@ -268,6 +276,18 @@ public class RoadManager : MonoBehaviour
 
         if (isPreview)
         {
+            if (height == 0)
+            {
+                if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+                    return roadTileBridgeHorizontal;
+                return roadTileBridgeVertical;
+            }
+            Vector2? slopeDir = GetTerrainSlopeDirection(currGridPos, height);
+            if (slopeDir.HasValue)
+            {
+                GameObject slopePrefab = GetSlopePrefabForDirection(slopeDir.Value);
+                if (slopePrefab != null) return slopePrefab;
+            }
 
             if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
             {
@@ -335,6 +355,8 @@ public class RoadManager : MonoBehaviour
         }
         else if (hasLeft || hasRight)
         {
+            GameObject slopePrefab = TryGetSlopePrefabForCell(currGridPos, height);
+            if (slopePrefab != null) return slopePrefab;
             if (height == 0)
             {
                 return roadTileBridgeHorizontal;
@@ -344,6 +366,8 @@ public class RoadManager : MonoBehaviour
 
         else if (hasUp || hasDown)
         {
+            GameObject slopePrefab = TryGetSlopePrefabForCell(currGridPos, height);
+            if (slopePrefab != null) return slopePrefab;
             if (height == 0)
             {
                 return roadTileBridgeVertical;
@@ -352,6 +376,9 @@ public class RoadManager : MonoBehaviour
         }
 
         // If no intersection or elbow, fall back to horizontal/vertical
+
+        GameObject fallbackSlope = TryGetSlopePrefabForCell(currGridPos, height);
+        if (fallbackSlope != null) return fallbackSlope;
 
         if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
         {
@@ -369,6 +396,73 @@ public class RoadManager : MonoBehaviour
             }
             return roadTilePrefab1;
         }
+    }
+
+    /// <summary>
+    /// Returns the height of the neighbor at (gridX + dx, gridY + dy), or int.MinValue if out of bounds.
+    /// Only use cardinal offsets: (dx, dy) one of (±1, 0) or (0, ±1).
+    /// </summary>
+    int GetNeighborHeight(int gridX, int gridY, int dx, int dy)
+    {
+        int nx = gridX + dx;
+        int ny = gridY + dy;
+        if (nx < 0 || nx >= gridManager.width || ny < 0 || ny >= gridManager.height)
+            return int.MinValue;
+        GameObject neighborCell = gridManager.GetGridCell(new Vector2(nx, ny));
+        if (neighborCell == null) return int.MinValue;
+        Cell c = neighborCell.GetComponent<Cell>();
+        return c != null ? c.GetCellInstanceHeight() : int.MinValue;
+    }
+
+    /// <summary>
+    /// Returns the cardinal direction for the slope prefab only when there is adjacent higher ground
+    /// (so we're on a slope). When we only have a lower neighbor (first flat tile after a slope),
+    /// returns null so a flat road prefab is used.
+    /// </summary>
+    Vector2? GetTerrainSlopeDirection(Vector2 currGridPos, int currentHeight)
+    {
+        if (currentHeight == 0) return null;
+        int x = (int)currGridPos.x;
+        int y = (int)currGridPos.y;
+        Vector2? directionToHigher = null;
+        int[] dx = { 1, -1, 0, 0 };
+        int[] dy = { 0, 0, 1, -1 };
+        for (int i = 0; i < 4; i++)
+        {
+            int nh = GetNeighborHeight(x, y, dx[i], dy[i]);
+            if (nh == int.MinValue) continue;
+            int diff = nh - currentHeight;
+            if (diff == 1)
+                directionToHigher = new Vector2(dx[i], dy[i]);
+        }
+        if (!directionToHigher.HasValue) return null;
+        int dxi = Mathf.RoundToInt(directionToHigher.Value.x);
+        int dyi = Mathf.RoundToInt(directionToHigher.Value.y);
+        bool isCardinal = (Mathf.Abs(dxi) == 1 && dyi == 0) || (dxi == 0 && Mathf.Abs(dyi) == 1);
+        return isCardinal ? (Vector2?)directionToHigher.Value : null;
+    }
+
+    /// <summary>
+    /// Maps grid cardinal direction (from current cell toward the higher neighbor) to slope road prefab.
+    /// Prefab names follow visual slope direction. Grid axes don't match visual N/S/E/W 1:1, so we swap:
+    /// (1,0) and (-1,0) map to South/North prefabs; (0,1) and (0,-1) map to East/West prefabs.
+    /// </summary>
+    GameObject GetSlopePrefabForDirection(Vector2 cardinalDirection)
+    {
+        int dx = Mathf.RoundToInt(cardinalDirection.x);
+        int dy = Mathf.RoundToInt(cardinalDirection.y);
+        if (dx == 1 && dy == 0) return roadTilePrefabSouthSlope;
+        if (dx == -1 && dy == 0) return roadTilePrefabNorthSlope;
+        if (dx == 0 && dy == 1) return roadTilePrefabEastSlope;
+        if (dx == 0 && dy == -1) return roadTilePrefabWestSlope;
+        return null;
+    }
+
+    GameObject TryGetSlopePrefabForCell(Vector2 currGridPos, int currentHeight)
+    {
+        Vector2? slopeDir = GetTerrainSlopeDirection(currGridPos, currentHeight);
+        if (!slopeDir.HasValue) return null;
+        return GetSlopePrefabForDirection(slopeDir.Value);
     }
 
     bool IsRoadAt(Vector2 gridPos)
