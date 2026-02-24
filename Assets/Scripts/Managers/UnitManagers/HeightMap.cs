@@ -74,6 +74,9 @@ public class HeightMap : MonoBehaviour
         return x >= 0 && x < width && y >= 0 && y < height;
     }
 
+    public int Width => width;
+    public int Height => height;
+
     public bool HasHeightDifference(int x, int y)
     {
         int currentHeight = GetHeight(x, y);

@@ -244,7 +244,7 @@ public class ForestManager : MonoBehaviour
         GameObject cell = gridManager.gridArray[x, y];
         Cell cellComponent = cell.GetComponent<Cell>();
 
-        // Cannot place on river/coast edge (cell with height 1 adjacent to water/height 0)
+        // Cannot place on river/coast edge (cell adjacent to water / height 0)
         if (IsRiverOrCoastEdge(x, y))
             return false;
 
@@ -261,12 +261,14 @@ public class ForestManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// True if this cell is on river/coast edge: land cell with at least one orthogonal neighbor at height 0 (water).
+    /// </summary>
     private bool IsRiverOrCoastEdge(int x, int y)
     {
         int cellHeight = GetCellHeight(x, y);
         if (cellHeight <= TerrainManager.SEA_LEVEL)
             return true; // Water or below sea level
-        // Cell is land; invalid if any orthogonal neighbor is water (height 0)
         int[] dx = { -1, 1, 0, 0 };
         int[] dy = { 0, 0, -1, 1 };
         for (int i = 0; i < 4; i++)
@@ -283,10 +285,24 @@ public class ForestManager : MonoBehaviour
         return false;
     }
 
-    private int GetCellHeight(int x, int y)
+    /// <summary>
+    /// Height map used for terrain logic (river edge, etc.). Prefer terrainManager; fallback to gridManager.terrainManager
+    /// so we use initial/terrain heights, not Cell.height (water slope cells have Cell.height=0 but terrain height=1).
+    /// </summary>
+    private HeightMap GetTerrainHeightMap()
     {
         if (terrainManager != null && terrainManager.GetHeightMap() != null)
-            return terrainManager.GetHeightMap().GetHeight(x, y);
+            return terrainManager.GetHeightMap();
+        if (gridManager != null && gridManager.terrainManager != null && gridManager.terrainManager.GetHeightMap() != null)
+            return gridManager.terrainManager.GetHeightMap();
+        return null;
+    }
+
+    private int GetCellHeight(int x, int y)
+    {
+        HeightMap heightMap = GetTerrainHeightMap();
+        if (heightMap != null && heightMap.IsValidPosition(x, y))
+            return heightMap.GetHeight(x, y);
         GameObject cell = gridManager.gridArray[x, y];
         if (cell != null)
         {

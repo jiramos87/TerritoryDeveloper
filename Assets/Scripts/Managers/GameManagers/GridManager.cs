@@ -462,8 +462,6 @@ public class GridManager : MonoBehaviour
 
         DestroyCellChildren(cell, new Vector2(cellComponent.x, cellComponent.y));
 
-        RestoreTile(cell);
-
         // Show the bulldoze animation using the pre-captured sorting order
         if (uiManager != null)
         {
@@ -527,7 +525,13 @@ public class GridManager : MonoBehaviour
 
         RestoreCellAttributes(cellComponent);
         DestroyCellChildren(cell, new Vector2(cellComponent.x, cellComponent.y));
-        RestoreTile(cell);
+
+        int gx = (int)cellComponent.x;
+        int gy = (int)cellComponent.y;
+        HeightMap hm = terrainManager != null ? terrainManager.GetOrCreateHeightMap() : null;
+        bool restoredWaterSlope = hm != null && terrainManager.RestoreTerrainForCell(gx, gy, hm);
+        if (!restoredWaterSlope)
+            RestoreTile(cell);
     }
 
     void HandleBuildingStatsReset(Cell cellComponent, Zone.ZoneType zoneType)
@@ -724,6 +728,7 @@ public class GridManager : MonoBehaviour
 
     /// <summary>
     /// Destroys all children of the cell except the optional exclude object (e.g. the building being placed).
+    /// Does not destroy terrain (flat grass) or slope children (land/water slope).
     /// </summary>
     public void DestroyCellChildren(GameObject cell, Vector2 gridPosition, GameObject excludeFromDestroy)
     {
@@ -734,7 +739,13 @@ public class GridManager : MonoBehaviour
             if (excludeFromDestroy != null && child.gameObject == excludeFromDestroy)
                 continue;
 
+            // Do not destroy flat terrain (grass) or slope tiles (land or water)
             Zone zone = child.GetComponent<Zone>();
+            if (zone != null && zone.zoneType == Zone.ZoneType.Grass)
+                continue;
+            if (terrainManager != null && (terrainManager.IsWaterSlopeObject(child.gameObject) || terrainManager.IsLandSlopeObject(child.gameObject)))
+                continue;
+
             if (zone != null && zone.zoneCategory == Zone.ZoneCategory.Zoning)
             {
                 zoneManager.removeZonedPositionFromList(gridPosition, zone.zoneType);
@@ -1065,6 +1076,7 @@ public class GridManager : MonoBehaviour
 
     /// <summary>
     /// Gets the screen-space bounds of the cell's base tile (first child with Zone Grass/Road or Zoning and SpriteRenderer).
+    /// If none, uses the first child with SpriteRenderer (e.g. slope prefab) so hit-test works at all heights.
     /// Fallback: rect from cell.transformPosition and tile size when no such child exists.
     /// </summary>
     private bool TryGetCellBaseTileScreenBounds(Cell cell, Camera cam, out Rect screenRect)
@@ -1073,23 +1085,29 @@ public class GridManager : MonoBehaviour
         if (cell == null || cam == null) return false;
 
         SpriteRenderer tileRenderer = null;
+        SpriteRenderer anyRenderer = null;
         for (int i = 0; i < cell.gameObject.transform.childCount; i++)
         {
             Transform child = cell.gameObject.transform.GetChild(i);
             Zone zone = child.GetComponent<Zone>();
             SpriteRenderer sr = child.GetComponent<SpriteRenderer>();
-            if (zone == null || sr == null) continue;
-            if (zone.zoneType == Zone.ZoneType.Grass || zone.zoneType == Zone.ZoneType.Road || zone.zoneCategory == Zone.ZoneCategory.Zoning)
+            if (sr != null)
             {
-                tileRenderer = sr;
-                break;
+                if (anyRenderer == null)
+                    anyRenderer = sr;
+                if (zone != null && (zone.zoneType == Zone.ZoneType.Grass || zone.zoneType == Zone.ZoneType.Road || zone.zoneCategory == Zone.ZoneCategory.Zoning))
+                {
+                    tileRenderer = sr;
+                    break;
+                }
             }
         }
 
+        SpriteRenderer boundsSource = tileRenderer != null ? tileRenderer : anyRenderer;
         Bounds worldBounds;
-        if (tileRenderer != null)
+        if (boundsSource != null)
         {
-            worldBounds = tileRenderer.bounds;
+            worldBounds = boundsSource.bounds;
         }
         else
         {

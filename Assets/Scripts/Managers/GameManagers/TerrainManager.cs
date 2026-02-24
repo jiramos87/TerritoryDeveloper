@@ -69,11 +69,54 @@ public class TerrainManager : MonoBehaviour
         return heightMap;
     }
 
+    /// <summary>
+    /// Returns the heightMap, creating or loading it if null. Call this before RestoreTerrainForCell
+    /// and pass the result to RestoreTerrainForCell(x, y, map) so the same map is used.
+    /// </summary>
+    public HeightMap GetOrCreateHeightMap()
+    {
+        EnsureHeightMapLoaded();
+        return heightMap;
+    }
+
     public void InitializeHeightMap()
     {
         heightMap = new HeightMap(gridManager.width, gridManager.height);
         LoadInitialHeightMap();
         ApplyHeightMapToGrid();
+    }
+
+    /// <summary>
+    /// Ensures heightMap exists and has initial data (for RestoreTerrainForCell when init order skipped).
+    /// Tries: 1) create from gridManager, 2) borrow from another TerrainManager in scene.
+    /// Does not call ApplyHeightMapToGrid so the visible grid is not reset.
+    /// Public so GridManager can call it on the same TM reference before RestoreTerrainForCell.
+    /// </summary>
+    public void EnsureHeightMapLoaded()
+    {
+        if (heightMap != null) return;
+
+        if (gridManager == null)
+            gridManager = FindObjectOfType<GridManager>();
+
+        if (gridManager != null && gridManager.width > 0 && gridManager.height > 0)
+        {
+            heightMap = new HeightMap(gridManager.width, gridManager.height);
+            LoadInitialHeightMap();
+        }
+
+        if (heightMap == null)
+        {
+            TerrainManager[] all = FindObjectsOfType<TerrainManager>();
+            foreach (TerrainManager tm in all)
+            {
+                if (tm != this && tm.GetHeightMap() != null)
+                {
+                    heightMap = tm.GetHeightMap();
+                    break;
+                }
+            }
+        }
     }
 
     private void LoadInitialHeightMap()
@@ -169,6 +212,62 @@ public class TerrainManager : MonoBehaviour
         }
 
         PlaceCliffWalls(x, y);
+    }
+
+    /// <summary>
+    /// Reapplies terrain for a single cell from the heightMap (e.g. after demolition).
+    /// Restores height, world position, sorting order, and slope prefab if needed.
+    /// Returns true if this cell was restored as a water slope (caller should not add grass tile).
+    /// </summary>
+    /// <param name="useHeightMap">If non-null, this map is used (and assigned to heightMap) so restore works even when instance field was null.</param>
+    public bool RestoreTerrainForCell(int x, int y, HeightMap useHeightMap = null)
+    {
+        if (useHeightMap != null)
+            heightMap = useHeightMap;
+        if (heightMap == null)
+        {
+            EnsureHeightMapLoaded();
+        }
+        if (heightMap == null)
+            return false;
+        if (!heightMap.IsValidPosition(x, y))
+            return false;
+        int newHeight = heightMap.GetHeight(x, y);
+        if (newHeight == SEA_LEVEL)
+            return false;
+        Cell cell = gridManager.GetCell(x, y);
+        if (cell == null)
+            return false;
+
+        gridManager.SetCellHeight(new Vector2(x, y), newHeight);
+
+        Vector2 newWorldPos = gridManager.GetCellWorldPosition(cell);
+        cell.gameObject.transform.position = newWorldPos;
+        cell.transformPosition = newWorldPos;
+
+        int sortingOrder = CalculateTerrainSortingOrder(x, y, newHeight);
+        cell.sortingOrder = sortingOrder;
+        SpriteRenderer sr = cell.gameObject.GetComponent<SpriteRenderer>();
+        if (sr != null)
+            sr.sortingOrder = sortingOrder;
+
+        bool adjacentWater = IsAdjacentToWaterHeight(x, y);
+        bool requiresSlope = RequiresSlope(x, y, newHeight);
+
+        // Land cell adjacent to water (height 0) must restore water slope, not land slope.
+        if (newHeight >= 1 && adjacentWater)
+        {
+            GameObject waterSlopePrefab = DetermineWaterSlopePrefab(x, y);
+            if (waterSlopePrefab != null)
+                PlaceWaterSlope(x, y, waterSlopePrefab);
+            return true;
+        }
+
+        if (requiresSlope)
+            PlaceSlope(x, y);
+
+        PlaceCliffWalls(x, y);
+        return false;
     }
 
     private void DestroyCellChildren(Cell cell)
@@ -323,17 +422,22 @@ public class TerrainManager : MonoBehaviour
         Cell cell = gridManager.GetCell(x, y);
         DestroyCellChildren(cell);
 
-        // modify the height of the cell to be 0
-        gridManager.SetCellHeight(new Vector2(x, y), 0);
+        // Cell height = 1 (land) so logic (forest, roads, etc.) treats this as land; heightMap already has 1 here.
+        gridManager.SetCellHeight(new Vector2(x, y), 1);
         Cell updatedCell = gridManager.GetCell(x, y);
 
-        Vector2 worldPos = gridManager.GetWorldPosition(x, y);
+        // Cell at land elevation; slope prefab at water elevation so it appears lower (transition to water).
+        Vector2 cellWorldPos = gridManager.GetWorldPositionVector(x, y, 1);
+        cell.gameObject.transform.position = cellWorldPos;
+        updatedCell.transformPosition = cellWorldPos;
+
+        Vector2 slopeWorldPos = gridManager.GetWorldPositionVector(x, y, SEA_LEVEL);
         GameObject slope = Instantiate(
             waterSlopePrefab,
-            worldPos,
+            slopeWorldPos,
             Quaternion.identity
         );
-        slope.transform.SetParent(cell.gameObject.transform);
+        slope.transform.SetParent(cell.gameObject.transform, true);
 
         int sortingOrder = CalculateWaterSlopeSortingOrder(x, y);
         SpriteRenderer sr = slope.GetComponent<SpriteRenderer>();
@@ -733,6 +837,25 @@ public class TerrainManager : MonoBehaviour
             || IsPrefabInstance(obj, northWestUpslopeWaterPrefab)
             || IsPrefabInstance(obj, southEastUpslopeWaterPrefab)
             || IsPrefabInstance(obj, southWestUpslopeWaterPrefab);
+    }
+
+    /// <summary>
+    /// Returns true if the object is a land slope tile (not water slope).
+    /// </summary>
+    public bool IsLandSlopeObject(GameObject obj)
+    {
+        return IsPrefabInstance(obj, northSlopePrefab)
+            || IsPrefabInstance(obj, southSlopePrefab)
+            || IsPrefabInstance(obj, eastSlopePrefab)
+            || IsPrefabInstance(obj, westSlopePrefab)
+            || IsPrefabInstance(obj, northEastSlopePrefab)
+            || IsPrefabInstance(obj, northWestSlopePrefab)
+            || IsPrefabInstance(obj, southEastSlopePrefab)
+            || IsPrefabInstance(obj, southWestSlopePrefab)
+            || IsPrefabInstance(obj, northEastUpslopePrefab)
+            || IsPrefabInstance(obj, northWestUpslopePrefab)
+            || IsPrefabInstance(obj, southEastUpslopePrefab)
+            || IsPrefabInstance(obj, southWestUpslopePrefab);
     }
 
     public bool IsSeaLevelWaterObject(GameObject obj)
