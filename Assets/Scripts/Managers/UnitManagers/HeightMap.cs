@@ -1,12 +1,10 @@
 using UnityEngine;
 
-public class HeightMap : MonoBehaviour
+public class HeightMap
 {
     private int[,] heights;
     private int width;
     private int height;
-
-    private GridManager gridManager;
 
     public HeightMap(int width, int height)
     {
@@ -18,8 +16,6 @@ public class HeightMap : MonoBehaviour
 
     private void InitializeHeights()
     {
-        gridManager = FindObjectOfType<GridManager>();
-        // Initialize all heights to 1 (or whatever base height you prefer)
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)

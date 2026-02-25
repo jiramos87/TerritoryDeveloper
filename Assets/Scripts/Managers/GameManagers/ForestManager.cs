@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 /// <summary>
@@ -21,6 +22,20 @@ public class ForestManager : MonoBehaviour
     public GameObject mediumForestPrefab;
     public GameObject denseForestPrefab;
 
+    [Header("Forest Slope Prefabs (Medium)")]
+    public GameObject forestNorthSlopePrefab;
+    public GameObject forestSouthSlopePrefab;
+    public GameObject forestEastSlopePrefab;
+    public GameObject forestWestSlopePrefab;
+    public GameObject forestNorthEastSlopePrefab;
+    public GameObject forestNorthWestSlopePrefab;
+    public GameObject forestSouthEastSlopePrefab;
+    public GameObject forestSouthWestSlopePrefab;
+    public GameObject forestNorthEastUpSlopePrefab;
+    public GameObject forestNorthWestUpSlopePrefab;
+    public GameObject forestSouthEastUpSlopePrefab;
+    public GameObject forestSouthWestUpSlopePrefab;
+
     [Header("Forest Configuration")]
     public float desirabilityPerAdjacentForest = 2.0f; // Desirability bonus per adjacent forest
     public float demandBoostPercentage = 0.5f; // Percentage increase in demand per forest cell
@@ -41,6 +56,9 @@ public class ForestManager : MonoBehaviour
 
         if (uiManager == null)
             uiManager = FindObjectOfType<UIManager>();
+        // Use same TerrainManager as GridManager so we get the heightMap from InitializeHeightMap (correct slope prefabs).
+        if (terrainManager == null && gridManager != null && gridManager.terrainManager != null)
+            terrainManager = gridManager.terrainManager;
         if (terrainManager == null)
             terrainManager = FindObjectOfType<TerrainManager>();
 
@@ -62,6 +80,12 @@ public class ForestManager : MonoBehaviour
     {
         if (gridManager != null)
         {
+            // Use same TerrainManager as GridManager so heightMap is available (slope prefabs). Start() order is not guaranteed.
+            if (terrainManager == null && gridManager.terrainManager != null)
+                terrainManager = gridManager.terrainManager;
+            if (terrainManager == null)
+                terrainManager = FindObjectOfType<TerrainManager>();
+
             forestMap = new ForestMap(gridManager.width, gridManager.height);
 
             // Build int matrix (0 = None, 1 = Sparse, 2 = Medium, 3 = Dense); only place forest where validation allows
@@ -81,8 +105,23 @@ public class ForestManager : MonoBehaviour
 
             forestMap.InitializeFromIntMatrix(initialForestCells);
 
-            // Apply forest visuals to the grid
-            UpdateForestVisuals();
+            // Apply forest visuals only when TerrainManager has heightMap (needed for slope prefab selection).
+            if (terrainManager != null)
+            {
+                terrainManager.EnsureHeightMapLoaded();
+                if (terrainManager.GetHeightMap() != null)
+                {
+                    UpdateForestVisuals();
+                }
+                else
+                {
+                    StartCoroutine(DeferredUpdateForestVisuals());
+                }
+            }
+            else
+            {
+                UpdateForestVisuals();
+            }
 
             // Update statistics
             UpdateForestStatistics();
@@ -141,7 +180,7 @@ public class ForestManager : MonoBehaviour
             return false;
         }
 
-        GameObject forestPrefab = uiManager.GetForestPrefabForType(selectedForest.ForestType);
+        GameObject forestPrefab = GetForestPrefabForCell(x, y, selectedForest.ForestType);
 
         if (forestPrefab == null)
         {
@@ -153,7 +192,8 @@ public class ForestManager : MonoBehaviour
 
         int height = cellComponent.GetCellInstanceHeight();
 
-        GameObject forestObject = Instantiate(forestPrefab, worldPos, Quaternion.identity);
+        Quaternion rotation = forestPrefab.transform.rotation;
+        GameObject forestObject = Instantiate(forestPrefab, worldPos, rotation);
 
         forestObject.transform.SetParent(cellComponent.gameObject.transform);
 
@@ -355,6 +395,16 @@ public class ForestManager : MonoBehaviour
         return (currentWaterConsumption + forest.WaterConsumption) <= currentWaterOutput;
     }
 
+    private IEnumerator DeferredUpdateForestVisuals()
+    {
+        yield return null;
+        if (terrainManager != null)
+            terrainManager.EnsureHeightMapLoaded();
+        // Always place forest visuals; if heightMap is still null we use flat prefabs so the map is never empty.
+        if (forestMap != null && gridManager != null)
+            UpdateForestVisuals();
+    }
+
     public void UpdateForestVisuals()
     {
         if (forestMap == null || gridManager == null) return;
@@ -381,11 +431,13 @@ public class ForestManager : MonoBehaviour
         if (cellComponent.hasTree)
             return;
 
-        GameObject forestPrefab = GetPrefabForForestType(forestType);
+        GameObject forestPrefab = GetForestPrefabForCell(x, y, forestType);
         if (forestPrefab == null) return;
 
         Vector2 worldPos = cellComponent.transformPosition;
-        GameObject forestObject = Instantiate(forestPrefab, worldPos, Quaternion.identity);
+        // Use prefab's default rotation so slope prefabs keep their authored orientation (avoids "upside down" on slopes).
+        Quaternion rotation = forestPrefab.transform.rotation;
+        GameObject forestObject = Instantiate(forestPrefab, worldPos, rotation);
 
         forestObject.transform.SetParent(cellComponent.gameObject.transform);
         SetForestSortingOrder(forestObject, x, y, cellComponent.height);
@@ -485,6 +537,44 @@ public class ForestManager : MonoBehaviour
             default:
                 Debug.LogWarning($"No prefab assigned for forest type: {forestType}");
                 return null;
+        }
+    }
+
+    /// <summary>
+    /// Returns the forest prefab to use for this cell based on terrain (flat vs slope). On slopes uses the 12 slope prefabs (medium).
+    /// </summary>
+    private GameObject GetForestPrefabForCell(int x, int y, Forest.ForestType forestType)
+    {
+        if (terrainManager == null)
+            return GetPrefabForForestType(forestType);
+
+        TerrainSlopeType slopeType = terrainManager.GetTerrainSlopeTypeAt(x, y);
+        if (slopeType == TerrainSlopeType.Flat)
+            return GetPrefabForForestType(forestType);
+
+        GameObject slopePrefab = GetSlopeForestPrefab(slopeType);
+        if (slopePrefab != null)
+            return slopePrefab;
+        return GetPrefabForForestType(forestType);
+    }
+
+    private GameObject GetSlopeForestPrefab(TerrainSlopeType slopeType)
+    {
+        switch (slopeType)
+        {
+            case TerrainSlopeType.North: return forestNorthSlopePrefab;
+            case TerrainSlopeType.South: return forestSouthSlopePrefab;
+            case TerrainSlopeType.East: return forestEastSlopePrefab;
+            case TerrainSlopeType.West: return forestWestSlopePrefab;
+            case TerrainSlopeType.NorthEast: return forestNorthEastSlopePrefab;
+            case TerrainSlopeType.NorthWest: return forestNorthWestSlopePrefab;
+            case TerrainSlopeType.SouthEast: return forestSouthEastSlopePrefab;
+            case TerrainSlopeType.SouthWest: return forestSouthWestSlopePrefab;
+            case TerrainSlopeType.NorthEastUp: return forestNorthEastUpSlopePrefab;
+            case TerrainSlopeType.NorthWestUp: return forestNorthWestUpSlopePrefab;
+            case TerrainSlopeType.SouthEastUp: return forestSouthEastUpSlopePrefab;
+            case TerrainSlopeType.SouthWestUp: return forestSouthWestUpSlopePrefab;
+            default: return null;
         }
     }
 

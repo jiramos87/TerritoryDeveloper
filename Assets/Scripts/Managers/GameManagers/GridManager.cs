@@ -27,6 +27,8 @@ public class GridManager : MonoBehaviour
     public float halfHeight;
     public GameObject[,] gridArray;
     public Vector2 mouseGridPosition;
+    /// <summary>Last grid cell clicked (left or right button). (-1,-1) if none yet.</summary>
+    public Vector2 selectedPoint = new Vector2(-1, -1);
     public int mouseGridHeight;
     public int mouseGridSortingOrder;
 
@@ -222,6 +224,9 @@ public class GridManager : MonoBehaviour
             {
                 return;
             }
+
+            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
+                selectedPoint = mouseGridPosition;
 
             if (uiManager.isBulldozeMode())
             {

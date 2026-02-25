@@ -159,9 +159,12 @@ public class GameDebugInfoBuilder : MonoBehaviour
 
     /// <summary>
     /// Returns the full debug text for the current cursor position: coordinates, cell under cursor,
-    /// and (if a building is selected) building placement info. Use this for the main debug panel.
+    /// selectedPoint (last clicked grid cell), and (if a building is selected) building placement info.
+    /// Use this for the main debug panel.
     /// </summary>
-    public string GetFullDebugText(Vector2 gridPosition)
+    /// <param name="gridPosition">Current cursor grid position.</param>
+    /// <param name="selectedPoint">Last clicked grid position (left or right). Use (-1,-1) for none.</param>
+    public string GetFullDebugText(Vector2 gridPosition, Vector2 selectedPoint)
     {
         ResolveRefsIfNeeded();
 
@@ -170,6 +173,11 @@ public class GameDebugInfoBuilder : MonoBehaviour
             GetCoordinatesLine(gridPosition),
             GetCellUnderCursorInfo(gridPosition)
         };
+
+        int sx = (int)selectedPoint.x;
+        int sy = (int)selectedPoint.y;
+        if (sx >= 0 && sy >= 0)
+            parts.Add("selectedPoint: " + GetCoordinatesLine(selectedPoint));
 
         if (uiManager != null && uiManager.GetSelectedBuilding() != null)
         {

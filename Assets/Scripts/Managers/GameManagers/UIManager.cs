@@ -212,7 +212,7 @@ public class UIManager : MonoBehaviour
             if (gameDebugInfoBuilder == null)
                 gameDebugInfoBuilder = FindObjectOfType<GameDebugInfoBuilder>();
             if (gameDebugInfoBuilder != null && useFullDebugText && gridManager != null)
-                gridCoordinatesText.text = gameDebugInfoBuilder.GetFullDebugText(gridManager.mouseGridPosition);
+                gridCoordinatesText.text = gameDebugInfoBuilder.GetFullDebugText(gridManager.mouseGridPosition, gridManager.selectedPoint);
             else if (gridManager != null)
                 gridCoordinatesText.text = "x: " + gridManager.mouseGridPosition.x + ", y: " + gridManager.mouseGridPosition.y;
         }

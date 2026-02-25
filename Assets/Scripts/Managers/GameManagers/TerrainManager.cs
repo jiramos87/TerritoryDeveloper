@@ -1,6 +1,23 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+public enum TerrainSlopeType
+{
+    Flat,
+    North,
+    South,
+    East,
+    West,
+    NorthEast,
+    NorthWest,
+    SouthEast,
+    SouthWest,
+    NorthEastUp,
+    NorthWestUp,
+    SouthEastUp,
+    SouthWestUp
+}
+
 public class TerrainManager : MonoBehaviour
 {
     public GridManager gridManager;
@@ -50,7 +67,7 @@ public class TerrainManager : MonoBehaviour
     public const int BUILDING_OFFSET = 10; // Buildings should be above terrain
     public const int EFFECT_OFFSET = 30; // Effects should be above terrain
     public const int DEPTH_MULTIPLIER = 100;
-    public const int HEIGHT_MULTIPLIER = 1000;
+    public const int HEIGHT_MULTIPLIER = 10; // Must be < DEPTH_MULTIPLIER/MAX_HEIGHT so depth dominates (hilltops don't draw over foreground forest)
 
     public void StartTerrainGeneration()
     {
@@ -101,8 +118,13 @@ public class TerrainManager : MonoBehaviour
 
         if (gridManager != null && gridManager.width > 0 && gridManager.height > 0)
         {
+            Debug.Log($"[EnsureHeightMapLoaded] Creating HeightMap from grid (width={gridManager.width}, height={gridManager.height}).");
             heightMap = new HeightMap(gridManager.width, gridManager.height);
             LoadInitialHeightMap();
+        }
+        else
+        {
+            Debug.Log($"[EnsureHeightMapLoaded] Skipping HeightMap creation: gridManager null? {gridManager == null}, width={gridManager?.width ?? -1}, height={gridManager?.height ?? -1}.");
         }
 
         if (heightMap == null)
@@ -117,6 +139,9 @@ public class TerrainManager : MonoBehaviour
                 }
             }
         }
+
+        if (heightMap == null)
+            Debug.LogWarning($"[EnsureHeightMapLoaded] heightMap still null after load attempt. gridManager null? {gridManager == null}, width={gridManager?.width ?? -1}, height={gridManager?.height ?? -1}. Check init order (grid may not be ready when forest runs).");
     }
 
     private void LoadInitialHeightMap()
@@ -913,6 +938,56 @@ public class TerrainManager : MonoBehaviour
         if (hasSouthEastSlope) return northWestSlopePrefab;
 
         return null;
+    }
+
+    /// <summary>
+    /// Returns the slope type at (x,y) for use by ForestManager etc. Uses same logic as DetermineSlopePrefab.
+    /// Returns Flat if heightMap is null or position invalid. Calls EnsureHeightMapLoaded() when heightMap is null so ForestManager can get slope type even if init order skipped.
+    /// </summary>
+    public TerrainSlopeType GetTerrainSlopeTypeAt(int x, int y)
+    {
+        if (heightMap == null)
+            EnsureHeightMapLoaded();
+
+        if (heightMap == null || !heightMap.IsValidPosition(x, y))
+            return TerrainSlopeType.Flat;
+
+        int currentHeight = heightMap.GetHeight(x, y);
+        int northHeight = heightMap.GetHeight(x + 1, y);
+        int southHeight = heightMap.GetHeight(x - 1, y);
+        int westHeight = heightMap.GetHeight(x, y + 1);
+        int eastHeight = heightMap.GetHeight(x, y - 1);
+        int neHeight = heightMap.GetHeight(x + 1, y - 1);
+        int nwHeight = heightMap.GetHeight(x + 1, y + 1);
+        int swHeight = heightMap.GetHeight(x - 1, y + 1);
+        int seHeight = heightMap.GetHeight(x - 1, y - 1);
+
+        bool hasNorthSlope = northHeight > currentHeight;
+        bool hasSouthSlope = southHeight > currentHeight;
+        bool hasEastSlope = eastHeight > currentHeight;
+        bool hasWestSlope = westHeight > currentHeight;
+        bool hasNorthEastSlope = neHeight > currentHeight;
+        bool hasNorthWestSlope = nwHeight > currentHeight;
+        bool hasSouthEastSlope = seHeight > currentHeight;
+        bool hasSouthWestSlope = swHeight > currentHeight;
+
+        // Return slope *face* direction (same convention as DetermineSlopePrefab): prefab name = direction slope faces (downhill).
+        TerrainSlopeType result;
+        if (hasWestSlope && hasNorthSlope) result = TerrainSlopeType.SouthEastUp;
+        else if (hasWestSlope && hasSouthSlope) result = TerrainSlopeType.NorthEastUp;
+        else if (hasEastSlope && hasNorthSlope) result = TerrainSlopeType.SouthWestUp;
+        else if (hasEastSlope && hasSouthSlope) result = TerrainSlopeType.NorthWestUp;
+        else if (hasNorthSlope) result = TerrainSlopeType.South;   // north higher => slope faces south
+        else if (hasSouthSlope) result = TerrainSlopeType.North;   // south higher => slope faces north
+        else if (hasEastSlope) result = TerrainSlopeType.West;      // east higher => slope faces west
+        else if (hasWestSlope) result = TerrainSlopeType.East;     // west higher => slope faces east
+        else if (hasNorthWestSlope) result = TerrainSlopeType.SouthEast;
+        else if (hasNorthEastSlope) result = TerrainSlopeType.SouthWest;
+        else if (hasSouthWestSlope) result = TerrainSlopeType.NorthEast;
+        else if (hasSouthEastSlope) result = TerrainSlopeType.NorthWest;
+        else result = TerrainSlopeType.Flat;
+
+        return result;
     }
 
     // These methods will be implemented later
