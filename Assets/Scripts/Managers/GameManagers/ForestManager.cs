@@ -288,8 +288,10 @@ public class ForestManager : MonoBehaviour
         if (IsRiverOrCoastEdge(x, y))
             return false;
 
-        // Cannot place on roads
+        // Cannot place on roads or interstate
         if (cellComponent.zoneType == Zone.ZoneType.Road)
+            return false;
+        if (cellComponent.isInterstate)
             return false;
 
         // Cannot place on buildings (occupied building or zone type is a building)

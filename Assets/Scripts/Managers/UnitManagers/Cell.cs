@@ -47,6 +47,9 @@ public class Cell : MonoBehaviour
     [Header("Zone Properties")]
     public Zone.ZoneType zoneType;
 
+    [Header("Interstate Properties")]
+    public bool isInterstate = false;
+
     private string occupiedBuildingName;
 
     public Cell(CellData cellData)
@@ -84,6 +87,7 @@ public class Cell : MonoBehaviour
         this.occupiedBuilding = cellData.occupiedBuilding;
         this.powerPlant = cellData.powerPlant;
         this.waterPlant = cellData.waterPlant;
+        this.isInterstate = cellData.isInterstate;
     }
 
     #region Building Property Getters
@@ -316,6 +320,7 @@ public class Cell : MonoBehaviour
     {
         CellData cellData = new CellData(x, y, height);
         cellData.SetDefaults();
+        cellData.isInterstate = isInterstate;
 
         return cellData;
     }
@@ -382,6 +387,9 @@ public class Cell : MonoBehaviour
         desirability = cellData.desirability;
         closeForestCount = cellData.closeForestCount;
         closeWaterCount = cellData.closeWaterCount;
+
+        // Interstate properties
+        isInterstate = cellData.isInterstate;
     }
     #endregion
 }

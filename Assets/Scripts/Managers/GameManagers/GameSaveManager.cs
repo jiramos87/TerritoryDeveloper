@@ -14,6 +14,7 @@ public class GameSaveManager : MonoBehaviour
     public GridManager gridManager;
     public CityStats cityStats;
     public TimeManager timeManager;
+    public InterstateManager interstateManager;
 
     public void SaveGame(string customSaveName = null)
     {
@@ -25,6 +26,7 @@ public class GameSaveManager : MonoBehaviour
         saveData.inGameTime = timeManager.GetCurrentInGameTime();
         saveData.gridData = gridManager.GetGridData();
         saveData.cityStats = cityStats.GetCityStatsData();
+        saveData.isConnectedToInterstate = interstateManager != null && interstateManager.IsConnectedToInterstate;
         // saveData.playerSettings = GetPlayerSettings();
 
         string json = JsonUtility.ToJson(saveData);
@@ -41,6 +43,11 @@ public class GameSaveManager : MonoBehaviour
             GameSaveData saveData = JsonUtility.FromJson<GameSaveData>(json);
 
             gridManager.RestoreGrid(saveData.gridData);
+            if (interstateManager != null)
+            {
+                interstateManager.RebuildFromGrid();
+                interstateManager.CheckInterstateConnectivity();
+            }
             cityStats.RestoreCityStatsData(saveData.cityStats);
             timeManager.RestoreInGameTime(saveData.inGameTime);
         }
@@ -66,6 +73,7 @@ public class GameSaveData
     public DateTime realWorldSaveTime;
     public InGameTime inGameTime;
     public List<CellData> gridData;
+    public bool isConnectedToInterstate;
 
     // public PlayerSettingsData playerSettings;
     public CityStatsData cityStats;

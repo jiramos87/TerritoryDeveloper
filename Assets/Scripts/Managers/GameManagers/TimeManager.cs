@@ -11,6 +11,7 @@ public class TimeManager : MonoBehaviour
     public GridManager gridManager;
     public AnimatorManager animatorManager;
     public ZoneManager zoneManager;
+    public InterstateManager interstateManager;
     public float[] timeSpeeds = new float[] { 0f, 0.50f, 1.0f, 2.0f, 4.0f };
     private int currentTimeSpeedIndex = 0;
 
@@ -44,6 +45,8 @@ public class TimeManager : MonoBehaviour
             {
                 cityStats.PerformMonthlyUpdates();
                 economyManager.ProcessDailyEconomy();
+                if (interstateManager != null)
+                    interstateManager.CheckInterstateConnectivity();
             }
             uiManager.UpdateUI();
         }

@@ -15,6 +15,7 @@ public class ZoneManager : MonoBehaviour
     public GameNotificationManager gameNotificationManager;
     public DemandManager demandManager;
     public WaterManager waterManager;
+    public InterstateManager interstateManager;
 
     public List<GameObject> lightResidential1x1Prefabs;
     public List<GameObject> lightResidential2x2Prefabs;
@@ -374,6 +375,17 @@ public class ZoneManager : MonoBehaviour
     {
         if (zoneAttributes == null)
             return false;
+
+        if (interstateManager != null)
+        {
+            interstateManager.CheckInterstateConnectivity();
+            if (!interstateManager.IsConnectedToInterstate)
+            {
+                if (gameNotificationManager != null)
+                    gameNotificationManager.PostWarning("Connect a road to the Interstate Highway before zoning.");
+                return false;
+            }
+        }
 
         if (!cityStats.CanAfford(zoneAttributes.ConstructionCost))
             return false;

@@ -14,6 +14,7 @@ public class GeographyManager : MonoBehaviour
     public ForestManager forestManager;
     public GridManager gridManager;
     public ZoneManager zoneManager;
+    public InterstateManager interstateManager;
 
     [Header("Geography Configuration")]
     public bool initializeOnStart = true;
@@ -35,6 +36,8 @@ public class GeographyManager : MonoBehaviour
             forestManager = FindObjectOfType<ForestManager>();
         if (gridManager == null)
             gridManager = FindObjectOfType<GridManager>();
+        if (interstateManager == null)
+            interstateManager = FindObjectOfType<InterstateManager>();
 
         if (initializeOnStart)
         {
@@ -54,6 +57,11 @@ public class GeographyManager : MonoBehaviour
             waterManager.InitializeWaterMap();
         }
 
+        if (interstateManager != null)
+        {
+            interstateManager.GenerateAndPlaceInterstate();
+        }
+
         if (forestManager != null)
         {
             forestManager.InitializeForestMap();
@@ -61,6 +69,15 @@ public class GeographyManager : MonoBehaviour
 
         currentGeographyData = CreateGeographyData();
         ReCalculateSortingOrderBasedOnHeight();
+
+        if (interstateManager != null && GameNotificationManager.Instance != null)
+        {
+            GameNotificationManager.Instance.PostNotification(
+                "An Interstate Highway crosses your territory. Build a road connecting to it to start developing your city.",
+                GameNotificationManager.NotificationType.Info,
+                8f
+            );
+        }
     }
 
     private GeographyData CreateGeographyData()

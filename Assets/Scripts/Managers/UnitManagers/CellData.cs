@@ -43,6 +43,9 @@ public class CellData
     public bool hasTree; // Keep for backward compatibility with old saves
     public string treePrefabName; // Keep for backward compatibility with old saves
 
+    [Header("Interstate Properties")]
+    public bool isInterstate;
+
     [Header("Desirability Properties")]
     public float desirability;
     public int closeForestCount;
@@ -92,6 +95,7 @@ public class CellData
         this.powerPlant = null;
         this.waterPlant = null;
         this.occupiedBuilding = null;
+        this.isInterstate = false;
     }
 
     /// <summary>
@@ -197,6 +201,7 @@ public class CellData
         if (forestType == null) forestType = Forest.ForestType.None.ToString();
         if (forestPrefabName == null) forestPrefabName = "";
         if (treePrefabName == null) treePrefabName = "";
+        // isInterstate is bool, no null check needed
     }
 
     /// <summary>
@@ -239,6 +244,9 @@ public class CellData
         clone.desirability = desirability;
         clone.closeForestCount = closeForestCount;
         clone.closeWaterCount = closeWaterCount;
+
+        // Interstate properties
+        clone.isInterstate = isInterstate;
 
         return clone;
     }

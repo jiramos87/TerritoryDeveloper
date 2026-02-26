@@ -17,6 +17,7 @@ public class GridManager : MonoBehaviour
     public ForestManager forestManager;
     public CameraController cameraController;
     public RoadManager roadManager;
+    public InterstateManager interstateManager;
     public BuildingSelectorMenuController buildingSelectorMenuController;
 
     public int width, height;
@@ -102,6 +103,11 @@ public class GridManager : MonoBehaviour
         if (forestManager == null)
         {
             forestManager = FindObjectOfType<ForestManager>();
+        }
+
+        if (interstateManager == null)
+        {
+            interstateManager = FindObjectOfType<InterstateManager>();
         }
         CreateGrid();
         terrainManager.InitializeHeightMap();
@@ -577,6 +583,13 @@ public class GridManager : MonoBehaviour
     {
         if (cell == null)
         {
+            return false;
+        }
+
+        if (cell.isInterstate)
+        {
+            if (GameNotificationManager != null)
+                GameNotificationManager.PostWarning("The Interstate Highway cannot be demolished.");
             return false;
         }
 
@@ -1463,6 +1476,18 @@ public class GridManager : MonoBehaviour
             return false;
         }
 
+        if (interstateManager != null)
+        {
+            interstateManager.CheckInterstateConnectivity();
+            if (!interstateManager.IsConnectedToInterstate)
+            {
+                failReason = "No connection to Interstate Highway.";
+                if (GameNotificationManager != null)
+                    GameNotificationManager.PostWarning("Connect a road to the Interstate Highway before building.");
+                return false;
+            }
+        }
+
         if (isWaterPlant)
             return TryValidateWaterPlantPlacement(gridPosition, buildingSize, out failReason);
 
@@ -1490,6 +1515,11 @@ public class GridManager : MonoBehaviour
                 }
 
                 Cell cell = gridArray[gridX, gridY].GetComponent<Cell>();
+                if (cell.isInterstate)
+                {
+                    failReason = "Cannot build on Interstate Highway.";
+                    return false;
+                }
                 if (cell.zoneType != Zone.ZoneType.Grass)
                 {
                     failReason = $"Tile ({gridX},{gridY}) is not Grass (current: {cell.zoneType}).";

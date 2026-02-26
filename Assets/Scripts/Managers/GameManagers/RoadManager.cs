@@ -11,6 +11,7 @@ public class RoadManager : MonoBehaviour
     public CityStats cityStats;
     public UIManager uiManager;
     public ZoneManager zoneManager;
+    public InterstateManager interstateManager;
 
     private bool isDrawingRoad = false;
     private Vector2 startPosition;
@@ -70,6 +71,12 @@ public class RoadManager : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
+            if (interstateManager != null && !interstateManager.CanPlaceStreetFrom(gridPosition))
+            {
+                if (GameNotificationManager.Instance != null)
+                    GameNotificationManager.Instance.PostWarning("Streets must connect to the Interstate Highway or existing connected roads.");
+                return;
+            }
             isDrawingRoad = true;
             startPosition = gridPosition;
             if (uiManager != null)
@@ -598,6 +605,9 @@ public class RoadManager : MonoBehaviour
             return;
 
         GameObject cell = gridManager.GetGridCell(gridPos);
+        Cell cellComponentCheck = cell.GetComponent<Cell>();
+        if (cellComponentCheck != null && cellComponentCheck.isInterstate)
+            return;
 
         bool isCenterRoadTile = !isAdjacent;
         bool isPreview = false;
@@ -687,5 +697,96 @@ public class RoadManager : MonoBehaviour
     public List<GameObject> GetRoadPrefabs()
     {
         return roadTilePrefabs;
+    }
+
+    /// <summary>
+    /// Returns the correct road prefab for a cell in a path (for interstate placement).
+    /// </summary>
+    public GameObject GetCorrectRoadPrefabForPath(Vector2 prevGridPos, Vector2 currGridPos)
+    {
+        return GetCorrectRoadPrefab(prevGridPos, currGridPos, true, false);
+    }
+
+    /// <summary>
+    /// Place a single road tile for the interstate at currGridPos. Clears forest and applies interstate tint.
+    /// </summary>
+    public void PlaceInterstateTile(Vector2 prevGridPos, Vector2 currGridPos, bool isInterstate)
+    {
+        Vector2 gridPos = currGridPos;
+        int gx = (int)gridPos.x;
+        int gy = (int)gridPos.y;
+        if (gridManager.IsCellOccupiedByBuilding(gx, gy)) return;
+
+        GameObject cell = gridManager.GetGridCell(gridPos);
+        Cell cellComponent = cell.GetComponent<Cell>();
+        if (cellComponent == null) return;
+
+        DestroyPreviousRoadTile(cell, gridPos);
+        cellComponent.RemoveForestForBuilding();
+
+        GameObject correctRoadPrefab = GetCorrectRoadPrefabForPath(prevGridPos, currGridPos);
+        int terrainHeight = cellComponent.GetCellInstanceHeight();
+        Vector2 worldPos;
+        if (terrainHeight == 0)
+            worldPos = gridManager.GetWorldPositionVector(gx, gy, 1);
+        else
+            worldPos = gridManager.GetWorldPosition(gx, gy);
+
+        GameObject roadTile = Instantiate(correctRoadPrefab, worldPos, Quaternion.identity);
+        roadTile.transform.SetParent(cellComponent.gameObject.transform);
+
+        if (isInterstate)
+            roadTile.GetComponent<SpriteRenderer>().color = new Color(0.78f, 0.78f, 0.88f, 1f);
+        else
+            roadTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 1);
+
+        Zone zone = roadTile.AddComponent<Zone>();
+        zone.zoneType = Zone.ZoneType.Road;
+        UpdateRoadCellAttributes(cellComponent, roadTile, Zone.ZoneType.Road);
+        if (isInterstate)
+            cellComponent.isInterstate = true;
+
+        gridManager.SetRoadSortingOrder(roadTile, gx, gy);
+    }
+
+    /// <summary>
+    /// Replace the road tile at the given position with a new prefab (e.g. after all interstate tiles placed to fix junctions). Preserves isInterstate and tint.
+    /// </summary>
+    public void ReplaceRoadTileAt(Vector2Int gridPos, GameObject newPrefab, bool keepInterstateTint)
+    {
+        GameObject cell = gridManager.GetGridCell(new Vector2(gridPos.x, gridPos.y));
+        if (cell == null) return;
+        Cell cellComponent = cell.GetComponent<Cell>();
+        if (cellComponent == null) return;
+
+        foreach (Transform child in cell.transform)
+        {
+            if (child.GetComponent<Zone>() != null)
+            {
+                DestroyImmediate(child.gameObject);
+                break;
+            }
+        }
+
+        int terrainHeight = cellComponent.GetCellInstanceHeight();
+        Vector2 worldPos;
+        if (terrainHeight == 0)
+            worldPos = gridManager.GetWorldPositionVector(gridPos.x, gridPos.y, 1);
+        else
+            worldPos = gridManager.GetWorldPosition(gridPos.x, gridPos.y);
+
+        GameObject roadTile = Instantiate(newPrefab, worldPos, Quaternion.identity);
+        roadTile.transform.SetParent(cellComponent.gameObject.transform);
+
+        if (keepInterstateTint)
+            roadTile.GetComponent<SpriteRenderer>().color = new Color(0.78f, 0.78f, 0.88f, 1f);
+        else
+            roadTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 1);
+
+        Zone zone = roadTile.AddComponent<Zone>();
+        zone.zoneType = Zone.ZoneType.Road;
+        UpdateRoadCellAttributes(cellComponent, roadTile, Zone.ZoneType.Road);
+
+        gridManager.SetRoadSortingOrder(roadTile, gridPos.x, gridPos.y);
     }
 }
