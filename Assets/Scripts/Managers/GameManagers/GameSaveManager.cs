@@ -27,6 +27,12 @@ public class GameSaveManager : MonoBehaviour
         saveData.gridData = gridManager.GetGridData();
         saveData.cityStats = cityStats.GetCityStatsData();
         saveData.isConnectedToInterstate = interstateManager != null && interstateManager.IsConnectedToInterstate;
+        RegionalMapManager regionalMapManager = FindObjectOfType<RegionalMapManager>();
+        if (regionalMapManager != null)
+        {
+            regionalMapManager.SyncCityNameToPlayerTerritory();
+            saveData.regionalMap = regionalMapManager.GetRegionalMapForSave();
+        }
         // saveData.playerSettings = GetPlayerSettings();
 
         string json = JsonUtility.ToJson(saveData);
@@ -50,6 +56,12 @@ public class GameSaveManager : MonoBehaviour
             }
             cityStats.RestoreCityStatsData(saveData.cityStats);
             timeManager.RestoreInGameTime(saveData.inGameTime);
+            RegionalMapManager regionalMapManager = FindObjectOfType<RegionalMapManager>();
+            if (regionalMapManager != null && saveData.regionalMap != null)
+            {
+                regionalMapManager.RestoreRegionalMap(saveData.regionalMap);
+                regionalMapManager.PlaceBorderSigns();
+            }
         }
         else
         {
@@ -59,8 +71,17 @@ public class GameSaveManager : MonoBehaviour
 
     public void NewGame()
     {
+        RegionalMapManager regionalMapManager = FindObjectOfType<RegionalMapManager>();
+        if (regionalMapManager != null)
+            regionalMapManager.ClearBorderSigns();
         gridManager.ResetGrid();
         cityStats.ResetCityStats();
+        if (regionalMapManager != null)
+        {
+            var playerTerritory = regionalMapManager.GetRegionalMap()?.GetPlayerTerritory();
+            if (playerTerritory != null && !string.IsNullOrEmpty(playerTerritory.cityName))
+                cityStats.cityName = playerTerritory.cityName;
+        }
         timeManager.ResetInGameTime();
     }
 }
@@ -74,6 +95,7 @@ public class GameSaveData
     public InGameTime inGameTime;
     public List<CellData> gridData;
     public bool isConnectedToInterstate;
+    public RegionalMap regionalMap;
 
     // public PlayerSettingsData playerSettings;
     public CityStatsData cityStats;

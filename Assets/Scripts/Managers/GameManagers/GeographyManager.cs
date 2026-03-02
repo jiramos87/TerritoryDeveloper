@@ -15,6 +15,7 @@ public class GeographyManager : MonoBehaviour
     public GridManager gridManager;
     public ZoneManager zoneManager;
     public InterstateManager interstateManager;
+    public RegionalMapManager regionalMapManager;
 
     [Header("Geography Configuration")]
     public bool initializeOnStart = true;
@@ -38,6 +39,8 @@ public class GeographyManager : MonoBehaviour
             gridManager = FindObjectOfType<GridManager>();
         if (interstateManager == null)
             interstateManager = FindObjectOfType<InterstateManager>();
+        if (regionalMapManager == null)
+            regionalMapManager = FindObjectOfType<RegionalMapManager>();
 
         if (initializeOnStart)
         {
@@ -47,6 +50,11 @@ public class GeographyManager : MonoBehaviour
 
     public void InitializeGeography()
     {
+        if (regionalMapManager != null)
+        {
+            regionalMapManager.InitializeRegionalMap();
+        }
+
         if (gridManager != null)
         {
             gridManager.InitializeGrid();
@@ -70,10 +78,17 @@ public class GeographyManager : MonoBehaviour
         currentGeographyData = CreateGeographyData();
         ReCalculateSortingOrderBasedOnHeight();
 
+        if (regionalMapManager != null)
+        {
+            regionalMapManager.PlaceBorderSigns();
+        }
+
         if (interstateManager != null && GameNotificationManager.Instance != null)
         {
+            CityStats cityStats = FindObjectOfType<CityStats>();
+            string cityName = (cityStats != null && !string.IsNullOrEmpty(cityStats.cityName)) ? cityStats.cityName : "your city";
             GameNotificationManager.Instance.PostNotification(
-                "An Interstate Highway crosses your territory. Build a road connecting to it to start developing your city.",
+                "Welcome to " + cityName + "! An Interstate Highway crosses your territory. Build a road connecting to it to start developing your city.",
                 GameNotificationManager.NotificationType.Info,
                 8f
             );

@@ -14,6 +14,12 @@ public class InterstateManager : MonoBehaviour
     private List<Vector2Int> interstatePositions = new List<Vector2Int>();
     private bool isConnectedToInterstate;
 
+    /// <summary>Border and position of the interstate entry/exit points (set during generation or RebuildFromGrid).</summary>
+    public Vector2Int? EntryPoint { get; private set; }
+    public Vector2Int? ExitPoint { get; private set; }
+    public int EntryBorder { get; private set; } = -1;
+    public int ExitBorder { get; private set; } = -1;
+
     /// <summary>
     /// Whether the player's road network is connected to the interstate (updated monthly).
     /// </summary>
@@ -75,11 +81,20 @@ public class InterstateManager : MonoBehaviour
         int w = gridManager.width;
         int h = gridManager.height;
 
-        // 1. Pick two distinct borders
-        List<int> borders = new List<int> { 0, 1, 2, 3 }; // 0=South, 1=North, 2=West, 3=East
-        int borderA = borders[Random.Range(0, borders.Count)];
-        borders.Remove(borderA);
-        int borderB = borders[Random.Range(0, borders.Count)];
+        int borderA, borderB;
+        RegionalMapManager regionManager = FindObjectOfType<RegionalMapManager>();
+        if (regionManager != null && regionManager.TryGetInterstateBorders(out int rA, out int rB))
+        {
+            borderA = rA;
+            borderB = rB;
+        }
+        else
+        {
+            List<int> borders = new List<int> { 0, 1, 2, 3 };
+            borderA = borders[Random.Range(0, borders.Count)];
+            borders.Remove(borderA);
+            borderB = borders[Random.Range(0, borders.Count)];
+        }
 
         Vector2Int? entry = GetValidBorderCell(borderA, w, h, heightMap);
         Vector2Int? exit = GetValidBorderCell(borderB, w, h, heightMap);
@@ -100,7 +115,16 @@ public class InterstateManager : MonoBehaviour
         }
 
         if (path != null && path.Count > 0 && path[path.Count - 1] == exit.Value)
+        {
             interstatePositions = path;
+            if (interstatePositions.Count >= 2)
+            {
+                EntryPoint = interstatePositions[0];
+                ExitPoint = interstatePositions[interstatePositions.Count - 1];
+                EntryBorder = borderA;
+                ExitBorder = borderB;
+            }
+        }
 
         return interstatePositions;
     }
@@ -289,15 +313,55 @@ public class InterstateManager : MonoBehaviour
     public void RebuildFromGrid()
     {
         interstatePositions.Clear();
+        EntryPoint = null;
+        ExitPoint = null;
+        EntryBorder = -1;
+        ExitBorder = -1;
         if (gridManager == null) return;
-        for (int x = 0; x < gridManager.width; x++)
+        int w = gridManager.width;
+        int h = gridManager.height;
+        for (int x = 0; x < w; x++)
         {
-            for (int y = 0; y < gridManager.height; y++)
+            for (int y = 0; y < h; y++)
             {
                 Cell cell = gridManager.GetCell(x, y);
                 if (cell != null && cell.isInterstate)
                     interstatePositions.Add(new Vector2Int(x, y));
             }
+        }
+        Vector2Int? firstBorder = null;
+        int firstBorderIdx = -1;
+        Vector2Int? secondBorder = null;
+        int secondBorderIdx = -1;
+        foreach (Vector2Int pos in interstatePositions)
+        {
+            int borderIdx = -1;
+            if (pos.y == 0) borderIdx = 0;
+            else if (pos.y == h - 1) borderIdx = 1;
+            else if (pos.x == 0) borderIdx = 2;
+            else if (pos.x == w - 1) borderIdx = 3;
+            if (borderIdx < 0) continue;
+            if (!firstBorder.HasValue)
+            {
+                firstBorder = pos;
+                firstBorderIdx = borderIdx;
+            }
+            else if (!secondBorder.HasValue)
+            {
+                secondBorder = pos;
+                secondBorderIdx = borderIdx;
+                break;
+            }
+        }
+        if (firstBorder.HasValue)
+        {
+            EntryPoint = firstBorder;
+            EntryBorder = firstBorderIdx;
+        }
+        if (secondBorder.HasValue)
+        {
+            ExitPoint = secondBorder;
+            ExitBorder = secondBorderIdx;
         }
     }
 

@@ -44,6 +44,7 @@ public class UIManager : MonoBehaviour
     public Text cityPowerOutputText;
     public Text cityPowerConsumptionText;
     public Text dateText;
+    public Text cityNameText;
     public Text residentialTaxText;
     public Text commercialTaxText;
     public Text industrialTaxText;
@@ -192,6 +193,8 @@ public class UIManager : MonoBehaviour
 
     public void UpdateUI()
     {
+        if (cityNameText != null && cityStats != null)
+            cityNameText.text = cityStats.cityName;
         populationText.text = cityStats.population.ToString();
         moneyText.text = cityStats.money.ToString();
         buttonMoneyText.text = "$" + cityStats.money.ToString();

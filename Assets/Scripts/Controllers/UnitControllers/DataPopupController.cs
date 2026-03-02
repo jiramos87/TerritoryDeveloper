@@ -17,9 +17,13 @@ public class DataPopupController : MonoBehaviour
 
     public void ToggleStats()
     {
+        Debug.Log("ToggleStats called");
+        Debug.Log("statsPanel.activeSelf: " + statsPanel.activeSelf);
+        Debug.Log("taxPanel.activeSelf: " + taxPanel.activeSelf);
         statsPanel.SetActive(!statsPanel.activeSelf);
         taxPanel.SetActive(false);
         if (statsPanel.activeSelf)
+            Debug.Log("Registering with UIManager");
             RegisterWithUIManager(PopupType.StatsPanel);
     }
 
@@ -49,7 +53,9 @@ public class DataPopupController : MonoBehaviour
 
     private void RegisterWithUIManager(PopupType type)
     {
+        Debug.Log("Registering with UIManager: " + type);
         if (uiManager == null) uiManager = FindObjectOfType<UIManager>();
         if (uiManager != null) uiManager.RegisterPopupOpened(type);
+        else Debug.Log("uiManager is null");
     }
 }

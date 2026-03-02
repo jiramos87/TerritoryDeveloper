@@ -3,10 +3,26 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    public float moveSpeed = 5f;
-    public float zoomSpeed = 2f;
+    [Header("Movement")]
+    [Tooltip("Base movement speed (no smoothing - immediate response)")]
+    public float moveSpeed = 22f;
+
+    [Header("Zoom")]
     public float[] zoomLevels = new float[] { 2f, 5f, 10f, 15f, 20f, 30f };
+    [Tooltip("Scroll units required to change one zoom level (higher = more precise, less jumpy)")]
+    [Range(0.05f, 0.5f)]
+    public float scrollThresholdPerLevel = 0.2f;
+    [Tooltip("Min seconds between zoom level changes (avoids touchpad overshooting)")]
+    [Range(0.05f, 0.3f)]
+    public float zoomStepCooldown = 0.12f;
+    [Tooltip("Zoom lerp speed toward target level (smooth transition)")]
+    [Range(5f, 30f)]
+    public float zoomSmoothSpeed = 18f;
+
     private int currentZoomLevel = 0;
+    private float scrollAccumulator;
+    private float lastZoomStepTime = -1f;
+    private float targetOrthoSize;
     private Camera mainCamera;
     public float startZoomLevel = 5f;
     public GridManager gridManager;
@@ -55,7 +71,8 @@ public class CameraController : MonoBehaviour
             {
                 currentZoomLevel = 0;
             }
-            mainCamera.orthographicSize = zoomLevels[currentZoomLevel];
+            targetOrthoSize = zoomLevels[currentZoomLevel];
+            mainCamera.orthographicSize = targetOrthoSize;
         }
         else
         {
@@ -80,6 +97,7 @@ public class CameraController : MonoBehaviour
             HandleMovement();
             HandleZoom();
             HandleScrollZoom();
+            ApplySmoothZoom();
         }
     }
 
@@ -115,10 +133,11 @@ public class CameraController : MonoBehaviour
 
     private void HandleMovement()
     {
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
+        // Raw axis = no built-in smoothing; immediate response
+        float horizontal = Input.GetAxisRaw("Horizontal");
+        float vertical = Input.GetAxisRaw("Vertical");
 
-        Vector3 movement = new Vector3(horizontal, vertical, 0) * moveSpeed * Time.deltaTime;
+        Vector3 movement = new Vector3(horizontal, vertical, 0).normalized * moveSpeed * Time.deltaTime;
         mainCamera.transform.Translate(movement);
     }
 
@@ -127,7 +146,7 @@ public class CameraController : MonoBehaviour
         if (currentZoomLevel > 0)
         {
             currentZoomLevel--;
-            mainCamera.orthographicSize = zoomLevels[currentZoomLevel];
+            targetOrthoSize = zoomLevels[currentZoomLevel];
         }
     }
 
@@ -136,21 +155,61 @@ public class CameraController : MonoBehaviour
         if (currentZoomLevel < zoomLevels.Length - 1)
         {
             currentZoomLevel++;
-            mainCamera.orthographicSize = zoomLevels[currentZoomLevel];
+            targetOrthoSize = zoomLevels[currentZoomLevel];
         }
     }
 
     private void HandleScrollZoom()
     {
         float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (scroll > 0)
+        if (Mathf.Approximately(scroll, 0f))
+            return;
+
+        scrollAccumulator += scroll;
+        float t = Time.time - lastZoomStepTime;
+        if (t < zoomStepCooldown)
+            return;
+
+        float threshold = scrollThresholdPerLevel;
+        if (scrollAccumulator >= threshold)
         {
-            ZoomIn();
+            int steps = Mathf.FloorToInt(scrollAccumulator / threshold);
+            steps = Mathf.Min(steps, currentZoomLevel);
+            if (steps > 0)
+            {
+                currentZoomLevel -= steps;
+                targetOrthoSize = zoomLevels[currentZoomLevel];
+                scrollAccumulator -= steps * threshold;
+                lastZoomStepTime = Time.time;
+            }
+            else
+                scrollAccumulator = 0f;
         }
-        else if (scroll < 0)
+        else if (scrollAccumulator <= -threshold)
         {
-            ZoomOut();
+            int steps = Mathf.FloorToInt(-scrollAccumulator / threshold);
+            int maxSteps = zoomLevels.Length - 1 - currentZoomLevel;
+            steps = Mathf.Min(steps, maxSteps);
+            if (steps > 0)
+            {
+                currentZoomLevel += steps;
+                targetOrthoSize = zoomLevels[currentZoomLevel];
+                scrollAccumulator += steps * threshold;
+                lastZoomStepTime = Time.time;
+            }
+            else
+                scrollAccumulator = 0f;
         }
+
+        scrollAccumulator = Mathf.Clamp(scrollAccumulator, -threshold * 1.5f, threshold * 1.5f);
+    }
+
+    private void ApplySmoothZoom()
+    {
+        if (zoomLevels.Length == 0) return;
+        float current = mainCamera.orthographicSize;
+        if (Mathf.Approximately(current, targetOrthoSize)) return;
+        mainCamera.orthographicSize = Mathf.Lerp(current, targetOrthoSize, zoomSmoothSpeed * Time.deltaTime);
     }
 
     private void HandleZoom()

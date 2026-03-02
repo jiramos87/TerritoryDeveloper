@@ -72,7 +72,7 @@ public class CityStats : MonoBehaviour
         cityPowerOutput = 0;
         cityWaterConsumption = 0;
         cityWaterOutput = 0;
-        cityName = "City";
+        // cityName is set by RegionalMapManager.InitializeRegionalMap() from the player territory
 
         // Initialize forest statistics
         forestCellCount = 0;
@@ -765,11 +765,20 @@ public class CityStats : MonoBehaviour
         grassCount = 0;
         cityPowerConsumption = 0;
         cityPowerOutput = 0;
-        cityName = "City";
+        // cityName is preserved; sync from RegionalMap in GameSaveManager.NewGame() if needed
 
         // Reset forest statistics
         forestCellCount = 0;
         forestCoveragePercentage = 0f;
+    }
+
+    /// <summary>
+    /// Set the city name (e.g. when the player renames the city). This becomes the canonical name until changed again or loaded from save.
+    /// </summary>
+    public void SetCityName(string newName)
+    {
+        if (!string.IsNullOrWhiteSpace(newName))
+            cityName = newName.Trim();
     }
 
     public EmploymentManager GetEmploymentManager() { return FindObjectOfType<EmploymentManager>(); }
