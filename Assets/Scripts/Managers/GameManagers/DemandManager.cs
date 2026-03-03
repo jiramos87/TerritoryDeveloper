@@ -71,11 +71,8 @@ public class DemandManager : MonoBehaviour
     [Header("Auto-Growth Settings")]
     public bool autoGrowthEnabled = true;
     public float growthThreshold = 5f; // Lower threshold since we start with 10
-    public float growthCooldown = 3f; // Faster growth for more responsive gameplay
-    private float lastGrowthTime = 0f;
 
     private EmploymentManager employmentManager;
-    private GrowthManager growthManager;
     private CityStats cityStats;
     private ForestManager forestManager;
 
@@ -88,7 +85,6 @@ public class DemandManager : MonoBehaviour
     {
         InitializeDemand();
         employmentManager = FindObjectOfType<EmploymentManager>();
-        growthManager = GetComponent<GrowthManager>();
         cityStats = FindObjectOfType<CityStats>();
         forestManager = FindObjectOfType<ForestManager>();
         buildingTracker = new BuildingTracker();
@@ -111,7 +107,6 @@ public class DemandManager : MonoBehaviour
         UpdateBuildingTracking();
         UpdateDemandLogic();
         UpdateDemandStatus();
-        CheckAutoGrowth();
         buildingTracker.Reset(); // Reset new building counters after processing
     }
 
@@ -304,30 +299,7 @@ public class DemandManager : MonoBehaviour
         industrialDemand.UpdateStatus();
     }
 
-    private void CheckAutoGrowth()
-    {
-        if (!autoGrowthEnabled || growthManager == null) return;
-        if (Time.time - lastGrowthTime < growthCooldown) return;
-
-        // Prioritize residential growth first
-        if (residentialDemand.canGrow && residentialDemand.demandLevel > growthThreshold)
-        {
-            growthManager.TriggerAutoGrowth(Zone.ZoneType.ResidentialLightZoning);
-            lastGrowthTime = Time.time;
-        }
-        else if (commercialDemand.canGrow && commercialDemand.demandLevel > growthThreshold)
-        {
-            growthManager.TriggerAutoGrowth(Zone.ZoneType.CommercialLightZoning);
-            lastGrowthTime = Time.time;
-        }
-        else if (industrialDemand.canGrow && industrialDemand.demandLevel > growthThreshold)
-        {
-            growthManager.TriggerAutoGrowth(Zone.ZoneType.IndustrialLightZoning);
-            lastGrowthTime = Time.time;
-        }
-    }
-
-    // Public method to check if a zone type can grow (used for auto-growth)
+    // Public method to check if a zone type can grow (used by AutoZoningManager)
     public bool CanZoneTypeGrow(Zone.ZoneType zoneType)
     {
         switch (zoneType)
@@ -448,8 +420,6 @@ public class DemandManager : MonoBehaviour
     // Settings for player control
     public void SetAutoGrowthEnabled(bool enabled) => autoGrowthEnabled = enabled;
     public void SetGrowthThreshold(float threshold) => growthThreshold = Mathf.Clamp(threshold, 0f, 100f);
-    public void SetGrowthCooldown(float cooldown) => growthCooldown = Mathf.Max(1f, cooldown);
-
     // Public getter for environmental bonus (for UI display)
     public float GetCurrentEnvironmentalBonus() => GetEnvironmentalDemandBonus();
 }

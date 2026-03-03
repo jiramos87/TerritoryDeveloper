@@ -144,9 +144,15 @@ public class TerrainManager : MonoBehaviour
             Debug.LogWarning($"[EnsureHeightMapLoaded] heightMap still null after load attempt. gridManager null? {gridManager == null}, width={gridManager?.width ?? -1}, height={gridManager?.height ?? -1}. Check init order (grid may not be ready when forest runs).");
     }
 
-    private void LoadInitialHeightMap()
+    private const int OriginalMapSize = 40;
+    private const int TerrainGenSeed = 12345;
+    private const float PerlinNoiseScale = 16f;
+    private const int BorderBlendWidth = 10;
+
+    /// <summary>Original 40x40 height map (rows y, cols x). Used as template for [0..39,0..39] when grid is larger.</summary>
+    private static int[,] GetOriginal40x40Heights()
     {
-        int[,] initialHeights = new int[,] {
+        return new int[,] {
           {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2},
           {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2},
           {1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 0, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2},
@@ -188,7 +194,136 @@ public class TerrainManager : MonoBehaviour
           {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
           {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         };
-        heightMap.SetHeights(initialHeights);
+    }
+
+    private void LoadInitialHeightMap()
+    {
+        int w = gridManager.width;
+        int h = gridManager.height;
+
+        if (w == OriginalMapSize && h == OriginalMapSize)
+        {
+            heightMap.SetHeights(GetOriginal40x40Heights());
+            return;
+        }
+
+        int[,] extended = new int[w, h];
+        int[,] template = GetOriginal40x40Heights();
+        for (int x = 0; x < OriginalMapSize && x < w; x++)
+        {
+            for (int y = 0; y < OriginalMapSize && y < h; y++)
+            {
+                extended[x, y] = template[y, x];
+            }
+        }
+
+        FillExtendedTerrainProcedural(extended, w, h);
+        heightMap.SetHeights(extended);
+    }
+
+    /// <summary>Fills cells outside [0..39,0..39] with coherent Perlin-based terrain and smooth blend at 40x40 border. Water only from lakes and rivers.</summary>
+    private void FillExtendedTerrainProcedural(int[,] heights, int w, int h)
+    {
+        float offsetX = TerrainGenSeed * 0.1f;
+        float offsetY = TerrainGenSeed * 0.27f;
+        int[,] template = GetOriginal40x40Heights();
+
+        for (int x = 0; x < w; x++)
+        {
+            for (int y = 0; y < h; y++)
+            {
+                if (x < OriginalMapSize && y < OriginalMapSize)
+                    continue;
+
+                float n = Mathf.PerlinNoise((x + offsetX) / PerlinNoiseScale, (y + offsetY) / PerlinNoiseScale);
+                int perlinHeight = PerlinToHeight(n);
+
+                float blend = 1f;
+                int edgeHeight = perlinHeight;
+                if (x >= OriginalMapSize && x < OriginalMapSize + BorderBlendWidth && y < OriginalMapSize)
+                {
+                    edgeHeight = template[y, OriginalMapSize - 1];
+                    blend = (float)(x - OriginalMapSize) / BorderBlendWidth;
+                }
+                else if (y >= OriginalMapSize && y < OriginalMapSize + BorderBlendWidth && x < OriginalMapSize)
+                {
+                    edgeHeight = template[OriginalMapSize - 1, x];
+                    blend = (float)(y - OriginalMapSize) / BorderBlendWidth;
+                }
+
+                int finalHeight = blend >= 1f ? perlinHeight : Mathf.RoundToInt(edgeHeight * (1f - blend) + perlinHeight * blend);
+                heights[x, y] = Mathf.Clamp(finalHeight, 1, MAX_HEIGHT);
+            }
+        }
+
+        AddProceduralLakes(heights, w, h);
+        AddProceduralRivers(heights, w, h);
+    }
+
+    /// <summary>Maps Perlin value [0,1] to land height 1-5: mostly plains (1-2), some 3, few hills (4-5). No water.</summary>
+    private static int PerlinToHeight(float n)
+    {
+        if (n < 0.5f) return 1;
+        if (n < 0.7f) return 2;
+        if (n < 0.85f) return 3;
+        if (n < 0.95f) return 4;
+        return 5;
+    }
+
+    private void AddProceduralLakes(int[,] heights, int w, int h)
+    {
+        Random.InitState(TerrainGenSeed + 1);
+        int numLakes = 4 + (int)(Random.value * 3);
+        for (int i = 0; i < numLakes; i++)
+        {
+            int cx = OriginalMapSize + (int)(Random.value * (w - OriginalMapSize - 2));
+            int cy = OriginalMapSize + (int)(Random.value * (h - OriginalMapSize - 2));
+            if (cx < OriginalMapSize || cy < OriginalMapSize) continue;
+            int radius = 2 + (int)(Random.value * 2);
+            for (int dx = -radius; dx <= radius; dx++)
+            {
+                for (int dy = -radius; dy <= radius; dy++)
+                {
+                    int nx = cx + dx, ny = cy + dy;
+                    if (nx >= OriginalMapSize && nx < w && ny >= OriginalMapSize && ny < h && dx * dx + dy * dy <= radius * radius)
+                        heights[nx, ny] = SEA_LEVEL;
+                }
+            }
+        }
+    }
+
+    private void AddProceduralRivers(int[,] heights, int w, int h)
+    {
+        Random.InitState(TerrainGenSeed + 2);
+        int numRivers = 4 + (int)(Random.value * 4);
+        int[][] dirs = { new[] { 1, 0 }, new[] { -1, 0 }, new[] { 0, 1 }, new[] { 0, -1 } };
+        for (int i = 0; i < numRivers; i++)
+        {
+            int sx = OriginalMapSize + (int)(Random.value * (w - OriginalMapSize - 4));
+            int sy = OriginalMapSize + (int)(Random.value * (h - OriginalMapSize - 4));
+            if (sx < OriginalMapSize || sy < OriginalMapSize) continue;
+            if (heights[sx, sy] < 2) continue;
+            int len = 4 + (int)(Random.value * 8);
+            int x = sx, y = sy;
+            for (int step = 0; step < len; step++)
+            {
+                if (x >= 0 && x < w && y >= 0 && y < h && (x >= OriginalMapSize || y >= OriginalMapSize))
+                    heights[x, y] = SEA_LEVEL;
+                int bestDx = 0, bestDy = 0, bestH = 6;
+                for (int d = 0; d < 4; d++)
+                {
+                    int nx = x + dirs[d][0], ny = y + dirs[d][1];
+                    if (nx >= 0 && nx < w && ny >= 0 && ny < h)
+                    {
+                        int nh = heights[nx, ny];
+                        if (nh < bestH) { bestH = nh; bestDx = dirs[d][0]; bestDy = dirs[d][1]; }
+                    }
+                }
+                x += bestDx;
+                y += bestDy;
+                if (bestH == 0) break;
+            }
+        }
     }
 
     private void ApplyHeightMapToGrid()
@@ -1078,11 +1213,40 @@ public class TerrainManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// True if a road can be placed at (x,y): not occupied, and terrain is flat or cardinal slope only.
+    /// Water cells (height 0) are allowed for bridge placement. Diagonal slopes have no road prefabs and are rejected.
+    /// </summary>
     public bool CanPlaceRoad(int x, int y)
     {
         if (gridManager != null && gridManager.IsCellOccupiedByBuilding(x, y))
             return false;
-        return true;
+        if (gridManager != null)
+        {
+            Cell c = gridManager.GetCell(x, y);
+            if (c != null && c.GetCellInstanceHeight() == 0)
+                return true;
+        }
+        TerrainSlopeType slope = GetTerrainSlopeTypeAt(x, y);
+        switch (slope)
+        {
+            case TerrainSlopeType.Flat:
+            case TerrainSlopeType.North:
+            case TerrainSlopeType.South:
+            case TerrainSlopeType.East:
+            case TerrainSlopeType.West:
+            case TerrainSlopeType.NorthEast:
+            case TerrainSlopeType.NorthWest:
+            case TerrainSlopeType.SouthEast:
+            case TerrainSlopeType.SouthWest:
+            case TerrainSlopeType.NorthEastUp:
+            case TerrainSlopeType.NorthWestUp:
+            case TerrainSlopeType.SouthEastUp:
+            case TerrainSlopeType.SouthWestUp:
+                return true;
+            default:
+                return false;
+        }
     }
 
     void OnDrawGizmos()

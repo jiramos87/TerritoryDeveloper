@@ -7,6 +7,9 @@ public class DataPopupController : MonoBehaviour
     public GameObject statsPanel; // Reference to the stats panel
     public GameObject taxPanel; // Reference to the tax panel
     [SerializeField] private UIManager uiManager;
+    [SerializeField] private CityStats cityStats;
+    [Tooltip("Growth budget sliders container; shown when tax panel is open and simulate growth is on.")]
+    public GameObject growthBudgetSlidersContainer;
 
     public void ShowStats()
     {
@@ -23,7 +26,6 @@ public class DataPopupController : MonoBehaviour
         statsPanel.SetActive(!statsPanel.activeSelf);
         taxPanel.SetActive(false);
         if (statsPanel.activeSelf)
-            Debug.Log("Registering with UIManager");
             RegisterWithUIManager(PopupType.StatsPanel);
     }
 
@@ -32,7 +34,11 @@ public class DataPopupController : MonoBehaviour
         statsPanel.SetActive(false);
         taxPanel.SetActive(!taxPanel.activeSelf);
         if (taxPanel.activeSelf)
+        {
             RegisterWithUIManager(PopupType.TaxPanel);
+            if (growthBudgetSlidersContainer != null && cityStats != null)
+                growthBudgetSlidersContainer.SetActive(cityStats.simulateGrowth);
+        }
     }
 
     public void CloseAll()
@@ -53,9 +59,7 @@ public class DataPopupController : MonoBehaviour
 
     private void RegisterWithUIManager(PopupType type)
     {
-        Debug.Log("Registering with UIManager: " + type);
         if (uiManager == null) uiManager = FindObjectOfType<UIManager>();
         if (uiManager != null) uiManager.RegisterPopupOpened(type);
-        else Debug.Log("uiManager is null");
     }
 }

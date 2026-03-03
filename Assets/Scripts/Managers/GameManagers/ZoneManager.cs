@@ -371,12 +371,12 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
-    bool canPlaceZone(ZoneAttributes zoneAttributes, Vector3 gridPosition)
+    bool canPlaceZone(ZoneAttributes zoneAttributes, Vector3 gridPosition, bool requireInterstate = true)
     {
         if (zoneAttributes == null)
             return false;
 
-        if (interstateManager != null)
+        if (requireInterstate && interstateManager != null)
         {
             interstateManager.CheckInterstateConnectivity();
             if (!interstateManager.IsConnectedToInterstate)
@@ -597,6 +597,43 @@ public class ZoneManager : MonoBehaviour
         {
             gameNotificationManager.PostError("Cannot place zone here.");
         }
+    }
+
+    /// <summary>
+    /// Place a zone at the given grid position with the given zone type (for programmatic/auto-zoning).
+    /// Caller is responsible for affordability and budget. Skips interstate check so auto-zoning works even if connectivity lags.
+    /// </summary>
+    public bool PlaceZoneAt(Vector2 gridPosition, Zone.ZoneType zoneType)
+    {
+        var zoneAttributes = GetZoneAttributes(zoneType);
+        if (zoneAttributes == null)
+            return false;
+        if (!cityStats.CanAfford(zoneAttributes.ConstructionCost))
+            return false;
+        if (!canPlaceZone(zoneAttributes, gridPosition, requireInterstate: false))
+            return false;
+
+        Cell cell = gridManager.GetCell((int)gridPosition.x, (int)gridPosition.y);
+        if (cell == null) return false;
+        Vector2 worldPosition = cell.transformPosition;
+
+        gridManager.DestroyCellChildrenExceptForest(cell.gameObject, gridPosition);
+
+        GameObject zonePrefab = GetRandomZonePrefab(zoneType, 1);
+        if (zonePrefab == null)
+            return false;
+
+        GameObject zoneTile = Instantiate(zonePrefab, worldPosition, Quaternion.identity);
+        Zone zone = zoneTile.AddComponent<Zone>();
+        zone.zoneType = zoneType;
+        zone.zoneCategory = Zone.ZoneCategory.Zoning;
+
+        UpdatePlacedZoneCellAttributes(cell, zoneType, zonePrefab, zoneAttributes);
+        gridManager.SetZoningTileSortingOrder(zoneTile, (int)gridPosition.x, (int)gridPosition.y);
+        addZonedTileToList(gridPosition, zoneType);
+        cityStats.AddZoneBuildingCount(zoneType);
+        gridManager.InvalidateRoadCache();
+        return true;
     }
 
     public void removeZonedPositionFromList(Vector2 zonedPosition, Zone.ZoneType zoneType)

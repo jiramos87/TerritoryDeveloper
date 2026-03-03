@@ -59,6 +59,10 @@ public class CityStats : MonoBehaviour
     public int forestCellCount;
     public float forestCoveragePercentage;
 
+    [Header("Simulation")]
+    public bool simulateGrowth = false;
+    public List<CommuneData> communes = new List<CommuneData>();
+
     void Start()
     {
         population = 0;
@@ -703,7 +707,9 @@ public class CityStats : MonoBehaviour
             cityName = cityName,
             // Forest statistics
             forestCellCount = forestCellCount,
-            forestCoveragePercentage = forestCoveragePercentage
+            forestCoveragePercentage = forestCoveragePercentage,
+            simulateGrowth = simulateGrowth,
+            communes = communes
         };
 
         return cityStatsData;
@@ -750,6 +756,8 @@ public class CityStats : MonoBehaviour
         // Restore forest statistics
         forestCellCount = cityStatsData.forestCellCount;
         forestCoveragePercentage = cityStatsData.forestCoveragePercentage;
+        simulateGrowth = cityStatsData.simulateGrowth;
+        communes = cityStatsData.communes != null ? new List<CommuneData>(cityStatsData.communes) : new List<CommuneData>();
     }
 
     public void ResetCityStats()
@@ -770,6 +778,10 @@ public class CityStats : MonoBehaviour
         // Reset forest statistics
         forestCellCount = 0;
         forestCoveragePercentage = 0f;
+
+        simulateGrowth = false;
+        communes?.Clear();
+        if (communes == null) communes = new List<CommuneData>();
     }
 
     /// <summary>
@@ -878,4 +890,7 @@ public struct CityStatsData
     // Forest statistics
     public int forestCellCount;
     public float forestCoveragePercentage;
+
+    public bool simulateGrowth;
+    public List<CommuneData> communes;
 }

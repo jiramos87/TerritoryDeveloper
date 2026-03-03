@@ -67,7 +67,13 @@ public class GeographyManager : MonoBehaviour
 
         if (interstateManager != null)
         {
-            interstateManager.GenerateAndPlaceInterstate();
+            const int maxInterstateAttempts = 3;
+            for (int attempt = 0; attempt < maxInterstateAttempts; attempt++)
+            {
+                interstateManager.GenerateAndPlaceInterstate();
+                if (interstateManager.InterstatePositions != null && interstateManager.InterstatePositions.Count >= 2)
+                    break;
+            }
         }
 
         if (forestManager != null)
@@ -85,13 +91,20 @@ public class GeographyManager : MonoBehaviour
 
         if (interstateManager != null && GameNotificationManager.Instance != null)
         {
-            CityStats cityStats = FindObjectOfType<CityStats>();
-            string cityName = (cityStats != null && !string.IsNullOrEmpty(cityStats.cityName)) ? cityStats.cityName : "your city";
-            GameNotificationManager.Instance.PostNotification(
-                "Welcome to " + cityName + "! An Interstate Highway crosses your territory. Build a road connecting to it to start developing your city.",
-                GameNotificationManager.NotificationType.Info,
-                8f
-            );
+            if (interstateManager.InterstatePositions != null && interstateManager.InterstatePositions.Count >= 2)
+            {
+                CityStats cityStats = FindObjectOfType<CityStats>();
+                string cityName = (cityStats != null && !string.IsNullOrEmpty(cityStats.cityName)) ? cityStats.cityName : "your city";
+                GameNotificationManager.Instance.PostNotification(
+                    "Welcome to " + cityName + "! An Interstate Highway crosses your territory. Build a road connecting to it to start developing your city.",
+                    GameNotificationManager.NotificationType.Info,
+                    8f
+                );
+            }
+            else
+            {
+                Debug.LogWarning("GeographyManager: Interstate could not be placed (no valid path). Game continues without interstate.");
+            }
         }
     }
 

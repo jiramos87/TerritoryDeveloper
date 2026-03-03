@@ -67,65 +67,112 @@ public class InterstateManager : MonoBehaviour
         }
     }
 
+    const int MaxRouteAttempts = 80;
+    const int PathTriesPerPair = 8;
+
     /// <summary>
-    /// Generate interstate route and store positions. Does not place tiles (call PlaceInterstateTiles after).
+    /// Returns border indices (0=South, 1=North, 2=West, 3=East) that have at least one land cell valid for interstate.
+    /// </summary>
+    private static List<int> GetBordersWithLand(int w, int h, HeightMap heightMap)
+    {
+        var list = new List<int>();
+        for (int b = 0; b < 4; b++)
+        {
+            if (HasAnyValidCellOnBorder(b, w, h, heightMap))
+                list.Add(b);
+        }
+        return list;
+    }
+
+    private static bool HasAnyValidCellOnBorder(int border, int w, int h, HeightMap heightMap)
+    {
+        switch (border)
+        {
+            case 0:
+                for (int x = 0; x < w; x++)
+                    if (IsCellAllowedForInterstate(x, 0, w, h, heightMap)) return true;
+                break;
+            case 1:
+                for (int x = 0; x < w; x++)
+                    if (IsCellAllowedForInterstate(x, h - 1, w, h, heightMap)) return true;
+                break;
+            case 2:
+                for (int y = 0; y < h; y++)
+                    if (IsCellAllowedForInterstate(0, y, w, h, heightMap)) return true;
+                break;
+            case 3:
+                for (int y = 0; y < h; y++)
+                    if (IsCellAllowedForInterstate(w - 1, y, w, h, heightMap)) return true;
+                break;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Generate interstate route and store positions. Retries until valid path exists (two land connections, path reaches exit).
+    /// Does not place tiles (call GenerateAndPlaceInterstate after).
     /// </summary>
     public List<Vector2Int> GenerateInterstateRoute()
     {
         interstatePositions.Clear();
-        if (gridManager == null || terrainManager == null) return interstatePositions;
+        EntryPoint = null;
+        ExitPoint = null;
+        EntryBorder = -1;
+        ExitBorder = -1;
 
+        if (gridManager == null || terrainManager == null) return interstatePositions;
         HeightMap heightMap = terrainManager.GetHeightMap();
         if (heightMap == null) return interstatePositions;
 
         int w = gridManager.width;
         int h = gridManager.height;
+        List<int> bordersWithLand = GetBordersWithLand(w, h, heightMap);
+        if (bordersWithLand.Count < 2)
+        {
+            Debug.LogWarning("InterstateManager: Fewer than 2 borders have land cells. Cannot place interstate.");
+            return interstatePositions;
+        }
 
-        int borderA, borderB;
         RegionalMapManager regionManager = FindObjectOfType<RegionalMapManager>();
-        if (regionManager != null && regionManager.TryGetInterstateBorders(out int rA, out int rB))
+        for (int attempt = 0; attempt < MaxRouteAttempts; attempt++)
         {
-            borderA = rA;
-            borderB = rB;
-        }
-        else
-        {
-            List<int> borders = new List<int> { 0, 1, 2, 3 };
-            borderA = borders[Random.Range(0, borders.Count)];
-            borders.Remove(borderA);
-            borderB = borders[Random.Range(0, borders.Count)];
-        }
-
-        Vector2Int? entry = GetValidBorderCell(borderA, w, h, heightMap);
-        Vector2Int? exit = GetValidBorderCell(borderB, w, h, heightMap);
-        if (!entry.HasValue || !exit.HasValue)
-        {
-            Debug.LogWarning("InterstateManager: Could not find valid entry/exit on borders. Using fallback.");
-            entry = GetValidBorderCell(0, w, h, heightMap);
-            exit = GetValidBorderCell(1, w, h, heightMap);
-            if (!entry.HasValue || !exit.HasValue) return interstatePositions;
-        }
-
-        List<Vector2Int> path = null;
-        for (int tryCount = 0; tryCount < 3; tryCount++)
-        {
-            path = BiasedWalkPath(entry.Value, exit.Value, w, h, heightMap);
-            if (path != null && path.Count > 0 && path[path.Count - 1] == exit.Value)
-                break;
-        }
-
-        if (path != null && path.Count > 0 && path[path.Count - 1] == exit.Value)
-        {
-            interstatePositions = path;
-            if (interstatePositions.Count >= 2)
+            int borderA, borderB;
+            if (regionManager != null && regionManager.TryGetInterstateBorders(out int rA, out int rB)
+                && bordersWithLand.Contains(rA) && bordersWithLand.Contains(rB))
             {
-                EntryPoint = interstatePositions[0];
-                ExitPoint = interstatePositions[interstatePositions.Count - 1];
-                EntryBorder = borderA;
-                ExitBorder = borderB;
+                borderA = rA;
+                borderB = rB;
+            }
+            else
+            {
+                int ia = Random.Range(0, bordersWithLand.Count);
+                borderA = bordersWithLand[ia];
+                borderB = borderA;
+                while (borderB == borderA && bordersWithLand.Count > 1)
+                    borderB = bordersWithLand[Random.Range(0, bordersWithLand.Count)];
+                if (borderB == borderA) continue;
+            }
+
+            Vector2Int? entry = GetValidBorderCell(borderA, w, h, heightMap);
+            Vector2Int? exit = GetValidBorderCell(borderB, w, h, heightMap);
+            if (!entry.HasValue || !exit.HasValue) continue;
+
+            for (int pathTry = 0; pathTry < PathTriesPerPair; pathTry++)
+            {
+                List<Vector2Int> path = BiasedWalkPath(entry.Value, exit.Value, w, h, heightMap);
+                if (path != null && path.Count >= 2 && path[path.Count - 1] == exit.Value)
+                {
+                    interstatePositions = path;
+                    EntryPoint = interstatePositions[0];
+                    ExitPoint = interstatePositions[interstatePositions.Count - 1];
+                    EntryBorder = borderA;
+                    ExitBorder = borderB;
+                    return interstatePositions;
+                }
             }
         }
 
+        Debug.LogWarning("InterstateManager: Could not find valid path after " + MaxRouteAttempts + " attempts. Interstate not placed.");
         return interstatePositions;
     }
 

@@ -40,6 +40,10 @@ public class GridManager : MonoBehaviour
         halfWidth = tileWidth / 2f;
         halfHeight = tileHeight / 2f;
 
+        // Default to 64x64 when not set in Inspector (balance between area and performance)
+        if (width <= 0) width = 64;
+        if (height <= 0) height = 64;
+
         if (zoneManager == null)
         {
             zoneManager = FindObjectOfType<ZoneManager>();
@@ -407,6 +411,7 @@ public class GridManager : MonoBehaviour
     {
         cellComponent.buildingType = null;
         cellComponent.powerPlant = null;
+        cellComponent.occupiedBuilding = null;
         cellComponent.population = 0;
         cellComponent.powerConsumption = 0;
         cellComponent.happiness = 0;
@@ -480,7 +485,7 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    void BulldozeBuildingTiles(GameObject cell)
+    void BulldozeBuildingTiles(GameObject cell, bool showAnimation = true)
     {
         Cell cellComponent = cell.GetComponent<Cell>();
 
@@ -490,7 +495,7 @@ public class GridManager : MonoBehaviour
         int preSortingOrder = cellComponent.sortingOrder;
 
         // Show animation before demolishing for better visual effect
-        if (uiManager != null)
+        if (showAnimation && uiManager != null)
         {
             uiManager.ShowDemolitionAnimationCentered(cell, buildingSize, preSortingOrder);
         }
@@ -543,6 +548,8 @@ public class GridManager : MonoBehaviour
         bool restoredWaterSlope = hm != null && terrainManager.RestoreTerrainForCell(gx, gy, hm);
         if (!restoredWaterSlope)
             RestoreTile(cell);
+        if (roadManager != null)
+            roadManager.UpdateAdjacentRoadPrefabsAt(new Vector2(gx, gy));
     }
 
     void HandleBuildingStatsReset(Cell cellComponent, Zone.ZoneType zoneType)
@@ -570,13 +577,33 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    void HandleBulldozeTile(Zone.ZoneType zoneType, GameObject cell)
+    void HandleBulldozeTile(Zone.ZoneType zoneType, GameObject cell, bool showAnimation = true)
     {
         Cell cellComponent = cell.GetComponent<Cell>();
 
         HandleBuildingStatsReset(cellComponent, zoneType);
 
-        BulldozeBuildingTiles(cell);
+        BulldozeBuildingTiles(cell, showAnimation);
+    }
+
+    /// <summary>
+    /// Demolish the building/zoning at the given grid position. Uses same stats and logic as manual bulldoze.
+    /// Returns true if something was demolished. When showAnimation is false (e.g. expropriation), road cache is invalidated.
+    /// </summary>
+    public bool DemolishCellAt(Vector2 gridPosition, bool showAnimation = true)
+    {
+        int gx = (int)gridPosition.x;
+        int gy = (int)gridPosition.y;
+        if (gx < 0 || gx >= width || gy < 0 || gy >= height) return false;
+        GameObject cell = gridArray[gx, gy];
+        Cell cellComponent = cell.GetComponent<Cell>();
+        if (cellComponent == null || !CanBulldoze(cellComponent)) return false;
+
+        Zone.ZoneType zoneType = cellComponent.zoneType;
+        HandleBulldozeTile(zoneType, cell, showAnimation);
+        if (!showAnimation)
+            InvalidateRoadCache();
+        return true;
     }
 
     bool CanBulldoze(Cell cell)
@@ -611,6 +638,15 @@ public class GridManager : MonoBehaviour
             case Zone.ZoneType.IndustrialLightBuilding:
             case Zone.ZoneType.IndustrialMediumBuilding:
             case Zone.ZoneType.IndustrialHeavyBuilding:
+            case Zone.ZoneType.ResidentialLightZoning:
+            case Zone.ZoneType.ResidentialMediumZoning:
+            case Zone.ZoneType.ResidentialHeavyZoning:
+            case Zone.ZoneType.CommercialLightZoning:
+            case Zone.ZoneType.CommercialMediumZoning:
+            case Zone.ZoneType.CommercialHeavyZoning:
+            case Zone.ZoneType.IndustrialLightZoning:
+            case Zone.ZoneType.IndustrialMediumZoning:
+            case Zone.ZoneType.IndustrialHeavyZoning:
                 return true;
             default:
                 return false;
@@ -747,6 +783,8 @@ public class GridManager : MonoBehaviour
     /// <summary>
     /// Destroys all children of the cell except the optional exclude object (e.g. the building being placed).
     /// Does not destroy terrain (flat grass) or slope children (land/water slope).
+    /// Used by DemolishCellAt (including expropriation with showAnimation: false): any child with
+    /// ZoneCategory.Zoning is removed from the zone manager lists (removeZonedPositionFromList) before destroy.
     /// </summary>
     public void DestroyCellChildren(GameObject cell, Vector2 gridPosition, GameObject excludeFromDestroy)
     {
@@ -1537,6 +1575,11 @@ public class GridManager : MonoBehaviour
         return TryValidateBuildingPlacement(gridPosition, buildingSize, isWaterPlant, out _);
     }
 
+    public bool canPlaceBuilding(Vector2 gridPosition, int buildingSize, bool isWaterPlant)
+    {
+        return TryValidateBuildingPlacement(gridPosition, buildingSize, isWaterPlant, out _);
+    }
+
     void UpdatePlacedBuildingCellAttributes(Cell cell, int buildingSize, PowerPlant powerPlant, WaterPlant waterPlant, GameObject buildingPrefab, Zone.ZoneType zoneType = Zone.ZoneType.Building, GameObject building = null)
     {
         cell.occupiedBuilding = building;
@@ -1642,6 +1685,31 @@ public class GridManager : MonoBehaviour
         building.transform.SetParent(pivotCell.gameObject.transform);
 
         SetZoneBuildingSortingOrder(building, (int)gridPos.x, (int)gridPos.y, buildingSize);
+    }
+
+    /// <summary>
+    /// Place a building programmatically (e.g. auto resource planner). Caller is responsible for budget and affordability.
+    /// Does not deduct money. Returns true if placed.
+    /// </summary>
+    public bool PlaceBuildingProgrammatic(Vector2 gridPos, IBuilding buildingTemplate)
+    {
+        if (buildingTemplate == null) return false;
+        int buildingSize = buildingTemplate.BuildingSize;
+        bool isWaterPlant = buildingTemplate is WaterPlant;
+        if (!TryValidateBuildingPlacement(gridPos, buildingSize, isWaterPlant, out _))
+            return false;
+
+        Vector2 pivotGridPos = new Vector2(gridPos.x, gridPos.y);
+        Vector2 position = GetBuildingPlacementWorldPosition(pivotGridPos, buildingSize);
+        Vector3 worldPosition = new Vector3(position.x, position.y, 0f);
+        GameObject building = Instantiate(buildingTemplate.Prefab, worldPosition, Quaternion.identity);
+        building.transform.SetParent(gridArray[(int)pivotGridPos.x, (int)pivotGridPos.y].transform);
+        SetZoneBuildingSortingOrder(building, (int)pivotGridPos.x, (int)pivotGridPos.y, buildingSize);
+
+        IBuilding placedIBuilding = building.GetComponent<PowerPlant>() as IBuilding ?? building.GetComponent<WaterPlant>() as IBuilding;
+        if (placedIBuilding != null)
+            HandleBuildingPlacementAttributesUpdate(placedIBuilding, pivotGridPos, building, buildingTemplate.Prefab);
+        return true;
     }
 
     void PlaceBuilding(Vector2 gridPos, IBuilding iBuilding)
@@ -1752,5 +1820,201 @@ public class GridManager : MonoBehaviour
             return true;
         }
         return false;
+    }
+
+    // Road/path helpers for auto-growth (cache invalidated when grid changes)
+    private List<Vector2Int> cachedRoadPositions;
+    private List<Vector2Int> cachedRoadEdgePositions;
+    private bool roadCacheDirty = true;
+
+    public void InvalidateRoadCache()
+    {
+        roadCacheDirty = true;
+    }
+
+    public List<Vector2Int> GetAllRoadPositions()
+    {
+        if (!roadCacheDirty && cachedRoadPositions != null)
+            return cachedRoadPositions;
+        cachedRoadPositions = new List<Vector2Int>();
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Cell c = GetCell(x, y);
+                if (c != null && c.zoneType == Zone.ZoneType.Road)
+                    cachedRoadPositions.Add(new Vector2Int(x, y));
+            }
+        }
+        cachedRoadEdgePositions = null;
+        roadCacheDirty = false;
+        return cachedRoadPositions;
+    }
+
+    public List<Vector2Int> GetRoadEdgePositions()
+    {
+        if (cachedRoadEdgePositions != null && !roadCacheDirty)
+            return cachedRoadEdgePositions;
+        List<Vector2Int> all = GetAllRoadPositions();
+        cachedRoadEdgePositions = new List<Vector2Int>();
+        foreach (Vector2Int p in all)
+        {
+            bool hasExpandableNeighbor = false;
+            if (IsValidGridPosition(new Vector2(p.x + 1, p.y))) { Cell n = GetCell(p.x + 1, p.y); if (n != null && (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)) hasExpandableNeighbor = true; }
+            if (!hasExpandableNeighbor && IsValidGridPosition(new Vector2(p.x - 1, p.y))) { Cell n = GetCell(p.x - 1, p.y); if (n != null && (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)) hasExpandableNeighbor = true; }
+            if (!hasExpandableNeighbor && IsValidGridPosition(new Vector2(p.x, p.y + 1))) { Cell n = GetCell(p.x, p.y + 1); if (n != null && (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)) hasExpandableNeighbor = true; }
+            if (!hasExpandableNeighbor && IsValidGridPosition(new Vector2(p.x, p.y - 1))) { Cell n = GetCell(p.x, p.y - 1); if (n != null && (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)) hasExpandableNeighbor = true; }
+            if (hasExpandableNeighbor)
+                cachedRoadEdgePositions.Add(p);
+        }
+        return cachedRoadEdgePositions;
+    }
+
+    /// <summary>Number of cardinal neighbors of (gx,gy) that are zoneable (Grass, Forest, or Flat/N-S/E-W slope). Used for road-reservation in auto-zoning.</summary>
+    public int CountGrassNeighbors(int gx, int gy)
+    {
+        if (gx < 0 || gx >= width || gy < 0 || gy >= height) return 0;
+        int count = 0;
+        int[] dx = { 1, -1, 0, 0 }, dy = { 0, 0, 1, -1 };
+        for (int i = 0; i < 4; i++)
+        {
+            int nx = gx + dx[i], ny = gy + dy[i];
+            if (nx >= 0 && nx < width && ny >= 0 && ny < height)
+            {
+                Cell c = GetCell(nx, ny);
+                if (c != null && IsZoneableNeighbor(c, nx, ny))
+                    count++;
+            }
+        }
+        return count;
+    }
+
+    /// <summary>True if this neighbor cell is valid for zoning (Grass, Forest, or Flat/N-S/E-W slope).</summary>
+    public bool IsZoneableNeighbor(Cell c, int x, int y)
+    {
+        if (c == null) return false;
+        if (c.zoneType == Zone.ZoneType.Grass || c.HasForest()) return true;
+        if (terrainManager == null) return false;
+        TerrainSlopeType slope = terrainManager.GetTerrainSlopeTypeAt(x, y);
+        return slope == TerrainSlopeType.Flat || slope == TerrainSlopeType.North || slope == TerrainSlopeType.South || slope == TerrainSlopeType.East || slope == TerrainSlopeType.West;
+    }
+
+    /// <summary>True if at least one of the 4 cardinal neighbors of (x,y) is a road.</summary>
+    public bool IsAdjacentToRoad(int x, int y)
+    {
+        if (x < 0 || x >= width || y < 0 || y >= height) return false;
+        int[] dx = { 1, -1, 0, 0 }, dy = { 0, 0, 1, -1 };
+        for (int i = 0; i < 4; i++)
+        {
+            int nx = x + dx[i], ny = y + dy[i];
+            if (nx >= 0 && nx < width && ny >= 0 && ny < height)
+            {
+                Cell c = GetCell(nx, ny);
+                if (c != null && c.zoneType == Zone.ZoneType.Road)
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// A* path over walkable cells (grass or road). Prefers flat terrain; cardinal slopes cost more; diagonal slopes are impassable.
+    /// Max 200 nodes explored. Returns path including start and end, or empty if not found.
+    /// </summary>
+    public List<Vector2Int> FindPath(Vector2Int from, Vector2Int to)
+    {
+        const int maxNodes = 200;
+        if (!IsWalkable(from.x, from.y) || !IsWalkable(to.x, to.y))
+            return new List<Vector2Int>();
+        var open = new List<Vector2Int>();
+        var closed = new HashSet<Vector2Int>();
+        var gScore = new Dictionary<Vector2Int, int>();
+        var fScore = new Dictionary<Vector2Int, int>();
+        var cameFrom = new Dictionary<Vector2Int, Vector2Int>();
+        gScore[from] = 0;
+        fScore[from] = Heuristic(from, to);
+        open.Add(from);
+        int explored = 0;
+        while (open.Count > 0 && explored < maxNodes)
+        {
+            explored++;
+            open.Sort((a, b) => (fScore.ContainsKey(a) ? fScore[a] : int.MaxValue).CompareTo(fScore.ContainsKey(b) ? fScore[b] : int.MaxValue));
+            Vector2Int current = open[0];
+            open.RemoveAt(0);
+            if (current == to)
+            {
+                var path = new List<Vector2Int>();
+                while (cameFrom.ContainsKey(current))
+                {
+                    path.Add(current);
+                    current = cameFrom[current];
+                }
+                path.Add(from);
+                path.Reverse();
+                return path;
+            }
+            closed.Add(current);
+            foreach (Vector2Int neighbor in GetWalkableNeighbors(current))
+            {
+                if (closed.Contains(neighbor)) continue;
+                int stepCost = GetRoadStepCost(neighbor.x, neighbor.y);
+                if (stepCost == int.MaxValue) continue;
+                int tentative = (gScore.ContainsKey(current) ? gScore[current] : int.MaxValue) + stepCost;
+                if (!gScore.ContainsKey(neighbor) || tentative < gScore[neighbor])
+                {
+                    cameFrom[neighbor] = current;
+                    gScore[neighbor] = tentative;
+                    fScore[neighbor] = tentative + Heuristic(neighbor, to);
+                    if (!open.Contains(neighbor))
+                        open.Add(neighbor);
+                }
+            }
+        }
+        return new List<Vector2Int>();
+    }
+
+    /// <summary>
+    /// Cost to step onto (x,y) for road pathfinding: 1 = flat, higher = slope, MaxValue = impassable (e.g. diagonal slope).
+    /// </summary>
+    private int GetRoadStepCost(int x, int y)
+    {
+        if (!IsWalkable(x, y)) return int.MaxValue;
+        if (terrainManager == null) return 1;
+        TerrainSlopeType t = terrainManager.GetTerrainSlopeTypeAt(x, y);
+        switch (t)
+        {
+            case TerrainSlopeType.Flat: return 1;
+            case TerrainSlopeType.North:
+            case TerrainSlopeType.South:
+            case TerrainSlopeType.East:
+            case TerrainSlopeType.West: return 8;
+            default: return int.MaxValue;
+        }
+    }
+
+    private bool IsWalkable(int x, int y)
+    {
+        if (x < 0 || x >= width || y < 0 || y >= height) return false;
+        Cell c = GetCell(x, y);
+        if (c == null) return false;
+        return c.zoneType == Zone.ZoneType.Grass || c.zoneType == Zone.ZoneType.Road;
+    }
+
+    private List<Vector2Int> GetWalkableNeighbors(Vector2Int p)
+    {
+        var list = new List<Vector2Int>();
+        int[] dx = { 1, -1, 0, 0 }, dy = { 0, 0, 1, -1 };
+        for (int i = 0; i < 4; i++)
+        {
+            int nx = p.x + dx[i], ny = p.y + dy[i];
+            if (IsWalkable(nx, ny))
+                list.Add(new Vector2Int(nx, ny));
+        }
+        return list;
+    }
+
+    private static int Heuristic(Vector2Int a, Vector2Int b)
+    {
+        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
     }
 }

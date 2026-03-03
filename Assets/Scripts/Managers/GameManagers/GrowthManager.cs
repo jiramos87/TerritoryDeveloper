@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+[System.Obsolete("Auto-zoning is now handled by AutoZoningManager. This component is kept for reference only.")]
 public class GrowthManager : MonoBehaviour
 {
     [Header("Auto-Growth Configuration")]

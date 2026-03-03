@@ -12,6 +12,7 @@ public class TimeManager : MonoBehaviour
     public AnimatorManager animatorManager;
     public ZoneManager zoneManager;
     public InterstateManager interstateManager;
+    public SimulationManager simulationManager;
     public float[] timeSpeeds = new float[] { 0f, 0.50f, 1.0f, 2.0f, 4.0f };
     private int currentTimeSpeedIndex = 0;
 
@@ -40,11 +41,17 @@ public class TimeManager : MonoBehaviour
             cityStats.PerformDailyUpdates();
             zoneManager.CalculateAvailableSquareZonedSections();
             PlaceAllZonedBuildings();
+            if (simulationManager != null)
+                simulationManager.ProcessSimulationTick();
+            else if (cityStats != null && cityStats.simulateGrowth)
+                Debug.LogWarning("[TimeManager] Daily tick: simulationManager is null but simulateGrowth is true - auto-growth will not run.");
 
             if (currentDate.Day == 1)
             {
                 cityStats.PerformMonthlyUpdates();
                 economyManager.ProcessDailyEconomy();
+                if (simulationManager != null)
+                    simulationManager.ProcessMonthlyReset();
                 if (interstateManager != null)
                     interstateManager.CheckInterstateConnectivity();
             }

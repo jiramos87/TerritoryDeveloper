@@ -33,6 +33,11 @@ public class GameSaveManager : MonoBehaviour
             regionalMapManager.SyncCityNameToPlayerTerritory();
             saveData.regionalMap = regionalMapManager.GetRegionalMapForSave();
         }
+        GrowthBudgetManager growthBudgetManager = FindObjectOfType<GrowthBudgetManager>();
+        if (growthBudgetManager != null)
+            saveData.growthBudget = growthBudgetManager.data.Clone();
+        // Proposal flow disabled: do not persist pending proposals
+        saveData.pendingProposals = new List<UrbanizationProposal>();
         // saveData.playerSettings = GetPlayerSettings();
 
         string json = JsonUtility.ToJson(saveData);
@@ -62,6 +67,15 @@ public class GameSaveManager : MonoBehaviour
                 regionalMapManager.RestoreRegionalMap(saveData.regionalMap);
                 regionalMapManager.PlaceBorderSigns();
             }
+            GrowthBudgetManager growthBudgetManager = FindObjectOfType<GrowthBudgetManager>();
+            if (growthBudgetManager != null && saveData.growthBudget != null)
+            {
+                growthBudgetManager.data = saveData.growthBudget.Clone();
+            }
+            // Proposal flow disabled: clear any pending proposals on load
+            UrbanizationProposalManager proposalManager = FindObjectOfType<UrbanizationProposalManager>();
+            if (proposalManager != null)
+                proposalManager.RestorePendingProposals(new List<UrbanizationProposal>());
         }
         else
         {
@@ -83,6 +97,12 @@ public class GameSaveManager : MonoBehaviour
                 cityStats.cityName = playerTerritory.cityName;
         }
         timeManager.ResetInGameTime();
+        GrowthBudgetManager growthBudgetManager = FindObjectOfType<GrowthBudgetManager>();
+        if (growthBudgetManager != null)
+            growthBudgetManager.data = new GrowthBudgetData();
+        UrbanizationProposalManager proposalManager = FindObjectOfType<UrbanizationProposalManager>();
+        if (proposalManager != null)
+            proposalManager.RestorePendingProposals(new List<UrbanizationProposal>());
     }
 }
 
@@ -99,4 +119,6 @@ public class GameSaveData
 
     // public PlayerSettingsData playerSettings;
     public CityStatsData cityStats;
+    public GrowthBudgetData growthBudget;
+    public List<UrbanizationProposal> pendingProposals;
 }

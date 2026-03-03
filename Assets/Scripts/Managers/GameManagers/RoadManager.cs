@@ -177,6 +177,78 @@ public class RoadManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Refreshes prefabs of all road tiles adjacent to the given position so they connect correctly.
+    /// Use after programmatic placement (e.g. AutoRoadBuilder) so existing roads update to T-junctions/crossings.
+    /// </summary>
+    public void UpdateAdjacentRoadPrefabsAt(Vector2 gridPos)
+    {
+        var toRefresh = new List<Vector2>();
+        Vector2[] dirs = { new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, -1) };
+        foreach (Vector2 d in dirs)
+        {
+            Vector2 n = gridPos + d;
+            if (IsRoadAt(n))
+                toRefresh.Add(n);
+        }
+        foreach (Vector2 pos in toRefresh)
+            RefreshRoadPrefabAt(pos);
+        if (gridManager != null)
+            gridManager.InvalidateRoadCache();
+    }
+
+    void RefreshRoadPrefabAt(Vector2 gridPos)
+    {
+        if (gridManager.IsCellOccupiedByBuilding((int)gridPos.x, (int)gridPos.y))
+            return;
+        GameObject cell = gridManager.GetGridCell(gridPos);
+        if (cell == null) return;
+        Cell cellComponentCheck = cell.GetComponent<Cell>();
+        if (cellComponentCheck != null && cellComponentCheck.isInterstate)
+            return;
+
+        Vector2 prevGridPos = gridPos;
+        Vector2[] dirs = { new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, -1) };
+        foreach (Vector2 d in dirs)
+        {
+            if (IsRoadAt(gridPos + d))
+            {
+                prevGridPos = gridPos + d;
+                break;
+            }
+        }
+
+        GameObject correctRoadPrefab = GetCorrectRoadPrefab(prevGridPos, gridPos, false, false);
+        DestroyPreviousRoadTile(cell, gridPos);
+
+        Cell cellComponent = cell.GetComponent<Cell>();
+        if (cellComponent == null) return;
+        cellComponent.RemoveForestForBuilding();
+        int roadPlacedAtHeight = 0;
+        int terrainHeight = cellComponent.GetCellInstanceHeight();
+
+        Vector2 worldPos;
+        if (terrainHeight == 0)
+        {
+            roadPlacedAtHeight = 1;
+            worldPos = gridManager.GetWorldPositionVector((int)gridPos.x, (int)gridPos.y, roadPlacedAtHeight);
+        }
+        else
+        {
+            worldPos = gridManager.GetWorldPosition((int)gridPos.x, (int)gridPos.y);
+        }
+
+        GameObject roadTile = Instantiate(correctRoadPrefab, worldPos, Quaternion.identity);
+        roadTile.transform.SetParent(cellComponent.gameObject.transform);
+        roadTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 1);
+
+        Zone zone = roadTile.AddComponent<Zone>();
+        zone.zoneType = Zone.ZoneType.Road;
+
+        UpdateRoadCellAttributes(cellComponent, roadTile, Zone.ZoneType.Road);
+        gridManager.SetRoadSortingOrder(roadTile, (int)gridPos.x, (int)gridPos.y);
+    }
+
     void DrawPreviewLine(Vector2 start, Vector2 end)
     {
         ClearPreview();
@@ -693,6 +765,89 @@ public class RoadManager : MonoBehaviour
         cellComponent.happiness = 0;
         cellComponent.isPivot = false;
     }
+
+    /// <summary>
+    /// Returns true if a road can be placed at the given grid position (terrain, not building, not interstate).
+    /// </summary>
+    public bool CanPlaceRoadAt(Vector2 gridPos)
+    {
+        int gx = (int)gridPos.x;
+        int gy = (int)gridPos.y;
+        if (!terrainManager.CanPlaceRoad(gx, gy))
+            return false;
+        if (gridManager.IsCellOccupiedByBuilding(gx, gy))
+            return false;
+        GameObject cell = gridManager.GetGridCell(gridPos);
+        if (cell == null) return false;
+        Cell c = cell.GetComponent<Cell>();
+        if (c != null && c.isInterstate)
+            return false;
+        return true;
+    }
+
+    /// <summary>
+    /// Places a single road tile at the given grid position. Uses existing road neighbors to pick prefab.
+    /// Caller is responsible for affordability and budget. Returns true if placed.
+    /// </summary>
+    public bool PlaceRoadTileAt(Vector2 gridPos)
+    {
+        if (!CanPlaceRoadAt(gridPos))
+            return false;
+
+        Vector2 prevGridPos = gridPos + new Vector2(0, 1);
+        Vector2[] dirs = { new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, -1) };
+        foreach (Vector2 d in dirs)
+        {
+            if (IsRoadAt(gridPos + d))
+            {
+                prevGridPos = gridPos + d;
+                break;
+            }
+        }
+
+        GameObject cell = gridManager.GetGridCell(gridPos);
+        if (cell == null) return false;
+        Cell cellComponentCheck = cell.GetComponent<Cell>();
+        if (cellComponentCheck != null && cellComponentCheck.isInterstate)
+            return false;
+
+        bool isCenterRoadTile = true;
+        bool isPreview = false;
+        GameObject correctRoadPrefab = GetCorrectRoadPrefab(prevGridPos, gridPos, isCenterRoadTile, isPreview);
+
+        DestroyPreviousRoadTile(cell, gridPos);
+
+        Cell cellComponent = cell.GetComponent<Cell>();
+        cellComponent.RemoveForestForBuilding();
+        int roadPlacedAtHeight = 0;
+        int terrainHeight = cellComponent.GetCellInstanceHeight();
+
+        Vector2 worldPos;
+        if (terrainHeight == 0)
+        {
+            roadPlacedAtHeight = 1;
+            worldPos = gridManager.GetWorldPositionVector((int)gridPos.x, (int)gridPos.y, roadPlacedAtHeight);
+        }
+        else
+        {
+            worldPos = gridManager.GetWorldPosition((int)gridPos.x, (int)gridPos.y);
+        }
+
+        GameObject roadTile = Instantiate(correctRoadPrefab, worldPos, Quaternion.identity);
+        roadTile.transform.SetParent(cellComponent.gameObject.transform);
+        roadTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 1);
+
+        Zone zone = roadTile.AddComponent<Zone>();
+        zone.zoneType = Zone.ZoneType.Road;
+
+        UpdateRoadCellAttributes(cellComponent, roadTile, Zone.ZoneType.Road);
+        gridManager.SetRoadSortingOrder(roadTile, (int)gridPos.x, (int)gridPos.y);
+        gridManager.InvalidateRoadCache();
+        UpdateAdjacentRoadPrefabsAt(gridPos);
+        return true;
+    }
+
+    public const int RoadCostPerTile = 50;
 
     public List<GameObject> GetRoadPrefabs()
     {

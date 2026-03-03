@@ -88,20 +88,8 @@ public class ForestManager : MonoBehaviour
 
             forestMap = new ForestMap(gridManager.width, gridManager.height);
 
-            // Build int matrix (0 = None, 1 = Sparse, 2 = Medium, 3 = Dense); only place forest where validation allows
-            int gridWidth = gridManager.width;
-            int gridHeight = gridManager.height;
-            int[,] initialForestCells = new int[gridHeight, gridWidth];
-            for (int y = 0; y < gridHeight; y++)
-            {
-                for (int x = 0; x < gridWidth; x++)
-                {
-                    if (CanPlaceForestAt(x, y))
-                        initialForestCells[y, x] = (Random.value < 0.5f) ? 2 : 0; // 2 = Medium (default type)
-                    else
-                        initialForestCells[y, x] = 0;
-                }
-            }
+            // Build int matrix (0 = None, 1 = Sparse, 2 = Medium, 3 = Dense) using chunk-based placement for economy and natural clusters
+            int[,] initialForestCells = BuildInitialForestCellsChunkBased(gridManager.width, gridManager.height);
 
             forestMap.InitializeFromIntMatrix(initialForestCells);
 
@@ -129,6 +117,59 @@ public class ForestManager : MonoBehaviour
             // Calculate initial desirability for all cells
             UpdateAllCellDesirability();
         }
+    }
+
+    private const int ForestChunkSize = 8;
+    private const float ForestChunkProbability = 0.4f;
+    private const float ForestCellInChunkProbability = 0.5f;
+
+    /// <summary>Builds initial forest matrix by chunks: fewer Random calls, natural clusters. 0 = None, 1 = Sparse, 2 = Medium, 3 = Dense.</summary>
+    private int[,] BuildInitialForestCellsChunkBased(int gridWidth, int gridHeight)
+    {
+        int[,] initialForestCells = new int[gridHeight, gridWidth];
+        HeightMap heightMap = GetTerrainHeightMap();
+
+        for (int by = 0; by < gridHeight; by += ForestChunkSize)
+        {
+            for (int bx = 0; bx < gridWidth; bx += ForestChunkSize)
+            {
+                bool chunkHasLand = false;
+                for (int oy = 0; oy < ForestChunkSize && by + oy < gridHeight; oy++)
+                {
+                    for (int ox = 0; ox < ForestChunkSize && bx + ox < gridWidth; ox++)
+                    {
+                        int x = bx + ox, y = by + oy;
+                        if (heightMap != null && heightMap.GetHeight(x, y) > TerrainManager.SEA_LEVEL)
+                        {
+                            chunkHasLand = true;
+                            break;
+                        }
+                    }
+                    if (chunkHasLand) break;
+                }
+
+                if (!chunkHasLand || Random.value >= ForestChunkProbability)
+                    continue;
+
+                for (int oy = 0; oy < ForestChunkSize && by + oy < gridHeight; oy++)
+                {
+                    for (int ox = 0; ox < ForestChunkSize && bx + ox < gridWidth; ox++)
+                    {
+                        int x = bx + ox, y = by + oy;
+                        if (heightMap != null && heightMap.GetHeight(x, y) == TerrainManager.SEA_LEVEL)
+                            continue;
+                        if (!CanPlaceForestAt(x, y))
+                            continue;
+                        if (Random.value >= ForestCellInChunkProbability)
+                            continue;
+                        float t = Random.value;
+                        initialForestCells[y, x] = t < 0.33f ? 1 : (t < 0.66f ? 2 : 3);
+                    }
+                }
+            }
+        }
+
+        return initialForestCells;
     }
 
     public bool IsForestAt(int x, int y)

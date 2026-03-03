@@ -56,17 +56,18 @@ public class WaterManager : MonoBehaviour
         if (gridManager != null)
         {
             waterMap = new WaterMap(gridManager.width, gridManager.height);
-            // First apply predefined water cells from the matrix
-            InitializeWaterBodiesFromMatrix();
 
-            // Then optionally apply water based on terrain height
-            // You can comment this out if you only want to use the predefined matrix
-            // if (terrainManager != null)
-            // {
-            //     waterMap.InitializeWaterBodiesBasedOnHeight(terrainManager.GetHeightMap(), seaLevel);
-            // }
+            if (terrainManager == null)
+                terrainManager = FindObjectOfType<TerrainManager>();
+            if (terrainManager != null && terrainManager.GetHeightMap() != null)
+            {
+                waterMap.InitializeWaterBodiesBasedOnHeight(terrainManager.GetHeightMap(), seaLevel);
+            }
+            else
+            {
+                InitializeWaterBodiesFromMatrix();
+            }
 
-            // Apply the water visuals to the grid
             UpdateWaterVisuals();
         }
     }
