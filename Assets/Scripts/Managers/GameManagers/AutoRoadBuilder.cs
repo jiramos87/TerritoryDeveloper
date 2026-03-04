@@ -24,9 +24,11 @@ public class AutoRoadBuilder : MonoBehaviour
     [Range(0f, 1f)]
     public float chancePerpendicularAtEnd = 0.6f;
     /// <summary>Min tiles along a road before we allow a perpendicular branch (avoid dense grid).</summary>
-    public int minSpacingForBranch = 4;
+    public int minSpacingForBranch = 6;
     /// <summary>Min distance from an existing parallel road when starting a new street from an edge (avoids adjacent parallel roads).</summary>
-    public int minParallelSpacingFromEdge = 2;
+    public int minParallelSpacingFromEdge = 3;
+    /// <summary>Min distance between two edges when starting new projects in the same tick (avoids multiple intersections in adjacent cells).</summary>
+    public int minEdgeSpacing = 2;
     /// <summary>Ramas cada N: interval along the street to spawn a perpendicular branch. N is chosen at random per project between branchIntervalMin and branchIntervalMax (inclusive).</summary>
     public int branchIntervalMin = 4;
     public int branchIntervalMax = 8;
@@ -34,6 +36,8 @@ public class AutoRoadBuilder : MonoBehaviour
     public int minLengthForBranch = 3;
     /// <summary>Max water tiles in a straight line for auto bridge (bridge "less than 6 tiles" = up to 5 water cells).</summary>
     public const int MaxBridgeWaterTiles = 5;
+    /// <summary>When connecting to interstate or between clusters, prefer paths that stay this many cells away from existing roads (0 = no preference).</summary>
+    public int minRoadSpacingWhenConnecting = 2;
 
     private struct StreetProject
     {
@@ -247,11 +251,26 @@ public class AutoRoadBuilder : MonoBehaviour
         foreach (Vector2Int e in edges)
             withScore.Add(new KeyValuePair<Vector2Int, int>(e, CountGrassNeighbors(e)));
         withScore.Sort((a, b) => b.Value.CompareTo(a.Value));
+        var consideredEdges = new HashSet<Vector2Int>();
         const int maxRejectLogsPerTick = 8;
         int rejectLogCount = 0;
         foreach (var kv in withScore)
         {
             Vector2Int edge = kv.Key;
+            if (minEdgeSpacing > 0)
+            {
+                bool tooCloseToConsidered = false;
+                foreach (Vector2Int c in consideredEdges)
+                {
+                    if (Mathf.Abs(edge.x - c.x) + Mathf.Abs(edge.y - c.y) < minEdgeSpacing)
+                    {
+                        tooCloseToConsidered = true;
+                        break;
+                    }
+                }
+                if (tooCloseToConsidered) continue;
+                consideredEdges.Add(edge);
+            }
             for (int d = 0; d < 4; d++)
             {
                 int nx = edge.x + Dx[d], ny = edge.y + Dy[d];
@@ -547,8 +566,15 @@ public class AutoRoadBuilder : MonoBehaviour
 
         Vector2Int from = roadPositions[Random.Range(0, roadPositions.Count)];
         Vector2Int to = interstatePositions[Random.Range(0, interstatePositions.Count)];
-        var path = gridManager.FindPath(from, to);
-        if (path == null || path.Count <= 1) return 0;
+        var path = minRoadSpacingWhenConnecting > 0
+            ? gridManager.FindPathWithRoadSpacing(from, to, minRoadSpacingWhenConnecting)
+            : gridManager.FindPath(from, to);
+        if (path == null || path.Count <= 1)
+        {
+            if (minRoadSpacingWhenConnecting > 0)
+                path = gridManager.FindPath(from, to);
+            if (path == null || path.Count <= 1) return 0;
+        }
         int placed = 0;
         foreach (Vector2Int p in path)
         {
@@ -597,8 +623,15 @@ public class AutoRoadBuilder : MonoBehaviour
         if (clusters.Count < 2) return 0;
         Vector2Int a = clusters[0][Random.Range(0, clusters[0].Count)];
         Vector2Int b = clusters[1][Random.Range(0, clusters[1].Count)];
-        var path = gridManager.FindPath(a, b);
-        if (path == null || path.Count <= 1) return 0;
+        var path = minRoadSpacingWhenConnecting > 0
+            ? gridManager.FindPathWithRoadSpacing(a, b, minRoadSpacingWhenConnecting)
+            : gridManager.FindPath(a, b);
+        if (path == null || path.Count <= 1)
+        {
+            if (minRoadSpacingWhenConnecting > 0)
+                path = gridManager.FindPath(a, b);
+            if (path == null || path.Count <= 1) return 0;
+        }
         int placed = 0;
         foreach (Vector2Int p in path)
         {

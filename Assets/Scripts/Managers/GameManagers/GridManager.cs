@@ -1923,7 +1923,24 @@ public class GridManager : MonoBehaviour
     /// </summary>
     public List<Vector2Int> FindPath(Vector2Int from, Vector2Int to)
     {
+        return FindPathWithRoadSpacing(from, to, 0);
+    }
+
+    /// <summary>
+    /// A* path with optional extra cost for cells close to existing roads, so paths tend to keep minDistanceFromRoad cells away and leave space for zones.
+    /// When minDistanceFromRoad is 0, behaves like FindPath. When &gt; 0, adds penalty for stepping on cells within that Manhattan distance of any road.
+    /// </summary>
+    public List<Vector2Int> FindPathWithRoadSpacing(Vector2Int from, Vector2Int to, int minDistanceFromRoad)
+    {
         const int maxNodes = 200;
+        const int roadProximityPenalty = 18;
+        HashSet<Vector2Int> roadSet = null;
+        if (minDistanceFromRoad > 0)
+        {
+            var roads = GetAllRoadPositions();
+            roadSet = new HashSet<Vector2Int>(roads);
+        }
+
         if (!IsWalkable(from.x, from.y) || !IsWalkable(to.x, to.y))
             return new List<Vector2Int>();
         var open = new List<Vector2Int>();
@@ -1959,6 +1976,12 @@ public class GridManager : MonoBehaviour
                 if (closed.Contains(neighbor)) continue;
                 int stepCost = GetRoadStepCost(neighbor.x, neighbor.y);
                 if (stepCost == int.MaxValue) continue;
+                if (minDistanceFromRoad > 0 && roadSet != null)
+                {
+                    int dist = MinManhattanDistanceToSet(neighbor.x, neighbor.y, roadSet);
+                    if (dist > 0 && dist < minDistanceFromRoad)
+                        stepCost += roadProximityPenalty;
+                }
                 int tentative = (gScore.ContainsKey(current) ? gScore[current] : int.MaxValue) + stepCost;
                 if (!gScore.ContainsKey(neighbor) || tentative < gScore[neighbor])
                 {
@@ -1971,6 +1994,18 @@ public class GridManager : MonoBehaviour
             }
         }
         return new List<Vector2Int>();
+    }
+
+    /// <summary>Minimum Manhattan distance from (x,y) to any position in the set.</summary>
+    private static int MinManhattanDistanceToSet(int x, int y, HashSet<Vector2Int> set)
+    {
+        int min = int.MaxValue;
+        foreach (Vector2Int p in set)
+        {
+            int d = Mathf.Abs(x - p.x) + Mathf.Abs(y - p.y);
+            if (d < min) min = d;
+        }
+        return min == int.MaxValue ? int.MaxValue : min;
     }
 
     /// <summary>

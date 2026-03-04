@@ -207,14 +207,26 @@ public class RoadManager : MonoBehaviour
         if (cellComponentCheck != null && cellComponentCheck.isInterstate)
             return;
 
+        bool hasLeft = IsRoadAt(gridPos + new Vector2(-1, 0));
+        bool hasRight = IsRoadAt(gridPos + new Vector2(1, 0));
+        bool hasUp = IsRoadAt(gridPos + new Vector2(0, 1));
+        bool hasDown = IsRoadAt(gridPos + new Vector2(0, -1));
+
         Vector2 prevGridPos = gridPos;
-        Vector2[] dirs = { new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, -1) };
-        foreach (Vector2 d in dirs)
+        if (hasLeft && hasRight && !hasUp && !hasDown)
+            prevGridPos = gridPos + new Vector2(-1, 0);
+        else if (hasUp && hasDown && !hasLeft && !hasRight)
+            prevGridPos = gridPos + new Vector2(0, -1);
+        else
         {
-            if (IsRoadAt(gridPos + d))
+            Vector2[] dirs = { new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, -1) };
+            foreach (Vector2 d in dirs)
             {
-                prevGridPos = gridPos + d;
-                break;
+                if (IsRoadAt(gridPos + d))
+                {
+                    prevGridPos = gridPos + d;
+                    break;
+                }
             }
         }
 
@@ -432,9 +444,23 @@ public class RoadManager : MonoBehaviour
         {
             return roadTilePrefabElbowUpLeft;
         }
+        else if (hasLeft && hasRight && !hasUp && !hasDown)
+        {
+            GameObject slopePrefab = TryGetSlopePrefabForStraightSegment(currGridPos, height, true);
+            if (slopePrefab != null) return slopePrefab;
+            if (height == 0) return roadTileBridgeHorizontal;
+            return roadTilePrefab2;
+        }
+        else if (hasUp && hasDown && !hasLeft && !hasRight)
+        {
+            GameObject slopePrefab = TryGetSlopePrefabForStraightSegment(currGridPos, height, false);
+            if (slopePrefab != null) return slopePrefab;
+            if (height == 0) return roadTileBridgeVertical;
+            return roadTilePrefab1;
+        }
         else if (hasLeft || hasRight)
         {
-            GameObject slopePrefab = TryGetSlopePrefabForCell(currGridPos, height);
+            GameObject slopePrefab = TryGetSlopePrefabForStraightSegment(currGridPos, height, true);
             if (slopePrefab != null) return slopePrefab;
             if (height == 0)
             {
@@ -442,10 +468,9 @@ public class RoadManager : MonoBehaviour
             }
             return roadTilePrefab2;
         }
-
         else if (hasUp || hasDown)
         {
-            GameObject slopePrefab = TryGetSlopePrefabForCell(currGridPos, height);
+            GameObject slopePrefab = TryGetSlopePrefabForStraightSegment(currGridPos, height, false);
             if (slopePrefab != null) return slopePrefab;
             if (height == 0)
             {
@@ -541,6 +566,22 @@ public class RoadManager : MonoBehaviour
     {
         Vector2? slopeDir = GetTerrainSlopeDirection(currGridPos, currentHeight);
         if (!slopeDir.HasValue) return null;
+        return GetSlopePrefabForDirection(slopeDir.Value);
+    }
+
+    /// <summary>
+    /// Returns slope road prefab only when terrain slope direction is parallel to the road line.
+    /// For horizontal lines use slope only if terrain slopes E-W; for vertical lines only if N-S.
+    /// Prevents lateral slopes from showing wrong slope prefab on straight segments.
+    /// </summary>
+    GameObject TryGetSlopePrefabForStraightSegment(Vector2 currGridPos, int currentHeight, bool isHorizontalLine)
+    {
+        Vector2? slopeDir = GetTerrainSlopeDirection(currGridPos, currentHeight);
+        if (!slopeDir.HasValue) return null;
+        int dx = Mathf.RoundToInt(slopeDir.Value.x);
+        int dy = Mathf.RoundToInt(slopeDir.Value.y);
+        bool slopeParallelToLine = isHorizontalLine ? (dx != 0 && dy == 0) : (dx == 0 && dy != 0);
+        if (!slopeParallelToLine) return null;
         return GetSlopePrefabForDirection(slopeDir.Value);
     }
 

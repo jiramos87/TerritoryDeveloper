@@ -122,19 +122,25 @@ public class WaterManager : MonoBehaviour
             GameObject.Destroy(child.gameObject);
         }
 
-        // Update the cell's zone type
+        // Update the cell's zone type and height so sorting/position are correct
         cellComponent.zoneType = Zone.ZoneType.Water;
+        gridManager.SetCellHeight(new Vector2(x, y), seaLevel);
+        Vector2 worldPosWater = gridManager.GetWorldPositionVector(x, y, seaLevel);
+        cell.transform.position = worldPosWater;
+        cellComponent.transformPosition = worldPosWater;
+
+        // Place water tile half a cell lower so it sits visually below the land edge (relative height offset for h=0)
+        float halfCellHeight = gridManager.tileHeight * 0.25f;
+        Vector2 waterTileWorldPos = worldPosWater + new Vector2(0f, halfCellHeight);
 
         // Place water tile
         GameObject waterPrefab = GetRandomWaterPrefab();
 
         if (waterPrefab == null) return;
 
-        Vector2 worldPos = cellComponent.transformPosition;
-
         GameObject waterTile = GameObject.Instantiate(
             waterPrefab,
-            worldPos,
+            waterTileWorldPos,
             Quaternion.identity
         );
         // Set up animation
@@ -153,7 +159,15 @@ public class WaterManager : MonoBehaviour
         zone.zoneType = Zone.ZoneType.Water;
         zone.zoneCategory = Zone.ZoneCategory.Water;
 
-        gridManager.SetTileSortingOrder(waterTile, Zone.ZoneType.Water);
+        waterTile.transform.SetParent(cell.transform);
+        // Use TerrainManager sorting so water (height 0) draws behind land (height >= 1)
+        int sortingOrder = terrainManager != null
+            ? terrainManager.CalculateTerrainSortingOrder(x, y, seaLevel)
+            : -(y * gridManager.width + x + 50000);
+        SpriteRenderer sr = waterTile.GetComponent<SpriteRenderer>();
+        if (sr != null)
+            sr.sortingOrder = sortingOrder;
+        cellComponent.SetCellInstanceSortingOrder(sortingOrder);
     }
 
     // Rest of the existing WaterManager methods remain the same

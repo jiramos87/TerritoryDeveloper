@@ -8565,7 +8565,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 470750414}
   m_HandleRect: {fileID: 470750413}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -17916,8 +17916,8 @@ MonoBehaviour:
   roadManager: {fileID: 1313145027}
   interstateManager: {fileID: 251169277}
   buildingSelectorMenuController: {fileID: 1975260509}
-  width: 64
-  height: 64
+  width: 40
+  height: 40
   tileWidth: 1
   tileHeight: 0.5
   halfWidth: 0
