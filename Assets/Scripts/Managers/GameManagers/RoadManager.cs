@@ -168,11 +168,13 @@ public class RoadManager : MonoBehaviour
     {
         foreach (Vector2 adjacentRoadTile in adjacentRoadTiles)
         {
-            bool isAdjacent = true;
-
             if (!isAdjacentRoadInPreview(adjacentRoadTile))
             {
-                PlaceRoadTile(adjacentRoadTile, i, isAdjacent);
+                Cell adjCell = gridManager.GetCell((int)adjacentRoadTile.x, (int)adjacentRoadTile.y);
+                if (adjCell != null && adjCell.isInterstate)
+                    RefreshRoadPrefabAt(adjacentRoadTile);
+                else
+                    PlaceRoadTile(adjacentRoadTile, i, true);
             }
         }
     }
@@ -204,8 +206,7 @@ public class RoadManager : MonoBehaviour
         GameObject cell = gridManager.GetGridCell(gridPos);
         if (cell == null) return;
         Cell cellComponentCheck = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
-        if (cellComponentCheck != null && cellComponentCheck.isInterstate)
-            return;
+        if (cellComponentCheck == null) return;
 
         bool hasLeft = IsRoadAt(gridPos + new Vector2(-1, 0));
         bool hasRight = IsRoadAt(gridPos + new Vector2(1, 0));
@@ -252,7 +253,9 @@ public class RoadManager : MonoBehaviour
 
         GameObject roadTile = Instantiate(correctRoadPrefab, worldPos, Quaternion.identity);
         roadTile.transform.SetParent(cellComponent.gameObject.transform);
-        roadTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 1);
+        roadTile.GetComponent<SpriteRenderer>().color = cellComponent.isInterstate
+            ? new Color(0.78f, 0.78f, 0.88f, 1f)
+            : new Color(1, 1, 1, 1);
 
         Zone zone = roadTile.AddComponent<Zone>();
         zone.zoneType = Zone.ZoneType.Road;
@@ -930,14 +933,14 @@ public class RoadManager : MonoBehaviour
         Cell cellComponent = gridManager.GetCell(gridPos.x, gridPos.y);
         if (cellComponent == null) return;
 
+        var toDestroy = new List<GameObject>();
         foreach (Transform child in cell.transform)
         {
             if (child.GetComponent<Zone>() != null)
-            {
-                Destroy(child.gameObject);
-                break;
-            }
+                toDestroy.Add(child.gameObject);
         }
+        foreach (GameObject go in toDestroy)
+            Destroy(go);
 
         int terrainHeight = cellComponent.GetCellInstanceHeight();
         Vector2 worldPos;
