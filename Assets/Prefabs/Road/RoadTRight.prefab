@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4303605590515366853}
   - component: {fileID: 1384536562182210328}
-  - component: {fileID: 2266320154803684756}
   m_Layer: 0
   m_Name: RoadTRight
   m_TagString: Untagged
@@ -85,56 +84,3 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!60 &2266320154803684756
-PolygonCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4229080818344033914}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
-    newSize: {x: 1, y: 1}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Points:
-    m_Paths:
-    - - {x: -0.020935059, y: 0.26893616}
-      - {x: -0.50653076, y: 0.034561157}
-      - {x: -0.504364, y: -0.005874634}
-      - {x: -0.01675415, y: -0.26383972}
-      - {x: 0.022155762, y: -0.2616577}
-      - {x: 0.50871277, y: -0.014205933}
-      - {x: 0.5, y: 0.021987915}
-      - {x: 0.020950317, y: 0.26893616}
-  m_UseDelaunayMesh: 0

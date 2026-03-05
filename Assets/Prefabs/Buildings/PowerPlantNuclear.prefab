@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 5215279982075917472}
   - component: {fileID: 7472536377933348090}
   - component: {fileID: 5972228545905541872}
-  - component: {fileID: 2138651763690138193}
   m_Layer: 0
   m_Name: PowerPlantNuclear
   m_TagString: Untagged
@@ -107,60 +106,3 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!60 &2138651763690138193
-PolygonCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5639871321760385905}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
-    newSize: {x: 1, y: 1}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Points:
-    m_Paths:
-    - - {x: 0.114583336, y: 0.3854167}
-      - {x: 0.08854167, y: 0.390625}
-      - {x: -0.078125, y: 0.390625}
-      - {x: -0.08854167, y: 0.22395834}
-      - {x: -0.36458334, y: 0.203125}
-      - {x: -0.5, y: 0.14583334}
-      - {x: -0.5, y: -0.010416667}
-      - {x: -0.020833334, y: -0.2604167}
-      - {x: 0.0052083335, y: -0.2604167}
-      - {x: 0.5, y: -0.015625}
-      - {x: 0.5, y: 0.0625}
-      - {x: 0.1875, y: 0.27083334}
-  m_UseDelaunayMesh: 0

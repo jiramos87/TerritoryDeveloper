@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3400545534736994391}
   - component: {fileID: 6431091238127500783}
-  - component: {fileID: 8678740076144471023}
   m_Layer: 0
   m_Name: WaterPlant-1-128
   m_TagString: Untagged
@@ -85,57 +84,3 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!60 &8678740076144471023
-PolygonCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6076960314507618842}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
-    newSize: {x: 1.28, y: 1.28}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Points:
-    m_Paths:
-    - - {x: -0.0859375, y: 0.2890625}
-      - {x: -0.3515625, y: 0.171875}
-      - {x: -0.5, y: 0.0546875}
-      - {x: -0.5, y: -0.0234375}
-      - {x: -0.03125, y: -0.265625}
-      - {x: 0.0078125, y: -0.265625}
-      - {x: 0.5, y: -0.015625}
-      - {x: 0.5, y: 0.046875}
-      - {x: 0.109375, y: 0.2890625}
-  m_UseDelaunayMesh: 0

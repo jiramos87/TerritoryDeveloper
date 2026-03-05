@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3459817128636278552}
   - component: {fileID: 51028729896669444}
-  - component: {fileID: 3139015516880020022}
   m_Layer: 0
   m_Name: RoadCrossing
   m_TagString: Untagged
@@ -85,56 +84,3 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!60 &3139015516880020022
-PolygonCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8867849998717431026}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
-    newSize: {x: 1, y: 1}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Points:
-    m_Paths:
-    - - {x: -0.024337769, y: 0.2772827}
-      - {x: -0.497818, y: 0.03201294}
-      - {x: -0.502182, y: -0.0062561035}
-      - {x: -0.015625, y: -0.2551117}
-      - {x: 0.018951416, y: -0.2572937}
-      - {x: 0.50653076, y: -0.01600647}
-      - {x: 0.50871277, y: 0.025466919}
-      - {x: 0.02330017, y: 0.2751007}
-  m_UseDelaunayMesh: 0
