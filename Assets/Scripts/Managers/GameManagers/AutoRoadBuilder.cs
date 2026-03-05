@@ -92,25 +92,16 @@ public class AutoRoadBuilder : MonoBehaviour
         int costPerTile = RoadManager.RoadCostPerTile;
         int maxByBudget = costPerTile > 0 ? available / costPerTile : 0;
         int toPlace = Mathf.Min(maxTilesPerTick, maxByBudget);
-        Debug.Log($"[Sim {d}] [AutoRoadBuilder] ProcessTick: edges={edgeCount}, roadTiles={roadTilesTotal}, expropriated={expropriatedCount}, budget={available}, toPlace={toPlace}, activeProjects={activeProjects.Count}");
-
-        if (toPlace <= 0)
-        {
-            Debug.Log($"[Sim {d}] [AutoRoadBuilder] ProcessTick: no budget (toPlace<=0), exit.");
-            return;
-        }
 
         int placed = 0;
         int effectiveMinStreetLength = edgeCount < 4 ? minStreetLengthRecovery : minStreetLength;
 
-        // Priorizar espacio recién expropiado: colocar al menos 1 tile en el borde nuevo; no hacer return para aprovechar el resto del presupuesto
         if (expropriatedCount > 0 && toPlace > 0)
         {
             placed = TryPlaceOneTileFromEdges();
             if (placed > 0)
             {
                 toPlace -= placed;
-                Debug.Log($"[Sim {d}] [AutoRoadBuilder] Placed {placed} tile(s) from expropriated space, toPlace left={toPlace}");
                 if (toPlace <= 0) return;
             }
         }
@@ -120,7 +111,6 @@ public class AutoRoadBuilder : MonoBehaviour
             placed = TryConnectToInterstate(toPlace);
             if (placed > 0)
             {
-                Debug.Log($"[Sim {d}] [AutoRoadBuilder] TryConnectToInterstate placed={placed}, exit tick.");
                 return;
             }
         }
@@ -131,7 +121,6 @@ public class AutoRoadBuilder : MonoBehaviour
             placed = TryConnectDisconnected(clusters, toPlace);
             if (placed > 0)
             {
-                Debug.Log($"[Sim {d}] [AutoRoadBuilder] TryConnectDisconnected placed={placed}, exit tick.");
                 return;
             }
         }
@@ -139,7 +128,6 @@ public class AutoRoadBuilder : MonoBehaviour
         placed = AdvanceStreetProjects(toPlace);
         if (placed > 0)
         {
-            Debug.Log($"[Sim {d}] [AutoRoadBuilder] AdvanceStreetProjects placed={placed}, activeProjects={activeProjects.Count}, exit tick.");
             return;
         }
 
@@ -155,7 +143,6 @@ public class AutoRoadBuilder : MonoBehaviour
             if (TryStartNewStreetProject(ref toPlace, minStreetLengthRecovery))
                 newProjectsStarted++;
         }
-        Debug.Log($"[Sim {d}] [AutoRoadBuilder] ProcessTick end: newProjectsStarted={newProjectsStarted}, toPlace left={toPlace}, activeProjects={activeProjects.Count}");
     }
 
     /// <summary>Advance all active projects in a fixed direction; remove when done or blocked.</summary>
@@ -237,7 +224,6 @@ public class AutoRoadBuilder : MonoBehaviour
             int targetLen = Mathf.Clamp(Random.Range(minLengthForBranch, maxStreetLength + 1), minLengthForBranch, len);
             int interval = Mathf.Clamp(Random.Range(branchIntervalMin, branchIntervalMax + 1), 1, 99);
             activeProjects.Add(new StreetProject { tip = start, dir = perp, targetLength = targetLen, builtLength = 0, branchInterval = interval, tilesSinceLastBranch = 0 });
-            Debug.Log($"[Sim {SimDateStr()}] [AutoRoadBuilder] TryStartPerpendicularProject: started branch at ({start.x},{start.y}) dir=({perp.x},{perp.y}) targetLen={targetLen}");
             return;
         }
     }
@@ -278,29 +264,22 @@ public class AutoRoadBuilder : MonoBehaviour
                     continue;
                 if (!IsCellPlaceableForRoad(nx, ny))
                 {
-                    if (rejectLogCount++ < maxRejectLogsPerTick)
-                        Debug.Log($"[Sim {SimDateStr()}] [AutoRoadBuilder] TryStartNewStreetProject reject: tip=({nx},{ny}) dir=({Dx[d]},{Dy[d]}) — {GetCellPlaceableRejectReason(nx, ny)}");
                     continue;
                 }
                 Vector2Int dir = new Vector2Int(Dx[d], Dy[d]);
                 Vector2Int tip = new Vector2Int(nx, ny);
                 if (!IsSuitableForRoad(nx, ny, dir))
                 {
-                    if (rejectLogCount++ < maxRejectLogsPerTick)
-                        Debug.Log($"[Sim {SimDateStr()}] [AutoRoadBuilder] TryStartNewStreetProject reject: tip=({nx},{ny}) dir=({dir.x},{dir.y}) — IsSuitableForRoad=false (terrain/slope)");
                     continue;
                 }
                 if (HasParallelRoadTooClose(edge, dir, parallelSpacing))
                 {
-                    if (rejectLogCount++ < maxRejectLogsPerTick)
-                        Debug.Log($"[Sim {SimDateStr()}] [AutoRoadBuilder] TryStartNewStreetProject reject: tip=({nx},{ny}) dir=({dir.x},{dir.y}) — HasParallelRoadTooClose (spacing={parallelSpacing})");
                     continue;
                 }
                 int len = HowFarWeCanBuild(tip, dir);
                 if (len < effectiveMinStreetLength)
                 {
-                    if (rejectLogCount++ < maxRejectLogsPerTick)
-                        Debug.Log($"[Sim {SimDateStr()}] [AutoRoadBuilder] TryStartNewStreetProject reject: tip=({nx},{ny}) dir=({dir.x},{dir.y}) — HowFarWeCanBuild len={len} < minStreetLength={effectiveMinStreetLength}");
+
                     continue;
                 }
                 int targetLen = Mathf.Clamp(Random.Range(effectiveMinStreetLength, maxStreetLength + 1), effectiveMinStreetLength, len);
@@ -308,12 +287,10 @@ public class AutoRoadBuilder : MonoBehaviour
                 activeProjects.Add(new StreetProject { tip = tip, dir = dir, targetLength = targetLen, builtLength = 0, branchInterval = interval, tilesSinceLastBranch = 0 });
                 int advance = AdvanceOneProject(activeProjects.Count - 1, Mathf.Min(tilesPerProjectPerTick, budgetRemaining));
                 budgetRemaining -= advance;
-                Debug.Log($"[Sim {SimDateStr()}] [AutoRoadBuilder] TryStartNewStreetProject: started at ({tip.x},{tip.y}) dir=({dir.x},{dir.y}) targetLen={targetLen}, advance={advance}");
                 return true;
             }
         }
-        if (rejectLogCount > 0)
-            Debug.Log($"[Sim {SimDateStr()}] [AutoRoadBuilder] TryStartNewStreetProject: no valid candidate (logged first {Mathf.Min(rejectLogCount, maxRejectLogsPerTick)} reject reasons above).");
+
         return false;
     }
 
@@ -362,11 +339,9 @@ public class AutoRoadBuilder : MonoBehaviour
             if (gridManager.DemolishCellAt(new Vector2(pos.x, pos.y), showAnimation: false))
             {
                 demolished++;
-                Debug.Log($"[Sim {SimDateStr()}] [AutoRoadBuilder] TryExpropriate: demolished ({pos.x},{pos.y}) zoneType={cell.zoneType} buildingType={buildingType ?? "null"} ({demolished}/{maxCount})");
             }
         }
-        if (demolished == 0 && sorted.Count > 0)
-            Debug.Log($"[Sim {SimDateStr()}] [AutoRoadBuilder] TryExpropriate: {sorted.Count} candidates but none demolished (CanBulldoze or DemolishCellAt failed).");
+
         return demolished;
     }
 
@@ -376,7 +351,6 @@ public class AutoRoadBuilder : MonoBehaviour
         var edges = gridManager.GetRoadEdgePositions();
         if (edges.Count == 0)
         {
-            Debug.Log($"[Sim {SimDateStr()}] [AutoRoadBuilder] TryPlaceOneTileFromEdges: 0 edges, skip.");
             return 0;
         }
         var withScore = new List<KeyValuePair<Vector2Int, int>>(edges.Count);

@@ -20,9 +20,6 @@ public class DataPopupController : MonoBehaviour
 
     public void ToggleStats()
     {
-        Debug.Log("ToggleStats called");
-        Debug.Log("statsPanel.activeSelf: " + statsPanel.activeSelf);
-        Debug.Log("taxPanel.activeSelf: " + taxPanel.activeSelf);
         statsPanel.SetActive(!statsPanel.activeSelf);
         taxPanel.SetActive(false);
         if (statsPanel.activeSelf)

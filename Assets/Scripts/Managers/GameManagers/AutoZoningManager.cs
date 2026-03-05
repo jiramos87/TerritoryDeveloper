@@ -32,7 +32,6 @@ public class AutoZoningManager : MonoBehaviour
         string d = SimDateStr();
         if (zoneManager == null || growthBudgetManager == null || gridManager == null || cityStats == null)
         {
-            Debug.Log($"[Sim {d}] [AutoZoningManager] ProcessTick: missing refs, skip.");
             return;
         }
         if (!cityStats.simulateGrowth)
@@ -41,7 +40,6 @@ public class AutoZoningManager : MonoBehaviour
         int budget = growthBudgetManager.GetAvailableBudget(GrowthCategory.Zoning);
         if (budget <= 0)
         {
-            Debug.Log($"[Sim {d}] [AutoZoningManager] ProcessTick: budget<=0 ({budget}), skip.");
             return;
         }
 
@@ -49,7 +47,6 @@ public class AutoZoningManager : MonoBehaviour
         List<Vector2Int> candidates = GetCandidatesAdjacentToRoad();
         if (candidates.Count == 0)
         {
-            Debug.Log($"[Sim {d}] [AutoZoningManager] ProcessTick: 0 candidates adjacent to road, skip.");
             return;
         }
 
@@ -98,7 +95,6 @@ public class AutoZoningManager : MonoBehaviour
             else
                 skippedOther++;
         }
-        Debug.Log($"[Sim {d}] [AutoZoningManager] ProcessTick: candidates={candidates.Count}, skippedReserved={skippedReserved}, skippedOther={skippedOther}, placed={placed}, budgetLeft={budget}");
     }
 
     private Vector2 GetUrbanCentroid()

@@ -21,7 +21,6 @@ public class PowerBuildingsSelectButton : MonoBehaviour
 
     public void OnPowerBuildingsButtonClick()
     {
-        Debug.Log("Power Buildings button clicked");
         uiManager.RestoreMouseCursor();
 
         popupController.ShowPopup(powerBuildingItems, OnPowerBuildingSelected, "Power");
@@ -55,7 +54,6 @@ public class PowerBuildingsSelectButton : MonoBehaviour
             // Force deselection and return to normal state
             button.OnDeselect(null);
             button.targetGraphic.CrossFadeColor(button.colors.normalColor, 0f, true, true);
-            Debug.Log($"Deselected button: {gameObject.name}");
         }
         else
         {
