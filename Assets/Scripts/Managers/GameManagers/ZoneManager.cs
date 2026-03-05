@@ -896,13 +896,13 @@ public class ZoneManager : MonoBehaviour
         foreach (Vector2 zonedPosition in section)
         {
             GameObject cell = gridManager.GetGridCell(zonedPosition);
-            Cell cellComponent = cell.GetComponent<Cell>();
+            Cell cellComponent = gridManager.GetCell((int)zonedPosition.x, (int)zonedPosition.y);
             if (cellComponent != null)
                 cellComponent.RemoveForestForBuilding();
 
             gridManager.DestroyCellChildren(cell, zonedPosition);
 
-            gridManager.UpdateCellAttributes(cell.GetComponent<Cell>(), selectedZoneType, zoneAttributes, prefab, buildingSize);
+            gridManager.UpdateCellAttributes(cellComponent, selectedZoneType, zoneAttributes, prefab, buildingSize);
 
             removeZonedPositionFromList(zonedPosition, zoningType);
         }
@@ -910,7 +910,7 @@ public class ZoneManager : MonoBehaviour
         Vector2 firstPosition = section[0];
 
         GameObject firstPositionGridCell = gridManager.GetGridCell(firstPosition);
-        firstPositionGridCell.GetComponent<Cell>().isPivot = true;
+        gridManager.GetCell((int)firstPosition.x, (int)firstPosition.y).isPivot = true;
 
         PlaceZoneBuildingTile(prefab, firstPositionGridCell, buildingSize);
 

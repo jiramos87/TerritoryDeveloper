@@ -153,7 +153,7 @@ public class GameNotificationManager : MonoBehaviour
         // Validate input
         if (string.IsNullOrEmpty(message))
         {
-            Debug.LogWarning("GameNotificationManager: Attempted to post empty notification message");
+            DebugHelper.LogWarning("GameNotificationManager: Attempted to post empty notification message");
             return;
         }
 
@@ -164,7 +164,7 @@ public class GameNotificationManager : MonoBehaviour
         if (messageQueue.Count >= maxQueueSize)
         {
             messageQueue.Dequeue();
-            Debug.LogWarning("GameNotificationManager: Message queue full, removing oldest message");
+            DebugHelper.LogWarning("GameNotificationManager: Message queue full, removing oldest message");
         }
 
         messageQueue.Enqueue(notification);

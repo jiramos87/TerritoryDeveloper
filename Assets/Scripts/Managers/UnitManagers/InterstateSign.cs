@@ -40,11 +40,14 @@ public class InterstateSign : MonoBehaviour
 
     private string destinationCityName;
     private int border;
+    private Camera _cachedCamera;
 
     void LateUpdate()
     {
-        if (!scaleByCameraDistance || Camera.main == null) return;
-        float distance = Vector3.Distance(Camera.main.transform.position, transform.position);
+        if (!scaleByCameraDistance) return;
+        if (_cachedCamera == null) _cachedCamera = Camera.main;
+        if (_cachedCamera == null) return;
+        float distance = Vector3.Distance(_cachedCamera.transform.position, transform.position);
         float scale = Mathf.Clamp(distance * distanceScaleFactor, minScale, maxScale);
         transform.localScale = Vector3.one * scale;
     }

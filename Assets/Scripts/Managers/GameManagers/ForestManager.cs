@@ -191,7 +191,7 @@ public class ForestManager : MonoBehaviour
 
         if (!gridManager.IsValidGridPosition(gridPosition))
         {
-            Debug.LogWarning($"Cannot place forest at invalid position: ({x}, {y})");
+            DebugHelper.LogWarning($"Cannot place forest at invalid position: ({x}, {y})");
             return false;
         }
 
@@ -277,8 +277,7 @@ public class ForestManager : MonoBehaviour
             return false;
 
         // Get the cell and remove forest
-        GameObject cell = gridManager.gridArray[x, y];
-        Cell cellComponent = cell.GetComponent<Cell>();
+        Cell cellComponent = gridManager.GetCell(x, y);
 
         // Store water consumption for refund calculation
         int waterToRefund = GetWaterConsumptionForForestType(currentType);
@@ -322,8 +321,7 @@ public class ForestManager : MonoBehaviour
         if (waterManager != null && waterManager.IsWaterAt(x, y))
             return false;
 
-        GameObject cell = gridManager.gridArray[x, y];
-        Cell cellComponent = cell.GetComponent<Cell>();
+        Cell cellComponent = gridManager.GetCell(x, y);
 
         // Cannot place on river/coast edge (cell adjacent to water / height 0)
         if (IsRiverOrCoastEdge(x, y))
@@ -386,13 +384,9 @@ public class ForestManager : MonoBehaviour
         HeightMap heightMap = GetTerrainHeightMap();
         if (heightMap != null && heightMap.IsValidPosition(x, y))
             return heightMap.GetHeight(x, y);
-        GameObject cell = gridManager.gridArray[x, y];
-        if (cell != null)
-        {
-            Cell c = cell.GetComponent<Cell>();
-            if (c != null)
-                return c.height;
-        }
+        Cell c = gridManager.GetCell(x, y);
+        if (c != null)
+            return c.height;
         return TerrainManager.SEA_LEVEL;
     }
 
@@ -467,8 +461,7 @@ public class ForestManager : MonoBehaviour
 
     private void PlaceForestVisual(int x, int y, Forest.ForestType forestType)
     {
-        GameObject cell = gridManager.gridArray[x, y];
-        Cell cellComponent = cell.GetComponent<Cell>();
+        Cell cellComponent = gridManager.GetCell(x, y);
 
         // Don't place if cell already has a tree
         if (cellComponent.hasTree)
@@ -494,8 +487,7 @@ public class ForestManager : MonoBehaviour
 
         foreach (var pos in adjacentPositions)
         {
-            GameObject cell = gridManager.gridArray[pos.x, pos.y];
-            Cell cellComponent = cell.GetComponent<Cell>();
+            Cell cellComponent = gridManager.GetCell(pos.x, pos.y);
 
             // Update close forest count
             if (forestAdded)
@@ -516,8 +508,7 @@ public class ForestManager : MonoBehaviour
         {
             for (int y = 0; y < gridManager.height; y++)
             {
-                GameObject cell = gridManager.gridArray[x, y];
-                Cell cellComponent = cell.GetComponent<Cell>();
+                Cell cellComponent = gridManager.GetCell(x, y);
 
                 // Calculate adjacent forest count
                 cellComponent.closeForestCount = forestMap.GetAdjacentForestCount(x, y);
@@ -578,7 +569,7 @@ public class ForestManager : MonoBehaviour
             case Forest.ForestType.Dense:
                 return denseForestPrefab;
             default:
-                Debug.LogWarning($"No prefab assigned for forest type: {forestType}");
+                DebugHelper.LogWarning($"No prefab assigned for forest type: {forestType}");
                 return null;
         }
     }

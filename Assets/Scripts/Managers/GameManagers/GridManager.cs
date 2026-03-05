@@ -27,6 +27,7 @@ public class GridManager : MonoBehaviour
     public float halfWidth;
     public float halfHeight;
     public GameObject[,] gridArray;
+    public Cell[,] cellArray;
     public Vector2 mouseGridPosition;
     /// <summary>Last grid cell clicked (left or right button). (-1,-1) if none yet.</summary>
     public Vector2 selectedPoint = new Vector2(-1, -1);
@@ -140,6 +141,7 @@ public class GridManager : MonoBehaviour
         }
 
         gridArray = new GameObject[width, height];
+        cellArray = new Cell[width, height];
 
         chunksX = Mathf.CeilToInt((float)width / chunkSize);
         chunksY = Mathf.CeilToInt((float)height / chunkSize);
@@ -179,6 +181,7 @@ public class GridManager : MonoBehaviour
                 cellComponent.SetCellData(cellData);
 
                 gridArray[x, y] = gridCell;
+                cellArray[x, y] = cellComponent;
 
                 GameObject zoneTile = Instantiate(
                     tilePrefab,
@@ -341,7 +344,7 @@ public class GridManager : MonoBehaviour
     {
         if (x < 0 || x >= width || y < 0 || y >= height)
             return false;
-        Cell cell = gridArray[x, y].GetComponent<Cell>();
+        Cell cell = cellArray[x, y];
         if (cell == null) return false;
         return cell.occupiedBuilding != null || IsZoneTypeBuilding(cell.zoneType);
     }
@@ -381,8 +384,7 @@ public class GridManager : MonoBehaviour
         if (x < 0 || x >= width || y < 0 || y >= height) return int.MinValue;
         if (terrainManager == null) return int.MinValue;
 
-        GameObject cellObj = gridArray[x, y];
-        Cell cell = cellObj != null ? cellObj.GetComponent<Cell>() : null;
+        Cell cell = (x >= 0 && x < width && y >= 0 && y < height) ? cellArray[x, y] : null;
         if (cell == null) return int.MinValue;
 
         int terrainOrder = terrainManager.CalculateTerrainSortingOrder(x, y, cell.height);
@@ -391,9 +393,9 @@ public class GridManager : MonoBehaviour
         if (cell.GetComponent<SpriteRenderer>() != null)
             maxOrder = Mathf.Max(maxOrder, terrainOrder);
 
-        for (int i = 0; i < cellObj.transform.childCount; i++)
+        for (int i = 0; i < cell.gameObject.transform.childCount; i++)
         {
-            GameObject child = cellObj.transform.GetChild(i).gameObject;
+            GameObject child = cell.gameObject.transform.GetChild(i).gameObject;
             if (child.GetComponent<SpriteRenderer>() == null) continue;
 
             int order;
@@ -441,7 +443,7 @@ public class GridManager : MonoBehaviour
                 int py = cy - j;
                 if (px >= 0 && px < width && py >= 0 && py < height)
                 {
-                    Cell pivotCandidate = gridArray[px, py].GetComponent<Cell>();
+                    Cell pivotCandidate = cellArray[px, py];
                     if (pivotCandidate != null && pivotCandidate.isPivot)
                         return gridArray[px, py];
                 }
@@ -466,7 +468,7 @@ public class GridManager : MonoBehaviour
     void HandleBulldozerClick(Vector2 gridPosition)
     {
         GameObject cell = gridArray[(int)gridPosition.x, (int)gridPosition.y];
-        Cell cellComponent = cell.GetComponent<Cell>();
+        Cell cellComponent = cellArray[(int)gridPosition.x, (int)gridPosition.y];
         Zone.ZoneType zoneType = cellComponent.zoneType;
 
         if (!CanBulldoze(cellComponent))
@@ -507,7 +509,7 @@ public class GridManager : MonoBehaviour
                 toDestroy.Add(child);
         }
         foreach (Transform t in toDestroy)
-            DestroyImmediate(t.gameObject);
+            Destroy(t.gameObject);
 
         GameObject zoneTile = Instantiate(
             zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass),
@@ -589,8 +591,7 @@ public class GridManager : MonoBehaviour
 
                     if (gridX >= 0 && gridX < width && gridY >= 0 && gridY < height)
                     {
-                        GameObject adjacentCell = gridArray[gridX, gridY];
-                        BulldozeTileWithoutAnimation(adjacentCell);
+                        BulldozeTileWithoutAnimation(gridArray[gridX, gridY]);
                     }
                 }
             }
@@ -666,7 +667,7 @@ public class GridManager : MonoBehaviour
         int gy = (int)gridPosition.y;
         if (gx < 0 || gx >= width || gy < 0 || gy >= height) return false;
         GameObject cell = gridArray[gx, gy];
-        Cell cellComponent = cell.GetComponent<Cell>();
+        Cell cellComponent = cellArray[gx, gy];
         if (cellComponent == null || !CanBulldoze(cellComponent)) return false;
 
         Zone.ZoneType zoneType = cellComponent.zoneType;
@@ -727,9 +728,7 @@ public class GridManager : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            GameObject cell = gridArray[(int)gridPosition.x, (int)gridPosition.y];
-            Cell cellComponent = cell.GetComponent<Cell>();
-
+            Cell cellComponent = cellArray[(int)gridPosition.x, (int)gridPosition.y];
             uiManager.ShowTileDetails(cellComponent);
         }
     }
@@ -860,6 +859,7 @@ public class GridManager : MonoBehaviour
     {
         if (cell.transform.childCount == 0) return;
 
+        var toDestroy = new List<GameObject>();
         foreach (Transform child in cell.transform)
         {
             if (excludeFromDestroy != null && child.gameObject == excludeFromDestroy)
@@ -877,8 +877,10 @@ public class GridManager : MonoBehaviour
                 zoneManager.removeZonedPositionFromList(gridPosition, zone.zoneType);
             }
 
-            DestroyImmediate(child.gameObject);
+            toDestroy.Add(child.gameObject);
         }
+        foreach (GameObject go in toDestroy)
+            Destroy(go);
     }
 
     /// <summary>
@@ -888,7 +890,7 @@ public class GridManager : MonoBehaviour
     {
         if (cell.transform.childCount == 0) return;
 
-        Cell cellComponent = cell.GetComponent<Cell>();
+        Cell cellComponent = cellArray[(int)gridPosition.x, (int)gridPosition.y];
         GameObject forestObject = (cellComponent != null && cellComponent.HasForest()) ? cellComponent.forestObject : null;
 
         List<Transform> toDestroy = new List<Transform>();
@@ -904,7 +906,7 @@ public class GridManager : MonoBehaviour
             Zone zone = child.GetComponent<Zone>();
             if (zone != null && zone.zoneCategory == Zone.ZoneCategory.Zoning)
                 zoneManager.removeZonedPositionFromList(gridPosition, zone.zoneType);
-            DestroyImmediate(child.gameObject);
+            Destroy(child.gameObject);
         }
     }
 
@@ -949,7 +951,7 @@ public class GridManager : MonoBehaviour
             return -1001;
         }
 
-        Cell cell = gridArray[x, y].GetComponent<Cell>();
+        Cell cell = cellArray[x, y];
         tile.transform.SetParent(cell.gameObject.transform);
         SpriteRenderer sr = tile.GetComponent<SpriteRenderer>();
 
@@ -977,7 +979,7 @@ public class GridManager : MonoBehaviour
     {
         if (x < 0 || x >= width || y < 0 || y >= height) return;
 
-        Cell cell = gridArray[x, y].GetComponent<Cell>();
+        Cell cell = cellArray[x, y];
         if (cell == null) return;
 
         tile.transform.SetParent(cell.gameObject.transform);
@@ -1009,7 +1011,7 @@ public class GridManager : MonoBehaviour
     {
         if (x < 0 || x >= width || y < 0 || y >= height) return;
 
-        Cell cell = gridArray[x, y].GetComponent<Cell>();
+        Cell cell = cellArray[x, y];
         if (cell == null) return;
 
         tile.transform.SetParent(cell.gameObject.transform);
@@ -1046,7 +1048,7 @@ public class GridManager : MonoBehaviour
             return;
         }
         if (pivotX < 0 || pivotX >= width || pivotY < 0 || pivotY >= height) return;
-        Cell pivotCell = gridArray[pivotX, pivotY].GetComponent<Cell>();
+        Cell pivotCell = cellArray[pivotX, pivotY];
         if (pivotCell == null) return;
         tile.transform.SetParent(pivotCell.gameObject.transform);
         if (terrainManager == null)
@@ -1069,7 +1071,7 @@ public class GridManager : MonoBehaviour
                 int gridX = pivotX + x - offsetX;
                 int gridY = pivotY + y - offsetY;
                 if (gridX < 0 || gridX >= width || gridY < 0 || gridY >= height) continue;
-                Cell cell = gridArray[gridX, gridY].GetComponent<Cell>();
+                Cell cell = cellArray[gridX, gridY];
                 if (cell == null) continue;
                 int cellHeight = cell.height;
                 if (terrainManager.GetHeightMap() != null)
@@ -1144,7 +1146,7 @@ public class GridManager : MonoBehaviour
     {
         if (x < 0 || x >= width || y < 0 || y >= height) return;
 
-        Cell cell = gridArray[x, y].GetComponent<Cell>();
+        Cell cell = cellArray[x, y];
         if (cell == null) return;
 
         tile.transform.SetParent(cell.gameObject.transform);
@@ -1283,9 +1285,7 @@ public class GridManager : MonoBehaviour
         int[] dy = { 0, 0, 0, 1, -1 };
         for (int i = 0; i < 5; i++)
         {
-            GameObject go = GetGridCell(new Vector2(gridX + dx[i], gridY + dy[i]));
-            if (go == null) continue;
-            Cell c = go.GetComponent<Cell>();
+            Cell c = GetCell(gridX + dx[i], gridY + dy[i]);
             if (c != null) candidates.Add(c);
         }
 
@@ -1356,7 +1356,7 @@ public class GridManager : MonoBehaviour
 
     public Vector2 GetWorldPosition(int gridX, int gridY)
     {
-        Cell cell = gridArray[gridX, gridY].GetComponent<Cell>();
+        Cell cell = cellArray[gridX, gridY];
         int height = cell.GetCellInstanceHeight();
         return GetWorldPositionVector(gridX, gridY, height);
     }
@@ -1373,7 +1373,7 @@ public class GridManager : MonoBehaviour
     /// </summary>
     public Vector2 GetBuildingPlacementWorldPosition(Vector2 gridPos, int buildingSize)
     {
-        Cell pivotCell = gridArray[(int)gridPos.x, (int)gridPos.y].GetComponent<Cell>();
+        Cell pivotCell = cellArray[(int)gridPos.x, (int)gridPos.y];
         if (buildingSize <= 1)
             return pivotCell.transformPosition;
 
@@ -1388,7 +1388,7 @@ public class GridManager : MonoBehaviour
                 int gridY = (int)gridPos.y + y - offsetY;
                 if (gridX >= 0 && gridX < width && gridY >= 0 && gridY < height)
                 {
-                    Cell c = gridArray[gridX, gridY].GetComponent<Cell>();
+                    Cell c = cellArray[gridX, gridY];
                     sum += GetCellWorldPosition(c);
                     count++;
                 }
@@ -1409,8 +1409,7 @@ public class GridManager : MonoBehaviour
 
     public void SetCellHeight(Vector2 gridPos, int height)
     {
-
-        Cell cell = gridArray[(int)gridPos.x, (int)gridPos.y].GetComponent<Cell>();
+        Cell cell = cellArray[(int)gridPos.x, (int)gridPos.y];
         cell.SetCellInstanceHeight(height);
     }
 
@@ -1418,10 +1417,11 @@ public class GridManager : MonoBehaviour
     {
         if (cell.transform.childCount > 0)
         {
+            var toDestroy = new List<GameObject>();
             foreach (Transform child in cell.transform)
-            {
-                DestroyImmediate(child.gameObject);
-            }
+                toDestroy.Add(child.gameObject);
+            foreach (GameObject go in toDestroy)
+                Destroy(go);
         }
     }
 
@@ -1467,7 +1467,7 @@ public class GridManager : MonoBehaviour
         bool fromCellHeight = false;
         if (!fromHeightMap && x >= 0 && x < width && y >= 0 && y < height)
         {
-            Cell cell = gridArray[x, y].GetComponent<Cell>();
+            Cell cell = cellArray[x, y];
             if (cell != null)
             {
                 h = cell.GetCellInstanceHeight();
@@ -1544,7 +1544,7 @@ public class GridManager : MonoBehaviour
                 if (waterManager == null || !waterManager.IsWaterAt(gridX, gridY))
                 {
                     hasLandTile = true;
-                    Cell cell = gridArray[gridX, gridY].GetComponent<Cell>();
+                    Cell cell = cellArray[gridX, gridY];
                     if (cell.zoneType != Zone.ZoneType.Grass)
                     {
                         failReason = $"Tile ({gridX},{gridY}) is not Grass (current: {cell.zoneType}).";
@@ -1623,7 +1623,7 @@ public class GridManager : MonoBehaviour
                     return false;
                 }
 
-                Cell cell = gridArray[gridX, gridY].GetComponent<Cell>();
+                Cell cell = cellArray[gridX, gridY];
                 if (cell.isInterstate)
                 {
                     failReason = "Cannot build on Interstate Highway.";
@@ -1692,7 +1692,7 @@ public class GridManager : MonoBehaviour
                 if (gridX >= 0 && gridX < width && gridY >= 0 && gridY < height)
                 {
                     GameObject gridCell = gridArray[gridX, gridY];
-                    Cell cell = gridCell.GetComponent<Cell>();
+                    Cell cell = cellArray[gridX, gridY];
 
                     cell.RemoveForestForBuilding();
                     UpdatePlacedBuildingCellAttributes(cell, buildingSize, powerPlant, waterPlant, buildingPrefab, Zone.ZoneType.Building, building);
@@ -1748,7 +1748,7 @@ public class GridManager : MonoBehaviour
 
     void LoadBuildingTile(GameObject prefab, Vector2 gridPos, int buildingSize)
     {
-        Cell pivotCell = gridArray[(int)gridPos.x, (int)gridPos.y].GetComponent<Cell>();
+        Cell pivotCell = cellArray[(int)gridPos.x, (int)gridPos.y];
         Vector2 worldPos = GetBuildingPlacementWorldPosition(gridPos, buildingSize);
 
         Vector3 position = new Vector3(worldPos.x, worldPos.y, 0f);
@@ -1813,7 +1813,7 @@ public class GridManager : MonoBehaviour
 
     void RestoreGridCell(CellData cellData, GameObject cell)
     {
-        cell.GetComponent<Cell>().SetCellData(cellData);
+        cellArray[cellData.x, cellData.y].SetCellData(cellData);
 
         Zone.ZoneType zoneType = zoneManager.GetZoneTypeFromZoneTypeString(cellData.zoneType);
 
@@ -1821,7 +1821,7 @@ public class GridManager : MonoBehaviour
         if (tilePrefab != null)
         {
             zoneManager.PlaceZoneBuildingTile(tilePrefab, cell, cellData.buildingSize);
-            UpdatePlacedBuildingCellAttributes(cell.GetComponent<Cell>(), cellData.buildingSize, cellData.powerPlant, cellData.waterPlant, tilePrefab, zoneType, null);
+            UpdatePlacedBuildingCellAttributes(cellArray[cellData.x, cellData.y], cellData.buildingSize, cellData.powerPlant, cellData.waterPlant, tilePrefab, zoneType, null);
         }
 
         zoneManager.addZonedTileToList(new Vector2(cellData.x, cellData.y), zoneType);
@@ -1861,6 +1861,7 @@ public class GridManager : MonoBehaviour
 
         zoneManager.ClearZonedPositions();
 
+        cellArray = null;
         CreateGrid();
     }
 
@@ -1868,11 +1869,7 @@ public class GridManager : MonoBehaviour
     {
         if (x >= 0 && x < width && y >= 0 && y < height)
         {
-            GameObject cell = gridArray[x, y];
-
-            Cell cellComponent = cell.GetComponent<Cell>();
-
-            return cellComponent;
+            return cellArray[x, y];
         }
         return null;
     }
@@ -1881,11 +1878,14 @@ public class GridManager : MonoBehaviour
     {
         List<CellData> gridData = new List<CellData>();
 
-        foreach (GameObject cell in gridArray)
+        for (int x = 0; x < width; x++)
         {
-            Cell cellComponent = cell.GetComponent<Cell>();
-            CellData cellData = cellComponent.GetCellData();
-            gridData.Add(cellData);
+            for (int y = 0; y < height; y++)
+            {
+                Cell cellComponent = cellArray[x, y];
+                CellData cellData = cellComponent.GetCellData();
+                gridData.Add(cellData);
+            }
         }
 
         return gridData;

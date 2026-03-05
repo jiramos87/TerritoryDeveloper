@@ -114,8 +114,7 @@ public class WaterManager : MonoBehaviour
 
         // Update the grid cell to display water
         GameObject cell = gridManager.gridArray[x, y];
-
-        Cell cellComponent = cell.GetComponent<Cell>();
+        Cell cellComponent = gridManager.GetCell(x, y);
         // Destroy existing children
         foreach (Transform child in cell.transform)
         {
@@ -186,7 +185,7 @@ public class WaterManager : MonoBehaviour
 
         // Update the grid cell to display grass
         GameObject cell = gridManager.gridArray[x, y];
-        Cell cellComponent = cell.GetComponent<Cell>();
+        Cell cellComponent = gridManager.GetCell(x, y);
 
         // Destroy existing children
         foreach (Transform child in cell.transform)

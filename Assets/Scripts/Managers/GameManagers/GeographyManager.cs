@@ -103,7 +103,7 @@ public class GeographyManager : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("GeographyManager: Interstate could not be placed (no valid path). Game continues without interstate.");
+                DebugHelper.LogWarning("GeographyManager: Interstate could not be placed (no valid path). Game continues without interstate.");
             }
         }
     }
@@ -180,8 +180,7 @@ public class GeographyManager : MonoBehaviour
         if (y < 0 || y >= height) return false;
 
         int westX = x - 1;
-        GameObject westCellObj = gridManager.gridArray[westX, y];
-        Cell westCell = westCellObj != null ? westCellObj.GetComponent<Cell>() : null;
+        Cell westCell = gridManager.GetCell(westX, y);
         if (westCell == null || westCell.buildingSize <= 1) return false;
 
         GameObject pivotObj = gridManager.GetBuildingPivotCell(westCell);
@@ -210,8 +209,7 @@ public class GeographyManager : MonoBehaviour
         if (x < 0 || x >= width - 1 || y < 0 || y >= height) return false;
 
         int northX = x + 1;
-        GameObject northCellObj = gridManager.gridArray[northX, y];
-        Cell northCell = northCellObj != null ? northCellObj.GetComponent<Cell>() : null;
+        Cell northCell = gridManager.GetCell(northX, y);
         if (northCell == null || northCell.buildingSize <= 1) return false;
 
         GameObject pivotObj = gridManager.GetBuildingPivotCell(northCell);
@@ -240,8 +238,7 @@ public class GeographyManager : MonoBehaviour
         if (x < 0 || x >= width || y < 0 || y >= height - 1) return false;
 
         int eastY = y + 1;
-        GameObject eastCellObj = gridManager.gridArray[x, eastY];
-        Cell eastCell = eastCellObj != null ? eastCellObj.GetComponent<Cell>() : null;
+        Cell eastCell = gridManager.GetCell(x, eastY);
         if (eastCell == null || eastCell.buildingSize <= 1) return false;
 
         GameObject pivotObj = gridManager.GetBuildingPivotCell(eastCell);
@@ -269,7 +266,7 @@ public class GeographyManager : MonoBehaviour
         if (x < 0 || x >= width || y < 0 || y >= height) return int.MinValue;
 
         GameObject cellObj = gridManager.gridArray[x, y];
-        Cell cell = cellObj != null ? cellObj.GetComponent<Cell>() : null;
+        Cell cell = gridManager.GetCell(x, y);
         if (cell == null) return int.MinValue;
 
         int terrainOrder = terrainManager.CalculateTerrainSortingOrder(x, y, cell.height);
@@ -333,8 +330,7 @@ public class GeographyManager : MonoBehaviour
                 int gridY = pivotY + y - offsetY;
                 if (gridX < 0 || gridX >= width || gridY < 0 || gridY >= height) continue;
 
-                GameObject cellObj = gridManager.gridArray[gridX, gridY];
-                Cell cell = cellObj != null ? cellObj.GetComponent<Cell>() : null;
+                Cell cell = gridManager.GetCell(gridX, gridY);
                 if (cell == null) continue;
 
                 int cellHeight = cell.height;
@@ -397,11 +393,11 @@ public class GeographyManager : MonoBehaviour
             {
 
                 GameObject cell = gridManager.gridArray[x, y];
-                Cell cellComponent = cell.GetComponent<Cell>();
+                Cell cellComponent = gridManager.GetCell(x, y);
 
                 if (cellComponent == null)
                 {
-                    Debug.LogWarning($"Cell component missing at ({x}, {y})");
+                    DebugHelper.LogWarning($"Cell component missing at ({x}, {y})");
                     continue;
                 }
 
@@ -494,12 +490,12 @@ public class GeographyManager : MonoBehaviour
         if (waterManager != null && waterManager.GetWaterMap() != null)
         {
             // Water manager would need a ClearAllWater method similar to forest
-            Debug.Log("GeographyManager: Water reset not implemented yet");
+            DebugHelper.Log("GeographyManager: Water reset not implemented yet");
         }
 
         currentGeographyData = new GeographyData();
 
-        Debug.Log("GeographyManager: Geography reset complete!");
+        DebugHelper.Log("GeographyManager: Geography reset complete!");
     }
 
     private void ClearAllForests()
@@ -558,8 +554,7 @@ public class GeographyManager : MonoBehaviour
                     return false;
                 if (gridManager != null && gridManager.gridArray != null)
                 {
-                    GameObject cell = gridManager.gridArray[x, y];
-                    Cell cellComponent = cell.GetComponent<Cell>();
+                    Cell cellComponent = gridManager.GetCell(x, y);
                     if (cellComponent != null && cellComponent.occupiedBuilding != null)
                         return false;
                 }
@@ -602,8 +597,7 @@ public class GeographyManager : MonoBehaviour
         {
             if (x >= 0 && x < gridManager.width && y >= 0 && y < gridManager.height)
             {
-                GameObject cell = gridManager.gridArray[x, y];
-                Cell cellComponent = cell.GetComponent<Cell>();
+                Cell cellComponent = gridManager.GetCell(x, y);
 
                 if (cellComponent != null)
                 {

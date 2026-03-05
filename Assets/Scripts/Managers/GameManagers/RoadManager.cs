@@ -203,7 +203,7 @@ public class RoadManager : MonoBehaviour
             return;
         GameObject cell = gridManager.GetGridCell(gridPos);
         if (cell == null) return;
-        Cell cellComponentCheck = cell.GetComponent<Cell>();
+        Cell cellComponentCheck = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         if (cellComponentCheck != null && cellComponentCheck.isInterstate)
             return;
 
@@ -233,7 +233,7 @@ public class RoadManager : MonoBehaviour
         GameObject correctRoadPrefab = GetCorrectRoadPrefab(prevGridPos, gridPos, false, false);
         DestroyPreviousRoadTile(cell, gridPos);
 
-        Cell cellComponent = cell.GetComponent<Cell>();
+        Cell cellComponent = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         if (cellComponent == null) return;
         cellComponent.RemoveForestForBuilding();
         int roadPlacedAtHeight = 0;
@@ -329,7 +329,7 @@ public class RoadManager : MonoBehaviour
 
         GameObject roadPrefab = GetCorrectRoadPrefab(prevGridPos, gridPos, isCenterRoadTile, isPreview, path, i);
 
-        Cell cell = gridManager.GetGridCell(gridPos).GetComponent<Cell>();
+        Cell cell = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         int roadPlacedAtHeight = 0;
         int terrainHeight = cell.GetCellInstanceHeight();
         Vector2 worldPos;
@@ -362,7 +362,7 @@ public class RoadManager : MonoBehaviour
     GameObject GetCorrectRoadPrefab(Vector2 prevGridPos, Vector2 currGridPos, bool isCenterRoadTile = true, bool isPreview = false, List<Vector2> path = null, int pathIndex = -1)
     {
         Vector2 direction = currGridPos - prevGridPos;
-        Cell cell = gridManager.GetGridCell(currGridPos).GetComponent<Cell>();
+        Cell cell = gridManager.GetCell((int)currGridPos.x, (int)currGridPos.y);
         int height = cell.GetCellInstanceHeight();
 
         if (isPreview)
@@ -512,9 +512,7 @@ public class RoadManager : MonoBehaviour
         int ny = gridY + dy;
         if (nx < 0 || nx >= gridManager.width || ny < 0 || ny >= gridManager.height)
             return int.MinValue;
-        GameObject neighborCell = gridManager.GetGridCell(new Vector2(nx, ny));
-        if (neighborCell == null) return int.MinValue;
-        Cell c = neighborCell.GetComponent<Cell>();
+        Cell c = gridManager.GetCell(nx, ny);
         return c != null ? c.GetCellInstanceHeight() : int.MinValue;
     }
 
@@ -597,10 +595,7 @@ public class RoadManager : MonoBehaviour
         worldPos = gridManager.GetWorldPosition(x, y);
         sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, 0);
 
-        GameObject cellObj = gridManager.GetGridCell(gridPos);
-        if (cellObj == null) return;
-
-        Cell cell = cellObj.GetComponent<Cell>();
+        Cell cell = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         if (cell == null) return;
 
         int height = cell.GetCellInstanceHeight();
@@ -648,7 +643,7 @@ public class RoadManager : MonoBehaviour
         var cell = gridManager.GetGridCell(new Vector2(gridX, gridY));
         if (cell == null || cell.transform.childCount == 0) return false;
 
-        var cellComponent = cell.GetComponent<Cell>();
+        var cellComponent = gridManager.GetCell(gridX, gridY);
         if (cellComponent?.zoneType == Zone.ZoneType.Road) return true;
 
         return cell.transform
@@ -699,7 +694,7 @@ public class RoadManager : MonoBehaviour
             return;
 
         GameObject cell = gridManager.GetGridCell(gridPos);
-        Cell cellComponentCheck = cell.GetComponent<Cell>();
+        Cell cellComponentCheck = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         if (cellComponentCheck != null && cellComponentCheck.isInterstate)
             return;
 
@@ -719,7 +714,7 @@ public class RoadManager : MonoBehaviour
 
         DestroyPreviousRoadTile(cell, gridPos);
 
-        Cell cellComponent = cell.GetComponent<Cell>();
+        Cell cellComponent = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         cellComponent.RemoveForestForBuilding();
         int roadPlacedAtHeight = 0;
         int terrainHeight = cellComponent.GetCellInstanceHeight();
@@ -759,17 +754,18 @@ public class RoadManager : MonoBehaviour
     {
         if (cell.transform.childCount > 0)
         {
+            var toDestroy = new List<(GameObject go, Zone zone)>();
             foreach (Transform child in cell.transform)
             {
                 Zone zone = child.GetComponent<Zone>();
                 if (zone != null)
-                {
-                    DestroyImmediate(child.gameObject);
-                    if (zone.zoneCategory == Zone.ZoneCategory.Zoning)
-                    {
-                        zoneManager.removeZonedPositionFromList(gridPos, zone.zoneType);
-                    }
-                }
+                    toDestroy.Add((child.gameObject, zone));
+            }
+            foreach (var t in toDestroy)
+            {
+                if (t.zone.zoneCategory == Zone.ZoneCategory.Zoning)
+                    zoneManager.removeZonedPositionFromList(gridPos, t.zone.zoneType);
+                Destroy(t.go);
             }
         }
     }
@@ -799,9 +795,7 @@ public class RoadManager : MonoBehaviour
             return false;
         if (gridManager.IsCellOccupiedByBuilding(gx, gy))
             return false;
-        GameObject cell = gridManager.GetGridCell(gridPos);
-        if (cell == null) return false;
-        Cell c = cell.GetComponent<Cell>();
+        Cell c = gridManager.GetCell(gx, gy);
         if (c != null && c.isInterstate)
             return false;
         return true;
@@ -829,7 +823,7 @@ public class RoadManager : MonoBehaviour
 
         GameObject cell = gridManager.GetGridCell(gridPos);
         if (cell == null) return false;
-        Cell cellComponentCheck = cell.GetComponent<Cell>();
+        Cell cellComponentCheck = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         if (cellComponentCheck != null && cellComponentCheck.isInterstate)
             return false;
 
@@ -839,7 +833,7 @@ public class RoadManager : MonoBehaviour
 
         DestroyPreviousRoadTile(cell, gridPos);
 
-        Cell cellComponent = cell.GetComponent<Cell>();
+        Cell cellComponent = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         cellComponent.RemoveForestForBuilding();
         int roadPlacedAtHeight = 0;
         int terrainHeight = cellComponent.GetCellInstanceHeight();
@@ -895,7 +889,7 @@ public class RoadManager : MonoBehaviour
         if (gridManager.IsCellOccupiedByBuilding(gx, gy)) return;
 
         GameObject cell = gridManager.GetGridCell(gridPos);
-        Cell cellComponent = cell.GetComponent<Cell>();
+        Cell cellComponent = gridManager.GetCell(gx, gy);
         if (cellComponent == null) return;
 
         DestroyPreviousRoadTile(cell, gridPos);
@@ -933,14 +927,14 @@ public class RoadManager : MonoBehaviour
     {
         GameObject cell = gridManager.GetGridCell(new Vector2(gridPos.x, gridPos.y));
         if (cell == null) return;
-        Cell cellComponent = cell.GetComponent<Cell>();
+        Cell cellComponent = gridManager.GetCell(gridPos.x, gridPos.y);
         if (cellComponent == null) return;
 
         foreach (Transform child in cell.transform)
         {
             if (child.GetComponent<Zone>() != null)
             {
-                DestroyImmediate(child.gameObject);
+                Destroy(child.gameObject);
                 break;
             }
         }

@@ -164,7 +164,7 @@ public class RegionalMapManager : MonoBehaviour
         foreach (var signObj in activeSignInstances)
         {
             if (signObj != null)
-                DestroyImmediate(signObj);
+                Destroy(signObj);
         }
         activeSignInstances.Clear();
     }

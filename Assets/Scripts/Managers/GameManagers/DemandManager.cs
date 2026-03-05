@@ -75,6 +75,7 @@ public class DemandManager : MonoBehaviour
     private EmploymentManager employmentManager;
     private CityStats cityStats;
     private ForestManager forestManager;
+    private GridManager gridManager;
 
     // Track previous values to detect new buildings
     private int previousResidentialBuildings = 0;
@@ -87,6 +88,7 @@ public class DemandManager : MonoBehaviour
         employmentManager = FindObjectOfType<EmploymentManager>();
         cityStats = FindObjectOfType<CityStats>();
         forestManager = FindObjectOfType<ForestManager>();
+        gridManager = FindObjectOfType<GridManager>();
         buildingTracker = new BuildingTracker();
     }
 
@@ -280,15 +282,10 @@ public class DemandManager : MonoBehaviour
     /// </summary>
     public float GetCellDesirabilityBonus(int x, int y)
     {
-        GameObject cell = FindObjectOfType<GridManager>().gridArray[x, y];
-        if (cell != null)
-        {
-            Cell cellComponent = cell.GetComponent<Cell>();
-            if (cellComponent != null)
-            {
-                return cellComponent.desirability * desirabilityDemandMultiplier;
-            }
-        }
+        if (gridManager == null) return 0f;
+        Cell cellComponent = gridManager.GetCell(x, y);
+        if (cellComponent != null)
+            return cellComponent.desirability * desirabilityDemandMultiplier;
         return 0f;
     }
 

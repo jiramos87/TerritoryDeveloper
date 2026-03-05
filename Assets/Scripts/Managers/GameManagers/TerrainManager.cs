@@ -433,10 +433,11 @@ public class TerrainManager : MonoBehaviour
     private void DestroyCellChildren(Cell cell)
     {
         GameObject cellObject = cell.gameObject;  // Get the GameObject that holds the Cell component
+        var toDestroy = new List<GameObject>();
         foreach (Transform child in cellObject.transform)
-        {
-            DestroyImmediate(child.gameObject);
-        }
+            toDestroy.Add(child.gameObject);
+        foreach (GameObject go in toDestroy)
+            Destroy(go);
     }
 
     private bool RequiresSlope(int x, int y, int currentHeight)
@@ -694,7 +695,7 @@ public class TerrainManager : MonoBehaviour
             if (IsPrefabInstance(child, southCliffWallPrefab)
                 || IsPrefabInstance(child, eastCliffWallPrefab))
             {
-                DestroyImmediate(child);
+                Destroy(child);
             }
         }
     }

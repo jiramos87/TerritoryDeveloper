@@ -156,7 +156,7 @@ public class EconomyManager : MonoBehaviour
         {
             // In a more complex system, this would transfer to another account
             // For now, it just removes money from the treasury
-            Debug.Log($"EconomyManager: Transfer completed - ${amount} ({description})");
+            DebugHelper.Log($"EconomyManager: Transfer completed - ${amount} ({description})");
             return true;
         }
         return false;
@@ -192,7 +192,7 @@ public class EconomyManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Residential tax is already at maximum ({maxTaxRate}%)");
+            DebugHelper.LogWarning($"Residential tax is already at maximum ({maxTaxRate}%)");
         }
     }
 
@@ -208,7 +208,7 @@ public class EconomyManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Residential tax is already at minimum ({minTaxRate}%)");
+            DebugHelper.LogWarning($"Residential tax is already at minimum ({minTaxRate}%)");
         }
     }
 
@@ -224,7 +224,7 @@ public class EconomyManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Commercial tax is already at maximum ({maxTaxRate}%)");
+            DebugHelper.LogWarning($"Commercial tax is already at maximum ({maxTaxRate}%)");
         }
     }
 
@@ -240,7 +240,7 @@ public class EconomyManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Commercial tax is already at minimum ({minTaxRate}%)");
+            DebugHelper.LogWarning($"Commercial tax is already at minimum ({minTaxRate}%)");
         }
     }
 
@@ -256,7 +256,7 @@ public class EconomyManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Industrial tax is already at maximum ({maxTaxRate}%)");
+            DebugHelper.LogWarning($"Industrial tax is already at maximum ({maxTaxRate}%)");
         }
     }
 
@@ -272,7 +272,7 @@ public class EconomyManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Industrial tax is already at minimum ({minTaxRate}%)");
+            DebugHelper.LogWarning($"Industrial tax is already at minimum ({minTaxRate}%)");
         }
     }
 
@@ -299,7 +299,7 @@ public class EconomyManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"Cannot set tax rate for zone type: {zoneType}");
+            DebugHelper.LogWarning($"Cannot set tax rate for zone type: {zoneType}");
         }
     }
     #endregion
