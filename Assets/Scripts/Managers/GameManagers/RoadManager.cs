@@ -681,35 +681,16 @@ public class RoadManager : MonoBehaviour
 
     void SetPreviewRoadTileDetails(GameObject previewTile)
     {
-        SetPreviewTileCollider(previewTile);
         gridManager.SetTileSortingOrder(previewTile, Zone.ZoneType.Road);
 
         SetRoadTileZoneDetails(previewTile);
         previewTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 0.5f);
     }
 
-    void SetPreviewTileCollider(GameObject previewTile)
-    {
-        PolygonCollider2D collider = previewTile.AddComponent<PolygonCollider2D>();
-        collider.points = GetRoadColliderPoints();
-        collider.isTrigger = true;
-    }
-
     void SetRoadTileZoneDetails(GameObject roadTile)
     {
         Zone zone = roadTile.AddComponent<Zone>();
         zone.zoneType = Zone.ZoneType.Road;
-    }
-
-    Vector2[] GetRoadColliderPoints()
-    {
-        Vector2[] points = new Vector2[4];
-        points[0] = new Vector2(-0.5f, 0f);
-        points[1] = new Vector2(0f, 0.25f);
-        points[2] = new Vector2(0.5f, 0f);
-        points[3] = new Vector2(0f, -0.25f);
-
-        return points;
     }
 
     void PlaceRoadTile(Vector2 gridPos, int i = 0, bool isAdjacent = false)

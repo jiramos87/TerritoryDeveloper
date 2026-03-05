@@ -220,7 +220,7 @@ public class UrbanizationProposalManager : MonoBehaviour
             var sr = tile.GetComponent<SpriteRenderer>();
             if (sr != null) sr.color = new Color(1, 1, 1, 0.5f);
             var collider = tile.GetComponent<Collider2D>();
-            if (collider != null) collider.enabled = false;
+            if (collider != null) Destroy(collider);
         }
     }
 

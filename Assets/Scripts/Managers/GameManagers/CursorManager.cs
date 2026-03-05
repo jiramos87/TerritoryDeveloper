@@ -14,6 +14,7 @@ public class CursorManager : MonoBehaviour
     private Vector2 activeCursorHotSpot;
     private bool isOverUI;
     private Texture2D scaledBulldozerTexture;
+    private Camera cachedMainCamera;
 
     void Start()
     {
@@ -21,6 +22,7 @@ public class CursorManager : MonoBehaviour
         activeCursorTexture = null;
         activeCursorHotSpot = Vector2.zero;
         isOverUI = false;
+        cachedMainCamera = Camera.main;
         Cursor.SetCursor(cursorTexture, hotSpot, CursorMode.Auto);
     }
 
@@ -91,11 +93,10 @@ public class CursorManager : MonoBehaviour
                 Debug.LogError("No SpriteRenderer found on building prefab or its children!");
             }
 
-            // Optionally disable colliders or other components
             Collider2D[] colliders = previewInstance.GetComponentsInChildren<Collider2D>();
             foreach (var col in colliders)
             {
-                col.enabled = false; // Disable collision for the preview
+                Destroy(col);
             }
         }
         catch (System.Exception ex)
@@ -108,7 +109,8 @@ public class CursorManager : MonoBehaviour
     {
         if (previewInstance != null)
         {
-            Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            if (cachedMainCamera == null) cachedMainCamera = Camera.main;
+            Vector3 mousePosition = cachedMainCamera.ScreenToWorldPoint(Input.mousePosition);
             Vector2 mousePosition2 = new Vector2(mousePosition.x, mousePosition.y);
 
             Vector2 gridPosition = gridManager.GetGridPositionWithHeight(mousePosition2);
@@ -136,7 +138,7 @@ public class CursorManager : MonoBehaviour
                     if (sr == null) sr = previewInstance.GetComponentInChildren<SpriteRenderer>();
                     if (sr != null) sr.color = new Color(1, 1, 1, 0.5f);
                     foreach (var col in previewInstance.GetComponentsInChildren<Collider2D>())
-                        col.enabled = false;
+                        Destroy(col);
                 }
                 previewInstance.transform.position = new Vector3(worldPos.x, worldPos.y, 0f);
                 SpriteRenderer[] renderers = previewInstance.GetComponentsInChildren<SpriteRenderer>();
