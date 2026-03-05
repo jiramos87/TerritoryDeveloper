@@ -35,6 +35,15 @@ public class GridManager : MonoBehaviour
 
     public bool isInitialized = false;
 
+    [Header("Chunk Culling")]
+    public int chunkSize = 16;
+    private GameObject[,] chunkObjects;
+    private bool[,] chunkActiveState;
+    private int chunksX, chunksY;
+    private Camera cachedCamera;
+    private Vector3 lastCameraPosition;
+    private float lastOrthoSize;
+
     public void InitializeGrid()
     {
         halfWidth = tileWidth / 2f;
@@ -132,6 +141,22 @@ public class GridManager : MonoBehaviour
 
         gridArray = new GameObject[width, height];
 
+        chunksX = Mathf.CeilToInt((float)width / chunkSize);
+        chunksY = Mathf.CeilToInt((float)height / chunkSize);
+        chunkObjects = new GameObject[chunksX, chunksY];
+        chunkActiveState = new bool[chunksX, chunksY];
+
+        for (int cx = 0; cx < chunksX; cx++)
+        {
+            for (int cy = 0; cy < chunksY; cy++)
+            {
+                GameObject chunk = new GameObject($"Chunk_{cx}_{cy}");
+                chunk.transform.SetParent(transform);
+                chunkObjects[cx, cy] = chunk;
+                chunkActiveState[cx, cy] = true;
+            }
+        }
+
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
@@ -142,7 +167,7 @@ public class GridManager : MonoBehaviour
                 float posY = (x + y) * (tileHeight / 2);
 
                 gridCell.transform.position = new Vector3(posX, posY, 0);
-                gridCell.transform.SetParent(transform);
+                gridCell.transform.SetParent(chunkObjects[x / chunkSize, y / chunkSize].transform);
 
                 CellData cellData = new CellData(x, y, 1);
                 GameObject tilePrefab = zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass, 1);
@@ -161,12 +186,6 @@ public class GridManager : MonoBehaviour
                     Quaternion.identity
                 );
                 SetTileSortingOrder(zoneTile, Zone.ZoneType.Grass);
-
-                PolygonCollider2D polygonCollider = zoneTile.GetComponent<PolygonCollider2D>();
-                if (polygonCollider == null)
-                {
-                    polygonCollider = zoneTile.AddComponent<PolygonCollider2D>();
-                }
 
                 Zone zoneComponent = zoneTile.GetComponent<Zone>();
                 if (zoneComponent == null)
@@ -212,7 +231,8 @@ public class GridManager : MonoBehaviour
                 buildingSelectorMenuController.DeselectAndUnpressAllButtons();
             }
 
-            Vector2 worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            if (cachedCamera == null) cachedCamera = Camera.main;
+            Vector2 worldPoint = cachedCamera.ScreenToWorldPoint(Input.mousePosition);
 
             // USE: Height-aware grid position calculation
             // mouseGridPosition = GetGridPosition(worldPoint);
@@ -256,6 +276,56 @@ public class GridManager : MonoBehaviour
             Debug.LogError("Update error: " + ex);
         }
     }
+
+    void LateUpdate()
+    {
+        if (!isInitialized || chunkObjects == null) return;
+        UpdateChunkVisibility();
+    }
+
+    void UpdateChunkVisibility()
+    {
+        if (cachedCamera == null) cachedCamera = Camera.main;
+        if (cachedCamera == null) return;
+
+        Vector3 camPos = cachedCamera.transform.position;
+        float orthoSize = cachedCamera.orthographicSize;
+        if (camPos == lastCameraPosition && Mathf.Approximately(orthoSize, lastOrthoSize))
+            return;
+        lastCameraPosition = camPos;
+        lastOrthoSize = orthoSize;
+
+        float halfH = orthoSize;
+        float halfW = orthoSize * cachedCamera.aspect;
+        Vector2 bl = new Vector2(camPos.x - halfW, camPos.y - halfH);
+        Vector2 br = new Vector2(camPos.x + halfW, camPos.y - halfH);
+        Vector2 tl = new Vector2(camPos.x - halfW, camPos.y + halfH);
+        Vector2 tr = new Vector2(camPos.x + halfW, camPos.y + halfH);
+
+        int minGridX = Mathf.Min((int)GetGridPosition(bl).x, (int)GetGridPosition(br).x, (int)GetGridPosition(tl).x, (int)GetGridPosition(tr).x);
+        int maxGridX = Mathf.Max((int)GetGridPosition(bl).x, (int)GetGridPosition(br).x, (int)GetGridPosition(tl).x, (int)GetGridPosition(tr).x);
+        int minGridY = Mathf.Min((int)GetGridPosition(bl).y, (int)GetGridPosition(br).y, (int)GetGridPosition(tl).y, (int)GetGridPosition(tr).y);
+        int maxGridY = Mathf.Max((int)GetGridPosition(bl).y, (int)GetGridPosition(br).y, (int)GetGridPosition(tl).y, (int)GetGridPosition(tr).y);
+
+        int minCX = Mathf.Max(0, minGridX / chunkSize - 1);
+        int maxCX = Mathf.Min(chunksX - 1, maxGridX / chunkSize + 1);
+        int minCY = Mathf.Max(0, minGridY / chunkSize - 1);
+        int maxCY = Mathf.Min(chunksY - 1, maxGridY / chunkSize + 1);
+
+        for (int cx = 0; cx < chunksX; cx++)
+        {
+            for (int cy = 0; cy < chunksY; cy++)
+            {
+                bool shouldBeActive = cx >= minCX && cx <= maxCX && cy >= minCY && cy <= maxCY;
+                if (chunkActiveState[cx, cy] != shouldBeActive)
+                {
+                    chunkActiveState[cx, cy] = shouldBeActive;
+                    chunkObjects[cx, cy].SetActive(shouldBeActive);
+                }
+            }
+        }
+    }
+
     public bool IsValidGridPosition(Vector2 gridPosition)
     {
         int gridX = (int)gridPosition.x;
@@ -1200,7 +1270,8 @@ public class GridManager : MonoBehaviour
 
     public Cell GetCellFromWorldPoint(Vector2 worldPoint, Vector2 gridPos)
     {
-        Camera cam = Camera.main;
+        if (cachedCamera == null) cachedCamera = Camera.main;
+        Camera cam = cachedCamera;
         if (cam == null) return null;
 
         int gridX = (int)gridPos.x;
@@ -1776,9 +1847,16 @@ public class GridManager : MonoBehaviour
 
     public void ResetGrid()
     {
-        foreach (GameObject cell in gridArray)
+        if (chunkObjects != null)
         {
-            Destroy(cell);
+            for (int cx = 0; cx < chunksX; cx++)
+            {
+                for (int cy = 0; cy < chunksY; cy++)
+                {
+                    if (chunkObjects[cx, cy] != null)
+                        Destroy(chunkObjects[cx, cy]);
+                }
+            }
         }
 
         zoneManager.ClearZonedPositions();

@@ -8565,7 +8565,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 470750414}
   m_HandleRect: {fileID: 470750413}
   m_Direction: 0
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -8668,9 +8668,11 @@ MonoBehaviour:
   chancePerpendicularAtEnd: 0.6
   minSpacingForBranch: 4
   minParallelSpacingFromEdge: 3
+  minEdgeSpacing: 2
   branchIntervalMin: 4
   branchIntervalMax: 8
   minLengthForBranch: 3
+  minRoadSpacingWhenConnecting: 2
 --- !u!1 &938947610
 GameObject:
   m_ObjectHideFlags: 0
@@ -15467,7 +15469,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -260.99472, y: -10.571869}
+  m_AnchoredPosition: {x: -260.9947, y: -10.571808}
   m_SizeDelta: {x: -521.9894, y: -455.8174}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1664159913
@@ -17916,8 +17918,8 @@ MonoBehaviour:
   roadManager: {fileID: 1313145027}
   interstateManager: {fileID: 251169277}
   buildingSelectorMenuController: {fileID: 1975260509}
-  width: 40
-  height: 40
+  width: 128
+  height: 128
   tileWidth: 1
   tileHeight: 0.5
   halfWidth: 0
@@ -17927,6 +17929,7 @@ MonoBehaviour:
   mouseGridHeight: 0
   mouseGridSortingOrder: 0
   isInitialized: 0
+  chunkSize: 16
 --- !u!1 &1888940540
 GameObject:
   m_ObjectHideFlags: 0
