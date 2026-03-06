@@ -1,4 +1,3 @@
-using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
@@ -207,15 +206,15 @@ public class RoadManager : MonoBehaviour, IRoadManager
         }
     }
 
-    void IRoadManager.UpdateAdjacentRoadPrefabsAt(Vector2 gridPos) => UpdateAdjacentRoadPrefabsAt(gridPos, true);
+    void IRoadManager.UpdateAdjacentRoadPrefabsAt(Vector2 gridPos) => UpdateAdjacentRoadPrefabsAt(gridPos);
 
     /// <summary>
     /// Refreshes prefabs of all road tiles adjacent to the given position so they connect correctly.
     /// Use after programmatic placement (e.g. AutoRoadBuilder) so existing roads update to T-junctions/crossings.
+    /// Road cache is updated incrementally by the placement caller (AddRoadToCache).
     /// </summary>
     /// <param name="gridPos">Grid position of the newly placed road.</param>
-    /// <param name="invalidateCache">When true, invalidates the road cache. Set false during batch placement.</param>
-    public void UpdateAdjacentRoadPrefabsAt(Vector2 gridPos, bool invalidateCache = true)
+    public void UpdateAdjacentRoadPrefabsAt(Vector2 gridPos)
     {
         var toRefresh = new List<Vector2>();
         Vector2[] dirs = { new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, -1) };
@@ -227,8 +226,6 @@ public class RoadManager : MonoBehaviour, IRoadManager
         }
         foreach (Vector2 pos in toRefresh)
             RefreshRoadPrefabAt(pos);
-        if (invalidateCache && gridManager != null)
-            gridManager.InvalidateRoadCache();
     }
 
     void RefreshRoadPrefabAt(Vector2 gridPos)
@@ -681,12 +678,15 @@ public class RoadManager : MonoBehaviour, IRoadManager
         if (cell == null || cell.transform.childCount == 0) return false;
 
         var cellComponent = gridManager.GetCell(gridX, gridY);
-        if (cellComponent?.zoneType == Zone.ZoneType.Road) return true;
+        if (cellComponent != null && cellComponent.zoneType == Zone.ZoneType.Road) return true;
 
-        return cell.transform
-            .Cast<Transform>()
-            .Select(child => child.GetComponent<Zone>())
-            .Any(zone => zone != null && zone.zoneType == Zone.ZoneType.Road);
+        for (int i = 0; i < cell.transform.childCount; i++)
+        {
+            var zone = cell.transform.GetChild(i).GetComponent<Zone>();
+            if (zone != null && zone.zoneType == Zone.ZoneType.Road)
+                return true;
+        }
+        return false;
     }
 
     void UpdateAdjacentRoadTilesArray(Vector2 currGridPos, bool hasLeft, bool hasRight, bool hasUp, bool hasDown, bool isPreview)
@@ -785,6 +785,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         UpdateRoadCellAttributes(cellComponent, roadTile, zoneType);
 
         gridManager.SetRoadSortingOrder(roadTile, (int)gridPos.x, (int)gridPos.y);
+        gridManager.AddRoadToCache(new Vector2Int((int)gridPos.x, (int)gridPos.y));
     }
 
     void DestroyPreviousRoadTile(GameObject cell, Vector2 gridPos)
@@ -802,6 +803,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
             {
                 if (t.zone.zoneCategory == Zone.ZoneCategory.Zoning)
                     zoneManager.removeZonedPositionFromList(gridPos, t.zone.zoneType);
+                if (t.zone.zoneType == Zone.ZoneType.Road)
+                    gridManager.RemoveRoadFromCache(new Vector2Int((int)gridPos.x, (int)gridPos.y));
                 Destroy(t.go);
             }
         }
@@ -840,15 +843,15 @@ public class RoadManager : MonoBehaviour, IRoadManager
         return true;
     }
 
-    bool IRoadManager.PlaceRoadTileAt(Vector2 gridPos) => PlaceRoadTileAt(gridPos, true);
+    bool IRoadManager.PlaceRoadTileAt(Vector2 gridPos) => PlaceRoadTileAt(gridPos);
 
     /// <summary>
     /// Places a single road tile at the given grid position. Uses existing road neighbors to pick prefab.
     /// Caller is responsible for affordability and budget. Returns true if placed.
+    /// Updates road cache incrementally (AddRoadToCache).
     /// </summary>
     /// <param name="gridPos">Grid position to place the road.</param>
-    /// <param name="invalidateCache">When true, invalidates the road cache after placement. Set false during batch placement (e.g. AutoRoadBuilder) and invalidate once at end.</param>
-    public bool PlaceRoadTileAt(Vector2 gridPos, bool invalidateCache = true)
+    public bool PlaceRoadTileAt(Vector2 gridPos)
     {
         if (!CanPlaceRoadAt(gridPos))
             return false;
@@ -901,9 +904,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         UpdateRoadCellAttributes(cellComponent, roadTile, Zone.ZoneType.Road);
         gridManager.SetRoadSortingOrder(roadTile, (int)gridPos.x, (int)gridPos.y);
-        if (invalidateCache)
-            gridManager.InvalidateRoadCache();
-        UpdateAdjacentRoadPrefabsAt(gridPos, invalidateCache);
+        gridManager.AddRoadToCache(new Vector2Int((int)gridPos.x, (int)gridPos.y));
+        UpdateAdjacentRoadPrefabsAt(gridPos);
         return true;
     }
 
@@ -968,10 +970,12 @@ public class RoadManager : MonoBehaviour, IRoadManager
             cellComponent.isInterstate = true;
 
         gridManager.SetRoadSortingOrder(roadTile, gx, gy);
+        gridManager.AddRoadToCache(new Vector2Int(gx, gy));
     }
 
     /// <summary>
     /// Replace the road tile at the given position with a new prefab (e.g. after all interstate tiles placed to fix junctions). Preserves isInterstate and tint.
+    /// Road remains at same position, so cache does not need updating.
     /// </summary>
     public void ReplaceRoadTileAt(Vector2Int gridPos, GameObject newPrefab, bool keepInterstateTint)
     {

@@ -35,6 +35,37 @@ namespace Territory.Core
         }
 
         /// <summary>
+        /// Adds a road position to the cache incrementally. Call when a road tile is placed.
+        /// </summary>
+        public void AddRoad(Vector2Int pos)
+        {
+            if (cachedRoadPositionsSet == null)
+            {
+                cachedRoadPositions = new List<Vector2Int>();
+                cachedRoadPositionsSet = new HashSet<Vector2Int>();
+            }
+            if (cachedRoadPositionsSet.Add(pos))
+            {
+                cachedRoadPositions.Add(pos);
+                cachedRoadEdgePositions = null;
+            }
+            roadCacheDirty = false;
+        }
+
+        /// <summary>
+        /// Removes a road position from the cache incrementally. Call when a road tile is demolished.
+        /// </summary>
+        public void RemoveRoad(Vector2Int pos)
+        {
+            if (cachedRoadPositionsSet == null) return;
+            if (cachedRoadPositionsSet.Remove(pos))
+            {
+                cachedRoadPositions.Remove(pos);
+                cachedRoadEdgePositions = null;
+            }
+        }
+
+        /// <summary>
         /// Returns all grid positions that contain a road, using a lazily rebuilt cache.
         /// </summary>
         public List<Vector2Int> GetAllRoadPositions()
@@ -73,7 +104,7 @@ namespace Territory.Core
         {
             if (cachedRoadEdgePositions != null && !roadCacheDirty)
                 return cachedRoadEdgePositions;
-            List<Vector2Int> all = GetAllRoadPositions();
+            List<Vector2Int> all = roadCacheDirty ? GetAllRoadPositions() : (cachedRoadPositions ?? GetAllRoadPositions());
             cachedRoadEdgePositions = new List<Vector2Int>();
             foreach (Vector2Int p in all)
             {

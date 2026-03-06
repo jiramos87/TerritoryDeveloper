@@ -74,10 +74,10 @@ public class AutoRoadBuilder : MonoBehaviour
         return cityStats != null ? cityStats.currentDate.ToString("yyyy-MM-dd") : "?";
     }
 
-    /// <summary>Places a road tile without invalidating cache. Caller must call gridManager.InvalidateRoadCache() once at end of batch.</summary>
+    /// <summary>Places a road tile. Cache is updated incrementally.</summary>
     private bool PlaceRoadTileInBatch(Vector2 pos)
     {
-        return roadManager.PlaceRoadTileAt(pos, invalidateCache: false);
+        return roadManager.PlaceRoadTileAt(pos);
     }
 
     void Start()
@@ -127,10 +127,7 @@ public class AutoRoadBuilder : MonoBehaviour
             {
                 toPlace -= placed;
                 if (toPlace <= 0)
-                {
-                    gridManager.InvalidateRoadCache();
                     return;
-                }
             }
         }
 
@@ -138,10 +135,7 @@ public class AutoRoadBuilder : MonoBehaviour
         {
             placed = TryConnectToInterstate(toPlace, allRoads);
             if (placed > 0)
-            {
-                gridManager.InvalidateRoadCache();
                 return;
-            }
         }
 
         List<List<Vector2Int>> clusters = GetRoadClusters(allRoads);
@@ -149,18 +143,12 @@ public class AutoRoadBuilder : MonoBehaviour
         {
             placed = TryConnectDisconnected(clusters, toPlace);
             if (placed > 0)
-            {
-                gridManager.InvalidateRoadCache();
                 return;
-            }
         }
 
         placed = AdvanceStreetProjects(toPlace, roadSet);
         if (placed > 0)
-        {
-            gridManager.InvalidateRoadCache();
             return;
-        }
 
         int newProjectsStarted = 0;
         while (toPlace > 0 && activeProjects.Count < maxActiveProjects)
@@ -174,7 +162,6 @@ public class AutoRoadBuilder : MonoBehaviour
             if (TryStartNewStreetProject(ref toPlace, minStreetLengthRecovery, edges, roadSet))
                 newProjectsStarted++;
         }
-        gridManager.InvalidateRoadCache();
     }
 
     /// <summary>Advance all active projects in a fixed direction; remove when done or blocked.</summary>

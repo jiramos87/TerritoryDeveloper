@@ -28,6 +28,10 @@ namespace Territory.Core
             return FindPathWithRoadSpacing(from, to, 0);
         }
 
+        private static readonly int[] NeighborDx = { 1, -1, 0, 0 };
+        private static readonly int[] NeighborDy = { 0, 0, 1, -1 };
+        private readonly Vector2Int[] neighborBuffer = new Vector2Int[4];
+
         /// <summary>
         /// A* path with optional extra cost for cells close to existing roads, so paths tend to keep
         /// minDistanceFromRoad cells away and leave space for zones.
@@ -46,21 +50,21 @@ namespace Territory.Core
 
             if (!IsWalkable(from.x, from.y) || !IsWalkable(to.x, to.y))
                 return new List<Vector2Int>();
-            var open = new List<Vector2Int>();
+            var open = new MinHeap();
             var closed = new HashSet<Vector2Int>();
             var gScore = new Dictionary<Vector2Int, int>();
             var fScore = new Dictionary<Vector2Int, int>();
             var cameFrom = new Dictionary<Vector2Int, Vector2Int>();
             gScore[from] = 0;
             fScore[from] = Heuristic(from, to);
-            open.Add(from);
+            open.Enqueue(from, fScore[from]);
             int explored = 0;
             while (open.Count > 0 && explored < maxNodes)
             {
                 explored++;
-                open.Sort((a, b) => (fScore.ContainsKey(a) ? fScore[a] : int.MaxValue).CompareTo(fScore.ContainsKey(b) ? fScore[b] : int.MaxValue));
-                Vector2Int current = open[0];
-                open.RemoveAt(0);
+                Vector2Int current = open.Dequeue();
+                if (closed.Contains(current)) continue;
+                closed.Add(current);
                 if (current == to)
                 {
                     var path = new List<Vector2Int>();
@@ -73,15 +77,16 @@ namespace Territory.Core
                     path.Reverse();
                     return path;
                 }
-                closed.Add(current);
-                foreach (Vector2Int neighbor in GetWalkableNeighbors(current))
+                int neighborCount = GetWalkableNeighbors(current, neighborBuffer);
+                for (int i = 0; i < neighborCount; i++)
                 {
+                    Vector2Int neighbor = neighborBuffer[i];
                     if (closed.Contains(neighbor)) continue;
                     int stepCost = GetRoadStepCost(neighbor.x, neighbor.y);
                     if (stepCost == int.MaxValue) continue;
                     if (minDistanceFromRoad > 0 && roadSet != null)
                     {
-                        int dist = MinManhattanDistanceToSet(neighbor.x, neighbor.y, roadSet);
+                        int dist = MinManhattanDistanceToSet(neighbor.x, neighbor.y, roadSet, minDistanceFromRoad);
                         if (dist > 0 && dist < minDistanceFromRoad)
                             stepCost += roadProximityPenalty;
                     }
@@ -90,22 +95,23 @@ namespace Territory.Core
                     {
                         cameFrom[neighbor] = current;
                         gScore[neighbor] = tentative;
-                        fScore[neighbor] = tentative + Heuristic(neighbor, to);
-                        if (!open.Contains(neighbor))
-                            open.Add(neighbor);
+                        int f = tentative + Heuristic(neighbor, to);
+                        fScore[neighbor] = f;
+                        open.Enqueue(neighbor, f);
                     }
                 }
             }
             return new List<Vector2Int>();
         }
 
-        private static int MinManhattanDistanceToSet(int x, int y, HashSet<Vector2Int> set)
+        private static int MinManhattanDistanceToSet(int x, int y, HashSet<Vector2Int> set, int earlyOutThreshold = int.MaxValue)
         {
             int min = int.MaxValue;
             foreach (Vector2Int p in set)
             {
                 int d = Mathf.Abs(x - p.x) + Mathf.Abs(y - p.y);
                 if (d < min) min = d;
+                if (min < earlyOutThreshold) return min;
             }
             return min == int.MaxValue ? int.MaxValue : min;
         }
@@ -134,17 +140,16 @@ namespace Territory.Core
             return c.zoneType == Zone.ZoneType.Grass || c.zoneType == Zone.ZoneType.Road;
         }
 
-        private List<Vector2Int> GetWalkableNeighbors(Vector2Int p)
+        private int GetWalkableNeighbors(Vector2Int p, Vector2Int[] buffer)
         {
-            var list = new List<Vector2Int>();
-            int[] dx = { 1, -1, 0, 0 }, dy = { 0, 0, 1, -1 };
+            int count = 0;
             for (int i = 0; i < 4; i++)
             {
-                int nx = p.x + dx[i], ny = p.y + dy[i];
+                int nx = p.x + NeighborDx[i], ny = p.y + NeighborDy[i];
                 if (IsWalkable(nx, ny))
-                    list.Add(new Vector2Int(nx, ny));
+                    buffer[count++] = new Vector2Int(nx, ny);
             }
-            return list;
+            return count;
         }
 
         private static int Heuristic(Vector2Int a, Vector2Int b)

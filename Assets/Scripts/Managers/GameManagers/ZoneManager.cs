@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
@@ -106,6 +105,11 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     private List<GameObject> previewZoningTiles = new List<GameObject>();
     private Dictionary<Zone.ZoneType, List<List<Vector2>>> availableZoneSections =
       new Dictionary<Zone.ZoneType, List<List<Vector2>>>();
+
+    private bool zonesSectionsDirty = true;
+
+    /// <summary>Invoked when an urban cell (zoning) is added or removed. Args: (position, isAdded). Not invoked when zoning converts to building.</summary>
+    public System.Action<Vector2, bool> onUrbanCellChanged;
 
     private bool isInitialized = false;
     #endregion
@@ -483,9 +487,13 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     /// <summary>
     /// Recalculates all available contiguous square sections (1x1, 2x2, 3x3) for each zoning type.
     /// Call after placing or removing zones so buildings can spawn in valid sections.
+    /// Skips recalculation when no zoning changes have occurred since last run.
     /// </summary>
     public void CalculateAvailableSquareZonedSections()
     {
+        if (!zonesSectionsDirty)
+            return;
+        zonesSectionsDirty = false;
         availableZoneSections.Clear();
         var validZoneTypes = GetValidZoneTypes();
 
@@ -496,21 +504,17 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         }
     }
 
-    private IEnumerable<Zone.ZoneType> GetValidZoneTypes()
+    private static readonly Zone.ZoneType[] ValidZoneTypesForSections =
     {
-        var excludedTypes = new[]
-        {
-            Zone.ZoneType.None, Zone.ZoneType.Road, Zone.ZoneType.Building,
-            Zone.ZoneType.ResidentialLightBuilding, Zone.ZoneType.ResidentialMediumBuilding,
-            Zone.ZoneType.ResidentialHeavyBuilding, Zone.ZoneType.CommercialLightBuilding,
-            Zone.ZoneType.CommercialMediumBuilding, Zone.ZoneType.CommercialHeavyBuilding,
-            Zone.ZoneType.IndustrialLightBuilding, Zone.ZoneType.IndustrialMediumBuilding,
-            Zone.ZoneType.IndustrialHeavyBuilding
-        };
+        Zone.ZoneType.ResidentialLightZoning, Zone.ZoneType.ResidentialMediumZoning, Zone.ZoneType.ResidentialHeavyZoning,
+        Zone.ZoneType.CommercialLightZoning, Zone.ZoneType.CommercialMediumZoning, Zone.ZoneType.CommercialHeavyZoning,
+        Zone.ZoneType.IndustrialLightZoning, Zone.ZoneType.IndustrialMediumZoning, Zone.ZoneType.IndustrialHeavyZoning,
+        Zone.ZoneType.Grass, Zone.ZoneType.Water
+    };
 
-        return System.Enum.GetValues(typeof(Zone.ZoneType))
-                  .Cast<Zone.ZoneType>()
-                  .Where(type => !excludedTypes.Contains(type));
+    private Zone.ZoneType[] GetValidZoneTypes()
+    {
+        return ValidZoneTypesForSections;
     }
 
     private List<List<Vector2>> CalculateSectionsForZoneType(Zone.ZoneType zoneType)
@@ -519,8 +523,8 @@ public class ZoneManager : MonoBehaviour, IZoneManager
 
         for (int size = 1; size <= 3; size++)
         {
-            var zonedPositions = GetZonedPositions(zoneType).ToList();
-            if (!zonedPositions.Any()) continue;
+            var zonedPositions = GetZonedPositions(zoneType);
+            if (zonedPositions.Count == 0) continue;
 
             sections.AddRange(CalculateSectionsForSize(zonedPositions, size));
         }
@@ -528,44 +532,45 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         return sections;
     }
 
-    private Vector2[] GetZonedPositions(Zone.ZoneType zoneType)
+    private IReadOnlyList<Vector2> GetZonedPositions(Zone.ZoneType zoneType)
     {
         switch (zoneType)
         {
             case Zone.ZoneType.ResidentialLightZoning:
-                return zonedResidentialLightPositions.ToArray();
+                return zonedResidentialLightPositions;
             case Zone.ZoneType.ResidentialMediumZoning:
-                return zonedResidentialMediumPositions.ToArray();
+                return zonedResidentialMediumPositions;
             case Zone.ZoneType.ResidentialHeavyZoning:
-                return zonedResidentialHeavyPositions.ToArray();
+                return zonedResidentialHeavyPositions;
             case Zone.ZoneType.CommercialLightZoning:
-                return zonedCommercialLightPositions.ToArray();
+                return zonedCommercialLightPositions;
             case Zone.ZoneType.CommercialMediumZoning:
-                return zonedCommercialMediumPositions.ToArray();
+                return zonedCommercialMediumPositions;
             case Zone.ZoneType.CommercialHeavyZoning:
-                return zonedCommercialHeavyPositions.ToArray();
+                return zonedCommercialHeavyPositions;
             case Zone.ZoneType.IndustrialLightZoning:
-                return zonedIndustrialLightPositions.ToArray();
+                return zonedIndustrialLightPositions;
             case Zone.ZoneType.IndustrialMediumZoning:
-                return zonedIndustrialMediumPositions.ToArray();
+                return zonedIndustrialMediumPositions;
             case Zone.ZoneType.IndustrialHeavyZoning:
-                return zonedIndustrialHeavyPositions.ToArray();
+                return zonedIndustrialHeavyPositions;
             default:
-                return new Vector2[0];
+                return new List<Vector2>();
         }
     }
 
-    private List<List<Vector2>> CalculateSectionsForSize(List<Vector2> zonedPositions, int size)
+    private List<List<Vector2>> CalculateSectionsForSize(IReadOnlyList<Vector2> zonedPositions, int size)
     {
         List<List<Vector2>> sections = new List<List<Vector2>>();
         var usedPositions = new HashSet<Vector2>();
+        var zonedSet = new HashSet<Vector2>(zonedPositions);
 
         for (int i = zonedPositions.Count - 1; i >= 0; i--)
         {
             Vector2 start = zonedPositions[i];
             if (usedPositions.Contains(start)) continue;
 
-            List<Vector2> section = GetSquareSection(start, size, zonedPositions, usedPositions);
+            List<Vector2> section = GetSquareSection(start, size, zonedSet, usedPositions);
 
             if (section.Count == size * size)
             {
@@ -581,7 +586,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     }
 
     // Helper method to get square sections of a given size
-    private List<Vector2> GetSquareSection(Vector2 start, int size, List<Vector2> availablePositions, HashSet<Vector2> excludedPositions = null)
+    private List<Vector2> GetSquareSection(Vector2 start, int size, HashSet<Vector2> availablePositions, HashSet<Vector2> excludedPositions = null)
     {
         List<Vector2> section = new List<Vector2>();
         excludedPositions = excludedPositions ?? new HashSet<Vector2>();
@@ -697,8 +702,11 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     /// </summary>
     /// <param name="zonedPosition">The grid position to remove.</param>
     /// <param name="zoneType">The zoning type list to remove from.</param>
-    public void removeZonedPositionFromList(Vector2 zonedPosition, Zone.ZoneType zoneType)
+    public void removeZonedPositionFromList(Vector2 zonedPosition, Zone.ZoneType zoneType, bool isConversionToBuilding = false)
     {
+        zonesSectionsDirty = true;
+        if (!isConversionToBuilding)
+            onUrbanCellChanged?.Invoke(zonedPosition, false);
         switch (zoneType)
         {
             case Zone.ZoneType.ResidentialLightZoning:
@@ -815,8 +823,8 @@ public class ZoneManager : MonoBehaviour, IZoneManager
 
         if (availableSections.Count > 0)
         {
-            int randomSize = availableSections.Keys.ElementAt(UnityEngine.Random.Range(0, availableSections.Keys.Count));
-
+            var keys = new List<int>(availableSections.Keys);
+            int randomSize = keys[UnityEngine.Random.Range(0, keys.Count)];
             return (randomSize, availableSections[randomSize]);
         }
 
@@ -827,14 +835,23 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     {
         if (availableZoneSections.ContainsKey(zoneType) && availableZoneSections[zoneType].Count > 0)
         {
-            // Find sections that fit the building size
-            var possibleSections = availableZoneSections[zoneType].Where(section => buildingSize * buildingSize <= section.Count).ToList();
+            var sections = availableZoneSections[zoneType];
+            var possibleSections = new List<List<Vector2>>(sections.Count);
+            int minCount = buildingSize * buildingSize;
+            for (int i = 0; i < sections.Count; i++)
+            {
+                if (sections[i].Count >= minCount)
+                    possibleSections.Add(sections[i]);
+            }
 
             if (possibleSections.Count > 0)
             {
                 int randomIndex = UnityEngine.Random.Range(0, possibleSections.Count);
-
-                return possibleSections[randomIndex].ToArray();
+                var section = possibleSections[randomIndex];
+                var result = new Vector2[section.Count];
+                for (int i = 0; i < section.Count; i++)
+                    result[i] = section[i];
+                return result;
             }
         }
         return null;
@@ -931,6 +948,8 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     /// <param name="zoneType">The zoning type list to add to.</param>
     public void addZonedTileToList(Vector2 zonedPosition, Zone.ZoneType zoneType)
     {
+        zonesSectionsDirty = true;
+        onUrbanCellChanged?.Invoke(zonedPosition, true);
         switch (zoneType)
         {
             case Zone.ZoneType.ResidentialLightZoning:
@@ -995,7 +1014,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
 
             gridManager.UpdateCellAttributes(cellComponent, selectedZoneType, zoneAttributes, prefab, buildingSize);
 
-            removeZonedPositionFromList(zonedPosition, zoningType);
+            removeZonedPositionFromList(zonedPosition, zoningType, isConversionToBuilding: true);
         }
 
         Vector2 firstPosition = section[0];
@@ -1103,12 +1122,27 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     /// <param name="zoneType">The zone type whose section list to update.</param>
     public void RemoveZonedSectionFromList(Vector2[] zonedPositions, Zone.ZoneType zoneType)
     {
-        if (availableZoneSections.ContainsKey(zoneType))
+        if (!availableZoneSections.ContainsKey(zoneType))
+            return;
+        var sections = availableZoneSections[zoneType];
+        for (int i = 0; i < sections.Count; i++)
         {
-            var sectionToRemove = availableZoneSections[zoneType].FirstOrDefault(section => section.SequenceEqual(zonedPositions));
-            if (sectionToRemove != null)
+            var section = sections[i];
+            if (section.Count != zonedPositions.Length)
+                continue;
+            bool match = true;
+            for (int j = 0; j < section.Count; j++)
             {
-                availableZoneSections[zoneType].Remove(sectionToRemove);
+                if (section[j] != zonedPositions[j])
+                {
+                    match = false;
+                    break;
+                }
+            }
+            if (match)
+            {
+                sections.RemoveAt(i);
+                return;
             }
         }
     }
@@ -1129,6 +1163,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         zonedIndustrialHeavyPositions.Clear();
 
         availableZoneSections.Clear();
+        zonesSectionsDirty = true;
     }
     #endregion
 }

@@ -25,6 +25,10 @@ public class AutoZoningManager : MonoBehaviour
     private static readonly int[] Dx = { 1, -1, 0, 0 };
     private static readonly int[] Dy = { 0, 0, 1, -1 };
 
+    private float centroidSumX, centroidSumY;
+    private int centroidUrbanCount;
+    private bool centroidDirty = true;
+
     string SimDateStr()
     {
         return cityStats != null ? cityStats.currentDate.ToString("yyyy-MM-dd") : "?";
@@ -37,6 +41,56 @@ public class AutoZoningManager : MonoBehaviour
         if (growthBudgetManager == null) growthBudgetManager = FindObjectOfType<GrowthBudgetManager>();
         if (cityStats == null) cityStats = FindObjectOfType<CityStats>();
         if (demandManager == null) demandManager = FindObjectOfType<DemandManager>();
+        if (zoneManager != null)
+            zoneManager.onUrbanCellChanged += OnUrbanCellChanged;
+        if (gridManager != null)
+        {
+            gridManager.onUrbanCellsBulldozed += OnUrbanCellsBulldozed;
+            gridManager.onGridRestored += OnGridRestored;
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (zoneManager != null)
+            zoneManager.onUrbanCellChanged -= OnUrbanCellChanged;
+        if (gridManager != null)
+        {
+            gridManager.onUrbanCellsBulldozed -= OnUrbanCellsBulldozed;
+            gridManager.onGridRestored -= OnGridRestored;
+        }
+    }
+
+    private void OnGridRestored()
+    {
+        centroidDirty = true;
+    }
+
+    private void OnUrbanCellChanged(Vector2 pos, bool isAdded)
+    {
+        if (isAdded)
+        {
+            centroidSumX += pos.x;
+            centroidSumY += pos.y;
+            centroidUrbanCount++;
+        }
+        else
+        {
+            centroidSumX -= pos.x;
+            centroidSumY -= pos.y;
+            centroidUrbanCount--;
+        }
+    }
+
+    private void OnUrbanCellsBulldozed(IReadOnlyList<Vector2Int> positions)
+    {
+        for (int i = 0; i < positions.Count; i++)
+        {
+            var p = positions[i];
+            centroidSumX -= p.x;
+            centroidSumY -= p.y;
+            centroidUrbanCount--;
+        }
     }
 
     public void ProcessTick()
@@ -111,41 +165,50 @@ public class AutoZoningManager : MonoBehaviour
 
     private Vector2 GetUrbanCentroid()
     {
-        float sx = 0, sy = 0;
-        int n = 0;
-        for (int x = 0; x < gridManager.width; x++)
+        if (centroidDirty)
         {
-            for (int y = 0; y < gridManager.height; y++)
+            centroidSumX = 0;
+            centroidSumY = 0;
+            centroidUrbanCount = 0;
+            for (int x = 0; x < gridManager.width; x++)
             {
-                Cell c = gridManager.GetCell(x, y);
-                if (c == null) continue;
-                if (c.zoneType != Zone.ZoneType.Grass && c.zoneType != Zone.ZoneType.Road &&
-                    c.zoneType != Zone.ZoneType.None && c.zoneType != Zone.ZoneType.Water)
+                for (int y = 0; y < gridManager.height; y++)
                 {
-                    sx += x;
-                    sy += y;
-                    n++;
+                    Cell c = gridManager.GetCell(x, y);
+                    if (c == null) continue;
+                    if (c.zoneType != Zone.ZoneType.Grass && c.zoneType != Zone.ZoneType.Road &&
+                        c.zoneType != Zone.ZoneType.None && c.zoneType != Zone.ZoneType.Water)
+                    {
+                        centroidSumX += x;
+                        centroidSumY += y;
+                        centroidUrbanCount++;
+                    }
                 }
             }
+            centroidDirty = false;
         }
-        if (n == 0) return new Vector2(gridManager.width / 2f, gridManager.height / 2f);
-        return new Vector2(sx / n, sy / n);
+        if (centroidUrbanCount == 0) return new Vector2(gridManager.width / 2f, gridManager.height / 2f);
+        return new Vector2(centroidSumX / centroidUrbanCount, centroidSumY / centroidUrbanCount);
     }
 
     private List<Vector2Int> GetCandidatesAdjacentToRoad()
     {
-        var list = new List<Vector2Int>();
-        for (int x = 0; x < gridManager.width; x++)
+        var candidates = new HashSet<Vector2Int>();
+        var edges = gridManager.GetRoadEdgePositions();
+        for (int i = 0; i < edges.Count; i++)
         {
-            for (int y = 0; y < gridManager.height; y++)
+            Vector2Int edge = edges[i];
+            for (int d = 0; d < 4; d++)
             {
-                Cell c = gridManager.GetCell(x, y);
-                if (c == null || !gridManager.IsZoneableNeighbor(c, x, y)) continue;
-                if (!gridManager.IsAdjacentToRoad(x, y)) continue;
-                list.Add(new Vector2Int(x, y));
+                int nx = edge.x + Dx[d], ny = edge.y + Dy[d];
+                if (nx < 0 || nx >= gridManager.width || ny < 0 || ny >= gridManager.height) continue;
+                if (candidates.Contains(new Vector2Int(nx, ny))) continue;
+                Cell c = gridManager.GetCell(nx, ny);
+                if (c == null || !gridManager.IsZoneableNeighbor(c, nx, ny)) continue;
+                candidates.Add(new Vector2Int(nx, ny));
             }
         }
-        return list;
+        return new List<Vector2Int>(candidates);
     }
 
     /// <summary>True if this Grass cell is adjacent to a road edge that has few Grass neighbors; do not zone here to leave room for road growth.

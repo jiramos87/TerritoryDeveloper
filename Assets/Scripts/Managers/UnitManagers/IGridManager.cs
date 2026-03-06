@@ -25,6 +25,8 @@ public interface IGridManager
     bool canPlaceBuilding(Vector2 position, int buildingSize);
     bool canPlaceBuilding(Vector2 position, int buildingSize, bool isWaterPlant);
     void InvalidateRoadCache();
+    void AddRoadToCache(Vector2Int pos);
+    void RemoveRoadFromCache(Vector2Int pos);
     List<Vector2Int> GetAllRoadPositions();
     List<Vector2Int> GetRoadEdgePositions();
     List<Vector2Int> FindPath(Vector2Int from, Vector2Int to);

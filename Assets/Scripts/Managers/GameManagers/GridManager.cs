@@ -43,6 +43,12 @@ public class GridManager : MonoBehaviour, IGridManager
     private BuildingPlacementService placementService;
     private ChunkCullingSystem chunkCulling;
     private RoadCacheService roadCache;
+
+    /// <summary>Invoked when urban cells (buildings) are bulldozed. Args: list of grid positions.</summary>
+    public System.Action<System.Collections.Generic.IReadOnlyList<Vector2Int>> onUrbanCellsBulldozed;
+
+    /// <summary>Invoked when grid is restored from save. Listeners should invalidate caches.</summary>
+    public System.Action onGridRestored;
     #endregion
 
     #region Grid Configuration
@@ -519,7 +525,7 @@ public class GridManager : MonoBehaviour, IGridManager
         }
     }
 
-    void BulldozeBuildingTiles(GameObject cell, bool showAnimation = true)
+    void BulldozeBuildingTiles(GameObject cell, Zone.ZoneType zoneType, bool showAnimation = true)
     {
         Cell cellComponent = cell.GetComponent<Cell>();
 
@@ -534,6 +540,12 @@ public class GridManager : MonoBehaviour, IGridManager
             uiManager.ShowDemolitionAnimationCentered(cell, buildingSize, preSortingOrder);
         }
 
+        bool isBuilding = zoneType == Zone.ZoneType.ResidentialLightBuilding || zoneType == Zone.ZoneType.ResidentialMediumBuilding ||
+            zoneType == Zone.ZoneType.ResidentialHeavyBuilding || zoneType == Zone.ZoneType.CommercialLightBuilding ||
+            zoneType == Zone.ZoneType.CommercialMediumBuilding || zoneType == Zone.ZoneType.CommercialHeavyBuilding ||
+            zoneType == Zone.ZoneType.IndustrialLightBuilding || zoneType == Zone.ZoneType.IndustrialMediumBuilding ||
+            zoneType == Zone.ZoneType.IndustrialHeavyBuilding;
+
         if (buildingSize > 1)
         {
             // If clicked cell is not pivot, find pivot to get correct footprint
@@ -544,6 +556,10 @@ public class GridManager : MonoBehaviour, IGridManager
 
             GetBuildingFootprintOffset(buildingSize, out int offsetX, out int offsetY);
 
+            List<Vector2Int> footprint = null;
+            if (isBuilding)
+                footprint = new List<Vector2Int>();
+
             for (int x = 0; x < buildingSize; x++)
             {
                 for (int y = 0; y < buildingSize; y++)
@@ -553,14 +569,20 @@ public class GridManager : MonoBehaviour, IGridManager
 
                     if (gridX >= 0 && gridX < width && gridY >= 0 && gridY < height)
                     {
+                        if (footprint != null)
+                            footprint.Add(new Vector2Int(gridX, gridY));
                         BulldozeTileWithoutAnimation(gridArray[gridX, gridY]);
                     }
                 }
             }
+            if (footprint != null && footprint.Count > 0)
+                onUrbanCellsBulldozed?.Invoke(footprint);
         }
         else
         {
             BulldozeTileWithoutAnimation(cell);
+            if (isBuilding)
+                onUrbanCellsBulldozed?.Invoke(new List<Vector2Int> { new Vector2Int((int)cellComponent.x, (int)cellComponent.y) });
         }
     }
 
@@ -616,7 +638,7 @@ public class GridManager : MonoBehaviour, IGridManager
 
         HandleBuildingStatsReset(cellComponent, zoneType);
 
-        BulldozeBuildingTiles(cell, showAnimation);
+        BulldozeBuildingTiles(cell, zoneType, showAnimation);
     }
 
     /// <summary>
@@ -633,9 +655,9 @@ public class GridManager : MonoBehaviour, IGridManager
         if (cellComponent == null || !CanBulldoze(cellComponent)) return false;
 
         Zone.ZoneType zoneType = cellComponent.zoneType;
+        if (zoneType == Zone.ZoneType.Road)
+            RemoveRoadFromCache(new Vector2Int(gx, gy));
         HandleBulldozeTile(zoneType, cell, showAnimation);
-        if (!showAnimation)
-            InvalidateRoadCache();
         return true;
     }
 
@@ -1365,6 +1387,8 @@ public class GridManager : MonoBehaviour, IGridManager
             RestoreGridCell(cellData, cell);
         }
 
+        InvalidateRoadCache();
+        onGridRestored?.Invoke();
         zoneManager.CalculateAvailableSquareZonedSections();
     }
 
@@ -1386,6 +1410,8 @@ public class GridManager : MonoBehaviour, IGridManager
         }
 
         zoneManager.ClearZonedPositions();
+        InvalidateRoadCache();
+        onGridRestored?.Invoke();
 
         cellArray = null;
         CreateGrid();
@@ -1449,6 +1475,18 @@ public class GridManager : MonoBehaviour, IGridManager
     /// </summary>
     public void InvalidateRoadCache()
         => roadCache.Invalidate();
+
+    /// <summary>
+    /// Adds a road position to the cache incrementally. Call when a road tile is placed.
+    /// </summary>
+    public void AddRoadToCache(Vector2Int pos)
+        => roadCache.AddRoad(pos);
+
+    /// <summary>
+    /// Removes a road position from the cache incrementally. Call when a road tile is demolished.
+    /// </summary>
+    public void RemoveRoadFromCache(Vector2Int pos)
+        => roadCache.RemoveRoad(pos);
 
     /// <summary>
     /// Returns all grid positions that contain a road, using a lazily rebuilt cache.
