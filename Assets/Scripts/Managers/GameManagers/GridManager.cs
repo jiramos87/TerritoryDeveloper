@@ -1458,6 +1458,12 @@ public class GridManager : MonoBehaviour, IGridManager
         => roadCache.GetAllRoadPositions();
 
     /// <summary>
+    /// Returns road positions as a HashSet for O(1) Contains lookups.
+    /// </summary>
+    public HashSet<Vector2Int> GetRoadPositionsAsHashSet()
+        => roadCache.GetRoadPositionsAsHashSet();
+
+    /// <summary>
     /// Returns road positions that have at least one expandable (grass/forest/sea-level) cardinal neighbor, i.e. the road frontier.
     /// </summary>
     /// <returns>Cached list of road edge positions.</returns>

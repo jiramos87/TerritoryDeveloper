@@ -20,6 +20,8 @@ public class CityStats : MonoBehaviour, ICityStats
     public TimeManager timeManager;
     public WaterManager waterManager;
     public ForestManager forestManager;
+    private EmploymentManager _employmentManager;
+    private StatisticsManager _statisticsManager;
     #endregion
 
     #region City Data Fields
@@ -102,6 +104,10 @@ public class CityStats : MonoBehaviour, ICityStats
 
         if (forestManager == null)
             forestManager = FindObjectOfType<ForestManager>();
+        if (_employmentManager == null)
+            _employmentManager = FindObjectOfType<EmploymentManager>();
+        if (_statisticsManager == null)
+            _statisticsManager = FindObjectOfType<StatisticsManager>();
     }
 
     /// <summary>
@@ -828,12 +834,8 @@ public class CityStats : MonoBehaviour, ICityStats
     {
         currentDate = timeManager.GetCurrentDate();
 
-        // Add these lines to existing method
-        EmploymentManager employment = FindObjectOfType<EmploymentManager>();
-        StatisticsManager stats = FindObjectOfType<StatisticsManager>();
-
-        if (employment != null) employment.UpdateEmployment();
-        if (stats != null) stats.UpdateStatistics();
+        if (_employmentManager != null) _employmentManager.UpdateEmployment();
+        if (_statisticsManager != null) _statisticsManager.UpdateStatistics();
 
         // Update forest statistics
         UpdateForestStatistics();
@@ -1062,7 +1064,7 @@ public class CityStats : MonoBehaviour, ICityStats
     /// Finds and returns the EmploymentManager in the scene.
     /// </summary>
     /// <returns>The EmploymentManager instance, or null if not found.</returns>
-    public EmploymentManager GetEmploymentManager() { return FindObjectOfType<EmploymentManager>(); }
+    public EmploymentManager GetEmploymentManager() => _employmentManager;
 
     /// <summary>
     /// Adds the specified amount to both the local and WaterManager water consumption trackers.

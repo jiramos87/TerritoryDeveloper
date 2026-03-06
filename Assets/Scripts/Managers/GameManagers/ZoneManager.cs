@@ -687,7 +687,6 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         gridManager.SetZoningTileSortingOrder(zoneTile, (int)gridPosition.x, (int)gridPosition.y);
         addZonedTileToList(gridPosition, zoneType);
         cityStats.AddZoneBuildingCount(zoneType);
-        gridManager.InvalidateRoadCache();
         return true;
     }
     #endregion

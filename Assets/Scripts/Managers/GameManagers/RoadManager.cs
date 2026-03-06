@@ -30,6 +30,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     #region Road Drawing State
     private bool isDrawingRoad = false;
     private Vector2 startPosition;
+    private static readonly int[] DirX = { 1, -1, 0, 0 };
+    private static readonly int[] DirY = { 0, 0, 1, -1 };
     #endregion
 
     #region Road Prefabs
@@ -205,11 +207,15 @@ public class RoadManager : MonoBehaviour, IRoadManager
         }
     }
 
+    void IRoadManager.UpdateAdjacentRoadPrefabsAt(Vector2 gridPos) => UpdateAdjacentRoadPrefabsAt(gridPos, true);
+
     /// <summary>
     /// Refreshes prefabs of all road tiles adjacent to the given position so they connect correctly.
     /// Use after programmatic placement (e.g. AutoRoadBuilder) so existing roads update to T-junctions/crossings.
     /// </summary>
-    public void UpdateAdjacentRoadPrefabsAt(Vector2 gridPos)
+    /// <param name="gridPos">Grid position of the newly placed road.</param>
+    /// <param name="invalidateCache">When true, invalidates the road cache. Set false during batch placement.</param>
+    public void UpdateAdjacentRoadPrefabsAt(Vector2 gridPos, bool invalidateCache = true)
     {
         var toRefresh = new List<Vector2>();
         Vector2[] dirs = { new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, -1) };
@@ -221,7 +227,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         }
         foreach (Vector2 pos in toRefresh)
             RefreshRoadPrefabAt(pos);
-        if (gridManager != null)
+        if (invalidateCache && gridManager != null)
             gridManager.InvalidateRoadCache();
     }
 
@@ -558,15 +564,13 @@ public class RoadManager : MonoBehaviour, IRoadManager
         int x = (int)currGridPos.x;
         int y = (int)currGridPos.y;
         Vector2? directionToHigher = null;
-        int[] dx = { 1, -1, 0, 0 };
-        int[] dy = { 0, 0, 1, -1 };
         for (int i = 0; i < 4; i++)
         {
-            int nh = GetNeighborHeight(x, y, dx[i], dy[i]);
+            int nh = GetNeighborHeight(x, y, DirX[i], DirY[i]);
             if (nh == int.MinValue) continue;
             int diff = nh - currentHeight;
             if (diff == 1)
-                directionToHigher = new Vector2(dx[i], dy[i]);
+                directionToHigher = new Vector2(DirX[i], DirY[i]);
         }
         if (!directionToHigher.HasValue) return null;
         int dxi = Mathf.RoundToInt(directionToHigher.Value.x);
@@ -836,11 +840,15 @@ public class RoadManager : MonoBehaviour, IRoadManager
         return true;
     }
 
+    bool IRoadManager.PlaceRoadTileAt(Vector2 gridPos) => PlaceRoadTileAt(gridPos, true);
+
     /// <summary>
     /// Places a single road tile at the given grid position. Uses existing road neighbors to pick prefab.
     /// Caller is responsible for affordability and budget. Returns true if placed.
     /// </summary>
-    public bool PlaceRoadTileAt(Vector2 gridPos)
+    /// <param name="gridPos">Grid position to place the road.</param>
+    /// <param name="invalidateCache">When true, invalidates the road cache after placement. Set false during batch placement (e.g. AutoRoadBuilder) and invalidate once at end.</param>
+    public bool PlaceRoadTileAt(Vector2 gridPos, bool invalidateCache = true)
     {
         if (!CanPlaceRoadAt(gridPos))
             return false;
@@ -893,8 +901,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         UpdateRoadCellAttributes(cellComponent, roadTile, Zone.ZoneType.Road);
         gridManager.SetRoadSortingOrder(roadTile, (int)gridPos.x, (int)gridPos.y);
-        gridManager.InvalidateRoadCache();
-        UpdateAdjacentRoadPrefabsAt(gridPos);
+        if (invalidateCache)
+            gridManager.InvalidateRoadCache();
+        UpdateAdjacentRoadPrefabsAt(gridPos, invalidateCache);
         return true;
     }
 

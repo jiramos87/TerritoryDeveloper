@@ -74,6 +74,12 @@ public class AutoRoadBuilder : MonoBehaviour
         return cityStats != null ? cityStats.currentDate.ToString("yyyy-MM-dd") : "?";
     }
 
+    /// <summary>Places a road tile without invalidating cache. Caller must call gridManager.InvalidateRoadCache() once at end of batch.</summary>
+    private bool PlaceRoadTileInBatch(Vector2 pos)
+    {
+        return roadManager.PlaceRoadTileAt(pos, invalidateCache: false);
+    }
+
     void Start()
     {
         if (gridManager == null) gridManager = FindObjectOfType<GridManager>();
@@ -96,13 +102,15 @@ public class AutoRoadBuilder : MonoBehaviour
             return;
 
         var edges = gridManager.GetRoadEdgePositions();
+        var allRoads = gridManager.GetAllRoadPositions();
+        var roadSet = new HashSet<Vector2Int>(allRoads);
         int edgeCount = edges.Count;
-        int roadTilesTotal = gridManager.GetAllRoadPositions().Count;
+        int roadTilesTotal = allRoads.Count;
         int expropriatedCount = 0;
         if (edgeCount == 0)
-            expropriatedCount = TryExpropriate(3);
+            expropriatedCount = TryExpropriate(3, allRoads);
         else if (edgeCount < 4)
-            expropriatedCount = TryExpropriate(1);
+            expropriatedCount = TryExpropriate(1, allRoads);
 
         int available = growthBudgetManager.GetAvailableBudget(GrowthCategory.Roads);
         int costPerTile = RoadManager.RoadCostPerTile;
@@ -114,55 +122,63 @@ public class AutoRoadBuilder : MonoBehaviour
 
         if (expropriatedCount > 0 && toPlace > 0)
         {
-            placed = TryPlaceOneTileFromEdges();
+            placed = TryPlaceOneTileFromEdges(edges);
             if (placed > 0)
             {
                 toPlace -= placed;
-                if (toPlace <= 0) return;
+                if (toPlace <= 0)
+                {
+                    gridManager.InvalidateRoadCache();
+                    return;
+                }
             }
         }
 
         if (interstateManager != null && !interstateManager.IsConnectedToInterstate)
         {
-            placed = TryConnectToInterstate(toPlace);
+            placed = TryConnectToInterstate(toPlace, allRoads);
             if (placed > 0)
             {
+                gridManager.InvalidateRoadCache();
                 return;
             }
         }
 
-        List<List<Vector2Int>> clusters = GetRoadClusters();
+        List<List<Vector2Int>> clusters = GetRoadClusters(allRoads);
         if (clusters.Count > 1)
         {
             placed = TryConnectDisconnected(clusters, toPlace);
             if (placed > 0)
             {
+                gridManager.InvalidateRoadCache();
                 return;
             }
         }
 
-        placed = AdvanceStreetProjects(toPlace);
+        placed = AdvanceStreetProjects(toPlace, roadSet);
         if (placed > 0)
         {
+            gridManager.InvalidateRoadCache();
             return;
         }
 
         int newProjectsStarted = 0;
         while (toPlace > 0 && activeProjects.Count < maxActiveProjects)
         {
-            if (!TryStartNewStreetProject(ref toPlace, effectiveMinStreetLength))
+            if (!TryStartNewStreetProject(ref toPlace, effectiveMinStreetLength, edges, roadSet))
                 break;
             newProjectsStarted++;
         }
         if (newProjectsStarted == 0 && toPlace > 0 && activeProjects.Count < maxActiveProjects && effectiveMinStreetLength > minStreetLengthRecovery)
         {
-            if (TryStartNewStreetProject(ref toPlace, minStreetLengthRecovery))
+            if (TryStartNewStreetProject(ref toPlace, minStreetLengthRecovery, edges, roadSet))
                 newProjectsStarted++;
         }
+        gridManager.InvalidateRoadCache();
     }
 
     /// <summary>Advance all active projects in a fixed direction; remove when done or blocked.</summary>
-    private int AdvanceStreetProjects(int maxTiles)
+    private int AdvanceStreetProjects(int maxTiles, HashSet<Vector2Int> roadSet)
     {
         int totalPlaced = 0;
         int budget = maxTiles;
@@ -170,20 +186,20 @@ public class AutoRoadBuilder : MonoBehaviour
         {
             if (budget <= 0) break;
             int toPlaceThis = Mathf.Min(tilesPerProjectPerTick, budget);
-            int placed = AdvanceOneProject(i, toPlaceThis);
+            int placed = AdvanceOneProject(i, toPlaceThis, roadSet);
             totalPlaced += placed;
             budget -= placed;
             if (placed == 0 || activeProjects[i].builtLength >= activeProjects[i].targetLength)
             {
                 if (activeProjects[i].builtLength >= minStreetLength && Random.value < chancePerpendicularAtEnd)
-                    TryStartPerpendicularProject(activeProjects[i].tip, activeProjects[i].dir);
+                    TryStartPerpendicularProject(activeProjects[i].tip, activeProjects[i].dir, roadSet);
                 activeProjects.RemoveAt(i);
             }
         }
         return totalPlaced;
     }
 
-    private int AdvanceOneProject(int index, int maxPlace)
+    private int AdvanceOneProject(int index, int maxPlace, HashSet<Vector2Int> roadSet)
     {
         if (index < 0 || index >= activeProjects.Count) return 0;
         StreetProject p = activeProjects[index];
@@ -193,7 +209,7 @@ public class AutoRoadBuilder : MonoBehaviour
         {
             if (p.builtLength > 0 && p.tilesSinceLastBranch >= p.branchInterval)
             {
-                TryStartPerpendicularProject(p.tip, p.dir);
+                TryStartPerpendicularProject(p.tip, p.dir, roadSet);
                 p.tilesSinceLastBranch = 0;
             }
 
@@ -208,7 +224,7 @@ public class AutoRoadBuilder : MonoBehaviour
                 break;
             if (!growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile))
                 break;
-            if (!roadManager.PlaceRoadTileAt(new Vector2(tx, ty)))
+            if (!PlaceRoadTileInBatch(new Vector2(tx, ty)))
                 break;
             placed++;
             p.tip = new Vector2Int(p.tip.x + p.dir.x, p.tip.y + p.dir.y);
@@ -219,7 +235,7 @@ public class AutoRoadBuilder : MonoBehaviour
         return placed;
     }
 
-    private void TryStartPerpendicularProject(Vector2Int fromTip, Vector2Int previousDir)
+    private void TryStartPerpendicularProject(Vector2Int fromTip, Vector2Int previousDir, HashSet<Vector2Int> roadSet)
     {
         Vector2Int perp1 = new Vector2Int(-previousDir.y, previousDir.x);
         Vector2Int perp2 = new Vector2Int(previousDir.y, -previousDir.x);
@@ -232,7 +248,7 @@ public class AutoRoadBuilder : MonoBehaviour
                 continue;
             if (!IsSuitableForRoad(start.x, start.y, perp))
                 continue;
-            if (HasParallelRoadTooClose(fromTip, perp, minSpacingForBranch, excludeAlongDir: previousDir))
+            if (HasParallelRoadTooClose(fromTip, perp, minSpacingForBranch, roadSet, excludeAlongDir: previousDir))
                 continue;
             int len = HowFarWeCanBuild(start, perp);
             if (len < minLengthForBranch) continue;
@@ -244,9 +260,8 @@ public class AutoRoadBuilder : MonoBehaviour
         }
     }
 
-    private bool TryStartNewStreetProject(ref int budgetRemaining, int effectiveMinStreetLength)
+    private bool TryStartNewStreetProject(ref int budgetRemaining, int effectiveMinStreetLength, List<Vector2Int> edges, HashSet<Vector2Int> roadSet)
     {
-        var edges = gridManager.GetRoadEdgePositions();
         if (edges.Count == 0) return false;
         int parallelSpacing = activeProjects.Count == 0 ? minParallelSpacingFromEdge : (activeProjects.Count < 2 ? Mathf.Max(minParallelSpacingFromEdge, minSpacingForBranch / 2) : minSpacingForBranch);
         var withScore = new List<KeyValuePair<Vector2Int, int>>(edges.Count);
@@ -288,7 +303,7 @@ public class AutoRoadBuilder : MonoBehaviour
                 {
                     continue;
                 }
-                if (HasParallelRoadTooClose(edge, dir, parallelSpacing))
+                if (HasParallelRoadTooClose(edge, dir, parallelSpacing, roadSet))
                 {
                     continue;
                 }
@@ -301,7 +316,7 @@ public class AutoRoadBuilder : MonoBehaviour
                 int targetLen = Mathf.Clamp(Random.Range(effectiveMinStreetLength, maxStreetLength + 1), effectiveMinStreetLength, len);
                 int interval = Mathf.Clamp(Random.Range(branchIntervalMin, branchIntervalMax + 1), 1, 99);
                 activeProjects.Add(new StreetProject { tip = tip, dir = dir, targetLength = targetLen, builtLength = 0, branchInterval = interval, tilesSinceLastBranch = 0 });
-                int advance = AdvanceOneProject(activeProjects.Count - 1, Mathf.Min(tilesPerProjectPerTick, budgetRemaining));
+                int advance = AdvanceOneProject(activeProjects.Count - 1, Mathf.Min(tilesPerProjectPerTick, budgetRemaining), roadSet);
                 budgetRemaining -= advance;
                 return true;
             }
@@ -317,9 +332,8 @@ public class AutoRoadBuilder : MonoBehaviour
     /// When edges==0, call with maxCount 3 to create a corridor. Picks cells adjacent to the most road cells.
     /// Excludes PowerPlant and WaterPlant. Returns number demolished.
     /// </summary>
-    private int TryExpropriate(int maxCount)
+    private int TryExpropriate(int maxCount, List<Vector2Int> roadPositions)
     {
-        var roadPositions = gridManager.GetAllRoadPositions();
         if (roadPositions.Count == 0) return 0;
 
         var roadSet = new HashSet<Vector2Int>(roadPositions);
@@ -364,9 +378,8 @@ public class AutoRoadBuilder : MonoBehaviour
     }
 
     /// <summary>Place at most one road tile from current road edges (used after expropriation to fill freed space first).</summary>
-    private int TryPlaceOneTileFromEdges()
+    private int TryPlaceOneTileFromEdges(List<Vector2Int> edges)
     {
-        var edges = gridManager.GetRoadEdgePositions();
         if (edges.Count == 0)
         {
             return 0;
@@ -387,7 +400,7 @@ public class AutoRoadBuilder : MonoBehaviour
                     continue;
                 if (!growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile))
                     continue;
-                if (roadManager.PlaceRoadTileAt(new Vector2(nx, ny)))
+                if (PlaceRoadTileInBatch(new Vector2(nx, ny)))
                     return 1;
                 return 0; // presupuesto gastado pero colocación falló
             }
@@ -515,10 +528,9 @@ public class AutoRoadBuilder : MonoBehaviour
     /// True if there is already a road parallel to dir within minSpacing tiles of edge (would create too-dense grid).
     /// When branching perpendicular from a parent street, pass excludeAlongDir = parent direction so we don't count the parent segment as "parallel".
     /// </summary>
-    private bool HasParallelRoadTooClose(Vector2Int edge, Vector2Int dir, int minSpacing, Vector2Int? excludeAlongDir = null)
+    private bool HasParallelRoadTooClose(Vector2Int edge, Vector2Int dir, int minSpacing, HashSet<Vector2Int> roadSet, Vector2Int? excludeAlongDir = null)
     {
         Vector2Int perp = new Vector2Int(-dir.y, dir.x);
-        var allRoads = gridManager.GetAllRoadPositions();
         HashSet<Vector2Int> excludeSet = null;
         if (excludeAlongDir.HasValue)
         {
@@ -537,13 +549,13 @@ public class AutoRoadBuilder : MonoBehaviour
             if (offset.x < 0 || offset.x >= gridManager.width || offset.y < 0 || offset.y >= gridManager.height)
                 continue;
             if (excludeSet != null && excludeSet.Contains(offset)) continue;
-            if (allRoads.Contains(offset))
+            if (roadSet.Contains(offset))
                 return true;
             Vector2Int otherSide = new Vector2Int(edge.x - perp.x * s, edge.y - perp.y * s);
             if (otherSide.x >= 0 && otherSide.x < gridManager.width && otherSide.y >= 0 && otherSide.y < gridManager.height)
             {
                 if (excludeSet != null && excludeSet.Contains(otherSide)) continue;
-                if (allRoads.Contains(otherSide))
+                if (roadSet.Contains(otherSide))
                     return true;
             }
         }
@@ -552,10 +564,9 @@ public class AutoRoadBuilder : MonoBehaviour
     #endregion
 
     #region Utility Methods
-    private int TryConnectToInterstate(int maxTiles)
+    private int TryConnectToInterstate(int maxTiles, List<Vector2Int> roadPositions)
     {
         if (interstateManager == null || gridManager == null || roadManager == null) return 0;
-        var roadPositions = gridManager.GetAllRoadPositions();
         if (roadPositions.Count == 0) return 0;
         var interstatePositions = interstateManager.InterstatePositions;
         if (interstatePositions == null || interstatePositions.Count == 0) return 0;
@@ -576,15 +587,14 @@ public class AutoRoadBuilder : MonoBehaviour
         {
             if (placed >= maxTiles) break;
             if (gridManager.GetCell(p.x, p.y)?.zoneType == Zone.ZoneType.Road) continue;
-            if (growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile) && roadManager.PlaceRoadTileAt(new Vector2(p.x, p.y)))
+            if (growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile) && PlaceRoadTileInBatch(new Vector2(p.x, p.y)))
                 placed++;
         }
         return placed;
     }
 
-    private List<List<Vector2Int>> GetRoadClusters()
+    private List<List<Vector2Int>> GetRoadClusters(List<Vector2Int> all)
     {
-        var all = gridManager.GetAllRoadPositions();
         var roadSet = new HashSet<Vector2Int>(all);
         var visited = new HashSet<Vector2Int>();
         var clusters = new List<List<Vector2Int>>();
@@ -633,7 +643,7 @@ public class AutoRoadBuilder : MonoBehaviour
         {
             if (placed >= maxTiles) break;
             if (gridManager.GetCell(p.x, p.y)?.zoneType == Zone.ZoneType.Road) continue;
-            if (growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile) && roadManager.PlaceRoadTileAt(new Vector2(p.x, p.y)))
+            if (growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile) && PlaceRoadTileInBatch(new Vector2(p.x, p.y)))
                 placed++;
         }
         return placed;

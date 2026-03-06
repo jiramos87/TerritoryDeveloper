@@ -12,8 +12,12 @@ namespace Territory.Core
     /// </summary>
     public class RoadCacheService
     {
+        private static readonly int[] Dx = { 1, -1, 0, 0 };
+        private static readonly int[] Dy = { 0, 0, 1, -1 };
+
         private readonly GridManager grid;
         private List<Vector2Int> cachedRoadPositions;
+        private HashSet<Vector2Int> cachedRoadPositionsSet;
         private List<Vector2Int> cachedRoadEdgePositions;
         private bool roadCacheDirty = true;
 
@@ -48,8 +52,18 @@ namespace Territory.Core
                 }
             }
             cachedRoadEdgePositions = null;
+            cachedRoadPositionsSet = new HashSet<Vector2Int>(cachedRoadPositions);
             roadCacheDirty = false;
             return cachedRoadPositions;
+        }
+
+        /// <summary>
+        /// Returns road positions as a HashSet for O(1) Contains lookups.
+        /// </summary>
+        public HashSet<Vector2Int> GetRoadPositionsAsHashSet()
+        {
+            GetAllRoadPositions();
+            return cachedRoadPositionsSet;
         }
 
         /// <summary>
@@ -79,10 +93,9 @@ namespace Territory.Core
         {
             if (gx < 0 || gx >= grid.width || gy < 0 || gy >= grid.height) return 0;
             int count = 0;
-            int[] dx = { 1, -1, 0, 0 }, dy = { 0, 0, 1, -1 };
             for (int i = 0; i < 4; i++)
             {
-                int nx = gx + dx[i], ny = gy + dy[i];
+                int nx = gx + Dx[i], ny = gy + Dy[i];
                 if (nx >= 0 && nx < grid.width && ny >= 0 && ny < grid.height)
                 {
                     Cell c = grid.GetCell(nx, ny);
@@ -107,10 +120,9 @@ namespace Territory.Core
         public bool IsAdjacentToRoad(int x, int y)
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return false;
-            int[] dx = { 1, -1, 0, 0 }, dy = { 0, 0, 1, -1 };
             for (int i = 0; i < 4; i++)
             {
-                int nx = x + dx[i], ny = y + dy[i];
+                int nx = x + Dx[i], ny = y + Dy[i];
                 if (nx >= 0 && nx < grid.width && ny >= 0 && ny < grid.height)
                 {
                     Cell c = grid.GetCell(nx, ny);

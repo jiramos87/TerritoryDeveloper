@@ -22,6 +22,9 @@ public class AutoZoningManager : MonoBehaviour
     /// <summary>Do not zone on Grass cells that are adjacent to a road edge with this many or fewer Grass neighbors (reserve for road growth). 0 = reserve only road cells with zero grass neighbors (maximize zoning).</summary>
     public int minGrassNeighborsForZoning = 0;
 
+    private static readonly int[] Dx = { 1, -1, 0, 0 };
+    private static readonly int[] Dy = { 0, 0, 1, -1 };
+
     string SimDateStr()
     {
         return cityStats != null ? cityStats.currentDate.ToString("yyyy-MM-dd") : "?";
@@ -150,10 +153,9 @@ public class AutoZoningManager : MonoBehaviour
     private bool IsReservedForRoadExpansion(Vector2Int p)
     {
         int threshold = Mathf.Min(minGrassNeighborsForZoning, 1);
-        int[] dx = { 1, -1, 0, 0 }, dy = { 0, 0, 1, -1 };
         for (int i = 0; i < 4; i++)
         {
-            int nx = p.x + dx[i], ny = p.y + dy[i];
+            int nx = p.x + Dx[i], ny = p.y + Dy[i];
             if (nx < 0 || nx >= gridManager.width || ny < 0 || ny >= gridManager.height) continue;
             Cell neighbor = gridManager.GetCell(nx, ny);
             if (neighbor == null || neighbor.zoneType != Zone.ZoneType.Road) continue;
