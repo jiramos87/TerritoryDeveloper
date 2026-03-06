@@ -1,0 +1,41 @@
+---
+description: Backlog workflow and issue management context
+globs:
+  - BACKLOG.md
+alwaysApply: false
+---
+
+# Backlog Workflow
+
+## Source of Truth
+`BACKLOG.md` in the repo root is the single source of truth for all project issues.
+
+## Issue ID Convention
+- `BUG-XX` — Bugs and broken functionality
+- `FEAT-XX` — New features and enhancements
+- `ART-XX` — Art assets, prefabs, sprites
+- `AUDIO-XX` — Audio assets and audio system features
+
+## Working on an Issue
+When the user references a backlog issue (by ID or description):
+1. Read `BACKLOG.md` to get the full issue context
+2. Read the files listed in the issue's "Archivos" field
+3. In Plan/Ask mode: analyze the issue and propose a step-by-step plan
+4. In Agent mode: implement the plan, then update `BACKLOG.md` to move the issue to "En progreso" or "Completados"
+
+## Adding New Issues
+- Use the next available ID in the appropriate category
+- Place in the correct priority section
+- Include: tipo, archivos, and notas fields
+
+## Completing Issues
+- Mark checkbox as `[x]`
+- Move to "Completados (últimos 30 días)" with the date
+- After 30 days, issues can be archived or removed from the list
+
+## Priority Order
+Issues are ordered by priority within each section. The section order is:
+1. En progreso (actively being worked on)
+2. Prioridad alta (critical bugs, core gameplay blockers)
+3. Prioridad media (important features, balance issues)
+4. Prioridad baja (new systems, polish, content)

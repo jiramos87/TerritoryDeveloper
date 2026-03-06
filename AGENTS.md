@@ -5,11 +5,13 @@
 1. Read `ARCHITECTURE.md` to understand the project structure, data flows, and dependency map
 2. Read `.cursor/rules/` for coding conventions and manager responsibilities
 3. Check the `/// <summary>` on the class you are about to modify — it describes its role and dependencies
+4. Read `BACKLOG.md` for the current list of issues, priorities, and what's in progress
 
 ## What to Read by Task Type
 
 | Task | Primary File(s) | Then Also Read |
 |------|-----------------|----------------|
+| Backlog issue | `BACKLOG.md` | Files listed in the issue's "Archivos" field |
 | Road logic | `RoadManager.cs` | `GridManager.cs` (coordinate conversion), `TerrainManager.cs` (slopes) |
 | Zoning logic | `ZoneManager.cs` | `GridManager.cs`, `DemandManager.cs` |
 | UI changes | `UIManager.cs` | The specific Controller in `UnitControllers/` |
