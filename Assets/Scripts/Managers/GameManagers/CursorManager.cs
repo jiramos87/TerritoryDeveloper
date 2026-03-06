@@ -1,6 +1,16 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Territory.Core;
+using Territory.Zones;
 
+namespace Territory.UI
+{
+/// <summary>
+/// Manages the visual cursor and placement preview system. Shows ghost prefabs for buildings,
+/// roads, and zones as the player moves the mouse over the grid. Handles cursor texture changes
+/// for different tool modes (bulldozer, details, placement). Coordinates with GridManager for
+/// grid position and placement validation.
+/// </summary>
 public class CursorManager : MonoBehaviour
 {
     public Texture2D cursorTexture;
@@ -252,4 +262,5 @@ public class CursorManager : MonoBehaviour
             previewInstance = null;
         }
     }
+}
 }

@@ -1,5 +1,7 @@
 using UnityEngine;
 
+namespace Territory.Forests
+{
 /// <summary>
 /// Sparse forest implementation with minimal water consumption and environmental impact
 /// </summary>
@@ -35,4 +37,5 @@ public class SparseForest : MonoBehaviour, IForest
     {
         return WaterConsumption;
     }
+}
 }

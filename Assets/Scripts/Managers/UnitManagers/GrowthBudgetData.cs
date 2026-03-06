@@ -1,5 +1,10 @@
 using UnityEngine;
 
+namespace Territory.Simulation
+{
+/// <summary>
+/// Serializable data container for growth budget allocation across residential, commercial, and industrial categories.
+/// </summary>
 [System.Serializable]
 public class GrowthBudgetData
 {
@@ -29,4 +34,5 @@ public class GrowthBudgetData
             zoningSpentThisCycle = zoningSpentThisCycle
         };
     }
+}
 }

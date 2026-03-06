@@ -1,5 +1,10 @@
 using UnityEngine;
+using Territory.Zones;
+using Territory.Forests;
+using Territory.Buildings;
 
+namespace Territory.Core
+{
 /// <summary>
 /// Serializable data structure for saving and loading cell information.
 /// Updated to support the new Forest.ForestType system while maintaining backward compatibility.
@@ -250,4 +255,5 @@ public class CellData
 
         return clone;
     }
+}
 }

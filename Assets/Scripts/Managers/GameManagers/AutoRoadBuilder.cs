@@ -1,15 +1,29 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Territory.Core;
+using Territory.Roads;
+using Territory.Economy;
+using Territory.Terrain;
+using Territory.Zones;
 
+namespace Territory.Simulation
+{
+/// <summary>
+/// Automatically extends the road network during simulation steps by finding optimal paths from existing road edges.
+/// Coordinates with GridManager for pathfinding, RoadManager for road placement, and TerrainManager for terrain constraints.
+/// </summary>
 public class AutoRoadBuilder : MonoBehaviour
 {
+    #region Dependencies
     public GridManager gridManager;
     public RoadManager roadManager;
     public GrowthBudgetManager growthBudgetManager;
     public CityStats cityStats;
     public InterstateManager interstateManager;
     public TerrainManager terrainManager;
+    #endregion
 
+    #region Configuration
     [Header("Budget per tick")]
     public int maxTilesPerTick = 10;
 
@@ -52,7 +66,9 @@ public class AutoRoadBuilder : MonoBehaviour
     private List<StreetProject> activeProjects = new List<StreetProject>();
     private static readonly int[] Dx = { 1, -1, 0, 0 };
     private static readonly int[] Dy = { 0, 0, 1, -1 };
+    #endregion
 
+    #region Road Extension Logic
     string SimDateStr()
     {
         return cityStats != null ? cityStats.currentDate.ToString("yyyy-MM-dd") : "?";
@@ -293,7 +309,9 @@ public class AutoRoadBuilder : MonoBehaviour
 
         return false;
     }
+    #endregion
 
+    #region Road Placement
     /// <summary>
     /// When road edges are few, demolish up to maxCount buildings/zoning adjacent to roads to create outlets.
     /// When edges==0, call with maxCount 3 to create a corridor. Picks cells adjacent to the most road cells.
@@ -376,7 +394,9 @@ public class AutoRoadBuilder : MonoBehaviour
         }
         return 0;
     }
+    #endregion
 
+    #region Path Planning
     private int HowFarWeCanBuild(Vector2Int start, Vector2Int dir)
     {
         int count = 0;
@@ -529,7 +549,9 @@ public class AutoRoadBuilder : MonoBehaviour
         }
         return false;
     }
+    #endregion
 
+    #region Utility Methods
     private int TryConnectToInterstate(int maxTiles)
     {
         if (interstateManager == null || gridManager == null || roadManager == null) return 0;
@@ -616,4 +638,6 @@ public class AutoRoadBuilder : MonoBehaviour
         }
         return placed;
     }
+    #endregion
+}
 }

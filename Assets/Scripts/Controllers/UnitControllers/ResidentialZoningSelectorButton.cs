@@ -1,6 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI button that activates residential zone placement mode in UIManager.
+/// </summary>
 public class ResidentialZoningSelectorButton : MonoBehaviour
 {
     public BuildingSelectorMenuController popupController;
@@ -32,4 +37,5 @@ public class ResidentialZoningSelectorButton : MonoBehaviour
                 break;
         }
     }
+}
 }

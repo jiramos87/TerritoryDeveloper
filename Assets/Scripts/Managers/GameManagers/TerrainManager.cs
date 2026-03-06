@@ -1,6 +1,10 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Territory.Core;
+using Territory.Zones;
 
+namespace Territory.Terrain
+{
 public enum TerrainSlopeType
 {
     Flat,
@@ -18,14 +22,22 @@ public enum TerrainSlopeType
     SouthWestUp
 }
 
-public class TerrainManager : MonoBehaviour
+/// <summary>
+/// Generates and manages the terrain heightmap, slope types, and terrain tile prefab selection.
+/// Determines slope direction for each cell based on neighbor heights and selects the appropriate
+/// slope prefab (flat, N/S/E/W slopes, corner slopes, water slopes). Coordinates with GridManager
+/// for cell height assignment and WaterManager for water-slope prefab variants.
+/// </summary>
+public class TerrainManager : MonoBehaviour, ITerrainManager
 {
+    #region Dependencies
     public GridManager gridManager;
     private HeightMap heightMap;
     public ZoneManager zoneManager;
     public WaterManager waterManager;
+    #endregion
 
-    // References to slope prefabs
+    #region Slope Prefabs
     public GameObject northSlopePrefab;
     public GameObject southSlopePrefab;
     public GameObject eastSlopePrefab;
@@ -38,8 +50,9 @@ public class TerrainManager : MonoBehaviour
     public GameObject northWestUpslopePrefab;
     public GameObject southEastUpslopePrefab;
     public GameObject southWestUpslopePrefab;
+    #endregion
 
-    // Water-slope prefabs
+    #region Water Slope Prefabs
     public GameObject northSlopeWaterPrefab;
     public GameObject southSlopeWaterPrefab;
     public GameObject eastSlopeWaterPrefab;
@@ -56,7 +69,9 @@ public class TerrainManager : MonoBehaviour
     public GameObject seaLevelWaterPrefab;
     public GameObject southCliffWallPrefab;
     public GameObject eastCliffWallPrefab;
+    #endregion
 
+    #region Configuration
     public const int MIN_HEIGHT = 0;
     public const int MAX_HEIGHT = 5;
     public const int SEA_LEVEL = 0;
@@ -68,7 +83,12 @@ public class TerrainManager : MonoBehaviour
     public const int EFFECT_OFFSET = 30; // Effects should be above terrain
     public const int DEPTH_MULTIPLIER = 100;
     public const int HEIGHT_MULTIPLIER = 10; // Must be < DEPTH_MULTIPLIER/MAX_HEIGHT so depth dominates (hilltops don't draw over foreground forest)
+    #endregion
 
+    #region Height Map Generation
+    /// <summary>
+    /// Initializes the heightmap and applies it to the grid, creating initial terrain elevations.
+    /// </summary>
     public void StartTerrainGeneration()
     {
         if (gridManager == null)
@@ -81,6 +101,10 @@ public class TerrainManager : MonoBehaviour
         ApplyHeightMapToGrid();
     }
 
+    /// <summary>
+    /// Returns the current heightmap instance, or null if not yet initialized.
+    /// </summary>
+    /// <returns>The active HeightMap, or null.</returns>
     public HeightMap GetHeightMap()
     {
         return heightMap;
@@ -96,6 +120,9 @@ public class TerrainManager : MonoBehaviour
         return heightMap;
     }
 
+    /// <summary>
+    /// Creates a fresh heightmap from the grid dimensions, loads initial height data, and applies it to the grid.
+    /// </summary>
     public void InitializeHeightMap()
     {
         heightMap = new HeightMap(gridManager.width, gridManager.height);
@@ -429,7 +456,9 @@ public class TerrainManager : MonoBehaviour
         PlaceCliffWalls(x, y);
         return false;
     }
+    #endregion
 
+    #region Terrain Tile Placement
     private void DestroyCellChildren(Cell cell)
     {
         GameObject cellObject = cell.gameObject;  // Get the GameObject that holds the Cell component
@@ -699,7 +728,9 @@ public class TerrainManager : MonoBehaviour
             }
         }
     }
+    #endregion
 
+    #region Slope Calculation
     private GameObject DetermineWaterSlopePrefab(int x, int y)
     {
         int heightAtNorth = heightMap.getHeightWithBorder(x + 1, y);
@@ -914,6 +945,12 @@ public class TerrainManager : MonoBehaviour
         return TERRAIN_BASE_ORDER + depthOrder + heightOrder;
     }
 
+    /// <summary>
+    /// Calculates sorting order for water-slope tiles, positioned slightly above sea-level terrain.
+    /// </summary>
+    /// <param name="x">Grid X coordinate.</param>
+    /// <param name="y">Grid Y coordinate.</param>
+    /// <returns>Sorting order value for the water slope.</returns>
     public int CalculateWaterSlopeSortingOrder(int x, int y)
     {
         const int WATER_SLOPE_OFFSET = 1;
@@ -984,6 +1021,11 @@ public class TerrainManager : MonoBehaviour
         Effect
     }
 
+    /// <summary>
+    /// Returns true if the given GameObject is an instance of any water-slope prefab.
+    /// </summary>
+    /// <param name="obj">The GameObject to check.</param>
+    /// <returns>True if the object matches a water-slope prefab.</returns>
     public bool IsWaterSlopeObject(GameObject obj)
     {
         return IsPrefabInstance(obj, northSlopeWaterPrefab)
@@ -1019,6 +1061,11 @@ public class TerrainManager : MonoBehaviour
             || IsPrefabInstance(obj, southWestUpslopePrefab);
     }
 
+    /// <summary>
+    /// Returns true if the given GameObject is an instance of the sea-level water prefab.
+    /// </summary>
+    /// <param name="obj">The GameObject to check.</param>
+    /// <returns>True if the object matches the sea-level water prefab.</returns>
     public bool IsSeaLevelWaterObject(GameObject obj)
     {
         return IsPrefabInstance(obj, seaLevelWaterPrefab);
@@ -1125,16 +1172,29 @@ public class TerrainManager : MonoBehaviour
 
         return result;
     }
+    #endregion
 
-    // These methods will be implemented later
+    #region Utility Methods
+    /// <summary>
+    /// Modifies the terrain height at the given grid position.
+    /// </summary>
+    /// <param name="x">Grid X coordinate.</param>
+    /// <param name="y">Grid Y coordinate.</param>
+    /// <param name="newHeight">The new height value to set.</param>
     public void ModifyTerrain(int x, int y, int newHeight)
     {
         // Implementation for terrain modification
     }
 
+    /// <summary>
+    /// Checks whether a building of the given size can be placed at the grid position based on terrain constraints (height uniformity, slopes, water).
+    /// </summary>
+    /// <param name="gridPosition">The grid position for placement.</param>
+    /// <param name="size">The footprint size of the building.</param>
     /// <param name="failReason">When the method returns false, contains the specific reason for failure.</param>
     /// <param name="allowCoastalSlope">When true, allows placement on tiles that have slope only due to being adjacent to water (e.g. for water plants).</param>
     /// <param name="allowWaterInFootprint">When true, water tiles in the footprint are allowed (e.g. for water plants); they are skipped for height/slope checks.</param>
+    /// <returns>True if the terrain allows placement; false otherwise.</returns>
     public bool CanPlaceBuildingInTerrain(Vector2 gridPosition, int size, out string failReason, bool allowCoastalSlope = false, bool allowWaterInFootprint = false)
     {
         failReason = null;
@@ -1265,4 +1325,6 @@ public class TerrainManager : MonoBehaviour
             }
         }
     }
+    #endregion
+}
 }

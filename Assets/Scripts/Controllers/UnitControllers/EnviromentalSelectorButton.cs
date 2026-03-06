@@ -1,6 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI button that activates environmental/forest placement tools in UIManager.
+/// </summary>
 public class EnvironmentalSelectorButton : MonoBehaviour
 {
     [Header("UI References")]
@@ -113,4 +118,5 @@ public class EnvironmentalSelectorButton : MonoBehaviour
         };
         environmentalItems.Add(grassItem);
     }
+}
 }

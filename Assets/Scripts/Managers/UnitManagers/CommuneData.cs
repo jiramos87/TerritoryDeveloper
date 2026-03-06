@@ -1,6 +1,11 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+namespace Territory.Core
+{
+/// <summary>
+/// Serializable data container for commune/district information within the territory.
+/// </summary>
 [System.Serializable]
 public class CommuneData
 {
@@ -39,4 +44,5 @@ public struct SerializableVector2Int
 
     public Vector2Int ToVector2Int() => new Vector2Int(x, y);
     public static SerializableVector2Int From(Vector2Int v) => new SerializableVector2Int { x = v.x, y = v.y };
+}
 }

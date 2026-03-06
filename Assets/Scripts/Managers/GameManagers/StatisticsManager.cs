@@ -2,6 +2,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+namespace Territory.Economy
+{
 [System.Serializable]
 public class StatisticTrend
 {
@@ -60,6 +62,10 @@ public enum TrendDirection
     Increasing
 }
 
+/// <summary>
+/// Tracks historical trends for key city metrics (population, employment, economy).
+/// Coordinates with EmploymentManager, DemandManager, EconomyManager, and CityStats for data collection.
+/// </summary>
 public class StatisticsManager : MonoBehaviour
 {
     [Header("Employment Trends")]
@@ -141,4 +147,5 @@ public class StatisticsManager : MonoBehaviour
             default: return "►";
         }
     }
+}
 }

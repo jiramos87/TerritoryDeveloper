@@ -2,7 +2,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Territory.Timing;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI controller for game speed buttons (pause, 1x, 2x, 3x). Forwards speed changes to TimeManager.
+/// </summary>
 public class SpeedButtonsController : MonoBehaviour
 {
     [Header("References")]
@@ -174,4 +180,5 @@ public class SpeedButtonsController : MonoBehaviour
     {
         UpdateButtonStates(currentSelectedSpeed);
     }
+}
 }

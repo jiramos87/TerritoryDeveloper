@@ -1,5 +1,11 @@
 using UnityEngine;
 
+namespace Territory.Forests
+{
+/// <summary>
+/// Interface contract for forest types.
+/// Defines ForestType, ConstructionCost, WaterConsumption, Prefab, ForestSize, and GameObjectReference properties.
+/// </summary>
 public interface IForest
 {
     Forest.ForestType ForestType { get; }
@@ -10,4 +16,5 @@ public interface IForest
     int ForestSize { get; }
 
     GameObject GameObjectReference { get; }
+}
 }

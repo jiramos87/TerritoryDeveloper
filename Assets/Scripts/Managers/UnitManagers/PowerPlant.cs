@@ -1,6 +1,14 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Territory.Timing;
+using Territory.Zones;
 
+namespace Territory.Buildings
+{
+/// <summary>
+/// MonoBehaviour component for power plant buildings placed on the grid.
+/// Tracks power capacity and coordinates with AnimatorManager for animation speed.
+/// </summary>
 public class PowerPlant : MonoBehaviour, IBuilding
 {
     private int powerOutput;
@@ -93,4 +101,5 @@ public class PowerPlant : MonoBehaviour, IBuilding
 
         return powerPlantPrefabs;
     }
+}
 }

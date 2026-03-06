@@ -2,7 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using Territory.Core;
+using Territory.Economy;
+using Territory.Timing;
+using Territory.Roads;
+using Territory.Geography;
+using Territory.Simulation;
 
+namespace Territory.Persistence
+{
+/// <summary>
+/// Handles serialization and deserialization of the complete game state.
+/// Coordinates with GridManager for grid data, CityStats for city state, and TimeManager for time state.
+/// </summary>
 public class GameSaveManager : MonoBehaviour
 {
     public string saveName;
@@ -121,4 +133,5 @@ public class GameSaveData
     public CityStatsData cityStats;
     public GrowthBudgetData growthBudget;
     public List<UrbanizationProposal> pendingProposals;
+}
 }

@@ -1,5 +1,11 @@
 using UnityEngine;
 
+namespace Territory.Zones
+{
+/// <summary>
+/// Static readonly class defining zone and building attributes (construction cost, population capacity,
+/// job capacity, water/power consumption) for each zone type.
+/// </summary>
 public class ZoneAttributes
 {
     public int ConstructionCost { get; set; }
@@ -62,4 +68,5 @@ public class ZoneAttributes
     public static readonly ZoneAttributes Road = new ZoneAttributes(50, 0, 0, 100, 0, 0);
     public static readonly ZoneAttributes Grass = new ZoneAttributes(0, 0, 0, 0, 0, 0);
     public static readonly ZoneAttributes Water = new ZoneAttributes(0, 0, 0, 0, 0, 0);
+}
 }

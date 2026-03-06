@@ -1,6 +1,17 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Territory.Core;
+using Territory.Zones;
+using Territory.Buildings;
 
+namespace Territory.Terrain
+{
+/// <summary>
+/// Generates and manages water bodies on the grid based on the sea level threshold.
+/// Places animated water tiles on cells at or below sea level, tracks water plants for
+/// capacity calculations, and provides water map data. Coordinates with GridManager for
+/// cell access and TerrainManager for height-based water placement.
+/// </summary>
 public class WaterManager : MonoBehaviour
 {
     public GridManager gridManager;
@@ -321,4 +332,5 @@ public class WaterManager : MonoBehaviour
     {
         return waterMap;
     }
+}
 }

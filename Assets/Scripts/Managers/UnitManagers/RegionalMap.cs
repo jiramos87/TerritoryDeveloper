@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Territory.Utilities;
 
+namespace Territory.Geography
+{
 /// <summary>
 /// The regional-scale map: a grid of TerritoryData where each cell represents one territory/city.
 /// Our playable map is one cell in this grid. Player at center (2,2) for 5x5. Flat array for JsonUtility.
@@ -242,4 +245,5 @@ public class RegionalMap
         }
         return sb.ToString();
     }
+}
 }

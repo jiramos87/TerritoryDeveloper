@@ -3,6 +3,12 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI controller for the building selector popup. Manages item display, selection callbacks,
+/// and coordinates with CursorManager for placement preview.
+/// </summary>
 public class BuildingSelectorMenuController : MonoBehaviour
 {
     public BuildingSelectorMenuManager menuManager;
@@ -138,4 +144,5 @@ public class BuildingSelectorMenuController : MonoBehaviour
     {
         CacheAllSelectorButtons();
     }
+}
 }

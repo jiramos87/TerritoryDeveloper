@@ -1,5 +1,8 @@
 using UnityEngine;
+using Territory.Economy;
 
+namespace Territory.Simulation
+{
 /// <summary>
 /// Central orchestrator for automatic city growth simulation.
 /// Called by TimeManager each day; runs roads -> zoning -> resources when simulateGrowth is true. Proposal flow disabled.
@@ -70,4 +73,5 @@ public class SimulationManager : MonoBehaviour
         if (growthBudgetManager != null)
             growthBudgetManager.ResetMonthlyCycle();
     }
+}
 }

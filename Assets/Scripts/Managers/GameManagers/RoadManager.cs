@@ -3,19 +3,36 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
 using System;
+using Territory.Core;
+using Territory.Terrain;
+using Territory.Economy;
+using Territory.UI;
+using Territory.Zones;
 
-public class RoadManager : MonoBehaviour
+namespace Territory.Roads
 {
+/// <summary>
+/// Manages road placement, drawing, and prefab selection on the grid. Handles road preview
+/// during drag, selects correct road prefab based on neighbor connectivity, and coordinates
+/// with TerrainManager for slope adaptation and InterstateManager for highway connections.
+/// </summary>
+public class RoadManager : MonoBehaviour, IRoadManager
+{
+    #region Dependencies
     public TerrainManager terrainManager;
     public GridManager gridManager;
     public CityStats cityStats;
     public UIManager uiManager;
     public ZoneManager zoneManager;
     public InterstateManager interstateManager;
+    #endregion
 
+    #region Road Drawing State
     private bool isDrawingRoad = false;
     private Vector2 startPosition;
+    #endregion
 
+    #region Road Prefabs
     public List<GameObject> roadTilePrefabs;
     public GameObject roadTilePrefab1;
     public GameObject roadTilePrefab2;
@@ -38,6 +55,9 @@ public class RoadManager : MonoBehaviour
     private List<Vector2> previewRoadGridPositions = new List<Vector2>();
     private List<Vector2> adjacentRoadTiles = new List<Vector2>();
 
+    /// <summary>
+    /// Populates the road tile prefabs list from the individual prefab fields.
+    /// </summary>
     public void Initialize()
     {
         roadTilePrefabs = new List<GameObject>
@@ -61,7 +81,13 @@ public class RoadManager : MonoBehaviour
             roadTilePrefabSouthSlope
         };
     }
+    #endregion
 
+    #region Road Drawing
+    /// <summary>
+    /// Handles the full road drawing input lifecycle: start on mouse down, preview line on drag, and place on mouse up.
+    /// </summary>
+    /// <param name="gridPosition">The current grid position under the cursor.</param>
     public void HandleRoadDrawing(Vector2 gridPosition)
     {
         if (!terrainManager.CanPlaceRoad((int)gridPosition.x, (int)gridPosition.y))
@@ -361,7 +387,9 @@ public class RoadManager : MonoBehaviour
 
         previewTile.transform.SetParent(cell.gameObject.transform);
     }
+    #endregion
 
+    #region Road Prefab Selection
     GameObject GetCorrectRoadPrefab(Vector2 prevGridPos, Vector2 currGridPos, bool isCenterRoadTile = true, bool isPreview = false, List<Vector2> path = null, int pathIndex = -1)
     {
         Vector2 direction = currGridPos - prevGridPos;
@@ -624,7 +652,9 @@ public class RoadManager : MonoBehaviour
         worldPos = gridManager.GetWorldPosition(x, y);
         sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, height);
     }
+    #endregion
 
+    #region Road Placement
     bool IsRoadAt(Vector2 gridPos)
     {
         bool isRoad = false;
@@ -786,7 +816,9 @@ public class RoadManager : MonoBehaviour
         cellComponent.happiness = 0;
         cellComponent.isPivot = false;
     }
+    #endregion
 
+    #region Road Update
     /// <summary>
     /// Returns true if a road can be placed at the given grid position (terrain, not building, not interstate).
     /// </summary>
@@ -868,11 +900,17 @@ public class RoadManager : MonoBehaviour
 
     public const int RoadCostPerTile = 50;
 
+    /// <summary>
+    /// Returns the list of all road tile prefabs.
+    /// </summary>
+    /// <returns>The road tile prefabs list.</returns>
     public List<GameObject> GetRoadPrefabs()
     {
         return roadTilePrefabs;
     }
+    #endregion
 
+    #region Utility Methods
     /// <summary>
     /// Returns the correct road prefab for a cell in a path (for interstate placement).
     /// </summary>
@@ -963,4 +1001,6 @@ public class RoadManager : MonoBehaviour
 
         gridManager.SetRoadSortingOrder(roadTile, gridPos.x, gridPos.y);
     }
+    #endregion
+}
 }

@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Territory.Zones;
 
+namespace Territory.Simulation
+{
 public enum ProposalStatus { Pending, Accepted, Rejected }
 
 [System.Serializable]
@@ -23,6 +26,9 @@ public struct ProposedCell
     }
 }
 
+/// <summary>
+/// Data class representing an urbanization expansion proposal with road paths, zone positions, status, and cost estimation.
+/// </summary>
 [System.Serializable]
 public class UrbanizationProposal
 {
@@ -44,4 +50,5 @@ public class UrbanizationProposal
         get => (ProposalStatus)statusInt;
         set => statusInt = (int)value;
     }
+}
 }

@@ -1,6 +1,16 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Territory.Core;
+using Territory.Terrain;
+using Territory.Forests;
+using Territory.Zones;
+using Territory.Roads;
+using Territory.Economy;
+using Territory.UI;
+using Territory.Utilities;
 
+namespace Territory.Geography
+{
 /// <summary>
 /// GeographyManager coordinates the initialization and management of all geographical features:
 /// terrain height, water bodies, and forests. It centralizes the loading of geographical data
@@ -8,6 +18,7 @@ using System.Collections.Generic;
 /// </summary>
 public class GeographyManager : MonoBehaviour
 {
+    #region Dependencies
     [Header("Manager References")]
     public TerrainManager terrainManager;
     public WaterManager waterManager;
@@ -16,14 +27,18 @@ public class GeographyManager : MonoBehaviour
     public ZoneManager zoneManager;
     public InterstateManager interstateManager;
     public RegionalMapManager regionalMapManager;
+    #endregion
 
+    #region Configuration
     [Header("Geography Configuration")]
     public bool initializeOnStart = true;
     public bool useTerrainForWater = true; // Whether to use terrain height for water placement
 
     // Current geographical data (for save/load operations)
     private GeographyData currentGeographyData;
+    #endregion
 
+    #region Initialization
     void Start()
     {
         // Find managers if not assigned
@@ -164,7 +179,9 @@ public class GeographyManager : MonoBehaviour
 
         ReCalculateSortingOrderBasedOnHeight();
     }
+    #endregion
 
+    #region Terrain Setup
     const int RoadSortingOffset = 3;
 
     /// <summary>
@@ -480,7 +497,9 @@ public class GeographyManager : MonoBehaviour
             }
         }
     }
+    #endregion
 
+    #region Forest Setup
     public void ResetGeography()
     {
         if (forestManager != null && forestManager.GetForestMap() != null)
@@ -531,7 +550,9 @@ public class GeographyManager : MonoBehaviour
             forestManager.RemoveForestFromCell(forestPos.x, forestPos.y, false);
         }
     }
+    #endregion
 
+    #region Utility Methods
     public GeographyData GetCurrentGeographyData()
     {
         currentGeographyData = CreateGeographyData();
@@ -671,6 +692,7 @@ public class GeographyManager : MonoBehaviour
         }
         return count;
     }
+    #endregion
 }
 
 public enum PlacementType
@@ -746,4 +768,5 @@ public struct ForestRegionInfo
     {
         return sparseCount + mediumCount + denseCount;
     }
+}
 }

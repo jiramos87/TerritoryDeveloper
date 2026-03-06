@@ -1,5 +1,10 @@
 using UnityEngine;
+using Territory.Zones;
+using Territory.Forests;
+using Territory.Buildings;
 
+namespace Territory.Core
+{
 /// <summary>
 /// Represents a single cell in the game grid with properties for buildings, roads, forests, and environmental factors.
 /// Updated to support the new Forest.ForestType system for better forest management.
@@ -392,4 +397,5 @@ public class Cell : MonoBehaviour
         isInterstate = cellData.isInterstate;
     }
     #endregion
+}
 }

@@ -1,7 +1,14 @@
 using UnityEngine;
+using Territory.Economy;
 
+namespace Territory.Simulation
+{
 public enum GrowthCategory { Roads, Energy, Water, Zoning }
 
+/// <summary>
+/// Manages growth budget allocation across residential, commercial, and industrial categories.
+/// Provides budget data to simulation managers for growth decisions based on CityStats.
+/// </summary>
 public class GrowthBudgetManager : MonoBehaviour
 {
     public CityStats cityStats;
@@ -119,4 +126,5 @@ public class GrowthBudgetManager : MonoBehaviour
             case GrowthCategory.Zoning: data.zoningSpentThisCycle = Mathf.Max(0, data.zoningSpentThisCycle + amount); break;
         }
     }
+}
 }

@@ -3,9 +3,26 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
 using System;
+using Territory.Zones;
+using Territory.UI;
+using Territory.Economy;
+using Territory.Terrain;
+using Territory.Forests;
+using Territory.Buildings;
+using Territory.Roads;
+using Territory.Timing;
 
-public class GridManager : MonoBehaviour
+namespace Territory.Core
 {
+/// <summary>
+/// Central hub for the isometric 2D grid. Manages cell arrays, coordinate conversion between
+/// world and grid space, building placement and validation, bulldozing, sorting order assignment,
+/// chunk-based culling, road caching, and A* pathfinding. Most managers depend on GridManager
+/// for cell access via GetCell(x,y) and coordinate utilities.
+/// </summary>
+public class GridManager : MonoBehaviour, IGridManager
+{
+    #region Dependencies
     public ZoneManager zoneManager;
     public UIManager uiManager;
     public CityStats cityStats;
@@ -20,6 +37,15 @@ public class GridManager : MonoBehaviour
     public InterstateManager interstateManager;
     public BuildingSelectorMenuController buildingSelectorMenuController;
 
+    // Helper services (initialized in InitializeGrid)
+    private GridPathfinder pathfinder;
+    private GridSortingOrderService sortingService;
+    private BuildingPlacementService placementService;
+    private ChunkCullingSystem chunkCulling;
+    private RoadCacheService roadCache;
+    #endregion
+
+    #region Grid Configuration
     public int width, height;
     public float tileWidth = 1f; // Full width of the tile
     public float tileHeight = 0.5f; // Effective height due to isometric perspective
@@ -42,9 +68,12 @@ public class GridManager : MonoBehaviour
     private bool[,] chunkActiveState;
     private int chunksX, chunksY;
     private Camera cachedCamera;
-    private Vector3 lastCameraPosition;
-    private float lastOrthoSize;
+    #endregion
 
+    #region Initialization
+    /// <summary>
+    /// Bootstraps the grid: resolves dependencies, creates the cell/chunk arrays, generates terrain, and centers the camera.
+    /// </summary>
     public void InitializeGrid()
     {
         halfWidth = tileWidth / 2f;
@@ -123,6 +152,10 @@ public class GridManager : MonoBehaviour
         {
             interstateManager = FindObjectOfType<InterstateManager>();
         }
+
+        // Create sortingService before CreateGrid() so SetTileSortingOrder is available during grid creation
+        sortingService = new GridSortingOrderService(this);
+
         CreateGrid();
         terrainManager.InitializeHeightMap();
         isInitialized = true;
@@ -131,6 +164,14 @@ public class GridManager : MonoBehaviour
         );
 
         cameraController.MoveCameraToMapCenter(centerWorldPosition);
+
+        // Initialize helper services (sortingService already created above for CreateGrid)
+        pathfinder = new GridPathfinder(this);
+        placementService = new BuildingPlacementService(this, sortingService);
+        chunkCulling = new ChunkCullingSystem(this, chunkSize, cachedCamera);
+        chunkCulling.chunkObjects = chunkObjects;
+        chunkCulling.chunkActiveState = chunkActiveState;
+        roadCache = new RoadCacheService(this);
     }
 
     void CreateGrid()
@@ -199,7 +240,9 @@ public class GridManager : MonoBehaviour
             }
         }
     }
+    #endregion
 
+    #region Unity Lifecycle
     void Update()
     {
         try
@@ -283,52 +326,16 @@ public class GridManager : MonoBehaviour
     void LateUpdate()
     {
         if (!isInitialized || chunkObjects == null) return;
-        UpdateChunkVisibility();
+        chunkCulling?.UpdateVisibility();
     }
+    #endregion
 
-    void UpdateChunkVisibility()
-    {
-        if (cachedCamera == null) cachedCamera = Camera.main;
-        if (cachedCamera == null) return;
-
-        Vector3 camPos = cachedCamera.transform.position;
-        float orthoSize = cachedCamera.orthographicSize;
-        if (camPos == lastCameraPosition && Mathf.Approximately(orthoSize, lastOrthoSize))
-            return;
-        lastCameraPosition = camPos;
-        lastOrthoSize = orthoSize;
-
-        float halfH = orthoSize;
-        float halfW = orthoSize * cachedCamera.aspect;
-        Vector2 bl = new Vector2(camPos.x - halfW, camPos.y - halfH);
-        Vector2 br = new Vector2(camPos.x + halfW, camPos.y - halfH);
-        Vector2 tl = new Vector2(camPos.x - halfW, camPos.y + halfH);
-        Vector2 tr = new Vector2(camPos.x + halfW, camPos.y + halfH);
-
-        int minGridX = Mathf.Min((int)GetGridPosition(bl).x, (int)GetGridPosition(br).x, (int)GetGridPosition(tl).x, (int)GetGridPosition(tr).x);
-        int maxGridX = Mathf.Max((int)GetGridPosition(bl).x, (int)GetGridPosition(br).x, (int)GetGridPosition(tl).x, (int)GetGridPosition(tr).x);
-        int minGridY = Mathf.Min((int)GetGridPosition(bl).y, (int)GetGridPosition(br).y, (int)GetGridPosition(tl).y, (int)GetGridPosition(tr).y);
-        int maxGridY = Mathf.Max((int)GetGridPosition(bl).y, (int)GetGridPosition(br).y, (int)GetGridPosition(tl).y, (int)GetGridPosition(tr).y);
-
-        int minCX = Mathf.Max(0, minGridX / chunkSize - 1);
-        int maxCX = Mathf.Min(chunksX - 1, maxGridX / chunkSize + 1);
-        int minCY = Mathf.Max(0, minGridY / chunkSize - 1);
-        int maxCY = Mathf.Min(chunksY - 1, maxGridY / chunkSize + 1);
-
-        for (int cx = 0; cx < chunksX; cx++)
-        {
-            for (int cy = 0; cy < chunksY; cy++)
-            {
-                bool shouldBeActive = cx >= minCX && cx <= maxCX && cy >= minCY && cy <= maxCY;
-                if (chunkActiveState[cx, cy] != shouldBeActive)
-                {
-                    chunkActiveState[cx, cy] = shouldBeActive;
-                    chunkObjects[cx, cy].SetActive(shouldBeActive);
-                }
-            }
-        }
-    }
-
+    #region Cell Queries
+    /// <summary>
+    /// Returns true if the grid position is within the grid bounds.
+    /// </summary>
+    /// <param name="gridPosition">Grid coordinates to validate.</param>
+    /// <returns>True when both x and y are inside [0, width) and [0, height).</returns>
     public bool IsValidGridPosition(Vector2 gridPosition)
     {
         int gridX = (int)gridPosition.x;
@@ -375,53 +382,6 @@ public class GridManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns the maximum sorting order that any content on the cell at (x,y) would have
-    /// (terrain, forest +5, road +3, building +10, etc.). Used so the building can place itself
-    /// behind "front" adjacent cells and let forest/terrain draw on top.
-    /// </summary>
-    private int GetCellMaxContentSortingOrder(int x, int y)
-    {
-        if (x < 0 || x >= width || y < 0 || y >= height) return int.MinValue;
-        if (terrainManager == null) return int.MinValue;
-
-        Cell cell = (x >= 0 && x < width && y >= 0 && y < height) ? cellArray[x, y] : null;
-        if (cell == null) return int.MinValue;
-
-        int terrainOrder = terrainManager.CalculateTerrainSortingOrder(x, y, cell.height);
-        int maxOrder = terrainOrder;
-
-        if (cell.GetComponent<SpriteRenderer>() != null)
-            maxOrder = Mathf.Max(maxOrder, terrainOrder);
-
-        for (int i = 0; i < cell.gameObject.transform.childCount; i++)
-        {
-            GameObject child = cell.gameObject.transform.GetChild(i).gameObject;
-            if (child.GetComponent<SpriteRenderer>() == null) continue;
-
-            int order;
-            if (terrainManager.IsWaterSlopeObject(child))
-                order = terrainManager.CalculateWaterSlopeSortingOrder(x, y);
-            else if (cell.forestObject != null && cell.forestObject == child)
-                order = terrainOrder + 5;
-            else
-            {
-                Zone zone = child.GetComponent<Zone>();
-                if (zone != null)
-                {
-                    if (zone.zoneCategory == Zone.ZoneCategory.Zoning) order = terrainOrder + 0;
-                    else if (zone.zoneType == Zone.ZoneType.Road) order = terrainOrder + ROAD_SORTING_OFFSET;
-                    else if (zone.zoneCategory == Zone.ZoneCategory.Building) order = terrainOrder + 10;
-                    else order = terrainOrder;
-                }
-                else
-                    order = terrainOrder;
-            }
-            maxOrder = Mathf.Max(maxOrder, order);
-        }
-        return maxOrder;
-    }
-
-    /// <summary>
     /// Returns the pivot cell for a multi-cell building. If the given cell is part of the building footprint, finds and returns the pivot cell (isPivot=true).
     /// </summary>
     public GameObject GetBuildingPivotCell(Cell cell)
@@ -451,7 +411,9 @@ public class GridManager : MonoBehaviour
         }
         return gridArray[cx, cy];
     }
+    #endregion
 
+    #region Input and Placement Handlers
     bool IsInWaterPlacementMode()
     {
         return uiManager.GetSelectedZoneType() == Zone.ZoneType.Water;
@@ -793,7 +755,7 @@ public class GridManager : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
-            PlaceBuilding(gridPosition, selectedBuilding);
+            placementService.PlaceBuilding(gridPosition, selectedBuilding);
         }
     }
 
@@ -805,6 +767,11 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Returns a user-facing demand feedback string (e.g. "✓ Demand: 80%") for the given zone type, considering employment and residential support.
+    /// </summary>
+    /// <param name="zoneType">The zone type to evaluate demand for.</param>
+    /// <returns>A formatted demand feedback string, or empty if no demand manager exists.</returns>
     public string GetDemandFeedback(Zone.ZoneType zoneType)
     {
         if (demandManager == null)
@@ -843,7 +810,14 @@ public class GridManager : MonoBehaviour
 
         return feedback;
     }
+    #endregion
 
+    #region Cell Destruction and Attributes
+    /// <summary>
+    /// Destroys all non-terrain children of the cell at the given grid position. Convenience overload that excludes nothing.
+    /// </summary>
+    /// <param name="cell">The cell GameObject whose children will be destroyed.</param>
+    /// <param name="gridPosition">Grid coordinates of the cell (used for zone list bookkeeping).</param>
     public void DestroyCellChildren(GameObject cell, Vector2 gridPosition)
     {
         DestroyCellChildren(cell, gridPosition, null);
@@ -910,6 +884,14 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Overwrites a cell's zone type, population, power consumption, happiness, prefab, and building size with the supplied values.
+    /// </summary>
+    /// <param name="cellComponent">The cell to update.</param>
+    /// <param name="selectedZoneType">New zone type for the cell.</param>
+    /// <param name="zoneAttributes">Attributes (population, power, happiness) to apply.</param>
+    /// <param name="prefab">The prefab GameObject associated with this zone.</param>
+    /// <param name="buildingSize">Footprint size of the building (1 for single-cell).</param>
     public void UpdateCellAttributes(Cell cellComponent, Zone.ZoneType selectedZoneType, ZoneAttributes zoneAttributes, GameObject prefab, int buildingSize)
     {
         cellComponent.zoneType = selectedZoneType;
@@ -939,193 +921,35 @@ public class GridManager : MonoBehaviour
 
         return new Vector2(x, y);
     }
+    #endregion
 
+    #region Sorting Order
+    /// <summary>
+    /// Sets the sorting order of a tile using a legacy formula based on grid position. Prefers TerrainManager-based methods for new code.
+    /// </summary>
+    /// <param name="tile">The tile GameObject to update.</param>
+    /// <param name="zoneType">Zone type used to determine the sorting layer offset.</param>
+    /// <returns>The computed sorting order, or -1001 if the tile is outside the grid.</returns>
     public int SetTileSortingOrder(GameObject tile, Zone.ZoneType zoneType = Zone.ZoneType.Grass)
-    {
-        Vector3 gridPos = GetGridPosition(tile.transform.position);
-
-        int x = (int)gridPos.x;
-        int y = (int)gridPos.y;
-        if (x < 0 || x >= width || y < 0 || y >= height)
-        {
-            return -1001;
-        }
-
-        Cell cell = cellArray[x, y];
-        tile.transform.SetParent(cell.gameObject.transform);
-        SpriteRenderer sr = tile.GetComponent<SpriteRenderer>();
-
-        int baseSortingOrder = (y * width + x);
-
-        int sortingOrder;
-        switch (zoneType)
-        {
-            case Zone.ZoneType.Grass:
-                sortingOrder = -(baseSortingOrder + 100000);
-                break;
-            default:
-                sortingOrder = -(baseSortingOrder + 50000);
-                break;
-        }
-        sr.sortingOrder = sortingOrder;
-        cell.SetCellInstanceSortingOrder(sortingOrder);
-        return sortingOrder;
-    }
+        => sortingService.SetTileSortingOrder(tile, zoneType);
 
     /// <summary>
     /// Sets sorting order for a zoning tile (RCI overlay) using TerrainManager so it renders below forest and buildings.
     /// </summary>
     public void SetZoningTileSortingOrder(GameObject tile, int x, int y)
-    {
-        if (x < 0 || x >= width || y < 0 || y >= height) return;
-
-        Cell cell = cellArray[x, y];
-        if (cell == null) return;
-
-        tile.transform.SetParent(cell.gameObject.transform);
-
-        if (terrainManager == null)
-        {
-            SetTileSortingOrder(tile, Zone.ZoneType.Grass);
-            return;
-        }
-
-        int cellHeight = cell.height;
-        if (terrainManager.GetHeightMap() != null)
-            cellHeight = terrainManager.GetHeightMap().GetHeight(x, y);
-
-        int sortingOrder = terrainManager.CalculateTerrainSortingOrder(x, y, cellHeight);
-
-        SpriteRenderer[] renderers = tile.GetComponentsInChildren<SpriteRenderer>();
-        foreach (SpriteRenderer sr in renderers)
-        {
-            if (sr != null)
-                sr.sortingOrder = sortingOrder;
-        }
-    }
+        => sortingService.SetZoningTileSortingOrder(tile, x, y);
 
     /// <summary>
     /// Sets sorting order for a zone building (RCI) tile using TerrainManager so it renders above forest and terrain.
     /// </summary>
     public void SetZoneBuildingSortingOrder(GameObject tile, int x, int y)
-    {
-        if (x < 0 || x >= width || y < 0 || y >= height) return;
-
-        Cell cell = cellArray[x, y];
-        if (cell == null) return;
-
-        tile.transform.SetParent(cell.gameObject.transform);
-
-        if (terrainManager == null)
-        {
-            SetTileSortingOrder(tile, Zone.ZoneType.Building);
-            return;
-        }
-
-        int cellHeight = cell.height;
-        if (terrainManager.GetHeightMap() != null)
-            cellHeight = terrainManager.GetHeightMap().GetHeight(x, y);
-
-        int sortingOrder = terrainManager.CalculateBuildingSortingOrder(x, y, cellHeight);
-
-        SpriteRenderer[] renderers = tile.GetComponentsInChildren<SpriteRenderer>();
-        foreach (SpriteRenderer sr in renderers)
-        {
-            if (sr != null)
-                sr.sortingOrder = sortingOrder;
-        }
-        cell.SetCellInstanceSortingOrder(sortingOrder);
-    }
+        => sortingService.SetZoneBuildingSortingOrder(tile, x, y);
 
     /// <summary>
     /// Sets sorting order for a multi-cell building using the maximum order over its footprint so the whole building renders in front of all covered terrain.
     /// </summary>
     public void SetZoneBuildingSortingOrder(GameObject tile, int pivotX, int pivotY, int buildingSize)
-    {
-        if (buildingSize <= 1)
-        {
-            SetZoneBuildingSortingOrder(tile, pivotX, pivotY);
-            return;
-        }
-        if (pivotX < 0 || pivotX >= width || pivotY < 0 || pivotY >= height) return;
-        Cell pivotCell = cellArray[pivotX, pivotY];
-        if (pivotCell == null) return;
-        tile.transform.SetParent(pivotCell.gameObject.transform);
-        if (terrainManager == null)
-        {
-            SetTileSortingOrder(tile, Zone.ZoneType.Building);
-            return;
-        }
-        GetBuildingFootprintOffset(buildingSize, out int offsetX, out int offsetY);
-        int minFx = pivotX - offsetX;
-        int minFy = pivotY - offsetY;
-        int maxFx = minFx + buildingSize - 1;
-        int maxFy = minFy + buildingSize - 1;
-
-        int maxOrder = int.MinValue;
-
-        for (int x = 0; x < buildingSize; x++)
-        {
-            for (int y = 0; y < buildingSize; y++)
-            {
-                int gridX = pivotX + x - offsetX;
-                int gridY = pivotY + y - offsetY;
-                if (gridX < 0 || gridX >= width || gridY < 0 || gridY >= height) continue;
-                Cell cell = cellArray[gridX, gridY];
-                if (cell == null) continue;
-                int cellHeight = cell.height;
-                if (terrainManager.GetHeightMap() != null)
-                    cellHeight = terrainManager.GetHeightMap().GetHeight(gridX, gridY);
-                int order = terrainManager.CalculateBuildingSortingOrder(gridX, gridY, cellHeight);
-                if (order > maxOrder) maxOrder = order;
-            }
-        }
-        if (maxOrder == int.MinValue) return;
-
-        // Front = left or top. Back = south-east face only: right column (ax==maxFx+1, ay>=minFy) and bottom row (ay==maxFy+1).
-        // This explicitly excludes top-right corner (e.g. 29,8) so the floor is driven only by (29,9),(29,10),(29,11) and bottom row.
-        int minFrontAdjacentContentOrder = int.MaxValue;
-        int maxBackAdjacentContentOrder = int.MinValue;
-        for (int ax = minFx - 1; ax <= maxFx + 1; ax++)
-        {
-            for (int ay = minFy - 1; ay <= maxFy + 1; ay++)
-            {
-                if (ax >= minFx && ax <= maxFx && ay >= minFy && ay <= maxFy) continue;
-                if (ax < 0 || ax >= width || ay < 0 || ay >= height) continue;
-                int contentOrder = GetCellMaxContentSortingOrder(ax, ay);
-                if (contentOrder == int.MinValue) continue;
-                bool isFront = (ax < minFx) || (ay < minFy);
-                bool isBackSouthEast = (ax == maxFx + 1 && ay >= minFy && ay <= maxFy + 1) || (ay == maxFy + 1 && ax >= minFx && ax <= maxFx + 1);
-                if (isFront && contentOrder < minFrontAdjacentContentOrder)
-                    minFrontAdjacentContentOrder = contentOrder;
-                if (isBackSouthEast && contentOrder > maxBackAdjacentContentOrder)
-                    maxBackAdjacentContentOrder = contentOrder;
-            }
-        }
-        // Apply floor first so we're always in front of back south-east tiles
-        if (maxBackAdjacentContentOrder != int.MinValue)
-        {
-            int orderInFrontOfBack = maxBackAdjacentContentOrder + 1;
-            if (orderInFrontOfBack > maxOrder)
-                maxOrder = orderInFrontOfBack;
-        }
-        // Cap (go behind front row) only when it wouldn't hide the building. If current maxOrder is already > front content, skip cap so building stays visible.
-        if (minFrontAdjacentContentOrder != int.MaxValue)
-        {
-            int orderBehindFront = minFrontAdjacentContentOrder - 1;
-            bool skipCapForVisibility = orderBehindFront < maxOrder && maxOrder > minFrontAdjacentContentOrder;
-            if (orderBehindFront < maxOrder && !skipCapForVisibility)
-                maxOrder = orderBehindFront;
-        }
-
-        SpriteRenderer[] renderers = tile.GetComponentsInChildren<SpriteRenderer>();
-        foreach (SpriteRenderer sr in renderers)
-        {
-            if (sr != null)
-                sr.sortingOrder = maxOrder;
-        }
-        pivotCell.SetCellInstanceSortingOrder(maxOrder);
-    }
+        => sortingService.SetZoneBuildingSortingOrder(tile, pivotX, pivotY, buildingSize);
 
     const int ROAD_SORTING_OFFSET = 3;
 
@@ -1133,64 +957,30 @@ public class GridManager : MonoBehaviour
     /// Returns the sorting order to use for a road tile at (x, y) at the given height (e.g. 1 for bridge over water).
     /// </summary>
     public int GetRoadSortingOrderForCell(int x, int y, int height)
-    {
-        if (x < 0 || x >= width || y < 0 || y >= height) return 0;
-        if (terrainManager == null) return 0;
-        return terrainManager.CalculateTerrainSortingOrder(x, y, height) + ROAD_SORTING_OFFSET;
-    }
+        => sortingService.GetRoadSortingOrderForCell(x, y, height);
 
     /// <summary>
     /// Sets sorting order for a road tile using TerrainManager so it renders below forest and buildings.
     /// </summary>
     public void SetRoadSortingOrder(GameObject tile, int x, int y)
-    {
-        if (x < 0 || x >= width || y < 0 || y >= height) return;
+        => sortingService.SetRoadSortingOrder(tile, x, y);
 
-        Cell cell = cellArray[x, y];
-        if (cell == null) return;
-
-        tile.transform.SetParent(cell.gameObject.transform);
-
-        if (terrainManager == null)
-        {
-            SetTileSortingOrder(tile, Zone.ZoneType.Road);
-            return;
-        }
-
-        int cellHeight = cell.height;
-        if (terrainManager.GetHeightMap() != null)
-            cellHeight = terrainManager.GetHeightMap().GetHeight(x, y);
-
-        int sortingOrder = terrainManager.CalculateTerrainSortingOrder(x, y, cellHeight) + ROAD_SORTING_OFFSET;
-
-        SpriteRenderer[] renderers = tile.GetComponentsInChildren<SpriteRenderer>();
-        foreach (SpriteRenderer sr in renderers)
-        {
-            if (sr != null)
-                sr.sortingOrder = sortingOrder;
-        }
-    }
-
+    /// <summary>
+    /// Sets the sorting order for a sea-level tile so it renders behind all land content.
+    /// </summary>
+    /// <param name="tile">The tile GameObject to update.</param>
+    /// <param name="cell">The cell this tile belongs to.</param>
+    /// <returns>The computed sea-level sorting order.</returns>
     public int SetResortSeaLevelOrder(GameObject tile, Cell cell)
-    {
-        int x = (int)cell.x;
-        int y = (int)cell.y;
+        => sortingService.SetResortSeaLevelOrder(tile, cell);
+    #endregion
 
-        tile.transform.SetParent(cell.gameObject.transform);
-
-        int baseSortingOrder = (y * width + x);
-        int sortingOrder = -(baseSortingOrder + 110000);
-
-        SpriteRenderer sr = tile.GetComponent<SpriteRenderer>();
-
-        if (sr != null)
-        {
-            sr.sortingOrder = sortingOrder;
-        }
-        cell.sortingOrder = sortingOrder;
-        return sortingOrder;
-    }
-
+    #region Coordinate Conversion
+    /// <summary>
+    /// Converts a world-space point to isometric grid coordinates (ignoring height).
+    /// </summary>
+    /// <param name="worldPoint">Position in world space.</param>
+    /// <returns>Grid coordinates as a Vector2 (x, y).</returns>
     public Vector2 GetGridPosition(Vector2 worldPoint)
     {
         float posX = worldPoint.x / (tileWidth / 2);
@@ -1270,6 +1060,12 @@ public class GridManager : MonoBehaviour
         return true;
     }
 
+    /// <summary>
+    /// Resolves a world-space point to the best-matching cell using screen-space hit testing against neighboring cells.
+    /// </summary>
+    /// <param name="worldPoint">Position in world space.</param>
+    /// <param name="gridPos">Initial grid position estimate (from GetGridPosition).</param>
+    /// <returns>The cell whose base tile contains the mouse, or null if none match.</returns>
     public Cell GetCellFromWorldPoint(Vector2 worldPoint, Vector2 gridPos)
     {
         if (cachedCamera == null) cachedCamera = Camera.main;
@@ -1309,6 +1105,11 @@ public class GridManager : MonoBehaviour
         return best;
     }
 
+    /// <summary>
+    /// Converts a mouse world point to grid coordinates, correcting for terrain height via screen-space hit testing.
+    /// </summary>
+    /// <param name="mouseWorldPoint">Mouse position in world space.</param>
+    /// <returns>Height-aware grid coordinates.</returns>
     public Vector2 GetGridPositionWithHeight(Vector2 mouseWorldPoint)
     {
         Vector2 gridPos = GetGridPosition(mouseWorldPoint);
@@ -1324,6 +1125,11 @@ public class GridManager : MonoBehaviour
         return gridPosWithHeight;
     }
 
+    /// <summary>
+    /// Returns the cell under the mouse, using screen-space hit testing with height-aware fallback to the flat grid position.
+    /// </summary>
+    /// <param name="mouseWorldPoint">Mouse position in world space.</param>
+    /// <returns>The cell under the mouse, or null if outside the grid.</returns>
     public Cell GetMouseGridCell(Vector2 mouseWorldPoint)
     {
         Vector2 gridPos = GetGridPosition(mouseWorldPoint);
@@ -1336,6 +1142,13 @@ public class GridManager : MonoBehaviour
         }
         return cell;
     }
+    /// <summary>
+    /// Converts grid coordinates and height to a world-space position (height shifts the tile upward).
+    /// </summary>
+    /// <param name="gridX">Grid X coordinate.</param>
+    /// <param name="gridY">Grid Y coordinate.</param>
+    /// <param name="height">Terrain height level (1 = base).</param>
+    /// <returns>World-space position as a Vector2.</returns>
     public Vector2 GetWorldPositionVector(int gridX, int gridY, int height)
     {
         float heightOffset = (height - 1) * (tileHeight / 2);
@@ -1354,6 +1167,12 @@ public class GridManager : MonoBehaviour
         return new Vector2(posX, posY);
     }
 
+    /// <summary>
+    /// Returns the world-space position for the cell at (gridX, gridY), accounting for its current terrain height.
+    /// </summary>
+    /// <param name="gridX">Grid X coordinate.</param>
+    /// <param name="gridY">Grid Y coordinate.</param>
+    /// <returns>World-space position as a Vector2.</returns>
     public Vector2 GetWorldPosition(int gridX, int gridY)
     {
         Cell cell = cellArray[gridX, gridY];
@@ -1361,6 +1180,11 @@ public class GridManager : MonoBehaviour
         return GetWorldPositionVector(gridX, gridY, height);
     }
 
+    /// <summary>
+    /// Returns the world-space position of the given cell, accounting for its terrain height.
+    /// </summary>
+    /// <param name="cell">The cell to get the position for.</param>
+    /// <returns>World-space position as a Vector2.</returns>
     public Vector2 GetCellWorldPosition(Cell cell)
     {
         int height = cell.GetCellInstanceHeight();
@@ -1397,6 +1221,11 @@ public class GridManager : MonoBehaviour
         return count > 0 ? sum / count : pivotCell.transformPosition;
     }
 
+    /// <summary>
+    /// Returns the GameObject for the grid cell at the given position, or null if out of bounds.
+    /// </summary>
+    /// <param name="gridPos">Grid coordinates.</param>
+    /// <returns>The cell GameObject, or null.</returns>
     public GameObject GetGridCell(Vector2 gridPos)
     {
         if (gridPos.x < 0 || gridPos.x >= gridArray.GetLength(0) ||
@@ -1407,6 +1236,11 @@ public class GridManager : MonoBehaviour
         return gridArray[(int)gridPos.x, (int)gridPos.y];
     }
 
+    /// <summary>
+    /// Sets the terrain height of the cell at the given grid position.
+    /// </summary>
+    /// <param name="gridPos">Grid coordinates of the cell.</param>
+    /// <param name="height">New height value to assign.</param>
     public void SetCellHeight(Vector2 gridPos, int height)
     {
         Cell cell = cellArray[(int)gridPos.x, (int)gridPos.y];
@@ -1437,219 +1271,34 @@ public class GridManager : MonoBehaviour
         }
         return false;
     }
+    #endregion
 
+    #region Building Validation and Placement
     /// <summary>
     /// Returns the reason why building placement would fail at this position, or null if placement would succeed.
     /// Used for debug UI and specific error messages.
     /// </summary>
     public string GetBuildingPlacementFailReason(Vector2 gridPosition, int buildingSize, bool isWaterPlant)
-    {
-        TryValidateBuildingPlacement(gridPosition, buildingSize, isWaterPlant, out string failReason);
-        return failReason;
-    }
+        => placementService.GetBuildingPlacementFailReason(gridPosition, buildingSize, isWaterPlant);
 
     /// <summary>
-    /// Returns true if the cell is water: either in WaterMap or at sea level (height 0).
-    /// Uses height map when valid; otherwise falls back to the Cell's height from the grid (same source as terrain visuals).
+    /// Returns true if a building of the given size can be placed at the grid position. Infers water plant status from the currently selected building.
     /// </summary>
-    private bool IsCellWater(int x, int y)
-    {
-        bool fromWaterMap = waterManager != null && waterManager.IsWaterAt(x, y);
-
-        int h = -1;
-        var heightMap = terrainManager != null ? terrainManager.GetHeightMap() : null;
-        bool validHeightMap = heightMap != null && heightMap.IsValidPosition(x, y);
-        if (validHeightMap)
-            h = heightMap.GetHeight(x, y);
-
-        bool fromHeightMap = validHeightMap && h == TerrainManager.SEA_LEVEL;
-
-        bool fromCellHeight = false;
-        if (!fromHeightMap && x >= 0 && x < width && y >= 0 && y < height)
-        {
-            Cell cell = cellArray[x, y];
-            if (cell != null)
-            {
-                h = cell.GetCellInstanceHeight();
-                fromCellHeight = h == TerrainManager.SEA_LEVEL;
-            }
-        }
-
-        if (fromWaterMap) return true;
-        if (fromHeightMap || fromCellHeight) return true;
-        return false;
-    }
-
-    /// <summary>
-    /// Returns true if at least one cell in the perimeter ring around the building footprint is water.
-    /// Perimeter = full ring around the footprint rectangle (includes diagonal corners of the ring).
-    /// </summary>
-    private bool HasWaterInFootprintPerimeter(Vector2 gridPosition, int buildingSize)
-    {
-        GetBuildingFootprintOffset(buildingSize, out int offsetX, out int offsetY);
-        int minFx = (int)gridPosition.x - offsetX;
-        int minFy = (int)gridPosition.y - offsetY;
-        int maxFx = minFx + buildingSize - 1;
-        int maxFy = minFy + buildingSize - 1;
-
-        for (int px = minFx - 1; px <= maxFx + 1; px++)
-        {
-            for (int py = minFy - 1; py <= maxFy + 1; py++)
-            {
-                if (px >= minFx && px <= maxFx && py >= minFy && py <= maxFy)
-                    continue;
-                if (px >= 0 && px < width && py >= 0 && py < height)
-                {
-                    if (IsCellWater(px, py))
-                        return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Validates water plant placement for any footprint size (1x1, 2x2, 3x3, etc.).
-    /// Allows water tiles in footprint; requires at least one land tile and adjacency to water (water in perimeter ring).
-    /// </summary>
-    private bool TryValidateWaterPlantPlacement(Vector2 gridPosition, int buildingSize, out string failReason)
-    {
-        failReason = null;
-        GetBuildingFootprintOffset(buildingSize, out int offsetX, out int offsetY);
-
-        for (int x = 0; x < buildingSize; x++)
-        {
-            for (int y = 0; y < buildingSize; y++)
-            {
-                int gridX = (int)gridPosition.x + x - offsetX;
-                int gridY = (int)gridPosition.y + y - offsetY;
-                if (gridX < 0 || gridX >= width || gridY < 0 || gridY >= height)
-                {
-                    failReason = "Footprint out of grid bounds.";
-                    return false;
-                }
-            }
-        }
-
-        if (!terrainManager.CanPlaceBuildingInTerrain(gridPosition, buildingSize, out failReason, true, true))
-            return false;
-
-        bool hasLandTile = false;
-        for (int x = 0; x < buildingSize; x++)
-        {
-            for (int y = 0; y < buildingSize; y++)
-            {
-                int gridX = (int)gridPosition.x + x - offsetX;
-                int gridY = (int)gridPosition.y + y - offsetY;
-                if (waterManager == null || !waterManager.IsWaterAt(gridX, gridY))
-                {
-                    hasLandTile = true;
-                    Cell cell = cellArray[gridX, gridY];
-                    if (cell.zoneType != Zone.ZoneType.Grass)
-                    {
-                        failReason = $"Tile ({gridX},{gridY}) is not Grass (current: {cell.zoneType}).";
-                        return false;
-                    }
-                }
-            }
-        }
-
-        if (!hasLandTile)
-        {
-            failReason = "Water plant must have at least one land tile in footprint.";
-            return false;
-        }
-
-        if (waterManager != null)
-        {
-            if (!HasWaterInFootprintPerimeter(gridPosition, buildingSize))
-            {
-                failReason = "Water plant must be adjacent to water.";
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /// <summary>
-    /// Validates building placement and optionally returns the first failure reason.
-    /// </summary>
-    private bool TryValidateBuildingPlacement(Vector2 gridPosition, int buildingSize, bool isWaterPlant, out string failReason)
-    {
-        failReason = null;
-
-        if (buildingSize == 0)
-        {
-            failReason = "Building size is 0.";
-            return false;
-        }
-
-        if (interstateManager != null)
-        {
-            interstateManager.CheckInterstateConnectivity();
-            if (!interstateManager.IsConnectedToInterstate)
-            {
-                failReason = "No connection to Interstate Highway.";
-                if (GameNotificationManager != null)
-                    GameNotificationManager.PostWarning("Connect a road to the Interstate Highway before building.");
-                return false;
-            }
-        }
-
-        if (isWaterPlant)
-            return TryValidateWaterPlantPlacement(gridPosition, buildingSize, out failReason);
-
-        bool allowCoastalSlope = false;
-        GetBuildingFootprintOffset(buildingSize, out int offsetX, out int offsetY);
-
-        if (!terrainManager.CanPlaceBuildingInTerrain(gridPosition, buildingSize, out failReason, allowCoastalSlope, false))
-        {
-            if (string.IsNullOrEmpty(failReason))
-                failReason = "Terrain: slope, water in footprint, height mismatch, or out of bounds.";
-            return false;
-        }
-
-        for (int x = 0; x < buildingSize; x++)
-        {
-            for (int y = 0; y < buildingSize; y++)
-            {
-                int gridX = (int)gridPosition.x + x - offsetX;
-                int gridY = (int)gridPosition.y + y - offsetY;
-
-                if (gridX < 0 || gridX >= width || gridY < 0 || gridY >= height)
-                {
-                    failReason = "Footprint out of grid bounds.";
-                    return false;
-                }
-
-                Cell cell = cellArray[gridX, gridY];
-                if (cell.isInterstate)
-                {
-                    failReason = "Cannot build on Interstate Highway.";
-                    return false;
-                }
-                if (cell.zoneType != Zone.ZoneType.Grass)
-                {
-                    failReason = $"Tile ({gridX},{gridY}) is not Grass (current: {cell.zoneType}).";
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
+    /// <param name="gridPosition">Pivot grid coordinates for the building.</param>
+    /// <param name="buildingSize">Footprint size of the building.</param>
+    /// <returns>True if placement is valid.</returns>
     public bool canPlaceBuilding(Vector2 gridPosition, int buildingSize)
-    {
-        bool isWaterPlant = uiManager != null && uiManager.GetSelectedBuilding() is WaterPlant;
-        return TryValidateBuildingPlacement(gridPosition, buildingSize, isWaterPlant, out _);
-    }
+        => placementService.CanPlaceBuilding(gridPosition, buildingSize);
 
+    /// <summary>
+    /// Returns true if a building of the given size can be placed at the grid position, with explicit water plant flag.
+    /// </summary>
+    /// <param name="gridPosition">Pivot grid coordinates for the building.</param>
+    /// <param name="buildingSize">Footprint size of the building.</param>
+    /// <param name="isWaterPlant">Whether the building is a water plant (relaxed water adjacency rules).</param>
+    /// <returns>True if placement is valid.</returns>
     public bool canPlaceBuilding(Vector2 gridPosition, int buildingSize, bool isWaterPlant)
-    {
-        return TryValidateBuildingPlacement(gridPosition, buildingSize, isWaterPlant, out _);
-    }
+        => placementService.CanPlaceBuilding(gridPosition, buildingSize, isWaterPlant);
 
     void UpdatePlacedBuildingCellAttributes(Cell cell, int buildingSize, PowerPlant powerPlant, WaterPlant waterPlant, GameObject buildingPrefab, Zone.ZoneType zoneType = Zone.ZoneType.Building, GameObject building = null)
     {
@@ -1672,145 +1321,15 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    void SetCellAsBuildingPivot(Cell cell)
-    {
-        cell.isPivot = true;
-    }
-
-    void UpdateBuildingTilesAttributes(Vector2 gridPos, GameObject building, int buildingSize, PowerPlant powerPlant, WaterPlant waterPlant, GameObject buildingPrefab)
-    {
-        GetBuildingFootprintOffset(buildingSize, out int offsetX, out int offsetY);
-
-        for (int x = 0; x < buildingSize; x++)
-        {
-            for (int y = 0; y < buildingSize; y++)
-            {
-                int gridX = (int)gridPos.x + x - offsetX;
-                int gridY = (int)gridPos.y + y - offsetY;
-
-                // Ensure we're within grid bounds
-                if (gridX >= 0 && gridX < width && gridY >= 0 && gridY < height)
-                {
-                    GameObject gridCell = gridArray[gridX, gridY];
-                    Cell cell = cellArray[gridX, gridY];
-
-                    cell.RemoveForestForBuilding();
-                    UpdatePlacedBuildingCellAttributes(cell, buildingSize, powerPlant, waterPlant, buildingPrefab, Zone.ZoneType.Building, building);
-
-                    // Destroy children of every footprint cell (grass, etc.). On pivot cell, exclude the building.
-                    bool isPivot = (gridX == gridPos.x && gridY == gridPos.y);
-                    DestroyCellChildren(gridCell, new Vector2(gridX, gridY), isPivot ? building : null);
-                    if (isPivot)
-                        SetCellAsBuildingPivot(cell);
-                }
-            }
-        }
-    }
-
-    void HandleBuildingPlacementAttributesUpdate(IBuilding iBuilding, Vector2 gridPos, GameObject building, GameObject buildingPrefab)
-    {
-        int buildingSize = iBuilding.BuildingSize;
-        PowerPlant powerPlant = iBuilding.GameObjectReference.GetComponent<PowerPlant>();
-        WaterPlant waterPlant = iBuilding.GameObjectReference.GetComponent<WaterPlant>();
-
-        if (powerPlant != null)
-        {
-            cityStats.RegisterPowerPlant(powerPlant);
-        }
-
-        if (waterPlant != null && waterManager != null)
-        {
-            waterManager.RegisterWaterPlant(waterPlant);
-            cityStats.cityWaterOutput = waterManager.GetTotalWaterOutput();
-        }
-
-        UpdateBuildingTilesAttributes(gridPos, building, buildingSize, powerPlant, waterPlant, buildingPrefab);
-
-        cursorManager.RemovePreview();
-    }
-
-    void PlaceBuildingTile(IBuilding iBuilding, Vector2 gridPos)
-    {
-        GameObject buildingPrefab = iBuilding.Prefab;
-        int buildingSize = iBuilding.BuildingSize;
-
-        Vector2 pivotGridPos = new Vector2(gridPos.x, gridPos.y);
-        Vector2 position = GetBuildingPlacementWorldPosition(pivotGridPos, buildingSize);
-
-        Vector3 worldPosition = new Vector3(position.x, position.y, 0f);
-        GameObject building = Instantiate(buildingPrefab, worldPosition, Quaternion.identity);
-        building.transform.SetParent(gridArray[(int)pivotGridPos.x, (int)pivotGridPos.y].transform);
-
-        SetZoneBuildingSortingOrder(building, (int)pivotGridPos.x, (int)pivotGridPos.y, buildingSize);
-
-        HandleBuildingPlacementAttributesUpdate(iBuilding, pivotGridPos, building, buildingPrefab);
-    }
-
-    void LoadBuildingTile(GameObject prefab, Vector2 gridPos, int buildingSize)
-    {
-        Cell pivotCell = cellArray[(int)gridPos.x, (int)gridPos.y];
-        Vector2 worldPos = GetBuildingPlacementWorldPosition(gridPos, buildingSize);
-
-        Vector3 position = new Vector3(worldPos.x, worldPos.y, 0f);
-        GameObject building = Instantiate(prefab, position, Quaternion.identity);
-        building.transform.SetParent(pivotCell.gameObject.transform);
-
-        SetZoneBuildingSortingOrder(building, (int)gridPos.x, (int)gridPos.y, buildingSize);
-    }
-
     /// <summary>
     /// Place a building programmatically (e.g. auto resource planner). Caller is responsible for budget and affordability.
     /// Does not deduct money. Returns true if placed.
     /// </summary>
     public bool PlaceBuildingProgrammatic(Vector2 gridPos, IBuilding buildingTemplate)
-    {
-        if (buildingTemplate == null) return false;
-        int buildingSize = buildingTemplate.BuildingSize;
-        bool isWaterPlant = buildingTemplate is WaterPlant;
-        if (!TryValidateBuildingPlacement(gridPos, buildingSize, isWaterPlant, out _))
-            return false;
+        => placementService.PlaceBuildingProgrammatic(gridPos, buildingTemplate);
+    #endregion
 
-        Vector2 pivotGridPos = new Vector2(gridPos.x, gridPos.y);
-        Vector2 position = GetBuildingPlacementWorldPosition(pivotGridPos, buildingSize);
-        Vector3 worldPosition = new Vector3(position.x, position.y, 0f);
-        GameObject building = Instantiate(buildingTemplate.Prefab, worldPosition, Quaternion.identity);
-        building.transform.SetParent(gridArray[(int)pivotGridPos.x, (int)pivotGridPos.y].transform);
-        SetZoneBuildingSortingOrder(building, (int)pivotGridPos.x, (int)pivotGridPos.y, buildingSize);
-
-        IBuilding placedIBuilding = building.GetComponent<PowerPlant>() as IBuilding ?? building.GetComponent<WaterPlant>() as IBuilding;
-        if (placedIBuilding != null)
-            HandleBuildingPlacementAttributesUpdate(placedIBuilding, pivotGridPos, building, buildingTemplate.Prefab);
-        return true;
-    }
-
-    void PlaceBuilding(Vector2 gridPos, IBuilding iBuilding)
-    {
-        if (!cityStats.CanAfford(iBuilding.ConstructionCost))
-        {
-            uiManager.ShowInsufficientFundsTooltip("building", iBuilding.ConstructionCost);
-            return;
-        }
-
-        bool isWaterPlant = iBuilding is WaterPlant;
-        if (canPlaceBuilding(gridPos, iBuilding.BuildingSize))
-        {
-            cityStats.RemoveMoney(iBuilding.ConstructionCost);
-
-            PlaceBuildingTile(iBuilding, gridPos);
-
-            GameNotificationManager.Instance.PostBuildingConstructed(
-                iBuilding.Prefab.name
-            );
-        }
-        else
-        {
-            string reason = GetBuildingPlacementFailReason(gridPos, iBuilding.BuildingSize, isWaterPlant);
-            GameNotificationManager.Instance.PostBuildingPlacementError(
-                string.IsNullOrEmpty(reason) ? "Cannot place building here, area is not available." : reason
-            );
-        }
-    }
-
+    #region Save and Restore
     void RestoreGridCell(CellData cellData, GameObject cell)
     {
         cellArray[cellData.x, cellData.y].SetCellData(cellData);
@@ -1833,6 +1352,10 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Restores the grid from saved data, re-placing all zones and buildings and recalculating available zoned sections.
+    /// </summary>
+    /// <param name="gridData">List of serialized cell data from a save file.</param>
     public void RestoreGrid(List<CellData> gridData)
     {
         foreach (CellData cellData in gridData)
@@ -1845,6 +1368,9 @@ public class GridManager : MonoBehaviour
         zoneManager.CalculateAvailableSquareZonedSections();
     }
 
+    /// <summary>
+    /// Destroys all chunks and recreates a fresh empty grid, clearing all zoned positions.
+    /// </summary>
     public void ResetGrid()
     {
         if (chunkObjects != null)
@@ -1865,6 +1391,12 @@ public class GridManager : MonoBehaviour
         CreateGrid();
     }
 
+    /// <summary>
+    /// Returns the Cell at the given grid coordinates, or null if out of bounds.
+    /// </summary>
+    /// <param name="x">Grid X coordinate.</param>
+    /// <param name="y">Grid Y coordinate.</param>
+    /// <returns>The Cell component, or null.</returns>
     public Cell GetCell(int x, int y)
     {
         if (x >= 0 && x < width && y >= 0 && y < height)
@@ -1874,6 +1406,10 @@ public class GridManager : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Serializes every cell in the grid into a list of CellData for saving.
+    /// </summary>
+    /// <returns>A list containing one CellData per grid cell.</returns>
     public List<CellData> GetGridData()
     {
         List<CellData> gridData = new List<CellData>();
@@ -1891,6 +1427,12 @@ public class GridManager : MonoBehaviour
         return gridData;
     }
 
+    /// <summary>
+    /// Returns true if the cell is on the outer edge of the grid (first or last row/column).
+    /// </summary>
+    /// <param name="x">Grid X coordinate.</param>
+    /// <param name="y">Grid Y coordinate.</param>
+    /// <returns>True if the cell lies on the grid border.</returns>
     public bool isBorderCell(int x, int y)
     {
         if (x == 0 || x == width - 1 || y == 0 || y == height - 1)
@@ -1899,235 +1441,54 @@ public class GridManager : MonoBehaviour
         }
         return false;
     }
+    #endregion
 
-    // Road/path helpers for auto-growth (cache invalidated when grid changes)
-    private List<Vector2Int> cachedRoadPositions;
-    private List<Vector2Int> cachedRoadEdgePositions;
-    private bool roadCacheDirty = true;
-
+    #region Road Cache and Pathfinding
+    /// <summary>
+    /// Marks the cached road positions as stale so they are rebuilt on the next query.
+    /// </summary>
     public void InvalidateRoadCache()
-    {
-        roadCacheDirty = true;
-    }
+        => roadCache.Invalidate();
 
+    /// <summary>
+    /// Returns all grid positions that contain a road, using a lazily rebuilt cache.
+    /// </summary>
+    /// <returns>Cached list of road positions.</returns>
     public List<Vector2Int> GetAllRoadPositions()
-    {
-        if (!roadCacheDirty && cachedRoadPositions != null)
-            return cachedRoadPositions;
-        cachedRoadPositions = new List<Vector2Int>();
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                Cell c = GetCell(x, y);
-                if (c != null && c.zoneType == Zone.ZoneType.Road)
-                    cachedRoadPositions.Add(new Vector2Int(x, y));
-            }
-        }
-        cachedRoadEdgePositions = null;
-        roadCacheDirty = false;
-        return cachedRoadPositions;
-    }
+        => roadCache.GetAllRoadPositions();
 
+    /// <summary>
+    /// Returns road positions that have at least one expandable (grass/forest/sea-level) cardinal neighbor, i.e. the road frontier.
+    /// </summary>
+    /// <returns>Cached list of road edge positions.</returns>
     public List<Vector2Int> GetRoadEdgePositions()
-    {
-        if (cachedRoadEdgePositions != null && !roadCacheDirty)
-            return cachedRoadEdgePositions;
-        List<Vector2Int> all = GetAllRoadPositions();
-        cachedRoadEdgePositions = new List<Vector2Int>();
-        foreach (Vector2Int p in all)
-        {
-            bool hasExpandableNeighbor = false;
-            if (IsValidGridPosition(new Vector2(p.x + 1, p.y))) { Cell n = GetCell(p.x + 1, p.y); if (n != null && (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)) hasExpandableNeighbor = true; }
-            if (!hasExpandableNeighbor && IsValidGridPosition(new Vector2(p.x - 1, p.y))) { Cell n = GetCell(p.x - 1, p.y); if (n != null && (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)) hasExpandableNeighbor = true; }
-            if (!hasExpandableNeighbor && IsValidGridPosition(new Vector2(p.x, p.y + 1))) { Cell n = GetCell(p.x, p.y + 1); if (n != null && (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)) hasExpandableNeighbor = true; }
-            if (!hasExpandableNeighbor && IsValidGridPosition(new Vector2(p.x, p.y - 1))) { Cell n = GetCell(p.x, p.y - 1); if (n != null && (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)) hasExpandableNeighbor = true; }
-            if (hasExpandableNeighbor)
-                cachedRoadEdgePositions.Add(p);
-        }
-        return cachedRoadEdgePositions;
-    }
+        => roadCache.GetRoadEdgePositions();
 
     /// <summary>Number of cardinal neighbors of (gx,gy) that are zoneable (Grass, Forest, or Flat/N-S/E-W slope). Used for road-reservation in auto-zoning.</summary>
     public int CountGrassNeighbors(int gx, int gy)
-    {
-        if (gx < 0 || gx >= width || gy < 0 || gy >= height) return 0;
-        int count = 0;
-        int[] dx = { 1, -1, 0, 0 }, dy = { 0, 0, 1, -1 };
-        for (int i = 0; i < 4; i++)
-        {
-            int nx = gx + dx[i], ny = gy + dy[i];
-            if (nx >= 0 && nx < width && ny >= 0 && ny < height)
-            {
-                Cell c = GetCell(nx, ny);
-                if (c != null && IsZoneableNeighbor(c, nx, ny))
-                    count++;
-            }
-        }
-        return count;
-    }
+        => roadCache.CountGrassNeighbors(gx, gy);
 
     /// <summary>True if this neighbor cell is valid for zoning (Grass, Forest, or Flat/N-S/E-W slope).</summary>
     public bool IsZoneableNeighbor(Cell c, int x, int y)
-    {
-        if (c == null) return false;
-        if (c.zoneType == Zone.ZoneType.Grass || c.HasForest()) return true;
-        if (terrainManager == null) return false;
-        TerrainSlopeType slope = terrainManager.GetTerrainSlopeTypeAt(x, y);
-        return slope == TerrainSlopeType.Flat || slope == TerrainSlopeType.North || slope == TerrainSlopeType.South || slope == TerrainSlopeType.East || slope == TerrainSlopeType.West;
-    }
+        => roadCache.IsZoneableNeighbor(c, x, y);
 
     /// <summary>True if at least one of the 4 cardinal neighbors of (x,y) is a road.</summary>
     public bool IsAdjacentToRoad(int x, int y)
-    {
-        if (x < 0 || x >= width || y < 0 || y >= height) return false;
-        int[] dx = { 1, -1, 0, 0 }, dy = { 0, 0, 1, -1 };
-        for (int i = 0; i < 4; i++)
-        {
-            int nx = x + dx[i], ny = y + dy[i];
-            if (nx >= 0 && nx < width && ny >= 0 && ny < height)
-            {
-                Cell c = GetCell(nx, ny);
-                if (c != null && c.zoneType == Zone.ZoneType.Road)
-                    return true;
-            }
-        }
-        return false;
-    }
+        => roadCache.IsAdjacentToRoad(x, y);
 
     /// <summary>
     /// A* path over walkable cells (grass or road). Prefers flat terrain; cardinal slopes cost more; diagonal slopes are impassable.
     /// Max 200 nodes explored. Returns path including start and end, or empty if not found.
     /// </summary>
     public List<Vector2Int> FindPath(Vector2Int from, Vector2Int to)
-    {
-        return FindPathWithRoadSpacing(from, to, 0);
-    }
+        => pathfinder.FindPath(from, to);
 
     /// <summary>
     /// A* path with optional extra cost for cells close to existing roads, so paths tend to keep minDistanceFromRoad cells away and leave space for zones.
     /// When minDistanceFromRoad is 0, behaves like FindPath. When &gt; 0, adds penalty for stepping on cells within that Manhattan distance of any road.
     /// </summary>
     public List<Vector2Int> FindPathWithRoadSpacing(Vector2Int from, Vector2Int to, int minDistanceFromRoad)
-    {
-        const int maxNodes = 200;
-        const int roadProximityPenalty = 18;
-        HashSet<Vector2Int> roadSet = null;
-        if (minDistanceFromRoad > 0)
-        {
-            var roads = GetAllRoadPositions();
-            roadSet = new HashSet<Vector2Int>(roads);
-        }
-
-        if (!IsWalkable(from.x, from.y) || !IsWalkable(to.x, to.y))
-            return new List<Vector2Int>();
-        var open = new List<Vector2Int>();
-        var closed = new HashSet<Vector2Int>();
-        var gScore = new Dictionary<Vector2Int, int>();
-        var fScore = new Dictionary<Vector2Int, int>();
-        var cameFrom = new Dictionary<Vector2Int, Vector2Int>();
-        gScore[from] = 0;
-        fScore[from] = Heuristic(from, to);
-        open.Add(from);
-        int explored = 0;
-        while (open.Count > 0 && explored < maxNodes)
-        {
-            explored++;
-            open.Sort((a, b) => (fScore.ContainsKey(a) ? fScore[a] : int.MaxValue).CompareTo(fScore.ContainsKey(b) ? fScore[b] : int.MaxValue));
-            Vector2Int current = open[0];
-            open.RemoveAt(0);
-            if (current == to)
-            {
-                var path = new List<Vector2Int>();
-                while (cameFrom.ContainsKey(current))
-                {
-                    path.Add(current);
-                    current = cameFrom[current];
-                }
-                path.Add(from);
-                path.Reverse();
-                return path;
-            }
-            closed.Add(current);
-            foreach (Vector2Int neighbor in GetWalkableNeighbors(current))
-            {
-                if (closed.Contains(neighbor)) continue;
-                int stepCost = GetRoadStepCost(neighbor.x, neighbor.y);
-                if (stepCost == int.MaxValue) continue;
-                if (minDistanceFromRoad > 0 && roadSet != null)
-                {
-                    int dist = MinManhattanDistanceToSet(neighbor.x, neighbor.y, roadSet);
-                    if (dist > 0 && dist < minDistanceFromRoad)
-                        stepCost += roadProximityPenalty;
-                }
-                int tentative = (gScore.ContainsKey(current) ? gScore[current] : int.MaxValue) + stepCost;
-                if (!gScore.ContainsKey(neighbor) || tentative < gScore[neighbor])
-                {
-                    cameFrom[neighbor] = current;
-                    gScore[neighbor] = tentative;
-                    fScore[neighbor] = tentative + Heuristic(neighbor, to);
-                    if (!open.Contains(neighbor))
-                        open.Add(neighbor);
-                }
-            }
-        }
-        return new List<Vector2Int>();
-    }
-
-    /// <summary>Minimum Manhattan distance from (x,y) to any position in the set.</summary>
-    private static int MinManhattanDistanceToSet(int x, int y, HashSet<Vector2Int> set)
-    {
-        int min = int.MaxValue;
-        foreach (Vector2Int p in set)
-        {
-            int d = Mathf.Abs(x - p.x) + Mathf.Abs(y - p.y);
-            if (d < min) min = d;
-        }
-        return min == int.MaxValue ? int.MaxValue : min;
-    }
-
-    /// <summary>
-    /// Cost to step onto (x,y) for road pathfinding: 1 = flat, higher = slope, MaxValue = impassable (e.g. diagonal slope).
-    /// </summary>
-    private int GetRoadStepCost(int x, int y)
-    {
-        if (!IsWalkable(x, y)) return int.MaxValue;
-        if (terrainManager == null) return 1;
-        TerrainSlopeType t = terrainManager.GetTerrainSlopeTypeAt(x, y);
-        switch (t)
-        {
-            case TerrainSlopeType.Flat: return 1;
-            case TerrainSlopeType.North:
-            case TerrainSlopeType.South:
-            case TerrainSlopeType.East:
-            case TerrainSlopeType.West: return 8;
-            default: return int.MaxValue;
-        }
-    }
-
-    private bool IsWalkable(int x, int y)
-    {
-        if (x < 0 || x >= width || y < 0 || y >= height) return false;
-        Cell c = GetCell(x, y);
-        if (c == null) return false;
-        return c.zoneType == Zone.ZoneType.Grass || c.zoneType == Zone.ZoneType.Road;
-    }
-
-    private List<Vector2Int> GetWalkableNeighbors(Vector2Int p)
-    {
-        var list = new List<Vector2Int>();
-        int[] dx = { 1, -1, 0, 0 }, dy = { 0, 0, 1, -1 };
-        for (int i = 0; i < 4; i++)
-        {
-            int nx = p.x + dx[i], ny = p.y + dy[i];
-            if (IsWalkable(nx, ny))
-                list.Add(new Vector2Int(nx, ny));
-        }
-        return list;
-    }
-
-    private static int Heuristic(Vector2Int a, Vector2Int b)
-    {
-        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
-    }
+        => pathfinder.FindPathWithRoadSpacing(from, to, minDistanceFromRoad);
+    #endregion
+}
 }

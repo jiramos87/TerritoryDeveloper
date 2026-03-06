@@ -1,5 +1,10 @@
 using UnityEngine;
 
+namespace Territory.Buildings
+{
+/// <summary>
+/// Handles the visual demolition animation when a building or zone is bulldozed.
+/// </summary>
 public class DemolitionAnimation : MonoBehaviour
 {
     [SerializeField] private Animator animator;
@@ -35,4 +40,5 @@ public class DemolitionAnimation : MonoBehaviour
     {
         transform.position = worldPosition;
     }
+}
 }

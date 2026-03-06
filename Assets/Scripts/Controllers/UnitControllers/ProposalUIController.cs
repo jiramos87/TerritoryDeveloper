@@ -1,6 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Territory.Simulation;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI controller for displaying and managing urbanization proposals from UrbanizationProposalManager.
+/// </summary>
 public class ProposalUIController : MonoBehaviour
 {
     public UrbanizationProposal proposal;
@@ -33,4 +39,5 @@ public class ProposalUIController : MonoBehaviour
         if (manager != null && proposal != null)
             manager.RejectProposal(proposal);
     }
+}
 }

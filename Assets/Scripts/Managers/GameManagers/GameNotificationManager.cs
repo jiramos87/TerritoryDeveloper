@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Territory.Utilities;
 
+namespace Territory.UI
+{
 /// <summary>
 /// Manages in-game notifications for game logic events, providing persistent
 /// message display in the UI for player feedback on actions and system states.
@@ -363,4 +366,5 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     #endregion
+}
 }

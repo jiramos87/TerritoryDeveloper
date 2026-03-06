@@ -1,7 +1,22 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
+using Territory.Core;
+using Territory.Roads;
+using Territory.Zones;
+using Territory.Economy;
+using Territory.Timing;
+using Territory.UI;
+using Territory.Utilities;
 
+namespace Territory.Simulation
+{
+/// <summary>
+/// Manages urban expansion proposals that extend the city's road and zone network.
+/// Periodically evaluates growth conditions, generates road layout proposals from existing
+/// road edges, and creates zone proposals adjacent to new roads. Coordinates with GridManager
+/// for pathfinding, RoadManager for road placement, and DemandManager for demand-based decisions.
+/// </summary>
 public class UrbanizationProposalManager : MonoBehaviour
 {
     public GridManager gridManager;
@@ -302,4 +317,5 @@ public class UrbanizationProposalManager : MonoBehaviour
             if (go != null) Destroy(go);
         proposalUIs.Clear();
     }
+}
 }

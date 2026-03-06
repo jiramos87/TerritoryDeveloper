@@ -2,6 +2,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI button that opens the power buildings selector menu via BuildingSelectorMenuController.
+/// </summary>
 public class PowerBuildingsSelectButton : MonoBehaviour
 {
     public BuildingSelectorMenuController popupController;
@@ -60,4 +65,5 @@ public class PowerBuildingsSelectButton : MonoBehaviour
             Debug.LogWarning($"Button component not found on {gameObject.name}");
         }
     }
+}
 }

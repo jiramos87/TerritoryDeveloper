@@ -1,6 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI button that opens the water buildings selector menu via BuildingSelectorMenuController.
+/// </summary>
 public class WaterBuildingSelectorButton : MonoBehaviour
 {
     public BuildingSelectorMenuController popupController;
@@ -84,4 +89,5 @@ public class WaterBuildingSelectorButton : MonoBehaviour
             Debug.LogError($"Error in OnWaterBuildingSelected: {ex.Message}\n{ex.StackTrace}");
         }
     }
+}
 }

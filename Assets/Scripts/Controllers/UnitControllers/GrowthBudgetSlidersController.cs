@@ -1,6 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Territory.Economy;
+using Territory.Simulation;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI controller for growth budget allocation sliders. Allows players to adjust R/C/I growth budgets
+/// via GrowthBudgetManager.
+/// </summary>
 public class GrowthBudgetSlidersController : MonoBehaviour
 {
     public CityStats cityStats;
@@ -214,4 +222,5 @@ public class GrowthBudgetSlidersController : MonoBehaviour
         if (totalBudgetLabel != null && growthBudgetManager != null)
             totalBudgetLabel.text = "$" + growthBudgetManager.GetTotalBudget();
     }
+}
 }

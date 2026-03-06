@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+namespace Territory.Utilities
+{
 /// <summary>
 /// Generates unique procedural city names from combinable components.
 /// Stateless utility — all methods are static. Uses System.Random for deterministic seed-based generation.
@@ -64,4 +66,5 @@ public static class CityNameGenerator
         usedNames.Add(fallback);
         return fallback;
     }
+}
 }

@@ -1,6 +1,13 @@
 
 using UnityEngine;
+using Territory.Core;
 
+namespace Territory.UI
+{
+/// <summary>
+/// Controls camera movement, zoom, and panning for the isometric grid view.
+/// Coordinates with GridManager for viewport bounds.
+/// </summary>
 public class CameraController : MonoBehaviour
 {
     [Header("Movement")]
@@ -223,4 +230,5 @@ public class CameraController : MonoBehaviour
             ZoomOut();
         }
     }
+}
 }

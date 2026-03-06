@@ -1,6 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Territory.Roads;
+using Territory.Economy;
+using Territory.Core;
 
+namespace Territory.Geography
+{
 /// <summary>
 /// Manages the regional map: generation, querying neighbor data for interstate routing and border signs.
 /// </summary>
@@ -197,4 +202,5 @@ public class RegionalMapManager : MonoBehaviour
                 cityStats.cityName = player.cityName;
         }
     }
+}
 }

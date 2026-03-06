@@ -1,7 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Territory.Economy;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI controller for the data/statistics popup panel. Displays city stats from UIManager and CityStats.
+/// </summary>
 public class DataPopupController : MonoBehaviour
 {
     public GameObject statsPanel; // Reference to the stats panel
@@ -59,4 +65,5 @@ public class DataPopupController : MonoBehaviour
         if (uiManager == null) uiManager = FindObjectOfType<UIManager>();
         if (uiManager != null) uiManager.RegisterPopupOpened(type);
     }
+}
 }

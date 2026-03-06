@@ -3,9 +3,23 @@ using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
+using Territory.Core;
+using Territory.Roads;
+using Territory.Economy;
+using Territory.UI;
+using Territory.Terrain;
+using Territory.Buildings;
 
-public class ZoneManager : MonoBehaviour
+namespace Territory.Zones
 {
+/// <summary>
+/// Handles RCI (residential, commercial, industrial) zone placement and zone tile rendering.
+/// Manages zone overlays, building instantiation within zones, and coordinates with GridManager
+/// for cell state, RoadManager for adjacency checks, and DemandManager for growth eligibility.
+/// </summary>
+public class ZoneManager : MonoBehaviour, IZoneManager
+{
+    #region Dependencies
     public GridManager gridManager;
     public PowerPlant powerPlantManager;
     public WaterPlant waterPlantManager;
@@ -16,7 +30,9 @@ public class ZoneManager : MonoBehaviour
     public DemandManager demandManager;
     public WaterManager waterManager;
     public InterstateManager interstateManager;
+    #endregion
 
+    #region Zone Prefabs and Configuration
     public List<GameObject> lightResidential1x1Prefabs;
     public List<GameObject> lightResidential2x2Prefabs;
     public List<GameObject> lightResidential3x3Prefabs;
@@ -92,7 +108,9 @@ public class ZoneManager : MonoBehaviour
       new Dictionary<Zone.ZoneType, List<List<Vector2>>>();
 
     private bool isInitialized = false;
+    #endregion
 
+    #region Initialization
     /// <summary>
     /// Initialize zone prefabs dictionary early in the Unity lifecycle
     /// </summary>
@@ -162,7 +180,14 @@ public class ZoneManager : MonoBehaviour
             InitializeZonePrefabs();
         }
     }
+    #endregion
 
+    #region Zone Queries
+    /// <summary>
+    /// Returns the static ZoneAttributes data for the given zone type, or null if unrecognized.
+    /// </summary>
+    /// <param name="zoneType">The zone type to look up.</param>
+    /// <returns>The corresponding ZoneAttributes, or null.</returns>
     public ZoneAttributes GetZoneAttributes(Zone.ZoneType zoneType)
     {
         switch (zoneType)
@@ -214,6 +239,12 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Returns a random prefab for the given zone type and building size, or null if none available.
+    /// </summary>
+    /// <param name="zoneType">The zone type to get a prefab for.</param>
+    /// <param name="size">The building footprint size (1, 2, or 3).</param>
+    /// <returns>A random matching prefab GameObject, or null.</returns>
     public GameObject GetRandomZonePrefab(Zone.ZoneType zoneType, int size = 1)
     {
         if (!isInitialized)
@@ -237,16 +268,30 @@ public class ZoneManager : MonoBehaviour
         return prefabs[UnityEngine.Random.Range(0, prefabs.Count)];
     }
 
+    /// <summary>
+    /// Returns the default grass tile prefab.
+    /// </summary>
+    /// <returns>The grass prefab GameObject.</returns>
     public GameObject GetGrassPrefab()
     {
         return grassPrefabs[0];
     }
 
+    /// <summary>
+    /// Returns the default water tile prefab.
+    /// </summary>
+    /// <returns>The water prefab GameObject.</returns>
     public GameObject GetWaterPrefab()
     {
         return waterPrefabs[0];
     }
 
+    /// <summary>
+    /// Searches all zone, road, power plant, and water plant prefab lists for a prefab matching the given name.
+    /// Strips "(Clone)" suffix before comparing.
+    /// </summary>
+    /// <param name="prefabName">The prefab name to search for (may include "(Clone)" suffix).</param>
+    /// <returns>The matching prefab GameObject, or null if not found.</returns>
     public GameObject FindPrefabByName(string prefabName)
     {
         string trimmedName = prefabName.Replace("(Clone)", "");
@@ -299,7 +344,13 @@ public class ZoneManager : MonoBehaviour
         Debug.LogWarning($"Prefab with name {trimmedName} not found.");
         return null;
     }
+    #endregion
 
+    #region Zone Placement
+    /// <summary>
+    /// Handles the full zoning input lifecycle: start on mouse down, preview on drag, and place on mouse up.
+    /// </summary>
+    /// <param name="gridPosition">The current grid position under the cursor.</param>
     public void HandleZoning(Vector2 gridPosition)
     {
         if (Input.GetMouseButtonDown(0) && !isZoning)
@@ -429,6 +480,10 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Recalculates all available contiguous square sections (1x1, 2x2, 3x3) for each zoning type.
+    /// Call after placing or removing zones so buildings can spawn in valid sections.
+    /// </summary>
     public void CalculateAvailableSquareZonedSections()
     {
         availableZoneSections.Clear();
@@ -635,7 +690,14 @@ public class ZoneManager : MonoBehaviour
         gridManager.InvalidateRoadCache();
         return true;
     }
+    #endregion
 
+    #region Zone Building Placement
+    /// <summary>
+    /// Removes a grid position from the tracked zoned-positions list for the specified zoning type.
+    /// </summary>
+    /// <param name="zonedPosition">The grid position to remove.</param>
+    /// <param name="zoneType">The zoning type list to remove from.</param>
     public void removeZonedPositionFromList(Vector2 zonedPosition, Zone.ZoneType zoneType)
     {
         switch (zoneType)
@@ -670,6 +732,11 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Attempts to place a building on a random available zoned section of the given zoning type.
+    /// Checks demand, power, and water availability before placement.
+    /// </summary>
+    /// <param name="zoningType">The zoning type to place a building for (e.g. ResidentialLightZoning).</param>
     public void PlaceZonedBuildings(Zone.ZoneType zoningType)
     {
         if (availableZoneSections.Count == 0)
@@ -774,6 +841,11 @@ public class ZoneManager : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Maps a zoning overlay type to its corresponding building zone type (e.g. ResidentialLightZoning → ResidentialLightBuilding).
+    /// </summary>
+    /// <param name="zoningType">The zoning overlay type.</param>
+    /// <returns>The corresponding building zone type, or Grass if unrecognized.</returns>
     public Zone.ZoneType GetBuildingZoneType(Zone.ZoneType zoningType)
     {
         switch (zoningType)
@@ -801,6 +873,11 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Returns true if the zone type is any residential building density (light, medium, or heavy).
+    /// </summary>
+    /// <param name="zoneType">The zone type to check.</param>
+    /// <returns>True if the zone type is a residential building.</returns>
     public bool IsResidentialBuilding(Zone.ZoneType zoneType)
     {
         return (zoneType == Zone.ZoneType.ResidentialLightBuilding ||
@@ -808,6 +885,11 @@ public class ZoneManager : MonoBehaviour
                 zoneType == Zone.ZoneType.ResidentialHeavyBuilding);
     }
 
+    /// <summary>
+    /// Returns true if the zone type is any commercial or industrial building density.
+    /// </summary>
+    /// <param name="zoneType">The zone type to check.</param>
+    /// <returns>True if the zone type is a commercial or industrial building.</returns>
     public bool IsCommercialOrIndustrialBuilding(Zone.ZoneType zoneType)
     {
         return (zoneType == Zone.ZoneType.CommercialLightBuilding ||
@@ -843,6 +925,11 @@ public class ZoneManager : MonoBehaviour
         return demandManager.CanZoneTypeGrow(zoningType);
     }
 
+    /// <summary>
+    /// Adds a grid position to the tracked zoned-positions list for the specified zoning type.
+    /// </summary>
+    /// <param name="zonedPosition">The grid position to add.</param>
+    /// <param name="zoneType">The zoning type list to add to.</param>
     public void addZonedTileToList(Vector2 zonedPosition, Zone.ZoneType zoneType)
     {
         switch (zoneType)
@@ -879,6 +966,11 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Parses a string into a Zone.ZoneType enum value.
+    /// </summary>
+    /// <param name="zoneTypeString">The string representation of the zone type.</param>
+    /// <returns>The parsed Zone.ZoneType enum value.</returns>
     public Zone.ZoneType GetZoneTypeFromZoneTypeString(string zoneTypeString)
     {
         return (Zone.ZoneType)System.Enum.Parse(typeof(Zone.ZoneType), zoneTypeString);
@@ -924,6 +1016,13 @@ public class ZoneManager : MonoBehaviour
         cityStats.AddPowerConsumption(zoneAttributes.PowerConsumption);
     }
 
+    /// <summary>
+    /// Instantiates a zone building prefab on the given grid cell, setting sorting order and pivot.
+    /// For multi-tile buildings, only the pivot cell gets the tile placed.
+    /// </summary>
+    /// <param name="prefab">The building prefab to instantiate.</param>
+    /// <param name="gridCell">The grid cell GameObject to place the building on.</param>
+    /// <param name="buildingSize">The building footprint size (1, 2, or 3).</param>
     public void PlaceZoneBuildingTile(GameObject prefab, GameObject gridCell, int buildingSize = 1)
     {
         Cell cell = gridCell.GetComponent<Cell>();
@@ -968,7 +1067,9 @@ public class ZoneManager : MonoBehaviour
         cellComponent.occupiedBuilding = null;
         cellComponent.isPivot = false;
     }
+    #endregion
 
+    #region Zone Removal
     private Zone.ZoneType GetDemandZoneType(Zone.ZoneType zoningType)
     {
         switch (zoningType)
@@ -996,6 +1097,11 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Removes a specific section of zoned positions from the available zone sections cache.
+    /// </summary>
+    /// <param name="zonedPositions">The array of positions defining the section to remove.</param>
+    /// <param name="zoneType">The zone type whose section list to update.</param>
     public void RemoveZonedSectionFromList(Vector2[] zonedPositions, Zone.ZoneType zoneType)
     {
         if (availableZoneSections.ContainsKey(zoneType))
@@ -1008,6 +1114,9 @@ public class ZoneManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Clears all tracked zoned-position lists and the available zone sections cache.
+    /// </summary>
     public void ClearZonedPositions()
     {
         zonedResidentialLightPositions.Clear();
@@ -1022,4 +1131,6 @@ public class ZoneManager : MonoBehaviour
 
         availableZoneSections.Clear();
     }
+    #endregion
+}
 }

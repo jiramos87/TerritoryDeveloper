@@ -1,5 +1,17 @@
 using UnityEngine;
+using Territory.UI;
+using Territory.Economy;
+using Territory.Core;
+using Territory.Zones;
+using Territory.Roads;
+using Territory.Simulation;
 
+namespace Territory.Timing
+{
+/// <summary>
+/// Controls game speed, pause state, and simulation tick timing.
+/// Drives the simulation loop by calling SimulationManager and notifying EconomyManager, ZoneManager, and other time-dependent managers.
+/// </summary>
 public class TimeManager : MonoBehaviour
 {
     [Header("UI References")]
@@ -31,7 +43,7 @@ public class TimeManager : MonoBehaviour
     {
         HandleOnKeyInput();
 
-        timeElapsed += Time.deltaTime * timeMultiplier;
+        timeElapsed += UnityEngine.Time.deltaTime * timeMultiplier;
 
         if (timeElapsed >= 1f)
         {
@@ -162,4 +174,5 @@ public struct InGameTime
     public int day;
     public int month;
     public int year;
+}
 }

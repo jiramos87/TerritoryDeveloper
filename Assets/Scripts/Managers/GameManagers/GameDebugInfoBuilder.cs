@@ -1,7 +1,14 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Text;
+using Territory.Core;
+using Territory.Terrain;
+using Territory.UI;
+using Territory.Zones;
+using Territory.Buildings;
 
+namespace Territory.Utilities
+{
 /// <summary>
 /// Centralized builder for in-game debug / analysis text shown in the UI (e.g. coordinates,
 /// cell under cursor, building placement info, fail reason). Use this to keep debug strings
@@ -197,4 +204,5 @@ public class GameDebugInfoBuilder : MonoBehaviour
     {
         return GetCoordinatesLine(gridPosition) + SectionSeparator + GetCellUnderCursorInfo(gridPosition);
     }
+}
 }

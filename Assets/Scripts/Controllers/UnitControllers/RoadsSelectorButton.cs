@@ -1,6 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI button that activates road placement mode via BuildingSelectorMenuController.
+/// </summary>
 public class RoadsSelectorButton : MonoBehaviour
 {
     public BuildingSelectorMenuController popupController; // Reference to the PopupController
@@ -26,4 +31,5 @@ public class RoadsSelectorButton : MonoBehaviour
                 break;
         }
     }
+}
 }

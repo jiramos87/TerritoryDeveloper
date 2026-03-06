@@ -1,5 +1,11 @@
 using UnityEngine;
 
+namespace Territory.Terrain
+{
+/// <summary>
+/// Generates and stores the water body map.
+/// Determines which cells are water based on the sea level threshold and height map.
+/// </summary>
 public class WaterMap
 {
     private bool[,] waterCells;
@@ -106,4 +112,5 @@ public class WaterMapData
     public int width;
     public int height;
     public bool[] waterCells; // Flattened 2D array for serialization
+}
 }

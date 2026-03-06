@@ -2,7 +2,18 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.IO;
 using System.Collections.Generic;
+using Territory.Core;
+using Territory.Zones;
+using Territory.Economy;
+using Territory.Terrain;
+using Territory.Timing;
+using Territory.Persistence;
+using Territory.Forests;
+using Territory.Buildings;
+using Territory.Utilities;
 
+namespace Territory.UI
+{
 public enum PopupType
 {
     LoadGame,
@@ -12,8 +23,14 @@ public enum PopupType
     TaxPanel
 }
 
+/// <summary>
+/// Manages the main game UI including popups (load game, details, building selector, stats, taxes),
+/// toolbar state, selected zone/tool tracking, and demand bar visualization. Coordinates with
+/// ZoneManager for zone selection, CursorManager for cursor state, and EconomyManager for tax display.
+/// </summary>
 public class UIManager : MonoBehaviour
 {
+    #region Dependencies
     public ZoneManager zoneManager;
     public CursorManager cursorManager;
     public GridManager gridManager;
@@ -25,7 +42,9 @@ public class UIManager : MonoBehaviour
     public TerrainManager terrainManager;
     public BuildingSelectorMenuController buildingSelectorMenuController;
     public CityStats cityStats;
+    #endregion
 
+    #region State
     private GameObject ghostPreviewPrefab;
     private int ghostPreviewSize = 1;
 
@@ -36,7 +55,9 @@ public class UIManager : MonoBehaviour
     public string saveName;
     private string saveFolderPath;
     public float tooltipDisplayTime = 3f;
+    #endregion
 
+    #region UI References
     public Text populationText;
     public Text moneyText;
     public Text happinessText;
@@ -105,7 +126,9 @@ public class UIManager : MonoBehaviour
     [Header("Pop-up stack (Esc: close last opened, then close all)")]
     [SerializeField] private DataPopupController dataPopupController;
     private Stack<PopupType> popupStack = new Stack<PopupType>();
+    #endregion
 
+    #region Initialization
     void Start()
     {
         if (cityStats == null)
@@ -140,7 +163,9 @@ public class UIManager : MonoBehaviour
             }
         }
     }
+    #endregion
 
+    #region Popup Management
     /// <summary>Call when a pop-up is opened so Esc closes last-opened first.</summary>
     public void RegisterPopupOpened(PopupType type)
     {
@@ -190,7 +215,9 @@ public class UIManager : MonoBehaviour
         if (dataPopup != null)
             dataPopup.CloseAll();
     }
+    #endregion
 
+    #region Demand Display
     public void UpdateUI()
     {
         if (cityNameText != null && cityStats != null)
@@ -372,7 +399,9 @@ public class UIManager : MonoBehaviour
                zoneType == Zone.ZoneType.IndustrialMediumBuilding ||
                zoneType == Zone.ZoneType.IndustrialHeavyBuilding;
     }
+    #endregion
 
+    #region Toolbar and Selection
     public void OnLightResidentialButtonClicked()
     {
         ClearCurrentTool();
@@ -642,7 +671,9 @@ public class UIManager : MonoBehaviour
     {
         economyManager.LowerIndustrialTax();
     }
+    #endregion
 
+    #region Utility Methods
     public void ShowTileDetails(Cell cell)
     {
         detailsPopupController.ShowDetails();
@@ -1011,6 +1042,7 @@ public class UIManager : MonoBehaviour
         buildingSelectorMenuController.ClosePopup();
         buildingSelectorMenuController.DeselectAndUnpressAllButtons();
     }
+    #endregion
 }
 
 [System.Serializable]
@@ -1018,4 +1050,5 @@ public struct ForestSelectionData
 {
     public Forest.ForestType forestType;
     public GameObject prefab;
+}
 }

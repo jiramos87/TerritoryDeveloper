@@ -1,6 +1,15 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Territory.Core;
+using Territory.Economy;
+using Territory.Zones;
 
+namespace Territory.Simulation
+{
+/// <summary>
+/// Handles zone growth logic, determining when and where zones should develop.
+/// Coordinates with GridManager for cell state and DemandManager for demand-based growth eligibility.
+/// </summary>
 [System.Obsolete("Auto-zoning is now handled by AutoZoningManager. This component is kept for reference only.")]
 public class GrowthManager : MonoBehaviour
 {
@@ -274,4 +283,5 @@ public class GrowthManager : MonoBehaviour
     public void SetMaxZonesPerGrowth(int max) => maxZonesPerGrowth = Mathf.Max(1, max);
     public void SetRespectDemandLimits(bool respect) => respectDemandLimits = respect;
     public void SetDemandMultiplier(float multiplier) => demandMultiplier = Mathf.Clamp(multiplier, 0.1f, 3.0f);
+}
 }

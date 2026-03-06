@@ -1,6 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Territory.Timing
+{
+/// <summary>
+/// Controls animation speed scaling for animated game objects (e.g., water tiles).
+/// Synchronizes animator playback speed with TimeManager's game speed setting.
+/// </summary>
 public class AnimatorManager : MonoBehaviour
 {
     private List<Animator> animators = new List<Animator>();
@@ -28,7 +34,7 @@ public class AnimatorManager : MonoBehaviour
     public void SetAnimatorSpeed(float speed)
     {
         float timeScale = speed * 0.5f;
-        Time.timeScale = timeScale;
+        UnityEngine.Time.timeScale = timeScale;
         foreach (Animator animator in animators)
         {
             if (animator != null)
@@ -38,4 +44,5 @@ public class AnimatorManager : MonoBehaviour
             }
         }
     }
+}
 }

@@ -1,6 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI button that activates industrial zone placement mode in UIManager.
+/// </summary>
 public class IndustrialZoningSelectorButton : MonoBehaviour
 {
     public BuildingSelectorMenuController popupController; // Reference to the PopupController
@@ -32,4 +37,5 @@ public class IndustrialZoningSelectorButton : MonoBehaviour
                 break;
         }
     }
+}
 }

@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+namespace Territory.Forests
+{
 /// <summary>
 /// Manages the forest data for the entire grid, tracking different forest types per cell.
 /// Provides efficient querying and updating of forest information.
@@ -427,4 +429,5 @@ public class ForestMap
     {
         return new Vector2Int(width, height);
     }
+}
 }

@@ -1,6 +1,17 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Territory.Core;
+using Territory.Economy;
+using Territory.UI;
+using Territory.Buildings;
+using Territory.Zones;
 
+namespace Territory.Simulation
+{
+/// <summary>
+/// Automatically plans and places resource buildings (power plants, water plants) when city capacity is insufficient.
+/// Coordinates with CityStats for capacity checks and GridManager for placement validation.
+/// </summary>
 public class AutoResourcePlanner : MonoBehaviour
 {
     public CityStats cityStats;
@@ -176,4 +187,5 @@ public class AutoResourcePlanner : MonoBehaviour
         }
         return null;
     }
+}
 }

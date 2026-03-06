@@ -1,13 +1,22 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Territory.Core;
+using Territory.Terrain;
+using Territory.Economy;
+using Territory.UI;
+using Territory.Zones;
+using Territory.Utilities;
 
+namespace Territory.Forests
+{
 /// <summary>
 /// Manages forest placement, removal, and environmental effects in the city simulation.
 /// Works with the IForest interface to support different forest types (Sparse, Dense, Dense).
 /// </summary>
 public class ForestManager : MonoBehaviour
 {
+    #region Dependencies
     [Header("References")]
     public GridManager gridManager;
     public WaterManager waterManager;
@@ -16,7 +25,9 @@ public class ForestManager : MonoBehaviour
     public UIManager uiManager;
     public GameNotificationManager gameNotificationManager;
     public TerrainManager terrainManager;
+    #endregion
 
+    #region Forest Prefabs and Configuration
     [Header("Forest Prefabs")]
     public GameObject sparseForestPrefab;
     public GameObject mediumForestPrefab;
@@ -42,7 +53,9 @@ public class ForestManager : MonoBehaviour
 
     private ForestMap forestMap;
     private Dictionary<Forest.ForestType, int> forestTypeCounts;
+    #endregion
 
+    #region Initialization
     void Start()
     {
         if (gridManager == null)
@@ -171,7 +184,9 @@ public class ForestManager : MonoBehaviour
 
         return initialForestCells;
     }
+    #endregion
 
+    #region Forest Placement
     public bool IsForestAt(int x, int y)
     {
         if (forestMap == null) return false;
@@ -266,7 +281,9 @@ public class ForestManager : MonoBehaviour
 
         return true;
     }
+    #endregion
 
+    #region Forest Removal
     public bool RemoveForestFromCell(int x, int y, bool refundCost = false)
     {
         if (forestMap == null || !forestMap.IsValidPosition(x, y))
@@ -310,7 +327,9 @@ public class ForestManager : MonoBehaviour
 
         return true;
     }
+    #endregion
 
+    #region Forest Queries
     private bool CanPlaceForestAt(int x, int y)
     {
         // Cannot place if already has forest
@@ -431,7 +450,9 @@ public class ForestManager : MonoBehaviour
 
         return (currentWaterConsumption + forest.WaterConsumption) <= currentWaterOutput;
     }
+    #endregion
 
+    #region Utility Methods
     private IEnumerator DeferredUpdateForestVisuals()
     {
         yield return null;
@@ -705,6 +726,7 @@ public class ForestManager : MonoBehaviour
     }
 
     public ForestMap GetForestMap() => forestMap;
+    #endregion
 }
 
 /// <summary>
@@ -718,4 +740,5 @@ public struct ForestStatistics
     public int sparseForestCount;
     public int mediumForestCount;
     public int denseForestCount;
+}
 }

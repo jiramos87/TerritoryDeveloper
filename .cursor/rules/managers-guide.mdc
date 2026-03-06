@@ -1,0 +1,45 @@
+---
+description: Guide for working with GameManagers
+globs: "**/Managers/GameManagers/*.cs"
+alwaysApply: false
+---
+
+# GameManagers Guide
+
+## Manager Responsibilities (one-line each)
+- **GridManager** — Central hub. Isometric 2D grid, cell access, coordinate conversion, building placement, bulldozing, sorting order, pathfinding
+- **TerrainManager** — Heightmap generation, slope types, prefab selection by slope
+- **WaterManager** — Water body generation and management
+- **ForestManager** — Forest generation (sparse/medium/dense), forestation, deforestation
+- **ZoneManager** — RCI zoning (residential, commercial, industrial), zone tile placement
+- **RoadManager** — Road drawing, prefab selection by neighbors, road preview
+- **InterstateManager** — Interstate highways connecting the map to the exterior
+- **GeographyManager** — Orchestrator for all terrain initialization (terrain + water + forest + grid)
+- **DemandManager** — R/C/I demand calculation based on population, employment, forests
+- **EconomyManager** — Taxes, money, financial transactions
+- **CityStats** — Global statistics aggregator: population, employment, water/power capacity
+- **EmploymentManager** — Employment and unemployment calculation by zone
+- **SimulationManager** — Automatic simulation cycle orchestrator
+- **AutoRoadBuilder** — Automatic road network extension
+- **AutoZoningManager** — Automatic zoning of cells adjacent to roads
+- **AutoResourcePlanner** — Automatic resource building planning
+- **GrowthManager** — Zone growth logic
+- **GrowthBudgetManager** — Growth budget per category
+- **UrbanizationProposalManager** — Urban expansion proposals
+- **UIManager** — Main UI management, popups, selected tool state
+- **CursorManager** — Placement preview, visual cursor
+- **TimeManager** — Game speed control, simulation ticks
+- **GameNotificationManager** — Singleton. In-game notifications
+- **GameSaveManager** — Serialize/deserialize game state
+- **GameManager** — Entry point, game loading
+- **RegionalMapManager** — Regional map with neighboring cities
+- **StatisticsManager** — Historical trend tracking
+- **AnimatorManager** (AnimationManager.cs) — Animation control
+- **GameDebugInfoBuilder** — Debug text generation for game state
+
+## Rules
+- Every manager is a MonoBehaviour living as a component on a scene GameObject
+- NEVER instantiate managers with `new` — they are always scene components
+- GridManager is the central hub — all cell operations go through it
+- For notifications use `GameNotificationManager.Instance`
+- CityStats is the global data aggregator — read city-wide stats from here

@@ -1,5 +1,11 @@
 using UnityEngine;
 
+namespace Territory.Zones
+{
+/// <summary>
+/// MonoBehaviour component attached to zone GameObjects.
+/// Stores ZoneType (residential, commercial, industrial, road, etc.), zone category, and building level.
+/// </summary>
 public class Zone : MonoBehaviour
 {
     public enum ZoneType
@@ -150,4 +156,5 @@ public class Zone : MonoBehaviour
                 return 0f; // Neutral impact
         }
     }
+}
 }

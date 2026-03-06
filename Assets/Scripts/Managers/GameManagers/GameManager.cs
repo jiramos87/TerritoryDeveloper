@@ -1,6 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Territory.Core;
 
+namespace Territory.Persistence
+{
+/// <summary>
+/// Entry point for game initialization and save/load orchestration.
+/// Coordinates with GridManager for grid restoration and GameSaveManager for persistence.
+/// </summary>
 public class GameManager : MonoBehaviour
 {
     private GridManager gridManager;
@@ -32,4 +39,5 @@ public class GameManager : MonoBehaviour
     {
         saveManager.NewGame();
     }
+}
 }

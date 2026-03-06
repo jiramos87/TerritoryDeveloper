@@ -1,6 +1,11 @@
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 
+namespace Territory.Utilities
+{
+/// <summary>
+/// Static utility class providing debug logging helpers with formatted output.
+/// </summary>
 public static class DebugHelper
 {
     [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
@@ -14,4 +19,5 @@ public static class DebugHelper
     {
         Debug.LogWarning(message);
     }
+}
 }

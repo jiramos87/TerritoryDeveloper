@@ -1,0 +1,38 @@
+---
+description: C# coding standards for Territory Developer
+globs: "**/*.cs"
+alwaysApply: false
+---
+
+# Coding Conventions
+
+## Documentation Requirements
+- Every class MUST have a `/// <summary>` (2-4 lines): responsibility, key dependencies, how it fits in the system
+- Public methods MUST have `/// <summary>`, with `<param>` and `<returns>` when applicable
+- Files over 300 lines MUST use `#region` to group methods by category
+- Inspector fields MUST use `[Header("Category Name")]` for visual grouping
+
+## Naming
+- PascalCase: classes, methods, public properties
+- camelCase: private fields
+- Enums: PascalCase for type and values
+
+## Dependency Pattern
+```csharp
+[Header("Manager References")]
+[SerializeField] private GridManager gridManager;
+
+void Awake() {
+    if (gridManager == null) gridManager = FindObjectOfType<GridManager>();
+}
+```
+
+## Anti-patterns to Avoid
+- Do NOT create new singletons — use Inspector + FindObjectOfType pattern
+- Do NOT access `gridArray` or `cellArray` directly from outside GridManager — use `GetCell(x,y)`
+- Do NOT use `FindObjectOfType` in Update/loops — only in Awake/Start
+- Do NOT add more responsibilities to GridManager — extract to helper classes
+
+## Reference Files
+- Documentation model: `EconomyManager.cs` (XML docs + regions + headers)
+- Region model: `Cell.cs` (4 well-named regions)

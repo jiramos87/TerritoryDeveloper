@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Territory.Zones;
 
+namespace Territory.Economy
+{
 [System.Serializable]
 public class JobData
 {
@@ -34,6 +37,10 @@ public class JobData
     }
 }
 
+/// <summary>
+/// Calculates employment and unemployment rates across all zones.
+/// Coordinates with CityStats for population data and DemandManager for employment-based demand adjustments.
+/// </summary>
 public class EmploymentManager : MonoBehaviour
 {
     [Header("Employment Statistics")]
@@ -232,4 +239,5 @@ public class EmploymentManager : MonoBehaviour
     // Additional getters for detailed information
     public int GetResidentialPopulation() => totalPopulation; // All population comes from residential
     public int GetJobsTakenByResidents() => commercialJobs.jobsTakenByResidents + industrialJobs.jobsTakenByResidents;
+}
 }

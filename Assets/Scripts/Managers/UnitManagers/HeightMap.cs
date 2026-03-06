@@ -1,5 +1,11 @@
 using UnityEngine;
 
+namespace Territory.Terrain
+{
+/// <summary>
+/// Generates and stores the terrain height grid using Perlin noise.
+/// Provides height queries and height modification for the terrain system.
+/// </summary>
 public class HeightMap
 {
     private int[,] heights;
@@ -206,4 +212,5 @@ public class HeightMapData
     public int width;
     public int height;
     public int[] heights; // Flattened 2D array for serialization
+}
 }

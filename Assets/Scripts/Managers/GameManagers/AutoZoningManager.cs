@@ -1,6 +1,15 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Territory.Core;
+using Territory.Zones;
+using Territory.Economy;
 
+namespace Territory.Simulation
+{
+/// <summary>
+/// Automatically zones cells adjacent to roads during simulation steps based on demand.
+/// Coordinates with GridManager for cell queries, ZoneManager for zone placement, and DemandManager for demand-driven decisions.
+/// </summary>
 public class AutoZoningManager : MonoBehaviour
 {
     public GridManager gridManager;
@@ -179,4 +188,5 @@ public class AutoZoningManager : MonoBehaviour
         }
         return list.ToArray();
     }
+}
 }

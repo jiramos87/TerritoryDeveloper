@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using Territory.Economy;
 
+namespace Territory.UI
+{
 /// <summary>
 /// Manages the city statistics UI panel using UI Toolkit
 /// Integrates with the existing CityStats system from the city builder
@@ -366,4 +369,5 @@ public class CityStatsUIController : MonoBehaviour
             statsContainer.Remove(labelToRemove);
         }
     }
+}
 }

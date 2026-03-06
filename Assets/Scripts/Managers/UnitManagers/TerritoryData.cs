@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using Territory.Utilities;
 
+namespace Territory.Geography
+{
 /// <summary>
 /// Data model for a single territory in the regional map.
 /// Each territory contains one city (or is uninhabited).
@@ -154,4 +157,5 @@ public class TerritoryData
 
         return data;
     }
+}
 }

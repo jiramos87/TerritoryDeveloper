@@ -1,0 +1,28 @@
+---
+description: Territory Developer project overview - Unity 2D city builder
+alwaysApply: true
+---
+
+# Territory Developer — Project Overview
+
+Unity 2D city-builder with isometric view. Players build and manage a city by placing roads, zones (residential/commercial/industrial), buildings, and managing economy.
+
+## Stack
+- Unity + C#, all game logic in MonoBehaviour classes
+- No namespaces currently (global namespace)
+- No dependency injection — managers reference each other via Inspector fields + `FindObjectOfType<T>()` fallback in Awake/Start
+
+## Folder Structure (`Assets/Scripts/`)
+- `Managers/GameManagers/` (33 files) — core game logic: grid, terrain, zones, roads, economy, simulation, UI
+- `Managers/UnitManagers/` (23 files) — data models: Cell, Zone, Building, Forest, HeightMap, CellData, etc.
+- `Controllers/GameControllers/` (2 files) — CameraController, CityStatsUIController
+- `Controllers/UnitControllers/` (17 files) — UI buttons, popups, sliders
+- `Utilities/` (1 file) — DebugHelper
+
+## Key Architectural Facts
+- **GridManager** is the central hub (~2100 lines, 13 direct dependencies). All cell operations go through it.
+- **Only singleton**: `GameNotificationManager.Instance` (with DontDestroyOnLoad)
+- **Data models**: MonoBehaviour-based (Cell, Zone — live on GameObjects) or plain classes (CellData, CommuneData, TerritoryData — for serialization/save)
+- **Grid**: 2D isometric with height system (heightMap). Cells stored in `Cell[,] cellArray` and `GameObject[,] gridArray`
+- **Sorting order**: complex system determining draw order based on Y position + height
+- **Reference file for best practices**: `EconomyManager.cs` (XML docs + #regions + [Header] attributes)

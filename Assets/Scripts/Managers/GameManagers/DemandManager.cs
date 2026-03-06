@@ -1,5 +1,10 @@
 using UnityEngine;
+using Territory.Core;
+using Territory.Forests;
+using Territory.Zones;
 
+namespace Territory.Economy
+{
 [System.Serializable]
 public class DemandData
 {
@@ -44,6 +49,12 @@ public class BuildingTracker
     }
 }
 
+/// <summary>
+/// Calculates residential, commercial, and industrial demand levels based on population,
+/// employment ratios, forest coverage, and zone capacity. Provides demand data that drives
+/// zone growth decisions in GrowthManager and AutoZoningManager. Updated periodically by
+/// EmploymentManager and CityStats.
+/// </summary>
 public class DemandManager : MonoBehaviour
 {
     [Header("RCI Demand")]
@@ -419,4 +430,5 @@ public class DemandManager : MonoBehaviour
     public void SetGrowthThreshold(float threshold) => growthThreshold = Mathf.Clamp(threshold, 0f, 100f);
     // Public getter for environmental bonus (for UI display)
     public float GetCurrentEnvironmentalBonus() => GetEnvironmentalDemandBonus();
+}
 }

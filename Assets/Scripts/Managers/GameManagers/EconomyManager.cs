@@ -1,5 +1,11 @@
 using UnityEngine;
+using Territory.Zones;
+using Territory.UI;
+using Territory.Timing;
+using Territory.Utilities;
 
+namespace Territory.Economy
+{
 /// <summary>
 /// Manages the city's economy including taxation, money management, and financial transactions.
 /// Acts as the main interface for all economic operations in the game.
@@ -535,4 +541,5 @@ public struct EconomicSummary
     public int totalResidentialZones;
     public int totalCommercialZones;
     public int totalIndustrialZones;
+}
 }

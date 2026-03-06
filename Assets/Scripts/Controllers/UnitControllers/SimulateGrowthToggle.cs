@@ -1,6 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Territory.Economy;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI toggle that enables/disables automatic city growth simulation in CityStats.
+/// </summary>
 public class SimulateGrowthToggle : MonoBehaviour
 {
     public CityStats cityStats;
@@ -50,4 +56,5 @@ public class SimulateGrowthToggle : MonoBehaviour
     {
         RefreshVisual();
     }
+}
 }

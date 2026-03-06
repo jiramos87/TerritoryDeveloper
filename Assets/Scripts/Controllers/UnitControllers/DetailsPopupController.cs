@@ -2,6 +2,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI controller for the cell details popup. Shows detailed information about a selected grid cell.
+/// </summary>
 public class DetailsPopupController : MonoBehaviour
 {
     public GameObject detailsPanel;
@@ -23,4 +28,5 @@ public class DetailsPopupController : MonoBehaviour
     {
         return detailsPanel != null && detailsPanel.activeSelf;
     }
+}
 }

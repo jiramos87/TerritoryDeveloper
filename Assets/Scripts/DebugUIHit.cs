@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+namespace Territory.Core
+{
 /// <summary>
 /// Temporary debug script: logs which UI elements receive the raycast on left click.
 /// Attach to Canvas (or any active GameObject) and check Console when clicking.
@@ -36,4 +38,5 @@ public class DebugUIHit : MonoBehaviour
     //         Debug.Log($"[DebugUIHit] Hit #{i + 1}: {r.gameObject.name} (layer={r.gameObject.layer})", r.gameObject);
     //     }
     // }
+}
 }

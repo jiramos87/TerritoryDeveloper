@@ -1,0 +1,54 @@
+---
+description: System architecture and manager dependency graph
+alwaysApply: true
+---
+
+# Architecture
+
+## Initialization Flow
+`GeographyManager.InitializeGeography()` orchestrates startup:
+1. `TerrainManager.GenerateHeightMap()` — terrain elevation
+2. `WaterManager.InitializeWater()` — water bodies
+3. `ForestManager.InitializeForests()` — forest generation
+4. `GridManager.InitializeGrid()` — cell grid with terrain applied
+5. `InterstateManager.GenerateInterstateConnections()` — interstate highways
+6. `ZoneManager` — ready for player zoning
+
+## Simulation Flow (each TimeManager tick)
+`TimeManager` → `SimulationManager.RunSimulationStep()` → in order:
+1. `AutoRoadBuilder` — extends road network
+2. `AutoZoningManager` — zones cells adjacent to roads
+3. `AutoResourcePlanner` — plans resource buildings (water, power)
+4. `UrbanizationProposalManager` — proposes urban expansions
+
+## Player Input Flow
+`GridManager.Update()` detects clicks → dispatches by active mode:
+- Zoning: `ZoneManager.PlaceZone()`
+- Road: `RoadManager.HandleRoadDrawing()`
+- Building: `GridManager.HandleBuildingPlacement()`
+- Bulldozer: `GridManager.HandleBulldozerMode()`
+
+## Logical Layers
+- **Core**: GridManager, Cell, CellData — grid, cells, coordinates
+- **Terrain**: TerrainManager, WaterManager, HeightMap, WaterMap
+- **Forests**: ForestManager, ForestMap, Forest, IForest, SparseForest, MediumForest, DenseForest
+- **Gameplay**: ZoneManager, RoadManager, InterstateManager, DemandManager, EconomyManager
+- **Simulation**: SimulationManager, AutoRoadBuilder, AutoZoningManager, GrowthManager, GrowthBudgetManager
+- **Stats**: CityStats, EmploymentManager, StatisticsManager
+- **UI**: UIManager, CursorManager, GameNotificationManager, all Controllers
+- **Persistence**: GameSaveManager, GameManager
+
+## Dependency Map
+- GridManager → [ZoneManager, UIManager, CityStats, CursorManager, TerrainManager, DemandManager, WaterManager, GameNotificationManager, ForestManager, CameraController, RoadManager, InterstateManager]
+- ZoneManager → [GridManager, RoadManager, CityStats, UIManager, GameNotificationManager, DemandManager, WaterManager, InterstateManager]
+- RoadManager → [TerrainManager, GridManager, CityStats, UIManager, ZoneManager, InterstateManager]
+- TerrainManager → [GridManager, ZoneManager, WaterManager]
+- WaterManager → [GridManager, TerrainManager, ZoneManager]
+- ForestManager → [GridManager, WaterManager, CityStats, EconomyManager, UIManager, GameNotificationManager, TerrainManager]
+- GeographyManager → [TerrainManager, WaterManager, ForestManager, GridManager, ZoneManager, InterstateManager, RegionalMapManager]
+- TimeManager → [UIManager, SpeedButtonsController, CityStats, EconomyManager, GridManager, AnimatorManager, ZoneManager, InterstateManager, SimulationManager]
+- SimulationManager → [CityStats, GrowthBudgetManager, AutoRoadBuilder, AutoZoningManager, AutoResourcePlanner, UrbanizationProposalManager]
+- EconomyManager → [CityStats, TimeManager, GameNotificationManager]
+- DemandManager → [EmploymentManager, CityStats, ForestManager, GridManager]
+- InterstateManager → [GridManager, TerrainManager, RoadManager]
+- CityStats → [TimeManager, WaterManager, ForestManager]

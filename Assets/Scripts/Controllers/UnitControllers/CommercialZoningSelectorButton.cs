@@ -1,6 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI button that activates commercial zone placement mode in UIManager.
+/// </summary>
 public class CommercialZoningSelectorButton : MonoBehaviour
 {
     public BuildingSelectorMenuController popupController; // Reference to the PopupController
@@ -32,4 +37,5 @@ public class CommercialZoningSelectorButton : MonoBehaviour
                 break;
         }
     }
+}
 }

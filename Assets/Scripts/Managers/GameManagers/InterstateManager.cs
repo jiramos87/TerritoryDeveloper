@@ -1,16 +1,25 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Territory.Core;
+using Territory.Terrain;
+using Territory.Zones;
+using Territory.Geography;
 
+namespace Territory.Roads
+{
 /// <summary>
 /// Manages the Interstate Highway: generation at game start, connectivity checks,
 /// and validation for player road placement (streets must grow from the interstate).
 /// </summary>
 public class InterstateManager : MonoBehaviour
 {
+    #region Dependencies
     public GridManager gridManager;
     public TerrainManager terrainManager;
     public RoadManager roadManager;
+    #endregion
 
+    #region Prefabs and Configuration
     private List<Vector2Int> interstatePositions = new List<Vector2Int>();
     private bool isConnectedToInterstate;
 
@@ -36,7 +45,9 @@ public class InterstateManager : MonoBehaviour
         if (terrainManager == null) terrainManager = FindObjectOfType<TerrainManager>();
         if (roadManager == null) roadManager = FindObjectOfType<RoadManager>();
     }
+    #endregion
 
+    #region Interstate Placement
     /// <summary>
     /// Generate interstate route, place tiles, then refresh prefabs so junctions are correct.
     /// Call after water map, before forest map.
@@ -66,7 +77,9 @@ public class InterstateManager : MonoBehaviour
             }
         }
     }
+    #endregion
 
+    #region Interstate Generation
     const int MaxRouteAttempts = 80;
     const int PathTriesPerPair = 8;
 
@@ -137,7 +150,8 @@ public class InterstateManager : MonoBehaviour
         for (int attempt = 0; attempt < MaxRouteAttempts; attempt++)
         {
             int borderA, borderB;
-            if (regionManager != null && regionManager.TryGetInterstateBorders(out int rA, out int rB)
+            int rA = 0, rB = 0;
+            if (regionManager != null && regionManager.TryGetInterstateBorders(out rA, out rB)
                 && bordersWithLand.Contains(rA) && bordersWithLand.Contains(rB))
             {
                 borderA = rA;
@@ -353,7 +367,9 @@ public class InterstateManager : MonoBehaviour
 
         return path;
     }
+    #endregion
 
+    #region Utility Methods
     /// <summary>
     /// Rebuild interstate positions list from grid (e.g. after load). Call after RestoreGrid.
     /// </summary>
@@ -558,4 +574,6 @@ public class InterstateManager : MonoBehaviour
     {
         isConnectedToInterstate = connected;
     }
+    #endregion
+}
 }

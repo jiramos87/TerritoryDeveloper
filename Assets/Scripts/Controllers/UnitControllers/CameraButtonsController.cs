@@ -3,6 +3,11 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI controller for camera navigation buttons (pan, zoom). Forwards button events to CameraController.
+/// </summary>
 public class CameraButtonsController : MonoBehaviour
 {
     [Header("References")]
@@ -42,4 +47,5 @@ public class CameraButtonsController : MonoBehaviour
     {
         return currentSelectedZoomLevelIndex;
     }
+}
 }

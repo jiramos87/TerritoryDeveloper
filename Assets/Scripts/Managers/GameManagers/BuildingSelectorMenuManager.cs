@@ -4,6 +4,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+namespace Territory.UI
+{
+/// <summary>
+/// Manages the building selector popup menu data and item types.
+/// Provides prefab references and item configuration for the BuildingSelectorMenuController UI.
+/// </summary>
 public class BuildingSelectorMenuManager : MonoBehaviour
 {
     [Serializable]
@@ -49,4 +55,5 @@ public class BuildingSelectorMenuManager : MonoBehaviour
     {
         return populatedWith;
     }
+}
 }

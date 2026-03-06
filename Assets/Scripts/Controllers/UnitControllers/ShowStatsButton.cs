@@ -1,6 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Territory.UI
+{
+/// <summary>
+/// UI button that toggles the statistics popup via DataPopupController.
+/// </summary>
 public class ShowStatsButton : MonoBehaviour
 {
     public DataPopupController popupController; // Reference to the PopupController
@@ -11,4 +16,5 @@ public class ShowStatsButton : MonoBehaviour
         uiManager.UpdateUI();
         popupController.ToggleStats();
     }
+}
 }

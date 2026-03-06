@@ -1,6 +1,11 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+namespace Territory.Forests
+{
+/// <summary>
+/// Implements IForest for dense forest type with its specific cost, water consumption, prefab, and size properties.
+/// </summary>
 public class DenseForest : MonoBehaviour, IForest
 {
   public int WaterConsumption { get; private set; }
@@ -27,4 +32,5 @@ public class DenseForest : MonoBehaviour, IForest
   {
     return WaterConsumption;
   }
+}
 }

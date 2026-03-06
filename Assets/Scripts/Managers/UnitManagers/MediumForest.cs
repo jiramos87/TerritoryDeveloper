@@ -1,5 +1,7 @@
 using UnityEngine;
 
+namespace Territory.Forests
+{
 /// <summary>
 /// Medium forest implementation with moderate water consumption and environmental impact
 /// </summary>
@@ -35,4 +37,5 @@ public class MediumForest : MonoBehaviour, IForest
     {
         return WaterConsumption;
     }
+}
 }

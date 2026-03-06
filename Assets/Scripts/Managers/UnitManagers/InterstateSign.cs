@@ -1,5 +1,8 @@
 using UnityEngine;
+using Territory.Geography;
 
+namespace Territory.Roads
+{
 /// <summary>
 /// Visual component for a highway sign at the border of the map.
 /// Shows the destination city name, population hint, and directional arrow.
@@ -112,4 +115,5 @@ public class InterstateSign : MonoBehaviour
         if (pop >= 1000) return (pop / 1000f).ToString("F0") + "K";
         return pop.ToString();
     }
+}
 }
