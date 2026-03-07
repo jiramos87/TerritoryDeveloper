@@ -13,6 +13,7 @@ alwaysApply: false
 ## Issue ID Convention
 - `BUG-XX` — Bugs and broken functionality
 - `FEAT-XX` — New features and enhancements
+- `TECH-XX` — Technical debt, refactors, code health
 - `ART-XX` — Art assets, prefabs, sprites
 - `AUDIO-XX` — Audio assets and audio system features
 
@@ -26,7 +27,8 @@ When the user references a backlog issue (by ID or description):
 ## Adding New Issues
 - Use the next available ID in the appropriate category
 - Place in the correct priority section
-- Include: tipo, archivos, and notas fields
+- Include: tipo, archivos, notas, and depende de (if applicable) fields
+- Use `Depende de: ID` when an issue requires another to be completed first
 
 ## Completing Issues
 - Mark checkbox as `[x]`
@@ -38,4 +40,5 @@ Issues are ordered by priority within each section. The section order is:
 1. En progreso (actively being worked on)
 2. Prioridad alta (critical bugs, core gameplay blockers)
 3. Prioridad media (important features, balance issues)
-4. Prioridad baja (new systems, polish, content)
+4. Code Health (technical debt, refactors, performance)
+5. Prioridad baja (new systems, polish, content)

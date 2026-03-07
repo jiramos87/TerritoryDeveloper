@@ -694,6 +694,45 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         cityStats.AddZoneBuildingCount(zoneType);
         return true;
     }
+
+    /// <summary>
+    /// Restores a zoning overlay tile from save. Uses SetZoningTileSortingOrder so it renders correctly
+    /// (below roads and buildings). Call instead of PlaceZoneBuildingTile for zoning types.
+    /// </summary>
+    public void RestoreZoneTile(GameObject prefab, GameObject gridCell, Zone.ZoneType zoneType)
+    {
+        Cell cell = gridCell.GetComponent<Cell>();
+        if (cell == null) return;
+
+        Vector2 worldPosition = cell.transformPosition;
+        gridManager.DestroyCellChildrenExceptForest(gridCell, new Vector2(cell.x, cell.y));
+
+        GameObject zoneTile = Instantiate(prefab, worldPosition, Quaternion.identity);
+        zoneTile.transform.SetParent(gridCell.transform);
+
+        Zone zone = zoneTile.GetComponent<Zone>();
+        if (zone == null) zone = zoneTile.AddComponent<Zone>();
+        zone.zoneType = zoneType;
+        zone.zoneCategory = Zone.ZoneCategory.Zoning;
+
+        var zoneAttributes = GetZoneAttributes(zoneType);
+        if (zoneAttributes != null)
+            UpdatePlacedZoneCellAttributes(cell, zoneType, prefab, zoneAttributes);
+        gridManager.SetZoningTileSortingOrder(zoneTile, cell.x, cell.y);
+    }
+
+    /// <summary>
+    /// Returns true if the zone type is a zoning overlay (empty zone awaiting building spawn).
+    /// </summary>
+    public static bool IsZoningType(Zone.ZoneType zoneType)
+    {
+        return zoneType == Zone.ZoneType.ResidentialLightZoning || zoneType == Zone.ZoneType.ResidentialMediumZoning
+            || zoneType == Zone.ZoneType.ResidentialHeavyZoning || zoneType == Zone.ZoneType.CommercialLightZoning
+            || zoneType == Zone.ZoneType.CommercialMediumZoning || zoneType == Zone.ZoneType.CommercialHeavyZoning
+            || zoneType == Zone.ZoneType.IndustrialLightZoning || zoneType == Zone.ZoneType.IndustrialMediumZoning
+            || zoneType == Zone.ZoneType.IndustrialHeavyZoning;
+    }
+
     #endregion
 
     #region Zone Building Placement

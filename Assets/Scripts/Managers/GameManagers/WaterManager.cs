@@ -83,6 +83,35 @@ public class WaterManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Restores WaterMap from saved grid data. Call after RestoreHeightMapFromGridData and before RestoreGrid.
+    /// Ensures water cells are correctly tracked for PlaceWater and other water systems.
+    /// </summary>
+    public void RestoreWaterMapFromGridData(List<CellData> gridData)
+    {
+        if (gridManager == null || gridData == null) return;
+
+        if (waterMap == null || waterMap.IsValidPosition(0, 0) == false)
+            waterMap = new WaterMap(gridManager.width, gridManager.height);
+
+        for (int x = 0; x < gridManager.width; x++)
+        {
+            for (int y = 0; y < gridManager.height; y++)
+            {
+                waterMap.SetWater(x, y, false);
+            }
+        }
+
+        foreach (CellData cd in gridData)
+        {
+            if (cd.height <= seaLevel || (cd.zoneType != null && cd.zoneType.Equals("Water", System.StringComparison.OrdinalIgnoreCase)))
+            {
+                if (waterMap.IsValidPosition(cd.x, cd.y))
+                    waterMap.SetWater(cd.x, cd.y, true);
+            }
+        }
+    }
+
     private void InitializeWaterBodiesFromMatrix()
     {
         if (waterMap == null || initialWaterCells == null)

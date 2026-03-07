@@ -8,6 +8,8 @@ using Territory.Timing;
 using Territory.Roads;
 using Territory.Geography;
 using Territory.Simulation;
+using Territory.Terrain;
+using Territory.UI;
 
 namespace Territory.Persistence
 {
@@ -56,6 +58,9 @@ public class GameSaveManager : MonoBehaviour
 
         string path = Path.Combine(Application.persistentDataPath, saveData.saveName + ".json");
         File.WriteAllText(path, json);
+
+        if (GameNotificationManager.Instance != null)
+            GameNotificationManager.Instance.PostNotification("Game saved successfully", GameNotificationManager.NotificationType.Success, 3f);
     }
 
     public void LoadGame(string saveFilePath)
@@ -65,7 +70,29 @@ public class GameSaveManager : MonoBehaviour
             string json = File.ReadAllText(saveFilePath);
             GameSaveData saveData = JsonUtility.FromJson<GameSaveData>(json);
 
+            TerrainManager terrainManager = FindObjectOfType<TerrainManager>();
+            if (terrainManager != null && saveData.gridData != null)
+            {
+                terrainManager.RestoreHeightMapFromGridData(saveData.gridData);
+                terrainManager.ApplyRestoredPositionsToGrid();
+            }
+
+            WaterManager waterManager = FindObjectOfType<WaterManager>();
+            if (waterManager != null && saveData.gridData != null)
+                waterManager.RestoreWaterMapFromGridData(saveData.gridData);
+
             gridManager.RestoreGrid(saveData.gridData);
+
+            if (terrainManager != null)
+            {
+                terrainManager.RestoreWaterSlopesFromHeightMap();
+                terrainManager.RestoreTerrainSlopesFromHeightMap();
+            }
+
+            GeographyManager geographyManager = FindObjectOfType<GeographyManager>();
+            if (geographyManager != null)
+                geographyManager.ReCalculateSortingOrderBasedOnHeight();
+
             if (interstateManager != null)
             {
                 interstateManager.RebuildFromGrid();
@@ -101,6 +128,11 @@ public class GameSaveManager : MonoBehaviour
         if (regionalMapManager != null)
             regionalMapManager.ClearBorderSigns();
         gridManager.ResetGrid();
+
+        GeographyManager geographyManager = FindObjectOfType<GeographyManager>();
+        if (geographyManager != null)
+            geographyManager.ReinitializeGeographyForNewGame();
+
         cityStats.ResetCityStats();
         if (regionalMapManager != null)
         {

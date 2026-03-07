@@ -327,6 +327,57 @@ public class ForestManager : MonoBehaviour
 
         return true;
     }
+
+    /// <summary>
+    /// Restores forest at the given cell during Load. Destroys any existing forest visual,
+    /// updates ForestMap, and when forestType != None places the correct prefab.
+    /// Call for every cell to sync ForestMap with saved data (including None to clear initial gen).
+    /// </summary>
+    /// <param name="updateStats">If false, skips UpdateForestStatistics (call RefreshForestStatistics after batch restore).</param>
+    public void RestoreForestAt(int x, int y, Forest.ForestType forestType, string forestPrefabName, bool updateStats = true)
+    {
+        if (forestMap == null || gridManager == null) return;
+        if (!forestMap.IsValidPosition(x, y)) return;
+
+        Cell cellComponent = gridManager.GetCell(x, y);
+        if (cellComponent == null) return;
+
+        // Destroy existing forest visual (from initial generation)
+        if (cellComponent.forestObject != null)
+        {
+            Destroy(cellComponent.forestObject);
+            cellComponent.forestObject = null;
+        }
+
+        forestMap.SetForestType(x, y, forestType);
+
+        if (forestType == Forest.ForestType.None)
+            return;
+
+        GameObject forestPrefab = GetForestPrefabForCell(x, y, forestType);
+        if (forestPrefab == null) return;
+
+        Vector2 worldPos = cellComponent.transformPosition;
+        Quaternion rotation = forestPrefab.transform.rotation;
+        GameObject forestObject = Instantiate(forestPrefab, worldPos, rotation);
+
+        forestObject.transform.SetParent(cellComponent.gameObject.transform);
+        SetForestSortingOrder(forestObject, x, y, cellComponent.height);
+
+        cellComponent.SetForest(forestType, forestPrefab.name, forestObject);
+
+        UpdateAdjacentDesirability(x, y, true);
+        if (updateStats)
+            UpdateForestStatistics();
+    }
+
+    /// <summary>
+    /// Refreshes forest statistics (e.g. after batch restore). Call once after RestoreForestAt for all cells.
+    /// </summary>
+    public void RefreshForestStatistics()
+    {
+        UpdateForestStatistics();
+    }
     #endregion
 
     #region Forest Queries

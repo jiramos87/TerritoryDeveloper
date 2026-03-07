@@ -1352,40 +1352,83 @@ public class GridManager : MonoBehaviour, IGridManager
     #endregion
 
     #region Save and Restore
-    void RestoreGridCell(CellData cellData, GameObject cell)
+    void RestoreGridCellVisuals(CellData cellData, GameObject cell)
     {
-        cellArray[cellData.x, cellData.y].SetCellData(cellData);
-
         Zone.ZoneType zoneType = zoneManager.GetZoneTypeFromZoneTypeString(cellData.zoneType);
 
-        GameObject tilePrefab = zoneManager.FindPrefabByName(cellData.prefabName);
-        if (tilePrefab != null)
+        if (zoneType == Zone.ZoneType.Water && waterManager != null)
         {
-            zoneManager.PlaceZoneBuildingTile(tilePrefab, cell, cellData.buildingSize);
-            UpdatePlacedBuildingCellAttributes(cellArray[cellData.x, cellData.y], cellData.buildingSize, cellData.powerPlant, cellData.waterPlant, tilePrefab, zoneType, null);
+            waterManager.PlaceWater(cellData.x, cellData.y);
+        }
+        else
+        {
+            GameObject tilePrefab = zoneManager.FindPrefabByName(cellData.prefabName);
+            if (tilePrefab == null && terrainManager != null)
+                tilePrefab = terrainManager.FindTerrainPrefabByName(cellData.prefabName);
+            if (tilePrefab != null)
+            {
+                bool isMultiCellUtilityBuilding = cellData.buildingSize > 1 && cellData.isPivot
+                    && (tilePrefab.GetComponent<PowerPlant>() != null || tilePrefab.GetComponent<WaterPlant>() != null);
+
+                if (isMultiCellUtilityBuilding)
+                {
+                    placementService.RestoreBuildingTile(tilePrefab, new Vector2(cellData.x, cellData.y), cellData.buildingSize);
+                }
+                else if (ZoneManager.IsZoningType(zoneType))
+                {
+                    zoneManager.RestoreZoneTile(tilePrefab, cell, zoneType);
+                }
+                else if (!(cellData.buildingSize > 1 && !cellData.isPivot))
+                {
+                    zoneManager.PlaceZoneBuildingTile(tilePrefab, cell, cellData.buildingSize);
+                    Cell cellComponent = cellArray[cellData.x, cellData.y];
+                    PowerPlant powerPlant = cell.GetComponentInChildren<PowerPlant>();
+                    WaterPlant waterPlant = cell.GetComponentInChildren<WaterPlant>();
+                    UpdatePlacedBuildingCellAttributes(cellComponent, cellData.buildingSize, powerPlant, waterPlant, tilePrefab, zoneType, null);
+                    if (powerPlant != null)
+                        cityStats.RegisterPowerPlant(powerPlant);
+                    if (waterPlant != null && waterManager != null)
+                    {
+                        waterManager.RegisterWaterPlant(waterPlant);
+                        cityStats.cityWaterOutput = waterManager.GetTotalWaterOutput();
+                    }
+                }
+            }
         }
 
         zoneManager.addZonedTileToList(new Vector2(cellData.x, cellData.y), zoneType);
 
-        PowerPlant powerPlant = cellData.powerPlant;
-        if (powerPlant != null)
+        // Restore forest state (sync ForestMap with saved data; clears initial gen forests where save has None)
+        if (forestManager != null)
         {
-            cityStats.RegisterPowerPlant(powerPlant);
+            Forest.ForestType parsedForestType = Forest.ForestType.None;
+            if (!string.IsNullOrEmpty(cellData.forestType))
+                System.Enum.TryParse(cellData.forestType, out parsedForestType);
+            forestManager.RestoreForestAt(cellData.x, cellData.y, parsedForestType, cellData.forestPrefabName, updateStats: false);
         }
     }
 
     /// <summary>
     /// Restores the grid from saved data, re-placing all zones and buildings and recalculating available zoned sections.
+    /// Two-pass: first restores all cell data (positions, attributes), then places tiles so building placement
+    /// uses correct transformPosition and runtime references are not overwritten.
     /// </summary>
     /// <param name="gridData">List of serialized cell data from a save file.</param>
     public void RestoreGrid(List<CellData> gridData)
     {
         foreach (CellData cellData in gridData)
         {
-            GameObject cell = gridArray[cellData.x, cellData.y];
-
-            RestoreGridCell(cellData, cell);
+            cellArray[cellData.x, cellData.y].SetCellData(cellData);
         }
+
+        foreach (CellData cellData in gridData)
+        {
+            GameObject cell = gridArray[cellData.x, cellData.y];
+            RestoreGridCellVisuals(cellData, cell);
+        }
+
+        if (forestManager != null)
+            forestManager.RefreshForestStatistics();
 
         InvalidateRoadCache();
         onGridRestored?.Invoke();

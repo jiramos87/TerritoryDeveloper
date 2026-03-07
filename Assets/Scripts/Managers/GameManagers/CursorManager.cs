@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using Territory.Core;
 using Territory.Zones;
+using Territory.Buildings;
 
 namespace Territory.UI
 {
@@ -169,6 +170,9 @@ public class CursorManager : MonoBehaviour
                 else
                 {
                     Vector2 newWorldPos = gridManager.GetBuildingPlacementWorldPosition(gridPosition, buildingSize);
+                    IBuilding selectedBuilding = uiManager?.GetSelectedBuilding();
+                    if (selectedBuilding is WaterPlant)
+                        newWorldPos.y += gridManager.tileHeight / 4f;
                     previewInstance.transform.position = newWorldPos;
                 }
             }

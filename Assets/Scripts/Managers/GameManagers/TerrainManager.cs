@@ -71,6 +71,33 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public GameObject eastCliffWallPrefab;
     #endregion
 
+    /// <summary>
+    /// Finds a terrain prefab (slope, water slope, sea level water) by name. Used when restoring saved games.
+    /// </summary>
+    public GameObject FindTerrainPrefabByName(string prefabName)
+    {
+        if (string.IsNullOrEmpty(prefabName)) return null;
+        string trimmed = prefabName.Replace("(Clone)", "");
+
+        GameObject[] terrainPrefabs = new[]
+        {
+            northSlopePrefab, southSlopePrefab, eastSlopePrefab, westSlopePrefab,
+            northEastSlopePrefab, northWestSlopePrefab, southEastSlopePrefab, southWestSlopePrefab,
+            northEastUpslopePrefab, northWestUpslopePrefab, southEastUpslopePrefab, southWestUpslopePrefab,
+            northSlopeWaterPrefab, southSlopeWaterPrefab, eastSlopeWaterPrefab, westSlopeWaterPrefab,
+            northEastSlopeWaterPrefab, northWestSlopeWaterPrefab, southEastSlopeWaterPrefab, southWestSlopeWaterPrefab,
+            northEastUpslopeWaterPrefab, northWestUpslopeWaterPrefab, southEastUpslopeWaterPrefab, southWestUpslopeWaterPrefab,
+            seaLevelWaterPrefab, southCliffWallPrefab, eastCliffWallPrefab
+        };
+
+        foreach (GameObject prefab in terrainPrefabs)
+        {
+            if (prefab != null && prefab.name == trimmed)
+                return prefab;
+        }
+        return null;
+    }
+
     #region Configuration
     public const int MIN_HEIGHT = 0;
     public const int MAX_HEIGHT = 5;
@@ -78,7 +105,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     // Sorting order constants for different object types
     public const int TERRAIN_BASE_ORDER = 0;
-    public const int SLOPE_OFFSET = -1;
+    /// <summary>Offset for land slope sorting. 1 = slightly in front of terrain so slopes (especially east-facing) render correctly.</summary>
+    public const int SLOPE_OFFSET = 1;
     public const int BUILDING_OFFSET = 10; // Buildings should be above terrain
     public const int EFFECT_OFFSET = 30; // Effects should be above terrain
     public const int DEPTH_MULTIPLIER = 100;
@@ -128,6 +156,48 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         heightMap = new HeightMap(gridManager.width, gridManager.height);
         LoadInitialHeightMap();
         ApplyHeightMapToGrid();
+    }
+
+    /// <summary>
+    /// Restores heightMap from saved grid data. Call before RestoreGrid so terrain/water systems use correct heights.
+    /// </summary>
+    public void RestoreHeightMapFromGridData(List<CellData> gridData)
+    {
+        if (gridData == null || gridManager == null) return;
+
+        if (heightMap == null || heightMap.Width != gridManager.width || heightMap.Height != gridManager.height)
+            heightMap = new HeightMap(gridManager.width, gridManager.height);
+
+        foreach (CellData cellData in gridData)
+        {
+            if (heightMap.IsValidPosition(cellData.x, cellData.y))
+                heightMap.SetHeight(cellData.x, cellData.y, cellData.height);
+        }
+    }
+
+    /// <summary>
+    /// Applies restored heightMap positions to all cell GameObjects. Call after RestoreHeightMapFromGridData
+    /// and before RestoreGrid so buildings (e.g. water plant) are parented to correctly positioned cells.
+    /// </summary>
+    public void ApplyRestoredPositionsToGrid()
+    {
+        if (heightMap == null || gridManager == null) return;
+
+        for (int x = 0; x < gridManager.width; x++)
+        {
+            for (int y = 0; y < gridManager.height; y++)
+            {
+                Cell cell = gridManager.GetCell(x, y);
+                if (cell == null) continue;
+                if (!heightMap.IsValidPosition(x, y)) continue;
+
+                int h = heightMap.GetHeight(x, y);
+                gridManager.SetCellHeight(new Vector2(x, y), h);
+                Vector2 pos = gridManager.GetWorldPositionVector(x, y, h);
+                cell.gameObject.transform.position = pos;
+                cell.transformPosition = pos;
+            }
+        }
     }
 
     /// <summary>
@@ -534,6 +604,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             );
             slope.transform.SetParent(cell.gameObject.transform);
 
+            cell.prefabName = slopePrefab.name;
+
             SpriteRenderer sr = slope.GetComponent<SpriteRenderer>();
             if (sr != null)
             {
@@ -573,6 +645,72 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         }
 
         PlaceSeaLevelWater(x, y);
+    }
+
+    /// <summary>
+    /// Restores water slopes on land cells adjacent to water. Call after RestoreGrid during Load.
+    /// Skips cells with buildings. Does not modify water cells (WaterManager already placed them).
+    /// </summary>
+    public void RestoreWaterSlopesFromHeightMap()
+    {
+        if (heightMap == null || gridManager == null) return;
+
+        for (int x = 0; x < gridManager.width; x++)
+        {
+            for (int y = 0; y < gridManager.height; y++)
+            {
+                if (heightMap.GetHeight(x, y) != SEA_LEVEL) continue;
+
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        if (dx == 0 && dy == 0) continue;
+
+                        int nx = x + dx, ny = y + dy;
+                        if (!heightMap.IsValidPosition(nx, ny) || heightMap.GetHeight(nx, ny) == SEA_LEVEL)
+                            continue;
+
+                        if (gridManager.IsCellOccupiedByBuilding(nx, ny)) continue;
+                        Cell neighborCell = gridManager.GetCell(nx, ny);
+                        if (neighborCell != null && (neighborCell.zoneType != Zone.ZoneType.Grass || neighborCell.HasForest())) continue;
+
+                        GameObject waterSlopePrefab = DetermineWaterSlopePrefab(nx, ny);
+                        if (waterSlopePrefab != null)
+                            PlaceWaterSlope(nx, ny, waterSlopePrefab);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Restores land slopes and water slopes for terrain-only cells. Call after RestoreGrid during Load.
+    /// Skips cells with buildings, roads, or zoning.
+    /// </summary>
+    public void RestoreTerrainSlopesFromHeightMap()
+    {
+        if (heightMap == null || gridManager == null) return;
+
+        for (int x = 0; x < gridManager.width; x++)
+        {
+            for (int y = 0; y < gridManager.height; y++)
+            {
+                if (heightMap.GetHeight(x, y) == SEA_LEVEL) continue;
+
+                Cell cell = gridManager.GetCell(x, y);
+                if (cell == null) continue;
+                if (gridManager.IsCellOccupiedByBuilding(x, y)) continue;
+                if (cell.zoneType != Zone.ZoneType.Grass) continue;
+                if (cell.HasForest()) continue;
+
+                bool adjacentWater = IsAdjacentToWaterHeight(x, y);
+                bool requiresSlope = RequiresSlope(x, y, heightMap.GetHeight(x, y));
+                if (!adjacentWater && !requiresSlope) continue;
+
+                RestoreTerrainForCell(x, y);
+            }
+        }
     }
 
     private void PlaceSeaLevelWater(int x, int y)
@@ -628,6 +766,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             Quaternion.identity
         );
         slope.transform.SetParent(cell.gameObject.transform, true);
+
+        updatedCell.prefabName = waterSlopePrefab.name;
 
         int sortingOrder = CalculateWaterSlopeSortingOrder(x, y);
         SpriteRenderer sr = slope.GetComponent<SpriteRenderer>();

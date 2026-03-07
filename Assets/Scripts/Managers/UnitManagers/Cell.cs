@@ -319,12 +319,49 @@ public class Cell : MonoBehaviour
 
     #region Save/Load Data Methods
     /// <summary>
-    /// Get cell data for saving
+    /// Get cell data for saving. Copies all serializable state from this Cell to CellData.
     /// </summary>
     public CellData GetCellData()
     {
         CellData cellData = new CellData(x, y, height);
-        cellData.SetDefaults();
+
+        // Roads
+        cellData.hasRoadAtLeft = hasRoadAtLeft;
+        cellData.hasRoadAtTop = hasRoadAtTop;
+        cellData.hasRoadAtRight = hasRoadAtRight;
+        cellData.hasRoadAtBottom = hasRoadAtBottom;
+
+        // Building
+        cellData.population = population;
+        cellData.powerOutput = powerOutput;
+        cellData.powerConsumption = powerConsumption;
+        cellData.waterConsumption = waterConsumption;
+        cellData.buildingType = buildingType ?? "Grass";
+        cellData.buildingSize = buildingSize;
+        cellData.happiness = happiness;
+        cellData.prefabName = prefabName ?? "";
+        cellData.zoneType = zoneType.ToString();
+        cellData.occupiedBuildingName = GetBuildingName();
+        if (string.IsNullOrEmpty(cellData.occupiedBuildingName) && prefabName != null)
+            cellData.occupiedBuildingName = prefabName;
+        cellData.isPivot = isPivot;
+
+        // Grid (x, y, height from constructor)
+        cellData.transformPosition = transformPosition;
+        cellData.sortingOrder = sortingOrder;
+
+        // Forest
+        cellData.forestType = forestType.ToString();
+        cellData.forestPrefabName = forestPrefabName ?? "";
+        cellData.hasTree = forestType != Forest.ForestType.None;
+        cellData.treePrefabName = forestPrefabName ?? "";
+
+        // Desirability
+        cellData.desirability = desirability;
+        cellData.closeForestCount = closeForestCount;
+        cellData.closeWaterCount = closeWaterCount;
+
+        // Interstate
         cellData.isInterstate = isInterstate;
 
         return cellData;

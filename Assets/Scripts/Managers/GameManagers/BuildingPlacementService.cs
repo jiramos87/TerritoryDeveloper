@@ -269,6 +269,8 @@ namespace Territory.Core
 
             Vector2 pivotGridPos = new Vector2(gridPos.x, gridPos.y);
             Vector2 position = grid.GetBuildingPlacementWorldPosition(pivotGridPos, buildingSize);
+            if (iBuilding is WaterPlant)
+                position.y += grid.tileHeight / 4f;
 
             Vector3 worldPosition = new Vector3(position.x, position.y, 0f);
             GameObject building = Object.Instantiate(buildingPrefab, worldPosition, Quaternion.identity);
@@ -286,12 +288,42 @@ namespace Territory.Core
         {
             Cell pivotCell = grid.cellArray[(int)gridPos.x, (int)gridPos.y];
             Vector2 worldPos = grid.GetBuildingPlacementWorldPosition(gridPos, buildingSize);
+            if (prefab.GetComponent<WaterPlant>() != null)
+                worldPos.y += grid.tileHeight / 4f;
 
             Vector3 position = new Vector3(worldPos.x, worldPos.y, 0f);
             GameObject building = Object.Instantiate(prefab, position, Quaternion.identity);
             building.transform.SetParent(pivotCell.gameObject.transform);
 
             sortingService.SetZoneBuildingSortingOrder(building, (int)gridPos.x, (int)gridPos.y, buildingSize);
+        }
+
+        /// <summary>
+        /// Restores a multi-cell building (PowerPlant, WaterPlant) from save. Uses correct position and sorting order.
+        /// Call instead of PlaceZoneBuildingTile for buildingSize > 1 to fix grass-over-building render bug.
+        /// </summary>
+        public void RestoreBuildingTile(GameObject prefab, Vector2 gridPos, int buildingSize)
+        {
+            LoadBuildingTile(prefab, gridPos, buildingSize);
+
+            Cell pivotCell = grid.cellArray[(int)gridPos.x, (int)gridPos.y];
+            GameObject building = pivotCell.GetComponentInChildren<PowerPlant>()?.gameObject
+                ?? pivotCell.GetComponentInChildren<WaterPlant>()?.gameObject;
+
+            if (building == null) return;
+
+            PowerPlant powerPlant = building.GetComponent<PowerPlant>();
+            WaterPlant waterPlant = building.GetComponent<WaterPlant>();
+
+            if (powerPlant != null)
+                grid.cityStats.RegisterPowerPlant(powerPlant);
+            if (waterPlant != null && grid.waterManager != null)
+            {
+                grid.waterManager.RegisterWaterPlant(waterPlant);
+                grid.cityStats.cityWaterOutput = grid.waterManager.GetTotalWaterOutput();
+            }
+
+            UpdateBuildingTilesAttributes(gridPos, building, buildingSize, powerPlant, waterPlant, prefab);
         }
 
         /// <summary>
@@ -308,6 +340,8 @@ namespace Territory.Core
 
             Vector2 pivotGridPos = new Vector2(gridPos.x, gridPos.y);
             Vector2 position = grid.GetBuildingPlacementWorldPosition(pivotGridPos, buildingSize);
+            if (isWaterPlant)
+                position.y += grid.tileHeight / 4f;
             Vector3 worldPosition = new Vector3(position.x, position.y, 0f);
             GameObject building = Object.Instantiate(buildingTemplate.Prefab, worldPosition, Quaternion.identity);
             building.transform.SetParent(grid.gridArray[(int)pivotGridPos.x, (int)pivotGridPos.y].transform);
@@ -366,6 +400,16 @@ namespace Territory.Core
 
                         bool isPivot = (gridX == gridPos.x && gridY == gridPos.y);
                         grid.DestroyCellChildren(gridCell, new Vector2(gridX, gridY), isPivot ? building : null);
+                        if (buildingSize > 1)
+                        {
+                            for (int i = gridCell.transform.childCount - 1; i >= 0; i--)
+                            {
+                                Transform child = gridCell.transform.GetChild(i);
+                                Zone zone = child.GetComponent<Zone>();
+                                if (zone != null && zone.zoneType == Zone.ZoneType.Grass)
+                                    Object.Destroy(child.gameObject);
+                            }
+                        }
                         if (isPivot)
                             SetCellAsBuildingPivot(cell);
                     }

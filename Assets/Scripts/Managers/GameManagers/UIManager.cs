@@ -709,16 +709,17 @@ public class UIManager : MonoBehaviour
     public void OnSaveGameButtonClicked()
     {
         gameManager.SaveGame(saveName);
-        // Show the game saved text for 3 seconds
-
-        GameSavedText.gameObject.SetActive(true);
-
-        Invoke("HideGameSavedText", 3f);
+        if (GameSavedText != null)
+        {
+            GameSavedText.gameObject.SetActive(true);
+            Invoke("HideGameSavedText", 3f);
+        }
     }
 
     public void HideGameSavedText()
     {
-        GameSavedText.gameObject.SetActive(false);
+        if (GameSavedText != null)
+            GameSavedText.gameObject.SetActive(false);
     }
 
     public void OnLoadButtonClicked()

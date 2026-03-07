@@ -4,6 +4,7 @@ using Territory.Core;
 using Territory.Terrain;
 using Territory.Forests;
 using Territory.Zones;
+using Territory.Buildings;
 using Territory.Roads;
 using Territory.Economy;
 using Territory.UI;
@@ -179,6 +180,56 @@ public class GeographyManager : MonoBehaviour
 
         ReCalculateSortingOrderBasedOnHeight();
     }
+
+    /// <summary>
+    /// Re-initializes geography after ResetGrid (New Game). Applies terrain, water, interstate, forests,
+    /// and recalculates sorting order. Call after gridManager.ResetGrid().
+    /// </summary>
+    public void ReinitializeGeographyForNewGame()
+    {
+        if (terrainManager != null)
+            terrainManager.InitializeHeightMap();
+
+        if (waterManager != null)
+            waterManager.InitializeWaterMap();
+
+        if (interstateManager != null)
+        {
+            const int maxInterstateAttempts = 3;
+            for (int attempt = 0; attempt < maxInterstateAttempts; attempt++)
+            {
+                interstateManager.GenerateAndPlaceInterstate();
+                if (interstateManager.InterstatePositions != null && interstateManager.InterstatePositions.Count >= 2)
+                    break;
+            }
+        }
+
+        if (forestManager != null)
+            forestManager.InitializeForestMap();
+
+        ReCalculateSortingOrderBasedOnHeight();
+
+        if (regionalMapManager != null)
+            regionalMapManager.PlaceBorderSigns();
+
+        if (interstateManager != null && GameNotificationManager.Instance != null)
+        {
+            if (interstateManager.InterstatePositions != null && interstateManager.InterstatePositions.Count >= 2)
+            {
+                CityStats cityStats = FindObjectOfType<CityStats>();
+                string cityName = (cityStats != null && !string.IsNullOrEmpty(cityStats.cityName)) ? cityStats.cityName : "your city";
+                GameNotificationManager.Instance.PostNotification(
+                    "Welcome to " + cityName + "! An Interstate Highway crosses your territory. Build a road connecting to it to start developing your city.",
+                    GameNotificationManager.NotificationType.Info,
+                    8f
+                );
+            }
+            else
+            {
+                DebugHelper.LogWarning("GeographyManager: Interstate could not be placed (no valid path). Game continues without interstate.");
+            }
+        }
+    }
     #endregion
 
     #region Terrain Setup
@@ -312,6 +363,13 @@ public class GeographyManager : MonoBehaviour
                     else if (zone.zoneCategory == Zone.ZoneCategory.Building) order = terrainOrder + 10;
                     else order = terrainOrder;
                 }
+                else if (child.GetComponent<PowerPlant>() != null || child.GetComponent<WaterPlant>() != null)
+                {
+                    if (cell.buildingSize > 1)
+                        order = GetMultiCellBuildingMaxSortingOrder(x, y, cell.buildingSize);
+                    else
+                        order = terrainOrder + 10;
+                }
                 else
                     order = terrainOrder;
             }
@@ -378,10 +436,10 @@ public class GeographyManager : MonoBehaviour
                     maxBackAdjacentContentOrder = contentOrder;
             }
         }
-        // Apply floor first so we're always in front of back south-east tiles
+        // Apply floor first so we're always in front of back south-east tiles (use +2 buffer to avoid grass overlapping building)
         if (maxBackAdjacentContentOrder != int.MinValue)
         {
-            int orderInFrontOfBack = maxBackAdjacentContentOrder + 1;
+            int orderInFrontOfBack = maxBackAdjacentContentOrder + 2;
             if (orderInFrontOfBack > maxOrder)
                 maxOrder = orderInFrontOfBack;
         }
@@ -446,6 +504,14 @@ public class GeographyManager : MonoBehaviour
                     {
                         newSortingOrder = terrainManager.CalculateWaterSlopeSortingOrder(x, y);
                     }
+                    else if (terrainManager != null && terrainManager.IsSeaLevelWaterObject(obj))
+                    {
+                        newSortingOrder = -(y * gridManager.width + x + 110000);
+                    }
+                    else if (terrainManager != null && terrainManager.IsLandSlopeObject(obj))
+                    {
+                        newSortingOrder = terrainManager.CalculateSlopeSortingOrder(x, y, cellComponent.height);
+                    }
                     else
                     {
                         int terrainOrder = terrainManager != null
@@ -460,7 +526,9 @@ public class GeographyManager : MonoBehaviour
                             Zone zone = obj.GetComponent<Zone>();
                             if (zone != null)
                             {
-                                if (zone.zoneCategory == Zone.ZoneCategory.Zoning)
+                                if (zone.zoneType == Zone.ZoneType.Water)
+                                    newSortingOrder = -(y * gridManager.width + x + 110000);
+                                else if (zone.zoneCategory == Zone.ZoneCategory.Zoning)
                                     newSortingOrder = terrainOrder + 0;
                                 else if (zone.zoneType == Zone.ZoneType.Road)
                                     newSortingOrder = terrainOrder + 3;
@@ -474,6 +542,13 @@ public class GeographyManager : MonoBehaviour
                                 }
                                 else
                                     newSortingOrder = terrainOrder;
+                            }
+                            else if (obj.GetComponent<PowerPlant>() != null || obj.GetComponent<WaterPlant>() != null)
+                            {
+                                if (cellComponent.buildingSize > 1)
+                                    newSortingOrder = GetMultiCellBuildingMaxSortingOrder(x, y, cellComponent.buildingSize);
+                                else
+                                    newSortingOrder = terrainOrder + 10;
                             }
                             else
                             {
