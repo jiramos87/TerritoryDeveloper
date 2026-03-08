@@ -73,7 +73,8 @@ public class GameNotificationManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            // DontDestroyOnLoad only works for root GameObjects
+            DontDestroyOnLoad(transform.root.gameObject);
             InitializeComponents();
         }
         else

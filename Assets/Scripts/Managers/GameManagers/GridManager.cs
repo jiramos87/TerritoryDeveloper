@@ -74,6 +74,8 @@ public class GridManager : MonoBehaviour, IGridManager
     private bool[,] chunkActiveState;
     private int chunksX, chunksY;
     private Camera cachedCamera;
+    /// <summary>When > 0, skip UpdateVisibility to avoid culling chunks incorrectly right after Load.</summary>
+    private int skipChunkCullingFramesRemaining = 0;
     #endregion
 
     #region Initialization
@@ -90,18 +92,9 @@ public class GridManager : MonoBehaviour, IGridManager
         if (height <= 0) height = 64;
 
         if (zoneManager == null)
-        {
             zoneManager = FindObjectOfType<ZoneManager>();
-            if (zoneManager != null)
-            {
-                zoneManager.InitializeZonePrefabs();
-            }
-        }
-
-        if (zoneManager == null)
-        {
+        if (zoneManager != null)
             zoneManager.InitializeZonePrefabs();
-        }
 
         if (uiManager == null)
         {
@@ -134,10 +127,9 @@ public class GridManager : MonoBehaviour, IGridManager
         }
 
         if (roadManager == null)
-        {
             roadManager = FindObjectOfType<RoadManager>();
+        if (roadManager != null)
             roadManager.Initialize();
-        }
 
         if (demandManager == null)
         {
@@ -180,7 +172,8 @@ public class GridManager : MonoBehaviour, IGridManager
         roadCache = new RoadCacheService(this);
     }
 
-    void CreateGrid()
+    /// <param name="createBaseTiles">When false, cells are created without grass tiles (for Load). RestoreGrid will place all tiles from save.</param>
+    void CreateGrid(bool createBaseTiles = true)
     {
         if (!zoneManager)
         {
@@ -220,9 +213,13 @@ public class GridManager : MonoBehaviour, IGridManager
 
                 CellData cellData = new CellData(x, y, 1);
                 GameObject tilePrefab = zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass, 1);
-
-                cellData.prefab = tilePrefab;
-                cellData.prefabName = tilePrefab.name;
+                if (tilePrefab == null && zoneManager.grassPrefabs != null && zoneManager.grassPrefabs.Count > 0)
+                    tilePrefab = zoneManager.grassPrefabs[0];
+                if (tilePrefab != null)
+                {
+                    cellData.prefab = tilePrefab;
+                    cellData.prefabName = tilePrefab.name;
+                }
 
                 Cell cellComponent = gridCell.AddComponent<Cell>();
                 cellComponent.SetCellData(cellData);
@@ -230,18 +227,21 @@ public class GridManager : MonoBehaviour, IGridManager
                 gridArray[x, y] = gridCell;
                 cellArray[x, y] = cellComponent;
 
-                GameObject zoneTile = Instantiate(
-                    tilePrefab,
-                    gridCell.transform.position,
-                    Quaternion.identity
-                );
-                SetTileSortingOrder(zoneTile, Zone.ZoneType.Grass);
-
-                Zone zoneComponent = zoneTile.GetComponent<Zone>();
-                if (zoneComponent == null)
+                if (createBaseTiles)
                 {
-                    zoneComponent = zoneTile.AddComponent<Zone>();
-                    zoneComponent.zoneType = Zone.ZoneType.Grass;
+                    GameObject zoneTile = Instantiate(
+                        tilePrefab,
+                        gridCell.transform.position,
+                        Quaternion.identity
+                    );
+                    SetTileSortingOrder(zoneTile, Zone.ZoneType.Grass);
+
+                    Zone zoneComponent = zoneTile.GetComponent<Zone>();
+                    if (zoneComponent == null)
+                    {
+                        zoneComponent = zoneTile.AddComponent<Zone>();
+                        zoneComponent.zoneType = Zone.ZoneType.Grass;
+                    }
                 }
             }
         }
@@ -332,6 +332,11 @@ public class GridManager : MonoBehaviour, IGridManager
     void LateUpdate()
     {
         if (!isInitialized || chunkObjects == null) return;
+        if (skipChunkCullingFramesRemaining > 0)
+        {
+            skipChunkCullingFramesRemaining--;
+            return;
+        }
         chunkCulling?.UpdateVisibility();
     }
     #endregion
@@ -1352,6 +1357,26 @@ public class GridManager : MonoBehaviour, IGridManager
     #endregion
 
     #region Save and Restore
+    /// <summary>Enable in Inspector or set to true to log RestoreGridCellVisuals details (roads, buildings, prefab misses).</summary>
+    [Header("Load Debug")]
+    [SerializeField] private bool restoreGridDebugLogs = false;
+
+    /// <summary>
+    /// Sets sorting order on a grass tile using grid coordinates directly, avoiding GetGridPosition
+    /// which cannot account for height offset and would parent the tile to the wrong cell at h > 1.
+    /// </summary>
+    void SetGrassSortingOrderDirect(GameObject tile, int x, int y, int height, Cell cell)
+    {
+        if (terrainManager != null)
+        {
+            int sortingOrder = terrainManager.CalculateTerrainSortingOrder(x, y, height);
+            SpriteRenderer sr = tile.GetComponent<SpriteRenderer>();
+            if (sr != null)
+                sr.sortingOrder = sortingOrder;
+            cell.SetCellInstanceSortingOrder(sortingOrder);
+        }
+    }
+
     void RestoreGridCellVisuals(CellData cellData, GameObject cell)
     {
         Zone.ZoneType zoneType = zoneManager.GetZoneTypeFromZoneTypeString(cellData.zoneType);
@@ -1359,46 +1384,153 @@ public class GridManager : MonoBehaviour, IGridManager
         if (zoneType == Zone.ZoneType.Water && waterManager != null)
         {
             waterManager.PlaceWater(cellData.x, cellData.y);
+            if (restoreGridDebugLogs)
+                Debug.Log($"[RestoreGrid] Water ({cellData.x},{cellData.y})");
+            // Water cells don't need the zoneType list or forest restore below
+            return;
         }
-        else
-        {
-            GameObject tilePrefab = zoneManager.FindPrefabByName(cellData.prefabName);
-            if (tilePrefab == null && terrainManager != null)
-                tilePrefab = terrainManager.FindTerrainPrefabByName(cellData.prefabName);
-            if (tilePrefab != null)
-            {
-                bool isMultiCellUtilityBuilding = cellData.buildingSize > 1 && cellData.isPivot
-                    && (tilePrefab.GetComponent<PowerPlant>() != null || tilePrefab.GetComponent<WaterPlant>() != null);
 
-                if (isMultiCellUtilityBuilding)
+        if (zoneType == Zone.ZoneType.Grass)
+        {
+            // Slope cells: place from saved prefab (don't rely on ApplyHeightMapToGrid which may skip edge cells)
+            if (!string.IsNullOrEmpty(cellData.prefabName) && cellData.prefabName.Contains("Slope"))
+            {
+                GameObject slopePrefab = terrainManager != null ? terrainManager.FindTerrainPrefabByName(cellData.prefabName) : null;
+                if (slopePrefab != null && terrainManager != null)
                 {
-                    placementService.RestoreBuildingTile(tilePrefab, new Vector2(cellData.x, cellData.y), cellData.buildingSize);
+                    terrainManager.PlaceSlopeFromPrefab(cellData.x, cellData.y, slopePrefab, cellData.height);
                 }
-                else if (ZoneManager.IsZoningType(zoneType))
+                else
                 {
-                    zoneManager.RestoreZoneTile(tilePrefab, cell, zoneType);
-                }
-                else if (!(cellData.buildingSize > 1 && !cellData.isPivot))
-                {
-                    zoneManager.PlaceZoneBuildingTile(tilePrefab, cell, cellData.buildingSize);
-                    Cell cellComponent = cellArray[cellData.x, cellData.y];
-                    PowerPlant powerPlant = cell.GetComponentInChildren<PowerPlant>();
-                    WaterPlant waterPlant = cell.GetComponentInChildren<WaterPlant>();
-                    UpdatePlacedBuildingCellAttributes(cellComponent, cellData.buildingSize, powerPlant, waterPlant, tilePrefab, zoneType, null);
-                    if (powerPlant != null)
-                        cityStats.RegisterPowerPlant(powerPlant);
-                    if (waterPlant != null && waterManager != null)
+                    Debug.LogWarning($"[RestoreGrid] Slope prefab NOT FOUND for ({cellData.x},{cellData.y}) prefabName=\"{cellData.prefabName}\" - using grass fallback");
+                    GameObject fallbackGrass = zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass, 1)
+                        ?? (zoneManager.grassPrefabs != null && zoneManager.grassPrefabs.Count > 0 ? zoneManager.grassPrefabs[0] : null);
+                    if (fallbackGrass != null)
                     {
-                        waterManager.RegisterWaterPlant(waterPlant);
-                        cityStats.cityWaterOutput = waterManager.GetTotalWaterOutput();
+                        for (int i = cell.transform.childCount - 1; i >= 0; i--)
+                            Destroy(cell.transform.GetChild(i).gameObject);
+                        Cell cc = cellArray[cellData.x, cellData.y];
+                        GameObject zoneTile = Instantiate(fallbackGrass, cc.transformPosition, Quaternion.identity);
+                        zoneTile.transform.SetParent(cell.transform);
+                        SetGrassSortingOrderDirect(zoneTile, cellData.x, cellData.y, cellData.height, cc);
+                        Zone z = zoneTile.GetComponent<Zone>();
+                        if (z == null) { z = zoneTile.AddComponent<Zone>(); z.zoneType = Zone.ZoneType.Grass; }
                     }
+                }
+                if (forestManager != null)
+                {
+                    Forest.ForestType parsedForestType = Forest.ForestType.None;
+                    if (!string.IsNullOrEmpty(cellData.forestType))
+                        System.Enum.TryParse(cellData.forestType, out parsedForestType);
+                    forestManager.RestoreForestAt(cellData.x, cellData.y, parsedForestType, cellData.forestPrefabName, updateStats: false);
+                }
+                return;
+            }
+
+            // Replace CreateGrid grass with saved prefab (or place if missing).
+            // Never destroy without placing: only destroy when we have a valid prefab to place.
+            GameObject grassPrefab = terrainManager != null ? terrainManager.FindTerrainPrefabByName(cellData.prefabName) : null;
+            if (grassPrefab == null)
+                grassPrefab = zoneManager.FindPrefabByName(cellData.prefabName);
+            if (grassPrefab == null)
+                grassPrefab = zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass, 1);
+            if (grassPrefab == null)
+                grassPrefab = zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass, Mathf.Clamp(cellData.height, 1, 5));
+            if (grassPrefab == null && zoneManager.grassPrefabs != null && zoneManager.grassPrefabs.Count > 0)
+                grassPrefab = zoneManager.grassPrefabs[0];
+
+            if (grassPrefab != null)
+            {
+                // Destroy existing base tile only when we have a valid prefab to place
+                for (int i = cell.transform.childCount - 1; i >= 0; i--)
+                    Destroy(cell.transform.GetChild(i).gameObject);
+
+                Cell cellComponent = cellArray[cellData.x, cellData.y];
+                GameObject zoneTile = Instantiate(grassPrefab, cellComponent.transformPosition, Quaternion.identity);
+                zoneTile.transform.SetParent(cell.transform);
+                SetGrassSortingOrderDirect(zoneTile, cellData.x, cellData.y, cellData.height, cellComponent);
+
+                Zone zoneComponent = zoneTile.GetComponent<Zone>();
+                if (zoneComponent == null)
+                {
+                    zoneComponent = zoneTile.AddComponent<Zone>();
+                    zoneComponent.zoneType = Zone.ZoneType.Grass;
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[RestoreGrid] Grass prefab NOT FOUND for ({cellData.x},{cellData.y}) height={cellData.height} prefabName=\"{cellData.prefabName}\" - keeping CreateGrid base tile");
+            }
+
+            // Restore forest on top of grass
+            if (forestManager != null)
+            {
+                Forest.ForestType parsedForestType = Forest.ForestType.None;
+                if (!string.IsNullOrEmpty(cellData.forestType))
+                    System.Enum.TryParse(cellData.forestType, out parsedForestType);
+                forestManager.RestoreForestAt(cellData.x, cellData.y, parsedForestType, cellData.forestPrefabName, updateStats: false);
+            }
+            return;
+        }
+
+        GameObject tilePrefab = zoneManager.FindPrefabByName(cellData.prefabName);
+        if (tilePrefab == null && terrainManager != null)
+            tilePrefab = terrainManager.FindTerrainPrefabByName(cellData.prefabName);
+
+        // Fallback for Road: use default road prefab when saved prefab not found (avoids black squares)
+        if (tilePrefab == null && zoneType == Zone.ZoneType.Road && roadManager != null)
+        {
+            var roadPrefabs = roadManager.GetRoadPrefabs();
+            if (roadPrefabs != null && roadPrefabs.Count > 0)
+                tilePrefab = roadPrefabs[0];
+        }
+
+        if (tilePrefab == null)
+        {
+            Debug.LogWarning($"[RestoreGrid] Prefab NOT FOUND for ({cellData.x},{cellData.y}) zoneType={cellData.zoneType} prefabName=\"{cellData.prefabName}\"");
+        }
+
+        if (tilePrefab != null)
+        {
+            bool isMultiCellUtilityBuilding = cellData.buildingSize > 1 && cellData.isPivot
+                && (tilePrefab.GetComponent<PowerPlant>() != null || tilePrefab.GetComponent<WaterPlant>() != null);
+
+            if (isMultiCellUtilityBuilding)
+            {
+                if (restoreGridDebugLogs)
+                    Debug.Log($"[RestoreGrid] Building ({cellData.x},{cellData.y}) prefab={cellData.prefabName} size={cellData.buildingSize}");
+                placementService.RestoreBuildingTile(tilePrefab, new Vector2(cellData.x, cellData.y), cellData.buildingSize);
+            }
+            else if (zoneType == Zone.ZoneType.Road && roadManager != null)
+            {
+                if (restoreGridDebugLogs)
+                    Debug.Log($"[RestoreGrid] Road ({cellData.x},{cellData.y}) prefab={cellData.prefabName} interstate={cellData.isInterstate} height={cellData.height}");
+                roadManager.RestoreRoadTile(new Vector2Int(cellData.x, cellData.y), tilePrefab, cellData.isInterstate);
+            }
+            else if (ZoneManager.IsZoningType(zoneType))
+            {
+                zoneManager.RestoreZoneTile(tilePrefab, cell, zoneType);
+            }
+            else if (!(cellData.buildingSize > 1 && !cellData.isPivot))
+            {
+                zoneManager.PlaceZoneBuildingTile(tilePrefab, cell, cellData.buildingSize);
+                Cell cellComponent = cellArray[cellData.x, cellData.y];
+                PowerPlant powerPlant = cell.GetComponentInChildren<PowerPlant>();
+                WaterPlant waterPlant = cell.GetComponentInChildren<WaterPlant>();
+                UpdatePlacedBuildingCellAttributes(cellComponent, cellData.buildingSize, powerPlant, waterPlant, tilePrefab, zoneType, null);
+                if (powerPlant != null)
+                    cityStats.RegisterPowerPlant(powerPlant);
+                if (waterPlant != null && waterManager != null)
+                {
+                    waterManager.RegisterWaterPlant(waterPlant);
+                    cityStats.cityWaterOutput = waterManager.GetTotalWaterOutput();
                 }
             }
         }
 
         zoneManager.addZonedTileToList(new Vector2(cellData.x, cellData.y), zoneType);
 
-        // Restore forest state (sync ForestMap with saved data; clears initial gen forests where save has None)
+        // Restore forest state
         if (forestManager != null)
         {
             Forest.ForestType parsedForestType = Forest.ForestType.None;
@@ -1416,13 +1548,24 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <param name="gridData">List of serialized cell data from a save file.</param>
     public void RestoreGrid(List<CellData> gridData)
     {
-        foreach (CellData cellData in gridData)
-        {
-            cellArray[cellData.x, cellData.y].SetCellData(cellData);
-        }
+        if (gridData == null || cellArray == null) return;
 
         foreach (CellData cellData in gridData)
         {
+            if (cellData.x < 0 || cellData.x >= width || cellData.y < 0 || cellData.y >= height)
+                continue;
+            cellArray[cellData.x, cellData.y].SetCellData(cellData);
+        }
+
+        int roadsInSave = 0;
+        int buildingsInSave = 0;
+        foreach (CellData cellData in gridData)
+        {
+            if (cellData.x < 0 || cellData.x >= width || cellData.y < 0 || cellData.y >= height)
+                continue;
+            if (cellData.zoneType == "Road") roadsInSave++;
+            if (cellData.buildingSize > 1 && cellData.isPivot && (cellData.buildingType == "PowerPlant" || cellData.buildingType == "WaterPlant")) buildingsInSave++;
+
             GameObject cell = gridArray[cellData.x, cellData.y];
             RestoreGridCellVisuals(cellData, cell);
         }
@@ -1433,6 +1576,54 @@ public class GridManager : MonoBehaviour, IGridManager
         InvalidateRoadCache();
         onGridRestored?.Invoke();
         zoneManager.CalculateAvailableSquareZonedSections();
+
+        // Post-load diagnostic: count empty cells and safety net
+        RunPostLoadDiagnosticAndSafetyNet();
+
+        skipChunkCullingFramesRemaining = 3;
+
+        if (restoreGridDebugLogs)
+            Debug.Log($"[RestoreGrid] Complete. Expected {roadsInSave} roads, {buildingsInSave} multi-cell buildings. Check for prefab NOT FOUND warnings above.");
+    }
+
+    void RunPostLoadDiagnosticAndSafetyNet()
+    {
+        if (cellArray == null || zoneManager == null) return;
+
+        int emptyCount = 0;
+        var firstEmpty = new System.Collections.Generic.List<string>(10);
+        GameObject fallbackGrass = zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass, 1)
+            ?? (zoneManager.grassPrefabs != null && zoneManager.grassPrefabs.Count > 0 ? zoneManager.grassPrefabs[0] : null);
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Cell cellComponent = cellArray[x, y];
+                if (cellComponent == null) continue;
+
+                if (cellComponent.zoneType == Zone.ZoneType.Grass && gridArray[x, y].transform.childCount == 0)
+                {
+                    emptyCount++;
+                    if (firstEmpty.Count < 10)
+                        firstEmpty.Add($"({x},{y}) h={cellComponent.height} prefab=\"{cellComponent.prefabName}\"");
+
+                    if (fallbackGrass != null)
+                    {
+                        GameObject zoneTile = Instantiate(fallbackGrass, cellComponent.transformPosition, Quaternion.identity);
+                        zoneTile.transform.SetParent(gridArray[x, y].transform);
+                        SetGrassSortingOrderDirect(zoneTile, x, y, cellComponent.height, cellComponent);
+                        Zone z = zoneTile.GetComponent<Zone>();
+                        if (z == null) { z = zoneTile.AddComponent<Zone>(); z.zoneType = Zone.ZoneType.Grass; }
+                    }
+                }
+            }
+        }
+
+        if (emptyCount > 0)
+        {
+            Debug.LogWarning($"[RestoreGrid] Found {emptyCount} empty Grass cells. First 10: {string.Join(", ", firstEmpty)}. Safety net placed grass where possible.");
+        }
     }
 
     /// <summary>
@@ -1458,6 +1649,53 @@ public class GridManager : MonoBehaviour, IGridManager
 
         cellArray = null;
         CreateGrid();
+    }
+
+    /// <summary>
+    /// Clears the grid generated by InitializeGeography and recreates a fresh empty grid.
+    /// Used at the start of LoadGame so restoration runs on a clean slate instead of
+    /// overwriting randomly-initialized terrain. Does not invoke onGridRestored (RestoreGrid will).
+    /// </summary>
+    public void ResetGridForLoad()
+    {
+        if (chunkObjects != null)
+        {
+            for (int cx = 0; cx < chunksX; cx++)
+            {
+                for (int cy = 0; cy < chunksY; cy++)
+                {
+                    if (chunkObjects[cx, cy] != null)
+                        Destroy(chunkObjects[cx, cy]);
+                }
+            }
+        }
+
+        zoneManager.ClearZonedPositions();
+        InvalidateRoadCache();
+
+        cellArray = null;
+        CreateGrid(createBaseTiles: true);
+
+        if (chunkCulling != null)
+        {
+            chunkCulling.chunkObjects = chunkObjects;
+            chunkCulling.chunkActiveState = chunkActiveState;
+            chunkCulling.chunksX = chunksX;
+            chunkCulling.chunksY = chunksY;
+            // Ensure all chunks start visible after load (CreateGrid sets chunkActiveState true, but reset explicitly for safety)
+            int maxCx = Mathf.Min(chunksX, chunkObjects != null ? chunkObjects.GetLength(0) : 0);
+            int maxCy = Mathf.Min(chunksY, chunkObjects != null ? chunkObjects.GetLength(1) : 0);
+            for (int cx = 0; cx < maxCx; cx++)
+            {
+                for (int cy = 0; cy < maxCy; cy++)
+                {
+                    if (chunkActiveState != null && cx < chunkActiveState.GetLength(0) && cy < chunkActiveState.GetLength(1))
+                        chunkActiveState[cx, cy] = true;
+                    if (chunkObjects[cx, cy] != null)
+                        chunkObjects[cx, cy].SetActive(true);
+                }
+            }
+        }
     }
 
     /// <summary>

@@ -974,6 +974,60 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
+    /// Restores a road tile from save data. Uses the exact prefab, applies interstate tint when needed,
+    /// and sets correct sorting order. Call during RestoreGrid for Road cells.
+    /// </summary>
+    /// <param name="gridPos">Grid position to restore the road at.</param>
+    /// <param name="prefab">Road prefab to instantiate (from saved prefabName).</param>
+    /// <param name="isInterstate">Whether this cell is part of the interstate (applies gray tint).</param>
+    public void RestoreRoadTile(Vector2Int gridPos, GameObject prefab, bool isInterstate)
+    {
+        GameObject cell = gridManager.GetGridCell(new Vector2(gridPos.x, gridPos.y));
+        if (cell == null) return;
+        Cell cellComponent = gridManager.GetCell(gridPos.x, gridPos.y);
+        if (cellComponent == null) return;
+
+        var toDestroy = new List<(GameObject go, Zone zone)>();
+        foreach (Transform child in cell.transform)
+        {
+            Zone z = child.GetComponent<Zone>();
+            if (z != null)
+                toDestroy.Add((child.gameObject, z));
+        }
+        foreach (var t in toDestroy)
+        {
+            if (t.zone.zoneCategory == Zone.ZoneCategory.Zoning)
+                zoneManager.removeZonedPositionFromList(new Vector2(gridPos.x, gridPos.y), t.zone.zoneType);
+            Destroy(t.go);
+        }
+
+        cellComponent.RemoveForestForBuilding();
+
+        int terrainHeight = cellComponent.GetCellInstanceHeight();
+        Vector2 worldPos;
+        if (terrainHeight == 0)
+            worldPos = gridManager.GetWorldPositionVector(gridPos.x, gridPos.y, 1);
+        else
+            worldPos = gridManager.GetWorldPosition(gridPos.x, gridPos.y);
+
+        GameObject roadTile = Instantiate(prefab, worldPos, Quaternion.identity);
+        roadTile.transform.SetParent(cellComponent.gameObject.transform);
+
+        if (isInterstate)
+            roadTile.GetComponent<SpriteRenderer>().color = new Color(0.78f, 0.78f, 0.88f, 1f);
+        else
+            roadTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 1);
+
+        Zone zone = roadTile.AddComponent<Zone>();
+        zone.zoneType = Zone.ZoneType.Road;
+        UpdateRoadCellAttributes(cellComponent, roadTile, Zone.ZoneType.Road);
+        if (isInterstate)
+            cellComponent.isInterstate = true;
+
+        gridManager.SetRoadSortingOrder(roadTile, gridPos.x, gridPos.y);
+    }
+
+    /// <summary>
     /// Replace the road tile at the given position with a new prefab (e.g. after all interstate tiles placed to fix junctions). Preserves isInterstate and tint.
     /// Road remains at same position, so cache does not need updating.
     /// </summary>

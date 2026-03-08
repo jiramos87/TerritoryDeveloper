@@ -69,10 +69,15 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public GameObject seaLevelWaterPrefab;
     public GameObject southCliffWallPrefab;
     public GameObject eastCliffWallPrefab;
+
+    public GameObject northEastBayPrefab;
+    public GameObject northWestBayPrefab;
+    public GameObject southEastBayPrefab;
+    public GameObject southWestBayPrefab;
     #endregion
 
     /// <summary>
-    /// Finds a terrain prefab (slope, water slope, sea level water) by name. Used when restoring saved games.
+    /// Finds a terrain prefab (slope, water slope, sea level water, bay) by name. Used when restoring saved games.
     /// </summary>
     public GameObject FindTerrainPrefabByName(string prefabName)
     {
@@ -87,7 +92,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             northSlopeWaterPrefab, southSlopeWaterPrefab, eastSlopeWaterPrefab, westSlopeWaterPrefab,
             northEastSlopeWaterPrefab, northWestSlopeWaterPrefab, southEastSlopeWaterPrefab, southWestSlopeWaterPrefab,
             northEastUpslopeWaterPrefab, northWestUpslopeWaterPrefab, southEastUpslopeWaterPrefab, southWestUpslopeWaterPrefab,
-            seaLevelWaterPrefab, southCliffWallPrefab, eastCliffWallPrefab
+            seaLevelWaterPrefab, southCliffWallPrefab, eastCliffWallPrefab,
+            northEastBayPrefab, northWestBayPrefab, southEastBayPrefab, southWestBayPrefab
         };
 
         foreach (GameObject prefab in terrainPrefabs)
@@ -423,7 +429,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         }
     }
 
-    private void ApplyHeightMapToGrid()
+    /// <summary>
+    /// Applies terrain (slopes, water, cliff walls) to all cells based on heightMap.
+    /// Same mechanism used by New Game. Call after RestoreHeightMapFromGridData + ApplyRestoredPositionsToGrid for Load.
+    /// </summary>
+    public void ApplyHeightMapToGrid()
     {
         for (int sum = 0; sum < gridManager.width + gridManager.height - 1; sum++)
         {
@@ -593,25 +603,32 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
         if (slopePrefab != null)
         {
-            Cell cell = gridManager.GetCell(x, y);
-            DestroyCellChildren(cell);
-
-            Vector2 worldPos = cell.transformPosition;
-            GameObject slope = Instantiate(
-                slopePrefab,
-                worldPos,
-                Quaternion.identity
-            );
-            slope.transform.SetParent(cell.gameObject.transform);
-
-            cell.prefabName = slopePrefab.name;
-
-            SpriteRenderer sr = slope.GetComponent<SpriteRenderer>();
-            if (sr != null)
-            {
-                sr.sortingOrder = CalculateSlopeSortingOrder(x, y, currentHeight);
-            }
+            PlaceSlopeFromPrefab(x, y, slopePrefab, currentHeight);
         }
+    }
+
+    /// <summary>
+    /// Places a slope tile from the given prefab. Used by RestoreGrid for Load when saved prefabName is a slope.
+    /// </summary>
+    public void PlaceSlopeFromPrefab(int x, int y, GameObject slopePrefab, int cellHeight = -1)
+    {
+        if (slopePrefab == null || gridManager == null) return;
+
+        Cell cell = gridManager.GetCell(x, y);
+        if (cell == null) return;
+
+        int currentHeight = cellHeight >= 0 ? cellHeight : (heightMap != null ? heightMap.GetHeight(x, y) : cell.height);
+        DestroyCellChildren(cell);
+
+        Vector2 worldPos = cell.transformPosition;
+        GameObject slope = Instantiate(slopePrefab, worldPos, Quaternion.identity);
+        slope.transform.SetParent(cell.gameObject.transform);
+
+        cell.prefabName = slopePrefab.name;
+
+        SpriteRenderer sr = slope.GetComponent<SpriteRenderer>();
+        if (sr != null)
+            sr.sortingOrder = CalculateSlopeSortingOrder(x, y, currentHeight);
     }
 
     private void ModifyWaterSlopeInAdjacentNeighbors(int x, int y)
@@ -707,6 +724,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 bool adjacentWater = IsAdjacentToWaterHeight(x, y);
                 bool requiresSlope = RequiresSlope(x, y, heightMap.GetHeight(x, y));
                 if (!adjacentWater && !requiresSlope) continue;
+
+                // Only process cells that are the LOW side of a height transition (where we place the slope).
+                // High-side cells keep their grass from RestoreGrid and must not be touched.
+                bool isLowSideOfHeightTransition = requiresSlope && DetermineSlopePrefab(x, y) != null;
+                if (!adjacentWater && !isLowSideOfHeightTransition)
+                    continue;
 
                 RestoreTerrainForCell(x, y);
             }

@@ -10,16 +10,16 @@
 
 ## Prioridad alta
 
-- [ ] **BUG-01** — Save game, Load game y New game están rotos
-  - Tipo: fix
-  - Archivos: `GameSaveManager.cs`, `GridManager.cs` (GetGridData/RestoreGrid), `CellData.cs`, `GameManager.cs`
-  - Notas: Funcionalidad core del juego, bloquea testing de cualquier sesión larga.
-  - Depende de: BUG-09 (root cause)
+- [ ] **FEAT-27** — Main menu with Continue, New Game, Load City, Options
+  - Tipo: feature
+  - Archivos: new MainMenu scene, `GameSaveManager.cs`, `UIManager.cs`, `GameManager.cs`
+  - Notas: Create game start menu with 4 buttons in English: "Continue" (load last saved game), "New Game", "Load City", "Options". Requires changing how saved games are saved and displayed: allow sorting by save date, track last-saved game for "Continue" button. Save list UI should show saves ordered by `realWorldSaveTime` (newest first).
+  - Depende de: BUG-01 (save/load must work first; completado 2026-03-07)
 
-- [ ] **BUG-09** — `Cell.GetCellData()` no serializa el estado de la celda
-  - Tipo: fix (crítico)
-  - Archivos: `Cell.cs` (GetCellData), `CellData.cs` (SetDefaults)
-  - Notas: Root cause de BUG-01. `GetCellData()` llama `SetDefaults()` que sobreescribe todos los campos. Solo se preservan `x`, `y` e `isInterstate`. Se pierden: zoneType, prefabName, buildingType, population, roads, forests, desirability.
+- [ ] **BUG-20** — Planta de energía (y edificios 3x3/2x2) cargan mal en LoadGame: quedan bajo el grass
+  - Tipo: fix
+  - Archivos: `GeographyManager.cs` (GetMultiCellBuildingMaxSortingOrder, ReCalculateSortingOrderBasedOnHeight), `BuildingPlacementService.cs` (LoadBuildingTile, RestoreBuildingTile), `GridManager.cs` (RestoreGridCellVisuals)
+  - Notas: Al cargar partida, el prefab de la planta de energía (y posiblemente planta de agua 2x2) se dibuja por debajo de los tiles de grass del footprint. El pivot (64,102) tiene tanto grass como edificio como hijos; el sorting order del edificio puede quedar por debajo del grass por el "cap" en GetMultiCellBuildingMaxSortingOrder. No corregido aún.
 
 - [ ] **BUG-10** — `IndustrialHeavyZoning` nunca genera edificios
   - Tipo: fix
@@ -72,6 +72,17 @@
   - Notas: `SimulationManager.ProcessSimulationTick()` nunca llama `UrbanizationProposalManager.ProcessTick()`. Las propuestas de urbanización están deshabilitadas.
 
 ## Prioridad media
+
+- [ ] **FEAT-28** — Right-click drag-to-pan (grab and drag map)
+  - Tipo: feature (UX)
+  - Archivos: `CameraController.cs` (HandleDragToPan), `GridManager.cs` (coordinate right-click when panning), `RoadManager.cs` (distinguish single right-click cancel vs drag)
+  - Notas: **Effect name**: "Drag-to-pan" or "click-and-drag panning". When the user holds right mouse button and moves the mouse, the camera should follow the movement, translating the map as if "grabbing" it. Implement in CameraController: detect `Input.GetMouseButton(1)` held + `Input.mousePosition` delta, translate camera opposite to mouse movement. Check `EventSystem.current.IsPointerOverGameObject()` before processing to avoid panning when cursor is over UI (Load Game panel, Building Selector, etc.) — same pattern as BUG-19. Coordinate with GridManager (right-click sets selectedPoint) and RoadManager (right-click-down cancels road drawing): when user is actively dragging for pan, those handlers should not fire; consider threshold: significant mouse movement = pan, minimal/no movement = cancel/select.
+
+- [ ] **BUG-19** — Mouse scroll wheel in Load Game scrollable menu also triggers camera zoom
+  - Tipo: fix (UX)
+  - Archivos: `CameraController.cs` (HandleScrollZoom), `UIManager.cs` (loadGameMenu, savedGamesListContainer), `MainScene.unity` (LoadGameMenuPanel / Scroll View hierarchy)
+  - Notas: When scrolling over the Load Game save list, the mouse wheel scrolls the list AND zooms the camera. The scroll should only move the list up/down, not affect camera zoom or other game mechanisms that use the scroll wheel.
+  - Solución propuesta: In `CameraController.HandleScrollZoom()`, check `EventSystem.current.IsPointerOverGameObject()` before processing scroll. If the pointer is over UI (e.g. Load Game panel, Building Selector, any scrollable popup), skip the zoom logic and let the UI consume the scroll. This mirrors how `GridManager` already gates mouse clicks via `IsPointerOverGameObject()`. Requires `using UnityEngine.EventSystems`. Verify that the Load Game ScrollRect (Scroll View) has proper raycast target so `IsPointerOverGameObject()` returns true when hovering over it.
 
 - [ ] **BUG-13** — `FindObjectOfType<TimeManager>()` se llama cada tick en UrbanizationProposalManager
   - Tipo: fix (performance)
@@ -260,10 +271,10 @@
   - Archivos: `CameraController.cs`, `GridManager.cs`, todos los managers de rendering
   - Notas: Rotación de vista isométrica. Impacto alto en sorting order y rendering.
 
-- [ ] **FEAT-20** — Pantalla de inicio
+- [ ] **FEAT-20** — Pantalla de inicio (superseded by FEAT-27)
   - Tipo: feature
   - Archivos: nueva scene + managers de UI
-  - Notas: Menú principal con New Game, Load Game, Settings.
+  - Notas: Menú principal con New Game, Load Game, Settings. Superseded by FEAT-27 (main menu with Continue, New Game, Load City, Options).
 
 - [ ] **ART-01** — Prefabs faltantes: bosques en pendiente SE, NE, SW, NW
   - Tipo: arte/assets
@@ -290,6 +301,8 @@
 
 ## Completados (últimos 30 días)
 
+- [x] **BUG-01** — Save game, Load game y New game están rotos (2026-03-07)
+- [x] **BUG-09** — `Cell.GetCellData()` no serializa el estado de la celda (2026-03-07)
 - [x] **DONE** — Bosque no se puede colocar adyacente a agua (2026-03)
 - [x] **DONE** — Demoler bosques en todas las alturas + todos los tipos de edificio (2026-03)
 - [x] **DONE** — Al demoler bosque en pendiente se repone prefab de terreno correcto por lectura a heightMap (2026-03)

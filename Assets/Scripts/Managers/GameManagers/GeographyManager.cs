@@ -381,6 +381,7 @@ public class GeographyManager : MonoBehaviour
     /// <summary>
     /// Returns the maximum sorting order over a multi-cell building's footprint, capped so the building
     /// draws behind "front" adjacent cells (left and top) so forest/terrain can draw on top.
+    /// Ensures the building always draws above content on its own footprint (e.g. grass during LoadGame).
     /// </summary>
     private int GetMultiCellBuildingMaxSortingOrder(int pivotX, int pivotY, int buildingSize)
     {
@@ -451,6 +452,21 @@ public class GeographyManager : MonoBehaviour
             if (orderBehindFront < maxOrder && !skipCapForVisibility)
                 maxOrder = orderBehindFront;
         }
+
+        // Floor: building must always draw on top of content on its own footprint (e.g. grass left during LoadGame before deferred destroy).
+        int maxFootprintContentOrder = int.MinValue;
+        for (int fx = minFx; fx <= maxFx; fx++)
+        {
+            for (int fy = minFy; fy <= maxFy; fy++)
+            {
+                if (fx < 0 || fx >= width || fy < 0 || fy >= height) continue;
+                int contentOrder = GetCellMaxContentSortingOrder(fx, fy);
+                if (contentOrder != int.MinValue && contentOrder > maxFootprintContentOrder)
+                    maxFootprintContentOrder = contentOrder;
+            }
+        }
+        if (maxFootprintContentOrder != int.MinValue && maxOrder < maxFootprintContentOrder + 1)
+            maxOrder = maxFootprintContentOrder + 1;
 
         return maxOrder != int.MinValue ? maxOrder : terrainManager.CalculateTerrainSortingOrder(pivotX, pivotY, 0) + 10;
     }
@@ -564,7 +580,12 @@ public class GeographyManager : MonoBehaviour
                         if (TryGetWestAdjacentBuildingOrder(x, y, out int westBuildingOrder))
                             newSortingOrder = Mathf.Max(newSortingOrder, westBuildingOrder + 1);
                     }
-                    obj.GetComponent<SpriteRenderer>().sortingOrder = newSortingOrder;
+                    SpriteRenderer[] renderers = obj.GetComponentsInChildren<SpriteRenderer>();
+                    foreach (SpriteRenderer sr in renderers)
+                    {
+                        if (sr != null)
+                            sr.sortingOrder = newSortingOrder;
+                    }
                     if (newSortingOrder > maxCellSortingOrder)
                         maxCellSortingOrder = newSortingOrder;
                 }

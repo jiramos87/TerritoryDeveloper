@@ -298,50 +298,62 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     /// <returns>The matching prefab GameObject, or null if not found.</returns>
     public GameObject FindPrefabByName(string prefabName)
     {
+        if (string.IsNullOrEmpty(prefabName)) return null;
         string trimmedName = prefabName.Replace("(Clone)", "");
 
-        List<GameObject> roadPrefabs = roadManager.GetRoadPrefabs();
-        List<GameObject> powerPlantPrefabs = powerPlantManager.GetPowerPlantPrefabs();
-        List<GameObject> waterPlantPrefabs = waterPlantManager.GetWaterPlantPrefabs();
-
-        if (roadPrefabs == null || powerPlantPrefabs == null || waterPlantPrefabs == null)
+        // Search zonePrefabs first (grass, zoning, etc.) - does not depend on road/power/water managers
+        if (zonePrefabs != null)
         {
-            Debug.LogWarning("One or more prefab lists are null.");
-            return null;
-        }
-
-        foreach (var prefabList in zonePrefabs.Values)
-        {
-            foreach (GameObject prefab in prefabList)
+            foreach (var prefabList in zonePrefabs.Values)
             {
-                if (prefab.name == trimmedName)
+                if (prefabList == null) continue;
+                foreach (GameObject prefab in prefabList)
                 {
-                    return prefab;
+                    if (prefab != null && prefab.name == trimmedName)
+                        return prefab;
                 }
             }
         }
 
-        foreach (var prefab in roadPrefabs)
+        // Search road prefabs (only if list is available)
+        if (roadManager != null)
         {
-            if (prefab.name == trimmedName)
+            var roadPrefabs = roadManager.GetRoadPrefabs();
+            if (roadPrefabs != null)
             {
-                return prefab;
+                foreach (var prefab in roadPrefabs)
+                {
+                    if (prefab != null && prefab.name == trimmedName)
+                        return prefab;
+                }
             }
         }
 
-        foreach (var prefab in powerPlantPrefabs)
+        // Search power plant prefabs
+        if (powerPlantManager != null)
         {
-            if (prefab.name == trimmedName)
+            var powerPlantPrefabs = powerPlantManager.GetPowerPlantPrefabs();
+            if (powerPlantPrefabs != null)
             {
-                return prefab;
+                foreach (var prefab in powerPlantPrefabs)
+                {
+                    if (prefab != null && prefab.name == trimmedName)
+                        return prefab;
+                }
             }
         }
 
-        foreach (var prefab in waterPlantPrefabs)
+        // Search water plant prefabs
+        if (waterPlantManager != null)
         {
-            if (prefab.name == trimmedName)
+            var waterPlantPrefabs = waterPlantManager.GetWaterPlantPrefabs();
+            if (waterPlantPrefabs != null)
             {
-                return prefab;
+                foreach (var prefab in waterPlantPrefabs)
+                {
+                    if (prefab != null && prefab.name == trimmedName)
+                        return prefab;
+                }
             }
         }
 
@@ -1030,7 +1042,11 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     /// <returns>The parsed Zone.ZoneType enum value.</returns>
     public Zone.ZoneType GetZoneTypeFromZoneTypeString(string zoneTypeString)
     {
-        return (Zone.ZoneType)System.Enum.Parse(typeof(Zone.ZoneType), zoneTypeString);
+        if (string.IsNullOrEmpty(zoneTypeString))
+            return Zone.ZoneType.Grass;
+        if (System.Enum.TryParse(zoneTypeString, out Zone.ZoneType result))
+            return result;
+        return Zone.ZoneType.Grass;
     }
 
     void PlaceZoneBuilding(Vector2[] section, Zone.ZoneType selectedZoneType, ZoneAttributes zoneAttributes, Zone.ZoneType zoningType, int buildingSize)

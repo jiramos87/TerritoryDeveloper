@@ -65,15 +65,22 @@ namespace Territory.Core
             int minCY = Mathf.Max(0, minGridY / chunkSize - 1);
             int maxCY = Mathf.Min(chunksY - 1, maxGridY / chunkSize + 1);
 
-            for (int cx = 0; cx < chunksX; cx++)
+            if (chunkObjects == null) return;
+
+            int maxCX_safe = Mathf.Min(chunksX, chunkObjects.GetLength(0));
+            int maxCY_safe = Mathf.Min(chunksY, chunkObjects.GetLength(1));
+
+            for (int cx = 0; cx < maxCX_safe; cx++)
             {
-                for (int cy = 0; cy < chunksY; cy++)
+                for (int cy = 0; cy < maxCY_safe; cy++)
                 {
                     bool shouldBeActive = cx >= minCX && cx <= maxCX && cy >= minCY && cy <= maxCY;
                     if (chunkActiveState[cx, cy] != shouldBeActive)
                     {
                         chunkActiveState[cx, cy] = shouldBeActive;
-                        chunkObjects[cx, cy].SetActive(shouldBeActive);
+                        GameObject chunk = chunkObjects[cx, cy];
+                        if (chunk != null)
+                            chunk.SetActive(shouldBeActive);
                     }
                 }
             }

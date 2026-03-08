@@ -244,7 +244,13 @@ public class UIManager : MonoBehaviour
             if (gameDebugInfoBuilder != null && useFullDebugText && gridManager != null)
                 gridCoordinatesText.text = gameDebugInfoBuilder.GetFullDebugText(gridManager.mouseGridPosition, gridManager.selectedPoint);
             else if (gridManager != null)
-                gridCoordinatesText.text = "x: " + gridManager.mouseGridPosition.x + ", y: " + gridManager.mouseGridPosition.y;
+            {
+                int x = (int)gridManager.mouseGridPosition.x;
+                int y = (int)gridManager.mouseGridPosition.y;
+                int cx = gridManager.chunkSize > 0 ? x / gridManager.chunkSize : 0;
+                int cy = gridManager.chunkSize > 0 ? y / gridManager.chunkSize : 0;
+                gridCoordinatesText.text = "x: " + x + ", y: " + y + ", chunk: (" + cx + "," + cy + ")";
+            }
         }
 
         EmploymentManager employment = FindObjectOfType<EmploymentManager>();

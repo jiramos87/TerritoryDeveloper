@@ -42,11 +42,19 @@ public class GameDebugInfoBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns a single line with grid coordinates, e.g. "x: 12, y: 9".
+    /// Returns a single line with grid coordinates and chunk id, e.g. "x: 12, y: 9, chunk: (0,0)".
     /// </summary>
     public string GetCoordinatesLine(Vector2 gridPosition)
     {
-        return $"x: {gridPosition.x}, y: {gridPosition.y}";
+        ResolveRefsIfNeeded();
+        string coords = $"x: {gridPosition.x}, y: {gridPosition.y}";
+        if (gridManager != null && gridManager.chunkSize > 0)
+        {
+            int cx = (int)gridPosition.x / gridManager.chunkSize;
+            int cy = (int)gridPosition.y / gridManager.chunkSize;
+            coords += $", chunk: ({cx},{cy})";
+        }
+        return coords;
     }
 
     /// <summary>

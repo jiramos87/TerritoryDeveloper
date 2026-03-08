@@ -1033,6 +1033,7 @@ public class CityStats : MonoBehaviour, ICityStats
 
         population = 0;
         money = 20000;
+        currentDate = new System.DateTime(2024, 8, 27);
         residentialZoneCount = 0;
         commercialZoneCount = 0;
         industrialZoneCount = 0;

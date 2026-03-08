@@ -160,11 +160,15 @@ public class TimeManager : MonoBehaviour
     public void RestoreInGameTime(InGameTime inGameTime)
     {
         currentDate = new System.DateTime(inGameTime.year, inGameTime.month, inGameTime.day);
+        if (uiManager != null)
+            uiManager.UpdateUI();
     }
 
     public void ResetInGameTime()
     {
         currentDate = new System.DateTime(2024, 8, 27);
+        if (uiManager != null)
+            uiManager.UpdateUI();
     }
 }
 
