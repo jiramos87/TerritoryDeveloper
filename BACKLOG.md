@@ -11,11 +11,6 @@ _No active issues._
 
 ## High Priority
 
-- [ ] **BUG-21** — Zoning cost is not charged when placing zones
-  - Type: fix
-  - Files: `ZoneManager.cs`, `CityStats.cs`
-  - Notes: Zone placement shows an associated cost in the UI, but the total budget (cityStats.money) does not decrease when placing a zone. PlaceZone checks CanAfford but never calls RemoveMoney.
-
 - [ ] **BUG-02** — Taxes do not work
   - Type: fix
   - Files: `EconomyManager.cs`, `CityStats.cs`
@@ -281,6 +276,7 @@ _No active issues._
 
 ## Completed (last 30 days)
 
+- [x] **BUG-21** — Zoning cost is not charged when placing zones (2026-03-09)
 - [x] **FEAT-02** — Add construction cost counter to mouse cursor (2026-03-09)
 - [x] **FEAT-28** — Right-click drag-to-pan (grab and drag map) with inertia/fling (2026-03-09)
 - [x] **BUG-04** — Pause mode stops camera movement; camera speed tied to simulation speed (2026-03-09)

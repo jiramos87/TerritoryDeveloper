@@ -692,6 +692,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
             addZonedTileToList(gridPosition, selectedZoneType);
 
             cityStats.AddZoneBuildingCount(selectedZoneType);
+            cityStats.RemoveMoney(zoneAttributes.ConstructionCost);
         }
         else
         {
