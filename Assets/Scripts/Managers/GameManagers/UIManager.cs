@@ -1,8 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.IO;
 using System.Collections.Generic;
 using Territory.Core;
+using Territory.Roads;
 using Territory.Zones;
 using Territory.Economy;
 using Territory.Terrain;
@@ -92,6 +94,12 @@ public class UIManager : MonoBehaviour
     public Text cityWaterConsumptionText;
     public Text insufficientFundsText;
 
+    [Header("Construction Cost")]
+    [Tooltip("Floating text near cursor showing construction cost before placement. Create under Canvas, assign here.")]
+    public Text constructionCostText;
+    [Tooltip("Offset from mouse position (pixels). Default: 24 right, -24 down.")]
+    public Vector2 constructionCostOffset = new Vector2(24, -24);
+
     [Header("Debug (optional)")]
     [SerializeField] private GameDebugInfoBuilder gameDebugInfoBuilder;
     [Tooltip("If set, use full debug text (coordinates + cell + placement). Otherwise only coordinates.")]
@@ -140,6 +148,52 @@ public class UIManager : MonoBehaviour
         bulldozeMode = false;
 
         saveFolderPath = Application.persistentDataPath;
+
+        EnsureConstructionCostTextExists();
+    }
+
+    /// <summary>
+    /// Creates the construction cost text UI element at runtime if not assigned in the Inspector.
+    /// </summary>
+    private void EnsureConstructionCostTextExists()
+    {
+        if (constructionCostText != null)
+            return;
+
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
+            return;
+
+        GameObject costObj = new GameObject("ConstructionCostText");
+        costObj.transform.SetParent(canvas.transform, false);
+
+        Text text = costObj.AddComponent<Text>();
+        Font defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        if (defaultFont != null)
+            text.font = defaultFont;
+        else if (demandFeedbackText != null)
+            text.font = demandFeedbackText.font;
+        text.fontSize = 16;
+        text.fontStyle = FontStyle.Bold;
+        text.color = Color.white;
+        text.raycastTarget = false;
+        text.alignment = TextAnchor.MiddleCenter;
+        text.horizontalOverflow = HorizontalWrapMode.Overflow;
+        text.verticalOverflow = VerticalWrapMode.Overflow;
+
+        RectTransform rt = costObj.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0, 0);
+        rt.anchorMax = new Vector2(0, 0);
+        rt.pivot = new Vector2(0, 0);
+        rt.sizeDelta = new Vector2(150, 40);
+        rt.anchoredPosition = Vector2.zero;
+
+        Shadow shadow = costObj.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0, 0, 0, 0.8f);
+        shadow.effectDistance = new Vector2(1, -1);
+
+        constructionCostText = text;
+        constructionCostText.gameObject.SetActive(false);
     }
 
     void Update()
@@ -282,6 +336,117 @@ public class UIManager : MonoBehaviour
 
         // Update demand feedback for selected zone type
         UpdateDemandFeedback();
+
+        // Update construction cost display near cursor
+        UpdateConstructionCostDisplay();
+    }
+
+    private void UpdateConstructionCostDisplay()
+    {
+        if (constructionCostText == null)
+            return;
+
+        // Hide when pointer is over UI
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        {
+            constructionCostText.gameObject.SetActive(false);
+            return;
+        }
+
+        // Hide when not in placement mode
+        if (bulldozeMode || detailsMode)
+        {
+            constructionCostText.gameObject.SetActive(false);
+            return;
+        }
+
+        Zone.ZoneType selectedZone = GetSelectedZoneType();
+        string displayText = "";
+        int cost = 0;
+
+        // Check building and forest first (they set selectedZone to Grass)
+        if (selectedBuilding != null)
+        {
+            cost = selectedBuilding.ConstructionCost;
+            displayText = $"${cost}";
+        }
+        else if (selectedForestData.forestType != Forest.ForestType.None)
+        {
+            IForest forest = GetSelectedForest();
+            cost = forest != null ? forest.ConstructionCost : 0;
+            displayText = cost > 0 ? $"${cost}" : "$0";
+        }
+        else if (selectedZone == Zone.ZoneType.Grass)
+        {
+            constructionCostText.gameObject.SetActive(false);
+            return;
+        }
+        else if (selectedZone == Zone.ZoneType.Road && gridManager != null && gridManager.roadManager != null)
+        {
+            RoadManager roadManager = gridManager.roadManager;
+            if (roadManager.IsDrawingRoad())
+            {
+                int tiles = roadManager.GetPreviewRoadTileCount();
+                cost = roadManager.GetRoadCostForTileCount(tiles);
+                displayText = $"${cost}";
+            }
+            else
+            {
+                cost = roadManager.GetRoadCostPerTile();
+                displayText = $"${cost}";
+            }
+        }
+        else if (selectedZone == Zone.ZoneType.Water)
+        {
+            cost = ZoneAttributes.Water.ConstructionCost;
+            displayText = cost > 0 ? $"${cost}" : "$0";
+        }
+        else if (IsInZoningMode())
+        {
+            ZoneAttributes attrs = zoneManager.GetZoneAttributes(selectedZone);
+            if (attrs == null)
+            {
+                constructionCostText.gameObject.SetActive(false);
+                return;
+            }
+
+            if (zoneManager.IsZoning())
+            {
+                int cells = zoneManager.GetPreviewZoneCellCount();
+                cost = cells * attrs.ConstructionCost;
+                displayText = $"${cost}";
+            }
+            else
+            {
+                cost = attrs.ConstructionCost;
+                displayText = $"${attrs.ConstructionCost}";
+            }
+        }
+        else
+        {
+            constructionCostText.gameObject.SetActive(false);
+            return;
+        }
+
+        constructionCostText.text = displayText;
+        constructionCostText.color = (cityStats != null && cityStats.CanAfford(cost)) ? Color.green : Color.red;
+
+        RectTransform rectTransform = constructionCostText.GetComponent<RectTransform>();
+        if (rectTransform != null)
+        {
+            rectTransform.position = (Vector3)((Vector2)Input.mousePosition + constructionCostOffset);
+        }
+
+        constructionCostText.gameObject.SetActive(true);
+    }
+
+    private bool IsInZoningMode()
+    {
+        Zone.ZoneType selectedZone = GetSelectedZoneType();
+        return selectedZone != Zone.ZoneType.Grass &&
+            selectedZone != Zone.ZoneType.Road &&
+            selectedZone != Zone.ZoneType.Water &&
+            selectedZone != Zone.ZoneType.None;
     }
 
     private void UpdateDemandFeedback()

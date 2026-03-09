@@ -26,6 +26,7 @@ public class CursorManager : MonoBehaviour
     private bool isOverUI;
     private Texture2D scaledBulldozerTexture;
     private Camera cachedMainCamera;
+    private UIManager cachedUIManager;
 
     void Start()
     {
@@ -34,6 +35,7 @@ public class CursorManager : MonoBehaviour
         activeCursorHotSpot = Vector2.zero;
         isOverUI = false;
         cachedMainCamera = Camera.main;
+        cachedUIManager = FindObjectOfType<UIManager>();
         Cursor.SetCursor(cursorTexture, hotSpot, CursorMode.Auto);
     }
 
@@ -135,9 +137,7 @@ public class CursorManager : MonoBehaviour
 
             previewInstance.SetActive(true);
 
-            UIManager uiManager = FindObjectOfType<UIManager>();
-
-            if (uiManager != null && uiManager.GetSelectedZoneType() == Zone.ZoneType.Road && gridManager.roadManager != null)
+            if (cachedUIManager != null && cachedUIManager.GetSelectedZoneType() == Zone.ZoneType.Road && gridManager.roadManager != null)
             {
                 gridManager.roadManager.GetRoadGhostPreviewForCell(gridPosition, out GameObject roadPrefab, out Vector2 worldPos, out int sortingOrder);
                 if (roadPrefab != currentRoadGhostPrefab)
@@ -160,8 +160,8 @@ public class CursorManager : MonoBehaviour
             {
                 currentRoadGhostPrefab = null;
                 int buildingSize = 1;
-                if (uiManager != null && uiManager.GetSelectedBuilding() != null)
-                    buildingSize = uiManager.GetSelectedBuilding().BuildingSize;
+                if (cachedUIManager != null && cachedUIManager.GetSelectedBuilding() != null)
+                    buildingSize = cachedUIManager.GetSelectedBuilding().BuildingSize;
                 Cell cell = gridManager.GetCell((int)gridPosition.x, (int)gridPosition.y);
                 if (cell == null)
                 {
@@ -170,7 +170,7 @@ public class CursorManager : MonoBehaviour
                 else
                 {
                     Vector2 newWorldPos = gridManager.GetBuildingPlacementWorldPosition(gridPosition, buildingSize);
-                    IBuilding selectedBuilding = uiManager?.GetSelectedBuilding();
+                    IBuilding selectedBuilding = cachedUIManager?.GetSelectedBuilding();
                     if (selectedBuilding is WaterPlant)
                         newWorldPos.y += gridManager.tileHeight / 4f;
                     previewInstance.transform.position = newWorldPos;

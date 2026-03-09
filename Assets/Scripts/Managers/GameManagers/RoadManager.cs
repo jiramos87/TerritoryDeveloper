@@ -182,6 +182,40 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
     int CalculateTotalCost(int tilesCount)
     {
+        return GetRoadCostForTileCount(tilesCount);
+    }
+
+    /// <summary>
+    /// Returns true when the player is actively drawing a road (mouse held after initial click).
+    /// </summary>
+    public bool IsDrawingRoad()
+    {
+        return isDrawingRoad;
+    }
+
+    /// <summary>
+    /// Returns the number of tiles in the current road preview path (while drawing).
+    /// </summary>
+    public int GetPreviewRoadTileCount()
+    {
+        return previewRoadGridPositions.Count;
+    }
+
+    /// <summary>
+    /// Returns the cost per road tile (50).
+    /// </summary>
+    public int GetRoadCostPerTile()
+    {
+        return 50;
+    }
+
+    /// <summary>
+    /// Returns the total cost for placing the given number of road tiles.
+    /// </summary>
+    /// <param name="tilesCount">Number of road tiles.</param>
+    /// <returns>Total construction cost.</returns>
+    public int GetRoadCostForTileCount(int tilesCount)
+    {
         return tilesCount * 50;
     }
 

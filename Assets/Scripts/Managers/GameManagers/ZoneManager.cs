@@ -404,6 +404,34 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         previewZoningTiles.Clear();
     }
 
+    /// <summary>
+    /// Returns true when the player is actively dragging to zone an area (mouse held after initial click).
+    /// </summary>
+    public bool IsZoning()
+    {
+        return isZoning;
+    }
+
+    /// <summary>
+    /// Returns the number of cells in the current zoning preview rectangle (while dragging).
+    /// Uses the same rectangle logic as UpdateZoningPreview.
+    /// </summary>
+    public int GetPreviewZoneCellCount()
+    {
+        if (!isZoning)
+            return 0;
+
+        Vector2Int start = Vector2Int.FloorToInt(zoningStartGridPosition);
+        Vector2Int end = Vector2Int.FloorToInt(zoningEndGridPosition);
+
+        Vector2Int topLeft = new Vector2Int(Mathf.Min(start.x, end.x), Mathf.Max(start.y, end.y));
+        Vector2Int bottomRight = new Vector2Int(Mathf.Max(start.x, end.x), Mathf.Min(start.y, end.y));
+
+        int width = bottomRight.x - topLeft.x + 1;
+        int height = topLeft.y - bottomRight.y + 1;
+        return width * height;
+    }
+
     void UpdateZoningPreview(Vector2 gridPosition)
     {
         zoningEndGridPosition = gridPosition;
