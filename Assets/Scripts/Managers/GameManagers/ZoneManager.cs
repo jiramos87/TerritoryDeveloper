@@ -1099,6 +1099,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
             gridManager.UpdateCellAttributes(cellComponent, selectedZoneType, zoneAttributes, prefab, buildingSize);
 
             removeZonedPositionFromList(zonedPosition, zoningType, isConversionToBuilding: true);
+            cityStats.RemoveZoneBuildingCount(zoningType);
         }
 
         Vector2 firstPosition = section[0];

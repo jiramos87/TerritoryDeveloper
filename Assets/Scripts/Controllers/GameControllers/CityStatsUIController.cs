@@ -259,24 +259,11 @@ public class CityStatsUIController : MonoBehaviour
     }
 
     /// <summary>
-    /// Get treasury from EconomyManager - modify this method to match your actual implementation
+    /// Get treasury from EconomyManager.
     /// </summary>
     private int GetTreasury()
     {
-        // Try different common method names - uncomment the one that matches your implementation
-
-        // Option 1: If you have a treasury field/property
-        // return economyManager.treasury;
-
-        // Option 2: If you have a GetTreasury method
-        // return economyManager.GetTreasury();
-
-        // Option 3: If it's named differently
-        // return economyManager.GetCurrentMoney();
-        // return economyManager.money;
-
-        // Placeholder - replace with your actual implementation
-        return 10000;
+        return economyManager != null ? economyManager.GetCurrentMoney() : 0;
     }
 
     /// <summary>

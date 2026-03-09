@@ -33,6 +33,8 @@ public class EconomyManager : MonoBehaviour
             cityStats = FindObjectOfType<CityStats>();
         if (timeManager == null)
             timeManager = FindObjectOfType<TimeManager>();
+        if (gameNotificationManager == null)
+            gameNotificationManager = FindObjectOfType<GameNotificationManager>();
     }
 
     /// <summary>
@@ -54,19 +56,20 @@ public class EconomyManager : MonoBehaviour
     {
         if (cityStats == null) return;
 
-        int residentialIncome = cityStats.residentialZoneCount * residentialIncomeTax;
-        int commercialIncome = cityStats.commercialZoneCount * commercialIncomeTax;
-        int industrialIncome = cityStats.industrialZoneCount * industrialIncomeTax;
+        int residentialIncome = cityStats.residentialBuildingCount * residentialIncomeTax;
+        int commercialIncome = cityStats.commercialBuildingCount * commercialIncomeTax;
+        int industrialIncome = cityStats.industrialBuildingCount * industrialIncomeTax;
 
         int totalTaxIncome = residentialIncome + commercialIncome + industrialIncome;
 
         cityStats.AddMoney(totalTaxIncome);
 
-        gameNotificationManager.PostInfo(
-            "Monthly Tax Collection" +
-            $"Collected ${totalTaxIncome} in taxes this month.\n" +
-            $"Residential: ${residentialIncome}, Commercial: ${commercialIncome}, Industrial: ${industrialIncome}"
-        );
+        if (gameNotificationManager != null)
+            gameNotificationManager.PostInfo(
+                "Monthly Tax Collection\n" +
+                $"Collected ${totalTaxIncome} in taxes this month.\n" +
+                $"Residential: ${residentialIncome}, Commercial: ${commercialIncome}, Industrial: ${industrialIncome}"
+            );
     }
 
     #region Money Management Methods
@@ -96,10 +99,11 @@ public class EconomyManager : MonoBehaviour
         }
         else
         {
-            gameNotificationManager.PostError(
-                "Insufficient Funds" +
-                $"Cannot spend ${amount}. Current balance is ${GetCurrentMoney()}."
-            );
+            if (gameNotificationManager != null)
+                gameNotificationManager.PostError(
+                    "Insufficient Funds" +
+                    $"Cannot spend ${amount}. Current balance is ${GetCurrentMoney()}."
+                );
             return false;
         }
     }
@@ -194,7 +198,8 @@ public class EconomyManager : MonoBehaviour
         if (residentialIncomeTax < maxTaxRate)
         {
             residentialIncomeTax += 1;
-            gameNotificationManager.PostInfo($"Residential tax raised to {residentialIncomeTax}%");
+            if (gameNotificationManager != null)
+                gameNotificationManager.PostInfo($"Residential tax raised to {residentialIncomeTax}%");
         }
         else
         {
@@ -210,7 +215,8 @@ public class EconomyManager : MonoBehaviour
         if (residentialIncomeTax > minTaxRate)
         {
             residentialIncomeTax -= 1;
-            gameNotificationManager.PostInfo($"Residential tax lowered to {residentialIncomeTax}%");
+            if (gameNotificationManager != null)
+                gameNotificationManager.PostInfo($"Residential tax lowered to {residentialIncomeTax}%");
         }
         else
         {
@@ -226,7 +232,8 @@ public class EconomyManager : MonoBehaviour
         if (commercialIncomeTax < maxTaxRate)
         {
             commercialIncomeTax += 1;
-            gameNotificationManager.PostInfo($"Commercial tax raised to {commercialIncomeTax}%");
+            if (gameNotificationManager != null)
+                gameNotificationManager.PostInfo($"Commercial tax raised to {commercialIncomeTax}%");
         }
         else
         {
@@ -242,7 +249,8 @@ public class EconomyManager : MonoBehaviour
         if (commercialIncomeTax > minTaxRate)
         {
             commercialIncomeTax -= 1;
-            gameNotificationManager.PostInfo($"Commercial tax lowered to {commercialIncomeTax}%");
+            if (gameNotificationManager != null)
+                gameNotificationManager.PostInfo($"Commercial tax lowered to {commercialIncomeTax}%");
         }
         else
         {
@@ -258,7 +266,8 @@ public class EconomyManager : MonoBehaviour
         if (industrialIncomeTax < maxTaxRate)
         {
             industrialIncomeTax += 1;
-            gameNotificationManager.PostInfo($"Industrial tax raised to {industrialIncomeTax}%");
+            if (gameNotificationManager != null)
+                gameNotificationManager.PostInfo($"Industrial tax raised to {industrialIncomeTax}%");
         }
         else
         {
@@ -274,7 +283,8 @@ public class EconomyManager : MonoBehaviour
         if (industrialIncomeTax > minTaxRate)
         {
             industrialIncomeTax -= 1;
-            gameNotificationManager.PostInfo($"Industrial tax lowered to {industrialIncomeTax}%");
+            if (gameNotificationManager != null)
+                gameNotificationManager.PostInfo($"Industrial tax lowered to {industrialIncomeTax}%");
         }
         else
         {
@@ -473,9 +483,9 @@ public class EconomyManager : MonoBehaviour
     {
         if (cityStats == null) return 0;
 
-        int projectedResidentialIncome = cityStats.residentialZoneCount * residentialIncomeTax;
-        int projectedCommercialIncome = cityStats.commercialZoneCount * commercialIncomeTax;
-        int projectedIndustrialIncome = cityStats.industrialZoneCount * industrialIncomeTax;
+        int projectedResidentialIncome = cityStats.residentialBuildingCount * residentialIncomeTax;
+        int projectedCommercialIncome = cityStats.commercialBuildingCount * commercialIncomeTax;
+        int projectedIndustrialIncome = cityStats.industrialBuildingCount * industrialIncomeTax;
 
         return projectedResidentialIncome + projectedCommercialIncome + projectedIndustrialIncome;
     }

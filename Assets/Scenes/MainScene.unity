@@ -1178,8 +1178,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
+      - m_Target: {fileID: 515320935}
+        m_TargetAssemblyTypeName: Territory.UI.UIManager, Assembly-CSharp
         m_MethodName: OnRaiseCommercialTaxButtonClicked
         m_Mode: 1
         m_Arguments:
@@ -1360,10 +1360,13 @@ MonoBehaviour:
   - 15
   - 20
   - 30
+  startZoomLevel: 2
   scrollThresholdPerLevel: 0.2
   zoomStepCooldown: 0.12
   zoomSmoothSpeed: 18
-  startZoomLevel: 2
+  dragPanThresholdPixels: 8
+  panInertiaDamping: 0.92
+  panInertiaMinVelocity: 0.001
   gridManager: {fileID: 1880690383}
   cameraButtonsController: {fileID: 1281450407}
 --- !u!1 &98386996
@@ -4332,8 +4335,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
+      - m_Target: {fileID: 515320935}
+        m_TargetAssemblyTypeName: Territory.UI.UIManager, Assembly-CSharp
         m_MethodName: OnLowerResidentialTaxButtonClicked
         m_Mode: 1
         m_Arguments:
@@ -4860,6 +4863,8 @@ MonoBehaviour:
   cityWaterOutputText: {fileID: 366043617}
   cityWaterConsumptionText: {fileID: 323551595}
   insufficientFundsText: {fileID: 451789830}
+  constructionCostText: {fileID: 0}
+  constructionCostOffset: {x: 24, y: -24}
   gameDebugInfoBuilder: {fileID: 230279213}
   useFullDebugText: 1
   detailsDebugText: {fileID: 1101691737}
@@ -5604,9 +5609,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
-        m_MethodName: OnRaiseIndustrialTaxButtonClicked
+      - m_Target: {fileID: 515320935}
+        m_TargetAssemblyTypeName: Territory.UI.UIManager, Assembly-CSharp
+        m_MethodName: OnRaiseCommercialTaxButtonClicked
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -8610,7 +8615,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 470750414}
   m_HandleRect: {fileID: 470750413}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -8939,8 +8944,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
+      - m_Target: {fileID: 515320935}
+        m_TargetAssemblyTypeName: Territory.UI.UIManager, Assembly-CSharp
         m_MethodName: OnLowerCommercialTaxButtonClicked
         m_Mode: 1
         m_Arguments:
@@ -9616,8 +9621,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
+      - m_Target: {fileID: 515320935}
+        m_TargetAssemblyTypeName: Territory.UI.UIManager, Assembly-CSharp
         m_MethodName: OnRaiseResidentialTaxButtonClicked
         m_Mode: 1
         m_Arguments:
@@ -12088,8 +12093,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
+      - m_Target: {fileID: 515320935}
+        m_TargetAssemblyTypeName: Territory.UI.UIManager, Assembly-CSharp
         m_MethodName: OnLowerIndustrialTaxButtonClicked
         m_Mode: 1
         m_Arguments:
