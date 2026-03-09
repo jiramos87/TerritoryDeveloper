@@ -1,348 +1,340 @@
 # Backlog — Territory Developer
 
-> Fuente de verdad para issues del proyecto. Ordenado por prioridad (mayor arriba).
-> Para trabajar un issue: referenciarlo con `@BACKLOG.md` en la conversación de Cursor.
+> Single source of truth for project issues. Ordered by priority (highest first).
+> To work on an issue: reference it with `@BACKLOG.md` in the Cursor conversation.
 
 ---
 
-## En progreso
+## In Progress
 
+_No active issues._
 
-## Prioridad alta
+## High Priority
 
-- [ ] **FEAT-27** — Main menu with Continue, New Game, Load City, Options
-  - Tipo: feature
-  - Archivos: new MainMenu scene, `GameSaveManager.cs`, `UIManager.cs`, `GameManager.cs`
-  - Notas: Create game start menu with 4 buttons in English: "Continue" (load last saved game), "New Game", "Load City", "Options". Requires changing how saved games are saved and displayed: allow sorting by save date, track last-saved game for "Continue" button. Save list UI should show saves ordered by `realWorldSaveTime` (newest first).
-  - Depende de: BUG-01 (save/load must work first; completado 2026-03-07)
+- [ ] **BUG-02** — Taxes do not work
+  - Type: fix
+  - Files: `EconomyManager.cs`, `CityStats.cs`
+  - Notes: Without taxes there is no functional economic loop.
 
-- [ ] **BUG-20** — Planta de energía (y edificios 3x3/2x2) cargan mal en LoadGame: quedan bajo el grass
-  - Tipo: fix
-  - Archivos: `GeographyManager.cs` (GetMultiCellBuildingMaxSortingOrder, ReCalculateSortingOrderBasedOnHeight), `BuildingPlacementService.cs` (LoadBuildingTile, RestoreBuildingTile), `GridManager.cs` (RestoreGridCellVisuals)
-  - Notas: Al cargar partida, el prefab de la planta de energía (y posiblemente planta de agua 2x2) se dibuja por debajo de los tiles de grass del footprint. El pivot (64,102) tiene tanto grass como edificio como hijos; el sorting order del edificio puede quedar por debajo del grass por el "cap" en GetMultiCellBuildingMaxSortingOrder. No corregido aún.
+- [ ] **BUG-03** — Growth % sets amount instead of percentage of total budget
+  - Type: fix
+  - Files: `GrowthManager.cs`, `GrowthBudgetManager.cs`, `CityStats.cs`
+  - Notes: Must be percentage of total city budget.
 
-- [ ] **BUG-10** — `IndustrialHeavyZoning` nunca genera edificios
-  - Tipo: fix
-  - Archivos: `TimeManager.cs` (PlaceAllZonedBuildings)
-  - Notas: `PlaceAllZonedBuildings` llama a 8 de 9 tipos de zona pero omite `IndustrialHeavyZoning`. Los edificios industriales pesados nunca se construyen.
+- [ ] **BUG-04** — Pause mode stops camera movement; camera speed tied to simulation speed
+  - Type: fix
+  - Files: `CameraController.cs`, `TimeManager.cs`
+  - Notes: Camera and simulation must be independent. Camera speed must depend on camera height relative to the map.
 
-- [ ] **BUG-11** — Demand usa `Time.deltaTime` causando dependencia del framerate
-  - Tipo: fix
-  - Archivos: `DemandManager.cs`
-  - Notas: `Mathf.Lerp(..., demandSensitivity * Time.deltaTime)` hace que la demanda cambie diferente a 30 FPS vs 120 FPS. Debe usar delta fijo diario.
+- [ ] **BUG-05** — Do not remove cursor from buildings when constructing
+  - Type: fix
+  - Files: `GridManager.cs`, `CursorManager.cs`, `UIManager.cs`
+  - Notes: User may want to keep building the same building. Keep selection active post-placement.
 
-- [ ] **BUG-12** — Happiness UI siempre muestra 50%
-  - Tipo: fix
-  - Archivos: `CityStatsUIController.cs` (GetHappiness)
-  - Notas: `GetHappiness()` retorna `50.0f` hardcodeado en vez de leer `cityStats.happiness`.
+- [ ] **BUG-20** — Power plant (and 3x3/2x2 buildings) load incorrectly in LoadGame: end up under grass
+  - Type: fix
+  - Files: `GeographyManager.cs` (GetMultiCellBuildingMaxSortingOrder, ReCalculateSortingOrderBasedOnHeight), `BuildingPlacementService.cs` (LoadBuildingTile, RestoreBuildingTile), `GridManager.cs` (RestoreGridCellVisuals)
+  - Notes: When loading a game, the power plant prefab (and possibly 2x2 water plant) is drawn under the grass tiles of the footprint. The pivot (64,102) has both grass and building as children; the building's sorting order can end up below the grass due to the "cap" in GetMultiCellBuildingMaxSortingOrder. Not yet fixed.
 
-- [ ] **BUG-18** — Road preview and placement draw discontinuous lines instead of continuous paths
-  - Tipo: fix
-  - Archivos: `RoadManager.cs`, `GridManager.cs`
-  - Notas: When drawing roads, moving the mouse produces discrete, broken line figures across cells instead of a continuous path. The underlying coordinate/cell calculation is likely continuous (floating-point) rather than discrete, causing gaps in the cell sequence. Fix should ensure the path is always a connected chain of cells. For diagonal gaps, use the existing diagonal road prefabs; for other discontinuities, insert an extra bridging prefab at each break point so the road is visually and logically continuous in both preview and final placement.
+- [ ] **BUG-10** — `IndustrialHeavyZoning` never generates buildings
+  - Type: fix
+  - Files: `TimeManager.cs` (PlaceAllZonedBuildings)
+  - Notes: `PlaceAllZonedBuildings` calls 8 of 9 zone types but omits `IndustrialHeavyZoning`. Heavy industrial buildings are never built.
 
-- [ ] **BUG-02** — Taxes no funcionan
-  - Tipo: fix
-  - Archivos: `EconomyManager.cs`, `CityStats.cs`
-  - Notas: Sin impuestos no hay loop económico funcional.
+- [ ] **BUG-11** — Demand uses `Time.deltaTime` causing framerate dependency
+  - Type: fix
+  - Files: `DemandManager.cs`
+  - Notes: `Mathf.Lerp(..., demandSensitivity * Time.deltaTime)` makes demand change differently at 30 FPS vs 120 FPS. Must use fixed daily delta.
 
-- [ ] **BUG-03** — Growth % setea monto en vez de porcentaje del presupuesto total
-  - Tipo: fix
-  - Archivos: `GrowthManager.cs`, `GrowthBudgetManager.cs`, `CityStats.cs`
-  - Notas: Debe ser porcentaje del presupuesto total de la ciudad.
+- [ ] **BUG-12** — Happiness UI always shows 50%
+  - Type: fix
+  - Files: `CityStatsUIController.cs` (GetHappiness)
+  - Notes: `GetHappiness()` returns hardcoded `50.0f` instead of reading `cityStats.happiness`.
 
-- [ ] **BUG-04** — Modo pausa detiene movimiento de cámara; velocidad de cámara ligada a velocidad de simulación
-  - Tipo: fix
-  - Archivos: `CameraController.cs`, `TimeManager.cs`
-  - Notas: Cámara y simulación deben ser independientes. Velocidad de cámara debe depender de la altura relativa de la cámara versus el mapa.
+- [ ] **BUG-14** — `FindObjectOfType` in Update/per-frame degrades performance
+  - Type: fix (performance)
+  - Files: `CursorManager.cs` (Update), `UIManager.cs` (UpdateUI)
+  - Notes: `CursorManager.Update()` calls `FindObjectOfType<UIManager>()` every frame. `UIManager.UpdateUI()` calls `FindObjectOfType` for 4 managers repeatedly. Must be cached in Start().
 
-- [ ] **BUG-05** — No quitar cursor de edificios al construir
-  - Tipo: fix
-  - Archivos: `GridManager.cs`, `CursorManager.cs`, `UIManager.cs`
-  - Notas: El usuario puede querer seguir construyendo el mismo edificio. Mantener selección activa post-placement.
+- [ ] **BUG-15** — `UrbanizationProposalManager` not connected to simulation
+  - Type: fix
+  - Files: `SimulationManager.cs`, `UrbanizationProposalManager.cs`
+  - Notes: `SimulationManager.ProcessSimulationTick()` never calls `UrbanizationProposalManager.ProcessTick()`. Urbanization proposals are disabled.
 
-- [ ] **BUG-14** — `FindObjectOfType` en Update/per-frame degrada performance
-  - Tipo: fix (performance)
-  - Archivos: `CursorManager.cs` (Update), `UIManager.cs` (UpdateUI)
-  - Notas: `CursorManager.Update()` llama `FindObjectOfType<UIManager>()` cada frame. `UIManager.UpdateUI()` llama `FindObjectOfType` para 4 managers repetidamente. Deben cachearse en Start().
-
-- [ ] **BUG-15** — `UrbanizationProposalManager` no está conectado a la simulación
-  - Tipo: fix
-  - Archivos: `SimulationManager.cs`, `UrbanizationProposalManager.cs`
-  - Notas: `SimulationManager.ProcessSimulationTick()` nunca llama `UrbanizationProposalManager.ProcessTick()`. Las propuestas de urbanización están deshabilitadas.
-
-## Prioridad media
+## Medium Priority
 
 - [ ] **FEAT-28** — Right-click drag-to-pan (grab and drag map)
-  - Tipo: feature (UX)
-  - Archivos: `CameraController.cs` (HandleDragToPan), `GridManager.cs` (coordinate right-click when panning), `RoadManager.cs` (distinguish single right-click cancel vs drag)
-  - Notas: **Effect name**: "Drag-to-pan" or "click-and-drag panning". When the user holds right mouse button and moves the mouse, the camera should follow the movement, translating the map as if "grabbing" it. Implement in CameraController: detect `Input.GetMouseButton(1)` held + `Input.mousePosition` delta, translate camera opposite to mouse movement. Check `EventSystem.current.IsPointerOverGameObject()` before processing to avoid panning when cursor is over UI (Load Game panel, Building Selector, etc.) — same pattern as BUG-19. Coordinate with GridManager (right-click sets selectedPoint) and RoadManager (right-click-down cancels road drawing): when user is actively dragging for pan, those handlers should not fire; consider threshold: significant mouse movement = pan, minimal/no movement = cancel/select.
+  - Type: feature (UX)
+  - Files: `CameraController.cs` (HandleDragToPan), `GridManager.cs` (coordinate right-click when panning), `RoadManager.cs` (distinguish single right-click cancel vs drag)
+  - Notes: **Effect name**: "Drag-to-pan" or "click-and-drag panning". When the user holds right mouse button and moves the mouse, the camera should follow the movement, translating the map as if "grabbing" it. Implement in CameraController: detect `Input.GetMouseButton(1)` held + `Input.mousePosition` delta, translate camera opposite to mouse movement. Check `EventSystem.current.IsPointerOverGameObject()` before processing to avoid panning when cursor is over UI (Load Game panel, Building Selector, etc.) — same pattern as BUG-19. Coordinate with GridManager (right-click sets selectedPoint) and RoadManager (right-click-down cancels road drawing): when user is actively dragging for pan, those handlers should not fire; consider threshold: significant mouse movement = pan, minimal/no movement = cancel/select.
 
 - [ ] **BUG-19** — Mouse scroll wheel in Load Game scrollable menu also triggers camera zoom
-  - Tipo: fix (UX)
-  - Archivos: `CameraController.cs` (HandleScrollZoom), `UIManager.cs` (loadGameMenu, savedGamesListContainer), `MainScene.unity` (LoadGameMenuPanel / Scroll View hierarchy)
-  - Notas: When scrolling over the Load Game save list, the mouse wheel scrolls the list AND zooms the camera. The scroll should only move the list up/down, not affect camera zoom or other game mechanisms that use the scroll wheel.
-  - Solución propuesta: In `CameraController.HandleScrollZoom()`, check `EventSystem.current.IsPointerOverGameObject()` before processing scroll. If the pointer is over UI (e.g. Load Game panel, Building Selector, any scrollable popup), skip the zoom logic and let the UI consume the scroll. This mirrors how `GridManager` already gates mouse clicks via `IsPointerOverGameObject()`. Requires `using UnityEngine.EventSystems`. Verify that the Load Game ScrollRect (Scroll View) has proper raycast target so `IsPointerOverGameObject()` returns true when hovering over it.
+  - Type: fix (UX)
+  - Files: `CameraController.cs` (HandleScrollZoom), `UIManager.cs` (loadGameMenu, savedGamesListContainer), `MainScene.unity` (LoadGameMenuPanel / Scroll View hierarchy)
+  - Notes: When scrolling over the Load Game save list, the mouse wheel scrolls the list AND zooms the camera. The scroll should only move the list up/down, not affect camera zoom or other game mechanisms that use the scroll wheel.
+  - Proposed solution: In `CameraController.HandleScrollZoom()`, check `EventSystem.current.IsPointerOverGameObject()` before processing scroll. If the pointer is over UI (e.g. Load Game panel, Building Selector, any scrollable popup), skip the zoom logic and let the UI consume the scroll. This mirrors how `GridManager` already gates mouse clicks via `IsPointerOverGameObject()`. Requires `using UnityEngine.EventSystems`. Verify that the Load Game ScrollRect (Scroll View) has proper raycast target so `IsPointerOverGameObject()` returns true when hovering over it.
 
-- [ ] **BUG-13** — `FindObjectOfType<TimeManager>()` se llama cada tick en UrbanizationProposalManager
-  - Tipo: fix (performance)
-  - Archivos: `UrbanizationProposalManager.cs` (ProcessTick)
-  - Notas: `FindObjectOfType` es costoso y se ejecuta en cada tick de simulación. Cachear en Start().
+- [ ] **BUG-13** — `FindObjectOfType<TimeManager>()` called every tick in UrbanizationProposalManager
+  - Type: fix (performance)
+  - Files: `UrbanizationProposalManager.cs` (ProcessTick)
+  - Notes: `FindObjectOfType` is expensive and runs every simulation tick. Cache in Start().
 
-- [ ] **BUG-16** — Posible race condition en inicialización GeographyManager vs TimeManager
-  - Tipo: fix
-  - Archivos: `GeographyManager.cs`, `TimeManager.cs`, `GridManager.cs`
-  - Notas: Unity no garantiza orden de Start(). Si TimeManager.Update() corre antes de que GeographyManager cree el grid, puede acceder a datos inexistentes. Usar Script Execution Order o gate con `isInitialized`.
+- [ ] **BUG-16** — Possible race condition in GeographyManager vs TimeManager initialization
+  - Type: fix
+  - Files: `GeographyManager.cs`, `TimeManager.cs`, `GridManager.cs`
+  - Notes: Unity does not guarantee Start() order. If TimeManager.Update() runs before GeographyManager creates the grid, it may access non-existent data. Use Script Execution Order or gate with `isInitialized`.
 
-- [ ] **BUG-17** — `cachedCamera` es null al crear `ChunkCullingSystem`
-  - Tipo: fix
-  - Archivos: `GridManager.cs`
-  - Notas: En InitializeGrid() se crea ChunkCullingSystem con `cachedCamera`, pero esta se asigna recién en Update(). Puede causar NullReferenceException.
+- [ ] **BUG-17** — `cachedCamera` is null when creating `ChunkCullingSystem`
+  - Type: fix
+  - Files: `GridManager.cs`
+  - Notes: In InitializeGrid() ChunkCullingSystem is created with `cachedCamera`, but it is only assigned in Update(). May cause NullReferenceException.
 
-- [ ] **FEAT-01** — Agregar cambio delta al presupuesto total (ej: $25,000 (+$1,200))
-  - Tipo: feature
-  - Archivos: `EconomyManager.cs`, `CityStatsUIController.cs`, `UIManager.cs`
-  - Notas: Feedback visual del flujo económico por turno.
+- [ ] **FEAT-01** — Add delta change to total budget (e.g. $25,000 (+$1,200))
+  - Type: feature
+  - Files: `EconomyManager.cs`, `CityStatsUIController.cs`, `UIManager.cs`
+  - Notes: Visual feedback of economic flow per turn.
 
-- [ ] **FEAT-02** — Agregar contador de costo de construcción al cursor del mouse
-  - Tipo: feature
-  - Archivos: `CursorManager.cs`, `UIManager.cs`, `GridManager.cs`
-  - Notas: Mostrar costo antes de confirmar placement.
+- [ ] **FEAT-02** — Add construction cost counter to mouse cursor
+  - Type: feature
+  - Files: `CursorManager.cs`, `UIManager.cs`, `GridManager.cs`
+  - Notes: Show cost before confirming placement.
 
-- [ ] **FEAT-21** — Sistema de gastos y mantenimiento
-  - Tipo: feature
-  - Archivos: `EconomyManager.cs`, `CityStats.cs`
-  - Notas: No hay gastos: ni mantenimiento de calles, ni costo de servicios, ni salarios. Sin gastos no hay tensión económica. Agregar upkeep por calles, edificios públicos y servicios.
+- [ ] **FEAT-21** — Expenses and maintenance system
+  - Type: feature
+  - Files: `EconomyManager.cs`, `CityStats.cs`
+  - Notes: No expenses: no street maintenance, no service costs, no salaries. Without expenses there is no economic tension. Add upkeep for streets, public buildings and services.
 
-- [ ] **FEAT-22** — Feedback de impuestos sobre demanda y felicidad
-  - Tipo: feature
-  - Archivos: `EconomyManager.cs`, `DemandManager.cs`, `CityStats.cs`
-  - Notas: Impuestos altos no afectan demanda ni felicidad. Loop: impuestos altos → menos demanda residencial → menos crecimiento → menos ingresos.
-  - Depende de: BUG-02
+- [ ] **FEAT-22** — Tax feedback on demand and happiness
+  - Type: feature
+  - Files: `EconomyManager.cs`, `DemandManager.cs`, `CityStats.cs`
+  - Notes: High taxes do not affect demand or happiness. Loop: high taxes → less residential demand → less growth → less income.
+  - Depends on: BUG-02
 
-- [ ] **FEAT-23** — Happiness dinámico basado en condiciones de la ciudad
-  - Tipo: feature
-  - Archivos: `CityStats.cs`, `DemandManager.cs`, `EmploymentManager.cs`
-  - Notas: Happiness solo sube al colocar zonas (+100 por edificio). No hay efecto de desempleo, impuestos, servicios ni contaminación. Debería ser cálculo continuo multi-factor con decaimiento.
-  - Depende de: BUG-12
+- [ ] **FEAT-23** — Dynamic happiness based on city conditions
+  - Type: feature
+  - Files: `CityStats.cs`, `DemandManager.cs`, `EmploymentManager.cs`
+  - Notes: Happiness only increases when placing zones (+100 per building). No effect from unemployment, taxes, services or pollution. Should be continuous multi-factor calculation with decay.
+  - Depends on: BUG-12
 
-- [ ] **FEAT-24** — Auto-zoning de densidad Media y Pesada
-  - Tipo: feature
-  - Archivos: `AutoZoningManager.cs`, `DemandManager.cs`
-  - Notas: AutoZoningManager solo coloca zonas Light. Debería soportar Medium/Heavy basado en demanda o nivel de desarrollo de la zona.
+- [ ] **FEAT-24** — Auto-zoning for Medium and Heavy density
+  - Type: feature
+  - Files: `AutoZoningManager.cs`, `DemandManager.cs`
+  - Notes: AutoZoningManager only places Light zones. Should support Medium/Heavy based on demand or zone development level.
 
-- [ ] **FEAT-25** — Presupuesto de crecimiento ligado a ingresos reales
-  - Tipo: feature
-  - Archivos: `GrowthBudgetManager.cs`, `EconomyManager.cs`
-  - Notas: Budget usa monto fijo (default 5000) no relacionado con ingresos. Debería ser porcentaje del ingreso mensual proyectado.
-  - Depende de: BUG-02, BUG-03
+- [ ] **FEAT-25** — Growth budget tied to real income
+  - Type: feature
+  - Files: `GrowthBudgetManager.cs`, `EconomyManager.cs`
+  - Notes: Budget uses fixed amount (default 5000) unrelated to income. Should be percentage of projected monthly income.
+  - Depends on: BUG-02, BUG-03
 
-- [ ] **FEAT-26** — Usar desirability para selección de spawn de edificios
-  - Tipo: feature
-  - Archivos: `ZoneManager.cs`, `DemandManager.cs` (GetCellDesirabilityBonus)
-  - Notas: `DemandManager.GetCellDesirabilityBonus()` existe pero no se usa para decidir dónde construir. Edificios deberían preferir zonas con mayor desirability.
+- [ ] **FEAT-26** — Use desirability for building spawn selection
+  - Type: feature
+  - Files: `ZoneManager.cs`, `DemandManager.cs` (GetCellDesirabilityBonus)
+  - Notes: `DemandManager.GetCellDesirabilityBonus()` exists but is not used to decide where to build. Buildings should prefer zones with higher desirability.
 
-- [ ] **BUG-06** — Calles no deben costar tanta energía
-  - Tipo: fix/balance
-  - Archivos: `RoadManager.cs`, `CityStats.cs`, `EconomyManager.cs`
-  - Notas: Rebalancear costo energético de calles.
+- [ ] **BUG-06** — Streets should not cost so much energy
+  - Type: fix/balance
+  - Files: `RoadManager.cs`, `CityStats.cs`, `EconomyManager.cs`
+  - Notes: Rebalance street energy cost.
 
-- [ ] **BUG-07** — Repartir mejor las zonas: menos aleatorias, más homogéneas por barrios/sectores
-  - Tipo: fix
-  - Archivos: `AutoZoningManager.cs`, `ZoneManager.cs`, `DemandManager.cs`
-  - Notas: Las zonas se distribuyen de forma muy aleatoria y mezclada. Deberían agruparse en sectores coherentes.
+- [ ] **BUG-07** — Better zone distribution: less random, more homogeneous by neighbourhoods/sectors
+  - Type: fix
+  - Files: `AutoZoningManager.cs`, `ZoneManager.cs`, `DemandManager.cs`
+  - Notes: Zones are distributed very randomly and mixed. Should be grouped in coherent sectors.
 
-- [ ] **FEAT-03** — Modo bosque mantener apretado (hold-to-place)
-  - Tipo: feature
-  - Archivos: `ForestManager.cs`, `GridManager.cs`
-  - Notas: Actualmente requiere click por celda. Permitir drag continuo.
+- [ ] **FEAT-03** — Forest mode hold-to-place
+  - Type: feature
+  - Files: `ForestManager.cs`, `GridManager.cs`
+  - Notes: Currently requires click per cell. Allow continuous drag.
 
-- [ ] **FEAT-04** — Herramienta de spray azaroso de bosque
-  - Tipo: feature
-  - Archivos: `ForestManager.cs`, `GridManager.cs`, `CursorManager.cs`
-  - Notas: Colocar bosque en área con distribución aleatoria tipo spray/brush.
+- [ ] **FEAT-04** — Random forest spray tool
+  - Type: feature
+  - Files: `ForestManager.cs`, `GridManager.cs`, `CursorManager.cs`
+  - Notes: Place forest in area with random spray/brush distribution.
 
-- [ ] **BUG-08** — Más ríos pequeños, ríos llegan a lagos, definir un mar en esquina/borde
-  - Tipo: fix/feature
-  - Archivos: `WaterManager.cs`, `WaterMap.cs`, `GeographyManager.cs`
-  - Notas: Mejorar generación hídrica del mapa.
+- [ ] **BUG-08** — More small rivers, rivers reach lakes, define sea at corner/edge
+  - Type: fix/feature
+  - Files: `WaterManager.cs`, `WaterMap.cs`, `GeographyManager.cs`
+  - Notes: Improve map water generation.
 
-- [ ] **FEAT-05** — Calles deben poder subir por pendientes diagonales usando prefabs ortogonales
-  - Tipo: feature
-  - Archivos: `RoadManager.cs`, `TerrainManager.cs`, `GridManager.cs`
-  - Notas: Actualmente las calles no suben pendientes diagonales.
+- [ ] **FEAT-05** — Streets must be able to climb diagonal slopes using orthogonal prefabs
+  - Type: feature
+  - Files: `RoadManager.cs`, `TerrainManager.cs`, `GridManager.cs`
+  - Notes: Streets currently do not climb diagonal slopes.
 
-- [ ] **FEAT-06** — Bosque que crece con el tiempo: sparse → medium → dense
-  - Tipo: feature
-  - Archivos: `ForestManager.cs`, `ForestMap.cs`, `SimulationManager.cs`
-  - Notas: Sistema de maduración de bosques a lo largo del tiempo de simulación.
+- [ ] **FEAT-06** — Forest that grows over time: sparse → medium → dense
+  - Type: feature
+  - Files: `ForestManager.cs`, `ForestMap.cs`, `SimulationManager.cs`
+  - Notes: Forest maturation system over simulation time.
 
-- [ ] **FEAT-07** — Probar que funcione randomized spawning para zones
-  - Tipo: feature/test
-  - Archivos: `ZoneManager.cs`, `GrowthManager.cs`
-  - Notas: Verificar que el spawning aleatorio de edificios en zonas funcione correctamente.
+- [ ] **FEAT-07** — Test that randomized spawning works for zones
+  - Type: feature/test
+  - Files: `ZoneManager.cs`, `GrowthManager.cs`
+  - Notes: Verify that random building spawning in zones works correctly.
 
-- [ ] **FEAT-08** — Simulación de plusvalía, respawning y evolución a edificios mayores
-  - Tipo: feature
-  - Archivos: `GrowthManager.cs`, `ZoneManager.cs`, `DemandManager.cs`, `CityStats.cs`
-  - Notas: Edificios existentes evolucionan a versiones mayores basado en plusvalía de la zona.
+- [ ] **FEAT-08** — Property value simulation, respawning and evolution to larger buildings
+  - Type: feature
+  - Files: `GrowthManager.cs`, `ZoneManager.cs`, `DemandManager.cs`, `CityStats.cs`
+  - Notes: Existing buildings evolve to larger versions based on zone property value.
 
-## Code Health (deuda técnica)
+## Code Health (technical debt)
 
-- [ ] **TECH-01** — Extraer responsabilidades de archivos gigantes (GridManager, TerrainManager, CityStats, ZoneManager, UIManager, RoadManager)
-  - Tipo: refactor
-  - Archivos: `GridManager.cs` (1538 líneas), `TerrainManager.cs` (1330), `CityStats.cs` (1199), `ZoneManager.cs` (1170), `UIManager.cs` (1054), `RoadManager.cs` (1019)
-  - Notas: Ya se extrajeron helpers (GridPathfinder, GridSortingOrderService, etc.). Candidatos pendientes: BulldozeHandler (~200 líneas), GridInputHandler (~130 líneas), CoordinateConversionService (~230 líneas) desde GridManager.
+- [ ] **TECH-01** — Extract responsibilities from large files (GridManager, TerrainManager, CityStats, ZoneManager, UIManager, RoadManager)
+  - Type: refactor
+  - Files: `GridManager.cs` (1538 lines), `TerrainManager.cs` (1330), `CityStats.cs` (1199), `ZoneManager.cs` (1170), `UIManager.cs` (1054), `RoadManager.cs` (1019)
+  - Notes: Helpers already extracted (GridPathfinder, GridSortingOrderService, etc.). Pending candidates: BulldozeHandler (~200 lines), GridInputHandler (~130 lines), CoordinateConversionService (~230 lines) from GridManager.
 
-- [ ] **TECH-02** — Cambiar campos públicos a `[SerializeField] private` en managers
-  - Tipo: refactor
-  - Archivos: `ZoneManager.cs`, `RoadManager.cs`, `GridManager.cs`, `CityStats.cs`, `AutoZoningManager.cs`, `AutoRoadBuilder.cs`, `UIManager.cs`, `WaterManager.cs`, `UrbanizationProposalManager.cs`
-  - Notas: Dependencias y prefabs expuestos como `public` permiten acceso accidental desde cualquier clase. Usar `[SerializeField] private` para encapsular.
+- [ ] **TECH-02** — Change public fields to `[SerializeField] private` in managers
+  - Type: refactor
+  - Files: `ZoneManager.cs`, `RoadManager.cs`, `GridManager.cs`, `CityStats.cs`, `AutoZoningManager.cs`, `AutoRoadBuilder.cs`, `UIManager.cs`, `WaterManager.cs`, `UrbanizationProposalManager.cs`
+  - Notes: Dependencies and prefabs exposed as `public` allow accidental access from any class. Use `[SerializeField] private` to encapsulate.
 
-- [ ] **TECH-03** — Extraer magic numbers a constantes o ScriptableObjects
-  - Tipo: refactor
-  - Archivos: múltiples (GridManager, CityStats, RoadManager, UIManager, TimeManager, TerrainManager, WaterManager, EconomyManager, ForestManager, InterstateManager, etc.)
-  - Notas: Costos de edificios, balance económico, parámetros de generación, sorting order offsets, fechas iniciales, probabilidades — todos hardcodeados. Extraer a constantes nombradas o ScriptableObject de configuración para facilitar tuning.
+- [ ] **TECH-03** — Extract magic numbers to constants or ScriptableObjects
+  - Type: refactor
+  - Files: multiple (GridManager, CityStats, RoadManager, UIManager, TimeManager, TerrainManager, WaterManager, EconomyManager, ForestManager, InterstateManager, etc.)
+  - Notes: Building costs, economic balance, generation parameters, sorting order offsets, initial dates, probabilities — all hardcoded. Extract to named constants or configuration ScriptableObject for easier tuning.
 
-- [ ] **TECH-04** — Eliminar acceso directo a `gridArray`/`cellArray` fuera de GridManager
-  - Tipo: refactor
-  - Archivos: `WaterManager.cs`, `GridSortingOrderService.cs`, `GeographyManager.cs`, `BuildingPlacementService.cs`
-  - Notas: Regla del proyecto: usar `GetCell(x, y)` en vez de acceso directo al array. Varias clases violan esto.
+- [ ] **TECH-04** — Remove direct access to `gridArray`/`cellArray` outside GridManager
+  - Type: refactor
+  - Files: `WaterManager.cs`, `GridSortingOrderService.cs`, `GeographyManager.cs`, `BuildingPlacementService.cs`
+  - Notes: Project rule: use `GetCell(x, y)` instead of direct array access. Several classes violate this.
 
-- [ ] **TECH-05** — Extraer patrón duplicado de resolución de dependencias
-  - Tipo: refactor
-  - Archivos: ~25+ managers con bloque `if (X == null) X = FindObjectOfType<X>()`
-  - Notas: Considerar método helper, clase base, o extension method para reducir duplicación del patrón Inspector + FindObjectOfType fallback.
+- [ ] **TECH-05** — Extract duplicated dependency resolution pattern
+  - Type: refactor
+  - Files: ~25+ managers with `if (X == null) X = FindObjectOfType<X>()` block
+  - Notes: Consider helper method, base class, or extension method to reduce duplication of Inspector + FindObjectOfType fallback pattern.
 
-## Prioridad baja
+## Low Priority
 
-- [ ] **FEAT-09** — Comercio / Producción / Sueldos
-  - Tipo: feature (sistema nuevo)
-  - Archivos: `EconomyManager.cs`, `CityStats.cs` (+ nuevos managers)
-  - Notas: Sistema económico de producción, comercio entre zonas y sueldos.
+- [ ] **FEAT-09** — Trade / Production / Salaries
+  - Type: feature (new system)
+  - Files: `EconomyManager.cs`, `CityStats.cs` (+ new managers)
+  - Notes: Economic system of production, trade between zones and salaries.
 
-- [ ] **FEAT-10** — Aporte regional: bonificación mensual por pertenecer al estado
-  - Tipo: feature
-  - Archivos: `EconomyManager.cs`, `CityStats.cs`, `RegionalMapManager.cs`
-  - Notas: Ingreso adicional mensual por pertenecer a red regional.
+- [ ] **FEAT-10** — Regional contribution: monthly bonus for belonging to the state
+  - Type: feature
+  - Files: `EconomyManager.cs`, `CityStats.cs`, `RegionalMapManager.cs`
+  - Notes: Additional monthly income for belonging to regional network.
 
-- [ ] **FEAT-11** — Nivel educativo / Escuelas
-  - Tipo: feature (sistema nuevo)
-  - Archivos: nuevos managers + `CityStats.cs`, `DemandManager.cs`
-  - Notas: Sistema de educación que afecta demanda y crecimiento.
+- [ ] **FEAT-11** — Education level / Schools
+  - Type: feature (new system)
+  - Files: new managers + `CityStats.cs`, `DemandManager.cs`
+  - Notes: Education system affecting demand and growth.
 
-- [ ] **FEAT-12** — Seguridad / Orden / Policía
-  - Tipo: feature (sistema nuevo)
-  - Archivos: nuevos managers + `CityStats.cs`
-  - Notas: Sistema de seguridad pública.
+- [ ] **FEAT-12** — Security / Order / Police
+  - Type: feature (new system)
+  - Files: new managers + `CityStats.cs`
+  - Notes: Public security system.
 
-- [ ] **FEAT-13** — Incendio / Riesgo de incendio / Bomberos
-  - Tipo: feature (sistema nuevo)
-  - Archivos: nuevos managers + `CityStats.cs`
-  - Notas: Sistema de riesgo de incendio y servicio de bomberos.
+- [ ] **FEAT-13** — Fire / Fire risk / Firefighters
+  - Type: feature (new system)
+  - Files: new managers + `CityStats.cs`
+  - Notes: Fire risk and firefighter service system.
 
-- [ ] **FEAT-14** — Sistema de tránsito vehicular / animaciones de tránsito
-  - Tipo: feature (sistema nuevo)
-  - Archivos: nuevo manager + `RoadManager.cs`, `GridManager.cs`
-  - Notas: Vehículos que circulan por las calles.
+- [ ] **FEAT-14** — Vehicle traffic system / traffic animations
+  - Type: feature (new system)
+  - Files: new manager + `RoadManager.cs`, `GridManager.cs`
+  - Notes: Vehicles circulating on streets.
 
-- [ ] **FEAT-15** — Sistema de puertos / animaciones de cargueros
-  - Tipo: feature (sistema nuevo)
-  - Archivos: nuevo manager + `WaterManager.cs`
-  - Notas: Requiere sistema de agua con mar definido (depende de BUG-08).
+- [ ] **FEAT-15** — Port system / cargo ship animations
+  - Type: feature (new system)
+  - Files: new manager + `WaterManager.cs`
+  - Notes: Requires water system with defined sea (depends on BUG-08).
 
-- [ ] **FEAT-16** — Sistema de trenes / animaciones de trenes
-  - Tipo: feature (sistema nuevo)
-  - Archivos: nuevo manager + `GridManager.cs`
-  - Notas: Red ferroviaria y animaciones.
+- [ ] **FEAT-16** — Train system / train animations
+  - Type: feature (new system)
+  - Files: new manager + `GridManager.cs`
+  - Notes: Railway network and animations.
 
 - [ ] **FEAT-17** — Mini-map
-  - Tipo: feature
-  - Archivos: `CameraController.cs`, `UIManager.cs` (+ nuevo controller)
-  - Notas: Vista miniatura del mapa completo para navegación rápida.
+  - Type: feature
+  - Files: `CameraController.cs`, `UIManager.cs` (+ new controller)
+  - Notes: Miniature view of full map for quick navigation.
 
-- [ ] **FEAT-18** — Terrain generator (mejorado)
-  - Tipo: feature
-  - Archivos: `TerrainManager.cs`, `GeographyManager.cs`, `HeightMap.cs`
-  - Notas: Generador de terreno con más control y variedad.
+- [ ] **FEAT-18** — Terrain generator (improved)
+  - Type: feature
+  - Files: `TerrainManager.cs`, `GeographyManager.cs`, `HeightMap.cs`
+  - Notes: Terrain generator with more control and variety.
 
-- [ ] **FEAT-19** — Giro de mapa / prefabs
-  - Tipo: feature
-  - Archivos: `CameraController.cs`, `GridManager.cs`, todos los managers de rendering
-  - Notas: Rotación de vista isométrica. Impacto alto en sorting order y rendering.
+- [ ] **FEAT-19** — Map rotation / prefabs
+  - Type: feature
+  - Files: `CameraController.cs`, `GridManager.cs`, all rendering managers
+  - Notes: Isometric view rotation. High impact on sorting order and rendering.
 
-- [ ] **FEAT-20** — Pantalla de inicio (superseded by FEAT-27)
-  - Tipo: feature
-  - Archivos: nueva scene + managers de UI
-  - Notas: Menú principal con New Game, Load Game, Settings. Superseded by FEAT-27 (main menu with Continue, New Game, Load City, Options).
+- [ ] **FEAT-20** — Start screen (superseded by FEAT-27)
+  - Type: feature
+  - Files: new scene + UI managers
+  - Notes: Main menu with New Game, Load Game, Settings. Superseded by FEAT-27 (main menu with Continue, New Game, Load City, Options).
 
-- [ ] **ART-01** — Prefabs faltantes: bosques en pendiente SE, NE, SW, NW
-  - Tipo: arte/assets
-  - Archivos: prefabs en `Assets/Prefabs/`, `ForestManager.cs`
+- [ ] **ART-01** — Missing prefabs: forests on SE, NE, SW, NW slopes
+  - Type: art/assets
+  - Files: prefabs in `Assets/Prefabs/`, `ForestManager.cs`
 
-- [ ] **ART-02** — Prefabs faltantes: residencial (2 heavy 1x1/2x2, light 2x2, medium 1x1)
-  - Tipo: arte/assets
-  - Archivos: prefabs en `Assets/Prefabs/`, `ZoneManager.cs`
+- [ ] **ART-02** — Missing prefabs: residential (2 heavy 1x1/2x2, light 2x2, medium 1x1)
+  - Type: art/assets
+  - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-- [ ] **ART-03** — Prefabs faltantes: comercial (2 heavy 2x2/1x1, light 2x2, medium 2x2)
-  - Tipo: arte/assets
-  - Archivos: prefabs en `Assets/Prefabs/`, `ZoneManager.cs`
+- [ ] **ART-03** — Missing prefabs: commercial (2 heavy 2x2/1x1, light 2x2, medium 2x2)
+  - Type: art/assets
+  - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-- [ ] **ART-04** — Prefabs faltantes: industrial (2 heavy 2x2/1x1, light 1x1, 2 medium 1x1/2x2)
-  - Tipo: arte/assets
-  - Archivos: prefabs en `Assets/Prefabs/`, `ZoneManager.cs`
+- [ ] **ART-04** — Missing prefabs: industrial (2 heavy 2x2/1x1, light 1x1, 2 medium 1x1/2x2)
+  - Type: art/assets
+  - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-- [ ] **AUDIO-01** — Audio FX: demolición, placement, zoning, forest, 3 temas musicales, efectos de ambiente
-  - Tipo: audio/feature
-  - Archivos: nuevo AudioManager + assets de audio
-  - Notas: Efectos de ambiente deben variar según posición y altura de la cámara sobre el mapa.
+- [ ] **AUDIO-01** — Audio FX: demolition, placement, zoning, forest, 3 music themes, ambient effects
+  - Type: audio/feature
+  - Files: new AudioManager + audio assets
+  - Notes: Ambient effects must vary by camera position and height over the map.
 
 ---
 
-## Completados (últimos 30 días)
+## Completed (last 30 days)
 
-- [x] **BUG-01** — Save game, Load game y New game están rotos (2026-03-07)
-- [x] **BUG-09** — `Cell.GetCellData()` no serializa el estado de la celda (2026-03-07)
-- [x] **DONE** — Bosque no se puede colocar adyacente a agua (2026-03)
-- [x] **DONE** — Demoler bosques en todas las alturas + todos los tipos de edificio (2026-03)
-- [x] **DONE** — Al demoler bosque en pendiente se repone prefab de terreno correcto por lectura a heightMap (2026-03)
+- [x] **BUG-18** — Road preview and placement draw discontinuous lines instead of continuous paths (2026-03-09)
+- [x] **FEAT-27** — Main menu with Continue, New Game, Load City, Options (2026-03-08)
+- [x] **BUG-01** — Save game, Load game and New game were broken (2026-03-07)
+- [x] **BUG-09** — `Cell.GetCellData()` does not serialize cell state (2026-03-07)
+- [x] **DONE** — Forest cannot be placed adjacent to water (2026-03)
+- [x] **DONE** — Demolish forests at all heights + all building types (2026-03)
+- [x] **DONE** — When demolishing forest on slope, correct terrain prefab restored via heightMap read (2026-03)
 - [x] **DONE** — Interstate Road (2026-03)
 - [x] **DONE** — CityNetwork sim (2026-03)
-- [x] **DONE** — Bosques en pendientes (2026-03)
-- [x] **DONE** — Simulación de crecimiento — modo AUTO (2026-03)
-- [x] **DONE** — Optimización de simulación (2026-03)
-- [x] **DONE** — Mejora de codebase para contextualización eficiente para agentes de IA (2026-03)
+- [x] **DONE** — Forests on slopes (2026-03)
+- [x] **DONE** — Growth simulation — AUTO mode (2026-03)
+- [x] **DONE** — Simulation optimization (2026-03)
+- [x] **DONE** — Codebase improvement for efficient AI agent contextualization (2026-03)
 
 ---
 
-## Cómo usar este backlog
+## How to Use This Backlog
 
-1. **Trabajar un issue**: Abrir chat en Cursor, referenciar `@BACKLOG.md` y pedir análisis o implementación del issue por su ID (ej: "Analiza BUG-01 y proponme un plan").
-2. **Repriorizar**: Mover el issue hacia arriba o abajo dentro de su sección, o cambiar de sección.
-3. **Agregar issue nuevo**: Asignar el siguiente ID disponible (BUG-XX, FEAT-XX, TECH-XX, ART-XX, AUDIO-XX) y ubicar en la sección de prioridad correspondiente.
-4. **Completar issue**: Mover a la sección "Completados" con fecha, marcar checkbox como `[x]`.
-5. **En progreso**: Mover a la sección "En progreso" cuando se empiece a trabajar.
-6. **Dependencias**: Usar campo `Depende de: ID` cuando un issue requiere que otro se complete primero. Revisar dependencias antes de empezar.
+1. **Work on an issue**: Open chat in Cursor, reference `@BACKLOG.md` and request analysis or implementation of the issue by ID (e.g. "Analyze BUG-01 and propose a plan").
+2. **Reprioritize**: Move the issue up or down within its section, or change section.
+3. **Add new issue**: Assign the next available ID in the appropriate category and place in the correct priority section.
+4. **Complete issue**: Move to "Completed" section with date, mark checkbox as `[x]`.
+5. **In progress**: Move to "In progress" section when starting work.
+6. **Dependencies**: Use `Depends on: ID` field when an issue requires another to be completed first. Check dependencies before starting.
 
-### Convención de IDs
-| Prefijo | Categoría |
-|---------|-----------|
-| `BUG-XX` | Bugs y funcionalidad rota |
-| `FEAT-XX` | Features y mejoras |
-| `TECH-XX` | Deuda técnica, refactors, code health |
-| `ART-XX` | Assets de arte, prefabs, sprites |
-| `AUDIO-XX` | Assets de audio y sistema de audio |
+### ID Convention
+| Prefix | Category |
+|--------|----------|
+| `BUG-XX` | Bugs and broken functionality |
+| `FEAT-XX` | Features and enhancements |
+| `TECH-XX` | Technical debt, refactors, code health |
+| `ART-XX` | Art assets, prefabs, sprites |
+| `AUDIO-XX` | Audio assets and audio system features |
 
-### Campos de un issue
-- **Tipo**: fix, feature, refactor, arte/assets, audio/feature, etc.
-- **Archivos**: archivos principales involucrados
-- **Notas**: contexto, descripción del problema o solución esperada
-- **Depende de** (opcional): IDs de issues que deben completarse primero
+### Issue Fields
+- **Type**: fix, feature, refactor, art/assets, audio/feature, etc.
+- **Files**: main files involved
+- **Notes**: context, problem description or expected solution
+- **Depends on** (optional): IDs of issues that must be completed first
 
-### Orden de secciones
-1. En progreso (activamente en desarrollo)
-2. Prioridad alta (bugs críticos, blockers de gameplay core)
-3. Prioridad media (features importantes, balance, mejoras)
-4. Code Health (deuda técnica, refactors, performance)
-5. Prioridad baja (sistemas nuevos, polish, contenido)
-6. Completados (últimos 30 días)
+### Section Order
+1. In progress (actively being developed)
+2. High priority (critical bugs, core gameplay blockers)
+3. Medium priority (important features, balance, improvements)
+4. Code Health (technical debt, refactors, performance)
+5. Low priority (new systems, polish, content)
+6. Completed (last 30 days)

@@ -1,0 +1,431 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using Territory.Persistence;
+
+namespace Territory.UI
+{
+/// <summary>
+/// Controls the main menu UI: Continue, New Game, Load City, Options.
+/// Handles scene transition to MainScene with appropriate GameStartInfo.
+/// </summary>
+public class MainMenuController : MonoBehaviour
+{
+    private const string LastSavePathKey = "LastSavePath";
+    private const int MainSceneBuildIndex = 1;
+
+    [Header("Optional: assign in Inspector to use pre-built UI")]
+    [SerializeField] private Button continueButton;
+    [SerializeField] private Button newGameButton;
+    [SerializeField] private Button loadCityButton;
+    [SerializeField] private Button optionsButton;
+    [SerializeField] private GameObject loadCityPanel;
+    [SerializeField] private Transform savedGamesListContainer;
+    [SerializeField] private GameObject savedGameButtonPrefab;
+    [SerializeField] private Button loadCityBackButton;
+    [SerializeField] private GameObject optionsPanel;
+    [SerializeField] private Button optionsBackButton;
+
+    private string saveFolderPath;
+
+    void Start()
+    {
+        saveFolderPath = Application.persistentDataPath;
+
+        if (continueButton == null)
+            BuildUI();
+        else
+            WireExistingUI();
+
+        UpdateContinueButtonState();
+    }
+
+    private void WireExistingUI()
+    {
+        if (continueButton != null)
+            continueButton.onClick.AddListener(OnContinueClicked);
+        if (newGameButton != null)
+            newGameButton.onClick.AddListener(OnNewGameClicked);
+        if (loadCityButton != null)
+            loadCityButton.onClick.AddListener(OnLoadCityClicked);
+        if (optionsButton != null)
+            optionsButton.onClick.AddListener(OnOptionsClicked);
+        if (loadCityBackButton != null)
+            loadCityBackButton.onClick.AddListener(CloseLoadCityPanel);
+        if (optionsBackButton != null)
+            optionsBackButton.onClick.AddListener(CloseOptionsPanel);
+
+        if (loadCityPanel != null)
+            loadCityPanel.SetActive(false);
+        if (optionsPanel != null)
+            optionsPanel.SetActive(false);
+    }
+
+    private void BuildUI()
+    {
+        var canvasObj = new GameObject("Canvas");
+        var canvas = canvasObj.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        var scaler = canvasObj.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1280, 720);
+        scaler.matchWidthOrHeight = 0.5f;
+        canvasObj.AddComponent<GraphicRaycaster>();
+
+        var root = new GameObject("MainMenuRoot");
+        root.transform.SetParent(canvasObj.transform, false);
+        var rootRect = root.AddComponent<RectTransform>();
+        rootRect.anchorMin = Vector2.zero;
+        rootRect.anchorMax = Vector2.one;
+        rootRect.offsetMin = rootRect.offsetMax = Vector2.zero;
+
+        float buttonWidth = 200f;
+        float buttonHeight = 40f;
+        float spacing = 10f;
+        float startY = 80f;
+
+        continueButton = CreateButton(root.transform, "Continue", new Vector2(0, startY), buttonWidth, buttonHeight);
+        continueButton.onClick.AddListener(OnContinueClicked);
+
+        newGameButton = CreateButton(root.transform, "New Game", new Vector2(0, startY - (buttonHeight + spacing)), buttonWidth, buttonHeight);
+        newGameButton.onClick.AddListener(OnNewGameClicked);
+
+        loadCityButton = CreateButton(root.transform, "Load City", new Vector2(0, startY - 2 * (buttonHeight + spacing)), buttonWidth, buttonHeight);
+        loadCityButton.onClick.AddListener(OnLoadCityClicked);
+
+        optionsButton = CreateButton(root.transform, "Options", new Vector2(0, startY - 3 * (buttonHeight + spacing)), buttonWidth, buttonHeight);
+        optionsButton.onClick.AddListener(OnOptionsClicked);
+
+        loadCityPanel = CreateLoadCityPanel(canvasObj.transform);
+        optionsPanel = CreateOptionsPanel(canvasObj.transform);
+
+        if (GameObject.Find("EventSystem") == null)
+        {
+            var es = new GameObject("EventSystem");
+            es.AddComponent<UnityEngine.EventSystems.EventSystem>();
+            es.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+        }
+    }
+
+    private Button CreateButton(Transform parent, string label, Vector2 pos, float w, float h)
+    {
+        var go = new GameObject(label + "Button");
+        go.transform.SetParent(parent, false);
+        var rect = go.AddComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = pos;
+        rect.sizeDelta = new Vector2(w, h);
+
+        var image = go.AddComponent<Image>();
+        image.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+
+        var button = go.AddComponent<Button>();
+        button.targetGraphic = image;
+
+        var textGo = new GameObject("Text");
+        textGo.transform.SetParent(go.transform, false);
+        var textRect = textGo.AddComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = textRect.offsetMax = Vector2.zero;
+        var text = textGo.AddComponent<Text>();
+        text.text = label;
+        text.alignment = TextAnchor.MiddleCenter;
+        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        text.fontSize = 18;
+        text.color = Color.white;
+
+        return button;
+    }
+
+    private GameObject CreateLoadCityPanel(Transform canvasTransform)
+    {
+        var panel = new GameObject("LoadCityPanel");
+        panel.transform.SetParent(canvasTransform, false);
+        var panelRect = panel.AddComponent<RectTransform>();
+        panelRect.anchorMin = Vector2.zero;
+        panelRect.anchorMax = Vector2.one;
+        panelRect.offsetMin = panelRect.offsetMax = Vector2.zero;
+        panel.AddComponent<Image>().color = new Color(0, 0, 0, 0.7f);
+
+        var content = new GameObject("Content");
+        content.transform.SetParent(panel.transform, false);
+        var contentRect = content.AddComponent<RectTransform>();
+        contentRect.anchorMin = new Vector2(0.5f, 0.5f);
+        contentRect.anchorMax = new Vector2(0.5f, 0.5f);
+        contentRect.sizeDelta = new Vector2(450, 450);
+        contentRect.anchoredPosition = Vector2.zero;
+
+        var contentBg = content.AddComponent<Image>();
+        contentBg.color = new Color(0.15f, 0.15f, 0.2f, 0.95f);
+
+        var scrollView = new GameObject("ScrollView");
+        scrollView.transform.SetParent(content.transform, false);
+        var scrollRect = scrollView.AddComponent<RectTransform>();
+        scrollRect.anchorMin = new Vector2(0, 0);
+        scrollRect.anchorMax = new Vector2(1, 1);
+        scrollRect.offsetMin = new Vector2(15, 50);
+        scrollRect.offsetMax = new Vector2(-15, -55);
+
+        var scroll = scrollView.AddComponent<ScrollRect>();
+        scroll.horizontal = false;
+        scroll.vertical = true;
+
+        var viewport = new GameObject("Viewport");
+        viewport.transform.SetParent(scrollView.transform, false);
+        var viewportRect = viewport.AddComponent<RectTransform>();
+        viewportRect.anchorMin = Vector2.zero;
+        viewportRect.anchorMax = Vector2.one;
+        viewportRect.offsetMin = viewportRect.offsetMax = Vector2.zero;
+        viewport.AddComponent<Image>().color = new Color(1, 1, 1, 1);
+        viewport.AddComponent<Mask>().showMaskGraphic = false;
+
+        var listContent = new GameObject("ListContent");
+        listContent.transform.SetParent(viewport.transform, false);
+        var listContentRect = listContent.AddComponent<RectTransform>();
+        listContentRect.anchorMin = new Vector2(0, 1);
+        listContentRect.anchorMax = Vector2.one;
+        listContentRect.pivot = new Vector2(0.5f, 1f);
+        listContentRect.offsetMin = Vector2.zero;
+        listContentRect.offsetMax = Vector2.zero;
+
+        var layoutGroup = listContent.AddComponent<VerticalLayoutGroup>();
+        layoutGroup.spacing = 5;
+        layoutGroup.childForceExpandHeight = false;
+        layoutGroup.childControlHeight = true;
+        layoutGroup.childControlWidth = true;
+        layoutGroup.padding = new RectOffset(5, 5, 5, 5);
+
+        var contentSizeFitter = listContent.AddComponent<ContentSizeFitter>();
+        contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        contentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+        scroll.content = listContentRect;
+        scroll.viewport = viewportRect;
+
+        savedGamesListContainer = listContent.transform;
+
+        loadCityBackButton = CreateButton(content.transform, "Back", new Vector2(0, -210), 120, 35);
+        loadCityBackButton.onClick.AddListener(CloseLoadCityPanel);
+
+        panel.SetActive(false);
+        return panel;
+    }
+
+    private GameObject CreateOptionsPanel(Transform canvasTransform)
+    {
+        var panel = new GameObject("OptionsPanel");
+        panel.transform.SetParent(canvasTransform, false);
+        var panelRect = panel.AddComponent<RectTransform>();
+        panelRect.anchorMin = Vector2.zero;
+        panelRect.anchorMax = Vector2.one;
+        panelRect.offsetMin = panelRect.offsetMax = Vector2.zero;
+        panel.AddComponent<Image>().color = new Color(0, 0, 0, 0.7f);
+
+        var content = new GameObject("Content");
+        content.transform.SetParent(panel.transform, false);
+        var contentRect = content.AddComponent<RectTransform>();
+        contentRect.anchorMin = contentRect.anchorMax = new Vector2(0.5f, 0.5f);
+        contentRect.sizeDelta = new Vector2(300, 200);
+        contentRect.anchoredPosition = Vector2.zero;
+
+        var title = new GameObject("Title");
+        title.transform.SetParent(content.transform, false);
+        var titleRect = title.AddComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0.5f, 1f);
+        titleRect.anchorMax = new Vector2(0.5f, 1f);
+        titleRect.anchoredPosition = new Vector2(0, -25);
+        titleRect.sizeDelta = new Vector2(200, 30);
+        var titleText = title.AddComponent<Text>();
+        titleText.text = "Options";
+        titleText.alignment = TextAnchor.MiddleCenter;
+        titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        titleText.fontSize = 24;
+        titleText.color = Color.white;
+
+        optionsBackButton = CreateButton(content.transform, "Back", new Vector2(0, -80), 120, 35);
+        optionsBackButton.onClick.AddListener(CloseOptionsPanel);
+
+        panel.SetActive(false);
+        return panel;
+    }
+
+    private void UpdateContinueButtonState()
+    {
+        if (continueButton == null) return;
+        bool hasValidSave = GetMostRecentSavePath() != null;
+        continueButton.interactable = hasValidSave;
+    }
+
+    /// <summary>Returns LastSavePath if valid, otherwise the most recent save file in the folder.</summary>
+    private string GetMostRecentSavePath()
+    {
+        string lastPath = PlayerPrefs.GetString(LastSavePathKey, "");
+        if (!string.IsNullOrEmpty(lastPath) && File.Exists(lastPath))
+            return lastPath;
+        var entries = GetSortedSaveEntries();
+        return entries.Count > 0 ? entries[0].filePath : null;
+    }
+
+    public void OnContinueClicked()
+    {
+        string path = GetMostRecentSavePath();
+        if (string.IsNullOrEmpty(path))
+        {
+            Debug.LogWarning("No saved game found for Continue.");
+            return;
+        }
+        GameStartInfo.SetPendingLoadPath(path);
+        SceneManager.LoadScene(MainSceneBuildIndex);
+    }
+
+    public void OnNewGameClicked()
+    {
+        GameStartInfo.SetStartModeNewGame();
+        SceneManager.LoadScene(MainSceneBuildIndex);
+    }
+
+    public void OnLoadCityClicked()
+    {
+        if (loadCityPanel != null)
+        {
+            loadCityPanel.SetActive(true);
+            PopulateSavedGamesList();
+        }
+    }
+
+    private void PopulateSavedGamesList()
+    {
+        if (savedGamesListContainer == null) return;
+
+        foreach (Transform child in savedGamesListContainer)
+            Destroy(child.gameObject);
+
+        var entries = GetSortedSaveEntries();
+        if (entries.Count == 0)
+        {
+            var empty = new GameObject("EmptyText");
+            empty.transform.SetParent(savedGamesListContainer, false);
+            var rect = empty.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(300, 30);
+            var le = empty.AddComponent<LayoutElement>();
+            le.preferredHeight = 30;
+            le.minHeight = 30;
+            var text = empty.AddComponent<Text>();
+            text.text = "No saved games found.";
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.fontSize = 14;
+            text.color = Color.gray;
+        }
+        else
+        {
+            foreach (var entry in entries)
+            {
+                Button btn;
+                if (savedGameButtonPrefab != null)
+                {
+                    var go = Instantiate(savedGameButtonPrefab, savedGamesListContainer);
+                    btn = go.GetComponent<Button>();
+                    if (go.GetComponent<LayoutElement>() == null)
+                    {
+                        var le = go.AddComponent<LayoutElement>();
+                        le.preferredHeight = 35;
+                        le.minHeight = 35;
+                    }
+                    var text = go.GetComponentInChildren<Text>();
+                    if (text != null)
+                        text.text = entry.displayName;
+                }
+                else
+                {
+                    btn = CreateSaveListButton(entry.displayName);
+                }
+                string path = entry.filePath;
+                btn.onClick.AddListener(() => OnSavedGameSelected(path));
+            }
+        }
+
+        if (savedGamesListContainer is RectTransform rt)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
+    }
+
+    private Button CreateSaveListButton(string label)
+    {
+        var go = new GameObject("SaveButton");
+        go.transform.SetParent(savedGamesListContainer, false);
+        var rect = go.AddComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(350, 35);
+        var le = go.AddComponent<LayoutElement>();
+        le.preferredHeight = 35;
+        le.minHeight = 35;
+        var image = go.AddComponent<Image>();
+        image.color = new Color(0.25f, 0.25f, 0.25f, 1f);
+        var btn = go.AddComponent<Button>();
+        btn.targetGraphic = image;
+
+        var textGo = new GameObject("Text");
+        textGo.transform.SetParent(go.transform, false);
+        var textRect = textGo.AddComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(5, 0);
+        textRect.offsetMax = new Vector2(-5, 0);
+        var text = textGo.AddComponent<Text>();
+        text.text = label;
+        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        text.fontSize = 14;
+        text.color = Color.white;
+        return btn;
+    }
+
+    private List<(string filePath, string displayName)> GetSortedSaveEntries()
+    {
+        var entries = new List<(string filePath, string displayName)>();
+        if (!Directory.Exists(saveFolderPath)) return entries;
+
+        string[] files = Directory.GetFiles(saveFolderPath, "*.json");
+        var withDates = new List<(string path, string name, DateTime date)>();
+
+        foreach (string path in files)
+        {
+            var meta = GameSaveManager.GetSaveMetadata(path);
+            withDates.Add((path, meta.displayName, meta.sortDate));
+        }
+
+        withDates.Sort((a, b) => b.date.CompareTo(a.date));
+
+        foreach (var t in withDates)
+            entries.Add((t.path, t.name));
+
+        return entries;
+    }
+
+    private void OnSavedGameSelected(string saveFilePath)
+    {
+        CloseLoadCityPanel();
+        GameStartInfo.SetPendingLoadPath(saveFilePath);
+        SceneManager.LoadScene(MainSceneBuildIndex);
+    }
+
+    private void CloseLoadCityPanel()
+    {
+        if (loadCityPanel != null)
+            loadCityPanel.SetActive(false);
+    }
+
+    public void OnOptionsClicked()
+    {
+        if (optionsPanel != null)
+            optionsPanel.SetActive(true);
+    }
+
+    private void CloseOptionsPanel()
+    {
+        if (optionsPanel != null)
+            optionsPanel.SetActive(false);
+    }
+}
+}

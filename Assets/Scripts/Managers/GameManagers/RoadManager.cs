@@ -91,21 +91,23 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// <param name="gridPosition">The current grid position under the cursor.</param>
     public void HandleRoadDrawing(Vector2 gridPosition)
     {
-        if (!terrainManager.CanPlaceRoad((int)gridPosition.x, (int)gridPosition.y))
+        Vector2 pos = new Vector2((int)gridPosition.x, (int)gridPosition.y);
+
+        if (!terrainManager.CanPlaceRoad((int)pos.x, (int)pos.y))
         {
             return;
         }
 
         if (Input.GetMouseButtonDown(0))
         {
-            if (interstateManager != null && !interstateManager.CanPlaceStreetFrom(gridPosition))
+            if (interstateManager != null && !interstateManager.CanPlaceStreetFrom(pos))
             {
                 if (GameNotificationManager.Instance != null)
                     GameNotificationManager.Instance.PostWarning("Streets must connect to the Interstate Highway or existing connected roads.");
                 return;
             }
             isDrawingRoad = true;
-            startPosition = gridPosition;
+            startPosition = pos;
             if (uiManager != null)
             {
                 uiManager.HideGhostPreview();
@@ -113,8 +115,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
         }
         else if (isDrawingRoad && Input.GetMouseButton(0))
         {
-            Vector3 currentMousePosition = gridPosition;
-            DrawPreviewLine(startPosition, currentMousePosition);
+            Vector2 currentMousePosition = pos;
+            List<Vector2> path = GetLine(startPosition, currentMousePosition);
+            DrawPreviewLine(path);
         }
 
         if (Input.GetMouseButtonUp(0) && isDrawingRoad)
@@ -197,11 +200,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         {
             if (!isAdjacentRoadInPreview(adjacentRoadTile))
             {
-                Cell adjCell = gridManager.GetCell((int)adjacentRoadTile.x, (int)adjacentRoadTile.y);
-                if (adjCell != null && adjCell.isInterstate)
-                    RefreshRoadPrefabAt(adjacentRoadTile);
-                else
-                    PlaceRoadTile(adjacentRoadTile, i, true);
+                RefreshRoadPrefabAt(adjacentRoadTile);
             }
         }
     }
@@ -293,27 +292,38 @@ public class RoadManager : MonoBehaviour, IRoadManager
         gridManager.SetRoadSortingOrder(roadTile, (int)gridPos.x, (int)gridPos.y);
     }
 
-    void DrawPreviewLine(Vector2 start, Vector2 end)
+    void DrawPreviewLine(List<Vector2> path)
     {
         ClearPreview();
-        List<Vector2> path = GetLine(start, end);
 
+        // Filter to in-bounds cells to avoid null reference and preserve connectivity
+        List<Vector2> filteredPath = new List<Vector2>();
         for (int i = 0; i < path.Count; i++)
         {
             Vector2 gridPos = path[i];
+            if (gridManager.GetCell((int)gridPos.x, (int)gridPos.y) != null)
+                filteredPath.Add(gridPos);
+        }
 
-            DrawPreviewRoadTile(gridPos, path, i, true);
+        for (int i = 0; i < filteredPath.Count; i++)
+        {
+            Vector2 gridPos = filteredPath[i];
+            DrawPreviewRoadTile(gridPos, filteredPath, i, true);
         }
     }
 
+    /// <summary>
+    /// Returns grid cells from start to end using Bresenham. Diagonal steps are split into
+    /// two cardinal steps (staircase) so road placement matches interstate-style elbows.
+    /// </summary>
     List<Vector2> GetLine(Vector2 start, Vector2 end)
     {
         List<Vector2> line = new List<Vector2>();
 
-        int x0 = (int)start.x;
-        int y0 = (int)start.y;
-        int x1 = (int)end.x;
-        int y1 = (int)end.y;
+        int x0 = Mathf.Clamp((int)start.x, 0, gridManager.width - 1);
+        int y0 = Mathf.Clamp((int)start.y, 0, gridManager.height - 1);
+        int x1 = Mathf.Clamp((int)end.x, 0, gridManager.width - 1);
+        int y1 = Mathf.Clamp((int)end.y, 0, gridManager.height - 1);
 
         int dx = Mathf.Abs(x1 - x0);
         int dy = Mathf.Abs(y1 - y0);
@@ -328,15 +338,24 @@ public class RoadManager : MonoBehaviour, IRoadManager
             if (x0 == x1 && y0 == y1) break;
 
             int e2 = err * 2;
+            bool movedX = false;
+            bool movedY = false;
             if (e2 > -dy)
             {
                 err -= dy;
                 x0 += sx;
+                movedX = true;
             }
             if (e2 < dx)
             {
                 err += dx;
                 y0 += sy;
+                movedY = true;
+            }
+
+            if (movedX && movedY)
+            {
+                line.Add(new Vector2(x0 - sx, y0));
             }
         }
 
@@ -355,13 +374,18 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
     void DrawPreviewRoadTile(Vector2 gridPos, List<Vector2> path, int i, bool isCenterRoadTile = true)
     {
-        Vector2 prevGridPos = i == 0 ? (path.Count > 1 ? path[1] : gridPos) : path[i - 1];
+        Cell cell = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
+        if (cell == null)
+            return;
+
+        Vector2 prevGridPos = i == 0
+            ? (path.Count > 1 ? 2 * gridPos - path[1] : gridPos)
+            : path[i - 1];
 
         bool isPreview = true;
 
         GameObject roadPrefab = GetCorrectRoadPrefab(prevGridPos, gridPos, isCenterRoadTile, isPreview, path, i);
 
-        Cell cell = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         int roadPlacedAtHeight = 0;
         int terrainHeight = cell.GetCellInstanceHeight();
         Vector2 worldPos;
@@ -397,7 +421,36 @@ public class RoadManager : MonoBehaviour, IRoadManager
     {
         Vector2 direction = currGridPos - prevGridPos;
         Cell cell = gridManager.GetCell((int)currGridPos.x, (int)currGridPos.y);
+        if (cell == null)
+            return roadTilePrefab1;
+
         int height = cell.GetCellInstanceHeight();
+
+        // Diagonal direction: use elbow prefab (same logic as interstate)
+        int dx = Mathf.RoundToInt(direction.x);
+        int dy = Mathf.RoundToInt(direction.y);
+        if (dx != 0 && dy != 0)
+        {
+            if (dx == 1 && dy == 1) return roadTilePrefabElbowUpLeft;
+            if (dx == 1 && dy == -1) return roadTilePrefabElbowDownLeft;
+            if (dx == -1 && dy == 1) return roadTilePrefabElbowUpRight;
+            if (dx == -1 && dy == -1) return roadTilePrefabElbowDownRight;
+        }
+
+        if (isPreview && path != null && pathIndex >= 0 && pathIndex < path.Count)
+        {
+            bool pathLeft = IsPathNeighbor(path, pathIndex, -1, 0);
+            bool pathRight = IsPathNeighbor(path, pathIndex, 1, 0);
+            bool pathUp = IsPathNeighbor(path, pathIndex, 0, 1);
+            bool pathDown = IsPathNeighbor(path, pathIndex, 0, -1);
+            if (pathLeft || pathRight || pathUp || pathDown)
+            {
+                if (pathLeft && pathUp && !pathRight && !pathDown) return roadTilePrefabElbowDownRight;
+                if (pathRight && pathUp && !pathLeft && !pathDown) return roadTilePrefabElbowDownLeft;
+                if (pathLeft && pathDown && !pathRight && !pathUp) return roadTilePrefabElbowUpRight;
+                if (pathRight && pathDown && !pathLeft && !pathUp) return roadTilePrefabElbowUpLeft;
+            }
+        }
 
         if (isPreview)
         {
@@ -534,6 +587,19 @@ public class RoadManager : MonoBehaviour, IRoadManager
             }
             return roadTilePrefab1;
         }
+    }
+
+    /// <summary>
+    /// True if the path has a neighbor at curr + (offsetX, offsetY) — used for preview elbow detection.
+    /// </summary>
+    bool IsPathNeighbor(List<Vector2> path, int pathIndex, int offsetX, int offsetY)
+    {
+        if (path == null || pathIndex < 0 || pathIndex >= path.Count) return false;
+        Vector2 curr = path[pathIndex];
+        Vector2 neighbor = new Vector2(curr.x + offsetX, curr.y + offsetY);
+        if (pathIndex > 0 && path[pathIndex - 1] == neighbor) return true;
+        if (pathIndex < path.Count - 1 && path[pathIndex + 1] == neighbor) return true;
+        return false;
     }
 
     /// <summary>
@@ -738,15 +804,17 @@ public class RoadManager : MonoBehaviour, IRoadManager
         bool isCenterRoadTile = !isAdjacent;
         bool isPreview = false;
 
-        Vector2 prevGridPos = isAdjacent
-            ? (i == 0 ? gridPos : previewRoadGridPositions[i - 1])
-            : new Vector2(0, 0);
+        Vector2 prevGridPos = (i == 0 && previewRoadGridPositions.Count > 1)
+            ? 2 * gridPos - previewRoadGridPositions[1]
+            : (i == 0 ? gridPos : previewRoadGridPositions[i - 1]);
 
         GameObject correctRoadPrefab = GetCorrectRoadPrefab(
             prevGridPos,
             gridPos,
             isCenterRoadTile,
-            isPreview
+            isPreview,
+            previewRoadGridPositions,
+            i
         );
 
         DestroyPreviousRoadTile(cell, gridPos);

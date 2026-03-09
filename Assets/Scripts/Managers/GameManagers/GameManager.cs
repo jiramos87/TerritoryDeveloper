@@ -21,7 +21,7 @@ public class GameManager : MonoBehaviour
 
     public void SaveGame(string saveName = null)
     {
-        saveManager.SaveGame();
+        saveManager.SaveGame(saveName);
     }
 
     public void LoadGame(string saveFilePath)

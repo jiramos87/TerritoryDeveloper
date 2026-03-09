@@ -739,13 +739,21 @@ public class UIManager : MonoBehaviour
         }
 
         string[] saveFiles = Directory.GetFiles(saveFolderPath, "*.json");
+        var entries = new List<(string path, string displayName, System.DateTime sortDate)>();
 
-        foreach (string saveFile in saveFiles)
+        foreach (string path in saveFiles)
+        {
+            var meta = GameSaveManager.GetSaveMetadata(path);
+            entries.Add((path, meta.displayName, meta.sortDate));
+        }
+
+        entries.Sort((a, b) => b.sortDate.CompareTo(a.sortDate));
+
+        foreach (var entry in entries)
         {
             GameObject newButton = Instantiate(savedGameButtonPrefab, savedGamesListContainer);
-            newButton.GetComponentInChildren<Text>().text = Path.GetFileNameWithoutExtension(saveFile);
-
-            newButton.GetComponent<Button>().onClick.AddListener(() => OnSavedGameSelected(saveFile));
+            newButton.GetComponentInChildren<Text>().text = entry.displayName;
+            newButton.GetComponent<Button>().onClick.AddListener(() => OnSavedGameSelected(entry.path));
         }
     }
 

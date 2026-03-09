@@ -35,6 +35,7 @@ public class GameSaveManager : MonoBehaviour
         GameSaveData saveData = new GameSaveData();
         saveData.cityName = cityStats.cityName;
         saveData.realWorldSaveTime = DateTime.Now;
+        saveData.realWorldSaveTimeTicks = DateTime.UtcNow.Ticks;
         saveData.saveName = customSaveName ?? $"{saveData.cityName}_{saveData.realWorldSaveTime:yyyyMMdd_HHmmss}";
 
         saveData.inGameTime = timeManager.GetCurrentInGameTime();
@@ -61,8 +62,37 @@ public class GameSaveManager : MonoBehaviour
         string path = Path.Combine(Application.persistentDataPath, saveData.saveName + ".json");
         File.WriteAllText(path, json);
 
+        PlayerPrefs.SetString("LastSavePath", path);
+        PlayerPrefs.Save();
+
         if (GameNotificationManager.Instance != null)
             GameNotificationManager.Instance.PostNotification("Game saved successfully", GameNotificationManager.NotificationType.Success, 3f);
+    }
+
+    /// <summary>
+    /// Reads save file metadata for display and sorting. Uses realWorldSaveTimeTicks when present,
+    /// otherwise falls back to file last-write time for older saves.
+    /// </summary>
+    public static (string displayName, DateTime sortDate) GetSaveMetadata(string filePath)
+    {
+        if (!File.Exists(filePath))
+            return (null, DateTime.MinValue);
+        try
+        {
+            string json = File.ReadAllText(filePath);
+            GameSaveData data = JsonUtility.FromJson<GameSaveData>(json);
+            DateTime sortDate = data.realWorldSaveTimeTicks > 0
+                ? new DateTime(data.realWorldSaveTimeTicks, DateTimeKind.Utc)
+                : File.GetLastWriteTimeUtc(filePath);
+            string displayName = !string.IsNullOrEmpty(data.saveName) ? data.saveName
+                : (!string.IsNullOrEmpty(data.cityName) ? data.cityName : Path.GetFileNameWithoutExtension(filePath));
+            return (displayName ?? Path.GetFileNameWithoutExtension(filePath), sortDate);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"Failed to read save metadata from {filePath}: {ex.Message}");
+            return (Path.GetFileNameWithoutExtension(filePath), File.GetLastWriteTimeUtc(filePath));
+        }
     }
 
     public void LoadGame(string saveFilePath)
@@ -180,6 +210,7 @@ public class GameSaveData
     public string saveName;
     public string cityName;
     public DateTime realWorldSaveTime;
+    public long realWorldSaveTimeTicks;
     public InGameTime inGameTime;
     public List<CellData> gridData;
     public int gridWidth;

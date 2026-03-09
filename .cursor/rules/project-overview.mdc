@@ -7,6 +7,9 @@ alwaysApply: true
 
 Unity 2D city-builder with isometric view. Players build and manage a city by placing roads, zones (residential/commercial/industrial), buildings, and managing economy.
 
+## Language
+All code, comments, XML docs, annotations, and repository content must be in **English**.
+
 ## Stack
 - Unity + C#, all game logic in MonoBehaviour classes
 - No namespaces currently (global namespace)

@@ -7,11 +7,20 @@
 3. Check the `/// <summary>` on the class you are about to modify — it describes its role and dependencies
 4. Read `BACKLOG.md` for the current list of issues, priorities, and what's in progress
 
+## Language
+All code, comments, XML docs, annotations, and repository content must be in **English**. Chat with the user may be in any language.
+
+## Backlog: Next Issue and AI Agent Prompts
+When the user asks which is the next issue to work on (or similar), respond with the issue and **ask if they want you to create an AI agent prompt** — a prompt for another agent to analyze, evaluate, and propose a development plan in Cursor for the changes needed to resolve the issue, clarifying all questions before writing the plan file.
+
+## Backlog: After Implementing a Plan
+After executing a development plan for an issue, **keep the issue in "In progress"**. Do NOT move it to "Completed". Only move to "Completed" when the user explicitly confirms the fix has been verified (e.g. after testing in Unity).
+
 ## What to Read by Task Type
 
 | Task | Primary File(s) | Then Also Read |
 |------|-----------------|----------------|
-| Backlog issue | `BACKLOG.md` | Files listed in the issue's "Archivos" field |
+| Backlog issue | `BACKLOG.md` | Files listed in the issue's "Files" field |
 | Road logic | `RoadManager.cs` | `GridManager.cs` (coordinate conversion), `TerrainManager.cs` (slopes) |
 | Zoning logic | `ZoneManager.cs` | `GridManager.cs`, `DemandManager.cs` |
 | UI changes | `UIManager.cs` | The specific Controller in `UnitControllers/` |

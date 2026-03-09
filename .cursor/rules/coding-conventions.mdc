@@ -6,6 +6,9 @@ alwaysApply: false
 
 # Coding Conventions
 
+## Language
+All code, comments, XML docs, annotations, and repository content must be in **English**.
+
 ## Documentation Requirements
 - Every class MUST have a `/// <summary>` (2-4 lines): responsibility, key dependencies, how it fits in the system
 - Public methods MUST have `/// <summary>`, with `<param>` and `<returns>` when applicable
