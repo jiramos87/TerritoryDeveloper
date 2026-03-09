@@ -1974,7 +1974,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -66.383, y: 57.8}
+  m_AnchoredPosition: {x: -66.383, y: 62.2}
   m_SizeDelta: {x: 76.2414, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &172977744
@@ -2055,7 +2055,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 27.250656, y: 57.799988}
+  m_AnchoredPosition: {x: 27.089, y: 62.2}
   m_SizeDelta: {x: 91.3214, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &210316796
@@ -3939,6 +3939,7 @@ MonoBehaviour:
   cityStats: {fileID: 72477285}
   data:
     totalGrowthBudget: 5000
+    growthBudgetPercent: 10
     roadBudgetPercent: 25
     energyBudgetPercent: 25
     waterBudgetPercent: 25
@@ -5611,7 +5612,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 515320935}
         m_TargetAssemblyTypeName: Territory.UI.UIManager, Assembly-CSharp
-        m_MethodName: OnRaiseCommercialTaxButtonClicked
+        m_MethodName: OnRaiseIndustrialTaxButtonClicked
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -10144,7 +10145,6 @@ MonoBehaviour:
   growthBudgetManager: {fileID: 439753650}
   totalBudgetSlider: {fileID: 210316796}
   totalBudgetLabel: {fileID: 1869640414}
-  maxTotalBudget: 50000
   roadPercentSlider: {fileID: 1955363890}
   roadPercentLabel: {fileID: 259043450}
   energyPercentSlider: {fileID: 1638682891}
@@ -11729,7 +11729,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 294.4, y: -66.6}
+  m_AnchoredPosition: {x: 295.5, y: -64.004}
   m_SizeDelta: {x: 47.1249, y: 45.3079}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1201366532
@@ -17826,8 +17826,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 93.18201, y: 55.299988}
-  m_SizeDelta: {x: 37.0641, y: 25}
+  m_AnchoredPosition: {x: 93.418, y: 60.9482}
+  m_SizeDelta: {x: 36.595, y: 37.3037}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1869640413
 CanvasRenderer:

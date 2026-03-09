@@ -14,15 +14,32 @@ public class GrowthBudgetManager : MonoBehaviour
     public CityStats cityStats;
     public GrowthBudgetData data = new GrowthBudgetData();
 
+    private int cachedEffectiveTotalBudget;
+    private bool cacheValid;
+
     void Start()
     {
         if (cityStats == null)
             cityStats = FindObjectOfType<CityStats>();
+        MigrateFromLegacyIfNeeded();
+    }
+
+    void MigrateFromLegacyIfNeeded()
+    {
+        if (data.growthBudgetPercent == 0 && data.totalGrowthBudget > 0)
+        {
+            int money = cityStats != null ? cityStats.money : 20000;
+            data.growthBudgetPercent = Mathf.Clamp(money > 0 ? (data.totalGrowthBudget * 100 / money) : 10, 0, 100);
+        }
+        else if (data.growthBudgetPercent == 0)
+        {
+            data.growthBudgetPercent = 10;
+        }
     }
 
     public void EnsureBudgetValid()
     {
-        if (data.totalGrowthBudget < 0) data.totalGrowthBudget = 0;
+        data.growthBudgetPercent = Mathf.Clamp(data.growthBudgetPercent, 0, 100);
         data.roadBudgetPercent = Mathf.Clamp(data.roadBudgetPercent, 0, 100);
         data.energyBudgetPercent = Mathf.Clamp(data.energyBudgetPercent, 0, 100);
         data.waterBudgetPercent = Mathf.Clamp(data.waterBudgetPercent, 0, 100);
@@ -34,7 +51,7 @@ public class GrowthBudgetManager : MonoBehaviour
 
     public int GetAvailableBudget(GrowthCategory cat)
     {
-        int total = data.totalGrowthBudget;
+        int total = GetTotalBudget();
         int pct = GetPercent(cat);
         int budgetForCat = total * pct / 100;
         int spent = GetSpent(cat);
@@ -66,16 +83,31 @@ public class GrowthBudgetManager : MonoBehaviour
 
     public void ResetMonthlyCycle()
     {
+        ComputeAndCacheBudget();
         data.roadSpentThisCycle = 0;
         data.energySpentThisCycle = 0;
         data.waterSpentThisCycle = 0;
         data.zoningSpentThisCycle = 0;
     }
 
-    public void SetTotalBudget(int amount)
+    void ComputeAndCacheBudget()
     {
-        data.totalGrowthBudget = Mathf.Max(0, amount);
+        if (cityStats == null) return;
+        int money = cityStats.money;
+        int pct = Mathf.Clamp(data.growthBudgetPercent, 0, 100);
+        cachedEffectiveTotalBudget = money * pct / 100;
+        cacheValid = true;
     }
+
+    /// <summary>Sets the growth budget as a percentage of city money (0-100).</summary>
+    public void SetGrowthBudgetPercent(int percent)
+    {
+        data.growthBudgetPercent = Mathf.Clamp(percent, 0, 100);
+        cacheValid = false;
+    }
+
+    /// <summary>Returns the user's growth budget percentage (0-100).</summary>
+    public int GetGrowthBudgetPercent() => data.growthBudgetPercent;
 
     public void SetCategoryPercent(GrowthCategory cat, int pct)
     {
@@ -89,7 +121,13 @@ public class GrowthBudgetManager : MonoBehaviour
         }
     }
 
-    public int GetTotalBudget() => data.totalGrowthBudget;
+    /// <summary>Returns the effective total growth budget (cached at month start). Computes on first use if not yet set.</summary>
+    public int GetTotalBudget()
+    {
+        if (!cacheValid)
+            ComputeAndCacheBudget();
+        return cachedEffectiveTotalBudget;
+    }
     public int GetCategoryPercent(GrowthCategory cat) => GetPercent(cat);
 
     int GetPercent(GrowthCategory cat)

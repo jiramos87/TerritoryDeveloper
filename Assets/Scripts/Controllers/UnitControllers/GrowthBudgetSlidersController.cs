@@ -14,10 +14,9 @@ public class GrowthBudgetSlidersController : MonoBehaviour
     public CityStats cityStats;
     public GrowthBudgetManager growthBudgetManager;
 
-    [Header("Total budget")]
+    [Header("Total budget (percent of city money)")]
     public Slider totalBudgetSlider;
     public Text totalBudgetLabel;
-    public int maxTotalBudget = 50000;
 
     [Header("Category sliders (0-100%, sum = 100)")]
     public Slider roadPercentSlider;
@@ -41,9 +40,12 @@ public class GrowthBudgetSlidersController : MonoBehaviour
         if (totalBudgetSlider != null)
         {
             totalBudgetSlider.minValue = 0;
-            totalBudgetSlider.maxValue = maxTotalBudget;
+            totalBudgetSlider.maxValue = 100;
+            totalBudgetSlider.wholeNumbers = true;
             totalBudgetSlider.onValueChanged.AddListener(OnTotalBudgetChanged);
         }
+        if (totalBudgetLabel != null)
+            totalBudgetLabel.supportRichText = true;
         if (roadPercentSlider != null) roadPercentSlider.onValueChanged.AddListener(_ => OnRoadPercentChanged());
         if (energyPercentSlider != null) energyPercentSlider.onValueChanged.AddListener(_ => OnEnergyPercentChanged());
         if (waterPercentSlider != null) waterPercentSlider.onValueChanged.AddListener(_ => OnWaterPercentChanged());
@@ -62,7 +64,7 @@ public class GrowthBudgetSlidersController : MonoBehaviour
     {
         if (growthBudgetManager != null)
         {
-            growthBudgetManager.SetTotalBudget(Mathf.RoundToInt(value));
+            growthBudgetManager.SetGrowthBudgetPercent(Mathf.RoundToInt(value));
             UpdateTotalBudgetLabel();
         }
     }
@@ -179,7 +181,7 @@ public class GrowthBudgetSlidersController : MonoBehaviour
     void SyncFromManager()
     {
         if (growthBudgetManager == null) return;
-        if (totalBudgetSlider != null) totalBudgetSlider.value = growthBudgetManager.GetTotalBudget();
+        if (totalBudgetSlider != null) totalBudgetSlider.value = growthBudgetManager.GetGrowthBudgetPercent();
 
         int r = growthBudgetManager.GetCategoryPercent(GrowthCategory.Roads);
         int e = growthBudgetManager.GetCategoryPercent(GrowthCategory.Energy);
@@ -220,7 +222,11 @@ public class GrowthBudgetSlidersController : MonoBehaviour
     void UpdateTotalBudgetLabel()
     {
         if (totalBudgetLabel != null && growthBudgetManager != null)
-            totalBudgetLabel.text = "$" + growthBudgetManager.GetTotalBudget();
+        {
+            int pct = growthBudgetManager.GetGrowthBudgetPercent();
+            int amount = growthBudgetManager.GetTotalBudget();
+            totalBudgetLabel.text = "<size=10>" + pct + "%</size>\n<size=8>$" + amount + "</size>";
+        }
     }
 }
 }

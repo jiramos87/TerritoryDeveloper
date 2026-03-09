@@ -10,10 +10,6 @@
 _No active issues._
 
 ## High Priority
-- [ ] **BUG-03** — Growth % sets amount instead of percentage of total budget
-  - Type: fix
-  - Files: `GrowthManager.cs`, `GrowthBudgetManager.cs`, `CityStats.cs`
-  - Notes: Must be percentage of total city budget.
 
 - [ ] **BUG-20** — Power plant (and 3x3/2x2 buildings) load incorrectly in LoadGame: end up under grass
   - Type: fix
@@ -265,6 +261,7 @@ _No active issues._
 
 ## Completed (last 30 days)
 
+- [x] **BUG-03** — Growth % sets amount instead of percentage of total budget (2026-03-09)
 - [x] **BUG-02** — Taxes do not work (2026-03-09)
 - [x] **BUG-05** — Do not remove cursor preview from buildings when constructing (2026-03-09)
 - [x] **BUG-21** — Zoning cost is not charged when placing zones (2026-03-09)

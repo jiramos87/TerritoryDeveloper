@@ -164,6 +164,7 @@ public class GameSaveManager : MonoBehaviour
             if (growthBudgetManager != null && saveData.growthBudget != null)
             {
                 growthBudgetManager.data = saveData.growthBudget.Clone();
+                MigrateGrowthBudgetFromLegacy(growthBudgetManager);
             }
             // Proposal flow disabled: clear any pending proposals on load
             UrbanizationProposalManager proposalManager = FindObjectOfType<UrbanizationProposalManager>();
@@ -173,6 +174,21 @@ public class GameSaveManager : MonoBehaviour
         else
         {
             Debug.LogWarning("Save file not found!");
+        }
+    }
+
+    /// <summary>Migrates old saves that stored totalGrowthBudget (amount) to growthBudgetPercent.</summary>
+    static void MigrateGrowthBudgetFromLegacy(GrowthBudgetManager growthBudgetManager)
+    {
+        var d = growthBudgetManager.data;
+        if (d.growthBudgetPercent == 0 && d.totalGrowthBudget > 0)
+        {
+            int money = growthBudgetManager.cityStats != null ? growthBudgetManager.cityStats.money : 20000;
+            d.growthBudgetPercent = Mathf.Clamp(money > 0 ? (d.totalGrowthBudget * 100 / money) : 10, 0, 100);
+        }
+        else if (d.growthBudgetPercent == 0)
+        {
+            d.growthBudgetPercent = 10;
         }
     }
 
