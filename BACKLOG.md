@@ -10,6 +10,10 @@
 _No active issues._
 
 ## High Priority
+- [ ] **FEAT-17** — Mini-map
+  - Type: feature
+  - Files: `CameraController.cs`, `UIManager.cs` (+ new controller)
+  - Notes: Miniature view of full map for quick navigation.
 
 - [ ] **BUG-20** — Power plant (and 3x3/2x2 buildings) load incorrectly in LoadGame: end up under grass
   - Type: fix
@@ -210,11 +214,6 @@ _No active issues._
   - Type: feature (new system)
   - Files: new manager + `GridManager.cs`
   - Notes: Railway network and animations.
-
-- [ ] **FEAT-17** — Mini-map
-  - Type: feature
-  - Files: `CameraController.cs`, `UIManager.cs` (+ new controller)
-  - Notes: Miniature view of full map for quick navigation.
 
 - [ ] **FEAT-18** — Terrain generator (improved)
   - Type: feature
