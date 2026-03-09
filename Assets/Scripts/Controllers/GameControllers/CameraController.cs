@@ -7,15 +7,20 @@ namespace Territory.UI
 /// <summary>
 /// Controls camera movement, zoom, and panning for the isometric grid view.
 /// Coordinates with GridManager for viewport bounds.
+/// Camera is independent of simulation speed: uses Time.unscaledDeltaTime so movement and zoom work during pause.
 /// </summary>
 public class CameraController : MonoBehaviour
 {
     [Header("Movement")]
-    [Tooltip("Base movement speed (no smoothing - immediate response)")]
-    public float moveSpeed = 22f;
+    [Tooltip("Base movement speed at reference zoom level (no smoothing - immediate response)")]
+    public float moveSpeed = 28f;
+    [Tooltip("Orthographic size at which moveSpeed is applied 1:1. Movement scales with zoom (zoomed out = faster).")]
+    public float referenceOrthoSize = 10f;
 
     [Header("Zoom")]
     public float[] zoomLevels = new float[] { 2f, 5f, 10f, 15f, 20f, 30f };
+    [Tooltip("Initial orthographic size. Uses closest zoom level if value is not exact (e.g. 7 → 5 or 10).")]
+    public float startZoomLevel = 2f;
     [Tooltip("Scroll units required to change one zoom level (higher = more precise, less jumpy)")]
     [Range(0.05f, 0.5f)]
     public float scrollThresholdPerLevel = 0.2f;
@@ -31,7 +36,6 @@ public class CameraController : MonoBehaviour
     private float lastZoomStepTime = -1f;
     private float targetOrthoSize;
     private Camera mainCamera;
-    public float startZoomLevel = 5f;
     public GridManager gridManager;
     public CameraButtonsController cameraButtonsController;
 
@@ -70,14 +74,10 @@ public class CameraController : MonoBehaviour
             return;
         }
 
-        // Set the initial zoom level
+        // Set the initial zoom level (find closest match so Inspector/code values work even with float precision)
         if (zoomLevels.Length > 0)
         {
-            currentZoomLevel = Mathf.Clamp(System.Array.IndexOf(zoomLevels, startZoomLevel), 0, zoomLevels.Length - 1);
-            if (currentZoomLevel == -1) // startZoomLevel not found in array
-            {
-                currentZoomLevel = 0;
-            }
+            currentZoomLevel = FindClosestZoomLevel(startZoomLevel);
             targetOrthoSize = zoomLevels[currentZoomLevel];
             mainCamera.orthographicSize = targetOrthoSize;
         }
@@ -85,6 +85,26 @@ public class CameraController : MonoBehaviour
         {
             Debug.LogWarning("CameraController: No zoom levels defined.");
         }
+    }
+
+    /// <summary>
+    /// Returns the index of the zoom level closest to the target value.
+    /// Avoids Array.IndexOf exact-float issues when startZoomLevel is set in Inspector or code.
+    /// </summary>
+    private int FindClosestZoomLevel(float target)
+    {
+        int closest = 0;
+        float minDist = float.MaxValue;
+        for (int i = 0; i < zoomLevels.Length; i++)
+        {
+            float dist = Mathf.Abs(zoomLevels[i] - target);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                closest = i;
+            }
+        }
+        return closest;
     }
 
     void Start()
@@ -138,13 +158,18 @@ public class CameraController : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Handles WASD/arrow camera movement. Uses Time.unscaledDeltaTime so movement works during pause.
+    /// Speed scales with zoom level (zoomed out = faster movement).
+    /// </summary>
     private void HandleMovement()
     {
         // Raw axis = no built-in smoothing; immediate response
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
 
-        Vector3 movement = new Vector3(horizontal, vertical, 0).normalized * moveSpeed * Time.deltaTime;
+        float effectiveMoveSpeed = moveSpeed * (mainCamera.orthographicSize / referenceOrthoSize);
+        Vector3 movement = new Vector3(horizontal, vertical, 0).normalized * effectiveMoveSpeed * Time.unscaledDeltaTime;
         mainCamera.transform.Translate(movement);
     }
 
@@ -166,6 +191,9 @@ public class CameraController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Handles mouse scroll zoom. Uses Time.unscaledTime for cooldown so zoom works during pause.
+    /// </summary>
     private void HandleScrollZoom()
     {
         float scroll = Input.GetAxis("Mouse ScrollWheel");
@@ -173,7 +201,7 @@ public class CameraController : MonoBehaviour
             return;
 
         scrollAccumulator += scroll;
-        float t = Time.time - lastZoomStepTime;
+        float t = Time.unscaledTime - lastZoomStepTime;
         if (t < zoomStepCooldown)
             return;
 
@@ -187,7 +215,7 @@ public class CameraController : MonoBehaviour
                 currentZoomLevel -= steps;
                 targetOrthoSize = zoomLevels[currentZoomLevel];
                 scrollAccumulator -= steps * threshold;
-                lastZoomStepTime = Time.time;
+                lastZoomStepTime = Time.unscaledTime;
             }
             else
                 scrollAccumulator = 0f;
@@ -202,7 +230,7 @@ public class CameraController : MonoBehaviour
                 currentZoomLevel += steps;
                 targetOrthoSize = zoomLevels[currentZoomLevel];
                 scrollAccumulator += steps * threshold;
-                lastZoomStepTime = Time.time;
+                lastZoomStepTime = Time.unscaledTime;
             }
             else
                 scrollAccumulator = 0f;
@@ -211,12 +239,15 @@ public class CameraController : MonoBehaviour
         scrollAccumulator = Mathf.Clamp(scrollAccumulator, -threshold * 1.5f, threshold * 1.5f);
     }
 
+    /// <summary>
+    /// Smoothly interpolates orthographic size toward target. Uses Time.unscaledDeltaTime so zoom works during pause.
+    /// </summary>
     private void ApplySmoothZoom()
     {
         if (zoomLevels.Length == 0) return;
         float current = mainCamera.orthographicSize;
         if (Mathf.Approximately(current, targetOrthoSize)) return;
-        mainCamera.orthographicSize = Mathf.Lerp(current, targetOrthoSize, zoomSmoothSpeed * Time.deltaTime);
+        mainCamera.orthographicSize = Mathf.Lerp(current, targetOrthoSize, zoomSmoothSpeed * Time.unscaledDeltaTime);
     }
 
     private void HandleZoom()

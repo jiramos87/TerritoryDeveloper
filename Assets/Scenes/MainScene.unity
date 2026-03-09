@@ -1351,7 +1351,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ab197b367c2949568bbfc8e649b7f00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
+  moveSpeed: 20
+  referenceOrthoSize: 10
   zoomLevels:
   - 2
   - 5
@@ -1362,7 +1363,7 @@ MonoBehaviour:
   scrollThresholdPerLevel: 0.2
   zoomStepCooldown: 0.12
   zoomSmoothSpeed: 18
-  startZoomLevel: 5
+  startZoomLevel: 2
   gridManager: {fileID: 1880690383}
   cameraButtonsController: {fileID: 1281450407}
 --- !u!1 &98386996
@@ -6769,6 +6770,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 724627298}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -8773,6 +8775,7 @@ Transform:
   - {fileID: 913510113}
   - {fileID: 2140155701}
   - {fileID: 586497353}
+  - {fileID: 724627299}
   m_Father: {fileID: 1745906816}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &938977936
@@ -10689,6 +10692,10 @@ MonoBehaviour:
   seaLevelWaterPrefab: {fileID: 3176668870032135925, guid: 14af9dcc8387e4a58add2d580e2afbc1, type: 3}
   southCliffWallPrefab: {fileID: 5564609725091321451, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
   eastCliffWallPrefab: {fileID: 2327040077204098500, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+  northEastBayPrefab: {fileID: 0}
+  northWestBayPrefab: {fileID: 0}
+  southEastBayPrefab: {fileID: 0}
+  southWestBayPrefab: {fileID: 0}
 --- !u!1 &1101691736
 GameObject:
   m_ObjectHideFlags: 0
@@ -15512,7 +15519,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -260.9947, y: -10.571808}
+  m_AnchoredPosition: {x: -260.99472, y: -10.571777}
   m_SizeDelta: {x: -521.9894, y: -455.8174}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1664159913
@@ -17973,6 +17980,7 @@ MonoBehaviour:
   mouseGridSortingOrder: 0
   isInitialized: 0
   chunkSize: 16
+  restoreGridDebugLogs: 0
 --- !u!1 &1888940540
 GameObject:
   m_ObjectHideFlags: 0
