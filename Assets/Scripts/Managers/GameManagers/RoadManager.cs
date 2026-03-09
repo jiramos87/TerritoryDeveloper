@@ -131,13 +131,16 @@ public class RoadManager : MonoBehaviour, IRoadManager
             }
         }
 
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonUp(1))
         {
-            isDrawingRoad = false;
-            ClearPreview();
-            if (uiManager != null)
+            if (gridManager == null || gridManager.cameraController == null || !gridManager.cameraController.WasLastRightClickAPan)
             {
-                uiManager.RestoreGhostPreview();
+                isDrawingRoad = false;
+                ClearPreview();
+                if (uiManager != null)
+                {
+                    uiManager.RestoreGhostPreview();
+                }
             }
         }
     }

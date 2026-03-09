@@ -1,5 +1,6 @@
 
 using UnityEngine;
+using UnityEngine.EventSystems;
 using Territory.Core;
 
 namespace Territory.UI
@@ -9,6 +10,7 @@ namespace Territory.UI
 /// Coordinates with GridManager for viewport bounds.
 /// Camera is independent of simulation speed: uses Time.unscaledDeltaTime so movement and zoom work during pause.
 /// </summary>
+[DefaultExecutionOrder(-100)]
 public class CameraController : MonoBehaviour
 {
     [Header("Movement")]
@@ -30,6 +32,31 @@ public class CameraController : MonoBehaviour
     [Tooltip("Zoom lerp speed toward target level (smooth transition)")]
     [Range(5f, 30f)]
     public float zoomSmoothSpeed = 18f;
+
+    [Header("Drag-to-Pan")]
+    [Tooltip("Minimum mouse movement (pixels) to treat as pan instead of click")]
+    [SerializeField]
+    private float dragPanThresholdPixels = 8f;
+    [Tooltip("Exponential damping per frame (0 = instant stop, 1 = no friction)")]
+    [Range(0.8f, 0.99f)]
+    [SerializeField]
+    private float panInertiaDamping = 0.92f;
+    [Tooltip("Inertia stops when velocity magnitude falls below this (world units/frame)")]
+    [SerializeField]
+    private float panInertiaMinVelocity = 0.001f;
+
+    /// <summary>True when the last right-click release was a pan (exceeded threshold). Reset each frame when not holding right.</summary>
+    public bool WasLastRightClickAPan { get; private set; }
+
+    private Vector3 lastMouseScreenPos;
+    private Vector2 rightClickDownScreenPos;
+    private bool isRightHeld;
+    private bool exceededPanThreshold;
+
+    private Vector2 panInertiaVelocity;
+    private Vector2[] recentPanDeltas = new Vector2[5];
+    private int panDeltaIndex;
+    private int panDeltaCount;
 
     private int currentZoomLevel = 0;
     private float scrollAccumulator;
@@ -121,11 +148,105 @@ public class CameraController : MonoBehaviour
         // Only handle input if camera is properly initialized
         if (mainCamera != null)
         {
+            if (!Input.GetMouseButton(1))
+            {
+                WasLastRightClickAPan = false;
+            }
+
             HandleMovement();
             HandleZoom();
             HandleScrollZoom();
             ApplySmoothZoom();
+            HandleDragToPan();
+            ApplyPanInertia();
         }
+    }
+
+    /// <summary>
+    /// Handles right-click drag-to-pan. When the user holds right mouse and moves beyond threshold,
+    /// the camera follows the movement (1:1 screen-to-world). Skips when cursor is over UI.
+    /// </summary>
+    private void HandleDragToPan()
+    {
+        if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
+            panInertiaVelocity = Vector2.zero;
+
+        if (EventSystem.current == null || EventSystem.current.IsPointerOverGameObject())
+        {
+            return;
+        }
+
+        if (Input.GetMouseButtonDown(1))
+        {
+            rightClickDownScreenPos = Input.mousePosition;
+            lastMouseScreenPos = Input.mousePosition;
+            isRightHeld = true;
+            exceededPanThreshold = false;
+            panDeltaCount = 0;
+            panDeltaIndex = 0;
+            panInertiaVelocity = Vector2.zero;
+        }
+
+        if (Input.GetMouseButton(1) && isRightHeld)
+        {
+            if (!exceededPanThreshold)
+            {
+                if (Vector2.Distance(Input.mousePosition, rightClickDownScreenPos) > dragPanThresholdPixels)
+                {
+                    exceededPanThreshold = true;
+                }
+            }
+
+            if (exceededPanThreshold)
+            {
+                Vector3 curWorld = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+                Vector3 lastWorld = mainCamera.ScreenToWorldPoint(lastMouseScreenPos);
+                Vector3 delta = curWorld - lastWorld;
+                mainCamera.transform.position -= new Vector3(delta.x, delta.y, 0);
+                lastMouseScreenPos = Input.mousePosition;
+
+                Vector2 frameDelta = new Vector2(delta.x, delta.y);
+                recentPanDeltas[panDeltaIndex] = frameDelta;
+                panDeltaIndex = (panDeltaIndex + 1) % recentPanDeltas.Length;
+                if (panDeltaCount < recentPanDeltas.Length) panDeltaCount++;
+            }
+        }
+
+        if (Input.GetMouseButtonUp(1))
+        {
+            WasLastRightClickAPan = exceededPanThreshold;
+            isRightHeld = false;
+
+            if (exceededPanThreshold && panDeltaCount > 0)
+            {
+                Vector2 avg = Vector2.zero;
+                int count = Mathf.Min(panDeltaCount, recentPanDeltas.Length);
+                for (int i = 0; i < count; i++)
+                    avg += recentPanDeltas[i];
+                avg /= count;
+                float zoomScale = mainCamera.orthographicSize / referenceOrthoSize;
+                panInertiaVelocity = avg * zoomScale;
+            }
+            else
+            {
+                panInertiaVelocity = Vector2.zero;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Applies pan inertia (fling) after drag release. Camera continues moving with exponential decay.
+    /// </summary>
+    private void ApplyPanInertia()
+    {
+        if (panInertiaVelocity.sqrMagnitude < panInertiaMinVelocity * panInertiaMinVelocity)
+        {
+            panInertiaVelocity = Vector2.zero;
+            return;
+        }
+
+        mainCamera.transform.position -= new Vector3(panInertiaVelocity.x, panInertiaVelocity.y, 0);
+        panInertiaVelocity *= panInertiaDamping;
     }
 
     /// <summary>
@@ -167,6 +288,9 @@ public class CameraController : MonoBehaviour
         // Raw axis = no built-in smoothing; immediate response
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
+
+        if (horizontal != 0 || vertical != 0)
+            panInertiaVelocity = Vector2.zero;
 
         float effectiveMoveSpeed = moveSpeed * (mainCamera.orthographicSize / referenceOrthoSize);
         Vector3 movement = new Vector3(horizontal, vertical, 0).normalized * effectiveMoveSpeed * Time.unscaledDeltaTime;

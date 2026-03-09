@@ -11,11 +11,6 @@ _No active issues._
 
 ## High Priority
 
-- [ ] **FEAT-28** — Right-click drag-to-pan (grab and drag map)
-  - Type: feature (UX)
-  - Files: `CameraController.cs` (HandleDragToPan), `GridManager.cs` (coordinate right-click when panning), `RoadManager.cs` (distinguish single right-click cancel vs drag)
-  - Notes: **Effect name**: "Drag-to-pan" or "click-and-drag panning". When the user holds right mouse button and moves the mouse, the camera should follow the movement, translating the map as if "grabbing" it. Implement in CameraController: detect `Input.GetMouseButton(1)` held + `Input.mousePosition` delta, translate camera opposite to mouse movement. Check `EventSystem.current.IsPointerOverGameObject()` before processing to avoid panning when cursor is over UI (Load Game panel, Building Selector, etc.) — same pattern as BUG-19. Coordinate with GridManager (right-click sets selectedPoint) and RoadManager (right-click-down cancels road drawing): when user is actively dragging for pan, those handlers should not fire; consider threshold: significant mouse movement = pan, minimal/no movement = cancel/select.
-
 - [ ] **FEAT-02** — Add construction cost counter to mouse cursor
   - Type: feature
   - Files: `CursorManager.cs`, `UIManager.cs`, `GridManager.cs`
@@ -286,6 +281,7 @@ _No active issues._
 
 ## Completed (last 30 days)
 
+- [x] **FEAT-28** — Right-click drag-to-pan (grab and drag map) with inertia/fling (2026-03-09)
 - [x] **BUG-04** — Pause mode stops camera movement; camera speed tied to simulation speed (2026-03-09)
 - [x] **BUG-18** — Road preview and placement draw discontinuous lines instead of continuous paths (2026-03-09)
 - [x] **FEAT-27** — Main menu with Continue, New Game, Load City, Options (2026-03-08)

@@ -63,6 +63,8 @@ public class GridManager : MonoBehaviour, IGridManager
     public Vector2 mouseGridPosition;
     /// <summary>Last grid cell clicked (left or right button). (-1,-1) if none yet.</summary>
     public Vector2 selectedPoint = new Vector2(-1, -1);
+    /// <summary>Grid position at right-click down; used to set selectedPoint on right-click up if not a pan.</summary>
+    private Vector2 pendingRightClickGridPosition = new Vector2(-1, -1);
     public int mouseGridHeight;
     public int mouseGridSortingOrder;
 
@@ -307,8 +309,18 @@ public class GridManager : MonoBehaviour, IGridManager
                 return;
             }
 
-            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
+            if (Input.GetMouseButtonDown(0))
+            {
                 selectedPoint = mouseGridPosition;
+            }
+            else if (Input.GetMouseButtonDown(1))
+            {
+                pendingRightClickGridPosition = mouseGridPosition;
+            }
+            else if (Input.GetMouseButtonUp(1) && cameraController != null && !cameraController.WasLastRightClickAPan && IsValidGridPosition(pendingRightClickGridPosition))
+            {
+                selectedPoint = pendingRightClickGridPosition;
+            }
 
             if (uiManager.isBulldozeMode())
             {
