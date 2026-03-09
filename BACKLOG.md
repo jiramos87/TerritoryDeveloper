@@ -10,10 +10,6 @@
 _No active issues._
 
 ## High Priority
-- [ ] **FEAT-17** — Mini-map
-  - Type: feature
-  - Files: `CameraController.cs`, `UIManager.cs` (+ new controller)
-  - Notes: Miniature view of full map for quick navigation.
 
 - [ ] **BUG-20** — Power plant (and 3x3/2x2 buildings) load incorrectly in LoadGame: end up under grass
   - Type: fix
@@ -255,6 +251,7 @@ _No active issues._
 
 ## Completed (last 30 days)
 
+- [x] **FEAT-17** — Mini-map (2026-03-09)
 - [x] **FEAT-01** — Add delta change to total budget (e.g. $25,000 (+$1,200)) (2026-03-09)
 - [x] **BUG-03** — Growth % sets amount instead of percentage of total budget (2026-03-09)
 - [x] **BUG-02** — Taxes do not work (2026-03-09)

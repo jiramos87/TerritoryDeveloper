@@ -44,6 +44,9 @@ public class UIManager : MonoBehaviour
     public TerrainManager terrainManager;
     public BuildingSelectorMenuController buildingSelectorMenuController;
     public CityStats cityStats;
+
+    [Header("Mini-map")]
+    [SerializeField] private MiniMapController miniMapController;
     #endregion
 
     #region State
