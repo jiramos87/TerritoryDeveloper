@@ -491,6 +491,14 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Returns projected monthly income (tax revenue). Negative when expenses exceed income (future).
+    /// </summary>
+    public int GetMonthlyIncomeDelta()
+    {
+        return GetProjectedMonthlyIncome();
+    }
+
+    /// <summary>
     /// Get economic health indicator based on tax rates and income
     /// </summary>
     /// <returns>Economic health score (0-100)</returns>

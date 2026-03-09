@@ -277,8 +277,10 @@ public class UIManager : MonoBehaviour
         if (cityNameText != null && cityStats != null)
             cityNameText.text = cityStats.cityName;
         populationText.text = cityStats.population.ToString();
-        moneyText.text = cityStats.money.ToString();
-        buttonMoneyText.text = "$" + cityStats.money.ToString();
+        int delta = economyManager != null ? economyManager.GetMonthlyIncomeDelta() : 0;
+        string deltaStr = delta >= 0 ? $"(+${delta:N0})" : $"(-${Mathf.Abs(delta):N0})";
+        moneyText.text = $"{cityStats.money:N0} {deltaStr}";
+        buttonMoneyText.text = $"${cityStats.money:N0} {deltaStr}";
         happinessText.text = cityStats.happiness.ToString();
 
         cityPowerOutputText.text = cityStats.cityPowerOutput.ToString() + " MW";

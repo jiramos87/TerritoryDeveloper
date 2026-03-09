@@ -64,11 +64,6 @@ _No active issues._
   - Files: `GridManager.cs`
   - Notes: In InitializeGrid() ChunkCullingSystem is created with `cachedCamera`, but it is only assigned in Update(). May cause NullReferenceException.
 
-- [ ] **FEAT-01** — Add delta change to total budget (e.g. $25,000 (+$1,200))
-  - Type: feature
-  - Files: `EconomyManager.cs`, `CityStatsUIController.cs`, `UIManager.cs`
-  - Notes: Visual feedback of economic flow per turn.
-
 - [ ] **FEAT-21** — Expenses and maintenance system
   - Type: feature
   - Files: `EconomyManager.cs`, `CityStats.cs`
@@ -261,6 +256,7 @@ _No active issues._
 
 ## Completed (last 30 days)
 
+- [x] **FEAT-01** — Add delta change to total budget (e.g. $25,000 (+$1,200)) (2026-03-09)
 - [x] **BUG-03** — Growth % sets amount instead of percentage of total budget (2026-03-09)
 - [x] **BUG-02** — Taxes do not work (2026-03-09)
 - [x] **BUG-05** — Do not remove cursor preview from buildings when constructing (2026-03-09)

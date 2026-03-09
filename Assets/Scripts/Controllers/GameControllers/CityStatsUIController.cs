@@ -204,7 +204,9 @@ public class CityStatsUIController : MonoBehaviour
 
             // Update treasury - adjust based on your EconomyManager implementation
             int treasury = GetTreasury();
-            treasuryLabel.text = $"Treasury: ${treasury:N0}";
+            int delta = economyManager != null ? economyManager.GetMonthlyIncomeDelta() : 0;
+            string deltaStr = delta >= 0 ? $"(+${delta:N0})" : $"(-${Mathf.Abs(delta):N0})";
+            treasuryLabel.text = $"Treasury: ${treasury:N0} {deltaStr}";
             treasuryLabel.style.color = treasury >= 0 ? Color.green : Color.red;
 
             // Update unemployment - adjust based on your implementation
