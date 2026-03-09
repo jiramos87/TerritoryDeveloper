@@ -10,7 +10,6 @@
 _No active issues._
 
 ## High Priority
-
 - [ ] **BUG-02** — Taxes do not work
   - Type: fix
   - Files: `EconomyManager.cs`, `CityStats.cs`
@@ -20,11 +19,6 @@ _No active issues._
   - Type: fix
   - Files: `GrowthManager.cs`, `GrowthBudgetManager.cs`, `CityStats.cs`
   - Notes: Must be percentage of total city budget.
-
-- [ ] **BUG-05** — Do not remove cursor from buildings when constructing
-  - Type: fix
-  - Files: `GridManager.cs`, `CursorManager.cs`, `UIManager.cs`
-  - Notes: User may want to keep building the same building. Keep selection active post-placement.
 
 - [ ] **BUG-20** — Power plant (and 3x3/2x2 buildings) load incorrectly in LoadGame: end up under grass
   - Type: fix
@@ -276,6 +270,7 @@ _No active issues._
 
 ## Completed (last 30 days)
 
+- [x] **BUG-05** — Do not remove cursor preview from buildings when constructing (2026-03-09)
 - [x] **BUG-21** — Zoning cost is not charged when placing zones (2026-03-09)
 - [x] **FEAT-02** — Add construction cost counter to mouse cursor (2026-03-09)
 - [x] **FEAT-28** — Right-click drag-to-pan (grab and drag map) with inertia/fling (2026-03-09)

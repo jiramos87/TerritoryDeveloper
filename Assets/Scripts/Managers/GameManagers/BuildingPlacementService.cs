@@ -435,8 +435,6 @@ namespace Territory.Core
             }
 
             UpdateBuildingTilesAttributes(gridPos, building, buildingSize, powerPlant, waterPlant, buildingPrefab);
-
-            grid.cursorManager.RemovePreview();
         }
     }
 }
