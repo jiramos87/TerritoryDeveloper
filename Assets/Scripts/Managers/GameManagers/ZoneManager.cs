@@ -108,6 +108,13 @@ public class ZoneManager : MonoBehaviour, IZoneManager
 
     private bool zonesSectionsDirty = true;
 
+    [Header("Desirability-weighted spawn (FEAT-26)")]
+    [SerializeField] private float baseSpawnWeight = 1.0f;
+    [SerializeField] private float minDesirabilityThreshold = 2.0f;
+    [SerializeField] private float lowDesirabilityPenalty = 0.1f;
+
+    private const int MaxRoadDistanceForSpawning = 3;
+
     /// <summary>Invoked when an urban cell (zoning) is added or removed. Args: (position, isAdded). Not invoked when zoning converts to building.</summary>
     public System.Action<Vector2, bool> onUrbanCellChanged;
 
@@ -889,52 +896,115 @@ public class ZoneManager : MonoBehaviour, IZoneManager
 
     private (int size, Vector2[] section)? GetRandomAvailableSection(Zone.ZoneType zoneType)
     {
-        Dictionary<int, Vector2[]> availableSections = new Dictionary<int, Vector2[]>();
+        if (!availableZoneSections.ContainsKey(zoneType) || availableZoneSections[zoneType].Count == 0)
+            return null;
 
-        for (int i = 1; i <= 3; i++)
+        var allSections = new List<(int size, List<Vector2> section)>();
+        var sections = availableZoneSections[zoneType];
+
+        for (int i = 0; i < sections.Count; i++)
         {
-            Vector2[] section = GetRandomAvailableSizeSection(zoneType, i);
-
-            if (section != null && section.Length > 0)
-            {
-                availableSections.Add(i, section);
-            }
+            int count = sections[i].Count;
+            int size = (int)System.Math.Sqrt(count);
+            if (size >= 1 && size <= 3 && count == size * size && IsSectionWithinDistanceOfRoad(sections[i]))
+                allSections.Add((size, sections[i]));
         }
 
-        if (availableSections.Count > 0)
-        {
-            var keys = new List<int>(availableSections.Keys);
-            int randomSize = keys[UnityEngine.Random.Range(0, keys.Count)];
-            return (randomSize, availableSections[randomSize]);
-        }
+        if (allSections.Count == 0)
+            return null;
 
-        return (0, null);
+        var selected = GetWeightedSection(zoneType, allSections);
+        if (selected.section == null)
+            return null;
+
+        var result = new Vector2[selected.section.Count];
+        for (int i = 0; i < selected.section.Count; i++)
+            result[i] = selected.section[i];
+        return (selected.size, result);
     }
 
-    private Vector2[] GetRandomAvailableSizeSection(Zone.ZoneType zoneType, int buildingSize)
+    private (int size, List<Vector2> section) GetWeightedSection(Zone.ZoneType zoneType, List<(int size, List<Vector2> section)> candidates)
     {
-        if (availableZoneSections.ContainsKey(zoneType) && availableZoneSections[zoneType].Count > 0)
+        if (candidates == null || candidates.Count == 0)
+            return (0, null);
+
+        bool isIndustrial = IsIndustrialZoning(zoneType);
+        float[] weights = new float[candidates.Count];
+        float maxDesir = 0f;
+
+        for (int i = 0; i < candidates.Count; i++)
         {
-            var sections = availableZoneSections[zoneType];
-            var possibleSections = new List<List<Vector2>>(sections.Count);
-            int minCount = buildingSize * buildingSize;
-            for (int i = 0; i < sections.Count; i++)
+            float avg = AverageSectionDesirability(candidates[i].section);
+            if (avg > maxDesir) maxDesir = avg;
+        }
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            float avgDesir = AverageSectionDesirability(candidates[i].section);
+
+            if (isIndustrial)
             {
-                if (sections[i].Count >= minCount)
-                    possibleSections.Add(sections[i]);
+                weights[i] = (maxDesir - avgDesir) + baseSpawnWeight;
+            }
+            else
+            {
+                weights[i] = avgDesir + baseSpawnWeight;
+                if (avgDesir < minDesirabilityThreshold)
+                    weights[i] *= lowDesirabilityPenalty;
             }
 
-            if (possibleSections.Count > 0)
-            {
-                int randomIndex = UnityEngine.Random.Range(0, possibleSections.Count);
-                var section = possibleSections[randomIndex];
-                var result = new Vector2[section.Count];
-                for (int i = 0; i < section.Count; i++)
-                    result[i] = section[i];
-                return result;
-            }
+            if (weights[i] < 0) weights[i] = 0;
         }
-        return null;
+
+        float totalWeight = 0;
+        for (int i = 0; i < weights.Length; i++)
+            totalWeight += weights[i];
+
+        if (totalWeight <= 0)
+        {
+            int idx = UnityEngine.Random.Range(0, candidates.Count);
+            return candidates[idx];
+        }
+
+        float roll = UnityEngine.Random.value * totalWeight;
+        float cumulative = 0;
+        for (int i = 0; i < weights.Length; i++)
+        {
+            cumulative += weights[i];
+            if (roll <= cumulative)
+                return candidates[i];
+        }
+        return candidates[candidates.Count - 1];
+    }
+
+    private bool IsSectionWithinDistanceOfRoad(List<Vector2> section)
+    {
+        if (section == null || gridManager == null) return false;
+        for (int i = 0; i < section.Count; i++)
+        {
+            int x = (int)section[i].x, y = (int)section[i].y;
+            if (gridManager.IsWithinDistanceOfRoad(x, y, MaxRoadDistanceForSpawning))
+                return true;
+        }
+        return false;
+    }
+
+    private float AverageSectionDesirability(List<Vector2> section)
+    {
+        if (section == null || section.Count == 0 || gridManager == null) return 0f;
+        float total = 0f;
+        for (int i = 0; i < section.Count; i++)
+        {
+            Cell c = gridManager.GetCell((int)section[i].x, (int)section[i].y);
+            if (c != null)
+                total += c.desirability;
+        }
+        return total / section.Count;
+    }
+
+    private static bool IsIndustrialZoning(Zone.ZoneType zoneType)
+    {
+        return zoneType == Zone.ZoneType.IndustrialLightZoning || zoneType == Zone.ZoneType.IndustrialMediumZoning || zoneType == Zone.ZoneType.IndustrialHeavyZoning;
     }
 
     /// <summary>

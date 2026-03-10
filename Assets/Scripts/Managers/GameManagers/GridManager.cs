@@ -1813,6 +1813,14 @@ public class GridManager : MonoBehaviour, IGridManager
     public bool IsAdjacentToRoad(int x, int y)
         => roadCache.IsAdjacentToRoad(x, y);
 
+    /// <summary>Returns all grid cells within maxDistance (Manhattan) of any road. Cached and invalidated when roads change.</summary>
+    public HashSet<Vector2Int> GetCellsWithinDistanceOfRoad(int maxDistance)
+        => roadCache.GetCellsWithinDistanceOfRoad(maxDistance);
+
+    /// <summary>True if (x,y) is within maxDistance (Manhattan) of any road cell.</summary>
+    public bool IsWithinDistanceOfRoad(int x, int y, int maxDistance)
+        => roadCache.IsWithinDistanceOfRoad(x, y, maxDistance);
+
     /// <summary>
     /// A* path over walkable cells (grass or road). Prefers flat terrain; cardinal slopes cost more; diagonal slopes are impassable.
     /// Max 200 nodes explored. Returns path including start and end, or empty if not found.

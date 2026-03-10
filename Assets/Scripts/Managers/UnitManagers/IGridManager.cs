@@ -32,6 +32,8 @@ public interface IGridManager
     List<Vector2Int> FindPath(Vector2Int from, Vector2Int to);
     List<Vector2Int> FindPathWithRoadSpacing(Vector2Int from, Vector2Int to, int minDistanceFromRoad);
     bool IsAdjacentToRoad(int x, int y);
+    HashSet<Vector2Int> GetCellsWithinDistanceOfRoad(int maxDistance);
+    bool IsWithinDistanceOfRoad(int x, int y, int maxDistance);
     int CountGrassNeighbors(int gx, int gy);
     bool DemolishCellAt(Vector2 position, bool withAnimation = true);
 }

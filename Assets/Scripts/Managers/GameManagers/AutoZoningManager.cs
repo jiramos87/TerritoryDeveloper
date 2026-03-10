@@ -8,6 +8,7 @@ namespace Territory.Simulation
 {
 /// <summary>
 /// Automatically zones cells adjacent to roads during simulation steps based on demand.
+/// Uses UrbanMetrics for sector-coherent zone selection (R/C/I by urban ring) and neighbor influence.
 /// Coordinates with GridManager for cell queries, ZoneManager for zone placement, and DemandManager for demand-driven decisions.
 /// </summary>
 public class AutoZoningManager : MonoBehaviour
@@ -25,9 +26,11 @@ public class AutoZoningManager : MonoBehaviour
     private static readonly int[] Dx = { 1, -1, 0, 0 };
     private static readonly int[] Dy = { 0, 0, 1, -1 };
 
-    private float centroidSumX, centroidSumY;
-    private int centroidUrbanCount;
-    private bool centroidDirty = true;
+    private UrbanMetrics urbanMetrics;
+
+    private const float COHERENCE_BOOST = 1.6f;
+    private const float INDUSTRIAL_SEPARATION = 0.02f;
+    private const int MaxRoadDistanceForZoning = 3;
 
     string SimDateStr()
     {
@@ -41,6 +44,13 @@ public class AutoZoningManager : MonoBehaviour
         if (growthBudgetManager == null) growthBudgetManager = FindObjectOfType<GrowthBudgetManager>();
         if (cityStats == null) cityStats = FindObjectOfType<CityStats>();
         if (demandManager == null) demandManager = FindObjectOfType<DemandManager>();
+
+        if (gridManager != null)
+        {
+            urbanMetrics = new UrbanMetrics(gridManager.width, gridManager.height);
+            urbanMetrics.RecalculateFromGrid(gridManager);
+        }
+
         if (zoneManager != null)
             zoneManager.onUrbanCellChanged += OnUrbanCellChanged;
         if (gridManager != null)
@@ -61,41 +71,34 @@ public class AutoZoningManager : MonoBehaviour
         }
     }
 
+    public UrbanMetrics GetUrbanMetrics()
+    {
+        return urbanMetrics;
+    }
+
     private void OnGridRestored()
     {
-        centroidDirty = true;
+        if (urbanMetrics != null && gridManager != null)
+            urbanMetrics.RecalculateFromGrid(gridManager);
     }
 
     private void OnUrbanCellChanged(Vector2 pos, bool isAdded)
     {
+        if (urbanMetrics == null) return;
         if (isAdded)
-        {
-            centroidSumX += pos.x;
-            centroidSumY += pos.y;
-            centroidUrbanCount++;
-        }
+            urbanMetrics.OnUrbanCellAdded(pos);
         else
-        {
-            centroidSumX -= pos.x;
-            centroidSumY -= pos.y;
-            centroidUrbanCount--;
-        }
+            urbanMetrics.OnUrbanCellRemoved(pos);
     }
 
     private void OnUrbanCellsBulldozed(IReadOnlyList<Vector2Int> positions)
     {
-        for (int i = 0; i < positions.Count; i++)
-        {
-            var p = positions[i];
-            centroidSumX -= p.x;
-            centroidSumY -= p.y;
-            centroidUrbanCount--;
-        }
+        if (urbanMetrics != null)
+            urbanMetrics.OnUrbanCellsBulldozed(positions);
     }
 
     public void ProcessTick()
     {
-        string d = SimDateStr();
         if (zoneManager == null || growthBudgetManager == null || gridManager == null || cityStats == null)
         {
             return;
@@ -109,7 +112,7 @@ public class AutoZoningManager : MonoBehaviour
             return;
         }
 
-        Vector2 centroid = GetUrbanCentroid();
+        Vector2 centroid = urbanMetrics != null ? urbanMetrics.GetCentroid() : new Vector2(gridManager.width / 2f, gridManager.height / 2f);
         List<Vector2Int> candidates = GetCandidatesAdjacentToRoad();
         if (candidates.Count == 0)
         {
@@ -123,7 +126,6 @@ public class AutoZoningManager : MonoBehaviour
             return da.CompareTo(db);
         });
 
-        Zone.ZoneType[] zoneTypes = GetZoneTypesByDemand();
         int placed = 0;
         int skippedReserved = 0;
         int skippedOther = 0;
@@ -135,7 +137,15 @@ public class AutoZoningManager : MonoBehaviour
                 skippedReserved++;
                 continue;
             }
-            Zone.ZoneType zoneType = zoneTypes[Random.Range(0, zoneTypes.Length)];
+
+            UrbanRing ring = urbanMetrics != null ? urbanMetrics.GetUrbanRing(new Vector2(p.x, p.y)) : UrbanRing.Mid;
+            if (!ShouldZoneInRing(ring))
+            {
+                skippedOther++;
+                continue;
+            }
+
+            Zone.ZoneType zoneType = SelectZoneType(p);
             var attrs = zoneManager.GetZoneAttributes(zoneType);
             if (attrs == null || attrs.ConstructionCost > budget)
             {
@@ -163,52 +173,131 @@ public class AutoZoningManager : MonoBehaviour
         }
     }
 
-    private Vector2 GetUrbanCentroid()
+    private bool ShouldZoneInRing(UrbanRing ring)
     {
-        if (centroidDirty)
+        switch (ring)
         {
-            centroidSumX = 0;
-            centroidSumY = 0;
-            centroidUrbanCount = 0;
-            for (int x = 0; x < gridManager.width; x++)
-            {
-                for (int y = 0; y < gridManager.height; y++)
-                {
-                    Cell c = gridManager.GetCell(x, y);
-                    if (c == null) continue;
-                    if (c.zoneType != Zone.ZoneType.Grass && c.zoneType != Zone.ZoneType.Road &&
-                        c.zoneType != Zone.ZoneType.None && c.zoneType != Zone.ZoneType.Water)
-                    {
-                        centroidSumX += x;
-                        centroidSumY += y;
-                        centroidUrbanCount++;
-                    }
-                }
-            }
-            centroidDirty = false;
+            case UrbanRing.Core:
+            case UrbanRing.Inner:
+                return true;
+            case UrbanRing.Mid:
+                return Random.value < 0.85f;
+            case UrbanRing.Outer:
+                return Random.value < 0.65f;
+            case UrbanRing.Edge:
+                return Random.value < 0.50f;
+            case UrbanRing.Rural:
+                return Random.value < 0.25f;
+            default:
+                return true;
         }
-        if (centroidUrbanCount == 0) return new Vector2(gridManager.width / 2f, gridManager.height / 2f);
-        return new Vector2(centroidSumX / centroidUrbanCount, centroidSumY / centroidUrbanCount);
+    }
+
+    private Zone.ZoneType SelectZoneType(Vector2Int candidate)
+    {
+        UrbanRing ring = urbanMetrics != null ? urbanMetrics.GetUrbanRing(new Vector2(candidate.x, candidate.y)) : UrbanRing.Mid;
+        RingZoneProbabilities probs = urbanMetrics != null ? urbanMetrics.GetBaseZoneProbabilities(ring) : new RingZoneProbabilities { residential = 0.33f, commercial = 0.33f, industrial = 0.34f };
+
+        float r = probs.residential;
+        float c = probs.commercial;
+        float i = probs.industrial;
+
+        ApplyNeighborInfluence(ref r, ref c, ref i, candidate.x, candidate.y);
+
+        if (demandManager != null)
+        {
+            if (demandManager.GetResidentialDemand().demandLevel <= 0) r = 0;
+            if (demandManager.GetCommercialDemand().demandLevel <= 0) c = 0;
+            if (demandManager.GetIndustrialDemand().demandLevel <= 0) i = 0;
+        }
+
+        if (r <= 0 && c <= 0 && i <= 0)
+        {
+            if (demandManager != null)
+            {
+                if (demandManager.GetResidentialDemand().demandLevel > 0) r = 0.33f;
+                if (demandManager.GetCommercialDemand().demandLevel > 0) c = 0.33f;
+                if (demandManager.GetIndustrialDemand().demandLevel > 0) i = 0.33f;
+            }
+            if (r <= 0 && c <= 0 && i <= 0)
+            {
+                r = 0.33f;
+                c = 0.33f;
+                i = 0.34f;
+            }
+        }
+
+        float total = r + c + i;
+        if (total <= 0) return Zone.ZoneType.ResidentialLightZoning;
+
+        r /= total;
+        c /= total;
+        i /= total;
+
+        float roll = Random.value;
+        if (roll < r) return Zone.ZoneType.ResidentialLightZoning;
+        if (roll < r + c) return Zone.ZoneType.CommercialLightZoning;
+        return Zone.ZoneType.IndustrialLightZoning;
+    }
+
+    private void ApplyNeighborInfluence(ref float r, ref float c, ref float i, int x, int y)
+    {
+        int rCount = 0, cCount = 0, iCount = 0;
+        for (int d = 0; d < 4; d++)
+        {
+            int nx = x + Dx[d], ny = y + Dy[d];
+            if (nx < 0 || nx >= gridManager.width || ny < 0 || ny >= gridManager.height) continue;
+            Cell neighbor = gridManager.GetCell(nx, ny);
+            if (neighbor == null) continue;
+
+            if (IsResidentialZoneOrBuilding(neighbor.zoneType)) rCount++;
+            else if (IsCommercialZoneOrBuilding(neighbor.zoneType)) cCount++;
+            else if (IsIndustrialZoneOrBuilding(neighbor.zoneType)) iCount++;
+        }
+
+        r *= Mathf.Pow(COHERENCE_BOOST, rCount);
+        c *= Mathf.Pow(COHERENCE_BOOST, cCount);
+        i *= Mathf.Pow(COHERENCE_BOOST, iCount);
+
+        if (rCount > 0 || cCount > 0)
+            i *= INDUSTRIAL_SEPARATION;
+        if (iCount > 0)
+        {
+            r *= INDUSTRIAL_SEPARATION;
+            c *= INDUSTRIAL_SEPARATION;
+        }
+    }
+
+    private static bool IsResidentialZoneOrBuilding(Zone.ZoneType t)
+    {
+        return t == Zone.ZoneType.ResidentialLightZoning || t == Zone.ZoneType.ResidentialMediumZoning || t == Zone.ZoneType.ResidentialHeavyZoning ||
+               t == Zone.ZoneType.ResidentialLightBuilding || t == Zone.ZoneType.ResidentialMediumBuilding || t == Zone.ZoneType.ResidentialHeavyBuilding;
+    }
+
+    private static bool IsCommercialZoneOrBuilding(Zone.ZoneType t)
+    {
+        return t == Zone.ZoneType.CommercialLightZoning || t == Zone.ZoneType.CommercialMediumZoning || t == Zone.ZoneType.CommercialHeavyZoning ||
+               t == Zone.ZoneType.CommercialLightBuilding || t == Zone.ZoneType.CommercialMediumBuilding || t == Zone.ZoneType.CommercialHeavyBuilding;
+    }
+
+    private static bool IsIndustrialZoneOrBuilding(Zone.ZoneType t)
+    {
+        return t == Zone.ZoneType.IndustrialLightZoning || t == Zone.ZoneType.IndustrialMediumZoning || t == Zone.ZoneType.IndustrialHeavyZoning ||
+               t == Zone.ZoneType.IndustrialLightBuilding || t == Zone.ZoneType.IndustrialMediumBuilding || t == Zone.ZoneType.IndustrialHeavyBuilding;
     }
 
     private List<Vector2Int> GetCandidatesAdjacentToRoad()
     {
-        var candidates = new HashSet<Vector2Int>();
-        var edges = gridManager.GetRoadEdgePositions();
-        for (int i = 0; i < edges.Count; i++)
+        var nearRoad = gridManager.GetCellsWithinDistanceOfRoad(MaxRoadDistanceForZoning);
+        var candidates = new List<Vector2Int>();
+        foreach (var p in nearRoad)
         {
-            Vector2Int edge = edges[i];
-            for (int d = 0; d < 4; d++)
-            {
-                int nx = edge.x + Dx[d], ny = edge.y + Dy[d];
-                if (nx < 0 || nx >= gridManager.width || ny < 0 || ny >= gridManager.height) continue;
-                if (candidates.Contains(new Vector2Int(nx, ny))) continue;
-                Cell c = gridManager.GetCell(nx, ny);
-                if (c == null || !gridManager.IsZoneableNeighbor(c, nx, ny)) continue;
-                candidates.Add(new Vector2Int(nx, ny));
-            }
+            if (p.x < 0 || p.x >= gridManager.width || p.y < 0 || p.y >= gridManager.height) continue;
+            Cell c = gridManager.GetCell(p.x, p.y);
+            if (c == null || !gridManager.IsZoneableNeighbor(c, p.x, p.y)) continue;
+            candidates.Add(p);
         }
-        return new List<Vector2Int>(candidates);
+        return candidates;
     }
 
     /// <summary>True if this Grass cell is adjacent to a road edge that has few Grass neighbors; do not zone here to leave room for road growth.
@@ -227,31 +316,6 @@ public class AutoZoningManager : MonoBehaviour
                 return true;
         }
         return false;
-    }
-
-    private Zone.ZoneType[] GetZoneTypesByDemand()
-    {
-        var list = new List<Zone.ZoneType>();
-        if (demandManager == null)
-        {
-            list.Add(Zone.ZoneType.ResidentialLightZoning);
-            list.Add(Zone.ZoneType.CommercialLightZoning);
-            list.Add(Zone.ZoneType.IndustrialLightZoning);
-            return list.ToArray();
-        }
-        float r = demandManager.GetResidentialDemand().demandLevel;
-        float c = demandManager.GetCommercialDemand().demandLevel;
-        float i = demandManager.GetIndustrialDemand().demandLevel;
-        if (r > 0) list.Add(Zone.ZoneType.ResidentialLightZoning);
-        if (c > 0) list.Add(Zone.ZoneType.CommercialLightZoning);
-        if (i > 0) list.Add(Zone.ZoneType.IndustrialLightZoning);
-        if (list.Count == 0)
-        {
-            list.Add(Zone.ZoneType.ResidentialLightZoning);
-            list.Add(Zone.ZoneType.CommercialLightZoning);
-            list.Add(Zone.ZoneType.IndustrialLightZoning);
-        }
-        return list.ToArray();
     }
 }
 }

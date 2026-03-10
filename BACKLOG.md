@@ -7,7 +7,21 @@
 
 ## In Progress
 
-_No active issues._
+- [ ] **FEAT-26** — Use desirability for building spawn selection
+  - Type: feature
+  - Files: `ZoneManager.cs`, `DemandManager.cs` (GetCellDesirabilityBonus)
+  - Notes: `DemandManager.GetCellDesirabilityBonus()` exists but is not used to decide where to build. Buildings should prefer zones with higher desirability.
+
+- [ ] **BUG-07** — Better zone distribution: less random, more homogeneous by neighbourhoods/sectors
+  - Type: fix
+  - Files: `AutoZoningManager.cs`, `ZoneManager.cs`, `DemandManager.cs`
+  - Notes: Zones are distributed very randomly and mixed. Should be grouped in coherent sectors.
+
+- [ ] **FEAT-29** — Density gradient around urban centroids (AUTO mode)
+  - Type: feature
+  - Files: `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `UrbanizationProposalManager.cs`, `GridManager.cs`, `CityStats.cs` (+ possible new UrbanCentroidService)
+  - Notes: In AUTO mode the city grows homogeneously. Goal: variable density based on distance to urban centroids. (1) Detect urban centroids from density data — can be multiple per map. (2) Near centroids: higher street density + grid/square street patterns; higher zoning density. (3) Far from centroids: lower street density + long straight lines (rural style). Affects AutoRoadBuilder (street patterns), AutoZoningManager (zoning density), and possibly UrbanizationProposalManager.
+  - Related: BUG-07 (zone distribution)
 
 ## High Priority
 
@@ -92,20 +106,10 @@ _No active issues._
   - Notes: Budget uses fixed amount (default 5000) unrelated to income. Should be percentage of projected monthly income.
   - Depends on: BUG-02, BUG-03
 
-- [ ] **FEAT-26** — Use desirability for building spawn selection
-  - Type: feature
-  - Files: `ZoneManager.cs`, `DemandManager.cs` (GetCellDesirabilityBonus)
-  - Notes: `DemandManager.GetCellDesirabilityBonus()` exists but is not used to decide where to build. Buildings should prefer zones with higher desirability.
-
 - [ ] **BUG-06** — Streets should not cost so much energy
   - Type: fix/balance
   - Files: `RoadManager.cs`, `CityStats.cs`, `EconomyManager.cs`
   - Notes: Rebalance street energy cost.
-
-- [ ] **BUG-07** — Better zone distribution: less random, more homogeneous by neighbourhoods/sectors
-  - Type: fix
-  - Files: `AutoZoningManager.cs`, `ZoneManager.cs`, `DemandManager.cs`
-  - Notes: Zones are distributed very randomly and mixed. Should be grouped in coherent sectors.
 
 - [ ] **FEAT-03** — Forest mode hold-to-place
   - Type: feature
@@ -141,6 +145,29 @@ _No active issues._
   - Type: feature
   - Files: `GrowthManager.cs`, `ZoneManager.cs`, `DemandManager.cs`, `CityStats.cs`
   - Notes: Existing buildings evolve to larger versions based on zone property value.
+
+- [ ] **FEAT-30** — Mini map layer toggles + desirability visualization
+  - Type: feature
+  - Files: `MiniMapController.cs`, `ShowMiniMapButton.cs`, `UIManager.cs`, `DemandManager.cs` (GetCellDesirabilityBonus), new layer-toggle UI
+  - Notes: SimCity 2000-style mini map with toggle buttons at the edge. Each button toggles a layer: streets, urban zones, desirability, etc. Desirability layer: green (high/positive) to red (low/negative) color scale. Work order: (1) Create mini map button abstraction and panel; (2) Add toggle buttons for current data (streets, zones); (3) Add desirability layer as a specific case.
+  - Depends on: FEAT-17 (mini-map)
+
+- [ ] **FEAT-31** — Auto roads grow toward high desirability areas
+  - Type: feature
+  - Files: `AutoRoadBuilder.cs`, `DemandManager.cs` (GetCellDesirabilityBonus), `GridManager.cs`
+  - Notes: Terrain desirability already affects building spawn in zones. In AUTO mode, roads should also tend to grow toward sectors with higher desirability, like in real life. Integrate desirability into road extension decisions.
+
+- [ ] **FEAT-32** — More streets and intersections in central urban areas (AUTO mode)
+  - Type: feature
+  - Files: `AutoRoadBuilder.cs`, `UrbanizationProposalManager.cs`, `CityStats.cs`, possible `UrbanCentroidService` or similar
+  - Notes: Central urban sectors should have higher street density and more intersections. Far from centroids: lower density, longer straight roads (rural style). Define how to detect "central" areas and modulate AutoRoadBuilder behavior accordingly.
+  - Related: FEAT-29 (density gradient around urban centroids)
+
+- [ ] **FEAT-33** — Urban remodeling: expropriations and redevelopment
+  - Type: feature
+  - Files: `GridManager.cs`, `ZoneManager.cs`, `RoadManager.cs`, `EconomyManager.cs`, new expropriation/remodeling logic
+  - Notes: Expropriate buildings to demolish and build new routes; expropriate to demolish and de-zone for new neighborhoods according to updated desirability. Driven by variables: desirability, proximity to urban center, street density, etc. Needs further definition and design.
+  - Related: FEAT-29, FEAT-31
 
 ## Code Health (technical debt)
 
@@ -220,11 +247,6 @@ _No active issues._
   - Type: feature
   - Files: `CameraController.cs`, `GridManager.cs`, all rendering managers
   - Notes: Isometric view rotation. High impact on sorting order and rendering.
-
-- [ ] **FEAT-20** — Start screen (superseded by FEAT-27)
-  - Type: feature
-  - Files: new scene + UI managers
-  - Notes: Main menu with New Game, Load Game, Settings. Superseded by FEAT-27 (main menu with Continue, New Game, Load City, Options).
 
 - [ ] **ART-01** — Missing prefabs: forests on SE, NE, SW, NW slopes
   - Type: art/assets

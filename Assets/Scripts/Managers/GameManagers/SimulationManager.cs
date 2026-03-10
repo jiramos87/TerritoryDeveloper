@@ -31,7 +31,8 @@ public class SimulationManager : MonoBehaviour
         if (urbanizationProposalManager == null)
             urbanizationProposalManager = FindObjectOfType<UrbanizationProposalManager>();
 
-        bool simOn = cityStats != null && cityStats.simulateGrowth;
+        if (autoRoadBuilder != null && autoZoningManager != null && autoRoadBuilder.autoZoningManager == null)
+            autoRoadBuilder.autoZoningManager = autoZoningManager;
     }
 
     string SimDateStr()

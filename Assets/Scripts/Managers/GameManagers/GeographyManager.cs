@@ -97,6 +97,8 @@ public class GeographyManager : MonoBehaviour
             forestManager.InitializeForestMap();
         }
 
+        InitializeWaterDesirability();
+
         currentGeographyData = CreateGeographyData();
         ReCalculateSortingOrderBasedOnHeight();
 
@@ -120,6 +122,41 @@ public class GeographyManager : MonoBehaviour
             else
             {
                 DebugHelper.LogWarning("GeographyManager: Interstate could not be placed (no valid path). Game continues without interstate.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Populates closeWaterCount for all cells and recalculates desirability.
+    /// Call after ForestManager.InitializeForestMap() so both forest and water contribute to desirability.
+    /// </summary>
+    private void InitializeWaterDesirability()
+    {
+        if (gridManager == null || waterManager == null) return;
+
+        int[] dx = { 1, -1, 0, 0 };
+        int[] dy = { 0, 0, 1, -1 };
+
+        for (int x = 0; x < gridManager.width; x++)
+        {
+            for (int y = 0; y < gridManager.height; y++)
+            {
+                Cell cell = gridManager.GetCell(x, y);
+                if (cell == null) continue;
+
+                int count = 0;
+                for (int d = 0; d < 4; d++)
+                {
+                    int nx = x + dx[d];
+                    int ny = y + dy[d];
+                    if (nx >= 0 && nx < gridManager.width && ny >= 0 && ny < gridManager.height &&
+                        waterManager.IsWaterAt(nx, ny))
+                    {
+                        count++;
+                    }
+                }
+                cell.closeWaterCount = count;
+                cell.UpdateDesirability();
             }
         }
     }
@@ -178,6 +215,7 @@ public class GeographyManager : MonoBehaviour
             forestManager.InitializeForestMap();
         }
 
+        InitializeWaterDesirability();
         ReCalculateSortingOrderBasedOnHeight();
     }
 
@@ -207,6 +245,7 @@ public class GeographyManager : MonoBehaviour
         if (forestManager != null)
             forestManager.InitializeForestMap();
 
+        InitializeWaterDesirability();
         ReCalculateSortingOrderBasedOnHeight();
 
         if (regionalMapManager != null)

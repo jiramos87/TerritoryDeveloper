@@ -21,6 +21,7 @@ public class AutoRoadBuilder : MonoBehaviour
     public CityStats cityStats;
     public InterstateManager interstateManager;
     public TerrainManager terrainManager;
+    public AutoZoningManager autoZoningManager;
     #endregion
 
     #region Configuration
@@ -88,6 +89,7 @@ public class AutoRoadBuilder : MonoBehaviour
         if (cityStats == null) cityStats = FindObjectOfType<CityStats>();
         if (interstateManager == null) interstateManager = FindObjectOfType<InterstateManager>();
         if (terrainManager == null) terrainManager = FindObjectOfType<TerrainManager>();
+        if (autoZoningManager == null) autoZoningManager = FindObjectOfType<AutoZoningManager>();
     }
 
     public void ProcessTick()
@@ -169,6 +171,8 @@ public class AutoRoadBuilder : MonoBehaviour
     {
         int totalPlaced = 0;
         int budget = maxTiles;
+        UrbanMetrics urbanMetrics = autoZoningManager != null ? autoZoningManager.GetUrbanMetrics() : null;
+
         for (int i = activeProjects.Count - 1; i >= 0; i--)
         {
             if (budget <= 0) break;
@@ -178,7 +182,13 @@ public class AutoRoadBuilder : MonoBehaviour
             budget -= placed;
             if (placed == 0 || activeProjects[i].builtLength >= activeProjects[i].targetLength)
             {
-                if (activeProjects[i].builtLength >= minStreetLength && Random.value < chancePerpendicularAtEnd)
+                float branchChance = chancePerpendicularAtEnd;
+                if (urbanMetrics != null && activeProjects[i].builtLength >= minStreetLength)
+                {
+                    UrbanRing ring = urbanMetrics.GetUrbanRing(new Vector2(activeProjects[i].tip.x, activeProjects[i].tip.y));
+                    branchChance = urbanMetrics.GetStreetParamsForRing(ring).branchChanceAtEnd;
+                }
+                if (activeProjects[i].builtLength >= minStreetLength && Random.value < branchChance)
                     TryStartPerpendicularProject(activeProjects[i].tip, activeProjects[i].dir, roadSet);
                 activeProjects.RemoveAt(i);
             }
@@ -224,6 +234,24 @@ public class AutoRoadBuilder : MonoBehaviour
 
     private void TryStartPerpendicularProject(Vector2Int fromTip, Vector2Int previousDir, HashSet<Vector2Int> roadSet)
     {
+        UrbanMetrics urbanMetrics = autoZoningManager != null ? autoZoningManager.GetUrbanMetrics() : null;
+        int useMinLength = minLengthForBranch;
+        int useMaxLength = maxStreetLength;
+        int useBranchIntervalMin = branchIntervalMin;
+        int useBranchIntervalMax = branchIntervalMax;
+        int useParallelSpacing = minSpacingForBranch;
+
+        if (urbanMetrics != null)
+        {
+            UrbanRing ring = urbanMetrics.GetUrbanRing(new Vector2(fromTip.x, fromTip.y));
+            RingStreetParams @params = urbanMetrics.GetStreetParamsForRing(ring);
+            useMinLength = Mathf.Max(@params.minLength, minLengthForBranch);
+            useMaxLength = @params.maxLength;
+            useBranchIntervalMin = @params.branchIntervalMin;
+            useBranchIntervalMax = @params.branchIntervalMax;
+            useParallelSpacing = @params.parallelSpacing;
+        }
+
         Vector2Int perp1 = new Vector2Int(-previousDir.y, previousDir.x);
         Vector2Int perp2 = new Vector2Int(previousDir.y, -previousDir.x);
         foreach (Vector2Int perp in new[] { perp1, perp2 })
@@ -235,13 +263,13 @@ public class AutoRoadBuilder : MonoBehaviour
                 continue;
             if (!IsSuitableForRoad(start.x, start.y, perp))
                 continue;
-            if (HasParallelRoadTooClose(fromTip, perp, minSpacingForBranch, roadSet, excludeAlongDir: previousDir))
+            if (HasParallelRoadTooClose(fromTip, perp, useParallelSpacing, roadSet, excludeAlongDir: previousDir))
                 continue;
             int len = HowFarWeCanBuild(start, perp);
-            if (len < minLengthForBranch) continue;
+            if (len < useMinLength) continue;
             if (activeProjects.Count >= maxActiveProjects) return;
-            int targetLen = Mathf.Clamp(Random.Range(minLengthForBranch, maxStreetLength + 1), minLengthForBranch, len);
-            int interval = Mathf.Clamp(Random.Range(branchIntervalMin, branchIntervalMax + 1), 1, 99);
+            int targetLen = Mathf.Clamp(Random.Range(useMinLength, useMaxLength + 1), useMinLength, len);
+            int interval = Mathf.Clamp(Random.Range(useBranchIntervalMin, useBranchIntervalMax + 1), 1, 99);
             activeProjects.Add(new StreetProject { tip = start, dir = perp, targetLength = targetLen, builtLength = 0, branchInterval = interval, tilesSinceLastBranch = 0 });
             return;
         }
@@ -250,17 +278,39 @@ public class AutoRoadBuilder : MonoBehaviour
     private bool TryStartNewStreetProject(ref int budgetRemaining, int effectiveMinStreetLength, List<Vector2Int> edges, HashSet<Vector2Int> roadSet)
     {
         if (edges.Count == 0) return false;
-        int parallelSpacing = activeProjects.Count == 0 ? minParallelSpacingFromEdge : (activeProjects.Count < 2 ? Mathf.Max(minParallelSpacingFromEdge, minSpacingForBranch / 2) : minSpacingForBranch);
+
+        UrbanMetrics urbanMetrics = autoZoningManager != null ? autoZoningManager.GetUrbanMetrics() : null;
+        RingStreetParams fallbackParams = new RingStreetParams
+        {
+            minLength = effectiveMinStreetLength,
+            maxLength = maxStreetLength,
+            branchIntervalMin = branchIntervalMin,
+            branchIntervalMax = branchIntervalMax,
+            parallelSpacing = activeProjects.Count == 0 ? minParallelSpacingFromEdge : (activeProjects.Count < 2 ? Mathf.Max(minParallelSpacingFromEdge, minSpacingForBranch / 2) : minSpacingForBranch)
+        };
+
         var withScore = new List<KeyValuePair<Vector2Int, int>>(edges.Count);
         foreach (Vector2Int e in edges)
             withScore.Add(new KeyValuePair<Vector2Int, int>(e, CountGrassNeighbors(e)));
         withScore.Sort((a, b) => b.Value.CompareTo(a.Value));
         var consideredEdges = new HashSet<Vector2Int>();
-        const int maxRejectLogsPerTick = 8;
-        int rejectLogCount = 0;
+
         foreach (var kv in withScore)
         {
             Vector2Int edge = kv.Key;
+
+            RingStreetParams @params = fallbackParams;
+            if (urbanMetrics != null)
+            {
+                UrbanRing ring = urbanMetrics.GetUrbanRing(new Vector2(edge.x, edge.y));
+                @params = urbanMetrics.GetStreetParamsForRing(ring);
+                @params.minLength = Mathf.Max(@params.minLength, effectiveMinStreetLength);
+            }
+            else
+            {
+                @params.parallelSpacing = activeProjects.Count == 0 ? minParallelSpacingFromEdge : (activeProjects.Count < 2 ? Mathf.Max(minParallelSpacingFromEdge, minSpacingForBranch / 2) : minSpacingForBranch);
+            }
+
             if (minEdgeSpacing > 0)
             {
                 bool tooCloseToConsidered = false;
@@ -281,27 +331,18 @@ public class AutoRoadBuilder : MonoBehaviour
                 if (nx < 0 || nx >= gridManager.width || ny < 0 || ny >= gridManager.height)
                     continue;
                 if (!IsCellPlaceableForRoad(nx, ny))
-                {
                     continue;
-                }
                 Vector2Int dir = new Vector2Int(Dx[d], Dy[d]);
                 Vector2Int tip = new Vector2Int(nx, ny);
                 if (!IsSuitableForRoad(nx, ny, dir))
-                {
                     continue;
-                }
-                if (HasParallelRoadTooClose(edge, dir, parallelSpacing, roadSet))
-                {
+                if (HasParallelRoadTooClose(edge, dir, @params.parallelSpacing, roadSet))
                     continue;
-                }
                 int len = HowFarWeCanBuild(tip, dir);
-                if (len < effectiveMinStreetLength)
-                {
-
+                if (len < @params.minLength)
                     continue;
-                }
-                int targetLen = Mathf.Clamp(Random.Range(effectiveMinStreetLength, maxStreetLength + 1), effectiveMinStreetLength, len);
-                int interval = Mathf.Clamp(Random.Range(branchIntervalMin, branchIntervalMax + 1), 1, 99);
+                int targetLen = Mathf.Clamp(Random.Range(@params.minLength, @params.maxLength + 1), @params.minLength, len);
+                int interval = Mathf.Clamp(Random.Range(@params.branchIntervalMin, @params.branchIntervalMax + 1), 1, 99);
                 activeProjects.Add(new StreetProject { tip = tip, dir = dir, targetLength = targetLen, builtLength = 0, branchInterval = interval, tilesSinceLastBranch = 0 });
                 int advance = AdvanceOneProject(activeProjects.Count - 1, Mathf.Min(tilesPerProjectPerTick, budgetRemaining), roadSet);
                 budgetRemaining -= advance;

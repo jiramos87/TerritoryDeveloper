@@ -19,6 +19,8 @@ namespace Territory.Core
         private List<Vector2Int> cachedRoadPositions;
         private HashSet<Vector2Int> cachedRoadPositionsSet;
         private List<Vector2Int> cachedRoadEdgePositions;
+        private HashSet<Vector2Int> cachedCellsWithinDistanceOfRoad;
+        private int cachedCellsWithinDistanceMax = -1;
         private bool roadCacheDirty = true;
 
         public RoadCacheService(GridManager grid)
@@ -32,6 +34,8 @@ namespace Territory.Core
         public void Invalidate()
         {
             roadCacheDirty = true;
+            cachedCellsWithinDistanceOfRoad = null;
+            cachedCellsWithinDistanceMax = -1;
         }
 
         /// <summary>
@@ -48,6 +52,8 @@ namespace Territory.Core
             {
                 cachedRoadPositions.Add(pos);
                 cachedRoadEdgePositions = null;
+                cachedCellsWithinDistanceOfRoad = null;
+                cachedCellsWithinDistanceMax = -1;
             }
             roadCacheDirty = false;
         }
@@ -62,6 +68,8 @@ namespace Territory.Core
             {
                 cachedRoadPositions.Remove(pos);
                 cachedRoadEdgePositions = null;
+                cachedCellsWithinDistanceOfRoad = null;
+                cachedCellsWithinDistanceMax = -1;
             }
         }
 
@@ -83,6 +91,8 @@ namespace Territory.Core
                 }
             }
             cachedRoadEdgePositions = null;
+            cachedCellsWithinDistanceOfRoad = null;
+            cachedCellsWithinDistanceMax = -1;
             cachedRoadPositionsSet = new HashSet<Vector2Int>(cachedRoadPositions);
             roadCacheDirty = false;
             return cachedRoadPositions;
@@ -162,6 +172,56 @@ namespace Territory.Core
                 }
             }
             return false;
+        }
+
+        /// <summary>
+        /// Returns all grid cells within maxDistance (Manhattan) of any road. Cached and invalidated when roads change.
+        /// Excludes road cells from the result. Used for auto-zoning and building spawn eligibility.
+        /// </summary>
+        public HashSet<Vector2Int> GetCellsWithinDistanceOfRoad(int maxDistance)
+        {
+            if (cachedCellsWithinDistanceOfRoad != null && cachedCellsWithinDistanceMax == maxDistance)
+                return cachedCellsWithinDistanceOfRoad;
+
+            var roads = GetRoadPositionsAsHashSet();
+            cachedCellsWithinDistanceOfRoad = new HashSet<Vector2Int>();
+            cachedCellsWithinDistanceMax = maxDistance;
+
+            if (roads == null || roads.Count == 0)
+                return cachedCellsWithinDistanceOfRoad;
+
+            var visited = new HashSet<Vector2Int>();
+            var queue = new Queue<(Vector2Int p, int dist)>();
+            foreach (var r in roads)
+            {
+                queue.Enqueue((r, 0));
+                visited.Add(r);
+            }
+
+            while (queue.Count > 0)
+            {
+                var (p, dist) = queue.Dequeue();
+                if (dist > 0 && !roads.Contains(p))
+                    cachedCellsWithinDistanceOfRoad.Add(p);
+                if (dist >= maxDistance)
+                    continue;
+                for (int i = 0; i < 4; i++)
+                {
+                    int nx = p.x + Dx[i], ny = p.y + Dy[i];
+                    if (nx < 0 || nx >= grid.width || ny < 0 || ny >= grid.height) continue;
+                    var n = new Vector2Int(nx, ny);
+                    if (visited.Add(n))
+                        queue.Enqueue((n, dist + 1));
+                }
+            }
+            return cachedCellsWithinDistanceOfRoad;
+        }
+
+        /// <summary>True if (x,y) is within maxDistance (Manhattan) of any road cell.</summary>
+        public bool IsWithinDistanceOfRoad(int x, int y, int maxDistance)
+        {
+            if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return false;
+            return GetCellsWithinDistanceOfRoad(maxDistance).Contains(new Vector2Int(x, y));
         }
     }
 }
