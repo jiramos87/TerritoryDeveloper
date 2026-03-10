@@ -6,12 +6,29 @@ using Territory.Core;
 using Territory.Zones;
 using Territory.Terrain;
 using Territory.Roads;
+using Territory.Forests;
+using Territory.Simulation;
 
 namespace Territory.UI
 {
 /// <summary>
+/// Layer flags for the mini-map. Multiple layers can be active at once.
+/// </summary>
+[System.Flags]
+public enum MiniMapLayer
+{
+    None = 0,
+    Streets = 1 << 0,
+    Zones = 1 << 1,
+    Forests = 1 << 2,
+    Desirability = 1 << 3,
+    Centroid = 1 << 4,
+}
+
+/// <summary>
 /// Renders a procedural mini-map from grid cell data and provides click-to-navigate.
 /// Displays zones, roads, water, interstate (thicker), and a viewport rectangle.
+/// Supports multiple toggleable layers: streets, zones, forests, desirability, centroid.
 /// Hides during full-screen popups (LoadGame, BuildingSelector).
 /// </summary>
 public class MiniMapController : MonoBehaviour, IPointerClickHandler
@@ -21,6 +38,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
     public WaterManager waterManager;
     public InterstateManager interstateManager;
     public CameraController cameraController;
+    public AutoZoningManager autoZoningManager;
     #endregion
 
     #region UI References
@@ -45,6 +63,12 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
     private static readonly Color ColorRoad = Color.white;
     private static readonly Color ColorInterstate = new Color(0.5f, 0.5f, 0.5f); // Gray, same thickness as roads
     private static readonly Color ColorWater = new Color(0.082f, 0.396f, 0.753f);       // #1565C0
+    private static readonly Color ColorDesirabilityLow = new Color(0.9f, 0.2f, 0.2f);
+    private static readonly Color ColorDesirabilityHigh = new Color(0.2f, 0.8f, 0.2f);
+    private static readonly Color ColorForestSparse = new Color(0.4f, 0.7f, 0.35f);
+    private static readonly Color ColorForestMedium = new Color(0.25f, 0.55f, 0.25f);
+    private static readonly Color ColorForestDense = new Color(0.15f, 0.4f, 0.15f);
+    private static readonly Color ColorCentroid = new Color(1f, 0f, 1f); // Magenta marker
     #endregion
 
     #region State
@@ -53,6 +77,10 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
     private HashSet<Vector2Int> interstateSet;
     private HashSet<Vector2Int> roadSet;
     private bool wasVisibleBeforePopup = true;
+    private float desirabilityMin;
+    private float desirabilityMax;
+
+    [SerializeField] private MiniMapLayer activeLayers = MiniMapLayer.Streets | MiniMapLayer.Zones;
     #endregion
 
     #region Public API
@@ -65,6 +93,30 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         GameObject target = miniMapPanel != null ? miniMapPanel : gameObject;
         target.SetActive(visible);
     }
+
+    /// <summary>Toggles the given layer on or off.</summary>
+    public void ToggleLayer(MiniMapLayer layer)
+    {
+        activeLayers ^= layer;
+    }
+
+    /// <summary>Returns true if the given layer is currently active.</summary>
+    public bool IsLayerActive(MiniMapLayer layer)
+    {
+        return (activeLayers & layer) != 0;
+    }
+
+    /// <summary>Returns the currently active layers bitmask.</summary>
+    public MiniMapLayer GetActiveLayers()
+    {
+        return activeLayers;
+    }
+
+    /// <summary>Sets the active layers (used when restoring from save).</summary>
+    public void SetActiveLayers(MiniMapLayer layers)
+    {
+        activeLayers = layers;
+    }
     #endregion
 
     #region Unity Lifecycle
@@ -74,6 +126,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         if (waterManager == null) waterManager = FindObjectOfType<WaterManager>();
         if (interstateManager == null) interstateManager = FindObjectOfType<InterstateManager>();
         if (cameraController == null) cameraController = FindObjectOfType<CameraController>();
+        if (autoZoningManager == null) autoZoningManager = FindObjectOfType<AutoZoningManager>();
     }
 
     void Start()
@@ -143,12 +196,39 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         BuildInterstateSet();
         BuildRoadSet();
 
+        if ((activeLayers & MiniMapLayer.Desirability) != 0)
+            ComputeDesirabilityRange(w, h);
+
         for (int x = 0; x < w; x++)
         {
             for (int y = 0; y < h; y++)
             {
                 Color c = GetCellColor(x, y);
                 mapTexture.SetPixel(x, y, c);
+            }
+        }
+
+        if ((activeLayers & MiniMapLayer.Centroid) != 0 && autoZoningManager != null)
+        {
+            UrbanMetrics urbanMetrics = autoZoningManager.GetUrbanMetrics();
+            if (urbanMetrics != null)
+            {
+                Vector2 centroid = urbanMetrics.GetCentroid();
+                int cx = Mathf.Clamp(Mathf.RoundToInt(centroid.x), 0, w - 1);
+                int cy = Mathf.Clamp(Mathf.RoundToInt(centroid.y), 0, h - 1);
+                const int markerRadius = 2;
+                for (int dx = -markerRadius; dx <= markerRadius; dx++)
+                {
+                    int px = cx + dx;
+                    if (px >= 0 && px < w)
+                        mapTexture.SetPixel(px, cy, ColorCentroid);
+                }
+                for (int dy = -markerRadius; dy <= markerRadius; dy++)
+                {
+                    int py = cy + dy;
+                    if (py >= 0 && py < h)
+                        mapTexture.SetPixel(cx, py, ColorCentroid);
+                }
             }
         }
 
@@ -166,17 +246,24 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         }
     }
 
+    /// <summary>Builds road set by scanning the grid directly (cell.zoneType == Road).
+    /// Bypasses cache to ensure auto-generated roads, manual roads, and restored roads all show correctly.</summary>
     private void BuildRoadSet()
     {
         roadSet = new HashSet<Vector2Int>();
-        if (gridManager != null)
+        if (gridManager == null || !gridManager.isInitialized)
+            return;
+        int w = gridManager.width;
+        int h = gridManager.height;
+        for (int x = 0; x < w; x++)
         {
-            var roads = gridManager.GetAllRoadPositions();
-            if (roads != null)
+            for (int y = 0; y < h; y++)
             {
-                foreach (var pos in roads)
+                Cell c = gridManager.GetCell(x, y);
+                if (c != null && c.zoneType == Zone.ZoneType.Road)
                 {
-                    if (!interstateSet.Contains(pos))
+                    Vector2Int pos = new Vector2Int(x, y);
+                    if (interstateSet == null || !interstateSet.Contains(pos))
                         roadSet.Add(pos);
                 }
             }
@@ -185,15 +272,20 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
 
     private Color GetCellColor(int x, int y)
     {
-        // Roads and bridges first (bridges are roads on water cells)
-        if (interstateSet != null && interstateSet.Contains(new Vector2Int(x, y)))
-            return ColorInterstate;
+        Vector2Int pos = new Vector2Int(x, y);
+        bool isInterstate = interstateSet != null && interstateSet.Contains(pos);
+        bool isRoad = roadSet != null && roadSet.Contains(pos);
 
-        if (roadSet != null && roadSet.Contains(new Vector2Int(x, y)))
-            return ColorRoad;
-
+        // 1. Water (always visible)
         if (waterManager != null && waterManager.IsWaterAt(x, y))
             return ColorWater;
+
+        // 2. Streets (if active) — roads and interstate
+        if ((activeLayers & MiniMapLayer.Streets) != 0)
+        {
+            if (isInterstate) return ColorInterstate;
+            if (isRoad) return ColorRoad;
+        }
 
         Cell cell = gridManager.GetCell(x, y);
         if (cell == null)
@@ -201,17 +293,79 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
 
         Zone.ZoneType zt = cell.GetZoneType();
 
-        if (IsBuilding(zt))
-            return ColorBuilding;
+        // 3. Zones (if active) — buildings and zoning
+        if ((activeLayers & MiniMapLayer.Zones) != 0)
+        {
+            if (IsBuilding(zt)) return ColorBuilding;
+            if (IsResidentialZoning(zt)) return ColorResidential;
+            if (IsCommercialZoning(zt)) return ColorCommercial;
+            if (IsIndustrialZoning(zt)) return ColorIndustrial;
+        }
 
-        if (IsResidentialZoning(zt))
-            return ColorResidential;
-        if (IsCommercialZoning(zt))
-            return ColorCommercial;
-        if (IsIndustrialZoning(zt))
-            return ColorIndustrial;
+        // 4. Forests (if active)
+        if ((activeLayers & MiniMapLayer.Forests) != 0 && cell.HasForest())
+            return GetForestColor(cell.GetForestType());
 
+        // 5. Desirability (if active) — roads keep normal colors per user requirement
+        if ((activeLayers & MiniMapLayer.Desirability) != 0)
+        {
+            if (isInterstate) return ColorInterstate;
+            if (isRoad) return ColorRoad;
+            return GetDesirabilityColor(cell.desirability);
+        }
+
+        // 6. Fallback
         return ColorGrass;
+    }
+
+    /// <summary>Computes min/max desirability for land cells (excludes water, roads) for dynamic color scaling.</summary>
+    private void ComputeDesirabilityRange(int w, int h)
+    {
+        desirabilityMin = float.MaxValue;
+        desirabilityMax = float.MinValue;
+        for (int x = 0; x < w; x++)
+        {
+            for (int y = 0; y < h; y++)
+            {
+                if (waterManager != null && waterManager.IsWaterAt(x, y))
+                    continue;
+                Vector2Int pos = new Vector2Int(x, y);
+                if (interstateSet != null && interstateSet.Contains(pos))
+                    continue;
+                if (roadSet != null && roadSet.Contains(pos))
+                    continue;
+                Cell cell = gridManager.GetCell(x, y);
+                if (cell == null) continue;
+                float d = cell.desirability;
+                if (d < desirabilityMin) desirabilityMin = d;
+                if (d > desirabilityMax) desirabilityMax = d;
+            }
+        }
+        if (desirabilityMin > desirabilityMax)
+        {
+            desirabilityMin = 0f;
+            desirabilityMax = 20f;
+        }
+    }
+
+    private Color GetDesirabilityColor(float desirability)
+    {
+        float range = desirabilityMax - desirabilityMin;
+        float t = range > 0.001f
+            ? Mathf.Clamp01((desirability - desirabilityMin) / range)
+            : 0f;
+        return Color.Lerp(ColorDesirabilityLow, ColorDesirabilityHigh, t);
+    }
+
+    private static Color GetForestColor(Forest.ForestType forestType)
+    {
+        switch (forestType)
+        {
+            case Forest.ForestType.Sparse: return ColorForestSparse;
+            case Forest.ForestType.Medium: return ColorForestMedium;
+            case Forest.ForestType.Dense: return ColorForestDense;
+            default: return ColorForestMedium;
+        }
     }
 
     private static bool IsBuilding(Zone.ZoneType zt)

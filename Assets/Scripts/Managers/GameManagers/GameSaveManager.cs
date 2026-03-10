@@ -29,6 +29,7 @@ public class GameSaveManager : MonoBehaviour
     public CityStats cityStats;
     public TimeManager timeManager;
     public InterstateManager interstateManager;
+    public MiniMapController miniMapController;
 
     public void SaveGame(string customSaveName = null)
     {
@@ -55,6 +56,8 @@ public class GameSaveManager : MonoBehaviour
             saveData.growthBudget = growthBudgetManager.data.Clone();
         // Proposal flow disabled: do not persist pending proposals
         saveData.pendingProposals = new List<UrbanizationProposal>();
+        if (miniMapController != null)
+            saveData.minimapActiveLayers = (int)miniMapController.GetActiveLayers();
         // saveData.playerSettings = GetPlayerSettings();
 
         string json = JsonUtility.ToJson(saveData);
@@ -170,6 +173,13 @@ public class GameSaveManager : MonoBehaviour
             UrbanizationProposalManager proposalManager = FindObjectOfType<UrbanizationProposalManager>();
             if (proposalManager != null)
                 proposalManager.RestorePendingProposals(new List<UrbanizationProposal>());
+            if (miniMapController != null)
+            {
+                var layers = (MiniMapLayer)saveData.minimapActiveLayers;
+                if (layers == 0)
+                    layers = MiniMapLayer.Streets | MiniMapLayer.Zones;
+                miniMapController.SetActiveLayers(layers);
+            }
         }
         else
         {
@@ -238,5 +248,6 @@ public class GameSaveData
     public CityStatsData cityStats;
     public GrowthBudgetData growthBudget;
     public List<UrbanizationProposal> pendingProposals;
+    public int minimapActiveLayers;
 }
 }

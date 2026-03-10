@@ -53,6 +53,8 @@ public class AutoRoadBuilder : MonoBehaviour
     public const int MaxBridgeWaterTiles = 5;
     /// <summary>When connecting to interstate or between clusters, prefer paths that stay this many cells away from existing roads (0 = no preference).</summary>
     public int minRoadSpacingWhenConnecting = 2;
+    /// <summary>Penalty for directions towards high-desirability cells; higher = growth towards desirability is slower (FEAT-26).</summary>
+    [SerializeField] float desirabilityGrowthPenalty = 0.2f;
 
     private struct StreetProject
     {
@@ -289,9 +291,14 @@ public class AutoRoadBuilder : MonoBehaviour
             parallelSpacing = activeProjects.Count == 0 ? minParallelSpacingFromEdge : (activeProjects.Count < 2 ? Mathf.Max(minParallelSpacingFromEdge, minSpacingForBranch / 2) : minSpacingForBranch)
         };
 
-        var withScore = new List<KeyValuePair<Vector2Int, int>>(edges.Count);
+        var withScore = new List<KeyValuePair<Vector2Int, float>>(edges.Count);
         foreach (Vector2Int e in edges)
-            withScore.Add(new KeyValuePair<Vector2Int, int>(e, CountGrassNeighbors(e)));
+        {
+            int ringPriority = urbanMetrics != null ? GetRingPriority(urbanMetrics.GetUrbanRing(new Vector2(e.x, e.y))) : 4;
+            int grass = CountGrassNeighbors(e);
+            float score = ringPriority * 100f + grass;
+            withScore.Add(new KeyValuePair<Vector2Int, float>(e, score));
+        }
         withScore.Sort((a, b) => b.Value.CompareTo(a.Value));
         var consideredEdges = new HashSet<Vector2Int>();
 
@@ -304,7 +311,8 @@ public class AutoRoadBuilder : MonoBehaviour
             {
                 UrbanRing ring = urbanMetrics.GetUrbanRing(new Vector2(edge.x, edge.y));
                 @params = urbanMetrics.GetStreetParamsForRing(ring);
-                @params.minLength = Mathf.Max(@params.minLength, effectiveMinStreetLength);
+                if (ring != UrbanRing.Core && ring != UrbanRing.Inner)
+                    @params.minLength = Mathf.Max(@params.minLength, effectiveMinStreetLength);
             }
             else
             {
@@ -325,6 +333,8 @@ public class AutoRoadBuilder : MonoBehaviour
                 if (tooCloseToConsidered) continue;
                 consideredEdges.Add(edge);
             }
+
+            var validDirections = new List<(Vector2Int dir, Vector2Int tip, int len)>();
             for (int d = 0; d < 4; d++)
             {
                 int nx = edge.x + Dx[d], ny = edge.y + Dy[d];
@@ -341,6 +351,29 @@ public class AutoRoadBuilder : MonoBehaviour
                 int len = HowFarWeCanBuild(tip, dir);
                 if (len < @params.minLength)
                     continue;
+                validDirections.Add((dir, tip, len));
+            }
+
+            if (validDirections.Count > 0)
+            {
+                UrbanRing ringForSort = urbanMetrics != null ? urbanMetrics.GetUrbanRing(new Vector2(edge.x, edge.y)) : UrbanRing.Mid;
+                Vector2Int roadDir = GetRoadDirectionAtEdge(edge, roadSet);
+                validDirections.Sort((a, b) =>
+                {
+                    if (ringForSort == UrbanRing.Core || ringForSort == UrbanRing.Inner)
+                    {
+                        bool aPerp = roadDir.x == 0 && roadDir.y == 0 ? false : (a.dir.x * roadDir.x + a.dir.y * roadDir.y) == 0;
+                        bool bPerp = roadDir.x == 0 && roadDir.y == 0 ? false : (b.dir.x * roadDir.x + b.dir.y * roadDir.y) == 0;
+                        if (aPerp != bPerp) return aPerp ? -1 : 1;
+                    }
+                    float desirA = GetAverageDesirabilityInDirection(edge, a.dir, 5);
+                    float desirB = GetAverageDesirabilityInDirection(edge, b.dir, 5);
+                    return desirA.CompareTo(desirB);
+                });
+            }
+
+            foreach (var (dir, tip, len) in validDirections)
+            {
                 int targetLen = Mathf.Clamp(Random.Range(@params.minLength, @params.maxLength + 1), @params.minLength, len);
                 int interval = Mathf.Clamp(Random.Range(@params.branchIntervalMin, @params.branchIntervalMax + 1), 1, 99);
                 activeProjects.Add(new StreetProject { tip = tip, dir = dir, targetLength = targetLen, builtLength = 0, branchInterval = interval, tilesSinceLastBranch = 0 });
@@ -479,6 +512,61 @@ public class AutoRoadBuilder : MonoBehaviour
             y += dir.y;
         }
         return count;
+    }
+
+    /// <summary>Average desirability of cells along a direction from start (FEAT-26). Samples up to sampleCount cells.</summary>
+    private float GetAverageDesirabilityInDirection(Vector2Int start, Vector2Int dir, int sampleCount)
+    {
+        float sum = 0f;
+        int count = 0;
+        int x = start.x, y = start.y;
+        int w = gridManager.width, h = gridManager.height;
+        for (int k = 0; k < sampleCount; k++)
+        {
+            x += dir.x;
+            y += dir.y;
+            if (x < 0 || x >= w || y < 0 || y >= h) break;
+            Cell c = gridManager.GetCell(x, y);
+            if (c != null)
+            {
+                sum += c.desirability;
+                count++;
+            }
+        }
+        return count > 0 ? sum / count : 0f;
+    }
+
+    /// <summary>Returns the dominant road direction at this edge (for perpendicular preference). Zero if no clear direction.</summary>
+    private Vector2Int GetRoadDirectionAtEdge(Vector2Int edge, HashSet<Vector2Int> roadSet)
+    {
+        int roadX = 0, roadY = 0;
+        for (int d = 0; d < 4; d++)
+        {
+            var n = new Vector2Int(edge.x + Dx[d], edge.y + Dy[d]);
+            if (roadSet.Contains(n))
+            {
+                roadX += Dx[d];
+                roadY += Dy[d];
+            }
+        }
+        if (roadX == 0 && roadY == 0) return Vector2Int.zero;
+        if (Mathf.Abs(roadX) >= Mathf.Abs(roadY))
+            return new Vector2Int(roadX > 0 ? 1 : -1, 0);
+        return new Vector2Int(0, roadY > 0 ? 1 : -1);
+    }
+
+    private static int GetRingPriority(UrbanRing ring)
+    {
+        switch (ring)
+        {
+            case UrbanRing.Core: return 6;
+            case UrbanRing.Inner: return 5;
+            case UrbanRing.Mid: return 4;
+            case UrbanRing.Outer: return 3;
+            case UrbanRing.Edge: return 2;
+            case UrbanRing.Rural: return 1;
+            default: return 4;
+        }
     }
 
     /// <summary>

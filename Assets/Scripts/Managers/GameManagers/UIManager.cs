@@ -83,6 +83,7 @@ public class UIManager : MonoBehaviour
     public Text detailsDateBuiltText;
     public Text detailsBuildingTypeText;
     public Text detailsSortingOrderText;
+    public Text detailsDesirabilityText;
     public Text GameSavedText;
     public Text unemploymentRateText;
     public Text totalJobsText;
@@ -872,6 +873,8 @@ public class UIManager : MonoBehaviour
         detailsBuildingTypeText.text = "Building Type: " + cell.GetBuildingType();
         detailsImage.sprite = cell.GetCellPrefab().GetComponent<SpriteRenderer>().sprite;
         detailsSortingOrderText.text = "Sorting Order: " + cell.GetSortingOrder();
+        if (detailsDesirabilityText != null)
+            detailsDesirabilityText.text = "Desirability: " + cell.desirability.ToString("F1");
 
         if (gameDebugInfoBuilder != null && detailsDebugText != null)
             detailsDebugText.text = gameDebugInfoBuilder.GetCellUnderCursorInfo(new Vector2(cell.x, cell.y));

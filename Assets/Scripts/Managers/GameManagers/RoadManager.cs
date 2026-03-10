@@ -1130,6 +1130,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
             cellComponent.isInterstate = true;
 
         gridManager.SetRoadSortingOrder(roadTile, gridPos.x, gridPos.y);
+        gridManager.AddRoadToCache(gridPos);
     }
 
     /// <summary>

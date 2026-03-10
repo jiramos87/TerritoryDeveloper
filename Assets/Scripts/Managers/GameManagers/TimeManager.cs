@@ -81,6 +81,7 @@ public class TimeManager : MonoBehaviour
         zoneManager.PlaceZonedBuildings(Zone.ZoneType.CommercialHeavyZoning);
         zoneManager.PlaceZonedBuildings(Zone.ZoneType.IndustrialLightZoning);
         zoneManager.PlaceZonedBuildings(Zone.ZoneType.IndustrialMediumZoning);
+        zoneManager.PlaceZonedBuildings(Zone.ZoneType.IndustrialHeavyZoning);
     }
 
     public void HandleOnKeyInput()

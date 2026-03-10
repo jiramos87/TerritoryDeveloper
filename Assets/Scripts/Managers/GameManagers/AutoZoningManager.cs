@@ -29,7 +29,8 @@ public class AutoZoningManager : MonoBehaviour
     private UrbanMetrics urbanMetrics;
 
     private const float COHERENCE_BOOST = 1.6f;
-    private const float INDUSTRIAL_SEPARATION = 0.02f;
+    [Header("Industrial separation (BUG-07)")]
+    [SerializeField] float industrialSeparation = 0.15f;
     private const int MaxRoadDistanceForZoning = 3;
 
     string SimDateStr()
@@ -100,9 +101,11 @@ public class AutoZoningManager : MonoBehaviour
     public void ProcessTick()
     {
         if (zoneManager == null || growthBudgetManager == null || gridManager == null || cityStats == null)
-        {
             return;
-        }
+
+        if (urbanMetrics != null && gridManager != null)
+            urbanMetrics.RecalculateFromGrid(gridManager);
+
         if (!cityStats.simulateGrowth)
             return;
 
@@ -235,9 +238,47 @@ public class AutoZoningManager : MonoBehaviour
         i /= total;
 
         float roll = Random.value;
-        if (roll < r) return Zone.ZoneType.ResidentialLightZoning;
-        if (roll < r + c) return Zone.ZoneType.CommercialLightZoning;
-        return Zone.ZoneType.IndustrialLightZoning;
+        Zone.ZoneType baseType;
+        if (roll < r)
+            baseType = Zone.ZoneType.ResidentialLightZoning;
+        else if (roll < r + c)
+            baseType = Zone.ZoneType.CommercialLightZoning;
+        else
+            baseType = Zone.ZoneType.IndustrialLightZoning;
+
+        return ApplyDensityToZoneType(baseType, ring);
+    }
+
+    /// <summary>Applies Light/Medium/Heavy density based on urban ring (FEAT-29).</summary>
+    private Zone.ZoneType ApplyDensityToZoneType(Zone.ZoneType lightType, UrbanRing ring)
+    {
+        RingZoningDensity density = urbanMetrics != null ? urbanMetrics.GetZoningDensityForRing(ring) : new RingZoningDensity { lightProb = 0.90f, mediumProb = 0.08f, heavyProb = 0.02f };
+        float roll = Random.value;
+        if (roll < density.lightProb) return lightType;
+        if (roll < density.lightProb + density.mediumProb) return LightToMedium(lightType);
+        return LightToHeavy(lightType);
+    }
+
+    private static Zone.ZoneType LightToMedium(Zone.ZoneType lightType)
+    {
+        switch (lightType)
+        {
+            case Zone.ZoneType.ResidentialLightZoning: return Zone.ZoneType.ResidentialMediumZoning;
+            case Zone.ZoneType.CommercialLightZoning: return Zone.ZoneType.CommercialMediumZoning;
+            case Zone.ZoneType.IndustrialLightZoning: return Zone.ZoneType.IndustrialMediumZoning;
+            default: return lightType;
+        }
+    }
+
+    private static Zone.ZoneType LightToHeavy(Zone.ZoneType lightType)
+    {
+        switch (lightType)
+        {
+            case Zone.ZoneType.ResidentialLightZoning: return Zone.ZoneType.ResidentialHeavyZoning;
+            case Zone.ZoneType.CommercialLightZoning: return Zone.ZoneType.CommercialHeavyZoning;
+            case Zone.ZoneType.IndustrialLightZoning: return Zone.ZoneType.IndustrialHeavyZoning;
+            default: return lightType;
+        }
     }
 
     private void ApplyNeighborInfluence(ref float r, ref float c, ref float i, int x, int y)
@@ -260,11 +301,11 @@ public class AutoZoningManager : MonoBehaviour
         i *= Mathf.Pow(COHERENCE_BOOST, iCount);
 
         if (rCount > 0 || cCount > 0)
-            i *= INDUSTRIAL_SEPARATION;
+            i *= industrialSeparation;
         if (iCount > 0)
         {
-            r *= INDUSTRIAL_SEPARATION;
-            c *= INDUSTRIAL_SEPARATION;
+            r *= industrialSeparation;
+            c *= industrialSeparation;
         }
     }
 

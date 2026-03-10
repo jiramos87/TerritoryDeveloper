@@ -1,0 +1,430 @@
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"null","layer":"Desirability"},"timestamp":1773160433036}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"null","layer":"Forests"},"timestamp":1773160433037}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"null","layer":"Zones"},"timestamp":1773160433037}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"null","layer":"Streets"},"timestamp":1773160433037}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160443890}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160443890}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160443890}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160443890}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160452584}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160452586}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160452586}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160452586}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773160453253}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones","after":"Streets"},"timestamp":1773160453254}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773160453254}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets","after":"Streets, Zones"},"timestamp":1773160453254}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773160453430}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones","after":"Streets"},"timestamp":1773160453430}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773160453430}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets","after":"Streets, Zones"},"timestamp":1773160453430}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773160454066}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones","after":"Streets, Zones, Forests"},"timestamp":1773160454066}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773160454067}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones, Forests","after":"Streets, Zones"},"timestamp":1773160454067}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773160454227}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones","after":"Streets, Zones, Forests"},"timestamp":1773160454228}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773160454228}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones, Forests","after":"Streets, Zones"},"timestamp":1773160454228}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773160454724}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones","after":"Streets, Zones, Desirability"},"timestamp":1773160454725}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773160454725}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones, Desirability","after":"Streets, Zones"},"timestamp":1773160454725}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773160454919}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones","after":"Streets, Zones, Desirability"},"timestamp":1773160454919}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773160454920}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones, Desirability","after":"Streets, Zones"},"timestamp":1773160454920}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773160455488}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones","after":"Streets, Zones, Forests"},"timestamp":1773160455489}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773160455489}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones, Forests","after":"Streets, Zones"},"timestamp":1773160455489}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773160455918}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones","after":"Streets"},"timestamp":1773160455918}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773160455918}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets","after":"Streets, Zones"},"timestamp":1773160455918}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160456591}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160456591}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160456592}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160456592}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160456801}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160456802}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160456802}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160456802}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"ok","layer":"Desirability"},"timestamp":1773160521147}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"ok","layer":"Forests"},"timestamp":1773160521147}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"ok","layer":"Zones"},"timestamp":1773160521148}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"ok","layer":"Streets"},"timestamp":1773160521148}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160552590}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160552591}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160552591}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160552591}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160553627}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160553627}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160553627}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160553627}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160554925}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160554925}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160554925}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160554925}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160555230}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160555230}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160555230}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160555230}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160555489}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160555490}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160555490}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160555490}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160570616}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160570616}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160570616}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160570616}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160571162}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160571162}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160571162}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160571162}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160571557}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160571557}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160571557}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160571557}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160571943}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160571944}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160571944}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160571944}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160572212}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160572212}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160572212}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160572212}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160572386}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160572387}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160572387}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160572387}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160572594}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160572594}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160572594}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160572594}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160572834}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160572834}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160572834}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160572834}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160575145}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160575145}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160575146}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160575146}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160575566}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160575566}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160575566}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160575567}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160577837}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160577837}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160577837}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160577838}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160578960}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160578960}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160578962}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160578963}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160579521}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160579522}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160579522}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160579522}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160580392}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160580392}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160580392}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160580392}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160580949}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160580949}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160580949}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160580949}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160581636}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160581636}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160581636}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160581636}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160581830}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160581831}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160581831}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160581831}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160585575}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160585576}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160585576}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160585576}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160585955}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160585956}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160585956}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160585956}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160593138}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160593138}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160593139}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160593139}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160594560}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160594561}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160594561}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160594561}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160596542}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160596543}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160596543}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160596543}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160597266}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160597266}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160597266}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160597266}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160597604}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160597605}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160597605}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160597605}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160597766}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160597766}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160597766}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160597766}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160597994}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160597994}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160597995}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160597995}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160598272}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160598272}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160598272}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160598272}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773160599257}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones","after":"Streets"},"timestamp":1773160599258}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773160599258}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets","after":"Streets, Zones"},"timestamp":1773160599258}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160599811}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160599811}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160599812}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160599812}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773160600422}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones","after":"Streets, Zones, Forests"},"timestamp":1773160600423}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773160600423}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones, Forests","after":"Streets, Zones"},"timestamp":1773160600423}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773160600859}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones","after":"Streets, Zones, Desirability"},"timestamp":1773160600859}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773160600860}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones, Desirability","after":"Streets, Zones"},"timestamp":1773160600860}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160601423}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160601423}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160601423}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160601424}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160603997}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160603997}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160603997}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160603998}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160604152}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160604153}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160604153}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160604153}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160604294}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160604294}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160604295}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160604295}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773160650031}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones","after":"Streets"},"timestamp":1773160650033}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773160650033}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets","after":"Streets, Zones"},"timestamp":1773160650033}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160650584}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160650585}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160650585}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160650585}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773160651097}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones","after":"Streets, Zones, Forests"},"timestamp":1773160651097}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773160651098}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones, Forests","after":"Streets, Zones"},"timestamp":1773160651098}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773160651415}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones","after":"Streets, Zones, Desirability"},"timestamp":1773160651415}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773160651416}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones, Desirability","after":"Streets, Zones"},"timestamp":1773160651416}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160651932}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773160651933}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773160651933}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773160651933}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"ok","layer":"Desirability"},"timestamp":1773161546934}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"ok","layer":"Forests"},"timestamp":1773161546934}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"ok","layer":"Zones"},"timestamp":1773161546935}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"ok","layer":"Streets"},"timestamp":1773161546935}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773161555628}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773161555628}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773161555629}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773161555629}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773161556753}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773161556753}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773161556753}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773161556754}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773161557266}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones","after":"Streets"},"timestamp":1773161557266}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773161557266}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets","after":"Streets, Zones"},"timestamp":1773161557267}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773161557864}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones","after":"Streets, Zones, Forests"},"timestamp":1773161557865}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773161557865}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones, Forests","after":"Streets, Zones"},"timestamp":1773161557865}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773161558505}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones","after":"Streets, Zones, Desirability"},"timestamp":1773161558506}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773161558506}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones, Desirability","after":"Streets, Zones"},"timestamp":1773161558506}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773161560318}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773161560318}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773161560319}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773161560319}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773161628323}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773161628323}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773161628323}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773161628323}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773161636297}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773161636297}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773161636297}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773161636297}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773161637088}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones","after":"Streets"},"timestamp":1773161637088}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773161637088}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets","after":"Streets, Zones"},"timestamp":1773161637088}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773161637482}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773161637482}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773161637483}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773161637483}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773161638083}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones","after":"Streets, Zones, Forests"},"timestamp":1773161638084}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773161638084}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones, Forests","after":"Streets, Zones"},"timestamp":1773161638084}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773161638439}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones","after":"Streets, Zones, Desirability"},"timestamp":1773161638440}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773161638440}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones, Desirability","after":"Streets, Zones"},"timestamp":1773161638440}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"ok","layer":"Desirability"},"timestamp":1773162035861}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"ok","layer":"Forests"},"timestamp":1773162035863}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"ok","layer":"Zones"},"timestamp":1773162035863}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","button":"ok","buttonImage":"ok","layer":"Streets"},"timestamp":1773162035863}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162049375}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773162049376}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162049376}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773162049376}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162051248}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773162051248}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162051249}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773162051249}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162052205}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773162052206}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162052207}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773162052207}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162062970}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773162062970}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162062970}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773162062970}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773162063475}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones","after":"Streets"},"timestamp":1773162063476}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773162063476}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets","after":"Streets, Zones"},"timestamp":1773162063476}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773162063910}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones","after":"Streets, Zones, Forests"},"timestamp":1773162063911}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773162063911}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones, Forests","after":"Streets, Zones"},"timestamp":1773162063911}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773162064520}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones","after":"Streets, Zones, Desirability"},"timestamp":1773162064520}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773162064521}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones, Desirability","after":"Streets, Zones"},"timestamp":1773162064521}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162104693}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773162104694}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162104694}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773162104694}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162106274}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773162106275}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162106275}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773162106275}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773162106696}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones","after":"Streets"},"timestamp":1773162106696}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773162106697}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets","after":"Streets, Zones"},"timestamp":1773162106697}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773162107304}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones","after":"Streets, Zones, Forests"},"timestamp":1773162107304}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773162107304}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones, Forests","after":"Streets, Zones"},"timestamp":1773162107304}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773162107793}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones","after":"Streets, Zones, Desirability"},"timestamp":1773162107794}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773162107794}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones, Desirability","after":"Streets, Zones"},"timestamp":1773162107794}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773162109512}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones","after":"Streets"},"timestamp":1773162109512}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773162109512}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets","after":"Streets, Zones"},"timestamp":1773162109512}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162109993}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773162109993}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162109993}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773162109994}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162110189}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773162110190}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162110191}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773162110191}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162110346}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773162110347}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162110347}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773162110347}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162110510}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773162110511}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162110511}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773162110511}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162110680}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773162110680}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162110680}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773162110681}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162110861}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773162110862}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773162110862}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773162110863}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","buttonImage":"ok","layer":"Desirability"},"timestamp":1773162997013}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","buttonImage":"ok","layer":"Forests"},"timestamp":1773162997014}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","buttonImage":"ok","layer":"Zones"},"timestamp":1773162997014}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","buttonImage":"ok","layer":"Streets"},"timestamp":1773162997014}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163019388}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773163019389}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163021331}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773163021332}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163022473}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773163022473}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163023403}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773163023404}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773163025102}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones","after":"Streets"},"timestamp":1773163025103}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773163025590}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets","after":"Streets, Zones"},"timestamp":1773163025590}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773163162965}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones","after":"Streets"},"timestamp":1773163162967}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773163163669}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets","after":"Streets, Zones"},"timestamp":1773163163670}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163167578}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773163167578}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163168704}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773163168705}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773163170329}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones","after":"Streets, Zones, Forests"},"timestamp":1773163170330}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773163247506}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones, Forests","after":"Streets, Zones, Forests, Desirability"},"timestamp":1773163247508}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773163252684}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones, Forests, Desirability","after":"Streets, Forests, Desirability"},"timestamp":1773163252684}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773163254436}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Forests, Desirability","after":"Streets, Zones, Forests, Desirability"},"timestamp":1773163254437}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163255456}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones, Forests, Desirability","after":"Zones, Forests, Desirability"},"timestamp":1773163255456}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163257128}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones, Forests, Desirability","after":"Streets, Zones, Forests, Desirability"},"timestamp":1773163257128}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773163257710}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Zones, Forests, Desirability","after":"Streets, Forests, Desirability"},"timestamp":1773163257711}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Zones","miniMapCtrl":"ok"},"timestamp":1773163258628}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Zones","before":"Streets, Forests, Desirability","after":"Streets, Zones, Forests, Desirability"},"timestamp":1773163258629}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773163260265}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones, Forests, Desirability","after":"Streets, Zones, Desirability"},"timestamp":1773163260266}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Forests","miniMapCtrl":"ok"},"timestamp":1773163261448}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Forests","before":"Streets, Zones, Desirability","after":"Streets, Zones, Forests, Desirability"},"timestamp":1773163261449}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163263174}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones, Forests, Desirability","after":"Zones, Forests, Desirability"},"timestamp":1773163263175}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163264936}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones, Forests, Desirability","after":"Streets, Zones, Forests, Desirability"},"timestamp":1773163264936}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Desirability","miniMapCtrl":"ok"},"timestamp":1773163265424}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Desirability","before":"Streets, Zones, Forests, Desirability","after":"Streets, Zones, Forests"},"timestamp":1773163265424}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163266837}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones, Forests","after":"Zones, Forests"},"timestamp":1773163266838}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163267549}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones, Forests","after":"Streets, Zones, Forests"},"timestamp":1773163267550}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","buttonImage":"ok","layer":"Desirability"},"timestamp":1773163353880}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","buttonImage":"ok","layer":"Forests"},"timestamp":1773163353881}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","buttonImage":"ok","layer":"Zones"},"timestamp":1773163353881}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.Start","message":"Start","data":{"miniMapCtrl":"ok","buttonImage":"ok","layer":"Streets"},"timestamp":1773163353881}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163387918}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Streets, Zones","after":"Zones"},"timestamp":1773163387919}
+{"sessionId":"f3e7c1","location":"MiniMapLayerButton.OnClick","message":"OnClick fired","data":{"layer":"Streets","miniMapCtrl":"ok"},"timestamp":1773163389107}
+{"sessionId":"f3e7c1","location":"MiniMapController.ToggleLayer","message":"Layer toggled","data":{"layer":"Streets","before":"Zones","after":"Streets, Zones"},"timestamp":1773163389107}
