@@ -326,7 +326,7 @@ public class DemandManager : MonoBehaviour
             case Zone.ZoneType.IndustrialLightZoning:
             case Zone.ZoneType.IndustrialMediumZoning:
             case Zone.ZoneType.IndustrialHeavyZoning:
-                return industrialDemand.canGrow;
+                return true; // No demand gate; RCI balance to be tuned separately
 
             default:
                 return true; // Roads, grass, etc. can always be placed

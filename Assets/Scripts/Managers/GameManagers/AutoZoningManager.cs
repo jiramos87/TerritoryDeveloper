@@ -18,6 +18,7 @@ public class AutoZoningManager : MonoBehaviour
     public GrowthBudgetManager growthBudgetManager;
     public CityStats cityStats;
     public DemandManager demandManager;
+    public AutoRoadBuilder autoRoadBuilder;
 
     public int maxZonesPerTick = 5;
     /// <summary>Do not zone on Grass cells that are adjacent to a road edge with this many or fewer Grass neighbors (reserve for road growth). 0 = reserve only road cells with zero grass neighbors (maximize zoning).</summary>
@@ -45,6 +46,7 @@ public class AutoZoningManager : MonoBehaviour
         if (growthBudgetManager == null) growthBudgetManager = FindObjectOfType<GrowthBudgetManager>();
         if (cityStats == null) cityStats = FindObjectOfType<CityStats>();
         if (demandManager == null) demandManager = FindObjectOfType<DemandManager>();
+        if (autoRoadBuilder == null) autoRoadBuilder = FindObjectOfType<AutoRoadBuilder>();
 
         if (gridManager != null)
         {
@@ -136,6 +138,11 @@ public class AutoZoningManager : MonoBehaviour
         {
             if (placed >= maxZonesPerTick) break;
             if (IsReservedForRoadExpansion(p))
+            {
+                skippedReserved++;
+                continue;
+            }
+            if (autoRoadBuilder != null && autoRoadBuilder.ReservedForRoadProjects != null && autoRoadBuilder.ReservedForRoadProjects.Contains(p))
             {
                 skippedReserved++;
                 continue;

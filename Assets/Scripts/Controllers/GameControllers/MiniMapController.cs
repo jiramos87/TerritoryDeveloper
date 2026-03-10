@@ -69,6 +69,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
     private static readonly Color ColorForestMedium = new Color(0.25f, 0.55f, 0.25f);
     private static readonly Color ColorForestDense = new Color(0.15f, 0.4f, 0.15f);
     private static readonly Color ColorCentroid = new Color(1f, 0f, 1f); // Magenta marker
+    private static readonly Color ColorRingBoundary = new Color(0.6f, 0.9f, 1f); // Light cyan
     #endregion
 
     #region State
@@ -211,9 +212,30 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         if ((activeLayers & MiniMapLayer.Centroid) != 0 && autoZoningManager != null)
         {
             UrbanMetrics urbanMetrics = autoZoningManager.GetUrbanMetrics();
-            if (urbanMetrics != null)
+            if (urbanMetrics != null && gridManager != null)
             {
+                urbanMetrics.RecalculateFromGrid(gridManager);
                 Vector2 centroid = urbanMetrics.GetCentroid();
+                float radius = urbanMetrics.GetUrbanRadius();
+                float[] boundaries = { radius * 0.15f, radius * 0.40f, radius * 0.70f, radius * 1.00f, radius * 1.50f };
+
+                for (int x = 0; x < w; x++)
+                {
+                    for (int y = 0; y < h; y++)
+                    {
+                        Vector2 cellCenter = new Vector2(x + 0.5f, y + 0.5f);
+                        float dist = Vector2.Distance(cellCenter, centroid);
+                        foreach (float b in boundaries)
+                        {
+                            if (Mathf.Abs(dist - b) < 0.45f)
+                            {
+                                mapTexture.SetPixel(x, y, ColorRingBoundary);
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 int cx = Mathf.Clamp(Mathf.RoundToInt(centroid.x), 0, w - 1);
                 int cy = Mathf.Clamp(Mathf.RoundToInt(centroid.y), 0, h - 1);
                 const int markerRadius = 2;

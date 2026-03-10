@@ -7,43 +7,29 @@
 
 ## In Progress
 
-- [ ] **FEAT-26** — Use desirability for building spawn selection
-  - Type: feature
-  - Files: `ZoneManager.cs`, `DemandManager.cs` (GetCellDesirabilityBonus)
-  - Notes: `DemandManager.GetCellDesirabilityBonus()` exists but is not used to decide where to build. Buildings should prefer zones with higher desirability.
-
-- [ ] **BUG-07** — Better zone distribution: less random, more homogeneous by neighbourhoods/sectors
-  - Type: fix
-  - Files: `AutoZoningManager.cs`, `ZoneManager.cs`, `DemandManager.cs`
-  - Notes: Zones are distributed very randomly and mixed. Should be grouped in coherent sectors.
-
-- [ ] **FEAT-29** — Density gradient around urban centroids (AUTO mode)
-  - Type: feature
-  - Files: `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `UrbanizationProposalManager.cs`, `GridManager.cs`, `CityStats.cs` (+ possible new UrbanCentroidService)
-  - Notes: In AUTO mode the city grows homogeneously. Goal: variable density based on distance to urban centroids. (1) Detect urban centroids from density data — can be multiple per map. (2) Near centroids: higher street density + grid/square street patterns; higher zoning density. (3) Far from centroids: lower street density + long straight lines (rural style). Affects AutoRoadBuilder (street patterns), AutoZoningManager (zoning density), and possibly UrbanizationProposalManager.
-  - Related: BUG-07 (zone distribution)
+(none)
 
 ## High Priority
+
+- [ ] **BUG-10** — `IndustrialHeavyZoning` never generates buildings
+  - Type: fix
+  - Files: `TimeManager.cs` (PlaceAllZonedBuildings)
+  - Notes: `PlaceAllZonedBuildings` calls 8 of 9 zone types but omits `IndustrialHeavyZoning`. Heavy industrial buildings are never built. Quick one-line fix, high impact.
+
+- [ ] **BUG-11** — Demand uses `Time.deltaTime` causing framerate dependency
+  - Type: fix
+  - Files: `DemandManager.cs`
+  - Notes: `Mathf.Lerp(..., demandSensitivity * Time.deltaTime)` makes demand change differently at 30 FPS vs 120 FPS. Must use fixed daily delta. Affects simulation correctness.
 
 - [ ] **BUG-20** — Power plant (and 3x3/2x2 buildings) load incorrectly in LoadGame: end up under grass
   - Type: fix
   - Files: `GeographyManager.cs` (GetMultiCellBuildingMaxSortingOrder, ReCalculateSortingOrderBasedOnHeight), `BuildingPlacementService.cs` (LoadBuildingTile, RestoreBuildingTile), `GridManager.cs` (RestoreGridCellVisuals)
   - Notes: When loading a game, the power plant prefab (and possibly 2x2 water plant) is drawn under the grass tiles of the footprint. The pivot (64,102) has both grass and building as children; the building's sorting order can end up below the grass due to the "cap" in GetMultiCellBuildingMaxSortingOrder. Not yet fixed.
 
-- [ ] **BUG-10** — `IndustrialHeavyZoning` never generates buildings
-  - Type: fix
-  - Files: `TimeManager.cs` (PlaceAllZonedBuildings)
-  - Notes: `PlaceAllZonedBuildings` calls 8 of 9 zone types but omits `IndustrialHeavyZoning`. Heavy industrial buildings are never built.
-
-- [ ] **BUG-11** — Demand uses `Time.deltaTime` causing framerate dependency
-  - Type: fix
-  - Files: `DemandManager.cs`
-  - Notes: `Mathf.Lerp(..., demandSensitivity * Time.deltaTime)` makes demand change differently at 30 FPS vs 120 FPS. Must use fixed daily delta.
-
 - [ ] **BUG-12** — Happiness UI always shows 50%
   - Type: fix
   - Files: `CityStatsUIController.cs` (GetHappiness)
-  - Notes: `GetHappiness()` returns hardcoded `50.0f` instead of reading `cityStats.happiness`.
+  - Notes: `GetHappiness()` returns hardcoded `50.0f` instead of reading `cityStats.happiness`. Blocks FEAT-23 (dynamic happiness).
 
 - [ ] **BUG-14** — `FindObjectOfType` in Update/per-frame degrades performance
   - Type: fix (performance)
@@ -63,11 +49,6 @@
   - Notes: When scrolling over the Load Game save list, the mouse wheel scrolls the list AND zooms the camera. The scroll should only move the list up/down, not affect camera zoom or other game mechanisms that use the scroll wheel.
   - Proposed solution: In `CameraController.HandleScrollZoom()`, check `EventSystem.current.IsPointerOverGameObject()` before processing scroll. If the pointer is over UI (e.g. Load Game panel, Building Selector, any scrollable popup), skip the zoom logic and let the UI consume the scroll. This mirrors how `GridManager` already gates mouse clicks via `IsPointerOverGameObject()`. Requires `using UnityEngine.EventSystems`. Verify that the Load Game ScrollRect (Scroll View) has proper raycast target so `IsPointerOverGameObject()` returns true when hovering over it.
 
-- [ ] **BUG-13** — `FindObjectOfType<TimeManager>()` called every tick in UrbanizationProposalManager
-  - Type: fix (performance)
-  - Files: `UrbanizationProposalManager.cs` (ProcessTick)
-  - Notes: `FindObjectOfType` is expensive and runs every simulation tick. Cache in Start().
-
 - [ ] **BUG-16** — Possible race condition in GeographyManager vs TimeManager initialization
   - Type: fix
   - Files: `GeographyManager.cs`, `TimeManager.cs`, `GridManager.cs`
@@ -78,22 +59,15 @@
   - Files: `GridManager.cs`
   - Notes: In InitializeGrid() ChunkCullingSystem is created with `cachedCamera`, but it is only assigned in Update(). May cause NullReferenceException.
 
+- [ ] **BUG-13** — `FindObjectOfType<TimeManager>()` called every tick in UrbanizationProposalManager
+  - Type: fix (performance)
+  - Files: `UrbanizationProposalManager.cs` (ProcessTick)
+  - Notes: `FindObjectOfType` is expensive and runs every simulation tick. Cache in Start().
+
 - [ ] **FEAT-21** — Expenses and maintenance system
   - Type: feature
   - Files: `EconomyManager.cs`, `CityStats.cs`
   - Notes: No expenses: no street maintenance, no service costs, no salaries. Without expenses there is no economic tension. Add upkeep for streets, public buildings and services.
-
-- [ ] **FEAT-22** — Tax feedback on demand and happiness
-  - Type: feature
-  - Files: `EconomyManager.cs`, `DemandManager.cs`, `CityStats.cs`
-  - Notes: High taxes do not affect demand or happiness. Loop: high taxes → less residential demand → less growth → less income.
-  - Depends on: BUG-02
-
-- [ ] **FEAT-23** — Dynamic happiness based on city conditions
-  - Type: feature
-  - Files: `CityStats.cs`, `DemandManager.cs`, `EmploymentManager.cs`
-  - Notes: Happiness only increases when placing zones (+100 per building). No effect from unemployment, taxes, services or pollution. Should be continuous multi-factor calculation with decay.
-  - Depends on: BUG-12
 
 - [ ] **FEAT-24** — Auto-zoning for Medium and Heavy density
   - Type: feature
@@ -110,6 +84,29 @@
   - Type: fix/balance
   - Files: `RoadManager.cs`, `CityStats.cs`, `EconomyManager.cs`
   - Notes: Rebalance street energy cost.
+
+- [ ] **FEAT-22** — Tax feedback on demand and happiness
+  - Type: feature
+  - Files: `EconomyManager.cs`, `DemandManager.cs`, `CityStats.cs`
+  - Notes: High taxes do not affect demand or happiness. Loop: high taxes → less residential demand → less growth → less income.
+  - Depends on: BUG-02
+
+- [ ] **FEAT-23** — Dynamic happiness based on city conditions
+  - Type: feature
+  - Files: `CityStats.cs`, `DemandManager.cs`, `EmploymentManager.cs`
+  - Notes: Happiness only increases when placing zones (+100 per building). No effect from unemployment, taxes, services or pollution. Should be continuous multi-factor calculation with decay.
+  - Depends on: BUG-12
+
+- [ ] **FEAT-30** — Mini map layer toggles + desirability visualization
+  - Type: feature
+  - Files: `MiniMapController.cs`, `ShowMiniMapButton.cs`, `UIManager.cs`, `DemandManager.cs` (GetCellDesirabilityBonus), new layer-toggle UI
+  - Notes: SimCity 2000-style mini map with toggle buttons at the edge. Each button toggles a layer: streets, urban zones, desirability, etc. Desirability layer: green (high/positive) to red (low/negative) color scale. Work order: (1) Create mini map button abstraction and panel; (2) Add toggle buttons for current data (streets, zones); (3) Add desirability layer as a specific case.
+
+- [ ] **FEAT-32** — More streets and intersections in central urban areas (AUTO mode)
+  - Type: feature
+  - Files: `AutoRoadBuilder.cs`, `UrbanizationProposalManager.cs`, `CityStats.cs`, possible `UrbanCentroidService` or similar
+  - Notes: Central urban sectors should have higher street density and more intersections. Far from centroids: lower density, longer straight roads (rural style). Define how to detect "central" areas and modulate AutoRoadBuilder behavior accordingly.
+  - Related: FEAT-29 (density gradient around urban centroids)
 
 - [ ] **FEAT-03** — Forest mode hold-to-place
   - Type: feature
@@ -146,21 +143,11 @@
   - Files: `GrowthManager.cs`, `ZoneManager.cs`, `DemandManager.cs`, `CityStats.cs`
   - Notes: Existing buildings evolve to larger versions based on zone property value.
 
-- [ ] **FEAT-30** — Mini map layer toggles + desirability visualization
-  - Type: feature
-  - Files: `MiniMapController.cs`, `ShowMiniMapButton.cs`, `UIManager.cs`, `DemandManager.cs` (GetCellDesirabilityBonus), new layer-toggle UI
-  - Notes: SimCity 2000-style mini map with toggle buttons at the edge. Each button toggles a layer: streets, urban zones, desirability, etc. Desirability layer: green (high/positive) to red (low/negative) color scale. Work order: (1) Create mini map button abstraction and panel; (2) Add toggle buttons for current data (streets, zones); (3) Add desirability layer as a specific case.
-
 - [ ] **FEAT-31** — Auto roads grow toward high desirability areas
   - Type: feature
   - Files: `AutoRoadBuilder.cs`, `DemandManager.cs` (GetCellDesirabilityBonus), `GridManager.cs`
   - Notes: Terrain desirability already affects building spawn in zones. In AUTO mode, roads should also tend to grow toward sectors with higher desirability, like in real life. Integrate desirability into road extension decisions.
-
-- [ ] **FEAT-32** — More streets and intersections in central urban areas (AUTO mode)
-  - Type: feature
-  - Files: `AutoRoadBuilder.cs`, `UrbanizationProposalManager.cs`, `CityStats.cs`, possible `UrbanCentroidService` or similar
-  - Notes: Central urban sectors should have higher street density and more intersections. Far from centroids: lower density, longer straight roads (rural style). Define how to detect "central" areas and modulate AutoRoadBuilder behavior accordingly.
-  - Related: FEAT-29 (density gradient around urban centroids)
+  - Note: Partially implemented (roads prefer high-desirability directions). May need verification or refinement.
 
 - [ ] **FEAT-33** — Urban remodeling: expropriations and redevelopment
   - Type: feature
@@ -169,6 +156,11 @@
   - Related: FEAT-29, FEAT-31
 
 ## Code Health (technical debt)
+
+- [ ] **TECH-04** — Remove direct access to `gridArray`/`cellArray` outside GridManager
+  - Type: refactor
+  - Files: `WaterManager.cs`, `GridSortingOrderService.cs`, `GeographyManager.cs`, `BuildingPlacementService.cs`
+  - Notes: Project rule: use `GetCell(x, y)` instead of direct array access. Several classes violate this. Risk of subtle bugs when grid changes.
 
 - [ ] **TECH-01** — Extract responsibilities from large files (GridManager, TerrainManager, CityStats, ZoneManager, UIManager, RoadManager)
   - Type: refactor
@@ -185,11 +177,6 @@
   - Files: multiple (GridManager, CityStats, RoadManager, UIManager, TimeManager, TerrainManager, WaterManager, EconomyManager, ForestManager, InterstateManager, etc.)
   - Notes: Building costs, economic balance, generation parameters, sorting order offsets, initial dates, probabilities — all hardcoded. Extract to named constants or configuration ScriptableObject for easier tuning.
 
-- [ ] **TECH-04** — Remove direct access to `gridArray`/`cellArray` outside GridManager
-  - Type: refactor
-  - Files: `WaterManager.cs`, `GridSortingOrderService.cs`, `GeographyManager.cs`, `BuildingPlacementService.cs`
-  - Notes: Project rule: use `GetCell(x, y)` instead of direct array access. Several classes violate this.
-
 - [ ] **TECH-05** — Extract duplicated dependency resolution pattern
   - Type: refactor
   - Files: ~25+ managers with `if (X == null) X = FindObjectOfType<X>()` block
@@ -202,10 +189,20 @@
   - Files: `EconomyManager.cs`, `CityStats.cs` (+ new managers)
   - Notes: Economic system of production, trade between zones and salaries.
 
+- [ ] **FEAT-18** — Terrain generator (improved)
+  - Type: feature
+  - Files: `TerrainManager.cs`, `GeographyManager.cs`, `HeightMap.cs`
+  - Notes: Terrain generator with more control and variety.
+
 - [ ] **FEAT-10** — Regional contribution: monthly bonus for belonging to the state
   - Type: feature
   - Files: `EconomyManager.cs`, `CityStats.cs`, `RegionalMapManager.cs`
   - Notes: Additional monthly income for belonging to regional network.
+
+- [ ] **FEAT-19** — Map rotation / prefabs
+  - Type: feature
+  - Files: `CameraController.cs`, `GridManager.cs`, all rendering managers
+  - Notes: Isometric view rotation. High impact on sorting order and rendering.
 
 - [ ] **FEAT-11** — Education level / Schools
   - Type: feature (new system)
@@ -237,16 +234,6 @@
   - Files: new manager + `GridManager.cs`
   - Notes: Railway network and animations.
 
-- [ ] **FEAT-18** — Terrain generator (improved)
-  - Type: feature
-  - Files: `TerrainManager.cs`, `GeographyManager.cs`, `HeightMap.cs`
-  - Notes: Terrain generator with more control and variety.
-
-- [ ] **FEAT-19** — Map rotation / prefabs
-  - Type: feature
-  - Files: `CameraController.cs`, `GridManager.cs`, all rendering managers
-  - Notes: Isometric view rotation. High impact on sorting order and rendering.
-
 - [ ] **ART-01** — Missing prefabs: forests on SE, NE, SW, NW slopes
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ForestManager.cs`
@@ -272,6 +259,9 @@
 
 ## Completed (last 30 days)
 
+- [x] **FEAT-26** — Use desirability for building spawn selection (2026-03-10)
+- [x] **BUG-07** — Better zone distribution: less random, more homogeneous by neighbourhoods/sectors (2026-03-10)
+- [x] **FEAT-29** — Density gradient around urban centroids (AUTO mode) (2026-03-10)
 - [x] **FEAT-17** — Mini-map (2026-03-09)
 - [x] **FEAT-01** — Add delta change to total budget (e.g. $25,000 (+$1,200)) (2026-03-09)
 - [x] **BUG-03** — Growth % sets amount instead of percentage of total budget (2026-03-09)

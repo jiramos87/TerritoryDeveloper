@@ -53,8 +53,8 @@ public class AutoRoadBuilder : MonoBehaviour
     public const int MaxBridgeWaterTiles = 5;
     /// <summary>When connecting to interstate or between clusters, prefer paths that stay this many cells away from existing roads (0 = no preference).</summary>
     public int minRoadSpacingWhenConnecting = 2;
-    /// <summary>Penalty for directions towards high-desirability cells; higher = growth towards desirability is slower (FEAT-26).</summary>
-    [SerializeField] float desirabilityGrowthPenalty = 0.2f;
+    /// <summary>Unused; roads now prefer high-desirability directions to connect forests/water to urban core.</summary>
+    [SerializeField] float desirabilityGrowthPenalty = 0f;
 
     private struct StreetProject
     {
@@ -69,6 +69,11 @@ public class AutoRoadBuilder : MonoBehaviour
     private List<StreetProject> activeProjects = new List<StreetProject>();
     private static readonly int[] Dx = { 1, -1, 0, 0 };
     private static readonly int[] Dy = { 0, 0, 1, -1 };
+
+    /// <summary>Cells reserved for active street projects; AutoZoningManager must not zone these.</summary>
+    public HashSet<Vector2Int> ReservedForRoadProjects { get; private set; } = new HashSet<Vector2Int>();
+
+    private int expropriationsThisTick;
     #endregion
 
     #region Road Extension Logic
@@ -81,6 +86,24 @@ public class AutoRoadBuilder : MonoBehaviour
     private bool PlaceRoadTileInBatch(Vector2 pos)
     {
         return roadManager.PlaceRoadTileAt(pos);
+    }
+
+    private void RebuildReservedForRoadProjects()
+    {
+        ReservedForRoadProjects.Clear();
+        int w = gridManager != null ? gridManager.width : 0;
+        int h = gridManager != null ? gridManager.height : 0;
+        foreach (var p in activeProjects)
+        {
+            int remaining = p.targetLength - p.builtLength;
+            int x = p.tip.x, y = p.tip.y;
+            for (int k = 0; k < remaining && x >= 0 && x < w && y >= 0 && y < h; k++)
+            {
+                ReservedForRoadProjects.Add(new Vector2Int(x, y));
+                x += p.dir.x;
+                y += p.dir.y;
+            }
+        }
     }
 
     void Start()
@@ -105,6 +128,9 @@ public class AutoRoadBuilder : MonoBehaviour
         if (!cityStats.simulateGrowth)
             return;
 
+        RebuildReservedForRoadProjects();
+        expropriationsThisTick = 0;
+
         var edges = gridManager.GetRoadEdgePositions();
         var allRoads = gridManager.GetAllRoadPositions();
         var roadSet = new HashSet<Vector2Int>(allRoads);
@@ -126,6 +152,8 @@ public class AutoRoadBuilder : MonoBehaviour
 
         if (expropriatedCount > 0 && toPlace > 0)
         {
+            gridManager.InvalidateRoadCache();
+            edges = gridManager.GetRoadEdgePositions();
             placed = TryPlaceOneTileFromEdges(edges);
             if (placed > 0)
             {
@@ -218,7 +246,27 @@ public class AutoRoadBuilder : MonoBehaviour
             if (c != null && c.zoneType == Zone.ZoneType.Road)
                 break;
             if (!IsCellPlaceableForRoad(tx, ty))
+            {
+                if (c != null && !c.isInterstate && c.zoneType != Zone.ZoneType.Road && expropriationsThisTick < 2 && gridManager != null)
+                {
+                    UrbanMetrics um = autoZoningManager != null ? autoZoningManager.GetUrbanMetrics() : null;
+                    UrbanRing ring = um != null ? um.GetUrbanRing(new Vector2(tx, ty)) : UrbanRing.Rural;
+                    if (ring == UrbanRing.Core || ring == UrbanRing.Inner || ring == UrbanRing.Mid)
+                    {
+                        string bt = c.GetBuildingType();
+                        if (bt != "PowerPlant" && bt != "WaterPlant")
+                        {
+                            if (gridManager.DemolishCellAt(new Vector2(tx, ty), showAnimation: false))
+                            {
+                                expropriationsThisTick++;
+                                gridManager.InvalidateRoadCache();
+                                continue;
+                            }
+                        }
+                    }
+                }
                 break;
+            }
             if (!IsSuitableForRoad(tx, ty, p.dir))
                 break;
             if (!growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile))
@@ -251,7 +299,7 @@ public class AutoRoadBuilder : MonoBehaviour
             useMaxLength = @params.maxLength;
             useBranchIntervalMin = @params.branchIntervalMin;
             useBranchIntervalMax = @params.branchIntervalMax;
-            useParallelSpacing = @params.parallelSpacing;
+            useParallelSpacing = GetEffectiveParallelSpacing(@params);
         }
 
         Vector2Int perp1 = new Vector2Int(-previousDir.y, previousDir.x);
@@ -296,7 +344,23 @@ public class AutoRoadBuilder : MonoBehaviour
         {
             int ringPriority = urbanMetrics != null ? GetRingPriority(urbanMetrics.GetUrbanRing(new Vector2(e.x, e.y))) : 4;
             int grass = CountGrassNeighbors(e);
-            float score = ringPriority * 100f + grass;
+            RingStreetParams edgeParams = urbanMetrics != null ? urbanMetrics.GetStreetParamsForRing(urbanMetrics.GetUrbanRing(new Vector2(e.x, e.y))) : fallbackParams;
+            int spacing = GetEffectiveParallelSpacing(edgeParams);
+            float bestUtil = 0f;
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = e.x + Dx[d], ny = e.y + Dy[d];
+                if (nx < 0 || nx >= gridManager.width || ny < 0 || ny >= gridManager.height) continue;
+                if (!IsCellPlaceableForRoad(nx, ny)) continue;
+                Vector2Int dir = new Vector2Int(Dx[d], Dy[d]);
+                if (!IsSuitableForRoad(nx, ny, dir)) continue;
+                if (HasParallelRoadTooClose(e, dir, spacing, roadSet)) continue;
+                int len = HowFarWeCanBuild(new Vector2Int(nx, ny), dir);
+                if (len < edgeParams.minLength) continue;
+                float u = CalculateDirectionUtility(e, dir, 5, spacing, roadSet);
+                if (u > bestUtil) bestUtil = u;
+            }
+            float score = ringPriority * 100f + grass * 5f + bestUtil * 10f;
             withScore.Add(new KeyValuePair<Vector2Int, float>(e, score));
         }
         withScore.Sort((a, b) => b.Value.CompareTo(a.Value));
@@ -346,7 +410,8 @@ public class AutoRoadBuilder : MonoBehaviour
                 Vector2Int tip = new Vector2Int(nx, ny);
                 if (!IsSuitableForRoad(nx, ny, dir))
                     continue;
-                if (HasParallelRoadTooClose(edge, dir, @params.parallelSpacing, roadSet))
+                int spacing = GetEffectiveParallelSpacing(@params);
+                if (HasParallelRoadTooClose(edge, dir, spacing, roadSet))
                     continue;
                 int len = HowFarWeCanBuild(tip, dir);
                 if (len < @params.minLength)
@@ -358,6 +423,7 @@ public class AutoRoadBuilder : MonoBehaviour
             {
                 UrbanRing ringForSort = urbanMetrics != null ? urbanMetrics.GetUrbanRing(new Vector2(edge.x, edge.y)) : UrbanRing.Mid;
                 Vector2Int roadDir = GetRoadDirectionAtEdge(edge, roadSet);
+                int sortSpacing = GetEffectiveParallelSpacing(@params);
                 validDirections.Sort((a, b) =>
                 {
                     if (ringForSort == UrbanRing.Core || ringForSort == UrbanRing.Inner)
@@ -366,9 +432,9 @@ public class AutoRoadBuilder : MonoBehaviour
                         bool bPerp = roadDir.x == 0 && roadDir.y == 0 ? false : (b.dir.x * roadDir.x + b.dir.y * roadDir.y) == 0;
                         if (aPerp != bPerp) return aPerp ? -1 : 1;
                     }
-                    float desirA = GetAverageDesirabilityInDirection(edge, a.dir, 5);
-                    float desirB = GetAverageDesirabilityInDirection(edge, b.dir, 5);
-                    return desirA.CompareTo(desirB);
+                    float utilA = CalculateDirectionUtility(edge, a.dir, 5, sortSpacing, roadSet);
+                    float utilB = CalculateDirectionUtility(edge, b.dir, 5, sortSpacing, roadSet);
+                    return utilB.CompareTo(utilA);
                 });
             }
 
@@ -567,6 +633,64 @@ public class AutoRoadBuilder : MonoBehaviour
             case UrbanRing.Rural: return 1;
             default: return 4;
         }
+    }
+
+    private static int GetEffectiveParallelSpacing(RingStreetParams p)
+    {
+        return p.parallelSpacingMax > p.parallelSpacingMin
+            ? Random.Range(p.parallelSpacingMin, p.parallelSpacingMax + 1)
+            : p.parallelSpacing;
+    }
+
+    private int CountUnzonedCellsNearPath(Vector2Int start, Vector2Int dir, int sampleLen, int radius)
+    {
+        int count = 0;
+        int w = gridManager.width, h = gridManager.height;
+        int x = start.x, y = start.y;
+        for (int k = 0; k < sampleLen; k++)
+        {
+            x += dir.x;
+            y += dir.y;
+            if (x < 0 || x >= w || y < 0 || y >= h) break;
+            for (int rx = -radius; rx <= radius; rx++)
+            {
+                for (int ry = -radius; ry <= radius; ry++)
+                {
+                    int nx = x + rx, ny = y + ry;
+                    if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+                    Cell c = gridManager.GetCell(nx, ny);
+                    if (c != null && (c.zoneType == Zone.ZoneType.Grass || c.HasForest()))
+                        count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private bool IsDirectionEnclosed(Vector2Int edge, Vector2Int dir, int parallelSpacing, HashSet<Vector2Int> roadSet)
+    {
+        Vector2Int perp = new Vector2Int(-dir.y, dir.x);
+        bool hasRoadLeft = false, hasRoadRight = false;
+        for (int s = 1; s <= Mathf.Min(parallelSpacing, 5); s++)
+        {
+            int x = edge.x + dir.x * s, y = edge.y + dir.y * s;
+            if (x < 0 || x >= gridManager.width || y < 0 || y >= gridManager.height) break;
+            Vector2Int left = new Vector2Int(edge.x + perp.x * s, edge.y + perp.y * s);
+            Vector2Int right = new Vector2Int(edge.x - perp.x * s, edge.y - perp.y * s);
+            if (left.x >= 0 && left.x < gridManager.width && left.y >= 0 && left.y < gridManager.height && roadSet.Contains(left))
+                hasRoadLeft = true;
+            if (right.x >= 0 && right.x < gridManager.width && right.y >= 0 && right.y < gridManager.height && roadSet.Contains(right))
+                hasRoadRight = true;
+        }
+        return hasRoadLeft && hasRoadRight;
+    }
+
+    private float CalculateDirectionUtility(Vector2Int edge, Vector2Int dir, int sampleLen, int parallelSpacing, HashSet<Vector2Int> roadSet)
+    {
+        float desir = GetAverageDesirabilityInDirection(edge, dir, sampleLen);
+        int unzoned = CountUnzonedCellsNearPath(edge, dir, sampleLen, 2);
+        bool enclosed = IsDirectionEnclosed(edge, dir, parallelSpacing, roadSet);
+        return desir * 2f + unzoned * 1f - (enclosed ? 50f : 0f);
     }
 
     /// <summary>

@@ -53,6 +53,8 @@ public struct RingStreetParams
     public int branchIntervalMax;
     public float branchChanceAtEnd;
     public int parallelSpacing;
+    public int parallelSpacingMin;
+    public int parallelSpacingMax;
 }
 
 /// <summary>
@@ -97,12 +99,12 @@ public class UrbanMetrics
     private void InitializeStreetParams()
     {
         streetParamsByRing = new RingStreetParams[6];
-        streetParamsByRing[(int)UrbanRing.Core] = new RingStreetParams { minLength = 2, maxLength = 6, branchIntervalMin = 3, branchIntervalMax = 4, branchChanceAtEnd = 0.90f, parallelSpacing = 1 };
-        streetParamsByRing[(int)UrbanRing.Inner] = new RingStreetParams { minLength = 4, maxLength = 10, branchIntervalMin = 3, branchIntervalMax = 5, branchChanceAtEnd = 0.80f, parallelSpacing = 3 };
-        streetParamsByRing[(int)UrbanRing.Mid] = new RingStreetParams { minLength = 6, maxLength = 15, branchIntervalMin = 5, branchIntervalMax = 8, branchChanceAtEnd = 0.50f, parallelSpacing = 4 };
-        streetParamsByRing[(int)UrbanRing.Outer] = new RingStreetParams { minLength = 8, maxLength = 20, branchIntervalMin = 7, branchIntervalMax = 12, branchChanceAtEnd = 0.35f, parallelSpacing = 5 };
-        streetParamsByRing[(int)UrbanRing.Edge] = new RingStreetParams { minLength = 10, maxLength = 25, branchIntervalMin = 10, branchIntervalMax = 16, branchChanceAtEnd = 0.20f, parallelSpacing = 6 };
-        streetParamsByRing[(int)UrbanRing.Rural] = new RingStreetParams { minLength = 15, maxLength = 35, branchIntervalMin = 15, branchIntervalMax = 25, branchChanceAtEnd = 0.10f, parallelSpacing = 8 };
+        streetParamsByRing[(int)UrbanRing.Core] = new RingStreetParams { minLength = 2, maxLength = 6, branchIntervalMin = 3, branchIntervalMax = 4, branchChanceAtEnd = 0.90f, parallelSpacing = 1, parallelSpacingMin = 1, parallelSpacingMax = 1 };
+        streetParamsByRing[(int)UrbanRing.Inner] = new RingStreetParams { minLength = 4, maxLength = 10, branchIntervalMin = 3, branchIntervalMax = 5, branchChanceAtEnd = 0.80f, parallelSpacing = 3, parallelSpacingMin = 3, parallelSpacingMax = 3 };
+        streetParamsByRing[(int)UrbanRing.Mid] = new RingStreetParams { minLength = 6, maxLength = 15, branchIntervalMin = 5, branchIntervalMax = 8, branchChanceAtEnd = 0.50f, parallelSpacing = 4, parallelSpacingMin = 4, parallelSpacingMax = 4 };
+        streetParamsByRing[(int)UrbanRing.Outer] = new RingStreetParams { minLength = 8, maxLength = 20, branchIntervalMin = 7, branchIntervalMax = 12, branchChanceAtEnd = 0.35f, parallelSpacing = 5, parallelSpacingMin = 5, parallelSpacingMax = 5 };
+        streetParamsByRing[(int)UrbanRing.Edge] = new RingStreetParams { minLength = 10, maxLength = 25, branchIntervalMin = 10, branchIntervalMax = 16, branchChanceAtEnd = 0.20f, parallelSpacing = 6, parallelSpacingMin = 4, parallelSpacingMax = 6 };
+        streetParamsByRing[(int)UrbanRing.Rural] = new RingStreetParams { minLength = 15, maxLength = 35, branchIntervalMin = 15, branchIntervalMax = 25, branchChanceAtEnd = 0.10f, parallelSpacing = 8, parallelSpacingMin = 5, parallelSpacingMax = 8 };
     }
 
     private void InitializeZoningDensity()
