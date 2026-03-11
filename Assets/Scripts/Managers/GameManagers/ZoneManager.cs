@@ -273,6 +273,10 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         List<GameObject> prefabs = zonePrefabs[key];
         if (prefabs == null || prefabs.Count == 0)
         {
+            if (zoneType == Zone.ZoneType.IndustrialHeavyBuilding)
+                return GetRandomZonePrefab(Zone.ZoneType.IndustrialMediumBuilding, size);
+            if (zoneType == Zone.ZoneType.IndustrialMediumBuilding)
+                return GetRandomZonePrefab(Zone.ZoneType.IndustrialLightBuilding, size);
             return null;
         }
 
@@ -867,10 +871,14 @@ public class ZoneManager : MonoBehaviour, IZoneManager
                 return;
             }
 
-            // For commercial/industrial, check normal demand
-            if (!CanZoneTypeGrowBasedOnDemand(zoningType))
+            // Demand as spawn probability: low demand reduces spawn rate instead of blocking
+            if (demandManager != null)
             {
-                return;
+                float demandFactor = demandManager.GetDemandSpawnFactor(zoningType);
+                if (UnityEngine.Random.value > demandFactor)
+                {
+                    return;
+                }
             }
         }
 

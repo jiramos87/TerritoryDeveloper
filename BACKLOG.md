@@ -11,16 +11,6 @@
 
 ## High Priority
 
-- [ ] **BUG-10** — `IndustrialHeavyZoning` never generates buildings
-  - Type: fix
-  - Files: `TimeManager.cs` (PlaceAllZonedBuildings)
-  - Notes: `PlaceAllZonedBuildings` calls 8 of 9 zone types but omits `IndustrialHeavyZoning`. Heavy industrial buildings are never built. Quick one-line fix, high impact.
-
-- [ ] **BUG-11** — Demand uses `Time.deltaTime` causing framerate dependency
-  - Type: fix
-  - Files: `DemandManager.cs`
-  - Notes: `Mathf.Lerp(..., demandSensitivity * Time.deltaTime)` makes demand change differently at 30 FPS vs 120 FPS. Must use fixed daily delta. Affects simulation correctness.
-
 - [ ] **BUG-20** — Power plant (and 3x3/2x2 buildings) load incorrectly in LoadGame: end up under grass
   - Type: fix
   - Files: `GeographyManager.cs` (GetMultiCellBuildingMaxSortingOrder, ReCalculateSortingOrderBasedOnHeight), `BuildingPlacementService.cs` (LoadBuildingTile, RestoreBuildingTile), `GridManager.cs` (RestoreGridCellVisuals)
@@ -259,6 +249,7 @@
 
 ## Completed (last 30 days)
 
+- [x] **BUG-10** — `IndustrialHeavyZoning` never generates buildings (2026-03-11)
 - [x] **FEAT-26** — Use desirability for building spawn selection (2026-03-10)
 - [x] **BUG-07** — Better zone distribution: less random, more homogeneous by neighbourhoods/sectors (2026-03-10)
 - [x] **FEAT-29** — Density gradient around urban centroids (AUTO mode) (2026-03-10)
@@ -273,6 +264,8 @@
 - [x] **BUG-04** — Pause mode stops camera movement; camera speed tied to simulation speed (2026-03-09)
 - [x] **BUG-18** — Road preview and placement draw discontinuous lines instead of continuous paths (2026-03-09)
 - [x] **FEAT-27** — Main menu with Continue, New Game, Load City, Options (2026-03-08)
+- [x] **BUG-11** — Demand uses `Time.deltaTime` causing framerate dependency (2026-03-11)
+- [x] **BUG-21** — Demand fix: unemployment-based RCI, remove environmental from demand, desirability for density (2026-03-11)
 - [x] **BUG-01** — Save game, Load game and New game were broken (2026-03-07)
 - [x] **BUG-09** — `Cell.GetCellData()` does not serialize cell state (2026-03-07)
 - [x] **DONE** — Forest cannot be placed adjacent to water (2026-03)

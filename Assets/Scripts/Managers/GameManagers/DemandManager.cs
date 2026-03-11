@@ -68,13 +68,21 @@ public class DemandManager : MonoBehaviour
     public float startingCommercialDemand = 0f;
 
     [Header("Demand Configuration")]
-    public float demandSensitivity = 2.0f; // Increased for more responsive demand
+    [Tooltip("Fraction of distance to target per day. 0.2 = ~90% in ~10 days.")]
+    public float demandSmoothingPerDay = 0.2f;
     public float demandDecayRate = 0.1f;
 
-    [Header("Environmental Demand Bonuses")]
-    public float forestDemandBoostPerCell = 0.5f; // Demand boost per forest cell
-    public float desirabilityDemandMultiplier = 0.1f; // How much desirability affects demand
-    public float waterAvailabilityBonus = 5.0f; // Bonus when water is available
+    [Header("Unemployment-Based Demand")]
+    [Tooltip("Unemployment rate (%) above which residential demand drops and C/I demand rises.")]
+    public float unemploymentThreshold = 15f;
+    [Tooltip("Residential target reduction per % unemployment above threshold.")]
+    public float unemploymentResidentialPenalty = 1.5f;
+    [Tooltip("Commercial/Industrial target boost per % unemployment above threshold.")]
+    public float unemploymentJobBoost = 1.2f;
+
+    [Header("Cell Desirability")]
+    [Tooltip("Multiplier for per-cell desirability in GetCellDesirabilityBonus. Used for geographic attraction, not demand.")]
+    public float desirabilityDemandMultiplier = 0.1f;
 
     [Header("Building Tracking")]
     public BuildingTracker buildingTracker;
@@ -165,18 +173,18 @@ public class DemandManager : MonoBehaviour
     private void UpdateResidentialDemand()
     {
         int availableJobs = GetCurrentAvailableJobs();
-        float environmentalBonus = GetEnvironmentalDemandBonus();
+        float unemploymentRate = GetUnemploymentRate();
 
         if (availableJobs <= 0)
         {
             // No jobs available → negative residential demand
-            float targetDemand = -30f + environmentalBonus; // Environmental bonus can still help
-            residentialDemand.demandLevel = Mathf.Lerp(residentialDemand.demandLevel, targetDemand, demandSensitivity * Time.deltaTime);
+            float targetDemand = -30f;
+            residentialDemand.demandLevel = Mathf.Lerp(residentialDemand.demandLevel, targetDemand, demandSmoothingPerDay);
         }
         else
         {
             // Jobs are available → positive residential demand
-            float targetDemand = startingResidentialDemand + environmentalBonus;
+            float targetDemand = startingResidentialDemand;
 
             // Rule: If there are industrial zones without buildings AND residential zones without buildings
             // → boost residential demand even more
@@ -192,7 +200,14 @@ public class DemandManager : MonoBehaviour
                 targetDemand += 10f; // More jobs = higher demand
             }
 
-            residentialDemand.demandLevel = Mathf.Lerp(residentialDemand.demandLevel, targetDemand, demandSensitivity * Time.deltaTime);
+            // High unemployment → reduce residential demand (need more jobs, not more housing)
+            if (unemploymentRate > unemploymentThreshold)
+            {
+                float excessUnemployment = unemploymentRate - unemploymentThreshold;
+                targetDemand -= excessUnemployment * unemploymentResidentialPenalty;
+            }
+
+            residentialDemand.demandLevel = Mathf.Lerp(residentialDemand.demandLevel, targetDemand, demandSmoothingPerDay);
         }
 
         residentialDemand.demandLevel = Mathf.Clamp(residentialDemand.demandLevel, -100f, 100f);
@@ -200,47 +215,41 @@ public class DemandManager : MonoBehaviour
 
     private void UpdateCommercialDemand()
     {
-        float demandChange = 0f;
-        float environmentalBonus = GetEnvironmentalDemandBonus();
+        float targetDemand = startingCommercialDemand;
 
         // Rule: If residential zoning is placed → commercial demand increases
         if (buildingTracker.residentialZonesWithoutBuildings > 0)
         {
-            demandChange += 10f;
+            targetDemand += 10f;
         }
 
         // Rule: If residential buildings are placed → commercial demand increases
         if (buildingTracker.newResidentialBuildings > 0)
         {
-            demandChange += buildingTracker.newResidentialBuildings * 12f; // Strong boost per new building
+            targetDemand += buildingTracker.newResidentialBuildings * 12f; // Strong boost per new building
         }
 
-        // Apply environmental bonus
-        demandChange += environmentalBonus;
-
-        // Gradual decay toward 0 if no residential activity (but environmental bonus remains)
-        if (demandChange == environmentalBonus) // Only environmental bonus, no other activity
+        // High unemployment → boost commercial demand (need more jobs)
+        float unemploymentRate = GetUnemploymentRate();
+        if (unemploymentRate > unemploymentThreshold)
         {
-            demandChange += (environmentalBonus - commercialDemand.demandLevel) * demandDecayRate;
+            float excessUnemployment = unemploymentRate - unemploymentThreshold;
+            targetDemand += excessUnemployment * unemploymentJobBoost;
         }
 
-        commercialDemand.demandLevel += demandChange * demandSensitivity * Time.deltaTime;
+        commercialDemand.demandLevel = Mathf.Lerp(commercialDemand.demandLevel, targetDemand, demandSmoothingPerDay);
         commercialDemand.demandLevel = Mathf.Clamp(commercialDemand.demandLevel, -100f, 100f);
     }
 
     private void UpdateIndustrialDemand()
     {
         float targetDemand = startingIndustrialDemand;
-        float environmentalBonus = GetEnvironmentalDemandBonus();
 
         // Rule: If residential buildings are placed → industrial demand increases
         if (buildingTracker.newResidentialBuildings > 0)
         {
             targetDemand += buildingTracker.newResidentialBuildings * 10f; // Boost per new residential building
         }
-
-        // Apply environmental bonus
-        targetDemand += environmentalBonus;
 
         // Early game bonus: encourage initial industrial development
         if (cityStats != null)
@@ -251,41 +260,29 @@ public class DemandManager : MonoBehaviour
 
             if (totalIndustrialBuildings < 5) // First 5 industrial buildings
             {
-                targetDemand = Mathf.Max(targetDemand, 25f + environmentalBonus); // Ensure good demand for early industrial
+                targetDemand = Mathf.Max(targetDemand, 25f);
             }
         }
 
-        industrialDemand.demandLevel = Mathf.Lerp(industrialDemand.demandLevel, targetDemand, demandSensitivity * Time.deltaTime);
+        // High unemployment → boost industrial demand (need more jobs)
+        float unemploymentRate = GetUnemploymentRate();
+        if (unemploymentRate > unemploymentThreshold)
+        {
+            float excessUnemployment = unemploymentRate - unemploymentThreshold;
+            targetDemand += excessUnemployment * unemploymentJobBoost;
+        }
+
+        industrialDemand.demandLevel = Mathf.Lerp(industrialDemand.demandLevel, targetDemand, demandSmoothingPerDay);
         industrialDemand.demandLevel = Mathf.Clamp(industrialDemand.demandLevel, -100f, 100f);
     }
 
     /// <summary>
-    /// Calculate environmental bonus to demand based on forests and other factors
+    /// Environmental bonus no longer affects RCI demand. Kept for API compatibility; returns 0.
+    /// Geographic attraction uses per-cell desirability in ZoneManager.GetWeightedSection.
     /// </summary>
     private float GetEnvironmentalDemandBonus()
     {
-        float bonus = 0f;
-
-        // Forest bonus
-        if (forestManager != null)
-        {
-            var forestStats = forestManager.GetForestStatistics();
-            bonus += forestStats.totalForestCells * forestDemandBoostPerCell;
-        }
-
-        // Water availability bonus
-        if (cityStats != null && cityStats.GetCityWaterAvailability())
-        {
-            bonus += waterAvailabilityBonus;
-        }
-
-        // Power availability bonus (existing infrastructure should boost demand)
-        if (cityStats != null && cityStats.GetCityPowerAvailability())
-        {
-            bonus += 3.0f; // Small bonus for power availability
-        }
-
-        return bonus;
+        return 0f;
     }
 
     /// <summary>
@@ -338,6 +335,11 @@ public class DemandManager : MonoBehaviour
     {
         if (employmentManager == null) return 0;
         return employmentManager.GetAvailableJobs();
+    }
+
+    private float GetUnemploymentRate()
+    {
+        return employmentManager != null ? employmentManager.unemploymentRate : 0f;
     }
 
     // Public getter for available jobs (for debugging)
@@ -416,8 +418,17 @@ public class DemandManager : MonoBehaviour
                 return 100f; // Always allow infrastructure
         }
 
-        // Environmental bonuses are already included in the base demand calculations
         return baseDemand;
+    }
+
+    /// <summary>
+    /// Maps demand level [-100, 100] to spawn probability factor [0, 1].
+    /// Used by AutoZoningManager and ZoneManager for demand-weighted decisions.
+    /// </summary>
+    public float GetDemandSpawnFactor(Zone.ZoneType zoneType)
+    {
+        float level = GetDemandLevel(zoneType);
+        return Mathf.Clamp01((level + 100f) / 200f);
     }
 
     // Public getters for UI

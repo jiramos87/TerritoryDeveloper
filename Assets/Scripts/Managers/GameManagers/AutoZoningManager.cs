@@ -162,11 +162,6 @@ public class AutoZoningManager : MonoBehaviour
                 skippedOther++;
                 continue;
             }
-            if (!demandManager.CanZoneTypeGrow(zoneType))
-            {
-                skippedOther++;
-                continue;
-            }
             Cell cell = gridManager.GetCell(p.x, p.y);
             if (cell == null || !gridManager.IsZoneableNeighbor(cell, p.x, p.y))
             {
@@ -216,25 +211,9 @@ public class AutoZoningManager : MonoBehaviour
 
         if (demandManager != null)
         {
-            if (demandManager.GetResidentialDemand().demandLevel <= 0) r = 0;
-            if (demandManager.GetCommercialDemand().demandLevel <= 0) c = 0;
-            if (demandManager.GetIndustrialDemand().demandLevel <= 0) i = 0;
-        }
-
-        if (r <= 0 && c <= 0 && i <= 0)
-        {
-            if (demandManager != null)
-            {
-                if (demandManager.GetResidentialDemand().demandLevel > 0) r = 0.33f;
-                if (demandManager.GetCommercialDemand().demandLevel > 0) c = 0.33f;
-                if (demandManager.GetIndustrialDemand().demandLevel > 0) i = 0.33f;
-            }
-            if (r <= 0 && c <= 0 && i <= 0)
-            {
-                r = 0.33f;
-                c = 0.33f;
-                i = 0.34f;
-            }
+            r *= demandManager.GetDemandSpawnFactor(Zone.ZoneType.ResidentialLightZoning);
+            c *= demandManager.GetDemandSpawnFactor(Zone.ZoneType.CommercialLightZoning);
+            i *= demandManager.GetDemandSpawnFactor(Zone.ZoneType.IndustrialLightZoning);
         }
 
         float total = r + c + i;
@@ -253,17 +232,55 @@ public class AutoZoningManager : MonoBehaviour
         else
             baseType = Zone.ZoneType.IndustrialLightZoning;
 
-        return ApplyDensityToZoneType(baseType, ring);
+        return ApplyDensityToZoneType(baseType, ring, candidate);
     }
 
-    /// <summary>Applies Light/Medium/Heavy density based on urban ring (FEAT-29).</summary>
-    private Zone.ZoneType ApplyDensityToZoneType(Zone.ZoneType lightType, UrbanRing ring)
+    [Header("Desirability density")]
+    [SerializeField] float desirabilityDensityThreshold = 6f;
+
+    /// <summary>Applies Light/Medium/Heavy density based on urban ring (FEAT-29). High desirability favors Medium/Heavy.</summary>
+    private Zone.ZoneType ApplyDensityToZoneType(Zone.ZoneType lightType, UrbanRing ring, Vector2Int candidate)
     {
         RingZoningDensity density = urbanMetrics != null ? urbanMetrics.GetZoningDensityForRing(ring) : new RingZoningDensity { lightProb = 0.90f, mediumProb = 0.08f, heavyProb = 0.02f };
-        float roll = Random.value;
+
+        float desirability = gridManager != null ? GetCellDesirability(candidate) : 0f;
+        if (desirability >= desirabilityDensityThreshold)
+        {
+            density.lightProb = Mathf.Max(0f, density.lightProb - 0.15f);
+            density.mediumProb += 0.10f;
+            density.heavyProb += 0.05f;
+            float total = density.lightProb + density.mediumProb + density.heavyProb;
+            if (total > 0f)
+            {
+                density.lightProb /= total;
+                density.mediumProb /= total;
+                density.heavyProb /= total;
+            }
+        }
+
+        float roll = UnityEngine.Random.value;
         if (roll < density.lightProb) return lightType;
         if (roll < density.lightProb + density.mediumProb) return LightToMedium(lightType);
         return LightToHeavy(lightType);
+    }
+
+    private float GetCellDesirability(Vector2Int p)
+    {
+        if (gridManager == null) return 0f;
+        float sum = 0f;
+        int count = 0;
+        for (int d = 0; d < 4; d++)
+        {
+            int nx = p.x + Dx[d], ny = p.y + Dy[d];
+            if (nx >= 0 && nx < gridManager.width && ny >= 0 && ny < gridManager.height)
+            {
+                Cell c = gridManager.GetCell(nx, ny);
+                if (c != null) { sum += c.desirability; count++; }
+            }
+        }
+        Cell center = gridManager.GetCell(p.x, p.y);
+        if (center != null) { sum += center.desirability; count++; }
+        return count > 0 ? sum / count : 0f;
     }
 
     private static Zone.ZoneType LightToMedium(Zone.ZoneType lightType)
