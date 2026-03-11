@@ -14,7 +14,7 @@ public class GrowthBudgetSlidersController : MonoBehaviour
     public CityStats cityStats;
     public GrowthBudgetManager growthBudgetManager;
 
-    [Header("Total budget (percent of city money)")]
+    [Header("Total budget (percent of projected monthly income)")]
     public Slider totalBudgetSlider;
     public Text totalBudgetLabel;
 

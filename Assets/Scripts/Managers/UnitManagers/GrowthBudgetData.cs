@@ -10,7 +10,7 @@ public class GrowthBudgetData
 {
     /// <summary>Legacy: fixed dollar amount. Kept for save/load backward compatibility; migrated to growthBudgetPercent on load.</summary>
     public int totalGrowthBudget = 5000;
-    /// <summary>User preference: percentage of city money to allocate for growth (0-100).</summary>
+    /// <summary>User preference: percentage of projected monthly income to allocate for growth (0-100).</summary>
     public int growthBudgetPercent = 10;
     public int roadBudgetPercent = 25;
     public int energyBudgetPercent = 25;

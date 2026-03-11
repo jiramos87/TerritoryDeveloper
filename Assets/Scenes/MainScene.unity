@@ -156,7 +156,7 @@ RectTransform:
   m_Father: {fileID: 52314886}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -597,7 +597,7 @@ RectTransform:
   m_Father: {fileID: 98386997}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -1418,6 +1418,7 @@ GameObject:
   - component: {fileID: 101811181}
   - component: {fileID: 101811180}
   - component: {fileID: 101811179}
+  - component: {fileID: 101811182}
   m_Layer: 5
   m_Name: LayerButtonForests
   m_TagString: Untagged
@@ -1488,7 +1489,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 101811180}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 101811182}
+        m_TargetAssemblyTypeName: Territory.UI.MiniMapLayerButton, Assembly-CSharp
+        m_MethodName: OnClick
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &101811180
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1527,6 +1540,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 101811177}
   m_CullTransparentMesh: 1
+--- !u!114 &101811182
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101811177}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f2e8b91c3d4f5a6b7c8d9e0f1a2b3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  miniMapController: {fileID: 1604661285}
+  layer: 4
+  buttonImage: {fileID: 0}
+  colorWhenOn: {r: 0.3, g: 0.7, b: 0.3, a: 1}
+  colorWhenOff: {r: 0.5, g: 0.5, b: 0.5, a: 1}
 --- !u!1 &125810887
 GameObject:
   m_ObjectHideFlags: 0
@@ -1968,7 +1998,7 @@ RectTransform:
   m_Father: {fileID: 251526538}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -4217,6 +4247,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cityStats: {fileID: 72477285}
+  economyManager: {fileID: 0}
   data:
     totalGrowthBudget: 5000
     growthBudgetPercent: 10
@@ -4816,6 +4847,85 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 473613644}
   m_CullTransparentMesh: 1
+--- !u!1 &477379712
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 477379713}
+  - component: {fileID: 477379715}
+  - component: {fileID: 477379714}
+  m_Layer: 5
+  m_Name: Text (Legacy)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &477379713
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 477379712}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1315855104}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &477379714
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 477379712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FontData:
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_FontSize: 14
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 40
+    m_Alignment: 4
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: Ct
+--- !u!222 &477379715
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 477379712}
+  m_CullTransparentMesh: 1
 --- !u!1 &485109137
 GameObject:
   m_ObjectHideFlags: 0
@@ -5211,6 +5321,7 @@ MonoBehaviour:
   detailsDateBuiltText: {fileID: 1820852098}
   detailsBuildingTypeText: {fileID: 1743846242}
   detailsSortingOrderText: {fileID: 343466887}
+  detailsDesirabilityText: {fileID: 0}
   GameSavedText: {fileID: 1974144054}
   unemploymentRateText: {fileID: 1346853130}
   totalJobsText: {fileID: 659669717}
@@ -6201,7 +6312,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 215.59985, y: 10.736042}
+  m_AnchoredPosition: {x: 215.59985, y: 14.510249}
   m_SizeDelta: {x: 145.1061, y: 40.96}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &639654561
@@ -7080,6 +7191,7 @@ GameObject:
   - component: {fileID: 721180690}
   - component: {fileID: 721180689}
   - component: {fileID: 721180688}
+  - component: {fileID: 721180691}
   m_Layer: 5
   m_Name: LayerButtonZones
   m_TagString: Untagged
@@ -7150,7 +7262,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 721180689}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 721180691}
+        m_TargetAssemblyTypeName: Territory.UI.MiniMapLayerButton, Assembly-CSharp
+        m_MethodName: OnClick
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &721180689
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7189,6 +7313,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 721180686}
   m_CullTransparentMesh: 1
+--- !u!114 &721180691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 721180686}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f2e8b91c3d4f5a6b7c8d9e0f1a2b3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  miniMapController: {fileID: 1604661285}
+  layer: 2
+  buttonImage: {fileID: 0}
+  colorWhenOn: {r: 0.3, g: 0.7, b: 0.3, a: 1}
+  colorWhenOff: {r: 0.5, g: 0.5, b: 0.5, a: 1}
 --- !u!1 &724627292
 GameObject:
   m_ObjectHideFlags: 0
@@ -8087,7 +8228,7 @@ RectTransform:
   m_Father: {fileID: 1598628247}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -9206,6 +9347,7 @@ MonoBehaviour:
   branchIntervalMax: 8
   minLengthForBranch: 3
   minRoadSpacingWhenConnecting: 2
+  desirabilityGrowthPenalty: 0.2
 --- !u!1 &938947610
 GameObject:
   m_ObjectHideFlags: 0
@@ -10778,7 +10920,7 @@ RectTransform:
   m_Father: {fileID: 1324986323}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -10832,6 +10974,7 @@ GameObject:
   - component: {fileID: 1075734692}
   - component: {fileID: 1075734691}
   - component: {fileID: 1075734690}
+  - component: {fileID: 1075734693}
   m_Layer: 5
   m_Name: LayerButtonStreets
   m_TagString: Untagged
@@ -10902,7 +11045,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1075734691}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1075734693}
+        m_TargetAssemblyTypeName: Territory.UI.MiniMapLayerButton, Assembly-CSharp
+        m_MethodName: OnClick
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1075734691
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10941,6 +11096,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1075734688}
   m_CullTransparentMesh: 1
+--- !u!114 &1075734693
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1075734688}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f2e8b91c3d4f5a6b7c8d9e0f1a2b3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  miniMapController: {fileID: 1604661285}
+  layer: 1
+  buttonImage: {fileID: 0}
+  colorWhenOn: {r: 0.3, g: 0.7, b: 0.3, a: 1}
+  colorWhenOff: {r: 0.5, g: 0.5, b: 0.5, a: 1}
 --- !u!1 &1079921490
 GameObject:
   m_ObjectHideFlags: 0
@@ -11244,7 +11416,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1094778209
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11279,7 +11451,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 289.83, y: -156.07}
+  m_AnchoredPosition: {x: 289.52, y: -156.07}
   m_SizeDelta: {x: 224.37, y: 229.44}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1094778210
@@ -11739,7 +11911,7 @@ RectTransform:
   m_Father: {fileID: 632602093}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: -1.9}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -11814,7 +11986,7 @@ RectTransform:
   m_Father: {fileID: 1081205360}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -12427,8 +12599,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 295.5, y: -64.004}
-  m_SizeDelta: {x: 47.1249, y: 45.3079}
+  m_AnchoredPosition: {x: 282.95798, y: -23.337}
+  m_SizeDelta: {x: 41.4449, y: 35.316}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1201366532
 MonoBehaviour:
@@ -13749,6 +13921,157 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1313366838}
   m_CullTransparentMesh: 1
+--- !u!1 &1315855103
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1315855104}
+  - component: {fileID: 1315855108}
+  - component: {fileID: 1315855107}
+  - component: {fileID: 1315855106}
+  - component: {fileID: 1315855105}
+  m_Layer: 5
+  m_Name: LayerButtonCentroid
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1315855104
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1315855103}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 477379713}
+  m_Father: {fileID: 2067597087}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 32.4351, y: 30}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1315855105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1315855103}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f2e8b91c3d4f5a6b7c8d9e0f1a2b3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  miniMapController: {fileID: 1604661285}
+  layer: 16
+  buttonImage: {fileID: 0}
+  colorWhenOn: {r: 0.3, g: 0.7, b: 0.3, a: 1}
+  colorWhenOff: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+--- !u!114 &1315855106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1315855103}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 1315855107}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1315855105}
+        m_TargetAssemblyTypeName: Territory.UI.MiniMapLayerButton, Assembly-CSharp
+        m_MethodName: OnClick
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &1315855107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1315855103}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1315855108
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1315855103}
+  m_CullTransparentMesh: 1
 --- !u!1 &1324927520
 GameObject:
   m_ObjectHideFlags: 0
@@ -14051,7 +14374,7 @@ RectTransform:
   m_Father: {fileID: 1189090779}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -14187,6 +14510,7 @@ GameObject:
   - component: {fileID: 1372487378}
   - component: {fileID: 1372487377}
   - component: {fileID: 1372487376}
+  - component: {fileID: 1372487379}
   m_Layer: 5
   m_Name: LayerButtonDesirability
   m_TagString: Untagged
@@ -14257,7 +14581,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1372487377}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1372487379}
+        m_TargetAssemblyTypeName: Territory.UI.MiniMapLayerButton, Assembly-CSharp
+        m_MethodName: OnClick
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1372487377
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14296,6 +14632,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1372487374}
   m_CullTransparentMesh: 1
+--- !u!114 &1372487379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1372487374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7f2e8b91c3d4f5a6b7c8d9e0f1a2b3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  miniMapController: {fileID: 1604661285}
+  layer: 8
+  buttonImage: {fileID: 0}
+  colorWhenOn: {r: 0.3, g: 0.7, b: 0.3, a: 1}
+  colorWhenOff: {r: 0.5, g: 0.5, b: 0.5, a: 1}
 --- !u!1 &1414594742
 GameObject:
   m_ObjectHideFlags: 0
@@ -15809,6 +16162,7 @@ MonoBehaviour:
   waterManager: {fileID: 1132506491}
   interstateManager: {fileID: 251169277}
   cameraController: {fileID: 81380780}
+  autoZoningManager: {fileID: 2140155702}
   mapImage: {fileID: 1560566556}
   viewportRect: {fileID: 973240451}
   miniMapPanel: {fileID: 1604661281}
@@ -16840,7 +17194,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 367.11246, y: 9.725794}
+  m_AnchoredPosition: {x: 367.11246, y: 13.5}
   m_SizeDelta: {x: 44.482, y: 38.939}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1669810223
@@ -18276,7 +18630,7 @@ MonoBehaviour:
   cityStats: {fileID: 72477285}
   timeManager: {fileID: 1231479808}
   interstateManager: {fileID: 251169277}
-  miniMapController: {fileID: 0}
+  miniMapController: {fileID: 1604661285}
 --- !u!1 &1784220805
 GameObject:
   m_ObjectHideFlags: 0
@@ -20561,7 +20915,7 @@ RectTransform:
   m_Father: {fileID: 360852294}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -21254,11 +21608,12 @@ MonoBehaviour:
   startingResidentialDemand: 10
   startingIndustrialDemand: 10
   startingCommercialDemand: 0
-  demandSensitivity: 2
+  demandSmoothingPerDay: 0.2
   demandDecayRate: 0.1
-  forestDemandBoostPerCell: 0.5
+  unemploymentThreshold: 15
+  unemploymentResidentialPenalty: 1.5
+  unemploymentJobBoost: 1.2
   desirabilityDemandMultiplier: 0.1
-  waterAvailabilityBonus: 5
   buildingTracker:
     residentialZonesWithoutBuildings: 0
     commercialZonesWithoutBuildings: 0
@@ -21294,19 +21649,20 @@ RectTransform:
   m_GameObject: {fileID: 2067597086}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.03, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1075734689}
   - {fileID: 721180687}
   - {fileID: 101811178}
   - {fileID: 1372487375}
+  - {fileID: 1315855104}
   m_Father: {fileID: 1604661282}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -56}
-  m_SizeDelta: {x: -4, y: 24}
+  m_AnchoredPosition: {x: 2, y: 24}
+  m_SizeDelta: {x: -3.9999962, y: 24}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &2067597088
 MonoBehaviour:
@@ -21575,7 +21931,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 316.8726, y: 10.736056}
+  m_AnchoredPosition: {x: 316.8726, y: 14.510263}
   m_SizeDelta: {x: 39.8546, y: 45}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2127139862
@@ -21735,8 +22091,11 @@ MonoBehaviour:
   growthBudgetManager: {fileID: 439753650}
   cityStats: {fileID: 72477285}
   demandManager: {fileID: 2064853469}
+  autoRoadBuilder: {fileID: 0}
   maxZonesPerTick: 5
   minGrassNeighborsForZoning: 1
+  industrialSeparation: 0.15
+  desirabilityDensityThreshold: 6
 --- !u!1 &2144173133
 GameObject:
   m_ObjectHideFlags: 0
@@ -21770,7 +22129,7 @@ RectTransform:
   m_Father: {fileID: 1945210117}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}

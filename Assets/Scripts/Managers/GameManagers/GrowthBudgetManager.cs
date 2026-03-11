@@ -12,6 +12,7 @@ public enum GrowthCategory { Roads, Energy, Water, Zoning }
 public class GrowthBudgetManager : MonoBehaviour
 {
     public CityStats cityStats;
+    public EconomyManager economyManager;
     public GrowthBudgetData data = new GrowthBudgetData();
 
     private int cachedEffectiveTotalBudget;
@@ -21,6 +22,8 @@ public class GrowthBudgetManager : MonoBehaviour
     {
         if (cityStats == null)
             cityStats = FindObjectOfType<CityStats>();
+        if (economyManager == null)
+            economyManager = FindObjectOfType<EconomyManager>();
         MigrateFromLegacyIfNeeded();
     }
 
@@ -93,13 +96,14 @@ public class GrowthBudgetManager : MonoBehaviour
     void ComputeAndCacheBudget()
     {
         if (cityStats == null) return;
-        int money = cityStats.money;
         int pct = Mathf.Clamp(data.growthBudgetPercent, 0, 100);
-        cachedEffectiveTotalBudget = money * pct / 100;
+        int projectedIncome = economyManager != null ? economyManager.GetProjectedMonthlyIncome() : 0;
+        int baseAmount = projectedIncome > 0 ? projectedIncome : cityStats.money;
+        cachedEffectiveTotalBudget = baseAmount * pct / 100;
         cacheValid = true;
     }
 
-    /// <summary>Sets the growth budget as a percentage of city money (0-100).</summary>
+    /// <summary>Sets the growth budget as a percentage of projected monthly income (0-100). Falls back to city money when income is 0.</summary>
     public void SetGrowthBudgetPercent(int percent)
     {
         data.growthBudgetPercent = Mathf.Clamp(percent, 0, 100);
