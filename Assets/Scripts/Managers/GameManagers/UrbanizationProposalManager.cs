@@ -24,6 +24,7 @@ public class UrbanizationProposalManager : MonoBehaviour
     public ZoneManager zoneManager;
     public CityStats cityStats;
     public DemandManager demandManager;
+    public UrbanCentroidService urbanCentroidService;
 
     public int proposalEvaluationIntervalDays = 30;
     public int minDistanceFromCentroid = 15;
@@ -44,6 +45,7 @@ public class UrbanizationProposalManager : MonoBehaviour
         if (zoneManager == null) zoneManager = FindObjectOfType<ZoneManager>();
         if (cityStats == null) cityStats = FindObjectOfType<CityStats>();
         if (demandManager == null) demandManager = FindObjectOfType<DemandManager>();
+        if (urbanCentroidService == null) urbanCentroidService = FindObjectOfType<UrbanCentroidService>();
     }
 
     public void ProcessTick()
@@ -90,7 +92,7 @@ public class UrbanizationProposalManager : MonoBehaviour
 
     private UrbanizationProposal GenerateProposal()
     {
-        Vector2 centroid = GetUrbanCentroid();
+        Vector2 centroid = urbanCentroidService != null ? urbanCentroidService.GetCentroid() : GetFallbackCentroid();
         Vector2Int? anchor = FindRemoteAnchor(centroid);
         if (!anchor.HasValue) return null;
 
@@ -164,21 +166,10 @@ public class UrbanizationProposalManager : MonoBehaviour
         return Zone.ZoneType.IndustrialLightZoning;
     }
 
-    private Vector2 GetUrbanCentroid()
+    private Vector2 GetFallbackCentroid()
     {
-        float sx = 0, sy = 0;
-        int n = 0;
-        for (int x = 0; x < gridManager.width; x++)
-            for (int y = 0; y < gridManager.height; y++)
-            {
-                Cell c = gridManager.GetCell(x, y);
-                if (c != null && c.zoneType != Zone.ZoneType.Grass && c.zoneType != Zone.ZoneType.None)
-                {
-                    sx += x; sy += y; n++;
-                }
-            }
-        if (n == 0) return new Vector2(gridManager.width / 2f, gridManager.height / 2f);
-        return new Vector2(sx / n, sy / n);
+        if (gridManager == null) return Vector2.zero;
+        return new Vector2(gridManager.width / 2f, gridManager.height / 2f);
     }
 
     private Vector2Int? FindRemoteAnchor(Vector2 centroid)
@@ -187,8 +178,18 @@ public class UrbanizationProposalManager : MonoBehaviour
         {
             int ax = UnityEngine.Random.Range(0, gridManager.width - proposalLayoutSize + 1);
             int ay = UnityEngine.Random.Range(0, gridManager.height - proposalLayoutSize + 1);
-            float dist = Vector2.Distance(new Vector2(ax, ay), centroid);
-            if (dist < minDistanceFromCentroid) continue;
+            Vector2 anchorCenter = new Vector2(ax + proposalLayoutSize / 2f, ay + proposalLayoutSize / 2f);
+            if (urbanCentroidService != null)
+            {
+                UrbanRing ring = urbanCentroidService.GetUrbanRing(anchorCenter);
+                if (ring == UrbanRing.Inner || ring == UrbanRing.Mid)
+                    continue;
+            }
+            else
+            {
+                float dist = Vector2.Distance(anchorCenter, centroid);
+                if (dist < minDistanceFromCentroid) continue;
+            }
             bool allGrass = true;
             for (int ox = 0; ox < proposalLayoutSize && allGrass; ox++)
                 for (int oy = 0; oy < proposalLayoutSize && allGrass; oy++)

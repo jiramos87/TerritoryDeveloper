@@ -3885,6 +3885,7 @@ GameObject:
   m_Component:
   - component: {fileID: 396756358}
   - component: {fileID: 396756359}
+  - component: {fileID: 396756360}
   m_Layer: 0
   m_Name: SimulationManager
   m_TagString: Untagged
@@ -3925,6 +3926,19 @@ MonoBehaviour:
   autoZoningManager: {fileID: 2140155702}
   autoResourcePlanner: {fileID: 586497354}
   urbanizationProposalManager: {fileID: 1038576157}
+--- !u!114 &396756360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 396756357}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f8e9d0c1b2a3948574655a6b7c8d9e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gridManager: {fileID: 1880690383}
 --- !u!1 &406381655
 GameObject:
   m_ObjectHideFlags: 0
@@ -9238,7 +9252,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 470750414}
   m_HandleRect: {fileID: 470750413}
   m_Direction: 0
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -9332,21 +9346,15 @@ MonoBehaviour:
   cityStats: {fileID: 72477285}
   interstateManager: {fileID: 251169277}
   terrainManager: {fileID: 1097666053}
-  autoZoningManager: {fileID: 0}
+  autoZoningManager: {fileID: 2140155702}
   maxTilesPerTick: 10
   minStreetLength: 8
   minStreetLengthRecovery: 3
   maxStreetLength: 20
   maxActiveProjects: 5
-  tilesPerProjectPerTick: 3
-  chancePerpendicularAtEnd: 0.6
-  minSpacingForBranch: 4
   minParallelSpacingFromEdge: 3
   minEdgeSpacing: 2
-  branchIntervalMin: 4
-  branchIntervalMax: 8
-  minLengthForBranch: 3
-  minRoadSpacingWhenConnecting: 2
+  minRoadSpacingWhenConnecting: 4
   desirabilityGrowthPenalty: 0.2
 --- !u!1 &938947610
 GameObject:
@@ -17027,7 +17035,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -260.99475, y: -10.571777}
+  m_AnchoredPosition: {x: -260.99478, y: -10.571777}
   m_SizeDelta: {x: -521.9894, y: -455.8174}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1664159913
@@ -22091,11 +22099,8 @@ MonoBehaviour:
   growthBudgetManager: {fileID: 439753650}
   cityStats: {fileID: 72477285}
   demandManager: {fileID: 2064853469}
-  autoRoadBuilder: {fileID: 0}
-  maxZonesPerTick: 5
-  minGrassNeighborsForZoning: 1
-  industrialSeparation: 0.15
-  desirabilityDensityThreshold: 6
+  autoRoadBuilder: {fileID: 913510114}
+  maxZonedCellsPerTick: 32
 --- !u!1 &2144173133
 GameObject:
   m_ObjectHideFlags: 0

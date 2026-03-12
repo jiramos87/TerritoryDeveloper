@@ -1239,6 +1239,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         cellComponent.zoneType = selectedZoneType;
         cellComponent.population = zoneAttributes.Population;
         cellComponent.powerConsumption = zoneAttributes.PowerConsumption;
+        cellComponent.waterConsumption = zoneAttributes.WaterConsumption;
         cellComponent.happiness = zoneAttributes.Happiness;
         cellComponent.prefab = zonePrefab;
         cellComponent.prefabName = zonePrefab.name;

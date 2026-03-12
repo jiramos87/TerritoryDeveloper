@@ -575,6 +575,16 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
+    /// True if terrain at (x,y) allows building placement: Flat only.
+    /// All slope types (cardinal, diagonal, corner) are rejected until slope building support is implemented.
+    /// </summary>
+    private bool IsTerrainPlaceableForBuilding(int x, int y)
+    {
+        TerrainSlopeType slope = GetTerrainSlopeTypeAt(x, y);
+        return slope == TerrainSlopeType.Flat;
+    }
+
+    /// <summary>
     /// Returns true if this cell has at least one neighbor (including diagonals) at sea level (height 0).
     /// Used to allow water plants on coastal slope tiles. Uses 8 neighbors to match RequiresSlope,
     /// so cells that only touch water diagonally are still considered coastal.
@@ -1351,6 +1361,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// Checks whether a building of the given size can be placed at the grid position based on terrain constraints (height uniformity, slopes, water).
+    /// Allows Flat terrain only; rejects all slope types until slope building support is implemented.
     /// </summary>
     /// <param name="gridPosition">The grid position for placement.</param>
     /// <param name="size">The footprint size of the building.</param>
@@ -1411,11 +1422,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                     }
                 }
 
-                if (RequiresSlope(checkX, checkY, landBaseHeight ?? cellHeight))
+                if (!IsTerrainPlaceableForBuilding(checkX, checkY))
                 {
                     if (!allowCoastalSlope || !IsAdjacentToWaterHeight(checkX, checkY))
                     {
-                        failReason = "Slope not allowed here.";
+                        failReason = "Slope not allowed here (diagonal or corner slope).";
                         return false;
                     }
                 }
@@ -1459,6 +1470,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             case TerrainSlopeType.South:
             case TerrainSlopeType.East:
             case TerrainSlopeType.West:
+                return true;
             case TerrainSlopeType.NorthEast:
             case TerrainSlopeType.NorthWest:
             case TerrainSlopeType.SouthEast:
@@ -1467,7 +1479,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             case TerrainSlopeType.NorthWestUp:
             case TerrainSlopeType.SouthEastUp:
             case TerrainSlopeType.SouthWestUp:
-                return true;
+                return false;
             default:
                 return false;
         }

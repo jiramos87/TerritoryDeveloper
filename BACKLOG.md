@@ -11,34 +11,20 @@
 
 ## High Priority
 
-- [ ] **FEAT-31** — Auto roads grow toward high desirability areas
+- [ ] **FEAT-34** — Zoning and building on slopes
   - Type: feature
-  - Files: `AutoRoadBuilder.cs`, `DemandManager.cs` (GetCellDesirabilityBonus), `GridManager.cs`
-  - Notes: Terrain desirability already affects building spawn in zones. In AUTO mode, roads should also tend to grow toward sectors with higher desirability, like in real life. Integrate desirability into road extension decisions.
-  - Note: Partially implemented (roads prefer high-desirability directions). May need verification or refinement.
-
-- [ ] **FEAT-33** — Urban remodeling: expropriations and redevelopment
-  - Type: feature
-  - Files: `GridManager.cs`, `ZoneManager.cs`, `RoadManager.cs`, `EconomyManager.cs`, new expropriation/remodeling logic
-  - Notes: Expropriate buildings to demolish and build new routes; expropriate to demolish and de-zone for new neighborhoods according to updated desirability. Driven by variables: desirability, proximity to urban center, street density, etc. Needs further definition and design.
-  - Related: FEAT-29, FEAT-31
-
-- [ ] **FEAT-30** — Mini map layer toggles + desirability visualization
-  - Type: feature
-  - Files: `MiniMapController.cs`, `ShowMiniMapButton.cs`, `UIManager.cs`, `DemandManager.cs` (GetCellDesirabilityBonus), new layer-toggle UI
-  - Notes: SimCity 2000-style mini map with toggle buttons at the edge. Each button toggles a layer: streets, urban zones, desirability, etc. Desirability layer: green (high/positive) to red (low/negative) color scale. Work order: (1) Create mini map button abstraction and panel; (2) Add toggle buttons for current data (streets, zones); (3) Add desirability layer as a specific case.
-
-- [ ] **FEAT-32** — More streets and intersections in central urban areas (AUTO mode)
-  - Type: feature
-  - Files: `AutoRoadBuilder.cs`, `UrbanizationProposalManager.cs`, `CityStats.cs`, possible `UrbanCentroidService` or similar
-  - Notes: Central urban sectors should have higher street density and more intersections. Far from centroids: lower density, longer straight roads (rural style). Define how to detect "central" areas and modulate AutoRoadBuilder behavior accordingly.
-  - Related: FEAT-29 (density gradient around urban centroids)
+  - Files: `TerrainManager.cs`, `ZoneManager.cs`, `BuildingPlacementService.cs`, `AutoZoningManager.cs`, `RoadCacheService.cs`, slope building prefabs
+  - Notes: Currently only Flat terrain can be zoned. Allow zoning and building on cardinal slopes (N/S/E/W) and eventually diagonal/corner slopes. Requires prefabs for buildings on slopes. Related to FEAT-05 (roads on diagonal slopes).
 
 - [ ] **FEAT-05** — Streets must be able to climb diagonal slopes using orthogonal prefabs
   - Type: feature
   - Files: `RoadManager.cs`, `TerrainManager.cs`, `GridManager.cs`
   - Notes: Streets currently do not climb diagonal slopes.
 
+- [ ] **BUG-23** — Interstate route generation is flaky; never created in New Game flow
+  - Type: fix
+  - Files: `InterstateManager.cs`, `GeographyManager.cs`, `GameSaveManager.cs`, `GameBootstrap.cs`, `GridManager.cs` (ResetGrid)
+  - Notes: Interstate generation is flaky: sometimes the game loads (Play in Unity) without the interstate. When pressing New Game in the UI, the interstate is never created — there is a problem in the New Game flow. Interstate should be recreated when starting a new game. Reopening the game in Unity gives a chance (still flaky) for the route to generate. Fix the flaky interstate generation and ensure it is correctly invoked and created in the New Game flow (ResetGrid → ReinitializeGeographyForNewGame).
 
 - [ ] **BUG-20** — Power plant (and 3x3/2x2 buildings) load incorrectly in LoadGame: end up under grass
   - Type: fix
@@ -93,11 +79,6 @@
   - Files: `AutoZoningManager.cs`, `DemandManager.cs`
   - Notes: AutoZoningManager only places Light zones. Should support Medium/Heavy based on demand or zone development level.
 
-- [ ] **BUG-06** — Streets should not cost so much energy
-  - Type: fix/balance
-  - Files: `RoadManager.cs`, `CityStats.cs`, `EconomyManager.cs`
-  - Notes: Rebalance street energy cost.
-
 - [ ] **FEAT-22** — Tax feedback on demand and happiness
   - Type: feature
   - Files: `EconomyManager.cs`, `DemandManager.cs`, `CityStats.cs`
@@ -109,6 +90,11 @@
   - Files: `CityStats.cs`, `DemandManager.cs`, `EmploymentManager.cs`
   - Notes: Happiness only increases when placing zones (+100 per building). No effect from unemployment, taxes, services or pollution. Should be continuous multi-factor calculation with decay.
   - Depends on: BUG-12
+
+- [ ] **FEAT-35** — Area demolition tool (bulldozer drag-to-select)
+  - Type: feature
+  - Files: `GridManager.cs`, `UIManager.cs`, `CursorManager.cs`
+  - Notes: Manual tool to demolish all buildings and zoning in a rectangular area at once. Use the same area selection mechanism as zoning: hold mouse button, drag to define rectangle, release to demolish. Reuse zoning's start/end position logic (zoningStartGridPosition, zoningEndGridPosition pattern). Demolish each cell in the selected area via DemolishCellAt. Interstate Highway cells must remain non-demolishable. Consider preview overlay (e.g. red tint) during drag.
 
 - [ ] **FEAT-03** — Forest mode hold-to-place
   - Type: feature
@@ -240,6 +226,13 @@
 
 ## Completed (last 30 days)
 
+- [x] **FEAT-33** — Urban remodeling: expropriations and redevelopment (2026-03-12)
+- [x] **FEAT-31** — Auto roads grow toward high desirability areas (2026-03-12)
+- [x] **FEAT-30** — Mini map layer toggles + desirability visualization (2026-03-12)
+- [x] **BUG-24** — Growth budget not recalculated when income changes (2026-03-12)
+- [x] **BUG-06** — Streets should not cost so much energy (2026-03-12)
+- [x] **FEAT-32** — More streets and intersections in central and mid-urban areas (AUTO mode) (2026-03-12)
+- [x] **BUG-22** — Auto zoning must not block street segment ends (AUTO mode) (2026-03-11)
 - [x] **FEAT-25** — Growth budget tied to real income (2026-03-11)
 - [x] **BUG-10** — `IndustrialHeavyZoning` never generates buildings (2026-03-11)
 - [x] **FEAT-26** — Use desirability for building spawn selection (2026-03-10)

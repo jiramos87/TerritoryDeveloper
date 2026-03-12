@@ -14,14 +14,22 @@ namespace Territory.Core
     {
         private static readonly int[] Dx = { 1, -1, 0, 0 };
         private static readonly int[] Dy = { 0, 0, 1, -1 };
+        /// <summary>Diagonal directions for axial corridor (roads can connect diagonally via elbows).</summary>
+        private static readonly int[] Dx8 = { 1, -1, 0, 0, 1, 1, -1, -1 };
+        private static readonly int[] Dy8 = { 0, 0, 1, -1, 1, -1, 1, -1 };
 
         private readonly GridManager grid;
         private List<Vector2Int> cachedRoadPositions;
         private HashSet<Vector2Int> cachedRoadPositionsSet;
         private List<Vector2Int> cachedRoadEdgePositions;
+        private HashSet<Vector2Int> cachedRoadExtensionCells;
+        private HashSet<Vector2Int> cachedRoadAxialCorridor;
         private HashSet<Vector2Int> cachedCellsWithinDistanceOfRoad;
         private int cachedCellsWithinDistanceMax = -1;
         private bool roadCacheDirty = true;
+
+        /// <summary>Cells reserved for road extension; extend corridor this many cells beyond each segment end.</summary>
+        private const int AxialCorridorLength = 8;
 
         public RoadCacheService(GridManager grid)
         {
@@ -34,6 +42,8 @@ namespace Territory.Core
         public void Invalidate()
         {
             roadCacheDirty = true;
+            cachedRoadExtensionCells = null;
+            cachedRoadAxialCorridor = null;
             cachedCellsWithinDistanceOfRoad = null;
             cachedCellsWithinDistanceMax = -1;
         }
@@ -52,6 +62,8 @@ namespace Territory.Core
             {
                 cachedRoadPositions.Add(pos);
                 cachedRoadEdgePositions = null;
+                cachedRoadExtensionCells = null;
+                cachedRoadAxialCorridor = null;
                 cachedCellsWithinDistanceOfRoad = null;
                 cachedCellsWithinDistanceMax = -1;
             }
@@ -68,6 +80,8 @@ namespace Territory.Core
             {
                 cachedRoadPositions.Remove(pos);
                 cachedRoadEdgePositions = null;
+                cachedRoadExtensionCells = null;
+                cachedRoadAxialCorridor = null;
                 cachedCellsWithinDistanceOfRoad = null;
                 cachedCellsWithinDistanceMax = -1;
             }
@@ -91,6 +105,8 @@ namespace Territory.Core
                 }
             }
             cachedRoadEdgePositions = null;
+            cachedRoadExtensionCells = null;
+            cachedRoadAxialCorridor = null;
             cachedCellsWithinDistanceOfRoad = null;
             cachedCellsWithinDistanceMax = -1;
             cachedRoadPositionsSet = new HashSet<Vector2Int>(cachedRoadPositions);
@@ -127,6 +143,131 @@ namespace Territory.Core
                     cachedRoadEdgePositions.Add(p);
             }
             return cachedRoadEdgePositions;
+        }
+
+        /// <summary>
+        /// Returns cells that are one step beyond each road edge in the natural extension direction.
+        /// AutoZoningManager must not zone these so AutoRoadBuilder can extend roads without being blocked.
+        /// For each edge E and road neighbor R: extDir = E - R, extCell = E + extDir.
+        /// </summary>
+        public HashSet<Vector2Int> GetRoadExtensionCells()
+        {
+            if (cachedRoadExtensionCells != null && !roadCacheDirty)
+                return cachedRoadExtensionCells;
+            var roadSet = GetRoadPositionsAsHashSet();
+            var edges = GetRoadEdgePositions();
+            cachedRoadExtensionCells = new HashSet<Vector2Int>();
+            foreach (Vector2Int e in edges)
+            {
+                for (int d = 0; d < 4; d++)
+                {
+                    int rx = e.x + Dx[d], ry = e.y + Dy[d];
+                    if (rx < 0 || rx >= grid.width || ry < 0 || ry >= grid.height) continue;
+                    if (!roadSet.Contains(new Vector2Int(rx, ry))) continue;
+                    int extDirX = e.x - rx;
+                    int extDirY = e.y - ry;
+                    int extX = e.x + extDirX;
+                    int extY = e.y + extDirY;
+                    if (extX < 0 || extX >= grid.width || extY < 0 || extY >= grid.height) continue;
+                    Cell extCell = grid.GetCell(extX, extY);
+                    if (extCell == null) continue;
+                    if (extCell.zoneType != Zone.ZoneType.Grass && !extCell.HasForest() && extCell.GetCellInstanceHeight() != 0)
+                        continue;
+                    cachedRoadExtensionCells.Add(new Vector2Int(extX, extY));
+                }
+            }
+            return cachedRoadExtensionCells;
+        }
+
+        /// <summary>Dominant road direction at (rx,ry): (1,0), (-1,0), (0,1), or (0,-1). Zero if no road neighbors.</summary>
+        private Vector2Int GetRoadDirectionAt(int rx, int ry, HashSet<Vector2Int> roadSet)
+        {
+            int roadX = 0, roadY = 0;
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = rx + Dx[d], ny = ry + Dy[d];
+                if (nx < 0 || nx >= grid.width || ny < 0 || ny >= grid.height) continue;
+                if (roadSet.Contains(new Vector2Int(nx, ny)))
+                {
+                    roadX += Dx[d];
+                    roadY += Dy[d];
+                }
+            }
+            if (roadX == 0 && roadY == 0) return Vector2Int.zero;
+            if (Mathf.Abs(roadX) >= Mathf.Abs(roadY))
+                return new Vector2Int(roadX > 0 ? 1 : -1, 0);
+            return new Vector2Int(0, roadY > 0 ? 1 : -1);
+        }
+
+        /// <summary>True if vector (dx,dy) from road R to cell P is perpendicular to road direction (lateral).</summary>
+        private bool IsLateralDirection(int dx, int dy, Vector2Int roadDir)
+        {
+            if (roadDir.x == 0 && roadDir.y == 0) return false;
+            int dot = dx * roadDir.x + dy * roadDir.y;
+            return dot == 0;
+        }
+
+        /// <summary>Returns cells in the axial corridor (extension of road segments). Used to exclude from lateral zone.
+        /// Includes diagonal directions for elbow roads and corner extensions (cells beyond road end at turns).</summary>
+        private HashSet<Vector2Int> GetRoadAxialCorridor()
+        {
+            if (cachedRoadAxialCorridor != null && !roadCacheDirty)
+                return cachedRoadAxialCorridor;
+            var roadSet = GetRoadPositionsAsHashSet();
+            var edges = GetRoadEdgePositions();
+            cachedRoadAxialCorridor = new HashSet<Vector2Int>();
+            foreach (Vector2Int e in edges)
+            {
+                for (int d = 0; d < 8; d++)
+                {
+                    int rx = e.x + Dx8[d], ry = e.y + Dy8[d];
+                    if (rx < 0 || rx >= grid.width || ry < 0 || ry >= grid.height) continue;
+                    var rPos = new Vector2Int(rx, ry);
+                    if (!roadSet.Contains(rPos)) continue;
+                    int extDirX = e.x - rx;
+                    int extDirY = e.y - ry;
+                    AddCorridorLine(e.x, e.y, extDirX, extDirY, roadSet);
+                    for (int d2 = 0; d2 < 8; d2++)
+                    {
+                        int r2x = rx + Dx8[d2], r2y = ry + Dy8[d2];
+                        if (r2x < 0 || r2x >= grid.width || r2y < 0 || r2y >= grid.height) continue;
+                        if (r2x == e.x && r2y == e.y) continue;
+                        if (!roadSet.Contains(new Vector2Int(r2x, r2y))) continue;
+                        int cornerDirX = rx - r2x;
+                        int cornerDirY = ry - r2y;
+                        AddCorridorLine(e.x, e.y, cornerDirX, cornerDirY, roadSet);
+                    }
+                }
+            }
+            return cachedRoadAxialCorridor;
+        }
+
+        private void AddCorridorLine(int ex, int ey, int dirX, int dirY, HashSet<Vector2Int> roadSet)
+        {
+            for (int k = 1; k <= AxialCorridorLength; k++)
+            {
+                int ax = ex + k * dirX;
+                int ay = ey + k * dirY;
+                if (ax < 0 || ax >= grid.width || ay < 0 || ay >= grid.height) break;
+                if (roadSet.Contains(new Vector2Int(ax, ay))) break;
+                cachedRoadAxialCorridor.Add(new Vector2Int(ax, ay));
+            }
+        }
+
+        /// <summary>Number of cardinal neighbors of (gx,gy) that are roads.</summary>
+        public int CountRoadNeighbors(int gx, int gy)
+        {
+            if (gx < 0 || gx >= grid.width || gy < 0 || gy >= grid.height) return 0;
+            var roadSet = GetRoadPositionsAsHashSet();
+            if (roadSet == null) return 0;
+            int count = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                int nx = gx + Dx[i], ny = gy + Dy[i];
+                if (nx >= 0 && nx < grid.width && ny >= 0 && ny < grid.height && roadSet.Contains(new Vector2Int(nx, ny)))
+                    count++;
+            }
+            return count;
         }
 
         /// <summary>Number of cardinal neighbors of (gx,gy) that are zoneable (Grass, Forest, or Flat/N-S/E-W slope).</summary>

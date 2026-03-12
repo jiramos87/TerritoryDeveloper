@@ -471,6 +471,7 @@ public class GridManager : MonoBehaviour, IGridManager
         cellComponent.occupiedBuilding = null;
         cellComponent.population = 0;
         cellComponent.powerConsumption = 0;
+        cellComponent.waterConsumption = 0;
         cellComponent.happiness = 0;
         cellComponent.zoneType = Zone.ZoneType.Grass;
         cellComponent.buildingSize = 1;
@@ -936,6 +937,7 @@ public class GridManager : MonoBehaviour, IGridManager
         cellComponent.zoneType = selectedZoneType;
         cellComponent.population = zoneAttributes.Population;
         cellComponent.powerConsumption = zoneAttributes.PowerConsumption;
+        cellComponent.waterConsumption = zoneAttributes.WaterConsumption;
         cellComponent.happiness = zoneAttributes.Happiness;
         cellComponent.prefab = prefab;
         cellComponent.prefabName = prefab.name;
@@ -1801,9 +1803,17 @@ public class GridManager : MonoBehaviour, IGridManager
     public List<Vector2Int> GetRoadEdgePositions()
         => roadCache.GetRoadEdgePositions();
 
+    /// <summary>Returns cells that are one step beyond each road edge in the natural extension direction. AutoZoningManager must not zone these.</summary>
+    public HashSet<Vector2Int> GetRoadExtensionCells()
+        => roadCache.GetRoadExtensionCells();
+
     /// <summary>Number of cardinal neighbors of (gx,gy) that are zoneable (Grass, Forest, or Flat/N-S/E-W slope). Used for road-reservation in auto-zoning.</summary>
     public int CountGrassNeighbors(int gx, int gy)
         => roadCache.CountGrassNeighbors(gx, gy);
+
+    /// <summary>Number of cardinal neighbors of (gx,gy) that are roads. Used to identify axial termini for reserving perpendicular road generation.</summary>
+    public int CountRoadNeighbors(int gx, int gy)
+        => roadCache.CountRoadNeighbors(gx, gy);
 
     /// <summary>True if this neighbor cell is valid for zoning (Grass, Forest, or Flat/N-S/E-W slope).</summary>
     public bool IsZoneableNeighbor(Cell c, int x, int y)

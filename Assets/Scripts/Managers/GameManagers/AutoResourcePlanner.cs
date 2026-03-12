@@ -23,9 +23,9 @@ public class AutoResourcePlanner : MonoBehaviour
     public float powerThreshold = 0.9f;
     public float waterThreshold = 0.9f;
 
-    private const int PowerPlantCost = 10000;
+    private const int PowerPlantCost = 5000;
     private const int PowerPlantSize = 3;
-    private const int WaterPlantCost = 8000;
+    private const int WaterPlantCost = 4000;
     private const int WaterPlantSize = 2;
 
     void Start()
@@ -78,7 +78,7 @@ public class AutoResourcePlanner : MonoBehaviour
         templateGo.SetActive(false);
         var pp = templateGo.GetComponent<PowerPlant>();
         if (pp == null) pp = templateGo.AddComponent<PowerPlant>();
-        pp.Initialize("Power Plant A", PowerPlantCost, 100, 50, 25, PowerPlantSize, 10000, powerPlantPrefab);
+        pp.Initialize("Power Plant A", PowerPlantCost, 100, 50, 25, PowerPlantSize, 20000, powerPlantPrefab);
 
         bool spent = growthBudgetManager.GetAvailableBudget(GrowthCategory.Energy) >= PowerPlantCost
             && growthBudgetManager.TrySpend(GrowthCategory.Energy, PowerPlantCost);
@@ -110,7 +110,7 @@ public class AutoResourcePlanner : MonoBehaviour
         templateGo.SetActive(false);
         var wp = templateGo.GetComponent<WaterPlant>();
         if (wp == null) wp = templateGo.AddComponent<WaterPlant>();
-        wp.Initialize("Water Pump", WaterPlantCost, 80, 30, 20, WaterPlantSize, 8000, waterPlantPrefab);
+        wp.Initialize("Water Pump", WaterPlantCost, 80, 30, 20, WaterPlantSize, 16000, waterPlantPrefab);
 
         bool spent = growthBudgetManager.GetAvailableBudget(GrowthCategory.Water) >= WaterPlantCost
             && growthBudgetManager.TrySpend(GrowthCategory.Water, WaterPlantCost);

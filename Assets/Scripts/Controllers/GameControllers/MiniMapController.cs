@@ -39,6 +39,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
     public InterstateManager interstateManager;
     public CameraController cameraController;
     public AutoZoningManager autoZoningManager;
+    public UrbanCentroidService urbanCentroidService;
     #endregion
 
     #region UI References
@@ -128,6 +129,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         if (interstateManager == null) interstateManager = FindObjectOfType<InterstateManager>();
         if (cameraController == null) cameraController = FindObjectOfType<CameraController>();
         if (autoZoningManager == null) autoZoningManager = FindObjectOfType<AutoZoningManager>();
+        if (urbanCentroidService == null) urbanCentroidService = FindObjectOfType<UrbanCentroidService>();
     }
 
     void Start()
@@ -209,15 +211,19 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
             }
         }
 
-        if ((activeLayers & MiniMapLayer.Centroid) != 0 && autoZoningManager != null)
+        if ((activeLayers & MiniMapLayer.Centroid) != 0 && (urbanCentroidService != null || (autoZoningManager != null && autoZoningManager.GetUrbanMetrics() != null)))
         {
-            UrbanMetrics urbanMetrics = autoZoningManager.GetUrbanMetrics();
+            if (urbanCentroidService != null)
+            {
+                urbanCentroidService.RecalculateFromGrid();
+            }
+            UrbanMetrics urbanMetrics = urbanCentroidService != null ? urbanCentroidService.GetUrbanMetrics() : autoZoningManager.GetUrbanMetrics();
             if (urbanMetrics != null && gridManager != null)
             {
-                urbanMetrics.RecalculateFromGrid(gridManager);
-                Vector2 centroid = urbanMetrics.GetCentroid();
-                float radius = urbanMetrics.GetUrbanRadius();
-                float[] boundaries = { radius * 0.15f, radius * 0.40f, radius * 0.70f, radius * 1.00f, radius * 1.50f };
+                Vector2 centroid = urbanCentroidService != null ? urbanCentroidService.GetCentroid() : urbanMetrics.GetCentroid();
+                float[] boundaries = urbanCentroidService != null
+                    ? urbanCentroidService.GetRingBoundaryDistances()
+                    : urbanMetrics.GetRingBoundaryDistances();
 
                 for (int x = 0; x < w; x++)
                 {

@@ -82,6 +82,8 @@ public class InterstateManager : MonoBehaviour
     #region Interstate Generation
     const int MaxRouteAttempts = 80;
     const int PathTriesPerPair = 8;
+    /// <summary>Seed for interstate pathfinding. Derived from TerrainManager.TerrainGenSeed so same terrain yields same interstate.</summary>
+    const int InterstateGenSeed = 12345 + 100;
 
     /// <summary>
     /// Returns border indices (0=South, 1=North, 2=West, 3=East) that have at least one land cell valid for interstate.
@@ -133,9 +135,24 @@ public class InterstateManager : MonoBehaviour
         EntryBorder = -1;
         ExitBorder = -1;
 
-        if (gridManager == null || terrainManager == null) return interstatePositions;
+        if (gridManager == null)
+        {
+            Debug.LogWarning("InterstateManager: gridManager is null. Cannot generate interstate.");
+            return interstatePositions;
+        }
+        if (terrainManager == null)
+        {
+            Debug.LogWarning("InterstateManager: terrainManager is null. Cannot generate interstate.");
+            return interstatePositions;
+        }
         HeightMap heightMap = terrainManager.GetHeightMap();
-        if (heightMap == null) return interstatePositions;
+        if (heightMap == null)
+        {
+            Debug.LogWarning("InterstateManager: heightMap is null. Cannot generate interstate.");
+            return interstatePositions;
+        }
+
+        Random.InitState(InterstateGenSeed);
 
         int w = gridManager.width;
         int h = gridManager.height;

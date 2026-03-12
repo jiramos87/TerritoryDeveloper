@@ -690,11 +690,11 @@ public class ForestManager : MonoBehaviour
         switch (forestType)
         {
             case Forest.ForestType.Sparse:
-                return 5;
+                return 2;
             case Forest.ForestType.Medium:
-                return 7;
+                return 3;
             case Forest.ForestType.Dense:
-                return 10;
+                return 5;
             default:
                 return 0;
         }

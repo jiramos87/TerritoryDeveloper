@@ -709,7 +709,7 @@ public class UIManager : MonoBehaviour
         GameObject powerPlantObject = Instantiate(powerPlantAPrefab);
         PowerPlant powerPlant = powerPlantObject.AddComponent<PowerPlant>();
 
-        powerPlant.Initialize("Power Plant A", 10000, 100, 50, 25, 3, 10000, powerPlantAPrefab);
+        powerPlant.Initialize("Power Plant A", 5000, 100, 50, 25, 3, 20000, powerPlantAPrefab);
 
         selectedBuilding = powerPlant;
 
@@ -976,7 +976,7 @@ public class UIManager : MonoBehaviour
                 waterPlant = waterPlantObject.AddComponent<WaterPlant>();
             }
 
-            waterPlant.Initialize("Water Pump", 8000, 80, 30, 20, 2, 8000, waterPumpPrefab);
+            waterPlant.Initialize("Water Pump", 4000, 80, 30, 20, 2, 16000, waterPumpPrefab);
 
             selectedBuilding = waterPlant;
 

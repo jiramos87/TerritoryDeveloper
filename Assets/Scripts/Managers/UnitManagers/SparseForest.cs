@@ -21,7 +21,7 @@ public class SparseForest : MonoBehaviour, IForest
     /// </summary>
     public void Initialize()
     {
-        WaterConsumption = 5; // Low water requirement
+        WaterConsumption = 2; // Low water requirement
         ConstructionCost = 0; // Free to place
         Prefab = forestPrefab;
         ForestType = Forest.ForestType.Sparse;

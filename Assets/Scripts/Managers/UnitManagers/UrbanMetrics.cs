@@ -7,15 +7,13 @@ namespace Territory.Simulation
 {
 /// <summary>
 /// Urban ring classification for density gradient and sector-based zoning.
-/// Core = downtown, Inner = inner city, Mid = residential, Outer = transition, Edge = industrial margins, Rural = sparse.
+/// Inner = urban center (dense, no industrial), Mid = residential, Outer = transition to rural, Rural = sparse.
 /// </summary>
 public enum UrbanRing
 {
-    Core,
     Inner,
     Mid,
     Outer,
-    Edge,
     Rural
 }
 
@@ -49,9 +47,6 @@ public struct RingStreetParams
 {
     public int minLength;
     public int maxLength;
-    public int branchIntervalMin;
-    public int branchIntervalMax;
-    public float branchChanceAtEnd;
     public int parallelSpacing;
     public int parallelSpacingMin;
     public int parallelSpacingMax;
@@ -64,7 +59,12 @@ public struct RingStreetParams
 /// </summary>
 public class UrbanMetrics
 {
-    private const float MIN_URBAN_RADIUS = 5f;
+    private const float MIN_URBAN_RADIUS = 20f;
+    private const float RADIUS_SCALE = 1.8f;
+
+    private const float INNER_BOUNDARY = 0.70f;
+    private const float MID_BOUNDARY = 1.00f;
+    private const float OUTER_BOUNDARY = 1.80f;
 
     private float centroidSumX;
     private float centroidSumY;
@@ -87,34 +87,28 @@ public class UrbanMetrics
 
     private void InitializeZoneProbabilities()
     {
-        zoneProbabilitiesByRing = new RingZoneProbabilities[6];
-        zoneProbabilitiesByRing[(int)UrbanRing.Core] = new RingZoneProbabilities { residential = 0.05f, commercial = 0.90f, industrial = 0f };
-        zoneProbabilitiesByRing[(int)UrbanRing.Inner] = new RingZoneProbabilities { residential = 0.25f, commercial = 0.70f, industrial = 0f };
+        zoneProbabilitiesByRing = new RingZoneProbabilities[4];
+        zoneProbabilitiesByRing[(int)UrbanRing.Inner] = new RingZoneProbabilities { residential = 0.15f, commercial = 0.85f, industrial = 0f };
         zoneProbabilitiesByRing[(int)UrbanRing.Mid] = new RingZoneProbabilities { residential = 0.70f, commercial = 0.15f, industrial = 0.10f };
-        zoneProbabilitiesByRing[(int)UrbanRing.Outer] = new RingZoneProbabilities { residential = 0.35f, commercial = 0.05f, industrial = 0.50f };
-        zoneProbabilitiesByRing[(int)UrbanRing.Edge] = new RingZoneProbabilities { residential = 0.05f, commercial = 0f, industrial = 0.90f };
+        zoneProbabilitiesByRing[(int)UrbanRing.Outer] = new RingZoneProbabilities { residential = 0.20f, commercial = 0.05f, industrial = 0.75f };
         zoneProbabilitiesByRing[(int)UrbanRing.Rural] = new RingZoneProbabilities { residential = 0.55f, commercial = 0.35f, industrial = 0f };
     }
 
     private void InitializeStreetParams()
     {
-        streetParamsByRing = new RingStreetParams[6];
-        streetParamsByRing[(int)UrbanRing.Core] = new RingStreetParams { minLength = 2, maxLength = 6, branchIntervalMin = 3, branchIntervalMax = 4, branchChanceAtEnd = 0.90f, parallelSpacing = 1, parallelSpacingMin = 1, parallelSpacingMax = 1 };
-        streetParamsByRing[(int)UrbanRing.Inner] = new RingStreetParams { minLength = 4, maxLength = 10, branchIntervalMin = 3, branchIntervalMax = 5, branchChanceAtEnd = 0.80f, parallelSpacing = 3, parallelSpacingMin = 3, parallelSpacingMax = 3 };
-        streetParamsByRing[(int)UrbanRing.Mid] = new RingStreetParams { minLength = 6, maxLength = 15, branchIntervalMin = 5, branchIntervalMax = 8, branchChanceAtEnd = 0.50f, parallelSpacing = 4, parallelSpacingMin = 4, parallelSpacingMax = 4 };
-        streetParamsByRing[(int)UrbanRing.Outer] = new RingStreetParams { minLength = 8, maxLength = 20, branchIntervalMin = 7, branchIntervalMax = 12, branchChanceAtEnd = 0.35f, parallelSpacing = 5, parallelSpacingMin = 5, parallelSpacingMax = 5 };
-        streetParamsByRing[(int)UrbanRing.Edge] = new RingStreetParams { minLength = 10, maxLength = 25, branchIntervalMin = 10, branchIntervalMax = 16, branchChanceAtEnd = 0.20f, parallelSpacing = 6, parallelSpacingMin = 4, parallelSpacingMax = 6 };
-        streetParamsByRing[(int)UrbanRing.Rural] = new RingStreetParams { minLength = 15, maxLength = 35, branchIntervalMin = 15, branchIntervalMax = 25, branchChanceAtEnd = 0.10f, parallelSpacing = 8, parallelSpacingMin = 5, parallelSpacingMax = 8 };
+        streetParamsByRing = new RingStreetParams[4];
+        streetParamsByRing[(int)UrbanRing.Inner] = new RingStreetParams { minLength = 2, maxLength = 8, parallelSpacing = 1, parallelSpacingMin = 1, parallelSpacingMax = 1 };
+        streetParamsByRing[(int)UrbanRing.Mid] = new RingStreetParams { minLength = 4, maxLength = 12, parallelSpacing = 3, parallelSpacingMin = 3, parallelSpacingMax = 3 };
+        streetParamsByRing[(int)UrbanRing.Outer] = new RingStreetParams { minLength = 7, maxLength = 25, parallelSpacing = 6, parallelSpacingMin = 5, parallelSpacingMax = 6 };
+        streetParamsByRing[(int)UrbanRing.Rural] = new RingStreetParams { minLength = 10, maxLength = 35, parallelSpacing = 6, parallelSpacingMin = 5, parallelSpacingMax = 6 };
     }
 
     private void InitializeZoningDensity()
     {
-        densityByRing = new RingZoningDensity[6];
-        densityByRing[(int)UrbanRing.Core] = new RingZoningDensity { lightProb = 0.20f, mediumProb = 0.50f, heavyProb = 0.30f };
-        densityByRing[(int)UrbanRing.Inner] = new RingZoningDensity { lightProb = 0.40f, mediumProb = 0.45f, heavyProb = 0.15f };
+        densityByRing = new RingZoningDensity[4];
+        densityByRing[(int)UrbanRing.Inner] = new RingZoningDensity { lightProb = 0.25f, mediumProb = 0.50f, heavyProb = 0.25f };
         densityByRing[(int)UrbanRing.Mid] = new RingZoningDensity { lightProb = 0.70f, mediumProb = 0.25f, heavyProb = 0.05f };
         densityByRing[(int)UrbanRing.Outer] = new RingZoningDensity { lightProb = 0.90f, mediumProb = 0.08f, heavyProb = 0.02f };
-        densityByRing[(int)UrbanRing.Edge] = new RingZoningDensity { lightProb = 0.90f, mediumProb = 0.08f, heavyProb = 0.02f };
         densityByRing[(int)UrbanRing.Rural] = new RingZoningDensity { lightProb = 0.90f, mediumProb = 0.08f, heavyProb = 0.02f };
     }
 
@@ -129,8 +123,15 @@ public class UrbanMetrics
     /// <summary>Effective urban radius for ring classification.</summary>
     public float GetUrbanRadius()
     {
-        float r = Mathf.Sqrt(urbanCellCount / Mathf.PI);
+        float r = RADIUS_SCALE * Mathf.Sqrt(urbanCellCount / Mathf.PI);
         return Mathf.Max(MIN_URBAN_RADIUS, r);
+    }
+
+    /// <summary>Returns the 3 ring boundary distances (at 70%, 100%, 180% of radius) for visualization.</summary>
+    public float[] GetRingBoundaryDistances()
+    {
+        float r = GetUrbanRadius();
+        return new[] { r * INNER_BOUNDARY, r * MID_BOUNDARY, r * OUTER_BOUNDARY };
     }
 
     /// <summary>Classifies a cell position by urban ring based on distance to centroid.</summary>
@@ -140,11 +141,9 @@ public class UrbanMetrics
         float dist = Vector2.Distance(cellPos, centroid);
         float radius = GetUrbanRadius();
 
-        if (dist <= radius * 0.15f) return UrbanRing.Core;
-        if (dist <= radius * 0.40f) return UrbanRing.Inner;
-        if (dist <= radius * 0.70f) return UrbanRing.Mid;
-        if (dist <= radius * 1.00f) return UrbanRing.Outer;
-        if (dist <= radius * 1.50f) return UrbanRing.Edge;
+        if (dist <= radius * INNER_BOUNDARY) return UrbanRing.Inner;
+        if (dist <= radius * MID_BOUNDARY) return UrbanRing.Mid;
+        if (dist <= radius * OUTER_BOUNDARY) return UrbanRing.Outer;
         return UrbanRing.Rural;
     }
 
@@ -164,6 +163,44 @@ public class UrbanMetrics
     public RingZoningDensity GetZoningDensityForRing(UrbanRing ring)
     {
         return densityByRing[(int)ring];
+    }
+
+    /// <summary>Deterministic density by ring for segment-based zoning: Inner→Heavy, Mid→Medium, Outer/Rural→Light.</summary>
+    public static Zone.ZoneType ApplyDensityByRing(Zone.ZoneType lightType, UrbanRing ring)
+    {
+        switch (ring)
+        {
+            case UrbanRing.Inner:
+                return LightToHeavy(lightType);
+            case UrbanRing.Mid:
+                return LightToMedium(lightType);
+            case UrbanRing.Outer:
+            case UrbanRing.Rural:
+            default:
+                return lightType;
+        }
+    }
+
+    private static Zone.ZoneType LightToMedium(Zone.ZoneType lightType)
+    {
+        switch (lightType)
+        {
+            case Zone.ZoneType.ResidentialLightZoning: return Zone.ZoneType.ResidentialMediumZoning;
+            case Zone.ZoneType.CommercialLightZoning: return Zone.ZoneType.CommercialMediumZoning;
+            case Zone.ZoneType.IndustrialLightZoning: return Zone.ZoneType.IndustrialMediumZoning;
+            default: return lightType;
+        }
+    }
+
+    private static Zone.ZoneType LightToHeavy(Zone.ZoneType lightType)
+    {
+        switch (lightType)
+        {
+            case Zone.ZoneType.ResidentialLightZoning: return Zone.ZoneType.ResidentialHeavyZoning;
+            case Zone.ZoneType.CommercialLightZoning: return Zone.ZoneType.CommercialHeavyZoning;
+            case Zone.ZoneType.IndustrialLightZoning: return Zone.ZoneType.IndustrialHeavyZoning;
+            default: return lightType;
+        }
     }
 
     /// <summary>No-op: centroid is recalculated from grid each tick (buildings only).</summary>

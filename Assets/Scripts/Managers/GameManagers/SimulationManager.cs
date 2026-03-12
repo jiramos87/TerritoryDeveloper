@@ -15,6 +15,7 @@ public class SimulationManager : MonoBehaviour
     public AutoZoningManager autoZoningManager;
     public AutoResourcePlanner autoResourcePlanner;
     public UrbanizationProposalManager urbanizationProposalManager;
+    public UrbanCentroidService urbanCentroidService;
 
     void Start()
     {
@@ -30,6 +31,8 @@ public class SimulationManager : MonoBehaviour
             autoResourcePlanner = FindObjectOfType<AutoResourcePlanner>();
         if (urbanizationProposalManager == null)
             urbanizationProposalManager = FindObjectOfType<UrbanizationProposalManager>();
+        if (urbanCentroidService == null)
+            urbanCentroidService = FindObjectOfType<UrbanCentroidService>();
 
         if (autoRoadBuilder != null && autoZoningManager != null)
         {
@@ -37,6 +40,15 @@ public class SimulationManager : MonoBehaviour
                 autoRoadBuilder.autoZoningManager = autoZoningManager;
             if (autoZoningManager.autoRoadBuilder == null)
                 autoZoningManager.autoRoadBuilder = autoRoadBuilder;
+        }
+        if (urbanCentroidService != null)
+        {
+            if (autoZoningManager != null && autoZoningManager.urbanCentroidService == null)
+                autoZoningManager.urbanCentroidService = urbanCentroidService;
+            if (autoRoadBuilder != null && autoRoadBuilder.urbanCentroidService == null)
+                autoRoadBuilder.urbanCentroidService = urbanCentroidService;
+            if (urbanizationProposalManager != null && urbanizationProposalManager.urbanCentroidService == null)
+                urbanizationProposalManager.urbanCentroidService = urbanCentroidService;
         }
     }
 
@@ -60,6 +72,9 @@ public class SimulationManager : MonoBehaviour
 
         if (growthBudgetManager != null)
             growthBudgetManager.EnsureBudgetValid();
+
+        if (urbanCentroidService != null)
+            urbanCentroidService.RecalculateFromGrid();
 
         if (autoRoadBuilder != null)
             autoRoadBuilder.ProcessTick();

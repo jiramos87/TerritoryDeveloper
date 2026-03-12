@@ -225,6 +225,9 @@ public class GeographyManager : MonoBehaviour
     /// </summary>
     public void ReinitializeGeographyForNewGame()
     {
+        if (regionalMapManager != null)
+            regionalMapManager.InitializeRegionalMap();
+
         if (terrainManager != null)
             terrainManager.InitializeHeightMap();
 
@@ -233,12 +236,19 @@ public class GeographyManager : MonoBehaviour
 
         if (interstateManager != null)
         {
-            const int maxInterstateAttempts = 3;
-            for (int attempt = 0; attempt < maxInterstateAttempts; attempt++)
+            if (terrainManager == null || terrainManager.GetHeightMap() == null || gridManager == null)
             {
-                interstateManager.GenerateAndPlaceInterstate();
-                if (interstateManager.InterstatePositions != null && interstateManager.InterstatePositions.Count >= 2)
-                    break;
+                DebugHelper.LogWarning("GeographyManager: Skipping interstate - terrainManager, heightMap, or gridManager missing.");
+            }
+            else
+            {
+                const int maxInterstateAttempts = 3;
+                for (int attempt = 0; attempt < maxInterstateAttempts; attempt++)
+                {
+                    interstateManager.GenerateAndPlaceInterstate();
+                    if (interstateManager.InterstatePositions != null && interstateManager.InterstatePositions.Count >= 2)
+                        break;
+                }
             }
         }
 

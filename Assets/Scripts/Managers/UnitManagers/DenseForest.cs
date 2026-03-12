@@ -19,7 +19,7 @@ public class DenseForest : MonoBehaviour, IForest
 
   public void Initialize ()
   {
-      WaterConsumption = 10; // Example value
+      WaterConsumption = 5; // Example value
       ConstructionCost = 0; // Example value
       Prefab = forestPrefab;
       ForestType = Forest.ForestType.Dense;

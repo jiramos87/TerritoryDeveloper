@@ -50,22 +50,22 @@ public class ZoneAttributes
     // RESIDENTIAL BUILDINGS: Provide population (job seekers)
     // Note: The small job values represent internal services (building maintenance, etc.)
     // These should NOT count towards city-wide employment in the demand calculation
-    public static readonly ZoneAttributes ResidentialLightBuilding = new ZoneAttributes(0, 5, 100, 10, 5, 0); // CHANGED: 0 jobs (internal only)
-    public static readonly ZoneAttributes ResidentialMediumBuilding = new ZoneAttributes(0, 20, 100, 40, 20, 0); // CHANGED: 0 jobs (internal only)
-    public static readonly ZoneAttributes ResidentialHeavyBuilding = new ZoneAttributes(0, 50, 100, 80, 50, 0); // CHANGED: 0 jobs (internal only)
+    public static readonly ZoneAttributes ResidentialLightBuilding = new ZoneAttributes(0, 5, 100, 10, 2, 0); // CHANGED: 0 jobs (internal only)
+    public static readonly ZoneAttributes ResidentialMediumBuilding = new ZoneAttributes(0, 20, 100, 40, 10, 0); // CHANGED: 0 jobs (internal only)
+    public static readonly ZoneAttributes ResidentialHeavyBuilding = new ZoneAttributes(0, 50, 100, 80, 25, 0); // CHANGED: 0 jobs (internal only)
 
     // COMMERCIAL BUILDINGS: Provide jobs (retail, services, office work)
-    public static readonly ZoneAttributes CommercialLightBuilding = new ZoneAttributes(0, 0, 100, 40, 20, 8);
-    public static readonly ZoneAttributes CommercialMediumBuilding = new ZoneAttributes(0, 0, 100, 80, 40, 15);
-    public static readonly ZoneAttributes CommercialHeavyBuilding = new ZoneAttributes(0, 0, 100, 160, 80, 25);
+    public static readonly ZoneAttributes CommercialLightBuilding = new ZoneAttributes(0, 0, 100, 40, 10, 8);
+    public static readonly ZoneAttributes CommercialMediumBuilding = new ZoneAttributes(0, 0, 100, 80, 20, 15);
+    public static readonly ZoneAttributes CommercialHeavyBuilding = new ZoneAttributes(0, 0, 100, 160, 40, 25);
 
     // INDUSTRIAL BUILDINGS: Provide jobs (manufacturing, production)
-    public static readonly ZoneAttributes IndustrialLightBuilding = new ZoneAttributes(0, 0, 5, 60, 30, 12);
-    public static readonly ZoneAttributes IndustrialMediumBuilding = new ZoneAttributes(0, 0, 100, 120, 60, 25);
-    public static readonly ZoneAttributes IndustrialHeavyBuilding = new ZoneAttributes(0, 0, 100, 240, 120, 40);
+    public static readonly ZoneAttributes IndustrialLightBuilding = new ZoneAttributes(0, 0, 5, 60, 15, 12);
+    public static readonly ZoneAttributes IndustrialMediumBuilding = new ZoneAttributes(0, 0, 100, 120, 30, 25);
+    public static readonly ZoneAttributes IndustrialHeavyBuilding = new ZoneAttributes(0, 0, 100, 240, 60, 40);
 
     // Infrastructure
-    public static readonly ZoneAttributes Road = new ZoneAttributes(50, 0, 0, 100, 0, 0);
+    public static readonly ZoneAttributes Road = new ZoneAttributes(50, 0, 0, 50, 0, 0);
     public static readonly ZoneAttributes Grass = new ZoneAttributes(0, 0, 0, 0, 0, 0);
     public static readonly ZoneAttributes Water = new ZoneAttributes(0, 0, 0, 0, 0, 0);
 }

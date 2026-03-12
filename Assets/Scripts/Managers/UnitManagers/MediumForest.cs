@@ -21,7 +21,7 @@ public class MediumForest : MonoBehaviour, IForest
     /// </summary>
     public void Initialize()
     {
-        WaterConsumption = 7; // Moderate water requirement
+        WaterConsumption = 3; // Moderate water requirement
         ConstructionCost = 0; // Free to place
         Prefab = forestPrefab;
         ForestType = Forest.ForestType.Medium;
