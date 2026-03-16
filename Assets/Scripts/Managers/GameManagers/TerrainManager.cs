@@ -575,13 +575,14 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True if terrain at (x,y) allows building placement: Flat only.
-    /// All slope types (cardinal, diagonal, corner) are rejected until slope building support is implemented.
+    /// True if terrain at (x,y) allows building placement. Flat terrain always allowed.
+    /// Slopes allowed only for 1x1 buildings (FEAT-34).
     /// </summary>
-    private bool IsTerrainPlaceableForBuilding(int x, int y)
+    private bool IsTerrainPlaceableForBuilding(int x, int y, int buildingSize = 1)
     {
         TerrainSlopeType slope = GetTerrainSlopeTypeAt(x, y);
-        return slope == TerrainSlopeType.Flat;
+        if (slope == TerrainSlopeType.Flat) return true;
+        return buildingSize == 1;
     }
 
     /// <summary>
@@ -1422,7 +1423,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                     }
                 }
 
-                if (!IsTerrainPlaceableForBuilding(checkX, checkY))
+                if (!IsTerrainPlaceableForBuilding(checkX, checkY, size))
                 {
                     if (!allowCoastalSlope || !IsAdjacentToWaterHeight(checkX, checkY))
                     {
@@ -1449,8 +1450,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True if a road can be placed at (x,y): not occupied, and terrain is flat or cardinal slope only.
-    /// Water cells (height 0) are allowed for bridge placement. Diagonal slopes have no road prefabs and are rejected.
+    /// True if a road can be placed at (x,y): not occupied, and terrain is flat, cardinal, or diagonal slope.
+    /// Water cells (height 0) are allowed for bridge placement. Diagonal slopes use orthogonal road prefabs (FEAT-05).
+    /// Corner slopes (NEUp, NWUp, SEUp, SWUp) have no prefabs yet and are rejected.
     /// </summary>
     public bool CanPlaceRoad(int x, int y)
     {
@@ -1470,11 +1472,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             case TerrainSlopeType.South:
             case TerrainSlopeType.East:
             case TerrainSlopeType.West:
-                return true;
             case TerrainSlopeType.NorthEast:
             case TerrainSlopeType.NorthWest:
             case TerrainSlopeType.SouthEast:
             case TerrainSlopeType.SouthWest:
+                return true;
             case TerrainSlopeType.NorthEastUp:
             case TerrainSlopeType.NorthWestUp:
             case TerrainSlopeType.SouthEastUp:

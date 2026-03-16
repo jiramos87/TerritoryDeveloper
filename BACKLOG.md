@@ -7,19 +7,13 @@
 
 ## In Progress
 
-(none)
-
-## High Priority
-
-- [ ] **FEAT-34** — Zoning and building on slopes
-  - Type: feature
-  - Files: `TerrainManager.cs`, `ZoneManager.cs`, `BuildingPlacementService.cs`, `AutoZoningManager.cs`, `RoadCacheService.cs`, slope building prefabs
-  - Notes: Currently only Flat terrain can be zoned. Allow zoning and building on cardinal slopes (N/S/E/W) and eventually diagonal/corner slopes. Requires prefabs for buildings on slopes. Related to FEAT-05 (roads on diagonal slopes).
-
 - [ ] **FEAT-05** — Streets must be able to climb diagonal slopes using orthogonal prefabs
   - Type: feature
   - Files: `RoadManager.cs`, `TerrainManager.cs`, `GridManager.cs`
   - Notes: Streets currently do not climb diagonal slopes.
+
+
+## High Priority
 
 - [ ] **BUG-23** — Interstate route generation is flaky; never created in New Game flow
   - Type: fix
@@ -226,6 +220,7 @@
 
 ## Completed (last 30 days)
 
+- [x] **FEAT-34** — Zoning and building on slopes (2026-03-16)
 - [x] **FEAT-33** — Urban remodeling: expropriations and redevelopment (2026-03-12)
 - [x] **FEAT-31** — Auto roads grow toward high desirability areas (2026-03-12)
 - [x] **FEAT-30** — Mini map layer toggles + desirability visualization (2026-03-12)

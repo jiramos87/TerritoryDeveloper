@@ -29,6 +29,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     public DemandManager demandManager;
     public WaterManager waterManager;
     public InterstateManager interstateManager;
+    public SlopePrefabRegistry slopePrefabRegistry;
     #endregion
 
     #region Zone Prefabs and Configuration
@@ -368,8 +369,30 @@ public class ZoneManager : MonoBehaviour, IZoneManager
             }
         }
 
+        if (slopePrefabRegistry != null)
+        {
+            GameObject slopePrefab = slopePrefabRegistry.FindByName(trimmedName);
+            if (slopePrefab != null) return slopePrefab;
+        }
+
         Debug.LogWarning($"Prefab with name {trimmedName} not found.");
         return null;
+    }
+
+    /// <summary>
+    /// Returns the slope variant of a flat prefab for the cell at (x,y),
+    /// or the flat prefab itself if on flat terrain or no slope variant exists.
+    /// </summary>
+    private GameObject GetSlopeAwarePrefab(GameObject flatPrefab, int x, int y)
+    {
+        if (slopePrefabRegistry == null || flatPrefab == null) return flatPrefab;
+        if (gridManager == null || gridManager.terrainManager == null) return flatPrefab;
+
+        TerrainSlopeType slopeType = gridManager.terrainManager.GetTerrainSlopeTypeAt(x, y);
+        if (slopeType == TerrainSlopeType.Flat) return flatPrefab;
+
+        GameObject slopeVariant = slopePrefabRegistry.GetSlopeVariant(flatPrefab, slopeType);
+        return slopeVariant ?? flatPrefab;
     }
     #endregion
 
@@ -463,7 +486,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
                     Cell cell = gridManager.GetCell(x, y);
                     Vector2 worldPos = cell.transformPosition;
 
-                    GameObject zoningPrefab = GetRandomZonePrefab(uiManager.GetSelectedZoneType());
+                    GameObject zoningPrefab = GetSlopeAwarePrefab(GetRandomZonePrefab(uiManager.GetSelectedZoneType()), x, y);
 
                     GameObject previewZoningTile = Instantiate(
                       zoningPrefab,
@@ -679,7 +702,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         {
             gridManager.DestroyCellChildrenExceptForest(cell.gameObject, gridPosition);
 
-            GameObject zonePrefab = GetRandomZonePrefab(selectedZoneType);
+            GameObject zonePrefab = GetSlopeAwarePrefab(GetRandomZonePrefab(selectedZoneType), (int)gridPosition.x, (int)gridPosition.y);
 
             if (zonePrefab == null)
             {
@@ -731,7 +754,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
 
         gridManager.DestroyCellChildrenExceptForest(cell.gameObject, gridPosition);
 
-        GameObject zonePrefab = GetRandomZonePrefab(zoneType, 1);
+        GameObject zonePrefab = GetSlopeAwarePrefab(GetRandomZonePrefab(zoneType, 1), (int)gridPosition.x, (int)gridPosition.y);
         if (zonePrefab == null)
             return false;
 
@@ -1158,7 +1181,8 @@ public class ZoneManager : MonoBehaviour, IZoneManager
 
     void PlaceZoneBuilding(Vector2[] section, Zone.ZoneType selectedZoneType, ZoneAttributes zoneAttributes, Zone.ZoneType zoningType, int buildingSize)
     {
-        GameObject prefab = GetRandomZonePrefab(selectedZoneType, buildingSize);
+        Vector2 firstPos = section[0];
+        GameObject prefab = GetSlopeAwarePrefab(GetRandomZonePrefab(selectedZoneType, buildingSize), (int)firstPos.x, (int)firstPos.y);
 
         if (prefab == null)
         {
@@ -1180,10 +1204,8 @@ public class ZoneManager : MonoBehaviour, IZoneManager
             cityStats.RemoveZoneBuildingCount(zoningType);
         }
 
-        Vector2 firstPosition = section[0];
-
-        GameObject firstPositionGridCell = gridManager.GetGridCell(firstPosition);
-        gridManager.GetCell((int)firstPosition.x, (int)firstPosition.y).isPivot = true;
+        GameObject firstPositionGridCell = gridManager.GetGridCell(firstPos);
+        gridManager.GetCell((int)firstPos.x, (int)firstPos.y).isPivot = true;
 
         PlaceZoneBuildingTile(prefab, firstPositionGridCell, buildingSize);
 

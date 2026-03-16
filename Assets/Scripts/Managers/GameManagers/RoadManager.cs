@@ -698,24 +698,76 @@ public class RoadManager : MonoBehaviour, IRoadManager
     GameObject TryGetSlopePrefabForCell(Vector2 currGridPos, int currentHeight)
     {
         Vector2? slopeDir = GetTerrainSlopeDirection(currGridPos, currentHeight);
-        if (!slopeDir.HasValue) return null;
-        return GetSlopePrefabForDirection(slopeDir.Value);
+        if (slopeDir.HasValue)
+            return GetSlopePrefabForDirection(slopeDir.Value);
+
+        if (terrainManager == null) return null;
+        int x = (int)currGridPos.x;
+        int y = (int)currGridPos.y;
+        TerrainSlopeType slopeType = terrainManager.GetTerrainSlopeTypeAt(x, y);
+        Vector2? diagonalFallback = GetOrthogonalDirectionForDiagonalSlope(slopeType);
+        if (diagonalFallback.HasValue)
+            return GetSlopePrefabForDirection(diagonalFallback.Value);
+        return null;
+    }
+
+    /// <summary>
+    /// Maps diagonal slope types to an orthogonal direction for road prefab selection (FEAT-05).
+    /// When lineDirection is provided, picks the orthogonal that is parallel to the road segment.
+    /// </summary>
+    Vector2? GetOrthogonalDirectionForDiagonalSlope(TerrainSlopeType slopeType, bool? isHorizontalLine = null)
+    {
+        switch (slopeType)
+        {
+            case TerrainSlopeType.NorthEast:
+                if (isHorizontalLine == true) return new Vector2(0, 1);
+                if (isHorizontalLine == false) return new Vector2(-1, 0);
+                return new Vector2(-1, 0);
+            case TerrainSlopeType.NorthWest:
+                if (isHorizontalLine == true) return new Vector2(0, -1);
+                if (isHorizontalLine == false) return new Vector2(-1, 0);
+                return new Vector2(-1, 0);
+            case TerrainSlopeType.SouthEast:
+                if (isHorizontalLine == true) return new Vector2(0, 1);
+                if (isHorizontalLine == false) return new Vector2(1, 0);
+                return new Vector2(1, 0);
+            case TerrainSlopeType.SouthWest:
+                if (isHorizontalLine == true) return new Vector2(0, -1);
+                if (isHorizontalLine == false) return new Vector2(1, 0);
+                return new Vector2(1, 0);
+            default:
+                return null;
+        }
     }
 
     /// <summary>
     /// Returns slope road prefab only when terrain slope direction is parallel to the road line.
     /// For horizontal lines use slope only if terrain slopes E-W; for vertical lines only if N-S.
     /// Prevents lateral slopes from showing wrong slope prefab on straight segments.
+    /// For diagonal slopes (FEAT-05), maps to orthogonal prefab parallel to the road.
     /// </summary>
     GameObject TryGetSlopePrefabForStraightSegment(Vector2 currGridPos, int currentHeight, bool isHorizontalLine)
     {
         Vector2? slopeDir = GetTerrainSlopeDirection(currGridPos, currentHeight);
-        if (!slopeDir.HasValue) return null;
-        int dx = Mathf.RoundToInt(slopeDir.Value.x);
-        int dy = Mathf.RoundToInt(slopeDir.Value.y);
-        bool slopeParallelToLine = isHorizontalLine ? (dx != 0 && dy == 0) : (dx == 0 && dy != 0);
-        if (!slopeParallelToLine) return null;
-        return GetSlopePrefabForDirection(slopeDir.Value);
+        if (slopeDir.HasValue)
+        {
+            int dx = Mathf.RoundToInt(slopeDir.Value.x);
+            int dy = Mathf.RoundToInt(slopeDir.Value.y);
+            bool slopeParallelToLine = isHorizontalLine ? (dx != 0 && dy == 0) : (dx == 0 && dy != 0);
+            if (slopeParallelToLine)
+                return GetSlopePrefabForDirection(slopeDir.Value);
+        }
+
+        if (terrainManager != null)
+        {
+            int x = (int)currGridPos.x;
+            int y = (int)currGridPos.y;
+            TerrainSlopeType slopeType = terrainManager.GetTerrainSlopeTypeAt(x, y);
+            Vector2? diagonalDir = GetOrthogonalDirectionForDiagonalSlope(slopeType, isHorizontalLine);
+            if (diagonalDir.HasValue)
+                return GetSlopePrefabForDirection(diagonalDir.Value);
+        }
+        return null;
     }
 
     /// <summary>
