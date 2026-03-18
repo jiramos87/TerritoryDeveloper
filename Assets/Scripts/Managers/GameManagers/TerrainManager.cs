@@ -473,6 +473,18 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             sr.sortingOrder = sortingOrder;
         }
 
+        // Land cell adjacent to water: use water slope, not land slope or grass (avoids black voids at coast)
+        if (newHeight >= 1 && IsAdjacentToWaterHeight(x, y))
+        {
+            GameObject waterSlopePrefab = DetermineWaterSlopePrefab(x, y);
+            if (waterSlopePrefab != null)
+                PlaceWaterSlope(x, y, waterSlopePrefab);
+            else
+                PlaceFlatTerrain(x, y);  // fallback if pattern not recognized
+            PlaceCliffWalls(x, y);
+            return;
+        }
+
         if (RequiresSlope(x, y, newHeight))
         {
             GameObject slopePrefab = DetermineSlopePrefab(x, y);
@@ -670,6 +682,20 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
+    /// True if cell is land (height >= 1) with at least one water neighbor.
+    /// Used to enforce road buffer from coastlines: normal roads should stay 1 cell from coast.
+    /// </summary>
+    public bool IsWaterSlopeCell(int x, int y)
+    {
+        if (heightMap == null)
+            EnsureHeightMapLoaded();
+        if (heightMap == null || !heightMap.IsValidPosition(x, y))
+            return false;
+        int h = heightMap.GetHeight(x, y);
+        return h >= 1 && IsAdjacentToWaterHeight(x, y);
+    }
+
+    /// <summary>
     /// Replaces terrain with flat grass. Destroys slope and grass children, then places grass.
     /// Used when cell is flat or a plateau (no higher neighbors).
     /// </summary>
@@ -743,9 +769,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                     }
                     GameObject waterSlopePrefab = DetermineWaterSlopePrefab(nx, ny);
                     if (waterSlopePrefab == null)
-                    {
                         continue;
-                    }
 
                     PlaceWaterSlope(nx, ny, waterSlopePrefab);
                 }
@@ -1552,8 +1576,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// True if a road can be placed at (x,y): not occupied, and terrain is flat, cardinal, or diagonal slope.
-    /// Water cells (height 0) are allowed for bridge placement. Diagonal slopes use orthogonal road prefabs (FEAT-05).
-    /// Corner slopes (NEUp, NWUp, SEUp, SWUp) have no prefabs yet and are rejected.
+    /// Water cells (height 0) are allowed for bridge placement. Water slope cells (land adjacent to water)
+    /// are rejected for normal roads to keep a 1-cell buffer from coastlines. Diagonal slopes use
+    /// orthogonal road prefabs (FEAT-05). Corner slopes (NEUp, NWUp, SEUp, SWUp) have no prefabs yet and are rejected.
     /// </summary>
     public bool CanPlaceRoad(int x, int y)
     {
@@ -1565,6 +1590,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             if (c != null && c.GetCellInstanceHeight() == 0)
                 return true;
         }
+        if (IsWaterSlopeCell(x, y))
+            return false;
         TerrainSlopeType slope = GetTerrainSlopeTypeAt(x, y);
         switch (slope)
         {

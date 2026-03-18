@@ -125,6 +125,9 @@ namespace Territory.Core
             if (!IsWalkable(toX, toY)) return int.MaxValue;
             if (grid.terrainManager == null) return RoadPathCostConstants.Flat;
 
+            if (grid.terrainManager.IsWaterSlopeCell(toX, toY))
+                return RoadPathCostConstants.WaterSlopeCost;
+
             var heightMap = grid.terrainManager.GetHeightMap();
             int heightDiff = 0;
             if (heightMap != null)

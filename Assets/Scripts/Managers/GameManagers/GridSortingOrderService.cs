@@ -55,7 +55,11 @@ namespace Territory.Core
                     Zone zone = child.GetComponent<Zone>();
                     if (zone != null)
                     {
-                        if (zone.zoneType == Zone.ZoneType.Road) order = terrainOrder + ROAD_SORTING_OFFSET;
+                        if (zone.zoneType == Zone.ZoneType.Road)
+                        {
+                            int effectiveHeight = (cell.height == 0) ? 1 : cell.height;  // Bridge over water
+                            order = grid.terrainManager.CalculateTerrainSortingOrder(x, y, effectiveHeight) + ROAD_SORTING_OFFSET;
+                        }
                         else if (zone.zoneCategory == Zone.ZoneCategory.Zoning) order = terrainOrder + 0;
                         else if (zone.zoneCategory == Zone.ZoneCategory.Building) order = terrainOrder + 10;
                         else order = terrainOrder;
@@ -258,12 +262,38 @@ namespace Territory.Core
 
         /// <summary>
         /// Returns the sorting order to use for a road tile at (x, y) at the given height level.
+        /// Caps order when adjacent higher terrain is "in front" (cut-through scenario).
         /// </summary>
         public int GetRoadSortingOrderForCell(int x, int y, int height)
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return 0;
             if (grid.terrainManager == null) return 0;
-            return grid.terrainManager.CalculateTerrainSortingOrder(x, y, height) + ROAD_SORTING_OFFSET;
+            int roadSortingOrder = grid.terrainManager.CalculateTerrainSortingOrder(x, y, height) + ROAD_SORTING_OFFSET;
+
+            var heightMap = grid.terrainManager.GetHeightMap();
+            if (heightMap != null)
+            {
+                int[] adx = { 1, -1, 0, 0, 1, 1, -1, -1 };
+                int[] ady = { 0, 0, 1, -1, 1, -1, 1, -1 };
+                int roadDepth = x + y;
+                int minFrontHigherOrder = int.MaxValue;
+                for (int d = 0; d < 8; d++)
+                {
+                    int nx = x + adx[d];
+                    int ny = y + ady[d];
+                    if (nx < 0 || nx >= grid.width || ny < 0 || ny >= grid.height) continue;
+                    int nh = heightMap.GetHeight(nx, ny);
+                    if (nh < height) continue;
+                    if ((nx + ny) >= roadDepth) continue;
+                    int adjOrder = GetCellMaxContentSortingOrder(nx, ny);
+                    if (adjOrder != int.MinValue && adjOrder < minFrontHigherOrder)
+                        minFrontHigherOrder = adjOrder;
+                }
+                if (minFrontHigherOrder != int.MaxValue)
+                    roadSortingOrder = Mathf.Min(roadSortingOrder, minFrontHigherOrder - 1);
+            }
+
+            return roadSortingOrder;
         }
 
         /// <summary>
@@ -297,6 +327,30 @@ namespace Territory.Core
             {
                 int bridgeOrder = grid.terrainManager.CalculateTerrainSortingOrder(x, y, 1) + ROAD_SORTING_OFFSET;
                 roadSortingOrder = Mathf.Max(roadSortingOrder, bridgeOrder);
+            }
+
+            // Cut-through: road at lower height must render behind adjacent higher terrain that is "in front"
+            var heightMap = grid.terrainManager.GetHeightMap();
+            if (heightMap != null)
+            {
+                int[] adx = { 1, -1, 0, 0, 1, 1, -1, -1 };
+                int[] ady = { 0, 0, 1, -1, 1, -1, 1, -1 };
+                int roadDepth = x + y;
+                int minFrontHigherOrder = int.MaxValue;
+                for (int d = 0; d < 8; d++)
+                {
+                    int nx = x + adx[d];
+                    int ny = y + ady[d];
+                    if (nx < 0 || nx >= grid.width || ny < 0 || ny >= grid.height) continue;
+                    int nh = heightMap.GetHeight(nx, ny);
+                    if (nh < cellHeight) continue;
+                    if ((nx + ny) >= roadDepth) continue;
+                    int adjOrder = GetCellMaxContentSortingOrder(nx, ny);
+                    if (adjOrder != int.MinValue && adjOrder < minFrontHigherOrder)
+                        minFrontHigherOrder = adjOrder;
+                }
+                if (minFrontHigherOrder != int.MaxValue)
+                    roadSortingOrder = Mathf.Min(roadSortingOrder, minFrontHigherOrder - 1);
             }
 
             SpriteRenderer[] renderers = tile.GetComponentsInChildren<SpriteRenderer>();

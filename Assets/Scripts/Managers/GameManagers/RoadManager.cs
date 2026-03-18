@@ -367,16 +367,25 @@ public class RoadManager : MonoBehaviour, IRoadManager
             return;
         }
 
-        var plan = terraformingService.ComputePathPlan(filteredPath);
+        var heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null) return;
+        filteredPath = StraightenBridgeSegments(filteredPath, heightMap);
+
+        if (!IsBridgePathValid(filteredPath, heightMap))
+        {
+            if (GameNotificationManager.Instance != null)
+                GameNotificationManager.Instance.PostWarning("Cannot build a valid bridge here. Draw a straighter path over water.");
+            return;
+        }
+
+        List<Vector2> expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(filteredPath);
+        var plan = terraformingService.ComputePathPlan(expandedPath);
         if (!plan.isValid)
         {
             if (GameNotificationManager.Instance != null)
                 GameNotificationManager.Instance.PostWarning("Road cannot cross terrain with height difference greater than 1. Choose a different path.");
             return;
         }
-
-        var heightMap = terrainManager.GetHeightMap();
-        if (heightMap == null) return;
 
         if (!plan.Apply(heightMap, terrainManager))
         {
@@ -386,7 +395,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         }
         currentPreviewPlan = plan;
 
-        var resolved = roadPrefabResolver.ResolveForPath(filteredPath, plan);
+        var resolved = roadPrefabResolver.ResolveForPath(expandedPath, plan);
         previewResolvedTiles.Clear();
         previewResolvedTiles.AddRange(resolved);
 
@@ -475,6 +484,158 @@ public class RoadManager : MonoBehaviour, IRoadManager
             }
         }
 
+        return line;
+    }
+
+    /// <summary>
+    /// True if cell is water (height 0) or water slope (land adjacent to water).
+    /// Used to define bridge segments for straightening.
+    /// </summary>
+    bool IsWaterOrWaterSlope(int x, int y, HeightMap heightMap)
+    {
+        if (heightMap == null || !heightMap.IsValidPosition(x, y)) return false;
+        if (heightMap.GetHeight(x, y) <= TerrainManager.SEA_LEVEL) return true;
+        return terrainManager != null && terrainManager.IsWaterSlopeCell(x, y);
+    }
+
+    /// <summary>
+    /// Replaces runs of consecutive water and water-slope cells with a straight Bresenham line.
+    /// Bridges must be straight; turns happen on land.
+    /// </summary>
+    List<Vector2> StraightenBridgeSegments(List<Vector2> path, HeightMap heightMap)
+    {
+        if (path == null || path.Count < 2 || heightMap == null) return path;
+
+        var result = new List<Vector2>();
+        int i = 0;
+        while (i < path.Count)
+        {
+            int x = (int)path[i].x;
+            int y = (int)path[i].y;
+            if (!IsWaterOrWaterSlope(x, y, heightMap))
+            {
+                result.Add(path[i]);
+                i++;
+                continue;
+            }
+            int j = i;
+            while (j < path.Count)
+            {
+                int xj = (int)path[j].x, yj = (int)path[j].y;
+                if (!IsWaterOrWaterSlope(xj, yj, heightMap))
+                    break;
+                j++;
+            }
+            j--;
+            if (j > i)
+            {
+                var straight = BresenhamStraightLine((int)path[i].x, (int)path[i].y, (int)path[j].x, (int)path[j].y);
+                foreach (var p in straight)
+                    result.Add(p);
+            }
+            else
+            {
+                result.Add(path[i]);
+            }
+            i = j + 1;
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Returns true if the path has valid bridge segments: at most one water run per crossing,
+    /// and each Bresenham straight line only passes through water or water-slope cells.
+    /// Invalid paths (multiple runs, or line crossing land) should be rejected.
+    /// </summary>
+    bool IsBridgePathValid(List<Vector2> path, HeightMap heightMap)
+    {
+        if (path == null || path.Count < 2 || heightMap == null) return true;
+
+        int runCount = 0;
+        bool inRun = false;
+        for (int i = 0; i < path.Count; i++)
+        {
+            int x = (int)path[i].x, y = (int)path[i].y;
+            bool isWaterOrSlope = IsWaterOrWaterSlope(x, y, heightMap);
+            if (isWaterOrSlope && !inRun)
+            {
+                runCount++;
+                inRun = true;
+            }
+            else if (!isWaterOrSlope)
+            {
+                inRun = false;
+            }
+        }
+        if (runCount > 1) return false;
+
+        inRun = false;
+        int runStart = -1, runEnd = -1;
+        for (int i = 0; i < path.Count; i++)
+        {
+            int x = (int)path[i].x, y = (int)path[i].y;
+            bool isWaterOrSlope = IsWaterOrWaterSlope(x, y, heightMap);
+            if (isWaterOrSlope && !inRun)
+            {
+                runStart = i;
+                runEnd = i;
+                inRun = true;
+            }
+            else if (isWaterOrSlope)
+            {
+                runEnd = i;
+            }
+            else
+            {
+                if (inRun && runEnd > runStart)
+                {
+                    var straight = BresenhamStraightLine(
+                        (int)path[runStart].x, (int)path[runStart].y,
+                        (int)path[runEnd].x, (int)path[runEnd].y);
+                    foreach (var p in straight)
+                    {
+                        int px = (int)p.x, py = (int)p.y;
+                        if (!heightMap.IsValidPosition(px, py)) return false;
+                        if (!IsWaterOrWaterSlope(px, py, heightMap)) return false;
+                    }
+                }
+                inRun = false;
+            }
+        }
+        if (inRun && runEnd > runStart)
+        {
+            var straight = BresenhamStraightLine(
+                (int)path[runStart].x, (int)path[runStart].y,
+                (int)path[runEnd].x, (int)path[runEnd].y);
+            foreach (var p in straight)
+            {
+                int px = (int)p.x, py = (int)p.y;
+                if (!heightMap.IsValidPosition(px, py)) return false;
+                if (!IsWaterOrWaterSlope(px, py, heightMap)) return false;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Bresenham straight line (no staircase). Used for bridge segments.
+    /// </summary>
+    static List<Vector2> BresenhamStraightLine(int x0, int y0, int x1, int y1)
+    {
+        var line = new List<Vector2>();
+        int dx = Mathf.Abs(x1 - x0);
+        int dy = Mathf.Abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx - dy;
+        while (true)
+        {
+            line.Add(new Vector2(x0, y0));
+            if (x0 == x1 && y0 == y1) break;
+            int e2 = err * 2;
+            if (e2 > -dy) { err -= dy; x0 += sx; }
+            if (e2 < dx) { err += dx; y0 += sy; }
+        }
         return line;
     }
 
@@ -915,13 +1076,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
             Vector2 dir = currGridPos - prevGridPos;
             bool isHorizontal = Mathf.Abs(dir.x) >= Mathf.Abs(dir.y);
             GameObject flatPrefab = isHorizontal ? roadTilePrefab2 : roadTilePrefab1;
-            Debug.Log($"[Road GetCorrectRoadPrefabForPath] ({gx},{gy}) prev=({prevGridPos.x},{prevGridPos.y}) forceFlat=>{(flatPrefab != null ? flatPrefab.name : "null")}");
             return flatPrefab;
         }
-        GameObject result = GetCorrectRoadPrefab(prevGridPos, currGridPos, true, false);
-        TerrainSlopeType slopeType = terrainManager != null ? terrainManager.GetTerrainSlopeTypeAt(gx, gy) : TerrainSlopeType.Flat;
-        Debug.Log($"[Road GetCorrectRoadPrefabForPath] ({gx},{gy}) prev=({prevGridPos.x},{prevGridPos.y}) slopeType={slopeType} => roadPrefab={(result != null ? result.name : "null")}");
-        return result;
+        return GetCorrectRoadPrefab(prevGridPos, currGridPos, true, false);
     }
 
     /// <summary>
@@ -943,39 +1100,32 @@ public class RoadManager : MonoBehaviour, IRoadManager
     public bool PlaceInterstateFromPath(List<Vector2Int> path)
     {
         if (path == null || path.Count == 0)
-        {
-            Debug.LogWarning("[Road] PlaceInterstateFromPath: path null or empty.");
             return false;
-        }
         if (roadPrefabResolver == null && gridManager != null && terrainManager != null)
             roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
         if (roadPrefabResolver == null || terraformingService == null || terrainManager == null)
-        {
-            Debug.LogWarning($"[Road] PlaceInterstateFromPath: missing deps resolver={roadPrefabResolver != null} terraform={terraformingService != null} terrain={terrainManager != null}");
             return false;
-        }
 
         var pathVec2 = new List<Vector2>();
         for (int i = 0; i < path.Count; i++)
             pathVec2.Add(new Vector2(path[i].x, path[i].y));
 
-        var plan = terraformingService.ComputePathPlan(pathVec2);
         var heightMap = terrainManager.GetHeightMap();
         if (heightMap == null)
-        {
-            Debug.LogWarning("[Road] PlaceInterstateFromPath: heightMap null.");
             return false;
-        }
+
+        List<Vector2> straightenedPath = StraightenBridgeSegments(pathVec2, heightMap);
+        if (!IsBridgePathValid(straightenedPath, heightMap))
+            return false;
+
+        List<Vector2> expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(straightenedPath);
+        var plan = terraformingService.ComputePathPlan(expandedPath);
         bool planValid = plan.isValid;
         bool applyOk = plan.Apply(heightMap, terrainManager);
         if (!planValid || !applyOk)
-        {
-            Debug.LogWarning($"[Road] PlaceInterstateFromPath FAILED: plan.isValid={planValid} Apply={applyOk}");
             return false;
-        }
 
-        var resolved = roadPrefabResolver.ResolveForPath(pathVec2, plan);
-        Debug.Log($"[Road] PlaceInterstateFromPath: path.Count={path.Count} resolved.Count={resolved.Count}");
+        var resolved = roadPrefabResolver.ResolveForPath(expandedPath, plan);
         for (int i = 0; i < resolved.Count; i++)
         {
             PlaceInterstateFromResolved(resolved[i]);
@@ -991,18 +1141,12 @@ public class RoadManager : MonoBehaviour, IRoadManager
         int x = resolved.gridPos.x;
         int y = resolved.gridPos.y;
         if (gridManager.IsCellOccupiedByBuilding(x, y))
-        {
-            Debug.Log($"[Road] PlaceInterstateFromResolved: ({x},{y}) skipped - cell occupied by building.");
             return;
-        }
 
         GameObject cell = gridManager.GetGridCell(new Vector2(x, y));
         Cell cellComponent = gridManager.GetCell(x, y);
         if (cell == null || cellComponent == null)
-        {
-            Debug.LogWarning($"[Road] PlaceInterstateFromResolved: ({x},{y}) cell or cellComponent null.");
             return;
-        }
 
         DestroyPreviousRoadTile(cell, new Vector2(x, y));
         cellComponent.RemoveForestForBuilding();
@@ -1019,7 +1163,6 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         gridManager.SetRoadSortingOrder(roadTile, x, y);
         gridManager.AddRoadToCache(resolved.gridPos);
-        Debug.Log($"[Road] PlaceInterstateFromResolved: ({x},{y}) placed prefab={prefab?.name ?? "null"}");
     }
 
     /// <summary>
@@ -1147,20 +1290,6 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         int terrainHeight = cellComponent.GetCellInstanceHeight();
         Vector2 worldPos = GetRoadTileWorldPosition(gridPos.x, gridPos.y, newPrefab, terrainHeight);
-
-        if (keepInterstateTint && gridManager != null)
-        {
-            string terrainPrefab = terrainPrefabName ?? "null";
-            TerrainSlopeType slopeType = terrainManager != null ? terrainManager.GetTerrainSlopeTypeAt(gridPos.x, gridPos.y) : TerrainSlopeType.Flat;
-            string roadReason = slopeType == TerrainSlopeType.Flat
-                ? "Flat terrain => flat road (RoadVertical/RoadHorizontal)"
-                : $"Slope {slopeType} => slope road prefab";
-            string terrainReason = slopeType == TerrainSlopeType.Flat
-                ? "All neighbors same height => flat grass"
-                : $"Neighbor height differences => slope prefab";
-            Debug.Log($"[Interstate Result] ({gridPos.x},{gridPos.y}) roadPrefab={(newPrefab != null ? newPrefab.name : "null")} terrainPrefab={terrainPrefab} slopeType={slopeType} h={terrainHeight}");
-            Debug.Log($"[Interstate Result] ({gridPos.x},{gridPos.y}) WHY road: {roadReason}. WHY terrain: {terrainReason}");
-        }
 
         GameObject roadTile = Instantiate(newPrefab, worldPos, Quaternion.identity);
         roadTile.transform.SetParent(cellComponent.gameObject.transform);

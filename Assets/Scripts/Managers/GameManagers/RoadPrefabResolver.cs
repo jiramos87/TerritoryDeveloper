@@ -83,8 +83,6 @@ public class RoadPrefabResolver
                 sortingOrder = sortingOrder
             });
         }
-        if (skipped > 0)
-            Debug.LogWarning($"[RoadPrefabResolver] ResolveForPath: skipped {skipped}/{path.Count} cells (cell null)");
         return result;
     }
 
@@ -105,7 +103,17 @@ public class RoadPrefabResolver
         bool hasDown = IsRoadAt(currGridPos + new Vector2(0, -1));
 
         int height = cell.GetCellInstanceHeight();
-        GameObject prefab = SelectFromConnectivity(prevGridPos, currGridPos, hasLeft, hasRight, hasUp, hasDown, height);
+        GameObject prefab;
+        if (terrainManager != null && terrainManager.IsWaterSlopeCell(x, y))
+        {
+            Vector2 dirIn = currGridPos - prevGridPos;
+            bool isHorizontal = Mathf.Abs(dirIn.x) >= Mathf.Abs(dirIn.y);
+            prefab = isHorizontal ? roadManager.roadTileBridgeHorizontal : roadManager.roadTileBridgeVertical;
+        }
+        else
+        {
+            prefab = SelectFromConnectivity(prevGridPos, currGridPos, hasLeft, hasRight, hasUp, hasDown, height);
+        }
         Vector2 worldPos = GetWorldPositionForPrefab(x, y, prefab, height, terrainManager?.GetTerrainSlopeTypeAt(x, y) ?? TerrainSlopeType.Flat);
 
         return new ResolvedRoadTile
@@ -141,6 +149,14 @@ public class RoadPrefabResolver
             return;
         }
 
+        if (terrainManager != null && terrainManager.IsWaterSlopeCell(x, y))
+        {
+            prefab = roadManager.roadTileBridgeVertical;
+            worldPos = gridManager.GetWorldPosition(x, y);
+            sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, height);
+            return;
+        }
+
         GameObject slopePrefab = TryGetSlopePrefabForCell(new Vector2(x, y), height);
         if (slopePrefab != null)
         {
@@ -164,6 +180,12 @@ public class RoadPrefabResolver
         int dyOut = Mathf.RoundToInt(dirOut.y);
 
         if (height == 0)
+        {
+            bool isHorizontal = Mathf.Abs(dirIn.x) >= Mathf.Abs(dirIn.y);
+            return isHorizontal ? roadManager.roadTileBridgeHorizontal : roadManager.roadTileBridgeVertical;
+        }
+
+        if (terrainManager != null && terrainManager.IsWaterSlopeCell((int)curr.x, (int)curr.y))
         {
             bool isHorizontal = Mathf.Abs(dirIn.x) >= Mathf.Abs(dirIn.y);
             return isHorizontal ? roadManager.roadTileBridgeHorizontal : roadManager.roadTileBridgeVertical;
@@ -432,6 +454,10 @@ public class RoadPrefabResolver
             return gridManager.GetWorldPositionVector(x, y, 1);
 
         if (!IsDiagonalRoadPrefab(prefab))
+            return gridManager.GetWorldPosition(x, y);
+
+        // Cut-through: when terrain was flattened, place elbow at cell position (not upper neighbor).
+        if (slopeType == TerrainSlopeType.Flat)
             return gridManager.GetWorldPosition(x, y);
 
         int upperX = x, upperY = y;

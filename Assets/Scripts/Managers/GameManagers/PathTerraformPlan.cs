@@ -29,6 +29,12 @@ public class PathTerraformPlan
     public bool isValid = true;
 
     /// <summary>
+    /// When true, only path cells are flattened; adjacent terrain keeps its height, creating
+    /// a "cut" with slopes/cliffs between higher sectors and the lowered road.
+    /// </summary>
+    public bool isCutThrough;
+
+    /// <summary>
     /// Applies the terraforming plan: sets heights on the heightmap and refreshes terrain visuals.
     /// Two-phase: first set all heights so RestoreTerrainForCell sees correct neighbors, then restore terrain.
     /// Uses forceFlat/forceSlopeType so terrain matches the plan regardless of apply order.
@@ -38,16 +44,27 @@ public class PathTerraformPlan
     {
         if (heightMap == null || terrainManager == null) return false;
 
-        // Phase 1: Set all heights so neighbor-dependent terrain logic sees correct state
+        // Phase 1: Set all heights so neighbor-dependent terrain logic sees correct state.
+        // Skip water and water slope cells - bridge goes on top, no terrain modification.
         foreach (var cell in pathCells)
         {
             if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
+            {
+                int h = heightMap.GetHeight(cell.position.x, cell.position.y);
+                if (h <= TerrainManager.SEA_LEVEL || terrainManager.IsWaterSlopeCell(cell.position.x, cell.position.y))
+                    continue;
                 heightMap.SetHeight(cell.position.x, cell.position.y, cell.targetHeight);
+            }
         }
         foreach (var cell in adjacentCells)
         {
             if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
+            {
+                int h = heightMap.GetHeight(cell.position.x, cell.position.y);
+                if (h <= TerrainManager.SEA_LEVEL || terrainManager.IsWaterSlopeCell(cell.position.x, cell.position.y))
+                    continue;
                 heightMap.SetHeight(cell.position.x, cell.position.y, cell.targetHeight);
+            }
         }
 
         if (!ValidateNoHeightDiffGreaterThanOne(heightMap))
@@ -68,9 +85,13 @@ public class PathTerraformPlan
 
         // Phase 2: Restore terrain for all affected cells with correct force flags.
         // Refresh all path cells (neighbors may have changed) and modified adjacent cells.
+        // Skip water and water slope cells - bridge goes on top, no terrain modification.
         foreach (var cell in pathCells)
         {
             if (!heightMap.IsValidPosition(cell.position.x, cell.position.y)) continue;
+            int h = heightMap.GetHeight(cell.position.x, cell.position.y);
+            if (h <= TerrainManager.SEA_LEVEL || terrainManager.IsWaterSlopeCell(cell.position.x, cell.position.y))
+                continue;
             if (cell.action != TerraformingService.TerraformAction.None)
             {
                 bool flat = cell.postTerraformSlopeType == TerrainSlopeType.Flat;
@@ -93,7 +114,12 @@ public class PathTerraformPlan
         foreach (var cell in adjacentCells)
         {
             if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
+            {
+                int h = heightMap.GetHeight(cell.position.x, cell.position.y);
+                if (h <= TerrainManager.SEA_LEVEL || terrainManager.IsWaterSlopeCell(cell.position.x, cell.position.y))
+                    continue;
                 terrainManager.RestoreTerrainForCell(cell.position.x, cell.position.y, null, forceFlat: true);
+            }
         }
 
         // Phase 3: Refresh cardinal neighbors of all modified cells so their slope/cliff sprites

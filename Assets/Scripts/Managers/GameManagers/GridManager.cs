@@ -1085,7 +1085,8 @@ public class GridManager : MonoBehaviour, IGridManager
         float maxY = Mathf.Max(p0.y, p1.y, p2.y, p3.y);
 
         // Inset rect toward center so hit areas don't overlap with neighbors (isometric AABB overlap).
-        const float insetFactor = 0.75f;
+        // 0.6 reduces gaps vs 0.75 while still avoiding excessive overlap in cut-through scenarios.
+        const float insetFactor = 0.6f;
         float width = maxX - minX;
         float height = maxY - minY;
         float insetW = width * (1f - insetFactor) * 0.5f;
@@ -1114,11 +1115,11 @@ public class GridManager : MonoBehaviour, IGridManager
         int gridX = (int)gridPos.x;
         int gridY = (int)gridPos.y;
 
-        // 5 candidate cells: center + 4 cross neighbors
+        // 9 candidate cells: center + 8 neighbors (3x3)
         List<Cell> candidates = new List<Cell>();
-        int[] dx = { 0, 1, -1, 0, 0 };
-        int[] dy = { 0, 0, 0, 1, -1 };
-        for (int i = 0; i < 5; i++)
+        int[] dx = { 0, 1, -1, 0, 0, 1, 1, -1, -1 };
+        int[] dy = { 0, 0, 0, 1, -1, 1, -1, 1, -1 };
+        for (int i = 0; i < 9; i++)
         {
             Cell c = GetCell(gridX + dx[i], gridY + dy[i]);
             if (c != null) candidates.Add(c);
@@ -1141,7 +1142,37 @@ public class GridManager : MonoBehaviour, IGridManager
             }
         }
 
+        if (best == null && candidates.Count > 0)
+            best = GetClosestCellByScreenDistance(mouseScreen, candidates, cam);
+
         return best;
+    }
+
+    /// <summary>
+    /// Returns the cell whose screen-space center is closest to the given mouse position.
+    /// Used as fallback when no cell's screen rect contains the mouse (e.g. gaps between insets).
+    /// </summary>
+    private Cell GetClosestCellByScreenDistance(Vector2 mouseScreen, List<Cell> candidates, Camera cam)
+    {
+        if (cam == null || candidates == null || candidates.Count == 0) return null;
+
+        Cell closest = null;
+        float minDistSq = float.MaxValue;
+
+        foreach (Cell cell in candidates)
+        {
+            Vector2 worldCenter = GetCellWorldPosition(cell);
+            Vector3 screenCenter = cam.WorldToScreenPoint(new Vector3(worldCenter.x, worldCenter.y, 0f));
+            float dx = mouseScreen.x - screenCenter.x;
+            float dy = mouseScreen.y - screenCenter.y;
+            float distSq = dx * dx + dy * dy;
+            if (distSq < minDistSq)
+            {
+                minDistSq = distSq;
+                closest = cell;
+            }
+        }
+        return closest;
     }
 
     /// <summary>
@@ -1165,21 +1196,14 @@ public class GridManager : MonoBehaviour, IGridManager
     }
 
     /// <summary>
-    /// Returns the cell under the mouse, using screen-space hit testing with height-aware fallback to the flat grid position.
+    /// Returns the cell under the mouse, using screen-space hit testing with closest-cell fallback when no rect contains the mouse.
     /// </summary>
     /// <param name="mouseWorldPoint">Mouse position in world space.</param>
     /// <returns>The cell under the mouse, or null if outside the grid.</returns>
     public Cell GetMouseGridCell(Vector2 mouseWorldPoint)
     {
         Vector2 gridPos = GetGridPosition(mouseWorldPoint);
-        Cell cell = GetCellFromWorldPoint(mouseWorldPoint, gridPos);
-
-        if (cell == null)
-        {
-            Cell gridPosCell = GetCell((int)gridPos.x, (int)gridPos.y);
-            return gridPosCell;
-        }
-        return cell;
+        return GetCellFromWorldPoint(mouseWorldPoint, gridPos);
     }
     /// <summary>
     /// Converts grid coordinates and height to a world-space position (height shifts the tile upward).

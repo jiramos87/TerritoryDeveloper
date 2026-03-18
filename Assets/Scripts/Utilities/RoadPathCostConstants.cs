@@ -10,6 +10,8 @@ public static class RoadPathCostConstants
     public const int CardinalSlope = 60;
     public const int DiagonalSlope = 35;
     public const int HeightDiffPenalty = 25;
+    /// <summary>Cost for water slope cells (land adjacent to water). Path prefers to stay 1 cell from coast.</summary>
+    public const int WaterSlopeCost = 500;
 
     /// <summary>
     /// Returns step cost for moving onto a cell with the given terrain slope and height difference.

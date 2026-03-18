@@ -439,7 +439,9 @@ public class InterstateManager : MonoBehaviour
 
                 TerrainSlopeType terrain = cellHeight == 0 ? TerrainSlopeType.Flat : terrainManager.GetTerrainSlopeTypeAt(neighbor.x, neighbor.y);
                 int heightDiff = Mathf.Abs(cellHeight - currentHeight);
-                int stepCost = RoadPathCostConstants.GetStepCost(terrain, heightDiff);
+                int stepCost = terrainManager.IsWaterSlopeCell(neighbor.x, neighbor.y)
+                    ? RoadPathCostConstants.WaterSlopeCost
+                    : RoadPathCostConstants.GetStepCost(terrain, heightDiff);
                 int tentative = (gScore.ContainsKey(current) ? gScore[current] : int.MaxValue) + stepCost;
                 if (!gScore.ContainsKey(neighbor) || tentative < gScore[neighbor])
                 {
@@ -568,7 +570,9 @@ public class InterstateManager : MonoBehaviour
 
                 TerrainSlopeType terrain = cellHeight == 0 ? TerrainSlopeType.Flat : terrainManager.GetTerrainSlopeTypeAt(c.x, c.y);
                 int heightDiff = Mathf.Abs(cellHeight - currentHeight);
-                int stepCost = RoadPathCostConstants.GetStepCost(terrain, heightDiff);
+                int stepCost = terrainManager.IsWaterSlopeCell(c.x, c.y)
+                    ? RoadPathCostConstants.WaterSlopeCost
+                    : RoadPathCostConstants.GetStepCost(terrain, heightDiff);
                 int dist = Mathf.Abs(c.x - end.x) + Mathf.Abs(c.y - end.y);
                 int score = dist + stepCost;
                 if (score < bestScore || (score == bestScore && Random.value > 0.5f))

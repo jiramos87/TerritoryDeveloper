@@ -584,7 +584,8 @@ public class GeographyManager : MonoBehaviour
                     }
                     else if (terrainManager != null && terrainManager.IsSeaLevelWaterObject(obj))
                     {
-                        newSortingOrder = -(y * gridManager.width + x + 110000);
+                        // Water below terrain at height 1; offset < DEPTH_MULTIPLIER (100) so depth ordering works with water slopes
+                        newSortingOrder = terrainManager.CalculateTerrainSortingOrder(x, y, 0) - 50;
                     }
                     else if (terrainManager != null && terrainManager.IsLandSlopeObject(obj))
                     {
@@ -605,9 +606,33 @@ public class GeographyManager : MonoBehaviour
                             if (zone != null)
                             {
                                 if (zone.zoneType == Zone.ZoneType.Water)
-                                    newSortingOrder = -(y * gridManager.width + x + 110000);
+                                {
+                                    // Bridge cell: ensure water is explicitly below the bridge
+                                    bool hasRoadInCell = false;
+                                    for (int j = 0; j < cell.transform.childCount; j++)
+                                    {
+                                        Zone z = cell.transform.GetChild(j).GetComponent<Zone>();
+                                        if (z != null && z.zoneType == Zone.ZoneType.Road) { hasRoadInCell = true; break; }
+                                    }
+                                    if (hasRoadInCell && terrainManager != null)
+                                    {
+                                        int bridgeOrder = terrainManager.CalculateTerrainSortingOrder(x, y, 1) + GridSortingOrderService.ROAD_SORTING_OFFSET;
+                                        newSortingOrder = bridgeOrder - 100;  // Guarantee water renders below bridge
+                                    }
+                                    else
+                                    {
+                                        // Water below terrain at height 1; offset < DEPTH_MULTIPLIER (100) so depth ordering works with water slopes
+                                        newSortingOrder = terrainManager.CalculateTerrainSortingOrder(x, y, 0) - 50;
+                                    }
+                                }
                                 else if (zone.zoneType == Zone.ZoneType.Road)
-                                    newSortingOrder = terrainOrder + GridSortingOrderService.ROAD_SORTING_OFFSET;
+                                {
+                                    // Bridge over water: use height 1 so bridge renders above water (matches SetRoadSortingOrder)
+                                    int effectiveHeight = (cellComponent.height == 0) ? 1 : cellComponent.height;
+                                    newSortingOrder = (terrainManager != null
+                                        ? terrainManager.CalculateTerrainSortingOrder(x, y, effectiveHeight)
+                                        : 0) + GridSortingOrderService.ROAD_SORTING_OFFSET;
+                                }
                                 else if (zone.zoneCategory == Zone.ZoneCategory.Zoning)
                                     newSortingOrder = terrainOrder + 0;
                                 else if (zone.zoneCategory == Zone.ZoneCategory.Building)
@@ -633,14 +658,17 @@ public class GeographyManager : MonoBehaviour
                                 newSortingOrder = terrainOrder;
                             }
                         }
-                        // Cells east of a multi-cell building: draw their content (forest, grass) on top of the building
-                        if (TryGetEastAdjacentBuildingOrder(x, y, out int eastBuildingOrder))
-                            newSortingOrder = Mathf.Max(newSortingOrder, eastBuildingOrder + 1);
-                        // Cells south or west of a multi-cell building: same boost so front-adjacent content draws on top
-                        if (TryGetSouthAdjacentBuildingOrder(x, y, out int southBuildingOrder))
-                            newSortingOrder = Mathf.Max(newSortingOrder, southBuildingOrder + 1);
-                        if (TryGetWestAdjacentBuildingOrder(x, y, out int westBuildingOrder))
-                            newSortingOrder = Mathf.Max(newSortingOrder, westBuildingOrder + 1);
+                        // Cells east/south/west of a multi-cell building: draw their content on top. Skip for water so it stays below bridges/roads.
+                        Zone zoneForBoost = obj.GetComponent<Zone>();
+                        if (zoneForBoost == null || zoneForBoost.zoneType != Zone.ZoneType.Water)
+                        {
+                            if (TryGetEastAdjacentBuildingOrder(x, y, out int eastBuildingOrder))
+                                newSortingOrder = Mathf.Max(newSortingOrder, eastBuildingOrder + 1);
+                            if (TryGetSouthAdjacentBuildingOrder(x, y, out int southBuildingOrder))
+                                newSortingOrder = Mathf.Max(newSortingOrder, southBuildingOrder + 1);
+                            if (TryGetWestAdjacentBuildingOrder(x, y, out int westBuildingOrder))
+                                newSortingOrder = Mathf.Max(newSortingOrder, westBuildingOrder + 1);
+                        }
                     }
                     SpriteRenderer[] renderers = obj.GetComponentsInChildren<SpriteRenderer>();
                     foreach (SpriteRenderer sr in renderers)

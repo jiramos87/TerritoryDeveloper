@@ -126,14 +126,14 @@ public class CursorManager : MonoBehaviour
             Vector3 mousePosition = cachedMainCamera.ScreenToWorldPoint(Input.mousePosition);
             Vector2 mousePosition2 = new Vector2(mousePosition.x, mousePosition.y);
 
-            Vector2 gridPosition = gridManager.GetGridPositionWithHeight(mousePosition2);
-
-            if (!gridManager.IsValidGridPosition(gridPosition))
+            Cell mouseCell = gridManager.GetMouseGridCell(mousePosition2);
+            if (mouseCell == null)
             {
                 previewInstance.SetActive(false);
                 UpdateCursorForUIHover();
                 return;
             }
+            Vector2 gridPosition = new Vector2(mouseCell.x, mouseCell.y);
 
             previewInstance.SetActive(true);
 

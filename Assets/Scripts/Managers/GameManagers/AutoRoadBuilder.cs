@@ -126,12 +126,8 @@ public class AutoRoadBuilder : MonoBehaviour
 
     public void ProcessTick()
     {
-        string d = SimDateStr();
         if (growthBudgetManager == null || roadManager == null || gridManager == null || cityStats == null)
-        {
-            Debug.Log($"[Sim {d}] [AutoRoadBuilder] ProcessTick: missing refs, skip.");
             return;
-        }
         if (!cityStats.simulateGrowth)
             return;
 
@@ -897,13 +893,15 @@ public class AutoRoadBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// True if (x,y) is valid for a road in direction streetDir: flat, cardinal, diagonal and corner slopes allowed; terraforming handles diagonal/corner. Water (height 0) is always suitable for bridge.
+    /// True if (x,y) is valid for a road in direction streetDir: flat, cardinal, diagonal and corner slopes allowed; terraforming handles diagonal/corner. Water (height 0) is always suitable for bridge. Water slope cells (coastline) are rejected to keep roads 1 cell from coast.
     /// </summary>
     private bool IsSuitableForRoad(int x, int y, Vector2Int streetDir)
     {
         Cell c = gridManager.GetCell(x, y);
         if (c != null && c.GetCellInstanceHeight() == 0)
             return true;
+        if (terrainManager != null && terrainManager.IsWaterSlopeCell(x, y))
+            return false;
         if (terrainManager == null) return true;
         TerrainSlopeType slope = terrainManager.GetTerrainSlopeTypeAt(x, y);
         switch (slope)
@@ -1002,26 +1000,32 @@ public class AutoRoadBuilder : MonoBehaviour
         }
         if (path.Count <= 1) return 0;
 
+        List<Vector2> expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(pathVec2);
+        plan = terraformingService.ComputePathPlan(expandedPath);
         var heightMap = terrainManager.GetHeightMap();
         if (heightMap == null || !plan.Apply(heightMap, terrainManager))
             return 0;
 
-        var resolved = roadManager.ResolvePathForRoads(pathVec2, plan);
+        var resolved = roadManager.ResolvePathForRoads(expandedPath, plan);
         var resolvedByPos = new Dictionary<Vector2Int, RoadPrefabResolver.ResolvedRoadTile>();
         for (int j = 0; j < resolved.Count; j++)
             resolvedByPos[resolved[j].gridPos] = resolved[j];
 
+        var expandedPathInt = new List<Vector2Int>();
+        for (int k = 0; k < expandedPath.Count; k++)
+            expandedPathInt.Add(new Vector2Int((int)expandedPath[k].x, (int)expandedPath[k].y));
+
         int placed = 0;
-        for (int i = 1; i < path.Count && placed < maxTiles; i++)
+        for (int i = 1; i < expandedPathInt.Count && placed < maxTiles; i++)
         {
-            Vector2Int p = path[i];
+            Vector2Int p = expandedPathInt[i];
             if (!resolvedByPos.TryGetValue(p, out var resolvedTile)) continue;
             if (gridManager.GetCell(p.x, p.y)?.zoneType == Zone.ZoneType.Road)
             {
                 roadSet.Add(p);
                 continue;
             }
-            Vector2Int dir = new Vector2Int(p.x - path[i - 1].x, p.y - path[i - 1].y);
+            Vector2Int dir = new Vector2Int(p.x - expandedPathInt[i - 1].x, p.y - expandedPathInt[i - 1].y);
             if ((dir.x != 0 || dir.y != 0) && HasParallelRoadTooClose(p, dir, minParallel, roadSet))
                 continue;
             if (growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile) && PlaceRoadTileInBatch(resolvedTile))
@@ -1096,26 +1100,32 @@ public class AutoRoadBuilder : MonoBehaviour
         }
         if (path.Count <= 1) return 0;
 
+        List<Vector2> expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(pathVec2);
+        plan = terraformingService.ComputePathPlan(expandedPath);
         var heightMap = terrainManager.GetHeightMap();
         if (heightMap == null || !plan.Apply(heightMap, terrainManager))
             return 0;
 
-        var resolved = roadManager.ResolvePathForRoads(pathVec2, plan);
+        var resolved = roadManager.ResolvePathForRoads(expandedPath, plan);
         var resolvedByPos = new Dictionary<Vector2Int, RoadPrefabResolver.ResolvedRoadTile>();
         for (int j = 0; j < resolved.Count; j++)
             resolvedByPos[resolved[j].gridPos] = resolved[j];
 
+        var expandedPathInt = new List<Vector2Int>();
+        for (int k = 0; k < expandedPath.Count; k++)
+            expandedPathInt.Add(new Vector2Int((int)expandedPath[k].x, (int)expandedPath[k].y));
+
         int placed = 0;
-        for (int i = 1; i < path.Count && placed < maxTiles; i++)
+        for (int i = 1; i < expandedPathInt.Count && placed < maxTiles; i++)
         {
-            Vector2Int p = path[i];
+            Vector2Int p = expandedPathInt[i];
             if (!resolvedByPos.TryGetValue(p, out var resolvedTile)) continue;
             if (gridManager.GetCell(p.x, p.y)?.zoneType == Zone.ZoneType.Road)
             {
                 roadSet.Add(p);
                 continue;
             }
-            Vector2Int dir = new Vector2Int(p.x - path[i - 1].x, p.y - path[i - 1].y);
+            Vector2Int dir = new Vector2Int(p.x - expandedPathInt[i - 1].x, p.y - expandedPathInt[i - 1].y);
             if ((dir.x != 0 || dir.y != 0) && HasParallelRoadTooClose(p, dir, minParallel, roadSet))
                 continue;
             if (growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile) && PlaceRoadTileInBatch(resolvedTile))

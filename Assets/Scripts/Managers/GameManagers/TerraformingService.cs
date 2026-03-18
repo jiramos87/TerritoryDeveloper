@@ -43,9 +43,10 @@ public class TerraformingService : MonoBehaviour
 
     /// <summary>
     /// Expands diagonal steps (dx!=0 and dy!=0) into two cardinal steps so road prefabs
-    /// and terraforming logic receive only orthogonal segments.
+    /// and terraforming logic receive only orthogonal segments. Public so RoadManager can
+    /// use the same expanded path for both ComputePathPlan and ResolveForPath.
     /// </summary>
-    static System.Collections.Generic.List<Vector2> ExpandDiagonalStepsToCardinal(System.Collections.Generic.IList<Vector2> path)
+    public static System.Collections.Generic.List<Vector2> ExpandDiagonalStepsToCardinal(System.Collections.Generic.IList<Vector2> path)
     {
         if (path == null || path.Count < 2) return new System.Collections.Generic.List<Vector2>(path ?? new Vector2[0]);
 
@@ -76,9 +77,19 @@ public class TerraformingService : MonoBehaviour
     /// </summary>
     public int ComputePathBaseHeight(System.Collections.Generic.IList<Vector2> path)
     {
-        if (terrainManager == null || path == null || path.Count == 0) return 1;
+        var (baseHeight, _) = ComputePathBaseHeightAndCutThrough(path);
+        return baseHeight;
+    }
+
+    /// <summary>
+    /// Returns base height and whether path crosses a hill (height variation with max >= 2).
+    /// Used for cut-through mode: flatten only path cells, leave adjacent terrain "cut" with cliffs.
+    /// </summary>
+    (int baseHeight, bool pathCrossesHill) ComputePathBaseHeightAndCutThrough(System.Collections.Generic.IList<Vector2> path)
+    {
+        if (terrainManager == null || path == null || path.Count == 0) return (1, false);
         var heightMap = terrainManager.GetHeightMap();
-        if (heightMap == null) return 1;
+        if (heightMap == null) return (1, false);
 
         int minHeight = int.MaxValue;
         int maxHeight = int.MinValue;
@@ -96,9 +107,9 @@ public class TerraformingService : MonoBehaviour
             maxHeight = Mathf.Max(maxHeight, h);
         }
 
-        if (maxHeight > minHeight)
-            return minHeight;
-        return minHeight < int.MaxValue ? minHeight : 1;
+        int baseHeight = maxHeight > minHeight ? minHeight : (minHeight < int.MaxValue ? minHeight : 1);
+        bool pathCrossesHill = (maxHeight >= 2) && (maxHeight > minHeight);
+        return (baseHeight, pathCrossesHill);
     }
 
     /// <summary>
@@ -117,7 +128,45 @@ public class TerraformingService : MonoBehaviour
         var heightMap = terrainManager.GetHeightMap();
         if (heightMap == null) return plan;
 
-        plan.baseHeight = ComputePathBaseHeight(path);
+        var (baseHeight, pathCrossesHill) = ComputePathBaseHeightAndCutThrough(path);
+        plan.baseHeight = baseHeight;
+        plan.isCutThrough = pathCrossesHill;
+
+        if (pathCrossesHill)
+        {
+            for (int i = 0; i < path.Count; i++)
+            {
+                int x = (int)path[i].x;
+                int y = (int)path[i].y;
+                int h = heightMap.IsValidPosition(x, y) ? heightMap.GetHeight(x, y) : TerrainManager.SEA_LEVEL;
+
+                var cellPlan = new PathTerraformPlan.CellPlan
+                {
+                    position = new Vector2Int(x, y),
+                    action = TerraformAction.Flatten,
+                    direction = OrthogonalDirection.North,
+                    originalHeight = h,
+                    targetHeight = plan.baseHeight,
+                    postTerraformSlopeType = TerrainSlopeType.Flat
+                };
+
+                if (!heightMap.IsValidPosition(x, y) || h <= TerrainManager.SEA_LEVEL)
+                {
+                    cellPlan.action = TerraformAction.None;
+                    cellPlan.targetHeight = h;
+                }
+
+                if (i < path.Count - 1)
+                {
+                    int hNext = heightMap.GetHeight((int)path[i + 1].x, (int)path[i + 1].y);
+                    if (h > TerrainManager.SEA_LEVEL && hNext > TerrainManager.SEA_LEVEL && Mathf.Abs(hNext - h) > 1)
+                        plan.isValid = false;
+                }
+
+                plan.pathCells.Add(cellPlan);
+            }
+            return plan;
+        }
 
         for (int i = 0; i < path.Count; i++)
         {
