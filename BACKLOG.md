@@ -7,11 +7,10 @@
 
 ## In Progress
 
-- [ ] **FEAT-05** — Streets must be able to climb diagonal slopes using orthogonal prefabs
-  - Type: feature
-  - Files: `RoadManager.cs`, `TerrainManager.cs`, `GridManager.cs`
-  - Notes: Streets currently do not climb diagonal slopes.
-
+- [ ] **BUG-25** — Fix bugs in manual street segment drawing
+  - Type: fix
+  - Files: `RoadManager.cs`, `GridManager.cs`
+  - Notes: Bugs in manual road placement mode when drawing street segments. To be documented as specific issues are identified.
 
 ## High Priority
 
@@ -220,6 +219,7 @@
 
 ## Completed (last 30 days)
 
+- [x] **FEAT-05** — Streets must be able to climb diagonal slopes using orthogonal prefabs (2026-03-18)
 - [x] **FEAT-34** — Zoning and building on slopes (2026-03-16)
 - [x] **FEAT-33** — Urban remodeling: expropriations and redevelopment (2026-03-12)
 - [x] **FEAT-31** — Auto roads grow toward high desirability areas (2026-03-12)
