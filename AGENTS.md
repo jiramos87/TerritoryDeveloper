@@ -8,7 +8,7 @@
 4. Read `BACKLOG.md` for the current list of issues, priorities, and what's in progress
 
 ## Language
-All code, comments, XML docs, annotations, and repository content must be in **English**. Chat with the user may be in any language.
+All code, comments, XML docs, annotations, Debug.Log messages, and repository content must be in **English**. Chat with the user may be in any language.
 
 ## Backlog: Next Issue and AI Agent Prompts
 When the user asks which is the next issue to work on (or similar), respond with the issue and **ask if they want you to create an AI agent prompt** — a prompt for another agent to analyze, evaluate, and propose a development plan in Cursor for the changes needed to resolve the issue, clarifying all questions before writing the plan file.
@@ -51,6 +51,7 @@ After executing a development plan for an issue, **keep the issue in "In progres
 - [ ] Code compiles (Build in Unity)
 - [ ] Class-level `/// <summary>` exists and is accurate
 - [ ] New public methods have XML documentation
+- [ ] Debug.Log messages and comments are in English
 - [ ] If GridManager was touched, verify sorting order works with different height levels
 - [ ] If roads were modified, verify `InvalidateRoadCache()` is called where needed
 - [ ] If a new manager was added, it follows the Inspector + FindObjectOfType dependency pattern

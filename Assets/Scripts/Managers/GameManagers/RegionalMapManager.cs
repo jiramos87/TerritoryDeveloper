@@ -62,16 +62,9 @@ public class RegionalMapManager : MonoBehaviour
         if (connected.Count == 0)
             return false;
 
-        if (connected.Count >= 2)
-        {
-            borderA = connected[0];
-            borderB = connected[1];
-        }
-        else
-        {
-            borderA = connected[0];
-            borderB = TerritoryData.OppositeBorder(borderA);
-        }
+        borderA = connected[0];
+        int opposite = TerritoryData.OppositeBorder(borderA);
+        borderB = connected.Contains(opposite) ? opposite : (connected.Count >= 2 ? connected[1] : opposite);
 
         return true;
     }

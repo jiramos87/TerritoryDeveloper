@@ -24,13 +24,18 @@ public class RoadManager : MonoBehaviour, IRoadManager
     public UIManager uiManager;
     public ZoneManager zoneManager;
     public InterstateManager interstateManager;
+    public TerraformingService terraformingService;
     #endregion
 
     #region Road Drawing State
     private bool isDrawingRoad = false;
     private Vector2 startPosition;
+    private Dictionary<Vector2Int, int> previewTerraformedHeights = new Dictionary<Vector2Int, int>();
     private static readonly int[] DirX = { 1, -1, 0, 0 };
     private static readonly int[] DirY = { 0, 0, 1, -1 };
+    private RoadPrefabResolver roadPrefabResolver;
+    private PathTerraformPlan currentPreviewPlan;
+    private List<RoadPrefabResolver.ResolvedRoadTile> previewResolvedTiles = new List<RoadPrefabResolver.ResolvedRoadTile>();
     #endregion
 
     #region Road Prefabs
@@ -54,13 +59,14 @@ public class RoadManager : MonoBehaviour, IRoadManager
     public GameObject roadTilePrefabSouthSlope;
     private List<GameObject> previewRoadTiles = new List<GameObject>();
     private List<Vector2> previewRoadGridPositions = new List<Vector2>();
-    private List<Vector2> adjacentRoadTiles = new List<Vector2>();
 
     /// <summary>
     /// Populates the road tile prefabs list from the individual prefab fields.
     /// </summary>
     public void Initialize()
     {
+        if (gridManager != null && terrainManager != null)
+            roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
         roadTilePrefabs = new List<GameObject>
         {
             roadTilePrefab1,
@@ -147,9 +153,10 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
     void DrawRoadLine(bool calculateCost = true)
     {
+        int tileCount = previewResolvedTiles.Count > 0 ? previewResolvedTiles.Count : previewRoadGridPositions.Count;
         if (calculateCost)
         {
-            int totalCost = CalculateTotalCost(previewRoadGridPositions.Count);
+            int totalCost = CalculateTotalCost(tileCount);
 
             // Check if player can afford the road
             if (!cityStats.CanAfford(totalCost))
@@ -164,18 +171,27 @@ public class RoadManager : MonoBehaviour, IRoadManager
             cityStats.RemoveMoney(totalCost);
         }
 
-        for (int i = 0; i < previewRoadGridPositions.Count; i++)
+        if (previewResolvedTiles.Count > 0)
         {
-            Vector2 gridPos = previewRoadGridPositions[i];
-
-            PlaceRoadTile(gridPos, i, false);
-
-            UpdateAdjacentRoadPrefabs(gridPos, i);
+            for (int i = 0; i < previewResolvedTiles.Count; i++)
+            {
+                PlaceRoadTileFromResolved(previewResolvedTiles[i]);
+                UpdateAdjacentRoadPrefabsAt(new Vector2(previewResolvedTiles[i].gridPos.x, previewResolvedTiles[i].gridPos.y));
+            }
+        }
+        else
+        {
+            for (int i = 0; i < previewRoadGridPositions.Count; i++)
+            {
+                Vector2 gridPos = previewRoadGridPositions[i];
+                PlaceRoadTile(gridPos, i, false);
+                UpdateAdjacentRoadPrefabs(gridPos, i);
+            }
         }
 
         if (calculateCost)
         {
-            int roadPowerConsumption = previewRoadGridPositions.Count * ZoneAttributes.Road.PowerConsumption;
+            int roadPowerConsumption = tileCount * ZoneAttributes.Road.PowerConsumption;
             cityStats.AddPowerConsumption(roadPowerConsumption);
         }
     }
@@ -233,12 +249,12 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
     void UpdateAdjacentRoadPrefabs(Vector2 gridPos, int i)
     {
-        foreach (Vector2 adjacentRoadTile in adjacentRoadTiles)
+        Vector2[] dirs = { new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, -1) };
+        foreach (Vector2 d in dirs)
         {
-            if (!isAdjacentRoadInPreview(adjacentRoadTile))
-            {
-                RefreshRoadPrefabAt(adjacentRoadTile);
-            }
+            Vector2 n = gridPos + d;
+            if (IsRoadAt(n) && !isAdjacentRoadInPreview(n))
+                RefreshRoadPrefabAt(n);
         }
     }
 
@@ -273,67 +289,63 @@ public class RoadManager : MonoBehaviour, IRoadManager
         Cell cellComponentCheck = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         if (cellComponentCheck == null) return;
 
-        bool hasLeft = IsRoadAt(gridPos + new Vector2(-1, 0));
-        bool hasRight = IsRoadAt(gridPos + new Vector2(1, 0));
-        bool hasUp = IsRoadAt(gridPos + new Vector2(0, 1));
-        bool hasDown = IsRoadAt(gridPos + new Vector2(0, -1));
-
         Vector2 prevGridPos = gridPos;
-        if (hasLeft && hasRight && !hasUp && !hasDown)
-            prevGridPos = gridPos + new Vector2(-1, 0);
-        else if (hasUp && hasDown && !hasLeft && !hasRight)
-            prevGridPos = gridPos + new Vector2(0, -1);
-        else
+        Vector2[] dirs = { new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, -1) };
+        foreach (Vector2 d in dirs)
         {
-            Vector2[] dirs = { new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, -1) };
-            foreach (Vector2 d in dirs)
+            if (IsRoadAt(gridPos + d))
             {
-                if (IsRoadAt(gridPos + d))
-                {
-                    prevGridPos = gridPos + d;
-                    break;
-                }
+                prevGridPos = gridPos + d;
+                break;
             }
         }
 
-        GameObject correctRoadPrefab = GetCorrectRoadPrefab(prevGridPos, gridPos, false, false);
-        DestroyPreviousRoadTile(cell, gridPos);
+        if (roadPrefabResolver == null && gridManager != null && terrainManager != null)
+            roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
 
-        Cell cellComponent = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
-        if (cellComponent == null) return;
-        cellComponent.RemoveForestForBuilding();
-        int roadPlacedAtHeight = 0;
-        int terrainHeight = cellComponent.GetCellInstanceHeight();
-
+        GameObject correctRoadPrefab;
         Vector2 worldPos;
-        if (terrainHeight == 0)
+        if (roadPrefabResolver != null)
         {
-            roadPlacedAtHeight = 1;
-            worldPos = gridManager.GetWorldPositionVector((int)gridPos.x, (int)gridPos.y, roadPlacedAtHeight);
+            var resolved = roadPrefabResolver.ResolveForCell(gridPos, prevGridPos);
+            if (resolved.HasValue)
+            {
+                correctRoadPrefab = resolved.Value.prefab;
+                worldPos = resolved.Value.worldPos;
+            }
+            else
+            {
+                correctRoadPrefab = roadTilePrefab1;
+                worldPos = gridManager.GetWorldPosition((int)gridPos.x, (int)gridPos.y);
+            }
         }
         else
         {
-            worldPos = gridManager.GetWorldPosition((int)gridPos.x, (int)gridPos.y);
+            correctRoadPrefab = GetCorrectRoadPrefab(prevGridPos, gridPos, false, false);
+            int terrainHeight = cellComponentCheck.GetCellInstanceHeight();
+            worldPos = GetRoadTileWorldPosition((int)gridPos.x, (int)gridPos.y, correctRoadPrefab, terrainHeight);
         }
 
+        DestroyPreviousRoadTile(cell, gridPos);
+        cellComponentCheck.RemoveForestForBuilding();
+
         GameObject roadTile = Instantiate(correctRoadPrefab, worldPos, Quaternion.identity);
-        roadTile.transform.SetParent(cellComponent.gameObject.transform);
-        roadTile.GetComponent<SpriteRenderer>().color = cellComponent.isInterstate
+        roadTile.transform.SetParent(cellComponentCheck.gameObject.transform);
+        roadTile.GetComponent<SpriteRenderer>().color = cellComponentCheck.isInterstate
             ? new Color(0.78f, 0.78f, 0.88f, 1f)
             : new Color(1, 1, 1, 1);
 
         Zone zone = roadTile.AddComponent<Zone>();
         zone.zoneType = Zone.ZoneType.Road;
 
-        UpdateRoadCellAttributes(cellComponent, roadTile, Zone.ZoneType.Road);
+        UpdateRoadCellAttributes(cellComponentCheck, roadTile, Zone.ZoneType.Road);
         gridManager.SetRoadSortingOrder(roadTile, (int)gridPos.x, (int)gridPos.y);
     }
 
     void DrawPreviewLine(List<Vector2> path)
     {
-        ClearPreview();
+        ClearPreview(false);
 
-        // Filter to in-bounds cells to avoid null reference and preserve connectivity
         List<Vector2> filteredPath = new List<Vector2>();
         for (int i = 0; i < path.Count; i++)
         {
@@ -342,18 +354,85 @@ public class RoadManager : MonoBehaviour, IRoadManager
                 filteredPath.Add(gridPos);
         }
 
-        for (int i = 0; i < filteredPath.Count; i++)
+        if (filteredPath.Count == 0) return;
+        if (terraformingService == null || terrainManager == null) return;
+        if (roadPrefabResolver == null && gridManager != null)
+            roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
+        if (roadPrefabResolver == null) return;
+
+        if (!IsPathFullyAdjacent(filteredPath))
         {
-            Vector2 gridPos = filteredPath[i];
-            DrawPreviewRoadTile(gridPos, filteredPath, i, true);
+            if (GameNotificationManager.Instance != null)
+                GameNotificationManager.Instance.PostWarning("Road path has gaps (e.g. over water). Draw a continuous path.");
+            return;
+        }
+
+        var plan = terraformingService.ComputePathPlan(filteredPath);
+        if (!plan.isValid)
+        {
+            if (GameNotificationManager.Instance != null)
+                GameNotificationManager.Instance.PostWarning("Road cannot cross terrain with height difference greater than 1. Choose a different path.");
+            return;
+        }
+
+        var heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null) return;
+
+        if (!plan.Apply(heightMap, terrainManager))
+        {
+            if (GameNotificationManager.Instance != null)
+                GameNotificationManager.Instance.PostWarning("Terrain cannot be modified safely (height difference would exceed 1). Choose a different path.");
+            return;
+        }
+        currentPreviewPlan = plan;
+
+        var resolved = roadPrefabResolver.ResolveForPath(filteredPath, plan);
+        previewResolvedTiles.Clear();
+        previewResolvedTiles.AddRange(resolved);
+
+        for (int i = 0; i < resolved.Count; i++)
+        {
+            var tile = resolved[i];
+            Cell cell = gridManager.GetCell(tile.gridPos.x, tile.gridPos.y);
+            if (cell == null) continue;
+
+            GameObject previewTile = Instantiate(tile.prefab, tile.worldPos, Quaternion.identity);
+            SetPreviewRoadTileDetails(previewTile);
+            previewRoadTiles.Add(previewTile);
+            previewRoadGridPositions.Add(new Vector2(tile.gridPos.x, tile.gridPos.y));
+            previewTile.transform.SetParent(cell.gameObject.transform);
         }
     }
 
     /// <summary>
-    /// Returns grid cells from start to end using Bresenham. Diagonal steps are split into
-    /// two cardinal steps (staircase) so road placement matches interstate-style elbows.
+    /// Returns grid cells from start to end. Uses A* pathfinding to prefer flat terrain and go around hills;
+    /// falls back to Bresenham line when pathfinding finds no route (e.g. blocked by water).
     /// </summary>
     List<Vector2> GetLine(Vector2 start, Vector2 end)
+    {
+        Vector2Int from = new Vector2Int(Mathf.Clamp((int)start.x, 0, gridManager.width - 1), Mathf.Clamp((int)start.y, 0, gridManager.height - 1));
+        Vector2Int to = new Vector2Int(Mathf.Clamp((int)end.x, 0, gridManager.width - 1), Mathf.Clamp((int)end.y, 0, gridManager.height - 1));
+
+        if (gridManager != null)
+        {
+            var path = gridManager.FindPath(from, to);
+            if (path != null && path.Count > 0)
+            {
+                var line = new List<Vector2>(path.Count);
+                for (int i = 0; i < path.Count; i++)
+                    line.Add(new Vector2(path[i].x, path[i].y));
+                return line;
+            }
+        }
+
+        return GetLineBresenham(start, end);
+    }
+
+    /// <summary>
+    /// Bresenham line from start to end. Used as fallback when pathfinding finds no route.
+    /// Diagonal steps are split into two cardinal steps (staircase) so road placement matches interstate-style elbows.
+    /// </summary>
+    List<Vector2> GetLineBresenham(Vector2 start, Vector2 end)
     {
         List<Vector2> line = new List<Vector2>();
 
@@ -399,8 +478,34 @@ public class RoadManager : MonoBehaviour, IRoadManager
         return line;
     }
 
+    /// <summary>
+    /// Returns true if every consecutive pair in the path is adjacent (within 1 cell).
+    /// Used to reject paths with gaps (e.g. over water) that would create loose corners.
+    /// </summary>
+    bool IsPathFullyAdjacent(List<Vector2> path)
+    {
+        if (path == null || path.Count < 2) return true;
+        for (int i = 1; i < path.Count; i++)
+        {
+            int dx = Mathf.Abs((int)path[i].x - (int)path[i - 1].x);
+            int dy = Mathf.Abs((int)path[i].y - (int)path[i - 1].y);
+            if (dx > 1 || dy > 1) return false;
+        }
+        return true;
+    }
+
     void ClearPreview(bool isEnd = false)
     {
+        if (!isEnd && currentPreviewPlan != null && terrainManager != null)
+        {
+            var heightMap = terrainManager.GetHeightMap();
+            if (heightMap != null)
+                currentPreviewPlan.Revert(heightMap, terrainManager);
+            currentPreviewPlan = null;
+        }
+        previewTerraformedHeights.Clear();
+        previewResolvedTiles.Clear();
+
         foreach (GameObject previewTile in previewRoadTiles)
         {
             Destroy(previewTile);
@@ -409,234 +514,19 @@ public class RoadManager : MonoBehaviour, IRoadManager
         previewRoadGridPositions.Clear();
     }
 
-    void DrawPreviewRoadTile(Vector2 gridPos, List<Vector2> path, int i, bool isCenterRoadTile = true)
-    {
-        Cell cell = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
-        if (cell == null)
-            return;
-
-        Vector2 prevGridPos = i == 0
-            ? (path.Count > 1 ? 2 * gridPos - path[1] : gridPos)
-            : path[i - 1];
-
-        bool isPreview = true;
-
-        GameObject roadPrefab = GetCorrectRoadPrefab(prevGridPos, gridPos, isCenterRoadTile, isPreview, path, i);
-
-        int roadPlacedAtHeight = 0;
-        int terrainHeight = cell.GetCellInstanceHeight();
-        Vector2 worldPos;
-
-        if (terrainHeight == 0)
-        {
-            roadPlacedAtHeight = 1;
-            worldPos = gridManager.GetWorldPositionVector((int)gridPos.x, (int)gridPos.y, roadPlacedAtHeight);
-        }
-        else
-        {
-            worldPos = gridManager.GetWorldPosition((int)gridPos.x, (int)gridPos.y);
-        }
-
-        GameObject previewTile = Instantiate(
-            roadPrefab,
-            worldPos,
-            Quaternion.identity
-        );
-
-        SetPreviewRoadTileDetails(previewTile);
-
-        previewRoadTiles.Add(previewTile);
-
-        previewRoadGridPositions.Add(new Vector2(gridPos.x, gridPos.y));
-
-        previewTile.transform.SetParent(cell.gameObject.transform);
-    }
     #endregion
 
     #region Road Prefab Selection
+    /// <summary>
+    /// Returns the correct road prefab for a cell. Delegates to RoadPrefabResolver.ResolveForCell.
+    /// </summary>
     GameObject GetCorrectRoadPrefab(Vector2 prevGridPos, Vector2 currGridPos, bool isCenterRoadTile = true, bool isPreview = false, List<Vector2> path = null, int pathIndex = -1)
     {
-        Vector2 direction = currGridPos - prevGridPos;
-        Cell cell = gridManager.GetCell((int)currGridPos.x, (int)currGridPos.y);
-        if (cell == null)
-            return roadTilePrefab1;
-
-        int height = cell.GetCellInstanceHeight();
-
-        // Diagonal direction: use elbow prefab (same logic as interstate)
-        int dx = Mathf.RoundToInt(direction.x);
-        int dy = Mathf.RoundToInt(direction.y);
-        if (dx != 0 && dy != 0)
-        {
-            if (dx == 1 && dy == 1) return roadTilePrefabElbowUpLeft;
-            if (dx == 1 && dy == -1) return roadTilePrefabElbowDownLeft;
-            if (dx == -1 && dy == 1) return roadTilePrefabElbowUpRight;
-            if (dx == -1 && dy == -1) return roadTilePrefabElbowDownRight;
-        }
-
-        if (isPreview && path != null && pathIndex >= 0 && pathIndex < path.Count)
-        {
-            bool pathLeft = IsPathNeighbor(path, pathIndex, -1, 0);
-            bool pathRight = IsPathNeighbor(path, pathIndex, 1, 0);
-            bool pathUp = IsPathNeighbor(path, pathIndex, 0, 1);
-            bool pathDown = IsPathNeighbor(path, pathIndex, 0, -1);
-            if (pathLeft || pathRight || pathUp || pathDown)
-            {
-                if (pathLeft && pathUp && !pathRight && !pathDown) return roadTilePrefabElbowDownRight;
-                if (pathRight && pathUp && !pathLeft && !pathDown) return roadTilePrefabElbowDownLeft;
-                if (pathLeft && pathDown && !pathRight && !pathUp) return roadTilePrefabElbowUpRight;
-                if (pathRight && pathDown && !pathLeft && !pathUp) return roadTilePrefabElbowUpLeft;
-            }
-        }
-
-        if (isPreview)
-        {
-            if (height == 0)
-            {
-                if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-                    return roadTileBridgeHorizontal;
-                return roadTileBridgeVertical;
-            }
-            Vector2? slopeDir = GetTerrainSlopeDirection(currGridPos, height);
-            if (slopeDir.HasValue)
-            {
-                GameObject slopePrefab = GetSlopePrefabForDirection(slopeDir.Value);
-                if (slopePrefab != null) return slopePrefab;
-            }
-
-            if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-            {
-                if (height == 0)
-                {
-                    return roadTileBridgeHorizontal;
-                }
-                return roadTilePrefab2;
-            }
-            else
-            {
-                if (height == 0)
-                {
-                    return roadTileBridgeVertical;
-                }
-                return roadTilePrefab1;
-            }
-        }
-
-        bool hasLeft = IsRoadAt(currGridPos + new Vector2(-1, 0));
-        bool hasRight = IsRoadAt(currGridPos + new Vector2(1, 0));
-        bool hasUp = IsRoadAt(currGridPos + new Vector2(0, 1));
-        bool hasDown = IsRoadAt(currGridPos + new Vector2(0, -1));
-
-        if (isCenterRoadTile)
-        {
-            UpdateAdjacentRoadTilesArray(currGridPos, hasLeft, hasRight, hasUp, hasDown, isPreview);
-        }
-
-        if (hasLeft && hasRight && hasUp && hasDown)
-        {
-            return roadTilePrefabCrossing;
-        }
-        else if (hasLeft && hasRight && hasUp && !hasDown)
-        {
-            return roadTilePrefabTIntersectionDown;
-        }
-        else if (hasLeft && hasRight && hasDown && !hasUp)
-        {
-            return roadTilePrefabTIntersectionUp;
-        }
-        else if (hasUp && hasDown && hasLeft && !hasRight)
-        {
-            return roadTilePrefabTIntersectionRight;
-        }
-        else if (hasUp && hasDown && hasRight && !hasLeft)
-        {
-            return roadTilePrefabTIntersectionLeft;
-        }
-        else if (hasLeft && hasUp && !hasRight && !hasDown)
-        {
-            return roadTilePrefabElbowDownRight;
-        }
-        else if (hasRight && hasUp && !hasLeft && !hasDown)
-        {
-            return roadTilePrefabElbowDownLeft;
-        }
-        else if (hasLeft && hasDown && !hasRight && !hasUp)
-        {
-            return roadTilePrefabElbowUpRight;
-        }
-        else if (hasRight && hasDown && !hasLeft && !hasUp)
-        {
-            return roadTilePrefabElbowUpLeft;
-        }
-        else if (hasLeft && hasRight && !hasUp && !hasDown)
-        {
-            GameObject slopePrefab = TryGetSlopePrefabForStraightSegment(currGridPos, height, true);
-            if (slopePrefab != null) return slopePrefab;
-            if (height == 0) return roadTileBridgeHorizontal;
-            return roadTilePrefab2;
-        }
-        else if (hasUp && hasDown && !hasLeft && !hasRight)
-        {
-            GameObject slopePrefab = TryGetSlopePrefabForStraightSegment(currGridPos, height, false);
-            if (slopePrefab != null) return slopePrefab;
-            if (height == 0) return roadTileBridgeVertical;
-            return roadTilePrefab1;
-        }
-        else if (hasLeft || hasRight)
-        {
-            GameObject slopePrefab = TryGetSlopePrefabForStraightSegment(currGridPos, height, true);
-            if (slopePrefab != null) return slopePrefab;
-            if (height == 0)
-            {
-                return roadTileBridgeHorizontal;
-            }
-            return roadTilePrefab2;
-        }
-        else if (hasUp || hasDown)
-        {
-            GameObject slopePrefab = TryGetSlopePrefabForStraightSegment(currGridPos, height, false);
-            if (slopePrefab != null) return slopePrefab;
-            if (height == 0)
-            {
-                return roadTileBridgeVertical;
-            }
-            return roadTilePrefab1;
-        }
-
-        // If no intersection or elbow, fall back to horizontal/vertical
-
-        GameObject fallbackSlope = TryGetSlopePrefabForCell(currGridPos, height);
-        if (fallbackSlope != null) return fallbackSlope;
-
-        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-        {
-            if (height == 0)
-            {
-                return roadTileBridgeHorizontal;
-            }
-            return roadTilePrefab2;
-        }
-        else
-        {
-            if (height == 0)
-            {
-                return roadTileBridgeVertical;
-            }
-            return roadTilePrefab1;
-        }
-    }
-
-    /// <summary>
-    /// True if the path has a neighbor at curr + (offsetX, offsetY) — used for preview elbow detection.
-    /// </summary>
-    bool IsPathNeighbor(List<Vector2> path, int pathIndex, int offsetX, int offsetY)
-    {
-        if (path == null || pathIndex < 0 || pathIndex >= path.Count) return false;
-        Vector2 curr = path[pathIndex];
-        Vector2 neighbor = new Vector2(curr.x + offsetX, curr.y + offsetY);
-        if (pathIndex > 0 && path[pathIndex - 1] == neighbor) return true;
-        if (pathIndex < path.Count - 1 && path[pathIndex + 1] == neighbor) return true;
-        return false;
+        if (roadPrefabResolver == null && gridManager != null && terrainManager != null)
+            roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
+        if (roadPrefabResolver == null) return roadTilePrefab1;
+        var resolved = roadPrefabResolver.ResolveForCell(currGridPos, prevGridPos);
+        return resolved.HasValue ? resolved.Value.prefab : roadTilePrefab1;
     }
 
     /// <summary>
@@ -680,94 +570,66 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Maps grid cardinal direction (from current cell toward the higher neighbor) to slope road prefab.
-    /// Prefab names follow visual slope direction. Grid axes don't match visual N/S/E/W 1:1, so we swap:
-    /// (1,0) and (-1,0) map to South/North prefabs; (0,1) and (0,-1) map to East/West prefabs.
+    /// Returns true if the prefab is a diagonal road (elbow, used when route is diagonal on sloped terrain).
+    /// Only these prefabs use higher positioning for correct visual integration with the slope.
     /// </summary>
-    GameObject GetSlopePrefabForDirection(Vector2 cardinalDirection)
+    bool IsDiagonalRoadPrefab(GameObject prefab)
     {
-        int dx = Mathf.RoundToInt(cardinalDirection.x);
-        int dy = Mathf.RoundToInt(cardinalDirection.y);
-        if (dx == 1 && dy == 0) return roadTilePrefabSouthSlope;
-        if (dx == -1 && dy == 0) return roadTilePrefabNorthSlope;
-        if (dx == 0 && dy == 1) return roadTilePrefabEastSlope;
-        if (dx == 0 && dy == -1) return roadTilePrefabWestSlope;
-        return null;
-    }
-
-    GameObject TryGetSlopePrefabForCell(Vector2 currGridPos, int currentHeight)
-    {
-        Vector2? slopeDir = GetTerrainSlopeDirection(currGridPos, currentHeight);
-        if (slopeDir.HasValue)
-            return GetSlopePrefabForDirection(slopeDir.Value);
-
-        if (terrainManager == null) return null;
-        int x = (int)currGridPos.x;
-        int y = (int)currGridPos.y;
-        TerrainSlopeType slopeType = terrainManager.GetTerrainSlopeTypeAt(x, y);
-        Vector2? diagonalFallback = GetOrthogonalDirectionForDiagonalSlope(slopeType);
-        if (diagonalFallback.HasValue)
-            return GetSlopePrefabForDirection(diagonalFallback.Value);
-        return null;
+        if (prefab == null) return false;
+        return prefab == roadTilePrefabElbowUpLeft || prefab == roadTilePrefabElbowUpRight
+            || prefab == roadTilePrefabElbowDownLeft || prefab == roadTilePrefabElbowDownRight;
     }
 
     /// <summary>
-    /// Maps diagonal slope types to an orthogonal direction for road prefab selection (FEAT-05).
-    /// When lineDirection is provided, picks the orthogonal that is parallel to the road segment.
+    /// Returns the world position for a road tile. For diagonal road prefabs on sloped terrain,
+    /// uses the upper cell's position so the ramp renders with more height in the same cell.
+    /// Orthogonal slope prefabs (East/West/North/South) use the current cell position.
     /// </summary>
-    Vector2? GetOrthogonalDirectionForDiagonalSlope(TerrainSlopeType slopeType, bool? isHorizontalLine = null)
+    Vector2 GetRoadTileWorldPosition(int x, int y, GameObject prefab, int terrainHeight)
     {
-        switch (slopeType)
-        {
-            case TerrainSlopeType.NorthEast:
-                if (isHorizontalLine == true) return new Vector2(0, 1);
-                if (isHorizontalLine == false) return new Vector2(-1, 0);
-                return new Vector2(-1, 0);
-            case TerrainSlopeType.NorthWest:
-                if (isHorizontalLine == true) return new Vector2(0, -1);
-                if (isHorizontalLine == false) return new Vector2(-1, 0);
-                return new Vector2(-1, 0);
-            case TerrainSlopeType.SouthEast:
-                if (isHorizontalLine == true) return new Vector2(0, 1);
-                if (isHorizontalLine == false) return new Vector2(1, 0);
-                return new Vector2(1, 0);
-            case TerrainSlopeType.SouthWest:
-                if (isHorizontalLine == true) return new Vector2(0, -1);
-                if (isHorizontalLine == false) return new Vector2(1, 0);
-                return new Vector2(1, 0);
-            default:
-                return null;
-        }
-    }
+        if (terrainHeight == 0)
+            return gridManager.GetWorldPositionVector(x, y, 1);
 
-    /// <summary>
-    /// Returns slope road prefab only when terrain slope direction is parallel to the road line.
-    /// For horizontal lines use slope only if terrain slopes E-W; for vertical lines only if N-S.
-    /// Prevents lateral slopes from showing wrong slope prefab on straight segments.
-    /// For diagonal slopes (FEAT-05), maps to orthogonal prefab parallel to the road.
-    /// </summary>
-    GameObject TryGetSlopePrefabForStraightSegment(Vector2 currGridPos, int currentHeight, bool isHorizontalLine)
-    {
-        Vector2? slopeDir = GetTerrainSlopeDirection(currGridPos, currentHeight);
+        if (!IsDiagonalRoadPrefab(prefab))
+            return gridManager.GetWorldPosition(x, y);
+
+        int upperX = x, upperY = y;
+        Vector2? slopeDir = GetTerrainSlopeDirection(new Vector2(x, y), terrainHeight);
         if (slopeDir.HasValue)
         {
-            int dx = Mathf.RoundToInt(slopeDir.Value.x);
-            int dy = Mathf.RoundToInt(slopeDir.Value.y);
-            bool slopeParallelToLine = isHorizontalLine ? (dx != 0 && dy == 0) : (dx == 0 && dy != 0);
-            if (slopeParallelToLine)
-                return GetSlopePrefabForDirection(slopeDir.Value);
+            upperX = x + Mathf.RoundToInt(slopeDir.Value.x);
+            upperY = y + Mathf.RoundToInt(slopeDir.Value.y);
         }
-
-        if (terrainManager != null)
+        else if (terrainManager != null)
         {
-            int x = (int)currGridPos.x;
-            int y = (int)currGridPos.y;
             TerrainSlopeType slopeType = terrainManager.GetTerrainSlopeTypeAt(x, y);
-            Vector2? diagonalDir = GetOrthogonalDirectionForDiagonalSlope(slopeType, isHorizontalLine);
-            if (diagonalDir.HasValue)
-                return GetSlopePrefabForDirection(diagonalDir.Value);
+            switch (slopeType)
+            {
+                case TerrainSlopeType.SouthEast: upperX = x + 1; upperY = y + 1; break;
+                case TerrainSlopeType.SouthWest: upperX = x + 1; upperY = y - 1; break;
+                case TerrainSlopeType.NorthEast: upperX = x - 1; upperY = y + 1; break;
+                case TerrainSlopeType.NorthWest: upperX = x - 1; upperY = y - 1; break;
+                case TerrainSlopeType.SouthEastUp: upperX = x + 1; upperY = y; break;
+                case TerrainSlopeType.NorthEastUp: upperX = x - 1; upperY = y; break;
+                case TerrainSlopeType.SouthWestUp: upperX = x + 1; upperY = y; break;
+                case TerrainSlopeType.NorthWestUp: upperX = x - 1; upperY = y; break;
+                default: return gridManager.GetWorldPosition(x, y);
+            }
         }
-        return null;
+        else
+        {
+            return gridManager.GetWorldPosition(x, y);
+        }
+
+        if (upperX < 0 || upperX >= gridManager.width || upperY < 0 || upperY >= gridManager.height)
+            return gridManager.GetWorldPosition(x, y);
+
+        Cell upperCell = gridManager.GetCell(upperX, upperY);
+        if (upperCell == null)
+            return gridManager.GetWorldPosition(x, y);
+
+        int upperHeight = upperCell.GetCellInstanceHeight();
+        return gridManager.GetWorldPositionVector(upperX, upperY, upperHeight);
     }
 
     /// <summary>
@@ -776,37 +638,14 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// </summary>
     public void GetRoadGhostPreviewForCell(Vector2 gridPos, out GameObject prefab, out Vector2 worldPos, out int sortingOrder)
     {
-        int x = (int)gridPos.x;
-        int y = (int)gridPos.y;
         prefab = roadTilePrefab1;
-        worldPos = gridManager.GetWorldPosition(x, y);
-        sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, 0);
+        worldPos = gridManager.GetWorldPosition((int)gridPos.x, (int)gridPos.y);
+        sortingOrder = gridManager.GetRoadSortingOrderForCell((int)gridPos.x, (int)gridPos.y, 0);
 
-        Cell cell = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
-        if (cell == null) return;
-
-        int height = cell.GetCellInstanceHeight();
-
-        if (height == 0)
-        {
-            prefab = roadTileBridgeVertical;
-            worldPos = gridManager.GetWorldPositionVector(x, y, 1);
-            sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, 1);
-            return;
-        }
-
-        GameObject slopePrefab = TryGetSlopePrefabForCell(gridPos, height);
-        if (slopePrefab != null)
-        {
-            prefab = slopePrefab;
-            worldPos = gridManager.GetWorldPosition(x, y);
-            sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, height);
-            return;
-        }
-
-        prefab = roadTilePrefab1;
-        worldPos = gridManager.GetWorldPosition(x, y);
-        sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, height);
+        if (roadPrefabResolver == null && gridManager != null && terrainManager != null)
+            roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
+        if (roadPrefabResolver != null)
+            roadPrefabResolver.ResolveForGhostPreview(gridPos, out prefab, out worldPos, out sortingOrder);
     }
     #endregion
 
@@ -844,28 +683,6 @@ public class RoadManager : MonoBehaviour, IRoadManager
         return false;
     }
 
-    void UpdateAdjacentRoadTilesArray(Vector2 currGridPos, bool hasLeft, bool hasRight, bool hasUp, bool hasDown, bool isPreview)
-    {
-        adjacentRoadTiles.Clear();
-
-        if (hasLeft)
-        {
-            adjacentRoadTiles.Add(new Vector2(currGridPos.x - 1, currGridPos.y));
-        }
-        if (hasRight)
-        {
-            adjacentRoadTiles.Add(new Vector2(currGridPos.x + 1, currGridPos.y));
-        }
-        if (hasUp)
-        {
-            adjacentRoadTiles.Add(new Vector2(currGridPos.x, currGridPos.y + 1));
-        }
-        if (hasDown)
-        {
-            adjacentRoadTiles.Add(new Vector2(currGridPos.x, currGridPos.y - 1));
-        }
-    }
-
     void SetPreviewRoadTileDetails(GameObject previewTile)
     {
         gridManager.SetTileSortingOrder(previewTile, Zone.ZoneType.Road);
@@ -878,6 +695,37 @@ public class RoadManager : MonoBehaviour, IRoadManager
     {
         Zone zone = roadTile.AddComponent<Zone>();
         zone.zoneType = Zone.ZoneType.Road;
+    }
+
+    /// <summary>
+    /// Places a single road tile from a resolved prefab. Used by path pipeline (manual draw, interstate, AutoRoadBuilder).
+    /// </summary>
+    public void PlaceRoadTileFromResolved(RoadPrefabResolver.ResolvedRoadTile resolved)
+    {
+        int x = resolved.gridPos.x;
+        int y = resolved.gridPos.y;
+        if (gridManager.IsCellOccupiedByBuilding(x, y))
+            return;
+
+        GameObject cell = gridManager.GetGridCell(new Vector2(x, y));
+        Cell cellComponentCheck = gridManager.GetCell(x, y);
+        if (cellComponentCheck != null && cellComponentCheck.isInterstate)
+            return;
+        if (cell == null || cellComponentCheck == null) return;
+
+        DestroyPreviousRoadTile(cell, new Vector2(x, y));
+        cellComponentCheck.RemoveForestForBuilding();
+
+        GameObject roadTile = Instantiate(resolved.prefab, resolved.worldPos, Quaternion.identity);
+        roadTile.transform.SetParent(cellComponentCheck.gameObject.transform);
+        roadTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 1);
+
+        Zone zone = roadTile.AddComponent<Zone>();
+        zone.zoneType = Zone.ZoneType.Road;
+
+        UpdateRoadCellAttributes(cellComponentCheck, roadTile, Zone.ZoneType.Road);
+        gridManager.SetRoadSortingOrder(roadTile, x, y);
+        gridManager.AddRoadToCache(resolved.gridPos);
     }
 
     void PlaceRoadTile(Vector2 gridPos, int i = 0, bool isAdjacent = false)
@@ -910,19 +758,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         Cell cellComponent = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         cellComponent.RemoveForestForBuilding();
-        int roadPlacedAtHeight = 0;
         int terrainHeight = cellComponent.GetCellInstanceHeight();
-
-        Vector2 worldPos;
-        if (terrainHeight == 0)
-        {
-            roadPlacedAtHeight = 1;
-            worldPos = gridManager.GetWorldPositionVector((int)gridPos.x, (int)gridPos.y, roadPlacedAtHeight);
-        }
-        else
-        {
-            worldPos = gridManager.GetWorldPosition((int)gridPos.x, (int)gridPos.y);
-        }
+        Vector2 worldPos = GetRoadTileWorldPosition((int)gridPos.x, (int)gridPos.y, correctRoadPrefab, terrainHeight);
 
         GameObject roadTile = Instantiate(
             correctRoadPrefab,
@@ -953,15 +790,12 @@ public class RoadManager : MonoBehaviour, IRoadManager
             foreach (Transform child in cell.transform)
             {
                 Zone zone = child.GetComponent<Zone>();
-                if (zone != null)
+                if (zone != null && zone.zoneType == Zone.ZoneType.Road)
                     toDestroy.Add((child.gameObject, zone));
             }
             foreach (var t in toDestroy)
             {
-                if (t.zone.zoneCategory == Zone.ZoneCategory.Zoning)
-                    zoneManager.removeZonedPositionFromList(gridPos, t.zone.zoneType);
-                if (t.zone.zoneType == Zone.ZoneType.Road)
-                    gridManager.RemoveRoadFromCache(new Vector2Int((int)gridPos.x, (int)gridPos.y));
+                gridManager.RemoveRoadFromCache(new Vector2Int((int)gridPos.x, (int)gridPos.y));
                 Destroy(t.go);
             }
         }
@@ -1038,19 +872,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         Cell cellComponent = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         cellComponent.RemoveForestForBuilding();
-        int roadPlacedAtHeight = 0;
         int terrainHeight = cellComponent.GetCellInstanceHeight();
-
-        Vector2 worldPos;
-        if (terrainHeight == 0)
-        {
-            roadPlacedAtHeight = 1;
-            worldPos = gridManager.GetWorldPositionVector((int)gridPos.x, (int)gridPos.y, roadPlacedAtHeight);
-        }
-        else
-        {
-            worldPos = gridManager.GetWorldPosition((int)gridPos.x, (int)gridPos.y);
-        }
+        Vector2 worldPos = GetRoadTileWorldPosition((int)gridPos.x, (int)gridPos.y, correctRoadPrefab, terrainHeight);
 
         GameObject roadTile = Instantiate(correctRoadPrefab, worldPos, Quaternion.identity);
         roadTile.transform.SetParent(cellComponent.gameObject.transform);
@@ -1081,10 +904,122 @@ public class RoadManager : MonoBehaviour, IRoadManager
     #region Utility Methods
     /// <summary>
     /// Returns the correct road prefab for a cell in a path (for interstate placement).
+    /// When forceFlatCells contains currGridPos, returns flat road (horizontal/vertical) regardless of terrain slope.
     /// </summary>
-    public GameObject GetCorrectRoadPrefabForPath(Vector2 prevGridPos, Vector2 currGridPos)
+    public GameObject GetCorrectRoadPrefabForPath(Vector2 prevGridPos, Vector2 currGridPos, HashSet<Vector2Int> forceFlatCells = null)
     {
-        return GetCorrectRoadPrefab(prevGridPos, currGridPos, true, false);
+        int gx = (int)currGridPos.x, gy = (int)currGridPos.y;
+        var currInt = new Vector2Int(gx, gy);
+        if (forceFlatCells != null && forceFlatCells.Contains(currInt))
+        {
+            Vector2 dir = currGridPos - prevGridPos;
+            bool isHorizontal = Mathf.Abs(dir.x) >= Mathf.Abs(dir.y);
+            GameObject flatPrefab = isHorizontal ? roadTilePrefab2 : roadTilePrefab1;
+            Debug.Log($"[Road GetCorrectRoadPrefabForPath] ({gx},{gy}) prev=({prevGridPos.x},{prevGridPos.y}) forceFlat=>{(flatPrefab != null ? flatPrefab.name : "null")}");
+            return flatPrefab;
+        }
+        GameObject result = GetCorrectRoadPrefab(prevGridPos, currGridPos, true, false);
+        TerrainSlopeType slopeType = terrainManager != null ? terrainManager.GetTerrainSlopeTypeAt(gx, gy) : TerrainSlopeType.Flat;
+        Debug.Log($"[Road GetCorrectRoadPrefabForPath] ({gx},{gy}) prev=({prevGridPos.x},{prevGridPos.y}) slopeType={slopeType} => roadPrefab={(result != null ? result.name : "null")}");
+        return result;
+    }
+
+    /// <summary>
+    /// Resolves road prefabs for a path using the terraform plan. Used by AutoRoadBuilder for path-based placement.
+    /// </summary>
+    public List<RoadPrefabResolver.ResolvedRoadTile> ResolvePathForRoads(List<Vector2> path, PathTerraformPlan plan)
+    {
+        if (roadPrefabResolver == null && gridManager != null && terrainManager != null)
+            roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
+        if (roadPrefabResolver == null) return new List<RoadPrefabResolver.ResolvedRoadTile>();
+        return roadPrefabResolver.ResolveForPath(path, plan);
+    }
+
+    /// <summary>
+    /// Places interstate tiles along a path using the centralized terraform + resolve pipeline.
+    /// Call from InterstateManager after route generation.
+    /// </summary>
+    /// <returns>True if placement succeeded (plan valid and Apply succeeded).</returns>
+    public bool PlaceInterstateFromPath(List<Vector2Int> path)
+    {
+        if (path == null || path.Count == 0)
+        {
+            Debug.LogWarning("[Road] PlaceInterstateFromPath: path null or empty.");
+            return false;
+        }
+        if (roadPrefabResolver == null && gridManager != null && terrainManager != null)
+            roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
+        if (roadPrefabResolver == null || terraformingService == null || terrainManager == null)
+        {
+            Debug.LogWarning($"[Road] PlaceInterstateFromPath: missing deps resolver={roadPrefabResolver != null} terraform={terraformingService != null} terrain={terrainManager != null}");
+            return false;
+        }
+
+        var pathVec2 = new List<Vector2>();
+        for (int i = 0; i < path.Count; i++)
+            pathVec2.Add(new Vector2(path[i].x, path[i].y));
+
+        var plan = terraformingService.ComputePathPlan(pathVec2);
+        var heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null)
+        {
+            Debug.LogWarning("[Road] PlaceInterstateFromPath: heightMap null.");
+            return false;
+        }
+        bool planValid = plan.isValid;
+        bool applyOk = plan.Apply(heightMap, terrainManager);
+        if (!planValid || !applyOk)
+        {
+            Debug.LogWarning($"[Road] PlaceInterstateFromPath FAILED: plan.isValid={planValid} Apply={applyOk}");
+            return false;
+        }
+
+        var resolved = roadPrefabResolver.ResolveForPath(pathVec2, plan);
+        Debug.Log($"[Road] PlaceInterstateFromPath: path.Count={path.Count} resolved.Count={resolved.Count}");
+        for (int i = 0; i < resolved.Count; i++)
+        {
+            PlaceInterstateFromResolved(resolved[i]);
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Places an interstate tile from a resolved road tile. Applies interstate tint and sets isInterstate on the cell.
+    /// </summary>
+    public void PlaceInterstateFromResolved(RoadPrefabResolver.ResolvedRoadTile resolved)
+    {
+        int x = resolved.gridPos.x;
+        int y = resolved.gridPos.y;
+        if (gridManager.IsCellOccupiedByBuilding(x, y))
+        {
+            Debug.Log($"[Road] PlaceInterstateFromResolved: ({x},{y}) skipped - cell occupied by building.");
+            return;
+        }
+
+        GameObject cell = gridManager.GetGridCell(new Vector2(x, y));
+        Cell cellComponent = gridManager.GetCell(x, y);
+        if (cell == null || cellComponent == null)
+        {
+            Debug.LogWarning($"[Road] PlaceInterstateFromResolved: ({x},{y}) cell or cellComponent null.");
+            return;
+        }
+
+        DestroyPreviousRoadTile(cell, new Vector2(x, y));
+        cellComponent.RemoveForestForBuilding();
+
+        GameObject prefab = resolved.prefab ?? roadTilePrefab1;
+        GameObject roadTile = Instantiate(prefab, resolved.worldPos, Quaternion.identity);
+        roadTile.transform.SetParent(cellComponent.gameObject.transform);
+        roadTile.GetComponent<SpriteRenderer>().color = new Color(0.78f, 0.78f, 0.88f, 1f);
+
+        Zone zone = roadTile.AddComponent<Zone>();
+        zone.zoneType = Zone.ZoneType.Road;
+        UpdateRoadCellAttributes(cellComponent, roadTile, Zone.ZoneType.Road);
+        cellComponent.isInterstate = true;
+
+        gridManager.SetRoadSortingOrder(roadTile, x, y);
+        gridManager.AddRoadToCache(resolved.gridPos);
+        Debug.Log($"[Road] PlaceInterstateFromResolved: ({x},{y}) placed prefab={prefab?.name ?? "null"}");
     }
 
     /// <summary>
@@ -1106,11 +1041,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         GameObject correctRoadPrefab = GetCorrectRoadPrefabForPath(prevGridPos, currGridPos);
         int terrainHeight = cellComponent.GetCellInstanceHeight();
-        Vector2 worldPos;
-        if (terrainHeight == 0)
-            worldPos = gridManager.GetWorldPositionVector(gx, gy, 1);
-        else
-            worldPos = gridManager.GetWorldPosition(gx, gy);
+        Vector2 worldPos = GetRoadTileWorldPosition(gx, gy, correctRoadPrefab, terrainHeight);
 
         GameObject roadTile = Instantiate(correctRoadPrefab, worldPos, Quaternion.identity);
         roadTile.transform.SetParent(cellComponent.gameObject.transform);
@@ -1161,11 +1092,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         cellComponent.RemoveForestForBuilding();
 
         int terrainHeight = cellComponent.GetCellInstanceHeight();
-        Vector2 worldPos;
-        if (terrainHeight == 0)
-            worldPos = gridManager.GetWorldPositionVector(gridPos.x, gridPos.y, 1);
-        else
-            worldPos = gridManager.GetWorldPosition(gridPos.x, gridPos.y);
+        Vector2 worldPos = GetRoadTileWorldPosition(gridPos.x, gridPos.y, prefab, terrainHeight);
 
         GameObject roadTile = Instantiate(prefab, worldPos, Quaternion.identity);
         roadTile.transform.SetParent(cellComponent.gameObject.transform);
@@ -1196,21 +1123,44 @@ public class RoadManager : MonoBehaviour, IRoadManager
         Cell cellComponent = gridManager.GetCell(gridPos.x, gridPos.y);
         if (cellComponent == null) return;
 
+        string terrainPrefabName = null;
+        string fallbackNonRoad = null;
         var toDestroy = new List<GameObject>();
         foreach (Transform child in cell.transform)
         {
-            if (child.GetComponent<Zone>() != null)
+            Zone zone = child.GetComponent<Zone>();
+            if (zone != null && zone.zoneType == Zone.ZoneType.Road)
                 toDestroy.Add(child.gameObject);
+            else
+            {
+                string name = child.gameObject.name.Replace("(Clone)", "");
+                if (name.Contains("Slope") || name.Contains("Grass"))
+                    terrainPrefabName = name;
+                else if (fallbackNonRoad == null)
+                    fallbackNonRoad = name;
+            }
         }
+        if (terrainPrefabName == null)
+            terrainPrefabName = fallbackNonRoad;
         foreach (GameObject go in toDestroy)
             Destroy(go);
 
         int terrainHeight = cellComponent.GetCellInstanceHeight();
-        Vector2 worldPos;
-        if (terrainHeight == 0)
-            worldPos = gridManager.GetWorldPositionVector(gridPos.x, gridPos.y, 1);
-        else
-            worldPos = gridManager.GetWorldPosition(gridPos.x, gridPos.y);
+        Vector2 worldPos = GetRoadTileWorldPosition(gridPos.x, gridPos.y, newPrefab, terrainHeight);
+
+        if (keepInterstateTint && gridManager != null)
+        {
+            string terrainPrefab = terrainPrefabName ?? "null";
+            TerrainSlopeType slopeType = terrainManager != null ? terrainManager.GetTerrainSlopeTypeAt(gridPos.x, gridPos.y) : TerrainSlopeType.Flat;
+            string roadReason = slopeType == TerrainSlopeType.Flat
+                ? "Flat terrain => flat road (RoadVertical/RoadHorizontal)"
+                : $"Slope {slopeType} => slope road prefab";
+            string terrainReason = slopeType == TerrainSlopeType.Flat
+                ? "All neighbors same height => flat grass"
+                : $"Neighbor height differences => slope prefab";
+            Debug.Log($"[Interstate Result] ({gridPos.x},{gridPos.y}) roadPrefab={(newPrefab != null ? newPrefab.name : "null")} terrainPrefab={terrainPrefab} slopeType={slopeType} h={terrainHeight}");
+            Debug.Log($"[Interstate Result] ({gridPos.x},{gridPos.y}) WHY road: {roadReason}. WHY terrain: {terrainReason}");
+        }
 
         GameObject roadTile = Instantiate(newPrefab, worldPos, Quaternion.identity);
         roadTile.transform.SetParent(cellComponent.gameObject.transform);
@@ -1220,8 +1170,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
         else
             roadTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 1);
 
-        Zone zone = roadTile.AddComponent<Zone>();
-        zone.zoneType = Zone.ZoneType.Road;
+        Zone roadZone = roadTile.AddComponent<Zone>();
+        roadZone.zoneType = Zone.ZoneType.Road;
         UpdateRoadCellAttributes(cellComponent, roadTile, Zone.ZoneType.Road);
 
         gridManager.SetRoadSortingOrder(roadTile, gridPos.x, gridPos.y);

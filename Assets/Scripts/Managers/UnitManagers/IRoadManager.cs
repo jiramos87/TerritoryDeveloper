@@ -13,7 +13,7 @@ public interface IRoadManager
     void UpdateAdjacentRoadPrefabsAt(Vector2 gridPos);
     bool CanPlaceRoadAt(Vector2 gridPos);
     bool PlaceRoadTileAt(Vector2 gridPos);
-    GameObject GetCorrectRoadPrefabForPath(Vector2 prevGridPos, Vector2 currGridPos);
+    GameObject GetCorrectRoadPrefabForPath(Vector2 prevGridPos, Vector2 currGridPos, HashSet<Vector2Int> forceFlatCells = null);
     void PlaceInterstateTile(Vector2 prevGridPos, Vector2 currGridPos, bool isInterstate);
     void ReplaceRoadTileAt(Vector2Int gridPos, GameObject newPrefab, bool keepInterstateTint);
     List<GameObject> GetRoadPrefabs();

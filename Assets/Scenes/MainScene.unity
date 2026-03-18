@@ -2806,6 +2806,7 @@ MonoBehaviour:
   gridManager: {fileID: 1880690383}
   terrainManager: {fileID: 1097666053}
   roadManager: {fileID: 1313145027}
+  terraformingService: {fileID: 0}
 --- !u!1 &251526537
 GameObject:
   m_ObjectHideFlags: 0
@@ -4262,7 +4263,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cityStats: {fileID: 72477285}
-  economyManager: {fileID: 0}
+  economyManager: {fileID: 678270592}
   data:
     totalGrowthBudget: 5000
     growthBudgetPercent: 10
@@ -9147,7 +9148,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 470750414}
   m_HandleRect: {fileID: 470750413}
   m_Direction: 0
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -9241,6 +9242,7 @@ MonoBehaviour:
   cityStats: {fileID: 72477285}
   interstateManager: {fileID: 251169277}
   terrainManager: {fileID: 1097666053}
+  terraformingService: {fileID: 0}
   autoZoningManager: {fileID: 2140155702}
   urbanCentroidService: {fileID: 0}
   maxTilesPerTick: 10
@@ -9313,6 +9315,7 @@ Transform:
   - {fileID: 586497353}
   - {fileID: 724627299}
   - {fileID: 3764000002}
+  - {fileID: 1624889128}
   m_Father: {fileID: 1745906816}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &938977936
@@ -13743,6 +13746,7 @@ MonoBehaviour:
   uiManager: {fileID: 515320935}
   zoneManager: {fileID: 955926521}
   interstateManager: {fileID: 251169277}
+  terraformingService: {fileID: 0}
   roadTilePrefabs: []
   roadTilePrefab1: {fileID: 985362822682053019, guid: f352b1a1987d5475fb6ca00d317d21da, type: 3}
   roadTilePrefab2: {fileID: 6344670689893122505, guid: 720adb93575224a59a2e816ea22172de, type: 3}
@@ -16551,6 +16555,52 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 3acbea86c09784331bac2d88984f3ee0, type: 3}
     price: 3
   uiManager: {fileID: 515320935}
+--- !u!1 &1624889127
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1624889128}
+  - component: {fileID: 1624889129}
+  m_Layer: 0
+  m_Name: TerraformingManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1624889128
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1624889127}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 938947611}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1624889129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1624889127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdbdb5621cde4d1ebd01caf172b491de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  terrainManager: {fileID: 1097666053}
+  gridManager: {fileID: 1880690383}
 --- !u!1 &1628017426
 GameObject:
   m_ObjectHideFlags: 0
@@ -16946,7 +16996,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -260.99475, y: -10.571777}
+  m_AnchoredPosition: {x: -260.9948, y: -10.571838}
   m_SizeDelta: {x: -521.9894, y: -455.8174}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1664159913

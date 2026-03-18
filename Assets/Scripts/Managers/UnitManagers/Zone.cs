@@ -49,9 +49,13 @@ public class Zone : MonoBehaviour
     public ZoneType zoneType;
     public ZoneCategory zoneCategory;
 
+    void Awake()
+    {
+        SetZoneCategoryFromType();
+    }
+
     void Start()
     {
-        // Initialize zone-specific properties
         SetZoneCategoryFromType();
     }
 

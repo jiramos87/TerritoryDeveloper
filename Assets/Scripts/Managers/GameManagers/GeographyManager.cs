@@ -34,6 +34,8 @@ public class GeographyManager : MonoBehaviour
     [Header("Geography Configuration")]
     public bool initializeOnStart = true;
     public bool useTerrainForWater = true; // Whether to use terrain height for water placement
+    [Tooltip("Disable to see terrain clearly during road/terraforming tests.")]
+    public bool initializeForestsOnStart = false;
 
     // Current geographical data (for save/load operations)
     private GeographyData currentGeographyData;
@@ -84,15 +86,21 @@ public class GeographyManager : MonoBehaviour
         if (interstateManager != null)
         {
             const int maxInterstateAttempts = 3;
+            bool placed = false;
             for (int attempt = 0; attempt < maxInterstateAttempts; attempt++)
             {
-                interstateManager.GenerateAndPlaceInterstate();
-                if (interstateManager.InterstatePositions != null && interstateManager.InterstatePositions.Count >= 2)
-                    break;
+                placed = interstateManager.GenerateAndPlaceInterstate(attempt);
+                Debug.Log($"[Interstate] Attempt {attempt + 1}/{maxInterstateAttempts}: placed={placed}");
+                if (placed) break;
+            }
+            if (!placed)
+            {
+                Debug.Log("[Interstate] Random attempts failed, trying deterministic fallback...");
+                placed = interstateManager.TryGenerateInterstateDeterministic();
             }
         }
 
-        if (forestManager != null)
+        if (forestManager != null && initializeForestsOnStart)
         {
             forestManager.InitializeForestMap();
         }
@@ -242,17 +250,24 @@ public class GeographyManager : MonoBehaviour
             }
             else
             {
+                Debug.Log("[GeographyManager] Order: 1.InitializeHeightMap 2.InitializeWaterMap 3.GenerateAndPlaceInterstate 4.InitializeForestMap 5.ReCalculateSortingOrder");
                 const int maxInterstateAttempts = 3;
+                bool placed = false;
                 for (int attempt = 0; attempt < maxInterstateAttempts; attempt++)
                 {
-                    interstateManager.GenerateAndPlaceInterstate();
-                    if (interstateManager.InterstatePositions != null && interstateManager.InterstatePositions.Count >= 2)
-                        break;
+                    placed = interstateManager.GenerateAndPlaceInterstate(attempt);
+                    Debug.Log($"[Interstate] Attempt {attempt + 1}/{maxInterstateAttempts}: placed={placed}");
+                    if (placed) break;
+                }
+                if (!placed)
+                {
+                    Debug.Log("[Interstate] Random attempts failed, trying deterministic fallback...");
+                    placed = interstateManager.TryGenerateInterstateDeterministic();
                 }
             }
         }
 
-        if (forestManager != null)
+        if (forestManager != null && initializeForestsOnStart)
             forestManager.InitializeForestMap();
 
         InitializeWaterDesirability();
@@ -282,8 +297,6 @@ public class GeographyManager : MonoBehaviour
     #endregion
 
     #region Terrain Setup
-    const int RoadSortingOffset = 3;
-
     /// <summary>
     /// If cell (x, y) is immediately east of a multi-cell building (i.e. x == that building's maxFx+1),
     /// returns true and the building's current sorting order so we can draw this cell's content on top (buildingOrder+1).
@@ -407,8 +420,8 @@ public class GeographyManager : MonoBehaviour
                 Zone zone = child.GetComponent<Zone>();
                 if (zone != null)
                 {
-                    if (zone.zoneCategory == Zone.ZoneCategory.Zoning) order = terrainOrder + 0;
-                    else if (zone.zoneType == Zone.ZoneType.Road) order = terrainOrder + RoadSortingOffset;
+                    if (zone.zoneType == Zone.ZoneType.Road) order = terrainOrder + GridSortingOrderService.ROAD_SORTING_OFFSET;
+                    else if (zone.zoneCategory == Zone.ZoneCategory.Zoning) order = terrainOrder + 0;
                     else if (zone.zoneCategory == Zone.ZoneCategory.Building) order = terrainOrder + 10;
                     else order = terrainOrder;
                 }
@@ -593,10 +606,10 @@ public class GeographyManager : MonoBehaviour
                             {
                                 if (zone.zoneType == Zone.ZoneType.Water)
                                     newSortingOrder = -(y * gridManager.width + x + 110000);
+                                else if (zone.zoneType == Zone.ZoneType.Road)
+                                    newSortingOrder = terrainOrder + GridSortingOrderService.ROAD_SORTING_OFFSET;
                                 else if (zone.zoneCategory == Zone.ZoneCategory.Zoning)
                                     newSortingOrder = terrainOrder + 0;
-                                else if (zone.zoneType == Zone.ZoneType.Road)
-                                    newSortingOrder = terrainOrder + 3;
                                 else if (zone.zoneCategory == Zone.ZoneCategory.Building)
                                 {
                                     // Multi-cell buildings: use max order over footprint so the whole building renders in front of adjacent terrain/forest

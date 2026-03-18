@@ -288,14 +288,19 @@ namespace Territory.Core
             return count;
         }
 
-        /// <summary>True if this neighbor cell is valid for zoning (Grass, Forest, or Flat/N-S/E-W slope).</summary>
+        /// <summary>True if this neighbor cell is valid for zoning (Grass, Forest, or any slope including diagonal and corner).</summary>
         public bool IsZoneableNeighbor(Cell c, int x, int y)
         {
             if (c == null) return false;
             if (c.zoneType == Zone.ZoneType.Grass || c.HasForest()) return true;
             if (grid.terrainManager == null) return false;
             TerrainSlopeType slope = grid.terrainManager.GetTerrainSlopeTypeAt(x, y);
-            return slope == TerrainSlopeType.Flat || slope == TerrainSlopeType.North || slope == TerrainSlopeType.South || slope == TerrainSlopeType.East || slope == TerrainSlopeType.West;
+            return slope == TerrainSlopeType.Flat || slope == TerrainSlopeType.North || slope == TerrainSlopeType.South
+                || slope == TerrainSlopeType.East || slope == TerrainSlopeType.West
+                || slope == TerrainSlopeType.NorthEast || slope == TerrainSlopeType.NorthWest
+                || slope == TerrainSlopeType.SouthEast || slope == TerrainSlopeType.SouthWest
+                || slope == TerrainSlopeType.NorthEastUp || slope == TerrainSlopeType.NorthWestUp
+                || slope == TerrainSlopeType.SouthEastUp || slope == TerrainSlopeType.SouthWestUp;
         }
 
         /// <summary>True if at least one of the 4 cardinal neighbors of (x,y) is a road.</summary>

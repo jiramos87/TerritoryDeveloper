@@ -69,6 +69,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public GameObject seaLevelWaterPrefab;
     public GameObject southCliffWallPrefab;
     public GameObject eastCliffWallPrefab;
+    public GameObject northCliffWallPrefab;
+    public GameObject westCliffWallPrefab;
 
     public GameObject northEastBayPrefab;
     public GameObject northWestBayPrefab;
@@ -93,6 +95,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             northEastSlopeWaterPrefab, northWestSlopeWaterPrefab, southEastSlopeWaterPrefab, southWestSlopeWaterPrefab,
             northEastUpslopeWaterPrefab, northWestUpslopeWaterPrefab, southEastUpslopeWaterPrefab, southWestUpslopeWaterPrefab,
             seaLevelWaterPrefab, southCliffWallPrefab, eastCliffWallPrefab,
+            northCliffWallPrefab, westCliffWallPrefab,
             northEastBayPrefab, northWestBayPrefab, southEastBayPrefab, southWestBayPrefab
         };
 
@@ -249,7 +252,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     private const int OriginalMapSize = 40;
     private const int TerrainGenSeed = 12345;
-    private const float PerlinNoiseScale = 16f;
+    private const float PerlinNoiseScale = 6f;
     private const int BorderBlendWidth = 10;
 
     /// <summary>Original 40x40 height map (rows y, cols x). Used as template for [0..39,0..39] when grid is larger.</summary>
@@ -338,7 +341,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 if (x < OriginalMapSize && y < OriginalMapSize)
                     continue;
 
-                float n = Mathf.PerlinNoise((x + offsetX) / PerlinNoiseScale, (y + offsetY) / PerlinNoiseScale);
+                float n1 = Mathf.PerlinNoise((x + offsetX) / 14f, (y + offsetY) / 14f);
+                float n2 = Mathf.PerlinNoise((x + offsetX + 100f) / PerlinNoiseScale, (y + offsetY + 100f) / PerlinNoiseScale);
+                float n = 0.5f * n1 + 0.5f * n2;
+                n = 0.2f + 0.8f * n;
                 int perlinHeight = PerlinToHeight(n);
 
                 float blend = 1f;
@@ -363,13 +369,13 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         AddProceduralRivers(heights, w, h);
     }
 
-    /// <summary>Maps Perlin value [0,1] to land height 1-5: mostly plains (1-2), some 3, few hills (4-5). No water.</summary>
+    /// <summary>Maps Perlin value [0,1] to land height 1-5: heavily mountainous, few plains. For slope/road testing.</summary>
     private static int PerlinToHeight(float n)
     {
-        if (n < 0.5f) return 1;
-        if (n < 0.7f) return 2;
-        if (n < 0.85f) return 3;
-        if (n < 0.95f) return 4;
+        if (n < 0.1f) return 1;
+        if (n < 0.3f) return 2;
+        if (n < 0.5f) return 3;
+        if (n < 0.75f) return 4;
         return 5;
     }
 
@@ -469,7 +475,15 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
         if (RequiresSlope(x, y, newHeight))
         {
-            PlaceSlope(x, y);
+            GameObject slopePrefab = DetermineSlopePrefab(x, y);
+            if (slopePrefab != null)
+                PlaceSlopeFromPrefab(x, y, slopePrefab, newHeight);
+            else
+                PlaceFlatTerrain(x, y);  // plateau: no higher neighbors
+        }
+        else
+        {
+            PlaceFlatTerrain(x, y);  // flat: all neighbors same height
         }
 
         if (newHeight == SEA_LEVEL)
@@ -487,7 +501,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// Returns true if this cell was restored as a water slope (caller should not add grass tile).
     /// </summary>
     /// <param name="useHeightMap">If non-null, this map is used (and assigned to heightMap) so restore works even when instance field was null.</param>
-    public bool RestoreTerrainForCell(int x, int y, HeightMap useHeightMap = null)
+    /// <param name="forceFlat">When true, use flat terrain regardless of neighbor heights. Used for terraformed path transition cells.</param>
+    /// <param name="forceSlopeType">When set, use this orthogonal slope prefab instead of DetermineSlopePrefab. Used for terraformed path slope cells.</param>
+    public bool RestoreTerrainForCell(int x, int y, HeightMap useHeightMap = null, bool forceFlat = false, TerrainSlopeType? forceSlopeType = null)
     {
         if (useHeightMap != null)
             heightMap = useHeightMap;
@@ -519,10 +535,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             sr.sortingOrder = sortingOrder;
 
         bool adjacentWater = IsAdjacentToWaterHeight(x, y);
-        bool requiresSlope = RequiresSlope(x, y, newHeight);
+        bool requiresSlope = forceFlat ? false : (forceSlopeType.HasValue || RequiresSlope(x, y, newHeight));
 
         // Land cell adjacent to water (height 0) must restore water slope, not land slope.
-        if (newHeight >= 1 && adjacentWater)
+        if (newHeight >= 1 && adjacentWater && !forceFlat && !forceSlopeType.HasValue)
         {
             GameObject waterSlopePrefab = DetermineWaterSlopePrefab(x, y);
             if (waterSlopePrefab != null)
@@ -531,10 +547,35 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         }
 
         if (requiresSlope)
-            PlaceSlope(x, y);
+        {
+            GameObject slopePrefab = forceSlopeType.HasValue ? GetOrthogonalSlopePrefab(forceSlopeType.Value) : DetermineSlopePrefab(x, y);
+            if (slopePrefab != null)
+                PlaceSlopeFromPrefab(x, y, slopePrefab, newHeight);
+            else
+                PlaceFlatTerrain(x, y);  // plateau: no higher neighbors
+        }
+        else
+        {
+            PlaceFlatTerrain(x, y);  // flat: all neighbors same height
+        }
 
         PlaceCliffWalls(x, y);
         return false;
+    }
+
+    /// <summary>
+    /// Returns the terrain prefab for an orthogonal slope type. Used when forcing slope prefab for terraformed path cells.
+    /// </summary>
+    GameObject GetOrthogonalSlopePrefab(TerrainSlopeType slopeType)
+    {
+        switch (slopeType)
+        {
+            case TerrainSlopeType.North: return northSlopePrefab;
+            case TerrainSlopeType.South: return southSlopePrefab;
+            case TerrainSlopeType.East: return eastSlopePrefab;
+            case TerrainSlopeType.West: return westSlopePrefab;
+            default: return null;
+        }
     }
     #endregion
 
@@ -547,6 +588,27 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             toDestroy.Add(child.gameObject);
         foreach (GameObject go in toDestroy)
             Destroy(go);
+    }
+
+    /// <summary>
+    /// Destroys only slope and grass children, preserving road, forest, and buildings.
+    /// Used when replacing slope with flat grass (plateau or flat terrain).
+    /// Uses DestroyImmediate to avoid deferred Destroy causing multiple grass instances when
+    /// RestoreTerrainForCell is called repeatedly in the same frame (e.g. during interstate generation).
+    /// </summary>
+    private void DestroyTerrainChildrenOnly(Cell cell)
+    {
+        var toDestroy = new List<GameObject>();
+        foreach (Transform child in cell.gameObject.transform)
+        {
+            Zone zone = child.GetComponent<Zone>();
+            if (zone != null && zone.zoneType == Zone.ZoneType.Grass)
+                toDestroy.Add(child.gameObject);
+            else if (IsWaterSlopeObject(child.gameObject) || IsLandSlopeObject(child.gameObject))
+                toDestroy.Add(child.gameObject);
+        }
+        foreach (GameObject go in toDestroy)
+            Object.DestroyImmediate(go);
     }
 
     private bool RequiresSlope(int x, int y, int currentHeight)
@@ -607,15 +669,33 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         return false;
     }
 
-    private void PlaceSlope(int x, int y)
+    /// <summary>
+    /// Replaces terrain with flat grass. Destroys slope and grass children, then places grass.
+    /// Used when cell is flat or a plateau (no higher neighbors).
+    /// </summary>
+    private void PlaceFlatTerrain(int x, int y)
     {
-        int currentHeight = heightMap.GetHeight(x, y);
-        GameObject slopePrefab = DetermineSlopePrefab(x, y);
+        if (gridManager == null || zoneManager == null) return;
 
-        if (slopePrefab != null)
-        {
-            PlaceSlopeFromPrefab(x, y, slopePrefab, currentHeight);
-        }
+        Cell cell = gridManager.GetCell(x, y);
+        if (cell == null) return;
+
+        DestroyTerrainChildrenOnly(cell);
+
+        GameObject grassPrefab = zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass);
+        if (grassPrefab == null && zoneManager.grassPrefabs != null && zoneManager.grassPrefabs.Count > 0)
+            grassPrefab = zoneManager.grassPrefabs[0];
+        if (grassPrefab == null) return;
+
+        GameObject zoneTile = Instantiate(grassPrefab, cell.transformPosition, Quaternion.identity);
+        zoneTile.transform.SetParent(cell.gameObject.transform);
+
+        int sortingOrder = CalculateTerrainSortingOrder(x, y, cell.height);
+        SpriteRenderer sr = zoneTile.GetComponent<SpriteRenderer>();
+        if (sr != null)
+            sr.sortingOrder = sortingOrder;
+        cell.SetCellInstanceSortingOrder(sortingOrder);
+        cell.prefabName = grassPrefab.name;
     }
 
     /// <summary>
@@ -824,14 +904,13 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         RemoveExistingCliffWalls(cell);
 
         if (NeedsCliffWallSouth(x, y, currentHeight))
-        {
             PlaceCliffWallPrefab(cell, southCliffWallPrefab, x, y, currentHeight);
-        }
-
         if (NeedsCliffWallEast(x, y, currentHeight))
-        {
             PlaceCliffWallPrefab(cell, eastCliffWallPrefab, x, y, currentHeight);
-        }
+        if (NeedsCliffWallNorth(x, y, currentHeight))
+            PlaceCliffWallPrefab(cell, northCliffWallPrefab, x, y, currentHeight);
+        if (NeedsCliffWallWest(x, y, currentHeight))
+            PlaceCliffWallPrefab(cell, westCliffWallPrefab, x, y, currentHeight);
     }
 
     private bool NeedsCliffWallSouth(int x, int y, int currentHeight)
@@ -868,6 +947,28 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         return heightAtEast == SEA_LEVEL && currentHeight == 1 && heightAtWest == 2;
     }
 
+    private bool NeedsCliffWallNorth(int x, int y, int currentHeight)
+    {
+        if (!heightMap.IsValidPosition(x + 1, y) || !heightMap.IsValidPosition(x - 1, y))
+            return false;
+        int heightAtNorth = heightMap.GetHeight(x + 1, y);
+        if (currentHeight - heightAtNorth > 1)
+            return true;
+        int heightAtSouth = heightMap.GetHeight(x - 1, y);
+        return heightAtNorth == SEA_LEVEL && currentHeight == 1 && heightAtSouth == 2;
+    }
+
+    private bool NeedsCliffWallWest(int x, int y, int currentHeight)
+    {
+        if (!heightMap.IsValidPosition(x, y + 1) || !heightMap.IsValidPosition(x, y - 1))
+            return false;
+        int heightAtWest = heightMap.GetHeight(x, y + 1);
+        if (currentHeight - heightAtWest > 1)
+            return true;
+        int heightAtEast = heightMap.GetHeight(x, y - 1);
+        return heightAtWest == SEA_LEVEL && currentHeight == 1 && heightAtEast == 2;
+    }
+
     private void PlaceCliffWallPrefab(Cell cell, GameObject prefab, int x, int y, int currentHeight)
     {
         if (prefab == null)
@@ -896,7 +997,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         {
             GameObject child = cell.transform.GetChild(i).gameObject;
             if (IsPrefabInstance(child, southCliffWallPrefab)
-                || IsPrefabInstance(child, eastCliffWallPrefab))
+                || IsPrefabInstance(child, eastCliffWallPrefab)
+                || IsPrefabInstance(child, northCliffWallPrefab)
+                || IsPrefabInstance(child, westCliffWallPrefab))
             {
                 Destroy(child);
             }
@@ -1279,22 +1382,20 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         bool hasSouthEastSlope = seHeight > currentHeight;
         bool hasSouthWestSlope = swHeight > currentHeight;
 
-        if (hasWestSlope && hasNorthSlope) return southEastUpslopePrefab;
-        if (hasWestSlope && hasSouthSlope) return northEastUpslopePrefab;
-        if (hasEastSlope && hasNorthSlope) return southWestUpslopePrefab;
-        if (hasEastSlope && hasSouthSlope) return northWestUpslopePrefab;
-
-        if (hasNorthSlope) return southSlopePrefab;
-        if (hasSouthSlope) return northSlopePrefab;
-        if (hasEastSlope) return westSlopePrefab;
-        if (hasWestSlope) return eastSlopePrefab;
-
-        if (hasNorthWestSlope) return southEastSlopePrefab;
-        if (hasNorthEastSlope) return southWestSlopePrefab;
-        if (hasSouthWestSlope) return northEastSlopePrefab;
-        if (hasSouthEastSlope) return northWestSlopePrefab;
-
-        return null;
+        GameObject result = null;
+        if (hasWestSlope && hasNorthSlope) result = southEastUpslopePrefab;
+        else if (hasWestSlope && hasSouthSlope) result = northEastUpslopePrefab;
+        else if (hasEastSlope && hasNorthSlope) result = southWestUpslopePrefab;
+        else if (hasEastSlope && hasSouthSlope) result = northWestUpslopePrefab;
+        else if (hasNorthSlope) result = southSlopePrefab;
+        else if (hasSouthSlope) result = northSlopePrefab;
+        else if (hasEastSlope) result = westSlopePrefab;
+        else if (hasWestSlope) result = eastSlopePrefab;
+        else if (hasNorthWestSlope) result = southEastSlopePrefab;
+        else if (hasNorthEastSlope) result = southWestSlopePrefab;
+        else if (hasSouthWestSlope) result = northEastSlopePrefab;
+        else if (hasSouthEastSlope) result = northWestSlopePrefab;
+        return result;
     }
 
     /// <summary>
@@ -1476,12 +1577,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             case TerrainSlopeType.NorthWest:
             case TerrainSlopeType.SouthEast:
             case TerrainSlopeType.SouthWest:
-                return true;
             case TerrainSlopeType.NorthEastUp:
             case TerrainSlopeType.NorthWestUp:
             case TerrainSlopeType.SouthEastUp:
             case TerrainSlopeType.SouthWestUp:
-                return false;
+                return true;
             default:
                 return false;
         }

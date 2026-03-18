@@ -992,8 +992,6 @@ public class GridManager : MonoBehaviour, IGridManager
     public void SetZoneBuildingSortingOrder(GameObject tile, int pivotX, int pivotY, int buildingSize)
         => sortingService.SetZoneBuildingSortingOrder(tile, pivotX, pivotY, buildingSize);
 
-    const int ROAD_SORTING_OFFSET = 3;
-
     /// <summary>
     /// Returns the sorting order to use for a road tile at (x, y) at the given height (e.g. 1 for bridge over water).
     /// </summary>
