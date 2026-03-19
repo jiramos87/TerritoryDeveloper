@@ -132,6 +132,7 @@ public class InterstateManager : MonoBehaviour
             Random.InitState(InterstateGenSeed + 9999 + entry.x + entry.y * w + exit.x + exit.y * w);
             List<Vector2Int> path = FindInterstatePathAStar(entry, exit, w, h, heightMap);
             if (path == null || path.Count < 2 || path[path.Count - 1] != exit) continue;
+            if (roadManager != null && !roadManager.ValidateBridgePath(path, heightMap)) continue;
 
             interstatePositions = path;
             EntryPoint = interstatePositions[0];
@@ -279,7 +280,8 @@ public class InterstateManager : MonoBehaviour
             for (int pathTry = 0; pathTry < PathTriesPerPair; pathTry++)
             {
                 List<Vector2Int> path = FindInterstatePathAStar(entry.Value, exit.Value, w, h, heightMap);
-                if (path != null && path.Count >= 2 && path[path.Count - 1] == exit.Value)
+                if (path != null && path.Count >= 2 && path[path.Count - 1] == exit.Value
+                    && (roadManager == null || roadManager.ValidateBridgePath(path, heightMap)))
                 {
                     interstatePositions = path;
                     EntryPoint = interstatePositions[0];
@@ -326,8 +328,17 @@ public class InterstateManager : MonoBehaviour
         if (path.Count == 0) return false;
         int dx = end.x - waterCell.x;
         int dy = end.y - waterCell.y;
-        int stepX = dx != 0 ? (dx > 0 ? 1 : -1) : 0;
-        int stepY = dy != 0 ? (dy > 0 ? 1 : -1) : 0;
+        int stepX, stepY;
+        if (Mathf.Abs(dx) >= Mathf.Abs(dy))
+        {
+            stepX = dx != 0 ? (dx > 0 ? 1 : -1) : 0;
+            stepY = 0;
+        }
+        else
+        {
+            stepX = 0;
+            stepY = dy != 0 ? (dy > 0 ? 1 : -1) : 0;
+        }
         if (stepX == 0 && stepY == 0) return false;
 
         int px = waterCell.x;
@@ -492,8 +503,17 @@ public class InterstateManager : MonoBehaviour
         if (heightMap.GetHeight(waterCell.x, waterCell.y) != 0) return false;
         int dx = end.x - waterCell.x;
         int dy = end.y - waterCell.y;
-        int stepX = dx != 0 ? (dx > 0 ? 1 : -1) : 0;
-        int stepY = dy != 0 ? (dy > 0 ? 1 : -1) : 0;
+        int stepX, stepY;
+        if (Mathf.Abs(dx) >= Mathf.Abs(dy))
+        {
+            stepX = dx != 0 ? (dx > 0 ? 1 : -1) : 0;
+            stepY = 0;
+        }
+        else
+        {
+            stepX = 0;
+            stepY = dy != 0 ? (dy > 0 ? 1 : -1) : 0;
+        }
         if (stepX == 0 && stepY == 0) return false;
 
         int px = waterCell.x, py = waterCell.y;

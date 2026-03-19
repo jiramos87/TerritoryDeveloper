@@ -191,17 +191,20 @@ public class RoadPrefabResolver
             return isHorizontal ? roadManager.roadTileBridgeHorizontal : roadManager.roadTileBridgeVertical;
         }
 
-        bool pathLeft = IsPathNeighbor(path, index, -1, 0);
-        bool pathRight = IsPathNeighbor(path, index, 1, 0);
-        bool pathUp = IsPathNeighbor(path, index, 0, 1);
-        bool pathDown = IsPathNeighbor(path, index, 0, -1);
+        bool pathLeft = IsPathNeighbor(path, index, -1, 0) || IsRoadAt(new Vector2(curr.x - 1, curr.y));
+        bool pathRight = IsPathNeighbor(path, index, 1, 0) || IsRoadAt(new Vector2(curr.x + 1, curr.y));
+        bool pathUp = IsPathNeighbor(path, index, 0, 1) || IsRoadAt(new Vector2(curr.x, curr.y + 1));
+        bool pathDown = IsPathNeighbor(path, index, 0, -1) || IsRoadAt(new Vector2(curr.x, curr.y - 1));
 
         if (pathLeft || pathRight || pathUp || pathDown)
         {
             if (pathLeft && pathUp && !pathRight && !pathDown) return roadManager.roadTilePrefabElbowDownRight;
-            if (pathRight && pathUp && !pathLeft && !pathDown) return roadManager.roadTilePrefabElbowDownLeft;
-            if (pathLeft && pathDown && !pathRight && !pathUp) return roadManager.roadTilePrefabElbowUpRight;
-            if (pathRight && pathDown && !pathLeft && !pathUp) return roadManager.roadTilePrefabElbowUpLeft;
+            if (pathRight && pathUp && !pathLeft && !pathDown)
+                return roadManager.roadTilePrefabElbowDownLeft;
+            if (pathLeft && pathDown && !pathRight && !pathUp)
+                return roadManager.roadTilePrefabElbowUpRight;
+            if (pathRight && pathDown && !pathLeft && !pathUp)
+                return roadManager.roadTilePrefabElbowUpRight;
 
             bool isHorizontal = pathLeft || pathRight;
             if (pathLeft && pathRight && !pathUp && !pathDown)

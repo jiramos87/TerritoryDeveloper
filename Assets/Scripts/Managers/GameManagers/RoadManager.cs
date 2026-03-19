@@ -178,6 +178,10 @@ public class RoadManager : MonoBehaviour, IRoadManager
                 PlaceRoadTileFromResolved(previewResolvedTiles[i]);
                 UpdateAdjacentRoadPrefabsAt(new Vector2(previewResolvedTiles[i].gridPos.x, previewResolvedTiles[i].gridPos.y));
             }
+            foreach (var resolved in previewResolvedTiles)
+            {
+                RefreshRoadPrefabAt(new Vector2(resolved.gridPos.x, resolved.gridPos.y));
+            }
         }
         else
         {
@@ -340,6 +344,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         UpdateRoadCellAttributes(cellComponentCheck, roadTile, Zone.ZoneType.Road);
         gridManager.SetRoadSortingOrder(roadTile, (int)gridPos.x, (int)gridPos.y);
+        gridManager.AddRoadToCache(new Vector2Int((int)gridPos.x, (int)gridPos.y));
     }
 
     void DrawPreviewLine(List<Vector2> path)
@@ -375,6 +380,20 @@ public class RoadManager : MonoBehaviour, IRoadManager
         {
             if (GameNotificationManager.Instance != null)
                 GameNotificationManager.Instance.PostWarning("Cannot build a valid bridge here. Draw a straighter path over water.");
+            return;
+        }
+
+        if (HasTurnOnWaterOrCoast(filteredPath, heightMap))
+        {
+            if (GameNotificationManager.Instance != null)
+                GameNotificationManager.Instance.PostWarning("Bridges must be straight. Turns cannot be on water or coast.");
+            return;
+        }
+
+        if (HasElbowTooCloseToWater(filteredPath, heightMap))
+        {
+            if (GameNotificationManager.Instance != null)
+                GameNotificationManager.Instance.PostWarning("Turns must be at least 2 cells away from water.");
             return;
         }
 
@@ -499,8 +518,80 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Replaces runs of consecutive water and water-slope cells with a straight Bresenham line.
-    /// Bridges must be straight; turns happen on land.
+    /// True if cell is at least 2 cells from any water (not on water, not adjacent to water).
+    /// Elbows must satisfy this to be valid.
+    /// </summary>
+    bool IsAtLeastTwoCellsFromWater(int x, int y, HeightMap heightMap)
+    {
+        if (heightMap == null || !heightMap.IsValidPosition(x, y)) return false;
+        if (heightMap.GetHeight(x, y) <= TerrainManager.SEA_LEVEL) return false;
+        int[] dx = { 0, 1, -1, 0, 0 };
+        int[] dy = { 0, 0, 0, 1, -1 };
+        for (int d = 0; d < 5; d++)
+        {
+            int nx = x + dx[d], ny = y + dy[d];
+            if (heightMap.IsValidPosition(nx, ny) && heightMap.GetHeight(nx, ny) <= TerrainManager.SEA_LEVEL)
+                return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// True if the path has a turn (direction change) on water or water-slope. Invalid.
+    /// </summary>
+    bool HasTurnOnWaterOrCoast(List<Vector2> path, HeightMap heightMap)
+    {
+        if (path == null || path.Count < 3 || heightMap == null) return false;
+        for (int i = 1; i < path.Count - 1; i++)
+        {
+            Vector2 prev = path[i - 1], curr = path[i], next = path[i + 1];
+            int dxIn = (int)(curr.x - prev.x), dyIn = (int)(curr.y - prev.y);
+            int dxOut = (int)(next.x - curr.x), dyOut = (int)(next.y - curr.y);
+            if (dxIn != dxOut || dyIn != dyOut)
+            {
+                int x = (int)curr.x, y = (int)curr.y;
+                if (IsWaterOrWaterSlope(x, y, heightMap))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// True if the path has an elbow (turn) that is on water-slope or within 2 cells of water. Invalid.
+    /// </summary>
+    bool HasElbowTooCloseToWater(List<Vector2> path, HeightMap heightMap)
+    {
+        if (path == null || path.Count < 3 || heightMap == null) return false;
+        for (int i = 1; i < path.Count - 1; i++)
+        {
+            Vector2 prev = path[i - 1], curr = path[i], next = path[i + 1];
+            int dxIn = (int)(curr.x - prev.x), dyIn = (int)(curr.y - prev.y);
+            int dxOut = (int)(next.x - curr.x), dyOut = (int)(next.y - curr.y);
+            if (dxIn != dxOut || dyIn != dyOut)
+            {
+                int x = (int)curr.x, y = (int)curr.y;
+                if (!IsAtLeastTwoCellsFromWater(x, y, heightMap))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Validates bridge path for interstate/auto-road: no turns on water or coast, elbows at least 2 cells from water.
+    /// </summary>
+    public bool ValidateBridgePath(List<Vector2Int> path, HeightMap heightMap)
+    {
+        if (path == null || path.Count < 2 || heightMap == null) return true;
+        var pathVec2 = new List<Vector2>();
+        foreach (var p in path) pathVec2.Add(new Vector2(p.x, p.y));
+        return !HasTurnOnWaterOrCoast(pathVec2, heightMap) && !HasElbowTooCloseToWater(pathVec2, heightMap);
+    }
+
+    /// <summary>
+    /// Replaces runs of consecutive water and water-slope cells with a straight axis-aligned line.
+    /// Bridges must be horizontal or vertical; diagonal runs are aligned to the dominant axis.
     /// </summary>
     List<Vector2> StraightenBridgeSegments(List<Vector2> path, HeightMap heightMap)
     {
@@ -529,9 +620,64 @@ public class RoadManager : MonoBehaviour, IRoadManager
             j--;
             if (j > i)
             {
-                var straight = BresenhamStraightLine((int)path[i].x, (int)path[i].y, (int)path[j].x, (int)path[j].y);
+                int x0 = (int)path[i].x, y0 = (int)path[i].y;
+                int x1 = (int)path[j].x, y1 = (int)path[j].y;
+                List<Vector2> straight;
+                if (x0 == x1 || y0 == y1)
+                {
+                    straight = BresenhamStraightLine(x0, y0, x1, y1);
+                }
+                else
+                {
+                    int dx = Mathf.Abs(x1 - x0), dy = Mathf.Abs(y1 - y0);
+                    int ex, ey;
+                    if (dx >= dy)
+                    {
+                        int sx = x1 > x0 ? 1 : -1;
+                        ex = x0;
+                        ey = y0;
+                        straight = new List<Vector2>();
+                        while (true)
+                        {
+                            if (!heightMap.IsValidPosition(ex, ey)) break;
+                            straight.Add(new Vector2(ex, ey));
+                            if (!IsWaterOrWaterSlope(ex, ey, heightMap)) break;
+                            if (ex == x1) break;
+                            ex += sx;
+                        }
+                    }
+                    else
+                    {
+                        int sy = y1 > y0 ? 1 : -1;
+                        ex = x0;
+                        ey = y0;
+                        straight = new List<Vector2>();
+                        while (true)
+                        {
+                            if (!heightMap.IsValidPosition(ex, ey)) break;
+                            straight.Add(new Vector2(ex, ey));
+                            if (!IsWaterOrWaterSlope(ex, ey, heightMap)) break;
+                            if (ey == y1) break;
+                            ey += sy;
+                        }
+                    }
+                }
                 foreach (var p in straight)
                     result.Add(p);
+                if (j + 1 < path.Count)
+                {
+                    Vector2 bridgeEnd = straight[straight.Count - 1];
+                    Vector2 nextLand = path[j + 1];
+                    int gapX = Mathf.Abs((int)bridgeEnd.x - (int)nextLand.x);
+                    int gapY = Mathf.Abs((int)bridgeEnd.y - (int)nextLand.y);
+                    if (gapX > 1 || gapY > 1)
+                    {
+                        foreach (var p in GetCardinalPath(bridgeEnd, nextLand))
+                            result.Add(p);
+                        i = j + 2;
+                        continue;
+                    }
+                }
             }
             else
             {
@@ -544,8 +690,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
     /// <summary>
     /// Returns true if the path has valid bridge segments: at most one water run per crossing,
-    /// and each Bresenham straight line only passes through water or water-slope cells.
-    /// Invalid paths (multiple runs, or line crossing land) should be rejected.
+    /// each bridge is axis-aligned (horizontal or vertical), and each straight line only passes
+    /// through water or water-slope cells.
     /// </summary>
     bool IsBridgePathValid(List<Vector2> path, HeightMap heightMap)
     {
@@ -589,9 +735,12 @@ public class RoadManager : MonoBehaviour, IRoadManager
             {
                 if (inRun && runEnd > runStart)
                 {
-                    var straight = BresenhamStraightLine(
-                        (int)path[runStart].x, (int)path[runStart].y,
-                        (int)path[runEnd].x, (int)path[runEnd].y);
+                    int x0 = (int)path[runStart].x, y0 = (int)path[runStart].y;
+                    int x1 = (int)path[runEnd].x, y1 = (int)path[runEnd].y;
+                    bool isAxisAligned = (x0 == x1) || (y0 == y1);
+                    if (!isAxisAligned) return false;
+
+                    var straight = BresenhamStraightLine(x0, y0, x1, y1);
                     foreach (var p in straight)
                     {
                         int px = (int)p.x, py = (int)p.y;
@@ -604,9 +753,12 @@ public class RoadManager : MonoBehaviour, IRoadManager
         }
         if (inRun && runEnd > runStart)
         {
-            var straight = BresenhamStraightLine(
-                (int)path[runStart].x, (int)path[runStart].y,
-                (int)path[runEnd].x, (int)path[runEnd].y);
+            int x0 = (int)path[runStart].x, y0 = (int)path[runStart].y;
+            int x1 = (int)path[runEnd].x, y1 = (int)path[runEnd].y;
+            bool isAxisAligned = (x0 == x1) || (y0 == y1);
+            if (!isAxisAligned) return false;
+
+            var straight = BresenhamStraightLine(x0, y0, x1, y1);
             foreach (var p in straight)
             {
                 int px = (int)p.x, py = (int)p.y;
@@ -615,6 +767,25 @@ public class RoadManager : MonoBehaviour, IRoadManager
             }
         }
         return true;
+    }
+
+    /// <summary>
+    /// Cardinal path from A to B (horizontal then vertical). Excludes start point.
+    /// Used to connect bridge end to next land cell when axis alignment creates a gap.
+    /// </summary>
+    static List<Vector2> GetCardinalPath(Vector2 from, Vector2 to)
+    {
+        var path = new List<Vector2>();
+        int x0 = (int)from.x, y0 = (int)from.y;
+        int x1 = (int)to.x, y1 = (int)to.y;
+        int sx = x1 > x0 ? 1 : (x1 < x0 ? -1 : 0);
+        int sy = y1 > y0 ? 1 : (y1 < y0 ? -1 : 0);
+        for (int x = x0 + sx; sx != 0 && x != x1 + sx; x += sx)
+            path.Add(new Vector2(x, y0));
+        int lastX = path.Count > 0 ? (int)path[path.Count - 1].x : x0;
+        for (int y = y0 + sy; sy != 0 && y != y1 + sy; y += sy)
+            path.Add(new Vector2(lastX, y));
+        return path;
     }
 
     /// <summary>
@@ -1116,6 +1287,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         List<Vector2> straightenedPath = StraightenBridgeSegments(pathVec2, heightMap);
         if (!IsBridgePathValid(straightenedPath, heightMap))
+            return false;
+        if (HasTurnOnWaterOrCoast(straightenedPath, heightMap) || HasElbowTooCloseToWater(straightenedPath, heightMap))
             return false;
 
         List<Vector2> expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(straightenedPath);

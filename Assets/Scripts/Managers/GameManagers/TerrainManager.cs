@@ -508,6 +508,22 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
+    /// True if the cell has any child with ZoneCategory.Zoning (residential/commercial/industrial overlay).
+    /// Used to skip terrain refresh on zoned cells during road preview neighbor refresh.
+    /// </summary>
+    private bool CellHasZoningOverlay(Cell cell)
+    {
+        if (cell == null) return false;
+        foreach (Transform child in cell.gameObject.transform)
+        {
+            Zone zone = child.GetComponent<Zone>();
+            if (zone != null && zone.zoneCategory == Zone.ZoneCategory.Zoning)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
     /// Reapplies terrain for a single cell from the heightMap (e.g. after demolition).
     /// Restores height, world position, sorting order, and slope prefab if needed.
     /// Returns true if this cell was restored as a water slope (caller should not add grass tile).
@@ -532,6 +548,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return false;
         Cell cell = gridManager.GetCell(x, y);
         if (cell == null)
+            return false;
+
+        if (CellHasZoningOverlay(cell))
             return false;
 
         gridManager.SetCellHeight(new Vector2(x, y), newHeight);
@@ -735,7 +754,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         if (cell == null) return;
 
         int currentHeight = cellHeight >= 0 ? cellHeight : (heightMap != null ? heightMap.GetHeight(x, y) : cell.height);
-        DestroyCellChildren(cell);
+        DestroyTerrainChildrenOnly(cell);
 
         Vector2 worldPos = cell.transformPosition;
         GameObject slope = Instantiate(slopePrefab, worldPos, Quaternion.identity);
