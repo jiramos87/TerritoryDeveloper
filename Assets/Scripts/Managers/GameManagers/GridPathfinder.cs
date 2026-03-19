@@ -147,7 +147,11 @@ namespace Territory.Core
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return false;
             Cell c = grid.GetCell(x, y);
             if (c == null) return false;
-            return c.zoneType == Zone.ZoneType.Grass || c.zoneType == Zone.ZoneType.Road;
+            if (c.zoneType != Zone.ZoneType.Grass && c.zoneType != Zone.ZoneType.Road)
+                return false;
+            if (grid.terrainManager != null && !grid.terrainManager.CanPlaceRoad(x, y))
+                return false;
+            return true;
         }
 
         private int GetWalkableNeighbors(Vector2Int p, Vector2Int[] buffer)

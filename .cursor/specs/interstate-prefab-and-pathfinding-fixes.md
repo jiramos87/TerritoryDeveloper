@@ -4,11 +4,14 @@
 
 This spec addresses multiple issues observed in interstate route generation: incorrect road prefab selection (especially elbows), zigzag paths that could be simplified, poor "environmental" path choices (hugging hills instead of offsetting to avoid them), and cut-through terrain interactions that produce visual artifacts. It also clarifies how the road subsystems share logic and proposes a unified approach.
 
+**Status (2026-03-19):** Bridge approach (Rule F) and shared terraform validation are in place. **BUG-27** (interstate pathfinding) and **BUG-29** (cut-through craters / tall-hill reject + cliff corridor) are **completed** in [BACKLOG.md](../../BACKLOG.md). **Remaining:** sorting order (**BUG-28**), interstate slope prefabs at entry/exit (**BUG-30**).
+
 ## Related Documents
 
 - [bridge-and-junction-fixes.md](bridge-and-junction-fixes.md) — Bridge disappearing, junction refresh
-- [road-drawing-fixes.md](road-drawing-fixes.md) — Manual draw pipeline, preview consistency, Phase 1–4
-- [BACKLOG.md](../../BACKLOG.md) — BUG-25 (manual street drawing), BUG-23 (interstate flaky)
+- [road-drawing-fixes.md](road-drawing-fixes.md) — Manual draw pipeline, preview consistency, Phase 1–4 (**BUG-25**)
+- [BACKLOG.md](../../BACKLOG.md) — BUG-25 (in progress pending verify), BUG-23 (interstate flaky, completed)
+- [docs/plan-cut-through-craters.md](../../docs/plan-cut-through-craters.md) — BUG-29 implementation notes
 
 ## Related Files
 
@@ -21,7 +24,7 @@ This spec addresses multiple issues observed in interstate route generation: inc
 | `TerraformingService.cs` | `ComputePathPlan`, `ExpandDiagonalStepsToCardinal` |
 | `PathTerraformPlan.cs` | Terraform Apply/Revert, cut-through mode |
 | `TerrainManager.cs` | Terrain visuals, `RestoreTerrainForCell`, `PlaceWaterSlope` |
-| `AutoRoadBuilder.cs` | Auto road mode, uses `ResolvePathForRoads` + `ComputePathPlan` |
+| `AutoRoadBuilder.cs` | Auto road mode, `TryGetStreetPlacementPlan` → `TryPrepareRoadPlacementPlan` when available |
 | `RoadPathCostConstants.cs` | Shared cost model for slopes |
 
 ---
@@ -37,6 +40,7 @@ This spec addresses multiple issues observed in interstate route generation: inc
 | **Cost model** | `RoadPathCostConstants` (via GridPathfinder) | Same | Same |
 | **Bridge validation** | `StraightenBridgeSegments`, `IsBridgePathValid`, `HasElbowTooCloseToWater` | Same | Same |
 | **Path expansion** | `ExpandDiagonalStepsToCardinal` | Same | Same |
+| **Terraform validation entry** | `RoadManager.TryPrepareRoadPlacementPlanLongestValidPrefix` (`forbidCutThrough: false`) for streets | `TryPrepareRoadPlacementPlan` (`forbidCutThrough: true`, full path) | `AutoRoadBuilder.TryGetStreetPlacementPlan` → longest-prefix API when `RoadManager` present |
 
 ### What is different
 
@@ -45,7 +49,11 @@ This spec addresses multiple issues observed in interstate route generation: inc
 | **Pathfinding** | `GridPathfinder.FindPath` (A* + SmoothPath) | `InterstateManager.FindInterstatePathAStar` + `BiasedWalkPath` | `GridManager.FindPath` / `FindPathWithRoadSpacing` |
 | **Path source** | User drag (start → end) | Border-to-border (entry → exit) | Edge → target (interstate, cluster, or straight segment) |
 
-**Conclusion:** Prefab selection and terraforming are fully shared. Pathfinding is **not** shared: Interstate uses its own A*, which has no straightness preference and can produce zigzag routes that then get incorrect prefabs when the resolver misinterprets connectivity.
+**Interstate endpoints:** `InterstateManager` ranks border cells with `ComputeInterstateBorderEndpointScore` (flat neighbors, flat mandatory first step inland, low border height). Lists are sorted best-first; random generation picks from the top third of candidates; `TryGenerateInterstateDeterministic` breaks Manhattan-distance ties by combined entry+exit score.
+
+**Interstate A\*:** `PickLowerCostInterstateAStarPath` runs `RunInterstateAStar` with `avoidHighTerrain` true and false; if both reach the exit, the cheaper path by `ComputePathCost` wins (so a shorter hill-crossing route can beat a long flat U). `InterstateAwayFromGoalPenalty` penalizes steps that increase Manhattan distance to the goal, reducing aimless detours.
+
+**Conclusion:** Prefab selection, bridge checks, and terraform plan validation are fully shared via **`TryPrepareRoadPlacementPlan`**. Interstate adds **`RoadPathValidationContext.forbidCutThrough`** so routes that would flatten a hill in cut-through mode are rejected; manual streets and auto roads allow cut-through when `ComputePathPlan` marks it valid. Pathfinding is **not** shared: Interstate uses its own A*, which has no straightness preference and can produce zigzag routes that then get incorrect prefabs when the resolver misinterprets connectivity.
 
 ---
 
@@ -128,7 +136,18 @@ if (pathRight && pathDown && !pathLeft && !pathUp)
 
 **Root cause:** Pathfinding or bridge straightening places a turn on the last land cell. `StraightenBridgeSegments` aligns the water run but does not guarantee the approach segment is straight.
 
-**Fix:** Enforce that the last N land cells before water (e.g. N=2) form a straight line aligned with the bridge axis. If the path has a turn within 2 cells of water, reject or adjust the path.
+**Fix:** Enforce that the last N land cells before water (e.g. N=2) form a straight line aligned with the bridge axis. If the path has a turn within 2 cells of water, reject or adjust the path. **Implemented** — `HasTurnOnLastLandCellsBeforeWater` in RoadManager.
+
+---
+
+## 3.6 Issue tracker (post BUG-26)
+
+| ID | Issue | Backlog | Status |
+|----|-------|---------|--------|
+| 3.6a | Interstate pathfinding — endpoint scoring, dual A*, penalties | BUG-27 | **Completed** (2026-03-19) |
+| 3.6b | Sorting order between slope cell and interstate cell | BUG-28 | Open |
+| 3.6c | Cut-through: tall-hill reject, cliff corridor, map-edge margin, validation ring | BUG-29 | **Completed** (2026-03-19) |
+| 3.6d | Prefab selection wrong at interstate input/output points | BUG-30 | Open |
 
 ---
 
@@ -146,28 +165,28 @@ if (pathRight && pathDown && !pathLeft && !pathUp)
 
 ---
 
-### Phase 2 — Interstate pathfinding improvements (P1)
+### Phase 2 — Interstate pathfinding improvements (P1) — **complete (BUG-27, 2026-03-19)**
 
 | Task | File | Description |
 |------|------|-------------|
-| 2.1 | `InterstateManager.cs` | Add straightness bonus: reduce step cost when `dir(current→next) == dir(prev→current)` |
-| 2.2 | `RoadPathCostConstants.cs` | Add `InterstateSlopeCostMultiplier` or higher constants for interstate to favor avoiding slopes |
-| 2.3 | `InterstateManager.cs` | Optional: parallel path sampling — when path would cross hill, try offset ±1 perpendicular; pick lower cost |
-| 2.4 | `InterstateManager.cs` | Bridge approach: ensure last 2 land cells before water are collinear with bridge axis; reject or straighten if not |
+| 2.1 | `InterstateManager.cs` | Straightness / continuity in step costs — **done** (aligned with BUG-27 tuning) |
+| 2.2 | `RoadPathCostConstants.cs` | Interstate slope / away-from-goal penalties — **done** |
+| 2.3 | `InterstateManager.cs` | Dual-run A* (`avoidHighTerrain` true vs false), pick lower `ComputePathCost` — **done** (`PickLowerCostInterstateAStarPath`) |
+| 2.4 | `InterstateManager.cs` / `RoadManager.cs` | Bridge approach — **done** (Rule F / shared bridge validation) |
 
-**Acceptance:** Interstate paths are straighter and tend to avoid hills when an offset path exists.
+**Acceptance:** Interstate paths are straighter and tend to avoid hills when a cheaper offset path exists (per cost model).
 
 ---
 
-### Phase 3 — Cut-through robustness (P1)
+### Phase 3 — Cut-through robustness (P1) — **complete (BUG-29, 2026-03-19)**
 
 | Task | File | Description |
 |------|------|-------------|
-| 3.1 | `PathTerraformPlan.cs` | Phase 3: extend neighbor refresh to include diagonal neighbors at cut-through boundaries |
-| 3.2 | `TerrainManager.cs` | Audit `RestoreTerrainForCell` for cells with mixed flattened/non-flattened neighbors; fix slope/cliff selection |
-| 3.3 | `TerraformingService.cs` | Consider expanding `adjacentCells` more aggressively at cut-through so terrain transitions are smooth |
+| 3.1 | `PathTerraformPlan.cs` | Neighbor refresh waves for cut-through — **done** (Phase 3 second ring / waves) |
+| 3.2 | `TerrainManager.cs` | One-step cliff walls toward cut corridor — **done** (`terraformCutCorridorCells`, `NeedsCutThroughOneStepCliffToCorridor`) |
+| 3.3 | `TerraformingService.cs` | Tall-hill cut reject; map-edge margin; optional widen — **done** (see `docs/plan-cut-through-craters.md`) |
 
-**Acceptance:** Cut-through roads no longer show black holes or misaligned terrain.
+**Acceptance:** Cut-through no longer leaves voids at typical boundaries; invalid tall cuts rejected; interstate forbids cut-through trench.
 
 ---
 
@@ -222,6 +241,11 @@ Phase 4 (unify) — optional, after 2 and 3
 
 ## 7. Backlog Integration
 
-- **BUG-25** (manual street drawing): Phase 1 prefab fixes apply to manual draw as well. Phase 1.1 done.
-- **BUG-23** (interstate flaky): This spec does **not** cover the New Game flow problem (interstate never created on New Game). That is a separate initialization/flow issue in GeographyManager/GameBootstrap. Phase 2 pathfinding improvements may reduce flaky generation when the route does run.
-- **BUG-26** (created): Interstate prefab selection and pathfinding improvements — this spec. Phase 1.1 done; Phases 2–5 pending.
+- **BUG-25** (manual street drawing): Phase 1 prefab fixes apply to manual draw as well.
+- **BUG-23** (interstate flaky): New Game flow problem is a separate initialization/flow issue in GeographyManager/GameBootstrap.
+- **BUG-26** (completed 2026-03-19): Phases 1–3 started; bridge approach (Rule F) and shared validation landed.
+- **BUG-27** (completed 2026-03-19): Interstate pathfinding — endpoint ranking, dual A*, penalties (`RoadPathCostConstants`).
+- **BUG-29** (completed 2026-03-19): Cut-through craters — reject tall cut, cliff corridor, map-edge guard, validation ring; see `docs/plan-cut-through-craters.md`.
+- **BUG-25** (in progress in BACKLOG): Manual street drawing — spec tasks marked complete in `road-drawing-fixes.md`; pending user verify.
+- **BUG-28**: Sorting order between slope cell and interstate cell — open.
+- **BUG-30**: Prefab selection at interstate input/output points — open.

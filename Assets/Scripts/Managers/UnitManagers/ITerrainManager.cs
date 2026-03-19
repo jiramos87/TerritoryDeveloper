@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Territory.Terrain
@@ -16,6 +17,6 @@ public interface ITerrainManager
     int CalculateSlopeSortingOrder(int x, int y, int height);
     int CalculateBuildingSortingOrder(int x, int y, int height);
     void ModifyTerrain(int x, int y, int newHeight);
-    bool RestoreTerrainForCell(int x, int y, HeightMap useHeightMap = null, bool forceFlat = false, TerrainSlopeType? forceSlopeType = null);
+    bool RestoreTerrainForCell(int x, int y, HeightMap useHeightMap = null, bool forceFlat = false, TerrainSlopeType? forceSlopeType = null, ISet<Vector2Int> terraformCutCorridorCells = null);
 }
 }

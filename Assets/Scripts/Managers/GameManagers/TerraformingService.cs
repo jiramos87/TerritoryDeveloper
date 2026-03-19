@@ -5,7 +5,8 @@ using Territory.Core;
 
 /// <summary>
 /// Terraforms terrain for road placement: converts diagonal slopes to orthogonal or flattens
-/// cells when roads run along hillsides. Used by RoadManager, AutoRoadBuilder, and InterstateManager.
+/// cells when roads run along hillsides. When the path only has scalable land steps (|Δh| ≤ 1 between consecutive path cells),
+/// ascending segments prefer slope alignment (no flatten to base) to avoid spurious cut-through visuals. Used by RoadManager, AutoRoadBuilder, and InterstateManager.
 /// </summary>
 public class TerraformingService : MonoBehaviour
 {
@@ -13,6 +14,17 @@ public class TerraformingService : MonoBehaviour
     public TerrainManager terrainManager;
     public GridManager gridManager;
     #endregion
+
+    #region Cut-through (BUG-29)
+    [Header("Cut-through")]
+    [Tooltip("Widens cut-through by flattening diagonal/cardinal neighbors one step above base height. Off by default.")]
+    public bool expandCutThroughAdjacentByOneStep = false;
+    [Tooltip("Reject cut-through when any path cell or expanded flatten cell is within this many cells of the map edge. 0 = no check. Keeps corridor terraforming away from void/bad slope prefabs at borders.")]
+    public int cutThroughMinCellsFromMapEdge = 2;
+    #endregion
+
+    /// <summary>When true, logs plan validity, cut-through flag, and flatten counts after <see cref="ComputePathPlan"/>.</summary>
+    public static bool LogTerraformPlanDiagnostics = false;
 
     /// <summary>
     /// Action to perform when terraforming a cell.
@@ -77,19 +89,21 @@ public class TerraformingService : MonoBehaviour
     /// </summary>
     public int ComputePathBaseHeight(System.Collections.Generic.IList<Vector2> path)
     {
-        var (baseHeight, _) = ComputePathBaseHeightAndCutThrough(path);
+        var (baseHeight, _, _) = ComputePathBaseHeightAndCutThrough(path);
         return baseHeight;
     }
 
     /// <summary>
     /// Returns base height and whether path crosses a hill (height variation with max >= 2).
     /// Used for cut-through mode: flatten only path cells, leave adjacent terrain "cut" with cliffs.
+    /// Cut-through is only used when path has consecutive height diff &gt; 1 (cannot scale with slopes).
+    /// Paths that can scale (all consecutive diffs &lt;= 1) use slope prefabs instead.
     /// </summary>
-    (int baseHeight, bool pathCrossesHill) ComputePathBaseHeightAndCutThrough(System.Collections.Generic.IList<Vector2> path)
+    (int baseHeight, bool pathCrossesHill, int maxHeight) ComputePathBaseHeightAndCutThrough(System.Collections.Generic.IList<Vector2> path)
     {
-        if (terrainManager == null || path == null || path.Count == 0) return (1, false);
+        if (terrainManager == null || path == null || path.Count == 0) return (1, false, 1);
         var heightMap = terrainManager.GetHeightMap();
-        if (heightMap == null) return (1, false);
+        if (heightMap == null) return (1, false, 1);
 
         int minHeight = int.MaxValue;
         int maxHeight = int.MinValue;
@@ -108,8 +122,26 @@ public class TerraformingService : MonoBehaviour
         }
 
         int baseHeight = maxHeight > minHeight ? minHeight : (minHeight < int.MaxValue ? minHeight : 1);
-        bool pathCrossesHill = (maxHeight >= 2) && (maxHeight > minHeight);
-        return (baseHeight, pathCrossesHill);
+        bool pathCrossesHill = (maxHeight >= 2) && (maxHeight > minHeight)
+            && HasConsecutiveHeightDiffGreaterThanOne(path, heightMap);
+        return (baseHeight, pathCrossesHill, maxHeight);
+    }
+
+    /// <summary>
+    /// True if any consecutive path cells have land height difference &gt; 1.
+    /// Used to decide cut-through: only when we cannot scale with slopes.
+    /// </summary>
+    private static bool HasConsecutiveHeightDiffGreaterThanOne(System.Collections.Generic.IList<Vector2> path, HeightMap heightMap)
+    {
+        if (path == null || path.Count < 2 || heightMap == null) return false;
+        for (int i = 0; i < path.Count - 1; i++)
+        {
+            int h1 = heightMap.GetHeight((int)path[i].x, (int)path[i].y);
+            int h2 = heightMap.GetHeight((int)path[i + 1].x, (int)path[i + 1].y);
+            if (h1 > TerrainManager.SEA_LEVEL && h2 > TerrainManager.SEA_LEVEL && Mathf.Abs(h2 - h1) > 1)
+                return true;
+        }
+        return false;
     }
 
     /// <summary>
@@ -128,12 +160,16 @@ public class TerraformingService : MonoBehaviour
         var heightMap = terrainManager.GetHeightMap();
         if (heightMap == null) return plan;
 
-        var (baseHeight, pathCrossesHill) = ComputePathBaseHeightAndCutThrough(path);
+        var (baseHeight, pathCrossesHill, maxHeight) = ComputePathBaseHeightAndCutThrough(path);
         plan.baseHeight = baseHeight;
         plan.isCutThrough = pathCrossesHill;
 
         if (pathCrossesHill)
         {
+            // BUG-29: Cut-through only valid when height diff <= 1. Reject paths that would cut through tall hills.
+            if (maxHeight - baseHeight > 1)
+                plan.isValid = false;
+
             for (int i = 0; i < path.Count; i++)
             {
                 int x = (int)path[i].x;
@@ -165,8 +201,17 @@ public class TerraformingService : MonoBehaviour
 
                 plan.pathCells.Add(cellPlan);
             }
+            // Cut-through: expand adjacentCells so no flattened path cell has a neighbor with height diff > 1.
+            // Ensures smooth terrain transitions and prevents black holes at boundaries.
+            ExpandAdjacentFlattenCellsRecursively(plan, path, heightMap);
+            if (plan.isValid && cutThroughMinCellsFromMapEdge > 0 && !CutThroughHasAcceptableMapMargin(plan, path, heightMap))
+                plan.isValid = false;
+            LogTerraformPlanDiagnosticsInternal(plan, path);
             return plan;
         }
+
+        // Scale-with-slopes mode: no consecutive land step with |Δh|>1. Prefer climbing via slope prefabs instead of flattening path cells to baseHeight (avoids fake cut-through / craters).
+        bool preferSlopeClimb = !HasConsecutiveHeightDiffGreaterThanOne(path, heightMap);
 
         for (int i = 0; i < path.Count; i++)
         {
@@ -199,6 +244,18 @@ public class TerraformingService : MonoBehaviour
 
             TerrainSlopeType slopeType = terrainManager.GetTerrainSlopeTypeAt(x, y);
 
+            int hPrevLand = TerrainManager.SEA_LEVEL;
+            if (i > 0)
+            {
+                int px = (int)path[i - 1].x, py = (int)path[i - 1].y;
+                if (heightMap.IsValidPosition(px, py))
+                    hPrevLand = heightMap.GetHeight(px, py);
+            }
+            bool ascendingOneStepLand = preferSlopeClimb
+                && hPrevLand > TerrainManager.SEA_LEVEL
+                && h > hPrevLand
+                && (h - hPrevLand) == 1;
+
             if (i < path.Count - 1)
             {
                 int hNext = heightMap.GetHeight((int)path[i + 1].x, (int)path[i + 1].y);
@@ -226,6 +283,14 @@ public class TerraformingService : MonoBehaviour
 
             if (roadParallelToSlope)
             {
+                if (ascendingOneStepLand)
+                {
+                    cellPlan.action = TerraformAction.None;
+                    cellPlan.targetHeight = h;
+                    cellPlan.postTerraformSlopeType = GetSlopeTypeFromRoadDirection(dxOut, dyOut);
+                    plan.pathCells.Add(cellPlan);
+                    continue;
+                }
                 cellPlan.action = TerraformAction.Flatten;
                 cellPlan.targetHeight = plan.baseHeight;
                 cellPlan.postTerraformSlopeType = TerrainSlopeType.Flat;
@@ -258,10 +323,19 @@ public class TerraformingService : MonoBehaviour
                 }
                 else
                 {
-                    cellPlan.action = TerraformAction.Flatten;
-                    cellPlan.targetHeight = plan.baseHeight;
-                    cellPlan.postTerraformSlopeType = TerrainSlopeType.Flat;
-                    AddAdjacentFlattenCells(plan, path, heightMap, x, y, plan.baseHeight, h);
+                    if (ascendingOneStepLand)
+                    {
+                        cellPlan.action = TerraformAction.None;
+                        cellPlan.targetHeight = h;
+                        cellPlan.postTerraformSlopeType = GetSlopeTypeFromRoadDirection(dxOut, dyOut);
+                    }
+                    else
+                    {
+                        cellPlan.action = TerraformAction.Flatten;
+                        cellPlan.targetHeight = plan.baseHeight;
+                        cellPlan.postTerraformSlopeType = TerrainSlopeType.Flat;
+                        AddAdjacentFlattenCells(plan, path, heightMap, x, y, plan.baseHeight, h);
+                    }
                 }
                 plan.pathCells.Add(cellPlan);
                 continue;
@@ -270,7 +344,12 @@ public class TerraformingService : MonoBehaviour
             if (isOrthogonalSlope)
             {
                 bool isLower = IsLowerInSlopePair(heightMap, x, y, slopeType);
-                if (isLower)
+                if (isLower && ascendingOneStepLand)
+                {
+                    cellPlan.action = TerraformAction.None;
+                    cellPlan.targetHeight = h;
+                }
+                else if (isLower)
                 {
                     cellPlan.action = TerraformAction.Flatten;
                     cellPlan.targetHeight = plan.baseHeight;
@@ -282,8 +361,139 @@ public class TerraformingService : MonoBehaviour
             plan.pathCells.Add(cellPlan);
         }
 
-        ExpandAdjacentFlattenCellsRecursively(plan, path, heightMap);
+        if (plan.isValid)
+            InvalidatePlanIfPathBesideSteepLandCliff(plan, path, heightMap, preferSlopeClimb);
+
+        bool anyFlattenScheduled = false;
+        for (int pi = 0; pi < plan.pathCells.Count; pi++)
+        {
+            if (plan.pathCells[pi].action == TerraformAction.Flatten)
+            {
+                anyFlattenScheduled = true;
+                break;
+            }
+        }
+        if (!anyFlattenScheduled)
+        {
+            for (int ai = 0; ai < plan.adjacentCells.Count; ai++)
+            {
+                if (plan.adjacentCells[ai].action == TerraformAction.Flatten)
+                {
+                    anyFlattenScheduled = true;
+                    break;
+                }
+            }
+        }
+        if (!preferSlopeClimb || anyFlattenScheduled)
+            ExpandAdjacentFlattenCellsRecursively(plan, path, heightMap);
+
+        LogTerraformPlanDiagnosticsInternal(plan, path);
         return plan;
+    }
+
+    /// <summary>
+    /// Scale-climb mode: path must not run alongside land neighbors with |Δh|&gt;1 (e.g. gorge beside slope tile). Uses current heightmap (pre-apply).
+    /// </summary>
+    void InvalidatePlanIfPathBesideSteepLandCliff(PathTerraformPlan plan, IList<Vector2> path, HeightMap heightMap, bool preferSlopeClimb)
+    {
+        if (!preferSlopeClimb || plan == null || heightMap == null || path == null || !plan.isValid)
+            return;
+
+        var pathSet = new HashSet<Vector2Int>();
+        for (int i = 0; i < path.Count; i++)
+            pathSet.Add(new Vector2Int((int)path[i].x, (int)path[i].y));
+
+        int[] cdx = { 1, -1, 0, 0 };
+        int[] cdy = { 0, 0, 1, -1 };
+        for (int i = 0; i < path.Count; i++)
+        {
+            int x = (int)path[i].x;
+            int y = (int)path[i].y;
+            if (!heightMap.IsValidPosition(x, y))
+                continue;
+            int h = heightMap.GetHeight(x, y);
+            if (h <= TerrainManager.SEA_LEVEL)
+                continue;
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + cdx[d];
+                int ny = y + cdy[d];
+                if (!heightMap.IsValidPosition(nx, ny))
+                    continue;
+                if (pathSet.Contains(new Vector2Int(nx, ny)))
+                    continue;
+                int nh = heightMap.GetHeight(nx, ny);
+                if (nh <= TerrainManager.SEA_LEVEL)
+                    continue;
+                if (Mathf.Abs(nh - h) > 1)
+                {
+                    plan.isValid = false;
+                    return;
+                }
+            }
+        }
+    }
+
+    void LogTerraformPlanDiagnosticsInternal(PathTerraformPlan plan, IList<Vector2> path)
+    {
+        if (!LogTerraformPlanDiagnostics || plan == null)
+            return;
+        int pathFlat = 0;
+        int adjFlat = 0;
+        for (int i = 0; i < plan.pathCells.Count; i++)
+        {
+            if (plan.pathCells[i].action == TerraformAction.Flatten)
+                pathFlat++;
+        }
+        for (int i = 0; i < plan.adjacentCells.Count; i++)
+        {
+            if (plan.adjacentCells[i].action == TerraformAction.Flatten)
+                adjFlat++;
+        }
+        Debug.Log($"[Terraform] valid={plan.isValid} cutThrough={plan.isCutThrough} pathCells={plan.pathCells.Count} pathFlat={pathFlat} adjacent={plan.adjacentCells.Count} adjFlat={adjFlat} pathLen={(path != null ? path.Count : 0)}");
+    }
+
+    /// <summary>
+    /// True when cut-through path and expanded flatten corridor stay inside an inner rectangle,
+    /// at least <see cref="cutThroughMinCellsFromMapEdge"/> cells away from each map edge.
+    /// </summary>
+    bool CutThroughHasAcceptableMapMargin(PathTerraformPlan plan, IList<Vector2> path, HeightMap heightMap)
+    {
+        int m = cutThroughMinCellsFromMapEdge;
+        if (m <= 0 || heightMap == null || plan == null || path == null)
+            return true;
+
+        int w = heightMap.Width;
+        int h = heightMap.Height;
+        // No room for an inner band — skip margin rule so tiny maps are not always invalid.
+        if (w <= m * 2 || h <= m * 2)
+            return true;
+
+        bool Inside(int x, int y)
+        {
+            return x >= m && y >= m && x < w - m && y < h - m;
+        }
+
+        for (int i = 0; i < path.Count; i++)
+        {
+            int x = (int)path[i].x;
+            int y = (int)path[i].y;
+            if (!heightMap.IsValidPosition(x, y))
+                continue;
+            if (!Inside(x, y))
+                return false;
+        }
+
+        for (int i = 0; i < plan.adjacentCells.Count; i++)
+        {
+            var c = plan.adjacentCells[i];
+            if (c.action != TerraformAction.Flatten)
+                continue;
+            if (!Inside(c.position.x, c.position.y))
+                return false;
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -328,7 +538,8 @@ public class TerraformingService : MonoBehaviour
                 if (!heightMap.IsValidPosition(nx, ny)) continue;
                 int nh = heightMap.GetHeight(nx, ny);
                 if (nh <= TerrainManager.SEA_LEVEL || nh == baseHeight) continue;
-                if (Mathf.Abs(nh - baseHeight) <= 1) continue;
+                bool oneStepRidgeAboveBase = expandCutThroughAdjacentByOneStep && plan.isCutThrough && nh == baseHeight + 1;
+                if (Mathf.Abs(nh - baseHeight) <= 1 && !oneStepRidgeAboveBase) continue;
                 if (toFlatten.Contains(new Vector2Int(nx, ny))) continue;
 
                 toFlatten.Add(new Vector2Int(nx, ny));

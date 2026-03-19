@@ -30,6 +30,12 @@ public enum TerrainSlopeType
 /// </summary>
 public class TerrainManager : MonoBehaviour, ITerrainManager
 {
+    /// <summary>
+    /// When true, logs when <see cref="RestoreTerrainForCell"/> exits early (null cell, overlay, invalid position).
+    /// Used to diagnose cut-through / BUG-29 voids vs sorting issues.
+    /// </summary>
+    public static bool LogTerraformRestoreDiagnostics = false;
+
     #region Dependencies
     public GridManager gridManager;
     private HeightMap heightMap;
@@ -527,11 +533,16 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// Reapplies terrain for a single cell from the heightMap (e.g. after demolition).
     /// Restores height, world position, sorting order, and slope prefab if needed.
     /// Returns true if this cell was restored as a water slope (caller should not add grass tile).
+    /// Cut-through boundaries: Phase 3 refreshes neighbors of flattened path cells. Those neighbors
+    /// have mixed flattened/non-flattened neighbors; RequiresSlope and DetermineSlopePrefab use the
+    /// updated heightmap so slope selection matches the new landscape. forceFlat/forceSlopeType are
+    /// used for path and adjacent cells in Phase 2; Phase 3 neighbors use live heightmap.
     /// </summary>
     /// <param name="useHeightMap">If non-null, this map is used (and assigned to heightMap) so restore works even when instance field was null.</param>
     /// <param name="forceFlat">When true, use flat terrain regardless of neighbor heights. Used for terraformed path transition cells.</param>
     /// <param name="forceSlopeType">When set, use this orthogonal slope prefab instead of DetermineSlopePrefab. Used for terraformed path slope cells.</param>
-    public bool RestoreTerrainForCell(int x, int y, HeightMap useHeightMap = null, bool forceFlat = false, TerrainSlopeType? forceSlopeType = null)
+    /// <param name="terraformCutCorridorCells">When non-null (cut-through apply), places land–land cliff walls for 1-step drops toward these cells (BUG-29).</param>
+    public bool RestoreTerrainForCell(int x, int y, HeightMap useHeightMap = null, bool forceFlat = false, TerrainSlopeType? forceSlopeType = null, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
         if (useHeightMap != null)
             heightMap = useHeightMap;
@@ -540,18 +551,34 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             EnsureHeightMapLoaded();
         }
         if (heightMap == null)
+        {
+            if (LogTerraformRestoreDiagnostics)
+                Debug.LogWarning($"[Terrain] RestoreTerrainForCell({x},{y}): heightMap null");
             return false;
+        }
         if (!heightMap.IsValidPosition(x, y))
+        {
+            if (LogTerraformRestoreDiagnostics)
+                Debug.LogWarning($"[Terrain] RestoreTerrainForCell({x},{y}): invalid position");
             return false;
+        }
         int newHeight = heightMap.GetHeight(x, y);
         if (newHeight == SEA_LEVEL)
             return false;
         Cell cell = gridManager.GetCell(x, y);
         if (cell == null)
+        {
+            if (LogTerraformRestoreDiagnostics)
+                Debug.LogWarning($"[Terrain] RestoreTerrainForCell({x},{y}): Cell null");
             return false;
+        }
 
         if (CellHasZoningOverlay(cell))
+        {
+            if (LogTerraformRestoreDiagnostics)
+                Debug.LogWarning($"[Terrain] RestoreTerrainForCell({x},{y}): skipped — zoning overlay");
             return false;
+        }
 
         gridManager.SetCellHeight(new Vector2(x, y), newHeight);
 
@@ -590,7 +617,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             PlaceFlatTerrain(x, y);  // flat: all neighbors same height
         }
 
-        PlaceCliffWalls(x, y);
+        PlaceCliffWalls(x, y, terraformCutCorridorCells);
         return false;
     }
 
@@ -935,7 +962,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         updatedCell.sortingOrder = sortingOrder;
     }
 
-    private void PlaceCliffWalls(int x, int y)
+    /// <param name="terraformCutCorridorCells">Cells lowered by cut-through terraform; enables 1-step land–land cliff faces toward the corridor (BUG-29).</param>
+    private void PlaceCliffWalls(int x, int y, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
         int currentHeight = heightMap.GetHeight(x, y);
         if (currentHeight <= SEA_LEVEL)
@@ -946,22 +974,23 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         Cell cell = gridManager.GetCell(x, y);
         RemoveExistingCliffWalls(cell);
 
-        if (NeedsCliffWallSouth(x, y, currentHeight))
+        if (NeedsCliffWallSouth(x, y, currentHeight, terraformCutCorridorCells))
             PlaceCliffWallPrefab(cell, southCliffWallPrefab, x, y, currentHeight);
-        if (NeedsCliffWallEast(x, y, currentHeight))
+        if (NeedsCliffWallEast(x, y, currentHeight, terraformCutCorridorCells))
             PlaceCliffWallPrefab(cell, eastCliffWallPrefab, x, y, currentHeight);
-        if (NeedsCliffWallNorth(x, y, currentHeight))
+        if (NeedsCliffWallNorth(x, y, currentHeight, terraformCutCorridorCells))
             PlaceCliffWallPrefab(cell, northCliffWallPrefab, x, y, currentHeight);
-        if (NeedsCliffWallWest(x, y, currentHeight))
+        if (NeedsCliffWallWest(x, y, currentHeight, terraformCutCorridorCells))
             PlaceCliffWallPrefab(cell, westCliffWallPrefab, x, y, currentHeight);
     }
 
-    private bool NeedsCliffWallSouth(int x, int y, int currentHeight)
+    /// <summary>
+    /// True when the south neighbor (x-1,y) is lower and forms a cliff on this cell's south edge.
+    /// </summary>
+    private bool NeedsCliffWallSouth(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
-        if (!heightMap.IsValidPosition(x - 1, y) || !heightMap.IsValidPosition(x + 1, y))
-        {
+        if (!heightMap.IsValidPosition(x - 1, y))
             return false;
-        }
 
         int heightAtSouth = heightMap.GetHeight(x - 1, y);
         if (currentHeight - heightAtSouth > 1)
@@ -969,16 +998,19 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return true;
         }
 
+        if (NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtSouth, x - 1, y))
+            return true;
+
+        if (!heightMap.IsValidPosition(x + 1, y))
+            return false;
         int heightAtNorth = heightMap.GetHeight(x + 1, y);
         return heightAtSouth == SEA_LEVEL && currentHeight == 1 && heightAtNorth == 2;
     }
 
-    private bool NeedsCliffWallEast(int x, int y, int currentHeight)
+    private bool NeedsCliffWallEast(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
-        if (!heightMap.IsValidPosition(x, y - 1) || !heightMap.IsValidPosition(x, y + 1))
-        {
+        if (!heightMap.IsValidPosition(x, y - 1))
             return false;
-        }
 
         int heightAtEast = heightMap.GetHeight(x, y - 1);
         if (currentHeight - heightAtEast > 1)
@@ -986,30 +1018,59 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return true;
         }
 
+        if (NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtEast, x, y - 1))
+            return true;
+
+        if (!heightMap.IsValidPosition(x, y + 1))
+            return false;
         int heightAtWest = heightMap.GetHeight(x, y + 1);
         return heightAtEast == SEA_LEVEL && currentHeight == 1 && heightAtWest == 2;
     }
 
-    private bool NeedsCliffWallNorth(int x, int y, int currentHeight)
+    private bool NeedsCliffWallNorth(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
-        if (!heightMap.IsValidPosition(x + 1, y) || !heightMap.IsValidPosition(x - 1, y))
+        if (!heightMap.IsValidPosition(x + 1, y))
             return false;
         int heightAtNorth = heightMap.GetHeight(x + 1, y);
         if (currentHeight - heightAtNorth > 1)
             return true;
+
+        if (NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtNorth, x + 1, y))
+            return true;
+
+        if (!heightMap.IsValidPosition(x - 1, y))
+            return false;
         int heightAtSouth = heightMap.GetHeight(x - 1, y);
         return heightAtNorth == SEA_LEVEL && currentHeight == 1 && heightAtSouth == 2;
     }
 
-    private bool NeedsCliffWallWest(int x, int y, int currentHeight)
+    private bool NeedsCliffWallWest(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
-        if (!heightMap.IsValidPosition(x, y + 1) || !heightMap.IsValidPosition(x, y - 1))
+        if (!heightMap.IsValidPosition(x, y + 1))
             return false;
         int heightAtWest = heightMap.GetHeight(x, y + 1);
         if (currentHeight - heightAtWest > 1)
             return true;
+
+        if (NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtWest, x, y + 1))
+            return true;
+
+        if (!heightMap.IsValidPosition(x, y - 1))
+            return false;
         int heightAtEast = heightMap.GetHeight(x, y - 1);
         return heightAtWest == SEA_LEVEL && currentHeight == 1 && heightAtEast == 2;
+    }
+
+    /// <summary>
+    /// Cut-through only: 1-step land drop into the lowered corridor gets a cliff wall (avoids black voids at rim).
+    /// </summary>
+    static bool NeedsCutThroughOneStepCliffToCorridor(ISet<Vector2Int> terraformCutCorridorCells, int currentHeight, int neighborHeight, int nx, int ny)
+    {
+        if (terraformCutCorridorCells == null || !terraformCutCorridorCells.Contains(new Vector2Int(nx, ny)))
+            return false;
+        if (neighborHeight <= SEA_LEVEL)
+            return false;
+        return currentHeight - neighborHeight == 1 && neighborHeight < currentHeight;
     }
 
     private void PlaceCliffWallPrefab(Cell cell, GameObject prefab, int x, int y, int currentHeight)
@@ -1412,19 +1473,29 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         return obj.name.StartsWith(prefab.name);
     }
 
+    /// <summary>
+    /// Height used for land slope / prefab selection. Out-of-map neighbors use <paramref name="currentHeight"/> so MIN_HEIGHT outside the grid does not fake slopes toward the void.
+    /// </summary>
+    int GetNeighborHeightForLandSlope(int nx, int ny, int currentHeight)
+    {
+        if (heightMap == null || !heightMap.IsValidPosition(nx, ny))
+            return currentHeight;
+        return heightMap.GetHeight(nx, ny);
+    }
+
     private GameObject DetermineSlopePrefab(int x, int y)
     {
         int currentHeight = heightMap.GetHeight(x, y);
 
-        int northHeight = heightMap.GetHeight(x + 1, y);
-        int southHeight = heightMap.GetHeight(x - 1, y);
-        int westHeight = heightMap.GetHeight(x, y + 1);
-        int eastHeight = heightMap.GetHeight(x, y - 1);
+        int northHeight = GetNeighborHeightForLandSlope(x + 1, y, currentHeight);
+        int southHeight = GetNeighborHeightForLandSlope(x - 1, y, currentHeight);
+        int westHeight = GetNeighborHeightForLandSlope(x, y + 1, currentHeight);
+        int eastHeight = GetNeighborHeightForLandSlope(x, y - 1, currentHeight);
 
-        int neHeight = heightMap.GetHeight(x + 1, y - 1);
-        int nwHeight = heightMap.GetHeight(x + 1, y + 1);
-        int swHeight = heightMap.GetHeight(x - 1, y + 1);
-        int seHeight = heightMap.GetHeight(x - 1, y - 1);
+        int neHeight = GetNeighborHeightForLandSlope(x + 1, y - 1, currentHeight);
+        int nwHeight = GetNeighborHeightForLandSlope(x + 1, y + 1, currentHeight);
+        int swHeight = GetNeighborHeightForLandSlope(x - 1, y + 1, currentHeight);
+        int seHeight = GetNeighborHeightForLandSlope(x - 1, y - 1, currentHeight);
 
         bool hasNorthSlope = northHeight > currentHeight;
         bool hasSouthSlope = southHeight > currentHeight;
@@ -1465,14 +1536,14 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return TerrainSlopeType.Flat;
 
         int currentHeight = heightMap.GetHeight(x, y);
-        int northHeight = heightMap.GetHeight(x + 1, y);
-        int southHeight = heightMap.GetHeight(x - 1, y);
-        int westHeight = heightMap.GetHeight(x, y + 1);
-        int eastHeight = heightMap.GetHeight(x, y - 1);
-        int neHeight = heightMap.GetHeight(x + 1, y - 1);
-        int nwHeight = heightMap.GetHeight(x + 1, y + 1);
-        int swHeight = heightMap.GetHeight(x - 1, y + 1);
-        int seHeight = heightMap.GetHeight(x - 1, y - 1);
+        int northHeight = GetNeighborHeightForLandSlope(x + 1, y, currentHeight);
+        int southHeight = GetNeighborHeightForLandSlope(x - 1, y, currentHeight);
+        int westHeight = GetNeighborHeightForLandSlope(x, y + 1, currentHeight);
+        int eastHeight = GetNeighborHeightForLandSlope(x, y - 1, currentHeight);
+        int neHeight = GetNeighborHeightForLandSlope(x + 1, y - 1, currentHeight);
+        int nwHeight = GetNeighborHeightForLandSlope(x + 1, y + 1, currentHeight);
+        int swHeight = GetNeighborHeightForLandSlope(x - 1, y + 1, currentHeight);
+        int seHeight = GetNeighborHeightForLandSlope(x - 1, y - 1, currentHeight);
 
         bool hasNorthSlope = northHeight > currentHeight;
         bool hasSouthSlope = southHeight > currentHeight;

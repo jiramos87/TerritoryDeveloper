@@ -124,6 +124,25 @@ public class AutoRoadBuilder : MonoBehaviour
         if (urbanCentroidService == null) urbanCentroidService = FindObjectOfType<UrbanCentroidService>();
     }
 
+    /// <summary>Shared street validation (bridges + terraform; cut-through allowed). Uses longest buildable prefix via <see cref="RoadManager.TryPrepareRoadPlacementPlanLongestValidPrefix"/> when <see cref="RoadManager"/> is present.</summary>
+    bool TryGetStreetPlacementPlan(List<Vector2> pathVec2, out List<Vector2> expandedPath, out PathTerraformPlan plan)
+    {
+        if (roadManager != null)
+        {
+            int hint = 0;
+            return roadManager.TryPrepareRoadPlacementPlanLongestValidPrefix(pathVec2, new RoadPathValidationContext { forbidCutThrough = false }, false, ref hint, out expandedPath, out plan, out _);
+        }
+        if (pathVec2 == null || pathVec2.Count == 0)
+        {
+            expandedPath = pathVec2;
+            plan = new PathTerraformPlan { isValid = false };
+            return false;
+        }
+        expandedPath = pathVec2.Count >= 2 ? TerraformingService.ExpandDiagonalStepsToCardinal(pathVec2) : pathVec2;
+        plan = terraformingService != null ? terraformingService.ComputePathPlan(expandedPath) : new PathTerraformPlan { isValid = false };
+        return plan.isValid;
+    }
+
     public void ProcessTick()
     {
         if (growthBudgetManager == null || roadManager == null || gridManager == null || cityStats == null)
@@ -238,18 +257,21 @@ public class AutoRoadBuilder : MonoBehaviour
         for (int i = 0; i < path.Count; i++)
             pathVec2.Add(new Vector2(path[i].x, path[i].y));
 
-        var plan = terraformingService != null ? terraformingService.ComputePathPlan(pathVec2) : new PathTerraformPlan();
         const int maxShortenAttempts = 3;
         int shortenCount = 0;
-        while (!plan.isValid && path.Count > 1 && shortenCount < maxShortenAttempts)
+        List<Vector2> expandedPath = null;
+        PathTerraformPlan plan = null;
+        while (path.Count >= 1 && shortenCount < maxShortenAttempts)
         {
+            if (TryGetStreetPlacementPlan(pathVec2, out expandedPath, out plan) && plan != null && plan.isValid)
+                break;
+            if (path.Count <= 1) break;
             path.RemoveAt(path.Count - 1);
             pathVec2.RemoveAt(pathVec2.Count - 1);
-            plan = terraformingService.ComputePathPlan(pathVec2);
             shortenCount++;
         }
 
-        if (!plan.isValid && path.Count >= 2)
+        if (!(plan != null && plan.isValid) && path.Count >= 2)
         {
             Vector2Int edge = new Vector2Int(origin.x - dir.x, origin.y - dir.y);
             Vector2Int target = path[path.Count - 1];
@@ -266,8 +288,7 @@ public class AutoRoadBuilder : MonoBehaviour
                 }
                 if (path.Count > 0)
                 {
-                    plan = terraformingService != null ? terraformingService.ComputePathPlan(pathVec2) : new PathTerraformPlan();
-                    if (!plan.isValid)
+                    if (!TryGetStreetPlacementPlan(pathVec2, out expandedPath, out plan) || plan == null || !plan.isValid)
                     {
                         path.Clear();
                         pathVec2.Clear();
@@ -276,13 +297,13 @@ public class AutoRoadBuilder : MonoBehaviour
             }
         }
 
-        if (path.Count == 0) return 0;
+        if (path.Count == 0 || plan == null || !plan.isValid || expandedPath == null) return 0;
 
         var heightMap = terrainManager != null ? terrainManager.GetHeightMap() : null;
         if (heightMap != null && !plan.Apply(heightMap, terrainManager))
             return 0;
 
-        var resolved = roadManager.ResolvePathForRoads(pathVec2, plan);
+        var resolved = roadManager.ResolvePathForRoads(expandedPath, plan);
         int placed = 0;
         for (int i = 0; i < resolved.Count && budgetRemaining > 0; i++)
         {
@@ -991,17 +1012,17 @@ public class AutoRoadBuilder : MonoBehaviour
         for (int i = 0; i < path.Count; i++)
             pathVec2.Add(new Vector2(path[i].x, path[i].y));
 
-        var plan = terraformingService.ComputePathPlan(pathVec2);
-        while (!plan.isValid && path.Count > 1)
+        List<Vector2> expandedPath = null;
+        PathTerraformPlan plan = null;
+        while (path.Count > 1)
         {
+            if (TryGetStreetPlacementPlan(pathVec2, out expandedPath, out plan) && plan != null && plan.isValid)
+                break;
             path.RemoveAt(path.Count - 1);
             pathVec2.RemoveAt(pathVec2.Count - 1);
-            plan = terraformingService.ComputePathPlan(pathVec2);
         }
-        if (path.Count <= 1) return 0;
+        if (path.Count <= 1 || expandedPath == null || plan == null || !plan.isValid) return 0;
 
-        List<Vector2> expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(pathVec2);
-        plan = terraformingService.ComputePathPlan(expandedPath);
         var heightMap = terrainManager.GetHeightMap();
         if (heightMap == null || !plan.Apply(heightMap, terrainManager))
             return 0;
@@ -1072,7 +1093,7 @@ public class AutoRoadBuilder : MonoBehaviour
     private int TryConnectDisconnected(List<List<Vector2Int>> clusters, int maxTiles)
     {
         if (clusters.Count < 2) return 0;
-        if (terraformingService == null || terrainManager == null) return 0;
+        if (terraformingService == null || terrainManager == null || roadManager == null) return 0;
         Vector2Int a = clusters[0][Random.Range(0, clusters[0].Count)];
         Vector2Int b = clusters[1][Random.Range(0, clusters[1].Count)];
         var path = minRoadSpacingWhenConnecting > 0
@@ -1091,17 +1112,17 @@ public class AutoRoadBuilder : MonoBehaviour
         for (int i = 0; i < path.Count; i++)
             pathVec2.Add(new Vector2(path[i].x, path[i].y));
 
-        var plan = terraformingService.ComputePathPlan(pathVec2);
-        while (!plan.isValid && path.Count > 1)
+        List<Vector2> expandedPath = null;
+        PathTerraformPlan plan = null;
+        while (path.Count > 1)
         {
+            if (TryGetStreetPlacementPlan(pathVec2, out expandedPath, out plan) && plan != null && plan.isValid)
+                break;
             path.RemoveAt(path.Count - 1);
             pathVec2.RemoveAt(pathVec2.Count - 1);
-            plan = terraformingService.ComputePathPlan(pathVec2);
         }
-        if (path.Count <= 1) return 0;
+        if (path.Count <= 1 || expandedPath == null || plan == null || !plan.isValid) return 0;
 
-        List<Vector2> expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(pathVec2);
-        plan = terraformingService.ComputePathPlan(expandedPath);
         var heightMap = terrainManager.GetHeightMap();
         if (heightMap == null || !plan.Apply(heightMap, terrainManager))
             return 0;

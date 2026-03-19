@@ -53,4 +53,4 @@ alwaysApply: true
 - InterstateManager → [GridManager, TerrainManager, RoadManager]
 - CityStats → [TimeManager, WaterManager, ForestManager]
 
-See `ARCHITECTURE.md` for full dependency map and helper services (GridPathfinder, RoadPrefabResolver, TerraformingService, etc.).
+See `ARCHITECTURE.md` for full dependency map, helper services (GridPathfinder, RoadPrefabResolver, TerraformingService, etc.), and the **Road and interstate routing** summary (manual streets vs interstate validation).

@@ -40,12 +40,11 @@ public class PathTerraformPlan
     /// Uses forceFlat/forceSlopeType so terrain matches the plan regardless of apply order.
     /// Returns false if validation fails (height diff &gt; 1); in that case reverts and does not apply Phase 2.
     /// </summary>
-    public bool Apply(HeightMap heightMap, TerrainManager terrainManager)
+    /// <summary>
+    /// Phase 1 only: write planned terraform heights. Skips water and water-slope cells (same rules as <see cref="Apply"/>).
+    /// </summary>
+    void WritePhase1TerraformHeights(HeightMap heightMap, TerrainManager terrainManager)
     {
-        if (heightMap == null || terrainManager == null) return false;
-
-        // Phase 1: Set all heights so neighbor-dependent terrain logic sees correct state.
-        // Skip water and water slope cells - bridge goes on top, no terrain modification.
         foreach (var cell in pathCells)
         {
             if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
@@ -66,22 +65,55 @@ public class PathTerraformPlan
                 heightMap.SetHeight(cell.position.x, cell.position.y, cell.targetHeight);
             }
         }
+    }
+
+    /// <summary>
+    /// Reverts heights written in Phase 1 using stored <see cref="CellPlan.originalHeight"/>.
+    /// </summary>
+    void RevertPhase1TerraformHeights(HeightMap heightMap)
+    {
+        foreach (var cell in pathCells)
+        {
+            if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
+                heightMap.SetHeight(cell.position.x, cell.position.y, cell.originalHeight);
+        }
+        foreach (var cell in adjacentCells)
+        {
+            if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
+                heightMap.SetHeight(cell.position.x, cell.position.y, cell.originalHeight);
+        }
+    }
+
+    /// <summary>
+    /// Applies Phase 1 height writes and <see cref="ValidateNoHeightDiffGreaterThanOne"/> without Phase 2 terrain meshes, then restores heights.
+    /// Use so preview/path prep match <see cref="Apply"/> feasibility before modifying sprites.
+    /// </summary>
+    public bool TryValidatePhase1Heights(HeightMap heightMap, TerrainManager terrainManager)
+    {
+        if (heightMap == null || terrainManager == null) return false;
+        WritePhase1TerraformHeights(heightMap, terrainManager);
+        if (!ValidateNoHeightDiffGreaterThanOne(heightMap))
+        {
+            RevertPhase1TerraformHeights(heightMap);
+            return false;
+        }
+        RevertPhase1TerraformHeights(heightMap);
+        return true;
+    }
+
+    public bool Apply(HeightMap heightMap, TerrainManager terrainManager)
+    {
+        if (heightMap == null || terrainManager == null) return false;
+
+        WritePhase1TerraformHeights(heightMap, terrainManager);
 
         if (!ValidateNoHeightDiffGreaterThanOne(heightMap))
         {
-            // Only revert heights; terrain was never changed (Phase 2 not reached). Avoids expensive RestoreTerrainForCell for failed attempts.
-            foreach (var cell in pathCells)
-            {
-                if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
-                    heightMap.SetHeight(cell.position.x, cell.position.y, cell.originalHeight);
-            }
-            foreach (var cell in adjacentCells)
-            {
-                if (cell.action != TerraformingService.TerraformAction.None && heightMap.IsValidPosition(cell.position.x, cell.position.y))
-                    heightMap.SetHeight(cell.position.x, cell.position.y, cell.originalHeight);
-            }
+            RevertPhase1TerraformHeights(heightMap);
             return false;
         }
+
+        HashSet<Vector2Int> cutCorridorCells = BuildTerraformCutCorridorSet();
 
         // Phase 2: Restore terrain for all affected cells with correct force flags.
         // Refresh all path cells (neighbors may have changed) and modified adjacent cells.
@@ -97,18 +129,18 @@ public class PathTerraformPlan
                 bool flat = cell.postTerraformSlopeType == TerrainSlopeType.Flat;
                 bool orthogonalSlope = cell.postTerraformSlopeType == TerrainSlopeType.North || cell.postTerraformSlopeType == TerrainSlopeType.South
                     || cell.postTerraformSlopeType == TerrainSlopeType.East || cell.postTerraformSlopeType == TerrainSlopeType.West;
-                terrainManager.RestoreTerrainForCell(cell.position.x, cell.position.y, null, forceFlat: flat && !orthogonalSlope, forceSlopeType: orthogonalSlope ? cell.postTerraformSlopeType : null);
+                terrainManager.RestoreTerrainForCell(cell.position.x, cell.position.y, null, forceFlat: flat && !orthogonalSlope, forceSlopeType: orthogonalSlope ? cell.postTerraformSlopeType : null, terraformCutCorridorCells: cutCorridorCells);
             }
             else if (cell.postTerraformSlopeType != TerrainSlopeType.Flat)
             {
                 bool orthogonalSlope = cell.postTerraformSlopeType == TerrainSlopeType.North || cell.postTerraformSlopeType == TerrainSlopeType.South
                     || cell.postTerraformSlopeType == TerrainSlopeType.East || cell.postTerraformSlopeType == TerrainSlopeType.West;
                 if (orthogonalSlope)
-                    terrainManager.RestoreTerrainForCell(cell.position.x, cell.position.y, null, forceFlat: false, forceSlopeType: cell.postTerraformSlopeType);
+                    terrainManager.RestoreTerrainForCell(cell.position.x, cell.position.y, null, forceFlat: false, forceSlopeType: cell.postTerraformSlopeType, terraformCutCorridorCells: cutCorridorCells);
             }
             else
             {
-                terrainManager.RestoreTerrainForCell(cell.position.x, cell.position.y);
+                terrainManager.RestoreTerrainForCell(cell.position.x, cell.position.y, terraformCutCorridorCells: cutCorridorCells);
             }
         }
         foreach (var cell in adjacentCells)
@@ -118,12 +150,11 @@ public class PathTerraformPlan
                 int h = heightMap.GetHeight(cell.position.x, cell.position.y);
                 if (h <= TerrainManager.SEA_LEVEL || terrainManager.IsWaterSlopeCell(cell.position.x, cell.position.y))
                     continue;
-                terrainManager.RestoreTerrainForCell(cell.position.x, cell.position.y, null, forceFlat: true);
+                terrainManager.RestoreTerrainForCell(cell.position.x, cell.position.y, null, forceFlat: true, forceSlopeType: null, terraformCutCorridorCells: cutCorridorCells);
             }
         }
 
-        // Phase 3: Refresh cardinal neighbors of all modified cells so their slope/cliff sprites
-        // update to match the new height landscape (prevents black gaps at height transitions).
+        // Phase 3: Refresh rings of 8-neighbors so slope/cliff sprites match (second ring for cut-through — BUG-29).
         var refreshed = new HashSet<Vector2Int>();
         foreach (var cell in pathCells)
             refreshed.Add(cell.position);
@@ -133,22 +164,61 @@ public class PathTerraformPlan
                 refreshed.Add(cell.position);
         }
 
-        int[] ndx = { 1, -1, 0, 0, 1, 1, -1, -1 };
-        int[] ndy = { 0, 0, 1, -1, 1, -1, 1, -1 };
-        var neighborsToRefresh = new HashSet<Vector2Int>();
-        foreach (var pos in refreshed)
-        {
-            for (int d = 0; d < 8; d++)
-            {
-                var np = new Vector2Int(pos.x + ndx[d], pos.y + ndy[d]);
-                if (!refreshed.Contains(np) && heightMap.IsValidPosition(np.x, np.y))
-                    neighborsToRefresh.Add(np);
-            }
-        }
-        foreach (var np in neighborsToRefresh)
-            terrainManager.RestoreTerrainForCell(np.x, np.y);
+        int phase3NeighborWaves = isCutThrough ? 2 : 1;
+        RefreshTerrainNeighborWaves(heightMap, terrainManager, refreshed, cutCorridorCells, phase3NeighborWaves);
 
         return true;
+    }
+
+    /// <summary>
+    /// Positions lowered by this plan's flatten actions; used for 1-step cliff walls toward the cut (BUG-29).
+    /// </summary>
+    HashSet<Vector2Int> BuildTerraformCutCorridorSet()
+    {
+        if (!isCutThrough)
+            return null;
+        var set = new HashSet<Vector2Int>();
+        foreach (var cell in pathCells)
+        {
+            if (cell.action != TerraformingService.TerraformAction.None)
+                set.Add(cell.position);
+        }
+        foreach (var cell in adjacentCells)
+        {
+            if (cell.action != TerraformingService.TerraformAction.None)
+                set.Add(cell.position);
+        }
+        return set;
+    }
+
+    /// <summary>
+    /// Expands <paramref name="touchedCore"/> by repeatedly restoring all 8-neighbors not yet touched (one wave per iteration).
+    /// </summary>
+    static void RefreshTerrainNeighborWaves(HeightMap heightMap, TerrainManager terrainManager, HashSet<Vector2Int> touchedCore, HashSet<Vector2Int> cutCorridorCells, int waveCount)
+    {
+        if (heightMap == null || terrainManager == null || touchedCore == null || waveCount < 1)
+            return;
+
+        int[] ndx = { 1, -1, 0, 0, 1, 1, -1, -1 };
+        int[] ndy = { 0, 0, 1, -1, 1, -1, 1, -1 };
+        var touched = new HashSet<Vector2Int>(touchedCore);
+        for (int w = 0; w < waveCount; w++)
+        {
+            var nextWave = new HashSet<Vector2Int>();
+            foreach (var pos in touched)
+            {
+                for (int d = 0; d < 8; d++)
+                {
+                    var np = new Vector2Int(pos.x + ndx[d], pos.y + ndy[d]);
+                    if (!touched.Contains(np) && heightMap.IsValidPosition(np.x, np.y))
+                        nextWave.Add(np);
+                }
+            }
+            foreach (var np in nextWave)
+                terrainManager.RestoreTerrainForCell(np.x, np.y, null, false, null, cutCorridorCells);
+            foreach (var np in nextWave)
+                touched.Add(np);
+        }
     }
 
     /// <summary>
@@ -165,6 +235,18 @@ public class PathTerraformPlan
             checkSet.Add(cell.position);
         foreach (var cell in adjacentCells)
             checkSet.Add(cell.position);
+        // Include cardinal neighbors of planned cells so cliff/gorge edges one step outside the plan are validated (P3).
+        var ring = new List<Vector2Int>(checkSet);
+        foreach (var pos in ring)
+        {
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = pos.x + dx[d];
+                int ny = pos.y + dy[d];
+                if (heightMap.IsValidPosition(nx, ny))
+                    checkSet.Add(new Vector2Int(nx, ny));
+            }
+        }
         foreach (var pos in checkSet)
         {
             if (!heightMap.IsValidPosition(pos.x, pos.y)) continue;
@@ -218,7 +300,7 @@ public class PathTerraformPlan
                 terrainManager.RestoreTerrainForCell(cell.position.x, cell.position.y);
         }
 
-        // Phase 3: Refresh cardinal neighbors so their slope/cliff sprites match restored heights.
+        // Phase 3: Refresh neighbors so slope/cliff sprites match restored heights (single ring on revert).
         var refreshed = new HashSet<Vector2Int>();
         foreach (var cell in pathCells)
             refreshed.Add(cell.position);
@@ -228,19 +310,6 @@ public class PathTerraformPlan
                 refreshed.Add(cell.position);
         }
 
-        int[] ndx = { 1, -1, 0, 0, 1, 1, -1, -1 };
-        int[] ndy = { 0, 0, 1, -1, 1, -1, 1, -1 };
-        var neighborsToRefresh = new HashSet<Vector2Int>();
-        foreach (var pos in refreshed)
-        {
-            for (int d = 0; d < 8; d++)
-            {
-                var np = new Vector2Int(pos.x + ndx[d], pos.y + ndy[d]);
-                if (!refreshed.Contains(np) && heightMap.IsValidPosition(np.x, np.y))
-                    neighborsToRefresh.Add(np);
-            }
-        }
-        foreach (var np in neighborsToRefresh)
-            terrainManager.RestoreTerrainForCell(np.x, np.y);
+        RefreshTerrainNeighborWaves(heightMap, terrainManager, refreshed, null, 1);
     }
 }

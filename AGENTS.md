@@ -21,7 +21,7 @@ After executing a development plan for an issue, **keep the issue in "In progres
 | Task | Primary File(s) | Then Also Read |
 |------|-----------------|----------------|
 | Backlog issue | `BACKLOG.md` | Files listed in the issue's "Files" field |
-| Road logic | `RoadManager.cs` | `GridManager.cs` (coordinate conversion), `TerrainManager.cs` (slopes) |
+| Road logic | `RoadManager.cs` | `GridManager.cs` (coordinate conversion), `TerrainManager.cs` (slopes). Use **`TryPrepareRoadPlacementPlan`** or **`TryPrepareRoadPlacementPlanLongestValidPrefix`** (streets) with **`RoadPathValidationContext`** for terraform routes; interstate uses full-path prepare with `forbidCutThrough: true`. Spec: `.cursor/specs/road-drawing-fixes.md` (BACKLOG **BUG-25**). |
 | Zoning logic | `ZoneManager.cs` | `GridManager.cs`, `DemandManager.cs` |
 | UI changes | `UIManager.cs` | The specific Controller in `UnitControllers/` |
 | Simulation | `SimulationManager.cs` | The relevant `Auto*Manager` |
@@ -31,7 +31,7 @@ After executing a development plan for an issue, **keep the issue in "In progres
 | Forests | `ForestManager.cs` | `ForestMap.cs`, `GeographyManager.cs` |
 | New building type | `IBuilding.cs` (interface) | `ZoneManager.cs`, `GridManager.cs` (placement) |
 | Sorting/render bug | `GridManager.cs` region "Sorting Order" | `TerrainManager.cs` |
-| Interstate highways | `InterstateManager.cs` | `GridManager.cs`, `TerrainManager.cs` |
+| Interstate highways | `InterstateManager.cs` | `GridManager.cs`, `TerrainManager.cs`, `RoadManager.cs` (`TryPrepareRoadPlacementPlan`). Spec: `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md`. Cut-through notes: `docs/plan-cut-through-craters.md`. |
 | Save/load | `GameSaveManager.cs` | `GridManager.cs` (GetGridData/RestoreGrid), `CellData.cs` |
 | Demand/growth | `DemandManager.cs` | `GrowthManager.cs`, `EmploymentManager.cs`, `CityStats.cs` |
 | Statistics display | `StatisticsManager.cs` | `CityStatsUIController.cs`, `CityStats.cs` |

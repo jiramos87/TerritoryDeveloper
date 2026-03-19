@@ -10,6 +10,7 @@ namespace Territory.Roads
 /// <summary>
 /// Manages the Interstate Highway: generation at game start, connectivity checks,
 /// and validation for player road placement (streets must grow from the interstate).
+/// Border entry/exit candidates are ranked by flat land toward the interior so routes avoid harsh corner climbs when alternatives exist.
 /// </summary>
 public class InterstateManager : MonoBehaviour
 {
@@ -78,9 +79,9 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Tries all border cells deterministically until a path is found and placed.
+    /// Tries all border cells deterministically. Chooses the best valid path by cost (shortest/most economical).
+    /// Entry and exit are derived from the best path, not chosen first.
     /// Call when random attempts fail. Guarantees interstate if any valid route exists.
-    /// Shuffles candidate order per game run so routes vary instead of always starting at (0,0).
     /// </summary>
     public bool TryGenerateInterstateDeterministic()
     {
@@ -95,36 +96,59 @@ public class InterstateManager : MonoBehaviour
         List<int> bordersWithLand = GetBordersWithLand(w, h, heightMap);
         if (bordersWithLand.Count < 2) return false;
 
-        var candidates = new List<(int borderA, int borderB, Vector2Int entry, Vector2Int exit)>();
-        for (int ia = 0; ia < bordersWithLand.Count; ia++)
+        int runSeed = System.Environment.TickCount ^ (int)(Time.realtimeSinceStartup * 1000);
+        Random.InitState(runSeed);
+        int randomEntryBorder = bordersWithLand[Random.Range(0, bordersWithLand.Count)];
+        int exitBorder = TerritoryData.OppositeBorder(randomEntryBorder);
+        if (!bordersWithLand.Contains(exitBorder))
         {
-            int borderA = bordersWithLand[ia];
-            int borderB = TerritoryData.OppositeBorder(borderA);
-            if (!bordersWithLand.Contains(borderB)) continue;
-
-            var entries = GetValidBorderCells(borderA, w, h, heightMap);
-            if (entries.Count == 0) continue;
-
-            var exits = GetValidBorderCells(borderB, w, h, heightMap);
-            if (exits.Count == 0) continue;
-
-            for (int ei = 0; ei < entries.Count; ei++)
+            foreach (int b in bordersWithLand)
             {
-                for (int xi = 0; xi < exits.Count; xi++)
-                {
-                    Vector2Int entry = entries[ei];
-                    Vector2Int exit = exits[xi];
-                    if (entry != exit)
-                        candidates.Add((borderA, borderB, entry, exit));
-                }
+                if (b != randomEntryBorder) { exitBorder = b; break; }
             }
         }
 
-        int runSeed = System.Environment.TickCount ^ (int)(Time.realtimeSinceStartup * 1000);
-        Random.InitState(runSeed);
-        Shuffle(candidates);
+        var entries = GetValidBorderCellsWithPreference(randomEntryBorder, w, h, heightMap);
+        if (entries.Count == 0) return false;
 
+        var exits = GetValidBorderCellsWithPreference(exitBorder, w, h, heightMap);
+        if (exits.Count == 0) return false;
+
+        var candidates = new List<(int borderA, int borderB, Vector2Int entry, Vector2Int exit)>();
+        for (int ei = 0; ei < entries.Count; ei++)
+        {
+            for (int xi = 0; xi < exits.Count; xi++)
+            {
+                Vector2Int entry = entries[ei];
+                Vector2Int exit = exits[xi];
+                if (entry != exit)
+                    candidates.Add((randomEntryBorder, exitBorder, entry, exit));
+            }
+        }
+
+        candidates.Sort((a, b) =>
+        {
+            int manhattanA = Mathf.Abs(a.entry.x - a.exit.x) + Mathf.Abs(a.entry.y - a.exit.y);
+            int manhattanB = Mathf.Abs(b.entry.x - b.exit.x) + Mathf.Abs(b.entry.y - b.exit.y);
+            int cmp = manhattanA.CompareTo(manhattanB);
+            if (cmp != 0) return cmp;
+            int scoreA = ComputeInterstateBorderEndpointScore(a.entry, w, h, heightMap, terrainManager)
+                + ComputeInterstateBorderEndpointScore(a.exit, w, h, heightMap, terrainManager);
+            int scoreB = ComputeInterstateBorderEndpointScore(b.entry, w, h, heightMap, terrainManager)
+                + ComputeInterstateBorderEndpointScore(b.exit, w, h, heightMap, terrainManager);
+            cmp = scoreB.CompareTo(scoreA);
+            if (cmp != 0) return cmp;
+            if (a.entry.x != b.entry.x) return a.entry.x.CompareTo(b.entry.x);
+            if (a.entry.y != b.entry.y) return a.entry.y.CompareTo(b.entry.y);
+            if (a.exit.x != b.exit.x) return a.exit.x.CompareTo(b.exit.x);
+            return a.exit.y.CompareTo(b.exit.y);
+        });
+
+        List<Vector2Int> bestPath = null;
+        int bestCost = int.MaxValue;
+        int bestBorderA = -1, bestBorderB = -1;
         const int maxDeterministicTries = 800;
+
         for (int i = 0; i < Mathf.Min(candidates.Count, maxDeterministicTries); i++)
         {
             var (borderA, borderB, entry, exit) = candidates[i];
@@ -133,24 +157,36 @@ public class InterstateManager : MonoBehaviour
             List<Vector2Int> path = FindInterstatePathAStar(entry, exit, w, h, heightMap);
             if (path == null || path.Count < 2 || path[path.Count - 1] != exit) continue;
             if (roadManager != null && !roadManager.ValidateBridgePath(path, heightMap)) continue;
+            if (roadManager != null && !roadManager.ValidateInterstatePathForPlacement(path)) continue;
 
-            interstatePositions = path;
-            EntryPoint = interstatePositions[0];
-            ExitPoint = interstatePositions[interstatePositions.Count - 1];
-            EntryBorder = borderA;
-            ExitBorder = borderB;
-
-            bool placed = roadManager.PlaceInterstateFromPath(interstatePositions);
-            if (placed)
+            int cost = ComputePathCost(path, heightMap);
+            if (cost < bestCost)
             {
-                Debug.Log($"[Interstate] Deterministic: placed at {i + 1} tries, entry=({entry.x},{entry.y}) exit=({exit.x},{exit.y})");
-                return true;
+                bestCost = cost;
+                bestPath = path;
+                bestBorderA = borderA;
+                bestBorderB = borderB;
             }
-            interstatePositions.Clear();
         }
 
-        Debug.LogWarning($"[Interstate] Deterministic fallback: no valid path after {candidates.Count} candidates.");
-        return false;
+        if (bestPath == null)
+        {
+            Debug.LogWarning($"[Interstate] Deterministic: no valid path after {candidates.Count} candidates.");
+            return false;
+        }
+
+        interstatePositions = bestPath;
+        EntryPoint = interstatePositions[0];
+        ExitPoint = interstatePositions[interstatePositions.Count - 1];
+        EntryBorder = bestBorderA;
+        ExitBorder = bestBorderB;
+
+        bool placed = roadManager.PlaceInterstateFromPath(interstatePositions);
+        if (placed)
+            Debug.Log($"[Interstate] Deterministic: placed best path (cost={bestCost}), entry=({EntryPoint.Value.x},{EntryPoint.Value.y}) exit=({ExitPoint.Value.x},{ExitPoint.Value.y})");
+        else
+            interstatePositions.Clear();
+        return placed;
     }
 
     private static void Shuffle<T>(List<T> list)
@@ -251,27 +287,31 @@ public class InterstateManager : MonoBehaviour
             return interstatePositions;
         }
 
-        RegionalMapManager regionManager = FindObjectOfType<RegionalMapManager>();
+        var borderPairs = new List<(int a, int b)>();
+        foreach (int b in bordersWithLand)
+        {
+            int opp = TerritoryData.OppositeBorder(b);
+            if (bordersWithLand.Contains(opp) && b < opp)
+                borderPairs.Add((b, opp));
+        }
+        if (borderPairs.Count == 0)
+        {
+            Debug.LogWarning("InterstateManager: No valid opposite border pairs. Cannot place interstate.");
+            return interstatePositions;
+        }
+
+        int pairIdx = Random.Range(0, borderPairs.Count);
+        int borderA = borderPairs[pairIdx].a;
+        int borderB = borderPairs[pairIdx].b;
+
+        List<Vector2Int> bestPath = null;
+        int bestCost = int.MaxValue;
+        int bestBorderA = borderA;
+        int bestBorderB = borderB;
+
         for (int attempt = 0; attempt < MaxRouteAttempts; attempt++)
         {
-            int borderA, borderB;
-            int rA = 0, rB = 0;
-            bool useRegion = regionManager != null && regionManager.TryGetInterstateBorders(out rA, out rB)
-                && bordersWithLand.Contains(rA);
-            int oppositeB = useRegion ? TerritoryData.OppositeBorder(rA) : -1;
-
-            if (useRegion && bordersWithLand.Contains(oppositeB))
-            {
-                borderA = rA;
-                borderB = oppositeB;
-            }
-            else
-            {
-                int ia = Random.Range(0, bordersWithLand.Count);
-                borderA = bordersWithLand[ia];
-                borderB = TerritoryData.OppositeBorder(borderA);
-                if (!bordersWithLand.Contains(borderB)) continue;
-            }
+            Random.InitState(InterstateGenSeed + attemptOffset + runSeed + attempt);
 
             Vector2Int? entry = GetValidBorderCell(borderA, w, h, heightMap);
             Vector2Int? exit = GetValidBorderCell(borderB, w, h, heightMap);
@@ -279,22 +319,38 @@ public class InterstateManager : MonoBehaviour
 
             for (int pathTry = 0; pathTry < PathTriesPerPair; pathTry++)
             {
+                Random.InitState(InterstateGenSeed + attemptOffset + runSeed + attempt * 100 + pathTry);
                 List<Vector2Int> path = FindInterstatePathAStar(entry.Value, exit.Value, w, h, heightMap);
-                if (path != null && path.Count >= 2 && path[path.Count - 1] == exit.Value
-                    && (roadManager == null || roadManager.ValidateBridgePath(path, heightMap)))
+                if (path == null || path.Count < 2 || path[path.Count - 1] != exit.Value) continue;
+                if (roadManager != null && !roadManager.ValidateBridgePath(path, heightMap)) continue;
+                if (roadManager != null && !roadManager.ValidateInterstatePathForPlacement(path)) continue;
+
+                int cost = ComputePathCost(path, heightMap);
+                if (cost < bestCost)
                 {
-                    interstatePositions = path;
-                    EntryPoint = interstatePositions[0];
-                    ExitPoint = interstatePositions[interstatePositions.Count - 1];
-                    EntryBorder = borderA;
-                    ExitBorder = borderB;
-                    Debug.Log($"[Interstate] GenerateInterstateRoute: path found, {path.Count} cells from ({EntryPoint.Value.x},{EntryPoint.Value.y}) to ({ExitPoint.Value.x},{ExitPoint.Value.y})");
-                    return interstatePositions;
+                    bestCost = cost;
+                    bestPath = path;
+                    bestBorderA = borderA;
+                    bestBorderB = borderB;
                 }
+                break;
             }
+            if (bestPath != null) break;
         }
 
-        Debug.LogWarning("InterstateManager: Could not find valid path after " + MaxRouteAttempts + " attempts. Interstate not placed.");
+        if (bestPath == null)
+        {
+            Debug.LogWarning("InterstateManager: Could not find valid path after " + MaxRouteAttempts + " attempts. Interstate not placed.");
+            return interstatePositions;
+        }
+
+        interstatePositions = bestPath;
+        EntryPoint = interstatePositions[0];
+        ExitPoint = interstatePositions[interstatePositions.Count - 1];
+        EntryBorder = bestBorderA;
+        ExitBorder = bestBorderB;
+        string dir = (bestBorderA == 0 || bestBorderA == 1) ? "North-South" : "East-West";
+        Debug.Log($"[Interstate] GenerateInterstateRoute: {dir} (borders {bestBorderA}-{bestBorderB}), cost={bestCost}, {bestPath.Count} cells from ({EntryPoint.Value.x},{EntryPoint.Value.y}) to ({ExitPoint.Value.x},{ExitPoint.Value.y})");
         return interstatePositions;
     }
 
@@ -316,6 +372,95 @@ public class InterstateManager : MonoBehaviour
         if (start.x == 0) return new Vector2Int(1, start.y);
         if (start.x == w - 1) return new Vector2Int(w - 2, start.y);
         return null;
+    }
+
+    /// <summary>
+    /// Higher = better interstate endpoint. Favors low border height, land neighbors at h=1, a flat mandatory first step inside the map,
+    /// and a first-step neighborhood with more h=1 cells (gentle entry before climbing).
+    /// </summary>
+    private static int ComputeInterstateBorderEndpointScore(Vector2Int c, int w, int h, HeightMap heightMap, TerrainManager terrainManager)
+    {
+        if (heightMap == null || !heightMap.IsValidPosition(c.x, c.y))
+            return int.MinValue;
+        if (terrainManager != null && terrainManager.IsWaterSlopeCell(c.x, c.y))
+            return int.MinValue;
+
+        int h0 = heightMap.GetHeight(c.x, c.y);
+        if (h0 <= TerrainManager.SEA_LEVEL)
+            return int.MinValue;
+
+        int score = 0;
+        if (h0 == 1)
+            score += 10_000;
+        else if (h0 == 2)
+            score += 3_000;
+        else
+            score += 1_000;
+
+        int flatAroundBorder = 0;
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                if (dx == 0 && dy == 0) continue;
+                int nx = c.x + dx;
+                int ny = c.y + dy;
+                if (!heightMap.IsValidPosition(nx, ny)) continue;
+                int nh = heightMap.GetHeight(nx, ny);
+                if (nh <= TerrainManager.SEA_LEVEL) continue;
+                if (nh == 1) flatAroundBorder++;
+            }
+        }
+        score += flatAroundBorder * 500;
+
+        Vector2Int? firstStep = GetFirstStepFromBorder(c, w, h);
+        if (!firstStep.HasValue)
+            return score;
+
+        Vector2Int fs = firstStep.Value;
+        if (!heightMap.IsValidPosition(fs.x, fs.y))
+            return score;
+
+        int h1 = heightMap.GetHeight(fs.x, fs.y);
+        if (h1 > TerrainManager.SEA_LEVEL)
+        {
+            int stepDiff = Mathf.Abs(h1 - h0);
+            score -= stepDiff * 2_000;
+            if (h1 == 1)
+                score += 4_000;
+
+            int flatAroundFirst = 0;
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    if (dx == 0 && dy == 0) continue;
+                    int nx = fs.x + dx;
+                    int ny = fs.y + dy;
+                    if (!heightMap.IsValidPosition(nx, ny)) continue;
+                    int nh = heightMap.GetHeight(nx, ny);
+                    if (nh <= TerrainManager.SEA_LEVEL) continue;
+                    if (nh == 1) flatAroundFirst++;
+                }
+            }
+            score += flatAroundFirst * 200;
+        }
+
+        return score;
+    }
+
+    private void SortBorderCellsByInterstateEndpointQuality(List<Vector2Int> cells, int w, int h, HeightMap heightMap)
+    {
+        if (cells == null || cells.Count < 2) return;
+        cells.Sort((a, b) =>
+        {
+            int sa = ComputeInterstateBorderEndpointScore(a, w, h, heightMap, terrainManager);
+            int sb = ComputeInterstateBorderEndpointScore(b, w, h, heightMap, terrainManager);
+            int cmp = sb.CompareTo(sa);
+            if (cmp != 0) return cmp;
+            if (a.x != b.x) return a.x.CompareTo(b.x);
+            return a.y.CompareTo(b.y);
+        });
     }
 
     const int MaxRiverWidthForBridge = 5;
@@ -380,27 +525,181 @@ public class InterstateManager : MonoBehaviour
         return candidates;
     }
 
-    private static Vector2Int? GetValidBorderCell(int border, int w, int h, HeightMap heightMap)
+    /// <summary>
+    /// Returns border cells for interstate: excludes water-slope tiles, sorts by endpoint quality (flat interior and gentle mandatory first step).
+    /// </summary>
+    private List<Vector2Int> GetValidBorderCellsWithPreference(int border, int w, int h, HeightMap heightMap)
     {
-        var candidates = GetValidBorderCells(border, w, h, heightMap);
+        var raw = GetValidBorderCells(border, w, h, heightMap);
+        if (raw.Count == 0) return raw;
+
+        var filtered = new List<Vector2Int>();
+        foreach (var c in raw)
+        {
+            if (terrainManager != null && terrainManager.IsWaterSlopeCell(c.x, c.y))
+                continue;
+            filtered.Add(c);
+        }
+
+        if (filtered.Count == 0)
+            return raw;
+
+        SortBorderCellsByInterstateEndpointQuality(filtered, w, h, heightMap);
+        return filtered;
+    }
+
+    private Vector2Int? GetValidBorderCell(int border, int w, int h, HeightMap heightMap)
+    {
+        var candidates = GetValidBorderCellsWithPreference(border, w, h, heightMap);
         if (candidates.Count == 0) return null;
-        int idx = Random.Range(0, candidates.Count);
+        int poolSize = Mathf.Min(candidates.Count, Mathf.Max(1, (candidates.Count + 2) / 3));
+        int idx = Random.Range(0, poolSize);
         return candidates[idx];
     }
 
     /// <summary>
-    /// A* pathfinding for interstate. Prefers flat terrain, allows bridge segments over water,
-    /// rejects height diff &gt; 1. Falls back to BiasedWalkPath if A* finds no route.
+    /// A* pathfinding for interstate. Runs low-terrain and full-terrain A* when both reach the goal, then keeps the lower <see cref="ComputePathCost"/> route (avoids mandatory long flat detours).
+    /// Steps that increase Manhattan distance to the goal add <see cref="RoadPathCostConstants.InterstateAwayFromGoalPenalty"/>. Falls back to BiasedWalkPath if both A* runs fail.
+    /// Rule D: when primary path crosses a hill, tries parallel offset paths and picks the one with lower cost.
     /// </summary>
-    private List<Vector2Int> FindInterstatePathAStar(Vector2Int start, Vector2Int end, int w, int h, HeightMap heightMap)
+    /// <summary>
+    /// Runs low-terrain and full-terrain A* when both reach <paramref name="end"/>; returns the path with lower <see cref="ComputePathCost"/>.
+    /// Previously only the low-terrain path was used when it succeeded, which forced long flat detours around hills.
+    /// </summary>
+    List<Vector2Int> PickLowerCostInterstateAStarPath(Vector2Int start, Vector2Int end, int w, int h, HeightMap heightMap)
     {
-        var path = RunInterstateAStar(start, end, w, h, heightMap);
-        if (path != null && path.Count >= 2 && path[path.Count - 1] == end)
-            return path;
-        return BiasedWalkPath(start, end, w, h, heightMap);
+        var lowTerrain = RunInterstateAStar(start, end, w, h, heightMap, avoidHighTerrain: true);
+        var anyTerrain = RunInterstateAStar(start, end, w, h, heightMap, avoidHighTerrain: false);
+        bool lowOk = lowTerrain != null && lowTerrain.Count >= 2 && lowTerrain[lowTerrain.Count - 1] == end;
+        bool anyOk = anyTerrain != null && anyTerrain.Count >= 2 && anyTerrain[anyTerrain.Count - 1] == end;
+        if (!lowOk && !anyOk) return null;
+        if (!lowOk) return anyTerrain;
+        if (!anyOk) return lowTerrain;
+
+        int cLow = ComputePathCost(lowTerrain, heightMap);
+        int cAny = ComputePathCost(anyTerrain, heightMap);
+        if (cAny < cLow) return anyTerrain;
+        if (cLow < cAny) return lowTerrain;
+        return lowTerrain.Count <= anyTerrain.Count ? lowTerrain : anyTerrain;
     }
 
-    private List<Vector2Int> RunInterstateAStar(Vector2Int start, Vector2Int end, int w, int h, HeightMap heightMap)
+    private List<Vector2Int> FindInterstatePathAStar(Vector2Int start, Vector2Int end, int w, int h, HeightMap heightMap)
+    {
+        var path = PickLowerCostInterstateAStarPath(start, end, w, h, heightMap);
+        if (path == null || path.Count < 2 || path[path.Count - 1] != end)
+            path = BiasedWalkPath(start, end, w, h, heightMap);
+        if (path == null || path.Count < 2) return path;
+
+        path = SmoothInterstatePath(path, w, h, heightMap, end);
+        if (!PathCrossesHill(path, heightMap)) return path;
+
+        int primaryCost = ComputePathCost(path, heightMap);
+        Vector2Int dir = new Vector2Int(end.x - start.x, end.y - start.y);
+        Vector2Int perp1 = Mathf.Abs(dir.x) >= Mathf.Abs(dir.y) ? new Vector2Int(0, 1) : new Vector2Int(1, 0);
+        Vector2Int perp2 = Mathf.Abs(dir.x) >= Mathf.Abs(dir.y) ? new Vector2Int(0, -1) : new Vector2Int(-1, 0);
+
+        const int maxParallelOffsetAttempts = 2;
+        for (int attempt = 0; attempt < maxParallelOffsetAttempts; attempt++)
+        {
+            Vector2Int offset = attempt == 0 ? perp1 : perp2;
+            Vector2Int offStart = new Vector2Int(start.x + offset.x, start.y + offset.y);
+            Vector2Int offEnd = new Vector2Int(end.x + offset.x, end.y + offset.y);
+            if (offStart.x < 0 || offStart.x >= w || offStart.y < 0 || offStart.y >= h) continue;
+            if (offEnd.x < 0 || offEnd.x >= w || offEnd.y < 0 || offEnd.y >= h) continue;
+            if (!IsCellAllowedForInterstate(offStart.x, offStart.y, w, h, heightMap)) continue;
+            if (!IsCellAllowedForInterstate(offEnd.x, offEnd.y, w, h, heightMap)) continue;
+
+            var altPath = PickLowerCostInterstateAStarPath(offStart, offEnd, w, h, heightMap);
+            if (altPath == null || altPath.Count < 2 || altPath[altPath.Count - 1] != offEnd) continue;
+            if (roadManager != null && !roadManager.ValidateBridgePath(altPath, heightMap)) continue;
+
+            altPath = SmoothInterstatePath(altPath, w, h, heightMap, offEnd);
+            int altCost = ComputePathCost(altPath, heightMap);
+            if (altCost < primaryCost)
+            {
+                path = altPath;
+                primaryCost = altCost;
+            }
+        }
+        path = SmoothInterstatePath(path, w, h, heightMap, end);
+        return path;
+    }
+
+    /// <summary>
+    /// Removes redundant collinear points when the direct step prev→next is valid.
+    /// Similar to GridPathfinder.SmoothPath but uses interstate validity checks.
+    /// </summary>
+    private List<Vector2Int> SmoothInterstatePath(List<Vector2Int> path, int w, int h, HeightMap heightMap, Vector2Int pathEnd)
+    {
+        if (path == null || path.Count < 3) return path;
+        var result = new List<Vector2Int> { path[0] };
+        for (int i = 1; i < path.Count - 1; i++)
+        {
+            Vector2Int prev = result[result.Count - 1];
+            Vector2Int curr = path[i];
+            Vector2Int next = path[i + 1];
+            int dx = next.x - prev.x;
+            int dy = next.y - prev.y;
+            bool cardinalStep = (Mathf.Abs(dx) == 1 && dy == 0) || (dx == 0 && Mathf.Abs(dy) == 1);
+            if (cardinalStep && IsDirectStepValid(prev, next, w, h, heightMap, pathEnd))
+            {
+                result.Add(next);
+                i++;
+                continue;
+            }
+            result.Add(curr);
+        }
+        if (result[result.Count - 1] != path[path.Count - 1])
+            result.Add(path[path.Count - 1]);
+        return result;
+    }
+
+    private static bool IsDirectStepValid(Vector2Int from, Vector2Int to, int w, int h, HeightMap heightMap, Vector2Int pathEnd)
+    {
+        if (to.x < 0 || to.x >= w || to.y < 0 || to.y >= h) return false;
+        int hFrom = heightMap.GetHeight(from.x, from.y);
+        int hTo = heightMap.GetHeight(to.x, to.y);
+        if (hTo == 0)
+            return IsValidBridgeSegmentFrom(from, to, pathEnd, w, h, heightMap);
+        if (hFrom > 0 && Mathf.Abs(hTo - hFrom) > 1) return false;
+        return IsCellAllowedForInterstate(to.x, to.y, w, h, heightMap);
+    }
+
+    private static bool PathCrossesHill(List<Vector2Int> path, HeightMap heightMap)
+    {
+        if (path == null || heightMap == null) return false;
+        foreach (var p in path)
+        {
+            if (heightMap.IsValidPosition(p.x, p.y) && heightMap.GetHeight(p.x, p.y) > 1)
+                return true;
+        }
+        return false;
+    }
+
+    private int ComputePathCost(List<Vector2Int> path, HeightMap heightMap)
+    {
+        if (path == null || path.Count < 2 || heightMap == null || terrainManager == null) return int.MaxValue;
+        int cost = 0;
+        for (int i = 1; i < path.Count; i++)
+        {
+            var prev = path[i - 1];
+            var curr = path[i];
+            int hPrev = heightMap.GetHeight(prev.x, prev.y);
+            int hCurr = heightMap.GetHeight(curr.x, curr.y);
+            TerrainSlopeType terrain = hCurr == 0 ? TerrainSlopeType.Flat : terrainManager.GetTerrainSlopeTypeAt(curr.x, curr.y);
+            int heightDiff = Mathf.Abs(hCurr - hPrev);
+            cost += terrainManager.IsWaterSlopeCell(curr.x, curr.y)
+                ? RoadPathCostConstants.WaterSlopeCost
+                : RoadPathCostConstants.GetStepCostForInterstate(terrain, heightDiff);
+        }
+        return cost;
+    }
+
+    /// <summary>
+    /// A* for interstate. When avoidHighTerrain is true, blocks land cells at height &gt; 1
+    /// so the path stays on flat/low terrain (no cut-through, no scaling hills).
+    /// </summary>
+    private List<Vector2Int> RunInterstateAStar(Vector2Int start, Vector2Int end, int w, int h, HeightMap heightMap, bool avoidHighTerrain = false)
     {
         int maxNodes = Mathf.Max(200, (Mathf.Abs(end.x - start.x) + Mathf.Abs(end.y - start.y)) * 4);
         var open = new MinHeap();
@@ -440,6 +739,7 @@ public class InterstateManager : MonoBehaviour
                 if (neighbor.x < 0 || neighbor.x >= w || neighbor.y < 0 || neighbor.y >= h) continue;
 
                 int cellHeight = heightMap.GetHeight(neighbor.x, neighbor.y);
+                if (avoidHighTerrain && cellHeight > 1 && neighbor != end) continue;
                 bool allowed = cellHeight > 0
                     ? IsCellAllowedForInterstate(neighbor.x, neighbor.y, w, h, heightMap)
                     : IsValidBridgeSegmentFrom(current, neighbor, end, w, h, heightMap);
@@ -452,7 +752,33 @@ public class InterstateManager : MonoBehaviour
                 int heightDiff = Mathf.Abs(cellHeight - currentHeight);
                 int stepCost = terrainManager.IsWaterSlopeCell(neighbor.x, neighbor.y)
                     ? RoadPathCostConstants.WaterSlopeCost
-                    : RoadPathCostConstants.GetStepCost(terrain, heightDiff);
+                    : RoadPathCostConstants.GetStepCostForInterstate(terrain, heightDiff);
+
+                int manCurr = Heuristic(current, end);
+                int manNei = Heuristic(neighbor, end);
+                if (manNei > manCurr)
+                    stepCost += RoadPathCostConstants.InterstateAwayFromGoalPenalty;
+
+                // Rule E: straightness bonus — prefer continuing in same direction (fewer zigzags).
+                if (cameFrom.ContainsKey(current))
+                {
+                    Vector2Int dirFromPrev = new Vector2Int(current.x - cameFrom[current].x, current.y - cameFrom[current].y);
+                    Vector2Int dirToNeighbor = new Vector2Int(neighbor.x - current.x, neighbor.y - current.y);
+                    if (dirFromPrev == dirToNeighbor)
+                        stepCost = Mathf.Max(1, stepCost - RoadPathCostConstants.InterstateStraightnessBonus);
+                    else
+                    {
+                        stepCost += RoadPathCostConstants.InterstateTurnPenalty;
+                        // Zigzag penalty: turn, 1 tile, turn back to original direction. Prefer single turn or water slope over S-curve.
+                        if (cameFrom.ContainsKey(cameFrom[current]))
+                        {
+                            Vector2Int prevPrev = cameFrom[cameFrom[current]];
+                            Vector2Int dirBeforeTurn = new Vector2Int(cameFrom[current].x - prevPrev.x, cameFrom[current].y - prevPrev.y);
+                            if (dirFromPrev != dirBeforeTurn && dirToNeighbor == dirBeforeTurn)
+                                stepCost += RoadPathCostConstants.InterstateZigzagPenalty;
+                        }
+                    }
+                }
                 int tentative = (gScore.ContainsKey(current) ? gScore[current] : int.MaxValue) + stepCost;
                 if (!gScore.ContainsKey(neighbor) || tentative < gScore[neighbor])
                 {
@@ -561,7 +887,7 @@ public class InterstateManager : MonoBehaviour
 
                 if (ax != 0) candidates.Add(new Vector2Int(current.x + ax, current.y));
                 if (ay != 0) candidates.Add(new Vector2Int(current.x, current.y + ay));
-                if (Random.value < 0.25f)
+                if (Random.value < 0.08f)
                 {
                     if (ax != 0) { candidates.Add(new Vector2Int(current.x, current.y + 1)); candidates.Add(new Vector2Int(current.x, current.y - 1)); }
                     if (ay != 0) { candidates.Add(new Vector2Int(current.x + 1, current.y)); candidates.Add(new Vector2Int(current.x - 1, current.y)); }
@@ -592,9 +918,25 @@ public class InterstateManager : MonoBehaviour
                 int heightDiff = Mathf.Abs(cellHeight - currentHeight);
                 int stepCost = terrainManager.IsWaterSlopeCell(c.x, c.y)
                     ? RoadPathCostConstants.WaterSlopeCost
-                    : RoadPathCostConstants.GetStepCost(terrain, heightDiff);
+                    : RoadPathCostConstants.GetStepCostForInterstate(terrain, heightDiff);
+                int turnCost = 0;
+                if (path.Count >= 2)
+                {
+                    Vector2Int dirFromPrev = new Vector2Int(current.x - path[path.Count - 2].x, current.y - path[path.Count - 2].y);
+                    Vector2Int dirToC = new Vector2Int(c.x - current.x, c.y - current.y);
+                    if (dirFromPrev != dirToC)
+                    {
+                        turnCost = RoadPathCostConstants.InterstateTurnPenalty;
+                        if (path.Count >= 3)
+                        {
+                            Vector2Int dirBeforeTurn = new Vector2Int(path[path.Count - 2].x - path[path.Count - 3].x, path[path.Count - 2].y - path[path.Count - 3].y);
+                            if (dirFromPrev != dirBeforeTurn && dirToC == dirBeforeTurn)
+                                turnCost += RoadPathCostConstants.InterstateZigzagPenalty;
+                        }
+                    }
+                }
                 int dist = Mathf.Abs(c.x - end.x) + Mathf.Abs(c.y - end.y);
-                int score = dist + stepCost;
+                int score = dist + stepCost + turnCost;
                 if (score < bestScore || (score == bestScore && Random.value > 0.5f))
                 {
                     bestScore = score;

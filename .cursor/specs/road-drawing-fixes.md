@@ -4,7 +4,19 @@
 
 Manual road drawing has multiple bugs affecting terrain interaction, existing infrastructure preservation, zoning integrity, and visual consistency between preview and built roads. This spec organizes the fixes into incremental phases ordered by severity and dependency.
 
-**Related specs:** `bridge-and-junction-fixes.md` (completed), `interstate-prefab-and-pathfinding-fixes.md` (Phase 1.1 elbow fix done).
+**Related specs:** `bridge-and-junction-fixes.md` (completed), `interstate-prefab-and-pathfinding-fixes.md` (Phases 1–3 + pathfinding; see BACKLOG BUG-27/BUG-29).
+
+## BUG-25 — Spec task status (2026-03-19)
+
+Tracked in [BACKLOG.md](../../BACKLOG.md) as **In progress** until playmode sign-off. **Implementation for this document’s core scope is treated as complete:**
+
+| Area | Status |
+|------|--------|
+| Shared route validation, longest valid prefix, Phase 1 height check | Done |
+| Preview pipeline: revert → A*, build revalidation | Done |
+| Bridge geometry / approach rules | Done |
+| Slope climb vs carve; gorge-beside-slope P1–P3, P5 | Done |
+| Optional polish (not blocking BUG-25 closure) | Open: **1.2** crossroads/`IsRoadAt` pass, **2.1** `postTerraformSlopeType` on refresh, **3.3** expansion precondition, **4.1** `DestroyImmediate` |
 
 ## Related Files
 
@@ -19,23 +31,39 @@ Manual road drawing has multiple bugs affecting terrain interaction, existing in
 | `Assets/Scripts/Managers/GameManagers/GridManager.cs` | Grid operations, road cache, `FindPath` delegation |
 | `Assets/Scripts/Utilities/RoadPathCostConstants.cs` | Shared cost constants for road pathfinding |
 
+## Slope climb vs carve (manual / streets)
+
+When the path has **no** consecutive land cells with `|Δh| > 1` (`preferSlopeClimb` in `TerraformingService.ComputePathPlan`), **ascending** steps (`h_curr == h_prev + 1` on land) no longer use `Flatten` to `baseHeight` on orthogonal (and related) slope tiles—terraform stays `None` and `postTerraformSlopeType` follows road direction so the road **rides the slope** instead of digging a cut-through trench.
+
+### Gorge-beside-slope mitigations (P1–P3, P5)
+
+| Item | Behavior |
+|------|----------|
+| **P1** | `ExpandAdjacentFlattenCellsRecursively` runs only if **not** (`preferSlopeClimb` with **no** Flatten on path or pre-expansion `adjacentCells`). Avoids recursive flatten pulling gorges into the corridor when slope-climb mode scheduled no digs. |
+| **P2** | After main path loop (non–cut-through), `InvalidatePlanIfPathBesideSteepLandCliff`: each **land** path cell’s **cardinal** neighbors **off** the path must differ in height by at most 1 vs that cell on the **current** heightmap (reject gorge beside corridor before expansion). |
+| **P3** | `PathTerraformPlan.ValidateNoHeightDiffGreaterThanOne` adds a **one-ring** cardinal expansion of planned cells so Phase 1 validation sees cliff edges just outside the plan. |
+| **P5** | `TerraformingService.LogTerraformPlanDiagnostics` (static): when `true`, logs plan validity, cut-through, flatten counts after `ComputePathPlan`. |
+
+## Shared route validation (P0)
+
+All persistent road placement that uses terraforming should go through **`RoadManager.TryPrepareRoadPlacementPlan`** (bridge straightening, adjacency, `ComputePathPlan`, optional `RoadPathValidationContext.forbidCutThrough`, **`PathTerraformPlan.TryValidatePhase1Heights`** so prep matches `Apply` Phase 1 rules):
+
+- **Manual draw:** preview and mouse-up use **`TryPrepareRoadPlacementPlanLongestValidPrefix`** with `forbidCutThrough: false` so the preview stops at the last buildable cell when the full A* path would need invalid terraform (avoids crater previews). Placement uses the same helper + shared `manualRoadLongestPrefixHint` across drag and release.
+- **Interstate:** `ValidateInterstatePathForPlacement` / `PlaceInterstateFromPath` use `TryPrepareRoadPlacementPlan` with `forbidCutThrough: true` (full path only; no cut-through trenches).
+- **Auto road:** `AutoRoadBuilder.TryGetStreetPlacementPlan` uses **`TryPrepareRoadPlacementPlanLongestValidPrefix`** (hint 0) when `RoadManager` is present so partial segments can still build.
+
 ## Road Drawing Pipeline (Reference)
 
-1. **Click** → `HandleRoadDrawing`: sets `startPosition`, `isDrawingRoad = true`
-2. **Drag** (each frame) → `GetLine()` (A* pathfinding) → `DrawPreviewLine(path)`:
-   - `ClearPreview(false)` — reverts previous terraform plan
-   - Filter path for valid cells, check adjacency
-   - `StraightenBridgeSegments` + `IsBridgePathValid`
-   - `ExpandDiagonalStepsToCardinal` — convert diagonal steps to cardinal pairs
-   - `ComputePathPlan` — analyze terrain, decide flatten/slope actions per cell
-   - `plan.Apply()` — modify heightmap + terrain visuals (3 phases)
-   - `ResolveForPath` — select prefab + world position per cell using plan's `postTerraformSlopeType`
+1. **Click** → `HandleRoadDrawing`: sets `startPosition`, `currentDrawCursorGrid`, `isDrawingRoad = true`
+2. **Drag** (each frame) → `ClearPreview(false)` **first** (revert preview terraform) → `GetLine()` (A* on **original** heightmap) → `DrawPreviewLineCore(path)`:
+   - `TryPrepareRoadPlacementPlanLongestValidPrefix(..., forbidCutThrough: false)` (stops at last valid prefix; `TryValidatePhase1Heights` inside prep)
+   - `plan.Apply()` — preview terraform + terrain visuals
+   - `ResolveForPath` — prefabs + world positions
    - Instantiate preview tiles
-3. **Release** → `DrawRoadLine()`:
-   - Uses `previewResolvedTiles` from last preview
-   - `PlaceRoadTileFromResolved` for each tile
-   - `UpdateAdjacentRoadPrefabsAt` for each tile
-   - `ClearPreview(true)` — keeps terraform, destroys preview GameObjects
+3. **Release** → handled **before** `CanPlaceRoad` guard so state never sticks:
+   - `ClearPreview(false)` — revert preview
+   - `TryFinalizeManualRoadPlacement()` — **`TryPrepareRoadPlacementPlanLongestValidPrefix`** (same hint as drag) + afford check + `Apply` + place tiles (`ResolveForPath` after apply)
+   - `ClearPreview(true)` — cleanup only
 
 ---
 
@@ -109,24 +137,15 @@ The effect is cascading: when tile `[i]` is placed, the adjacent refresh hits ti
   - (A) Pass the terraform plan's `postTerraformSlopeType` into the refresh (requires extending `RefreshRoadPrefabAt` with an optional override).
   - (B) Simpler: don't refresh path cells at all during placement. The resolved tiles from `ResolveForPath` already have the correct prefabs. Only refresh cells OUTSIDE the path (existing adjacent roads that need to update their connectivity).
 
-### Problem 2.2: A* pathfinding runs on terraformed heightmap instead of original
+### Problem 2.2: A* pathfinding runs on terraformed heightmap instead of original — FIXED (P0)
 
 **Symptom**: Preview route may flicker between different paths on consecutive frames. The path shown can differ from what the terraform plan actually processes.
 
-**Root cause**: In `HandleRoadDrawing`, `GetLine()` (A*) runs BEFORE `DrawPreviewLine()` calls `ClearPreview(false)` to revert the previous terraform. So the A* sees the terraformed heightmap from the previous frame. Then `ClearPreview(false)` reverts, and the new terraform plan is computed on the original heightmap. On alternating frames, A* alternates between seeing original and terraformed terrain, potentially finding different routes.
+**Root cause**: In `HandleRoadDrawing`, `GetLine()` (A*) ran BEFORE `ClearPreview(false)` reverted the previous terraform, so A* alternated between original and terraformed heightmaps.
 
-**Files**: `RoadManager.cs` — `HandleRoadDrawing()` (line ~98), `DrawPreviewLine()` (line ~345)
+**Fix applied**: Drag branch now calls `ClearPreview(false)` then `GetLine` then `DrawPreviewLineCore`. Mouse-up calls `TryFinalizeManualRoadPlacement()` after a full revert so build matches validation on the original map.
 
-**Fix approach**: Move the terraform revert before the A* call. Restructure the drag branch:
-```
-else if (isDrawingRoad && Input.GetMouseButton(0))
-{
-    ClearPreview(false);  // ← revert terraform FIRST
-    List<Vector2> path = GetLine(startPosition, currentMousePosition);  // ← A* on original terrain
-    DrawPreviewLineAfterClear(path);  // ← new method that skips internal ClearPreview
-}
-```
-Or: extract the revert-only logic from `ClearPreview` so `DrawPreviewLine` can be called after manual revert.
+**Files**: `RoadManager.cs` — `HandleRoadDrawing`, `DrawPreviewLineCore`, `TryFinalizeManualRoadPlacement`, `TryPrepareRoadPlacementPlan`
 
 ---
 
@@ -148,37 +167,15 @@ Or: extract the revert-only logic from `ClearPreview` so `DrawPreviewLine` can b
 
 **Files**: `RoadManager.cs`, `InterstateManager.cs`
 
-### Problem 3.2: `CanPlaceRoad` blocks mouse-up event, leaving drawing state stuck
+### Problem 3.2: `CanPlaceRoad` blocks mouse-up event, leaving drawing state stuck — FIXED
 
 **Symptom**: If the player releases the mouse over an invalid cell (water, building, incompatible slope), the road is never placed and the preview tiles remain visible as ghost objects in the scene. `isDrawingRoad` stays `true`.
 
-**Root cause**: `CanPlaceRoad` check at the top of `HandleRoadDrawing` returns early for the entire method, including the `GetMouseButtonUp` handler. The drawing state and preview tiles are never cleaned up.
+**Root cause**: `CanPlaceRoad` check at the top of `HandleRoadDrawing` returned early for the entire method, including the `GetMouseButtonUp` handler.
 
-**Files**: `RoadManager.cs` — `HandleRoadDrawing()` (line ~98)
+**Fix applied**: Mouse release and cancel branches run **before** the `CanPlaceRoad` guard so drawing state and preview always clear. See `RoadManager.HandleRoadDrawing`.
 
-**Fix approach**: Move the `GetMouseButtonUp` and `GetMouseButtonUp(1)` (cancel) checks BEFORE the `CanPlaceRoad` guard, so input state transitions always complete:
-```csharp
-public void HandleRoadDrawing(Vector2 gridPosition)
-{
-    Vector2 pos = new Vector2((int)gridPosition.x, (int)gridPosition.y);
-
-    // Always process release events to prevent stuck state
-    if (Input.GetMouseButtonUp(0) && isDrawingRoad)
-    {
-        isDrawingRoad = false;
-        DrawRoadLine(true);
-        ClearPreview(true);
-        uiManager?.RestoreGhostPreview();
-        return;
-    }
-    if (Input.GetMouseButtonUp(1)) { /* cancel logic */ }
-
-    if (!terrainManager.CanPlaceRoad((int)pos.x, (int)pos.y))
-        return;
-
-    // ... rest of click/drag logic
-}
-```
+**Files**: `RoadManager.cs` — `HandleRoadDrawing()`
 
 ### Problem 3.3: Double diagonal expansion in `ComputePathPlan`
 

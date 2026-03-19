@@ -139,6 +139,11 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 | RegionalMapManager | InterstateManager, CityStats, GridManager |
 | CursorManager | GridManager |
 
+## Road and interstate routing (summary)
+
+- **Manual streets:** `RoadManager.TryPrepareRoadPlacementPlanLongestValidPrefix` (partial paths), `PathTerraformPlan.TryValidatePhase1Heights`, preview terraform reverted before A* each frame. Spec: `.cursor/specs/road-drawing-fixes.md` (BACKLOG **BUG-25**).
+- **Interstate:** `TryPrepareRoadPlacementPlan` with `RoadPathValidationContext.forbidCutThrough`; `InterstateManager` ranks border endpoints and runs dual A* (`PickLowerCostInterstateAStarPath`) with shared costs in `RoadPathCostConstants`. Spec: `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md`. Cut-through void mitigation: `docs/plan-cut-through-craters.md` (BACKLOG **BUG-29**, completed).
+
 ## Architectural Decisions
 
 - **GridManager as hub**: GridManager is the central coordinator because nearly all game operations involve cells. This keeps cell access consistent but makes GridManager large.

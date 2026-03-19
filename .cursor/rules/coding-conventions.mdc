@@ -19,6 +19,7 @@ All code, comments, XML docs, annotations, and repository content must be in **E
 - PascalCase: classes, methods, public properties
 - camelCase: private fields
 - Enums: PascalCase for type and values
+- Do NOT use C# reserved keywords as identifiers (e.g. `base`, `class`, `ref`, `out`, `in`)
 
 ## Dependency Pattern
 ```csharp

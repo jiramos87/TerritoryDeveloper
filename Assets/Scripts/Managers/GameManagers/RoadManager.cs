@@ -11,9 +11,19 @@ using Territory.Zones;
 namespace Territory.Roads
 {
 /// <summary>
+/// Shared terraform validation options for manual draw, interstate, and auto-road (same rules via <see cref="RoadManager.TryPrepareRoadPlacementPlan"/>).
+/// </summary>
+public struct RoadPathValidationContext
+{
+    /// <summary>When true (interstate), paths requiring cut-through hill flattening are invalid.</summary>
+    public bool forbidCutThrough;
+}
+
+/// <summary>
 /// Manages road placement, drawing, and prefab selection on the grid. Handles road preview
 /// during drag, selects correct road prefab based on neighbor connectivity, and coordinates
 /// with TerrainManager for slope adaptation and InterstateManager for highway connections.
+/// Shared terraform validation: <see cref="TryPrepareRoadPlacementPlan"/> and <see cref="RoadPathValidationContext"/>.
 /// </summary>
 public class RoadManager : MonoBehaviour, IRoadManager
 {
@@ -37,6 +47,10 @@ public class RoadManager : MonoBehaviour, IRoadManager
     private PathTerraformPlan currentPreviewPlan;
     private List<RoadPrefabResolver.ResolvedRoadTile> previewResolvedTiles = new List<RoadPrefabResolver.ResolvedRoadTile>();
     private HashSet<Vector2> placementPathPositions;
+    /// <summary>Last grid cell under cursor during manual road drag (for mouse-up placement when release cell is invalid).</summary>
+    private Vector2 currentDrawCursorGrid;
+    /// <summary>Speeds longest-prefix search during drag: try extending from last valid filtered-path length first.</summary>
+    private int manualRoadLongestPrefixHint;
     #endregion
 
     #region Road Prefabs
@@ -100,10 +114,35 @@ public class RoadManager : MonoBehaviour, IRoadManager
     {
         Vector2 pos = new Vector2((int)gridPosition.x, (int)gridPosition.y);
 
-        if (!terrainManager.CanPlaceRoad((int)pos.x, (int)pos.y))
+        if (Input.GetMouseButtonUp(0) && isDrawingRoad)
         {
+            isDrawingRoad = false;
+            ClearPreview(false);
+            if (!TryFinalizeManualRoadPlacement())
+            {
+                if (GameNotificationManager.Instance != null)
+                    GameNotificationManager.Instance.PostWarning("Cannot place road along this path. Terrain or validation failed.");
+            }
+            ClearPreview(true);
+            if (uiManager != null)
+                uiManager.RestoreGhostPreview();
             return;
         }
+
+        if (Input.GetMouseButtonUp(1))
+        {
+            if (gridManager == null || gridManager.cameraController == null || !gridManager.cameraController.WasLastRightClickAPan)
+            {
+                isDrawingRoad = false;
+                ClearPreview();
+                if (uiManager != null)
+                    uiManager.RestoreGhostPreview();
+            }
+            return;
+        }
+
+        if (!terrainManager.CanPlaceRoad((int)pos.x, (int)pos.y))
+            return;
 
         if (Input.GetMouseButtonDown(0))
         {
@@ -115,91 +154,228 @@ public class RoadManager : MonoBehaviour, IRoadManager
             }
             isDrawingRoad = true;
             startPosition = pos;
+            currentDrawCursorGrid = pos;
+            manualRoadLongestPrefixHint = 0;
             if (uiManager != null)
-            {
                 uiManager.HideGhostPreview();
-            }
         }
         else if (isDrawingRoad && Input.GetMouseButton(0))
         {
-            Vector2 currentMousePosition = pos;
-            List<Vector2> path = GetLine(startPosition, currentMousePosition);
-            DrawPreviewLine(path);
-        }
-
-        if (Input.GetMouseButtonUp(0) && isDrawingRoad)
-        {
-            isDrawingRoad = false;
-            DrawRoadLine(true);
-            ClearPreview(true);
-            if (uiManager != null)
-            {
-                uiManager.RestoreGhostPreview();
-            }
-        }
-
-        if (Input.GetMouseButtonUp(1))
-        {
-            if (gridManager == null || gridManager.cameraController == null || !gridManager.cameraController.WasLastRightClickAPan)
-            {
-                isDrawingRoad = false;
-                ClearPreview();
-                if (uiManager != null)
-                {
-                    uiManager.RestoreGhostPreview();
-                }
-            }
+            currentDrawCursorGrid = pos;
+            ClearPreview(false);
+            List<Vector2> path = GetLine(startPosition, currentDrawCursorGrid);
+            DrawPreviewLineCore(path);
         }
     }
 
-    void DrawRoadLine(bool calculateCost = true)
+    /// <summary>
+    /// After preview terraform reverted: rebuild path from drag endpoints, validate, apply, place tiles, update economy. Streets allow cut-through.
+    /// </summary>
+    bool TryFinalizeManualRoadPlacement()
     {
-        int tileCount = previewResolvedTiles.Count > 0 ? previewResolvedTiles.Count : previewRoadGridPositions.Count;
-        if (calculateCost)
-        {
-            int totalCost = CalculateTotalCost(tileCount);
+        if (terraformingService == null || terrainManager == null || gridManager == null)
+            return false;
+        var heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null) return false;
+        if (roadPrefabResolver == null)
+            roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
+        if (roadPrefabResolver == null) return false;
 
-            // Check if player can afford the road
-            if (!cityStats.CanAfford(totalCost))
-            {
+        List<Vector2> path = GetLine(startPosition, currentDrawCursorGrid);
+        if (!TryPrepareRoadPlacementPlanLongestValidPrefix(path, new RoadPathValidationContext { forbidCutThrough = false }, false, ref manualRoadLongestPrefixHint, out List<Vector2> expandedPath, out PathTerraformPlan plan, out _))
+            return false;
+
+        int tileCount = expandedPath.Count;
+        int totalCost = CalculateTotalCost(tileCount);
+        if (!cityStats.CanAfford(totalCost))
+        {
+            if (uiManager != null)
                 uiManager.ShowInsufficientFundsTooltip("Road", totalCost);
-                ClearPreview();
-                isDrawingRoad = false;
-                return;
-            }
-
-            // Deduct the cost if we can afford it
-            cityStats.RemoveMoney(totalCost);
+            return false;
         }
 
-        if (previewResolvedTiles.Count > 0)
+        if (!plan.Apply(heightMap, terrainManager))
+            return false;
+
+        cityStats.RemoveMoney(totalCost);
+        var resolved = roadPrefabResolver.ResolveForPath(expandedPath, plan);
+        placementPathPositions = new HashSet<Vector2>();
+        foreach (var r in resolved)
+            placementPathPositions.Add(new Vector2(r.gridPos.x, r.gridPos.y));
+        for (int i = 0; i < resolved.Count; i++)
         {
-            placementPathPositions = new HashSet<Vector2>();
-            foreach (var r in previewResolvedTiles)
-                placementPathPositions.Add(new Vector2(r.gridPos.x, r.gridPos.y));
-            for (int i = 0; i < previewResolvedTiles.Count; i++)
+            PlaceRoadTileFromResolved(resolved[i]);
+            UpdateAdjacentRoadPrefabsAt(new Vector2(resolved[i].gridPos.x, resolved[i].gridPos.y));
+        }
+        RefreshAllAdjacentRoadsOutsidePath();
+        placementPathPositions = null;
+        var placedPathCells = new HashSet<Vector2Int>();
+        for (int i = 0; i < resolved.Count; i++)
+            placedPathCells.Add(resolved[i].gridPos);
+        foreach (Vector2Int p in placedPathCells)
+            RefreshRoadPrefabAt(new Vector2(p.x, p.y));
+        cityStats.AddPowerConsumption(resolved.Count * ZoneAttributes.Road.PowerConsumption);
+        return true;
+    }
+
+    /// <summary>
+    /// True if terraform plan is buildable under <paramref name="ctx"/> (e.g. interstate forbids cut-through).
+    /// </summary>
+    public bool ValidateTerraformPlanWithContext(PathTerraformPlan plan, RoadPathValidationContext ctx)
+    {
+        if (plan == null) return false;
+        if (!plan.isValid) return false;
+        if (ctx.forbidCutThrough && plan.isCutThrough) return false;
+        return true;
+    }
+
+    /// <summary>
+    /// Shared pipeline: filter cells, adjacency, bridge straightening/validation, cardinal expansion, <see cref="TerraformingService.ComputePathPlan"/>,
+    /// context checks, and Phase-1 height validation (matches <see cref="PathTerraformPlan.Apply"/> feasibility). Does not apply terrain meshes.
+    /// </summary>
+    public bool TryPrepareRoadPlacementPlan(List<Vector2> pathRaw, RoadPathValidationContext ctx, bool postUserWarnings, out List<Vector2> expandedPath, out PathTerraformPlan plan)
+    {
+        if (!TryBuildFilteredPathForRoadPlan(pathRaw, postUserWarnings, out List<Vector2> filteredPath))
+        {
+            expandedPath = null;
+            plan = null;
+            return false;
+        }
+
+        return TryPrepareFromFilteredPathList(filteredPath, ctx, postUserWarnings, out expandedPath, out plan);
+    }
+
+    /// <summary>
+    /// Like <see cref="TryPrepareRoadPlacementPlan"/> but keeps the longest prefix of the filtered path that passes terraform + Phase-1 height checks.
+    /// <paramref name="longestPrefixLengthHint"/> (manual drag): pass a ref field; on success it stores the filtered-path length used; reset to 0 on new stroke.
+    /// Auto-road should pass a local int with value 0.
+    /// </summary>
+    /// <param name="filteredPathUsedOrNull">Filtered path (before diagonal expansion) that was accepted, or null on failure.</param>
+    public bool TryPrepareRoadPlacementPlanLongestValidPrefix(List<Vector2> pathRaw, RoadPathValidationContext ctx, bool postUserWarnings, ref int longestPrefixLengthHint, out List<Vector2> expandedPath, out PathTerraformPlan plan, out List<Vector2> filteredPathUsedOrNull)
+    {
+        expandedPath = null;
+        plan = null;
+        filteredPathUsedOrNull = null;
+        if (!TryBuildFilteredPathForRoadPlan(pathRaw, postUserWarnings, out List<Vector2> fullFiltered))
+            return false;
+
+        int n = fullFiltered.Count;
+        var heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null) return false;
+
+        int startK = Mathf.Min(n, longestPrefixLengthHint > 0 ? longestPrefixLengthHint + 1 : n);
+        for (int k = startK; k >= 1; k--)
+        {
+            var prefix = SubListCopy(fullFiltered, k);
+            if (!IsBridgePathValid(prefix, heightMap)) continue;
+            if (HasTurnOnWaterOrCoast(prefix, heightMap)) continue;
+            if (HasElbowTooCloseToWater(prefix, heightMap)) continue;
+            if (!TryPrepareFromFilteredPathList(prefix, ctx, false, out expandedPath, out plan))
+                continue;
+
+            longestPrefixLengthHint = k;
+            filteredPathUsedOrNull = prefix;
+            return true;
+        }
+
+        longestPrefixLengthHint = 0;
+        if (postUserWarnings && GameNotificationManager.Instance != null)
+            GameNotificationManager.Instance.PostWarning("Road cannot extend further along this path. Terrain would exceed allowed height change.");
+        return false;
+    }
+
+    static List<Vector2> SubListCopy(List<Vector2> full, int count)
+    {
+        var p = new List<Vector2>(count);
+        for (int i = 0; i < count; i++)
+            p.Add(full[i]);
+        return p;
+    }
+
+    /// <summary>
+    /// Filters raw path, checks adjacency, straightens bridges, validates bridge rules. Shared by full plan and longest-prefix search.
+    /// </summary>
+    bool TryBuildFilteredPathForRoadPlan(List<Vector2> pathRaw, bool postUserWarnings, out List<Vector2> filteredPath)
+    {
+        filteredPath = null;
+        if (pathRaw == null || pathRaw.Count == 0 || terraformingService == null || terrainManager == null || gridManager == null)
+            return false;
+
+        var heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null) return false;
+
+        var list = new List<Vector2>();
+        for (int i = 0; i < pathRaw.Count; i++)
+        {
+            Vector2 gridPos = pathRaw[i];
+            if (gridManager.GetCell((int)gridPos.x, (int)gridPos.y) != null)
+                list.Add(gridPos);
+        }
+        if (list.Count == 0) return false;
+
+        if (!IsPathFullyAdjacent(list))
+        {
+            if (postUserWarnings && GameNotificationManager.Instance != null)
+                GameNotificationManager.Instance.PostWarning("Road path has gaps (e.g. over water). Draw a continuous path.");
+            return false;
+        }
+
+        list = StraightenBridgeSegments(list, heightMap);
+        if (!IsBridgePathValid(list, heightMap))
+        {
+            if (postUserWarnings && GameNotificationManager.Instance != null)
+                GameNotificationManager.Instance.PostWarning("Cannot build a valid bridge here. Draw a straighter path over water.");
+            return false;
+        }
+        if (HasTurnOnWaterOrCoast(list, heightMap))
+        {
+            if (postUserWarnings && GameNotificationManager.Instance != null)
+                GameNotificationManager.Instance.PostWarning("Bridges must be straight. Turns cannot be on water or coast.");
+            return false;
+        }
+        if (HasElbowTooCloseToWater(list, heightMap))
+        {
+            if (postUserWarnings && GameNotificationManager.Instance != null)
+                GameNotificationManager.Instance.PostWarning("Turns must be at least 2 cells away from water.");
+            return false;
+        }
+
+        filteredPath = list;
+        return true;
+    }
+
+    /// <summary>
+    /// Diagonal expansion, <see cref="TerraformingService.ComputePathPlan"/>, context validation, and <see cref="PathTerraformPlan.TryValidatePhase1Heights"/>.
+    /// </summary>
+    bool TryPrepareFromFilteredPathList(List<Vector2> filteredPath, RoadPathValidationContext ctx, bool postUserWarnings, out List<Vector2> expandedPath, out PathTerraformPlan plan)
+    {
+        expandedPath = null;
+        plan = null;
+        var heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null || filteredPath == null || filteredPath.Count == 0) return false;
+
+        expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(filteredPath);
+        plan = terraformingService.ComputePathPlan(expandedPath);
+        if (!ValidateTerraformPlanWithContext(plan, ctx))
+        {
+            if (postUserWarnings && GameNotificationManager.Instance != null)
             {
-                PlaceRoadTileFromResolved(previewResolvedTiles[i]);
-                UpdateAdjacentRoadPrefabsAt(new Vector2(previewResolvedTiles[i].gridPos.x, previewResolvedTiles[i].gridPos.y));
+                if (plan != null && plan.isValid && ctx.forbidCutThrough && plan.isCutThrough)
+                    GameNotificationManager.Instance.PostWarning("Interstate cannot cut through hills. Choose a different route.");
+                else
+                    GameNotificationManager.Instance.PostWarning("Road cannot cross terrain with height difference greater than 1. Choose a different path.");
             }
-            RefreshAllAdjacentRoadsOutsidePath();
-            placementPathPositions = null;
-        }
-        else
-        {
-            for (int i = 0; i < previewRoadGridPositions.Count; i++)
-            {
-                Vector2 gridPos = previewRoadGridPositions[i];
-                PlaceRoadTile(gridPos, i, false);
-                UpdateAdjacentRoadPrefabs(gridPos, i);
-            }
+            return false;
         }
 
-        if (calculateCost)
+        if (!plan.TryValidatePhase1Heights(heightMap, terrainManager))
         {
-            int roadPowerConsumption = tileCount * ZoneAttributes.Road.PowerConsumption;
-            cityStats.AddPowerConsumption(roadPowerConsumption);
+            if (postUserWarnings && GameNotificationManager.Instance != null)
+                GameNotificationManager.Instance.PostWarning("Terrain cannot be modified safely (height difference would exceed 1). Choose a different path.");
+            return false;
         }
+
+        return true;
     }
 
     int CalculateTotalCost(int tilesCount)
@@ -371,64 +547,22 @@ public class RoadManager : MonoBehaviour, IRoadManager
         gridManager.AddRoadToCache(new Vector2Int((int)gridPos.x, (int)gridPos.y));
     }
 
-    void DrawPreviewLine(List<Vector2> path)
+    /// <summary>
+    /// Preview terraform + ghost tiles. Caller must revert any prior preview first and run <see cref="GetLine"/> on the original heightmap.
+    /// </summary>
+    void DrawPreviewLineCore(List<Vector2> path)
     {
-        ClearPreview(false);
-
-        List<Vector2> filteredPath = new List<Vector2>();
-        for (int i = 0; i < path.Count; i++)
-        {
-            Vector2 gridPos = path[i];
-            if (gridManager.GetCell((int)gridPos.x, (int)gridPos.y) != null)
-                filteredPath.Add(gridPos);
-        }
-
-        if (filteredPath.Count == 0) return;
-        if (terraformingService == null || terrainManager == null) return;
-        if (roadPrefabResolver == null && gridManager != null)
+        if (path == null || path.Count == 0) return;
+        if (terraformingService == null || terrainManager == null || gridManager == null) return;
+        if (roadPrefabResolver == null)
             roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
         if (roadPrefabResolver == null) return;
 
-        if (!IsPathFullyAdjacent(filteredPath))
-        {
-            if (GameNotificationManager.Instance != null)
-                GameNotificationManager.Instance.PostWarning("Road path has gaps (e.g. over water). Draw a continuous path.");
-            return;
-        }
-
         var heightMap = terrainManager.GetHeightMap();
         if (heightMap == null) return;
-        filteredPath = StraightenBridgeSegments(filteredPath, heightMap);
 
-        if (!IsBridgePathValid(filteredPath, heightMap))
-        {
-            if (GameNotificationManager.Instance != null)
-                GameNotificationManager.Instance.PostWarning("Cannot build a valid bridge here. Draw a straighter path over water.");
+        if (!TryPrepareRoadPlacementPlanLongestValidPrefix(path, new RoadPathValidationContext { forbidCutThrough = false }, false, ref manualRoadLongestPrefixHint, out List<Vector2> expandedPath, out PathTerraformPlan plan, out _))
             return;
-        }
-
-        if (HasTurnOnWaterOrCoast(filteredPath, heightMap))
-        {
-            if (GameNotificationManager.Instance != null)
-                GameNotificationManager.Instance.PostWarning("Bridges must be straight. Turns cannot be on water or coast.");
-            return;
-        }
-
-        if (HasElbowTooCloseToWater(filteredPath, heightMap))
-        {
-            if (GameNotificationManager.Instance != null)
-                GameNotificationManager.Instance.PostWarning("Turns must be at least 2 cells away from water.");
-            return;
-        }
-
-        List<Vector2> expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(filteredPath);
-        var plan = terraformingService.ComputePathPlan(expandedPath);
-        if (!plan.isValid)
-        {
-            if (GameNotificationManager.Instance != null)
-                GameNotificationManager.Instance.PostWarning("Road cannot cross terrain with height difference greater than 1. Choose a different path.");
-            return;
-        }
 
         if (!plan.Apply(heightMap, terrainManager))
         {
@@ -437,7 +571,6 @@ public class RoadManager : MonoBehaviour, IRoadManager
             return;
         }
         currentPreviewPlan = plan;
-
         var resolved = roadPrefabResolver.ResolveForPath(expandedPath, plan);
         previewResolvedTiles.Clear();
         previewResolvedTiles.AddRange(resolved);
@@ -604,13 +737,48 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
     /// <summary>
     /// Validates bridge path for interstate/auto-road: no turns on water or coast, elbows at least 2 cells from water.
+    /// Rule F: last N land cells before water must be collinear (approach perpendicular to water).
     /// </summary>
     public bool ValidateBridgePath(List<Vector2Int> path, HeightMap heightMap)
     {
         if (path == null || path.Count < 2 || heightMap == null) return true;
         var pathVec2 = new List<Vector2>();
         foreach (var p in path) pathVec2.Add(new Vector2(p.x, p.y));
-        return !HasTurnOnWaterOrCoast(pathVec2, heightMap) && !HasElbowTooCloseToWater(pathVec2, heightMap);
+        if (HasTurnOnWaterOrCoast(pathVec2, heightMap) || HasElbowTooCloseToWater(pathVec2, heightMap))
+            return false;
+        if (HasTurnOnLastLandCellsBeforeWater(pathVec2, heightMap, 2))
+            return false;
+        return true;
+    }
+
+    /// <summary>
+    /// Rule F: True if the last n land cells before any water segment have a turn (not collinear with bridge axis).
+    /// Bridge approach must be perpendicular; no turn on the last land cells before water.
+    /// </summary>
+    bool HasTurnOnLastLandCellsBeforeWater(List<Vector2> path, HeightMap heightMap, int n = 2)
+    {
+        if (path == null || path.Count < n + 2 || heightMap == null || n < 1) return false;
+        for (int i = 1; i < path.Count; i++)
+        {
+            int x = (int)path[i].x, y = (int)path[i].y;
+            if (!IsWaterOrWaterSlope(x, y, heightMap)) continue;
+            int firstWater = i;
+            int landEnd = i - 1;
+            int landStart = i - n;
+            if (landStart < 0) continue;
+            Vector2Int dirApproach = new Vector2Int((int)path[firstWater].x - (int)path[landEnd].x, (int)path[firstWater].y - (int)path[landEnd].y);
+            if (dirApproach.x == 0 && dirApproach.y == 0) continue;
+            for (int j = landStart; j < landEnd; j++)
+            {
+                Vector2Int dir = new Vector2Int((int)path[j + 1].x - (int)path[j].x, (int)path[j + 1].y - (int)path[j].y);
+                if (dir.x != dirApproach.x || dir.y != dirApproach.y)
+                    return true;
+            }
+            while (i < path.Count && IsWaterOrWaterSlope((int)path[i].x, (int)path[i].y, heightMap))
+                i++;
+            i--;
+        }
+        return false;
     }
 
     /// <summary>
@@ -1288,6 +1456,22 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
+    /// Returns true if the path would be valid for interstate placement (bridge, plan, etc).
+    /// Does not place. Used to evaluate candidate paths before choosing the best.
+    /// </summary>
+    public bool ValidateInterstatePathForPlacement(List<Vector2Int> path)
+    {
+        if (path == null || path.Count == 0) return false;
+        if (terraformingService == null || terrainManager == null || gridManager == null) return false;
+
+        var pathVec2 = new List<Vector2>();
+        for (int i = 0; i < path.Count; i++)
+            pathVec2.Add(new Vector2(path[i].x, path[i].y));
+
+        return TryPrepareRoadPlacementPlan(pathVec2, new RoadPathValidationContext { forbidCutThrough = true }, false, out _, out _);
+    }
+
+    /// <summary>
     /// Places interstate tiles along a path using the centralized terraform + resolve pipeline.
     /// Call from InterstateManager after route generation.
     /// </summary>
@@ -1298,7 +1482,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
             return false;
         if (roadPrefabResolver == null && gridManager != null && terrainManager != null)
             roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
-        if (roadPrefabResolver == null || terraformingService == null || terrainManager == null)
+        if (roadPrefabResolver == null || terraformingService == null || terrainManager == null || gridManager == null)
             return false;
 
         var pathVec2 = new List<Vector2>();
@@ -1309,17 +1493,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
         if (heightMap == null)
             return false;
 
-        List<Vector2> straightenedPath = StraightenBridgeSegments(pathVec2, heightMap);
-        if (!IsBridgePathValid(straightenedPath, heightMap))
+        if (!TryPrepareRoadPlacementPlan(pathVec2, new RoadPathValidationContext { forbidCutThrough = true }, false, out List<Vector2> expandedPath, out PathTerraformPlan plan))
             return false;
-        if (HasTurnOnWaterOrCoast(straightenedPath, heightMap) || HasElbowTooCloseToWater(straightenedPath, heightMap))
-            return false;
-
-        List<Vector2> expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(straightenedPath);
-        var plan = terraformingService.ComputePathPlan(expandedPath);
-        bool planValid = plan.isValid;
-        bool applyOk = plan.Apply(heightMap, terrainManager);
-        if (!planValid || !applyOk)
+        if (!plan.Apply(heightMap, terrainManager))
             return false;
 
         var resolved = roadPrefabResolver.ResolveForPath(expandedPath, plan);

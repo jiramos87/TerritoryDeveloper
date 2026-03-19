@@ -49,6 +49,7 @@ alwaysApply: false
 - **GameBootstrap** — Entry point, game loading flow
 
 ## Rules
+- **Road terraform validation:** Use `RoadManager.TryPrepareRoadPlacementPlan` (includes `PathTerraformPlan.TryValidatePhase1Heights`) and `RoadPathValidationContext`. Streets / auto-road should use `TryPrepareRoadPlacementPlanLongestValidPrefix` when partial paths are acceptable; interstate uses full-path `TryPrepareRoadPlacementPlan` with `forbidCutThrough: true`. Do not use `ComputePathPlan` alone for placement decisions. Specs: `.cursor/specs/road-drawing-fixes.md` (BUG-25), `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md` (BUG-27/BUG-29 completed per BACKLOG).
 - Every manager is a MonoBehaviour living as a component on a scene GameObject
 - NEVER instantiate managers with `new` — they are always scene components
 - GridManager is the central hub — all cell operations go through it

@@ -7,22 +7,22 @@
 
 ## In Progress
 
-- [ ] **BUG-25** — Fix bugs in manual street segment drawing
+- [ ] **BUG-30** — Incorrect road prefabs when interstate climbs slopes
   - Type: fix
-  - Files: `RoadManager.cs`, `GridManager.cs`
-  - Notes: Documented in `.cursor/specs/road-drawing-fixes.md` (Phases 1–4) and `.cursor/specs/bridge-and-junction-fixes.md` (completed). Bridge/junction fixes and elbow prefab fix implemented; Phases 2–4 of road-drawing-fixes pending.
+  - Files: `RoadPrefabResolver.cs`, `RoadManager.cs`
+  - Notes: When road climbs hills: flat/junction prefabs used instead of ramp/slope prefabs at transitions, wrong junction at top of slope, visual gaps and disconnection. Agent prompt: `docs/agent-prompt-interstate-slope-prefabs.md`.
 
 ## High Priority
 
-- [ ] **BUG-23** — Interstate route generation is flaky; never created in New Game flow
+- [ ] **BUG-31** — Wrong prefabs at interstate entry/exit (border)
   - Type: fix
-  - Files: `InterstateManager.cs`, `GeographyManager.cs`, `GameSaveManager.cs`, `GameBootstrap.cs`, `GridManager.cs` (ResetGrid)
-  - Notes: Two sub-problems: (a) Flaky generation — sometimes Play in Unity loads without interstate. (b) New Game flow — pressing New Game never creates interstate. Fix both: ensure interstate is correctly invoked in New Game flow (ResetGrid → ReinitializeGeographyForNewGame) and fix flaky generation. Prefab/pathfinding improvements are in BUG-26 and `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md`.
+  - Files: `RoadPrefabResolver.cs`, `RoadManager.cs`
+  - Notes: Road must be able to enter/exit at border in any direction. Incorrect prefab selection at entry/exit cells. Isolated from BUG-30 for separate work.
 
-- [ ] **BUG-26** — Interstate prefab selection and pathfinding improvements
+- [ ] **BUG-28** — Sorting order between slope cell and interstate cell
   - Type: fix
-  - Files: `RoadPrefabResolver.cs`, `InterstateManager.cs`, `PathTerraformPlan.cs`, `TerrainManager.cs`
-  - Notes: Wrong elbow prefabs, zigzag paths, environmental path choices (hugging hills), cut-through visual artifacts. Spec: `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md`. Phase 1.1 (elbow fix) done; Phases 2–5 pending.
+  - Files: `GridManager.cs` (Sorting Order region), `TerrainManager.cs`, `RoadManager.cs`
+  - Notes: Slope cells and interstate road cells render in wrong order; one draws over the other incorrectly.
 
 - [ ] **BUG-20** — Power plant (and 3x3/2x2 buildings) load incorrectly in LoadGame: end up under grass
   - Type: fix
@@ -71,11 +71,6 @@
   - Type: feature
   - Files: `EconomyManager.cs`, `CityStats.cs`
   - Notes: No expenses: no street maintenance, no service costs, no salaries. Without expenses there is no economic tension. Add upkeep for streets, public buildings and services.
-
-- [ ] **FEAT-24** — Auto-zoning for Medium and Heavy density
-  - Type: feature
-  - Files: `AutoZoningManager.cs`, `DemandManager.cs`
-  - Notes: AutoZoningManager only places Light zones. Should support Medium/Heavy based on demand or zone development level.
 
 - [ ] **FEAT-22** — Tax feedback on demand and happiness
   - Type: feature
@@ -229,6 +224,18 @@
 
 ## Completed (last 30 days)
 
+- [x] **BUG-25** — Fix bugs in manual street segment drawing (2026-03-19)
+  - Type: fix
+  - Files: `RoadManager.cs`, `RoadPrefabResolver.cs` (also: `GridManager.cs`, `TerraformingService.cs`, `PathTerraformPlan.cs`, `GridPathfinder.cs` for prior spec work)
+  - Notes: Junction/T/cross prefabs: `HashSet` path membership + `SelectFromConnectivity` for 3+ cardinal neighbors in `RoadPrefabResolver`; post-placement `RefreshRoadPrefabAt` pass on placed cells in `TryFinalizeManualRoadPlacement`. Spec: `.cursor/specs/road-drawing-fixes.md`. Optional follow-up: `postTerraformSlopeType` on refresh (spec 2.1), crossroads prefab audit.
+- [x] **BUG-27** — Interstate pathfinding bugs (2026-03-19)
+  - Border endpoint scoring (`ComputeInterstateBorderEndpointScore`), sorted candidates, `PickLowerCostInterstateAStarPath` (avoid-high vs not, pick cheaper), `InterstateAwayFromGoalPenalty` and cost tuning in `RoadPathCostConstants`. Spec: `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md` Phase 2.
+- [x] **BUG-29** — Cut-through: high hills cut through disappear leaving crater (2026-03-19)
+  - Reject cut-through when `maxHeight - baseHeight > 1`; cliff/corridor context in `TerrainManager` / `PathTerraformPlan`; map-edge margin `cutThroughMinCellsFromMapEdge`; Phase 1 validation ring in `PathTerraformPlan`; interstate uses `forbidCutThrough`. See `docs/plan-cut-through-craters.md`.
+- [x] **FEAT-24** — Auto-zoning for Medium and Heavy density (2026-03-19)
+- [x] **BUG-23** — Interstate route generation is flaky; never created in New Game flow (2026-03-19)
+- [x] **BUG-26** — Interstate prefab selection and pathfinding improvements (2026-03-19)
+  - Elbow audit, validation, straightness bonus, slope cost, parallel sampling, bridge approach (Rule F), cut-through expansion. Follow-up: BUG-27 / BUG-29 completed 2026-03-19; remaining: BUG-28 (sorting), BUG-30 (slope prefabs at entry/exit).
 - [x] **TECH-06** — Documentation sync: specs aligned with backlog and rules; BUG-26, FEAT-36 added; ARCHITECTURE, file counts, helper services updated; zoning plan translated to English (2026-03-19)
 - [x] **FEAT-05** — Streets must be able to climb diagonal slopes using orthogonal prefabs (2026-03-18)
 - [x] **FEAT-34** — Zoning and building on slopes (2026-03-16)
