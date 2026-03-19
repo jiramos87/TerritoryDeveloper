@@ -16,14 +16,14 @@ All code, comments, XML docs, annotations, Debug.Log messages, and repository co
 - No dependency injection — managers reference each other via Inspector fields + `FindObjectOfType<T>()` fallback in Awake/Start
 
 ## Folder Structure (`Assets/Scripts/`)
-- `Managers/GameManagers/` (33 files) — core game logic: grid, terrain, zones, roads, economy, simulation, UI
-- `Managers/UnitManagers/` (23 files) — data models: Cell, Zone, Building, Forest, HeightMap, CellData, etc.
-- `Controllers/GameControllers/` (2 files) — CameraController, CityStatsUIController
-- `Controllers/UnitControllers/` (17 files) — UI buttons, popups, sliders
-- `Utilities/` (1 file) — DebugHelper
+- `Managers/GameManagers/` (94 files) — core game logic: grid, terrain, zones, roads, economy, simulation, helpers
+- `Managers/UnitManagers/` (58 files) — data models: Cell, Zone, Building, Forest, HeightMap, CellData, etc.
+- `Controllers/GameControllers/` (6 files) — CameraController, CityStatsUIController, etc.
+- `Controllers/UnitControllers/` (38 files) — UI buttons, popups, sliders
+- `Utilities/` (6 files) — DebugHelper, RoadPathCostConstants, etc.
 
 ## Key Architectural Facts
-- **GridManager** is the central hub (~2100 lines, 13 direct dependencies). All cell operations go through it.
+- **GridManager** is the central hub (~1870 lines, 13 direct dependencies). All cell operations go through it.
 - **Only singleton**: `GameNotificationManager.Instance` (with DontDestroyOnLoad)
 - **Data models**: MonoBehaviour-based (Cell, Zone — live on GameObjects) or plain classes (CellData, CommuneData, TerritoryData — for serialization/save)
 - **Grid**: 2D isometric with height system (heightMap). Cells stored in `Cell[,] cellArray` and `GameObject[,] gridArray`

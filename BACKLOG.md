@@ -10,14 +10,19 @@
 - [ ] **BUG-25** — Fix bugs in manual street segment drawing
   - Type: fix
   - Files: `RoadManager.cs`, `GridManager.cs`
-  - Notes: Bugs in manual road placement mode when drawing street segments. To be documented as specific issues are identified.
+  - Notes: Documented in `.cursor/specs/road-drawing-fixes.md` (Phases 1–4) and `.cursor/specs/bridge-and-junction-fixes.md` (completed). Bridge/junction fixes and elbow prefab fix implemented; Phases 2–4 of road-drawing-fixes pending.
 
 ## High Priority
 
 - [ ] **BUG-23** — Interstate route generation is flaky; never created in New Game flow
   - Type: fix
   - Files: `InterstateManager.cs`, `GeographyManager.cs`, `GameSaveManager.cs`, `GameBootstrap.cs`, `GridManager.cs` (ResetGrid)
-  - Notes: Interstate generation is flaky: sometimes the game loads (Play in Unity) without the interstate. When pressing New Game in the UI, the interstate is never created — there is a problem in the New Game flow. Interstate should be recreated when starting a new game. Reopening the game in Unity gives a chance (still flaky) for the route to generate. Fix the flaky interstate generation and ensure it is correctly invoked and created in the New Game flow (ResetGrid → ReinitializeGeographyForNewGame).
+  - Notes: Two sub-problems: (a) Flaky generation — sometimes Play in Unity loads without interstate. (b) New Game flow — pressing New Game never creates interstate. Fix both: ensure interstate is correctly invoked in New Game flow (ResetGrid → ReinitializeGeographyForNewGame) and fix flaky generation. Prefab/pathfinding improvements are in BUG-26 and `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md`.
+
+- [ ] **BUG-26** — Interstate prefab selection and pathfinding improvements
+  - Type: fix
+  - Files: `RoadPrefabResolver.cs`, `InterstateManager.cs`, `PathTerraformPlan.cs`, `TerrainManager.cs`
+  - Notes: Wrong elbow prefabs, zigzag paths, environmental path choices (hugging hills), cut-through visual artifacts. Spec: `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md`. Phase 1.1 (elbow fix) done; Phases 2–5 pending.
 
 - [ ] **BUG-20** — Power plant (and 3x3/2x2 buildings) load incorrectly in LoadGame: end up under grass
   - Type: fix
@@ -84,6 +89,11 @@
   - Notes: Happiness only increases when placing zones (+100 per building). No effect from unemployment, taxes, services or pollution. Should be continuous multi-factor calculation with decay.
   - Depends on: BUG-12
 
+- [ ] **FEAT-36** — Expand auto-zoning and auto-road candidates to include forests and slopes
+  - Type: feature
+  - Files: `GridManager.cs`, `AutoZoningManager.cs`, `AutoRoadBuilder.cs`
+  - Notes: Treat Grass, Forest, and N-S/E-W slopes as valid candidates for zoning and road expansion. Plan: `docs/plan-zoning-road-candidates-grass-forest-slopes.md`.
+
 - [ ] **FEAT-35** — Area demolition tool (bulldozer drag-to-select)
   - Type: feature
   - Files: `GridManager.cs`, `UIManager.cs`, `CursorManager.cs`
@@ -124,7 +134,7 @@
 
 - [ ] **TECH-01** — Extract responsibilities from large files (GridManager, TerrainManager, CityStats, ZoneManager, UIManager, RoadManager)
   - Type: refactor
-  - Files: `GridManager.cs` (1538 lines), `TerrainManager.cs` (1330), `CityStats.cs` (1199), `ZoneManager.cs` (1170), `UIManager.cs` (1054), `RoadManager.cs` (1019)
+  - Files: `GridManager.cs` (~1870 lines), `TerrainManager.cs` (~1660), `CityStats.cs` (~1200), `ZoneManager.cs` (~1360), `UIManager.cs` (~1240), `RoadManager.cs` (~1510)
   - Notes: Helpers already extracted (GridPathfinder, GridSortingOrderService, etc.). Pending candidates: BulldozeHandler (~200 lines), GridInputHandler (~130 lines), CoordinateConversionService (~230 lines) from GridManager.
 
 - [ ] **TECH-02** — Change public fields to `[SerializeField] private` in managers
@@ -219,6 +229,7 @@
 
 ## Completed (last 30 days)
 
+- [x] **TECH-06** — Documentation sync: specs aligned with backlog and rules; BUG-26, FEAT-36 added; ARCHITECTURE, file counts, helper services updated; zoning plan translated to English (2026-03-19)
 - [x] **FEAT-05** — Streets must be able to climb diagonal slopes using orthogonal prefabs (2026-03-18)
 - [x] **FEAT-34** — Zoning and building on slopes (2026-03-16)
 - [x] **FEAT-33** — Urban remodeling: expropriations and redevelopment (2026-03-12)

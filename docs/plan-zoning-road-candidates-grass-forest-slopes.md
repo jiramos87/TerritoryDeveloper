@@ -1,99 +1,103 @@
-# Plan: Candidatos de zona y calle = Grass, Forest y pendientes N-S / E-O
+# Plan: Zoning and Road Candidates = Grass, Forest, and N-S / E-W Slopes
 
-## Objetivo
+## Objective
 
-Tratar como candidatos válidos para **colocación de zona** y para **expansión de calle** no solo celdas Grass, sino también:
+Treat as valid candidates for **zone placement** and for **road expansion** not only Grass cells, but also:
 
-- **Forest** (celda con bosque)
-- **Pendientes** de tipo **norte-sur** o **este-oeste** (y Flat), cuando el terreno lo permita.
+- **Forest** (cell with forest)
+- **Slopes** of type **north-south** or **east-west** (and Flat), when the terrain allows it.
 
-Así se evita restringir en exceso el crecimiento automático a “solo Grass” y se alinea la lógica con terreno construible (zonas y calles sobre Flat/N/S/E/W).
-
----
-
-## 1. Definición de “celda zoneable/expandible”
-
-- **Zoneable (candidato a zona):**  
-  `zoneType == Grass` **o** `HasForest()` **o** celda cuyo terreno sea colocable para zona (Flat, North, South, East, West).  
-  En la práctica: toda celda que sea Grass (con o sin forest) ya es zoneable; si en el futuro hubiera celdas con otro `zoneType` pero pendiente N-S/E-O, incluirlas con un helper que consulte `TerrainManager.GetTerrainSlopeTypeAt`.
-
-- **Expandible para calle (vecino válido de un borde de calle):**  
-  Misma idea: Grass, Forest, agua (`GetCellInstanceHeight() == 0`), o terreno aceptado por `TerrainManager.CanPlaceRoad` (ya incluye Flat, N, S, E, W y diagonales si se mantiene el cambio previo).
+This avoids over-restricting automatic growth to "Grass only" and aligns the logic with buildable terrain (zones and roads on Flat/N/S/E/W).
 
 ---
 
-## 2. Cambios por archivo
+## 1. Definition of "zoneable/expandable cell"
+
+- **Zoneable (zone candidate):**  
+  `zoneType == Grass` **or** `HasForest()` **or** cell whose terrain is placeable for zone (Flat, North, South, East, West).  
+  In practice: every cell that is Grass (with or without forest) is already zoneable; if in the future there were cells with another `zoneType` but N-S/E-W slope, include them with a helper that consults `TerrainManager.GetTerrainSlopeTypeAt`.
+
+- **Expandable for road (valid neighbor of a road edge):**  
+  Same idea: Grass, Forest, water (`GetCellInstanceHeight() == 0`), or terrain accepted by `TerrainManager.CanPlaceRoad` (already includes Flat, N, S, E, W and diagonals if the previous change is kept).
+
+---
+
+## 2. Changes by file
 
 ### 2.1 GridManager.cs
 
-| Ubicación | Cambio |
+| Location | Change |
 |----------|--------|
-| **GetRoadEdgePositions** (líneas 1863–1866) | Considerar vecino “expandible” si es Grass **o** `n.HasForest()` **o** agua (`n.GetCellInstanceHeight() == 0`). Sustituir la condición actual por algo como: `(n.zoneType == Zone.ZoneType.Grass \|\| n.HasForest() \|\| n.GetCellInstanceHeight() == 0)`. |
-| **CountGrassNeighbors** (líneas 1873–1890) | Opción A: Mantener nombre y ampliar criterio: contar vecinos que sean **zoneable** (Grass, HasForest, o pendiente Flat/N/S/E/W). Opción B: Añadir `CountZoneableNeighbors(int gx, int gy)` que use un helper `IsZoneableNeighbor(Cell c)` (Grass \|\| HasForest \|\| slope Flat/N/S/E/W vía `terrainManager.GetTerrainSlopeTypeAt`) y usar este método en la reserva de auto-zoning. Si se usa Opción B, `IsReservedForRoadExpansion` en AutoZoningManager debe usar `CountZoneableNeighbors` en lugar de `CountGrassNeighbors`. |
+| **GetRoadEdgePositions** (lines 1863–1866) | Consider neighbor "expandable" if Grass **or** `n.HasForest()` **or** water (`n.GetCellInstanceHeight() == 0`). Replace current condition with something like: `(n.zoneType == Zone.ZoneType.Grass \|\| n.HasForest() \|\| n.GetCellInstanceHeight() == 0)`. |
+| **CountGrassNeighbors** (lines 1873–1890) | Option A: Keep name and broaden criteria: count neighbors that are **zoneable** (Grass, HasForest, or slope Flat/N/S/E/W). Option B: Add `CountZoneableNeighbors(int gx, int gy)` that uses helper `IsZoneableNeighbor(Cell c)` (Grass \|\| HasForest \|\| slope Flat/N/S/E/W via `terrainManager.GetTerrainSlopeTypeAt`) and use this method in auto-zoning reserve. If Option B is used, `IsReservedForRoadExpansion` in AutoZoningManager must use `CountZoneableNeighbors` instead of `CountGrassNeighbors`. |
 
-Recomendación: **Opción A** para no tocar la firma pública ni el nombre del método usado desde AutoZoningManager; solo ampliar la condición de conteo a “zoneable” (Grass, HasForest, y si `terrainManager != null` y slope es Flat/North/South/East/West, contar también).
+Recommendation: **Option A** to avoid changing the public signature or the name of the method used from AutoZoningManager; only broaden the count condition to "zoneable" (Grass, HasForest, and if `terrainManager != null` and slope is Flat/North/South/East/West, count as well).
 
 ---
 
 ### 2.2 AutoZoningManager.cs
 
-| Ubicación | Cambio |
+| Location | Change |
 |----------|--------|
-| **GetCandidatesAdjacentToRoad** (líneas 128–142) | Incluir celda si es candidata a zona: **Grass, HasForest(), o terreno zoneable**. Añadir referencia a `TerrainManager` (FindObjectOfType si hace falta). Helper local o privado: `IsZoneableCandidate(Cell c, int x, int y)` → `c != null && (c.zoneType == Zone.ZoneType.Grass \|\| c.HasForest() \|\| IsSlopePlaceableForZone(x, y))`. `IsSlopePlaceableForZone(x, y)` usa `terrainManager.GetTerrainSlopeTypeAt(x, y)` y devuelve true para Flat, North, South, East, West. |
-| **ProcessTick – comprobación de celda** (líneas 86–91) | Sustituir la condición actual por el mismo criterio: `IsZoneableCandidate(cell, p.x, p.y)` (o equivalente: Grass, HasForest, o slope N-S/E-O). |
-| **IsReservedForRoadExpansion** | Sigue usando `CountGrassNeighbors` del GridManager; cuando GridManager cuente “zoneable” (ver 2.1), la reserva seguirá siendo coherente sin cambiar esta función. |
+| **GetCandidatesAdjacentToRoad** (lines 128–142) | Include cell if it is a zone candidate: **Grass, HasForest(), or zoneable terrain**. Add reference to `TerrainManager` (FindObjectOfType if needed). Local or private helper: `IsZoneableCandidate(Cell c, int x, int y)` → `c != null && (c.zoneType == Zone.ZoneType.Grass \|\| c.HasForest() \|\| IsSlopePlaceableForZone(x, y))`. `IsSlopePlaceableForZone(x, y)` uses `terrainManager.GetTerrainSlopeTypeAt(x, y)` and returns true for Flat, North, South, East, West. |
+| **ProcessTick – cell check** (lines 86–91) | Replace current condition with same criteria: `IsZoneableCandidate(cell, p.x, p.y)` (or equivalent: Grass, HasForest, or slope N-S/E-O). |
+| **IsReservedForRoadExpansion** | Continues using `CountGrassNeighbors` from GridManager; when GridManager counts "zoneable" (see 2.1), the reserve will remain coherent without changing this function. |
 
-Nota: Si no se quiere que AutoZoningManager dependa de TerrainManager, el “slope zoneable” puede centralizarse en GridManager con un método público `IsCellZoneableTerrain(int x, int y)` que consulte `terrainManager` y devuelva true para Flat/N/S/E/W; AutoZoningManager solo llamaría a ese método además de Grass/HasForest.
+Note: If AutoZoningManager should not depend on TerrainManager, "zoneable slope" can be centralized in GridManager with a public method `IsCellZoneableTerrain(int x, int y)` that consults `terrainManager` and returns true for Flat/N/S/E/W; AutoZoningManager would only call that method in addition to Grass/HasForest.
 
 ---
 
 ### 2.3 AutoRoadBuilder.cs
 
-| Ubicación | Cambio |
+| Location | Change |
 |----------|--------|
-| **IsCellPlaceableForRoad** (líneas 434–442) | Ya acepta Grass y HasForest(); no hace falta cambiar. La colocación efectiva de road ya pasa por `TerrainManager.CanPlaceRoad`, que acepta Flat y N/S/E/W (y diagonales si se mantiene). |
-| **GetCellPlaceableRejectReason** (líneas 446–460) | Opcional: en el caso “zone not grass/water”, aclarar que se acepta Grass o Forest; el mensaje puede seguir siendo “zone not grass/water” o “zone not grass/forest/water” según prefieras. |
-| **CountGrassNeighbors** (AutoRoadBuilder, línea 471) | Usado para priorizar bordes con más “espacio”. Opcional: contar también Forest para consistencia: `(c.zoneType == Zone.ZoneType.Grass \|\| c.HasForest())`. |
+| **IsCellPlaceableForRoad** (lines 434–442) | Already accepts Grass and HasForest(); no change needed. Effective road placement already goes through `TerrainManager.CanPlaceRoad`, which accepts Flat and N/S/E/W (and diagonals if kept). |
+| **GetCellPlaceableRejectReason** (lines 446–460) | Optional: in the "zone not grass/water" case, clarify that Grass or Forest is accepted; the message can remain "zone not grass/water" or be "zone not grass/forest/water" as preferred. |
+| **CountGrassNeighbors** (AutoRoadBuilder, line 471) | Used to prioritize edges with more "space". Optional: also count Forest for consistency: `(c.zoneType == Zone.ZoneType.Grass \|\| c.HasForest())`. |
 
-Resumen: en AutoRoadBuilder la lógica de “qué celda es colocable para calle” ya está alineada con Grass/Forest y terreno (vía TerrainManager); solo falta que **GetRoadEdgePositions** en GridManager considere Forest como vecino expandible (y opcionalmente unificar el conteo de vecinos “expandibles” con Grass+Forest).
-
----
-
-### 2.4 ZoneManager / GridManager – validación de zona (PlaceZoneAt / canPlaceZone)
-
-- **ZoneManager.PlaceZoneAt** llama a `canPlaceZone(..., requireInterstate: false)`.
-- **canPlaceZone** usa `gridManager.canPlaceBuilding(gridPosition, 1)`.
-- **TryValidateBuildingPlacement** (GridManager) exige `zoneType == Grass` para cada celda del footprint.
-
-Si en el juego **todas** las celdas colocables son `zoneType == Grass` (con o sin forest, con o sin pendiente en el terreno), no hace falta cambiar esta validación. Si en el futuro existieran celdas con otro `zoneType` pero pendiente N-S/E-O que deban ser zoneables, habría que:
-
-- Añadir en GridManager un método tipo `IsCellValidForZonePlacement(int x, int y)` que devuelva true si `zoneType == Grass` **o** `HasForest()` **o** (terreno Flat/N/S/E/W según TerrainManager), y
-- Hacer que la rama de validación para **tamaño 1** (solo zona) use ese método en lugar de solo `zoneType == Grass`.
-
-Queda como **opcional / fase 2** en el plan.
+Summary: In AutoRoadBuilder the logic for "which cell is placeable for road" is already aligned with Grass/Forest and terrain (via TerrainManager); only **GetRoadEdgePositions** in GridManager needs to consider Forest as an expandable neighbor (and optionally unify the count of "expandable" neighbors with Grass+Forest).
 
 ---
 
-## 3. Orden sugerido de implementación
+### 2.4 ZoneManager / GridManager – zone validation (PlaceZoneAt / canPlaceZone)
+
+- **ZoneManager.PlaceZoneAt** calls `canPlaceZone(..., requireInterstate: false)`.
+- **canPlaceZone** uses `gridManager.canPlaceBuilding(gridPosition, 1)`.
+- **TryValidateBuildingPlacement** (GridManager) requires `zoneType == Grass` for each cell in the footprint.
+
+If in the game **all** placeable cells are `zoneType == Grass` (with or without forest, with or without slope on terrain), this validation does not need to change. If in the future there were cells with another `zoneType` but N-S/E-W slope that should be zoneable, it would be necessary to:
+
+- Add in GridManager a method like `IsCellValidForZonePlacement(int x, int y)` that returns true if `zoneType == Grass` **or** `HasForest()` **or** (terrain Flat/N/S/E/W per TerrainManager), and
+- Make the validation branch for **size 1** (zone only) use that method instead of only `zoneType == Grass`.
+
+Remains **optional / phase 2** in the plan.
+
+---
+
+## 3. Suggested implementation order
 
 1. **GridManager**
-   - GetRoadEdgePositions: añadir `n.HasForest()` a la condición de vecino expandible.
-   - CountGrassNeighbors: ampliar a “zoneable” (Grass, HasForest, y slope Flat/N/S/E/W vía TerrainManager). Mantener nombre o documentar que ahora cuenta “zoneable”.
+   - GetRoadEdgePositions: add `n.HasForest()` to the expandable neighbor condition.
+   - CountGrassNeighbors: broaden to "zoneable" (Grass, HasForest, and slope Flat/N/S/E/W via TerrainManager). Keep name or document that it now counts "zoneable".
 2. **AutoZoningManager**
-   - Añadir referencia a TerrainManager (o usar GridManager si se añade allí `IsCellZoneableTerrain`).
-   - GetCandidatesAdjacentToRoad: incluir solo celdas que pasen `IsZoneableCandidate` (Grass, HasForest, o slope N-S/E-O).
-   - ProcessTick: misma condición al comprobar la celda antes de colocar zona.
-3. **AutoRoadBuilder** (opcional)
-   - CountGrassNeighbors interno: contar también HasForest() para priorizar bordes.
-4. **Validación zona 1x1** (opcional/fase 2)
-   - Solo si se introducen celdas no-Grass zoneables; entonces usar `IsCellValidForZonePlacement` en la validación de building tamaño 1.
+   - Add reference to TerrainManager (or use GridManager if `IsCellZoneableTerrain` is added there).
+   - GetCandidatesAdjacentToRoad: include only cells that pass `IsZoneableCandidate` (Grass, HasForest, or slope N-S/E-O).
+   - ProcessTick: same condition when checking the cell before placing zone.
+3. **AutoRoadBuilder** (optional)
+   - Internal CountGrassNeighbors: also count HasForest() to prioritize edges.
+4. **Zone validation 1x1** (optional/phase 2)
+   - Only if non-Grass zoneable cells are introduced; then use `IsCellValidForZonePlacement` in building validation for size 1.
 
 ---
 
-## 4. Resumen de criterios unificados
+## 4. Summary of unified criteria
 
-- **Vecino expandible para calle (borde):** Grass **o** Forest **o** agua (height 0). Pendientes N-S/E-O ya se consideran en TerrainManager.CanPlaceRoad al colocar el tile.
-- **Candidato a zona:** Grass **o** HasForest() **o** terreno con pendiente Flat / North / South / East / West.
-- **Reserva para expansión de calle:** Seguir usando el conteo de vecinos “zoneable” (tras el cambio en CountGrassNeighbors/CountZoneableNeighbors) para no zonificar donde la calle debe crecer.
+- **Expandable neighbor for road (edge):** Grass **or** Forest **or** water (height 0). N-S/E-W slopes are already considered in TerrainManager.CanPlaceRoad when placing the tile.
+- **Zone candidate:** Grass **or** HasForest() **or** terrain with slope Flat / North / South / East / West.
+- **Reserve for road expansion:** Continue using the count of "zoneable" neighbors (after the change in CountGrassNeighbors/CountZoneableNeighbors) so as not to zone where the road should grow.
 
-Con esto, tanto las calles como las zonas consideran **Grass, Forest y pendientes norte-sur o este-oeste** de forma coherente en todo el flujo automático.
+With this, both roads and zones consider **Grass, Forest, and north-south or east-west slopes** coherently throughout the automatic flow.
+
+---
+
+**Backlog:** FEAT-36 — Expand auto-zoning and auto-road candidates to include forests and slopes.

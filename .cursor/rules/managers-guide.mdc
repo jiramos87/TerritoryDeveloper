@@ -37,6 +37,17 @@ alwaysApply: false
 - **AnimatorManager** (AnimationManager.cs) — Animation control
 - **GameDebugInfoBuilder** — Debug text generation for game state
 
+## Helper Services (extracted from managers)
+- **GridPathfinder** — A* pathfinding for road routes
+- **GridSortingOrderService** — Sorting order computation
+- **BuildingPlacementService** — Building placement and load/restore
+- **TerraformingService** — Path-level terraform plan computation
+- **PathTerraformPlan** — Terraform Apply/Revert, cut-through mode
+- **RoadPrefabResolver** — Prefab selection for path and single-cell contexts
+- **RoadPathCostConstants** — Shared cost constants for road pathfinding
+- **UrbanCentroidService** — Urban centroid and ring calculation (FEAT-32)
+- **GameBootstrap** — Entry point, game loading flow
+
 ## Rules
 - Every manager is a MonoBehaviour living as a component on a scene GameObject
 - NEVER instantiate managers with `new` — they are always scene components

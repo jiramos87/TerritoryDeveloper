@@ -4,6 +4,8 @@
 
 Manual road drawing has multiple bugs affecting terrain interaction, existing infrastructure preservation, zoning integrity, and visual consistency between preview and built roads. This spec organizes the fixes into incremental phases ordered by severity and dependency.
 
+**Related specs:** `bridge-and-junction-fixes.md` (completed), `interstate-prefab-and-pathfinding-fixes.md` (Phase 1.1 elbow fix done).
+
 ## Related Files
 
 | File | Role |
@@ -53,9 +55,11 @@ Manual road drawing has multiple bugs affecting terrain interaction, existing in
 
 **Files**: `TerrainManager.cs` — `RestoreTerrainForCell()`, `CellHasZoningOverlay()`, `PlaceSlopeFromPrefab()`, `DestroyTerrainChildrenOnly()`
 
-### Problem 1.2: Existing roads destroyed when new route crosses them
+### Problem 1.2: Existing roads destroyed when new route crosses them — PARTIALLY FIXED
 
 **Symptom**: Drawing a new road that crosses an existing road causes the existing road tiles (including bridge tiles) to be replaced with incorrect prefabs or disappear entirely.
+
+**Implemented:** `RefreshAllAdjacentRoadsOutsidePath()` and `placementPathPositions` skip refreshing path cells during placement; final pass refreshes adjacent roads. **Pending:** Augment `IsPathNeighbor` with `IsRoadAt` in `ResolvePrefabForPathCell` so path cells at crossroads get correct prefabs.
 
 **Root cause**: The A* pathfinder (`GridPathfinder.IsWalkable`) treats road cells as walkable, so computed paths routinely cross existing roads. `PlaceRoadTileFromResolved` unconditionally calls `DestroyPreviousRoadTile` on each path cell, destroying existing road tiles and replacing them with prefabs resolved only from path context (not existing connectivity).
 
@@ -70,15 +74,15 @@ After placement, `UpdateAdjacentRoadPrefabsAt` refreshes adjacent cells but NOT 
 - After the placement loop in `DrawRoadLine`, add a final refresh pass over all placed cells using `RefreshRoadPrefabAt` (which uses full connectivity via `ResolveForCell`) to correct any remaining mismatches.
 - For cells that already have a road and the new path crosses them: instead of destroy-and-replace, update the existing tile's prefab in-place (similar to `ReplaceRoadTileAt`).
 
-### Problem 1.3: `RefreshRoadPrefabAt` leaks road cache entries
+### Problem 1.3: `RefreshRoadPrefabAt` leaks road cache entries — FIXED
 
 **Symptom**: Over time, `GetAllRoadPositions()` returns fewer roads than actually exist. Affects road spacing in A* and any feature using the road cache.
 
 **Root cause**: `RefreshRoadPrefabAt` calls `DestroyPreviousRoadTile` (which calls `RemoveRoadFromCache`) but never calls `AddRoadToCache` after instantiating the replacement tile.
 
-**Files**: `RoadManager.cs` — `RefreshRoadPrefabAt()` (line ~283)
+**Fix applied**: `RefreshRoadPrefabAt` now calls `AddRoadToCache` at the end after instantiating the replacement tile.
 
-**Fix approach**: Add `gridManager.AddRoadToCache(new Vector2Int((int)gridPos.x, (int)gridPos.y))` at the end of `RefreshRoadPrefabAt`.
+**Files**: `RoadManager.cs` — `RefreshRoadPrefabAt()` (line ~371)
 
 ---
 
@@ -86,9 +90,11 @@ After placement, `UpdateAdjacentRoadPrefabsAt` refreshes adjacent cells but NOT 
 
 **Priority**: P1 — Visual mismatch between preview and built road.
 
-### Problem 2.1: `RefreshRoadPrefabAt` overrides plan-based prefabs with live terrain slope
+### Problem 2.1: `RefreshRoadPrefabAt` overrides plan-based prefabs with live terrain slope — PARTIALLY FIXED
 
 **Symptom**: Cut-through routes (road through a hill) show correct flat road prefabs in preview, but after building, some tiles switch to slope road prefabs.
+
+**Implemented:** `placementPathPositions` excludes path cells from refresh during placement; only adjacent roads outside the path are refreshed. **Pending:** `postTerraformSlopeType` not yet passed to refresh; edge cases may still occur.
 
 **Root cause**: During `DrawRoadLine`, each tile placed triggers `UpdateAdjacentRoadPrefabsAt` which can refresh previously placed path tiles. `RefreshRoadPrefabAt` → `ResolveForCell` reads slope type from `GetTerrainSlopeTypeAt` (which computes from live heightmap neighbors). In a cut-through, path cells are at `baseHeight` but have non-path neighbors at `baseHeight + 1`. `GetTerrainSlopeTypeAt` detects the height difference and returns a slope type, causing `ResolveForCell` to select a slope road prefab instead of the flat one from the plan.
 

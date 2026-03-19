@@ -104,7 +104,18 @@ public class RoadPrefabResolver
 
         int height = cell.GetCellInstanceHeight();
         GameObject prefab;
-        if (terrainManager != null && terrainManager.IsWaterSlopeCell(x, y))
+        if (height == 0)
+        {
+            bool hasHorizontal = hasLeft || hasRight;
+            bool hasVertical = hasUp || hasDown;
+            bool isHorizontal = hasHorizontal && !hasVertical
+                ? true
+                : !hasHorizontal && hasVertical
+                    ? false
+                    : Mathf.Abs((currGridPos - prevGridPos).x) >= Mathf.Abs((currGridPos - prevGridPos).y);
+            prefab = isHorizontal ? roadManager.roadTileBridgeHorizontal : roadManager.roadTileBridgeVertical;
+        }
+        else if (terrainManager != null && terrainManager.IsWaterSlopeCell(x, y))
         {
             Vector2 dirIn = currGridPos - prevGridPos;
             bool isHorizontal = Mathf.Abs(dirIn.x) >= Mathf.Abs(dirIn.y);
@@ -204,7 +215,7 @@ public class RoadPrefabResolver
             if (pathLeft && pathDown && !pathRight && !pathUp)
                 return roadManager.roadTilePrefabElbowUpRight;
             if (pathRight && pathDown && !pathLeft && !pathUp)
-                return roadManager.roadTilePrefabElbowUpRight;
+                return roadManager.roadTilePrefabElbowUpLeft;
 
             bool isHorizontal = pathLeft || pathRight;
             if (pathLeft && pathRight && !pathUp && !pathDown)

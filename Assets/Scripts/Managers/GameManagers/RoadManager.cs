@@ -36,6 +36,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     private RoadPrefabResolver roadPrefabResolver;
     private PathTerraformPlan currentPreviewPlan;
     private List<RoadPrefabResolver.ResolvedRoadTile> previewResolvedTiles = new List<RoadPrefabResolver.ResolvedRoadTile>();
+    private HashSet<Vector2> placementPathPositions;
     #endregion
 
     #region Road Prefabs
@@ -173,15 +174,16 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         if (previewResolvedTiles.Count > 0)
         {
+            placementPathPositions = new HashSet<Vector2>();
+            foreach (var r in previewResolvedTiles)
+                placementPathPositions.Add(new Vector2(r.gridPos.x, r.gridPos.y));
             for (int i = 0; i < previewResolvedTiles.Count; i++)
             {
                 PlaceRoadTileFromResolved(previewResolvedTiles[i]);
                 UpdateAdjacentRoadPrefabsAt(new Vector2(previewResolvedTiles[i].gridPos.x, previewResolvedTiles[i].gridPos.y));
             }
-            foreach (var resolved in previewResolvedTiles)
-            {
-                RefreshRoadPrefabAt(new Vector2(resolved.gridPos.x, resolved.gridPos.y));
-            }
+            RefreshAllAdjacentRoadsOutsidePath();
+            placementPathPositions = null;
         }
         else
         {
@@ -265,6 +267,28 @@ public class RoadManager : MonoBehaviour, IRoadManager
     void IRoadManager.UpdateAdjacentRoadPrefabsAt(Vector2 gridPos) => UpdateAdjacentRoadPrefabsAt(gridPos);
 
     /// <summary>
+    /// Final pass: refreshes all road cells adjacent to the placement path but not in the path.
+    /// Ensures junction prefabs (T, crossing) are correct after all tiles are placed.
+    /// </summary>
+    void RefreshAllAdjacentRoadsOutsidePath()
+    {
+        if (placementPathPositions == null) return;
+        var toRefresh = new HashSet<Vector2>();
+        Vector2[] dirs = { new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, -1) };
+        foreach (Vector2 pathPos in placementPathPositions)
+        {
+            foreach (Vector2 d in dirs)
+            {
+                Vector2 n = pathPos + d;
+                if (IsRoadAt(n) && !placementPathPositions.Contains(n))
+                    toRefresh.Add(n);
+            }
+        }
+        foreach (Vector2 pos in toRefresh)
+            RefreshRoadPrefabAt(pos);
+    }
+
+    /// <summary>
     /// Refreshes prefabs of all road tiles adjacent to the given position so they connect correctly.
     /// Use after programmatic placement (e.g. AutoRoadBuilder) so existing roads update to T-junctions/crossings.
     /// Road cache is updated incrementally by the placement caller (AddRoadToCache).
@@ -277,7 +301,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         foreach (Vector2 d in dirs)
         {
             Vector2 n = gridPos + d;
-            if (IsRoadAt(n))
+            if (IsRoadAt(n) && (placementPathPositions == null || !placementPathPositions.Contains(n)))
                 toRefresh.Add(n);
         }
         foreach (Vector2 pos in toRefresh)

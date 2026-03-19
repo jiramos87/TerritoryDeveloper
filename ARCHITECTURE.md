@@ -44,26 +44,40 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 
 | Directory | Files | Purpose |
 |-----------|-------|---------|
-| `Managers/GameManagers/` | 33 | Core game logic: grid, terrain, zones, roads, economy, simulation |
-| `Managers/UnitManagers/` | 23 | Data models: Cell, Zone, Building, Forest, HeightMap, CellData, etc. |
-| `Controllers/GameControllers/` | 2 | CameraController, CityStatsUIController |
-| `Controllers/UnitControllers/` | 17 | UI buttons, popups, sliders |
-| `Utilities/` | 1 | DebugHelper |
+| `Managers/GameManagers/` | 94 | Core game logic: grid, terrain, zones, roads, economy, simulation, helpers |
+| `Managers/UnitManagers/` | 58 | Data models: Cell, Zone, Building, Forest, HeightMap, CellData, etc. |
+| `Controllers/GameControllers/` | 6 | CameraController, CityStatsUIController, etc. |
+| `Controllers/UnitControllers/` | 38 | UI buttons, popups, sliders |
+| `Utilities/` | 6 | DebugHelper, RoadPathCostConstants, etc. |
 
 ## Key Files by Size
 
 | File | Lines | Role |
 |------|-------|------|
-| GridManager.cs | ~2100 | Central hub — grid, cells, coordinates, placement, sorting, pathfinding |
-| TerrainManager.cs | ~1270 | Heightmap, slopes, terrain prefab selection |
-| ZoneManager.cs | ~1025 | RCI zoning, zone tile placement |
-| UIManager.cs | ~1020 | Main UI, popups, tool state |
-| RoadManager.cs | ~965 | Road drawing, prefab selection, road preview |
-| CityStats.cs | ~895 | Global statistics aggregator |
-| GeographyManager.cs | ~750 | Terrain initialization orchestrator |
-| ForestManager.cs | ~720 | Forest generation and management |
-| AutoRoadBuilder.cs | ~620 | Automatic road extension |
-| InterstateManager.cs | ~560 | Interstate highway connections |
+| GridManager.cs | ~1870 | Central hub — grid, cells, coordinates, placement, sorting, pathfinding |
+| TerrainManager.cs | ~1660 | Heightmap, slopes, terrain prefab selection |
+| ZoneManager.cs | ~1360 | RCI zoning, zone tile placement |
+| RoadManager.cs | ~1510 | Road drawing, prefab selection, road preview |
+| UIManager.cs | ~1240 | Main UI, popups, tool state |
+| CityStats.cs | ~1200 | Global statistics aggregator |
+| AutoRoadBuilder.cs | ~1140 | Automatic road extension |
+| GeographyManager.cs | ~960 | Terrain initialization orchestrator |
+| InterstateManager.cs | ~830 | Interstate highway connections |
+| ForestManager.cs | ~795 | Forest generation and management |
+
+## Helper Services (extracted from managers)
+
+| Service | Role |
+|---------|------|
+| GridPathfinder | A* pathfinding for road routes |
+| GridSortingOrderService | Sorting order computation |
+| BuildingPlacementService | Building placement and load/restore |
+| TerraformingService | Path-level terraform plan computation |
+| PathTerraformPlan | Terraform Apply/Revert, cut-through mode |
+| RoadPrefabResolver | Prefab selection for path and single-cell contexts |
+| RoadPathCostConstants | Shared cost constants for road pathfinding |
+| UrbanCentroidService | Urban centroid and ring calculation (FEAT-32) |
+| GameBootstrap | Entry point, game loading flow |
 
 ## Data Flows
 
@@ -134,5 +148,5 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 
 ## Known Trade-offs
 - **High coupling**: Many managers reference each other directly, creating tight coupling
-- **GridManager size**: At ~2100 lines, it handles too many responsibilities (placement, sorting, pathfinding, culling)
+- **GridManager size**: At ~1870 lines, it handles too many responsibilities (placement, sorting, pathfinding, culling)
 - **No event system**: Managers communicate via direct method calls rather than events

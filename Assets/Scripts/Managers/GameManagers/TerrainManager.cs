@@ -635,7 +635,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             Zone zone = child.GetComponent<Zone>();
             if (zone != null && zone.zoneType == Zone.ZoneType.Grass)
                 toDestroy.Add(child.gameObject);
-            else if (IsWaterSlopeObject(child.gameObject) || IsLandSlopeObject(child.gameObject))
+            else if (IsWaterSlopeObject(child.gameObject) || IsLandSlopeObject(child.gameObject) || IsBayObject(child.gameObject))
                 toDestroy.Add(child.gameObject);
         }
         foreach (GameObject go in toDestroy)
@@ -905,7 +905,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     private void PlaceWaterSlope(int x, int y, GameObject waterSlopePrefab)
     {
         Cell cell = gridManager.GetCell(x, y);
-        DestroyCellChildren(cell);
+        DestroyTerrainChildrenOnly(cell);
 
         // Cell height = 1 (land) so logic (forest, roads, etc.) treats this as land; heightMap already has 1 here.
         gridManager.SetCellHeight(new Vector2(x, y), 1);
@@ -1389,6 +1389,17 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public bool IsSeaLevelWaterObject(GameObject obj)
     {
         return IsPrefabInstance(obj, seaLevelWaterPrefab);
+    }
+
+    /// <summary>
+    /// Returns true if the given GameObject is an instance of any bay prefab (coastal water terrain).
+    /// </summary>
+    public bool IsBayObject(GameObject obj)
+    {
+        return IsPrefabInstance(obj, northEastBayPrefab)
+            || IsPrefabInstance(obj, northWestBayPrefab)
+            || IsPrefabInstance(obj, southEastBayPrefab)
+            || IsPrefabInstance(obj, southWestBayPrefab);
     }
 
     private bool IsPrefabInstance(GameObject obj, GameObject prefab)
