@@ -4,7 +4,7 @@
 
 This spec addresses multiple issues observed in interstate route generation: incorrect road prefab selection (especially elbows), zigzag paths that could be simplified, poor "environmental" path choices (hugging hills instead of offsetting to avoid them), and cut-through terrain interactions that produce visual artifacts. It also clarifies how the road subsystems share logic and proposes a unified approach.
 
-**Status (2026-03-19):** Bridge approach (Rule F) and shared terraform validation are in place. **BUG-27** (interstate pathfinding) and **BUG-29** (cut-through craters / tall-hill reject + cliff corridor) are **completed** in [BACKLOG.md](../../BACKLOG.md). **Remaining:** sorting order (**BUG-28**), interstate slope prefabs at entry/exit (**BUG-30**).
+**Status (2026-03-20):** Bridge approach (Rule F) and shared terraform validation are in place. **BUG-27**, **BUG-29**, and **BUG-30** (interstate/manual slope prefabs on hills, corner cells aligned with travel) are **completed** in [BACKLOG.md](../../BACKLOG.md). **Remaining:** sorting order (**BUG-28**), prefabs at border entry/exit (**BUG-31** — not BUG-30).
 
 ## Related Documents
 
@@ -147,7 +147,8 @@ if (pathRight && pathDown && !pathLeft && !pathUp)
 | 3.6a | Interstate pathfinding — endpoint scoring, dual A*, penalties | BUG-27 | **Completed** (2026-03-19) |
 | 3.6b | Sorting order between slope cell and interstate cell | BUG-28 | Open |
 | 3.6c | Cut-through: tall-hill reject, cliff corridor, map-edge margin, validation ring | BUG-29 | **Completed** (2026-03-19) |
-| 3.6d | Prefab selection wrong at interstate input/output points | BUG-30 | Open |
+| 3.6d | Prefab selection wrong at interstate input/output points (border) | BUG-31 | Open |
+| 3.6e | Slope / ramp prefabs when road climbs hills (incl. corner upslope) | BUG-30 | **Completed** (2026-03-20) |
 
 ---
 
@@ -248,4 +249,5 @@ Phase 4 (unify) — optional, after 2 and 3
 - **BUG-29** (completed 2026-03-19): Cut-through craters — reject tall cut, cliff corridor, map-edge guard, validation ring; see `docs/plan-cut-through-craters.md`.
 - **BUG-25** (in progress in BACKLOG): Manual street drawing — spec tasks marked complete in `road-drawing-fixes.md`; pending user verify.
 - **BUG-28**: Sorting order between slope cell and interstate cell — open.
-- **BUG-30**: Prefab selection at interstate input/output points — open.
+- **BUG-30** (completed 2026-03-20): Slope/ramp prefabs when interstate (or manual road) climbs hills — corner and diagonal aligned with `GetPostTerraformSlopeTypeAlongExit`; see `docs/agent-prompt-interstate-slope-prefabs.md`.
+- **BUG-31**: Prefab selection at interstate border entry/exit — open.

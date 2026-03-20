@@ -1,6 +1,6 @@
 # Water System Refactor — Technical Overview
 
-> **Backlog:** [FEAT-37](../../BACKLOG.md) (Medium priority)  
+> **Backlog:** [FEAT-37](../../BACKLOG.md) (Medium priority) · **Planning pass:** [TECH-12](../../BACKLOG.md) (define objectives, rules, bugs, scope, child issues before implementation)  
 > **Status:** Draft — design and phased delivery TBD  
 > **Related:** [BUG-08](../../BACKLOG.md) (generation polish), [FEAT-15](../../BACKLOG.md) (ports / sea), bridge specs (e.g. `.cursor/specs/bridge-and-junction-fixes.md`)
 
@@ -62,6 +62,8 @@ Phases are **not** committed ordering until a dedicated design pass; they split 
 - **Bridges / interstate:** Overlap with road prefab and terraform validation — coordinate with `RoadManager` / bridge specs.
 
 ## 7. Documentation maintenance
+
+**Before** large implementation (see **TECH-12** in [BACKLOG.md](../../BACKLOG.md)): lock **objectives**, **rules**, **in-scope bugs**, **non-goals**, and **phased child issues** here and in **FEAT-37**.
 
 When implementation starts:
 

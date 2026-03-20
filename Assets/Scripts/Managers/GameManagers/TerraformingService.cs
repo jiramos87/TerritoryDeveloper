@@ -209,6 +209,10 @@ public class TerraformingService : MonoBehaviour
             if (plan.isValid && cutThroughMinCellsFromMapEdge > 0 && !CutThroughHasAcceptableMapMargin(plan, path, heightMap))
                 plan.isValid = false;
             LogTerraformPlanDiagnosticsInternal(plan, path);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (path != null && plan.pathCells != null && path.Count != plan.pathCells.Count)
+                Debug.LogWarning($"[TerraformingService] Path/plan length mismatch: path={path.Count} pathCells={plan.pathCells.Count}");
+#endif
             return plan;
         }
 
@@ -246,21 +250,10 @@ public class TerraformingService : MonoBehaviour
 
             TerrainSlopeType slopeType = terrainManager.GetTerrainSlopeTypeAt(x, y);
 
-            int hPrevLand = TerrainManager.SEA_LEVEL;
-            if (i > 0)
-            {
-                int px = (int)path[i - 1].x, py = (int)path[i - 1].y;
-                if (heightMap.IsValidPosition(px, py))
-                    hPrevLand = heightMap.GetHeight(px, py);
-            }
-            bool ascendingOneStepLand = preferSlopeClimb
-                && hPrevLand > TerrainManager.SEA_LEVEL
-                && h > hPrevLand
-                && (h - hPrevLand) == 1;
-            bool descendingOneStepLand = preferSlopeClimb
-                && hPrevLand > TerrainManager.SEA_LEVEL
-                && h < hPrevLand
-                && (hPrevLand - h) == 1;
+            // BUG-30: use height delta along the active path segment (exit when possible), not only prev cell —
+            // diagonal / wedge tiles can mismatch prev-based checks and spuriously flatten.
+            int dSeg = ComputeSegmentDeltaHForPostSlope(heightMap, path, i, h);
+            bool segmentOneStepLand = preferSlopeClimb && (dSeg == 1 || dSeg == -1);
 
             if (i < path.Count - 1)
             {
@@ -289,7 +282,7 @@ public class TerraformingService : MonoBehaviour
 
             if (roadParallelToSlope)
             {
-                if (ascendingOneStepLand || descendingOneStepLand)
+                if (segmentOneStepLand)
                 {
                     cellPlan.action = TerraformAction.None;
                     cellPlan.targetHeight = h;
@@ -324,15 +317,13 @@ public class TerraformingService : MonoBehaviour
             {
                 if (isCornerSlope)
                 {
+                    // BUG-30: align with diagonal/orthogonal ramps — cardinal slope type from travel + segment Δh (same as GetPostTerraformSlopeTypeAlongExit).
                     cellPlan.action = TerraformAction.None;
-                    int dSeg = ComputeSegmentDeltaHForPostSlope(heightMap, path, i, h);
-                    int effDx = dxOut, effDy = dyOut;
-                    if (dSeg > 0) { effDx = -dxOut; effDy = -dyOut; }
-                    cellPlan.postTerraformSlopeType = GetOrthogonalFromCornerSlope(slopeType, effDx, effDy);
+                    cellPlan.postTerraformSlopeType = GetPostTerraformSlopeTypeAlongExit(heightMap, path, i, h, dxOut, dyOut);
                 }
                 else
                 {
-                    if (ascendingOneStepLand || descendingOneStepLand)
+                    if (segmentOneStepLand)
                     {
                         cellPlan.action = TerraformAction.None;
                         cellPlan.targetHeight = h;
@@ -353,7 +344,7 @@ public class TerraformingService : MonoBehaviour
             if (isOrthogonalSlope)
             {
                 bool isLower = IsLowerInSlopePair(heightMap, x, y, slopeType);
-                if (isLower && ascendingOneStepLand)
+                if (isLower && preferSlopeClimb && dSeg == 1)
                 {
                     cellPlan.action = TerraformAction.None;
                     cellPlan.targetHeight = h;
@@ -397,6 +388,12 @@ public class TerraformingService : MonoBehaviour
             ExpandAdjacentFlattenCellsRecursively(plan, path, heightMap);
 
         LogTerraformPlanDiagnosticsInternal(plan, path);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (path != null && plan.pathCells != null && path.Count != plan.pathCells.Count)
+            Debug.LogWarning($"[TerraformingService] Path/plan length mismatch: path={path.Count} pathCells={plan.pathCells.Count}");
+#endif
+
         return plan;
     }
 
@@ -632,24 +629,6 @@ public class TerraformingService : MonoBehaviour
         if (dSeg > 0)
             return GetSlopeTypeFromTravelVector(-dxOut, -dyOut);
         return GetSlopeTypeFromTravelVector(dxOut, dyOut);
-    }
-
-    /// <summary>
-    /// Derives the orthogonal slope for a corner slope cell when road is orthogonal.
-    /// Uses exit direction (dxOut, dyOut) so ramp choice matches the path axis: dominant axis |dx|>=|dy|
-    /// matches <see cref="RoadPrefabResolver"/> segment horizontal (grid-x movement vs grid-y).
-    /// </summary>
-    static TerrainSlopeType GetOrthogonalFromCornerSlope(TerrainSlopeType cornerSlope, int dxOut, int dyOut)
-    {
-        bool isHorizontalRoad = (dxOut != 0 || dyOut != 0) && Mathf.Abs(dxOut) >= Mathf.Abs(dyOut);
-        switch (cornerSlope)
-        {
-            case TerrainSlopeType.SouthEastUp: return isHorizontalRoad ? TerrainSlopeType.East : TerrainSlopeType.South;
-            case TerrainSlopeType.NorthEastUp: return isHorizontalRoad ? TerrainSlopeType.East : TerrainSlopeType.North;
-            case TerrainSlopeType.SouthWestUp: return isHorizontalRoad ? TerrainSlopeType.West : TerrainSlopeType.South;
-            case TerrainSlopeType.NorthWestUp: return isHorizontalRoad ? TerrainSlopeType.West : TerrainSlopeType.North;
-            default: return TerrainSlopeType.Flat;
-        }
     }
 
     static TerrainSlopeType OrthogonalToSlopeType(OrthogonalDirection d)

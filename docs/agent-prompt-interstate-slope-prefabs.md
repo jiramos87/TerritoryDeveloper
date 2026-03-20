@@ -42,7 +42,7 @@ When the path crosses slopes without cut-through, **TerraformingService.ComputeP
 - **Flat cell:** `postTerraformSlopeType = Flat`
 - **Orthogonal slope, road parallel:** Flatten → `Flat`
 - **Orthogonal slope, road perpendicular:** `postTerraformSlopeType = GetSlopeTypeFromRoadDirection(dxOut, dyOut)` (N/S/E/W)
-- **Corner slope, road orthogonal:** `postTerraformSlopeType = GetOrthogonalFromCornerSlope(...)`
+- **Corner slope, road orthogonal:** `postTerraformSlopeType = GetPostTerraformSlopeTypeAlongExit(...)` (aligned with diagonal ramps; BUG-30)
 - **Diagonal slope:** Various (flatten or orthogonal)
 
 ### Suspected Root Causes
@@ -55,7 +55,7 @@ When the path crosses slopes without cut-through, **TerraformingService.ComputeP
 
 4. **Live terrain vs plan:** `ResolvePrefabForPathCell` uses `postSlope` from the plan. If the plan is wrong or missing for some cells, there is no fallback to live terrain slope (`terrainManager.GetTerrainSlopeTypeAt`).
 
-5. **Corner slopes:** `GetOrthogonalFromCornerSlope` picks one of N/S/E/W. The road prefab resolver may not have matching slope prefabs for all corner configurations.
+5. **Corner slopes:** cardinal type comes from travel + segment Δh (`GetPostTerraformSlopeTypeAlongExit`). Road fallback uses `TryRampRoadPrefabFromPrevTravel` in `RoadPrefabResolver`.
 
 ### Relevant Files
 

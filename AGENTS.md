@@ -29,7 +29,7 @@ After executing a development plan for an issue, **keep the issue in "In progres
 | Economy | `EconomyManager.cs` | `CityStats.cs` |
 | Isometric geography / slopes / heightmap | `.cursor/specs/isometric-geography-system.md` | `TerrainManager.cs`, `HeightMap.cs`, `TerraformingService.cs`, `RoadPrefabResolver.cs`, `SlopePrefabRegistry.cs`, `GridPathfinder.cs` |
 | Terrain/heightmap | `TerrainManager.cs` | `HeightMap.cs`, `GeographyManager.cs` |
-| Water bodies | `WaterManager.cs` | `WaterMap.cs`, `GeographyManager.cs`. Multi-level / refactor epic: **FEAT-37**, spec `.cursor/specs/water-system-refactor.md` |
+| Water bodies | `WaterManager.cs` | `WaterMap.cs`, `GeographyManager.cs`. Multi-level / refactor epic: **FEAT-37** (depends on **TECH-12** planning pass), spec `.cursor/specs/water-system-refactor.md` |
 | Forests | `ForestManager.cs` | `ForestMap.cs`, `GeographyManager.cs` |
 | New building type | `IBuilding.cs` (interface) | `ZoneManager.cs`, `GridManager.cs` (placement) |
 | Sorting/render bug | `GridManager.cs` region "Sorting Order" | `TerrainManager.cs` |

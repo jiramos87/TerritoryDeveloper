@@ -37,12 +37,6 @@ public class PathTerraformPlan
     public bool isCutThrough;
 
     /// <summary>
-    /// Applies the terraforming plan: sets heights on the heightmap and refreshes terrain visuals.
-    /// Two-phase: first set all heights so RestoreTerrainForCell sees correct neighbors, then restore terrain.
-    /// Uses forceFlat/forceSlopeType so terrain matches the plan regardless of apply order.
-    /// Returns false if validation fails (height diff &gt; 1); in that case reverts and does not apply Phase 2.
-    /// </summary>
-    /// <summary>
     /// Phase 1 only: write planned terraform heights. Skips water and water-slope cells (same rules as <see cref="Apply"/>).
     /// </summary>
     void WritePhase1TerraformHeights(HeightMap heightMap, TerrainManager terrainManager)
@@ -103,6 +97,22 @@ public class PathTerraformPlan
         return true;
     }
 
+    /// <summary>
+    /// Cardinal ramp types compatible with <see cref="TerrainManager.GetOrthogonalSlopePrefab"/> (N/S/E/W).
+    /// Corner / diagonal path cells store these after <see cref="TerraformingService.ComputePathPlan"/> (BUG-30).
+    /// </summary>
+    static bool IsOrthogonalRampSlopeType(TerrainSlopeType t)
+    {
+        return t == TerrainSlopeType.North || t == TerrainSlopeType.South
+            || t == TerrainSlopeType.East || t == TerrainSlopeType.West;
+    }
+
+    /// <summary>
+    /// Applies the terraforming plan: sets heights on the heightmap and refreshes terrain visuals.
+    /// Two-phase: first set all heights so RestoreTerrainForCell sees correct neighbors, then restore terrain.
+    /// Uses forceFlat/forceSlopeType so terrain matches the plan regardless of apply order.
+    /// Returns false if validation fails (height diff &gt; 1); in that case reverts and does not apply Phase 2.
+    /// </summary>
     public bool Apply(HeightMap heightMap, TerrainManager terrainManager)
     {
         if (heightMap == null || terrainManager == null) return false;
@@ -129,15 +139,13 @@ public class PathTerraformPlan
             if (cell.action != TerraformingService.TerraformAction.None)
             {
                 bool flat = cell.postTerraformSlopeType == TerrainSlopeType.Flat;
-                bool orthogonalSlope = cell.postTerraformSlopeType == TerrainSlopeType.North || cell.postTerraformSlopeType == TerrainSlopeType.South
-                    || cell.postTerraformSlopeType == TerrainSlopeType.East || cell.postTerraformSlopeType == TerrainSlopeType.West;
+                bool orthogonalSlope = IsOrthogonalRampSlopeType(cell.postTerraformSlopeType);
                 terrainManager.RestoreTerrainForCell(cell.position.x, cell.position.y, null, forceFlat: flat && !orthogonalSlope, forceSlopeType: orthogonalSlope ? cell.postTerraformSlopeType : null, terraformCutCorridorCells: cutCorridorCells);
             }
             else if (cell.postTerraformSlopeType != TerrainSlopeType.Flat)
             {
-                bool orthogonalSlope = cell.postTerraformSlopeType == TerrainSlopeType.North || cell.postTerraformSlopeType == TerrainSlopeType.South
-                    || cell.postTerraformSlopeType == TerrainSlopeType.East || cell.postTerraformSlopeType == TerrainSlopeType.West;
-                if (orthogonalSlope)
+                // action None: scale-with-slopes cells (incl. former corner / valley tiles) — force orthogonal terrain to match cardinal ramp from travel.
+                if (IsOrthogonalRampSlopeType(cell.postTerraformSlopeType))
                     terrainManager.RestoreTerrainForCell(cell.position.x, cell.position.y, null, forceFlat: false, forceSlopeType: cell.postTerraformSlopeType, terraformCutCorridorCells: cutCorridorCells);
             }
             else

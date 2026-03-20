@@ -41,7 +41,9 @@ public class RoadPrefabResolver
 
     /// <summary>
     /// Resolves prefabs for a full path using the terraform plan. Uses postTerraformSlopeType
-    /// from the plan (Rule 5: terraform wins). Ensures continuity (Rule 1) and elbows at turns (Rule 2).
+    /// from the plan (Rule 5: terraform wins on cut-through). In scale-with-slopes mode, may fall back
+    /// to live terrain slope mapping when the plan leaves Flat but the cell was not flattened (BUG-30).
+    /// Ensures continuity (Rule 1) and elbows at turns (Rule 2).
     /// </summary>
     public List<ResolvedRoadTile> ResolveForPath(List<Vector2> path, PathTerraformPlan plan)
     {
@@ -74,12 +76,23 @@ public class RoadPrefabResolver
             int height = cell.GetCellInstanceHeight();
             TerrainSlopeType postSlope = cellPlan.postTerraformSlopeType;
 
-            GameObject prefab = ResolvePrefabForPathCell(prev, curr, pathCellSet, height, postSlope);
+            bool allowLiveSlopeFallback = plan != null && !plan.isCutThrough && plan.pathCells != null && i < plan.pathCells.Count
+                && cellPlan.action == TerraformingService.TerraformAction.None;
+
+            GameObject prefab = ResolvePrefabForPathCell(prev, curr, pathCellSet, height, postSlope, allowLiveSlopeFallback);
 #if UNITY_EDITOR
             if (Debug.isDebugBuild && prefab != null && !ValidatePrefabExitsMatchPath(curr, pathCellSet, prefab))
                 Debug.LogWarning($"[RoadPrefab] Mismatch at ({curr.x},{curr.y}): prefab={prefab.name}");
 #endif
-            Vector2 worldPos = GetWorldPositionForPrefab(x, y, prefab, height, postSlope);
+            TerrainSlopeType slopeForWorld = postSlope;
+            if (postSlope == TerrainSlopeType.Flat && terrainManager != null && prefab != null && IsCardinalSlopeRoadPrefab(prefab))
+            {
+                TerrainSlopeType live = terrainManager.GetTerrainSlopeTypeAt(x, y);
+                if (live != TerrainSlopeType.Flat)
+                    slopeForWorld = live;
+            }
+
+            Vector2 worldPos = GetWorldPositionForPrefab(x, y, prefab, height, slopeForWorld);
             int sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, height);
 
             result.Add(new ResolvedRoadTile
@@ -188,7 +201,12 @@ public class RoadPrefabResolver
         sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, height);
     }
 
-    private GameObject ResolvePrefabForPathCell(Vector2 prev, Vector2 curr, HashSet<Vector2Int> pathCellSet, int height, TerrainSlopeType postSlope)
+    /// <summary>
+    /// When <paramref name="allowLiveSlopeFallback"/> is true (scale-with-slopes, no flatten action),
+    /// and the plan left <paramref name="postSlope"/> as Flat, uses the same diagonal→orthogonal mapping
+    /// as <see cref="TryGetSlopePrefabForStraightSegment"/> so ramp prefabs match live terrain (BUG-30).
+    /// </summary>
+    private GameObject ResolvePrefabForPathCell(Vector2 prev, Vector2 curr, HashSet<Vector2Int> pathCellSet, int height, TerrainSlopeType postSlope, bool allowLiveSlopeFallback)
     {
         Vector2 dirIn = curr - prev;
         int dxIn = Mathf.RoundToInt(dirIn.x);
@@ -228,7 +246,14 @@ public class RoadPrefabResolver
             bool segmentHorizontal = (dxIn != 0 || dyIn != 0)
                 ? Mathf.Abs(dxIn) >= Mathf.Abs(dyIn)
                 : (pathLeft || pathRight);
-            return TrySlopeForStraight(postSlope, segmentHorizontal) ?? (segmentHorizontal ? roadManager.roadTilePrefab2 : roadManager.roadTilePrefab1);
+            GameObject straightSlope = TrySlopeForStraight(postSlope, segmentHorizontal);
+            if (straightSlope != null) return straightSlope;
+            if (allowLiveSlopeFallback && postSlope == TerrainSlopeType.Flat)
+            {
+                GameObject liveSlope = TryGetSlopePrefabForStraightSegment(curr, height, segmentHorizontal, prev);
+                if (liveSlope != null) return liveSlope;
+            }
+            return segmentHorizontal ? roadManager.roadTilePrefab2 : roadManager.roadTilePrefab1;
         }
 
         if (dxIn != 0 && dyIn != 0)
@@ -243,10 +268,27 @@ public class RoadPrefabResolver
             }
         }
 
-        GameObject slopePrefab = TrySlopeFromPostTerraform(postSlope, Mathf.Abs(dirIn.x) >= Mathf.Abs(dirIn.y));
+        bool horizontalSeg = Mathf.Abs(dirIn.x) >= Mathf.Abs(dirIn.y);
+        GameObject slopePrefab = TrySlopeFromPostTerraform(postSlope, horizontalSeg);
         if (slopePrefab != null) return slopePrefab;
 
-        return Mathf.Abs(dirIn.x) >= Mathf.Abs(dirIn.y) ? roadManager.roadTilePrefab2 : roadManager.roadTilePrefab1;
+        if (allowLiveSlopeFallback && postSlope == TerrainSlopeType.Flat)
+        {
+            GameObject liveSlope = TryGetSlopePrefabForStraightSegment(curr, height, horizontalSeg, prev);
+            if (liveSlope != null) return liveSlope;
+        }
+
+        return horizontalSeg ? roadManager.roadTilePrefab2 : roadManager.roadTilePrefab1;
+    }
+
+    /// <summary>
+    /// True for the four cardinal ramp road prefabs (used for world placement when plan slope is Flat but terrain is sloped).
+    /// </summary>
+    private bool IsCardinalSlopeRoadPrefab(GameObject prefab)
+    {
+        if (prefab == null) return false;
+        return prefab == roadManager.roadTilePrefabNorthSlope || prefab == roadManager.roadTilePrefabSouthSlope
+            || prefab == roadManager.roadTilePrefabEastSlope || prefab == roadManager.roadTilePrefabWestSlope;
     }
 
     private GameObject TrySlopeFromPostTerraform(TerrainSlopeType postSlope, bool isHorizontal)
@@ -358,6 +400,65 @@ public class RoadPrefabResolver
         return null;
     }
 
+    /// <summary>
+    /// Matches <see cref="TerraformingService"/> travel→slope mapping (downhill-facing type).
+    /// Grid: +x=North, -x=South, +y=West, -y=East.
+    /// </summary>
+    private static TerrainSlopeType GetSlopeTypeFromTravelVector(int dx, int dy)
+    {
+        if (Mathf.Abs(dx) >= Mathf.Abs(dy) && dx != 0)
+            return dx > 0 ? TerrainSlopeType.North : TerrainSlopeType.South;
+        if (dy != 0)
+            return dy > 0 ? TerrainSlopeType.West : TerrainSlopeType.East;
+        return TerrainSlopeType.Flat;
+    }
+
+    /// <summary>
+    /// Cardinal ramp prefab from prev→curr travel and segment heights (BUG-30; same rule as GetPostTerraformSlopeTypeAlongExit).
+    /// </summary>
+    private GameObject TryRampRoadPrefabFromPrevTravel(Vector2 currGridPos, int currentHeight, Vector2 prevGridPos)
+    {
+        Vector2 dir = currGridPos - prevGridPos;
+        int dx = Mathf.RoundToInt(dir.x);
+        int dy = Mathf.RoundToInt(dir.y);
+        if (dx == 0 && dy == 0) return null;
+
+        int px = Mathf.RoundToInt(prevGridPos.x);
+        int py = Mathf.RoundToInt(prevGridPos.y);
+        if (px < 0 || px >= gridManager.width || py < 0 || py >= gridManager.height) return null;
+        Cell prevCell = gridManager.GetCell(px, py);
+        if (prevCell == null) return null;
+        int hPrev = prevCell.GetCellInstanceHeight();
+
+        int x = Mathf.RoundToInt(currGridPos.x);
+        int y = Mathf.RoundToInt(currGridPos.y);
+        int nx = x + dx, ny = y + dy;
+        int dSeg;
+        if (nx >= 0 && nx < gridManager.width && ny >= 0 && ny < gridManager.height)
+        {
+            Cell nextCell = gridManager.GetCell(nx, ny);
+            if (nextCell != null)
+                dSeg = nextCell.GetCellInstanceHeight() - currentHeight;
+            else
+                dSeg = currentHeight - hPrev;
+        }
+        else
+            dSeg = currentHeight - hPrev;
+
+        TerrainSlopeType rampSlopeType;
+        if (dSeg > 0)
+            rampSlopeType = GetSlopeTypeFromTravelVector(-dx, -dy);
+        else if (dSeg < 0)
+            rampSlopeType = GetSlopeTypeFromTravelVector(dx, dy);
+        else
+            return null;
+
+        if (rampSlopeType == TerrainSlopeType.Flat) return null;
+
+        bool isHorizontal = Mathf.Abs(dx) >= Mathf.Abs(dy);
+        return TrySlopeFromPostTerraform(rampSlopeType, isHorizontal);
+    }
+
     private GameObject TryGetSlopePrefabForStraightSegment(Vector2 currGridPos, int currentHeight, bool isHorizontalLine, Vector2? neighborAlongRoad = null)
     {
         if (terrainManager == null) return null;
@@ -373,6 +474,12 @@ public class RoadPrefabResolver
 
         if (isDiagonalSlope)
         {
+            if (neighborAlongRoad.HasValue)
+            {
+                GameObject travelRamp = TryRampRoadPrefabFromPrevTravel(currGridPos, currentHeight, neighborAlongRoad.Value);
+                if (travelRamp != null) return travelRamp;
+            }
+
             Vector2? diagonalDir = null;
             bool isDiagonalDownslope = slopeType == TerrainSlopeType.SouthEast || slopeType == TerrainSlopeType.SouthWest
                 || slopeType == TerrainSlopeType.NorthEast || slopeType == TerrainSlopeType.NorthWest;

@@ -139,7 +139,7 @@ NorthEastUp, NorthWestUp, SouthEastUp, SouthWestUp          // 4 corner (upslope
 #### 3.3.4 Corner / Upslope Types — NEUp, NWUp, SEUp, SWUp
 - **Condition:** Two **adjacent** cardinal neighbors are both higher (forming a concave corner).
 - **Visual:** The cell sits in a valley between two ascending ridges. Visually a concave corner piece.
-- **Road compatibility:** Roads can traverse corner slopes; `TerraformingService` derives the best orthogonal slope type based on the road's exit direction.
+- **Road compatibility:** Roads can traverse corner slopes; `TerraformingService` maps the cardinal ramp type from **path travel and segment height** (`GetPostTerraformSlopeTypeAlongExit`), same as diagonal slopes — not a separate corner-only heuristic (**BUG-30**, scale-with-slopes).
 
 | Slope | Higher Pair | Valley Opens Toward |
 |-------|------------|---------------------|

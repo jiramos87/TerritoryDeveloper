@@ -7,11 +7,11 @@
 
 ## In Progress
 
-- [ ] **BUG-30** — Incorrect road prefabs when interstate climbs slopes
-  - Type: fix
-  - Files: `TerraformingService.cs`, `RoadManager.cs` (prefab resolution still `RoadPrefabResolver.cs`)
-  - Notes: When road climbs hills: flat/junction prefabs used instead of ramp/slope prefabs at transitions, wrong junction at top of slope, visual gaps and disconnection. Agent prompt: `docs/agent-prompt-interstate-slope-prefabs.md`.
-  - **Verify in Unity:** interstate/manual road up a hill drawn from below (SS5) vs from above (SS6) — same geometry should match prefabs; `DEVELOPMENT_BUILD` warns if `expandedPath.Count != plan.pathCells.Count`.
+- [ ] **TECH-12** — Water system refactor: planning pass (objectives, rules, scope, child issues)
+  - Type: planning / documentation
+  - Files: `.cursor/specs/water-system-refactor.md`, `BACKLOG.md` (FEAT-37, BUG-08 splits), `ARCHITECTURE.md` (Terrain / Water as needed)
+  - Notes: **Goal:** Before implementation of **FEAT-37**, produce a single agreed definition of **objectives**, **rules** (data + gameplay + rendering), **known bugs** to fold in, **non-goals / phases**, and **concrete child issues** (IDs) ordered for development. Link outcomes in this spec and in `FEAT-37`. Overlaps **BUG-08** (generation), **FEAT-15** (ports/sea). **Does not** implement code — only backlog + spec updates and issue breakdown.
+  - Depends on: nothing (blocks structured FEAT-37 execution)
 
 ## High Priority
 
@@ -114,6 +114,7 @@
   - Type: feature (epic) + refactor
   - Files: `WaterManager.cs`, `WaterMap.cs`, `GeographyManager.cs`, `TerrainManager.cs`, `HeightMap.cs`, `GridManager.cs`, `GridSortingOrderService.cs`, `Cell.cs`, `CellData.cs`, `GameSaveManager.cs`; later `RoadManager.cs` (bridges), `ZoneManager.cs`, `ForestManager.cs`
   - Notes: **Problem:** Water behaves as a single global surface (effectively “level 0”), so lakes read as deep pits with poor embankments and a flat blue plane at the bottom. **Goal:** Treat all water as **masses of water supported by terrain** at **variable surface elevation**—not one world-wide Z-plane—so bodies can sit naturally in depressions, on plateaus, or at coasts. **Long-term concepts (phased):** distinguish geological situations (cliffs vs deep wells, alpine lakes, rivers with downhill flow, seas with tide direction); slope water; bridges; buildings adjacent to water; save/load migration. Overlaps or unlocks work with **BUG-08** (generation) and **FEAT-15** (ports / defined sea). **Spec:** `.cursor/specs/water-system-refactor.md`.
+  - Depends on: **TECH-12** (planning pass: objectives, rules, scope, child issues — recommended before coding the epic)
 
 - [ ] **FEAT-06** — Forest that grows over time: sparse → medium → dense
   - Type: feature
@@ -236,6 +237,11 @@
 
 ## Completed (last 30 days)
 
+- [x] **BUG-30** — Incorrect road prefabs when interstate climbs slopes (2026-03-20)
+  - Type: fix
+  - Files: `TerraformingService.cs`, `RoadPrefabResolver.cs`, `PathTerraformPlan.cs`, `RoadManager.cs` (shared pipeline)
+  - Notes: Segment-based Δh for scale-with-slopes; corner/upslope cells use `GetPostTerraformSlopeTypeAlongExit` (aligned with travel); live-terrain fallback + `RestoreTerrainForCell` force orthogonal ramp when `action == None` and cardinal `postTerraformSlopeType`. See `docs/agent-prompt-interstate-slope-prefabs.md`. Verified in Unity.
+
 - [x] **TECH-09** — Remove obsolete `TerraformNeeded` from TerraformingService (2026-03-20)
   - Type: refactor (dead code removal)
   - Files: `TerraformingService.cs`
@@ -267,7 +273,7 @@
 - [x] **FEAT-24** — Auto-zoning for Medium and Heavy density (2026-03-19)
 - [x] **BUG-23** — Interstate route generation is flaky; never created in New Game flow (2026-03-19)
 - [x] **BUG-26** — Interstate prefab selection and pathfinding improvements (2026-03-19)
-  - Elbow audit, validation, straightness bonus, slope cost, parallel sampling, bridge approach (Rule F), cut-through expansion. Follow-up: BUG-27 / BUG-29 completed 2026-03-19; remaining: BUG-28 (sorting), BUG-30 (slope prefabs at entry/exit).
+  - Elbow audit, validation, straightness bonus, slope cost, parallel sampling, bridge approach (Rule F), cut-through expansion. Follow-up: BUG-27 / BUG-29 / **BUG-30** completed 2026-03-19–2026-03-20; remaining: BUG-28 (sorting), BUG-31 (prefabs at entry/exit).
 - [x] **TECH-06** — Documentation sync: specs aligned with backlog and rules; BUG-26, FEAT-36 added; ARCHITECTURE, file counts, helper services updated; zoning plan translated to English (2026-03-19)
 - [x] **FEAT-05** — Streets must be able to climb diagonal slopes using orthogonal prefabs (2026-03-18)
 - [x] **FEAT-34** — Zoning and building on slopes (2026-03-16)

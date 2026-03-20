@@ -116,7 +116,7 @@ Cross-cutting effort to standardize HUD, popups, and interaction patterns: **cha
 ### Water (current vs planned)
 
 - **Today:** Water bodies are largely modeled against a **single conceptual water level** (flat surface, strong association with the lowest terrain band). Procedural lakes and the water drawing tool share this model, which can produce **visual gaps** between terrain and water (pit-like lakes).
-- **Planned epic ([FEAT-37](BACKLOG.md)):** Refactor toward **terrain-hosted water at multiple elevations**—unifying procedural and painted water as persistent water masses constrained by local terrain, with phased work on flow (rivers), coast/tide direction, slope water, bridges, and placement rules. See `.cursor/specs/water-system-refactor.md`.
+- **Planned epic ([FEAT-37](BACKLOG.md)):** Refactor toward **terrain-hosted water at multiple elevations**—unifying procedural and painted water as persistent water masses constrained by local terrain, with phased work on flow (rivers), coast/tide direction, slope water, bridges, and placement rules. **Planning pass [TECH-12](BACKLOG.md)** defines objectives, rules, scope, and child issues before implementation. See `.cursor/specs/water-system-refactor.md`.
 
 ### Isometric Geography
 
