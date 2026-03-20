@@ -55,9 +55,9 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 | File | Lines | Role |
 |------|-------|------|
 | GridManager.cs | ~1870 | Central hub — grid, cells, coordinates, placement, sorting, pathfinding |
-| TerrainManager.cs | ~1660 | Heightmap, slopes, terrain prefab selection |
+| TerrainManager.cs | ~1740 | Heightmap, slopes, terrain prefab selection |
 | ZoneManager.cs | ~1360 | RCI zoning, zone tile placement |
-| RoadManager.cs | ~1510 | Road drawing, prefab selection, road preview |
+| RoadManager.cs | ~1730 | Road drawing, prefab selection, road preview |
 | UIManager.cs | ~1240 | Main UI, popups, tool state |
 | CityStats.cs | ~1200 | Global statistics aggregator |
 | AutoRoadBuilder.cs | ~1140 | Automatic road extension |
@@ -83,12 +83,13 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 
 ### Initialization
 `GeographyManager.InitializeGeography()` orchestrates the full startup sequence:
-1. `TerrainManager.GenerateHeightMap()` — generates terrain elevation
-2. `WaterManager.InitializeWater()` — places water bodies
-3. `ForestManager.InitializeForests()` — generates forests
-4. `GridManager.InitializeGrid()` — creates the cell grid with terrain applied
-5. `InterstateManager.GenerateInterstateConnections()` — connects interstate highways
-6. `ZoneManager` is then ready for player zoning
+1. `RegionalMapManager.InitializeRegionalMap()` — regional map with neighboring cities
+2. `GridManager.InitializeGrid()` — creates cell grid, then internally calls `TerrainManager.InitializeHeightMap()` to generate terrain elevation
+3. `WaterManager.InitializeWaterMap()` — places water bodies based on heightmap (cells at h=0)
+4. `InterstateManager.GenerateAndPlaceInterstate()` — interstate highways (up to 3 random attempts + deterministic fallback)
+5. `ForestManager.InitializeForestMap()` — generates forests (conditional: `initializeForestsOnStart`)
+6. Water desirability calculation, sorting order recalculation, border signs placement
+7. `ZoneManager` is then ready for player zoning
 
 ### Simulation (each TimeManager tick)
 `TimeManager` → `SimulationManager.RunSimulationStep()` → executes in order:
@@ -108,11 +109,24 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 - Save: `GameSaveManager` → `GridManager.GetGridData()` → serializes `List<CellData>`
 - Load: `GameSaveManager` → `GridManager.RestoreGrid(List<CellData>)` → rebuilds grid
 
+### UI / UX design system (program)
+
+Cross-cutting effort to standardize HUD, popups, and interaction patterns: **charter** [`docs/ui-design-system-project.md`](docs/ui-design-system-project.md), **discovery** [`docs/ui-design-system-context.md`](docs/ui-design-system-context.md), **spec** [`.cursor/specs/ui-design-system.md`](.cursor/specs/ui-design-system.md). Executable work is tracked as normal `BACKLOG.md` issues linked from the charter (e.g. toolbar **ControlPanel** layout: **[TECH-07](BACKLOG.md)**).
+
+### Water (current vs planned)
+
+- **Today:** Water bodies are largely modeled against a **single conceptual water level** (flat surface, strong association with the lowest terrain band). Procedural lakes and the water drawing tool share this model, which can produce **visual gaps** between terrain and water (pit-like lakes).
+- **Planned epic ([FEAT-37](BACKLOG.md)):** Refactor toward **terrain-hosted water at multiple elevations**—unifying procedural and painted water as persistent water masses constrained by local terrain, with phased work on flow (rivers), coast/tide direction, slope water, bridges, and placement rules. See `.cursor/specs/water-system-refactor.md`.
+
+### Isometric Geography
+
+The terrain system uses a **diamond isometric projection** with an integer **height model** (0–5), **13 terrain slope types** (flat, 4 cardinal, 4 diagonal, 4 corner/upslope), and a **priority-based slope determination algorithm**. Roads interact with terrain via a terraforming system (scale-with-slopes or cut-through modes). Full technical reference: [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md).
+
 ## Full Dependency Map
 
 | Manager | Dependencies |
 |---------|-------------|
-| GridManager | ZoneManager, UIManager, CityStats, CursorManager, TerrainManager, DemandManager, WaterManager, GameNotificationManager, ForestManager, CameraController, RoadManager, InterstateManager |
+| GridManager | ZoneManager, UIManager, CityStats, CursorManager, TerrainManager, DemandManager, WaterManager, GameNotificationManager, ForestManager, CameraController, RoadManager, InterstateManager, BuildingSelectorMenuController |
 | ZoneManager | GridManager, RoadManager, CityStats, UIManager, GameNotificationManager, DemandManager, WaterManager, InterstateManager |
 | RoadManager | TerrainManager, GridManager, CityStats, UIManager, ZoneManager, InterstateManager |
 | TerrainManager | GridManager, ZoneManager, WaterManager |
@@ -149,7 +163,7 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 - **GridManager as hub**: GridManager is the central coordinator because nearly all game operations involve cells. This keeps cell access consistent but makes GridManager large.
 - **FindObjectOfType pattern**: Used instead of DI for simplicity. Managers declare public/serialized fields wired in Inspector, with FindObjectOfType as null-check fallback in Awake/Start.
 - **Single singleton**: Only GameNotificationManager uses the singleton pattern (with DontDestroyOnLoad). All other managers are resolved via Inspector references.
-- **No namespaces**: All 77 scripts share the global namespace. This is a known limitation being addressed.
+- **Namespaces (partial migration)**: Most scripts use `Territory.*` namespaces (`Territory.Core`, `Territory.Terrain`, `Territory.Roads`, `Territory.Zones`, `Territory.Forests`, `Territory.Buildings`, `Territory.Economy`, `Territory.UI`, `Territory.Geography`, `Territory.Timing`, `Territory.Utilities`). A few files remain in the global namespace (e.g. `TerraformingService.cs`, `PathTerraformPlan.cs`).
 
 ## Known Trade-offs
 - **High coupling**: Many managers reference each other directly, creating tight coupling

@@ -2806,7 +2806,7 @@ MonoBehaviour:
   gridManager: {fileID: 1880690383}
   terrainManager: {fileID: 1097666053}
   roadManager: {fileID: 1313145027}
-  terraformingService: {fileID: 0}
+  terraformingService: {fileID: 1624889129}
 --- !u!1 &251526537
 GameObject:
   m_ObjectHideFlags: 0
@@ -3927,7 +3927,7 @@ MonoBehaviour:
   autoZoningManager: {fileID: 2140155702}
   autoResourcePlanner: {fileID: 586497354}
   urbanizationProposalManager: {fileID: 1038576157}
-  urbanCentroidService: {fileID: 0}
+  urbanCentroidService: {fileID: 1144256721}
 --- !u!114 &396756360
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9148,7 +9148,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 470750414}
   m_HandleRect: {fileID: 470750413}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -9242,9 +9242,9 @@ MonoBehaviour:
   cityStats: {fileID: 72477285}
   interstateManager: {fileID: 251169277}
   terrainManager: {fileID: 1097666053}
-  terraformingService: {fileID: 0}
+  terraformingService: {fileID: 1624889129}
   autoZoningManager: {fileID: 2140155702}
-  urbanCentroidService: {fileID: 0}
+  urbanCentroidService: {fileID: 1144256721}
   maxTilesPerTick: 10
   minStreetLength: 8
   minStreetLengthRecovery: 3
@@ -9316,6 +9316,7 @@ Transform:
   - {fileID: 724627299}
   - {fileID: 3764000002}
   - {fileID: 1624889128}
+  - {fileID: 1144256722}
   m_Father: {fileID: 1745906816}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &938977936
@@ -10667,7 +10668,7 @@ MonoBehaviour:
   zoneManager: {fileID: 955926521}
   cityStats: {fileID: 72477285}
   demandManager: {fileID: 2064853469}
-  urbanCentroidService: {fileID: 0}
+  urbanCentroidService: {fileID: 1144256721}
   proposalEvaluationIntervalDays: 30
   minDistanceFromCentroid: 15
   proposalLayoutSize: 5
@@ -11487,6 +11488,8 @@ MonoBehaviour:
   seaLevelWaterPrefab: {fileID: 3176668870032135925, guid: 14af9dcc8387e4a58add2d580e2afbc1, type: 3}
   southCliffWallPrefab: {fileID: 5564609725091321451, guid: 7cd9c05e8be44456a842d1ab2af291e0, type: 3}
   eastCliffWallPrefab: {fileID: 2327040077204098500, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
+  northCliffWallPrefab: {fileID: 0}
+  westCliffWallPrefab: {fileID: 0}
   northEastBayPrefab: {fileID: 0}
   northWestBayPrefab: {fileID: 0}
   southEastBayPrefab: {fileID: 0}
@@ -11799,6 +11802,51 @@ MonoBehaviour:
   itemButtonPrefab: {fileID: 624494626664334750, guid: 096dd929ea7fe42199f037651281ca35, type: 3}
   content: {fileID: 709582275}
   populatedWith: 
+--- !u!1 &1144256720
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1144256722}
+  - component: {fileID: 1144256721}
+  m_Layer: 0
+  m_Name: UrbanCentroidManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1144256721
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1144256720}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f8e9d0c1b2a3948574655a6b7c8d9e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gridManager: {fileID: 1880690383}
+--- !u!4 &1144256722
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1144256720}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 938947611}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1145307480
 GameObject:
   m_ObjectHideFlags: 0
@@ -12670,6 +12718,7 @@ MonoBehaviour:
   regionalMapManager: {fileID: 1244739876}
   initializeOnStart: 1
   useTerrainForWater: 1
+  initializeForestsOnStart: 0
 --- !u!1 &1205150777
 GameObject:
   m_ObjectHideFlags: 0
@@ -13746,7 +13795,7 @@ MonoBehaviour:
   uiManager: {fileID: 515320935}
   zoneManager: {fileID: 955926521}
   interstateManager: {fileID: 251169277}
-  terraformingService: {fileID: 0}
+  terraformingService: {fileID: 1624889129}
   roadTilePrefabs: []
   roadTilePrefab1: {fileID: 985362822682053019, guid: f352b1a1987d5475fb6ca00d317d21da, type: 3}
   roadTilePrefab2: {fileID: 6344670689893122505, guid: 720adb93575224a59a2e816ea22172de, type: 3}
@@ -16601,6 +16650,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   terrainManager: {fileID: 1097666053}
   gridManager: {fileID: 1880690383}
+  expandCutThroughAdjacentByOneStep: 0
+  cutThroughMinCellsFromMapEdge: 2
 --- !u!1 &1628017426
 GameObject:
   m_ObjectHideFlags: 0
@@ -16996,7 +17047,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -260.9948, y: -10.571838}
+  m_AnchoredPosition: {x: -260.99487, y: -10.571838}
   m_SizeDelta: {x: -521.9894, y: -455.8174}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1664159913
@@ -22061,7 +22112,7 @@ MonoBehaviour:
   cityStats: {fileID: 72477285}
   demandManager: {fileID: 2064853469}
   autoRoadBuilder: {fileID: 913510114}
-  urbanCentroidService: {fileID: 0}
+  urbanCentroidService: {fileID: 1144256721}
   maxZonedCellsPerTick: 32
 --- !u!1 &2144173133
 GameObject:

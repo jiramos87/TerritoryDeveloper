@@ -356,6 +356,11 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(filteredPath);
         plan = terraformingService.ComputePathPlan(expandedPath);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (expandedPath != null && plan != null && plan.pathCells != null && expandedPath.Count != plan.pathCells.Count)
+            Debug.LogWarning(
+                $"[RoadManager] Path/plan length mismatch (BUG-30 diagnostics): expandedPath={expandedPath.Count} plan.pathCells={plan.pathCells.Count}");
+#endif
         if (!ValidateTerraformPlanWithContext(plan, ctx))
         {
             if (postUserWarnings && GameNotificationManager.Instance != null)
@@ -484,6 +489,52 @@ public class RoadManager : MonoBehaviour, IRoadManager
             RefreshRoadPrefabAt(pos);
     }
 
+    /// <summary>
+    /// Picks a road neighbor to use as "previous" cell for prefab resolution. Deterministic when several roads touch (straight-through vs crossing).
+    /// </summary>
+    Vector2 PickPrevGridPosForRoadRefresh(Vector2 gridPos)
+    {
+        bool roadWest = IsRoadAt(gridPos + new Vector2(-1, 0));
+        bool roadEast = IsRoadAt(gridPos + new Vector2(1, 0));
+        bool roadNorth = IsRoadAt(gridPos + new Vector2(0, 1));
+        bool roadSouth = IsRoadAt(gridPos + new Vector2(0, -1));
+        int horizCount = (roadWest ? 1 : 0) + (roadEast ? 1 : 0);
+        int vertCount = (roadNorth ? 1 : 0) + (roadSouth ? 1 : 0);
+        int total = horizCount + vertCount;
+        if (total == 0)
+            return gridPos;
+        if (total == 1)
+        {
+            if (roadWest) return gridPos + new Vector2(-1, 0);
+            if (roadEast) return gridPos + new Vector2(1, 0);
+            if (roadNorth) return gridPos + new Vector2(0, 1);
+            return gridPos + new Vector2(0, -1);
+        }
+
+        if (horizCount == 2 && vertCount <= 1)
+        {
+            if (roadWest) return gridPos + new Vector2(-1, 0);
+            return gridPos + new Vector2(1, 0);
+        }
+        if (vertCount == 2 && horizCount <= 1)
+        {
+            if (roadNorth) return gridPos + new Vector2(0, 1);
+            return gridPos + new Vector2(0, -1);
+        }
+
+        var candidates = new List<Vector2>(4);
+        if (roadWest) candidates.Add(gridPos + new Vector2(-1, 0));
+        if (roadEast) candidates.Add(gridPos + new Vector2(1, 0));
+        if (roadNorth) candidates.Add(gridPos + new Vector2(0, 1));
+        if (roadSouth) candidates.Add(gridPos + new Vector2(0, -1));
+        candidates.Sort((a, b) =>
+        {
+            int c = a.x.CompareTo(b.x);
+            return c != 0 ? c : a.y.CompareTo(b.y);
+        });
+        return candidates[0];
+    }
+
     void RefreshRoadPrefabAt(Vector2 gridPos)
     {
         if (gridManager.IsCellOccupiedByBuilding((int)gridPos.x, (int)gridPos.y))
@@ -493,16 +544,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         Cell cellComponentCheck = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         if (cellComponentCheck == null) return;
 
-        Vector2 prevGridPos = gridPos;
-        Vector2[] dirs = { new Vector2(-1, 0), new Vector2(1, 0), new Vector2(0, 1), new Vector2(0, -1) };
-        foreach (Vector2 d in dirs)
-        {
-            if (IsRoadAt(gridPos + d))
-            {
-                prevGridPos = gridPos + d;
-                break;
-            }
-        }
+        Vector2 prevGridPos = PickPrevGridPosForRoadRefresh(gridPos);
 
         if (roadPrefabResolver == null && gridManager != null && terrainManager != null)
             roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);

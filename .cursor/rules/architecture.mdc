@@ -7,12 +7,14 @@ alwaysApply: true
 
 ## Initialization Flow
 `GeographyManager.InitializeGeography()` orchestrates startup:
-1. `TerrainManager.GenerateHeightMap()` — terrain elevation
-2. `WaterManager.InitializeWater()` — water bodies
-3. `ForestManager.InitializeForests()` — forest generation
-4. `GridManager.InitializeGrid()` — cell grid with terrain applied
-5. `InterstateManager.GenerateInterstateConnections()` — interstate highways
-6. `ZoneManager` — ready for player zoning
+1. `RegionalMapManager.InitializeRegionalMap()` — regional map with neighboring cities
+2. `GridManager.InitializeGrid()` → internally calls `TerrainManager.InitializeHeightMap()` — cell grid + terrain elevation
+3. `WaterManager.InitializeWaterMap()` — water bodies (cells at h=0)
+4. `InterstateManager.GenerateAndPlaceInterstate()` — interstate highways
+5. `ForestManager.InitializeForestMap()` — forest generation (conditional)
+6. Sorting order recalculation, border signs, then `ZoneManager` ready for player zoning
+
+**Water evolution:** A multi-level, terrain-hosted water model is planned (**FEAT-37**); see `.cursor/specs/water-system-refactor.md` and `ARCHITECTURE.md` (Data Flows → Water).
 
 ## Simulation Flow (each TimeManager tick)
 `TimeManager` → `SimulationManager.RunSimulationStep()` → in order:
@@ -39,7 +41,7 @@ alwaysApply: true
 - **Persistence**: GameSaveManager, GameManager
 
 ## Dependency Map
-- GridManager → [ZoneManager, UIManager, CityStats, CursorManager, TerrainManager, DemandManager, WaterManager, GameNotificationManager, ForestManager, CameraController, RoadManager, InterstateManager]
+- GridManager → [ZoneManager, UIManager, CityStats, CursorManager, TerrainManager, DemandManager, WaterManager, GameNotificationManager, ForestManager, CameraController, RoadManager, InterstateManager, BuildingSelectorMenuController]
 - ZoneManager → [GridManager, RoadManager, CityStats, UIManager, GameNotificationManager, DemandManager, WaterManager, InterstateManager]
 - RoadManager → [TerrainManager, GridManager, CityStats, UIManager, ZoneManager, InterstateManager]
 - TerrainManager → [GridManager, ZoneManager, WaterManager]
@@ -52,5 +54,7 @@ alwaysApply: true
 - DemandManager → [EmploymentManager, CityStats, ForestManager, GridManager]
 - InterstateManager → [GridManager, TerrainManager, RoadManager]
 - CityStats → [TimeManager, WaterManager, ForestManager]
+
+**Isometric geography:** Diamond projection, integer heights (0–5), 13 slope types, priority-based slope determination. Full spec: `.cursor/specs/isometric-geography-system.md`.
 
 See `ARCHITECTURE.md` for full dependency map, helper services (GridPathfinder, RoadPrefabResolver, TerraformingService, etc.), and the **Road and interstate routing** summary (manual streets vs interstate validation).

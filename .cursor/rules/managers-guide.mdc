@@ -9,7 +9,7 @@ alwaysApply: false
 ## Manager Responsibilities (one-line each)
 - **GridManager** — Central hub. Isometric 2D grid, cell access, coordinate conversion, building placement, bulldozing, sorting order, pathfinding
 - **TerrainManager** — Heightmap generation, slope types, prefab selection by slope
-- **WaterManager** — Water body generation and management
+- **WaterManager** — Water body generation and management (planned multi-level refactor: **FEAT-37**, `.cursor/specs/water-system-refactor.md`)
 - **ForestManager** — Forest generation (sparse/medium/dense), forestation, deforestation
 - **ZoneManager** — RCI zoning (residential, commercial, industrial), zone tile placement
 - **RoadManager** — Road drawing, prefab selection by neighbors, road preview
@@ -26,7 +26,7 @@ alwaysApply: false
 - **GrowthManager** — Zone growth logic
 - **GrowthBudgetManager** — Growth budget per category
 - **UrbanizationProposalManager** — Urban expansion proposals
-- **UIManager** — Main UI management, popups, selected tool state
+- **UIManager** — Main UI: popups, toolbar/tool state (`ControlPanel` in `MainScene.unity`), demand bar; UI program: `docs/ui-design-system-project.md`, context `docs/ui-design-system-context.md`, spec `.cursor/specs/ui-design-system.md` (toolbar **§3.3**; layout migration **TECH-07**)
 - **CursorManager** — Placement preview, visual cursor
 - **TimeManager** — Game speed control, simulation ticks
 - **GameNotificationManager** — Singleton. In-game notifications

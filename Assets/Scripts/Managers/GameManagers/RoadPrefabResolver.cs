@@ -224,14 +224,11 @@ public class RoadPrefabResolver
             if (cardinalCount >= 3)
                 return SelectFromConnectivity(prev, curr, pathLeft, pathRight, pathUp, pathDown, height);
 
-            if (pathLeft && pathRight && !pathUp && !pathDown)
-                return TrySlopeForStraight(postSlope, true) ?? roadManager.roadTilePrefab2;
-            if (pathUp && pathDown && !pathLeft && !pathRight)
-                return TrySlopeForStraight(postSlope, false) ?? roadManager.roadTilePrefab1;
-            if (pathLeft || pathRight)
-                return TrySlopeForStraight(postSlope, true) ?? roadManager.roadTilePrefab2;
-            if (pathUp || pathDown)
-                return TrySlopeForStraight(postSlope, false) ?? roadManager.roadTilePrefab1;
+            // Align slope prefab axis to travel direction (prev→curr), not to which path neighbors exist first (BUG-30 corner / T-adjacent cells).
+            bool segmentHorizontal = (dxIn != 0 || dyIn != 0)
+                ? Mathf.Abs(dxIn) >= Mathf.Abs(dyIn)
+                : (pathLeft || pathRight);
+            return TrySlopeForStraight(postSlope, segmentHorizontal) ?? (segmentHorizontal ? roadManager.roadTilePrefab2 : roadManager.roadTilePrefab1);
         }
 
         if (dxIn != 0 && dyIn != 0)

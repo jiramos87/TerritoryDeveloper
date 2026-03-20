@@ -255,6 +255,10 @@ public class TerraformingService : MonoBehaviour
                 && hPrevLand > TerrainManager.SEA_LEVEL
                 && h > hPrevLand
                 && (h - hPrevLand) == 1;
+            bool descendingOneStepLand = preferSlopeClimb
+                && hPrevLand > TerrainManager.SEA_LEVEL
+                && h < hPrevLand
+                && (hPrevLand - h) == 1;
 
             if (i < path.Count - 1)
             {
@@ -283,11 +287,11 @@ public class TerraformingService : MonoBehaviour
 
             if (roadParallelToSlope)
             {
-                if (ascendingOneStepLand)
+                if (ascendingOneStepLand || descendingOneStepLand)
                 {
                     cellPlan.action = TerraformAction.None;
                     cellPlan.targetHeight = h;
-                    cellPlan.postTerraformSlopeType = GetSlopeTypeFromRoadDirection(dxOut, dyOut);
+                    cellPlan.postTerraformSlopeType = GetPostTerraformSlopeTypeAlongExit(heightMap, path, i, h, dxOut, dyOut);
                     plan.pathCells.Add(cellPlan);
                     continue;
                 }
@@ -319,15 +323,18 @@ public class TerraformingService : MonoBehaviour
                 if (isCornerSlope)
                 {
                     cellPlan.action = TerraformAction.None;
-                    cellPlan.postTerraformSlopeType = GetOrthogonalFromCornerSlope(slopeType, dxOut, dyOut);
+                    int dSeg = ComputeSegmentDeltaHForPostSlope(heightMap, path, i, h);
+                    int effDx = dxOut, effDy = dyOut;
+                    if (dSeg > 0) { effDx = -dxOut; effDy = -dyOut; }
+                    cellPlan.postTerraformSlopeType = GetOrthogonalFromCornerSlope(slopeType, effDx, effDy);
                 }
                 else
                 {
-                    if (ascendingOneStepLand)
+                    if (ascendingOneStepLand || descendingOneStepLand)
                     {
                         cellPlan.action = TerraformAction.None;
                         cellPlan.targetHeight = h;
-                        cellPlan.postTerraformSlopeType = GetSlopeTypeFromRoadDirection(dxOut, dyOut);
+                        cellPlan.postTerraformSlopeType = GetPostTerraformSlopeTypeAlongExit(heightMap, path, i, h, dxOut, dyOut);
                     }
                     else
                     {
@@ -354,9 +361,9 @@ public class TerraformingService : MonoBehaviour
                     cellPlan.action = TerraformAction.Flatten;
                     cellPlan.targetHeight = plan.baseHeight;
                 }
-                // Use road direction so cliff aligns with road segment (not terrain-only).
+                // Use exit segment direction and land Δh so downhill-facing type matches travel (BUG-30).
                 // Grid: +x=North, -x=South, +y=West, -y=East. Screen: -y => bottom-right => South.
-                cellPlan.postTerraformSlopeType = GetSlopeTypeFromRoadDirection(dxOut, dyOut);
+                cellPlan.postTerraformSlopeType = GetPostTerraformSlopeTypeAlongExit(heightMap, path, i, h, dxOut, dyOut);
             }
             plan.pathCells.Add(cellPlan);
         }
@@ -573,11 +580,39 @@ public class TerraformingService : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns the slope type that matches the road's travel direction.
-    /// Used when the road crosses an orthogonal slope so the cliff aligns with the road segment.
-    /// Grid: +x=North, -x=South, +y=West, -y=East. Screen: -y => bottom-right => South.
+    /// Land Δh along the path segment that defines prefab orientation: for interior cells,
+    /// height(next) − height(current); for the last cell, height(current) − height(prev).
+    /// Zero when an endpoint is invalid or water (cannot infer climb vs descent).
     /// </summary>
-    static TerrainSlopeType GetSlopeTypeFromRoadDirection(int dx, int dy)
+    static int ComputeSegmentDeltaHForPostSlope(HeightMap heightMap, IList<Vector2> path, int i, int hLandAtCell)
+    {
+        if (heightMap == null || path == null || hLandAtCell <= TerrainManager.SEA_LEVEL) return 0;
+        if (i < path.Count - 1)
+        {
+            int nx = (int)path[i + 1].x, ny = (int)path[i + 1].y;
+            if (!heightMap.IsValidPosition(nx, ny)) return 0;
+            int hn = heightMap.GetHeight(nx, ny);
+            if (hn <= TerrainManager.SEA_LEVEL) return 0;
+            return hn - hLandAtCell;
+        }
+        if (i > 0)
+        {
+            int px = (int)path[i - 1].x, py = (int)path[i - 1].y;
+            if (!heightMap.IsValidPosition(px, py)) return 0;
+            int hp = heightMap.GetHeight(px, py);
+            if (hp <= TerrainManager.SEA_LEVEL) return 0;
+            return hLandAtCell - hp;
+        }
+        return 0;
+    }
+
+    /// <summary>
+    /// <see cref="TerrainSlopeType"/> for orthogonal cells: direction the slope <i>faces</i> (downhill).
+    /// Maps a <b>travel</b> vector to that type when the road follows that vector while <b>descending</b> one step.
+    /// If the path climbs along (dxOut, dyOut), pass the negated vector (handled by <see cref="GetPostTerraformSlopeTypeAlongExit"/>).
+    /// Grid: +x=North, -x=South, +y=West, -y=East.
+    /// </summary>
+    static TerrainSlopeType GetSlopeTypeFromTravelVector(int dx, int dy)
     {
         if (Mathf.Abs(dx) >= Mathf.Abs(dy) && dx != 0)
             return dx > 0 ? TerrainSlopeType.North : TerrainSlopeType.South;
@@ -587,13 +622,24 @@ public class TerraformingService : MonoBehaviour
     }
 
     /// <summary>
+    /// Post-terraform slope type for the path exit segment so ramp prefabs match downhill geometry (BUG-30).
+    /// </summary>
+    static TerrainSlopeType GetPostTerraformSlopeTypeAlongExit(HeightMap heightMap, IList<Vector2> path, int i, int hLand, int dxOut, int dyOut)
+    {
+        int dSeg = ComputeSegmentDeltaHForPostSlope(heightMap, path, i, hLand);
+        if (dSeg > 0)
+            return GetSlopeTypeFromTravelVector(-dxOut, -dyOut);
+        return GetSlopeTypeFromTravelVector(dxOut, dyOut);
+    }
+
+    /// <summary>
     /// Derives the orthogonal slope for a corner slope cell when road is orthogonal.
-    /// Uses exit direction (dxOut, dyOut) to maintain continuity of the road segment.
-    /// Picks East/West for horizontal road, North/South for vertical road, based on which neighbor is higher.
+    /// Uses exit direction (dxOut, dyOut) so ramp choice matches the path axis: dominant axis |dx|>=|dy|
+    /// matches <see cref="RoadPrefabResolver"/> segment horizontal (grid-x movement vs grid-y).
     /// </summary>
     static TerrainSlopeType GetOrthogonalFromCornerSlope(TerrainSlopeType cornerSlope, int dxOut, int dyOut)
     {
-        bool isHorizontalRoad = dxOut != 0 && dyOut == 0;
+        bool isHorizontalRoad = (dxOut != 0 || dyOut != 0) && Mathf.Abs(dxOut) >= Mathf.Abs(dyOut);
         switch (cornerSlope)
         {
             case TerrainSlopeType.SouthEastUp: return isHorizontalRoad ? TerrainSlopeType.East : TerrainSlopeType.South;

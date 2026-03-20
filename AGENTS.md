@@ -23,11 +23,13 @@ After executing a development plan for an issue, **keep the issue in "In progres
 | Backlog issue | `BACKLOG.md` | Files listed in the issue's "Files" field |
 | Road logic | `RoadManager.cs` | `GridManager.cs` (coordinate conversion), `TerrainManager.cs` (slopes). Use **`TryPrepareRoadPlacementPlan`** or **`TryPrepareRoadPlacementPlanLongestValidPrefix`** (streets) with **`RoadPathValidationContext`** for terraform routes; interstate uses full-path prepare with `forbidCutThrough: true`. Spec: `.cursor/specs/road-drawing-fixes.md` (BACKLOG **BUG-25**). |
 | Zoning logic | `ZoneManager.cs` | `GridManager.cs`, `DemandManager.cs` |
-| UI changes | `UIManager.cs` | The specific Controller in `UnitControllers/` |
+| UI changes | `UIManager.cs` | The specific Controller in `UnitControllers/` or `GameControllers/`. Design system program: `docs/ui-design-system-project.md`, context `docs/ui-design-system-context.md`, spec `.cursor/specs/ui-design-system.md` (toolbar **§3.3**). **ControlPanel** layout: **TECH-07**, `MainScene.unity`. |
+| UI / UX design system (meta) | `docs/ui-design-system-project.md` | `docs/ui-design-system-context.md`, `.cursor/specs/ui-design-system.md`, `UIManager.cs`; ticket work in `BACKLOG.md` |
 | Simulation | `SimulationManager.cs` | The relevant `Auto*Manager` |
 | Economy | `EconomyManager.cs` | `CityStats.cs` |
+| Isometric geography / slopes / heightmap | `.cursor/specs/isometric-geography-system.md` | `TerrainManager.cs`, `HeightMap.cs`, `TerraformingService.cs`, `RoadPrefabResolver.cs`, `SlopePrefabRegistry.cs`, `GridPathfinder.cs` |
 | Terrain/heightmap | `TerrainManager.cs` | `HeightMap.cs`, `GeographyManager.cs` |
-| Water bodies | `WaterManager.cs` | `WaterMap.cs`, `GeographyManager.cs` |
+| Water bodies | `WaterManager.cs` | `WaterMap.cs`, `GeographyManager.cs`. Multi-level / refactor epic: **FEAT-37**, spec `.cursor/specs/water-system-refactor.md` |
 | Forests | `ForestManager.cs` | `ForestMap.cs`, `GeographyManager.cs` |
 | New building type | `IBuilding.cs` (interface) | `ZoneManager.cs`, `GridManager.cs` (placement) |
 | Sorting/render bug | `GridManager.cs` region "Sorting Order" | `TerrainManager.cs` |

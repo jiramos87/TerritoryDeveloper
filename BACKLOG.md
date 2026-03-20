@@ -9,8 +9,9 @@
 
 - [ ] **BUG-30** — Incorrect road prefabs when interstate climbs slopes
   - Type: fix
-  - Files: `RoadPrefabResolver.cs`, `RoadManager.cs`
+  - Files: `TerraformingService.cs`, `RoadManager.cs` (prefab resolution still `RoadPrefabResolver.cs`)
   - Notes: When road climbs hills: flat/junction prefabs used instead of ramp/slope prefabs at transitions, wrong junction at top of slope, visual gaps and disconnection. Agent prompt: `docs/agent-prompt-interstate-slope-prefabs.md`.
+  - **Verify in Unity:** interstate/manual road up a hill drawn from below (SS5) vs from above (SS6) — same geometry should match prefabs; `DEVELOPMENT_BUILD` warns if `expandedPath.Count != plan.pathCells.Count`.
 
 ## High Priority
 
@@ -109,6 +110,11 @@
   - Files: `WaterManager.cs`, `WaterMap.cs`, `GeographyManager.cs`
   - Notes: Improve map water generation.
 
+- [ ] **FEAT-37** — Multi-level water bodies and water system refactor (terrain-hosted water)
+  - Type: feature (epic) + refactor
+  - Files: `WaterManager.cs`, `WaterMap.cs`, `GeographyManager.cs`, `TerrainManager.cs`, `HeightMap.cs`, `GridManager.cs`, `GridSortingOrderService.cs`, `Cell.cs`, `CellData.cs`, `GameSaveManager.cs`; later `RoadManager.cs` (bridges), `ZoneManager.cs`, `ForestManager.cs`
+  - Notes: **Problem:** Water behaves as a single global surface (effectively “level 0”), so lakes read as deep pits with poor embankments and a flat blue plane at the bottom. **Goal:** Treat all water as **masses of water supported by terrain** at **variable surface elevation**—not one world-wide Z-plane—so bodies can sit naturally in depressions, on plateaus, or at coasts. **Long-term concepts (phased):** distinguish geological situations (cliffs vs deep wells, alpine lakes, rivers with downhill flow, seas with tide direction); slope water; bridges; buildings adjacent to water; save/load migration. Overlaps or unlocks work with **BUG-08** (generation) and **FEAT-15** (ports / defined sea). **Spec:** `.cursor/specs/water-system-refactor.md`.
+
 - [ ] **FEAT-06** — Forest that grows over time: sparse → medium → dense
   - Type: feature
   - Files: `ForestManager.cs`, `ForestMap.cs`, `SimulationManager.cs`
@@ -129,7 +135,7 @@
 
 - [ ] **TECH-01** — Extract responsibilities from large files (GridManager, TerrainManager, CityStats, ZoneManager, UIManager, RoadManager)
   - Type: refactor
-  - Files: `GridManager.cs` (~1870 lines), `TerrainManager.cs` (~1660), `CityStats.cs` (~1200), `ZoneManager.cs` (~1360), `UIManager.cs` (~1240), `RoadManager.cs` (~1510)
+  - Files: `GridManager.cs` (~1870 lines), `TerrainManager.cs` (~1740), `CityStats.cs` (~1200), `ZoneManager.cs` (~1360), `UIManager.cs` (~1240), `RoadManager.cs` (~1730)
   - Notes: Helpers already extracted (GridPathfinder, GridSortingOrderService, etc.). Pending candidates: BulldozeHandler (~200 lines), GridInputHandler (~130 lines), CoordinateConversionService (~230 lines) from GridManager.
 
 - [ ] **TECH-02** — Change public fields to `[SerializeField] private` in managers
@@ -146,6 +152,27 @@
   - Type: refactor
   - Files: ~25+ managers with `if (X == null) X = FindObjectOfType<X>()` block
   - Notes: Consider helper method, base class, or extension method to reduce duplication of Inspector + FindObjectOfType fallback pattern.
+
+- [ ] **TECH-09** — Remove obsolete `TerraformNeeded` method from TerraformingService
+  - Type: refactor (dead code removal)
+  - Files: `TerraformingService.cs`
+  - Notes: The `[Obsolete]` method `TerraformNeeded` contains ~80 lines of unused code with extensive `Debug.Log` statements. It was superseded by `ComputePathPlan` but never deleted. Safe to remove — no callers exist.
+
+- [ ] **TECH-10** — Fix dead code in `TerrainManager.DetermineWaterSlopePrefab`
+  - Type: fix (code health)
+  - Files: `TerrainManager.cs`
+  - Notes: Lines ~1223–1247 in `DetermineWaterSlopePrefab` contain redundant `if (!hasSeaLevelAtNorth)` conditions nested inside `if (hasSeaLevelAtNorth)` blocks — always false, producing duplicate unreachable return statements. Probable copy-paste bug. No runtime impact (dead branches), but confusing for maintenance. Audit the full method for similar patterns.
+
+- [ ] **TECH-11** — Complete namespace migration for remaining global-namespace files
+  - Type: refactor
+  - Files: `TerraformingService.cs`, `PathTerraformPlan.cs`
+  - Notes: Most core game logic files now use `Territory.*` namespaces. These two files remain in the global namespace. Migrate them to `Territory.Terrain` (or `Territory.Roads` as appropriate) and update `using` directives in dependent files. Cross-ref: `ARCHITECTURE.md` documents the partial migration state.
+
+- [ ] **TECH-07** — ControlPanel: left vertical sidebar layout (category rows)
+  - Type: refactor (UI/UX)
+  - Files: `MainScene.unity` (`ControlPanel` hierarchy, RectTransform anchors, `LayoutGroup` / `ContentSizeFitter` as needed), `UIManager.cs` (only if toolbar/submenu positioning or references must follow the new dock), `UnitControllers/*SelectorButton.cs` (only if button wiring or parent references break after reparenting)
+  - Spec sections: `.cursor/specs/ui-design-system.md` — **§3.3** (toolbar), **§1.3** (anchors/margins), **§4.3** (Canvas Scaler) as applicable.
+  - Notes: Replace the bottom-centered horizontal **ribbon** with a **left-docked vertical** panel. Structure: **one row per category** (demolition, RCI zoning, utilities, roads, environment/forests, etc.), with **buttons laid out horizontally within each row** (e.g. `VerticalLayoutGroup` of rows, each row `HorizontalLayoutGroup`, or equivalent manual layout). Re-anchor dependent UI (e.g. zoning density / tool option overlays) so they align to the new sidebar instead of the old bottom bar. Verify safe area and Canvas Scaler at reference resolutions; avoid overlapping the mini-map and debug readouts. Document final hierarchy in `docs/ui-design-system-context.md`. Link program charter: `docs/ui-design-system-project.md` (Backlog bridge). Spec/docs ticketed and cross-linked in **TECH-08** (completed).
 
 ## Low Priority
 
@@ -223,6 +250,11 @@
 ---
 
 ## Completed (last 30 days)
+
+- [x] **TECH-08** — UI design system docs: TECH-07 (ControlPanel sidebar) ticketed and wired (2026-03-20)
+  - Type: documentation
+  - Files: `BACKLOG.md` (TECH-07), `docs/ui-design-system-project.md` (Backlog bridge), `docs/ui-design-system-context.md` (Toolbar — ControlPanel), `.cursor/specs/ui-design-system.md` (§3.3 layout variants), `ARCHITECTURE.md`, `AGENTS.md`, `.cursor/rules/managers-guide.mdc`
+  - Notes: Executable toolbar refactor remains **TECH-07** (open). This issue records the documentation and cross-links only.
 
 - [x] **BUG-25** — Fix bugs in manual street segment drawing (2026-03-19)
   - Type: fix
