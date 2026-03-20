@@ -3,6 +3,8 @@ using UnityEngine;
 using Territory.Terrain;
 using Territory.Core;
 
+namespace Territory.Terrain
+{
 /// <summary>
 /// Holds the result of path-level terraforming analysis. Contains per-cell actions,
 /// target heights, and post-terraform slope types. Apply/Revert modify the heightmap
@@ -312,4 +314,5 @@ public class PathTerraformPlan
 
         RefreshTerrainNeighborWaves(heightMap, terrainManager, refreshed, null, 1);
     }
+}
 }

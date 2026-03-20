@@ -12,7 +12,7 @@ All code, comments, XML docs, annotations, Debug.Log messages, and repository co
 
 ## Stack
 - Unity + C#, all game logic in MonoBehaviour classes
-- Most files use `Territory.*` namespaces (partial migration; a few files remain in global namespace — see TECH-11 in BACKLOG.md)
+- Most files use `Territory.*` namespaces (partial migration; a few legacy files may remain in the global namespace)
 - No dependency injection — managers reference each other via Inspector fields + `FindObjectOfType<T>()` fallback in Awake/Start
 
 ## Folder Structure (`Assets/Scripts/`)

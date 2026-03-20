@@ -163,7 +163,7 @@ The terrain system uses a **diamond isometric projection** with an integer **hei
 - **GridManager as hub**: GridManager is the central coordinator because nearly all game operations involve cells. This keeps cell access consistent but makes GridManager large.
 - **FindObjectOfType pattern**: Used instead of DI for simplicity. Managers declare public/serialized fields wired in Inspector, with FindObjectOfType as null-check fallback in Awake/Start.
 - **Single singleton**: Only GameNotificationManager uses the singleton pattern (with DontDestroyOnLoad). All other managers are resolved via Inspector references.
-- **Namespaces (partial migration)**: Most scripts use `Territory.*` namespaces (`Territory.Core`, `Territory.Terrain`, `Territory.Roads`, `Territory.Zones`, `Territory.Forests`, `Territory.Buildings`, `Territory.Economy`, `Territory.UI`, `Territory.Geography`, `Territory.Timing`, `Territory.Utilities`). A few files remain in the global namespace (e.g. `TerraformingService.cs`, `PathTerraformPlan.cs`).
+- **Namespaces (partial migration)**: Most scripts use `Territory.*` namespaces (`Territory.Core`, `Territory.Terrain`, `Territory.Roads`, `Territory.Zones`, `Territory.Forests`, `Territory.Buildings`, `Territory.Economy`, `Territory.UI`, `Territory.Geography`, `Territory.Timing`, `Territory.Utilities`). `TerraformingService` and `PathTerraformPlan` live in `Territory.Terrain`. A few legacy or utility scripts may still be in the global namespace; prefer new code under `Territory.*`.
 
 ## Known Trade-offs
 - **High coupling**: Many managers reference each other directly, creating tight coupling

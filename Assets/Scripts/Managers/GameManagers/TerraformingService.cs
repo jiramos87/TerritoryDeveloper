@@ -3,6 +3,8 @@ using UnityEngine;
 using Territory.Terrain;
 using Territory.Core;
 
+namespace Territory.Terrain
+{
 /// <summary>
 /// Terraforms terrain for road placement: converts diagonal slopes to orthogonal or flattens
 /// cells when roads run along hillsides. When the path only has scalable land steps (|Δh| ≤ 1 between consecutive path cells),
@@ -720,104 +722,6 @@ public class TerraformingService : MonoBehaviour
     }
 
     /// <summary>
-    /// [Obsolete] Use ComputePathPlan for path-based terraforming. Returns true if the cell needs terraforming.
-    /// </summary>
-    [System.Obsolete("Use ComputePathPlan for path-based terraforming instead.")]
-    public bool TerraformNeeded(int x, int y, Vector2 roadDir, out TerraformAction action, out OrthogonalDirection orthogonalDir,
-        System.Collections.Generic.IList<Vector2> path = null)
-    {
-        action = TerraformAction.None;
-        orthogonalDir = OrthogonalDirection.North;
-
-        if (terrainManager == null || gridManager == null) return false;
-        var heightMap = terrainManager.GetHeightMap();
-        if (heightMap == null || !heightMap.IsValidPosition(x, y)) return false;
-
-        int currentHeight = heightMap.GetHeight(x, y);
-        if (currentHeight <= TerrainManager.SEA_LEVEL) return false;
-
-        TerrainSlopeType slopeType = terrainManager.GetTerrainSlopeTypeAt(x, y);
-        int dx = Mathf.RoundToInt(roadDir.x);
-        int pathCount = path != null ? path.Count : 0;
-        int dy = Mathf.RoundToInt(roadDir.y);
-
-        if (slopeType == TerrainSlopeType.Flat)
-        {
-            Debug.Log($"[TerraformNeeded] ({x},{y}) slopeType=Flat -> SKIP (no terraform)");
-            return false;
-        }
-
-        int n = GetNeighborHeight(heightMap, x + 1, y);
-        int s = GetNeighborHeight(heightMap, x - 1, y);
-        int e = GetNeighborHeight(heightMap, x, y - 1);
-        int w = GetNeighborHeight(heightMap, x, y + 1);
-        int ne = GetNeighborHeight(heightMap, x + 1, y - 1);
-        int nw = GetNeighborHeight(heightMap, x + 1, y + 1);
-        int sw = GetNeighborHeight(heightMap, x - 1, y + 1);
-        int se = GetNeighborHeight(heightMap, x - 1, y - 1);
-        Debug.Log($"[TerraformNeeded] ({x},{y}) currentHeight={currentHeight} slopeType={slopeType} roadDir=({dx},{dy}) neighbors N={n} S={s} E={e} W={w} NE={ne} NW={nw} SW={sw} SE={se}");
-
-        bool isHorizontalRoad = Mathf.Abs(dx) > Mathf.Abs(dy);
-        bool isVerticalRoad = Mathf.Abs(dy) >= Mathf.Abs(dx) && dx == 0;
-
-        if (dx != 0 && dy != 0)
-        {
-            isHorizontalRoad = Mathf.Abs(dx) >= Mathf.Abs(dy);
-            isVerticalRoad = Mathf.Abs(dy) > Mathf.Abs(dx);
-        }
-
-        bool isOrthogonalSlope = slopeType == TerrainSlopeType.North || slopeType == TerrainSlopeType.South
-            || slopeType == TerrainSlopeType.East || slopeType == TerrainSlopeType.West;
-
-        bool roadParallelToSlope = isOrthogonalSlope && ((slopeType == TerrainSlopeType.North || slopeType == TerrainSlopeType.South)
-            ? isVerticalRoad : isHorizontalRoad);
-
-        if (roadParallelToSlope)
-        {
-            action = TerraformAction.Flatten;
-            Debug.Log($"[TerraformNeeded] ({x},{y}) slopeType={slopeType} roadDir=({dx},{dy}) orthogonal->Flatten");
-            return true;
-        }
-
-        bool isDiagonalSlope = slopeType == TerrainSlopeType.NorthEast || slopeType == TerrainSlopeType.NorthWest
-            || slopeType == TerrainSlopeType.SouthEast || slopeType == TerrainSlopeType.SouthWest;
-
-        bool isCornerSlope = slopeType == TerrainSlopeType.NorthEastUp || slopeType == TerrainSlopeType.NorthWestUp
-            || slopeType == TerrainSlopeType.SouthEastUp || slopeType == TerrainSlopeType.SouthWestUp;
-
-        if (isDiagonalSlope || isCornerSlope)
-        {
-            if (dx != 0 && dy != 0)
-            {
-                orthogonalDir = GetOrthogonalFromRoadDirection(dx, dy);
-                action = TerraformAction.DiagonalToOrthogonal;
-                Debug.Log($"[TerraformNeeded] ({x},{y}) slopeType={slopeType} roadDir=({dx},{dy}) diagonal segment->DiagonalToOrthogonal");
-                return true;
-            }
-            if (path != null && path.Count >= 2)
-            {
-                action = TerraformAction.Flatten;
-                Debug.Log($"[TerraformNeeded] ({x},{y}) slopeType={slopeType} roadDir=({dx},{dy}) diagonal/corner pathCount={pathCount}->Flatten");
-                return true;
-            }
-            Debug.Log($"[TerraformNeeded] ({x},{y}) slopeType={slopeType} roadDir=({dx},{dy}) diagonal/corner path=null->return false");
-            return false;
-        }
-
-            Debug.Log($"[TerraformNeeded] ({x},{y}) slopeType={slopeType} roadDir=({dx},{dy}) no match->return false");
-        return false;
-    }
-
-    static OrthogonalDirection GetOrthogonalFromRoadDirection(int dx, int dy)
-    {
-        if (Mathf.Abs(dx) >= Mathf.Abs(dy))
-        {
-            return dx > 0 ? OrthogonalDirection.North : OrthogonalDirection.South;
-        }
-        return dy > 0 ? OrthogonalDirection.West : OrthogonalDirection.East;
-    }
-
-    /// <summary>
     /// Applies terraforming to the cell. Modifies heightMap and applies terrain.
     /// </summary>
     /// <param name="allowLowering">When false, skips terraforming if it would lower the cell. Used for interstate to avoid "buried" appearance.</param>
@@ -931,4 +835,5 @@ public class TerraformingService : MonoBehaviour
         return max;
     }
 
+}
 }

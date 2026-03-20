@@ -153,21 +153,6 @@
   - Files: ~25+ managers with `if (X == null) X = FindObjectOfType<X>()` block
   - Notes: Consider helper method, base class, or extension method to reduce duplication of Inspector + FindObjectOfType fallback pattern.
 
-- [ ] **TECH-09** — Remove obsolete `TerraformNeeded` method from TerraformingService
-  - Type: refactor (dead code removal)
-  - Files: `TerraformingService.cs`
-  - Notes: The `[Obsolete]` method `TerraformNeeded` contains ~80 lines of unused code with extensive `Debug.Log` statements. It was superseded by `ComputePathPlan` but never deleted. Safe to remove — no callers exist.
-
-- [ ] **TECH-10** — Fix dead code in `TerrainManager.DetermineWaterSlopePrefab`
-  - Type: fix (code health)
-  - Files: `TerrainManager.cs`
-  - Notes: Lines ~1223–1247 in `DetermineWaterSlopePrefab` contain redundant `if (!hasSeaLevelAtNorth)` conditions nested inside `if (hasSeaLevelAtNorth)` blocks — always false, producing duplicate unreachable return statements. Probable copy-paste bug. No runtime impact (dead branches), but confusing for maintenance. Audit the full method for similar patterns.
-
-- [ ] **TECH-11** — Complete namespace migration for remaining global-namespace files
-  - Type: refactor
-  - Files: `TerraformingService.cs`, `PathTerraformPlan.cs`
-  - Notes: Most core game logic files now use `Territory.*` namespaces. These two files remain in the global namespace. Migrate them to `Territory.Terrain` (or `Territory.Roads` as appropriate) and update `using` directives in dependent files. Cross-ref: `ARCHITECTURE.md` documents the partial migration state.
-
 - [ ] **TECH-07** — ControlPanel: left vertical sidebar layout (category rows)
   - Type: refactor (UI/UX)
   - Files: `MainScene.unity` (`ControlPanel` hierarchy, RectTransform anchors, `LayoutGroup` / `ContentSizeFitter` as needed), `UIManager.cs` (only if toolbar/submenu positioning or references must follow the new dock), `UnitControllers/*SelectorButton.cs` (only if button wiring or parent references break after reparenting)
@@ -250,6 +235,21 @@
 ---
 
 ## Completed (last 30 days)
+
+- [x] **TECH-09** — Remove obsolete `TerraformNeeded` from TerraformingService (2026-03-20)
+  - Type: refactor (dead code removal)
+  - Files: `TerraformingService.cs`
+  - Notes: Removed `[Obsolete]` `TerraformNeeded` and `GetOrthogonalFromRoadDirection` (only used by it). Path-based terraforming uses `ComputePathPlan` only.
+
+- [x] **TECH-10** — Fix `TerrainManager.DetermineWaterSlopePrefab` north/south sea logic (2026-03-20)
+  - Type: fix (code health)
+  - Files: `TerrainManager.cs`
+  - Notes: Replaced impossible `if (!hasSeaLevelAtNorth)` under `hasSeaLevelAtNorth` with NE/NW corner handling and East-style branch for sea north+south strips (`southEast` / `southEastUpslope`). South-only coast mirrors East; removed unreachable `hasSeaLevelAtSouth` else (handled by North block first).
+
+- [x] **TECH-11** — Namespace `Territory.Terrain` for TerraformingService and PathTerraformPlan (2026-03-20)
+  - Type: refactor
+  - Files: `TerraformingService.cs`, `PathTerraformPlan.cs`, `ARCHITECTURE.md`, `.cursor/rules/project-overview.mdc`
+  - Notes: Wrapped both types in `namespace Territory.Terrain`. Dependents already had `using Territory.Terrain`. Docs updated to drop “global namespace” examples for these files.
 
 - [x] **TECH-08** — UI design system docs: TECH-07 (ControlPanel sidebar) ticketed and wired (2026-03-20)
   - Type: documentation

@@ -1220,55 +1220,37 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             }
         }
 
+        // Sea to the north: pure north face vs NE/NW corners; sea north+south (E–W strip) mirrors East’s east+south branch (southEast vs upslope).
         if (hasSeaLevelAtNorth)
         {
             if (!hasSeaLevelAtSouth)
             {
-                if (!hasSeaLevelAtNorth)
-                {
+                if (hasSeaLevelAtEast && hasSeaLevelAtWest)
                     return northSlopeWaterPrefab;
-                }
-                else
-                {
-                    return northSlopeWaterPrefab;
-                }
+                if (hasSeaLevelAtEast)
+                    return northEastSlopeWaterPrefab;
+                if (hasSeaLevelAtWest)
+                    return northWestSlopeWaterPrefab;
+                return northSlopeWaterPrefab;
             }
             else
             {
-                if (!hasSeaLevelAtWest)
-                {
-                    return southSlopeWaterPrefab;
-                }
+                if (!hasSeaLevelAtEast)
+                    return southEastSlopeWaterPrefab;
                 else
-                {
-                    return southSlopeWaterPrefab;
-                }
+                    return southEastUpslopeWaterPrefab;
             }
         }
 
+        // Sea to the south only (sea north is handled above): mirror East — pure south vs SW corner.
         if (hasSeaLevelAtSouth)
         {
             if (!hasSeaLevelAtNorth)
             {
                 if (!hasSeaLevelAtWest)
-                {
                     return southSlopeWaterPrefab;
-                }
                 else
-                {
-                    return northSlopeWaterPrefab;
-                }
-            }
-            else
-            {
-                if (!hasSeaLevelAtWest)
-                {
-                    return southSlopeWaterPrefab;
-                }
-                else
-                {
-                    return southSlopeWaterPrefab;
-                }
+                    return southWestSlopeWaterPrefab;
             }
         }
 
