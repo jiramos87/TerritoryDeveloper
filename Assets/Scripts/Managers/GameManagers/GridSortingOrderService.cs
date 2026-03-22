@@ -22,16 +22,11 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Returns the maximum sorting order that any content on the cell at (x,y) would have
-        /// (terrain, forest +5, road +ROAD_SORTING_OFFSET, building +10, etc.). Used so the building can place itself
-        /// behind "front" adjacent cells and let forest/terrain draw on top.
-        /// </summary>
-        /// <summary>
         /// After a building's sorting order is applied, re-apply pure terrain sorting to any grass/slope
-        /// zone children so they stay strictly below the building (avoids identical Order in Layer ties when
-        /// DestroyCellChildren preserves flat grass under buildings).
+        /// zone children so they stay strictly below the building (only when flat grass was preserved).
+        /// Multi-cell footprints also call this per footprint cell (BUG-35).
         /// </summary>
-        void SyncGrassTerrainSortingBelowBuilding(int cellX, int cellY)
+        void SyncCellTerrainLayersBelowBuilding(int cellX, int cellY)
         {
             if (grid.terrainManager == null || grid.cellArray == null || grid.gridArray == null) return;
             if (cellX < 0 || cellX >= grid.width || cellY < 0 || cellY >= grid.height) return;
@@ -67,6 +62,11 @@ namespace Territory.Core
             }
         }
 
+        /// <summary>
+        /// Returns the maximum sorting order that any content on the cell at (x,y) would have
+        /// (terrain, forest +5, road +ROAD_SORTING_OFFSET, building +10, etc.). Used so the building can place itself
+        /// behind "front" adjacent cells and let forest/terrain draw on top.
+        /// </summary>
         private int GetCellMaxContentSortingOrder(int x, int y)
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return int.MinValue;
@@ -213,7 +213,7 @@ namespace Territory.Core
                     sr.sortingOrder = sortingOrder;
             }
             cell.SetCellInstanceSortingOrder(sortingOrder);
-            SyncGrassTerrainSortingBelowBuilding(x, y);
+            SyncCellTerrainLayersBelowBuilding(x, y);
         }
 
         /// <summary>
@@ -302,7 +302,17 @@ namespace Territory.Core
                     sr.sortingOrder = maxOrder;
             }
             pivotCell.SetCellInstanceSortingOrder(maxOrder);
-            SyncGrassTerrainSortingBelowBuilding(pivotX, pivotY);
+
+            for (int fx = 0; fx < buildingSize; fx++)
+            {
+                for (int fy = 0; fy < buildingSize; fy++)
+                {
+                    int gridX = pivotX + fx - offsetX;
+                    int gridY = pivotY + fy - offsetY;
+                    if (gridX < 0 || gridX >= grid.width || gridY < 0 || gridY >= grid.height) continue;
+                    SyncCellTerrainLayersBelowBuilding(gridX, gridY);
+                }
+            }
         }
 
         /// <summary>

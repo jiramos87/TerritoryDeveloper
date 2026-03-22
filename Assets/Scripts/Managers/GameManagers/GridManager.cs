@@ -860,16 +860,23 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <param name="gridPosition">Grid coordinates of the cell (used for zone list bookkeeping).</param>
     public void DestroyCellChildren(GameObject cell, Vector2 gridPosition)
     {
-        DestroyCellChildren(cell, gridPosition, null);
+        DestroyCellChildren(cell, gridPosition, null, false);
     }
 
     /// <summary>
     /// Destroys all children of the cell except the optional exclude object (e.g. the building being placed).
-    /// Does not destroy terrain (flat grass) or slope children (land/water slope).
+    /// Does not destroy terrain (flat grass) or slope children (land/water slope), unless
+    /// <paramref name="destroyFlatGrass"/> is true (building/utility placement so the cell has a single visual layer).
     /// Used by DemolishCellAt (including expropriation with showAnimation: false): any child with
     /// ZoneCategory.Zoning is removed from the zone manager lists (removeZonedPositionFromList) before destroy.
     /// </summary>
     public void DestroyCellChildren(GameObject cell, Vector2 gridPosition, GameObject excludeFromDestroy)
+    {
+        DestroyCellChildren(cell, gridPosition, excludeFromDestroy, false);
+    }
+
+    /// <param name="destroyFlatGrass">When true, flat grass zone tiles are destroyed too (building placement and load restore).</param>
+    public void DestroyCellChildren(GameObject cell, Vector2 gridPosition, GameObject excludeFromDestroy, bool destroyFlatGrass)
     {
         if (cell.transform.childCount == 0) return;
 
@@ -879,9 +886,9 @@ public class GridManager : MonoBehaviour, IGridManager
             if (excludeFromDestroy != null && child.gameObject == excludeFromDestroy)
                 continue;
 
-            // Do not destroy flat terrain (grass) or slope tiles (land or water)
+            // Do not destroy flat terrain (grass) or slope tiles (land or water), unless replacing with a building/road overlay
             Zone zone = child.GetComponent<Zone>();
-            if (zone != null && zone.zoneType == Zone.ZoneType.Grass)
+            if (!destroyFlatGrass && zone != null && zone.zoneType == Zone.ZoneType.Grass)
                 continue;
             if (terrainManager != null && (terrainManager.IsWaterSlopeObject(child.gameObject) || terrainManager.IsLandSlopeObject(child.gameObject)))
                 continue;

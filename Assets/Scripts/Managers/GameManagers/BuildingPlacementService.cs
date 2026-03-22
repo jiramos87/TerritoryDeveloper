@@ -399,17 +399,7 @@ namespace Territory.Core
                         UpdatePlacedBuildingCellAttributes(cell, buildingSize, powerPlant, waterPlant, buildingPrefab, Zone.ZoneType.Building, building);
 
                         bool isPivot = (gridX == gridPos.x && gridY == gridPos.y);
-                        grid.DestroyCellChildren(gridCell, new Vector2(gridX, gridY), isPivot ? building : null);
-                        if (buildingSize > 1)
-                        {
-                            for (int i = gridCell.transform.childCount - 1; i >= 0; i--)
-                            {
-                                Transform child = gridCell.transform.GetChild(i);
-                                Zone zone = child.GetComponent<Zone>();
-                                if (zone != null && zone.zoneType == Zone.ZoneType.Grass)
-                                    Object.Destroy(child.gameObject);
-                            }
-                        }
+                        grid.DestroyCellChildren(gridCell, new Vector2(gridX, gridY), isPivot ? building : null, destroyFlatGrass: true);
                         if (isPivot)
                             SetCellAsBuildingPivot(cell);
                     }

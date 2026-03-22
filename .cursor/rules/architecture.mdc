@@ -14,7 +14,7 @@ alwaysApply: true
 5. `ForestManager.InitializeForestMap()` — forest generation (conditional)
 6. Sorting order recalculation, border signs, then `ZoneManager` ready for player zoning
 
-**Water evolution:** **FEAT-37** epic — **FEAT-37a** / **FEAT-37b** / **FEAT-37c** **completed**. Load-time building sort **BUG-34** completed; multi-cell footprint **BUG-35**. See `.cursor/specs/water-system-refactor.md` and `ARCHITECTURE.md` (Data Flows → Water).
+**Water evolution:** **FEAT-37** epic — **FEAT-37a** / **FEAT-37b** / **FEAT-37c** **completed**. Load-time building sort **BUG-34** and grass/building layering **BUG-35** completed (2026-03-22). See `.cursor/specs/water-system-refactor.md` and `ARCHITECTURE.md` (Data Flows → Water).
 
 ## Simulation Flow (each TimeManager tick)
 `TimeManager` → `SimulationManager.RunSimulationStep()` → in order:

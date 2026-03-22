@@ -5,13 +5,11 @@
 
 ---
 
-## High Priority
+## In Progress
 
-- [ ] **BUG-35** — Load Game: multi-cell buildings — grass on **footprint** (non-pivot) cells draws **above** building sprite (`sortingOrder` only synced on pivot)
-  - Type: fix
-  - Files: `GridSortingOrderService.cs` (`SetZoneBuildingSortingOrder`, `SyncGrassTerrainSortingBelowBuilding`), `ZoneManager.cs` (`PlaceZoneBuildingTile`), `GridManager.cs`, `BuildingPlacementService.cs` (`RestoreBuildingTile`, `UpdateBuildingTilesAttributes`)
-  - Notes: **BUG-34** fixed 1×1 and general load sorting; multi-cell prefab is parented only on the **pivot**. `SyncGrassTerrainSortingBelowBuilding` runs for `(pivotX, pivotY)` only — non-pivot footprint cells often still have `ZoneType.Grass` children (RCI multi-cell does not clear them per cell). Their sprite order can occlude the single building draw order. **Fix:** run grass/terrain sorting sync (or force strictly below building `maxOrder`) for **every** cell in the footprint rectangle, not only the pivot. Verify **BUG-20** after. Spec: [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md).
-  - Depends on: **BUG-34** (completed)
+*None.*
+
+## High Priority
 
 - [ ] **BUG-31** — Wrong prefabs at interstate entry/exit (border)
   - Type: fix
@@ -26,7 +24,7 @@
 - [ ] **BUG-20** — Power plant (and 3x3/2x2 buildings) load incorrectly in LoadGame: end up under grass
   - Type: fix
   - Files: `GeographyManager.cs` (GetMultiCellBuildingMaxSortingOrder, ReCalculateSortingOrderBasedOnHeight), `BuildingPlacementService.cs` (LoadBuildingTile, RestoreBuildingTile), `GridManager.cs` (RestoreGridCellVisuals)
-  - Notes: Overlaps **BUG-35** (multi-cell footprint grass vs building sort on load). **BUG-34** addressed general load/building sort; remaining multi-cell footprint issues → **BUG-35**. Verify and close **BUG-20** after **BUG-35** is fixed and tested in Unity.
+  - Notes: Overlaps **BUG-35** (completed 2026-03-22): flat grass removed with buildings on load. **BUG-34** addressed general load/building sort. Re-verify in Unity after **BUG-35** closure; close if power plants / multi-cell utilities sort correctly.
 
 - [ ] **BUG-12** — Happiness UI always shows 50%
   - Type: fix
@@ -263,15 +261,20 @@
 
 ## Completed (last 30 days)
 
+- [x] **BUG-35** — Load Game: multi-cell buildings — grass on footprint (non-pivot) could draw above building; 1×1 grass + building under one cell (2026-03-22)
+  - Type: fix
+  - Files: `GridManager.cs` (`DestroyCellChildren`), `ZoneManager.cs` (`PlaceZoneBuilding`, `PlaceZoneBuildingTile`), `BuildingPlacementService.cs` (`UpdateBuildingTilesAttributes`), `GridSortingOrderService.cs` (`SetZoneBuildingSortingOrder`, `SyncCellTerrainLayersBelowBuilding`)
+  - Notes: `DestroyCellChildren(..., destroyFlatGrass: true)` when placing/restoring **RCI and utility** buildings so flat grass prefabs are not kept alongside the building (runtime + load). Multi-cell `SetZoneBuildingSortingOrder` still calls **grass-only** `SyncCellTerrainLayersBelowBuilding` for each footprint cell. **BUG-20** may be re-verified against this. Spec: [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) §7.4.
+
 - [x] **BUG-34** — Load Game: zone buildings / utilities render under terrain or water edges (`sortingOrder` snapshot vs building layer) (2026-03-22)
   - Type: fix
   - Files: `GridManager.cs`, `ZoneManager.cs`, `TerrainManager.cs`, `BuildingPlacementService.cs`, `GridSortingOrderService.cs`, `Cell.cs`, `CellData.cs`, `GameSaveManager.cs`
-  - Notes: Deterministic restore order; open water and shores aligned with runtime sorting; multi-cell RCI passes `buildingSize`; post-load building sort pass; grass under pivot synced below building via `SyncGrassTerrainSortingBelowBuilding`. **Follow-up:** multi-cell **footprint** cells — **BUG-35**. **Agent prompt:** [`docs/agent-prompt-load-game-building-sorting-order.md`](docs/agent-prompt-load-game-building-sorting-order.md).
+  - Notes: Deterministic restore order; open water and shores aligned with runtime sorting; multi-cell RCI passes `buildingSize`; post-load building sort pass; optional grass sync via `SyncCellTerrainLayersBelowBuilding`. **BUG-35** (completed 2026-03-22) adds `destroyFlatGrass` on building placement/restore. **Agent prompt:** [`docs/agent-prompt-load-game-building-sorting-order.md`](docs/agent-prompt-load-game-building-sorting-order.md).
 
 - [x] **FEAT-37c** — Persist `WaterMapData` in saves + snapshot load (no terrain/water regen on load) (2026-03-22)
   - Type: feature
   - Files: `GameSaveManager.cs`, `WaterManager.cs`, `TerrainManager.cs`, `GridManager.cs`, `Cell.cs`, `CellData.cs`, `WaterBodyType.cs`
-  - Notes: `GameSaveData.waterMapData`; `WaterManager.RestoreWaterMapFromSaveData`; `RestoreGridCellVisuals` applies saved `sortingOrder` and prefabs; legacy saves without `waterMapData` supported. **Follow-up:** building vs terrain sorting on load — **BUG-34** (completed); multi-cell footprint — **BUG-35**.
+  - Notes: `GameSaveData.waterMapData`; `WaterManager.RestoreWaterMapFromSaveData`; `RestoreGridCellVisuals` applies saved `sortingOrder` and prefabs; legacy saves without `waterMapData` supported. **Follow-up:** building vs terrain sorting on load — **BUG-34** (completed); multi-cell footprint / grass under building — **BUG-35** (completed 2026-03-22).
 
 - [x] **FEAT-37b** — Variable-height water: sorting, roads/bridges, `SEA_LEVEL` removal (no lake shore prefab scope) (2026-03-24)
   - Type: feature + refactor
@@ -286,7 +289,7 @@
 - [x] **FEAT-37a** — WaterBody + WaterMap depression-fill (lake data & procedural placement) (2026-03-22)
   - Type: feature + refactor
   - Files: `WaterBody.cs`, `WaterMap.cs`, `WaterManager.cs`, `TerrainManager.cs`, `LakeFeasibility.cs`
-  - Notes: `WaterBody` + per-cell body ids; `WaterMap.InitializeLakesFromDepressionFill` + `LakeFillSettings` (depression-fill, bounded pass, artificial fallback, merge); `LakeFeasibility` / `EnsureGuaranteedLakeDepressions` terrain bowls; `WaterMapData` v2 + legacy load; centered 40×40 template + extended terrain. **Follow-up:** shore prefab fixes **BUG-33**; **FEAT-37b** / **FEAT-37c** completed; building sort on load **BUG-34** (completed); multi-cell footprint **BUG-35**.
+  - Notes: `WaterBody` + per-cell body ids; `WaterMap.InitializeLakesFromDepressionFill` + `LakeFillSettings` (depression-fill, bounded pass, artificial fallback, merge); `LakeFeasibility` / `EnsureGuaranteedLakeDepressions` terrain bowls; `WaterMapData` v2 + legacy load; centered 40×40 template + extended terrain. **Follow-up:** shore prefab fixes **BUG-33**; **FEAT-37b** / **FEAT-37c** completed; building sort on load **BUG-34** (completed); multi-cell footprint / grass under building **BUG-35** (completed 2026-03-22).
 
 - [x] **TECH-12** — Water system refactor: planning pass (objectives, rules, scope, child issues) (2026-03-21)
   - Type: planning / documentation

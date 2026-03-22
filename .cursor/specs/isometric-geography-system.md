@@ -2,7 +2,7 @@
 
 > **Status:** Reference documentation
 > **Audience:** AI agents and developers working on terrain, roads, water, sorting order, or any system that interacts with the isometric grid.
-> **Related:** `ARCHITECTURE.md`, `.cursor/specs/water-system-refactor.md`, `.cursor/specs/road-drawing-fixes.md`
+> **Related:** `ARCHITECTURE.md` (Persistence), `.cursor/specs/water-system-refactor.md` (FEAT-37c save/load), `.cursor/specs/road-drawing-fixes.md`. **Save/load building sorting:** §7.4 below; **[BUG-34](../../BACKLOG.md)** / **[BUG-35](../../BACKLOG.md)** completed 2026-03-22.
 
 ---
 
@@ -327,6 +327,19 @@ Where:
 - `DEPTH_MULTIPLIER (100) > HEIGHT_MULTIPLIER (10) * MAX_HEIGHT (5) = 50` ensures that **depth (distance from camera)** dominates over **height**. A hilltop at the back of the map never draws over foreground forest/terrain.
 - `HEIGHT_MULTIPLIER = 10` is chosen to be less than `DEPTH_MULTIPLIER / MAX_HEIGHT` so depth always wins.
 - Negative depth order means cells farther from camera (higher `x+y`) have lower sorting order (drawn first / behind).
+
+### 7.4 Save / Load Game — cell visuals and building sorting
+
+Load does **not** run a global `ReCalculateSortingOrderBasedOnHeight` (see **FEAT-37c** / `GridManager.RestoreGrid`). Building and water behavior is aligned with runtime as follows:
+
+| Mechanism | Role |
+|-----------|------|
+| **`SortCellDataForVisualRestore`** | Stable phase order: water → grass/shore/slope → RCI zoning overlays → roads → building pivots → multi-cell non-pivots (tie-break `y`, then `x`). |
+| **`RestoreGridCellVisuals`** | Instantiates saved prefabs; applies **`CellData.sortingOrder`** where appropriate; open water uses **`TerrainManager.CalculateTerrainSortingOrder`** for the visual surface height. |
+| **BUG-34 (completed)** | **`RecalculateBuildingSortingAfterLoad`** re-runs **`GridSortingOrderService.SetZoneBuildingSortingOrder`** on each pivot building so **`GetCellMaxContentSortingOrder`** matches a fully restored grid; multi-cell RCI passes **`buildingSize`**. |
+| **BUG-35 (completed)** | Default **`GridManager.DestroyCellChildren`** skips flat **Grass** (so bulldozer/demolish can leave terrain). When placing or restoring **RCI and utility** buildings, **`DestroyCellChildren(..., destroyFlatGrass: true)`** removes that grass so the cell does not keep **grass + building** as sibling sprites. Call sites: **`ZoneManager.PlaceZoneBuilding`** (section loop), **`ZoneManager.PlaceZoneBuildingTile`**, **`BuildingPlacementService.UpdateBuildingTilesAttributes`**. Multi-cell buildings still use **`SetZoneBuildingSortingOrder`** with a per-footprint pass of **`SyncCellTerrainLayersBelowBuilding`** (grass-only children, if any remain). |
+
+Road restore destroys all **`Zone`** children before placing the road; zoning restore uses **`DestroyCellChildrenExceptForest`**. Those paths already cleared flat grass or replaced overlays without relying on **`destroyFlatGrass`**.
 
 ---
 

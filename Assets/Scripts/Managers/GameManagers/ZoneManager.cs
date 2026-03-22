@@ -1196,7 +1196,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
             if (cellComponent != null)
                 cellComponent.RemoveForestForBuilding();
 
-            gridManager.DestroyCellChildren(cell, zonedPosition);
+            gridManager.DestroyCellChildren(cell, zonedPosition, null, destroyFlatGrass: true);
 
             gridManager.UpdateCellAttributes(cellComponent, selectedZoneType, zoneAttributes, prefab, buildingSize);
 
@@ -1243,7 +1243,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
             worldPosition -= offset;
         }
 
-        gridManager.DestroyCellChildren(gridCell, new Vector2(cell.x, cell.y));
+        gridManager.DestroyCellChildren(gridCell, new Vector2(cell.x, cell.y), null, destroyFlatGrass: true);
 
         GameObject zoneTile = Instantiate(
           prefab,
