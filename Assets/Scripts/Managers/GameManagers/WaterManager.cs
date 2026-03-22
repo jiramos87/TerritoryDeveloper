@@ -9,6 +9,7 @@ namespace Territory.Terrain
 /// <summary>
 /// Generates and manages water bodies on the grid. Lakes use depression-fill on the height map (FEAT-37a);
 /// sea-level terrain cells are merged into <see cref="WaterMap"/> after fill so they match <c>PlaceSeaLevelWater</c>.
+/// Save serializes <see cref="WaterMap.GetSerializableData"/> (FEAT-37c); load uses <see cref="RestoreWaterMapFromSaveData"/>.
 /// Legacy sea-level threshold remains for paint tool / old save restore. Coordinates with GridManager,
 /// TerrainManager, and ZoneManager. <see cref="LakeFillSettings"/> are created in code (not Inspector) until terrain UI exists.
 /// </summary>
@@ -122,8 +123,27 @@ public class WaterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Restores WaterMap from saved grid data. Call after RestoreHeightMapFromGridData and before RestoreGrid.
-    /// Ensures water cells are correctly tracked for PlaceWater and other water systems.
+    /// Restores WaterMap from serialized save data, or best-effort from legacy CellData when <paramref name="data"/> is missing.
+    /// Call after RestoreHeightMapFromGridData and before RestoreGrid.
+    /// </summary>
+    public void RestoreWaterMapFromSaveData(WaterMapData data, int gridWidth, int gridHeight, List<CellData> gridData)
+    {
+        if (gridManager == null) return;
+
+        waterMap = new WaterMap(gridWidth, gridHeight);
+
+        if (data != null && data.waterBodyIds != null && data.waterBodyIds.Length == gridWidth * gridHeight)
+        {
+            waterMap.LoadFromSerializableData(data);
+        }
+        else if (gridData != null)
+        {
+            waterMap.RestoreFromLegacyCellData(gridData, seaLevel);
+        }
+    }
+
+    /// <summary>
+    /// Restores WaterMap from saved grid data only (legacy saves). Prefer <see cref="RestoreWaterMapFromSaveData"/>.
     /// </summary>
     public void RestoreWaterMapFromGridData(List<CellData> gridData)
     {
@@ -133,6 +153,22 @@ public class WaterManager : MonoBehaviour
             waterMap = new WaterMap(gridManager.width, gridManager.height);
 
         waterMap.RestoreFromLegacyCellData(gridData, seaLevel);
+    }
+
+    /// <summary>
+    /// Resolves a water tile prefab by saved prefab name for load restore. Falls back to random when not found.
+    /// </summary>
+    public GameObject FindWaterPrefabByName(string prefabName)
+    {
+        if (string.IsNullOrEmpty(prefabName) || waterTilePrefabs == null)
+            return GetRandomWaterPrefab();
+        string trimmed = prefabName.Replace("(Clone)", "").Trim();
+        foreach (GameObject p in waterTilePrefabs)
+        {
+            if (p != null && p.name == trimmed)
+                return p;
+        }
+        return GetRandomWaterPrefab();
     }
 
     private void InitializeWaterBodiesFromMatrix()
@@ -221,6 +257,7 @@ public class WaterManager : MonoBehaviour
         // Terrain already placed sea-level water; do not replace with animated lake prefabs. Sync inspector fields from the existing child.
         if (terrainHeight <= seaLevel && cellComponent.zoneType == Zone.ZoneType.Water && cell.transform.childCount > 0)
         {
+            cellComponent.waterBodyType = WaterBodyType.Sea;
             Transform first = cell.transform.GetChild(0);
             if (first != null)
             {
@@ -292,6 +329,9 @@ public class WaterManager : MonoBehaviour
         cellComponent.buildingType = waterPrefab.name;
         cellComponent.buildingSize = 0;
         cellComponent.occupiedBuilding = null;
+        cellComponent.secondaryPrefabName = "";
+
+        cellComponent.waterBodyType = terrainHeight <= seaLevel ? WaterBodyType.Sea : WaterBodyType.Lake;
     }
 
     // Rest of the existing WaterManager methods remain the same
@@ -319,6 +359,8 @@ public class WaterManager : MonoBehaviour
 
         // Update the cell's zone type to grass
         cellComponent.zoneType = Zone.ZoneType.Grass;
+        cellComponent.waterBodyType = WaterBodyType.None;
+        cellComponent.secondaryPrefabName = "";
 
         // Place grass tile
         GameObject grassPrefab = zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass);

@@ -1253,7 +1253,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
 
         cell.isPivot = true;
 
-        gridManager.SetZoneBuildingSortingOrder(zoneTile, (int)cell.x, (int)cell.y);
+        gridManager.SetZoneBuildingSortingOrder(zoneTile, (int)cell.x, (int)cell.y, buildingSize);
     }
 
     void UpdatePlacedZoneCellAttributes(Cell cellComponent, Zone.ZoneType selectedZoneType, GameObject zonePrefab, ZoneAttributes zoneAttributes)

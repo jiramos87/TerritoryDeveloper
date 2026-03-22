@@ -1626,7 +1626,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// <param name="gridPos">Grid position to restore the road at.</param>
     /// <param name="prefab">Road prefab to instantiate (from saved prefabName).</param>
     /// <param name="isInterstate">Whether this cell is part of the interstate (applies gray tint).</param>
-    public void RestoreRoadTile(Vector2Int gridPos, GameObject prefab, bool isInterstate)
+    /// <param name="savedSpriteSortingOrder">When set (load restore), applies persisted sorting instead of recalculating.</param>
+    public void RestoreRoadTile(Vector2Int gridPos, GameObject prefab, bool isInterstate, int? savedSpriteSortingOrder = null)
     {
         GameObject cell = gridManager.GetGridCell(new Vector2(gridPos.x, gridPos.y));
         if (cell == null) return;
@@ -1666,7 +1667,15 @@ public class RoadManager : MonoBehaviour, IRoadManager
         if (isInterstate)
             cellComponent.isInterstate = true;
 
-        gridManager.SetRoadSortingOrder(roadTile, gridPos.x, gridPos.y);
+        if (savedSpriteSortingOrder.HasValue)
+        {
+            SpriteRenderer sr = roadTile.GetComponent<SpriteRenderer>();
+            if (sr != null)
+                sr.sortingOrder = savedSpriteSortingOrder.Value;
+            cellComponent.SetCellInstanceSortingOrder(savedSpriteSortingOrder.Value);
+        }
+        else
+            gridManager.SetRoadSortingOrder(roadTile, gridPos.x, gridPos.y);
         gridManager.AddRoadToCache(gridPos);
     }
 

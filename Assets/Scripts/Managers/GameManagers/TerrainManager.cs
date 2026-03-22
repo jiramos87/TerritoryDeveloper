@@ -1079,9 +1079,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
         cell.prefabName = slopePrefab.name;
 
+        int slopeOrder = CalculateSlopeSortingOrder(x, y, currentHeight);
         SpriteRenderer sr = slope.GetComponent<SpriteRenderer>();
         if (sr != null)
-            sr.sortingOrder = CalculateSlopeSortingOrder(x, y, currentHeight);
+            sr.sortingOrder = slopeOrder;
+        cell.SetCellInstanceSortingOrder(slopeOrder);
     }
 
     private void ModifyWaterSlopeInAdjacentNeighbors(int x, int y)
@@ -1221,8 +1223,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             sr.sortingOrder = sortingOrder;
         }
         updatedCell.sortingOrder = sortingOrder;
+        updatedCell.SetCellInstanceSortingOrder(sortingOrder);
         updatedCell.prefabName = seaLevelWater.name;
         updatedCell.buildingType = seaLevelWater.name;
+        updatedCell.waterBodyType = WaterBodyType.Sea;
 
         if (waterManager != null)
             waterManager.TryRegisterSeaLevelWaterCell(x, y);
@@ -1285,10 +1289,38 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         if (primaryPrefab != null)
             updatedCell.prefabName = primaryPrefab.name;
 
+        updatedCell.secondaryPrefabName = "";
+        if (waterShorePrefabs.Count > 1 && waterShorePrefabs[1] != null)
+            updatedCell.secondaryPrefabName = waterShorePrefabs[1].name;
+
         int primarySort = primaryIsBay
             ? CalculateBayShoreSortingOrder(x, y)
             : CalculateWaterSlopeSortingOrder(x, y);
         updatedCell.sortingOrder = primarySort;
+        updatedCell.SetCellInstanceSortingOrder(primarySort);
+    }
+
+    /// <summary>
+    /// Restores lake/coast shore visuals from saved prefab names (load path).
+    /// Sorting uses the same formulas as the private PlaceWaterShore path (Bay / water-slope orders). The savedPrimarySort argument is kept for call-site compatibility with older saves and is not applied.
+    /// </summary>
+    public void RestoreWaterShorePrefabsFromSave(int x, int y, string primaryName, string secondaryName, int savedPrimarySort)
+    {
+        var list = new List<GameObject>();
+        if (!string.IsNullOrEmpty(primaryName))
+        {
+            GameObject p = FindTerrainPrefabByName(primaryName);
+            if (p != null) list.Add(p);
+        }
+        if (!string.IsNullOrEmpty(secondaryName))
+        {
+            GameObject p = FindTerrainPrefabByName(secondaryName);
+            if (p != null) list.Add(p);
+        }
+        if (list.Count == 0)
+            return;
+
+        PlaceWaterShore(x, y, list);
     }
 
     /// <param name="terraformCutCorridorCells">Cells lowered by cut-through terraform; enables 1-step land–land cliff faces toward the corridor (BUG-29).</param>

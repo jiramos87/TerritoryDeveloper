@@ -15,7 +15,8 @@ namespace Territory.Persistence
 {
 /// <summary>
 /// Handles serialization and deserialization of the complete game state.
-/// Coordinates with GridManager for grid data, CityStats for city state, and TimeManager for time state.
+/// Coordinates with GridManager for grid data, WaterManager for <see cref="WaterMapData"/>, CityStats for city state, and TimeManager for time state.
+/// Load restores height map and water map before <see cref="GridManager.RestoreGrid"/> (snapshot visuals; no terrain/water slope regen or global sorting recalc).
 /// </summary>
 public class GameSaveManager : MonoBehaviour
 {
@@ -43,6 +44,9 @@ public class GameSaveManager : MonoBehaviour
         saveData.gridData = gridManager.GetGridData();
         saveData.gridWidth = gridManager.width;
         saveData.gridHeight = gridManager.height;
+        WaterManager waterManagerForSave = FindObjectOfType<WaterManager>();
+        if (waterManagerForSave != null && waterManagerForSave.GetWaterMap() != null)
+            saveData.waterMapData = waterManagerForSave.GetWaterMap().GetSerializableData();
         saveData.cityStats = cityStats.GetCityStatsData();
         saveData.isConnectedToInterstate = interstateManager != null && interstateManager.IsConnectedToInterstate;
         RegionalMapManager regionalMapManager = FindObjectOfType<RegionalMapManager>();
@@ -136,19 +140,12 @@ public class GameSaveManager : MonoBehaviour
 
             WaterManager waterManager = FindObjectOfType<WaterManager>();
             if (waterManager != null && saveData.gridData != null)
-                waterManager.RestoreWaterMapFromGridData(saveData.gridData);
+                waterManager.RestoreWaterMapFromSaveData(saveData.waterMapData, gridManager.width, gridManager.height, saveData.gridData);
 
             gridManager.RestoreGrid(saveData.gridData);
 
-            if (terrainManager != null)
-            {
-                terrainManager.RestoreWaterSlopesFromHeightMap();
-                terrainManager.RestoreTerrainSlopesFromHeightMap();
-            }
-
-            GeographyManager geographyManager = FindObjectOfType<GeographyManager>();
-            if (geographyManager != null)
-                geographyManager.ReCalculateSortingOrderBasedOnHeight();
+            if (miniMapController != null)
+                miniMapController.RebuildTexture();
 
             if (interstateManager != null)
             {
@@ -241,6 +238,8 @@ public class GameSaveData
     public List<CellData> gridData;
     public int gridWidth;
     public int gridHeight;
+    /// <summary>Serialized <see cref="Territory.Terrain.WaterMap"/> state (FEAT-37c). Null for legacy saves.</summary>
+    public WaterMapData waterMapData;
     public bool isConnectedToInterstate;
     public RegionalMap regionalMap;
 

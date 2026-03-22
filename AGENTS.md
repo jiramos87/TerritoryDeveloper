@@ -29,13 +29,13 @@ After executing a development plan for an issue, **keep the issue in "In progres
 | Economy | `EconomyManager.cs` | `CityStats.cs` |
 | Isometric geography / slopes / heightmap | `.cursor/specs/isometric-geography-system.md` | `TerrainManager.cs`, `HeightMap.cs`, `TerraformingService.cs`, `RoadPrefabResolver.cs`, `SlopePrefabRegistry.cs`, `GridPathfinder.cs` |
 | Terrain/heightmap | `TerrainManager.cs` | `HeightMap.cs`, `GeographyManager.cs` |
-| Water bodies | `WaterManager.cs` | `WaterMap.cs`, `WaterBody.cs`, `GeographyManager.cs`. Epic **FEAT-37** completes only when **FEAT-37a**, **FEAT-37b**, and **FEAT-37c** are done; spec `.cursor/specs/water-system-refactor.md`. **FEAT-37a** completed; lake shore prefab edge issues: **BUG-33**. Minimap water out of sync: **BUG-32** |
+| Water bodies | `WaterManager.cs` | `WaterMap.cs`, `WaterBody.cs`, `WaterBodyType.cs`, `GeographyManager.cs`. **FEAT-37a** / **FEAT-37b** / **FEAT-37c** completed; spec `.cursor/specs/water-system-refactor.md`. Shore defects **BUG-33**; minimap water **BUG-32** completed; load building sort **BUG-34** (completed); multi-cell footprint sort **BUG-35** |
 | Minimap height / relief (optional layer) | `MiniMapController.cs` | `HeightMap`, `GridManager`; **FEAT-42** in `BACKLOG.md` |
 | Forests | `ForestManager.cs` | `ForestMap.cs`, `GeographyManager.cs` |
 | New building type | `IBuilding.cs` (interface) | `ZoneManager.cs`, `GridManager.cs` (placement) |
 | Sorting/render bug | `GridManager.cs` region "Sorting Order" | `TerrainManager.cs` |
 | Interstate highways | `InterstateManager.cs` | `GridManager.cs`, `TerrainManager.cs`, `RoadManager.cs` (`TryPrepareRoadPlacementPlan`). Spec: `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md`. Cut-through notes: `docs/plan-cut-through-craters.md`. |
-| Save/load | `GameSaveManager.cs` | `GridManager.cs` (GetGridData/RestoreGrid), `CellData.cs` |
+| Save/load | `GameSaveManager.cs` | `GridManager.cs` (GetGridData/RestoreGrid), `CellData.cs`, `WaterManager.cs` (`GetSerializableData` / `RestoreWaterMapFromSaveData`), `WaterMapData` on `GameSaveData`. Load sorting **BUG-34** (completed); multi-cell footprint **BUG-35**; `docs/agent-prompt-load-game-building-sorting-order.md` |
 | Demand/growth | `DemandManager.cs` | `GrowthManager.cs`, `EmploymentManager.cs`, `CityStats.cs` |
 | Statistics display | `StatisticsManager.cs` | `CityStatsUIController.cs`, `CityStats.cs` |
 | Camera/viewport | `CameraController.cs` | `GridManager.cs` (chunk culling) |

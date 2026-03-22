@@ -2,6 +2,7 @@ using UnityEngine;
 using Territory.Zones;
 using Territory.Forests;
 using Territory.Buildings;
+using Territory.Terrain;
 
 namespace Territory.Core
 {
@@ -27,7 +28,11 @@ public class CellData
     public int buildingSize;
     public int happiness;
     public string prefabName;
+    /// <summary>Optional second terrain/shore prefab (e.g. lake shore with two layered children).</summary>
+    public string secondaryPrefabName;
     public string zoneType;
+    /// <summary>Serialized <see cref="WaterBodyType"/> for water cells; empty/None for dry cells.</summary>
+    public string waterBodyType;
     public GameObject occupiedBuilding;
     public string occupiedBuildingName;
     public bool isPivot;
@@ -94,7 +99,9 @@ public class CellData
         this.buildingSize = 1;
         this.happiness = 0;
         this.prefabName = "";
+        this.secondaryPrefabName = "";
         this.zoneType = Zone.ZoneType.Grass.ToString();
+        this.waterBodyType = WaterBodyType.None.ToString();
         this.occupiedBuildingName = "";
         this.isPivot = false;
         this.powerPlant = null;
@@ -160,6 +167,30 @@ public class CellData
     }
 
     /// <summary>
+    /// Returns the persisted water body classification; legacy saves infer Lake when zone is Water and type was unset.
+    /// </summary>
+    public WaterBodyType GetWaterBodyType()
+    {
+        if (string.IsNullOrEmpty(waterBodyType))
+        {
+            if (GetZoneType() == Zone.ZoneType.Water)
+                return WaterBodyType.Lake;
+            return WaterBodyType.None;
+        }
+        if (System.Enum.TryParse(waterBodyType, out WaterBodyType result))
+            return result;
+        return WaterBodyType.None;
+    }
+
+    /// <summary>
+    /// Stores <see cref="WaterBodyType"/> for save serialization.
+    /// </summary>
+    public void SetWaterBodyType(WaterBodyType type)
+    {
+        waterBodyType = type.ToString();
+    }
+
+    /// <summary>
     /// Check if this cell has any forest
     /// </summary>
     public bool HasForest()
@@ -206,6 +237,10 @@ public class CellData
         if (forestType == null) forestType = Forest.ForestType.None.ToString();
         if (forestPrefabName == null) forestPrefabName = "";
         if (treePrefabName == null) treePrefabName = "";
+        if (secondaryPrefabName == null) secondaryPrefabName = "";
+        if (waterBodyType == null) waterBodyType = WaterBodyType.None.ToString();
+        if (string.IsNullOrEmpty(waterBodyType) && GetZoneType() == Zone.ZoneType.Water)
+            waterBodyType = WaterBodyType.Lake.ToString();
         // isInterstate is bool, no null check needed
     }
 
@@ -229,7 +264,9 @@ public class CellData
         clone.buildingSize = buildingSize;
         clone.happiness = happiness;
         clone.prefabName = prefabName;
+        clone.secondaryPrefabName = secondaryPrefabName;
         clone.zoneType = zoneType;
+        clone.waterBodyType = waterBodyType;
         clone.occupiedBuildingName = occupiedBuildingName;
         clone.isPivot = isPivot;
         clone.powerPlant = powerPlant;

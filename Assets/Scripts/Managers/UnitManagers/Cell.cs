@@ -2,6 +2,7 @@ using UnityEngine;
 using Territory.Zones;
 using Territory.Forests;
 using Territory.Buildings;
+using Territory.Terrain;
 
 namespace Territory.Core
 {
@@ -26,6 +27,8 @@ public class Cell : MonoBehaviour
     public int buildingSize;
     public int happiness;
     public string prefabName;
+    /// <summary>Optional second terrain/shore prefab name (multi-child shore cells).</summary>
+    public string secondaryPrefabName;
     public bool isPivot;
     public PowerPlant powerPlant { get; set; }
     public WaterPlant waterPlant { get; set; }
@@ -52,6 +55,9 @@ public class Cell : MonoBehaviour
     [Header("Zone Properties")]
     public Zone.ZoneType zoneType;
 
+    [Header("Water Properties")]
+    public WaterBodyType waterBodyType = WaterBodyType.None;
+
     [Header("Interstate Properties")]
     public bool isInterstate = false;
 
@@ -66,7 +72,9 @@ public class Cell : MonoBehaviour
         this.transformPosition = cellData.transformPosition;
         this.prefab = cellData.prefab;
         this.prefabName = cellData.prefabName;
+        this.secondaryPrefabName = cellData.secondaryPrefabName ?? "";
         this.zoneType = (Zone.ZoneType)System.Enum.Parse(typeof(Zone.ZoneType), cellData.zoneType);
+        this.waterBodyType = cellData.GetWaterBodyType();
         this.occupiedBuildingName = cellData.occupiedBuildingName;
         this.isPivot = cellData.isPivot;
         this.sortingOrder = cellData.sortingOrder;
@@ -340,7 +348,9 @@ public class Cell : MonoBehaviour
         cellData.buildingSize = buildingSize;
         cellData.happiness = happiness;
         cellData.prefabName = prefabName ?? "";
+        cellData.secondaryPrefabName = secondaryPrefabName ?? "";
         cellData.zoneType = zoneType.ToString();
+        cellData.waterBodyType = waterBodyType.ToString();
         cellData.occupiedBuildingName = GetBuildingName();
         if (string.IsNullOrEmpty(cellData.occupiedBuildingName) && prefabName != null)
             cellData.occupiedBuildingName = prefabName;
@@ -387,7 +397,9 @@ public class Cell : MonoBehaviour
         happiness = cellData.happiness;
         prefab = cellData.prefab;
         prefabName = cellData.prefabName;
+        secondaryPrefabName = cellData.secondaryPrefabName ?? "";
         zoneType = (Zone.ZoneType)System.Enum.Parse(typeof(Zone.ZoneType), cellData.zoneType);
+        waterBodyType = cellData.GetWaterBodyType();
         occupiedBuildingName = cellData.occupiedBuildingName;
         isPivot = cellData.isPivot;
         height = cellData.height;

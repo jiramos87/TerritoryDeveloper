@@ -26,6 +26,47 @@ namespace Territory.Core
         /// (terrain, forest +5, road +ROAD_SORTING_OFFSET, building +10, etc.). Used so the building can place itself
         /// behind "front" adjacent cells and let forest/terrain draw on top.
         /// </summary>
+        /// <summary>
+        /// After a building's sorting order is applied, re-apply pure terrain sorting to any grass/slope
+        /// zone children so they stay strictly below the building (avoids identical Order in Layer ties when
+        /// DestroyCellChildren preserves flat grass under buildings).
+        /// </summary>
+        void SyncGrassTerrainSortingBelowBuilding(int cellX, int cellY)
+        {
+            if (grid.terrainManager == null || grid.cellArray == null || grid.gridArray == null) return;
+            if (cellX < 0 || cellX >= grid.width || cellY < 0 || cellY >= grid.height) return;
+
+            Cell cell = grid.cellArray[cellX, cellY];
+            GameObject cellGo = grid.gridArray[cellX, cellY];
+            if (cell == null || cellGo == null) return;
+
+            int h = cell.height;
+            if (grid.terrainManager.GetHeightMap() != null)
+                h = grid.terrainManager.GetHeightMap().GetHeight(cellX, cellY);
+
+            foreach (Transform child in cellGo.transform)
+            {
+                GameObject go = child.gameObject;
+                if (grid.terrainManager.IsWaterSlopeObject(go) || grid.terrainManager.IsBayObject(go))
+                    continue;
+
+                Zone zone = go.GetComponent<Zone>();
+                if (zone == null || zone.zoneType != Zone.ZoneType.Grass)
+                    continue;
+
+                int terrainOrder = grid.terrainManager.IsLandSlopeObject(go)
+                    ? grid.terrainManager.CalculateSlopeSortingOrder(cellX, cellY, h)
+                    : grid.terrainManager.CalculateTerrainSortingOrder(cellX, cellY, h);
+
+                SpriteRenderer[] srs = go.GetComponentsInChildren<SpriteRenderer>(true);
+                foreach (SpriteRenderer sr in srs)
+                {
+                    if (sr != null)
+                        sr.sortingOrder = terrainOrder;
+                }
+            }
+        }
+
         private int GetCellMaxContentSortingOrder(int x, int y)
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return int.MinValue;
@@ -172,6 +213,7 @@ namespace Territory.Core
                     sr.sortingOrder = sortingOrder;
             }
             cell.SetCellInstanceSortingOrder(sortingOrder);
+            SyncGrassTerrainSortingBelowBuilding(x, y);
         }
 
         /// <summary>
@@ -260,6 +302,7 @@ namespace Territory.Core
                     sr.sortingOrder = maxOrder;
             }
             pivotCell.SetCellInstanceSortingOrder(maxOrder);
+            SyncGrassTerrainSortingBelowBuilding(pivotX, pivotY);
         }
 
         /// <summary>

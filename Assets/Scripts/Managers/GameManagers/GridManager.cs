@@ -1413,28 +1413,202 @@ public class GridManager : MonoBehaviour, IGridManager
         }
     }
 
+    static void ApplySavedSpriteSorting(GameObject obj, int sortingOrder)
+    {
+        if (obj == null) return;
+        SpriteRenderer sr = obj.GetComponent<SpriteRenderer>();
+        if (sr != null)
+            sr.sortingOrder = sortingOrder;
+    }
+
+    /// <summary>Lake/coast shore cells saved with Bay, water-slope prefabs, or a secondary shore prefab.</summary>
+    static bool IsWaterShoreSavedCell(CellData cellData)
+    {
+        if (string.IsNullOrEmpty(cellData.prefabName))
+            return false;
+        return cellData.prefabName.Contains("Bay")
+            || cellData.prefabName.Contains("SlopeWater")
+            || cellData.prefabName.Contains("UpslopeWater")
+            || !string.IsNullOrEmpty(cellData.secondaryPrefabName);
+    }
+
+    /// <summary>
+    /// Restore order: water → terrain (grass/shore/slope) → zoning overlays → roads → building pivots/singles → multi-cell footprint non-pivots.
+    /// </summary>
+    int GetCellDataRestoreVisualPhase(CellData cellData)
+    {
+        if (zoneManager == null) return 1;
+        Zone.ZoneType zoneType = zoneManager.GetZoneTypeFromZoneTypeString(cellData.zoneType);
+
+        if (zoneType == Zone.ZoneType.Water) return 0;
+        if (zoneType == Zone.ZoneType.Grass) return 1;
+        if (ZoneManager.IsZoningType(zoneType)) return 2;
+        if (zoneType == Zone.ZoneType.Road) return 3;
+        if (IsZoneTypeBuilding(zoneType))
+        {
+            if (cellData.buildingSize > 1 && !cellData.isPivot) return 5;
+            return 4;
+        }
+        return 1;
+    }
+
+    /// <summary>Stable sort of cell data for restore-visual pass so terrain exists before roads/buildings and pivot before footprint.</summary>
+    List<CellData> SortCellDataForVisualRestore(List<CellData> gridData)
+    {
+        var list = new List<CellData>(gridData.Count);
+        list.AddRange(gridData);
+        list.Sort((a, b) =>
+        {
+            int pa = GetCellDataRestoreVisualPhase(a);
+            int pb = GetCellDataRestoreVisualPhase(b);
+            if (pa != pb) return pa.CompareTo(pb);
+            if (a.y != b.y) return a.y.CompareTo(b.y);
+            return a.x.CompareTo(b.x);
+        });
+        return list;
+    }
+
+    /// <summary>Finds building root on pivot cell after load (occupiedBuilding or children).</summary>
+    GameObject FindBuildingRootOnPivotCell(Cell cell, GameObject gridCell)
+    {
+        if (cell == null || gridCell == null) return null;
+        if (cell.occupiedBuilding != null) return cell.occupiedBuilding;
+        PowerPlant pp = gridCell.GetComponentInChildren<PowerPlant>(true);
+        if (pp != null) return pp.gameObject;
+        WaterPlant wp = gridCell.GetComponentInChildren<WaterPlant>(true);
+        if (wp != null) return wp.gameObject;
+        foreach (Transform child in gridCell.transform)
+        {
+            Zone z = child.GetComponent<Zone>();
+            if (z != null && z.zoneCategory == Zone.ZoneCategory.Building)
+                return child.gameObject;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Re-applies sorting for all pivot buildings so neighbor caps match New Game after full terrain/water/roads restore.
+    /// </summary>
+    /// <returns>Number of buildings touched.</returns>
+    int RecalculateBuildingSortingAfterLoad(out int sortOrderChangeCount)
+    {
+        sortOrderChangeCount = 0;
+        if (cellArray == null || sortingService == null || gridArray == null) return 0;
+
+        int touched = 0;
+        var firstDeltas = new List<string>(5);
+
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Cell cell = cellArray[x, y];
+                if (cell == null) continue;
+                if (cell.buildingSize > 1 && !cell.isPivot) continue;
+                if (!IsZoneTypeBuilding(cell.zoneType)) continue;
+
+                int buildingSize = cell.buildingSize > 0 ? cell.buildingSize : 1;
+                GameObject gridCell = gridArray[x, y];
+                GameObject buildingGo = FindBuildingRootOnPivotCell(cell, gridCell);
+                if (buildingGo == null) continue;
+
+                int orderBefore = cell.sortingOrder;
+                sortingService.SetZoneBuildingSortingOrder(buildingGo, x, y, buildingSize);
+                touched++;
+                if (cell.sortingOrder != orderBefore)
+                {
+                    sortOrderChangeCount++;
+                    if (firstDeltas.Count < 5 && restoreGridDebugLogs)
+                        firstDeltas.Add($"({x},{y}) pivotOrder {orderBefore} -> {cell.sortingOrder} size={buildingSize}");
+                }
+            }
+        }
+
+        if (restoreGridDebugLogs && firstDeltas.Count > 0)
+        {
+            Debug.Log($"[RestoreGrid] Building sort post-pass deltas (sample): {string.Join("; ", firstDeltas)}");
+        }
+
+        return touched;
+    }
+
     void RestoreGridCellVisuals(CellData cellData, GameObject cell)
     {
         Zone.ZoneType zoneType = zoneManager.GetZoneTypeFromZoneTypeString(cellData.zoneType);
 
+        cell.transform.position = new Vector3(cellData.transformPosition.x, cellData.transformPosition.y, cell.transform.position.z);
+        cellArray[cellData.x, cellData.y].transformPosition = cellData.transformPosition;
+
         if (zoneType == Zone.ZoneType.Water && waterManager != null)
         {
-            waterManager.PlaceWater(cellData.x, cellData.y);
+            Cell cellComponent = cellArray[cellData.x, cellData.y];
+            for (int i = cell.transform.childCount - 1; i >= 0; i--)
+                Destroy(cell.transform.GetChild(i).gameObject);
+
+            GameObject waterPrefab = waterManager.FindWaterPrefabByName(cellData.prefabName);
+            if (waterPrefab == null)
+            {
+                Debug.LogWarning($"[RestoreGrid] Water prefab NOT FOUND for ({cellData.x},{cellData.y}) prefabName=\"{cellData.prefabName}\"");
+                return;
+            }
+
+            int surfaceHeight = waterManager.GetWaterSurfaceHeight(cellData.x, cellData.y);
+            if (surfaceHeight < 0)
+                surfaceHeight = waterManager.seaLevel;
+
+            int visualSurfaceHeight = Mathf.Max(TerrainManager.MIN_HEIGHT, surfaceHeight - 1);
+            float halfCellHeight = tileHeight * 0.25f;
+            Vector2 waterSurfaceWorld = GetWorldPositionVector(cellData.x, cellData.y, visualSurfaceHeight);
+            Vector2 waterTileWorldPos = waterSurfaceWorld + new Vector2(0f, halfCellHeight);
+
+            GameObject waterTile = Instantiate(waterPrefab, waterTileWorldPos, Quaternion.identity);
+            Zone zone = waterTile.AddComponent<Zone>();
+            zone.zoneType = Zone.ZoneType.Water;
+            zone.zoneCategory = Zone.ZoneCategory.Water;
+            waterTile.transform.SetParent(cell.transform);
+            int waterSort = terrainManager != null
+                ? terrainManager.CalculateTerrainSortingOrder(cellData.x, cellData.y, visualSurfaceHeight)
+                : cellData.sortingOrder;
+            ApplySavedSpriteSorting(waterTile, waterSort);
+            cellComponent.SetCellInstanceSortingOrder(waterSort);
             if (restoreGridDebugLogs)
-                Debug.Log($"[RestoreGrid] Water ({cellData.x},{cellData.y})");
-            // Water cells don't need the zoneType list or forest restore below
+                Debug.Log($"[RestoreGrid] Water ({cellData.x},{cellData.y}) from save");
             return;
         }
 
         if (zoneType == Zone.ZoneType.Grass)
         {
-            // Slope cells: place from saved prefab (don't rely on ApplyHeightMapToGrid which may skip edge cells)
+            if (IsWaterShoreSavedCell(cellData) && terrainManager != null)
+            {
+                terrainManager.RestoreWaterShorePrefabsFromSave(
+                    cellData.x, cellData.y,
+                    cellData.prefabName,
+                    cellData.secondaryPrefabName ?? "",
+                    cellData.sortingOrder);
+                if (forestManager != null)
+                {
+                    Forest.ForestType parsedForestType = Forest.ForestType.None;
+                    if (!string.IsNullOrEmpty(cellData.forestType))
+                        System.Enum.TryParse(cellData.forestType, out parsedForestType);
+                    int forestOrder = cellArray[cellData.x, cellData.y].sortingOrder + 5;
+                    forestManager.RestoreForestAt(cellData.x, cellData.y, parsedForestType, cellData.forestPrefabName, updateStats: false, savedSpriteSortingOrder: forestOrder);
+                }
+                return;
+            }
+
+            // Land slope cells (saved prefab name contains "Slope", not water-shore)
             if (!string.IsNullOrEmpty(cellData.prefabName) && cellData.prefabName.Contains("Slope"))
             {
                 GameObject slopePrefab = terrainManager != null ? terrainManager.FindTerrainPrefabByName(cellData.prefabName) : null;
                 if (slopePrefab != null && terrainManager != null)
                 {
                     terrainManager.PlaceSlopeFromPrefab(cellData.x, cellData.y, slopePrefab, cellData.height);
+                    foreach (Transform child in cell.transform)
+                    {
+                        ApplySavedSpriteSorting(child.gameObject, cellData.sortingOrder);
+                        break;
+                    }
+                    cellArray[cellData.x, cellData.y].SetCellInstanceSortingOrder(cellData.sortingOrder);
                 }
                 else
                 {
@@ -1448,9 +1622,11 @@ public class GridManager : MonoBehaviour, IGridManager
                         Cell cc = cellArray[cellData.x, cellData.y];
                         GameObject zoneTile = Instantiate(fallbackGrass, cc.transformPosition, Quaternion.identity);
                         zoneTile.transform.SetParent(cell.transform);
-                        SetGrassSortingOrderDirect(zoneTile, cellData.x, cellData.y, cellData.height, cc);
+                        ApplySavedSpriteSorting(zoneTile, cellData.sortingOrder);
+                        cc.SetCellInstanceSortingOrder(cellData.sortingOrder);
                         Zone z = zoneTile.GetComponent<Zone>();
-                        if (z == null) { z = zoneTile.AddComponent<Zone>(); z.zoneType = Zone.ZoneType.Grass; }
+                        if (z == null) z = zoneTile.AddComponent<Zone>();
+                        z.zoneType = Zone.ZoneType.Grass;
                     }
                 }
                 if (forestManager != null)
@@ -1458,7 +1634,8 @@ public class GridManager : MonoBehaviour, IGridManager
                     Forest.ForestType parsedForestType = Forest.ForestType.None;
                     if (!string.IsNullOrEmpty(cellData.forestType))
                         System.Enum.TryParse(cellData.forestType, out parsedForestType);
-                    forestManager.RestoreForestAt(cellData.x, cellData.y, parsedForestType, cellData.forestPrefabName, updateStats: false);
+                    int forestOrder = cellData.sortingOrder + 5;
+                    forestManager.RestoreForestAt(cellData.x, cellData.y, parsedForestType, cellData.forestPrefabName, updateStats: false, savedSpriteSortingOrder: forestOrder);
                 }
                 return;
             }
@@ -1484,7 +1661,8 @@ public class GridManager : MonoBehaviour, IGridManager
                 Cell cellComponent = cellArray[cellData.x, cellData.y];
                 GameObject zoneTile = Instantiate(grassPrefab, cellComponent.transformPosition, Quaternion.identity);
                 zoneTile.transform.SetParent(cell.transform);
-                SetGrassSortingOrderDirect(zoneTile, cellData.x, cellData.y, cellData.height, cellComponent);
+                ApplySavedSpriteSorting(zoneTile, cellData.sortingOrder);
+                cellComponent.SetCellInstanceSortingOrder(cellData.sortingOrder);
 
                 Zone zoneComponent = zoneTile.GetComponent<Zone>();
                 if (zoneComponent == null)
@@ -1498,13 +1676,13 @@ public class GridManager : MonoBehaviour, IGridManager
                 Debug.LogWarning($"[RestoreGrid] Grass prefab NOT FOUND for ({cellData.x},{cellData.y}) height={cellData.height} prefabName=\"{cellData.prefabName}\" - keeping CreateGrid base tile");
             }
 
-            // Restore forest on top of grass
             if (forestManager != null)
             {
                 Forest.ForestType parsedForestType = Forest.ForestType.None;
                 if (!string.IsNullOrEmpty(cellData.forestType))
                     System.Enum.TryParse(cellData.forestType, out parsedForestType);
-                forestManager.RestoreForestAt(cellData.x, cellData.y, parsedForestType, cellData.forestPrefabName, updateStats: false);
+                int forestOrder = cellData.sortingOrder + 5;
+                forestManager.RestoreForestAt(cellData.x, cellData.y, parsedForestType, cellData.forestPrefabName, updateStats: false, savedSpriteSortingOrder: forestOrder);
             }
             return;
         }
@@ -1541,7 +1719,7 @@ public class GridManager : MonoBehaviour, IGridManager
             {
                 if (restoreGridDebugLogs)
                     Debug.Log($"[RestoreGrid] Road ({cellData.x},{cellData.y}) prefab={cellData.prefabName} interstate={cellData.isInterstate} height={cellData.height}");
-                roadManager.RestoreRoadTile(new Vector2Int(cellData.x, cellData.y), tilePrefab, cellData.isInterstate);
+                roadManager.RestoreRoadTile(new Vector2Int(cellData.x, cellData.y), tilePrefab, cellData.isInterstate, cellData.sortingOrder);
             }
             else if (ZoneManager.IsZoningType(zoneType))
             {
@@ -1572,7 +1750,8 @@ public class GridManager : MonoBehaviour, IGridManager
             Forest.ForestType parsedForestType = Forest.ForestType.None;
             if (!string.IsNullOrEmpty(cellData.forestType))
                 System.Enum.TryParse(cellData.forestType, out parsedForestType);
-            forestManager.RestoreForestAt(cellData.x, cellData.y, parsedForestType, cellData.forestPrefabName, updateStats: false);
+            int forestOrder = cellData.sortingOrder + 5;
+            forestManager.RestoreForestAt(cellData.x, cellData.y, parsedForestType, cellData.forestPrefabName, updateStats: false, savedSpriteSortingOrder: forestOrder);
         }
     }
 
@@ -1593,6 +1772,8 @@ public class GridManager : MonoBehaviour, IGridManager
             cellArray[cellData.x, cellData.y].SetCellData(cellData);
         }
 
+        List<CellData> sortedForVisuals = SortCellDataForVisualRestore(gridData);
+
         int roadsInSave = 0;
         int buildingsInSave = 0;
         foreach (CellData cellData in gridData)
@@ -1601,10 +1782,19 @@ public class GridManager : MonoBehaviour, IGridManager
                 continue;
             if (cellData.zoneType == "Road") roadsInSave++;
             if (cellData.buildingSize > 1 && cellData.isPivot && (cellData.buildingType == "PowerPlant" || cellData.buildingType == "WaterPlant")) buildingsInSave++;
+        }
+
+        foreach (CellData cellData in sortedForVisuals)
+        {
+            if (cellData.x < 0 || cellData.x >= width || cellData.y < 0 || cellData.y >= height)
+                continue;
 
             GameObject cell = gridArray[cellData.x, cellData.y];
             RestoreGridCellVisuals(cellData, cell);
         }
+
+        int postPassPivotOrderChanges = 0;
+        int buildingsSortRecalculated = RecalculateBuildingSortingAfterLoad(out postPassPivotOrderChanges);
 
         if (forestManager != null)
             forestManager.RefreshForestStatistics();
@@ -1619,7 +1809,10 @@ public class GridManager : MonoBehaviour, IGridManager
         skipChunkCullingFramesRemaining = 3;
 
         if (restoreGridDebugLogs)
-            Debug.Log($"[RestoreGrid] Complete. Expected {roadsInSave} roads, {buildingsInSave} multi-cell buildings. Check for prefab NOT FOUND warnings above.");
+        {
+            Debug.Log($"[RestoreGrid] Complete. roadsInSave={roadsInSave} multiCellUtilityBuildingsInSave={buildingsInSave} " +
+                      $"buildingSortPostPassTouched={buildingsSortRecalculated} pivotOrderChanges={postPassPivotOrderChanges}. Check for prefab NOT FOUND warnings above.");
+        }
     }
 
     void RunPostLoadDiagnosticAndSafetyNet()

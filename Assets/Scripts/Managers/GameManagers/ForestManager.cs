@@ -334,7 +334,8 @@ public class ForestManager : MonoBehaviour
     /// Call for every cell to sync ForestMap with saved data (including None to clear initial gen).
     /// </summary>
     /// <param name="updateStats">If false, skips UpdateForestStatistics (call RefreshForestStatistics after batch restore).</param>
-    public void RestoreForestAt(int x, int y, Forest.ForestType forestType, string forestPrefabName, bool updateStats = true)
+    /// <param name="savedSpriteSortingOrder">When set (load restore), applies persisted forest sprite order (e.g. terrain base + 5).</param>
+    public void RestoreForestAt(int x, int y, Forest.ForestType forestType, string forestPrefabName, bool updateStats = true, int? savedSpriteSortingOrder = null)
     {
         if (forestMap == null || gridManager == null) return;
         if (!forestMap.IsValidPosition(x, y)) return;
@@ -362,7 +363,14 @@ public class ForestManager : MonoBehaviour
         GameObject forestObject = Instantiate(forestPrefab, worldPos, rotation);
 
         forestObject.transform.SetParent(cellComponent.gameObject.transform);
-        SetForestSortingOrder(forestObject, x, y, cellComponent.height);
+        if (savedSpriteSortingOrder.HasValue)
+        {
+            SpriteRenderer sr = forestObject.GetComponent<SpriteRenderer>();
+            if (sr != null)
+                sr.sortingOrder = savedSpriteSortingOrder.Value;
+        }
+        else
+            SetForestSortingOrder(forestObject, x, y, cellComponent.height);
 
         cellComponent.SetForest(forestType, forestPrefab.name, forestObject);
 

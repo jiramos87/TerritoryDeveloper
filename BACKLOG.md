@@ -5,15 +5,13 @@
 
 ---
 
-## In Progress
-
-  - [ ] **FEAT-37** — Multi-level water bodies and water system refactor (terrain-hosted water) — **lakes MVP epic**
-  - Type: feature (epic) + refactor
-  - Files: `WaterManager.cs`, `WaterMap.cs`, `WaterBody.cs`, `GeographyManager.cs`, `TerrainManager.cs`, `HeightMap.cs`, `GridManager.cs`, `GridSortingOrderService.cs`, `Cell.cs`, `CellData.cs`, `GameSaveManager.cs`; later `RoadManager.cs` (bridges), `ZoneManager.cs`, `ForestManager.cs`
-  - Notes: **Scope (MVP):** **Lakes only** at variable surface heights; rivers, sea, flow, and manual terrain tools are **out of scope** (see **FEAT-38–FEAT-41**). **Problem:** Water used to behave as a single global surface tied to height 0. **Goal:** Water overlay (`WaterMap` + `WaterBody`) with per-body **surface height**, depression-fill generation from `HeightMap`, terrain floor stays in `HeightMap` (depth = surface − terrain). **Child issues (order):** **FEAT-37a** ✅ (data + generation — completed 2026-03-22) → **FEAT-37b** (rendering / sorting / coast prefabs / roads) → **FEAT-37c** (`WaterMapData` save-load + gameplay rules). **Spec:** `.cursor/specs/water-system-refactor.md`. **Epic closure:** **FEAT-37** is **completed** only when **FEAT-37a**, **FEAT-37b**, and **FEAT-37c** are all done. **Shore prefab polish:** **BUG-33**.
-  - Depends on: **TECH-12** (planning pass — recommended)
-
 ## High Priority
+
+- [ ] **BUG-35** — Load Game: multi-cell buildings — grass on **footprint** (non-pivot) cells draws **above** building sprite (`sortingOrder` only synced on pivot)
+  - Type: fix
+  - Files: `GridSortingOrderService.cs` (`SetZoneBuildingSortingOrder`, `SyncGrassTerrainSortingBelowBuilding`), `ZoneManager.cs` (`PlaceZoneBuildingTile`), `GridManager.cs`, `BuildingPlacementService.cs` (`RestoreBuildingTile`, `UpdateBuildingTilesAttributes`)
+  - Notes: **BUG-34** fixed 1×1 and general load sorting; multi-cell prefab is parented only on the **pivot**. `SyncGrassTerrainSortingBelowBuilding` runs for `(pivotX, pivotY)` only — non-pivot footprint cells often still have `ZoneType.Grass` children (RCI multi-cell does not clear them per cell). Their sprite order can occlude the single building draw order. **Fix:** run grass/terrain sorting sync (or force strictly below building `maxOrder`) for **every** cell in the footprint rectangle, not only the pivot. Verify **BUG-20** after. Spec: [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md).
+  - Depends on: **BUG-34** (completed)
 
 - [ ] **BUG-31** — Wrong prefabs at interstate entry/exit (border)
   - Type: fix
@@ -28,7 +26,7 @@
 - [ ] **BUG-20** — Power plant (and 3x3/2x2 buildings) load incorrectly in LoadGame: end up under grass
   - Type: fix
   - Files: `GeographyManager.cs` (GetMultiCellBuildingMaxSortingOrder, ReCalculateSortingOrderBasedOnHeight), `BuildingPlacementService.cs` (LoadBuildingTile, RestoreBuildingTile), `GridManager.cs` (RestoreGridCellVisuals)
-  - Notes: When loading a game, the power plant prefab (and possibly 2x2 water plant) is drawn under the grass tiles of the footprint. The pivot (64,102) has both grass and building as children; the building's sorting order can end up below the grass due to the "cap" in GetMultiCellBuildingMaxSortingOrder. Not yet fixed.
+  - Notes: Overlaps **BUG-35** (multi-cell footprint grass vs building sort on load). **BUG-34** addressed general load/building sort; remaining multi-cell footprint issues → **BUG-35**. Verify and close **BUG-20** after **BUG-35** is fixed and tested in Unity.
 
 - [ ] **BUG-12** — Happiness UI always shows 50%
   - Type: fix
@@ -112,29 +110,11 @@
 
 
 
-- [ ] **BUG-32** — Lakes / `WaterMap` water not shown on minimap (desync with main map)
-  - Type: fix (UX / consistency)
-  - Files: `MiniMapController.cs`, `GeographyManager.cs`, `WaterManager.cs`, `WaterMap.cs`
-  - Notes: Water visible in the game view (procedural lakes, sea-level merge) but missing or wrong on the minimap water layer (e.g. no blue where `WaterManager.IsWaterAt` / `WaterMap` is true). Investigate: null `WaterManager` on `MiniMapController`, `RebuildTexture` before `InitializeWaterMap`, `GetCellColor` not consulting water, water layer toggle / visibility. If **no** procedural lakes appear in the **world** view, check `LakeFillSettings.MaxLakeBoundingExtent` (too-small bbox rejects entire flood basins). Distinct from **FEAT-42** (height relief on minimap). World-view **shore / edge prefab** issues: **BUG-33**. Related: **FEAT-30**.
-  - Depends on: nothing
-
 - [ ] **BUG-33** — Lake shore / edge prefab bugs (incorrect tiles, gaps, alignment)
   - Type: fix
   - Files: `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `RefreshLakeShoreAfterLakePlacement`, `GetLakeShoreExtraWorldYOffset`, …), `GridSortingOrderService.cs`, `GeographyManager.cs` (sorting helpers), lake/coast prefabs under `Assets/Prefabs/` as needed
-  - Notes: Fix incorrect or missing shore tiles at lake boundaries (cardinal/diagonal water slopes, Bay corners, upslope pairs), z-order / sorting glitches, and visual gaps after procedural lake placement. Overlaps **FEAT-37b** (generalize variable-height water rendering); this ticket tracks **prefab-edge defects** specifically. Related: **BUG-32** (minimap vs world).
+  - Notes: Fix incorrect or missing shore tiles at lake boundaries (cardinal/diagonal water slopes, Bay corners, upslope pairs), z-order / sorting glitches, and visual gaps after procedural lake placement. Baseline lake shore behavior was implemented with **FEAT-37a**; this ticket is **only** for remaining defects. **FEAT-37b** (completed) excluded shore prefab scope; shores stay here.
   - Depends on: nothing
-
-- [ ] **FEAT-37b** — Variable-height water rendering: slopes, sorting, bridges (no `height == 0` / `SEA_LEVEL` assumptions)
-  - Type: feature + refactor
-  - Files: `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `IsAdjacentToWaterHeight`, …), `GridSortingOrderService.cs`, `RoadPrefabResolver.cs`, `AutoRoadBuilder.cs`, `ForestManager.cs`
-  - Notes: Generalize coast/water-slope prefabs and road bridge logic to use `WaterManager` / surface height instead of `SEA_LEVEL` and `cell.height == 0`. Align with lakes MVP rules (same prefabs, valid shores/bridges). Edge prefab defects: coordinate with **BUG-33**.
-  - Depends on: **FEAT-37a** (completed)
-
-- [ ] **FEAT-37c** — Persist `WaterMapData` in saves + gameplay rules on load
-  - Type: feature
-  - Files: `GameSaveManager.cs`, `GameManager.cs` / save payload, `WaterManager.cs`, `GeographyManager.cs`
-  - Notes: Save/load v2 water bodies; restore order with height map; keep legacy save path working where applicable. Building/zoning adjacency vs water as agreed in spec.
-  - Depends on: **FEAT-37b**
 
 - [ ] **FEAT-06** — Forest that grows over time: sparse → medium → dense
   - Type: feature
@@ -283,10 +263,30 @@
 
 ## Completed (last 30 days)
 
+- [x] **BUG-34** — Load Game: zone buildings / utilities render under terrain or water edges (`sortingOrder` snapshot vs building layer) (2026-03-22)
+  - Type: fix
+  - Files: `GridManager.cs`, `ZoneManager.cs`, `TerrainManager.cs`, `BuildingPlacementService.cs`, `GridSortingOrderService.cs`, `Cell.cs`, `CellData.cs`, `GameSaveManager.cs`
+  - Notes: Deterministic restore order; open water and shores aligned with runtime sorting; multi-cell RCI passes `buildingSize`; post-load building sort pass; grass under pivot synced below building via `SyncGrassTerrainSortingBelowBuilding`. **Follow-up:** multi-cell **footprint** cells — **BUG-35**. **Agent prompt:** [`docs/agent-prompt-load-game-building-sorting-order.md`](docs/agent-prompt-load-game-building-sorting-order.md).
+
+- [x] **FEAT-37c** — Persist `WaterMapData` in saves + snapshot load (no terrain/water regen on load) (2026-03-22)
+  - Type: feature
+  - Files: `GameSaveManager.cs`, `WaterManager.cs`, `TerrainManager.cs`, `GridManager.cs`, `Cell.cs`, `CellData.cs`, `WaterBodyType.cs`
+  - Notes: `GameSaveData.waterMapData`; `WaterManager.RestoreWaterMapFromSaveData`; `RestoreGridCellVisuals` applies saved `sortingOrder` and prefabs; legacy saves without `waterMapData` supported. **Follow-up:** building vs terrain sorting on load — **BUG-34** (completed); multi-cell footprint — **BUG-35**.
+
+- [x] **FEAT-37b** — Variable-height water: sorting, roads/bridges, `SEA_LEVEL` removal (no lake shore prefab scope) (2026-03-24)
+  - Type: feature + refactor
+  - Files: `GridSortingOrderService.cs`, `RoadPrefabResolver.cs`, `RoadManager.cs`, `AutoRoadBuilder.cs`, `ForestManager.cs`, `TerrainManager.cs` (water height queries, bridge/adjacency paths — **exclude** shore placement methods; **BUG-33** if broken)
+  - Notes: Legacy `SEA_LEVEL` / `cell.height == 0` assumptions removed or generalized for sorting, roads, bridges, non-shore water adjacency. Shore tiles **not** in scope (37a + BUG-33). Verified in Unity.
+
+- [x] **BUG-32** — Lakes / `WaterMap` water not shown on minimap (desync with main map) (2026-03-23)
+  - Type: fix (UX / consistency)
+  - Files: `MiniMapController.cs`, `GeographyManager.cs`, `WaterManager.cs`, `WaterMap.cs`
+  - Notes: Minimap water layer aligned with `WaterManager` / `WaterMap` (rebuild timing, `GetCellColor`, layer toggles). Verified in Unity.
+
 - [x] **FEAT-37a** — WaterBody + WaterMap depression-fill (lake data & procedural placement) (2026-03-22)
   - Type: feature + refactor
   - Files: `WaterBody.cs`, `WaterMap.cs`, `WaterManager.cs`, `TerrainManager.cs`, `LakeFeasibility.cs`
-  - Notes: `WaterBody` + per-cell body ids; `WaterMap.InitializeLakesFromDepressionFill` + `LakeFillSettings` (depression-fill, bounded pass, artificial fallback, merge); `LakeFeasibility` / `EnsureGuaranteedLakeDepressions` terrain bowls; `WaterMapData` v2 + legacy load; centered 40×40 template + extended terrain. **Follow-up:** shore prefab fixes **BUG-33**; rendering/save: **FEAT-37b** / **FEAT-37c**.
+  - Notes: `WaterBody` + per-cell body ids; `WaterMap.InitializeLakesFromDepressionFill` + `LakeFillSettings` (depression-fill, bounded pass, artificial fallback, merge); `LakeFeasibility` / `EnsureGuaranteedLakeDepressions` terrain bowls; `WaterMapData` v2 + legacy load; centered 40×40 template + extended terrain. **Follow-up:** shore prefab fixes **BUG-33**; **FEAT-37b** / **FEAT-37c** completed; building sort on load **BUG-34** (completed); multi-cell footprint **BUG-35**.
 
 - [x] **TECH-12** — Water system refactor: planning pass (objectives, rules, scope, child issues) (2026-03-21)
   - Type: planning / documentation

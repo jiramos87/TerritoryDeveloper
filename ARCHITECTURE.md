@@ -106,8 +106,9 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 - Bulldozer mode → `GridManager.HandleBulldozerMode()`
 
 ### Persistence
-- Save: `GameSaveManager` → `GridManager.GetGridData()` → serializes `List<CellData>`
-- Load: `GameSaveManager` → `GridManager.RestoreGrid(List<CellData>)` → rebuilds grid
+- Save: `GameSaveManager` → `GridManager.GetGridData()` → serializes `List<CellData>` + `WaterMap.GetSerializableData()` as `WaterMapData` on `GameSaveData`
+- Load: `GameSaveManager` → `TerrainManager.RestoreHeightMapFromGridData` / `ApplyRestoredPositionsToGrid` → `WaterManager.RestoreWaterMapFromSaveData` (or legacy `RestoreFromLegacyCellData` when `waterMapData` absent) → `GridManager.RestoreGrid` (applies saved prefabs, `sortingOrder`, `waterBodyType`, shore secondary prefabs; does **not** run `RestoreWaterSlopesFromHeightMap`, `RestoreTerrainSlopesFromHeightMap`, or `ReCalculateSortingOrderBasedOnHeight`)
+- **Load sorting:** **[BUG-34](BACKLOG.md)** completed (2026-03-22): snapshot restore, water/shore, building post-pass, grass-under-pivot. **Remaining:** multi-cell **footprint** grass vs building — **[BUG-35](BACKLOG.md)** (see **[BUG-20](BACKLOG.md)**).
 
 ### UI / UX design system (program)
 
@@ -115,8 +116,8 @@ Cross-cutting effort to standardize HUD, popups, and interaction patterns: **cha
 
 ### Water (current vs planned)
 
-- **Today (FEAT-37a completed):** `WaterMap` stores **per-cell water body id** and **`WaterBody`** holds **surface height**; procedural lakes use **depression-fill** on the heightmap; `TerrainManager` may carve **minimal cardinal bowls** before water init so enough spill-feasible terrain exists (`LakeFeasibility`). No template carve at height 0 “as water.” Painted water uses a reserved body id (`LegacyPaintWaterBodyId`). Procedural lake **target count** defaults to **`ProceduralLakeBudgetHardCap`** (area scaling optional via `UseScaledProceduralLakeBudget`). Coast/slope prefabs and roads still largely assume **legacy sea level** until **FEAT-37b**; lake edge art issues: **[BUG-33](BACKLOG.md)**.
-- **Epic ([FEAT-37](BACKLOG.md)):** Lakes MVP via child issues **FEAT-37a** (done) → **FEAT-37b** → **FEAT-37c**; rivers/sea/sources/tools tracked as **FEAT-38–FEAT-41**. Minimap water desync: **[BUG-32](BACKLOG.md)**. See `.cursor/specs/water-system-refactor.md`.
+- **Today (FEAT-37a + FEAT-37b + FEAT-37c completed):** `WaterMap` stores **per-cell water body id** and **`WaterBody`** holds **surface height**; procedural lakes use **depression-fill**; `TerrainManager` may carve **minimal cardinal bowls** (`LakeFeasibility`). Lake **shore tiles** from **FEAT-37a**; **sorting / roads / bridges / `SEA_LEVEL` removal** (non-shore) from **FEAT-37b**; **FEAT-37c** persists `WaterMapData` on save and restores it on load with **CellData** snapshot restore (no slope regen / no global sorting recalc on load). **`WaterBodyType`** on `Cell` / `CellData` classifies lake vs sea for saves. Remaining shore art issues: **[BUG-33](BACKLOG.md)**. Load-time building sort: **[BUG-34](BACKLOG.md)** completed; multi-cell footprint: **[BUG-35](BACKLOG.md)**.
+- **Epic ([FEAT-37](BACKLOG.md)):** Child issues **FEAT-37a** / **FEAT-37b** / **FEAT-37c** done; rivers/sea/sources/tools: **FEAT-38–FEAT-41**. Minimap water: **[BUG-32](BACKLOG.md)** completed (2026-03-23). See `.cursor/specs/water-system-refactor.md`.
 
 ### Isometric Geography
 
