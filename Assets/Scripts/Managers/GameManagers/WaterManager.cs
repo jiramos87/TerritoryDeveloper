@@ -7,10 +7,10 @@ using Territory.Buildings;
 namespace Territory.Terrain
 {
 /// <summary>
-/// Generates and manages water bodies on the grid based on the sea level threshold.
-/// Places animated water tiles on cells at or below sea level, tracks water plants for
-/// capacity calculations, and provides water map data. Coordinates with GridManager for
-/// cell access and TerrainManager for height-based water placement.
+/// Generates and manages water bodies on the grid. Lakes use depression-fill on the height map (FEAT-37a);
+/// sea-level terrain cells are merged into <see cref="WaterMap"/> after fill so they match <c>PlaceSeaLevelWater</c>.
+/// Legacy sea-level threshold remains for paint tool / old save restore. Coordinates with GridManager,
+/// TerrainManager, and ZoneManager. <see cref="LakeFillSettings"/> are created in code (not Inspector) until terrain UI exists.
 /// </summary>
 public class WaterManager : MonoBehaviour
 {
@@ -20,7 +20,18 @@ public class WaterManager : MonoBehaviour
 
     public List<GameObject> waterTilePrefabs; // Water tile prefabs with animation
 
-    public int seaLevel = 0; // Height at or below which water will be placed
+    [Tooltip("When true, procedural lakes come from depression-fill on the height map (multi-level surfaces). When false, any cell with terrain height <= seaLevel is water (legacy).")]
+    public bool useLakeDepressionFill = true;
+
+    /// <summary>Lake depression-fill parameters — not serialized; tune defaults in <see cref="LakeFillSettings"/> (terrain generator UI will expose these later).</summary>
+    private LakeFillSettings lakeFillSettings;
+
+    /// <summary>Read-only access for terrain feasibility and diagnostics.</summary>
+    public LakeFillSettings LakeFillSettings => lakeFillSettings;
+
+    [Tooltip("Legacy: height at or below which water is placed when useLakeDepressionFill is false; also used for painted water and restore from old saves.")]
+    public int seaLevel = 0;
+
     private WaterMap waterMap;
 
     private List<WaterPlant> waterPlants = new List<WaterPlant>();
@@ -51,6 +62,14 @@ public class WaterManager : MonoBehaviour
         {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}
     };
 
+    void Awake()
+    {
+        lakeFillSettings = new LakeFillSettings();
+        const int maxLakeBboxPerAxisCap = 10;
+        lakeFillSettings.MaxLakeBoundingExtent = Mathf.Min(lakeFillSettings.MaxLakeBoundingExtent, maxLakeBboxPerAxisCap);
+        lakeFillSettings.MaxLakeBoundingExtent = Mathf.Max(lakeFillSettings.MaxLakeBoundingExtent, lakeFillSettings.MinLakeBoundingExtent);
+    }
+
     void Start()
     {
         if (gridManager == null)
@@ -72,7 +91,23 @@ public class WaterManager : MonoBehaviour
                 terrainManager = FindObjectOfType<TerrainManager>();
             if (terrainManager != null && terrainManager.GetHeightMap() != null)
             {
-                waterMap.InitializeWaterBodiesBasedOnHeight(terrainManager.GetHeightMap(), seaLevel);
+                if (useLakeDepressionFill)
+                {
+                    waterMap.InitializeLakesFromDepressionFill(terrainManager.GetHeightMap(), lakeFillSettings, seaLevel);
+                    Debug.Log($"[WaterManager] Lake init: finalBodies={waterMap.LastLakeGenerationFinalBodyCount}, target={waterMap.LastLakeGenerationTargetBodies}, metTarget={waterMap.LastLakeGenerationMetTarget}, artificialBodies={waterMap.LastLakeGenerationArtificialBodiesPlaced}");
+                    if (waterMap.ArtificialDirtyMinX >= 0)
+                    {
+                        terrainManager.ApplyHeightMapToRegion(
+                            waterMap.ArtificialDirtyMinX,
+                            waterMap.ArtificialDirtyMinY,
+                            waterMap.ArtificialDirtyMaxX,
+                            waterMap.ArtificialDirtyMaxY);
+                    }
+                }
+                else
+                    waterMap.InitializeWaterBodiesBasedOnHeight(terrainManager.GetHeightMap(), seaLevel);
+                // Sea-level terrain may already use PlaceSeaLevelWater without WaterMap entries when using lake fill.
+                waterMap.MergeSeaLevelDryCellsFromHeightMap(terrainManager.GetHeightMap(), seaLevel);
             }
             else
             {
@@ -80,6 +115,9 @@ public class WaterManager : MonoBehaviour
             }
 
             UpdateWaterVisuals();
+
+            if (terrainManager != null && useLakeDepressionFill)
+                terrainManager.RefreshLakeShoreAfterLakePlacement(this);
         }
     }
 
@@ -94,22 +132,7 @@ public class WaterManager : MonoBehaviour
         if (waterMap == null || waterMap.IsValidPosition(0, 0) == false)
             waterMap = new WaterMap(gridManager.width, gridManager.height);
 
-        for (int x = 0; x < gridManager.width; x++)
-        {
-            for (int y = 0; y < gridManager.height; y++)
-            {
-                waterMap.SetWater(x, y, false);
-            }
-        }
-
-        foreach (CellData cd in gridData)
-        {
-            if (cd.height <= seaLevel || (cd.zoneType != null && cd.zoneType.Equals("Water", System.StringComparison.OrdinalIgnoreCase)))
-            {
-                if (waterMap.IsValidPosition(cd.x, cd.y))
-                    waterMap.SetWater(cd.x, cd.y, true);
-            }
-        }
+        waterMap.RestoreFromLegacyCellData(gridData, seaLevel);
     }
 
     private void InitializeWaterBodiesFromMatrix()
@@ -128,7 +151,7 @@ public class WaterManager : MonoBehaviour
             {
                 if (initialWaterCells[x, y])
                 {
-                    waterMap.SetWater(x, y, true);
+                    waterMap.AddLegacyPaintedWaterCell(x, y, seaLevel);
                 }
             }
         }
@@ -138,6 +161,29 @@ public class WaterManager : MonoBehaviour
     {
         if (waterMap == null) return false;
         return waterMap.IsWater(x, y);
+    }
+
+    /// <summary>
+    /// Registers a sea-level cell in <see cref="WaterMap"/> when terrain placed water without going through lake fill (e.g. <c>PlaceSeaLevelWater</c> at runtime).
+    /// </summary>
+    public void TryRegisterSeaLevelWaterCell(int x, int y)
+    {
+        if (waterMap == null || terrainManager == null || terrainManager.GetHeightMap() == null)
+            return;
+        if (!waterMap.IsValidPosition(x, y))
+            return;
+        if (terrainManager.GetHeightMap().GetHeight(x, y) > seaLevel)
+            return;
+        if (waterMap.IsWater(x, y))
+            return;
+        waterMap.AddLegacyPaintedWaterCell(x, y, seaLevel);
+    }
+
+    /// <summary>Returns -1 if the cell is not water.</summary>
+    public int GetWaterSurfaceHeight(int x, int y)
+    {
+        if (waterMap == null) return -1;
+        return waterMap.GetSurfaceHeightAt(x, y);
     }
 
     public void PlaceWater(int x, int y)
@@ -152,30 +198,64 @@ public class WaterManager : MonoBehaviour
             return;
         }
 
+        if (!waterMap.IsWater(x, y))
+            waterMap.AddLegacyPaintedWaterCell(x, y, seaLevel);
+
+        int surfaceHeight = waterMap.GetSurfaceHeightAt(x, y);
+        if (surfaceHeight < 0)
+            surfaceHeight = seaLevel;
+
+        // Logical surface height in WaterMap is spill (fill level). World placement uses one step lower (Option A / FEAT-37).
+        int visualSurfaceHeight = Mathf.Max(TerrainManager.MIN_HEIGHT, surfaceHeight - 1);
+
+        int terrainHeight = seaLevel;
+        if (terrainManager != null && terrainManager.GetHeightMap() != null)
+            terrainHeight = terrainManager.GetHeightMap().GetHeight(x, y);
+
         // Update the grid cell to display water
         GameObject cell = gridManager.gridArray[x, y];
         Cell cellComponent = gridManager.GetCell(x, y);
+        if (cellComponent == null)
+            return;
+
+        // Terrain already placed sea-level water; do not replace with animated lake prefabs. Sync inspector fields from the existing child.
+        if (terrainHeight <= seaLevel && cellComponent.zoneType == Zone.ZoneType.Water && cell.transform.childCount > 0)
+        {
+            Transform first = cell.transform.GetChild(0);
+            if (first != null)
+            {
+                string n = first.name.Replace("(Clone)", "").Trim();
+                if (!string.IsNullOrEmpty(n))
+                {
+                    cellComponent.prefabName = n;
+                    cellComponent.buildingType = n;
+                }
+            }
+            return;
+        }
+
         // Destroy existing children
         foreach (Transform child in cell.transform)
         {
             GameObject.Destroy(child.gameObject);
         }
 
-        // Update the cell's zone type and height so sorting/position are correct
+        // Cell height follows terrain floor (HeightMap); water surface is used for the water tile and sorting.
         cellComponent.zoneType = Zone.ZoneType.Water;
-        gridManager.SetCellHeight(new Vector2(x, y), seaLevel);
-        Vector2 worldPosWater = gridManager.GetWorldPositionVector(x, y, seaLevel);
-        cell.transform.position = worldPosWater;
-        cellComponent.transformPosition = worldPosWater;
+        gridManager.SetCellHeight(new Vector2(x, y), terrainHeight);
+        Vector2 cellWorldPos = gridManager.GetWorldPositionVector(x, y, terrainHeight);
+        cell.transform.position = cellWorldPos;
+        cellComponent.transformPosition = cellWorldPos;
 
-        // Place water tile half a cell lower so it sits visually below the land edge (relative height offset for h=0)
+        Vector2 waterSurfaceWorld = gridManager.GetWorldPositionVector(x, y, visualSurfaceHeight);
         float halfCellHeight = gridManager.tileHeight * 0.25f;
-        Vector2 waterTileWorldPos = worldPosWater + new Vector2(0f, halfCellHeight);
+        Vector2 waterTileWorldPos = waterSurfaceWorld + new Vector2(0f, halfCellHeight);
 
         // Place water tile
         GameObject waterPrefab = GetRandomWaterPrefab();
 
-        if (waterPrefab == null) return;
+        if (waterPrefab == null)
+            return;
 
         GameObject waterTile = GameObject.Instantiate(
             waterPrefab,
@@ -199,14 +279,19 @@ public class WaterManager : MonoBehaviour
         zone.zoneCategory = Zone.ZoneCategory.Water;
 
         waterTile.transform.SetParent(cell.transform);
-        // Use TerrainManager sorting so water (height 0) draws behind land (height >= 1)
+        // Sorting matches visual water height (one step below logical surface).
         int sortingOrder = terrainManager != null
-            ? terrainManager.CalculateTerrainSortingOrder(x, y, seaLevel)
+            ? terrainManager.CalculateTerrainSortingOrder(x, y, visualSurfaceHeight)
             : -(y * gridManager.width + x + 50000);
         SpriteRenderer sr = waterTile.GetComponent<SpriteRenderer>();
         if (sr != null)
             sr.sortingOrder = sortingOrder;
         cellComponent.SetCellInstanceSortingOrder(sortingOrder);
+
+        cellComponent.prefabName = waterPrefab.name;
+        cellComponent.buildingType = waterPrefab.name;
+        cellComponent.buildingSize = 0;
+        cellComponent.occupiedBuilding = null;
     }
 
     // Rest of the existing WaterManager methods remain the same
@@ -220,8 +305,7 @@ public class WaterManager : MonoBehaviour
         if (!IsWaterAt(x, y))
             return;
 
-        // Set the water map cell to no water
-        waterMap.SetWater(x, y, false);
+        waterMap.ClearWaterAt(x, y);
 
         // Update the grid cell to display grass
         GameObject cell = gridManager.gridArray[x, y];
@@ -264,9 +348,7 @@ public class WaterManager : MonoBehaviour
             for (int y = 0; y < gridManager.height; y++)
             {
                 if (waterMap.IsWater(x, y))
-                {
                     PlaceWater(x, y);
-                }
             }
         }
     }
@@ -348,7 +430,7 @@ public class WaterManager : MonoBehaviour
             int nx = x + dx[i];
             int ny = y + dy[i];
 
-            if (waterMap.IsValidPosition(nx, ny) && (waterMap.IsWater(nx, ny) || terrainManager.GetHeightMap().GetHeight(nx, ny) == 0))
+            if (waterMap.IsValidPosition(nx, ny) && waterMap.IsWater(nx, ny))
             {
                 return true;
             }

@@ -39,6 +39,8 @@ public class GeographyManager : MonoBehaviour
 
     // Current geographical data (for save/load operations)
     private GeographyData currentGeographyData;
+
+    private MiniMapController miniMapController;
     #endregion
 
     #region Initialization
@@ -59,6 +61,8 @@ public class GeographyManager : MonoBehaviour
             interstateManager = FindObjectOfType<InterstateManager>();
         if (regionalMapManager == null)
             regionalMapManager = FindObjectOfType<RegionalMapManager>();
+        if (miniMapController == null)
+            miniMapController = FindObjectOfType<MiniMapController>();
 
         if (initializeOnStart)
         {
@@ -83,6 +87,7 @@ public class GeographyManager : MonoBehaviour
             waterManager.InitializeWaterMap();
         }
 
+        // Interstate runs after terrain (from InitializeGrid) and water so pathing and tiles use final height/water state.
         if (interstateManager != null)
         {
             const int maxInterstateAttempts = 3;
@@ -90,14 +95,10 @@ public class GeographyManager : MonoBehaviour
             for (int attempt = 0; attempt < maxInterstateAttempts; attempt++)
             {
                 placed = interstateManager.GenerateAndPlaceInterstate(attempt);
-                Debug.Log($"[Interstate] Attempt {attempt + 1}/{maxInterstateAttempts}: placed={placed}");
                 if (placed) break;
             }
             if (!placed)
-            {
-                Debug.Log("[Interstate] Random attempts failed, trying deterministic fallback...");
                 placed = interstateManager.TryGenerateInterstateDeterministic();
-            }
         }
 
         if (forestManager != null && initializeForestsOnStart)
@@ -132,6 +133,19 @@ public class GeographyManager : MonoBehaviour
                 DebugHelper.LogWarning("GeographyManager: Interstate could not be placed (no valid path). Game continues without interstate.");
             }
         }
+
+        NotifyMiniMapAfterGeographyReady();
+    }
+
+    /// <summary>
+    /// Refreshes the mini-map texture once terrain, water, interstate, forests (if any), and sorting are ready.
+    /// </summary>
+    private void NotifyMiniMapAfterGeographyReady()
+    {
+        if (miniMapController == null)
+            miniMapController = FindObjectOfType<MiniMapController>();
+        if (miniMapController != null)
+            miniMapController.RebuildTexture();
     }
 
     /// <summary>
@@ -225,6 +239,8 @@ public class GeographyManager : MonoBehaviour
 
         InitializeWaterDesirability();
         ReCalculateSortingOrderBasedOnHeight();
+
+        NotifyMiniMapAfterGeographyReady();
     }
 
     /// <summary>
@@ -242,6 +258,7 @@ public class GeographyManager : MonoBehaviour
         if (waterManager != null)
             waterManager.InitializeWaterMap();
 
+        // Interstate after terrain and water (same order as InitializeGeography).
         if (interstateManager != null)
         {
             if (terrainManager == null || terrainManager.GetHeightMap() == null || gridManager == null)
@@ -250,20 +267,15 @@ public class GeographyManager : MonoBehaviour
             }
             else
             {
-                Debug.Log("[GeographyManager] Order: 1.InitializeHeightMap 2.InitializeWaterMap 3.GenerateAndPlaceInterstate 4.InitializeForestMap 5.ReCalculateSortingOrder");
                 const int maxInterstateAttempts = 3;
                 bool placed = false;
                 for (int attempt = 0; attempt < maxInterstateAttempts; attempt++)
                 {
                     placed = interstateManager.GenerateAndPlaceInterstate(attempt);
-                    Debug.Log($"[Interstate] Attempt {attempt + 1}/{maxInterstateAttempts}: placed={placed}");
                     if (placed) break;
                 }
                 if (!placed)
-                {
-                    Debug.Log("[Interstate] Random attempts failed, trying deterministic fallback...");
                     placed = interstateManager.TryGenerateInterstateDeterministic();
-                }
             }
         }
 
@@ -293,6 +305,8 @@ public class GeographyManager : MonoBehaviour
                 DebugHelper.LogWarning("GeographyManager: Interstate could not be placed (no valid path). Game continues without interstate.");
             }
         }
+
+        NotifyMiniMapAfterGeographyReady();
     }
     #endregion
 
@@ -413,6 +427,8 @@ public class GeographyManager : MonoBehaviour
             int order;
             if (terrainManager.IsWaterSlopeObject(child))
                 order = terrainManager.CalculateWaterSlopeSortingOrder(x, y);
+            else if (terrainManager.IsBayObject(child))
+                order = terrainManager.CalculateBayShoreSortingOrder(x, y);
             else if (cell.forestObject != null && cell.forestObject == child)
                 order = terrainOrder + 5;
             else
@@ -581,6 +597,10 @@ public class GeographyManager : MonoBehaviour
                     if (terrainManager != null && terrainManager.IsWaterSlopeObject(obj))
                     {
                         newSortingOrder = terrainManager.CalculateWaterSlopeSortingOrder(x, y);
+                    }
+                    else if (terrainManager != null && terrainManager.IsBayObject(obj))
+                    {
+                        newSortingOrder = terrainManager.CalculateBayShoreSortingOrder(x, y);
                     }
                     else if (terrainManager != null && terrainManager.IsSeaLevelWaterObject(obj))
                     {

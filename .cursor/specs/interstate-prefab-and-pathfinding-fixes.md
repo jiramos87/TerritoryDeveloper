@@ -23,7 +23,7 @@ This spec addresses multiple issues observed in interstate route generation: inc
 | `GridPathfinder.cs` | Manual draw A* (via `GridManager.FindPath`) |
 | `TerraformingService.cs` | `ComputePathPlan`, `ExpandDiagonalStepsToCardinal` |
 | `PathTerraformPlan.cs` | Terraform Apply/Revert, cut-through mode |
-| `TerrainManager.cs` | Terrain visuals, `RestoreTerrainForCell`, `PlaceWaterSlope` |
+| `TerrainManager.cs` | Terrain visuals, `RestoreTerrainForCell`, `PlaceWaterShore` |
 | `AutoRoadBuilder.cs` | Auto road mode, `TryGetStreetPlacementPlan` → `TryPrepareRoadPlacementPlan` when available |
 | `RoadPathCostConstants.cs` | Shared cost model for slopes |
 

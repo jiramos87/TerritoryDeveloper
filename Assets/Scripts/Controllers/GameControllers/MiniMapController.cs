@@ -29,6 +29,7 @@ public enum MiniMapLayer
 /// Renders a procedural mini-map from grid cell data and provides click-to-navigate.
 /// Displays zones, roads, water, interstate (thicker), and a viewport rectangle.
 /// Supports multiple toggleable layers: streets, zones, forests, desirability, centroid.
+/// Texture rebuilds on geography completion, grid restore, panel open, and layer changes (not on a fixed timer).
 /// Hides during full-screen popups (LoadGame, BuildingSelector).
 /// </summary>
 public class MiniMapController : MonoBehaviour, IPointerClickHandler
@@ -47,12 +48,6 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
     public RawImage mapImage;
     public RectTransform viewportRect;
     public GameObject miniMapPanel;
-    #endregion
-
-    #region Configuration
-    [Header("Configuration")]
-    [Tooltip("Seconds between map texture rebuilds")]
-    [SerializeField] private float rebuildInterval = 0.5f;
     #endregion
 
     #region Colors
@@ -75,7 +70,6 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
 
     #region State
     private Texture2D mapTexture;
-    private float rebuildTimer;
     private HashSet<Vector2Int> interstateSet;
     private HashSet<Vector2Int> roadSet;
     private bool wasVisibleBeforePopup = true;
@@ -89,17 +83,20 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
     /// <summary>Whether the mini-map panel is currently visible.</summary>
     public bool IsVisible => (miniMapPanel != null ? miniMapPanel : gameObject).activeSelf;
 
-    /// <summary>Shows or hides the mini-map panel.</summary>
+    /// <summary>Shows or hides the mini-map panel. Rebuilds the texture when opening so the map stays current.</summary>
     public void SetVisible(bool visible)
     {
         GameObject target = miniMapPanel != null ? miniMapPanel : gameObject;
         target.SetActive(visible);
+        if (visible)
+            RebuildTexture();
     }
 
     /// <summary>Toggles the given layer on or off.</summary>
     public void ToggleLayer(MiniMapLayer layer)
     {
         activeLayers ^= layer;
+        RebuildTexture();
     }
 
     /// <summary>Returns true if the given layer is currently active.</summary>
@@ -118,6 +115,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
     public void SetActiveLayers(MiniMapLayer layers)
     {
         activeLayers = layers;
+        RebuildTexture();
     }
     #endregion
 
@@ -136,8 +134,6 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
     {
         if (gridManager != null && gridManager.onGridRestored != null)
             gridManager.onGridRestored += OnGridRestored;
-
-        rebuildTimer = 0f;
     }
 
     void OnDestroy()
@@ -161,13 +157,6 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         if (!panel.activeSelf)
             return;
 
-        rebuildTimer += Time.unscaledDeltaTime;
-        if (rebuildTimer >= rebuildInterval)
-        {
-            rebuildTimer = 0f;
-            RebuildTexture();
-        }
-
         UpdateViewportRect();
     }
     #endregion
@@ -175,7 +164,6 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
     #region Texture Rebuild
     private void OnGridRestored()
     {
-        rebuildTimer = 0f;
         RebuildTexture();
     }
 
@@ -304,7 +292,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         bool isInterstate = interstateSet != null && interstateSet.Contains(pos);
         bool isRoad = roadSet != null && roadSet.Contains(pos);
 
-        // 1. Water (always visible)
+        // 1. Water (always visible) — WaterMap first; ZoneType.Water covers sea-level terrain not yet in map.
         if (waterManager != null && waterManager.IsWaterAt(x, y))
             return ColorWater;
 
@@ -318,6 +306,9 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         Cell cell = gridManager.GetCell(x, y);
         if (cell == null)
             return ColorGrass;
+
+        if (cell.GetZoneType() == Zone.ZoneType.Water)
+            return ColorWater;
 
         Zone.ZoneType zt = cell.GetZoneType();
 
@@ -364,6 +355,8 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
                     continue;
                 Cell cell = gridManager.GetCell(x, y);
                 if (cell == null) continue;
+                if (cell.GetZoneType() == Zone.ZoneType.Water)
+                    continue;
                 float d = cell.desirability;
                 if (d < desirabilityMin) desirabilityMin = d;
                 if (d > desirabilityMax) desirabilityMax = d;

@@ -176,9 +176,9 @@ NorthEastUp, NorthWestUp, SouthEastUp, SouthWestUp          // 4 corner (upslope
 
 4. **No match → returns null** (cell is a local maximum/plateau; uses flat grass).
 
-### 4.2 Water Slope Selection (`DetermineWaterSlopePrefab`)
+### 4.2 Water Slope Selection (`DetermineWaterShorePrefabs`)
 
-For land cells (h ≥ 1) adjacent to water (h = 0), `DetermineWaterSlopePrefab(x, y)` uses a similar but distinct decision tree. It checks which cardinal and diagonal neighbors are at sea level and selects the appropriate water-slope variant. Priority: border cases → cardinal water neighbors → combined cardinal patterns → diagonal-only water (upslope water variants).
+For land cells (h ≥ 1) adjacent to water, `DetermineWaterShorePrefabs(x, y)` uses a similar but distinct decision tree. It checks which cardinal and diagonal neighbors are water/sea and selects one or more shore prefabs (cardinal, Bay, or upslope+downslope pair). Priority: border cases → cardinal water neighbors → combined cardinal patterns → diagonal-only water (Bay when the diagonal water cell has **no water beyond it** along the two cardinals that extend the lake away from the shore—outer corner of an axis-aligned rectangle; upslope + downslope when a higher **land** neighbor forces a sloped shore; otherwise single Bay on flat terrain along a diagonal lake edge).
 
 ### 4.3 `RequiresSlope` vs Slope Selection
 
@@ -431,9 +431,9 @@ Interstate pathfinding multiplies slope costs by `InterstateSlopeMultiplier = 5`
 |---------|----------------|-------------|
 | Height data | `HeightMap.cs` | `GetHeight`, `SetHeight`, `IsValidPosition` |
 | Slope type determination | `TerrainManager.cs` | `DetermineSlopePrefab`, `GetTerrainSlopeTypeAt` |
-| Water slope determination | `TerrainManager.cs` | `DetermineWaterSlopePrefab`, `IsWaterSlopeCell` |
+| Water slope determination | `TerrainManager.cs` | `DetermineWaterShorePrefabs`, `IsWaterSlopeCell` |
 | Cliff walls | `TerrainManager.cs` | `PlaceCliffWalls`, `NeedsCliffWall{N,S,E,W}` |
-| Terrain tile placement | `TerrainManager.cs` | `PlaceFlatTerrain`, `PlaceSlopeFromPrefab`, `PlaceWaterSlope` |
+| Terrain tile placement | `TerrainManager.cs` | `PlaceFlatTerrain`, `PlaceSlopeFromPrefab`, `PlaceWaterShore` |
 | Sorting order | `TerrainManager.cs` | `CalculateTerrainSortingOrder`, `CalculateSlopeSortingOrder` |
 | Full sort recalculation | `GeographyManager.cs` | `ReCalculateSortingOrderBasedOnHeight` |
 | Initialization orchestration | `GeographyManager.cs` | `InitializeGeography` |

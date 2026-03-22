@@ -48,6 +48,8 @@ namespace Territory.Core
                 int order;
                 if (grid.terrainManager.IsWaterSlopeObject(child))
                     order = grid.terrainManager.CalculateWaterSlopeSortingOrder(x, y);
+                else if (grid.terrainManager.IsBayObject(child))
+                    order = grid.terrainManager.CalculateBayShoreSortingOrder(x, y);
                 else if (cell.forestObject != null && cell.forestObject == child)
                     order = terrainOrder + 5;
                 else

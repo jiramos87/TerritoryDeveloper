@@ -84,8 +84,8 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 ### Initialization
 `GeographyManager.InitializeGeography()` orchestrates the full startup sequence:
 1. `RegionalMapManager.InitializeRegionalMap()` — regional map with neighboring cities
-2. `GridManager.InitializeGrid()` — creates cell grid, then internally calls `TerrainManager.InitializeHeightMap()` to generate terrain elevation
-3. `WaterManager.InitializeWaterMap()` — places water bodies based on heightmap (cells at h=0)
+2. `GridManager.InitializeGrid()` — creates cell grid, then internally calls `TerrainManager.InitializeHeightMap()` to generate terrain elevation (on maps **wider/taller than 40×40**, the **40×40** designer template is **centered**; procedural terrain fills the rest)
+3. `WaterManager.InitializeWaterMap()` — builds `WaterMap` + lake bodies (depression-fill on `HeightMap` when `useLakeDepressionFill`; legacy: mask by `seaLevel`)
 4. `InterstateManager.GenerateAndPlaceInterstate()` — interstate highways (up to 3 random attempts + deterministic fallback)
 5. `ForestManager.InitializeForestMap()` — generates forests (conditional: `initializeForestsOnStart`)
 6. Water desirability calculation, sorting order recalculation, border signs placement
@@ -115,8 +115,8 @@ Cross-cutting effort to standardize HUD, popups, and interaction patterns: **cha
 
 ### Water (current vs planned)
 
-- **Today:** Water bodies are largely modeled against a **single conceptual water level** (flat surface, strong association with the lowest terrain band). Procedural lakes and the water drawing tool share this model, which can produce **visual gaps** between terrain and water (pit-like lakes).
-- **Planned epic ([FEAT-37](BACKLOG.md)):** Refactor toward **terrain-hosted water at multiple elevations**—unifying procedural and painted water as persistent water masses constrained by local terrain, with phased work on flow (rivers), coast/tide direction, slope water, bridges, and placement rules. **Planning pass [TECH-12](BACKLOG.md)** defines objectives, rules, scope, and child issues before implementation. See `.cursor/specs/water-system-refactor.md`.
+- **Today (FEAT-37a completed):** `WaterMap` stores **per-cell water body id** and **`WaterBody`** holds **surface height**; procedural lakes use **depression-fill** on the heightmap; `TerrainManager` may carve **minimal cardinal bowls** before water init so enough spill-feasible terrain exists (`LakeFeasibility`). No template carve at height 0 “as water.” Painted water uses a reserved body id (`LegacyPaintWaterBodyId`). Procedural lake **target count** defaults to **`ProceduralLakeBudgetHardCap`** (area scaling optional via `UseScaledProceduralLakeBudget`). Coast/slope prefabs and roads still largely assume **legacy sea level** until **FEAT-37b**; lake edge art issues: **[BUG-33](BACKLOG.md)**.
+- **Epic ([FEAT-37](BACKLOG.md)):** Lakes MVP via child issues **FEAT-37a** (done) → **FEAT-37b** → **FEAT-37c**; rivers/sea/sources/tools tracked as **FEAT-38–FEAT-41**. Minimap water desync: **[BUG-32](BACKLOG.md)**. See `.cursor/specs/water-system-refactor.md`.
 
 ### Isometric Geography
 

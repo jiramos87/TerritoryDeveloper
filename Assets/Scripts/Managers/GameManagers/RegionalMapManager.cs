@@ -41,9 +41,6 @@ public class RegionalMapManager : MonoBehaviour
         TerritoryData playerTerritory = regionalMap.GetPlayerTerritory();
         if (cityStats != null && playerTerritory != null)
             cityStats.cityName = playerTerritory.cityName;
-
-        if (regionalMap != null)
-            Debug.Log("Regional map generated: " + regionalMap.ToDebugString());
     }
 
     public bool TryGetInterstateBorders(out int borderA, out int borderB)

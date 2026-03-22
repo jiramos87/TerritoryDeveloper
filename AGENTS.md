@@ -29,7 +29,8 @@ After executing a development plan for an issue, **keep the issue in "In progres
 | Economy | `EconomyManager.cs` | `CityStats.cs` |
 | Isometric geography / slopes / heightmap | `.cursor/specs/isometric-geography-system.md` | `TerrainManager.cs`, `HeightMap.cs`, `TerraformingService.cs`, `RoadPrefabResolver.cs`, `SlopePrefabRegistry.cs`, `GridPathfinder.cs` |
 | Terrain/heightmap | `TerrainManager.cs` | `HeightMap.cs`, `GeographyManager.cs` |
-| Water bodies | `WaterManager.cs` | `WaterMap.cs`, `GeographyManager.cs`. Multi-level / refactor epic: **FEAT-37** (depends on **TECH-12** planning pass), spec `.cursor/specs/water-system-refactor.md` |
+| Water bodies | `WaterManager.cs` | `WaterMap.cs`, `WaterBody.cs`, `GeographyManager.cs`. Epic **FEAT-37** completes only when **FEAT-37a**, **FEAT-37b**, and **FEAT-37c** are done; spec `.cursor/specs/water-system-refactor.md`. **FEAT-37a** completed; lake shore prefab edge issues: **BUG-33**. Minimap water out of sync: **BUG-32** |
+| Minimap height / relief (optional layer) | `MiniMapController.cs` | `HeightMap`, `GridManager`; **FEAT-42** in `BACKLOG.md` |
 | Forests | `ForestManager.cs` | `ForestMap.cs`, `GeographyManager.cs` |
 | New building type | `IBuilding.cs` (interface) | `ZoneManager.cs`, `GridManager.cs` (placement) |
 | Sorting/render bug | `GridManager.cs` region "Sorting Order" | `TerrainManager.cs` |

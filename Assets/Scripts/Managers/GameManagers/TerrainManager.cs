@@ -170,7 +170,106 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     {
         heightMap = new HeightMap(gridManager.width, gridManager.height);
         LoadInitialHeightMap();
+        EnsureGuaranteedLakeDepressions();
         ApplyHeightMapToGrid();
+    }
+
+    private const string LakeBasinLogPrefix = "[LakeBasins]";
+
+    /// <summary>
+    /// After procedural height generation, carves minimal cardinal bowls until
+    /// <see cref="LakeFeasibility.CountSpillPassingCells"/> reaches
+    /// <c>2 × ProceduralLakeBudgetHardCap + LakeFeasibilityExtraBowls</c> (capped by map area).
+    /// Uses shuffled full interior scans so the target is met for any map size when physically possible.
+    /// Skips if <see cref="waterManager"/> is missing or lake fill is disabled.
+    /// </summary>
+    private void EnsureGuaranteedLakeDepressions()
+    {
+        if (heightMap == null || gridManager == null)
+            return;
+
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        if (waterManager == null || !waterManager.useLakeDepressionFill)
+            return;
+
+        LakeFillSettings settings = waterManager.LakeFillSettings;
+        int w = gridManager.width;
+        int h = gridManager.height;
+
+        int minRequired = 2 * settings.ProceduralLakeBudgetHardCap + settings.LakeFeasibilityExtraBowls;
+        minRequired = Mathf.Max(1, minRequired);
+        int maxPassingPossible = w * h;
+        minRequired = Mathf.Min(minRequired, maxPassingPossible);
+
+        int passing = LakeFeasibility.CountSpillPassingCells(heightMap);
+        Debug.Log($"{LakeBasinLogPrefix} Target spill-passing cells >= {minRequired} (map {w}x{h}, hardCap={settings.ProceduralLakeBudgetHardCap}, extraBowls={settings.LakeFeasibilityExtraBowls}), initial passing={passing}");
+
+        if (w < 3 || h < 3)
+        {
+            Debug.LogWarning($"{LakeBasinLogPrefix} Map too small for interior bowl carving; skipping.");
+            return;
+        }
+
+        if (passing >= minRequired)
+        {
+            Debug.Log($"{LakeBasinLogPrefix} Target already met; no terrain carve.");
+            return;
+        }
+
+        int rngSeed = unchecked(settings.RandomSeed ^ (w * 73856093) ^ (h * 19349663) ^ 0x4C414B45);
+        var rnd = new System.Random(rngSeed);
+
+        var interior = new List<Vector2Int>((w - 2) * (h - 2));
+        for (int x = 1; x < w - 1; x++)
+        {
+            for (int y = 1; y < h - 1; y++)
+                interior.Add(new Vector2Int(x, y));
+        }
+
+        int carves = 0;
+        int round = 0;
+        const int maxRounds = 500;
+
+        while (passing < minRequired && round < maxRounds)
+        {
+            round++;
+            ShuffleCoordsList(interior, rnd);
+            bool anyCarveThisRound = false;
+            foreach (Vector2Int c in interior)
+            {
+                if (passing >= minRequired)
+                    break;
+                if (!LakeFeasibility.PassesSpillTest(c.x, c.y, heightMap))
+                {
+                    LakeFeasibility.CarveMinimalCardinalBowl(heightMap, c.x, c.y);
+                    carves++;
+                    passing = LakeFeasibility.CountSpillPassingCells(heightMap);
+                    anyCarveThisRound = true;
+                    if (passing >= minRequired)
+                        break;
+                }
+            }
+
+            if (!anyCarveThisRound)
+                break;
+        }
+
+        if (passing >= minRequired)
+            Debug.Log($"{LakeBasinLogPrefix} Done: rounds={round}, carves={carves}, final passing={passing} (target {minRequired})");
+        else
+            Debug.LogWarning($"{LakeBasinLogPrefix} Stopped early: rounds={round}, carves={carves}, final passing={passing}, target={minRequired} (no carveable cells left or iteration cap)");
+    }
+
+    private static void ShuffleCoordsList(List<Vector2Int> list, System.Random rnd)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = rnd.Next(i + 1);
+            Vector2Int tmp = list[i];
+            list[i] = list[j];
+            list[j] = tmp;
+        }
     }
 
     /// <summary>
@@ -258,53 +357,64 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     private const int OriginalMapSize = 40;
     private const int TerrainGenSeed = 12345;
-    private const float PerlinNoiseScale = 6f;
-    private const int BorderBlendWidth = 10;
+    /// <summary>Low-frequency Perlin (large horizontal plateaus for extended map).</summary>
+    private const float ExtendedPerlinScaleCoarse = 58f;
+    /// <summary>Medium-frequency detail; mixed lightly with coarse.</summary>
+    private const float ExtendedPerlinScaleFine = 38f;
+    private const float ExtendedPerlinCoarseWeight = 0.72f;
+    private const float ExtendedNoiseRemapLow = 0.32f;
+    private const float ExtendedNoiseRemapRange = 0.58f;
+    private const int BorderBlendWidth = 16;
+    private const int ExtendedTerrainSmoothPasses = 2;
+    /// <summary>Fine Perlin scale for sparse one-step dips (FEAT-37a lake seeds outside the 40×40 template).</summary>
+    private const float ExtendedMicroLakeNoiseScale = 9f;
+    /// <summary>Lower values carve more often; keep rare so smoothing does not erase all structure.</summary>
+    private const float ExtendedMicroLakeCarveThreshold = 0.028f;
 
-    /// <summary>Original 40x40 height map (rows y, cols x). Used as template for [0..39,0..39] when grid is larger.</summary>
+    /// <summary>Original 40×40 height map (rows y, cols x). When the grid is larger, placed <b>centered</b>; procedural fill surrounds it.</summary>
     private static int[,] GetOriginal40x40Heights()
     {
         return new int[,] {
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2},
-          {1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 0, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2},
-          {1, 1, 2, 3, 3, 3, 2, 1, 1, 1, 1, 0, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4, 5, 4, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2},
-          {1, 1, 2, 3, 3, 3, 2, 1, 1, 1, 1, 0, 1, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4, 5, 4, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2},
-          {1, 1, 2, 3, 3, 3, 2, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2},
-          {1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {3, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {4, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {4, 4, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {3, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2},
+          {1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2},
+          {1, 1, 2, 3, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4, 5, 4, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2},
+          {1, 1, 2, 3, 3, 3, 2, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4, 5, 4, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2},
+          {1, 1, 2, 3, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2},
+          {1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {3, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {4, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {4, 4, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {3, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
         };
     }
 
@@ -321,124 +431,204 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
         int[,] extended = new int[w, h];
         int[,] template = GetOriginal40x40Heights();
-        for (int x = 0; x < OriginalMapSize && x < w; x++)
+        int ox = Mathf.Max(0, (w - OriginalMapSize) / 2);
+        int oy = Mathf.Max(0, (h - OriginalMapSize) / 2);
+
+        for (int tx = 0; tx < OriginalMapSize && ox + tx < w; tx++)
         {
-            for (int y = 0; y < OriginalMapSize && y < h; y++)
+            for (int ty = 0; ty < OriginalMapSize && oy + ty < h; ty++)
             {
-                extended[x, y] = template[y, x];
+                extended[ox + tx, oy + ty] = template[ty, tx];
             }
         }
 
-        FillExtendedTerrainProcedural(extended, w, h);
+        FillExtendedTerrainProcedural(extended, w, h, ox, oy);
         heightMap.SetHeights(extended);
     }
 
-    /// <summary>Fills cells outside [0..39,0..39] with coherent Perlin-based terrain and smooth blend at 40x40 border. Water only from lakes and rivers.</summary>
-    private void FillExtendedTerrainProcedural(int[,] heights, int w, int h)
+    /// <summary>
+    /// Fills cells outside the centered 40×40 template with low-frequency Perlin terrain, layered plateaus, and 3×3 smoothing.
+    /// Blends at the template border. Lakes are placed later via <see cref="WaterMap.InitializeLakesFromDepressionFill"/> (FEAT-37a).
+    /// </summary>
+    private void FillExtendedTerrainProcedural(int[,] heights, int w, int h, int templateOriginX, int templateOriginY)
     {
         float offsetX = TerrainGenSeed * 0.1f;
         float offsetY = TerrainGenSeed * 0.27f;
         int[,] template = GetOriginal40x40Heights();
+        float fineWeight = 1f - ExtendedPerlinCoarseWeight;
+        int ox = templateOriginX;
+        int oy = templateOriginY;
+        int txMax = ox + OriginalMapSize;
+        int tyMax = oy + OriginalMapSize;
 
         for (int x = 0; x < w; x++)
         {
             for (int y = 0; y < h; y++)
             {
-                if (x < OriginalMapSize && y < OriginalMapSize)
+                if (x >= ox && x < txMax && y >= oy && y < tyMax)
                     continue;
 
-                float n1 = Mathf.PerlinNoise((x + offsetX) / 14f, (y + offsetY) / 14f);
-                float n2 = Mathf.PerlinNoise((x + offsetX + 100f) / PerlinNoiseScale, (y + offsetY + 100f) / PerlinNoiseScale);
-                float n = 0.5f * n1 + 0.5f * n2;
-                n = 0.2f + 0.8f * n;
-                int perlinHeight = PerlinToHeight(n);
+                float n1 = Mathf.PerlinNoise((x + offsetX) / ExtendedPerlinScaleCoarse, (y + offsetY) / ExtendedPerlinScaleCoarse);
+                float n2 = Mathf.PerlinNoise((x + offsetX + 100f) / ExtendedPerlinScaleFine, (y + offsetY + 100f) / ExtendedPerlinScaleFine);
+                float n = ExtendedPerlinCoarseWeight * n1 + fineWeight * n2;
+                n = Mathf.Clamp01(ExtendedNoiseRemapLow + ExtendedNoiseRemapRange * n);
+                int perlinHeight = PerlinToHeightExtended(n);
 
                 float blend = 1f;
                 int edgeHeight = perlinHeight;
-                if (x >= OriginalMapSize && x < OriginalMapSize + BorderBlendWidth && y < OriginalMapSize)
-                {
-                    edgeHeight = template[y, OriginalMapSize - 1];
-                    blend = (float)(x - OriginalMapSize) / BorderBlendWidth;
-                }
-                else if (y >= OriginalMapSize && y < OriginalMapSize + BorderBlendWidth && x < OriginalMapSize)
-                {
-                    edgeHeight = template[OriginalMapSize - 1, x];
-                    blend = (float)(y - OriginalMapSize) / BorderBlendWidth;
-                }
+                TryGetTemplateBorderBlend(x, y, ox, oy, template, perlinHeight, out edgeHeight, out blend);
 
                 int finalHeight = blend >= 1f ? perlinHeight : Mathf.RoundToInt(edgeHeight * (1f - blend) + perlinHeight * blend);
                 heights[x, y] = Mathf.Clamp(finalHeight, 1, MAX_HEIGHT);
             }
         }
 
-        AddProceduralLakes(heights, w, h);
-        AddProceduralRivers(heights, w, h);
+        SmoothExtendedTerrainHeights(heights, w, h, ox, oy, ExtendedTerrainSmoothPasses);
+        ApplyExtendedMicroLakeRoughness(heights, w, h, ox, oy);
     }
 
-    /// <summary>Maps Perlin value [0,1] to land height 1-5: heavily mountainous, few plains. For slope/road testing.</summary>
-    private static int PerlinToHeight(float n)
+    /// <summary>
+    /// Sparse fine-scale height dips outside the template so depression-fill can find valid lake seeds on extended terrain.
+    /// </summary>
+    private static void ApplyExtendedMicroLakeRoughness(int[,] heights, int w, int h, int ox, int oy)
     {
-        if (n < 0.1f) return 1;
-        if (n < 0.3f) return 2;
-        if (n < 0.5f) return 3;
-        if (n < 0.75f) return 4;
-        return 5;
-    }
-
-    private void AddProceduralLakes(int[,] heights, int w, int h)
-    {
-        Random.InitState(TerrainGenSeed + 1);
-        int numLakes = 4 + (int)(Random.value * 3);
-        for (int i = 0; i < numLakes; i++)
+        float offX = TerrainGenSeed * 0.031f;
+        float offY = TerrainGenSeed * 0.019f;
+        int txMax = ox + OriginalMapSize;
+        int tyMax = oy + OriginalMapSize;
+        for (int x = 0; x < w; x++)
         {
-            int cx = OriginalMapSize + (int)(Random.value * (w - OriginalMapSize - 2));
-            int cy = OriginalMapSize + (int)(Random.value * (h - OriginalMapSize - 2));
-            if (cx < OriginalMapSize || cy < OriginalMapSize) continue;
-            int radius = 2 + (int)(Random.value * 2);
-            for (int dx = -radius; dx <= radius; dx++)
+            for (int y = 0; y < h; y++)
             {
-                for (int dy = -radius; dy <= radius; dy++)
-                {
-                    int nx = cx + dx, ny = cy + dy;
-                    if (nx >= OriginalMapSize && nx < w && ny >= OriginalMapSize && ny < h && dx * dx + dy * dy <= radius * radius)
-                        heights[nx, ny] = SEA_LEVEL;
-                }
+                if (x >= ox && x < txMax && y >= oy && y < tyMax)
+                    continue;
+
+                float n = Mathf.PerlinNoise((x + offX) / ExtendedMicroLakeNoiseScale, (y + offY) / ExtendedMicroLakeNoiseScale);
+                if (n < ExtendedMicroLakeCarveThreshold && heights[x, y] > MIN_HEIGHT + 1)
+                    heights[x, y] = Mathf.Max(MIN_HEIGHT + 1, heights[x, y] - 1);
             }
         }
     }
 
-    private void AddProceduralRivers(int[,] heights, int w, int h)
+    /// <summary>Blends procedural height toward the centered template along the four sides and four corner bands.</summary>
+    private static void TryGetTemplateBorderBlend(int x, int y, int ox, int oy, int[,] template, int perlinHeight, out int edgeHeight, out float blend)
     {
-        Random.InitState(TerrainGenSeed + 2);
-        int numRivers = 4 + (int)(Random.value * 4);
-        int[][] dirs = { new[] { 1, 0 }, new[] { -1, 0 }, new[] { 0, 1 }, new[] { 0, -1 } };
-        for (int i = 0; i < numRivers; i++)
+        edgeHeight = perlinHeight;
+        blend = 1f;
+        int bw = BorderBlendWidth;
+        int tx0 = ox;
+        int tx1 = ox + OriginalMapSize - 1;
+        int ty0 = oy;
+        int ty1 = oy + OriginalMapSize - 1;
+
+        float bestBlend = 1f;
+        int bestEdge = perlinHeight;
+
+        void Consider(float b, int eh)
         {
-            int sx = OriginalMapSize + (int)(Random.value * (w - OriginalMapSize - 4));
-            int sy = OriginalMapSize + (int)(Random.value * (h - OriginalMapSize - 4));
-            if (sx < OriginalMapSize || sy < OriginalMapSize) continue;
-            if (heights[sx, sy] < 2) continue;
-            int len = 4 + (int)(Random.value * 8);
-            int x = sx, y = sy;
-            for (int step = 0; step < len; step++)
+            if (b < bestBlend)
             {
-                if (x >= 0 && x < w && y >= 0 && y < h && (x >= OriginalMapSize || y >= OriginalMapSize))
-                    heights[x, y] = SEA_LEVEL;
-                int bestDx = 0, bestDy = 0, bestH = 6;
-                for (int d = 0; d < 4; d++)
+                bestBlend = b;
+                bestEdge = eh;
+            }
+        }
+
+        // Corner bands (two-axis blend toward template corners)
+        if (x >= tx1 + 1 && x < tx1 + 1 + bw && y >= ty1 + 1 && y < ty1 + 1 + bw)
+        {
+            float bx = (x - (tx1 + 1)) / (float)bw;
+            float by = (y - (ty1 + 1)) / (float)bw;
+            Consider(Mathf.Max(bx, by), template[OriginalMapSize - 1, OriginalMapSize - 1]);
+        }
+        if (x >= tx1 + 1 && x < tx1 + 1 + bw && y >= ty0 - bw && y < ty0)
+        {
+            float bx = (x - (tx1 + 1)) / (float)bw;
+            float by = (ty0 - 1 - y) / (float)bw;
+            Consider(Mathf.Max(bx, by), template[0, OriginalMapSize - 1]);
+        }
+        if (x >= tx0 - bw && x < tx0 && y >= ty1 + 1 && y < ty1 + 1 + bw)
+        {
+            float bx = (tx0 - 1 - x) / (float)bw;
+            float by = (y - (ty1 + 1)) / (float)bw;
+            Consider(Mathf.Max(bx, by), template[OriginalMapSize - 1, 0]);
+        }
+        if (x >= tx0 - bw && x < tx0 && y >= ty0 - bw && y < ty0)
+        {
+            float bx = (tx0 - 1 - x) / (float)bw;
+            float by = (ty0 - 1 - y) / (float)bw;
+            Consider(Mathf.Max(bx, by), template[0, 0]);
+        }
+
+        // East / west strips
+        if (y >= ty0 && y <= ty1)
+        {
+            if (x >= tx1 + 1 && x < tx1 + 1 + bw)
+                Consider((x - (tx1 + 1)) / (float)bw, template[y - ty0, OriginalMapSize - 1]);
+            if (x >= tx0 - bw && x < tx0)
+                Consider((tx0 - 1 - x) / (float)bw, template[y - ty0, 0]);
+        }
+
+        // North / south strips (template row 0 = low y edge, row 39 = high y edge in array indexing used by GetOriginal40x40Heights)
+        if (x >= tx0 && x <= tx1)
+        {
+            if (y >= ty1 + 1 && y < ty1 + 1 + bw)
+                Consider((y - (ty1 + 1)) / (float)bw, template[OriginalMapSize - 1, x - tx0]);
+            if (y >= ty0 - bw && y < ty0)
+                Consider((ty0 - 1 - y) / (float)bw, template[0, x - tx0]);
+        }
+
+        if (bestBlend < 1f)
+        {
+            blend = bestBlend;
+            edgeHeight = bestEdge;
+        }
+    }
+
+    /// <summary>3×3 box blur on procedural cells only (outside centered template); softens terraces and sharp pits.</summary>
+    private static void SmoothExtendedTerrainHeights(int[,] heights, int w, int h, int ox, int oy, int passes)
+    {
+        int txMax = ox + OriginalMapSize;
+        int tyMax = oy + OriginalMapSize;
+        for (int p = 0; p < passes; p++)
+        {
+            int[,] src = (int[,])heights.Clone();
+            for (int x = 0; x < w; x++)
+            {
+                for (int y = 0; y < h; y++)
                 {
-                    int nx = x + dirs[d][0], ny = y + dirs[d][1];
-                    if (nx >= 0 && nx < w && ny >= 0 && ny < h)
+                    if (x >= ox && x < txMax && y >= oy && y < tyMax)
+                        continue;
+
+                    int sum = 0;
+                    int count = 0;
+                    for (int dx = -1; dx <= 1; dx++)
                     {
-                        int nh = heights[nx, ny];
-                        if (nh < bestH) { bestH = nh; bestDx = dirs[d][0]; bestDy = dirs[d][1]; }
+                        for (int dy = -1; dy <= 1; dy++)
+                        {
+                            int nx = x + dx;
+                            int ny = y + dy;
+                            if (nx < 0 || nx >= w || ny < 0 || ny >= h)
+                                continue;
+                            sum += src[nx, ny];
+                            count++;
+                        }
                     }
+
+                    if (count > 0)
+                        heights[x, y] = Mathf.Clamp(Mathf.RoundToInt((float)sum / count), 1, MAX_HEIGHT);
                 }
-                x += bestDx;
-                y += bestDy;
-                if (bestH == 0) break;
             }
         }
+    }
+
+    /// <summary>Maps Perlin [0,1] to land height 1–5: favors wide plains and mid plateaus; fewer peaks (FEAT-37a / large lakes).</summary>
+    private static int PerlinToHeightExtended(float n)
+    {
+        if (n < 0.28f) return 1;
+        if (n < 0.48f) return 2;
+        if (n < 0.66f) return 3;
+        if (n < 0.84f) return 4;
+        return 5;
     }
 
     /// <summary>
@@ -458,6 +648,72 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Reapplies terrain for an inclusive heightmap rectangle (e.g. after artificial lake carving).
+    /// Uses the same diagonal sweep order as <see cref="ApplyHeightMapToGrid"/> for consistent slope resolution.
+    /// </summary>
+    public void ApplyHeightMapToRegion(int minX, int minY, int maxX, int maxY)
+    {
+        if (heightMap == null || gridManager == null)
+            return;
+
+        minX = Mathf.Clamp(minX, 0, gridManager.width - 1);
+        maxX = Mathf.Clamp(maxX, 0, gridManager.width - 1);
+        minY = Mathf.Clamp(minY, 0, gridManager.height - 1);
+        maxY = Mathf.Clamp(maxY, 0, gridManager.height - 1);
+
+        for (int sum = minX + minY; sum <= maxX + maxY; sum++)
+        {
+            for (int x = minX; x <= maxX; x++)
+            {
+                int y = sum - x;
+                if (y >= minY && y <= maxY && y >= 0 && y < gridManager.height)
+                    UpdateTileElevation(x, y);
+            }
+        }
+    }
+
+    /// <summary>
+    /// After lake water visuals exist, refreshes land cells in the 8-neighborhood of lake water so shore/bay slopes match.
+    /// Call after <see cref="WaterManager.UpdateWaterVisuals"/>.
+    /// </summary>
+    public void RefreshLakeShoreAfterLakePlacement(WaterManager wm)
+    {
+        if (heightMap == null || gridManager == null || wm == null)
+            return;
+
+        WaterMap wmMap = wm.GetWaterMap();
+        if (wmMap == null)
+            return;
+
+        var shore = new HashSet<Vector2Int>();
+        for (int x = 0; x < gridManager.width; x++)
+        {
+            for (int y = 0; y < gridManager.height; y++)
+            {
+                if (!wmMap.IsWater(x, y))
+                    continue;
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        if (dx == 0 && dy == 0)
+                            continue;
+                        int nx = x + dx;
+                        int ny = y + dy;
+                        if (!heightMap.IsValidPosition(nx, ny))
+                            continue;
+                        if (!wmMap.IsWater(nx, ny))
+                            shore.Add(new Vector2Int(nx, ny));
+                    }
+                }
+            }
+        }
+
+        foreach (Vector2Int p in shore)
+            UpdateTileElevation(p.x, p.y);
     }
 
     private void UpdateTileElevation(int x, int y)
@@ -482,9 +738,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         // Land cell adjacent to water: use water slope, not land slope or grass (avoids black voids at coast)
         if (newHeight >= 1 && IsAdjacentToWaterHeight(x, y))
         {
-            GameObject waterSlopePrefab = DetermineWaterSlopePrefab(x, y);
-            if (waterSlopePrefab != null)
-                PlaceWaterSlope(x, y, waterSlopePrefab);
+            List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(x, y);
+            LogShorePrefabSelectionDebug(x, y, waterShorePrefabs);
+            if (waterShorePrefabs != null && waterShorePrefabs.Count > 0)
+                PlaceWaterShore(x, y, waterShorePrefabs);
             else
                 PlaceFlatTerrain(x, y);  // fallback if pattern not recognized
             PlaceCliffWalls(x, y);
@@ -598,9 +855,13 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         // Land cell adjacent to water (height 0) must restore water slope, not land slope.
         if (newHeight >= 1 && adjacentWater && !forceFlat && !forceSlopeType.HasValue)
         {
-            GameObject waterSlopePrefab = DetermineWaterSlopePrefab(x, y);
-            if (waterSlopePrefab != null)
-                PlaceWaterSlope(x, y, waterSlopePrefab);
+            List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(x, y);
+            LogShorePrefabSelectionDebug(x, y, waterShorePrefabs);
+            if (waterShorePrefabs != null && waterShorePrefabs.Count > 0)
+            {
+                Debug.Log($"RestoreTerrainForCell: PlaceWaterShore at ({x}, {y}) with prefab(s) {string.Join(", ", waterShorePrefabs.ConvertAll(p => p != null ? p.name : "null"))}");
+                PlaceWaterShore(x, y, waterShorePrefabs);
+            }
             return true;
         }
 
@@ -659,11 +920,25 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         var toDestroy = new List<GameObject>();
         foreach (Transform child in cell.gameObject.transform)
         {
+            if (cell.forestObject != null && child.gameObject == cell.forestObject)
+                continue;
+
             Zone zone = child.GetComponent<Zone>();
             if (zone != null && zone.zoneType == Zone.ZoneType.Grass)
                 toDestroy.Add(child.gameObject);
+            else if (zone != null && zone.zoneCategory == Zone.ZoneCategory.Grass)
+                toDestroy.Add(child.gameObject);
             else if (IsWaterSlopeObject(child.gameObject) || IsLandSlopeObject(child.gameObject) || IsBayObject(child.gameObject))
                 toDestroy.Add(child.gameObject);
+            else if (zone == null && child.GetComponent<SpriteRenderer>() != null
+                     && !IsWaterSlopeObject(child.gameObject)
+                     && !IsLandSlopeObject(child.gameObject)
+                     && !IsBayObject(child.gameObject)
+                     && !IsSeaLevelWaterObject(child.gameObject))
+            {
+                // Legacy grass / terrain tiles without Zone on root (PlaceFlatTerrain now adds Zone; old instances must still be cleared for shores).
+                toDestroy.Add(child.gameObject);
+            }
         }
         foreach (GameObject go in toDestroy)
             Object.DestroyImmediate(go);
@@ -712,6 +987,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// </summary>
     private bool IsAdjacentToWaterHeight(int x, int y)
     {
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+
         for (int dx = -1; dx <= 1; dx++)
         {
             for (int dy = -1; dy <= 1; dy++)
@@ -720,7 +998,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
                 int nx = x + dx;
                 int ny = y + dy;
-                if (heightMap.IsValidPosition(nx, ny) && heightMap.GetHeight(nx, ny) == SEA_LEVEL)
+                if (!heightMap.IsValidPosition(nx, ny))
+                    continue;
+                if (heightMap.GetHeight(nx, ny) == SEA_LEVEL)
+                    return true;
+                if (waterManager != null && waterManager.IsWaterAt(nx, ny))
                     return true;
             }
         }
@@ -761,6 +1043,14 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
         GameObject zoneTile = Instantiate(grassPrefab, cell.transformPosition, Quaternion.identity);
         zoneTile.transform.SetParent(cell.gameObject.transform);
+
+        Zone zoneComponent = zoneTile.GetComponent<Zone>();
+        if (zoneComponent == null)
+        {
+            zoneComponent = zoneTile.AddComponent<Zone>();
+            zoneComponent.zoneType = Zone.ZoneType.Grass;
+            zoneComponent.zoneCategory = Zone.ZoneCategory.Grass;
+        }
 
         int sortingOrder = CalculateTerrainSortingOrder(x, y, cell.height);
         SpriteRenderer sr = zoneTile.GetComponent<SpriteRenderer>();
@@ -813,11 +1103,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                     {
                         continue;
                     }
-                    GameObject waterSlopePrefab = DetermineWaterSlopePrefab(nx, ny);
-                    if (waterSlopePrefab == null)
+                    List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(nx, ny);
+                    LogShorePrefabSelectionDebug(nx, ny, waterShorePrefabs);
+                    if (waterShorePrefabs == null || waterShorePrefabs.Count == 0)
                         continue;
-
-                    PlaceWaterSlope(nx, ny, waterSlopePrefab);
+                    PlaceWaterShore(nx, ny, waterShorePrefabs);
                 }
             }
         }
@@ -853,9 +1143,13 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                         Cell neighborCell = gridManager.GetCell(nx, ny);
                         if (neighborCell != null && (neighborCell.zoneType != Zone.ZoneType.Grass || neighborCell.HasForest())) continue;
 
-                        GameObject waterSlopePrefab = DetermineWaterSlopePrefab(nx, ny);
-                        if (waterSlopePrefab != null)
-                            PlaceWaterSlope(nx, ny, waterSlopePrefab);
+                        List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(nx, ny);
+                        LogShorePrefabSelectionDebug(nx, ny, waterShorePrefabs);
+                        if (waterShorePrefabs != null && waterShorePrefabs.Count > 0)
+                        {
+                            Debug.Log($"RestoreWaterSlopesFromHeightMap: PlaceWaterShore at ({nx}, {ny}) with prefab(s) {string.Join(", ", waterShorePrefabs.ConvertAll(p => p != null ? p.name : "null"))}");
+                            PlaceWaterShore(nx, ny, waterShorePrefabs);
+                        }
                     }
                 }
             }
@@ -927,39 +1221,74 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             sr.sortingOrder = sortingOrder;
         }
         updatedCell.sortingOrder = sortingOrder;
+        updatedCell.prefabName = seaLevelWater.name;
+        updatedCell.buildingType = seaLevelWater.name;
+
+        if (waterManager != null)
+            waterManager.TryRegisterSeaLevelWaterCell(x, y);
     }
 
-    private void PlaceWaterSlope(int x, int y, GameObject waterSlopePrefab)
+    /// <summary>
+    /// Instantiates one or more lake/coast shore prefabs (cardinal, Bay, or upslope+downslope pair) as children of the cell.
+    /// </summary>
+    private void PlaceWaterShore(int x, int y, List<GameObject> waterShorePrefabs)
     {
+        if (waterShorePrefabs == null || waterShorePrefabs.Count == 0)
+            return;
+
         Cell cell = gridManager.GetCell(x, y);
         DestroyTerrainChildrenOnly(cell);
 
-        // Cell height = 1 (land) so logic (forest, roads, etc.) treats this as land; heightMap already has 1 here.
-        gridManager.SetCellHeight(new Vector2(x, y), 1);
+        int landH = heightMap != null ? heightMap.GetHeight(x, y) : 1;
+        if (landH <= SEA_LEVEL)
+            landH = 1;
+
+        gridManager.SetCellHeight(new Vector2(x, y), landH);
         Cell updatedCell = gridManager.GetCell(x, y);
 
-        // Cell at land elevation; slope prefab at water elevation so it appears lower (transition to water).
-        Vector2 cellWorldPos = gridManager.GetWorldPositionVector(x, y, 1);
+        Vector2 cellWorldPos = gridManager.GetWorldPositionVector(x, y, landH);
         cell.gameObject.transform.position = cellWorldPos;
         updatedCell.transformPosition = cellWorldPos;
 
-        Vector2 slopeWorldPos = gridManager.GetWorldPositionVector(x, y, SEA_LEVEL);
-        GameObject slope = Instantiate(
-            waterSlopePrefab,
-            slopeWorldPos,
-            Quaternion.identity
-        );
-        slope.transform.SetParent(cell.gameObject.transform, true);
+        int waterVisualH = GetNeighborWaterVisualHeightForShore(x, y);
 
-        updatedCell.prefabName = waterSlopePrefab.name;
+        GameObject primaryPrefab = waterShorePrefabs[0];
+        bool primaryIsBay = primaryPrefab != null && IsBayShorePrefab(primaryPrefab);
 
-        int sortingOrder = CalculateWaterSlopeSortingOrder(x, y);
-        SpriteRenderer sr = slope.GetComponent<SpriteRenderer>();
-        if (sr != null)
+        for (int i = 0; i < waterShorePrefabs.Count; i++)
         {
-            sr.sortingOrder = sortingOrder;
+            GameObject prefab = waterShorePrefabs[i];
+            if (prefab == null)
+                continue;
+
+            Vector2 slopeWorldPos = gridManager.GetWorldPositionVector(x, y, waterVisualH);
+            float extraWorldY = GetLakeShoreExtraWorldYOffset(prefab, landH, waterVisualH);
+            if (extraWorldY != 0f)
+                slopeWorldPos += new Vector2(0f, extraWorldY);
+
+            GameObject slope = Instantiate(prefab, slopeWorldPos, Quaternion.identity);
+            slope.SetActive(true);
+            slope.transform.SetParent(cell.gameObject.transform, true);
+
+            bool isBay = IsBayShorePrefab(prefab);
+            int sortingOrder = isBay
+                ? CalculateBayShoreSortingOrder(x, y)
+                : CalculateWaterSlopeSortingOrder(x, y);
+            if (i > 0)
+                sortingOrder -= 1;
+
+            SpriteRenderer sr = slope.GetComponent<SpriteRenderer>();
+            if (sr != null)
+                sr.sortingOrder = sortingOrder;
         }
-        updatedCell.sortingOrder = sortingOrder;
+
+        if (primaryPrefab != null)
+            updatedCell.prefabName = primaryPrefab.name;
+
+        int primarySort = primaryIsBay
+            ? CalculateBayShoreSortingOrder(x, y)
+            : CalculateWaterSlopeSortingOrder(x, y);
+        updatedCell.sortingOrder = primarySort;
     }
 
     /// <param name="terraformCutCorridorCells">Cells lowered by cut-through terraform; enables 1-step land–land cliff faces toward the corridor (BUG-29).</param>
@@ -1112,27 +1441,310 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     #endregion
 
     #region Slope Calculation
-    private GameObject DetermineWaterSlopePrefab(int x, int y)
+
+    /// <summary>
+    /// True if the neighbor cell is sea-level terrain or registered water (lake/sea in <see cref="WaterManager"/>).
+    /// Used for shore prefab selection at any terrain height, not only height 0.
+    /// </summary>
+    private bool WaterOrSeaAt(int nx, int ny)
     {
-        int heightAtNorth = heightMap.getHeightWithBorder(x + 1, y);
-        int heightAtSouth = heightMap.getHeightWithBorder(x - 1, y);
-        int heightAtWest = heightMap.getHeightWithBorder(x, y + 1);
-        int heightAtEast = heightMap.getHeightWithBorder(x, y - 1);
+        if (heightMap == null || !heightMap.IsValidPosition(nx, ny))
+            return false;
+        if (heightMap.GetHeight(nx, ny) == SEA_LEVEL)
+            return true;
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        return waterManager != null && waterManager.IsWaterAt(nx, ny);
+    }
 
-        int heightAtNorthEast = heightMap.getHeightWithBorder(x + 1, y - 1);
-        int heightAtNorthWest = heightMap.getHeightWithBorder(x + 1, y + 1);
-        int heightAtSouthEast = heightMap.getHeightWithBorder(x - 1, y - 1);
-        int heightAtSouthWest = heightMap.getHeightWithBorder(x - 1, y + 1);
+    /// <summary>
+    /// Visual height index used for water sprites at <paramref name="nx"/>, <paramref name="ny"/> (logical surface minus one).
+    /// </summary>
+    private int GetWaterVisualHeightForNeighborCell(int nx, int ny)
+    {
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        int surf;
+        if (waterManager != null && waterManager.IsWaterAt(nx, ny))
+        {
+            surf = waterManager.GetWaterSurfaceHeight(nx, ny);
+            if (surf < 0)
+                surf = waterManager.seaLevel;
+        }
+        else
+            surf = SEA_LEVEL;
+        return Mathf.Max(SEA_LEVEL, surf - 1);
+    }
 
-        bool hasSeaLevelAtNorth = heightAtNorth == SEA_LEVEL;
-        bool hasSeaLevelAtSouth = heightAtSouth == SEA_LEVEL;
-        bool hasSeaLevelAtWest = heightAtWest == SEA_LEVEL;
-        bool hasSeaLevelAtEast = heightAtEast == SEA_LEVEL;
+    /// <summary>
+    /// World height index for water visuals adjacent to this shore cell: logical surface minus one (see WaterManager.PlaceWater).
+    /// Uses the minimum among cardinal water/sea neighbors; if none, falls back to diagonal neighbors (external lake corners).
+    /// </summary>
+    private int GetNeighborWaterVisualHeightForShore(int x, int y)
+    {
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        int[] dx = { 1, -1, 0, 0 };
+        int[] dy = { 0, 0, 1, -1 };
+        int best = int.MaxValue;
+        for (int i = 0; i < 4; i++)
+        {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+            if (!WaterOrSeaAt(nx, ny))
+                continue;
+            int vis = GetWaterVisualHeightForNeighborCell(nx, ny);
+            if (vis < best)
+                best = vis;
+        }
+        if (best == int.MaxValue)
+        {
+            int[] ddx = { 1, 1, -1, -1 };
+            int[] ddy = { -1, 1, -1, 1 };
+            for (int i = 0; i < 4; i++)
+            {
+                int nx = x + ddx[i];
+                int ny = y + ddy[i];
+                if (!WaterOrSeaAt(nx, ny))
+                    continue;
+                int vis = GetWaterVisualHeightForNeighborCell(nx, ny);
+                if (vis < best)
+                    best = vis;
+            }
+        }
+        return best == int.MaxValue ? SEA_LEVEL : best;
+    }
 
-        bool hasSeaLevelAtNorthEast = heightAtNorthEast == SEA_LEVEL;
-        bool hasSeaLevelAtNorthWest = heightAtNorthWest == SEA_LEVEL;
-        bool hasSeaLevelAtSouthEast = heightAtSouthEast == SEA_LEVEL;
-        bool hasSeaLevelAtSouthWest = heightAtSouthWest == SEA_LEVEL;
+    /// <summary>
+    /// True when this shore cell sits on a terrain slope toward a non-water neighbor (cardinal land higher than this cell).
+    /// Used to choose upslope+downslope water pair vs Bay on diagonal-only water patterns.
+    /// </summary>
+    private bool HasLandSlopeIgnoringWater(int x, int y)
+    {
+        if (heightMap == null || !heightMap.IsValidPosition(x, y))
+            return false;
+        int h = heightMap.GetHeight(x, y);
+        int[] ddx = { 1, -1, 0, 0 };
+        int[] ddy = { 0, 0, 1, -1 };
+        for (int i = 0; i < 4; i++)
+        {
+            int nx = x + ddx[i];
+            int ny = y + ddy[i];
+            if (!heightMap.IsValidPosition(nx, ny))
+                continue;
+            if (WaterOrSeaAt(nx, ny))
+                continue;
+            if (heightMap.GetHeight(nx, ny) > h)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// True when <paramref name="prefab"/> is one of the shore corner (Bay) prefabs — inner 90° (two cardinals water) or external rectangular-lake corners.
+    /// </summary>
+    private bool IsBayShorePrefab(GameObject prefab)
+    {
+        if (prefab == null)
+            return false;
+        return prefab == northEastBayPrefab
+            || prefab == northWestBayPrefab
+            || prefab == southEastBayPrefab
+            || prefab == southWestBayPrefab;
+    }
+
+    /// <summary>
+    /// Diagonal shore tiles (NE/NW/SE/SW Upslope or SlopeWater), not Bay — used for Y offset and diagonal downslope selection.
+    /// </summary>
+    private bool IsDiagonalShoreWaterPrefab(GameObject prefab)
+    {
+        if (prefab == null)
+            return false;
+        return prefab == northEastUpslopeWaterPrefab
+            || prefab == northWestUpslopeWaterPrefab
+            || prefab == southEastUpslopeWaterPrefab
+            || prefab == southWestUpslopeWaterPrefab
+            || prefab == northEastSlopeWaterPrefab
+            || prefab == northWestSlopeWaterPrefab
+            || prefab == southEastSlopeWaterPrefab
+            || prefab == southWestSlopeWaterPrefab;
+    }
+
+    /// <summary>
+    /// Extra world Y for lake shore child sprites vs <see cref="GridManager.GetWorldPositionVector"/> at water visual height.
+    /// Bay: 0. Diagonal Upslope/SlopeWater: <c>(landH − waterVisualH) × tileHeight × 0.25</c> so shore aligns when the lake surface
+    /// is below the shore cell (same per-level offset as terrain height steps). Cardinal slopes: 0.
+    /// </summary>
+    private float GetLakeShoreExtraWorldYOffset(GameObject prefab, int landH, int waterVisualH)
+    {
+        if (prefab == null || gridManager == null)
+            return 0f;
+
+        if (IsBayShorePrefab(prefab))
+            return 0f;
+
+        if (IsDiagonalShoreWaterPrefab(prefab))
+        {
+            int delta = Mathf.Max(0, landH - waterVisualH);
+            return delta * gridManager.tileHeight * 0.25f;
+        }
+
+        return 0f;
+    }
+
+    /// <summary>
+    /// Sorting order of the water surface sprite on <paramref name="nx"/>, <paramref name="ny"/>,
+    /// matching lake <c>PlaceWater</c> and sea-level water tiles (for Bay vs neighbor overlap).
+    /// </summary>
+    private int GetWaterNeighborTileSortingOrder(int nx, int ny)
+    {
+        if (heightMap == null || !heightMap.IsValidPosition(nx, ny))
+            return int.MinValue;
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+
+        if (waterManager != null && waterManager.IsWaterAt(nx, ny))
+        {
+            int surf = waterManager.GetWaterSurfaceHeight(nx, ny);
+            if (surf < 0)
+                surf = waterManager.seaLevel;
+            int visualSurfaceHeight = Mathf.Max(MIN_HEIGHT, surf - 1);
+            return CalculateTerrainSortingOrder(nx, ny, visualSurfaceHeight);
+        }
+
+        if (heightMap.GetHeight(nx, ny) == SEA_LEVEL)
+            return CalculateTerrainSortingOrder(nx, ny, SEA_LEVEL);
+
+        return int.MinValue;
+    }
+
+    /// <summary>
+    /// Debug-only: logs chosen lake shore prefab(s) for cells under investigation.
+    /// </summary>
+    private void LogShorePrefabSelectionDebug(int x, int y, IList<GameObject> terrainPrefabs)
+    {
+        if ((x != 10 || y != 19) && (x != 11 || y != 20) && (x != 12 || y != 22) && (x != 8 || y != 19))
+            return;
+
+        int h = -1;
+        if (heightMap != null && heightMap.IsValidPosition(x, y))
+            h = heightMap.GetHeight(x, y);
+        else if (gridManager != null)
+        {
+            Cell c = gridManager.GetCell(x, y);
+            if (c != null)
+                h = c.height;
+        }
+
+        string prefabStr = "null";
+        if (terrainPrefabs != null && terrainPrefabs.Count > 0)
+        {
+            var names = new List<string>();
+            foreach (GameObject p in terrainPrefabs)
+                names.Add(p != null ? p.name : "null");
+            prefabStr = string.Join(", ", names);
+        }
+        Debug.Log($"cell ({x},{y}) has terrainPrefab: {prefabStr}, height: {h}");
+    }
+
+    private static List<GameObject> ShoreList(GameObject prefab)
+    {
+        if (prefab == null)
+            return null;
+        return new List<GameObject> { prefab };
+    }
+
+    /// <summary>
+    /// Diagonal-only water at shore. <b>Priority:</b> (1) axis-aligned rectangle outer corner → single Bay;
+    /// (2) <see cref="HasLandSlopeIgnoringWater"/> → upslope + downslope; (3) otherwise single Bay (flat terrain, diagonal lake edge).
+    /// Rectangle corners must win over land-slope so a higher land neighbor does not force the companion pair on straight corners.
+    /// </summary>
+    private List<GameObject> BuildDiagonalOnlyShorePrefabs(int x, int y, GameObject bayPrefab, GameObject upslopePrefab, GameObject downslopePrefab, bool isAxisAlignedRectangleCornerWater)
+    {
+        if (isAxisAlignedRectangleCornerWater && bayPrefab != null)
+            return new List<GameObject> { bayPrefab };
+        if (HasLandSlopeIgnoringWater(x, y))
+        {
+            var list = new List<GameObject>();
+            if (upslopePrefab != null)
+                list.Add(upslopePrefab);
+            if (downslopePrefab != null)
+                list.Add(downslopePrefab);
+            return list.Count == 0 ? null : list;
+        }
+        if (bayPrefab != null)
+            return new List<GameObject> { bayPrefab };
+        var pair = new List<GameObject>();
+        if (upslopePrefab != null)
+            pair.Add(upslopePrefab);
+        if (downslopePrefab != null)
+            pair.Add(downslopePrefab);
+        return pair.Count > 0 ? pair : null;
+    }
+
+    /// <summary>
+    /// True when diagonal water at NE of shore is the outer corner of an axis-aligned rectangle: no water further North or East of W.
+    /// </summary>
+    private bool IsAxisAlignedRectangleCornerWaterNorthEast(int x, int y)
+    {
+        int wx = x + 1, wy = y - 1;
+        if (!WaterOrSeaAt(wx, wy))
+            return false;
+        return !WaterOrSeaAt(wx + 1, wy) && !WaterOrSeaAt(wx, wy - 1);
+    }
+
+    /// <summary>
+    /// True when diagonal water at NW of shore is the outer corner of an axis-aligned rectangle: no water further North or West of W.
+    /// </summary>
+    private bool IsAxisAlignedRectangleCornerWaterNorthWest(int x, int y)
+    {
+        int wx = x + 1, wy = y + 1;
+        if (!WaterOrSeaAt(wx, wy))
+            return false;
+        return !WaterOrSeaAt(wx + 1, wy) && !WaterOrSeaAt(wx, wy + 1);
+    }
+
+    /// <summary>
+    /// True when diagonal water at SE of shore is the outer corner of an axis-aligned rectangle: no water further South or East of W.
+    /// </summary>
+    private bool IsAxisAlignedRectangleCornerWaterSouthEast(int x, int y)
+    {
+        int wx = x - 1, wy = y - 1;
+        if (!WaterOrSeaAt(wx, wy))
+            return false;
+        return !WaterOrSeaAt(wx - 1, wy) && !WaterOrSeaAt(wx, wy - 1);
+    }
+
+    /// <summary>
+    /// True when diagonal water at SW of shore is the outer corner of an axis-aligned rectangle: no water further South or West of W.
+    /// </summary>
+    private bool IsAxisAlignedRectangleCornerWaterSouthWest(int x, int y)
+    {
+        int wx = x - 1, wy = y + 1;
+        if (!WaterOrSeaAt(wx, wy))
+            return false;
+        return !WaterOrSeaAt(wx - 1, wy) && !WaterOrSeaAt(wx, wy + 1);
+    }
+
+    /// <summary>
+    /// Selects lake/coast shore prefab(s) for a land cell adjacent to water. Returns one prefab or an upslope+downslope pair for diagonal slopes.
+    /// </summary>
+    private List<GameObject> DetermineWaterShorePrefabs(int x, int y)
+    {
+        if (heightMap == null)
+            return null;
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+
+        bool hasWaterAtNorth = WaterOrSeaAt(x + 1, y);
+        bool hasWaterAtSouth = WaterOrSeaAt(x - 1, y);
+        bool hasWaterAtWest = WaterOrSeaAt(x, y + 1);
+        bool hasWaterAtEast = WaterOrSeaAt(x, y - 1);
+
+        bool hasWaterAtNorthEast = WaterOrSeaAt(x + 1, y - 1);
+        bool hasWaterAtNorthWest = WaterOrSeaAt(x + 1, y + 1);
+        bool hasWaterAtSouthEast = WaterOrSeaAt(x - 1, y - 1);
+        bool hasWaterAtSouthWest = WaterOrSeaAt(x - 1, y + 1);
 
         bool isAtNorthBorder = !heightMap.IsValidPosition(x + 1, y);
         bool isAtSouthBorder = !heightMap.IsValidPosition(x - 1, y);
@@ -1141,150 +1753,135 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
         if (isAtSouthBorder)
         {
-            if (hasSeaLevelAtWest) return westSlopeWaterPrefab;
-            if (hasSeaLevelAtEast) return eastSlopeWaterPrefab;
-            if (hasSeaLevelAtNorth) return northSlopeWaterPrefab;
+            if (hasWaterAtWest) return ShoreList(westSlopeWaterPrefab);
+            if (hasWaterAtEast) return ShoreList(eastSlopeWaterPrefab);
+            if (hasWaterAtNorth) return ShoreList(northSlopeWaterPrefab);
         }
 
         if (isAtNorthBorder)
         {
-            if (hasSeaLevelAtWest) return westSlopeWaterPrefab;
-            if (hasSeaLevelAtEast) return eastSlopeWaterPrefab;
-            if (hasSeaLevelAtSouth) return southSlopeWaterPrefab;
+            if (hasWaterAtWest) return ShoreList(westSlopeWaterPrefab);
+            if (hasWaterAtEast) return ShoreList(eastSlopeWaterPrefab);
+            if (hasWaterAtSouth) return ShoreList(southSlopeWaterPrefab);
         }
 
         if (isAtWestBorder)
         {
-            if (hasSeaLevelAtNorth) return northSlopeWaterPrefab;
-            if (hasSeaLevelAtSouth) return southSlopeWaterPrefab;
-            if (hasSeaLevelAtEast) return eastSlopeWaterPrefab;
+            if (hasWaterAtNorth) return ShoreList(northSlopeWaterPrefab);
+            if (hasWaterAtSouth) return ShoreList(southSlopeWaterPrefab);
+            if (hasWaterAtEast) return ShoreList(eastSlopeWaterPrefab);
         }
 
         if (isAtEastBorder)
         {
-            if (hasSeaLevelAtNorth) return northSlopeWaterPrefab;
-            if (hasSeaLevelAtSouth) return southSlopeWaterPrefab;
-            if (hasSeaLevelAtWest) return westSlopeWaterPrefab;
+            if (hasWaterAtNorth) return ShoreList(northSlopeWaterPrefab);
+            if (hasWaterAtSouth) return ShoreList(southSlopeWaterPrefab);
+            if (hasWaterAtWest) return ShoreList(westSlopeWaterPrefab);
         }
 
-
-        if (hasSeaLevelAtEast)
+        // Perpendicular shore corners: both cardinals of a quadrant have water — Bay first, then diagonal SlopeWater.
+        // Order SE, SW, NE, NW so when three cardinals are water (e.g. N+E+S), one unambiguous tile wins (SE before NE).
+        if (hasWaterAtSouth && hasWaterAtEast)
         {
-            if (!hasSeaLevelAtSouth)
+            if (southEastBayPrefab != null) return ShoreList(southEastBayPrefab);
+            if (southEastSlopeWaterPrefab != null) return ShoreList(southEastSlopeWaterPrefab);
+        }
+        if (hasWaterAtSouth && hasWaterAtWest)
+        {
+            if (southWestBayPrefab != null) return ShoreList(southWestBayPrefab);
+            if (southWestSlopeWaterPrefab != null) return ShoreList(southWestSlopeWaterPrefab);
+        }
+        if (hasWaterAtNorth && hasWaterAtEast)
+        {
+            if (northEastBayPrefab != null) return ShoreList(northEastBayPrefab);
+            if (northEastSlopeWaterPrefab != null) return ShoreList(northEastSlopeWaterPrefab);
+        }
+        if (hasWaterAtNorth && hasWaterAtWest)
+        {
+            if (northWestBayPrefab != null) return ShoreList(northWestBayPrefab);
+            if (northWestSlopeWaterPrefab != null) return ShoreList(northWestSlopeWaterPrefab);
+        }
+
+        if (hasWaterAtEast)
+        {
+            if (!hasWaterAtSouth)
             {
-                if (!hasSeaLevelAtNorth)
+                if (!hasWaterAtNorth)
                 {
-                    return eastSlopeWaterPrefab;
+                    return ShoreList(eastSlopeWaterPrefab);
                 }
                 else
                 {
-                    return northEastSlopeWaterPrefab;
+                    return ShoreList(northEastUpslopeWaterPrefab);
                 }
             }
             else
             {
-                if (!hasSeaLevelAtWest)
-                {
-                    return southEastSlopeWaterPrefab;
-                }
-                else
-                {
-                    return southEastUpslopeWaterPrefab;
-                }
+                return ShoreList(southEastUpslopeWaterPrefab);
             }
         }
 
-        if (hasSeaLevelAtWest)
+        if (hasWaterAtWest)
         {
-            if (!hasSeaLevelAtSouth)
+            if (!hasWaterAtSouth)
             {
-                if (!hasSeaLevelAtNorth)
+                if (!hasWaterAtNorth)
                 {
-                    return westSlopeWaterPrefab;
+                    return ShoreList(westSlopeWaterPrefab);
                 }
                 else
                 {
-                    return northWestSlopeWaterPrefab;
+                    return ShoreList(northWestUpslopeWaterPrefab);
                 }
             }
             else
             {
-                if (!hasSeaLevelAtNorth)
-                {
-                    return southWestSlopeWaterPrefab;
-                }
-                else
-                {
-                    return southWestUpslopeWaterPrefab;
-                }
+                return ShoreList(southWestUpslopeWaterPrefab);
             }
         }
 
-        // Sea to the north: pure north face vs NE/NW corners; sea north+south (E–W strip) mirrors East’s east+south branch (southEast vs upslope).
-        if (hasSeaLevelAtNorth)
+        // Water to the north: pure north face vs NE/NW corners; water north+south (E–W strip) uses upslope corner tiles like the east branch.
+        if (hasWaterAtNorth)
         {
-            if (!hasSeaLevelAtSouth)
+            if (!hasWaterAtSouth)
             {
-                if (hasSeaLevelAtEast && hasSeaLevelAtWest)
-                    return northSlopeWaterPrefab;
-                if (hasSeaLevelAtEast)
-                    return northEastSlopeWaterPrefab;
-                if (hasSeaLevelAtWest)
-                    return northWestSlopeWaterPrefab;
-                return northSlopeWaterPrefab;
+                if (hasWaterAtEast && hasWaterAtWest)
+                    return ShoreList(northSlopeWaterPrefab);
+                if (hasWaterAtEast)
+                    return ShoreList(northEastUpslopeWaterPrefab);
+                if (hasWaterAtWest)
+                    return ShoreList(northWestUpslopeWaterPrefab);
+                return ShoreList(northSlopeWaterPrefab);
             }
             else
             {
-                if (!hasSeaLevelAtEast)
-                    return southEastSlopeWaterPrefab;
+                return ShoreList(southEastUpslopeWaterPrefab);
+            }
+        }
+
+        // Water to the south only (water north is handled above): mirror East — pure south vs SW corner.
+        if (hasWaterAtSouth)
+        {
+            if (!hasWaterAtNorth)
+            {
+                if (!hasWaterAtWest)
+                    return ShoreList(southSlopeWaterPrefab);
                 else
-                    return southEastUpslopeWaterPrefab;
+                    return ShoreList(southWestUpslopeWaterPrefab);
             }
         }
 
-        // Sea to the south only (sea north is handled above): mirror East — pure south vs SW corner.
-        if (hasSeaLevelAtSouth)
-        {
-            if (!hasSeaLevelAtNorth)
-            {
-                if (!hasSeaLevelAtWest)
-                    return southSlopeWaterPrefab;
-                else
-                    return southWestSlopeWaterPrefab;
-            }
-        }
+        if (hasWaterAtNorthEast && !hasWaterAtSouth)
+            return BuildDiagonalOnlyShorePrefabs(x, y, northEastBayPrefab, northEastUpslopeWaterPrefab, northEastSlopeWaterPrefab, IsAxisAlignedRectangleCornerWaterNorthEast(x, y));
 
-        if (hasSeaLevelAtNorthEast)
-        {
-            if (!hasSeaLevelAtSouth)
-            {
-                return northEastUpslopeWaterPrefab;
-            }
-        }
+        if (hasWaterAtNorthWest && !hasWaterAtSouth)
+            return BuildDiagonalOnlyShorePrefabs(x, y, northWestBayPrefab, northWestUpslopeWaterPrefab, northWestSlopeWaterPrefab, IsAxisAlignedRectangleCornerWaterNorthWest(x, y));
 
-        if (hasSeaLevelAtNorthWest)
-        {
-            if (!hasSeaLevelAtSouth)
-            {
-                return northWestUpslopeWaterPrefab;
-            }
-        }
+        if (hasWaterAtSouthEast && !hasWaterAtNorth)
+            return BuildDiagonalOnlyShorePrefabs(x, y, southEastBayPrefab, southEastUpslopeWaterPrefab, southEastSlopeWaterPrefab, IsAxisAlignedRectangleCornerWaterSouthEast(x, y));
 
-        if (hasSeaLevelAtSouthEast)
-        {
-            if (!hasSeaLevelAtNorth)
-            {
-                return southEastUpslopeWaterPrefab;
-            }
-        }
-
-        if (hasSeaLevelAtSouthWest)
-        {
-            if (!hasSeaLevelAtNorth)
-            {
-                return southWestUpslopeWaterPrefab;
-            }
-        }
+        if (hasWaterAtSouthWest && !hasWaterAtNorth)
+            return BuildDiagonalOnlyShorePrefabs(x, y, southWestBayPrefab, southWestUpslopeWaterPrefab, southWestSlopeWaterPrefab, IsAxisAlignedRectangleCornerWaterSouthWest(x, y));
 
         return null;
     }
@@ -1309,7 +1906,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Calculates sorting order for water-slope tiles, positioned slightly above sea-level terrain.
+    /// Sorting for water-slope tiles at (x,y): uses neighbor water visual height (surface − 1), same as <see cref="PlaceWaterShore"/>.
     /// </summary>
     /// <param name="x">Grid X coordinate.</param>
     /// <param name="y">Grid Y coordinate.</param>
@@ -1317,7 +1914,40 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public int CalculateWaterSlopeSortingOrder(int x, int y)
     {
         const int WATER_SLOPE_OFFSET = 1;
-        return CalculateTerrainSortingOrder(x, y, SEA_LEVEL) + WATER_SLOPE_OFFSET;
+        int waterVisualH = GetNeighborWaterVisualHeightForShore(x, y);
+        return CalculateTerrainSortingOrder(x, y, waterVisualH) + WATER_SLOPE_OFFSET;
+    }
+
+    /// <summary>
+    /// Sorting for Bay (inner 90°) shore tiles only: same base as <see cref="CalculateWaterSlopeSortingOrder"/>,
+    /// then at least one step above adjacent water tiles so isometric neighbors do not cover the corner.
+    /// </summary>
+    public int CalculateBayShoreSortingOrder(int x, int y)
+    {
+        const int BAY_SHORE_MIN_OFFSET = 1;
+        int waterVisualH = GetNeighborWaterVisualHeightForShore(x, y);
+        int baseOrder = CalculateTerrainSortingOrder(x, y, waterVisualH) + BAY_SHORE_MIN_OFFSET;
+
+        int maxNeighborWater = int.MinValue;
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                if (dx == 0 && dy == 0)
+                    continue;
+                int nx = x + dx;
+                int ny = y + dy;
+                if (!WaterOrSeaAt(nx, ny))
+                    continue;
+                int order = GetWaterNeighborTileSortingOrder(nx, ny);
+                if (order > maxNeighborWater)
+                    maxNeighborWater = order;
+            }
+        }
+
+        if (maxNeighborWater == int.MinValue)
+            return baseOrder;
+        return Mathf.Max(baseOrder, maxNeighborWater + 1);
     }
 
     /// <summary>
@@ -1385,10 +2015,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Returns true if the given GameObject is an instance of any water-slope prefab.
+    /// Returns true if the given GameObject is an instance of any water-slope or shore Bay prefab.
     /// </summary>
     /// <param name="obj">The GameObject to check.</param>
-    /// <returns>True if the object matches a water-slope prefab.</returns>
+    /// <returns>True if the object matches a water-slope or Bay prefab.</returns>
     public bool IsWaterSlopeObject(GameObject obj)
     {
         return IsPrefabInstance(obj, northSlopeWaterPrefab)
@@ -1402,7 +2032,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             || IsPrefabInstance(obj, northEastUpslopeWaterPrefab)
             || IsPrefabInstance(obj, northWestUpslopeWaterPrefab)
             || IsPrefabInstance(obj, southEastUpslopeWaterPrefab)
-            || IsPrefabInstance(obj, southWestUpslopeWaterPrefab);
+            || IsPrefabInstance(obj, southWestUpslopeWaterPrefab)
+            || IsBayObject(obj);
     }
 
     /// <summary>

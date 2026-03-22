@@ -268,10 +268,7 @@ public class PathTerraformPlan
                 if (!heightMap.IsValidPosition(nx, ny)) continue;
                 int nh = heightMap.GetHeight(nx, ny);
                 if (Mathf.Abs(nh - h) > 1)
-                {
-                    Debug.LogWarning($"[Terraform] Validation failed: ({pos.x},{pos.y}) h={h} vs neighbor ({nx},{ny}) nh={nh} diff={Mathf.Abs(nh - h)}");
                     return false;
-                }
             }
         }
         return true;

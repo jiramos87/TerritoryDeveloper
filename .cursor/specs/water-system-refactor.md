@@ -1,7 +1,7 @@
 # Water System Refactor — Technical Overview
 
 > **Backlog:** [FEAT-37](../../BACKLOG.md) (Medium priority) · **Planning pass:** [TECH-12](../../BACKLOG.md) (define objectives, rules, bugs, scope, child issues before implementation)  
-> **Status:** Draft — design and phased delivery TBD  
+> **Status:** In implementation — **FEAT-37a** (data + depression-fill) **completed** (2026-03-22); **FEAT-37b** (rendering / `SEA_LEVEL` removal in roads & slopes) and **FEAT-37c** (save) pending. Lake shore prefab polish: [BUG-33](../../BACKLOG.md). See [BACKLOG.md](../../BACKLOG.md).  
 > **Related:** [BUG-08](../../BACKLOG.md) (generation polish), [FEAT-15](../../BACKLOG.md) (ports / sea), bridge specs (e.g. `.cursor/specs/bridge-and-junction-fixes.md`)
 
 ## 1. Problem synthesis
@@ -26,7 +26,7 @@ This is a **major feature epic** with a **large refactor** of `WaterManager`, `W
 | Area | Role today |
 |------|------------|
 | `GeographyManager.InitializeGeography()` | Order: terrain → **water** → forests → grid … |
-| `WaterManager` / `WaterMap` | Generation, placement, likely assumptions about flat water height |
+| `WaterManager` / `WaterMap` | `WaterMap` body ids + `WaterBody` surface heights; depression-fill lakes; sea-level merge; paint uses `LegacyPaintWaterBodyId`. Rendering still mixes legacy sea-level assumptions until **FEAT-37b** ([BUG-33](../../BACKLOG.md) tracks shore prefab edge defects). |
 | `TerrainManager` / `HeightMap` | Elevations and slopes; water must **agree** with these per cell |
 | `GridManager` | Cell visuals, sorting; water cells interact with terrain and overlays |
 | `Cell` / `CellData` | Serialization; any new water fields must round-trip in save/load |
@@ -60,6 +60,9 @@ Phases are **not** committed ordering until a dedicated design pass; they split 
 - **Performance:** Larger water graphs (flow) may need caching; avoid per-frame `FindObjectOfType`.
 - **Sorting:** Water at arbitrary heights must stay consistent with `GridSortingOrderService` and multi-cell buildings.
 - **Bridges / interstate:** Overlap with road prefab and terraform validation — coordinate with `RoadManager` / bridge specs.
+- **Lake shore visuals:** Incorrect tiles, gaps, or sorting at lake edges — [BUG-33](../../BACKLOG.md) (coordinate with **FEAT-37b**).
+- **Minimap vs world water:** [BUG-32](../../BACKLOG.md) if the minimap layer disagrees with `WaterMap` / main view.
+- **Console noise:** Startup logs `[LakeGeneration]` (`WaterMap` lake fill) and `[LakeBasins]` (`TerrainManager` spill-passing target) are for diagnostics; strip or gate behind a debug flag for release if needed.
 
 ## 7. Documentation maintenance
 
@@ -67,13 +70,37 @@ Phases are **not** committed ordering until a dedicated design pass; they split 
 
 When implementation starts:
 
-- Update this spec with **decided** data structures and **public APIs**.
+- Update this spec with **decided** data structures and **public APIs** (FEAT-37a summary: §9 below).
 - Update `ARCHITECTURE.md` (Terrain layer / Geography bullets) if initialization order or dependencies change.
 - Add a row under `AGENTS.md` “What to Read” if the primary entry point shifts from “only `WaterManager`” to a new helper.
 
 ## 8. References
 
 - `ARCHITECTURE.md` — Initialization, `WaterManager` dependencies  
-- `BACKLOG.md` — **FEAT-37**, **BUG-08**, **FEAT-15**  
+- `BACKLOG.md` — **FEAT-37**, **FEAT-37a–c**, **FEAT-38–41**, **BUG-08**, **BUG-32**, **BUG-33**, **FEAT-15**  
 - `.cursor/rules/managers-guide.mdc` — Manager responsibilities  
 - Bridge / junction context: `.cursor/specs/bridge-and-junction-fixes.md`
+
+## 9. Implementation notes (FEAT-37a)
+
+- **`WaterBody`:** `Id`, `SurfaceHeight`, set of flattened cell indices.
+- **`WaterMap`:** `int[,]` body ids (0 = dry); `InitializeLakesFromDepressionFill(HeightMap, LakeFillSettings, seaLevelForArtificialFallback)`; `GetSurfaceHeightAt`; merge adjacent bodies with same surface; `WaterMapData` format v2 (`waterBodyIds` + `WaterBodySerialized[]`); legacy `bool[]` load supported.
+- **Procedural lake budget (hard cap vs area-scaled):** **`UseScaledProceduralLakeBudget`** (default **`false`**) controls whether the target body count depends on map area. When **`false`**, `GetEffectiveMaxLakeBodies` returns **`Clamp(ProceduralLakeBudgetHardCap, 1, MaxLakeBodies)`** — same target at any map size (until **FEAT-18** exposes this in UI). When **`true`**, the target is **`min(ProceduralLakeBudgetHardCap, GetAreaScaledLakeBudgetDiagnostic(...))`**, where the diagnostic scales `ProceduralLakeBudgetAtReference` by area vs `ReferenceMapSide²` and caps at `MaxLakeBodies`. **`GetAreaScaledLakeBudgetDiagnostic`** remains useful in logs even when scaling is off. Extra random seed attempts scale with map area (`GetScaledRandomExtraSeedAttempts`). Seeds are ordered by spill headroom (`spill − floor`). If procedural passes still yield fewer bodies than the target, **artificial fallback** carves axis-aligned rectangles (extent in `[MinLakeBoundingExtent, MaxLakeBoundingExtent]`), registers a `WaterBody`, and exposes an **inclusive dirty rect** so `TerrainManager.ApplyHeightMapToRegion` can refresh only touched cells. **Source defaults** for `LakeFillSettings` (not Inspector-serialized): e.g. **`MinLakeCells` = 4**, **`MinLakeBoundingExtent` / `MaxLakeBoundingExtent` = 2..10**, **`ProceduralLakeBudgetHardCap` = 4** — verify in `WaterMap.cs` if tuning.
+- **`LakeAcceptProbability`:** Applied **after** the spill check (`spill` > terrain height at seed). Applying random rejection **before** spill would discard rare valid minima (e.g. only two strict minima on a 128×128 map) with no hydrological benefit. Default **1**; lower to thin seeds when many feasible minima exist.
+- **Extended terrain:** After Perlin fill and 3×3 smoothing, `TerrainManager` applies sparse fine-scale height dips outside the centered 40×40 template so depression-fill can find valid seeds on large maps.
+- **Guaranteed lake capacity (terrain):** `LakeFeasibility` mirrors `WaterMap` plateau spill (same-height 4-connected component; rim minimum; `OutsideMapSpillHeight` = 6 for off-map). After `LoadInitialHeightMap`, `TerrainManager.EnsureGuaranteedLakeDepressions` raises the count of spill-passing cells until **`passing >= min(2 × ProceduralLakeBudgetHardCap + LakeFeasibilityExtraBowls, w × h)`** (at least one). It **shuffles** the full interior cell list each round and carves **`CarveMinimalCardinalBowl`** wherever `PassesSpillTest` is false, recounting after each carve, until the target is met or no progress (if **w** or **h** is below 3 there is no interior; carving is skipped). Actual **water bodies** still come from `WaterMap.InitializeLakesFromDepressionFill` + artificial fallback, not from this pass alone.
+- **Shore / slopes:** After `WaterManager.UpdateWaterVisuals`, `TerrainManager.RefreshLakeShoreAfterLakePlacement` updates land cells in the Moore neighborhood of lake water. `DetermineWaterShorePrefabs` treats **water** as cardinal/diagonal neighbors where `WaterMap.IsWater` **or** terrain height is sea level. **Perpendicular shore corners:** whenever **both** cardinals of a quadrant have water (NE, NW, SE, SW), pick **Bay** then diagonal **SlopeWater** — order **SE, SW, NE, NW** so ambiguous triples (e.g. N+E+S) resolve consistently. **Diagonal-only water:** **Priority:** (1) **Bay** when the diagonal water cell `W` is the **outer corner** of an axis-aligned rectangle (`IsAxisAlignedRectangleCornerWater*` — no water on the two cardinals **beyond** `W` away from the shore, i.e. the lake does not continue along that diagonal); (2) else **Upslope + SlopeWater** if `HasLandSlopeIgnoringWater`; (3) else **single Bay** (flat terrain along a diagonal lake edge). Rectangle corner is evaluated **before** land-slope so straight corners are not overridden by a higher land neighbor. `GetNeighborWaterVisualHeightForShore` uses cardinals first, then diagonal water neighbors (external corners). `PlaceWaterShore` uses neighbor water visual height (surface − 1). **Cardinal** water slopes (N/E/S/W) use that position with no extra Y. **Bay** extra Y is **0** (tune in code if art needs nudge). **Diagonal** Upslope/SlopeWater shore tiles add extra Y `(landHeight − waterVisualHeight) × tileHeight × 0.25` so alignment matches per-level terrain steps when the shore cell is above the water visual plane. Bay tiles use `CalculateBayShoreSortingOrder` in `GeographyManager` / `GridSortingOrderService`.
+- **Diagnostics:** `WaterMap.InitializeLakesFromDepressionFill` emits **`[LakeGeneration]`** `Debug.Log` / `LogWarning` (target bodies, procedural/bounded/artificial passes, final count). `EnsureGuaranteedLakeDepressions` emits **`[LakeBasins]`** lines for spill target vs initial/final passing count.
+- **`WaterManager`:** `useLakeDepressionFill`, code-only `LakeFillSettings` (via `LakeFillSettings` property / internal instance), `GetWaterSurfaceHeight`; `PlaceWater` keeps **logical** `SurfaceHeight` = spill in `WaterMap` while positioning the water tile at **surface − 1** in world space (Option A); sorting uses that visual height. Paint uses **`LegacyPaintWaterBodyId`** (10001). Lake fill tuning lives in **`LakeFillSettings`** defaults in source — not serialized on the component until terrain generator UI. After lake init, **`[WaterManager]`** logs a one-line summary (`LastLakeGeneration*` fields).
+- **Artificial lakes on small maps:** Edge margin from the map border for rectangle placement shrinks on tiny grids (0–2 cells). Random/deterministic fallback carves rectangles with **the same per-axis bbox limits as procedural fill** (`MinLakeBoundingExtent`–`MaxLakeBoundingExtent`, default max **10** per axis). A **last-resort** pass tries a bounded square at the four corners (extent capped by `MaxLakeBoundingExtent`).
+- **`TerrainManager`:** Original 40×40 template no longer uses `0` as carved water; procedural lake/river **height carve** removed. On grids **larger than 40×40**, the template is **centered**; procedural terrain fills the **surrounding** region (not locked to the top-left corner). Small 3×3 bowl in template data remains only as legacy **height** variation; **lake validity** is procedural (see §10), not template-dependent.
+
+## 10. Lake validity and sea rules (agreed)
+
+- **Valid lake (procedural):** A `WaterBody` created by depression-fill must satisfy **`LakeFillSettings`**: strict and **window** local minima as seeds (window minima require **some** higher terrain in the window—flat plateaus are not seeds); flood-fill basin under **spill** height; optional **bounded local depression** pass (larger window, max basin cell count); **axis-aligned bounding box** of occupied cells must have **width and height in [`MinLakeBoundingExtent`, `MaxLakeBoundingExtent`] grid cells per axis** (defaults in source, typically **2..10** per axis). Bodies that merge afterward may exceed a single bbox—acceptable until merge rules are tightened.
+- **Shore prefab polish (known follow-up):** Visual defects at lake edges (wrong tile, gaps, sorting) — [BUG-33](../../BACKLOG.md); overlaps **FEAT-37b**.
+- **Sea:** Reference surface at **height 0** (`seaLevel`); `MergeSeaLevelDryCellsFromHeightMap` aligns terrain sea cells with `WaterMap`. **Future:** player terraform may leave dry land below sea reference; **not** required for MVP.
+- **Lakes at height 0:** Allowed if hydrologically disconnected from the **sea** body (same rules as any other lake: containment + successful fill).
+- **FEAT-37 epic closure:** **FEAT-37** is **done** only when **FEAT-37a**, **FEAT-37b**, and **FEAT-37c** are all completed (see `BACKLOG.md`).
+- **Minimap relief:** Out of scope for water MVP; tracked as **FEAT-42** in `BACKLOG.md`.
+- **Minimap water layer:** If lakes / `WaterMap` do not match the main map on the minimap, see **BUG-32** in `BACKLOG.md`.

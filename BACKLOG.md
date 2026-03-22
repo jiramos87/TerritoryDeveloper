@@ -7,11 +7,11 @@
 
 ## In Progress
 
-- [ ] **TECH-12** — Water system refactor: planning pass (objectives, rules, scope, child issues)
-  - Type: planning / documentation
-  - Files: `.cursor/specs/water-system-refactor.md`, `BACKLOG.md` (FEAT-37, BUG-08 splits), `ARCHITECTURE.md` (Terrain / Water as needed)
-  - Notes: **Goal:** Before implementation of **FEAT-37**, produce a single agreed definition of **objectives**, **rules** (data + gameplay + rendering), **known bugs** to fold in, **non-goals / phases**, and **concrete child issues** (IDs) ordered for development. Link outcomes in this spec and in `FEAT-37`. Overlaps **BUG-08** (generation), **FEAT-15** (ports/sea). **Does not** implement code — only backlog + spec updates and issue breakdown.
-  - Depends on: nothing (blocks structured FEAT-37 execution)
+  - [ ] **FEAT-37** — Multi-level water bodies and water system refactor (terrain-hosted water) — **lakes MVP epic**
+  - Type: feature (epic) + refactor
+  - Files: `WaterManager.cs`, `WaterMap.cs`, `WaterBody.cs`, `GeographyManager.cs`, `TerrainManager.cs`, `HeightMap.cs`, `GridManager.cs`, `GridSortingOrderService.cs`, `Cell.cs`, `CellData.cs`, `GameSaveManager.cs`; later `RoadManager.cs` (bridges), `ZoneManager.cs`, `ForestManager.cs`
+  - Notes: **Scope (MVP):** **Lakes only** at variable surface heights; rivers, sea, flow, and manual terrain tools are **out of scope** (see **FEAT-38–FEAT-41**). **Problem:** Water used to behave as a single global surface tied to height 0. **Goal:** Water overlay (`WaterMap` + `WaterBody`) with per-body **surface height**, depression-fill generation from `HeightMap`, terrain floor stays in `HeightMap` (depth = surface − terrain). **Child issues (order):** **FEAT-37a** ✅ (data + generation — completed 2026-03-22) → **FEAT-37b** (rendering / sorting / coast prefabs / roads) → **FEAT-37c** (`WaterMapData` save-load + gameplay rules). **Spec:** `.cursor/specs/water-system-refactor.md`. **Epic closure:** **FEAT-37** is **completed** only when **FEAT-37a**, **FEAT-37b**, and **FEAT-37c** are all done. **Shore prefab polish:** **BUG-33**.
+  - Depends on: **TECH-12** (planning pass — recommended)
 
 ## High Priority
 
@@ -110,11 +110,31 @@
   - Files: `WaterManager.cs`, `WaterMap.cs`, `GeographyManager.cs`
   - Notes: Improve map water generation.
 
-- [ ] **FEAT-37** — Multi-level water bodies and water system refactor (terrain-hosted water)
-  - Type: feature (epic) + refactor
-  - Files: `WaterManager.cs`, `WaterMap.cs`, `GeographyManager.cs`, `TerrainManager.cs`, `HeightMap.cs`, `GridManager.cs`, `GridSortingOrderService.cs`, `Cell.cs`, `CellData.cs`, `GameSaveManager.cs`; later `RoadManager.cs` (bridges), `ZoneManager.cs`, `ForestManager.cs`
-  - Notes: **Problem:** Water behaves as a single global surface (effectively “level 0”), so lakes read as deep pits with poor embankments and a flat blue plane at the bottom. **Goal:** Treat all water as **masses of water supported by terrain** at **variable surface elevation**—not one world-wide Z-plane—so bodies can sit naturally in depressions, on plateaus, or at coasts. **Long-term concepts (phased):** distinguish geological situations (cliffs vs deep wells, alpine lakes, rivers with downhill flow, seas with tide direction); slope water; bridges; buildings adjacent to water; save/load migration. Overlaps or unlocks work with **BUG-08** (generation) and **FEAT-15** (ports / defined sea). **Spec:** `.cursor/specs/water-system-refactor.md`.
-  - Depends on: **TECH-12** (planning pass: objectives, rules, scope, child issues — recommended before coding the epic)
+
+
+- [ ] **BUG-32** — Lakes / `WaterMap` water not shown on minimap (desync with main map)
+  - Type: fix (UX / consistency)
+  - Files: `MiniMapController.cs`, `GeographyManager.cs`, `WaterManager.cs`, `WaterMap.cs`
+  - Notes: Water visible in the game view (procedural lakes, sea-level merge) but missing or wrong on the minimap water layer (e.g. no blue where `WaterManager.IsWaterAt` / `WaterMap` is true). Investigate: null `WaterManager` on `MiniMapController`, `RebuildTexture` before `InitializeWaterMap`, `GetCellColor` not consulting water, water layer toggle / visibility. If **no** procedural lakes appear in the **world** view, check `LakeFillSettings.MaxLakeBoundingExtent` (too-small bbox rejects entire flood basins). Distinct from **FEAT-42** (height relief on minimap). World-view **shore / edge prefab** issues: **BUG-33**. Related: **FEAT-30**.
+  - Depends on: nothing
+
+- [ ] **BUG-33** — Lake shore / edge prefab bugs (incorrect tiles, gaps, alignment)
+  - Type: fix
+  - Files: `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `RefreshLakeShoreAfterLakePlacement`, `GetLakeShoreExtraWorldYOffset`, …), `GridSortingOrderService.cs`, `GeographyManager.cs` (sorting helpers), lake/coast prefabs under `Assets/Prefabs/` as needed
+  - Notes: Fix incorrect or missing shore tiles at lake boundaries (cardinal/diagonal water slopes, Bay corners, upslope pairs), z-order / sorting glitches, and visual gaps after procedural lake placement. Overlaps **FEAT-37b** (generalize variable-height water rendering); this ticket tracks **prefab-edge defects** specifically. Related: **BUG-32** (minimap vs world).
+  - Depends on: nothing
+
+- [ ] **FEAT-37b** — Variable-height water rendering: slopes, sorting, bridges (no `height == 0` / `SEA_LEVEL` assumptions)
+  - Type: feature + refactor
+  - Files: `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `IsAdjacentToWaterHeight`, …), `GridSortingOrderService.cs`, `RoadPrefabResolver.cs`, `AutoRoadBuilder.cs`, `ForestManager.cs`
+  - Notes: Generalize coast/water-slope prefabs and road bridge logic to use `WaterManager` / surface height instead of `SEA_LEVEL` and `cell.height == 0`. Align with lakes MVP rules (same prefabs, valid shores/bridges). Edge prefab defects: coordinate with **BUG-33**.
+  - Depends on: **FEAT-37a** (completed)
+
+- [ ] **FEAT-37c** — Persist `WaterMapData` in saves + gameplay rules on load
+  - Type: feature
+  - Files: `GameSaveManager.cs`, `GameManager.cs` / save payload, `WaterManager.cs`, `GeographyManager.cs`
+  - Notes: Save/load v2 water bodies; restore order with height map; keep legacy save path working where applicable. Building/zoning adjacency vs water as agreed in spec.
+  - Depends on: **FEAT-37b**
 
 - [ ] **FEAT-06** — Forest that grows over time: sparse → medium → dense
   - Type: feature
@@ -212,6 +232,32 @@
   - Files: new manager + `GridManager.cs`
   - Notes: Railway network and animations.
 
+- [ ] **FEAT-38** — Rivers: downhill flow, connect lakes, generation polish
+  - Type: feature
+  - Files: `WaterMap.cs`, `WaterManager.cs`, `TerrainManager.cs`, `GeographyManager.cs`
+  - Notes: Gradient-based paths, merge with **BUG-08** where appropriate. Depends on **FEAT-37c** (stable multi-level water model).
+
+- [ ] **FEAT-39** — Sea / coast: edge region, infinite reservoir, tide direction (data)
+  - Type: feature
+  - Files: `WaterManager.cs`, `WaterMap.cs`, `TerrainManager.cs`, `GeographyManager.cs`
+  - Notes: Coordinate with **FEAT-15** (ports). Depends on **FEAT-37c**.
+
+- [ ] **FEAT-40** — Water sources & drainage (snowmelt, rain, overflow) — simulation
+  - Type: feature
+  - Files: new helpers + `WaterMap.cs`, `WaterManager.cs`, `SimulationManager.cs`
+  - Notes: Not full fluid simulation; data-driven flow. Depends on **FEAT-37c** and possibly **FEAT-38**.
+
+- [ ] **FEAT-41** — Water terrain tools (manual paint/modify, AUTO terraform) — extended
+  - Type: feature
+  - Files: `GridManager.cs`, `WaterManager.cs`, `UIManager.cs`, `TerraformingService.cs` (as needed)
+  - Notes: Beyond legacy paint-at-sea-level. Depends on **FEAT-37c**.
+
+- [ ] **FEAT-42** — Minimap: optional height / relief shading layer
+  - Type: feature (UI)
+  - Files: `MiniMapController.cs`, `HeightMap` / `GridManager` read access as needed
+  - Notes: Visualize terrain elevation on the minimap (distinct from zones/roads/water layers). Does not replace logical water/zone data; base layer reliability stays in **FEAT-37a** / **FEAT-30** scope.
+  - Depends on: none (can follow **FEAT-37a** polish)
+
 - [ ] **ART-01** — Missing prefabs: forests on SE, NE, SW, NW slopes
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ForestManager.cs`
@@ -236,6 +282,17 @@
 ---
 
 ## Completed (last 30 days)
+
+- [x] **FEAT-37a** — WaterBody + WaterMap depression-fill (lake data & procedural placement) (2026-03-22)
+  - Type: feature + refactor
+  - Files: `WaterBody.cs`, `WaterMap.cs`, `WaterManager.cs`, `TerrainManager.cs`, `LakeFeasibility.cs`
+  - Notes: `WaterBody` + per-cell body ids; `WaterMap.InitializeLakesFromDepressionFill` + `LakeFillSettings` (depression-fill, bounded pass, artificial fallback, merge); `LakeFeasibility` / `EnsureGuaranteedLakeDepressions` terrain bowls; `WaterMapData` v2 + legacy load; centered 40×40 template + extended terrain. **Follow-up:** shore prefab fixes **BUG-33**; rendering/save: **FEAT-37b** / **FEAT-37c**.
+
+- [x] **TECH-12** — Water system refactor: planning pass (objectives, rules, scope, child issues) (2026-03-21)
+  - Type: planning / documentation
+  - Files: `.cursor/specs/water-system-refactor.md`, `BACKLOG.md` (FEAT-37, BUG-08 splits), `ARCHITECTURE.md` (Terrain / Water as needed)
+  - Notes: **Goal:** Before implementation of **FEAT-37**, produce a single agreed definition of **objectives**, **rules** (data + gameplay + rendering), **known bugs** to fold in, **non-goals / phases**, and **concrete child issues** (IDs) ordered for development. Link outcomes in this spec and in `FEAT-37`. Overlaps **BUG-08** (generation), **FEAT-15** (ports/sea). **Does not** implement code — only backlog + spec updates and issue breakdown.
+  - Depends on: nothing (blocks structured FEAT-37 execution)
 
 - [x] **BUG-30** — Incorrect road prefabs when interstate climbs slopes (2026-03-20)
   - Type: fix

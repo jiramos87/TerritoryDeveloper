@@ -8,13 +8,13 @@ alwaysApply: true
 ## Initialization Flow
 `GeographyManager.InitializeGeography()` orchestrates startup:
 1. `RegionalMapManager.InitializeRegionalMap()` — regional map with neighboring cities
-2. `GridManager.InitializeGrid()` → internally calls `TerrainManager.InitializeHeightMap()` — cell grid + terrain elevation
-3. `WaterManager.InitializeWaterMap()` — water bodies (cells at h=0)
+2. `GridManager.InitializeGrid()` → internally calls `TerrainManager.InitializeHeightMap()` — cell grid + terrain elevation (may carve **lake feasibility** bowls when depression-fill is on)
+3. `WaterManager.InitializeWaterMap()` — `WaterMap` + lakes (depression-fill or legacy sea-level mask)
 4. `InterstateManager.GenerateAndPlaceInterstate()` — interstate highways
 5. `ForestManager.InitializeForestMap()` — forest generation (conditional)
 6. Sorting order recalculation, border signs, then `ZoneManager` ready for player zoning
 
-**Water evolution:** A multi-level, terrain-hosted water model is planned (**FEAT-37**); see `.cursor/specs/water-system-refactor.md` and `ARCHITECTURE.md` (Data Flows → Water).
+**Water evolution:** **FEAT-37** epic — **FEAT-37a** (data + procedural lakes) **completed**; **FEAT-37b** / **FEAT-37c** pending. See `.cursor/specs/water-system-refactor.md` and `ARCHITECTURE.md` (Data Flows → Water).
 
 ## Simulation Flow (each TimeManager tick)
 `TimeManager` → `SimulationManager.RunSimulationStep()` → in order:

@@ -61,18 +61,10 @@ public class InterstateManager : MonoBehaviour
     {
         if (roadManager == null) roadManager = FindObjectOfType<RoadManager>();
         GenerateInterstateRoute(attemptOffset);
-        Debug.Log($"[Interstate] GenerateAndPlaceInterstate: path.Count={interstatePositions?.Count ?? 0} roadManager={(roadManager != null ? "ok" : "null")}");
         if (interstatePositions.Count == 0 || roadManager == null)
-        {
-            if (interstatePositions.Count == 0)
-                Debug.LogWarning("[Interstate] GenerateAndPlaceInterstate: path empty, skipping placement.");
-            if (roadManager == null)
-                Debug.LogWarning("[Interstate] GenerateAndPlaceInterstate: roadManager null, skipping placement.");
             return false;
-        }
 
         bool placed = roadManager.PlaceInterstateFromPath(interstatePositions);
-        Debug.Log($"[Interstate] GenerateAndPlaceInterstate: PlaceInterstateFromPath completed, placed={placed}");
         if (!placed)
             interstatePositions.Clear();
         return placed;
@@ -170,10 +162,7 @@ public class InterstateManager : MonoBehaviour
         }
 
         if (bestPath == null)
-        {
-            Debug.LogWarning($"[Interstate] Deterministic: no valid path after {candidates.Count} candidates.");
             return false;
-        }
 
         interstatePositions = bestPath;
         EntryPoint = interstatePositions[0];
@@ -182,9 +171,7 @@ public class InterstateManager : MonoBehaviour
         ExitBorder = bestBorderB;
 
         bool placed = roadManager.PlaceInterstateFromPath(interstatePositions);
-        if (placed)
-            Debug.Log($"[Interstate] Deterministic: placed best path (cost={bestCost}), entry=({EntryPoint.Value.x},{EntryPoint.Value.y}) exit=({ExitPoint.Value.x},{ExitPoint.Value.y})");
-        else
+        if (!placed)
             interstatePositions.Clear();
         return placed;
     }
@@ -349,8 +336,6 @@ public class InterstateManager : MonoBehaviour
         ExitPoint = interstatePositions[interstatePositions.Count - 1];
         EntryBorder = bestBorderA;
         ExitBorder = bestBorderB;
-        string dir = (bestBorderA == 0 || bestBorderA == 1) ? "North-South" : "East-West";
-        Debug.Log($"[Interstate] GenerateInterstateRoute: {dir} (borders {bestBorderA}-{bestBorderB}), cost={bestCost}, {bestPath.Count} cells from ({EntryPoint.Value.x},{EntryPoint.Value.y}) to ({ExitPoint.Value.x},{ExitPoint.Value.y})");
         return interstatePositions;
     }
 

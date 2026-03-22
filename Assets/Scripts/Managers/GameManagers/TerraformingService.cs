@@ -574,8 +574,6 @@ public class TerraformingService : MonoBehaviour
                 }
             }
         }
-        if (queue.Count > 0 && (plan.adjacentCells.Count - initialAdjacentCount) >= maxExpansion)
-            Debug.LogWarning($"[Terraform] Expansion hit limit {maxExpansion}, may need more. queue.Count={queue.Count}");
     }
 
     /// <summary>
