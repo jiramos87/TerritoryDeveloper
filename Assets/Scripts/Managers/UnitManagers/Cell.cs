@@ -58,6 +58,13 @@ public class Cell : MonoBehaviour
     [Header("Water Properties")]
     public WaterBodyType waterBodyType = WaterBodyType.None;
 
+    /// <summary>
+    /// Logical cardinal cliff faces (N/S/E/W). Set when a risco exists toward that neighbor even if prefabs are skipped
+    /// (hidden north/west faces or underwater cull).
+    /// </summary>
+    [Header("Terrain — cliff faces (logical)")]
+    public CliffFaceFlags cliffFaces = CliffFaceFlags.None;
+
     [Header("Interstate Properties")]
     public bool isInterstate = false;
 

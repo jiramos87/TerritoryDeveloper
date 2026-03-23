@@ -11352,6 +11352,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2554f07997e242c2adef24969c46277, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  terrainDebugLogCellsEnabled: 1
   gridManager: {fileID: 1880690383}
   zoneManager: {fileID: 955926521}
   waterManager: {fileID: 1132506491}

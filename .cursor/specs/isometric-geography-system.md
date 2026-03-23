@@ -178,7 +178,9 @@ NorthEastUp, NorthWestUp, SouthEastUp, SouthWestUp          // 4 corner (upslope
 
 ### 4.2 Water Slope Selection (`DetermineWaterShorePrefabs`)
 
-For land cells (h ≥ 1) adjacent to water, `DetermineWaterShorePrefabs(x, y)` uses a similar but distinct decision tree. It checks which cardinal and diagonal neighbors are water/sea and selects one or more shore prefabs (cardinal, Bay, or upslope+downslope pair). Priority: border cases → cardinal water neighbors → combined cardinal patterns → diagonal-only water (Bay when the diagonal water cell has **no water beyond it** along the two cardinals that extend the lake away from the shore—outer corner of an axis-aligned rectangle; upslope + downslope when a higher **land** neighbor forces a sloped shore; otherwise single Bay on flat terrain along a diagonal lake edge).
+Water-shore prefabs are used only when the land cell passes the **surface-height gate** in `TerrainManager`: among 8 neighbors, some water/sea cell exists whose **body surface height** (`WaterManager.GetWaterSurfaceHeight` / `WaterMap`) satisfies `h ≤ surface + MAX_LAND_HEIGHT_ABOVE_ADJACENT_WATER_SURFACE_FOR_SHORE_PREFABS` (default **1**). Higher rim land (e.g. bowl walls above the lake surface) uses **land slopes + `PlaceCliffWalls`** instead of water-shore art, so cliff stacks are not skipped.
+
+For eligible land cells, `DetermineWaterShorePrefabs(x, y)` uses a similar but distinct decision tree. It checks which cardinal and diagonal neighbors are water/sea and selects one or more shore prefabs (cardinal, Bay, or upslope+downslope pair). Priority: border cases → cardinal water neighbors → combined cardinal patterns → diagonal-only water (Bay when the diagonal water cell has **no water beyond it** along the two cardinals that extend the lake away from the shore—outer corner of an axis-aligned rectangle; upslope + downslope when a higher **land** neighbor forces a sloped shore; otherwise single Bay on flat terrain along a diagonal lake edge).
 
 ### 4.3 `RequiresSlope` vs Slope Selection
 
@@ -226,14 +228,14 @@ Returns a `TerrainSlopeType` enum value using the same logic as `DetermineSlopeP
 
 ### 5.7 Cliffs
 - **HeightMap pattern:** Cardinal neighbor height difference > 1 (e.g., cell at h=3, south neighbor at h=1).
-- **Visual:** Vertical cliff wall prefabs rendered on the cell's edge facing the lower neighbor. Multiple cliff directions can stack on one cell.
-- **Code:** `PlaceCliffWalls(x, y)` checks each cardinal direction. `NeedsCliffWallSouth/East/North/West` returns true when the drop exceeds 1 height level.
-- **Special case:** Land-to-water transitions at h=1 also get cliff walls when a higher neighbor (h=2) is behind them.
+- **Visual (fixed isometric camera):** Each cardinal drop uses **`CliffCardinalFace`** (North/South/East/West) and the matching **prefab** (`GetCliffPrefabForCardinalFace`). **Prefabs are not instantiated** on **north** or **west** faces (`IsCliffCardinalFaceVisibleToCamera`) — those are hidden behind the terrain diamond; **south** and **east** faces (↙ ↘) get sprites. **`Cell.cliffFaces`** still records **N/S/E/W** bits for any cardinal risco (hydrology), even when **N/W** skip meshes.
+- **Code:** `PlaceCliffWalls` evaluates `GetCliffWallDropNorth` / `South` / `East` / `West` from the **high** cell toward lower neighbors. `PlaceCliffWallStack` parents segments to that cell; underwater segment cull unchanged.
+- **Water / shore:** Water classification uses **`WaterManager.IsWaterAt`**, not raw `SEA_LEVEL` height. For **one-step** drops toward **registered water** or **`IsWaterSlopeCell`**, cliff prefabs are suppressed (`ShouldSuppressCliffFaceTowardLowerCell`) so water-slope art is not duplicated. **Escarpments (Δh ≥ 2)** toward the same neighbors still get stacked segments on **visible** faces only. **Underwater cull:** at the cliff **foot** (low cell of the drop), if that cell is water, segments whose **entire height band** lies strictly below `GetWaterSurfaceHeight` are not instantiated (`ShouldSkipCliffSegmentFullyUnderwater`). **Cut-through** corridors may still get a **1-step** cliff into a **non–water-slope** lowered cell.
 
 ### 5.8 Coastal Transitions (Water Slopes)
-- **HeightMap pattern:** Land cell (h ≥ 1) adjacent to water cell (h = 0).
-- **Visual:** Special water-slope prefabs that visually transition from land elevation down to sea level. The cell's logical height stays at 1 (so game systems treat it as land) but the slope sprite is rendered at sea-level world position.
-- **Constraint:** Normal roads cannot be placed on water-slope cells (`IsWaterSlopeCell` returns true). This enforces a 1-cell buffer between roads and coastlines. Water plants can be placed on coastal slopes.
+- **HeightMap pattern:** Land cell (h ≥ 1) adjacent to water (sea level or registered lake/sea in `WaterMap`), **and** within one height step of an adjacent water body's **surface** (see §4.2).
+- **Visual:** Special water-slope prefabs that visually transition from land elevation toward the water surface. World placement uses the water visual height (see `WaterManager.placeWater` / FEAT-37).
+- **Constraint:** Normal roads cannot be placed on water-shore tiles (`IsWaterSlopeCell` returns true). Rim cells above the surface cap are **not** water-slope; roads may use normal terrain rules there. Water plants can be placed on coastal slopes.
 
 ### 5.9 Bays
 - **HeightMap pattern:** Concave water corners where water surrounds a land cell diagonally.
@@ -271,10 +273,10 @@ Same 12 patterns with water visual treatment:
 | Prefab | Purpose |
 |--------|---------|
 | `seaLevelWaterPrefab` | Animated water tile at h=0 |
-| `southCliffWallPrefab` | Cliff face on south edge |
-| `eastCliffWallPrefab` | Cliff face on east edge |
-| `northCliffWallPrefab` | Cliff face on north edge |
-| `westCliffWallPrefab` | Cliff face on west edge |
+| `southCliffWallPrefab` | South cardinal face (visible — instantiated when drop exists) |
+| `eastCliffWallPrefab` | East cardinal face (visible — instantiated when drop exists) |
+| `northCliffWallPrefab` | North cardinal face (selected by geometry; **never** instantiated — hidden face; kept for asset parity / `RemoveExistingCliffWalls`) |
+| `westCliffWallPrefab` | West cardinal face (same as north) |
 | `northEastBayPrefab` | Concave coastal corner (NE) |
 | `northWestBayPrefab` | Concave coastal corner (NW) |
 | `southEastBayPrefab` | Concave coastal corner (SE) |
@@ -445,7 +447,7 @@ Interstate pathfinding multiplies slope costs by `InterstateSlopeMultiplier = 5`
 | Height data | `HeightMap.cs` | `GetHeight`, `SetHeight`, `IsValidPosition` |
 | Slope type determination | `TerrainManager.cs` | `DetermineSlopePrefab`, `GetTerrainSlopeTypeAt` |
 | Water slope determination | `TerrainManager.cs` | `DetermineWaterShorePrefabs`, `IsWaterSlopeCell` |
-| Cliff walls | `TerrainManager.cs` | `PlaceCliffWalls`, `NeedsCliffWall{N,S,E,W}` |
+| Cliff walls | `TerrainManager.cs`, `CliffFace.cs`, `Cell` | `PlaceCliffWalls`, `CliffCardinalFace` / `CliffFaceFlags`, `GetCliffWallDropNorth/South/East/West`, `PlaceCliffWallStack`, `GetCliffPrefabForCardinalFace`, `IsCliffCardinalFaceVisibleToCamera`, `GetWaterSurfaceHeightForCliffProbe`, `ShouldSuppressCliffFaceTowardLowerCell`, `ShouldSuppressCliffTowardCardinalLower`, `IsWaterShoreRampTerrainCell` |
 | Terrain tile placement | `TerrainManager.cs` | `PlaceFlatTerrain`, `PlaceSlopeFromPrefab`, `PlaceWaterShore` |
 | Sorting order | `TerrainManager.cs` | `CalculateTerrainSortingOrder`, `CalculateSlopeSortingOrder` |
 | Full sort recalculation | `GeographyManager.cs` | `ReCalculateSortingOrderBasedOnHeight` |
