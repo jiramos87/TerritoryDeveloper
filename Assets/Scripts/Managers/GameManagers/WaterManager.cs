@@ -98,19 +98,17 @@ public class WaterManager : MonoBehaviour
                     MapGenerationSeed.EnsureSessionMasterSeed();
                     lakeFillSettings.RandomSeed = MapGenerationSeed.GetLakeFillRandomSeed();
                     waterMap.InitializeLakesFromDepressionFill(terrainManager.GetHeightMap(), lakeFillSettings, seaLevel);
-                    if (waterMap.ArtificialDirtyMinX >= 0)
-                    {
-                        terrainManager.ApplyHeightMapToRegion(
-                            waterMap.ArtificialDirtyMinX,
-                            waterMap.ArtificialDirtyMinY,
-                            waterMap.ArtificialDirtyMaxX,
-                            waterMap.ArtificialDirtyMaxY);
-                    }
                 }
                 else
                     waterMap.InitializeWaterBodiesBasedOnHeight(terrainManager.GetHeightMap(), seaLevel);
                 // Sea-level terrain may already use PlaceSeaLevelWater without WaterMap entries when using lake fill.
                 waterMap.MergeSeaLevelDryCellsFromHeightMap(terrainManager.GetHeightMap(), seaLevel);
+
+                if (useLakeDepressionFill && TryGetLakeTerrainRefreshRegion(waterMap, gridManager.width, gridManager.height,
+                        out int rMinX, out int rMinY, out int rMaxX, out int rMaxY))
+                {
+                    terrainManager.ApplyHeightMapToRegion(rMinX, rMinY, rMaxX, rMaxY);
+                }
             }
             else
             {
@@ -122,6 +120,55 @@ public class WaterManager : MonoBehaviour
             if (terrainManager != null && useLakeDepressionFill)
                 terrainManager.RefreshLakeShoreAfterLakePlacement(this);
         }
+    }
+
+    /// <summary>
+    /// Builds the inclusive rect for <see cref="TerrainManager.ApplyHeightMapToRegion"/> after lake fill: union of
+    /// all water cells (with margin for shore/cliffs) and the artificial carve dirty rect when present.
+    /// Matches the fallback path so procedural lakes get the same terrain + cliff refresh as carved rectangles.
+    /// </summary>
+    static bool TryGetLakeTerrainRefreshRegion(WaterMap wm, int gridWidth, int gridHeight, out int minX, out int minY, out int maxX, out int maxY)
+    {
+        const int waterMargin = 3;
+        minX = minY = maxX = maxY = 0;
+        bool has = false;
+        if (wm.TryGetAllWaterBoundingBox(out int wx0, out int wy0, out int wx1, out int wy1))
+        {
+            minX = wx0 - waterMargin;
+            minY = wy0 - waterMargin;
+            maxX = wx1 + waterMargin;
+            maxY = wy1 + waterMargin;
+            has = true;
+        }
+        if (wm.ArtificialDirtyMinX >= 0)
+        {
+            int ax0 = wm.ArtificialDirtyMinX;
+            int ay0 = wm.ArtificialDirtyMinY;
+            int ax1 = wm.ArtificialDirtyMaxX;
+            int ay1 = wm.ArtificialDirtyMaxY;
+            if (!has)
+            {
+                minX = ax0;
+                minY = ay0;
+                maxX = ax1;
+                maxY = ay1;
+                has = true;
+            }
+            else
+            {
+                minX = Mathf.Min(minX, ax0);
+                minY = Mathf.Min(minY, ay0);
+                maxX = Mathf.Max(maxX, ax1);
+                maxY = Mathf.Max(maxY, ay1);
+            }
+        }
+        if (!has)
+            return false;
+        minX = Mathf.Clamp(minX, 0, gridWidth - 1);
+        maxX = Mathf.Clamp(maxX, 0, gridWidth - 1);
+        minY = Mathf.Clamp(minY, 0, gridHeight - 1);
+        maxY = Mathf.Clamp(maxY, 0, gridHeight - 1);
+        return true;
     }
 
     /// <summary>

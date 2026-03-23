@@ -89,6 +89,38 @@ namespace Territory.Terrain
             return bodies;
         }
 
+        /// <summary>
+        /// Inclusive axis-aligned bounding box of every cell with a non-zero water body id.
+        /// Returns <c>false</c> when the map has no water.
+        /// </summary>
+        public bool TryGetAllWaterBoundingBox(out int minX, out int minY, out int maxX, out int maxY)
+        {
+            minX = minY = maxX = maxY = 0;
+            bool found = false;
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (waterBodyIds[x, y] == 0)
+                        continue;
+                    if (!found)
+                    {
+                        minX = maxX = x;
+                        minY = maxY = y;
+                        found = true;
+                    }
+                    else
+                    {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+            return found;
+        }
+
         /// <summary>Rebuilds water from saved <see cref="CellData"/> (legacy sea-level mask + Water zone).</summary>
         public void RestoreFromLegacyCellData(List<CellData> gridData, int seaLevel)
         {

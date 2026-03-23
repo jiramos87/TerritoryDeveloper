@@ -119,6 +119,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public const int MAX_HEIGHT = 5;
     public const int SEA_LEVEL = 0;
 
+    /// <summary>Cardinal offsets (south, north, east, west) for neighbor scans — order matches four-direction loops.</summary>
+    static readonly int[] CardinalDx = { -1, 1, 0, 0 };
+    static readonly int[] CardinalDy = { 0, 0, -1, 1 };
+
     // Sorting order constants for different object types
     public const int TERRAIN_BASE_ORDER = 0;
     /// <summary>Offset for land slope sorting. 1 = slightly in front of terrain so slopes (especially east-facing) render correctly.</summary>
@@ -670,7 +674,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// After lake water visuals exist, refreshes land cells in the 8-neighborhood of lake water so shore/bay slopes match.
+    /// After lake water visuals exist, refreshes land cells near lake water so shore/bay slopes match and cliff walls
+    /// on higher terrain above the shore are placed (multi-segment stacks when drop &gt; 1).
+    /// Includes (1) all non-water cells in the Moore neighborhood of water and (2) one extra ring of land neighbors
+    /// of those cells so rim tiles (Chebyshev distance 2 from water) still run <see cref="UpdateTileElevation"/>.
     /// Call after <see cref="WaterManager.UpdateWaterVisuals"/>.
     /// </summary>
     public void RefreshLakeShoreAfterLakePlacement(WaterManager wm)
@@ -706,7 +713,27 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             }
         }
 
+        var toRefresh = new HashSet<Vector2Int>(shore);
         foreach (Vector2Int p in shore)
+        {
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    if (dx == 0 && dy == 0)
+                        continue;
+                    int nx = p.x + dx;
+                    int ny = p.y + dy;
+                    if (!heightMap.IsValidPosition(nx, ny))
+                        continue;
+                    if (wmMap.IsWater(nx, ny))
+                        continue;
+                    toRefresh.Add(new Vector2Int(nx, ny));
+                }
+            }
+        }
+
+        foreach (Vector2Int p in toRefresh)
             UpdateTileElevation(p.x, p.y);
     }
 
@@ -729,15 +756,23 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             sr.sortingOrder = sortingOrder;
         }
 
-        // Land cell adjacent to water: use water slope, not land slope or grass (avoids black voids at coast)
-        if (newHeight >= 1 && IsAdjacentToWaterHeight(x, y))
+        // Land cell adjacent to water: use water slope, not land slope or grass (avoids black voids at coast).
+        // Skip for registered water cells (lake/sea interior): those are not shore tiles; water visuals come from WaterManager.
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        bool isLandShoreAdjacentToWater = newHeight >= 1 && IsAdjacentToWaterHeight(x, y)
+            && !(waterManager != null && waterManager.IsWaterAt(x, y));
+        if (isLandShoreAdjacentToWater)
         {
             List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(x, y);
             LogShorePrefabSelectionDebug(x, y, waterShorePrefabs);
             if (waterShorePrefabs != null && waterShorePrefabs.Count > 0)
+            {
                 PlaceWaterShore(x, y, waterShorePrefabs);
-            else
-                PlaceFlatTerrain(x, y);  // fallback if pattern not recognized
+                // Cliff prefabs belong on the higher land cell facing the shore, not on the water-slope tile.
+                return;
+            }
+            PlaceFlatTerrain(x, y);  // fallback if pattern not recognized
             PlaceCliffWalls(x, y);
             return;
         }
@@ -846,8 +881,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         bool adjacentWater = IsAdjacentToWaterHeight(x, y);
         bool requiresSlope = forceFlat ? false : (forceSlopeType.HasValue || RequiresSlope(x, y, newHeight));
 
-        // Land cell adjacent to water (height 0) must restore water slope, not land slope.
-        if (newHeight >= 1 && adjacentWater && !forceFlat && !forceSlopeType.HasValue)
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        // Land cell adjacent to water must restore water slope; skip open-water cells (same rule as UpdateTileElevation).
+        bool landShoreRestore = newHeight >= 1 && adjacentWater && !forceFlat && !forceSlopeType.HasValue
+            && !(waterManager != null && waterManager.IsWaterAt(x, y));
+        if (landShoreRestore)
         {
             List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(x, y);
             LogShorePrefabSelectionDebug(x, y, waterShorePrefabs);
@@ -1012,6 +1051,63 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return false;
         int h = heightMap.GetHeight(x, y);
         return h >= 1 && IsAdjacentToWaterHeight(x, y);
+    }
+
+    /// <summary>
+    /// True for the <b>transition</b> tile that sits one step below inland land toward open water (cardinal sea or
+    /// registered water) — this cell should host water-slope prefabs, not rim cliffs. A flat plateau rim next to a
+    /// rectangular lake has the same height as land behind along the edge, so no cardinal land neighbor is strictly
+    /// higher; those cells are <b>not</b> ramp tiles and can receive cliffs toward the water. (Cardinal-only water
+    /// alone matched every fallback lake rim and suppressed all rim cliffs.)
+    /// </summary>
+    private bool IsWaterShoreRampTerrainCell(int x, int y, WaterManager wm = null)
+    {
+        if (heightMap == null || !heightMap.IsValidPosition(x, y))
+            return false;
+        int h = heightMap.GetHeight(x, y);
+        if (h <= SEA_LEVEL)
+            return false;
+        if (wm == null)
+            wm = waterManager != null ? waterManager : FindObjectOfType<WaterManager>();
+        if (wm != null && wm.IsWaterAt(x, y))
+            return false;
+
+        bool hasCardinalWater = false;
+        for (int i = 0; i < 4; i++)
+        {
+            int nx = x + CardinalDx[i];
+            int ny = y + CardinalDy[i];
+            if (!heightMap.IsValidPosition(nx, ny))
+                continue;
+            if (heightMap.GetHeight(nx, ny) == SEA_LEVEL)
+            {
+                hasCardinalWater = true;
+                break;
+            }
+            if (wm != null && wm.IsWaterAt(nx, ny))
+            {
+                hasCardinalWater = true;
+                break;
+            }
+        }
+        if (!hasCardinalWater)
+            return false;
+
+        for (int i = 0; i < 4; i++)
+        {
+            int nx = x + CardinalDx[i];
+            int ny = y + CardinalDy[i];
+            if (!heightMap.IsValidPosition(nx, ny))
+                continue;
+            int nh = heightMap.GetHeight(nx, ny);
+            if (nh <= SEA_LEVEL)
+                continue;
+            if (wm != null && wm.IsWaterAt(nx, ny))
+                continue;
+            if (nh > h)
+                return true;
+        }
+        return false;
     }
 
     /// <summary>
@@ -1320,94 +1416,173 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return;
         }
 
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        if (waterManager != null && waterManager.IsWaterAt(x, y))
+            return;
+
+        if (IsCellSurroundedByCardinalWaterOnly(x, y, waterManager))
+            return;
+
         Cell cell = gridManager.GetCell(x, y);
         RemoveExistingCliffWalls(cell);
 
-        if (NeedsCliffWallSouth(x, y, currentHeight, terraformCutCorridorCells))
-            PlaceCliffWallPrefab(cell, southCliffWallPrefab, x, y, currentHeight);
-        if (NeedsCliffWallEast(x, y, currentHeight, terraformCutCorridorCells))
-            PlaceCliffWallPrefab(cell, eastCliffWallPrefab, x, y, currentHeight);
-        if (NeedsCliffWallNorth(x, y, currentHeight, terraformCutCorridorCells))
-            PlaceCliffWallPrefab(cell, northCliffWallPrefab, x, y, currentHeight);
-        if (NeedsCliffWallWest(x, y, currentHeight, terraformCutCorridorCells))
-            PlaceCliffWallPrefab(cell, westCliffWallPrefab, x, y, currentHeight);
+        int dSouth = GetCliffWallDropSouth(x, y, currentHeight, terraformCutCorridorCells);
+        if (dSouth > 0)
+            PlaceCliffWallStack(cell, southCliffWallPrefab, x, y, x - 1, y, currentHeight, heightMap.GetHeight(x - 1, y), dSouth);
+
+        int dEast = GetCliffWallDropEast(x, y, currentHeight, terraformCutCorridorCells);
+        if (dEast > 0)
+            PlaceCliffWallStack(cell, eastCliffWallPrefab, x, y, x, y - 1, currentHeight, heightMap.GetHeight(x, y - 1), dEast);
+
+        int dNorth = GetCliffWallDropNorth(x, y, currentHeight, terraformCutCorridorCells);
+        if (dNorth > 0)
+            PlaceCliffWallStack(cell, northCliffWallPrefab, x, y, x + 1, y, currentHeight, heightMap.GetHeight(x + 1, y), dNorth);
+
+        int dWest = GetCliffWallDropWest(x, y, currentHeight, terraformCutCorridorCells);
+        if (dWest > 0)
+            PlaceCliffWallStack(cell, westCliffWallPrefab, x, y, x, y + 1, currentHeight, heightMap.GetHeight(x, y + 1), dWest);
     }
 
     /// <summary>
-    /// True when the south neighbor (x-1,y) is lower and forms a cliff on this cell's south edge.
+    /// True when all four cardinals are sea or registered water (e.g. a 1×1 island) — no vertical cliff ring.
     /// </summary>
-    private bool NeedsCliffWallSouth(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
+    private bool IsCellSurroundedByCardinalWaterOnly(int x, int y, WaterManager wm)
+    {
+        if (heightMap == null || !heightMap.IsValidPosition(x, y))
+            return false;
+        if (wm == null)
+            wm = waterManager != null ? waterManager : FindObjectOfType<WaterManager>();
+        for (int i = 0; i < 4; i++)
+        {
+            int nx = x + CardinalDx[i];
+            int ny = y + CardinalDy[i];
+            if (!heightMap.IsValidPosition(nx, ny))
+                return false;
+            bool water = heightMap.GetHeight(nx, ny) == SEA_LEVEL || (wm != null && wm.IsWaterAt(nx, ny));
+            if (!water)
+                return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// One-step drop toward open water only: suppress a cliff on the narrow shore strip (height-1 band with higher land
+    /// behind). Multi-step drops toward water are not suppressed — those need stacked cliff segments (fallback rims).
+    /// </summary>
+    private bool ShouldSuppressCliffTowardCardinalLower(int x, int y, int lowerX, int lowerY, int currentHeight, int lowerHeight)
+    {
+        if (currentHeight - lowerHeight != 1)
+            return false;
+        if (heightMap == null || !heightMap.IsValidPosition(x, y) || !heightMap.IsValidPosition(lowerX, lowerY))
+            return false;
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        bool lowerIsWaterSurface = lowerHeight <= SEA_LEVEL
+            || (waterManager != null && waterManager.IsWaterAt(lowerX, lowerY));
+        if (!lowerIsWaterSurface)
+            return false;
+        int inlandX = x + (x - lowerX);
+        int inlandY = y + (y - lowerY);
+        if (!heightMap.IsValidPosition(inlandX, inlandY))
+            return false;
+        int inlandH = heightMap.GetHeight(inlandX, inlandY);
+        return inlandH > currentHeight;
+    }
+
+    /// <summary>
+    /// One-step drop from higher land down to a <see cref="IsWaterSlopeCell"/> neighbor (shore / water-border land).
+    /// Cliffs belong on the <b>upper</b> cell facing the shore, not on the shore tile facing water (which already has water-slope prefabs).
+    /// </summary>
+    private bool NeedsCliffWallOneStepAboveWaterSlopeNeighbor(int cellX, int cellY, int neighborX, int neighborY, int currentHeight, int neighborHeight)
+    {
+        if (currentHeight - neighborHeight != 1)
+            return false;
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        // Exclude only the one-step-down transition tile (water-slope), not flat plateau rim (same height as land behind).
+        if (IsWaterShoreRampTerrainCell(cellX, cellY, waterManager))
+            return false;
+        if (!IsWaterSlopeCell(neighborX, neighborY))
+            return false;
+        return true;
+    }
+
+    /// <summary>Number of stacked cliff segments on the south face (0 = none). Higher cell is (x,y); lower is south.</summary>
+    private int GetCliffWallDropSouth(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
         if (!heightMap.IsValidPosition(x - 1, y))
-            return false;
-
+            return 0;
         int heightAtSouth = heightMap.GetHeight(x - 1, y);
-        if (currentHeight - heightAtSouth > 1)
-        {
-            return true;
-        }
-
+        if (heightAtSouth >= currentHeight)
+            return 0;
+        int diff = currentHeight - heightAtSouth;
+        if (diff > 1)
+            return diff;
+        if (ShouldSuppressCliffTowardCardinalLower(x, y, x - 1, y, currentHeight, heightAtSouth))
+            return 0;
         if (NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtSouth, x - 1, y))
-            return true;
-
-        if (!heightMap.IsValidPosition(x + 1, y))
-            return false;
-        int heightAtNorth = heightMap.GetHeight(x + 1, y);
-        return heightAtSouth == SEA_LEVEL && currentHeight == 1 && heightAtNorth == 2;
+            return 1;
+        if (NeedsCliffWallOneStepAboveWaterSlopeNeighbor(x, y, x - 1, y, currentHeight, heightAtSouth))
+            return 1;
+        return 0;
     }
 
-    private bool NeedsCliffWallEast(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
+    private int GetCliffWallDropEast(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
         if (!heightMap.IsValidPosition(x, y - 1))
-            return false;
-
+            return 0;
         int heightAtEast = heightMap.GetHeight(x, y - 1);
-        if (currentHeight - heightAtEast > 1)
-        {
-            return true;
-        }
-
+        if (heightAtEast >= currentHeight)
+            return 0;
+        int diff = currentHeight - heightAtEast;
+        if (diff > 1)
+            return diff;
+        if (ShouldSuppressCliffTowardCardinalLower(x, y, x, y - 1, currentHeight, heightAtEast))
+            return 0;
         if (NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtEast, x, y - 1))
-            return true;
-
-        if (!heightMap.IsValidPosition(x, y + 1))
-            return false;
-        int heightAtWest = heightMap.GetHeight(x, y + 1);
-        return heightAtEast == SEA_LEVEL && currentHeight == 1 && heightAtWest == 2;
+            return 1;
+        if (NeedsCliffWallOneStepAboveWaterSlopeNeighbor(x, y, x, y - 1, currentHeight, heightAtEast))
+            return 1;
+        return 0;
     }
 
-    private bool NeedsCliffWallNorth(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
+    private int GetCliffWallDropNorth(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
         if (!heightMap.IsValidPosition(x + 1, y))
-            return false;
+            return 0;
         int heightAtNorth = heightMap.GetHeight(x + 1, y);
-        if (currentHeight - heightAtNorth > 1)
-            return true;
-
+        if (heightAtNorth >= currentHeight)
+            return 0;
+        int diff = currentHeight - heightAtNorth;
+        if (diff > 1)
+            return diff;
+        if (ShouldSuppressCliffTowardCardinalLower(x, y, x + 1, y, currentHeight, heightAtNorth))
+            return 0;
         if (NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtNorth, x + 1, y))
-            return true;
-
-        if (!heightMap.IsValidPosition(x - 1, y))
-            return false;
-        int heightAtSouth = heightMap.GetHeight(x - 1, y);
-        return heightAtNorth == SEA_LEVEL && currentHeight == 1 && heightAtSouth == 2;
+            return 1;
+        if (NeedsCliffWallOneStepAboveWaterSlopeNeighbor(x, y, x + 1, y, currentHeight, heightAtNorth))
+            return 1;
+        return 0;
     }
 
-    private bool NeedsCliffWallWest(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
+    private int GetCliffWallDropWest(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
         if (!heightMap.IsValidPosition(x, y + 1))
-            return false;
+            return 0;
         int heightAtWest = heightMap.GetHeight(x, y + 1);
-        if (currentHeight - heightAtWest > 1)
-            return true;
-
+        if (heightAtWest >= currentHeight)
+            return 0;
+        int diff = currentHeight - heightAtWest;
+        if (diff > 1)
+            return diff;
+        if (ShouldSuppressCliffTowardCardinalLower(x, y, x, y + 1, currentHeight, heightAtWest))
+            return 0;
         if (NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtWest, x, y + 1))
-            return true;
-
-        if (!heightMap.IsValidPosition(x, y - 1))
-            return false;
-        int heightAtEast = heightMap.GetHeight(x, y - 1);
-        return heightAtWest == SEA_LEVEL && currentHeight == 1 && heightAtEast == 2;
+            return 1;
+        if (NeedsCliffWallOneStepAboveWaterSlopeNeighbor(x, y, x, y + 1, currentHeight, heightAtWest))
+            return 1;
+        return 0;
     }
 
     /// <summary>
@@ -1422,20 +1597,37 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         return currentHeight - neighborHeight == 1 && neighborHeight < currentHeight;
     }
 
-    private void PlaceCliffWallPrefab(Cell cell, GameObject prefab, int x, int y, int currentHeight)
+    /// <summary>
+    /// Stacks <paramref name="segmentCount"/> cliff sprites along the vertical face from <paramref name="highH"/> down to
+    /// <paramref name="lowH"/> on the lower neighbor cell (one prefab per height unit of drop).
+    /// </summary>
+    private void PlaceCliffWallStack(Cell cell, GameObject prefab, int highX, int highY, int lowX, int lowY, int highH, int lowH, int segmentCount)
     {
-        if (prefab == null)
-        {
+        if (prefab == null || gridManager == null || heightMap == null || segmentCount <= 0)
             return;
-        }
+        if (highH <= lowH)
+            return;
 
-        GameObject cliffWall = Instantiate(prefab, cell.transformPosition, Quaternion.identity);
-        cliffWall.transform.SetParent(cell.gameObject.transform);
-
-        SpriteRenderer sr = cliffWall.GetComponent<SpriteRenderer>();
-        if (sr != null)
+        float z = cell.gameObject.transform.position.z;
+        const float edgeBlend = 1.0f;
+        int d = highH - lowH;
+        int count = Mathf.Min(segmentCount, d);
+        for (int s = 0; s < count; s++)
         {
-            sr.sortingOrder = CalculateTerrainSortingOrder(x, y, currentHeight) + SLOPE_OFFSET;
+            int topH = highH - s;
+            int bottomH = (s < count - 1) ? (highH - s - 1) : lowH;
+            Vector2 topCenter = gridManager.GetWorldPositionVector(highX, highY, topH);
+            Vector2 bottomCenter = (s < count - 1)
+                ? gridManager.GetWorldPositionVector(highX, highY, bottomH)
+                : gridManager.GetWorldPositionVector(lowX, lowY, lowH);
+            Vector2 world = Vector2.Lerp(topCenter, bottomCenter, edgeBlend);
+
+            GameObject cliffWall = Instantiate(prefab, new Vector3(world.x, world.y, z), Quaternion.identity);
+            cliffWall.transform.SetParent(cell.gameObject.transform, true);
+
+            SpriteRenderer sr = cliffWall.GetComponent<SpriteRenderer>();
+            if (sr != null)
+                sr.sortingOrder = CalculateTerrainSortingOrder(highX, highY, topH) + SLOPE_OFFSET + s;
         }
     }
 

@@ -208,10 +208,12 @@ public class ForestManager : MonoBehaviour
         return initialForestCells;
     }
 
-    /// <summary>Dry land suitable for forest seeding: above sea level in height map and not logical water (lakes/sea can sit above sea level; see WaterMap).</summary>
+    /// <summary>Dry land suitable for forest seeding: above sea level in height map, not logical water, and not lake/coast border (water-slope cells).</summary>
     private bool IsDryLandForForestSeed(int x, int y, HeightMap heightMap)
     {
         if (waterManager != null && waterManager.IsWaterAt(x, y))
+            return false;
+        if (terrainManager != null && terrainManager.IsWaterSlopeCell(x, y))
             return false;
         if (heightMap != null && heightMap.IsValidPosition(x, y))
             return heightMap.GetHeight(x, y) > TerrainManager.SEA_LEVEL;
@@ -440,8 +442,14 @@ public class ForestManager : MonoBehaviour
 
         Cell cellComponent = gridManager.GetCell(x, y);
 
-        // Cannot place on river/coast edge (cell adjacent to water / height 0)
+        // Cannot place on river/coast edge (cardinal water); Moore-neighbor lake edges use TerrainManager.IsWaterSlopeCell.
         if (IsRiverOrCoastEdge(x, y))
+            return false;
+
+        TerrainManager tm = terrainManager;
+        if (tm == null && gridManager != null)
+            tm = gridManager.terrainManager;
+        if (tm != null && tm.IsWaterSlopeCell(x, y))
             return false;
 
         // Cannot place on roads or interstate
