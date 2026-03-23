@@ -13,8 +13,6 @@ namespace Territory.Terrain
     {
         public const int FormatVersionV2 = 2;
 
-        private const string LakeGenLogPrefix = "[LakeGeneration]";
-
         /// <summary>Neighbor outside the grid is treated as higher than any terrain cell (see <see cref="HeightMap"/> range 0–5).</summary>
         private const int OutsideMapSpillHeight = 6;
 
@@ -194,8 +192,6 @@ namespace Territory.Terrain
             LastLakeGenerationTargetBodies = effectiveMaxLakeBodies;
             LastLakeGenerationScaledBudget = areaScaledBudget;
 
-            Debug.Log($"{LakeGenLogPrefix} InitializeLakesFromDepressionFill start: map {width}x{height}, targetBodies={effectiveMaxLakeBodies} (hardCap={settings.ProceduralLakeBudgetHardCap}, maxBodies={settings.MaxLakeBodies}), areaScaledDiagnostic={areaScaledBudget}, useAreaScaledBudget={settings.UseScaledProceduralLakeBudget}");
-
             int randomExtraAttempts = settings.GetScaledRandomExtraSeedAttempts(width, height);
 
             var rnd = new System.Random(settings.RandomSeed);
@@ -283,8 +279,6 @@ namespace Territory.Terrain
                 bodiesCreated++;
             }
 
-            Debug.Log($"{LakeGenLogPrefix} After strict/window seeds: proceduralBodies={bodiesCreated}, mergedCount={bodies.Count}");
-
             if (settings.RunBoundedLocalDepressionPass)
                 TryFillBoundedLocalDepressions(heightMap, settings, rnd, claimed, ref bodiesCreated, effectiveMaxLakeBodies);
 
@@ -292,13 +286,10 @@ namespace Territory.Terrain
 
             MergeAdjacentBodiesWithSameSurface();
 
-            Debug.Log($"{LakeGenLogPrefix} After merge: bodyCount={bodies.Count}, target={effectiveMaxLakeBodies}");
-
             // Artificial fallback and corner last resort run only after procedural depression-fill (main + bounded) and merge
             // still leave the map short of the scaled lake budget — not as a primary generator.
             if (bodies.Count < effectiveMaxLakeBodies)
             {
-                Debug.Log($"{LakeGenLogPrefix} Starting artificial lake fallback (short by {effectiveMaxLakeBodies - bodies.Count})");
                 const int maxRecoveryPasses = 48;
                 int totalArtificial = 0;
                 int pass = 0;
@@ -309,7 +300,6 @@ namespace Territory.Terrain
                     MergeAdjacentBodiesWithSameSurface();
                     pass++;
                     LastLakeGenerationRecoveryPasses = pass;
-                    Debug.Log($"{LakeGenLogPrefix} Artificial recovery pass {pass}: added={added}, bodies={bodies.Count}/{effectiveMaxLakeBodies}");
                     if (bodies.Count >= effectiveMaxLakeBodies)
                         break;
                     if (added == 0)
@@ -318,10 +308,7 @@ namespace Territory.Terrain
 
                 if (bodies.Count < effectiveMaxLakeBodies)
                 {
-                    Debug.Log($"{LakeGenLogPrefix} Last-resort corner artificial lakes (still short by {effectiveMaxLakeBodies - bodies.Count})");
                     int cornerAdded = TryLastResortCornerArtificialLakes(heightMap, settings, seaLevelForArtificialFallback, effectiveMaxLakeBodies, claimed);
-                    if (cornerAdded > 0)
-                        Debug.Log($"{LakeGenLogPrefix} Corner pass placed {cornerAdded} artificial body/bodies");
                     totalArtificial += cornerAdded;
                     MergeAdjacentBodiesWithSameSurface();
                 }
@@ -331,11 +318,6 @@ namespace Territory.Terrain
 
             LastLakeGenerationFinalBodyCount = bodies.Count;
             LastLakeGenerationMetTarget = bodies.Count >= effectiveMaxLakeBodies;
-
-            if (LastLakeGenerationMetTarget)
-                Debug.Log($"{LakeGenLogPrefix} Complete: finalBodies={LastLakeGenerationFinalBodyCount}, artificialPlaced={LastLakeGenerationArtificialBodiesPlaced}, recoveryPasses={LastLakeGenerationRecoveryPasses}, metTarget=true");
-            else
-                Debug.LogWarning($"{LakeGenLogPrefix} Complete: finalBodies={LastLakeGenerationFinalBodyCount} (target {effectiveMaxLakeBodies} not reached — map may be too small or constrained). artificialPlaced={LastLakeGenerationArtificialBodiesPlaced}, recoveryPasses={LastLakeGenerationRecoveryPasses}");
         }
 
         /// <summary>
@@ -343,7 +325,6 @@ namespace Territory.Terrain
         /// </summary>
         private void TryFillBoundedLocalDepressions(HeightMap heightMap, LakeFillSettings settings, System.Random rnd, bool[,] claimed, ref int bodiesCreated, int effectiveMaxLakeBodies)
         {
-            int boundedBodiesStart = bodiesCreated;
             var extraSeeds = new List<Vector2Int>();
             int r = settings.BoundedLocalDepressionWindowRadius;
             for (int x = 0; x < width; x++)
@@ -373,8 +354,6 @@ namespace Territory.Terrain
                 c = a.x.CompareTo(b.x);
                 return c != 0 ? c : a.y.CompareTo(b.y);
             });
-
-            Debug.Log($"{LakeGenLogPrefix} Bounded pass: window radius {r}, {extraSeeds.Count} candidate seeds");
 
             foreach (var seed in extraSeeds)
             {
@@ -425,8 +404,6 @@ namespace Territory.Terrain
 
                 bodiesCreated++;
             }
-
-            Debug.Log($"{LakeGenLogPrefix} Bounded pass: {extraSeeds.Count} window-minima seeds, newBodiesThisPass={bodiesCreated - boundedBodiesStart}");
         }
 
         /// <summary>True if an artificial rectangle's width/height match procedural <see cref="LakeBoundingBoxFits"/> axis limits.</summary>

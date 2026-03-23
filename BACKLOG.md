@@ -7,7 +7,12 @@
 
 ## In Progress
 
-*None.*
+- [ ] **FEAT-38** — Procedural rivers during geography / terrain generation
+  - Type: feature
+  - Files: `GeographyManager.cs`, `TerrainManager.cs`, `HeightMap.cs`, `WaterMap.cs`, `WaterManager.cs`, `WaterBody.cs`, `Cell.cs` / `CellData.cs` (as needed for `WaterBodyType.River` persistence)
+  - Spec: `.cursor/specs/water-system-refactor.md` (goals: directed flow; suggested **phase D**: river graph or flow field — data-driven first, not full fluid simulation)
+  - Notes: On **New Game**, after the height map and lake placement pipeline, generate **rivers** as water bodies that follow **downhill gradients** (higher → lower terrain), optionally **linking lakes** or reaching the **sea** edge. Rivers share the same abstraction as lakes (**`WaterMap`** body ids, per-cell surface height aligned with terrain). Hook into `GeographyManager.InitializeGeography()` order (terrain → water → …) so river placement runs where procedural water is initialized. Coordinate with **BUG-08** (generation polish) where overlap. Shore/sorting for river banks may reuse lake shore paths or need follow-ups (**BUG-33**). **Prerequisite:** **FEAT-37a–c** (multi-level water + save/load) **completed**.
+  - Depends on: none (foundation **FEAT-37c** done)
 
 ## High Priority
 
@@ -100,13 +105,6 @@
   - Type: feature
   - Files: `ForestManager.cs`, `GridManager.cs`, `CursorManager.cs`
   - Notes: Place forest in area with random spray/brush distribution.
-
-- [ ] **BUG-08** — More small rivers, rivers reach lakes, define sea at corner/edge
-  - Type: fix/feature
-  - Files: `WaterManager.cs`, `WaterMap.cs`, `GeographyManager.cs`
-  - Notes: Improve map water generation.
-
-
 
 - [ ] **BUG-33** — Lake shore / edge prefab bugs (incorrect tiles, gaps, alignment)
   - Type: fix
@@ -209,11 +207,6 @@
   - Type: feature (new system)
   - Files: new manager + `GridManager.cs`
   - Notes: Railway network and animations.
-
-- [ ] **FEAT-38** — Rivers: downhill flow, connect lakes, generation polish
-  - Type: feature
-  - Files: `WaterMap.cs`, `WaterManager.cs`, `TerrainManager.cs`, `GeographyManager.cs`
-  - Notes: Gradient-based paths, merge with **BUG-08** where appropriate. Depends on **FEAT-37c** (stable multi-level water model).
 
 - [ ] **FEAT-39** — Sea / coast: edge region, infinite reservoir, tide direction (data)
   - Type: feature

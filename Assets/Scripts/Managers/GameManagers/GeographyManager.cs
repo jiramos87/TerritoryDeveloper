@@ -34,8 +34,8 @@ public class GeographyManager : MonoBehaviour
     [Header("Geography Configuration")]
     public bool initializeOnStart = true;
     public bool useTerrainForWater = true; // Whether to use terrain height for water placement
-    [Tooltip("Disable to see terrain clearly during road/terraforming tests.")]
-    public bool initializeForestsOnStart = false;
+    [Tooltip("When true, procedural forests are generated after interstate placement. Disable to see terrain clearly during road/terraforming tests.")]
+    public bool initializeForestsOnStart = true;
 
     // Current geographical data (for save/load operations)
     private GeographyData currentGeographyData;

@@ -174,8 +174,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         ApplyHeightMapToGrid();
     }
 
-    private const string LakeBasinLogPrefix = "[LakeBasins]";
-
     /// <summary>
     /// After procedural height generation, carves minimal cardinal bowls until
     /// <see cref="LakeFeasibility.CountSpillPassingCells"/> reaches
@@ -203,17 +201,14 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         minRequired = Mathf.Min(minRequired, maxPassingPossible);
 
         int passing = LakeFeasibility.CountSpillPassingCells(heightMap);
-        Debug.Log($"{LakeBasinLogPrefix} Target spill-passing cells >= {minRequired} (map {w}x{h}, hardCap={settings.ProceduralLakeBudgetHardCap}, extraBowls={settings.LakeFeasibilityExtraBowls}), initial passing={passing}");
 
         if (w < 3 || h < 3)
         {
-            Debug.LogWarning($"{LakeBasinLogPrefix} Map too small for interior bowl carving; skipping.");
             return;
         }
 
         if (passing >= minRequired)
         {
-            Debug.Log($"{LakeBasinLogPrefix} Target already met; no terrain carve.");
             return;
         }
 
@@ -255,10 +250,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 break;
         }
 
-        if (passing >= minRequired)
-            Debug.Log($"{LakeBasinLogPrefix} Done: rounds={round}, carves={carves}, final passing={passing} (target {minRequired})");
-        else
-            Debug.LogWarning($"{LakeBasinLogPrefix} Stopped early: rounds={round}, carves={carves}, final passing={passing}, target={minRequired} (no carveable cells left or iteration cap)");
     }
 
     private static void ShuffleCoordsList(List<Vector2Int> list, System.Random rnd)
@@ -858,10 +849,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(x, y);
             LogShorePrefabSelectionDebug(x, y, waterShorePrefabs);
             if (waterShorePrefabs != null && waterShorePrefabs.Count > 0)
-            {
-                Debug.Log($"RestoreTerrainForCell: PlaceWaterShore at ({x}, {y}) with prefab(s) {string.Join(", ", waterShorePrefabs.ConvertAll(p => p != null ? p.name : "null"))}");
                 PlaceWaterShore(x, y, waterShorePrefabs);
-            }
             return true;
         }
 
@@ -1148,10 +1136,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                         List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(nx, ny);
                         LogShorePrefabSelectionDebug(nx, ny, waterShorePrefabs);
                         if (waterShorePrefabs != null && waterShorePrefabs.Count > 0)
-                        {
-                            Debug.Log($"RestoreWaterSlopesFromHeightMap: PlaceWaterShore at ({nx}, {ny}) with prefab(s) {string.Join(", ", waterShorePrefabs.ConvertAll(p => p != null ? p.name : "null"))}");
                             PlaceWaterShore(nx, ny, waterShorePrefabs);
-                        }
                     }
                 }
             }

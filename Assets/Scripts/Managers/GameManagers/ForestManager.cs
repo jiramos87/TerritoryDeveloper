@@ -99,6 +99,18 @@ public class ForestManager : MonoBehaviour
             if (terrainManager == null)
                 terrainManager = FindObjectOfType<TerrainManager>();
 
+            if (waterManager == null && gridManager.waterManager != null)
+                waterManager = gridManager.waterManager;
+            if (waterManager == null)
+                waterManager = FindObjectOfType<WaterManager>();
+
+            // Required before BuildInitialForestCellsChunkBased: chunk placement uses GetTerrainHeightMap(); without this, heightMap can still be null (Start order).
+            if (terrainManager != null)
+                terrainManager.EnsureHeightMapLoaded();
+
+            HeightMap hm = GetTerrainHeightMap();
+            Debug.Log($"[ForestManager] InitializeForestMap: grid {gridManager.width}x{gridManager.height}, heightMap={(hm != null)}, waterManager={(waterManager != null)}");
+
             forestMap = new ForestMap(gridManager.width, gridManager.height);
 
             // Build int matrix (0 = None, 1 = Sparse, 2 = Medium, 3 = Dense) using chunk-based placement for economy and natural clusters
@@ -129,6 +141,17 @@ public class ForestManager : MonoBehaviour
 
             // Calculate initial desirability for all cells
             UpdateAllCellDesirability();
+
+            int forestCells = 0;
+            for (int fx = 0; fx < gridManager.width; fx++)
+            {
+                for (int fy = 0; fy < gridManager.height; fy++)
+                {
+                    if (forestMap.GetForestType(fx, fy) != Forest.ForestType.None)
+                        forestCells++;
+                }
+            }
+            Debug.Log($"[ForestManager] Initial forest generation complete: {forestCells} forest cells (chunkSize={ForestChunkSize}, chunkProb={ForestChunkProbability}, cellInChunkProb={ForestCellInChunkProbability}; ForestMap matrix filled).");
         }
     }
 
@@ -152,7 +175,7 @@ public class ForestManager : MonoBehaviour
                     for (int ox = 0; ox < ForestChunkSize && bx + ox < gridWidth; ox++)
                     {
                         int x = bx + ox, y = by + oy;
-                        if (heightMap != null && heightMap.GetHeight(x, y) > TerrainManager.SEA_LEVEL)
+                        if (IsDryLandForForestSeed(x, y, heightMap))
                         {
                             chunkHasLand = true;
                             break;
@@ -169,7 +192,7 @@ public class ForestManager : MonoBehaviour
                     for (int ox = 0; ox < ForestChunkSize && bx + ox < gridWidth; ox++)
                     {
                         int x = bx + ox, y = by + oy;
-                        if (heightMap != null && heightMap.GetHeight(x, y) == TerrainManager.SEA_LEVEL)
+                        if (!IsDryLandForForestSeed(x, y, heightMap))
                             continue;
                         if (!CanPlaceForestAt(x, y))
                             continue;
@@ -183,6 +206,17 @@ public class ForestManager : MonoBehaviour
         }
 
         return initialForestCells;
+    }
+
+    /// <summary>Dry land suitable for forest seeding: above sea level in height map and not logical water (lakes/sea can sit above sea level; see WaterMap).</summary>
+    private bool IsDryLandForForestSeed(int x, int y, HeightMap heightMap)
+    {
+        if (waterManager != null && waterManager.IsWaterAt(x, y))
+            return false;
+        if (heightMap != null && heightMap.IsValidPosition(x, y))
+            return heightMap.GetHeight(x, y) > TerrainManager.SEA_LEVEL;
+        Cell c = gridManager != null ? gridManager.GetCell(x, y) : null;
+        return c != null && c.height > TerrainManager.SEA_LEVEL;
     }
     #endregion
 
@@ -217,6 +251,8 @@ public class ForestManager : MonoBehaviour
             Debug.LogError($"Cell component is null at position: ({x}, {y})");
             return false;
         }
+
+        EnsureForestMapForManualPlacement();
 
         if (forestMap == null || !forestMap.IsValidPosition(x, y))
             return false;
@@ -391,6 +427,9 @@ public class ForestManager : MonoBehaviour
     #region Forest Queries
     private bool CanPlaceForestAt(int x, int y)
     {
+        if (forestMap == null)
+            return false;
+
         // Cannot place if already has forest
         if (forestMap.GetForestType(x, y) != Forest.ForestType.None)
             return false;
@@ -421,27 +460,45 @@ public class ForestManager : MonoBehaviour
     }
 
     /// <summary>
-    /// True if this cell is on river/coast edge: land cell with at least one orthogonal neighbor at height 0 (water).
+    /// True if this land cell is orthogonally adjacent to logical water (any surface height). Uses <see cref="WaterManager.IsWaterAt"/>, not terrain height alone (FEAT-37).
     /// </summary>
     private bool IsRiverOrCoastEdge(int x, int y)
     {
-        int cellHeight = GetCellHeight(x, y);
-        if (cellHeight <= TerrainManager.SEA_LEVEL)
-            return true; // Water or below sea level
+        if (waterManager == null)
+            return false;
+
+        if (waterManager.IsWaterAt(x, y))
+            return true;
+
         int[] dx = { -1, 1, 0, 0 };
         int[] dy = { 0, 0, -1, 1 };
         for (int i = 0; i < 4; i++)
         {
             int nx = x + dx[i];
             int ny = y + dy[i];
-            if (gridManager.IsValidGridPosition(new Vector2(nx, ny)))
-            {
-                int neighborHeight = GetCellHeight(nx, ny);
-                if (neighborHeight == TerrainManager.SEA_LEVEL)
-                    return true;
-            }
+            if (gridManager.IsValidGridPosition(new Vector2(nx, ny)) && waterManager.IsWaterAt(nx, ny))
+                return true;
         }
         return false;
+    }
+
+    /// <summary>Allocates an empty <see cref="ForestMap"/> when procedural init was skipped so manual placement still works.</summary>
+    private void EnsureForestMapForManualPlacement()
+    {
+        if (forestMap != null || gridManager == null)
+            return;
+        if (terrainManager == null && gridManager.terrainManager != null)
+            terrainManager = gridManager.terrainManager;
+        if (terrainManager == null)
+            terrainManager = FindObjectOfType<TerrainManager>();
+        if (waterManager == null && gridManager.waterManager != null)
+            waterManager = gridManager.waterManager;
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        if (terrainManager != null)
+            terrainManager.EnsureHeightMapLoaded();
+        forestMap = new ForestMap(gridManager.width, gridManager.height);
+        Debug.Log($"[ForestManager] Lazy ForestMap allocated for manual placement ({gridManager.width}x{gridManager.height}).");
     }
 
     /// <summary>

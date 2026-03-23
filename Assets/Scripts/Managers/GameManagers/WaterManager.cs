@@ -95,7 +95,6 @@ public class WaterManager : MonoBehaviour
                 if (useLakeDepressionFill)
                 {
                     waterMap.InitializeLakesFromDepressionFill(terrainManager.GetHeightMap(), lakeFillSettings, seaLevel);
-                    Debug.Log($"[WaterManager] Lake init: finalBodies={waterMap.LastLakeGenerationFinalBodyCount}, target={waterMap.LastLakeGenerationTargetBodies}, metTarget={waterMap.LastLakeGenerationMetTarget}, artificialBodies={waterMap.LastLakeGenerationArtificialBodiesPlaced}");
                     if (waterMap.ArtificialDirtyMinX >= 0)
                     {
                         terrainManager.ApplyHeightMapToRegion(
