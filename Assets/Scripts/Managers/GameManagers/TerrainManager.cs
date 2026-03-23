@@ -1605,7 +1605,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// Extra world Y for lake shore child sprites vs <see cref="GridManager.GetWorldPositionVector"/> at water visual height.
-    /// Bay: 0. Standalone corner SlopeWater: 0 (same water plane as neighbors). Diagonal Upslope or upslope+downslope pairs:
+    /// Bay: 0 when <c>landH − waterVisualH ≤ 1</c> (flat rim); same terrain-step nudge as diagonals when delta &gt; 1 (deep bowls / cliffs).
+    /// Standalone corner SlopeWater: 0 (same water plane as neighbors). Diagonal Upslope or upslope+downslope pairs:
     /// <c>(landH − waterVisualH) × tileHeight × 0.25</c>. Cardinal slopes: 0.
     /// </summary>
     /// <param name="shorePrefabCount">Number of shore prefabs placed together (2 = upslope+downslope pair).</param>
@@ -1615,7 +1616,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return 0f;
 
         if (IsBayShorePrefab(prefab))
-            return 0f;
+        {
+            int delta = Mathf.Max(0, landH - waterVisualH);
+            if (delta <= 1)
+                return 0f;
+            return delta * gridManager.tileHeight * 0.25f;
+        }
 
         if (IsDiagonalShoreWaterPrefab(prefab))
         {
@@ -1694,7 +1700,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// Diagonal-only water at shore. <b>Priority:</b> (1) axis-aligned rectangle outer corner → single Bay;
-    /// (2) <see cref="HasLandSlopeIgnoringWater"/> → upslope + downslope; (3) otherwise single Bay (flat terrain, diagonal lake edge).
+    /// (2) <see cref="HasLandSlopeIgnoringWater"/> → single Bay (cliff / higher land rim matches flat-lake concave corners); else downslope if no Bay;
+    /// (3) otherwise single Bay (flat terrain, diagonal lake edge); (4) fallback upslope+downslope pair.
     /// Rectangle corners must win over land-slope so a higher land neighbor does not force the companion pair on straight corners.
     /// </summary>
     private List<GameObject> BuildDiagonalOnlyShorePrefabs(int x, int y, GameObject bayPrefab, GameObject upslopePrefab, GameObject downslopePrefab, bool isAxisAlignedRectangleCornerWater)
@@ -1703,12 +1710,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return new List<GameObject> { bayPrefab };
         if (HasLandSlopeIgnoringWater(x, y))
         {
-            var list = new List<GameObject>();
-            if (upslopePrefab != null)
-                list.Add(upslopePrefab);
+            if (bayPrefab != null)
+                return ShoreList(bayPrefab);
             if (downslopePrefab != null)
-                list.Add(downslopePrefab);
-            return list.Count == 0 ? null : list;
+                return ShoreList(downslopePrefab);
+            // No Bay/downslope: fall through to pair — do not use upslope alone at cliff rim.
         }
         if (bayPrefab != null)
             return new List<GameObject> { bayPrefab };
@@ -1766,7 +1772,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// Selects lake/coast shore prefab(s) for a land cell adjacent to water. Returns one prefab or an upslope+downslope pair for diagonal slopes.
-    /// Perpendicular two-cardinal corners: Bay when the diagonal water cell is an axis-aligned rectangle outer corner; otherwise diagonal SlopeWater (convex land tip / large-lake shore).
+    /// Perpendicular two-cardinal corners: Bay when the diagonal water cell is an axis-aligned rectangle outer corner; when not, prefer Bay if
+    /// <see cref="HasLandSlopeIgnoringWater"/> (cliff rim), else SlopeWater then Bay (convex land tip / large-lake shore).
     /// </summary>
     private List<GameObject> DetermineWaterShorePrefabs(int x, int y)
     {
@@ -1821,10 +1828,16 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         // Perpendicular shore corners: both cardinals of a quadrant have water.
         // Bay = concave water corner (outer axis-aligned corner of the water patch: see IsAxisAlignedRectangleCornerWater*).
         // SlopeWater = convex land corner when water continues past the diagonal (peninsula tip, island corners, large lakes).
+        // When not a rectangle outer corner but a higher land neighbor exists (cliff rim), prefer Bay like flat lakes.
         // Order SE, SW, NE, NW so when three cardinals are water (e.g. N+E+S), one unambiguous tile wins (SE before NE).
         if (hasWaterAtSouth && hasWaterAtEast)
         {
             if (IsAxisAlignedRectangleCornerWaterSouthEast(x, y))
+            {
+                if (southEastBayPrefab != null) return ShoreList(southEastBayPrefab);
+                if (southEastSlopeWaterPrefab != null) return ShoreList(southEastSlopeWaterPrefab);
+            }
+            else if (HasLandSlopeIgnoringWater(x, y))
             {
                 if (southEastBayPrefab != null) return ShoreList(southEastBayPrefab);
                 if (southEastSlopeWaterPrefab != null) return ShoreList(southEastSlopeWaterPrefab);
@@ -1842,6 +1855,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 if (southWestBayPrefab != null) return ShoreList(southWestBayPrefab);
                 if (southWestSlopeWaterPrefab != null) return ShoreList(southWestSlopeWaterPrefab);
             }
+            else if (HasLandSlopeIgnoringWater(x, y))
+            {
+                if (southWestBayPrefab != null) return ShoreList(southWestBayPrefab);
+                if (southWestSlopeWaterPrefab != null) return ShoreList(southWestSlopeWaterPrefab);
+            }
             else
             {
                 if (southWestSlopeWaterPrefab != null) return ShoreList(southWestSlopeWaterPrefab);
@@ -1855,6 +1873,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 if (northEastBayPrefab != null) return ShoreList(northEastBayPrefab);
                 if (northEastSlopeWaterPrefab != null) return ShoreList(northEastSlopeWaterPrefab);
             }
+            else if (HasLandSlopeIgnoringWater(x, y))
+            {
+                if (northEastBayPrefab != null) return ShoreList(northEastBayPrefab);
+                if (northEastSlopeWaterPrefab != null) return ShoreList(northEastSlopeWaterPrefab);
+            }
             else
             {
                 if (northEastSlopeWaterPrefab != null) return ShoreList(northEastSlopeWaterPrefab);
@@ -1864,6 +1887,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         if (hasWaterAtNorth && hasWaterAtWest)
         {
             if (IsAxisAlignedRectangleCornerWaterNorthWest(x, y))
+            {
+                if (northWestBayPrefab != null) return ShoreList(northWestBayPrefab);
+                if (northWestSlopeWaterPrefab != null) return ShoreList(northWestSlopeWaterPrefab);
+            }
+            else if (HasLandSlopeIgnoringWater(x, y))
             {
                 if (northWestBayPrefab != null) return ShoreList(northWestBayPrefab);
                 if (northWestSlopeWaterPrefab != null) return ShoreList(northWestSlopeWaterPrefab);
