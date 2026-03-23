@@ -201,6 +201,8 @@ public class GameSaveManager : MonoBehaviour
 
     public void NewGame()
     {
+        MapGenerationSeed.RollNewMasterSeed();
+
         RegionalMapManager regionalMapManager = FindObjectOfType<RegionalMapManager>();
         if (regionalMapManager != null)
             regionalMapManager.ClearBorderSigns();

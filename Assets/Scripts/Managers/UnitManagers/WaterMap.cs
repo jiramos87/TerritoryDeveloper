@@ -211,23 +211,7 @@ namespace Territory.Terrain
                 seedSet.Add(new Vector2Int(rnd.Next(width), rnd.Next(height)));
 
             var minima = new List<Vector2Int>(seedSet);
-
-            // Prefer seeds with larger spill headroom (spill − floor) before random rejection.
-            minima.Sort((a, b) =>
-            {
-                int spillA = GetPlateauSpillHeight(a.x, a.y, heightMap);
-                int spillB = GetPlateauSpillHeight(b.x, b.y, heightMap);
-                int hA = heightMap.GetHeight(a.x, a.y);
-                int hB = heightMap.GetHeight(b.x, b.y);
-                int scoreA = spillA - hA;
-                int scoreB = spillB - hB;
-                int c = scoreB.CompareTo(scoreA);
-                if (c != 0) return c;
-                c = hA.CompareTo(hB);
-                if (c != 0) return c;
-                c = a.x.CompareTo(b.x);
-                return c != 0 ? c : a.y.CompareTo(b.y);
-            });
+            SortSeedCandidatesBySpillHeadroom(minima, heightMap, rnd);
 
             var claimed = new bool[width, height];
             int bodiesCreated = 0;
@@ -321,6 +305,41 @@ namespace Territory.Terrain
         }
 
         /// <summary>
+        /// Orders candidates by spill headroom (descending), then terrain height, then random tie-break (BUG-36).
+        /// </summary>
+        private void SortSeedCandidatesBySpillHeadroom(List<Vector2Int> cells, HeightMap heightMap, System.Random rnd)
+        {
+            int n = cells.Count;
+            if (n <= 1)
+                return;
+
+            var tmp = new List<(Vector2Int p, int tie)>(n);
+            for (int i = 0; i < n; i++)
+                tmp.Add((cells[i], rnd.Next()));
+
+            tmp.Sort((A, B) =>
+            {
+                Vector2Int a = A.p;
+                Vector2Int b = B.p;
+                int spillA = GetPlateauSpillHeight(a.x, a.y, heightMap);
+                int spillB = GetPlateauSpillHeight(b.x, b.y, heightMap);
+                int hA = heightMap.GetHeight(a.x, a.y);
+                int hB = heightMap.GetHeight(b.x, b.y);
+                int scoreA = spillA - hA;
+                int scoreB = spillB - hB;
+                int c = scoreB.CompareTo(scoreA);
+                if (c != 0) return c;
+                c = hA.CompareTo(hB);
+                if (c != 0) return c;
+                return A.tie.CompareTo(B.tie);
+            });
+
+            cells.Clear();
+            for (int i = 0; i < n; i++)
+                cells.Add(tmp[i].p);
+        }
+
+        /// <summary>
         /// Second pass: seeds that are minima in a larger window (lakes between plateaus), same spill/basin rules, optional cap via bbox.
         /// </summary>
         private void TryFillBoundedLocalDepressions(HeightMap heightMap, LakeFillSettings settings, System.Random rnd, bool[,] claimed, ref int bodiesCreated, int effectiveMaxLakeBodies)
@@ -339,21 +358,7 @@ namespace Territory.Terrain
                 }
             }
 
-            extraSeeds.Sort((a, b) =>
-            {
-                int spillA = GetPlateauSpillHeight(a.x, a.y, heightMap);
-                int spillB = GetPlateauSpillHeight(b.x, b.y, heightMap);
-                int hA = heightMap.GetHeight(a.x, a.y);
-                int hB = heightMap.GetHeight(b.x, b.y);
-                int scoreA = spillA - hA;
-                int scoreB = spillB - hB;
-                int c = scoreB.CompareTo(scoreA);
-                if (c != 0) return c;
-                c = hA.CompareTo(hB);
-                if (c != 0) return c;
-                c = a.x.CompareTo(b.x);
-                return c != 0 ? c : a.y.CompareTo(b.y);
-            });
+            SortSeedCandidatesBySpillHeadroom(extraSeeds, heightMap, rnd);
 
             foreach (var seed in extraSeeds)
             {
@@ -1116,6 +1121,7 @@ namespace Territory.Terrain
         /// <summary>Extra spill-passing cells carved in terrain (margin over effective lake budget). See <see cref="TerrainManager"/> lake feasibility.</summary>
         public int LakeFeasibilityExtraBowls = 2;
 
+        /// <summary>Default only; <see cref="WaterManager.InitializeWaterMap"/> sets this from <see cref="Territory.Persistence.MapGenerationSeed"/> before lake fill (BUG-36).</summary>
         public int RandomSeed = 54321;
 
         /// <summary>

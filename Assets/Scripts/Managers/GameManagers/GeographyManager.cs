@@ -9,6 +9,7 @@ using Territory.Roads;
 using Territory.Economy;
 using Territory.UI;
 using Territory.Utilities;
+using Territory.Persistence;
 
 namespace Territory.Geography
 {
@@ -72,6 +73,8 @@ public class GeographyManager : MonoBehaviour
 
     public void InitializeGeography()
     {
+        MapGenerationSeed.EnsureSessionMasterSeed();
+
         if (regionalMapManager != null)
         {
             regionalMapManager.InitializeRegionalMap();

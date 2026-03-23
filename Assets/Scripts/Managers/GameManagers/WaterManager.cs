@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Territory.Core;
 using Territory.Zones;
 using Territory.Buildings;
+using Territory.Persistence;
 
 namespace Territory.Terrain
 {
@@ -94,6 +95,8 @@ public class WaterManager : MonoBehaviour
             {
                 if (useLakeDepressionFill)
                 {
+                    MapGenerationSeed.EnsureSessionMasterSeed();
+                    lakeFillSettings.RandomSeed = MapGenerationSeed.GetLakeFillRandomSeed();
                     waterMap.InitializeLakesFromDepressionFill(terrainManager.GetHeightMap(), lakeFillSettings, seaLevel);
                     if (waterMap.ArtificialDirtyMinX >= 0)
                     {

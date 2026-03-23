@@ -7,6 +7,13 @@
 
 ## In Progress
 
+- [ ] **BUG-36** — Fix lake generation randomness
+  - Type: bug
+  - Files: `WaterMap.cs` (`InitializeLakesFromDepressionFill`, artificial fallback passes), `TerrainManager.cs` (`EnsureGuaranteedLakeDepressions`, `CarveMinimalCardinalBowl`, lake-spill / seed ordering), `WaterManager.cs` (`LakeFillSettings`, `useLakeDepressionFill`), `LakeFillSettings` (defaults / tuning)
+  - Spec: `.cursor/specs/water-system-refactor.md` (§9 — depression-fill seeds ordered by spill headroom (`spill − floor`), bounded pass, artificial fallback rectangles, `EnsureGuaranteedLakeDepressions` shuffle + carve)
+  - Notes: **Observed:** For the same base geography (height map / template), **New Game** lake bodies are **identical** across runs (same positions, extents, shapes). **Likely causes:** (1) **Procedural depression-fill** — deterministic seed ordering and candidate iteration; **Random** may not be tied to a per-run or per-map seed; (2) **Terrain bowl** pass — interior shuffle exists but **RNG state** at geography init may be fixed; (3) **Artificial fallback** — axis-aligned rectangle placement and last-resort corner passes may use **fixed** iteration order. **Goal:** Introduce **controlled randomness** (e.g. dedicated **lake-generation RNG** seeded from `GameManager` / map / **New Game** seed) so lake placement **varies** between runs while remaining **reproducible** when a save or explicit seed is used. Revisit ordering of spill-headroom vs random tie-break; avoid breaking determinism tests if any are added. **Related:** **BUG-08** (generation polish), **FEAT-38** (rivers after lakes — may share seeding).
+  - Depends on: none
+
 - [ ] **FEAT-38** — Procedural rivers during geography / terrain generation
   - Type: feature
   - Files: `GeographyManager.cs`, `TerrainManager.cs`, `HeightMap.cs`, `WaterMap.cs`, `WaterManager.cs`, `WaterBody.cs`, `Cell.cs` / `CellData.cs` (as needed for `WaterBodyType.River` persistence)
@@ -20,6 +27,13 @@
   - Type: refactor
   - Files: `GridManager.cs` (~2070 lines), `TerrainManager.cs` (~2365), `CityStats.cs` (~1200), `ZoneManager.cs` (~1360), `UIManager.cs` (~1240), `RoadManager.cs` (~1730)
   - Notes: Helpers already extracted (`GridPathfinder`, `GridSortingOrderService`, `ChunkCullingSystem`, `RoadCacheService`, `BuildingPlacementService`, etc.). **Next candidates from GridManager:** `BulldozeHandler` (~200 lines), `GridInputHandler` (~130 lines), `CoordinateConversionService` (~230 lines). Prioritize this workstream; see `ARCHITECTURE.md` (GridManager hub trade-off).
+
+- [ ] **BUG-37** — Manual street drawing clears buildings and zones on cells adjacent to the traced path
+  - Type: bug
+  - Files: `RoadManager.cs` (`HandleRoadDrawing`, road placement / commit path), `GridManager.cs` (road mode input, any demolish or clear calls near road segments), `TerrainManager.cs` / `TerraformingService.cs` if road placement widens the affected region; `ZoneManager.cs` if zoning is cleared outside road cells
+  - Spec: `.cursor/specs/road-drawing-fixes.md` (manual streets; **BUG-25** completed — regression or related edge case)
+  - Notes: **Observed:** In **road drawing mode**, tracing a street **removes** (or clears) **buildings and zoning on cells adjacent to the route**, not only on the road cells themselves. **Expected:** Only cells that actually receive the road (and any explicitly required footprint for valid placement) should be modified; **neighboring** zoned or built cells should remain unless the design intentionally requires a wider clear (document if so). Likely causes: over-broad dirty rect, neighbor iteration calling `DemolishCellAt` / zone clear, terraform brush larger than 1×1, or preview vs commit mismatch. **Related:** completed **BUG-25** (manual street segment drawing).
+  - Depends on: none
 
 - [ ] **BUG-31** — Wrong prefabs at interstate entry/exit (border)
   - Type: fix
