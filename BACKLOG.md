@@ -16,6 +16,11 @@
 
 ## High Priority
 
+- [ ] **TECH-01** — Extract responsibilities from large files (focus: **GridManager** decomposition next)
+  - Type: refactor
+  - Files: `GridManager.cs` (~2070 lines), `TerrainManager.cs` (~2365), `CityStats.cs` (~1200), `ZoneManager.cs` (~1360), `UIManager.cs` (~1240), `RoadManager.cs` (~1730)
+  - Notes: Helpers already extracted (`GridPathfinder`, `GridSortingOrderService`, `ChunkCullingSystem`, `RoadCacheService`, `BuildingPlacementService`, etc.). **Next candidates from GridManager:** `BulldozeHandler` (~200 lines), `GridInputHandler` (~130 lines), `CoordinateConversionService` (~230 lines). Prioritize this workstream; see `ARCHITECTURE.md` (GridManager hub trade-off).
+
 - [ ] **BUG-31** — Wrong prefabs at interstate entry/exit (border)
   - Type: fix
   - Files: `RoadPrefabResolver.cs`, `RoadManager.cs`
@@ -41,11 +46,6 @@
   - Files: `CursorManager.cs` (Update), `UIManager.cs` (UpdateUI)
   - Notes: `CursorManager.Update()` calls `FindObjectOfType<UIManager>()` every frame. `UIManager.UpdateUI()` calls `FindObjectOfType` for 4 managers repeatedly. Must be cached in Start().
 
-- [ ] **BUG-15** — `UrbanizationProposalManager` not connected to simulation
-  - Type: fix
-  - Files: `SimulationManager.cs`, `UrbanizationProposalManager.cs`
-  - Notes: `SimulationManager.ProcessSimulationTick()` never calls `UrbanizationProposalManager.ProcessTick()`. Urbanization proposals are disabled.
-
 ## Medium Priority
 
 - [ ] **BUG-19** — Mouse scroll wheel in Load Game scrollable menu also triggers camera zoom
@@ -63,11 +63,6 @@
   - Type: fix
   - Files: `GridManager.cs`
   - Notes: In InitializeGrid() ChunkCullingSystem is created with `cachedCamera`, but it is only assigned in Update(). May cause NullReferenceException.
-
-- [ ] **BUG-13** — `FindObjectOfType<TimeManager>()` called every tick in UrbanizationProposalManager
-  - Type: fix (performance)
-  - Files: `UrbanizationProposalManager.cs` (ProcessTick)
-  - Notes: `FindObjectOfType` is expensive and runs every simulation tick. Cache in Start().
 
 - [ ] **FEAT-21** — Expenses and maintenance system
   - Type: feature
@@ -125,19 +120,19 @@
 
 ## Code Health (technical debt)
 
+- [ ] **TECH-13** — Remove obsolete **UrbanizationProposal** system (dead code, UI, models)
+  - Type: refactor (cleanup)
+  - Files: `UrbanizationProposalManager.cs`, `ProposalUIController.cs`, `UrbanizationProposal.cs` (and related), `SimulationManager.cs`, `UIManager.cs`, scene references, save data if any
+  - Notes: The **urban expansion proposal** feature is **obsolete** and intentionally **disabled**; the game is stable without it. **Keep** `UrbanizationProposalManager` disconnected from the simulation — do **not** re-enable proposals. **Keep** `UrbanCentroidService` / urban **rings** for AUTO roads and zoning (FEAT-32). This issue tracks **full removal** of proposal-specific code and UI after a safe audit (no save-game breakage). Supersedes former **BUG-15** / **BUG-13**.
+
 - [ ] **TECH-04** — Remove direct access to `gridArray`/`cellArray` outside GridManager
   - Type: refactor
   - Files: `WaterManager.cs`, `GridSortingOrderService.cs`, `GeographyManager.cs`, `BuildingPlacementService.cs`
   - Notes: Project rule: use `GetCell(x, y)` instead of direct array access. Several classes violate this. Risk of subtle bugs when grid changes.
 
-- [ ] **TECH-01** — Extract responsibilities from large files (GridManager, TerrainManager, CityStats, ZoneManager, UIManager, RoadManager)
-  - Type: refactor
-  - Files: `GridManager.cs` (~1870 lines), `TerrainManager.cs` (~1740), `CityStats.cs` (~1200), `ZoneManager.cs` (~1360), `UIManager.cs` (~1240), `RoadManager.cs` (~1730)
-  - Notes: Helpers already extracted (GridPathfinder, GridSortingOrderService, etc.). Pending candidates: BulldozeHandler (~200 lines), GridInputHandler (~130 lines), CoordinateConversionService (~230 lines) from GridManager.
-
 - [ ] **TECH-02** — Change public fields to `[SerializeField] private` in managers
   - Type: refactor
-  - Files: `ZoneManager.cs`, `RoadManager.cs`, `GridManager.cs`, `CityStats.cs`, `AutoZoningManager.cs`, `AutoRoadBuilder.cs`, `UIManager.cs`, `WaterManager.cs`, `UrbanizationProposalManager.cs`
+  - Files: `ZoneManager.cs`, `RoadManager.cs`, `GridManager.cs`, `CityStats.cs`, `AutoZoningManager.cs`, `AutoRoadBuilder.cs`, `UIManager.cs`, `WaterManager.cs`
   - Notes: Dependencies and prefabs exposed as `public` allow accidental access from any class. Use `[SerializeField] private` to encapsulate.
 
 - [ ] **TECH-03** — Extract magic numbers to constants or ScriptableObjects
@@ -177,6 +172,11 @@
   - Type: feature
   - Files: `CameraController.cs`, `GridManager.cs`, all rendering managers
   - Notes: Isometric view rotation. High impact on sorting order and rendering.
+
+- [ ] **TECH-14** — Remove residual placeholder / test scripts
+  - Type: refactor (cleanup)
+  - Files: `CityManager.cs` (namespace-only stub), `TestScript.cs` (compile smoke test)
+  - Notes: Delete or replace with real content only if nothing references them; verify no scene/Inspector references.
 
 - [ ] **FEAT-11** — Education level / Schools
   - Type: feature (new system)
@@ -262,7 +262,7 @@
 - [x] **BUG-34** — Load Game: zone buildings / utilities render under terrain or water edges (`sortingOrder` snapshot vs building layer) (2026-03-22)
   - Type: fix
   - Files: `GridManager.cs`, `ZoneManager.cs`, `TerrainManager.cs`, `BuildingPlacementService.cs`, `GridSortingOrderService.cs`, `Cell.cs`, `CellData.cs`, `GameSaveManager.cs`
-  - Notes: Deterministic restore order; open water and shores aligned with runtime sorting; multi-cell RCI passes `buildingSize`; post-load building sort pass; optional grass sync via `SyncCellTerrainLayersBelowBuilding`. **BUG-35** (completed 2026-03-22) adds `destroyFlatGrass` on building placement/restore. **Agent prompt:** [`docs/agent-prompt-load-game-building-sorting-order.md`](docs/agent-prompt-load-game-building-sorting-order.md).
+  - Notes: Deterministic restore order; open water and shores aligned with runtime sorting; multi-cell RCI passes `buildingSize`; post-load building sort pass; optional grass sync via `SyncCellTerrainLayersBelowBuilding`. **BUG-35** (completed 2026-03-22) adds `destroyFlatGrass` on building placement/restore. Archived agent prompt: [`.cursor/specs/archive/agent-prompt-load-game-building-sorting-order.md`](.cursor/specs/archive/agent-prompt-load-game-building-sorting-order.md).
 
 - [x] **FEAT-37c** — Persist `WaterMapData` in saves + snapshot load (no terrain/water regen on load) (2026-03-22)
   - Type: feature
@@ -293,7 +293,7 @@
 - [x] **BUG-30** — Incorrect road prefabs when interstate climbs slopes (2026-03-20)
   - Type: fix
   - Files: `TerraformingService.cs`, `RoadPrefabResolver.cs`, `PathTerraformPlan.cs`, `RoadManager.cs` (shared pipeline)
-  - Notes: Segment-based Δh for scale-with-slopes; corner/upslope cells use `GetPostTerraformSlopeTypeAlongExit` (aligned with travel); live-terrain fallback + `RestoreTerrainForCell` force orthogonal ramp when `action == None` and cardinal `postTerraformSlopeType`. See `docs/agent-prompt-interstate-slope-prefabs.md`. Verified in Unity.
+  - Notes: Segment-based Δh for scale-with-slopes; corner/upslope cells use `GetPostTerraformSlopeTypeAlongExit` (aligned with travel); live-terrain fallback + `RestoreTerrainForCell` force orthogonal ramp when `action == None` and cardinal `postTerraformSlopeType`. Archived prompt: [`.cursor/specs/archive/agent-prompt-interstate-slope-prefabs.md`](.cursor/specs/archive/agent-prompt-interstate-slope-prefabs.md). Verified in Unity.
 
 - [x] **TECH-09** — Remove obsolete `TerraformNeeded` from TerraformingService (2026-03-20)
   - Type: refactor (dead code removal)
@@ -322,7 +322,10 @@
 - [x] **BUG-27** — Interstate pathfinding bugs (2026-03-19)
   - Border endpoint scoring (`ComputeInterstateBorderEndpointScore`), sorted candidates, `PickLowerCostInterstateAStarPath` (avoid-high vs not, pick cheaper), `InterstateAwayFromGoalPenalty` and cost tuning in `RoadPathCostConstants`. Spec: `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md` Phase 2.
 - [x] **BUG-29** — Cut-through: high hills cut through disappear leaving crater (2026-03-19)
-  - Reject cut-through when `maxHeight - baseHeight > 1`; cliff/corridor context in `TerrainManager` / `PathTerraformPlan`; map-edge margin `cutThroughMinCellsFromMapEdge`; Phase 1 validation ring in `PathTerraformPlan`; interstate uses `forbidCutThrough`. See `docs/plan-cut-through-craters.md`.
+  - Reject cut-through when `maxHeight - baseHeight > 1`; cliff/corridor context in `TerrainManager` / `PathTerraformPlan`; map-edge margin `cutThroughMinCellsFromMapEdge`; Phase 1 validation ring in `PathTerraformPlan`; interstate uses `forbidCutThrough`. Archived summary: [`.cursor/specs/archive/plan-cut-through-craters.md`](.cursor/specs/archive/plan-cut-through-craters.md).
+
+- [x] **BUG-15** / **BUG-13** — UrbanizationProposal not wired / per-tick FindObjectOfType (2026-03-22 superseded)
+  - Notes: The **UrbanizationProposal** system is **obsolete** and stays **disabled** by design. Do not fix by re-enabling. Full removal tracked under **TECH-13**.
 - [x] **FEAT-24** — Auto-zoning for Medium and Heavy density (2026-03-19)
 - [x] **BUG-23** — Interstate route generation is flaky; never created in New Game flow (2026-03-19)
 - [x] **BUG-26** — Interstate prefab selection and pathfinding improvements (2026-03-19)

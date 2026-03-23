@@ -8,7 +8,7 @@ Manual road drawing has multiple bugs affecting terrain interaction, existing in
 
 ## BUG-25 — Spec task status (2026-03-19)
 
-Tracked in [BACKLOG.md](../../BACKLOG.md) as **In progress** until playmode sign-off. **Implementation for this document’s core scope is treated as complete:**
+**BUG-25** is **completed** in [BACKLOG.md](../../BACKLOG.md) (2026-03-19). **Implementation for this document’s core scope is complete:**
 
 | Area | Status |
 |------|--------|

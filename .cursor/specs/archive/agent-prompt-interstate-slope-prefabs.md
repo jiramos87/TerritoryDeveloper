@@ -1,5 +1,7 @@
 # Agent Prompt: Interstate Slope Prefabs (BUG-30)
 
+> **Archived** — Historical reference only. See [`README.md`](README.md). Do not use as an active task prompt.
+
 ## Task
 
 Create a **development plan** for fixing incorrect road prefab selection when the interstate climbs slopes. The plan should be written as a markdown file (e.g. `docs/plan-interstate-slope-prefabs.md` or `.cursor/specs/plan-interstate-slope-prefabs.md`) that another developer or agent can execute. Before writing the plan, analyze the codebase, clarify any open questions, and propose a concrete, step-by-step approach.

@@ -1,6 +1,8 @@
 # AI Agent Prompt — Load Game: Building vs Terrain Sorting (BUG-34 & BUG-35, completed)
 
-Reference for **save/load** cell visuals and **sprite sorting** after **Load Game**. Issues **[BUG-34](../BACKLOG.md)** and **[BUG-35](../BACKLOG.md)** are **completed** (2026-03-22).
+> **Archived** — Historical reference only. See [`README.md`](README.md). Do not use as an active task prompt.
+
+Reference for **save/load** cell visuals and **sprite sorting** after **Load Game**. Issues **[BUG-34](../../../BACKLOG.md)** and **[BUG-35](../../../BACKLOG.md)** are **completed** (2026-03-22).
 
 ## Goal (achieved)
 
@@ -25,9 +27,9 @@ Reference for **save/load** cell visuals and **sprite sorting** after **Load Gam
 
 ## Specs (read first)
 
-- [`.cursor/specs/isometric-geography-system.md`](../.cursor/specs/isometric-geography-system.md) — §7 Sorting Order, **§7.4 Save / Load Game**.
-- [`.cursor/specs/water-system-refactor.md`](../.cursor/specs/water-system-refactor.md) — FEAT-37c save/load notes.
-- [`ARCHITECTURE.md`](../ARCHITECTURE.md) — Persistence, Water.
+- [`isometric-geography-system.md`](../isometric-geography-system.md) — §7 Sorting Order, **§7.4 Save / Load Game**.
+- [`water-system-refactor.md`](../water-system-refactor.md) — FEAT-37c save/load notes.
+- [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) — Persistence, Water.
 
 ## Code map
 

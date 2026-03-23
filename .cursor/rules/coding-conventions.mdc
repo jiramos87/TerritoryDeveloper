@@ -21,6 +21,11 @@ All code, comments, XML docs, annotations, and repository content must be in **E
 - Enums: PascalCase for type and values
 - Do NOT use C# reserved keywords as identifiers (e.g. `base`, `class`, `ref`, `out`, `in`)
 
+## Prefabs and asset naming (new content)
+- **Do not rename** existing prefab files or asset filenames in the project for consistency with this rule — only apply conventions to **new** assets and variants.
+- **Slope / zoning / building variants** (see `SlopePrefabRegistry`, `.cursor/specs/isometric-geography-system.md` §6.4): use the pattern `{flatPrefabName}_{slopeCode}Slope` where `slopeCode` is one of `N`, `S`, `E`, `W`, `NE`, `NW`, `SE`, `SW`, `NEUp`, `NWUp`, `SEUp`, `SWUp`.
+- **Roads, terrain, UI:** follow existing prefixes in each folder (e.g. `roadTilePrefab*`, `northSlopePrefab`); new prefabs should mirror the established naming style in that category.
+
 ## Dependency Pattern
 ```csharp
 [Header("Manager References")]

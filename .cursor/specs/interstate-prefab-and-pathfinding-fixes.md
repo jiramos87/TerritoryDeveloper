@@ -10,8 +10,8 @@ This spec addresses multiple issues observed in interstate route generation: inc
 
 - [bridge-and-junction-fixes.md](bridge-and-junction-fixes.md) — Bridge disappearing, junction refresh
 - [road-drawing-fixes.md](road-drawing-fixes.md) — Manual draw pipeline, preview consistency, Phase 1–4 (**BUG-25**)
-- [BACKLOG.md](../../BACKLOG.md) — BUG-25 (in progress pending verify), BUG-23 (interstate flaky, completed)
-- [docs/plan-cut-through-craters.md](../../docs/plan-cut-through-craters.md) — BUG-29 implementation notes
+- [BACKLOG.md](../../BACKLOG.md) — BUG-25 (completed), BUG-23 (interstate flaky, completed)
+- [archive/plan-cut-through-craters.md](archive/plan-cut-through-craters.md) — BUG-29 implementation notes (archived; historical reference)
 
 ## Related Files
 
@@ -185,7 +185,7 @@ if (pathRight && pathDown && !pathLeft && !pathUp)
 |------|------|-------------|
 | 3.1 | `PathTerraformPlan.cs` | Neighbor refresh waves for cut-through — **done** (Phase 3 second ring / waves) |
 | 3.2 | `TerrainManager.cs` | One-step cliff walls toward cut corridor — **done** (`terraformCutCorridorCells`, `NeedsCutThroughOneStepCliffToCorridor`) |
-| 3.3 | `TerraformingService.cs` | Tall-hill cut reject; map-edge margin; optional widen — **done** (see `docs/plan-cut-through-craters.md`) |
+| 3.3 | `TerraformingService.cs` | Tall-hill cut reject; map-edge margin; optional widen — **done** (see [archive/plan-cut-through-craters.md](archive/plan-cut-through-craters.md)) |
 
 **Acceptance:** Cut-through no longer leaves voids at typical boundaries; invalid tall cuts rejected; interstate forbids cut-through trench.
 
@@ -246,8 +246,8 @@ Phase 4 (unify) — optional, after 2 and 3
 - **BUG-23** (interstate flaky): New Game flow problem is a separate initialization/flow issue in GeographyManager/GameBootstrap.
 - **BUG-26** (completed 2026-03-19): Phases 1–3 started; bridge approach (Rule F) and shared validation landed.
 - **BUG-27** (completed 2026-03-19): Interstate pathfinding — endpoint ranking, dual A*, penalties (`RoadPathCostConstants`).
-- **BUG-29** (completed 2026-03-19): Cut-through craters — reject tall cut, cliff corridor, map-edge guard, validation ring; see `docs/plan-cut-through-craters.md`.
-- **BUG-25** (in progress in BACKLOG): Manual street drawing — spec tasks marked complete in `road-drawing-fixes.md`; pending user verify.
+- **BUG-29** (completed 2026-03-19): Cut-through craters — reject tall cut, cliff corridor, map-edge guard, validation ring; see [archive/plan-cut-through-craters.md](archive/plan-cut-through-craters.md).
+- **BUG-25** (completed): Manual street drawing — see `road-drawing-fixes.md` for optional polish items.
 - **BUG-28**: Sorting order between slope cell and interstate cell — open.
-- **BUG-30** (completed 2026-03-20): Slope/ramp prefabs when interstate (or manual road) climbs hills — corner and diagonal aligned with `GetPostTerraformSlopeTypeAlongExit`; see `docs/agent-prompt-interstate-slope-prefabs.md`.
+- **BUG-30** (completed 2026-03-20): Slope/ramp prefabs when interstate (or manual road) climbs hills — corner and diagonal aligned with `GetPostTerraformSlopeTypeAlongExit`; see [archive/agent-prompt-interstate-slope-prefabs.md](archive/agent-prompt-interstate-slope-prefabs.md) (archived).
 - **BUG-31**: Prefab selection at interstate border entry/exit — open.

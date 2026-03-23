@@ -1,6 +1,8 @@
 # BUG-29 — Cut-through craters: implementation summary
 
-**Backlog:** [BUG-29](../BACKLOG.md) marked **completed** (2026-03-19).
+**Backlog:** [BUG-29](../../../BACKLOG.md) marked **completed** (2026-03-19).
+
+> **Archived:** Historical implementation summary. Active specs live under `.cursor/specs/`; do not treat this as pending work.
 
 This document aligns with [agent-prompt-cut-through-craters.md](agent-prompt-cut-through-craters.md) and records what was implemented.
 

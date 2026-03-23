@@ -1,5 +1,7 @@
 # Agent Prompt: Cut-Through Craters (BUG-29)
 
+> **Archived** — Historical reference only. See [`README.md`](README.md). Do not use as an active task prompt.
+
 **Status:** Issue **completed** in BACKLOG (2026-03-19). Implementation summary: [plan-cut-through-craters.md](plan-cut-through-craters.md). This prompt is retained for historical context.
 
 ## Task

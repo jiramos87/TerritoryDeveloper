@@ -17,7 +17,7 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 │  Simulation Layer                                       │
 │  SimulationManager, AutoRoadBuilder, AutoZoningManager, │
 │  AutoResourcePlanner, GrowthManager, GrowthBudgetMgr,  │
-│  UrbanizationProposalManager                            │
+│  UrbanCentroidService (AUTO roads/zoning rings)         │
 ├─────────────────────────────────────────────────────────┤
 │  Gameplay Layer                                         │
 │  ZoneManager, RoadManager, InterstateManager,           │
@@ -45,7 +45,7 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 | Directory | Files | Purpose |
 |-----------|-------|---------|
 | `Managers/GameManagers/` | 94 | Core game logic: grid, terrain, zones, roads, economy, simulation, helpers |
-| `Managers/UnitManagers/` | 58 | Data models: Cell, Zone, Building, Forest, HeightMap, CellData, etc. |
+| `Managers/UnitManagers/` | 64 | Data models: Cell, Zone, Building, Forest, HeightMap, CellData, WaterMap, etc. |
 | `Controllers/GameControllers/` | 6 | CameraController, CityStatsUIController, etc. |
 | `Controllers/UnitControllers/` | 38 | UI buttons, popups, sliders |
 | `Utilities/` | 6 | DebugHelper, RoadPathCostConstants, etc. |
@@ -54,16 +54,16 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 
 | File | Lines | Role |
 |------|-------|------|
-| GridManager.cs | ~1870 | Central hub — grid, cells, coordinates, placement, sorting, pathfinding |
-| TerrainManager.cs | ~1740 | Heightmap, slopes, terrain prefab selection |
+| GridManager.cs | ~2070 | Central hub — grid, cells, coordinates, placement, sorting, pathfinding |
+| TerrainManager.cs | ~2365 | Heightmap, slopes, terrain prefab selection |
 | ZoneManager.cs | ~1360 | RCI zoning, zone tile placement |
 | RoadManager.cs | ~1730 | Road drawing, prefab selection, road preview |
 | UIManager.cs | ~1240 | Main UI, popups, tool state |
 | CityStats.cs | ~1200 | Global statistics aggregator |
-| AutoRoadBuilder.cs | ~1140 | Automatic road extension |
-| GeographyManager.cs | ~960 | Terrain initialization orchestrator |
-| InterstateManager.cs | ~830 | Interstate highway connections |
-| ForestManager.cs | ~795 | Forest generation and management |
+| AutoRoadBuilder.cs | ~1160 | Automatic road extension |
+| GeographyManager.cs | ~980 | Terrain initialization orchestrator |
+| InterstateManager.cs | ~1160 | Interstate highway connections |
+| ForestManager.cs | ~860 | Forest generation and management |
 
 ## Helper Services (extracted from managers)
 
@@ -92,11 +92,14 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 7. `ZoneManager` is then ready for player zoning
 
 ### Simulation (each TimeManager tick)
-`TimeManager` → `SimulationManager.RunSimulationStep()` → executes in order:
-1. `AutoRoadBuilder` — extends road network
-2. `AutoZoningManager` — zones cells adjacent to roads
-3. `AutoResourcePlanner` — plans resource buildings (water, power)
-4. `UrbanizationProposalManager` — proposes urban expansions
+`TimeManager` → `SimulationManager.ProcessSimulationTick()` → executes in order:
+1. `GrowthBudgetManager.EnsureBudgetValid` (when present)
+2. `UrbanCentroidService.RecalculateFromGrid` — urban centroid and rings for AUTO systems (FEAT-32)
+3. `AutoRoadBuilder` — extends road network
+4. `AutoZoningManager` — zones cells adjacent to roads
+5. `AutoResourcePlanner` — plans resource buildings (water, power)
+
+The legacy **UrbanizationProposal** system is **obsolete** and **not** invoked; removal is tracked as **TECH-13** in `BACKLOG.md`.
 
 ### Player Input
 `GridManager.Update()` detects clicks → dispatches by active mode:
@@ -135,7 +138,7 @@ The terrain system uses a **diamond isometric projection** with an integer **hei
 | ForestManager | GridManager, WaterManager, CityStats, EconomyManager, UIManager, GameNotificationManager, TerrainManager |
 | GeographyManager | TerrainManager, WaterManager, ForestManager, GridManager, ZoneManager, InterstateManager, RegionalMapManager |
 | TimeManager | UIManager, SpeedButtonsController, CityStats, EconomyManager, GridManager, AnimatorManager, ZoneManager, InterstateManager, SimulationManager |
-| SimulationManager | CityStats, GrowthBudgetManager, AutoRoadBuilder, AutoZoningManager, AutoResourcePlanner, UrbanizationProposalManager |
+| SimulationManager | CityStats, GrowthBudgetManager, UrbanCentroidService, AutoRoadBuilder, AutoZoningManager, AutoResourcePlanner |
 | EconomyManager | CityStats, TimeManager, GameNotificationManager |
 | DemandManager | EmploymentManager, CityStats, ForestManager, GridManager |
 | InterstateManager | GridManager, TerrainManager, RoadManager |
@@ -143,13 +146,12 @@ The terrain system uses a **diamond isometric projection** with an integer **hei
 | AutoRoadBuilder | GridManager, RoadManager, GrowthBudgetManager, CityStats, InterstateManager, TerrainManager |
 | AutoZoningManager | GridManager, ZoneManager, GrowthBudgetManager, CityStats, DemandManager |
 | AutoResourcePlanner | CityStats, GridManager, GrowthBudgetManager, UIManager |
-| UrbanizationProposalManager | GridManager, RoadManager, ZoneManager, CityStats, DemandManager |
 | GrowthManager | GridManager, DemandManager |
 | GrowthBudgetManager | CityStats |
 | EmploymentManager | CityStats, DemandManager |
 | StatisticsManager | EmploymentManager, DemandManager, EconomyManager, CityStats |
 | UIManager | ZoneManager, CursorManager, GridManager, TimeManager, EconomyManager, GameManager, TerrainManager, CityStats, various Controllers |
-| GameSaveManager | GridManager, CityStats, TimeManager, InterstateManager |
+| GameSaveManager | GridManager, CityStats, TimeManager, InterstateManager, MiniMapController (+ runtime `FindObjectOfType` for WaterManager, etc.) |
 | GameManager | GridManager, GameSaveManager |
 | RegionalMapManager | InterstateManager, CityStats, GridManager |
 | CursorManager | GridManager |
@@ -157,16 +159,16 @@ The terrain system uses a **diamond isometric projection** with an integer **hei
 ## Road and interstate routing (summary)
 
 - **Manual streets:** `RoadManager.TryPrepareRoadPlacementPlanLongestValidPrefix` (partial paths), `PathTerraformPlan.TryValidatePhase1Heights`, preview terraform reverted before A* each frame. Spec: `.cursor/specs/road-drawing-fixes.md` (BACKLOG **BUG-25**).
-- **Interstate:** `TryPrepareRoadPlacementPlan` with `RoadPathValidationContext.forbidCutThrough`; `InterstateManager` ranks border endpoints and runs dual A* (`PickLowerCostInterstateAStarPath`) with shared costs in `RoadPathCostConstants`. Spec: `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md`. Cut-through void mitigation: `docs/plan-cut-through-craters.md` (BACKLOG **BUG-29**, completed).
+- **Interstate:** `TryPrepareRoadPlacementPlan` with `RoadPathValidationContext.forbidCutThrough`; `InterstateManager` ranks border endpoints and runs dual A* (`PickLowerCostInterstateAStarPath`) with shared costs in `RoadPathCostConstants`. Spec: `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md`. Cut-through void mitigation (historical): `.cursor/specs/archive/plan-cut-through-craters.md` (BACKLOG **BUG-29**, completed).
 
 ## Architectural Decisions
 
 - **GridManager as hub**: GridManager is the central coordinator because nearly all game operations involve cells. This keeps cell access consistent but makes GridManager large.
 - **FindObjectOfType pattern**: Used instead of DI for simplicity. Managers declare public/serialized fields wired in Inspector, with FindObjectOfType as null-check fallback in Awake/Start.
 - **Single singleton**: Only GameNotificationManager uses the singleton pattern (with DontDestroyOnLoad). All other managers are resolved via Inspector references.
-- **Namespaces (partial migration)**: Most scripts use `Territory.*` namespaces (`Territory.Core`, `Territory.Terrain`, `Territory.Roads`, `Territory.Zones`, `Territory.Forests`, `Territory.Buildings`, `Territory.Economy`, `Territory.UI`, `Territory.Geography`, `Territory.Timing`, `Territory.Utilities`). `TerraformingService` and `PathTerraformPlan` live in `Territory.Terrain`. A few legacy or utility scripts may still be in the global namespace; prefer new code under `Territory.*`.
+- **Namespaces (partial migration)**: Most scripts use `Territory.*` namespaces (`Territory.Core`, `Territory.Terrain`, `Territory.Roads`, `Territory.Zones`, `Territory.Forests`, `Territory.Buildings`, `Territory.Economy`, `Territory.UI`, `Territory.Geography`, `Territory.Timing`, `Territory.Utilities`, `Territory.Simulation`, `Territory.Persistence`). `TerraformingService` and `PathTerraformPlan` live in `Territory.Terrain`. A few legacy or utility scripts may still be in the global namespace; prefer new code under `Territory.*`.
 
 ## Known Trade-offs
 - **High coupling**: Many managers reference each other directly, creating tight coupling
-- **GridManager size**: At ~1870 lines, it handles too many responsibilities (placement, sorting, pathfinding, culling)
+- **GridManager size**: At ~2070 lines, it handles too many responsibilities (placement, sorting, pathfinding, culling); decomposition tracked as **TECH-01** in `BACKLOG.md`
 - **No event system**: Managers communicate via direct method calls rather than events

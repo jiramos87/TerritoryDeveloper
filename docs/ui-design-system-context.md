@@ -47,7 +47,6 @@ Namespace: `UIManager` lives in `Territory.UI` (`namespace Territory.UI` in `UIM
 | `IndustrialZoningSelectorButton.cs` | Industrial zone tool |
 | `MiniMapLayerButton.cs` | Mini-map layer toggle |
 | `PowerBuildingsSelectorButton.cs` | Power building tool |
-| `ProposalUIController.cs` | Urbanization proposals UI |
 | `ResidentialZoningSelectorButton.cs` | Residential zone tool |
 | `RoadsSelectorButton.cs` | Road tool |
 | `ShowMiniMapButton.cs` | Show mini-map |
@@ -73,7 +72,7 @@ Other managers consume UI indirectly: e.g. `StatisticsManager`, `EconomyManager`
 
 - **Resolution / Canvas** — Scale mode and reference resolution affect layout; document chosen approach in the [design system spec](../.cursor/specs/ui-design-system.md) once decided.
 - **EventSystem** — UI must consume pointer events where appropriate so world tools (e.g. camera zoom) do not fire through panels (**BUG-19** pattern).
-- **Performance** — Avoid `FindObjectOfType` per frame in UI code (**BUG-14**, **BUG-13** patterns); cache references in `Start` / serialized fields.
+- **Performance** — Avoid `FindObjectOfType` per frame in UI code (**BUG-14** pattern); cache references in `Start` / serialized fields.
 - **Coupling** — `UIManager` is large (~1200+ lines); new work should prefer small controllers or shared helpers over growing a single class (align with project anti-patterns in `AGENTS.md`).
 
 ## Known pain points (from backlog and code shape)

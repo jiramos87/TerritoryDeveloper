@@ -25,7 +25,6 @@ alwaysApply: false
 - **AutoResourcePlanner** — Automatic resource building planning
 - **GrowthManager** — Zone growth logic
 - **GrowthBudgetManager** — Growth budget per category
-- **UrbanizationProposalManager** — Urban expansion proposals
 - **UIManager** — Main UI: popups, toolbar/tool state (`ControlPanel` in `MainScene.unity`), demand bar; UI program: `docs/ui-design-system-project.md`, context `docs/ui-design-system-context.md`, spec `.cursor/specs/ui-design-system.md` (toolbar **§3.3**; layout migration **TECH-07**)
 - **CursorManager** — Placement preview, visual cursor
 - **TimeManager** — Game speed control, simulation ticks
@@ -45,8 +44,11 @@ alwaysApply: false
 - **PathTerraformPlan** — Terraform Apply/Revert, cut-through mode
 - **RoadPrefabResolver** — Prefab selection for path and single-cell contexts
 - **RoadPathCostConstants** — Shared cost constants for road pathfinding
-- **UrbanCentroidService** — Urban centroid and ring calculation (FEAT-32)
+- **UrbanCentroidService** — Urban centroid and ring metrics for AUTO roads and AUTO zoning (FEAT-32); **keep** — not part of the obsolete proposal system
 - **GameBootstrap** — Entry point, game loading flow
+
+## Obsolete / removal backlog
+- **`UrbanizationProposalManager`** and related proposal UI — **obsolete**; intentionally **not** run from `SimulationManager.ProcessSimulationTick()`. Do **not** re-enable. Full removal: **TECH-13** in `BACKLOG.md`. **UrbanCentroidService** and ring-based AUTO growth remain supported.
 
 ## Rules
 - **Road terraform validation:** Use `RoadManager.TryPrepareRoadPlacementPlan` (includes `PathTerraformPlan.TryValidatePhase1Heights`) and `RoadPathValidationContext`. Streets / auto-road should use `TryPrepareRoadPlacementPlanLongestValidPrefix` when partial paths are acceptable; interstate uses full-path `TryPrepareRoadPlacementPlan` with `forbidCutThrough: true`. Do not use `ComputePathPlan` alone for placement decisions. Specs: `.cursor/specs/road-drawing-fixes.md` (BUG-25), `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md` (BUG-27/BUG-29 completed per BACKLOG).
