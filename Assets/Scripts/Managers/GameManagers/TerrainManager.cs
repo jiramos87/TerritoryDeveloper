@@ -1254,7 +1254,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 continue;
 
             Vector2 slopeWorldPos = gridManager.GetWorldPositionVector(x, y, waterVisualH);
-            float extraWorldY = GetLakeShoreExtraWorldYOffset(prefab, landH, waterVisualH);
+            float extraWorldY = GetLakeShoreExtraWorldYOffset(prefab, landH, waterVisualH, waterShorePrefabs.Count);
             if (extraWorldY != 0f)
                 slopeWorldPos += new Vector2(0f, extraWorldY);
 
@@ -1591,11 +1591,25 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Extra world Y for lake shore child sprites vs <see cref="GridManager.GetWorldPositionVector"/> at water visual height.
-    /// Bay: 0. Diagonal Upslope/SlopeWater: <c>(landH − waterVisualH) × tileHeight × 0.25</c> so shore aligns when the lake surface
-    /// is below the shore cell (same per-level offset as terrain height steps). Cardinal slopes: 0.
+    /// True for NE/NW/SE/SW <c>*SlopeWaterPrefab</c> only (not Upslope). Used for flat-lake corner placement vs upslope+downslope pairs.
     /// </summary>
-    private float GetLakeShoreExtraWorldYOffset(GameObject prefab, int landH, int waterVisualH)
+    private bool IsCornerSlopeWaterPrefab(GameObject prefab)
+    {
+        if (prefab == null)
+            return false;
+        return prefab == northEastSlopeWaterPrefab
+            || prefab == northWestSlopeWaterPrefab
+            || prefab == southEastSlopeWaterPrefab
+            || prefab == southWestSlopeWaterPrefab;
+    }
+
+    /// <summary>
+    /// Extra world Y for lake shore child sprites vs <see cref="GridManager.GetWorldPositionVector"/> at water visual height.
+    /// Bay: 0. Standalone corner SlopeWater: 0 (same water plane as neighbors). Diagonal Upslope or upslope+downslope pairs:
+    /// <c>(landH − waterVisualH) × tileHeight × 0.25</c>. Cardinal slopes: 0.
+    /// </summary>
+    /// <param name="shorePrefabCount">Number of shore prefabs placed together (2 = upslope+downslope pair).</param>
+    private float GetLakeShoreExtraWorldYOffset(GameObject prefab, int landH, int waterVisualH, int shorePrefabCount)
     {
         if (prefab == null || gridManager == null)
             return 0f;
@@ -1605,6 +1619,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
         if (IsDiagonalShoreWaterPrefab(prefab))
         {
+            // Single corner SlopeWater fills the same role as Bay on a flat lake surface; skip terrain-step nudge.
+            if (shorePrefabCount == 1 && IsCornerSlopeWaterPrefab(prefab))
+                return 0f;
+
             int delta = Mathf.Max(0, landH - waterVisualH);
             return delta * gridManager.tileHeight * 0.25f;
         }
@@ -1748,6 +1766,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// Selects lake/coast shore prefab(s) for a land cell adjacent to water. Returns one prefab or an upslope+downslope pair for diagonal slopes.
+    /// Perpendicular two-cardinal corners: Bay when the diagonal water cell is an axis-aligned rectangle outer corner; otherwise diagonal SlopeWater (convex land tip / large-lake shore).
     /// </summary>
     private List<GameObject> DetermineWaterShorePrefabs(int x, int y)
     {
@@ -1799,27 +1818,61 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             if (hasWaterAtWest) return ShoreList(westSlopeWaterPrefab);
         }
 
-        // Perpendicular shore corners: both cardinals of a quadrant have water — Bay first, then diagonal SlopeWater.
+        // Perpendicular shore corners: both cardinals of a quadrant have water.
+        // Bay = concave water corner (outer axis-aligned corner of the water patch: see IsAxisAlignedRectangleCornerWater*).
+        // SlopeWater = convex land corner when water continues past the diagonal (peninsula tip, island corners, large lakes).
         // Order SE, SW, NE, NW so when three cardinals are water (e.g. N+E+S), one unambiguous tile wins (SE before NE).
         if (hasWaterAtSouth && hasWaterAtEast)
         {
-            if (southEastBayPrefab != null) return ShoreList(southEastBayPrefab);
-            if (southEastSlopeWaterPrefab != null) return ShoreList(southEastSlopeWaterPrefab);
+            if (IsAxisAlignedRectangleCornerWaterSouthEast(x, y))
+            {
+                if (southEastBayPrefab != null) return ShoreList(southEastBayPrefab);
+                if (southEastSlopeWaterPrefab != null) return ShoreList(southEastSlopeWaterPrefab);
+            }
+            else
+            {
+                if (southEastSlopeWaterPrefab != null) return ShoreList(southEastSlopeWaterPrefab);
+                if (southEastBayPrefab != null) return ShoreList(southEastBayPrefab);
+            }
         }
         if (hasWaterAtSouth && hasWaterAtWest)
         {
-            if (southWestBayPrefab != null) return ShoreList(southWestBayPrefab);
-            if (southWestSlopeWaterPrefab != null) return ShoreList(southWestSlopeWaterPrefab);
+            if (IsAxisAlignedRectangleCornerWaterSouthWest(x, y))
+            {
+                if (southWestBayPrefab != null) return ShoreList(southWestBayPrefab);
+                if (southWestSlopeWaterPrefab != null) return ShoreList(southWestSlopeWaterPrefab);
+            }
+            else
+            {
+                if (southWestSlopeWaterPrefab != null) return ShoreList(southWestSlopeWaterPrefab);
+                if (southWestBayPrefab != null) return ShoreList(southWestBayPrefab);
+            }
         }
         if (hasWaterAtNorth && hasWaterAtEast)
         {
-            if (northEastBayPrefab != null) return ShoreList(northEastBayPrefab);
-            if (northEastSlopeWaterPrefab != null) return ShoreList(northEastSlopeWaterPrefab);
+            if (IsAxisAlignedRectangleCornerWaterNorthEast(x, y))
+            {
+                if (northEastBayPrefab != null) return ShoreList(northEastBayPrefab);
+                if (northEastSlopeWaterPrefab != null) return ShoreList(northEastSlopeWaterPrefab);
+            }
+            else
+            {
+                if (northEastSlopeWaterPrefab != null) return ShoreList(northEastSlopeWaterPrefab);
+                if (northEastBayPrefab != null) return ShoreList(northEastBayPrefab);
+            }
         }
         if (hasWaterAtNorth && hasWaterAtWest)
         {
-            if (northWestBayPrefab != null) return ShoreList(northWestBayPrefab);
-            if (northWestSlopeWaterPrefab != null) return ShoreList(northWestSlopeWaterPrefab);
+            if (IsAxisAlignedRectangleCornerWaterNorthWest(x, y))
+            {
+                if (northWestBayPrefab != null) return ShoreList(northWestBayPrefab);
+                if (northWestSlopeWaterPrefab != null) return ShoreList(northWestSlopeWaterPrefab);
+            }
+            else
+            {
+                if (northWestSlopeWaterPrefab != null) return ShoreList(northWestSlopeWaterPrefab);
+                if (northWestBayPrefab != null) return ShoreList(northWestBayPrefab);
+            }
         }
 
         if (hasWaterAtEast)
