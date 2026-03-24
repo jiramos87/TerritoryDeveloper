@@ -157,6 +157,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public const int TERRAIN_BASE_ORDER = 0;
     /// <summary>Offset for land slope sorting. 1 = slightly in front of terrain so slopes (especially east-facing) render correctly.</summary>
     public const int SLOPE_OFFSET = 1;
+    /// <summary>Cliff sprites must sort strictly below the cell's primary terrain/shore sprite; subtract this from <see cref="Cell.sortingOrder"/> for the top stack segment.</summary>
+    private const int CliffSortingBelowCellTerrain = 1;
     public const int BUILDING_OFFSET = 10; // Buildings should be above terrain
     public const int EFFECT_OFFSET = 30; // Effects should be above terrain
     public const int DEPTH_MULTIPLIER = 100;
@@ -2019,6 +2021,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// <paramref name="lowH"/> on the lower neighbor cell (one prefab per height unit of drop). Segments whose band lies
     /// entirely below the adjacent water body's surface at the cliff foot are skipped (visual underwater cull).
     /// North/west faces skip prefab instantiation (not visible to camera); use <see cref="Cell.cliffFaces"/> for logical risco.
+    /// Sorting is capped so cliffs never draw above the parent cell's primary terrain/shore sprite (e.g. water-slope shore).
+    /// When the cell uses a water-shore prefab, world Y is lowered by <c>tileHeight / 2</c> so cliff stacks align with the sloped shore art.
+    /// Sorting is also capped by registered water neighbors strictly in front of <see cref="CalculateTerrainSortingOrder"/> depth (<c>x+y</c>)
+    /// so cliff faces do not draw over water tiles closer to the camera.
     /// </summary>
     private void PlaceCliffWallStack(Cell cell, CliffCardinalFace cardinalFace, int highX, int highY, int lowX, int lowY, int highH, int lowH, int segmentCount)
     {
@@ -2042,6 +2048,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return;
 
         int waterSurfaceH = GetWaterSurfaceHeightForCliffProbe(lowX, lowY);
+        int cellTerrainSort = cell.sortingOrder;
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        int maxSortFromForegroundWater = GetMaxCliffSortingOrderFromForegroundWaterNeighbors(highX, highY);
 
         float z = cell.gameObject.transform.position.z;
         // South/East prefabs carry correct art orientation per face; rotating by edge/downhill angles tilts the sprite in XY
@@ -2063,19 +2073,28 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             }
 
             Vector2 world = GetCliffWallSegmentWorldPositionOnSharedEdge(cardinalFace, highX, highY, lowX, lowY, topH, bottomH);
+            if (CellUsesWaterShorePrimaryPrefab(cell))
+                world.y -= gridManager.tileHeight * 0.5f;
 
             GameObject cliffWall = Instantiate(prefab, new Vector3(world.x, world.y, z), rot);
             cliffWall.transform.SetParent(cell.gameObject.transform, true);
 
             SpriteRenderer sr = cliffWall.GetComponent<SpriteRenderer>();
             if (sr != null)
-                sr.sortingOrder = CalculateTerrainSortingOrder(highX, highY, topH) + SLOPE_OFFSET + visualIndex;
+            {
+                int computedSort = CalculateTerrainSortingOrder(highX, highY, topH) + SLOPE_OFFSET + visualIndex;
+                int maxCliffSort = cellTerrainSort - CliffSortingBelowCellTerrain - visualIndex;
+                int finalSort = Mathf.Min(computedSort, maxCliffSort);
+                if (maxSortFromForegroundWater != int.MaxValue)
+                    finalSort = Mathf.Min(finalSort, maxSortFromForegroundWater - visualIndex);
+                sr.sortingOrder = finalSort;
+            }
 
             if (ShouldTerrainDebugLog(highX, highY) || ShouldTerrainDebugLog(lowX, lowY))
             {
                 int sortOrd = sr != null ? sr.sortingOrder : -999;
                 TerrainDebugLog("PlaceCliffWallStack", highX, highY,
-                    $"  segment {visualIndex + 1} (stack {s + 1}/{count}) face={cardinalFace} prefab={(prefab != null ? prefab.name : "null")} highCell=({highX},{highY}) lowCell=({lowX},{lowY}) topH={topH} bottomH={bottomH} highH={highH} lowH={lowH} world=({world.x:F4},{world.y:F4}) sort={sortOrd} waterSurf={waterSurfaceH}");
+                    $"  segment {visualIndex + 1} (stack {s + 1}/{count}) face={cardinalFace} prefab={(prefab != null ? prefab.name : "null")} highCell=({highX},{highY}) lowCell=({lowX},{lowY}) topH={topH} bottomH={bottomH} highH={highH} lowH={lowH} world=({world.x:F4},{world.y:F4}) sort={sortOrd} cellTerrainSort={cellTerrainSort} fgWaterCap={maxSortFromForegroundWater} waterSurf={waterSurfaceH}");
             }
 
             visualIndex++;
@@ -2100,6 +2119,47 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 Destroy(child);
             }
         }
+    }
+
+    /// <summary>
+    /// Upper bound for cliff <see cref="SpriteRenderer.sortingOrder"/> so vertical cliff faces on <paramref name="highX"/>,<paramref name="highY"/>
+    /// do not render above registered water in the 8-neighbor ring when that water is strictly in front in isometric depth
+    /// (<c>nx+ny &lt; highX+highY</c>, same rule as <see cref="CalculateTerrainSortingOrder"/>). Returns <see cref="int.MaxValue"/> if none.
+    /// </summary>
+    private int GetMaxCliffSortingOrderFromForegroundWaterNeighbors(int highX, int highY)
+    {
+        if (gridManager == null || heightMap == null)
+            return int.MaxValue;
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        if (waterManager == null)
+            return int.MaxValue;
+
+        int highDepth = highX + highY;
+        int maxAllowed = int.MaxValue;
+
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                if (dx == 0 && dy == 0)
+                    continue;
+                int nx = highX + dx;
+                int ny = highY + dy;
+                if (!heightMap.IsValidPosition(nx, ny))
+                    continue;
+                if (nx + ny >= highDepth)
+                    continue;
+                if (!waterManager.IsWaterAt(nx, ny))
+                    continue;
+                Cell neighborCell = gridManager.GetCell(nx, ny);
+                if (neighborCell == null)
+                    continue;
+                maxAllowed = Mathf.Min(maxAllowed, neighborCell.sortingOrder - 1);
+            }
+        }
+
+        return maxAllowed;
     }
     #endregion
 
@@ -2214,6 +2274,38 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             || prefab == northWestBayPrefab
             || prefab == southEastBayPrefab
             || prefab == southWestBayPrefab;
+    }
+
+    /// <summary>
+    /// True when <paramref name="prefab"/> is any lake/coast shore asset from <see cref="PlaceWaterShore"/> (cardinal/corner slope water, upslope, Bay).
+    /// Uses reference equality — same prefabs as <see cref="IsWaterSlopeObject"/> plus Bay.
+    /// </summary>
+    private bool IsWaterShoreTerrainPrefabAsset(GameObject prefab)
+    {
+        if (prefab == null)
+            return false;
+        return prefab == northSlopeWaterPrefab
+            || prefab == southSlopeWaterPrefab
+            || prefab == eastSlopeWaterPrefab
+            || prefab == westSlopeWaterPrefab
+            || prefab == northEastSlopeWaterPrefab
+            || prefab == northWestSlopeWaterPrefab
+            || prefab == southEastSlopeWaterPrefab
+            || prefab == southWestSlopeWaterPrefab
+            || prefab == northEastUpslopeWaterPrefab
+            || prefab == northWestUpslopeWaterPrefab
+            || prefab == southEastUpslopeWaterPrefab
+            || prefab == southWestUpslopeWaterPrefab
+            || IsBayShorePrefab(prefab);
+    }
+
+    /// <summary>True when the cell's primary terrain prefab is a water-shore tile (see <see cref="PlaceWaterShore"/>).</summary>
+    private bool CellUsesWaterShorePrimaryPrefab(Cell cell)
+    {
+        if (cell == null || string.IsNullOrEmpty(cell.prefabName))
+            return false;
+        GameObject p = FindTerrainPrefabByName(cell.prefabName);
+        return IsWaterShoreTerrainPrefabAsset(p);
     }
 
     /// <summary>
