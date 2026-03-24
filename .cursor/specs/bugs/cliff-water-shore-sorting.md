@@ -1,10 +1,26 @@
 # Cliff / water-shore / sorting — findings (SS1–SS5)
 
-> **Status:** Engineering notes from screenshots + code review (2026-03-23). Not a backlog item until verified in Unity.
+> **Status:** Active engineering notes (screenshots + code review, 2026-03-23). **Backlog:** umbrella **[BUG-33](../../BACKLOG.md)**; focused work **[BUG-39](../../BACKLOG.md)** (bay / cliff art), **[BUG-40](../../BACKLOG.md)** (cliff vs foreground water sorting). Verify fixes in Unity before closing those items.
+
+## Glossary (stable vocabulary)
+
+| Term | Meaning |
+|------|---------|
+| **Water surface / open water** | Registered water cell: tile from `WaterManager` / `WaterMap`, sorted using **visual surface height** (FEAT-37). |
+| **Water-shore (ramp)** | Land cell that passes the **surface-height gate** (§4.2 in `isometric-geography-system.md`): gets **water-slope** prefabs (`DetermineWaterShorePrefabs` / `PlaceWaterShore`), not a vertical “cliff” read from height diff alone. |
+| **Rim** | Land **above** the shore cap (typically **≥** two steps above adjacent water surface): uses **normal slopes** + **`PlaceCliffWalls`** toward lower neighbors, not water-shore art. |
+| **Cliff face / cliff wall stack** | One or more **child** prefabs on the **higher** cell, placed along the **shared cardinal edge** toward a lower neighbor (`PlaceCliffWallStack`). **Δh > 1** produces multiple segments. |
+| **Bay (shore prefab)** | Inner-corner / diagonal water pattern: **Bay** NE/NW/SE/SW prefabs (see §5.9 isometric spec). Art may omit an in-sprite vertical cliff; see **BUG-39**. |
+| **Visible cliff faces (camera)** | Only **south** and **east** cardinal faces get prefab meshes (`IsCliffCardinalFaceVisibleToCamera`); **N/W** skip instantiation but `Cell.cliffFaces` can still record bits. |
 
 ## Scope
 
 Observed issues when combining **depression-fill lakes**, **water-shore prefabs**, **cliff wall stacks**, and **pure land** (no water). Related code: `TerrainManager` (`UpdateTileElevation`, `PlaceCliffWalls`, `PlaceCliffWallStack`, `PlaceWaterShore`, shore gate), `WaterManager` / `WaterMap`, `GridManager` sorting.
+
+### Open defects (tracked in backlog)
+
+- **BUG-39:** Bay / inner-corner shore prefabs: missing vertical cliff in sprite or hole vs stacked cliffs on straight edges — **art vs extra `PlaceCliffWallStack` segments**.
+- **BUG-40:** Brown cliff sprites **draw in front of** water tiles that are **closer to the camera** (isometric depth wrong) — **sorting / layers / caps** (e.g. vs foreground water neighbors).
 
 ---
 
@@ -82,5 +98,6 @@ If **`PlaceFlatTerrain`** destroys children and re-instantiates grass as a **chi
 ## References
 
 - `TerrainManager.cs` — `terrainDebugLogCellsEnabled`, `TerrainDebugCellCoordinates`, `BuildTerrainDebugCellReport`, `PlaceCliffWallStack`
-- `.cursor/specs/isometric-geography-system.md` — §5.7–5.8, cliff + shore
+- `.cursor/specs/isometric-geography-system.md` — §4.2, §5.6.1, §5.7–5.9 (cliff + shore + bay)
 - `.cursor/specs/water-system-refactor.md` — FEAT-37 water visual height
+- **[BUG-33](../../BACKLOG.md)**, **[BUG-39](../../BACKLOG.md)**, **[BUG-40](../../BACKLOG.md)**

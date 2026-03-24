@@ -7,19 +7,22 @@
 
 ## In Progress
 
-- [ ] **BUG-36** — Fix lake generation randomness
-  - Type: bug
-  - Files: `WaterMap.cs` (`InitializeLakesFromDepressionFill`, artificial fallback passes), `TerrainManager.cs` (`EnsureGuaranteedLakeDepressions`, `CarveMinimalCardinalBowl`, lake-spill / seed ordering), `WaterManager.cs` (`LakeFillSettings`, `useLakeDepressionFill`), `LakeFillSettings` (defaults / tuning)
-  - Spec: `.cursor/specs/water-system-refactor.md` (§9 — depression-fill seeds ordered by spill headroom (`spill − floor`), bounded pass, artificial fallback rectangles, `EnsureGuaranteedLakeDepressions` shuffle + carve)
-  - Notes: **Observed:** For the same base geography (height map / template), **New Game** lake bodies are **identical** across runs (same positions, extents, shapes). **Likely causes:** (1) **Procedural depression-fill** — deterministic seed ordering and candidate iteration; **Random** may not be tied to a per-run or per-map seed; (2) **Terrain bowl** pass — interior shuffle exists but **RNG state** at geography init may be fixed; (3) **Artificial fallback** — axis-aligned rectangle placement and last-resort corner passes may use **fixed** iteration order. **Goal:** Introduce **controlled randomness** (e.g. dedicated **lake-generation RNG** seeded from `GameManager` / map / **New Game** seed) so lake placement **varies** between runs while remaining **reproducible** when a save or explicit seed is used. Revisit ordering of spill-headroom vs random tie-break; avoid breaking determinism tests if any are added. **Related:** **BUG-08** (generation polish), **FEAT-38** (rivers after lakes — may share seeding).
-  - Depends on: none
-
 - [ ] **FEAT-38** — Procedural rivers during geography / terrain generation
   - Type: feature
   - Files: `GeographyManager.cs`, `TerrainManager.cs`, `HeightMap.cs`, `WaterMap.cs`, `WaterManager.cs`, `WaterBody.cs`, `Cell.cs` / `CellData.cs` (as needed for `WaterBodyType.River` persistence)
   - Spec: `.cursor/specs/water-system-refactor.md` (goals: directed flow; suggested **phase D**: river graph or flow field — data-driven first, not full fluid simulation)
   - Notes: On **New Game**, after the height map and lake placement pipeline, generate **rivers** as water bodies that follow **downhill gradients** (higher → lower terrain), optionally **linking lakes** or reaching the **sea** edge. Rivers share the same abstraction as lakes (**`WaterMap`** body ids, per-cell surface height aligned with terrain). Hook into `GeographyManager.InitializeGeography()` order (terrain → water → …) so river placement runs where procedural water is initialized. Coordinate with **BUG-08** (generation polish) where overlap. Shore/sorting for river banks may reuse lake shore paths or need follow-ups (**BUG-33**). **Prerequisite:** **FEAT-37a–c** (multi-level water + save/load) **completed**.
   - Depends on: none (foundation **FEAT-37c** done)
+
+- [ ] **BUG-39** — Bay / inner-corner shore prefabs: no cliff art in sprite (gap vs stacked cliffs elsewhere)
+  - Type: fix (art vs code)
+  - Files: `TerrainManager.cs` (water shore / bay selection, cliff stacks), bay-related prefabs under `Assets/Prefabs/`, `GridSortingOrderService.cs` if extra cliff objects are added
+  - Notes: **Observed:** Inward “bay” water corners show flat grass→water art without a vertical cliff face, or a hole where stacked cliffs exist on straight edges. **Decision needed:** bake cliffs into the sprite vs keep flat shore art and **instantiate** extra cliff wall segments (aligned with existing `PlaceCliffWallStack` behavior). Screenshots: 2026-03-24 (project assets folder). **Related:** **BUG-33**.
+
+- [ ] **BUG-40** — Shore cliff walls draw in front of nearer (foreground) water tiles
+  - Type: fix (sorting / layers)
+  - Files: `TerrainManager.cs` (`PlaceCliffWallStack`, shore/cliff `sortingOrder`), `WaterManager.cs` (`PlaceWater`, terrain sorting for water surface), `GridSortingOrderService.cs`
+  - Notes: **Observed:** Brown vertical cliff faces from cells “behind” the camera overlap blue water on cells closer to the camera (isometric depth wrong). **Decision needed:** adjust sorting rules (e.g. cap cliff order vs foreground water), layers, or sprite splits. See `.cursor/specs/bugs/cliff-water-shore-sorting.md`. Screenshots: 2026-03-24. **Related:** **BUG-33**, **FEAT-37b** (variable-height water sorting — shores out of scope there).
 
 ## High Priority
 
@@ -267,6 +270,11 @@
 ---
 
 ## Completed (last 30 days)
+
+- [x] **BUG-36** — Lake generation: seeded RNG (reproducible + varied per New Game) (2026-03-24)
+  - Type: fix
+  - Files: `WaterMap.cs` (`InitializeLakesFromDepressionFill`, `LakeFillSettings`), `WaterManager.cs`, `MapGenerationSeed.cs` (`GetLakeFillRandomSeed`), `TerrainManager.cs` (`EnsureGuaranteedLakeDepressions` shuffle)
+  - Notes: `LakeFillSettings.RandomSeed` comes from map generation seed; depression-fill uses a seeded `System.Random`; bowl shuffle uses a derived seed. Same template no longer forces identical lake bodies across unrelated runs; fixed seed still reproduces. Spec: `.cursor/specs/water-system-refactor.md` (depression-fill / lake RNG). **Related:** **BUG-08**, **FEAT-38**.
 
 - [x] **BUG-35** — Load Game: multi-cell buildings — grass on footprint (non-pivot) could draw above building; 1×1 grass + building under one cell (2026-03-22)
   - Type: fix

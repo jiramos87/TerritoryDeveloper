@@ -2,7 +2,7 @@
 
 > **Status:** Reference documentation
 > **Audience:** AI agents and developers working on terrain, roads, water, sorting order, or any system that interacts with the isometric grid.
-> **Related:** `ARCHITECTURE.md` (Persistence), `.cursor/specs/water-system-refactor.md` (FEAT-37c save/load), `.cursor/specs/road-drawing-fixes.md`. **Save/load building sorting:** §7.4 below; **[BUG-34](../../BACKLOG.md)** / **[BUG-35](../../BACKLOG.md)** completed 2026-03-22.
+> **Related:** `ARCHITECTURE.md` (Persistence), `.cursor/specs/water-system-refactor.md` (FEAT-37c save/load), `.cursor/specs/road-drawing-fixes.md`, `.cursor/specs/bugs/cliff-water-shore-sorting.md` (lake edges: cliffs + shore + sorting). **Save/load building sorting:** §7.4 below; **[BUG-34](../../BACKLOG.md)** / **[BUG-35](../../BACKLOG.md)** completed 2026-03-22. **Lake shore / cliff follow-ups:** **[BUG-33](../../BACKLOG.md)**, **[BUG-39](../../BACKLOG.md)**, **[BUG-40](../../BACKLOG.md)**.
 
 ---
 
@@ -226,6 +226,18 @@ Returns a `TerrainSlopeType` enum value using the same logic as `DetermineSlopeP
 - **Visual:** A small wedge connecting the diagonal height transition.
 - **Example:** Cell at h=1, only NW diagonal at h=2 → `SouthEast` diagonal slope prefab.
 
+### 5.6.1 Lake edges: layered model (water + shore + cliffs)
+
+Treat lake/coast borders as **three cooperating layers**, not one prefab:
+
+1. **Open water** lives on **registered water cells** (`WaterManager` / `WaterMap`). Sorting uses the body’s **surface height** (visual placement uses surface − 1 in world space; see FEAT-37 / `WaterManager.PlaceWater`).
+2. **Water-shore art** (cardinal ramps, **Bay** corners, upslope+downslope pairs) is chosen on **land** cells that pass the **surface-height gate** (§4.2): `DetermineWaterShorePrefabs` → `PlaceWaterShore`. Parent is the **land** cell.
+3. **Cliff wall stacks** (`PlaceCliffWalls` / `PlaceCliffWallStack`) are **children of the higher land cell**, along the **shared cardinal edge** toward a lower neighbor, when **rim** escarpments or **Δh > 1** require vertical faces. **Do not** assume four symmetric cliff meshes: only **south** and **east** faces instantiate visible prefabs (§5.7).
+
+**Rim vs shore:** Land within **one height step** of an adjacent water body’s **surface** uses water-shore prefabs where eligible. **Higher rim** cells (e.g. bowl walls above the lake) use **ordinary slopes + cliff stacks** toward lower cells, not water-shore tiles.
+
+**Geometric decisions worth remembering:** Cardinal **Δh** drives drop tests; **one-step** drops toward water-shore or water can **suppress** duplicate cliff faces (`ShouldSuppressCliffFaceTowardLowerCell`); **Δh ≥ 2** still stacks segments on **visible** faces. Sorting interleaves cliff segments with **neighbor** water tiles in screen space — defects are tracked in **[BUG-33](../../BACKLOG.md)**, **[BUG-39](../../BACKLOG.md)**, **[BUG-40](../../BACKLOG.md)**. Engineering notes: `.cursor/specs/bugs/cliff-water-shore-sorting.md`.
+
 ### 5.7 Cliffs
 - **HeightMap pattern:** Cardinal neighbor height difference > 1 (e.g., cell at h=3, south neighbor at h=1).
 - **Visual (fixed isometric camera):** Each cardinal drop uses **`CliffCardinalFace`** (North/South/East/West) and the matching **prefab** (`GetCliffPrefabForCardinalFace`). **Prefabs are not instantiated** on **north** or **west** faces (`IsCliffCardinalFaceVisibleToCamera`) — those are hidden behind the terrain diamond; **south** and **east** faces (↙ ↘) get sprites. **`Cell.cliffFaces`** still records **N/S/E/W** bits for any cardinal risco (hydrology), even when **N/W** skip meshes.
@@ -239,7 +251,7 @@ Returns a `TerrainSlopeType` enum value using the same logic as `DetermineSlopeP
 
 ### 5.9 Bays
 - **HeightMap pattern:** Concave water corners where water surrounds a land cell diagonally.
-- **Visual:** NE/NW/SE/SW bay prefabs that render a rounded coastal indent.
+- **Visual:** NE/NW/SE/SW bay prefabs that render a rounded coastal indent. Some bay art may not include an **in-sprite vertical cliff**; stacked cliffs on straight edges vs gaps at bay corners are an open **art vs code** question — **[BUG-39](../../BACKLOG.md)**.
 
 ### 5.10 Cut-Through Corridors
 - **HeightMap pattern:** A path of cells flattened to base height through a hill by the terraforming system.

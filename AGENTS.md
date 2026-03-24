@@ -33,7 +33,7 @@ After executing a development plan for an issue, **keep the issue in "In progres
 | Economy | `EconomyManager.cs` | `CityStats.cs` |
 | Isometric geography / slopes / heightmap | `.cursor/specs/isometric-geography-system.md` | `TerrainManager.cs`, `HeightMap.cs`, `TerraformingService.cs`, `RoadPrefabResolver.cs`, `SlopePrefabRegistry.cs`, `GridPathfinder.cs` |
 | Terrain/heightmap | `TerrainManager.cs` | `HeightMap.cs`, `GeographyManager.cs` |
-| Water bodies | `WaterManager.cs` | `WaterMap.cs`, `WaterBody.cs`, `WaterBodyType.cs`, `GeographyManager.cs`. **FEAT-37a** / **FEAT-37b** / **FEAT-37c** completed; spec `.cursor/specs/water-system-refactor.md`. Shore defects **BUG-33**; minimap water **BUG-32** completed; load building sort **BUG-34** + grass under buildings **BUG-35** (both completed 2026-03-22) |
+| Water bodies | `WaterManager.cs` | `WaterMap.cs`, `WaterBody.cs`, `WaterBodyType.cs`, `GeographyManager.cs`. **FEAT-37a** / **FEAT-37b** / **FEAT-37c** completed; spec `.cursor/specs/water-system-refactor.md`. Lake shore + cliff stacks + sorting: `.cursor/specs/bugs/cliff-water-shore-sorting.md`; shore defects **BUG-33**; **BUG-39** / **BUG-40** (bay cliff art, cliff vs foreground water sorting). Minimap water **BUG-32** completed; load building sort **BUG-34** + grass under buildings **BUG-35** (both completed 2026-03-22) |
 | Minimap height / relief (optional layer) | `MiniMapController.cs` | `HeightMap`, `GridManager`; **FEAT-42** in `BACKLOG.md` |
 | Forests | `ForestManager.cs` | `ForestMap.cs`, `GeographyManager.cs` |
 | New building type | `IBuilding.cs` (interface) | `ZoneManager.cs`, `GridManager.cs` (placement) |
