@@ -77,8 +77,8 @@ When implementation starts:
 ## 8. References
 
 - `ARCHITECTURE.md` — Initialization, `WaterManager` dependencies  
-- `BACKLOG.md` — **FEAT-37**, **FEAT-37a–c**, **FEAT-38–41**, **BUG-08**, **BUG-33**, **FEAT-15**  
-- **FEAT-38 (rivers):** `.cursor/specs/rivers.md` — definitions, scope, progress (living spec; Phase D alignment)  
+- `BACKLOG.md` — **FEAT-37**, **FEAT-37a–c**, **FEAT-38** (completed 2026-03-24), **BUG-41** (river shore/cliffs), **BUG-08**, **BUG-33**, **FEAT-15**  
+- **FEAT-38 (rivers):** `.cursor/specs/rivers.md` — **feature complete**; follow-up visuals **[BUG-41](../../BACKLOG.md)** (shore prefabs + cliff stacks on river corridors)  
 - `.cursor/rules/managers-guide.mdc` — Manager responsibilities  
 - Bridge / junction context: `.cursor/specs/bridge-and-junction-fixes.md`
 

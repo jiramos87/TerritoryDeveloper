@@ -15,7 +15,7 @@ namespace Territory.Geography
 {
 /// <summary>
 /// GeographyManager coordinates the initialization and management of all geographical features:
-/// terrain height, water bodies, and forests. It centralizes the loading of geographical data
+/// terrain height, water bodies (lakes/sea then FEAT-38 rivers), and forests. It centralizes the loading of geographical data
 /// and ensures proper initialization order.
 /// </summary>
 public class GeographyManager : MonoBehaviour
@@ -88,9 +88,10 @@ public class GeographyManager : MonoBehaviour
         if (waterManager != null)
         {
             waterManager.InitializeWaterMap();
+            waterManager.GenerateProceduralRiversForNewGame();
         }
 
-        // Interstate runs after terrain (from InitializeGrid) and water so pathing and tiles use final height/water state.
+        // Interstate runs after terrain (from InitializeGrid), water, and rivers so pathing and tiles use final height/water state.
         if (interstateManager != null)
         {
             const int maxInterstateAttempts = 3;
@@ -259,9 +260,12 @@ public class GeographyManager : MonoBehaviour
             terrainManager.InitializeHeightMap();
 
         if (waterManager != null)
+        {
             waterManager.InitializeWaterMap();
+            waterManager.GenerateProceduralRiversForNewGame();
+        }
 
-        // Interstate after terrain and water (same order as InitializeGeography).
+        // Interstate after terrain, water, and rivers (same order as InitializeGeography).
         if (interstateManager != null)
         {
             if (terrainManager == null || terrainManager.GetHeightMap() == null || gridManager == null)

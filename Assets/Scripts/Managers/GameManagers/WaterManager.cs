@@ -11,6 +11,7 @@ namespace Territory.Terrain
 /// Generates and manages water bodies on the grid. Lakes use depression-fill on the height map (FEAT-37a);
 /// sea-level terrain cells are merged into <see cref="WaterMap"/> after fill so they match <c>PlaceSeaLevelWater</c>.
 /// Save serializes <see cref="WaterMap.GetSerializableData"/> (FEAT-37c); load uses <see cref="RestoreWaterMapFromSaveData"/>.
+/// Procedural rivers (FEAT-38): <see cref="GenerateProceduralRiversForNewGame"/> after lake init, before interstate.
 /// Legacy sea-level threshold remains for paint tool / old save restore. Coordinates with GridManager,
 /// TerrainManager, and ZoneManager. <see cref="LakeFillSettings"/> are created in code (not Inspector) until terrain UI exists.
 /// </summary>
@@ -120,6 +121,23 @@ public class WaterManager : MonoBehaviour
             if (terrainManager != null && useLakeDepressionFill)
                 terrainManager.RefreshLakeShoreAfterLakePlacement(this);
         }
+    }
+
+    /// <summary>
+    /// Procedural static rivers (FEAT-38): run after <see cref="InitializeWaterMap"/> (lakes/sea), before interstate.
+    /// </summary>
+    public void GenerateProceduralRiversForNewGame()
+    {
+        if (waterMap == null || terrainManager == null || gridManager == null || terrainManager.GetHeightMap() == null)
+            return;
+
+        MapGenerationSeed.EnsureSessionMasterSeed();
+        int seed = MapGenerationSeed.GetLakeFillRandomSeed();
+        var rnd = new System.Random(seed ^ unchecked((int)0xBADC0DE1));
+        ProceduralRiverGenerator.Generate(this, terrainManager, gridManager, rnd);
+        UpdateWaterVisuals();
+        terrainManager.RefreshLakeShoreAfterLakePlacement(this);
+        gridManager.InvalidateRoadCache();
     }
 
     /// <summary>
@@ -261,7 +279,7 @@ public class WaterManager : MonoBehaviour
             return;
         if (waterMap.IsWater(x, y))
             return;
-        waterMap.AddLegacyPaintedWaterCell(x, y, seaLevel);
+        waterMap.AddLegacyPaintedWaterCell(x, y, seaLevel, WaterBodyType.Sea);
     }
 
     /// <summary>Returns -1 if the cell is not water.</summary>
@@ -283,8 +301,15 @@ public class WaterManager : MonoBehaviour
             return;
         }
 
+        int terrainHeight = seaLevel;
+        if (terrainManager != null && terrainManager.GetHeightMap() != null)
+            terrainHeight = terrainManager.GetHeightMap().GetHeight(x, y);
+
         if (!waterMap.IsWater(x, y))
-            waterMap.AddLegacyPaintedWaterCell(x, y, seaLevel);
+        {
+            WaterBodyType provisional = terrainHeight <= seaLevel ? WaterBodyType.Sea : WaterBodyType.Lake;
+            waterMap.AddLegacyPaintedWaterCell(x, y, seaLevel, provisional);
+        }
 
         int surfaceHeight = waterMap.GetSurfaceHeightAt(x, y);
         if (surfaceHeight < 0)
@@ -292,10 +317,6 @@ public class WaterManager : MonoBehaviour
 
         // Logical surface height in WaterMap is spill (fill level). World placement uses one step lower (Option A / FEAT-37).
         int visualSurfaceHeight = Mathf.Max(TerrainManager.MIN_HEIGHT, surfaceHeight - 1);
-
-        int terrainHeight = seaLevel;
-        if (terrainManager != null && terrainManager.GetHeightMap() != null)
-            terrainHeight = terrainManager.GetHeightMap().GetHeight(x, y);
 
         // Update the grid cell to display water
         GameObject cell = gridManager.gridArray[x, y];
@@ -380,7 +401,11 @@ public class WaterManager : MonoBehaviour
         cellComponent.occupiedBuilding = null;
         cellComponent.secondaryPrefabName = "";
 
-        cellComponent.waterBodyType = terrainHeight <= seaLevel ? WaterBodyType.Sea : WaterBodyType.Lake;
+        WaterBodyType cls = waterMap.GetBodyClassificationAt(x, y);
+        if (cls != WaterBodyType.None)
+            cellComponent.waterBodyType = cls;
+        else
+            cellComponent.waterBodyType = terrainHeight <= seaLevel ? WaterBodyType.Sea : WaterBodyType.Lake;
     }
 
     // Rest of the existing WaterManager methods remain the same

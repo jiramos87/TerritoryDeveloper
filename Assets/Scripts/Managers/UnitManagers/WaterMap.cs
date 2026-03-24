@@ -13,6 +13,9 @@ namespace Territory.Terrain
     {
         public const int FormatVersionV2 = 2;
 
+        /// <summary>V3: <see cref="WaterBodySerialized.bodyClassification"/> per body (FEAT-38). Loads still accept V2 without it.</summary>
+        public const int FormatVersionV3 = 3;
+
         /// <summary>Neighbor outside the grid is treated as higher than any terrain cell (see <see cref="HeightMap"/> range 0–5).</summary>
         private const int OutsideMapSpillHeight = 6;
 
@@ -84,6 +87,15 @@ namespace Territory.Terrain
             return bodyId != 0 && bodies.TryGetValue(bodyId, out WaterBody b) ? b : null;
         }
 
+        /// <summary>Classification of the body at this cell, or <see cref="WaterBodyType.None"/> when dry.</summary>
+        public WaterBodyType GetBodyClassificationAt(int x, int y)
+        {
+            int id = GetWaterBodyId(x, y);
+            if (id == 0)
+                return WaterBodyType.None;
+            return bodies.TryGetValue(id, out WaterBody b) ? b.Classification : WaterBodyType.None;
+        }
+
         public IReadOnlyDictionary<int, WaterBody> GetBodies()
         {
             return bodies;
@@ -129,7 +141,7 @@ namespace Territory.Terrain
                 return;
 
             const int legacyId = 1;
-            var body = new WaterBody(legacyId, seaLevel);
+            var body = new WaterBody(legacyId, seaLevel, WaterBodyType.Lake);
             bodies[legacyId] = body;
             nextBodyId = 2;
 
@@ -146,14 +158,15 @@ namespace Territory.Terrain
             }
         }
 
-        /// <summary>Single-cell water from the paint tool at <paramref name="surfaceHeight"/>.</summary>
-        public void AddLegacyPaintedWaterCell(int x, int y, int surfaceHeight)
+        /// <summary>Single-cell water from the paint tool at <paramref name="surfaceHeight"/> (or sea-level registration).</summary>
+        /// <param name="classification">Sea for sea-level fill; Lake for matrix/paint defaults.</param>
+        public void AddLegacyPaintedWaterCell(int x, int y, int surfaceHeight, WaterBodyType classification = WaterBodyType.Lake)
         {
             if (!IsValidPosition(x, y))
                 return;
 
             int legacyBodyId = LegacyPaintWaterBodyId;
-            EnsureBody(legacyBodyId, surfaceHeight);
+            EnsureBody(legacyBodyId, surfaceHeight, classification);
             int oldId = waterBodyIds[x, y];
             if (oldId != 0 && oldId != legacyBodyId)
                 RemoveCellFromBody(x, y, oldId);
@@ -187,11 +200,11 @@ namespace Territory.Terrain
             }
         }
 
-        private void EnsureBody(int id, int surfaceHeight)
+        private void EnsureBody(int id, int surfaceHeight, WaterBodyType classification = WaterBodyType.Lake)
         {
             if (!bodies.TryGetValue(id, out WaterBody body))
             {
-                body = new WaterBody(id, surfaceHeight);
+                body = new WaterBody(id, surfaceHeight, classification);
                 bodies[id] = body;
                 nextBodyId = Math.Max(nextBodyId, id + 1);
             }
@@ -282,7 +295,7 @@ namespace Territory.Terrain
                     continue;
 
                 int bodyId = nextBodyId++;
-                var body = new WaterBody(bodyId, spill);
+                var body = new WaterBody(bodyId, spill, WaterBodyType.Lake);
                 bodies[bodyId] = body;
 
                 foreach (var c in basinCells)
@@ -429,7 +442,7 @@ namespace Territory.Terrain
                     continue;
 
                 int bodyId = nextBodyId++;
-                var body = new WaterBody(bodyId, spill);
+                var body = new WaterBody(bodyId, spill, WaterBodyType.Lake);
                 bodies[bodyId] = body;
 
                 foreach (var c in basinCells)
@@ -489,7 +502,7 @@ namespace Territory.Terrain
                         continue;
                     if (IsWater(x, y))
                         continue;
-                    AddLegacyPaintedWaterCell(x, y, seaLevel);
+                    AddLegacyPaintedWaterCell(x, y, seaLevel, WaterBodyType.Sea);
                 }
             }
         }
@@ -502,7 +515,7 @@ namespace Territory.Terrain
                 return;
 
             const int legacyId = 1;
-            var body = new WaterBody(legacyId, seaLevel);
+            var body = new WaterBody(legacyId, seaLevel, WaterBodyType.Sea);
             bodies[legacyId] = body;
             nextBodyId = 2;
 
@@ -523,7 +536,7 @@ namespace Territory.Terrain
         {
             var data = new WaterMapData
             {
-                formatVersion = FormatVersionV2,
+                formatVersion = FormatVersionV3,
                 width = width,
                 height = height,
                 waterBodyIds = new int[width * height]
@@ -545,6 +558,7 @@ namespace Territory.Terrain
                 {
                     id = wb.Id,
                     surfaceHeight = wb.SurfaceHeight,
+                    bodyClassification = (int)wb.Classification,
                     cellIndicesFlat = new int[wb.CellIndices.Count]
                 };
                 int i = 0;
@@ -584,7 +598,8 @@ namespace Territory.Terrain
             {
                 foreach (var ser in data.bodies)
                 {
-                    var body = new WaterBody(ser.id, ser.surfaceHeight);
+                    WaterBodyType cls = DeserializeBodyClassification(ser);
+                    var body = new WaterBody(ser.id, ser.surfaceHeight, cls);
                     if (ser.cellIndicesFlat != null)
                     {
                         foreach (int flat in ser.cellIndicesFlat)
@@ -598,12 +613,22 @@ namespace Territory.Terrain
             RebuildBodyIdsFromCellsIfNeeded();
         }
 
+        private static WaterBodyType DeserializeBodyClassification(WaterBodySerialized ser)
+        {
+            if (ser == null)
+                return WaterBodyType.Lake;
+            WaterBodyType cls = (WaterBodyType)ser.bodyClassification;
+            if (cls == WaterBodyType.None)
+                return WaterBodyType.Lake;
+            return cls;
+        }
+
         private void LoadLegacyBoolFormat(WaterMapData data)
         {
             ClearAllWater();
             const int legacyId = 1;
             int surface = 0;
-            var body = new WaterBody(legacyId, surface);
+            var body = new WaterBody(legacyId, surface, WaterBodyType.Lake);
             bodies[legacyId] = body;
             nextBodyId = 2;
 
@@ -779,6 +804,16 @@ namespace Territory.Terrain
             }
         }
 
+        /// <summary>Rivers merge only with rivers; lakes/seas still merge with each other at the same surface.</summary>
+        private static bool CanMergeWaterBodies(WaterBody a, WaterBody b)
+        {
+            if (a.Classification == b.Classification)
+                return true;
+            if (a.Classification == WaterBodyType.River || b.Classification == WaterBodyType.River)
+                return false;
+            return true;
+        }
+
         private void MergeAdjacentBodiesWithSameSurface()
         {
             bool changed = true;
@@ -805,6 +840,8 @@ namespace Territory.Terrain
                             if (idB == 0 || idA == idB)
                                 continue;
                             if (bodies[idA].SurfaceHeight != bodies[idB].SurfaceHeight)
+                                continue;
+                            if (!CanMergeWaterBodies(bodies[idA], bodies[idB]))
                                 continue;
 
                             int keep = Math.Min(idA, idB);
@@ -1118,7 +1155,7 @@ namespace Territory.Terrain
                 surface = Mathf.Min(TerrainManager.MAX_HEIGHT, Mathf.Max(seaLevel + 1, maxHPost + 1));
 
             int bodyId = nextBodyId++;
-            var wb = new WaterBody(bodyId, surface);
+            var wb = new WaterBody(bodyId, surface, WaterBodyType.Lake);
             bodies[bodyId] = wb;
             for (int ox = 0; ox < rw; ox++)
             {
@@ -1134,6 +1171,35 @@ namespace Territory.Terrain
 
             ExpandArtificialDirtyRect(x0, y0, rw, rh);
             return true;
+        }
+
+        /// <summary>Creates a new river body and returns its id (FEAT-38).</summary>
+        public int CreateRiverWaterBody(int surfaceHeight)
+        {
+            int bodyId = nextBodyId++;
+            bodies[bodyId] = new WaterBody(bodyId, surfaceHeight, WaterBodyType.River);
+            return bodyId;
+        }
+
+        /// <summary>Assigns a dry cell to an existing river body.</summary>
+        public bool TryAssignCellToRiverBody(int x, int y, int bodyId)
+        {
+            if (!IsValidPosition(x, y))
+                return false;
+            if (waterBodyIds[x, y] != 0)
+                return false;
+            if (!bodies.TryGetValue(bodyId, out WaterBody wb) || wb.Classification != WaterBodyType.River)
+                return false;
+            int flat = ToFlat(x, y);
+            waterBodyIds[x, y] = bodyId;
+            wb.AddCellIndex(flat);
+            return true;
+        }
+
+        /// <summary>Re-runs adjacency merge (same surface + same classification) after procedural river placement.</summary>
+        public void MergeAdjacentBodiesAfterRiverPlacement()
+        {
+            MergeAdjacentBodiesWithSameSurface();
         }
     }
 
@@ -1226,7 +1292,7 @@ namespace Territory.Terrain
     [Serializable]
     public sealed class WaterMapData
     {
-        public int formatVersion = WaterMap.FormatVersionV2;
+        public int formatVersion = WaterMap.FormatVersionV3;
         public int width;
         public int height;
 
@@ -1244,6 +1310,10 @@ namespace Territory.Terrain
     {
         public int id;
         public int surfaceHeight;
+
+        /// <summary>Values from <see cref="WaterBodyType"/> (Lake, Sea, River). 0 / missing = treat as Lake on load.</summary>
+        public int bodyClassification;
+
         public int[] cellIndicesFlat;
     }
 }

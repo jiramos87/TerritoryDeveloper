@@ -7,12 +7,12 @@
 
 ## In Progress
 
-- [ ] **FEAT-38** — Procedural rivers during geography / terrain generation
-  - Type: feature
-  - Files: `GeographyManager.cs`, `TerrainManager.cs`, `HeightMap.cs`, `WaterMap.cs`, `WaterManager.cs`, `WaterBody.cs`, `Cell.cs` / `CellData.cs` (as needed for `WaterBodyType.River` persistence)
-  - Spec: `.cursor/specs/water-system-refactor.md` (goals: directed flow; suggested **phase D**: river graph or flow field — data-first, not full fluid simulation); **`.cursor/specs/rivers.md`** (definitions, scope, progress); planning prompt: `.cursor/specs/agent-prompt-feat-38-rivers.md`
-  - Notes: On **New Game**, after the height map and lake placement pipeline, generate **rivers** as water bodies that follow **downhill gradients** (higher → lower terrain), optionally **linking lakes** or reaching the **sea** edge. Rivers share the same abstraction as lakes (**`WaterMap`** body ids, per-cell surface height aligned with terrain). Hook into `GeographyManager.InitializeGeography()` order (terrain → water → …) so river placement runs where procedural water is initialized. Coordinate with **BUG-08** (generation polish) where overlap. Shore/sorting for river banks may reuse lake shore paths or need follow-ups (**BUG-33**). **Prerequisite:** **FEAT-37a–c** (multi-level water + save/load) **completed**.
-  - Depends on: none (foundation **FEAT-37c** done)
+- [ ] **BUG-41** — River corridors: wrong water-shore prefabs and missing / incorrect cliff stacks (2026-03-24)
+  - Type: bug
+  - Files: `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `PlaceCliffWalls`, `RefreshLakeShoreAfterLakePlacement`, `IsLandEligibleForWaterShorePrefabs`, neighbor queries vs `WaterBodyType.River`), `WaterManager.cs` (`PlaceWater`, `UpdateWaterVisuals`), `GridSortingOrderService.cs` as needed; river-related prefabs under `Assets/Prefabs/` as applicable
+  - Spec: `.cursor/specs/rivers.md` (§6 visuals follow-up; §4.3 / §7 transverse + cliffs); `.cursor/specs/bugs/cliff-water-shore-sorting.md`; **BUG-33** (lake shore baseline — rivers may need distinct patterns or eligibility)
+  - Notes: **Observed:** After **FEAT-38**, procedural **river** water and banks can show **incorrect shore tiles** (cardinal/diagonal/Bay mismatches) and **absent or wrong brown cliff** segments at drops along the river, compared to lake shores. **Expected:** Shore selection and cliff placement treat **River** adjacency consistently with height/surface rules; refresh passes cover river Moore neighborhoods where needed. **Related:** **BUG-33** (lakes), **BUG-39** / **BUG-40** (cliff sorting — verify rivers).
+  - Depends on: **FEAT-38** (completed)
 
 ## High Priority
 
@@ -260,6 +260,12 @@
 ---
 
 ## Completed (last 30 days)
+
+- [x] **FEAT-38** — Procedural rivers during geography / terrain generation (2026-03-24)
+  - Type: feature
+  - Files: `GeographyManager.cs`, `ProceduralRiverGenerator.cs`, `TerrainManager.cs`, `WaterMap.cs`, `WaterManager.cs`, `WaterBody.cs`, `Cell.cs` / `CellData.cs` (as needed)
+  - Spec: `.cursor/specs/rivers.md`; `.cursor/specs/water-system-refactor.md` (Phase D alignment); `.cursor/specs/agent-prompt-feat-38-rivers.md`
+  - Notes: **Completed:** `WaterBody` classification + merge (river vs lake/sea); `GenerateProceduralRiversForNewGame()` after `InitializeWaterMap`, before interstate; `ProceduralRiverGenerator` (BFS / forced centerline, border margin, transverse + longitudinal monotonicity, `WaterMap` river bodies). **Follow-up visuals:** **BUG-41** (shore prefabs + cliffs on rivers). Cardinal slope-water / cascade **art** and shore/cliff polish tracked separately.
 
 - [x] **BUG-39** — Bay / inner-corner shore prefabs: cliff art alignment vs stacked cliffs (2026-03-24)
   - Type: fix (art vs code)

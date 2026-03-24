@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Text;
 using Territory.Core;
 using Territory.Zones;
 using Territory.Persistence;
@@ -39,10 +38,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public static bool LogTerraformRestoreDiagnostics = false;
 
     /// <summary>
-    /// When true, emits detailed <c>Debug.Log</c> lines for <see cref="TerrainDebugCellCoordinates"/> (heights, shore
-    /// eligibility, cliff drops, world positions, sorting order, child prefab names). Toggle in Inspector or from code.
+    /// When true, <see cref="ShouldTerrainDebugLog"/> is true for <see cref="TerrainDebugCellCoordinates"/> (reserved for
+    /// future diagnostics; console logging is disabled). Toggle in Inspector or from code.
     /// </summary>
-    [Tooltip("Logs detailed terrain/cliff/shore state for TerrainDebugCellCoordinates. Filter console: [TerrainDebug]")]
+    [Tooltip("Enables ShouldTerrainDebugLog for TerrainDebugCellCoordinates (reserved; no console output yet).")]
     public bool terrainDebugLogCellsEnabled = false;
 
     /// <summary>
@@ -412,43 +411,43 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         return new int[,] {
           {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2},
           {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2},
-          {1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2},
-          {1, 1, 2, 3, 3, 3, 3, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4, 5, 4, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2},
-          {1, 1, 2, 3, 3, 3, 3, 3, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4, 5, 4, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2},
-          {1, 1, 2, 3, 3, 2, 2, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2},
-          {1, 1, 2, 3, 3, 2, 2, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 2, 3, 3, 3, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 2, 3, 3, 3, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 5, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4, 5, 4, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 3, 4, 5, 4, 3, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
           {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
           {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
-          {1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 3, 3, 3, 3, 3, 2, 1},
-          {2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 3, 3, 3, 5, 5, 1, 1, 1, 1, 1, 1, 1, 2, 3, 1, 1, 1, 1, 1, 3, 2, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 5, 5, 3, 3, 3, 5, 5, 1, 1, 1, 1, 1, 1, 1, 2, 3, 1, 0, 0, 0, 1, 3, 2, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 2, 1, 1, 1, 5, 5, 3, 3, 3, 5, 5, 1, 1, 1, 1, 1, 1, 1, 2, 3, 1, 0, 0, 0, 1, 3, 2, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 1, 1, 2, 3, 1, 0, 0, 0, 1, 3, 2, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 1, 1, 2, 3, 1, 0, 0, 0, 1, 3, 2, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 1, 1, 1, 1, 1, 3, 2, 1},
+          {1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1},
+          {1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1},
+          {2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1},
           {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 3, 3, 3, 3, 3, 3, 2, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 3, 2, 2, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 3, 2, 1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 3, 2, 2, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-          {1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
           {2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
           {3, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
           {4, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
           {4, 4, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
           {3, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
           {2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 3, 3, 3, 3, 3, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 3, 3, 3, 3, 3, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 3, 3, 3, 3, 3, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 3, 3, 3, 3, 4},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 3, 3, 3, 3, 3, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 3, 2, 2, 3, 4},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 3, 3, 3, 3, 3, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 3, 2, 2, 3, 4},
-          {1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 3, 3, 3, 3, 4},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 3, 3, 3, 3, 4},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 3, 2, 2, 3, 4},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 3, 2, 2, 3, 4},
+          {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 3, 3, 3, 3, 4},
           {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4}
         };
     }
@@ -779,9 +778,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             UpdateTileElevation(p.x, p.y);
     }
 
-    #region Terrain cell debug logging
+    #region Terrain cell debug (toggle retained; no console logging)
 
-    static bool IsTerrainDebugCell(int x, int y)
+    /// <summary>True if <paramref name="x"/>,<paramref name="y"/> is one of <see cref="TerrainDebugCellCoordinates"/>.</summary>
+    public static bool IsTerrainDebugCell(int x, int y)
     {
         for (int i = 0; i < TerrainDebugCellCoordinates.Length; i++)
         {
@@ -791,124 +791,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         return false;
     }
 
-    bool ShouldTerrainDebugLog(int x, int y) => terrainDebugLogCellsEnabled && IsTerrainDebugCell(x, y);
-
-    /// <summary>
-    /// Multi-line report: height map, water flags, shore gate, 8-neighbor heights, cell root/children names, sorting.
-    /// </summary>
-    string BuildTerrainDebugCellReport(int x, int y, Cell cell, string branchNote)
-    {
-        int SafeHeight(int gx, int gy)
-        {
-            if (heightMap == null || !heightMap.IsValidPosition(gx, gy)) return -999;
-            return heightMap.GetHeight(gx, gy);
-        }
-
-        var sb = new StringBuilder(512);
-        sb.Append("  branch: ").AppendLine(branchNote ?? "(none)");
-        if (heightMap == null || !heightMap.IsValidPosition(x, y))
-        {
-            sb.AppendLine("  heightMap: invalid");
-            return sb.ToString();
-        }
-
-        int h = heightMap.GetHeight(x, y);
-        sb.Append("  heightMap=").Append(h);
-        if (cell != null)
-        {
-            sb.Append(" cell.height=").Append(cell.height)
-                .Append(" prefabName=").Append(cell.prefabName ?? "(null)")
-                .Append(" secondary=").Append(cell.secondaryPrefabName ?? "(null)")
-                .Append(" sort=").Append(cell.sortingOrder)
-                .Append(" zoneType=").AppendLine(cell.zoneType.ToString());
-        }
-        else
-            sb.AppendLine(" cell: null");
-
-        if (waterManager == null)
-            waterManager = FindObjectOfType<WaterManager>();
-        bool regWater = waterManager != null && waterManager.IsWaterAt(x, y);
-        sb.Append("  IsWaterAt=").Append(regWater);
-        if (waterManager != null && regWater)
-            sb.Append(" surfaceAtCell=").Append(waterManager.GetWaterSurfaceHeight(x, y));
-        sb.AppendLine();
-
-        bool shoreEligible = IsLandEligibleForWaterShorePrefabs(x, y, h);
-        sb.Append("  IsLandEligibleForWaterShorePrefabs=").Append(shoreEligible)
-            .Append(" RequiresSlope=").Append(RequiresSlope(x, y, h));
-        TerrainSlopeType st = GetTerrainSlopeTypeAt(x, y);
-        sb.Append(" slopeType=").AppendLine(st.ToString());
-
-        sb.Append("  neighbors cardinal S=").Append(heightMap.IsValidPosition(x - 1, y) ? heightMap.GetHeight(x - 1, y).ToString() : "—");
-        sb.Append(" N=").Append(heightMap.IsValidPosition(x + 1, y) ? heightMap.GetHeight(x + 1, y).ToString() : "—");
-        sb.Append(" E=").Append(heightMap.IsValidPosition(x, y - 1) ? heightMap.GetHeight(x, y - 1).ToString() : "—");
-        sb.Append(" W=").AppendLine(heightMap.IsValidPosition(x, y + 1) ? heightMap.GetHeight(x, y + 1).ToString() : "—");
-
-        sb.Append("  water cardinals: ");
-        AppendWaterNeighborLine(sb, x - 1, y, "S");
-        AppendWaterNeighborLine(sb, x + 1, y, "N");
-        AppendWaterNeighborLine(sb, x, y - 1, "E");
-        AppendWaterNeighborLine(sb, x, y + 1, "W");
-        sb.AppendLine();
-
-        sb.Append("  diagonals SE=").Append(SafeHeight(x - 1, y - 1))
-            .Append(" SW=").Append(SafeHeight(x - 1, y + 1))
-            .Append(" NE=").Append(SafeHeight(x + 1, y - 1))
-            .Append(" NW=").AppendLine(SafeHeight(x + 1, y + 1).ToString());
-
-        if (cell != null && cell.gameObject != null)
-        {
-            sb.Append("  cell.root pos=").AppendLine(cell.gameObject.transform.position.ToString("F4"));
-            sb.Append("  children (").Append(cell.transform.childCount).AppendLine("):");
-            int max = Mathf.Min(cell.transform.childCount, 24);
-            for (int i = 0; i < max; i++)
-            {
-                Transform ch = cell.transform.GetChild(i);
-                var z = ch.GetComponent<Zone>();
-                int cs = -999;
-                var csr = ch.GetComponent<SpriteRenderer>();
-                if (csr != null) cs = csr.sortingOrder;
-                sb.Append("    [").Append(i).Append("] ").Append(ch.name)
-                    .Append(" zone=").Append(z != null ? z.zoneType.ToString() : "—")
-                    .Append(" sort=").Append(cs)
-                    .AppendLine();
-            }
-            if (cell.transform.childCount > max)
-                sb.Append("    … ").Append(cell.transform.childCount - max).AppendLine(" more");
-        }
-
-        return sb.ToString();
-    }
-
-    void AppendWaterNeighborLine(StringBuilder sb, int nx, int ny, string tag)
-    {
-        if (heightMap == null || !heightMap.IsValidPosition(nx, ny))
-        {
-            sb.Append(tag).Append(":— ");
-            return;
-        }
-        if (waterManager == null)
-            waterManager = FindObjectOfType<WaterManager>();
-        bool w = waterManager != null && waterManager.IsWaterAt(nx, ny);
-        int surf = waterManager != null ? waterManager.GetWaterSurfaceHeight(nx, ny) : -1;
-        sb.Append(tag).Append(":h").Append(heightMap.GetHeight(nx, ny)).Append(w ? "W" : "").Append("(surf=").Append(surf).Append(") ");
-    }
-
-    void TerrainDebugLog(string phase, int x, int y, string detail)
-    {
-        if (!ShouldTerrainDebugLog(x, y))
-            return;
-        Debug.Log($"[TerrainDebug] {phase} ({x},{y})\n{detail}");
-    }
-
-    /// <summary>Refreshes <see cref="Cell"/> from grid after terrain writes, then logs.</summary>
-    void TerrainDebugLogAfterUpdateTile(int x, int y, string branch)
-    {
-        if (!ShouldTerrainDebugLog(x, y))
-            return;
-        Cell c = gridManager != null ? gridManager.GetCell(x, y) : null;
-        TerrainDebugLog("UpdateTileElevation", x, y, BuildTerrainDebugCellReport(x, y, c, branch));
-    }
+    /// <summary>True when <see cref="terrainDebugLogCellsEnabled"/> is on and <paramref name="x"/>,<paramref name="y"/> is in <see cref="TerrainDebugCellCoordinates"/> (reserved for future diagnostics).</summary>
+    public bool ShouldTerrainDebugLog(int x, int y) => terrainDebugLogCellsEnabled && IsTerrainDebugCell(x, y);
 
     #endregion
 
@@ -931,12 +815,18 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             sr.sortingOrder = sortingOrder;
         }
 
-        // Land cell adjacent to water: use water-shore prefabs only when close enough to that body's surface (rim
-        // cliffs go on higher cells). Skip registered water cells — visuals come from WaterManager.
         if (waterManager == null)
             waterManager = FindObjectOfType<WaterManager>();
+        // River/lake/sea cells: terrain refresh must not place grass or slopes on top of water (avoids holes / double stacks).
+        if (waterManager != null && waterManager.IsWaterAt(x, y))
+        {
+            waterManager.PlaceWater(x, y);
+            return;
+        }
+
+        // Land cell adjacent to water: use water-shore prefabs only when close enough to that body's surface (rim
+        // cliffs go on higher cells). Water cells already returned above.
         bool canUseWaterShorePrefabsHere = newHeight >= 1
-            && !(waterManager != null && waterManager.IsWaterAt(x, y))
             && IsLandEligibleForWaterShorePrefabs(x, y, newHeight);
         if (canUseWaterShorePrefabsHere)
         {
@@ -946,12 +836,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             {
                 PlaceWaterShore(x, y, waterShorePrefabs);
                 PlaceCliffWalls(x, y);
-                TerrainDebugLogAfterUpdateTile(x, y, "waterShore prefabs + PlaceCliffWalls");
                 return;
             }
             PlaceFlatTerrain(x, y);  // fallback if pattern not recognized
             PlaceCliffWalls(x, y);
-            TerrainDebugLogAfterUpdateTile(x, y, "waterShore branch fallback flat + PlaceCliffWalls");
             return;
         }
 
@@ -971,12 +859,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         if (newHeight == SEA_LEVEL)
         {
             ModifyWaterSlopeInAdjacentNeighbors(x, y);
-            TerrainDebugLogAfterUpdateTile(x, y, "SEA_LEVEL cell — ModifyWaterSlopeInAdjacentNeighbors only");
             return;
         }
 
         PlaceCliffWalls(x, y);
-        TerrainDebugLogAfterUpdateTile(x, y, "land slope or flat + PlaceCliffWalls");
     }
 
     /// <summary>
@@ -1030,11 +916,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         }
         int newHeight = heightMap.GetHeight(x, y);
         if (newHeight == SEA_LEVEL)
-        {
-            if (ShouldTerrainDebugLog(x, y))
-                TerrainDebugLog("RestoreTerrainForCell", x, y, "early exit: newHeight == SEA_LEVEL → return false");
             return false;
-        }
         Cell cell = gridManager.GetCell(x, y);
         if (cell == null)
         {
@@ -1078,13 +960,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             {
                 PlaceWaterShore(x, y, waterShorePrefabs);
                 PlaceCliffWalls(x, y, terraformCutCorridorCells);
-                if (ShouldTerrainDebugLog(x, y))
-                {
-                    Cell c = gridManager.GetCell(x, y);
-                    TerrainDebugLog("RestoreTerrainForCell", x, y,
-                        BuildTerrainDebugCellReport(x, y, c, "water shore + cliffs → return true") +
-                        $"  forceFlat={forceFlat} forceSlope={(forceSlopeType.HasValue ? forceSlopeType.Value.ToString() : "null")}");
-                }
                 return true;
             }
         }
@@ -1103,13 +978,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         }
 
         PlaceCliffWalls(x, y, terraformCutCorridorCells);
-        if (ShouldTerrainDebugLog(x, y))
-        {
-            Cell c = gridManager.GetCell(x, y);
-            TerrainDebugLog("RestoreTerrainForCell", x, y,
-                BuildTerrainDebugCellReport(x, y, c, "slope/flat + cliffs → return false") +
-                $"  forceFlat={forceFlat} forceSlope={(forceSlopeType.HasValue ? forceSlopeType.Value.ToString() : "null")}");
-        }
         return false;
     }
 
@@ -1679,18 +1547,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         if (waterManager == null)
             waterManager = FindObjectOfType<WaterManager>();
         if (waterManager != null && waterManager.IsWaterAt(x, y))
-        {
-            if (ShouldTerrainDebugLog(x, y))
-                TerrainDebugLog("PlaceCliffWalls", x, y, "skip: registered water cell (cliffs belong on land parents)");
             return;
-        }
 
         if (IsCellSurroundedByCardinalWaterOnly(x, y, waterManager))
-        {
-            if (ShouldTerrainDebugLog(x, y))
-                TerrainDebugLog("PlaceCliffWalls", x, y, "skip: island — cardinal water only");
             return;
-        }
 
         Cell cell = gridManager.GetCell(x, y);
         RemoveExistingCliffWalls(cell);
@@ -1729,13 +1589,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             if (cell != null)
                 cell.cliffFaces |= CliffFaceFlags.West;
             PlaceCliffWallStack(cell, CliffCardinalFace.West, x, y, x, y + 1, currentHeight, heightMap.GetHeight(x, y + 1), dWest);
-        }
-
-        if (ShouldTerrainDebugLog(x, y))
-        {
-            string drops =
-                $"  cliff drops N={dNorth} S={dSouth} E={dEast} W={dWest} (prefabs only on visible S/E faces)\n";
-            TerrainDebugLog("PlaceCliffWalls", x, y, drops + BuildTerrainDebugCellReport(x, y, cell, "after cliff stacks"));
         }
     }
 
@@ -1997,12 +1850,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return;
 
         if (!IsCliffCardinalFaceVisibleToCamera(cardinalFace))
-        {
-            if (ShouldTerrainDebugLog(highX, highY) || ShouldTerrainDebugLog(lowX, lowY))
-                TerrainDebugLog("PlaceCliffWallStack", highX, highY,
-                    $"  skip prefabs: face={cardinalFace} (not visible to camera) highCell=({highX},{highY}) lowCell=({lowX},{lowY})");
             return;
-        }
 
         GameObject prefab = GetCliffPrefabForCardinalFace(cardinalFace);
         if (prefab == null)
@@ -2026,31 +1874,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             int topH = highH - s;
             int bottomH = (s < count - 1) ? (highH - s - 1) : lowH;
             if (ShouldSkipCliffSegmentFullyUnderwater(topH, bottomH, waterSurfaceH))
-            {
-                if (ShouldTerrainDebugLog(highX, highY) || ShouldTerrainDebugLog(lowX, lowY))
-                    TerrainDebugLog("PlaceCliffWallStack", highX, highY,
-                        $"  skip segment {s + 1}/{count} face={cardinalFace} (underwater vs surface={waterSurfaceH}) topH={topH} bottomH={bottomH}");
                 continue;
-            }
 
             Vector2 world = GetCliffWallSegmentWorldPositionOnSharedEdge(cell, topH, s);
 
-            if (cell.x == 28 && cell.y == 28)
-            {
-                Debug.Log($"cliff segment worldposition: {world.x}, {world.y}");
-            }
-            if (CellUsesWaterShorePrimaryPrefab(cell)) {
+            if (CellUsesWaterShorePrimaryPrefab(cell))
                 world.y -= gridManager.tileHeight * cliffWallWaterShoreYOffsetTileHeightFraction;
-                if (cell.x == 28 && cell.y == 28)
-                {
-                    Debug.Log($"cliff segment worldposition after water shore offset: {world.x}, {world.y}");
-                }
-            }
-
-            if (cell.x == 28 && cell.y == 28)
-            {
-                Debug.Log($"Terrain prefab world position: {cell.gameObject.transform.position.x}, {cell.gameObject.transform.position.y}");
-            }
 
             GameObject cliffWall = Instantiate(prefab, new Vector3(world.x, world.y, z), rot);
             cliffWall.transform.SetParent(cell.gameObject.transform, true);
@@ -2064,13 +1893,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 if (maxSortFromForegroundWater != int.MaxValue)
                     finalSort = Mathf.Min(finalSort, maxSortFromForegroundWater - visualIndex);
                 sr.sortingOrder = finalSort;
-            }
-
-            if (ShouldTerrainDebugLog(highX, highY) || ShouldTerrainDebugLog(lowX, lowY))
-            {
-                int sortOrd = sr != null ? sr.sortingOrder : -999;
-                TerrainDebugLog("PlaceCliffWallStack", highX, highY,
-                    $"  segment {visualIndex + 1} (stack {s + 1}/{count}) face={cardinalFace} prefab={(prefab != null ? prefab.name : "null")} highCell=({highX},{highY}) lowCell=({lowX},{lowY}) topH={topH} bottomH={bottomH} highH={highH} lowH={lowH} world=({world.x:F4},{world.y:F4}) sort={sortOrd} cellTerrainSort={cellTerrainSort} fgWaterCap={maxSortFromForegroundWater} waterSurf={waterSurfaceH}");
             }
 
             visualIndex++;

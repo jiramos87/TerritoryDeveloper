@@ -108,9 +108,6 @@ public class ForestManager : MonoBehaviour
             if (terrainManager != null)
                 terrainManager.EnsureHeightMapLoaded();
 
-            HeightMap hm = GetTerrainHeightMap();
-            Debug.Log($"[ForestManager] InitializeForestMap: grid {gridManager.width}x{gridManager.height}, heightMap={(hm != null)}, waterManager={(waterManager != null)}");
-
             forestMap = new ForestMap(gridManager.width, gridManager.height);
 
             // Build int matrix (0 = None, 1 = Sparse, 2 = Medium, 3 = Dense) using chunk-based placement for economy and natural clusters
@@ -142,16 +139,6 @@ public class ForestManager : MonoBehaviour
             // Calculate initial desirability for all cells
             UpdateAllCellDesirability();
 
-            int forestCells = 0;
-            for (int fx = 0; fx < gridManager.width; fx++)
-            {
-                for (int fy = 0; fy < gridManager.height; fy++)
-                {
-                    if (forestMap.GetForestType(fx, fy) != Forest.ForestType.None)
-                        forestCells++;
-                }
-            }
-            Debug.Log($"[ForestManager] Initial forest generation complete: {forestCells} forest cells (chunkSize={ForestChunkSize}, chunkProb={ForestChunkProbability}, cellInChunkProb={ForestCellInChunkProbability}; ForestMap matrix filled).");
         }
     }
 
@@ -249,10 +236,7 @@ public class ForestManager : MonoBehaviour
         Cell cellComponent = gridManager.GetCell(x, y);
 
         if (cellComponent == null)
-        {
-            Debug.LogError($"Cell component is null at position: ({x}, {y})");
             return false;
-        }
 
         EnsureForestMapForManualPlacement();
 
@@ -277,10 +261,7 @@ public class ForestManager : MonoBehaviour
         GameObject forestPrefab = GetForestPrefabForCell(x, y, selectedForest.ForestType);
 
         if (forestPrefab == null)
-        {
-            Debug.LogError($"No prefab available for {selectedForest.ForestType} forest!");
             return false;
-        }
 
         Vector2 worldPos = cellComponent.transformPosition;
 
@@ -506,7 +487,6 @@ public class ForestManager : MonoBehaviour
         if (terrainManager != null)
             terrainManager.EnsureHeightMapLoaded();
         forestMap = new ForestMap(gridManager.width, gridManager.height);
-        Debug.Log($"[ForestManager] Lazy ForestMap allocated for manual placement ({gridManager.width}x{gridManager.height}).");
     }
 
     /// <summary>
