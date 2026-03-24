@@ -101,6 +101,16 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     [Header("Cliff wall placement")]
     [Tooltip("Extra downward shift in world Y after grid math, in units of (tileHeight/2) — same as one logical height step in GridManager.GetWorldPositionVector. Tune if cliffs float or sink vs grass/water.")]
     [SerializeField] private float cliffWallPivotDownHeightSteps = 1.5f;
+    [Tooltip("World X offset for South cliff art vs shared-edge midpoint, as a fraction of tileWidth (e.g. -0.25 when the draw was in the opposite corner). Set to 0 when the sprite art sits on the south face.")]
+    [SerializeField] private float cliffWallSouthFaceNudgeTileWidthFraction = 1.0f;
+    [Tooltip("World Y offset for South cliff art vs shared-edge midpoint, as a fraction of tileHeight. Set to 0 when the sprite art sits on the south face.")]
+    [SerializeField] private float cliffWallSouthFaceNudgeTileHeightFraction = 1.0f;
+    [Tooltip("World X offset for East cliff art vs shared-edge midpoint, as a fraction of tileWidth. Set to 0 when the sprite art sits on the east face.")]
+    [SerializeField] private float cliffWallEastFaceNudgeTileWidthFraction = -1.0f;
+    [Tooltip("World Y offset for East cliff art vs shared-edge midpoint, as a fraction of tileHeight. Set to 0 when the sprite art sits on the east face.")]
+    [SerializeField] private float cliffWallEastFaceNudgeTileHeightFraction = 1.0f;
+    [Tooltip("When the cell uses a water-shore primary prefab, cliff world Y is decreased by this fraction of tileHeight (0.5 matches legacy sloped-shore alignment). Set to 0 if cliffs align without the extra drop.")]
+    [SerializeField] private float cliffWallWaterShoreYOffsetTileHeightFraction = 1.0f;
 
     public GameObject northEastBayPrefab;
     public GameObject northWestBayPrefab;
@@ -1967,64 +1977,15 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// World position for a cliff segment on the shared edge between the high and low cells.
-    /// Horizontal: midpoint between the two cell centers at base terrain height (h = 1) — that point lies on the shared
-    /// diamond edge for this grid math (same basis as <see cref="GridManager.GetWorldPositionVector"/>).
-    /// Vertical: midpoint Y of the segment band on the high column, then subtract
-    /// <see cref="cliffWallPivotDownHeightSteps"/> × (<see cref="GridManager.tileHeight"/> / 2) for sprite pivot vs tile mesh.
-    /// <para>
-    /// Pivot vs sprite art uses a small <b>per-face</b> correction: a fixed (−tw/4, +th/4)-style nudge in world X/Y works for
-    /// <see cref="CliffCardinalFace.South"/> but mirrors incorrectly on <see cref="CliffCardinalFace.East"/> because the drop axis
-    /// flips sign in X; East uses +tw/4 on X with the same +th/4 on Y.
-    /// </para>
+    /// World position for a cliff is the same x position as the cell, and the y position is the y position of the cell minus the tile height times the segment index.
     /// </summary>
-    private Vector2 GetCliffWallSegmentWorldPositionOnSharedEdge(
-        CliffCardinalFace cardinalFace, int highX, int highY, int lowX, int lowY, int topH, int bottomH)
+    private Vector2 GetCliffWallSegmentWorldPositionOnSharedEdge(Cell cell, int topH, int segmentIndex)
     {
-        const int baseH = 1;
-        float tw = gridManager.tileWidth;
-        float th = gridManager.tileHeight;
-        Vector2 baseHigh = gridManager.GetWorldPositionVector(highX, highY, baseH);
-        Vector2 baseLow = gridManager.GetWorldPositionVector(lowX, lowY, baseH);
-        Vector2 edgeMidBase = (baseHigh + baseLow) * 0.5f;
-
-        Vector2 highTop = gridManager.GetWorldPositionVector(highX, highY, topH);
-        Vector2 highBottom = gridManager.GetWorldPositionVector(highX, highY, bottomH);
-        float yCenter = edgeMidBase.y + ((highTop.y - baseHigh.y) + (highBottom.y - baseHigh.y)) * 0.5f;
-        float oneHeightStepY = th * 0.5f;
-        yCenter -= oneHeightStepY * cliffWallPivotDownHeightSteps;
-
-        float xOut = edgeMidBase.x;
-        float yOut = yCenter;
-        switch (cardinalFace)
-        {
-            case CliffCardinalFace.South:
-                xOut -= tw * 0.25f;
-                yOut += th * 0.25f;
-                break;
-            case CliffCardinalFace.East:
-                xOut += tw * 0.25f;
-                yOut += th * 0.25f;
-                break;
-            case CliffCardinalFace.North:
-            case CliffCardinalFace.West:
-                break;
-            default:
-                break;
-        }
-
-        return new Vector2(xOut, yOut);
+        return new Vector2(cell.gameObject.transform.position.x, cell.gameObject.transform.position.y - gridManager.tileHeight * (segmentIndex * 0.5f));
     }
 
     /// <summary>
-    /// Stacks <paramref name="segmentCount"/> cliff sprites along the vertical face from <paramref name="highH"/> down to
-    /// <paramref name="lowH"/> on the lower neighbor cell (one prefab per height unit of drop). Segments whose band lies
-    /// entirely below the adjacent water body's surface at the cliff foot are skipped (visual underwater cull).
-    /// North/west faces skip prefab instantiation (not visible to camera); use <see cref="Cell.cliffFaces"/> for logical risco.
-    /// Sorting is capped so cliffs never draw above the parent cell's primary terrain/shore sprite (e.g. water-slope shore).
-    /// When the cell uses a water-shore prefab, world Y is lowered by <c>tileHeight / 2</c> so cliff stacks align with the sloped shore art.
-    /// Sorting is also capped by registered water neighbors strictly in front of <see cref="CalculateTerrainSortingOrder"/> depth (<c>x+y</c>)
-    /// so cliff faces do not draw over water tiles closer to the camera.
+    /// Places a stack of cliff walls on the cell.
     /// </summary>
     private void PlaceCliffWallStack(Cell cell, CliffCardinalFace cardinalFace, int highX, int highY, int lowX, int lowY, int highH, int lowH, int segmentCount)
     {
@@ -2072,9 +2033,24 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 continue;
             }
 
-            Vector2 world = GetCliffWallSegmentWorldPositionOnSharedEdge(cardinalFace, highX, highY, lowX, lowY, topH, bottomH);
-            if (CellUsesWaterShorePrimaryPrefab(cell))
-                world.y -= gridManager.tileHeight * 0.5f;
+            Vector2 world = GetCliffWallSegmentWorldPositionOnSharedEdge(cell, topH, s);
+
+            if (cell.x == 28 && cell.y == 28)
+            {
+                Debug.Log($"cliff segment worldposition: {world.x}, {world.y}");
+            }
+            if (CellUsesWaterShorePrimaryPrefab(cell)) {
+                world.y -= gridManager.tileHeight * cliffWallWaterShoreYOffsetTileHeightFraction;
+                if (cell.x == 28 && cell.y == 28)
+                {
+                    Debug.Log($"cliff segment worldposition after water shore offset: {world.x}, {world.y}");
+                }
+            }
+
+            if (cell.x == 28 && cell.y == 28)
+            {
+                Debug.Log($"Terrain prefab world position: {cell.gameObject.transform.position.x}, {cell.gameObject.transform.position.y}");
+            }
 
             GameObject cliffWall = Instantiate(prefab, new Vector3(world.x, world.y, z), rot);
             cliffWall.transform.SetParent(cell.gameObject.transform, true);
