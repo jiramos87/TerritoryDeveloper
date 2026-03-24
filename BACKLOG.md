@@ -14,16 +14,6 @@
   - Notes: On **New Game**, after the height map and lake placement pipeline, generate **rivers** as water bodies that follow **downhill gradients** (higher → lower terrain), optionally **linking lakes** or reaching the **sea** edge. Rivers share the same abstraction as lakes (**`WaterMap`** body ids, per-cell surface height aligned with terrain). Hook into `GeographyManager.InitializeGeography()` order (terrain → water → …) so river placement runs where procedural water is initialized. Coordinate with **BUG-08** (generation polish) where overlap. Shore/sorting for river banks may reuse lake shore paths or need follow-ups (**BUG-33**). **Prerequisite:** **FEAT-37a–c** (multi-level water + save/load) **completed**.
   - Depends on: none (foundation **FEAT-37c** done)
 
-- [ ] **BUG-39** — Bay / inner-corner shore prefabs: no cliff art in sprite (gap vs stacked cliffs elsewhere)
-  - Type: fix (art vs code)
-  - Files: `TerrainManager.cs` (water shore / bay selection, cliff stacks), bay-related prefabs under `Assets/Prefabs/`, `GridSortingOrderService.cs` if extra cliff objects are added
-  - Notes: **Observed:** Inward “bay” water corners show flat grass→water art without a vertical cliff face, or a hole where stacked cliffs exist on straight edges. **Decision needed:** bake cliffs into the sprite vs keep flat shore art and **instantiate** extra cliff wall segments (aligned with existing `PlaceCliffWallStack` behavior). Screenshots: 2026-03-24 (project assets folder). **Related:** **BUG-33**.
-
-- [ ] **BUG-40** — Shore cliff walls draw in front of nearer (foreground) water tiles
-  - Type: fix (sorting / layers)
-  - Files: `TerrainManager.cs` (`PlaceCliffWallStack`, shore/cliff `sortingOrder`), `WaterManager.cs` (`PlaceWater`, terrain sorting for water surface), `GridSortingOrderService.cs`
-  - Notes: **Observed:** Brown vertical cliff faces from cells “behind” the camera overlap blue water on cells closer to the camera (isometric depth wrong). **Decision needed:** adjust sorting rules (e.g. cap cliff order vs foreground water), layers, or sprite splits. See `.cursor/specs/bugs/cliff-water-shore-sorting.md`. Screenshots: 2026-03-24. **Related:** **BUG-33**, **FEAT-37b** (variable-height water sorting — shores out of scope there).
-
 ## High Priority
 
 - [ ] **TECH-01** — Extract responsibilities from large files (focus: **GridManager** decomposition next)
@@ -270,6 +260,16 @@
 ---
 
 ## Completed (last 30 days)
+
+- [x] **BUG-39** — Bay / inner-corner shore prefabs: cliff art alignment vs stacked cliffs (2026-03-24)
+  - Type: fix (art vs code)
+  - Files: `TerrainManager.cs` (`GetCliffWallSegmentWorldPositionOnSharedEdge`, `PlaceCliffWallStack`), `Assets/Sprites/Cliff/CliffEast.png`, `Assets/Sprites/Cliff/CliffSouth.png`, cliff prefabs under `Assets/Prefabs/Cliff/`
+  - Notes: **Resolved:** Inspector-tunable per-face placement (`cliffWallSouthFaceNudgeTileWidthFraction` / `HeightFraction`, `cliffWallEastFaceNudgeTileWidthFraction` / `HeightFraction`) and water-shore Y offset (`cliffWallWaterShoreYOffsetTileHeightFraction`) so cliff sprites align with the south/east diamond faces and water-shore cells after art was moved inside the textures. Remaining generic shore/gap polish stays under **BUG-33** where applicable.
+
+- [x] **BUG-40** — Shore cliff walls draw in front of nearer (foreground) water tiles (2026-03-24)
+  - Type: fix (sorting / layers)
+  - Files: `TerrainManager.cs` (`PlaceCliffWallStack`, `GetMaxCliffSortingOrderFromForegroundWaterNeighbors`)
+  - Notes: **Resolved:** Cliff `sortingOrder` is capped against registered **foreground** water neighbors (`nx+ny < highX+highY`) using their `Cell.sortingOrder`, so brown cliff segments do not draw above nearer water tiles. See `.cursor/specs/bugs/cliff-water-shore-sorting.md`.
 
 - [x] **BUG-36** — Lake generation: seeded RNG (reproducible + varied per New Game) (2026-03-24)
   - Type: fix

@@ -1,6 +1,6 @@
 # Cliff / water-shore / sorting — findings (SS1–SS5)
 
-> **Status:** Active engineering notes (screenshots + code review, 2026-03-23). **Backlog:** umbrella **[BUG-33](../../BACKLOG.md)**; focused work **[BUG-39](../../BACKLOG.md)** (bay / cliff art), **[BUG-40](../../BACKLOG.md)** (cliff vs foreground water sorting). Verify fixes in Unity before closing those items.
+> **Status:** Active engineering notes (screenshots + code review, 2026-03-23). **Backlog:** umbrella **[BUG-33](../../BACKLOG.md)**. ~~**[BUG-39](../../BACKLOG.md)** (bay / cliff placement + art)~~ and ~~**[BUG-40](../../BACKLOG.md)** (cliff vs foreground water sorting)~~ **completed** 2026-03-24 — see **Resolved (2026-03-24)** below.
 
 ## Glossary (stable vocabulary)
 
@@ -10,17 +10,21 @@
 | **Water-shore (ramp)** | Land cell that passes the **surface-height gate** (§4.2 in `isometric-geography-system.md`): gets **water-slope** prefabs (`DetermineWaterShorePrefabs` / `PlaceWaterShore`), not a vertical “cliff” read from height diff alone. |
 | **Rim** | Land **above** the shore cap (typically **≥** two steps above adjacent water surface): uses **normal slopes** + **`PlaceCliffWalls`** toward lower neighbors, not water-shore art. |
 | **Cliff face / cliff wall stack** | One or more **child** prefabs on the **higher** cell, placed along the **shared cardinal edge** toward a lower neighbor (`PlaceCliffWallStack`). **Δh > 1** produces multiple segments. |
-| **Bay (shore prefab)** | Inner-corner / diagonal water pattern: **Bay** NE/NW/SE/SW prefabs (see §5.9 isometric spec). Art may omit an in-sprite vertical cliff; see **BUG-39**. |
+| **Bay (shore prefab)** | Inner-corner / diagonal water pattern: **Bay** NE/NW/SE/SW prefabs (see §5.9 isometric spec). Cardinal cliff stacks use tunable placement on `TerrainManager` (**BUG-39** completed); inner-corner bay art may still need polish under **BUG-33**. |
 | **Visible cliff faces (camera)** | Only **south** and **east** cardinal faces get prefab meshes (`IsCliffCardinalFaceVisibleToCamera`); **N/W** skip instantiation but `Cell.cliffFaces` can still record bits. |
 
 ## Scope
 
 Observed issues when combining **depression-fill lakes**, **water-shore prefabs**, **cliff wall stacks**, and **pure land** (no water). Related code: `TerrainManager` (`UpdateTileElevation`, `PlaceCliffWalls`, `PlaceCliffWallStack`, `PlaceWaterShore`, shore gate), `WaterManager` / `WaterMap`, `GridManager` sorting.
 
+### Resolved (2026-03-24)
+
+- **BUG-39:** Cliff wall world placement vs sprite art — **`TerrainManager`** exposes serialized **south/east face nudges** (fractions of `tileWidth` / `tileHeight`) and **`cliffWallWaterShoreYOffsetTileHeightFraction`** when the cell uses a water-shore primary prefab, so `GetCliffWallSegmentWorldPositionOnSharedEdge` / `PlaceCliffWallStack` align art with the diamond edge after textures were repositioned. Bay-specific gaps, if any, remain under **BUG-33**.
+- **BUG-40:** **`GetMaxCliffSortingOrderFromForegroundWaterNeighbors`** — scans the 8-neighbor ring for registered water with **lower** isometric depth (`nx+ny < highX+highY`) and returns `min(neighbor.sortingOrder - 1)`. Each cliff segment sets `finalSort = min(computedSort, maxCliffSort, maxSortFromForegroundWater - visualIndex)` so stacks stay below foreground water.
+
 ### Open defects (tracked in backlog)
 
-- **BUG-39:** Bay / inner-corner shore prefabs: missing vertical cliff in sprite or hole vs stacked cliffs on straight edges — **art vs extra `PlaceCliffWallStack` segments**.
-- **BUG-40:** Brown cliff sprites **draw in front of** water tiles that are **closer to the camera** (isometric depth wrong) — **sorting / layers / caps** (e.g. vs foreground water neighbors).
+- **[BUG-33](../../BACKLOG.md)** — Umbrella shore / lake-edge polish (tiles, gaps, sorting edge cases not covered above).
 
 ---
 
@@ -100,4 +104,4 @@ If **`PlaceFlatTerrain`** destroys children and re-instantiates grass as a **chi
 - `TerrainManager.cs` — `terrainDebugLogCellsEnabled`, `TerrainDebugCellCoordinates`, `BuildTerrainDebugCellReport`, `PlaceCliffWallStack`
 - `.cursor/specs/isometric-geography-system.md` — §4.2, §5.6.1, §5.7–5.9 (cliff + shore + bay)
 - `.cursor/specs/water-system-refactor.md` — FEAT-37 water visual height
-- **[BUG-33](../../BACKLOG.md)**, **[BUG-39](../../BACKLOG.md)**, **[BUG-40](../../BACKLOG.md)**
+- **[BUG-33](../../BACKLOG.md)** · ~~**[BUG-39](../../BACKLOG.md)**~~ / ~~**[BUG-40](../../BACKLOG.md)**~~ (completed 2026-03-24)

@@ -8,8 +8,8 @@ alwaysApply: false
 
 ## Manager Responsibilities (one-line each)
 - **GridManager** — Central hub. Isometric 2D grid, cell access, coordinate conversion, building placement, bulldozing, sorting order, pathfinding
-- **TerrainManager** — Heightmap generation, slope types, prefab selection by slope
-- **WaterManager** — Water body generation and management (multi-level lakes: **FEAT-37**; **FEAT-37a** / **FEAT-37b** / **FEAT-37c** completed; shore **BUG-33**; load building sort **BUG-34** + grass under buildings **BUG-35** completed 2026-03-22; `.cursor/specs/water-system-refactor.md`)
+- **TerrainManager** — Heightmap generation, slope types, prefab selection by slope, cliff stacks (`PlaceCliffWallStack`, serialized face nudges + water-shore Y + `GetMaxCliffSortingOrderFromForegroundWaterNeighbors`)
+- **WaterManager** — Water body generation and management (multi-level lakes: **FEAT-37**; **FEAT-37a** / **FEAT-37b** / **FEAT-37c** completed; shore **BUG-33**; cliff placement + foreground-water sorting **BUG-39** / **BUG-40** completed 2026-03-24; load building sort **BUG-34** + grass under buildings **BUG-35** completed 2026-03-22; `.cursor/specs/water-system-refactor.md`)
 - **ForestManager** — Forest generation (sparse/medium/dense), forestation, deforestation
 - **ZoneManager** — RCI zoning (residential, commercial, industrial), zone tile placement
 - **RoadManager** — Road drawing, prefab selection by neighbors, road preview
