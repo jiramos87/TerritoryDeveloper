@@ -10,7 +10,7 @@
 - [ ] **FEAT-38** — Procedural rivers during geography / terrain generation
   - Type: feature
   - Files: `GeographyManager.cs`, `TerrainManager.cs`, `HeightMap.cs`, `WaterMap.cs`, `WaterManager.cs`, `WaterBody.cs`, `Cell.cs` / `CellData.cs` (as needed for `WaterBodyType.River` persistence)
-  - Spec: `.cursor/specs/water-system-refactor.md` (goals: directed flow; suggested **phase D**: river graph or flow field — data-driven first, not full fluid simulation)
+  - Spec: `.cursor/specs/water-system-refactor.md` (goals: directed flow; suggested **phase D**: river graph or flow field — data-first, not full fluid simulation); **`.cursor/specs/rivers.md`** (definitions, scope, progress); planning prompt: `.cursor/specs/agent-prompt-feat-38-rivers.md`
   - Notes: On **New Game**, after the height map and lake placement pipeline, generate **rivers** as water bodies that follow **downhill gradients** (higher → lower terrain), optionally **linking lakes** or reaching the **sea** edge. Rivers share the same abstraction as lakes (**`WaterMap`** body ids, per-cell surface height aligned with terrain). Hook into `GeographyManager.InitializeGeography()` order (terrain → water → …) so river placement runs where procedural water is initialized. Coordinate with **BUG-08** (generation polish) where overlap. Shore/sorting for river banks may reuse lake shore paths or need follow-ups (**BUG-33**). **Prerequisite:** **FEAT-37a–c** (multi-level water + save/load) **completed**.
   - Depends on: none (foundation **FEAT-37c** done)
 

@@ -78,6 +78,7 @@ When implementation starts:
 
 - `ARCHITECTURE.md` — Initialization, `WaterManager` dependencies  
 - `BACKLOG.md` — **FEAT-37**, **FEAT-37a–c**, **FEAT-38–41**, **BUG-08**, **BUG-33**, **FEAT-15**  
+- **FEAT-38 (rivers):** `.cursor/specs/rivers.md` — definitions, scope, progress (living spec; Phase D alignment)  
 - `.cursor/rules/managers-guide.mdc` — Manager responsibilities  
 - Bridge / junction context: `.cursor/specs/bridge-and-junction-fixes.md`
 
