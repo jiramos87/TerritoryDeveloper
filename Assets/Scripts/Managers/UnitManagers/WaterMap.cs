@@ -1065,6 +1065,66 @@ namespace Territory.Terrain
             return minH;
         }
 
+        /// <summary>
+        /// Artificial rectangles only carve interior cells. Land cells that touch a lake corner only diagonally
+        /// (no cardinal neighbor inside the rectangle) could stay too high vs the resolved surface — clamp them
+        /// to <paramref name="surface"/> so rim/bay continuity matches cardinal shores (BUG-42).
+        /// </summary>
+        private static void CoerceDiagonalCornerRimForArtificialLake(HeightMap heightMap, int x0, int y0, int rw, int rh, int surface)
+        {
+            if (heightMap == null || rw <= 0 || rh <= 0)
+                return;
+
+            int[] cx = { x0 - 1, x0 + rw, x0 - 1, x0 + rw };
+            int[] cy = { y0 - 1, y0 - 1, y0 + rh, y0 + rh };
+            int[] ddx = { 1, -1, 1, -1 };
+            int[] ddy = { 1, 1, -1, -1 };
+
+            for (int i = 0; i < 4; i++)
+            {
+                int x = cx[i];
+                int y = cy[i];
+                if (!heightMap.IsValidPosition(x, y))
+                    continue;
+
+                bool touchesLakeDiagonally = false;
+                for (int k = 0; k < 4; k++)
+                {
+                    int lx = x + ddx[k];
+                    int ly = y + ddy[k];
+                    if (lx >= x0 && lx < x0 + rw && ly >= y0 && ly < y0 + rh)
+                    {
+                        touchesLakeDiagonally = true;
+                        break;
+                    }
+                }
+
+                if (!touchesLakeDiagonally)
+                    continue;
+
+                int[] cdx = { 1, -1, 0, 0 };
+                int[] cdy = { 0, 0, 1, -1 };
+                bool touchesLakeCardinally = false;
+                for (int k = 0; k < 4; k++)
+                {
+                    int lx = x + cdx[k];
+                    int ly = y + cdy[k];
+                    if (lx >= x0 && lx < x0 + rw && ly >= y0 && ly < y0 + rh)
+                    {
+                        touchesLakeCardinally = true;
+                        break;
+                    }
+                }
+
+                if (touchesLakeCardinally)
+                    continue;
+
+                int cur = heightMap.GetHeight(x, y);
+                if (cur > surface)
+                    heightMap.SetHeight(x, y, Mathf.Clamp(surface, TerrainManager.MIN_HEIGHT, TerrainManager.MAX_HEIGHT));
+            }
+        }
+
         private void ExpandArtificialDirtyRect(int x0, int y0, int rw, int rh)
         {
             const int dirtyPad = 2;
@@ -1153,6 +1213,8 @@ namespace Territory.Terrain
             // Surface must reflect post-carve terrain so PlaceWater aligns with the basin floor.
             if (!ResolveSurfaceForNewLake(x0, y0, rw, rh, maxHPost, seaLevel, out int surface))
                 surface = Mathf.Min(TerrainManager.MAX_HEIGHT, Mathf.Max(seaLevel + 1, maxHPost + 1));
+
+            CoerceDiagonalCornerRimForArtificialLake(heightMap, x0, y0, rw, rh, surface);
 
             int bodyId = nextBodyId++;
             var wb = new WaterBody(bodyId, surface, WaterBodyType.Lake);

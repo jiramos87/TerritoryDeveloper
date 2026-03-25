@@ -1,6 +1,6 @@
 # Rivers — definitions, metaknowledge, and progress (FEAT-38)
 
-> **Backlog:** [FEAT-38](../../BACKLOG.md) **completed** (2026-03-24) · **Follow-up:** [BUG-41](../../BACKLOG.md) (river shore prefabs + cliffs) · **Parent context:** [`water-system-refactor.md`](water-system-refactor.md) (Phase D — flow & coast; data-driven first)  
+> **Backlog:** [FEAT-38](../../BACKLOG.md) **completed** (2026-03-24) · **Follow-up:** [BUG-42](../../BACKLOG.md) (lakes + rivers: shores, cliffs, waterfalls, water-cliff walls — merged **BUG-33** + **BUG-41**) · **Parent context:** [`water-system-refactor.md`](water-system-refactor.md) (Phase D — flow & coast; data-driven first)  
 > **Language:** All additions to this file and to code must be **English**.
 
 ## 1. Purpose
@@ -23,7 +23,7 @@ This file is the **living spec** for the rivers workstream. Update it when decis
 - **Static classification** — The **`WaterBodyType` assigned at generation** (per cell / body creation) is **fixed for the session** and is **not** recomputed after merge. **Do not** simulate fluid mixing, average surface height after union, or dynamic hydraulics.
 - **Forced river** — If **no** viable river candidate is found on generated terrain, **carve** a river basin and place a **forced** river, analogous to **artificial lake** fallback in spirit (must still respect global caps and ordering constraints).
 - **River count and tuning (code defaults)** — **1–3** rivers per New Game; **not** exposed in Inspector or Unity UI in this pass.
-- **Visuals** — **Cardinal slope water** prefabs (**N / S / E / W**), parallel in spirit to **SlopeRoads**; **cliff** segments may use **cascade / waterfall** prefabs on the appropriate faces. Banks/shores: **BUG-33** and related specs.
+- **Visuals** — **Cardinal slope water** prefabs (**N / S / E / W**), parallel in spirit to **SlopeRoads**; **cliff** segments may use **cascade / waterfall** prefabs on the appropriate faces. Banks/shores: **[BUG-42](../../BACKLOG.md)** and related specs.
 
 ## 3. Out of scope (explicit — not now)
 
@@ -117,7 +117,7 @@ Related specs: [`isometric-geography-system.md`](isometric-geography-system.md),
 - [ ] Save/load (`WaterMapData` / `CellData`) verified for rivers in Unity
 - [ ] Cardinal **slope water** + **cascade** prefabs (assets + placement) — uses existing water tiles until dedicated slope-water art ships
 - [x] `BACKLOG.md` **FEAT-38** — completed (2026-03-24)
-- [ ] **BUG-41** — river shore prefabs + cliff stacks on river corridors (in progress)
+- [ ] **BUG-42** — water shores + cliffs (lakes + rivers); waterfalls; water-cliff walls (in progress)
 
 ## 7. Decisions and open questions
 
@@ -154,10 +154,10 @@ _Add rows as the team resolves them. Mark **Status:** Draft | Locked | Supersede
 
 ## 8. Future (post–MVP procedural rivers)
 
-**FEAT-38** is closed; near-term **visual / prefab** polish for river shores and cliffs is **[BUG-41](../../BACKLOG.md)**.
+**FEAT-38** is closed; near-term **visual / prefab** polish for water shores, cliffs, waterfalls, and water-cliff walls is **[BUG-42](../../BACKLOG.md)**.
 
 Animated flow, flow-rate scalars, gameplay spill/flood, tides, full drainage networks, **procedural sea** as standard neighbor, optional **Inspector** tuning for river count/length, non-square map **L** cap refinement.
 
 ---
 
-**Last updated:** 2026-03-24 — FEAT-38 completed; **BUG-41** follow-up; §4.4 longitudinal monotonicity; §4.3 transverse coherence; §4.2 border margin; merge by classification; **L** / **Wₙ**; init order rivers before interstate.
+**Last updated:** 2026-03-25 — **BUG-33** / **BUG-41** merged into **BUG-42**; FEAT-38 completed; §4.4 longitudinal monotonicity; §4.3 transverse coherence; §4.2 border margin; merge by classification; **L** / **Wₙ**; init order rivers before interstate.

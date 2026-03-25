@@ -1,7 +1,7 @@
 # Water System Refactor — Technical Overview
 
 > **Backlog:** [FEAT-37](../../BACKLOG.md) (Medium priority) · **Planning pass:** [TECH-12](../../BACKLOG.md) (define objectives, rules, bugs, scope, child issues before implementation)  
-> **Status:** **FEAT-37a** / **FEAT-37b** / **FEAT-37c** **completed** (water save/load snapshot per [BACKLOG](../../BACKLOG.md)). Shore defects: [BUG-33](../../BACKLOG.md); cliff placement + foreground-water sorting: [BUG-39](../../BACKLOG.md) / [BUG-40](../../BACKLOG.md) **completed** 2026-03-24 — [bugs/cliff-water-shore-sorting.md](bugs/cliff-water-shore-sorting.md). Load building sort: [BUG-34](../../BACKLOG.md) and [BUG-35](../../BACKLOG.md) **completed** (2026-03-22).  
+> **Status:** **FEAT-37a** / **FEAT-37b** / **FEAT-37c** **completed** (water save/load snapshot per [BACKLOG](../../BACKLOG.md)). Shore / cliff / waterfall follow-up: [BUG-42](../../BACKLOG.md) (merged **BUG-33** + **BUG-41**); cliff placement + foreground-water sorting: [BUG-39](../../BACKLOG.md) / [BUG-40](../../BACKLOG.md) **completed** 2026-03-24 — [bugs/cliff-water-shore-sorting.md](bugs/cliff-water-shore-sorting.md). Load building sort: [BUG-34](../../BACKLOG.md) and [BUG-35](../../BACKLOG.md) **completed** (2026-03-22).  
 > **Related:** [BUG-08](../../BACKLOG.md) (generation polish), [FEAT-15](../../BACKLOG.md) (ports / sea), bridge specs (e.g. `.cursor/specs/bridge-and-junction-fixes.md`)
 
 ## 1. Problem synthesis
@@ -26,7 +26,7 @@ This is a **major feature epic** with a **large refactor** of `WaterManager`, `W
 | Area | Role today |
 |------|------------|
 | `GeographyManager.InitializeGeography()` | Order: terrain → **water** → forests → grid … |
-| `WaterManager` / `WaterMap` | `WaterMap` body ids + `WaterBody` surface heights; depression-fill lakes; sea-level merge; paint uses `LegacyPaintWaterBodyId`. Lake **shore tiles** in **FEAT-37a**; sorting/roads/bridges/`SEA_LEVEL` generalization **FEAT-37b** (done); remaining shore defects [BUG-33](../../BACKLOG.md). |
+| `WaterManager` / `WaterMap` | `WaterMap` body ids + `WaterBody` surface heights; depression-fill lakes; sea-level merge; paint uses `LegacyPaintWaterBodyId`. Lake **shore tiles** in **FEAT-37a**; sorting/roads/bridges/`SEA_LEVEL` generalization **FEAT-37b** (done); remaining shore / cliff / waterfall work [BUG-42](../../BACKLOG.md). |
 | `TerrainManager` / `HeightMap` | Elevations and slopes; water must **agree** with these per cell |
 | `GridManager` | Cell visuals, sorting; water cells interact with terrain and overlays |
 | `Cell` / `CellData` | Serialization; any new water fields must round-trip in save/load |
@@ -60,7 +60,7 @@ Phases are **not** committed ordering until a dedicated design pass; they split 
 - **Performance:** Larger water graphs (flow) may need caching; avoid per-frame `FindObjectOfType`.
 - **Sorting:** Water at arbitrary heights must stay consistent with `GridSortingOrderService` and multi-cell buildings.
 - **Bridges / interstate:** Overlap with road prefab and terraform validation — coordinate with `RoadManager` / bridge specs.
-- **Lake shore visuals:** Incorrect tiles, gaps, or sorting at lake edges — [BUG-33](../../BACKLOG.md) (outside **FEAT-37b** scope; 37b completed without new shore work).
+- **Lake + river shore visuals:** Incorrect tiles, gaps, sorting, cliffs, waterfalls — [BUG-42](../../BACKLOG.md) (outside **FEAT-37b** scope; 37b completed without new shore work; merged **BUG-33** + **BUG-41**).
 - **Minimap water layer:** [BUG-32](../../BACKLOG.md) **completed** (2026-03-23); optional height shading remains **FEAT-42**.
 - **Console noise:** Startup logs `[LakeGeneration]` (`WaterMap` lake fill) and `[LakeBasins]` (`TerrainManager` spill-passing target) are for diagnostics; strip or gate behind a debug flag for release if needed.
 
@@ -77,8 +77,8 @@ When implementation starts:
 ## 8. References
 
 - `ARCHITECTURE.md` — Initialization, `WaterManager` dependencies  
-- `BACKLOG.md` — **FEAT-37**, **FEAT-37a–c**, **FEAT-38** (completed 2026-03-24), **BUG-41** (river shore/cliffs), **BUG-08**, **BUG-33**, **FEAT-15**  
-- **FEAT-38 (rivers):** `.cursor/specs/rivers.md` — **feature complete**; follow-up visuals **[BUG-41](../../BACKLOG.md)** (shore prefabs + cliff stacks on river corridors)  
+- `BACKLOG.md` — **FEAT-37**, **FEAT-37a–c**, **FEAT-38** (completed 2026-03-24), **BUG-42** (water shores + cliffs + waterfalls + water-cliff walls; merged **BUG-33** + **BUG-41**), **BUG-08**, **FEAT-15**
+- **FEAT-38 (rivers):** `.cursor/specs/rivers.md` — **feature complete**; follow-up visuals **[BUG-42](../../BACKLOG.md)** (lakes + rivers: shores, cliffs, waterfalls, water-cliff walls)
 - `.cursor/rules/managers-guide.mdc` — Manager responsibilities  
 - Bridge / junction context: `.cursor/specs/bridge-and-junction-fixes.md`
 
@@ -101,9 +101,9 @@ When implementation starts:
 ## 10. Lake validity and sea rules (agreed)
 
 - **Valid lake (procedural):** A `WaterBody` created by depression-fill must satisfy **`LakeFillSettings`**: strict and **window** local minima as seeds (window minima require **some** higher terrain in the window—flat plateaus are not seeds); flood-fill basin under **spill** height; optional **bounded local depression** pass (larger window, max basin cell count); **axis-aligned bounding box** of occupied cells must have **width and height in [`MinLakeBoundingExtent`, `MaxLakeBoundingExtent`] grid cells per axis** (defaults in source, typically **2..10** per axis). Bodies that merge afterward may exceed a single bbox—acceptable until merge rules are tightened.
-- **Shore prefab polish (known follow-up):** Visual defects at lake edges (wrong tile, gaps, sorting) — [BUG-33](../../BACKLOG.md); deeper notes [bugs/cliff-water-shore-sorting.md](bugs/cliff-water-shore-sorting.md). Cliff wall alignment and cliff-vs-foreground-water sorting: [BUG-39](../../BACKLOG.md), [BUG-40](../../BACKLOG.md) **completed** 2026-03-24 (**FEAT-37b** did not include shore prefab scope).
+- **Shore / cliff / waterfall polish (known follow-up):** Visual defects at lake and river edges (wrong tile, gaps, sorting), plus waterfalls and water-cliff walls — [BUG-42](../../BACKLOG.md); deeper notes [bugs/cliff-water-shore-sorting.md](bugs/cliff-water-shore-sorting.md). Cliff wall alignment and cliff-vs-foreground-water sorting: [BUG-39](../../BACKLOG.md), [BUG-40](../../BACKLOG.md) **completed** 2026-03-24 (**FEAT-37b** did not include shore prefab scope).
 - **Sea:** Reference surface at **height 0** (`seaLevel`); `MergeSeaLevelDryCellsFromHeightMap` aligns terrain sea cells with `WaterMap`. **Future:** player terraform may leave dry land below sea reference; **not** required for MVP.
 - **Lakes at height 0:** Allowed if hydrologically disconnected from the **sea** body (same rules as any other lake: containment + successful fill).
-- **FEAT-37 epic (MVP children):** **FEAT-37a**, **FEAT-37b**, and **FEAT-37c** are **completed** (see `BACKLOG.md`). Follow-up work is not part of that closure: shore polish **[BUG-33](../../BACKLOG.md)**; cliff placement / foreground-water sorting **[BUG-39](../../BACKLOG.md)** / **[BUG-40](../../BACKLOG.md)** completed 2026-03-24. Load-time building / grass under buildings: **[BUG-34](../../BACKLOG.md)** and **[BUG-35](../../BACKLOG.md)** completed (2026-03-22).
+- **FEAT-37 epic (MVP children):** **FEAT-37a**, **FEAT-37b**, and **FEAT-37c** are **completed** (see `BACKLOG.md`). Follow-up work is not part of that closure: shore / cliff / waterfall polish **[BUG-42](../../BACKLOG.md)** (merged **BUG-33** + **BUG-41**); cliff placement / foreground-water sorting **[BUG-39](../../BACKLOG.md)** / **[BUG-40](../../BACKLOG.md)** completed 2026-03-24. Load-time building / grass under buildings: **[BUG-34](../../BACKLOG.md)** and **[BUG-35](../../BACKLOG.md)** completed (2026-03-22).
 - **Minimap relief:** Out of scope for water MVP; tracked as **FEAT-42** in `BACKLOG.md`.
 - **Minimap water layer:** Logical water alignment with the main map was **[BUG-32](../../BACKLOG.md)** (completed 2026-03-23). Optional **height / relief** on the minimap is **FEAT-42**.

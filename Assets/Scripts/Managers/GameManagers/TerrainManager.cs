@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Text;
 using Territory.Core;
 using Territory.Zones;
 using Territory.Persistence;
@@ -38,22 +39,14 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public static bool LogTerraformRestoreDiagnostics = false;
 
     /// <summary>
-    /// When true, <see cref="ShouldTerrainDebugLog"/> is true for <see cref="TerrainDebugCellCoordinates"/> (reserved for
-    /// future diagnostics; console logging is disabled). Toggle in Inspector or from code.
+    /// When true, <see cref="RefreshLakeShoreAfterLakePlacement"/> also refreshes the second Chebyshev ring of land (legacy halo).
+    /// BUG-42 default is minimal scope; enable only if a regression needs the wider refresh.
     /// </summary>
-    [Tooltip("Enables ShouldTerrainDebugLog for TerrainDebugCellCoordinates (reserved; no console output yet).")]
-    public bool terrainDebugLogCellsEnabled = false;
+    [SerializeField] private bool debugLakeShoreRefreshSecondRing = false;
 
-    /// <summary>
-    /// Grid cells to trace when <see cref="terrainDebugLogCellsEnabled"/> is true. Default: bowl/lake debug cells.
-    /// </summary>
-    public static readonly Vector2Int[] TerrainDebugCellCoordinates =
-    {
-        new Vector2Int(28, 24),
-        new Vector2Int(28, 25),
-        new Vector2Int(34, 24),
-        new Vector2Int(34, 25),
-    };
+    /// <summary>Fixed cell for verbose <c>[LakeShoreDebug]</c> logs inside <see cref="RefreshLakeShoreAfterLakePlacement"/> only.</summary>
+    private const int LakeShoreDebugLogCellX = 81;
+    private const int LakeShoreDebugLogCellY = 83;
 
     #region Dependencies
     public GridManager gridManager;
@@ -715,11 +708,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// After lake water visuals exist, refreshes land cells near lake water so shore/bay slopes match and cliff walls
-    /// on higher terrain above the shore are placed (multi-segment stacks when drop &gt; 1).
-    /// Includes (1) all non-water cells in the Moore neighborhood of water and (2) one extra ring of land neighbors
-    /// of those cells so rim tiles (Chebyshev distance 2 from water) still run <see cref="UpdateTileElevation"/>.
-    /// Call after <see cref="WaterManager.UpdateWaterVisuals"/>.
+    /// After lake/river water visuals exist, refreshes land cells adjacent to water so shore/bay slopes and
+    /// <see cref="PlaceCliffWalls"/> stay consistent (BUG-42). Default: each shore cell plus one cardinal land
+    /// neighbor outward from water (minimal audit). Optional <see cref="debugLakeShoreRefreshSecondRing"/> restores
+    /// the legacy Chebyshev-2 halo. Call after <see cref="WaterManager.UpdateWaterVisuals"/>.
     /// </summary>
     public void RefreshLakeShoreAfterLakePlacement(WaterManager wm)
     {
@@ -755,46 +747,195 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         }
 
         var toRefresh = new HashSet<Vector2Int>(shore);
-        foreach (Vector2Int p in shore)
+        if (debugLakeShoreRefreshSecondRing)
         {
-            for (int dx = -1; dx <= 1; dx++)
+            foreach (Vector2Int p in shore)
             {
-                for (int dy = -1; dy <= 1; dy++)
+                for (int dx = -1; dx <= 1; dx++)
                 {
-                    if (dx == 0 && dy == 0)
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        if (dx == 0 && dy == 0)
+                            continue;
+                        int nx = p.x + dx;
+                        int ny = p.y + dy;
+                        if (!heightMap.IsValidPosition(nx, ny))
+                            continue;
+                        if (wmMap.IsWater(nx, ny))
+                            continue;
+                        toRefresh.Add(new Vector2Int(nx, ny));
+                    }
+                }
+            }
+        }
+        else
+        {
+            int[] d4x = { 1, -1, 0, 0 };
+            int[] d4y = { 0, 0, 1, -1 };
+            foreach (Vector2Int p in shore)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    int wx = p.x + d4x[i];
+                    int wy = p.y + d4y[i];
+                    if (!heightMap.IsValidPosition(wx, wy) || !wmMap.IsWater(wx, wy))
                         continue;
-                    int nx = p.x + dx;
-                    int ny = p.y + dy;
-                    if (!heightMap.IsValidPosition(nx, ny))
+                    int ox = p.x - d4x[i];
+                    int oy = p.y - d4y[i];
+                    if (!heightMap.IsValidPosition(ox, oy) || wmMap.IsWater(ox, oy))
                         continue;
-                    if (wmMap.IsWater(nx, ny))
-                        continue;
-                    toRefresh.Add(new Vector2Int(nx, ny));
+                    toRefresh.Add(new Vector2Int(ox, oy));
                 }
             }
         }
 
-        foreach (Vector2Int p in toRefresh)
+        var ordered = new List<Vector2Int>(toRefresh);
+        ordered.Sort((a, b) =>
+        {
+            int sa = a.x + a.y;
+            int sb = b.x + b.y;
+            if (sa != sb)
+                return sa.CompareTo(sb);
+            return a.x.CompareTo(b.x);
+        });
+
+        LogLakeShoreRefreshDiagnosticsForCell81_83(wm, wmMap, shore, toRefresh, ordered);
+
+        foreach (Vector2Int p in ordered)
             UpdateTileElevation(p.x, p.y);
     }
 
-    #region Terrain cell debug (toggle retained; no console logging)
-
-    /// <summary>True if <paramref name="x"/>,<paramref name="y"/> is one of <see cref="TerrainDebugCellCoordinates"/>.</summary>
-    public static bool IsTerrainDebugCell(int x, int y)
+    /// <summary>
+    /// Verbose console diagnostics for <see cref="LakeShoreDebugLogCellX"/>,<see cref="LakeShoreDebugLogCellY"/> only — does not affect gameplay.
+    /// </summary>
+    private void LogLakeShoreRefreshDiagnosticsForCell81_83(
+        WaterManager wm,
+        WaterMap wmMap,
+        HashSet<Vector2Int> shore,
+        HashSet<Vector2Int> toRefresh,
+        List<Vector2Int> orderedSweep)
     {
-        for (int i = 0; i < TerrainDebugCellCoordinates.Length; i++)
-        {
-            if (TerrainDebugCellCoordinates[i].x == x && TerrainDebugCellCoordinates[i].y == y)
-                return true;
-        }
-        return false;
+        if (heightMap == null || gridManager == null || wm == null || wmMap == null)
+            return;
+        if (!heightMap.IsValidPosition(LakeShoreDebugLogCellX, LakeShoreDebugLogCellY))
+            return;
+
+        var sb = new StringBuilder();
+        sb.AppendLine("[LakeShoreDebug] RefreshLakeShoreAfterLakePlacement — diagnostics for fixed cell (81,83)");
+        AppendLakeShoreDebugCell81_83SweepContext(sb, shore, toRefresh, orderedSweep);
+        AppendLakeShoreDebugCell81_83HeightsAndWater(sb, wm, wmMap);
+        AppendLakeShoreDebugCell81_83OutwardNeighborAudit(sb, wmMap, shore);
+        Debug.Log(sb.ToString());
     }
 
-    /// <summary>True when <see cref="terrainDebugLogCellsEnabled"/> is on and <paramref name="x"/>,<paramref name="y"/> is in <see cref="TerrainDebugCellCoordinates"/> (reserved for future diagnostics).</summary>
-    public bool ShouldTerrainDebugLog(int x, int y) => terrainDebugLogCellsEnabled && IsTerrainDebugCell(x, y);
+    private void AppendLakeShoreDebugCell81_83SweepContext(
+        StringBuilder sb,
+        HashSet<Vector2Int> shore,
+        HashSet<Vector2Int> toRefresh,
+        List<Vector2Int> orderedSweep)
+    {
+        var p = new Vector2Int(LakeShoreDebugLogCellX, LakeShoreDebugLogCellY);
+        sb.AppendLine($"  debugLakeShoreRefreshSecondRing={debugLakeShoreRefreshSecondRing}");
+        sb.AppendLine($"  in Moore shore set (land next to water): {shore.Contains(p)}");
+        sb.AppendLine($"  in toRefresh set: {toRefresh.Contains(p)}");
+        int idx = -1;
+        for (int i = 0; i < orderedSweep.Count; i++)
+        {
+            if (orderedSweep[i].x == LakeShoreDebugLogCellX && orderedSweep[i].y == LakeShoreDebugLogCellY)
+            {
+                idx = i;
+                break;
+            }
+        }
 
-    #endregion
+        sb.AppendLine($"  diagonal sweep order index for (81,83): {idx} (total cells in sweep: {orderedSweep.Count})");
+    }
+
+    private void AppendLakeShoreDebugCell81_83HeightsAndWater(StringBuilder sb, WaterManager wm, WaterMap wmMap)
+    {
+        int x = LakeShoreDebugLogCellX;
+        int y = LakeShoreDebugLogCellY;
+        int h = heightMap.GetHeight(x, y);
+        Cell cell = gridManager.GetCell(x, y);
+        sb.AppendLine($"  HeightMap({x},{y})={h} Cell.height={(cell != null ? cell.height.ToString() : "null")} (before UpdateTileElevation in sweep)");
+        sb.AppendLine("  Cardinal neighbors (cliff/orientation convention: N@(x+1,y) S@(x-1,y) E@(x,y-1) W@(x,y+1)):");
+        void AppendCard(string label, int nx, int ny)
+        {
+            if (!heightMap.IsValidPosition(nx, ny))
+            {
+                sb.AppendLine($"    {label}: OOB");
+                return;
+            }
+
+            int nh = heightMap.GetHeight(nx, ny);
+            bool water = wmMap.IsWater(nx, ny);
+            int surf = water ? wm.GetWaterSurfaceHeight(nx, ny) : -1;
+            sb.AppendLine($"    {label} ({nx},{ny}) h={nh} water={water}" + (water ? $" surface={surf}" : ""));
+        }
+
+        AppendCard("N", x + 1, y);
+        AppendCard("S", x - 1, y);
+        AppendCard("E", x, y - 1);
+        AppendCard("W", x, y + 1);
+        sb.AppendLine("  Moore 8 (dx,dy) water + height:");
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                if (dx == 0 && dy == 0)
+                    continue;
+                int nx = x + dx;
+                int ny = y + dy;
+                if (!heightMap.IsValidPosition(nx, ny))
+                {
+                    sb.AppendLine($"    ({dx},{dy}): OOB");
+                    continue;
+                }
+
+                bool water = wmMap.IsWater(nx, ny);
+                int nh = heightMap.GetHeight(nx, ny);
+                sb.AppendLine($"    ({dx},{dy}) → ({nx},{ny}) h={nh} water={water}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Logs how minimal outward-neighbor audit would treat (81,83) as shore cell <c>p</c> (cardinal toward water → outward land).
+    /// </summary>
+    private void AppendLakeShoreDebugCell81_83OutwardNeighborAudit(StringBuilder sb, WaterMap wmMap, HashSet<Vector2Int> shore)
+    {
+        int x = LakeShoreDebugLogCellX;
+        int y = LakeShoreDebugLogCellY;
+        var self = new Vector2Int(x, y);
+        sb.AppendLine($"  Moore shore membership for (81,83): {shore.Contains(self)}");
+        int[] d4x = { 1, -1, 0, 0 };
+        int[] d4y = { 0, 0, 1, -1 };
+        string[] dname = { "d4[0]=+x", "d4[1]=-x", "d4[2]=+y", "d4[3]=-y" };
+        sb.AppendLine("  Minimal-audit cardinal check (same logic as second-ring-off branch): from p, if neighbor is water, outward = p - dir:");
+        for (int i = 0; i < 4; i++)
+        {
+            int wx = x + d4x[i];
+            int wy = y + d4y[i];
+            if (!heightMap.IsValidPosition(wx, wy))
+            {
+                sb.AppendLine($"    {dname[i]} toward ({wx},{wy}): OOB");
+                continue;
+            }
+
+            bool wWater = wmMap.IsWater(wx, wy);
+            int ox = x - d4x[i];
+            int oy = y - d4y[i];
+            if (!heightMap.IsValidPosition(ox, oy))
+            {
+                sb.AppendLine($"    {dname[i]} water@({wx},{wy})={wWater} → outward OOB");
+                continue;
+            }
+
+            bool oWater = wmMap.IsWater(ox, oy);
+            int oh = heightMap.GetHeight(ox, oy);
+            sb.AppendLine($"    {dname[i]} water@({wx},{wy})={wWater} → outward land ({ox},{oy}) h={oh} water={oWater}");
+        }
+    }
 
     private void UpdateTileElevation(int x, int y)
     {
@@ -831,7 +972,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         if (canUseWaterShorePrefabsHere)
         {
             List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(x, y);
-            LogShorePrefabSelectionDebug(x, y, waterShorePrefabs);
             if (waterShorePrefabs != null && waterShorePrefabs.Count > 0)
             {
                 PlaceWaterShore(x, y, waterShorePrefabs);
@@ -955,7 +1095,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         if (landShoreRestore)
         {
             List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(x, y);
-            LogShorePrefabSelectionDebug(x, y, waterShorePrefabs);
             if (waterShorePrefabs != null && waterShorePrefabs.Count > 0)
             {
                 PlaceWaterShore(x, y, waterShorePrefabs);
@@ -1326,7 +1465,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                         continue;
                     }
                     List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(nx, ny);
-                    LogShorePrefabSelectionDebug(nx, ny, waterShorePrefabs);
                     if (waterShorePrefabs == null || waterShorePrefabs.Count == 0)
                         continue;
                     PlaceWaterShore(nx, ny, waterShorePrefabs);
@@ -1366,7 +1504,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                         if (neighborCell != null && (neighborCell.zoneType != Zone.ZoneType.Grass || neighborCell.HasForest())) continue;
 
                         List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(nx, ny);
-                        LogShorePrefabSelectionDebug(nx, ny, waterShorePrefabs);
                         if (waterShorePrefabs != null && waterShorePrefabs.Count > 0)
                             PlaceWaterShore(nx, ny, waterShorePrefabs);
                     }
@@ -1617,8 +1754,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// True for a <b>one-step</b> drop toward sea, registered water, or a water-shore slope tile — do not instantiate
     /// cliff prefabs; water-slope / water visuals cover that transition. Escarpments (Δh ≥ 2) toward the same neighbor
     /// are <b>not</b> suppressed here so stacked cliff segments can fill the vertical face (lake basins, rim voids).
+    /// Suppression applies only when the <b>high</b> cell is in the water-shore eligibility band; rim plateaus above the
+    /// shore strip (not eligible) keep cliff faces toward that lower neighbor (BUG-42 voids).
     /// </summary>
-    private bool ShouldSuppressCliffFaceTowardLowerCell(int lowerX, int lowerY, int lowerHeight, int currentHeight)
+    private bool ShouldSuppressCliffFaceTowardLowerCell(int highX, int highY, int lowerX, int lowerY, int lowerHeight, int currentHeight)
     {
         if (currentHeight - lowerHeight != 1)
             return false;
@@ -1626,9 +1765,44 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return false;
         if (waterManager == null)
             waterManager = FindObjectOfType<WaterManager>();
-        if (waterManager != null && waterManager.IsWaterAt(lowerX, lowerY))
-            return true;
-        return IsWaterSlopeCell(lowerX, lowerY);
+        bool lowerIsWaterOrSlope = (waterManager != null && waterManager.IsWaterAt(lowerX, lowerY)) || IsWaterSlopeCell(lowerX, lowerY);
+        if (!lowerIsWaterOrSlope)
+            return false;
+        if (currentHeight < 1 || !IsLandEligibleForWaterShorePrefabs(highX, highY, currentHeight))
+            return false;
+        return true;
+    }
+
+    /// <summary>
+    /// After one-step suppression rules, resolves segment count for dry land, narrow shore, cut-through, and rim plateau toward water/slope.
+    /// </summary>
+    private int ResolveCliffWallDropAfterSuppression(
+        int highX,
+        int highY,
+        int currentHeight,
+        int lowerX,
+        int lowerY,
+        int lowerHeight,
+        int diff,
+        ISet<Vector2Int> terraformCutCorridorCells)
+    {
+        if (diff > 1)
+            return diff;
+        if (ShouldSuppressCliffTowardCardinalLower(highX, highY, lowerX, lowerY, currentHeight, lowerHeight))
+            return 0;
+        if (NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, lowerHeight, lowerX, lowerY))
+            return 1;
+        if (diff == 1 && currentHeight >= 1 && !IsLandEligibleForWaterShorePrefabs(highX, highY, currentHeight))
+        {
+            if (waterManager == null)
+                waterManager = FindObjectOfType<WaterManager>();
+            if (waterManager != null && waterManager.IsWaterAt(lowerX, lowerY))
+                return 1;
+            if (IsWaterSlopeCell(lowerX, lowerY))
+                return 1;
+        }
+
+        return 0;
     }
 
     /// <summary>
@@ -1664,7 +1838,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return 0;
         int diff = currentHeight - heightAtNorth;
 
-        if (ShouldSuppressCliffFaceTowardLowerCell(x + 1, y, heightAtNorth, currentHeight))
+        if (ShouldSuppressCliffFaceTowardLowerCell(x, y, x + 1, y, heightAtNorth, currentHeight))
         {
             if (diff == 1 && NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtNorth, x + 1, y)
                 && !IsWaterSlopeCell(x + 1, y))
@@ -1672,13 +1846,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return 0;
         }
 
-        if (diff > 1)
-            return diff;
-        if (ShouldSuppressCliffTowardCardinalLower(x, y, x + 1, y, currentHeight, heightAtNorth))
-            return 0;
-        if (NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtNorth, x + 1, y))
-            return 1;
-        return 0;
+        return ResolveCliffWallDropAfterSuppression(x, y, currentHeight, x + 1, y, heightAtNorth, diff, terraformCutCorridorCells);
     }
 
     /// <summary>Number of stacked cliff segments on the south face (0 = none). Higher cell is (x,y); lower is south.</summary>
@@ -1691,7 +1859,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return 0;
         int diff = currentHeight - heightAtSouth;
 
-        if (ShouldSuppressCliffFaceTowardLowerCell(x - 1, y, heightAtSouth, currentHeight))
+        if (ShouldSuppressCliffFaceTowardLowerCell(x, y, x - 1, y, heightAtSouth, currentHeight))
         {
             if (diff == 1 && NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtSouth, x - 1, y)
                 && !IsWaterSlopeCell(x - 1, y))
@@ -1699,13 +1867,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return 0;
         }
 
-        if (diff > 1)
-            return diff;
-        if (ShouldSuppressCliffTowardCardinalLower(x, y, x - 1, y, currentHeight, heightAtSouth))
-            return 0;
-        if (NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtSouth, x - 1, y))
-            return 1;
-        return 0;
+        return ResolveCliffWallDropAfterSuppression(x, y, currentHeight, x - 1, y, heightAtSouth, diff, terraformCutCorridorCells);
     }
 
     private int GetCliffWallDropEast(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
@@ -1717,7 +1879,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return 0;
         int diff = currentHeight - heightAtEast;
 
-        if (ShouldSuppressCliffFaceTowardLowerCell(x, y - 1, heightAtEast, currentHeight))
+        if (ShouldSuppressCliffFaceTowardLowerCell(x, y, x, y - 1, heightAtEast, currentHeight))
         {
             if (diff == 1 && NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtEast, x, y - 1)
                 && !IsWaterSlopeCell(x, y - 1))
@@ -1725,13 +1887,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return 0;
         }
 
-        if (diff > 1)
-            return diff;
-        if (ShouldSuppressCliffTowardCardinalLower(x, y, x, y - 1, currentHeight, heightAtEast))
-            return 0;
-        if (NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtEast, x, y - 1))
-            return 1;
-        return 0;
+        return ResolveCliffWallDropAfterSuppression(x, y, currentHeight, x, y - 1, heightAtEast, diff, terraformCutCorridorCells);
     }
 
     /// <summary>Number of stacked cliff segments on the west face (0 = none). Higher cell is (x,y); lower neighbor is west.</summary>
@@ -1744,7 +1900,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return 0;
         int diff = currentHeight - heightAtWest;
 
-        if (ShouldSuppressCliffFaceTowardLowerCell(x, y + 1, heightAtWest, currentHeight))
+        if (ShouldSuppressCliffFaceTowardLowerCell(x, y, x, y + 1, heightAtWest, currentHeight))
         {
             if (diff == 1 && NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtWest, x, y + 1)
                 && !IsWaterSlopeCell(x, y + 1))
@@ -1752,13 +1908,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return 0;
         }
 
-        if (diff > 1)
-            return diff;
-        if (ShouldSuppressCliffTowardCardinalLower(x, y, x, y + 1, currentHeight, heightAtWest))
-            return 0;
-        if (NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtWest, x, y + 1))
-            return 1;
-        return 0;
+        return ResolveCliffWallDropAfterSuppression(x, y, currentHeight, x, y + 1, heightAtWest, diff, terraformCutCorridorCells);
     }
 
     /// <summary>
@@ -2193,35 +2343,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return CalculateTerrainSortingOrder(nx, ny, SEA_LEVEL);
 
         return int.MinValue;
-    }
-
-    /// <summary>
-    /// Debug-only: logs chosen lake shore prefab(s) for cells under investigation.
-    /// </summary>
-    private void LogShorePrefabSelectionDebug(int x, int y, IList<GameObject> terrainPrefabs)
-    {
-        if ((x != 10 || y != 19) && (x != 11 || y != 20) && (x != 12 || y != 22) && (x != 8 || y != 19))
-            return;
-
-        int h = -1;
-        if (heightMap != null && heightMap.IsValidPosition(x, y))
-            h = heightMap.GetHeight(x, y);
-        else if (gridManager != null)
-        {
-            Cell c = gridManager.GetCell(x, y);
-            if (c != null)
-                h = c.height;
-        }
-
-        string prefabStr = "null";
-        if (terrainPrefabs != null && terrainPrefabs.Count > 0)
-        {
-            var names = new List<string>();
-            foreach (GameObject p in terrainPrefabs)
-                names.Add(p != null ? p.name : "null");
-            prefabStr = string.Join(", ", names);
-        }
-        Debug.Log($"cell ({x},{y}) has terrainPrefab: {prefabStr}, height: {h}");
     }
 
     private static List<GameObject> ShoreList(GameObject prefab)

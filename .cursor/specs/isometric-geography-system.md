@@ -2,7 +2,7 @@
 
 > **Status:** Reference documentation
 > **Audience:** AI agents and developers working on terrain, roads, water, sorting order, or any system that interacts with the isometric grid.
-> **Related:** `ARCHITECTURE.md` (Persistence), `.cursor/specs/water-system-refactor.md` (FEAT-37c save/load), `.cursor/specs/road-drawing-fixes.md`, `.cursor/specs/bugs/cliff-water-shore-sorting.md` (lake edges: cliffs + shore + sorting). **Save/load building sorting:** §7.4 below; **[BUG-34](../../BACKLOG.md)** / **[BUG-35](../../BACKLOG.md)** completed 2026-03-22. **Lake shore / cliff:** **[BUG-33](../../BACKLOG.md)** (umbrella polish); **[BUG-39](../../BACKLOG.md)** / **[BUG-40](../../BACKLOG.md)** completed 2026-03-24 (cliff placement + foreground-water sorting caps).
+> **Related:** `ARCHITECTURE.md` (Persistence), `.cursor/specs/water-system-refactor.md` (FEAT-37c save/load), `.cursor/specs/road-drawing-fixes.md`, `.cursor/specs/bugs/cliff-water-shore-sorting.md` (lake edges: cliffs + shore + sorting). **Implementation plan (BUG-42):** [`docs/plan-bug-42-shore-cliff-refresh.md`](../../docs/plan-bug-42-shore-cliff-refresh.md). **Save/load building sorting:** §7.4 below; **[BUG-34](../../BACKLOG.md)** / **[BUG-35](../../BACKLOG.md)** completed 2026-03-22. **Lake / river shore + cliff + waterfall polish:** **[BUG-42](../../BACKLOG.md)** (in progress; merged **BUG-33** + **BUG-41**); **[BUG-39](../../BACKLOG.md)** / **[BUG-40](../../BACKLOG.md)** completed 2026-03-24 (cliff placement + foreground-water sorting caps).
 
 ---
 
@@ -65,7 +65,7 @@ For height-aware picking, `GetMouseGridCell` performs screen-space hit testing a
 
 | Height | Semantic |
 |--------|----------|
-| 0 | **Sea level** — water surface. `SEA_LEVEL = 0` |
+| 0 | **Sea level** — legacy label for water at lowest index; `SEA_LEVEL = 0`. Registered **lake/river/sea** bodies use **per-body surface height** from `WaterMap` / `WaterBody` (not a single global surface). |
 | 1 | **Base land** — default land elevation. Most flat terrain is h=1 |
 | 2–5 | **Elevated land** — hills, mountains, plateaus |
 
@@ -81,6 +81,22 @@ The initial 40×40 map uses a **hardcoded template** (`GetOriginal40x40Heights()
 ### 2.3 Height Constraint
 
 The terrain system enforces a **maximum height difference of 1** between any two cardinal neighbors for valid terrain. Greater differences are displayed with cliff walls but can cause visual artifacts (black voids). The `PathTerraformPlan.ValidateNoHeightDiffGreaterThanOne()` validation rejects terraform plans that would violate this constraint.
+
+**Depression-fill bowls and procedural lakes:** Intentional **lake basins** may use **|Δh| > 1** across the bowl wall in some templates; those cases rely on **cliff stacks** (`PlaceCliffWallStack`) and shore rules rather than rejecting the height grid. Do not assume every map satisfies the soft guideline everywhere.
+
+### 2.4 Height authority and procedural water (rivers / lakes)
+
+During **initial geography generation** (rivers and lakes), **`HeightMap` is the source of truth** for integer terrain height at the point each procedural step runs. **`Cell.height`** at `(x, y)` **must stay in sync** with `HeightMap[x, y]` whenever either is written by terraform or water-related carving.
+
+**Water surface height** (per `WaterBody` / river segment) is the **terrain height that hosts that water** at that location after coherent carving and terraform: bowl or channel floor and body registration must agree with **FEAT-37** visuals (`WaterManager`, `WaterMap`; see `.cursor/specs/water-system-refactor.md`). When a **lake fallback** or similar path terraform raises or lowers terrain so a body sits on a consistent surface, **both** `HeightMap` and **`Cell`** data **must** be updated together — no divergent “display only” height on the cell.
+
+**Fallback coherence:** Artificial lake fallback and forced river paths must update the **same height fields** as depression-fill paths so downstream logic (shore selection, `GetCliffWallDrop*`, `PlaceCliffWalls`) sees one neighborhood.
+
+**Known pitfall ([BUG-42](../../BACKLOG.md)):** **Border corner cells** (concave/convex) of a fallback lake can incorrectly remain at an **elevated neighbor** height instead of the **lake surface** height, breaking shore and cliff prefab selection. Terraform must leave **`HeightMap` and `Cell.height`** consistent with the intended **surface** at those cells.
+
+### 2.5 Minimal neighbor refresh after lake shore
+
+After **`RefreshLakeShore`** (or equivalent) updates shore tiles for a water body, **recompute** the affected **shore land cell(s)** and, for each, **audit only the single land neighbor** immediately **outward** from the water along the relevant cardinal (away from the water — **not** a full Moore-neighborhood ring). Expand the refresh radius only if a verified bug requires it.
 
 ---
 
@@ -178,7 +194,7 @@ NorthEastUp, NorthWestUp, SouthEastUp, SouthWestUp          // 4 corner (upslope
 
 ### 4.2 Water Slope Selection (`DetermineWaterShorePrefabs`)
 
-Water-shore prefabs are used only when the land cell passes the **surface-height gate** in `TerrainManager`: among 8 neighbors, some water/sea cell exists whose **body surface height** (`WaterManager.GetWaterSurfaceHeight` / `WaterMap`) satisfies `h ≤ surface + MAX_LAND_HEIGHT_ABOVE_ADJACENT_WATER_SURFACE_FOR_SHORE_PREFABS` (default **1**). Higher rim land (e.g. bowl walls above the lake surface) uses **land slopes + `PlaceCliffWalls`** instead of water-shore art, so cliff stacks are not skipped.
+Water-shore prefabs are used only when the land cell passes the **surface-height gate** in `TerrainManager` (`IsLandEligibleForWaterShorePrefabs`): among 8 neighbors, some water/sea cell exists whose **body surface height** (`WaterManager.GetWaterSurfaceHeight` / `WaterMap`) satisfies `h ≤ surface + MAX_LAND_HEIGHT_ABOVE_ADJACENT_WATER_SURFACE_FOR_SHORE_PREFABS` (default **1**). **Higher rim** land (e.g. flat grass one step above a shore tile, not Moore-adjacent to open water) **does not** pass that gate: it uses **ordinary terrain + `PlaceCliffWalls`** instead of water-shore art. The **same gate** drives **one-step cliff suppression** toward water / `IsWaterSlopeCell` (see §5.6.1 / §5.7): suppression applies only on **shore-band** cells; **rim plateaus** keep a **visible** cliff segment (south/east) toward the lower shore/water cell so the vertical face is not left empty (BUG-42).
 
 For eligible land cells, `DetermineWaterShorePrefabs(x, y)` uses a similar but distinct decision tree. It checks which cardinal and diagonal neighbors are water/sea and selects one or more shore prefabs (cardinal, Bay, or upslope+downslope pair). Priority: border cases → cardinal water neighbors → combined cardinal patterns → diagonal-only water (Bay when the diagonal water cell has **no water beyond it** along the two cardinals that extend the lake away from the shore—outer corner of an axis-aligned rectangle; upslope + downslope when a higher **land** neighbor forces a sloped shore; otherwise single Bay on flat terrain along a diagonal lake edge).
 
@@ -236,13 +252,20 @@ Treat lake/coast borders as **three cooperating layers**, not one prefab:
 
 **Rim vs shore:** Land within **one height step** of an adjacent water body’s **surface** uses water-shore prefabs where eligible. **Higher rim** cells (e.g. bowl walls above the lake) use **ordinary slopes + cliff stacks** toward lower cells, not water-shore tiles.
 
-**Geometric decisions worth remembering:** Cardinal **Δh** drives drop tests; **one-step** drops toward water-shore or water can **suppress** duplicate cliff faces (`ShouldSuppressCliffFaceTowardLowerCell`); **Δh ≥ 2** still stacks segments on **visible** faces. Cliff **sorting** vs **foreground** water neighbors is capped in **`TerrainManager.PlaceCliffWallStack`** (**[BUG-40](../../BACKLOG.md)** completed 2026-03-24). Remaining shore / edge-case polish: **[BUG-33](../../BACKLOG.md)**. Engineering notes: `.cursor/specs/bugs/cliff-water-shore-sorting.md`.
+**Face ownership (one logical system per cardinal face):** On a **single cardinal face** of a land cell, **do not** combine an independent **`PlaceCliffWallStack`** segment with a **water-shore ramp** that already expresses the **same** vertical drop — that duplicates the cliff read. **Shore prefabs** may **embed** bank or brown cliff art on **one or more** faces as part of the asset; **`PlaceCliffWallStack`** may attach to **other** faces of the same cell.
+
+**One-step suppression (`ShouldSuppressCliffFaceTowardLowerCell`):** Applies only when the **high** cell **would** use water-shore prefabs (`IsLandEligibleForWaterShorePrefabs` is **true**) **and** the lower neighbor is registered **water** or an **`IsWaterSlopeCell`** shore tile — then a **single** height step toward that neighbor does **not** add an extra `PlaceCliffWallStack` on that face (ramp/water art carries the transition). If the **high** cell is **not** shore-eligible (typical **rim plateau** above the shore strip, e.g. land not in the Moore neighborhood of water but one cardinal step above a shore cell), suppression does **not** apply; `ResolveCliffWallDropAfterSuppression` may assign **one** segment toward that water or water-slope neighbor so visible **south/east** cliff prefabs fill the vertical gap. **`Δh ≥ 2`** still uses stacked segments on visible faces regardless. Other rules: `ShouldSuppressCliffTowardCardinalLower` (narrow shore strip), cut-through corridors, underwater segment cull — unchanged.
+
+**Lake fallback — border corner heights:** When an **artificial lake fallback** terraform runs, **corner** border cells (concave and convex) must have **`HeightMap` / `Cell.height`** consistent with the **lake surface** at that shoreline, not left at an unrelated **elevated dry neighbor** height when continuity with the lake is required.
+
+**Geometric decisions worth remembering:** Cardinal **Δh** drives drop tests. **One-step** duplicate-cliff suppression is **conditional** on shore eligibility (see above). **Δh ≥ 2** stacks segments on **visible** faces. Cliff **sorting** vs **foreground** water neighbors is capped in **`TerrainManager.PlaceCliffWallStack`** (**[BUG-40](../../BACKLOG.md)** completed 2026-03-24). Remaining shore / edge-case polish: **[BUG-42](../../BACKLOG.md)**. Engineering notes: `.cursor/specs/bugs/cliff-water-shore-sorting.md`.
 
 ### 5.7 Cliffs
 - **HeightMap pattern:** Cardinal neighbor height difference > 1 (e.g., cell at h=3, south neighbor at h=1).
 - **Visual (fixed isometric camera):** Each cardinal drop uses **`CliffCardinalFace`** (North/South/East/West) and the matching **prefab** (`GetCliffPrefabForCardinalFace`). **Prefabs are not instantiated** on **north** or **west** faces (`IsCliffCardinalFaceVisibleToCamera`) — those are hidden behind the terrain diamond; **south** and **east** faces (↙ ↘) get sprites. **`Cell.cliffFaces`** still records **N/S/E/W** bits for any cardinal risco (hydrology), even when **N/W** skip meshes.
-- **Code:** `PlaceCliffWalls` evaluates `GetCliffWallDropNorth` / `South` / `East` / `West` from the **high** cell toward lower neighbors. `PlaceCliffWallStack` parents segments to that cell; world position uses `GetCliffWallSegmentWorldPositionOnSharedEdge` with inspector **face nudges** and optional **water-shore Y** fraction; underwater segment cull unchanged.
-- **Water / shore:** Water classification uses **`WaterManager.IsWaterAt`**, not raw `SEA_LEVEL` height. For **one-step** drops toward **registered water** or **`IsWaterSlopeCell`**, cliff prefabs are suppressed (`ShouldSuppressCliffFaceTowardLowerCell`) so water-slope art is not duplicated. **Escarpments (Δh ≥ 2)** toward the same neighbors still get stacked segments on **visible** faces only. **Underwater cull:** at the cliff **foot** (low cell of the drop), if that cell is water, segments whose **entire height band** lies strictly below `GetWaterSurfaceHeight` are not instantiated (`ShouldSkipCliffSegmentFullyUnderwater`). **Cut-through** corridors may still get a **1-step** cliff into a **non–water-slope** lowered cell.
+- **Code:** `PlaceCliffWalls` evaluates `GetCliffWallDropNorth` / `South` / `East` / `West` from the **high** cell toward lower neighbors, then `ResolveCliffWallDropAfterSuppression` for the non-suppressed path (rim plateau rule, narrow shore, cut-through). `PlaceCliffWallStack` parents segments to that cell; world position uses `GetCliffWallSegmentWorldPositionOnSharedEdge` with inspector **face nudges** and optional **water-shore Y** fraction; underwater segment cull unchanged.
+- **Water / shore:** Water classification uses **`WaterManager.IsWaterAt`**, not raw `SEA_LEVEL` height. For **one-step** drops toward **registered water** or **`IsWaterSlopeCell`**, cliff prefabs are **suppressed only if** the **high** cell passes **`IsLandEligibleForWaterShorePrefabs`** (same gate as `DetermineWaterShorePrefabs`); otherwise the **rim plateau** keeps **one** cliff segment toward that lower cell where visible (see §5.6.1). **Escarpments (Δh ≥ 2)** toward the same neighbors still get stacked segments on **visible** faces only. **Underwater cull:** at the cliff **foot** (low cell of the drop), if that cell is water, segments whose **entire height band** lies strictly below `GetWaterSurfaceHeight` are not instantiated (`ShouldSkipCliffSegmentFullyUnderwater`). **Cut-through** corridors may still get a **1-step** cliff into a **non–water-slope** lowered cell.
+- **North / west faces (deferred):** With the fixed camera, **north** and **west** cliff **meshes** are not instantiated for typical **interior** cells (`IsCliffCardinalFaceVisibleToCamera`). **Map border** situations can make the absence of N/W prefabs obvious; adding visible N/W cliff art for edges is **out of scope** for **[BUG-42](../../BACKLOG.md)** — track as a future follow-up.
 
 ### 5.8 Coastal Transitions (Water Slopes)
 - **HeightMap pattern:** Land cell (h ≥ 1) adjacent to water (sea level or registered lake/sea in `WaterMap`), **and** within one height step of an adjacent water body's **surface** (see §4.2).
@@ -251,7 +274,7 @@ Treat lake/coast borders as **three cooperating layers**, not one prefab:
 
 ### 5.9 Bays
 - **HeightMap pattern:** Concave water corners where water surrounds a land cell diagonally.
-- **Visual:** NE/NW/SE/SW bay prefabs that render a rounded coastal indent. Cardinal cliff stacks use **`TerrainManager`** tunable placement vs the shared edge (**[BUG-39](../../BACKLOG.md)** completed 2026-03-24). Inner-corner bay vs straight-edge stacking, if mismatched, falls under general shore polish **[BUG-33](../../BACKLOG.md)**.
+- **Visual:** NE/NW/SE/SW bay prefabs that render a rounded coastal indent. Cardinal cliff stacks use **`TerrainManager`** tunable placement vs the shared edge (**[BUG-39](../../BACKLOG.md)** completed 2026-03-24). Inner-corner bay vs straight-edge stacking, if mismatched, falls under general shore polish **[BUG-42](../../BACKLOG.md)**.
 
 ### 5.10 Cut-Through Corridors
 - **HeightMap pattern:** A path of cells flattened to base height through a hill by the terraforming system.
@@ -459,7 +482,7 @@ Interstate pathfinding multiplies slope costs by `InterstateSlopeMultiplier = 5`
 | Height data | `HeightMap.cs` | `GetHeight`, `SetHeight`, `IsValidPosition` |
 | Slope type determination | `TerrainManager.cs` | `DetermineSlopePrefab`, `GetTerrainSlopeTypeAt` |
 | Water slope determination | `TerrainManager.cs` | `DetermineWaterShorePrefabs`, `IsWaterSlopeCell` |
-| Cliff walls | `TerrainManager.cs`, `CliffFace.cs`, `Cell` | `PlaceCliffWalls`, `CliffCardinalFace` / `CliffFaceFlags`, `GetCliffWallDropNorth/South/East/West`, `PlaceCliffWallStack`, `GetCliffPrefabForCardinalFace`, `IsCliffCardinalFaceVisibleToCamera`, `GetWaterSurfaceHeightForCliffProbe`, `ShouldSuppressCliffFaceTowardLowerCell`, `ShouldSuppressCliffTowardCardinalLower`, `IsWaterShoreRampTerrainCell` |
+| Cliff walls | `TerrainManager.cs`, `CliffFace.cs`, `Cell` | `PlaceCliffWalls`, `CliffCardinalFace` / `CliffFaceFlags`, `GetCliffWallDropNorth/South/East/West`, `ResolveCliffWallDropAfterSuppression`, `PlaceCliffWallStack`, `GetCliffPrefabForCardinalFace`, `IsCliffCardinalFaceVisibleToCamera`, `GetWaterSurfaceHeightForCliffProbe`, `ShouldSuppressCliffFaceTowardLowerCell` (with `IsLandEligibleForWaterShorePrefabs` on the **high** cell), `ShouldSuppressCliffTowardCardinalLower`, `IsLandEligibleForWaterShorePrefabs`, `IsWaterShoreRampTerrainCell` |
 | Terrain tile placement | `TerrainManager.cs` | `PlaceFlatTerrain`, `PlaceSlopeFromPrefab`, `PlaceWaterShore` |
 | Sorting order | `TerrainManager.cs` | `CalculateTerrainSortingOrder`, `CalculateSlopeSortingOrder` |
 | Full sort recalculation | `GeographyManager.cs` | `ReCalculateSortingOrderBasedOnHeight` |

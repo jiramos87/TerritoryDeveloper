@@ -7,11 +7,11 @@
 
 ## In Progress
 
-- [ ] **BUG-41** — River corridors: wrong water-shore prefabs and missing / incorrect cliff stacks (2026-03-24)
-  - Type: bug
-  - Files: `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `PlaceCliffWalls`, `RefreshLakeShoreAfterLakePlacement`, `IsLandEligibleForWaterShorePrefabs`, neighbor queries vs `WaterBodyType.River`), `WaterManager.cs` (`PlaceWater`, `UpdateWaterVisuals`), `GridSortingOrderService.cs` as needed; river-related prefabs under `Assets/Prefabs/` as applicable
-  - Spec: `.cursor/specs/rivers.md` (§6 visuals follow-up; §4.3 / §7 transverse + cliffs); `.cursor/specs/bugs/cliff-water-shore-sorting.md`; **BUG-33** (lake shore baseline — rivers may need distinct patterns or eligibility)
-  - Notes: **Observed:** After **FEAT-38**, procedural **river** water and banks can show **incorrect shore tiles** (cardinal/diagonal/Bay mismatches) and **absent or wrong brown cliff** segments at drops along the river, compared to lake shores. **Expected:** Shore selection and cliff placement treat **River** adjacency consistently with height/surface rules; refresh passes cover river Moore neighborhoods where needed. **Related:** **BUG-33** (lakes), **BUG-39** / **BUG-40** (cliff sorting — verify rivers).
+- [ ] **BUG-42** — Water shores & cliffs: terrain + water (lakes + rivers); waterfalls; water-cliff walls — merged **BUG-33** + **BUG-41** (2026-03-25)
+  - Type: bug / feature
+  - Files: `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `PlaceCliffWalls`, `RefreshLakeShoreAfterLakePlacement`, `IsLandEligibleForWaterShorePrefabs`, neighbor queries vs `WaterBodyType` lake/river/sea), `WaterManager.cs` (`PlaceWater`, `UpdateWaterVisuals`), `GridSortingOrderService.cs`, `GeographyManager.cs` (sorting helpers as needed); water / shore / waterfall / water-cliff prefabs under `Assets/Prefabs/` (follow `.cursor/rules/coding-conventions.mdc` for new assets)
+  - Spec: `.cursor/specs/rivers.md` (§6 visuals; §4.3 / §7 transverse + cliffs); `.cursor/specs/bugs/cliff-water-shore-sorting.md`; `.cursor/specs/water-system-refactor.md` as applicable; **plan:** `docs/plan-bug-42-shore-cliff-refresh.md`
+  - Notes: **Merged scope — lakes (ex-BUG-33):** Fix incorrect or missing **lake** shore tiles (cardinal/diagonal water slopes, Bay corners, upslope pairs), z-order / sorting glitches, and visual gaps after procedural lake placement. Baseline shores from **FEAT-37a**; **FEAT-37b** excluded shore prefab scope. **Merged scope — rivers (ex-BUG-41):** After **FEAT-38**, procedural **river** water and banks must show **correct shore tiles** and **brown cliff** stacks at drops; **River** adjacency consistent with height/surface rules; refresh passes cover river Moore neighborhoods where needed. **New — waterfalls:** Introduce **waterfall** prefabs in **four orthogonal directions** (N, S, E, W) for cascades / cardinal slope-water drops. **New — water-cliff walls:** Introduce **water-cliff** wall prefabs on **south** and **east** faces (same placement/stacking model as existing **brown cliff** segments — `PlaceCliffWallStack` / shared-edge rules — but visually water-facing). **Related:** **BUG-39** / **BUG-40** (cliff placement + foreground-water sorting — re-verify on lakes + rivers after new prefabs).
   - Depends on: **FEAT-38** (completed)
 
 ## High Priority
@@ -107,12 +107,6 @@
   - Type: feature
   - Files: `ForestManager.cs`, `GridManager.cs`, `CursorManager.cs`
   - Notes: Place forest in area with random spray/brush distribution.
-
-- [ ] **BUG-33** — Lake shore / edge prefab bugs (incorrect tiles, gaps, alignment)
-  - Type: fix
-  - Files: `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `RefreshLakeShoreAfterLakePlacement`, `GetLakeShoreExtraWorldYOffset`, …), `GridSortingOrderService.cs`, `GeographyManager.cs` (sorting helpers), lake/coast prefabs under `Assets/Prefabs/` as needed
-  - Notes: Fix incorrect or missing shore tiles at lake boundaries (cardinal/diagonal water slopes, Bay corners, upslope pairs), z-order / sorting glitches, and visual gaps after procedural lake placement. Baseline lake shore behavior was implemented with **FEAT-37a**; this ticket is **only** for remaining defects. **FEAT-37b** (completed) excluded shore prefab scope; shores stay here.
-  - Depends on: nothing
 
 - [ ] **FEAT-06** — Forest that grows over time: sparse → medium → dense
   - Type: feature
@@ -271,16 +265,18 @@
 
 ## Completed (last 30 days)
 
+- [x] **BUG-33** — Lake shore / edge prefab bugs — **superseded:** merged into **[BUG-42](#in-progress)** (2026-03-25)
+- [x] **BUG-41** — River corridors: shore prefabs + cliff stacks — **superseded:** merged into **[BUG-42](#in-progress)** (2026-03-25)
 - [x] **FEAT-38** — Procedural rivers during geography / terrain generation (2026-03-24)
   - Type: feature
   - Files: `GeographyManager.cs`, `ProceduralRiverGenerator.cs`, `TerrainManager.cs`, `WaterMap.cs`, `WaterManager.cs`, `WaterBody.cs`, `Cell.cs` / `CellData.cs` (as needed)
   - Spec: `.cursor/specs/rivers.md`; `.cursor/specs/water-system-refactor.md` (Phase D alignment); `.cursor/specs/agent-prompt-feat-38-rivers.md`
-  - Notes: **Completed:** `WaterBody` classification + merge (river vs lake/sea); `GenerateProceduralRiversForNewGame()` after `InitializeWaterMap`, before interstate; `ProceduralRiverGenerator` (BFS / forced centerline, border margin, transverse + longitudinal monotonicity, `WaterMap` river bodies). **Follow-up visuals:** **BUG-41** (shore prefabs + cliffs on rivers). Cardinal slope-water / cascade **art** and shore/cliff polish tracked separately.
+  - Notes: **Completed:** `WaterBody` classification + merge (river vs lake/sea); `GenerateProceduralRiversForNewGame()` after `InitializeWaterMap`, before interstate; `ProceduralRiverGenerator` (BFS / forced centerline, border margin, transverse + longitudinal monotonicity, `WaterMap` river bodies). **Follow-up visuals:** **BUG-42** (shores + cliffs + waterfalls + water-cliff walls — merged **BUG-33** + **BUG-41**). Cardinal slope-water / cascade **art** and shore/cliff polish tracked there.
 
 - [x] **BUG-39** — Bay / inner-corner shore prefabs: cliff art alignment vs stacked cliffs (2026-03-24)
   - Type: fix (art vs code)
   - Files: `TerrainManager.cs` (`GetCliffWallSegmentWorldPositionOnSharedEdge`, `PlaceCliffWallStack`), `Assets/Sprites/Cliff/CliffEast.png`, `Assets/Sprites/Cliff/CliffSouth.png`, cliff prefabs under `Assets/Prefabs/Cliff/`
-  - Notes: **Resolved:** Inspector-tunable per-face placement (`cliffWallSouthFaceNudgeTileWidthFraction` / `HeightFraction`, `cliffWallEastFaceNudgeTileWidthFraction` / `HeightFraction`) and water-shore Y offset (`cliffWallWaterShoreYOffsetTileHeightFraction`) so cliff sprites align with the south/east diamond faces and water-shore cells after art was moved inside the textures. Remaining generic shore/gap polish stays under **BUG-33** where applicable.
+  - Notes: **Resolved:** Inspector-tunable per-face placement (`cliffWallSouthFaceNudgeTileWidthFraction` / `HeightFraction`, `cliffWallEastFaceNudgeTileWidthFraction` / `HeightFraction`) and water-shore Y offset (`cliffWallWaterShoreYOffsetTileHeightFraction`) so cliff sprites align with the south/east diamond faces and water-shore cells after art was moved inside the textures. Remaining generic shore/gap polish → **BUG-42** where applicable.
 
 - [x] **BUG-40** — Shore cliff walls draw in front of nearer (foreground) water tiles (2026-03-24)
   - Type: fix (sorting / layers)
@@ -309,8 +305,8 @@
 
 - [x] **FEAT-37b** — Variable-height water: sorting, roads/bridges, `SEA_LEVEL` removal (no lake shore prefab scope) (2026-03-24)
   - Type: feature + refactor
-  - Files: `GridSortingOrderService.cs`, `RoadPrefabResolver.cs`, `RoadManager.cs`, `AutoRoadBuilder.cs`, `ForestManager.cs`, `TerrainManager.cs` (water height queries, bridge/adjacency paths — **exclude** shore placement methods; **BUG-33** if broken)
-  - Notes: Legacy `SEA_LEVEL` / `cell.height == 0` assumptions removed or generalized for sorting, roads, bridges, non-shore water adjacency. Shore tiles **not** in scope (37a + BUG-33). Verified in Unity.
+  - Files: `GridSortingOrderService.cs`, `RoadPrefabResolver.cs`, `RoadManager.cs`, `AutoRoadBuilder.cs`, `ForestManager.cs`, `TerrainManager.cs` (water height queries, bridge/adjacency paths — **exclude** shore placement methods; **BUG-42** if broken)
+  - Notes: Legacy `SEA_LEVEL` / `cell.height == 0` assumptions removed or generalized for sorting, roads, bridges, non-shore water adjacency. Shore tiles **not** in scope (37a + **BUG-42**). Verified in Unity.
 
 - [x] **BUG-32** — Lakes / `WaterMap` water not shown on minimap (desync with main map) (2026-03-23)
   - Type: fix (UX / consistency)
@@ -320,7 +316,7 @@
 - [x] **FEAT-37a** — WaterBody + WaterMap depression-fill (lake data & procedural placement) (2026-03-22)
   - Type: feature + refactor
   - Files: `WaterBody.cs`, `WaterMap.cs`, `WaterManager.cs`, `TerrainManager.cs`, `LakeFeasibility.cs`
-  - Notes: `WaterBody` + per-cell body ids; `WaterMap.InitializeLakesFromDepressionFill` + `LakeFillSettings` (depression-fill, bounded pass, artificial fallback, merge); `LakeFeasibility` / `EnsureGuaranteedLakeDepressions` terrain bowls; `WaterMapData` v2 + legacy load; centered 40×40 template + extended terrain. **Follow-up:** shore prefab fixes **BUG-33**; **FEAT-37b** / **FEAT-37c** completed; building sort on load **BUG-34** (completed); multi-cell footprint / grass under building **BUG-35** (completed 2026-03-22).
+  - Notes: `WaterBody` + per-cell body ids; `WaterMap.InitializeLakesFromDepressionFill` + `LakeFillSettings` (depression-fill, bounded pass, artificial fallback, merge); `LakeFeasibility` / `EnsureGuaranteedLakeDepressions` terrain bowls; `WaterMapData` v2 + legacy load; centered 40×40 template + extended terrain. **Follow-up:** shore / cliff / waterfall polish **BUG-42**; **FEAT-37b** / **FEAT-37c** completed; building sort on load **BUG-34** (completed); multi-cell footprint / grass under building **BUG-35** (completed 2026-03-22).
 
 - [x] **TECH-12** — Water system refactor: planning pass (objectives, rules, scope, child issues) (2026-03-21)
   - Type: planning / documentation
