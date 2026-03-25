@@ -124,6 +124,16 @@
   - Files: `GrowthManager.cs`, `ZoneManager.cs`, `DemandManager.cs`, `CityStats.cs`
   - Notes: Existing buildings evolve to larger versions based on zone property value.
 
+- [ ] **TECH-15** — New Game / geography initialization performance (generation pipeline)
+  - Type: performance / optimization
+  - Files: `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `GridManager.cs`, `InterstateManager.cs`, `ForestManager.cs`, `RegionalMapManager.cs`, `ProceduralRiverGenerator.cs` (as applicable)
+  - Notes: Reduce wall-clock time and frame spikes when starting a **New Game**: height map, lakes, procedural rivers (**FEAT-38**), interstate, forests, border signs, sorting passes, etc. Profile the pipeline; consider batched or deferred work across frames, fewer redundant passes, algorithmic improvements, and deferring non-critical visuals until after the map is interactive. **Related:** **FEAT-37c** optimizes **Load Game** (no regen) — this issue targets **generation** cost only.
+
+- [ ] **TECH-16** — Simulation performance v2 (per-tick AUTO pipeline)
+  - Type: performance / optimization
+  - Files: `SimulationManager.cs`, `TimeManager.cs`, `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `AutoResourcePlanner.cs`, `UrbanCentroidService.cs`, `GrowthBudgetManager.cs`, `DemandManager.cs`, `CityStats.cs` (as applicable)
+  - Notes: Second-pass optimization of the simulation tick after early **Simulation optimization** work (completed). Profile `ProcessSimulationTick` and callees; reduce redundant work, hot-path cost, spatial queries, and per-tick allocations; preserve gameplay unless changes are explicitly agreed. **Related:** **BUG-14** (per-frame UI `FindObjectOfType`); **TECH-01** (manager decomposition may help profiling and hotspots).
+
 
 ## Code Health (technical debt)
 

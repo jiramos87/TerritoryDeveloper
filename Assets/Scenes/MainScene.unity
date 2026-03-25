@@ -11385,6 +11385,12 @@ MonoBehaviour:
   eastCliffWallPrefab: {fileID: 2327040077204098500, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
   northCliffWallPrefab: {fileID: 0}
   westCliffWallPrefab: {fileID: 0}
+  cliffWallPivotDownHeightSteps: 1.5
+  cliffWallSouthFaceNudgeTileWidthFraction: 1
+  cliffWallSouthFaceNudgeTileHeightFraction: 1
+  cliffWallEastFaceNudgeTileWidthFraction: -1
+  cliffWallEastFaceNudgeTileHeightFraction: 1
+  cliffWallWaterShoreYOffsetTileHeightFraction: 1
   northEastBayPrefab: {fileID: 9019178619069177773, guid: b0cda54140b9a4ac3b8e9c5887779fd7, type: 3}
   northWestBayPrefab: {fileID: 1106770982510219462, guid: 8b9a41e5824334877b1b0ec353c5e1de, type: 3}
   southEastBayPrefab: {fileID: 8808602844539512836, guid: b730393b247ff43eabb129208f2b876d, type: 3}
@@ -16814,7 +16820,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -260.99487, y: -10.571777}
+  m_AnchoredPosition: {x: -260.99487, y: -10.571747}
   m_SizeDelta: {x: -521.9894, y: -455.8174}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1664159913
@@ -19492,8 +19498,8 @@ MonoBehaviour:
   roadManager: {fileID: 1313145027}
   interstateManager: {fileID: 251169277}
   buildingSelectorMenuController: {fileID: 1975260509}
-  width: 64
-  height: 64
+  width: 128
+  height: 128
   tileWidth: 1
   tileHeight: 0.5
   halfWidth: 0
