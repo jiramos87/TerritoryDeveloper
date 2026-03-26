@@ -25,7 +25,14 @@
   - Type: bug
   - Files: `RoadManager.cs` (`HandleRoadDrawing`, road placement / commit path), `GridManager.cs` (road mode input, any demolish or clear calls near road segments), `TerrainManager.cs` / `TerraformingService.cs` if road placement widens the affected region; `ZoneManager.cs` if zoning is cleared outside road cells
   - Spec: `.cursor/specs/isometric-geography-system.md` §14 (manual streets; **BUG-25** completed — regression)
-  - Notes: **Observed:** In **road drawing mode**, tracing a street **removes** (or clears) **buildings and zoning on cells adjacent to the route**, not only on the road cells themselves. **Expected:** Only cells that actually receive the road (and any explicitly required footprint for valid placement) should be modified; **neighboring** zoned or built cells should remain unless the design intentionally requires a wider clear (document if so). Likely causes: over-broad dirty rect, neighbor iteration calling `DemolishCellAt` / zone clear, terraform brush larger than 1×1, or preview vs commit mismatch. **Related:** completed **BUG-25** (manual street segment drawing).
+  - Notes: **Observed:** In **road drawing mode**, tracing a street **removes** (or clears) **zoning prefabs**, **zone buildings** (RCI), and **zoning** on cells **adjacent to the route**, not only on the road cells themselves (same report: manual street trace wipes zone visuals and spawned buildings). **Expected:** Only cells that actually receive the road (and any explicitly required footprint for valid placement) should be modified; **neighboring** zoned or built cells should remain unless the design intentionally requires a wider clear (document if so). Likely causes: over-broad dirty rect, neighbor iteration calling `DemolishCellAt` / zone clear, terraform brush larger than 1×1, or preview vs commit mismatch. **Related:** completed **BUG-25** (manual street segment drawing).
+  - Depends on: none
+
+- [ ] **BUG-49** — Manual road drawing: preview builds the route cell-by-cell (animated); should show full path at once
+  - Type: bug (UX / preview)
+  - Files: `RoadManager.cs` (`HandleRoadDrawing`, preview placement / ghost or temp prefab updates per frame), `GridManager.cs` if road mode input drives incremental preview; any coroutine or per-tick preview extension of the traced path
+  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (manual streets — preview behavior)
+  - Notes: **Observed:** While drawing a street, **preview mode** visually **extends the route one cell at a time**, like an animation, instead of updating the full proposed path in one step. **Expected:** **No** step-by-step or staggered preview animation. The game should **compute the full valid path** (same rules as commit / `TryPrepareRoadPlacementPlan` or equivalent) for the current stroke, **then** instantiate or refresh **preview** prefabs for that complete path in a single update — or batch updates without visible per-cell delay. **Related:** **BUG-37** (adjacent clear during trace — ensure preview vs commit paths stay consistent when fixing).
   - Depends on: none
 
 - [ ] **BUG-43** — Bridges over rivers/lakes adjacent to cliffs: gaps, floating segments, wrong alignment
@@ -40,6 +47,27 @@
   - Files: `TerrainManager.cs` (`PlaceCliffWalls`, `PlaceCliffWallStack`, map-boundary / max-X / max-Y edge cases vs water cells), `WaterManager.cs` / `WaterMap.cs` if edge water placement interacts with cliff refresh; brown cliff / water-shore prefabs under `Assets/Prefabs/` (per `.cursor/rules/coding-conventions.mdc` for new or adjusted assets)
   - Spec: `.cursor/specs/isometric-geography-system.md` (map edges, water, cliffs, sorting — sections covering shore/cliff stacks at boundaries)
   - Notes: **Observed:** Where a **river channel** or **lake** reaches the **east** or **south** boundary of the grid, the **brown vertical cliff** geometry that seals the map edge is **missing or too short** under the water tiles, exposing **black void**; **grass** cells on the same edge still show correct cliff faces. Suggests boundary cliff stacks or prefab variants do not account for **lower water-bed elevation** at those edges. **Expected:** Continuous cliff wall to the same depth as neighboring land cliffs, or dedicated boundary + water prefabs so no holes at east/south × water. **Related:** **BUG-42** (shores, cliffs, rivers/lakes — may share root cause with water-cliff / boundary placement).
+  - Depends on: none
+
+- [ ] **BUG-45** — Adjacent water bodies at different surface heights: merge, prefab refresh at intersections, straight slope/cliff transitions
+  - Type: bug / polish
+  - Files: `WaterManager.cs` (`PlaceWater`, `UpdateWaterVisuals`, body merge / neighbor refresh), `WaterMap.cs` (per-cell surface height, body boundaries, adjacency between bodies), `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `RefreshLakeShoreAfterLakePlacement`, cliff/water-shore stacks where two water levels meet), `ProceduralRiverGenerator.cs` if river–lake or river–river height junctions are involved; water / shore / cliff prefabs under `Assets/Prefabs/` (per `.cursor/rules/coding-conventions.mdc` for new or adjusted assets)
+  - Spec: `.cursor/specs/isometric-geography-system.md` (water bodies, surface height, shores, cliffs — §4–§7, §12–§13 as applicable); extend spec once rules for multi-body height junctions are stable
+  - Notes: **Observed:** Where **two water bodies** with **different water-surface elevations** are **adjacent** or share an edge/corner, visuals break: **black voids** (missing mesh/texture), **grass or terrain slivers** bleeding through, **jagged stepped** edges instead of a coherent **vertical drop** or **clean cardinal slope**. Current merge / refresh logic does not reliably update **shore and cliff prefabs** at these **intersections**. **Expected:** Revisit **merge and visual update** when multiple bodies abut at different heights; ensure refresh passes include **Moore/Von Neumann neighborhoods** at body–body boundaries; prefer **straight cliff faces** or **orthogonal slope segments** (cardinal “laderas/riscos” style) at the height step rather than inconsistent diagonal slivers. **Related:** **BUG-42** (waterfalls, water-cliff walls, general shore/cliff polish — coordinate so intersection rules and prefabs stay consistent).
+  - Depends on: none
+
+- [ ] **BUG-46** — Parallel rivers (same map-border exit): minimum spacing at entry and along course
+  - Type: fix (procedural generation)
+  - Files: `ProceduralRiverGenerator.cs`, `WaterManager.cs` (`GenerateProceduralRiversForNewGame` / river placement orchestration), `GeographyManager.cs` if generation is wired there; `WaterMap.cs` only if body/cell queries are needed for distance checks
+  - Spec: `.cursor/specs/isometric-geography-system.md` (rivers / procedural rivers — extend once rules are fixed)
+  - Notes: When multiple rivers are generated such that their **exit** cells lie on the **same map border** (parallel outflow), they can cluster: **entry** points too close on the interior border and/or **centerline paths** that run too near each other for too long. **Expected:** Enforce a **minimum grid distance** between **entry** points for rivers that share the same **exit** border, and a **minimum separation** between their **routes** (e.g. per-cell clearance along polyline/centerline, or minimum distance between paths while both are active — define tunable thresholds in generator settings). Reject or re-roll placements that violate spacing before committing water bodies. **Related:** **FEAT-38** (rivers — completed); **BUG-42** (visual follow-up if spacing changes affect shores).
+  - Depends on: none
+
+- [ ] **BUG-47** — AUTO simulation: perpendicular street stubs from auto-zoning gaps never built (orthogonal intersections missing)
+  - Type: bug / feature
+  - Files: `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `SimulationManager.cs` (`ProcessSimulationTick` order), `UrbanCentroidService.cs` if ring/candidate logic gates stubs; `RoadManager.cs` / `GridPathfinder.cs` only if AUTO road placement reuses manual validation and rejects valid stubs
+  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (AUTO vs manual roads) — extend Notes here while **BUG-47** is open; no parallel spec file
+  - Notes: **Design intent (observed in-game):** Along traced routes where **auto-zoning** runs, the system leaves **free land segments perpendicular** to the road so that **later** perpendicular connectors can be drawn, forming **orthogonal street crossings**. **Observed:** In **AUTO** simulation mode, those **perpendicular connectors are never built** even when **space remains clear**; the player must switch to **manual** road mode to complete the grid. **Expected:** Either **AUTO road growth** should propose and commit **short perpendicular stubs** (or equivalent path steps) from reserved gaps toward orthogonal intersections when placement rules allow, or document and implement an explicit alternative (e.g. dedicated AUTO pass after zoning) so behavior matches the layout auto-zoning prepares. **Related:** completed **BUG-22** (auto zoning must not block street ends); **FEAT-36** (expand auto-zoning / auto-road candidates — forests/slopes).
   - Depends on: none
 
 - [ ] **BUG-31** — Wrong prefabs at interstate entry/exit (border)
@@ -85,6 +113,12 @@
   - Files: `GridManager.cs`
   - Notes: In InitializeGrid() ChunkCullingSystem is created with `cachedCamera`, but it is only assigned in Update(). May cause NullReferenceException.
 
+- [ ] **BUG-48** — Minimap stays stale until toggling a layer (e.g. data-visualization / desirability / centroid)
+  - Type: bug
+  - Files: `MiniMapController.cs` (`RebuildTexture`, `Update`; layer toggles call `RebuildTexture` but nothing runs on simulation time), `TimeManager.cs` / `SimulationManager.cs` if wiring refresh to the simulation tick or a shared event
+  - Notes: **Observed:** The procedural minimap **does not refresh** as the city changes unless the player **toggles a minimap layer** (or other actions that call `RebuildTexture`, such as opening the panel). **Expected:** The minimap should track **zones, roads, water, forests**, etc. **without** requiring layer toggles. **Implementation:** Rebuild at least **once per simulation tick** while the minimap is visible, **or** a **performance-balanced** approach (throttled full rebuild, dirty rect / incremental update, or event-driven refresh when grid/zone/road/water data changes) — profile full `RebuildTexture` cost first. Class summary in code states rebuilds on geography completion, grid restore, panel open, and layer changes **not** on a fixed timer — that gap is this bug. **Related:** completed **BUG-32** (water on minimap); **FEAT-42** (optional height layer).
+  - Depends on: none
+
 - [ ] **FEAT-21** — Expenses and maintenance system
   - Type: feature
   - Files: `EconomyManager.cs`, `CityStats.cs`
@@ -106,6 +140,12 @@
   - Type: feature
   - Files: `GridManager.cs`, `AutoZoningManager.cs`, `AutoRoadBuilder.cs`
   - Notes: Treat Grass, Forest, and N-S/E-W slopes as valid candidates for zoning and road expansion. Capture any design notes in this issue or in `.cursor/specs/isometric-geography-system.md` if rules become stable.
+
+- [ ] **FEAT-43** — Urban rings: tune AUTO road/zoning weights for a gradual center → edge gradient
+  - Type: feature (simulation / balance)
+  - Files: `UrbanCentroidService.cs` (ring boundaries, centroid distance), `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `SimulationManager.cs` (`ProcessSimulationTick` order), `GrowthBudgetManager.cs` if per-ring budgets apply; `GridManager.cs` / `DemandManager.cs` only if desirability or placement must align with rings
+  - Notes: **Observed:** In **AUTO** simulation, cities tend toward a **dense core**, **under-developed middle rings**, and **outer rings that are more zoned than the middle** — not a smooth radial gradient. **Expected:** Development should fall off **gradually from the urban center**: **highest** street density and zoning pressure **near the centroid**, **moderate** in **mid** rings, and **lowest** in **outer** rings. Revisit ring radii/thresholds, per-ring weights for road growth vs zoning, and any caps or priorities that invert mid vs outer activity. **Related:** completed **FEAT-32** (streets/intersections by area), **FEAT-29** (density gradient around centroids), **FEAT-31** (roads toward desirability); coordinate with **BUG-47** (AUTO perpendicular stubs) if road patterns depend on the same passes.
+  - Depends on: none
 
 - [ ] **FEAT-35** — Area demolition tool (bulldozer drag-to-select)
   - Type: feature
