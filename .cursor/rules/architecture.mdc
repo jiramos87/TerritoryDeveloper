@@ -14,7 +14,7 @@ alwaysApply: true
 5. `ForestManager.InitializeForestMap()` — forest generation (conditional)
 6. Sorting order recalculation, border signs, then `ZoneManager` ready for player zoning
 
-**Water evolution:** **FEAT-37** epic — **FEAT-37a** / **FEAT-37b** / **FEAT-37c** **completed**. Load-time building sort **BUG-34** and grass/building layering **BUG-35** completed (2026-03-22). See `.cursor/specs/water-system-refactor.md` and `ARCHITECTURE.md` (Data Flows → Water).
+**Water evolution:** **FEAT-37** epic — **FEAT-37a** / **FEAT-37b** / **FEAT-37c** **completed**; **FEAT-38** (rivers) completed. Load-time building sort **BUG-34** and grass/building layering **BUG-35** completed (2026-03-22). See `.cursor/specs/isometric-geography-system.md` §12–§13 and `ARCHITECTURE.md` (Data Flows → Water).
 
 ## Simulation Flow (each TimeManager tick)
 `TimeManager` → `SimulationManager.ProcessSimulationTick()` → in order:
@@ -58,6 +58,6 @@ Legacy **UrbanizationProposal** flow is **obsolete** and **not** called; removal
 - InterstateManager → [GridManager, TerrainManager, RoadManager]
 - CityStats → [TimeManager, WaterManager, ForestManager]
 
-**Isometric geography:** Diamond projection, integer heights (0–5), 13 slope types, priority-based slope determination. Full spec: `.cursor/specs/isometric-geography-system.md`.
+**Isometric geography (canonical):** `.cursor/specs/isometric-geography-system.md` — grid, terrain, water, shores, cliffs, sorting, terraform, roads, rivers, pathfinding. `.cursor/specs/` holds only that plus `ui-design-system.md`; do not add bug archives (see `AGENTS.md`).
 
-See `ARCHITECTURE.md` for full dependency map, helper services (GridPathfinder, RoadPrefabResolver, TerraformingService, etc.), and the **Road and interstate routing** summary (manual streets vs interstate validation). **Archived** implementation notes and old prompts: `.cursor/specs/archive/` (see `README.md` there — not active work).
+See `ARCHITECTURE.md` for full dependency map, helper services (GridPathfinder, RoadPrefabResolver, TerraformingService, etc.), and the **Road and interstate routing** summary (manual streets vs interstate validation).

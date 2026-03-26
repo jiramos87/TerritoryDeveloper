@@ -136,7 +136,7 @@ public class WaterManager : MonoBehaviour
         var rnd = new System.Random(seed ^ unchecked((int)0xBADC0DE1));
         ProceduralRiverGenerator.Generate(this, terrainManager, gridManager, rnd);
         UpdateWaterVisuals();
-        terrainManager.RefreshLakeShoreAfterLakePlacement(this);
+        terrainManager.RefreshLakeShoreAfterLakePlacement(this, expandSecondChebyshevRing: true);
         gridManager.InvalidateRoadCache();
     }
 

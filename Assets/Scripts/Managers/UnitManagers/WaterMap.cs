@@ -1068,7 +1068,9 @@ namespace Territory.Terrain
         /// <summary>
         /// Artificial rectangles only carve interior cells. Land cells that touch a lake corner only diagonally
         /// (no cardinal neighbor inside the rectangle) could stay too high vs the resolved surface — clamp them
-        /// to <paramref name="surface"/> so rim/bay continuity matches cardinal shores (BUG-42).
+        /// to <paramref name="surface"/> so rim/bay continuity matches cardinal shores (BUG-42). After init,
+        /// <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> also lowers any Moore shore land above
+        /// adjacent water logical surface (see isometric spec §2.4.1).
         /// </summary>
         private static void CoerceDiagonalCornerRimForArtificialLake(HeightMap heightMap, int x0, int y0, int rw, int rh, int surface)
         {

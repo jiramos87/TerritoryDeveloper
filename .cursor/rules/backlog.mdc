@@ -32,11 +32,14 @@ When the user references a backlog issue (by ID or description):
 ## Next Issue and AI Agent Prompts
 When the user asks which is the next issue to work on (or similar), respond with the issue and **ask if they want you to create an AI agent prompt** — a prompt for another agent to analyze, evaluate, and propose a development plan in Cursor for the changes needed to resolve the issue, clarifying all questions before writing the plan file.
 
+When **delivering** that prompt, follow **`AGENTS.md` → “Format when delivering an AI agent prompt”**: output Markdown (prefer one fenced code block tagged `markdown`) so the user can copy it into a `.md` file without losing structure.
+
 ## Adding New Issues
 - Use the next available ID in the appropriate category
 - Place in the correct priority section
 - Include: Type, Files, Notes, and Depends on (if applicable) fields
 - Use `Depends on: ID` when an issue requires another to be completed first
+- Prefer **`BACKLOG.md`** + **`.cursor/specs/isometric-geography-system.md`** / **`ui-design-system.md`** for durable rules; do not add parallel spec files under `.cursor/specs/` for bugs or prompts (see `AGENTS.md`)
 
 ## Completing Issues
 - **Only when the user confirms** the fix has been verified/tested

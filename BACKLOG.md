@@ -10,7 +10,7 @@
 - [ ] **BUG-42** — Water shores & cliffs: terrain + water (lakes + rivers); waterfalls; water-cliff walls — merged **BUG-33** + **BUG-41** (2026-03-25)
   - Type: bug / feature
   - Files: `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `PlaceCliffWalls`, `RefreshLakeShoreAfterLakePlacement`, `IsLandEligibleForWaterShorePrefabs`, neighbor queries vs `WaterBodyType` lake/river/sea), `WaterManager.cs` (`PlaceWater`, `UpdateWaterVisuals`), `GridSortingOrderService.cs`, `GeographyManager.cs` (sorting helpers as needed); water / shore / waterfall / water-cliff prefabs under `Assets/Prefabs/` (follow `.cursor/rules/coding-conventions.mdc` for new assets)
-  - Spec: `.cursor/specs/rivers.md` (§6 visuals; §4.3 / §7 transverse + cliffs); `.cursor/specs/bugs/cliff-water-shore-sorting.md`; `.cursor/specs/water-system-refactor.md` as applicable; **plan:** `docs/plan-bug-42-shore-cliff-refresh.md`
+  - Spec: `.cursor/specs/isometric-geography-system.md` (§4.2, §5.6–§5.9, §12–§13, §15); details in **Notes** / **Files** while **BUG-42** is open
   - Notes: **Merged scope — lakes (ex-BUG-33):** Fix incorrect or missing **lake** shore tiles (cardinal/diagonal water slopes, Bay corners, upslope pairs), z-order / sorting glitches, and visual gaps after procedural lake placement. Baseline shores from **FEAT-37a**; **FEAT-37b** excluded shore prefab scope. **Merged scope — rivers (ex-BUG-41):** After **FEAT-38**, procedural **river** water and banks must show **correct shore tiles** and **brown cliff** stacks at drops; **River** adjacency consistent with height/surface rules; refresh passes cover river Moore neighborhoods where needed. **New — waterfalls:** Introduce **waterfall** prefabs in **four orthogonal directions** (N, S, E, W) for cascades / cardinal slope-water drops. **New — water-cliff walls:** Introduce **water-cliff** wall prefabs on **south** and **east** faces (same placement/stacking model as existing **brown cliff** segments — `PlaceCliffWallStack` / shared-edge rules — but visually water-facing). **Related:** **BUG-39** / **BUG-40** (cliff placement + foreground-water sorting — re-verify on lakes + rivers after new prefabs).
   - Depends on: **FEAT-38** (completed)
 
@@ -18,14 +18,28 @@
 
 - [ ] **TECH-01** — Extract responsibilities from large files (focus: **GridManager** decomposition next)
   - Type: refactor
-  - Files: `GridManager.cs` (~2070 lines), `TerrainManager.cs` (~2365), `CityStats.cs` (~1200), `ZoneManager.cs` (~1360), `UIManager.cs` (~1240), `RoadManager.cs` (~1730)
+  - Files: `GridManager.cs` (~2070 lines), `TerrainManager.cs` (~3100), `CityStats.cs` (~1200), `ZoneManager.cs` (~1360), `UIManager.cs` (~1240), `RoadManager.cs` (~1730)
   - Notes: Helpers already extracted (`GridPathfinder`, `GridSortingOrderService`, `ChunkCullingSystem`, `RoadCacheService`, `BuildingPlacementService`, etc.). **Next candidates from GridManager:** `BulldozeHandler` (~200 lines), `GridInputHandler` (~130 lines), `CoordinateConversionService` (~230 lines). Prioritize this workstream; see `ARCHITECTURE.md` (GridManager hub trade-off).
 
 - [ ] **BUG-37** — Manual street drawing clears buildings and zones on cells adjacent to the traced path
   - Type: bug
   - Files: `RoadManager.cs` (`HandleRoadDrawing`, road placement / commit path), `GridManager.cs` (road mode input, any demolish or clear calls near road segments), `TerrainManager.cs` / `TerraformingService.cs` if road placement widens the affected region; `ZoneManager.cs` if zoning is cleared outside road cells
-  - Spec: `.cursor/specs/road-drawing-fixes.md` (manual streets; **BUG-25** completed — regression or related edge case)
+  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (manual streets; **BUG-25** completed — regression)
   - Notes: **Observed:** In **road drawing mode**, tracing a street **removes** (or clears) **buildings and zoning on cells adjacent to the route**, not only on the road cells themselves. **Expected:** Only cells that actually receive the road (and any explicitly required footprint for valid placement) should be modified; **neighboring** zoned or built cells should remain unless the design intentionally requires a wider clear (document if so). Likely causes: over-broad dirty rect, neighbor iteration calling `DemolishCellAt` / zone clear, terraform brush larger than 1×1, or preview vs commit mismatch. **Related:** completed **BUG-25** (manual street segment drawing).
+  - Depends on: none
+
+- [ ] **BUG-43** — Bridges over rivers/lakes adjacent to cliffs: gaps, floating segments, wrong alignment
+  - Type: bug
+  - Files: `RoadManager.cs` (`ValidateBridgePath`, `StraightenBridgeSegments` / bridge placement and commit), `RoadPrefabResolver.cs` (bridge vs land prefabs at height/water boundaries), `TerrainManager.cs` (cliff stacks, water shores, height continuity at cliff–water edges), `GridSortingOrderService.cs` (bridge `sortingOrder` over water vs land), `GridManager.cs` (road tile placement / refresh near cliffs); `InterstateManager.cs` if interstate bridge segments hit the same cases; `WaterManager.cs` / `WaterMap.cs` if body-type or surface rules affect placement
+  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (roads, bridges, validation); cliff/water interaction with roads as documented in §4–§7 and §12–§13 where relevant
+  - Notes: **Observed:** When a street or bridge path crosses **water** (river or lake) **next to a vertical cliff** (height drop), bridge/road visuals break: **floating** segments at the upper level, **gaps** between cliff-top approach and lower water segments, **disconnected** path continuity, occasional **grass/terrain patches** on water under misplaced road tiles, and **misaligned** bridge tiles relative to cliff faces and water surface. **Expected:** A single continuous, correctly elevated bridge run with prefabs and **sorting** consistent with per-cell height and water vs land; no floating or orphaned road pieces at cliff–water junctions. **Related:** **BUG-42** (shores, cliffs, rivers/lakes — coordinate so bridge fixes do not fight shore/cliff refresh passes).
+  - Depends on: none
+
+- [ ] **BUG-44** — Cliff prefabs: black gaps when a river or lake meets the **east** or **south** map edge
+  - Type: bug
+  - Files: `TerrainManager.cs` (`PlaceCliffWalls`, `PlaceCliffWallStack`, map-boundary / max-X / max-Y edge cases vs water cells), `WaterManager.cs` / `WaterMap.cs` if edge water placement interacts with cliff refresh; brown cliff / water-shore prefabs under `Assets/Prefabs/` (per `.cursor/rules/coding-conventions.mdc` for new or adjusted assets)
+  - Spec: `.cursor/specs/isometric-geography-system.md` (map edges, water, cliffs, sorting — sections covering shore/cliff stacks at boundaries)
+  - Notes: **Observed:** Where a **river channel** or **lake** reaches the **east** or **south** boundary of the grid, the **brown vertical cliff** geometry that seals the map edge is **missing or too short** under the water tiles, exposing **black void**; **grass** cells on the same edge still show correct cliff faces. Suggests boundary cliff stacks or prefab variants do not account for **lower water-bed elevation** at those edges. **Expected:** Continuous cliff wall to the same depth as neighboring land cliffs, or dedicated boundary + water prefabs so no holes at east/south × water. **Related:** **BUG-42** (shores, cliffs, rivers/lakes — may share root cause with water-cliff / boundary placement).
   - Depends on: none
 
 - [ ] **BUG-31** — Wrong prefabs at interstate entry/exit (border)
@@ -91,7 +105,7 @@
 - [ ] **FEAT-36** — Expand auto-zoning and auto-road candidates to include forests and slopes
   - Type: feature
   - Files: `GridManager.cs`, `AutoZoningManager.cs`, `AutoRoadBuilder.cs`
-  - Notes: Treat Grass, Forest, and N-S/E-W slopes as valid candidates for zoning and road expansion. Plan: `docs/plan-zoning-road-candidates-grass-forest-slopes.md`.
+  - Notes: Treat Grass, Forest, and N-S/E-W slopes as valid candidates for zoning and road expansion. Capture any design notes in this issue or in `.cursor/specs/isometric-geography-system.md` if rules become stable.
 
 - [ ] **FEAT-35** — Area demolition tool (bulldozer drag-to-select)
   - Type: feature
@@ -270,7 +284,7 @@
 - [x] **FEAT-38** — Procedural rivers during geography / terrain generation (2026-03-24)
   - Type: feature
   - Files: `GeographyManager.cs`, `ProceduralRiverGenerator.cs`, `TerrainManager.cs`, `WaterMap.cs`, `WaterManager.cs`, `WaterBody.cs`, `Cell.cs` / `CellData.cs` (as needed)
-  - Spec: `.cursor/specs/rivers.md`; `.cursor/specs/water-system-refactor.md` (Phase D alignment); `.cursor/specs/agent-prompt-feat-38-rivers.md`
+  - Spec: `.cursor/specs/isometric-geography-system.md` §12–§13
   - Notes: **Completed:** `WaterBody` classification + merge (river vs lake/sea); `GenerateProceduralRiversForNewGame()` after `InitializeWaterMap`, before interstate; `ProceduralRiverGenerator` (BFS / forced centerline, border margin, transverse + longitudinal monotonicity, `WaterMap` river bodies). **Follow-up visuals:** **BUG-42** (shores + cliffs + waterfalls + water-cliff walls — merged **BUG-33** + **BUG-41**). Cardinal slope-water / cascade **art** and shore/cliff polish tracked there.
 
 - [x] **BUG-39** — Bay / inner-corner shore prefabs: cliff art alignment vs stacked cliffs (2026-03-24)
@@ -281,12 +295,12 @@
 - [x] **BUG-40** — Shore cliff walls draw in front of nearer (foreground) water tiles (2026-03-24)
   - Type: fix (sorting / layers)
   - Files: `TerrainManager.cs` (`PlaceCliffWallStack`, `GetMaxCliffSortingOrderFromForegroundWaterNeighbors`)
-  - Notes: **Resolved:** Cliff `sortingOrder` is capped against registered **foreground** water neighbors (`nx+ny < highX+highY`) using their `Cell.sortingOrder`, so brown cliff segments do not draw above nearer water tiles. See `.cursor/specs/bugs/cliff-water-shore-sorting.md`.
+  - Notes: **Resolved:** Cliff `sortingOrder` is capped against registered **foreground** water neighbors (`nx+ny < highX+highY`) using their `Cell.sortingOrder`, so brown cliff segments do not draw above nearer water tiles. See `.cursor/specs/isometric-geography-system.md` §15.2.
 
 - [x] **BUG-36** — Lake generation: seeded RNG (reproducible + varied per New Game) (2026-03-24)
   - Type: fix
   - Files: `WaterMap.cs` (`InitializeLakesFromDepressionFill`, `LakeFillSettings`), `WaterManager.cs`, `MapGenerationSeed.cs` (`GetLakeFillRandomSeed`), `TerrainManager.cs` (`EnsureGuaranteedLakeDepressions` shuffle)
-  - Notes: `LakeFillSettings.RandomSeed` comes from map generation seed; depression-fill uses a seeded `System.Random`; bowl shuffle uses a derived seed. Same template no longer forces identical lake bodies across unrelated runs; fixed seed still reproduces. Spec: `.cursor/specs/water-system-refactor.md` (depression-fill / lake RNG). **Related:** **BUG-08**, **FEAT-38**.
+  - Notes: `LakeFillSettings.RandomSeed` comes from map generation seed; depression-fill uses a seeded `System.Random`; bowl shuffle uses a derived seed. Same template no longer forces identical lake bodies across unrelated runs; fixed seed still reproduces. Spec: `.cursor/specs/isometric-geography-system.md` §12.3. **Related:** **BUG-08**, **FEAT-38**.
 
 - [x] **BUG-35** — Load Game: multi-cell buildings — grass on footprint (non-pivot) could draw above building; 1×1 grass + building under one cell (2026-03-22)
   - Type: fix
@@ -296,7 +310,7 @@
 - [x] **BUG-34** — Load Game: zone buildings / utilities render under terrain or water edges (`sortingOrder` snapshot vs building layer) (2026-03-22)
   - Type: fix
   - Files: `GridManager.cs`, `ZoneManager.cs`, `TerrainManager.cs`, `BuildingPlacementService.cs`, `GridSortingOrderService.cs`, `Cell.cs`, `CellData.cs`, `GameSaveManager.cs`
-  - Notes: Deterministic restore order; open water and shores aligned with runtime sorting; multi-cell RCI passes `buildingSize`; post-load building sort pass; optional grass sync via `SyncCellTerrainLayersBelowBuilding`. **BUG-35** (completed 2026-03-22) adds `destroyFlatGrass` on building placement/restore. Archived agent prompt: [`.cursor/specs/archive/agent-prompt-load-game-building-sorting-order.md`](.cursor/specs/archive/agent-prompt-load-game-building-sorting-order.md).
+  - Notes: Deterministic restore order; open water and shores aligned with runtime sorting; multi-cell RCI passes `buildingSize`; post-load building sort pass; optional grass sync via `SyncCellTerrainLayersBelowBuilding`. **BUG-35** (completed 2026-03-22) adds `destroyFlatGrass` on building placement/restore. Spec summary: `.cursor/specs/isometric-geography-system.md` §7.4.
 
 - [x] **FEAT-37c** — Persist `WaterMapData` in saves + snapshot load (no terrain/water regen on load) (2026-03-22)
   - Type: feature
@@ -320,14 +334,14 @@
 
 - [x] **TECH-12** — Water system refactor: planning pass (objectives, rules, scope, child issues) (2026-03-21)
   - Type: planning / documentation
-  - Files: `.cursor/specs/water-system-refactor.md`, `BACKLOG.md` (FEAT-37, BUG-08 splits), `ARCHITECTURE.md` (Terrain / Water as needed)
+  - Files: `.cursor/specs/isometric-geography-system.md` (§12), `BACKLOG.md` (FEAT-37, BUG-08 splits), `ARCHITECTURE.md` (Terrain / Water as needed)
   - Notes: **Goal:** Before implementation of **FEAT-37**, produce a single agreed definition of **objectives**, **rules** (data + gameplay + rendering), **known bugs** to fold in, **non-goals / phases**, and **concrete child issues** (IDs) ordered for development. Link outcomes in this spec and in `FEAT-37`. Overlaps **BUG-08** (generation), **FEAT-15** (ports/sea). **Does not** implement code — only backlog + spec updates and issue breakdown.
   - Depends on: nothing (blocks structured FEAT-37 execution)
 
 - [x] **BUG-30** — Incorrect road prefabs when interstate climbs slopes (2026-03-20)
   - Type: fix
   - Files: `TerraformingService.cs`, `RoadPrefabResolver.cs`, `PathTerraformPlan.cs`, `RoadManager.cs` (shared pipeline)
-  - Notes: Segment-based Δh for scale-with-slopes; corner/upslope cells use `GetPostTerraformSlopeTypeAlongExit` (aligned with travel); live-terrain fallback + `RestoreTerrainForCell` force orthogonal ramp when `action == None` and cardinal `postTerraformSlopeType`. Archived prompt: [`.cursor/specs/archive/agent-prompt-interstate-slope-prefabs.md`](.cursor/specs/archive/agent-prompt-interstate-slope-prefabs.md). Verified in Unity.
+  - Notes: Segment-based Δh for scale-with-slopes; corner/upslope cells use `GetPostTerraformSlopeTypeAlongExit` (aligned with travel); live-terrain fallback + `RestoreTerrainForCell` force orthogonal ramp when `action == None` and cardinal `postTerraformSlopeType`. Spec: `.cursor/specs/isometric-geography-system.md` §14.7. Verified in Unity.
 
 - [x] **TECH-09** — Remove obsolete `TerraformNeeded` from TerraformingService (2026-03-20)
   - Type: refactor (dead code removal)
@@ -352,11 +366,11 @@
 - [x] **BUG-25** — Fix bugs in manual street segment drawing (2026-03-19)
   - Type: fix
   - Files: `RoadManager.cs`, `RoadPrefabResolver.cs` (also: `GridManager.cs`, `TerraformingService.cs`, `PathTerraformPlan.cs`, `GridPathfinder.cs` for prior spec work)
-  - Notes: Junction/T/cross prefabs: `HashSet` path membership + `SelectFromConnectivity` for 3+ cardinal neighbors in `RoadPrefabResolver`; post-placement `RefreshRoadPrefabAt` pass on placed cells in `TryFinalizeManualRoadPlacement`. Spec: `.cursor/specs/road-drawing-fixes.md`. Optional follow-up: `postTerraformSlopeType` on refresh (spec 2.1), crossroads prefab audit.
+  - Notes: Junction/T/cross prefabs: `HashSet` path membership + `SelectFromConnectivity` for 3+ cardinal neighbors in `RoadPrefabResolver`; post-placement `RefreshRoadPrefabAt` pass on placed cells in `TryFinalizeManualRoadPlacement`. Spec: `.cursor/specs/isometric-geography-system.md` §14. Optional follow-up: `postTerraformSlopeType` on refresh, crossroads prefab audit.
 - [x] **BUG-27** — Interstate pathfinding bugs (2026-03-19)
-  - Border endpoint scoring (`ComputeInterstateBorderEndpointScore`), sorted candidates, `PickLowerCostInterstateAStarPath` (avoid-high vs not, pick cheaper), `InterstateAwayFromGoalPenalty` and cost tuning in `RoadPathCostConstants`. Spec: `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md` Phase 2.
+  - Border endpoint scoring (`ComputeInterstateBorderEndpointScore`), sorted candidates, `PickLowerCostInterstateAStarPath` (avoid-high vs not, pick cheaper), `InterstateAwayFromGoalPenalty` and cost tuning in `RoadPathCostConstants`. Spec: `.cursor/specs/isometric-geography-system.md` §14.5.
 - [x] **BUG-29** — Cut-through: high hills cut through disappear leaving crater (2026-03-19)
-  - Reject cut-through when `maxHeight - baseHeight > 1`; cliff/corridor context in `TerrainManager` / `PathTerraformPlan`; map-edge margin `cutThroughMinCellsFromMapEdge`; Phase 1 validation ring in `PathTerraformPlan`; interstate uses `forbidCutThrough`. Archived summary: [`.cursor/specs/archive/plan-cut-through-craters.md`](.cursor/specs/archive/plan-cut-through-craters.md).
+  - Reject cut-through when `maxHeight - baseHeight > 1`; cliff/corridor context in `TerrainManager` / `PathTerraformPlan`; map-edge margin `cutThroughMinCellsFromMapEdge`; Phase 1 validation ring in `PathTerraformPlan`; interstate uses `forbidCutThrough`. Spec: `.cursor/specs/isometric-geography-system.md` §14.6.
 
 - [x] **BUG-15** / **BUG-13** — UrbanizationProposal not wired / per-tick FindObjectOfType (2026-03-22 superseded)
   - Notes: The **UrbanizationProposal** system is **obsolete** and stays **disabled** by design. Do not fix by re-enabling. Full removal tracked under **TECH-13**.

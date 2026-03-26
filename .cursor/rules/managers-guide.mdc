@@ -9,7 +9,7 @@ alwaysApply: false
 ## Manager Responsibilities (one-line each)
 - **GridManager** — Central hub. Isometric 2D grid, cell access, coordinate conversion, building placement, bulldozing, sorting order, pathfinding
 - **TerrainManager** — Heightmap generation, slope types, prefab selection by slope, cliff stacks (`PlaceCliffWallStack`, serialized face nudges + water-shore Y + `GetMaxCliffSortingOrderFromForegroundWaterNeighbors`)
-- **WaterManager** — Water body generation and management (multi-level lakes: **FEAT-37**; **FEAT-37a** / **FEAT-37b** / **FEAT-37c** completed; shore / cliff / waterfall **BUG-42** (merged **BUG-33** + **BUG-41**); cliff placement + foreground-water sorting **BUG-39** / **BUG-40** completed 2026-03-24; load building sort **BUG-34** + grass under buildings **BUG-35** completed 2026-03-22; `.cursor/specs/water-system-refactor.md`)
+- **WaterManager** — Water body generation and management (multi-level lakes: **FEAT-37**; **FEAT-37a** / **FEAT-37b** / **FEAT-37c** completed; **FEAT-38** rivers; shore / cliff / waterfall **BUG-42**; **BUG-39** / **BUG-40** completed 2026-03-24; load **BUG-34** / **BUG-35** completed 2026-03-22). Spec: `.cursor/specs/isometric-geography-system.md` §12–§13
 - **ForestManager** — Forest generation (sparse/medium/dense), forestation, deforestation
 - **ZoneManager** — RCI zoning (residential, commercial, industrial), zone tile placement
 - **RoadManager** — Road drawing, prefab selection by neighbors, road preview
@@ -51,7 +51,7 @@ alwaysApply: false
 - **`UrbanizationProposalManager`** and related proposal UI — **obsolete**; intentionally **not** run from `SimulationManager.ProcessSimulationTick()`. Do **not** re-enable. Full removal: **TECH-13** in `BACKLOG.md`. **UrbanCentroidService** and ring-based AUTO growth remain supported.
 
 ## Rules
-- **Road terraform validation:** Use `RoadManager.TryPrepareRoadPlacementPlan` (includes `PathTerraformPlan.TryValidatePhase1Heights`) and `RoadPathValidationContext`. Streets / auto-road should use `TryPrepareRoadPlacementPlanLongestValidPrefix` when partial paths are acceptable; interstate uses full-path `TryPrepareRoadPlacementPlan` with `forbidCutThrough: true`. Do not use `ComputePathPlan` alone for placement decisions. Specs: `.cursor/specs/road-drawing-fixes.md` (BUG-25), `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md` (BUG-27/BUG-29 completed per BACKLOG).
+- **Road terraform validation:** Use `RoadManager.TryPrepareRoadPlacementPlan` (includes `PathTerraformPlan.TryValidatePhase1Heights`) and `RoadPathValidationContext`. Streets / auto-road should use `TryPrepareRoadPlacementPlanLongestValidPrefix` when partial paths are acceptable; interstate uses full-path `TryPrepareRoadPlacementPlan` with `forbidCutThrough: true`. Do not use `ComputePathPlan` alone for placement decisions. Spec: `.cursor/specs/isometric-geography-system.md` §14.
 - Every manager is a MonoBehaviour living as a component on a scene GameObject
 - NEVER instantiate managers with `new` — they are always scene components
 - GridManager is the central hub — all cell operations go through it

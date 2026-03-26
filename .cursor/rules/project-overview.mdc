@@ -27,5 +27,6 @@ All code, comments, XML docs, annotations, Debug.Log messages, and repository co
 - **Only singleton**: `GameNotificationManager.Instance` (with DontDestroyOnLoad)
 - **Data models**: MonoBehaviour-based (Cell, Zone — live on GameObjects) or plain classes (CellData, CommuneData, TerritoryData — for serialization/save)
 - **Grid**: 2D isometric with height system (heightMap). Cells stored in `Cell[,] cellArray` and `GameObject[,] gridArray`
-- **Sorting order**: complex system determining draw order based on Y position + height
+- **Geography (canonical spec)**: `.cursor/specs/isometric-geography-system.md` — coordinates, heights, slopes, water/shore/cliffs, sorting for terrain layers
+- **Sorting order**: depth × height formula and per-type offsets (see canonical spec §7); `GridManager` + `GridSortingOrderService` implement cell content ordering
 - **Reference file for best practices**: `EconomyManager.cs` (XML docs + #regions + [Header] attributes)

@@ -55,7 +55,7 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 | File | Lines | Role |
 |------|-------|------|
 | GridManager.cs | ~2070 | Central hub — grid, cells, coordinates, placement, sorting, pathfinding |
-| TerrainManager.cs | ~2365 | Heightmap, slopes, terrain prefab selection |
+| TerrainManager.cs | ~3100 | Heightmap, slopes, water-shore/cliff prefabs, terrain sorting helpers |
 | ZoneManager.cs | ~1360 | RCI zoning, zone tile placement |
 | RoadManager.cs | ~1730 | Road drawing, prefab selection, road preview |
 | UIManager.cs | ~1240 | Main UI, popups, tool state |
@@ -119,12 +119,14 @@ Cross-cutting effort to standardize HUD, popups, and interaction patterns: **cha
 
 ### Water (current vs planned)
 
-- **Today (FEAT-37a + FEAT-37b + FEAT-37c + FEAT-38 completed):** `WaterMap` stores **per-cell water body id** and **`WaterBody`** holds **surface height**; procedural lakes use **depression-fill**; `TerrainManager` may carve **minimal cardinal bowls** (`LakeFeasibility`). Lake **shore tiles** from **FEAT-37a**; **sorting / roads / bridges / `SEA_LEVEL` removal** (non-shore) from **FEAT-37b**; **FEAT-37c** persists `WaterMapData` on save and restores it on load with **CellData** snapshot restore (no slope regen / no global sorting recalc on load). **`WaterBodyType`** on `Cell` / `CellData` classifies lake vs sea for saves. **FEAT-38** adds **procedural rivers** (`ProceduralRiverGenerator`, `WaterBodyType.River`) after lakes, before interstate; see [`.cursor/specs/rivers.md`](.cursor/specs/rivers.md). Lake + river **shore / cliff / waterfall / water-cliff** polish: **[BUG-42](BACKLOG.md)** (in progress; merged **BUG-33** + **BUG-41**). Cliff wall placement (inspector nudges + water-shore Y) and cliff-vs-foreground-water sorting caps: **[BUG-39](BACKLOG.md)** and **[BUG-40](BACKLOG.md)** completed (2026-03-24); engineering notes: [`.cursor/specs/bugs/cliff-water-shore-sorting.md`](.cursor/specs/bugs/cliff-water-shore-sorting.md). Load-time building sort: **[BUG-34](BACKLOG.md)** and **[BUG-35](BACKLOG.md)** completed (2026-03-22).
-- **Epic ([FEAT-37](BACKLOG.md)):** Child issues **FEAT-37a** / **FEAT-37b** / **FEAT-37c** done; **FEAT-38** (procedural rivers) **completed** (2026-03-24). Water **shore / cliff** prefab polish (lakes + rivers): **[BUG-42](BACKLOG.md)** (in progress). Broader sea/sources/tools: **FEAT-39+** (see backlog). Minimap water: **[BUG-32](BACKLOG.md)** completed (2026-03-23). See `.cursor/specs/water-system-refactor.md`.
+- **Today (FEAT-37a + FEAT-37b + FEAT-37c + FEAT-38 completed):** `WaterMap` stores **per-cell water body id** and **`WaterBody`** holds **surface height**; procedural lakes use **depression-fill**; `TerrainManager` may carve **minimal cardinal bowls** (`LakeFeasibility`). Lake **shore tiles** from **FEAT-37a**; **sorting / roads / bridges / `SEA_LEVEL` removal** (non-shore) from **FEAT-37b**; **FEAT-37c** persists `WaterMapData` on save and restores it on load with **CellData** snapshot restore (no slope regen / no global sorting recalc on load). **`WaterBodyType`** on `Cell` / `CellData` classifies lake, river, sea for saves. **FEAT-38** — **procedural rivers** (`ProceduralRiverGenerator`, `WaterBodyType.River`) after lakes, before interstate — see [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) §13. Lake + river **shore / cliff / waterfall / water-cliff** polish: **[BUG-42](BACKLOG.md)** (in progress; merged **BUG-33** + **BUG-41**). Cliff wall placement (inspector nudges + water-shore Y) and cliff-vs-foreground-water sorting caps: **[BUG-39](BACKLOG.md)** and **[BUG-40](BACKLOG.md)** completed (2026-03-24). Load-time building sort: **[BUG-34](BACKLOG.md)** and **[BUG-35](BACKLOG.md)** completed (2026-03-22).
+- **Epic ([FEAT-37](BACKLOG.md)):** Child issues **FEAT-37a** / **FEAT-37b** / **FEAT-37c** done; **FEAT-38** (procedural rivers) **completed** (2026-03-24). Water **shore / cliff** prefab polish (lakes + rivers): **[BUG-42](BACKLOG.md)** (in progress). Broader sea/sources/tools: **FEAT-39+** (see backlog). Minimap water: **[BUG-32](BACKLOG.md)** completed (2026-03-23). Detail: [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) §12.
 
-### Isometric Geography
+### Isometric geography (canonical spec)
 
-The terrain system uses a **diamond isometric projection** with an integer **height model** (0–5), **13 terrain slope types** (flat, 4 cardinal, 4 diagonal, 4 corner/upslope), and a **priority-based slope determination algorithm**. Roads interact with terrain via a terraforming system (scale-with-slopes or cut-through modes). Full technical reference: [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md). Lake **water surface + shore ramps + cliff stacks** layering and sorting: [`.cursor/specs/bugs/cliff-water-shore-sorting.md`](.cursor/specs/bugs/cliff-water-shore-sorting.md) (**[BUG-42](BACKLOG.md)** in progress; **[BUG-39](BACKLOG.md)** / **[BUG-40](BACKLOG.md)** completed 2026-03-24).
+**Canonical reference:** [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) — use it for **conventions, definitions, and mechanisms**: diamond grid and direction deltas, `HeightMap` / `Cell.height`, land slopes, **water surface vs shore-band vs rim**, `DetermineWaterShorePrefabs` behavior, cliff faces and suppression, **terrain/water/shore sorting**, terraform modes, road-on-slope mapping, and pathfinding costs. When another document disagrees, **update the spec or the code**, then align the doc — do not fork a second “source of truth.”
+
+**Same file (sections):** §12 (water map, lakes, save/load), §13 (rivers), §14 (roads / interstate / bridges), §15 (lake-edge debugging notes). UI-only spec: [`.cursor/specs/ui-design-system.md`](.cursor/specs/ui-design-system.md). **`.cursor/specs/`** intentionally contains only those two specs — see `AGENTS.md` (no bug archives under `specs/`).
 
 ## Full Dependency Map
 
@@ -158,11 +160,12 @@ The terrain system uses a **diamond isometric projection** with an integer **hei
 
 ## Road and interstate routing (summary)
 
-- **Manual streets:** `RoadManager.TryPrepareRoadPlacementPlanLongestValidPrefix` (partial paths), `PathTerraformPlan.TryValidatePhase1Heights`, preview terraform reverted before A* each frame. Spec: `.cursor/specs/road-drawing-fixes.md` (BACKLOG **BUG-25**).
-- **Interstate:** `TryPrepareRoadPlacementPlan` with `RoadPathValidationContext.forbidCutThrough`; `InterstateManager` ranks border endpoints and runs dual A* (`PickLowerCostInterstateAStarPath`) with shared costs in `RoadPathCostConstants`. Spec: `.cursor/specs/interstate-prefab-and-pathfinding-fixes.md`. Cut-through void mitigation (historical): `.cursor/specs/archive/plan-cut-through-craters.md` (BACKLOG **BUG-29**, completed).
+- **Manual streets:** `RoadManager.TryPrepareRoadPlacementPlanLongestValidPrefix` (partial paths), `PathTerraformPlan.TryValidatePhase1Heights`, preview terraform reverted before A* each frame. Spec: `.cursor/specs/isometric-geography-system.md` §14 (BACKLOG **BUG-25** completed).
+- **Interstate:** `TryPrepareRoadPlacementPlan` with `RoadPathValidationContext.forbidCutThrough`; `InterstateManager` ranks border endpoints and runs dual A* (`PickLowerCostInterstateAStarPath`) with shared costs in `RoadPathCostConstants`. Spec: same file §10, §14.5–§14.6 (BACKLOG **BUG-27**, **BUG-29** completed).
 
 ## Architectural Decisions
 
+- **`.cursor/specs/` minimal set**: Only **durable** system specs live there — [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) (terrain, water, roads, sorting) and [`.cursor/specs/ui-design-system.md`](.cursor/specs/ui-design-system.md). Bug write-ups, agent prompts, and one-off fix plans are **not** kept under `specs/`; use **`BACKLOG.md`** while work is open and **delete** ephemeral markdown when done (see `AGENTS.md`).
 - **GridManager as hub**: GridManager is the central coordinator because nearly all game operations involve cells. This keeps cell access consistent but makes GridManager large.
 - **FindObjectOfType pattern**: Used instead of DI for simplicity. Managers declare public/serialized fields wired in Inspector, with FindObjectOfType as null-check fallback in Awake/Start.
 - **Single singleton**: Only GameNotificationManager uses the singleton pattern (with DontDestroyOnLoad). All other managers are resolved via Inspector references.
@@ -170,5 +173,5 @@ The terrain system uses a **diamond isometric projection** with an integer **hei
 
 ## Known Trade-offs
 - **High coupling**: Many managers reference each other directly, creating tight coupling
-- **GridManager size**: At ~2070 lines, it handles too many responsibilities (placement, sorting, pathfinding, culling); decomposition tracked as **TECH-01** in `BACKLOG.md`
+- **GridManager size**: At ~2070 lines (order of magnitude), it handles too many responsibilities (placement, sorting, pathfinding, culling); decomposition tracked as **TECH-01** in `BACKLOG.md`
 - **No event system**: Managers communicate via direct method calls rather than events

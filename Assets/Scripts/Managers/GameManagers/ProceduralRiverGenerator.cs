@@ -7,8 +7,10 @@ namespace Territory.Terrain
     /// <summary>
     /// FEAT-38: procedural static rivers after lake/sea init. Only assigns dry cells; never modifies existing water bodies.
     /// Cross-stream <b>bed</b> width (lecho) is 1–3 cells of <b>water</b>; corridor width = bed + 2 (one dry shore strip per side) for terrain refresh and collision with <see cref="RiverBorderMargin"/>.
-    /// Each cross-section gets one shared bed height and symmetric bank height; water bodies are split when surface height changes along the path (see <c>rivers.md</c> §4.3).
-    /// Bed floor <c>H_bed</c> is <b>non-increasing</b> along the centerline from map entry toward exit so the river never climbs terrain (see <c>rivers.md</c> §4.4).
+    /// Each cross-section gets one shared bed height and symmetric bank height; water bodies are split when surface height changes along the path (see <c>isometric-geography-system.md</c> §13.4).
+    /// After carving, inner-corner shore continuity is enforced on the bed footprint (see §13.5). Lake/river shore
+    /// land heights are aligned with adjacent water surfaces during <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> (§2.4.1).
+    /// Bed floor <c>H_bed</c> is <b>non-increasing</b> along the centerline from map entry toward exit so the river never climbs terrain (see §13.4).
     /// Centerline and footprint avoid map borders except at designated entry/exit edges (see <see cref="RiverBorderMargin"/>).
     /// </summary>
     public static class ProceduralRiverGenerator
@@ -82,6 +84,7 @@ namespace Territory.Terrain
                     used.Add(p);
 
                 ApplyCrossSectionHeights(wm, hm, crossSections);
+                PromoteRiverBedInnerCornerShoreContinuity(hm, gw, gh, waterFootprint);
 
                 int lastSurface = int.MinValue;
                 int currentBodyId = -1;
@@ -99,6 +102,8 @@ namespace Territory.Terrain
                     foreach (Vector2Int p in sec.Bed)
                     {
                         if (wm.IsWater(p.x, p.y))
+                            continue;
+                        if (hm.GetHeight(p.x, p.y) != sec.AppliedBedHeight)
                             continue;
                         wm.TryAssignCellToRiverBody(p.x, p.y, currentBodyId);
                     }
@@ -138,7 +143,7 @@ namespace Territory.Terrain
             maxY = Mathf.Min(gh - 1, maxY + 2);
         }
 
-        /// <summary>One perpendicular strip: left shore, bed cells, right shore (see <c>rivers.md</c> §4.3).</summary>
+        /// <summary>One perpendicular strip: left shore, bed cells, right shore (see project spec <c>.cursor/specs/isometric-geography-system.md</c> §13.4).</summary>
         private sealed class RiverCrossSectionData
         {
             public readonly List<Vector2Int> Bed = new List<Vector2Int>(MaxRiverBedWidth);
@@ -212,7 +217,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Shallow carve candidate per section, then <b>longitudinal</b> clamp: <c>H_bed[i] = min(candidate[i], H_bed[i-1])</c> from entry to exit (see <c>rivers.md</c> §4.4).
+        /// Shallow carve candidate per section, then <b>longitudinal</b> clamp: <c>H_bed[i] = min(candidate[i], H_bed[i-1])</c> from entry to exit (see <c>isometric-geography-system.md</c> §13.4).
         /// Finally writes bed and symmetric bank heights.
         /// </summary>
         private static void ApplyCrossSectionHeights(WaterMap wm, HeightMap hm, List<RiverCrossSectionData> sections)
@@ -269,6 +274,44 @@ namespace Territory.Terrain
                     hm.SetHeight(sec.LeftShore.x, sec.LeftShore.y, bankH);
                 if (sec.HasRight && !wm.IsWater(sec.RightShore.x, sec.RightShore.y))
                     hm.SetHeight(sec.RightShore.x, sec.RightShore.y, bankH);
+            }
+        }
+
+        /// <summary>
+        /// After carving bed and banks, some bed cells can sit at the <b>inner corner</b> of an L-shaped shore where two
+        /// perpendicular bank neighbors are one step higher — leaving a water-height hole breaks continuous shore art
+        /// (see isometric spec §13.5). Promotes such cells from <c>H_bed</c> to <c>H_bed + 1</c> so they stay dry shore.
+        /// </summary>
+        private static void PromoteRiverBedInnerCornerShoreContinuity(HeightMap hm, int gw, int gh, HashSet<Vector2Int> bedFootprint)
+        {
+            if (hm == null || bedFootprint == null || bedFootprint.Count == 0)
+                return;
+
+            foreach (Vector2Int p in bedFootprint)
+            {
+                int x = p.x;
+                int y = p.y;
+                if (x < 0 || x >= gw || y < 0 || y >= gh)
+                    continue;
+                int h = hm.GetHeight(x, y);
+                if (h >= TerrainManager.MAX_HEIGHT)
+                    continue;
+                int hp = h + 1;
+
+                bool PromoteIfBothPerpendicularShore(int ax, int ay, int bx, int by)
+                {
+                    if (!hm.IsValidPosition(ax, ay) || !hm.IsValidPosition(bx, by))
+                        return false;
+                    return hm.GetHeight(ax, ay) == hp && hm.GetHeight(bx, by) == hp;
+                }
+
+                if (PromoteIfBothPerpendicularShore(x + 1, y, x, y + 1)
+                    || PromoteIfBothPerpendicularShore(x + 1, y, x, y - 1)
+                    || PromoteIfBothPerpendicularShore(x - 1, y, x, y + 1)
+                    || PromoteIfBothPerpendicularShore(x - 1, y, x, y - 1))
+                {
+                    hm.SetHeight(x, y, hp);
+                }
             }
         }
 
