@@ -29,6 +29,9 @@ namespace Territory.Terrain
         private int width;
         private int height;
 
+        /// <summary>First centerline cell per procedural river placed in <see cref="ProceduralRiverGenerator"/> (diagnostics).</summary>
+        private readonly List<Vector2Int> proceduralRiverEntryAnchors = new List<Vector2Int>();
+
         /// <summary>After artificial lake fallback, region in heightmap coords to refresh terrain (inclusive). -1 if none.</summary>
         public int ArtificialDirtyMinX { get; private set; } = -1;
         public int ArtificialDirtyMinY { get; private set; } = -1;
@@ -99,6 +102,19 @@ namespace Territory.Terrain
         public IReadOnlyDictionary<int, WaterBody> GetBodies()
         {
             return bodies;
+        }
+
+        /// <summary>Ordered entry anchors for rivers generated this session (map coordinates).</summary>
+        public IReadOnlyList<Vector2Int> GetProceduralRiverEntryAnchors()
+        {
+            return proceduralRiverEntryAnchors;
+        }
+
+        /// <summary>Records the entry centerline cell for one procedural river pass (FEAT-38 diagnostics).</summary>
+        public void RecordProceduralRiverEntryAnchor(int x, int y)
+        {
+            if (IsValidPosition(x, y))
+                proceduralRiverEntryAnchors.Add(new Vector2Int(x, y));
         }
 
         /// <summary>
@@ -198,6 +214,296 @@ namespace Territory.Terrain
                 if (body.CellCount == 0)
                     bodies.Remove(bodyId);
             }
+        }
+
+        /// <summary>
+        /// BUG-45 / multi-body contact: For each water cell on the <b>higher</b> logical surface that cardinally touches
+        /// water at a <b>strictly lower</b> surface, sets <see cref="HeightMap"/> bed height to the <b>minimum</b> bed
+        /// among those lower-surface neighbors only. Does <b>not</b> change <c>waterBodyIds</c>, merge bodies, or fill dry cells.
+        /// Idempotent; safe to run from <see cref="WaterManager.UpdateWaterVisuals"/> before <c>PlaceWater</c>.
+        /// </summary>
+        private void AlignUpperSurfaceContactBorderBedHeights(HeightMap hm)
+        {
+            int[] d4x = { 1, -1, 0, 0 };
+            int[] d4y = { 0, 0, 1, -1 };
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (!IsWater(x, y))
+                        continue;
+                    int sHere = GetSurfaceHeightAt(x, y);
+                    if (sHere < 0)
+                        continue;
+                    int targetBed = int.MaxValue;
+                    for (int i = 0; i < 4; i++)
+                    {
+                        int nx = x + d4x[i];
+                        int ny = y + d4y[i];
+                        if (!IsValidPosition(nx, ny) || !IsWater(nx, ny))
+                            continue;
+                        int sN = GetSurfaceHeightAt(nx, ny);
+                        if (sN < 0 || sN >= sHere)
+                            continue;
+                        targetBed = Mathf.Min(targetBed, hm.GetHeight(nx, ny));
+                    }
+
+                    if (targetBed == int.MaxValue)
+                        continue;
+                    hm.SetHeight(x, y, Mathf.Clamp(targetBed, TerrainManager.MIN_HEIGHT, TerrainManager.MAX_HEIGHT));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Aligns <see cref="HeightMap"/> beds only on the cardinal contact strip where a higher logical water surface
+        /// meets a lower one (see §12.7). Does not reclassify cells or merge bodies.
+        /// Call from <see cref="WaterManager.UpdateWaterVisuals"/> when a <see cref="HeightMap"/> is available.
+        /// </summary>
+        public void ApplyMultiBodySurfaceBoundaryNormalization(HeightMap heightMap)
+        {
+            if (heightMap == null)
+                return;
+            AlignUpperSurfaceContactBorderBedHeights(heightMap);
+        }
+
+        /// <summary>
+        /// BUG-45 Pass B: extends the lower logical surface along cardinal contacts where <c>S_high &gt; S_low</c>,
+        /// so <see cref="PlaceWater"/> and cascade cliffs see continuous lower pool geometry.
+        /// Absorbs dry land (including former water-shore) in the strip away from the high cell, and dry cells on the
+        /// <b>upper-bank</b> perpendicular to the contact (beside each high cell at the junction) so the lower body
+        /// can replace shore wedges between two surface levels. The next <see cref="WaterManager.UpdateWaterVisuals"/>
+        /// pass replaces terrain with open water where absorbed.
+        /// Assigns <see cref="waterBodyIds"/> to an existing body at <paramref name="sLow"/> (deterministic: contact cell’s id;
+        /// does not merge two lower bodies). Idempotent. Updates <see cref="HeightMap"/> beds; sync <see cref="GridManager.SetCellHeight"/>
+        /// when <paramref name="gridManager"/> is non-null.
+        /// </summary>
+        /// <returns><c>true</c> if any cell or height changed.</returns>
+        public bool ApplyWaterSurfaceJunctionMerge(HeightMap heightMap, GridManager gridManager, out int dirtyMinX, out int dirtyMinY, out int dirtyMaxX, out int dirtyMaxY)
+        {
+            dirtyMinX = dirtyMinY = dirtyMaxX = dirtyMaxY = 0;
+            if (heightMap == null)
+                return false;
+
+            const int maxStripDepthCap = 5;
+            int[] d4x = { 1, -1, 0, 0 };
+            int[] d4y = { 0, 0, 1, -1 };
+
+            bool anyChange = false;
+            bool haveBounds = false;
+            int dMinX = 0, dMinY = 0, dMaxX = 0, dMaxY = 0;
+            var absorbClaims = new Dictionary<Vector2Int, (int bodyId, int sLow)>();
+
+            void ExpandDirty(int x, int y)
+            {
+                if (!haveBounds)
+                {
+                    dMinX = dMaxX = x;
+                    dMinY = dMaxY = y;
+                    haveBounds = true;
+                }
+                else
+                {
+                    if (x < dMinX) dMinX = x;
+                    if (x > dMaxX) dMaxX = x;
+                    if (y < dMinY) dMinY = y;
+                    if (y > dMaxY) dMaxY = y;
+                }
+            }
+
+            void ProposeAbsorb(int cx, int cy, int lowerBodyId, int sLow)
+            {
+                var key = new Vector2Int(cx, cy);
+                if (!absorbClaims.TryGetValue(key, out var prev))
+                    absorbClaims[key] = (lowerBodyId, sLow);
+                else if (sLow < prev.sLow)
+                    absorbClaims[key] = (lowerBodyId, sLow);
+                else if (sLow > prev.sLow)
+                    return;
+                else if (lowerBodyId < prev.bodyId)
+                    absorbClaims[key] = (lowerBodyId, sLow);
+            }
+
+            for (int hx = 0; hx < width; hx++)
+            {
+                for (int hy = 0; hy < height; hy++)
+                {
+                    if (!IsWater(hx, hy))
+                        continue;
+                    int sHigh = GetSurfaceHeightAt(hx, hy);
+                    if (sHigh < 0)
+                        continue;
+
+                    for (int i = 0; i < 4; i++)
+                    {
+                        int lx = hx + d4x[i];
+                        int ly = hy + d4y[i];
+                        if (!IsValidPosition(lx, ly) || !IsWater(lx, ly))
+                            continue;
+                        int sLow = GetSurfaceHeightAt(lx, ly);
+                        if (sLow < 0 || sHigh <= sLow)
+                            continue;
+
+                        int lowerBodyId = GetWaterBodyId(lx, ly);
+                        if (lowerBodyId == 0 || !bodies.TryGetValue(lowerBodyId, out WaterBody lowerBody) || lowerBody.SurfaceHeight != sLow)
+                            continue;
+
+                        int stepX = lx - hx;
+                        int stepY = ly - hy;
+                        int intoUpperX = hx - lx;
+                        int intoUpperY = hy - ly;
+                        int maxDepth = Mathf.Min(maxStripDepthCap, CountUpperExtentAlongStep(hx, hy, intoUpperX, intoUpperY, sHigh, GetWaterBodyId(hx, hy)));
+
+                        for (int k = 1; k <= maxDepth; k++)
+                        {
+                            int cx = lx + stepX * k;
+                            int cy = ly + stepY * k;
+                            if (!IsValidPosition(cx, cy))
+                                break;
+                            if (IsWater(cx, cy))
+                            {
+                                int sC = GetSurfaceHeightAt(cx, cy);
+                                if (sC == sLow)
+                                    break;
+                                break;
+                            }
+
+                            ProposeAbsorb(cx, cy, lowerBodyId, sLow);
+                        }
+
+                        // Upper-bank wedge: dry cells perpendicular to the high→low step (beside the high cell at the contact).
+                        // Lets the lower body take shore tiles that sit between the two surface levels along the junction.
+                        int ddx = lx - hx;
+                        int ddy = ly - hy;
+                        int p1x = -ddy;
+                        int p1y = ddx;
+                        int p2x = ddy;
+                        int p2y = -ddx;
+                        for (int pi = 0; pi < 2; pi++)
+                        {
+                            int px = pi == 0 ? p1x : p2x;
+                            int py = pi == 0 ? p1y : p2y;
+                            int ux = hx + px;
+                            int uy = hy + py;
+                            if (!IsValidPosition(ux, uy))
+                                continue;
+                            if (IsWater(ux, uy))
+                                continue;
+                            ProposeAbsorb(ux, uy, lowerBodyId, sLow);
+                        }
+                    }
+                }
+            }
+
+            foreach (var kv in absorbClaims)
+            {
+                int cx = kv.Key.x;
+                int cy = kv.Key.y;
+                int bodyId = kv.Value.bodyId;
+                int sLow = kv.Value.sLow;
+                if (!TryAbsorbDryCellIntoLowerBody(cx, cy, bodyId, sLow, heightMap, gridManager, out bool cellChanged))
+                    continue;
+                if (cellChanged)
+                {
+                    anyChange = true;
+                    ExpandDirty(cx, cy);
+                }
+            }
+
+            if (haveBounds)
+            {
+                const int pad = 2;
+                dirtyMinX = Mathf.Max(0, dMinX - pad);
+                dirtyMinY = Mathf.Max(0, dMinY - pad);
+                dirtyMaxX = Mathf.Min(width - 1, dMaxX + pad);
+                dirtyMaxY = Mathf.Min(height - 1, dMaxY + pad);
+            }
+
+            return anyChange;
+        }
+
+        /// <summary>
+        /// Counts consecutive cells from <paramref name="startX"/>,<paramref name="startY"/> stepping by
+        /// <paramref name="stepX"/>,<paramref name="stepY"/> (unit cardinal) that share <paramref name="surface"/> and <paramref name="bodyId"/>.
+        /// </summary>
+        private int CountUpperExtentAlongStep(int startX, int startY, int stepX, int stepY, int surface, int bodyId)
+        {
+            int count = 0;
+            int cx = startX;
+            int cy = startY;
+            while (IsValidPosition(cx, cy) && IsWater(cx, cy) && GetWaterBodyId(cx, cy) == bodyId && GetSurfaceHeightAt(cx, cy) == surface)
+            {
+                count++;
+                cx += stepX;
+                cy += stepY;
+            }
+            return Mathf.Max(1, count);
+        }
+
+        /// <summary>
+        /// Registers a dry cell on the lower surface body and aligns its bed to adjacent lower-surface water.
+        /// Does not take cells from other water bodies. Skips cells with a placed building.
+        /// </summary>
+        private bool TryAbsorbDryCellIntoLowerBody(int x, int y, int targetBodyId, int sLow, HeightMap hm, GridManager grid, out bool changed)
+        {
+            changed = false;
+            if (!IsValidPosition(x, y) || !bodies.TryGetValue(targetBodyId, out WaterBody targetBody) || targetBody.SurfaceHeight != sLow)
+                return false;
+
+            int existingId = waterBodyIds[x, y];
+            if (existingId != 0)
+            {
+                if (existingId == targetBodyId)
+                    return true;
+                if (GetSurfaceHeightAt(x, y) == sLow)
+                    return false;
+                return false;
+            }
+
+            if (grid != null)
+            {
+                Cell cell = grid.GetCell(x, y);
+                if (cell != null && cell.occupiedBuilding != null)
+                    return false;
+            }
+
+            int targetBed = ProposeLowerJunctionBedHeight(x, y, sLow, hm);
+            int maxBed = Mathf.Min(TerrainManager.MAX_HEIGHT, sLow - 1);
+            if (maxBed < TerrainManager.MIN_HEIGHT)
+                return false;
+            targetBed = Mathf.Clamp(targetBed, TerrainManager.MIN_HEIGHT, maxBed);
+
+            hm.SetHeight(x, y, targetBed);
+            int flat = ToFlat(x, y);
+            waterBodyIds[x, y] = targetBodyId;
+            targetBody.AddCellIndex(flat);
+            changed = true;
+
+            if (grid != null)
+                grid.SetCellHeight(new Vector2(x, y), targetBed);
+
+            return true;
+        }
+
+        /// <summary>Minimum bed among cardinal neighbors that are water at <paramref name="sLow"/>; otherwise current terrain height.</summary>
+        private int ProposeLowerJunctionBedHeight(int x, int y, int sLow, HeightMap hm)
+        {
+            int[] d4x = { 1, -1, 0, 0 };
+            int[] d4y = { 0, 0, 1, -1 };
+            int best = int.MaxValue;
+            for (int i = 0; i < 4; i++)
+            {
+                int nx = x + d4x[i];
+                int ny = y + d4y[i];
+                if (!IsValidPosition(nx, ny) || !IsWater(nx, ny) || GetSurfaceHeightAt(nx, ny) != sLow)
+                    continue;
+                best = Mathf.Min(best, hm.GetHeight(nx, ny));
+            }
+
+            if (best == int.MaxValue)
+                return hm.GetHeight(x, y);
+            return best;
         }
 
         private void EnsureBody(int id, int surfaceHeight, WaterBodyType classification = WaterBodyType.Lake)
@@ -667,6 +973,7 @@ namespace Territory.Terrain
             }
             bodies.Clear();
             nextBodyId = 1;
+            proceduralRiverEntryAnchors.Clear();
         }
 
         private int ToFlat(int x, int y) => x + y * width;
@@ -1260,11 +1567,27 @@ namespace Territory.Terrain
             return true;
         }
 
-        /// <summary>Re-runs adjacency merge (same surface + same classification) after procedural river placement.</summary>
-        public void MergeAdjacentBodiesAfterRiverPlacement()
+        /// <summary>
+        /// Moves a cell from any water body into an existing river body (procedural river bed overlapping prior lake/sea).
+        /// Dry cells delegate to <see cref="TryAssignCellToRiverBody"/>.
+        /// </summary>
+        public bool TryReassignCellFromAnyWaterToRiverBody(int x, int y, int riverBodyId)
         {
-            MergeAdjacentBodiesWithSameSurface();
+            if (!IsValidPosition(x, y))
+                return false;
+            if (!bodies.TryGetValue(riverBodyId, out WaterBody river) || river.Classification != WaterBodyType.River)
+                return false;
+            int oldId = waterBodyIds[x, y];
+            if (oldId == 0)
+                return TryAssignCellToRiverBody(x, y, riverBodyId);
+            if (oldId == riverBodyId)
+                return true;
+            RemoveCellFromBody(x, y, oldId);
+            waterBodyIds[x, y] = riverBodyId;
+            river.AddCellIndex(ToFlat(x, y));
+            return true;
         }
+
     }
 
     /// <summary>Parameters for procedural lake placement (depression fill). Tuned in code only — not exposed on <see cref="WaterManager"/> until terrain generator UI (see FEAT-18 / BACKLOG).</summary>
@@ -1273,7 +1596,7 @@ namespace Territory.Terrain
     {
         /// <summary>Applied only after spill &gt; seed height (hydrologically feasible). Use &lt; 1 to thin redundant seeds on dense minima maps.</summary>
         public float LakeAcceptProbability = 1f;
-        public int MinLakeCells = 4;
+        public int MinLakeCells = 6;
         /// <summary>Hard upper bound on procedural lake bodies (safety cap).</summary>
         public int MaxLakeBodies = 48;
 

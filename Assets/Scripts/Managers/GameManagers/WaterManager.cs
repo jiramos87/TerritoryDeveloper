@@ -117,9 +117,6 @@ public class WaterManager : MonoBehaviour
             }
 
             UpdateWaterVisuals();
-
-            if (terrainManager != null && useLakeDepressionFill)
-                terrainManager.RefreshLakeShoreAfterLakePlacement(this);
         }
     }
 
@@ -135,9 +132,18 @@ public class WaterManager : MonoBehaviour
         int seed = MapGenerationSeed.GetLakeFillRandomSeed();
         var rnd = new System.Random(seed ^ unchecked((int)0xBADC0DE1));
         ProceduralRiverGenerator.Generate(this, terrainManager, gridManager, rnd);
-        UpdateWaterVisuals();
-        terrainManager.RefreshLakeShoreAfterLakePlacement(this, expandSecondChebyshevRing: true);
+        UpdateWaterVisuals(expandLakeShoreSecondRing: true);
         gridManager.InvalidateRoadCache();
+    }
+
+    /// <summary>
+    /// One console line per final water body (lake/sea/river) and per distinct-surface intersection segment; run after procedural rivers.
+    /// </summary>
+    public void LogGeneratedWaterGeographyDiagnostics()
+    {
+        if (waterMap == null)
+            return;
+        WaterGeographyDiagnosticsLog.WriteProceduralWaterSummary(waterMap);
     }
 
     /// <summary>
@@ -325,7 +331,13 @@ public class WaterManager : MonoBehaviour
             return;
 
         // Terrain already placed sea-level water; do not replace with animated lake prefabs. Sync inspector fields from the existing child.
-        if (terrainHeight <= seaLevel && cellComponent.zoneType == Zone.ZoneType.Water && cell.transform.childCount > 0)
+        // Procedural rivers (FEAT-38) must always use the path below so all bed cells share the same visual surface placement;
+        // the legacy branch would leave border/sea-level lecho cells misaligned with the rest of the same river body.
+        WaterBodyType classificationForLegacyPath = waterMap.GetBodyClassificationAt(x, y);
+        if (terrainHeight <= seaLevel
+            && cellComponent.zoneType == Zone.ZoneType.Water
+            && cell.transform.childCount > 0
+            && classificationForLegacyPath != WaterBodyType.River)
         {
             cellComponent.waterBodyType = WaterBodyType.Sea;
             Transform first = cell.transform.GetChild(0);
@@ -455,9 +467,27 @@ public class WaterManager : MonoBehaviour
         gridManager.SetTileSortingOrder(grassTile, Zone.ZoneType.Grass);
     }
 
-    public void UpdateWaterVisuals()
+    /// <summary>
+    /// Refreshes every water cell prefab and water–water cascade cliffs. Pass A + B (§12.7): bed normalization, then junction merge,
+    /// then <see cref="PlaceWater"/>, <see cref="TerrainManager.RefreshWaterCascadeCliffs"/>, and
+    /// <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> when depression-fill is enabled or Pass B merged any junction cells (BUG-45).
+    /// </summary>
+    /// <param name="expandLakeShoreSecondRing">When true, expands the land shore refresh halo (procedural river confluences).</param>
+    public void UpdateWaterVisuals(bool expandLakeShoreSecondRing = false)
     {
         if (waterMap == null || gridManager == null) return;
+
+        if (terrainManager == null)
+            terrainManager = FindObjectOfType<TerrainManager>();
+        HeightMap hm = terrainManager != null ? terrainManager.GetHeightMap() : null;
+        bool junctionMerged = false;
+        if (hm != null)
+        {
+            waterMap.ApplyMultiBodySurfaceBoundaryNormalization(hm);
+            junctionMerged = waterMap.ApplyWaterSurfaceJunctionMerge(hm, gridManager, out int jMinX, out int jMinY, out int jMaxX, out int jMaxY);
+            if (junctionMerged && terrainManager != null)
+                terrainManager.ApplyHeightMapToRegion(jMinX, jMinY, jMaxX, jMaxY);
+        }
 
         for (int x = 0; x < gridManager.width; x++)
         {
@@ -472,6 +502,9 @@ public class WaterManager : MonoBehaviour
             terrainManager = FindObjectOfType<TerrainManager>();
         if (terrainManager != null)
             terrainManager.RefreshWaterCascadeCliffs(this);
+
+        if (terrainManager != null && (useLakeDepressionFill || junctionMerged))
+            terrainManager.RefreshLakeShoreAfterLakePlacement(this, expandSecondChebyshevRing: expandLakeShoreSecondRing || junctionMerged);
     }
 
     public GameObject GetRandomWaterPrefab()

@@ -89,6 +89,7 @@ public class GeographyManager : MonoBehaviour
         {
             waterManager.InitializeWaterMap();
             waterManager.GenerateProceduralRiversForNewGame();
+            waterManager.LogGeneratedWaterGeographyDiagnostics();
         }
 
         // Interstate runs after terrain (from InitializeGrid), water, and rivers so pathing and tiles use final height/water state.
@@ -263,6 +264,7 @@ public class GeographyManager : MonoBehaviour
         {
             waterManager.InitializeWaterMap();
             waterManager.GenerateProceduralRiversForNewGame();
+            waterManager.LogGeneratedWaterGeographyDiagnostics();
         }
 
         // Interstate after terrain, water, and rivers (same order as InitializeGeography).

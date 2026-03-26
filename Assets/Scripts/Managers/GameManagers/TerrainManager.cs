@@ -2197,7 +2197,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// After all water tiles are placed, builds water–water surface-step stacks on the higher cell (south/east faces only).
-    /// Same stack rules as land cliffs; uses logical surface difference when <see cref="HeightMap"/> heights match.
+    /// For each cardinal edge to registered water with strictly lower logical surface (<c>S_high &gt; S_low</c>), places a stack;
+    /// <see cref="GetEffectiveHeightsForWaterWaterCliff"/> uses <c>segmentCount = S_high − S_low</c> (§5.6.2). Interior cells along a
+    /// long contact between two different surfaces receive cascades on every such edge — not only pool "outer" rows (BUG-45).
     /// </summary>
     public void RefreshWaterCascadeCliffs(WaterManager wm)
     {
@@ -2253,7 +2255,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Computes terrain heights and segment count for a water–water cascade; if <see cref="HeightMap"/> has no step, uses logical surface delta.
+    /// Computes terrain heights and segment count for a water–water cascade. Segment count follows the
+    /// <b>logical</b> surface step <c>S_high − S_low</c>; bed <see cref="HeightMap"/> does not define surface height.
+    /// When high bed is not above low bed, adjusts <paramref name="lowH"/> so <c>highH &gt; lowH</c> for stack geometry
+    /// (may be below <see cref="MIN_HEIGHT"/> only for the depth calculation at equal beds — §5.6.2, §12.7).
     /// </summary>
     private void GetEffectiveHeightsForWaterWaterCliff(
         int highX,
@@ -2268,21 +2273,19 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     {
         highH = heightMap.GetHeight(highX, highY);
         lowH = heightMap.GetHeight(lowX, lowY);
-        int dH = highH - lowH;
         int dS = sHigh - sLow;
-        if (dH > 0)
-        {
-            segmentCount = dH;
-        }
-        else if (dS > 0)
-        {
-            lowH = Mathf.Max(MIN_HEIGHT, highH - dS);
-            segmentCount = highH - lowH;
-        }
-        else
+        if (dS <= 0)
         {
             segmentCount = 0;
+            return;
         }
+
+        segmentCount = dS;
+        if (highH <= lowH)
+            lowH = Mathf.Max(MIN_HEIGHT, highH - dS);
+        // Stack uses d = highH − lowH for segment count; beds may still coincide at MIN_HEIGHT after clamping.
+        if (segmentCount > 0 && highH <= lowH)
+            lowH = highH - segmentCount;
     }
 
     private void TryPlaceWaterCascadeCliffStack(
@@ -2711,6 +2714,48 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
+    /// True when both perpendicular cardinal neighbors are <b>registered</b> water with different logical surface heights (BUG-45 junction).
+    /// </summary>
+    private bool IsMultiSurfacePerpendicularWaterCorner(int x, int y, ShoreCornerQuadrant quadrant)
+    {
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        if (waterManager == null)
+            return false;
+
+        bool Reg(int cx, int cy, out int s)
+        {
+            s = -1;
+            if (!waterManager.IsWaterAt(cx, cy))
+                return false;
+            s = waterManager.GetWaterSurfaceHeight(cx, cy);
+            return s >= 0;
+        }
+
+        switch (quadrant)
+        {
+            case ShoreCornerQuadrant.SouthEast:
+            {
+                return Reg(x - 1, y, out int sSouth) && Reg(x, y - 1, out int sEast) && sSouth != sEast;
+            }
+            case ShoreCornerQuadrant.SouthWest:
+            {
+                return Reg(x - 1, y, out int sSouth2) && Reg(x, y + 1, out int sWest) && sSouth2 != sWest;
+            }
+            case ShoreCornerQuadrant.NorthEast:
+            {
+                return Reg(x + 1, y, out int sNorth) && Reg(x, y - 1, out int sEast2) && sNorth != sEast2;
+            }
+            case ShoreCornerQuadrant.NorthWest:
+            {
+                return Reg(x + 1, y, out int sNorth2) && Reg(x, y + 1, out int sWest2) && sNorth2 != sWest2;
+            }
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
     /// Bay vs corner slope for one perpendicular pair (two cardinals wet). Returns null if both Bay and SlopeWater prefabs are missing.
     /// </summary>
     private List<GameObject> SelectPerpendicularWaterCornerPrefabs(int x, int y, ShoreCornerQuadrant quadrant)
@@ -2722,6 +2767,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             case ShoreCornerQuadrant.SouthEast:
                 bayPrefab = southEastBayPrefab;
                 slopePrefab = southEastSlopeWaterPrefab;
+                if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.SouthEast))
+                {
+                    if (slopePrefab != null) return ShoreList(slopePrefab);
+                    if (bayPrefab != null) return ShoreList(bayPrefab);
+                    return null;
+                }
                 if (IsAxisAlignedRectangleCornerWaterSouthEast(x, y))
                 {
                     if (bayPrefab != null) return ShoreList(bayPrefab);
@@ -2740,6 +2791,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             case ShoreCornerQuadrant.SouthWest:
                 bayPrefab = southWestBayPrefab;
                 slopePrefab = southWestSlopeWaterPrefab;
+                if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.SouthWest))
+                {
+                    if (slopePrefab != null) return ShoreList(slopePrefab);
+                    if (bayPrefab != null) return ShoreList(bayPrefab);
+                    return null;
+                }
                 if (IsAxisAlignedRectangleCornerWaterSouthWest(x, y))
                 {
                     if (bayPrefab != null) return ShoreList(bayPrefab);
@@ -2758,6 +2815,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             case ShoreCornerQuadrant.NorthEast:
                 bayPrefab = northEastBayPrefab;
                 slopePrefab = northEastSlopeWaterPrefab;
+                if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.NorthEast))
+                {
+                    if (slopePrefab != null) return ShoreList(slopePrefab);
+                    if (bayPrefab != null) return ShoreList(bayPrefab);
+                    return null;
+                }
                 if (IsAxisAlignedRectangleCornerWaterNorthEast(x, y))
                 {
                     if (bayPrefab != null) return ShoreList(bayPrefab);
@@ -2776,6 +2839,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             case ShoreCornerQuadrant.NorthWest:
                 bayPrefab = northWestBayPrefab;
                 slopePrefab = northWestSlopeWaterPrefab;
+                if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.NorthWest))
+                {
+                    if (slopePrefab != null) return ShoreList(slopePrefab);
+                    if (bayPrefab != null) return ShoreList(bayPrefab);
+                    return null;
+                }
                 if (IsAxisAlignedRectangleCornerWaterNorthWest(x, y))
                 {
                     if (bayPrefab != null) return ShoreList(bayPrefab);
@@ -2858,7 +2927,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// Selects lake/coast shore prefab(s) for a land cell adjacent to water. Returns one prefab or an upslope+downslope pair for diagonal slopes.
-    /// Perpendicular two-cardinal corners: Bay when the diagonal water cell is an axis-aligned rectangle outer corner; when not, prefer Bay if
+    /// Perpendicular two-cardinal corners: when both cardinals are <b>registered</b> water with different logical surfaces (BUG-45), prefer
+    /// diagonal <c>*SlopeWaterPrefab</c> over Bay. Else Bay when the diagonal water cell is an axis-aligned rectangle outer corner; when not, prefer Bay if
     /// <see cref="HasLandSlopeIgnoringWater"/> (cliff rim), else SlopeWater then Bay (convex land tip / large-lake shore).
     /// Pure cardinal north or south (no east/west water on those branches) uses north/south slope only — not <see cref="BuildDiagonalOnlyShorePrefabs"/>.
     /// River confluences and non-rectangular water patterns: isometric spec §5.9; refresh land after river stamps via <see cref="RefreshLakeShoreAfterLakePlacement"/>.

@@ -5,7 +5,8 @@ using UnityEngine;
 namespace Territory.Terrain
 {
     /// <summary>
-    /// FEAT-38: procedural static rivers after lake/sea init. Only assigns dry cells; never modifies existing water bodies.
+    /// FEAT-38: procedural static rivers after lake/sea init. Bed footprint includes prior lake/sea cells in the cross-section;
+    /// those cells are carved to <c>H_bed</c> and reassigned to the river body (BUG-45 follow-up: uniform lecho).
     /// Cross-stream <b>bed</b> width (lecho) is 1–3 cells of <b>water</b>; corridor width = bed + 2 (one dry shore strip per side) for terrain refresh and collision with <see cref="RiverBorderMargin"/>.
     /// Each cross-section gets one shared bed height and symmetric bank height; water bodies are split when surface height changes along the path (see <c>isometric-geography-system.md</c> §13.4).
     /// After carving, inner-corner shore continuity is enforced on the bed footprint (see §13.5). Lake/river shore
@@ -41,7 +42,7 @@ namespace Territory.Terrain
 
             int maxL = Mathf.Max(1, Mathf.RoundToInt(1.5f * Mathf.Max(gw, gh)));
 
-            int riverCount = rnd.Next(1, 4);
+            int riverCount = rnd.Next(4, 8);
             var used = new HashSet<Vector2Int>();
 
             for (int r = 0; r < riverCount; r++)
@@ -53,6 +54,8 @@ namespace Territory.Terrain
 
                 if (centerline == null || centerline.Count < 2)
                     continue;
+
+                wm.RecordProceduralRiverEntryAnchor(centerline[0].x, centerline[0].y);
 
                 int bedWidth = MinRiverBedWidth;
                 int stepsSinceWidthChange = 0;
@@ -101,15 +104,14 @@ namespace Territory.Terrain
 
                     foreach (Vector2Int p in sec.Bed)
                     {
-                        if (wm.IsWater(p.x, p.y))
-                            continue;
                         if (hm.GetHeight(p.x, p.y) != sec.AppliedBedHeight)
                             continue;
-                        wm.TryAssignCellToRiverBody(p.x, p.y, currentBodyId);
+                        if (wm.IsWater(p.x, p.y))
+                            wm.TryReassignCellFromAnyWaterToRiverBody(p.x, p.y, currentBodyId);
+                        else
+                            wm.TryAssignCellToRiverBody(p.x, p.y, currentBodyId);
                     }
                 }
-
-                wm.MergeAdjacentBodiesAfterRiverPlacement();
 
                 if (corridorFootprint.Count > 0)
                 {
@@ -196,9 +198,14 @@ namespace Territory.Terrain
                     continue;
                 if (!IsFootprintCellAllowedOnBorder(wx, wy, gw, gh, flowIsNorthSouth, isFirstSegment, isLastSegment))
                     continue;
-                if (wm.IsWater(wx, wy))
-                    continue;
                 var cell = new Vector2Int(wx, wy);
+                if (wm.IsWater(wx, wy))
+                {
+                    if (d >= bedLeft && d <= bedRight)
+                        sec.Bed.Add(cell);
+                    continue;
+                }
+
                 if (d >= bedLeft && d <= bedRight)
                     sec.Bed.Add(cell);
                 else if (d == left)
@@ -231,11 +238,7 @@ namespace Territory.Terrain
 
                 int minH = int.MaxValue;
                 foreach (Vector2Int p in sec.Bed)
-                {
-                    if (wm.IsWater(p.x, p.y))
-                        continue;
                     minH = Mathf.Min(minH, hm.GetHeight(p.x, p.y));
-                }
 
                 if (minH == int.MaxValue)
                     continue;
@@ -261,10 +264,7 @@ namespace Territory.Terrain
 
                 int hBed = sec.AppliedBedHeight;
                 foreach (Vector2Int p in sec.Bed)
-                {
-                    if (!wm.IsWater(p.x, p.y))
-                        hm.SetHeight(p.x, p.y, hBed);
-                }
+                    hm.SetHeight(p.x, p.y, hBed);
 
                 if (hBed >= TerrainManager.MAX_HEIGHT)
                     continue;

@@ -2,7 +2,7 @@
 
 > **Status:** **Canonical specification** for isometric geography in this project (single source of truth for definitions and mechanisms listed in §0.1). Keep it aligned with `TerrainManager`, `WaterManager`, `GridManager`, and related helpers; prefer updating this file over scattering duplicate rules.
 > **Audience:** AI agents and developers working on terrain, roads, water, sorting order, or any system that interacts with the isometric grid.
-> **Related:** `ARCHITECTURE.md` (persistence pipeline summary, init order). **Shore / cliff / water–water cascades:** **[BUG-42](../../BACKLOG.md)** completed 2026-03-26 (merged **BUG-33** + **BUG-41**). **Adjacent bodies at different heights:** **[BUG-45](../../BACKLOG.md)** (in progress). **Save/load building sorting:** §7.4; **[BUG-34](../../BACKLOG.md)** / **[BUG-35](../../BACKLOG.md)** completed 2026-03-22. **Cliff art alignment + foreground-water sort cap:** **[BUG-39](../../BACKLOG.md)** / **[BUG-40](../../BACKLOG.md)** completed 2026-03-24.
+> **Related:** `ARCHITECTURE.md` (persistence pipeline summary, init order). **Shore / cliff / water–water cascades:** **[BUG-42](../../BACKLOG.md)** completed 2026-03-26 (merged **BUG-33** + **BUG-41**). **Multi-body junction merge, bed alignment, cascades:** **[BUG-45](../../BACKLOG.md)** — rules in **§12.7** / **§5.6.2**; implementation plan **[`docs/water-junction-merge-implementation-plan.md`](../../docs/water-junction-merge-implementation-plan.md)**. **Save/load building sorting:** §7.4; **[BUG-34](../../BACKLOG.md)** / **[BUG-35](../../BACKLOG.md)** completed 2026-03-22. **Cliff art alignment + foreground-water sort cap:** **[BUG-39](../../BACKLOG.md)** / **[BUG-40](../../BACKLOG.md)** completed 2026-03-24.
 
 ## 0. Canonical scope and doc hierarchy
 
@@ -304,7 +304,15 @@ Treat lake/coast borders as **three cooperating layers**, not one prefab:
 
 #### 5.6.2 Water–water cascades (cardinal surface step)
 
-When two **cardinally adjacent** cells are **both** registered water and the **logical surface** of the **higher** cell exceeds the neighbor’s (`S_high > S_low` from `WaterManager.GetWaterSurfaceHeight`), the transition is a **cascade** (no dry shore between). **`PlaceCliffWalls` does not run on water cells**; instead **`TerrainManager.RefreshWaterCascadeCliffs`** (after **`WaterManager.UpdateWaterVisuals`**) places **`cliffWaterSouthPrefab` / `cliffWaterEastPrefab`** on the **higher** cell’s **south** or **east** visible face — same **stack** model as **`PlaceCliffWallStack`** (segment loop, underwater cull toward the **low** cell’s surface, sorting cap vs foreground water). Segment depth uses **`HeightMap`** difference when positive; if floors match but **`S_high > S_low`**, depth falls back to **`S_high − S_low`** for stack math. **World Y anchor** for the stack matches **`WaterManager.PlaceWater`**: `GetWorldPositionVector` at `visualSurfaceHeight = max(MIN_HEIGHT, S_high − 1)` **plus** `(0, tileHeight × 0.25)` — the same offset applied to the water tile prefab position (cell transform stays at basin floor). Assign **`cliffWater*`** prefabs in the **`TerrainManager`** inspector (art matches **`southCliffWallPrefab` / `eastCliffWallPrefab`** geometry).
+When two **cardinally adjacent** cells are **both** registered water and the **logical surface** of the **higher** cell exceeds the neighbor’s (`S_high > S_low` from `WaterManager.GetWaterSurfaceHeight`), the transition is a **cascade** (no dry shore between). **Cascades exist only on that contact line** between two **distinct** logical surfaces — not from bed roughness alone. **`HeightMap` under water is the bed**; it does **not** define the water **surface**. The surface is **homogeneous per body or river segment** (`SurfaceHeight` + **`PlaceWater`** at one visual plane); beds may vary freely underneath.
+
+**Placement:** **`PlaceCliffWalls` does not run on water cells**; **`TerrainManager.RefreshWaterCascadeCliffs`** (after **`WaterManager.UpdateWaterVisuals`**) places **`cliffWaterSouthPrefab` / `cliffWaterEastPrefab`** on the **higher** cell’s **south** or **east** visible face for **every** cardinal edge where the neighbor is registered water at a **strictly lower** logical surface (`S_high > S_low`), including along **long** contacts parallel to the high pool (BUG-45). Same-surface neighbors in the **+x** / **+y** directions do **not** suppress cascades when the shared edge is a **surface step** to lower water. Stack model matches **`PlaceCliffWallStack`** (segment loop, underwater cull toward the **low** cell’s surface, sorting cap vs foreground water).
+
+**Anchor and visible faces:** Cascades are parented to **water cells of the upper pool** (`S_high`) along the **cardinal contact** with the lower pool; the instantiated meshes use the **visible** faces of the isometric system (§5.7) — i.e. the faces that correspond to the **edge toward the lower pool** on the grid. **Only `CliffCardinalFace.South` and `CliffCardinalFace.East`** are used for water–water cascades (`cliffWaterSouth` / `cliffWaterEast`). **West and north** cliff meshes for this feature are **out of scope** (same camera rule as §5.7: N/W are not instantiated for interior cells).
+
+**Segment count:** **`segmentCount = S_high − S_low`** (logical step). For **world/stack geometry**, the code uses the two cells’ bed heights; if the high bed is not above the low bed, it **synthesizes** a foot height so the stack still spans **`ΔS`** steps (bed alignment at the contact strip is handled separately — §12.7).
+
+**World Y anchor** for the stack matches **`WaterManager.PlaceWater`**: `GetWorldPositionVector` at `visualSurfaceHeight = max(MIN_HEIGHT, S_high − 1)` **plus** `(0, tileHeight × 0.25)`. Assign **`cliffWater*`** prefabs in the **`TerrainManager`** inspector (art matches **`southCliffWallPrefab` / `eastCliffWallPrefab`** geometry).
 
 ### 5.7 Cliffs
 - **HeightMap pattern:** Cardinal neighbor height difference > 1 (e.g., cell at h=3, south neighbor at h=1).
@@ -330,9 +338,11 @@ When two **cardinally adjacent** cells are **both** registered water and the **l
 | **Diagonal lake edge (flat land)** | No | Yes | Often **Bay**; if Bay missing, **upslope + downslope** pair |
 | **River confluence / mouth** | Varies (often 3 cardinals or T) | Often asymmetric | Same §4.2 priority list; **not** always an axis-aligned rectangle — refresh land in a **wider halo** after river stamps (`RefreshLakeShoreAfterLakePlacement` with second Chebyshev ring from the procedural river path). |
 
+**Multi-surface perpendicular junction (BUG-45):** When two **registered** cardinal neighbors are both water but at **different** logical `SurfaceHeight`, **`DetermineWaterShorePrefabs`** prefers the diagonal **`*SlopeWaterPrefab`** for that quadrant over **Bay** so convex contacts at a surface step do not pick concave bay art.
+
 **`IsAxisAlignedRectangleCornerWater*`** (per diagonal): diagonal cell `W` is water and **both** “outward” cardinals from `W` (away from the shore land cell) are **not** water — i.e. `W` is a **convex vertex** of the water set in grid steps (the tip of a rectangle’s corner). L-shapes, notches, and diagonal coastlines may fail this test and correctly take **corner slope water** instead of Bay.
 
-**River merge / desembocadura:** When one **River** corridor meets another or widens, neighbor patterns may differ from rectangular lakes. After **`WaterManager.UpdateWaterVisuals`**, **`TerrainManager.RefreshLakeShoreAfterLakePlacement`** should cover all affected land (procedural river path passes **`expandSecondChebyshevRing: true`** for a Chebyshev-2 land halo). **Orphan** shore sprites or triangles on open water usually indicate **`HeightMap` / `Cell.height` vs `WaterMap`** mismatch or a missed refresh — compare §2.4 lake corner pitfall.
+**River confluence / desembocadura:** When one **River** corridor meets another or widens, neighbor patterns may differ from rectangular lakes; **multiple river `WaterBody` ids** at the **same** surface may remain side by side (§12.7). After **`WaterManager.UpdateWaterVisuals`**, **`TerrainManager.RefreshLakeShoreAfterLakePlacement`** should cover all affected land (procedural river path passes **`expandSecondChebyshevRing: true`** for a Chebyshev-2 land halo). **Orphan** shore sprites or triangles on open water usually indicate **`HeightMap` / `Cell.height` vs `WaterMap`** mismatch or a missed refresh — compare §2.4 lake corner pitfall.
 
 **Visual:** NE/NW/SE/SW bay prefabs round the shoreline art. Cardinal cliff stacks use **`TerrainManager`** inspector nudges vs the shared edge (**[BUG-39](../../BACKLOG.md)** completed 2026-03-24). Residual corner / multi-body issues: **[BUG-45](../../BACKLOG.md)** where applicable. Vocabulary for debugging: §15.1.
 
@@ -572,7 +582,7 @@ Water is **hosted by terrain**: each body has a **logical surface height** align
 ### 12.2 Data structures
 
 - **`WaterBody`:** `Id`, `SurfaceHeight`, occupied cell indices.
-- **`WaterMap`:** `int[,]` body ids (0 = dry); `GetSurfaceHeightAt`; merge adjacent bodies at the **same** surface when rules allow.
+- **`WaterMap`:** `int[,]` body ids (0 = dry); `GetSurfaceHeightAt`. **Lake / sea init** may merge adjacent cells into one body when rules allow (`MergeAdjacentBodiesWithSameSurface`). **Touching bodies at the same logical surface may remain different ids** (aligned water plane via `PlaceWater`); procedural rivers **do not** run a post-pass merge of adjacent river segments (§12.7, §13.3).
 - **`Cell` / `CellData`:** `WaterBodyType` (None, Lake, River, Sea); optional `secondaryPrefabName` for two-part shores.
 - **`WaterMapData` (save v2):** `waterBodyIds` + serialized bodies; legacy `bool[]` water load still supported.
 
@@ -600,6 +610,26 @@ Strict/window minima as seeds; flood under spill; per-body axis-aligned bbox of 
 
 After `WaterManager.UpdateWaterVisuals`, **`TerrainManager.RefreshLakeShoreAfterLakePlacement`** updates land in the Moore neighborhood of new lake water (and optionally a **second Chebyshev ring** when called from **procedural river** generation — confluence mouths). Shore prefab logic: §4.2, §5.8–5.9; rim cliffs: §5.6–5.7.
 
+### 12.7 Multi-body contact: bed alignment and junction merge (BUG-45)
+
+These rules separate **what players read as water level** from **terrain under the water**, and define **two passes** before **`PlaceWater`** when a height map is available.
+
+1. **Several bodies, one aligned plane:** Two or more **`WaterBody`** instances may share the **same** logical **`SurfaceHeight`** and sit **next to or touching** each other. They remain **different ids** when the design chooses not to merge. **`PlaceWater`** uses **`SurfaceHeight`** so the **animated water tile** stays on one **homogeneous** visual plane per body/segment; that is the operational meaning of “same surface,” **not** identical **`HeightMap`** or **`GetHeight`** on every underwater cell.
+
+2. **Bed vs surface:** Underwater **`HeightMap`** is the **bed** (lake bottom, river trench). It **may vary** within a lake or along a river. The **logical water surface** is **one value per body or per river surface segment** (`SurfaceHeight`). **Shores** and sorting use that surface; **cascades** (§5.6.2) appear only where **two different logical surfaces** meet cardinally.
+
+3. **Pass A — Upper contact bed alignment (no `waterBodyIds` change):** Where a higher-surface **water** cell cardinally touches water at a **strictly lower** logical surface, **only** those **higher-surface** cells on that contact may have their **bed** (`HeightMap`) lowered to match the **minimum bed height** among adjacent **lower-surface** water neighbors. **Do not** flatten the entire upper pool. **Do not** change **`waterBodyIds`** or turn dry land into water **in this pass**. Width is **one cell thick** on the upper side of the cardinal contact. **`WaterMap.ApplyMultiBodySurfaceBoundaryNormalization`** implements Pass A: **idempotent**; runs **first** in **`WaterManager.UpdateWaterVisuals`**.
+
+4. **Pass B — Junction merge (lower-side extension):** After Pass A, a **junction merge** pass may **reclassify** cells on the **lower-surface** side of cardinal edges where **`S_high > S_low`** (any pair of registered water cells — lakes, rivers, or mixed). It may assign **dry** land and (until refined) **water-shore** cells to **registered water** at the **lower** logical surface, update **`HeightMap`** and **`Cell.height`** to match that body’s conventions, and set **`waterBodyId`** to a body with **`SurfaceHeight == S_low`**. It also absorbs **dry** cells on the **upper-bank** perpendicular to the contact (beside each **high** cell at the step), so shore wedges between two surface levels are replaced by the **lower** body instead of blocking the junction. Strip extent is **parametric** along the **full** contact length; width follows the **upper** body’s cross-section where terrain allows; if beds cannot align, **narrow** the strip. **Diagonal** water-shore prefabs on the **upper** side are chosen relative to the **contact direction** (cardinal step from high to low), using **existing** assets; **`cliffWaterSouth` / `cliffWaterEast`** (and stack height for **`ΔS > 1`**) on **upper-pool** water cells along the contact as needed, including **upper** diagonal shore cells where applicable (§5.6.2 — **south** and **east** faces only; **west/north** water cascade meshes not in scope). **Same `S_low`, different ids:** when several lower bodies share the same surface height, new cells may attach to **any** of those ids (deterministic choice); **do not** merge those lower bodies into one id.
+
+5. **Rivers downstream:** Along a river path, **bed height** does not increase toward the exit (**§13.4** longitudinal rule). **Surface height** stays constant for a **segment** until generator logic starts a **new** segment. Pass A + B must **not** violate upstream pool geometry beyond the **contact strip** and the **lower-side** extension.
+
+6. **`UpdateWaterVisuals` order:** Pass A → Pass B → **`PlaceWater`** (all water cells) → **`RefreshWaterCascadeCliffs`** → **`RefreshLakeShoreAfterLakePlacement`** when lake depression-fill is enabled **or** Pass B changed any cell (Chebyshev-2 halo when Pass B merged, so river junctions get land shore refresh without requiring depression-fill only).
+
+7. **“Correct surface” in tools and debug:** Means **`PlaceWater` / world water plane** consistency for a body, **not** that every underwater cell shares one **`HeightMap`** value.
+
+**Implementation plan:** [`docs/water-junction-merge-implementation-plan.md`](../../docs/water-junction-merge-implementation-plan.md).
+
 ---
 
 ## 13. Procedural rivers (FEAT-38)
@@ -617,7 +647,7 @@ Rivers are **static** after geography init: **no** runtime fluid simulation, dis
 
 ### 13.3 Merge and adjacency to lakes/sea
 
-**`MergeAdjacentBodiesWithSameSurface`:** **River** merges **only** with **River**; **Lake** with **Lake**; **Sea** with **Sea**; **Lake** with **Sea** (FEAT-37 compatibility). River pass **does not** add cells to or change surfaces of existing lake/sea bodies; logical exit = river ends in **River** cells **adjacent** to that body’s perimeter.
+**`MergeAdjacentBodiesWithSameSurface`** (used during **lake / sea** placement and similar init passes): **River** merges **only** with **River**; **Lake** with **Lake**; **Sea** with **Sea**; **Lake** with **Sea** (FEAT-37 compatibility). The **procedural river pass** does **not** call a final adjacency merge: touching river segments at the **same** surface may keep **separate ids** so confluences and wide channels stay explicit (§12.7). River pass **does not** add cells to or change surfaces of existing lake/sea bodies except where bed assignment explicitly reassigns overlapping water to the river body; logical exit = river ends in **River** cells **adjacent** to that body’s perimeter.
 
 ### 13.4 Geometry (implementation contracts)
 
