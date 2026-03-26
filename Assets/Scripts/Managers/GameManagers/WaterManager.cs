@@ -467,6 +467,11 @@ public class WaterManager : MonoBehaviour
                     PlaceWater(x, y);
             }
         }
+
+        if (terrainManager == null)
+            terrainManager = FindObjectOfType<TerrainManager>();
+        if (terrainManager != null)
+            terrainManager.RefreshWaterCascadeCliffs(this);
     }
 
     public GameObject GetRandomWaterPrefab()

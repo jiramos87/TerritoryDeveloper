@@ -2,7 +2,7 @@
 
 > **Status:** **Canonical specification** for isometric geography in this project (single source of truth for definitions and mechanisms listed in §0.1). Keep it aligned with `TerrainManager`, `WaterManager`, `GridManager`, and related helpers; prefer updating this file over scattering duplicate rules.
 > **Audience:** AI agents and developers working on terrain, roads, water, sorting order, or any system that interacts with the isometric grid.
-> **Related:** `ARCHITECTURE.md` (persistence pipeline summary, init order). **Active water-shore / cliff / waterfall / water-cliff polish:** **[BUG-42](../../BACKLOG.md)** (merged **BUG-33** + **BUG-41**). **Save/load building sorting:** §7.4; **[BUG-34](../../BACKLOG.md)** / **[BUG-35](../../BACKLOG.md)** completed 2026-03-22. **Cliff art alignment + foreground-water sort cap:** **[BUG-39](../../BACKLOG.md)** / **[BUG-40](../../BACKLOG.md)** completed 2026-03-24.
+> **Related:** `ARCHITECTURE.md` (persistence pipeline summary, init order). **Shore / cliff / water–water cascades:** **[BUG-42](../../BACKLOG.md)** completed 2026-03-26 (merged **BUG-33** + **BUG-41**). **Adjacent bodies at different heights:** **[BUG-45](../../BACKLOG.md)** (in progress). **Save/load building sorting:** §7.4; **[BUG-34](../../BACKLOG.md)** / **[BUG-35](../../BACKLOG.md)** completed 2026-03-22. **Cliff art alignment + foreground-water sort cap:** **[BUG-39](../../BACKLOG.md)** / **[BUG-40](../../BACKLOG.md)** completed 2026-03-24.
 
 ## 0. Canonical scope and doc hierarchy
 
@@ -300,7 +300,11 @@ Treat lake/coast borders as **three cooperating layers**, not one prefab:
 
 **Lake fallback — border corner heights:** When an **artificial lake fallback** terraform runs, **corner** border cells (concave and convex) must have **`HeightMap` / `Cell.height`** consistent with the **lake surface** at that shoreline, not left at an unrelated **elevated dry neighbor** height when continuity with the lake is required.
 
-**Geometric decisions worth remembering:** Cardinal **Δh** drives drop tests. **One-step** duplicate-cliff suppression is **conditional** on shore eligibility (see above). **Δh ≥ 2** stacks segments on **visible** faces. Cliff **sorting** vs **foreground** water neighbors is capped in **`TerrainManager.PlaceCliffWallStack`** (**[BUG-40](../../BACKLOG.md)** completed 2026-03-24). Remaining shore / edge-case polish: **[BUG-42](../../BACKLOG.md)**. Historical SS notes: §15.
+**Geometric decisions worth remembering:** Cardinal **Δh** drives drop tests. **One-step** duplicate-cliff suppression is **conditional** on shore eligibility (see above). **Δh ≥ 2** stacks segments on **visible** faces. Cliff **sorting** vs **foreground** water neighbors is capped in **`TerrainManager.PlaceCliffWallStack`** (**[BUG-40](../../BACKLOG.md)** completed 2026-03-24). Shore / cascade / multi-body edge cases: completed **[BUG-42](../../BACKLOG.md)** (2026-03-26); **[BUG-45](../../BACKLOG.md)** (adjacent bodies at different heights). Historical SS notes: §15.
+
+#### 5.6.2 Water–water cascades (cardinal surface step)
+
+When two **cardinally adjacent** cells are **both** registered water and the **logical surface** of the **higher** cell exceeds the neighbor’s (`S_high > S_low` from `WaterManager.GetWaterSurfaceHeight`), the transition is a **cascade** (no dry shore between). **`PlaceCliffWalls` does not run on water cells**; instead **`TerrainManager.RefreshWaterCascadeCliffs`** (after **`WaterManager.UpdateWaterVisuals`**) places **`cliffWaterSouthPrefab` / `cliffWaterEastPrefab`** on the **higher** cell’s **south** or **east** visible face — same **stack** model as **`PlaceCliffWallStack`** (segment loop, underwater cull toward the **low** cell’s surface, sorting cap vs foreground water). Segment depth uses **`HeightMap`** difference when positive; if floors match but **`S_high > S_low`**, depth falls back to **`S_high − S_low`** for stack math. **World Y anchor** for the stack matches **`WaterManager.PlaceWater`**: `GetWorldPositionVector` at `visualSurfaceHeight = max(MIN_HEIGHT, S_high − 1)` **plus** `(0, tileHeight × 0.25)` — the same offset applied to the water tile prefab position (cell transform stays at basin floor). Assign **`cliffWater*`** prefabs in the **`TerrainManager`** inspector (art matches **`southCliffWallPrefab` / `eastCliffWallPrefab`** geometry).
 
 ### 5.7 Cliffs
 - **HeightMap pattern:** Cardinal neighbor height difference > 1 (e.g., cell at h=3, south neighbor at h=1).
@@ -308,7 +312,7 @@ Treat lake/coast borders as **three cooperating layers**, not one prefab:
 - **Code:** `PlaceCliffWalls` evaluates `GetCliffWallDropNorth` / `South` / `East` / `West` from the **high** cell toward lower neighbors, then `ResolveCliffWallDropAfterSuppression` for the non-suppressed path (rim plateau rule, narrow shore, cut-through). `PlaceCliffWallStack` parents segments to that cell; world position uses `GetCliffWallSegmentWorldPositionOnSharedEdge` with inspector **face nudges** and optional **water-shore Y** fraction; underwater segment cull unchanged.
 - **Water / shore:** Water classification uses **`WaterManager.IsWaterAt`**, not raw `SEA_LEVEL` height. For **one-step** drops toward **registered water** or **`IsWaterSlopeCell`**, cliff prefabs are **suppressed only if** the **high** cell passes **`IsLandEligibleForWaterShorePrefabs`** (same gate as `DetermineWaterShorePrefabs`); otherwise the **rim plateau** keeps **one** cliff segment toward that lower cell where visible (see §5.6.1). **Escarpments (Δh ≥ 2)** toward the same neighbors still get stacked segments on **visible** faces only. **Underwater cull:** at the cliff **foot** (low cell of the drop), if that cell is water, segments whose **entire height band** lies strictly below `GetWaterSurfaceHeight` are not instantiated (`ShouldSkipCliffSegmentFullyUnderwater`). **Cut-through** corridors may still get a **1-step** cliff into a **non–water-slope** lowered cell.
 - **South / east map border (exterior void):** When the **south** neighbor `(x−1, y)` or **east** neighbor `(x, y−1)` is **outside the grid**, `GetCliffWallDropSouth` / `GetCliffWallDropEast` still compute a drop using a **virtual foot** at **`SEA_LEVEL`** (same as open sea) so **`PlaceCliffWallStack`** can instantiate visible **south** / **east** cliff meshes toward the map edge — avoiding black voids on elevated border cells. `ResolveCliffWallDropAfterSuppression` handles the invalid lower coordinate without probing `WaterMap` at non-cells.
-- **North / west faces (deferred):** With the fixed camera, **north** and **west** cliff **meshes** are not instantiated for typical **interior** cells (`IsCliffCardinalFaceVisibleToCamera`). **Map border** situations can make the absence of N/W prefabs obvious; adding visible N/W cliff art for edges is **out of scope** for **[BUG-42](../../BACKLOG.md)** — track as a future follow-up.
+- **North / west faces (deferred):** With the fixed camera, **north** and **west** cliff **meshes** are not instantiated for typical **interior** cells (`IsCliffCardinalFaceVisibleToCamera`). **Map border** situations can make the absence of N/W prefabs obvious; visible N/W cliff art for edges remains a **future follow-up** (not part of completed **[BUG-42](../../BACKLOG.md)**).
 
 ### 5.8 Coastal Transitions (Water Slopes)
 - **HeightMap pattern:** Land cell (h ≥ 1) with Moore-neighbor water/sea per **`WaterOrSeaAt`** for **pattern** selection, **and** passing the **surface-height gate** in §4.2 (`IsLandEligibleForWaterShorePrefabs` / `TryGetSurfaceHeightForWaterNeighbor`).
@@ -330,7 +334,7 @@ Treat lake/coast borders as **three cooperating layers**, not one prefab:
 
 **River merge / desembocadura:** When one **River** corridor meets another or widens, neighbor patterns may differ from rectangular lakes. After **`WaterManager.UpdateWaterVisuals`**, **`TerrainManager.RefreshLakeShoreAfterLakePlacement`** should cover all affected land (procedural river path passes **`expandSecondChebyshevRing: true`** for a Chebyshev-2 land halo). **Orphan** shore sprites or triangles on open water usually indicate **`HeightMap` / `Cell.height` vs `WaterMap`** mismatch or a missed refresh — compare §2.4 lake corner pitfall.
 
-**Visual:** NE/NW/SE/SW bay prefabs round the shoreline art. Cardinal cliff stacks use **`TerrainManager`** inspector nudges vs the shared edge (**[BUG-39](../../BACKLOG.md)** completed 2026-03-24). Remaining corner mismatches: **[BUG-42](../../BACKLOG.md)**. Vocabulary for debugging: §15.1.
+**Visual:** NE/NW/SE/SW bay prefabs round the shoreline art. Cardinal cliff stacks use **`TerrainManager`** inspector nudges vs the shared edge (**[BUG-39](../../BACKLOG.md)** completed 2026-03-24). Residual corner / multi-body issues: **[BUG-45](../../BACKLOG.md)** where applicable. Vocabulary for debugging: §15.1.
 
 ### 5.10 Cut-Through Corridors
 - **HeightMap pattern:** A path of cells flattened to base height through a hill by the terraforming system.
@@ -632,7 +636,7 @@ Cross-sections perpendicular to local flow (see **`ProceduralRiverGenerator`** X
 
 **Cardinal edges:** **N–S** or **E–W** opposite border pairs; high/low from relief; lake/sea as logical exit when present.
 
-Visual follow-up (slope-water art, cascades, shore polish): **[BUG-42](../../BACKLOG.md)**.
+Shore / cascade polish: **[BUG-42](../../BACKLOG.md)** completed 2026-03-26; residual multi-body / intersection cases: **[BUG-45](../../BACKLOG.md)**.
 
 ### 13.5 Shore band continuity (inner corners)
 

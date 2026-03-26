@@ -61,7 +61,7 @@ After executing a development plan for an issue, **keep the issue in "In progres
 | Economy | `EconomyManager.cs` | `CityStats.cs` |
 | Isometric geography / slopes / heightmap | `.cursor/specs/isometric-geography-system.md` | `TerrainManager.cs`, `HeightMap.cs`, `TerraformingService.cs`, `RoadPrefabResolver.cs`, `SlopePrefabRegistry.cs`, `GridPathfinder.cs` |
 | Terrain/heightmap | `TerrainManager.cs` | `HeightMap.cs`, `GeographyManager.cs` |
-| Water bodies | `WaterManager.cs` | `.cursor/specs/isometric-geography-system.md` (§2, §4.2, §5.6–5.9, §7, §12–§13, §15). `WaterMap.cs`, `WaterBody.cs`, `WaterBodyType.cs`, `GeographyManager.cs`. Open polish: **BUG-42**; **BUG-39** / **BUG-40** completed 2026-03-24. **BUG-32** minimap; **BUG-34** / **BUG-35** load (2026-03-22) |
+| Water bodies | `WaterManager.cs` | `.cursor/specs/isometric-geography-system.md` (§2, §4.2, §5.6–5.9, §7, §12–§13, §15). `WaterMap.cs`, `WaterBody.cs`, `WaterBodyType.cs`, `GeographyManager.cs`. **BUG-42** completed 2026-03-26 (shores + water–water cascades); **BUG-45** multi-body junctions (in progress). **BUG-39** / **BUG-40** completed 2026-03-24. **BUG-32** minimap; **BUG-34** / **BUG-35** load (2026-03-22) |
 | Minimap height / relief (optional layer) | `MiniMapController.cs` | `HeightMap`, `GridManager`; **FEAT-42** in `BACKLOG.md` |
 | Forests | `ForestManager.cs` | `ForestMap.cs`, `GeographyManager.cs` |
 | New building type | `IBuilding.cs` (interface) | `ZoneManager.cs`, `GridManager.cs` (placement) |

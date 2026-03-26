@@ -29,6 +29,7 @@ public enum TerrainSlopeType
 /// Determines slope direction for each cell based on neighbor heights and selects the appropriate
 /// slope prefab (flat, N/S/E/W slopes, corner slopes, water slopes). Coordinates with GridManager
 /// for cell height assignment and WaterManager for water-slope prefab variants.
+/// Water–water surface steps: <see cref="RefreshWaterCascadeCliffs"/> (same segment stack as brown <c>PlaceCliffWallStack</c>).
 /// </summary>
 public class TerrainManager : MonoBehaviour, ITerrainManager
 {
@@ -100,6 +101,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public GameObject northCliffWallPrefab;
     public GameObject westCliffWallPrefab;
 
+    [Header("Water–water cascade cliffs (BUG-42)")]
+    /// <summary>Water-facing cliff stack on the south diamond edge (same placement model as <see cref="southCliffWallPrefab"/>).</summary>
+    public GameObject cliffWaterSouthPrefab;
+    /// <summary>Water-facing cliff stack on the east diamond edge (same placement model as <see cref="eastCliffWallPrefab"/>).</summary>
+    public GameObject cliffWaterEastPrefab;
+
     [Header("Cliff wall placement")]
     [Tooltip("Extra downward shift in world Y after grid math, in units of (tileHeight/2) — same as one logical height step in GridManager.GetWorldPositionVector. Tune if cliffs float or sink vs grass/water.")]
     [SerializeField] private float cliffWallPivotDownHeightSteps = 1.5f;
@@ -138,6 +145,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             northEastUpslopeWaterPrefab, northWestUpslopeWaterPrefab, southEastUpslopeWaterPrefab, southWestUpslopeWaterPrefab,
             seaLevelWaterPrefab, southCliffWallPrefab, eastCliffWallPrefab,
             northCliffWallPrefab, westCliffWallPrefab,
+            cliffWaterSouthPrefab, cliffWaterEastPrefab,
             northEastBayPrefab, northWestBayPrefab, southEastBayPrefab, southWestBayPrefab
         };
 
@@ -2101,30 +2109,49 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// World position for a cliff is the same x position as the cell, and the y position is the y position of the cell minus the tile height times the segment index.
+    /// World position for a cliff is the same x position as the cell, and the y position is the anchor y minus the tile height times the segment index.
+    /// Land cliffs use the cell transform (terrain floor). Water–water cascades pass <paramref name="overrideAnchorWorldY"/> at the water visual surface (FEAT-37 / <see cref="WaterManager.PlaceWater"/>).
     /// </summary>
-    private Vector2 GetCliffWallSegmentWorldPositionOnSharedEdge(Cell cell, int topH, int segmentIndex)
+    private Vector2 GetCliffWallSegmentWorldPositionOnSharedEdge(Cell cell, int topH, int segmentIndex, float? overrideAnchorWorldY = null)
     {
-        return new Vector2(cell.gameObject.transform.position.x, cell.gameObject.transform.position.y - gridManager.tileHeight * (segmentIndex * 0.5f));
+        float anchorY = overrideAnchorWorldY ?? cell.gameObject.transform.position.y;
+        return new Vector2(cell.gameObject.transform.position.x, anchorY - gridManager.tileHeight * (segmentIndex * 0.5f));
     }
 
     /// <summary>
-    /// Places a stack of cliff walls on the cell.
+    /// Places a stack of brown cliff walls on a <b>land</b> cell (see <see cref="PlaceCliffWalls"/>).
     /// </summary>
     private void PlaceCliffWallStack(Cell cell, CliffCardinalFace cardinalFace, int highX, int highY, int lowX, int lowY, int highH, int lowH, int segmentCount)
     {
+        GameObject prefab = GetCliffPrefabForCardinalFace(cardinalFace);
+        PlaceCliffWallStackCore(cell, prefab, cardinalFace, highX, highY, lowX, lowY, highH, lowH, segmentCount);
+    }
+
+    /// <summary>
+    /// Shared stack placement for brown cliffs and water cascade cliffs — same segment loop, sorting, and underwater skip as land cliffs.
+    /// </summary>
+    /// <param name="cliffStackAnchorWorldY">When set (water–water cascades), Y anchor at water visual surface; otherwise cell transform Y (terrain floor).</param>
+    private void PlaceCliffWallStackCore(
+        Cell cell,
+        GameObject cliffPrefab,
+        CliffCardinalFace cardinalFace,
+        int highX,
+        int highY,
+        int lowX,
+        int lowY,
+        int highH,
+        int lowH,
+        int segmentCount,
+        float? cliffStackAnchorWorldY = null)
+    {
         if (gridManager == null || heightMap == null || segmentCount <= 0)
             return;
-        if (cell == null)
+        if (cell == null || cliffPrefab == null)
             return;
         if (highH <= lowH)
             return;
 
         if (!IsCliffCardinalFaceVisibleToCamera(cardinalFace))
-            return;
-
-        GameObject prefab = GetCliffPrefabForCardinalFace(cardinalFace);
-        if (prefab == null)
             return;
 
         int waterSurfaceH = GetWaterSurfaceHeightForCliffProbe(lowX, lowY);
@@ -2134,8 +2161,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         int maxSortFromForegroundWater = GetMaxCliffSortingOrderFromForegroundWaterNeighbors(highX, highY);
 
         float z = cell.gameObject.transform.position.z;
-        // South/East prefabs carry correct art orientation per face; rotating by edge/downhill angles tilts the sprite in XY
-        // and makes the cliff read as a horizontal strip. Position uses shared-edge anchor only.
         Quaternion rot = Quaternion.identity;
         int d = highH - lowH;
         int count = Mathf.Min(segmentCount, d);
@@ -2147,12 +2172,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             if (ShouldSkipCliffSegmentFullyUnderwater(topH, bottomH, waterSurfaceH))
                 continue;
 
-            Vector2 world = GetCliffWallSegmentWorldPositionOnSharedEdge(cell, topH, s);
+            Vector2 world = GetCliffWallSegmentWorldPositionOnSharedEdge(cell, topH, s, cliffStackAnchorWorldY);
 
-            if (CellUsesWaterShorePrimaryPrefab(cell))
+            if (cliffStackAnchorWorldY == null && CellUsesWaterShorePrimaryPrefab(cell))
                 world.y -= gridManager.tileHeight * cliffWallWaterShoreYOffsetTileHeightFraction;
 
-            GameObject cliffWall = Instantiate(prefab, new Vector3(world.x, world.y, z), rot);
+            GameObject cliffWall = Instantiate(cliffPrefab, new Vector3(world.x, world.y, z), rot);
             cliffWall.transform.SetParent(cell.gameObject.transform, true);
 
             SpriteRenderer sr = cliffWall.GetComponent<SpriteRenderer>();
@@ -2167,6 +2192,138 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             }
 
             visualIndex++;
+        }
+    }
+
+    /// <summary>
+    /// After all water tiles are placed, builds water–water surface-step stacks on the higher cell (south/east faces only).
+    /// Same stack rules as land cliffs; uses logical surface difference when <see cref="HeightMap"/> heights match.
+    /// </summary>
+    public void RefreshWaterCascadeCliffs(WaterManager wm)
+    {
+        if (heightMap == null || gridManager == null || wm == null)
+            return;
+        WaterMap wmMap = wm.GetWaterMap();
+        if (wmMap == null)
+            return;
+        if (cliffWaterSouthPrefab == null && cliffWaterEastPrefab == null)
+            return;
+        if (waterManager == null)
+            waterManager = wm;
+
+        int gw = gridManager.width;
+        int gh = gridManager.height;
+        for (int x = 0; x < gw; x++)
+        {
+            for (int y = 0; y < gh; y++)
+            {
+                if (!wmMap.IsWater(x, y))
+                    continue;
+                Cell cell = gridManager.GetCell(x, y);
+                if (cell != null)
+                    RemoveExistingWaterCascadeCliffs(cell);
+            }
+        }
+
+        for (int x = 0; x < gw; x++)
+        {
+            for (int y = 0; y < gh; y++)
+            {
+                if (!wmMap.IsWater(x, y))
+                    continue;
+                int sHere = wm.GetWaterSurfaceHeight(x, y);
+                if (sHere < 0)
+                    continue;
+
+                if (cliffWaterSouthPrefab != null && heightMap.IsValidPosition(x - 1, y) && wmMap.IsWater(x - 1, y))
+                {
+                    int sLow = wm.GetWaterSurfaceHeight(x - 1, y);
+                    if (sLow >= 0 && sHere > sLow)
+                        TryPlaceWaterCascadeCliffStack(x, y, x - 1, y, sHere, sLow, CliffCardinalFace.South, cliffWaterSouthPrefab);
+                }
+
+                if (cliffWaterEastPrefab != null && heightMap.IsValidPosition(x, y - 1) && wmMap.IsWater(x, y - 1))
+                {
+                    int sLow = wm.GetWaterSurfaceHeight(x, y - 1);
+                    if (sLow >= 0 && sHere > sLow)
+                        TryPlaceWaterCascadeCliffStack(x, y, x, y - 1, sHere, sLow, CliffCardinalFace.East, cliffWaterEastPrefab);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Computes terrain heights and segment count for a water–water cascade; if <see cref="HeightMap"/> has no step, uses logical surface delta.
+    /// </summary>
+    private void GetEffectiveHeightsForWaterWaterCliff(
+        int highX,
+        int highY,
+        int lowX,
+        int lowY,
+        int sHigh,
+        int sLow,
+        out int highH,
+        out int lowH,
+        out int segmentCount)
+    {
+        highH = heightMap.GetHeight(highX, highY);
+        lowH = heightMap.GetHeight(lowX, lowY);
+        int dH = highH - lowH;
+        int dS = sHigh - sLow;
+        if (dH > 0)
+        {
+            segmentCount = dH;
+        }
+        else if (dS > 0)
+        {
+            lowH = Mathf.Max(MIN_HEIGHT, highH - dS);
+            segmentCount = highH - lowH;
+        }
+        else
+        {
+            segmentCount = 0;
+        }
+    }
+
+    private void TryPlaceWaterCascadeCliffStack(
+        int highX,
+        int highY,
+        int lowX,
+        int lowY,
+        int sHigh,
+        int sLow,
+        CliffCardinalFace face,
+        GameObject waterCliffPrefab)
+    {
+        if (waterCliffPrefab == null || heightMap == null || gridManager == null)
+            return;
+
+        GetEffectiveHeightsForWaterWaterCliff(highX, highY, lowX, lowY, sHigh, sLow, out int highH, out int lowH, out int segmentCount);
+        if (segmentCount <= 0 || highH <= lowH)
+            return;
+
+        Cell cell = gridManager.GetCell(highX, highY);
+        if (cell == null)
+            return;
+
+        // Same Y band as the animated water tile child (WaterManager.PlaceWater): waterSurfaceWorld + (0, tileHeight*0.25).
+        int visualSurfaceHeight = Mathf.Max(MIN_HEIGHT, sHigh - 1);
+        Vector2 waterSurfaceWorld = gridManager.GetWorldPositionVector(highX, highY, visualSurfaceHeight);
+        float halfCellHeight = gridManager.tileHeight * 0.25f;
+        float anchorY = waterSurfaceWorld.y + halfCellHeight;
+
+        PlaceCliffWallStackCore(cell, waterCliffPrefab, face, highX, highY, lowX, lowY, highH, lowH, segmentCount, anchorY);
+    }
+
+    private void RemoveExistingWaterCascadeCliffs(Cell cell)
+    {
+        if (cell == null)
+            return;
+        for (int i = cell.transform.childCount - 1; i >= 0; i--)
+        {
+            GameObject child = cell.transform.GetChild(i).gameObject;
+            if (IsPrefabInstance(child, cliffWaterSouthPrefab) || IsPrefabInstance(child, cliffWaterEastPrefab))
+                Destroy(child);
         }
     }
 

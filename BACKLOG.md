@@ -7,18 +7,18 @@
 
 ## In Progress
 
-- [ ] **BUG-42** — Water shores & cliffs: terrain + water (lakes + rivers); waterfalls; water-cliff walls — merged **BUG-33** + **BUG-41** (2026-03-25)
-  - Type: bug / feature
-  - Files: `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `PlaceCliffWalls`, `RefreshLakeShoreAfterLakePlacement`, `IsLandEligibleForWaterShorePrefabs`, neighbor queries vs `WaterBodyType` lake/river/sea), `WaterManager.cs` (`PlaceWater`, `UpdateWaterVisuals`), `GridSortingOrderService.cs`, `GeographyManager.cs` (sorting helpers as needed); water / shore / waterfall / water-cliff prefabs under `Assets/Prefabs/` (follow `.cursor/rules/coding-conventions.mdc` for new assets)
-  - Spec: `.cursor/specs/isometric-geography-system.md` (§4.2, §5.6–§5.9, §12–§13, §15); details in **Notes** / **Files** while **BUG-42** is open
-  - Notes: **Merged scope — lakes (ex-BUG-33):** Fix incorrect or missing **lake** shore tiles (cardinal/diagonal water slopes, Bay corners, upslope pairs), z-order / sorting glitches, and visual gaps after procedural lake placement. Baseline shores from **FEAT-37a**; **FEAT-37b** excluded shore prefab scope. **Merged scope — rivers (ex-BUG-41):** After **FEAT-38**, procedural **river** water and banks must show **correct shore tiles** and **brown cliff** stacks at drops; **River** adjacency consistent with height/surface rules; refresh passes cover river Moore neighborhoods where needed. **New — waterfalls:** Introduce **waterfall** prefabs in **four orthogonal directions** (N, S, E, W) for cascades / cardinal slope-water drops. **New — water-cliff walls:** Introduce **water-cliff** wall prefabs on **south** and **east** faces (same placement/stacking model as existing **brown cliff** segments — `PlaceCliffWallStack` / shared-edge rules — but visually water-facing). **Related:** **BUG-39** / **BUG-40** (cliff placement + foreground-water sorting — re-verify on lakes + rivers after new prefabs).
-  - Depends on: **FEAT-38** (completed)
+- [ ] **BUG-45** — Adjacent water bodies at different surface heights: merge, prefab refresh at intersections, straight slope/cliff transitions
+  - Type: bug / polish
+  - Files: `WaterManager.cs` (`PlaceWater`, `UpdateWaterVisuals`, body merge / neighbor refresh), `WaterMap.cs` (per-cell surface height, body boundaries, adjacency between bodies), `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `RefreshLakeShoreAfterLakePlacement`, cliff/water-shore stacks where two water levels meet), `ProceduralRiverGenerator.cs` if river–lake or river–river height junctions are involved; water / shore / cliff prefabs under `Assets/Prefabs/` (per `.cursor/rules/coding-conventions.mdc` for new or adjusted assets)
+  - Spec: `.cursor/specs/isometric-geography-system.md` (water bodies, surface height, shores, cliffs — §4–§7, §12–§13 as applicable); extend spec once rules for multi-body height junctions are stable
+  - Notes: **Observed:** Where **two water bodies** with **different water-surface elevations** are **adjacent** or share an edge/corner, visuals break: **black voids** (missing mesh/texture), **grass or terrain slivers** bleeding through, **jagged stepped** edges instead of a coherent **vertical drop** or **clean cardinal slope**. Current merge / refresh logic does not reliably update **shore and cliff prefabs** at these **intersections**. **Expected:** Revisit **merge and visual update** when multiple bodies abut at different heights; ensure refresh passes include **Moore/Von Neumann neighborhoods** at body–body boundaries; prefer **straight cliff faces** or **orthogonal slope segments** (cardinal “laderas/riscos” style) at the height step rather than inconsistent diagonal slivers. **Related:** completed **BUG-42** (water cascades + shore coherence — coordinate intersection rules with **`RefreshWaterCascadeCliffs`** / shore refresh).
+  - Depends on: none
 
 ## High Priority
 
 - [ ] **TECH-01** — Extract responsibilities from large files (focus: **GridManager** decomposition next)
   - Type: refactor
-  - Files: `GridManager.cs` (~2070 lines), `TerrainManager.cs` (~3100), `CityStats.cs` (~1200), `ZoneManager.cs` (~1360), `UIManager.cs` (~1240), `RoadManager.cs` (~1730)
+  - Files: `GridManager.cs` (~2070 lines), `TerrainManager.cs` (~3500), `CityStats.cs` (~1200), `ZoneManager.cs` (~1360), `UIManager.cs` (~1240), `RoadManager.cs` (~1730)
   - Notes: Helpers already extracted (`GridPathfinder`, `GridSortingOrderService`, `ChunkCullingSystem`, `RoadCacheService`, `BuildingPlacementService`, etc.). **Next candidates from GridManager:** `BulldozeHandler` (~200 lines), `GridInputHandler` (~130 lines), `CoordinateConversionService` (~230 lines). Prioritize this workstream; see `ARCHITECTURE.md` (GridManager hub trade-off).
 
 - [ ] **BUG-37** — Manual street drawing clears buildings and zones on cells adjacent to the traced path
@@ -39,28 +39,21 @@
   - Type: bug
   - Files: `RoadManager.cs` (`ValidateBridgePath`, `StraightenBridgeSegments` / bridge placement and commit), `RoadPrefabResolver.cs` (bridge vs land prefabs at height/water boundaries), `TerrainManager.cs` (cliff stacks, water shores, height continuity at cliff–water edges), `GridSortingOrderService.cs` (bridge `sortingOrder` over water vs land), `GridManager.cs` (road tile placement / refresh near cliffs); `InterstateManager.cs` if interstate bridge segments hit the same cases; `WaterManager.cs` / `WaterMap.cs` if body-type or surface rules affect placement
   - Spec: `.cursor/specs/isometric-geography-system.md` §14 (roads, bridges, validation); cliff/water interaction with roads as documented in §4–§7 and §12–§13 where relevant
-  - Notes: **Observed:** When a street or bridge path crosses **water** (river or lake) **next to a vertical cliff** (height drop), bridge/road visuals break: **floating** segments at the upper level, **gaps** between cliff-top approach and lower water segments, **disconnected** path continuity, occasional **grass/terrain patches** on water under misplaced road tiles, and **misaligned** bridge tiles relative to cliff faces and water surface. **Expected:** A single continuous, correctly elevated bridge run with prefabs and **sorting** consistent with per-cell height and water vs land; no floating or orphaned road pieces at cliff–water junctions. **Related:** **BUG-42** (shores, cliffs, rivers/lakes — coordinate so bridge fixes do not fight shore/cliff refresh passes).
+  - Notes: **Observed:** When a street or bridge path crosses **water** (river or lake) **next to a vertical cliff** (height drop), bridge/road visuals break: **floating** segments at the upper level, **gaps** between cliff-top approach and lower water segments, **disconnected** path continuity, occasional **grass/terrain patches** on water under misplaced road tiles, and **misaligned** bridge tiles relative to cliff faces and water surface. **Expected:** A single continuous, correctly elevated bridge run with prefabs and **sorting** consistent with per-cell height and water vs land; no floating or orphaned road pieces at cliff–water junctions. **Related:** completed **BUG-42** (shore/cascade pipeline — ensure bridge refresh does not fight **`RefreshWaterCascadeCliffs`** / `RefreshLakeShoreAfterLakePlacement`).
   - Depends on: none
 
 - [ ] **BUG-44** — Cliff prefabs: black gaps when a river or lake meets the **east** or **south** map edge
   - Type: bug
   - Files: `TerrainManager.cs` (`PlaceCliffWalls`, `PlaceCliffWallStack`, map-boundary / max-X / max-Y edge cases vs water cells), `WaterManager.cs` / `WaterMap.cs` if edge water placement interacts with cliff refresh; brown cliff / water-shore prefabs under `Assets/Prefabs/` (per `.cursor/rules/coding-conventions.mdc` for new or adjusted assets)
   - Spec: `.cursor/specs/isometric-geography-system.md` (map edges, water, cliffs, sorting — sections covering shore/cliff stacks at boundaries)
-  - Notes: **Observed:** Where a **river channel** or **lake** reaches the **east** or **south** boundary of the grid, the **brown vertical cliff** geometry that seals the map edge is **missing or too short** under the water tiles, exposing **black void**; **grass** cells on the same edge still show correct cliff faces. Suggests boundary cliff stacks or prefab variants do not account for **lower water-bed elevation** at those edges. **Expected:** Continuous cliff wall to the same depth as neighboring land cliffs, or dedicated boundary + water prefabs so no holes at east/south × water. **Related:** **BUG-42** (shores, cliffs, rivers/lakes — may share root cause with water-cliff / boundary placement).
-  - Depends on: none
-
-- [ ] **BUG-45** — Adjacent water bodies at different surface heights: merge, prefab refresh at intersections, straight slope/cliff transitions
-  - Type: bug / polish
-  - Files: `WaterManager.cs` (`PlaceWater`, `UpdateWaterVisuals`, body merge / neighbor refresh), `WaterMap.cs` (per-cell surface height, body boundaries, adjacency between bodies), `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `RefreshLakeShoreAfterLakePlacement`, cliff/water-shore stacks where two water levels meet), `ProceduralRiverGenerator.cs` if river–lake or river–river height junctions are involved; water / shore / cliff prefabs under `Assets/Prefabs/` (per `.cursor/rules/coding-conventions.mdc` for new or adjusted assets)
-  - Spec: `.cursor/specs/isometric-geography-system.md` (water bodies, surface height, shores, cliffs — §4–§7, §12–§13 as applicable); extend spec once rules for multi-body height junctions are stable
-  - Notes: **Observed:** Where **two water bodies** with **different water-surface elevations** are **adjacent** or share an edge/corner, visuals break: **black voids** (missing mesh/texture), **grass or terrain slivers** bleeding through, **jagged stepped** edges instead of a coherent **vertical drop** or **clean cardinal slope**. Current merge / refresh logic does not reliably update **shore and cliff prefabs** at these **intersections**. **Expected:** Revisit **merge and visual update** when multiple bodies abut at different heights; ensure refresh passes include **Moore/Von Neumann neighborhoods** at body–body boundaries; prefer **straight cliff faces** or **orthogonal slope segments** (cardinal “laderas/riscos” style) at the height step rather than inconsistent diagonal slivers. **Related:** **BUG-42** (waterfalls, water-cliff walls, general shore/cliff polish — coordinate so intersection rules and prefabs stay consistent).
+  - Notes: **Observed:** Where a **river channel** or **lake** reaches the **east** or **south** boundary of the grid, the **brown vertical cliff** geometry that seals the map edge is **missing or too short** under the water tiles, exposing **black void**; **grass** cells on the same edge still show correct cliff faces. Suggests boundary cliff stacks or prefab variants do not account for **lower water-bed elevation** at those edges. **Expected:** Continuous cliff wall to the same depth as neighboring land cliffs, or dedicated boundary + water prefabs so no holes at east/south × water. **Related:** completed **BUG-42** (virtual foot / edge cliffs — may share root cause with boundary × water placement).
   - Depends on: none
 
 - [ ] **BUG-46** — Parallel rivers (same map-border exit): minimum spacing at entry and along course
   - Type: fix (procedural generation)
   - Files: `ProceduralRiverGenerator.cs`, `WaterManager.cs` (`GenerateProceduralRiversForNewGame` / river placement orchestration), `GeographyManager.cs` if generation is wired there; `WaterMap.cs` only if body/cell queries are needed for distance checks
   - Spec: `.cursor/specs/isometric-geography-system.md` (rivers / procedural rivers — extend once rules are fixed)
-  - Notes: When multiple rivers are generated such that their **exit** cells lie on the **same map border** (parallel outflow), they can cluster: **entry** points too close on the interior border and/or **centerline paths** that run too near each other for too long. **Expected:** Enforce a **minimum grid distance** between **entry** points for rivers that share the same **exit** border, and a **minimum separation** between their **routes** (e.g. per-cell clearance along polyline/centerline, or minimum distance between paths while both are active — define tunable thresholds in generator settings). Reject or re-roll placements that violate spacing before committing water bodies. **Related:** **FEAT-38** (rivers — completed); **BUG-42** (visual follow-up if spacing changes affect shores).
+  - Notes: When multiple rivers are generated such that their **exit** cells lie on the **same map border** (parallel outflow), they can cluster: **entry** points too close on the interior border and/or **centerline paths** that run too near each other for too long. **Expected:** Enforce a **minimum grid distance** between **entry** points for rivers that share the same **exit** border, and a **minimum separation** between their **routes** (e.g. per-cell clearance along polyline/centerline, or minimum distance between paths while both are active — define tunable thresholds in generator settings). Reject or re-roll placements that violate spacing before committing water bodies. **Related:** **FEAT-38** (rivers — completed); completed **BUG-42** (re-verify shores/cascades if spacing changes).
   - Depends on: none
 
 - [ ] **BUG-47** — AUTO simulation: perpendicular street stubs from auto-zoning gaps never built (orthogonal intersections missing)
@@ -319,18 +312,24 @@
 
 ## Completed (last 30 days)
 
-- [x] **BUG-33** — Lake shore / edge prefab bugs — **superseded:** merged into **[BUG-42](#in-progress)** (2026-03-25)
-- [x] **BUG-41** — River corridors: shore prefabs + cliff stacks — **superseded:** merged into **[BUG-42](#in-progress)** (2026-03-25)
+- [x] **BUG-42** — Water shores & cliffs: terrain + water (lakes + rivers); water–water cascades; shore coherence — merged **BUG-33** + **BUG-41** (2026-03-26)
+  - Type: bug / feature
+  - Files: `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `PlaceCliffWalls`, `PlaceCliffWallStackCore`, `RefreshWaterCascadeCliffs`, `RefreshLakeShoreAfterLakePlacement`, `ClampShoreLandHeightsToAdjacentWaterSurface`, `IsLandEligibleForWaterShorePrefabs`), `WaterManager.cs` (`PlaceWater`, `UpdateWaterVisuals`), `ProceduralRiverGenerator.cs` (inner-corner shore continuity §13.5), `ProceduralRiverGenerator` / `WaterMap` as applicable; `cliffWaterSouthPrefab` & `cliffWaterEastPrefab` under `Assets/Prefabs/`
+  - Spec: `.cursor/specs/isometric-geography-system.md` (§2.4.1 shore band height coherence, §4.2 gate, §5.6–§5.7, §5.6.2 water–water cascades, §12–§13, §15)
+  - Notes: **Completed (verified):** **Shore band height coherence** — `HeightMap` clamp on Moore shore ring vs adjacent logical surface; water-shore prefab gate uses **`V = max(MIN_HEIGHT, S−1)`** vs **land height**. **River** inner-corner promotion + bed assignment guard. **Water–water cascades** — `RefreshWaterCascadeCliffs` after full `UpdateWaterVisuals`; **`PlaceCliffWallStackCore`** shared with brown cliffs; cascade Y anchor matches **water tile** (`GetWorldPositionVector` at `visualSurfaceHeight` + `tileHeight×0.25`). **Out of scope / follow-up:** visible **north/west** cliff meshes (camera); map edge water × cliff (**BUG-44**); **multi-body** height junctions (**BUG-45**); bridges × cliff-water (**BUG-43**); optional **N/S/E/W** “waterfall” art beyond **S/E** stacks — track separately if needed.
+
+- [x] **BUG-33** — Lake shore / edge prefab bugs — **superseded:** merged into **[BUG-42](#bug-42)** (2026-03-25); closed with **BUG-42** (2026-03-26)
+- [x] **BUG-41** — River corridors: shore prefabs + cliff stacks — **superseded:** merged into **[BUG-42](#bug-42)** (2026-03-25); closed with **BUG-42** (2026-03-26)
 - [x] **FEAT-38** — Procedural rivers during geography / terrain generation (2026-03-24)
   - Type: feature
   - Files: `GeographyManager.cs`, `ProceduralRiverGenerator.cs`, `TerrainManager.cs`, `WaterMap.cs`, `WaterManager.cs`, `WaterBody.cs`, `Cell.cs` / `CellData.cs` (as needed)
   - Spec: `.cursor/specs/isometric-geography-system.md` §12–§13
-  - Notes: **Completed:** `WaterBody` classification + merge (river vs lake/sea); `GenerateProceduralRiversForNewGame()` after `InitializeWaterMap`, before interstate; `ProceduralRiverGenerator` (BFS / forced centerline, border margin, transverse + longitudinal monotonicity, `WaterMap` river bodies). **Follow-up visuals:** **BUG-42** (shores + cliffs + waterfalls + water-cliff walls — merged **BUG-33** + **BUG-41**). Cardinal slope-water / cascade **art** and shore/cliff polish tracked there.
+  - Notes: **Completed:** `WaterBody` classification + merge (river vs lake/sea); `GenerateProceduralRiversForNewGame()` after `InitializeWaterMap`, before interstate; `ProceduralRiverGenerator` (BFS / forced centerline, border margin, transverse + longitudinal monotonicity, `WaterMap` river bodies). **Shore / cliff / cascade polish:** completed **[BUG-42](#bug-42)** (merged **BUG-33** + **BUG-41**, 2026-03-26).
 
 - [x] **BUG-39** — Bay / inner-corner shore prefabs: cliff art alignment vs stacked cliffs (2026-03-24)
   - Type: fix (art vs code)
   - Files: `TerrainManager.cs` (`GetCliffWallSegmentWorldPositionOnSharedEdge`, `PlaceCliffWallStack`), `Assets/Sprites/Cliff/CliffEast.png`, `Assets/Sprites/Cliff/CliffSouth.png`, cliff prefabs under `Assets/Prefabs/Cliff/`
-  - Notes: **Resolved:** Inspector-tunable per-face placement (`cliffWallSouthFaceNudgeTileWidthFraction` / `HeightFraction`, `cliffWallEastFaceNudgeTileWidthFraction` / `HeightFraction`) and water-shore Y offset (`cliffWallWaterShoreYOffsetTileHeightFraction`) so cliff sprites align with the south/east diamond faces and water-shore cells after art was moved inside the textures. Remaining generic shore/gap polish → **BUG-42** where applicable.
+  - Notes: **Resolved:** Inspector-tunable per-face placement (`cliffWallSouthFaceNudgeTileWidthFraction` / `HeightFraction`, `cliffWallEastFaceNudgeTileWidthFraction` / `HeightFraction`) and water-shore Y offset (`cliffWallWaterShoreYOffsetTileHeightFraction`) so cliff sprites align with the south/east diamond faces and water-shore cells after art was moved inside the textures. Further shore/gap / cascade work → completed **[BUG-42](#bug-42)** (2026-03-26) where applicable.
 
 - [x] **BUG-40** — Shore cliff walls draw in front of nearer (foreground) water tiles (2026-03-24)
   - Type: fix (sorting / layers)
@@ -359,8 +358,8 @@
 
 - [x] **FEAT-37b** — Variable-height water: sorting, roads/bridges, `SEA_LEVEL` removal (no lake shore prefab scope) (2026-03-24)
   - Type: feature + refactor
-  - Files: `GridSortingOrderService.cs`, `RoadPrefabResolver.cs`, `RoadManager.cs`, `AutoRoadBuilder.cs`, `ForestManager.cs`, `TerrainManager.cs` (water height queries, bridge/adjacency paths — **exclude** shore placement methods; **BUG-42** if broken)
-  - Notes: Legacy `SEA_LEVEL` / `cell.height == 0` assumptions removed or generalized for sorting, roads, bridges, non-shore water adjacency. Shore tiles **not** in scope (37a + **BUG-42**). Verified in Unity.
+  - Files: `GridSortingOrderService.cs`, `RoadPrefabResolver.cs`, `RoadManager.cs`, `AutoRoadBuilder.cs`, `ForestManager.cs`, `TerrainManager.cs` (water height queries, bridge/adjacency paths — **exclude** shore placement methods)
+  - Notes: Legacy `SEA_LEVEL` / `cell.height == 0` assumptions removed or generalized for sorting, roads, bridges, non-shore water adjacency. Shore tiles **not** in scope (37a + completed **[BUG-42](#bug-42)**). Verified in Unity.
 
 - [x] **BUG-32** — Lakes / `WaterMap` water not shown on minimap (desync with main map) (2026-03-23)
   - Type: fix (UX / consistency)
@@ -370,7 +369,7 @@
 - [x] **FEAT-37a** — WaterBody + WaterMap depression-fill (lake data & procedural placement) (2026-03-22)
   - Type: feature + refactor
   - Files: `WaterBody.cs`, `WaterMap.cs`, `WaterManager.cs`, `TerrainManager.cs`, `LakeFeasibility.cs`
-  - Notes: `WaterBody` + per-cell body ids; `WaterMap.InitializeLakesFromDepressionFill` + `LakeFillSettings` (depression-fill, bounded pass, artificial fallback, merge); `LakeFeasibility` / `EnsureGuaranteedLakeDepressions` terrain bowls; `WaterMapData` v2 + legacy load; centered 40×40 template + extended terrain. **Follow-up:** shore / cliff / waterfall polish **BUG-42**; **FEAT-37b** / **FEAT-37c** completed; building sort on load **BUG-34** (completed); multi-cell footprint / grass under building **BUG-35** (completed 2026-03-22).
+  - Notes: `WaterBody` + per-cell body ids; `WaterMap.InitializeLakesFromDepressionFill` + `LakeFillSettings` (depression-fill, bounded pass, artificial fallback, merge); `LakeFeasibility` / `EnsureGuaranteedLakeDepressions` terrain bowls; `WaterMapData` v2 + legacy load; centered 40×40 template + extended terrain. **Shore / cliff / cascade polish:** completed **[BUG-42](#bug-42)** (2026-03-26); **FEAT-37b** / **FEAT-37c** completed; building sort on load **BUG-34** (completed); multi-cell footprint / grass under building **BUG-35** (completed 2026-03-22).
 
 - [x] **TECH-12** — Water system refactor: planning pass (objectives, rules, scope, child issues) (2026-03-21)
   - Type: planning / documentation
