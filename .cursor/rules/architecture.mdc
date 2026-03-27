@@ -14,7 +14,7 @@ alwaysApply: true
 5. `ForestManager.InitializeForestMap()` — forest generation (conditional)
 6. Sorting order recalculation, border signs, then `ZoneManager` ready for player zoning
 
-**Water evolution:** **FEAT-37** epic — **FEAT-37a** / **FEAT-37b** / **FEAT-37c** **completed**; **FEAT-38** (rivers) completed. Shore / cliff / water–water cascades **BUG-42** completed (2026-03-26); adjacent bodies at different heights **BUG-45** in progress. Load-time building sort **BUG-34** and grass/building layering **BUG-35** completed (2026-03-22). See `.cursor/specs/isometric-geography-system.md` §12–§13 and `ARCHITECTURE.md` (Data Flows → Water).
+**Water evolution:** **FEAT-37** epic — **FEAT-37a** / **FEAT-37b** / **FEAT-37c** **completed**; **FEAT-38** (rivers) completed. Shore / cliff / water–water cascades **BUG-42** completed (2026-03-26); adjacent bodies at different heights **BUG-45** completed (2026-03-27). Load-time building sort **BUG-34** and grass/building layering **BUG-35** completed (2026-03-22). See `.cursor/specs/isometric-geography-system.md` §12–§13 and `ARCHITECTURE.md` (Data Flows → Water).
 
 ## Simulation Flow (each TimeManager tick)
 `TimeManager` → `SimulationManager.ProcessSimulationTick()` → in order:

@@ -2,7 +2,7 @@
 
 > **Issue:** [BUG-45](../BACKLOG.md)  
 > **Canonical geography:** [`.cursor/specs/isometric-geography-system.md`](../.cursor/specs/isometric-geography-system.md) (§12.7 after update)  
-> **Status:** partially implemented — Pass B, cascade rule, multi-surface shore corners, and conditional lake-shore refresh are in code; see `BACKLOG.md` **BUG-45** and spec §12.7 / §5.6.2 for shipped behavior.
+> **Status:** **shipped** — Pass A/B, lake-at-step exclusions, full-cardinal cascades (incl. mirror N/W lower pool), `SelectPerpendicularWaterCornerPrefabs`, lake–river rim fallback; see `BACKLOG.md` **[BUG-45](../BACKLOG.md)** (completed 2026-03-27) and spec §12.7 / §5.6.2.
 
 ## 1. Goal
 
@@ -109,4 +109,4 @@ When an **upper** cell touches **several** lower-surface neighbors with differen
 ## 7. Completion criteria
 
 - §12.7 and this plan match shipped behavior.  
-- BUG-45 moved to **Completed** in `BACKLOG.md` only after **user verification** in Unity (per project workflow).
+- **[BUG-45](../BACKLOG.md)** marked **Completed** in `BACKLOG.md` (2026-03-27) after user verification in Unity (per project workflow).
