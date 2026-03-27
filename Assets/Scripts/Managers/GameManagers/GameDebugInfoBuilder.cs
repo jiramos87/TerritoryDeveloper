@@ -42,7 +42,8 @@ public class GameDebugInfoBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns a single line with grid coordinates and chunk id, e.g. "x: 12, y: 9, chunk: (0,0)".
+    /// Returns a single line with grid coordinates, chunk id, and logical water surface height when in bounds, e.g.
+    /// "x: 12, y: 9, chunk: (0,0), S: 2" or "..., S: n/a" when the cell is dry.
     /// </summary>
     public string GetCoordinatesLine(Vector2 gridPosition)
     {
@@ -54,6 +55,15 @@ public class GameDebugInfoBuilder : MonoBehaviour
             int cy = (int)gridPosition.y / gridManager.chunkSize;
             coords += $", chunk: ({cx},{cy})";
         }
+
+        int ix = (int)gridPosition.x;
+        int iy = (int)gridPosition.y;
+        if (gridManager != null && ix >= 0 && ix < gridManager.width && iy >= 0 && iy < gridManager.height && waterManager != null)
+        {
+            int s = waterManager.GetWaterSurfaceHeight(ix, iy);
+            coords += s >= 0 ? $", S: {s}" : ", S: n/a";
+        }
+
         return coords;
     }
 

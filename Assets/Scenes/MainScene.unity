@@ -11352,6 +11352,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2554f07997e242c2adef24969c46277, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debugLakeShoreRefreshSecondRing: 0
   terrainDebugLogCellsEnabled: 1
   gridManager: {fileID: 1880690383}
   zoneManager: {fileID: 955926521}
@@ -11385,6 +11386,8 @@ MonoBehaviour:
   eastCliffWallPrefab: {fileID: 2327040077204098500, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
   northCliffWallPrefab: {fileID: 0}
   westCliffWallPrefab: {fileID: 0}
+  cliffWaterSouthPrefab: {fileID: 0}
+  cliffWaterEastPrefab: {fileID: 0}
   cliffWallPivotDownHeightSteps: 1.5
   cliffWallSouthFaceNudgeTileWidthFraction: 1
   cliffWallSouthFaceNudgeTileHeightFraction: 1
@@ -16820,7 +16823,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -260.99487, y: -10.571747}
+  m_AnchoredPosition: {x: -260.99487, y: -10.571701}
   m_SizeDelta: {x: -521.9894, y: -455.8174}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1664159913
@@ -16859,8 +16862,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 399, y: -39}
-  m_SizeDelta: {x: 132.6454, y: 105.4498}
+  m_AnchoredPosition: {x: 379.69287, y: -27.682}
+  m_SizeDelta: {x: 171.2597, y: 128.0857}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1664159915
 MonoBehaviour:

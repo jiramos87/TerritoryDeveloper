@@ -44,6 +44,7 @@ public class UIManager : MonoBehaviour
     public TerrainManager terrainManager;
     public BuildingSelectorMenuController buildingSelectorMenuController;
     public CityStats cityStats;
+    private WaterManager waterManager;
 
     [Header("Mini-map")]
     [SerializeField] private MiniMapController miniMapController;
@@ -147,6 +148,9 @@ public class UIManager : MonoBehaviour
         {
             cityStats = FindObjectOfType<CityStats>();
         }
+
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
 
         selectedZoneType = Zone.ZoneType.Grass;
         bulldozeMode = false;
@@ -309,7 +313,15 @@ public class UIManager : MonoBehaviour
                 int y = (int)gridManager.mouseGridPosition.y;
                 int cx = gridManager.chunkSize > 0 ? x / gridManager.chunkSize : 0;
                 int cy = gridManager.chunkSize > 0 ? y / gridManager.chunkSize : 0;
-                gridCoordinatesText.text = "x: " + x + ", y: " + y + ", chunk: (" + cx + "," + cy + ")";
+                string line = "x: " + x + ", y: " + y + ", chunk: (" + cx + "," + cy + ")";
+                if (waterManager == null)
+                    waterManager = FindObjectOfType<WaterManager>();
+                if (waterManager != null && x >= 0 && x < gridManager.width && y >= 0 && y < gridManager.height)
+                {
+                    int s = waterManager.GetWaterSurfaceHeight(x, y);
+                    line += s >= 0 ? ", S: " + s : ", S: n/a";
+                }
+                gridCoordinatesText.text = line;
             }
         }
 

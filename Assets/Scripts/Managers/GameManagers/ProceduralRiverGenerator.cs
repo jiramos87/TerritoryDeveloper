@@ -6,7 +6,8 @@ namespace Territory.Terrain
 {
     /// <summary>
     /// FEAT-38: procedural static rivers after lake/sea init. Bed footprint includes prior lake/sea cells in the cross-section;
-    /// those cells are carved to <c>H_bed</c> and reassigned to the river body (BUG-45 follow-up: uniform lecho).
+    /// those cells are carved to <c>H_bed</c> and reassigned to the river body when allowed (lake at a different
+    /// logical <see cref="WaterBody.SurfaceHeight"/> is not carved or reassigned — §12.7 / <see cref="WaterMap.TryReassignCellFromAnyWaterToRiverBody"/>).
     /// Cross-stream <b>bed</b> width (lecho) is 1–3 cells of <b>water</b>; corridor width = bed + 2 (one dry shore strip per side) for terrain refresh and collision with <see cref="RiverBorderMargin"/>.
     /// Each cross-section gets one shared bed height and symmetric bank height; water bodies are split when surface height changes along the path (see <c>isometric-geography-system.md</c> §13.4).
     /// After carving, inner-corner shore continuity is enforced on the bed footprint (see §13.5). Lake/river shore
@@ -86,8 +87,9 @@ namespace Territory.Terrain
                 foreach (var p in corridorFootprint)
                     used.Add(p);
 
-                ApplyCrossSectionHeights(wm, hm, crossSections);
-                PromoteRiverBedInnerCornerShoreContinuity(hm, gw, gh, waterFootprint);
+                var riverBedCarvedCells = new HashSet<Vector2Int>();
+                ApplyCrossSectionHeights(wm, hm, crossSections, riverBedCarvedCells);
+                PromoteRiverBedInnerCornerShoreContinuity(hm, gw, gh, waterFootprint, riverBedCarvedCells);
 
                 int lastSurface = int.MinValue;
                 int currentBodyId = -1;
@@ -227,7 +229,8 @@ namespace Territory.Terrain
         /// Shallow carve candidate per section, then <b>longitudinal</b> clamp: <c>H_bed[i] = min(candidate[i], H_bed[i-1])</c> from entry to exit (see <c>isometric-geography-system.md</c> §13.4).
         /// Finally writes bed and symmetric bank heights.
         /// </summary>
-        private static void ApplyCrossSectionHeights(WaterMap wm, HeightMap hm, List<RiverCrossSectionData> sections)
+        /// <param name="riverBedCarvedCells">Cells where bed height was written; excludes skipped lake cells (different surface).</param>
+        private static void ApplyCrossSectionHeights(WaterMap wm, HeightMap hm, List<RiverCrossSectionData> sections, HashSet<Vector2Int> riverBedCarvedCells)
         {
             foreach (RiverCrossSectionData sec in sections)
             {
@@ -264,7 +267,12 @@ namespace Territory.Terrain
 
                 int hBed = sec.AppliedBedHeight;
                 foreach (Vector2Int p in sec.Bed)
+                {
+                    if (ShouldSkipCarvingLakeCellForRiverBed(wm, p.x, p.y, hBed))
+                        continue;
                     hm.SetHeight(p.x, p.y, hBed);
+                    riverBedCarvedCells.Add(p);
+                }
 
                 if (hBed >= TerrainManager.MAX_HEIGHT)
                     continue;
@@ -278,17 +286,34 @@ namespace Territory.Terrain
         }
 
         /// <summary>
+        /// Lake cells that would require a cross-body surface step vs the river segment bed are not carved to <paramref name="hBed"/>;
+        /// keeps terrain and <see cref="WaterMap"/> consistent when the river corridor overlaps an existing lake (§12.7).
+        /// </summary>
+        private static bool ShouldSkipCarvingLakeCellForRiverBed(WaterMap wm, int x, int y, int hBed)
+        {
+            if (wm == null || !wm.IsWater(x, y))
+                return false;
+            if (wm.GetBodyClassificationAt(x, y) != WaterBodyType.Lake)
+                return false;
+            int riverSurface = Mathf.Min(TerrainManager.MAX_HEIGHT, hBed + 1);
+            return wm.GetSurfaceHeightAt(x, y) != riverSurface;
+        }
+
+        /// <summary>
         /// After carving bed and banks, some bed cells can sit at the <b>inner corner</b> of an L-shaped shore where two
         /// perpendicular bank neighbors are one step higher — leaving a water-height hole breaks continuous shore art
         /// (see isometric spec §13.5). Promotes such cells from <c>H_bed</c> to <c>H_bed + 1</c> so they stay dry shore.
         /// </summary>
-        private static void PromoteRiverBedInnerCornerShoreContinuity(HeightMap hm, int gw, int gh, HashSet<Vector2Int> bedFootprint)
+        /// <param name="riverBedCarvedCells">When non-null, only these bed footprint cells received a river bed carve (skips protected lake cells).</param>
+        private static void PromoteRiverBedInnerCornerShoreContinuity(HeightMap hm, int gw, int gh, HashSet<Vector2Int> bedFootprint, HashSet<Vector2Int> riverBedCarvedCells = null)
         {
             if (hm == null || bedFootprint == null || bedFootprint.Count == 0)
                 return;
 
             foreach (Vector2Int p in bedFootprint)
             {
+                if (riverBedCarvedCells != null && !riverBedCarvedCells.Contains(p))
+                    continue;
                 int x = p.x;
                 int y = p.y;
                 if (x < 0 || x >= gw || y < 0 || y >= gh)

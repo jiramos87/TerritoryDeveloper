@@ -99,6 +99,28 @@ namespace Territory.Terrain
             return bodies.TryGetValue(id, out WaterBody b) ? b.Classification : WaterBodyType.None;
         }
 
+        /// <summary>
+        /// When two registered water cells share a cardinal edge with <c>S_high &gt; S_low</c>, Pass A/B junction processing
+        /// and water–water cascades are skipped if <b>either</b> body is a <see cref="WaterBodyType.Lake"/> (§12.7). River–river
+        /// steps are unaffected; Sea is not treated as Lake for this rule.
+        /// </summary>
+        /// <param name="highX">Higher logical surface cell.</param>
+        /// <param name="highY">Higher logical surface cell.</param>
+        /// <param name="lowX">Lower logical surface neighbor (cardinally adjacent to the high cell).</param>
+        /// <param name="lowY">Lower logical surface neighbor.</param>
+        public bool IsLakeSurfaceStepContactForbidden(int highX, int highY, int lowX, int lowY)
+        {
+            if (!IsWater(highX, highY) || !IsWater(lowX, lowY))
+                return false;
+            int sH = GetSurfaceHeightAt(highX, highY);
+            int sL = GetSurfaceHeightAt(lowX, lowY);
+            if (sH <= sL)
+                return false;
+            WaterBodyType cH = GetBodyClassificationAt(highX, highY);
+            WaterBodyType cL = GetBodyClassificationAt(lowX, lowY);
+            return cH == WaterBodyType.Lake || cL == WaterBodyType.Lake;
+        }
+
         public IReadOnlyDictionary<int, WaterBody> GetBodies()
         {
             return bodies;
@@ -220,12 +242,15 @@ namespace Territory.Terrain
         /// BUG-45 / multi-body contact: For each water cell on the <b>higher</b> logical surface that cardinally touches
         /// water at a <b>strictly lower</b> surface, sets <see cref="HeightMap"/> bed height to the <b>minimum</b> bed
         /// among those lower-surface neighbors only. Does <b>not</b> change <c>waterBodyIds</c>, merge bodies, or fill dry cells.
-        /// Idempotent; safe to run from <see cref="WaterManager.UpdateWaterVisuals"/> before <c>PlaceWater</c>.
+        /// Skips edges where <see cref="IsLakeSurfaceStepContactForbidden"/> applies (§12.7). Idempotent; safe to run from
+        /// <see cref="WaterManager.UpdateWaterVisuals"/> before <c>PlaceWater</c>.
         /// </summary>
-        private void AlignUpperSurfaceContactBorderBedHeights(HeightMap hm)
+        /// <returns><c>true</c> if any cell height was written.</returns>
+        private bool AlignUpperSurfaceContactBorderBedHeightsOnce(HeightMap hm)
         {
             int[] d4x = { 1, -1, 0, 0 };
             int[] d4y = { 0, 0, 1, -1 };
+            bool any = false;
 
             for (int x = 0; x < width; x++)
             {
@@ -246,26 +271,40 @@ namespace Territory.Terrain
                         int sN = GetSurfaceHeightAt(nx, ny);
                         if (sN < 0 || sN >= sHere)
                             continue;
+                        if (IsLakeSurfaceStepContactForbidden(x, y, nx, ny))
+                            continue;
                         targetBed = Mathf.Min(targetBed, hm.GetHeight(nx, ny));
                     }
 
                     if (targetBed == int.MaxValue)
                         continue;
-                    hm.SetHeight(x, y, Mathf.Clamp(targetBed, TerrainManager.MIN_HEIGHT, TerrainManager.MAX_HEIGHT));
+                    int clamped = Mathf.Clamp(targetBed, TerrainManager.MIN_HEIGHT, TerrainManager.MAX_HEIGHT);
+                    if (hm.GetHeight(x, y) == clamped)
+                        continue;
+                    hm.SetHeight(x, y, clamped);
+                    any = true;
                 }
             }
+
+            return any;
         }
 
         /// <summary>
         /// Aligns <see cref="HeightMap"/> beds only on the cardinal contact strip where a higher logical water surface
         /// meets a lower one (see §12.7). Does not reclassify cells or merge bodies.
+        /// Runs multiple passes so minimum lower-pool beds propagate along the contact strip (junction width).
         /// Call from <see cref="WaterManager.UpdateWaterVisuals"/> when a <see cref="HeightMap"/> is available.
         /// </summary>
         public void ApplyMultiBodySurfaceBoundaryNormalization(HeightMap heightMap)
         {
             if (heightMap == null)
                 return;
-            AlignUpperSurfaceContactBorderBedHeights(heightMap);
+            const int maxPassAIterations = 24;
+            for (int i = 0; i < maxPassAIterations; i++)
+            {
+                if (!AlignUpperSurfaceContactBorderBedHeightsOnce(heightMap))
+                    break;
+            }
         }
 
         /// <summary>
@@ -275,6 +314,9 @@ namespace Territory.Terrain
         /// <b>upper-bank</b> perpendicular to the contact (beside each high cell at the junction) so the lower body
         /// can replace shore wedges between two surface levels. The next <see cref="WaterManager.UpdateWaterVisuals"/>
         /// pass replaces terrain with open water where absorbed.
+        /// After dry absorption, <b>contact-bed reassignment</b> moves upper-pool <b>water</b> cells cardinally touching
+        /// lower-surface water into that neighbor’s body (§12.7): if the upper bed is still above the neighbor’s bed, it is
+        /// lowered to match first, then <c>waterBodyId</c> is updated so logical <c>S</c> matches the lecho.
         /// Assigns <see cref="waterBodyIds"/> to an existing body at <paramref name="sLow"/> (deterministic: contact cell’s id;
         /// does not merge two lower bodies). Idempotent. Updates <see cref="HeightMap"/> beds; sync <see cref="GridManager.SetCellHeight"/>
         /// when <paramref name="gridManager"/> is non-null.
@@ -344,6 +386,8 @@ namespace Territory.Terrain
                         int sLow = GetSurfaceHeightAt(lx, ly);
                         if (sLow < 0 || sHigh <= sLow)
                             continue;
+                        if (IsLakeSurfaceStepContactForbidden(hx, hy, lx, ly))
+                            continue;
 
                         int lowerBodyId = GetWaterBodyId(lx, ly);
                         if (lowerBodyId == 0 || !bodies.TryGetValue(lowerBodyId, out WaterBody lowerBody) || lowerBody.SurfaceHeight != sLow)
@@ -411,6 +455,14 @@ namespace Territory.Terrain
                 }
             }
 
+            const int maxContactReassignIterations = 24;
+            for (int iter = 0; iter < maxContactReassignIterations; iter++)
+            {
+                if (!TryReassignUpperWaterCellsMatchingLowerContactBed(heightMap, gridManager, ExpandDirty))
+                    break;
+                anyChange = true;
+            }
+
             if (haveBounds)
             {
                 const int pad = 2;
@@ -421,6 +473,120 @@ namespace Territory.Terrain
             }
 
             return anyChange;
+        }
+
+        /// <summary>
+        /// One sweep: for each water cell on the higher side of a cardinal <c>S_high &gt; S_low</c> contact, pick a
+        /// lower-surface neighbor (not lake-forbidden) whose bed is not above this cell’s bed. If this cell’s bed is
+        /// still higher than the neighbor’s, align it to the neighbor’s bed first, then reassign <c>waterBodyId</c> to
+        /// the lower body. When multiple lower neighbors qualify, prefers the lowest <c>S_low</c> then the lowest body id.
+        /// </summary>
+        private bool TryReassignUpperWaterCellsMatchingLowerContactBed(HeightMap hm, GridManager grid, System.Action<int, int> expandDirty)
+        {
+            int[] d4x = { 1, -1, 0, 0 };
+            int[] d4y = { 0, 0, 1, -1 };
+            bool any = false;
+
+            for (int hx = 0; hx < width; hx++)
+            {
+                for (int hy = 0; hy < height; hy++)
+                {
+                    if (!IsWater(hx, hy))
+                        continue;
+                    int sHigh = GetSurfaceHeightAt(hx, hy);
+                    if (sHigh < 0)
+                        continue;
+
+                    int bestSl = int.MaxValue;
+                    int bestBid = int.MaxValue;
+                    int bestLx = -1;
+                    int bestLy = -1;
+
+                    for (int i = 0; i < 4; i++)
+                    {
+                        int lx = hx + d4x[i];
+                        int ly = hy + d4y[i];
+                        if (!IsValidPosition(lx, ly) || !IsWater(lx, ly))
+                            continue;
+                        int sLow = GetSurfaceHeightAt(lx, ly);
+                        if (sLow < 0 || sHigh <= sLow)
+                            continue;
+                        if (IsLakeSurfaceStepContactForbidden(hx, hy, lx, ly))
+                            continue;
+                        int hH = hm.GetHeight(hx, hy);
+                        int hL = hm.GetHeight(lx, ly);
+                        if (hH < hL)
+                            continue;
+                        int bid = GetWaterBodyId(lx, ly);
+                        if (bid == 0 || !bodies.TryGetValue(bid, out WaterBody lb) || lb.SurfaceHeight != sLow)
+                            continue;
+
+                        if (sLow < bestSl || (sLow == bestSl && bid < bestBid))
+                        {
+                            bestSl = sLow;
+                            bestBid = bid;
+                            bestLx = lx;
+                            bestLy = ly;
+                        }
+                    }
+
+                    if (bestLx < 0)
+                        continue;
+                    int highId = GetWaterBodyId(hx, hy);
+                    if (highId == bestBid)
+                        continue;
+
+                    if (TryReassignSingleUpperWaterCellToLowerBody(hx, hy, bestLx, bestLy, hm, grid))
+                    {
+                        any = true;
+                        expandDirty?.Invoke(hx, hy);
+                    }
+                }
+            }
+
+            return any;
+        }
+
+        /// <summary>
+        /// Moves one upper-pool water cell to the lower neighbor’s body. When the upper bed is still above the lower
+        /// cell’s bed, aligns <see cref="HeightMap"/> (and <see cref="GridManager.SetCellHeight"/>) to the lower bed first.
+        /// </summary>
+        private bool TryReassignSingleUpperWaterCellToLowerBody(int hx, int hy, int lx, int ly, HeightMap hm, GridManager grid)
+        {
+            int sHigh = GetSurfaceHeightAt(hx, hy);
+            int sLow = GetSurfaceHeightAt(lx, ly);
+            if (sLow < 0 || sHigh <= sLow)
+                return false;
+            if (IsLakeSurfaceStepContactForbidden(hx, hy, lx, ly))
+                return false;
+
+            int hH = hm.GetHeight(hx, hy);
+            int hL = hm.GetHeight(lx, ly);
+            if (hH < hL)
+                return false;
+            if (hH > hL)
+            {
+                int clamped = Mathf.Clamp(hL, TerrainManager.MIN_HEIGHT, TerrainManager.MAX_HEIGHT);
+                hm.SetHeight(hx, hy, clamped);
+                if (grid != null)
+                    grid.SetCellHeight(new Vector2(hx, hy), hm.GetHeight(hx, hy));
+            }
+
+            int lowId = GetWaterBodyId(lx, ly);
+            int highId = GetWaterBodyId(hx, hy);
+            if (lowId == 0 || highId == lowId)
+                return false;
+            if (!bodies.TryGetValue(lowId, out WaterBody lowerBody) || lowerBody.SurfaceHeight != sLow)
+                return false;
+
+            RemoveCellFromBody(hx, hy, highId);
+            waterBodyIds[hx, hy] = lowId;
+            lowerBody.AddCellIndex(ToFlat(hx, hy));
+
+            if (grid != null)
+                grid.SetCellHeight(new Vector2(hx, hy), hm.GetHeight(hx, hy));
+
+            return true;
         }
 
         /// <summary>
@@ -1570,6 +1736,8 @@ namespace Territory.Terrain
         /// <summary>
         /// Moves a cell from any water body into an existing river body (procedural river bed overlapping prior lake/sea).
         /// Dry cells delegate to <see cref="TryAssignCellToRiverBody"/>.
+        /// Does not reassign <see cref="WaterBodyType.Lake"/> cells when the lake&apos;s <see cref="WaterBody.SurfaceHeight"/>
+        /// differs from the river body&apos;s surface (§12.7 — same rule as <see cref="IsLakeSurfaceStepContactForbidden"/> at contacts).
         /// </summary>
         public bool TryReassignCellFromAnyWaterToRiverBody(int x, int y, int riverBodyId)
         {
@@ -1582,6 +1750,13 @@ namespace Territory.Terrain
                 return TryAssignCellToRiverBody(x, y, riverBodyId);
             if (oldId == riverBodyId)
                 return true;
+            if (bodies.TryGetValue(oldId, out WaterBody oldBody)
+                && oldBody.Classification == WaterBodyType.Lake
+                && oldBody.SurfaceHeight != river.SurfaceHeight)
+            {
+                return false;
+            }
+
             RemoveCellFromBody(x, y, oldId);
             waterBodyIds[x, y] = riverBodyId;
             river.AddCellIndex(ToFlat(x, y));

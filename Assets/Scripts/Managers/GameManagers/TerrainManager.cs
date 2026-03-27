@@ -2200,6 +2200,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// For each cardinal edge to registered water with strictly lower logical surface (<c>S_high &gt; S_low</c>), places a stack;
     /// <see cref="GetEffectiveHeightsForWaterWaterCliff"/> uses <c>segmentCount = S_high − S_low</c> (§5.6.2). Interior cells along a
     /// long contact between two different surfaces receive cascades on every such edge — not only pool "outer" rows (BUG-45).
+    /// Skips edges where <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> is true (§12.7).
     /// </summary>
     public void RefreshWaterCascadeCliffs(WaterManager wm)
     {
@@ -2240,14 +2241,14 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 if (cliffWaterSouthPrefab != null && heightMap.IsValidPosition(x - 1, y) && wmMap.IsWater(x - 1, y))
                 {
                     int sLow = wm.GetWaterSurfaceHeight(x - 1, y);
-                    if (sLow >= 0 && sHere > sLow)
+                    if (sLow >= 0 && sHere > sLow && !wmMap.IsLakeSurfaceStepContactForbidden(x, y, x - 1, y))
                         TryPlaceWaterCascadeCliffStack(x, y, x - 1, y, sHere, sLow, CliffCardinalFace.South, cliffWaterSouthPrefab);
                 }
 
                 if (cliffWaterEastPrefab != null && heightMap.IsValidPosition(x, y - 1) && wmMap.IsWater(x, y - 1))
                 {
                     int sLow = wm.GetWaterSurfaceHeight(x, y - 1);
-                    if (sLow >= 0 && sHere > sLow)
+                    if (sLow >= 0 && sHere > sLow && !wmMap.IsLakeSurfaceStepContactForbidden(x, y, x, y - 1))
                         TryPlaceWaterCascadeCliffStack(x, y, x, y - 1, sHere, sLow, CliffCardinalFace.East, cliffWaterEastPrefab);
                 }
             }
