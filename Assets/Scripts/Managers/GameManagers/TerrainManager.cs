@@ -39,6 +39,19 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// </summary>
     public static bool LogTerraformRestoreDiagnostics = false;
 
+    /// <summary>Throttles one-time warnings when a single cliff-water prefab is missing on <see cref="TerrainManager"/>.</summary>
+    private static bool _warnedCliffWaterSouthPrefabMissing;
+    private static bool _warnedCliffWaterEastPrefabMissing;
+
+    private int _waterCascadeLogTryPlaceDetailRemaining;
+    private int _waterCascadeLogSkipGeomRemaining;
+    private int _waterCascadeLogPlaceCoreEarlyRemaining;
+    private int _waterCascadeLogPlacedDetailRemaining;
+    private int _waterCascadeLogZeroPlacedRemaining;
+    private int _waterCascadeLogInvisibleFaceRemaining;
+    private int _waterCascadeRefreshTryPlaceCount;
+    private int _waterCascadeRefreshSegmentsPlaced;
+
     /// <summary>
     /// When true, <see cref="RefreshLakeShoreAfterLakePlacement"/> also refreshes the second Chebyshev ring of land (legacy halo).
     /// BUG-42 default is minimal scope; enable only if a regression needs the wider refresh.
@@ -2187,10 +2200,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Shared stack placement for brown cliffs and water cascade cliffs — same segment loop, sorting, and underwater skip as land cliffs.
+    /// Shared stack placement for brown cliffs and water cascade cliffs — same segment loop and sorting.
+    /// Land cliffs skip segments fully below the lower-side water surface; water–water cascades do not (logical surface vs bed heights would hide the whole stack).
     /// </summary>
+    /// <returns>Number of cliff segment sprites instantiated.</returns>
     /// <param name="cliffStackAnchorWorldY">When set (water–water cascades), Y anchor at water visual surface; otherwise cell transform Y (terrain floor).</param>
-    private void PlaceCliffWallStackCore(
+    private int PlaceCliffWallStackCore(
         Cell cell,
         GameObject cliffPrefab,
         CliffCardinalFace cardinalFace,
@@ -2203,17 +2218,49 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         int segmentCount,
         float? cliffStackAnchorWorldY = null)
     {
+        bool waterCascade = cliffStackAnchorWorldY != null;
+
         if (gridManager == null || heightMap == null || segmentCount <= 0)
-            return;
+        {
+            if (waterCascade && _waterCascadeLogPlaceCoreEarlyRemaining > 0)
+            {
+                _waterCascadeLogPlaceCoreEarlyRemaining--;
+                Debug.Log($"[WaterCascade] PlaceCliffWallStackCore exit: grid/heightMap null or segmentCount<=0 (seg={segmentCount}). high=({highX},{highY}) low=({lowX},{lowY})");
+            }
+            return 0;
+        }
         if (cell == null || cliffPrefab == null)
-            return;
+        {
+            if (waterCascade && _waterCascadeLogPlaceCoreEarlyRemaining > 0)
+            {
+                _waterCascadeLogPlaceCoreEarlyRemaining--;
+                Debug.Log($"[WaterCascade] PlaceCliffWallStackCore exit: cell or prefab null. high=({highX},{highY}) low=({lowX},{lowY})");
+            }
+            return 0;
+        }
         if (highH <= lowH)
-            return;
+        {
+            if (waterCascade && _waterCascadeLogPlaceCoreEarlyRemaining > 0)
+            {
+                _waterCascadeLogPlaceCoreEarlyRemaining--;
+                Debug.Log($"[WaterCascade] PlaceCliffWallStackCore exit: highH<=lowH ({highH}<={lowH}). high=({highX},{highY}) low=({lowX},{lowY})");
+            }
+            return 0;
+        }
 
         if (!IsCliffCardinalFaceVisibleToCamera(cardinalFace))
-            return;
+        {
+            if (waterCascade && _waterCascadeLogInvisibleFaceRemaining > 0)
+            {
+                _waterCascadeLogInvisibleFaceRemaining--;
+                Debug.Log($"[WaterCascade] Skipped: face {cardinalFace} not visible to camera (only South/East). high=({highX},{highY}) low=({lowX},{lowY}) parent=({cell.x},{cell.y})");
+            }
+            return 0;
+        }
 
-        int waterSurfaceH = GetWaterSurfaceHeightForCliffProbe(lowX, lowY);
+        int waterSurfaceH = cliffStackAnchorWorldY == null
+            ? GetWaterSurfaceHeightForCliffProbe(lowX, lowY)
+            : -1;
         int cellTerrainSort = cell.sortingOrder;
         if (waterManager == null)
             waterManager = FindObjectOfType<WaterManager>();
@@ -2228,7 +2275,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         {
             int topH = highH - s;
             int bottomH = (s < count - 1) ? (highH - s - 1) : lowH;
-            if (ShouldSkipCliffSegmentFullyUnderwater(topH, bottomH, waterSurfaceH))
+            if (cliffStackAnchorWorldY == null && ShouldSkipCliffSegmentFullyUnderwater(topH, bottomH, waterSurfaceH))
                 continue;
 
             Vector2 world = GetCliffWallSegmentWorldPositionOnSharedEdge(cell, topH, s, cliffStackAnchorWorldY);
@@ -2252,26 +2299,64 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
             visualIndex++;
         }
+
+        if (waterCascade && visualIndex == 0 && count > 0)
+            Debug.LogWarning($"[WaterCascade] PlaceCliffWallStackCore: 0 sprites after loop (land underwater skip?). high=({highX},{highY}) low=({lowX},{lowY}) count={count}");
+
+        return visualIndex;
     }
 
     /// <summary>
-    /// After all water tiles are placed, builds water–water surface-step stacks on the higher cell (south/east faces only).
-    /// For each cardinal edge to registered water with strictly lower logical surface (<c>S_high &gt; S_low</c>), places a stack;
-    /// <see cref="GetEffectiveHeightsForWaterWaterCliff"/> uses <c>segmentCount = S_high − S_low</c> (§5.6.2). Interior cells along a
-    /// long contact between two different surfaces receive cascades on every such edge — not only pool "outer" rows (BUG-45).
-    /// Skips edges where <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> is true (§12.7).
+    /// After all water tiles are placed, builds water–water surface-step stacks for every cardinal surface step
+    /// (<c>S_high &gt; S_low</c>) using existing south/east cliff-water prefabs only (§5.6.2).
+    /// Standard edges parent stacks to the <b>upper</b> cell when the lower pool is south or east (visible faces on that cell).
+    /// When the lower pool is <b>north</b> or <b>west</b>, the same prefabs attach to the <b>lower</b> cell (south face toward
+    /// the upper pool to the south; east face toward the upper pool to the east) so cascades are not missing on those contacts.
+    /// <see cref="GetEffectiveHeightsForWaterWaterCliff"/> uses <c>segmentCount = S_high − S_low</c>. Skips edges where
+    /// <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> is true (§12.7).
     /// </summary>
     public void RefreshWaterCascadeCliffs(WaterManager wm)
     {
         if (heightMap == null || gridManager == null || wm == null)
+        {
+            Debug.LogWarning("[WaterCascade] RefreshWaterCascadeCliffs aborted: heightMap, gridManager, or WaterManager is null.");
             return;
+        }
         WaterMap wmMap = wm.GetWaterMap();
         if (wmMap == null)
+        {
+            Debug.LogWarning("[WaterCascade] RefreshWaterCascadeCliffs aborted: WaterMap is null.");
             return;
+        }
         if (cliffWaterSouthPrefab == null && cliffWaterEastPrefab == null)
+        {
+            Debug.LogWarning("[WaterCascade] RefreshWaterCascadeCliffs aborted: both cliffWaterSouthPrefab and cliffWaterEastPrefab are null.");
             return;
+        }
+        if (cliffWaterSouthPrefab == null && !_warnedCliffWaterSouthPrefabMissing)
+        {
+            _warnedCliffWaterSouthPrefabMissing = true;
+            Debug.LogWarning(
+                "[WaterCascade] cliffWaterSouthPrefab is not assigned on TerrainManager — south-facing water–water cascades will not be placed.");
+        }
+        if (cliffWaterEastPrefab == null && !_warnedCliffWaterEastPrefabMissing)
+        {
+            _warnedCliffWaterEastPrefabMissing = true;
+            Debug.LogWarning(
+                "[WaterCascade] cliffWaterEastPrefab is not assigned on TerrainManager — east-facing water–water cascades will not be placed " +
+                "(e.g. west→east surface steps where the lower pool is at (x, y−1)).");
+        }
         if (waterManager == null)
             waterManager = wm;
+
+        _waterCascadeLogTryPlaceDetailRemaining = 48;
+        _waterCascadeLogSkipGeomRemaining = 24;
+        _waterCascadeLogPlaceCoreEarlyRemaining = 24;
+        _waterCascadeLogPlacedDetailRemaining = 24;
+        _waterCascadeLogZeroPlacedRemaining = 32;
+        _waterCascadeLogInvisibleFaceRemaining = 32;
+        _waterCascadeRefreshTryPlaceCount = 0;
+        _waterCascadeRefreshSegmentsPlaced = 0;
 
         int gw = gridManager.width;
         int gh = gridManager.height;
@@ -2310,8 +2395,29 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                     if (sLow >= 0 && sHere > sLow && !wmMap.IsLakeSurfaceStepContactForbidden(x, y, x, y - 1))
                         TryPlaceWaterCascadeCliffStack(x, y, x, y - 1, sHere, sLow, CliffCardinalFace.East, cliffWaterEastPrefab);
                 }
+
+                // Lower pool to the north: shared edge is the south face of the northern (lower-S) cell — parent there (mirror).
+                if (cliffWaterSouthPrefab != null && heightMap.IsValidPosition(x + 1, y) && wmMap.IsWater(x + 1, y))
+                {
+                    int sLowNorth = wm.GetWaterSurfaceHeight(x + 1, y);
+                    if (sLowNorth >= 0 && sHere > sLowNorth && !wmMap.IsLakeSurfaceStepContactForbidden(x, y, x + 1, y))
+                        TryPlaceWaterCascadeCliffStack(x, y, x + 1, y, sHere, sLowNorth, CliffCardinalFace.South, cliffWaterSouthPrefab, x + 1, y);
+                }
+
+                // Lower pool to the west: shared edge is the east face of the western (lower-S) cell — parent there (mirror).
+                if (cliffWaterEastPrefab != null && heightMap.IsValidPosition(x, y + 1) && wmMap.IsWater(x, y + 1))
+                {
+                    int sLowWest = wm.GetWaterSurfaceHeight(x, y + 1);
+                    if (sLowWest >= 0 && sHere > sLowWest && !wmMap.IsLakeSurfaceStepContactForbidden(x, y, x, y + 1))
+                        TryPlaceWaterCascadeCliffStack(x, y, x, y + 1, sHere, sLowWest, CliffCardinalFace.East, cliffWaterEastPrefab, x, y + 1);
+                }
             }
         }
+
+        Debug.Log(
+            "[WaterCascade] RefreshWaterCascadeCliffs summary: " +
+            $"TryPlace calls={_waterCascadeRefreshTryPlaceCount}, segment sprites placed={_waterCascadeRefreshSegmentsPlaced}, " +
+            $"prefabs south={(cliffWaterSouthPrefab != null)}, east={(cliffWaterEastPrefab != null)}.");
     }
 
     /// <summary>
@@ -2348,6 +2454,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             lowH = highH - segmentCount;
     }
 
+    /// <summary>
+    /// Instantiates water–water cascade prefabs for one cardinal step. Optional <paramref name="parentCellX"/> / <paramref name="parentCellY"/>
+    /// parent to the lower pool when the visible south/east face lies on that cell (north/west lower neighbor — mirror placement).
+    /// </summary>
+    /// <param name="parentCellX">When set with <paramref name="parentCellY"/>, cliff children parent to this cell; otherwise to the upper pool.</param>
     private void TryPlaceWaterCascadeCliffStack(
         int highX,
         int highY,
@@ -2356,26 +2467,67 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         int sHigh,
         int sLow,
         CliffCardinalFace face,
-        GameObject waterCliffPrefab)
+        GameObject waterCliffPrefab,
+        int? parentCellX = null,
+        int? parentCellY = null)
     {
         if (waterCliffPrefab == null || heightMap == null || gridManager == null)
             return;
 
+        _waterCascadeRefreshTryPlaceCount++;
+        if (_waterCascadeLogTryPlaceDetailRemaining > 0)
+        {
+            _waterCascadeLogTryPlaceDetailRemaining--;
+            Debug.Log(
+                $"[WaterCascade] TryPlace enter: high=({highX},{highY}) low=({lowX},{lowY}) face={face} sHigh={sHigh} sLow={sLow} " +
+                $"parent=({parentCellX ?? highX},{parentCellY ?? highY}) prefab={(waterCliffPrefab != null ? waterCliffPrefab.name : "null")}");
+        }
+
         GetEffectiveHeightsForWaterWaterCliff(highX, highY, lowX, lowY, sHigh, sLow, out int highH, out int lowH, out int segmentCount);
         if (segmentCount <= 0 || highH <= lowH)
+        {
+            if (_waterCascadeLogSkipGeomRemaining > 0)
+            {
+                _waterCascadeLogSkipGeomRemaining--;
+                Debug.Log(
+                    $"[WaterCascade] TryPlace skip geometry: segCount={segmentCount} highH={highH} lowH={lowH} " +
+                    $"high=({highX},{highY}) low=({lowX},{lowY}) face={face} sHigh={sHigh} sLow={sLow}");
+            }
             return;
+        }
 
-        Cell cell = gridManager.GetCell(highX, highY);
+        int px = parentCellX ?? highX;
+        int py = parentCellY ?? highY;
+        Cell cell = gridManager.GetCell(px, py);
         if (cell == null)
+        {
+            Debug.LogWarning($"[WaterCascade] TryPlaceWaterCascadeCliffStack: null Cell at parent ({px},{py}). high=({highX},{highY}) low=({lowX},{lowY}) face={face}");
             return;
+        }
 
         // Same Y band as the animated water tile child (WaterManager.PlaceWater): waterSurfaceWorld + (0, tileHeight*0.25).
+        // Anchor always uses the upper pool plane even when parenting to the lower cell (mirror placement).
         int visualSurfaceHeight = Mathf.Max(MIN_HEIGHT, sHigh - 1);
         Vector2 waterSurfaceWorld = gridManager.GetWorldPositionVector(highX, highY, visualSurfaceHeight);
         float halfCellHeight = gridManager.tileHeight * 0.25f;
         float anchorY = waterSurfaceWorld.y + halfCellHeight;
 
-        PlaceCliffWallStackCore(cell, waterCliffPrefab, face, highX, highY, lowX, lowY, highH, lowH, segmentCount, anchorY);
+        int placed = PlaceCliffWallStackCore(cell, waterCliffPrefab, face, highX, highY, lowX, lowY, highH, lowH, segmentCount, anchorY);
+        _waterCascadeRefreshSegmentsPlaced += placed;
+        if (placed > 0 && _waterCascadeLogPlacedDetailRemaining > 0)
+        {
+            _waterCascadeLogPlacedDetailRemaining--;
+            Debug.Log(
+                $"[WaterCascade] Placed {placed} cascade segment(s): parent=({cell.x},{cell.y}) face={face} " +
+                $"highH={highH} lowH={lowH} segCount={segmentCount} d={highH - lowH}");
+        }
+        if (placed == 0 && segmentCount > 0 && _waterCascadeLogZeroPlacedRemaining > 0)
+        {
+            _waterCascadeLogZeroPlacedRemaining--;
+            Debug.Log(
+                $"[WaterCascade] TryPlace placed 0 sprites (see PlaceCliffWallStackCore / invisible face logs). " +
+                $"high=({highX},{highY}) low=({lowX},{lowY}) face={face} segCount={segmentCount} highH={highH} lowH={lowH}");
+        }
     }
 
     private void RemoveExistingWaterCascadeCliffs(Cell cell)

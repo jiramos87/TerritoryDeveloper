@@ -15,8 +15,8 @@ namespace Territory.Geography
 {
 /// <summary>
 /// GeographyManager coordinates the initialization and management of all geographical features:
-/// terrain height, water bodies (lakes/sea then FEAT-38 rivers), and forests. It centralizes the loading of geographical data
-/// and ensures proper initialization order.
+/// terrain height, water bodies (optional lakes/sea, optional FEAT-38 rivers, optional test river), and forests.
+/// Inspector toggles: <see cref="generateStandardWaterBodies"/>, <see cref="generateProceduralRiversOnInit"/>, <see cref="generateTestRiverOnInit"/>.
 /// </summary>
 public class GeographyManager : MonoBehaviour
 {
@@ -37,6 +37,19 @@ public class GeographyManager : MonoBehaviour
     public bool useTerrainForWater = true; // Whether to use terrain height for water placement
     [Tooltip("When true, procedural forests are generated after interstate placement. Disable to see terrain clearly during road/terraforming tests.")]
     public bool initializeForestsOnStart = true;
+
+    [Header("Water generation (New Game / InitializeGeography)")]
+    [Tooltip("When true, InitializeWaterMap places lakes/sea from terrain as usual. When false, WaterMap starts empty (no procedural lake fill or height-based sea).")]
+    public bool generateStandardWaterBodies = true;
+
+    [Tooltip("When true, FEAT-38 procedural rivers run after standard water init. Ignored when standard water is disabled.")]
+    public bool generateProceduralRiversOnInit = true;
+
+    [Tooltip("When true, places the straight grid West→East test river after standard water and procedural rivers (fixed x, y from west to east per isometric spec). Four equal segments with S=4,3,2,1.")]
+    public bool generateTestRiverOnInit = false;
+
+    [Tooltip("Four bed widths (1–3 cells effective; larger values clamp) for test river segments S=4,3,2,1. Length 4 when assigned.")]
+    public int[] testRiverSegmentBedWidths = new int[] { 1, 2, 3, 2 };
 
     // Current geographical data (for save/load operations)
     private GeographyData currentGeographyData;
@@ -87,8 +100,12 @@ public class GeographyManager : MonoBehaviour
 
         if (waterManager != null)
         {
+            waterManager.SetGenerateStandardWater(generateStandardWaterBodies);
             waterManager.InitializeWaterMap();
-            waterManager.GenerateProceduralRiversForNewGame();
+            if (generateStandardWaterBodies && generateProceduralRiversOnInit)
+                waterManager.GenerateProceduralRiversForNewGame();
+            if (generateTestRiverOnInit)
+                waterManager.GenerateTestRiver(testRiverSegmentBedWidths);
             waterManager.LogGeneratedWaterGeographyDiagnostics();
         }
 
@@ -262,8 +279,12 @@ public class GeographyManager : MonoBehaviour
 
         if (waterManager != null)
         {
+            waterManager.SetGenerateStandardWater(generateStandardWaterBodies);
             waterManager.InitializeWaterMap();
-            waterManager.GenerateProceduralRiversForNewGame();
+            if (generateStandardWaterBodies && generateProceduralRiversOnInit)
+                waterManager.GenerateProceduralRiversForNewGame();
+            if (generateTestRiverOnInit)
+                waterManager.GenerateTestRiver(testRiverSegmentBedWidths);
             waterManager.LogGeneratedWaterGeographyDiagnostics();
         }
 

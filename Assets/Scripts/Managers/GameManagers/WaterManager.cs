@@ -12,6 +12,7 @@ namespace Territory.Terrain
 /// sea-level terrain cells are merged into <see cref="WaterMap"/> after fill so they match <c>PlaceSeaLevelWater</c>.
 /// Save serializes <see cref="WaterMap.GetSerializableData"/> (FEAT-37c); load uses <see cref="RestoreWaterMapFromSaveData"/>.
 /// Procedural rivers (FEAT-38): <see cref="GenerateProceduralRiversForNewGame"/> after lake init, before interstate.
+/// QA: <see cref="SetGenerateStandardWater"/> and <see cref="GenerateTestRiver"/> are driven from GeographyManager (Inspector toggles on <c>Territory.Geography.GeographyManager</c>).
 /// Legacy sea-level threshold remains for paint tool / old save restore. Coordinates with GridManager,
 /// TerrainManager, and ZoneManager. <see cref="LakeFillSettings"/> are created in code (not Inspector) until terrain UI exists.
 /// </summary>
@@ -36,6 +37,9 @@ public class WaterManager : MonoBehaviour
     public int seaLevel = 0;
 
     private WaterMap waterMap;
+
+    /// <summary>When false, <see cref="InitializeWaterMap"/> only allocates an empty <see cref="WaterMap"/> (no lakes/sea from terrain).</summary>
+    private bool generateStandardWaterBodies = true;
 
     private List<WaterPlant> waterPlants = new List<WaterPlant>();
     private int cityWaterConsumption;
@@ -84,11 +88,26 @@ public class WaterManager : MonoBehaviour
         cityWaterOutput = 0;
     }
 
+    /// <summary>
+    /// When <paramref name="enabled"/> is false, the next <see cref="InitializeWaterMap"/> creates an empty <see cref="WaterMap"/> without lake/sea placement from terrain.
+    /// Call from <see cref="Territory.Geography.GeographyManager"/> before <see cref="InitializeWaterMap"/> when toggling QA options.
+    /// </summary>
+    public void SetGenerateStandardWater(bool enabled)
+    {
+        generateStandardWaterBodies = enabled;
+    }
+
     public void InitializeWaterMap()
     {
         if (gridManager != null)
         {
             waterMap = new WaterMap(gridManager.width, gridManager.height);
+
+            if (!generateStandardWaterBodies)
+            {
+                UpdateWaterVisuals();
+                return;
+            }
 
             if (terrainManager == null)
                 terrainManager = FindObjectOfType<TerrainManager>();
@@ -118,6 +137,24 @@ public class WaterManager : MonoBehaviour
 
             UpdateWaterVisuals();
         }
+    }
+
+    /// <summary>
+    /// QA straight grid West→East test river (four segments S=4..1; see <see cref="TestRiverGenerator"/>). Run after <see cref="InitializeWaterMap"/> and optional <see cref="GenerateProceduralRiversForNewGame"/>.
+    /// </summary>
+    /// <param name="segmentBedWidths">Four entries (bed width 1–3 per segment); null uses default 1,2,3,2.</param>
+    public void GenerateTestRiver(int[] segmentBedWidths = null)
+    {
+        if (waterMap == null || terrainManager == null || gridManager == null || terrainManager.GetHeightMap() == null)
+            return;
+
+        MapGenerationSeed.EnsureSessionMasterSeed();
+        int seed = MapGenerationSeed.GetLakeFillRandomSeed();
+        var rnd = new System.Random(seed ^ unchecked((int)0xFEEDBEEF));
+        TestRiverGenerator.Generate(this, terrainManager, gridManager, rnd, segmentBedWidths);
+        waterMap.MergeAdjacentBodiesWithSameSurface();
+        UpdateWaterVisuals(expandLakeShoreSecondRing: true, skipMultiBodySurfacePasses: true);
+        gridManager.InvalidateRoadCache();
     }
 
     /// <summary>
@@ -469,13 +506,14 @@ public class WaterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Refreshes every water cell prefab and water–water cascade cliffs. Pass A + B (§12.7): bed normalization, then junction merge,
+    /// Refreshes every water cell prefab and water–water cascade cliffs. Unless <paramref name="skipMultiBodySurfacePasses"/> is true: Pass A + B (§12.7) bed normalization, then junction merge,
     /// then lake–river high/low fallback (dry rim at <c>S</c> where Pass A/B are skipped for lakes), then <see cref="PlaceWater"/>,
     /// <see cref="TerrainManager.RefreshWaterCascadeCliffs"/>, and <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> when
     /// depression-fill is enabled, Pass B merged any junction cells, or the fallback ran (BUG-45).
     /// </summary>
     /// <param name="expandLakeShoreSecondRing">When true, expands the land shore refresh halo (procedural river confluences).</param>
-    public void UpdateWaterVisuals(bool expandLakeShoreSecondRing = false)
+    /// <param name="skipMultiBodySurfacePasses">When true, skips Pass A/B (§12.7 bed normalization and junction merge). Use after QA test river so intentional multi-surface segments are not merged into the lowest pool.</param>
+    public void UpdateWaterVisuals(bool expandLakeShoreSecondRing = false, bool skipMultiBodySurfacePasses = false)
     {
         if (waterMap == null || gridManager == null) return;
 
@@ -483,7 +521,7 @@ public class WaterManager : MonoBehaviour
             terrainManager = FindObjectOfType<TerrainManager>();
         HeightMap hm = terrainManager != null ? terrainManager.GetHeightMap() : null;
         bool junctionMerged = false;
-        if (hm != null)
+        if (hm != null && !skipMultiBodySurfacePasses)
         {
             waterMap.ApplyMultiBodySurfaceBoundaryNormalization(hm);
             junctionMerged = waterMap.ApplyWaterSurfaceJunctionMerge(hm, gridManager, out int jMinX, out int jMinY, out int jMaxX, out int jMaxY);
@@ -525,7 +563,7 @@ public class WaterManager : MonoBehaviour
         if (terrainManager != null)
             terrainManager.RefreshWaterCascadeCliffs(this);
 
-        if (terrainManager != null && (useLakeDepressionFill || junctionMerged || lakeRiverFallback))
+        if (terrainManager != null && (useLakeDepressionFill || junctionMerged || lakeRiverFallback || expandLakeShoreSecondRing))
         {
             terrainManager.RefreshLakeShoreAfterLakePlacement(this, expandSecondChebyshevRing: expandLakeShoreSecondRing || junctionMerged || lakeRiverFallback);
             if (lakeRiverFallback && lakeRiverRimCells != null && lakeRiverRimCells.Count > 0)
