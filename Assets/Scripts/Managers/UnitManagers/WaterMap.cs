@@ -121,6 +121,78 @@ namespace Territory.Terrain
             return cH == WaterBodyType.Lake || cL == WaterBodyType.Lake;
         }
 
+        /// <summary>
+        /// BUG-45 / §12.7: When a <see cref="WaterBodyType.Lake"/> cell cardinally touches a <see cref="WaterBodyType.River"/>
+        /// at a strictly lower logical surface, Pass A/B and water–water cascades are skipped
+        /// (<see cref="IsLakeSurfaceStepContactForbidden"/>). This fallback removes those lake water cells and sets dry rim
+        /// terrain height to the lake&apos;s logical <see cref="WaterBody.SurfaceHeight"/> <c>S</c> so the upper pool reads as a
+        /// closed basin; <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> then selects shore prefabs.
+        /// Call after <see cref="ApplyWaterSurfaceJunctionMerge"/>, before <see cref="WaterManager.PlaceWater"/>.
+        /// </summary>
+        /// <param name="restoredCells">Cells converted from lake water to dry (for terrain restore and post–lake-shore height fix).</param>
+        /// <returns><c>true</c> if any cell was converted.</returns>
+        public bool ApplyLakeHighToRiverLowContactFallback(HeightMap heightMap, GridManager gridManager, out List<(int x, int y, int lakeSurface)> restoredCells)
+        {
+            restoredCells = new List<(int, int, int)>();
+            if (heightMap == null)
+                return false;
+
+            int[] d4x = { 1, -1, 0, 0 };
+            int[] d4y = { 0, 0, 1, -1 };
+            var candidates = new List<(int x, int y, int sLake)>();
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if (!IsWater(x, y))
+                        continue;
+                    if (GetBodyClassificationAt(x, y) != WaterBodyType.Lake)
+                        continue;
+                    int sLake = GetSurfaceHeightAt(x, y);
+                    if (sLake < 0)
+                        continue;
+
+                    for (int i = 0; i < 4; i++)
+                    {
+                        int nx = x + d4x[i];
+                        int ny = y + d4y[i];
+                        if (!IsValidPosition(nx, ny) || !IsWater(nx, ny))
+                            continue;
+                        if (GetBodyClassificationAt(nx, ny) != WaterBodyType.River)
+                            continue;
+                        int sRiver = GetSurfaceHeightAt(nx, ny);
+                        if (sRiver < 0 || sRiver >= sLake)
+                            continue;
+
+                        candidates.Add((x, y, sLake));
+                        break;
+                    }
+                }
+            }
+
+            if (candidates.Count == 0)
+                return false;
+
+            bool any = false;
+            foreach (var (x, y, sLake) in candidates)
+            {
+                if (!IsWater(x, y) || GetBodyClassificationAt(x, y) != WaterBodyType.Lake)
+                    continue;
+
+                ClearWaterAt(x, y);
+                int clampedSurface = Mathf.Clamp(sLake, TerrainManager.MIN_HEIGHT, TerrainManager.MAX_HEIGHT);
+                heightMap.SetHeight(x, y, clampedSurface);
+                if (gridManager != null)
+                    gridManager.SetCellHeight(new Vector2(x, y), heightMap.GetHeight(x, y));
+
+                restoredCells.Add((x, y, sLake));
+                any = true;
+            }
+
+            return any;
+        }
+
         public IReadOnlyDictionary<int, WaterBody> GetBodies()
         {
             return bodies;
@@ -785,7 +857,7 @@ namespace Territory.Terrain
 
             LastLakeGenerationProceduralBodiesAfterBounded = bodies.Count;
 
-            MergeAdjacentBodiesWithSameSurface();
+            RunMergeAdjacentBodiesWithSameSurface();
 
             // Artificial fallback and corner last resort run only after procedural depression-fill (main + bounded) and merge
             // still leave the map short of the scaled lake budget — not as a primary generator.
@@ -798,7 +870,7 @@ namespace Territory.Terrain
                 {
                     int added = TryArtificialLakeFallback(heightMap, settings, seaLevelForArtificialFallback, effectiveMaxLakeBodies, claimed, rnd);
                     totalArtificial += added;
-                    MergeAdjacentBodiesWithSameSurface();
+                    RunMergeAdjacentBodiesWithSameSurface();
                     pass++;
                     LastLakeGenerationRecoveryPasses = pass;
                     if (bodies.Count >= effectiveMaxLakeBodies)
@@ -811,7 +883,7 @@ namespace Territory.Terrain
                 {
                     int cornerAdded = TryLastResortCornerArtificialLakes(heightMap, settings, seaLevelForArtificialFallback, effectiveMaxLakeBodies, claimed);
                     totalArtificial += cornerAdded;
-                    MergeAdjacentBodiesWithSameSurface();
+                    RunMergeAdjacentBodiesWithSameSurface();
                 }
 
                 LastLakeGenerationArtificialBodiesPlaced = totalArtificial;
@@ -1287,7 +1359,17 @@ namespace Territory.Terrain
             return true;
         }
 
-        private void MergeAdjacentBodiesWithSameSurface()
+        /// <summary>
+        /// BUG-46 / §13.3: Merge cardinally adjacent cells that belong to different bodies but share the same logical
+        /// <see cref="WaterBody.SurfaceHeight"/> (rivers with rivers, lakes with lakes, lake+sea). Call after procedural
+        /// river placement so parallel segments at the same surface become one <see cref="WaterBody"/> id where they touch.
+        /// </summary>
+        public void MergeAdjacentBodiesWithSameSurface()
+        {
+            RunMergeAdjacentBodiesWithSameSurface();
+        }
+
+        private void RunMergeAdjacentBodiesWithSameSurface()
         {
             bool changed = true;
             int[] dx = { 1, -1, 0, 0 };

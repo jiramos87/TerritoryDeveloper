@@ -728,7 +728,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// <summary>
     /// After lake/river water visuals exist, refreshes land cells adjacent to water so shore/bay slopes and
     /// <see cref="PlaceCliffWalls"/> stay consistent (BUG-42). Default: each shore cell plus one cardinal land
-    /// neighbor outward from water (minimal audit). Optional <see cref="debugLakeShoreRefreshSecondRing"/> restores
+    /// neighbor outward from water (minimal audit). Adds a Moore ring of dry cells around the <b>high</b> water cell on
+    /// <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> edges (§12.7 lake rim). Optional <see cref="debugLakeShoreRefreshSecondRing"/> restores
     /// the legacy Chebyshev-2 halo. Pass <paramref name="expandSecondChebyshevRing"/> true after procedural river
     /// generation so confluence mouths get a wider refresh without enabling the debug flag globally.
     /// Call after <see cref="WaterManager.UpdateWaterVisuals"/>.
@@ -765,6 +766,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 }
             }
         }
+
+        AddDryMooreRingAroundLakeRimForbiddenSurfaceSteps(wmMap, shore);
 
         var toRefresh = new HashSet<Vector2Int>(shore);
         bool useSecondRing = expandSecondChebyshevRing || debugLakeShoreRefreshSecondRing;
@@ -826,6 +829,62 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
         foreach (Vector2Int p in ordered)
             UpdateTileElevation(p.x, p.y);
+    }
+
+    /// <summary>
+    /// Adds extra dry cells in the Moore neighborhood of the <b>higher</b> water cell on each cardinal edge where
+    /// <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> applies (Lake at a surface step — §12.7). Ensures
+    /// <see cref="UpdateTileElevation"/> revisits rim grass/cliffs so lake shore can close before the escarpment instead
+    /// of leaving gaps next to lower-pool water.
+    /// </summary>
+    private void AddDryMooreRingAroundLakeRimForbiddenSurfaceSteps(WaterMap wmMap, HashSet<Vector2Int> shore)
+    {
+        if (heightMap == null || gridManager == null || wmMap == null || shore == null)
+            return;
+
+        int[] d4x = { 1, -1, 0, 0 };
+        int[] d4y = { 0, 0, 1, -1 };
+
+        for (int x = 0; x < gridManager.width; x++)
+        {
+            for (int y = 0; y < gridManager.height; y++)
+            {
+                if (!wmMap.IsWater(x, y))
+                    continue;
+                int sHere = wmMap.GetSurfaceHeightAt(x, y);
+                if (sHere < 0)
+                    continue;
+                for (int i = 0; i < 4; i++)
+                {
+                    int nx = x + d4x[i];
+                    int ny = y + d4y[i];
+                    if (!heightMap.IsValidPosition(nx, ny) || !wmMap.IsWater(nx, ny))
+                        continue;
+                    int sN = wmMap.GetSurfaceHeightAt(nx, ny);
+                    if (sN < 0 || sHere == sN)
+                        continue;
+                    int hX, hY, lX, lY;
+                    if (sHere > sN) { hX = x; hY = y; lX = nx; lY = ny; }
+                    else { hX = nx; hY = ny; lX = x; lY = y; }
+                    if (!wmMap.IsLakeSurfaceStepContactForbidden(hX, hY, lX, lY))
+                        continue;
+                    for (int dx = -1; dx <= 1; dx++)
+                    {
+                        for (int dy = -1; dy <= 1; dy++)
+                        {
+                            if (dx == 0 && dy == 0)
+                                continue;
+                            int ax = hX + dx;
+                            int ay = hY + dy;
+                            if (!heightMap.IsValidPosition(ax, ay))
+                                continue;
+                            if (!wmMap.IsWater(ax, ay))
+                                shore.Add(new Vector2Int(ax, ay));
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -2715,7 +2774,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True when both perpendicular cardinal neighbors are <b>registered</b> water with different logical surface heights (BUG-45 junction).
+    /// True when both perpendicular cardinal neighbors are <b>registered</b> water with different logical surface heights
+    /// (BUG-45 junction), <b>except</b> when that step is a <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> edge — then
+    /// the land cell should use normal lake-rim Bay / axis-aligned shore logic instead of multi-surface diagonal slopes (§12.7).
     /// </summary>
     private bool IsMultiSurfacePerpendicularWaterCorner(int x, int y, ShoreCornerQuadrant quadrant)
     {
@@ -2733,23 +2794,65 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return s >= 0;
         }
 
+        WaterMap wm = waterManager.GetWaterMap();
+
         switch (quadrant)
         {
             case ShoreCornerQuadrant.SouthEast:
             {
-                return Reg(x - 1, y, out int sSouth) && Reg(x, y - 1, out int sEast) && sSouth != sEast;
+                if (!Reg(x - 1, y, out int sSouth) || !Reg(x, y - 1, out int sEast) || sSouth == sEast)
+                    return false;
+                if (wm != null)
+                {
+                    int hX, hY, lX, lY;
+                    if (sSouth > sEast) { hX = x - 1; hY = y; lX = x; lY = y - 1; }
+                    else { hX = x; hY = y - 1; lX = x - 1; lY = y; }
+                    if (wm.IsLakeSurfaceStepContactForbidden(hX, hY, lX, lY))
+                        return false;
+                }
+                return true;
             }
             case ShoreCornerQuadrant.SouthWest:
             {
-                return Reg(x - 1, y, out int sSouth2) && Reg(x, y + 1, out int sWest) && sSouth2 != sWest;
+                if (!Reg(x - 1, y, out int sSouth2) || !Reg(x, y + 1, out int sWest) || sSouth2 == sWest)
+                    return false;
+                if (wm != null)
+                {
+                    int hX, hY, lX, lY;
+                    if (sSouth2 > sWest) { hX = x - 1; hY = y; lX = x; lY = y + 1; }
+                    else { hX = x; hY = y + 1; lX = x - 1; lY = y; }
+                    if (wm.IsLakeSurfaceStepContactForbidden(hX, hY, lX, lY))
+                        return false;
+                }
+                return true;
             }
             case ShoreCornerQuadrant.NorthEast:
             {
-                return Reg(x + 1, y, out int sNorth) && Reg(x, y - 1, out int sEast2) && sNorth != sEast2;
+                if (!Reg(x + 1, y, out int sNorth) || !Reg(x, y - 1, out int sEast2) || sNorth == sEast2)
+                    return false;
+                if (wm != null)
+                {
+                    int hX, hY, lX, lY;
+                    if (sNorth > sEast2) { hX = x + 1; hY = y; lX = x; lY = y - 1; }
+                    else { hX = x; hY = y - 1; lX = x + 1; lY = y; }
+                    if (wm.IsLakeSurfaceStepContactForbidden(hX, hY, lX, lY))
+                        return false;
+                }
+                return true;
             }
             case ShoreCornerQuadrant.NorthWest:
             {
-                return Reg(x + 1, y, out int sNorth2) && Reg(x, y + 1, out int sWest2) && sNorth2 != sWest2;
+                if (!Reg(x + 1, y, out int sNorth2) || !Reg(x, y + 1, out int sWest2) || sNorth2 == sWest2)
+                    return false;
+                if (wm != null)
+                {
+                    int hX, hY, lX, lY;
+                    if (sNorth2 > sWest2) { hX = x + 1; hY = y; lX = x; lY = y + 1; }
+                    else { hX = x; hY = y + 1; lX = x + 1; lY = y; }
+                    if (wm.IsLakeSurfaceStepContactForbidden(hX, hY, lX, lY))
+                        return false;
+                }
+                return true;
             }
             default:
                 return false;
@@ -2929,7 +3032,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// <summary>
     /// Selects lake/coast shore prefab(s) for a land cell adjacent to water. Returns one prefab or an upslope+downslope pair for diagonal slopes.
     /// Perpendicular two-cardinal corners: when both cardinals are <b>registered</b> water with different logical surfaces (BUG-45), prefer
-    /// diagonal <c>*SlopeWaterPrefab</c> over Bay. Else Bay when the diagonal water cell is an axis-aligned rectangle outer corner; when not, prefer Bay if
+    /// diagonal <c>*SlopeWaterPrefab</c> over Bay <b>unless</b> that edge is <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> (§12.7 — lake rim vs lower pool, no junction).
+    /// Else Bay when the diagonal water cell is an axis-aligned rectangle outer corner; when not, prefer Bay if
     /// <see cref="HasLandSlopeIgnoringWater"/> (cliff rim), else SlopeWater then Bay (convex land tip / large-lake shore).
     /// Pure cardinal north or south (no east/west water on those branches) uses north/south slope only — not <see cref="BuildDiagonalOnlyShorePrefabs"/>.
     /// River confluences and non-rectangular water patterns: isometric spec §5.9; refresh land after river stamps via <see cref="RefreshLakeShoreAfterLakePlacement"/>.

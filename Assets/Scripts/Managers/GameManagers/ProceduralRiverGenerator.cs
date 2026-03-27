@@ -13,7 +13,11 @@ namespace Territory.Terrain
     /// After carving, inner-corner shore continuity is enforced on the bed footprint (see §13.5). Lake/river shore
     /// land heights are aligned with adjacent water surfaces during <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> (§2.4.1).
     /// Bed floor <c>H_bed</c> is <b>non-increasing</b> along the centerline from map entry toward exit so the river never climbs terrain (see §13.4).
+    /// Each river picks an axis (N–S vs E–W) and a flow direction along that axis with 50/50 randomness, so entry anchors are equally likely on north, south, west, or east borders (testing cascades from any side).
     /// Centerline and footprint avoid map borders except at designated entry/exit edges (see <see cref="RiverBorderMargin"/>).
+    /// BUG-46: prior corridors are dilated in Chebyshev space for BFS; forced centerlines respect the same avoid set;
+    /// entry anchors on the same map border must be separated; after placement, <see cref="WaterMap.MergeAdjacentBodiesWithSameSurface"/>
+    /// unifies touching river ids at the same logical surface.
     /// </summary>
     public static class ProceduralRiverGenerator
     {
@@ -26,8 +30,71 @@ namespace Territory.Terrain
         /// </summary>
         private const int RiverBorderMargin = 2;
 
+        /// <summary>
+        /// Chebyshev dilation radius around each cell already reserved by a prior river corridor (bed + shores).
+        /// New centerlines must not enter this expanded region (minimum gap between corridors).
+        /// </summary>
+        private const int MinCorridorSeparationDilation = 2;
+
+        /// <summary>
+        /// Minimum separation on the same map edge between new and prior entry anchors (|Δx| on north/south borders, |Δy| on west/east).
+        /// </summary>
+        private const int MinRiverEntrySeparationOnBorder = 5;
+
         private static readonly int[] D4x = { 0, 0, 1, -1 };
         private static readonly int[] D4y = { 1, -1, 0, 0 };
+
+        /// <summary>
+        /// Expands prior corridor cells so the next BFS centerline stays at least Chebyshev (dilation+1) away from reserved cells.
+        /// </summary>
+        private static HashSet<Vector2Int> BuildAvoidForBfs(HashSet<Vector2Int> usedCorridors, int gw, int gh)
+        {
+            var dilated = new HashSet<Vector2Int>();
+            if (usedCorridors == null || usedCorridors.Count == 0)
+                return dilated;
+            int r = MinCorridorSeparationDilation;
+            foreach (var p in usedCorridors)
+            {
+                for (int dx = -r; dx <= r; dx++)
+                {
+                    for (int dy = -r; dy <= r; dy++)
+                    {
+                        if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy)) > r)
+                            continue;
+                        int nx = p.x + dx;
+                        int ny = p.y + dy;
+                        if (nx < 0 || nx >= gw || ny < 0 || ny >= gh)
+                            continue;
+                        dilated.Add(new Vector2Int(nx, ny));
+                    }
+                }
+            }
+            return dilated;
+        }
+
+        private static bool IsEntryTooCloseToExistingStarts(Vector2Int candidate, bool northSouth, int gw, int gh, List<Vector2Int> sameAxisEntryStarts, int minSep)
+        {
+            if (sameAxisEntryStarts == null || sameAxisEntryStarts.Count == 0 || minSep <= 0)
+                return false;
+            foreach (var s in sameAxisEntryStarts)
+            {
+                if (northSouth)
+                {
+                    bool sameNorth = candidate.y == 0 && s.y == 0;
+                    bool sameSouth = candidate.y == gh - 1 && s.y == gh - 1;
+                    if ((sameNorth || sameSouth) && Mathf.Abs(candidate.x - s.x) < minSep)
+                        return true;
+                }
+                else
+                {
+                    bool sameWest = candidate.x == 0 && s.x == 0;
+                    bool sameEast = candidate.x == gw - 1 && s.x == gw - 1;
+                    if ((sameWest || sameEast) && Mathf.Abs(candidate.y - s.y) < minSep)
+                        return true;
+                }
+            }
+            return false;
+        }
 
         public static void Generate(WaterManager waterManager, TerrainManager terrainManager, GridManager gridManager, System.Random rnd)
         {
@@ -45,16 +112,26 @@ namespace Territory.Terrain
 
             int riverCount = rnd.Next(4, 8);
             var used = new HashSet<Vector2Int>();
+            var nsEntryStarts = new List<Vector2Int>();
+            var ewEntryStarts = new List<Vector2Int>();
 
             for (int r = 0; r < riverCount; r++)
             {
                 bool nsAxis = rnd.Next(0, 2) == 0;
-                List<Vector2Int> centerline = TryBuildCenterline(wm, hm, gw, gh, maxL, nsAxis, rnd, used);
+                bool flowPositive = rnd.Next(0, 2) == 0;
+                HashSet<Vector2Int> avoidForBfs = BuildAvoidForBfs(used, gw, gh);
+                List<Vector2Int> sameAxisEntries = nsAxis ? nsEntryStarts : ewEntryStarts;
+                List<Vector2Int> centerline = TryBuildCenterline(wm, hm, gw, gh, maxL, nsAxis, flowPositive, rnd, avoidForBfs, sameAxisEntries, MinRiverEntrySeparationOnBorder);
                 if (centerline == null || centerline.Count < 2)
-                    centerline = BuildForcedCenterline(wm, gw, gh, nsAxis, rnd);
+                    centerline = BuildForcedCenterline(wm, gw, gh, nsAxis, flowPositive, rnd, avoidForBfs);
 
                 if (centerline == null || centerline.Count < 2)
                     continue;
+
+                if (nsAxis)
+                    nsEntryStarts.Add(centerline[0]);
+                else
+                    ewEntryStarts.Add(centerline[0]);
 
                 wm.RecordProceduralRiverEntryAnchor(centerline[0].x, centerline[0].y);
 
@@ -76,7 +153,7 @@ namespace Territory.Terrain
                     Vector2Int prev = i > 0 ? centerline[i - 1] : centerline[i];
                     Vector2Int cur = centerline[i];
                     Vector2Int next = i + 1 < pathLen ? centerline[i + 1] : cur + (centerline[i] - centerline[i - 1]);
-                    RiverCrossSectionData sec = BuildCrossSection(wm, gw, gh, prev, cur, next, bedWidth, nsAxis, i, pathLen);
+                    RiverCrossSectionData sec = BuildCrossSection(wm, gw, gh, prev, cur, next, bedWidth, nsAxis, flowPositive, i, pathLen);
                     crossSections.Add(sec);
                     foreach (Vector2Int p in sec.Bed)
                         waterFootprint.Add(p);
@@ -172,7 +249,7 @@ namespace Territory.Terrain
         }
 
         /// <param name="segmentIndex">Index along centerline (entry/exit allow border footprint only here).</param>
-        private static RiverCrossSectionData BuildCrossSection(WaterMap wm, int gw, int gh, Vector2Int prev, Vector2Int cur, Vector2Int next, int bedWidth, bool flowIsNorthSouth, int segmentIndex, int pathLength)
+        private static RiverCrossSectionData BuildCrossSection(WaterMap wm, int gw, int gh, Vector2Int prev, Vector2Int cur, Vector2Int next, int bedWidth, bool flowIsNorthSouth, bool flowPositive, int segmentIndex, int pathLength)
         {
             var sec = new RiverCrossSectionData();
             bedWidth = Mathf.Clamp(bedWidth, MinRiverBedWidth, MaxRiverBedWidth);
@@ -198,7 +275,7 @@ namespace Territory.Terrain
                 int wy = widthAlongX ? cur.y : cur.y + d;
                 if (wx < 0 || wx >= gw || wy < 0 || wy >= gh)
                     continue;
-                if (!IsFootprintCellAllowedOnBorder(wx, wy, gw, gh, flowIsNorthSouth, isFirstSegment, isLastSegment))
+                if (!IsFootprintCellAllowedOnBorder(wx, wy, gw, gh, flowIsNorthSouth, flowPositive, isFirstSegment, isLastSegment))
                     continue;
                 var cell = new Vector2Int(wx, wy);
                 if (wm.IsWater(wx, wy))
@@ -341,60 +418,84 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// N–S flow: never west/east map edges; north row only on first segment; south row only on last.
-        /// E–W flow: never north/south map edges; west column only on first segment; east column only on last.
+        /// N–S flow: never west/east map edges. <paramref name="flowPositive"/> true = entry north / exit south; false = entry south / exit north.
+        /// E–W flow: never north/south map edges. <paramref name="flowPositive"/> true = entry west / exit east; false = entry east / exit west.
         /// </summary>
-        private static bool IsFootprintCellAllowedOnBorder(int wx, int wy, int gw, int gh, bool flowIsNorthSouth, bool isFirstSegment, bool isLastSegment)
+        private static bool IsFootprintCellAllowedOnBorder(int wx, int wy, int gw, int gh, bool flowIsNorthSouth, bool flowPositive, bool isFirstSegment, bool isLastSegment)
         {
             if (flowIsNorthSouth)
             {
                 if (wx == 0 || wx == gw - 1)
                     return false;
-                if (wy == 0 && !isFirstSegment)
-                    return false;
-                if (wy == gh - 1 && !isLastSegment)
-                    return false;
+                if (flowPositive)
+                {
+                    if (wy == 0 && !isFirstSegment)
+                        return false;
+                    if (wy == gh - 1 && !isLastSegment)
+                        return false;
+                }
+                else
+                {
+                    if (wy == gh - 1 && !isFirstSegment)
+                        return false;
+                    if (wy == 0 && !isLastSegment)
+                        return false;
+                }
                 return true;
             }
 
             if (wy == 0 || wy == gh - 1)
                 return false;
-            if (wx == 0 && !isFirstSegment)
-                return false;
-            if (wx == gw - 1 && !isLastSegment)
-                return false;
+            if (flowPositive)
+            {
+                if (wx == 0 && !isFirstSegment)
+                    return false;
+                if (wx == gw - 1 && !isLastSegment)
+                    return false;
+            }
+            else
+            {
+                if (wx == gw - 1 && !isFirstSegment)
+                    return false;
+                if (wx == 0 && !isLastSegment)
+                    return false;
+            }
             return true;
         }
 
-        private static List<Vector2Int> TryBuildCenterline(WaterMap wm, HeightMap hm, int gw, int gh, int maxL, bool nsAxis, System.Random rnd, HashSet<Vector2Int> avoid)
+        private static List<Vector2Int> TryBuildCenterline(WaterMap wm, HeightMap hm, int gw, int gh, int maxL, bool nsAxis, bool flowPositive, System.Random rnd, HashSet<Vector2Int> avoid, List<Vector2Int> sameAxisEntryStarts, int minEntrySeparationOnBorder)
         {
             if (nsAxis)
-                return TryBfsEdgeToEdge(wm, hm, gw, gh, maxL, true, rnd, avoid);
-            return TryBfsEdgeToEdge(wm, hm, gw, gh, maxL, false, rnd, avoid);
+                return TryBfsEdgeToEdge(wm, hm, gw, gh, maxL, true, flowPositive, rnd, avoid, sameAxisEntryStarts, minEntrySeparationOnBorder);
+            return TryBfsEdgeToEdge(wm, hm, gw, gh, maxL, false, flowPositive, rnd, avoid, sameAxisEntryStarts, minEntrySeparationOnBorder);
         }
 
-        private static List<Vector2Int> TryBfsEdgeToEdge(WaterMap wm, HeightMap hm, int gw, int gh, int maxL, bool northSouth, System.Random rnd, HashSet<Vector2Int> avoid)
+        private static List<Vector2Int> TryBfsEdgeToEdge(WaterMap wm, HeightMap hm, int gw, int gh, int maxL, bool northSouth, bool flowPositive, System.Random rnd, HashSet<Vector2Int> avoid, List<Vector2Int> sameAxisEntryStarts, int minEntrySeparationOnBorder)
         {
             int m = RiverBorderMargin;
-            Vector2Int start = FindDryBorderStart(wm, gw, gh, northSouth, rnd);
+            if (avoid == null)
+                avoid = new HashSet<Vector2Int>();
+            Vector2Int start = FindDryBorderStart(wm, gw, gh, northSouth, flowPositive, rnd, avoid, sameAxisEntryStarts, minEntrySeparationOnBorder);
             if (start.x < 0)
                 return null;
 
             var goals = new HashSet<Vector2Int>();
             if (northSouth)
             {
+                int goalY = flowPositive ? gh - 1 : 0;
                 for (int x = m; x <= gw - 1 - m; x++)
                 {
-                    if (!wm.IsWater(x, gh - 1))
-                        goals.Add(new Vector2Int(x, gh - 1));
+                    if (!wm.IsWater(x, goalY))
+                        goals.Add(new Vector2Int(x, goalY));
                 }
             }
             else
             {
+                int goalX = flowPositive ? gw - 1 : 0;
                 for (int y = m; y <= gh - 1 - m; y++)
                 {
-                    if (!wm.IsWater(gw - 1, y))
-                        goals.Add(new Vector2Int(gw - 1, y));
+                    if (!wm.IsWater(goalX, y))
+                        goals.Add(new Vector2Int(goalX, y));
                 }
             }
 
@@ -415,15 +516,27 @@ namespace Territory.Terrain
                 if (dist[p] >= maxL)
                     continue;
 
-                if (northSouth && p.y == 0 && p == start)
+                if (northSouth && flowPositive && p.y == 0 && p == start)
                 {
-                    TryEnqueueRiverNeighbor(wm, hm, gw, gh, m, northSouth, start, goals, p, p.x, p.y + 1, avoid, q, cameFrom, dist);
+                    TryEnqueueRiverNeighbor(wm, hm, gw, gh, m, northSouth, flowPositive, start, goals, p, p.x, p.y + 1, avoid, q, cameFrom, dist);
                     continue;
                 }
 
-                if (!northSouth && p.x == 0 && p == start)
+                if (northSouth && !flowPositive && p.y == gh - 1 && p == start)
                 {
-                    TryEnqueueRiverNeighbor(wm, hm, gw, gh, m, northSouth, start, goals, p, p.x + 1, p.y, avoid, q, cameFrom, dist);
+                    TryEnqueueRiverNeighbor(wm, hm, gw, gh, m, northSouth, flowPositive, start, goals, p, p.x, p.y - 1, avoid, q, cameFrom, dist);
+                    continue;
+                }
+
+                if (!northSouth && flowPositive && p.x == 0 && p == start)
+                {
+                    TryEnqueueRiverNeighbor(wm, hm, gw, gh, m, northSouth, flowPositive, start, goals, p, p.x + 1, p.y, avoid, q, cameFrom, dist);
+                    continue;
+                }
+
+                if (!northSouth && !flowPositive && p.x == gw - 1 && p == start)
+                {
+                    TryEnqueueRiverNeighbor(wm, hm, gw, gh, m, northSouth, flowPositive, start, goals, p, p.x - 1, p.y, avoid, q, cameFrom, dist);
                     continue;
                 }
 
@@ -434,7 +547,7 @@ namespace Territory.Terrain
                     int i = ord[k];
                     int nx = p.x + D4x[i];
                     int ny = p.y + D4y[i];
-                    TryEnqueueRiverNeighbor(wm, hm, gw, gh, m, northSouth, start, goals, p, nx, ny, avoid, q, cameFrom, dist);
+                    TryEnqueueRiverNeighbor(wm, hm, gw, gh, m, northSouth, flowPositive, start, goals, p, nx, ny, avoid, q, cameFrom, dist);
                 }
             }
 
@@ -442,7 +555,7 @@ namespace Territory.Terrain
         }
 
         private static void TryEnqueueRiverNeighbor(
-            WaterMap wm, HeightMap hm, int gw, int gh, int margin, bool northSouth, Vector2Int start, HashSet<Vector2Int> goals,
+            WaterMap wm, HeightMap hm, int gw, int gh, int margin, bool northSouth, bool flowPositive, Vector2Int start, HashSet<Vector2Int> goals,
             Vector2Int p, int nx, int ny, HashSet<Vector2Int> avoid, Queue<Vector2Int> q, Dictionary<Vector2Int, Vector2Int> cameFrom, Dictionary<Vector2Int, int> dist)
         {
             if (nx < 0 || nx >= gw || ny < 0 || ny >= gh)
@@ -452,19 +565,39 @@ namespace Territory.Terrain
             {
                 if (nx < margin || nx > gw - 1 - margin)
                     return;
-                if (ny == 0)
-                    return;
-                if (ny == gh - 1 && !goals.Contains(new Vector2Int(nx, ny)))
-                    return;
+                if (flowPositive)
+                {
+                    if (ny == 0)
+                        return;
+                    if (ny == gh - 1 && !goals.Contains(new Vector2Int(nx, ny)))
+                        return;
+                }
+                else
+                {
+                    if (ny == gh - 1)
+                        return;
+                    if (ny == 0 && !goals.Contains(new Vector2Int(nx, ny)))
+                        return;
+                }
             }
             else
             {
                 if (ny < margin || ny > gh - 1 - margin)
                     return;
-                if (nx == 0)
-                    return;
-                if (nx == gw - 1 && !goals.Contains(new Vector2Int(nx, ny)))
-                    return;
+                if (flowPositive)
+                {
+                    if (nx == 0)
+                        return;
+                    if (nx == gw - 1 && !goals.Contains(new Vector2Int(nx, ny)))
+                        return;
+                }
+                else
+                {
+                    if (nx == gw - 1)
+                        return;
+                    if (nx == 0 && !goals.Contains(new Vector2Int(nx, ny)))
+                        return;
+                }
             }
 
             Vector2Int np = new Vector2Int(nx, ny);
@@ -492,40 +625,58 @@ namespace Territory.Terrain
             }
         }
 
-        /// <summary>Returns <c>(-1,-1)</c> if no valid dry start in the margin band.</summary>
-        private static Vector2Int FindDryBorderStart(WaterMap wm, int gw, int gh, bool northSouth, System.Random rnd)
+        /// <summary>Returns <c>(-1,-1)</c> if no valid dry start in the margin band (respects <paramref name="avoid"/> and entry spacing).</summary>
+        private static Vector2Int FindDryBorderStart(WaterMap wm, int gw, int gh, bool northSouth, bool flowPositive, System.Random rnd, HashSet<Vector2Int> avoid, List<Vector2Int> sameAxisEntryStarts, int minEntrySeparationOnBorder)
         {
             int m = RiverBorderMargin;
+            if (avoid == null)
+                avoid = new HashSet<Vector2Int>();
+
+            bool IsValidStart(Vector2Int c)
+            {
+                if (!wm.IsValidPosition(c.x, c.y) || wm.IsWater(c.x, c.y))
+                    return false;
+                if (avoid.Contains(c))
+                    return false;
+                return !IsEntryTooCloseToExistingStarts(c, northSouth, gw, gh, sameAxisEntryStarts, minEntrySeparationOnBorder);
+            }
+
             if (northSouth)
             {
                 if (gw <= 2 * m)
                     return new Vector2Int(-1, -1);
+                int startRow = flowPositive ? 0 : gh - 1;
                 for (int t = 0; t < 120; t++)
                 {
                     int x = rnd.Next(m, gw - m);
-                    if (!wm.IsWater(x, 0))
-                        return new Vector2Int(x, 0);
+                    var cand = new Vector2Int(x, startRow);
+                    if (IsValidStart(cand))
+                        return cand;
                 }
                 for (int x = m; x <= gw - 1 - m; x++)
                 {
-                    if (!wm.IsWater(x, 0))
-                        return new Vector2Int(x, 0);
+                    var cand = new Vector2Int(x, startRow);
+                    if (IsValidStart(cand))
+                        return cand;
                 }
             }
             else
             {
                 if (gh <= 2 * m)
                     return new Vector2Int(-1, -1);
+                int startCol = flowPositive ? 0 : gw - 1;
                 for (int t = 0; t < 120; t++)
                 {
                     int y = rnd.Next(m, gh - m);
-                    if (!wm.IsWater(0, y))
-                        return new Vector2Int(0, y);
+                    var cand = new Vector2Int(startCol, y);
+                    if (IsValidStart(cand))
+                        return cand;
                 }
                 for (int y = m; y <= gh - 1 - m; y++)
                 {
-                    if (!wm.IsWater(0, y))
-                        return new Vector2Int(0, y);
+                    var cand = new Vector2Int(startCol, y);
+                    if (IsValidStart(cand))
+                        return cand;
                 }
             }
 
@@ -554,14 +705,24 @@ namespace Territory.Terrain
             return Mathf.Abs(h0 - h1) <= 1;
         }
 
-        private static List<Vector2Int> BuildForcedCenterline(WaterMap wm, int gw, int gh, bool nsAxis, System.Random rnd)
+        /// <summary>
+        /// Deterministic fallback path when BFS fails. Respects <paramref name="avoid"/> (dilated prior corridors) like the BFS path.
+        /// Returns <c>null</c> if any row/column cannot be satisfied without water or blocked cells.
+        /// </summary>
+        private static List<Vector2Int> BuildForcedCenterline(WaterMap wm, int gw, int gh, bool nsAxis, bool flowPositive, System.Random rnd, HashSet<Vector2Int> avoid)
         {
+            if (avoid == null)
+                avoid = new HashSet<Vector2Int>();
+
             int m = RiverBorderMargin;
             var path = new List<Vector2Int>();
             if (nsAxis)
             {
                 int x = Mathf.Clamp(gw / 2, m, gw - 1 - m);
-                for (int y = 0; y < gh; y++)
+                int yStart = flowPositive ? 0 : gh - 1;
+                int yEnd = flowPositive ? gh : -1;
+                int yStep = flowPositive ? 1 : -1;
+                for (int y = yStart; y != yEnd; y += yStep)
                 {
                     int attempts = 0;
                     while (wm.IsWater(x, y) && attempts < gw)
@@ -584,6 +745,30 @@ namespace Territory.Terrain
                         }
                     }
 
+                    attempts = 0;
+                    while (avoid.Contains(new Vector2Int(x, y)) && attempts < gw)
+                    {
+                        x++;
+                        if (x > gw - 1 - m)
+                            x = m;
+                        attempts++;
+                    }
+
+                    if (avoid.Contains(new Vector2Int(x, y)))
+                    {
+                        for (int xx = m; xx <= gw - 1 - m; xx++)
+                        {
+                            if (!wm.IsWater(xx, y) && !avoid.Contains(new Vector2Int(xx, y)))
+                            {
+                                x = xx;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (wm.IsWater(x, y) || avoid.Contains(new Vector2Int(x, y)))
+                        return null;
+
                     x = Mathf.Clamp(x, m, gw - 1 - m);
                     path.Add(new Vector2Int(x, y));
                 }
@@ -591,7 +776,10 @@ namespace Territory.Terrain
             else
             {
                 int y = Mathf.Clamp(gh / 2, m, gh - 1 - m);
-                for (int x = 0; x < gw; x++)
+                int xStart = flowPositive ? 0 : gw - 1;
+                int xEnd = flowPositive ? gw : -1;
+                int xStep = flowPositive ? 1 : -1;
+                for (int x = xStart; x != xEnd; x += xStep)
                 {
                     int attempts = 0;
                     while (wm.IsWater(x, y) && attempts < gh)
@@ -613,6 +801,30 @@ namespace Territory.Terrain
                             }
                         }
                     }
+
+                    attempts = 0;
+                    while (avoid.Contains(new Vector2Int(x, y)) && attempts < gh)
+                    {
+                        y++;
+                        if (y > gh - 1 - m)
+                            y = m;
+                        attempts++;
+                    }
+
+                    if (avoid.Contains(new Vector2Int(x, y)))
+                    {
+                        for (int yy = m; yy <= gh - 1 - m; yy++)
+                        {
+                            if (!wm.IsWater(x, yy) && !avoid.Contains(new Vector2Int(x, yy)))
+                            {
+                                y = yy;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (wm.IsWater(x, y) || avoid.Contains(new Vector2Int(x, y)))
+                        return null;
 
                     y = Mathf.Clamp(y, m, gh - 1 - m);
                     path.Add(new Vector2Int(x, y));

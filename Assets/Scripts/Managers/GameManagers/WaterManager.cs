@@ -132,6 +132,7 @@ public class WaterManager : MonoBehaviour
         int seed = MapGenerationSeed.GetLakeFillRandomSeed();
         var rnd = new System.Random(seed ^ unchecked((int)0xBADC0DE1));
         ProceduralRiverGenerator.Generate(this, terrainManager, gridManager, rnd);
+        waterMap.MergeAdjacentBodiesWithSameSurface();
         UpdateWaterVisuals(expandLakeShoreSecondRing: true);
         gridManager.InvalidateRoadCache();
     }
@@ -469,8 +470,9 @@ public class WaterManager : MonoBehaviour
 
     /// <summary>
     /// Refreshes every water cell prefab and water–water cascade cliffs. Pass A + B (§12.7): bed normalization, then junction merge,
-    /// then <see cref="PlaceWater"/>, <see cref="TerrainManager.RefreshWaterCascadeCliffs"/>, and
-    /// <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> when depression-fill is enabled or Pass B merged any junction cells (BUG-45).
+    /// then lake–river high/low fallback (dry rim at <c>S</c> where Pass A/B are skipped for lakes), then <see cref="PlaceWater"/>,
+    /// <see cref="TerrainManager.RefreshWaterCascadeCliffs"/>, and <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> when
+    /// depression-fill is enabled, Pass B merged any junction cells, or the fallback ran (BUG-45).
     /// </summary>
     /// <param name="expandLakeShoreSecondRing">When true, expands the land shore refresh halo (procedural river confluences).</param>
     public void UpdateWaterVisuals(bool expandLakeShoreSecondRing = false)
@@ -489,6 +491,26 @@ public class WaterManager : MonoBehaviour
                 terrainManager.ApplyHeightMapToRegion(jMinX, jMinY, jMaxX, jMaxY);
         }
 
+        bool lakeRiverFallback = false;
+        List<(int x, int y, int lakeSurface)> lakeRiverRimCells = null;
+        if (hm != null)
+        {
+            lakeRiverFallback = waterMap.ApplyLakeHighToRiverLowContactFallback(hm, gridManager, out lakeRiverRimCells);
+            if (lakeRiverFallback && terrainManager != null && lakeRiverRimCells != null && lakeRiverRimCells.Count > 0)
+            {
+                int rMinX = int.MaxValue, rMinY = int.MaxValue, rMaxX = int.MinValue, rMaxY = int.MinValue;
+                foreach (var (rx, ry, _) in lakeRiverRimCells)
+                {
+                    if (rx < rMinX) rMinX = rx;
+                    if (ry < rMinY) rMinY = ry;
+                    if (rx > rMaxX) rMaxX = rx;
+                    if (ry > rMaxY) rMaxY = ry;
+                }
+                terrainManager.ApplyHeightMapToRegion(rMinX, rMinY, rMaxX, rMaxY);
+                ReapplyLakeRiverFallbackRimTerrain(lakeRiverRimCells, hm);
+            }
+        }
+
         for (int x = 0; x < gridManager.width; x++)
         {
             for (int y = 0; y < gridManager.height; y++)
@@ -503,8 +525,38 @@ public class WaterManager : MonoBehaviour
         if (terrainManager != null)
             terrainManager.RefreshWaterCascadeCliffs(this);
 
-        if (terrainManager != null && (useLakeDepressionFill || junctionMerged))
-            terrainManager.RefreshLakeShoreAfterLakePlacement(this, expandSecondChebyshevRing: expandLakeShoreSecondRing || junctionMerged);
+        if (terrainManager != null && (useLakeDepressionFill || junctionMerged || lakeRiverFallback))
+        {
+            terrainManager.RefreshLakeShoreAfterLakePlacement(this, expandSecondChebyshevRing: expandLakeShoreSecondRing || junctionMerged || lakeRiverFallback);
+            if (lakeRiverFallback && lakeRiverRimCells != null && lakeRiverRimCells.Count > 0)
+                ReapplyLakeRiverFallbackRimTerrain(lakeRiverRimCells, hm);
+        }
+    }
+
+    /// <summary>
+    /// Re-applies logical surface height and terrain after <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> —
+    /// <see cref="TerrainManager.ClampShoreLandHeightsToAdjacentWaterSurface"/> can pull rim cells toward the lower pool&apos;s <c>S</c>.
+    /// </summary>
+    private void ReapplyLakeRiverFallbackRimTerrain(List<(int x, int y, int lakeSurface)> lakeRiverRimCells, HeightMap hm)
+    {
+        if (lakeRiverRimCells == null || lakeRiverRimCells.Count == 0 || hm == null || terrainManager == null || gridManager == null)
+            return;
+
+        foreach (var (x, y, sLake) in lakeRiverRimCells)
+        {
+            if (!hm.IsValidPosition(x, y))
+                continue;
+            int clamped = Mathf.Clamp(sLake, TerrainManager.MIN_HEIGHT, TerrainManager.MAX_HEIGHT);
+            hm.SetHeight(x, y, clamped);
+            gridManager.SetCellHeight(new Vector2(x, y), hm.GetHeight(x, y));
+            terrainManager.RestoreTerrainForCell(x, y, hm);
+            Cell cell = gridManager.GetCell(x, y);
+            if (cell != null)
+            {
+                cell.zoneType = Zone.ZoneType.Grass;
+                cell.waterBodyType = WaterBodyType.None;
+            }
+        }
     }
 
     public GameObject GetRandomWaterPrefab()

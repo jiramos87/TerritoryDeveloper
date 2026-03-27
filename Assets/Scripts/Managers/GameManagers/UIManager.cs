@@ -320,6 +320,14 @@ public class UIManager : MonoBehaviour
                 {
                     int s = waterManager.GetWaterSurfaceHeight(x, y);
                     line += s >= 0 ? ", S: " + s : ", S: n/a";
+                    WaterMap wm = waterManager.GetWaterMap();
+                    if (wm != null)
+                    {
+                        if (s >= 0)
+                            line += ", body: " + wm.GetBodyClassificationAt(x, y) + " id=" + wm.GetWaterBodyId(x, y);
+                        else
+                            line += ", body: n/a";
+                    }
                 }
                 gridCoordinatesText.text = line;
             }

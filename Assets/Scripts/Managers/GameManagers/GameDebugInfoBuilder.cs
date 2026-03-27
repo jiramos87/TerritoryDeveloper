@@ -42,8 +42,8 @@ public class GameDebugInfoBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns a single line with grid coordinates, chunk id, and logical water surface height when in bounds, e.g.
-    /// "x: 12, y: 9, chunk: (0,0), S: 2" or "..., S: n/a" when the cell is dry.
+    /// Returns a single line with grid coordinates, chunk id, logical water surface height, and water body classification + id when in bounds, e.g.
+    /// "x: 12, y: 9, chunk: (0,0), S: 2, body: Lake id=3" or "..., S: n/a, body: n/a" when the cell is dry.
     /// </summary>
     public string GetCoordinatesLine(Vector2 gridPosition)
     {
@@ -62,6 +62,21 @@ public class GameDebugInfoBuilder : MonoBehaviour
         {
             int s = waterManager.GetWaterSurfaceHeight(ix, iy);
             coords += s >= 0 ? $", S: {s}" : ", S: n/a";
+
+            WaterMap wm = waterManager.GetWaterMap();
+            if (wm != null)
+            {
+                if (s >= 0)
+                {
+                    WaterBodyType cls = wm.GetBodyClassificationAt(ix, iy);
+                    int bid = wm.GetWaterBodyId(ix, iy);
+                    coords += $", body: {cls} id={bid}";
+                }
+                else
+                {
+                    coords += ", body: n/a";
+                }
+            }
         }
 
         return coords;
