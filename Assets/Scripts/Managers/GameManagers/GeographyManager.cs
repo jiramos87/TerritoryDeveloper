@@ -45,7 +45,7 @@ public class GeographyManager : MonoBehaviour
     [Tooltip("When true, FEAT-38 procedural rivers run after standard water init. Ignored when standard water is disabled.")]
     public bool generateProceduralRiversOnInit = true;
 
-    [Tooltip("When true, places the straight grid West→East test river after standard water and procedural rivers (fixed x, y from west to east per isometric spec). Four equal segments with S=4,3,2,1.")]
+    [Tooltip("When true, places the straight grid West→East test river after standard water and procedural rivers (centerline x = map width / 2, clamped to corridor margins; y west→east per isometric spec). Four equal segments with S=4,3,2,1.")]
     public bool generateTestRiverOnInit = false;
 
     [Tooltip("Four bed widths (1–3 cells effective; larger values clamp) for test river segments S=4,3,2,1. Length 4 when assigned.")]
@@ -106,7 +106,6 @@ public class GeographyManager : MonoBehaviour
                 waterManager.GenerateProceduralRiversForNewGame();
             if (generateTestRiverOnInit)
                 waterManager.GenerateTestRiver(testRiverSegmentBedWidths);
-            waterManager.LogGeneratedWaterGeographyDiagnostics();
         }
 
         // Interstate runs after terrain (from InitializeGrid), water, and rivers so pathing and tiles use final height/water state.
@@ -285,7 +284,6 @@ public class GeographyManager : MonoBehaviour
                 waterManager.GenerateProceduralRiversForNewGame();
             if (generateTestRiverOnInit)
                 waterManager.GenerateTestRiver(testRiverSegmentBedWidths);
-            waterManager.LogGeneratedWaterGeographyDiagnostics();
         }
 
         // Interstate after terrain, water, and rivers (same order as InitializeGeography).

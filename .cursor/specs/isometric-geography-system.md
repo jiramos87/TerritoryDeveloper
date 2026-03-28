@@ -16,7 +16,7 @@
 - Terrain-related **sorting** constants and formulas; load/save visual ordering summary (§7).
 - Terraform modes affecting height (§8), roads on slopes (§9), pathfinding costs (§10).
 - Code → concept map (§11).
-- Water map, lake generation, persistence (§12), procedural rivers (§13), road/interstate/bridge validation (§14), lake-edge engineering notes (§15).
+- Water map, lake generation, persistence (§12), river junction geometry / brinks (§12.8), procedural rivers (§13), road/interstate/bridge validation (§14), lake-edge engineering notes (§15).
 
 ### 0.2 What lives elsewhere
 
@@ -238,7 +238,7 @@ For eligible land cells, `DetermineWaterShorePrefabs(x, y)` walks a **fixed prio
 1. **Map-edge shortcuts** — if the cell is on the grid border, pick a cardinal water-slope prefab from whichever border branch applies (avoids missing neighbors).
 2. **Perpendicular cardinal corners (two wet cardinals)** — e.g. South + East both water. Chooses **Bay** vs corner `*SlopeWaterPrefab` using `IsAxisAlignedRectangleCornerWater*` on the diagonal water cell (true = **axis-aligned rectangle outer corner**: no water “beyond” that diagonal along the two outward cardinals) and `HasLandSlopeIgnoringWater` (any **non-water** cardinal higher than this cell → prefer Bay when assigned, else corner slope). If not a rectangle corner and no land-slope signal, prefers **corner `*SlopeWaterPrefab`** over Bay (peninsula / non-rectangular water). When **exactly three** cardinals are water, **two** perpendicular pairs both match: the implementation picks the inner corner using **diagonal water** — if only one of the two candidate diagonals is wet, that quadrant wins; if both or neither, tie-break matches the legacy pairwise order (missing North → try SE then SW; missing South → NE then NW; missing East → SW then NW; missing West → SE then NE).
 3. **Single cardinal water** — branches for **East, then West, then North, then South**, each returning cardinal ramps or `*UpslopeWaterPrefab` combinations when the opposite cardinals are also water in specific patterns. For **North** (resp. **South**) with **no** South (resp. North) opposite strip and **no** East/West cardinal water, the choice is always **pure** `northSlopeWaterPrefab` / `southSlopeWaterPrefab` — including beside rectangular lake corners, where only one of the two water-side diagonals is wet. **`BuildDiagonalOnlyShorePrefabs`** for NE/NW/SE/SW is **not** used in that branch; it remains for step **4** when **no** cardinal water applies and only a diagonal is wet (with the usual `!hasWaterAtSouth` / `!hasWaterAtNorth` guards). The South branch mirrors the East branch for E/W upslopes and E+W both wet → pure south ramp like North with E+W.
-4. **Diagonal-only water** — no cardinal water; only a diagonal is water/sea (with guards such as `!hasWaterAtSouth` / `!hasWaterAtNorth` per direction). Delegates to `BuildDiagonalOnlyShorePrefabs`: rectangle outer corner → **Bay**; else `HasLandSlopeIgnoringWater` → Bay or downslope; else Bay on flat; else **upslope + downslope** pair fallback.
+4. **Diagonal-only water** — no cardinal water; only a diagonal is water/sea (with guards such as `!hasWaterAtSouth` / `!hasWaterAtNorth` per direction). Delegates to `BuildDiagonalOnlyShorePrefabs`: rectangle outer corner → **Bay**; else `HasLandSlopeIgnoringWater` → Bay or downslope; else Bay on flat; else **upslope + downslope** pair fallback. **Exception (§12.8):** dry land classified as an **upper-** or **lower-brink** at a **river–river** cardinal surface step forces the diagonal **`*SlopeWaterPrefab`** for that quadrant (no Bay), so cascade corners do not read as a rectangular-lake outer corner.
 
 ### 4.3 `RequiresSlope` vs Slope Selection
 
@@ -486,6 +486,10 @@ Phases:
 | `Flatten` | Set cell height to `plan.baseHeight`; terrain becomes flat |
 | `DiagonalToOrthogonal` | (Legacy / obsolete) Convert diagonal slope to orthogonal |
 
+### 8.6 River junction straightening (with §12.8)
+
+When procedural or player terrain leaves a **multi-surface** river contact that is **not** cardinally straight enough for **`RefreshWaterCascadeCliffs`** and shore selection, terraform plans may **cut rectilinear** corridors (same spirit as cut-through §8.3) so **`HeightMap`** and **`WaterMap`** agree after **Pass A / Pass B**. Re-run **`WaterManager.UpdateWaterVisuals`** after height writes. Detailed engineering belongs with **`TerraformingService`** and **`WaterMap.ApplyWaterSurfaceJunctionMerge`**; this subsection ties terraform to junction **geometry** only.
+
 ---
 
 ## 9. Road Prefab Selection on Terrain
@@ -552,7 +556,7 @@ Interstate pathfinding multiplies slope costs by `InterstateSlopeMultiplier = 5`
 | Height data | `HeightMap.cs` | `GetHeight`, `SetHeight`, `IsValidPosition` |
 | Slope type determination | `TerrainManager.cs` | `DetermineSlopePrefab`, `GetTerrainSlopeTypeAt` |
 | Water / sea neighbor test (pattern) | `TerrainManager.cs` | `WaterOrSeaAt` |
-| Water slope determination | `TerrainManager.cs` | `DetermineWaterShorePrefabs`, `BuildDiagonalOnlyShorePrefabs`, `IsAxisAlignedRectangleCornerWaterNorthEast` (and NW/SE/SW), `HasLandSlopeIgnoringWater`, `IsWaterSlopeCell`, `IsLandEligibleForWaterShorePrefabs`, `TryGetSurfaceHeightForWaterNeighbor` |
+| Water slope determination | `TerrainManager.cs` | `DetermineWaterShorePrefabs`, `BuildDiagonalOnlyShorePrefabs` (incl. cascade junction override), `GetNeighborWaterVisualHeightForShore`, `IsAxisAlignedRectangleCornerWaterNorthEast` (and NW/SE/SW), `HasLandSlopeIgnoringWater`, `IsWaterSlopeCell`, `IsLandEligibleForWaterShorePrefabs`, `TryGetSurfaceHeightForWaterNeighbor` |
 | Cliff walls | `TerrainManager.cs`, `CliffFace.cs`, `Cell` | `PlaceCliffWalls`, `CliffCardinalFace` / `CliffFaceFlags`, `GetCliffWallDropNorth/South/East/West`, `ResolveCliffWallDropAfterSuppression`, `PlaceCliffWallStack`, `GetCliffPrefabForCardinalFace`, `IsCliffCardinalFaceVisibleToCamera`, `GetWaterSurfaceHeightForCliffProbe`, `ShouldSuppressCliffFaceTowardLowerCell` (with `IsLandEligibleForWaterShorePrefabs` on the **high** cell), `ShouldSuppressCliffTowardCardinalLower`, `IsLandEligibleForWaterShorePrefabs`, `IsWaterShoreRampTerrainCell` |
 | Terrain tile placement | `TerrainManager.cs` | `PlaceFlatTerrain`, `PlaceSlopeFromPrefab`, `PlaceWaterShore` |
 | Sorting order (terrain formula) | `TerrainManager.cs` | `CalculateTerrainSortingOrder`, `CalculateSlopeSortingOrder`, `CalculateWaterSlopeSortingOrder`, `CalculateShoreBaySortingOrder` |
@@ -566,7 +570,8 @@ Interstate pathfinding multiplies slope costs by `InterstateSlopeMultiplier = 5`
 | Slope overlay naming | `SlopePrefabRegistry.cs` | `GetSlopeVariant`, `GetSlopeSuffix` |
 | Pathfinding costs | `RoadPathCostConstants.cs` | `GetStepCost`, `GetStepCostForInterstate` |
 | A* pathfinding | `GridPathfinder.cs` | `FindPath`, `FindPathWithRoadSpacing` |
-| Water map / lakes | `WaterMap.cs`, `WaterManager.cs` | `InitializeLakesFromDepressionFill`, `GetSerializableData`, `RestoreWaterMapFromSaveData`, `PlaceWater` |
+| Water map / lakes | `WaterMap.cs`, `WaterManager.cs` | `InitializeLakesFromDepressionFill`, `GetSerializableData`, `RestoreWaterMapFromSaveData`, `PlaceWater`, `TryGetDryLandRiverJunctionBrink`, `ApplyMultiBodySurfaceBoundaryNormalization`, `ApplyWaterSurfaceJunctionMerge` |
+| Shore affiliation (dry land) | `WaterManager.Membership.cs` | `ComputeShoreAffiliationForDryLandCell`, `GetShoreAffiliatedWaterBodyIdForLandCell`, `ApplyShoreMembershipForLandCell`, `IsDryLandUpperRiverJunctionBrink`, `IsDryLandLowerRiverJunctionBrink`, `ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink` |
 | Procedural rivers | `ProceduralRiverGenerator.cs`, `GeographyManager.cs` | `GenerateProceduralRiversForNewGame` (after lakes, before interstate) |
 | Road terraform validation | `RoadManager.cs` | `TryPrepareRoadPlacementPlan`, `TryPrepareRoadPlacementPlanLongestValidPrefix` |
 | Interstate routing | `InterstateManager.cs` | `FindInterstatePathAStar`, `PickLowerCostInterstateAStarPath`, `ComputeInterstateBorderEndpointScore` |
@@ -638,7 +643,29 @@ These rules separate **what players read as water level** from **terrain under t
 
 7. **“Correct surface” in tools and debug:** Means **`PlaceWater` / world water plane** consistency for a body, **not** that every underwater cell shares one **`HeightMap`** value.
 
+8. **Dry-shore affiliation at river–river junctions:** When **`WaterMap.TryGetDryLandRiverJunctionBrink`** classifies a dry cell as **`UpperBrink`**, **`WaterManager.ComputeShoreAffiliationForDryLandCell`** affiliates **`Cell.waterBodyId`** to the **upper** pool’s body; when **`LowerBrink`**, to the **lower** pool. Otherwise affiliation still uses the **lowest** logical **`S`** among Moore neighbors (existing rule). **`TryGetDryLandRiverJunctionBrink`** tests **lower** before **upper** so cells that cardinally touch the low pool are not misclassified as upper brinks. **`TerrainManager.GetNeighborWaterVisualHeightForShore`** may restrict neighbor sampling to the affiliated body so **`PlaceWaterShore`** and sorting align with that pool. **`ShouldPlaceShoreEnd`** does **not** apply on **`UpperBrink`** (avoids lower-pool “shore end” closure on upper-brink tiles).
+
 **Implementation plan:** [`docs/water-junction-merge-implementation-plan.md`](../../docs/water-junction-merge-implementation-plan.md).
+
+### 12.8 River / multi-surface junction geometry (cardinal cascades, brinks)
+
+A **junction** between two registered water regions is modeled as **cardinal** contact edges where **`S_high > S_low`** (subject to **`IsLakeSurfaceStepContactForbidden`**). Junctions decompose into **straight strips** along those edges; **water–water cascades** use **cardinal** prefabs only (§5.6.2). **Pass A** and **Pass B** (§12.7) align beds and extend the lower surface so **`PlaceWater`**, **`RefreshWaterCascadeCliffs`**, and shore refresh see coherent geometry; where the terrain cannot support a **straight** cardinal cascade across the intended channel width, **terraform** (§8) may be required to carve rectilinear cuts and ensure **water** (not dry wedge) sits below the brink.
+
+**Brink roles (dry land):** **`RiverJunctionBrinkRole`** — **`UpperBrink`**: dry cell **Moore-adjacent** to the **high-surface** water cell of a **River–River** cardinal step (including the case where only the **low** pool meets the land diagonally but the **high** cell is still Moore-adjacent). **`LowerBrink`**: dry cell **cardinally** adjacent to the **low-surface** cell of such a step. **`TryGetDryLandRiverJunctionBrink`** evaluates **lower** before **upper** so cascade **shore-line closure** tiles that cardinally touch the low pool keep the **lower** body id even when Moore-adjacent to the high cell. **Code:** **`WaterMap.TryGetDryLandRiverJunctionBrink`**, **`WaterManager.ComputeShoreAffiliationForDryLandCell`**, **`WaterManager.ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink`** (upper or lower brink — diagonal-only shore forces `*SlopeWaterPrefab` over Bay), **`TerrainManager.BuildDiagonalOnlyShorePrefabs`** (`forceCascadeJunctionSlopeWater`), **`ShouldPlaceShoreEnd`** (early out for upper brinks).
+
+#### 12.8.1 Shore neighbor topology vs junction diagonal prefabs
+
+1. **Registered water** — **`WaterMap.IsWater`** is the authoritative predicate for “this cell is water” in the map.
+
+2. **Topological water for shore prefab masks** — For **`TerrainManager.DetermineWaterShorePrefabs`** Moore neighbors, **`WaterManager.IsOpenWaterForShoreTopology`** marks a neighbor as “wet” for the pattern when: registered water matches the shore-affiliated body, or sea-level / sea-body rules as implemented there. **Dry junction-brink land does not** count as wet for this mask (it is not registered water).
+
+3. **Unaffiliated shore** — When affiliation resolves to none (`ownerBodyId == 0`), the mask uses **`WaterOrSeaAt`** only (registered water or sea-level terrain per existing rules); junction-brink dry land is **not** added to the mask.
+
+4. **Diagonal `*SlopeWaterPrefab` at river–river junction cascades (main pass)** — The default Moore mask (2) does **not** treat junction-brink dry land as wet. During normal **`UpdateTileElevation`**, **`ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink`** can still set **`forceCascadeJunctionSlopeWater`** for the single “closest-to-cascade” tile per brink component (§12.8).
+
+5. **Junction cascade shore post-pass** — After **`RefreshShoreTerrainAfterWaterUpdate`** runs the main shore refresh, **`TerrainManager.ApplyJunctionCascadeShorePostPass`** revisits every dry cell with **`TryGetDryLandRiverJunctionBrinkWithStep`** (`UpperBrink` / `LowerBrink`). For those cells only, **`DetermineWaterShorePrefabs`** is called with an extended neighbor mask (**`WaterManager.NeighborMatchesShoreOwnerForJunctionTopology`**, which counts junction-brink dry neighbors as wet when affiliation matches) and **`forceJunctionDiagonalSlopeForCascade`** so diagonal **`SlopeWater`** prefabs apply along the full cascade strip, then **`PlaceWaterShore`** overwrites the prior result.
+
+6. **Diagonal corners from geography** — Unrelated to junction post-pass: perpendicular two-cardinal wet masks from (2) still drive Bay vs **`SlopeWater`** via rectangle outer-corner tests, multi-surface rules, and convex-land fallbacks in **`SelectPerpendicularWaterCornerPrefabs`**.
 
 ---
 

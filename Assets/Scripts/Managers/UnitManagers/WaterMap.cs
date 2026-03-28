@@ -6,6 +6,18 @@ using UnityEngine;
 namespace Territory.Terrain
 {
     /// <summary>
+    /// Dry-land role at a river–river cardinal surface step (§12.8). Used for shore affiliation and prefab selection.
+    /// </summary>
+    public enum RiverJunctionBrinkRole
+    {
+        None,
+        /// <summary>Dry cell on the upper-pool side of a river–river cascade (Moore-adjacent to the high-surface water cell).</summary>
+        UpperBrink,
+        /// <summary>Dry cell cardinally adjacent to the low-surface water cell of a river–river step.</summary>
+        LowerBrink
+    }
+
+    /// <summary>
     /// Stores water as an overlay on the height map: each cell has a water body id (0 = dry).
     /// Bodies carry a shared surface height; terrain depth is implicit (surface &gt; terrain floor).
     /// </summary>
@@ -100,6 +112,292 @@ namespace Territory.Terrain
         }
 
         /// <summary>
+        /// True when this <b>water</b> cell is on the lower side of a cardinal water-water surface step (<c>S_high &gt; S_low</c>)
+        /// and the step is not <see cref="IsLakeSurfaceStepContactForbidden"/> (river cascades / multi-body junctions; §12.7).
+        /// Used with land-shore affiliation to detect downstream shores beside cascades.
+        /// </summary>
+        public bool IsWaterCellLowerSideOfCardinalSurfaceStep(int x, int y)
+        {
+            if (!IsValidPosition(x, y) || !IsWater(x, y))
+                return false;
+            int sL = GetSurfaceHeightAt(x, y);
+            if (sL < 0)
+                return false;
+            int[] d4x = { 1, -1, 0, 0 };
+            int[] d4y = { 0, 0, 1, -1 };
+            for (int i = 0; i < 4; i++)
+            {
+                int ux = x + d4x[i];
+                int uy = y + d4y[i];
+                if (!IsValidPosition(ux, uy) || !IsWater(ux, uy))
+                    continue;
+                int sH = GetSurfaceHeightAt(ux, uy);
+                if (sH <= sL)
+                    continue;
+                if (IsLakeSurfaceStepContactForbidden(ux, uy, x, y))
+                    continue;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Classifies dry land at a <b>river–river</b> cardinal surface step: upper-pool brink vs lower-pool brink (§12.8).
+        /// Upper brinks affiliate to the <b>high</b> surface body; lower brinks to the <b>low</b> surface body.
+        /// <b>Lower</b> is tested before <b>upper</b> so land that cardinally touches the low pool (shore-line closure at a cascade)
+        /// keeps the lower <see cref="WaterBody"/> id even when Moore-adjacent to the high cell.
+        /// </summary>
+        /// <param name="x">Grid X.</param>
+        /// <param name="y">Grid Y.</param>
+        /// <param name="role">None when not dry, not a qualifying step, or non-river contact.</param>
+        /// <param name="affiliatedBodyId"><see cref="GetWaterBodyId"/> for the affiliated pool when <paramref name="role"/> is not None.</param>
+        /// <returns>True when <paramref name="role"/> is <see cref="RiverJunctionBrinkRole.UpperBrink"/> or <see cref="RiverJunctionBrinkRole.LowerBrink"/>.</returns>
+        public bool TryGetDryLandRiverJunctionBrink(int x, int y, out RiverJunctionBrinkRole role, out int affiliatedBodyId)
+        {
+            return TryGetDryLandRiverJunctionBrinkWithStep(x, y, out role, out affiliatedBodyId, out _, out _, out _, out _);
+        }
+
+        /// <summary>
+        /// Same as <see cref="TryGetDryLandRiverJunctionBrink"/> but also outputs the high- and low-surface water cells of the qualifying river–river step (§12.8).
+        /// </summary>
+        /// <param name="highX">High-surface water cell X for the step.</param>
+        /// <param name="highY">High-surface water cell Y for the step.</param>
+        /// <param name="lowX">Low-surface water cell X for the step.</param>
+        /// <param name="lowY">Low-surface water cell Y for the step.</param>
+        public bool TryGetDryLandRiverJunctionBrinkWithStep(
+            int x, int y,
+            out RiverJunctionBrinkRole role, out int affiliatedBodyId,
+            out int highX, out int highY, out int lowX, out int lowY)
+        {
+            role = RiverJunctionBrinkRole.None;
+            affiliatedBodyId = 0;
+            highX = highY = lowX = lowY = 0;
+            if (!IsValidPosition(x, y) || IsWater(x, y))
+                return false;
+
+            int[] d4x = { 1, -1, 0, 0 };
+            int[] d4y = { 0, 0, 1, -1 };
+
+            // 1) Lower first: cardinally adjacent to the low cell of a river–river step (wins over upper when both apply — cascade shore closure).
+            for (int i = 0; i < 4; i++)
+            {
+                int nx = x + d4x[i];
+                int ny = y + d4y[i];
+                if (!IsValidPosition(nx, ny) || !IsWater(nx, ny))
+                    continue;
+                if (!IsWaterCellLowerSideOfCardinalSurfaceStep(nx, ny))
+                    continue;
+                for (int j = 0; j < 4; j++)
+                {
+                    int wx = nx + d4x[j];
+                    int wy = ny + d4y[j];
+                    if (!IsValidPosition(wx, wy) || !IsWater(wx, wy))
+                        continue;
+                    if (IsRiverRiverCardinalSurfaceStepHighToLow(wx, wy, nx, ny))
+                    {
+                        role = RiverJunctionBrinkRole.LowerBrink;
+                        affiliatedBodyId = GetWaterBodyId(nx, ny);
+                        highX = wx;
+                        highY = wy;
+                        lowX = nx;
+                        lowY = ny;
+                        return true;
+                    }
+                }
+            }
+
+            // 2) Upper: cardinally adjacent to the high cell of a river–river step.
+            for (int i = 0; i < 4; i++)
+            {
+                int nx = x + d4x[i];
+                int ny = y + d4y[i];
+                if (!IsValidPosition(nx, ny) || !IsWater(nx, ny))
+                    continue;
+                for (int j = 0; j < 4; j++)
+                {
+                    int wx = nx + d4x[j];
+                    int wy = ny + d4y[j];
+                    if (!IsValidPosition(wx, wy) || !IsWater(wx, wy))
+                        continue;
+                    if (wx == x && wy == y)
+                        continue;
+                    if (IsRiverRiverCardinalSurfaceStepHighToLow(nx, ny, wx, wy))
+                    {
+                        role = RiverJunctionBrinkRole.UpperBrink;
+                        affiliatedBodyId = GetWaterBodyId(nx, ny);
+                        highX = nx;
+                        highY = ny;
+                        lowX = wx;
+                        lowY = wy;
+                        return true;
+                    }
+                    if (IsRiverRiverCardinalSurfaceStepHighToLow(wx, wy, nx, ny))
+                    {
+                        role = RiverJunctionBrinkRole.UpperBrink;
+                        affiliatedBodyId = GetWaterBodyId(wx, wy);
+                        highX = wx;
+                        highY = wy;
+                        lowX = nx;
+                        lowY = ny;
+                        return true;
+                    }
+                }
+            }
+
+            // 3) Upper: Moore-adjacent to the high cell while the low cell may be diagonal-only from land (e.g. corner at a cascade).
+            int[] ddx = { 1, 1, -1, -1 };
+            int[] ddy = { -1, 1, -1, 1 };
+            for (int d = 0; d < 4; d++)
+            {
+                int dx = x + ddx[d];
+                int dy = y + ddy[d];
+                if (!IsValidPosition(dx, dy) || !IsWater(dx, dy))
+                    continue;
+                if (!IsWaterCellLowerSideOfCardinalSurfaceStep(dx, dy))
+                    continue;
+                for (int j = 0; j < 4; j++)
+                {
+                    int stepHighX = dx + d4x[j];
+                    int stepHighY = dy + d4y[j];
+                    if (!IsValidPosition(stepHighX, stepHighY) || !IsWater(stepHighX, stepHighY))
+                        continue;
+                    if (!IsRiverRiverCardinalSurfaceStepHighToLow(stepHighX, stepHighY, dx, dy))
+                        continue;
+                    int dist = Mathf.Max(Mathf.Abs(x - stepHighX), Mathf.Abs(y - stepHighY));
+                    if (dist <= 1)
+                    {
+                        role = RiverJunctionBrinkRole.UpperBrink;
+                        affiliatedBodyId = GetWaterBodyId(stepHighX, stepHighY);
+                        highX = stepHighX;
+                        highY = stepHighY;
+                        lowX = dx;
+                        lowY = dy;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Among dry land cells that share the same river–river step and <paramref name="role"/>, connected by cardinal land adjacency
+        /// (same step tuple from <see cref="TryGetDryLandRiverJunctionBrinkWithStep"/>), returns true only for the cell closest to the
+        /// cascade junction (minimum Manhattan sum to high and low step cells; tie-break by distance to high, then by grid order).
+        /// Ensures a single diagonal <c>SlopeWater</c> closure tile per shore strip at a junction (§12.8).
+        /// </summary>
+        public bool IsDryLandRiverJunctionBrinkClosestToCascadeStep(
+            int x, int y, RiverJunctionBrinkRole role, int stepHighX, int stepHighY, int stepLowX, int stepLowY)
+        {
+            if (!TryGetDryLandRiverJunctionBrinkWithStep(x, y, out RiverJunctionBrinkRole r, out _, out int h0, out int h1, out int l0, out int l1))
+                return false;
+            if (r != role || h0 != stepHighX || h1 != stepHighY || l0 != stepLowX || l1 != stepLowY)
+                return false;
+
+            int[] d4x = { 1, -1, 0, 0 };
+            int[] d4y = { 0, 0, 1, -1 };
+
+            var queue = new Queue<(int qx, int qy)>();
+            var visited = new HashSet<(int, int)>();
+            var component = new List<(int cx, int cy)>();
+            queue.Enqueue((x, y));
+            visited.Add((x, y));
+
+            int Manhattan(int px, int py, int tx, int ty) =>
+                Mathf.Abs(px - tx) + Mathf.Abs(py - ty);
+
+            int Score(int px, int py) => Manhattan(px, py, stepHighX, stepHighY) + Manhattan(px, py, stepLowX, stepLowY);
+
+            while (queue.Count > 0 && component.Count < 96)
+            {
+                var (qx, qy) = queue.Dequeue();
+                if (!TryGetDryLandRiverJunctionBrinkWithStep(qx, qy, out RiverJunctionBrinkRole r2, out _, out int hh0, out int hh1, out int ll0, out int ll1))
+                    continue;
+                if (r2 != role || hh0 != stepHighX || hh1 != stepHighY || ll0 != stepLowX || ll1 != stepLowY)
+                    continue;
+
+                component.Add((qx, qy));
+
+                for (int i = 0; i < 4; i++)
+                {
+                    int nx = qx + d4x[i];
+                    int ny = qy + d4y[i];
+                    if (!IsValidPosition(nx, ny) || IsWater(nx, ny))
+                        continue;
+                    if (visited.Contains((nx, ny)))
+                        continue;
+                    visited.Add((nx, ny));
+                    if (!TryGetDryLandRiverJunctionBrinkWithStep(nx, ny, out RiverJunctionBrinkRole r3, out _, out int h3, out int h3y, out int l3, out int l3y))
+                        continue;
+                    if (r3 != role || h3 != stepHighX || h3y != stepHighY || l3 != stepLowX || l3y != stepLowY)
+                        continue;
+                    queue.Enqueue((nx, ny));
+                }
+            }
+
+            if (component.Count == 0)
+                return false;
+
+            int bestScore = int.MaxValue;
+            for (int i = 0; i < component.Count; i++)
+            {
+                int s = Score(component[i].cx, component[i].cy);
+                if (s < bestScore)
+                    bestScore = s;
+            }
+
+            int bestDHigh = int.MaxValue;
+            int winX = int.MaxValue;
+            int winY = int.MaxValue;
+
+            for (int i = 0; i < component.Count; i++)
+            {
+                int cx = component[i].cx;
+                int cy = component[i].cy;
+                if (Score(cx, cy) != bestScore)
+                    continue;
+                int dh = Manhattan(cx, cy, stepHighX, stepHighY);
+                if (dh < bestDHigh)
+                {
+                    bestDHigh = dh;
+                    winX = cx;
+                    winY = cy;
+                }
+                else if (dh == bestDHigh)
+                {
+                    if (cx < winX || (cx == winX && cy < winY))
+                    {
+                        winX = cx;
+                        winY = cy;
+                    }
+                }
+            }
+
+            return x == winX && y == winY;
+        }
+
+        /// <summary>
+        /// True when <paramref name="highX"/>,<paramref name="highY"/> and <paramref name="lowX"/>,<paramref name="lowY"/> are cardinally adjacent,
+        /// both <see cref="WaterBodyType.River"/>, and <c>S_high &gt; S_low</c> without lake-forbidden skip.
+        /// </summary>
+        private bool IsRiverRiverCardinalSurfaceStepHighToLow(int highX, int highY, int lowX, int lowY)
+        {
+            if (!IsWater(highX, highY) || !IsWater(lowX, lowY))
+                return false;
+            int sH = GetSurfaceHeightAt(highX, highY);
+            int sL = GetSurfaceHeightAt(lowX, lowY);
+            if (sH <= sL)
+                return false;
+            if (IsLakeSurfaceStepContactForbidden(highX, highY, lowX, lowY))
+                return false;
+            if (GetBodyClassificationAt(highX, highY) != WaterBodyType.River)
+                return false;
+            if (GetBodyClassificationAt(lowX, lowY) != WaterBodyType.River)
+                return false;
+            return true;
+        }
+
+        /// <summary>
         /// When two registered water cells share a cardinal edge with <c>S_high &gt; S_low</c>, Pass A/B junction processing
         /// and water–water cascades are skipped if <b>either</b> body is a <see cref="WaterBodyType.Lake"/> (§12.7). River–river
         /// steps are unaffected; Sea is not treated as Lake for this rule.
@@ -119,6 +417,43 @@ namespace Territory.Terrain
             WaterBodyType cH = GetBodyClassificationAt(highX, highY);
             WaterBodyType cL = GetBodyClassificationAt(lowX, lowY);
             return cH == WaterBodyType.Lake || cL == WaterBodyType.Lake;
+        }
+
+        /// <summary>
+        /// True when some cardinal river–river surface step between <paramref name="bodyA"/> and <paramref name="bodyB"/>
+        /// lies within Chebyshev distance <paramref name="searchRadius"/> of <paramref name="x"/>,<paramref name="y"/>.
+        /// Used by <see cref="WaterManager.NeighborMatchesShoreOwnerForJunctionTopology"/> for junction cascade shore post-pass (§12.8.1).
+        /// </summary>
+        public bool TryFindRiverRiverSurfaceStepBetweenBodiesNear(int x, int y, int bodyA, int bodyB, int searchRadius)
+        {
+            if (bodyA == 0 || bodyB == 0 || bodyA == bodyB || !IsValidPosition(x, y))
+                return false;
+            for (int dx = -searchRadius; dx <= searchRadius; dx++)
+            {
+                for (int dy = -searchRadius; dy <= searchRadius; dy++)
+                {
+                    int hx = x + dx;
+                    int hy = y + dy;
+                    if (!IsValidPosition(hx, hy) || !IsWater(hx, hy))
+                        continue;
+                    int[] d4x = { 1, -1, 0, 0 };
+                    int[] d4y = { 0, 0, 1, -1 };
+                    for (int i = 0; i < 4; i++)
+                    {
+                        int lx = hx + d4x[i];
+                        int ly = hy + d4y[i];
+                        if (!IsValidPosition(lx, ly) || !IsWater(lx, ly))
+                            continue;
+                        if (!IsRiverRiverCardinalSurfaceStepHighToLow(hx, hy, lx, ly))
+                            continue;
+                        int bH = GetWaterBodyId(hx, hy);
+                        int bL = GetWaterBodyId(lx, ly);
+                        if ((bH == bodyA && bL == bodyB) || (bH == bodyB && bL == bodyA))
+                            return true;
+                    }
+                }
+            }
+            return false;
         }
 
         /// <summary>
@@ -311,11 +646,35 @@ namespace Territory.Terrain
         }
 
         /// <summary>
+        /// True when a cardinal neighbor is registered water at the same logical surface <paramref name="surface"/>.
+        /// Skips Pass A bed alignment and Pass B contact-bed reassignment for cells that still connect to the upper pool
+        /// along a cardinal edge (§12.7 — straight waterfall brink, not a widened junction strip only).
+        /// </summary>
+        private bool HasCardinalWaterNeighborAtSameSurface(int x, int y, int surface)
+        {
+            if (surface < 0)
+                return false;
+            int[] d4x = { 1, -1, 0, 0 };
+            int[] d4y = { 0, 0, 1, -1 };
+            for (int i = 0; i < 4; i++)
+            {
+                int nx = x + d4x[i];
+                int ny = y + d4y[i];
+                if (!IsValidPosition(nx, ny) || !IsWater(nx, ny))
+                    continue;
+                if (GetSurfaceHeightAt(nx, ny) == surface)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
         /// BUG-45 / multi-body contact: For each water cell on the <b>higher</b> logical surface that cardinally touches
         /// water at a <b>strictly lower</b> surface, sets <see cref="HeightMap"/> bed height to the <b>minimum</b> bed
         /// among those lower-surface neighbors only. Does <b>not</b> change <c>waterBodyIds</c>, merge bodies, or fill dry cells.
         /// Skips edges where <see cref="IsLakeSurfaceStepContactForbidden"/> applies (§12.7). Idempotent; safe to run from
         /// <see cref="WaterManager.UpdateWaterVisuals"/> before <c>PlaceWater</c>.
+        /// Skips cells with a cardinal neighbor on the same logical surface (upper-pool continuity at cascades).
         /// </summary>
         /// <returns><c>true</c> if any cell height was written.</returns>
         private bool AlignUpperSurfaceContactBorderBedHeightsOnce(HeightMap hm)
@@ -332,6 +691,8 @@ namespace Territory.Terrain
                         continue;
                     int sHere = GetSurfaceHeightAt(x, y);
                     if (sHere < 0)
+                        continue;
+                    if (HasCardinalWaterNeighborAtSameSurface(x, y, sHere))
                         continue;
                     int targetBed = int.MaxValue;
                     for (int i = 0; i < 4; i++)
@@ -552,6 +913,7 @@ namespace Territory.Terrain
         /// lower-surface neighbor (not lake-forbidden) whose bed is not above this cell’s bed. If this cell’s bed is
         /// still higher than the neighbor’s, align it to the neighbor’s bed first, then reassign <c>waterBodyId</c> to
         /// the lower body. When multiple lower neighbors qualify, prefers the lowest <c>S_low</c> then the lowest body id.
+        /// Skips cells that still have a cardinal neighbor on the same logical surface (upper-segment continuity at cascades).
         /// </summary>
         private bool TryReassignUpperWaterCellsMatchingLowerContactBed(HeightMap hm, GridManager grid, System.Action<int, int> expandDirty)
         {
@@ -567,6 +929,8 @@ namespace Territory.Terrain
                         continue;
                     int sHigh = GetSurfaceHeightAt(hx, hy);
                     if (sHigh < 0)
+                        continue;
+                    if (HasCardinalWaterNeighborAtSameSurface(hx, hy, sHigh))
                         continue;
 
                     int bestSl = int.MaxValue;

@@ -85,16 +85,16 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Among 8-neighbors with registered water: highest logical surface <c>S</c>, then lowest body id on tie.
-        /// For open water cells, returns that cell&apos;s body id.
+        /// Among Moore neighbors with registered water, picks the body with the <b>lowest</b> logical surface <c>S</c>
+        /// (beach of that pool when multiple surfaces meet). Tie: lowest body id. Open water returns this cell&apos;s id.
         /// </summary>
-        public int ResolveWinningWaterBodyIdForLandCell(int x, int y)
+        public int ComputeShoreAffiliationFromLowestLogicalSurfaceAmongMooreWater(int x, int y)
         {
             if (waterMap == null || !waterMap.IsValidPosition(x, y))
                 return 0;
             if (waterMap.IsWater(x, y))
                 return waterMap.GetWaterBodyId(x, y);
-            int maxS = int.MinValue;
+            int minS = int.MaxValue;
             for (int dx = -1; dx <= 1; dx++)
             {
                 for (int dy = -1; dy <= 1; dy++)
@@ -106,11 +106,11 @@ namespace Territory.Terrain
                     if (!waterMap.IsValidPosition(nx, ny) || !waterMap.IsWater(nx, ny))
                         continue;
                     int s = waterMap.GetSurfaceHeightAt(nx, ny);
-                    if (s > maxS)
-                        maxS = s;
+                    if (s >= 0 && s < minS)
+                        minS = s;
                 }
             }
-            if (maxS == int.MinValue)
+            if (minS == int.MaxValue)
                 return 0;
             int bestId = int.MaxValue;
             for (int dx = -1; dx <= 1; dx++)
@@ -123,7 +123,7 @@ namespace Territory.Terrain
                     int ny = y + dy;
                     if (!waterMap.IsValidPosition(nx, ny) || !waterMap.IsWater(nx, ny))
                         continue;
-                    if (waterMap.GetSurfaceHeightAt(nx, ny) != maxS)
+                    if (waterMap.GetSurfaceHeightAt(nx, ny) != minS)
                         continue;
                     int bid = waterMap.GetWaterBodyId(nx, ny);
                     if (bid < bestId)
@@ -131,6 +131,101 @@ namespace Territory.Terrain
                 }
             }
             return bestId == int.MaxValue ? 0 : bestId;
+        }
+
+        /// <summary>
+        /// Resolves dry-land <see cref="Cell.waterBodyId"/> using river–river junction brinks (§12.8) when applicable,
+        /// else <see cref="ComputeShoreAffiliationFromLowestLogicalSurfaceAmongMooreWater"/>.
+        /// </summary>
+        public int ComputeShoreAffiliationForDryLandCell(int x, int y)
+        {
+            if (waterMap == null || !waterMap.IsValidPosition(x, y))
+                return 0;
+            if (waterMap.IsWater(x, y))
+                return waterMap.GetWaterBodyId(x, y);
+
+            if (waterMap.TryGetDryLandRiverJunctionBrink(x, y, out RiverJunctionBrinkRole role, out int affId))
+            {
+                if (role == RiverJunctionBrinkRole.UpperBrink && affId != 0)
+                    return affId;
+                if (role == RiverJunctionBrinkRole.LowerBrink && affId != 0)
+                    return affId;
+            }
+            return ComputeShoreAffiliationFromLowestLogicalSurfaceAmongMooreWater(x, y);
+        }
+
+        /// <summary>
+        /// True when dry <paramref name="x"/>,<paramref name="y"/> is classified as an upper-pool brink at a river–river cascade (§12.8).
+        /// </summary>
+        public bool IsDryLandUpperRiverJunctionBrink(int x, int y)
+        {
+            if (waterMap == null || !waterMap.IsValidPosition(x, y))
+                return false;
+            return waterMap.TryGetDryLandRiverJunctionBrink(x, y, out RiverJunctionBrinkRole role, out _)
+                && role == RiverJunctionBrinkRole.UpperBrink;
+        }
+
+        /// <summary>
+        /// True when dry land is a <see cref="RiverJunctionBrinkRole.LowerBrink"/> at a river–river cascade (§12.8).
+        /// </summary>
+        public bool IsDryLandLowerRiverJunctionBrink(int x, int y)
+        {
+            if (waterMap == null || !waterMap.IsValidPosition(x, y))
+                return false;
+            return waterMap.TryGetDryLandRiverJunctionBrink(x, y, out RiverJunctionBrinkRole role, out _)
+                && role == RiverJunctionBrinkRole.LowerBrink;
+        }
+
+        /// <summary>
+        /// True when <see cref="WaterMap.TryGetDryLandRiverJunctionBrink"/> returns upper or lower brink <b>and</b> this cell is the sole
+        /// closest-to-junction shore in its cardinal land component for that river–river step (<see cref="WaterMap.IsDryLandRiverJunctionBrinkClosestToCascadeStep"/>).
+        /// Diagonal <c>*SlopeWaterPrefab</c> over Bay applies only on that one tile per shore strip (§12.8).
+        /// </summary>
+        public bool ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink(int x, int y)
+        {
+            const int shoreDbgX = 66;
+            const int shoreDbgY = 62;
+            bool shoreDbg = x == shoreDbgX && y == shoreDbgY;
+
+            if (waterMap == null || !waterMap.IsValidPosition(x, y))
+            {
+                if (shoreDbg)
+                    UnityEngine.Debug.Log($"[ShoreDiag {shoreDbgX},{shoreDbgY}] ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink -> false (map/position)");
+                return false;
+            }
+            if (!waterMap.TryGetDryLandRiverJunctionBrinkWithStep(x, y, out RiverJunctionBrinkRole role, out int aff, out int hx, out int hy, out int lx, out int ly))
+            {
+                if (shoreDbg)
+                    UnityEngine.Debug.Log($"[ShoreDiag {shoreDbgX},{shoreDbgY}] ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink -> false (no WithStep)");
+                return false;
+            }
+            if (role != RiverJunctionBrinkRole.UpperBrink && role != RiverJunctionBrinkRole.LowerBrink)
+            {
+                if (shoreDbg)
+                    UnityEngine.Debug.Log($"[ShoreDiag {shoreDbgX},{shoreDbgY}] ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink -> false (role={role})");
+                return false;
+            }
+            bool closest = waterMap.IsDryLandRiverJunctionBrinkClosestToCascadeStep(x, y, role, hx, hy, lx, ly);
+            bool result = closest;
+            if (shoreDbg)
+                UnityEngine.Debug.Log($"[ShoreDiag {shoreDbgX},{shoreDbgY}] ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink role={role} aff={aff} stepHigh=({hx},{hy}) stepLow=({lx},{ly}) isClosestToCascadeStep={closest} => forceDiagonal={result}");
+            return result;
+        }
+
+        /// <summary>
+        /// Shore affiliation: returns <see cref="Cell.waterBodyId"/> when set on dry land; otherwise
+        /// <see cref="ComputeShoreAffiliationForDryLandCell"/>. Open water returns map body id.
+        /// </summary>
+        public int GetShoreAffiliatedWaterBodyIdForLandCell(int x, int y)
+        {
+            if (waterMap == null || !waterMap.IsValidPosition(x, y))
+                return 0;
+            if (waterMap.IsWater(x, y))
+                return waterMap.GetWaterBodyId(x, y);
+            int id = GetCellWaterBodyId(x, y);
+            if (id != 0)
+                return id;
+            return ComputeShoreAffiliationForDryLandCell(x, y);
         }
 
         /// <summary>
@@ -181,7 +276,7 @@ namespace Territory.Terrain
                 SyncOpenWaterCellBodyIdAt(x, y);
                 return;
             }
-            int win = ResolveWinningWaterBodyIdForLandCell(x, y);
+            int win = ComputeShoreAffiliationForDryLandCell(x, y);
             int h = terrainManager != null && terrainManager.GetHeightMap() != null
                 ? terrainManager.GetHeightMap().GetHeight(x, y)
                 : cell.GetCellInstanceHeight();
@@ -231,10 +326,12 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Neighbor counts for <see cref="TerrainManager.DetermineWaterShorePrefabs"/> when filtering by winning owner.
+        /// Topological &quot;water&quot; for <see cref="TerrainManager.DetermineWaterShorePrefabs"/> Moore masks when the shore cell has an affiliated body.
         /// Registered water must match <paramref name="ownerBodyId"/>; sea-level terrain without a map entry matches a sea body at <see cref="seaLevel"/>.
+        /// Dry junction-brink land is <b>not</b> treated as water here — diagonal <c>*SlopeWaterPrefab</c> at river–river cascades is driven by
+        /// <see cref="ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink"/> on the shore cell (isometric spec §12.8.1).
         /// </summary>
-        public bool NeighborMatchesShoreOwnerForPattern(int nx, int ny, int ownerBodyId)
+        public bool IsOpenWaterForShoreTopology(int nx, int ny, int ownerBodyId)
         {
             if (waterMap == null || ownerBodyId == 0 || !waterMap.IsValidPosition(nx, ny))
                 return false;
@@ -256,7 +353,29 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// After load: sync open water ids; recompute dry shore membership for legacy saves.
+        /// Extended neighbor &quot;wet&quot; mask for junction cascade shore post-pass only: same as <see cref="IsOpenWaterForShoreTopology"/>,
+        /// plus dry <see cref="WaterMap.TryGetDryLandRiverJunctionBrink"/> cells whose affiliation or river–river step matches the shore owner (§12.8.1).
+        /// </summary>
+        public bool NeighborMatchesShoreOwnerForJunctionTopology(int nx, int ny, int ownerBodyId)
+        {
+            if (IsOpenWaterForShoreTopology(nx, ny, ownerBodyId))
+                return true;
+            if (waterMap == null || ownerBodyId == 0 || !waterMap.IsValidPosition(nx, ny))
+                return false;
+            if (waterMap.IsWater(nx, ny))
+                return false;
+            if (waterMap.TryGetDryLandRiverJunctionBrink(nx, ny, out _, out int aff))
+            {
+                if (aff == ownerBodyId)
+                    return true;
+                if (waterMap.TryFindRiverRiverSurfaceStepBetweenBodiesNear(nx, ny, ownerBodyId, aff, 2))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// After grid restore: sync open water body ids; recompute dry shore membership for all land cells.
         /// </summary>
         public void MigrateWaterBodyIdsAfterGridRestore()
         {

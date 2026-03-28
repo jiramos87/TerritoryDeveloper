@@ -148,10 +148,7 @@ public partial class WaterManager : MonoBehaviour
         if (waterMap == null || terrainManager == null || gridManager == null || terrainManager.GetHeightMap() == null)
             return;
 
-        MapGenerationSeed.EnsureSessionMasterSeed();
-        int seed = MapGenerationSeed.GetLakeFillRandomSeed();
-        var rnd = new System.Random(seed ^ unchecked((int)0xFEEDBEEF));
-        TestRiverGenerator.Generate(this, terrainManager, gridManager, rnd, segmentBedWidths);
+        TestRiverGenerator.Generate(this, terrainManager, gridManager, segmentBedWidths);
         waterMap.MergeAdjacentBodiesWithSameSurface();
         UpdateWaterVisuals(expandShoreRefreshSecondRing: true, skipMultiBodySurfacePasses: true);
         gridManager.InvalidateRoadCache();
@@ -172,16 +169,6 @@ public partial class WaterManager : MonoBehaviour
         waterMap.MergeAdjacentBodiesWithSameSurface();
         UpdateWaterVisuals(expandShoreRefreshSecondRing: true);
         gridManager.InvalidateRoadCache();
-    }
-
-    /// <summary>
-    /// One console line per final water body (lake/sea/river) and per distinct-surface intersection segment; run after procedural rivers.
-    /// </summary>
-    public void LogGeneratedWaterGeographyDiagnostics()
-    {
-        if (waterMap == null)
-            return;
-        WaterGeographyDiagnosticsLog.WriteProceduralWaterSummary(waterMap);
     }
 
     /// <summary>
@@ -361,6 +348,12 @@ public partial class WaterManager : MonoBehaviour
 
         // Logical surface height in WaterMap is spill (fill level). World placement uses one step lower (Option A / FEAT-37).
         int visualSurfaceHeight = Mathf.Max(TerrainManager.MIN_HEIGHT, surfaceHeight - 1);
+
+        if (x == 66 && y == 62)
+        {
+            int bid = waterMap.GetWaterBodyId(x, y);
+            Debug.Log($"[ShoreDiag 66,62] WaterManager.PlaceWater terrainH={terrainHeight} surfaceH={surfaceHeight} visualSurfaceH={visualSurfaceHeight} bodyId={bid} classification={waterMap.GetBodyClassificationAt(x, y)}");
+        }
 
         // Update the grid cell to display water
         GameObject cell = gridManager.gridArray[x, y];

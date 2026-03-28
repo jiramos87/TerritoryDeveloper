@@ -11352,7 +11352,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2554f07997e242c2adef24969c46277, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugLakeShoreRefreshSecondRing: 0
+  debugShoreRefreshSecondRing: 1
+  debugWaterShoreCornerPrefabs: 1
   terrainDebugLogCellsEnabled: 1
   gridManager: {fileID: 1880690383}
   zoneManager: {fileID: 955926521}
@@ -12496,7 +12497,7 @@ MonoBehaviour:
   initializeOnStart: 1
   useTerrainForWater: 1
   initializeForestsOnStart: 1
-  generateStandardWaterBodies: 1
+  generateStandardWaterBodies: 0
   generateProceduralRiversOnInit: 0
   generateTestRiverOnInit: 1
   testRiverSegmentBedWidths: 03000000040000000500000006000000

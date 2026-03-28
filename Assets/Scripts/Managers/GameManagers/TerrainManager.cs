@@ -40,39 +40,14 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// </summary>
     public static bool LogTerraformRestoreDiagnostics = false;
 
-    /// <summary>Throttles one-time warnings when a single cliff-water prefab is missing on <see cref="TerrainManager"/>.</summary>
-    private static bool _warnedCliffWaterSouthPrefabMissing;
-    private static bool _warnedCliffWaterEastPrefabMissing;
-
-    private int _waterCascadeLogTryPlaceDetailRemaining;
-    private int _waterCascadeLogSkipGeomRemaining;
-    private int _waterCascadeLogPlaceCoreEarlyRemaining;
-    private int _waterCascadeLogPlacedDetailRemaining;
-    private int _waterCascadeLogZeroPlacedRemaining;
-    private int _waterCascadeLogInvisibleFaceRemaining;
-    private int _waterCascadeRefreshTryPlaceCount;
-    private int _waterCascadeRefreshSegmentsPlaced;
-
     /// <summary>
-    /// When true, <see cref="RefreshShoreTerrainAfterWaterUpdate"/> also refreshes the second Chebyshev ring of land (legacy halo).
-    /// BUG-42 default is minimal scope; enable only if a regression needs the wider refresh.
+    /// Single-cell shore prefab diagnostics (temporary). Change coordinates to trace another cell.
+    /// Also update <see cref="WaterManager.PlaceWater"/> and <c>ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink</c> (WaterManager.Membership) when changing.
     /// </summary>
-    [FormerlySerializedAs("debugLakeShoreRefreshSecondRing")]
-    [SerializeField] private bool debugShoreRefreshSecondRing = false;
+    private const int ShoreDiagX = 66;
+    private const int ShoreDiagY = 62;
 
-    /// <summary>
-    /// When true, logs <c>[TerrainDebug]</c> for cliff drop counts on the default probe cells (see §15.4 in the isometric spec).
-    /// </summary>
-    [SerializeField] private bool terrainDebugLogCellsEnabled;
-
-    private static readonly Vector2Int[] TerrainDebugCliffProbeCells =
-    {
-        new Vector2Int(28, 24), new Vector2Int(28, 25), new Vector2Int(34, 24), new Vector2Int(34, 25)
-    };
-
-    /// <summary>Fixed cell for verbose <c>[LakeShoreDebug]</c> logs inside <see cref="RefreshShoreTerrainAfterWaterUpdate"/> only.</summary>
-    private const int LakeShoreDebugLogCellX = 81;
-    private const int LakeShoreDebugLogCellY = 83;
+    private static bool IsShoreDiagCell(int x, int y) => x == ShoreDiagX && y == ShoreDiagY;
 
     #region Dependencies
     public GridManager gridManager;
@@ -744,9 +719,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// After lake/river water visuals exist, refreshes land cells adjacent to water so shore/bay slopes and
     /// <see cref="PlaceCliffWalls"/> stay consistent (BUG-42). Default: each shore cell plus one cardinal land
     /// neighbor outward from water (minimal audit). Adds a Moore ring of dry cells around the <b>high</b> water cell on
-    /// <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> edges (§12.7 lake rim). Optional <see cref="debugShoreRefreshSecondRing"/> restores
-    /// the legacy Chebyshev-2 halo. Pass <paramref name="expandSecondChebyshevRing"/> true after procedural river
-    /// generation so confluence mouths get a wider refresh without enabling the debug flag globally.
+    /// <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> edges (§12.7 lake rim). Pass <paramref name="expandSecondChebyshevRing"/> true after procedural river
+    /// generation so confluence mouths get a wider Chebyshev-2 halo refresh.
     /// Call after <see cref="WaterManager.UpdateWaterVisuals"/>.
     /// </summary>
     public void RefreshShoreTerrainAfterWaterUpdate(WaterManager wm, bool expandSecondChebyshevRing = false)
@@ -785,7 +759,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         AddDryMooreRingAroundLakeRimForbiddenSurfaceSteps(wmMap, shore);
 
         var toRefresh = new HashSet<Vector2Int>(shore);
-        bool useSecondRing = expandSecondChebyshevRing || debugShoreRefreshSecondRing;
+        bool useSecondRing = expandSecondChebyshevRing;
         if (useSecondRing)
         {
             foreach (Vector2Int p in shore)
@@ -840,10 +814,57 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return a.x.CompareTo(b.x);
         });
 
-        LogLakeShoreRefreshDiagnosticsForCell81_83(wm, wmMap, shore, toRefresh, ordered);
-
         foreach (Vector2Int p in ordered)
             UpdateTileElevation(p.x, p.y);
+
+        ApplyJunctionCascadeShorePostPass(wm);
+    }
+
+    /// <summary>
+    /// After the main shore refresh, re-applies shore prefabs for dry land on upper/lower river–river junction brinks using an extended
+    /// neighbor mask and forced diagonal <c>*SlopeWaterPrefab</c> so cascade edges do not stay on cardinal-only tiles (§12.8.1).
+    /// </summary>
+    private void ApplyJunctionCascadeShorePostPass(WaterManager wm)
+    {
+        if (heightMap == null || gridManager == null || wm == null)
+            return;
+        WaterMap wmMap = wm.GetWaterMap();
+        if (wmMap == null)
+            return;
+        if (waterManager == null)
+            waterManager = wm;
+
+        var cells = new List<Vector2Int>();
+        for (int x = 0; x < gridManager.width; x++)
+        {
+            for (int y = 0; y < gridManager.height; y++)
+            {
+                if (wmMap.IsWater(x, y))
+                    continue;
+                if (!wmMap.TryGetDryLandRiverJunctionBrinkWithStep(x, y, out RiverJunctionBrinkRole role, out _, out _, out _, out _, out _))
+                    continue;
+                if (role != RiverJunctionBrinkRole.UpperBrink && role != RiverJunctionBrinkRole.LowerBrink)
+                    continue;
+                cells.Add(new Vector2Int(x, y));
+            }
+        }
+
+        cells.Sort((a, b) =>
+        {
+            int sa = a.x + a.y;
+            int sb = b.x + b.y;
+            if (sa != sb)
+                return sa.CompareTo(sb);
+            return a.x.CompareTo(b.x);
+        });
+
+        foreach (Vector2Int p in cells)
+        {
+            List<GameObject> prefabs = DetermineWaterShorePrefabs(p.x, p.y, useJunctionTopologyForShorePattern: true, forceJunctionDiagonalSlopeForCascade: true);
+            if (prefabs == null || prefabs.Count == 0)
+                continue;
+            PlaceWaterShore(p.x, p.y, prefabs);
+        }
     }
 
     /// <summary>
@@ -903,9 +924,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Lowers dry cells in the Moore shore ring when they sit above the <b>logical surface</b> of any adjacent water
-    /// cell, so plateau heights do not dominate <see cref="PlaceWaterShore"/> (isometric spec §2.4.1). Only decreases
-    /// <see cref="HeightMap"/>; never raises terrain.
+    /// Lowers dry cells in the Moore shore ring when they sit above the <b>logical surface</b> of their affiliated
+    /// adjacent water body, so plateau heights do not dominate <see cref="PlaceWaterShore"/> (§2.4.1). At multi-surface
+    /// junctions (e.g. waterfall), uses <see cref="Cell.waterBodyId"/> or <see cref="WaterManager.GetShoreAffiliatedWaterBodyIdForLandCell"/>
+    /// so shore-line terrain stays aligned with that body&apos;s <c>S</c>, not the minimum <c>S</c> across all neighboring pools.
+    /// Only decreases <see cref="HeightMap"/>; never raises terrain.
     /// </summary>
     private void ClampShoreLandHeightsToAdjacentWaterSurface(WaterManager wm, WaterMap wmMap, HashSet<Vector2Int> shoreCells)
     {
@@ -921,7 +944,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             if (wmMap.IsWater(x, y))
                 continue;
 
-            int minSurface = int.MaxValue;
+            int minSurfaceAll = int.MaxValue;
             for (int dx = -1; dx <= 1; dx++)
             {
                 for (int dy = -1; dy <= 1; dy++)
@@ -934,148 +957,49 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                         continue;
                     int s = wm.GetWaterSurfaceHeight(nx, ny);
                     if (s >= 0)
-                        minSurface = Mathf.Min(minSurface, s);
+                        minSurfaceAll = Mathf.Min(minSurfaceAll, s);
                 }
             }
 
-            if (minSurface == int.MaxValue)
+            if (minSurfaceAll == int.MaxValue)
                 continue;
+
+            int minSurface = minSurfaceAll;
+            if (gridManager != null)
+            {
+                Cell cell = gridManager.GetCell(x, y);
+                int affId = cell != null ? cell.waterBodyId : 0;
+                if (affId == 0)
+                    affId = wm.GetShoreAffiliatedWaterBodyIdForLandCell(x, y);
+
+                if (affId != 0)
+                {
+                    int minAff = int.MaxValue;
+                    for (int dx = -1; dx <= 1; dx++)
+                    {
+                        for (int dy = -1; dy <= 1; dy++)
+                        {
+                            if (dx == 0 && dy == 0)
+                                continue;
+                            int nx = x + dx;
+                            int ny = y + dy;
+                            if (!heightMap.IsValidPosition(nx, ny) || !wmMap.IsWater(nx, ny))
+                                continue;
+                            if (wmMap.GetWaterBodyId(nx, ny) != affId)
+                                continue;
+                            int s = wm.GetWaterSurfaceHeight(nx, ny);
+                            if (s >= 0)
+                                minAff = Mathf.Min(minAff, s);
+                        }
+                    }
+                    if (minAff != int.MaxValue)
+                        minSurface = minAff;
+                }
+            }
 
             int h = heightMap.GetHeight(x, y);
             if (h > minSurface)
                 heightMap.SetHeight(x, y, Mathf.Clamp(minSurface, MIN_HEIGHT, MAX_HEIGHT));
-        }
-    }
-
-    /// <summary>
-    /// Verbose console diagnostics for <see cref="LakeShoreDebugLogCellX"/>,<see cref="LakeShoreDebugLogCellY"/> only — does not affect gameplay.
-    /// </summary>
-    private void LogLakeShoreRefreshDiagnosticsForCell81_83(
-        WaterManager wm,
-        WaterMap wmMap,
-        HashSet<Vector2Int> shore,
-        HashSet<Vector2Int> toRefresh,
-        List<Vector2Int> orderedSweep)
-    {
-        if (heightMap == null || gridManager == null || wm == null || wmMap == null)
-            return;
-        if (!heightMap.IsValidPosition(LakeShoreDebugLogCellX, LakeShoreDebugLogCellY))
-            return;
-
-        var sb = new StringBuilder();
-        sb.AppendLine("[LakeShoreDebug] RefreshShoreTerrainAfterWaterUpdate — diagnostics for fixed cell (81,83)");
-        AppendLakeShoreDebugCell81_83SweepContext(sb, shore, toRefresh, orderedSweep);
-        AppendLakeShoreDebugCell81_83HeightsAndWater(sb, wm, wmMap);
-        AppendLakeShoreDebugCell81_83OutwardNeighborAudit(sb, wmMap, shore);
-        Debug.Log(sb.ToString());
-    }
-
-    private void AppendLakeShoreDebugCell81_83SweepContext(
-        StringBuilder sb,
-        HashSet<Vector2Int> shore,
-        HashSet<Vector2Int> toRefresh,
-        List<Vector2Int> orderedSweep)
-    {
-        var p = new Vector2Int(LakeShoreDebugLogCellX, LakeShoreDebugLogCellY);
-        sb.AppendLine($"  debugShoreRefreshSecondRing={debugShoreRefreshSecondRing}");
-        sb.AppendLine($"  in Moore shore set (land next to water): {shore.Contains(p)}");
-        sb.AppendLine($"  in toRefresh set: {toRefresh.Contains(p)}");
-        int idx = -1;
-        for (int i = 0; i < orderedSweep.Count; i++)
-        {
-            if (orderedSweep[i].x == LakeShoreDebugLogCellX && orderedSweep[i].y == LakeShoreDebugLogCellY)
-            {
-                idx = i;
-                break;
-            }
-        }
-
-        sb.AppendLine($"  diagonal sweep order index for (81,83): {idx} (total cells in sweep: {orderedSweep.Count})");
-    }
-
-    private void AppendLakeShoreDebugCell81_83HeightsAndWater(StringBuilder sb, WaterManager wm, WaterMap wmMap)
-    {
-        int x = LakeShoreDebugLogCellX;
-        int y = LakeShoreDebugLogCellY;
-        int h = heightMap.GetHeight(x, y);
-        Cell cell = gridManager.GetCell(x, y);
-        sb.AppendLine($"  HeightMap({x},{y})={h} Cell.height={(cell != null ? cell.height.ToString() : "null")} (before UpdateTileElevation in sweep)");
-        sb.AppendLine("  Cardinal neighbors (cliff/orientation convention: N@(x+1,y) S@(x-1,y) E@(x,y-1) W@(x,y+1)):");
-        void AppendCard(string label, int nx, int ny)
-        {
-            if (!heightMap.IsValidPosition(nx, ny))
-            {
-                sb.AppendLine($"    {label}: OOB");
-                return;
-            }
-
-            int nh = heightMap.GetHeight(nx, ny);
-            bool water = wmMap.IsWater(nx, ny);
-            int surf = water ? wm.GetWaterSurfaceHeight(nx, ny) : -1;
-            sb.AppendLine($"    {label} ({nx},{ny}) h={nh} water={water}" + (water ? $" surface={surf}" : ""));
-        }
-
-        AppendCard("N", x + 1, y);
-        AppendCard("S", x - 1, y);
-        AppendCard("E", x, y - 1);
-        AppendCard("W", x, y + 1);
-        sb.AppendLine("  Moore 8 (dx,dy) water + height:");
-        for (int dx = -1; dx <= 1; dx++)
-        {
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                if (dx == 0 && dy == 0)
-                    continue;
-                int nx = x + dx;
-                int ny = y + dy;
-                if (!heightMap.IsValidPosition(nx, ny))
-                {
-                    sb.AppendLine($"    ({dx},{dy}): OOB");
-                    continue;
-                }
-
-                bool water = wmMap.IsWater(nx, ny);
-                int nh = heightMap.GetHeight(nx, ny);
-                sb.AppendLine($"    ({dx},{dy}) → ({nx},{ny}) h={nh} water={water}");
-            }
-        }
-    }
-
-    /// <summary>
-    /// Logs how minimal outward-neighbor audit would treat (81,83) as shore cell <c>p</c> (cardinal toward water → outward land).
-    /// </summary>
-    private void AppendLakeShoreDebugCell81_83OutwardNeighborAudit(StringBuilder sb, WaterMap wmMap, HashSet<Vector2Int> shore)
-    {
-        int x = LakeShoreDebugLogCellX;
-        int y = LakeShoreDebugLogCellY;
-        var self = new Vector2Int(x, y);
-        sb.AppendLine($"  Moore shore membership for (81,83): {shore.Contains(self)}");
-        int[] d4x = { 1, -1, 0, 0 };
-        int[] d4y = { 0, 0, 1, -1 };
-        string[] dname = { "d4[0]=+x", "d4[1]=-x", "d4[2]=+y", "d4[3]=-y" };
-        sb.AppendLine("  Minimal-audit cardinal check (same logic as second-ring-off branch): from p, if neighbor is water, outward = p - dir:");
-        for (int i = 0; i < 4; i++)
-        {
-            int wx = x + d4x[i];
-            int wy = y + d4y[i];
-            if (!heightMap.IsValidPosition(wx, wy))
-            {
-                sb.AppendLine($"    {dname[i]} toward ({wx},{wy}): OOB");
-                continue;
-            }
-
-            bool wWater = wmMap.IsWater(wx, wy);
-            int ox = x - d4x[i];
-            int oy = y - d4y[i];
-            if (!heightMap.IsValidPosition(ox, oy))
-            {
-                sb.AppendLine($"    {dname[i]} water@({wx},{wy})={wWater} → outward OOB");
-                continue;
-            }
-
-            bool oWater = wmMap.IsWater(ox, oy);
-            int oh = heightMap.GetHeight(ox, oy);
-            sb.AppendLine($"    {dname[i]} water@({wx},{wy})={wWater} → outward land ({ox},{oy}) h={oh} water={oWater}");
         }
     }
 
@@ -1105,6 +1029,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             // River/lake/sea cells: terrain refresh must not place grass or slopes on top of water (avoids holes / double stacks).
             if (waterManager != null && waterManager.IsWaterAt(x, y))
             {
+                if (IsShoreDiagCell(x, y))
+                    Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] UpdateTileElevation -> PlaceWater (open water) newHeight={newHeight}");
                 waterManager.PlaceWater(x, y);
                 return;
             }
@@ -1115,13 +1041,26 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 && IsLandEligibleForWaterShorePrefabs(x, y, newHeight);
             if (canUseWaterShorePrefabsHere)
             {
+                if (IsShoreDiagCell(x, y))
+                    Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] UpdateTileElevation shore path newHeight={newHeight} cell.waterBodyId={cell.waterBodyId} canUseWaterShorePrefabsHere=true");
                 List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(x, y);
+                if (IsShoreDiagCell(x, y))
+                {
+                    string res = waterShorePrefabs == null || waterShorePrefabs.Count == 0
+                        ? "null/empty"
+                        : waterShorePrefabs[0].name + (waterShorePrefabs.Count > 1 && waterShorePrefabs[1] != null ? $"+{waterShorePrefabs[1].name}" : "");
+                    Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] UpdateTileElevation DetermineWaterShorePrefabs result -> {res}");
+                }
                 if (waterShorePrefabs != null && waterShorePrefabs.Count > 0)
                 {
+                    if (IsShoreDiagCell(x, y))
+                        Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] UpdateTileElevation -> PlaceWaterShore (count={waterShorePrefabs.Count})");
                     PlaceWaterShore(x, y, waterShorePrefabs);
                     PlaceCliffWalls(x, y);
                     return;
                 }
+                if (IsShoreDiagCell(x, y))
+                    Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] UpdateTileElevation -> PlaceFlatTerrain (shore prefabs empty)");
                 PlaceFlatTerrain(x, y);  // fallback if pattern not recognized
                 PlaceCliffWalls(x, y);
                 return;
@@ -1248,13 +1187,19 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 && IsLandEligibleForWaterShorePrefabs(x, y, newHeight);
             if (landShoreRestore)
             {
+                if (IsShoreDiagCell(x, y))
+                    Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] RestoreTerrainForCell landShoreRestore newHeight={newHeight}");
                 List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(x, y);
                 if (waterShorePrefabs != null && waterShorePrefabs.Count > 0)
                 {
+                    if (IsShoreDiagCell(x, y))
+                        Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] RestoreTerrainForCell -> PlaceWaterShore");
                     PlaceWaterShore(x, y, waterShorePrefabs);
                     PlaceCliffWalls(x, y, terraformCutCorridorCells);
                     return true;
                 }
+                if (IsShoreDiagCell(x, y))
+                    Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] RestoreTerrainForCell shore restore skipped (empty prefabs) -> slope/flat path");
             }
 
             if (requiresSlope)
@@ -1821,7 +1766,19 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         cell.gameObject.transform.position = cellWorldPos;
         updatedCell.transformPosition = cellWorldPos;
 
-        int waterVisualH = GetNeighborWaterVisualHeightForShore(x, y);
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        int affBody = waterManager != null ? waterManager.GetShoreAffiliatedWaterBodyIdForLandCell(x, y) : 0;
+        int waterVisualH = GetNeighborWaterVisualHeightForShore(x, y, affBody);
+
+        if (IsShoreDiagCell(x, y))
+        {
+            var sb = new StringBuilder();
+            sb.Append($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] PlaceWaterShore enter landH={landH} waterVisualH={waterVisualH} affBody={affBody} prefabs=");
+            for (int pi = 0; pi < waterShorePrefabs.Count; pi++)
+                sb.Append(pi == 0 ? "" : "|").Append(waterShorePrefabs[pi] != null ? waterShorePrefabs[pi].name : "null");
+            Debug.Log(sb.ToString());
+        }
 
         GameObject primaryPrefab = waterShorePrefabs[0];
         bool primaryIsBay = primaryPrefab != null && IsShoreBayPrefab(primaryPrefab);
@@ -1840,6 +1797,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             GameObject slope = Instantiate(prefab, slopeWorldPos, Quaternion.identity);
             slope.SetActive(true);
             slope.transform.SetParent(cell.gameObject.transform, true);
+
+            if (IsShoreDiagCell(x, y))
+                Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] PlaceWaterShore Instantiate i={i} prefab={prefab.name} waterVisualH={waterVisualH} worldPos=({slopeWorldPos.x:F2},{slopeWorldPos.y:F2})");
 
             bool isBay = IsShoreBayPrefab(prefab);
             int sortingOrder = isBay
@@ -1943,27 +1903,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             PlaceCliffWallStack(cell, CliffCardinalFace.West, x, y, x, y + 1, currentHeight, heightMap.GetHeight(x, y + 1), dWest);
         }
 
-        MaybeLogTerrainDebugCliffPlacement(x, y, dNorth, dSouth, dEast, dWest);
-    }
-
-    /// <summary>
-    /// §15.4: optional <c>[TerrainDebug]</c> for default probe cells — cliff segment counts after <see cref="PlaceCliffWalls"/>.
-    /// </summary>
-    private void MaybeLogTerrainDebugCliffPlacement(int x, int y, int dNorth, int dSouth, int dEast, int dWest)
-    {
-        if (!terrainDebugLogCellsEnabled || heightMap == null || !heightMap.IsValidPosition(x, y))
-            return;
-        for (int i = 0; i < TerrainDebugCliffProbeCells.Length; i++)
-        {
-            if (TerrainDebugCliffProbeCells[i].x != x || TerrainDebugCliffProbeCells[i].y != y)
-                continue;
-            int h = heightMap.GetHeight(x, y);
-            bool shoreEligible = h >= 1 && IsLandEligibleForWaterShorePrefabs(x, y, h);
-            Debug.Log(
-                $"[TerrainDebug] PlaceCliffWalls({x},{y}) h={h} shoreEligible={shoreEligible} " +
-                $"drops N={dNorth} S={dSouth} E={dEast} W={dWest}");
-            return;
-        }
     }
 
     /// <summary>
@@ -2281,45 +2220,15 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         int segmentCount,
         float? cliffStackAnchorWorldY = null)
     {
-        bool waterCascade = cliffStackAnchorWorldY != null;
-
         if (gridManager == null || heightMap == null || segmentCount <= 0)
-        {
-            if (waterCascade && _waterCascadeLogPlaceCoreEarlyRemaining > 0)
-            {
-                _waterCascadeLogPlaceCoreEarlyRemaining--;
-                Debug.Log($"[WaterCascade] PlaceCliffWallStackCore exit: grid/heightMap null or segmentCount<=0 (seg={segmentCount}). high=({highX},{highY}) low=({lowX},{lowY})");
-            }
             return 0;
-        }
         if (cell == null || cliffPrefab == null)
-        {
-            if (waterCascade && _waterCascadeLogPlaceCoreEarlyRemaining > 0)
-            {
-                _waterCascadeLogPlaceCoreEarlyRemaining--;
-                Debug.Log($"[WaterCascade] PlaceCliffWallStackCore exit: cell or prefab null. high=({highX},{highY}) low=({lowX},{lowY})");
-            }
             return 0;
-        }
         if (highH <= lowH)
-        {
-            if (waterCascade && _waterCascadeLogPlaceCoreEarlyRemaining > 0)
-            {
-                _waterCascadeLogPlaceCoreEarlyRemaining--;
-                Debug.Log($"[WaterCascade] PlaceCliffWallStackCore exit: highH<=lowH ({highH}<={lowH}). high=({highX},{highY}) low=({lowX},{lowY})");
-            }
             return 0;
-        }
 
         if (!IsCliffCardinalFaceVisibleToCamera(cardinalFace))
-        {
-            if (waterCascade && _waterCascadeLogInvisibleFaceRemaining > 0)
-            {
-                _waterCascadeLogInvisibleFaceRemaining--;
-                Debug.Log($"[WaterCascade] Skipped: face {cardinalFace} not visible to camera (only South/East). high=({highX},{highY}) low=({lowX},{lowY}) parent=({cell.x},{cell.y})");
-            }
             return 0;
-        }
 
         int waterSurfaceH = cliffStackAnchorWorldY == null
             ? GetWaterSurfaceHeightForCliffProbe(lowX, lowY)
@@ -2363,9 +2272,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             visualIndex++;
         }
 
-        if (waterCascade && visualIndex == 0 && count > 0)
-            Debug.LogWarning($"[WaterCascade] PlaceCliffWallStackCore: 0 sprites after loop (land underwater skip?). high=({highX},{highY}) low=({lowX},{lowY}) count={count}");
-
         return visualIndex;
     }
 
@@ -2381,45 +2287,14 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public void RefreshWaterCascadeCliffs(WaterManager wm)
     {
         if (heightMap == null || gridManager == null || wm == null)
-        {
-            Debug.LogWarning("[WaterCascade] RefreshWaterCascadeCliffs aborted: heightMap, gridManager, or WaterManager is null.");
             return;
-        }
         WaterMap wmMap = wm.GetWaterMap();
         if (wmMap == null)
-        {
-            Debug.LogWarning("[WaterCascade] RefreshWaterCascadeCliffs aborted: WaterMap is null.");
             return;
-        }
         if (cliffWaterSouthPrefab == null && cliffWaterEastPrefab == null)
-        {
-            Debug.LogWarning("[WaterCascade] RefreshWaterCascadeCliffs aborted: both cliffWaterSouthPrefab and cliffWaterEastPrefab are null.");
             return;
-        }
-        if (cliffWaterSouthPrefab == null && !_warnedCliffWaterSouthPrefabMissing)
-        {
-            _warnedCliffWaterSouthPrefabMissing = true;
-            Debug.LogWarning(
-                "[WaterCascade] cliffWaterSouthPrefab is not assigned on TerrainManager — south-facing water–water cascades will not be placed.");
-        }
-        if (cliffWaterEastPrefab == null && !_warnedCliffWaterEastPrefabMissing)
-        {
-            _warnedCliffWaterEastPrefabMissing = true;
-            Debug.LogWarning(
-                "[WaterCascade] cliffWaterEastPrefab is not assigned on TerrainManager — east-facing water–water cascades will not be placed " +
-                "(e.g. west→east surface steps where the lower pool is at (x, y−1)).");
-        }
         if (waterManager == null)
             waterManager = wm;
-
-        _waterCascadeLogTryPlaceDetailRemaining = 48;
-        _waterCascadeLogSkipGeomRemaining = 24;
-        _waterCascadeLogPlaceCoreEarlyRemaining = 24;
-        _waterCascadeLogPlacedDetailRemaining = 24;
-        _waterCascadeLogZeroPlacedRemaining = 32;
-        _waterCascadeLogInvisibleFaceRemaining = 32;
-        _waterCascadeRefreshTryPlaceCount = 0;
-        _waterCascadeRefreshSegmentsPlaced = 0;
 
         int gw = gridManager.width;
         int gh = gridManager.height;
@@ -2476,11 +2351,6 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                 }
             }
         }
-
-        Debug.Log(
-            "[WaterCascade] RefreshWaterCascadeCliffs summary: " +
-            $"TryPlace calls={_waterCascadeRefreshTryPlaceCount}, segment sprites placed={_waterCascadeRefreshSegmentsPlaced}, " +
-            $"prefabs south={(cliffWaterSouthPrefab != null)}, east={(cliffWaterEastPrefab != null)}.");
     }
 
     /// <summary>
@@ -2537,36 +2407,15 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         if (waterCliffPrefab == null || heightMap == null || gridManager == null)
             return;
 
-        _waterCascadeRefreshTryPlaceCount++;
-        if (_waterCascadeLogTryPlaceDetailRemaining > 0)
-        {
-            _waterCascadeLogTryPlaceDetailRemaining--;
-            Debug.Log(
-                $"[WaterCascade] TryPlace enter: high=({highX},{highY}) low=({lowX},{lowY}) face={face} sHigh={sHigh} sLow={sLow} " +
-                $"parent=({parentCellX ?? highX},{parentCellY ?? highY}) prefab={(waterCliffPrefab != null ? waterCliffPrefab.name : "null")}");
-        }
-
         GetEffectiveHeightsForWaterWaterCliff(highX, highY, lowX, lowY, sHigh, sLow, out int highH, out int lowH, out int segmentCount);
         if (segmentCount <= 0 || highH <= lowH)
-        {
-            if (_waterCascadeLogSkipGeomRemaining > 0)
-            {
-                _waterCascadeLogSkipGeomRemaining--;
-                Debug.Log(
-                    $"[WaterCascade] TryPlace skip geometry: segCount={segmentCount} highH={highH} lowH={lowH} " +
-                    $"high=({highX},{highY}) low=({lowX},{lowY}) face={face} sHigh={sHigh} sLow={sLow}");
-            }
             return;
-        }
 
         int px = parentCellX ?? highX;
         int py = parentCellY ?? highY;
         Cell cell = gridManager.GetCell(px, py);
         if (cell == null)
-        {
-            Debug.LogWarning($"[WaterCascade] TryPlaceWaterCascadeCliffStack: null Cell at parent ({px},{py}). high=({highX},{highY}) low=({lowX},{lowY}) face={face}");
             return;
-        }
 
         // Same Y band as the animated water tile child (WaterManager.PlaceWater): waterSurfaceWorld + (0, tileHeight*0.25).
         // Anchor always uses the upper pool plane even when parenting to the lower cell (mirror placement).
@@ -2575,22 +2424,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         float halfCellHeight = gridManager.tileHeight * 0.25f;
         float anchorY = waterSurfaceWorld.y + halfCellHeight;
 
-        int placed = PlaceCliffWallStackCore(cell, waterCliffPrefab, face, highX, highY, lowX, lowY, highH, lowH, segmentCount, anchorY);
-        _waterCascadeRefreshSegmentsPlaced += placed;
-        if (placed > 0 && _waterCascadeLogPlacedDetailRemaining > 0)
-        {
-            _waterCascadeLogPlacedDetailRemaining--;
-            Debug.Log(
-                $"[WaterCascade] Placed {placed} cascade segment(s): parent=({cell.x},{cell.y}) face={face} " +
-                $"highH={highH} lowH={lowH} segCount={segmentCount} d={highH - lowH}");
-        }
-        if (placed == 0 && segmentCount > 0 && _waterCascadeLogZeroPlacedRemaining > 0)
-        {
-            _waterCascadeLogZeroPlacedRemaining--;
-            Debug.Log(
-                $"[WaterCascade] TryPlace placed 0 sprites (see PlaceCliffWallStackCore / invisible face logs). " +
-                $"high=({highX},{highY}) low=({lowX},{lowY}) face={face} segCount={segmentCount} highH={highH} lowH={lowH}");
-        }
+        PlaceCliffWallStackCore(cell, waterCliffPrefab, face, highX, highY, lowX, lowY, highH, lowH, segmentCount, anchorY);
     }
 
     private void RemoveExistingWaterCascadeCliffs(Cell cell)
@@ -2709,8 +2543,30 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// </summary>
     private int GetNeighborWaterVisualHeightForShore(int x, int y)
     {
+        return GetNeighborWaterVisualHeightForShore(x, y, 0);
+    }
+
+    /// <summary>
+    /// Same as <see cref="GetNeighborWaterVisualHeightForShore(int,int)"/>, but when <paramref name="affiliatedBodyId"/> is non-zero,
+    /// only registered water neighbors whose body id matches contribute to the minimum (§12.8 upper-brink alignment).
+    /// </summary>
+    private int GetNeighborWaterVisualHeightForShore(int x, int y, int affiliatedBodyId)
+    {
         if (waterManager == null)
             waterManager = FindObjectOfType<WaterManager>();
+        WaterMap wm = waterManager != null ? waterManager.GetWaterMap() : null;
+
+        bool IncludeNeighbor(int nx, int ny)
+        {
+            if (!WaterOrSeaAt(nx, ny))
+                return false;
+            if (affiliatedBodyId == 0 || wm == null)
+                return true;
+            if (waterManager.IsWaterAt(nx, ny))
+                return wm.GetWaterBodyId(nx, ny) == affiliatedBodyId;
+            return true;
+        }
+
         int[] dx = { 1, -1, 0, 0 };
         int[] dy = { 0, 0, 1, -1 };
         int best = int.MaxValue;
@@ -2718,7 +2574,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         {
             int nx = x + dx[i];
             int ny = y + dy[i];
-            if (!WaterOrSeaAt(nx, ny))
+            if (!IncludeNeighbor(nx, ny))
                 continue;
             int vis = GetWaterVisualHeightForNeighborCell(nx, ny);
             if (vis < best)
@@ -2732,13 +2588,15 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             {
                 int nx = x + ddx[i];
                 int ny = y + ddy[i];
-                if (!WaterOrSeaAt(nx, ny))
+                if (!IncludeNeighbor(nx, ny))
                     continue;
                 int vis = GetWaterVisualHeightForNeighborCell(nx, ny);
                 if (vis < best)
                     best = vis;
             }
         }
+        if (best == int.MaxValue && affiliatedBodyId != 0)
+            return GetNeighborWaterVisualHeightForShore(x, y, 0);
         return best == int.MaxValue ? SEA_LEVEL : best;
     }
 
@@ -2913,9 +2771,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// (2) <see cref="HasLandSlopeIgnoringWater"/> → single Bay (cliff / higher land rim matches flat-lake concave corners); else downslope if no Bay;
     /// (3) otherwise single Bay (flat terrain, diagonal lake edge); (4) fallback upslope+downslope pair.
     /// Rectangle corners must win over land-slope so a higher land neighbor does not force the companion pair on straight corners.
+    /// When <paramref name="forceCascadeJunctionSlopeWater"/> is true (river–river upper or lower brink, §12.8), uses the diagonal <c>*SlopeWaterPrefab</c> only.
     /// </summary>
-    private List<GameObject> BuildDiagonalOnlyShorePrefabs(int x, int y, GameObject bayPrefab, GameObject upslopePrefab, GameObject downslopePrefab, bool isAxisAlignedRectangleCornerWater)
+    private List<GameObject> BuildDiagonalOnlyShorePrefabs(int x, int y, GameObject bayPrefab, GameObject upslopePrefab, GameObject downslopePrefab, bool isAxisAlignedRectangleCornerWater, bool forceCascadeJunctionSlopeWater = false)
     {
+        if (forceCascadeJunctionSlopeWater && downslopePrefab != null)
+            return new List<GameObject> { downslopePrefab };
         if (isAxisAlignedRectangleCornerWater && bayPrefab != null)
             return new List<GameObject> { bayPrefab };
         if (HasLandSlopeIgnoringWater(x, y))
@@ -3087,9 +2948,65 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Bay vs corner slope for one perpendicular pair (two cardinals wet). Returns null if both Bay and SlopeWater prefabs are missing.
+    /// True when the perpendicular-corner triangle (two cardinal water neighbors + the diagonal cell meeting at the land
+    /// corner) is fully registered water and the three cells do not share one logical surface <c>S</c>. Covers cascade
+    /// junctions where both cardinals belong to the lower pool (same <c>S</c>) but the diagonal is upper pool — then
+    /// <see cref="IsMultiSurfacePerpendicularWaterCorner"/> is false and <see cref="IsAxisAlignedRectangleCornerWaterSouthWest"/>
+    /// (and siblings) would wrongly choose Bay (concave) instead of <c>*SlopeWaterPrefab</c> (convex land tip).
     /// </summary>
-    private List<GameObject> SelectPerpendicularWaterCornerPrefabs(int x, int y, ShoreCornerQuadrant quadrant)
+    private bool IsMixedSurfaceThreeCellPerpendicularCorner(int x, int y, ShoreCornerQuadrant quadrant)
+    {
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        if (waterManager == null || heightMap == null)
+            return false;
+
+        int ax, ay, bx, by, cx, cy;
+        switch (quadrant)
+        {
+            case ShoreCornerQuadrant.SouthEast:
+                ax = x - 1; ay = y;
+                bx = x; by = y - 1;
+                cx = x - 1; cy = y - 1;
+                break;
+            case ShoreCornerQuadrant.SouthWest:
+                ax = x - 1; ay = y;
+                bx = x; by = y + 1;
+                cx = x - 1; cy = y + 1;
+                break;
+            case ShoreCornerQuadrant.NorthEast:
+                ax = x + 1; ay = y;
+                bx = x; by = y - 1;
+                cx = x + 1; cy = y - 1;
+                break;
+            case ShoreCornerQuadrant.NorthWest:
+                ax = x + 1; ay = y;
+                bx = x; by = y + 1;
+                cx = x + 1; cy = y + 1;
+                break;
+            default:
+                return false;
+        }
+
+        bool TryS(int px, int py, out int s)
+        {
+            s = -1;
+            if (!heightMap.IsValidPosition(px, py) || !waterManager.IsWaterAt(px, py))
+                return false;
+            s = waterManager.GetWaterSurfaceHeight(px, py);
+            return s >= 0;
+        }
+
+        if (!TryS(ax, ay, out int sa) || !TryS(bx, by, out int sb) || !TryS(cx, cy, out int sc))
+            return false;
+        return sa != sb || sb != sc || sa != sc;
+    }
+
+    /// <summary>
+    /// Bay vs corner slope for one perpendicular pair (two cardinals wet). Returns null if both Bay and SlopeWater prefabs are missing.
+    /// When <paramref name="forceCascadeJunctionSlopeWater"/> (river–river junction brink, §12.8), returns the diagonal <c>*SlopeWaterPrefab</c> only, matching <see cref="BuildDiagonalOnlyShorePrefabs"/>.
+    /// </summary>
+    private List<GameObject> SelectPerpendicularWaterCornerPrefabs(int x, int y, ShoreCornerQuadrant quadrant, bool forceCascadeJunctionSlopeWater = false)
     {
         GameObject bayPrefab;
         GameObject slopePrefab;
@@ -3098,7 +3015,15 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             case ShoreCornerQuadrant.SouthEast:
                 bayPrefab = southEastBayPrefab;
                 slopePrefab = southEastSlopeWaterPrefab;
+                if (forceCascadeJunctionSlopeWater && slopePrefab != null)
+                    return ShoreList(slopePrefab);
                 if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.SouthEast))
+                {
+                    if (slopePrefab != null) return ShoreList(slopePrefab);
+                    if (bayPrefab != null) return ShoreList(bayPrefab);
+                    return null;
+                }
+                if (IsMixedSurfaceThreeCellPerpendicularCorner(x, y, ShoreCornerQuadrant.SouthEast))
                 {
                     if (slopePrefab != null) return ShoreList(slopePrefab);
                     if (bayPrefab != null) return ShoreList(bayPrefab);
@@ -3122,7 +3047,15 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             case ShoreCornerQuadrant.SouthWest:
                 bayPrefab = southWestBayPrefab;
                 slopePrefab = southWestSlopeWaterPrefab;
+                if (forceCascadeJunctionSlopeWater && slopePrefab != null)
+                    return ShoreList(slopePrefab);
                 if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.SouthWest))
+                {
+                    if (slopePrefab != null) return ShoreList(slopePrefab);
+                    if (bayPrefab != null) return ShoreList(bayPrefab);
+                    return null;
+                }
+                if (IsMixedSurfaceThreeCellPerpendicularCorner(x, y, ShoreCornerQuadrant.SouthWest))
                 {
                     if (slopePrefab != null) return ShoreList(slopePrefab);
                     if (bayPrefab != null) return ShoreList(bayPrefab);
@@ -3146,7 +3079,15 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             case ShoreCornerQuadrant.NorthEast:
                 bayPrefab = northEastBayPrefab;
                 slopePrefab = northEastSlopeWaterPrefab;
+                if (forceCascadeJunctionSlopeWater && slopePrefab != null)
+                    return ShoreList(slopePrefab);
                 if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.NorthEast))
+                {
+                    if (slopePrefab != null) return ShoreList(slopePrefab);
+                    if (bayPrefab != null) return ShoreList(bayPrefab);
+                    return null;
+                }
+                if (IsMixedSurfaceThreeCellPerpendicularCorner(x, y, ShoreCornerQuadrant.NorthEast))
                 {
                     if (slopePrefab != null) return ShoreList(slopePrefab);
                     if (bayPrefab != null) return ShoreList(bayPrefab);
@@ -3170,7 +3111,15 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             case ShoreCornerQuadrant.NorthWest:
                 bayPrefab = northWestBayPrefab;
                 slopePrefab = northWestSlopeWaterPrefab;
+                if (forceCascadeJunctionSlopeWater && slopePrefab != null)
+                    return ShoreList(slopePrefab);
                 if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.NorthWest))
+                {
+                    if (slopePrefab != null) return ShoreList(slopePrefab);
+                    if (bayPrefab != null) return ShoreList(bayPrefab);
+                    return null;
+                }
+                if (IsMixedSurfaceThreeCellPerpendicularCorner(x, y, ShoreCornerQuadrant.NorthWest))
                 {
                     if (slopePrefab != null) return ShoreList(slopePrefab);
                     if (bayPrefab != null) return ShoreList(bayPrefab);
@@ -3203,7 +3152,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     private List<GameObject> TrySelectShoreForExactlyThreeCardinalWaters(
         int x, int y,
         bool hasWaterAtNorth, bool hasWaterAtSouth, bool hasWaterAtEast, bool hasWaterAtWest,
-        bool hasWaterAtNorthEast, bool hasWaterAtNorthWest, bool hasWaterAtSouthEast, bool hasWaterAtSouthWest)
+        bool hasWaterAtNorthEast, bool hasWaterAtNorthWest, bool hasWaterAtSouthEast, bool hasWaterAtSouthWest,
+        bool forceCascadeJunctionSlopeWater = false)
     {
         int count = (hasWaterAtNorth ? 1 : 0) + (hasWaterAtSouth ? 1 : 0) + (hasWaterAtEast ? 1 : 0) + (hasWaterAtWest ? 1 : 0);
         if (count != 3)
@@ -3212,52 +3162,235 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         if (!hasWaterAtNorth)
         {
             if (hasWaterAtSouthEast && !hasWaterAtSouthWest)
-                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthEast);
+                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthEast, forceCascadeJunctionSlopeWater);
             if (hasWaterAtSouthWest && !hasWaterAtSouthEast)
-                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthWest);
-            List<GameObject> southEastFirst = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthEast);
+                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthWest, forceCascadeJunctionSlopeWater);
+            List<GameObject> southEastFirst = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthEast, forceCascadeJunctionSlopeWater);
             if (southEastFirst != null)
                 return southEastFirst;
-            return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthWest);
+            return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthWest, forceCascadeJunctionSlopeWater);
         }
         if (!hasWaterAtSouth)
         {
             if (hasWaterAtNorthEast && !hasWaterAtNorthWest)
-                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthEast);
+                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthEast, forceCascadeJunctionSlopeWater);
             if (hasWaterAtNorthWest && !hasWaterAtNorthEast)
-                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthWest);
-            List<GameObject> northEastFirst = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthEast);
+                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthWest, forceCascadeJunctionSlopeWater);
+            List<GameObject> northEastFirst = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthEast, forceCascadeJunctionSlopeWater);
             if (northEastFirst != null)
                 return northEastFirst;
-            return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthWest);
+            return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthWest, forceCascadeJunctionSlopeWater);
         }
         if (!hasWaterAtEast)
         {
             if (hasWaterAtNorthWest && !hasWaterAtSouthWest)
-                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthWest);
+                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthWest, forceCascadeJunctionSlopeWater);
             if (hasWaterAtSouthWest && !hasWaterAtNorthWest)
-                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthWest);
-            List<GameObject> southWestFirst = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthWest);
+                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthWest, forceCascadeJunctionSlopeWater);
+            List<GameObject> southWestFirst = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthWest, forceCascadeJunctionSlopeWater);
             if (southWestFirst != null)
                 return southWestFirst;
-            return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthWest);
+            return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthWest, forceCascadeJunctionSlopeWater);
         }
         if (!hasWaterAtWest)
         {
             if (hasWaterAtNorthEast && !hasWaterAtSouthEast)
-                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthEast);
+                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthEast, forceCascadeJunctionSlopeWater);
             if (hasWaterAtSouthEast && !hasWaterAtNorthEast)
-                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthEast);
-            List<GameObject> southEastLead = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthEast);
+                return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthEast, forceCascadeJunctionSlopeWater);
+            List<GameObject> southEastLead = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthEast, forceCascadeJunctionSlopeWater);
             if (southEastLead != null)
                 return southEastLead;
-            return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthEast);
+            return SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthEast, forceCascadeJunctionSlopeWater);
         }
         return null;
     }
 
     /// <summary>
+    /// Two cardinal offsets from a shore cell to probe for cascade: only along the shore-line axis (both sides), e.g. E+W for an
+    /// E–W shoreline, N+S for an N–S shoreline. Uses the same cardinal water pattern as <see cref="DetermineWaterShorePrefabs"/>.
+    /// </summary>
+    private static bool TryGetShoreLineSearchOffsets(
+        bool hasWaterAtNorth, bool hasWaterAtSouth, bool hasWaterAtEast, bool hasWaterAtWest,
+        out int dx0, out int dy0, out int dx1, out int dy1)
+    {
+        dx0 = dy0 = dx1 = dy1 = 0;
+        bool n = hasWaterAtNorth, s = hasWaterAtSouth, e = hasWaterAtEast, w = hasWaterAtWest;
+
+        // N–S water strip (column): shoreline runs E–W → search east and west only.
+        if (n && s)
+        {
+            dx0 = 0; dy0 = -1; // East (x, y-1)
+            dx1 = 0; dy1 = 1;  // West (x, y+1)
+            return true;
+        }
+
+        // E–W water strip (row): shoreline runs N–S → search north and south only.
+        if (e && w)
+        {
+            dx0 = 1; dy0 = 0;  // North (x+1, y)
+            dx1 = -1; dy1 = 0; // South (x-1, y)
+            return true;
+        }
+
+        // Single cardinal toward water: shoreline is perpendicular to that → search the two neighbors along the parallel axis.
+        if (n && !s && !e && !w) { dx0 = 0; dy0 = -1; dx1 = 0; dy1 = 1; return true; }
+        if (s && !n && !e && !w) { dx0 = 0; dy0 = -1; dx1 = 0; dy1 = 1; return true; }
+        if (e && !w && !n && !s) { dx0 = 1; dy0 = 0; dx1 = -1; dy1 = 0; return true; }
+        if (w && !e && !n && !s) { dx0 = 1; dy0 = 0; dx1 = -1; dy1 = 0; return true; }
+
+        // Outer corners (two perpendicular cardinals).
+        if (n && e && !s && !w) { dx0 = 0; dy0 = -1; dx1 = 0; dy1 = 1; return true; }
+        if (n && w && !s && !e) { dx0 = 0; dy0 = -1; dx1 = 0; dy1 = 1; return true; }
+        if (s && e && !n && !w) { dx0 = 0; dy0 = -1; dx1 = 0; dy1 = 1; return true; }
+        if (s && w && !n && !e) { dx0 = 0; dy0 = -1; dx1 = 0; dy1 = 1; return true; }
+        if (e && s && !n && !w) { dx0 = 1; dy0 = 0; dx1 = -1; dy1 = 0; return true; }
+
+        return false;
+    }
+
+    /// <summary>
+    /// True when <paramref name="cx"/>,<paramref name="cy"/> lies on the lower-pool cascade / junction strip: registered water
+    /// on the low side of a cardinal surface step (same <paramref name="ownerBodyId"/>), or dry land with the same shore
+    /// affiliation that connects along the shore-line axis only to such water (Pass B strip may include dry cells).
+    /// <paramref name="axisDx0"/>/<paramref name="axisDy0"/> and <paramref name="axisDx1"/>/<paramref name="axisDy1"/> are the two
+    /// cardinal directions along the shore line (e.g. east and west); dry traversal does not step off that axis.
+    /// </summary>
+    private bool IsOnLowerCascadeOrJunctionStrip(
+        int cx, int cy, int ownerBodyId, WaterMap wm, HashSet<Vector2Int> excludeFromTraversal, int depthRemaining,
+        int axisDx0, int axisDy0, int axisDx1, int axisDy1)
+    {
+        if (depthRemaining <= 0 || wm == null || !wm.IsValidPosition(cx, cy))
+            return false;
+        var key = new Vector2Int(cx, cy);
+        if (excludeFromTraversal.Contains(key))
+            return false;
+        excludeFromTraversal.Add(key);
+
+        if (wm.IsWater(cx, cy))
+        {
+            if (wm.GetWaterBodyId(cx, cy) != ownerBodyId)
+                return false;
+            return wm.IsWaterCellLowerSideOfCardinalSurfaceStep(cx, cy);
+        }
+
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        if (waterManager == null || waterManager.GetShoreAffiliatedWaterBodyIdForLandCell(cx, cy) != ownerBodyId)
+            return false;
+
+        int nx0 = cx + axisDx0;
+        int ny0 = cy + axisDy0;
+        if (wm.IsValidPosition(nx0, ny0) &&
+            IsOnLowerCascadeOrJunctionStrip(nx0, ny0, ownerBodyId, wm, excludeFromTraversal, depthRemaining - 1, axisDx0, axisDy0, axisDx1, axisDy1))
+            return true;
+
+        int nx1 = cx + axisDx1;
+        int ny1 = cy + axisDy1;
+        if (wm.IsValidPosition(nx1, ny1) &&
+            IsOnLowerCascadeOrJunctionStrip(nx1, ny1, ownerBodyId, wm, excludeFromTraversal, depthRemaining - 1, axisDx0, axisDy0, axisDx1, axisDy1))
+            return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// When true, this dry land shore cell should use a <c>*SlopeWaterPrefab</c> corner (not <c>*UpslopeWaterPrefab</c>) to close
+    /// the shore line before the terrain/water surface step at a cascade or multi-surface junction: the cell is affiliated with
+    /// the lower pool (<paramref name="ownerBodyId"/>), touches the cascade/junction strip along the shore-line axis only, and
+    /// <paramref name="quadrant"/> is the perpendicular corner orientation (multi-surface or mixed three-cell pattern).
+    /// </summary>
+    private bool ShouldPlaceShoreEnd(
+        int x, int y, int ownerBodyId,
+        bool hasWaterAtNorth, bool hasWaterAtSouth, bool hasWaterAtEast, bool hasWaterAtWest,
+        out ShoreCornerQuadrant quadrant)
+    {
+        quadrant = default;
+        if (ownerBodyId == 0 || heightMap == null || !heightMap.IsValidPosition(x, y))
+            return false;
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        if (waterManager == null || waterManager.IsWaterAt(x, y))
+            return false;
+
+        WaterMap wm = waterManager.GetWaterMap();
+        if (wm != null && wm.TryGetDryLandRiverJunctionBrink(x, y, out RiverJunctionBrinkRole brinkRole, out _)
+            && brinkRole == RiverJunctionBrinkRole.UpperBrink)
+            return false;
+
+        if (!TryGetShoreLineSearchOffsets(hasWaterAtNorth, hasWaterAtSouth, hasWaterAtEast, hasWaterAtWest, out int ax0, out int ay0, out int ax1, out int ay1))
+            return false;
+
+        if (wm == null)
+            return false;
+
+        bool touchesCascadeStrip = false;
+        int lx0 = x + ax0;
+        int ly0 = y + ay0;
+        if (wm.IsValidPosition(lx0, ly0))
+        {
+            var visited0 = new HashSet<Vector2Int>();
+            visited0.Add(new Vector2Int(x, y));
+            if (IsOnLowerCascadeOrJunctionStrip(lx0, ly0, ownerBodyId, wm, visited0, 32, ax0, ay0, ax1, ay1))
+                touchesCascadeStrip = true;
+        }
+        if (!touchesCascadeStrip)
+        {
+            int lx1 = x + ax1;
+            int ly1 = y + ay1;
+            if (wm.IsValidPosition(lx1, ly1))
+            {
+                var visited1 = new HashSet<Vector2Int>();
+                visited1.Add(new Vector2Int(x, y));
+                if (IsOnLowerCascadeOrJunctionStrip(lx1, ly1, ownerBodyId, wm, visited1, 32, ax0, ay0, ax1, ay1))
+                    touchesCascadeStrip = true;
+            }
+        }
+        if (!touchesCascadeStrip)
+        {
+            if (IsShoreDiagCell(x, y))
+                Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] ShouldPlaceShoreEnd -> false (no cascade strip) ownerBodyId={ownerBodyId}");
+            return false;
+        }
+
+        ShoreCornerQuadrant[] order =
+        {
+            ShoreCornerQuadrant.SouthEast,
+            ShoreCornerQuadrant.SouthWest,
+            ShoreCornerQuadrant.NorthEast,
+            ShoreCornerQuadrant.NorthWest
+        };
+        foreach (ShoreCornerQuadrant q in order)
+        {
+            if (IsMultiSurfacePerpendicularWaterCorner(x, y, q) || IsMixedSurfaceThreeCellPerpendicularCorner(x, y, q))
+            {
+                quadrant = q;
+                if (IsShoreDiagCell(x, y))
+                    Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] ShouldPlaceShoreEnd -> true quadrant={q} ownerBodyId={ownerBodyId}");
+                return true;
+            }
+        }
+        if (IsShoreDiagCell(x, y))
+            Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] ShouldPlaceShoreEnd -> false (no matching corner) ownerBodyId={ownerBodyId}");
+        return false;
+    }
+
+    private GameObject GetSlopeWaterPrefabForQuadrant(ShoreCornerQuadrant quadrant)
+    {
+        switch (quadrant)
+        {
+            case ShoreCornerQuadrant.SouthEast: return southEastSlopeWaterPrefab;
+            case ShoreCornerQuadrant.SouthWest: return southWestSlopeWaterPrefab;
+            case ShoreCornerQuadrant.NorthEast: return northEastSlopeWaterPrefab;
+            case ShoreCornerQuadrant.NorthWest: return northWestSlopeWaterPrefab;
+            default: return null;
+        }
+    }
+
+    /// <summary>
     /// Selects lake/coast shore prefab(s) for a land cell adjacent to water. Returns one prefab or an upslope+downslope pair for diagonal slopes.
+    /// Moore neighbor wet/dry uses <see cref="WaterManager.IsOpenWaterForShoreTopology"/> (affiliated body) or <see cref="WaterOrSeaAt"/> (no affiliation), unless
+    /// <paramref name="useJunctionTopologyForShorePattern"/> uses <see cref="WaterManager.NeighborMatchesShoreOwnerForJunctionTopology"/> for the junction post-pass (§12.8.1).
     /// Perpendicular two-cardinal corners: when both cardinals are <b>registered</b> water with different logical surfaces (BUG-45), prefer
     /// diagonal <c>*SlopeWaterPrefab</c> over Bay <b>unless</b> that edge is <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> (§12.7 — lake rim vs lower pool, no junction).
     /// Else Bay when the diagonal water cell is an axis-aligned rectangle outer corner; when not, prefer Bay if
@@ -3265,19 +3398,23 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// Pure cardinal north or south (no east/west water on those branches) uses north/south slope only — not <see cref="BuildDiagonalOnlyShorePrefabs"/>.
     /// River confluences and non-rectangular water patterns: isometric spec §5.9; refresh land after river stamps via <see cref="RefreshShoreTerrainAfterWaterUpdate"/>.
     /// </summary>
-    private List<GameObject> DetermineWaterShorePrefabs(int x, int y)
+    /// <param name="useJunctionTopologyForShorePattern">When true, junction-brink dry neighbors count as wet (post-pass only).</param>
+    /// <param name="forceJunctionDiagonalSlopeForCascade">When true, forces diagonal <c>*SlopeWaterPrefab</c> over Bay for this cell (post-pass along the cascade strip).</param>
+    private List<GameObject> DetermineWaterShorePrefabs(int x, int y, bool useJunctionTopologyForShorePattern = false, bool forceJunctionDiagonalSlopeForCascade = false)
     {
         if (heightMap == null)
             return null;
         if (waterManager == null)
             waterManager = FindObjectOfType<WaterManager>();
 
-        int ownerBodyId = waterManager != null ? waterManager.ResolveWinningWaterBodyIdForLandCell(x, y) : 0;
+        int ownerBodyId = waterManager != null ? waterManager.GetShoreAffiliatedWaterBodyIdForLandCell(x, y) : 0;
         bool PatternWater(int nx, int ny)
         {
             if (ownerBodyId == 0)
                 return WaterOrSeaAt(nx, ny);
-            return waterManager != null && waterManager.NeighborMatchesShoreOwnerForPattern(nx, ny, ownerBodyId);
+            if (useJunctionTopologyForShorePattern)
+                return waterManager != null && waterManager.NeighborMatchesShoreOwnerForJunctionTopology(nx, ny, ownerBodyId);
+            return waterManager != null && waterManager.IsOpenWaterForShoreTopology(nx, ny, ownerBodyId);
         }
 
         bool hasWaterAtNorth = PatternWater(x + 1, y);
@@ -3289,6 +3426,23 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         bool hasWaterAtNorthWest = PatternWater(x + 1, y + 1);
         bool hasWaterAtSouthEast = PatternWater(x - 1, y - 1);
         bool hasWaterAtSouthWest = PatternWater(x - 1, y + 1);
+
+        bool forceCascadeJunctionSlopeWater = forceJunctionDiagonalSlopeForCascade
+            || (waterManager != null && waterManager.ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink(x, y));
+
+        if (IsShoreDiagCell(x, y))
+        {
+            int cellWid = waterManager != null ? waterManager.GetCellWaterBodyId(x, y) : -1;
+            Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] DetermineWaterShorePrefabs ownerBodyId={ownerBodyId} cellWaterBodyId={cellWid} forceCascadeJunctionSlopeWater={forceCascadeJunctionSlopeWater} N={hasWaterAtNorth} S={hasWaterAtSouth} E={hasWaterAtEast} W={hasWaterAtWest} NE={hasWaterAtNorthEast} NW={hasWaterAtNorthWest} SE={hasWaterAtSouthEast} SW={hasWaterAtSouthWest}");
+            WaterMap wmDbg = waterManager != null ? waterManager.GetWaterMap() : null;
+            if (wmDbg != null && wmDbg.TryGetDryLandRiverJunctionBrinkWithStep(x, y, out RiverJunctionBrinkRole br, out int brAff, out int shx, out int shy, out int slx, out int sly))
+            {
+                bool closest = wmDbg.IsDryLandRiverJunctionBrinkClosestToCascadeStep(x, y, br, shx, shy, slx, sly);
+                Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] TryGetDryLandRiverJunctionBrinkWithStep role={br} affiliatedBodyId={brAff} stepHigh=({shx},{shy}) stepLow=({slx},{sly}) IsDryLandRiverJunctionBrinkClosestToCascadeStep={closest}");
+            }
+            else if (wmDbg != null)
+                Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] TryGetDryLandRiverJunctionBrinkWithStep -> false (not a junction brink)");
+        }
 
         bool isAtNorthBorder = !heightMap.IsValidPosition(x + 1, y);
         bool isAtSouthBorder = !heightMap.IsValidPosition(x - 1, y);
@@ -3323,6 +3477,44 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             if (hasWaterAtWest) return ShoreList(westSlopeWaterPrefab);
         }
 
+        // Cascade / junction lower-pool shore cap: force corner SlopeWater (not Bay) when closing the shore line toward a surface step.
+        if (ShouldPlaceShoreEnd(x, y, ownerBodyId, hasWaterAtNorth, hasWaterAtSouth, hasWaterAtEast, hasWaterAtWest, out ShoreCornerQuadrant shoreEndQuadrant))
+        {
+            if (IsShoreDiagCell(x, y))
+                Debug.Log($"[ShoreDiag {ShoreDiagX},{ShoreDiagY}] DetermineWaterShorePrefabs shore-end branch quadrant={shoreEndQuadrant}");
+            GameObject shoreEndPrefab = GetSlopeWaterPrefabForQuadrant(shoreEndQuadrant);
+            if (shoreEndPrefab != null)
+                return ShoreList(shoreEndPrefab);
+        }
+
+        // Multi-surface perpendicular corners (BUG-45 / §12.7): two cardinals are water at different logical S.
+        // Run before TrySelectShoreForExactlyThreeCardinalWaters so cascade/junction cells prefer *SlopeWaterPrefab over Bay
+        // when three cardinals match PatternWater but the perpendicular pair is a surface step.
+        if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.SouthEast))
+        {
+            List<GameObject> cornerMs = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthEast, forceCascadeJunctionSlopeWater);
+            if (cornerMs != null)
+                return cornerMs;
+        }
+        if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.SouthWest))
+        {
+            List<GameObject> cornerMs = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthWest, forceCascadeJunctionSlopeWater);
+            if (cornerMs != null)
+                return cornerMs;
+        }
+        if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.NorthEast))
+        {
+            List<GameObject> cornerMs = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthEast, forceCascadeJunctionSlopeWater);
+            if (cornerMs != null)
+                return cornerMs;
+        }
+        if (IsMultiSurfacePerpendicularWaterCorner(x, y, ShoreCornerQuadrant.NorthWest))
+        {
+            List<GameObject> cornerMs = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthWest, forceCascadeJunctionSlopeWater);
+            if (cornerMs != null)
+                return cornerMs;
+        }
+
         // Perpendicular shore corners: both cardinals of a quadrant have water.
         // Bay = concave water corner (outer axis-aligned corner of the water patch: see IsAxisAlignedRectangleCornerWater*).
         // SlopeWater = convex land corner when water continues past the diagonal (peninsula tip, island corners, large lakes).
@@ -3331,31 +3523,32 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         List<GameObject> threeCardinalShore = TrySelectShoreForExactlyThreeCardinalWaters(
             x, y,
             hasWaterAtNorth, hasWaterAtSouth, hasWaterAtEast, hasWaterAtWest,
-            hasWaterAtNorthEast, hasWaterAtNorthWest, hasWaterAtSouthEast, hasWaterAtSouthWest);
+            hasWaterAtNorthEast, hasWaterAtNorthWest, hasWaterAtSouthEast, hasWaterAtSouthWest,
+            forceCascadeJunctionSlopeWater);
         if (threeCardinalShore != null)
             return threeCardinalShore;
 
         if (hasWaterAtSouth && hasWaterAtEast)
         {
-            List<GameObject> corner = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthEast);
+            List<GameObject> corner = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthEast, forceCascadeJunctionSlopeWater);
             if (corner != null)
                 return corner;
         }
         if (hasWaterAtSouth && hasWaterAtWest)
         {
-            List<GameObject> corner = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthWest);
+            List<GameObject> corner = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.SouthWest, forceCascadeJunctionSlopeWater);
             if (corner != null)
                 return corner;
         }
         if (hasWaterAtNorth && hasWaterAtEast)
         {
-            List<GameObject> corner = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthEast);
+            List<GameObject> corner = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthEast, forceCascadeJunctionSlopeWater);
             if (corner != null)
                 return corner;
         }
         if (hasWaterAtNorth && hasWaterAtWest)
         {
-            List<GameObject> corner = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthWest);
+            List<GameObject> corner = SelectPerpendicularWaterCornerPrefabs(x, y, ShoreCornerQuadrant.NorthWest, forceCascadeJunctionSlopeWater);
             if (corner != null)
                 return corner;
         }
@@ -3438,16 +3631,16 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         }
 
         if (hasWaterAtNorthEast && !hasWaterAtSouth)
-            return BuildDiagonalOnlyShorePrefabs(x, y, northEastBayPrefab, northEastUpslopeWaterPrefab, northEastSlopeWaterPrefab, IsAxisAlignedRectangleCornerWaterNorthEast(x, y, PatternWater));
+            return BuildDiagonalOnlyShorePrefabs(x, y, northEastBayPrefab, northEastUpslopeWaterPrefab, northEastSlopeWaterPrefab, IsAxisAlignedRectangleCornerWaterNorthEast(x, y, PatternWater), forceCascadeJunctionSlopeWater);
 
         if (hasWaterAtNorthWest && !hasWaterAtSouth)
-            return BuildDiagonalOnlyShorePrefabs(x, y, northWestBayPrefab, northWestUpslopeWaterPrefab, northWestSlopeWaterPrefab, IsAxisAlignedRectangleCornerWaterNorthWest(x, y, PatternWater));
+            return BuildDiagonalOnlyShorePrefabs(x, y, northWestBayPrefab, northWestUpslopeWaterPrefab, northWestSlopeWaterPrefab, IsAxisAlignedRectangleCornerWaterNorthWest(x, y, PatternWater), forceCascadeJunctionSlopeWater);
 
         if (hasWaterAtSouthEast && !hasWaterAtNorth)
-            return BuildDiagonalOnlyShorePrefabs(x, y, southEastBayPrefab, southEastUpslopeWaterPrefab, southEastSlopeWaterPrefab, IsAxisAlignedRectangleCornerWaterSouthEast(x, y, PatternWater));
+            return BuildDiagonalOnlyShorePrefabs(x, y, southEastBayPrefab, southEastUpslopeWaterPrefab, southEastSlopeWaterPrefab, IsAxisAlignedRectangleCornerWaterSouthEast(x, y, PatternWater), forceCascadeJunctionSlopeWater);
 
         if (hasWaterAtSouthWest && !hasWaterAtNorth)
-            return BuildDiagonalOnlyShorePrefabs(x, y, southWestBayPrefab, southWestUpslopeWaterPrefab, southWestSlopeWaterPrefab, IsAxisAlignedRectangleCornerWaterSouthWest(x, y, PatternWater));
+            return BuildDiagonalOnlyShorePrefabs(x, y, southWestBayPrefab, southWestUpslopeWaterPrefab, southWestSlopeWaterPrefab, IsAxisAlignedRectangleCornerWaterSouthWest(x, y, PatternWater), forceCascadeJunctionSlopeWater);
 
         return null;
     }
@@ -3480,7 +3673,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public int CalculateWaterSlopeSortingOrder(int x, int y)
     {
         const int WATER_SLOPE_OFFSET = 1;
-        int waterVisualH = GetNeighborWaterVisualHeightForShore(x, y);
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        int aff = waterManager != null ? waterManager.GetShoreAffiliatedWaterBodyIdForLandCell(x, y) : 0;
+        int waterVisualH = GetNeighborWaterVisualHeightForShore(x, y, aff);
         return CalculateTerrainSortingOrder(x, y, waterVisualH) + WATER_SLOPE_OFFSET;
     }
 
@@ -3491,7 +3687,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public int CalculateShoreBaySortingOrder(int x, int y)
     {
         const int BAY_SHORE_MIN_OFFSET = 1;
-        int waterVisualH = GetNeighborWaterVisualHeightForShore(x, y);
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        int aff = waterManager != null ? waterManager.GetShoreAffiliatedWaterBodyIdForLandCell(x, y) : 0;
+        int waterVisualH = GetNeighborWaterVisualHeightForShore(x, y, aff);
         int baseOrder = CalculateTerrainSortingOrder(x, y, waterVisualH) + BAY_SHORE_MIN_OFFSET;
 
         int maxNeighborWater = int.MinValue;

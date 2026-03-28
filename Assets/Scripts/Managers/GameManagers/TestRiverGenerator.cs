@@ -7,10 +7,10 @@ namespace Territory.Terrain
 {
     /// <summary>
     /// Debug / QA: straight grid West→East test river (four equal-length surface segments S=4,3,2,1), flat beds per segment.
-    /// Centerline is fixed grid <c>x</c> and decreasing <c>y</c> from west toward east (canonical spec: +y = West, East neighbor is (x, y−1)).
+    /// Centerline is fixed grid <c>x</c> (map-width center, clamped to corridor margins) and decreasing <c>y</c> from west toward east (canonical spec: +y = West, East neighbor is (x, y−1)).
     /// Runs after standard lakes and procedural rivers when enabled from <see cref="Territory.Geography.GeographyManager"/>.
     /// Does not run inner-corner shore promotion (that step was lifting forced bed heights and blocking water assignment on S=3 and S=1 segments).
-    /// Full grid span on <c>y</c> (west → east); only <c>x</c> is kept in [10, width−10] for corridor width. Post-gen refresh uses <see cref="WaterManager.UpdateWaterVisuals"/> with Pass A/B skipped so §12.7 junction merge does not collapse multi-surface segments.
+    /// Full grid span on <c>y</c> (west → east); <c>x</c> is <c>width / 2</c> clamped to [10, width−10] for corridor width. Post-gen refresh uses <see cref="WaterManager.UpdateWaterVisuals"/> with Pass A/B skipped so §12.7 junction merge does not collapse multi-surface segments.
     /// </summary>
     public static class TestRiverGenerator
     {
@@ -29,10 +29,9 @@ namespace Territory.Terrain
             WaterManager waterManager,
             TerrainManager terrainManager,
             GridManager gridManager,
-            System.Random rnd,
             IReadOnlyList<int> segmentBedWidths = null)
         {
-            if (waterManager == null || terrainManager == null || gridManager == null || rnd == null)
+            if (waterManager == null || terrainManager == null || gridManager == null)
                 return;
             WaterMap wm = waterManager.GetWaterMap();
             HeightMap hm = terrainManager.GetHeightMap();
@@ -54,7 +53,7 @@ namespace Territory.Terrain
 
             int minXR = 10;
             int maxXR = gw - 10;
-            int riverX = rnd.Next(minXR, maxXR + 1);
+            int riverX = Mathf.Clamp(gw / 2, minXR, maxXR);
 
             int yWest = gh - 1;
             int yEast = 0;
@@ -395,7 +394,7 @@ namespace Territory.Terrain
         {
             var sb = new StringBuilder(640);
             sb.AppendLine("[TestRiverGenerator] Straight grid West→East test river (canonical: +y = West, flow decreases y toward East).");
-            sb.AppendLine($"  Map: {gw}×{gh}, centerline column x={riverX} (random in [10, width-10]), y spans {yWest} (west) → {yEast} (east), full height.");
+            sb.AppendLine($"  Map: {gw}×{gh}, centerline column x={riverX} (width center, clamped to [10, width-10]), y spans {yWest} (west) → {yEast} (east), full height.");
             for (int i = 0; i < 4; i++)
             {
                 int s = 4 - i;
