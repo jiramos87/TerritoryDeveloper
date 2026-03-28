@@ -126,7 +126,7 @@ namespace Territory.Terrain
         /// at a strictly lower logical surface, Pass A/B and water–water cascades are skipped
         /// (<see cref="IsLakeSurfaceStepContactForbidden"/>). This fallback removes those lake water cells and sets dry rim
         /// terrain height to the lake&apos;s logical <see cref="WaterBody.SurfaceHeight"/> <c>S</c> so the upper pool reads as a
-        /// closed basin; <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> then selects shore prefabs.
+        /// closed basin; <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> then selects shore prefabs.
         /// Call after <see cref="ApplyWaterSurfaceJunctionMerge"/>, before <see cref="WaterManager.PlaceWater"/>.
         /// </summary>
         /// <param name="restoredCells">Cells converted from lake water to dry (for terrain restore and post–lake-shore height fix).</param>
@@ -1624,7 +1624,7 @@ namespace Territory.Terrain
         /// Artificial rectangles only carve interior cells. Land cells that touch a lake corner only diagonally
         /// (no cardinal neighbor inside the rectangle) could stay too high vs the resolved surface — clamp them
         /// to <paramref name="surface"/> so rim/bay continuity matches cardinal shores (BUG-42). After init,
-        /// <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> also lowers any Moore shore land above
+        /// <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> also lowers any Moore shore land above
         /// adjacent water logical surface (see isometric spec §2.4.1).
         /// </summary>
         private static void CoerceDiagonalCornerRimForArtificialLake(HeightMap heightMap, int x0, int y0, int rw, int rh, int surface)

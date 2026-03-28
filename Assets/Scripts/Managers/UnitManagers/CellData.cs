@@ -33,6 +33,12 @@ public class CellData
     public string zoneType;
     /// <summary>Serialized <see cref="WaterBodyType"/> for water cells; empty/None for dry cells.</summary>
     public string waterBodyType;
+
+    /// <summary>
+    /// <see cref="Territory.Terrain.WaterBody.id"/> for open water and dry shoreline membership (0 = none).
+    /// Must match <see cref="Territory.Terrain.WaterMap"/> for registered water cells.
+    /// </summary>
+    public int waterBodyId;
     public GameObject occupiedBuilding;
     public string occupiedBuildingName;
     public bool isPivot;
@@ -102,6 +108,7 @@ public class CellData
         this.secondaryPrefabName = "";
         this.zoneType = Zone.ZoneType.Grass.ToString();
         this.waterBodyType = WaterBodyType.None.ToString();
+        this.waterBodyId = 0;
         this.occupiedBuildingName = "";
         this.isPivot = false;
         this.powerPlant = null;
@@ -241,6 +248,7 @@ public class CellData
         if (waterBodyType == null) waterBodyType = WaterBodyType.None.ToString();
         if (string.IsNullOrEmpty(waterBodyType) && GetZoneType() == Zone.ZoneType.Water)
             waterBodyType = WaterBodyType.Lake.ToString();
+        waterBodyId = Mathf.Max(0, waterBodyId);
         // isInterstate is bool, no null check needed
     }
 
@@ -267,6 +275,7 @@ public class CellData
         clone.secondaryPrefabName = secondaryPrefabName;
         clone.zoneType = zoneType;
         clone.waterBodyType = waterBodyType;
+        clone.waterBodyId = waterBodyId;
         clone.occupiedBuildingName = occupiedBuildingName;
         clone.isPivot = isPivot;
         clone.powerPlant = powerPlant;

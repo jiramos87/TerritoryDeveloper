@@ -60,23 +60,11 @@ public class GameDebugInfoBuilder : MonoBehaviour
         int iy = (int)gridPosition.y;
         if (gridManager != null && ix >= 0 && ix < gridManager.width && iy >= 0 && iy < gridManager.height && waterManager != null)
         {
-            int s = waterManager.GetWaterSurfaceHeight(ix, iy);
-            coords += s >= 0 ? $", S: {s}" : ", S: n/a";
-
-            WaterMap wm = waterManager.GetWaterMap();
-            if (wm != null)
-            {
-                if (s >= 0)
-                {
-                    WaterBodyType cls = wm.GetBodyClassificationAt(ix, iy);
-                    int bid = wm.GetWaterBodyId(ix, iy);
-                    coords += $", body: {cls} id={bid}";
-                }
-                else
-                {
-                    coords += ", body: n/a";
-                }
-            }
+            WaterManager.CellWaterContext ctx = waterManager.GetCellWaterContext(ix, iy);
+            coords += ctx.SurfaceHeight >= 0 ? $", S: {ctx.SurfaceHeight}" : ", S: n/a";
+            coords += ctx.WaterBodyId != 0
+                ? $", body: {ctx.Classification} id={ctx.WaterBodyId}"
+                : ", body: n/a";
         }
 
         return coords;
@@ -116,6 +104,69 @@ public class GameDebugInfoBuilder : MonoBehaviour
             adjacentToWater ? "adjWater" : ""
         };
         return "Cell: " + string.Join(SectionSeparator, parts).Replace(SectionSeparator + SectionSeparator, SectionSeparator).Trim();
+    }
+
+    /// <summary>
+    /// Names of prefab instances associated with a cell: stored terrain/shore/forest labels, then live GameObject names
+    /// for terrain prefab, forest, and occupied building (deduplicated, insertion order).
+    /// </summary>
+    private static string FormatCellInstantiatedPrefabNames(Cell cell)
+    {
+        if (cell == null) return "";
+
+        var names = new List<string>();
+        void AddUnique(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return;
+            if (!names.Contains(s))
+                names.Add(s);
+        }
+
+        AddUnique(cell.prefabName);
+        AddUnique(cell.secondaryPrefabName);
+        AddUnique(cell.forestPrefabName);
+        if (cell.prefab != null)
+            AddUnique(cell.prefab.name);
+        if (cell.forestObject != null)
+            AddUnique(cell.forestObject.name);
+        if (cell.occupiedBuilding != null)
+            AddUnique(cell.occupiedBuilding.name);
+
+        return names.Count == 0 ? "" : string.Join(", ", names);
+    }
+
+    /// <summary>
+    /// Debug line for the last clicked cell: coordinates (chunk, water S/body when in bounds), terrain height h,
+    /// and instantiated prefab name(s) for that cell.
+    /// </summary>
+    public string GetSelectedPointDebugLine(Vector2 selectedPoint)
+    {
+        ResolveRefsIfNeeded();
+        int sx = (int)selectedPoint.x;
+        int sy = (int)selectedPoint.y;
+        if (sx < 0 || sy < 0)
+            return "";
+
+        var sb = new StringBuilder("selectedPoint: ");
+        sb.Append(GetCoordinatesLine(selectedPoint));
+
+        if (gridManager == null)
+            return sb.ToString();
+
+        Cell cell = gridManager.GetCell(sx, sy);
+        if (cell == null)
+            return sb.ToString();
+
+        int h = cell.GetCellInstanceHeight();
+        if (terrainManager != null && terrainManager.GetHeightMap() != null)
+            h = terrainManager.GetHeightMap().GetHeight(sx, sy);
+        sb.Append(SectionSeparator).Append("h:").Append(h);
+
+        string prefabNames = FormatCellInstantiatedPrefabNames(cell);
+        if (!string.IsNullOrEmpty(prefabNames))
+            sb.Append(SectionSeparator).Append("prefabs: ").Append(prefabNames);
+
+        return sb.ToString();
     }
 
     /// <summary>
@@ -199,7 +250,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
 
     /// <summary>
     /// Returns the full debug text for the current cursor position: coordinates, cell under cursor,
-    /// selectedPoint (last clicked grid cell), and (if a building is selected) building placement info.
+    /// selectedPoint (last clicked grid cell: coords, h, prefab names), and (if a building is selected) building placement info.
     /// Use this for the main debug panel.
     /// </summary>
     /// <param name="gridPosition">Current cursor grid position.</param>
@@ -217,7 +268,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
         int sx = (int)selectedPoint.x;
         int sy = (int)selectedPoint.y;
         if (sx >= 0 && sy >= 0)
-            parts.Add("selectedPoint: " + GetCoordinatesLine(selectedPoint));
+            parts.Add(GetSelectedPointDebugLine(selectedPoint));
 
         if (uiManager != null && uiManager.GetSelectedBuilding() != null)
         {

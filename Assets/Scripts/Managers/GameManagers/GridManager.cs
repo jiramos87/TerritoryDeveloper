@@ -1311,10 +1311,17 @@ public class GridManager : MonoBehaviour, IGridManager
     /// </summary>
     /// <param name="gridPos">Grid coordinates of the cell.</param>
     /// <param name="height">New height value to assign.</param>
-    public void SetCellHeight(Vector2 gridPos, int height)
+    /// <param name="skipWaterMembershipRefresh">When true, skips <see cref="WaterManager.OnLandCellHeightCommitted"/> (e.g. <see cref="TerrainManager.UpdateTileElevation"/> finishes membership in a finally block).</param>
+    public void SetCellHeight(Vector2 gridPos, int height, bool skipWaterMembershipRefresh = false)
     {
         Cell cell = cellArray[(int)gridPos.x, (int)gridPos.y];
         cell.SetCellInstanceHeight(height);
+        if (skipWaterMembershipRefresh)
+            return;
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        if (waterManager != null)
+            waterManager.OnLandCellHeightCommitted((int)gridPos.x, (int)gridPos.y);
     }
 
     void DestroyPreviousZoning(GameObject cell)

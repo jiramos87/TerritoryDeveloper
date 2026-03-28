@@ -11386,8 +11386,8 @@ MonoBehaviour:
   eastCliffWallPrefab: {fileID: 2327040077204098500, guid: 337d8c8750a3d4f8a8d81b50cb920d62, type: 3}
   northCliffWallPrefab: {fileID: 0}
   westCliffWallPrefab: {fileID: 0}
-  cliffWaterSouthPrefab: {fileID: 0}
-  cliffWaterEastPrefab: {fileID: 0}
+  cliffWaterSouthPrefab: {fileID: 2592380460837676270, guid: c8a20c30342af4b37ac5f1b0bd525582, type: 3}
+  cliffWaterEastPrefab: {fileID: 7256048085243564125, guid: 3ad688078476843b6b2bdd53c2947bee, type: 3}
   cliffWallPivotDownHeightSteps: 1.5
   cliffWallSouthFaceNudgeTileWidthFraction: 1
   cliffWallSouthFaceNudgeTileHeightFraction: 1
@@ -16827,7 +16827,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -260.9948, y: -10.571716}
+  m_AnchoredPosition: {x: -260.99478, y: -10.571716}
   m_SizeDelta: {x: -521.9894, y: -455.8174}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1664159913

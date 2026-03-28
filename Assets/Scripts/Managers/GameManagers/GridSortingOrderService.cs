@@ -42,7 +42,7 @@ namespace Territory.Core
             foreach (Transform child in cellGo.transform)
             {
                 GameObject go = child.gameObject;
-                if (grid.terrainManager.IsWaterSlopeObject(go) || grid.terrainManager.IsBayObject(go))
+                if (grid.terrainManager.IsWaterSlopeObject(go) || grid.terrainManager.IsShoreBayObject(go))
                     continue;
 
                 Zone zone = go.GetComponent<Zone>();
@@ -89,8 +89,8 @@ namespace Territory.Core
                 int order;
                 if (grid.terrainManager.IsWaterSlopeObject(child))
                     order = grid.terrainManager.CalculateWaterSlopeSortingOrder(x, y);
-                else if (grid.terrainManager.IsBayObject(child))
-                    order = grid.terrainManager.CalculateBayShoreSortingOrder(x, y);
+                else if (grid.terrainManager.IsShoreBayObject(child))
+                    order = grid.terrainManager.CalculateShoreBaySortingOrder(x, y);
                 else if (cell.forestObject != null && cell.forestObject == child)
                     order = terrainOrder + 5;
                 else

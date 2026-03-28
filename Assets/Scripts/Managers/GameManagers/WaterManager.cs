@@ -16,7 +16,7 @@ namespace Territory.Terrain
 /// Legacy sea-level threshold remains for paint tool / old save restore. Coordinates with GridManager,
 /// TerrainManager, and ZoneManager. <see cref="LakeFillSettings"/> are created in code (not Inspector) until terrain UI exists.
 /// </summary>
-public class WaterManager : MonoBehaviour
+public partial class WaterManager : MonoBehaviour
 {
     public GridManager gridManager;
     public TerrainManager terrainManager;
@@ -153,7 +153,7 @@ public class WaterManager : MonoBehaviour
         var rnd = new System.Random(seed ^ unchecked((int)0xFEEDBEEF));
         TestRiverGenerator.Generate(this, terrainManager, gridManager, rnd, segmentBedWidths);
         waterMap.MergeAdjacentBodiesWithSameSurface();
-        UpdateWaterVisuals(expandLakeShoreSecondRing: true, skipMultiBodySurfacePasses: true);
+        UpdateWaterVisuals(expandShoreRefreshSecondRing: true, skipMultiBodySurfacePasses: true);
         gridManager.InvalidateRoadCache();
     }
 
@@ -170,7 +170,7 @@ public class WaterManager : MonoBehaviour
         var rnd = new System.Random(seed ^ unchecked((int)0xBADC0DE1));
         ProceduralRiverGenerator.Generate(this, terrainManager, gridManager, rnd);
         waterMap.MergeAdjacentBodiesWithSameSurface();
-        UpdateWaterVisuals(expandLakeShoreSecondRing: true);
+        UpdateWaterVisuals(expandShoreRefreshSecondRing: true);
         gridManager.InvalidateRoadCache();
     }
 
@@ -378,6 +378,7 @@ public class WaterManager : MonoBehaviour
             && classificationForLegacyPath != WaterBodyType.River)
         {
             cellComponent.waterBodyType = WaterBodyType.Sea;
+            cellComponent.waterBodyId = waterMap.GetWaterBodyId(x, y);
             Transform first = cell.transform.GetChild(0);
             if (first != null)
             {
@@ -456,6 +457,7 @@ public class WaterManager : MonoBehaviour
             cellComponent.waterBodyType = cls;
         else
             cellComponent.waterBodyType = terrainHeight <= seaLevel ? WaterBodyType.Sea : WaterBodyType.Lake;
+        cellComponent.waterBodyId = waterMap.GetWaterBodyId(x, y);
     }
 
     // Rest of the existing WaterManager methods remain the same
@@ -484,6 +486,7 @@ public class WaterManager : MonoBehaviour
         // Update the cell's zone type to grass
         cellComponent.zoneType = Zone.ZoneType.Grass;
         cellComponent.waterBodyType = WaterBodyType.None;
+        cellComponent.waterBodyId = 0;
         cellComponent.secondaryPrefabName = "";
 
         // Place grass tile
@@ -503,17 +506,19 @@ public class WaterManager : MonoBehaviour
 
         // Set sorting order
         gridManager.SetTileSortingOrder(grassTile, Zone.ZoneType.Grass);
+
+        OnLandCellHeightCommitted(x, y);
     }
 
     /// <summary>
     /// Refreshes every water cell prefab and water–water cascade cliffs. Unless <paramref name="skipMultiBodySurfacePasses"/> is true: Pass A + B (§12.7) bed normalization, then junction merge,
     /// then lake–river high/low fallback (dry rim at <c>S</c> where Pass A/B are skipped for lakes), then <see cref="PlaceWater"/>,
-    /// <see cref="TerrainManager.RefreshWaterCascadeCliffs"/>, and <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> when
+    /// <see cref="TerrainManager.RefreshWaterCascadeCliffs"/>, and <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> when
     /// depression-fill is enabled, Pass B merged any junction cells, or the fallback ran (BUG-45).
     /// </summary>
-    /// <param name="expandLakeShoreSecondRing">When true, expands the land shore refresh halo (procedural river confluences).</param>
+    /// <param name="expandShoreRefreshSecondRing">When true, expands the land shore refresh halo (procedural river confluences).</param>
     /// <param name="skipMultiBodySurfacePasses">When true, skips Pass A/B (§12.7 bed normalization and junction merge). Use after QA test river so intentional multi-surface segments are not merged into the lowest pool.</param>
-    public void UpdateWaterVisuals(bool expandLakeShoreSecondRing = false, bool skipMultiBodySurfacePasses = false)
+    public void UpdateWaterVisuals(bool expandShoreRefreshSecondRing = false, bool skipMultiBodySurfacePasses = false)
     {
         if (waterMap == null || gridManager == null) return;
 
@@ -558,21 +563,23 @@ public class WaterManager : MonoBehaviour
             }
         }
 
+        SyncAllOpenWaterCellsBodyIdsFromMap();
+
         if (terrainManager == null)
             terrainManager = FindObjectOfType<TerrainManager>();
         if (terrainManager != null)
             terrainManager.RefreshWaterCascadeCliffs(this);
 
-        if (terrainManager != null && (useLakeDepressionFill || junctionMerged || lakeRiverFallback || expandLakeShoreSecondRing))
+        if (terrainManager != null && (useLakeDepressionFill || junctionMerged || lakeRiverFallback || expandShoreRefreshSecondRing))
         {
-            terrainManager.RefreshLakeShoreAfterLakePlacement(this, expandSecondChebyshevRing: expandLakeShoreSecondRing || junctionMerged || lakeRiverFallback);
+            terrainManager.RefreshShoreTerrainAfterWaterUpdate(this, expandSecondChebyshevRing: expandShoreRefreshSecondRing || junctionMerged || lakeRiverFallback);
             if (lakeRiverFallback && lakeRiverRimCells != null && lakeRiverRimCells.Count > 0)
                 ReapplyLakeRiverFallbackRimTerrain(lakeRiverRimCells, hm);
         }
     }
 
     /// <summary>
-    /// Re-applies logical surface height and terrain after <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> —
+    /// Re-applies logical surface height and terrain after <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> —
     /// <see cref="TerrainManager.ClampShoreLandHeightsToAdjacentWaterSurface"/> can pull rim cells toward the lower pool&apos;s <c>S</c>.
     /// </summary>
     private void ReapplyLakeRiverFallbackRimTerrain(List<(int x, int y, int lakeSurface)> lakeRiverRimCells, HeightMap hm)
@@ -593,6 +600,7 @@ public class WaterManager : MonoBehaviour
             {
                 cell.zoneType = Zone.ZoneType.Grass;
                 cell.waterBodyType = WaterBodyType.None;
+                cell.waterBodyId = 0;
             }
         }
     }

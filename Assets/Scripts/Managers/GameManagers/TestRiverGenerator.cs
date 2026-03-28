@@ -176,8 +176,8 @@ namespace Territory.Terrain
         private sealed class TestCrossSection
         {
             public readonly List<Vector2Int> Bed = new List<Vector2Int>(4);
-            public Vector2Int LeftShore;
-            public Vector2Int RightShore;
+            public Vector2Int LeftBank;
+            public Vector2Int RightBank;
             public bool HasLeft;
             public bool HasRight;
             public int AppliedBedHeight = -1;
@@ -188,11 +188,11 @@ namespace Territory.Terrain
             public IEnumerable<Vector2Int> AllCorridorCells()
             {
                 if (HasLeft)
-                    yield return LeftShore;
+                    yield return LeftBank;
                 foreach (Vector2Int p in Bed)
                     yield return p;
                 if (HasRight)
-                    yield return RightShore;
+                    yield return RightBank;
             }
         }
 
@@ -245,12 +245,12 @@ namespace Territory.Terrain
                     sec.Bed.Add(cell);
                 else if (d == left)
                 {
-                    sec.LeftShore = cell;
+                    sec.LeftBank = cell;
                     sec.HasLeft = true;
                 }
                 else if (d == right)
                 {
-                    sec.RightShore = cell;
+                    sec.RightBank = cell;
                     sec.HasRight = true;
                 }
             }
@@ -343,10 +343,10 @@ namespace Territory.Terrain
                     continue;
 
                 int bankH = hBed + 1;
-                if (sec.HasLeft && !wm.IsWater(sec.LeftShore.x, sec.LeftShore.y))
-                    hm.SetHeight(sec.LeftShore.x, sec.LeftShore.y, bankH);
-                if (sec.HasRight && !wm.IsWater(sec.RightShore.x, sec.RightShore.y))
-                    hm.SetHeight(sec.RightShore.x, sec.RightShore.y, bankH);
+                if (sec.HasLeft && !wm.IsWater(sec.LeftBank.x, sec.LeftBank.y))
+                    hm.SetHeight(sec.LeftBank.x, sec.LeftBank.y, bankH);
+                if (sec.HasRight && !wm.IsWater(sec.RightBank.x, sec.RightBank.y))
+                    hm.SetHeight(sec.RightBank.x, sec.RightBank.y, bankH);
             }
         }
 

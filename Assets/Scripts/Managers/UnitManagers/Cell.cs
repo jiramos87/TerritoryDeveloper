@@ -59,6 +59,12 @@ public class Cell : MonoBehaviour
     public WaterBodyType waterBodyType = WaterBodyType.None;
 
     /// <summary>
+    /// <see cref="Territory.Terrain.WaterBody.id"/> for open water and dry shoreline membership (0 = none).
+    /// For registered water cells, must match <see cref="Territory.Terrain.WaterMap"/> at this coordinate.
+    /// </summary>
+    public int waterBodyId;
+
+    /// <summary>
     /// Logical cardinal cliff faces (N/S/E/W). Set when a risco exists toward that neighbor even if prefabs are skipped
     /// (hidden north/west faces or underwater cull).
     /// </summary>
@@ -82,6 +88,7 @@ public class Cell : MonoBehaviour
         this.secondaryPrefabName = cellData.secondaryPrefabName ?? "";
         this.zoneType = (Zone.ZoneType)System.Enum.Parse(typeof(Zone.ZoneType), cellData.zoneType);
         this.waterBodyType = cellData.GetWaterBodyType();
+        this.waterBodyId = cellData.waterBodyId;
         this.occupiedBuildingName = cellData.occupiedBuildingName;
         this.isPivot = cellData.isPivot;
         this.sortingOrder = cellData.sortingOrder;
@@ -358,6 +365,7 @@ public class Cell : MonoBehaviour
         cellData.secondaryPrefabName = secondaryPrefabName ?? "";
         cellData.zoneType = zoneType.ToString();
         cellData.waterBodyType = waterBodyType.ToString();
+        cellData.waterBodyId = waterBodyId;
         cellData.occupiedBuildingName = GetBuildingName();
         if (string.IsNullOrEmpty(cellData.occupiedBuildingName) && prefabName != null)
             cellData.occupiedBuildingName = prefabName;
@@ -407,6 +415,7 @@ public class Cell : MonoBehaviour
         secondaryPrefabName = cellData.secondaryPrefabName ?? "";
         zoneType = (Zone.ZoneType)System.Enum.Parse(typeof(Zone.ZoneType), cellData.zoneType);
         waterBodyType = cellData.GetWaterBodyType();
+        waterBodyId = cellData.waterBodyId;
         occupiedBuildingName = cellData.occupiedBuildingName;
         isPivot = cellData.isPivot;
         height = cellData.height;

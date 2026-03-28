@@ -457,8 +457,8 @@ public class GeographyManager : MonoBehaviour
             int order;
             if (terrainManager.IsWaterSlopeObject(child))
                 order = terrainManager.CalculateWaterSlopeSortingOrder(x, y);
-            else if (terrainManager.IsBayObject(child))
-                order = terrainManager.CalculateBayShoreSortingOrder(x, y);
+            else if (terrainManager.IsShoreBayObject(child))
+                order = terrainManager.CalculateShoreBaySortingOrder(x, y);
             else if (cell.forestObject != null && cell.forestObject == child)
                 order = terrainOrder + 5;
             else
@@ -628,9 +628,9 @@ public class GeographyManager : MonoBehaviour
                     {
                         newSortingOrder = terrainManager.CalculateWaterSlopeSortingOrder(x, y);
                     }
-                    else if (terrainManager != null && terrainManager.IsBayObject(obj))
+                    else if (terrainManager != null && terrainManager.IsShoreBayObject(obj))
                     {
-                        newSortingOrder = terrainManager.CalculateBayShoreSortingOrder(x, y);
+                        newSortingOrder = terrainManager.CalculateShoreBaySortingOrder(x, y);
                     }
                     else if (terrainManager != null && terrainManager.IsSeaLevelWaterObject(obj))
                     {

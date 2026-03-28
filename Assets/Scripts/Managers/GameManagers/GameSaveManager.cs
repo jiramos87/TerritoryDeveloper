@@ -144,6 +144,9 @@ public class GameSaveManager : MonoBehaviour
 
             gridManager.RestoreGrid(saveData.gridData);
 
+            if (waterManager != null)
+                waterManager.MigrateWaterBodyIdsAfterGridRestore();
+
             if (miniMapController != null)
                 miniMapController.RebuildTexture();
 

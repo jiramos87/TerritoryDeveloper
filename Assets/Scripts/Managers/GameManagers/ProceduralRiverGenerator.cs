@@ -11,7 +11,7 @@ namespace Territory.Terrain
     /// Cross-stream <b>bed</b> width (lecho) is 1–3 cells of <b>water</b>; corridor width = bed + 2 (one dry shore strip per side) for terrain refresh and collision with <see cref="RiverBorderMargin"/>.
     /// Each cross-section gets one shared bed height and symmetric bank height; water bodies are split when surface height changes along the path (see <c>isometric-geography-system.md</c> §13.4).
     /// After carving, inner-corner shore continuity is enforced on the bed footprint (see §13.5). Lake/river shore
-    /// land heights are aligned with adjacent water surfaces during <see cref="TerrainManager.RefreshLakeShoreAfterLakePlacement"/> (§2.4.1).
+    /// land heights are aligned with adjacent water surfaces during <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> (§2.4.1).
     /// Bed floor <c>H_bed</c> is <b>non-increasing</b> along the centerline from map entry toward exit so the river never climbs terrain (see §13.4).
     /// Each river picks an axis (N–S vs E–W) and a flow direction along that axis with 50/50 randomness, so entry anchors are equally likely on north, south, west, or east borders (testing cascades from any side).
     /// Centerline and footprint avoid map borders except at designated entry/exit edges (see <see cref="RiverBorderMargin"/>).
@@ -224,12 +224,12 @@ namespace Territory.Terrain
             maxY = Mathf.Min(gh - 1, maxY + 2);
         }
 
-        /// <summary>One perpendicular strip: left shore, bed cells, right shore (see project spec <c>.cursor/specs/isometric-geography-system.md</c> §13.4).</summary>
+        /// <summary>One perpendicular strip: left bank, bed cells, right bank (see project spec <c>.cursor/specs/isometric-geography-system.md</c> §13.4).</summary>
         private sealed class RiverCrossSectionData
         {
             public readonly List<Vector2Int> Bed = new List<Vector2Int>(MaxRiverBedWidth);
-            public Vector2Int LeftShore;
-            public Vector2Int RightShore;
+            public Vector2Int LeftBank;
+            public Vector2Int RightBank;
             public bool HasLeft;
             public bool HasRight;
             /// <summary>HeightMap floor under water after carve; <c>-1</c> if section skipped.</summary>
@@ -240,11 +240,11 @@ namespace Territory.Terrain
             public IEnumerable<Vector2Int> AllCorridorCells()
             {
                 if (HasLeft)
-                    yield return LeftShore;
+                    yield return LeftBank;
                 foreach (Vector2Int p in Bed)
                     yield return p;
                 if (HasRight)
-                    yield return RightShore;
+                    yield return RightBank;
             }
         }
 
@@ -289,12 +289,12 @@ namespace Territory.Terrain
                     sec.Bed.Add(cell);
                 else if (d == left)
                 {
-                    sec.LeftShore = cell;
+                    sec.LeftBank = cell;
                     sec.HasLeft = true;
                 }
                 else if (d == right)
                 {
-                    sec.RightShore = cell;
+                    sec.RightBank = cell;
                     sec.HasRight = true;
                 }
             }
@@ -355,10 +355,10 @@ namespace Territory.Terrain
                     continue;
 
                 int bankH = hBed + 1;
-                if (sec.HasLeft && !wm.IsWater(sec.LeftShore.x, sec.LeftShore.y))
-                    hm.SetHeight(sec.LeftShore.x, sec.LeftShore.y, bankH);
-                if (sec.HasRight && !wm.IsWater(sec.RightShore.x, sec.RightShore.y))
-                    hm.SetHeight(sec.RightShore.x, sec.RightShore.y, bankH);
+                if (sec.HasLeft && !wm.IsWater(sec.LeftBank.x, sec.LeftBank.y))
+                    hm.SetHeight(sec.LeftBank.x, sec.LeftBank.y, bankH);
+                if (sec.HasRight && !wm.IsWater(sec.RightBank.x, sec.RightBank.y))
+                    hm.SetHeight(sec.RightBank.x, sec.RightBank.y, bankH);
             }
         }
 

@@ -33,7 +33,7 @@ Fix broken visuals where two **registered** water cells meet on a **cardinal** e
 2. **`waterMap.ApplyWaterSurfaceJunctionMerge(hm, gridManager, …)`** — Pass B (new). Must be **idempotent**.  
 3. Existing loop: `PlaceWater` for all water cells.  
 4. **`terrainManager.RefreshWaterCascadeCliffs(this)`** — extend if upper **diagonal** shores need cliff children.  
-5. Call existing **shore refresh** for a **dirty region** covering Pass B cells + Moore halo (reuse `RefreshLakeShoreAfterLakePlacement` patterns or a thin wrapper).
+5. Call existing **shore refresh** for a **dirty region** covering Pass B cells + Moore halo (reuse `RefreshShoreTerrainAfterWaterUpdate` patterns or a thin wrapper).
 
 **Do not** run Pass B after `PlaceWater` without a second full refresh (user chose **pre–PlaceWater**).
 
@@ -73,7 +73,7 @@ Fix broken visuals where two **registered** water cells meet on a **cardinal** e
 ### Phase 6 — Terrain and cell refresh
 
 - Collect **affected cells** from Pass B; expand by **1–2 Chebyshev rings** for land shores.  
-- Call **`RefreshLakeShoreAfterLakePlacement`**-style updates (or factor a **`RefreshShoresInBounds`**) so **rim cliffs** and **ordinary slopes** stay coherent with §2.4.1 / §5.6.1.
+- Call **`RefreshShoreTerrainAfterWaterUpdate`**-style updates (or factor a **`RefreshShoresInBounds`**) so **rim cliffs** and **ordinary slopes** stay coherent with §2.4.1 / §5.6.1.
 
 ### Phase 7 — Generators and init
 
