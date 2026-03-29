@@ -1,30 +1,25 @@
 # Isometric Geography System — Technical Specification
 
-> **Status:** **Canonical specification** for isometric geography in this project (single source of truth for definitions and mechanisms listed in §0.1). Keep it aligned with `TerrainManager`, `WaterManager`, `GridManager`, and related helpers; prefer updating this file over scattering duplicate rules.
-> **Audience:** AI agents and developers working on terrain, roads, water, sorting order, or any system that interacts with the isometric grid.
-> **Related:** `ARCHITECTURE.md` (persistence pipeline summary, init order). **Shore / cliff / water–water cascades:** **[BUG-42](../../BACKLOG.md)** completed 2026-03-26 (merged **BUG-33** + **BUG-41**). **Multi-body junction merge, bed alignment, cascades:** **[BUG-45](../../BACKLOG.md)** completed 2026-03-27 — rules in **§12.7** / **§5.6.2**; implementation plan **[`docs/water-junction-merge-implementation-plan.md`](../../docs/water-junction-merge-implementation-plan.md)**. **Save/load building sorting:** §7.4; **[BUG-34](../../BACKLOG.md)** / **[BUG-35](../../BACKLOG.md)** completed 2026-03-22. **Cliff art alignment + foreground-water sort cap:** **[BUG-39](../../BACKLOG.md)** / **[BUG-40](../../BACKLOG.md)** completed 2026-03-24.
+> **Canonical spec** for isometric geography (single source of truth). See `ARCHITECTURE.md` for init order and persistence.
 
 ## 0. Canonical scope and doc hierarchy
 
 ### 0.1 What this spec owns
 
-- Grid ↔ world math, direction naming, and neighbor deltas (§1).
-- `HeightMap` semantics, sync with `Cell.height`, water **surface** height vs **visual** placement (§2).
-- Land slope types and `DetermineSlopePrefab` / `GetTerrainSlopeTypeAt` (§3–4.1).
-- Water-shore eligibility, neighbor tests used in code, and `DetermineWaterShorePrefabs` decision order (§4.2, §5.8–5.9).
+- Grid ↔ world math, direction naming, neighbor deltas (§1).
+- `HeightMap` semantics, `Cell.height` sync, water surface vs visual placement (§2).
+- Land slope types and slope determination algorithm (§3–4.1).
+- Water-shore eligibility, neighbor tests, shore prefab decision order (§4.2, §5.8–5.9).
 - Layered model: open water, water-shore art, cliff stacks, suppression rules (§5.6–5.7).
-- Terrain-related **sorting** constants and formulas; load/save visual ordering summary (§7).
-- Terraform modes affecting height (§8), roads on slopes (§9), pathfinding costs (§10).
-- Code → concept map (§11).
-- Water map, lake generation, persistence (§12), river junction geometry / brinks (§12.8), procedural rivers (§13), road/interstate/bridge validation (§14), lake-edge engineering notes (§15).
+- Sorting constants and formulas; load/save visual ordering (§7).
+- Terraform modes (§8), roads on slopes (§9), pathfinding costs (§10).
+- Water map, lake generation, persistence (§11), river junction geometry / brinks (§11.8), procedural rivers (§12), road/interstate/bridge validation (§13), engineering notes (§14).
 
 ### 0.2 What lives elsewhere
 
 | Concern | Document |
 |---------|----------|
-| UI design system (HUD, toolbar, components) | `docs/ui-design-system-project.md`, `docs/ui-design-system-context.md`, `.cursor/specs/ui-design-system.md` |
-
-**`.cursor/specs/` policy:** Only **long-lived system specs** live here (`isometric-geography-system.md`, `ui-design-system.md`). Do not add bug write-ups, agent prompts, or one-off fix plans — those belong in `BACKLOG.md` while open and are **deleted after completion** to avoid stale context (see `AGENTS.md`).
+| UI design system | `.cursor/specs/ui-design-system.md` |
 
 ---
 
@@ -32,7 +27,7 @@
 
 ### 1.1 Coordinate System
 
-The game uses a **diamond (isometric) projection** where logical grid coordinates `(x, y)` map to screen-space (world) positions:
+Diamond (isometric) projection — logical `(x, y)` → world:
 
 ```
 worldX = (x - y) * (tileWidth / 2)
@@ -42,14 +37,12 @@ worldY = (x + y) * (tileHeight / 2) + heightOffset
 | Constant | Value | Notes |
 |----------|-------|-------|
 | `tileWidth` | 1.0 | Full diamond width in world units |
-| `tileHeight` | 0.5 | Diamond height (half of width due to isometric squash) |
+| `tileHeight` | 0.5 | Half of width (isometric squash) |
 | `heightOffset` | `(h - 1) * 0.25` | Vertical shift per height level above base (h=1) |
 
-Grid origin `(0, 0)` is at the **bottom corner** of the diamond. The grid extends to `(width-1, height-1)`.
+Grid origin `(0, 0)` is the **bottom corner** of the diamond; extends to `(width-1, height-1)`.
 
 ### 1.2 Direction Convention
-
-Cardinal and diagonal directions map to grid deltas as follows. This convention is used consistently across `TerrainManager`, `TerraformingService`, `RoadPrefabResolver`, and `GridPathfinder`.
 
 | Direction | Grid Delta (Δx, Δy) | Screen Appearance |
 |-----------|---------------------|-------------------|
@@ -62,11 +55,9 @@ Cardinal and diagonal directions map to grid deltas as follows. This convention 
 | **SouthEast** | `(-1, -1)` | Down ↓ |
 | **SouthWest** | `(-1, +1)` | Left ← |
 
-> **Mnemonic:** `+x` = toward top-right of screen (North). `+y` = toward top-left (West). Grid x increases "into the screen" to the right; grid y increases "into the screen" to the left.
+> **Mnemonic:** `+x` = toward top-right (North). `+y` = toward top-left (West).
 
 ### 1.3 Inverse Conversion (World → Grid)
-
-`GridManager.GetGridPosition(worldPoint)` converts screen clicks to grid coordinates:
 
 ```
 posX = worldPoint.x / (tileWidth / 2)
@@ -75,7 +66,7 @@ gridX = round((posY + posX) / 2)
 gridY = round((posY - posX) / 2)
 ```
 
-For height-aware picking, `GetMouseGridCell` performs screen-space hit testing against neighboring cells (3×3 candidates) using sprite bounds, selecting the cell with the highest sorting order whose screen rect contains the cursor.
+Height-aware picking tests a 3×3 candidate area, selecting the cell with the highest sorting order whose sprite bounds contain the cursor.
 
 ---
 
@@ -83,52 +74,45 @@ For height-aware picking, `GetMouseGridCell` performs screen-space hit testing a
 
 ### 2.1 HeightMap
 
-`HeightMap` is a plain C# class (not MonoBehaviour) storing an `int[width, height]` array. Each cell has an integer height in `[MIN_HEIGHT=0, MAX_HEIGHT=5]`.
+`HeightMap` stores `int[width, height]`; each cell has height in `[MIN_HEIGHT=0, MAX_HEIGHT=5]`.
 
 | Height | Semantic |
 |--------|----------|
-| 0 | **Sea level** — legacy label for water at lowest index; `SEA_LEVEL = 0`. Registered **lake/river/sea** bodies use **per-body surface height** from `WaterMap` / `WaterBody` (not a single global surface). |
-| 1 | **Base land** — default land elevation. Most flat terrain is h=1 |
+| 0 | **Sea level** — `SEA_LEVEL = 0`. Registered lake/river/sea bodies use **per-body surface height** from `WaterBody`, not a global surface. |
+| 1 | **Base land** — default elevation; most flat terrain |
 | 2–5 | **Elevated land** — hills, mountains, plateaus |
 
-Height affects three things:
-1. **World Y position** — each level adds `tileHeight / 2 = 0.25` world units upward
-2. **Sorting order** — higher terrain renders on top of lower terrain at the same depth
-3. **Slope detection** — any height difference to an 8-neighbor triggers slope prefab selection
+Height affects: (1) **world Y** — +0.25 per level, (2) **sorting order** — higher renders atop lower at same depth, (3) **slope detection** — any Δh to an 8-neighbor triggers slope prefab selection.
 
 ### 2.2 Height Generation
 
-The initial 40×40 map uses a **hardcoded template** (`GetOriginal40x40Heights()` in `TerrainManager`). For grids larger than 40×40, extended cells use **dual-octave Perlin noise** blended smoothly at the 40-cell border (`FillExtendedTerrainProcedural`). Procedural lakes (circular `h=0` patches) and rivers (downhill-flowing `h=0` paths) are stamped on the extended terrain.
+The initial 40×40 map uses a hardcoded template. Grids larger than 40×40 extend with **dual-octave Perlin noise** blended at the 40-cell border. Procedural lakes (circular h=0 patches) and rivers (downhill h=0 paths) are stamped on extended terrain.
 
 ### 2.3 Height Constraint
 
-The terrain system enforces a **maximum height difference of 1** between any two cardinal neighbors for valid terrain. Greater differences are displayed with cliff walls but can cause visual artifacts (black voids). The `PathTerraformPlan.ValidateNoHeightDiffGreaterThanOne()` validation rejects terraform plans that would violate this constraint.
+Max **|Δh| = 1** between cardinal neighbors for valid terrain. Greater differences display with cliff walls but may cause visual artifacts. Terraform plans reject violations via height-diff validation.
 
-**Depression-fill bowls and procedural lakes:** Intentional **lake basins** may use **|Δh| > 1** across the bowl wall in some templates; those cases rely on **cliff stacks** (`PlaceCliffWallStack`) and shore rules rather than rejecting the height grid. Do not assume every map satisfies the soft guideline everywhere.
+**Exception:** Intentional lake basins may use |Δh| > 1 across bowl walls; those rely on cliff stacks and shore rules.
 
-### 2.4 Height authority and procedural water (rivers / lakes)
+### 2.4 Height authority and procedural water
 
-During **initial geography generation** (rivers and lakes), **`HeightMap` is the source of truth** for integer terrain height at the point each procedural step runs. **`Cell.height`** at `(x, y)` **must stay in sync** with `HeightMap[x, y]` whenever either is written by terraform or water-related carving.
+During geography generation, **`HeightMap` is source of truth**. `Cell.height` must stay in sync with `HeightMap[x, y]` whenever either is written. Water surface height (per `WaterBody` / river segment) is the terrain height hosting that water after carving.
 
-**Water surface height** (per `WaterBody` / river segment) is the **terrain height that hosts that water** at that location after coherent carving and terraform: bowl or channel floor and body registration must agree with **FEAT-37** visuals (`WaterManager`, `WaterMap`; see §12). When a **lake fallback** or similar path terraform raises or lowers terrain so a body sits on a consistent surface, **both** `HeightMap` and **`Cell`** data **must** be updated together — no divergent “display only” height on the cell.
+**Invariants:** (1) `HeightMap` and `Cell.height` never diverge. (2) Fallback/forced paths update the same fields as depression-fill. (3) Fallback lake border corners have heights consistent with the lake surface.
 
-**Fallback coherence:** Artificial lake fallback and forced river paths must update the **same height fields** as depression-fill paths so downstream logic (shore selection, `GetCliffWallDrop*`, `PlaceCliffWalls`) sees one neighborhood.
+#### 2.4.1 Shore band height coherence
 
-**Known pitfall ([BUG-42](../../BACKLOG.md)):** **Border corner cells** (concave/convex) of a fallback lake can incorrectly remain at an **elevated neighbor** height instead of the **lake surface** height, breaking shore and cliff prefab selection. Terraform must leave **`HeightMap` and `Cell.height`** consistent with the intended **surface** at those cells.
+Land cells bordering water stay on the **same vertical band** as the body's surface so shore art aligns with water visuals (logical surface **S**, visual reference **V = max(MIN_HEIGHT, S − 1)**).
 
-#### 2.4.1 Shore band height coherence (water-adjacent land)
+**Invariant:** For any dry cell Moore-adjacent to water, `HeightMap` must not exceed the minimum logical surface among adjacent water cells. In practice, shore refresh clamps: if `h > min(S)`, height is lowered to `min(S)` (never raised).
 
-Land cells that border water must stay on the **same vertical band** as that body’s surface so `PlaceWaterShore` can align the cell transform with the water visual (FEAT-37: logical surface **`S`**, water art uses **`V = max(MIN_HEIGHT, S − 1)`**). **Plateau** heights inherited from pre-carve terrain must **not** remain on those cells when they sit in the **Moore shore ring** (dry cells with at least one water neighbor).
+**Shore prefab gate:** `h ≤ V + MAX_LAND_HEIGHT_ABOVE_ADJACENT_WATER_SURFACE_FOR_SHORE_PREFABS` (default MAX=1). Higher cells use ordinary slopes + cliff walls (rim).
 
-**Invariant (lakes / sea / rivers):** For any dry cell **Moore-adjacent** to water, **`HeightMap` must not exceed** the **minimum logical surface** among its adjacent water cells unless intentional rim design elsewhere requires it. In practice, **`TerrainManager.RefreshShoreTerrainAfterWaterUpdate`** runs **`ClampShoreLandHeightsToAdjacentWaterSurface`**: if **`h > min(S)`** over adjacent water, **`HeightMap`** is **lowered** to **`min(S)`** (never raised). That matches artificial-lake diagonal rim coercion (`WaterMap.CoerceDiagonalCornerRimForArtificialLake`) and generalizes refresh after procedural rivers.
-
-**Prefab gate:** **`IsLandEligibleForWaterShorePrefabs`** requires **`h ≤ V + MAX`** (default **`MAX = 1`**, **`TerrainManager.MAX_LAND_HEIGHT_ABOVE_ADJACENT_WATER_SURFACE_FOR_SHORE_PREFABS`**) so water-shore art is not selected for land **two or more** steps above the water **visual** reference. Higher cells use **ordinary slopes + `PlaceCliffWalls`** (rim).
-
-**Rivers:** Along a run with one carved bed height and one logical surface, shore dry cells at that run should share one **bank** height (see §13.4–13.5); the clamp plus §13.5 promotion keep **`HeightMap`** consistent with **`PlaceWaterShore`** / body assignment.
+**Rivers:** Shore dry cells share one bank height per run; clamp + promotion (§12.5) keep `HeightMap` consistent.
 
 ### 2.5 Minimal neighbor refresh after lake shore
 
-After **`RefreshShoreTerrainAfterWaterUpdate`** (or equivalent) updates shore tiles for a water body, **recompute** the affected **shore land cell(s)** and, for each, **audit only the single land neighbor** immediately **outward** from the water along the relevant cardinal (away from the water — **not** a full Moore-neighborhood ring). Expand the refresh radius only if a verified bug requires it.
+After shore terrain update for a water body, recompute affected shore land cells and audit only the single land neighbor immediately outward from water along each relevant cardinal. Expand refresh radius only if a verified bug requires it.
 
 ---
 
@@ -136,46 +120,44 @@ After **`RefreshShoreTerrainAfterWaterUpdate`** (or equivalent) updates shore ti
 
 ### 3.1 The TerrainSlopeType Enum
 
-`TerrainSlopeType` (defined in `TerrainManager.cs`) has 13 values:
+13 values:
 
 ```
 Flat,
-North, South, East, West,                                   // 4 orthogonal (cardinal) slopes
-NorthEast, NorthWest, SouthEast, SouthWest,                 // 4 diagonal slopes
-NorthEastUp, NorthWestUp, SouthEastUp, SouthWestUp          // 4 corner (upslope) slopes
+North, South, East, West,
+NorthEast, NorthWest, SouthEast, SouthWest,
+NorthEastUp, NorthWestUp, SouthEastUp, SouthWestUp
 ```
 
 ### 3.2 Naming Convention
 
-**Slope names indicate the direction the slope faces (downhill)**:
-- A `South` slope means the **North neighbor is higher** → the terrain slopes downhill toward the South.
-- A `NorthEast` diagonal slope means the **SouthWest diagonal neighbor is higher**.
-- A `SouthEastUp` corner slope means **both West AND North neighbors are higher** → the cell sits in a concave valley corner opening toward the southeast.
+**Slope names indicate downhill direction:**
+- `South` slope → North neighbor is higher → terrain slopes downhill toward South.
+- `NorthEast` diagonal → SouthWest diagonal neighbor is higher.
+- `SouthEastUp` corner → both West AND North neighbors higher → concave valley opening southeast.
 
 ### 3.3 Slope Categories
 
 #### 3.3.1 Flat
-- **Condition:** All 8 neighbors have the same height as this cell, OR this cell is a local maximum (plateau — no neighbor is higher).
-- **Visual:** Standard grass tile, no elevation change visible.
-- **Prefab:** One of the `grassPrefabs` from `ZoneManager`.
+- **Condition:** All 8 neighbors same height, OR local maximum (plateau).
+- **Visual:** Standard grass tile.
 
 #### 3.3.2 Orthogonal (Cardinal) Slopes — N, S, E, W
-- **Condition:** Exactly one cardinal neighbor is higher; no two adjacent cardinals are both higher.
-- **Visual:** A ramp connecting the lower cell to the higher neighbor along one axis. Occupies the full diamond tile but visually transitions one height level.
-- **Placement:** The slope prefab is placed on the **lower cell** (the cell whose height is less than the neighbor's).
-- **Road compatibility:** Roads can be placed on cardinal slopes using directional slope road prefabs.
+- **Condition:** Exactly one cardinal neighbor higher; no two adjacent cardinals both higher.
+- **Visual:** Ramp on the **lower cell** transitioning one height level.
+- Roads can use directional slope road prefabs.
 
 | Slope | Higher Neighbor | Screen Ramp Direction |
 |-------|----------------|----------------------|
-| North | South `(x-1, y)` | Ramp goes down-left to up-right |
-| South | North `(x+1, y)` | Ramp goes up-right to down-left |
-| East | West `(x, y+1)` | Ramp goes up-left to down-right |
-| West | East `(x, y-1)` | Ramp goes down-right to up-left |
+| North | South `(x-1, y)` | Down-left → up-right |
+| South | North `(x+1, y)` | Up-right → down-left |
+| East | West `(x, y+1)` | Up-left → down-right |
+| West | East `(x, y-1)` | Down-right → up-left |
 
 #### 3.3.3 Diagonal Slopes — NE, NW, SE, SW
-- **Condition:** No cardinal neighbor is higher, but exactly one diagonal neighbor is higher.
-- **Visual:** An angled ramp connecting the cell diagonally to one corner. Visually a wedge-shaped terrain transition.
-- **Road compatibility:** Roads can traverse diagonal slopes; `RoadPrefabResolver` selects the best orthogonal road prefab based on the road's travel axis relative to the diagonal.
+- **Condition:** No cardinal higher, but exactly one diagonal neighbor higher.
+- **Visual:** Wedge-shaped diagonal transition.
+- Roads can traverse; prefab resolver selects the best orthogonal road prefab based on travel axis.
 
 | Slope | Higher Diagonal Neighbor |
 |-------|--------------------------|
@@ -185,16 +167,16 @@ NorthEastUp, NorthWestUp, SouthEastUp, SouthWestUp          // 4 corner (upslope
 | SouthWest | NorthEast `(x+1, y-1)` |
 
 #### 3.3.4 Corner / Upslope Types — NEUp, NWUp, SEUp, SWUp
-- **Condition:** Two **adjacent** cardinal neighbors are both higher (forming a concave corner).
-- **Visual:** The cell sits in a valley between two ascending ridges. Visually a concave corner piece.
-- **Road compatibility:** Roads can traverse corner slopes; `TerraformingService` maps the cardinal ramp type from **path travel and segment height** (`GetPostTerraformSlopeTypeAlongExit`), same as diagonal slopes — not a separate corner-only heuristic (**BUG-30**, scale-with-slopes).
+- **Condition:** Two adjacent cardinal neighbors both higher (concave corner).
+- **Visual:** L-shaped concavity opening away from the two higher neighbors.
+- Roads traverse using the cardinal ramp type from path travel and segment height.
 
 | Slope | Higher Pair | Valley Opens Toward |
 |-------|------------|---------------------|
-| SouthEastUp | West `(x, y+1)` AND North `(x+1, y)` | Southeast ↘ |
-| NorthEastUp | West `(x, y+1)` AND South `(x-1, y)` | Northeast ↗ |
-| SouthWestUp | East `(x, y-1)` AND North `(x+1, y)` | Southwest ↙ |
-| NorthWestUp | East `(x, y-1)` AND South `(x-1, y)` | Northwest ↖ |
+| SouthEastUp | West + North | Southeast ↘ |
+| NorthEastUp | West + South | Northeast ↗ |
+| SouthWestUp | East + North | Southwest ↙ |
+| NorthWestUp | East + South | Northwest ↖ |
 
 ---
 
@@ -202,159 +184,126 @@ NorthEastUp, NorthWestUp, SouthEastUp, SouthWestUp          // 4 corner (upslope
 
 ### 4.1 Land Slope Selection (`DetermineSlopePrefab`)
 
-`TerrainManager.DetermineSlopePrefab(x, y)` determines which slope prefab to use for a land cell. It reads the 8-neighbor heights and applies a **priority cascade**:
+Reads 8-neighbor heights and applies a **priority cascade**:
 
-1. **Corner/upslope check (highest priority):** If two adjacent cardinal neighbors are higher → return corner upslope prefab.
-   - West+North higher → `SouthEastUp` prefab
-   - West+South higher → `NorthEastUp` prefab
-   - East+North higher → `SouthWestUp` prefab
-   - East+South higher → `NorthWestUp` prefab
+1. **Corner/upslope (highest priority):** Two adjacent cardinal neighbors higher → corner upslope prefab.
+   - West+North → `SouthEastUp`; West+South → `NorthEastUp`
+   - East+North → `SouthWestUp`; East+South → `NorthWestUp`
+2. **Cardinal slope:** Exactly one cardinal higher → cardinal slope prefab (named by downhill face).
+3. **Diagonal slope (lowest):** No cardinal higher but one diagonal higher → diagonal slope prefab.
+4. **No match → null** (plateau; uses flat grass).
 
-2. **Cardinal slope check:** If exactly one cardinal neighbor is higher → return cardinal slope prefab.
-   - North higher → `South` slope (faces south = downhill)
-   - South higher → `North` slope
-   - East higher → `West` slope
-   - West higher → `East` slope
+### 4.2 Water Shore Slope Selection (`DetermineWaterShorePrefabs`)
 
-3. **Diagonal slope check (lowest priority):** If no cardinal is higher but one diagonal is → return diagonal slope prefab.
-   - NW higher → `SouthEast` slope
-   - NE higher → `SouthWest` slope
-   - SW higher → `NorthEast` slope
-   - SE higher → `NorthWest` slope
+Water-shore prefabs apply only when the land cell passes the **surface-height gate**: among 8 neighbors, some water cell exists whose logical surface **S** yields visual reference **V = max(MIN_HEIGHT, S − 1)** such that **h ≤ V + MAX** (default 1). Higher rim land uses ordinary terrain + cliff walls instead.
 
-4. **No match → returns null** (cell is a local maximum/plateau; uses flat grass).
+The same gate drives **one-step cliff suppression** toward water: suppression applies only on shore-band cells; rim plateaus keep a visible cliff segment toward lower shore/water.
 
-### 4.2 Water Slope Selection (`DetermineWaterShorePrefabs`)
+**Two neighbor-test layers:** (1) Surface-height gate — uses water registration + surface-height lookup; `SEA_LEVEL` cells without registration still yield a surface. (2) Shore pattern detection — uses `WaterOrSeaAt` (true if `HeightMap == SEA_LEVEL` or registered water); bits may differ from "registered only" at generator boundaries.
 
-Water-shore prefabs are used only when the land cell passes the **surface-height gate** in `TerrainManager` (`IsLandEligibleForWaterShorePrefabs`): among 8 neighbors, some water/sea cell exists whose logical surface **`S`** yields a **visual reference** **`V = max(MIN_HEIGHT, S − 1)`** (same as `WaterManager.PlaceWater`) such that **`h ≤ V + MAX_LAND_HEIGHT_ABOVE_ADJACENT_WATER_SURFACE_FOR_SHORE_PREFABS`** (default **1**). This is stricter than comparing only to **`S + 1`** on logical surface and matches **§2.4.1** (shore band height coherence). **Higher rim** land (e.g. flat grass one step above a shore tile, not Moore-adjacent to open water) **does not** pass that gate: it uses **ordinary terrain + `PlaceCliffWalls`** instead of water-shore art. The **same gate** drives **one-step cliff suppression** toward water / `IsWaterSlopeCell` (see §5.6.1 / §5.7): suppression applies only on **shore-band** cells; **rim plateaus** keep a **visible** cliff segment (south/east) toward the lower shore/water cell so the vertical face is not left empty (BUG-42).
-
-**Neighbor tests (two layers):**
-
-1. **Surface-height gate** (`IsLandEligibleForWaterShorePrefabs`, `TryGetSurfaceHeightForWaterNeighbor`): uses `WaterManager.IsWaterAt` / `GetWaterSurfaceHeight` where registered; cells at `HeightMap == SEA_LEVEL` without registration still yield a surface for eligibility. This gate decides **shore-band vs rim** (whether water-shore prefabs may run at all).
-2. **Shore pattern detection** inside `DetermineWaterShorePrefabs` uses **`WaterOrSeaAt`**: true if `HeightMap` is `SEA_LEVEL` **or** `WaterManager.IsWaterAt`. Pattern bits can therefore differ from “registered water only” when terrain is `h=0` but not yet in `WaterMap` — a known integration edge case for generators and refresh order.
-
-For eligible land cells, `DetermineWaterShorePrefabs(x, y)` walks a **fixed priority list** (first match wins):
-
-1. **Map-edge shortcuts** — if the cell is on the grid border, pick a cardinal water-slope prefab from whichever border branch applies (avoids missing neighbors).
-2. **Perpendicular cardinal corners (two wet cardinals)** — e.g. South + East both water. Chooses **Bay** vs corner `*SlopeWaterPrefab` using `IsAxisAlignedRectangleCornerWater*` on the diagonal water cell (true = **axis-aligned rectangle outer corner**: no water “beyond” that diagonal along the two outward cardinals) and `HasLandSlopeIgnoringWater` (any **non-water** cardinal higher than this cell → prefer Bay when assigned, else corner slope). If not a rectangle corner and no land-slope signal, prefers **corner `*SlopeWaterPrefab`** over Bay (peninsula / non-rectangular water). When **exactly three** cardinals are water, **two** perpendicular pairs both match: the implementation picks the inner corner using **diagonal water** — if only one of the two candidate diagonals is wet, that quadrant wins; if both or neither, tie-break matches the legacy pairwise order (missing North → try SE then SW; missing South → NE then NW; missing East → SW then NW; missing West → SE then NE).
-3. **Single cardinal water** — branches for **East, then West, then North, then South**, each returning cardinal ramps or `*UpslopeWaterPrefab` combinations when the opposite cardinals are also water in specific patterns. For **North** (resp. **South**) with **no** South (resp. North) opposite strip and **no** East/West cardinal water, the choice is always **pure** `northSlopeWaterPrefab` / `southSlopeWaterPrefab` — including beside rectangular lake corners, where only one of the two water-side diagonals is wet. **`BuildDiagonalOnlyShorePrefabs`** for NE/NW/SE/SW is **not** used in that branch; it remains for step **4** when **no** cardinal water applies and only a diagonal is wet (with the usual `!hasWaterAtSouth` / `!hasWaterAtNorth` guards). The South branch mirrors the East branch for E/W upslopes and E+W both wet → pure south ramp like North with E+W.
-4. **Diagonal-only water** — no cardinal water; only a diagonal is water/sea (with guards such as `!hasWaterAtSouth` / `!hasWaterAtNorth` per direction). Delegates to `BuildDiagonalOnlyShorePrefabs`: rectangle outer corner → **Bay**; else `HasLandSlopeIgnoringWater` → Bay or downslope; else Bay on flat; else **upslope + downslope** pair fallback. **Exception (§12.8):** dry land classified as an **upper-** or **lower-brink** at a **river–river** cardinal surface step forces the diagonal **`*SlopeWaterPrefab`** for that quadrant (no Bay), so cascade corners do not read as a rectangular-lake outer corner.
+For eligible cells, **fixed priority** (first match wins):
+1. **Map-edge shortcuts** — border cell → cardinal water-slope.
+2. **Two wet cardinals** — e.g. S+E. Bay vs corner slope via rectangle-corner test + land-slope signal. Three-cardinal ties break by diagonal wetness and legacy pairwise order.
+3. **Single cardinal water** — E, W, N, S branches; cardinal ramps or upslope combinations. N/S with no opposite strip and no E/W water → pure cardinal shore.
+4. **Diagonal-only water** — rectangle outer corner → Bay; land-slope → Bay or downslope; flat → Bay; else upslope+downslope pair. **Exception (§11.8):** junction brink forces diagonal slope water (no Bay).
 
 ### 4.3 `RequiresSlope` vs Slope Selection
 
-`RequiresSlope(x, y, height)` returns true if **any** of the 8 neighbors has a different height. This determines whether the cell needs slope processing. However, `DetermineSlopePrefab` may still return null if the cell is a **plateau** (all neighbors are lower or equal) — in that case the cell gets flat grass even though `RequiresSlope` was true.
+`RequiresSlope(x, y, height)` returns true if any 8-neighbor has different height. But `DetermineSlopePrefab` may still return null for plateaus (all neighbors lower or equal) — cell gets flat grass.
 
-### 4.4 `GetTerrainSlopeTypeAt` (Public API)
+### 4.4 `GetTerrainSlopeTypeAt`
 
-Returns a `TerrainSlopeType` enum value using the same logic as `DetermineSlopePrefab`. Used by `ForestManager` (slope-aware tree placement), `TerraformingService`, `RoadPrefabResolver`, and road placement validation.
+Returns a `TerrainSlopeType` enum using the same logic as `DetermineSlopePrefab`. Used by forest placement, terraforming, road prefab resolution, and road validation.
 
 ---
 
 ## 5. Geographic Elements
 
 ### 5.1 Flat Terrain (Plains)
-- **HeightMap pattern:** Uniform height across a region (e.g., all cells at h=1).
-- **Visual:** Standard grass tiles, no elevation transitions visible.
-- **Gameplay:** Ideal for building placement (no constraints), road placement, and zoning.
-- **Code:** `PlaceFlatTerrain(x, y)` instantiates a random grass prefab from `ZoneManager.grassPrefabs`.
+- **HeightMap:** Uniform height across a region.
+- **Visual:** Standard grass tiles. Ideal for building, roads, zoning.
 
 ### 5.2 Hills and Mountains
-- **HeightMap pattern:** A region of cells at height h surrounded by cells at h-1. Concentric rings of decreasing height form multi-level hills (e.g., center at h=5, ring at h=4, ring at h=3, etc.).
-- **Visual:** Elevated mass with slope transitions on all perimeter cells. The top is flat (plateau) if multiple cells share the peak height.
-- **Structure:** A hill of height 3 on base terrain h=1 requires: center cells at h=3, a ring of h=2 around them, and a ring of h=1 that receives the slope prefabs facing the h=2 cells. Constraint: max |Δh|=1 between cardinal neighbors means hills must have gradual transitions.
-- **Example from the hardcoded 40×40 map:** Rows 0–6 around column 22–28 form a hill peaking at h=5.
+- **HeightMap:** Region at height h surrounded by h-1. Concentric rings form multi-level hills.
+- **Structure:** Max |Δh|=1 between cardinals → hills require gradual transitions.
 
 ### 5.3 Orthogonal Hillside (Cardinal Slope Line)
-- **HeightMap pattern:** A linear boundary where one row/column is at h and the adjacent row/column is at h+1.
-- **Visual:** A continuous line of cardinal slope tiles (e.g., all `South` slopes) forming a ridge or escarpment along one axis.
-- **Example:** A wall of `South` slope prefabs along x=10 where cells at x=10 are h=1 and cells at x=11 are h=2.
+- Linear boundary where adjacent row/column differs by 1. Continuous line of cardinal slope tiles.
 
 ### 5.4 Diagonal Hillside
-- **HeightMap pattern:** Height increases along a diagonal direction. Only the diagonal neighbor is higher; all cardinal neighbors are at the same height as the cell.
-- **Visual:** A diagonal wedge tile that connects two height levels at a 45° angle to the grid axes.
-- **Rarity:** Less common than cardinal slopes. Occurs at hill corners where the slope transitions from one axis to another.
+- Height increases along a diagonal; only diagonal neighbor higher. Less common; occurs at hill corners.
 
 ### 5.5 Concave Corners (Upslope / Valley)
-- **HeightMap pattern:** A cell where two perpendicular cardinal neighbors are both higher. This creates a "valley corner" — the cell is at the inner junction of two ascending ridges.
-- **Visual:** An L-shaped concavity opening away from the two higher neighbors.
-- **Example:** Cell at h=1 with North neighbor at h=2 and West neighbor at h=2 → `SouthEastUp` prefab.
+- Two perpendicular cardinal neighbors both higher → L-shaped concavity.
 
 ### 5.6 Convex Corners (Diagonal Slope at Hill Corner)
-- **HeightMap pattern:** A cell where only one diagonal neighbor is higher, and no cardinal neighbor is higher. This is the outer corner of a hill.
-- **Visual:** A small wedge connecting the diagonal height transition.
-- **Example:** Cell at h=1, only NW diagonal at h=2 → `SouthEast` diagonal slope prefab.
+- Only one diagonal neighbor higher, no cardinal higher → outer corner wedge.
 
 ### 5.6.1 Lake edges: layered model (water + shore + cliffs)
 
-Treat lake/coast borders as **three cooperating layers**, not one prefab:
+Three cooperating layers:
 
-1. **Open water** lives on **registered water cells** (`WaterManager` / `WaterMap`). Sorting uses the body’s **surface height** (visual placement uses surface − 1 in world space; see FEAT-37 / `WaterManager.PlaceWater`).
-2. **Water-shore art** (cardinal ramps, **Bay** corners, upslope+downslope pairs) is chosen on **land** cells that pass the **surface-height gate** (§4.2): `DetermineWaterShorePrefabs` → `PlaceWaterShore`. Parent is the **land** cell.
-3. **Cliff wall stacks** (`PlaceCliffWalls` / `PlaceCliffWallStack`) are **children of the higher land cell**, along the **shared cardinal edge** toward a lower neighbor, when **rim** escarpments or **Δh > 1** require vertical faces. **Do not** assume four symmetric cliff meshes: only **south** and **east** faces instantiate visible prefabs (§5.7).
+| Layer | Lives on | Rule |
+|-------|----------|------|
+| Open water | Registered water cells | Sorting at body's surface height; visual at surface − 1 |
+| Water-shore art | **Land** cells passing surface-height gate (§4.2) | Cardinal ramps, Bay corners, upslope+downslope pairs |
+| Cliff wall stacks | Children of **higher** land cell | Along shared cardinal edge toward lower; S and E faces only (§5.7) |
 
-**Rim vs shore:** Land within **one height step** of an adjacent water body’s **surface** uses water-shore prefabs where eligible. **Higher rim** cells (e.g. bowl walls above the lake) use **ordinary slopes + cliff stacks** toward lower cells, not water-shore tiles.
+**Rim vs shore:** Land within one height step of adjacent water uses shore art. Higher rim → ordinary slopes + cliff stacks.
 
-**Face ownership (one logical system per cardinal face):** On a **single cardinal face** of a land cell, **do not** combine an independent **`PlaceCliffWallStack`** segment with a **water-shore ramp** that already expresses the **same** vertical drop — that duplicates the cliff read. **Shore prefabs** may **embed** bank or brown cliff art on **one or more** faces as part of the asset; **`PlaceCliffWallStack`** may attach to **other** faces of the same cell.
+**Face ownership:** Do not combine independent cliff stacks with a shore ramp on the same cardinal face — that duplicates the transition. Shore prefabs may embed bank art; cliff stacks attach to other faces.
 
-**One-step suppression (`ShouldSuppressCliffFaceTowardLowerCell`):** Applies only when the **high** cell **would** use water-shore prefabs (`IsLandEligibleForWaterShorePrefabs` is **true**) **and** the lower neighbor is registered **water** or an **`IsWaterSlopeCell`** shore tile — then a **single** height step toward that neighbor does **not** add an extra `PlaceCliffWallStack` on that face (ramp/water art carries the transition). If the **high** cell is **not** shore-eligible (typical **rim plateau** above the shore strip, e.g. land not in the Moore neighborhood of water but one cardinal step above a shore cell), suppression does **not** apply; `ResolveCliffWallDropAfterSuppression` may assign **one** segment toward that water or water-slope neighbor so visible **south/east** cliff prefabs fill the vertical gap. **`Δh ≥ 2`** still uses stacked segments on visible faces regardless. Other rules: `ShouldSuppressCliffTowardCardinalLower` (narrow shore strip), cut-through corridors, underwater segment cull — unchanged.
+**One-step suppression:** Applies only when high cell is shore-eligible AND lower neighbor is water or water-shore. Single Δh skips cliff on that face. Non-eligible rim plateaus keep one cliff segment. Δh ≥ 2 always stacks on visible faces.
 
-**Lake fallback — border corner heights:** When an **artificial lake fallback** terraform runs, **corner** border cells (concave and convex) must have **`HeightMap` / `Cell.height`** consistent with the **lake surface** at that shoreline, not left at an unrelated **elevated dry neighbor** height when continuity with the lake is required.
-
-**Geometric decisions worth remembering:** Cardinal **Δh** drives drop tests. **One-step** duplicate-cliff suppression is **conditional** on shore eligibility (see above). **Δh ≥ 2** stacks segments on **visible** faces. Cliff **sorting** vs **foreground** water neighbors is capped in **`TerrainManager.PlaceCliffWallStack`** (**[BUG-40](../../BACKLOG.md)** completed 2026-03-24). Shore / cascade / multi-body junctions: completed **[BUG-42](../../BACKLOG.md)** (2026-03-26) and **[BUG-45](../../BACKLOG.md)** (2026-03-27). Historical SS notes: §15.
+**Fallback border corners:** Must have `HeightMap`/`Cell.height` consistent with the lake surface.
 
 #### 5.6.2 Water–water cascades (cardinal surface step)
 
-When two **cardinally adjacent** cells are **both** registered water and the **logical surface** of the **higher** cell exceeds the neighbor’s (`S_high > S_low` from `WaterManager.GetWaterSurfaceHeight`), the transition is a **cascade** (no dry shore between). **Cascades exist only on that contact line** between two **distinct** logical surfaces — not from bed roughness alone. **`HeightMap` under water is the bed**; it does **not** define the water **surface**. The surface is **homogeneous per body or river segment** (`SurfaceHeight` + **`PlaceWater`** at one visual plane); beds may vary freely underneath.
+When two cardinally adjacent cells are both registered water and `S_high > S_low`, the transition is a **cascade** (no dry shore between). Cascades exist only between distinct logical surfaces.
 
-**Placement:** **`PlaceCliffWalls` does not run on water cells**; **`TerrainManager.RefreshWaterCascadeCliffs`** (after **`WaterManager.UpdateWaterVisuals`**) places **`cliffWaterSouthPrefab` / `cliffWaterEastPrefab`** for **every** cardinal edge where registered water has a **strictly lower** logical surface (`S_high > S_low`), **except** edges excluded by **§12.7** (Lake involved — **`WaterMap.IsLakeSurfaceStepContactForbidden`**), including along **long** contacts parallel to the high pool (**[BUG-45](../../BACKLOG.md)** completed 2026-03-27). When the **lower** pool is **south** or **east** of the upper cell, stacks parent to the **upper** cell’s **south** or **east** face (same as before). When the **lower** pool is **north** or **west**, the shared visible edge is the **south** face of the northern cell or the **east** face of the western cell — stacks **parent to that lower-pool cell** using the **same** south/east prefabs (**mirror** placement). Same-surface neighbors in the **+x** / **+y** directions do **not** suppress cascades when the shared edge is a **surface step** to lower water. Stack model matches **`PlaceCliffWallStack`** (segment loop, underwater cull toward the **low** cell’s surface on **land** stacks only; water–water cascades skip that cull — **[BUG-45](../../BACKLOG.md)**), sorting cap vs foreground water).
-
-**Anchor and visible faces:** Meshes use **only** `CliffCardinalFace.South` and `CliffCardinalFace.East` (`cliffWaterSouth` / `cliffWaterEast`). The **world Y** anchor always uses the **upper** pool’s visual surface plane (`S_high`). **Dedicated north/west water-cascade prefabs** are **not** used — **west and north** faces on the **upper** cell remain out of scope for interior cells (§5.7); mirror placement covers north/west **lower** neighbors by attaching south/east art on the **opposite** cell along the shared edge.
-
-**Segment count:** **`segmentCount = S_high − S_low`** (logical step). For **world/stack geometry**, the code uses the two cells’ bed heights; if the high bed is not above the low bed, it **synthesizes** a foot height so the stack still spans **`ΔS`** steps (bed alignment at the contact strip is handled separately — §12.7).
-
-**World Y anchor** for the stack matches **`WaterManager.PlaceWater`**: `GetWorldPositionVector` at `visualSurfaceHeight = max(MIN_HEIGHT, S_high − 1)` **plus** `(0, tileHeight × 0.25)`. Assign **`cliffWater*`** prefabs in the **`TerrainManager`** inspector (art matches **`southCliffWallPrefab` / `eastCliffWallPrefab`** geometry).
+| Property | Rule |
+|----------|------|
+| **Visible faces** | South and East only (`cliffWaterSouth`/`cliffWaterEast` prefabs) |
+| **Anchor** | Upper pool's visual surface plane |
+| **Segment count** | `S_high − S_low` (logical step) |
+| **Mirror placement** | When lower pool is N or W, stacks parent to the lower-pool cell using S/E prefabs |
+| **Lake exclusion** | Edges where either body is Lake skip cascades (§11.7 `IsLakeSurfaceStepContactForbidden`) |
+| **Stacks** | Same model as cliff stacks; water–water cascades skip underwater segment cull |
 
 ### 5.7 Cliffs
-- **HeightMap pattern:** Cardinal neighbor height difference > 1 (e.g., cell at h=3, south neighbor at h=1).
-- **Visual (fixed isometric camera):** Each cardinal drop uses **`CliffCardinalFace`** (North/South/East/West) and the matching **prefab** (`GetCliffPrefabForCardinalFace`). **Prefabs are not instantiated** on **north** or **west** faces (`IsCliffCardinalFaceVisibleToCamera`) — those are hidden behind the terrain diamond; **south** and **east** faces (↙ ↘) get sprites. **`Cell.cliffFaces`** still records **N/S/E/W** bits for any cardinal risco (hydrology), even when **N/W** skip meshes.
-- **Code:** `PlaceCliffWalls` evaluates `GetCliffWallDropNorth` / `South` / `East` / `West` from the **high** cell toward lower neighbors, then `ResolveCliffWallDropAfterSuppression` for the non-suppressed path (rim plateau rule, narrow shore, cut-through). `PlaceCliffWallStack` parents segments to that cell; world position uses `GetCliffWallSegmentWorldPositionOnSharedEdge` with inspector **face nudges** and optional **water-shore Y** fraction; underwater segment cull unchanged.
-- **Water / shore:** Water classification uses **`WaterManager.IsWaterAt`**, not raw `SEA_LEVEL` height. For **one-step** drops toward **registered water** or **`IsWaterSlopeCell`**, cliff prefabs are **suppressed only if** the **high** cell passes **`IsLandEligibleForWaterShorePrefabs`** (same gate as `DetermineWaterShorePrefabs`); otherwise the **rim plateau** keeps **one** cliff segment toward that lower cell where visible (see §5.6.1). **Escarpments (Δh ≥ 2)** toward the same neighbors still get stacked segments on **visible** faces only. **Underwater cull:** at the cliff **foot** (low cell of the drop), if that cell is water, segments whose **entire height band** lies strictly below `GetWaterSurfaceHeight` are not instantiated (`ShouldSkipCliffSegmentFullyUnderwater`). **Cut-through** corridors may still get a **1-step** cliff into a **non–water-slope** lowered cell.
-- **South / east map border (exterior void):** When the **south** neighbor `(x−1, y)` or **east** neighbor `(x, y−1)` is **outside the grid**, `GetCliffWallDropSouth` / `GetCliffWallDropEast` still compute a drop using a **virtual foot** at **`SEA_LEVEL`** (same as open sea) so **`PlaceCliffWallStack`** can instantiate visible **south** / **east** cliff meshes toward the map edge — avoiding black voids on elevated border cells. `ResolveCliffWallDropAfterSuppression` handles the invalid lower coordinate without probing `WaterMap` at non-cells.
-- **North / west faces (deferred):** With the fixed camera, **north** and **west** cliff **meshes** are not instantiated for typical **interior** cells (`IsCliffCardinalFaceVisibleToCamera`). **Map border** situations can make the absence of N/W prefabs obvious; visible N/W cliff art for edges remains a **future follow-up** (not part of completed **[BUG-42](../../BACKLOG.md)**).
+- **Pattern:** Cardinal Δh > 1 (e.g. cell h=3, south neighbor h=1).
+- **Visible faces:** Only **south** and **east** meshes instantiated (`IsCliffCardinalFaceVisibleToCamera`). N/W are hidden behind the terrain diamond. `Cell.cliffFaces` still records N/S/E/W bits for hydrology.
+- **Water classification** uses registered water, not raw `SEA_LEVEL`. One-step drops toward water are suppressed only if the high cell passes the shore eligibility gate; rim plateaus keep one cliff segment. Δh ≥ 2 uses stacked segments on visible faces.
+- **Border (exterior void):** S/E border neighbors outside the grid use virtual foot at `SEA_LEVEL` so cliff meshes cover elevated border cells.
+- **N/W faces:** Not instantiated for interior cells. Map-border N/W cliff art is a future follow-up.
 
 ### 5.8 Coastal Transitions (Water Slopes)
-- **HeightMap pattern:** Land cell (h ≥ 1) with Moore-neighbor water/sea per **`WaterOrSeaAt`** for **pattern** selection, **and** passing the **surface-height gate** in §4.2 (`IsLandEligibleForWaterShorePrefabs` / `TryGetSurfaceHeightForWaterNeighbor`).
-- **Visual:** Special water-slope prefabs that visually transition from land elevation toward the water surface. World placement uses the water visual height (see `WaterManager.PlaceWater` / FEAT-37).
-- **Constraint:** Normal roads cannot be placed on water-shore tiles (`IsWaterSlopeCell` returns true). Rim cells above the surface cap are **not** water-slope; roads may use normal terrain rules there. Water plants can be placed on coastal slopes.
+- Land cell with Moore-neighbor water passing the surface-height gate (§4.2).
+- Special water-slope prefabs transition from land toward the water surface.
+- Normal roads cannot be placed on water-shore tiles (`IsWaterSlopeCell`). Rim cells above the cap follow normal terrain rules.
 
-### 5.9 Bays and shore corners (neighbor patterns, not “concave” alone)
+### 5.9 Bays and shore corners
 
-**Bay prefabs** (`northEastBayPrefab`, …) are **one** shore-art option selected by `DetermineWaterShorePrefabs`. Prefer describing **which neighbors are water** rather than informal “concave/convex” alone (those words flip between land view and water-polygon view).
+**Bay prefabs** are one option from shore prefab selection. Describe by **which neighbors are water**, not informal "concave/convex."
 
 | Pattern | Cardinal water? | Diagonal water? | Typical outcome |
 |---------|-----------------|-----------------|-----------------|
-| **Perpendicular shore corner** | Two adjacent cardinals (e.g. S + E) | Usually yes (SE diagonal) | Bay if `IsAxisAlignedRectangleCornerWater*` **or** `HasLandSlopeIgnoringWater`; else corner `*SlopeWaterPrefab` for non-rectangle water on flat land |
-| **Rectangle outer corner** | No | Yes; diagonal cell is the **outer** vertex of an axis-aligned water block | Often **Bay** (single tile), including via `BuildDiagonalOnlyShorePrefabs` |
-| **Diagonal lake edge (flat land)** | No | Yes | Often **Bay**; if Bay missing, **upslope + downslope** pair |
-| **River confluence / mouth** | Varies (often 3 cardinals or T) | Often asymmetric | Same §4.2 priority list; **not** always an axis-aligned rectangle — refresh land in a **wider halo** after river stamps (`RefreshShoreTerrainAfterWaterUpdate` with second Chebyshev ring from the procedural river path). |
+| **Perpendicular shore corner** | Two adjacent cardinals | Usually yes | Bay if rectangle outer corner or land-slope signal; else corner slope water |
+| **Rectangle outer corner** | No | Yes (outer vertex of axis-aligned water block) | Bay |
+| **Diagonal lake edge (flat)** | No | Yes | Bay; if missing, upslope+downslope pair |
+| **River confluence / mouth** | Varies (often 3 cardinals or T) | Often asymmetric | Same §4.2 priority; refresh land in wider halo after river stamps |
 
-**Multi-surface perpendicular junction** (**[BUG-45](../../BACKLOG.md)** completed 2026-03-27): When two **registered** cardinal neighbors are both water but at **different** logical `SurfaceHeight`, **`DetermineWaterShorePrefabs`** prefers the diagonal **`*SlopeWaterPrefab`** for that quadrant over **Bay** so convex contacts at a surface step do not pick concave bay art.
+**Multi-surface junction:** Two cardinal water neighbors at different `SurfaceHeight` → prefer diagonal slope water over Bay.
 
-**`IsAxisAlignedRectangleCornerWater*`** (per diagonal): diagonal cell `W` is water and **both** “outward” cardinals from `W` (away from the shore land cell) are **not** water — i.e. `W` is a **convex vertex** of the water set in grid steps (the tip of a rectangle’s corner). L-shapes, notches, and diagonal coastlines may fail this test and correctly take **corner slope water** instead of Bay.
+**Rectangle corner test:** Diagonal cell W is water and both outward cardinals from W are not water → W is a convex vertex. L-shapes and notches fail this test → corner slope water.
 
-**River confluence / desembocadura:** When one **River** corridor meets another or widens, neighbor patterns may differ from rectangular lakes; **multiple river `WaterBody` ids** at the **same** surface may remain side by side (§12.7). After **`WaterManager.UpdateWaterVisuals`**, **`TerrainManager.RefreshShoreTerrainAfterWaterUpdate`** should cover all affected land (procedural river path passes **`expandShoreRefreshSecondRing: true`** for a Chebyshev-2 land halo). **Orphan** shore sprites or triangles on open water usually indicate **`HeightMap` / `Cell.height` vs `WaterMap`** mismatch or a missed refresh — compare §2.4 lake corner pitfall.
-
-**Visual:** NE/NW/SE/SW bay prefabs round the shoreline art. Cardinal cliff stacks use **`TerrainManager`** inspector nudges vs the shared edge (**[BUG-39](../../BACKLOG.md)** completed 2026-03-24). Multi-body perpendicular corners and junction merge: **[BUG-45](../../BACKLOG.md)** completed 2026-03-27. Vocabulary for debugging: §15.1.
+**Orphan shore sprites** on open water usually indicate `HeightMap`/`Cell.height` vs `WaterMap` mismatch — compare §2.4.
 
 ### 5.10 Cut-Through Corridors
-- **HeightMap pattern:** A path of cells flattened to base height through a hill by the terraforming system.
-- **Visual:** A trench with cliff walls on the sides where the terrain drops from the surrounding hill height to the flattened path height. Created when roads are placed through terrain with consecutive height differences > 1.
-- **Code:** `PathTerraformPlan.isCutThrough = true` when path has consecutive |Δh| > 1. `BuildTerraformCutCorridorSet()` tracks lowered cells for cliff wall generation.
+- Path flattened to base height through a hill by terraforming. Creates a trench with cliff walls on sides where terrain drops from surrounding hill height.
 
 ### 5.11 Sea Level Water
-- **HeightMap pattern:** Cells at h=0.
-- **Visual:** Animated water tile (`seaLevelWaterPrefab`).
-- **Gameplay:** Water cells can have bridges placed over them. Buildings cannot be placed directly on water (except water plants, which allow water in their footprint).
+- Cells at h=0. Animated water tile. Bridges allowed; buildings not (except water plants).
 
 ---
 
@@ -362,7 +311,6 @@ When two **cardinally adjacent** cells are **both** registered water and the **l
 
 ### 6.1 Land Slope Prefabs (12)
 
-Assigned in `TerrainManager` Inspector fields:
 - `northSlopePrefab`, `southSlopePrefab`, `eastSlopePrefab`, `westSlopePrefab`
 - `northEastSlopePrefab`, `northWestSlopePrefab`, `southEastSlopePrefab`, `southWestSlopePrefab`
 - `northEastUpslopePrefab`, `northWestUpslopePrefab`, `southEastUpslopePrefab`, `southWestUpslopePrefab`
@@ -378,18 +326,13 @@ Same 12 patterns with water visual treatment:
 | Prefab | Purpose |
 |--------|---------|
 | `seaLevelWaterPrefab` | Animated water tile at h=0 |
-| `southCliffWallPrefab` | South cardinal face (visible — instantiated when drop exists) |
-| `eastCliffWallPrefab` | East cardinal face (visible — instantiated when drop exists) |
-| `northCliffWallPrefab` | North cardinal face (selected by geometry; **never** instantiated — hidden face; kept for asset parity / `RemoveExistingCliffWalls`) |
-| `westCliffWallPrefab` | West cardinal face (same as north) |
-| `northEastBayPrefab` | Bay shore tile (NE quadrant selection in `DetermineWaterShorePrefabs`) |
-| `northWestBayPrefab` | Bay shore tile (NW quadrant) |
-| `southEastBayPrefab` | Bay shore tile (SE quadrant) |
-| `southWestBayPrefab` | Bay shore tile (SW quadrant) |
+| `southCliffWallPrefab` | South face (visible — instantiated on drop) |
+| `eastCliffWallPrefab` | East face (visible — instantiated on drop) |
+| `northCliffWallPrefab` | North face (never instantiated — hidden; kept for asset parity) |
+| `westCliffWallPrefab` | West face (same as north) |
+| `northEastBayPrefab` … `southWestBayPrefab` | Bay shore tiles (4 quadrants) |
 
-### 6.4 Slope Variant Naming Convention (SlopePrefabRegistry)
-
-For zoning overlays and building sprites that need slope-aware variants:
+### 6.4 Slope Variant Naming Convention
 
 ```
 {flatPrefabName}_{slopeCode}Slope
@@ -397,9 +340,9 @@ For zoning overlays and building sprites that need slope-aware variants:
 
 Where `slopeCode` is: `N`, `S`, `E`, `W`, `NE`, `NW`, `SE`, `SW`, `NEUp`, `NWUp`, `SEUp`, `SWUp`.
 
-Example: `ResidentialLight_NSlope` is the north-slope variant of the `ResidentialLight` zoning prefab.
+Example: `ResidentialLight_NSlope` = north-slope variant of `ResidentialLight`.
 
-`SlopePrefabRegistry.GetSlopeVariant(flatPrefab, slopeType)` looks up the variant by constructed name. Returns `null` if no variant exists, in which case the flat prefab is used or placement is rejected.
+`GetSlopeVariant(flatPrefab, slopeType)` looks up the variant by constructed name. Returns null if no variant exists.
 
 ---
 
@@ -407,7 +350,7 @@ Example: `ResidentialLight_NSlope` is the north-slope variant of the `Residentia
 
 ### 7.1 Formula
 
-```csharp
+```
 sortingOrder = TERRAIN_BASE_ORDER + depthOrder + heightOrder + typeOffset
 ```
 
@@ -422,7 +365,7 @@ Where:
 | Object Type | Offset | Notes |
 |-------------|--------|-------|
 | Terrain (flat grass) | 0 | Base |
-| Land slope | +1 (`SLOPE_OFFSET`) | Slightly in front of terrain |
+| Land slope | +1 | Slightly in front of terrain |
 | Water slope | +1 | Above sea-level water |
 | Road | +5 | Above terrain and slopes |
 | Utility | +8 | Above roads |
@@ -431,22 +374,19 @@ Where:
 
 ### 7.3 Design Rationale
 
-- `DEPTH_MULTIPLIER (100) > HEIGHT_MULTIPLIER (10) * MAX_HEIGHT (5) = 50` ensures that **depth (distance from camera)** dominates over **height**. A hilltop at the back of the map never draws over foreground forest/terrain.
-- `HEIGHT_MULTIPLIER = 10` is chosen to be less than `DEPTH_MULTIPLIER / MAX_HEIGHT` so depth always wins.
-- Negative depth order means cells farther from camera (higher `x+y`) have lower sorting order (drawn first / behind).
+- `DEPTH_MULTIPLIER (100) > HEIGHT_MULTIPLIER (10) * MAX_HEIGHT (5) = 50` → depth dominates over height. Hilltops at back never draw over foreground.
+- Negative depth order → higher `x+y` drawn first (behind).
 
-### 7.4 Save / Load Game — cell visuals and building sorting
+### 7.4 Save / Load — cell visuals and building sorting
 
-Load does **not** run a global `ReCalculateSortingOrderBasedOnHeight` (see **FEAT-37c** / `GridManager.RestoreGrid`). Building and water behavior is aligned with runtime as follows:
+Load does **not** run a global sort recalculation. Building and water behavior:
 
 | Mechanism | Role |
 |-----------|------|
-| **`SortCellDataForVisualRestore`** | Stable phase order: water → grass/shore/slope → RCI zoning overlays → roads → building pivots → multi-cell non-pivots (tie-break `y`, then `x`). |
-| **`RestoreGridCellVisuals`** | Instantiates saved prefabs; applies **`CellData.sortingOrder`** where appropriate; open water uses **`TerrainManager.CalculateTerrainSortingOrder`** for the visual surface height. |
-| **BUG-34 (completed)** | **`RecalculateBuildingSortingAfterLoad`** re-runs **`GridSortingOrderService.SetZoneBuildingSortingOrder`** on each pivot building so **`GetCellMaxContentSortingOrder`** matches a fully restored grid; multi-cell RCI passes **`buildingSize`**. |
-| **BUG-35 (completed)** | Default **`GridManager.DestroyCellChildren`** skips flat **Grass** (so bulldozer/demolish can leave terrain). When placing or restoring **RCI and utility** buildings, **`DestroyCellChildren(..., destroyFlatGrass: true)`** removes that grass so the cell does not keep **grass + building** as sibling sprites. Call sites: **`ZoneManager.PlaceZoneBuilding`** (section loop), **`ZoneManager.PlaceZoneBuildingTile`**, **`BuildingPlacementService.UpdateBuildingTilesAttributes`**. Multi-cell buildings still use **`SetZoneBuildingSortingOrder`** with a per-footprint pass of **`SyncCellTerrainLayersBelowBuilding`** (grass-only children, if any remain). |
-
-Road restore destroys all **`Zone`** children before placing the road; zoning restore uses **`DestroyCellChildrenExceptForest`**. Those paths already cleared flat grass or replaced overlays without relying on **`destroyFlatGrass`**.
+| `SortCellDataForVisualRestore` | Stable phase order: water → grass/shore/slope → RCI overlays → roads → building pivots → multi-cell non-pivots (tie-break `y`, then `x`). |
+| `RestoreGridCellVisuals` | Instantiates saved prefabs; applies saved `sortingOrder`; open water uses terrain sorting formula for visual surface height. |
+| Building sort post-pass | Re-runs building sorting on each pivot after full grid restore so max-content-sorting matches runtime; multi-cell passes building size. |
+| Grass removal on place/restore | When placing or restoring RCI/utility buildings, destroys flat grass children so cell does not keep grass + building as siblings. |
 
 ---
 
@@ -454,53 +394,48 @@ Road restore destroys all **`Zone`** children before placing the road; zoning re
 
 ### 8.1 Overview
 
-When roads cross sloped terrain, the `TerraformingService` computes a `PathTerraformPlan` that describes how to modify terrain so the road can be placed. Two strategies exist:
+When roads cross sloped terrain, a `PathTerraformPlan` describes height modifications. Two strategies:
 
 ### 8.2 Scale-with-Slopes Mode
 
-**Condition:** All consecutive path cells have `|Δh| ≤ 1`.
-
-The road "climbs" the terrain using slope road prefabs. No terrain modification is needed; the terraform plan records `TerraformAction.None` for most cells and sets `postTerraformSlopeType` to guide `RoadPrefabResolver` in selecting the correct slope road prefab.
+**Condition:** All consecutive path cells have |Δh| ≤ 1. Road "climbs" using slope road prefabs. No terrain modification; plan records `TerraformAction.None` and sets `postTerraformSlopeType`.
 
 ### 8.3 Cut-Through Mode
 
-**Condition:** At least one pair of consecutive path cells has `|Δh| > 1`.
-
-The road cannot climb gradually, so the terrain is **flattened** along the path to `baseHeight` (minimum height on the path). This creates a corridor with cliff walls on the sides.
+**Condition:** At least one consecutive pair has |Δh| > 1. Terrain **flattened** along the path to `baseHeight`.
 
 Phases:
-1. **Phase 1:** Write target heights to the heightmap for all flatten cells.
-2. **Validation:** `ValidateNoHeightDiffGreaterThanOne()` checks no cardinal neighbors exceed |Δh|=1 after the planned changes. If failed, the plan reverts.
-3. **Phase 2:** `RestoreTerrainForCell` with `forceFlat`/`forceSlopeType` flags refreshes terrain visuals.
-4. **Phase 3:** Refresh 8-neighbors (2 waves for cut-through, 1 wave for normal) so adjacent slopes/cliffs update.
+1. Write target heights to heightmap for flatten cells.
+2. Validate no cardinal neighbors exceed |Δh|=1 after changes. Revert if failed.
+3. Refresh terrain visuals with `forceFlat`/`forceSlopeType` flags.
+4. Refresh 8-neighbors (2 waves for cut-through, 1 for normal).
 
 ### 8.4 Diagonal Step Expansion
 
-`ExpandDiagonalStepsToCardinal()` converts diagonal path steps into two orthogonal steps, since road prefabs only support cardinal movement. This ensures the terraform plan and road prefab resolution receive pure orthogonal segments.
+Converts diagonal path steps into two orthogonal steps (road prefabs only support cardinal movement).
 
 ### 8.5 Terraform Actions
 
 | Action | Description |
 |--------|-------------|
-| `None` | No terrain change; cell keeps its current height |
-| `Flatten` | Set cell height to `plan.baseHeight`; terrain becomes flat |
-| `DiagonalToOrthogonal` | (Legacy / obsolete) Convert diagonal slope to orthogonal |
+| `None` | No terrain change |
+| `Flatten` | Set cell height to `plan.baseHeight` |
+| `DiagonalToOrthogonal` | (Legacy / obsolete) |
 
-### 8.6 River junction straightening (with §12.8)
+### 8.6 River junction straightening
 
-When procedural or player terrain leaves a **multi-surface** river contact that is **not** cardinally straight enough for **`RefreshWaterCascadeCliffs`** and shore selection, terraform plans may **cut rectilinear** corridors (same spirit as cut-through §8.3) so **`HeightMap`** and **`WaterMap`** agree after **Pass A / Pass B**. Re-run **`WaterManager.UpdateWaterVisuals`** after height writes. Detailed engineering belongs with **`TerraformingService`** and **`WaterMap.ApplyWaterSurfaceJunctionMerge`**; this subsection ties terraform to junction **geometry** only.
+When multi-surface river contact is not cardinally straight enough for cascade cliffs and shore selection, terraform may cut rectilinear corridors. Re-run water visuals after height writes.
 
 ---
 
 ## 9. Road Prefab Selection on Terrain
 
-### 9.1 RoadPrefabResolver
+### 9.1 Road Prefab Resolver
 
-Centralized road prefab selection. Three entry points:
-
-1. **`ResolveForPath(path, plan)`** — Full path context. Uses `postTerraformSlopeType` from the terraform plan to select slope road prefabs. Handles elbows at turns, T-intersections, and crossings.
-2. **`ResolveForCell(curr, prev)`** — Single cell with neighbor connectivity. Used for `RefreshRoadPrefabAt` after demolition or road changes.
-3. **`ResolveForGhostPreview(gridPos)`** — Single cell for cursor preview.
+Three entry points:
+1. **Full path** — uses `postTerraformSlopeType` from terraform plan. Handles elbows, T-intersections, crossings.
+2. **Single cell with neighbor connectivity** — used for refresh after road changes.
+3. **Ghost preview** — single cell for cursor preview.
 
 ### 9.2 Road Prefab Types
 
@@ -520,7 +455,7 @@ Centralized road prefab selection. Three entry points:
 
 ### 9.3 Slope Road Prefab Mapping
 
-The slope prefab is named after the **slope face direction** (downhill), matching `TerrainSlopeType`:
+Named after the **slope face direction** (downhill), matching `TerrainSlopeType`:
 
 | `postTerraformSlopeType` | Road Prefab |
 |--------------------------|-------------|
@@ -528,284 +463,234 @@ The slope prefab is named after the **slope face direction** (downhill), matchin
 | `South` | `roadTilePrefabSouthSlope` |
 | `East` | `roadTilePrefabEastSlope` |
 | `West` | `roadTilePrefabWestSlope` |
-| Corner slopes (`NEUp`, etc.) | Decomposed to the orthogonal axis aligned with travel direction |
+| Corner slopes (`NEUp`, etc.) | Decomposed to orthogonal axis aligned with travel |
 
 ---
 
 ## 10. Pathfinding Cost Model
 
-`GridPathfinder` uses A* with costs from `RoadPathCostConstants`:
+A* with costs:
 
 | Terrain | Base Cost | Notes |
 |---------|-----------|-------|
 | Flat | 1 | Strongly preferred |
 | Diagonal slope | 35 | Moderate penalty |
 | Cardinal slope | 60 | High penalty |
-| Height diff = 1 | +25 | Additional penalty for climbing |
-| Water slope | 500 | Nearly impassable (road buffer) |
-| Height diff > 1 | ∞ (impassable) | Cannot step directly |
+| Height diff = 1 | +25 | Climbing penalty |
+| Water slope | 500 | Nearly impassable |
+| Height diff > 1 | ∞ | Cannot step directly |
 
-Interstate pathfinding multiplies slope costs by `InterstateSlopeMultiplier = 5` and adds penalties for turns (`InterstateTurnPenalty = 5`), zigzags (`InterstateZigzagPenalty = 500`), and moving away from goal (`InterstateAwayFromGoalPenalty = 18`). Straight continuation gets a bonus (`InterstateStraightnessBonus = 15`).
-
----
-
-## 11. Code Reference Map
-
-| Concept | Primary File(s) | Key Methods |
-|---------|----------------|-------------|
-| Height data | `HeightMap.cs` | `GetHeight`, `SetHeight`, `IsValidPosition` |
-| Slope type determination | `TerrainManager.cs` | `DetermineSlopePrefab`, `GetTerrainSlopeTypeAt` |
-| Water / sea neighbor test (pattern) | `TerrainManager.cs` | `WaterOrSeaAt` |
-| Water slope determination | `TerrainManager.cs` | `DetermineWaterShorePrefabs`, `BuildDiagonalOnlyShorePrefabs` (incl. cascade junction override), `GetNeighborWaterVisualHeightForShore`, `IsAxisAlignedRectangleCornerWaterNorthEast` (and NW/SE/SW), `HasLandSlopeIgnoringWater`, `IsWaterSlopeCell`, `IsLandEligibleForWaterShorePrefabs`, `TryGetSurfaceHeightForWaterNeighbor` |
-| Cliff walls | `TerrainManager.cs`, `CliffFace.cs`, `Cell` | `PlaceCliffWalls`, `CliffCardinalFace` / `CliffFaceFlags`, `GetCliffWallDropNorth/South/East/West`, `ResolveCliffWallDropAfterSuppression`, `PlaceCliffWallStack`, `GetCliffPrefabForCardinalFace`, `IsCliffCardinalFaceVisibleToCamera`, `GetWaterSurfaceHeightForCliffProbe`, `ShouldSuppressCliffFaceTowardLowerCell` (with `IsLandEligibleForWaterShorePrefabs` on the **high** cell), `ShouldSuppressCliffTowardCardinalLower`, `IsLandEligibleForWaterShorePrefabs`, `IsWaterShoreRampTerrainCell` |
-| Terrain tile placement | `TerrainManager.cs` | `PlaceFlatTerrain`, `PlaceSlopeFromPrefab`, `PlaceWaterShore` |
-| Sorting order (terrain formula) | `TerrainManager.cs` | `CalculateTerrainSortingOrder`, `CalculateSlopeSortingOrder`, `CalculateWaterSlopeSortingOrder`, `CalculateShoreBaySortingOrder` |
-| Sorting order (cell content / buildings) | `GridManager.cs`, `GridSortingOrderService.cs` | Zone/road/building ordering, load restore helpers |
-| Full sort recalculation | `GeographyManager.cs` | `ReCalculateSortingOrderBasedOnHeight` |
-| Initialization orchestration | `GeographyManager.cs` | `InitializeGeography` |
-| Grid ↔ world conversion | `GridManager.cs` | `GetGridPosition`, `GetWorldPositionVector`, `GetMouseGridCell` |
-| Terraform planning | `TerraformingService.cs` | `ComputePathPlan`, `ExpandDiagonalStepsToCardinal` |
-| Terraform apply/revert | `PathTerraformPlan.cs` | `Apply`, `Revert`, `TryValidatePhase1Heights` |
-| Road prefab selection | `RoadPrefabResolver.cs` | `ResolveForPath`, `ResolveForCell` |
-| Slope overlay naming | `SlopePrefabRegistry.cs` | `GetSlopeVariant`, `GetSlopeSuffix` |
-| Pathfinding costs | `RoadPathCostConstants.cs` | `GetStepCost`, `GetStepCostForInterstate` |
-| A* pathfinding | `GridPathfinder.cs` | `FindPath`, `FindPathWithRoadSpacing` |
-| Water map / lakes | `WaterMap.cs`, `WaterManager.cs` | `InitializeLakesFromDepressionFill`, `GetSerializableData`, `RestoreWaterMapFromSaveData`, `PlaceWater`, `TryGetDryLandRiverJunctionBrink`, `ApplyMultiBodySurfaceBoundaryNormalization`, `ApplyWaterSurfaceJunctionMerge` |
-| Shore affiliation (dry land) | `WaterManager.Membership.cs` | `ComputeShoreAffiliationForDryLandCell`, `GetShoreAffiliatedWaterBodyIdForLandCell`, `ApplyShoreMembershipForLandCell`, `IsDryLandUpperRiverJunctionBrink`, `IsDryLandLowerRiverJunctionBrink`, `ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink` |
-| Procedural rivers | `ProceduralRiverGenerator.cs`, `GeographyManager.cs` | `GenerateProceduralRiversForNewGame` (after lakes, before interstate) |
-| Road terraform validation | `RoadManager.cs` | `TryPrepareRoadPlacementPlan`, `TryPrepareRoadPlacementPlanLongestValidPrefix` |
-| Interstate routing | `InterstateManager.cs` | `FindInterstatePathAStar`, `PickLowerCostInterstateAStarPath`, `ComputeInterstateBorderEndpointScore` |
+Interstate multiplies slope costs by 5 and adds penalties: turns (5), zigzags (500), away-from-goal (18). Straight continuation bonus: 15.
 
 ---
 
-## 12. Water map, lakes, and persistence (FEAT-37)
+## 11. Water map, lakes, and persistence
 
-### 12.1 Mental model
+### 11.1 Mental model
 
-Water is **hosted by terrain**: each body has a **logical surface height** aligned with the carved bowl or channel. **`WaterManager.PlaceWater`** keeps logical `SurfaceHeight` in `WaterMap` while positioning the animated tile at **surface − 1** in world space; **sorting** uses that visual height index (see §2, §7).
+Water is **hosted by terrain**: each body has a **logical surface height** aligned with the carved bowl or channel. Visual placement uses surface − 1 in world space; sorting uses that visual height index (§2, §7).
 
-### 12.2 Data structures
+### 11.2 Data structures
 
 - **`WaterBody`:** `Id`, `SurfaceHeight`, occupied cell indices.
-- **`WaterMap`:** `int[,]` body ids (0 = dry); `GetSurfaceHeightAt`. **Lake / sea init** may merge adjacent cells into one body when rules allow (`MergeAdjacentBodiesWithSameSurface`). **Touching bodies at the same logical surface may remain different ids** (aligned water plane via `PlaceWater`); procedural rivers **do not** run a post-pass merge of adjacent river segments (§12.7, §13.3).
-- **`Cell` / `CellData`:** `WaterBodyType` (None, Lake, River, Sea); optional `secondaryPrefabName` for two-part shores; **`waterBodyId`** — same integer as `WaterBody.Id`. For **open water** cells, must match `WaterMap` at that coordinate. For **dry** water-shore / rim / ShoreBay tiles, identifies the **winning** adjacent body (highest adjacent logical `S`, then lowest id on tie); logical surface for gameplay is that body’s `SurfaceHeight`. **Islands:** dry land with `waterBodyId` set but terrain height **above** that body’s `SurfaceHeight` clears membership. Persisted on save with `CellData`.
-- **`WaterMapData` (save v2):** `waterBodyIds` + serialized bodies; legacy `bool[]` water load still supported.
+- **`WaterMap`:** `int[,]` body ids (0 = dry); `GetSurfaceHeightAt`. Lake/sea init may merge adjacent cells into one body. Touching bodies at the same surface may remain different ids; rivers do not post-merge adjacent segments (§11.7, §12.3).
+- **`Cell` / `CellData`:** `WaterBodyType` (None, Lake, River, Sea); optional `secondaryPrefabName` for two-part shores; `waterBodyId` — same as `WaterBody.Id`. Open water cells match `WaterMap`. Dry water-shore/rim/ShoreBay tiles identify the winning adjacent body (highest adjacent S, then lowest id). Persisted on save.
+- **`WaterMapData` (save v2):** body ids + serialized bodies; legacy `bool[]` water load still supported.
 
-**Shore terminology (code-aligned):** **Open water** — registered in `WaterMap` (`IsWater`). **Water-shore** — dry cell using water–land transition prefabs (`PlaceWaterShore`). **Rim** — dry land above the water-shore band, cliffs/slopes toward water. **ShoreBay** — axis-aligned inner-corner pattern (prefab family); still affiliated via `waterBodyId`. **ShoreLine** — contiguous dry cells sharing the same `waterBodyId` along an edge (narrative / queries; not a separate serializable type).
+**Shore terminology:** **Open water** — registered in `WaterMap`. **Water-shore** — dry cell using transition prefabs. **Rim** — dry land above shore band, cliffs/slopes toward water. **ShoreBay** — axis-aligned inner-corner pattern. **ShoreLine** — contiguous dry cells sharing `waterBodyId` along an edge.
 
-### 12.3 Lake generation (summary)
+### 11.3 Lake generation
 
-- **`InitializeLakesFromDepressionFill(HeightMap, LakeFillSettings, seaLevelForArtificialFallback)`** — depression-fill from strict/window local minima, spill height, optional bounded basin pass, **artificial axis-aligned fallback** if procedural count is below target.
-- **Budget:** `UseScaledProceduralLakeBudget` (default false) vs hard cap; `GetAreaScaledLakeBudgetDiagnostic` for logs; extra random seed attempts scale with map area.
-- **`LakeAcceptProbability`:** applied **after** spill feasibility (not before), so valid rare minima are not discarded.
-- **`LakeFeasibility` / `TerrainManager.EnsureGuaranteedLakeDepressions`:** carves minimal cardinal bowls so enough cells pass the spill test; **does not** replace `WaterMap` placement.
-- **Extended maps:** 40×40 designer template **centered**; Perlin + smoothing outside; sparse dips help depression-fill on large grids.
-- **Diagnostics:** `[LakeGeneration]` from `WaterMap`, `[LakeBasins]` from bowl pass; `[WaterManager]` one-line summary after init.
-- **Seeded RNG ([BUG-36](../../BACKLOG.md)):** `LakeFillSettings.RandomSeed` from map generation seed; depression-fill and bowl shuffle use derived `System.Random` — reproducible when seed fixed, varied across New Games.
+- **Depression-fill** from strict/window local minima, spill height, optional bounded basin pass, artificial axis-aligned fallback if count below target.
+- Budget: hard cap or scaled; extra random seed attempts scale with map area.
+- `LakeAcceptProbability` applied after spill feasibility.
+- Lake feasibility carves minimal cardinal bowls so enough cells pass spill test.
+- Extended maps: 40×40 designer template centered; Perlin + smoothing outside.
+- Seeded RNG: seed from map generation seed; depression-fill and bowl shuffle use derived `System.Random`.
 
-### 12.4 Valid lake (procedural) — agreed rules
+### 11.4 Valid lake — rules
 
-Strict/window minima as seeds; flood under spill; per-body axis-aligned bbox of occupied cells in **[`MinLakeBoundingExtent`, `MaxLakeBoundingExtent`]** per axis (defaults in `WaterMap.cs` source, typically **2..10**). Merged bodies may exceed one bbox. **Sea** at reference height 0 (`seaLevel`); `MergeSeaLevelDryCellsFromHeightMap` aligns terrain sea cells with `WaterMap`.
+Strict/window minima as seeds; flood under spill; per-body axis-aligned bbox in `[MinLakeBoundingExtent, MaxLakeBoundingExtent]` per axis (typically 2..10). Merged bodies may exceed one bbox. Sea at reference height 0; sea-level dry cells merged with `WaterMap`.
 
-### 12.5 Save / load ([FEAT-37c](../../BACKLOG.md))
+### 11.5 Save / load
 
-- **`GameSaveData.waterMapData`** from `WaterMap.GetSerializableData()`.
-- **`WaterManager.RestoreWaterMapFromSaveData`** before **`GridManager.RestoreGrid`**; legacy path **`RestoreFromLegacyCellData`** when `waterMapData` absent.
-- **Load** does **not** run global `RestoreWaterSlopesFromHeightMap`, `RestoreTerrainSlopesFromHeightMap`, or `ReCalculateSortingOrderBasedOnHeight`; **`RestoreGridCellVisuals`** applies saved `sortingOrder` and prefabs (see §7.4).
+- Save: `GameSaveData.waterMapData` from `WaterMap.GetSerializableData()`.
+- Load: restore water map before grid restore; legacy path when `waterMapData` absent.
+- Load does **not** run global slope restoration or sorting recalculation; snapshot applies saved prefabs and `sortingOrder` (§7.4).
 
-### 12.6 Shore refresh after lakes
+### 11.6 Shore refresh after lakes
 
-After `WaterManager.UpdateWaterVisuals`, **`TerrainManager.RefreshShoreTerrainAfterWaterUpdate`** updates land in the Moore neighborhood of new lake water (and optionally a **second Chebyshev ring** when called from **procedural river** generation — confluence mouths). Shore prefab logic: §4.2, §5.8–5.9; rim cliffs: §5.6–5.7.
+After water visuals update, shore terrain refresh updates land in the Moore neighborhood of new lake water (optionally a second Chebyshev ring for procedural rivers). Shore prefab logic: §4.2, §5.8–5.9; rim cliffs: §5.6–5.7.
 
-### 12.7 Multi-body contact: bed alignment and junction merge ([BUG-45](../../BACKLOG.md) completed 2026-03-27)
+### 11.7 Multi-body contact: bed alignment and junction merge
 
-These rules separate **what players read as water level** from **terrain under the water**, and define **Pass A** and **Pass B** before **`PlaceWater`** when a height map is available. **Pass B** has two stages: **(i)** lower-side extension (dry / shore absorption) and **(ii)** **contact-bed reassignment** of **upper-pool water** when appropriate (item 4).
+These rules separate **what players read as water level** from **terrain under water**, and define **Pass A** and **Pass B** before water placement when a height map is available.
 
-1. **Several bodies, one aligned plane:** Two or more **`WaterBody`** instances may share the **same** logical **`SurfaceHeight`** and sit **next to or touching** each other. They remain **different ids** when the design chooses not to merge. **`PlaceWater`** uses **`SurfaceHeight`** so the **animated water tile** stays on one **homogeneous** visual plane per body/segment; that is the operational meaning of “same surface,” **not** identical **`HeightMap`** or **`GetHeight`** on every underwater cell.
+1. **Several bodies, one plane:** Multiple `WaterBody` instances may share `SurfaceHeight` and sit adjacent with different ids. Water placement uses `SurfaceHeight` for a homogeneous visual plane per body.
 
-2. **Bed vs surface:** Underwater **`HeightMap`** is the **bed** (lake bottom, river trench). It **may vary** within a lake or along a river. The **logical water surface** is **one value per body or per river surface segment** (`SurfaceHeight`). **Shores** and sorting use that surface; **cascades** (§5.6.2) appear only where **two different logical surfaces** meet cardinally.
+2. **Bed vs surface:** Underwater `HeightMap` is the bed — may vary within a body. Logical surface is one value per body/segment. Shores and sorting use surface; cascades appear only where two different surfaces meet cardinally.
 
-   **Lake at a surface step:** When **`S_high > S_low`** cardinally between two registered water cells, if **either** body is classified **`Lake`**, **Pass A** does not aggregate that lower neighbor for bed alignment, **Pass B** does not run junction-merge absorption for that edge, and **`RefreshWaterCascadeCliffs`** does **not** place water–water cascade stacks on that edge. **`Sea`** is **not** treated as **`Lake`**. River–river steps and contacts where **neither** side is a lake use the normal Pass A/B + cascade behavior. **`WaterMap.IsLakeSurfaceStepContactForbidden`** implements the predicate.
+   **Lake at a surface step:** When `S_high > S_low` cardinally and either body is Lake, Pass A/B skip that edge and cascades are not placed. Sea is not treated as Lake. The edge is not a junction; perpendicular land uses normal lake shore selection. The upper Lake reads as a closed basin.
 
-   **Lake rim vs lower basin (no junction):** When that predicate applies, the edge is **not** a hydraulic “junction” between pools: do **not** treat perpendicular land cells as **BUG-45** multi-surface corners (prefer normal lake **Bay** / axis-aligned shore selection in **`TerrainManager.DetermineWaterShorePrefabs`**). The **lower** pool keeps its own shore and cliff **below** the escarpment; the **upper** **Lake** should read as a **closed basin** to the topographic drop — shore and rim cliffs should **continue** as for a lake against land/cliff, not as a shared water–water cascade. **`RefreshShoreTerrainAfterWaterUpdate`** expands the dry shore refresh ring along the **higher** cell on such edges so **`UpdateTileElevation`** revisits rim tiles. Remaining gaps (e.g. water cells sitting on cliff feet) may need stronger invariants or terraform in a follow-up.
+   **Lake-high vs river-low fallback:** Post-Pass-B removes those lake cells, sets height to lake's S, restores as dry land / lake-shore art. Shore refresh may clamp; height re-applied afterward.
 
-   **Lake high vs river low (fallback):** When a **`Lake`** cell cardinally touches a **`River`** at a strictly lower **`SurfaceHeight`** (the same configuration where **`IsLakeSurfaceStepContactForbidden`** skips Pass A/B and cascades), **`WaterMap.ApplyLakeHighToRiverLowContactFallback`** runs **after Pass B** and **before** **`PlaceWater`**: it **removes** those **lake** water cells from **`waterBodyIds`**, sets **`HeightMap`** / **`Cell.height`** to the lake’s logical **`S`**, and **`WaterManager`** calls **`TerrainManager.RestoreTerrainForCell`** so the rim is dry land / lake-shore art. **`RefreshShoreTerrainAfterWaterUpdate`** may then lower those cells via **`ClampShoreLandHeightsToAdjacentWaterSurface`** (minimum adjacent **`S`** includes the lower river); **`WaterManager`** **re-applies** the lake **`S`** height and **`RestoreTerrainForCell`** once after the lake-shore sweep so the upper basin stays closed at the escarpment.
+3. **Pass A — Bed alignment:** Higher-surface water at cardinal contact with lower-surface water: bed lowered to min bed among adjacent lower neighbors (excluding Lake edges). One cell thick on upper side. Sweeps until stable. No `waterBodyIds` change.
 
-3. **Pass A — Upper contact bed alignment (no `waterBodyIds` change):** Where a higher-surface **water** cell cardinally touches water at a **strictly lower** logical surface, **only** those **higher-surface** cells on that contact may have their **bed** (`HeightMap`) lowered to match the **minimum bed height** among adjacent **lower-surface** water neighbors **that are not excluded by the Lake rule (item 2)**. **Do not** flatten the entire upper pool. **Do not** change **`waterBodyIds`** or turn dry land into water **in this pass**. Width is **one cell thick** on the upper side of the cardinal contact. **`WaterMap.ApplyMultiBodySurfaceBoundaryNormalization`** implements Pass A by **repeated sweeps** (until stable) so the **minimum** lower-pool bed **propagates** along multi-cell-wide junction strips; **idempotent**; runs **first** in **`WaterManager.UpdateWaterVisuals`**.
+4. **Pass B — Junction merge:** Reclassifies lower-side cells (excluding Lake edges). Assigns dry/water-shore to lower surface body. Absorbs upper-bank perpendicular dry cells. **Contact-bed reassignment:** upper-pool water reassigned to lower body when beds align or can be lowered. Sweeps until stable.
 
-4. **Pass B — Junction merge (lower-side extension + contact-bed reassignment):** After Pass A, a **junction merge** pass may **reclassify** cells on the **lower-surface** side of cardinal edges where **`S_high > S_low`** (registered water on both sides — rivers, sea, or mixed — **excluding** edges where **either** body is **`Lake`**, per the Lake rule in **item 2** above). It may assign **dry** land and (until refined) **water-shore** cells to **registered water** at the **lower** logical surface, update **`HeightMap`** and **`Cell.height`** to match that body’s conventions, and set **`waterBodyId`** to a body with **`SurfaceHeight == S_low`**. It also absorbs **dry** cells on the **upper-bank** perpendicular to the contact (beside each **high** cell at the step), so shore wedges between two surface levels are replaced by the **lower** body instead of blocking the junction. Strip extent is **parametric** along the **full** contact length; width follows the **upper** body’s cross-section where terrain allows; if beds cannot align, **narrow** the strip. **Diagonal** water-shore prefabs on the **upper** side are chosen relative to the **contact direction** (cardinal step from high to low), using **existing** assets; **`cliffWaterSouth` / `cliffWaterEast`** (and stack height for **`ΔS > 1`**) on **upper-pool** water cells along the contact as needed, including **upper** diagonal shore cells where applicable (§5.6.2 — **south** and **east** faces only; **west/north** water cascade meshes not in scope). **Same `S_low`, different ids:** when several lower bodies share the same surface height, new cells may attach to **any** of those ids (deterministic choice); **do not** merge those lower bodies into one id.
+5. **Rivers downstream:** Bed does not increase toward exit (§12.4). Pass A/B must not violate upstream geometry beyond the contact strip.
 
-   **Contact-bed reassignment (upper-pool water):** Pass A may leave an **upper-surface** water cell’s **bed** (`HeightMap`) **above** a **cardinal** lower-surface neighbor’s bed (e.g. propagation not finished on wide channels) **or** **equal** without changing **`waterBodyIds`** — either way **`SurfaceHeight`** can remain **stale** on the **upper** body while the lecho already belongs with the **lower** pool. After the **dry** absorption stage, **Pass B** **reassigns** such **water** cells to the **lower** neighbor’s **`WaterBody`** when **`S_high > S_low`**, the Lake edge rule does **not** apply, and this cell’s bed is **not** **below** the chosen neighbor’s bed (`HeightMap`(high) ≥ `HeightMap`(low)); if **`HeightMap`(high) > `HeightMap`(low)**, the implementation **writes** the upper cell’s bed **down** to the neighbor’s bed **before** changing **`waterBodyId`**. If several cardinal lower neighbors qualify, prefer the **lowest** **`S_low`**, then the **lowest** body id. The sweep may **repeat** until stable. **`WaterMap`** implements this after **`TryAbsorbDryCellIntoLowerBody`** processing.
+6. **Update order:** Pass A → Pass B → Lake-river fallback → place water → cascade cliffs → shore terrain (Chebyshev-2 halo when Pass B merged or fallback ran).
 
-5. **Rivers downstream:** Along a river path, **bed height** does not increase toward the exit (**§13.4** longitudinal rule). **Surface height** stays constant for a **segment** until generator logic starts a **new** segment. Pass A + B must **not** violate upstream pool geometry beyond the **contact strip** and the **lower-side** extension.
+7. **Shore affiliation at junctions:** Upper-brink → upper pool; lower-brink → lower pool; otherwise lowest S among Moore neighbors. Shore-end closure skipped on upper brinks.
 
-6. **`UpdateWaterVisuals` order:** Pass A → Pass B → **`ApplyLakeHighToRiverLowContactFallback`** (when applicable) → **`PlaceWater`** (all water cells) → **`RefreshWaterCascadeCliffs`** → **`RefreshShoreTerrainAfterWaterUpdate`** when lake depression-fill is enabled, Pass B changed any cell, **or** the lake–river fallback ran (Chebyshev-2 halo when Pass B merged or fallback ran).
+### 11.8 River / multi-surface junction geometry (cascades, brinks)
 
-7. **“Correct surface” in tools and debug:** Means **`PlaceWater` / world water plane** consistency for a body, **not** that every underwater cell shares one **`HeightMap`** value.
+A **junction** is cardinal contact edges where `S_high > S_low` (subject to Lake exclusion). Junctions decompose into straight strips; water–water cascades use cardinal prefabs only (§5.6.2). Pass A/B align beds and extend the lower surface.
 
-8. **Dry-shore affiliation at river–river junctions:** When **`WaterMap.TryGetDryLandRiverJunctionBrink`** classifies a dry cell as **`UpperBrink`**, **`WaterManager.ComputeShoreAffiliationForDryLandCell`** affiliates **`Cell.waterBodyId`** to the **upper** pool’s body; when **`LowerBrink`**, to the **lower** pool. Otherwise affiliation still uses the **lowest** logical **`S`** among Moore neighbors (existing rule). **`TryGetDryLandRiverJunctionBrink`** tests **lower** before **upper** so cells that cardinally touch the low pool are not misclassified as upper brinks. **`TerrainManager.GetNeighborWaterVisualHeightForShore`** may restrict neighbor sampling to the affiliated body so **`PlaceWaterShore`** and sorting align with that pool. **`ShouldPlaceShoreEnd`** does **not** apply on **`UpperBrink`** (avoids lower-pool “shore end” closure on upper-brink tiles).
+**Brink roles (dry land):** `RiverJunctionBrinkRole` — **UpperBrink**: dry cell Moore-adjacent to the high-surface water of a River–River cardinal step. **LowerBrink**: dry cell cardinally adjacent to the low-surface cell. Lower tested before upper so cascade shore-closure tiles cardinally touching the low pool keep the lower body id.
 
-**Implementation plan:** [`docs/water-junction-merge-implementation-plan.md`](../../docs/water-junction-merge-implementation-plan.md).
+#### 11.8.1 Shore neighbor topology vs junction diagonal prefabs
 
-### 12.8 River / multi-surface junction geometry (cardinal cascades, brinks)
+**Refresh order:** Water visuals → cascade cliffs → shore refresh (main pass → junction post-pass → upper-brink cliff stacks).
 
-A **junction** between two registered water regions is modeled as **cardinal** contact edges where **`S_high > S_low`** (subject to **`IsLakeSurfaceStepContactForbidden`**). Junctions decompose into **straight strips** along those edges; **water–water cascades** use **cardinal** prefabs only (§5.6.2). **Pass A** and **Pass B** (§12.7) align beds and extend the lower surface so **`PlaceWater`**, **`RefreshWaterCascadeCliffs`**, and shore refresh see coherent geometry; where the terrain cannot support a **straight** cardinal cascade across the intended channel width, **terraform** (§8) may be required to carve rectilinear cuts and ensure **water** (not dry wedge) sits below the brink.
-
-**Brink roles (dry land):** **`RiverJunctionBrinkRole`** — **`UpperBrink`**: dry cell **Moore-adjacent** to the **high-surface** water cell of a **River–River** cardinal step (including the case where only the **low** pool meets the land diagonally but the **high** cell is still Moore-adjacent). **`LowerBrink`**: dry cell **cardinally** adjacent to the **low-surface** cell of such a step. **`TryGetDryLandRiverJunctionBrink`** evaluates **lower** before **upper** so cascade **shore-line closure** tiles that cardinally touch the low pool keep the **lower** body id even when Moore-adjacent to the high cell. **Code:** **`WaterMap.TryGetDryLandRiverJunctionBrink`**, **`WaterManager.ComputeShoreAffiliationForDryLandCell`**, **`WaterManager.ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink`** (upper or lower brink — diagonal-only shore forces `*SlopeWaterPrefab` over Bay), **`TerrainManager.BuildDiagonalOnlyShorePrefabs`** (`forceCascadeJunctionSlopeWater`), **`ShouldPlaceShoreEnd`** (early out for upper brinks).
-
-#### 12.8.1 Shore neighbor topology vs junction diagonal prefabs
-
-1. **Registered water** — **`WaterMap.IsWater`** is the authoritative predicate for “this cell is water” in the map.
-
-2. **Topological water for shore prefab masks** — For **`TerrainManager.DetermineWaterShorePrefabs`** Moore neighbors, **`WaterManager.IsOpenWaterForShoreTopology`** marks a neighbor as “wet” for the pattern when: registered water matches the shore-affiliated body, or sea-level / sea-body rules as implemented there. **Dry junction-brink land does not** count as wet for this mask (it is not registered water).
-
-3. **Unaffiliated shore** — When affiliation resolves to none (`ownerBodyId == 0`), the mask uses **`WaterOrSeaAt`** only (registered water or sea-level terrain per existing rules); junction-brink dry land is **not** added to the mask.
-
-4. **Diagonal `*SlopeWaterPrefab` at river–river junction cascades (main pass)** — The default Moore mask (2) does **not** treat junction-brink dry land as wet. During normal **`UpdateTileElevation`**, **`ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink`** can still set **`forceCascadeJunctionSlopeWater`** for the single “closest-to-cascade” tile per brink component (§12.8).
-
-5. **Junction cascade shore post-pass** — After **`RefreshShoreTerrainAfterWaterUpdate`** runs the main shore refresh, **`TerrainManager.ApplyJunctionCascadeShorePostPass`** revisits every dry cell with **`TryGetDryLandRiverJunctionBrinkWithStep`** (`UpperBrink` / `LowerBrink`). For those cells only, **`DetermineWaterShorePrefabs`** is called with an extended neighbor mask (**`WaterManager.NeighborMatchesShoreOwnerForJunctionTopology`**, which counts junction-brink dry neighbors as wet when affiliation matches) and **`forceJunctionDiagonalSlopeForCascade`** so diagonal **`SlopeWater`** prefabs apply along the full cascade strip, then **`PlaceWaterShore`** overwrites the prior result.
-
-6. **Diagonal corners from geography** — Unrelated to junction post-pass: perpendicular two-cardinal wet masks from (2) still drive Bay vs **`SlopeWater`** via rectangle outer-corner tests, multi-surface rules, and convex-land fallbacks in **`SelectPerpendicularWaterCornerPrefabs`**.
+| Step | Rule |
+|------|------|
+| Registered water | `WaterMap.IsWater` is authoritative |
+| Shore masks | Neighbor wet when registered water matches affiliated body; brink dry land excluded |
+| Unaffiliated shore | Mask uses `WaterOrSeaAt` only |
+| Cascades (main pass) | Default mask ignores brink dry land; forced diagonal slope for closest-to-cascade tile per brink component |
+| Junction post-pass | Revisits brink-classified dry cells with extended mask (brink neighbors count as wet when affiliation matches); forces diagonal slope water along full cascade strip |
+| Geography corners | Unrelated to junction; two-cardinal wet masks drive Bay vs slope via rectangle tests |
+| Upper-brink cliff stacks | Placed on UpperBrink dry cells; same cardinal/mirror rules as cascade cliffs; Y anchor at shore grid cell water surface |
 
 ---
 
-## 13. Procedural rivers (FEAT-38)
+## 12. Procedural rivers
 
-Rivers are **static** after geography init: **no** runtime fluid simulation, discharge, or type recomputation on merge.
+Rivers are **static** after geography init — no runtime fluid simulation.
 
-### 13.1 Initialization order
+### 12.1 Initialization order
 
-**`GeographyManager`:** terrain → **`WaterManager.InitializeWaterMap()`** (lakes/sea) → **dedicated river pass** → **interstate** → forests (if enabled) → desirability, sorting, etc.
+Terrain → water map (lakes/sea) → **river pass** → interstate → forests → desirability, sorting.
 
-### 13.2 Scope and out of scope
+### 12.2 Scope
 
-- **In scope:** pathfinding on generated terrain, shallow carve (default **≤ 2** steps, documented exceptions at relief), cardinal corridor, **1–3** rivers per New Game (code defaults; not exposed in UI in FEAT-38 pass).
-- **Out of scope:** gameplay spill/flood, dynamic volume, hydraulic reinterpretation after merge, full drainage networks.
+- **In scope:** Pathfinding on generated terrain, shallow carve (default ≤ 2 steps), cardinal corridor, 1–3 rivers per New Game.
+- **Out of scope:** Gameplay spill/flood, dynamic volume, drainage networks.
 
-### 13.3 Merge and adjacency to lakes/sea
+### 12.3 Merge and adjacency to lakes/sea
 
-**`MergeAdjacentBodiesWithSameSurface`** (used during **lake / sea** placement and similar init passes): **River** merges **only** with **River**; **Lake** with **Lake**; **Sea** with **Sea**; **Lake** with **Sea** (FEAT-37 compatibility). After **`ProceduralRiverGenerator.Generate`**, **`WaterManager.GenerateProceduralRiversForNewGame`** calls **`WaterMap.MergeAdjacentBodiesWithSameSurface()`** so **cardinally** adjacent **River** cells at the **same** logical **`SurfaceHeight`** share one **`WaterBody`** id (parallel strips that touch become one body; **BUG-46** spacing reduces how often they sit side by side). Where the river corridor overlaps existing water, **`ProceduralRiverGenerator`** may carve the bed and **`WaterMap.TryReassignCellFromAnyWaterToRiverBody`** may move **Sea** or **Lake** cells into the river body **only** when the existing body’s logical **`SurfaceHeight`** matches the river segment’s surface; **Lake** at a **different** logical surface is **not** carved to the river bed and **not** reassigned (§12.7). Logical exit = river ends in **River** cells **adjacent** to that body’s perimeter.
+River merges only with River; Lake with Lake; Sea with Sea; Lake with Sea. After river generation, cardinally adjacent River cells at the same surface share one `WaterBody` id. Where river overlaps existing water, cells may be reassigned only when existing body's surface matches the river segment's surface; Lake at a different surface is not carved or reassigned (§11.7). Spacing from prior river corridors is enforced via Chebyshev dilation.
 
-### 13.4 Geometry (implementation contracts)
-
-Cross-sections perpendicular to local flow (see **`ProceduralRiverGenerator`** XML docs):
+### 12.4 Geometry (implementation contracts)
 
 | Topic | Rule |
 |-------|------|
-| **Symmetric banks** | Dry shore cells on both sides: `H_bank = H_bed + 1` (one step above shared bed floor `H_bed`) when possible |
-| **Single bed height per section** | All bed cells in a section share one carved `H_bed` |
-| **Surface segments** | Logical `surface = H_bed + 1` (clamped); consecutive sections with same `surface` share one `WaterBody` id; **new** body when `surface` changes along the path |
-| **Longitudinal monotonicity** | Along centerline from entry: **`H_bed(i+1) ≤ H_bed(i)`** after forward clamp `min(candidate, H_bed(i−1))` — river does not climb toward exit |
-| **Entry / exit borders** | Random **axis** (N–S vs E–W) and **flow sign** (50/50): four equally likely cases — north→south, south→north, west→east, east→west — so entry anchors appear on any map edge for visual variety (cascades toward camera from any side) |
-| **Border margin** | `RiverBorderMargin` (default **2**): entry/exit in interior band; avoid lateral “moats” along non-flow edges |
-| **Width** | Bed width **1–3** cells; total cross-stream **Wₙ = bed + 2** shores → **{3,4,5}**; **|Wₙ₊₁ − Wₙ| ≤ 1**; prefer **≥ 4** steps between width changes unless terrain forces |
-| **Length L** | Sum of steps along channel; **max L** = **1.5 ×** map dimension on relevant axis (square: width or height) |
-| **Forced river** | If no viable candidate, carve basin and place forced river (spirit: artificial-lake fallback) |
-| **BUG-46 spacing** | Prior river corridors (bed + shores) are dilated in **Chebyshev** space for the next BFS centerline; **entry** anchors on the same border (N–S vs E–W) must be at least **5** apart in **|Δx|** or **|Δy|**; **`BuildForcedCenterline`** respects the same avoid set or returns **null** |
+| **Symmetric banks** | `H_bank = H_bed + 1` (one step above shared bed floor) when possible |
+| **Single bed height per section** | All bed cells in a section share one `H_bed` |
+| **Surface segments** | `surface = H_bed + 1` (clamped); same surface → same `WaterBody`; new body on surface change |
+| **Longitudinal monotonicity** | `H_bed(i+1) ≤ H_bed(i)` — river does not climb toward exit |
+| **Entry / exit borders** | Random axis (N–S vs E–W) and flow sign (50/50); four equally likely cases |
+| **Border margin** | Default 2: entry/exit in interior band |
+| **Width** | Bed 1–3 cells; total = bed + 2 shores → {3,4,5}; |ΔW| ≤ 1; prefer ≥ 4 steps between width changes |
+| **Length** | Max 1.5 × map dimension on flow axis |
+| **Forced river** | If no viable candidate, carve basin and place forced river |
+| **Spacing** | Prior corridors dilated in Chebyshev space; same-border entries ≥ 5 apart |
 
-**Cardinal edges:** **N–S** or **E–W** **flow** between **opposite** borders (north↔south or west↔east); which side is entry vs exit is chosen at random per river; high/low from relief; lake/sea as logical exit when present.
+**Cardinal edges:** N–S or E–W flow between opposite borders; entry vs exit random; high/low from relief; lake/sea as logical exit when present.
 
-Shore / cascade / multi-body junction polish: **[BUG-42](../../BACKLOG.md)** completed 2026-03-26; **[BUG-45](../../BACKLOG.md)** completed 2026-03-27.
+### 12.5 Shore band continuity (inner corners)
 
-### 13.5 Shore band continuity (inner corners)
+After cross-section height application, a **corner promotion** pass runs on bed footprint cells. If a cell is at `H_bed` but has two perpendicular cardinal neighbors at `H_bed + 1`, it is raised to `H_bed + 1` so the dry shore strip stays continuous around inner L-corners.
 
-After **`ApplyCrossSectionHeights`**, **`ProceduralRiverGenerator`** runs a **corner promotion** pass on **bed footprint** cells that actually received a river bed carve (skipped **Lake** cells at a different logical surface are excluded). If a cell is still at carved **`H_bed`** but has **two perpendicular cardinal neighbors** both at **`H_bed + 1`** (the symmetric bank height from §13.4), that cell is **raised** to **`H_bed + 1`** so the dry shore strip stays **continuous** around inner L-corners instead of leaving a bed-height “notch” that would read as water or break shore prefab continuity.
-
-**Water assignment** to the river body uses **`HeightMap`** after this pass: a cell listed in **`sec.Bed`** is assigned water **only** if its height still equals **`sec.AppliedBedHeight`** (promoted corners stay **dry** shore).
-
-**Example (heights, smaller numbers = lower):** plateau **4**, target shore band **2**, bed **1**. Without promotion, row near the inner corner can incorrectly show **`… 2 2 1 1`** (bed notch beside two shore cells). After promotion the inner corner matches the band: **`… 2 2 2 1`**.
+Water assignment uses `HeightMap` after this pass: a bed cell is assigned water only if its height still equals the applied bed height (promoted corners stay dry).
 
 ---
 
-## 14. Roads: manual draw, interstate, bridges, shared validation
+## 13. Roads: manual draw, interstate, bridges, shared validation
 
-### 14.1 Single entry point for terraform + validation
+### 13.1 Single entry point for terraform + validation
 
-All persistent road placement that uses terraforming should go through **`RoadManager.TryPrepareRoadPlacementPlan`** (includes **`PathTerraformPlan.TryValidatePhase1Heights`**) and **`RoadPathValidationContext`**. Do **not** use **`TerraformingService.ComputePathPlan`** alone for placement decisions.
+All persistent road placement uses terraform validation through a single pipeline. Do not use terraform computation alone for placement decisions.
 
-| Mode | API | `forbidCutThrough` |
-|------|-----|--------------------|
-| **Manual streets / preview** | `TryPrepareRoadPlacementPlanLongestValidPrefix` | `false` — partial path when full A* would need invalid terraform |
-| **Interstate** | `TryPrepareRoadPlacementPlan` (full path) | `true` — no cut-through trenches |
-| **AUTO streets** | `AutoRoadBuilder.TryGetStreetPlacementPlan` → longest-prefix when `RoadManager` present | `false` |
+| Mode | Validation | `forbidCutThrough` |
+|------|-----------|-------------------|
+| **Manual streets / preview** | Longest valid prefix | `false` |
+| **Interstate** | Full path | `true` |
+| **AUTO streets** | Longest prefix | `false` |
 
-### 14.2 Manual draw pipeline (reference)
+### 13.2 Manual draw pipeline
 
-1. Drag: **`ClearPreview(false)`** (revert terraform) → **`GetLine()`** (A* on **original** heightmap) → **`DrawPreviewLineCore`**: longest-valid-prefix prep → **`plan.Apply()`** → **`ResolveForPath`** → preview tiles.
-2. Release: revert → **`TryFinalizeManualRoadPlacement`** (same prefix hint) → afford → **`Apply`** → place tiles; **`RefreshRoadPrefabAt`** pass on placed cells for junction correctness.
+1. Drag: revert terraform → A* on original heightmap → longest-valid-prefix → apply → resolve prefabs → preview.
+2. Release: revert → final prep → afford → apply → place → refresh junctions.
 
-### 14.3 Slope climb vs carve
+### 13.3 Slope climb vs carve
 
-When no consecutive **`|Δh| > 1`**, **`preferSlopeClimb`**: ascending land steps use terraform **`None`** and **`postTerraformSlopeType`** from travel so the road **rides the slope** instead of flattening a trench.
+When no consecutive |Δh| > 1, ascending steps use `None` + `postTerraformSlopeType` so the road rides the slope. Gorge expansion only when not slope-climb. Adjacent-cliff validation with one-ring Phase 1 expansion.
 
-**Gorge beside corridor:** `ExpandAdjacentFlattenCellsRecursively` only when not (slope-climb with no Flatten and no pre-expansion adjacent cells); **`InvalidatePlanIfPathBesideSteepLandCliff`**; **`ValidateNoHeightDiffGreaterThanOne`** one-ring expansion for Phase 1 validation.
+### 13.4 Bridges and water approach
 
-### 14.4 Bridges and water approach
+- Bridge span must be axis-aligned; no kinked water crossings.
+- No elbows on water/water-slope; straight approach before water.
+- Coastal terrain refresh uses terrain-only child destruction so bridge tiles survive.
 
-- **`StraightenBridgeSegments`**, **`IsBridgePathValid`**: bridge span must be **axis-aligned** (same X or same Y); no kinked water crossings.
-- **`HasTurnOnWaterOrCoast`**, **`HasElbowTooCloseToWater`**, **`HasTurnOnLastLandCellsBeforeWater`**: elbows not on water/water-slope; approach straight before water (**Rule F**).
-- **`TerrainManager.PlaceWaterSlope`:** use **`DestroyTerrainChildrenOnly`** (not `DestroyCellChildren`) so **bridge** tiles on coastal cells are not destroyed when refreshing water-slope terrain; bays included in terrain-only destroy where applicable.
+### 13.5 Interstate pathfinding
 
-### 14.5 Interstate pathfinding (summary)
+Border endpoint scoring → sorted candidates → dual A* (avoidHighTerrain true/false), picks cheaper. Penalties from §10.
 
-**`InterstateManager`:** **`ComputeInterstateBorderEndpointScore`** (flat neighbors, first inland step, border height) → sorted candidates → **`PickLowerCostInterstateAStarPath`** runs A* with `avoidHighTerrain` true and false, picks cheaper **`ComputePathCost`** if both succeed. Penalties: **`InterstateAwayFromGoalPenalty`**, **`InterstateZigzagPenalty`**, slope multiplier — see **`RoadPathCostConstants`**.
+### 13.6 Cut-through robustness
 
-### 14.6 Cut-through robustness ([BUG-29](../../BACKLOG.md))
+Reject when `maxHeight - baseHeight > 1`; map-edge margin; Phase 1 validation ring. Interstate always forbids cut-through.
 
-Reject cut-through when **`maxHeight - baseHeight > 1`**; **`terraformCutCorridorCells`** / cliff corridor context; map-edge margin **`cutThroughMinCellsFromMapEdge`**; Phase 1 validation ring in **`PathTerraformPlan`**. Interstate always **`forbidCutThrough: true`**.
-
-### 14.7 Resolver rules (post-BUG-26 / BUG-30)
+### 13.7 Resolver rules
 
 | ID | Rule |
 |----|------|
 | **A** | Elbow connectivity matches exactly two path neighbors |
 | **B** | Prefab exits align with path in/out |
-| **C** | **Terraform wins:** cut-through → flat road prefabs from plan, not live slope misread |
-| **D** | Prefer offset paths that avoid hills when costs are close |
-| **E** | Interstate prefers straight segments (cost tuning) |
+| **C** | Terraform wins: cut-through → flat prefabs from plan, not live slope misread |
+| **D** | Prefer offset paths avoiding hills when costs close |
+| **E** | Interstate prefers straight segments |
 | **F** | Bridge approach perpendicular to water; no turn on last land cells before water |
 
-**Slope / corner roads:** segment **`postTerraformSlopeType`** via **`GetPostTerraformSlopeTypeAlongExit`** (travel-aligned); **`RestoreTerrainForCell`** can force orthogonal ramp when action `None` but plan has cardinal slope ([BUG-30](../../BACKLOG.md)).
+Slope/corner roads use travel-aligned `postTerraformSlopeType`; terrain restore can force orthogonal ramp when action is None but plan has cardinal slope.
 
-### 14.8 Optional polish (backlog)
+### 13.8 Optional polish (backlog)
 
-- Crossroads: augment path-only neighbor checks with **`IsRoadAt`** in **`ResolvePrefabForPathCell`**; final **`RefreshRoadPrefabAt`** over path cells if needed (**BUG-25** follow-up).
-- Pass **`postTerraformSlopeType`** into refresh after cut-through (**BUG-25** §2.1 style).
-- **BUG-28** / **BUG-31:** interstate vs slope sorting; border entry/exit prefabs.
+- Crossroads: augment path-only neighbor checks with road-presence queries; final refresh over path cells.
+- Pass `postTerraformSlopeType` into refresh after cut-through.
+- Interstate vs slope sorting; border entry/exit prefabs.
 
 ---
 
-## 15. Lake / cliff / shore — engineering notes (historical)
+## 14. Lake / cliff / shore — engineering notes
 
-Condensed from prior bug write-ups. **Mechanisms** are normative in §4.2, §5.6–5.9, §7; this section is for **symptoms**, **debugging**, and **vocabulary**.
-
-### 15.1 Glossary
+### 14.1 Glossary
 
 | Term | Meaning |
 |------|---------|
-| **Water surface / open water** | Registered water: `WaterManager` / `WaterMap`, sorted at visual surface height |
-| **Water-shore (ramp)** | Land passing §4.2 gate → `DetermineWaterShorePrefabs` / `PlaceWaterShore` |
-| **Rim** | Land above shore cap → normal slopes + `PlaceCliffWalls`, not water-shore art |
-| **Cliff wall stack** | Child prefab(s) on **higher** cell along shared cardinal edge toward lower cell |
-| **Bay** | Shore corner prefab set — neighbor patterns §5.9 |
-| **Visible cliff faces** | **South** and **east** meshes only (`IsCliffCardinalFaceVisibleToCamera`); N/W bits may still be set on `Cell.cliffFaces` |
+| **Water surface / open water** | Registered water, sorted at visual surface height |
+| **Water-shore (ramp)** | Land passing §4.2 gate → shore prefab selection |
+| **Rim** | Land above shore cap → normal slopes + cliff walls |
+| **Cliff wall stack** | Child prefab(s) on higher cell along shared cardinal edge |
+| **Bay** | Shore corner prefab — neighbor patterns §5.9 |
+| **Visible cliff faces** | South and east meshes only; N/W bits may still be set on `Cell.cliffFaces` |
 
-### 15.2 Resolved techniques ([BUG-39](../../BACKLOG.md), [BUG-40](../../BACKLOG.md))
+### 14.2 Resolved techniques
 
-- **BUG-39:** Inspector nudges for S/E cliff faces + **`cliffWallWaterShoreYOffsetTileHeightFraction`** when primary terrain is water-shore.
-- **BUG-40:** **`GetMaxCliffSortingOrderFromForegroundWaterNeighbors`** — cap cliff `sortingOrder` using registered water neighbors at lower isometric depth (`nx+ny < highX+highY`) so cliffs do not draw over nearer water.
+- S/E cliff face inspector nudges + water-shore Y offset fraction.
+- Cliff sorting cap from registered water neighbors at lower isometric depth (prevents cliffs drawing over nearer water).
 
-### 15.3 Symptom → direction (SS1–SS5)
+### 14.3 Symptom → direction
 
-- **SS1:** Duplicate cliff + shore ramp on same face → **`ShouldSuppressCliffFaceTowardLowerCell`** (one-step toward water / water-shore when high cell is shore-eligible).
-- **SS2 / SS4:** Stacked cliff segments visually collapsed → `PlaceCliffWallStack` uses **`edgeBlend = 1`** at bottom of segment; consider per-step Y offset or lerp &lt; 1 for inner segments; check prefab pivots.
-- **SS3:** Template bowls with **|Δh| &gt; 1** to neighbors — intentional for cliff stacks; must stay consistent with SS1 shore choice.
-- **SS5:** Z-fighting / cliffs under water → sorting formula vs water plane; possible future dedicated buckets or masks.
+| ID | Symptom | Check |
+|----|---------|-------|
+| SS1 | Duplicate cliff + shore on same face | One-step suppression logic |
+| SS2/SS4 | Stacked segments collapsed | Segment Y offset, prefab pivots |
+| SS3 | Template bowls |Δh|>1 | Intentional; must match shore choice |
+| SS5 | Z-fighting / cliffs under water | Sorting formula vs water plane |
 
-### 15.4 Terrain debug logging
+### 14.4 Debug and picking
 
-Enable **`TerrainManager.terrainDebugLogCellsEnabled`**; default cells **(28,24), (28,25), (34,24), (34,25)**. Console filter **`[TerrainDebug]`** — heights, shore eligibility, neighbors, cliff drops, stack positions, child sort orders.
-
-### 15.5 Picking / grass under cells
-
-**`PlaceFlatTerrain`** may leave root `SpriteRenderer` state dependent on pipeline; **`GetMouseGridCell`** uses sorting — steep stacks can mis-pick until cliff/shore order is stable. Compare `HeightMap`, `Cell.height`, and hierarchy when debugging.
+Terrain debug: enable `terrainDebugLogCellsEnabled`; default cells (28,24), (28,25), (34,24), (34,25); filter `[TerrainDebug]`. Height-aware picking uses sorting — steep stacks can mis-pick until cliff/shore order is stable.

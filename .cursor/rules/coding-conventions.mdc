@@ -6,8 +6,7 @@ alwaysApply: false
 
 # Coding Conventions
 
-## Language
-All code, comments, XML docs, annotations, and repository content must be in **English**.
+Language: see `project-overview.mdc`.
 
 ## Documentation Requirements
 - Every class MUST have a `/// <summary>` (2-4 lines): responsibility, key dependencies, how it fits in the system
@@ -22,9 +21,9 @@ All code, comments, XML docs, annotations, and repository content must be in **E
 - Do NOT use C# reserved keywords as identifiers (e.g. `base`, `class`, `ref`, `out`, `in`)
 
 ## Prefabs and asset naming (new content)
-- **Do not rename** existing prefab files or asset filenames in the project for consistency with this rule — only apply conventions to **new** assets and variants.
-- **Slope / zoning / building variants** (see `SlopePrefabRegistry`, `.cursor/specs/isometric-geography-system.md` §6.4): use the pattern `{flatPrefabName}_{slopeCode}Slope` where `slopeCode` is one of `N`, `S`, `E`, `W`, `NE`, `NW`, `SE`, `SW`, `NEUp`, `NWUp`, `SEUp`, `SWUp`.
-- **Roads, terrain, UI:** follow existing prefixes in each folder (e.g. `roadTilePrefab*`, `northSlopePrefab`); new prefabs should mirror the established naming style in that category.
+- **Do not rename** existing prefab files or asset filenames — only apply conventions to **new** assets and variants.
+- **Slope / zoning / building variants** (see geography spec §6.4): `{flatPrefabName}_{slopeCode}Slope` where `slopeCode` is `N`, `S`, `E`, `W`, `NE`, `NW`, `SE`, `SW`, `NEUp`, `NWUp`, `SEUp`, `SWUp`.
+- **Roads, terrain, UI:** follow existing prefixes in each folder (e.g. `roadTilePrefab*`, `northSlopePrefab`).
 
 ## Dependency Pattern
 ```csharp
@@ -36,11 +35,11 @@ void Awake() {
 }
 ```
 
-## Anti-patterns to Avoid
-- Do NOT create new singletons — use Inspector + FindObjectOfType pattern
-- Do NOT access `gridArray` or `cellArray` directly from outside GridManager — use `GetCell(x,y)`
-- Do NOT use `FindObjectOfType` in Update/loops — only in Awake/Start
-- Do NOT add more responsibilities to GridManager — extract to helper classes
+## Debug / temporary diagnostics
+- For one-off cell inspection, prefer `if (x == debugX && y == debugY) Debug.Log(...)` with local constants — not a new logging framework or global toggles.
+- Remove or gate temporary `Debug.Log` before merging if it would spam the console.
+
+Anti-patterns: see `AGENTS.md`.
 
 ## Reference Files
 - Documentation model: `EconomyManager.cs` (XML docs + regions + headers)

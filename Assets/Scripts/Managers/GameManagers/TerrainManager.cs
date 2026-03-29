@@ -721,6 +721,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// neighbor outward from water (minimal audit). Adds a Moore ring of dry cells around the <b>high</b> water cell on
     /// <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> edges (§12.7 lake rim). Pass <paramref name="expandSecondChebyshevRing"/> true after procedural river
     /// generation so confluence mouths get a wider Chebyshev-2 halo refresh.
+    /// Then runs junction shore post-pass and <see cref="ApplyUpperBrinkShoreWaterCascadeCliffStacks"/> (§12.8.1).
     /// Call after <see cref="WaterManager.UpdateWaterVisuals"/>.
     /// </summary>
     public void RefreshShoreTerrainAfterWaterUpdate(WaterManager wm, bool expandSecondChebyshevRing = false)
@@ -818,6 +819,94 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             UpdateTileElevation(p.x, p.y);
 
         ApplyJunctionCascadeShorePostPass(wm);
+        ApplyUpperBrinkShoreWaterCascadeCliffStacks(wm);
+    }
+
+    /// <summary>
+    /// After <see cref="ApplyJunctionCascadeShorePostPass"/>, builds <see cref="cliffWaterSouthPrefab"/> / <see cref="cliffWaterEastPrefab"/> stacks on
+    /// dry land classified as <see cref="RiverJunctionBrinkRole.UpperBrink"/> only, parented to that shore cell. Uses the same cardinal edge and
+    /// mirror rules as <see cref="RefreshWaterCascadeCliffs"/> (South when the lower pool is south or north of the high cell; East when east or west).
+    /// Anchor Y follows the upper pool water plane (§5.6.2, §12.8.1).
+    /// </summary>
+    private void ApplyUpperBrinkShoreWaterCascadeCliffStacks(WaterManager wm)
+    {
+        if (heightMap == null || gridManager == null || wm == null)
+            return;
+        WaterMap wmMap = wm.GetWaterMap();
+        if (wmMap == null)
+            return;
+        if (cliffWaterSouthPrefab == null && cliffWaterEastPrefab == null)
+            return;
+        if (waterManager == null)
+            waterManager = wm;
+
+        int gw = gridManager.width;
+        int gh = gridManager.height;
+        var cells = new List<Vector2Int>();
+        for (int x = 0; x < gw; x++)
+        {
+            for (int y = 0; y < gh; y++)
+            {
+                if (wmMap.IsWater(x, y))
+                    continue;
+                if (!wmMap.TryGetDryLandRiverJunctionBrinkWithStep(x, y, out RiverJunctionBrinkRole role, out _, out _, out _, out _, out _))
+                    continue;
+                if (role != RiverJunctionBrinkRole.UpperBrink)
+                    continue;
+                cells.Add(new Vector2Int(x, y));
+            }
+        }
+
+        cells.Sort((a, b) =>
+        {
+            int sa = a.x + a.y;
+            int sb = b.x + b.y;
+            if (sa != sb)
+                return sa.CompareTo(sb);
+            return a.x.CompareTo(b.x);
+        });
+
+        foreach (Vector2Int p in cells)
+        {
+            if (!wmMap.TryGetDryLandRiverJunctionBrinkWithStep(p.x, p.y, out RiverJunctionBrinkRole role, out _, out int highX, out int highY, out int lowX, out int lowY))
+                continue;
+            if (role != RiverJunctionBrinkRole.UpperBrink)
+                continue;
+
+            int sHigh = wm.GetWaterSurfaceHeight(highX, highY);
+            int sLow = wm.GetWaterSurfaceHeight(lowX, lowY);
+            if (sHigh < 0 || sLow < 0 || sHigh <= sLow)
+                continue;
+            if (wmMap.IsLakeSurfaceStepContactForbidden(highX, highY, lowX, lowY))
+                continue;
+
+            Cell shoreCell = gridManager.GetCell(p.x, p.y);
+            if (shoreCell != null)
+                RemoveExistingWaterCascadeCliffs(shoreCell);
+
+            int sx = p.x;
+            int sy = p.y;
+
+            if (cliffWaterSouthPrefab != null && lowX == highX - 1 && lowY == highY)
+            {
+                TryPlaceWaterCascadeCliffStack(highX, highY, lowX, lowY, sHigh, sLow, CliffCardinalFace.South, cliffWaterSouthPrefab, sx, sy, sx, sy);
+                continue;
+            }
+            if (cliffWaterEastPrefab != null && lowX == highX && lowY == highY - 1)
+            {
+                TryPlaceWaterCascadeCliffStack(highX, highY, lowX, lowY, sHigh, sLow, CliffCardinalFace.East, cliffWaterEastPrefab, sx, sy, sx, sy);
+                continue;
+            }
+            if (cliffWaterSouthPrefab != null && lowX == highX + 1 && lowY == highY)
+            {
+                TryPlaceWaterCascadeCliffStack(highX, highY, lowX, lowY, sHigh, sLow, CliffCardinalFace.South, cliffWaterSouthPrefab, sx, sy, sx, sy);
+                continue;
+            }
+            if (cliffWaterEastPrefab != null && lowX == highX && lowY == highY + 1)
+            {
+                TryPlaceWaterCascadeCliffStack(highX, highY, lowX, lowY, sHigh, sLow, CliffCardinalFace.East, cliffWaterEastPrefab, sx, sy, sx, sy);
+            }
+        }
     }
 
     /// <summary>
@@ -2207,6 +2296,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// </summary>
     /// <returns>Number of cliff segment sprites instantiated.</returns>
     /// <param name="cliffStackAnchorWorldY">When set (water–water cascades), Y anchor at water visual surface; otherwise cell transform Y (terrain floor).</param>
+    /// <param name="sortingReferenceGridX">When set with <paramref name="sortingReferenceGridY"/>, used for sorting depth instead of <paramref name="highX"/>,<paramref name="highY"/> (e.g. upper-brink shore cell).</param>
     private int PlaceCliffWallStackCore(
         Cell cell,
         GameObject cliffPrefab,
@@ -2218,7 +2308,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         int highH,
         int lowH,
         int segmentCount,
-        float? cliffStackAnchorWorldY = null)
+        float? cliffStackAnchorWorldY = null,
+        int? sortingReferenceGridX = null,
+        int? sortingReferenceGridY = null)
     {
         if (gridManager == null || heightMap == null || segmentCount <= 0)
             return 0;
@@ -2236,7 +2328,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         int cellTerrainSort = cell.sortingOrder;
         if (waterManager == null)
             waterManager = FindObjectOfType<WaterManager>();
-        int maxSortFromForegroundWater = GetMaxCliffSortingOrderFromForegroundWaterNeighbors(highX, highY);
+        int sortGX = sortingReferenceGridX ?? highX;
+        int sortGY = sortingReferenceGridY ?? highY;
+        int maxSortFromForegroundWater = GetMaxCliffSortingOrderFromForegroundWaterNeighbors(sortGX, sortGY);
 
         float z = cell.gameObject.transform.position.z;
         Quaternion rot = Quaternion.identity;
@@ -2261,7 +2355,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             SpriteRenderer sr = cliffWall.GetComponent<SpriteRenderer>();
             if (sr != null)
             {
-                int computedSort = CalculateTerrainSortingOrder(highX, highY, topH) + SLOPE_OFFSET + visualIndex;
+                int computedSort = CalculateTerrainSortingOrder(sortGX, sortGY, topH) + SLOPE_OFFSET + visualIndex;
                 int maxCliffSort = cellTerrainSort - CliffSortingBelowCellTerrain - visualIndex;
                 int finalSort = Mathf.Min(computedSort, maxCliffSort);
                 if (maxSortFromForegroundWater != int.MaxValue)
@@ -2392,6 +2486,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// parent to the lower pool when the visible south/east face lies on that cell (north/west lower neighbor — mirror placement).
     /// </summary>
     /// <param name="parentCellX">When set with <paramref name="parentCellY"/>, cliff children parent to this cell; otherwise to the upper pool.</param>
+    /// <param name="waterSurfaceAnchorGridX">When set with <paramref name="waterSurfaceAnchorGridY"/>, <see cref="GridManager.GetWorldPositionVector"/> for the cascade anchor Y uses this grid cell (e.g. upper-brink shore) so isometric water-plane Y matches the parent shore tile (§12.8.1).</param>
     private void TryPlaceWaterCascadeCliffStack(
         int highX,
         int highY,
@@ -2402,7 +2497,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         CliffCardinalFace face,
         GameObject waterCliffPrefab,
         int? parentCellX = null,
-        int? parentCellY = null)
+        int? parentCellY = null,
+        int? waterSurfaceAnchorGridX = null,
+        int? waterSurfaceAnchorGridY = null)
     {
         if (waterCliffPrefab == null || heightMap == null || gridManager == null)
             return;
@@ -2418,13 +2515,17 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return;
 
         // Same Y band as the animated water tile child (WaterManager.PlaceWater): waterSurfaceWorld + (0, tileHeight*0.25).
-        // Anchor always uses the upper pool plane even when parenting to the lower cell (mirror placement).
+        // Anchor uses upper pool visual surface; for shore parents use waterSurfaceAnchorGrid so isometric Y matches that tile (not only high cell center).
         int visualSurfaceHeight = Mathf.Max(MIN_HEIGHT, sHigh - 1);
-        Vector2 waterSurfaceWorld = gridManager.GetWorldPositionVector(highX, highY, visualSurfaceHeight);
+        int anchorGx = waterSurfaceAnchorGridX ?? highX;
+        int anchorGy = waterSurfaceAnchorGridY ?? highY;
+        Vector2 waterSurfaceWorld = gridManager.GetWorldPositionVector(anchorGx, anchorGy, visualSurfaceHeight);
         float halfCellHeight = gridManager.tileHeight * 0.25f;
         float anchorY = waterSurfaceWorld.y + halfCellHeight;
 
-        PlaceCliffWallStackCore(cell, waterCliffPrefab, face, highX, highY, lowX, lowY, highH, lowH, segmentCount, anchorY);
+        int? sortRx = waterSurfaceAnchorGridX;
+        int? sortRy = waterSurfaceAnchorGridY;
+        PlaceCliffWallStackCore(cell, waterCliffPrefab, face, highX, highY, lowX, lowY, highH, lowH, segmentCount, anchorY, sortRx, sortRy);
     }
 
     private void RemoveExistingWaterCascadeCliffs(Cell cell)

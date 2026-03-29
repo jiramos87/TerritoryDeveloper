@@ -4,7 +4,7 @@
 
 Territory Developer is a 2D isometric city-builder built in Unity with C#. Players place roads, zones (residential/commercial/industrial), buildings, and manage their city's economy, resources, and growth.
 
-All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is no dependency injection framework — managers reference each other via Unity Inspector fields with `FindObjectOfType<T>()` fallback in Awake/Start.
+All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. No dependency injection — managers reference each other via Inspector fields with `FindObjectOfType<T>()` fallback in Awake/Start.
 
 ## System Layers
 
@@ -40,93 +40,63 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. There is 
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Folder Structure (`Assets/Scripts/`)
-
-| Directory | Files | Purpose |
-|-----------|-------|---------|
-| `Managers/GameManagers/` | 94 | Core game logic: grid, terrain, zones, roads, economy, simulation, helpers |
-| `Managers/UnitManagers/` | 64 | Data models: Cell, Zone, Building, Forest, HeightMap, CellData, WaterMap, etc. |
-| `Controllers/GameControllers/` | 6 | CameraController, CityStatsUIController, etc. |
-| `Controllers/UnitControllers/` | 38 | UI buttons, popups, sliders |
-| `Utilities/` | 6 | DebugHelper, RoadPathCostConstants, etc. |
-
-## Key Files by Size
-
-| File | Lines | Role |
-|------|-------|------|
-| GridManager.cs | ~2070 | Central hub — grid, cells, coordinates, placement, sorting, pathfinding |
-| TerrainManager.cs | ~3500 | Heightmap, slopes, water-shore/cliff/water-cascade prefabs, terrain sorting helpers |
-| ZoneManager.cs | ~1360 | RCI zoning, zone tile placement |
-| RoadManager.cs | ~1730 | Road drawing, prefab selection, road preview |
-| UIManager.cs | ~1240 | Main UI, popups, tool state |
-| CityStats.cs | ~1200 | Global statistics aggregator |
-| AutoRoadBuilder.cs | ~1160 | Automatic road extension |
-| GeographyManager.cs | ~980 | Terrain initialization orchestrator |
-| InterstateManager.cs | ~1160 | Interstate highway connections |
-| ForestManager.cs | ~860 | Forest generation and management |
-
-## Helper Services (extracted from managers)
+## Helper Services
 
 | Service | Role |
 |---------|------|
 | GridPathfinder | A* pathfinding for road routes |
 | GridSortingOrderService | Sorting order computation |
 | BuildingPlacementService | Building placement and load/restore |
-| TerraformingService | Path-level terraform plan computation |
-| PathTerraformPlan | Terraform Apply/Revert, cut-through mode |
+| TerraformingService, PathTerraformPlan | Terraform plan computation, apply/revert, cut-through |
 | RoadPrefabResolver | Prefab selection for path and single-cell contexts |
 | RoadPathCostConstants | Shared cost constants for road pathfinding |
-| UrbanCentroidService | Urban centroid and ring calculation (FEAT-32) |
+| UrbanCentroidService | Urban centroid and ring calculation |
 | GameBootstrap | Entry point, game loading flow |
 
 ## Data Flows
 
 ### Initialization
-`GeographyManager.InitializeGeography()` orchestrates the full startup sequence:
-1. `RegionalMapManager.InitializeRegionalMap()` — regional map with neighboring cities
-2. `GridManager.InitializeGrid()` — creates cell grid, then internally calls `TerrainManager.InitializeHeightMap()` to generate terrain elevation (on maps **wider/taller than 40×40**, the **40×40** designer template is **centered**; procedural terrain fills the rest)
-3. `WaterManager.InitializeWaterMap()` — builds `WaterMap` + lake bodies (depression-fill on `HeightMap` when `useLakeDepressionFill`; legacy: mask by `seaLevel`)
-4. `InterstateManager.GenerateAndPlaceInterstate()` — interstate highways (up to 3 random attempts + deterministic fallback)
-5. `ForestManager.InitializeForestMap()` — generates forests (conditional: `initializeForestsOnStart`)
-6. Water desirability calculation, sorting order recalculation, border signs placement
-7. `ZoneManager` is then ready for player zoning
 
-### Simulation (each TimeManager tick)
-`TimeManager` → `SimulationManager.ProcessSimulationTick()` → executes in order:
-1. `GrowthBudgetManager.EnsureBudgetValid` (when present)
-2. `UrbanCentroidService.RecalculateFromGrid` — urban centroid and rings for AUTO systems (FEAT-32)
-3. `AutoRoadBuilder` — extends road network
-4. `AutoZoningManager` — zones cells adjacent to roads
-5. `AutoResourcePlanner` — plans resource buildings (water, power)
+`GeographyManager` orchestrates startup:
+1. Regional map with neighboring cities
+2. Grid + heightmap (40×40 designer template centered; procedural fill on larger maps)
+3. Water map + lake bodies (depression-fill or legacy sea-level mask)
+4. Interstate highways (up to 3 random attempts + deterministic fallback)
+5. Forests (conditional)
+6. Water desirability, sorting order recalculation, border signs
+7. Zone manager ready for player zoning
 
-The legacy **UrbanizationProposal** system is **obsolete** and **not** invoked; removal is tracked as **TECH-13** in `BACKLOG.md`.
+### Simulation (each tick)
+
+SimulationManager executes in order:
+1. Growth budget validation
+2. Urban centroid / ring recalculation
+3. Auto road extension
+4. Auto zoning (cells adjacent to roads)
+5. Auto resource planning (water, power)
+
+The legacy UrbanizationProposal system is obsolete and not invoked.
 
 ### Player Input
-`GridManager.Update()` detects clicks → dispatches by active mode:
-- Zoning mode → `ZoneManager.PlaceZone()`
-- Road mode → `RoadManager.HandleRoadDrawing()`
-- Building mode → `GridManager.HandleBuildingPlacement()`
-- Bulldozer mode → `GridManager.HandleBulldozerMode()`
+
+GridManager dispatches clicks by active mode → zoning, road drawing, building placement, or bulldozer.
 
 ### Persistence
-- Save: `GameSaveManager` → `GridManager.GetGridData()` → serializes `List<CellData>` + `WaterMap.GetSerializableData()` as `WaterMapData` on `GameSaveData`
-- Load: `GameSaveManager` → `TerrainManager.RestoreHeightMapFromGridData` / `ApplyRestoredPositionsToGrid` → `WaterManager.RestoreWaterMapFromSaveData` (or legacy `RestoreFromLegacyCellData` when `waterMapData` absent) → `GridManager.RestoreGrid` → `WaterManager.MigrateWaterBodyIdsAfterGridRestore` (syncs `Cell.waterBodyId` with `WaterMap` and shore membership). Snapshot applies saved prefabs, `sortingOrder`, `waterBodyType`, **`waterBodyId`**, shore secondary prefabs; does **not** run `RestoreWaterSlopesFromHeightMap`, `RestoreTerrainSlopesFromHeightMap`, or `ReCalculateSortingOrderBasedOnHeight`
-- **Load sorting:** **[BUG-34](BACKLOG.md)** completed (2026-03-22): snapshot restore, water/shore, building post-pass. **[BUG-35](BACKLOG.md)** completed (2026-03-22): `DestroyCellChildren(..., destroyFlatGrass: true)` when restoring/placing RCI and utility buildings (no flat grass child under the building); multi-cell footprint still uses `GridSortingOrderService.SetZoneBuildingSortingOrder` + per-cell `SyncCellTerrainLayersBelowBuilding` for any remaining grass tiles. See **[BUG-20](BACKLOG.md)** if utilities still mis-sort.
 
-### UI / UX design system (program)
+- **Save:** Grid data (`List<CellData>`) + `WaterMapData` serialized on `GameSaveData`.
+- **Load:** Restore heightmap → restore water map (or legacy path) → restore grid → sync water body ids with shore membership. Snapshot applies saved prefabs, sorting order, water body type/id. Does **not** run global slope restoration or sorting recalculation (see geography spec §7.4).
 
-Cross-cutting effort to standardize HUD, popups, and interaction patterns: **charter** [`docs/ui-design-system-project.md`](docs/ui-design-system-project.md), **discovery** [`docs/ui-design-system-context.md`](docs/ui-design-system-context.md), **spec** [`.cursor/specs/ui-design-system.md`](.cursor/specs/ui-design-system.md). Executable work is tracked as normal `BACKLOG.md` issues linked from the charter (e.g. toolbar **ControlPanel** layout: **[TECH-07](BACKLOG.md)**).
+### UI / UX design system
 
-### Water (current vs planned)
+Cross-cutting effort: charter [`docs/ui-design-system-project.md`](docs/ui-design-system-project.md), discovery [`docs/ui-design-system-context.md`](docs/ui-design-system-context.md), spec [`.cursor/specs/ui-design-system.md`](.cursor/specs/ui-design-system.md). Work tracked in `BACKLOG.md`.
 
-- **Today (FEAT-37a + FEAT-37b + FEAT-37c + FEAT-38 completed):** `WaterMap` stores **per-cell water body id** and **`WaterBody`** holds **surface height**; **`Cell` / `CellData`** also store **`waterBodyId`** (same as `WaterBody.Id`) for open water and dry shore/rim/ShoreBay membership — see [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) §12.2. Procedural lakes use **depression-fill**; `TerrainManager` may carve **minimal cardinal bowls** (`LakeFeasibility`). Lake **shore tiles** from **FEAT-37a**; **sorting / roads / bridges / `SEA_LEVEL` removal** (non-shore) from **FEAT-37b**; **FEAT-37c** persists `WaterMapData` on save and restores it on load with **CellData** snapshot restore (no slope regen / no global sorting recalc on load). **`WaterBodyType`** on `Cell` / `CellData` classifies lake, river, sea for saves. **FEAT-38** — **procedural rivers** (`ProceduralRiverGenerator`, `WaterBodyType.River`) after lakes, before interstate — see [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) §13. **Shore / brown cliff / water–water cascades** (merged **BUG-33** + **BUG-41**): **[BUG-42](BACKLOG.md)** **completed** (2026-03-26) — `ClampShoreLandHeightsToAdjacentWaterSurface` + `RefreshShoreTerrainAfterWaterUpdate`; `RefreshWaterCascadeCliffs` runs after **`WaterManager.UpdateWaterVisuals`** (stacks use `PlaceCliffWallStackCore`; cascade Y aligns with the water tile: `visualSurfaceHeight` + `tileHeight×0.25`). **Multi-body height junctions (Pass A/B, lake-step rules, lake–river rim fallback):** **[BUG-45](BACKLOG.md)** **completed** (2026-03-27). Cliff wall placement (inspector nudges + water-shore Y) and cliff-vs-foreground-water sorting caps: **[BUG-39](BACKLOG.md)** and **[BUG-40](BACKLOG.md)** completed (2026-03-24). Load-time building sort: **[BUG-34](BACKLOG.md)** and **[BUG-35](BACKLOG.md)** completed (2026-03-22).
-- **Epic ([FEAT-37](BACKLOG.md)):** Child issues **FEAT-37a** / **FEAT-37b** / **FEAT-37c** done; **FEAT-38** (procedural rivers) **completed** (2026-03-24). Broader sea/sources/tools: **FEAT-39+** (see backlog). Minimap water: **[BUG-32](BACKLOG.md)** completed (2026-03-23). Detail: [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) §12.
+### Water
+
+`WaterMap` stores per-cell body ids; `WaterBody` holds surface height. Procedural lakes (depression-fill), procedural rivers (after lakes, before interstate), shore/cliff/cascade visuals. See geography spec §11–§12.
 
 ### Isometric geography (canonical spec)
 
-**Canonical reference:** [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) — use it for **conventions, definitions, and mechanisms**: diamond grid and direction deltas, `HeightMap` / `Cell.height`, land slopes, **water surface vs shore-band vs rim**, `DetermineWaterShorePrefabs` behavior, cliff faces and suppression, **terrain/water/shore sorting**, terraform modes, road-on-slope mapping, and pathfinding costs. When another document disagrees, **update the spec or the code**, then align the doc — do not fork a second “source of truth.”
-
-**Same file (sections):** §12 (water map, lakes, save/load), §13 (rivers), §14 (roads / interstate / bridges), §15 (lake-edge debugging notes). UI-only spec: [`.cursor/specs/ui-design-system.md`](.cursor/specs/ui-design-system.md). **`.cursor/specs/`** intentionally contains only those two specs — see `AGENTS.md` (no bug archives under `specs/`).
+[`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) — single source of truth for grid math, heights, slopes, water/shore/cliffs, sorting, terraform, roads, pathfinding. When another doc disagrees, update the spec or code.
 
 ## Full Dependency Map
 
@@ -153,25 +123,24 @@ Cross-cutting effort to standardize HUD, popups, and interaction patterns: **cha
 | EmploymentManager | CityStats, DemandManager |
 | StatisticsManager | EmploymentManager, DemandManager, EconomyManager, CityStats |
 | UIManager | ZoneManager, CursorManager, GridManager, TimeManager, EconomyManager, GameManager, TerrainManager, CityStats, various Controllers |
-| GameSaveManager | GridManager, CityStats, TimeManager, InterstateManager, MiniMapController (+ runtime `FindObjectOfType` for WaterManager, etc.) |
+| GameSaveManager | GridManager, CityStats, TimeManager, InterstateManager, MiniMapController |
 | GameManager | GridManager, GameSaveManager |
 | RegionalMapManager | InterstateManager, CityStats, GridManager |
 | CursorManager | GridManager |
 
-## Road and interstate routing (summary)
+## Road and interstate routing
 
-- **Manual streets:** `RoadManager.TryPrepareRoadPlacementPlanLongestValidPrefix` (partial paths), `PathTerraformPlan.TryValidatePhase1Heights`, preview terraform reverted before A* each frame. Spec: `.cursor/specs/isometric-geography-system.md` §14 (BACKLOG **BUG-25** completed).
-- **Interstate:** `TryPrepareRoadPlacementPlan` with `RoadPathValidationContext.forbidCutThrough`; `InterstateManager` ranks border endpoints and runs dual A* (`PickLowerCostInterstateAStarPath`) with shared costs in `RoadPathCostConstants`. Spec: same file §10, §14.5–§14.6 (BACKLOG **BUG-27**, **BUG-29** completed).
+Manual streets use longest-valid-prefix terraform validation; interstate uses full-path with `forbidCutThrough`. See geography spec §10, §13.
 
 ## Architectural Decisions
 
-- **`.cursor/specs/` minimal set**: Only **durable** system specs live there — [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) (terrain, water, roads, sorting) and [`.cursor/specs/ui-design-system.md`](.cursor/specs/ui-design-system.md). Bug write-ups, agent prompts, and one-off fix plans are **not** kept under `specs/`; use **`BACKLOG.md`** while work is open and **delete** ephemeral markdown when done (see `AGENTS.md`).
-- **GridManager as hub**: GridManager is the central coordinator because nearly all game operations involve cells. This keeps cell access consistent but makes GridManager large.
-- **FindObjectOfType pattern**: Used instead of DI for simplicity. Managers declare public/serialized fields wired in Inspector, with FindObjectOfType as null-check fallback in Awake/Start.
-- **Single singleton**: Only GameNotificationManager uses the singleton pattern (with DontDestroyOnLoad). All other managers are resolved via Inspector references.
-- **Namespaces (partial migration)**: Most scripts use `Territory.*` namespaces (`Territory.Core`, `Territory.Terrain`, `Territory.Roads`, `Territory.Zones`, `Territory.Forests`, `Territory.Buildings`, `Territory.Economy`, `Territory.UI`, `Territory.Geography`, `Territory.Timing`, `Territory.Utilities`, `Territory.Simulation`, `Territory.Persistence`). `TerraformingService` and `PathTerraformPlan` live in `Territory.Terrain`. A few legacy or utility scripts may still be in the global namespace; prefer new code under `Territory.*`.
+- **GridManager as hub:** Central coordinator for cell operations. Keeps access consistent but makes it large.
+- **FindObjectOfType pattern:** Inspector wiring + null-check fallback in Awake/Start.
+- **Namespaces:** Most scripts under `Territory.*` (`Core`, `Terrain`, `Roads`, `Zones`, `Forests`, `Buildings`, `Economy`, `UI`, `Geography`, `Timing`, `Utilities`, `Simulation`, `Persistence`). A few legacy scripts in global namespace.
+- **Spec policy:** See `AGENTS.md`.
 
 ## Known Trade-offs
-- **High coupling**: Many managers reference each other directly, creating tight coupling
-- **GridManager size**: At ~2070 lines (order of magnitude), it handles too many responsibilities (placement, sorting, pathfinding, culling); decomposition tracked as **TECH-01** in `BACKLOG.md`
-- **No event system**: Managers communicate via direct method calls rather than events
+
+- **High coupling:** Managers reference each other directly.
+- **GridManager size:** ~2070 lines; decomposition tracked in `BACKLOG.md`.
+- **No event system:** Direct method calls, not events.
