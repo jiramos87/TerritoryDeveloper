@@ -1,0 +1,36 @@
+---
+description: Simulation domain — tick order, AUTO pipeline, obsolete systems
+globs:
+  - "**/SimulationManager*.cs"
+  - "**/AutoRoadBuilder*.cs"
+  - "**/AutoZoningManager*.cs"
+  - "**/AutoResourcePlanner*.cs"
+  - "**/GrowthManager*.cs"
+  - "**/GrowthBudgetManager*.cs"
+  - "**/UrbanCentroidService*.cs"
+alwaysApply: false
+---
+
+# Simulation Domain
+
+## Tick execution order
+
+`TimeManager` → `SimulationManager.ProcessSimulationTick()` runs these **in strict order**:
+
+1. `GrowthBudgetManager.EnsureBudgetValid` (when present)
+2. `UrbanCentroidService.RecalculateFromGrid` — urban centroid + ring metrics
+3. `AutoRoadBuilder` — extends road network
+4. `AutoZoningManager` — zones cells adjacent to roads
+5. `AutoResourcePlanner` — plans resource buildings (water, power)
+
+## Key dependencies
+
+- `AutoRoadBuilder` → GridManager, RoadManager, TerrainManager, GrowthBudgetManager, CityStats, InterstateManager
+- `AutoZoningManager` → GridManager, ZoneManager, GrowthBudgetManager, CityStats, DemandManager
+- `AutoResourcePlanner` → CityStats, GridManager, GrowthBudgetManager, UIManager
+
+## Obsolete system
+
+**`UrbanizationProposalManager`** and related proposal UI are **obsolete** — intentionally not called from `ProcessSimulationTick()`. **NEVER** re-enable. Full removal tracked as **TECH-13** in `BACKLOG.md`.
+
+**`UrbanCentroidService`** and ring-based AUTO growth **remain supported** — they are NOT part of the obsolete proposal system.

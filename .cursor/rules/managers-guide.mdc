@@ -9,7 +9,7 @@ alwaysApply: false
 ## Manager Responsibilities (one-line each)
 - **GridManager** — Central hub. Isometric 2D grid, cell access, coordinate conversion, building placement, bulldozing, sorting order, pathfinding
 - **TerrainManager** — Heightmap generation, slope types, prefab selection by slope, cliff stacks (`PlaceCliffWallStack`, serialized face nudges + water-shore Y + `GetMaxCliffSortingOrderFromForegroundWaterNeighbors`)
-- **WaterManager** — Water body generation and management (multi-level lakes: **FEAT-37**; **FEAT-37a** / **FEAT-37b** / **FEAT-37c** completed; **FEAT-38** rivers; shore / cliff / water cascades **BUG-42** completed 2026-03-26; **BUG-45** multi-body junctions completed 2026-03-27; **BUG-39** / **BUG-40** completed 2026-03-24; load **BUG-34** / **BUG-35** completed 2026-03-22). Spec: `.cursor/specs/isometric-geography-system.md` §12–§13
+- **WaterManager** — Water body generation and management (multi-level lakes, rivers, shore/cliff/cascade visuals, multi-body junctions). Spec: `.cursor/specs/isometric-geography-system.md` §11–§13
 - **ForestManager** — Forest generation (sparse/medium/dense), forestation, deforestation
 - **ZoneManager** — RCI zoning (residential, commercial, industrial), zone tile placement
 - **RoadManager** — Road drawing, prefab selection by neighbors, road preview
@@ -44,7 +44,7 @@ alwaysApply: false
 - **PathTerraformPlan** — Terraform Apply/Revert, cut-through mode
 - **RoadPrefabResolver** — Prefab selection for path and single-cell contexts
 - **RoadPathCostConstants** — Shared cost constants for road pathfinding
-- **UrbanCentroidService** — Urban centroid and ring metrics for AUTO roads and AUTO zoning (FEAT-32); **keep** — not part of the obsolete proposal system
+- **UrbanCentroidService** — Urban centroid and ring metrics for AUTO roads and AUTO zoning; **keep** — not part of the obsolete proposal system
 - **GameBootstrap** — Entry point, game loading flow
 
 ## Obsolete / removal backlog

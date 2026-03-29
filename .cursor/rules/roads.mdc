@@ -1,0 +1,43 @@
+---
+description: Roads domain — pipeline rules, validation, guardrails
+globs:
+  - "**/RoadManager*.cs"
+  - "**/RoadPrefabResolver*.cs"
+  - "**/TerraformingService*.cs"
+  - "**/PathTerraformPlan*.cs"
+  - "**/GridPathfinder*.cs"
+  - "**/RoadPathCostConstants*.cs"
+  - "**/InterstateManager*.cs"
+  - "**/RoadCacheService*.cs"
+alwaysApply: false
+---
+
+# Roads Domain
+
+**Canonical spec:** `.cursor/specs/isometric-geography-system.md` — §9 (road prefab selection on terrain), §10 (pathfinding cost model), §13 (manual draw, interstate, bridges, shared validation).
+
+## Single validation pipeline (§13.1)
+
+All persistent road placement must go through terraform validation. **Do not** use `ComputePathPlan` alone for placement decisions.
+
+| Mode | Validation method | `forbidCutThrough` |
+|------|-------------------|-------------------|
+| Manual streets / preview | `TryPrepareRoadPlacementPlanLongestValidPrefix` | `false` |
+| Interstate | `TryPrepareRoadPlacementPlan` (full path) | `true` |
+| AUTO streets | `TryPrepareRoadPlacementPlanLongestValidPrefix` | `false` |
+
+## Resolver rules (§13.7)
+
+- **A:** Elbow connectivity matches exactly two path neighbors.
+- **B:** Prefab exits align with path in/out.
+- **C:** Terraform wins — cut-through uses flat prefabs from plan, not live slope misread.
+- **D:** Prefer offset paths avoiding hills when costs close.
+- **E:** Interstate prefers straight segments.
+- **F:** Bridge approach perpendicular to water; no turn on last land cells before water.
+
+## Guardrails
+
+- IF modifying roads → THEN call `InvalidateRoadCache()` afterward.
+- IF placing bridge → THEN axis-aligned span only; no elbows on water/water-slope cells.
+- IF cut-through → THEN reject when `maxHeight - baseHeight > 1` (§13.6).
+- IF slope-climb (no consecutive |Δh| > 1) → THEN use `TerraformAction.None` + `postTerraformSlopeType` — do not flatten terrain.

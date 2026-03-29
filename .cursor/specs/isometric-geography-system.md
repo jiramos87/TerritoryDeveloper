@@ -21,6 +21,26 @@
 |---------|----------|
 | UI design system | `.cursor/specs/ui-design-system.md` |
 
+### 0.3 Quick reference for AI agents
+
+Read only the sections you need — use this table to navigate:
+
+| Need to understand... | Read sections | Approx. lines |
+|---|---|---|
+| Grid math, coordinates, directions | §1 | ~45 |
+| Height model, water surface vs bed | §2 | ~50 |
+| Slope type determination | §3–§4 | ~100 |
+| Shore/cliff/water layering | §5.6–§5.9, §14 | ~80 |
+| Prefab inventory and naming | §6 | ~40 |
+| Sorting order formula | §7 | ~45 |
+| Terraform system | §8 | ~35 |
+| Road prefab selection on terrain | §9 | ~35 |
+| Pathfinding costs | §10 | ~20 |
+| Water map, lakes, multi-body junctions | §11 | ~70 |
+| Procedural rivers | §12 | ~45 |
+| Road/interstate/bridge validation | §13 | ~60 |
+| Engineering notes, glossary, debug | §14 | ~30 |
+
 ---
 
 ## 1. Isometric Grid Fundamentals

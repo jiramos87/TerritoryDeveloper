@@ -63,16 +63,31 @@ Keep the issue **"In progress"**. Only move to "Completed" when the user explici
 | Statistics display | Statistics manager, city stats UI controller | — |
 | Camera / viewport | Camera controller, grid manager | — |
 
-## Anti-patterns to Avoid
+## System Invariants (NEVER violate)
 
-- Do NOT create new singletons — use Inspector + FindObjectOfType pattern
-- Do NOT access `gridArray` or `cellArray` directly from outside GridManager — use `GetCell(x, y)`
-- Do NOT add more responsibilities to GridManager — extract to helper classes
-- Do NOT use `FindObjectOfType` in Update or loops — only in Awake/Start
-- Do NOT forget `InvalidateRoadCache()` after modifying roads
-- Do NOT instantiate managers with `new` — they are scene components
-- Do NOT re-enable the obsolete UrbanizationProposal flow
-- Do NOT add bug reports or one-off specs under `.cursor/specs/`
+1. `HeightMap[x,y]` == `Cell.height` — always in sync; update both on every write (spec §2.4)
+2. After road modification → call `InvalidateRoadCache()`
+3. No `FindObjectOfType` in `Update` or per-frame loops — cache in `Awake`/`Start` only
+4. No new singletons — use Inspector + `FindObjectOfType` pattern
+5. No direct `gridArray`/`cellArray` access outside `GridManager` — use `GetCell(x, y)`
+6. Do not add responsibilities to `GridManager` — extract to helper classes
+7. Shore band: land Moore-adjacent to water must have `height ≤ min(S)` of neighbor water cells (spec §2.4.1)
+8. Rivers: `H_bed` monotonically non-increasing toward exit (spec §12.4)
+9. Cliff visible faces: south + east only — N/W not instantiated (spec §5.7)
+10. Road placement: always through `TryPrepareRoadPlacementPlan` pipeline — not `ComputePathPlan` alone (spec §13.1)
+11. `UrbanizationProposal`: NEVER re-enable — obsolete by design (TECH-13)
+12. Do not add specs under `.cursor/specs/` for bugs or one-off work — use `BACKLOG.md`
+
+## Guardrails (IF → THEN)
+
+- IF adding a manager reference → THEN use `[SerializeField] private` + `FindObjectOfType` fallback in `Awake`
+- IF modifying roads → THEN call `InvalidateRoadCache()` after changes
+- IF placing a road → THEN use `TryPrepareRoadPlacementPlan`, NOT `ComputePathPlan` alone
+- IF touching `GridManager` → THEN extract new logic to a helper class, do not grow GridManager
+- IF creating a new manager → THEN make it a MonoBehaviour scene component, never `new`
+- IF modifying `HeightMap` → THEN also write `Cell.height` (and vice versa)
+- IF placing or removing water → THEN call `RefreshShoreTerrainAfterWaterUpdate` afterward
+- IF adding a new spec → THEN only under `.cursor/specs/` if it covers a permanent domain; use `BACKLOG.md` for bugs/one-offs
 
 ## Pre-commit Checklist
 

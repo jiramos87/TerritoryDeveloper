@@ -1,0 +1,37 @@
+---
+description: Water and terrain domain — invariants, guardrails, spec pointers
+globs:
+  - "**/WaterManager*.cs"
+  - "**/WaterMap*.cs"
+  - "**/TerrainManager*.cs"
+  - "**/HeightMap*.cs"
+  - "**/ProceduralRiver*.cs"
+  - "**/TestRiverGenerator*.cs"
+  - "**/WaterBody*.cs"
+  - "**/LakeFeasibility*.cs"
+  - "**/CliffFace.cs"
+  - "**/GeographyManager*.cs"
+alwaysApply: false
+---
+
+# Water & Terrain Domain
+
+**Canonical spec:** `.cursor/specs/isometric-geography-system.md` — §2 (height model), §4.2 (water-shore slope selection), §5.6–§5.9 (layered model, cascades, cliffs, shores), §11 (water map, lakes, multi-body junctions), §12 (procedural rivers), §14 (engineering notes).
+
+## Invariants
+
+1. `HeightMap[x,y]` and `Cell.height` must **never diverge** — sync both on every write (§2.4).
+2. Shore band: land Moore-adjacent to water must have `height ≤ min(S)` of adjacent water cells (§2.4.1).
+3. Rivers: `H_bed` monotonically non-increasing toward exit (§12.4).
+4. Cliff visible faces: **south and east only** — N/W are not instantiated (§5.7).
+5. Water–water cascades exist only between **distinct** logical surfaces, on cardinal edges (§5.6.2).
+6. Lake surface-step contact is forbidden — lake edges at different S skip cascades (§11.7).
+
+## Guardrails
+
+- IF modifying `HeightMap` → THEN also write `Cell.height` (and vice versa).
+- IF placing or removing water → THEN call `RefreshShoreTerrainAfterWaterUpdate` afterward.
+- IF water–water cascade → THEN check `IsLakeSurfaceStepContactForbidden` before placing stacks.
+- IF multi-body contact → THEN follow Pass A → Pass B → lake-river fallback → place water → cascade cliffs → shore terrain (§11.7).
+- IF shore prefab selection → THEN verify surface-height gate: `h ≤ V + MAX` where `V = max(MIN_HEIGHT, S−1)` (§4.2).
+- IF procedural river → THEN enforce symmetric banks `H_bank = H_bed + 1`, corner promotion for shore continuity (§12.5).

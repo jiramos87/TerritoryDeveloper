@@ -1,32 +1,23 @@
 ---
-description: Territory Developer project overview - Unity 2D city builder
+description: Territory Developer project overview — Unity 2D city builder
 alwaysApply: true
 ---
 
 # Territory Developer — Project Overview
 
-Unity 2D city-builder with isometric view. Players build and manage a city by placing roads, zones (residential/commercial/industrial), buildings, and managing economy.
+**Language:** All code, comments, XML docs, annotations, Debug.Log messages, and repository content must be in **English**.
 
-## Language
-All code, comments, XML docs, annotations, Debug.Log messages, and repository content must be in **English**.
+**Stack:** Unity 2D isometric city-builder; C# MonoBehaviour classes; `Territory.*` namespaces (partial migration); no DI — Inspector fields + `FindObjectOfType<T>()` fallback in Awake/Start.
 
-## Stack
-- Unity + C#, all game logic in MonoBehaviour classes
-- Most files use `Territory.*` namespaces (partial migration; a few legacy files may remain in the global namespace)
-- No dependency injection — managers reference each other via Inspector fields + `FindObjectOfType<T>()` fallback in Awake/Start
+**Folder layout (`Assets/Scripts/`):**
+- `Managers/GameManagers/` (~94 files) — core game logic: grid, terrain, zones, roads, economy, simulation, helpers
+- `Managers/UnitManagers/` (~64 files) — data models: Cell, Zone, Building, Forest, HeightMap, CellData, WaterMap, etc.
+- `Controllers/GameControllers/` (~6 files) — CameraController, CityStatsUIController, etc.
+- `Controllers/UnitControllers/` (~38 files) — UI buttons, popups, sliders
+- `Utilities/` (~6 files) — DebugHelper, RoadPathCostConstants, etc.
 
-## Folder Structure (`Assets/Scripts/`)
-- `Managers/GameManagers/` (94 files) — core game logic: grid, terrain, zones, roads, economy, simulation, helpers
-- `Managers/UnitManagers/` (64 files) — data models: Cell, Zone, Building, Forest, HeightMap, CellData, WaterMap, etc.
-- `Controllers/GameControllers/` (6 files) — CameraController, CityStatsUIController, etc.
-- `Controllers/UnitControllers/` (38 files) — UI buttons, popups, sliders
-- `Utilities/` (6 files) — DebugHelper, RoadPathCostConstants, etc.
+**Key facts:** GridManager is the central hub for cell operations. Only singleton: `GameNotificationManager.Instance`. Data models: MonoBehaviour-based (Cell, Zone on GameObjects) vs plain classes (CellData, CommuneData, TerritoryData for serialization). Grid uses `Cell[,] cellArray` + `GameObject[,] gridArray` with heightMap-based isometric height system.
 
-## Key Architectural Facts
-- **GridManager** is the central hub (~2070 lines, 13 direct dependencies). All cell operations go through it. Decomposition: **TECH-01** in `BACKLOG.md`.
-- **Only singleton**: `GameNotificationManager.Instance` (with DontDestroyOnLoad)
-- **Data models**: MonoBehaviour-based (Cell, Zone — live on GameObjects) or plain classes (CellData, CommuneData, TerritoryData — for serialization/save)
-- **Grid**: 2D isometric with height system (heightMap). Cells stored in `Cell[,] cellArray` and `GameObject[,] gridArray`
-- **Geography (canonical spec)**: `.cursor/specs/isometric-geography-system.md` — coordinates, heights, slopes, water/shore/cliffs, sorting for terrain layers
-- **Sorting order**: depth × height formula and per-type offsets (see canonical spec §7); `GridManager` + `GridSortingOrderService` implement cell content ordering
-- **Reference file for best practices**: `EconomyManager.cs` (XML docs + #regions + [Header] attributes)
+**Style reference:** `EconomyManager.cs` (XML docs + `#region` + `[Header]` attributes).
+
+**Deep architecture / deps / flows:** `ARCHITECTURE.md`. **Geography:** `.cursor/specs/isometric-geography-system.md` (spec §7 for sorting order).

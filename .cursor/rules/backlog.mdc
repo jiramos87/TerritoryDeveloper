@@ -45,7 +45,7 @@ When **delivering** that prompt, follow **`AGENTS.md` → “Format when deliver
 - **Only when the user confirms** the fix has been verified/tested
 - Mark checkbox as `[x]`
 - Move to "Completed (last 30 days)" with the date
-- After 30 days, issues can be archived or removed from the list
+- Completed items older than ~7 days are moved to `BACKLOG-ARCHIVE.md`; check there for historical context if needed
 
 ## Priority Order
 Issues are ordered by priority within each section. The section order is:

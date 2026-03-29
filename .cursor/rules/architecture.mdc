@@ -1,63 +1,14 @@
 ---
-description: System architecture and manager dependency graph
+description: System architecture summary — pointers to detailed docs
 alwaysApply: true
 ---
 
-# Architecture
+# Architecture (summary)
 
-## Initialization Flow
-`GeographyManager.InitializeGeography()` orchestrates startup:
-1. `RegionalMapManager.InitializeRegionalMap()` — regional map with neighboring cities
-2. `GridManager.InitializeGrid()` → internally calls `TerrainManager.InitializeHeightMap()` — cell grid + terrain elevation (may carve **lake feasibility** bowls when depression-fill is on)
-3. `WaterManager.InitializeWaterMap()` — `WaterMap` + lakes (depression-fill or legacy sea-level mask)
-4. `InterstateManager.GenerateAndPlaceInterstate()` — interstate highways
-5. `ForestManager.InitializeForestMap()` — forest generation (conditional)
-6. Sorting order recalculation, border signs, then `ZoneManager` ready for player zoning
+**Init:** `GeographyManager.InitializeGeography()` → `RegionalMapManager` → `GridManager.InitializeGrid()` / `TerrainManager.InitializeHeightMap()` → `WaterManager.InitializeWaterMap()` → `InterstateManager.GenerateAndPlaceInterstate()` → `ForestManager.InitializeForestMap()` → sorting recalculation, border signs, `ZoneManager` ready.
 
-**Water evolution:** **FEAT-37** epic — **FEAT-37a** / **FEAT-37b** / **FEAT-37c** **completed**; **FEAT-38** (rivers) completed. Shore / cliff / water–water cascades **BUG-42** completed (2026-03-26); adjacent bodies at different heights **BUG-45** completed (2026-03-27). Load-time building sort **BUG-34** and grass/building layering **BUG-35** completed (2026-03-22). See `.cursor/specs/isometric-geography-system.md` §12–§13 and `ARCHITECTURE.md` (Data Flows → Water).
+**Simulation tick:** `TimeManager` → `SimulationManager.ProcessSimulationTick()` → `GrowthBudgetManager.EnsureBudgetValid` → `UrbanCentroidService.RecalculateFromGrid` → `AutoRoadBuilder` → `AutoZoningManager` → `AutoResourcePlanner`. UrbanizationProposal is **obsolete** — never re-enable.
 
-## Simulation Flow (each TimeManager tick)
-`TimeManager` → `SimulationManager.ProcessSimulationTick()` → in order:
-1. `GrowthBudgetManager.EnsureBudgetValid` (when present)
-2. `UrbanCentroidService.RecalculateFromGrid` — rings/centroid for AUTO roads and zoning (FEAT-32)
-3. `AutoRoadBuilder` — extends road network
-4. `AutoZoningManager` — zones cells adjacent to roads
-5. `AutoResourcePlanner` — plans resource buildings (water, power)
+**Player input:** `GridManager.Update()` dispatches by active mode → `ZoneManager.PlaceZone()` / `RoadManager.HandleRoadDrawing()` / `GridManager.HandleBuildingPlacement()` / `GridManager.HandleBulldozerMode()`.
 
-Legacy **UrbanizationProposal** flow is **obsolete** and **not** called; removal is **TECH-13** in `BACKLOG.md`.
-
-## Player Input Flow
-`GridManager.Update()` detects clicks → dispatches by active mode:
-- Zoning: `ZoneManager.PlaceZone()`
-- Road: `RoadManager.HandleRoadDrawing()`
-- Building: `GridManager.HandleBuildingPlacement()`
-- Bulldozer: `GridManager.HandleBulldozerMode()`
-
-## Logical Layers
-- **Core**: GridManager, Cell, CellData — grid, cells, coordinates
-- **Terrain**: TerrainManager, WaterManager, HeightMap, WaterMap
-- **Forests**: ForestManager, ForestMap, Forest, IForest, SparseForest, MediumForest, DenseForest
-- **Gameplay**: ZoneManager, RoadManager, InterstateManager, DemandManager, EconomyManager
-- **Simulation**: SimulationManager, AutoRoadBuilder, AutoZoningManager, AutoResourcePlanner, GrowthManager, GrowthBudgetManager, UrbanCentroidService
-- **Stats**: CityStats, EmploymentManager, StatisticsManager
-- **UI**: UIManager, CursorManager, GameNotificationManager, all Controllers
-- **Persistence**: GameSaveManager, GameManager
-
-## Dependency Map
-- GridManager → [ZoneManager, UIManager, CityStats, CursorManager, TerrainManager, DemandManager, WaterManager, GameNotificationManager, ForestManager, CameraController, RoadManager, InterstateManager, BuildingSelectorMenuController]
-- ZoneManager → [GridManager, RoadManager, CityStats, UIManager, GameNotificationManager, DemandManager, WaterManager, InterstateManager]
-- RoadManager → [TerrainManager, GridManager, CityStats, UIManager, ZoneManager, InterstateManager]
-- TerrainManager → [GridManager, ZoneManager, WaterManager]
-- WaterManager → [GridManager, TerrainManager, ZoneManager]
-- ForestManager → [GridManager, WaterManager, CityStats, EconomyManager, UIManager, GameNotificationManager, TerrainManager]
-- GeographyManager → [TerrainManager, WaterManager, ForestManager, GridManager, ZoneManager, InterstateManager, RegionalMapManager]
-- TimeManager → [UIManager, SpeedButtonsController, CityStats, EconomyManager, GridManager, AnimatorManager, ZoneManager, InterstateManager, SimulationManager]
-- SimulationManager → [CityStats, GrowthBudgetManager, UrbanCentroidService, AutoRoadBuilder, AutoZoningManager, AutoResourcePlanner]
-- EconomyManager → [CityStats, TimeManager, GameNotificationManager]
-- DemandManager → [EmploymentManager, CityStats, ForestManager, GridManager]
-- InterstateManager → [GridManager, TerrainManager, RoadManager]
-- CityStats → [TimeManager, WaterManager, ForestManager]
-
-**Isometric geography (canonical):** `.cursor/specs/isometric-geography-system.md` — grid, terrain, water, shores, cliffs, sorting, terraform, roads, rivers, pathfinding. `.cursor/specs/` holds only that plus `ui-design-system.md`; do not add bug archives (see `AGENTS.md`).
-
-See `ARCHITECTURE.md` for full dependency map, helper services (GridPathfinder, RoadPrefabResolver, TerraformingService, etc.), and the **Road and interstate routing** summary (manual streets vs interstate validation).
+**Deep reference:** `ARCHITECTURE.md` — full dependency map, helper services, system layers, persistence, road/interstate routing. **Geography spec:** `.cursor/specs/isometric-geography-system.md`. **Agent workflow + spec policy:** `AGENTS.md`.

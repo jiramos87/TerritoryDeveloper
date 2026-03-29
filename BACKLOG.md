@@ -21,6 +21,7 @@ _(none)_
   - Files: `RoadManager.cs` (`HandleRoadDrawing`, road placement / commit path), `GridManager.cs` (road mode input, any demolish or clear calls near road segments), `TerrainManager.cs` / `TerraformingService.cs` if road placement widens the affected region; `ZoneManager.cs` if zoning is cleared outside road cells
   - Spec: `.cursor/specs/isometric-geography-system.md` §14 (manual streets; **BUG-25** completed — regression)
   - Notes: **Observed:** In **road drawing mode**, tracing a street **removes** (or clears) **zoning prefabs**, **zone buildings** (RCI), and **zoning** on cells **adjacent to the route**, not only on the road cells themselves (same report: manual street trace wipes zone visuals and spawned buildings). **Expected:** Only cells that actually receive the road (and any explicitly required footprint for valid placement) should be modified; **neighboring** zoned or built cells should remain unless the design intentionally requires a wider clear (document if so). Likely causes: over-broad dirty rect, neighbor iteration calling `DemolishCellAt` / zone clear, terraform brush larger than 1×1, or preview vs commit mismatch. **Related:** completed **BUG-25** (manual street segment drawing).
+  - Acceptance: Drawing a street through zoned/built area modifies only cells on the road path; adjacent zones, buildings, and prefabs remain intact
   - Depends on: none
 
 - [ ] **BUG-49** — Manual road drawing: preview builds the route cell-by-cell (animated); should show full path at once
@@ -28,6 +29,7 @@ _(none)_
   - Files: `RoadManager.cs` (`HandleRoadDrawing`, preview placement / ghost or temp prefab updates per frame), `GridManager.cs` if road mode input drives incremental preview; any coroutine or per-tick preview extension of the traced path
   - Spec: `.cursor/specs/isometric-geography-system.md` §14 (manual streets — preview behavior)
   - Notes: **Observed:** While drawing a street, **preview mode** visually **extends the route one cell at a time**, like an animation, instead of updating the full proposed path in one step. **Expected:** **No** step-by-step or staggered preview animation. The game should **compute the full valid path** (same rules as commit / `TryPrepareRoadPlacementPlan` or equivalent) for the current stroke, **then** instantiate or refresh **preview** prefabs for that complete path in a single update — or batch updates without visible per-cell delay. **Related:** **BUG-37** (adjacent clear during trace — ensure preview vs commit paths stay consistent when fixing).
+  - Acceptance: Road preview shows the full computed path in one visual update; no visible cell-by-cell animation during drag
   - Depends on: none
 
 - [ ] **BUG-43** — Bridges over rivers/lakes adjacent to cliffs: gaps, floating segments, wrong alignment
@@ -35,6 +37,7 @@ _(none)_
   - Files: `RoadManager.cs` (`ValidateBridgePath`, `StraightenBridgeSegments` / bridge placement and commit), `RoadPrefabResolver.cs` (bridge vs land prefabs at height/water boundaries), `TerrainManager.cs` (cliff stacks, water shores, height continuity at cliff–water edges), `GridSortingOrderService.cs` (bridge `sortingOrder` over water vs land), `GridManager.cs` (road tile placement / refresh near cliffs); `InterstateManager.cs` if interstate bridge segments hit the same cases; `WaterManager.cs` / `WaterMap.cs` if body-type or surface rules affect placement
   - Spec: `.cursor/specs/isometric-geography-system.md` §14 (roads, bridges, validation); cliff/water interaction with roads as documented in §4–§7 and §12–§13 where relevant
   - Notes: **Observed:** When a street or bridge path crosses **water** (river or lake) **next to a vertical cliff** (height drop), bridge/road visuals break: **floating** segments at the upper level, **gaps** between cliff-top approach and lower water segments, **disconnected** path continuity, occasional **grass/terrain patches** on water under misplaced road tiles, and **misaligned** bridge tiles relative to cliff faces and water surface. **Expected:** A single continuous, correctly elevated bridge run with prefabs and **sorting** consistent with per-cell height and water vs land; no floating or orphaned road pieces at cliff–water junctions. **Related:** completed **BUG-42** (shore/cascade pipeline — ensure bridge refresh does not fight **`RefreshWaterCascadeCliffs`** / `RefreshShoreTerrainAfterWaterUpdate`).
+  - Acceptance: Bridge crossing water next to cliffs is visually continuous; no floating segments, gaps, or grass patches on water cells
   - Depends on: none
 
 - [ ] **BUG-44** — Cliff prefabs: black gaps when a river or lake meets the **east** or **south** map edge
@@ -378,91 +381,7 @@ _(none)_
   - Files: `WaterBody.cs`, `WaterMap.cs`, `WaterManager.cs`, `TerrainManager.cs`, `LakeFeasibility.cs`
   - Notes: `WaterBody` + per-cell body ids; `WaterMap.InitializeLakesFromDepressionFill` + `LakeFillSettings` (depression-fill, bounded pass, artificial fallback, merge); `LakeFeasibility` / `EnsureGuaranteedLakeDepressions` terrain bowls; `WaterMapData` v2 + legacy load; centered 40×40 template + extended terrain. **Shore / cliff / cascade polish:** completed **[BUG-42](#bug-42)** (2026-03-26); **FEAT-37b** / **FEAT-37c** completed; building sort on load **BUG-34** (completed); multi-cell footprint / grass under building **BUG-35** (completed 2026-03-22).
 
-- [x] **TECH-12** — Water system refactor: planning pass (objectives, rules, scope, child issues) (2026-03-21)
-  - Type: planning / documentation
-  - Files: `.cursor/specs/isometric-geography-system.md` (§12), `BACKLOG.md` (FEAT-37, BUG-08 splits), `ARCHITECTURE.md` (Terrain / Water as needed)
-  - Notes: **Goal:** Before implementation of **FEAT-37**, produce a single agreed definition of **objectives**, **rules** (data + gameplay + rendering), **known bugs** to fold in, **non-goals / phases**, and **concrete child issues** (IDs) ordered for development. Link outcomes in this spec and in `FEAT-37`. Overlaps **BUG-08** (generation), **FEAT-15** (ports/sea). **Does not** implement code — only backlog + spec updates and issue breakdown.
-  - Depends on: nothing (blocks structured FEAT-37 execution)
-
-- [x] **BUG-30** — Incorrect road prefabs when interstate climbs slopes (2026-03-20)
-  - Type: fix
-  - Files: `TerraformingService.cs`, `RoadPrefabResolver.cs`, `PathTerraformPlan.cs`, `RoadManager.cs` (shared pipeline)
-  - Notes: Segment-based Δh for scale-with-slopes; corner/upslope cells use `GetPostTerraformSlopeTypeAlongExit` (aligned with travel); live-terrain fallback + `RestoreTerrainForCell` force orthogonal ramp when `action == None` and cardinal `postTerraformSlopeType`. Spec: `.cursor/specs/isometric-geography-system.md` §14.7. Verified in Unity.
-
-- [x] **TECH-09** — Remove obsolete `TerraformNeeded` from TerraformingService (2026-03-20)
-  - Type: refactor (dead code removal)
-  - Files: `TerraformingService.cs`
-  - Notes: Removed `[Obsolete]` `TerraformNeeded` and `GetOrthogonalFromRoadDirection` (only used by it). Path-based terraforming uses `ComputePathPlan` only.
-
-- [x] **TECH-10** — Fix `TerrainManager.DetermineWaterSlopePrefab` north/south sea logic (2026-03-20)
-  - Type: fix (code health)
-  - Files: `TerrainManager.cs`
-  - Notes: Replaced impossible `if (!hasSeaLevelAtNorth)` under `hasSeaLevelAtNorth` with NE/NW corner handling and East-style branch for sea north+south strips (`southEast` / `southEastUpslope`). South-only coast mirrors East; removed unreachable `hasSeaLevelAtSouth` else (handled by North block first).
-
-- [x] **TECH-11** — Namespace `Territory.Terrain` for TerraformingService and PathTerraformPlan (2026-03-20)
-  - Type: refactor
-  - Files: `TerraformingService.cs`, `PathTerraformPlan.cs`, `ARCHITECTURE.md`, `.cursor/rules/project-overview.mdc`
-  - Notes: Wrapped both types in `namespace Territory.Terrain`. Dependents already had `using Territory.Terrain`. Docs updated to drop “global namespace” examples for these files.
-
-- [x] **TECH-08** — UI design system docs: TECH-07 (ControlPanel sidebar) ticketed and wired (2026-03-20)
-  - Type: documentation
-  - Files: `BACKLOG.md` (TECH-07), `docs/ui-design-system-project.md` (Backlog bridge), `docs/ui-design-system-context.md` (Toolbar — ControlPanel), `.cursor/specs/ui-design-system.md` (§3.3 layout variants), `ARCHITECTURE.md`, `AGENTS.md`, `.cursor/rules/managers-guide.mdc`
-  - Notes: Executable toolbar refactor remains **TECH-07** (open). This issue records the documentation and cross-links only.
-
-- [x] **BUG-25** — Fix bugs in manual street segment drawing (2026-03-19)
-  - Type: fix
-  - Files: `RoadManager.cs`, `RoadPrefabResolver.cs` (also: `GridManager.cs`, `TerraformingService.cs`, `PathTerraformPlan.cs`, `GridPathfinder.cs` for prior spec work)
-  - Notes: Junction/T/cross prefabs: `HashSet` path membership + `SelectFromConnectivity` for 3+ cardinal neighbors in `RoadPrefabResolver`; post-placement `RefreshRoadPrefabAt` pass on placed cells in `TryFinalizeManualRoadPlacement`. Spec: `.cursor/specs/isometric-geography-system.md` §14. Optional follow-up: `postTerraformSlopeType` on refresh, crossroads prefab audit.
-- [x] **BUG-27** — Interstate pathfinding bugs (2026-03-19)
-  - Border endpoint scoring (`ComputeInterstateBorderEndpointScore`), sorted candidates, `PickLowerCostInterstateAStarPath` (avoid-high vs not, pick cheaper), `InterstateAwayFromGoalPenalty` and cost tuning in `RoadPathCostConstants`. Spec: `.cursor/specs/isometric-geography-system.md` §14.5.
-- [x] **BUG-29** — Cut-through: high hills cut through disappear leaving crater (2026-03-19)
-  - Reject cut-through when `maxHeight - baseHeight > 1`; cliff/corridor context in `TerrainManager` / `PathTerraformPlan`; map-edge margin `cutThroughMinCellsFromMapEdge`; Phase 1 validation ring in `PathTerraformPlan`; interstate uses `forbidCutThrough`. Spec: `.cursor/specs/isometric-geography-system.md` §14.6.
-
-- [x] **BUG-15** / **BUG-13** — UrbanizationProposal not wired / per-tick FindObjectOfType (2026-03-22 superseded)
-  - Notes: The **UrbanizationProposal** system is **obsolete** and stays **disabled** by design. Do not fix by re-enabling. Full removal tracked under **TECH-13**.
-- [x] **FEAT-24** — Auto-zoning for Medium and Heavy density (2026-03-19)
-- [x] **BUG-23** — Interstate route generation is flaky; never created in New Game flow (2026-03-19)
-- [x] **BUG-26** — Interstate prefab selection and pathfinding improvements (2026-03-19)
-  - Elbow audit, validation, straightness bonus, slope cost, parallel sampling, bridge approach (Rule F), cut-through expansion. Follow-up: BUG-27 / BUG-29 / **BUG-30** completed 2026-03-19–2026-03-20; remaining: BUG-28 (sorting), BUG-31 (prefabs at entry/exit).
-- [x] **TECH-06** — Documentation sync: specs aligned with backlog and rules; BUG-26, FEAT-36 added; ARCHITECTURE, file counts, helper services updated; zoning plan translated to English (2026-03-19)
-- [x] **FEAT-05** — Streets must be able to climb diagonal slopes using orthogonal prefabs (2026-03-18)
-- [x] **FEAT-34** — Zoning and building on slopes (2026-03-16)
-- [x] **FEAT-33** — Urban remodeling: expropriations and redevelopment (2026-03-12)
-- [x] **FEAT-31** — Auto roads grow toward high desirability areas (2026-03-12)
-- [x] **FEAT-30** — Mini map layer toggles + desirability visualization (2026-03-12)
-- [x] **BUG-24** — Growth budget not recalculated when income changes (2026-03-12)
-- [x] **BUG-06** — Streets should not cost so much energy (2026-03-12)
-- [x] **FEAT-32** — More streets and intersections in central and mid-urban areas (AUTO mode) (2026-03-12)
-- [x] **BUG-22** — Auto zoning must not block street segment ends (AUTO mode) (2026-03-11)
-- [x] **FEAT-25** — Growth budget tied to real income (2026-03-11)
-- [x] **BUG-10** — `IndustrialHeavyZoning` never generates buildings (2026-03-11)
-- [x] **FEAT-26** — Use desirability for building spawn selection (2026-03-10)
-- [x] **BUG-07** — Better zone distribution: less random, more homogeneous by neighbourhoods/sectors (2026-03-10)
-- [x] **FEAT-29** — Density gradient around urban centroids (AUTO mode) (2026-03-10)
-- [x] **FEAT-17** — Mini-map (2026-03-09)
-- [x] **FEAT-01** — Add delta change to total budget (e.g. $25,000 (+$1,200)) (2026-03-09)
-- [x] **BUG-03** — Growth % sets amount instead of percentage of total budget (2026-03-09)
-- [x] **BUG-02** — Taxes do not work (2026-03-09)
-- [x] **BUG-05** — Do not remove cursor preview from buildings when constructing (2026-03-09)
-- [x] **BUG-21** — Zoning cost is not charged when placing zones (2026-03-09)
-- [x] **FEAT-02** — Add construction cost counter to mouse cursor (2026-03-09)
-- [x] **FEAT-28** — Right-click drag-to-pan (grab and drag map) with inertia/fling (2026-03-09)
-- [x] **BUG-04** — Pause mode stops camera movement; camera speed tied to simulation speed (2026-03-09)
-- [x] **BUG-18** — Road preview and placement draw discontinuous lines instead of continuous paths (2026-03-09)
-- [x] **FEAT-27** — Main menu with Continue, New Game, Load City, Options (2026-03-08)
-- [x] **BUG-11** — Demand uses `Time.deltaTime` causing framerate dependency (2026-03-11)
-- [x] **BUG-21** — Demand fix: unemployment-based RCI, remove environmental from demand, desirability for density (2026-03-11)
-- [x] **BUG-01** — Save game, Load game and New game were broken (2026-03-07)
-- [x] **BUG-09** — `Cell.GetCellData()` does not serialize cell state (2026-03-07)
-- [x] **DONE** — Forest cannot be placed adjacent to water (2026-03)
-- [x] **DONE** — Demolish forests at all heights + all building types (2026-03)
-- [x] **DONE** — When demolishing forest on slope, correct terrain prefab restored via heightMap read (2026-03)
-- [x] **DONE** — Interstate Road (2026-03)
-- [x] **DONE** — CityNetwork sim (2026-03)
-- [x] **DONE** — Forests on slopes (2026-03)
-- [x] **DONE** — Growth simulation — AUTO mode (2026-03)
-- [x] **DONE** — Simulation optimization (2026-03)
-- [x] **DONE** — Codebase improvement for efficient AI agent contextualization (2026-03)
+> Older completed items archived in `BACKLOG-ARCHIVE.md`.
 
 ---
 
@@ -488,6 +407,7 @@ _(none)_
 - **Type**: fix, feature, refactor, art/assets, audio/feature, etc.
 - **Files**: main files involved
 - **Notes**: context, problem description or expected solution
+- **Acceptance** (optional): concrete pass/fail criteria for verification
 - **Depends on** (optional): IDs of issues that must be completed first
 
 ### Section Order
