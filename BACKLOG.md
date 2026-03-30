@@ -7,7 +7,12 @@
 
 ## In Progress
 
-_(none)_
+- [ ] **FEAT-44** — High bridges: cross between cliff banks, variable terrain height, uniform deck height, bridge crossing path analysis, preview and commit behavior, 
+  - Type: feature
+  - Spec: `.cursor/specs/isometric-geography-system.md` (rivers, cliffs, road/bridge placement — extend Notes here while **FEAT-44** is open; no parallel spec file)
+  - Notes: **Goal:** Allow **elevated** road segments (or a dedicated bridge mode) with enough **vertical clearance** to connect land across terrain banks with **cliffs** or steep drops, so crossings are not limited to **flat shore** alignments.
+  - Acceptance: Player or AUTO can place a valid road crossing that spans a segment between cliff-separated banks; sorting and pathfinding treat the bridge consistently with geography rules.
+  - Depends on: none
 
 ## High Priority
 
@@ -32,26 +37,11 @@ _(none)_
   - Acceptance: Road preview shows the full computed path in one visual update; no visible cell-by-cell animation during drag
   - Depends on: none
 
-- [ ] **BUG-43** — Bridges over rivers/lakes adjacent to cliffs: gaps, floating segments, wrong alignment
-  - Type: bug
-  - Files: `RoadManager.cs` (`ValidateBridgePath`, `StraightenBridgeSegments` / bridge placement and commit), `RoadPrefabResolver.cs` (bridge vs land prefabs at height/water boundaries), `TerrainManager.cs` (cliff stacks, water shores, height continuity at cliff–water edges), `GridSortingOrderService.cs` (bridge `sortingOrder` over water vs land), `GridManager.cs` (road tile placement / refresh near cliffs); `InterstateManager.cs` if interstate bridge segments hit the same cases; `WaterManager.cs` / `WaterMap.cs` if body-type or surface rules affect placement
-  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (roads, bridges, validation); cliff/water interaction with roads as documented in §4–§7 and §12–§13 where relevant
-  - Notes: **Observed:** When a street or bridge path crosses **water** (river or lake) **next to a vertical cliff** (height drop), bridge/road visuals break: **floating** segments at the upper level, **gaps** between cliff-top approach and lower water segments, **disconnected** path continuity, occasional **grass/terrain patches** on water under misplaced road tiles, and **misaligned** bridge tiles relative to cliff faces and water surface. **Expected:** A single continuous, correctly elevated bridge run with prefabs and **sorting** consistent with per-cell height and water vs land; no floating or orphaned road pieces at cliff–water junctions. **Related:** completed **BUG-42** (shore/cascade pipeline — ensure bridge refresh does not fight **`RefreshWaterCascadeCliffs`** / `RefreshShoreTerrainAfterWaterUpdate`).
-  - Acceptance: Bridge crossing water next to cliffs is visually continuous; no floating segments, gaps, or grass patches on water cells
-  - Depends on: none
-
 - [ ] **BUG-44** — Cliff prefabs: black gaps when a river or lake meets the **east** or **south** map edge
   - Type: bug
   - Files: `TerrainManager.cs` (`PlaceCliffWalls`, `PlaceCliffWallStack`, map-boundary / max-X / max-Y edge cases vs water cells), `WaterManager.cs` / `WaterMap.cs` if edge water placement interacts with cliff refresh; brown cliff / water-shore prefabs under `Assets/Prefabs/` (per `.cursor/rules/coding-conventions.mdc` for new or adjusted assets)
   - Spec: `.cursor/specs/isometric-geography-system.md` (map edges, water, cliffs, sorting — sections covering shore/cliff stacks at boundaries)
   - Notes: **Observed:** Where a **river channel** or **lake** reaches the **east** or **south** boundary of the grid, the **brown vertical cliff** geometry that seals the map edge is **missing or too short** under the water tiles, exposing **black void**; **grass** cells on the same edge still show correct cliff faces. Suggests boundary cliff stacks or prefab variants do not account for **lower water-bed elevation** at those edges. **Expected:** Continuous cliff wall to the same depth as neighboring land cliffs, or dedicated boundary + water prefabs so no holes at east/south × water. **Related:** completed **BUG-42** (virtual foot / edge cliffs — may share root cause with boundary × water placement).
-  - Depends on: none
-
-- [ ] **BUG-46** — Parallel rivers (same map-border exit): minimum spacing at entry and along course
-  - Type: fix (procedural generation)
-  - Files: **`ProceduralRiverGenerator.cs`** (Chebyshev dilation of prior corridors for BFS `avoid`, min **|Δx|**/**|Δy|** between same-border entry anchors, **`BuildForcedCenterline`** respects `avoid`), **`WaterManager.cs`** (`MergeAdjacentBodiesWithSameSurface` after `Generate`), **`WaterMap.cs`** (public **`MergeAdjacentBodiesWithSameSurface`**)
-  - Spec: `.cursor/specs/isometric-geography-system.md` §13.3–§13.4 (BUG-46 row)
-  - Notes: When multiple rivers are generated such that their **exit** cells lie on the **same map border** (parallel outflow), they can cluster: **entry** points too close on the interior border and/or **centerline paths** that run too near each other for too long. **Expected:** Enforce a **minimum grid distance** between **entry** points for rivers that share the same **exit** border, and a **minimum separation** between their **routes**. **Implementation (2026-03-27):** dilation radius **2** on prior corridor cells; entry separation **5** on north (N–S) or west (E–W) border; forced path skips blocked cells or aborts that river pass; post-pass **`MergeAdjacentBodiesWithSameSurface`** unifies touching river cells at same **S**. **Verify in Unity** (wide maps, forced-BFS mix); tune constants if needed. **Related:** **FEAT-38** (rivers — completed); completed **BUG-42** (re-verify shores/cascades if spacing changes).
   - Depends on: none
 
 - [ ] **BUG-47** — AUTO simulation: perpendicular street stubs from auto-zoning gaps never built (orthogonal intersections missing)

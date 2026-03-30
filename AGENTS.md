@@ -20,6 +20,17 @@
 
 Do not add bug write-ups, agent prompts, or one-off specs under `.cursor/specs/`. Use `BACKLOG.md` while work is open; delete temporary markdown after completion.
 
+### `.cursor/projects/` policy
+
+Project-specific specs for features or complex bugs **in active development** live under `.cursor/projects/`. These are **temporary** — they are deleted after the work is completed and verified.
+
+| Aspect | Rule |
+|--------|------|
+| Template | `.cursor/templates/project-spec-template.md` — always use it as the starting point |
+| Naming | `{ISSUE_ID}.md` (e.g. `FEAT-44.md`, `BUG-45.md`) |
+| Lifecycle | Create when starting spec work → refine with agent → implement → verify → close |
+| On completion | Migrate **lessons learned**, **new rules**, and **design decisions** to canonical docs (`AGENTS.md`, `.cursor/specs/`, `.cursor/rules/`) before deleting the project spec |
+
 ## Project docs outside `.cursor/specs/`
 
 Charters and discovery for cross-cutting programs live under `docs/` as listed in `ARCHITECTURE.md`.
@@ -53,6 +64,7 @@ Keep the issue **"In progress"**. Only move to "Completed" when the user explici
 | Terrain / heightmap | Terrain manager, heightmap, geography manager | §2–§4 |
 | Water bodies | Water manager, water map, geography manager | §2, §4.2, §5.6–5.9, §7, §11–§12 |
 | Forests | Forest manager, forest map, geography manager | — |
+| Project spec (any issue) | `.cursor/templates/project-spec-template.md` + `BACKLOG.md` + relevant specs | — |
 | New building type | Building interface, zone manager, grid manager | — |
 | New prefab variants | `coding-conventions.mdc` (Prefabs section) | Geography spec §6.4 |
 | Sorting / render bug | Grid sorting service, terrain manager | §7 |
@@ -76,7 +88,7 @@ Keep the issue **"In progress"**. Only move to "Completed" when the user explici
 9. Cliff visible faces: south + east only — N/W not instantiated (spec §5.7)
 10. Road placement: always through `TryPrepareRoadPlacementPlan` pipeline — not `ComputePathPlan` alone (spec §13.1)
 11. `UrbanizationProposal`: NEVER re-enable — obsolete by design (TECH-13)
-12. Do not add specs under `.cursor/specs/` for bugs or one-off work — use `BACKLOG.md`
+12. Do not add specs under `.cursor/specs/` for bugs or one-off work — use `BACKLOG.md` and `.cursor/projects/`
 
 ## Guardrails (IF → THEN)
 
@@ -87,7 +99,9 @@ Keep the issue **"In progress"**. Only move to "Completed" when the user explici
 - IF creating a new manager → THEN make it a MonoBehaviour scene component, never `new`
 - IF modifying `HeightMap` → THEN also write `Cell.height` (and vice versa)
 - IF placing or removing water → THEN call `RefreshShoreTerrainAfterWaterUpdate` afterward
-- IF adding a new spec → THEN only under `.cursor/specs/` if it covers a permanent domain; use `BACKLOG.md` for bugs/one-offs
+- IF adding a new spec → THEN only under `.cursor/specs/` if it covers a permanent domain; use `.cursor/projects/` for issue-specific specs and `BACKLOG.md` for lightweight tracking
+- IF closing a project spec → THEN migrate lessons learned, new rules, and design decisions to canonical docs before deleting the file from `.cursor/projects/`
+- IF creating a project spec → THEN use `.cursor/templates/project-spec-template.md` as the starting point and name the file `{ISSUE_ID}.md` under `.cursor/projects/`
 
 ## Pre-commit Checklist
 
