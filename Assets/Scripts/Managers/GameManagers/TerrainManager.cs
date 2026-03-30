@@ -31,6 +31,7 @@ public enum TerrainSlopeType
 /// slope prefab (flat, N/S/E/W slopes, corner slopes, water slopes). Coordinates with GridManager
 /// for cell height assignment and WaterManager for water-slope prefab variants.
 /// Water–water surface steps: <see cref="RefreshWaterCascadeCliffs"/> (same segment stack as brown <c>PlaceCliffWallStack</c>).
+/// QA uniform new-game terrain: <see cref="SetNewGameFlatTerrainOptions"/> (driven from <see cref="Territory.Geography.GeographyManager"/>).
 /// </summary>
 public class TerrainManager : MonoBehaviour, ITerrainManager
 {
@@ -173,9 +174,32 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public const int EFFECT_OFFSET = 30; // Effects should be above terrain
     public const int DEPTH_MULTIPLIER = 100;
     public const int HEIGHT_MULTIPLIER = 10; // Must be < DEPTH_MULTIPLIER/MAX_HEIGHT so depth dominates (hilltops don't draw over foreground forest)
+
+    /// <summary>
+    /// When true for the next initial load, <see cref="LoadInitialHeightMap"/> fills the grid uniformly (no 40×40 template, no procedural extension).
+    /// Set via <see cref="SetNewGameFlatTerrainOptions"/> from <see cref="Territory.Geography.GeographyManager"/> before <see cref="GridManager.InitializeGrid"/>.
+    /// Cleared after <see cref="InitializeHeightMap"/> or <see cref="StartTerrainGeneration"/>.
+    /// </summary>
+    private bool newGameFlatTerrainEnabled;
+    private int newGameFlatTerrainHeight = 1;
     #endregion
 
     #region Height Map Generation
+    /// <summary>
+    /// Configures the next <see cref="LoadInitialHeightMap"/> to use a uniform height across the map (QA / method testing).
+    /// </summary>
+    /// <param name="enabled">When true, skips template and procedural terrain for the next load only.</param>
+    /// <param name="uniformHeight">Height for every cell; clamped to <see cref="MIN_HEIGHT"/>–<see cref="MAX_HEIGHT"/>.</param>
+    public void SetNewGameFlatTerrainOptions(bool enabled, int uniformHeight)
+    {
+        newGameFlatTerrainEnabled = enabled;
+        newGameFlatTerrainHeight = uniformHeight;
+    }
+
+    private void ClearNewGameFlatTerrainRequest()
+    {
+        newGameFlatTerrainEnabled = false;
+    }
     /// <summary>
     /// Initializes the heightmap and applies it to the grid, creating initial terrain elevations.
     /// </summary>
@@ -189,6 +213,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         heightMap = new HeightMap(gridManager.width, gridManager.height);
         LoadInitialHeightMap();
         ApplyHeightMapToGrid();
+        ClearNewGameFlatTerrainRequest();
     }
 
     /// <summary>
@@ -217,8 +242,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     {
         heightMap = new HeightMap(gridManager.width, gridManager.height);
         LoadInitialHeightMap();
-        EnsureGuaranteedLakeDepressions();
+        if (!newGameFlatTerrainEnabled)
+            EnsureGuaranteedLakeDepressions();
         ApplyHeightMapToGrid();
+        ClearNewGameFlatTerrainRequest();
     }
 
     /// <summary>
@@ -459,6 +486,17 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
         int w = gridManager.width;
         int h = gridManager.height;
+
+        if (newGameFlatTerrainEnabled)
+        {
+            int uniform = Mathf.Clamp(newGameFlatTerrainHeight, MIN_HEIGHT, MAX_HEIGHT);
+            for (int x = 0; x < w; x++)
+            {
+                for (int y = 0; y < h; y++)
+                    heightMap.SetHeight(x, y, uniform);
+            }
+            return;
+        }
 
         if (w == OriginalMapSize && h == OriginalMapSize)
         {

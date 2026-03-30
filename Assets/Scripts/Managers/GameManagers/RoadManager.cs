@@ -183,7 +183,10 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         List<Vector2> path = GetLine(startPosition, currentDrawCursorGrid);
         if (!TryPrepareRoadPlacementPlanLongestValidPrefix(path, new RoadPathValidationContext { forbidCutThrough = false }, false, ref manualRoadLongestPrefixHint, out List<Vector2> expandedPath, out PathTerraformPlan plan, out _))
+        {
+            Debug.Log($"[RoadManager] TryPrepareRoadPlacementPlanLongestValidPrefix failed for cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
             return false;
+        }
 
         int tileCount = expandedPath.Count;
         int totalCost = CalculateTotalCost(tileCount);

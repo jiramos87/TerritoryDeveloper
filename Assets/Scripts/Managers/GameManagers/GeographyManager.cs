@@ -16,7 +16,7 @@ namespace Territory.Geography
 /// <summary>
 /// GeographyManager coordinates the initialization and management of all geographical features:
 /// terrain height, water bodies (optional lakes/sea, optional FEAT-38 rivers, optional test river), and forests.
-/// Inspector toggles: <see cref="generateStandardWaterBodies"/>, <see cref="generateProceduralRiversOnInit"/>, <see cref="generateTestRiverOnInit"/>.
+/// Inspector toggles: <see cref="generateStandardWaterBodies"/>, <see cref="generateProceduralRiversOnInit"/>, <see cref="generateTestRiverOnInit"/>, <see cref="useFlatTerrainOnNewGame"/>.
 /// </summary>
 public class GeographyManager : MonoBehaviour
 {
@@ -37,6 +37,14 @@ public class GeographyManager : MonoBehaviour
     public bool useTerrainForWater = true; // Whether to use terrain height for water placement
     [Tooltip("When true, procedural forests are generated after interstate placement. Disable to see terrain clearly during road/terraforming tests.")]
     public bool initializeForestsOnStart = true;
+
+    [Header("Terrain (New Game / QA)")]
+    [Tooltip("When true, the height map is a single uniform level (no 40×40 template, no procedural extension). Use for road/bridge/terraform experiments. Height 0 is sea level everywhere; use ≥1 for typical dry-land tests.")]
+    public bool useFlatTerrainOnNewGame = false;
+
+    [Range(TerrainManager.MIN_HEIGHT, TerrainManager.MAX_HEIGHT)]
+    [Tooltip("Uniform terrain height when useFlatTerrainOnNewGame is enabled (clamped to valid range).")]
+    public int flatTerrainHeight = 1;
 
     [Header("Water generation (New Game / InitializeGeography)")]
     [Tooltip("When true, InitializeWaterMap places lakes/sea from terrain as usual. When false, WaterMap starts empty (no procedural lake fill or height-based sea).")]
@@ -92,6 +100,11 @@ public class GeographyManager : MonoBehaviour
         {
             regionalMapManager.InitializeRegionalMap();
         }
+
+        if (terrainManager == null)
+            terrainManager = FindObjectOfType<TerrainManager>();
+        if (terrainManager != null)
+            terrainManager.SetNewGameFlatTerrainOptions(useFlatTerrainOnNewGame, flatTerrainHeight);
 
         if (gridManager != null)
         {
