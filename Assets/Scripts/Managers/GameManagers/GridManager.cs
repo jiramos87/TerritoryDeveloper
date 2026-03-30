@@ -19,6 +19,7 @@ namespace Territory.Core
 /// world and grid space, building placement and validation, bulldozing, sorting order assignment,
 /// chunk-based culling, road caching, and A* pathfinding. Most managers depend on GridManager
 /// for cell access via GetCell(x,y) and coordinate utilities.
+/// Mouse-to-cell uses <see cref="RefineGridPositionForTerrainHeight"/> plus screen-space disambiguation in <see cref="GetCellFromWorldPoint"/>.
 /// </summary>
 public class GridManager : MonoBehaviour, IGridManager
 {
@@ -1039,6 +1040,41 @@ public class GridManager : MonoBehaviour, IGridManager
     }
 
     /// <summary>
+    /// Terrain height at a grid cell for mouse projection refinement (defaults to 1 if out of bounds).
+    /// </summary>
+    private int GetTerrainHeightForGridCell(int gridX, int gridY)
+    {
+        Cell c = GetCell(gridX, gridY);
+        return c != null ? c.GetCellInstanceHeight() : 1;
+    }
+
+    /// <summary>
+    /// Refines <see cref="GetGridPosition"/> by stripping the vertical offset used in <see cref="GetWorldPositionVector"/>
+    /// for the current terrain height estimate, then iterating until stable. Fixes diagonal bias when cells are elevated.
+    /// </summary>
+    private Vector2 RefineGridPositionForTerrainHeight(Vector2 worldPoint)
+    {
+        if (width <= 0 || height <= 0)
+            return GetGridPosition(worldPoint);
+
+        Vector2 grid = GetGridPosition(worldPoint);
+        const int maxIterations = 4;
+        for (int iter = 0; iter < maxIterations; iter++)
+        {
+            int gx = Mathf.Clamp(Mathf.RoundToInt(grid.x), 0, width - 1);
+            int gy = Mathf.Clamp(Mathf.RoundToInt(grid.y), 0, height - 1);
+            int h = GetTerrainHeightForGridCell(gx, gy);
+            float heightOffset = (h - 1) * (tileHeight / 2f);
+            Vector2 planePoint = new Vector2(worldPoint.x, worldPoint.y - heightOffset);
+            Vector2 next = GetGridPosition(planePoint);
+            if (Mathf.Approximately(next.x, grid.x) && Mathf.Approximately(next.y, grid.y))
+                return next;
+            grid = next;
+        }
+        return grid;
+    }
+
+    /// <summary>
     /// Gets the screen-space bounds of the cell's base tile (first child with Zone Grass/Road or Zoning and SpriteRenderer).
     /// If none, uses the first child with SpriteRenderer (e.g. slope prefab) so hit-test works at all heights.
     /// Fallback: rect from cell.transformPosition and tile size when no such child exists.
@@ -1081,10 +1117,11 @@ public class GridManager : MonoBehaviour, IGridManager
 
         Vector3 worldMin = worldBounds.min;
         Vector3 worldMax = worldBounds.max;
-        Vector3 p0 = cam.WorldToScreenPoint(new Vector3(worldMin.x, worldMin.y, 0f));
-        Vector3 p1 = cam.WorldToScreenPoint(new Vector3(worldMax.x, worldMin.y, 0f));
-        Vector3 p2 = cam.WorldToScreenPoint(new Vector3(worldMin.x, worldMax.y, 0f));
-        Vector3 p3 = cam.WorldToScreenPoint(new Vector3(worldMax.x, worldMax.y, 0f));
+        float zRef = worldBounds.center.z;
+        Vector3 p0 = cam.WorldToScreenPoint(new Vector3(worldMin.x, worldMin.y, zRef));
+        Vector3 p1 = cam.WorldToScreenPoint(new Vector3(worldMax.x, worldMin.y, zRef));
+        Vector3 p2 = cam.WorldToScreenPoint(new Vector3(worldMin.x, worldMax.y, zRef));
+        Vector3 p3 = cam.WorldToScreenPoint(new Vector3(worldMax.x, worldMax.y, zRef));
 
         float minX = Mathf.Min(p0.x, p1.x, p2.x, p3.x);
         float maxX = Mathf.Max(p0.x, p1.x, p2.x, p3.x);
@@ -1133,24 +1170,66 @@ public class GridManager : MonoBehaviour, IGridManager
         }
 
         Vector2 mouseScreen = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-        Cell best = null;
-        int bestOrder = int.MinValue;
-
+        List<Cell> rectHits = new List<Cell>();
         foreach (Cell cell in candidates)
         {
             if (!TryGetCellBaseTileScreenBounds(cell, cam, out Rect screenRect))
                 continue;
-            if (!screenRect.Contains(mouseScreen))
-                continue;
-            if (cell.sortingOrder > bestOrder)
-            {
-                bestOrder = cell.sortingOrder;
-                best = cell;
-            }
+            if (screenRect.Contains(mouseScreen))
+                rectHits.Add(cell);
         }
 
-        if (best == null && candidates.Count > 0)
-            best = GetClosestCellByScreenDistance(mouseScreen, candidates, cam);
+        if (rectHits.Count == 1)
+            return rectHits[0];
+
+        if (rectHits.Count > 1)
+            return PickCellHitClosestOnScreen(mouseScreen, rectHits, cam);
+
+        if (candidates.Count > 0)
+            return GetClosestCellByScreenDistance(mouseScreen, candidates, cam);
+
+        return null;
+    }
+
+    /// <summary>
+    /// When multiple cells' screen rects contain the cursor (isometric overlap), picks the one whose elevated
+    /// world center projects closest to the mouse; ties break by higher <see cref="Cell.sortingOrder"/>.
+    /// </summary>
+    private Cell PickCellHitClosestOnScreen(Vector2 mouseScreen, List<Cell> hits, Camera cam)
+    {
+        if (hits == null || hits.Count == 0 || cam == null)
+            return null;
+
+        Cell best = null;
+        float bestDistSq = float.MaxValue;
+        int bestOrder = int.MinValue;
+        const float tiePixels = 4f;
+        float tieEpsSq = tiePixels * tiePixels;
+
+        foreach (Cell cell in hits)
+        {
+            if (cell == null)
+                continue;
+
+            Vector2 worldCenter = GetCellWorldPosition(cell);
+            Vector3 sc = cam.WorldToScreenPoint(new Vector3(worldCenter.x, worldCenter.y, cell.transform.position.z));
+            float dx = mouseScreen.x - sc.x;
+            float dy = mouseScreen.y - sc.y;
+            float distSq = dx * dx + dy * dy;
+
+            bool better = best == null;
+            if (!better && distSq < bestDistSq - 0.001f)
+                better = true;
+            else if (!better && Mathf.Abs(distSq - bestDistSq) <= tieEpsSq && cell.sortingOrder > bestOrder)
+                better = true;
+
+            if (better)
+            {
+                best = cell;
+                bestDistSq = distSq;
+                bestOrder = cell.sortingOrder;
+            }
+        }
 
         return best;
     }
@@ -1189,7 +1268,7 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <returns>Height-aware grid coordinates.</returns>
     public Vector2 GetGridPositionWithHeight(Vector2 mouseWorldPoint)
     {
-        Vector2 gridPos = GetGridPosition(mouseWorldPoint);
+        Vector2 gridPos = RefineGridPositionForTerrainHeight(mouseWorldPoint);
 
         Cell cell = GetCellFromWorldPoint(mouseWorldPoint, gridPos);
         if (cell == null)
@@ -1209,7 +1288,7 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <returns>The cell under the mouse, or null if outside the grid.</returns>
     public Cell GetMouseGridCell(Vector2 mouseWorldPoint)
     {
-        Vector2 gridPos = GetGridPosition(mouseWorldPoint);
+        Vector2 gridPos = RefineGridPositionForTerrainHeight(mouseWorldPoint);
         return GetCellFromWorldPoint(mouseWorldPoint, gridPos);
     }
     /// <summary>

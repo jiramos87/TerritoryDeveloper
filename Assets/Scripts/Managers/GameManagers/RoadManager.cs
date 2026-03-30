@@ -112,6 +112,10 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// <param name="gridPosition">The current grid position under the cursor.</param>
     public void HandleRoadDrawing(Vector2 gridPosition)
     {
+        if (gridPosition.x == 62 && gridPosition.y == 124) 
+        {
+            Debug.Log($"[RoadManager] Trying to handle road drawing for cell ({gridPosition.x}, {gridPosition.y})");
+        }
         Vector2 pos = new Vector2((int)gridPosition.x, (int)gridPosition.y);
 
         if (Input.GetMouseButtonUp(0) && isDrawingRoad)
@@ -142,7 +146,10 @@ public class RoadManager : MonoBehaviour, IRoadManager
         }
 
         if (!terrainManager.CanPlaceRoad((int)pos.x, (int)pos.y))
+        {
+            GameNotificationManager.Instance.PostWarning("Cannot place road along this path.");
             return;
+        }
 
         if (Input.GetMouseButtonDown(0))
         {
@@ -158,12 +165,28 @@ public class RoadManager : MonoBehaviour, IRoadManager
             manualRoadLongestPrefixHint = 0;
             if (uiManager != null)
                 uiManager.HideGhostPreview();
+            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+            {
+                Debug.Log($"[RoadManager] Trying to hide ghost preview for cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
+            }
         }
         else if (isDrawingRoad && Input.GetMouseButton(0))
         {
+            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+            {
+                Debug.Log($"[RoadManager] Trying to clear preview for cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
+            }
             currentDrawCursorGrid = pos;
             ClearPreview(false);
+            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+            {
+                Debug.Log($"[RoadManager] Trying to get line for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
+            }
             List<Vector2> path = GetLine(startPosition, currentDrawCursorGrid);
+            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+            {
+                Debug.Log($"[RoadManager] Trying to draw preview line for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
+            }
             DrawPreviewLineCore(path);
         }
     }
@@ -182,10 +205,22 @@ public class RoadManager : MonoBehaviour, IRoadManager
         if (roadPrefabResolver == null) return false;
 
         List<Vector2> path = GetLine(startPosition, currentDrawCursorGrid);
+        if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+        {
+            Debug.Log($"[RoadManager] Trying to place road at cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
+        }
         if (!TryPrepareRoadPlacementPlanLongestValidPrefix(path, new RoadPathValidationContext { forbidCutThrough = false }, false, ref manualRoadLongestPrefixHint, out List<Vector2> expandedPath, out PathTerraformPlan plan, out _))
         {
-            Debug.Log($"[RoadManager] TryPrepareRoadPlacementPlanLongestValidPrefix failed for cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
+            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+            {
+                Debug.Log($"[RoadManager] TryPrepareRoadPlacementPlanLongestValidPrefix failed for cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
+            }
             return false;
+        }
+
+        if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+        {
+            Debug.Log($"[RoadManager] TryPrepareRoadPlacementPlanLongestValidPrefix succeeded for cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
         }
 
         int tileCount = expandedPath.Count;
@@ -597,6 +632,10 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// </summary>
     void DrawPreviewLineCore(List<Vector2> path)
     {
+        if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+        {
+            Debug.Log($"[RoadManager] Trying to draw preview line for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
+        }
         if (path == null || path.Count == 0) return;
         if (terraformingService == null || terrainManager == null || gridManager == null) return;
         if (roadPrefabResolver == null)
@@ -606,11 +645,30 @@ public class RoadManager : MonoBehaviour, IRoadManager
         var heightMap = terrainManager.GetHeightMap();
         if (heightMap == null) return;
 
+        if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+        {
+            Debug.Log($"[RoadManager] Trying to prepare road placement plan for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
+        }
         if (!TryPrepareRoadPlacementPlanLongestValidPrefix(path, new RoadPathValidationContext { forbidCutThrough = false }, false, ref manualRoadLongestPrefixHint, out List<Vector2> expandedPath, out PathTerraformPlan plan, out _))
+        {
+            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+            {
+                Debug.Log($"[RoadManager] failed to prepare road placement plan for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
+            }
             return;
+        }
+
+        if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+        {
+            Debug.Log($"[RoadManager] successfuly prepared road placement plan for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
+        }
 
         if (!plan.Apply(heightMap, terrainManager))
         {
+            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+            {
+                Debug.Log($"[RoadManager] failed to apply road placement plan for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
+            }
             if (GameNotificationManager.Instance != null)
                 GameNotificationManager.Instance.PostWarning("Terrain cannot be modified safely (height difference would exceed 1). Choose a different path.");
             return;
@@ -619,6 +677,11 @@ public class RoadManager : MonoBehaviour, IRoadManager
         var resolved = roadPrefabResolver.ResolveForPath(expandedPath, plan);
         previewResolvedTiles.Clear();
         previewResolvedTiles.AddRange(resolved);
+
+        if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+        {
+            Debug.Log($"[RoadManager] successfuly resolved road placement plan for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
+        }
 
         for (int i = 0; i < resolved.Count; i++)
         {
