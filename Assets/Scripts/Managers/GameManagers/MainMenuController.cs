@@ -274,10 +274,7 @@ public class MainMenuController : MonoBehaviour
     {
         string path = GetMostRecentSavePath();
         if (string.IsNullOrEmpty(path))
-        {
-            Debug.LogWarning("No saved game found for Continue.");
             return;
-        }
         GameStartInfo.SetPendingLoadPath(path);
         SceneManager.LoadScene(MainSceneBuildIndex);
     }

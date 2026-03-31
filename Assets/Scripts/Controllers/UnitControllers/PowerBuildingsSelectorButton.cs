@@ -44,7 +44,6 @@ public class PowerBuildingsSelectButton : MonoBehaviour
                 uiManager.OnNuclearPowerPlantButtonClicked();
                 break;
             default:
-                Debug.LogWarning($"Unknown power building selected: {selectedItem.name}");
                 break;
         }
     }
@@ -60,10 +59,7 @@ public class PowerBuildingsSelectButton : MonoBehaviour
             button.OnDeselect(null);
             button.targetGraphic.CrossFadeColor(button.colors.normalColor, 0f, true, true);
         }
-        else
-        {
-            Debug.LogWarning($"Button component not found on {gameObject.name}");
-        }
+        else { }
     }
 }
 }

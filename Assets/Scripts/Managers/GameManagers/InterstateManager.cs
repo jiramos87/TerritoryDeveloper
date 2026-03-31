@@ -246,21 +246,12 @@ public class InterstateManager : MonoBehaviour
         ExitBorder = -1;
 
         if (gridManager == null)
-        {
-            Debug.LogWarning("InterstateManager: gridManager is null. Cannot generate interstate.");
             return interstatePositions;
-        }
         if (terrainManager == null)
-        {
-            Debug.LogWarning("InterstateManager: terrainManager is null. Cannot generate interstate.");
             return interstatePositions;
-        }
         HeightMap heightMap = terrainManager.GetHeightMap();
         if (heightMap == null)
-        {
-            Debug.LogWarning("InterstateManager: heightMap is null. Cannot generate interstate.");
             return interstatePositions;
-        }
 
         int runSeed = System.Environment.TickCount ^ (int)(Time.realtimeSinceStartup * 1000);
         Random.InitState(InterstateGenSeed + attemptOffset + runSeed);
@@ -269,10 +260,7 @@ public class InterstateManager : MonoBehaviour
         int h = gridManager.height;
         List<int> bordersWithLand = GetBordersWithLand(w, h, heightMap);
         if (bordersWithLand.Count < 2)
-        {
-            Debug.LogWarning("InterstateManager: Fewer than 2 borders have land cells. Cannot place interstate.");
             return interstatePositions;
-        }
 
         var borderPairs = new List<(int a, int b)>();
         foreach (int b in bordersWithLand)
@@ -282,10 +270,7 @@ public class InterstateManager : MonoBehaviour
                 borderPairs.Add((b, opp));
         }
         if (borderPairs.Count == 0)
-        {
-            Debug.LogWarning("InterstateManager: No valid opposite border pairs. Cannot place interstate.");
             return interstatePositions;
-        }
 
         int pairIdx = Random.Range(0, borderPairs.Count);
         int borderA = borderPairs[pairIdx].a;
@@ -326,10 +311,7 @@ public class InterstateManager : MonoBehaviour
         }
 
         if (bestPath == null)
-        {
-            Debug.LogWarning("InterstateManager: Could not find valid path after " + MaxRouteAttempts + " attempts. Interstate not placed.");
             return interstatePositions;
-        }
 
         interstatePositions = bestPath;
         EntryPoint = interstatePositions[0];

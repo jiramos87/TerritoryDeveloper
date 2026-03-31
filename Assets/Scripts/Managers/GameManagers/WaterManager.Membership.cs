@@ -183,33 +183,13 @@ namespace Territory.Terrain
         /// </summary>
         public bool ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink(int x, int y)
         {
-            const int shoreDbgX = 66;
-            const int shoreDbgY = 62;
-            bool shoreDbg = x == shoreDbgX && y == shoreDbgY;
-
             if (waterMap == null || !waterMap.IsValidPosition(x, y))
-            {
-                if (shoreDbg)
-                    UnityEngine.Debug.Log($"[ShoreDiag {shoreDbgX},{shoreDbgY}] ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink -> false (map/position)");
                 return false;
-            }
-            if (!waterMap.TryGetDryLandRiverJunctionBrinkWithStep(x, y, out RiverJunctionBrinkRole role, out int aff, out int hx, out int hy, out int lx, out int ly))
-            {
-                if (shoreDbg)
-                    UnityEngine.Debug.Log($"[ShoreDiag {shoreDbgX},{shoreDbgY}] ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink -> false (no WithStep)");
+            if (!waterMap.TryGetDryLandRiverJunctionBrinkWithStep(x, y, out RiverJunctionBrinkRole role, out _, out int hx, out int hy, out int lx, out int ly))
                 return false;
-            }
             if (role != RiverJunctionBrinkRole.UpperBrink && role != RiverJunctionBrinkRole.LowerBrink)
-            {
-                if (shoreDbg)
-                    UnityEngine.Debug.Log($"[ShoreDiag {shoreDbgX},{shoreDbgY}] ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink -> false (role={role})");
                 return false;
-            }
-            bool closest = waterMap.IsDryLandRiverJunctionBrinkClosestToCascadeStep(x, y, role, hx, hy, lx, ly);
-            bool result = closest;
-            if (shoreDbg)
-                UnityEngine.Debug.Log($"[ShoreDiag {shoreDbgX},{shoreDbgY}] ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink role={role} aff={aff} stepHigh=({hx},{hy}) stepLow=({lx},{ly}) isClosestToCascadeStep={closest} => forceDiagonal={result}");
-            return result;
+            return waterMap.IsDryLandRiverJunctionBrinkClosestToCascadeStep(x, y, role, hx, hy, lx, ly);
         }
 
         /// <summary>

@@ -18,6 +18,9 @@ public class RoadPrefabResolver
     private readonly TerrainManager terrainManager;
     private readonly RoadManager roadManager;
 
+    /// <summary>Cardinal steps from a high-deck lip toward qualifying lower dry neighbors (bridge normal / perpendicular to local shore).</summary>
+    private readonly List<Vector2Int> scratchHighDeckBridgeNormals = new List<Vector2Int>(4);
+
     private static readonly int[] DirX = { 1, -1, 0, 0 };
     private static readonly int[] DirY = { 0, 0, 1, -1 };
 
@@ -79,11 +82,8 @@ public class RoadPrefabResolver
             bool allowLiveSlopeFallback = plan != null && !plan.isCutThrough && plan.pathCells != null && i < plan.pathCells.Count
                 && cellPlan.action == TerraformingService.TerraformAction.None;
 
-            GameObject prefab = ResolvePrefabForPathCell(prev, curr, pathCellSet, height, postSlope, allowLiveSlopeFallback);
-#if UNITY_EDITOR
-            if (Debug.isDebugBuild && prefab != null && !ValidatePrefabExitsMatchPath(curr, pathCellSet, prefab))
-                Debug.LogWarning($"[RoadPrefab] Mismatch at ({curr.x},{curr.y}): prefab={prefab.name}");
-#endif
+            HeightMap pathHeightMap = terrainManager != null ? terrainManager.GetHeightMap() : null;
+            GameObject prefab = ResolvePrefabForPathCell(prev, curr, pathCellSet, height, postSlope, allowLiveSlopeFallback, plan, pathHeightMap);
             TerrainSlopeType slopeForWorld = postSlope;
             if (postSlope == TerrainSlopeType.Flat && terrainManager != null && prefab != null && IsCardinalSlopeRoadPrefab(prefab))
             {
@@ -154,19 +154,59 @@ public class RoadPrefabResolver
         else
         {
             prefab = SelectFromConnectivity(prevGridPos, currGridPos, hasLeft, hasRight, hasUp, hasDown, height);
+
+            HeightMap hm = terrainManager != null ? terrainManager.GetHeightMap() : null;
+            WaterManager wm = ResolveWaterManagerForBridge();
+            if (hm != null && wm != null && terrainManager != null
+                && height > 0
+                && !terrainManager.IsRegisteredOpenWaterAt(x, y) && !terrainManager.IsWaterSlopeCell(x, y)
+                && DryLandCardinalLowerTouchesRegisteredWater(x, y, height, hm))
+            {
+                CollectHighDeckBridgeNormals(x, y, height, hm, scratchHighDeckBridgeNormals);
+                Vector2 approachDir = currGridPos - prevGridPos;
+                if (CardinalApproachParallelToHighDeckNormal(approachDir, scratchHighDeckBridgeNormals))
+                {
+                    int roadCount = (hasLeft ? 1 : 0) + (hasRight ? 1 : 0) + (hasUp ? 1 : 0) + (hasDown ? 1 : 0);
+                    bool straightH = hasLeft && hasRight && !hasUp && !hasDown;
+                    bool straightV = hasUp && hasDown && !hasLeft && !hasRight;
+                    bool deadEnd = roadCount == 1;
+                    if (straightH || straightV || deadEnd)
+                    {
+                        bool isHorizontal;
+                        if (straightH || (deadEnd && (hasLeft || hasRight)))
+                            isHorizontal = true;
+                        else if (straightV || (deadEnd && (hasUp || hasDown)))
+                            isHorizontal = false;
+                        else
+                            isHorizontal = Mathf.Abs((currGridPos - prevGridPos).x) >= Mathf.Abs((currGridPos - prevGridPos).y);
+                        prefab = isHorizontal ? roadManager.roadTileBridgeHorizontal : roadManager.roadTileBridgeVertical;
+                    }
+                }
+            }
         }
 
         int sortHeight = height;
         Vector2 worldPos;
+        HeightMap hmCell = terrainManager != null ? terrainManager.GetHeightMap() : null;
+        WaterManager wmCell = ResolveWaterManagerForBridge();
         bool needsDeckInference = IsBridgeDeckRoadPrefab(prefab)
             && terrainManager != null
             && (terrainManager.IsRegisteredOpenWaterAt(x, y)
                 || terrainManager.IsWaterSlopeCell(x, y)
                 || height == 0);
+        bool dryCliffBridgeDeck = IsBridgeDeckRoadPrefab(prefab) && height > 0 && hmCell != null && wmCell != null
+            && terrainManager != null
+            && !terrainManager.IsRegisteredOpenWaterAt(x, y) && !terrainManager.IsWaterSlopeCell(x, y)
+            && DryLandCardinalLowerTouchesRegisteredWater(x, y, height, hmCell);
         if (needsDeckInference && TryInferWaterBridgeDeckDisplayHeight(x, y, out int deckH) && deckH > 0)
         {
             sortHeight = deckH;
             worldPos = gridManager.GetWorldPositionVector(x, y, deckH);
+        }
+        else if (dryCliffBridgeDeck)
+        {
+            sortHeight = height;
+            worldPos = gridManager.GetWorldPositionVector(x, y, height);
         }
         else
             worldPos = GetWorldPositionForPrefab(x, y, prefab, height, terrainManager?.GetTerrainSlopeTypeAt(x, y) ?? TerrainSlopeType.Flat);
@@ -212,6 +252,19 @@ public class RoadPrefabResolver
             return;
         }
 
+        HeightMap ghostHm = terrainManager != null ? terrainManager.GetHeightMap() : null;
+        if (height > 0 && ghostHm != null && terrainManager != null
+            && !terrainManager.IsRegisteredOpenWaterAt(x, y)
+            && DryLandCardinalLowerTouchesRegisteredWater(x, y, height, ghostHm))
+        {
+            Vector2 towardLower = InferStrongestCardinalTowardQualifyingLowerNeighbor(x, y, height, ghostHm);
+            bool isHorizontal = Mathf.Abs(towardLower.x) >= Mathf.Abs(towardLower.y);
+            prefab = isHorizontal ? roadManager.roadTileBridgeHorizontal : roadManager.roadTileBridgeVertical;
+            worldPos = gridManager.GetWorldPositionVector(x, y, height);
+            sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, height);
+            return;
+        }
+
         GameObject slopePrefab = TryGetSlopePrefabForCell(new Vector2(x, y), height);
         if (slopePrefab != null)
         {
@@ -230,7 +283,7 @@ public class RoadPrefabResolver
     /// and the plan left <paramref name="postSlope"/> as Flat, uses the same diagonal→orthogonal mapping
     /// as <see cref="TryGetSlopePrefabForStraightSegment"/> so ramp prefabs match live terrain (BUG-30).
     /// </summary>
-    private GameObject ResolvePrefabForPathCell(Vector2 prev, Vector2 curr, HashSet<Vector2Int> pathCellSet, int height, TerrainSlopeType postSlope, bool allowLiveSlopeFallback)
+    private GameObject ResolvePrefabForPathCell(Vector2 prev, Vector2 curr, HashSet<Vector2Int> pathCellSet, int height, TerrainSlopeType postSlope, bool allowLiveSlopeFallback, PathTerraformPlan plan, HeightMap heightMap)
     {
         Vector2 dirIn = curr - prev;
         int dxIn = Mathf.RoundToInt(dirIn.x);
@@ -250,6 +303,9 @@ public class RoadPrefabResolver
             bool isHorizontal = Mathf.Abs(dirIn.x) >= Mathf.Abs(dirIn.y);
             return isHorizontal ? roadManager.roadTileBridgeHorizontal : roadManager.roadTileBridgeVertical;
         }
+
+        if (TryGetHighCliffLipBridgePrefab(plan, cx, cy, height, heightMap, dirIn, out GameObject cliffDeckPrefab))
+            return cliffDeckPrefab;
 
         bool pathLeft = PathCellContainsOrRoad(pathCellSet, cx - 1, cy);
         bool pathRight = PathCellContainsOrRoad(pathCellSet, cx + 1, cy);
@@ -303,6 +359,209 @@ public class RoadPrefabResolver
         }
 
         return horizontalSeg ? roadManager.roadTilePrefab2 : roadManager.roadTilePrefab1;
+    }
+
+    WaterManager ResolveWaterManagerForBridge()
+    {
+        if (terrainManager != null && terrainManager.waterManager != null)
+            return terrainManager.waterManager;
+        return Object.FindObjectOfType<WaterManager>();
+    }
+
+    bool DryCellTouchesRegisteredWaterMoore(int x, int y, WaterManager wm)
+    {
+        if (terrainManager == null)
+            return false;
+        if (terrainManager.IsRegisteredOpenWaterAt(x, y) || terrainManager.IsWaterSlopeCell(x, y))
+            return true;
+        if (wm == null)
+            return false;
+        int[] mdx = { 1, -1, 0, 0, 1, 1, -1, -1 };
+        int[] mdy = { 0, 0, 1, -1, 1, -1, 1, -1 };
+        for (int d = 0; d < 8; d++)
+        {
+            if (wm.IsWaterAt(x + mdx[d], y + mdy[d]))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Cardinal step from a high deck lip: neighbor strictly lower and (open water / water-slope OR dry cell whose Moore neighborhood touches registered water).
+    /// </summary>
+    bool LowerCardinalQualifiesAsHighDeckWaterStep(int nx, int ny, int hn, int lipHeight, WaterManager wm)
+    {
+        if (hn >= lipHeight)
+            return false;
+        if (terrainManager.IsRegisteredOpenWaterAt(nx, ny) || terrainManager.IsWaterSlopeCell(nx, ny))
+            return true;
+        return DryCellTouchesRegisteredWaterMoore(nx, ny, wm);
+    }
+
+    /// <summary>
+    /// High-deck lip toward water: includes direct cardinal step onto open water or water-slope (preview deck on last land tile before wet cells).
+    /// </summary>
+    bool DryLandCardinalLowerTouchesRegisteredWater(int x, int y, int h, HeightMap heightMap)
+    {
+        if (heightMap == null || terrainManager == null || !heightMap.IsValidPosition(x, y))
+            return false;
+        WaterManager wm = ResolveWaterManagerForBridge();
+        int[] cdx = { 1, -1, 0, 0 };
+        int[] cdy = { 0, 0, 1, -1 };
+        for (int d = 0; d < 4; d++)
+        {
+            int nx = x + cdx[d], ny = y + cdy[d];
+            if (!heightMap.IsValidPosition(nx, ny))
+                continue;
+            int hn = heightMap.GetHeight(nx, ny);
+            if (LowerCardinalQualifiesAsHighDeckWaterStep(nx, ny, hn, h, wm))
+                return true;
+        }
+        return false;
+    }
+
+    Vector2 InferStrongestCardinalTowardQualifyingLowerNeighbor(int x, int y, int h, HeightMap heightMap)
+    {
+        WaterManager wm = ResolveWaterManagerForBridge();
+        int bestDelta = -1;
+        Vector2 best = Vector2.right;
+        int[] cdx = { 1, -1, 0, 0 };
+        int[] cdy = { 0, 0, 1, -1 };
+        for (int d = 0; d < 4; d++)
+        {
+            int nx = x + cdx[d], ny = y + cdy[d];
+            if (!heightMap.IsValidPosition(nx, ny))
+                continue;
+            int hn = heightMap.GetHeight(nx, ny);
+            if (!LowerCardinalQualifiesAsHighDeckWaterStep(nx, ny, hn, h, wm))
+                continue;
+            int delta = h - hn;
+            if (delta > bestDelta)
+            {
+                bestDelta = delta;
+                best = new Vector2(nx - x, ny - y);
+            }
+        }
+
+        return bestDelta >= 0 ? best : Vector2.right;
+    }
+
+    /// <summary>
+    /// Cardinal offsets from (x,y) toward qualifying lower neighbors (dry→water corridor or direct water/slope step).
+    /// </summary>
+    void CollectHighDeckBridgeNormals(int x, int y, int h, HeightMap heightMap, List<Vector2Int> outNormals)
+    {
+        outNormals.Clear();
+        if (heightMap == null || terrainManager == null || !heightMap.IsValidPosition(x, y))
+            return;
+        WaterManager wm = ResolveWaterManagerForBridge();
+        int[] cdx = { 1, -1, 0, 0 };
+        int[] cdy = { 0, 0, 1, -1 };
+        for (int d = 0; d < 4; d++)
+        {
+            int nx = x + cdx[d], ny = y + cdy[d];
+            if (!heightMap.IsValidPosition(nx, ny))
+                continue;
+            int hn = heightMap.GetHeight(nx, ny);
+            if (!LowerCardinalQualifiesAsHighDeckWaterStep(nx, ny, hn, h, wm))
+                continue;
+            var step = new Vector2Int(cdx[d], cdy[d]);
+            if (!outNormals.Contains(step))
+                outNormals.Add(step);
+        }
+    }
+
+    /// <summary>
+    /// Preview path must run along the bridge axis (normal to local shore), not tangentially along the cliff. Single-cell path (zero dir) allowed so the cursor can rest on the lip.
+    /// </summary>
+    bool CardinalApproachParallelToHighDeckNormal(Vector2 dirIn, List<Vector2Int> bridgeNormals)
+    {
+        if (bridgeNormals == null || bridgeNormals.Count == 0)
+            return false;
+        if (Mathf.Approximately(dirIn.x, 0f) && Mathf.Approximately(dirIn.y, 0f))
+            return true;
+        int rdx = Mathf.RoundToInt(dirIn.x);
+        int rdy = Mathf.RoundToInt(dirIn.y);
+        if (Mathf.Abs(rdx) + Mathf.Abs(rdy) != 1)
+            return false;
+        for (int i = 0; i < bridgeNormals.Count; i++)
+        {
+            Vector2Int n = bridgeNormals[i];
+            if (rdx == n.x && rdy == n.y)
+                return true;
+            if (rdx == -n.x && rdy == -n.y)
+                return true;
+        }
+        return false;
+    }
+
+    bool TryGetHighCliffLipBridgePrefab(PathTerraformPlan plan, int cx, int cy, int height, HeightMap heightMap, Vector2 dirIn, out GameObject prefab)
+    {
+        prefab = null;
+        bool logDeckLip = TerraformingService.EnableWaterBridgeDeckLipDebugLogs && cx == 61 && cy == 119;
+        if (logDeckLip)
+        {
+            Debug.Log(
+                $"[RoadBuildDebug.DeckLipResolver 61,119] TryGetHighCliffLipBridgePrefab enter: " +
+                $"planNull={plan == null} relax={plan != null && plan.waterBridgeTerraformRelaxation} " +
+                $"deckDisplayH={plan?.waterBridgeDeckDisplayHeight ?? 0} cellInstanceH={height} dirIn={dirIn}");
+        }
+
+        if (plan == null || !plan.waterBridgeTerraformRelaxation || plan.waterBridgeDeckDisplayHeight <= 0)
+        {
+            if (logDeckLip)
+                Debug.Log("[RoadBuildDebug.DeckLipResolver 61,119] reject: plan/deck gate (null, !relax, or deck<=0).");
+            return false;
+        }
+        if (height != plan.waterBridgeDeckDisplayHeight || heightMap == null || terrainManager == null)
+        {
+            if (logDeckLip)
+                Debug.Log($"[RoadBuildDebug.DeckLipResolver 61,119] reject: height!=deck ({height}!={plan.waterBridgeDeckDisplayHeight}) or null map/terrain.");
+            return false;
+        }
+        if (terrainManager.IsRegisteredOpenWaterAt(cx, cy) || terrainManager.IsWaterSlopeCell(cx, cy))
+        {
+            if (logDeckLip)
+                Debug.Log("[RoadBuildDebug.DeckLipResolver 61,119] reject: current cell is open water or water-slope.");
+            return false;
+        }
+        if (!DryLandCardinalLowerTouchesRegisteredWater(cx, cy, height, heightMap))
+        {
+            if (logDeckLip)
+                Debug.Log("[RoadBuildDebug.DeckLipResolver 61,119] reject: DryLandCardinalLowerTouchesRegisteredWater false.");
+            return false;
+        }
+
+        CollectHighDeckBridgeNormals(cx, cy, height, heightMap, scratchHighDeckBridgeNormals);
+        if (scratchHighDeckBridgeNormals.Count == 0)
+        {
+            if (logDeckLip)
+                Debug.Log("[RoadBuildDebug.DeckLipResolver 61,119] reject: CollectHighDeckBridgeNormals empty.");
+            return false;
+        }
+        if (!CardinalApproachParallelToHighDeckNormal(dirIn, scratchHighDeckBridgeNormals))
+        {
+            if (logDeckLip)
+            {
+                var nb = new System.Text.StringBuilder();
+                for (int i = 0; i < scratchHighDeckBridgeNormals.Count; i++)
+                    nb.Append(scratchHighDeckBridgeNormals[i]).Append(' ');
+                Debug.Log(
+                    $"[RoadBuildDebug.DeckLipResolver 61,119] reject: approach not parallel to bridge normals dirIn={dirIn} normals={nb}");
+            }
+            return false;
+        }
+
+        bool isHorizontal;
+        if (Mathf.Approximately(dirIn.x, 0f) && Mathf.Approximately(dirIn.y, 0f))
+        {
+            Vector2 toward = InferStrongestCardinalTowardQualifyingLowerNeighbor(cx, cy, height, heightMap);
+            isHorizontal = Mathf.Abs(toward.x) >= Mathf.Abs(toward.y);
+        }
+        else
+            isHorizontal = Mathf.Abs(dirIn.x) >= Mathf.Abs(dirIn.y);
+        prefab = isHorizontal ? roadManager.roadTileBridgeHorizontal : roadManager.roadTileBridgeVertical;
+        return true;
     }
 
     /// <summary>

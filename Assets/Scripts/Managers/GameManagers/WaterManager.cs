@@ -349,12 +349,6 @@ public partial class WaterManager : MonoBehaviour
         // Logical surface height in WaterMap is spill (fill level). World placement uses one step lower (Option A / FEAT-37).
         int visualSurfaceHeight = Mathf.Max(TerrainManager.MIN_HEIGHT, surfaceHeight - 1);
 
-        if (x == 66 && y == 62)
-        {
-            int bid = waterMap.GetWaterBodyId(x, y);
-            Debug.Log($"[ShoreDiag 66,62] WaterManager.PlaceWater terrainH={terrainHeight} surfaceH={surfaceHeight} visualSurfaceH={visualSurfaceHeight} bodyId={bid} classification={waterMap.GetBodyClassificationAt(x, y)}");
-        }
-
         // Update the grid cell to display water
         GameObject cell = gridManager.gridArray[x, y];
         Cell cellComponent = gridManager.GetCell(x, y);

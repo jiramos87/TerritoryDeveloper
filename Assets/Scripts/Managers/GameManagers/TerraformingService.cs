@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using Territory.Terrain;
 using Territory.Core;
@@ -27,6 +28,27 @@ public class TerraformingService : MonoBehaviour
 
     /// <summary>When true, logs plan validity, cut-through flag, and flatten counts after <see cref="ComputePathPlan"/>.</summary>
     public static bool LogTerraformPlanDiagnostics = false;
+
+    /// <summary>
+    /// When true and the path touches <see cref="DeckLipDebugGridX"/> / <see cref="DeckLipDebugGridY"/>, logs deck-height assignment, chord walk, FEAT-44, and build/preview failures.
+    /// </summary>
+    public static bool EnableWaterBridgeDeckLipDebugLogs = true;
+
+    public const int DeckLipDebugGridX = 61;
+    public const int DeckLipDebugGridY = 92;
+
+    /// <summary>True if <paramref name="path"/> contains <see cref="DeckLipDebugGridX"/> / <see cref="DeckLipDebugGridY"/>.</summary>
+    public static bool PathIncludesDeckLipDebugCell(IList<Vector2> path)
+    {
+        if (path == null)
+            return false;
+        for (int i = 0; i < path.Count; i++)
+        {
+            if ((int)path[i].x == DeckLipDebugGridX && (int)path[i].y == DeckLipDebugGridY)
+                return true;
+        }
+        return false;
+    }
 
     /// <summary>
     /// Action to perform when terraforming a cell.
@@ -156,7 +178,7 @@ public class TerraformingService : MonoBehaviour
     /// differences, marks cells for Flatten or DiagonalToOrthogonal, and sets postTerraformSlopeType
     /// so RoadPrefabResolver can select correct prefabs.
     /// </summary>
-    /// <param name="waterBridgeTerraformRelaxation">When true (FEAT-44), skip beside-steep-cliff invalidation on scale-with-slopes paths so shore/cliff + water crossings can plan.</param>
+    /// <param name="waterBridgeTerraformRelaxation">When true (FEAT-44 full span or high deck above water), skip beside-steep-cliff invalidation, allow cut-through span &gt; 1 vs base (BUG-29), and allow dry–dry |Δh|&gt;1 steps adjacent to a coastal path cell.</param>
     public PathTerraformPlan ComputePathPlan(IList<Vector2> path, bool waterBridgeTerraformRelaxation = false)
     {
         var plan = new PathTerraformPlan();
@@ -172,6 +194,19 @@ public class TerraformingService : MonoBehaviour
         plan.waterBridgeDeckDisplayHeight = 0;
         if (waterBridgeTerraformRelaxation)
             TryAssignWaterBridgeDeckDisplayHeight(plan, path, heightMap);
+        else if (EnableWaterBridgeDeckLipDebugLogs && PathIncludesDeckLipDebugCell(path))
+        {
+            Debug.Log(
+                $"[RoadBuildDebug.DeckLip {DeckLipDebugGridX},{DeckLipDebugGridY}] TryAssignWaterBridgeDeckDisplayHeight skipped: " +
+                $"waterBridgeTerraformRelaxation=false pathLen={path.Count} planValidSoFar={plan.isValid}.");
+        }
+
+        if (EnableWaterBridgeDeckLipDebugLogs && PathIncludesDeckLipDebugCell(path) && waterBridgeTerraformRelaxation)
+        {
+            Debug.Log(
+                $"[RoadBuildDebug.DeckLip {DeckLipDebugGridX},{DeckLipDebugGridY}] After TryAssign: " +
+                $"waterBridgeDeckDisplayHeight={plan.waterBridgeDeckDisplayHeight} pathLen={path.Count}.");
+        }
 
         var (baseHeight, pathCrossesHill, maxHeight) = ComputePathBaseHeightAndCutThrough(path);
         plan.baseHeight = baseHeight;
@@ -180,7 +215,8 @@ public class TerraformingService : MonoBehaviour
         if (pathCrossesHill)
         {
             // BUG-29: Cut-through only valid when height diff <= 1. Reject paths that would cut through tall hills.
-            if (maxHeight - baseHeight > 1)
+            // Water-bridge / high-deck relaxation: allow larger land span toward water (arbitrary deck vs surface S).
+            if (maxHeight - baseHeight > 1 && !waterBridgeTerraformRelaxation)
                 plan.isValid = false;
 
             for (int i = 0; i < path.Count; i++)
@@ -209,8 +245,12 @@ public class TerraformingService : MonoBehaviour
                 {
                     int nx = (int)path[i + 1].x, ny = (int)path[i + 1].y;
                     int hNext = heightMap.GetHeight(nx, ny);
-                    if (!terrainManager.IsRegisteredOpenWaterAt(x, y) && !terrainManager.IsRegisteredOpenWaterAt(nx, ny)
-                        && Mathf.Abs(hNext - h) > 1)
+                    bool coastalA = terrainManager.IsRegisteredOpenWaterAt(x, y) || terrainManager.IsWaterSlopeCell(x, y)
+                        || terrainManager.IsDryShoreOrRimMembershipEligible(x, y);
+                    bool coastalB = terrainManager.IsRegisteredOpenWaterAt(nx, ny) || terrainManager.IsWaterSlopeCell(nx, ny)
+                        || terrainManager.IsDryShoreOrRimMembershipEligible(nx, ny);
+                    if (!coastalA && !coastalB && Mathf.Abs(hNext - h) > 1
+                        && !PathEdgeExemptDryDryForWaterBridgeRelaxation(path, i, heightMap, waterBridgeTerraformRelaxation))
                         plan.isValid = false;
                 }
 
@@ -224,10 +264,6 @@ public class TerraformingService : MonoBehaviour
             if (plan.isValid && cutThroughMinCellsFromMapEdge > 0 && !CutThroughHasAcceptableMapMargin(plan, path, heightMap))
                 plan.isValid = false;
             LogTerraformPlanDiagnosticsInternal(plan, path);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (path != null && plan.pathCells != null && path.Count != plan.pathCells.Count)
-                Debug.LogWarning($"[TerraformingService] Path/plan length mismatch: path={path.Count} pathCells={plan.pathCells.Count}");
-#endif
             return plan;
         }
 
@@ -274,8 +310,12 @@ public class TerraformingService : MonoBehaviour
             {
                 int nx = (int)path[i + 1].x, ny = (int)path[i + 1].y;
                 int hNext = heightMap.GetHeight(nx, ny);
-                if (!terrainManager.IsRegisteredOpenWaterAt(x, y) && !terrainManager.IsRegisteredOpenWaterAt(nx, ny)
-                    && Mathf.Abs(hNext - h) > 1)
+                bool coastalA = terrainManager.IsRegisteredOpenWaterAt(x, y) || terrainManager.IsWaterSlopeCell(x, y)
+                    || terrainManager.IsDryShoreOrRimMembershipEligible(x, y);
+                bool coastalB = terrainManager.IsRegisteredOpenWaterAt(nx, ny) || terrainManager.IsWaterSlopeCell(nx, ny)
+                    || terrainManager.IsDryShoreOrRimMembershipEligible(nx, ny);
+                if (!coastalA && !coastalB && Mathf.Abs(hNext - h) > 1
+                    && !PathEdgeExemptDryDryForWaterBridgeRelaxation(path, i, heightMap, waterBridgeTerraformRelaxation))
                     plan.isValid = false;
             }
 
@@ -407,12 +447,196 @@ public class TerraformingService : MonoBehaviour
 
         LogTerraformPlanDiagnosticsInternal(plan, path);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (path != null && plan.pathCells != null && path.Count != plan.pathCells.Count)
-            Debug.LogWarning($"[TerraformingService] Path/plan length mismatch: path={path.Count} pathCells={plan.pathCells.Count}");
-#endif
-
         return plan;
+    }
+
+    /// <summary>
+    /// When <see cref="ComputePathPlan"/> produced <c>plan.isValid == false</c>, logs matching failure rules to the Unity console for manual road debug.
+    /// Use the same orthogonal <paramref name="path"/> that was passed to <see cref="ComputePathPlan"/>.
+    /// </summary>
+    public void LogDiagnosticsForInvalidComputePathPlan(IList<Vector2> path, bool waterBridgeTerraformRelaxation, PathTerraformPlan plan)
+    {
+        if (plan == null || plan.isValid || path == null || path.Count == 0 || terrainManager == null)
+            return;
+
+        HeightMap heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null)
+        {
+            Debug.Log("[RoadBuildDebug.Terraform] heightMap is null.");
+            return;
+        }
+
+        var (baseHeight, pathCrossesHill, maxHeight) = ComputePathBaseHeightAndCutThrough(path);
+
+        if (pathCrossesHill)
+        {
+            if (maxHeight - baseHeight > 1 && !waterBridgeTerraformRelaxation)
+            {
+                Debug.Log(
+                    $"[RoadBuildDebug.Terraform] Cut-through: hill span too tall — maxHeight−baseHeight = {maxHeight}−{baseHeight} > 1 (BUG-29). " +
+                    $"baseHeight={baseHeight} maxHeight={maxHeight}.");
+            }
+
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                int x = (int)path[i].x, y = (int)path[i].y;
+                int nx = (int)path[i + 1].x, ny = (int)path[i + 1].y;
+                int h = heightMap.IsValidPosition(x, y) ? heightMap.GetHeight(x, y) : TerrainManager.MIN_HEIGHT;
+                int hNext = heightMap.IsValidPosition(nx, ny) ? heightMap.GetHeight(nx, ny) : TerrainManager.MIN_HEIGHT;
+                bool coastalA = terrainManager.IsRegisteredOpenWaterAt(x, y) || terrainManager.IsWaterSlopeCell(x, y)
+                    || terrainManager.IsDryShoreOrRimMembershipEligible(x, y);
+                bool coastalB = terrainManager.IsRegisteredOpenWaterAt(nx, ny) || terrainManager.IsWaterSlopeCell(nx, ny)
+                    || terrainManager.IsDryShoreOrRimMembershipEligible(nx, ny);
+                if (!coastalA && !coastalB && Mathf.Abs(hNext - h) > 1
+                    && !PathEdgeExemptDryDryForWaterBridgeRelaxation(path, i, heightMap, waterBridgeTerraformRelaxation))
+                {
+                    Debug.Log(
+                        $"[RoadBuildDebug.Terraform] Cut-through: consecutive path step ({x},{y}) h={h} → ({nx},{ny}) h={hNext} " +
+                        "is dry–dry with |Δh|>1 (not coastal-relaxed).");
+                }
+            }
+
+            if (!waterBridgeTerraformRelaxation && cutThroughMinCellsFromMapEdge > 0 && !CutThroughHasAcceptableMapMargin(plan, path, heightMap))
+            {
+                Debug.Log(
+                    $"[RoadBuildDebug.Terraform] Cut-through: map-edge margin check failed " +
+                    $"(cutThroughMinCellsFromMapEdge={cutThroughMinCellsFromMapEdge}).");
+            }
+
+            return;
+        }
+
+        for (int i = 0; i < path.Count - 1; i++)
+        {
+            int x = (int)path[i].x, y = (int)path[i].y;
+            if (terrainManager.IsRegisteredOpenWaterAt(x, y))
+                continue;
+
+            int nx = (int)path[i + 1].x, ny = (int)path[i + 1].y;
+            int h = heightMap.IsValidPosition(x, y) ? heightMap.GetHeight(x, y) : TerrainManager.MIN_HEIGHT;
+            int hNext = heightMap.IsValidPosition(nx, ny) ? heightMap.GetHeight(nx, ny) : TerrainManager.MIN_HEIGHT;
+            bool coastalA = terrainManager.IsRegisteredOpenWaterAt(x, y) || terrainManager.IsWaterSlopeCell(x, y)
+                || terrainManager.IsDryShoreOrRimMembershipEligible(x, y);
+            bool coastalB = terrainManager.IsRegisteredOpenWaterAt(nx, ny) || terrainManager.IsWaterSlopeCell(nx, ny)
+                || terrainManager.IsDryShoreOrRimMembershipEligible(nx, ny);
+            if (!coastalA && !coastalB && Mathf.Abs(hNext - h) > 1
+                && !PathEdgeExemptDryDryForWaterBridgeRelaxation(path, i, heightMap, waterBridgeTerraformRelaxation))
+            {
+                Debug.Log(
+                    $"[RoadBuildDebug.Terraform] Scale-with-slopes: consecutive step ({x},{y}) h={h} → ({nx},{ny}) h={hNext} " +
+                    "is dry–dry with |Δh|>1.");
+            }
+        }
+
+        bool preferSlopeClimb = !HasConsecutiveHeightDiffGreaterThanOne(path, heightMap);
+        if (!waterBridgeTerraformRelaxation && preferSlopeClimb)
+            LogBesideSteepLandCliffDiagnostics(path, heightMap);
+    }
+
+    /// <summary>
+    /// First path cell whose cardinal off-path dry neighbor differs by more than 1 in height (same rule as <see cref="InvalidatePlanIfPathBesideSteepLandCliff"/>).
+    /// </summary>
+    void LogBesideSteepLandCliffDiagnostics(IList<Vector2> path, HeightMap heightMap)
+    {
+        if (path == null || heightMap == null || terrainManager == null)
+            return;
+
+        var pathSet = new HashSet<Vector2Int>();
+        for (int i = 0; i < path.Count; i++)
+            pathSet.Add(new Vector2Int((int)path[i].x, (int)path[i].y));
+
+        int[] cdx = { 1, -1, 0, 0 };
+        int[] cdy = { 0, 0, 1, -1 };
+        for (int i = 0; i < path.Count; i++)
+        {
+            int x = (int)path[i].x, y = (int)path[i].y;
+            if (!heightMap.IsValidPosition(x, y))
+                continue;
+            if (terrainManager.IsRegisteredOpenWaterAt(x, y))
+                continue;
+
+            int h = heightMap.GetHeight(x, y);
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = x + cdx[d];
+                int ny = y + cdy[d];
+                if (!heightMap.IsValidPosition(nx, ny))
+                    continue;
+                if (pathSet.Contains(new Vector2Int(nx, ny)))
+                    continue;
+                if (terrainManager.IsRegisteredOpenWaterAt(nx, ny))
+                    continue;
+
+                int nh = heightMap.GetHeight(nx, ny);
+                if (Mathf.Abs(nh - h) > 1)
+                {
+                    string[] dirNames = { "North(+x)", "South(−x)", "West(+y)", "East(−y)" };
+                    Debug.Log(
+                        $"[RoadBuildDebug.Terraform] Beside steep land (InvalidatePlanIfPathBesideSteepLandCliff): " +
+                        $"path cell ({x},{y}) h={h} vs off-path neighbor ({nx},{ny}) h={nh} dir≈{dirNames[d]} (|Δh|>1).");
+                    return;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// When <paramref name="waterBridgeTerraformRelaxation"/> is on, allows a consecutive dry–dry path step with |Δh|&gt;1 if either endpoint Moore-adjoins a coastal path cell (open water, water-slope, dry shore/rim), e.g. high land → lip → wet run.
+    /// </summary>
+    bool PathEdgeExemptDryDryForWaterBridgeRelaxation(IList<Vector2> path, int edgeStartIdx, HeightMap heightMap, bool waterBridgeTerraformRelaxation)
+    {
+        if (!waterBridgeTerraformRelaxation || path == null || heightMap == null || terrainManager == null)
+            return false;
+        if (edgeStartIdx < 0 || edgeStartIdx >= path.Count - 1)
+            return false;
+
+        int x = (int)path[edgeStartIdx].x, y = (int)path[edgeStartIdx].y;
+        int nx = (int)path[edgeStartIdx + 1].x, ny = (int)path[edgeStartIdx + 1].y;
+        if (!heightMap.IsValidPosition(x, y) || !heightMap.IsValidPosition(nx, ny))
+            return false;
+
+        int h = heightMap.GetHeight(x, y);
+        int hNext = heightMap.GetHeight(nx, ny);
+        if (Mathf.Abs(hNext - h) <= 1)
+            return false;
+
+        bool coastalA = IsCoastalCellForTerraformConsecutiveStep(x, y);
+        bool coastalB = IsCoastalCellForTerraformConsecutiveStep(nx, ny);
+        if (coastalA || coastalB)
+            return false;
+
+        return PathCellMooreTouchesOnPathCoastalTile(path, x, y)
+            || PathCellMooreTouchesOnPathCoastalTile(path, nx, ny);
+    }
+
+    bool IsCoastalCellForTerraformConsecutiveStep(int cx, int cy)
+    {
+        return terrainManager.IsRegisteredOpenWaterAt(cx, cy) || terrainManager.IsWaterSlopeCell(cx, cy)
+            || terrainManager.IsDryShoreOrRimMembershipEligible(cx, cy);
+    }
+
+    /// <summary>
+    /// True if <paramref name="px"/>,<paramref name="py"/> Moore-adjoins a different path cell that counts as coastal for consecutive-step rules.
+    /// </summary>
+    bool PathCellMooreTouchesOnPathCoastalTile(IList<Vector2> path, int px, int py)
+    {
+        if (path == null || terrainManager == null)
+            return false;
+
+        for (int i = 0; i < path.Count; i++)
+        {
+            int qx = (int)path[i].x, qy = (int)path[i].y;
+            if (qx == px && qy == py)
+                continue;
+            int adx = Mathf.Abs(qx - px);
+            int ady = Mathf.Abs(qy - py);
+            if (adx > 1 || ady > 1)
+                continue;
+            if (IsCoastalCellForTerraformConsecutiveStep(qx, qy))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -462,19 +686,6 @@ public class TerraformingService : MonoBehaviour
     {
         if (!LogTerraformPlanDiagnostics || plan == null)
             return;
-        int pathFlat = 0;
-        int adjFlat = 0;
-        for (int i = 0; i < plan.pathCells.Count; i++)
-        {
-            if (plan.pathCells[i].action == TerraformAction.Flatten)
-                pathFlat++;
-        }
-        for (int i = 0; i < plan.adjacentCells.Count; i++)
-        {
-            if (plan.adjacentCells[i].action == TerraformAction.Flatten)
-                adjFlat++;
-        }
-        Debug.Log($"[Terraform] valid={plan.isValid} cutThrough={plan.isCutThrough} pathCells={plan.pathCells.Count} pathFlat={pathFlat} adjacent={plan.adjacentCells.Count} adjFlat={adjFlat} pathLen={(path != null ? path.Count : 0)}");
     }
 
     /// <summary>
@@ -736,18 +947,9 @@ public class TerraformingService : MonoBehaviour
         if (newHeight < 0) return;
 
         if (!allowLowering && newHeight < currentHeight)
-        {
-            Debug.Log($"[ApplyTerraform] ({x},{y}) action={action} SKIPPED allowLowering=false currentHeight={currentHeight} newHeight={newHeight}");
             return;
-        }
 
-        Debug.Log($"[ApplyTerraform] ({x},{y}) action={action} currentHeight={currentHeight} newHeight={newHeight} baseHeight={baseHeight} allowLowering={allowLowering}");
         heightMap.SetHeight(x, y, newHeight);
-        int nw = heightMap.IsValidPosition(x + 1, y + 1) ? heightMap.GetHeight(x + 1, y + 1) : -1;
-        int se = heightMap.IsValidPosition(x - 1, y - 1) ? heightMap.GetHeight(x - 1, y - 1) : -1;
-        int n = heightMap.IsValidPosition(x + 1, y) ? heightMap.GetHeight(x + 1, y) : -1;
-        int w = heightMap.IsValidPosition(x, y + 1) ? heightMap.GetHeight(x, y + 1) : -1;
-        Debug.Log($"[ApplyTerraform] ({x},{y}) AFTER SetHeight: self={newHeight} NW={nw} SE={se} N={n} W={w}");
         terrainManager.RestoreTerrainForCell(x, y);
     }
 
@@ -816,50 +1018,308 @@ public class TerraformingService : MonoBehaviour
     }
 
     /// <summary>
+    /// Builds a <see cref="PathTerraformPlan"/> with no terraform height mutations (all <see cref="TerraformAction.None"/>), water-bridge relaxation on,
+    /// and <see cref="PathTerraformPlan.waterBridgeDeckDisplayHeight"/> from <see cref="TryAssignWaterBridgeDeckDisplayHeight"/>.
+    /// Used when the manual stroke locks a straight chord over water/cliffs so preview/commit skip <see cref="ComputePathPlan"/> cut-through / Phase-1 failures
+    /// while still placing deck tiles at the lip height. <paramref name="expandedCardinalPath"/> must already be cardinal (use <see cref="ExpandDiagonalStepsToCardinal"/> first).
+    /// </summary>
+    public bool TryBuildDeckSpanOnlyWaterBridgePlan(IList<Vector2> expandedCardinalPath, out PathTerraformPlan plan)
+    {
+        plan = null;
+        if (terrainManager == null || expandedCardinalPath == null || expandedCardinalPath.Count == 0 || gridManager == null)
+            return false;
+
+        HeightMap heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null)
+            return false;
+
+        plan = new PathTerraformPlan
+        {
+            isValid = true,
+            isCutThrough = false,
+            waterBridgeTerraformRelaxation = true
+        };
+
+        int x0 = (int)expandedCardinalPath[0].x;
+        int y0 = (int)expandedCardinalPath[0].y;
+        plan.baseHeight = heightMap.IsValidPosition(x0, y0) ? heightMap.GetHeight(x0, y0) : 1;
+
+        plan.pathCells.Clear();
+        plan.adjacentCells.Clear();
+
+        for (int i = 0; i < expandedCardinalPath.Count; i++)
+        {
+            int x = (int)expandedCardinalPath[i].x;
+            int y = (int)expandedCardinalPath[i].y;
+            if (!heightMap.IsValidPosition(x, y) || gridManager.GetCell(x, y) == null)
+            {
+                plan.isValid = false;
+                plan = null;
+                return false;
+            }
+
+            int h = heightMap.GetHeight(x, y);
+            TerrainSlopeType slope = TerrainSlopeType.Flat;
+            if (!terrainManager.IsRegisteredOpenWaterAt(x, y) && !terrainManager.IsWaterSlopeCell(x, y))
+                slope = terrainManager.GetTerrainSlopeTypeAt(x, y);
+
+            plan.pathCells.Add(new PathTerraformPlan.CellPlan
+            {
+                position = new Vector2Int(x, y),
+                action = TerraformAction.None,
+                direction = OrthogonalDirection.North,
+                originalHeight = h,
+                targetHeight = h,
+                postTerraformSlopeType = slope
+            });
+        }
+
+        plan.waterBridgeDeckDisplayHeight = 0;
+        TryAssignWaterBridgeDeckDisplayHeight(plan, expandedCardinalPath, heightMap);
+        if (plan.waterBridgeDeckDisplayHeight <= 0)
+        {
+            plan = null;
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// FEAT-44: single wet run with dry land before/after — deck display height matches land-before <see cref="Cell.GetCellInstanceHeight"/>.
+    /// High cliff lip (relaxed): dry path cell with a cardinal neighbor strictly lower that is open water, water-slope, or dry land touching registered water
+    /// (preview deck on last land tile before wet; aligns with <see cref="RoadPrefabResolver"/> lip tests).
+    /// Verbose logs when the path touches <see cref="DeckLipDebugGridX"/> / <see cref="DeckLipDebugGridY"/> and <see cref="EnableWaterBridgeDeckLipDebugLogs"/> is true.
     /// </summary>
     void TryAssignWaterBridgeDeckDisplayHeight(PathTerraformPlan plan, IList<Vector2> path, HeightMap heightMap)
     {
-        if (plan == null || path == null || path.Count < 3 || heightMap == null || gridManager == null || terrainManager == null)
+        if (plan == null || path == null || path.Count < 1 || heightMap == null || gridManager == null || terrainManager == null)
             return;
 
-        int runs = 0;
-        int rs = -1, re = -1;
-        bool inRun = false;
+        if (path.Count >= 3)
+        {
+            int runs = 0;
+            int rs = -1, re = -1;
+            bool inRun = false;
+            for (int i = 0; i < path.Count; i++)
+            {
+                int x = (int)path[i].x;
+                int y = (int)path[i].y;
+                bool w = IsWaterOrWaterSlopeForBridgeDeckHeight(x, y, heightMap);
+                if (w)
+                {
+                    if (!inRun)
+                    {
+                        runs++;
+                        rs = i;
+                        inRun = true;
+                    }
+                    re = i;
+                }
+                else
+                    inRun = false;
+            }
+
+            if (runs == 1 && rs >= 1 && re < path.Count - 1)
+            {
+                int bx = (int)path[rs - 1].x;
+                int by = (int)path[rs - 1].y;
+                if (!IsWaterOrWaterSlopeForBridgeDeckHeight(bx, by, heightMap))
+                {
+                    Cell landBefore = gridManager.GetCell(bx, by);
+                    if (landBefore != null)
+                    {
+                        int dh = landBefore.GetCellInstanceHeight();
+                        if (dh > 0)
+                        {
+                            plan.waterBridgeDeckDisplayHeight = dh;
+                            if (EnableWaterBridgeDeckLipDebugLogs && PathIncludesDeckLipDebugCell(path))
+                            {
+                                Debug.Log(
+                                    $"[RoadBuildDebug.DeckLip {DeckLipDebugGridX},{DeckLipDebugGridY}] FEAT-44 branch set " +
+                                    $"waterBridgeDeckDisplayHeight={dh} from land-before ({bx},{by}) then returned early.");
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        WaterManager wm = terrainManager.waterManager != null ? terrainManager.waterManager : FindObjectOfType<WaterManager>();
+
+        if (EnableWaterBridgeDeckLipDebugLogs && PathIncludesDeckLipDebugCell(path))
+            LogDeckLipTryAssignStart(path, plan, heightMap, wm);
+
+        int best = 0;
         for (int i = 0; i < path.Count; i++)
         {
             int x = (int)path[i].x;
             int y = (int)path[i].y;
-            bool w = IsWaterOrWaterSlopeForBridgeDeckHeight(x, y, heightMap);
-            if (w)
-            {
-                if (!inRun)
-                {
-                    runs++;
-                    rs = i;
-                    inRun = true;
-                }
-                re = i;
-            }
-            else
-                inRun = false;
+            if (terrainManager.IsRegisteredOpenWaterAt(x, y))
+                continue;
+            Cell pathCell = gridManager.GetCell(x, y);
+            if (pathCell == null)
+                continue;
+            int h = pathCell.GetCellInstanceHeight();
+            if (h <= 0)
+                continue;
+            bool strictLip = CellHasHighDeckLipTowardWater(x, y, h, heightMap, wm);
+            bool relaxedLip = CellQualifiesForDeckDisplayLipRelaxed(x, y, h, heightMap, wm);
+            if (EnableWaterBridgeDeckLipDebugLogs && x == DeckLipDebugGridX && y == DeckLipDebugGridY)
+                LogDeckLipCellInspection(path, i, x, y, h, heightMap, wm, strictLip, relaxedLip);
+
+            if (!relaxedLip)
+                continue;
+            if (h > best)
+                best = h;
         }
 
-        if (runs != 1 || rs < 1 || re >= path.Count - 1)
-            return;
+        if (best > 0)
+            plan.waterBridgeDeckDisplayHeight = best;
 
-        int bx = (int)path[rs - 1].x;
-        int by = (int)path[rs - 1].y;
-        if (IsWaterOrWaterSlopeForBridgeDeckHeight(bx, by, heightMap))
-            return;
+        if (EnableWaterBridgeDeckLipDebugLogs && PathIncludesDeckLipDebugCell(path))
+            LogDeckLipTryAssignResult(plan, best);
+    }
 
-        Cell landBefore = gridManager.GetCell(bx, by);
-        if (landBefore == null)
-            return;
+    void LogDeckLipTryAssignStart(IList<Vector2> path, PathTerraformPlan plan, HeightMap heightMap, WaterManager wm)
+    {
+        var sb = new StringBuilder(512);
+        sb.Append($"[RoadBuildDebug.DeckLip {DeckLipDebugGridX},{DeckLipDebugGridY}] TryAssign relaxed-loop enter pathLen=").Append(path.Count).Append(" wmNull=").Append(wm == null).Append(" cells=");
+        int maxShow = Mathf.Min(path.Count, 24);
+        for (int i = 0; i < maxShow; i++)
+            sb.Append('(').Append((int)path[i].x).Append(',').Append((int)path[i].y).Append(") ");
+        if (path.Count > maxShow)
+            sb.Append("…");
+        Debug.Log(sb.ToString());
+    }
 
-        int dh = landBefore.GetCellInstanceHeight();
-        if (dh > 0)
-            plan.waterBridgeDeckDisplayHeight = dh;
+    void LogDeckLipCellInspection(IList<Vector2> path, int pathIndex, int x, int y, int hCell, HeightMap heightMap, WaterManager wm, bool strictLip, bool relaxedLip)
+    {
+        int hmSelf = heightMap.IsValidPosition(x, y) ? heightMap.GetHeight(x, y) : -999;
+        var sb = new StringBuilder(1024);
+        sb.Append($"[RoadBuildDebug.DeckLip {DeckLipDebugGridX},{DeckLipDebugGridY}] PathIndex=").Append(pathIndex)
+            .Append(" GetCellInstanceHeight=").Append(hCell).Append(" HeightMap[").Append(x).Append(',').Append(y).Append("]=").Append(hmSelf)
+            .Append(" openWaterSelf=").Append(terrainManager.IsRegisteredOpenWaterAt(x, y))
+            .Append(" waterSlopeSelf=").Append(terrainManager.IsWaterSlopeCell(x, y))
+            .Append(" strictDryLowerTowardWater=").Append(strictLip)
+            .Append(" relaxedLip=").Append(relaxedLip)
+            .AppendLine();
+        int[] cdx = { 1, -1, 0, 0 };
+        int[] cdy = { 0, 0, 1, -1 };
+        string[] dirNames = { "N(+x)", "S(−x)", "W(+y)", "E(−y)" };
+        for (int d = 0; d < 4; d++)
+        {
+            int nx = x + cdx[d];
+            int ny = y + cdy[d];
+            if (!heightMap.IsValidPosition(nx, ny))
+            {
+                sb.Append("  ").Append(dirNames[d]).Append(" OOB\n");
+                continue;
+            }
+            int hn = heightMap.GetHeight(nx, ny);
+            bool openW = terrainManager.IsRegisteredOpenWaterAt(nx, ny);
+            bool slopeW = terrainManager.IsWaterSlopeCell(nx, ny);
+            bool dryTouches = DryCellTouchesRegisteredWaterForDeckHeight(nx, ny, wm);
+            bool lower = hn < hCell;
+            bool relaxedStep = lower && (openW || slopeW || dryTouches);
+            bool strictStep = lower && !openW && !slopeW && dryTouches;
+            sb.Append("  ").Append(dirNames[d]).Append(" (").Append(nx).Append(',').Append(ny).Append(") hn=").Append(hn)
+                .Append(" lower=").Append(lower)
+                .Append(" openWater=").Append(openW).Append(" waterSlope=").Append(slopeW)
+                .Append(" dryTouchesRegWater=").Append(dryTouches)
+                .Append(" strictStep=").Append(strictStep).Append(" relaxedStep=").Append(relaxedStep);
+            if (wm != null)
+                sb.Append(" wm.IsWaterAt(n)=").Append(wm.IsWaterAt(nx, ny));
+            sb.AppendLine();
+        }
+        Debug.Log(sb.ToString());
+    }
+
+    void LogDeckLipTryAssignResult(PathTerraformPlan plan, int best)
+    {
+        Debug.Log(
+            $"[RoadBuildDebug.DeckLip {DeckLipDebugGridX},{DeckLipDebugGridY}] TryAssign relaxed-loop result bestCandidate={best} " +
+            $"assigned waterBridgeDeckDisplayHeight={plan.waterBridgeDeckDisplayHeight}.");
+    }
+
+    /// <summary>
+    /// Deck display height: strict dry-lower corridor to water, or direct cardinal step onto lower open water / water-slope (last land tile before wet).
+    /// </summary>
+    bool CellQualifiesForDeckDisplayLipRelaxed(int x, int y, int h, HeightMap heightMap, WaterManager wm)
+    {
+        if (heightMap == null || terrainManager == null || !heightMap.IsValidPosition(x, y))
+            return false;
+
+        int[] cdx = { 1, -1, 0, 0 };
+        int[] cdy = { 0, 0, 1, -1 };
+        for (int d = 0; d < 4; d++)
+        {
+            int nx = x + cdx[d];
+            int ny = y + cdy[d];
+            if (!heightMap.IsValidPosition(nx, ny))
+                continue;
+            int hn = heightMap.GetHeight(nx, ny);
+            if (hn >= h)
+                continue;
+            if (terrainManager.IsRegisteredOpenWaterAt(nx, ny) || terrainManager.IsWaterSlopeCell(nx, ny))
+                return true;
+            if (DryCellTouchesRegisteredWaterForDeckHeight(nx, ny, wm))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// True when a cardinal neighbor is strictly lower, not open water / water-slope, and touches registered water (Moore).
+    /// Matches <c>RoadManager</c> deck-adjacent relaxation geometry so deck display height and bridge prefabs stay aligned.
+    /// </summary>
+    bool CellHasHighDeckLipTowardWater(int x, int y, int h, HeightMap heightMap, WaterManager wm)
+    {
+        if (heightMap == null || terrainManager == null || !heightMap.IsValidPosition(x, y))
+            return false;
+
+        int[] cdx = { 1, -1, 0, 0 };
+        int[] cdy = { 0, 0, 1, -1 };
+        for (int d = 0; d < 4; d++)
+        {
+            int nx = x + cdx[d];
+            int ny = y + cdy[d];
+            if (!heightMap.IsValidPosition(nx, ny))
+                continue;
+            int hn = heightMap.GetHeight(nx, ny);
+            if (hn >= h)
+                continue;
+            if (terrainManager.IsRegisteredOpenWaterAt(nx, ny) || terrainManager.IsWaterSlopeCell(nx, ny))
+                continue;
+            if (DryCellTouchesRegisteredWaterForDeckHeight(nx, ny, wm))
+                return true;
+        }
+
+        return false;
+    }
+
+    bool DryCellTouchesRegisteredWaterForDeckHeight(int x, int y, WaterManager wm)
+    {
+        if (terrainManager == null)
+            return false;
+        if (terrainManager.IsRegisteredOpenWaterAt(x, y) || terrainManager.IsWaterSlopeCell(x, y))
+            return true;
+        if (wm == null)
+            return false;
+
+        int[] mdx = { 1, -1, 0, 0, 1, 1, -1, -1 };
+        int[] mdy = { 0, 0, 1, -1, 1, -1, 1, -1 };
+        for (int d = 0; d < 8; d++)
+        {
+            int ax = x + mdx[d];
+            int ay = y + mdy[d];
+            if (wm.IsWaterAt(ax, ay))
+                return true;
+        }
+
+        return false;
     }
 
     bool IsWaterOrWaterSlopeForBridgeDeckHeight(int x, int y, HeightMap heightMap)

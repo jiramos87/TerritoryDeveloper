@@ -95,7 +95,8 @@ public class PathTerraformPlan
     /// Use so preview/path prep match <see cref="Apply"/> feasibility before modifying sprites.
     /// </summary>
     /// <param name="logPhase1HeightFailure">When validation fails, invoked once with the failing cardinal edge (or null if unknown).</param>
-    public bool TryValidatePhase1Heights(HeightMap heightMap, TerrainManager terrainManager, Action<string> logPhase1HeightFailure = null)
+    /// <param name="logDryCliffPhase1Detail">When non-null, emits verbose lines for strict Phase1 |Δh|&gt;1 edges and dry-cliff skip decisions (use with road diagnostic cursor only).</param>
+    public bool TryValidatePhase1Heights(HeightMap heightMap, TerrainManager terrainManager, Action<string> logPhase1HeightFailure = null, Action<string> logDryCliffPhase1Detail = null)
     {
         if (heightMap == null || terrainManager == null) return false;
         WritePhase1TerraformHeights(heightMap, terrainManager);
@@ -106,10 +107,13 @@ public class PathTerraformPlan
         else if (waterBridgeTerraformRelaxation)
             heightOk = ValidateNoHeightDiffGreaterThanOneWaterBridgeRelaxed(heightMap, terrainManager, out failureDetail);
         else
-            heightOk = ValidateNoHeightDiffGreaterThanOne(heightMap, out failureDetail);
+            heightOk = ValidateNoHeightDiffGreaterThanOne(heightMap, terrainManager, out failureDetail, logDryCliffPhase1Detail);
         if (!heightOk)
         {
-            if (!string.IsNullOrEmpty(failureDetail))
+            // Strict Phase1 emits REJECT via logDryCliffPhase1Detail; relaxed validation does not — always log Phase1 for bridge-relaxed failures.
+            bool strictPhase1 = !waterBridgeTerraformRelaxation;
+            bool skipPhase1Duplicate = strictPhase1 && logDryCliffPhase1Detail != null;
+            if (!string.IsNullOrEmpty(failureDetail) && !skipPhase1Duplicate)
                 logPhase1HeightFailure?.Invoke(failureDetail);
             RevertPhase1TerraformHeights(heightMap);
             return false;
@@ -146,7 +150,7 @@ public class PathTerraformPlan
         else if (waterBridgeTerraformRelaxation)
             heightOk = ValidateNoHeightDiffGreaterThanOneWaterBridgeRelaxed(heightMap, terrainManager, out _);
         else
-            heightOk = ValidateNoHeightDiffGreaterThanOne(heightMap, out _);
+            heightOk = ValidateNoHeightDiffGreaterThanOne(heightMap, terrainManager, out _, logDryCliffPhase1Detail: null);
         if (!heightOk)
         {
             RevertPhase1TerraformHeights(heightMap);
@@ -273,13 +277,18 @@ public class PathTerraformPlan
     /// <summary>
     /// Returns false if any affected cell has a neighbor with height difference greater than 1.
     /// Used after Phase 1 to avoid invalid terrain (black voids, degenerate slopes).
+    /// Skips edges where the stroke sits on high ground and a cardinal neighbor is dry land strictly lower (pre-existing cliff), same rule as FEAT-44 relaxed Phase1 for water bridges.
+    /// Also skips high dry land (on or beside stroke) dropping to a lower registered water-slope shore cell so manual roads can preview to cliff lips above NorthSlopeWaterPrefab tiles without full water-bridge relaxation.
     /// </summary>
-    bool ValidateNoHeightDiffGreaterThanOne(HeightMap heightMap, out string failureDetail)
+    bool ValidateNoHeightDiffGreaterThanOne(HeightMap heightMap, TerrainManager terrainManager, out string failureDetail, Action<string> logDryCliffPhase1Detail = null)
     {
         failureDetail = null;
         if (heightMap == null) return true;
         int[] dx = { 1, -1, 0, 0 };
         int[] dy = { 0, 0, 1, -1 };
+        var pathCellsOnly = new HashSet<Vector2Int>();
+        foreach (var cell in pathCells)
+            pathCellsOnly.Add(cell.position);
         var checkSet = new HashSet<Vector2Int>();
         foreach (var cell in pathCells)
             checkSet.Add(cell.position);
@@ -297,6 +306,7 @@ public class PathTerraformPlan
                     checkSet.Add(new Vector2Int(nx, ny));
             }
         }
+
         foreach (var pos in checkSet)
         {
             if (!heightMap.IsValidPosition(pos.x, pos.y)) continue;
@@ -307,15 +317,109 @@ public class PathTerraformPlan
                 int ny = pos.y + dy[d];
                 if (!heightMap.IsValidPosition(nx, ny)) continue;
                 int nh = heightMap.GetHeight(nx, ny);
-                if (Mathf.Abs(nh - h) > 1)
+                if (Mathf.Abs(nh - h) <= 1)
+                    continue;
+                string dryExplain = string.Empty;
+                bool drySkip = terrainManager != null
+                    && DryLandCliffDropsAwayFromPathStroke(heightMap, terrainManager, pos.x, pos.y, nx, ny, pathCellsOnly, out dryExplain);
+                if (drySkip)
+                    continue;
+                string wsExplain = string.Empty;
+                bool wsSkip = terrainManager != null
+                    && HighDryLandToWaterSlopeSkipsPhase1Strict(heightMap, terrainManager, pos.x, pos.y, nx, ny, pathCellsOnly, out wsExplain);
+                if (wsSkip)
+                    continue;
+                failureDetail =
+                    $"Phase1 strict |Δh|>1: ({pos.x},{pos.y}) h={h} → ({nx},{ny}) h={nh} (|Δ|={Mathf.Abs(nh - h)}).";
+                if (logDryCliffPhase1Detail != null)
                 {
-                    failureDetail =
-                        $"Phase1 strict |Δh|>1: ({pos.x},{pos.y}) h={h} → ({nx},{ny}) h={nh} (|Δ|={Mathf.Abs(nh - h)}).";
-                    return false;
+                    logDryCliffPhase1Detail.Invoke(
+                        $"REJECT {failureDetail} dryCliff={dryExplain} waterSlopeSkip={wsExplain}");
                 }
+                return false;
             }
         }
         return true;
+    }
+
+    /// <summary>
+    /// True if <paramref name="gx,gy"/> is cardinally adjacent to any cell in <paramref name="pathCellsOnly"/>.
+    /// </summary>
+    static bool IsCardinalNeighborOfPathStroke(int gx, int gy, HashSet<Vector2Int> pathCellsOnly)
+    {
+        if (pathCellsOnly == null || pathCellsOnly.Count == 0) return false;
+        int[] cdx = { 1, -1, 0, 0 };
+        int[] cdy = { 0, 0, 1, -1 };
+        for (int d = 0; d < 4; d++)
+        {
+            var p = new Vector2Int(gx + cdx[d], gy + cdy[d]);
+            if (pathCellsOnly.Contains(p))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Strict Phase1: allow |Δh|&gt;1 when the higher cell is dry (not open water / not water-slope) on or beside the stroke and the lower cell is a registered water-slope shore (e.g. NorthSlopeWaterPrefab below a grass cliff lip).
+    /// </summary>
+    static bool HighDryLandToWaterSlopeSkipsPhase1Strict(
+        HeightMap heightMap, TerrainManager terrainManager, int x0, int y0, int x1, int y1, HashSet<Vector2Int> pathCellsOnly, out string explain)
+    {
+        explain = string.Empty;
+        if (heightMap == null || terrainManager == null || pathCellsOnly == null)
+        {
+            explain = "null";
+            return false;
+        }
+
+        int h0 = heightMap.GetHeight(x0, y0);
+        int h1 = heightMap.GetHeight(x1, y1);
+        if (h0 == h1)
+            return false;
+
+        int hiX, hiY, loX, loY, hiH, loH;
+        if (h0 > h1)
+        {
+            hiX = x0; hiY = y0; hiH = h0;
+            loX = x1; loY = y1; loH = h1;
+        }
+        else
+        {
+            hiX = x1; hiY = y1; hiH = h1;
+            loX = x0; loY = y0; loH = h0;
+        }
+
+        if (hiH <= loH)
+            return false;
+
+        if (!terrainManager.IsWaterSlopeCell(loX, loY))
+        {
+            explain = "low not water-slope";
+            return false;
+        }
+
+        if (terrainManager.IsRegisteredOpenWaterAt(hiX, hiY) || terrainManager.IsWaterSlopeCell(hiX, hiY))
+        {
+            explain = "high is water/slope";
+            return false;
+        }
+
+        bool hiOn = pathCellsOnly.Contains(new Vector2Int(hiX, hiY));
+        bool loOn = pathCellsOnly.Contains(new Vector2Int(loX, loY));
+        if (hiOn && !loOn)
+        {
+            explain = "high on stroke, low water-slope off";
+            return true;
+        }
+
+        if (!hiOn && !loOn && IsCardinalNeighborOfPathStroke(hiX, hiY, pathCellsOnly))
+        {
+            explain = "high dry beside stroke, low water-slope off";
+            return true;
+        }
+
+        explain = "stroke geometry mismatch";
+        return false;
     }
 
     /// <summary>
@@ -400,6 +504,68 @@ public class PathTerraformPlan
     }
 
     /// <summary>
+    /// True when a natural dry cliff drops away from the road stroke: the higher tile is on the stroke OR is cardinally adjacent to the stroke,
+    /// the lower tile is off the stroke and not water, and the higher tile is strictly above the lower. Matches FEAT-44 relaxed “deck beside gorge” intent for strict Phase1 when the stroke ends one tile short of the cliff lip (P3 ring pulls the lip into checkSet).
+    /// </summary>
+    static bool DryLandCliffDropsAwayFromPathStroke(HeightMap heightMap, TerrainManager terrainManager, int x0, int y0, int x1, int y1, HashSet<Vector2Int> pathCellsOnly, out string explain)
+    {
+        explain = string.Empty;
+        if (heightMap == null || terrainManager == null || pathCellsOnly == null)
+        {
+            explain = "null map/manager/pathCells";
+            return false;
+        }
+
+        int h0 = heightMap.GetHeight(x0, y0);
+        int h1 = heightMap.GetHeight(x1, y1);
+        if (h0 == h1)
+        {
+            explain = "equal heights (no drop)";
+            return false;
+        }
+
+        int hiX, hiY, loX, loY, hiH, loH;
+        if (h0 > h1)
+        {
+            hiX = x0; hiY = y0; hiH = h0;
+            loX = x1; loY = y1; loH = h1;
+        }
+        else
+        {
+            hiX = x1; hiY = y1; hiH = h1;
+            loX = x0; loY = y0; loH = h0;
+        }
+
+        if (terrainManager.IsRegisteredOpenWaterAt(loX, loY) || terrainManager.IsWaterSlopeCell(loX, loY))
+        {
+            explain = $"low ({loX},{loY}) is open water or water-slope — not dry-cliff skip (bridge / S-height cases use wet path or relaxation)";
+            return false;
+        }
+
+        bool hiOnStroke = pathCellsOnly.Contains(new Vector2Int(hiX, hiY));
+        bool loOnStroke = pathCellsOnly.Contains(new Vector2Int(loX, loY));
+
+        // Classic: last stroke cell on the cliff top, drop is off-stroke (e.g. path includes (61,90), neighbor (62,90) lower).
+        if (hiOnStroke && !loOnStroke && hiH > loH)
+        {
+            explain = $"classic high ON stroke ({hiX},{hiY})h={hiH} low off-stroke ({loX},{loY})h={loH}";
+            return true;
+        }
+
+        // Beside-stroke: stroke ends at (60,90); P3 adds (61,90) to checkSet; (61) is not on stroke but neighbors stroke; (62) is lower and off stroke.
+        if (!hiOnStroke && !loOnStroke && hiH > loH
+            && IsCardinalNeighborOfPathStroke(hiX, hiY, pathCellsOnly))
+        {
+            explain = $"beside-stroke high ({hiX},{hiY})h={hiH} cardinal-adjacent to stroke, low ({loX},{loY})h={loH} off-stroke";
+            return true;
+        }
+
+        explain = $"no skip hiOnStroke={hiOnStroke} loOnStroke={loOnStroke} hiBesideStroke={IsCardinalNeighborOfPathStroke(hiX, hiY, pathCellsOnly)} " +
+                  $"(bridge-through-cliff: both ends often on stroke or waterBridgeTerraformRelaxation; climbing from low stroke to high off-stroke is rejected)";
+        return false;
+    }
+
+    /// <summary>
     /// FEAT-44 Phase1: skip |Δh|&gt;1 checks for edges that are intentionally steep (water, shore, full path deck span, or dry cliff dropping away from the deck).
     /// </summary>
     static bool WaterBridgeRelaxationSkipsHeightEdge(HeightMap heightMap, TerrainManager terrainManager, int x0, int y0, int x1, int y1, HashSet<Vector2Int> pathCorridor)
@@ -408,25 +574,8 @@ public class PathTerraformPlan
             && pathCorridor.Contains(new Vector2Int(x0, y0))
             && pathCorridor.Contains(new Vector2Int(x1, y1)))
             return true;
-        int h0 = heightMap.GetHeight(x0, y0);
-        int h1 = heightMap.GetHeight(x1, y1);
-        // Exactly one endpoint on path: dry land lower than deck (cliff drops away from stroke, e.g. west of approach).
-        if (pathCorridor != null)
-        {
-            bool on0 = pathCorridor.Contains(new Vector2Int(x0, y0));
-            bool on1 = pathCorridor.Contains(new Vector2Int(x1, y1));
-            if (on0 ^ on1)
-            {
-                int pathH = on0 ? h0 : h1;
-                int outX = on0 ? x1 : x0;
-                int outY = on0 ? y1 : y0;
-                int outH = on0 ? h1 : h0;
-                if (!terrainManager.IsRegisteredOpenWaterAt(outX, outY)
-                    && !terrainManager.IsWaterSlopeCell(outX, outY)
-                    && pathH > outH)
-                    return true;
-            }
-        }
+        if (DryLandCliffDropsAwayFromPathStroke(heightMap, terrainManager, x0, y0, x1, y1, pathCorridor, out _))
+            return true;
         if (terrainManager.IsRegisteredOpenWaterAt(x0, y0) || terrainManager.IsRegisteredOpenWaterAt(x1, y1))
             return true;
         if (terrainManager.IsWaterSlopeCell(x0, y0) || terrainManager.IsWaterSlopeCell(x1, y1))

@@ -108,10 +108,7 @@ public class CameraController : MonoBehaviour
             targetOrthoSize = zoomLevels[currentZoomLevel];
             mainCamera.orthographicSize = targetOrthoSize;
         }
-        else
-        {
-            Debug.LogWarning("CameraController: No zoom levels defined.");
-        }
+        else { }
     }
 
     /// <summary>
@@ -199,8 +196,12 @@ public class CameraController : MonoBehaviour
 
             if (exceededPanThreshold)
             {
-                Vector3 curWorld = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-                Vector3 lastWorld = mainCamera.ScreenToWorldPoint(lastMouseScreenPos);
+                Vector3 curWorld = gridManager != null
+                    ? (Vector3)GridManager.ScreenPointToWorldOnGridPlane(mainCamera, Input.mousePosition)
+                    : mainCamera.ScreenToWorldPoint(Input.mousePosition);
+                Vector3 lastWorld = gridManager != null
+                    ? (Vector3)GridManager.ScreenPointToWorldOnGridPlane(mainCamera, lastMouseScreenPos)
+                    : mainCamera.ScreenToWorldPoint(lastMouseScreenPos);
                 Vector3 delta = curWorld - lastWorld;
                 mainCamera.transform.position -= new Vector3(delta.x, delta.y, 0);
                 lastMouseScreenPos = Input.mousePosition;

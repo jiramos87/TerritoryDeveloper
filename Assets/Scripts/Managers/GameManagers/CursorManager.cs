@@ -123,8 +123,7 @@ public class CursorManager : MonoBehaviour
         if (previewInstance != null)
         {
             if (cachedMainCamera == null) cachedMainCamera = Camera.main;
-            Vector3 mousePosition = cachedMainCamera.ScreenToWorldPoint(Input.mousePosition);
-            Vector2 mousePosition2 = new Vector2(mousePosition.x, mousePosition.y);
+            Vector2 mousePosition2 = GridManager.ScreenPointToWorldOnGridPlane(cachedMainCamera, Input.mousePosition);
 
             Cell mouseCell = gridManager.GetMouseGridCell(mousePosition2);
             if (mouseCell == null)

@@ -375,7 +375,6 @@ public class ZoneManager : MonoBehaviour, IZoneManager
             if (slopePrefab != null) return slopePrefab;
         }
 
-        Debug.LogWarning($"Prefab with name {trimmedName} not found.");
         return null;
     }
 

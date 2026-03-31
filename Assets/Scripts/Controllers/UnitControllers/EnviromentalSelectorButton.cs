@@ -56,7 +56,6 @@ public class EnvironmentalSelectorButton : MonoBehaviour
                 break;
 
             default:
-                Debug.LogWarning($"Unknown environmental type selected: {selectedItem.name}");
                 break;
         }
     }

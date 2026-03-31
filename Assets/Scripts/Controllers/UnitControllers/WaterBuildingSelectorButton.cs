@@ -80,7 +80,6 @@ public class WaterBuildingSelectorButton : MonoBehaviour
                     }
                     break;
                 default:
-                    Debug.LogWarning($"Unknown water building selected: {selectedItem.name}");
                     break;
             }
         }

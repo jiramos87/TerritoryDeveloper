@@ -55,9 +55,6 @@ public class TimeManager : MonoBehaviour
             PlaceAllZonedBuildings();
             if (simulationManager != null)
                 simulationManager.ProcessSimulationTick();
-            else if (cityStats != null && cityStats.simulateGrowth)
-                Debug.LogWarning("[TimeManager] Daily tick: simulationManager is null but simulateGrowth is true - auto-growth will not run.");
-
             if (currentDate.Day == 1)
             {
                 cityStats.PerformMonthlyUpdates();
@@ -123,10 +120,7 @@ public class TimeManager : MonoBehaviour
     public void SetTimeSpeedIndex(int index)
     {
         if (index < 0 || index >= timeSpeeds.Length)
-        {
-            Debug.LogWarning($"Invalid speed index: {index}");
             return;
-        }
 
         currentTimeSpeedIndex = index;
         timeMultiplier = timeSpeeds[currentTimeSpeedIndex];

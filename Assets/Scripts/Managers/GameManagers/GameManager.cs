@@ -26,7 +26,6 @@ public class GameManager : MonoBehaviour
 
     public void LoadGame(string saveFilePath)
     {
-        Debug.Log("LoadGame saveFilePath: " + saveFilePath);
         saveManager.LoadGame(saveFilePath);
     }
 

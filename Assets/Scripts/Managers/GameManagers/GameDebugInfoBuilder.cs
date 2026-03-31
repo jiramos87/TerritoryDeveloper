@@ -147,7 +147,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
         if (sx < 0 || sy < 0)
             return "";
 
-        var sb = new StringBuilder("selectedPoint: ");
+        var sb = new StringBuilder("Last click: ");
         sb.Append(GetCoordinatesLine(selectedPoint));
 
         if (gridManager == null)
@@ -250,7 +250,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
 
     /// <summary>
     /// Returns the full debug text for the current cursor position: coordinates, cell under cursor,
-    /// selectedPoint (last clicked grid cell: coords, h, prefab names), and (if a building is selected) building placement info.
+    /// last-click grid cell (coords, h, prefab names), and (if a building is selected) building placement info.
     /// Use this for the main debug panel.
     /// </summary>
     /// <param name="gridPosition">Current cursor grid position.</param>
@@ -261,7 +261,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
 
         var parts = new List<string>
         {
-            GetCoordinatesLine(gridPosition),
+            "Cursor: " + GetCoordinatesLine(gridPosition),
             GetCellUnderCursorInfo(gridPosition)
         };
 

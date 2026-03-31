@@ -20,7 +20,9 @@ namespace Territory.Core
 /// chunk-based culling, road caching, and A* pathfinding. Most managers depend on GridManager
 /// for cell access via GetCell(x,y) and coordinate utilities.
 /// Mouse-to-cell uses <see cref="RefineGridPositionForTerrainHeight"/> plus screen-space disambiguation in <see cref="GetCellFromWorldPoint"/>.
+/// Uses script execution order -100 so <see cref="Update"/> runs before default-ordered UI and <see cref="mouseGridPosition"/> matches tools in the same frame.
 /// </summary>
+[DefaultExecutionOrder(-100)]
 public class GridManager : MonoBehaviour, IGridManager
 {
     #region Dependencies
@@ -287,7 +289,7 @@ public class GridManager : MonoBehaviour, IGridManager
             }
 
             if (cachedCamera == null) cachedCamera = Camera.main;
-            Vector2 worldPoint = cachedCamera.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 worldPoint = ScreenPointToWorldOnGridPlane(cachedCamera, Input.mousePosition);
 
             // USE: Height-aware grid position calculation
             // mouseGridPosition = GetGridPosition(worldPoint);
@@ -1024,6 +1026,33 @@ public class GridManager : MonoBehaviour, IGridManager
 
     #region Coordinate Conversion
     /// <summary>
+    /// Maps a screen position to world X/Y on the Z=0 plane where cell roots are placed in grid creation.
+    /// <c>Camera.ScreenToWorldPoint(Input.mousePosition)</c> leaves mouse z at 0, which Unity treats as the wrong depth and skews X/Y for orthographic picking.
+    /// </summary>
+    public static Vector2 ScreenPointToWorldOnGridPlane(Camera cam, Vector3 screenPosition)
+    {
+        if (cam == null)
+            return Vector2.zero;
+
+        Ray ray = cam.ScreenPointToRay(screenPosition);
+        const float planeZ = 0f;
+        float dz = ray.direction.z;
+        if (Mathf.Abs(dz) > 1e-5f)
+        {
+            float t = (planeZ - ray.origin.z) / dz;
+            if (t > -1e-3f)
+            {
+                Vector3 hit = ray.origin + ray.direction * t;
+                return new Vector2(hit.x, hit.y);
+            }
+        }
+
+        float depth = Mathf.Abs(cam.transform.position.z - planeZ);
+        Vector3 p = cam.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, depth));
+        return new Vector2(p.x, p.y);
+    }
+
+    /// <summary>
     /// Converts a world-space point to isometric grid coordinates (ignoring height).
     /// </summary>
     /// <param name="worldPoint">Position in world space.</param>
@@ -1049,8 +1078,29 @@ public class GridManager : MonoBehaviour, IGridManager
     }
 
     /// <summary>
+    /// Maximum instance height in a 3×3 Moore neighborhood. Stabilizes <see cref="RefineGridPositionForTerrainHeight"/> at cliff/water edges
+    /// where a single-cell height sample would alternate between high land and low shore.
+    /// </summary>
+    int GetMaxTerrainHeightInNeighborhood3x3(int centerX, int centerY)
+    {
+        int maxH = 1;
+        int[] mx = { 0, 1, -1, 0, 0, 1, 1, -1, -1 };
+        int[] my = { 0, 0, 0, 1, -1, 1, -1, 1, -1 };
+        for (int i = 0; i < 9; i++)
+        {
+            int x = centerX + mx[i];
+            int y = centerY + my[i];
+            if (x < 0 || x >= width || y < 0 || y >= height)
+                continue;
+            maxH = Mathf.Max(maxH, GetTerrainHeightForGridCell(x, y));
+        }
+        return maxH;
+    }
+
+    /// <summary>
     /// Refines <see cref="GetGridPosition"/> by stripping the vertical offset used in <see cref="GetWorldPositionVector"/>
     /// for the current terrain height estimate, then iterating until stable. Fixes diagonal bias when cells are elevated.
+    /// Uses the max height in a 3×3 neighborhood around the current estimate so iteration does not bounce between mismatched shore/land heights.
     /// </summary>
     private Vector2 RefineGridPositionForTerrainHeight(Vector2 worldPoint)
     {
@@ -1063,7 +1113,7 @@ public class GridManager : MonoBehaviour, IGridManager
         {
             int gx = Mathf.Clamp(Mathf.RoundToInt(grid.x), 0, width - 1);
             int gy = Mathf.Clamp(Mathf.RoundToInt(grid.y), 0, height - 1);
-            int h = GetTerrainHeightForGridCell(gx, gy);
+            int h = GetMaxTerrainHeightInNeighborhood3x3(gx, gy);
             float heightOffset = (h - 1) * (tileHeight / 2f);
             Vector2 planePoint = new Vector2(worldPoint.x, worldPoint.y - heightOffset);
             Vector2 next = GetGridPosition(planePoint);
@@ -1146,6 +1196,9 @@ public class GridManager : MonoBehaviour, IGridManager
 
     /// <summary>
     /// Resolves a world-space point to the best-matching cell using screen-space hit testing against neighboring cells.
+    /// When several cells' inset rects contain the mouse (isometric overlap), picks the hit whose projected world center is closest to the mouse
+    /// (same rule as <see cref="PickCellHitClosestOnScreen"/>). The neighborhood center uses <see cref="Mathf.RoundToInt"/> on <paramref name="gridPos"/> (not truncation) to match refinement.
+    /// If the rounded refined-center cell is also a hit and its screen distance ties the winner within a tiny epsilon, that cell wins (numeric tie-break only).
     /// </summary>
     /// <param name="worldPoint">Position in world space.</param>
     /// <param name="gridPos">Initial grid position estimate (from GetGridPosition).</param>
@@ -1156,8 +1209,8 @@ public class GridManager : MonoBehaviour, IGridManager
         Camera cam = cachedCamera;
         if (cam == null) return null;
 
-        int gridX = (int)gridPos.x;
-        int gridY = (int)gridPos.y;
+        int gridX = Mathf.Clamp(Mathf.RoundToInt(gridPos.x), 0, Mathf.Max(0, width - 1));
+        int gridY = Mathf.Clamp(Mathf.RoundToInt(gridPos.y), 0, Mathf.Max(0, height - 1));
 
         // 9 candidate cells: center + 8 neighbors (3x3)
         List<Cell> candidates = new List<Cell>();
@@ -1179,16 +1232,53 @@ public class GridManager : MonoBehaviour, IGridManager
                 rectHits.Add(cell);
         }
 
+        Cell chosen = null;
         if (rectHits.Count == 1)
-            return rectHits[0];
+        {
+            chosen = rectHits[0];
+        }
+        else if (rectHits.Count > 1)
+        {
+            chosen = PickCellHitClosestOnScreen(mouseScreen, rectHits, cam);
+            Cell refineHit = null;
+            for (int i = 0; i < rectHits.Count; i++)
+            {
+                Cell c = rectHits[i];
+                if (c != null && c.x == gridX && c.y == gridY)
+                {
+                    refineHit = c;
+                    break;
+                }
+            }
+            if (refineHit != null && chosen != null && refineHit != chosen)
+            {
+                float dPick = GetCellScreenDistanceSqToMouse(chosen, mouseScreen, cam);
+                float dRef = GetCellScreenDistanceSqToMouse(refineHit, mouseScreen, cam);
+                const float tieEpsSq = 0.04f;
+                if (Mathf.Abs(dPick - dRef) <= tieEpsSq)
+                    chosen = refineHit;
+            }
+        }
+        else if (candidates.Count > 0)
+        {
+            chosen = GetClosestCellByScreenDistance(mouseScreen, candidates, cam);
+        }
 
-        if (rectHits.Count > 1)
-            return PickCellHitClosestOnScreen(mouseScreen, rectHits, cam);
+        return chosen;
+    }
 
-        if (candidates.Count > 0)
-            return GetClosestCellByScreenDistance(mouseScreen, candidates, cam);
-
-        return null;
+    /// <summary>
+    /// Squared screen-space distance from <paramref name="mouseScreen"/> to the cell's world center projected through <paramref name="cam"/>.
+    /// </summary>
+    float GetCellScreenDistanceSqToMouse(Cell cell, Vector2 mouseScreen, Camera cam)
+    {
+        if (cell == null || cam == null)
+            return float.MaxValue;
+        Vector2 worldCenter = GetCellWorldPosition(cell);
+        Vector3 sc = cam.WorldToScreenPoint(new Vector3(worldCenter.x, worldCenter.y, cell.transform.position.z));
+        float dx = mouseScreen.x - sc.x;
+        float dy = mouseScreen.y - sc.y;
+        return dx * dx + dy * dy;
     }
 
     /// <summary>
@@ -1211,11 +1301,7 @@ public class GridManager : MonoBehaviour, IGridManager
             if (cell == null)
                 continue;
 
-            Vector2 worldCenter = GetCellWorldPosition(cell);
-            Vector3 sc = cam.WorldToScreenPoint(new Vector3(worldCenter.x, worldCenter.y, cell.transform.position.z));
-            float dx = mouseScreen.x - sc.x;
-            float dy = mouseScreen.y - sc.y;
-            float distSq = dx * dx + dy * dy;
+            float distSq = GetCellScreenDistanceSqToMouse(cell, mouseScreen, cam);
 
             bool better = best == null;
             if (!better && distSq < bestDistSq - 0.001f)
@@ -1486,10 +1572,6 @@ public class GridManager : MonoBehaviour, IGridManager
     #endregion
 
     #region Save and Restore
-    /// <summary>Enable in Inspector or set to true to log RestoreGridCellVisuals details (roads, buildings, prefab misses).</summary>
-    [Header("Load Debug")]
-    [SerializeField] private bool restoreGridDebugLogs = false;
-
     /// <summary>
     /// Sets sorting order on a grass tile using grid coordinates directly, avoiding GetGridPosition
     /// which cannot account for height offset and would parent the tile to the wrong cell at h > 1.
@@ -1589,7 +1671,6 @@ public class GridManager : MonoBehaviour, IGridManager
         if (cellArray == null || sortingService == null || gridArray == null) return 0;
 
         int touched = 0;
-        var firstDeltas = new List<string>(5);
 
         for (int x = 0; x < width; x++)
         {
@@ -1609,17 +1690,8 @@ public class GridManager : MonoBehaviour, IGridManager
                 sortingService.SetZoneBuildingSortingOrder(buildingGo, x, y, buildingSize);
                 touched++;
                 if (cell.sortingOrder != orderBefore)
-                {
                     sortOrderChangeCount++;
-                    if (firstDeltas.Count < 5 && restoreGridDebugLogs)
-                        firstDeltas.Add($"({x},{y}) pivotOrder {orderBefore} -> {cell.sortingOrder} size={buildingSize}");
-                }
             }
-        }
-
-        if (restoreGridDebugLogs && firstDeltas.Count > 0)
-        {
-            Debug.Log($"[RestoreGrid] Building sort post-pass deltas (sample): {string.Join("; ", firstDeltas)}");
         }
 
         return touched;
@@ -1640,10 +1712,7 @@ public class GridManager : MonoBehaviour, IGridManager
 
             GameObject waterPrefab = waterManager.FindWaterPrefabByName(cellData.prefabName);
             if (waterPrefab == null)
-            {
-                Debug.LogWarning($"[RestoreGrid] Water prefab NOT FOUND for ({cellData.x},{cellData.y}) prefabName=\"{cellData.prefabName}\"");
                 return;
-            }
 
             int surfaceHeight = waterManager.GetWaterSurfaceHeight(cellData.x, cellData.y);
             if (surfaceHeight < 0)
@@ -1664,8 +1733,6 @@ public class GridManager : MonoBehaviour, IGridManager
                 : cellData.sortingOrder;
             ApplySavedSpriteSorting(waterTile, waterSort);
             cellComponent.SetCellInstanceSortingOrder(waterSort);
-            if (restoreGridDebugLogs)
-                Debug.Log($"[RestoreGrid] Water ({cellData.x},{cellData.y}) from save");
             return;
         }
 
@@ -1705,7 +1772,6 @@ public class GridManager : MonoBehaviour, IGridManager
                 }
                 else
                 {
-                    Debug.LogWarning($"[RestoreGrid] Slope prefab NOT FOUND for ({cellData.x},{cellData.y}) prefabName=\"{cellData.prefabName}\" - using grass fallback");
                     GameObject fallbackGrass = zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass, 1)
                         ?? (zoneManager.grassPrefabs != null && zoneManager.grassPrefabs.Count > 0 ? zoneManager.grassPrefabs[0] : null);
                     if (fallbackGrass != null)
@@ -1764,11 +1830,6 @@ public class GridManager : MonoBehaviour, IGridManager
                     zoneComponent.zoneType = Zone.ZoneType.Grass;
                 }
             }
-            else
-            {
-                Debug.LogWarning($"[RestoreGrid] Grass prefab NOT FOUND for ({cellData.x},{cellData.y}) height={cellData.height} prefabName=\"{cellData.prefabName}\" - keeping CreateGrid base tile");
-            }
-
             if (forestManager != null)
             {
                 Forest.ForestType parsedForestType = Forest.ForestType.None;
@@ -1792,11 +1853,6 @@ public class GridManager : MonoBehaviour, IGridManager
                 tilePrefab = roadPrefabs[0];
         }
 
-        if (tilePrefab == null)
-        {
-            Debug.LogWarning($"[RestoreGrid] Prefab NOT FOUND for ({cellData.x},{cellData.y}) zoneType={cellData.zoneType} prefabName=\"{cellData.prefabName}\"");
-        }
-
         if (tilePrefab != null)
         {
             bool isMultiCellUtilityBuilding = cellData.buildingSize > 1 && cellData.isPivot
@@ -1804,14 +1860,10 @@ public class GridManager : MonoBehaviour, IGridManager
 
             if (isMultiCellUtilityBuilding)
             {
-                if (restoreGridDebugLogs)
-                    Debug.Log($"[RestoreGrid] Building ({cellData.x},{cellData.y}) prefab={cellData.prefabName} size={cellData.buildingSize}");
                 placementService.RestoreBuildingTile(tilePrefab, new Vector2(cellData.x, cellData.y), cellData.buildingSize);
             }
             else if (zoneType == Zone.ZoneType.Road && roadManager != null)
             {
-                if (restoreGridDebugLogs)
-                    Debug.Log($"[RestoreGrid] Road ({cellData.x},{cellData.y}) prefab={cellData.prefabName} interstate={cellData.isInterstate} height={cellData.height}");
                 roadManager.RestoreRoadTile(new Vector2Int(cellData.x, cellData.y), tilePrefab, cellData.isInterstate, cellData.sortingOrder);
             }
             else if (ZoneManager.IsZoningType(zoneType))
@@ -1867,16 +1919,6 @@ public class GridManager : MonoBehaviour, IGridManager
 
         List<CellData> sortedForVisuals = SortCellDataForVisualRestore(gridData);
 
-        int roadsInSave = 0;
-        int buildingsInSave = 0;
-        foreach (CellData cellData in gridData)
-        {
-            if (cellData.x < 0 || cellData.x >= width || cellData.y < 0 || cellData.y >= height)
-                continue;
-            if (cellData.zoneType == "Road") roadsInSave++;
-            if (cellData.buildingSize > 1 && cellData.isPivot && (cellData.buildingType == "PowerPlant" || cellData.buildingType == "WaterPlant")) buildingsInSave++;
-        }
-
         foreach (CellData cellData in sortedForVisuals)
         {
             if (cellData.x < 0 || cellData.x >= width || cellData.y < 0 || cellData.y >= height)
@@ -1886,8 +1928,7 @@ public class GridManager : MonoBehaviour, IGridManager
             RestoreGridCellVisuals(cellData, cell);
         }
 
-        int postPassPivotOrderChanges = 0;
-        int buildingsSortRecalculated = RecalculateBuildingSortingAfterLoad(out postPassPivotOrderChanges);
+        RecalculateBuildingSortingAfterLoad(out _);
 
         if (forestManager != null)
             forestManager.RefreshForestStatistics();
@@ -1900,20 +1941,12 @@ public class GridManager : MonoBehaviour, IGridManager
         RunPostLoadDiagnosticAndSafetyNet();
 
         skipChunkCullingFramesRemaining = 3;
-
-        if (restoreGridDebugLogs)
-        {
-            Debug.Log($"[RestoreGrid] Complete. roadsInSave={roadsInSave} multiCellUtilityBuildingsInSave={buildingsInSave} " +
-                      $"buildingSortPostPassTouched={buildingsSortRecalculated} pivotOrderChanges={postPassPivotOrderChanges}. Check for prefab NOT FOUND warnings above.");
-        }
     }
 
     void RunPostLoadDiagnosticAndSafetyNet()
     {
         if (cellArray == null || zoneManager == null) return;
 
-        int emptyCount = 0;
-        var firstEmpty = new System.Collections.Generic.List<string>(10);
         GameObject fallbackGrass = zoneManager.GetRandomZonePrefab(Zone.ZoneType.Grass, 1)
             ?? (zoneManager.grassPrefabs != null && zoneManager.grassPrefabs.Count > 0 ? zoneManager.grassPrefabs[0] : null);
 
@@ -1926,10 +1959,6 @@ public class GridManager : MonoBehaviour, IGridManager
 
                 if (cellComponent.zoneType == Zone.ZoneType.Grass && gridArray[x, y].transform.childCount == 0)
                 {
-                    emptyCount++;
-                    if (firstEmpty.Count < 10)
-                        firstEmpty.Add($"({x},{y}) h={cellComponent.height} prefab=\"{cellComponent.prefabName}\"");
-
                     if (fallbackGrass != null)
                     {
                         GameObject zoneTile = Instantiate(fallbackGrass, cellComponent.transformPosition, Quaternion.identity);
@@ -1942,10 +1971,6 @@ public class GridManager : MonoBehaviour, IGridManager
             }
         }
 
-        if (emptyCount > 0)
-        {
-            Debug.LogWarning($"[RestoreGrid] Found {emptyCount} empty Grass cells. First 10: {string.Join(", ", firstEmpty)}. Safety net placed grass where possible.");
-        }
     }
 
     /// <summary>

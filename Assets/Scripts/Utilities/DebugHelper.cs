@@ -1,23 +1,16 @@
 using System.Diagnostics;
-using Debug = UnityEngine.Debug;
 
 namespace Territory.Utilities
 {
 /// <summary>
-/// Static utility class providing debug logging helpers with formatted output.
+/// Debug logging helpers (no-op in all builds — use Unity Console filters or temporary logs when needed).
 /// </summary>
 public static class DebugHelper
 {
     [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
-    public static void Log(string message)
-    {
-        Debug.Log(message);
-    }
+    public static void Log(string message) { }
 
     [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
-    public static void LogWarning(string message)
-    {
-        Debug.LogWarning(message);
-    }
+    public static void LogWarning(string message) { }
 }
 }

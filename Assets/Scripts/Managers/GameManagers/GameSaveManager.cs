@@ -95,9 +95,8 @@ public class GameSaveManager : MonoBehaviour
                 : (!string.IsNullOrEmpty(data.cityName) ? data.cityName : Path.GetFileNameWithoutExtension(filePath));
             return (displayName ?? Path.GetFileNameWithoutExtension(filePath), sortDate);
         }
-        catch (System.Exception ex)
+        catch (System.Exception)
         {
-            Debug.LogWarning($"Failed to read save metadata from {filePath}: {ex.Message}");
             return (Path.GetFileNameWithoutExtension(filePath), File.GetLastWriteTimeUtc(filePath));
         }
     }
@@ -181,10 +180,7 @@ public class GameSaveManager : MonoBehaviour
                 miniMapController.SetActiveLayers(layers);
             }
         }
-        else
-        {
-            Debug.LogWarning("Save file not found!");
-        }
+        else { }
     }
 
     /// <summary>Migrates old saves that stored totalGrowthBudget (amount) to growthBudgetPercent.</summary>

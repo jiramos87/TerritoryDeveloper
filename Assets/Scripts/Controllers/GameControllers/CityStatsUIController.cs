@@ -26,11 +26,6 @@ public class CityStatsUIController : MonoBehaviour
         if (economyManager == null)
             economyManager = FindObjectOfType<EconomyManager>();
 
-        if (cityStats == null)
-            Debug.LogWarning("CityStats not found! Please assign manually or ensure CityStats exists in scene.");
-        if (economyManager == null)
-            Debug.LogWarning("EconomyManager not found! Please assign manually or ensure EconomyManager exists in scene.");
-        Debug.Log("CityStatsUIController Awake complete");
     }
 
     // UI Element references
@@ -45,7 +40,6 @@ public class CityStatsUIController : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("CityStatsUIController started");
         InitializeUI();
         SetupEventHandlers();
     }
@@ -83,10 +77,8 @@ public class CityStatsUIController : MonoBehaviour
 
         // Create toggle button
         toggleStatsButton = new Button(ToggleStatsVisibility);
-        Debug.Log("toggleStatsButton created");
         toggleStatsButton.text = "Hide Stats";
         SetupToggleButtonStyle(toggleStatsButton);
-        Debug.Log("toggleStatsButton styled");
         // Build hierarchy
         statsContainer.Add(titleLabel);
         statsContainer.Add(populationLabel);
@@ -214,9 +206,8 @@ public class CityStatsUIController : MonoBehaviour
             unemploymentLabel.text = $"Unemployment: {unemploymentRate:F1}%";
             unemploymentLabel.style.color = GetUnemploymentColor(unemploymentRate);
         }
-        catch (System.Exception e)
+        catch (System.Exception)
         {
-            Debug.LogWarning($"Error updating UI stats: {e.Message}");
         }
     }
 

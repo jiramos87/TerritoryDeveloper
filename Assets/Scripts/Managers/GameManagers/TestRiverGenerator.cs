@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Text;
 using Territory.Core;
 using UnityEngine;
 
@@ -41,10 +40,7 @@ namespace Territory.Terrain
             int gw = gridManager.width;
             int gh = gridManager.height;
             if (gw < 21 || gh < 4)
-            {
-                Debug.LogWarning("TestRiverGenerator: Map too small (need width ≥ 21 for column margin, height ≥ 4 for four segments). Skipped.");
                 return;
-            }
 
             int[] widthsRaw = NormalizeWidths(segmentBedWidths);
             var widthsClamped = new int[4];
@@ -124,9 +120,6 @@ namespace Territory.Terrain
                 GetFootprintBounds(corridorFootprint, gw, gh, out int bx0, out int by0, out int bx1, out int by1);
                 terrainManager.ApplyHeightMapToRegion(bx0, by0, bx1, by1);
             }
-
-            LogTestRiverSummary(
-                gw, gh, riverX, yWest, yEast, segStart, segEnd, widthsRaw, widthsClamped, bodyIdsPerSegment, corridorFootprint.Count);
         }
 
         private static int[] NormalizeWidths(IReadOnlyList<int> segmentBedWidths)
@@ -379,34 +372,5 @@ namespace Territory.Terrain
             maxY = Mathf.Min(gh - 1, maxY + 2);
         }
 
-        private static void LogTestRiverSummary(
-            int gw,
-            int gh,
-            int riverX,
-            int yWest,
-            int yEast,
-            int[] segStartT,
-            int[] segEndT,
-            int[] widthsRaw,
-            int[] widthsClamped,
-            int[] bodyIdsPerSegment,
-            int corridorCells)
-        {
-            var sb = new StringBuilder(640);
-            sb.AppendLine("[TestRiverGenerator] Straight grid West→East test river (canonical: +y = West, flow decreases y toward East).");
-            sb.AppendLine($"  Map: {gw}×{gh}, centerline column x={riverX} (width center, clamped to [10, width-10]), y spans {yWest} (west) → {yEast} (east), full height.");
-            for (int i = 0; i < 4; i++)
-            {
-                int s = 4 - i;
-                int bed = SegmentTargetBedHeights[i];
-                int ySegHi = yWest - segStartT[i];
-                int ySegLo = yWest - segEndT[i];
-                sb.AppendLine(
-                    $"  Segment {i + 1}: travel t [{segStartT[i]}, {segEndT[i]}], grid y [{ySegLo}, {ySegHi}] (west→east), S={s}, bed={bed}, bed width inspector={widthsRaw[i]}, clamped={widthsClamped[i]} (max {MaxBedWidth}), river body id={bodyIdsPerSegment[i]}");
-            }
-
-            sb.AppendLine($"  Corridor footprint cells (bed + shores): {corridorCells}");
-            Debug.Log(sb.ToString());
-        }
     }
 }

@@ -134,8 +134,20 @@ namespace Territory.Core
             {
                 int hFrom = heightMap.GetHeight(fromX, fromY);
                 int hTo = heightMap.GetHeight(toX, toY);
-                if (Mathf.Abs(hTo - hFrom) > 1) return int.MaxValue;
-                heightDiff = Mathf.Abs(hTo - hFrom);
+                int absDh = Mathf.Abs(hTo - hFrom);
+                if (absDh > 1)
+                {
+                    var tm = grid.terrainManager;
+                    bool coastalFrom = tm.IsRegisteredOpenWaterAt(fromX, fromY) || tm.IsWaterSlopeCell(fromX, fromY)
+                        || tm.IsDryShoreOrRimMembershipEligible(fromX, fromY);
+                    bool coastalTo = tm.IsRegisteredOpenWaterAt(toX, toY) || tm.IsWaterSlopeCell(toX, toY)
+                        || tm.IsDryShoreOrRimMembershipEligible(toX, toY);
+                    if (!coastalFrom && !coastalTo)
+                        return int.MaxValue;
+                    heightDiff = 1;
+                }
+                else
+                    heightDiff = absDh;
             }
 
             TerrainSlopeType t = grid.terrainManager.GetTerrainSlopeTypeAt(toX, toY);

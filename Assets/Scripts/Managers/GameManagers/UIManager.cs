@@ -29,6 +29,7 @@ public enum PopupType
 /// Manages the main game UI including popups (load game, details, building selector, stats, taxes),
 /// toolbar state, selected zone/tool tracking, and demand bar visualization. Coordinates with
 /// ZoneManager for zone selection, CursorManager for cursor state, and EconomyManager for tax display.
+/// Grid coordinate debug text is refreshed in <see cref="LateUpdate"/> so it matches <see cref="GridManager.mouseGridPosition"/> after grid input runs.
 /// </summary>
 public class UIManager : MonoBehaviour
 {
@@ -225,6 +226,13 @@ public class UIManager : MonoBehaviour
             }
         }
     }
+
+    void LateUpdate()
+    {
+        if (cityStats == null)
+            return;
+        UpdateGridCoordinatesDebugText();
+    }
     #endregion
 
     #region Popup Management
@@ -301,38 +309,6 @@ public class UIManager : MonoBehaviour
         commercialTaxText.text = "Commercial Tax: " + economyManager.GetCommercialTax() + "%";
         industrialTaxText.text = "Industrial Tax: " + economyManager.GetIndustrialTax() + "%";
 
-        if (gridCoordinatesText != null)
-        {
-            if (gameDebugInfoBuilder == null)
-                gameDebugInfoBuilder = FindObjectOfType<GameDebugInfoBuilder>();
-            if (gameDebugInfoBuilder != null && useFullDebugText && gridManager != null)
-                gridCoordinatesText.text = gameDebugInfoBuilder.GetFullDebugText(gridManager.mouseGridPosition, gridManager.selectedPoint);
-            else if (gridManager != null)
-            {
-                int x = (int)gridManager.mouseGridPosition.x;
-                int y = (int)gridManager.mouseGridPosition.y;
-                int cx = gridManager.chunkSize > 0 ? x / gridManager.chunkSize : 0;
-                int cy = gridManager.chunkSize > 0 ? y / gridManager.chunkSize : 0;
-                string line = "x: " + x + ", y: " + y + ", chunk: (" + cx + "," + cy + ")";
-                if (waterManager == null)
-                    waterManager = FindObjectOfType<WaterManager>();
-                if (waterManager != null && x >= 0 && x < gridManager.width && y >= 0 && y < gridManager.height)
-                {
-                    int s = waterManager.GetWaterSurfaceHeight(x, y);
-                    line += s >= 0 ? ", S: " + s : ", S: n/a";
-                    WaterMap wm = waterManager.GetWaterMap();
-                    if (wm != null)
-                    {
-                        if (s >= 0)
-                            line += ", body: " + wm.GetBodyClassificationAt(x, y) + " id=" + wm.GetWaterBodyId(x, y);
-                        else
-                            line += ", body: n/a";
-                    }
-                }
-                gridCoordinatesText.text = line;
-            }
-        }
-
         EmploymentManager employment = FindObjectOfType<EmploymentManager>();
         DemandManager demand = FindObjectOfType<DemandManager>();
         StatisticsManager stats = FindObjectOfType<StatisticsManager>();
@@ -365,6 +341,45 @@ public class UIManager : MonoBehaviour
 
         // Update construction cost display near cursor
         UpdateConstructionCostDisplay();
+    }
+
+    /// <summary>
+    /// Writes <see cref="gridCoordinatesText"/> from <see cref="GridManager.mouseGridPosition"/>; called from <see cref="LateUpdate"/> so it stays in sync with grid picking after <see cref="GridManager.Update"/>.
+    /// </summary>
+    void UpdateGridCoordinatesDebugText()
+    {
+        if (gridCoordinatesText == null)
+            return;
+        if (gameDebugInfoBuilder == null)
+            gameDebugInfoBuilder = FindObjectOfType<GameDebugInfoBuilder>();
+        if (gameDebugInfoBuilder != null && useFullDebugText && gridManager != null)
+        {
+            gridCoordinatesText.text = gameDebugInfoBuilder.GetFullDebugText(gridManager.mouseGridPosition, gridManager.selectedPoint);
+            return;
+        }
+        if (gridManager == null)
+            return;
+        int x = (int)gridManager.mouseGridPosition.x;
+        int y = (int)gridManager.mouseGridPosition.y;
+        int cx = gridManager.chunkSize > 0 ? x / gridManager.chunkSize : 0;
+        int cy = gridManager.chunkSize > 0 ? y / gridManager.chunkSize : 0;
+        string line = "x: " + x + ", y: " + y + ", chunk: (" + cx + "," + cy + ")";
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        if (waterManager != null && x >= 0 && x < gridManager.width && y >= 0 && y < gridManager.height)
+        {
+            int s = waterManager.GetWaterSurfaceHeight(x, y);
+            line += s >= 0 ? ", S: " + s : ", S: n/a";
+            WaterMap wm = waterManager.GetWaterMap();
+            if (wm != null)
+            {
+                if (s >= 0)
+                    line += ", body: " + wm.GetBodyClassificationAt(x, y) + " id=" + wm.GetWaterBodyId(x, y);
+                else
+                    line += ", body: n/a";
+            }
+        }
+        gridCoordinatesText.text = line;
     }
 
     private void UpdateConstructionCostDisplay()
