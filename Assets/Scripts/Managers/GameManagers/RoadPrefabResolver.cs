@@ -498,59 +498,20 @@ public class RoadPrefabResolver
     bool TryGetHighCliffLipBridgePrefab(PathTerraformPlan plan, int cx, int cy, int height, HeightMap heightMap, Vector2 dirIn, out GameObject prefab)
     {
         prefab = null;
-        bool logDeckLip = TerraformingService.EnableWaterBridgeDeckLipDebugLogs && cx == 61 && cy == 119;
-        if (logDeckLip)
-        {
-            Debug.Log(
-                $"[RoadBuildDebug.DeckLipResolver 61,119] TryGetHighCliffLipBridgePrefab enter: " +
-                $"planNull={plan == null} relax={plan != null && plan.waterBridgeTerraformRelaxation} " +
-                $"deckDisplayH={plan?.waterBridgeDeckDisplayHeight ?? 0} cellInstanceH={height} dirIn={dirIn}");
-        }
-
         if (plan == null || !plan.waterBridgeTerraformRelaxation || plan.waterBridgeDeckDisplayHeight <= 0)
-        {
-            if (logDeckLip)
-                Debug.Log("[RoadBuildDebug.DeckLipResolver 61,119] reject: plan/deck gate (null, !relax, or deck<=0).");
             return false;
-        }
         if (height != plan.waterBridgeDeckDisplayHeight || heightMap == null || terrainManager == null)
-        {
-            if (logDeckLip)
-                Debug.Log($"[RoadBuildDebug.DeckLipResolver 61,119] reject: height!=deck ({height}!={plan.waterBridgeDeckDisplayHeight}) or null map/terrain.");
             return false;
-        }
         if (terrainManager.IsRegisteredOpenWaterAt(cx, cy) || terrainManager.IsWaterSlopeCell(cx, cy))
-        {
-            if (logDeckLip)
-                Debug.Log("[RoadBuildDebug.DeckLipResolver 61,119] reject: current cell is open water or water-slope.");
             return false;
-        }
         if (!DryLandCardinalLowerTouchesRegisteredWater(cx, cy, height, heightMap))
-        {
-            if (logDeckLip)
-                Debug.Log("[RoadBuildDebug.DeckLipResolver 61,119] reject: DryLandCardinalLowerTouchesRegisteredWater false.");
             return false;
-        }
 
         CollectHighDeckBridgeNormals(cx, cy, height, heightMap, scratchHighDeckBridgeNormals);
         if (scratchHighDeckBridgeNormals.Count == 0)
-        {
-            if (logDeckLip)
-                Debug.Log("[RoadBuildDebug.DeckLipResolver 61,119] reject: CollectHighDeckBridgeNormals empty.");
             return false;
-        }
         if (!CardinalApproachParallelToHighDeckNormal(dirIn, scratchHighDeckBridgeNormals))
-        {
-            if (logDeckLip)
-            {
-                var nb = new System.Text.StringBuilder();
-                for (int i = 0; i < scratchHighDeckBridgeNormals.Count; i++)
-                    nb.Append(scratchHighDeckBridgeNormals[i]).Append(' ');
-                Debug.Log(
-                    $"[RoadBuildDebug.DeckLipResolver 61,119] reject: approach not parallel to bridge normals dirIn={dirIn} normals={nb}");
-            }
             return false;
-        }
 
         bool isHorizontal;
         if (Mathf.Approximately(dirIn.x, 0f) && Mathf.Approximately(dirIn.y, 0f))
