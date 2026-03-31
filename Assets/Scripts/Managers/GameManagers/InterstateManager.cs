@@ -371,7 +371,7 @@ public class InterstateManager : MonoBehaviour
             return int.MinValue;
 
         int h0 = heightMap.GetHeight(c.x, c.y);
-        if (h0 <= TerrainManager.SEA_LEVEL)
+        if (terrainManager != null && terrainManager.IsRegisteredOpenWaterAt(c.x, c.y))
             return int.MinValue;
 
         int score = 0;
@@ -392,7 +392,7 @@ public class InterstateManager : MonoBehaviour
                 int ny = c.y + dy;
                 if (!heightMap.IsValidPosition(nx, ny)) continue;
                 int nh = heightMap.GetHeight(nx, ny);
-                if (nh <= TerrainManager.SEA_LEVEL) continue;
+                if (terrainManager != null && terrainManager.IsRegisteredOpenWaterAt(nx, ny)) continue;
                 if (nh == 1) flatAroundBorder++;
             }
         }
@@ -407,7 +407,7 @@ public class InterstateManager : MonoBehaviour
             return score;
 
         int h1 = heightMap.GetHeight(fs.x, fs.y);
-        if (h1 > TerrainManager.SEA_LEVEL)
+        if (terrainManager == null || !terrainManager.IsRegisteredOpenWaterAt(fs.x, fs.y))
         {
             int stepDiff = Mathf.Abs(h1 - h0);
             score -= stepDiff * 2_000;
@@ -424,7 +424,7 @@ public class InterstateManager : MonoBehaviour
                     int ny = fs.y + dy;
                     if (!heightMap.IsValidPosition(nx, ny)) continue;
                     int nh = heightMap.GetHeight(nx, ny);
-                    if (nh <= TerrainManager.SEA_LEVEL) continue;
+                    if (terrainManager != null && terrainManager.IsRegisteredOpenWaterAt(nx, ny)) continue;
                     if (nh == 1) flatAroundFirst++;
                 }
             }

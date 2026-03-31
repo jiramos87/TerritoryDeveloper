@@ -92,8 +92,18 @@ public class RoadPrefabResolver
                     slopeForWorld = live;
             }
 
-            Vector2 worldPos = GetWorldPositionForPrefab(x, y, prefab, height, slopeForWorld);
-            int sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, height);
+            bool isBridgeDeck = IsBridgeDeckRoadPrefab(prefab);
+            int sortHeight = height;
+            Vector2 worldPos;
+            if (isBridgeDeck && plan != null && plan.waterBridgeDeckDisplayHeight > 0)
+            {
+                sortHeight = plan.waterBridgeDeckDisplayHeight;
+                worldPos = gridManager.GetWorldPositionVector(x, y, plan.waterBridgeDeckDisplayHeight);
+            }
+            else
+                worldPos = GetWorldPositionForPrefab(x, y, prefab, height, slopeForWorld);
+
+            int sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, sortHeight);
 
             result.Add(new ResolvedRoadTile
             {
@@ -145,14 +155,28 @@ public class RoadPrefabResolver
         {
             prefab = SelectFromConnectivity(prevGridPos, currGridPos, hasLeft, hasRight, hasUp, hasDown, height);
         }
-        Vector2 worldPos = GetWorldPositionForPrefab(x, y, prefab, height, terrainManager?.GetTerrainSlopeTypeAt(x, y) ?? TerrainSlopeType.Flat);
+
+        int sortHeight = height;
+        Vector2 worldPos;
+        bool needsDeckInference = IsBridgeDeckRoadPrefab(prefab)
+            && terrainManager != null
+            && (terrainManager.IsRegisteredOpenWaterAt(x, y)
+                || terrainManager.IsWaterSlopeCell(x, y)
+                || height == 0);
+        if (needsDeckInference && TryInferWaterBridgeDeckDisplayHeight(x, y, out int deckH) && deckH > 0)
+        {
+            sortHeight = deckH;
+            worldPos = gridManager.GetWorldPositionVector(x, y, deckH);
+        }
+        else
+            worldPos = GetWorldPositionForPrefab(x, y, prefab, height, terrainManager?.GetTerrainSlopeTypeAt(x, y) ?? TerrainSlopeType.Flat);
 
         return new ResolvedRoadTile
         {
             gridPos = new Vector2Int(x, y),
             prefab = prefab ?? roadManager.roadTilePrefab1,
             worldPos = worldPos,
-            sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, height)
+            sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, sortHeight)
         };
     }
 
@@ -279,6 +303,71 @@ public class RoadPrefabResolver
         }
 
         return horizontalSeg ? roadManager.roadTilePrefab2 : roadManager.roadTilePrefab1;
+    }
+
+    /// <summary>
+    /// FEAT-44: horizontal/vertical bridge deck prefabs.
+    /// </summary>
+    bool IsBridgeDeckRoadPrefab(GameObject prefab)
+    {
+        if (prefab == null || roadManager == null) return false;
+        return prefab == roadManager.roadTileBridgeHorizontal || prefab == roadManager.roadTileBridgeVertical;
+    }
+
+    /// <summary>
+    /// FEAT-44: when <see cref="RefreshRoadPrefabAt"/> re-resolves a bridge deck via <see cref="ResolveForCell"/>, there is no
+    /// <see cref="PathTerraformPlan.waterBridgeDeckDisplayHeight"/> — infer the deck Y from adjacent dry road cells or by walking
+    /// through registered open water along the bridge axis to the next non-water road (same land height as path-based placement).
+    /// </summary>
+    bool TryInferWaterBridgeDeckDisplayHeight(int x, int y, out int deckH)
+    {
+        deckH = 0;
+        if (terrainManager == null || gridManager == null) return false;
+
+        int best = 0;
+        for (int d = 0; d < 4; d++)
+        {
+            int nx = x + DirX[d], ny = y + DirY[d];
+            if (!IsValidGrid(nx, ny) || !IsRoadAt(new Vector2(nx, ny))) continue;
+            if (terrainManager.IsRegisteredOpenWaterAt(nx, ny)) continue;
+            Cell cn = gridManager.GetCell(nx, ny);
+            if (cn != null) best = Mathf.Max(best, cn.GetCellInstanceHeight());
+        }
+        if (best > 0)
+        {
+            deckH = best;
+            return true;
+        }
+
+        for (int d = 0; d < 4; d++)
+        {
+            int cx = x + DirX[d], cy = y + DirY[d];
+            if (!IsValidGrid(cx, cy) || !IsRoadAt(new Vector2(cx, cy))) continue;
+            while (terrainManager.IsRegisteredOpenWaterAt(cx, cy))
+            {
+                int ax = cx + DirX[d], ay = cy + DirY[d];
+                if (!IsValidGrid(ax, ay) || !IsRoadAt(new Vector2(ax, ay))) break;
+                cx = ax;
+                cy = ay;
+            }
+            if (IsValidGrid(cx, cy) && IsRoadAt(new Vector2(cx, cy)) && !terrainManager.IsRegisteredOpenWaterAt(cx, cy))
+            {
+                Cell c = gridManager.GetCell(cx, cy);
+                if (c != null) best = Mathf.Max(best, c.GetCellInstanceHeight());
+            }
+        }
+
+        if (best > 0)
+        {
+            deckH = best;
+            return true;
+        }
+        return false;
+    }
+
+    bool IsValidGrid(int gx, int gy)
+    {
+        return gx >= 0 && gx < gridManager.width && gy >= 0 && gy < gridManager.height;
     }
 
     /// <summary>

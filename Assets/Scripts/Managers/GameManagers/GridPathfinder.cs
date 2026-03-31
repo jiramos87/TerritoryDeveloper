@@ -149,7 +149,7 @@ namespace Territory.Core
             if (c == null) return false;
             if (c.zoneType != Zone.ZoneType.Grass && c.zoneType != Zone.ZoneType.Road)
                 return false;
-            if (grid.terrainManager != null && !grid.terrainManager.CanPlaceRoad(x, y))
+            if (grid.terrainManager != null && !grid.terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true))
                 return false;
             return true;
         }

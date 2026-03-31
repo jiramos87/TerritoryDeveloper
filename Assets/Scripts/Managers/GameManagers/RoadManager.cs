@@ -40,17 +40,18 @@ public class RoadManager : MonoBehaviour, IRoadManager
     #region Road Drawing State
     private bool isDrawingRoad = false;
     private Vector2 startPosition;
-    private Dictionary<Vector2Int, int> previewTerraformedHeights = new Dictionary<Vector2Int, int>();
     private static readonly int[] DirX = { 1, -1, 0, 0 };
     private static readonly int[] DirY = { 0, 0, 1, -1 };
     private RoadPrefabResolver roadPrefabResolver;
-    private PathTerraformPlan currentPreviewPlan;
     private List<RoadPrefabResolver.ResolvedRoadTile> previewResolvedTiles = new List<RoadPrefabResolver.ResolvedRoadTile>();
     private HashSet<Vector2> placementPathPositions;
     /// <summary>Last grid cell under cursor during manual road drag (for mouse-up placement when release cell is invalid).</summary>
     private Vector2 currentDrawCursorGrid;
     /// <summary>Speeds longest-prefix search during drag: try extending from last valid filtered-path length first.</summary>
     private int manualRoadLongestPrefixHint;
+    /// <summary>FEAT-44 diagnostics: verbose logs only while the road cursor is on this cell.</summary>
+    const int RoadBridgeDiagCursorX = 62;
+    const int RoadBridgeDiagCursorY = 124;
     #endregion
 
     #region Road Prefabs
@@ -105,6 +106,20 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
     #endregion
 
+    bool ShouldLogRoadBridgeDiagnostics()
+    {
+        return currentDrawCursorGrid.x == RoadBridgeDiagCursorX && currentDrawCursorGrid.y == RoadBridgeDiagCursorY;
+    }
+
+    /// <summary>
+    /// True for horizontal/vertical bridge deck prefabs (do not re-resolve with <see cref="RefreshRoadPrefabAt"/> — would drop FEAT-44 deck height).
+    /// </summary>
+    bool IsBridgeDeckRoadPrefab(GameObject prefab)
+    {
+        if (prefab == null) return false;
+        return prefab == roadTileBridgeHorizontal || prefab == roadTileBridgeVertical;
+    }
+
     #region Road Drawing
     /// <summary>
     /// Handles the full road drawing input lifecycle: start on mouse down, preview line on drag, and place on mouse up.
@@ -112,7 +127,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// <param name="gridPosition">The current grid position under the cursor.</param>
     public void HandleRoadDrawing(Vector2 gridPosition)
     {
-        if (gridPosition.x == 62 && gridPosition.y == 124) 
+        if (gridPosition.x == RoadBridgeDiagCursorX && gridPosition.y == RoadBridgeDiagCursorY)
         {
             Debug.Log($"[RoadManager] Trying to handle road drawing for cell ({gridPosition.x}, {gridPosition.y})");
         }
@@ -121,13 +136,13 @@ public class RoadManager : MonoBehaviour, IRoadManager
         if (Input.GetMouseButtonUp(0) && isDrawingRoad)
         {
             isDrawingRoad = false;
-            ClearPreview(false);
+            ClearPreview();
             if (!TryFinalizeManualRoadPlacement())
             {
                 if (GameNotificationManager.Instance != null)
                     GameNotificationManager.Instance.PostWarning("Cannot place road along this path. Terrain or validation failed.");
             }
-            ClearPreview(true);
+            ClearPreview();
             if (uiManager != null)
                 uiManager.RestoreGhostPreview();
             return;
@@ -145,9 +160,12 @@ public class RoadManager : MonoBehaviour, IRoadManager
             return;
         }
 
-        if (!terrainManager.CanPlaceRoad((int)pos.x, (int)pos.y))
+        if (!terrainManager.CanPlaceRoad((int)pos.x, (int)pos.y, allowWaterSlopeForWaterBridgeTrace: true))
         {
-            GameNotificationManager.Instance.PostWarning("Cannot place road along this path.");
+            if (isDrawingRoad)
+                ClearPreview();
+            if (GameNotificationManager.Instance != null)
+                GameNotificationManager.Instance.PostWarning("Cannot place road along this path.");
             return;
         }
 
@@ -165,25 +183,25 @@ public class RoadManager : MonoBehaviour, IRoadManager
             manualRoadLongestPrefixHint = 0;
             if (uiManager != null)
                 uiManager.HideGhostPreview();
-            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+            if (ShouldLogRoadBridgeDiagnostics()) 
             {
                 Debug.Log($"[RoadManager] Trying to hide ghost preview for cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
             }
         }
         else if (isDrawingRoad && Input.GetMouseButton(0))
         {
-            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+            if (ShouldLogRoadBridgeDiagnostics()) 
             {
                 Debug.Log($"[RoadManager] Trying to clear preview for cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
             }
             currentDrawCursorGrid = pos;
-            ClearPreview(false);
-            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+            ClearPreview();
+            if (ShouldLogRoadBridgeDiagnostics()) 
             {
                 Debug.Log($"[RoadManager] Trying to get line for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
             }
-            List<Vector2> path = GetLine(startPosition, currentDrawCursorGrid);
-            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+            List<Vector2> path = GetManualRoadPathWithOptionalBridgeExtension();
+            if (ShouldLogRoadBridgeDiagnostics()) 
             {
                 Debug.Log($"[RoadManager] Trying to draw preview line for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
             }
@@ -204,21 +222,21 @@ public class RoadManager : MonoBehaviour, IRoadManager
             roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
         if (roadPrefabResolver == null) return false;
 
-        List<Vector2> path = GetLine(startPosition, currentDrawCursorGrid);
-        if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+        List<Vector2> path = GetManualRoadPathWithOptionalBridgeExtension();
+        if (ShouldLogRoadBridgeDiagnostics()) 
         {
             Debug.Log($"[RoadManager] Trying to place road at cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
         }
         if (!TryPrepareRoadPlacementPlanLongestValidPrefix(path, new RoadPathValidationContext { forbidCutThrough = false }, false, ref manualRoadLongestPrefixHint, out List<Vector2> expandedPath, out PathTerraformPlan plan, out _))
         {
-            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+            if (ShouldLogRoadBridgeDiagnostics()) 
             {
                 Debug.Log($"[RoadManager] TryPrepareRoadPlacementPlanLongestValidPrefix failed for cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
             }
             return false;
         }
 
-        if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+        if (ShouldLogRoadBridgeDiagnostics()) 
         {
             Debug.Log($"[RoadManager] TryPrepareRoadPlacementPlanLongestValidPrefix succeeded for cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
         }
@@ -247,11 +265,12 @@ public class RoadManager : MonoBehaviour, IRoadManager
         }
         RefreshAllAdjacentRoadsOutsidePath();
         placementPathPositions = null;
-        var placedPathCells = new HashSet<Vector2Int>();
         for (int i = 0; i < resolved.Count; i++)
-            placedPathCells.Add(resolved[i].gridPos);
-        foreach (Vector2Int p in placedPathCells)
-            RefreshRoadPrefabAt(new Vector2(p.x, p.y));
+        {
+            if (IsBridgeDeckRoadPrefab(resolved[i].prefab))
+                continue;
+            RefreshRoadPrefabAt(new Vector2(resolved[i].gridPos.x, resolved[i].gridPos.y));
+        }
         cityStats.AddPowerConsumption(resolved.Count * ZoneAttributes.Road.PowerConsumption);
         return true;
     }
@@ -295,28 +314,68 @@ public class RoadManager : MonoBehaviour, IRoadManager
         plan = null;
         filteredPathUsedOrNull = null;
         if (!TryBuildFilteredPathForRoadPlan(pathRaw, postUserWarnings, out List<Vector2> fullFiltered))
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log("[RoadManager] TryPrepareRoadPlacementPlanLongestValidPrefix: TryBuildFilteredPathForRoadPlan failed (see prior diag log).");
             return false;
+        }
 
         int n = fullFiltered.Count;
         var heightMap = terrainManager.GetHeightMap();
-        if (heightMap == null) return false;
+        if (heightMap == null)
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log("[RoadManager] TryPrepareRoadPlacementPlanLongestValidPrefix: heightMap is null.");
+            return false;
+        }
 
         int startK = Mathf.Min(n, longestPrefixLengthHint > 0 ? longestPrefixLengthHint + 1 : n);
         for (int k = startK; k >= 1; k--)
         {
             var prefix = SubListCopy(fullFiltered, k);
-            if (!IsBridgePathValid(prefix, heightMap)) continue;
-            if (HasTurnOnWaterOrCoast(prefix, heightMap)) continue;
-            if (HasElbowTooCloseToWater(prefix, heightMap)) continue;
-            if (!TryPrepareFromFilteredPathList(prefix, ctx, false, out expandedPath, out plan))
+            if (ShouldLogRoadBridgeDiagnostics())
+            {
+                Vector2 a = prefix[0], b = prefix[prefix.Count - 1];
+                bool wetSeg = TryGetSingleBridgeRunBounds(prefix, heightMap, out int diagRs, out int diagRe);
+                string wetDesc = wetSeg ? $"wetIndices[{diagRs},{diagRe}]" : "no_single_wet_run";
+                Debug.Log($"[RoadManager] LongestPrefix probe k={k}/{n} ({a.x},{a.y})→({b.x},{b.y}) {wetDesc} startK={startK}");
+            }
+            if (!IsBridgePathValid(prefix, heightMap))
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                    Debug.Log($"[RoadManager] LongestPrefix k={k}: rejected — IsBridgePathValid.");
+                continue;
+            }
+            if (!ValidateFeat44WaterBridgeRules(prefix, heightMap, postUserWarnings: false))
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                    Debug.Log($"[RoadManager] LongestPrefix k={k}: rejected — ValidateFeat44WaterBridgeRules (details above if logged).");
+                continue;
+            }
+            if (HasTurnOnWaterOrCoast(prefix, heightMap))
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                    Debug.Log($"[RoadManager] LongestPrefix k={k}: rejected — HasTurnOnWaterOrCoast.");
+                continue;
+            }
+            if (HasElbowTooCloseToWater(prefix, heightMap))
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                    Debug.Log($"[RoadManager] LongestPrefix k={k}: rejected — HasElbowTooCloseToWater.");
+                continue;
+            }
+            if (!TryPrepareFromFilteredPathList(prefix, ctx, false, out expandedPath, out plan, longestPrefixDiagK: k))
                 continue;
 
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log($"[RoadManager] LongestPrefix k={k}: accepted (terraform + Phase1 OK).");
             longestPrefixLengthHint = k;
             filteredPathUsedOrNull = prefix;
             return true;
         }
 
         longestPrefixLengthHint = 0;
+        LogLongestValidPrefixExhaustedDiagnosis(fullFiltered, heightMap, ctx, startK, n);
         if (postUserWarnings && GameNotificationManager.Instance != null)
             GameNotificationManager.Instance.PostWarning("Road cannot extend further along this path. Terrain would exceed allowed height change.");
         return false;
@@ -331,16 +390,67 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
+    /// Local dev: when longest-prefix search finds no valid k, explains the first failing gate on the full filtered path (cursor 62,124 only).
+    /// </summary>
+    void LogLongestValidPrefixExhaustedDiagnosis(List<Vector2> fullFiltered, HeightMap heightMap, RoadPathValidationContext ctx, int startK, int n)
+    {
+        if (ShouldLogRoadBridgeDiagnostics())
+        {
+            if (fullFiltered == null || n <= 0 || heightMap == null) return;
+            Vector2 first = fullFiltered[0], last = fullFiltered[n - 1];
+            Debug.Log(
+                $"[RoadManager] LongestValidPrefix exhausted: filteredLen={n}, tried k from {startK} down to 1. Path ({first.x},{first.y}) → ({last.x},{last.y}).");
+
+            var probe = SubListCopy(fullFiltered, n);
+            if (!IsBridgePathValid(probe, heightMap))
+            {
+                Debug.Log("[RoadManager] LongestValidPrefix diag (k=n): IsBridgePathValid failed.");
+                return;
+            }
+            if (!ValidateFeat44WaterBridgeRules(probe, heightMap, postUserWarnings: false))
+            {
+                Debug.Log("[RoadManager] LongestValidPrefix diag (k=n): ValidateFeat44WaterBridgeRules failed.");
+                return;
+            }
+            if (HasTurnOnWaterOrCoast(probe, heightMap))
+            {
+                Debug.Log("[RoadManager] LongestValidPrefix diag (k=n): HasTurnOnWaterOrCoast failed.");
+                return;
+            }
+            if (HasElbowTooCloseToWater(probe, heightMap))
+            {
+                Debug.Log("[RoadManager] LongestValidPrefix diag (k=n): HasElbowTooCloseToWater failed.");
+                return;
+            }
+            if (!TryPrepareFromFilteredPathList(probe, ctx, false, out _, out _, longestPrefixDiagK: n))
+            {
+                Debug.Log("[RoadManager] LongestValidPrefix diag (k=n): TryPrepareFromFilteredPathList failed (see ValidateTerraformPlan / Phase1 logs above).");
+                return;
+            }
+            Debug.Log("[RoadManager] LongestValidPrefix diag: full length passes all gates — failure may be from prefix ordering or stale hint (unexpected).");
+        }
+    }
+
+    /// <summary>
     /// Filters raw path, checks adjacency, straightens bridges, validates bridge rules. Shared by full plan and longest-prefix search.
     /// </summary>
     bool TryBuildFilteredPathForRoadPlan(List<Vector2> pathRaw, bool postUserWarnings, out List<Vector2> filteredPath)
     {
         filteredPath = null;
         if (pathRaw == null || pathRaw.Count == 0 || terraformingService == null || terrainManager == null || gridManager == null)
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log("[RoadManager] TryBuildFilteredPathForRoadPlan: rejected (null path, empty path, or missing terraformingService / terrainManager / gridManager).");
             return false;
+        }
 
         var heightMap = terrainManager.GetHeightMap();
-        if (heightMap == null) return false;
+        if (heightMap == null)
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log("[RoadManager] TryBuildFilteredPathForRoadPlan: heightMap is null.");
+            return false;
+        }
 
         var list = new List<Vector2>();
         for (int i = 0; i < pathRaw.Count; i++)
@@ -349,10 +459,17 @@ public class RoadManager : MonoBehaviour, IRoadManager
             if (gridManager.GetCell((int)gridPos.x, (int)gridPos.y) != null)
                 list.Add(gridPos);
         }
-        if (list.Count == 0) return false;
+        if (list.Count == 0)
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log("[RoadManager] TryBuildFilteredPathForRoadPlan: no valid cells after filtering (all missing Cell).");
+            return false;
+        }
 
         if (!IsPathFullyAdjacent(list))
         {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log("[RoadManager] TryBuildFilteredPathForRoadPlan: IsPathFullyAdjacent failed (gaps in path).");
             if (postUserWarnings && GameNotificationManager.Instance != null)
                 GameNotificationManager.Instance.PostWarning("Road path has gaps (e.g. over water). Draw a continuous path.");
             return false;
@@ -361,18 +478,30 @@ public class RoadManager : MonoBehaviour, IRoadManager
         list = StraightenBridgeSegments(list, heightMap);
         if (!IsBridgePathValid(list, heightMap))
         {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log("[RoadManager] TryBuildFilteredPathForRoadPlan: IsBridgePathValid failed (straight axis-aligned water/shore span or multiple runs).");
             if (postUserWarnings && GameNotificationManager.Instance != null)
                 GameNotificationManager.Instance.PostWarning("Cannot build a valid bridge here. Draw a straighter path over water.");
             return false;
         }
+        if (!ValidateFeat44WaterBridgeRules(list, heightMap, postUserWarnings))
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log("[RoadManager] TryBuildFilteredPathForRoadPlan: ValidateFeat44WaterBridgeRules failed (FEAT-44 deck / registered water / intersection).");
+            return false;
+        }
         if (HasTurnOnWaterOrCoast(list, heightMap))
         {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log("[RoadManager] TryBuildFilteredPathForRoadPlan: HasTurnOnWaterOrCoast failed.");
             if (postUserWarnings && GameNotificationManager.Instance != null)
                 GameNotificationManager.Instance.PostWarning("Bridges must be straight. Turns cannot be on water or coast.");
             return false;
         }
         if (HasElbowTooCloseToWater(list, heightMap))
         {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log("[RoadManager] TryBuildFilteredPathForRoadPlan: HasElbowTooCloseToWater failed.");
             if (postUserWarnings && GameNotificationManager.Instance != null)
                 GameNotificationManager.Instance.PostWarning("Turns must be at least 2 cells away from water.");
             return false;
@@ -383,9 +512,31 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
+    /// True when <paramref name="expandedPath"/> is a completed FEAT-44 water bridge (land — wet run — land); enables relaxed terraform beside cliffs / water edges.
+    /// </summary>
+    bool PathQualifiesForWaterBridgeTerraformRelaxation(List<Vector2> expandedPath)
+    {
+        if (expandedPath == null || expandedPath.Count < 3 || terrainManager == null)
+            return false;
+        HeightMap hm = terrainManager.GetHeightMap();
+        if (hm == null)
+            return false;
+        if (!TryGetSingleBridgeRunBounds(expandedPath, hm, out int rs, out int re))
+            return false;
+        if (rs < 1 || re >= expandedPath.Count - 1)
+            return false;
+        if (IsWaterOrWaterSlope((int)expandedPath[rs - 1].x, (int)expandedPath[rs - 1].y, hm))
+            return false;
+        if (IsWaterOrWaterSlope((int)expandedPath[re + 1].x, (int)expandedPath[re + 1].y, hm))
+            return false;
+        return ValidateFeat44WaterBridgeRules(expandedPath, hm, postUserWarnings: false);
+    }
+
+    /// <summary>
     /// Diagonal expansion, <see cref="TerraformingService.ComputePathPlan"/>, context validation, and <see cref="PathTerraformPlan.TryValidatePhase1Heights"/>.
     /// </summary>
-    bool TryPrepareFromFilteredPathList(List<Vector2> filteredPath, RoadPathValidationContext ctx, bool postUserWarnings, out List<Vector2> expandedPath, out PathTerraformPlan plan)
+    /// <param name="longestPrefixDiagK">When non-negative, longest-prefix probe index for Phase1 failure logs (only emitted when the road diagnostic cursor cell is active).</param>
+    bool TryPrepareFromFilteredPathList(List<Vector2> filteredPath, RoadPathValidationContext ctx, bool postUserWarnings, out List<Vector2> expandedPath, out PathTerraformPlan plan, int longestPrefixDiagK = -1)
     {
         expandedPath = null;
         plan = null;
@@ -393,14 +544,21 @@ public class RoadManager : MonoBehaviour, IRoadManager
         if (heightMap == null || filteredPath == null || filteredPath.Count == 0) return false;
 
         expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(filteredPath);
-        plan = terraformingService.ComputePathPlan(expandedPath);
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (expandedPath != null && plan != null && plan.pathCells != null && expandedPath.Count != plan.pathCells.Count)
+        bool waterBridgeRelax = PathQualifiesForWaterBridgeTerraformRelaxation(expandedPath);
+        plan = terraformingService.ComputePathPlan(expandedPath, waterBridgeRelax);
+        if (ShouldLogRoadBridgeDiagnostics()
+            && expandedPath != null && plan != null && plan.pathCells != null && expandedPath.Count != plan.pathCells.Count)
+        {
             Debug.LogWarning(
                 $"[RoadManager] Path/plan length mismatch (BUG-30 diagnostics): expandedPath={expandedPath.Count} plan.pathCells={plan.pathCells.Count}");
-#endif
+        }
         if (!ValidateTerraformPlanWithContext(plan, ctx))
         {
+            if (ShouldLogRoadBridgeDiagnostics())
+            {
+                bool cut = plan != null && plan.isValid && ctx.forbidCutThrough && plan.isCutThrough;
+                Debug.Log($"[RoadManager] TryPrepareFromFilteredPathList: ValidateTerraformPlanWithContext failed (plan valid={plan?.isValid}, cutThrough={plan?.isCutThrough}, forbidCutThrough={ctx.forbidCutThrough} → interstateCutReject={cut}).");
+            }
             if (postUserWarnings && GameNotificationManager.Instance != null)
             {
                 if (plan != null && plan.isValid && ctx.forbidCutThrough && plan.isCutThrough)
@@ -411,14 +569,47 @@ public class RoadManager : MonoBehaviour, IRoadManager
             return false;
         }
 
-        if (!plan.TryValidatePhase1Heights(heightMap, terrainManager))
+        if (!plan.TryValidatePhase1Heights(heightMap, terrainManager,
+                ShouldLogRoadBridgeDiagnostics() ? (msg => Debug.Log($"[PathTerraformPlan] {msg}")) : null))
         {
+            if (ShouldLogRoadBridgeDiagnostics())
+            {
+                bool anyTerraform = PathPlanHasNonNoneTerraformAction(plan);
+                string kTag = longestPrefixDiagK >= 0 ? $"longestPrefixK={longestPrefixDiagK} " : string.Empty;
+                Debug.Log(
+                    $"[RoadManager] TryPrepareFromFilteredPathList: TryValidatePhase1Heights failed ({kTag}filteredLen={filteredPath.Count} expandedLen={expandedPath?.Count ?? 0} " +
+                    $"waterBridgeRelax={waterBridgeRelax} plan.waterBridgeTerraformRelaxation={plan?.waterBridgeTerraformRelaxation ?? false} " +
+                    $"planValid={plan?.isValid ?? false} cutThrough={plan?.isCutThrough ?? false} pathCells={plan?.pathCells?.Count ?? 0} " +
+                    $"anyNonNoneTerraformAction={anyTerraform}).");
+            }
             if (postUserWarnings && GameNotificationManager.Instance != null)
                 GameNotificationManager.Instance.PostWarning("Terrain cannot be modified safely (height difference would exceed 1). Choose a different path.");
             return false;
         }
 
         return true;
+    }
+
+    static bool PathPlanHasNonNoneTerraformAction(PathTerraformPlan plan)
+    {
+        if (plan == null) return false;
+        if (plan.pathCells != null)
+        {
+            for (int i = 0; i < plan.pathCells.Count; i++)
+            {
+                if (plan.pathCells[i].action != TerraformingService.TerraformAction.None)
+                    return true;
+            }
+        }
+        if (plan.adjacentCells != null)
+        {
+            for (int i = 0; i < plan.adjacentCells.Count; i++)
+            {
+                if (plan.adjacentCells[i].action != TerraformingService.TerraformAction.None)
+                    return true;
+            }
+        }
+        return false;
     }
 
     int CalculateTotalCost(int tilesCount)
@@ -628,11 +819,12 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Preview terraform + ghost tiles. Caller must revert any prior preview first and run <see cref="GetLine"/> on the original heightmap.
+    /// Ghost road tiles only — does not call <see cref="PathTerraformPlan.Apply"/> so dragging never mutates the heightmap (commit applies in <see cref="TryFinalizeManualRoadPlacement"/>).
+    /// Caller must clear prior preview instances first.
     /// </summary>
     void DrawPreviewLineCore(List<Vector2> path)
     {
-        if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+        if (ShouldLogRoadBridgeDiagnostics()) 
         {
             Debug.Log($"[RoadManager] Trying to draw preview line for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
         }
@@ -642,43 +834,29 @@ public class RoadManager : MonoBehaviour, IRoadManager
             roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
         if (roadPrefabResolver == null) return;
 
-        var heightMap = terrainManager.GetHeightMap();
-        if (heightMap == null) return;
-
-        if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+        if (ShouldLogRoadBridgeDiagnostics()) 
         {
             Debug.Log($"[RoadManager] Trying to prepare road placement plan for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
         }
         if (!TryPrepareRoadPlacementPlanLongestValidPrefix(path, new RoadPathValidationContext { forbidCutThrough = false }, false, ref manualRoadLongestPrefixHint, out List<Vector2> expandedPath, out PathTerraformPlan plan, out _))
         {
-            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+            if (ShouldLogRoadBridgeDiagnostics()) 
             {
                 Debug.Log($"[RoadManager] failed to prepare road placement plan for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
             }
             return;
         }
 
-        if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+        if (ShouldLogRoadBridgeDiagnostics()) 
         {
             Debug.Log($"[RoadManager] successfuly prepared road placement plan for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
         }
 
-        if (!plan.Apply(heightMap, terrainManager))
-        {
-            if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
-            {
-                Debug.Log($"[RoadManager] failed to apply road placement plan for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
-            }
-            if (GameNotificationManager.Instance != null)
-                GameNotificationManager.Instance.PostWarning("Terrain cannot be modified safely (height difference would exceed 1). Choose a different path.");
-            return;
-        }
-        currentPreviewPlan = plan;
         var resolved = roadPrefabResolver.ResolveForPath(expandedPath, plan);
         previewResolvedTiles.Clear();
         previewResolvedTiles.AddRange(resolved);
 
-        if (currentDrawCursorGrid.x == 62 && currentDrawCursorGrid.y == 124) 
+        if (ShouldLogRoadBridgeDiagnostics()) 
         {
             Debug.Log($"[RoadManager] successfuly resolved road placement plan for path with cell ({currentDrawCursorGrid.x}, {currentDrawCursorGrid.y})");
         }
@@ -719,6 +897,38 @@ public class RoadManager : MonoBehaviour, IRoadManager
         }
 
         return GetLineBresenham(start, end);
+    }
+
+    /// <summary>
+    /// Raw stroke from <see cref="GetLine"/> plus, when the cursor ends on water/shore with a cardinal approach from dry land,
+    /// an auto-completed opposite-bank land cell along the same axis (same bridge height). Resets <see cref="manualRoadLongestPrefixHint"/>
+    /// when extension applies so longest-prefix search tries the full crossing first.
+    /// </summary>
+    List<Vector2> GetManualRoadPathWithOptionalBridgeExtension()
+    {
+        List<Vector2> raw = GetLine(startPosition, currentDrawCursorGrid);
+        List<Vector2> extended = TryExtendPathAcrossWaterToOppositeLand(raw);
+        if (extended != null)
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+            {
+                Debug.Log(
+                    $"[RoadManager] GetManualRoadPathWithOptionalBridgeExtension: extended rawLen={raw.Count} → extendedLen={extended.Count} " +
+                    $"(far-bank land appended for FEAT-44).");
+            }
+            manualRoadLongestPrefixHint = 0;
+            return extended;
+        }
+        if (ShouldLogRoadBridgeDiagnostics() && raw != null && raw.Count > 0)
+        {
+            int lx = (int)raw[raw.Count - 1].x, ly = (int)raw[raw.Count - 1].y;
+            var hm = terrainManager != null ? terrainManager.GetHeightMap() : null;
+            bool endsWet = hm != null && IsWaterOrWaterSlope(lx, ly, hm);
+            Debug.Log(
+                $"[RoadManager] GetManualRoadPathWithOptionalBridgeExtension: no extension (rawLen={raw.Count} last=({lx},{ly}) endsOnWaterOrShore={endsWet}). " +
+                "See TryExtendPathAcrossWaterToOppositeLand logs for skip reason when stroke ends wet.");
+        }
+        return raw;
     }
 
     /// <summary>
@@ -772,14 +982,404 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// True if cell is water (height 0) or water slope (land adjacent to water).
-    /// Used to define bridge segments for straightening.
+    /// True if cell is registered open water (WaterMap) or water-shore slope. Used to define bridge wet runs (geography spec water map).
     /// </summary>
     bool IsWaterOrWaterSlope(int x, int y, HeightMap heightMap)
     {
+        if (heightMap == null || !heightMap.IsValidPosition(x, y) || terrainManager == null) return false;
+        if (terrainManager.IsRegisteredOpenWaterAt(x, y)) return true;
+        return terrainManager.IsWaterSlopeCell(x, y);
+    }
+
+    /// <summary>
+    /// If <paramref name="path"/> ends on water or shore, the step before the trailing wet run is dry land, and the step into the run
+    /// is a single cardinal move, extends along that axis through wet cells until the first dry land that passes
+    /// <see cref="TerrainManager.CanPlaceRoad(int,int)"/> at the same instance height as that land-before cell (FEAT-44 far endpoint).
+    /// Returns null when no extension is needed or none is found.
+    /// </summary>
+    List<Vector2> TryExtendPathAcrossWaterToOppositeLand(List<Vector2> path)
+    {
+        HeightMap heightMap = terrainManager != null ? terrainManager.GetHeightMap() : null;
+        if (path == null || path.Count < 2 || heightMap == null || gridManager == null || terrainManager == null)
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log("[RoadManager] TryExtendPathAcrossWaterToOppositeLand: skip (null path, len<2, or missing heightMap/gridManager/terrainManager).");
+            return null;
+        }
+
+        int n = path.Count;
+        int lx = (int)path[n - 1].x;
+        int ly = (int)path[n - 1].y;
+        if (!IsWaterOrWaterSlope(lx, ly, heightMap))
+            return null;
+
+        int wetStart = n - 1;
+        while (wetStart > 0 && IsWaterOrWaterSlope((int)path[wetStart - 1].x, (int)path[wetStart - 1].y, heightMap))
+            wetStart--;
+
+        if (wetStart == 0)
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log("[RoadManager] TryExtendPathAcrossWaterToOppositeLand: skip wet run reaches path index 0 (no dry land-before anchor).");
+            return null;
+        }
+
+        int bx = (int)path[wetStart - 1].x;
+        int by = (int)path[wetStart - 1].y;
+        if (IsWaterOrWaterSlope(bx, by, heightMap))
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log($"[RoadManager] TryExtendPathAcrossWaterToOppositeLand: skip cell before wet run still wet at ({bx},{by}).");
+            return null;
+        }
+
+        int fwx = (int)path[wetStart].x;
+        int fwy = (int)path[wetStart].y;
+        int sdx = fwx - bx;
+        int sdy = fwy - by;
+        if (Mathf.Abs(sdx) > 1 || Mathf.Abs(sdy) > 1 || (sdx != 0 && sdy != 0))
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log(
+                    $"[RoadManager] TryExtendPathAcrossWaterToOppositeLand: skip land→first-wet not single cardinal step land=({bx},{by}) firstWet=({fwx},{fwy}) delta=({sdx},{sdy}).");
+            return null;
+        }
+
+        int dx = sdx != 0 ? (int)Mathf.Sign(sdx) : 0;
+        int dy = sdy != 0 ? (int)Mathf.Sign(sdy) : 0;
+        if (dx == 0 && dy == 0)
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log("[RoadManager] TryExtendPathAcrossWaterToOppositeLand: skip zero bridge axis delta.");
+            return null;
+        }
+
+        Cell landBeforeCell = gridManager.GetCell(bx, by);
+        if (landBeforeCell == null)
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log($"[RoadManager] TryExtendPathAcrossWaterToOppositeLand: skip null Cell at land-before ({bx},{by}).");
+            return null;
+        }
+        int bridgeHeight = landBeforeCell.GetCellInstanceHeight();
+
+        int cx = lx;
+        int cy = ly;
+        var result = new List<Vector2>(path);
+        int maxSteps = Mathf.Max(gridManager.width, gridManager.height) + 2;
+
+        for (int step = 0; step < maxSteps; step++)
+        {
+            int nx = cx + dx;
+            int ny = cy + dy;
+            if (!heightMap.IsValidPosition(nx, ny))
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                    Debug.Log($"[RoadManager] TryExtendPathAcrossWaterToOppositeLand: abort off map at step={step} from=({cx},{cy}) next=({nx},{ny}) axis=({dx},{dy}).");
+                break;
+            }
+
+            if (IsWaterOrWaterSlope(nx, ny, heightMap))
+            {
+                if ((int)result[result.Count - 1].x != nx || (int)result[result.Count - 1].y != ny)
+                    result.Add(new Vector2(nx, ny));
+                cx = nx;
+                cy = ny;
+                continue;
+            }
+
+            if (gridManager.IsCellOccupiedByBuilding(nx, ny))
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                    Debug.Log($"[RoadManager] TryExtendPathAcrossWaterToOppositeLand: abort building at ({nx},{ny}) after step={step}.");
+                break;
+            }
+            Cell farCell = gridManager.GetCell(nx, ny);
+            if (farCell == null)
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                    Debug.Log($"[RoadManager] TryExtendPathAcrossWaterToOppositeLand: abort no Cell at ({nx},{ny}).");
+                break;
+            }
+            if (farCell.isInterstate)
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                    Debug.Log($"[RoadManager] TryExtendPathAcrossWaterToOppositeLand: abort interstate at ({nx},{ny}).");
+                break;
+            }
+            if (!terrainManager.CanPlaceRoad(nx, ny))
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                    Debug.Log($"[RoadManager] TryExtendPathAcrossWaterToOppositeLand: abort CanPlaceRoad false at ({nx},{ny}).");
+                break;
+            }
+            if (farCell.GetCellInstanceHeight() != bridgeHeight)
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                    Debug.Log(
+                        $"[RoadManager] TryExtendPathAcrossWaterToOppositeLand: abort height mismatch at ({nx},{ny}) farH={farCell.GetCellInstanceHeight()} bridgeH={bridgeHeight}.");
+                break;
+            }
+
+            result.Add(new Vector2(nx, ny));
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log($"[RoadManager] TryExtendPathAcrossWaterToOppositeLand: success appended land ({nx},{ny}) bridgeH={bridgeHeight} stepsFromCursorWet={step + 1}.");
+            return result;
+        }
+
+        if (ShouldLogRoadBridgeDiagnostics())
+            Debug.Log(
+                $"[RoadManager] TryExtendPathAcrossWaterToOppositeLand: failed after scan lastWet=({cx},{cy}) axis=({dx},{dy}) bridgeH={bridgeHeight} (no opposite-bank land tile).");
+        return null;
+    }
+
+    WaterManager ResolveWaterManager()
+    {
+        if (terrainManager != null && terrainManager.waterManager != null)
+            return terrainManager.waterManager;
+        return FindObjectOfType<WaterManager>();
+    }
+
+    /// <summary>
+    /// Open water for bridge rules: registered in <see cref="WaterMap"/> (logical surface S; bed height may be above reference sea).
+    /// </summary>
+    bool IsOpenWaterCellForBridge(int x, int y, HeightMap heightMap, WaterManager waterManager)
+    {
         if (heightMap == null || !heightMap.IsValidPosition(x, y)) return false;
-        if (heightMap.GetHeight(x, y) <= TerrainManager.SEA_LEVEL) return true;
-        return terrainManager != null && terrainManager.IsWaterSlopeCell(x, y);
+        return waterManager != null && waterManager.IsWaterAt(x, y);
+    }
+
+    /// <summary>
+    /// FEAT-44: interior of a water bridge must be registered water and/or shore (water slope), not dry land gaps.
+    /// </summary>
+    bool IsWaterRelatedBridgeInteriorCell(int x, int y, HeightMap heightMap, WaterManager waterManager)
+    {
+        if (!IsWaterOrWaterSlope(x, y, heightMap)) return false;
+        if (IsOpenWaterCellForBridge(x, y, heightMap, waterManager)) return true;
+        if (terrainManager != null && terrainManager.IsWaterSlopeCell(x, y))
+        {
+            if (waterManager == null) return true;
+            int[] dx = { 1, -1, 0, 0, 1, 1, -1, -1 };
+            int[] dy = { 0, 0, 1, -1, 1, -1, 1, -1 };
+            for (int d = 0; d < 8; d++)
+            {
+                int nx = x + dx[d], ny = y + dy[d];
+                if (waterManager.IsWaterAt(nx, ny)) return true;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// FEAT-44: deck height vs logical surface and bed on open water; land endpoints match; no orthogonal bridge overlap on wet cells.
+    /// </summary>
+    bool ValidateFeat44WaterBridgeRules(List<Vector2> path, HeightMap heightMap, bool postUserWarnings)
+    {
+        if (path == null || path.Count < 2 || heightMap == null || gridManager == null)
+            return true;
+
+        if (!TryGetSingleBridgeRunBounds(path, heightMap, out int runStart, out int runEnd))
+            return true;
+
+        WaterManager waterManager = ResolveWaterManager();
+
+        var straight = BresenhamStraightLine((int)path[runStart].x, (int)path[runStart].y, (int)path[runEnd].x, (int)path[runEnd].y);
+        if (ShouldLogRoadBridgeDiagnostics())
+        {
+            Debug.Log(
+                $"[RoadManager] ValidateFeat44: runStart={runStart} runEnd={runEnd} straightLen={straight.Count} runFrom=({path[runStart].x},{path[runStart].y}) runTo=({path[runEnd].x},{path[runEnd].y})");
+        }
+
+        foreach (var p in straight)
+        {
+            int px = (int)p.x, py = (int)p.y;
+            if (!heightMap.IsValidPosition(px, py))
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                    Debug.Log($"[RoadManager] ValidateFeat44 FAIL: Bresenham cell ({px},{py}) invalid map position.");
+                return FailFeat44(postUserWarnings, "Bridge span leaves the map.");
+            }
+            if (!IsWaterRelatedBridgeInteriorCell(px, py, heightMap, waterManager))
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                {
+                    bool wos = IsWaterOrWaterSlope(px, py, heightMap);
+                    bool slope = terrainManager != null && terrainManager.IsWaterSlopeCell(px, py);
+                    bool openW = IsOpenWaterCellForBridge(px, py, heightMap, waterManager);
+                    Debug.Log(
+                        $"[RoadManager] ValidateFeat44 FAIL: Bresenham ({px},{py}) not water-related interior (IsWaterOrWaterSlope={wos}, IsWaterSlopeCell={slope}, IsOpenWaterCellForBridge={openW}).");
+                }
+                return FailFeat44(postUserWarnings, "Bridges may only cross registered water and shore, not dry gaps.");
+            }
+        }
+
+        int landBefore = runStart - 1;
+        int landAfter = runEnd + 1;
+        if (landBefore < 0 || landAfter >= path.Count)
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+            {
+                int lastIdx = path.Count - 1;
+                Debug.Log(
+                    $"[RoadManager] ValidateFeat44 FAIL: land endpoints missing (landBeforeIdx={landBefore}, landAfterIdx={landAfter}, path.Count={path.Count}). " +
+                    $"wetRunIndices=[{runStart},{runEnd}] lastPathCell=({path[lastIdx].x},{path[lastIdx].y}) " +
+                    (landAfter >= path.Count
+                        ? "Reason: path ends inside wet run — need dry land cell after last water/shore on stroke (extension or longer drag)."
+                        : "Reason: wet run touches start of path — need land before first wet cell."));
+            }
+            return FailFeat44(postUserWarnings, "A water bridge needs land at both ends.");
+        }
+        if (IsWaterOrWaterSlope((int)path[landBefore].x, (int)path[landBefore].y, heightMap)
+            || IsWaterOrWaterSlope((int)path[landAfter].x, (int)path[landAfter].y, heightMap))
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+            {
+                Debug.Log(
+                    $"[RoadManager] ValidateFeat44 FAIL: endpoint still water/slope — before=({path[landBefore].x},{path[landBefore].y}) wos={IsWaterOrWaterSlope((int)path[landBefore].x, (int)path[landBefore].y, heightMap)}, after=({path[landAfter].x},{path[landAfter].y}) wos={IsWaterOrWaterSlope((int)path[landAfter].x, (int)path[landAfter].y, heightMap)}");
+            }
+            return FailFeat44(postUserWarnings, "A water bridge needs land at both ends.");
+        }
+
+        Cell cellBefore = gridManager.GetCell((int)path[landBefore].x, (int)path[landBefore].y);
+        Cell cellAfter = gridManager.GetCell((int)path[landAfter].x, (int)path[landAfter].y);
+        if (cellBefore == null || cellAfter == null)
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+                Debug.Log($"[RoadManager] ValidateFeat44 FAIL: null Cell (beforeNull={cellBefore == null}, afterNull={cellAfter == null}) at landBefore=({path[landBefore].x},{path[landBefore].y}) landAfter=({path[landAfter].x},{path[landAfter].y}).");
+            return false;
+        }
+        int bridgeHeight = cellBefore.GetCellInstanceHeight();
+        if (cellAfter.GetCellInstanceHeight() != bridgeHeight)
+        {
+            if (ShouldLogRoadBridgeDiagnostics())
+            {
+                Debug.Log(
+                    $"[RoadManager] ValidateFeat44 FAIL: bridge end heights differ — before=({path[landBefore].x},{path[landBefore].y}) h={bridgeHeight}, after=({path[landAfter].x},{path[landAfter].y}) h={cellAfter.GetCellInstanceHeight()}.");
+            }
+            return FailFeat44(postUserWarnings, "Bridge ends must be at the same terrain height.");
+        }
+
+        bool spanHorizontal = (int)path[runStart].y == (int)path[runEnd].y;
+
+        for (int i = runStart; i <= runEnd; i++)
+        {
+            int x = (int)path[i].x, y = (int)path[i].y;
+            if (!IsOpenWaterCellForBridge(x, y, heightMap, waterManager)) continue;
+
+            int surfaceS = waterManager != null ? waterManager.GetWaterSurfaceHeight(x, y) : -1;
+            if (surfaceS < 0)
+                surfaceS = heightMap.GetHeight(x, y);
+            int bed = heightMap.GetHeight(x, y);
+            if (bridgeHeight < surfaceS || bridgeHeight < bed)
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                {
+                    Debug.Log(
+                        $"[RoadManager] ValidateFeat44 FAIL: deck below S/bed at ({x},{y}) bridgeHeight={bridgeHeight} surfaceS={surfaceS} bed={bed}.");
+                }
+                return FailFeat44(postUserWarnings, "Bridge deck would sit below the water surface or bed here.");
+            }
+        }
+
+        for (int i = runStart; i <= runEnd; i++)
+        {
+            int x = (int)path[i].x, y = (int)path[i].y;
+            if (!IsWaterOrWaterSlope(x, y, heightMap)) continue;
+            if (!IsRoadAt(new Vector2(x, y))) continue;
+            if (!TryGetDominantRoadAxisAt(x, y, out bool existingHorizontal, out bool isJunction))
+                continue;
+            if (isJunction)
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                    Debug.Log($"[RoadManager] ValidateFeat44 FAIL: existing road junction on wet cell ({x},{y}).");
+                return FailFeat44(postUserWarnings, "Crossing or joining bridge spans here is not supported.");
+            }
+            if (existingHorizontal != spanHorizontal)
+            {
+                if (ShouldLogRoadBridgeDiagnostics())
+                {
+                    Debug.Log(
+                        $"[RoadManager] ValidateFeat44 FAIL: orthogonal bridge overlap at ({x},{y}) existingHorizontal={existingHorizontal} newSpanHorizontal={spanHorizontal}.");
+                }
+                return FailFeat44(postUserWarnings, "Another bridge already crosses this water at a different angle.");
+            }
+        }
+
+        return true;
+    }
+
+    static bool FailFeat44(bool postUserWarnings, string message)
+    {
+        if (postUserWarnings && GameNotificationManager.Instance != null && !string.IsNullOrEmpty(message))
+            GameNotificationManager.Instance.PostWarning(message);
+        return false;
+    }
+
+    /// <summary>
+    /// Returns bounds [runStart, runEnd] inclusive of the single water/shore run, or false if there is no bridge segment.
+    /// </summary>
+    bool TryGetSingleBridgeRunBounds(List<Vector2> path, HeightMap heightMap, out int runStart, out int runEnd)
+    {
+        runStart = -1;
+        runEnd = -1;
+        int runs = 0;
+        bool inRun = false;
+        int rs = -1, re = -1;
+        for (int i = 0; i < path.Count; i++)
+        {
+            int x = (int)path[i].x, y = (int)path[i].y;
+            bool w = IsWaterOrWaterSlope(x, y, heightMap);
+            if (w)
+            {
+                if (!inRun)
+                {
+                    runs++;
+                    rs = i;
+                    inRun = true;
+                }
+                re = i;
+            }
+            else
+            {
+                inRun = false;
+            }
+        }
+        if (runs != 1 || rs < 0) return false;
+        runStart = rs;
+        runEnd = re;
+        return runEnd >= runStart;
+    }
+
+    /// <summary>
+    /// Cardinal road axis through an existing road tile, or junction if both axes are used.
+    /// </summary>
+    bool TryGetDominantRoadAxisAt(int x, int y, out bool horizontal, out bool isJunction)
+    {
+        horizontal = false;
+        isJunction = false;
+        bool L = IsRoadAt(new Vector2(x - 1, y));
+        bool R = IsRoadAt(new Vector2(x + 1, y));
+        bool U = IsRoadAt(new Vector2(x, y + 1));
+        bool D = IsRoadAt(new Vector2(x, y - 1));
+        bool hConn = L || R;
+        bool vConn = U || D;
+        if (hConn && vConn)
+        {
+            isJunction = true;
+            return true;
+        }
+        if (hConn)
+        {
+            horizontal = true;
+            return true;
+        }
+        if (vConn)
+        {
+            horizontal = false;
+            return true;
+        }
+        return false;
     }
 
     /// <summary>
@@ -788,14 +1388,15 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// </summary>
     bool IsAtLeastTwoCellsFromWater(int x, int y, HeightMap heightMap)
     {
-        if (heightMap == null || !heightMap.IsValidPosition(x, y)) return false;
-        if (heightMap.GetHeight(x, y) <= TerrainManager.SEA_LEVEL) return false;
+        if (heightMap == null || !heightMap.IsValidPosition(x, y) || terrainManager == null) return false;
+        if (terrainManager.IsRegisteredOpenWaterAt(x, y) || terrainManager.IsWaterSlopeCell(x, y)) return false;
         int[] dx = { 0, 1, -1, 0, 0 };
         int[] dy = { 0, 0, 0, 1, -1 };
         for (int d = 0; d < 5; d++)
         {
             int nx = x + dx[d], ny = y + dy[d];
-            if (heightMap.IsValidPosition(nx, ny) && heightMap.GetHeight(nx, ny) <= TerrainManager.SEA_LEVEL)
+            if (!heightMap.IsValidPosition(nx, ny)) continue;
+            if (terrainManager.IsRegisteredOpenWaterAt(nx, ny) || terrainManager.IsWaterSlopeCell(nx, ny))
                 return false;
         }
         return true;
@@ -1126,16 +1727,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
         return true;
     }
 
-    void ClearPreview(bool isEnd = false)
+    void ClearPreview()
     {
-        if (!isEnd && currentPreviewPlan != null && terrainManager != null)
-        {
-            var heightMap = terrainManager.GetHeightMap();
-            if (heightMap != null)
-                currentPreviewPlan.Revert(heightMap, terrainManager);
-            currentPreviewPlan = null;
-        }
-        previewTerraformedHeights.Clear();
         previewResolvedTiles.Clear();
 
         foreach (GameObject previewTile in previewRoadTiles)
@@ -1318,8 +1911,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     void SetPreviewRoadTileDetails(GameObject previewTile)
     {
         gridManager.SetTileSortingOrder(previewTile, Zone.ZoneType.Road);
-
-        SetRoadTileZoneDetails(previewTile);
+        // No Zone component on ghost tiles — avoids zoning/decor systems treating preview as real road (FEAT-44 drag).
         previewTile.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 0.5f);
     }
 

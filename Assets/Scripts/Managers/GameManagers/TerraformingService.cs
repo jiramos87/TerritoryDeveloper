@@ -116,9 +116,10 @@ public class TerraformingService : MonoBehaviour
             int y = (int)path[i].y;
             if (!heightMap.IsValidPosition(x, y)) continue;
 
-            int h = heightMap.GetHeight(x, y);
-            if (h <= TerrainManager.SEA_LEVEL) continue;
+            if (terrainManager.IsRegisteredOpenWaterAt(x, y))
+                continue;
 
+            int h = heightMap.GetHeight(x, y);
             minHeight = Mathf.Min(minHeight, h);
             maxHeight = Mathf.Max(maxHeight, h);
         }
@@ -130,17 +131,21 @@ public class TerraformingService : MonoBehaviour
     }
 
     /// <summary>
-    /// True if any consecutive path cells have land height difference &gt; 1.
+    /// True if any consecutive path cells on dry corridor (not registered open water) have height difference &gt; 1.
     /// Used to decide cut-through: only when we cannot scale with slopes.
     /// </summary>
-    private static bool HasConsecutiveHeightDiffGreaterThanOne(System.Collections.Generic.IList<Vector2> path, HeightMap heightMap)
+    bool HasConsecutiveHeightDiffGreaterThanOne(System.Collections.Generic.IList<Vector2> path, HeightMap heightMap)
     {
-        if (path == null || path.Count < 2 || heightMap == null) return false;
+        if (path == null || path.Count < 2 || heightMap == null || terrainManager == null) return false;
         for (int i = 0; i < path.Count - 1; i++)
         {
-            int h1 = heightMap.GetHeight((int)path[i].x, (int)path[i].y);
-            int h2 = heightMap.GetHeight((int)path[i + 1].x, (int)path[i + 1].y);
-            if (h1 > TerrainManager.SEA_LEVEL && h2 > TerrainManager.SEA_LEVEL && Mathf.Abs(h2 - h1) > 1)
+            int x1 = (int)path[i].x, y1 = (int)path[i].y;
+            int x2 = (int)path[i + 1].x, y2 = (int)path[i + 1].y;
+            if (terrainManager.IsRegisteredOpenWaterAt(x1, y1) || terrainManager.IsRegisteredOpenWaterAt(x2, y2))
+                continue;
+            int h1 = heightMap.GetHeight(x1, y1);
+            int h2 = heightMap.GetHeight(x2, y2);
+            if (Mathf.Abs(h2 - h1) > 1)
                 return true;
         }
         return false;
@@ -151,9 +156,11 @@ public class TerraformingService : MonoBehaviour
     /// differences, marks cells for Flatten or DiagonalToOrthogonal, and sets postTerraformSlopeType
     /// so RoadPrefabResolver can select correct prefabs.
     /// </summary>
-    public PathTerraformPlan ComputePathPlan(IList<Vector2> path)
+    /// <param name="waterBridgeTerraformRelaxation">When true (FEAT-44), skip beside-steep-cliff invalidation on scale-with-slopes paths so shore/cliff + water crossings can plan.</param>
+    public PathTerraformPlan ComputePathPlan(IList<Vector2> path, bool waterBridgeTerraformRelaxation = false)
     {
         var plan = new PathTerraformPlan();
+        plan.waterBridgeTerraformRelaxation = waterBridgeTerraformRelaxation;
         if (terrainManager == null || path == null || path.Count == 0) return plan;
 
         if (path.Count >= 2)
@@ -161,6 +168,10 @@ public class TerraformingService : MonoBehaviour
 
         var heightMap = terrainManager.GetHeightMap();
         if (heightMap == null) return plan;
+
+        plan.waterBridgeDeckDisplayHeight = 0;
+        if (waterBridgeTerraformRelaxation)
+            TryAssignWaterBridgeDeckDisplayHeight(plan, path, heightMap);
 
         var (baseHeight, pathCrossesHill, maxHeight) = ComputePathBaseHeightAndCutThrough(path);
         plan.baseHeight = baseHeight;
@@ -176,7 +187,7 @@ public class TerraformingService : MonoBehaviour
             {
                 int x = (int)path[i].x;
                 int y = (int)path[i].y;
-                int h = heightMap.IsValidPosition(x, y) ? heightMap.GetHeight(x, y) : TerrainManager.SEA_LEVEL;
+                int h = heightMap.IsValidPosition(x, y) ? heightMap.GetHeight(x, y) : TerrainManager.MIN_HEIGHT;
 
                 var cellPlan = new PathTerraformPlan.CellPlan
                 {
@@ -188,7 +199,7 @@ public class TerraformingService : MonoBehaviour
                     postTerraformSlopeType = TerrainSlopeType.Flat
                 };
 
-                if (!heightMap.IsValidPosition(x, y) || h <= TerrainManager.SEA_LEVEL)
+                if (!heightMap.IsValidPosition(x, y) || terrainManager.ShouldSkipRoadTerraformSurfaceAt(x, y, heightMap))
                 {
                     cellPlan.action = TerraformAction.None;
                     cellPlan.targetHeight = h;
@@ -196,8 +207,10 @@ public class TerraformingService : MonoBehaviour
 
                 if (i < path.Count - 1)
                 {
-                    int hNext = heightMap.GetHeight((int)path[i + 1].x, (int)path[i + 1].y);
-                    if (h > TerrainManager.SEA_LEVEL && hNext > TerrainManager.SEA_LEVEL && Mathf.Abs(hNext - h) > 1)
+                    int nx = (int)path[i + 1].x, ny = (int)path[i + 1].y;
+                    int hNext = heightMap.GetHeight(nx, ny);
+                    if (!terrainManager.IsRegisteredOpenWaterAt(x, y) && !terrainManager.IsRegisteredOpenWaterAt(nx, ny)
+                        && Mathf.Abs(hNext - h) > 1)
                         plan.isValid = false;
                 }
 
@@ -205,7 +218,9 @@ public class TerraformingService : MonoBehaviour
             }
             // Cut-through: expand adjacentCells so no flattened path cell has a neighbor with height diff > 1.
             // Ensures smooth terrain transitions and prevents black holes at boundaries.
-            ExpandAdjacentFlattenCellsRecursively(plan, path, heightMap);
+            // FEAT-44 water bridge: skip recursive flood — it can chain far from the stroke and make Phase1 fail on unrelated cliffs.
+            if (!waterBridgeTerraformRelaxation)
+                ExpandAdjacentFlattenCellsRecursively(plan, path, heightMap);
             if (plan.isValid && cutThroughMinCellsFromMapEdge > 0 && !CutThroughHasAcceptableMapMargin(plan, path, heightMap))
                 plan.isValid = false;
             LogTerraformPlanDiagnosticsInternal(plan, path);
@@ -223,7 +238,7 @@ public class TerraformingService : MonoBehaviour
         {
             int x = (int)path[i].x;
             int y = (int)path[i].y;
-            int h = heightMap.IsValidPosition(x, y) ? heightMap.GetHeight(x, y) : TerrainManager.SEA_LEVEL;
+            int h = heightMap.IsValidPosition(x, y) ? heightMap.GetHeight(x, y) : TerrainManager.MIN_HEIGHT;
 
             var cellPlan = new PathTerraformPlan.CellPlan
             {
@@ -235,7 +250,7 @@ public class TerraformingService : MonoBehaviour
                 postTerraformSlopeType = TerrainSlopeType.Flat
             };
 
-            if (!heightMap.IsValidPosition(x, y) || h <= TerrainManager.SEA_LEVEL)
+            if (!heightMap.IsValidPosition(x, y) || terrainManager.IsRegisteredOpenWaterAt(x, y))
             {
                 plan.pathCells.Add(cellPlan);
                 continue;
@@ -257,8 +272,10 @@ public class TerraformingService : MonoBehaviour
 
             if (i < path.Count - 1)
             {
-                int hNext = heightMap.GetHeight((int)path[i + 1].x, (int)path[i + 1].y);
-                if (h > TerrainManager.SEA_LEVEL && hNext > TerrainManager.SEA_LEVEL && Mathf.Abs(hNext - h) > 1)
+                int nx = (int)path[i + 1].x, ny = (int)path[i + 1].y;
+                int hNext = heightMap.GetHeight(nx, ny);
+                if (!terrainManager.IsRegisteredOpenWaterAt(x, y) && !terrainManager.IsRegisteredOpenWaterAt(nx, ny)
+                    && Mathf.Abs(hNext - h) > 1)
                     plan.isValid = false;
             }
 
@@ -361,7 +378,7 @@ public class TerraformingService : MonoBehaviour
             plan.pathCells.Add(cellPlan);
         }
 
-        if (plan.isValid)
+        if (plan.isValid && !waterBridgeTerraformRelaxation)
             InvalidatePlanIfPathBesideSteepLandCliff(plan, path, heightMap, preferSlopeClimb);
 
         bool anyFlattenScheduled = false;
@@ -384,7 +401,8 @@ public class TerraformingService : MonoBehaviour
                 }
             }
         }
-        if (!preferSlopeClimb || anyFlattenScheduled)
+        // FEAT-44 water bridge: skip recursive flood so adjacentCells stay local to the stroke (see cut-through branch).
+        if ((!preferSlopeClimb || anyFlattenScheduled) && !waterBridgeTerraformRelaxation)
             ExpandAdjacentFlattenCellsRecursively(plan, path, heightMap);
 
         LogTerraformPlanDiagnosticsInternal(plan, path);
@@ -402,7 +420,7 @@ public class TerraformingService : MonoBehaviour
     /// </summary>
     void InvalidatePlanIfPathBesideSteepLandCliff(PathTerraformPlan plan, IList<Vector2> path, HeightMap heightMap, bool preferSlopeClimb)
     {
-        if (!preferSlopeClimb || plan == null || heightMap == null || path == null || !plan.isValid)
+        if (!preferSlopeClimb || plan == null || heightMap == null || path == null || terrainManager == null || !plan.isValid)
             return;
 
         var pathSet = new HashSet<Vector2Int>();
@@ -417,9 +435,9 @@ public class TerraformingService : MonoBehaviour
             int y = (int)path[i].y;
             if (!heightMap.IsValidPosition(x, y))
                 continue;
-            int h = heightMap.GetHeight(x, y);
-            if (h <= TerrainManager.SEA_LEVEL)
+            if (terrainManager.IsRegisteredOpenWaterAt(x, y))
                 continue;
+            int h = heightMap.GetHeight(x, y);
             for (int d = 0; d < 4; d++)
             {
                 int nx = x + cdx[d];
@@ -428,9 +446,9 @@ public class TerraformingService : MonoBehaviour
                     continue;
                 if (pathSet.Contains(new Vector2Int(nx, ny)))
                     continue;
-                int nh = heightMap.GetHeight(nx, ny);
-                if (nh <= TerrainManager.SEA_LEVEL)
+                if (terrainManager.IsRegisteredOpenWaterAt(nx, ny))
                     continue;
+                int nh = heightMap.GetHeight(nx, ny);
                 if (Mathf.Abs(nh - h) > 1)
                 {
                     plan.isValid = false;
@@ -508,7 +526,7 @@ public class TerraformingService : MonoBehaviour
     /// </summary>
     void ExpandAdjacentFlattenCellsRecursively(PathTerraformPlan plan, IList<Vector2> path, HeightMap heightMap)
     {
-        if (heightMap == null || plan == null) return;
+        if (heightMap == null || plan == null || terrainManager == null) return;
 
         var pathSet = new HashSet<Vector2Int>();
         for (int i = 0; i < path.Count; i++)
@@ -543,7 +561,7 @@ public class TerraformingService : MonoBehaviour
                 if (pathSet.Contains(new Vector2Int(nx, ny))) continue;
                 if (!heightMap.IsValidPosition(nx, ny)) continue;
                 int nh = heightMap.GetHeight(nx, ny);
-                if (nh <= TerrainManager.SEA_LEVEL || nh == baseHeight) continue;
+                if (terrainManager.IsRegisteredOpenWaterAt(nx, ny) || nh == baseHeight) continue;
                 bool oneStepRidgeAboveBase = expandCutThroughAdjacentByOneStep && plan.isCutThrough && nh == baseHeight + 1;
                 if (Mathf.Abs(nh - baseHeight) <= 1 && !oneStepRidgeAboveBase) continue;
                 if (toFlatten.Contains(new Vector2Int(nx, ny))) continue;
@@ -581,23 +599,26 @@ public class TerraformingService : MonoBehaviour
     /// height(next) − height(current); for the last cell, height(current) − height(prev).
     /// Zero when an endpoint is invalid or water (cannot infer climb vs descent).
     /// </summary>
-    static int ComputeSegmentDeltaHForPostSlope(HeightMap heightMap, IList<Vector2> path, int i, int hLandAtCell)
+    int ComputeSegmentDeltaHForPostSlope(HeightMap heightMap, IList<Vector2> path, int i, int hLandAtCell)
     {
-        if (heightMap == null || path == null || hLandAtCell <= TerrainManager.SEA_LEVEL) return 0;
+        if (heightMap == null || path == null || terrainManager == null) return 0;
+        int cx = (int)path[i].x, cy = (int)path[i].y;
+        if (!heightMap.IsValidPosition(cx, cy) || terrainManager.IsRegisteredOpenWaterAt(cx, cy))
+            return 0;
         if (i < path.Count - 1)
         {
             int nx = (int)path[i + 1].x, ny = (int)path[i + 1].y;
             if (!heightMap.IsValidPosition(nx, ny)) return 0;
+            if (terrainManager.IsRegisteredOpenWaterAt(nx, ny)) return 0;
             int hn = heightMap.GetHeight(nx, ny);
-            if (hn <= TerrainManager.SEA_LEVEL) return 0;
             return hn - hLandAtCell;
         }
         if (i > 0)
         {
             int px = (int)path[i - 1].x, py = (int)path[i - 1].y;
             if (!heightMap.IsValidPosition(px, py)) return 0;
+            if (terrainManager.IsRegisteredOpenWaterAt(px, py)) return 0;
             int hp = heightMap.GetHeight(px, py);
-            if (hp <= TerrainManager.SEA_LEVEL) return 0;
             return hLandAtCell - hp;
         }
         return 0;
@@ -621,7 +642,7 @@ public class TerraformingService : MonoBehaviour
     /// <summary>
     /// Post-terraform slope type for the path exit segment so ramp prefabs match downhill geometry (BUG-30).
     /// </summary>
-    static TerrainSlopeType GetPostTerraformSlopeTypeAlongExit(HeightMap heightMap, IList<Vector2> path, int i, int hLand, int dxOut, int dyOut)
+    TerrainSlopeType GetPostTerraformSlopeTypeAlongExit(HeightMap heightMap, IList<Vector2> path, int i, int hLand, int dxOut, int dyOut)
     {
         int dSeg = ComputeSegmentDeltaHForPostSlope(heightMap, path, i, hLand);
         if (dSeg > 0)
@@ -664,6 +685,7 @@ public class TerraformingService : MonoBehaviour
     /// </summary>
     void AddAdjacentFlattenCells(PathTerraformPlan plan, IList<Vector2> path, HeightMap heightMap, int x, int y, int baseHeight, int pathCellHeight)
     {
+        if (terrainManager == null) return;
         var pathSet = new HashSet<Vector2Int>();
         for (int i = 0; i < path.Count; i++)
             pathSet.Add(new Vector2Int((int)path[i].x, (int)path[i].y));
@@ -677,7 +699,7 @@ public class TerraformingService : MonoBehaviour
             if (pathSet.Contains(new Vector2Int(nx, ny))) continue;
             if (!heightMap.IsValidPosition(nx, ny)) continue;
             int nh = heightMap.GetHeight(nx, ny);
-            if (nh <= TerrainManager.SEA_LEVEL || nh == baseHeight) continue;
+            if (terrainManager.IsRegisteredOpenWaterAt(nx, ny) || nh == baseHeight) continue;
             bool needsFlatten = nh < pathCellHeight || nh > baseHeight + 1;
             if (!needsFlatten) continue;
 
@@ -791,6 +813,62 @@ public class TerraformingService : MonoBehaviour
         }
 
         return -1;
+    }
+
+    /// <summary>
+    /// FEAT-44: single wet run with dry land before/after — deck display height matches land-before <see cref="Cell.GetCellInstanceHeight"/>.
+    /// </summary>
+    void TryAssignWaterBridgeDeckDisplayHeight(PathTerraformPlan plan, IList<Vector2> path, HeightMap heightMap)
+    {
+        if (plan == null || path == null || path.Count < 3 || heightMap == null || gridManager == null || terrainManager == null)
+            return;
+
+        int runs = 0;
+        int rs = -1, re = -1;
+        bool inRun = false;
+        for (int i = 0; i < path.Count; i++)
+        {
+            int x = (int)path[i].x;
+            int y = (int)path[i].y;
+            bool w = IsWaterOrWaterSlopeForBridgeDeckHeight(x, y, heightMap);
+            if (w)
+            {
+                if (!inRun)
+                {
+                    runs++;
+                    rs = i;
+                    inRun = true;
+                }
+                re = i;
+            }
+            else
+                inRun = false;
+        }
+
+        if (runs != 1 || rs < 1 || re >= path.Count - 1)
+            return;
+
+        int bx = (int)path[rs - 1].x;
+        int by = (int)path[rs - 1].y;
+        if (IsWaterOrWaterSlopeForBridgeDeckHeight(bx, by, heightMap))
+            return;
+
+        Cell landBefore = gridManager.GetCell(bx, by);
+        if (landBefore == null)
+            return;
+
+        int dh = landBefore.GetCellInstanceHeight();
+        if (dh > 0)
+            plan.waterBridgeDeckDisplayHeight = dh;
+    }
+
+    bool IsWaterOrWaterSlopeForBridgeDeckHeight(int x, int y, HeightMap heightMap)
+    {
+        if (heightMap == null || !heightMap.IsValidPosition(x, y) || terrainManager == null)
+            return false;
+        if (terrainManager.IsRegisteredOpenWaterAt(x, y))
+            return true;
+        return terrainManager.IsWaterSlopeCell(x, y);
     }
 
     static int GetNeighborHeight(HeightMap heightMap, int nx, int ny)

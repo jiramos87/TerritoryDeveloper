@@ -151,7 +151,30 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     #region Configuration
     public const int MIN_HEIGHT = 0;
     public const int MAX_HEIGHT = 5;
+    /// <summary>Reserved for future sea bodies (surface S = 0). Do not use as a proxy for “is water” — use <see cref="IsRegisteredOpenWaterAt"/> and logical surface S (spec §11).</summary>
     public const int SEA_LEVEL = 0;
+
+    /// <summary>
+    /// True when <see cref="WaterMap"/> registers open water. Beds may be above <see cref="SEA_LEVEL"/>; this is authoritative for roads/terraform (geography spec water map).
+    /// </summary>
+    public bool IsRegisteredOpenWaterAt(int x, int y)
+    {
+        if (waterManager == null)
+            waterManager = FindObjectOfType<WaterManager>();
+        return waterManager != null && waterManager.IsWaterAt(x, y);
+    }
+
+    /// <summary>
+    /// Path/terraform: skip height writes and primary terrain mesh rebuilds for registered open water and water-shore slope cells (matches <see cref="PathTerraformPlan"/> Apply/Revert).
+    /// </summary>
+    public bool ShouldSkipRoadTerraformSurfaceAt(int x, int y, HeightMap heightMap)
+    {
+        if (heightMap == null || !heightMap.IsValidPosition(x, y))
+            return true;
+        if (IsWaterSlopeCell(x, y))
+            return true;
+        return IsRegisteredOpenWaterAt(x, y);
+    }
 
     /// <summary>
     /// Land may use water-shore prefabs only when its height is at most this many steps above the <b>visual reference
@@ -4197,8 +4220,22 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// Water cells (height 0) are allowed for bridge placement. Water slope cells (land adjacent to water)
     /// are rejected for normal roads to keep a 1-cell buffer from coastlines. Diagonal slopes use
     /// orthogonal road prefabs (FEAT-05). Corner slopes (NEUp, NWUp, SEUp, SWUp) have no prefabs yet and are rejected.
+    /// Implements <see cref="ITerrainManager.CanPlaceRoad(int, int)"/>; does not allow shore trace (use overload for FEAT-44).
     /// </summary>
     public bool CanPlaceRoad(int x, int y)
+    {
+        return CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: false);
+    }
+
+    /// <summary>
+    /// Same as <see cref="CanPlaceRoad(int, int)"/> with optional shore allowance for pathfinding and manual bridge strokes.
+    /// </summary>
+    /// <param name="allowWaterSlopeForWaterBridgeTrace">
+    /// When true (pathfinding / manual road stroke only), water-slope shore cells may pass so a shared
+    /// <see cref="Territory.Roads.RoadManager.TryPrepareRoadPlacementPlan"/> pass can validate water bridges (FEAT-44).
+    /// Single-tile placement and zoning must keep this false.
+    /// </param>
+    public bool CanPlaceRoad(int x, int y, bool allowWaterSlopeForWaterBridgeTrace)
     {
         if (gridManager != null && gridManager.IsCellOccupiedByBuilding(x, y))
             return false;
@@ -4208,7 +4245,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             if (c != null && c.GetCellInstanceHeight() == 0)
                 return true;
         }
-        if (IsWaterSlopeCell(x, y))
+        if (IsWaterSlopeCell(x, y) && !allowWaterSlopeForWaterBridgeTrace)
             return false;
         TerrainSlopeType slope = GetTerrainSlopeTypeAt(x, y);
         switch (slope)

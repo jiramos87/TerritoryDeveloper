@@ -858,7 +858,8 @@ public class AutoRoadBuilder : MonoBehaviour
         bool isLandPlaceable = c.zoneType == Zone.ZoneType.Grass || c.HasForest();
         bool isWaterForBridge = c.GetCellInstanceHeight() == 0;
         if (!isLandPlaceable && !isWaterForBridge) return false;
-        return roadManager.CanPlaceRoadAt(new Vector2(x, y));
+        if (terrainManager == null) return false;
+        return terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true);
     }
 
     /// <summary>Returns a short reason why the cell is not placeable for road (for debug logs).</summary>
@@ -872,8 +873,7 @@ public class AutoRoadBuilder : MonoBehaviour
         bool isLand = c.zoneType == Zone.ZoneType.Grass || c.HasForest();
         bool isWater = c.GetCellInstanceHeight() == 0;
         if (!isLand && !isWater) return "zone not grass/water";
-        if (terrainManager != null && !terrainManager.CanPlaceRoad(x, y)) return "terrain/slope";
-        if (roadManager != null && !roadManager.CanPlaceRoadAt(new Vector2(x, y))) return "RoadManager reject";
+        if (terrainManager != null && !terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true)) return "terrain/slope";
         return "unknown";
     }
 
@@ -914,7 +914,7 @@ public class AutoRoadBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// True if (x,y) is valid for a road in direction streetDir: flat, cardinal, diagonal and corner slopes allowed; terraforming handles diagonal/corner. Water (height 0) is always suitable for bridge. Water slope cells (coastline) are rejected to keep roads 1 cell from coast.
+    /// True if (x,y) is valid for a road in direction streetDir: flat, cardinal, diagonal and corner slopes allowed; terraforming handles diagonal/corner. Water (height 0) is always suitable for bridge. Shore (water-slope) cells use the same bridge-trace gate as pathfinding (FEAT-44).
     /// </summary>
     private bool IsSuitableForRoad(int x, int y, Vector2Int streetDir)
     {
@@ -922,7 +922,7 @@ public class AutoRoadBuilder : MonoBehaviour
         if (c != null && c.GetCellInstanceHeight() == 0)
             return true;
         if (terrainManager != null && terrainManager.IsWaterSlopeCell(x, y))
-            return false;
+            return terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true);
         if (terrainManager == null) return true;
         TerrainSlopeType slope = terrainManager.GetTerrainSlopeTypeAt(x, y);
         switch (slope)
