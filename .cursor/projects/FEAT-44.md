@@ -1,9 +1,9 @@
 # FEAT-44 — Elevated bridges over water (reduced scope)
 
 > **Issue:** [FEAT-44](../../BACKLOG.md)  
-> **Status:** Spec revised (reduced scope) — implementation must be re-aligned to this document  
+> **Status:** Implementation aligned — canonical spec §13 and `roads.mdc` updated for deck-span plan; verify in Unity then close per AGENTS.md  
 > **Created:** 2026-03-30  
-> **Last updated:** 2026-03-30 (water-only scope; no dry bridges; no bridge intersections)
+> **Last updated:** 2026-03-30 (locked chord + deck-span-only `PathTerraformPlan`; docs synced)
 
 ## 1. Summary
 
@@ -17,6 +17,8 @@ Canonical geography rules remain in `.cursor/specs/isometric-geography-system.md
 
 **Prior implementation note:** An attempt that added “high bridge” logic **and** dry-cliff spans, without fixing **pre-pipeline** eligibility for shore cells, caused hard-to-debug failures. This revision **removes dry-bridge complexity** and makes **shore-inclusive tracing** a first-class requirement for water bridges (see §5.3).
 
+**Deck-span plan (implemented):** Treating the entire player polyline as one `ComputePathPlan` stroke caused **Phase-1 / cut-through** failures when the **tail** re-entered water or formed complex land shapes, even when the **bridge core** (straight axis, valid FEAT-44) was sound. Manual draw therefore uses a **locked lip→exit chord** and, when active, **`TryBuildDeckSpanOnlyWaterBridgePlan`**: no terraform height writes on the path, same deck display height assignment, same `Apply` / resolver — see geography spec §13.1 and §13.4.
+
 ## 2. Goals and Non-Goals
 
 ### 2.1 Goals
@@ -27,7 +29,7 @@ Canonical geography rules remain in `.cursor/specs/isometric-geography-system.md
 4. **Height rule:** Along every cell under the deck, `bridge_height` must be **greater than** the **bed / solid terrain height** beneath open water, and **greater than** the logical **water surface S** (or equivalent project definition) for that body so the crossing is **elevated** relative to the water column. When `bridge_height` equals the **shore land height** at the crossing (today’s low-bridge case), treat as the **existing normal bridge** sub-case—still water-only, still straight, no extra terraform requirement beyond current pipeline.
 5. **Endpoints:** Land cells at both ends of the span must have `cell height == bridge_height` (same as legacy bridge end rule). Approach rules (perpendicular approach, no turns on water/shore) remain as in existing bridge validation unless this spec explicitly relaxes them later.
 6. **Implicit tool:** No separate “bridge mode”; eligibility follows from the stroke and these rules.
-7. **Manual and AUTO** use the **same** preparation pipeline (`TryPrepareRoadPlacementPlan` family); **pathfinding walkability** must agree with water-bridge eligibility for shore/open-water steps (§5.3).
+7. **Manual and AUTO** use the **same validation surface** (`PathTerraformPlan`, Phase1, `Apply`, resolver). Manual draw **additionally** tries a **locked deck-span** plan before longest-prefix + `ComputePathPlan` (§5.2). **Pathfinding walkability** must agree with water-bridge eligibility for shore/open-water steps (§5.3).
 8. **Pathfinding and costs:** Same as normal roads once placed; **`InvalidateRoadCache()`** after changes.
 9. **Persistence:** No new bridge-specific save fields in this iteration; bridges are ordinary road data.
 10. **Minimap:** Same as ordinary roads.
@@ -63,8 +65,8 @@ Canonical geography rules remain in `.cursor/specs/isometric-geography-system.md
 
 | File / Class | Role in this context |
 |--------------|------------------------|
-| `RoadManager` | Manual draw, preview/commit, `TryPrepareRoadPlacementPlan` / longest-prefix flow, bridge path helpers (`IsWaterOrWaterSlope`, straightening, validation). |
-| `TerraformingService` / `PathTerraformPlan` | Path plan and Phase-1 checks; bridge spans must **skip** terrain modification on water/shore under deck (existing skip paths); no **new** terraform to sculpt water crossings. |
+| `RoadManager` | Manual draw, preview/commit, `TryPrepareLockedDeckSpanBridgePlacement`, `TryPrepareRoadPlacementPlanLongestValidPrefix`, `TryFlexBridgePreviewPathAcrossLipPlane`, `WalkStraightChordFromLipThroughWetToFarDry`, bridge validation helpers. |
+| `TerraformingService` / `PathTerraformPlan` | `ComputePathPlan` (default) or **`TryBuildDeckSpanOnlyWaterBridgePlan`** (locked chord); Phase-1; `Apply` skips water/shore surfaces; no bank/water sculpting for the span. |
 | `RoadPrefabResolver` | Deck height / prefab choice for water and shore cells. |
 | `AutoRoadBuilder` | Uses shared road preparation when present. |
 | `TerrainManager` | `CanPlaceRoad`, `IsWaterSlopeCell`, heightmap / shore eligibility. |
@@ -72,11 +74,13 @@ Canonical geography rules remain in `.cursor/specs/isometric-geography-system.md
 | `GridManager` | Input dispatch; keep thin per project invariants. |
 | `.cursor/specs/isometric-geography-system.md` | Water surface S, shore band, rivers/lakes—canonical reference for height comparisons. |
 
-### 4.2 Current Behavior (baseline)
+### 4.2 Current behavior (implementation snapshot)
 
-- Legacy **water bridges** use straight segments over water and **water-slope** (`IsWaterSlopeCell`) cells in `RoadManager` bridge helpers.
-- **`CanPlaceRoad`** still rejects **all** shore land for generic road placement, which **blocks** strokes before bridge logic unless gates are contextual (§5.3).
-- Cut-through / preview neighbor refresh issues may still affect manual mode; parity between `Apply` and `Revert` must be preserved when touching this flow.
+- **Water bridges** use straight segments over open water and **water-slope** cells; FEAT-44 validates deck vs **S** and bed on open water along the span.
+- **Manual locked chord:** When the cursor stays past the entry lip plane, the stroke rebuilds with a fixed **cardinal chord** through wet cells to opposite dry land at matching **instance height**; merged path = approach + chord + tail to cursor.
+- **Deck-span-only plan:** If the lock is active and a valid merged-path prefix is found, `TryBuildDeckSpanOnlyWaterBridgePlan` builds a plan with **no** `Flatten`/`DiagonalToOrthogonal` on path cells, `waterBridgeTerraformRelaxation`, and `waterBridgeDeckDisplayHeight` from existing assignment rules — preview/commit match without forcing the wet run through **cut-through** `ComputePathPlan`. Otherwise **longest valid prefix** + `ComputePathPlan` applies as before.
+- **`CanPlaceRoad`:** Ordinary roads still avoid generic placement on shore; **contextual** `allowWaterSlopeForWaterBridgeTrace` (and related gates) allow tracing for bridge-intent manual draw per §5.3. Pathfinder/AUTO must stay consistent with that contract.
+- **Phase1 / tails:** Invalid or over-constrained **tails** (e.g. second wet run, turn on water) can still shorten preview via prefix search when the deck-span path does not apply; this is expected.
 
 ## 5. Proposed Design
 
@@ -92,9 +96,10 @@ Canonical geography rules remain in `.cursor/specs/isometric-geography-system.md
 
 ### 5.2 Architecture
 
-- Keep a **single** road preparation entry path (`TryPrepareRoadPlacementPlan` and related). Add or adjust a **water-bridge-only** validation phase that annotates deck height for the span.
-- **Do not** add dry-gap or cliff-led bridge branches in this issue.
-- **GridManager:** no new responsibilities; helpers/services hold bridge rules.
+- **Single validation surface, two plan builders:** Every commit still uses **`PathTerraformPlan.TryValidatePhase1Heights`**, **`Apply`**, and **`RoadPrefabResolver.ResolveForPath`**. Plan contents are built either by **`ComputePathPlan`** (after `TryBuildFilteredPathForRoadPlan` + longest-prefix as needed) or by **`TryBuildDeckSpanOnlyWaterBridgePlan`** when **manual** locked chord + stroke checks pass. This is **not** “`ComputePathPlan` only”; it **is** still “no raw terraform without the full plan + Apply path.”
+- **Water-bridge-only** validation (FEAT-44, axis, S/bed, no intersection) runs on **filtered** / merged paths before plan construction in both branches.
+- **Do not** add dry-gap bridge branches in this issue; cliff-adjacent **water** crossings use the same water-bridge rules (deck height from lip / land-before-wet).
+- **GridManager:** no new responsibilities; bridge logic stays in `RoadManager` / `TerraformingService` / resolver.
 
 ### 5.3 Pre-pipeline gates: shores must reach the pipeline
 
@@ -115,6 +120,14 @@ Canonical geography rules remain in `.cursor/specs/isometric-geography-system.md
 5. Verify **no bridge intersection** per §5.1.
 6. Emit plan metadata for uniform deck height on span cells; commit through existing road apply path.
 
+### 5.5 Manual locked chord + deck-span-only plan (implemented)
+
+1. **Lip detection:** Candidate lips from main stroke plus horizontal/vertical arms from start so deck height is found even when `GetLine(start, cursor)` misses the lip row/column.
+2. **Chord:** `WalkStraightChordFromLipThroughWetToFarDry` — first step onto water/slope, then wet steps, then first dry land with `CanPlaceRoad` and **same instance height** as entry land.
+3. **Lock:** While the cursor remains on the waterward side of the lip plane (`dot > 0` along chosen normal), keep **chord** fixed; merge **approach + chord + tail** (`GetLine` from chord exit to cursor).
+4. **Plan:** If merged path contains the locked chord as a subsequence, try prefixes from full length down to chord end with **adjacency**, `IsBridgePathValid`, FEAT-44, no turn on water, elbow rules (relaxed for manual where coded). On success, **`TryBuildDeckSpanOnlyWaterBridgePlan(expandedCardinalPath)`**; else fall back to longest-prefix + `ComputePathPlan`.
+5. **Documentation vs code:** Older wording (“single `ComputePathPlan` pipeline”) was **ambiguous**. Canonical text now: **single `PathTerraformPlan` + Apply surface**, **optional** second plan constructor for locked water bridges (geography spec §13.1, `roads.mdc`).
+
 ## 6. Decision Log
 
 | Date | Decision | Rationale | Alternatives considered |
@@ -126,30 +139,33 @@ Canonical geography rules remain in `.cursor/specs/isometric-geography-system.md
 | 2026-03-30 | `bridge_height` from start; land ends match | Same end rule as before. | Independent end height |
 | 2026-03-30 | Shore = traceable for water bridges; gate must be contextual | Unblocks cliff-adjacent and narrow water entries. | Global `CanPlaceRoad` allow |
 | 2026-03-30 | Low bridge at shore height = sub-case of same feature | One mental model; elevated = strictly above S and bed. | Separate feature id |
+| 2026-03-30 | **`TryBuildDeckSpanOnlyWaterBridgePlan` for locked manual chord** | Full player polyline + `ComputePathPlan` produced cut-through / Phase1 failures unrelated to a valid straight bridge core; no-mutation plan + existing relaxation skips strict Phase1 when there are no height writes. | Only relax validators; terraform banks |
+| 2026-03-30 | **Longest valid prefix retained** | Failing tails (second wet run, bad elbows) still need shortening when deck-span branch does not apply. | Accept broken full-length preview |
+| 2026-03-30 | **Remove temporary `Debug.Log` / toggle instrumentation after stabilization** | Console noise and false “source of truth” in static debug cells. | Permanent verbose logging |
 
 ## 7. Implementation Plan
 
 ### Phase 1 — Water-bridge validity and planning
 
-- [ ] Implement or trim bridge validation to **water/shore only**; remove or disable **dry-gap** branches tied to this issue.
-- [ ] Enforce **straight span** and **no bridge intersection** rules.
-- [ ] Enforce `bridge_height` vs **S** and **bed** under span; preserve **normal** low-bridge case at shore height.
-- [ ] **Pre-pipeline alignment:** `CanPlaceRoad` / pathfinder / manual early exits (§5.3).
+- [x] Implement or trim bridge validation to **water/shore only**; remove or disable **dry-gap** branches tied to this issue.
+- [x] Enforce **straight span** and **no bridge intersection** rules.
+- [x] Enforce `bridge_height` vs **S** and **bed** under span; preserve **normal** low-bridge case at shore height.
+- [x] **Pre-pipeline alignment:** contextual `CanPlaceRoad` / manual gates for water-bridge trace (§5.3); pathfinder/AUTO parity still verify in QA.
 - [ ] Tests or manual QA matrix for: narrow lake, river, shore approach from higher land, multi-surface junction (per spec).
 
 ### Phase 2 — Manual preview and commit integrity
 
-- [ ] Preview/commit do not damage off-path cells; `Apply`/`Revert` neighbor waves stay matched for cut-through if still used.
+- [x] Locked deck-span + longest-prefix preview/commit paths; re-verify `Apply`/`Revert` neighbor waves if changing cut-through preview again.
 
 ### Phase 3 — AUTO and persistence
 
-- [ ] AUTO uses same water-bridge validation.
+- [ ] AUTO uses same water-bridge validation (confirm in code paths).
 - [ ] Save/load without new flags; minimap unchanged.
 
 ### Phase 4 — Spec and cleanup
 
-- [ ] Update `isometric-geography-system.md` for reduced-scope bridges.
-- [ ] Mark BACKLOG verified after user QA; migrate lessons; delete this file per AGENTS.md.
+- [x] Update `isometric-geography-system.md` §13, `roads.mdc`, `AGENTS.md` invariants/guardrails for two plan constructors + manual order.
+- [ ] Mark BACKLOG verified after user QA; migrate any remaining notes; delete this file per AGENTS.md.
 
 ## 8. Acceptance Criteria
 
@@ -169,11 +185,24 @@ Canonical geography rules remain in `.cursor/specs/isometric-geography-system.md
 | 1 | Adjacent terrain wrong after cut-through road preview drag | `PathTerraformPlan.Revert` vs `Apply` neighbor wave mismatch | Fixed with matching wave count; still verify when changing preview. |
 | 2 | Slope roads “bridge invalid” over dry terrain | **Obsolete for reduced scope** — dry bridges removed from FEAT-44. | N/A under §2.2. |
 | 3 | Manual/pathfinder blocked on shore routes | `CanPlaceRoad` rejects `IsWaterSlopeCell` before pipeline | Address via §5.3. |
+| 4 | Preview/placement failed with **Phase1** / **cut-through** on valid bridge core | Entire polyline (ida/vuelta, tail) forced `ComputePathPlan` mutations; |Δh|/cut-through rules fought **deck-over-water** semantics | **Deck-span-only plan** when chord locked: no path mutations → Phase1 relaxed path when `!PlanHasTerraformHeightMutation()`; still `Apply` + resolver. |
+| 5 | Debugging was long and layered | Failure often surfaced **downstream** (Phase1, prefix) while root cause was **stroke vs single-plan model** | Instrument **by stage** only while investigating; remove logs/toggles once behavior is stable. |
 
-## 10. Lessons Learned
+## 10. Lessons learned (product + engineering + docs)
 
-- Align bridge validation indices with **cardinal-expanded** paths used by `ComputePathPlan` / resolver.
-- **Longest-prefix** search must not silently shorten a stroke that was validated as a **single** water bridge span.
-- **`CanPlaceRoad` is not bridge-aware;** water-bridge work **must** update manual gates, A* pathfinding, and AUTO together for shore-inclusive paths.
-- **Do not mix dry-gap logic with slope roads**—out of scope; avoids the worst false “invalid bridge” cases.
-- After QA: migrate lessons to canonical docs and remove this file per AGENTS.md.
+**Product / geometry**
+
+- A **water bridge** is not just “more road cells”: it is a **straight axis**, **uniform deck height**, and **no terraform of water/banks** to invent the crossing. The **player stroke** can still be an arbitrary polyline; the implementation must **derive** a coherent crossing (locked chord + optional prefix truncation).
+- **Cliffs** matter for **lip height and sorting**, not as a separate “forbidden” bridge type when the plan carries **no terrain mutations** and FEAT-44 height rules pass.
+
+**Engineering**
+
+- **`ComputePathPlan` encodes land-road assumptions** (cut-through, flatten, adjacent expansion). Forcing a **valid bridge core** through that machinery with a **bad tail** produces **misleading Phase1 failures**. A second plan builder (**all `None`** + `waterBridgeTerraformRelaxation` + deck display height) is **orthogonal**, not a violation of “terraform validation,” as long as **`PathTerraformPlan` + Phase1 + `Apply`** still run.
+- **Longest valid prefix** remains necessary when the deck-span branch does not apply (invalid tail, unlock, non-manual modes).
+- **Project invariants** (heightmap sync, `InvalidateRoadCache`, no `GridManager` bloat, shared resolver) were **constraints that shaped the solution**, not blockers — the fix was a **new allowed path inside the same commit surface**.
+- **`CanPlaceRoad` is not globally bridge-aware;** shore/water tracing requires **contextual** allows; pathfinder and AUTO must stay **consistent** with manual.
+
+**Documentation / mental model**
+
+- The phrase **“single pipeline”** was **ambiguous**: one **code path** vs one **validation/commit surface**. The codebase now matches **one surface, two plan constructors** — docs and AGENTS must say so to avoid future “restore `ComputePathPlan` everywhere” regressions.
+- After QA: confirm BACKLOG, then **delete this project spec** per AGENTS.md once any last lines are folded into canonical spec only if still missing.

@@ -16,13 +16,20 @@ alwaysApply: false
 
 **Canonical spec:** `.cursor/specs/isometric-geography-system.md` — §9 (road prefab selection on terrain), §10 (pathfinding cost model), §13 (manual draw, interstate, bridges, shared validation).
 
-## Single validation pipeline (§13.1)
+## Shared validation surface (§13.1)
 
-All persistent road placement must go through terraform validation. **Do not** use `ComputePathPlan` alone for placement decisions.
+All persistent road placement must produce a `PathTerraformPlan`, pass Phase-1 height validation where applicable, and use `Apply` / `ResolveForPath` for commit — **do not** use `ComputePathPlan` **alone** as the only placement decision (no plan object, no Phase1, no `Apply`).
+
+**Two ways to build the plan** (both valid; see geography spec §13.1):
+
+| Plan source | When | Notes |
+|-------------|------|--------|
+| `TerraformingService.ComputePathPlan` | Default land/slope/cut-through strokes | Used inside `TryPrepareFromFilteredPathList` after filtered path checks. |
+| `TerraformingService.TryBuildDeckSpanOnlyWaterBridgePlan` | Manual draw with **locked lip→exit chord** over water/shore (FEAT-44) | All path cells `TerraformAction.None`; `waterBridgeTerraformRelaxation` + deck display height; avoids spurious cut-through / Phase1 failures on complex tails while the crossing core is valid. |
 
 | Mode | Validation method | `forbidCutThrough` |
 |------|-------------------|-------------------|
-| Manual streets / preview | `TryPrepareRoadPlacementPlanLongestValidPrefix` | `false` |
+| Manual streets / preview | `TryPrepareLockedDeckSpanBridgePlacement` **then** `TryPrepareRoadPlacementPlanLongestValidPrefix` | `false` |
 | Interstate | `TryPrepareRoadPlacementPlan` (full path) | `true` |
 | AUTO streets | `TryPrepareRoadPlacementPlanLongestValidPrefix` | `false` |
 
@@ -39,5 +46,6 @@ All persistent road placement must go through terraform validation. **Do not** u
 
 - IF modifying roads → THEN call `InvalidateRoadCache()` afterward.
 - IF placing bridge → THEN axis-aligned span only; no elbows on water/water-slope cells.
+- IF manual draw holds a **locked water chord** (FEAT-44) → THEN prefer `TryBuildDeckSpanOnlyWaterBridgePlan` when stroke checks pass so preview/commit do not depend on cut-through `ComputePathPlan` for the wet core (spec §13.1).
 - IF cut-through → THEN reject when `maxHeight - baseHeight > 1` (§13.6).
 - IF slope-climb (no consecutive |Δh| > 1) → THEN use `TerraformAction.None` + `postTerraformSlopeType` — do not flatten terrain.

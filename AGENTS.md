@@ -86,7 +86,7 @@ Keep the issue **"In progress"**. Only move to "Completed" when the user explici
 7. Shore band: land Moore-adjacent to water must have `height ≤ min(S)` of neighbor water cells (spec §2.4.1)
 8. Rivers: `H_bed` monotonically non-increasing toward exit (spec §12.4)
 9. Cliff visible faces: south + east only — N/W not instantiated (spec §5.7)
-10. Road placement: always through `TryPrepareRoadPlacementPlan` pipeline — not `ComputePathPlan` alone (spec §13.1)
+10. Road placement: always through the **road preparation family** (`TryPrepareRoadPlacementPlan`, longest-valid-prefix, and locked deck-span prep when applicable) ending in `PathTerraformPlan` + Phase1 + `Apply` — never `ComputePathPlan` **alone** without that validation surface (spec §13.1)
 11. `UrbanizationProposal`: NEVER re-enable — obsolete by design (TECH-13)
 12. Do not add specs under `.cursor/specs/` for bugs or one-off work — use `BACKLOG.md` and `.cursor/projects/`
 
@@ -94,7 +94,7 @@ Keep the issue **"In progress"**. Only move to "Completed" when the user explici
 
 - IF adding a manager reference → THEN use `[SerializeField] private` + `FindObjectOfType` fallback in `Awake`
 - IF modifying roads → THEN call `InvalidateRoadCache()` after changes
-- IF placing a road → THEN use `TryPrepareRoadPlacementPlan`, NOT `ComputePathPlan` alone
+- IF placing a road → THEN use the preparation family (`TryPrepareRoadPlacementPlan` / longest-prefix / locked deck-span branch), NOT `ComputePathPlan` alone as the sole placement gate
 - IF touching `GridManager` → THEN extract new logic to a helper class, do not grow GridManager
 - IF creating a new manager → THEN make it a MonoBehaviour scene component, never `new`
 - IF modifying `HeightMap` → THEN also write `Cell.height` (and vice versa)

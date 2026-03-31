@@ -630,20 +630,27 @@ Water assignment uses `HeightMap` after this pass: a bed cell is assigned water 
 
 ## 13. Roads: manual draw, interstate, bridges, shared validation
 
-### 13.1 Single entry point for terraform + validation
+### 13.1 Shared validation surface; two plan constructors
 
-All persistent road placement uses terraform validation through a single pipeline. Do not use terraform computation alone for placement decisions.
+All persistent road placement must end with a **`PathTerraformPlan`**, Phase-1 checks where the plan applies, and **`Apply`** / prefab resolution — the same validation *surface* as other roads. **Do not** treat `ComputePathPlan` as the only gate: callers must not commit from raw `ComputePathPlan` output without that full path.
+
+**Plan construction** may use either:
+
+1. **`ComputePathPlan`** — default for filtered strokes (slope climb, cut-through, flatten neighbors as designed). Built inside `TryPrepareFromFilteredPathList` after bridge / FEAT-44 stroke checks on the filtered path.
+2. **`TryBuildDeckSpanOnlyWaterBridgePlan`** (code name) — for **manual** draw when a **locked lip→exit chord** is active over water/shore (FEAT-44). Produces a plan with **no height mutations** (`TerraformAction.None` on path cells), `waterBridgeTerraformRelaxation`, and `waterBridgeDeckDisplayHeight` from the same assignment rules as the full pipeline. Phase-1 then skips strict cliff/water edges when there are no mutations (see `PathTerraformPlan`). This avoids false failures when the player’s **full polyline** (e.g. tail, round-trip) would otherwise force cut-through or |Δh| checks unrelated to the bridge core.
+
+Both paths converge on **`TryValidatePhase1Heights`**, **`Apply`**, and **`RoadPrefabResolver.ResolveForPath`**.
 
 | Mode | Validation | `forbidCutThrough` |
 |------|-----------|-------------------|
-| **Manual streets / preview** | Longest valid prefix | `false` |
+| **Manual streets / preview** | Locked deck-span attempt, then longest valid prefix | `false` |
 | **Interstate** | Full path | `true` |
 | **AUTO streets** | Longest prefix | `false` |
 
 ### 13.2 Manual draw pipeline
 
-1. Drag: revert terraform → A* on original heightmap → longest-valid-prefix → apply → resolve prefabs → preview.
-2. Release: revert → final prep → afford → apply → place → refresh junctions.
+1. Drag: rebuild stroke (optional **flex** + locked chord over water) → **try locked deck-span plan** → else **longest-valid-prefix** (filtered path → `ComputePathPlan`) → resolve prefabs → preview ghosts (no heightmap commit until release).
+2. Release: final prep (same order as preview) → afford → **`Apply`** → place tiles → refresh junctions.
 
 ### 13.3 Slope climb vs carve
 
@@ -654,6 +661,8 @@ When no consecutive |Δh| > 1, ascending steps use `None` + `postTerraformSlopeT
 - Bridge span must be axis-aligned; no kinked water crossings.
 - No elbows on water/water-slope; straight approach before water.
 - Coastal terrain refresh uses terrain-only child destruction so bridge tiles survive.
+- **Locked chord (manual):** when the stroke qualifies, `RoadManager` fixes a **straight cardinal chord** from lip through wet cells to far dry land at matching bridge height; preview/commit prefer a **deck-span-only** plan for that merged path so the deck sits at **display height** above water/cliffs without requiring the wet run to pass **cut-through** `ComputePathPlan`. Tail segments still obey stroke rules (e.g. no turn on water); invalid tails may be dropped by prefix search when not using the locked plan.
+- **Cliffs vs deck:** elevated deck placement is driven by **lip / land-before-wet** height and resolver rules; absence of dedicated “cliff bridge” terraform does not block the span if the plan carries no terrain mutations and FEAT-44 height checks pass.
 
 ### 13.5 Interstate pathfinding
 
