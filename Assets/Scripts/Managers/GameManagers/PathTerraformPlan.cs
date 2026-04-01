@@ -44,7 +44,7 @@ public class PathTerraformPlan
     public bool waterBridgeTerraformRelaxation;
 
     /// <summary>
-    /// FEAT-44: land endpoint height for bridge deck prefab placement (world Y / sorting). Set by <see cref="TerraformingService.ComputePathPlan"/> when <see cref="waterBridgeTerraformRelaxation"/> is true. 0 = unset (legacy placement).
+    /// FEAT-44: one uniform height for <b>all</b> bridge deck prefabs on the span (world Y / sorting). Set by <see cref="TerraformingService.TryAssignWaterBridgeDeckDisplayHeight"/> / <see cref="TerraformingService.ComputePathPlan"/> when <see cref="waterBridgeTerraformRelaxation"/> applies. 0 = unset (legacy placement).
     /// </summary>
     public int waterBridgeDeckDisplayHeight;
 
@@ -424,7 +424,10 @@ public class PathTerraformPlan
 
     /// <summary>
     /// True if any path or adjacent cell would perform a terraform height write after water/shore skips in <see cref="WritePhase1TerraformHeights"/>.
+    /// Deck-only water bridge plans return false (all <see cref="TerraformingService.TerraformAction.None"/> on path cells).
     /// </summary>
+    public bool HasTerraformHeightMutation() => PlanHasTerraformHeightMutation();
+
     bool PlanHasTerraformHeightMutation()
     {
         for (int i = 0; i < pathCells.Count; i++)

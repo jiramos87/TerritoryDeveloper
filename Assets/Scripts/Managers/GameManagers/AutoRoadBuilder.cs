@@ -124,13 +124,44 @@ public class AutoRoadBuilder : MonoBehaviour
         if (urbanCentroidService == null) urbanCentroidService = FindObjectOfType<UrbanCentroidService>();
     }
 
-    /// <summary>Shared street validation (bridges + terraform; cut-through allowed). Uses longest buildable prefix via <see cref="RoadManager.TryPrepareRoadPlacementPlanLongestValidPrefix"/> when <see cref="RoadManager"/> is present.</summary>
-    bool TryGetStreetPlacementPlan(List<Vector2> pathVec2, out List<Vector2> expandedPath, out PathTerraformPlan plan)
+    /// <summary>Shared street validation (bridges + terraform; cut-through allowed). Uses <see cref="RoadManager.TryPrepareRoadPlacementPlanLongestValidPrefix"/>; for straight cardinal segments (street projects), falls back to programmatic lip→chord deck-span.</summary>
+    /// <param name="straightBuildDirection">When set, segment must be a straight line in this cardinal direction (simulation street extension).</param>
+    bool TryGetStreetPlacementPlan(List<Vector2> pathVec2, Vector2Int? straightBuildDirection, out List<Vector2> expandedPath, out PathTerraformPlan plan)
     {
         if (roadManager != null)
         {
             int hint = 0;
-            return roadManager.TryPrepareRoadPlacementPlanLongestValidPrefix(pathVec2, new RoadPathValidationContext { forbidCutThrough = false }, false, ref hint, out expandedPath, out plan, out _);
+            var ctx = new RoadPathValidationContext { forbidCutThrough = false };
+            bool prefixOk = roadManager.TryPrepareRoadPlacementPlanLongestValidPrefix(pathVec2, ctx, false, ref hint, out expandedPath, out plan, out _);
+            bool progOk = false;
+            List<Vector2> progExpanded = null;
+            PathTerraformPlan progPlan = null;
+            if (straightBuildDirection.HasValue)
+                progOk = roadManager.TryPrepareRoadPlacementPlanWithProgrammaticDeckSpanChord(pathVec2, straightBuildDirection.Value, ctx, out progExpanded, out progPlan);
+
+            if (!prefixOk && progOk)
+            {
+                expandedPath = progExpanded;
+                plan = progPlan;
+                return true;
+            }
+            if (!prefixOk && !progOk)
+            {
+                expandedPath = null;
+                plan = null;
+                return false;
+            }
+            if (prefixOk && !progOk)
+                return true;
+
+            bool strokeWet = roadManager.StrokeHasWaterOrWaterSlopeCells(pathVec2);
+            bool preferProg = strokeWet || (progExpanded != null && expandedPath != null && progExpanded.Count > expandedPath.Count);
+            if (preferProg)
+            {
+                expandedPath = progExpanded;
+                plan = progPlan;
+            }
+            return true;
         }
         if (pathVec2 == null || pathVec2.Count == 0)
         {
@@ -228,7 +259,10 @@ public class AutoRoadBuilder : MonoBehaviour
             gridManager.InvalidateRoadCache();
     }
 
-    /// <summary>Builds a complete street segment in one tick using the path pipeline. Returns placed count and adds to CompletedSegmentsThisTick and PendingZoningSegments.</summary>
+    /// <summary>
+    /// Builds a complete street segment in one tick using the path pipeline. Strokes that cross water require a firm dry exit cell, enough remaining tile budget
+    /// for every new road tile on the resolved path, and all-or-nothing placement (single lump <see cref="GrowthBudgetManager.TrySpend"/>); otherwise the plan is reverted and nothing is placed.
+    /// </summary>
     private int BuildFullSegmentInOneTick(StreetProject p, ref int budgetRemaining, HashSet<Vector2Int> roadSet)
     {
         Vector2Int origin = p.tip;
@@ -257,13 +291,19 @@ public class AutoRoadBuilder : MonoBehaviour
         for (int i = 0; i < path.Count; i++)
             pathVec2.Add(new Vector2(path[i].x, path[i].y));
 
+        if (roadManager != null && roadManager.TryExtendCardinalStreetPathWithBridgeChord(pathVec2, dir))
+        {
+            for (int i = path.Count; i < pathVec2.Count; i++)
+                path.Add(new Vector2Int((int)pathVec2[i].x, (int)pathVec2[i].y));
+        }
+
         const int maxShortenAttempts = 3;
         int shortenCount = 0;
         List<Vector2> expandedPath = null;
         PathTerraformPlan plan = null;
         while (path.Count >= 1 && shortenCount < maxShortenAttempts)
         {
-            if (TryGetStreetPlacementPlan(pathVec2, out expandedPath, out plan) && plan != null && plan.isValid)
+            if (TryGetStreetPlacementPlan(pathVec2, dir, out expandedPath, out plan) && plan != null && plan.isValid)
                 break;
             if (path.Count <= 1) break;
             path.RemoveAt(path.Count - 1);
@@ -288,7 +328,7 @@ public class AutoRoadBuilder : MonoBehaviour
                 }
                 if (path.Count > 0)
                 {
-                    if (!TryGetStreetPlacementPlan(pathVec2, out expandedPath, out plan) || plan == null || !plan.isValid)
+                    if (!TryGetStreetPlacementPlan(pathVec2, dir, out expandedPath, out plan) || plan == null || !plan.isValid)
                     {
                         path.Clear();
                         pathVec2.Clear();
@@ -300,23 +340,107 @@ public class AutoRoadBuilder : MonoBehaviour
         if (path.Count == 0 || plan == null || !plan.isValid || expandedPath == null) return 0;
 
         var heightMap = terrainManager != null ? terrainManager.GetHeightMap() : null;
+
+        bool waterCrossing = roadManager != null && roadManager.StrokeHasWaterOrWaterSlopeCells(expandedPath);
+        bool atomicWaterBridge = waterCrossing;
+        if (atomicWaterBridge && (roadManager == null || !roadManager.StrokeLastCellIsFirmDryLand(expandedPath)))
+            return 0;
+
+        List<RoadPrefabResolver.ResolvedRoadTile> resolvedPreApply = null;
+        if (atomicWaterBridge && roadManager != null && !plan.HasTerraformHeightMutation())
+            resolvedPreApply = roadManager.ResolvePathForRoads(expandedPath, plan);
+
+        int CountNonRoadTilesOnResolved(List<RoadPrefabResolver.ResolvedRoadTile> r)
+        {
+            if (r == null || gridManager == null) return 0;
+            int n = 0;
+            for (int i = 0; i < r.Count; i++)
+            {
+                Cell c = gridManager.GetCell(r[i].gridPos.x, r[i].gridPos.y);
+                if (c != null && c.zoneType != Zone.ZoneType.Road)
+                    n++;
+            }
+            return n;
+        }
+
+        int CountNonRoadTilesOnExpandedPath()
+        {
+            int n = 0;
+            for (int i = 0; i < expandedPath.Count; i++)
+            {
+                int x = (int)expandedPath[i].x, y = (int)expandedPath[i].y;
+                Cell c = gridManager.GetCell(x, y);
+                if (c != null && c.zoneType != Zone.ZoneType.Road)
+                    n++;
+            }
+            return n;
+        }
+
+        if (atomicWaterBridge && growthBudgetManager != null)
+        {
+            int needPre = resolvedPreApply != null ? CountNonRoadTilesOnResolved(resolvedPreApply) : CountNonRoadTilesOnExpandedPath();
+            if (needPre > budgetRemaining)
+                return 0;
+        }
+
         if (heightMap != null && !plan.Apply(heightMap, terrainManager))
             return 0;
 
-        var resolved = roadManager.ResolvePathForRoads(expandedPath, plan);
+        var resolved = roadManager != null ? roadManager.ResolvePathForRoads(expandedPath, plan) : new List<RoadPrefabResolver.ResolvedRoadTile>();
+        if (resolved.Count == 0)
+            return 0;
+
         int placed = 0;
-        for (int i = 0; i < resolved.Count && budgetRemaining > 0; i++)
+        if (atomicWaterBridge)
         {
-            if (!growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile)) break;
-            if (PlaceRoadTileInBatch(resolved[i]))
+            int tilesToPlace = CountNonRoadTilesOnResolved(resolved);
+            if (tilesToPlace > budgetRemaining)
             {
+                if (heightMap != null)
+                    plan.Revert(heightMap, terrainManager);
+                return 0;
+            }
+
+            int lumpCost = tilesToPlace * RoadManager.RoadCostPerTile;
+            if (tilesToPlace > 0)
+            {
+                if (growthBudgetManager == null || !growthBudgetManager.TrySpend(GrowthCategory.Roads, lumpCost))
+                {
+                    if (heightMap != null)
+                        plan.Revert(heightMap, terrainManager);
+                    return 0;
+                }
+                budgetRemaining -= tilesToPlace;
+            }
+
+            for (int i = 0; i < resolved.Count; i++)
+            {
+                Cell c = gridManager.GetCell(resolved[i].gridPos.x, resolved[i].gridPos.y);
+                if (c != null && c.zoneType == Zone.ZoneType.Road)
+                    continue;
+                PlaceRoadTileInBatch(resolved[i]);
                 placed++;
-                budgetRemaining--;
                 roadSet.Add(resolved[i].gridPos);
             }
-        }
 
-        if (placed == 0) return 0;
+            if (placed == 0)
+                return 0;
+        }
+        else
+        {
+            for (int i = 0; i < resolved.Count && budgetRemaining > 0; i++)
+            {
+                if (!growthBudgetManager.TrySpend(GrowthCategory.Roads, RoadManager.RoadCostPerTile)) break;
+                if (PlaceRoadTileInBatch(resolved[i]))
+                {
+                    placed++;
+                    budgetRemaining--;
+                    roadSet.Add(resolved[i].gridPos);
+                }
+            }
+
+            if (placed == 0) return 0;
+        }
 
         UrbanRing ring = urbanCentroidService != null ? urbanCentroidService.GetUrbanRing(new Vector2(origin.x, origin.y)) : UrbanRing.Mid;
         var completed = new CompletedSegment { origin = origin, dir = dir, length = placed, ring = ring };
@@ -1016,7 +1140,7 @@ public class AutoRoadBuilder : MonoBehaviour
         PathTerraformPlan plan = null;
         while (path.Count > 1)
         {
-            if (TryGetStreetPlacementPlan(pathVec2, out expandedPath, out plan) && plan != null && plan.isValid)
+            if (TryGetStreetPlacementPlan(pathVec2, null, out expandedPath, out plan) && plan != null && plan.isValid)
                 break;
             path.RemoveAt(path.Count - 1);
             pathVec2.RemoveAt(pathVec2.Count - 1);
@@ -1116,7 +1240,7 @@ public class AutoRoadBuilder : MonoBehaviour
         PathTerraformPlan plan = null;
         while (path.Count > 1)
         {
-            if (TryGetStreetPlacementPlan(pathVec2, out expandedPath, out plan) && plan != null && plan.isValid)
+            if (TryGetStreetPlacementPlan(pathVec2, null, out expandedPath, out plan) && plan != null && plan.isValid)
                 break;
             path.RemoveAt(path.Count - 1);
             pathVec2.RemoveAt(pathVec2.Count - 1);

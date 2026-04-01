@@ -323,6 +323,266 @@ public class RoadManager : MonoBehaviour, IRoadManager
         return false;
     }
 
+    /// <summary>
+    /// True if the last cell of the stroke is dry land (not open water / water-slope) with positive instance height — expected exit for a completed water bridge.
+    /// </summary>
+    public bool StrokeLastCellIsFirmDryLand(IList<Vector2> stroke)
+    {
+        if (stroke == null || stroke.Count == 0 || terrainManager == null || gridManager == null)
+            return false;
+        HeightMap heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null)
+            return false;
+        int x = (int)stroke[stroke.Count - 1].x;
+        int y = (int)stroke[stroke.Count - 1].y;
+        if (!heightMap.IsValidPosition(x, y))
+            return false;
+        if (IsWaterOrWaterSlope(x, y, heightMap))
+            return false;
+        if (terrainManager.IsRegisteredOpenWaterAt(x, y))
+            return false;
+        Cell c = gridManager.GetCell(x, y);
+        return c != null && c.GetCellInstanceHeight() > 0;
+    }
+
+    /// <summary>
+    /// True if any grid cell on the stroke is open water, water-slope (shore), or otherwise treated as wet for bridge tracing (FEAT-44; high-deck first span may sit on shore).
+    /// </summary>
+    public bool StrokeHasWaterOrWaterSlopeCells(IList<Vector2> stroke)
+    {
+        if (stroke == null || stroke.Count == 0 || terrainManager == null)
+            return false;
+        HeightMap heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null)
+            return false;
+        for (int i = 0; i < stroke.Count; i++)
+        {
+            int x = (int)stroke[i].x, y = (int)stroke[i].y;
+            if (IsWaterOrWaterSlope(x, y, heightMap))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// If the last cell is dry land and the next step along <paramref name="dir"/> is water or water-slope (shore), appends the FEAT-44 chord from that lip through wet to matching far dry land
+    /// (<see cref="WalkStraightChordFromLipThroughWetToFarDry"/>). Used by <see cref="AutoRoadBuilder"/> so simulation strokes include the crossing before planning.
+    /// </summary>
+    public bool TryExtendCardinalStreetPathWithBridgeChord(List<Vector2> pathVec2, Vector2Int dir)
+    {
+        if (pathVec2 == null || pathVec2.Count < 1 || terraformingService == null || terrainManager == null || gridManager == null)
+            return false;
+        if (dir.x == 0 && dir.y == 0)
+            return false;
+        if (Mathf.Abs(dir.x) + Mathf.Abs(dir.y) != 1)
+            return false;
+
+        HeightMap heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null)
+            return false;
+
+        for (int i = 1; i < pathVec2.Count; i++)
+        {
+            int px = (int)pathVec2[i - 1].x, py = (int)pathVec2[i - 1].y;
+            int cx = (int)pathVec2[i].x, cy = (int)pathVec2[i].y;
+            if (cx - px != dir.x || cy - py != dir.y)
+                return false;
+        }
+
+        int lx = (int)pathVec2[pathVec2.Count - 1].x;
+        int ly = (int)pathVec2[pathVec2.Count - 1].y;
+        int nx = lx + dir.x;
+        int ny = ly + dir.y;
+        if (!heightMap.IsValidPosition(nx, ny) || !IsWaterOrWaterSlope(nx, ny, heightMap))
+            return false;
+
+        Cell lipCell = gridManager.GetCell(lx, ly);
+        if (lipCell == null)
+            return false;
+        int lipH = lipCell.GetCellInstanceHeight();
+        if (lipH <= 0)
+            return false;
+
+        WaterManager wm = ResolveWaterManager();
+        if (!CellQualifiesForDeckDisplayLipRelaxedRoadManager(lx, ly, lipH, heightMap, wm))
+            return false;
+
+        var normalsScratch = new List<Vector2Int>(4);
+        CollectRelaxedLipBridgeNormalsRoadManager(lx, ly, lipH, heightMap, wm, normalsScratch);
+        bool dirOk = false;
+        for (int n = 0; n < normalsScratch.Count; n++)
+        {
+            if (normalsScratch[n].x == dir.x && normalsScratch[n].y == dir.y)
+            {
+                dirOk = true;
+                break;
+            }
+        }
+        if (!dirOk)
+            return false;
+
+        List<Vector2> chord = WalkStraightChordFromLipThroughWetToFarDry(lx, ly, dir.x, dir.y, lipH, heightMap);
+        if (chord == null || chord.Count < 2)
+            return false;
+
+        int before = pathVec2.Count;
+        AppendPathSkipDuplicateJoin(pathVec2, chord);
+        return pathVec2.Count > before;
+    }
+
+    /// <summary>
+    /// When <see cref="TryPrepareRoadPlacementPlanLongestValidPrefix"/> fails on a straight cardinal stroke (e.g. simulation street segment), rebuilds the wet run using
+    /// the same lip→chord walk as manual preview (<see cref="WalkStraightChordFromLipThroughWetToFarDry"/>) and prepares a deck-span-only plan via <see cref="TryPrepareDeckSpanPlanFromAdjacentStroke"/>.
+    /// </summary>
+    public bool TryPrepareRoadPlacementPlanWithProgrammaticDeckSpanChord(List<Vector2> straightCardinalPath, Vector2Int segmentDir, RoadPathValidationContext ctx, out List<Vector2> expandedPath, out PathTerraformPlan plan)
+    {
+        expandedPath = null;
+        plan = null;
+        if (straightCardinalPath == null || straightCardinalPath.Count < 2 || terraformingService == null || terrainManager == null || gridManager == null)
+            return false;
+        if (segmentDir.x == 0 && segmentDir.y == 0)
+            return false;
+        if (Mathf.Abs(segmentDir.x) + Mathf.Abs(segmentDir.y) != 1)
+            return false;
+
+        HeightMap heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null)
+            return false;
+
+        for (int i = 1; i < straightCardinalPath.Count; i++)
+        {
+            int px = (int)straightCardinalPath[i - 1].x, py = (int)straightCardinalPath[i - 1].y;
+            int cx = (int)straightCardinalPath[i].x, cy = (int)straightCardinalPath[i].y;
+            if (cx - px != segmentDir.x || cy - py != segmentDir.y)
+                return false;
+        }
+
+        int wetIndex = -1;
+        for (int i = 1; i < straightCardinalPath.Count; i++)
+        {
+            int cx = (int)straightCardinalPath[i].x, cy = (int)straightCardinalPath[i].y;
+            if (IsWaterOrWaterSlope(cx, cy, heightMap))
+            {
+                wetIndex = i;
+                break;
+            }
+        }
+        if (wetIndex < 1)
+            return false;
+
+        int lx = (int)straightCardinalPath[wetIndex - 1].x;
+        int ly = (int)straightCardinalPath[wetIndex - 1].y;
+        Cell lipCell = gridManager.GetCell(lx, ly);
+        if (lipCell == null)
+            return false;
+        int lipH = lipCell.GetCellInstanceHeight();
+        if (lipH <= 0)
+            return false;
+
+        WaterManager wm = ResolveWaterManager();
+        if (!CellQualifiesForDeckDisplayLipRelaxedRoadManager(lx, ly, lipH, heightMap, wm))
+            return false;
+
+        var normalsScratch = new List<Vector2Int>(4);
+        CollectRelaxedLipBridgeNormalsRoadManager(lx, ly, lipH, heightMap, wm, normalsScratch);
+        bool dirOk = false;
+        for (int n = 0; n < normalsScratch.Count; n++)
+        {
+            if (normalsScratch[n].x == segmentDir.x && normalsScratch[n].y == segmentDir.y)
+            {
+                dirOk = true;
+                break;
+            }
+        }
+        if (!dirOk)
+            return false;
+
+        List<Vector2> chord = WalkStraightChordFromLipThroughWetToFarDry(lx, ly, segmentDir.x, segmentDir.y, lipH, heightMap);
+        if (chord == null || chord.Count < 2)
+            return false;
+
+        var merged = new List<Vector2>(straightCardinalPath.Count + chord.Count);
+        for (int i = 0; i < wetIndex; i++)
+            merged.Add(straightCardinalPath[i]);
+        AppendPathSkipDuplicateJoin(merged, chord);
+        AppendStraightSuffixAlongProgrammaticChord(merged, straightCardinalPath, segmentDir);
+
+        int minPrefixLen = wetIndex + chord.Count - 1;
+        if (minPrefixLen < 2 || merged.Count < minPrefixLen)
+            return false;
+
+        for (int k = merged.Count; k >= minPrefixLen; k--)
+        {
+            List<Vector2> prefix = SubListCopy(merged, k);
+            if (TryPrepareDeckSpanPlanFromAdjacentStroke(prefix, ctx, out expandedPath, out plan))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Validates an adjacent stroke for bridge rules and builds a deck-span-only terraform plan (shared by locked manual chord and programmatic auto chord).
+    /// </summary>
+    bool TryPrepareDeckSpanPlanFromAdjacentStroke(List<Vector2> adjacentPath, RoadPathValidationContext ctx, out List<Vector2> expandedPath, out PathTerraformPlan plan)
+    {
+        expandedPath = null;
+        plan = null;
+        if (adjacentPath == null || adjacentPath.Count < 2 || terraformingService == null || terrainManager == null)
+            return false;
+
+        HeightMap heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null)
+            return false;
+
+        if (!IsPathFullyAdjacent(adjacentPath))
+            return false;
+        if (!IsBridgePathValid(adjacentPath, heightMap))
+            return false;
+        if (!ValidateFeat44WaterBridgeRules(adjacentPath, heightMap, postUserWarnings: false))
+            return false;
+        if (HasTurnOnWaterOrCoast(adjacentPath, heightMap))
+            return false;
+        if (HasElbowTooCloseToWater(adjacentPath, heightMap, relaxElbowNearWaterForWaterBridge: !ctx.forbidCutThrough))
+            return false;
+
+        expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(adjacentPath);
+        if (!terraformingService.TryBuildDeckSpanOnlyWaterBridgePlan(expandedPath, out plan))
+            return false;
+        if (!ValidateTerraformPlanWithContext(plan, ctx))
+            return false;
+        if (!plan.TryValidatePhase1Heights(heightMap, terrainManager, null, null))
+            return false;
+
+        return true;
+    }
+
+    static void AppendStraightSuffixAlongProgrammaticChord(List<Vector2> merged, List<Vector2> straightPath, Vector2Int segmentDir)
+    {
+        if (merged == null || straightPath == null || merged.Count == 0 || straightPath.Count == 0)
+            return;
+        Vector2 end = merged[merged.Count - 1];
+        int idx = -1;
+        for (int i = 0; i < straightPath.Count; i++)
+        {
+            if ((int)straightPath[i].x == (int)end.x && (int)straightPath[i].y == (int)end.y)
+            {
+                idx = i;
+                break;
+            }
+        }
+        if (idx < 0 || idx >= straightPath.Count - 1)
+            return;
+        for (int i = idx + 1; i < straightPath.Count; i++)
+        {
+            Vector2 prev = merged[merged.Count - 1];
+            Vector2 cur = straightPath[i];
+            if ((int)cur.x != (int)prev.x + segmentDir.x || (int)cur.y != (int)prev.y + segmentDir.y)
+                break;
+            merged.Add(cur);
+        }
+    }
+
     static List<Vector2> SubListCopy(List<Vector2> full, int count)
     {
         var p = new List<Vector2>(count);
@@ -371,10 +631,6 @@ public class RoadManager : MonoBehaviour, IRoadManager
         if (mergedPath == null || mergedPath.Count < 2 || terraformingService == null || terrainManager == null || gridManager == null)
             return false;
 
-        HeightMap heightMap = terrainManager.GetHeightMap();
-        if (heightMap == null)
-            return false;
-
         int chordEnd = FindLockedChordEndIndexInMergedPath(mergedPath, lockedBridgeChord);
         if (chordEnd < 0)
             return false;
@@ -384,26 +640,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
         for (int k = mergedPath.Count; k >= minLen; k--)
         {
             List<Vector2> prefix = SubListCopy(mergedPath, k);
-            if (!IsPathFullyAdjacent(prefix))
-                continue;
-            if (!IsBridgePathValid(prefix, heightMap))
-                continue;
-            if (!ValidateFeat44WaterBridgeRules(prefix, heightMap, postUserWarnings: false))
-                continue;
-            if (HasTurnOnWaterOrCoast(prefix, heightMap))
-                continue;
-            if (HasElbowTooCloseToWater(prefix, heightMap, relaxElbowNearWaterForWaterBridge: !ctx.forbidCutThrough))
-                continue;
-
-            expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(prefix);
-            if (!terraformingService.TryBuildDeckSpanOnlyWaterBridgePlan(expandedPath, out plan))
-                continue;
-            if (!ValidateTerraformPlanWithContext(plan, ctx))
-                continue;
-            if (!plan.TryValidatePhase1Heights(heightMap, terrainManager, null, null))
-                continue;
-
-            return true;
+            if (TryPrepareDeckSpanPlanFromAdjacentStroke(prefix, ctx, out expandedPath, out plan))
+                return true;
         }
 
         return false;

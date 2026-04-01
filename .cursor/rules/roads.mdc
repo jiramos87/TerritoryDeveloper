@@ -31,7 +31,7 @@ All persistent road placement must produce a `PathTerraformPlan`, pass Phase-1 h
 |------|-------------------|-------------------|
 | Manual streets / preview | `TryPrepareLockedDeckSpanBridgePlacement` **then** `TryPrepareRoadPlacementPlanLongestValidPrefix` | `false` |
 | Interstate | `TryPrepareRoadPlacementPlan` (full path) | `true` |
-| AUTO streets | `TryPrepareRoadPlacementPlanLongestValidPrefix` | `false` |
+| AUTO streets | Same as above; water crossings also require full segment budget in one tick and firm dry exit — `AutoRoadBuilder` reverts the plan if it cannot place every tile (no half bridges). Uniform `waterBridgeDeckDisplayHeight` for all deck prefabs on the span. | `false` |
 
 ## Resolver rules (§13.7)
 

@@ -909,61 +909,89 @@ public class TerraformingService : MonoBehaviour
     }
 
     /// <summary>
-    /// FEAT-44: single wet run with dry land before/after — deck display height matches land-before <see cref="Cell.GetCellInstanceHeight"/>.
-    /// High cliff lip (relaxed): dry path cell with a cardinal neighbor strictly lower that is open water, water-slope, or dry land touching registered water
-    /// (preview deck on last land tile before wet; aligns with <see cref="RoadPrefabResolver"/> lip tests).
+    /// FEAT-44: one <see cref="PathTerraformPlan.waterBridgeDeckDisplayHeight"/> for the whole span so every bridge deck prefab matches. Prefers the
+    /// <b>exit</b> dry cell after the wet run (mesa / far bank); valid bridges require matching endpoint instance heights, so entry and exit agree when FEAT-44 passes.
     /// </summary>
     void TryAssignWaterBridgeDeckDisplayHeight(PathTerraformPlan plan, IList<Vector2> path, HeightMap heightMap)
     {
         if (plan == null || path == null || path.Count < 1 || heightMap == null || gridManager == null || terrainManager == null)
             return;
 
-        if (path.Count >= 3)
+        int runs = 0;
+        int rs = -1, re = -1;
+        bool inRun = false;
+        for (int i = 0; i < path.Count; i++)
         {
-            int runs = 0;
-            int rs = -1, re = -1;
-            bool inRun = false;
-            for (int i = 0; i < path.Count; i++)
+            int x = (int)path[i].x;
+            int y = (int)path[i].y;
+            bool w = IsWaterOrWaterSlopeForBridgeDeckHeight(x, y, heightMap);
+            if (w)
             {
-                int x = (int)path[i].x;
-                int y = (int)path[i].y;
-                bool w = IsWaterOrWaterSlopeForBridgeDeckHeight(x, y, heightMap);
-                if (w)
+                if (!inRun)
                 {
-                    if (!inRun)
-                    {
-                        runs++;
-                        rs = i;
-                        inRun = true;
-                    }
-                    re = i;
+                    runs++;
+                    rs = i;
+                    inRun = true;
                 }
-                else
-                    inRun = false;
+                re = i;
             }
+            else
+                inRun = false;
+        }
 
-            if (runs == 1 && rs >= 1 && re < path.Count - 1)
+        if (runs == 1 && rs >= 1 && re < path.Count - 1)
+        {
+            int bx = (int)path[rs - 1].x, by = (int)path[rs - 1].y;
+            int ax = (int)path[re + 1].x, ay = (int)path[re + 1].y;
+            if (!IsWaterOrWaterSlopeForBridgeDeckHeight(bx, by, heightMap) && !IsWaterOrWaterSlopeForBridgeDeckHeight(ax, ay, heightMap))
             {
-                int bx = (int)path[rs - 1].x;
-                int by = (int)path[rs - 1].y;
-                if (!IsWaterOrWaterSlopeForBridgeDeckHeight(bx, by, heightMap))
+                Cell landBefore = gridManager.GetCell(bx, by);
+                Cell landExit = gridManager.GetCell(ax, ay);
+                if (landBefore != null && landExit != null)
                 {
-                    Cell landBefore = gridManager.GetCell(bx, by);
-                    if (landBefore != null)
+                    int hIn = landBefore.GetCellInstanceHeight();
+                    int hOut = landExit.GetCellInstanceHeight();
+                    int deckH = hOut > 0 ? hOut : hIn;
+                    if (deckH <= 0)
+                        deckH = hIn > 0 ? hIn : hOut;
+                    if (deckH > 0)
                     {
-                        int dh = landBefore.GetCellInstanceHeight();
-                        if (dh > 0)
-                        {
-                            plan.waterBridgeDeckDisplayHeight = dh;
-                            return;
-                        }
+                        plan.waterBridgeDeckDisplayHeight = deckH;
+                        return;
                     }
                 }
             }
         }
 
-        WaterManager wm = terrainManager.waterManager != null ? terrainManager.waterManager : FindObjectOfType<WaterManager>();
+        if (runs == 1 && re >= 0 && re < path.Count - 1)
+        {
+            int ax = (int)path[re + 1].x, ay = (int)path[re + 1].y;
+            if (!IsWaterOrWaterSlopeForBridgeDeckHeight(ax, ay, heightMap))
+            {
+                Cell landExit = gridManager.GetCell(ax, ay);
+                if (landExit != null && landExit.GetCellInstanceHeight() > 0)
+                {
+                    plan.waterBridgeDeckDisplayHeight = landExit.GetCellInstanceHeight();
+                    return;
+                }
+            }
+        }
 
+        if (runs == 1 && rs >= 1)
+        {
+            int bx = (int)path[rs - 1].x, by = (int)path[rs - 1].y;
+            if (!IsWaterOrWaterSlopeForBridgeDeckHeight(bx, by, heightMap))
+            {
+                Cell landBefore = gridManager.GetCell(bx, by);
+                if (landBefore != null && landBefore.GetCellInstanceHeight() > 0)
+                {
+                    plan.waterBridgeDeckDisplayHeight = landBefore.GetCellInstanceHeight();
+                    return;
+                }
+            }
+        }
+
+        WaterManager wm = terrainManager.waterManager != null ? terrainManager.waterManager : FindObjectOfType<WaterManager>();
         int best = 0;
         for (int i = 0; i < path.Count; i++)
         {

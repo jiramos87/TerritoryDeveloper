@@ -7,12 +7,7 @@
 
 ## In Progress
 
-- [ ] **FEAT-44** — High bridges: cross between cliff banks, variable terrain height, uniform deck height, bridge crossing path analysis, preview and commit behavior, 
-  - Type: feature
-  - Spec: `.cursor/specs/isometric-geography-system.md` (rivers, cliffs, road/bridge placement — extend Notes here while **FEAT-44** is open; no parallel spec file)
-  - Notes: **Goal:** Allow **elevated** road segments (or a dedicated bridge mode) with enough **vertical clearance** to connect land across terrain banks with **cliffs** or steep drops, so crossings are not limited to **flat shore** alignments.
-  - Acceptance: Player or AUTO can place a valid road crossing that spans a segment between cliff-separated banks; sorting and pathfinding treat the bridge consistently with geography rules.
-  - Depends on: none
+_(None — see High Priority.)_
 
 ## High Priority
 
@@ -299,6 +294,12 @@
 ---
 
 ## Completed (last 30 days)
+
+- [x] **FEAT-44** — High-deck water bridges: cliff banks, uniform deck height, manual + AUTO placement (2026-03-30)
+  - Type: feature
+  - Files: `RoadManager.cs` (`TryPrepareDeckSpanPlanFromAdjacentStroke`, `TryPrepareLockedDeckSpanBridgePlacement`, `TryPrepareRoadPlacementPlanWithProgrammaticDeckSpanChord`, `TryExtendCardinalStreetPathWithBridgeChord`, `StrokeHasWaterOrWaterSlopeCells`, `StrokeLastCellIsFirmDryLand`, FEAT-44 validation / chord walk), `TerraformingService.cs` (`TryBuildDeckSpanOnlyWaterBridgePlan`, `TryAssignWaterBridgeDeckDisplayHeight`), `AutoRoadBuilder.cs` (`TryGetStreetPlacementPlan`, `BuildFullSegmentInOneTick` — atomic water-bridge completion), `PathTerraformPlan.cs` (`HasTerraformHeightMutation`, deck display height docs), `RoadPrefabResolver.cs` (bridge deck resolution); rules/spec: `.cursor/rules/roads.mdc`, `.cursor/specs/isometric-geography-system.md` §13
+  - Spec: `.cursor/specs/isometric-geography-system.md` §13 (bridges, shared validation, AUTO behavior)
+  - Notes: **Completed (verified per user):** **Manual:** locked lip→chord preview uses a **deck-span-only** plan (`TerraformAction.None`, `TryBuildDeckSpanOnlyWaterBridgePlan`) so valid crossings are not blocked by cut-through / Phase-1 on complex tails; commit matches preview via shared `TryPrepareDeckSpanPlanFromAdjacentStroke`. **AUTO:** extends cardinal strokes with the same `WalkStraightChordFromLipThroughWetToFarDry` when the next step is wet/shore; runs longest-prefix plus programmatic deck-span and **prefers** deck-span when the stroke is wet or yields a longer expanded path. **AUTO water crossings** are **all-or-nothing in one tick**: require a **firm dry exit**, enough remaining tile budget for every new tile, a **single lump** `TrySpend` for the bridge, otherwise **`Revert`** — no half bridges. **Uniform deck:** one `waterBridgeDeckDisplayHeight` for all bridge deck prefabs on the span; assignment **prefers the exit (mesa) dry cell** after the wet run, then entry, then legacy lip fallback. **Description (issue):** Elevated road / bridge crossings across cliff-separated banks and variable terrain with correct clearance, FEAT-44 path rules, and consistent sorting/pathfinding per geography spec.
 
 - [x] **BUG-50** — River–river junction: shore Moore topology, junction post-pass diagonal SlopeWater, upper-brink cliff water stacks + isometric anchor at shore grid (2026-03-28)
   - Type: bug / polish

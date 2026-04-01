@@ -37,6 +37,7 @@ void Awake() {
 
 ## Debug / temporary diagnostics
 - For one-off cell inspection, prefer `if (x == debugX && y == debugY) Debug.Log(...)` with local constants — not a new logging framework or global toggles.
+- If a temporary `Debug.Log` is needed, prefix it with `[DEBUG]` to make it easier to find.
 - Remove or gate temporary `Debug.Log` before merging if it would spam the console.
 
 Anti-patterns: see `AGENTS.md`.

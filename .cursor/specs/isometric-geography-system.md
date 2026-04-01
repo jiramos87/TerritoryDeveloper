@@ -645,7 +645,7 @@ Both paths converge on **`TryValidatePhase1Heights`**, **`Apply`**, and **`RoadP
 |------|-----------|-------------------|
 | **Manual streets / preview** | Locked deck-span attempt, then longest valid prefix | `false` |
 | **Interstate** | Full path | `true` |
-| **AUTO streets** | Longest prefix | `false` |
+| **AUTO streets** | Extend cardinal stroke when the next cell is water/slope; longest prefix plus programmatic deck-span; prefer deck-span when the stroke is wet or longer. Water crossings: all tiles placed in one tick or the plan is reverted (no partial bridges); firm dry exit required. Uniform `waterBridgeDeckDisplayHeight` for the whole deck span. | `false` |
 
 ### 13.2 Manual draw pipeline
 
@@ -662,6 +662,7 @@ When no consecutive |Δh| > 1, ascending steps use `None` + `postTerraformSlopeT
 - No elbows on water/water-slope; straight approach before water.
 - Coastal terrain refresh uses terrain-only child destruction so bridge tiles survive.
 - **Locked chord (manual):** when the stroke qualifies, `RoadManager` fixes a **straight cardinal chord** from lip through wet cells to far dry land at matching bridge height; preview/commit prefer a **deck-span-only** plan for that merged path so the deck sits at **display height** above water/cliffs without requiring the wet run to pass **cut-through** `ComputePathPlan`. Tail segments still obey stroke rules (e.g. no turn on water); invalid tails may be dropped by prefix search when not using the locked plan.
+- **Programmatic chord (AUTO street segment):** `TryExtendCardinalStreetPathWithBridgeChord` appends the same `WalkStraightChordFromLipThroughWetToFarDry` span when the stroke ends on dry land and the next cardinal step is water or water-slope (shore), so planning sees the full crossing (high-deck first deck may sit on shore). `AutoRoadBuilder` then runs longest-prefix and programmatic deck-span; it **prefers** the deck-span result when the stroke contains wet/shore cells or it yields a longer expanded path, so a valid land-only prefix does not block the bridge. Curved A* connectors omit the extension (no fixed segment direction).
 - **Cliffs vs deck:** elevated deck placement is driven by **lip / land-before-wet** height and resolver rules; absence of dedicated “cliff bridge” terraform does not block the span if the plan carries no terrain mutations and FEAT-44 height checks pass.
 
 ### 13.5 Interstate pathfinding
