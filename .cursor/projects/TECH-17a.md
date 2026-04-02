@@ -1,9 +1,9 @@
 # TECH-17a — MCP Server Bootstrap + Markdown Parser + First Two Tools
 
 > **Issue:** [TECH-17](../../BACKLOG.md)
-> **Status:** Final
+> **Status:** Final (historical — implementation shipped; see **§11** and [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) for current truth)
 > **Created:** 2026-04-02
-> **Last updated:** 2026-04-02
+> **Last updated:** 2026-04-02 (§9–11 retrospective)
 > **Sequence:** Part 1 of 3 (TECH-17a → TECH-17b → TECH-17c)
 
 ## 1. Summary
@@ -36,7 +36,7 @@ This reduces implementation drift and mistaken assumptions about terminology whi
 2. **`spec_section` and `max_chars` truncation** — TECH-17b (semantic tools).
 3. **Fuzzy matching, spec-key aliases, in-memory parse cache, and richer error UX** — TECH-17c.
 4. PostgreSQL, database schema, or any persistence — those are TECH-19.
-5. Tests beyond manual smoke-testing — unit tests are TECH-17c.
+5. ~~Tests beyond manual smoke-testing — unit tests are TECH-17c.~~ **Superseded:** TECH-17c added `node:test` + `c8` + `npm run verify`.
 6. Publishing as an npm package.
 
 ## 3. User / Developer Stories
@@ -55,10 +55,10 @@ This reduces implementation drift and mistaken assumptions about terminology whi
 | File / Path | Role in this context |
 |-------------|----------------------|
 | `.cursor/specs/*.md` (8 files, ~1480 lines total) | Spec documents the MCP will serve |
-| `.cursor/rules/*.mdc` (9 files, ~269 lines total) | Rule documents with YAML frontmatter |
+| `.cursor/rules/*.mdc` (11 files after TECH-17 close; count may change) | Rule documents with YAML frontmatter |
 | `AGENTS.md` (106 lines) | Agent workflow guide |
 | `ARCHITECTURE.md` (148 lines) | System layers and dependency map |
-| **IA registry size** | **19** entries: 8 specs + 9 rules + `AGENTS.md` + `ARCHITECTURE.md` |
+| **IA registry size (at TECH-17 close)** | **21** `list_specs` entries: 8 `.cursor/specs/*.md` + 11 `.cursor/rules/*.mdc` + `AGENTS.md` + `ARCHITECTURE.md` (grows when new rules/specs are added; `verify-mcp.ts` asserts the live count) |
 | `.cursor/specs/glossary.md` (183 lines) | Domain glossary (table format) |
 | `.cursor/mcp.json` | Does not exist yet — will be created |
 | `tools/` | Does not exist yet — will be created |
@@ -94,7 +94,7 @@ tools/
 
 | Package | Purpose | Version constraint |
 |---------|---------|-------------------|
-| `@modelcontextprotocol/server` | MCP server SDK | latest stable (v1.x or v2 if stable by implementation time) |
+| `@modelcontextprotocol/sdk` | MCP server + client (`McpServer`, `StdioServerTransport`) | ^1.29+ (verify at upgrade time) |
 | `zod` | Schema validation for tool inputs (MCP SDK peer dep) | v4+ |
 | `gray-matter` | YAML frontmatter extraction from `.mdc` files | latest |
 | `typescript` | Build | ^5.x |
@@ -260,7 +260,8 @@ spec_outline({ spec: "roads-system" })
 ### 5.7 Entry Point (`index.ts`)
 
 ```typescript
-import { McpServer, StdioServerTransport } from "@modelcontextprotocol/server";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerListSpecs } from "./tools/list-specs.js";
 import { registerSpecOutline } from "./tools/spec-outline.js";
 import { buildRegistry } from "./config.js";
@@ -293,67 +294,63 @@ Each tool module exports a `register*` function that receives the `McpServer` in
 | 2026-04-02 | Static file registry, re-read on each call | Simple, correct for a small file set (~15 files); avoids file-watcher complexity | Chokidar watcher (premature for phase 1) |
 | 2026-04-02 | `tsx` for dev, `tsc` for build | `tsx` gives instant startup for dev; `tsc` output for production/CI | `ts-node` (slower startup), `esbuild` (complexity) |
 | 2026-04-02 | `list_specs` includes `relativePath` | Matches user story (“paths”) and helps agents locate files without guessing repo layout | Omit path (story vs contract drift) |
-| 2026-04-02 | Verify MCP npm package at scaffold | Package names and APIs shift between SDK majors; spec cannot hard-code one import path forever | Assume `@modelcontextprotocol/server` without verification |
+| 2026-04-02 | Verify MCP npm package at scaffold | Package names and APIs shift between SDK majors; spec cannot hard-code one import path forever | Shipped on `@modelcontextprotocol/sdk` (see §5.2) |
+| 2026-04-02 | `REPO_ROOT` + workspace CWD | Hosts that start MCP with a non-repo CWD break relative paths | Documented in README; verify script sets `REPO_ROOT` explicitly |
 
 ## 7. Implementation Plan
 
+*All phases completed as part of TECH-17 rollout.*
+
 ### Phase 1 — Project scaffold
 
-- [ ] Create `tools/mcp-ia-server/` directory.
-- [ ] Initialize `package.json` with `name: "@territory/mcp-ia-server"`, `type: "module"`, scripts: `dev`, `build`, `start`.
-- [ ] Create `tsconfig.json` targeting ES2022, `moduleResolution: "NodeNext"`, `outDir: "dist"`.
-- [ ] Install dependencies: `@modelcontextprotocol/server`, `zod`, `gray-matter`.
-- [ ] Install dev dependencies: `typescript`, `tsx`, `@types/node`.
-- [ ] Create `src/index.ts` with `McpServer` + `StdioServerTransport` boilerplate (no tools yet).
-- [ ] Verify server starts with `npx tsx src/index.ts` and exits cleanly.
+- [x] Create `tools/mcp-ia-server/` directory.
+- [x] Initialize `package.json` with `name: "@territory/mcp-ia-server"`, `type: "module"`, scripts: `dev`, `build`, `start`.
+- [x] Create `tsconfig.json` targeting ES2022, `moduleResolution: "NodeNext"`, `outDir: "dist"`.
+- [x] Install dependencies: `@modelcontextprotocol/sdk`, `zod`, `gray-matter`.
+- [x] Install dev dependencies: `typescript`, `tsx`, `@types/node`.
+- [x] Create `src/index.ts` with `McpServer` + `StdioServerTransport` boilerplate.
+- [x] Verify server starts (see `npm run dev` / Cursor MCP).
 
 ### Phase 2 — Parser module
 
-- [ ] Create `src/parser/types.ts` with `HeadingNode`, `ParsedDocument`, `SpecRegistryEntry` interfaces.
-- [ ] Create `src/parser/markdown-parser.ts` implementing:
-  - `parseDocument(filePath: string): ParsedDocument` — read file, extract frontmatter, build heading tree.
-  - `extractFrontmatter(content: string): { frontmatter: Record<string, unknown> | null; body: string }` — delegate to `gray-matter`.
-  - `buildHeadingTree(lines: string[]): HeadingNode[]` — heading regex scan, line-range computation, tree construction.
-  - `extractSectionId(title: string): string` — numeric prefix extraction or slug fallback.
-- [ ] Create `src/config.ts` implementing:
-  - `buildRegistry(): SpecRegistryEntry[]` — scan known directories, build entry list with keys and descriptions.
-  - `resolveRepoRoot(): string` — from `REPO_ROOT` env or `process.cwd()`.
-  - `findEntryByKey(registry: SpecRegistryEntry[], key: string): SpecRegistryEntry | undefined` — match by key or fileName (case-insensitive).
+- [x] `src/parser/types.ts`, `markdown-parser.ts` (incl. line ranges aligned with **physical file** lines, frontmatter-aware body scan).
+- [x] `src/config.ts`: `buildRegistry`, `resolveRepoRoot`, registry helpers.
 
 ### Phase 3 — Tools + Cursor config
 
-- [ ] Create `src/tools/list-specs.ts`: register `list_specs` tool, return filtered registry entries **including `relativePath`** (repo-relative, POSIX-style).
-- [ ] Create `src/tools/spec-outline.ts`: register `spec_outline` tool, parse document on demand, return outline.
-- [ ] Wire tools into `src/index.ts`.
-- [ ] Create `.cursor/mcp.json` at repo root.
-- [ ] Create `tools/mcp-ia-server/README.md` with: purpose, prerequisites, dev/build/run commands, architecture diagram, and how to add new tools.
-- [ ] Add `tools/mcp-ia-server/node_modules/` and `tools/mcp-ia-server/dist/` to `.gitignore` (or create a local `.gitignore` inside the tool folder).
+- [x] `list_specs`, `spec_outline`, wiring in `index.ts`.
+- [x] `.cursor/mcp.json` (typically `npx -y tsx tools/mcp-ia-server/src/index.ts` from repo root).
+- [x] `README.md`, `.gitignore` entries for `node_modules/` / `dist/`.
 
 ### Phase 4 — Smoke test
 
-- [ ] Restart Cursor, verify server appears in Tools & MCP settings.
-- [ ] Call `list_specs()` from an agent chat — confirm **19** documents appear (8 specs + 9 rules + `AGENTS.md` + `ARCHITECTURE.md`).
-- [ ] Call `list_specs({ category: "rule" })` — confirm only `.mdc` files.
-- [ ] Call `spec_outline({ spec: "isometric-geography-system" })` — confirm heading tree with §-numbered sections.
-- [ ] Call `spec_outline({ spec: "invariants" })` — confirm frontmatter extraction and body headings.
-- [ ] Call `spec_outline({ spec: "nonexistent" })` — confirm error response with available keys.
+- [x] Cursor lists **territory-ia**; `list_specs` / `spec_outline` validated (registry size later rose to **21** with additional `.mdc` rules).
 
 ## 8. Acceptance Criteria
 
-- [ ] `npm run dev` in `tools/mcp-ia-server/` starts the MCP server without errors.
-- [ ] Cursor auto-discovers the server via `.cursor/mcp.json` and shows it in settings.
-- [ ] `list_specs` returns all **19** IA documents grouped by category with correct line counts and `relativePath` on each row.
-- [ ] `spec_outline` returns a heading tree that accurately reflects the file's structure (verified against `isometric-geography-system.md` which has ~70 headings).
-- [ ] `.mdc` frontmatter is correctly extracted and returned (not mixed into body headings).
-- [ ] Unknown spec keys produce a structured error with the list of valid keys.
-- [ ] No file outside `tools/mcp-ia-server/` is modified except `.cursor/mcp.json` and `.gitignore`.
+- [x] Server starts locally; Cursor discovers MCP.
+- [x] `list_specs` returns full IA registry with `relativePath` and categories.
+- [x] `spec_outline` matches on-disk heading structure for large specs and `.mdc` frontmatter.
+- [x] Unknown keys return structured errors with `available_keys`.
 
 ## 9. Issues Found During Development
 
 | # | Description | Root cause | Resolution |
 |---|-------------|------------|------------|
-| — | — | — | — |
+| 1 | SDK import path / package name drift | Upstream renamed scope to `@modelcontextprotocol/sdk` | Use subpath imports (`server/mcp.js`, `server/stdio.js`) |
+| 2 | Line numbers must include frontmatter | Body-only line indices break `extractSection` | Scan headings against full file lines with frontmatter offset (see TECH-17b) |
+| 3 | Stdio vs stdout | Logging to stdout corrupts MCP JSON | Log timing/diagnostics to **stderr** only |
+| 4 | Registry count tests | New rules/specs change `list_specs` length | `verify-mcp.ts` encodes expected count; bump when IA grows |
 
 ## 10. Lessons Learned
 
-- (To be filled after implementation)
+- **Filesystem IA scales well** for ~2k–10k lines: no DB required for v1; latency stays low with parse cache (TECH-17c).
+- **Heading tree + absolute line ranges** are the spine for every “slice” tool; invest once in the parser, reuse everywhere.
+- **Zod raw shapes** for `registerTool` integrate cleanly with the SDK’s JSON Schema generation; prefer stable field names and add **aliases** later if models mis-key arguments (see TECH-17c / `spec_section`).
+- **REPO_ROOT** is cheap insurance when the IDE’s MCP CWD differs from the git root.
+
+## 11. Post-ship outcomes (consolidated)
+
+- **Delivered:** Scaffold, parser foundation, first two tools, Cursor config — all superseded in behavior by the living server; this document remains a **design archaeology** reference.
+- **Follow-on work:** TECH-17b added semantic tools; TECH-17c added fuzzy matching, rule tools, tests, `npm run verify`, and follow-ups (`backlog_issue`, argument aliases). Canonical operator docs: [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md).
+- **Generic pattern:** See [`docs/mcp-markdown-ia-pattern.md`](../../docs/mcp-markdown-ia-pattern.md) for a domain-agnostic description of the same architecture.

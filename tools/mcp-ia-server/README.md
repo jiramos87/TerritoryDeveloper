@@ -4,6 +4,8 @@ Local [Model Context Protocol](https://modelcontextprotocol.io/) server for **Te
 
 Canonical integration notes: [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) and [`.cursor/rules/agent-router.mdc`](../../.cursor/rules/agent-router.mdc) (subsection **MCP — territory-ia**).
 
+Abstract pattern (reusable outside this game): [`docs/mcp-markdown-ia-pattern.md`](../../docs/mcp-markdown-ia-pattern.md).
+
 ## Prerequisites
 
 - **Node.js 18+**

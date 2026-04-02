@@ -26,6 +26,7 @@ Permanent **reference specs** live here as `*.md` files. They are the long-lived
 2. **Canonical geography** — For grid math, water, cliffs, shores, roads, rivers, and pathfinding, [`isometric-geography-system.md`](isometric-geography-system.md) is the single source of truth. Other reference specs must not contradict it; defer with links.
 3. **Cross-links** — Link to glossary rows and spec sections by path and section id; keep spec abbreviations (`geo`, `roads`, …) consistent with the glossary header.
 4. **territory-ia MCP** — All `*.md` files in this directory are registered automatically. Optional short aliases live in `tools/mcp-ia-server/src/config.ts` (`SPEC_KEY_ALIASES`). After adding a file, confirm `list_specs` and, if useful, add an alias.
+5. **Reusable IA pattern** — Domain-agnostic guide to file-backed specs + MCP tools: [`docs/mcp-markdown-ia-pattern.md`](../../docs/mcp-markdown-ia-pattern.md).
 
 ## Terminology
 

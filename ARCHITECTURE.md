@@ -103,7 +103,7 @@ Cross-cutting effort: charter [`docs/ui-design-system-project.md`](docs/ui-desig
 
 Authoritative **agent-facing** content lives in `.cursor/specs/`, `.cursor/rules/`, [`AGENTS.md`](AGENTS.md), and this file. [`.cursor/rules/agent-router.mdc`](.cursor/rules/agent-router.mdc) maps tasks to specs.
 
-The **territory-ia** MCP server ([`tools/mcp-ia-server/`](tools/mcp-ia-server/), configured in [`.cursor/mcp.json`](.cursor/mcp.json)) exposes that corpus through tools (`backlog_issue` for [`BACKLOG.md`](BACKLOG.md) by issue id, plus `list_specs`, `spec_outline`, `spec_section`, `glossary_lookup`, `router_for_task`, `invariants_summary`, `list_rules`, `rule_content`) so agents can fetch slices without reading whole files. It does not change Unity runtime architecture. Overview: [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md).
+The **territory-ia** MCP server ([`tools/mcp-ia-server/`](tools/mcp-ia-server/), configured in [`.cursor/mcp.json`](.cursor/mcp.json)) exposes that corpus through tools (`backlog_issue` for [`BACKLOG.md`](BACKLOG.md) by issue id, plus `list_specs`, `spec_outline`, `spec_section`, `glossary_lookup`, `router_for_task`, `invariants_summary`, `list_rules`, `rule_content`) so agents can fetch slices without reading whole files. It does not change Unity runtime architecture. Overview: [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md). A **domain-agnostic** description of the same file-backed IA + MCP pattern (reusable in other repos) is in [`docs/mcp-markdown-ia-pattern.md`](docs/mcp-markdown-ia-pattern.md).
 
 ## Full Dependency Map
 
@@ -144,7 +144,7 @@ Manual streets use longest-valid-prefix terraform validation; interstate uses fu
 - **GridManager as hub:** Central coordinator for cell operations. Keeps access consistent but makes it large.
 - **FindObjectOfType pattern:** Inspector wiring + null-check fallback in Awake/Start.
 - **Namespaces:** Most scripts under `Territory.*` (`Core`, `Terrain`, `Roads`, `Zones`, `Forests`, `Buildings`, `Economy`, `UI`, `Geography`, `Timing`, `Utilities`, `Simulation`, `Persistence`). A few legacy scripts in global namespace.
-- **Spec policy:** See `AGENTS.md`. Full spec inventory in `.cursor/specs/`; agent routing in `.cursor/rules/agent-router.mdc`. Optional MCP access to the same files: `docs/mcp-ia-server.md`.
+- **Spec policy:** See `AGENTS.md`. Full spec inventory in `.cursor/specs/`; agent routing in `.cursor/rules/agent-router.mdc`. Optional MCP access to the same files: `docs/mcp-ia-server.md`; generic pattern notes: `docs/mcp-markdown-ia-pattern.md`.
 
 ## Known Trade-offs
 

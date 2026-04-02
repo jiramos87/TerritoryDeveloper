@@ -8,6 +8,7 @@
 <!--
   Structure guide: PROJECT-SPEC-STRUCTURE.md
   Terminology: .cursor/specs/glossary.md (spec wins if glossary differs)
+  Related: docs/mcp-markdown-ia-pattern.md (generic file-backed IA + MCP architecture)
 -->
 
 ## 1. Summary

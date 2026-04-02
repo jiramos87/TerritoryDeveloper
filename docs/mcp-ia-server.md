@@ -42,3 +42,5 @@ When starting work on **`BUG-XX` / `FEAT-XX` / `TECH-XX`** (etc.), call **`backl
 ## Future work (out of scope for TECH-17)
 
 Full-text search across all IA documents is tracked as **TECH-18**; database-backed IA and evolved tools are **TECH-19** / **TECH-18** in `BACKLOG.md`.
+
+For a **domain-neutral** description of this architecture (Markdown corpus, registry, parser spine, tool families, verification) — useful when starting a similar MCP in another repo — see [`mcp-markdown-ia-pattern.md`](mcp-markdown-ia-pattern.md).

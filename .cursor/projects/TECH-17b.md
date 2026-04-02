@@ -1,9 +1,9 @@
 # TECH-17b — Semantic Query Tools: Section Retrieval, Glossary, Router, Invariants
 
 > **Issue:** [TECH-17](../../BACKLOG.md)
-> **Status:** Final
+> **Status:** Final (historical — see **§11** and [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md))
 > **Created:** 2026-04-02
-> **Last updated:** 2026-04-02
+> **Last updated:** 2026-04-02 (§9–11 retrospective)
 > **Sequence:** Part 2 of 3 (TECH-17a → **TECH-17b** → TECH-17c)
 > **Prerequisite:** TECH-17a completed (server running, parser module, `list_specs` and `spec_outline` working).
 
@@ -362,8 +362,24 @@ registerInvariantsSummary(server, registry);
 
 | # | Description | Root cause | Resolution |
 |---|-------------|------------|------------|
-| — | — | — | — |
+| 1 | Ambiguous numeric section (`13` vs `13.4`) | Multiple headings share numeric prefix | Exact `sectionId` preference; candidate list on ambiguity |
+| 2 | Two router tables, different meaning | Geo quick-reference is not “task domain” | Union matches; synthetic `specToRead` for second table |
+| 3 | Markdown tables with `\|`, bold, code | Naive splitting breaks rows | `table-parser` escaped pipes + cell normalization |
+| 4 | Invariant/guardrail **counts** in tests | `invariants.mdc` edited over time | Update assertions when lists change intentionally |
 
 ## 10. Lessons Learned
 
-- (To be filled after implementation)
+- **Slice tools beat monolith reads:** `spec_section` + `max_chars` saves context; `spec_outline` first cuts wrong-section retries.
+- **Domain tables deserve thin parsers:** generic `table-parser` + `glossary-parser` / router mapping scales when columns evolve.
+- **Structured errors are API:** `available_sections`, `available_terms`, and router `available_domains` enable self-correction.
+- **Routing vs retrieval:** `router_for_task` = *where* to read; `spec_section` = *what* to read — keep both roles explicit.
+
+## 11. Post-ship outcomes (consolidated)
+
+- **Delivered:** Semantic IA tools (`spec_section`, `glossary_lookup`, `router_for_task`, `invariants_summary`) as specified; later hardened in TECH-17c (fuzzy, aliases).
+- **Issues:** See §9.
+- **Living docs:** [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md); generic pattern [`docs/mcp-markdown-ia-pattern.md`](../../docs/mcp-markdown-ia-pattern.md).
+
+## 12. Implementation checklist (completed)
+
+Phases 1–4 of §7 and §8 acceptance items were completed during TECH-17. Checkboxes in §7–§8 are left as originally written for historical traceability; treat §12 + §11 as the completion record.

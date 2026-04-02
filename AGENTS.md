@@ -20,6 +20,7 @@ ARCHITECTURE.md       → System layers, dependency map
 AGENTS.md             → This file: workflow, policies, checklist
 BACKLOG.md            → Issue tracking (read only when relevant)
 docs/mcp-ia-server.md → territory-ia MCP (default retrieval path in Agent when enabled)
+docs/mcp-markdown-ia-pattern.md → Reusable pattern: Markdown IA + Node MCP tools (any domain)
 ```
 
 ### `.cursor/specs/` inventory

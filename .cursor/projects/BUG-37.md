@@ -27,7 +27,7 @@ When the player draws a **manual street** (ordinary road tool), **RCI** **zones*
 
 | # | Role | Story | Acceptance criteria |
 |---|------|-------|---------------------|
-| 1 | Player | I draw a **street** along the edge of developed blocks so only the path that becomes road is affected; lots and **buildings** beside the **stroke** stay. | After placement, no loss of **RCI** **zones** or **buildings** on **Moore-adjacent** cells that are outside the defined footprints. |
+| 1 | Player | I draw a **street** along the edge of developed blocks so only the path that becomes road is affected; lots and **buildings** beside and near the **stroke** stay intact. | After placement, no loss of **RCI** **zones** or **buildings** on **Moore-adjacent** cells that are outside the defined footprints. No expropriation of neighboring cells. This should be applied to preview and commit in manual mode, and in AUTO mode when the **street** is placed.|
 | 2 | QA / Designer | I can state unambiguously which **cells** may change when a **street** is committed. | Spec and acceptance use glossary terms (**road stroke**, **terraform plan**, **Moore neighborhood**, **street**) so tests match docs. |
 
 ## 4. Current State
@@ -37,7 +37,7 @@ When the player draws a **manual street** (ordinary road tool), **RCI** **zones*
 | | Description |
 |---|-------------|
 | **Observed** | Manual **street** trace clears **zone** visuals, **buildings**, and **zoning** on cells **next to** the **road stroke** (Moore-adjacent in reports). |
-| **Expected** (backlog) | Only **cells** that actually receive the **street** (and any footprint required by validation / **terraform plan**) should change; **neighbors** keep **RCI** and **buildings** unless design documents a wider clear. |
+| **Expected** | Only **cells** that actually receive the **street** (and any footprint required by validation / **terraform plan**) should change; **neighbors** keep **RCI** and **buildings** unless design documents a wider clear. No expropriation of neighboring cells. This should be applied to preview and commit in manual mode, and in AUTO mode when the **street** is placed.|
 
 ### 4.2 Systems map (from backlog)
 
