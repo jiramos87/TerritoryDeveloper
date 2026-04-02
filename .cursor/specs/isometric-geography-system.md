@@ -45,7 +45,7 @@ Read only the sections you need — use this table to navigate:
 | Water map, lakes, multi-body junctions | §11 | ~70 |
 | Procedural rivers | §12 | ~45 |
 | Road/interstate/bridge validation | §13 | ~60 |
-| Engineering notes, glossary, debug | §14 | ~30 |
+| Engineering notes, shore mini-glossary, road/grid vocabulary, debug | §14 (see **§14.5** for stroke, lip, grass, Chebyshev) | ~45 |
 
 ---
 
@@ -736,6 +736,21 @@ Canonical procedural detail: **`roads-system.md`** (Land slope stroke policy).
 | **Cliff wall stack** | Child prefab(s) on higher cell along shared cardinal edge |
 | **Bay** | Shore corner prefab — neighbor patterns §5.9 |
 | **Visible cliff faces** | South and east meshes only; N/W bits may still be set on `Cell.cliffFaces` |
+
+### 14.5 Domain vocabulary — roads, grid, and spacing
+
+> **Glossary index:** `glossary.md` cites this subsection as **geo §14.5**.
+
+| Term | Meaning |
+|------|---------|
+| **Road stroke** | Ordered sequence of cells from a player drag or AUTO pathfinder for a road attempt. Filtered/truncated for land-slope and water rules before `PathTerraformPlan`. Procedural detail: `roads-system.md`. |
+| **Bridge lip** | Last **firm dry** land cell before a **wet run** on a straight chord; anchor for locked deck-span preview/commit and deck display height (§13.4). |
+| **Wet run** | Contiguous water and/or water-slope cells along a stroke crossed by a bridge plan. |
+| **baseHeight** | Cut-through target elevation: path cells flattened to this value when not using scale-with-slopes (§8.3). |
+| **Grass cell** | Undeveloped land substrate (typical grass `cellType`) — no road; zoning, forests, and manual A* treat it as buildable/walkable per mode (§13.9). |
+| **Street (ordinary road)** | Non-**interstate** road placed by player or AUTO using the shared validation pipeline (§13.1–§13.2); contrasts with border interstate (§13.5). |
+| **Map border / grid edge** | Cells on `x=0`, `y=0`, `maxX`, or `maxY`; interstate endpoints, virtual cliff feet, and exit rules reference these edges (§5.7, §13.5). |
+| **Chebyshev distance** | `max(|Δx|,|Δy|)` on the grid; used to dilate river corridors and spacing between entries (§12.4). |
 
 ### 14.2 Resolved techniques
 

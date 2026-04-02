@@ -63,6 +63,10 @@ Geography spec cross-reference: `isometric-geography-system.md` §3.3.3–§3.3.
 
 **BUG-51 (route-first):** `RoadPrefabResolver.ResolveForPath` classifies each path cell (straight-through, corner-90, junction, end, isolated) using **only** cells in the current stroke’s `pathCellSet` for topology (`pathOnlyNeighbors`), so adjacent unrelated roads do not create spurious T/elbows. Straights use travel `curr - prev` for ramp axis; junctions still use `SelectFromConnectivity`. `Cell` stores runtime hints: predecessor/successor grid, `roadRouteEntryStep` / `roadRouteExitStep`; `RefreshRoadPrefabAt` invalidates hints when topology is no longer straight/dead-end, and uses hints to pick `prev` for `ResolveForPath`-consistent slopes. `TerraformingService` may preserve diagonal wedge cells on the path when `preferSlopeClimb && dSeg == 0` instead of flattening. Cardinal ramp prefabs on diagonal/corner-up terrain use the same upper-cell anchor as elbows in `GetWorldPositionForPrefab` where applicable.
 
+## Domain vocabulary (glossary)
+
+Canonical definitions: **`isometric-geography-system.md` §14.5** — road **stroke**, **bridge lip**, **wet run**, **baseHeight**, **grass cell**, **street** vs interstate, **map border**, **Chebyshev distance**. This spec owns truncation, validation entry points, and `RoadCacheService` behavior tied to those terms.
+
 ## Key files
 
 | File | Role |

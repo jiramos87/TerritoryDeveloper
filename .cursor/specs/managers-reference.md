@@ -51,6 +51,66 @@
 | **UrbanCentroidService** | Urban centroid + ring metrics for AUTO roads/zoning (active, not obsolete) |
 | **GameBootstrap** | Entry point, game loading flow |
 
+## Zones & Buildings
+
+> **Glossary index:** `glossary.md` cites this section as **mgrs §Zones**.
+>
+> Domain model for RCI zoning, building placement, and multi-cell footprints. For AUTO road walkability over light zoning, see `isometric-geography-system.md` §13.9.
+
+### RCI model
+
+- **Residential (R), Commercial (C), Industrial (I)** are the three zone categories. Each drives different demand, employment, and building sets in the economy layer (`DemandManager`, `ZoneManager`).
+- Zoning is placed per cell; buildings spawn on zoned cells when simulation and demand allow.
+
+### Zone lifecycle
+
+1. **Empty developable cell** — grass, forest, or other land the player or AUTO may zone.
+2. **Zoned cell** — a `Zone` component marks the cell with a zone type and density tier (light / medium / heavy where applicable).
+3. **Building** — when growth rules fire, a building prefab is placed on the zone footprint; the zone tracks level and building reference.
+4. **Upgrade** — `GrowthManager` may replace a building with a larger variant when property value / demand supports it (see backlog issues for happiness and property value).
+
+### Zone density
+
+- **Light / medium / heavy** tiers control which building prefabs and footprints are eligible. Higher tiers generally mean larger or denser structures.
+- AUTO simulation treats **undeveloped light zoning** (light tier, **no** building spawned) as pass-through terrain for road pathfinding only — see geography spec §13.9 and `AutoSimulationRoadRules`.
+
+### Pivot cell and multi-cell buildings
+
+- Buildings may occupy **1×1** or **2×2** (and utility footprints as designed) cells.
+- The **pivot cell** is the anchor cell for a multi-cell building. Other footprint cells reference the pivot for sorting, save data, and demolition. Non-pivot cells must stay consistent with the pivot’s building reference.
+
+### Building footprint
+
+The set of grid cells covered by a single building instance (one tile or a rectangle/multi-tile utility layout). Bulldozing, sorting, save/load, and zone growth treat the footprint as one unit anchored at the **pivot cell**.
+
+### Building placement and restore
+
+- Runtime placement and load-game restore go through `BuildingPlacementService` and `GridManager` restore paths. Visual sorting on load follows geography spec §7.4 (visual restore).
+
+## Demand (R / C / I)
+
+> **Glossary index:** `glossary.md` cites this section as **mgrs §Demand**.
+
+Residential, commercial, and industrial **demand** scores express how strongly each zone type wants to grow. They are derived from population, employment, forest cover, taxes, and related aggregates (`DemandManager`, `CityStats`, `EmploymentManager`). The demand bar in the UI and `AutoZoningManager` use these values when choosing where to zone.
+
+**Tax base** — RCI development and population contribute to taxable capacity read by `EconomyManager` / `CityStats`; tax rates and income loop back into happiness and demand (see backlog for planned depth).
+
+**Desirability** — per-cell attractiveness for zoning and AUTO growth based on terrain context (e.g. proximity to water, forests), computed after geography initialization. See `ARCHITECTURE.md` (initialization order, `GeographyManager` desirability pass) when changing how cells become more or less attractive.
+
+## World features
+
+> **Glossary index:** `glossary.md` cites this section as **mgrs §World**.
+
+- **Forest** — Vegetation on land in **sparse**, **medium**, or **dense** states; affects demand and map tools (`ForestManager`).
+- **Regional map** — Neighboring cities in the wider region; ties to regional systems and UI (`RegionalMapManager`).
+- **Utility building** — Service structures (e.g. water treatment, power plants), distinct from RCI. Placement, multi-cell footprints, and AUTO placement follow `AutoResourcePlanner`, `ZoneManager`, and the same pivot rules as RCI buildings where applicable.
+
+## Game notifications
+
+> **Glossary index:** `glossary.md` cites this section as **mgrs §Notifications**.
+
+In-game toasts and alerts (funds, placement errors, hints). Delivered only through **`GameNotificationManager.Instance`** — the project’s sole notification singleton. See **Architectural patterns** below for access rules.
+
 ## Architectural patterns
 
 - Every manager is a **MonoBehaviour** living as a component on a scene GameObject.

@@ -277,6 +277,24 @@
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
+- [ ] **TECH-17** — MCP server for current agentic Information Architecture (Markdown sources)
+  - Type: infrastructure / tooling
+  - Files: new project outside `Assets/Scripts/` (MCP server); `.cursor/specs/*.md`, `.cursor/rules/*.mdc`, `AGENTS.md`, `ARCHITECTURE.md` as authoritative on-disk sources
+  - Notes: **Goal:** Expose the **existing** contextual-doc layout (specs hierarchy, `agent-router` task→spec mapping, glossary, invariants in rules, architecture map) through an MCP server so agents can run **low-token, targeted** lookups instead of loading entire files. **Scope:** Implement MCP (Node.js or Python + MCP SDK) with tools that read **Markdown / MDC from the repo** — e.g. `glossary_lookup(term)`, `spec_section(spec, section_or_heading)`, `router_for_task(task_domain)`, `invariants_summary()`, `list_specs()` / `spec_outline(spec)`. **No PostgreSQL** in this issue; no bulk migration of content. **Out of scope:** Full-text search index at DB scale, regenerating `.md` from a database — those belong to **TECH-18** after **TECH-19** exists. **Acceptance:** A Cursor agent can answer “which spec for roads?” and fetch a **single** glossary entry or spec slice via tools without reading whole `isometric-geography-system.md`.
+  - Depends on: none
+
+- [ ] **TECH-19** — Game PostgreSQL database; first milestone — IA schema for MCP + basic tools
+  - Type: infrastructure / tooling
+  - Files: new project outside `Assets/Scripts/` (PostgreSQL schema, migrations, optional small service or MCP-adjacent module); seed scripts as needed
+  - Notes: **Goal:** Introduce a **game-owned** PostgreSQL database (long-term: not only AI — analytics, metagame, ops, etc.; document intended product uses as they land). **First concrete milestone:** tables and migrations for **Information Architecture** data that MCP will eventually query: e.g. `glossary` (term, conceptual_def, technical_def, spec_address, section, category), `spec_sections` (spec_abbrev, section_id, title, content, parent_section), `invariants`, `relationships` (term_a, relation, term_b) — adjust names/types to match implementation. Ship a **minimal** programmatic surface (SQL views, repo functions, or thin API) plus a **basic** tool set (same *families* as **TECH-17**, but **wired to Postgres** where applicable) to prove read paths. **Optional:** seed a small subset from `.cursor/specs/glossary.md` to validate the pipeline. **Does not** ingest full specs or replace Markdown as source of truth — that is **TECH-18**. **Stack:** PostgreSQL (psql / DBeaver compatible), migrations (tool of choice).
+  - Depends on: none
+
+- [ ] **TECH-18** — Migrate Information Architecture from Markdown to PostgreSQL (MCP evolution)
+  - Type: infrastructure / tooling
+  - Files: All `.cursor/specs/*.md`, `.cursor/rules/agent-router.mdc`, `.cursor/rules/invariants.mdc`, `ARCHITECTURE.md`; MCP server from **TECH-17** (initially **file-backed**); schema / migrations / seed from **TECH-19**
+  - Notes: **Goal:** After **TECH-17** (MCP over **`.md` / `.mdc`**) and **TECH-19** (Postgres + IA tables), **migrate authoritative IA content** into PostgreSQL and evolve the **same MCP** so **primary** retrieval is DB-backed. Markdown becomes **generated or secondary** for human reading. **Explicit dependency:** This work **extends the MCP built first on Markdown** in **TECH-17** — same tool contracts where possible, swapping implementation to query **TECH-19**’s database. **Scope:** (1) Parse and ingest spec sections (`isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, etc.) into `spec_sections`. (2) Populate `relationships` (e.g. HeightMap↔Cell.height, PathTerraformPlan→Phase-1→Apply). (3) Populate `invariants` from `invariants.mdc`. (4) Extend tools: `what_do_i_need_to_know(task_description)`, `search_specs(query)`, `dependency_chain(term)`. (5) Script to regenerate `.md` from DB for review. (6) Update `agent-router.mdc` — MCP tools first, Markdown fallback second. **Acceptance:** Agent resolves a multi-spec task (e.g. “bridge over multi-level lake”) via MCP reading ≤ ~500 tokens of context instead of many full-file reads.
+  - Depends on: TECH-17, TECH-19
+
 - [ ] **AUDIO-01** — Audio FX: demolition, placement, zoning, forest, 3 music themes, ambient effects
   - Type: audio/feature
   - Files: new AudioManager + audio assets

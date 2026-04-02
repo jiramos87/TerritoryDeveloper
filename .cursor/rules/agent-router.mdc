@@ -11,11 +11,15 @@ Read **only** the specs relevant to your task. Use this table to navigate.
 
 | Task domain | Spec to read | Key sections |
 |-------------|-------------|--------------|
-| Road logic, placement, bridges | `.cursor/specs/roads-system.md` + geography spec §9, §10, §13 | Validation surface, resolver rules |
+| Road logic, placement, bridges | `.cursor/specs/roads-system.md` + geography spec §9, §10, §13, **§14.5** | Validation surface, resolver rules, stroke / lip / wet run |
 | Water, terrain, cliffs, shores | `.cursor/specs/water-terrain-system.md` + geography spec §2–§5, §11–§12 | Height model, layered visuals, lakes, rivers |
-| Simulation, AUTO growth | `.cursor/specs/simulation-system.md` | Tick order, AUTO pipeline |
+| Simulation, AUTO growth | `.cursor/specs/simulation-system.md` | Tick order, AUTO pipeline, **§Rings** (centroid + growth rings) |
 | Save / load | `.cursor/specs/persistence-system.md` + geography spec §7.4, §11.5 | Load pipeline, visual restore |
 | Manager responsibilities | `.cursor/specs/managers-reference.md` | Responsibilities, dependencies |
+| Zones, buildings, RCI | `.cursor/specs/managers-reference.md` — **Zones & Buildings** | Zone lifecycle, pivot, density, undeveloped light zoning |
+| Demand, desirability | `.cursor/specs/managers-reference.md` — **Demand (R / C / I)** | DemandManager, CityStats, growth pressure |
+| Forests, regional map, utilities | `.cursor/specs/managers-reference.md` — **World features** | ForestManager, RegionalMapManager, resource buildings |
+| In-game notifications | `.cursor/specs/managers-reference.md` — **Game notifications** | GameNotificationManager singleton |
 | Slopes, sorting, geography | `.cursor/specs/isometric-geography-system.md` §1–§7 | Coordinates, heights, sorting formula |
 | UI changes | `.cursor/specs/ui-design-system.md` | Foundations, components |
 | Coding standards | `.cursor/rules/coding-conventions.mdc` | XML docs, naming, prefabs |
@@ -43,4 +47,4 @@ Read **only** the specs relevant to your task. Use this table to navigate.
 | Water map, lakes, junctions | §11 |
 | Procedural rivers | §12 |
 | Road/interstate/bridge validation | §13 |
-| Engineering notes | §14 |
+| Engineering notes, road/grid vocabulary (stroke, lip, grass, Chebyshev) | §14 (**§14.5**) |
