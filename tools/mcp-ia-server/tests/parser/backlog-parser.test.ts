@@ -103,7 +103,7 @@ test(
       assert.equal(p!.status, "open");
       assert.ok(p!.title.includes("Manual") && p!.title.includes("street"));
       assert.ok(p!.files?.includes("RoadManager"));
-      assert.ok(p!.backlog_section.toLowerCase().includes("high"));
+      assert.match(p!.backlog_section.toLowerCase(), /in progress|high/);
       assert.ok(p!.raw_markdown.includes("BUG-37"));
     } finally {
       process.env.REPO_ROOT = prev;

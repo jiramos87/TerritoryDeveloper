@@ -24,6 +24,8 @@ docs/mcp-ia-server.md → territory-ia MCP (default retrieval path in Agent when
 
 ### `.cursor/specs/` inventory
 
+These Markdown files are **reference specs** (per [glossary.md](.cursor/specs/glossary.md) — **Reference spec**): permanent deep reference for domain behavior and vocabulary. Authoring layout and checklist: [REFERENCE-SPEC-STRUCTURE.md](.cursor/specs/REFERENCE-SPEC-STRUCTURE.md).
+
 | File | Scope |
 |------|-------|
 | `isometric-geography-system.md` | Canonical: terrain, water, cliffs, shores, sorting, terraform, roads, rivers, pathfinding |
@@ -34,6 +36,7 @@ docs/mcp-ia-server.md → territory-ia MCP (default retrieval path in Agent when
 | `water-terrain-system.md` | Height model, water bodies, cliffs, shores, cascades |
 | `managers-reference.md` | All managers and helper services: responsibilities, dependencies |
 | `glossary.md` | Domain term definitions |
+| `REFERENCE-SPEC-STRUCTURE.md` | Meta: conventions for writing and extending **reference specs** in this folder (terminology, MCP, new-file checklist) |
 
 Do not add bug write-ups, agent prompts, or one-off specs under `.cursor/specs/`. Use `BACKLOG.md` while work is open; delete temporary markdown after completion.
 
@@ -44,9 +47,14 @@ Project-specific specs for features or complex bugs **in active development** li
 | Aspect | Rule |
 |--------|------|
 | Template | `.cursor/templates/project-spec-template.md` |
+| Structure | `.cursor/projects/PROJECT-SPEC-STRUCTURE.md` (section order, requirements vs implementation) |
 | Naming | `{ISSUE_ID}.md` (e.g. `FEAT-44.md`, `BUG-45.md`) |
 | Lifecycle | Create → refine → implement → verify → close |
 | On completion | Migrate lessons learned to canonical docs before deleting |
+
+**Requirements vs implementation:** When authoring or extending a project spec, separate **product / game-logic** content (what the player and simulation rules do—using [`.cursor/specs/glossary.md`](.cursor/specs/glossary.md) terms) from **implementation** content (files, classes, algorithms). The **implementing agent** chooses code-level solutions **unless** a chosen approach would **change** the game behavior defined in the spec; in that case, record the conflict in the spec **Decision Log** or ask the product owner before proceeding.
+
+**`## Open Questions` section:** Every collaborative project spec SHOULD include `## Open Questions (resolve before / during implementation)`. Questions there MUST be phrased in **canonical domain vocabulary** (glossary + linked specs) and MUST target **definitions and intended game logic only**—not specific APIs, class names, or implementation mechanics. Technical investigation and coding strategy belong under **Implementation plan**, **Implementation investigation notes**, or the agent’s own workflow—not under Open Questions.
 
 ### Project docs outside `.cursor/specs/`
 

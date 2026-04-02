@@ -30,6 +30,8 @@ export const SPEC_KEY_ALIASES: Record<string, string> = {
   ui: "ui-design-system",
   arch: "architecture",
   agents: "agents",
+  refspec: "reference-spec-structure",
+  specstructure: "reference-spec-structure",
 };
 
 /**

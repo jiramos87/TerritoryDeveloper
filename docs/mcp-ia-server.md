@@ -24,8 +24,8 @@ When starting work on **`BUG-XX` / `FEAT-XX` / `TECH-XX`** (etc.), call **`backl
 |------|------|
 | `backlog_issue` | One issue from `BACKLOG.md` by id (`issue_id`); structured fields + `raw_markdown`. Nested sub-items (e.g. TECH-01 under BUG-20) supported. |
 | `list_specs` | Discover registered documents (`key`, path, category, description). |
-| `spec_outline` | Heading tree for a spec/rule/doc; supports aliases (`geo`, `roads`, …). |
-| `spec_section` | Body under one heading (id, slug, substring, or fuzzy heading match); `max_chars` truncation. |
+| `spec_outline` | Heading tree for a spec/rule/doc; supports aliases (`geo`, `roads`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
+| `spec_section` | Body under one heading (id, slug, substring, or fuzzy heading match); `max_chars` truncation. Parameters `spec` + `section` are canonical; aliases `key`/`doc` for spec and `section_heading`/`heading` for section are accepted (numeric section coerced to string) so mis-keyed tool calls still succeed. |
 | `glossary_lookup` | Glossary term; exact then fuzzy (typos). |
 | `router_for_task` | Match a task domain to specs using `agent-router.mdc` tables. |
 | `invariants_summary` | Numbered invariants and guardrails from `invariants.mdc`. |

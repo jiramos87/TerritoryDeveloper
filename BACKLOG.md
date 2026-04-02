@@ -6,9 +6,6 @@
 ---
 
 ## In Progress
-
-## High Priority
-
 - [ ] **BUG-37** — Manual **street** drawing clears **buildings** and **zones** on cells adjacent to the **road stroke**
   - Type: bug
   - Files: `RoadManager.cs` (`HandleRoadDrawing`, **road validation pipeline** / commit path), `GridManager.cs` (road mode input, any demolish or clear calls near **street** segments), `TerrainManager.cs` / `TerraformingService.cs` if the **terraform plan** widens the affected region; `ZoneManager.cs` if **zoning** is cleared outside **street** cells
@@ -17,6 +14,15 @@
   - Acceptance: Drawing a **street** through zoned/built area modifies only cells on the **road stroke**; adjacent **zones**, **buildings**, and prefabs remain intact
   - Depends on: none
 
+- [ ] **TECH-22** — Canonical terminology pass on **reference specs** (`.cursor/specs`)
+  - Type: documentation / refactor (IA)
+  - Files: All **reference specs** under `.cursor/specs/` (`glossary.md`, `isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, `REFERENCE-SPEC-STRUCTURE.md`); [`AGENTS.md`](AGENTS.md) if inventory text changes; [`tools/mcp-ia-server/src/config.ts`](tools/mcp-ia-server/src/config.ts) and MCP docs only if spec keys/aliases change
+  - Spec: [`.cursor/specs/glossary.md`](.cursor/specs/glossary.md) (canonical domain terms); [`.cursor/specs/REFERENCE-SPEC-STRUCTURE.md`](.cursor/specs/REFERENCE-SPEC-STRUCTURE.md) (authoring rules)
+  - Notes: **Goal:** Replace non-canonical or ad-hoc wording across **reference specs** with **glossary** vocabulary so search, MCP, and backlog stay aligned. **Method:** Review **one file at a time** in dependency order: `glossary.md` → `isometric-geography-system.md` → `roads-system.md` / `water-terrain-system.md` → `simulation-system.md` / `persistence-system.md` → `managers-reference.md` → `ui-design-system.md` → `REFERENCE-SPEC-STRUCTURE.md`. Use targeted search for common synonyms (e.g. informal “road” vs **street**/**interstate**, “map edge” vs **map border**). **Conflict rule:** Where glossary and a spec disagree on meaning, the **reference spec** section wins — update the glossary to defer or align (per glossary header). **New concepts:** add glossary row **and** authoritative spec text; do not leave terms only in this issue. **Optional:** Maintain a single **deprecated synonym → canonical** table in TECH-22 notes or in `REFERENCE-SPEC-STRUCTURE.md` during the pass. **Out of scope (unless expanded):** `.cursor/rules/*.mdc`, `docs/`, `ARCHITECTURE.md` — track as a follow-up issue if needed.
+  - Acceptance: Checklist in issue notes marks every inventory **reference spec** reviewed; no unresolved glossary ↔ spec contradictions; [`AGENTS.md`](AGENTS.md) inventory and MCP spec keys remain coherent
+  - Depends on: none
+
+## High Priority
 - [ ] **BUG-49** — Manual **street** drawing: preview builds the **road stroke** cell-by-cell (animated); should show full path at once
   - Type: bug (UX / preview)
   - Files: `RoadManager.cs` (`HandleRoadDrawing`, preview placement / ghost or temp prefab updates per frame), `GridManager.cs` if road mode input drives incremental preview; any coroutine or per-tick preview extension of the **road stroke**
@@ -294,6 +300,13 @@
   - Files: new `.cursor/specs/unity-development-context.md` (or agreed name); `AGENTS.md` and `.cursor/rules/agent-router.mdc` (pointer + “read when…” row); optional short glossary subsection or cross-links to `.cursor/specs/glossary.md` for shared terms
   - Notes: **Goal:** Give agents a **first-party** reference for **Unity concepts that routinely come up in this codebase** (e.g. MonoBehaviour lifecycle, `SerializeField` / Inspector wiring, scenes & prefabs, 2D sorting layers vs `sortingOrder`, `ScriptableObject` when used, `FindObjectOfType` policy here, execution order pitfalls, common Unity patterns **as constrained by this project** — not a full Unity manual). **Policy:** Agents should **default to this spec + existing `.cursor/` docs** for Unity API and workflow questions and **avoid opening general web/docs searches** unless the task **requires** version-specific behavior, undocumented APIs, or verification outside what the repo states. **Scope:** Curated sections, stable anchors, and links to **in-repo** examples (file/class references) where helpful. **Out of scope:** Duplicating Microsoft/Unity manual pages verbatim; replacing official docs when the user explicitly asks for external authority. **Acceptance:** `agent-router` lists when to read this spec; a new contributor agent can implement a typical Inspector + manager change using only repo context for Unity basics. **Related:** **TECH-17** (MCP can later expose this document like other specs).
   - Depends on: none
+
+- [ ] **TECH-21** — Extend and leverage **JSON** in the game system (serialization, tooling, future backend)
+  - Type: technical / data interchange
+  - Files: `.cursor/specs/persistence-system.md` (when save or interchange shapes stabilize); save/load and **geography initialization** code paths that already emit or consume structured data; optional `StreamingAssets`/config JSON; `tools/mcp-ia-server/` and other Node **scripts** that benefit from shared JSON schemas; future backend modules from **TECH-19** (align payloads and migrations)
+  - Notes: **Goals:** (1) **Runtime** — improve **performance** and maintainability where **JSON** or other **serialized** DTO-style data beats ad-hoc string/binary formats or repeated heavy reflection (profile before wide refactors). (2) **Development** — use **JSON** artifacts and TypeScript/JavaScript parsing for **agentic** tools, batch **scripts**, and validation (schemas, fixtures, golden files). (3) **Future backend** — define which **domain models** are safe to represent as **JSON** (save subsets, telemetry, IA exports, API bodies) and how they will map to **database** tables or documents when **TECH-19**+ lands; document versioning and migration expectations. **Out of scope until decided:** replacing the entire **save/load** pipeline without a phased plan; duplicating authoritative **spec** sources in JSON (see **TECH-18**). **Related:** **TECH-15** (**New Game** / **geography initialization** performance), **TECH-16** (**simulation tick** performance), **FEAT-37c** (**Load Game** optimizations), **TECH-19** / **TECH-18** (Postgres + MCP evolution).
+  - Acceptance: Written plan (issue update or short doc under `docs/` agreed in review) listing prioritized **JSON** use cases (game vs tooling vs future API); at least one **pilot** implementation or exported schema that proves the pattern (e.g. config slice, tool fixture format, or save-adjacent export) without breaking existing **save data**; glossary/spec terms used consistently for any new named payloads
+  - Depends on: none (coordinate with **TECH-19** when backend schema work starts)
 
 - [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects
   - Type: audio/feature

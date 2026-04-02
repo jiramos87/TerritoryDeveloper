@@ -12,5 +12,7 @@ When you **add or change** code, `.cursor/specs/`, `.cursor/rules/`, `BACKLOG.md
 3. **Backlog** — Issue ids: `BUG-` / `FEAT-` / `TECH-` / `ART-` / `AUDIO-` per `AGENTS.md`. In **Notes**, **Files**, and **Acceptance**, reuse vocabulary from specs/glossary so issues stay searchable and consistent with docs.
 4. **MCP tools** — Tool names are **snake_case** and must match server registration (`tools/mcp-ia-server/src/index.ts`); update [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md) and [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) when adding or renaming tools.
 5. **New concepts** — If you introduce a **new** domain term or redefine behavior, add or update the **glossary** row and the **authoritative spec** section; do not leave the term only in backlog or chat.
+6. **Project specs** (`.cursor/projects/{ISSUE_ID}.md`) — Use glossary terms in **Open Questions**; those questions define **game logic**, not implementation (see [`AGENTS.md`](AGENTS.md) `.cursor/projects/` policy and [`PROJECT-SPEC-STRUCTURE.md`](../projects/PROJECT-SPEC-STRUCTURE.md)).
+7. **Reference specs** (`.cursor/specs/*.md`) — Follow [`REFERENCE-SPEC-STRUCTURE.md`](../specs/REFERENCE-SPEC-STRUCTURE.md) for permanent spec authoring; prefer glossary vocabulary and keep **isometric-geography-system.md** authoritative for shared terrain/road/water rules.
 
 Full workflow: [`AGENTS.md`](AGENTS.md) — Terminology and information consistency.

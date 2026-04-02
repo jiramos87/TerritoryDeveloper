@@ -17,7 +17,7 @@ import { registerBacklogIssue } from "./tools/backlog-issue.js";
 
 const server = new McpServer({
   name: "territory-ia",
-  version: "0.4.0",
+  version: "0.4.1",
   description:
     "Information Architecture server for Territory Developer — exposes specs, rules, glossary, backlog issues, and architecture docs via MCP tools.",
 });

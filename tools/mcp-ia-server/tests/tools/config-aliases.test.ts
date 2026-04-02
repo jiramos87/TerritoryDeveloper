@@ -36,6 +36,11 @@ test("resolveSpecKeyAlias maps geo and roads spec", () => {
   assert.equal(resolveSpecKeyAlias("roads"), "roads-system");
 });
 
+test("resolveSpecKeyAlias maps refspec aliases to reference-spec-structure", () => {
+  assert.equal(resolveSpecKeyAlias("refspec"), "reference-spec-structure");
+  assert.equal(resolveSpecKeyAlias("specstructure"), "reference-spec-structure");
+});
+
 test("findEntryForSpecDoc uses roads alias for spec not rule", () => {
   const e = findEntryForSpecDoc(mockRegistry, "roads");
   assert.equal(e?.key, "roads-system");

@@ -180,3 +180,9 @@
 | **DEPTH_MULTIPLIER** | How strongly “farther on the map” pushes sprites back. Set so depth beats max height contribution (100 vs 10×max height). | geo §7.1, §7.3 |
 | **HEIGHT_MULTIPLIER** | Per-level boost so taller tiles sort above neighbors at the same depth. Used inside `heightOrder`. | geo §7.1 |
 | **Type offsets** | Extra bias per object kind so roads sit above grass, buildings above roads, etc. Terrain 0, slopes +1, road +5, utility +8, building +10, effect +30. | geo §7.2 |
+
+## Documentation
+
+| Term | Definition | Spec |
+|------|-----------|------|
+| **Reference spec** | Permanent Markdown under `.cursor/specs/` that defines domain behavior and vocabulary in depth (terrain, roads, simulation, UI, etc.). Listed in [`AGENTS.md`](../../AGENTS.md) inventory; consumed by humans, agents, and **territory-ia** MCP (`spec_section`, `spec_outline`). Contrasts with a **project spec** (`.cursor/projects/{ISSUE_ID}.md`), which is temporary for an active backlog item. Authoring rules: [REFERENCE-SPEC-STRUCTURE.md](REFERENCE-SPEC-STRUCTURE.md). | `AGENTS.md`, [REFERENCE-SPEC-STRUCTURE.md](REFERENCE-SPEC-STRUCTURE.md) |

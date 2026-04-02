@@ -5,9 +5,15 @@
 > **Created:** YYYY-MM-DD
 > **Last updated:** YYYY-MM-DD
 
+<!--
+  Structure guide: ../projects/PROJECT-SPEC-STRUCTURE.md
+  Use glossary terms: ../../.cursor/specs/glossary.md (spec wins if glossary differs).
+  Separate product behavior (sections 1–5.1, 8, Open Questions) from implementation notes (5.2+, 7, optional "Implementation investigation").
+-->
+
 ## 1. Summary
 
-<!-- 2-3 sentences: what this project does and why it matters. -->
+<!-- 2-3 sentences: what this project does and why it matters. Domain vocabulary only. -->
 
 ## 2. Goals and Non-Goals
 
@@ -34,35 +40,31 @@
 
 ## 4. Current State
 
-<!-- Describe relevant architecture, behavior, or code paths as they exist today.
-     Reference files, classes, spec sections. Keep it factual — no proposals here. -->
+### 4.1 Domain behavior
 
-### 4.1 Relevant Files and Systems
+<!-- Observed vs expected using canonical terms (glossary). No code. -->
 
-| File / Class | Role in this context |
-|--------------|----------------------|
-| … | … |
+### 4.2 Systems map
 
-### 4.2 Current Behavior
+<!-- Short pointers: backlog Files, subsystems, spec sections. Optional file/class table for implementers. -->
 
-<!-- What happens now (including the bug or limitation). Screenshots or diagrams welcome. -->
+### 4.3 Implementation investigation notes (optional)
+
+<!-- Technical hypotheses for the implementing agent — not product requirements. -->
 
 ## 5. Proposed Design
 
-<!-- Describe the target architecture, new components, data flow changes, or behavior.
-     Contrast with §4 where helpful. -->
+### 5.1 Target behavior (product)
 
-### 5.1 Target Behavior
+<!-- Player-visible rules and definitions; glossary-aligned. -->
 
-### 5.2 Architecture Changes
+### 5.2 Architecture / implementation (agent-owned unless fixed by design)
 
-<!-- New classes, modified interfaces, data model changes, prefab additions.
-     Include diagrams (ASCII, Mermaid) if they clarify the design. -->
+<!-- Classes, data flow, algorithms. Agent proposes unless user locked design. -->
 
-### 5.3 Method / Algorithm Specification
+### 5.3 Method / algorithm notes (optional)
 
-<!-- Key methods, signatures, parameters, return values, algorithmic steps.
-     Pseudo-code or bullet-point algorithms are fine. -->
+<!-- Signatures, pseudo-code — only if product owner must approve. -->
 
 ## 6. Decision Log
 
@@ -106,3 +108,14 @@
      On completion: migrate relevant entries to AGENTS.md, coding-conventions, or canonical specs. -->
 
 - …
+
+## Open Questions (resolve before / during implementation)
+
+<!--
+  REQUIRED for collaborative specs.
+  Rules: Use canonical terms from .cursor/specs/glossary.md only.
+  Ask about GAME LOGIC and definitions — not specific code, APIs, or class names.
+  The implementing agent resolves technical approach unless it would change intended behavior (then Decision Log or ask user).
+-->
+
+1. …
