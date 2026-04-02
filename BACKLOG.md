@@ -22,6 +22,14 @@
   - Acceptance: Checklist in issue notes marks every inventory **reference spec** reviewed; no unresolved glossary ↔ spec contradictions; [`AGENTS.md`](AGENTS.md) inventory and MCP spec keys remain coherent
   - Depends on: none
 
+- [ ] **FEAT-45** — MCP **`glossary_discover`**: keyword-style discovery over **glossary** rows
+  - Type: feature (IA / tooling)
+  - Files: `tools/mcp-ia-server/src/tools/glossary-discover.ts`, `tools/mcp-ia-server/src/parser/glossary-discover-rank.ts`, `tools/mcp-ia-server/tests/parser/glossary-discover-rank.test.ts`, `tools/mcp-ia-server/tests/tools/glossary-discover.test.ts`, `tools/mcp-ia-server/scripts/verify-mcp.ts`, [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md), [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md), [`AGENTS.md`](AGENTS.md), [`.cursor/rules/agent-router.mdc`](.cursor/rules/agent-router.mdc)
+  - Spec: [`.cursor/projects/FEAT-45.md`](.cursor/projects/FEAT-45.md)
+  - Notes: **Phase A (shipped):** deterministic ranking using **Term**, **Definition**, **Spec**, and category text; optional **`spec`** alias + **`registryKey`** from the Spec cell; complements **`glossary_lookup`**. **Phase B** (spec body scoring) deferred. Verify: `npm test` and `npm run verify` under `tools/mcp-ia-server/`.
+  - Acceptance: Fixture proves definition-only keywords surface the correct **Term**; `npm test` / `npm run verify` pass; docs and router text list the tool
+  - Depends on: **TECH-17** (MCP IA server — baseline)
+
 ## High Priority
 - [ ] **BUG-49** — Manual **street** drawing: preview builds the **road stroke** cell-by-cell (animated); should show full path at once
   - Type: bug (UX / preview)
@@ -119,14 +127,6 @@
   - Files: `UrbanCentroidService.cs` (**growth ring** boundaries, **urban centroid** distance), `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `SimulationManager.cs` (`ProcessSimulationTick` order), `GrowthBudgetManager.cs` if per-ring **growth budgets** apply; `GridManager.cs` / `DemandManager.cs` only if **desirability** or placement must align with **growth rings**
   - Notes: **Observed:** In **AUTO** simulation, cities tend toward a **dense core**, **under-developed middle growth rings**, and **outer rings that are more zoned than the middle** — not a smooth radial gradient. **Expected:** Development should fall off **gradually from the urban centroid**: **highest** **street** density and **AUTO** zoning pressure **near the centroid**, **moderate** in **mid growth rings**, and **lowest** in **outer growth rings**. Revisit **growth ring** radii/thresholds, per-ring weights for **AUTO** road growth vs zoning, and any caps or priorities that invert mid vs outer activity. **Related:** completed **FEAT-32** (**streets**/intersections by area), **FEAT-29** (**zone density** gradient around **urban centroids**), **FEAT-31** (roads toward **desirability**); completed **BUG-47** (2026-04-01, **AUTO** perpendicular stubs and junction refresh).
   - Depends on: none
-
-- [ ] **FEAT-45** — MCP **`glossary_discover`**: keyword-style discovery over **glossary** rows
-  - Type: feature (IA / tooling)
-  - Files: `tools/mcp-ia-server/src/tools/glossary-discover.ts`, `tools/mcp-ia-server/src/parser/glossary-discover-rank.ts`, `tools/mcp-ia-server/tests/parser/glossary-discover-rank.test.ts`, `tools/mcp-ia-server/tests/tools/glossary-discover.test.ts`, `tools/mcp-ia-server/scripts/verify-mcp.ts`, [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md), [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md), [`AGENTS.md`](AGENTS.md), [`.cursor/rules/agent-router.mdc`](.cursor/rules/agent-router.mdc)
-  - Spec: [`.cursor/projects/FEAT-45.md`](.cursor/projects/FEAT-45.md)
-  - Notes: **Phase A (shipped):** deterministic ranking using **Term**, **Definition**, **Spec**, and category text; optional **`spec`** alias + **`registryKey`** from the Spec cell; complements **`glossary_lookup`**. **Phase B** (spec body scoring) deferred. Verify: `npm test` and `npm run verify` under `tools/mcp-ia-server/`.
-  - Acceptance: Fixture proves definition-only keywords surface the correct **Term**; `npm test` / `npm run verify` pass; docs and router text list the tool
-  - Depends on: **TECH-17** (MCP IA server — baseline)
 
 - [ ] **FEAT-35** — Area demolition tool (bulldozer drag-to-select)
   - Type: feature

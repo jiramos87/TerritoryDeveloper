@@ -124,12 +124,14 @@ const inputShape = {
     .string()
     .optional()
     .describe(
-      "Free-text keywords (multiple words allowed). Combined with `keywords`. Aliases: `q`, `search`.",
+      "English keywords only (glossary language). Multiple words allowed. Combined with `keywords`. Aliases: `q`, `search`. Translate from the chat if the human did not use English.",
     ),
   keywords: z
     .array(z.string())
     .optional()
-    .describe("Extra tokens or phrases. Alias: `terms`."),
+    .describe(
+      "Extra English tokens or phrases. Alias: `terms`. Translate from the user’s language when needed.",
+    ),
   max_results: z
     .number()
     .optional()
@@ -150,7 +152,8 @@ export function registerGlossaryDiscover(
     {
       description:
         "Discover canonical glossary terms from rough keywords: scores Term, Definition, Spec, and category text. " +
-        "Use before glossary_lookup when you do not know the exact term name. Complements glossary_lookup (exact/fuzzy term).",
+        "Use before glossary_lookup when you do not know the exact term name. Complements glossary_lookup (exact/fuzzy term). " +
+        "IMPORTANT: Pass query/keywords in English only (glossary is English). If the user wrote in another language, translate their concepts into English domain words before calling.",
       inputSchema: inputShape,
     },
     async (args) =>

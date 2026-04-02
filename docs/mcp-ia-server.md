@@ -9,6 +9,7 @@ Task-to-spec priorities match **`.cursor/rules/agent-router.mdc`**. That rule fi
 ## Policy for Cursor agents
 
 - **Terminology:** Tool names (`snake_case`) and descriptions should align with [`AGENTS.md`](../AGENTS.md) — glossary-backed domain terms, same vocabulary as specs and backlog. When adding or renaming tools, update this file and [`tools/mcp-ia-server/README.md`](../tools/mcp-ia-server/README.md) together with `registerTool` in code.
+- **Glossary tools (`glossary_discover`, `glossary_lookup`):** The on-disk glossary is **English**. Agents must pass **English** in `query` / `keywords` / `term`. If the human conversation is in another language, **translate** the concepts into English (canonical domain words such as **street**, **road stroke**, **wet run**) before calling these tools. The server does not provide multilingual matching.
 - **Workspace expectation:** This repo is set up so **Cursor** can run **territory-ia** from `.cursor/mcp.json`. Agents with tool access should **prefer MCP** for IA lookups in **Agent** chats.
 - **Human / IDE settings:** Whether tool runs require a click to approve is controlled by **Cursor** (e.g. auto-run or approval settings for MCP/tools)—not by this repo. Adjust in Cursor **Settings** if you want fewer prompts.
 - **Not guaranteed every turn:** The model still chooses whether to call a tool; repo rules and `AGENTS.md` exist to **bias** behavior toward MCP first.
@@ -26,8 +27,8 @@ When starting work on **`BUG-XX` / `FEAT-XX` / `TECH-XX`** (etc.), call **`backl
 | `list_specs` | Discover registered documents (`key`, path, category, description). |
 | `spec_outline` | Heading tree for a spec/rule/doc; supports aliases (`geo`, `roads`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
 | `spec_section` | Body under one heading (id, slug, substring, or fuzzy heading match); `max_chars` truncation. Parameters `spec` + `section` are canonical; aliases `key`/`doc` for spec and `section_heading`/`heading` for section are accepted (numeric section coerced to string) so mis-keyed tool calls still succeed. |
-| `glossary_discover` | Rough keywords → ranked glossary terms (term, definition, Spec column); use before `glossary_lookup` when the exact term is unknown. |
-| `glossary_lookup` | Glossary term; exact then fuzzy (typos). |
+| `glossary_discover` | Rough **English** keywords → ranked glossary terms (term, definition, Spec column); use before `glossary_lookup` when the exact term is unknown. Translate from the conversation if needed. |
+| `glossary_lookup` | Glossary **English** term; exact then fuzzy (typos). Use the exact **Term** string from the table when possible. |
 | `router_for_task` | Match a task domain to specs using `agent-router.mdc` tables. |
 | `invariants_summary` | Numbered invariants and guardrails from `invariants.mdc`. |
 | `list_rules` | All `.mdc` rules with frontmatter metadata. |

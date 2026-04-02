@@ -47,8 +47,8 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`list_specs`** | Registry entries: `key`, `relativePath`, `description`, `category`, `lineCount`. Optional filter `category` (e.g. `rule`). |
 | **`spec_outline`** | Nested heading outline with line ranges. `spec` accepts key, filename, or alias (`geo` → `isometric-geography-system`, `roads` → `roads-system`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
 | **`spec_section`** | Body for one section: canonical `spec` + `section` (id `13.4`, slug, title substring, or fuzzy typo). Aliases: `key` / `doc` → spec; `section_heading` / `heading` → section; numeric `section` coerced to string. `max_chars` or `maxChars` (default 3000) with `truncated` / `totalChars`. |
-| **`glossary_discover`** | Keyword discovery over glossary rows: scores **Term**, **Definition**, **Spec**, and category; returns ranked `term`, `specReference`, optional `spec` alias + `registryKey`, `matchReasons`, `score`. Params: `query` and/or `keywords` (alias `terms`); `q` / `search` for query; `max_results` / `maxResults` (default 10, cap 25). |
-| **`glossary_lookup`** | Glossary row: exact (case-insensitive) then fuzzy; bracket text like `[x,y]` normalized for matching. |
+| **`glossary_discover`** | Keyword discovery over glossary rows (**English** `query` / `keywords` only — translate from the user’s language before calling). Scores **Term**, **Definition**, **Spec**, and category; returns ranked `term`, `specReference`, optional `spec` alias + `registryKey`, `matchReasons`, `score`. Params: `query` and/or `keywords` (alias `terms`); `q` / `search` for query; `max_results` / `maxResults` (default 10, cap 25). |
+| **`glossary_lookup`** | Glossary row: exact (case-insensitive) then fuzzy; **`term` must be English** (glossary language). Bracket text like `[x,y]` normalized for matching. |
 | **`router_for_task`** | Match `domain` string to specs using tables in `agent-router.mdc`. |
 | **`invariants_summary`** | Invariants + guardrails from `invariants.mdc`. |
 | **`list_rules`** | All `.mdc` rules with frontmatter (`alwaysApply`, `globs`, description). |

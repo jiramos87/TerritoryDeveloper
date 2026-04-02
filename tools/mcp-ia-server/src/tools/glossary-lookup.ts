@@ -16,7 +16,7 @@ const inputShape = {
   term: z
     .string()
     .describe(
-      "The term to look up (e.g. 'wet run', 'HeightMap', 'hight map'). Case-insensitive; bracket text like [x,y] is ignored for matching.",
+      "English glossary term to look up (e.g. 'wet run', 'HeightMap', 'hight map'). Translate from the user’s language when needed. Case-insensitive; bracket text like [x,y] is ignored for matching.",
     ),
 };
 
@@ -42,7 +42,8 @@ export function registerGlossaryLookup(
     "glossary_lookup",
     {
       description:
-        "Look up a domain term in the glossary (exact match, then fuzzy suggestions for typos).",
+        "Look up a domain term in the glossary (exact match, then fuzzy suggestions for typos). " +
+        "Pass the term in English (glossary language); translate from the conversation if the user did not use English.",
       inputSchema: inputShape,
     },
     async (args) =>
