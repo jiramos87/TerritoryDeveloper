@@ -31,3 +31,18 @@ export interface SpecRegistryEntry {
   description: string;
   category: "spec" | "rule" | "root-doc";
 }
+
+/** One row from `glossary.md` Term / Definition / Spec tables. */
+export interface GlossaryEntry {
+  term: string;
+  definition: string;
+  specReference: string;
+  category: string;
+}
+
+/** Normalized router tool match (both agent-router tables). */
+export interface RouterMatchRow {
+  taskDomain: string;
+  specToRead: string;
+  keySections: string;
+}

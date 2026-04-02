@@ -1,6 +1,8 @@
 # Territory IA MCP server
 
-Local [Model Context Protocol](https://modelcontextprotocol.io/) server for **Territory Developer** information architecture: Cursor rules (`.mdc`), deep specs (`.cursor/specs/*.md`), `AGENTS.md`, and `ARCHITECTURE.md`.
+Local [Model Context Protocol](https://modelcontextprotocol.io/) server for **Territory Developer** information architecture. It reads the **same** on-disk sources agents already use: `.cursor/specs/*.md`, `.cursor/rules/*.mdc`, `glossary.md`, and root docs registered in `buildRegistry()` (e.g. `AGENTS.md`, `ARCHITECTURE.md`).
+
+Canonical integration notes: [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) and [`.cursor/rules/agent-router.mdc`](../../.cursor/rules/agent-router.mdc) (subsection **MCP — territory-ia**).
 
 ## Prerequisites
 
@@ -15,7 +17,10 @@ Local [Model Context Protocol](https://modelcontextprotocol.io/) server for **Te
 | `npm run dev` | Run the server via `tsx` (stdio MCP). |
 | `npm run build` | Emit JavaScript to `dist/` with `tsc`. |
 | `npm start` | Run compiled `dist/index.js` (stdio MCP). |
-| `npm run verify` | Spawn the server like Cursor (`npx -y tsx …` from repo root) and exercise `list_specs` / `spec_outline` via the MCP SDK client. |
+| `npm test` | Unit tests (`node:test` + `tsx`) for parser and tool helpers. |
+| `npm run test:watch` | Tests in watch mode. |
+| `npm run test:coverage` | Parser line coverage with **c8** (gate ≥90% on `src/parser/**`). |
+| `npm run verify` | From this directory: spawns the server the same way as Cursor (via repo root + `npx -y tsx …`) and exercises all **9** tools through the MCP SDK client. |
 
 ## Cursor integration
 
@@ -32,12 +37,29 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 |----------|---------|
 | `REPO_ROOT` | Root used to resolve `.cursor/specs`, `.cursor/rules`, and root markdown. Defaults to `process.cwd()`. |
 
-## Tools (phase 1)
+## Tools (9)
 
-- **`list_specs`** — Registry of IA files with `relativePath`, `description`, `category`, and `lineCount`.
-- **`spec_outline`** — Heading tree with absolute `lineStart` / `lineEnd` (full file, including YAML frontmatter on `.mdc`).
+| Tool | Description |
+|------|-------------|
+| **`backlog_issue`** | One issue from `BACKLOG.md`: `issue_id` (e.g. `BUG-37`). Returns `status`, `backlog_section`, `Files` / `Spec` / `Notes` / `Acceptance` / `depends_on`, `raw_markdown`. Not in `list_specs`. |
+| **`list_specs`** | Registry entries: `key`, `relativePath`, `description`, `category`, `lineCount`. Optional filter `category` (e.g. `rule`). |
+| **`spec_outline`** | Nested heading outline with line ranges. `spec` accepts key, filename, or alias (`geo` → `isometric-geography-system`, `roads` → `roads-system`, …). |
+| **`spec_section`** | Body for one section: `section` as id (`13.4`), slug, title substring, or fuzzy typo (token-aware). `max_chars` (default 3000) with `truncated` / `totalChars`. |
+| **`glossary_lookup`** | Glossary row: exact (case-insensitive) then fuzzy; bracket text like `[x,y]` normalized for matching. |
+| **`router_for_task`** | Match `domain` string to specs using tables in `agent-router.mdc`. |
+| **`invariants_summary`** | Invariants + guardrails from `invariants.mdc`. |
+| **`list_rules`** | All `.mdc` rules with frontmatter (`alwaysApply`, `globs`, description). |
+| **`rule_content`** | Rule markdown body without frontmatter. `rule: "roads"` resolves **`roads.mdc`** (use `spec_section` / `spec_outline` with alias `roads` for the **roads-system** spec). |
 
-Further tools (e.g. section extraction) are defined in follow-up project specs.
+**Examples (conceptual):**
+
+- `backlog_issue` → `{ "issue_id": "BUG-37" }`
+- `list_specs` → `{}`
+- `spec_outline` → `{ "spec": "geo" }`
+- `spec_section` → `{ "spec": "geo", "section": "13.4", "max_chars": 8000 }`
+- `glossary_lookup` → `{ "term": "wet run" }`
+- `router_for_task` → `{ "domain": "roads" }`
+- `rule_content` → `{ "rule": "roads", "max_chars": 50000 }`
 
 ## Architecture
 
@@ -49,35 +71,78 @@ flowchart LR
   subgraph core [Core]
     CFG[config.ts]
     PAR[parser/markdown-parser.ts]
+    FZ[parser/fuzzy.ts]
+    TP[parser/table-parser.ts]
+    GP[parser/glossary-parser.ts]
+    BKP[parser/backlog-parser.ts]
   end
   subgraph mcp [MCP tools]
+    BI[backlog-issue.ts]
     LS[list-specs.ts]
     SO[spec-outline.ts]
+    SS[spec-section.ts]
+    GL[glossary-lookup.ts]
+    RF[router-for-task.ts]
+    IS[invariants-summary.ts]
+    LR[list-rules.ts]
+    RC[rule-content.ts]
   end
   IDX --> CFG
+  IDX --> BI
   IDX --> LS
   IDX --> SO
+  IDX --> SS
+  IDX --> GL
+  IDX --> RF
+  IDX --> IS
+  IDX --> LR
+  IDX --> RC
   LS --> CFG
   LS --> PAR
   SO --> CFG
   SO --> PAR
+  SS --> CFG
+  SS --> PAR
+  SS --> FZ
+  GL --> CFG
+  GL --> GP
+  GL --> FZ
+  RF --> CFG
+  RF --> TP
+  IS --> CFG
+  LR --> CFG
+  RC --> CFG
+  BI --> CFG
+  BI --> BKP
+  GP --> PAR
+  GP --> TP
 ```
 
-- **`config.ts`** — Resolves repo root, scans `.cursor/specs/*.md`, `.cursor/rules/*.mdc`, `AGENTS.md`, and `ARCHITECTURE.md`, and derives short `key` / `description` metadata.
-- **`markdown-parser.ts`** — `gray-matter` for frontmatter, Markdown heading scan on the body slice of the physical file, section IDs, line ranges, and a nested heading tree.
-- **Tools** — Register handlers on `McpServer` and return JSON inside MCP text content blocks.
+- **`config.ts`** — Resolves repo root, scans specs, rules, and root docs; builds registry; spec key aliases; separate rule key resolution for `rule_content`.
+- **`markdown-parser.ts`** — Frontmatter (`gray-matter`), heading tree, section extraction, optional **parse cache** keyed by absolute path.
+- **`instrumentation.ts`** — Per-tool timing on **stderr** (safe for stdio MCP).
+- **Tools** — Handlers return JSON in MCP **text** content blocks.
 
 ## Adding a tool
 
 1. Add `src/tools/<name>.ts` exporting `registerYourTool(server, registry)`.
 2. Use `registerTool` on the `McpServer` instance with a Zod `inputSchema` shape (see existing tools).
 3. Import and call the register function from `src/index.ts`.
-4. Document the tool in this README.
+4. Document the tool here and in `docs/mcp-ia-server.md`; extend `scripts/verify-mcp.ts` if needed.
+
+## Troubleshooting
+
+| Symptom | Check |
+|--------|--------|
+| Tools return empty or wrong paths | `REPO_ROOT` must point at the **repository root** (folder containing `.cursor/specs`). |
+| Cursor does not list the server | `.cursor/mcp.json` and Node/npm available; restart Cursor after config changes. |
+| `verify` fails | Run from `tools/mcp-ia-server/` with repo dependencies installed (`npm install`); ensure working copy includes expected spec/rule files. |
+| Slow repeated calls | Parsed documents are cached in memory until process exit; restart server after large doc edits. |
 
 ## Debugging
 
 - Run `npm run dev` from `tools/mcp-ia-server/` with `REPO_ROOT` pointing at the repo; the process speaks MCP over stdio, so attach a client or use Cursor’s MCP log output.
-- For quick registry checks without MCP: `REPO_ROOT=/path/to/repo node dist/config.js` is not wired — use a small `node --input-type=module` script importing `buildRegistry` from `dist/config.js` instead.
+- Tool timing lines appear on **stderr** (e.g. `[territory-ia] spec_section 0.4ms`).
 
 ## Dependency note
 

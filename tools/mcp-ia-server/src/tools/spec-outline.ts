@@ -1,18 +1,19 @@
 /**
- * MCP tool: spec_outline — heading tree for a registered IA document.
+ * MCP tool: spec_outline — heading tree for a registered IA document (supports spec key aliases).
  */
 
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SpecRegistryEntry } from "../parser/types.js";
 import { parseDocument } from "../parser/markdown-parser.js";
-import { findEntryByKey } from "../config.js";
+import { findEntryForSpecDoc } from "../config.js";
+import { runWithToolTiming } from "../instrumentation.js";
 
 const specOutlineInputShape = {
   spec: z
     .string()
     .describe(
-      "Key or filename of the document (e.g. 'glossary', 'roads-system', 'invariants', 'AGENTS.md').",
+      "Key or filename of the document (e.g. 'glossary', 'geo', 'roads-system', 'invariants').",
     ),
 };
 
@@ -38,30 +39,31 @@ export function registerSpecOutline(
     "spec_outline",
     {
       description:
-        "Get the heading outline (table of contents) for a spec, rule, or root document.",
+        "Get the heading outline (table of contents) for a spec, rule, or root document. Accepts short aliases (e.g. geo, roads, sim).",
       inputSchema: specOutlineInputShape,
     },
-    async (args) => {
-      const spec = args?.spec ?? "";
-      const entry = findEntryByKey(registry, spec);
+    async (args) =>
+      runWithToolTiming("spec_outline", async () => {
+        const spec = args?.spec ?? "";
+        const entry = findEntryForSpecDoc(registry, spec);
 
-      if (!entry) {
-        const available_keys = registry.map((e) => e.key).sort();
+        if (!entry) {
+          const available_keys = registry.map((e) => e.key).sort();
+          return jsonResult({
+            error: "unknown_spec",
+            message: `No document found for key '${spec}'. Use list_specs to see available documents.`,
+            available_keys,
+          });
+        }
+
+        const doc = parseDocument(entry.filePath);
         return jsonResult({
-          error: "unknown_spec",
-          message: `No document found for key '${spec}'. Use list_specs to see available documents.`,
-          available_keys,
+          key: entry.key,
+          fileName: entry.fileName,
+          description: entry.description,
+          frontmatter: doc.frontmatter,
+          outline: doc.headings,
         });
-      }
-
-      const doc = parseDocument(entry.filePath);
-      return jsonResult({
-        key: entry.key,
-        fileName: entry.fileName,
-        description: entry.description,
-        frontmatter: doc.frontmatter,
-        outline: doc.headings,
-      });
-    },
+      }),
   );
 }

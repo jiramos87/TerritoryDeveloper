@@ -1,0 +1,11 @@
+---
+description: Test rule fixture for MCP unit tests
+alwaysApply: true
+globs: "**/*.ts"
+---
+
+# Rule Title
+
+Rule body line one.
+
+- Bullet guidance

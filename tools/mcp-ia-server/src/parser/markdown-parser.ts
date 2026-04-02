@@ -3,8 +3,18 @@
  */
 
 import fs from "node:fs";
+import path from "node:path";
 import matter from "gray-matter";
 import type { HeadingNode, ParsedDocument } from "./types.js";
+
+const documentParseCache = new Map<string, ParsedDocument>();
+
+/**
+ * Clear the in-memory {@link parseDocument} cache (e.g. between tests).
+ */
+export function clearDocumentParseCache(): void {
+  documentParseCache.clear();
+}
 
 const HEADING_LINE = /^\s{0,3}(#{1,6})\s+(.+?)\s*$/;
 const SECTION_ID_NUMERIC = /^(?:§\s*)?(\d+(?:\.\d+)*)\b/;
@@ -164,21 +174,155 @@ export function buildHeadingTree(
 
 /**
  * Read a UTF-8 file and produce heading tree with absolute line numbers and frontmatter.
+ * Results are cached per resolved path until process exit or {@link clearDocumentParseCache}.
  */
 export function parseDocument(filePath: string): ParsedDocument {
-  const raw = fs.readFileSync(filePath, "utf8");
+  const key = path.resolve(filePath);
+  const hit = documentParseCache.get(key);
+  if (hit) return hit;
+  const doc = parseDocumentUncached(key);
+  documentParseCache.set(key, doc);
+  return doc;
+}
+
+function parseDocumentUncached(resolvedPath: string): ParsedDocument {
+  const raw = fs.readFileSync(resolvedPath, "utf8");
   const lines = splitLines(raw);
   const lineCount = lines.length;
   const { frontmatter, hadFrontmatterBlock } = extractFrontmatter(raw);
   const bodyStart = getBodyStartLine1Based(lines);
   const headings = buildHeadingTree(lines, bodyStart, lineCount);
-  const fileName = filePath.split(/[/\\]/).pop() ?? filePath;
+  const fileName = resolvedPath.split(/[/\\]/).pop() ?? resolvedPath;
 
   return {
-    filePath,
+    filePath: resolvedPath,
     fileName,
     frontmatter: hadFrontmatterBlock ? frontmatter : null,
     headings,
     lineCount,
   };
+}
+
+/**
+ * All heading nodes in document order (pre-order DFS).
+ */
+export function flattenHeadingTree(nodes: HeadingNode[]): HeadingNode[] {
+  const out: HeadingNode[] = [];
+  const walk = (list: HeadingNode[]) => {
+    for (const n of list) {
+      out.push(n);
+      walk(n.children);
+    }
+  };
+  walk(nodes);
+  return out;
+}
+
+function normalizeSectionToken(s: string): string {
+  return s
+    .replace(/^§\s*/i, "")
+    .trim()
+    .toLowerCase();
+}
+
+export interface ExtractSectionMatch {
+  heading: HeadingNode;
+  content: string;
+  lineStart: number;
+  lineEnd: number;
+}
+
+export type SectionResolveResult =
+  | ExtractSectionMatch
+  | { kind: "ambiguous"; candidates: { sectionId: string; title: string }[] }
+  | null;
+
+/**
+ * Find a section by numeric/slug sectionId (exact, case-insensitive, optional §) or by title substring.
+ */
+function resolveSectionHeading(
+  doc: ParsedDocument,
+  sectionQuery: string,
+): SectionResolveResult {
+  const q = sectionQuery.trim();
+  if (!q) return null;
+
+  const all = flattenHeadingTree(doc.headings);
+  const normQ = normalizeSectionToken(q);
+
+  const idMatches = all.filter(
+    (n) => normalizeSectionToken(n.sectionId) === normQ,
+  );
+  if (idMatches.length === 1) {
+    return buildExtractMatch(doc.filePath, idMatches[0]!);
+  }
+  if (idMatches.length > 1) {
+    return {
+      kind: "ambiguous",
+      candidates: idMatches.map((n) => ({
+        sectionId: n.sectionId,
+        title: n.title,
+      })),
+    };
+  }
+
+  const qLower = q.toLowerCase();
+  const titleMatches = all.filter((n) =>
+    n.title.trim().toLowerCase().includes(qLower),
+  );
+  if (titleMatches.length === 1) {
+    return buildExtractMatch(doc.filePath, titleMatches[0]!);
+  }
+  if (titleMatches.length > 1) {
+    return {
+      kind: "ambiguous",
+      candidates: titleMatches.map((n) => ({
+        sectionId: n.sectionId,
+        title: n.title,
+      })),
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Build section slice text for a heading node (inclusive line range).
+ */
+export function buildExtractMatch(
+  filePath: string,
+  heading: HeadingNode,
+): ExtractSectionMatch {
+  const content = extractLines(filePath, heading.lineStart, heading.lineEnd);
+  return {
+    heading,
+    content,
+    lineStart: heading.lineStart,
+    lineEnd: heading.lineEnd,
+  };
+}
+
+/**
+ * Read inclusive line range (1-based, physical file) as a single string.
+ */
+export function extractLines(
+  filePath: string,
+  lineStart: number,
+  lineEnd: number,
+): string {
+  const raw = fs.readFileSync(filePath, "utf8");
+  const lines = splitLines(raw);
+  const start = Math.max(0, lineStart - 1);
+  const end = Math.min(lines.length, lineEnd);
+  return lines.slice(start, end).join("\n");
+}
+
+/**
+ * Resolve section content; null if not found, or ambiguous match metadata.
+ */
+export function extractSection(
+  doc: ParsedDocument,
+  sectionQuery: string,
+): SectionResolveResult {
+  return resolveSectionHeading(doc, sectionQuery);
 }

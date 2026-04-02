@@ -44,16 +44,27 @@ async function main(): Promise<void> {
   const { tools } = await client.listTools();
   const names = tools.map((t) => t.name).sort();
   console.log("Tools:", names.join(", "));
-  if (!names.includes("list_specs") || !names.includes("spec_outline")) {
-    throw new Error("Expected list_specs and spec_outline");
+  const required = [
+    "list_specs",
+    "spec_outline",
+    "spec_section",
+    "glossary_lookup",
+    "router_for_task",
+    "invariants_summary",
+    "list_rules",
+    "rule_content",
+    "backlog_issue",
+  ];
+  for (const n of required) {
+    if (!names.includes(n)) throw new Error(`Missing MCP tool: ${n}`);
   }
 
   const all = parseJsonFromToolResult(
     await client.callTool({ name: "list_specs", arguments: {} }),
   ) as Array<{ key: string; category: string }>;
   console.log("list_specs count:", all.length);
-  if (all.length !== 19) {
-    throw new Error(`Expected 19 IA documents, got ${all.length}`);
+  if (all.length !== 21) {
+    throw new Error(`Expected 21 IA documents, got ${all.length}`);
   }
 
   const rules = parseJsonFromToolResult(
@@ -62,7 +73,7 @@ async function main(): Promise<void> {
       arguments: { category: "rule" },
     }),
   ) as Array<{ category: string }>;
-  if (rules.length !== 9 || rules.some((r) => r.category !== "rule")) {
+  if (rules.length !== 11 || rules.some((r) => r.category !== "rule")) {
     throw new Error("list_specs category=rule filter failed");
   }
 
@@ -95,6 +106,261 @@ async function main(): Promise<void> {
   ) as { error?: string; available_keys?: string[] };
   if (bad.error !== "unknown_spec" || !Array.isArray(bad.available_keys)) {
     throw new Error("Expected unknown_spec error with available_keys");
+  }
+
+  const sec134 = parseJsonFromToolResult(
+    await client.callTool({
+      name: "spec_section",
+      arguments: { spec: "isometric-geography-system", section: "13.4" },
+    }),
+  ) as { content?: string; error?: string; title?: string };
+  if (sec134.error || !sec134.content?.includes("Bridges and water")) {
+    throw new Error("spec_section 13.4 expected bridge content");
+  }
+
+  const sec13 = parseJsonFromToolResult(
+    await client.callTool({
+      name: "spec_section",
+      arguments: { spec: "isometric-geography-system", section: "13" },
+    }),
+  ) as { content?: string; error?: string };
+  if (sec13.error || !sec13.content?.includes("13.1")) {
+    throw new Error("spec_section 13 should include subsection 13.1");
+  }
+
+  const secGloss = parseJsonFromToolResult(
+    await client.callTool({
+      name: "spec_section",
+      arguments: {
+        spec: "glossary",
+        section: "Roads & Bridges",
+        max_chars: 20000,
+      },
+    }),
+  ) as { content?: string; error?: string };
+  if (secGloss.error || !secGloss.content?.includes("Wet run")) {
+    throw new Error("spec_section glossary Roads & Bridges failed");
+  }
+
+  const secRoads = parseJsonFromToolResult(
+    await client.callTool({
+      name: "spec_section",
+      arguments: {
+        spec: "roads-system",
+        section: "Land slope stroke policy",
+      },
+    }),
+  ) as { content?: string; error?: string };
+  if (secRoads.error || !secRoads.content?.includes("BUG-51")) {
+    throw new Error("spec_section roads-system title match failed");
+  }
+
+  const secBad = parseJsonFromToolResult(
+    await client.callTool({
+      name: "spec_section",
+      arguments: { spec: "isometric-geography-system", section: "999" },
+    }),
+  ) as { error?: string; available_sections?: unknown[] };
+  if (secBad.error !== "unknown_section" || !Array.isArray(secBad.available_sections)) {
+    throw new Error("spec_section unknown_section expected");
+  }
+
+  const secTrunc = parseJsonFromToolResult(
+    await client.callTool({
+      name: "spec_section",
+      arguments: {
+        spec: "isometric-geography-system",
+        section: "13",
+        max_chars: 500,
+      },
+    }),
+  ) as { truncated?: boolean; totalChars?: number };
+  if (!secTrunc.truncated || (secTrunc.totalChars ?? 0) <= 500) {
+    throw new Error("spec_section max_chars truncation expected");
+  }
+
+  const gloss = parseJsonFromToolResult(
+    await client.callTool({
+      name: "glossary_lookup",
+      arguments: { term: "wet run" },
+    }),
+  ) as { term?: string; error?: string };
+  if (gloss.error || !gloss.term?.toLowerCase().includes("wet")) {
+    throw new Error("glossary_lookup wet run failed");
+  }
+
+  const glossCi = parseJsonFromToolResult(
+    await client.callTool({
+      name: "glossary_lookup",
+      arguments: { term: "WET RUN" },
+    }),
+  ) as { term?: string; error?: string };
+  if (glossCi.error) throw new Error("glossary_lookup case-insensitive failed");
+
+  const glossBad = parseJsonFromToolResult(
+    await client.callTool({
+      name: "glossary_lookup",
+      arguments: { term: "nonexistent-term-xyz" },
+    }),
+  ) as { error?: string; available_terms?: string[] };
+  if (glossBad.error !== "term_not_found" || !Array.isArray(glossBad.available_terms)) {
+    throw new Error("glossary_lookup term_not_found expected");
+  }
+
+  const routeRoads = parseJsonFromToolResult(
+    await client.callTool({
+      name: "router_for_task",
+      arguments: { domain: "roads" },
+    }),
+  ) as { matches?: unknown[]; error?: string };
+  if (routeRoads.error || !routeRoads.matches?.length) {
+    throw new Error("router_for_task roads failed");
+  }
+
+  const routeSave = parseJsonFromToolResult(
+    await client.callTool({
+      name: "router_for_task",
+      arguments: { domain: "save" },
+    }),
+  ) as { matches?: unknown[]; error?: string };
+  if (routeSave.error || !routeSave.matches?.length) {
+    throw new Error("router_for_task save failed");
+  }
+
+  const routeGrid = parseJsonFromToolResult(
+    await client.callTool({
+      name: "router_for_task",
+      arguments: { domain: "grid math" },
+    }),
+  ) as { matches?: unknown[]; error?: string };
+  if (routeGrid.error || !routeGrid.matches?.length) {
+    throw new Error("router_for_task grid math failed");
+  }
+  const gridMatch = (routeGrid.matches as { specToRead?: string }[])[0];
+  if (!gridMatch?.specToRead?.includes("isometric-geography-system")) {
+    throw new Error("router_for_task grid math should point at geography spec");
+  }
+
+  const routeBad = parseJsonFromToolResult(
+    await client.callTool({
+      name: "router_for_task",
+      arguments: { domain: "xyz-no-match-12345" },
+    }),
+  ) as { error?: string; available_domains?: string[] };
+  if (routeBad.error !== "no_matching_domain" || !Array.isArray(routeBad.available_domains)) {
+    throw new Error("router_for_task no_matching_domain expected");
+  }
+
+  const invSum = parseJsonFromToolResult(
+    await client.callTool({ name: "invariants_summary", arguments: {} }),
+  ) as { invariants?: string[]; guardrails?: string[]; error?: string };
+  if (invSum.error) throw new Error("invariants_summary error");
+  if ((invSum.invariants?.length ?? 0) !== 12) {
+    throw new Error(`Expected 12 invariants, got ${invSum.invariants?.length}`);
+  }
+  if ((invSum.guardrails?.length ?? 0) !== 9) {
+    throw new Error(`Expected 9 guardrails, got ${invSum.guardrails?.length}`);
+  }
+
+  const lr = parseJsonFromToolResult(
+    await client.callTool({ name: "list_rules", arguments: {} }),
+  ) as { rules?: unknown[] };
+  if ((lr.rules?.length ?? 0) !== 11) {
+    throw new Error(`list_rules expected 11 rules, got ${lr.rules?.length}`);
+  }
+
+  const rc = parseJsonFromToolResult(
+    await client.callTool({
+      name: "rule_content",
+      arguments: { rule: "roads", max_chars: 50000 },
+    }),
+  ) as { content?: string; error?: string; key?: string };
+  if (rc.error || !rc.content?.length || rc.key !== "roads") {
+    throw new Error("rule_content roads failed");
+  }
+
+  const outlineGeo = parseJsonFromToolResult(
+    await client.callTool({
+      name: "spec_outline",
+      arguments: { spec: "geo" },
+    }),
+  ) as { key?: string; error?: string; outline?: unknown[] };
+  if (outlineGeo.error || outlineGeo.key !== "isometric-geography-system") {
+    throw new Error("spec_outline geo alias failed");
+  }
+
+  const secGeoAlias = parseJsonFromToolResult(
+    await client.callTool({
+      name: "spec_section",
+      arguments: {
+        spec: "geo",
+        section: "13.4",
+        max_chars: 8000,
+      },
+    }),
+  ) as { content?: string; error?: string; key?: string };
+  if (secGeoAlias.error || secGeoAlias.key !== "isometric-geography-system") {
+    throw new Error("spec_section geo alias failed");
+  }
+  if (!secGeoAlias.content?.includes("Bridges and water")) {
+    throw new Error("spec_section geo + 13.4 content failed");
+  }
+
+  const secFuzz = parseJsonFromToolResult(
+    await client.callTool({
+      name: "spec_section",
+      arguments: {
+        spec: "geo",
+        section: "Briges",
+        max_chars: 8000,
+      },
+    }),
+  ) as { content?: string; error?: string; matchType?: string };
+  if (
+    secFuzz.error ||
+    secFuzz.matchType !== "fuzzy" ||
+    !secFuzz.content?.includes("Bridges and water")
+  ) {
+    throw new Error("spec_section fuzzy typo Briges → bridges section failed");
+  }
+
+  const glossTypo = parseJsonFromToolResult(
+    await client.callTool({
+      name: "glossary_lookup",
+      arguments: { term: "hight map" },
+    }),
+  ) as { term?: string; matchType?: string; error?: string };
+  if (glossTypo.error || glossTypo.matchType !== "fuzzy") {
+    throw new Error("glossary_lookup fuzzy typo hight map failed");
+  }
+  if (!glossTypo.term?.toLowerCase().includes("height")) {
+    throw new Error("glossary_lookup expected HeightMap-style term");
+  }
+
+  const bl37 = parseJsonFromToolResult(
+    await client.callTool({
+      name: "backlog_issue",
+      arguments: { issue_id: "BUG-37" },
+    }),
+  ) as { issue_id?: string; status?: string; error?: string; files?: string; backlog_section?: string };
+  if (bl37.error || bl37.issue_id !== "BUG-37" || bl37.status !== "open") {
+    throw new Error("backlog_issue BUG-37 failed");
+  }
+  if (!bl37.files?.includes("RoadManager")) {
+    throw new Error("backlog_issue BUG-37 expected Files to mention RoadManager");
+  }
+  if (!bl37.backlog_section?.toLowerCase().includes("high")) {
+    throw new Error("backlog_issue BUG-37 expected High Priority section");
+  }
+
+  const blBad = parseJsonFromToolResult(
+    await client.callTool({
+      name: "backlog_issue",
+      arguments: { issue_id: "XYZ-99999" },
+    }),
+  ) as { error?: string };
+  if (blBad.error !== "unknown_issue") {
+    throw new Error("backlog_issue unknown_issue expected for fake id");
   }
 
   await transport.close();

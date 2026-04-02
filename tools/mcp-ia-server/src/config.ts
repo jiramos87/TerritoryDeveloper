@@ -1,5 +1,5 @@
 /**
- * Repo paths, IA registry construction, and key resolution.
+ * Repo paths, IA registry construction, spec aliases, and key resolution.
  */
 
 import fs from "node:fs";
@@ -10,6 +10,36 @@ import {
   getBodyStartLine1Based,
   splitLines,
 } from "./parser/markdown-parser.js";
+
+/**
+ * Short names for specs/root docs — values must match {@link buildRegistry} `key` fields (lowercase basenames).
+ */
+export const SPEC_KEY_ALIASES: Record<string, string> = {
+  geo: "isometric-geography-system",
+  geography: "isometric-geography-system",
+  roads: "roads-system",
+  water: "water-terrain-system",
+  terrain: "water-terrain-system",
+  sim: "simulation-system",
+  simulation: "simulation-system",
+  persist: "persistence-system",
+  save: "persistence-system",
+  load: "persistence-system",
+  mgrs: "managers-reference",
+  managers: "managers-reference",
+  ui: "ui-design-system",
+  arch: "architecture",
+  agents: "agents",
+};
+
+/**
+ * Map user-facing short keys (e.g. `geo`) to registry keys before document lookup.
+ */
+export function resolveSpecKeyAlias(spec: string): string {
+  const t = spec.trim().toLowerCase();
+  if (!t) return spec.trim();
+  return SPEC_KEY_ALIASES[t] ?? spec.trim();
+}
 
 /**
  * Resolve repository root: REPO_ROOT env (relative to cwd if not absolute), else cwd.
@@ -131,6 +161,37 @@ export function findEntryByKey(
   const qBase = q.includes(".") ? path.basename(q).toLowerCase() : q;
 
   return registry.find((e) => {
+    if (e.key === q) return true;
+    if (e.fileName.toLowerCase() === q) return true;
+    if (e.fileName.toLowerCase() === qBase) return true;
+    if (entryKeyFromFileName(e.fileName) === qBase) return true;
+    return false;
+  });
+}
+
+/**
+ * Resolve a spec/root document entry: alias map first, then {@link findEntryByKey}.
+ */
+export function findEntryForSpecDoc(
+  registry: SpecRegistryEntry[],
+  spec: string,
+): SpecRegistryEntry | undefined {
+  const aliased = resolveSpecKeyAlias(spec);
+  return findEntryByKey(registry, aliased) ?? findEntryByKey(registry, spec);
+}
+
+/**
+ * Find a `.mdc` rule by key or filename (never applies spec aliases — `roads` stays the rule file).
+ */
+export function findRuleEntry(
+  registry: SpecRegistryEntry[],
+  rule: string,
+): SpecRegistryEntry | undefined {
+  const rules = registry.filter((e) => e.category === "rule");
+  const q = rule.trim().toLowerCase();
+  if (!q) return undefined;
+  const qBase = q.includes(".") ? path.basename(q).toLowerCase() : q;
+  return rules.find((e) => {
     if (e.key === q) return true;
     if (e.fileName.toLowerCase() === q) return true;
     if (e.fileName.toLowerCase() === qBase) return true;

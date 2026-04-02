@@ -8,6 +8,7 @@ import fs from "node:fs";
 import type { SpecRegistryEntry } from "../parser/types.js";
 import { splitLines } from "../parser/markdown-parser.js";
 import { relativePathForEntry, resolveRepoRoot } from "../config.js";
+import { runWithToolTiming } from "../instrumentation.js";
 
 const listSpecsInputShape = {
   category: z
@@ -43,28 +44,29 @@ export function registerListSpecs(
         "List all Information Architecture documents (specs, rules, root docs) available for querying.",
       inputSchema: listSpecsInputShape,
     },
-    async (args) => {
-      const category = args?.category ?? "all";
+    async (args) =>
+      runWithToolTiming("list_specs", async () => {
+        const category = args?.category ?? "all";
 
-      const filtered =
-        category === "all"
-          ? registry
-          : registry.filter((e) => e.category === category);
+        const filtered =
+          category === "all"
+            ? registry
+            : registry.filter((e) => e.category === category);
 
-      const rows = filtered.map((e) => {
-        const raw = fs.readFileSync(e.filePath, "utf8");
-        const lineCount = splitLines(raw).length;
-        return {
-          key: e.key,
-          fileName: e.fileName,
-          relativePath: relativePathForEntry(repoRoot, e),
-          description: e.description,
-          category: e.category,
-          lineCount,
-        };
-      });
+        const rows = filtered.map((e) => {
+          const raw = fs.readFileSync(e.filePath, "utf8");
+          const lineCount = splitLines(raw).length;
+          return {
+            key: e.key,
+            fileName: e.fileName,
+            relativePath: relativePathForEntry(repoRoot, e),
+            description: e.description,
+            category: e.category,
+            lineCount,
+          };
+        });
 
-      return jsonResult(rows);
-    },
+        return jsonResult(rows);
+      }),
   );
 }
