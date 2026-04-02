@@ -57,6 +57,16 @@ Permanent **reference specs** live here as `*.md` files. They are the long-lived
 - Key terms used in this spec: … (or: see [glossary.md](glossary.md) sections …)
 ```
 
-## Optional: synonym migration (TECH-22)
+## Deprecated prose → canonical terms (authoring)
 
-For large terminology passes, maintain a short **deprecated → canonical** table either in the backlog issue notes ([`BACKLOG.md`](../../BACKLOG.md) **TECH-22**) or in an appendix section here — single place, avoid duplicating across every spec.
+When editing reference specs, prefer **`glossary_discover`** / **`glossary_lookup`** (territory-ia MCP) with English keywords to surface the table **Term** before global search-and-replace.
+
+| Avoid in specs (unless defining) | Prefer |
+|----------------------------------|--------|
+| map edge (play-area boundary) | **Map border** |
+| grid edge (when meaning outer playable boundary) | **Map border** |
+| generic “road” for committed network tiles | **Street (ordinary road)** or **interstate**, or umbrella **street or interstate** when the rule applies to both |
+| informal “validation” / “placement gate” for commit path | **Road validation pipeline** (plus **`PathTerraformPlan`**, Phase-1, `Apply` as needed) |
+| “road only” (walkability) | grass + **street**/**interstate** cells (or cite **road stroke** when speaking of the drag path) |
+
+**Local geometry:** Use **cell** edge, **Moore**/**cardinal neighbor**, or **shared cardinal edge** — not **map border** — unless the cell lies on the outer grid boundary.

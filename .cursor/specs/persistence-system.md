@@ -20,7 +20,7 @@ Load does **NOT** run global slope restoration or sorting recalculation. Snapsho
 
 ## Visual restore details
 
-- **Phase order** (`SortCellDataForVisualRestore`): water → grass/shore/slope → RCI overlays → roads → building pivots → multi-cell non-pivots.
+- **Phase order** (`SortCellDataForVisualRestore`): water → grass/shore/slope → RCI overlays → **street**/**interstate** prefabs → building pivots → multi-cell non-pivots.
 - **Building sort post-pass:** re-runs building sorting on each pivot after full grid restore.
 - **Grass removal on place/restore:** `DestroyCellChildren(..., destroyFlatGrass: true)` when placing/restoring RCI and utility buildings.
 - **Legacy saves:** saves without `waterMapData` are still supported via fallback path.

@@ -13,7 +13,7 @@
 - Layered model: open water, water-shore art, cliff stacks, suppression rules (§5.6–5.7).
 - Sorting constants and formulas; load/save visual ordering (§7).
 - Terraform modes (§8), roads on slopes (§9), pathfinding costs (§10).
-- Water map, lake generation, persistence (§11), river junction geometry / brinks (§11.8), procedural rivers (§12), road/interstate/bridge validation (§13), engineering notes (§14).
+- Water map, lake generation, persistence (§11), river junction geometry / brinks (§11.8), procedural rivers (§12), **street**/**interstate**/bridge validation (§13), engineering notes (§14).
 
 ### 0.2 What lives elsewhere
 
@@ -44,7 +44,7 @@ Read only the sections you need — use this table to navigate:
 | Pathfinding costs | §10 | ~20 |
 | Water map, lakes, multi-body junctions | §11 | ~70 |
 | Procedural rivers | §12 | ~45 |
-| Road/interstate/bridge validation | §13 | ~60 |
+| Street / interstate / bridge validation | §13 | ~60 |
 | Engineering notes, shore mini-glossary, road/grid vocabulary, debug | §14 (see **§14.5** for stroke, lip, grass, Chebyshev) | ~45 |
 
 ---
@@ -171,7 +171,7 @@ NorthEastUp, NorthWestUp, SouthEastUp, SouthWestUp
 #### 3.3.2 Orthogonal (Cardinal) Slopes — N, S, E, W
 - **Condition:** Exactly one cardinal neighbor higher; no two adjacent cardinals both higher.
 - **Visual:** Ramp on the **lower cell** transitioning one height level.
-- Roads can use directional slope road prefabs.
+- **Streets** and **interstates** can use directional slope prefabs (asset family in §9).
 
 | Slope | Higher Neighbor | Screen Ramp Direction |
 |-------|----------------|----------------------|
@@ -183,7 +183,7 @@ NorthEastUp, NorthWestUp, SouthEastUp, SouthWestUp
 #### 3.3.3 Diagonal Slopes — NE, NW, SE, SW
 - **Condition:** No cardinal higher, but exactly one diagonal neighbor higher.
 - **Visual:** Wedge-shaped diagonal transition.
-- **Road strokes:** Land diagonal slopes are **not** valid road cells. `RoadStrokeTerrainRules` / `RoadManager` truncate strokes at the first such cell; A* and interstate generation skip them (see `roads-system.md` and §13.10). Terrain art remains a wedge; roads do not run through these land tiles.
+- **Road strokes:** Land diagonal slopes are **not** valid **street**/**interstate** stroke cells. `RoadStrokeTerrainRules` / `RoadManager` truncate strokes at the first such cell; A* and interstate generation skip them (see `roads-system.md` and §13.10). Terrain art remains a wedge; **street**/**interstate** strokes do not run through these land tiles.
 
 | Slope | Higher Diagonal Neighbor |
 |-------|--------------------------|
@@ -195,7 +195,7 @@ NorthEastUp, NorthWestUp, SouthEastUp, SouthWestUp
 #### 3.3.4 Corner / Upslope Types — NEUp, NWUp, SEUp, SWUp
 - **Condition:** Two adjacent cardinal neighbors both higher (concave corner).
 - **Visual:** L-shaped concavity opening away from the two higher neighbors.
-- **Road strokes:** Corner-up land cells are **not** valid road cells (same rule as §3.3.3 — only flat + cardinal ramps for strokes). Resolver/route-first behavior applies only where a road may legally exist.
+- **Road strokes:** Corner-up land cells are **not** valid **street**/**interstate** stroke cells (same rule as §3.3.3 — only flat + cardinal ramps for strokes). Resolver/route-first behavior applies only where **street** or **interstate** placement may legally exist.
 
 | Slope | Higher Pair | Valley Opens Toward |
 |-------|------------|---------------------|
@@ -228,7 +228,7 @@ The same gate drives **one-step cliff suppression** toward water: suppression ap
 **Two neighbor-test layers:** (1) Surface-height gate — uses water registration + surface-height lookup; `SEA_LEVEL` cells without registration still yield a surface. (2) Shore pattern detection — uses `WaterOrSeaAt` (true if `HeightMap == SEA_LEVEL` or registered water); bits may differ from "registered only" at generator boundaries.
 
 For eligible cells, **fixed priority** (first match wins):
-1. **Map-edge shortcuts** — border cell → cardinal water-slope.
+1. **Map border shortcuts** — **map border** cell → cardinal water-slope.
 2. **Two wet cardinals** — e.g. S+E. Bay vs corner slope via rectangle-corner test + land-slope signal. Three-cardinal ties break by diagonal wetness and legacy pairwise order.
 3. **Single cardinal water** — E, W, N, S branches; cardinal ramps or upslope combinations. N/S with no opposite strip and no E/W water → pure cardinal shore.
 4. **Diagonal-only water** — rectangle outer corner → Bay; land-slope → Bay or downslope; flat → Bay; else upslope+downslope pair. **Exception (§11.8):** junction brink forces diagonal slope water (no Bay).
@@ -239,7 +239,7 @@ For eligible cells, **fixed priority** (first match wins):
 
 ### 4.4 `GetTerrainSlopeTypeAt`
 
-Returns a `TerrainSlopeType` enum using the same logic as `DetermineSlopePrefab`. Used by forest placement, terraforming, road prefab resolution, and road validation.
+Returns a `TerrainSlopeType` enum using the same logic as `DetermineSlopePrefab`. Used by forest placement, terraforming, **street**/**interstate** prefab resolution, and **road validation pipeline** checks.
 
 ---
 
@@ -247,7 +247,7 @@ Returns a `TerrainSlopeType` enum using the same logic as `DetermineSlopePrefab`
 
 ### 5.1 Flat Terrain (Plains)
 - **HeightMap:** Uniform height across a region.
-- **Visual:** Standard grass tiles. Ideal for building, roads, zoning.
+- **Visual:** Standard grass tiles. Ideal for building, **street**/**interstate** placement, zoning.
 
 ### 5.2 Hills and Mountains
 - **HeightMap:** Region at height h surrounded by h-1. Concentric rings form multi-level hills.
@@ -300,13 +300,13 @@ When two cardinally adjacent cells are both registered water and `S_high > S_low
 - **Pattern:** Cardinal Δh > 1 (e.g. cell h=3, south neighbor h=1).
 - **Visible faces:** Only **south** and **east** meshes instantiated (`IsCliffCardinalFaceVisibleToCamera`). N/W are hidden behind the terrain diamond. `Cell.cliffFaces` still records N/S/E/W bits for hydrology.
 - **Water classification** uses registered water, not raw `SEA_LEVEL`. One-step drops toward water are suppressed only if the high cell passes the shore eligibility gate; rim plateaus keep one cliff segment. Δh ≥ 2 uses stacked segments on visible faces.
-- **Border (exterior void):** S/E border neighbors outside the grid use virtual foot at `SEA_LEVEL` so cliff meshes cover elevated border cells.
-- **N/W faces:** Not instantiated for interior cells. Map-border N/W cliff art is a future follow-up.
+- **Map border (exterior void):** S/E **map border** neighbors outside the grid use virtual foot at `SEA_LEVEL` so cliff meshes cover elevated **map border** cells.
+- **N/W faces:** Not instantiated for interior cells. **Map border** N/W cliff art is a future follow-up.
 
 ### 5.8 Coastal Transitions (Water Slopes)
 - Land cell with Moore-neighbor water passing the surface-height gate (§4.2).
 - Special water-slope prefabs transition from land toward the water surface.
-- Normal roads cannot be placed on water-shore tiles (`IsWaterSlopeCell`). Rim cells above the cap follow normal terrain rules.
+- **Street**/**interstate** placement cannot use water-shore tiles (`IsWaterSlopeCell`) as ordinary land tiles (bridges use deck-span rules). Rim cells above the cap follow normal terrain rules.
 
 ### 5.9 Bays and shore corners
 
@@ -393,8 +393,8 @@ Where:
 | Terrain (flat grass) | 0 | Base |
 | Land slope | +1 | Slightly in front of terrain |
 | Water slope | +1 | Above sea-level water |
-| Road | +5 | Above terrain and slopes |
-| Utility | +8 | Above roads |
+| Road | +5 | Above terrain and slopes (**street**/**interstate** layer) |
+| Utility | +8 | Above **street**/**interstate** |
 | Building | +10 | Above everything on same cell |
 | Effect | +30 | Topmost layer |
 
@@ -409,7 +409,7 @@ Load does **not** run a global sort recalculation. Building and water behavior:
 
 | Mechanism | Role |
 |-----------|------|
-| `SortCellDataForVisualRestore` | Stable phase order: water → grass/shore/slope → RCI overlays → roads → building pivots → multi-cell non-pivots (tie-break `y`, then `x`). |
+| `SortCellDataForVisualRestore` | Stable phase order: water → grass/shore/slope → RCI overlays → **street**/**interstate** prefabs → building pivots → multi-cell non-pivots (tie-break `y`, then `x`). |
 | `RestoreGridCellVisuals` | Instantiates saved prefabs; applies saved `sortingOrder`; open water uses terrain sorting formula for visual surface height. |
 | Building sort post-pass | Re-runs building sorting on each pivot after full grid restore so max-content-sorting matches runtime; multi-cell passes building size. |
 | Grass removal on place/restore | When placing or restoring RCI/utility buildings, destroys flat grass children so cell does not keep grass + building as siblings. |
@@ -420,11 +420,11 @@ Load does **not** run a global sort recalculation. Building and water behavior:
 
 ### 8.1 Overview
 
-When roads cross sloped terrain, a `PathTerraformPlan` describes height modifications. Two strategies:
+When a **street** or **interstate** path crosses sloped terrain, a `PathTerraformPlan` describes height modifications. Two strategies:
 
 ### 8.2 Scale-with-Slopes Mode
 
-**Condition:** All consecutive path cells have |Δh| ≤ 1. Road "climbs" using slope road prefabs. No terrain modification; plan records `TerraformAction.None` and sets `postTerraformSlopeType`.
+**Condition:** All consecutive path cells have |Δh| ≤ 1. The path “climbs” using slope prefabs (§9). No terrain modification; plan records `TerraformAction.None` and sets `postTerraformSlopeType`.
 
 ### 8.3 Cut-Through Mode
 
@@ -456,11 +456,13 @@ When multi-surface river contact is not cardinally straight enough for cascade c
 
 ## 9. Road Prefab Selection on Terrain
 
+Prefabs for committed **street** and **interstate** cells (one shared visual family); eligibility and **road validation pipeline** in §13.
+
 ### 9.1 Road Prefab Resolver
 
 Three entry points:
 1. **Full path** — uses `postTerraformSlopeType` from terraform plan. Handles elbows, T-intersections, crossings.
-2. **Single cell with neighbor connectivity** — used for refresh after road changes.
+2. **Single cell with neighbor connectivity** — used for refresh after **street**/**interstate** topology changes.
 3. **Ghost preview** — single cell for cursor preview.
 
 ### 9.2 Road Prefab Types
@@ -489,7 +491,7 @@ Named after the **slope face direction** (downhill), matching `TerrainSlopeType`
 | `South` | `roadTilePrefabSouthSlope` |
 | `East` | `roadTilePrefabEastSlope` |
 | `West` | `roadTilePrefabWestSlope` |
-| Corner slopes (`NEUp`, etc.) | Decomposed to orthogonal axis aligned with travel (legacy / plan edge cases only — **new strokes** do not place roads on corner-up or pure diagonal **land**; see §13.10) |
+| Corner slopes (`NEUp`, etc.) | Decomposed to orthogonal axis aligned with travel (legacy / plan edge cases only — **new strokes** do not place **street**/**interstate** paths on corner-up or pure diagonal **land**; see §13.10) |
 
 ---
 
@@ -622,9 +624,9 @@ River merges only with River; Lake with Lake; Sea with Sea; Lake with Sea. After
 | **Width** | Bed 1–3 cells; total = bed + 2 shores → {3,4,5}; |ΔW| ≤ 1; prefer ≥ 4 steps between width changes |
 | **Length** | Max 1.5 × map dimension on flow axis |
 | **Forced river** | If no viable candidate, carve basin and place forced river |
-| **Spacing** | Prior corridors dilated in Chebyshev space; same-border entries ≥ 5 apart |
+| **Spacing** | Prior corridors dilated in Chebyshev space; same-**map border** entries ≥ 5 apart |
 
-**Cardinal edges:** N–S or E–W flow between opposite borders; entry vs exit random; high/low from relief; lake/sea as logical exit when present.
+**Cardinal edges:** N–S or E–W flow between opposite **map border** sides; entry vs exit random; high/low from relief; lake/sea as logical exit when present.
 
 ### 12.5 Shore band continuity (inner corners)
 
@@ -634,11 +636,11 @@ Water assignment uses `HeightMap` after this pass: a bed cell is assigned water 
 
 ---
 
-## 13. Roads: manual draw, interstate, bridges, shared validation
+## 13. Streets, interstates, bridges, shared validation
 
-### 13.1 Shared validation surface; two plan constructors
+### 13.1 Road validation pipeline; two plan constructors
 
-All persistent road placement must end with a **`PathTerraformPlan`**, Phase-1 checks where the plan applies, and **`Apply`** / prefab resolution — the same validation *surface* as other roads. **Do not** treat `ComputePathPlan` as the only gate: callers must not commit from raw `ComputePathPlan` output without that full path.
+All persistent **street** or **interstate** placement must end with a **`PathTerraformPlan`**, Phase-1 checks where the plan applies, and **`Apply`** / prefab resolution — the same validation *surface* as other **street**/**interstate** commits (**road validation pipeline**). **Do not** treat `ComputePathPlan` as the only gate: callers must not commit from raw `ComputePathPlan` output without that full path.
 
 **Plan construction** may use either:
 
@@ -660,7 +662,7 @@ Both paths converge on **`TryValidatePhase1Heights`**, **`Apply`**, and **`RoadP
 
 ### 13.3 Slope climb vs carve
 
-When no consecutive |Δh| > 1, ascending steps use `None` + `postTerraformSlopeType` so the road rides the slope. Gorge expansion only when not slope-climb. Adjacent-cliff validation with one-ring Phase 1 expansion.
+When no consecutive |Δh| > 1, ascending steps use `None` + `postTerraformSlopeType` so the path rides the slope. Gorge expansion only when not slope-climb. Adjacent-cliff validation with one-ring Phase 1 expansion.
 
 ### 13.4 Bridges and water approach
 
@@ -677,7 +679,7 @@ Border endpoint scoring → sorted candidates → dual A* (avoidHighTerrain true
 
 ### 13.6 Cut-through robustness
 
-Reject when `maxHeight - baseHeight > 1`; map-edge margin; Phase 1 validation ring. Interstate always forbids cut-through.
+Reject when `maxHeight - baseHeight > 1`; **map border** margin; Phase 1 validation ring. **Interstate** always forbids **cut-through**.
 
 ### 13.7 Resolver rules
 
@@ -702,12 +704,12 @@ On **legal** land cells (§13.10), slope/corner plan outputs use travel-aligned 
 
 These rules apply to **`AutoRoadBuilder`**, **`AutoZoningManager`**, and **`GridPathfinder`** / **`RoadCacheService`** during simulation ticks — not to manual street draw or generic `FindPath` used elsewhere.
 
-1. **Undeveloped light zoning:** Cells with **R/C/I light zoning only** (`ResidentialLightZoning`, `CommercialLightZoning`, `IndustrialLightZoning`) and **no building** may be treated as land that AUTO roads can plan through and replace, using shared predicates (`AutoSimulationRoadRules`). Medium/heavy zoning and buildings are not expanded for AUTO walkability.
-2. **Pathfinding:** Manual and legacy callers keep **`FindPath` / `FindPathWithRoadSpacing`** (grass and road only). AUTO simulation uses **`FindPathForAutoSimulation` / `FindPathWithRoadSpacingForAutoSimulation`**, which allow undeveloped light zoning subject to the same terrain / `CanPlaceRoad` gates as grass. Both paths also enforce **land slope walkability** (§13.10): non-walkable on pure diagonal and corner-up land slopes.
-3. **Road frontier:** **`GetRoadEdgePositions`** treats a neighbor as expandable if it is grass, forest, sea-level, or undeveloped light zoning, so road cells remain growth candidates after lateral auto-zoning.
+1. **Undeveloped light zoning:** Cells with **R/C/I light zoning only** (`ResidentialLightZoning`, `CommercialLightZoning`, `IndustrialLightZoning`) and **no building** may be treated as land that AUTO **streets** can plan through and replace, using shared predicates (`AutoSimulationRoadRules`). Medium/heavy zoning and buildings are not expanded for AUTO walkability.
+2. **Pathfinding:** Manual and legacy callers keep **`FindPath` / `FindPathWithRoadSpacing`** (grass and **street**/**interstate** cells only). AUTO simulation uses **`FindPathForAutoSimulation` / `FindPathWithRoadSpacingForAutoSimulation`**, which allow undeveloped light zoning subject to the same terrain / `CanPlaceRoad` gates as grass. Both paths also enforce **land slope walkability** (§13.10): non-walkable on pure diagonal and corner-up land slopes.
+3. **Street frontier:** **`GetRoadEdgePositions`** treats a neighbor as expandable if it is grass, forest, sea-level, or undeveloped light zoning, so **street**/**interstate** cells remain growth candidates after lateral auto-zoning.
 4. **Zoning reservations:** **`GetRoadExtensionCells`** and **`GetRoadAxialCorridorCells`** define cells where **`AutoZoningManager` must not place zones**, preserving axial strips for future street alignment. Extension cells may include the same expanded land types as in (3) when classifying the cell beyond an edge.
-5. **Perpendicular vs parallel spacing:** When scoring a growth direction **perpendicular** to the dominant road axis at an edge, **`HasParallelRoadTooClose`** is called with **`excludeAlongDir`** set to that dominant axis so the parent street line is not mistaken for a separate parallel arterial.
-6. **Commit path:** Placing AUTO roads still uses the shared validation surface (§13.1): `PathTerraformPlan`, `Apply`, prefab resolution — unchanged.
+5. **Perpendicular vs parallel spacing:** When scoring a growth direction **perpendicular** to the dominant **street**/**interstate** axis at a **cell** edge, **`HasParallelRoadTooClose`** is called with **`excludeAlongDir`** set to that dominant axis so the parent **street** line is not mistaken for a separate parallel arterial.
+6. **Commit path:** Placing AUTO **streets** still uses the shared validation surface (§13.1) — **road validation pipeline**: `PathTerraformPlan`, `Apply`, prefab resolution — unchanged.
 7. **Junction prefabs after batch `PlaceRoadTileFromResolved`:** `AutoRoadBuilder` accumulates placed cells per tick and calls **`RoadManager.RefreshRoadPrefabsAfterBatchPlacement`** once (deduped set: each new tile plus cardinal road neighbors). Skips bridge deck cells so FEAT-44 deck height is preserved. Single-tile **`PlaceRoadTileAt`** still uses per-placement **`UpdateAdjacentRoadPrefabsAt`**.
 
 ### 13.10 Land slope eligibility for road strokes (BUG-51)
@@ -716,7 +718,7 @@ These rules apply to **`AutoRoadBuilder`**, **`AutoZoningManager`**, and **`Grid
 
 **Pipeline:** `RoadStrokeTerrainRules` truncates the filtered stroke at the first disallowed land slope inside `TryBuildFilteredPathForRoadPlan`; deck-span chord paths use the same truncation in `TryPrepareDeckSpanPlanFromAdjacentStroke`. Empty after truncation → no preview/commit (silent). **`TryPrepareRoadPlacementPlanLongestValidPrefix`** suppresses the generic “cannot extend further” warning when there is **no** slope-valid prefix on the raw stroke.
 
-**Pathfinding:** `GridPathfinder` treats disallowed land slopes as non-walkable for grass/road/AUTO light-zoning cells (with the same water / `IsWaterSlopeCell` exceptions as the truncator — see `roads-system.md`).
+**Pathfinding:** `GridPathfinder` treats disallowed land slopes as non-walkable for grass / **street**/**interstate** / AUTO light-zoning cells (with the same water / `IsWaterSlopeCell` exceptions as the truncator — see `roads-system.md`).
 
 **Interstate:** `InterstateManager.IsCellAllowedForInterstate` enforces the same land-slope rule on positive-height cells (water-slope shore cells remain allowed as before).
 
@@ -747,9 +749,9 @@ Canonical procedural detail: **`roads-system.md`** (Land slope stroke policy).
 | **Bridge lip** | Last **firm dry** land cell before a **wet run** on a straight chord; anchor for locked deck-span preview/commit and deck display height (§13.4). |
 | **Wet run** | Contiguous water and/or water-slope cells along a stroke crossed by a bridge plan. |
 | **baseHeight** | Cut-through target elevation: path cells flattened to this value when not using scale-with-slopes (§8.3). |
-| **Grass cell** | Undeveloped land substrate (typical grass `cellType`) — no road; zoning, forests, and manual A* treat it as buildable/walkable per mode (§13.9). |
-| **Street (ordinary road)** | Non-**interstate** road placed by player or AUTO using the shared validation pipeline (§13.1–§13.2); contrasts with border interstate (§13.5). |
-| **Map border / grid edge** | Cells on `x=0`, `y=0`, `maxX`, or `maxY`; interstate endpoints, virtual cliff feet, and exit rules reference these edges (§5.7, §13.5). |
+| **Grass cell** | Undeveloped land substrate (typical grass `cellType`) — no **street**/**interstate**; zoning, forests, and manual A* treat it as buildable/walkable per mode (§13.9). |
+| **Street (ordinary road)** | Non-**interstate** placement by player or AUTO using the **road validation pipeline** (§13.1–§13.2); contrasts with **map border** **interstate** (§13.5). |
+| **Map border** | Outer boundary of the playable grid: cells on `x=0`, `y=0`, `maxX`, or `maxY`. **Interstate** endpoints, virtual cliff feet, and exit rules reference the **map border** (§5.7, §13.5). Not a generic **cell** edge — use **Moore**/**cardinal neighbor** wording for local geometry. |
 | **Chebyshev distance** | `max(|Δx|,|Δy|)` on the grid; used to dilate river corridors and spacing between entries (§12.4). |
 
 ### 14.2 Resolved techniques

@@ -5,40 +5,7 @@
 
 ---
 
-## In Progress
-- [ ] **BUG-37** — Manual **street** drawing clears **buildings** and **zones** on cells adjacent to the **road stroke**
-  - Type: bug
-  - Files: `RoadManager.cs` (`HandleRoadDrawing`, **road validation pipeline** / commit path), `GridManager.cs` (road mode input, any demolish or clear calls near **street** segments), `TerrainManager.cs` / `TerraformingService.cs` if the **terraform plan** widens the affected region; `ZoneManager.cs` if **zoning** is cleared outside **street** cells
-  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (manual **streets**; **BUG-25** completed — regression)
-  - Notes: **Observed:** In **street drawing mode**, tracing a **street** **removes** (or clears) **zone** prefabs, **buildings** (**RCI**), and **zoning** on cells **adjacent to the road stroke**, not only on the **street** cells themselves (same report: manual **street** trace wipes **zone** visuals and spawned **buildings**). **Expected:** Only cells that actually receive the **street** (and any explicitly required footprint for valid placement) should be modified; **neighboring** zoned or built cells should remain unless the design intentionally requires a wider clear (document if so). Likely causes: over-broad dirty rect, neighbor iteration calling `DemolishCellAt` / zone clear, **terraform plan** scope larger than 1×1, or preview vs commit mismatch. **Related:** completed **BUG-25** (manual **street** segment drawing).
-  - Acceptance: Drawing a **street** through zoned/built area modifies only cells on the **road stroke**; adjacent **zones**, **buildings**, and prefabs remain intact
-  - Depends on: none
-
-- [ ] **TECH-22** — Canonical terminology pass on **reference specs** (`.cursor/specs`)
-  - Type: documentation / refactor (IA)
-  - Files: All **reference specs** under `.cursor/specs/` (`glossary.md`, `isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, `REFERENCE-SPEC-STRUCTURE.md`); [`AGENTS.md`](AGENTS.md) if inventory text changes; [`tools/mcp-ia-server/src/config.ts`](tools/mcp-ia-server/src/config.ts) and MCP docs only if spec keys/aliases change
-  - Spec: [`.cursor/specs/glossary.md`](.cursor/specs/glossary.md) (canonical domain terms); [`.cursor/specs/REFERENCE-SPEC-STRUCTURE.md`](.cursor/specs/REFERENCE-SPEC-STRUCTURE.md) (authoring rules)
-  - Notes: **Goal:** Replace non-canonical or ad-hoc wording across **reference specs** with **glossary** vocabulary so search, MCP, and backlog stay aligned. **Method:** Review **one file at a time** in dependency order: `glossary.md` → `isometric-geography-system.md` → `roads-system.md` / `water-terrain-system.md` → `simulation-system.md` / `persistence-system.md` → `managers-reference.md` → `ui-design-system.md` → `REFERENCE-SPEC-STRUCTURE.md`. Use targeted search for common synonyms (e.g. informal “road” vs **street**/**interstate**, “map edge” vs **map border**). **Conflict rule:** Where glossary and a spec disagree on meaning, the **reference spec** section wins — update the glossary to defer or align (per glossary header). **New concepts:** add glossary row **and** authoritative spec text; do not leave terms only in this issue. **Optional:** Maintain a single **deprecated synonym → canonical** table in TECH-22 notes or in `REFERENCE-SPEC-STRUCTURE.md` during the pass. **Out of scope (unless expanded):** `.cursor/rules/*.mdc`, `docs/`, `ARCHITECTURE.md` — track as a follow-up issue if needed.
-  - Acceptance: Checklist in issue notes marks every inventory **reference spec** reviewed; no unresolved glossary ↔ spec contradictions; [`AGENTS.md`](AGENTS.md) inventory and MCP spec keys remain coherent
-  - Depends on: none
-
-- [ ] **FEAT-45** — MCP **`glossary_discover`**: keyword-style discovery over **glossary** rows
-  - Type: feature (IA / tooling)
-  - Files: `tools/mcp-ia-server/src/tools/glossary-discover.ts`, `tools/mcp-ia-server/src/parser/glossary-discover-rank.ts`, `tools/mcp-ia-server/tests/parser/glossary-discover-rank.test.ts`, `tools/mcp-ia-server/tests/tools/glossary-discover.test.ts`, `tools/mcp-ia-server/scripts/verify-mcp.ts`, [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md), [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md), [`AGENTS.md`](AGENTS.md), [`.cursor/rules/agent-router.mdc`](.cursor/rules/agent-router.mdc)
-  - Spec: [`.cursor/projects/FEAT-45.md`](.cursor/projects/FEAT-45.md)
-  - Notes: **Phase A (shipped):** deterministic ranking using **Term**, **Definition**, **Spec**, and category text; optional **`spec`** alias + **`registryKey`** from the Spec cell; complements **`glossary_lookup`**. **Phase B** (spec body scoring) deferred. Verify: `npm test` and `npm run verify` under `tools/mcp-ia-server/`.
-  - Acceptance: Fixture proves definition-only keywords surface the correct **Term**; `npm test` / `npm run verify` pass; docs and router text list the tool
-  - Depends on: **TECH-17** (MCP IA server — baseline)
-
 ## High Priority
-- [ ] **BUG-49** — Manual **street** drawing: preview builds the **road stroke** cell-by-cell (animated); should show full path at once
-  - Type: bug (UX / preview)
-  - Files: `RoadManager.cs` (`HandleRoadDrawing`, preview placement / ghost or temp prefab updates per frame), `GridManager.cs` if road mode input drives incremental preview; any coroutine or per-tick preview extension of the **road stroke**
-  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (manual **streets** — preview behavior)
-  - Notes: **Observed:** While drawing a **street**, **preview mode** visually **extends the road stroke one cell at a time**, like an animation, instead of updating the full proposed **road stroke** in one step. **Expected:** **No** step-by-step or staggered preview animation. The game should **compute the full valid road stroke** (same rules as commit / **road validation pipeline** / `TryPrepareRoadPlacementPlan` or equivalent) for the current **stroke**, **then** instantiate or refresh **preview** prefabs for that complete **road stroke** in a single update — or batch updates without visible per-cell delay. **Related:** **BUG-37** (adjacent clear during trace — ensure preview vs commit paths stay consistent when fixing).
-  - Acceptance: **Street** preview shows the full computed **road stroke** in one visual update; no visible cell-by-cell animation during drag
-  - Depends on: none
-
 - [ ] **BUG-44** — **Cliff** prefabs: black gaps when a **water body** (**river** or **lake**) meets the **east** or **south** **map border**
   - Type: bug
   - Files: `TerrainManager.cs` (`PlaceCliffWalls`, `PlaceCliffWallStack`, **map border** / max-X / max-Y edge cases vs **open water** cells), `WaterManager.cs` / `WaterMap.cs` if edge water placement interacts with **shore refresh**; **cliff** / **water-shore** prefabs under `Assets/Prefabs/` (per `.cursor/rules/coding-conventions.mdc` for new or adjusted assets)
@@ -77,6 +44,13 @@
   - Notes: `CursorManager.Update()` calls `FindObjectOfType<UIManager>()` every frame. `UIManager.UpdateUI()` calls `FindObjectOfType` for 4 managers repeatedly. Must be cached in Start().
 
 ## Medium Priority
+- [ ] **BUG-49** — Manual **street** drawing: preview builds the **road stroke** cell-by-cell (animated); should show full path at once
+  - Type: bug (UX / preview)
+  - Files: `RoadManager.cs` (`HandleRoadDrawing`, preview placement / ghost or temp prefab updates per frame), `GridManager.cs` if road mode input drives incremental preview; any coroutine or per-tick preview extension of the **road stroke**
+  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (manual **streets** — preview behavior)
+  - Notes: **Observed:** While drawing a **street**, **preview mode** visually **extends the road stroke one cell at a time**, like an animation, instead of updating the full proposed **road stroke** in one step. **Expected:** **No** step-by-step or staggered preview animation. The game should **compute the full valid road stroke** (same rules as commit / **road validation pipeline** / `TryPrepareRoadPlacementPlan` or equivalent) for the current **stroke**, **then** instantiate or refresh **preview** prefabs for that complete **road stroke** in a single update — or batch updates without visible per-cell delay. **Related:** completed **BUG-37** (2026-04-02); ensure preview vs commit paths stay consistent when fixing.
+  - Acceptance: **Street** preview shows the full computed **road stroke** in one visual update; no visible cell-by-cell animation during drag
+  - Depends on: none
 
 - [ ] **BUG-19** — Mouse scroll wheel in Load Game scrollable menu also triggers camera zoom
   - Type: fix (UX)
@@ -99,6 +73,14 @@
   - Files: `MiniMapController.cs` (`RebuildTexture`, `Update`; layer toggles call `RebuildTexture` but nothing runs on **simulation tick**), `TimeManager.cs` / `SimulationManager.cs` if wiring refresh to the **simulation tick** or a shared event
   - Notes: **Observed:** The procedural minimap **does not refresh** as the city changes unless the player **toggles a minimap layer** (or other actions that call `RebuildTexture`, such as opening the panel). **Expected:** The minimap should track **zones**, **streets**, **open water**, **forests**, etc. **without** requiring layer toggles. **Implementation:** Rebuild at least **once per simulation tick** while the minimap is visible, **or** a **performance-balanced** approach (throttled full rebuild, dirty rect / incremental update, or event-driven refresh when grid/**zone**/**street**/**water body** data changes) — profile full `RebuildTexture` cost first. Class summary in code states rebuilds on **geography initialization** completion, grid restore, panel open, and layer changes **not** on a fixed timer — that gap is this bug. **Related:** completed **BUG-32** (water on minimap); **FEAT-42** (optional **HeightMap** layer).
   - Depends on: none
+
+- [ ] **BUG-52** — **AUTO** zoning: persistent **grass cells** between **undeveloped light zoning** and new **AUTO** **street** segments (gaps not filled on later **simulation ticks**)
+  - Type: bug (behavior / regression suspicion)
+  - Files: `AutoZoningManager.cs`, `AutoRoadBuilder.cs`, `SimulationManager.cs` / `TimeManager.cs` (**tick execution order**, **AUTO systems**), `GrowthBudgetManager.cs` (**growth budget** vs eligibility), `RoadCacheService.cs` (**road cache** / zoneability neighbors), `GridManager.cs` if placement queries change; `TerrainManager.cs` (`RestoreTerrainForCell`) only if investigation ties gap cells to post-**BUG-37** terrain state
+  - Spec: `.cursor/specs/simulation-system.md` (**simulation tick**, **AUTO** pipeline), `.cursor/specs/managers-reference.md` (**Zones & Buildings**, **Demand**), `.cursor/specs/isometric-geography-system.md` §13.9 (**road reservation** / AUTO interaction) as needed
+  - Notes: **Observed:** After **AUTO** places **streets** (path and visuals OK), **AUTO** zoning creates **RCI** **undeveloped light zoning** patches of varying sizes (acceptable), but strips of **grass cells** often remain **Moore**-adjacent to the **road stroke** — typically a **one-cell** buffer between **zoning** and **street**. Those gap **cells** appear to stay unzoned across many later **simulation ticks**, as if permanently ineligible, not merely deferred by **growth budget**. **Expected:** Variable patch sizes are fine; any **grass cell** that remains valid for **AUTO** zoning (per design) should eventually be a candidate on a future **simulation tick** unless explicitly ruled out by documented rules (e.g. corridor reservation). **Regression suspicion:** surfaced after **BUG-37** fix (`TerrainManager` — skip terrain rebuild on **building**-occupied **cells** during path terraform refresh); verify no accidental exclusion of road-adjacent **grass cells** in zone candidate sets, **road cache invalidation**, or neighbor queries. **Related:** **FEAT-36** (AUTO zoning candidate expansion); **FEAT-43** (**growth rings** / weights); completed **BUG-47** (**AUTO** roads + zoning coordination).
+  - Acceptance: Repro in **AUTO** simulation: document coordinates of gap **grass cells**; confirm whether they are excluded from `AutoZoningManager` (or equivalent) forever or until manual action; fix or document intended rule so gaps either fill over time or are explained in spec/backlog.
+  - Depends on: none (follow-up from completed **BUG-37**, 2026-04-02)
 
 - [ ] **FEAT-21** — Expenses and maintenance system
   - Type: feature
@@ -325,6 +307,27 @@
 
 ## Completed (last 30 days)
 
+- [x] **BUG-37** — Manual **street** drawing clears **buildings** and **zones** on cells adjacent to the **road stroke** (2026-04-02)
+  - Type: bug
+  - Files: `TerrainManager.cs` (`RestoreTerrainForCell` — **BUG-37**: skip `PlaceFlatTerrain` / slope rebuild when `GridManager.IsCellOccupiedByBuilding`; sync **HeightMap** / **cell** height + transform first); `RoadManager.cs`, `PathTerraformPlan.cs` (call path unchanged)
+  - Spec: `.cursor/projects/BUG-37.md`; `.cursor/specs/isometric-geography-system.md` §14 (manual **streets**)
+  - Notes: **Completed (verified per user):** Commit/AUTO `PathTerraformPlan.Apply` Phase 2/3 was refreshing **Moore** neighbors and stacking **grass** under **RCI** **buildings** / footprint **cells** (preview skipped **Apply**, so only commit showed the bug). **Fix:** preserve development by returning after height/sync when the **cell** is **building**-occupied. **Follow-up:** **BUG-52** if **AUTO** zoning shows persistent **grass** buffers beside new **streets** (investigate correlation).
+  - Depends on: none
+
+- [x] **TECH-22** — Canonical terminology pass on **reference specs** (`.cursor/specs`) (2026-04-02)
+  - Type: documentation / refactor (IA)
+  - Files: `.cursor/specs/glossary.md`, `isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, `REFERENCE-SPEC-STRUCTURE.md`; `BACKLOG.md` (one **map border** wording fix); `tools/mcp-ia-server/tests/parser/fuzzy.test.ts` (§13 heading fixture); [`.cursor/projects/TECH-22.md`](.cursor/projects/TECH-22.md)
+  - Spec: [`.cursor/specs/glossary.md`](.cursor/specs/glossary.md); [`.cursor/specs/REFERENCE-SPEC-STRUCTURE.md`](.cursor/specs/REFERENCE-SPEC-STRUCTURE.md) (deprecated → canonical table + MCP **`glossary_discover`** hint)
+  - Notes: **Completed (verified per user):** Glossary/spec alignment — **map border** vs local **cell** edges; umbrella **street or interstate**; **road validation pipeline** wording; §13 retitled in geo; authoring table in `REFERENCE-SPEC-STRUCTURE.md`. `AGENTS.md` / MCP `config.ts` unchanged (no spec key changes).
+  - Depends on: none
+
+- [x] **FEAT-45** — MCP **`glossary_discover`**: keyword-style discovery over **glossary** rows (2026-04-02)
+  - Type: feature (IA / tooling)
+  - Files: `tools/mcp-ia-server/src/tools/glossary-discover.ts`, `tools/mcp-ia-server/src/tools/glossary-lookup.ts`, `tools/mcp-ia-server/src/parser/glossary-discover-rank.ts`, `tools/mcp-ia-server/src/index.ts`, `tools/mcp-ia-server/package.json`, `tools/mcp-ia-server/tests/parser/glossary-discover-rank.test.ts`, `tools/mcp-ia-server/tests/tools/glossary-discover.test.ts`, `tools/mcp-ia-server/scripts/verify-mcp.ts`, [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md), [`docs/mcp-markdown-ia-pattern.md`](docs/mcp-markdown-ia-pattern.md), [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md), [`AGENTS.md`](AGENTS.md), [`.cursor/rules/agent-router.mdc`](.cursor/rules/agent-router.mdc), [`.cursor/rules/mcp-ia-default.mdc`](.cursor/rules/mcp-ia-default.mdc)
+  - Spec: [`.cursor/projects/FEAT-45.md`](.cursor/projects/FEAT-45.md)
+  - Notes: **Completed (verified per user):** **`glossary_discover`** tool (territory-ia **v0.4.2**): Phase A deterministic ranking over **Term** / **Definition** / **Spec** / category; optional **`spec`** alias + **`registryKey`** from Spec cell; `hint_next_tools`; empty-query branch with fuzzy **term** suggestions. Agents must pass **English** in glossary tools; documented in MCP README, `docs/mcp-ia-server.md`, `AGENTS.md`, and Cursor rules. **`npm test`** / **`npm run verify`** under `tools/mcp-ia-server/`. **Phase B** (scoring linked spec body) deferred.
+  - Depends on: **TECH-17** (MCP IA server — baseline)
+
 - [x] **TECH-17** — MCP server for agentic Information Architecture (Markdown sources) (2026-04-02)
   - Type: infrastructure / tooling
   - Files: `tools/mcp-ia-server/`; `.cursor/mcp.json`; `.cursor/specs/*.md`, `.cursor/rules/*.mdc`, `AGENTS.md`, `ARCHITECTURE.md` as sources; `docs/mcp-ia-server.md`; docs updates in `AGENTS.md`, `ARCHITECTURE.md`, `.cursor/rules/project-overview.mdc`, `agent-router.mdc` (MCP subsection)
@@ -361,7 +364,7 @@
   - Type: bug / polish
   - Files: `WaterManager.cs` (`UpdateWaterVisuals` — Pass A/B, `ApplyLakeHighToRiverLowContactFallback`), `WaterMap.cs` (`ApplyMultiBodySurfaceBoundaryNormalization`, `ApplyWaterSurfaceJunctionMerge`, `IsLakeSurfaceStepContactForbidden`, lake–river fallback), `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `SelectPerpendicularWaterCornerPrefabs`, `RefreshWaterCascadeCliffs`, `RefreshShoreTerrainAfterWaterUpdate`), `ProceduralRiverGenerator.cs` / `TestRiverGenerator.cs` as applicable; `docs/water-junction-merge-implementation-plan.md`
   - Spec: `.cursor/specs/isometric-geography-system.md` — **§5.6.2**, **§12.7**
-  - Notes: **Completed (verified):** Pass A/B multi-body surface handling; lake-at-step exclusions; full-cardinal **`RefreshWaterCascadeCliffs`** (incl. mirror N/W lower pool); perpendicular multi-surface shore corner preference; lake-high vs river-low rim fallback. **Assign** `cliffWaterSouthPrefab` / **`cliffWaterEastPrefab`** on `TerrainManager` for visible cascades (west→east steps use **East**). Residual: map-edge water × cliff **BUG-44**; bridges × cliff-water **BUG-43**; optional N/W cascade art (camera).
+  - Notes: **Completed (verified):** Pass A/B multi-body surface handling; lake-at-step exclusions; full-cardinal **`RefreshWaterCascadeCliffs`** (incl. mirror N/W lower pool); perpendicular multi-surface shore corner preference; lake-high vs river-low rim fallback. **Assign** `cliffWaterSouthPrefab` / **`cliffWaterEastPrefab`** on `TerrainManager` for visible cascades (west→east steps use **East**). Residual: **map border** water × cliff **BUG-44**; bridges × cliff-water **BUG-43**; optional N/W cascade art (camera).
 
 - [x] **BUG-42** — Water shores & cliffs: terrain + water (lakes + rivers); water–water cascades; shore coherence — merged **BUG-33** + **BUG-41** (2026-03-26)
   - Type: bug / feature

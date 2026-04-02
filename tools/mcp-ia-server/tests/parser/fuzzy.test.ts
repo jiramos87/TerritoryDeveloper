@@ -46,7 +46,7 @@ test("fuzzyScoreAgainstTextOrTokens typo Briges vs bridges token", () => {
 
 test("fuzzyFindByHeadingTitle picks shorter title on tie", () => {
   const items = [
-    { id: "a", t: "## 13. Roads: interstate, bridges, validation" },
+    { id: "a", t: "## 13. Streets, interstates, bridges, shared validation" },
     { id: "b", t: "### 13.4 Bridges and water approach" },
   ];
   const r = fuzzyFindByHeadingTitle("Briges", items, (x) => x.t, {

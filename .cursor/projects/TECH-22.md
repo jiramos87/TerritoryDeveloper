@@ -1,7 +1,7 @@
 # TECH-22 — Canonical terminology pass on reference specs
 
 > **Issue:** [TECH-22](../../BACKLOG.md)
-> **Status:** Draft
+> **Status:** Completed (2026-04-02)
 > **Created:** 2026-04-02
 > **Last updated:** 2026-04-02
 
@@ -77,17 +77,9 @@ This issue does not change **game logic**. It changes how **reference specs** na
 - **Conflict resolution:** authoritative **reference spec** section wins; update **glossary** to match or to defer with a pointer (per glossary header).
 - **New concepts:** add glossary row + spec section (not backlog-only).
 
-### 5.3 Optional: deprecated synonym → canonical table
+### 5.3 Deprecated synonym → canonical table
 
-During the pass, maintain one table (either in this spec’s Decision Log appendix or in `REFERENCE-SPEC-STRUCTURE.md` per backlog) mapping deprecated prose to canonical terms. Example seeds from discovery intent:
-
-| Avoid in specs (unless defining) | Prefer |
-|----------------------------------|--------|
-| map edge (when meaning boundary of play area) | **Map border** |
-| generic “road” for player-drawn arterial | **Street (ordinary road)** or **Interstate** per context |
-| informal “validation” for placement pipeline | **Road validation pipeline** where that process is meant |
-
-Extend the table as files are reviewed.
+The live table lives in [`REFERENCE-SPEC-STRUCTURE.md`](../specs/REFERENCE-SPEC-STRUCTURE.md) (authoring section). Agents should use **`glossary_discover`** when choosing terms.
 
 ## 6. Decision Log
 
@@ -99,26 +91,26 @@ Extend the table as files are reviewed.
 
 ### Phase 1 — Glossary and geography foundation
 
-- [ ] `glossary.md` — align definitions with specs; fix any rows that contradict **isometric-geography-system.md**
-- [ ] `isometric-geography-system.md` — terminology pass (roads, water, **map border**, **road stroke**, etc.)
+- [x] `glossary.md` — align definitions with specs; fix any rows that contradict **isometric-geography-system.md**
+- [x] `isometric-geography-system.md` — terminology pass (roads, water, **map border**, **road stroke**, etc.)
 
 ### Phase 2 — Roads and water specs
 
-- [ ] `roads-system.md`
-- [ ] `water-terrain-system.md`
+- [x] `roads-system.md`
+- [x] `water-terrain-system.md`
 
 ### Phase 3 — Simulation, persistence, managers, UI
 
-- [ ] `simulation-system.md`
-- [ ] `persistence-system.md`
-- [ ] `managers-reference.md`
-- [ ] `ui-design-system.md`
+- [x] `simulation-system.md`
+- [x] `persistence-system.md`
+- [x] `managers-reference.md`
+- [x] `ui-design-system.md`
 
 ### Phase 4 — Meta and tooling coherence
 
-- [ ] `REFERENCE-SPEC-STRUCTURE.md` — authoring terms + optional deprecated-synonym table
-- [ ] `AGENTS.md` — only if inventory or spec descriptions change
-- [ ] `tools/mcp-ia-server/src/config.ts` and MCP docs — only if spec keys/aliases change
+- [x] `REFERENCE-SPEC-STRUCTURE.md` — authoring terms + deprecated → canonical table
+- [x] `AGENTS.md` — only if inventory or spec descriptions change *(no edit — inventory unchanged)*
+- [x] `tools/mcp-ia-server/src/config.ts` and MCP docs — only if spec keys/aliases change *(no edit — keys/aliases unchanged; test fixture aligned with §13 heading)*
 
 **Per-file workflow (repeat):**
 
@@ -129,16 +121,16 @@ Extend the table as files are reviewed.
 
 ## 8. Acceptance Criteria
 
-- [ ] Checklist: every file in §7 Phases 1–4 marked reviewed (`glossary.md` through `REFERENCE-SPEC-STRUCTURE.md`, plus conditional `AGENTS.md` / MCP files).
-- [ ] No unresolved contradiction between **glossary** and **reference spec** meaning (spec authoritative).
-- [ ] `AGENTS.md` spec inventory and MCP spec keys/aliases remain coherent with `.cursor/specs/` reality.
-- [ ] New terms appear in **glossary** and authoritative spec, not only in TECH-22.
+- [x] Checklist: every file in §7 Phases 1–4 marked reviewed (`glossary.md` through `REFERENCE-SPEC-STRUCTURE.md`, plus conditional `AGENTS.md` / MCP files).
+- [x] No unresolved contradiction between **glossary** and **reference spec** meaning (spec authoritative).
+- [x] `AGENTS.md` spec inventory and MCP spec keys/aliases remain coherent with `.cursor/specs/` reality.
+- [x] New terms appear in **glossary** and authoritative spec, not only in TECH-22.
 
 ## 9. Issues Found During Development
 
 | # | Description | Root cause | Resolution |
 |---|-------------|------------|------------|
-| — | — | — | — |
+| 1 | MCP fuzzy test fixture used old §13 heading string | Heading renamed for TECH-22 | Updated `tools/mcp-ia-server/tests/parser/fuzzy.test.ts` sample title |
 
 ## 10. Lessons Learned
 
@@ -149,5 +141,6 @@ Extend the table as files are reviewed.
 ## Open Questions (resolve before / during implementation)
 
 1. When a sentence applies equally to **street** and **interstate**, should prose always write “**street** / **interstate**”, or is a single approved umbrella phrase (defined in **glossary**) acceptable to reduce repetition?
-2. For **map border** vs local geometry, should specs use “**map border**” only for the play-area boundary and reserve other wording for **cell** edges and **Moore** / **cardinal neighbor** contexts—documented in the optional synonym table?
-3. Should the **deprecated synonym → canonical** table live permanently in `REFERENCE-SPEC-STRUCTURE.md` after TECH-22 closes, or stay as a time-limited appendix here and then be folded into authoring guidance only?
+ Answer: Use a single approved umbrella phrase (defined in **glossary**) to reduce repetition.
+2. For **map border** vs local geometry, should specs use “**map border**” only for the play-area boundary and reserve other wording for **cell** edges and **Moore** / **cardinal neighbor** contexts—documented in the optional synonym table? Answer: yes, this should be documented in the optional synonym table.
+3. Should the **deprecated synonym → canonical** table live permanently in `REFERENCE-SPEC-STRUCTURE.md` after TECH-22 closes, or stay as a time-limited appendix here and then be folded into authoring guidance only? No. MCP tool should help find the right term when agents are editing specs.

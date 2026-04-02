@@ -3,6 +3,8 @@
 > Deep reference for heightmap, slopes, water bodies, cliffs, shores, and cascades.
 > Canonical detail lives in `isometric-geography-system.md` — this spec provides navigational context and key rules.
 
+For shared vocabulary (**map border**, **open water**, **shore band**, **interstate** vs **street**, **road validation pipeline**), see [glossary.md](glossary.md) and geo §13–§14.5.
+
 ## Height model (geography spec §2)
 
 - `HeightMap[x,y]` is the authoritative terrain elevation.

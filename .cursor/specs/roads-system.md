@@ -3,9 +3,9 @@
 > Deep reference for road placement, pathfinding, bridge validation, and prefab resolution.
 > For terrain-level road rules (prefab selection on slopes, cost model), see `isometric-geography-system.md` §9, §10, §13.
 
-## Shared validation surface (geography spec §13.1)
+## Road validation pipeline (geography spec §13.1)
 
-All persistent road placement must produce a `PathTerraformPlan`, pass Phase-1 height validation, and commit via `Apply` / `ResolveForPath`. Never use `ComputePathPlan` alone as the placement decision.
+All persistent **street** or **interstate** placement must produce a `PathTerraformPlan`, pass Phase-1 height validation, and commit via `Apply` / `ResolveForPath` — the **road validation pipeline**. Never use `ComputePathPlan` alone as the placement decision.
 
 ### Two ways to build the plan
 
@@ -45,9 +45,9 @@ Geography spec cross-reference: `isometric-geography-system.md` §3.3.3–§3.3.
 
 ## AUTO simulation pathfinding (spec §13.9)
 
-- **Manual / generic A\*:** `GridManager.FindPath` and `FindPathWithRoadSpacing` — walkable cells: grass + road only, plus **land slope eligibility** (flat + cardinal ramps only; see Land slope stroke policy).
+- **Manual / generic A\*:** `GridManager.FindPath` and `FindPathWithRoadSpacing` — walkable cells: grass + **street**/**interstate** cells only, plus **land slope eligibility** (flat + cardinal ramps only; see Land slope stroke policy).
 - **AUTO simulation A\*:** `FindPathForAutoSimulation` and `FindPathWithRoadSpacingForAutoSimulation` — also allows undeveloped light zoning (no building), via `AutoSimulationRoadRules` + `GridPathfinder`. Only `AutoRoadBuilder` should use these. Same land slope walkability as manual A\*.
-- **Placement validation** for committed roads: `PathTerraformPlan` + Phase-1 + `Apply` / resolve (§13.1).
+- **Road validation pipeline** for committed **streets**/**interstates**: `PathTerraformPlan` + Phase-1 + `Apply` / resolve (§13.1).
 - **AUTO batch junction refresh:** After `PlaceRoadTileFromResolved`, `AutoRoadBuilder` flushes `RefreshRoadPrefabsAfterBatchPlacement` once per tick (deduped); bridge deck tiles skipped.
 
 ## Resolver rules (spec §13.7)
@@ -61,7 +61,7 @@ Geography spec cross-reference: `isometric-geography-system.md` §3.3.3–§3.3.
 | E | Interstate prefers straight segments |
 | F | Bridge approach perpendicular to water; no turn on last land cells before water |
 
-**BUG-51 (route-first):** `RoadPrefabResolver.ResolveForPath` classifies each path cell (straight-through, corner-90, junction, end, isolated) using **only** cells in the current stroke’s `pathCellSet` for topology (`pathOnlyNeighbors`), so adjacent unrelated roads do not create spurious T/elbows. Straights use travel `curr - prev` for ramp axis; junctions still use `SelectFromConnectivity`. `Cell` stores runtime hints: predecessor/successor grid, `roadRouteEntryStep` / `roadRouteExitStep`; `RefreshRoadPrefabAt` invalidates hints when topology is no longer straight/dead-end, and uses hints to pick `prev` for `ResolveForPath`-consistent slopes. `TerraformingService` may preserve diagonal wedge cells on the path when `preferSlopeClimb && dSeg == 0` instead of flattening. Cardinal ramp prefabs on diagonal/corner-up terrain use the same upper-cell anchor as elbows in `GetWorldPositionForPrefab` where applicable.
+**BUG-51 (route-first):** `RoadPrefabResolver.ResolveForPath` classifies each path cell (straight-through, corner-90, junction, end, isolated) using **only** cells in the current stroke’s `pathCellSet` for topology (`pathOnlyNeighbors`), so adjacent unrelated **street**/**interstate** segments do not create spurious T/elbows. Straights use travel `curr - prev` for ramp axis; junctions still use `SelectFromConnectivity`. `Cell` stores runtime hints: predecessor/successor grid, `roadRouteEntryStep` / `roadRouteExitStep`; `RefreshRoadPrefabAt` invalidates hints when topology is no longer straight/dead-end, and uses hints to pick `prev` for `ResolveForPath`-consistent slopes. `TerraformingService` may preserve diagonal wedge cells on the path when `preferSlopeClimb && dSeg == 0` instead of flattening. Cardinal ramp prefabs on diagonal/corner-up terrain use the same upper-cell anchor as elbows in `GetWorldPositionForPrefab` where applicable.
 
 ## Domain vocabulary (glossary)
 

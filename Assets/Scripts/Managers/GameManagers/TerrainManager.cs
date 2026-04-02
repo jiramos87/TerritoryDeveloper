@@ -1225,7 +1225,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// True if the cell has any child with ZoneCategory.Zoning (residential/commercial/industrial overlay).
-    /// Used to skip terrain refresh on zoned cells during road preview neighbor refresh.
+    /// Used to skip terrain refresh on those cells so <see cref="PathTerraformPlan.Apply"/> Phase 2/3 does not replace the overlay.
+    /// Building / footprint protection uses <see cref="GridManager.IsCellOccupiedByBuilding"/> (BUG-37).
     /// </summary>
     private bool CellHasZoningOverlay(Cell cell)
     {
@@ -1287,6 +1288,14 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             SpriteRenderer sr = cell.gameObject.GetComponent<SpriteRenderer>();
             if (sr != null)
                 sr.sortingOrder = sortingOrder;
+
+            // BUG-37: Path terraform Phase 2/3 calls this on Moore neighbors of the stroke. RCI buildings (and
+            // multi-cell footprint cells with no local tile) must not get PlaceFlatTerrain / slope rebuild — that
+            // stacks grass under or beside the building and reads as cleared development. Preview avoids Apply, so
+            // only commit/AUTO hit this path. Still sync height / cell transform to the heightmap (Phase 1 may
+            // have written this cell when it is in the terraform footprint).
+            if (gridManager != null && gridManager.IsCellOccupiedByBuilding(x, y))
+                return false;
 
             bool requiresSlope = forceFlat ? false : (forceSlopeType.HasValue || RequiresSlope(x, y, newHeight));
 

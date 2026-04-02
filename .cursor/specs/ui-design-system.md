@@ -7,6 +7,10 @@ This spec defines **foundations**, **components**, and **patterns** for Territor
 - [docs/ui-design-system-project.md](../../docs/ui-design-system-project.md) — Program charter and decision log
 - [docs/ui-design-system-context.md](../../docs/ui-design-system-context.md) — Current inventory and constraints
 
+### Domain vocabulary
+
+Backlog items and player-facing copy that name gameplay systems should use [`glossary.md`](glossary.md) terms (**Game notification**, **street**, **interstate**, **map border**, **road validation pipeline**, etc.) so wording matches reference specs and **territory-ia** tools (`glossary_discover`, `glossary_lookup`).
+
 **Status:** Draft — fill sections as foundations and components are agreed and implemented.
 
 ## Related files (code and assets)

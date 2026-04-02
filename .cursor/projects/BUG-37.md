@@ -1,25 +1,25 @@
 # BUG-37 — Manual street drawing clears RCI zones and buildings on cells Moore-adjacent to the road stroke
 
 > **Issue:** [BUG-37](../../BACKLOG.md)
-> **Status:** Draft
+> **Status:** Completed (2026-04-02)
 > **Created:** 2026-04-02
-> **Last updated:** 2026-04-02
+> **Last updated:** 2026-04-02 (path split: preview vs commit)
 
 ## 1. Summary
 
-When the player draws a **manual street** (ordinary road tool), **RCI** **zones**, **buildings**, and related visuals are reportedly removed on cells **Moore-adjacent** to the **road stroke**, not only on cells that should carry the new **street**. This regresses behavior relative to completed **BUG-25**. The intended outcome is to limit removal of development to the **street placement footprint** and any **terraform plan** footprint the design explicitly allows—keeping **Moore neighbors** that are not part of that footprint intact (no undocumented “expropriation band”).
+When the player **commits** a **manual street** (ordinary road tool), **RCI** **zones**, **buildings**, and related visuals are reportedly removed on cells **Moore-adjacent** to the **road stroke**, not only on cells that should carry the new **street**. **Manual preview** for the same stroke does **not** show this problem—the preview footprint matches expectations. **AUTO** placement of **streets** is reported to show the same unwanted neighbor clear as manual **commit** (confirm during investigation). This regresses behavior relative to completed **BUG-25**. The intended outcome is to limit removal of development to the **street placement footprint** and any **terraform plan** footprint the design explicitly allows—keeping **Moore neighbors** that are not part of that footprint intact (no undocumented “expropriation band”), on **commit** and **AUTO** paths, **consistent with** the already-correct **manual preview** behavior.
 
 ## 2. Goals and Non-Goals
 
 ### 2.1 Goals
 
-1. **Footprint clarity:** After a successful manual **street** placement, **RCI** **zones**, **buildings**, and non-street development on cells **outside** the agreed **street placement footprint** and **terraform plan** footprint remain unless a written rule in the geography or roads spec says otherwise.
+1. **Footprint clarity:** After a successful manual **street** **commit** (and on **AUTO** **street** placement if it shares the faulty path), **RCI** **zones**, **buildings**, and non-street development on cells **outside** the agreed **street placement footprint** and **terraform plan** footprint remain unless a written rule in the geography or roads spec says otherwise—matching what **manual preview** already demonstrates.
 2. **Pipeline fidelity:** Implementation must follow the **road validation pipeline** and project invariants (same family as manual **street** / **interstate** / AUTO roads per geography spec); the agent chooses code changes without altering intended game rules unless this spec is updated.
 3. **Verifiability:** Acceptance can be checked in play: trace a **street** through developed land and confirm which **cells** still host **zones** / **buildings**.
 
 ### 2.2 Non-Goals (Out of Scope)
 
-1. **BUG-49** (street preview cadence / full-stroke preview UX)—note as related; do not expand scope unless required to match player expectations for footprint.
+1. **BUG-49** (street preview cadence / full-stroke preview UX)—related; **BUG-37** does **not** require changing **preview** footprint behavior (preview is already the reference). Do not expand **BUG-37** into **BUG-49** unless a fix accidentally regresses preview UX.
 2. **Interstate** rules (**cut-through** forbidden, distinct validation)—this issue targets **ordinary street** (manual non-interstate); **interstate** behavior stays as today unless a shared fix is behavior-neutral.
 3. Intentionally widening how much land a **street** may claim beyond what is needed to stop **unintended** neighbor loss.
 
@@ -27,7 +27,7 @@ When the player draws a **manual street** (ordinary road tool), **RCI** **zones*
 
 | # | Role | Story | Acceptance criteria |
 |---|------|-------|---------------------|
-| 1 | Player | I draw a **street** along the edge of developed blocks so only the path that becomes road is affected; lots and **buildings** beside and near the **stroke** stay intact. | After placement, no loss of **RCI** **zones** or **buildings** on **Moore-adjacent** cells that are outside the defined footprints. No expropriation of neighboring cells. This should be applied to preview and commit in manual mode, and in AUTO mode when the **street** is placed.|
+| 1 | Player | I draw a **street** along the edge of developed blocks so only the path that becomes road is affected; lots and **buildings** beside and near the **stroke** stay intact. | **Manual preview** already satisfies this (reference behavior). On **commit** (manual) and on **AUTO** **street** placement, no loss of **RCI** **zones** or **buildings** on **Moore-adjacent** cells outside the defined footprints. No expropriation of neighboring cells. |
 | 2 | QA / Designer | I can state unambiguously which **cells** may change when a **street** is committed. | Spec and acceptance use glossary terms (**road stroke**, **terraform plan**, **Moore neighborhood**, **street**) so tests match docs. |
 
 ## 4. Current State
@@ -36,8 +36,17 @@ When the player draws a **manual street** (ordinary road tool), **RCI** **zones*
 
 | | Description |
 |---|-------------|
-| **Observed** | Manual **street** trace clears **zone** visuals, **buildings**, and **zoning** on cells **next to** the **road stroke** (Moore-adjacent in reports). |
-| **Expected** | Only **cells** that actually receive the **street** (and any footprint required by validation / **terraform plan**) should change; **neighbors** keep **RCI** and **buildings** unless design documents a wider clear. No expropriation of neighboring cells. This should be applied to preview and commit in manual mode, and in AUTO mode when the **street** is placed.|
+| **Observed (manual)** | **Commit** of a **manual street** clears **zone** visuals, **buildings**, and **zoning** on cells **next to** the **road stroke** (Moore-adjacent in reports). **Preview** for the same gesture does **not** exhibit this clear—preview matches the intended footprint. |
+| **Observed (AUTO)** | **Street** placement in **AUTO** is reported to match the bad **commit** behavior (neighbor clear); treat as **to confirm** in Phase 1. |
+| **Expected** | Only **cells** that actually receive the **street** (and any footprint required by validation / **terraform plan**) should change; **neighbors** keep **RCI** and **buildings** unless design documents a wider clear. **Manual preview** is the in-game reference for “correct” footprint until specs say otherwise. |
+
+### 4.1.1 Path split (investigation focus)
+
+| Path | Neighbor clear bug |
+|------|-------------------|
+| Manual **preview** | **Absent** (working) |
+| Manual **commit** | **Present** |
+| **AUTO** **street** | **Reported**; confirm shared code with **commit** |
 
 ### 4.2 Systems map (from backlog)
 
@@ -51,9 +60,10 @@ When the player draws a **manual street** (ordinary road tool), **RCI** **zones*
 
 _Not product requirements; technical leads only._
 
-- **Terraform plan** application refreshes terrain beyond the **road stroke** line (plan **adjacent** cells and neighbor refresh waves, including **cut-through** depth). Terrain refresh may replace child visuals; guards may not cover every **building** hierarchy.
-- **Diagonal step expansion** turns sketched diagonals into cardinal steps; some cardinal **cells** may not lie under the cursor path but are still part of the planner’s **stroke** for rules and prefabs.
-- Confirm whether `DemolishCellAt` or bulk **zone** clears are invoked from street mode (verify against `GridManager` / `RoadManager`).
+- **Primary hypothesis:** **Preview** and **commit** use different code paths; the over-clear happens only on **apply** / **commit** (and possibly **AUTO** if it reuses that path). Compare **preview** instantiation vs **Phase-1 apply** / **terraform** / **demolish** hooks for ordinary **street**.
+- **Terraform plan** application refreshes terrain beyond the **road stroke** line (plan **adjacent** cells and neighbor refresh waves, including **cut-through** depth). Terrain refresh may replace child visuals; guards may not cover every **building** hierarchy—this may affect **commit** only if **preview** skips full plan apply.
+- **Diagonal step expansion** turns sketched diagonals into cardinal steps; some cardinal **cells** may not lie under the cursor path but are still part of the planner’s **stroke** for rules and prefabs. If **preview** and **commit** use the same stroke but different side effects, the bug is not stroke geometry—it is post-plan clearing.
+- Confirm whether `DemolishCellAt` or bulk **zone** clears are invoked on **commit** / **AUTO** but not during **preview** (verify against `GridManager` / `RoadManager`).
 
 ## 5. Proposed Design
 
@@ -77,32 +87,36 @@ Reproduce with a developed strip; classify cleared **cells** against planner foo
 |------|----------|-----------|------------------------|
 | 2026-04-02 | Backlog “expected” is authoritative: no extra expropriation band beyond documented footprint. | Matches BACKLOG acceptance. | Wider intentional clear—rejected without design change. |
 | 2026-04-02 | Narrowing neighbor loss must not break **height constraints**, **cliff** / **slope** continuity, or **shore** rules. | Geography spec wins on terrain. | Disabling all neighbor terrain refresh—likely invalid. |
+| 2026-04-02 | **Manual preview** is correct; defect targets **commit** (and likely **AUTO**). | Narrows investigation to divergence from preview / apply pipeline, not “fix preview + commit.” | Treating preview and commit as equally broken—obsolete. |
 
 ## 7. Implementation Plan
 
-### Phase 1 — Confirm mechanism
+### Phase 1 — Confirm mechanism (narrowed)
 
-- [ ] Reproduce: **street** along **RCI** strip with **buildings**; record which **cells** clear.
-- [ ] Map cleared **cells** to **road stroke**, **terraform plan** region, and terrain neighbor refresh (implementation detail).
-- [ ] Check for demolish / **zone** clear calls tied to street tool (implementation detail).
+- [ ] Reproduce on **commit** only: same **stroke** as **preview**; confirm **preview** leaves neighbors intact and **commit** clears them (screenshot / cell list optional).
+- [ ] Confirm or refute **AUTO** **street**: same neighbor clear as manual **commit**; note whether it shares the **commit** / apply pipeline.
+- [ ] Diff **preview** vs **commit** / apply: where **terraform plan** runs, terrain neighbor refresh, `DemolishCellAt`, bulk **zone** clear (`RoadManager` / `GridManager` / helpers).
+- [ ] Map cleared **cells** on **commit** to **road stroke**, **terraform plan** region, and neighbor refresh (implementation detail)—only as needed after the path diff.
 
 ### Phase 2 — Fix and regress
 
-- [ ] Minimal behavior-preserving fix for **ordinary street**; respect **road validation pipeline** and invariants.
-- [ ] Manual: **street** on flat developed land; **street** with **cut-through**; **street** with **water bridge** / **wet run** if applicable.
+- [ ] Minimal fix so **commit** (and **AUTO** if affected) matches **preview** footprint rules for **ordinary street**; respect **road validation pipeline** and invariants.
+- [ ] **Regression:** **manual preview** must stay correct (no new neighbor clear); **commit** on flat developed land; **cut-through**; **water bridge** / **wet run** if applicable.
 - [ ] If player-visible footprint rules change, update geography spec section on manual **streets** (or roads spec cross-link) per terminology policy.
 
 ## 8. Acceptance Criteria
 
-- [ ] Manual **street** through or along developed **RCI** land does **not** clear **zones** or **buildings** on **Moore-adjacent** **cells** that are outside the **street** and **terraform plan** footprints defined for this fix (aligned with BACKLOG).
-- [ ] No regression for manual **street** over **water bridge** / **wet run** or **cut-through** scenarios that the geography / roads specs already allow.
+- [ ] **Manual commit** of **street** through or along developed **RCI** land does **not** clear **zones** or **buildings** on **Moore-adjacent** **cells** outside the **street** and **terraform plan** footprints defined for this fix (aligned with BACKLOG), **consistent with** **manual preview** for the same stroke.
+- [ ] If **AUTO** **street** was affected: same acceptance as above for **AUTO**-placed **streets**; if **AUTO** was never broken, document in **Issues Found** and skip duplicate QA.
+- [ ] **Manual preview** remains free of unintended neighbor clear (no regression vs current good behavior).
+- [ ] No regression for **commit** / **AUTO** **street** over **water bridge** / **wet run** or **cut-through** scenarios that the geography / roads specs already allow.
 - [ ] Terrain **height constraints** and **HeightMap** / **Cell.height** sync remain satisfied (project invariants).
 
 ## 9. Issues Found During Development
 
 | # | Description | Root cause | Resolution |
 |---|-------------|------------|------------|
-| 1 | — | — | — |
+| 1 | Neighbor clear on commit only | `PathTerraformPlan.Apply` Phase 2/3 → `RestoreTerrainForCell` on **Moore** neighbors; **building** / footprint **cells** got `PlaceFlatTerrain` stacked over preserved meshes | `TerrainManager.RestoreTerrainForCell`: after height/sync, return early when `IsCellOccupiedByBuilding` (preserve development; **BUG-52** tracks possible **AUTO** zoning side effect) |
 
 ## 10. Lessons Learned
 

@@ -20,7 +20,7 @@
 | **World ↔ Grid conversion** | Turning mouse/world positions into cell indices and back for picking and placement. Diamond projection and inverse use `tileWidth` / `tileHeight` / `heightOffset` and `round` for inverse. | geo §1.1, §1.3 |
 | **Moore neighborhood** | The eight tiles touching a cell (cardinals + diagonals); used for slopes, shores, and many adjacency rules. Same as Moore-adjacent cells in geography and water specs. | geo §2.4.1 |
 | **Cardinal neighbor** | The four tiles sharing an edge (N/S/E/W steps only) — not diagonals. Height difference limits, water–water cascades, and many road rules use cardinals only. | geo §2.3, §5.6.2 |
-| **Grass cell** | Default developable land — empty of roads, typically open for zoning, forests, and placement tools. Manual pathfinding treats grass plus roads as walkable; AUTO adds undeveloped light zoning per mode. | geo §14.5, geo §13.9 |
+| **Grass cell** | Default developable land — empty of **street**/**interstate** cells, typically open for zoning, forests, and placement tools. Manual pathfinding treats grass plus **street**/**interstate** cells as walkable; AUTO adds undeveloped light zoning per mode. | geo §14.5, geo §13.9 |
 
 ## Height System
 
@@ -37,7 +37,7 @@
 |------|-----------|------|
 | **Slope type** | Which way the ground tilts on a cell — flat, ramp, diagonal wedge, or concave corner. `TerrainSlopeType` enum from 8-neighbor height compares (land vs water-shore rules differ). | geo §3–§4 |
 | **Slope categories** | Grouping of slope outcomes: flat plateau, cardinal ramp, diagonal wedge, corner-up valley. Drives grass vs ramp prefabs and which tiles allow roads. | geo §3.3 |
-| **Cliff** | A vertical drop between two cells — reads as a rock wall on the map edge of the drop. S/E-facing stacked meshes when `\|Δh\| ≥ 1` on cardinals; N/W faces not rendered (camera). | geo §5.7 |
+| **Cliff** | A vertical drop between two cells — reads as a rock wall along the **drop boundary** (the lower cell’s side of the step). S/E-facing stacked meshes when `\|Δh\| ≥ 1` on cardinals; N/W faces not rendered (camera). Not the same as **map border** (play-area boundary). | geo §5.7 |
 | **Shore band** | The ring of dry land hugging water where special shore art applies and heights are clamped to the water surface. Moore neighbors of water with `height ≤ min(S)` among adjacent water. | geo §2.4.1 |
 | **Surface-height gate** | Whether a land tile is allowed to use water-shore visuals vs normal land + cliffs. Tests `h ≤ V + MAX` with `V = max(MIN_HEIGHT, S − 1)`; rim above cap uses ordinary terrain. | geo §4.2 |
 | **Rim** | Higher dry ground just above the shore band — looks like normal hills toward water, not a beach ramp. Uses slopes + cliff stacks; fails the shore-art gate. | geo §14.1 |
@@ -91,15 +91,16 @@
 | Term | Definition | Spec |
 |------|-----------|------|
 | **Terraform plan** | The authoritative description of how terrain under a proposed road changes (or does not). `PathTerraformPlan`: per-cell actions, heights, `postTerraformSlopeType`; `Apply` / `Revert`. | geo §8 |
-| **Road validation pipeline** | The required gate before any road is committed — same checks for player, interstate, and AUTO. Preparation (`TryPrepareRoadPlacementPlan`, longest-prefix, optional locked deck-span) → Phase-1 heights → `Apply` → prefab resolve — not raw `ComputePathPlan` alone. | geo §13.1, roads |
+| **Road validation pipeline** | The required gate before any **street** or **interstate** placement is committed — same checks for manual **street** draw, **interstate**, and AUTO **streets**. Preparation (`TryPrepareRoadPlacementPlan`, longest-prefix, optional locked deck-span) → Phase-1 heights → `Apply` → prefab resolve — not raw `ComputePathPlan` alone. | geo §13.1, roads |
 | **Road stroke** | The ordered path of cells for a road placement attempt — player drag or AUTO route — before filtering, truncation, and plan build. Same logical “stroke” drives preview and commit when valid. | geo §14.5, roads |
 | **Phase-1 validation** | Height and neighbor consistency check on a terraform plan **before** terrain writes are committed (`TryValidatePhase1Heights`). Fails fast if the plan would break `\|Δh\|` or edge rules. | geo §13.1 |
 | **Interstate** | Limited-access highway linking the city grid to the **map border** — long straight preference, full-path validation, **cut-through forbidden**. Distinct from ordinary streets and bridges. | geo §13.5, §13.6, mgrs |
 | **Street (ordinary road)** | Player or AUTO **non-interstate** road: local network using the same validation family as manual draw (prefix, deck-span, terraform). Contrasts with border **interstate**. | geo §14.5, geo §13.1, mgrs |
-| **Map border** | The outer edge of the playable grid (`x`/`y` min/max). Interstate endpoints, cliff “virtual foot” at sea level, and some water rules reference the border. | geo §14.5, §5.7, §13.5 |
+| **Street or interstate** | Umbrella when the same rule applies to **street (ordinary road)** and **interstate**: both must pass the **road validation pipeline** and commit via **`PathTerraformPlan`**. Prefer **street** or **interstate** alone when the distinction matters (e.g. **map border** endpoints, **cut-through** bans). | geo §13.1, roads |
+| **Map border** | The outer boundary of the playable grid (`x`/`y` min/max). Interstate endpoints, cliff “virtual foot” at sea level, and some water rules reference the border. Do not use informal “map edge” for this — see [REFERENCE-SPEC-STRUCTURE.md](REFERENCE-SPEC-STRUCTURE.md) deprecated → canonical table. Not a generic **cell** edge or **Moore**/**cardinal neighbor** face unless that neighbor lies on the border. | geo §14.5, §5.7, §13.5 |
 | **Water-slope tile** | Coastal **land** cell using water-slope shore prefabs (`IsWaterSlopeCell`). Behaves like impassable or high-cost terrain for normal street routing; bridges use separate rules. | geo §5.8, §10, roads |
 | **Road cache invalidation** | After **any** change to road topology, cached road queries must be rebuilt so pathfinding and neighbors see the new network. Project invariant: call invalidate after modifications. | roads, `.cursor/rules/invariants.mdc` |
-| **Cut-through** | Flattening terrain along a road line when slopes are too steep to “ride.” `Flatten` to `baseHeight`; rejected when `maxHeight - baseHeight > 1` (interstate forbids entirely). | geo §8.3, §13.6 |
+| **Cut-through** | Flattening terrain along a **street**/**interstate** path when slopes are too steep to “ride.” `Flatten` to `baseHeight`; rejected when `maxHeight - baseHeight > 1` (**interstate** forbids entirely). | geo §8.3, §13.6 |
 | **baseHeight (terraform)** | Reference elevation a cut-through plan writes along the path so the road sits flat through high ground. Chosen from path context; too deep a cut vs surrounding max height fails validation. | geo §8.3, geo §14.5 |
 | **Scale-with-slopes** | Letting a road follow natural ramps when every step is gentle. No height writes; plan records `TerraformAction.None` and slope type per cell. | geo §8.2 |
 | **Deck span** | A bridge segment over water — straight, no corners on water, one deck height. Axis-aligned; uniform `waterBridgeDeckDisplayHeight` across the wet run. | geo §13.4 |
@@ -109,7 +110,7 @@
 | **Longest valid prefix** | Truncating a stroke to the longest part that still passes all rules. Manual/AUTO use when tail would invalidate; silent when stroke starts on blocked slope (see roads spec). | geo §13.2, roads |
 | **Land slope eligibility** | Which ground tiles may carry a road stroke. **Flat** and **cardinal ramps** only; pure diagonals and corner-up land slopes disallowed for strokes and A* walkability. | geo §13.10, roads |
 | **Resolver rules** | Prefab choice invariants for topology and approach. Elbow degree, exit alignment, terraform-over-live-slope, hill avoidance, interstate straight preference, bridge approach orthogonality (A–F). | geo §13.7, roads |
-| **Road reservation** | Cells AUTO zoning must leave empty so future roads can align. Axial strips from `GetRoadExtensionCells` / `GetRoadAxialCorridorCells` excluded from auto-zone each tick. | geo §13.9, sim |
+| **Road reservation** | Cells AUTO zoning must leave empty so future **street** alignment stays possible. Axial strips from `GetRoadExtensionCells` / `GetRoadAxialCorridorCells` excluded from auto-zone each tick. | geo §13.9, sim |
 
 ## Pathfinding
 
@@ -129,7 +130,7 @@
 | **Zone density** | How intense development is allowed on a zoned tile — light, medium, heavy. Selects building size/tier; **undeveloped light** interacts with AUTO roads (see below). | mgrs §Zones |
 | **Pivot cell** | The anchor tile of a multi-cell building for save, sort, and demolish. Other footprint cells point at the pivot’s building instance. | mgrs §Zones |
 | **Building footprint** | All grid cells covered by one building (1×1 or multi-cell). Sorting, save data, bulldoze, and growth operate on the footprint as a unit tied to the pivot. | mgrs §Zones |
-| **Undeveloped light zoning** | A zoned tile still empty of a building, at light density — treated as passable for AUTO road planning only. Walkability via `AutoSimulationRoadRules` + simulation pathfinder; medium/heavy and built tiles differ. | mgrs §Zones, geo §13.9 |
+| **Undeveloped light zoning** | A zoned tile still empty of a building, at light density — treated as passable for AUTO **street** planning only. Walkability via `AutoSimulationRoadRules` + simulation pathfinder; medium/heavy and built tiles differ. | mgrs §Zones, geo §13.9 |
 | **Building** | The visible structure on a zoned or service tile — RCI houses/shops/factories or **utility** plants. Spawned by zone/growth/resource rules; may be 1×1 or multi-cell; level tracks growth stage. | mgrs §Zones, mgrs §World |
 
 ## Simulation & Growth
@@ -179,7 +180,7 @@
 | **Sorting components** | The four additive pieces: **TERRAIN_BASE_ORDER** (base), **depthOrder** (isometric depth), **heightOrder** (elevation), **typeOffset** (layer kind: terrain, road, building, etc.). Together they enforce global draw order rules. | geo §7.1, §7.2 |
 | **DEPTH_MULTIPLIER** | How strongly “farther on the map” pushes sprites back. Set so depth beats max height contribution (100 vs 10×max height). | geo §7.1, §7.3 |
 | **HEIGHT_MULTIPLIER** | Per-level boost so taller tiles sort above neighbors at the same depth. Used inside `heightOrder`. | geo §7.1 |
-| **Type offsets** | Extra bias per object kind so roads sit above grass, buildings above roads, etc. Terrain 0, slopes +1, road +5, utility +8, building +10, effect +30. | geo §7.2 |
+| **Type offsets** | Extra bias per object kind so **street**/**interstate** tiles sit above grass, buildings above roads, etc. Terrain 0, slopes +1, road +5, utility +8, building +10, effect +30. | geo §7.2 |
 
 ## Documentation
 

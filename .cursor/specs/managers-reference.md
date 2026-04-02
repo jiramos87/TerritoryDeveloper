@@ -12,16 +12,16 @@
 | **WaterManager** | Water body generation/management: multi-level lakes, rivers, shore/cliff/cascade visuals, multi-body junctions |
 | **ForestManager** | Forest generation (sparse/medium/dense), forestation, deforestation |
 | **ZoneManager** | RCI zoning, zone tile placement |
-| **RoadManager** | Road drawing, prefab selection by neighbors, road preview |
-| **InterstateManager** | Interstate highways connecting map to exterior |
+| **RoadManager** | **Street**/**interstate** drawing, prefab selection by neighbors, preview |
+| **InterstateManager** | **Interstate** placement linking the grid to the **map border** |
 | **GeographyManager** | Orchestrator for all terrain initialization (terrain + water + forest + grid) |
 | **DemandManager** | R/C/I demand calculation based on population, employment, forests |
 | **EconomyManager** | Taxes, money, financial transactions |
 | **CityStats** | Global statistics aggregator: population, employment, water/power capacity |
 | **EmploymentManager** | Employment and unemployment calculation by zone |
 | **SimulationManager** | Automatic simulation cycle orchestrator |
-| **AutoRoadBuilder** | Automatic road network extension |
-| **AutoZoningManager** | Automatic zoning of cells adjacent to roads |
+| **AutoRoadBuilder** | Automatic **street** network extension |
+| **AutoZoningManager** | Automatic zoning of cells adjacent to **streets**/**interstates** |
 | **AutoResourcePlanner** | Automatic resource building planning |
 | **GrowthManager** | Zone growth logic |
 | **GrowthBudgetManager** | Growth budget per category |
@@ -40,22 +40,22 @@
 
 | Service | Role |
 |---------|------|
-| **GridPathfinder** | A* pathfinding for road routes; walkability excludes non-cardinal land slopes (see `roads-system.md` land slope policy) |
+| **GridPathfinder** | A* pathfinding for **street**/**interstate** routes; walkability excludes non-cardinal land slopes (see `roads-system.md` land slope policy) |
 | **GridSortingOrderService** | Sorting order computation |
 | **BuildingPlacementService** | Building placement and load/restore |
 | **TerraformingService** | Path-level terraform plan computation |
 | **PathTerraformPlan** | Terraform Apply/Revert, cut-through mode |
 | **RoadPrefabResolver** | Prefab selection for path and single-cell contexts |
-| **RoadPathCostConstants** | Shared cost constants for road pathfinding |
-| **RoadStrokeTerrainRules** | Static allowlist (flat + cardinal ramps) and stroke truncation for road placement |
-| **UrbanCentroidService** | Urban centroid + ring metrics for AUTO roads/zoning (active, not obsolete) |
+| **RoadPathCostConstants** | Shared cost constants for **street**/**interstate** pathfinding |
+| **RoadStrokeTerrainRules** | Static allowlist (flat + cardinal ramps) and stroke truncation for **street**/**interstate** placement |
+| **UrbanCentroidService** | Urban centroid + ring metrics for AUTO **streets**/zoning (active, not obsolete) |
 | **GameBootstrap** | Entry point, game loading flow |
 
 ## Zones & Buildings
 
 > **Glossary index:** `glossary.md` cites this section as **mgrs §Zones**.
 >
-> Domain model for RCI zoning, building placement, and multi-cell footprints. For AUTO road walkability over light zoning, see `isometric-geography-system.md` §13.9.
+> Domain model for RCI zoning, building placement, and multi-cell footprints. For AUTO **street** walkability over light zoning, see `isometric-geography-system.md` §13.9.
 
 ### RCI model
 
@@ -72,7 +72,7 @@
 ### Zone density
 
 - **Light / medium / heavy** tiers control which building prefabs and footprints are eligible. Higher tiers generally mean larger or denser structures.
-- AUTO simulation treats **undeveloped light zoning** (light tier, **no** building spawned) as pass-through terrain for road pathfinding only — see geography spec §13.9 and `AutoSimulationRoadRules`.
+- AUTO simulation treats **undeveloped light zoning** (light tier, **no** building spawned) as pass-through terrain for **street** pathfinding only — see geography spec §13.9 and `AutoSimulationRoadRules`.
 
 ### Pivot cell and multi-cell buildings
 
