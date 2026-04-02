@@ -1,6 +1,6 @@
 {
   "name": "@territory/mcp-ia-server",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": true,
   "type": "module",
   "description": "MCP server exposing Territory Developer IA docs (specs, rules, root markdown).",

@@ -9,6 +9,7 @@ import { registerListSpecs } from "./tools/list-specs.js";
 import { registerSpecOutline } from "./tools/spec-outline.js";
 import { registerSpecSection } from "./tools/spec-section.js";
 import { registerGlossaryLookup } from "./tools/glossary-lookup.js";
+import { registerGlossaryDiscover } from "./tools/glossary-discover.js";
 import { registerRouterForTask } from "./tools/router-for-task.js";
 import { registerInvariantsSummary } from "./tools/invariants-summary.js";
 import { registerListRules } from "./tools/list-rules.js";
@@ -17,7 +18,7 @@ import { registerBacklogIssue } from "./tools/backlog-issue.js";
 
 const server = new McpServer({
   name: "territory-ia",
-  version: "0.4.1",
+  version: "0.4.2",
   description:
     "Information Architecture server for Territory Developer — exposes specs, rules, glossary, backlog issues, and architecture docs via MCP tools.",
 });
@@ -28,6 +29,7 @@ registerListSpecs(server, registry);
 registerSpecOutline(server, registry);
 registerSpecSection(server, registry);
 registerGlossaryLookup(server, registry);
+registerGlossaryDiscover(server, registry);
 registerRouterForTask(server, registry);
 registerInvariantsSummary(server, registry);
 registerListRules(server, registry);

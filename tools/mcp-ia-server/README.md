@@ -22,7 +22,7 @@ Abstract pattern (reusable outside this game): [`docs/mcp-markdown-ia-pattern.md
 | `npm test` | Unit tests (`node:test` + `tsx`) for parser and tool helpers. |
 | `npm run test:watch` | Tests in watch mode. |
 | `npm run test:coverage` | Parser line coverage with **c8** (gate ≥90% on `src/parser/**`). |
-| `npm run verify` | From this directory: spawns the server the same way as Cursor (via repo root + `npx -y tsx …`) and exercises all **9** tools through the MCP SDK client. |
+| `npm run verify` | From this directory: spawns the server the same way as Cursor (via repo root + `npx -y tsx …`) and exercises all **10** tools through the MCP SDK client. |
 
 ## Cursor integration
 
@@ -39,7 +39,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 |----------|---------|
 | `REPO_ROOT` | Root used to resolve `.cursor/specs`, `.cursor/rules`, and root markdown. Defaults to `process.cwd()`. |
 
-## Tools (9)
+## Tools (10)
 
 | Tool | Description |
 |------|-------------|
@@ -47,6 +47,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`list_specs`** | Registry entries: `key`, `relativePath`, `description`, `category`, `lineCount`. Optional filter `category` (e.g. `rule`). |
 | **`spec_outline`** | Nested heading outline with line ranges. `spec` accepts key, filename, or alias (`geo` → `isometric-geography-system`, `roads` → `roads-system`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
 | **`spec_section`** | Body for one section: canonical `spec` + `section` (id `13.4`, slug, title substring, or fuzzy typo). Aliases: `key` / `doc` → spec; `section_heading` / `heading` → section; numeric `section` coerced to string. `max_chars` or `maxChars` (default 3000) with `truncated` / `totalChars`. |
+| **`glossary_discover`** | Keyword discovery over glossary rows: scores **Term**, **Definition**, **Spec**, and category; returns ranked `term`, `specReference`, optional `spec` alias + `registryKey`, `matchReasons`, `score`. Params: `query` and/or `keywords` (alias `terms`); `q` / `search` for query; `max_results` / `maxResults` (default 10, cap 25). |
 | **`glossary_lookup`** | Glossary row: exact (case-insensitive) then fuzzy; bracket text like `[x,y]` normalized for matching. |
 | **`router_for_task`** | Match `domain` string to specs using tables in `agent-router.mdc`. |
 | **`invariants_summary`** | Invariants + guardrails from `invariants.mdc`. |
@@ -59,6 +60,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 - `list_specs` → `{}`
 - `spec_outline` → `{ "spec": "geo" }`
 - `spec_section` → `{ "spec": "geo", "section": "13.4", "max_chars": 8000 }` (or `{ "key": "geo", "section_heading": 14 }`)
+- `glossary_discover` → `{ "query": "manual street trace neighbors", "max_results": 8 }`
 - `glossary_lookup` → `{ "term": "wet run" }`
 - `router_for_task` → `{ "domain": "roads" }`
 - `rule_content` → `{ "rule": "roads", "max_chars": 50000 }`
@@ -84,6 +86,7 @@ flowchart LR
     SO[spec-outline.ts]
     SS[spec-section.ts]
     GL[glossary-lookup.ts]
+    GD[glossary-discover.ts]
     RF[router-for-task.ts]
     IS[invariants-summary.ts]
     LR[list-rules.ts]
@@ -95,6 +98,7 @@ flowchart LR
   IDX --> SO
   IDX --> SS
   IDX --> GL
+  IDX --> GD
   IDX --> RF
   IDX --> IS
   IDX --> LR
@@ -109,6 +113,9 @@ flowchart LR
   GL --> CFG
   GL --> GP
   GL --> FZ
+  GD --> CFG
+  GD --> GP
+  GD --> FZ
   RF --> CFG
   RF --> TP
   IS --> CFG

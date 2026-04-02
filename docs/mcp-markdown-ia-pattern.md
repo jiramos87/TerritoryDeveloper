@@ -41,7 +41,7 @@ Split files by **role** so tools can stay focused:
 |------|-----------------|---------|
 | **Long-form spec** | Domain behavior, numbered sections | `spec_outline`, `spec_section` |
 | **Short rule / policy** | Guardrails, coding standards, YAML frontmatter | `list_rules`, `rule_content` |
-| **Glossary** | Tables: term, definition, pointer to spec | `glossary_lookup` (+ future discovery tools) |
+| **Glossary** | Tables: term, definition, pointer to spec | `glossary_lookup`, `glossary_discover` |
 | **Router** | Task domain → where to read | `router_for_task` |
 | **Invariants / principles** | Numbered + bulleted constraints | `invariants_summary` |
 | **Work tracking** (optional) | Issues, backlog | Dedicated parser + tool (e.g. `backlog_issue`) — usually **excluded** from “spec list” |
@@ -70,7 +70,7 @@ Almost everything builds on:
 |--------|----------------|---------------|
 | **Catalog** | What exists? | `list_specs`, `list_rules` |
 | **Navigate** | Table of contents | `spec_outline` |
-| **Retrieve** | One slice | `spec_section`, `rule_content`, `glossary_lookup` |
+| **Retrieve** | One slice | `spec_section`, `rule_content`, `glossary_lookup`, `glossary_discover` |
 | **Route** | Where to start reading | `router_for_task` |
 | **Constraints** | Non-negotiables | `invariants_summary` |
 | **External slice** | Outside main registry | Issue tracker file, API schema dir, etc. |

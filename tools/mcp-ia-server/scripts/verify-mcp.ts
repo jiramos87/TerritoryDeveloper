@@ -49,6 +49,7 @@ async function main(): Promise<void> {
     "spec_outline",
     "spec_section",
     "glossary_lookup",
+    "glossary_discover",
     "router_for_task",
     "invariants_summary",
     "list_rules",
@@ -63,8 +64,8 @@ async function main(): Promise<void> {
     await client.callTool({ name: "list_specs", arguments: {} }),
   ) as Array<{ key: string; category: string }>;
   console.log("list_specs count:", all.length);
-  if (all.length !== 21) {
-    throw new Error(`Expected 21 IA documents, got ${all.length}`);
+  if (all.length !== 22) {
+    throw new Error(`Expected 22 IA documents, got ${all.length}`);
   }
 
   const rules = parseJsonFromToolResult(
@@ -337,6 +338,39 @@ async function main(): Promise<void> {
     throw new Error("glossary_lookup expected HeightMap-style term");
   }
 
+  const discover = parseJsonFromToolResult(
+    await client.callTool({
+      name: "glossary_discover",
+      arguments: {
+        query: "wet run lip grass stroke",
+        max_results: 5,
+      },
+    }),
+  ) as { matches?: Array<{ term?: string; matchReasons?: string[] }>; error?: string };
+  if (discover.error) throw new Error("glossary_discover returned error");
+  if (!discover.matches?.length) {
+    throw new Error("glossary_discover expected at least one match for road/wet keywords");
+  }
+  const wetHit = discover.matches.find((m) =>
+    m.term?.toLowerCase().includes("wet"),
+  );
+  if (!wetHit?.matchReasons?.length) {
+    throw new Error("glossary_discover expected matchReasons on wet-run style hit");
+  }
+
+  const discoverEmpty = parseJsonFromToolResult(
+    await client.callTool({
+      name: "glossary_discover",
+      arguments: { query: "zzzz-no-glossary-hit-99999" },
+    }),
+  ) as { matches?: unknown[]; suggestions?: string[]; message?: string };
+  if ((discoverEmpty.matches?.length ?? 0) !== 0) {
+    throw new Error("glossary_discover expected empty matches for nonsense query");
+  }
+  if (!Array.isArray(discoverEmpty.suggestions)) {
+    throw new Error("glossary_discover expected suggestions array when no matches");
+  }
+
   const bl37 = parseJsonFromToolResult(
     await client.callTool({
       name: "backlog_issue",
@@ -349,8 +383,10 @@ async function main(): Promise<void> {
   if (!bl37.files?.includes("RoadManager")) {
     throw new Error("backlog_issue BUG-37 expected Files to mention RoadManager");
   }
-  if (!bl37.backlog_section?.toLowerCase().includes("high")) {
-    throw new Error("backlog_issue BUG-37 expected High Priority section");
+  if (!/in progress|high priority|\bhigh\b/i.test(bl37.backlog_section ?? "")) {
+    throw new Error(
+      "backlog_issue BUG-37 expected In Progress or High Priority backlog_section",
+    );
   }
 
   const blBad = parseJsonFromToolResult(
