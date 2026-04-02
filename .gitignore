@@ -47,3 +47,8 @@ sysinfo.txt
 
 # Crashlytics generated file
 crashlytics-build.properties
+
+# MCP IA server (Node)
+tools/mcp-ia-server/node_modules/
+tools/mcp-ia-server/dist/
+tools/mcp-ia-server/coverage/

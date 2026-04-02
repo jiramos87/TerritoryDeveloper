@@ -4,7 +4,8 @@
 
 1. Check the `/// <summary>` on the class you are about to modify
 2. Use `.cursor/rules/agent-router.mdc` to find the right specs for your task
-3. **If asked to work on an issue:** read `BACKLOG.md` for context and priority
+3. **Context from IA (Cursor agents):** In **Agent** chats with tools enabled, treat **territory-ia** MCP as the **default** way to load specs and rules unless a tool call truly cannot run. **Do not** open whole spec files with `read_file` when a slice suffices. Suggested order: **`backlog_issue`** when you have an issue id (`BUG-37`, `FEAT-44`, …) → `list_specs` (if keys unknown) → `router_for_task` for domain → `spec_outline` / `spec_section` (or `glossary_lookup`, `invariants_summary`, `list_rules` / `rule_content` as needed). If MCP is disabled in the host, fall back to `.cursor/rules/agent-router.mdc` and targeted `read_file`. Stale content: MCP caches parses per server process—after large edits to a doc, prefer a fresh `read_file` on that path or restart the MCP server. Reference: [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md).
+4. **If asked to work on an issue:** use **`backlog_issue`** for that id when MCP is available; otherwise read `BACKLOG.md` (and see `BACKLOG.md` for priority and workflow).
 
 System invariants and guardrails are in `.cursor/rules/invariants.mdc` (always loaded).
 Task-to-spec routing is in `.cursor/rules/agent-router.mdc` (always loaded).
@@ -13,11 +14,12 @@ Full dependency map is in `ARCHITECTURE.md`.
 ## Documentation hierarchy
 
 ```
-.cursor/rules/   → Guardrails (auto-loaded by Cursor, light)
-.cursor/specs/   → Deep reference (read on demand per task)
-ARCHITECTURE.md  → System layers, dependency map
-AGENTS.md        → This file: workflow, policies, checklist
-BACKLOG.md       → Issue tracking (read only when relevant)
+.cursor/rules/        → Guardrails (auto-loaded by Cursor, light)
+.cursor/specs/        → Deep reference (read on demand per task)
+ARCHITECTURE.md       → System layers, dependency map
+AGENTS.md             → This file: workflow, policies, checklist
+BACKLOG.md            → Issue tracking (read only when relevant)
+docs/mcp-ia-server.md → territory-ia MCP (default retrieval path in Agent when enabled)
 ```
 
 ### `.cursor/specs/` inventory
@@ -48,7 +50,23 @@ Project-specific specs for features or complex bugs **in active development** li
 
 ### Project docs outside `.cursor/specs/`
 
-Charters and discovery for cross-cutting programs live under `docs/` as listed in `ARCHITECTURE.md`.
+Charters and discovery for cross-cutting programs live under `docs/` as listed in `ARCHITECTURE.md`. The **territory-ia** MCP is documented in [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) and [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md).
+
+## Terminology and information consistency
+
+Keep **one vocabulary** across code, specs, rules, backlog, tutorials, and MCP descriptions so agents and humans search and reason reliably.
+
+| Source | Use for |
+|--------|---------|
+| [`.cursor/specs/glossary.md`](.cursor/specs/glossary.md) | Canonical **domain** terms; always check before naming features, bugs, or user-facing copy in docs. |
+| Linked specs (e.g. geography, roads) | **Definitions** trump glossary if they differ (glossary defers to spec). |
+| [`.cursor/rules/coding-conventions.mdc`](.cursor/rules/coding-conventions.mdc) | C# identifiers, XML docs, prefab naming for **new** assets. |
+| [`BACKLOG.md`](BACKLOG.md) | Issue id prefixes per **Issue ID convention** below; write **Files**, **Notes**, and **Acceptance** using the same words as specs/glossary. |
+| [`tools/mcp-ia-server/`](tools/mcp-ia-server/) | **Tool names** (`snake_case`) must match `registerTool` in code; keep [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) and the package README in sync. |
+
+**New or changed concepts:** update the **glossary** and the **relevant spec** section—do not leave terminology only in backlog entries or informal docs.
+
+Cursor loads **`.cursor/rules/terminology-consistency.mdc`** (`alwaysApply`) as a short reminder; this section is the full checklist.
 
 ## Backlog Workflow
 
@@ -104,3 +122,4 @@ Only when user confirms verification. Mark `[x]`, move to "Completed (last 30 da
 - [ ] If a new manager was added, it follows the Inspector + FindObjectOfType pattern
 - [ ] New prefabs follow `coding-conventions.mdc` naming (do not rename existing assets)
 - [ ] Temporary `Debug.Log` diagnostics follow `coding-conventions.mdc` (remove or gate before merge)
+- [ ] Wording for touched domains matches `glossary.md` / linked specs (and backlog text stays consistent if the issue was edited)

@@ -18,4 +18,4 @@ alwaysApply: true
 
 **Key patterns:** GridManager is the central hub for cell operations. Only singleton: `GameNotificationManager.Instance`. Managers are MonoBehaviour scene components (never `new`). Dependencies via Inspector + `FindObjectOfType` fallback.
 
-**Documentation hierarchy:** `AGENTS.md` (workflow) → `.cursor/rules/` (guardrails) → `.cursor/specs/` (deep reference) → `ARCHITECTURE.md` (dependency map).
+**Documentation hierarchy:** `AGENTS.md` (workflow) → `.cursor/rules/` (guardrails, including `terminology-consistency.mdc` for shared vocabulary) → `.cursor/specs/` (deep reference) → `ARCHITECTURE.md` (dependency map). **territory-ia** MCP under `tools/mcp-ia-server/` reads those same sources for low-token tool calls; see `docs/mcp-ia-server.md` and `agent-router.mdc` (MCP subsection). **Cursor agents with tools should prefer territory-ia MCP for spec/rule slices before reading whole markdown files.**

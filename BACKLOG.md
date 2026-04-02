@@ -7,52 +7,45 @@
 
 ## In Progress
 
-- [ ] **TECH-17** — MCP server for current agentic Information Architecture (Markdown sources)
-  - Type: infrastructure / tooling
-  - Files: new project outside `Assets/Scripts/` (MCP server); `.cursor/specs/*.md`, `.cursor/rules/*.mdc`, `AGENTS.md`, `ARCHITECTURE.md` as authoritative on-disk sources
-  - Notes: **Goal:** Expose the **existing** contextual-doc layout (specs hierarchy, `agent-router` task→spec mapping, glossary, invariants in rules, architecture map) through an MCP server so agents can run **low-token, targeted** lookups instead of loading entire files. **Scope:** Implement MCP (Node.js or Python + MCP SDK) with tools that read **Markdown / MDC from the repo** — e.g. `glossary_lookup(term)`, `spec_section(spec, section_or_heading)`, `router_for_task(task_domain)`, `invariants_summary()`, `list_specs()` / `spec_outline(spec)`. **No PostgreSQL** in this issue; no bulk migration of content. **Out of scope:** Full-text search index at DB scale, regenerating `.md` from a database — those belong to **TECH-18** after **TECH-19** exists. **Acceptance:** A Cursor agent can answer "which spec for roads?" and fetch a **single** glossary entry or spec slice via tools without reading whole `isometric-geography-system.md`.
-  - Depends on: none
-  - Implementation specs: `.cursor/projects/TECH-17a.md`, `TECH-17b.md`, `TECH-17c.md`
-
 ## High Priority
 
-- [ ] **BUG-37** — Manual street drawing clears buildings and zones on cells adjacent to the traced path
+- [ ] **BUG-37** — Manual **street** drawing clears **buildings** and **zones** on cells adjacent to the **road stroke**
   - Type: bug
-  - Files: `RoadManager.cs` (`HandleRoadDrawing`, road placement / commit path), `GridManager.cs` (road mode input, any demolish or clear calls near road segments), `TerrainManager.cs` / `TerraformingService.cs` if road placement widens the affected region; `ZoneManager.cs` if zoning is cleared outside road cells
-  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (manual streets; **BUG-25** completed — regression)
-  - Notes: **Observed:** In **road drawing mode**, tracing a street **removes** (or clears) **zoning prefabs**, **zone buildings** (RCI), and **zoning** on cells **adjacent to the route**, not only on the road cells themselves (same report: manual street trace wipes zone visuals and spawned buildings). **Expected:** Only cells that actually receive the road (and any explicitly required footprint for valid placement) should be modified; **neighboring** zoned or built cells should remain unless the design intentionally requires a wider clear (document if so). Likely causes: over-broad dirty rect, neighbor iteration calling `DemolishCellAt` / zone clear, terraform brush larger than 1×1, or preview vs commit mismatch. **Related:** completed **BUG-25** (manual street segment drawing).
-  - Acceptance: Drawing a street through zoned/built area modifies only cells on the road path; adjacent zones, buildings, and prefabs remain intact
+  - Files: `RoadManager.cs` (`HandleRoadDrawing`, **road validation pipeline** / commit path), `GridManager.cs` (road mode input, any demolish or clear calls near **street** segments), `TerrainManager.cs` / `TerraformingService.cs` if the **terraform plan** widens the affected region; `ZoneManager.cs` if **zoning** is cleared outside **street** cells
+  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (manual **streets**; **BUG-25** completed — regression)
+  - Notes: **Observed:** In **street drawing mode**, tracing a **street** **removes** (or clears) **zone** prefabs, **buildings** (**RCI**), and **zoning** on cells **adjacent to the road stroke**, not only on the **street** cells themselves (same report: manual **street** trace wipes **zone** visuals and spawned **buildings**). **Expected:** Only cells that actually receive the **street** (and any explicitly required footprint for valid placement) should be modified; **neighboring** zoned or built cells should remain unless the design intentionally requires a wider clear (document if so). Likely causes: over-broad dirty rect, neighbor iteration calling `DemolishCellAt` / zone clear, **terraform plan** scope larger than 1×1, or preview vs commit mismatch. **Related:** completed **BUG-25** (manual **street** segment drawing).
+  - Acceptance: Drawing a **street** through zoned/built area modifies only cells on the **road stroke**; adjacent **zones**, **buildings**, and prefabs remain intact
   - Depends on: none
 
-- [ ] **BUG-49** — Manual road drawing: preview builds the route cell-by-cell (animated); should show full path at once
+- [ ] **BUG-49** — Manual **street** drawing: preview builds the **road stroke** cell-by-cell (animated); should show full path at once
   - Type: bug (UX / preview)
-  - Files: `RoadManager.cs` (`HandleRoadDrawing`, preview placement / ghost or temp prefab updates per frame), `GridManager.cs` if road mode input drives incremental preview; any coroutine or per-tick preview extension of the traced path
-  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (manual streets — preview behavior)
-  - Notes: **Observed:** While drawing a street, **preview mode** visually **extends the route one cell at a time**, like an animation, instead of updating the full proposed path in one step. **Expected:** **No** step-by-step or staggered preview animation. The game should **compute the full valid path** (same rules as commit / `TryPrepareRoadPlacementPlan` or equivalent) for the current stroke, **then** instantiate or refresh **preview** prefabs for that complete path in a single update — or batch updates without visible per-cell delay. **Related:** **BUG-37** (adjacent clear during trace — ensure preview vs commit paths stay consistent when fixing).
-  - Acceptance: Road preview shows the full computed path in one visual update; no visible cell-by-cell animation during drag
+  - Files: `RoadManager.cs` (`HandleRoadDrawing`, preview placement / ghost or temp prefab updates per frame), `GridManager.cs` if road mode input drives incremental preview; any coroutine or per-tick preview extension of the **road stroke**
+  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (manual **streets** — preview behavior)
+  - Notes: **Observed:** While drawing a **street**, **preview mode** visually **extends the road stroke one cell at a time**, like an animation, instead of updating the full proposed **road stroke** in one step. **Expected:** **No** step-by-step or staggered preview animation. The game should **compute the full valid road stroke** (same rules as commit / **road validation pipeline** / `TryPrepareRoadPlacementPlan` or equivalent) for the current **stroke**, **then** instantiate or refresh **preview** prefabs for that complete **road stroke** in a single update — or batch updates without visible per-cell delay. **Related:** **BUG-37** (adjacent clear during trace — ensure preview vs commit paths stay consistent when fixing).
+  - Acceptance: **Street** preview shows the full computed **road stroke** in one visual update; no visible cell-by-cell animation during drag
   - Depends on: none
 
-- [ ] **BUG-44** — Cliff prefabs: black gaps when a river or lake meets the **east** or **south** map edge
+- [ ] **BUG-44** — **Cliff** prefabs: black gaps when a **water body** (**river** or **lake**) meets the **east** or **south** **map border**
   - Type: bug
-  - Files: `TerrainManager.cs` (`PlaceCliffWalls`, `PlaceCliffWallStack`, map-boundary / max-X / max-Y edge cases vs water cells), `WaterManager.cs` / `WaterMap.cs` if edge water placement interacts with cliff refresh; brown cliff / water-shore prefabs under `Assets/Prefabs/` (per `.cursor/rules/coding-conventions.mdc` for new or adjusted assets)
-  - Spec: `.cursor/specs/isometric-geography-system.md` (map edges, water, cliffs, sorting — sections covering shore/cliff stacks at boundaries)
-  - Notes: **Observed:** Where a **river channel** or **lake** reaches the **east** or **south** boundary of the grid, the **brown vertical cliff** geometry that seals the map edge is **missing or too short** under the water tiles, exposing **black void**; **grass** cells on the same edge still show correct cliff faces. Suggests boundary cliff stacks or prefab variants do not account for **lower water-bed elevation** at those edges. **Expected:** Continuous cliff wall to the same depth as neighboring land cliffs, or dedicated boundary + water prefabs so no holes at east/south × water. **Related:** completed **BUG-42** (virtual foot / edge cliffs — may share root cause with boundary × water placement).
+  - Files: `TerrainManager.cs` (`PlaceCliffWalls`, `PlaceCliffWallStack`, **map border** / max-X / max-Y edge cases vs **open water** cells), `WaterManager.cs` / `WaterMap.cs` if edge water placement interacts with **shore refresh**; **cliff** / **water-shore** prefabs under `Assets/Prefabs/` (per `.cursor/rules/coding-conventions.mdc` for new or adjusted assets)
+  - Spec: `.cursor/specs/isometric-geography-system.md` (**map border**, water, **cliffs**, **sorting order** — sections covering shore/**cliff** stacks at boundaries)
+  - Notes: **Observed:** Where a **river** channel or **lake** reaches the **east** or **south** **map border**, the **cliff** geometry that seals the edge is **missing or too short** under the water tiles, exposing **black void**; **grass cells** on the same **map border** still show correct **cliff** faces. Suggests **map border** **cliff** stacks or prefab variants do not account for **lower river bed** (`H_bed`) elevation at those edges. **Expected:** Continuous **cliff** wall to the same depth as neighboring land **cliffs**, or dedicated **map border** + water prefabs so no holes at east/south × water. **Related:** completed **BUG-42** (virtual foot / edge **cliffs** — may share root cause with **map border** × water placement).
   - Depends on: none
 
 - [ ] **BUG-31** — Wrong prefabs at interstate entry/exit (border)
   - Type: fix
   - Files: `RoadPrefabResolver.cs`, `RoadManager.cs`
-  - Notes: Road must be able to enter/exit at border in any direction. Incorrect prefab selection at entry/exit cells. Isolated from BUG-30 for separate work.
+  - Notes: **Interstate** must be able to enter/exit at **map border** in any direction. Incorrect prefab selection at entry/exit cells. Isolated from BUG-30 for separate work.
 
-- [ ] **BUG-28** — Sorting order between slope cell and interstate cell
+- [ ] **BUG-28** — **Sorting order** between **slope** cell and **interstate** cell
   - Type: fix
-  - Files: `GridManager.cs` (Sorting Order region), `TerrainManager.cs`, `RoadManager.cs`
-  - Notes: Slope cells and interstate road cells render in wrong order; one draws over the other incorrectly.
+  - Files: `GridManager.cs` (**Sorting order** region), `TerrainManager.cs`, `RoadManager.cs`
+  - Notes: **Slope** cells and **interstate** cells render in wrong **sorting order**; one draws over the other incorrectly.
 
-- [ ] **BUG-20** — Power plant (and 3x3/2x2 buildings) load incorrectly in LoadGame: end up under grass
+- [ ] **BUG-20** — **Utility buildings** (power plant, 3×3/2×2 multi-cell **buildings**) load incorrectly in LoadGame: end up under **grass cells** (**visual restore**)
   - Type: fix
   - Files: `GeographyManager.cs` (GetMultiCellBuildingMaxSortingOrder, ReCalculateSortingOrderBasedOnHeight), `BuildingPlacementService.cs` (LoadBuildingTile, RestoreBuildingTile), `GridManager.cs` (RestoreGridCellVisuals)
-  - Notes: Overlaps **BUG-35** (completed 2026-03-22): flat grass removed with buildings on load. **BUG-34** addressed general load/building sort. Re-verify in Unity after **BUG-35** closure; close if power plants / multi-cell utilities sort correctly.
+  - Notes: Overlaps **BUG-35** (completed 2026-03-22): flat **grass** removed with **buildings** on load. **BUG-34** addressed general load/**building** **sorting order**. Re-verify in Unity after **BUG-35** closure; close if power plants / multi-cell **utility buildings** sort correctly.
 
   - [ ] **TECH-01** — Extract responsibilities from large files (focus: **GridManager** decomposition next)
   - Type: refactor
@@ -77,97 +70,97 @@
   - Notes: When scrolling over the Load Game save list, the mouse wheel scrolls the list AND zooms the camera. The scroll should only move the list up/down, not affect camera zoom or other game mechanisms that use the scroll wheel.
   - Proposed solution: In `CameraController.HandleScrollZoom()`, check `EventSystem.current.IsPointerOverGameObject()` before processing scroll. If the pointer is over UI (e.g. Load Game panel, Building Selector, any scrollable popup), skip the zoom logic and let the UI consume the scroll. This mirrors how `GridManager` already gates mouse clicks via `IsPointerOverGameObject()`. Requires `using UnityEngine.EventSystems`. Verify that the Load Game ScrollRect (Scroll View) has proper raycast target so `IsPointerOverGameObject()` returns true when hovering over it.
 
-- [ ] **BUG-16** — Possible race condition in GeographyManager vs TimeManager initialization
+- [ ] **BUG-16** — Possible race condition in GeographyManager vs TimeManager initialization (**geography initialization**)
   - Type: fix
   - Files: `GeographyManager.cs`, `TimeManager.cs`, `GridManager.cs`
-  - Notes: Unity does not guarantee Start() order. If TimeManager.Update() runs before GeographyManager creates the grid, it may access non-existent data. Use Script Execution Order or gate with `isInitialized`.
+  - Notes: Unity does not guarantee Start() order. If TimeManager.Update() runs before GeographyManager completes **geography initialization**, it may access non-existent data. Use Script Execution Order or gate with `isInitialized`.
 
 - [ ] **BUG-17** — `cachedCamera` is null when creating `ChunkCullingSystem`
   - Type: fix
   - Files: `GridManager.cs`
   - Notes: In InitializeGrid() ChunkCullingSystem is created with `cachedCamera`, but it is only assigned in Update(). May cause NullReferenceException.
 
-- [ ] **BUG-48** — Minimap stays stale until toggling a layer (e.g. data-visualization / desirability / centroid)
+- [ ] **BUG-48** — Minimap stays stale until toggling a layer (e.g. data-visualization / **desirability** / **urban centroid**)
   - Type: bug
-  - Files: `MiniMapController.cs` (`RebuildTexture`, `Update`; layer toggles call `RebuildTexture` but nothing runs on simulation time), `TimeManager.cs` / `SimulationManager.cs` if wiring refresh to the simulation tick or a shared event
-  - Notes: **Observed:** The procedural minimap **does not refresh** as the city changes unless the player **toggles a minimap layer** (or other actions that call `RebuildTexture`, such as opening the panel). **Expected:** The minimap should track **zones, roads, water, forests**, etc. **without** requiring layer toggles. **Implementation:** Rebuild at least **once per simulation tick** while the minimap is visible, **or** a **performance-balanced** approach (throttled full rebuild, dirty rect / incremental update, or event-driven refresh when grid/zone/road/water data changes) — profile full `RebuildTexture` cost first. Class summary in code states rebuilds on geography completion, grid restore, panel open, and layer changes **not** on a fixed timer — that gap is this bug. **Related:** completed **BUG-32** (water on minimap); **FEAT-42** (optional height layer).
+  - Files: `MiniMapController.cs` (`RebuildTexture`, `Update`; layer toggles call `RebuildTexture` but nothing runs on **simulation tick**), `TimeManager.cs` / `SimulationManager.cs` if wiring refresh to the **simulation tick** or a shared event
+  - Notes: **Observed:** The procedural minimap **does not refresh** as the city changes unless the player **toggles a minimap layer** (or other actions that call `RebuildTexture`, such as opening the panel). **Expected:** The minimap should track **zones**, **streets**, **open water**, **forests**, etc. **without** requiring layer toggles. **Implementation:** Rebuild at least **once per simulation tick** while the minimap is visible, **or** a **performance-balanced** approach (throttled full rebuild, dirty rect / incremental update, or event-driven refresh when grid/**zone**/**street**/**water body** data changes) — profile full `RebuildTexture` cost first. Class summary in code states rebuilds on **geography initialization** completion, grid restore, panel open, and layer changes **not** on a fixed timer — that gap is this bug. **Related:** completed **BUG-32** (water on minimap); **FEAT-42** (optional **HeightMap** layer).
   - Depends on: none
 
 - [ ] **FEAT-21** — Expenses and maintenance system
   - Type: feature
   - Files: `EconomyManager.cs`, `CityStats.cs`
-  - Notes: No expenses: no street maintenance, no service costs, no salaries. Without expenses there is no economic tension. Add upkeep for streets, public buildings and services.
+  - Notes: No expenses: no **street** maintenance, no service costs, no salaries. Without expenses there is no economic tension. Add upkeep for **streets**, **utility buildings**, and services.
 
-- [ ] **FEAT-22** — Tax feedback on demand and happiness
+- [ ] **FEAT-22** — **Tax base** feedback on **demand (R / C / I)** and happiness
   - Type: feature
   - Files: `EconomyManager.cs`, `DemandManager.cs`, `CityStats.cs`
-  - Notes: High taxes do not affect demand or happiness. Loop: high taxes → less residential demand → less growth → less income.
+  - Notes: High taxes do not affect **demand (R / C / I)** or happiness. Loop: high taxes → less residential **demand** → less growth → less income.
   - Depends on: BUG-02
 
 - [ ] **FEAT-23** — Dynamic happiness based on city conditions
   - Type: feature
   - Files: `CityStats.cs`, `DemandManager.cs`, `EmploymentManager.cs`
-  - Notes: Happiness only increases when placing zones (+100 per building). No effect from unemployment, taxes, services or pollution. Should be continuous multi-factor calculation with decay.
+  - Notes: Happiness only increases when placing **zones** (+100 per **building**). No effect from unemployment, **tax base**, services or pollution. Should be continuous multi-factor calculation with decay.
   - Depends on: BUG-12
 
-- [ ] **FEAT-36** — Expand auto-zoning and auto-road candidates to include forests and slopes
+- [ ] **FEAT-36** — Expand **AUTO** zoning and **AUTO** road candidates to include **forests** and cells meeting **land slope eligibility**
   - Type: feature
   - Files: `GridManager.cs`, `AutoZoningManager.cs`, `AutoRoadBuilder.cs`
-  - Notes: Treat Grass, Forest, and N-S/E-W slopes as valid candidates for zoning and road expansion. Capture any design notes in this issue or in `.cursor/specs/isometric-geography-system.md` if rules become stable.
+  - Notes: Treat **grass cells**, **forest (coverage)** cells, and cardinal-ramp **slopes** (per **land slope eligibility**) as valid candidates for **AUTO** zoning and **AUTO** road expansion. Capture any design notes in this issue or in `.cursor/specs/isometric-geography-system.md` if rules become stable.
 
-- [ ] **FEAT-43** — Urban rings: tune AUTO road/zoning weights for a gradual center → edge gradient
+- [ ] **FEAT-43** — **Urban growth rings**: tune **AUTO** road/zoning weights for a gradual center → edge gradient
   - Type: feature (simulation / balance)
-  - Files: `UrbanCentroidService.cs` (ring boundaries, centroid distance), `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `SimulationManager.cs` (`ProcessSimulationTick` order), `GrowthBudgetManager.cs` if per-ring budgets apply; `GridManager.cs` / `DemandManager.cs` only if desirability or placement must align with rings
-  - Notes: **Observed:** In **AUTO** simulation, cities tend toward a **dense core**, **under-developed middle rings**, and **outer rings that are more zoned than the middle** — not a smooth radial gradient. **Expected:** Development should fall off **gradually from the urban center**: **highest** street density and zoning pressure **near the centroid**, **moderate** in **mid** rings, and **lowest** in **outer** rings. Revisit ring radii/thresholds, per-ring weights for road growth vs zoning, and any caps or priorities that invert mid vs outer activity. **Related:** completed **FEAT-32** (streets/intersections by area), **FEAT-29** (density gradient around centroids), **FEAT-31** (roads toward desirability); completed **BUG-47** (2026-04-01, AUTO perpendicular stubs and junction refresh).
+  - Files: `UrbanCentroidService.cs` (**growth ring** boundaries, **urban centroid** distance), `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `SimulationManager.cs` (`ProcessSimulationTick` order), `GrowthBudgetManager.cs` if per-ring **growth budgets** apply; `GridManager.cs` / `DemandManager.cs` only if **desirability** or placement must align with **growth rings**
+  - Notes: **Observed:** In **AUTO** simulation, cities tend toward a **dense core**, **under-developed middle growth rings**, and **outer rings that are more zoned than the middle** — not a smooth radial gradient. **Expected:** Development should fall off **gradually from the urban centroid**: **highest** **street** density and **AUTO** zoning pressure **near the centroid**, **moderate** in **mid growth rings**, and **lowest** in **outer growth rings**. Revisit **growth ring** radii/thresholds, per-ring weights for **AUTO** road growth vs zoning, and any caps or priorities that invert mid vs outer activity. **Related:** completed **FEAT-32** (**streets**/intersections by area), **FEAT-29** (**zone density** gradient around **urban centroids**), **FEAT-31** (roads toward **desirability**); completed **BUG-47** (2026-04-01, **AUTO** perpendicular stubs and junction refresh).
   - Depends on: none
 
 - [ ] **FEAT-35** — Area demolition tool (bulldozer drag-to-select)
   - Type: feature
   - Files: `GridManager.cs`, `UIManager.cs`, `CursorManager.cs`
-  - Notes: Manual tool to demolish all buildings and zoning in a rectangular area at once. Use the same area selection mechanism as zoning: hold mouse button, drag to define rectangle, release to demolish. Reuse zoning's start/end position logic (zoningStartGridPosition, zoningEndGridPosition pattern). Demolish each cell in the selected area via DemolishCellAt. Interstate Highway cells must remain non-demolishable. Consider preview overlay (e.g. red tint) during drag.
+  - Notes: Manual tool to demolish all **buildings** and **zoning** in a rectangular area at once. Use the same area selection mechanism as **zoning**: hold mouse button, drag to define rectangle, release to demolish. Reuse **zoning**'s start/end position logic (zoningStartGridPosition, zoningEndGridPosition pattern). Demolish each **cell** in the selected area via DemolishCellAt. **Interstate** cells must remain non-demolishable. Consider preview overlay (e.g. red tint) during drag.
 
-- [ ] **FEAT-03** — Forest mode hold-to-place
+- [ ] **FEAT-03** — **Forest (coverage)** mode hold-to-place
   - Type: feature
   - Files: `ForestManager.cs`, `GridManager.cs`
-  - Notes: Currently requires click per cell. Allow continuous drag.
+  - Notes: Currently requires click per **cell**. Allow continuous drag.
 
-- [ ] **FEAT-04** — Random forest spray tool
+- [ ] **FEAT-04** — Random **forest (coverage)** spray tool
   - Type: feature
   - Files: `ForestManager.cs`, `GridManager.cs`, `CursorManager.cs`
-  - Notes: Place forest in area with random spray/brush distribution.
+  - Notes: Place **forest (coverage)** in area with random spray/brush distribution.
 
-- [ ] **FEAT-06** — Forest that grows over time: sparse → medium → dense
+- [ ] **FEAT-06** — **Forest (coverage)** that grows over **simulation ticks**: sparse → medium → dense
   - Type: feature
   - Files: `ForestManager.cs`, `ForestMap.cs`, `SimulationManager.cs`
-  - Notes: Forest maturation system over simulation time.
+  - Notes: **Forest (coverage)** maturation system over **simulation ticks**.
 
-- [ ] **FEAT-08** — Property value simulation, respawning and evolution to larger buildings
+- [ ] **FEAT-08** — **Zone density** and **desirability** simulation: evolution to larger **buildings**
   - Type: feature
   - Files: `GrowthManager.cs`, `ZoneManager.cs`, `DemandManager.cs`, `CityStats.cs`
-  - Notes: Existing buildings evolve to larger versions based on zone property value.
+  - Notes: Existing **buildings** evolve to larger versions based on **zone density** and **desirability**.
 
-- [ ] **TECH-15** — New Game / geography initialization performance (generation pipeline)
+- [ ] **TECH-15** — New Game / **geography initialization** performance
   - Type: performance / optimization
   - Files: `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `GridManager.cs`, `InterstateManager.cs`, `ForestManager.cs`, `RegionalMapManager.cs`, `ProceduralRiverGenerator.cs` (as applicable)
-  - Notes: Reduce wall-clock time and frame spikes when starting a **New Game**: height map, lakes, procedural rivers (**FEAT-38**), interstate, forests, border signs, sorting passes, etc. Profile the pipeline; consider batched or deferred work across frames, fewer redundant passes, algorithmic improvements, and deferring non-critical visuals until after the map is interactive. **Related:** **FEAT-37c** optimizes **Load Game** (no regen) — this issue targets **generation** cost only.
+  - Notes: Reduce wall-clock time and frame spikes when starting a **New Game** (**geography initialization**): **HeightMap**, lakes, procedural **rivers** (**FEAT-38**), **interstate**, **forests**, **map border** signs, **sorting order** passes, etc. Profile the pipeline; consider batched or deferred work across frames, fewer redundant passes, algorithmic improvements, and deferring non-critical visuals until after the map is interactive. **Related:** **FEAT-37c** optimizes **Load Game** (no regen) — this issue targets **geography initialization** cost only.
 
-- [ ] **TECH-16** — Simulation performance v2 (per-tick AUTO pipeline)
+- [ ] **TECH-16** — **Simulation tick** performance v2 (per-tick **AUTO systems** pipeline)
   - Type: performance / optimization
   - Files: `SimulationManager.cs`, `TimeManager.cs`, `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `AutoResourcePlanner.cs`, `UrbanCentroidService.cs`, `GrowthBudgetManager.cs`, `DemandManager.cs`, `CityStats.cs` (as applicable)
-  - Notes: Second-pass optimization of the simulation tick after early **Simulation optimization** work (completed). Profile `ProcessSimulationTick` and callees; reduce redundant work, hot-path cost, spatial queries, and per-tick allocations; preserve gameplay unless changes are explicitly agreed. **Related:** **BUG-14** (per-frame UI `FindObjectOfType`); **TECH-01** (manager decomposition may help profiling and hotspots).
+  - Notes: Second-pass optimization of the **simulation tick** after early **Simulation optimization** work (completed). Profile `ProcessSimulationTick` and callees (**tick execution order**); reduce redundant work, hot-path cost, spatial queries, and per-tick allocations; preserve gameplay unless changes are explicitly agreed. **Related:** **BUG-14** (per-frame UI `FindObjectOfType`); **TECH-01** (manager decomposition may help profiling and hotspots).
 
 
 ## Code Health (technical debt)
 
-- [ ] **TECH-13** — Remove obsolete **UrbanizationProposal** system (dead code, UI, models)
+- [ ] **TECH-13** — Remove obsolete **urbanization proposal** system (dead code, UI, models)
   - Type: refactor (cleanup)
-  - Files: `UrbanizationProposalManager.cs`, `ProposalUIController.cs`, `UrbanizationProposal.cs` (and related), `SimulationManager.cs`, `UIManager.cs`, scene references, save data if any
-  - Notes: The **urban expansion proposal** feature is **obsolete** and intentionally **disabled**; the game is stable without it. **Keep** `UrbanizationProposalManager` disconnected from the simulation — do **not** re-enable proposals. **Keep** `UrbanCentroidService` / urban **rings** for AUTO roads and zoning (FEAT-32). This issue tracks **full removal** of proposal-specific code and UI after a safe audit (no save-game breakage). Supersedes former **BUG-15** / **BUG-13**.
+  - Files: `UrbanizationProposalManager.cs`, `ProposalUIController.cs`, `UrbanizationProposal.cs` (and related), `SimulationManager.cs`, `UIManager.cs`, scene references, **save data** if any
+  - Notes: The **urbanization proposal** feature is **obsolete** and intentionally **disabled**; the game is stable without it. **Keep** `UrbanizationProposalManager` disconnected from the simulation — do **not** re-enable proposals. **Keep** `UrbanCentroidService` / **urban growth rings** for **AUTO** roads and zoning (FEAT-32). This issue tracks **full removal** of proposal-specific code and UI after a safe audit (no **save data** breakage). Supersedes former **BUG-15** / **BUG-13**.
 
 - [ ] **TECH-04** — Remove direct access to `gridArray`/`cellArray` outside GridManager
   - Type: refactor
   - Files: `WaterManager.cs`, `GridSortingOrderService.cs`, `GeographyManager.cs`, `BuildingPlacementService.cs`
-  - Notes: Project rule: use `GetCell(x, y)` instead of direct array access. Several classes violate this. Risk of subtle bugs when grid changes.
+  - Notes: Project rule: use `GetCell(x, y)` instead of direct array access to the **cell** grid. Several classes violate this. Risk of subtle bugs when grid or **HeightMap** changes.
 
 - [ ] **TECH-02** — Change public fields to `[SerializeField] private` in managers
   - Type: refactor
@@ -177,7 +170,7 @@
 - [ ] **TECH-03** — Extract magic numbers to constants or ScriptableObjects
   - Type: refactor
   - Files: multiple (GridManager, CityStats, RoadManager, UIManager, TimeManager, TerrainManager, WaterManager, EconomyManager, ForestManager, InterstateManager, etc.)
-  - Notes: Building costs, economic balance, generation parameters, sorting order offsets, initial dates, probabilities — all hardcoded. Extract to named constants or configuration ScriptableObject for easier tuning.
+  - Notes: **Building** costs, economic balance, **height generation** parameters, **sorting order** offsets (**type offsets**, **DEPTH_MULTIPLIER**, **HEIGHT_MULTIPLIER**), **pathfinding cost model** weights, initial dates, probabilities — all hardcoded. Extract to named constants or configuration ScriptableObject for easier tuning.
 
 - [ ] **TECH-05** — Extract duplicated dependency resolution pattern
   - Type: refactor
@@ -188,29 +181,29 @@
   - Type: refactor (UI/UX)
   - Files: `MainScene.unity` (`ControlPanel` hierarchy, RectTransform anchors, `LayoutGroup` / `ContentSizeFitter` as needed), `UIManager.cs` (only if toolbar/submenu positioning or references must follow the new dock), `UnitControllers/*SelectorButton.cs` (only if button wiring or parent references break after reparenting)
   - Spec sections: `.cursor/specs/ui-design-system.md` — **§3.3** (toolbar), **§1.3** (anchors/margins), **§4.3** (Canvas Scaler) as applicable.
-  - Notes: Replace the bottom-centered horizontal **ribbon** with a **left-docked vertical** panel. Structure: **one row per category** (demolition, RCI zoning, utilities, roads, environment/forests, etc.), with **buttons laid out horizontally within each row** (e.g. `VerticalLayoutGroup` of rows, each row `HorizontalLayoutGroup`, or equivalent manual layout). Re-anchor dependent UI (e.g. zoning density / tool option overlays) so they align to the new sidebar instead of the old bottom bar. Verify safe area and Canvas Scaler at reference resolutions; avoid overlapping the mini-map and debug readouts. Document final hierarchy in `docs/ui-design-system-context.md`. Link program charter: `docs/ui-design-system-project.md` (Backlog bridge). Spec/docs ticketed and cross-linked in **TECH-08** (completed).
+  - Notes: Replace the bottom-centered horizontal **ribbon** with a **left-docked vertical** panel. Structure: **one row per category** (demolition, **RCI** **zoning**, **utility buildings**, **streets**, environment/**forests**, etc.), with **buttons laid out horizontally within each row** (e.g. `VerticalLayoutGroup` of rows, each row `HorizontalLayoutGroup`, or equivalent manual layout). Re-anchor dependent UI (e.g. **zone density** / tool option overlays) so they align to the new sidebar instead of the old bottom bar. Verify safe area and Canvas Scaler at reference resolutions; avoid overlapping the mini-map and debug readouts. Document final hierarchy in `docs/ui-design-system-context.md`. Link program charter: `docs/ui-design-system-project.md` (Backlog bridge). Spec/docs ticketed and cross-linked in **TECH-08** (completed).
 
 ## Low Priority
 
 - [ ] **FEAT-09** — Trade / Production / Salaries
   - Type: feature (new system)
   - Files: `EconomyManager.cs`, `CityStats.cs` (+ new managers)
-  - Notes: Economic system of production, trade between zones and salaries.
+  - Notes: Economic system of production, trade between **RCI** **zones** and salaries.
 
-- [ ] **FEAT-18** — Terrain generator (improved)
+- [ ] **FEAT-18** — **Height generation** (improved terrain generator)
   - Type: feature
   - Files: `TerrainManager.cs`, `GeographyManager.cs`, `HeightMap.cs`
-  - Notes: Terrain generator with more control and variety.
+  - Notes: Improved **height generation** with more control and variety over the **HeightMap**.
 
-- [ ] **FEAT-10** — Regional contribution: monthly bonus for belonging to the state
+- [ ] **FEAT-10** — **Regional map** contribution: monthly bonus for belonging to the region
   - Type: feature
   - Files: `EconomyManager.cs`, `CityStats.cs`, `RegionalMapManager.cs`
-  - Notes: Additional monthly income for belonging to regional network.
+  - Notes: Additional monthly income for belonging to the **regional map** network.
 
 - [ ] **FEAT-19** — Map rotation / prefabs
   - Type: feature
   - Files: `CameraController.cs`, `GridManager.cs`, all rendering managers
-  - Notes: Isometric view rotation. High impact on sorting order and rendering.
+  - Notes: Isometric view rotation. High impact on **sorting order** (**sorting formula**, **cliff face visibility**) and rendering.
 
 - [ ] **TECH-14** — Remove residual placeholder / test scripts
   - Type: refactor (cleanup)
@@ -220,7 +213,7 @@
 - [ ] **FEAT-11** — Education level / Schools
   - Type: feature (new system)
   - Files: new managers + `CityStats.cs`, `DemandManager.cs`
-  - Notes: Education system affecting demand and growth.
+  - Notes: Education system affecting **demand (R / C / I)** and growth.
 
 - [ ] **FEAT-12** — Security / Order / Police
   - Type: feature (new system)
@@ -235,52 +228,52 @@
 - [ ] **FEAT-14** — Vehicle traffic system / traffic animations
   - Type: feature (new system)
   - Files: new manager + `RoadManager.cs`, `GridManager.cs`
-  - Notes: Vehicles circulating on streets.
+  - Notes: Vehicles circulating on **streets** and **interstate**.
 
 - [ ] **FEAT-15** — Port system / cargo ship animations
   - Type: feature (new system)
   - Files: new manager + `WaterManager.cs`
-  - Notes: Requires water system with defined sea (depends on BUG-08).
+  - Notes: Requires **water body** system with defined **sea** (**water body kind**). Depends on BUG-08.
 
 - [ ] **FEAT-16** — Train system / train animations
   - Type: feature (new system)
   - Files: new manager + `GridManager.cs`
   - Notes: Railway network and animations.
 
-- [ ] **FEAT-39** — Sea / coast: edge region, infinite reservoir, tide direction (data)
+- [ ] **FEAT-39** — Sea / **shore band**: **map border** region, infinite reservoir, tide direction (data)
   - Type: feature
   - Files: `WaterManager.cs`, `WaterMap.cs`, `TerrainManager.cs`, `GeographyManager.cs`
-  - Notes: Coordinate with **FEAT-15** (ports). Depends on **FEAT-37c**.
+  - Notes: Define **sea** as a **water body kind** at the **map border** with **surface height (S)** and **shore band** rules. Coordinate with **FEAT-15** (ports). Depends on **FEAT-37c**.
 
 - [ ] **FEAT-40** — Water sources & drainage (snowmelt, rain, overflow) — simulation
   - Type: feature
   - Files: new helpers + `WaterMap.cs`, `WaterManager.cs`, `SimulationManager.cs`
-  - Notes: Not full fluid simulation; data-driven flow. Depends on **FEAT-37c** and possibly **FEAT-38**.
+  - Notes: Not full fluid simulation; data-driven flow affecting **water bodies**, **surface height (S)**, and **depression-fill** dynamics. Depends on **FEAT-37c** and possibly **FEAT-38**.
 
-- [ ] **FEAT-41** — Water terrain tools (manual paint/modify, AUTO terraform) — extended
+- [ ] **FEAT-41** — **Water body** terrain tools (manual paint/modify, **AUTO** terraform) — extended
   - Type: feature
   - Files: `GridManager.cs`, `WaterManager.cs`, `UIManager.cs`, `TerraformingService.cs` (as needed)
-  - Notes: Beyond legacy paint-at-sea-level. Depends on **FEAT-37c**.
+  - Notes: Beyond legacy paint-at-**sea level**. Tools to create/modify **water bodies** with proper **surface height (S)**, **shore band**, and **water map** registration. Depends on **FEAT-37c**.
 
-- [ ] **FEAT-42** — Minimap: optional height / relief shading layer
+- [ ] **FEAT-42** — Minimap: optional **HeightMap** / relief shading layer
   - Type: feature (UI)
   - Files: `MiniMapController.cs`, `HeightMap` / `GridManager` read access as needed
-  - Notes: Visualize terrain elevation on the minimap (distinct from zones/roads/water layers). Does not replace logical water/zone data; base layer reliability stays in **FEAT-37a** / **FEAT-30** scope.
+  - Notes: Visualize terrain elevation (**HeightMap**) on the minimap (distinct from **zones**/**streets**/**open water** layers). Does not replace logical **water map** / **zone** data; base layer reliability stays in **FEAT-37a** / **FEAT-30** scope.
   - Depends on: none (can follow **FEAT-37a** polish)
 
-- [ ] **ART-01** — Missing prefabs: forests on SE, NE, SW, NW slopes
+- [ ] **ART-01** — Missing prefabs: **forest (coverage)** on SE, NE, SW, NW **slope types**
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ForestManager.cs`
 
-- [ ] **ART-02** — Missing prefabs: residential (2 heavy 1x1/2x2, light 2x2, medium 1x1)
+- [ ] **ART-02** — Missing prefabs: residential **buildings** (2 heavy 1×1/2×2, light 2×2, medium 1×1 per **zone density**)
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-- [ ] **ART-03** — Missing prefabs: commercial (2 heavy 2x2/1x1, light 2x2, medium 2x2)
+- [ ] **ART-03** — Missing prefabs: commercial **buildings** (2 heavy 2×2/1×1, light 2×2, medium 2×2 per **zone density**)
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-- [ ] **ART-04** — Missing prefabs: industrial (2 heavy 2x2/1x1, light 1x1, 2 medium 1x1/2x2)
+- [ ] **ART-04** — Missing prefabs: industrial **buildings** (2 heavy 2×2/1×1, light 1×1, 2 medium 1×1/2×2 per **zone density**)
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
@@ -302,14 +295,20 @@
   - Notes: **Goal:** Give agents a **first-party** reference for **Unity concepts that routinely come up in this codebase** (e.g. MonoBehaviour lifecycle, `SerializeField` / Inspector wiring, scenes & prefabs, 2D sorting layers vs `sortingOrder`, `ScriptableObject` when used, `FindObjectOfType` policy here, execution order pitfalls, common Unity patterns **as constrained by this project** — not a full Unity manual). **Policy:** Agents should **default to this spec + existing `.cursor/` docs** for Unity API and workflow questions and **avoid opening general web/docs searches** unless the task **requires** version-specific behavior, undocumented APIs, or verification outside what the repo states. **Scope:** Curated sections, stable anchors, and links to **in-repo** examples (file/class references) where helpful. **Out of scope:** Duplicating Microsoft/Unity manual pages verbatim; replacing official docs when the user explicitly asks for external authority. **Acceptance:** `agent-router` lists when to read this spec; a new contributor agent can implement a typical Inspector + manager change using only repo context for Unity basics. **Related:** **TECH-17** (MCP can later expose this document like other specs).
   - Depends on: none
 
-- [ ] **AUDIO-01** — Audio FX: demolition, placement, zoning, forest, 3 music themes, ambient effects
+- [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects
   - Type: audio/feature
   - Files: new AudioManager + audio assets
-  - Notes: Ambient effects must vary by camera position and height over the map.
+  - Notes: Ambient effects must vary by camera position and **height** (**HeightMap**) over the map.
 
 ---
 
 ## Completed (last 30 days)
+
+- [x] **TECH-17** — MCP server for agentic Information Architecture (Markdown sources) (2026-04-02)
+  - Type: infrastructure / tooling
+  - Files: `tools/mcp-ia-server/`; `.cursor/mcp.json`; `.cursor/specs/*.md`, `.cursor/rules/*.mdc`, `AGENTS.md`, `ARCHITECTURE.md` as sources; `docs/mcp-ia-server.md`; docs updates in `AGENTS.md`, `ARCHITECTURE.md`, `.cursor/rules/project-overview.mdc`, `agent-router.mdc` (MCP subsection)
+  - Notes: **Shipped:** Node + `@modelcontextprotocol/sdk` stdio server with tools including `list_specs`, `spec_outline`, `spec_section`, `glossary_lookup`, `router_for_task`, `invariants_summary`, `list_rules`, `rule_content`, `backlog_issue` (BACKLOG.md by id); spec aliases; fuzzy glossary/section fallbacks; parse cache; stderr timing; `node:test` + c8 coverage on `src/parser/**`; `npm run verify`. **Reference:** `docs/mcp-ia-server.md`, `tools/mcp-ia-server/README.md`. Implementation notes: `.cursor/projects/TECH-17a.md`, `TECH-17b.md`, `TECH-17c.md` (may be removed after any final migration).
+  - Depends on: none
 
 - [x] **BUG-51** — Diagonal / corner-up land slopes vs roads: design closure (2026-04-01)
   - Type: bug (closed by policy + implementation, not by fixing prefab-on-diagonal art)
