@@ -1,0 +1,31 @@
+---
+description: System invariants and guardrails — never violate
+alwaysApply: true
+---
+
+# System Invariants (NEVER violate)
+
+1. `HeightMap[x,y]` == `Cell.height` — always in sync; update both on every write
+2. After road modification → call `InvalidateRoadCache()`
+3. No `FindObjectOfType` in `Update` or per-frame loops — cache in `Awake`/`Start`
+4. No new singletons — use Inspector + `FindObjectOfType` pattern
+5. No direct `gridArray`/`cellArray` access outside `GridManager` — use `GetCell(x, y)`
+6. Do not add responsibilities to `GridManager` — extract to helper classes
+7. Shore band: land Moore-adjacent to water must have `height ≤ min(S)` of neighbor water cells
+8. Rivers: `H_bed` monotonically non-increasing toward exit
+9. Cliff visible faces: south + east only — N/W not instantiated
+10. Road placement: always through the **road preparation family** ending in `PathTerraformPlan` + Phase-1 + `Apply` — never `ComputePathPlan` alone
+11. `UrbanizationProposal`: NEVER re-enable — obsolete (TECH-13)
+12. Specs under `.cursor/specs/` for permanent domains only; use `.cursor/projects/` for issue-specific specs
+
+# Guardrails (IF → THEN)
+
+- IF adding a manager reference → THEN `[SerializeField] private` + `FindObjectOfType` fallback in `Awake`
+- IF modifying roads → THEN call `InvalidateRoadCache()` after changes
+- IF placing a road → THEN use the preparation family, NOT `ComputePathPlan` alone
+- IF touching `GridManager` → THEN extract new logic to a helper class
+- IF creating a new manager → THEN MonoBehaviour scene component, never `new`
+- IF modifying `HeightMap` → THEN also write `Cell.height` (and vice versa)
+- IF placing or removing water → THEN call `RefreshShoreTerrainAfterWaterUpdate`
+- IF closing a project spec → THEN migrate lessons learned to canonical docs before deleting
+- IF creating a project spec → THEN use `.cursor/templates/project-spec-template.md`, name `{ISSUE_ID}.md` under `.cursor/projects/`

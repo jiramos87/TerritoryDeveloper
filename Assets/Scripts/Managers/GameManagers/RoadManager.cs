@@ -7,6 +7,7 @@ using Territory.Terrain;
 using Territory.Economy;
 using Territory.UI;
 using Territory.Zones;
+using Territory.Utilities;
 
 namespace Territory.Roads
 {
@@ -295,6 +296,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
         int nRaw = pathRaw.Count;
         int startKRaw = Mathf.Min(nRaw, longestPrefixLengthHint > 0 ? longestPrefixLengthHint + 1 : nRaw);
 
+        bool hasSlopeEligibleRawPrefix = terrainManager != null
+            && RoadStrokeTerrainRules.TruncatePathAtFirstDisallowedLandSlope(pathRaw, terrainManager).Count > 0;
+
         for (int kRaw = startKRaw; kRaw >= 1; kRaw--)
         {
             List<Vector2> rawPrefix = SubListCopy(pathRaw, kRaw);
@@ -318,7 +322,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         }
 
         longestPrefixLengthHint = 0;
-        if (postUserWarnings && GameNotificationManager.Instance != null)
+        if (postUserWarnings && hasSlopeEligibleRawPrefix && GameNotificationManager.Instance != null)
             GameNotificationManager.Instance.PostWarning("Road cannot extend further along this path. Terrain would exceed allowed height change.");
         return false;
     }
@@ -535,18 +539,22 @@ public class RoadManager : MonoBehaviour, IRoadManager
         if (heightMap == null)
             return false;
 
-        if (!IsPathFullyAdjacent(adjacentPath))
-            return false;
-        if (!IsBridgePathValid(adjacentPath, heightMap))
-            return false;
-        if (!ValidateFeat44WaterBridgeRules(adjacentPath, heightMap, postUserWarnings: false))
-            return false;
-        if (HasTurnOnWaterOrCoast(adjacentPath, heightMap))
-            return false;
-        if (HasElbowTooCloseToWater(adjacentPath, heightMap, relaxElbowNearWaterForWaterBridge: !ctx.forbidCutThrough))
+        List<Vector2> pathForPlan = RoadStrokeTerrainRules.TruncatePathAtFirstDisallowedLandSlope(adjacentPath, terrainManager);
+        if (pathForPlan == null || pathForPlan.Count < 2)
             return false;
 
-        expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(adjacentPath);
+        if (!IsPathFullyAdjacent(pathForPlan))
+            return false;
+        if (!IsBridgePathValid(pathForPlan, heightMap))
+            return false;
+        if (!ValidateFeat44WaterBridgeRules(pathForPlan, heightMap, postUserWarnings: false))
+            return false;
+        if (HasTurnOnWaterOrCoast(pathForPlan, heightMap))
+            return false;
+        if (HasElbowTooCloseToWater(pathForPlan, heightMap, relaxElbowNearWaterForWaterBridge: !ctx.forbidCutThrough))
+            return false;
+
+        expandedPath = TerraformingService.ExpandDiagonalStepsToCardinal(pathForPlan);
         if (!terraformingService.TryBuildDeckSpanOnlyWaterBridgePlan(expandedPath, out plan))
             return false;
         if (!ValidateTerraformPlanWithContext(plan, ctx))
@@ -670,6 +678,13 @@ public class RoadManager : MonoBehaviour, IRoadManager
         }
         if (list.Count == 0)
             return false;
+
+        list = RoadStrokeTerrainRules.TruncatePathAtFirstDisallowedLandSlope(list, terrainManager);
+        if (list.Count == 0)
+        {
+            filteredPath = null;
+            return false;
+        }
 
         if (!IsPathFullyAdjacent(list))
         {
@@ -938,9 +953,181 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Picks a road neighbor to use as "previous" cell for prefab resolution. Deterministic when several roads touch (straight-through vs crossing).
+    /// After batch placement via <see cref="PlaceRoadTileFromResolved"/> (AUTO / programmatic), re-resolves each unique affected road cell once:
+    /// every newly placed cell plus cardinal road neighbors. Skips bridge deck tiles (FEAT-44). Deduplicates for performance.
     /// </summary>
-    Vector2 PickPrevGridPosForRoadRefresh(Vector2 gridPos)
+    public void RefreshRoadPrefabsAfterBatchPlacement(IReadOnlyList<Vector2Int> newlyPlacedRoadCells)
+    {
+        if (newlyPlacedRoadCells == null || newlyPlacedRoadCells.Count == 0 || gridManager == null)
+            return;
+
+        var toRefresh = new HashSet<Vector2Int>();
+        for (int i = 0; i < newlyPlacedRoadCells.Count; i++)
+        {
+            Vector2Int p = newlyPlacedRoadCells[i];
+            toRefresh.Add(p);
+            for (int d = 0; d < 4; d++)
+            {
+                int nx = p.x + DirX[d], ny = p.y + DirY[d];
+                if (nx < 0 || nx >= gridManager.width || ny < 0 || ny >= gridManager.height)
+                    continue;
+                if (IsRoadAt(new Vector2(nx, ny)))
+                    toRefresh.Add(new Vector2Int(nx, ny));
+            }
+        }
+
+        foreach (Vector2Int pos in toRefresh)
+        {
+            if (!IsRoadAt(new Vector2(pos.x, pos.y)))
+                continue;
+            if (IsCellUsingBridgeDeckRoadPrefab(pos))
+                continue;
+            RefreshRoadPrefabAt(new Vector2(pos.x, pos.y));
+        }
+    }
+
+    /// <summary>True if the road visual on this cell is a horizontal/vertical bridge deck (do not batch re-resolve).</summary>
+    bool IsCellUsingBridgeDeckRoadPrefab(Vector2Int gridPos)
+    {
+        GameObject cell = gridManager.GetGridCell(new Vector2(gridPos.x, gridPos.y));
+        if (cell == null) return false;
+        for (int i = 0; i < cell.transform.childCount; i++)
+        {
+            Transform t = cell.transform.GetChild(i);
+            Zone z = t.GetComponent<Zone>();
+            if (z == null || z.zoneType != Zone.ZoneType.Road)
+                continue;
+            string n = t.gameObject.name;
+            if (roadTileBridgeHorizontal != null && n.StartsWith(roadTileBridgeHorizontal.name))
+                return true;
+            if (roadTileBridgeVertical != null && n.StartsWith(roadTileBridgeVertical.name))
+                return true;
+            return false;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Picks a road neighbor as "previous" for <see cref="RefreshRoadPrefabAt"/>. Uses stored path segment hint on straight-through segments so
+    /// slope resolution matches <see cref="RoadPrefabResolver.ResolveForPath"/> travel order (BUG-51); otherwise same rules as legacy connectivity-only picker.
+    /// </summary>
+    Vector2 PickPrevGridPosForRoadRefresh(Vector2 gridPos, Cell cellOrNull)
+    {
+        if (cellOrNull != null && TryPrevGridPosFromStoredRoadSegment(gridPos, cellOrNull, out Vector2 hinted))
+            return hinted;
+        return PickPrevGridPosForRoadRefreshConnectivityOnly(gridPos);
+    }
+
+    /// <summary>
+    /// Clears BUG-51 route hints when the cell is no longer a straight-through segment, dead end, or stored successor is missing.
+    /// </summary>
+    void InvalidateRoadRouteHintsIfTopologyMismatch(Vector2 gridPos, Cell cell)
+    {
+        if (cell == null || !cell.hasRoadRouteDirHints)
+            return;
+
+        bool roadWest = IsRoadAt(gridPos + new Vector2(-1, 0));
+        bool roadEast = IsRoadAt(gridPos + new Vector2(1, 0));
+        bool roadNorth = IsRoadAt(gridPos + new Vector2(0, 1));
+        bool roadSouth = IsRoadAt(gridPos + new Vector2(0, -1));
+        int c = (roadWest ? 1 : 0) + (roadEast ? 1 : 0) + (roadNorth ? 1 : 0) + (roadSouth ? 1 : 0);
+        bool straightHorizontal = roadWest && roadEast && !roadNorth && !roadSouth;
+        bool straightVertical = roadNorth && roadSouth && !roadWest && !roadEast;
+        bool deadEnd = c == 1;
+
+        if (straightHorizontal || straightVertical)
+        {
+            if (cell.hasRoadSegmentNextHint)
+            {
+                Vector2 nxt = new Vector2(cell.roadSegmentNextGrid.x, cell.roadSegmentNextGrid.y);
+                if (!IsRoadAt(nxt))
+                {
+                    cell.ClearRoadRouteHints();
+                    return;
+                }
+            }
+            return;
+        }
+
+        if (deadEnd)
+            return;
+
+        cell.ClearRoadRouteHints();
+    }
+
+    static bool IsUnitCardinalGridStep(Vector2Int step)
+    {
+        return Mathf.Abs(step.x) + Mathf.Abs(step.y) == 1;
+    }
+
+    /// <summary>
+    /// When the cell has a valid straight-through topology (exactly two opposite cardinal road neighbors), returns the stored predecessor if it is one of those neighbors.
+    /// Otherwise clears the hint and returns false.
+    /// </summary>
+    bool TryPrevGridPosFromStoredRoadSegment(Vector2 gridPos, Cell cell, out Vector2 prev)
+    {
+        prev = gridPos;
+        Vector2 hint;
+        if (cell.hasRoadSegmentPrevHint)
+            hint = new Vector2(cell.roadSegmentPrevGrid.x, cell.roadSegmentPrevGrid.y);
+        else if (cell.hasRoadRouteDirHints && IsUnitCardinalGridStep(cell.roadRouteEntryStep))
+            hint = gridPos - new Vector2(cell.roadRouteEntryStep.x, cell.roadRouteEntryStep.y);
+        else
+            return false;
+
+        int gx = (int)gridPos.x;
+        int gy = (int)gridPos.y;
+        int hx = Mathf.RoundToInt(hint.x);
+        int hy = Mathf.RoundToInt(hint.y);
+        if (Mathf.Abs(gx - hx) + Mathf.Abs(gy - hy) != 1)
+        {
+            cell.ClearRoadRouteHints();
+            return false;
+        }
+
+        if (!IsRoadAt(hint))
+        {
+            cell.ClearRoadRouteHints();
+            return false;
+        }
+
+        bool roadWest = IsRoadAt(gridPos + new Vector2(-1, 0));
+        bool roadEast = IsRoadAt(gridPos + new Vector2(1, 0));
+        bool roadNorth = IsRoadAt(gridPos + new Vector2(0, 1));
+        bool roadSouth = IsRoadAt(gridPos + new Vector2(0, -1));
+
+        bool straightHorizontal = roadWest && roadEast && !roadNorth && !roadSouth;
+        bool straightVertical = roadNorth && roadSouth && !roadWest && !roadEast;
+
+        if (straightHorizontal)
+        {
+            Vector2 w = gridPos + new Vector2(-1, 0);
+            Vector2 e = gridPos + new Vector2(1, 0);
+            if (hint == w || hint == e)
+            {
+                prev = hint;
+                return true;
+            }
+        }
+        else if (straightVertical)
+        {
+            Vector2 n = gridPos + new Vector2(0, 1);
+            Vector2 s = gridPos + new Vector2(0, -1);
+            if (hint == n || hint == s)
+            {
+                prev = hint;
+                return true;
+            }
+        }
+
+        cell.ClearRoadRouteHints();
+        return false;
+    }
+
+    /// <summary>
+    /// Deterministic road neighbor for refresh when no path-order hint applies (legacy behavior).
+    /// </summary>
+    Vector2 PickPrevGridPosForRoadRefreshConnectivityOnly(Vector2 gridPos)
     {
         bool roadWest = IsRoadAt(gridPos + new Vector2(-1, 0));
         bool roadEast = IsRoadAt(gridPos + new Vector2(1, 0));
@@ -992,7 +1179,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
         Cell cellComponentCheck = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         if (cellComponentCheck == null) return;
 
-        Vector2 prevGridPos = PickPrevGridPosForRoadRefresh(gridPos);
+        InvalidateRoadRouteHintsIfTopologyMismatch(gridPos, cellComponentCheck);
+
+        Vector2 prevGridPos = PickPrevGridPosForRoadRefresh(gridPos, cellComponentCheck);
 
         if (roadPrefabResolver == null && gridManager != null && terrainManager != null)
             roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
@@ -2453,8 +2642,24 @@ public class RoadManager : MonoBehaviour, IRoadManager
         zone.zoneType = Zone.ZoneType.Road;
 
         UpdateRoadCellAttributes(cellComponentCheck, roadTile, Zone.ZoneType.Road);
+        ApplyRoadRouteHintsFromResolved(cellComponentCheck, resolved);
         gridManager.SetRoadSortingOrder(roadTile, x, y);
         gridManager.AddRoadToCache(resolved.gridPos);
+    }
+
+    /// <summary>Copies path route hints from resolved placement for BUG-51 route-first refresh alignment.</summary>
+    static void ApplyRoadRouteHintsFromResolved(Cell cell, RoadPrefabResolver.ResolvedRoadTile resolved)
+    {
+        if (cell == null)
+            return;
+        cell.hasRoadSegmentPrevHint = resolved.hasSegmentPrevHint;
+        cell.roadSegmentPrevGrid = resolved.segmentPrevGridPos;
+        cell.hasRoadSegmentNextHint = resolved.hasSegmentNextHint;
+        cell.roadSegmentNextGrid = resolved.segmentNextGridPos;
+        cell.roadRouteEntryStep = resolved.routeEntryStep;
+        cell.roadRouteExitStep = resolved.routeExitStep;
+        cell.hasRoadRouteDirHints = resolved.hasSegmentPrevHint || resolved.hasSegmentNextHint
+            || resolved.routeEntryStep != Vector2Int.zero || resolved.routeExitStep != Vector2Int.zero;
     }
 
     void PlaceRoadTile(Vector2 gridPos, int i = 0, bool isAdjacent = false)
@@ -2513,6 +2718,12 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
     void DestroyPreviousRoadTile(GameObject cell, Vector2 gridPos)
     {
+        if (gridManager != null)
+        {
+            Cell cleared = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
+            cleared?.ClearRoadRouteHints();
+        }
+
         if (cell.transform.childCount > 0)
         {
             var toDestroy = new List<(GameObject go, Zone zone)>();
@@ -2737,6 +2948,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         Zone zone = roadTile.AddComponent<Zone>();
         zone.zoneType = Zone.ZoneType.Road;
         UpdateRoadCellAttributes(cellComponent, roadTile, Zone.ZoneType.Road);
+        ApplyRoadRouteHintsFromResolved(cellComponent, resolved);
         cellComponent.isInterstate = true;
 
         gridManager.SetRoadSortingOrder(roadTile, x, y);

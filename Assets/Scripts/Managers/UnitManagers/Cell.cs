@@ -18,6 +18,22 @@ public class Cell : MonoBehaviour
     public bool hasRoadAtRight;
     public bool hasRoadAtBottom;
 
+    /// <summary>
+    /// Runtime-only: cardinal grid position of the path predecessor from last path-based road placement, used so refresh
+    /// prefab resolution matches path travel order on straight segments (BUG-51). Not saved in CellData.
+    /// </summary>
+    public bool hasRoadSegmentPrevHint;
+    public Vector2Int roadSegmentPrevGrid;
+    /// <summary>Runtime-only: path successor cell from last path-based placement (BUG-51 route-first refresh).</summary>
+    public bool hasRoadSegmentNextHint;
+    public Vector2Int roadSegmentNextGrid;
+    /// <summary>Runtime-only: true when <see cref="roadRouteEntryStep"/> / <see cref="roadRouteExitStep"/> or segment hints are set.</summary>
+    public bool hasRoadRouteDirHints;
+    /// <summary>Runtime-only: cardinal step <c>curr - prev</c> on the placed path.</summary>
+    public Vector2Int roadRouteEntryStep;
+    /// <summary>Runtime-only: cardinal step <c>next - curr</c> on the placed path (zero if path end).</summary>
+    public Vector2Int roadRouteExitStep;
+
     [Header("Building Properties")]
     public int population;
     public int powerOutput;
@@ -157,6 +173,19 @@ public class Cell : MonoBehaviour
     {
         return zoneType;
     }
+
+    /// <summary>Clears all BUG-51 path route hints (prev/next grid and entry/exit steps).</summary>
+    public void ClearRoadRouteHints()
+    {
+        hasRoadSegmentPrevHint = false;
+        hasRoadSegmentNextHint = false;
+        hasRoadRouteDirHints = false;
+        roadRouteEntryStep = default;
+        roadRouteExitStep = default;
+    }
+
+    /// <summary>Delegates to <see cref="ClearRoadRouteHints"/>.</summary>
+    public void ClearRoadSegmentPrevHint() => ClearRoadRouteHints();
 
     public string GetBuildingName()
     {

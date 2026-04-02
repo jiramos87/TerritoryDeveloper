@@ -1,5 +1,5 @@
 ---
-description: Simulation domain — tick order, AUTO pipeline, obsolete systems
+description: Simulation domain — guardrails and spec pointers
 globs:
   - "**/SimulationManager*.cs"
   - "**/AutoRoadBuilder*.cs"
@@ -13,24 +13,12 @@ alwaysApply: false
 
 # Simulation Domain
 
-## Tick execution order
+**Deep spec:** `.cursor/specs/simulation-system.md`
 
-`TimeManager` → `SimulationManager.ProcessSimulationTick()` runs these **in strict order**:
+## Guardrails
 
-1. `GrowthBudgetManager.EnsureBudgetValid` (when present)
-2. `UrbanCentroidService.RecalculateFromGrid` — urban centroid + ring metrics
-3. `AutoRoadBuilder` — extends road network
-4. `AutoZoningManager` — zones cells adjacent to roads
-5. `AutoResourcePlanner` — plans resource buildings (water, power)
-
-## Key dependencies
-
-- `AutoRoadBuilder` → GridManager, RoadManager, TerrainManager, GrowthBudgetManager, CityStats, InterstateManager
-- `AutoZoningManager` → GridManager, ZoneManager, GrowthBudgetManager, CityStats, DemandManager
-- `AutoResourcePlanner` → CityStats, GridManager, GrowthBudgetManager, UIManager
-
-## Obsolete system
-
-**`UrbanizationProposalManager`** and related proposal UI are **obsolete** — intentionally not called from `ProcessSimulationTick()`. **NEVER** re-enable. Full removal tracked as **TECH-13** in `BACKLOG.md`.
-
-**`UrbanCentroidService`** and ring-based AUTO growth **remain supported** — they are NOT part of the obsolete proposal system.
+- NEVER re-enable `UrbanizationProposalManager` — obsolete (TECH-13)
+- `UrbanCentroidService` and ring-based AUTO growth remain supported — NOT part of the obsolete system
+- Tick order is strict — do not reorder steps in `ProcessSimulationTick()`
+- AUTO roads use the same validation pipeline as manual: `PathTerraformPlan` + Phase-1 + `Apply`
+- `AutoZoningManager` must skip cells in `GetRoadExtensionCells()` / `GetRoadAxialCorridorCells()` (BUG-47)

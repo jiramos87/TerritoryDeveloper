@@ -1,5 +1,5 @@
 ---
-description: Territory Developer project overview — Unity 2D city builder
+description: Territory Developer project identity and structure
 alwaysApply: true
 ---
 
@@ -10,14 +10,12 @@ alwaysApply: true
 **Stack:** Unity 2D isometric city-builder; C# MonoBehaviour classes; `Territory.*` namespaces (partial migration); no DI — Inspector fields + `FindObjectOfType<T>()` fallback in Awake/Start.
 
 **Folder layout (`Assets/Scripts/`):**
-- `Managers/GameManagers/` (~94 files) — core game logic: grid, terrain, zones, roads, economy, simulation, helpers
-- `Managers/UnitManagers/` (~64 files) — data models: Cell, Zone, Building, Forest, HeightMap, CellData, WaterMap, etc.
-- `Controllers/GameControllers/` (~6 files) — CameraController, CityStatsUIController, etc.
-- `Controllers/UnitControllers/` (~38 files) — UI buttons, popups, sliders
-- `Utilities/` (~6 files) — DebugHelper, RoadPathCostConstants, etc.
+- `Managers/GameManagers/` — core game logic: grid, terrain, zones, roads, economy, simulation, helpers
+- `Managers/UnitManagers/` — data models: Cell, Zone, Building, Forest, HeightMap, CellData, WaterMap, etc.
+- `Controllers/GameControllers/` — CameraController, CityStatsUIController, etc.
+- `Controllers/UnitControllers/` — UI buttons, popups, sliders
+- `Utilities/` — DebugHelper, RoadPathCostConstants, AutoSimulationRoadRules, RoadStrokeTerrainRules, etc.
 
-**Key facts:** GridManager is the central hub for cell operations. Only singleton: `GameNotificationManager.Instance`. Data models: MonoBehaviour-based (Cell, Zone on GameObjects) vs plain classes (CellData, CommuneData, TerritoryData for serialization). Grid uses `Cell[,] cellArray` + `GameObject[,] gridArray` with heightMap-based isometric height system.
+**Key patterns:** GridManager is the central hub for cell operations. Only singleton: `GameNotificationManager.Instance`. Managers are MonoBehaviour scene components (never `new`). Dependencies via Inspector + `FindObjectOfType` fallback.
 
-**Style reference:** `EconomyManager.cs` (XML docs + `#region` + `[Header]` attributes).
-
-**Deep architecture / deps / flows:** `ARCHITECTURE.md`. **Geography:** `.cursor/specs/isometric-geography-system.md` (spec §7 for sorting order).
+**Documentation hierarchy:** `AGENTS.md` (workflow) → `.cursor/rules/` (guardrails) → `.cursor/specs/` (deep reference) → `ARCHITECTURE.md` (dependency map).

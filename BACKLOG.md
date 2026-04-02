@@ -7,14 +7,7 @@
 
 ## In Progress
 
-_(None — see High Priority.)_
-
 ## High Priority
-
-- [ ] **TECH-01** — Extract responsibilities from large files (focus: **GridManager** decomposition next)
-  - Type: refactor
-  - Files: `GridManager.cs` (~2070 lines), `TerrainManager.cs` (~3500), `CityStats.cs` (~1200), `ZoneManager.cs` (~1360), `UIManager.cs` (~1240), `RoadManager.cs` (~1730)
-  - Notes: Helpers already extracted (`GridPathfinder`, `GridSortingOrderService`, `ChunkCullingSystem`, `RoadCacheService`, `BuildingPlacementService`, etc.). **Next candidates from GridManager:** `BulldozeHandler` (~200 lines), `GridInputHandler` (~130 lines), `CoordinateConversionService` (~230 lines). Prioritize this workstream; see `ARCHITECTURE.md` (GridManager hub trade-off).
 
 - [ ] **BUG-37** — Manual street drawing clears buildings and zones on cells adjacent to the traced path
   - Type: bug
@@ -39,13 +32,6 @@ _(None — see High Priority.)_
   - Notes: **Observed:** Where a **river channel** or **lake** reaches the **east** or **south** boundary of the grid, the **brown vertical cliff** geometry that seals the map edge is **missing or too short** under the water tiles, exposing **black void**; **grass** cells on the same edge still show correct cliff faces. Suggests boundary cliff stacks or prefab variants do not account for **lower water-bed elevation** at those edges. **Expected:** Continuous cliff wall to the same depth as neighboring land cliffs, or dedicated boundary + water prefabs so no holes at east/south × water. **Related:** completed **BUG-42** (virtual foot / edge cliffs — may share root cause with boundary × water placement).
   - Depends on: none
 
-- [ ] **BUG-47** — AUTO simulation: perpendicular street stubs from auto-zoning gaps never built (orthogonal intersections missing)
-  - Type: bug / feature
-  - Files: `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `SimulationManager.cs` (`ProcessSimulationTick` order), `UrbanCentroidService.cs` if ring/candidate logic gates stubs; `RoadManager.cs` / `GridPathfinder.cs` only if AUTO road placement reuses manual validation and rejects valid stubs
-  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (AUTO vs manual roads) — extend Notes here while **BUG-47** is open; no parallel spec file
-  - Notes: **Design intent (observed in-game):** Along traced routes where **auto-zoning** runs, the system leaves **free land segments perpendicular** to the road so that **later** perpendicular connectors can be drawn, forming **orthogonal street crossings**. **Observed:** In **AUTO** simulation mode, those **perpendicular connectors are never built** even when **space remains clear**; the player must switch to **manual** road mode to complete the grid. **Expected:** Either **AUTO road growth** should propose and commit **short perpendicular stubs** (or equivalent path steps) from reserved gaps toward orthogonal intersections when placement rules allow, or document and implement an explicit alternative (e.g. dedicated AUTO pass after zoning) so behavior matches the layout auto-zoning prepares. **Related:** completed **BUG-22** (auto zoning must not block street ends); **FEAT-36** (expand auto-zoning / auto-road candidates — forests/slopes).
-  - Depends on: none
-
 - [ ] **BUG-31** — Wrong prefabs at interstate entry/exit (border)
   - Type: fix
   - Files: `RoadPrefabResolver.cs`, `RoadManager.cs`
@@ -60,6 +46,11 @@ _(None — see High Priority.)_
   - Type: fix
   - Files: `GeographyManager.cs` (GetMultiCellBuildingMaxSortingOrder, ReCalculateSortingOrderBasedOnHeight), `BuildingPlacementService.cs` (LoadBuildingTile, RestoreBuildingTile), `GridManager.cs` (RestoreGridCellVisuals)
   - Notes: Overlaps **BUG-35** (completed 2026-03-22): flat grass removed with buildings on load. **BUG-34** addressed general load/building sort. Re-verify in Unity after **BUG-35** closure; close if power plants / multi-cell utilities sort correctly.
+
+  - [ ] **TECH-01** — Extract responsibilities from large files (focus: **GridManager** decomposition next)
+  - Type: refactor
+  - Files: `GridManager.cs` (~2070 lines), `TerrainManager.cs` (~3500), `CityStats.cs` (~1200), `ZoneManager.cs` (~1360), `UIManager.cs` (~1240), `RoadManager.cs` (~1730)
+  - Notes: Helpers already extracted (`GridPathfinder`, `GridSortingOrderService`, `ChunkCullingSystem`, `RoadCacheService`, `BuildingPlacementService`, etc.). **Next candidates from GridManager:** `BulldozeHandler` (~200 lines), `GridInputHandler` (~130 lines), `CoordinateConversionService` (~230 lines). Prioritize this workstream; see `ARCHITECTURE.md` (GridManager hub trade-off).
 
 - [ ] **BUG-12** — Happiness UI always shows 50%
   - Type: fix
@@ -120,7 +111,7 @@ _(None — see High Priority.)_
 - [ ] **FEAT-43** — Urban rings: tune AUTO road/zoning weights for a gradual center → edge gradient
   - Type: feature (simulation / balance)
   - Files: `UrbanCentroidService.cs` (ring boundaries, centroid distance), `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `SimulationManager.cs` (`ProcessSimulationTick` order), `GrowthBudgetManager.cs` if per-ring budgets apply; `GridManager.cs` / `DemandManager.cs` only if desirability or placement must align with rings
-  - Notes: **Observed:** In **AUTO** simulation, cities tend toward a **dense core**, **under-developed middle rings**, and **outer rings that are more zoned than the middle** — not a smooth radial gradient. **Expected:** Development should fall off **gradually from the urban center**: **highest** street density and zoning pressure **near the centroid**, **moderate** in **mid** rings, and **lowest** in **outer** rings. Revisit ring radii/thresholds, per-ring weights for road growth vs zoning, and any caps or priorities that invert mid vs outer activity. **Related:** completed **FEAT-32** (streets/intersections by area), **FEAT-29** (density gradient around centroids), **FEAT-31** (roads toward desirability); coordinate with **BUG-47** (AUTO perpendicular stubs) if road patterns depend on the same passes.
+  - Notes: **Observed:** In **AUTO** simulation, cities tend toward a **dense core**, **under-developed middle rings**, and **outer rings that are more zoned than the middle** — not a smooth radial gradient. **Expected:** Development should fall off **gradually from the urban center**: **highest** street density and zoning pressure **near the centroid**, **moderate** in **mid** rings, and **lowest** in **outer** rings. Revisit ring radii/thresholds, per-ring weights for road growth vs zoning, and any caps or priorities that invert mid vs outer activity. **Related:** completed **FEAT-32** (streets/intersections by area), **FEAT-29** (density gradient around centroids), **FEAT-31** (roads toward desirability); completed **BUG-47** (2026-04-01, AUTO perpendicular stubs and junction refresh).
   - Depends on: none
 
 - [ ] **FEAT-35** — Area demolition tool (bulldozer drag-to-select)
@@ -294,6 +285,20 @@ _(None — see High Priority.)_
 ---
 
 ## Completed (last 30 days)
+
+- [x] **BUG-51** — Diagonal / corner-up land slopes vs roads: design closure (2026-04-01)
+  - Type: bug (closed by policy + implementation, not by fixing prefab-on-diagonal art)
+  - Files: `RoadStrokeTerrainRules.cs`, `RoadManager.cs` (`TryBuildFilteredPathForRoadPlan`, `TryPrepareRoadPlacementPlanLongestValidPrefix`, `TryPrepareDeckSpanPlanFromAdjacentStroke`), `GridPathfinder.cs`, `InterstateManager.cs` (`IsCellAllowedForInterstate`), `RoadPrefabResolver.cs`, `TerraformingService.cs`, `Cell.cs` (route-first / BUG-51 technical work — see spec)
+  - Spec: `.cursor/specs/roads-system.md` (land slope stroke policy, route-first paragraph), `.cursor/specs/isometric-geography-system.md` §3.3.3–§3.3.4, §13.10
+  - Notes: **Closed (verified):** The original report asked for **correct road prefabs on diagonal and corner-up terrain**. The chosen resolution was **not** to fully support roads on those land slope types. Instead, **road strokes are invalid on land that is not flat and not a cardinal ramp** (`TerrainSlopeType`: `Flat`, `North`, `South`, `East`, `West` only). Pure diagonals (`NorthEast`, …) and corner-up types (`*Up`) are excluded. **Behavior:** silent **prefix truncation** — preview and commit only include cells up to the last allowed cell; cursor may keep moving diagonally without extending preview. **Scope:** manual, AUTO, and interstate. **First cell blocked:** no placement, no notification. **`Road cannot extend further…`** is **not** posted when the only issue is no slope-valid prefix (e.g. stroke starts on diagonal). **Exceptions in stroke truncation / walkability:** path cells at `HeightMap` height ≤ 0 (wet span) and `IsWaterSlopeCell` shore tiles still pass the truncator so FEAT-44 bridges are not cut. **Still in codebase:** BUG-51 **route-first** resolver topology (`pathOnlyNeighbors`), `Cell` path hints, terraform preservation on diagonal wedge when `preferSlopeClimb && dSeg == 0`, `GetWorldPositionForPrefab` anchoring — documented under roads spec **BUG-51 (route-first)**.
+  - Depends on: none
+
+- [x] **BUG-47** — AUTO simulation: perpendicular street stubs, reservations, junction prefab refresh (2026-04-01)
+  - Type: bug / feature
+  - Files: `AutoRoadBuilder.cs` (`FindPath*ForAutoSimulation`, `HasParallelRoadTooClose` + `excludeAlongDir`, batch prefab refresh), `AutoSimulationRoadRules.cs`, `AutoZoningManager.cs`, `RoadCacheService.cs`, `GridPathfinder.cs`, `GridManager.cs`, `IGridManager.cs`, `RoadManager.cs` (`RefreshRoadPrefabsAfterBatchPlacement`, bridge-deck skip); `.cursor/specs/isometric-geography-system.md` §13.9, `.cursor/rules/roads.mdc`, `.cursor/rules/simulation.mdc`
+  - Spec: `.cursor/specs/isometric-geography-system.md` §13.9
+  - Notes: **Completed (verified in-game):** AUTO can trace perpendicular stubs/connectors and crossings: land = grass/forest/undeveloped light zoning; dedicated AUTO pathfinder; road frontier and extension cells include that class; perpendicular branches pass parent-axis `excludeAlongDir` in `HasParallelRoadTooClose`; auto-zoning skips axial corridor and extension cells. **Visual:** `PlaceRoadTileFromResolved` did not refresh neighbors; added deduplicated per-tick refresh (`RefreshRoadPrefabsAfterBatchPlacement`), skipping bridge deck re-resolve. **Lessons:** any batch `FromResolved` flow must document explicit junction refresh; keep generic `FindPath` separate from AUTO pathfinding.
+  - Depends on: none
 
 - [x] **FEAT-44** — High-deck water bridges: cliff banks, uniform deck height, manual + AUTO placement (2026-03-30)
   - Type: feature

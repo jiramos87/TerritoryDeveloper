@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Territory.Zones;
 using Territory.Terrain;
+using Territory.Utilities;
 
 namespace Territory.Core
 {
@@ -124,7 +125,20 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Returns road positions that have at least one expandable (grass/forest/sea-level) cardinal neighbor, i.e. the road frontier.
+        /// True if a cardinal neighbor can accept AUTO road growth: grass, forest, sea-level, or undeveloped light zoning (BUG-47).
+        /// </summary>
+        private bool IsExpandableNeighborForRoadFrontier(int nx, int ny)
+        {
+            if (nx < 0 || nx >= grid.width || ny < 0 || ny >= grid.height) return false;
+            Cell n = grid.GetCell(nx, ny);
+            if (n == null) return false;
+            if (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)
+                return true;
+            return AutoSimulationRoadRules.IsAutoRoadLandCell(grid, nx, ny);
+        }
+
+        /// <summary>
+        /// Returns road positions that have at least one expandable cardinal neighbor (road frontier).
         /// </summary>
         public List<Vector2Int> GetRoadEdgePositions()
         {
@@ -135,10 +149,10 @@ namespace Territory.Core
             foreach (Vector2Int p in all)
             {
                 bool hasExpandableNeighbor = false;
-                if (grid.IsValidGridPosition(new Vector2(p.x + 1, p.y))) { Cell n = grid.GetCell(p.x + 1, p.y); if (n != null && (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)) hasExpandableNeighbor = true; }
-                if (!hasExpandableNeighbor && grid.IsValidGridPosition(new Vector2(p.x - 1, p.y))) { Cell n = grid.GetCell(p.x - 1, p.y); if (n != null && (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)) hasExpandableNeighbor = true; }
-                if (!hasExpandableNeighbor && grid.IsValidGridPosition(new Vector2(p.x, p.y + 1))) { Cell n = grid.GetCell(p.x, p.y + 1); if (n != null && (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)) hasExpandableNeighbor = true; }
-                if (!hasExpandableNeighbor && grid.IsValidGridPosition(new Vector2(p.x, p.y - 1))) { Cell n = grid.GetCell(p.x, p.y - 1); if (n != null && (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)) hasExpandableNeighbor = true; }
+                if (grid.IsValidGridPosition(new Vector2(p.x + 1, p.y)) && IsExpandableNeighborForRoadFrontier(p.x + 1, p.y)) hasExpandableNeighbor = true;
+                if (!hasExpandableNeighbor && grid.IsValidGridPosition(new Vector2(p.x - 1, p.y)) && IsExpandableNeighborForRoadFrontier(p.x - 1, p.y)) hasExpandableNeighbor = true;
+                if (!hasExpandableNeighbor && grid.IsValidGridPosition(new Vector2(p.x, p.y + 1)) && IsExpandableNeighborForRoadFrontier(p.x, p.y + 1)) hasExpandableNeighbor = true;
+                if (!hasExpandableNeighbor && grid.IsValidGridPosition(new Vector2(p.x, p.y - 1)) && IsExpandableNeighborForRoadFrontier(p.x, p.y - 1)) hasExpandableNeighbor = true;
                 if (hasExpandableNeighbor)
                     cachedRoadEdgePositions.Add(p);
             }
@@ -171,7 +185,11 @@ namespace Territory.Core
                     if (extX < 0 || extX >= grid.width || extY < 0 || extY >= grid.height) continue;
                     Cell extCell = grid.GetCell(extX, extY);
                     if (extCell == null) continue;
-                    if (extCell.zoneType != Zone.ZoneType.Grass && !extCell.HasForest() && extCell.GetCellInstanceHeight() != 0)
+                    bool extOk = extCell.GetCellInstanceHeight() == 0
+                        || extCell.zoneType == Zone.ZoneType.Grass
+                        || extCell.HasForest()
+                        || AutoSimulationRoadRules.IsAutoRoadLandCell(grid, extX, extY);
+                    if (!extOk)
                         continue;
                     cachedRoadExtensionCells.Add(new Vector2Int(extX, extY));
                 }
@@ -207,9 +225,9 @@ namespace Territory.Core
             return dot == 0;
         }
 
-        /// <summary>Returns cells in the axial corridor (extension of road segments). Used to exclude from lateral zone.
+        /// <summary>Returns cells in the axial corridor (extension of road segments). AutoZoningManager must not zone these (BUG-47).
         /// Includes diagonal directions for elbow roads and corner extensions (cells beyond road end at turns).</summary>
-        private HashSet<Vector2Int> GetRoadAxialCorridor()
+        public HashSet<Vector2Int> GetRoadAxialCorridorCells()
         {
             if (cachedRoadAxialCorridor != null && !roadCacheDirty)
                 return cachedRoadAxialCorridor;

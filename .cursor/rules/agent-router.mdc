@@ -1,0 +1,46 @@
+---
+description: Agent index — routes tasks to the right specs and rules
+alwaysApply: true
+---
+
+# Agent Router — What to Read by Task
+
+Read **only** the specs relevant to your task. Use this table to navigate.
+
+## Task → Spec routing
+
+| Task domain | Spec to read | Key sections |
+|-------------|-------------|--------------|
+| Road logic, placement, bridges | `.cursor/specs/roads-system.md` + geography spec §9, §10, §13 | Validation surface, resolver rules |
+| Water, terrain, cliffs, shores | `.cursor/specs/water-terrain-system.md` + geography spec §2–§5, §11–§12 | Height model, layered visuals, lakes, rivers |
+| Simulation, AUTO growth | `.cursor/specs/simulation-system.md` | Tick order, AUTO pipeline |
+| Save / load | `.cursor/specs/persistence-system.md` + geography spec §7.4, §11.5 | Load pipeline, visual restore |
+| Manager responsibilities | `.cursor/specs/managers-reference.md` | Responsibilities, dependencies |
+| Slopes, sorting, geography | `.cursor/specs/isometric-geography-system.md` §1–§7 | Coordinates, heights, sorting formula |
+| UI changes | `.cursor/specs/ui-design-system.md` | Foundations, components |
+| Coding standards | `.cursor/rules/coding-conventions.mdc` | XML docs, naming, prefabs |
+| Domain terms | `.cursor/specs/glossary.md` | Quick definitions |
+| Backlog / issues | `BACKLOG.md` (only if task involves an issue) | — |
+| Full dependency map | `ARCHITECTURE.md` | System layers, dep table |
+
+## Canonical geography spec
+
+`.cursor/specs/isometric-geography-system.md` is the **single source of truth** for grid math, heights, slopes, water/shore/cliffs, sorting, terraform, roads, rivers, pathfinding. When another doc disagrees, the geography spec wins.
+
+## Quick reference for geography spec sections
+
+| Need to understand... | Read sections |
+|---|---|
+| Grid math, coordinates | §1 |
+| Height model, water surface | §2 |
+| Slope determination | §3–§4 |
+| Shore/cliff/water layering | §5 |
+| Prefab inventory | §6 |
+| Sorting order | §7 |
+| Terraform system | §8 |
+| Road prefabs on terrain | §9 |
+| Pathfinding costs | §10 |
+| Water map, lakes, junctions | §11 |
+| Procedural rivers | §12 |
+| Road/interstate/bridge validation | §13 |
+| Engineering notes | §14 |

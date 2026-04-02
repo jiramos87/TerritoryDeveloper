@@ -347,6 +347,13 @@ public class TerraformingService : MonoBehaviour
                         cellPlan.targetHeight = h;
                         cellPlan.postTerraformSlopeType = GetPostTerraformSlopeTypeAlongExit(heightMap, path, i, h, dxOut, dyOut);
                     }
+                    else if (preferSlopeClimb && dSeg == 0)
+                    {
+                        // BUG-51: same land height along path on a diagonal wedge still needs route-aligned ramp type; avoid flattening the corridor (scale-with-slopes: preferSlopeClimb already implies no consecutive |Δh|>1 on path).
+                        cellPlan.action = TerraformAction.None;
+                        cellPlan.targetHeight = h;
+                        cellPlan.postTerraformSlopeType = GetPostTerraformSlopeTypeAlongExit(heightMap, path, i, h, dxOut, dyOut);
+                    }
                     else
                     {
                         cellPlan.action = TerraformAction.Flatten;
@@ -632,6 +639,7 @@ public class TerraformingService : MonoBehaviour
     /// Land Δh along the path segment that defines prefab orientation: for interior cells,
     /// height(next) − height(current); for the last cell, height(current) − height(prev).
     /// Zero when an endpoint is invalid or water (cannot infer climb vs descent).
+    /// BUG-51: on diagonal wedge tiles, zero here with a valid cardinal path still allows <see cref="ComputePathPlan"/> to preserve terrain when <c>preferSlopeClimb &amp;&amp; dSeg == 0</c>.
     /// </summary>
     int ComputeSegmentDeltaHForPostSlope(HeightMap heightMap, IList<Vector2> path, int i, int hLandAtCell)
     {

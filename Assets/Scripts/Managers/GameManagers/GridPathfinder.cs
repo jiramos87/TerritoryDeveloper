@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Territory.Zones;
 using Territory.Terrain;
+using Territory.Utilities;
 
 namespace Territory.Core
 {
@@ -29,6 +30,22 @@ namespace Territory.Core
             return FindPathWithRoadSpacing(from, to, 0);
         }
 
+        /// <summary>
+        /// A* for AUTO simulation only: walkable cells include undeveloped light zoning (BUG-47). Manual draw uses <see cref="FindPath"/>.
+        /// </summary>
+        public List<Vector2Int> FindPathForAutoSimulation(Vector2Int from, Vector2Int to)
+        {
+            return FindPathWithRoadSpacingForAutoSimulation(from, to, 0);
+        }
+
+        /// <summary>
+        /// A* with road-spacing penalty for AUTO simulation; allows undeveloped light zoning as walkable (BUG-47).
+        /// </summary>
+        public List<Vector2Int> FindPathWithRoadSpacingForAutoSimulation(Vector2Int from, Vector2Int to, int minDistanceFromRoad)
+        {
+            return FindPathWithRoadSpacingCore(from, to, minDistanceFromRoad, allowUndevelopedLightZoning: true);
+        }
+
         private static readonly int[] NeighborDx = { 1, -1, 0, 0 };
         private static readonly int[] NeighborDy = { 0, 0, 1, -1 };
 
@@ -42,6 +59,11 @@ namespace Territory.Core
         /// </summary>
         public List<Vector2Int> FindPathWithRoadSpacing(Vector2Int from, Vector2Int to, int minDistanceFromRoad)
         {
+            return FindPathWithRoadSpacingCore(from, to, minDistanceFromRoad, allowUndevelopedLightZoning: false);
+        }
+
+        private List<Vector2Int> FindPathWithRoadSpacingCore(Vector2Int from, Vector2Int to, int minDistanceFromRoad, bool allowUndevelopedLightZoning)
+        {
             int manhattan = Mathf.Abs(to.x - from.x) + Mathf.Abs(to.y - from.y);
             int maxNodes = Mathf.Max(200, manhattan * 4);
             const int roadProximityPenalty = 18;
@@ -52,7 +74,7 @@ namespace Territory.Core
                 roadSet = new HashSet<Vector2Int>(roads);
             }
 
-            if (!IsWalkable(from.x, from.y) || !IsWalkable(to.x, to.y))
+            if (!IsWalkable(from.x, from.y, allowUndevelopedLightZoning) || !IsWalkable(to.x, to.y, allowUndevelopedLightZoning))
                 return new List<Vector2Int>();
             var open = new MinHeap();
             var closed = new HashSet<Vector2Int>();
@@ -79,14 +101,14 @@ namespace Territory.Core
                     }
                     path.Add(from);
                     path.Reverse();
-                    return SmoothPath(path);
+                    return SmoothPath(path, allowUndevelopedLightZoning);
                 }
-                int neighborCount = GetWalkableNeighbors(current, neighborBuffer);
+                int neighborCount = GetWalkableNeighbors(current, neighborBuffer, allowUndevelopedLightZoning);
                 for (int i = 0; i < neighborCount; i++)
                 {
                     Vector2Int neighbor = neighborBuffer[i];
                     if (closed.Contains(neighbor)) continue;
-                    int stepCost = GetRoadStepCost(current.x, current.y, neighbor.x, neighbor.y);
+                    int stepCost = GetRoadStepCost(current.x, current.y, neighbor.x, neighbor.y, allowUndevelopedLightZoning);
                     if (stepCost == int.MaxValue) continue;
                     if (minDistanceFromRoad > 0 && roadSet != null)
                     {
@@ -120,9 +142,9 @@ namespace Territory.Core
             return min == int.MaxValue ? int.MaxValue : min;
         }
 
-        private int GetRoadStepCost(int fromX, int fromY, int toX, int toY)
+        private int GetRoadStepCost(int fromX, int fromY, int toX, int toY, bool allowUndevelopedLightZoning)
         {
-            if (!IsWalkable(toX, toY)) return int.MaxValue;
+            if (!IsWalkable(toX, toY, allowUndevelopedLightZoning)) return int.MaxValue;
             if (grid.terrainManager == null) return RoadPathCostConstants.Flat;
 
             if (grid.terrainManager.IsWaterSlopeCell(toX, toY))
@@ -154,25 +176,61 @@ namespace Territory.Core
             return RoadPathCostConstants.GetStepCost(t, heightDiff);
         }
 
-        private bool IsWalkable(int x, int y)
+        private bool IsWalkable(int x, int y, bool allowUndevelopedLightZoning)
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return false;
             Cell c = grid.GetCell(x, y);
             if (c == null) return false;
-            if (c.zoneType != Zone.ZoneType.Grass && c.zoneType != Zone.ZoneType.Road)
-                return false;
-            if (grid.terrainManager != null && !grid.terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true))
-                return false;
-            return true;
+            if (c.zoneType == Zone.ZoneType.Road)
+            {
+                if (grid.terrainManager != null && !grid.terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true))
+                    return false;
+                if (!IsRoadPathfindingLandSlopeAllowed(x, y))
+                    return false;
+                return true;
+            }
+            if (c.zoneType == Zone.ZoneType.Grass)
+            {
+                if (grid.terrainManager != null && !grid.terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true))
+                    return false;
+                if (!IsRoadPathfindingLandSlopeAllowed(x, y))
+                    return false;
+                return true;
+            }
+            if (allowUndevelopedLightZoning && AutoSimulationRoadRules.IsAutoRoadLandCell(grid, x, y))
+            {
+                if (grid.terrainManager != null && !grid.terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true))
+                    return false;
+                if (!IsRoadPathfindingLandSlopeAllowed(x, y))
+                    return false;
+                return true;
+            }
+            return false;
         }
 
-        private int GetWalkableNeighbors(Vector2Int p, Vector2Int[] buffer)
+        /// <summary>
+        /// Roads may only cross flat or cardinal ramp land slopes (same rule as <see cref="RoadStrokeTerrainRules"/>).
+        /// </summary>
+        private bool IsRoadPathfindingLandSlopeAllowed(int x, int y)
+        {
+            if (grid.terrainManager == null)
+                return true;
+            HeightMap hm = grid.terrainManager.GetHeightMap();
+            if (hm != null && hm.IsValidPosition(x, y) && hm.GetHeight(x, y) <= 0)
+                return true;
+            if (grid.terrainManager.IsWaterSlopeCell(x, y))
+                return true;
+            TerrainSlopeType st = grid.terrainManager.GetTerrainSlopeTypeAt(x, y);
+            return RoadStrokeTerrainRules.IsLandSlopeAllowedForRoadStroke(st);
+        }
+
+        private int GetWalkableNeighbors(Vector2Int p, Vector2Int[] buffer, bool allowUndevelopedLightZoning)
         {
             int count = 0;
             for (int i = 0; i < 4; i++)
             {
                 int nx = p.x + NeighborDx[i], ny = p.y + NeighborDy[i];
-                if (IsWalkable(nx, ny))
+                if (IsWalkable(nx, ny, allowUndevelopedLightZoning))
                     buffer[count++] = new Vector2Int(nx, ny);
             }
             return count;
@@ -187,7 +245,7 @@ namespace Territory.Core
         /// Removes redundant zigzag points: when prev and next are cardinal neighbors,
         /// the middle point can be skipped if the direct step is valid.
         /// </summary>
-        private List<Vector2Int> SmoothPath(List<Vector2Int> path)
+        private List<Vector2Int> SmoothPath(List<Vector2Int> path, bool allowUndevelopedLightZoning)
         {
             if (path == null || path.Count < 3) return path;
             var result = new List<Vector2Int> { path[0] };
@@ -199,9 +257,9 @@ namespace Territory.Core
                 int dx = next.x - prev.x;
                 int dy = next.y - prev.y;
                 bool cardinalNeighbors = (Mathf.Abs(dx) == 1 && dy == 0) || (dx == 0 && Mathf.Abs(dy) == 1);
-                if (cardinalNeighbors && IsWalkable(next.x, next.y))
+                if (cardinalNeighbors && IsWalkable(next.x, next.y, allowUndevelopedLightZoning))
                 {
-                    int stepCost = GetRoadStepCost(prev.x, prev.y, next.x, next.y);
+                    int stepCost = GetRoadStepCost(prev.x, prev.y, next.x, next.y, allowUndevelopedLightZoning);
                     if (stepCost != int.MaxValue)
                     {
                         result.Add(next);

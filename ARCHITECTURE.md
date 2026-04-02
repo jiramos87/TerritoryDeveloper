@@ -50,6 +50,7 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. No depend
 | TerraformingService, PathTerraformPlan | Terraform plan computation, apply/revert, cut-through |
 | RoadPrefabResolver | Prefab selection for path and single-cell contexts |
 | RoadPathCostConstants | Shared cost constants for road pathfinding |
+| RoadStrokeTerrainRules | Land slope allowlist and stroke truncation (flat + cardinal ramps only for road cells) |
 | UrbanCentroidService | Urban centroid and ring calculation |
 | GameBootstrap | Entry point, game loading flow |
 
@@ -137,7 +138,7 @@ Manual streets use longest-valid-prefix terraform validation; interstate uses fu
 - **GridManager as hub:** Central coordinator for cell operations. Keeps access consistent but makes it large.
 - **FindObjectOfType pattern:** Inspector wiring + null-check fallback in Awake/Start.
 - **Namespaces:** Most scripts under `Territory.*` (`Core`, `Terrain`, `Roads`, `Zones`, `Forests`, `Buildings`, `Economy`, `UI`, `Geography`, `Timing`, `Utilities`, `Simulation`, `Persistence`). A few legacy scripts in global namespace.
-- **Spec policy:** See `AGENTS.md`.
+- **Spec policy:** See `AGENTS.md`. Full spec inventory in `.cursor/specs/`; agent routing in `.cursor/rules/agent-router.mdc`.
 
 ## Known Trade-offs
 

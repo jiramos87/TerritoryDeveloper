@@ -677,7 +677,10 @@ public class GridManager : MonoBehaviour, IGridManager
 
         Zone.ZoneType zoneType = cellComponent.zoneType;
         if (zoneType == Zone.ZoneType.Road)
+        {
+            cellComponent.ClearRoadRouteHints();
             RemoveRoadFromCache(new Vector2Int(gx, gy));
+        }
         HandleBulldozeTile(zoneType, cell, showAnimation);
         return true;
     }
@@ -2140,6 +2143,10 @@ public class GridManager : MonoBehaviour, IGridManager
     public HashSet<Vector2Int> GetRoadExtensionCells()
         => roadCache.GetRoadExtensionCells();
 
+    /// <summary>Axial corridor beyond road edges for future street alignment. AutoZoningManager must not zone these (BUG-47).</summary>
+    public HashSet<Vector2Int> GetRoadAxialCorridorCells()
+        => roadCache.GetRoadAxialCorridorCells();
+
     /// <summary>Number of cardinal neighbors of (gx,gy) that are zoneable (Grass, Forest, or Flat/N-S/E-W slope). Used for road-reservation in auto-zoning.</summary>
     public int CountGrassNeighbors(int gx, int gy)
         => roadCache.CountGrassNeighbors(gx, gy);
@@ -2177,6 +2184,14 @@ public class GridManager : MonoBehaviour, IGridManager
     /// </summary>
     public List<Vector2Int> FindPathWithRoadSpacing(Vector2Int from, Vector2Int to, int minDistanceFromRoad)
         => pathfinder.FindPathWithRoadSpacing(from, to, minDistanceFromRoad);
+
+    /// <summary>A* for AUTO simulation; walkable set includes undeveloped light zoning (BUG-47).</summary>
+    public List<Vector2Int> FindPathForAutoSimulation(Vector2Int from, Vector2Int to)
+        => pathfinder.FindPathForAutoSimulation(from, to);
+
+    /// <summary>A* with road-spacing for AUTO simulation; undeveloped light zoning is walkable (BUG-47).</summary>
+    public List<Vector2Int> FindPathWithRoadSpacingForAutoSimulation(Vector2Int from, Vector2Int to, int minDistanceFromRoad)
+        => pathfinder.FindPathWithRoadSpacingForAutoSimulation(from, to, minDistanceFromRoad);
     #endregion
 }
 }

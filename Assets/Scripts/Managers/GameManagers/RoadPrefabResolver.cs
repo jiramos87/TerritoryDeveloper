@@ -14,6 +14,16 @@ namespace Territory.Roads
 /// </summary>
 public class RoadPrefabResolver
 {
+    /// <summary>How the current path cell connects to other cells on the same stroke (BUG-51 route-first).</summary>
+    private enum PathRouteTopology
+    {
+        Isolated,
+        End,
+        StraightThrough,
+        Corner90,
+        Junction
+    }
+
     private readonly GridManager gridManager;
     private readonly TerrainManager terrainManager;
     private readonly RoadManager roadManager;
@@ -40,6 +50,16 @@ public class RoadPrefabResolver
         public GameObject prefab;
         public Vector2 worldPos;
         public int sortingOrder;
+        /// <summary>When true, <see cref="segmentPrevGridPos"/> is the path predecessor cell for this tile (BUG-51 refresh alignment).</summary>
+        public bool hasSegmentPrevHint;
+        public Vector2Int segmentPrevGridPos;
+        /// <summary>When true, <see cref="segmentNextGridPos"/> is the path successor cell (route-first refresh).</summary>
+        public bool hasSegmentNextHint;
+        public Vector2Int segmentNextGridPos;
+        /// <summary>Grid step <c>curr - prev</c> on the path (cardinal); zero if unknown.</summary>
+        public Vector2Int routeEntryStep;
+        /// <summary>Grid step <c>next - curr</c> on the path (cardinal); zero if last cell.</summary>
+        public Vector2Int routeExitStep;
     }
 
     /// <summary>
@@ -83,7 +103,7 @@ public class RoadPrefabResolver
                 && cellPlan.action == TerraformingService.TerraformAction.None;
 
             HeightMap pathHeightMap = terrainManager != null ? terrainManager.GetHeightMap() : null;
-            GameObject prefab = ResolvePrefabForPathCell(prev, curr, pathCellSet, height, postSlope, allowLiveSlopeFallback, plan, pathHeightMap);
+            GameObject prefab = ResolvePrefabForPathCell(prev, curr, pathCellSet, height, postSlope, allowLiveSlopeFallback, plan, pathHeightMap, pathOnlyNeighbors: true);
             TerrainSlopeType slopeForWorld = postSlope;
             if (postSlope == TerrainSlopeType.Flat && terrainManager != null && prefab != null && IsCardinalSlopeRoadPrefab(prefab))
             {
@@ -105,12 +125,30 @@ public class RoadPrefabResolver
 
             int sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, sortHeight);
 
+            bool hasPrevHint = i > 0;
+            Vector2Int prevGrid = hasPrevHint
+                ? new Vector2Int(Mathf.RoundToInt(path[i - 1].x), Mathf.RoundToInt(path[i - 1].y))
+                : default;
+            bool hasNextHint = i < path.Count - 1;
+            Vector2Int nextGrid = hasNextHint
+                ? new Vector2Int(Mathf.RoundToInt(path[i + 1].x), Mathf.RoundToInt(path[i + 1].y))
+                : default;
+            Vector2Int entryStep = GetCardinalGridStepRounded(curr - prev);
+            Vector2 nextForStep = i < path.Count - 1 ? path[i + 1] : curr;
+            Vector2Int exitStep = hasNextHint ? GetCardinalGridStepRounded(nextForStep - curr) : default;
+
             result.Add(new ResolvedRoadTile
             {
                 gridPos = new Vector2Int(x, y),
                 prefab = prefab ?? roadManager.roadTilePrefab1,
                 worldPos = worldPos,
-                sortingOrder = sortingOrder
+                sortingOrder = sortingOrder,
+                hasSegmentPrevHint = hasPrevHint,
+                segmentPrevGridPos = prevGrid,
+                hasSegmentNextHint = hasNextHint,
+                segmentNextGridPos = nextGrid,
+                routeEntryStep = entryStep,
+                routeExitStep = exitStep
             });
         }
         return result;
@@ -216,7 +254,13 @@ public class RoadPrefabResolver
             gridPos = new Vector2Int(x, y),
             prefab = prefab ?? roadManager.roadTilePrefab1,
             worldPos = worldPos,
-            sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, sortHeight)
+            sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, sortHeight),
+            hasSegmentPrevHint = false,
+            segmentPrevGridPos = default,
+            hasSegmentNextHint = false,
+            segmentNextGridPos = default,
+            routeEntryStep = default,
+            routeExitStep = default
         };
     }
 
@@ -283,7 +327,8 @@ public class RoadPrefabResolver
     /// and the plan left <paramref name="postSlope"/> as Flat, uses the same diagonal→orthogonal mapping
     /// as <see cref="TryGetSlopePrefabForStraightSegment"/> so ramp prefabs match live terrain (BUG-30).
     /// </summary>
-    private GameObject ResolvePrefabForPathCell(Vector2 prev, Vector2 curr, HashSet<Vector2Int> pathCellSet, int height, TerrainSlopeType postSlope, bool allowLiveSlopeFallback, PathTerraformPlan plan, HeightMap heightMap)
+    /// <param name="pathOnlyNeighbors">If true, only <paramref name="pathCellSet"/> counts for junction topology (BUG-51: ignore foreign roads during stroke resolve).</param>
+    private GameObject ResolvePrefabForPathCell(Vector2 prev, Vector2 curr, HashSet<Vector2Int> pathCellSet, int height, TerrainSlopeType postSlope, bool allowLiveSlopeFallback, PathTerraformPlan plan, HeightMap heightMap, bool pathOnlyNeighbors)
     {
         Vector2 dirIn = curr - prev;
         int dxIn = Mathf.RoundToInt(dirIn.x);
@@ -307,22 +352,27 @@ public class RoadPrefabResolver
         if (TryGetHighCliffLipBridgePrefab(plan, cx, cy, height, heightMap, dirIn, out GameObject cliffDeckPrefab))
             return cliffDeckPrefab;
 
-        bool pathLeft = PathCellContainsOrRoad(pathCellSet, cx - 1, cy);
-        bool pathRight = PathCellContainsOrRoad(pathCellSet, cx + 1, cy);
-        bool pathUp = PathCellContainsOrRoad(pathCellSet, cx, cy + 1);
-        bool pathDown = PathCellContainsOrRoad(pathCellSet, cx, cy - 1);
+        bool pathLeft = PathNeighborForResolve(pathCellSet, cx - 1, cy, pathOnlyNeighbors);
+        bool pathRight = PathNeighborForResolve(pathCellSet, cx + 1, cy, pathOnlyNeighbors);
+        bool pathUp = PathNeighborForResolve(pathCellSet, cx, cy + 1, pathOnlyNeighbors);
+        bool pathDown = PathNeighborForResolve(pathCellSet, cx, cy - 1, pathOnlyNeighbors);
 
-        if (pathLeft || pathRight || pathUp || pathDown)
+        PathRouteTopology topo = ClassifyPathRouteTopology(pathLeft, pathRight, pathUp, pathDown);
+
+        if (topo == PathRouteTopology.Junction)
+            return SelectFromConnectivity(prev, curr, pathLeft, pathRight, pathUp, pathDown, height);
+
+        if (topo == PathRouteTopology.Corner90)
         {
-            // Elbow mapping: single source of truth (Rule A, B). Left+Up=ElbowDownRight, Right+Up=ElbowDownLeft, Left+Down=ElbowUpRight, Right+Down=ElbowUpLeft.
             GameObject elbowPrefab = TryGetElbowPrefab(pathLeft, pathRight, pathUp, pathDown);
-            if (elbowPrefab != null) return elbowPrefab;
+            if (elbowPrefab != null)
+                return elbowPrefab;
+            return SelectFromConnectivity(prev, curr, pathLeft, pathRight, pathUp, pathDown, height);
+        }
 
-            int cardinalCount = (pathLeft ? 1 : 0) + (pathRight ? 1 : 0) + (pathUp ? 1 : 0) + (pathDown ? 1 : 0);
-            if (cardinalCount >= 3)
-                return SelectFromConnectivity(prev, curr, pathLeft, pathRight, pathUp, pathDown, height);
-
-            // Align slope prefab axis to travel direction (prev→curr), not to which path neighbors exist first (BUG-30 corner / T-adjacent cells).
+        if (topo == PathRouteTopology.StraightThrough || topo == PathRouteTopology.End
+            || ((pathLeft || pathRight || pathUp || pathDown) && topo != PathRouteTopology.Isolated))
+        {
             bool segmentHorizontal = (dxIn != 0 || dyIn != 0)
                 ? Mathf.Abs(dxIn) >= Mathf.Abs(dyIn)
                 : (pathLeft || pathRight);
@@ -359,6 +409,47 @@ public class RoadPrefabResolver
         }
 
         return horizontalSeg ? roadManager.roadTilePrefab2 : roadManager.roadTilePrefab1;
+    }
+
+    static Vector2Int GetCardinalGridStepRounded(Vector2 delta)
+    {
+        int x = Mathf.RoundToInt(delta.x);
+        int y = Mathf.RoundToInt(delta.y);
+        if (x == 0 && y == 0)
+            return Vector2Int.zero;
+        if (Mathf.Abs(x) >= Mathf.Abs(y) && x != 0)
+            return new Vector2Int(x > 0 ? 1 : -1, 0);
+        if (y != 0)
+            return new Vector2Int(0, y > 0 ? 1 : -1);
+        return Vector2Int.zero;
+    }
+
+    static PathRouteTopology ClassifyPathRouteTopology(bool pathLeft, bool pathRight, bool pathUp, bool pathDown)
+    {
+        int cardinalCount = (pathLeft ? 1 : 0) + (pathRight ? 1 : 0) + (pathUp ? 1 : 0) + (pathDown ? 1 : 0);
+        if (cardinalCount >= 3)
+            return PathRouteTopology.Junction;
+        if (cardinalCount == 2)
+        {
+            bool straightH = pathLeft && pathRight && !pathUp && !pathDown;
+            bool straightV = pathUp && pathDown && !pathLeft && !pathRight;
+            if (straightH || straightV)
+                return PathRouteTopology.StraightThrough;
+            return PathRouteTopology.Corner90;
+        }
+        if (cardinalCount == 1)
+            return PathRouteTopology.End;
+        return PathRouteTopology.Isolated;
+    }
+
+    /// <summary>Neighbor counts for path resolve: path cell set, optionally union with existing roads.</summary>
+    bool PathNeighborForResolve(HashSet<Vector2Int> pathCellSet, int nx, int ny, bool pathOnlyNeighbors)
+    {
+        if (pathCellSet != null && pathCellSet.Contains(new Vector2Int(nx, ny)))
+            return true;
+        if (!pathOnlyNeighbors)
+            return IsRoadAt(new Vector2(nx, ny));
+        return false;
     }
 
     WaterManager ResolveWaterManagerForBridge()
@@ -651,10 +742,10 @@ public class RoadPrefabResolver
         if (prefab == null) return true;
         int cx = Mathf.RoundToInt(curr.x);
         int cy = Mathf.RoundToInt(curr.y);
-        bool pathLeft = PathCellContainsOrRoad(pathCellSet, cx - 1, cy);
-        bool pathRight = PathCellContainsOrRoad(pathCellSet, cx + 1, cy);
-        bool pathUp = PathCellContainsOrRoad(pathCellSet, cx, cy + 1);
-        bool pathDown = PathCellContainsOrRoad(pathCellSet, cx, cy - 1);
+        bool pathLeft = PathNeighborForResolve(pathCellSet, cx - 1, cy, pathOnlyNeighbors: true);
+        bool pathRight = PathNeighborForResolve(pathCellSet, cx + 1, cy, pathOnlyNeighbors: true);
+        bool pathUp = PathNeighborForResolve(pathCellSet, cx, cy + 1, pathOnlyNeighbors: true);
+        bool pathDown = PathNeighborForResolve(pathCellSet, cx, cy - 1, pathOnlyNeighbors: true);
         GameObject expectedElbow = TryGetElbowPrefab(pathLeft, pathRight, pathUp, pathDown);
         if (expectedElbow == null) return true;
         return prefab == expectedElbow;
@@ -912,12 +1003,22 @@ public class RoadPrefabResolver
         return null;
     }
 
+    static bool TerrainSlopeIsDiagonalOrCornerUp(TerrainSlopeType slopeType)
+    {
+        return slopeType == TerrainSlopeType.NorthEast || slopeType == TerrainSlopeType.NorthWest
+            || slopeType == TerrainSlopeType.SouthEast || slopeType == TerrainSlopeType.SouthWest
+            || slopeType == TerrainSlopeType.NorthEastUp || slopeType == TerrainSlopeType.NorthWestUp
+            || slopeType == TerrainSlopeType.SouthEastUp || slopeType == TerrainSlopeType.SouthWestUp;
+    }
+
     private Vector2 GetWorldPositionForPrefab(int x, int y, GameObject prefab, int terrainHeight, TerrainSlopeType slopeType)
     {
         if (terrainHeight == 0)
             return gridManager.GetWorldPositionVector(x, y, 1);
 
-        if (!IsDiagonalRoadPrefab(prefab))
+        bool anchorAtUpperLikeElbow = IsDiagonalRoadPrefab(prefab)
+            || (IsCardinalSlopeRoadPrefab(prefab) && TerrainSlopeIsDiagonalOrCornerUp(slopeType));
+        if (!anchorAtUpperLikeElbow)
             return gridManager.GetWorldPosition(x, y);
 
         // Cut-through: when terrain was flattened, place elbow at cell position (not upper neighbor).

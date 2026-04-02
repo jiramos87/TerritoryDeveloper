@@ -20,6 +20,12 @@
 | Concern | Document |
 |---------|----------|
 | UI design system | `.cursor/specs/ui-design-system.md` |
+| Road placement pipeline | `.cursor/specs/roads-system.md` |
+| Simulation / AUTO growth | `.cursor/specs/simulation-system.md` |
+| Save / load pipeline | `.cursor/specs/persistence-system.md` |
+| Water & terrain overview | `.cursor/specs/water-terrain-system.md` |
+| Manager responsibilities | `.cursor/specs/managers-reference.md` |
+| Domain glossary | `.cursor/specs/glossary.md` |
 
 ### 0.3 Quick reference for AI agents
 
@@ -177,7 +183,7 @@ NorthEastUp, NorthWestUp, SouthEastUp, SouthWestUp
 #### 3.3.3 Diagonal Slopes — NE, NW, SE, SW
 - **Condition:** No cardinal higher, but exactly one diagonal neighbor higher.
 - **Visual:** Wedge-shaped diagonal transition.
-- Roads can traverse; prefab resolver selects the best orthogonal road prefab based on travel axis.
+- **Road strokes:** Land diagonal slopes are **not** valid road cells. `RoadStrokeTerrainRules` / `RoadManager` truncate strokes at the first such cell; A* and interstate generation skip them (see `roads-system.md` and §13.10). Terrain art remains a wedge; roads do not run through these land tiles.
 
 | Slope | Higher Diagonal Neighbor |
 |-------|--------------------------|
@@ -189,7 +195,7 @@ NorthEastUp, NorthWestUp, SouthEastUp, SouthWestUp
 #### 3.3.4 Corner / Upslope Types — NEUp, NWUp, SEUp, SWUp
 - **Condition:** Two adjacent cardinal neighbors both higher (concave corner).
 - **Visual:** L-shaped concavity opening away from the two higher neighbors.
-- Roads traverse using the cardinal ramp type from path travel and segment height.
+- **Road strokes:** Corner-up land cells are **not** valid road cells (same rule as §3.3.3 — only flat + cardinal ramps for strokes). Resolver/route-first behavior applies only where a road may legally exist.
 
 | Slope | Higher Pair | Valley Opens Toward |
 |-------|------------|---------------------|
@@ -483,7 +489,7 @@ Named after the **slope face direction** (downhill), matching `TerrainSlopeType`
 | `South` | `roadTilePrefabSouthSlope` |
 | `East` | `roadTilePrefabEastSlope` |
 | `West` | `roadTilePrefabWestSlope` |
-| Corner slopes (`NEUp`, etc.) | Decomposed to orthogonal axis aligned with travel |
+| Corner slopes (`NEUp`, etc.) | Decomposed to orthogonal axis aligned with travel (legacy / plan edge cases only — **new strokes** do not place roads on corner-up or pure diagonal **land**; see §13.10) |
 
 ---
 
@@ -684,13 +690,37 @@ Reject when `maxHeight - baseHeight > 1`; map-edge margin; Phase 1 validation ri
 | **E** | Interstate prefers straight segments |
 | **F** | Bridge approach perpendicular to water; no turn on last land cells before water |
 
-Slope/corner roads use travel-aligned `postTerraformSlopeType`; terrain restore can force orthogonal ramp when action is None but plan has cardinal slope.
+On **legal** land cells (§13.10), slope/corner plan outputs use travel-aligned `postTerraformSlopeType` where applicable; terrain restore can force orthogonal ramp when action is None but plan has cardinal slope.
 
 ### 13.8 Optional polish (backlog)
 
 - Crossroads: augment path-only neighbor checks with road-presence queries; final refresh over path cells.
 - Pass `postTerraformSlopeType` into refresh after cut-through.
 - Interstate vs slope sorting; border entry/exit prefabs.
+
+### 13.9 AUTO simulation: pathfinding walkability, reservations, perpendicular growth (BUG-47)
+
+These rules apply to **`AutoRoadBuilder`**, **`AutoZoningManager`**, and **`GridPathfinder`** / **`RoadCacheService`** during simulation ticks — not to manual street draw or generic `FindPath` used elsewhere.
+
+1. **Undeveloped light zoning:** Cells with **R/C/I light zoning only** (`ResidentialLightZoning`, `CommercialLightZoning`, `IndustrialLightZoning`) and **no building** may be treated as land that AUTO roads can plan through and replace, using shared predicates (`AutoSimulationRoadRules`). Medium/heavy zoning and buildings are not expanded for AUTO walkability.
+2. **Pathfinding:** Manual and legacy callers keep **`FindPath` / `FindPathWithRoadSpacing`** (grass and road only). AUTO simulation uses **`FindPathForAutoSimulation` / `FindPathWithRoadSpacingForAutoSimulation`**, which allow undeveloped light zoning subject to the same terrain / `CanPlaceRoad` gates as grass. Both paths also enforce **land slope walkability** (§13.10): non-walkable on pure diagonal and corner-up land slopes.
+3. **Road frontier:** **`GetRoadEdgePositions`** treats a neighbor as expandable if it is grass, forest, sea-level, or undeveloped light zoning, so road cells remain growth candidates after lateral auto-zoning.
+4. **Zoning reservations:** **`GetRoadExtensionCells`** and **`GetRoadAxialCorridorCells`** define cells where **`AutoZoningManager` must not place zones**, preserving axial strips for future street alignment. Extension cells may include the same expanded land types as in (3) when classifying the cell beyond an edge.
+5. **Perpendicular vs parallel spacing:** When scoring a growth direction **perpendicular** to the dominant road axis at an edge, **`HasParallelRoadTooClose`** is called with **`excludeAlongDir`** set to that dominant axis so the parent street line is not mistaken for a separate parallel arterial.
+6. **Commit path:** Placing AUTO roads still uses the shared validation surface (§13.1): `PathTerraformPlan`, `Apply`, prefab resolution — unchanged.
+7. **Junction prefabs after batch `PlaceRoadTileFromResolved`:** `AutoRoadBuilder` accumulates placed cells per tick and calls **`RoadManager.RefreshRoadPrefabsAfterBatchPlacement`** once (deduped set: each new tile plus cardinal road neighbors). Skips bridge deck cells so FEAT-44 deck height is preserved. Single-tile **`PlaceRoadTileAt`** still uses per-placement **`UpdateAdjacentRoadPrefabsAt`**.
+
+### 13.10 Land slope eligibility for road strokes (BUG-51)
+
+**Allowed land** for any road stroke (manual, AUTO, interstate): **`TerrainSlopeType.Flat`** and **cardinal ramps only** (`North`, `South`, `East`, `West`). Pure diagonals and all `*Up` corner types are **disallowed**.
+
+**Pipeline:** `RoadStrokeTerrainRules` truncates the filtered stroke at the first disallowed land slope inside `TryBuildFilteredPathForRoadPlan`; deck-span chord paths use the same truncation in `TryPrepareDeckSpanPlanFromAdjacentStroke`. Empty after truncation → no preview/commit (silent). **`TryPrepareRoadPlacementPlanLongestValidPrefix`** suppresses the generic “cannot extend further” warning when there is **no** slope-valid prefix on the raw stroke.
+
+**Pathfinding:** `GridPathfinder` treats disallowed land slopes as non-walkable for grass/road/AUTO light-zoning cells (with the same water / `IsWaterSlopeCell` exceptions as the truncator — see `roads-system.md`).
+
+**Interstate:** `InterstateManager.IsCellAllowedForInterstate` enforces the same land-slope rule on positive-height cells (water-slope shore cells remain allowed as before).
+
+Canonical procedural detail: **`roads-system.md`** (Land slope stroke policy).
 
 ---
 

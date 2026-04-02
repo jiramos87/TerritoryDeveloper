@@ -1,5 +1,5 @@
 ---
-description: Persistence domain — save/load pipeline, visual restore rules
+description: Persistence domain — guardrails and spec pointers
 globs:
   - "**/GameSaveManager*.cs"
   - "**/GameManager.cs"
@@ -10,26 +10,12 @@ alwaysApply: false
 
 # Persistence Domain
 
-**Spec reference:** `.cursor/specs/isometric-geography-system.md` §7.4 (save/load visual ordering), §11.5 (water persistence).
+**Deep spec:** `.cursor/specs/persistence-system.md`
+**Geography spec:** `.cursor/specs/isometric-geography-system.md` §7.4, §11.5
 
-## Save
+## Guardrails
 
-`GameSaveData` carries `List<CellData>` + `WaterMapData` (from `WaterMap.GetSerializableData()`). `WaterMapData` is a nested type inside `WaterMap.cs`.
-
-## Load pipeline
-
-Restore order matters — do not reorder:
-
-1. Restore heightmap
-2. Restore water map (or legacy path when `waterMapData` is absent)
-3. Restore grid cells
-4. Sync water body ids with shore membership
-
-**Load does NOT run** global slope restoration or sorting recalculation. Snapshot applies saved prefabs and `sortingOrder` directly.
-
-## Visual restore details
-
-- `SortCellDataForVisualRestore` — stable phase order: water → grass/shore/slope → RCI overlays → roads → building pivots → multi-cell non-pivots.
-- Building sort post-pass — re-runs building sorting on each pivot after full grid restore.
-- Grass removal on place/restore — `DestroyCellChildren(..., destroyFlatGrass: true)` when placing/restoring RCI and utility buildings.
-- Legacy saves without `waterMapData` are still supported via fallback path.
+- Load restore order is strict — do not reorder (heightmap → water map → grid → water body sync)
+- Load does NOT run global slope restoration or sorting recalculation
+- Legacy saves without `waterMapData` must still work via fallback path
+- Visual restore phase order must be stable: water → grass/shore/slope → RCI → roads → building pivots → multi-cell non-pivots

@@ -4,6 +4,7 @@ using Territory.Core;
 using Territory.Terrain;
 using Territory.Zones;
 using Territory.Geography;
+using Territory.Utilities;
 
 namespace Territory.Roads
 {
@@ -85,7 +86,7 @@ public class InterstateManager : MonoBehaviour
 
         int w = gridManager.width;
         int h = gridManager.height;
-        List<int> bordersWithLand = GetBordersWithLand(w, h, heightMap);
+        List<int> bordersWithLand = GetBordersWithLand(w, h, heightMap, terrainManager);
         if (bordersWithLand.Count < 2) return false;
 
         int runSeed = System.Environment.TickCount ^ (int)(Time.realtimeSinceStartup * 1000);
@@ -197,36 +198,36 @@ public class InterstateManager : MonoBehaviour
     /// <summary>
     /// Returns border indices (0=South, 1=North, 2=West, 3=East) that have at least one land cell valid for interstate.
     /// </summary>
-    private static List<int> GetBordersWithLand(int w, int h, HeightMap heightMap)
+    private static List<int> GetBordersWithLand(int w, int h, HeightMap heightMap, TerrainManager terrainManager)
     {
         var list = new List<int>();
         for (int b = 0; b < 4; b++)
         {
-            if (HasAnyValidCellOnBorder(b, w, h, heightMap))
+            if (HasAnyValidCellOnBorder(b, w, h, heightMap, terrainManager))
                 list.Add(b);
         }
         return list;
     }
 
-    private static bool HasAnyValidCellOnBorder(int border, int w, int h, HeightMap heightMap)
+    private static bool HasAnyValidCellOnBorder(int border, int w, int h, HeightMap heightMap, TerrainManager terrainManager)
     {
         switch (border)
         {
             case 0:
                 for (int x = 0; x < w; x++)
-                    if (IsCellAllowedForInterstate(x, 0, w, h, heightMap)) return true;
+                    if (IsCellAllowedForInterstate(x, 0, w, h, heightMap, terrainManager)) return true;
                 break;
             case 1:
                 for (int x = 0; x < w; x++)
-                    if (IsCellAllowedForInterstate(x, h - 1, w, h, heightMap)) return true;
+                    if (IsCellAllowedForInterstate(x, h - 1, w, h, heightMap, terrainManager)) return true;
                 break;
             case 2:
                 for (int y = 0; y < h; y++)
-                    if (IsCellAllowedForInterstate(0, y, w, h, heightMap)) return true;
+                    if (IsCellAllowedForInterstate(0, y, w, h, heightMap, terrainManager)) return true;
                 break;
             case 3:
                 for (int y = 0; y < h; y++)
-                    if (IsCellAllowedForInterstate(w - 1, y, w, h, heightMap)) return true;
+                    if (IsCellAllowedForInterstate(w - 1, y, w, h, heightMap, terrainManager)) return true;
                 break;
         }
         return false;
@@ -258,7 +259,7 @@ public class InterstateManager : MonoBehaviour
 
         int w = gridManager.width;
         int h = gridManager.height;
-        List<int> bordersWithLand = GetBordersWithLand(w, h, heightMap);
+        List<int> bordersWithLand = GetBordersWithLand(w, h, heightMap, terrainManager);
         if (bordersWithLand.Count < 2)
             return interstatePositions;
 
@@ -322,11 +323,21 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// True if cell is valid for interstate: not water. Flat, cardinal, diagonal and corner slopes allowed; terraforming handles diagonals.
+    /// True if cell is valid for interstate land: positive height and flat or cardinal ramp only (same stroke rule as streets; diagonal/corner-up excluded).
     /// </summary>
-    private static bool IsCellAllowedForInterstate(int x, int y, int w, int h, HeightMap heightMap)
+    private static bool IsCellAllowedForInterstate(int x, int y, int w, int h, HeightMap heightMap, TerrainManager terrainManager)
     {
-        return heightMap.GetHeight(x, y) > 0;
+        if (heightMap.GetHeight(x, y) <= 0)
+            return false;
+        if (terrainManager != null && terrainManager.IsWaterSlopeCell(x, y))
+            return true;
+        if (terrainManager != null)
+        {
+            TerrainSlopeType st = terrainManager.GetTerrainSlopeTypeAt(x, y);
+            if (!RoadStrokeTerrainRules.IsLandSlopeAllowedForRoadStroke(st))
+                return false;
+        }
+        return true;
     }
 
     /// <summary>
@@ -467,26 +478,26 @@ public class InterstateManager : MonoBehaviour
         return false;
     }
 
-    private static List<Vector2Int> GetValidBorderCells(int border, int w, int h, HeightMap heightMap)
+    private static List<Vector2Int> GetValidBorderCells(int border, int w, int h, HeightMap heightMap, TerrainManager terrainManager)
     {
         var candidates = new List<Vector2Int>();
         switch (border)
         {
             case 0:
                 for (int x = 0; x < w; x++)
-                    if (IsCellAllowedForInterstate(x, 0, w, h, heightMap)) candidates.Add(new Vector2Int(x, 0));
+                    if (IsCellAllowedForInterstate(x, 0, w, h, heightMap, terrainManager)) candidates.Add(new Vector2Int(x, 0));
                 break;
             case 1:
                 for (int x = 0; x < w; x++)
-                    if (IsCellAllowedForInterstate(x, h - 1, w, h, heightMap)) candidates.Add(new Vector2Int(x, h - 1));
+                    if (IsCellAllowedForInterstate(x, h - 1, w, h, heightMap, terrainManager)) candidates.Add(new Vector2Int(x, h - 1));
                 break;
             case 2:
                 for (int y = 0; y < h; y++)
-                    if (IsCellAllowedForInterstate(0, y, w, h, heightMap)) candidates.Add(new Vector2Int(0, y));
+                    if (IsCellAllowedForInterstate(0, y, w, h, heightMap, terrainManager)) candidates.Add(new Vector2Int(0, y));
                 break;
             case 3:
                 for (int y = 0; y < h; y++)
-                    if (IsCellAllowedForInterstate(w - 1, y, w, h, heightMap)) candidates.Add(new Vector2Int(w - 1, y));
+                    if (IsCellAllowedForInterstate(w - 1, y, w, h, heightMap, terrainManager)) candidates.Add(new Vector2Int(w - 1, y));
                 break;
         }
         return candidates;
@@ -497,7 +508,7 @@ public class InterstateManager : MonoBehaviour
     /// </summary>
     private List<Vector2Int> GetValidBorderCellsWithPreference(int border, int w, int h, HeightMap heightMap)
     {
-        var raw = GetValidBorderCells(border, w, h, heightMap);
+        var raw = GetValidBorderCells(border, w, h, heightMap, terrainManager);
         if (raw.Count == 0) return raw;
 
         var filtered = new List<Vector2Int>();
@@ -573,8 +584,8 @@ public class InterstateManager : MonoBehaviour
             Vector2Int offEnd = new Vector2Int(end.x + offset.x, end.y + offset.y);
             if (offStart.x < 0 || offStart.x >= w || offStart.y < 0 || offStart.y >= h) continue;
             if (offEnd.x < 0 || offEnd.x >= w || offEnd.y < 0 || offEnd.y >= h) continue;
-            if (!IsCellAllowedForInterstate(offStart.x, offStart.y, w, h, heightMap)) continue;
-            if (!IsCellAllowedForInterstate(offEnd.x, offEnd.y, w, h, heightMap)) continue;
+            if (!IsCellAllowedForInterstate(offStart.x, offStart.y, w, h, heightMap, terrainManager)) continue;
+            if (!IsCellAllowedForInterstate(offEnd.x, offEnd.y, w, h, heightMap, terrainManager)) continue;
 
             var altPath = PickLowerCostInterstateAStarPath(offStart, offEnd, w, h, heightMap);
             if (altPath == null || altPath.Count < 2 || altPath[altPath.Count - 1] != offEnd) continue;
@@ -608,7 +619,7 @@ public class InterstateManager : MonoBehaviour
             int dx = next.x - prev.x;
             int dy = next.y - prev.y;
             bool cardinalStep = (Mathf.Abs(dx) == 1 && dy == 0) || (dx == 0 && Mathf.Abs(dy) == 1);
-            if (cardinalStep && IsDirectStepValid(prev, next, w, h, heightMap, pathEnd))
+            if (cardinalStep && IsDirectStepValid(prev, next, w, h, heightMap, pathEnd, terrainManager))
             {
                 result.Add(next);
                 i++;
@@ -621,7 +632,7 @@ public class InterstateManager : MonoBehaviour
         return result;
     }
 
-    private static bool IsDirectStepValid(Vector2Int from, Vector2Int to, int w, int h, HeightMap heightMap, Vector2Int pathEnd)
+    private static bool IsDirectStepValid(Vector2Int from, Vector2Int to, int w, int h, HeightMap heightMap, Vector2Int pathEnd, TerrainManager terrainManager)
     {
         if (to.x < 0 || to.x >= w || to.y < 0 || to.y >= h) return false;
         int hFrom = heightMap.GetHeight(from.x, from.y);
@@ -629,7 +640,7 @@ public class InterstateManager : MonoBehaviour
         if (hTo == 0)
             return IsValidBridgeSegmentFrom(from, to, pathEnd, w, h, heightMap);
         if (hFrom > 0 && Mathf.Abs(hTo - hFrom) > 1) return false;
-        return IsCellAllowedForInterstate(to.x, to.y, w, h, heightMap);
+        return IsCellAllowedForInterstate(to.x, to.y, w, h, heightMap, terrainManager);
     }
 
     private static bool PathCrossesHill(List<Vector2Int> path, HeightMap heightMap)
@@ -708,7 +719,7 @@ public class InterstateManager : MonoBehaviour
                 int cellHeight = heightMap.GetHeight(neighbor.x, neighbor.y);
                 if (avoidHighTerrain && cellHeight > 1 && neighbor != end) continue;
                 bool allowed = cellHeight > 0
-                    ? IsCellAllowedForInterstate(neighbor.x, neighbor.y, w, h, heightMap)
+                    ? IsCellAllowedForInterstate(neighbor.x, neighbor.y, w, h, heightMap, terrainManager)
                     : IsValidBridgeSegmentFrom(current, neighbor, end, w, h, heightMap);
                 if (!allowed) continue;
 
@@ -872,7 +883,7 @@ public class InterstateManager : MonoBehaviour
                 int cellHeight = heightMap.GetHeight(c.x, c.y);
                 bool allowed = false;
                 if (cellHeight > 0)
-                    allowed = IsCellAllowedForInterstate(c.x, c.y, w, h, heightMap);
+                    allowed = IsCellAllowedForInterstate(c.x, c.y, w, h, heightMap, terrainManager);
                 else if (cellHeight == 0)
                     allowed = IsValidBridgeSegment(path, c, end, w, h, heightMap);
 

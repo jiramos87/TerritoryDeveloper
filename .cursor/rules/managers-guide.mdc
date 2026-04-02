@@ -1,59 +1,18 @@
 ---
-description: Guide for working with GameManagers
+description: GameManagers guide — guardrails and spec pointers
 globs: "**/Managers/GameManagers/*.cs"
 alwaysApply: false
 ---
 
 # GameManagers Guide
 
-## Manager Responsibilities (one-line each)
-- **GridManager** — Central hub. Isometric 2D grid, cell access, coordinate conversion, building placement, bulldozing, sorting order, pathfinding
-- **TerrainManager** — Heightmap generation, slope types, prefab selection by slope, cliff stacks (`PlaceCliffWallStack`, serialized face nudges + water-shore Y + `GetMaxCliffSortingOrderFromForegroundWaterNeighbors`)
-- **WaterManager** — Water body generation and management (multi-level lakes, rivers, shore/cliff/cascade visuals, multi-body junctions). Spec: `.cursor/specs/isometric-geography-system.md` §11–§13
-- **ForestManager** — Forest generation (sparse/medium/dense), forestation, deforestation
-- **ZoneManager** — RCI zoning (residential, commercial, industrial), zone tile placement
-- **RoadManager** — Road drawing, prefab selection by neighbors, road preview
-- **InterstateManager** — Interstate highways connecting the map to the exterior
-- **GeographyManager** — Orchestrator for all terrain initialization (terrain + water + forest + grid)
-- **DemandManager** — R/C/I demand calculation based on population, employment, forests
-- **EconomyManager** — Taxes, money, financial transactions
-- **CityStats** — Global statistics aggregator: population, employment, water/power capacity
-- **EmploymentManager** — Employment and unemployment calculation by zone
-- **SimulationManager** — Automatic simulation cycle orchestrator
-- **AutoRoadBuilder** — Automatic road network extension
-- **AutoZoningManager** — Automatic zoning of cells adjacent to roads
-- **AutoResourcePlanner** — Automatic resource building planning
-- **GrowthManager** — Zone growth logic
-- **GrowthBudgetManager** — Growth budget per category
-- **UIManager** — Main UI: popups, toolbar/tool state (`ControlPanel` in `MainScene.unity`), demand bar; UI program: `docs/ui-design-system-project.md`, context `docs/ui-design-system-context.md`, spec `.cursor/specs/ui-design-system.md` (toolbar **§3.3**; layout migration **TECH-07**)
-- **CursorManager** — Placement preview, visual cursor
-- **TimeManager** — Game speed control, simulation ticks
-- **GameNotificationManager** — Singleton. In-game notifications
-- **GameSaveManager** — Serialize/deserialize game state
-- **GameManager** — Entry point, game loading
-- **RegionalMapManager** — Regional map with neighboring cities
-- **StatisticsManager** — Historical trend tracking
-- **AnimatorManager** (AnimationManager.cs) — Animation control
-- **GameDebugInfoBuilder** — Debug text generation for game state
+**Deep spec:** `.cursor/specs/managers-reference.md`
 
-## Helper Services (extracted from managers)
-- **GridPathfinder** — A* pathfinding for road routes
-- **GridSortingOrderService** — Sorting order computation
-- **BuildingPlacementService** — Building placement and load/restore
-- **TerraformingService** — Path-level terraform plan computation
-- **PathTerraformPlan** — Terraform Apply/Revert, cut-through mode
-- **RoadPrefabResolver** — Prefab selection for path and single-cell contexts
-- **RoadPathCostConstants** — Shared cost constants for road pathfinding
-- **UrbanCentroidService** — Urban centroid and ring metrics for AUTO roads and AUTO zoning; **keep** — not part of the obsolete proposal system
-- **GameBootstrap** — Entry point, game loading flow
+## Guardrails
 
-## Obsolete / removal backlog
-- **`UrbanizationProposalManager`** and related proposal UI — **obsolete**; intentionally **not** run from `SimulationManager.ProcessSimulationTick()`. Do **not** re-enable. Full removal: **TECH-13** in `BACKLOG.md`. **UrbanCentroidService** and ring-based AUTO growth remain supported.
-
-## Rules
-- **Road terraform validation:** Use `RoadManager.TryPrepareRoadPlacementPlan` (includes `PathTerraformPlan.TryValidatePhase1Heights`) and `RoadPathValidationContext`. Streets / auto-road should use `TryPrepareRoadPlacementPlanLongestValidPrefix` when partial paths are acceptable; interstate uses full-path `TryPrepareRoadPlacementPlan` with `forbidCutThrough: true`. Do not use `ComputePathPlan` alone for placement decisions. Spec: `.cursor/specs/isometric-geography-system.md` §14.
-- Every manager is a MonoBehaviour living as a component on a scene GameObject
-- NEVER instantiate managers with `new` — they are always scene components
-- GridManager is the central hub — all cell operations go through it
-- For notifications use `GameNotificationManager.Instance`
+- Every manager is a MonoBehaviour on a scene GameObject — NEVER `new`
+- GridManager is the central hub — all cell operations go through it; do not add responsibilities
+- For notifications use `GameNotificationManager.Instance` (only singleton)
 - CityStats is the global data aggregator — read city-wide stats from here
+- Road terraform validation: use `TryPrepareRoadPlacementPlan` family, not `ComputePathPlan` alone
+- Style reference: `EconomyManager.cs` (XML docs + `#region` + `[Header]`)

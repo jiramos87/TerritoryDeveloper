@@ -5,6 +5,7 @@ using Territory.Roads;
 using Territory.Economy;
 using Territory.Terrain;
 using Territory.Zones;
+using Territory.Utilities;
 
 namespace Territory.Simulation
 {
@@ -90,6 +91,9 @@ public class AutoRoadBuilder : MonoBehaviour
     /// <summary>Cells expropriated this tick; must not be zoned until road is placed.</summary>
     public HashSet<Vector2Int> ExpropriatedCellsPendingRoad { get; private set; } = new HashSet<Vector2Int>();
 
+    /// <summary>Positions placed via <see cref="RoadManager.PlaceRoadTileFromResolved"/> this tick; deduped batch refresh for T-junction/cross prefabs.</summary>
+    private readonly List<Vector2Int> batchPlacedFromResolvedRoadCells = new List<Vector2Int>();
+
     #endregion
 
     #region Road Extension Logic
@@ -102,6 +106,7 @@ public class AutoRoadBuilder : MonoBehaviour
     private bool PlaceRoadTileInBatch(RoadPrefabResolver.ResolvedRoadTile resolved)
     {
         roadManager.PlaceRoadTileFromResolved(resolved);
+        batchPlacedFromResolvedRoadCells.Add(resolved.gridPos);
         return true;
     }
 
@@ -182,6 +187,7 @@ public class AutoRoadBuilder : MonoBehaviour
             return;
 
         CompletedSegmentsThisTick.Clear();
+        batchPlacedFromResolvedRoadCells.Clear();
 
         var edges = gridManager.GetRoadEdgePositions();
         var allRoads = gridManager.GetAllRoadPositions();
@@ -201,6 +207,7 @@ public class AutoRoadBuilder : MonoBehaviour
             placed = TryConnectToInterstate(toPlace, allRoads);
             if (placed > 0)
             {
+                FlushBatchRoadPrefabRefresh();
                 gridManager.InvalidateRoadCache();
                 return;
             }
@@ -212,6 +219,7 @@ public class AutoRoadBuilder : MonoBehaviour
             placed = TryConnectDisconnected(clusters, toPlace);
             if (placed > 0)
             {
+                FlushBatchRoadPrefabRefresh();
                 gridManager.InvalidateRoadCache();
                 return;
             }
@@ -255,8 +263,18 @@ public class AutoRoadBuilder : MonoBehaviour
                 placed += placedExp;
         }
 
+        FlushBatchRoadPrefabRefresh();
         if (placed > 0 || newProjectsStarted > 0)
             gridManager.InvalidateRoadCache();
+    }
+
+    /// <summary>One deduplicated junction refresh after all <see cref="PlaceRoadTileFromResolved"/> placements in the tick.</summary>
+    void FlushBatchRoadPrefabRefresh()
+    {
+        if (batchPlacedFromResolvedRoadCells.Count == 0 || roadManager == null)
+            return;
+        roadManager.RefreshRoadPrefabsAfterBatchPlacement(batchPlacedFromResolvedRoadCells);
+        batchPlacedFromResolvedRoadCells.Clear();
     }
 
     /// <summary>
@@ -315,7 +333,7 @@ public class AutoRoadBuilder : MonoBehaviour
         {
             Vector2Int edge = new Vector2Int(origin.x - dir.x, origin.y - dir.y);
             Vector2Int target = path[path.Count - 1];
-            var aStarPath = gridManager.FindPath(edge, target);
+            var aStarPath = gridManager.FindPathForAutoSimulation(edge, target);
             if (aStarPath != null && aStarPath.Count >= 2)
             {
                 path.Clear();
@@ -481,7 +499,9 @@ public class AutoRoadBuilder : MonoBehaviour
                 if (!IsCellPlaceableForRoad(nx, ny)) continue;
                 Vector2Int dir = new Vector2Int(Dx[d], Dy[d]);
                 if (!IsSuitableForRoad(nx, ny, dir)) continue;
-                if (HasParallelRoadTooClose(e, dir, spacing, roadSet)) continue;
+                Vector2Int rdE = GetRoadDirectionAtEdge(e, roadSet);
+                Vector2Int? exclE = (rdE.x != 0 || rdE.y != 0) && (dir.x * rdE.x + dir.y * rdE.y) == 0 ? (Vector2Int?)rdE : null;
+                if (HasParallelRoadTooClose(e, dir, spacing, roadSet, exclE)) continue;
                 Vector2Int tip = new Vector2Int(nx, ny);
                 int len = HowFarWeCanBuild(tip, dir);
                 int scoreMin = edgeParams.minLength;
@@ -549,7 +569,9 @@ public class AutoRoadBuilder : MonoBehaviour
                 if (!IsSuitableForRoad(nx, ny, dir))
                     continue;
                 int spacing = GetEffectiveParallelSpacing(@params);
-                if (HasParallelRoadTooClose(edge, dir, spacing, roadSet))
+                Vector2Int rdEdge = GetRoadDirectionAtEdge(edge, roadSet);
+                Vector2Int? exclEdge = (rdEdge.x != 0 || rdEdge.y != 0) && (dir.x * rdEdge.x + dir.y * rdEdge.y) == 0 ? (Vector2Int?)rdEdge : null;
+                if (HasParallelRoadTooClose(edge, dir, spacing, roadSet, exclEdge))
                     continue;
                 int len = HowFarWeCanBuild(tip, dir);
                 int effectiveMin = @params.minLength;
@@ -979,7 +1001,7 @@ public class AutoRoadBuilder : MonoBehaviour
         Cell c = gridManager.GetCell(x, y);
         if (c == null || c.zoneType == Zone.ZoneType.Road) return false;
         if (gridManager.IsCellOccupiedByBuilding(x, y) || c.isInterstate) return false;
-        bool isLandPlaceable = c.zoneType == Zone.ZoneType.Grass || c.HasForest();
+        bool isLandPlaceable = AutoSimulationRoadRules.IsAutoRoadLandCell(gridManager, x, y);
         bool isWaterForBridge = c.GetCellInstanceHeight() == 0;
         if (!isLandPlaceable && !isWaterForBridge) return false;
         if (terrainManager == null) return false;
@@ -994,9 +1016,9 @@ public class AutoRoadBuilder : MonoBehaviour
         if (c.zoneType == Zone.ZoneType.Road) return "already road";
         if (gridManager.IsCellOccupiedByBuilding(x, y)) return "building";
         if (c.isInterstate) return "interstate";
-        bool isLand = c.zoneType == Zone.ZoneType.Grass || c.HasForest();
+        bool isLand = AutoSimulationRoadRules.IsAutoRoadLandCell(gridManager, x, y);
         bool isWater = c.GetCellInstanceHeight() == 0;
-        if (!isLand && !isWater) return "zone not grass/water";
+        if (!isLand && !isWater) return "zone not grass/light-zoning/water";
         if (terrainManager != null && !terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true)) return "terrain/slope";
         return "unknown";
     }
@@ -1121,12 +1143,12 @@ public class AutoRoadBuilder : MonoBehaviour
         Vector2Int from = roadPositions[Random.Range(0, roadPositions.Count)];
         Vector2Int to = interstatePositions[Random.Range(0, interstatePositions.Count)];
         var path = minRoadSpacingWhenConnecting > 0
-            ? gridManager.FindPathWithRoadSpacing(from, to, minRoadSpacingWhenConnecting)
-            : gridManager.FindPath(from, to);
+            ? gridManager.FindPathWithRoadSpacingForAutoSimulation(from, to, minRoadSpacingWhenConnecting)
+            : gridManager.FindPathForAutoSimulation(from, to);
         if (path == null || path.Count <= 1)
         {
             if (minRoadSpacingWhenConnecting > 0)
-                path = gridManager.FindPath(from, to);
+                path = gridManager.FindPathForAutoSimulation(from, to);
             if (path == null || path.Count <= 1) return 0;
         }
         var roadSet = new HashSet<Vector2Int>(gridManager.GetAllRoadPositions());
@@ -1221,12 +1243,12 @@ public class AutoRoadBuilder : MonoBehaviour
         Vector2Int a = clusters[0][Random.Range(0, clusters[0].Count)];
         Vector2Int b = clusters[1][Random.Range(0, clusters[1].Count)];
         var path = minRoadSpacingWhenConnecting > 0
-            ? gridManager.FindPathWithRoadSpacing(a, b, minRoadSpacingWhenConnecting)
-            : gridManager.FindPath(a, b);
+            ? gridManager.FindPathWithRoadSpacingForAutoSimulation(a, b, minRoadSpacingWhenConnecting)
+            : gridManager.FindPathForAutoSimulation(a, b);
         if (path == null || path.Count <= 1)
         {
             if (minRoadSpacingWhenConnecting > 0)
-                path = gridManager.FindPath(a, b);
+                path = gridManager.FindPathForAutoSimulation(a, b);
             if (path == null || path.Count <= 1) return 0;
         }
         var roadSet = new HashSet<Vector2Int>(gridManager.GetAllRoadPositions());

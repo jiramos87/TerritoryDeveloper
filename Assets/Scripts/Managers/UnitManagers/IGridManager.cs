@@ -31,6 +31,8 @@ public interface IGridManager
     List<Vector2Int> GetRoadEdgePositions();
     List<Vector2Int> FindPath(Vector2Int from, Vector2Int to);
     List<Vector2Int> FindPathWithRoadSpacing(Vector2Int from, Vector2Int to, int minDistanceFromRoad);
+    List<Vector2Int> FindPathForAutoSimulation(Vector2Int from, Vector2Int to);
+    List<Vector2Int> FindPathWithRoadSpacingForAutoSimulation(Vector2Int from, Vector2Int to, int minDistanceFromRoad);
     bool IsAdjacentToRoad(int x, int y);
     HashSet<Vector2Int> GetCellsWithinDistanceOfRoad(int maxDistance);
     bool IsWithinDistanceOfRoad(int x, int y, int maxDistance);

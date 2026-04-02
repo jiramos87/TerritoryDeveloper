@@ -103,6 +103,9 @@ public class AutoZoningManager : MonoBehaviour
         int placedThisTick = 0;
         var toRemove = new List<int>();
 
+        var roadReservationCells = new HashSet<Vector2Int>(gridManager.GetRoadExtensionCells());
+        roadReservationCells.UnionWith(gridManager.GetRoadAxialCorridorCells());
+
         for (int i = 0; i < pendingSegments.Count; i++)
         {
             if (placedThisTick >= MaxZonedCellsPerTickSafetyCap || budget <= 0)
@@ -115,7 +118,7 @@ public class AutoZoningManager : MonoBehaviour
                 continue;
             }
 
-            int placed = ZoneSegmentStrip(ref seg, ref placedThisTick, ref budget);
+            int placed = ZoneSegmentStrip(ref seg, ref placedThisTick, ref budget, roadReservationCells);
             pendingSegments[i] = seg;
 
             if (seg.zonedUpToIndex >= seg.segment.length - 2)
@@ -127,7 +130,7 @@ public class AutoZoningManager : MonoBehaviour
     }
 
     /// <summary>Zones strips along a segment. Returns cells placed this call.</summary>
-    private int ZoneSegmentStrip(ref AutoRoadBuilder.PendingZoningSegment seg, ref int placedThisTick, ref int budget)
+    private int ZoneSegmentStrip(ref AutoRoadBuilder.PendingZoningSegment seg, ref int placedThisTick, ref int budget, HashSet<Vector2Int> roadReservationCells)
     {
         int L = seg.segment.length;
         Vector2Int origin = seg.segment.origin;
@@ -156,7 +159,7 @@ public class AutoZoningManager : MonoBehaviour
             for (int j = 1; j <= 4 && placedThisTick < MaxZonedCellsPerTickSafetyCap && budget >= attrs.ConstructionCost; j++)
             {
                 Vector2Int cellLeft = new Vector2Int(origin.x + k * dir.x + j * perp.x, origin.y + k * dir.y + j * perp.y);
-                if (CanZoneCell(cellLeft))
+                if (CanZoneCell(cellLeft, roadReservationCells))
                 {
                     if (growthBudgetManager.TrySpend(GrowthCategory.Zoning, attrs.ConstructionCost) && zoneManager.PlaceZoneAt(new Vector2(cellLeft.x, cellLeft.y), zoneType))
                     {
@@ -172,7 +175,7 @@ public class AutoZoningManager : MonoBehaviour
             for (int j = 1; j <= 4 && placedThisTick < MaxZonedCellsPerTickSafetyCap && budget >= attrs.ConstructionCost; j++)
             {
                 Vector2Int cellRight = new Vector2Int(origin.x + k * dir.x - j * perp.x, origin.y + k * dir.y - j * perp.y);
-                if (CanZoneCell(cellRight))
+                if (CanZoneCell(cellRight, roadReservationCells))
                 {
                     if (growthBudgetManager.TrySpend(GrowthCategory.Zoning, attrs.ConstructionCost) && zoneManager.PlaceZoneAt(new Vector2(cellRight.x, cellRight.y), zoneType))
                     {
@@ -193,10 +196,13 @@ public class AutoZoningManager : MonoBehaviour
         return placed;
     }
 
-    /// <summary>True if cell can be zoned: in bounds, not water, Grass or has forest, not road/interstate.</summary>
-    private bool CanZoneCell(Vector2Int cell)
+    /// <summary>True if cell can be zoned: in bounds, not water, Grass or has forest, not road/interstate; not in road extension or axial corridor (BUG-47).</summary>
+    private bool CanZoneCell(Vector2Int cell, HashSet<Vector2Int> roadReservationCells)
     {
         if (cell.x < 0 || cell.x >= gridManager.width || cell.y < 0 || cell.y >= gridManager.height)
+            return false;
+
+        if (roadReservationCells != null && roadReservationCells.Contains(cell))
             return false;
 
         Cell c = gridManager.GetCell(cell.x, cell.y);

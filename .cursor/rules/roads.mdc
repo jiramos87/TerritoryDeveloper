@@ -1,5 +1,5 @@
 ---
-description: Roads domain — pipeline rules, validation, guardrails
+description: Roads domain — guardrails and spec pointers
 globs:
   - "**/RoadManager*.cs"
   - "**/RoadPrefabResolver*.cs"
@@ -9,43 +9,20 @@ globs:
   - "**/RoadPathCostConstants*.cs"
   - "**/InterstateManager*.cs"
   - "**/RoadCacheService*.cs"
+  - "**/AutoRoadBuilder*.cs"
 alwaysApply: false
 ---
 
 # Roads Domain
 
-**Canonical spec:** `.cursor/specs/isometric-geography-system.md` — §9 (road prefab selection on terrain), §10 (pathfinding cost model), §13 (manual draw, interstate, bridges, shared validation).
-
-## Shared validation surface (§13.1)
-
-All persistent road placement must produce a `PathTerraformPlan`, pass Phase-1 height validation where applicable, and use `Apply` / `ResolveForPath` for commit — **do not** use `ComputePathPlan` **alone** as the only placement decision (no plan object, no Phase1, no `Apply`).
-
-**Two ways to build the plan** (both valid; see geography spec §13.1):
-
-| Plan source | When | Notes |
-|-------------|------|--------|
-| `TerraformingService.ComputePathPlan` | Default land/slope/cut-through strokes | Used inside `TryPrepareFromFilteredPathList` after filtered path checks. |
-| `TerraformingService.TryBuildDeckSpanOnlyWaterBridgePlan` | Manual draw with **locked lip→exit chord** over water/shore (FEAT-44) | All path cells `TerraformAction.None`; `waterBridgeTerraformRelaxation` + deck display height; avoids spurious cut-through / Phase1 failures on complex tails while the crossing core is valid. |
-
-| Mode | Validation method | `forbidCutThrough` |
-|------|-------------------|-------------------|
-| Manual streets / preview | `TryPrepareLockedDeckSpanBridgePlacement` **then** `TryPrepareRoadPlacementPlanLongestValidPrefix` | `false` |
-| Interstate | `TryPrepareRoadPlacementPlan` (full path) | `true` |
-| AUTO streets | Same as above; water crossings also require full segment budget in one tick and firm dry exit — `AutoRoadBuilder` reverts the plan if it cannot place every tile (no half bridges). Uniform `waterBridgeDeckDisplayHeight` for all deck prefabs on the span. | `false` |
-
-## Resolver rules (§13.7)
-
-- **A:** Elbow connectivity matches exactly two path neighbors.
-- **B:** Prefab exits align with path in/out.
-- **C:** Terraform wins — cut-through uses flat prefabs from plan, not live slope misread.
-- **D:** Prefer offset paths avoiding hills when costs close.
-- **E:** Interstate prefers straight segments.
-- **F:** Bridge approach perpendicular to water; no turn on last land cells before water.
+**Deep spec:** `.cursor/specs/roads-system.md`
+**Geography spec:** `.cursor/specs/isometric-geography-system.md` §9, §10, §13
 
 ## Guardrails
 
-- IF modifying roads → THEN call `InvalidateRoadCache()` afterward.
-- IF placing bridge → THEN axis-aligned span only; no elbows on water/water-slope cells.
-- IF manual draw holds a **locked water chord** (FEAT-44) → THEN prefer `TryBuildDeckSpanOnlyWaterBridgePlan` when stroke checks pass so preview/commit do not depend on cut-through `ComputePathPlan` for the wet core (spec §13.1).
-- IF cut-through → THEN reject when `maxHeight - baseHeight > 1` (§13.6).
-- IF slope-climb (no consecutive |Δh| > 1) → THEN use `TerraformAction.None` + `postTerraformSlopeType` — do not flatten terrain.
+- IF modifying roads → THEN call `InvalidateRoadCache()` afterward
+- IF placing a road → THEN use the preparation family (`TryPrepareRoadPlacementPlan` / longest-prefix / locked deck-span), NOT `ComputePathPlan` alone
+- IF placing bridge → THEN axis-aligned span only; no elbows on water/water-slope cells
+- IF manual draw holds a locked water chord → THEN prefer `TryBuildDeckSpanOnlyWaterBridgePlan`
+- IF cut-through → THEN reject when `maxHeight - baseHeight > 1`
+- IF slope-climb → THEN use `TerraformAction.None` + `postTerraformSlopeType` — do not flatten terrain
