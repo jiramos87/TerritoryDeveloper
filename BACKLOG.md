@@ -7,6 +7,13 @@
 
 ## In Progress
 
+- [ ] **TECH-17** — MCP server for current agentic Information Architecture (Markdown sources)
+  - Type: infrastructure / tooling
+  - Files: new project outside `Assets/Scripts/` (MCP server); `.cursor/specs/*.md`, `.cursor/rules/*.mdc`, `AGENTS.md`, `ARCHITECTURE.md` as authoritative on-disk sources
+  - Notes: **Goal:** Expose the **existing** contextual-doc layout (specs hierarchy, `agent-router` task→spec mapping, glossary, invariants in rules, architecture map) through an MCP server so agents can run **low-token, targeted** lookups instead of loading entire files. **Scope:** Implement MCP (Node.js or Python + MCP SDK) with tools that read **Markdown / MDC from the repo** — e.g. `glossary_lookup(term)`, `spec_section(spec, section_or_heading)`, `router_for_task(task_domain)`, `invariants_summary()`, `list_specs()` / `spec_outline(spec)`. **No PostgreSQL** in this issue; no bulk migration of content. **Out of scope:** Full-text search index at DB scale, regenerating `.md` from a database — those belong to **TECH-18** after **TECH-19** exists. **Acceptance:** A Cursor agent can answer "which spec for roads?" and fetch a **single** glossary entry or spec slice via tools without reading whole `isometric-geography-system.md`.
+  - Depends on: none
+  - Implementation specs: `.cursor/projects/TECH-17a.md`, `TECH-17b.md`, `TECH-17c.md`
+
 ## High Priority
 
 - [ ] **BUG-37** — Manual street drawing clears buildings and zones on cells adjacent to the traced path
@@ -277,12 +284,6 @@
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-- [ ] **TECH-17** — MCP server for current agentic Information Architecture (Markdown sources)
-  - Type: infrastructure / tooling
-  - Files: new project outside `Assets/Scripts/` (MCP server); `.cursor/specs/*.md`, `.cursor/rules/*.mdc`, `AGENTS.md`, `ARCHITECTURE.md` as authoritative on-disk sources
-  - Notes: **Goal:** Expose the **existing** contextual-doc layout (specs hierarchy, `agent-router` task→spec mapping, glossary, invariants in rules, architecture map) through an MCP server so agents can run **low-token, targeted** lookups instead of loading entire files. **Scope:** Implement MCP (Node.js or Python + MCP SDK) with tools that read **Markdown / MDC from the repo** — e.g. `glossary_lookup(term)`, `spec_section(spec, section_or_heading)`, `router_for_task(task_domain)`, `invariants_summary()`, `list_specs()` / `spec_outline(spec)`. **No PostgreSQL** in this issue; no bulk migration of content. **Out of scope:** Full-text search index at DB scale, regenerating `.md` from a database — those belong to **TECH-18** after **TECH-19** exists. **Acceptance:** A Cursor agent can answer “which spec for roads?” and fetch a **single** glossary entry or spec slice via tools without reading whole `isometric-geography-system.md`.
-  - Depends on: none
-
 - [ ] **TECH-19** — Game PostgreSQL database; first milestone — IA schema for MCP + basic tools
   - Type: infrastructure / tooling
   - Files: new project outside `Assets/Scripts/` (PostgreSQL schema, migrations, optional small service or MCP-adjacent module); seed scripts as needed
@@ -294,6 +295,12 @@
   - Files: All `.cursor/specs/*.md`, `.cursor/rules/agent-router.mdc`, `.cursor/rules/invariants.mdc`, `ARCHITECTURE.md`; MCP server from **TECH-17** (initially **file-backed**); schema / migrations / seed from **TECH-19**
   - Notes: **Goal:** After **TECH-17** (MCP over **`.md` / `.mdc`**) and **TECH-19** (Postgres + IA tables), **migrate authoritative IA content** into PostgreSQL and evolve the **same MCP** so **primary** retrieval is DB-backed. Markdown becomes **generated or secondary** for human reading. **Explicit dependency:** This work **extends the MCP built first on Markdown** in **TECH-17** — same tool contracts where possible, swapping implementation to query **TECH-19**’s database. **Scope:** (1) Parse and ingest spec sections (`isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, etc.) into `spec_sections`. (2) Populate `relationships` (e.g. HeightMap↔Cell.height, PathTerraformPlan→Phase-1→Apply). (3) Populate `invariants` from `invariants.mdc`. (4) Extend tools: `what_do_i_need_to_know(task_description)`, `search_specs(query)`, `dependency_chain(term)`. (5) Script to regenerate `.md` from DB for review. (6) Update `agent-router.mdc` — MCP tools first, Markdown fallback second. **Acceptance:** Agent resolves a multi-spec task (e.g. “bridge over multi-level lake”) via MCP reading ≤ ~500 tokens of context instead of many full-file reads.
   - Depends on: TECH-17, TECH-19
+
+- [ ] **TECH-20** — In-repo Unity development context for agents (spec + concept index)
+  - Type: documentation / agent tooling
+  - Files: new `.cursor/specs/unity-development-context.md` (or agreed name); `AGENTS.md` and `.cursor/rules/agent-router.mdc` (pointer + “read when…” row); optional short glossary subsection or cross-links to `.cursor/specs/glossary.md` for shared terms
+  - Notes: **Goal:** Give agents a **first-party** reference for **Unity concepts that routinely come up in this codebase** (e.g. MonoBehaviour lifecycle, `SerializeField` / Inspector wiring, scenes & prefabs, 2D sorting layers vs `sortingOrder`, `ScriptableObject` when used, `FindObjectOfType` policy here, execution order pitfalls, common Unity patterns **as constrained by this project** — not a full Unity manual). **Policy:** Agents should **default to this spec + existing `.cursor/` docs** for Unity API and workflow questions and **avoid opening general web/docs searches** unless the task **requires** version-specific behavior, undocumented APIs, or verification outside what the repo states. **Scope:** Curated sections, stable anchors, and links to **in-repo** examples (file/class references) where helpful. **Out of scope:** Duplicating Microsoft/Unity manual pages verbatim; replacing official docs when the user explicitly asks for external authority. **Acceptance:** `agent-router` lists when to read this spec; a new contributor agent can implement a typical Inspector + manager change using only repo context for Unity basics. **Related:** **TECH-17** (MCP can later expose this document like other specs).
+  - Depends on: none
 
 - [ ] **AUDIO-01** — Audio FX: demolition, placement, zoning, forest, 3 music themes, ambient effects
   - Type: audio/feature
