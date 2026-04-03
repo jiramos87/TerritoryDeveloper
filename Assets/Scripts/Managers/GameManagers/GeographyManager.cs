@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEngine;
 using System.Collections.Generic;
 using Territory.Core;
@@ -17,6 +18,7 @@ namespace Territory.Geography
 /// GeographyManager coordinates the initialization and management of all geographical features:
 /// terrain height, water bodies (optional lakes/sea, optional FEAT-38 rivers, optional test river), and forests.
 /// Inspector toggles: <see cref="generateStandardWaterBodies"/>, <see cref="generateProceduralRiversOnInit"/>, <see cref="generateTestRiverOnInit"/>, <see cref="useFlatTerrainOnNewGame"/>.
+/// Optional interchange: <see cref="loadGeographyInitParamsFromStreamingAssets"/> loads <c>geography_init_params</c> from StreamingAssets (TECH-41).
 /// </summary>
 public class GeographyManager : MonoBehaviour
 {
@@ -59,6 +61,17 @@ public class GeographyManager : MonoBehaviour
     [Tooltip("Four bed widths (1–3 cells effective; larger values clamp) for test river segments S=4,3,2,1. Length 4 when assigned.")]
     public int[] testRiverSegmentBedWidths = new int[] { 1, 2, 3, 2 };
 
+    [Header("Geography interchange (TECH-41)")]
+    [Tooltip("Load geography_init_params JSON from StreamingAssets at the start of each geography pipeline. When off, behavior matches pre–TECH-41 random session seed. When on, missing or invalid file falls back to random seed and Inspector river toggle.")]
+    public bool loadGeographyInitParamsFromStreamingAssets = false;
+    [Tooltip("Path relative to StreamingAssets (e.g. Config/geography-default.json).")]
+    public string geographyInitParamsRelativePath = "Config/geography-default.json";
+
+    /// <summary>Advisory <c>map</c> from last successful interchange load (for dimension mismatch warning).</summary>
+    private GeographyInitMapDto geographyInitMapAdvisory;
+    /// <summary>When set, overrides <see cref="generateProceduralRiversOnInit"/> for the current pipeline run.</summary>
+    private bool? riversEnabledFromInterchange;
+
     // Current geographical data (for save/load operations)
     private GeographyData currentGeographyData;
 
@@ -94,7 +107,7 @@ public class GeographyManager : MonoBehaviour
 
     public void InitializeGeography()
     {
-        MapGenerationSeed.EnsureSessionMasterSeed();
+        ApplyGeographyInitInterchangeAtPipelineStart();
 
         if (regionalMapManager != null)
         {
@@ -111,11 +124,13 @@ public class GeographyManager : MonoBehaviour
             gridManager.InitializeGrid();
         }
 
+        WarnIfGeographyInitMapMismatchAgainstGrid();
+
         if (waterManager != null)
         {
             waterManager.SetGenerateStandardWater(generateStandardWaterBodies);
             waterManager.InitializeWaterMap();
-            if (generateStandardWaterBodies && generateProceduralRiversOnInit)
+            if (generateStandardWaterBodies && GetEffectiveProceduralRiversOnInit())
                 waterManager.GenerateProceduralRiversForNewGame();
             if (generateTestRiverOnInit)
                 waterManager.GenerateTestRiver(testRiverSegmentBedWidths);
@@ -169,6 +184,70 @@ public class GeographyManager : MonoBehaviour
         }
 
         NotifyMiniMapAfterGeographyReady();
+    }
+
+    private bool GetEffectiveProceduralRiversOnInit()
+    {
+        return riversEnabledFromInterchange ?? generateProceduralRiversOnInit;
+    }
+
+    /// <summary>
+    /// Loads <c>geography_init_params</c> from StreamingAssets when enabled; sets <see cref="MapGenerationSeed"/> and optional river override.
+    /// </summary>
+    private void ApplyGeographyInitInterchangeAtPipelineStart()
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        UnityEngine.Profiling.Profiler.BeginSample("GeographyInitParams.Load");
+#endif
+        geographyInitMapAdvisory = null;
+        riversEnabledFromInterchange = null;
+        try
+        {
+            if (!loadGeographyInitParamsFromStreamingAssets)
+            {
+                MapGenerationSeed.EnsureSessionMasterSeed();
+                return;
+            }
+
+            string path = Path.Combine(Application.streamingAssetsPath, geographyInitParamsRelativePath);
+            if (!GeographyInitParamsLoader.TryLoadFromPath(path, out GeographyInitParamsDto dto, out string err))
+            {
+                if (!string.IsNullOrEmpty(err))
+                    DebugHelper.LogWarning($"GeographyManager: Geography init interchange — {err}");
+                MapGenerationSeed.EnsureSessionMasterSeed();
+                return;
+            }
+
+            MapGenerationSeed.SetSessionMasterSeed(dto.seed);
+            if (dto.rivers != null)
+                riversEnabledFromInterchange = dto.rivers.enabled;
+            if (dto.map != null)
+                geographyInitMapAdvisory = dto.map;
+
+            if (dto.water != null)
+                DebugHelper.Log($"GeographyManager: Interchange water.seaBias={dto.water.seaBias} (reserved for FEAT-46; not applied).");
+            if (dto.forest != null)
+                DebugHelper.Log($"GeographyManager: Interchange forest.coverageTarget={dto.forest.coverageTarget} (reserved for FEAT-46; not applied).");
+
+            DebugHelper.Log($"GeographyManager: Loaded geography interchange StreamingAssets/{geographyInitParamsRelativePath} (seed applied; procedural rivers={(riversEnabledFromInterchange.HasValue ? riversEnabledFromInterchange.Value.ToString() : "Inspector")}).");
+        }
+        finally
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            UnityEngine.Profiling.Profiler.EndSample();
+#endif
+        }
+    }
+
+    private void WarnIfGeographyInitMapMismatchAgainstGrid()
+    {
+        if (geographyInitMapAdvisory == null || gridManager == null)
+            return;
+        if (gridManager.width != geographyInitMapAdvisory.width || gridManager.height != geographyInitMapAdvisory.height)
+        {
+            DebugHelper.LogWarning(
+                $"GeographyManager: Interchange map ({geographyInitMapAdvisory.width}x{geographyInitMapAdvisory.height}) does not match grid ({gridManager.width}x{gridManager.height}). Interchange map is advisory only (TECH-41).");
+        }
     }
 
     /// <summary>
@@ -283,6 +362,9 @@ public class GeographyManager : MonoBehaviour
     /// </summary>
     public void ReinitializeGeographyForNewGame()
     {
+        ApplyGeographyInitInterchangeAtPipelineStart();
+        WarnIfGeographyInitMapMismatchAgainstGrid();
+
         if (regionalMapManager != null)
             regionalMapManager.InitializeRegionalMap();
 
@@ -293,7 +375,7 @@ public class GeographyManager : MonoBehaviour
         {
             waterManager.SetGenerateStandardWater(generateStandardWaterBodies);
             waterManager.InitializeWaterMap();
-            if (generateStandardWaterBodies && generateProceduralRiversOnInit)
+            if (generateStandardWaterBodies && GetEffectiveProceduralRiversOnInit())
                 waterManager.GenerateProceduralRiversForNewGame();
             if (generateTestRiverOnInit)
                 waterManager.GenerateTestRiver(testRiverSegmentBedWidths);

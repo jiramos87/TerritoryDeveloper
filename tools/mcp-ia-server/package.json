@@ -11,9 +11,9 @@
     "verify": "tsx scripts/verify-mcp.ts",
     "validate:fixtures": "tsx scripts/validate-fixtures.ts",
     "generate:ia-indexes": "tsx scripts/generate-ia-indexes.ts",
-    "test": "node --import tsx --test tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts",
-    "test:watch": "node --import tsx --test --watch tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts",
-    "test:coverage": "c8 --src src --include 'src/parser/**/*.ts' --include 'src/ia-index/**/*.ts' --exclude '**/*.test.ts' --check-coverage --lines 90 --reporter text node --import tsx --test tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts"
+    "test": "node --import tsx --test tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts tests/schemas/*.test.ts",
+    "test:watch": "node --import tsx --test --watch tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts tests/schemas/*.test.ts",
+    "test:coverage": "c8 --src src --include 'src/parser/**/*.ts' --include 'src/ia-index/**/*.ts' --exclude '**/*.test.ts' --check-coverage --lines 90 --reporter text node --import tsx --test tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts tests/schemas/*.test.ts"
   },
   "engines": {
     "node": ">=18"

@@ -1,0 +1,9 @@
+{
+  "artifact": "geography_init_params",
+  "schema_version": 1,
+  "seed": 42,
+  "map": { "width": 64, "height": 64 },
+  "water": { "seaBias": 0.2 },
+  "rivers": { "enabled": true },
+  "forest": { "coverageTarget": 0.15 }
+}

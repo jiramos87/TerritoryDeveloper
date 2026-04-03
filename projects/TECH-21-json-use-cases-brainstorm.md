@@ -4,7 +4,7 @@
 
 **Status:** Living draft — trim or mark **Accepted** / **Deferred** as implementation lands.
 
-**Program specs:** **TECH-40** (infra — completed; see [`BACKLOG.md`](../BACKLOG.md) **§ Completed**, [`docs/schemas/README.md`](../docs/schemas/README.md), [`docs/mcp-ia-server.md`](../docs/mcp-ia-server.md)), [TECH-41](../.cursor/projects/TECH-41.md) (current payloads), [TECH-42](../.cursor/projects/TECH-42.md) (future DB/API).
+**Program specs:** **TECH-40** (infra — completed; [`BACKLOG.md`](../BACKLOG.md) **§ Completed**), **TECH-41** (current payloads — completed; same section), [TECH-42](../.cursor/projects/TECH-42.md) (future DB/API). Durable pointers: [`docs/schemas/README.md`](../docs/schemas/README.md), **glossary** **Interchange JSON** / **geography_init_params**, [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 
 **Related:** **[TECH-36](../.cursor/projects/TECH-36.md)** program (**TECH-37**–**TECH-39** shares **GeographyInitParams** / **Zod** with MCP); [TECH-38](../.cursor/projects/TECH-38.md) Wave D (geography harness JSON); [TECH-39](../.cursor/projects/TECH-39.md) `geography_init_params_validate`; [`docs/planned-domain-ideas.md`](../docs/planned-domain-ideas.md) (**FEAT-46**–**FEAT-48**); [agent-friendly-tasks-with-territory-ia-context.md](agent-friendly-tasks-with-territory-ia-context.md) (**I1** reduces multi-`spec_section` churn).
 

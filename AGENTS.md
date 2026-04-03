@@ -65,7 +65,7 @@ Project-specific specs for features or complex bugs **in active development** li
 
 Charters and discovery for cross-cutting programs live under `docs/` as listed in `ARCHITECTURE.md`. The **territory-ia** MCP is documented in [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) and [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md).
 
-**Umbrella backlog programs** (one charter spec + phased child issues): **[TECH-21](.cursor/projects/TECH-21.md)** — **JSON** schemas, validation, indexes, runtime DTOs (**TECH-40** completed — **TECH-41** → **TECH-42**); **[TECH-36](.cursor/projects/TECH-36.md)** — **computational** **compute-lib** + Unity extractions + MCP tools (**TECH-37** → **TECH-38** → **TECH-39**). For **`backlog_issue`**, child rows still have their own **Spec** paths—read the umbrella charter when scope spans multiple phases.
+**Umbrella backlog programs** (one charter spec + phased child issues): **[TECH-21](.cursor/projects/TECH-21.md)** — **JSON** schemas, validation, indexes, runtime DTOs (**TECH-40** / **TECH-41** **§ Completed** — **TECH-42** open); **[TECH-36](.cursor/projects/TECH-36.md)** — **computational** **compute-lib** + Unity extractions + MCP tools (**TECH-37** → **TECH-38** → **TECH-39**). For **`backlog_issue`**, child rows still have their own **Spec** paths—read the umbrella charter when scope spans multiple phases.
 
 ## Terminology and information consistency
 
@@ -93,7 +93,7 @@ Cursor loads **`.cursor/rules/terminology-consistency.mdc`** (`alwaysApply`) as 
 
 ### Working on an issue
 
-1. Prefer **`backlog_issue`** (territory-ia) for the issue id when MCP is enabled; otherwise read `BACKLOG.md`. If the issue is a **child** of **TECH-21** or **TECH-36**, skim the **umbrella** spec (`.cursor/projects/TECH-21.md` or `TECH-36.md`) for program intent, then open the **child** spec (**TECH-41**–**TECH-42** for JSON payloads — **TECH-40** completed; or **TECH-37**–**TECH-39** for **compute-lib**).
+1. Prefer **`backlog_issue`** (territory-ia) for the issue id when MCP is enabled; otherwise read `BACKLOG.md`. If the issue is a **child** of **TECH-21** or **TECH-36**, skim the **umbrella** spec (`.cursor/projects/TECH-21.md` or `TECH-36.md`) for program intent, then open the **child** spec (**TECH-42** for remaining JSON program work — **TECH-40** / **TECH-41** **§ Completed**; or **TECH-37**–**TECH-39** for **compute-lib**).
 2. Read the files listed in the issue's "Files" field
 3. Plan mode: analyze and propose a plan
 4. Agent mode: implement, then move issue to "In progress"

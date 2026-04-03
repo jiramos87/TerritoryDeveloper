@@ -5,7 +5,7 @@
 > **Created:** 2026-04-03  
 > **Last updated:** 2026-04-03
 
-**Parent program:** [TECH-21](TECH-21.md) · **Depends on:** **TECH-41** (soft: **TECH-40** for policy) · **Feeds:** **TECH-19** implementation
+**Parent program:** [TECH-21](TECH-21.md) · **Depends on:** **TECH-41** (completed — [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** **TECH-41**; soft: **TECH-40** for policy) · **Feeds:** **TECH-19** implementation
 
 ## 1. Summary
 

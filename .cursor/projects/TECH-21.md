@@ -5,7 +5,7 @@
 > **Created:** 2026-04-02  
 > **Last updated:** 2026-04-11
 
-**Phased delivery (separate backlog issues + project specs):** **TECH-40** (**Phase A** — completed; durable: [`docs/schemas/README.md`](../../docs/schemas/README.md), [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md), **glossary** **IA index manifest** / **Interchange JSON**; closure record [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** **TECH-40**), **[TECH-41](TECH-41.md)** (current **runtime**/**Editor** payloads: **G1**/**G2**/**G4**, **E3**, **P1**/**P2**/**P4**), **[TECH-42](TECH-42.md)** (future **TECH-19** shapes: **B1**/**B3**, **P5**). **B2** append-only log → **[TECH-43](../../BACKLOG.md)** (backlog placeholder, no project spec yet).
+**Phased delivery (separate backlog issues + project specs):** **TECH-40** (**Phase A** — completed; [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** **TECH-40**), **TECH-41** (**Phase B** — completed; **G1**/**G2**/**G4**, **E3** — durable: **glossary** **Interchange JSON** / **geography_init_params**, **`ARCHITECTURE.md`**, `docs/schemas/`, `StreamingAssets/Config/`, Editor **Reports** menus; closure [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** **TECH-41**), **[TECH-42](TECH-42.md)** (future **TECH-19** shapes: **B1**/**B3**, **P5**). **B2** append-only log → **[TECH-43](../../BACKLOG.md)** (backlog placeholder, no project spec yet).
 
 **Brainstorm (exploration + FAQ):** [`projects/TECH-21-json-use-cases-brainstorm.md`](../../projects/TECH-21-json-use-cases-brainstorm.md)
 
@@ -15,13 +15,13 @@
 
 ## 1. Summary
 
-This file is the **program charter** for **TECH-21**. Executable work lives in **TECH-40**–**TECH-42**. The program introduces **versioned, validated JSON** for tooling and **init**/**interchange** layers, **machine indexes** for specs and glossary (**without** duplicating authoritative Markdown — **TECH-18**), and documented patterns for a future **Postgres** layer (**TECH-19**). Player **Save data** must not change format without a **dedicated migration** issue.
+This file is the **program charter** for **TECH-21**. **TECH-40** and **TECH-41** are **completed** (see [`BACKLOG.md`](../../BACKLOG.md) **§ Completed**); remaining executable charter work is **TECH-42**. The program introduces **versioned, validated JSON** for tooling and **init**/**interchange** layers, **machine indexes** for specs and glossary (**without** duplicating authoritative Markdown — **TECH-18**), and documented patterns for a future **Postgres** layer (**TECH-19**). Player **Save data** must not change format without a **dedicated migration** issue.
 
 ## 2. Resolved decisions (architecture)
 
 | Topic | Decision |
 |-------|----------|
-| Umbrella vs child specs | **TECH-21** = charter only; **TECH-41**/**42** hold **Implementation Plan** checklists; **TECH-40** (**Phase A**) completed — **BACKLOG** **§ Completed**. |
+| Umbrella vs child specs | **TECH-21** = charter only; **TECH-42** holds the remaining **Implementation Plan**; **TECH-40** / **TECH-41** completed — **BACKLOG** **§ Completed**. |
 | Spec duplication | No full **reference spec** bodies in JSON; **I1**/**I2** are **indexes** and anchors only. |
 | `schema_version` | Optional in payload when JSON Schema `$id` / filename semver suffices; required when **DB**, **Save-adjacent** export, or **MCP** consumer needs **one integer** for **branching migrations**. See brainstorm **§FAQ**. |
 | Artifact identity | Every interchange JSON type carries a logical `artifact` (or `kind`) string; **SQL** table name is separate at persistence layer. |
@@ -67,6 +67,7 @@ TECH-36 / TECH-37–39 — soft coordination on **GeographyInitParams** / Zod
 | 2026-04-03 | Link brainstorm use-case doc | Prioritize scenarios before **pilot** | Inline only in spec |
 | 2026-04-03 | Split **TECH-40**/**41**/**42** | Separate infra, current payloads, future DB/API | Single **TECH-21** issue only |
 | 2026-04-11 | **TECH-40** closed | **Phase A** shipped: `docs/schemas/`, **IA index** JSON, **IA tools** **CI**; project spec removed per **`project-spec-close`** | — |
+| 2026-04-11 | **TECH-41** closed | **Phase B** shipped: **G4** StreamingAssets + **`GeographyManager`**, **G1**/**G2** Editor interchange exports, Zod parity, **E3** in **`ARCHITECTURE.md`**; project spec removed per **`project-spec-close`** | — |
 
 ## 7. Implementation Plan
 
@@ -75,7 +76,7 @@ TECH-36 / TECH-37–39 — soft coordination on **GeographyInitParams** / Zod
 | Phase | Issue | Spec | Focus |
 |-------|-------|------|--------|
 | A | **TECH-40** | (completed — see **BACKLOG** **§ Completed** **TECH-40**; **glossary** / **docs/schemas** / **docs/mcp-ia-server.md**) | Schemas, **CI**, **I1**, **I2**, versioning policy |
-| B | **TECH-41** | [TECH-41.md](TECH-41.md) | **G1**, **G2**, **G4**, **E3**, **P1**, **P2**, **P4** |
+| B | **TECH-41** | (completed — [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** **TECH-41**; **glossary** / **`ARCHITECTURE.md`** / `docs/schemas/`) | **G1**, **G2**, **G4**, **E3**, **P1**, **P2**, **P4** |
 | C | **TECH-42** | [TECH-42.md](TECH-42.md) | **B1**, **B3**, **P5**, **TECH-19** alignment |
 
 **Placeholder:** **TECH-43** — **B2** append-only JSON lines (see **BACKLOG.md**).

@@ -60,7 +60,7 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. No depend
 
 `GeographyManager` orchestrates startup:
 1. Regional map with neighboring cities
-2. Grid + heightmap (40×40 designer template centered; procedural fill on larger maps)
+2. Optional **interchange** load of `geography_init_params` from StreamingAssets (session **MapGenerationSeed** + optional procedural-rivers override); then grid + heightmap (40×40 designer template centered; procedural fill on larger maps)
 3. Water map + lake bodies (depression-fill or legacy sea-level mask)
 4. Interstate highways (up to 3 random attempts + deterministic fallback)
 5. Forests (conditional)
@@ -86,6 +86,10 @@ GridManager dispatches clicks by active mode → zoning, road drawing, building 
 
 - **Save:** Grid data (`List<CellData>`) + `WaterMapData` serialized on `GameSaveData`.
 - **Load:** Restore heightmap → restore water map (or legacy path) → restore grid → sync water body ids with shore membership. Snapshot applies saved prefabs, sorting order, water body type/id. Does **not** run global slope restoration or sorting recalculation (see geography spec §7.4).
+
+### Interchange JSON (config and tooling, TECH-41)
+
+Data is split into three layers: **runtime** (`MonoBehaviour` managers and live `Cell` on the grid), **interchange** (JSON DTOs with string `artifact` and optional `schema_version` — validated by JSON Schema under `docs/schemas/` and Zod in `tools/mcp-ia-server`), and **persistence** (`CellData` / `GameSaveData` / `WaterMapData` on the save/load path only). Geography initialization may load `geography_init_params` once per pipeline from `StreamingAssets` (`GeographyInitParamsLoader`, `GeographyManager`). Editor exports for diagnostics live under `tools/reports/` (see `unity-development-context.md` §10).
 
 ### UI / UX design system
 

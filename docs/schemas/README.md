@@ -17,4 +17,11 @@ Machine-readable contracts for **interchange** JSON (tools, **MCP**, fixtures)�
 
 ## Pilot
 
-- **`geography-init-params.v1.schema.json`** — **`artifact`**: `geography_init_params`; aligns with **TECH-21** brainstorm **G4** and **TECH-41** / **TECH-39** naming goals (field names shared with **compute-lib** **Zod** when that schema lands).
+- **`geography-init-params.v1.schema.json`** — **`artifact`**: `geography_init_params`; aligns with **TECH-21** brainstorm **G4** and **TECH-41** / **TECH-39** naming goals. Zod mirror: `tools/mcp-ia-server/src/schemas/geography-init-params-zod.ts` (CI via `validate:fixtures` + unit tests).
+
+## TECH-41 interchange (tooling exports)
+
+| Schema | `artifact` | Role |
+|--------|------------|------|
+| `cell-chunk-interchange.v1.schema.json` | `terrain_cell_chunk` | Axis-aligned **chunk** of **Cell** subset + height (Editor export, **Play Mode**) |
+| `world-snapshot-dev.v1.schema.json` | `world_snapshot_dev` | **Water map** histogram + optional **HeightMap** raster (diagnostics only) |

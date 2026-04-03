@@ -7,6 +7,8 @@
 
 `GameSaveData` carries `List<CellData>` + `WaterMapData` (from `WaterMap.GetSerializableData()`). `WaterMapData` is a nested type inside `WaterMap.cs`.
 
+**Interchange JSON** (tools, MCP, StreamingAssets config) is separate from Save data: schemas and DTOs use `artifact` / `schema_version` per `docs/schemas/README.md`. Do not treat `tools/reports/*-interchange-*.json` or `world_snapshot_dev` exports as Load pipeline inputs unless a dedicated issue defines migration (see `ARCHITECTURE.md` — Interchange JSON).
+
 ## Load pipeline
 
 Restore order matters — do not reorder:

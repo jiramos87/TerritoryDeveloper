@@ -24,7 +24,7 @@ Default: spec **Status** is **Final** or **In Review** with game-logic **Open Qu
 
 ## Seed prompt (parameterize)
 
-Replace `{SPEC_PATH}` with the project spec path (e.g. `.cursor/projects/TECH-41.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
+Replace `{SPEC_PATH}` with the project spec path (e.g. `.cursor/projects/TECH-42.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
 
 ```markdown
 Implement @{SPEC_PATH} following its ## 7. Implementation Plan in order.

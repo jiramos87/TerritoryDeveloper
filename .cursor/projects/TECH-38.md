@@ -134,7 +134,7 @@ Script: read **JSON** `{ seed, mapSize, lakeSettings, riverSettings, ... }` → 
 
 ### 7.5 Wave D — **Stochastic** **geography** harness
 
-- [ ] Define **`GeographyInitParams`** **DTO** (C# **Serializable** or **record**) mirroring **TECH-41** **JSON** subset: **seed**, **width**, **height**, **lake** **fill** **settings** **ids**, **river** **enabled**, etc.
+- [ ] Reuse or extend shipped **`Territory.Persistence.GeographyInitParamsDto`** / **`GeographyInitParamsLoader`** (**TECH-41**) and JSON Schema [`docs/schemas/geography-init-params.v1.schema.json`](../../docs/schemas/geography-init-params.v1.schema.json) — do not fork a second **DTO** shape for the harness.
 - [ ] **Editor** menu or **`batchmode`** entry: **`TerritoryTools.ExportGeographyInitReport`** writing **`tools/reports/last-geography-init.json`** (gitignored) + optional committed **golden** for **CI** **smoke**.
 - [ ] Document **every** **RNG** **derivation** (master seed → **lake** shuffle → **river** **noise**) in **English** in **`tools/reports/TECH-38-rng-derivation.md`**.
 - [ ] Wire **optional** **Node** script **`tools/scripts/validate-geography-init.mjs`** that checks **schema** and **monotonicity** **flags** (e.g. **H_bed** along **river** **polyline** if exported).

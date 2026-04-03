@@ -141,15 +141,19 @@ For **Unity**-only vocabulary (**MonoBehaviour**, **Inspector**, **SerializeFiel
 |----------|---------------------------|------|
 | Agent context | `tools/reports/agent-context-{UTC-timestamp}.json` | `schema_version`, `exported_at_utc`, active scene, selection summary, bounded **grid** sample (**Cell**, **`HeightMap`**, **`WaterMap`** fields) |
 | Sorting debug | `tools/reports/sorting-debug-{UTC-timestamp}.md` | Per-**cell** lines derived from **`TerrainManager`** public sorting APIs and sampled **`SpriteRenderer.sortingOrder`**; narrative ties to [`isometric-geography-system.md`](isometric-geography-system.md) **Sorting order** (do not duplicate formula authority here) |
+| Cell chunk interchange | `tools/reports/cell-chunk-interchange-{UTC-timestamp}.json` | **Play Mode**; **`artifact`**: `terrain_cell_chunk` — **Cell** subset + heights ( **`HeightMap`** when available); [`cell-chunk-interchange.v1.schema.json`](../../docs/schemas/cell-chunk-interchange.v1.schema.json) |
+| World snapshot dev | `tools/reports/world-snapshot-dev-{UTC-timestamp}.json` | **Play Mode**; **`artifact`**: `world_snapshot_dev` — **Water map** body-id histogram + optional **HeightMap** raster; not Save data ([`world-snapshot-dev.v1.schema.json`](../../docs/schemas/world-snapshot-dev.v1.schema.json)) |
 
 Generated `*.json` / `*.md` under `tools/reports/` are **gitignored** by policy; the folder may contain **`.gitkeep`** only in VCS. Agents should reference exports in prompts with workspace paths (e.g. `@tools/reports/agent-context-….json`).
 
 **Expected Unity Editor behavior:**
 
-1. **Menu location:** Top bar **Territory Developer → Reports** with two sibling items:
+1. **Menu location:** Top bar **Territory Developer → Reports**:
    - **Export Agent Context**
    - **Export Sorting Debug (Markdown)**
-2. **When menus appear:** After the project compiles successfully, **Unity** discovers `[MenuItem]` on `AgentDiagnosticsReportsMenu` ([`AgentDiagnosticsReportsMenu.cs`](../../Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs)). If the submenu is missing, check **Console** for script compile errors in **Editor** scripts.
+   - **Export Cell Chunk (Interchange)** — [`InterchangeJsonReportsMenu.cs`](../../Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs); **Play Mode** only
+   - **Export World Snapshot (Dev Interchange)** — same; **Play Mode** only
+2. **When menus appear:** After the project compiles successfully, **Unity** discovers `[MenuItem]` on `AgentDiagnosticsReportsMenu` ([`AgentDiagnosticsReportsMenu.cs`](../../Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs)) and `InterchangeJsonReportsMenu`. If the submenu is missing, check **Console** for script compile errors in **Editor** scripts.
 3. **Export Agent Context (JSON):** Must run in **Edit Mode** or **Play Mode** without throwing. If **`GridManager`** is absent or **`isInitialized`** is false, the JSON still validates; the `grid` block documents that state and may omit **cell** samples.
 4. **Export Sorting Debug (Markdown):**
    - **Edit Mode:** Writes a **stub** file stating that full **Sorting order** breakdown requires **Play Mode** with an initialized **grid** — this is **expected**, not a failure.

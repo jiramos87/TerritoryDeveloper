@@ -31,6 +31,16 @@ namespace Territory.Persistence
                 RollNewMasterSeed();
         }
 
+        /// <summary>
+        /// Sets the session master seed from interchange <c>geography_init_params.seed</c> (TECH-41).
+        /// Replaces any prior master seed for this process (e.g. after <see cref="RollNewMasterSeed"/> from New Game menu).
+        /// </summary>
+        public static void SetSessionMasterSeed(int seed)
+        {
+            masterSeed = seed == 0 ? 1 : seed;
+            hasMasterSeed = true;
+        }
+
         /// <summary>Stable derived seed for Perlin offsets on extended terrain (replaces fixed TerrainGenSeed).</summary>
         public static int GetTerrainProceduralOffsetSeed()
         {

@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-03T21:02:54.979Z",
+  "last_generated": "2026-04-03T21:13:25.324Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -445,6 +445,10 @@
     },
     "Reference spec": {
       "spec_key": "agents",
+      "anchor": ""
+    },
+    "geography_init_params": {
+      "spec_key": "persistence-system",
       "anchor": ""
     }
   }

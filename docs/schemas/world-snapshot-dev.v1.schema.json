@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "territory-developer:schemas/world-snapshot-dev.v1",
+  "title": "World snapshot dev interchange (v1)",
+  "description": "Editor diagnostics: Water map histogram + optional HeightMap raster (TECH-41 G1). Not Save data or Load pipeline input.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact",
+    "schema_version",
+    "map_width",
+    "map_height",
+    "water_map_width",
+    "water_map_height",
+    "water_body_histogram",
+    "heights_row_major_width",
+    "heights_row_major_height",
+    "heights_row_major"
+  ],
+  "properties": {
+    "artifact": {
+      "type": "string",
+      "const": "world_snapshot_dev",
+      "description": "Logical model id for validators and agents."
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "map_width": { "type": "integer", "minimum": 1 },
+    "map_height": { "type": "integer", "minimum": 1 },
+    "water_map_width": { "type": "integer", "minimum": 0 },
+    "water_map_height": { "type": "integer", "minimum": 0 },
+    "water_body_histogram": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["body_id", "cell_count"],
+        "properties": {
+          "body_id": { "type": "integer" },
+          "cell_count": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "heights_row_major_width": { "type": "integer", "minimum": 0 },
+    "heights_row_major_height": { "type": "integer", "minimum": 0 },
+    "heights_row_major": {
+      "type": "array",
+      "items": { "type": "integer" }
+    },
+    "notes": { "type": "string" }
+  }
+}
