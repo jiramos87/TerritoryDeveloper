@@ -9,7 +9,7 @@
 
 ## 1. Summary
 
-After **TECH-19** provides the **PostgreSQL** schema and read surface, migrate **Information Architecture** consumption so **territory-ia** MCP can use **DB-backed** retrieval as the **primary** path (Markdown generated or secondary). Implement additional tools in **phases**: cross-spec search, kickoff checklist, dependency edges, markdown-backed quick tools, domain **topic bundles**, and **`unity_context_section`** over **`.cursor/specs/unity-development-context.md`** (reference spec; shipped **TECH-20** completed).
+After **TECH-19** provides the **PostgreSQL** schema and read surface, migrate **Information Architecture** consumption so **territory-ia** MCP can use **DB-backed** retrieval as the **primary** path (Markdown generated or secondary). Implement additional tools in **phases**: cross-spec search, kickoff checklist, dependency edges, markdown-backed quick tools, domain **topic bundles**, and **`unity_context_section`** over **`.cursor/specs/unity-development-context.md`** (reference spec; **TECH-20** completed — [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md)). **Depends on:** **TECH-19**; **TECH-17** baseline MCP is archived (same file).
 
 ## 2. Goals and Non-Goals
 

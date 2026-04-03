@@ -11,32 +11,78 @@
 
 Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP platform** → **agent workflow & CI helpers** → **research tooling**.
 
-- [ ] **TECH-21** — Extend and leverage **JSON** in the game system (serialization, tooling, future backend)
+- [ ] **TECH-21** — **JSON program** (umbrella): interchange, schemas, runtime payloads, future backend shapes
   - Type: technical / data interchange
-  - Files: `.cursor/specs/persistence-system.md` (when save or interchange shapes stabilize); save/load and **geography initialization** code paths that already emit or consume structured data; optional `StreamingAssets`/config JSON; `tools/mcp-ia-server/` and other Node **scripts** that benefit from shared JSON schemas; future backend modules from **TECH-19** (align payloads and migrations)
+  - Files: umbrella only — see **TECH-40**, **TECH-41**, **TECH-42**; charter `.cursor/projects/TECH-21.md`; [`projects/TECH-21-json-use-cases-brainstorm.md`](projects/TECH-21-json-use-cases-brainstorm.md); reference `.cursor/specs/persistence-system.md`, `docs/planned-domain-ideas.md`
   - Spec: `.cursor/projects/TECH-21.md`
-  - Notes: **Goals:** (1) **Runtime** — improve **performance** and maintainability where **JSON** or other **serialized** DTO-style data beats ad-hoc string/binary formats or repeated heavy reflection (profile before wide refactors). (2) **Development** — use **JSON** artifacts and TypeScript/JavaScript parsing for **agentic** tools, batch **scripts**, and validation (schemas, fixtures, golden files). (3) **Future backend** — define which **domain models** are safe to represent as **JSON** (save subsets, telemetry, IA exports, API bodies) and how they will map to **database** tables or documents when **TECH-19**+ lands; document versioning and migration expectations. **Out of scope until decided:** replacing the entire **save/load** pipeline without a phased plan; duplicating authoritative **spec** sources in JSON (see **TECH-18**). **Related:** **TECH-15** (**New Game** / **geography initialization** performance), **TECH-16** (**simulation tick** performance), **FEAT-37c** (**Load Game** optimizations), **TECH-19** / **TECH-18** (Postgres + MCP evolution).
-  - Acceptance: Written plan (issue update or short doc under `docs/` agreed in review) listing prioritized **JSON** use cases (game vs tooling vs future API); at least one **pilot** implementation or exported schema that proves the pattern (e.g. config slice, tool fixture format, or save-adjacent export) without breaking existing **save data**; glossary/spec terms used consistently for any new named payloads
-  - Depends on: none (coordinate with **TECH-19** when backend schema work starts)
+  - Notes: **Program charter** for **JSON** DTOs, **CI** validation, **spec/glossary** machine indexes (no full-spec duplication — **TECH-18**), **Geography initialization** / harness payloads (**TECH-15**, **TECH-38** Wave D, **TECH-39** `geography_init_params_validate`), and **TECH-19**-ready row+blob patterns. **Phased delivery:** **TECH-40** (infra + indexes + schema policy), **TECH-41** (current game/tooling payloads + **parse-once** / catalogs), **TECH-42** (future domains + DB/API envelopes + streaming guidance). **Related:** **TECH-36** program (**compute-lib** shares Zod/schemas with MCP), **FEAT-46**–**FEAT-48** (planned parameters in [`docs/planned-domain-ideas.md`](docs/planned-domain-ideas.md)), **TECH-16** tick harness JSON, **FEAT-37c** (**Load pipeline** — completed, [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)).
+  - Acceptance: **TECH-40**, **TECH-41**, and **TECH-42** each satisfy their own **Acceptance** lines in this file (program **complete** when all three **complete**); player **Save data** never regresses without an explicit migration issue
+  - Depends on: none (child order **TECH-40** → **TECH-41** → **TECH-42**)
 
-- [ ] **TECH-15** — New Game / **geography initialization** performance
-  - Type: performance / optimization
-  - Files: `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `GridManager.cs`, `InterstateManager.cs`, `ForestManager.cs`, `RegionalMapManager.cs`, `ProceduralRiverGenerator.cs` (as applicable)
-  - Spec: `.cursor/projects/TECH-15.md`
-  - Notes: Reduce wall-clock time and frame spikes when starting a **New Game** (**geography initialization**): **HeightMap**, lakes, procedural **rivers** (**FEAT-38**), **interstate**, **forests**, **map border** signs, **sorting order** passes, etc. **Priority:** Land the **Editor/batch JSON profiler** under `tools/reports/` (see spec) *before* or in parallel with deep optimization — agents need **measurable** phase breakdowns. **Related:** **FEAT-37c** optimizes **Load Game** (no regen) — this issue targets **geography initialization** cost only. **Tooling:** `docs/agent-tooling-verification-priority-tasks.md` (tasks 3, 22).
+- [ ] **TECH-36** — **Computational program** (umbrella): **geometry**, **stochastics**, **algorithms** + **territory-ia** tools
+  - Type: tooling / code health / agent enablement
+  - Files: umbrella only — see **TECH-37**, **TECH-38**, **TECH-39**; charter `.cursor/projects/TECH-36.md`; reference specs: `.cursor/specs/isometric-geography-system.md`, `.cursor/specs/simulation-system.md`, `.cursor/specs/managers-reference.md`
+  - Spec: `.cursor/projects/TECH-36.md`
+  - Notes: **Program charter** with resolved product/tooling decisions. **Phased delivery:** **TECH-37** (**`tools/compute-lib/`** + pilot **`registerTool`**), **TECH-38** (Unity **pure** **compute** + **`tools/`** harnesses), **TECH-39** (computational **MCP** suite). **Related:** **TECH-21** program (**TECH-40**–**TECH-42** — JSON DTOs/schemas), **TECH-28** (completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)), **TECH-32**, **TECH-35**; product follow-ups **FEAT-46** (geography authoring UI), **FEAT-47** (**multipolar** **urban growth rings**), **FEAT-48** (**water body** volume / **surface height (S)**).
+  - Acceptance: **TECH-37**, **TECH-38**, and **TECH-39** each satisfy their own **Acceptance** lines in this file (program **complete** when all three **complete**)
+  - Depends on: none (child issues **TECH-37** → **TECH-38** → **TECH-39** track implementation order)
 
-- [ ] **TECH-16** — **Simulation tick** performance v2 (per-tick **AUTO systems** pipeline)
-  - Type: performance / optimization
-  - Files: `SimulationManager.cs`, `TimeManager.cs`, `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `AutoResourcePlanner.cs`, `UrbanCentroidService.cs`, `GrowthBudgetManager.cs`, `DemandManager.cs`, `CityStats.cs` (as applicable)
-  - Spec: `.cursor/projects/TECH-16.md`
-  - Notes: Second-pass optimization of the **simulation tick** after early **Simulation optimization** work (completed). **Priority:** Ship **spec-labeled tick harness** JSON + **ProfilerMarker** names (see spec) so agents and CI can read **AUTO** pipeline cost *before* micro-optimizing allocations. **Related:** **BUG-14** (per-frame UI `FindObjectOfType`); **TECH-01** (manager decomposition may help profiling and hotspots). **Tooling:** `docs/agent-tooling-verification-priority-tasks.md` (tasks 4, 25); drift detection **TECH-29**.
-
-- [ ] **TECH-33** — Asset introspection: **prefab** manifest + scene **MonoBehaviour** listing
+- [ ] **TECH-37** — **Computational** infra: **`tools/compute-lib/`** + pilot **MCP** tool (**World ↔ Grid**)
   - Type: tooling
-  - Files: `tools/` (Unity `-batchmode` or Editor script), `Assets/Prefabs/`, agreed scene path (e.g. `MainScene.unity`)
-  - Spec: `.cursor/projects/TECH-33.md`
-  - Notes: List prefabs with missing script references; list MonoBehaviour types/paths in scene for **BUG-19** / **TECH-07**. `docs/agent-tooling-verification-priority-tasks.md` tasks 26, 27.
-  - Depends on: none
+  - Files: `tools/compute-lib/` (new package); `tools/mcp-ia-server/`; `Assets/Scripts/Utilities/Compute/` (convention **README** / optional stub); `docs/mcp-ia-server.md`, `tools/mcp-ia-server/README.md`
+  - Spec: `.cursor/projects/TECH-37.md`
+  - Notes: **Phase A** of **TECH-36**. Shared **Zod**/**TS** **schemas**; **`isometric_world_to_grid`** (or equivalent) **`registerTool`**; **golden** tests **Node** ↔ Unity export. **Architectural rule:** **C#** authoritative for **grid** truth; **compute-lib** only for **verified** **pure** math.
+  - Acceptance: **`tools/compute-lib`** tests pass; **MCP** **`npm run verify`** green with pilot tool; docs updated per `.cursor/projects/TECH-37.md` §8
+  - Depends on: none (soft: **TECH-21**)
+
+- [ ] **TECH-38** — **Core** **computational** modules (Unity **utilities** + **`tools/`** harnesses)
+  - Type: code health / performance enablement
+  - Files: `Assets/Scripts/Utilities/Compute/`; `GridManager.cs` (**CoordinateConversionService**), `GridPathfinder.cs`, `UrbanCentroidService.cs`, `ProceduralRiverGenerator.cs`, `TerrainManager.cs`, `WaterManager.cs`, `DemandManager.cs` / `CityStats.cs` (as extractions land); `tools/reports/`; **UTF** tests
+  - Spec: `.cursor/projects/TECH-38.md`
+  - Notes: **Phase B** of **TECH-36**. **Behavior-preserving** extractions; **UrbanGrowthRingMath** **multipolar**-ready for **FEAT-47**; **stochastic** **geography initialization** documentation; **no** second **pathfinding** authority. Prepare **batchmode** hooks for **TECH-39**.
+  - Acceptance: inventory doc + **≥ 3** **pure** modules with tests or **golden** **JSON**; **RNG** derivation doc; **invariants** respected — see `.cursor/projects/TECH-38.md` §8
+  - Depends on: **TECH-37**
+
+- [ ] **TECH-39** — **territory-ia** **computational** **MCP** tool suite
+  - Type: tooling / agent enablement
+  - Files: `tools/compute-lib/`; `tools/mcp-ia-server/src/` (compute handlers); `docs/mcp-ia-server.md`, `tools/mcp-ia-server/README.md`
+  - Spec: `.cursor/projects/TECH-39.md`
+  - Notes: **Phase C** of **TECH-36**. **`growth_ring_classify`**, **`grid_distance`**, **`pathfinding_cost_preview`**, **`geography_init_params_validate`**, **`desirability_top_cells`** (honest **NOT_AVAILABLE** until **TECH-38** **batchmode**); **many** **`snake_case`** tools, shared **compute-lib** core.
+  - Acceptance: **≥ 4** new tools beyond **TECH-37** pilot (or **Decision Log** consolidation); **`npm run verify`** green; docs updated — see `.cursor/projects/TECH-39.md` §8
+  - Depends on: **TECH-37** (soft: **TECH-38** for **heavy** tools)
+
+
+- [ ] **TECH-40** — **JSON** infra: artifact identity, schemas, **CI** validation, **spec** + **glossary** indexes
+  - Type: tooling / data interchange
+  - Files: `docs/schemas/` or `tools/schemas/` (TBD in spec); `package.json` / `tools/` validate script; optional generated `tools/mcp-ia-server/data/spec-index.json` (name TBD); `projects/TECH-21-json-use-cases-brainstorm.md` (policy §); `docs/mcp-ia-server.md` if indexes consumed by MCP later
+  - Spec: `.cursor/projects/TECH-40.md`
+  - Notes: **Phase A** of **TECH-21**. Defines **`artifact` / `kind`** naming + when to use in-file **`schema_version`** vs schema **`$id` / filename** only; JSON Schema + **`npm run validate:fixtures`** (or equivalent); **I1** spec index manifest; **I2** glossary→anchor index; **P3** = validate in **CI**, not in player hot paths. **Related:** **TECH-24** (parser regression), **TECH-30** (issue id validation in specs), **TECH-34** (generated JSON pattern).
+  - Acceptance: documented versioning policy + ≥1 checked-in schema + CI validation green; **I1** + **I2** generated artifacts or scripts merged per `.cursor/projects/TECH-40.md` §8
+  - Depends on: none (soft: align with **TECH-37** Zod naming when touching **compute-lib**)
+
+- [ ] **TECH-41** — **JSON** payloads for **current** systems: **geography** params, **cell**/**chunk** interchange, snapshots, DTO layers
+  - Type: technical / performance enablement
+  - Files: `StreamingAssets/` or `Assets/.../Resources/` (if adopted), `Assets/Scripts/` (DTOs, one-shot load), `tools/reports/`, **TECH-38** harness outputs; **TECH-16** profiler JSON shapes (if schema-owned here); `.cursor/specs/persistence-system.md` when **CellData**-shaped tooling touches **Save data** semantics
+  - Spec: `.cursor/projects/TECH-41.md`
+  - Notes: **Phase B** of **TECH-21**. **G4** **Geography initialization** parameter files (**FEAT-46**-aligned knobs as they exist today); **G2** single-**cell** / **chunk** JSON for tools (**HeightMap** / **Cell** fields consistent with glossary); **G1** read-only world snapshots (Editor/dev); **E3** documented layering (**MonoBehaviour** ↔ interchange DTO ↔ **CellData**); **P1** parse-once at boot / **Load pipeline** / init boundaries; **P2** static **catalog** arrays (not per **simulation tick**); **P4** optional `by_id` for hot static catalogs. Coordinate **TECH-39** validation tool inputs.
+  - Acceptance: at least one **runtime or Editor** JSON load path + one **export** path documented with glossary-aligned fields; **no** unintentional **Save data** format change — see `.cursor/projects/TECH-41.md` §8
+  - Depends on: **TECH-40**
+
+- [ ] **TECH-42** — **JSON** for **future** domains: DB shapes, API envelopes, large-document **streaming**
+  - Type: technical / architecture (future-facing)
+  - Files: `.cursor/projects/TECH-19.md` (cross-links only until DB lands); `docs/planned-domain-ideas.md` (parameter evolution); optional design appendix under `docs/`
+  - Spec: `.cursor/projects/TECH-42.md`
+  - Notes: **Phase C** of **TECH-21**. **B1** row + JSONB column pattern; **B3** idempotent **patch** envelope as **API contract** (not one fixed table); **P5** when **Load pipeline** or exports need incremental readers; links **FEAT-47**/**FEAT-48** data needs without implementing them. **B2** tracked separately (**TECH-43** — backlog only, no project spec).
+  - Acceptance: written patterns merged per `.cursor/projects/TECH-42.md` §8; **TECH-19** field naming compatible where applicable
+  - Depends on: **TECH-41** (soft: **TECH-40** for shared schema policy)
+
+- [ ] **TECH-43** — Append-only **JSON** line **event log** (telemetry / sim anomalies) — **backlog placeholder**
+  - Type: technical / observability (future)
+  - Files: TBD (`tools/`, optional **Postgres** table, ship pipeline)
+  - Spec: none (promote to `.cursor/projects/TECH-43.md` when scheduled)
+  - Notes: Idea from **TECH-21** brainstorm **B2**; **schema_version** per line; same validator family as **TECH-40** when implemented. **Does not** start until **TECH-40** schema pipeline exists.
+  - Acceptance: issue refined with concrete consumer + storage choice; optional schema + sample sink
+  - Depends on: **TECH-40** (soft)
 
 - [ ] **TECH-19** — Game PostgreSQL database; first milestone — IA schema for MCP + basic tools
   - Type: infrastructure / tooling
@@ -50,7 +96,26 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Files: All `.cursor/specs/*.md`, `.cursor/rules/agent-router.mdc`, `.cursor/rules/invariants.mdc`, `ARCHITECTURE.md`; MCP server from **TECH-17** (initially **file-backed**); schema / migrations / seed from **TECH-19**; `tools/mcp-ia-server/src/index.ts`, `docs/mcp-ia-server.md`
   - Spec: `.cursor/projects/TECH-18.md`
   - Notes: **Goal:** After **TECH-17** (MCP over **`.md` / `.mdc`**) and **TECH-19** (Postgres + IA tables), **migrate authoritative IA content** into PostgreSQL and evolve the **same MCP** so **primary** retrieval is DB-backed. Markdown becomes **generated or secondary** for human reading. **Explicit dependency:** This work **extends the MCP built first on Markdown** in **TECH-17** — same tool contracts where possible, swapping implementation to query **TECH-19**’s database. **Scope:** (1) Parse and ingest spec sections (`isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, etc.) into `spec_sections`. (2) Populate `relationships` (e.g. HeightMap↔Cell.height, PathTerraformPlan→Phase-1→Apply). (3) Populate `invariants` from `invariants.mdc`. (4) Extend tools: `what_do_i_need_to_know(task_description)`, `search_specs(query)`, `dependency_chain(term)`. (5) Script to regenerate `.md` from DB for review. (6) Update `agent-router.mdc` — MCP tools first, Markdown fallback second. **Acceptance:** Agent resolves a multi-spec task (e.g. “bridge over multi-level lake”) via MCP reading ≤ ~500 tokens of context instead of many full-file reads. **Phased MCP tools** (bundles, `backlog_search`, **`unity_context_section` after TECH-20** doc, etc.): see `.cursor/projects/TECH-18.md` and `docs/agent-tooling-verification-priority-tasks.md` (tasks 12–20, 28–32, 35). **Deferred unless reopened:** `findobjectoftype_scan`, `find_symbol` MCP tools (prefer **TECH-26** script).
-  - Depends on: TECH-17, TECH-19
+  - Depends on: **TECH-19** (**TECH-17** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
+
+- [ ] **TECH-15** — New Game / **geography initialization** performance
+  - Type: performance / optimization
+  - Files: `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `GridManager.cs`, `InterstateManager.cs`, `ForestManager.cs`, `RegionalMapManager.cs`, `ProceduralRiverGenerator.cs` (as applicable)
+  - Spec: `.cursor/projects/TECH-15.md`
+  - Notes: Reduce wall-clock time and frame spikes when starting a **New Game** (**geography initialization**): **HeightMap**, lakes, procedural **rivers** (**FEAT-38** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)), **interstate**, **forests**, **map border** signs, **sorting order** passes, etc. **Priority:** Land the **Editor/batch JSON profiler** under `tools/reports/` (see spec) *before* or in parallel with deep optimization — agents need **measurable** phase breakdowns. **Related:** **FEAT-37c** (**Load Game** / **water map** persist — completed, archive) — this issue targets **geography initialization** cost only. **Tooling:** `docs/agent-tooling-verification-priority-tasks.md` (tasks 3, 22).
+
+- [ ] **TECH-16** — **Simulation tick** performance v2 (per-tick **AUTO systems** pipeline)
+  - Type: performance / optimization
+  - Files: `SimulationManager.cs`, `TimeManager.cs`, `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `AutoResourcePlanner.cs`, `UrbanCentroidService.cs`, `GrowthBudgetManager.cs`, `DemandManager.cs`, `CityStats.cs` (as applicable)
+  - Spec: `.cursor/projects/TECH-16.md`
+  - Notes: Second-pass optimization of the **simulation tick** after early **Simulation optimization** work (completed). **Priority:** Ship **spec-labeled tick harness** JSON + **ProfilerMarker** names (see spec) so agents and CI can read **AUTO** pipeline cost *before* micro-optimizing allocations. **Related:** **BUG-14** (per-frame UI `FindObjectOfType`); **TECH-01** (manager decomposition may help profiling and hotspots). **Tooling:** `docs/agent-tooling-verification-priority-tasks.md` (tasks 4, 25); drift detection **TECH-29**.
+
+- [ ] **TECH-33** — Asset introspection: **prefab** manifest + scene **MonoBehaviour** listing
+  - Type: tooling
+  - Files: `tools/` (Unity `-batchmode` or Editor script), `Assets/Prefabs/`, agreed scene path (e.g. `MainScene.unity`)
+  - Spec: `.cursor/projects/TECH-33.md`
+  - Notes: List prefabs with missing script references; list MonoBehaviour types/paths in scene for **BUG-19** / **TECH-07**. `docs/agent-tooling-verification-priority-tasks.md` tasks 26, 27.
+  - Depends on: none
 
 - [ ] **TECH-23** — Agent workflow: MCP **invariant preflight** for issue kickoff
   - Type: documentation / process
@@ -118,6 +183,14 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Files: TBD test assembly or `tools/` prototype
   - Spec: `.cursor/projects/TECH-35.md`
   - Notes: High setup cost; only if geometric / ordering bugs justify. Predicates from **invariants** (HeightMap/**cell** sync, **road cache**, **shore band**, etc.). `docs/agent-tooling-verification-priority-tasks.md` task 38. **Non-goals:** production fuzz in player builds.
+  - Depends on: none
+
+- [ ] **BUG-53** — **Unity Editor:** **Territory Developer → Reports** menu missing, or **Export Sorting Debug** ineffective / not discoverable
+  - Type: bug (tooling / agent workflow)
+  - Files: `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs` (`MenuItem` paths, **Play Mode** vs **Edit Mode** branches); Unity **Editor** script compilation / **asmdef** (if introduced later); `tools/reports/` path resolution (`Application.dataPath` parent)
+  - Spec: `.cursor/specs/unity-development-context.md` §10 (**Editor agent diagnostics** — expected menus, outputs, prerequisites)
+  - Notes: **Observed:** Developer does not see **Export Sorting Debug (Markdown)** or the whole **Reports** submenu, or expects full **Sorting order** data while still in **Edit Mode** / before **`GridManager`** **isInitialized**. **Expected (canonical):** Both **Export Agent Context** and **Export Sorting Debug (Markdown)** appear under **Territory Developer → Reports** whenever `AgentDiagnosticsReportsMenu.cs` compiles in an **Editor** folder assembly. **Sorting** markdown with per-**cell** **`TerrainManager`** breakdowns requires **Play Mode** after **geography initialization** (`GridManager.InitializeGrid`); **Edit Mode** only writes a stub explaining that. **Export Agent Context** (JSON) should still run in **Edit Mode** / **Play Mode** and write under `tools/reports/`. **Related:** completed **TECH-28** ([`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). Investigate compile errors, wrong scene/package, menu path mismatch, or UX gap (e.g. single combined command, **Console** log on success).
+  - Acceptance: On a clean clone, after Unity imports scripts, both menu items are visible; **Sorting** export behavior matches §10; document any platform-specific caveat in the spec **Decision Log** or backlog **Notes**
   - Depends on: none
 
 ## High Priority
@@ -211,7 +284,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Type: feature
   - Files: `EconomyManager.cs`, `DemandManager.cs`, `CityStats.cs`
   - Notes: High taxes do not affect **demand (R / C / I)** or happiness. Loop: high taxes → less residential **demand** → less growth → less income.
-  - Depends on: BUG-02
+  - Depends on: none (**BUG-02** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
 
 - [ ] **FEAT-23** — Dynamic happiness based on city conditions
   - Type: feature
@@ -293,7 +366,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Spec sections: `.cursor/specs/ui-design-system.md` — **§3.3** (toolbar), **§1.3** (anchors/margins), **§4.3** (Canvas Scaler) as applicable.
   - Notes: Replace the bottom-centered horizontal **ribbon** with a **left-docked vertical** panel. Structure: **one row per category** (demolition, **RCI** **zoning**, **utility buildings**, **streets**, environment/**forests**, etc.), with **buttons laid out horizontally within each row** (e.g. `VerticalLayoutGroup` of rows, each row `HorizontalLayoutGroup`, or equivalent manual layout). Re-anchor dependent UI (e.g. **zone density** / tool option overlays) so they align to the new sidebar instead of the old bottom bar. Verify safe area and Canvas Scaler at reference resolutions; avoid overlapping the mini-map and debug readouts. Document final hierarchy in `docs/ui-design-system-context.md`. Link program charter: `docs/ui-design-system-project.md` (Backlog bridge). Spec/docs ticketed and cross-linked in **TECH-08** (completed).
 
-*(Agent–Unity / MCP tooling **TECH-23**–**TECH-35**, **TECH-15**/**TECH-16** performance+harness — listed in **§ Agent ↔ Unity & MCP context lane** above.)*
+*(Agent–Unity / MCP tooling **TECH-21** program **TECH-40**–**TECH-42**, **TECH-23**–**TECH-39** (including **TECH-36** program **TECH-37**–**TECH-39**), **TECH-43** (placeholder), **TECH-15**/**TECH-16** performance+harness — listed in **§ Agent ↔ Unity & MCP context lane** above.)*
 
 ## Low Priority
 
@@ -356,23 +429,41 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
 - [ ] **FEAT-39** — Sea / **shore band**: **map border** region, infinite reservoir, tide direction (data)
   - Type: feature
   - Files: `WaterManager.cs`, `WaterMap.cs`, `TerrainManager.cs`, `GeographyManager.cs`
-  - Notes: Define **sea** as a **water body kind** at the **map border** with **surface height (S)** and **shore band** rules. Coordinate with **FEAT-15** (ports). Depends on **FEAT-37c**.
+  - Notes: Define **sea** as a **water body kind** at the **map border** with **surface height (S)** and **shore band** rules. Coordinate with **FEAT-15** (ports). **FEAT-37c** (**water map** persist) completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
 
 - [ ] **FEAT-40** — Water sources & drainage (snowmelt, rain, overflow) — simulation
   - Type: feature
   - Files: new helpers + `WaterMap.cs`, `WaterManager.cs`, `SimulationManager.cs`
-  - Notes: Not full fluid simulation; data-driven flow affecting **water bodies**, **surface height (S)**, and **depression-fill** dynamics. Depends on **FEAT-37c** and possibly **FEAT-38**.
+  - Notes: Not full fluid simulation; data-driven flow affecting **water bodies**, **surface height (S)**, and **depression-fill** dynamics. **FEAT-37c** / **FEAT-38** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
 
 - [ ] **FEAT-41** — **Water body** terrain tools (manual paint/modify, **AUTO** terraform) — extended
   - Type: feature
   - Files: `GridManager.cs`, `WaterManager.cs`, `UIManager.cs`, `TerraformingService.cs` (as needed)
-  - Notes: Beyond legacy paint-at-**sea level**. Tools to create/modify **water bodies** with proper **surface height (S)**, **shore band**, and **water map** registration. Depends on **FEAT-37c**.
+  - Notes: Beyond legacy paint-at-**sea level**. Tools to create/modify **water bodies** with proper **surface height (S)**, **shore band**, and **water map** registration. **FEAT-37c** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
 
 - [ ] **FEAT-42** — Minimap: optional **HeightMap** / relief shading layer
   - Type: feature (UI)
   - Files: `MiniMapController.cs`, `HeightMap` / `GridManager` read access as needed
   - Notes: Visualize terrain elevation (**HeightMap**) on the minimap (distinct from **zones**/**streets**/**open water** layers). Does not replace logical **water map** / **zone** data; base layer reliability stays in **FEAT-37a** / **FEAT-30** scope.
   - Depends on: none (can follow **FEAT-37a** polish)
+
+- [ ] **FEAT-46** — **Geography** authoring: **territory** / **urban** area **map** editor + parameter dashboard
+  - Type: feature (tools / **New Game** flow)
+  - Files: `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `ForestManager.cs`, `UIManager.cs` (or dedicated **Editor** / in-game **wizard**); **JSON** / **ScriptableObject** templates (align **TECH-21** program **TECH-41**, **TECH-36** program)
+  - Notes: In-game or **Editor** flow to author **city** / **territory** **maps** with **isometric** terrain controls: **map** size, **water** / **forest** / **height** mix, **sea** / **river** / **lake** proportions, etc. Reuse the same parameter pipeline for future **player** **terraform**, **basin** / **elevation** tools, **water body** placement in **depressions**, and **AUTO** **geography**-driven tools. **Spec:** canonical **geography initialization** + **water-terrain** + **geo** when implemented (no `.cursor/projects/` spec until scheduled).
+  - Depends on: none (coordinates **FEAT-18**, **FEAT-41**, **TECH-36** program)
+
+- [ ] **FEAT-47** — **Multipolar** **urban centroid** model, per-pole **urban growth rings**, **connurbation**
+  - Type: feature (**simulation** / **AUTO** architecture)
+  - Files: `UrbanCentroidService.cs`, `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `SimulationManager.cs`, `GrowthBudgetManager.cs` (as applicable)
+  - Notes: Evolve **sim** §Rings from a single **urban centroid** to **multiple** **centroids** (**desirability** / employment **poles**), each with **ring** fields; preserve coherent **AUTO** **street** / **zoning** patterns across the **map**; long-term **connurbation** between distinct urban masses. **Desirability** **scoring** may use **grid** decay; **committed** **streets** remain **road preparation family** + **geo** §10. Coordinates **FEAT-43** (gradient tuning). **Spec:** **simulation-system** §Rings + **managers-reference** when implemented (no project spec until scheduled).
+  - Depends on: none (soft: **FEAT-43**, **TECH-38** **UrbanGrowthRingMath**)
+
+- [ ] **FEAT-48** — **Water body** volume budget: **basin** expand → **surface height (S)** adjusts; **Moore**-adjacent **dig** **fill**
+  - Type: feature (**water** / **terraform**)
+  - Files: `WaterMap.cs`, `WaterManager.cs`, `TerrainManager.cs`, `TerraformingService.cs`, water prefabs / **sorting order** (per **geo** §7, **water-terrain**)
+  - Notes: **Not** full 3D **fluid** simulation. **Gameplay:** excavating a **cell** **Moore**-adjacent to **open water** fills the **depression**; **basin** volume conservation lowers or raises **surface height (S)**; **render** water prefabs at new **S** (may expose or cover **terrain** / **islands**). Optional **isometric** directional **fill** **animation**; **S** step changes not animated. Expands across **terraform** / **water** interactions per product plan. Coordinates **FEAT-40**, **FEAT-41**, **FEAT-39**. **Spec:** **isometric-geography-system** / **water-terrain** amendments when implemented (no project spec until scheduled).
+  - Depends on: none (**FEAT-37c** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)); soft: **FEAT-41**, **TECH-36** program for **pure** **volume** helpers
 
 - [ ] **ART-01** — Missing prefabs: **forest (coverage)** on SE, NE, SW, NW **slope types**
   - Type: art/assets
@@ -390,7 +481,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-*(**TECH-18**, **TECH-19**, **TECH-21** — listed in **§ Agent ↔ Unity & MCP context lane** above; **TECH-20** completed below; not duplicated here.)*
+*(**TECH-18**, **TECH-19**, **TECH-21** program (**TECH-40**–**TECH-42**, **TECH-43**) — listed in **§ Agent ↔ Unity & MCP context lane** above; **TECH-20** / **TECH-25** / **TECH-28** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**.)*
 
 - [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects
   - Type: audio/feature
@@ -401,146 +492,9 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
 
 ## Completed (last 30 days)
 
-- [x] **TECH-28** — Unity Editor: **agent diagnostics** (context JSON + sorting debug export) (2026-04-02)
-  - Type: tooling / agent workflow
-  - Files: `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs`, `tools/reports/` (generated output; see `.gitignore`), `.gitignore`
-  - Spec: (project spec removed after closure)
-  - Notes: **Completed (verified per user):** **Territory Developer → Reports → Export Agent Context** writes `tools/reports/agent-context-{timestamp}.json` (`schema_version`, `exported_at_utc`, scene, selection, bounded **Cell** / **HeightMap** / **WaterMap** sample via **`GridManager.GetCell`** only). **Export Sorting Debug (Markdown)** writes `sorting-debug-{timestamp}.md` in **Play Mode** using **`TerrainManager`** sorting APIs and capped **`SpriteRenderer`** `sortingOrder` listing. **Agents:** reference `@tools/reports/agent-context-….json` or `@tools/reports/sorting-debug-….md` in Cursor prompts (paths under repo root). `docs/agent-tooling-verification-priority-tasks.md` tasks 2, 23.
-  - Depends on: none
+*(No entries — the previous batch was moved to [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) § **Recent archive** on 2026-04-10. Add new completions here for ~30 days, then archive.)*
 
-- [x] **TECH-25** — Incremental authoring milestones for `unity-development-context.md` (2026-04-02)
-  - Type: documentation / agent tooling
-  - Files: `.cursor/specs/unity-development-context.md`; `projects/agent-friendly-tasks-with-territory-ia-context.md` (pointer wording); `docs/agent-tooling-verification-priority-tasks.md`; `BACKLOG.md`; `tools/mcp-ia-server/scripts/verify-mcp.ts` (backlog smoke test → **TECH-28**)
-  - Spec: (project spec removed after closure)
-  - Notes: **Completed (verified per user):** Merged milestone slices **M1**–**M7** into **`unity-development-context.md`** — lifecycle (**`ZoneManager`**, **`WaterManager`**, coroutine/`Invoke` examples), Inspector / **Addressables** guard, **`SerializeField`** scan note + **`DemandManager`**, prefab/**YAML**/**meta** cautions, **`GridManager`** + **`GridSortingOrderService`** sorting entry points (formula still geo §7), **`GeographyManager`** init + **BUG-16** pointer, **`GetComponent`** per-frame row, glossary (**Geography initialization**), §1 roadmap (**TECH-18**, **TECH-26**, **TECH-28**). **`npm run verify`** under **`tools/mcp-ia-server/`**.
-  - Depends on: **TECH-20** (umbrella spec)
-
-- [x] **TECH-20** — In-repo Unity development context for agents (spec + concept index) (2026-04-02)
-  - Type: documentation / agent tooling
-  - Files: `.cursor/specs/unity-development-context.md`; `AGENTS.md`; `.cursor/rules/agent-router.mdc`; `tools/mcp-ia-server/src/config.ts` (`unity` / `unityctx` → `unity-development-context`); `docs/mcp-ia-server.md`; `tools/mcp-ia-server/README.md`; `tools/mcp-ia-server/scripts/verify-mcp.ts`; `tools/mcp-ia-server/tests/parser/backlog-parser.test.ts`; `tools/mcp-ia-server/tests/tools/build-registry.test.ts`; `tools/mcp-ia-server/tests/tools/config-aliases.test.ts`; [`.cursor/specs/REFERENCE-SPEC-STRUCTURE.md`](.cursor/specs/REFERENCE-SPEC-STRUCTURE.md) (router authoring note)
-  - Spec: [`.cursor/specs/unity-development-context.md`](.cursor/specs/unity-development-context.md) (authoritative); project spec removed after closure
-  - Notes: **Completed (verified per user):** First-party **Unity** reference for **MonoBehaviour** / **Inspector** / **`FindObjectOfType`** / execution order; **territory-ia** `list_specs` key `unity-development-context`; **agent-router** row avoids **`router_for_task`** token collisions with geography queries (see **REFERENCE-SPEC-STRUCTURE**). Unblocks **TECH-18** `unity_context_section`; follow-up polish shipped in **TECH-25** (completed).
-  - Depends on: none
-
-- [x] **BUG-37** — Manual **street** drawing clears **buildings** and **zones** on cells adjacent to the **road stroke** (2026-04-02)
-  - Type: bug
-  - Files: `TerrainManager.cs` (`RestoreTerrainForCell` — **BUG-37**: skip `PlaceFlatTerrain` / slope rebuild when `GridManager.IsCellOccupiedByBuilding`; sync **HeightMap** / **cell** height + transform first); `RoadManager.cs`, `PathTerraformPlan.cs` (call path unchanged)
-  - Spec: `.cursor/projects/BUG-37.md`; `.cursor/specs/isometric-geography-system.md` §14 (manual **streets**)
-  - Notes: **Completed (verified per user):** Commit/AUTO `PathTerraformPlan.Apply` Phase 2/3 was refreshing **Moore** neighbors and stacking **grass** under **RCI** **buildings** / footprint **cells** (preview skipped **Apply**, so only commit showed the bug). **Fix:** preserve development by returning after height/sync when the **cell** is **building**-occupied. **Follow-up:** **BUG-52** if **AUTO** zoning shows persistent **grass** buffers beside new **streets** (investigate correlation).
-  - Depends on: none
-
-- [x] **TECH-22** — Canonical terminology pass on **reference specs** (`.cursor/specs`) (2026-04-02)
-  - Type: documentation / refactor (IA)
-  - Files: `.cursor/specs/glossary.md`, `isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, `REFERENCE-SPEC-STRUCTURE.md`; `BACKLOG.md` (one **map border** wording fix); `tools/mcp-ia-server/tests/parser/fuzzy.test.ts` (§13 heading fixture); [`.cursor/projects/TECH-22.md`](.cursor/projects/TECH-22.md)
-  - Spec: [`.cursor/specs/glossary.md`](.cursor/specs/glossary.md); [`.cursor/specs/REFERENCE-SPEC-STRUCTURE.md`](.cursor/specs/REFERENCE-SPEC-STRUCTURE.md) (deprecated → canonical table + MCP **`glossary_discover`** hint)
-  - Notes: **Completed (verified per user):** Glossary/spec alignment — **map border** vs local **cell** edges; umbrella **street or interstate**; **road validation pipeline** wording; §13 retitled in geo; authoring table in `REFERENCE-SPEC-STRUCTURE.md`. `AGENTS.md` / MCP `config.ts` unchanged (no spec key changes).
-  - Depends on: none
-
-- [x] **FEAT-45** — MCP **`glossary_discover`**: keyword-style discovery over **glossary** rows (2026-04-02)
-  - Type: feature (IA / tooling)
-  - Files: `tools/mcp-ia-server/src/tools/glossary-discover.ts`, `tools/mcp-ia-server/src/tools/glossary-lookup.ts`, `tools/mcp-ia-server/src/parser/glossary-discover-rank.ts`, `tools/mcp-ia-server/src/index.ts`, `tools/mcp-ia-server/package.json`, `tools/mcp-ia-server/tests/parser/glossary-discover-rank.test.ts`, `tools/mcp-ia-server/tests/tools/glossary-discover.test.ts`, `tools/mcp-ia-server/scripts/verify-mcp.ts`, [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md), [`docs/mcp-markdown-ia-pattern.md`](docs/mcp-markdown-ia-pattern.md), [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md), [`AGENTS.md`](AGENTS.md), [`.cursor/rules/agent-router.mdc`](.cursor/rules/agent-router.mdc), [`.cursor/rules/mcp-ia-default.mdc`](.cursor/rules/mcp-ia-default.mdc)
-  - Spec: [`.cursor/projects/FEAT-45.md`](.cursor/projects/FEAT-45.md)
-  - Notes: **Completed (verified per user):** **`glossary_discover`** tool (territory-ia **v0.4.2**): Phase A deterministic ranking over **Term** / **Definition** / **Spec** / category; optional **`spec`** alias + **`registryKey`** from Spec cell; `hint_next_tools`; empty-query branch with fuzzy **term** suggestions. Agents must pass **English** in glossary tools; documented in MCP README, `docs/mcp-ia-server.md`, `AGENTS.md`, and Cursor rules. **`npm test`** / **`npm run verify`** under `tools/mcp-ia-server/`. **Phase B** (scoring linked spec body) deferred.
-  - Depends on: **TECH-17** (MCP IA server — baseline)
-
-- [x] **TECH-17** — MCP server for agentic Information Architecture (Markdown sources) (2026-04-02)
-  - Type: infrastructure / tooling
-  - Files: `tools/mcp-ia-server/`; `.cursor/mcp.json`; `.cursor/specs/*.md`, `.cursor/rules/*.mdc`, `AGENTS.md`, `ARCHITECTURE.md` as sources; `docs/mcp-ia-server.md`; docs updates in `AGENTS.md`, `ARCHITECTURE.md`, `.cursor/rules/project-overview.mdc`, `agent-router.mdc` (MCP subsection)
-  - Notes: **Shipped:** Node + `@modelcontextprotocol/sdk` stdio server with tools including `list_specs`, `spec_outline`, `spec_section`, `glossary_lookup`, `router_for_task`, `invariants_summary`, `list_rules`, `rule_content`, `backlog_issue` (BACKLOG.md by id); spec aliases; fuzzy glossary/section fallbacks; `spec_section` input aliases for LLM mis-keys; parse cache; stderr timing; `node:test` + c8 coverage on `src/parser/**`; `npm run verify`. **Reference:** `docs/mcp-ia-server.md`, `docs/mcp-markdown-ia-pattern.md` (generic pattern), `tools/mcp-ia-server/README.md`. **Retrospective / design history:** `.cursor/projects/TECH-17a.md`, `TECH-17b.md`, `TECH-17c.md` (§9–11 post-ship; delete when no longer needed).
-  - Depends on: none
-
-- [x] **BUG-51** — Diagonal / corner-up land slopes vs roads: design closure (2026-04-01)
-  - Type: bug (closed by policy + implementation, not by fixing prefab-on-diagonal art)
-  - Files: `RoadStrokeTerrainRules.cs`, `RoadManager.cs` (`TryBuildFilteredPathForRoadPlan`, `TryPrepareRoadPlacementPlanLongestValidPrefix`, `TryPrepareDeckSpanPlanFromAdjacentStroke`), `GridPathfinder.cs`, `InterstateManager.cs` (`IsCellAllowedForInterstate`), `RoadPrefabResolver.cs`, `TerraformingService.cs`, `Cell.cs` (route-first / BUG-51 technical work — see spec)
-  - Spec: `.cursor/specs/roads-system.md` (land slope stroke policy, route-first paragraph), `.cursor/specs/isometric-geography-system.md` §3.3.3–§3.3.4, §13.10
-  - Notes: **Closed (verified):** The original report asked for **correct road prefabs on diagonal and corner-up terrain**. The chosen resolution was **not** to fully support roads on those land slope types. Instead, **road strokes are invalid on land that is not flat and not a cardinal ramp** (`TerrainSlopeType`: `Flat`, `North`, `South`, `East`, `West` only). Pure diagonals (`NorthEast`, …) and corner-up types (`*Up`) are excluded. **Behavior:** silent **prefix truncation** — preview and commit only include cells up to the last allowed cell; cursor may keep moving diagonally without extending preview. **Scope:** manual, AUTO, and interstate. **First cell blocked:** no placement, no notification. **`Road cannot extend further…`** is **not** posted when the only issue is no slope-valid prefix (e.g. stroke starts on diagonal). **Exceptions in stroke truncation / walkability:** path cells at `HeightMap` height ≤ 0 (wet span) and `IsWaterSlopeCell` shore tiles still pass the truncator so FEAT-44 bridges are not cut. **Still in codebase:** BUG-51 **route-first** resolver topology (`pathOnlyNeighbors`), `Cell` path hints, terraform preservation on diagonal wedge when `preferSlopeClimb && dSeg == 0`, `GetWorldPositionForPrefab` anchoring — documented under roads spec **BUG-51 (route-first)**.
-  - Depends on: none
-
-- [x] **BUG-47** — AUTO simulation: perpendicular street stubs, reservations, junction prefab refresh (2026-04-01)
-  - Type: bug / feature
-  - Files: `AutoRoadBuilder.cs` (`FindPath*ForAutoSimulation`, `HasParallelRoadTooClose` + `excludeAlongDir`, batch prefab refresh), `AutoSimulationRoadRules.cs`, `AutoZoningManager.cs`, `RoadCacheService.cs`, `GridPathfinder.cs`, `GridManager.cs`, `IGridManager.cs`, `RoadManager.cs` (`RefreshRoadPrefabsAfterBatchPlacement`, bridge-deck skip); `.cursor/specs/isometric-geography-system.md` §13.9, `.cursor/rules/roads.mdc`, `.cursor/rules/simulation.mdc`
-  - Spec: `.cursor/specs/isometric-geography-system.md` §13.9
-  - Notes: **Completed (verified in-game):** AUTO can trace perpendicular stubs/connectors and crossings: land = grass/forest/undeveloped light zoning; dedicated AUTO pathfinder; road frontier and extension cells include that class; perpendicular branches pass parent-axis `excludeAlongDir` in `HasParallelRoadTooClose`; auto-zoning skips axial corridor and extension cells. **Visual:** `PlaceRoadTileFromResolved` did not refresh neighbors; added deduplicated per-tick refresh (`RefreshRoadPrefabsAfterBatchPlacement`), skipping bridge deck re-resolve. **Lessons:** any batch `FromResolved` flow must document explicit junction refresh; keep generic `FindPath` separate from AUTO pathfinding.
-  - Depends on: none
-
-- [x] **FEAT-44** — High-deck water bridges: cliff banks, uniform deck height, manual + AUTO placement (2026-03-30)
-  - Type: feature
-  - Files: `RoadManager.cs` (`TryPrepareDeckSpanPlanFromAdjacentStroke`, `TryPrepareLockedDeckSpanBridgePlacement`, `TryPrepareRoadPlacementPlanWithProgrammaticDeckSpanChord`, `TryExtendCardinalStreetPathWithBridgeChord`, `StrokeHasWaterOrWaterSlopeCells`, `StrokeLastCellIsFirmDryLand`, FEAT-44 validation / chord walk), `TerraformingService.cs` (`TryBuildDeckSpanOnlyWaterBridgePlan`, `TryAssignWaterBridgeDeckDisplayHeight`), `AutoRoadBuilder.cs` (`TryGetStreetPlacementPlan`, `BuildFullSegmentInOneTick` — atomic water-bridge completion), `PathTerraformPlan.cs` (`HasTerraformHeightMutation`, deck display height docs), `RoadPrefabResolver.cs` (bridge deck resolution); rules/spec: `.cursor/rules/roads.mdc`, `.cursor/specs/isometric-geography-system.md` §13
-  - Spec: `.cursor/specs/isometric-geography-system.md` §13 (bridges, shared validation, AUTO behavior)
-  - Notes: **Completed (verified per user):** **Manual:** locked lip→chord preview uses a **deck-span-only** plan (`TerraformAction.None`, `TryBuildDeckSpanOnlyWaterBridgePlan`) so valid crossings are not blocked by cut-through / Phase-1 on complex tails; commit matches preview via shared `TryPrepareDeckSpanPlanFromAdjacentStroke`. **AUTO:** extends cardinal strokes with the same `WalkStraightChordFromLipThroughWetToFarDry` when the next step is wet/shore; runs longest-prefix plus programmatic deck-span and **prefers** deck-span when the stroke is wet or yields a longer expanded path. **AUTO water crossings** are **all-or-nothing in one tick**: require a **firm dry exit**, enough remaining tile budget for every new tile, a **single lump** `TrySpend` for the bridge, otherwise **`Revert`** — no half bridges. **Uniform deck:** one `waterBridgeDeckDisplayHeight` for all bridge deck prefabs on the span; assignment **prefers the exit (mesa) dry cell** after the wet run, then entry, then legacy lip fallback. **Description (issue):** Elevated road / bridge crossings across cliff-separated banks and variable terrain with correct clearance, FEAT-44 path rules, and consistent sorting/pathfinding per geography spec.
-
-- [x] **BUG-50** — River–river junction: shore Moore topology, junction post-pass diagonal SlopeWater, upper-brink cliff water stacks + isometric anchor at shore grid (2026-03-28)
-  - Type: bug / polish
-  - Files: `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `IsOpenWaterForShoreTopology`, `NeighborMatchesShoreOwnerForJunctionTopology`, `ApplyJunctionCascadeShorePostPass`, `ApplyUpperBrinkShoreWaterCascadeCliffStacks`, `TryPlaceWaterCascadeCliffStack` / `waterSurfaceAnchorGrid`, `PlaceCliffWallStackCore` sorting reference), `WaterManager.Membership.cs`, `WaterMap.cs` (`TryFindRiverRiverSurfaceStepBetweenBodiesNear`)
-  - Spec: `.cursor/specs/isometric-geography-system.md` **§12.8.1**
-  - Notes: **Completed (verified):** Default shore masks use **`IsOpenWaterForShoreTopology`** (junction-brink dry land not counted). **`RefreshShoreTerrainAfterWaterUpdate`** runs **`ApplyJunctionCascadeShorePostPass`** (extended topology + **`forceJunctionDiagonalSlopeForCascade`**) then **`ApplyUpperBrinkShoreWaterCascadeCliffStacks`** ( **`CliffSouthWater`** / **`CliffEastWater`** on **`UpperBrink`** only). Cascade **Y** anchor and sorting use **`waterSurfaceAnchorGrid`** at the **shore** cell so wide-river banks align with the isometric water plane. **`ARCHITECTURE.md`** Water bullet and **§12.8.1** document pipeline and authority.
-
-- [x] **BUG-45** — Adjacent water bodies at different surface heights: merge, prefab refresh at intersections, straight slope/cliff transitions (2026-03-27)
-  - Type: bug / polish
-  - Files: `WaterManager.cs` (`UpdateWaterVisuals` — Pass A/B, `ApplyLakeHighToRiverLowContactFallback`), `WaterMap.cs` (`ApplyMultiBodySurfaceBoundaryNormalization`, `ApplyWaterSurfaceJunctionMerge`, `IsLakeSurfaceStepContactForbidden`, lake–river fallback), `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `SelectPerpendicularWaterCornerPrefabs`, `RefreshWaterCascadeCliffs`, `RefreshShoreTerrainAfterWaterUpdate`), `ProceduralRiverGenerator.cs` / `TestRiverGenerator.cs` as applicable; `docs/water-junction-merge-implementation-plan.md`
-  - Spec: `.cursor/specs/isometric-geography-system.md` — **§5.6.2**, **§12.7**
-  - Notes: **Completed (verified):** Pass A/B multi-body surface handling; lake-at-step exclusions; full-cardinal **`RefreshWaterCascadeCliffs`** (incl. mirror N/W lower pool); perpendicular multi-surface shore corner preference; lake-high vs river-low rim fallback. **Assign** `cliffWaterSouthPrefab` / **`cliffWaterEastPrefab`** on `TerrainManager` for visible cascades (west→east steps use **East**). Residual: **map border** water × cliff **BUG-44**; bridges × cliff-water **BUG-43**; optional N/W cascade art (camera).
-
-- [x] **BUG-42** — Water shores & cliffs: terrain + water (lakes + rivers); water–water cascades; shore coherence — merged **BUG-33** + **BUG-41** (2026-03-26)
-  - Type: bug / feature
-  - Files: `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `PlaceWaterShore`, `PlaceCliffWalls`, `PlaceCliffWallStackCore`, `RefreshWaterCascadeCliffs`, `RefreshShoreTerrainAfterWaterUpdate`, `ClampShoreLandHeightsToAdjacentWaterSurface`, `IsLandEligibleForWaterShorePrefabs`), `WaterManager.cs` (`PlaceWater`, `UpdateWaterVisuals`), `ProceduralRiverGenerator.cs` (inner-corner shore continuity §13.5), `ProceduralRiverGenerator` / `WaterMap` as applicable; `cliffWaterSouthPrefab` & `cliffWaterEastPrefab` under `Assets/Prefabs/`
-  - Spec: `.cursor/specs/isometric-geography-system.md` (§2.4.1 shore band height coherence, §4.2 gate, §5.6–§5.7, §5.6.2 water–water cascades, §12–§13, §15)
-  - Notes: **Completed (verified):** **Shore band height coherence** — `HeightMap` clamp on Moore shore ring vs adjacent logical surface; water-shore prefab gate uses **`V = max(MIN_HEIGHT, S−1)`** vs **land height**. **River** inner-corner promotion + bed assignment guard. **Water–water cascades** — `RefreshWaterCascadeCliffs` after full `UpdateWaterVisuals`; **`PlaceCliffWallStackCore`** shared with brown cliffs; cascade Y anchor matches **water tile** (`GetWorldPositionVector` at `visualSurfaceHeight` + `tileHeight×0.25`). **Out of scope / follow-up:** visible **north/west** cliff meshes (camera); map edge water × cliff (**BUG-44**); bridges × cliff-water (**BUG-43**); optional **N/S/E/W** “waterfall” art beyond **S/E** stacks — track separately if needed. **Multi-body junctions:** completed **[BUG-45](#bug-45)** (2026-03-27).
-
-- [x] **BUG-33** — Lake shore / edge prefab bugs — **superseded:** merged into **[BUG-42](#bug-42)** (2026-03-25); closed with **BUG-42** (2026-03-26)
-- [x] **BUG-41** — River corridors: shore prefabs + cliff stacks — **superseded:** merged into **[BUG-42](#bug-42)** (2026-03-25); closed with **BUG-42** (2026-03-26)
-- [x] **FEAT-38** — Procedural rivers during geography / terrain generation (2026-03-24)
-  - Type: feature
-  - Files: `GeographyManager.cs`, `ProceduralRiverGenerator.cs`, `TerrainManager.cs`, `WaterMap.cs`, `WaterManager.cs`, `WaterBody.cs`, `Cell.cs` / `CellData.cs` (as needed)
-  - Spec: `.cursor/specs/isometric-geography-system.md` §12–§13
-  - Notes: **Completed:** `WaterBody` classification + merge (river vs lake/sea); `GenerateProceduralRiversForNewGame()` after `InitializeWaterMap`, before interstate; `ProceduralRiverGenerator` (BFS / forced centerline, border margin, transverse + longitudinal monotonicity, `WaterMap` river bodies). **Shore / cliff / cascade polish:** completed **[BUG-42](#bug-42)** (merged **BUG-33** + **BUG-41**, 2026-03-26).
-
-- [x] **BUG-39** — Bay / inner-corner shore prefabs: cliff art alignment vs stacked cliffs (2026-03-24)
-  - Type: fix (art vs code)
-  - Files: `TerrainManager.cs` (`GetCliffWallSegmentWorldPositionOnSharedEdge`, `PlaceCliffWallStack`), `Assets/Sprites/Cliff/CliffEast.png`, `Assets/Sprites/Cliff/CliffSouth.png`, cliff prefabs under `Assets/Prefabs/Cliff/`
-  - Notes: **Resolved:** Inspector-tunable per-face placement (`cliffWallSouthFaceNudgeTileWidthFraction` / `HeightFraction`, `cliffWallEastFaceNudgeTileWidthFraction` / `HeightFraction`) and water-shore Y offset (`cliffWallWaterShoreYOffsetTileHeightFraction`) so cliff sprites align with the south/east diamond faces and water-shore cells after art was moved inside the textures. Further shore/gap / cascade work → completed **[BUG-42](#bug-42)** (2026-03-26) where applicable.
-
-- [x] **BUG-40** — Shore cliff walls draw in front of nearer (foreground) water tiles (2026-03-24)
-  - Type: fix (sorting / layers)
-  - Files: `TerrainManager.cs` (`PlaceCliffWallStack`, `GetMaxCliffSortingOrderFromForegroundWaterNeighbors`)
-  - Notes: **Resolved:** Cliff `sortingOrder` is capped against registered **foreground** water neighbors (`nx+ny < highX+highY`) using their `Cell.sortingOrder`, so brown cliff segments do not draw above nearer water tiles. See `.cursor/specs/isometric-geography-system.md` §15.2.
-
-- [x] **BUG-36** — Lake generation: seeded RNG (reproducible + varied per New Game) (2026-03-24)
-  - Type: fix
-  - Files: `WaterMap.cs` (`InitializeLakesFromDepressionFill`, `LakeFillSettings`), `WaterManager.cs`, `MapGenerationSeed.cs` (`GetLakeFillRandomSeed`), `TerrainManager.cs` (`EnsureGuaranteedLakeDepressions` shuffle)
-  - Notes: `LakeFillSettings.RandomSeed` comes from map generation seed; depression-fill uses a seeded `System.Random`; bowl shuffle uses a derived seed. Same template no longer forces identical lake bodies across unrelated runs; fixed seed still reproduces. Spec: `.cursor/specs/isometric-geography-system.md` §12.3. **Related:** **BUG-08**, **FEAT-38**.
-
-- [x] **BUG-35** — Load Game: multi-cell buildings — grass on footprint (non-pivot) could draw above building; 1×1 grass + building under one cell (2026-03-22)
-  - Type: fix
-  - Files: `GridManager.cs` (`DestroyCellChildren`), `ZoneManager.cs` (`PlaceZoneBuilding`, `PlaceZoneBuildingTile`), `BuildingPlacementService.cs` (`UpdateBuildingTilesAttributes`), `GridSortingOrderService.cs` (`SetZoneBuildingSortingOrder`, `SyncCellTerrainLayersBelowBuilding`)
-  - Notes: `DestroyCellChildren(..., destroyFlatGrass: true)` when placing/restoring **RCI and utility** buildings so flat grass prefabs are not kept alongside the building (runtime + load). Multi-cell `SetZoneBuildingSortingOrder` still calls **grass-only** `SyncCellTerrainLayersBelowBuilding` for each footprint cell. **BUG-20** may be re-verified against this. Spec: [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) §7.4.
-
-- [x] **BUG-34** — Load Game: zone buildings / utilities render under terrain or water edges (`sortingOrder` snapshot vs building layer) (2026-03-22)
-  - Type: fix
-  - Files: `GridManager.cs`, `ZoneManager.cs`, `TerrainManager.cs`, `BuildingPlacementService.cs`, `GridSortingOrderService.cs`, `Cell.cs`, `CellData.cs`, `GameSaveManager.cs`
-  - Notes: Deterministic restore order; open water and shores aligned with runtime sorting; multi-cell RCI passes `buildingSize`; post-load building sort pass; optional grass sync via `SyncCellTerrainLayersBelowBuilding`. **BUG-35** (completed 2026-03-22) adds `destroyFlatGrass` on building placement/restore. Spec summary: `.cursor/specs/isometric-geography-system.md` §7.4.
-
-- [x] **FEAT-37c** — Persist `WaterMapData` in saves + snapshot load (no terrain/water regen on load) (2026-03-22)
-  - Type: feature
-  - Files: `GameSaveManager.cs`, `WaterManager.cs`, `TerrainManager.cs`, `GridManager.cs`, `Cell.cs`, `CellData.cs`, `WaterBodyType.cs`
-  - Notes: `GameSaveData.waterMapData`; `WaterManager.RestoreWaterMapFromSaveData`; `RestoreGridCellVisuals` applies saved `sortingOrder` and prefabs; legacy saves without `waterMapData` supported. **Follow-up:** building vs terrain sorting on load — **BUG-34** (completed); multi-cell footprint / grass under building — **BUG-35** (completed 2026-03-22).
-
-- [x] **FEAT-37b** — Variable-height water: sorting, roads/bridges, `SEA_LEVEL` removal (no lake shore prefab scope) (2026-03-24)
-  - Type: feature + refactor
-  - Files: `GridSortingOrderService.cs`, `RoadPrefabResolver.cs`, `RoadManager.cs`, `AutoRoadBuilder.cs`, `ForestManager.cs`, `TerrainManager.cs` (water height queries, bridge/adjacency paths — **exclude** shore placement methods)
-  - Notes: Legacy `SEA_LEVEL` / `cell.height == 0` assumptions removed or generalized for sorting, roads, bridges, non-shore water adjacency. Shore tiles **not** in scope (37a + completed **[BUG-42](#bug-42)**). Verified in Unity.
-
-- [x] **BUG-32** — Lakes / `WaterMap` water not shown on minimap (desync with main map) (2026-03-23)
-  - Type: fix (UX / consistency)
-  - Files: `MiniMapController.cs`, `GeographyManager.cs`, `WaterManager.cs`, `WaterMap.cs`
-  - Notes: Minimap water layer aligned with `WaterManager` / `WaterMap` (rebuild timing, `GetCellColor`, layer toggles). Verified in Unity.
-
-- [x] **FEAT-37a** — WaterBody + WaterMap depression-fill (lake data & procedural placement) (2026-03-22)
-  - Type: feature + refactor
-  - Files: `WaterBody.cs`, `WaterMap.cs`, `WaterManager.cs`, `TerrainManager.cs`, `LakeFeasibility.cs`
-  - Notes: `WaterBody` + per-cell body ids; `WaterMap.InitializeLakesFromDepressionFill` + `LakeFillSettings` (depression-fill, bounded pass, artificial fallback, merge); `LakeFeasibility` / `EnsureGuaranteedLakeDepressions` terrain bowls; `WaterMapData` v2 + legacy load; centered 40×40 template + extended terrain. **Shore / cliff / cascade polish:** completed **[BUG-42](#bug-42)** (2026-03-26); **FEAT-37b** / **FEAT-37c** completed; building sort on load **BUG-34** (completed); multi-cell footprint / grass under building **BUG-35** (completed 2026-03-22).
-
-> Older completed items archived in `BACKLOG-ARCHIVE.md`.
+> Full history: [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
 
 ---
 
@@ -551,7 +505,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
 3. **Add new issue**: Assign the next available ID in the appropriate category and place in the correct priority section.
 4. **Complete issue**: Move to "Completed" section with date, mark checkbox as `[x]`.
 5. **In progress**: Move to "In progress" section when starting work.
-6. **Dependencies**: Use `Depends on: ID` field when an issue requires another to be completed first. Check dependencies before starting.
+6. **Dependencies**: Use `Depends on: ID` when an open issue must wait on another. **Convention:** every ID in `Depends on:` must appear **above** the dependent in this file (earlier in the same section or in a higher-priority section), **or** be **completed** in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) — then write `Depends on: none` and cite the archived id in **Notes**. Check dependencies before starting.
 
 ### ID Convention
 | Prefix | Category |

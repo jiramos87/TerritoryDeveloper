@@ -13,6 +13,7 @@
 7. [Anti-patterns and project guardrails](#7-anti-patterns-and-project-guardrails)
 8. [ScriptableObject](#8-scriptableobject)
 9. [Glossary alignment](#9-glossary-alignment)
+10. [Editor agent diagnostics (machine-readable exports)](#10-editor-agent-diagnostics-machine-readable-exports)
 
 ---
 
@@ -26,7 +27,7 @@
 
 **Out of scope here:** Full **Unity** manual text; authoritative **cell** geometry, **HeightMap**, **road preparation family**, water, cliffs, and **Sorting order** formulas — see [`isometric-geography-system.md`](isometric-geography-system.md) and linked specs.
 
-**Territory-ia and exports:** This file is registered as **`unity-development-context`** (aliases **`unity`**, **`unityctx`**) for **`spec_outline`** / **`spec_section`**. Roadmap items in [`BACKLOG.md`](../../BACKLOG.md) (verify status there): **[TECH-18](../../BACKLOG.md)** may evolve MCP toward a **`unity_context_section`**-style retrieval path over a database; **[TECH-28](../../BACKLOG.md)** (completed) — **Unity Editor** menu **Territory Developer → Reports** writes `tools/reports/agent-context-{timestamp}.json` and optional `sorting-debug-{timestamp}.md`; **[TECH-26](../../BACKLOG.md)** plans mechanical repo checks (e.g. **`FindObjectOfType`** in **`Update`**). Treat output paths and tool names for other issues as **planned** until the corresponding backlog item is completed.
+**Territory-ia and exports:** This file is registered as **`unity-development-context`** (aliases **`unity`**, **`unityctx`**) for **`spec_outline`** / **`spec_section`**. Roadmap items in [`BACKLOG.md`](../../BACKLOG.md) (verify status there): **[TECH-18](../../BACKLOG.md)** may evolve MCP toward a **`unity_context_section`**-style retrieval path over a database; **[TECH-26](../../BACKLOG.md)** plans mechanical repo checks (e.g. **`FindObjectOfType`** in **`Update`**). **Editor** JSON/Markdown exports shipped under **[TECH-28](../../BACKLOG.md)** (completed — see [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md)); **expected menus, prerequisites, and outputs** are defined in **§10** below. Treat output paths and tool names for other issues as **planned** until the corresponding backlog item is completed. If menus or **Sorting** export fail in practice, track **[BUG-53](../../BACKLOG.md)**.
 
 ---
 
@@ -127,3 +128,32 @@ Cross-check these terms in [`glossary.md`](glossary.md) and linked specs when wr
 - **Cell**, **HeightMap**, **GridManager**, **Sorting order**, **WaterMap**, **Geography initialization**, **street** / **interstate**, **road stroke**, **AUTO systems**, **terraform** / **PathTerraformPlan**, **Map border**
 
 For **Unity**-only vocabulary (**MonoBehaviour**, **Inspector**, **SerializeField**, **Prefab**), this document and **Unity** docs suffice; keep **game** terms aligned with the glossary.
+
+---
+
+## 10. Editor agent diagnostics (machine-readable exports)
+
+**Purpose:** Give IDE agents reproducible, **glossary-aligned** snapshots of **Editor** / **Play Mode** context and optional **Sorting order** debugging material without hand-copying **Inspector** values. Player builds **must not** gain these menus (implementation lives under `Assets/Scripts/Editor/`).
+
+**Information architecture (outputs):**
+
+| Artifact | Relative path (repo root) | Role |
+|----------|---------------------------|------|
+| Agent context | `tools/reports/agent-context-{UTC-timestamp}.json` | `schema_version`, `exported_at_utc`, active scene, selection summary, bounded **grid** sample (**Cell**, **`HeightMap`**, **`WaterMap`** fields) |
+| Sorting debug | `tools/reports/sorting-debug-{UTC-timestamp}.md` | Per-**cell** lines derived from **`TerrainManager`** public sorting APIs and sampled **`SpriteRenderer.sortingOrder`**; narrative ties to [`isometric-geography-system.md`](isometric-geography-system.md) **Sorting order** (do not duplicate formula authority here) |
+
+Generated `*.json` / `*.md` under `tools/reports/` are **gitignored** by policy; the folder may contain **`.gitkeep`** only in VCS. Agents should reference exports in prompts with workspace paths (e.g. `@tools/reports/agent-context-….json`).
+
+**Expected Unity Editor behavior:**
+
+1. **Menu location:** Top bar **Territory Developer → Reports** with two sibling items:
+   - **Export Agent Context**
+   - **Export Sorting Debug (Markdown)**
+2. **When menus appear:** After the project compiles successfully, **Unity** discovers `[MenuItem]` on `AgentDiagnosticsReportsMenu` ([`AgentDiagnosticsReportsMenu.cs`](../../Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs)). If the submenu is missing, check **Console** for script compile errors in **Editor** scripts.
+3. **Export Agent Context (JSON):** Must run in **Edit Mode** or **Play Mode** without throwing. If **`GridManager`** is absent or **`isInitialized`** is false, the JSON still validates; the `grid` block documents that state and may omit **cell** samples.
+4. **Export Sorting Debug (Markdown):**
+   - **Edit Mode:** Writes a **stub** file stating that full **Sorting order** breakdown requires **Play Mode** with an initialized **grid** — this is **expected**, not a failure.
+   - **Play Mode:** Requires an initialized **`GridManager`** (`isInitialized`), a non-null **`TerrainManager`**, and valid **`GetCell`** data for sampled coordinates. Output lists **`TerrainManager`** constants (`TERRAIN_BASE_ORDER`, `DEPTH_MULTIPLIER`, `HEIGHT_MULTIPLIER`), per-**cell** computed orders, and a capped list of **`SpriteRenderer`** `sortingOrder` values on the **cell** `GameObject` tree.
+5. **Grid reads:** Diagnostics code must use **`GridManager.GetCell(x, y)`** only for **cell** access — no new direct **`gridArray`** / **`cellArray`** use outside **`GridManager`** ([`.cursor/rules/invariants.mdc`](../rules/invariants.mdc)).
+
+**Active issue:** **[BUG-53](../../BACKLOG.md)** tracks reports that menus do not appear or that **Sorting** export does not match the expectations above.

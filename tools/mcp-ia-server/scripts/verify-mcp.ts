@@ -391,21 +391,23 @@ async function main(): Promise<void> {
     throw new Error("glossary_discover expected suggestions array when no matches");
   }
 
-  const bl28 = parseJsonFromToolResult(
+  const bl37 = parseJsonFromToolResult(
     await client.callTool({
       name: "backlog_issue",
-      arguments: { issue_id: "TECH-28" },
+      arguments: { issue_id: "TECH-37" },
     }),
   ) as { issue_id?: string; status?: string; error?: string; files?: string; backlog_section?: string };
-  if (bl28.error || bl28.issue_id !== "TECH-28" || bl28.status !== "completed") {
-    throw new Error("backlog_issue TECH-28 failed (expected completed)");
+  if (bl37.error || bl37.issue_id !== "TECH-37" || bl37.status !== "open") {
+    throw new Error("backlog_issue TECH-37 failed (expected open)");
   }
-  if (!/tools\/reports|GridManager|Editor/i.test(bl28.files ?? "")) {
-    throw new Error("backlog_issue TECH-28 expected Files to mention tools/reports, Editor, or GridManager");
-  }
-  if (!/agent|unity|mcp|completed/i.test(bl28.backlog_section ?? "")) {
+  if (!/compute-lib|mcp-ia-server|Utilities\/Compute/i.test(bl37.files ?? "")) {
     throw new Error(
-      "backlog_issue TECH-28 expected backlog_section to mention agent/Unity/MCP or Completed",
+      "backlog_issue TECH-37 expected Files to mention compute-lib, mcp-ia-server, or Utilities/Compute",
+    );
+  }
+  if (!/agent|unity|mcp/i.test(bl37.backlog_section ?? "")) {
+    throw new Error(
+      "backlog_issue TECH-37 expected backlog_section to mention agent/Unity/MCP context lane",
     );
   }
 

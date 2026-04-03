@@ -43,7 +43,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 
 | Tool | Description |
 |------|-------------|
-| **`backlog_issue`** | One issue from `BACKLOG.md`: `issue_id` (e.g. `BUG-37`). Returns `status`, `backlog_section`, `Files` / `Spec` / `Notes` / `Acceptance` / `depends_on`, `raw_markdown`. Not in `list_specs`. |
+| **`backlog_issue`** | One **open** issue from `BACKLOG.md`: `issue_id` (e.g. `BUG-37`). Returns `status`, `backlog_section`, `Files` / `Spec` / `Notes` / `Acceptance` / `depends_on`, `raw_markdown`. Completed-only ids: `BACKLOG-ARCHIVE.md`. Not in `list_specs`. |
 | **`list_specs`** | Registry entries: `key`, `relativePath`, `description`, `category`, `lineCount`. Optional filter `category` (e.g. `rule`). |
 | **`spec_outline`** | Nested heading outline with line ranges. `spec` accepts key, filename, or alias (`geo` → `isometric-geography-system`, `roads` → `roads-system`, `unity` / `unityctx` → `unity-development-context`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
 | **`spec_section`** | Body for one section: canonical `spec` + `section` (id `13.4`, slug, title substring, or fuzzy typo). Aliases: `key` / `doc` → spec; `section_heading` / `heading` → section; numeric `section` coerced to string. `max_chars` or `maxChars` (default 3000) with `truncated` / `totalChars`. |

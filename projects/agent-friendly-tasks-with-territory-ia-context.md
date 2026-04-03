@@ -17,6 +17,7 @@ Ten tools: `backlog_issue`, `list_specs`, `spec_outline`, `spec_section`, `gloss
 **Strengths for implementation:**
 
 - **Cheap, structured retrieval** of spec slices and glossary terms (English-only for glossary tools).
+- After **TECH-40** lands: generated **spec** / **glossary** index JSON (**TECH-21** program — see [`BACKLOG.md`](../BACKLOG.md) **Agent** lane) can narrow which file to open before chaining `spec_section` — same MCP tools, fewer blind full-file reads.
 - **`invariants_summary`** — hard constraints agents must not violate (HeightMap sync, road cache, no `FindObjectOfType` in per-frame loops, road preparation family, etc.).
 - **`router_for_task`** — points to the right spec file/section family for a domain keyword.
 - **`backlog_issue`** — exact issue block (files, notes, dependencies) when the id is known.
@@ -97,7 +98,7 @@ Labels:
 
 **FEAT-09–16**, **FEAT-18–19**, **FEAT-39–41**, **AUDIO-01**, **ART-01–04** → **C** (new systems, assets, or large design surface). Agents may **prototype** or **document** subtasks, but production merge without human/Unity review is risky.
 
-**TECH-18–21** → **B–C** depending on milestone; **unity-development-context.md** (**TECH-20** + **TECH-25** completed) remains a strong **B** target for *small, slice-sized* doc follow-ups if new Unity conventions appear.
+**TECH-18**–**TECH-20**, **TECH-21** program (**TECH-40**–**TECH-42**), **TECH-43** → **B–C** depending on milestone; **unity-development-context.md** (**TECH-20** + **TECH-25** completed) remains a strong **B** target for *small, slice-sized* doc follow-ups if new Unity conventions appear.
 
 ---
 

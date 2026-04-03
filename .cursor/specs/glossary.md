@@ -7,6 +7,26 @@
 > water = `water-terrain-system.md`, sim = `simulation-system.md`, persist = `persistence-system.md`,
 > mgrs = `managers-reference.md` — **§Zones**, **§Demand**, **§World**, **§Notifications**; **geo §14.5** = road stroke, lip, grass, Chebyshev, etc.; **sim §Rings** = centroid + growth rings; ui = `ui-design-system.md`; `ARCHITECTURE.md` = layer map and init order (no § numbers).
 
+## Index (quick skim)
+
+| Block | Keywords (search this doc for…) |
+|-------|----------------------------------|
+| **Grid** | Cell, HeightMap, sorting, tile/world, Moore, cardinal, grass |
+| **Height** | range, sea level, Δh, generation |
+| **Terrain** | slopes, cliffs, shore, rim, bay, suppression, cut-through |
+| **Water** | body, map, open vs shore, S/V, junction, Pass A/B, brink, cascade |
+| **Rivers** | H_bed, bank, width, spacing, Chebyshev |
+| **World gen** | geography init |
+| **Roads** | validation, stroke, street/interstate, bridge, wet run, terraform |
+| **Pathfinding** | A*, costs, diagonal steps |
+| **Zones** | RCI, density, pivot, footprint, undeveloped light |
+| **Simulation** | tick, AUTO, budget, centroid, rings |
+| **City** | demand, tax, desirability, forest, regional, utility, notification |
+| **Persistence** | save, CellData, water map data, visual restore, load order |
+| **Prefabs** | land/water slopes, sorting formula, type offsets |
+| **Documentation** | reference spec vs project spec |
+| **Planned (non-authoritative)** | backlog-backed future terms — [§ Planned terminology](#planned-domain-terms) |
+
 ## Grid & Coordinates
 
 | Term | Definition | Spec |
@@ -187,3 +207,20 @@
 | Term | Definition | Spec |
 |------|-----------|------|
 | **Reference spec** | Permanent Markdown under `.cursor/specs/` that defines domain behavior and vocabulary in depth (terrain, roads, simulation, UI, etc.). Listed in [`AGENTS.md`](../../AGENTS.md) inventory; consumed by humans, agents, and **territory-ia** MCP (`spec_section`, `spec_outline`). Contrasts with a **project spec** (`.cursor/projects/{ISSUE_ID}.md`), which is temporary for an active backlog item. Authoring rules: [REFERENCE-SPEC-STRUCTURE.md](REFERENCE-SPEC-STRUCTURE.md). | `AGENTS.md`, [REFERENCE-SPEC-STRUCTURE.md](REFERENCE-SPEC-STRUCTURE.md) |
+
+<a id="planned-domain-terms"></a>
+
+## Planned terminology (backlog-backed, non-authoritative)
+
+> **Not canonical gameplay.** Rows here name **product directions** tracked in [`BACKLOG.md`](../../BACKLOG.md). They are **not** implemented rules until the linked **FEAT-** ships and **reference specs** are updated. For current simulation and water behavior, use **Urban centroid**, **Urban growth rings**, **Surface height (S)**, etc. in the tables above. **If a reference spec is updated for a feature, the spec wins** over this section.
+>
+> **Full narrative:** [`docs/planned-domain-ideas.md`](../../docs/planned-domain-ideas.md). Completed issues referenced as prerequisites (e.g. **FEAT-37c**) live in [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) **Recent archive**, not in open [`BACKLOG.md`](../../BACKLOG.md).
+
+| Term | Working definition (intent only) | Backlog / program |
+|------|-----------------------------------|-------------------|
+| **Geography authoring** | In-game or Editor flow to design **territory** / **urban** area **maps** with a **parameter dashboard** (e.g. **map** size, **water** / **forest** / **height** mix, **sea** / **river** / **lake** proportions). Intended to drive **geography initialization** and to reuse the same parameter model for **player** **terraform**, **basin** / **elevation** tools, **water body** placement in **depressions**, and **AUTO**-driven tools. | **FEAT-46**; aligns with **TECH-36** program and **TECH-21** program (**TECH-40**–**TECH-42** — interchange DTOs, schemas, **TECH-41** **Geography initialization** params) |
+| **Urban pole** (working name) | A growth anchor for **AUTO** systems — e.g. employment or **desirability** hotspot — used to weight nearby **cells** for **streets** and **zoning**. Distinct from **committed** **pathfinding**: **road** segments still follow **road preparation** and **geo** §10. | **FEAT-47** |
+| **Multipolar urban growth** | Evolution from a single **urban centroid** to **multiple** **urban poles**, each with its own **urban growth rings** (or equivalent distance field), while preserving coherent regional patterns on one **map**; long-term **connurbation** between urban masses. | **FEAT-47** (coordinates **FEAT-43**) |
+| **Connurbation** | Planned concept: two or more distinct urban areas on the same **map** recognized as coexisting under shared regional rules (exact criteria TBD). | **FEAT-47** |
+| **Water volume budget** | Planned **not** full 3D **fluid** simulation: a **water body** (or connected component) holds a **volume** constraint so expanding **basin** capacity can **lower** **surface height (S)** to conserve mass; conversely, constrained **basins** may raise **S**. **Rendering** updates **water** prefab height; optional directional **fill** **animation** for player feedback. | **FEAT-48** (related **FEAT-40**, **FEAT-41**, **FEAT-39**) |
+| **Moore-adjacent excavation fill** | Planned **gameplay**: excavating a **dry** **cell** **Moore**-adjacent to **open water** allows that **depression** to **fill** from the adjacent **water body** (rules TBD). | **FEAT-48** |

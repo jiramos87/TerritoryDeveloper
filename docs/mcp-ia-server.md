@@ -23,7 +23,7 @@ When starting work on **`BUG-XX` / `FEAT-XX` / `TECH-XX`** (etc.), call **`backl
 
 | Tool | Role |
 |------|------|
-| `backlog_issue` | One issue from `BACKLOG.md` by id (`issue_id`); structured fields + `raw_markdown`. Nested sub-items (e.g. TECH-01 under BUG-20) supported. |
+| `backlog_issue` | One **open** issue from `BACKLOG.md` by id (`issue_id`); structured fields + `raw_markdown`. Nested sub-items (e.g. TECH-01 under BUG-20) supported. Completed-only rows: `BACKLOG-ARCHIVE.md` (**Recent archive** / older sections). |
 | `list_specs` | Discover registered documents (`key`, path, category, description). |
 | `spec_outline` | Heading tree for a spec/rule/doc; supports aliases (`geo`, `roads`, `unity` / `unityctx` → `unity-development-context`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
 | `spec_section` | Body under one heading (id, slug, substring, or fuzzy heading match); `max_chars` truncation. Parameters `spec` + `section` are canonical; aliases `key`/`doc` for spec and `section_heading`/`heading` for section are accepted (numeric section coerced to string) so mis-keyed tool calls still succeed. |
@@ -43,6 +43,8 @@ When starting work on **`BUG-XX` / `FEAT-XX` / `TECH-XX`** (etc.), call **`backl
 
 ## Future work (out of scope for TECH-17)
 
-Full-text search across all IA documents is tracked as **TECH-18**; database-backed IA and evolved tools are **TECH-19** / **TECH-18** in `BACKLOG.md`.
+Full-text search across all IA documents is tracked as **TECH-18**; database-backed IA and evolved tools are **TECH-19** / **TECH-18** in [`BACKLOG.md`](../BACKLOG.md).
+
+**TECH-21** program (**TECH-40**–**TECH-42**): JSON Schema, **CI** fixture validation, and optional **generated** **spec**/**glossary** index JSON (machine manifests only — **not** a second copy of spec bodies; see **TECH-18**). If those artifacts land under `tools/` or `docs/schemas/`, MCP **may** later consume them for faster path resolution; until then, **`list_specs`**, **`spec_outline`**, and **`spec_section`** remain authoritative for slice retrieval. Charter: [`.cursor/projects/TECH-21.md`](../.cursor/projects/TECH-21.md).
 
 For a **domain-neutral** description of this architecture (Markdown corpus, registry, parser spine, tool families, verification) — useful when starting a similar MCP in another repo — see [`mcp-markdown-ia-pattern.md`](mcp-markdown-ia-pattern.md).

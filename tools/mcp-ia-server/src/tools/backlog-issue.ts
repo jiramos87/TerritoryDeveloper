@@ -53,8 +53,8 @@ export function registerBacklogIssue(server: McpServer): void {
         if (!parsed) {
           return jsonResult({
             error: "unknown_issue",
-            message: `No issue '${issueId}' found in BACKLOG.md. Check spelling, id format (e.g. BUG-37), or BACKLOG-ARCHIVE.md for older items.`,
-            hint: "Use list_specs for IA docs; backlog lives only in BACKLOG.md for this tool.",
+            message: `No open issue '${issueId}' in BACKLOG.md. Check spelling, id format (e.g. BUG-37), or BACKLOG-ARCHIVE.md (§ Recent archive or Pre-2026-03-22) for completed-only items.`,
+            hint: "This tool reads open BACKLOG.md only; archived completions are not loaded here.",
           });
         }
 

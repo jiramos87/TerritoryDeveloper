@@ -1,87 +1,89 @@
-# TECH-21 — JSON leverage: schema pilot and tooling alignment
+# TECH-21 — JSON program (umbrella)
 
-> **Issue:** [TECH-21](../../BACKLOG.md)
-> **Status:** Draft
-> **Created:** 2026-04-02
-> **Last updated:** 2026-04-02
+> **Issue:** [TECH-21](../../BACKLOG.md)  
+> **Status:** Draft  
+> **Created:** 2026-04-02  
+> **Last updated:** 2026-04-03
 
-**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — task **31**.
+**Phased delivery (separate backlog issues + project specs):** **[TECH-40](TECH-40.md)** (infra, schemas, **CI** validation, **I1**/**I2** indexes), **[TECH-41](TECH-41.md)** (current **runtime**/**Editor** payloads: **G1**/**G2**/**G4**, **E3**, **P1**/**P2**/**P4**), **[TECH-42](TECH-42.md)** (future **TECH-19** shapes: **B1**/**B3**, **P5**). **B2** append-only log → **[TECH-43](../../BACKLOG.md)** (backlog placeholder, no project spec yet).
+
+**Brainstorm (exploration + FAQ):** [`projects/TECH-21-json-use-cases-brainstorm.md`](../../projects/TECH-21-json-use-cases-brainstorm.md)
+
+**Related programs / issues:** **[TECH-36](TECH-36.md)** (**compute-lib**, **TECH-39** `geography_init_params_validate`), **TECH-15** / **TECH-16**, **FEAT-37c** (completed — [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) **Recent archive**), **TECH-19** / **TECH-18**, [`docs/planned-domain-ideas.md`](../../docs/planned-domain-ideas.md).
+
+**territory-ia:** `glossary_discover` / `glossary_lookup` / `spec_outline` — **Save data**, **CellData**, **Load pipeline**, **Geography initialization**, **HeightMap**, **Water map**.
 
 ## 1. Summary
 
-Satisfy **TECH-21** backlog **Acceptance** with a **written plan** plus at least one **pilot**: a **JSON Schema** (or equivalent) for a concrete artifact — e.g. **TECH-15**/**TECH-16** report `schema_version`, MCP test fixture, or a small save-adjacent export — without breaking existing **save data**. Align naming with **glossary** / **persistence-system** where the pilot touches game concepts.
+This file is the **program charter** for **TECH-21**. Executable work lives in **TECH-40**–**TECH-42**. The program introduces **versioned, validated JSON** for tooling and **init**/**interchange** layers, **machine indexes** for specs and glossary (**without** duplicating authoritative Markdown — **TECH-18**), and documented patterns for a future **Postgres** layer (**TECH-19**). Player **Save data** must not change format without a **dedicated migration** issue.
 
-## 2. Goals and Non-Goals
+## 2. Resolved decisions (architecture)
 
-### 2.1 Goals
+| Topic | Decision |
+|-------|----------|
+| Umbrella vs child specs | **TECH-21** = charter only; **TECH-40**/**41**/**42** hold **Implementation Plan** checklists. |
+| Spec duplication | No full **reference spec** bodies in JSON; **I1**/**I2** are **indexes** and anchors only. |
+| `schema_version` | Optional in payload when JSON Schema `$id` / filename semver suffices; required when **DB**, **Save-adjacent** export, or **MCP** consumer needs **one integer** for **branching migrations**. See brainstorm **§FAQ**. |
+| Artifact identity | Every interchange JSON type carries a logical `artifact` (or `kind`) string; **SQL** table name is separate at persistence layer. |
+| Validation cost | **P3**: validate fixtures in **CI**; **avoid** schema validation on **player** hot paths in **release** builds. |
 
-1. Document prioritized JSON use cases (runtime vs tooling vs future API) in this spec **Decision Log** or **Implementation Plan** outcome.
-2. Ship one **pilot** schema + validator (`ajv`, `jsonschema`, or CI step) on a low-risk path.
-3. Versioning field (`schema_version`) on new JSON artifacts.
+## 3. Dependency graph
 
-### 2.2 Non-Goals (Out of Scope)
+```text
+TECH-40 (infra + I1 + I2)
+    → TECH-41 (G1, G2, G4, E3, P1, P2, P4)
+        → TECH-42 (B1, B3, P5; links TECH-19)
 
-1. Replacing entire **save/load** pipeline.
-2. Duplicating full reference specs as JSON (**TECH-18** policy).
+TECH-43 (B2) — depends soft on TECH-40; no spec until scheduled
 
-## 3. User / Developer Stories
+TECH-36 / TECH-37–39 — soft coordination on **GeographyInitParams** / Zod
+```
+
+## 4. Goals and Non-Goals (program level)
+
+### 4.1 Goals
+
+1. **TECH-40**–**TECH-42** **Acceptance** rows in **BACKLOG.md** satisfied.
+2. Glossary / **persistence-system** vocabulary in schema `description` fields and DTO docs.
+3. Clear **E3** layering: **MonoBehaviour** ↔ interchange DTO ↔ **CellData** / **Save data**.
+
+### 4.2 Non-Goals
+
+1. Replacing the entire **Load pipeline** / **Save data** format in this program.
+2. Implementing **FEAT-46** UI, **FEAT-47** multipolar behavior, or **FEAT-48** volume gameplay (payloads may **anticipate** fields only).
+
+## 5. User / Developer Stories (program)
 
 | # | Role | Story | Acceptance criteria |
 |---|------|-------|---------------------|
-| 1 | Developer | I want CI to reject invalid tool outputs. | Validator fails on bad fixture. |
-| 2 | Agent | I want stable shapes for reports. | Schema checked into `tools/` or `docs/schemas/`. |
-
-## 4. Current State
-
-### 4.1 Domain behavior
-
-**Save data** and **CellData** semantics remain per **persistence-system**; pilot must not alter on-disk player saves without migration plan.
-
-### 4.2 Systems map
-
-| Area | Pointer |
-|------|---------|
-| Spec | `.cursor/specs/persistence-system.md` |
-| Related | **TECH-15**, **TECH-16** report JSON |
-
-## 5. Proposed Design
-
-### 5.1 Target behavior (product)
-
-N/A unless pilot touches runtime — then no behavior regression.
-
-### 5.2 Architecture / implementation (agent-owned unless fixed by design)
-
-- Pick pilot in Phase 1 (recommend: **TECH-16** `sim-tick-profile` JSON).
-- Add `schemas/sim-tick-profile.schema.json` (example name) + `npm run validate:fixtures` or similar.
+| 1 | Maintainer | I want phased issues so infra lands before gameplay JSON. | **TECH-40** → **TECH-41** order in **BACKLOG**. |
+| 2 | Agent | I want stable **artifact** names and schemas. | **TECH-40** pilot + policy merged. |
 
 ## 6. Decision Log
 
 | Date | Decision | Rationale | Alternatives considered |
 |------|----------|-----------|------------------------|
 | 2026-04-02 | Spec created | Backlog integration | — |
+| 2026-04-03 | Link brainstorm use-case doc | Prioritize scenarios before **pilot** | Inline only in spec |
+| 2026-04-03 | Split **TECH-40**/**41**/**42** | Separate infra, current payloads, future DB/API | Single **TECH-21** issue only |
 
 ## 7. Implementation Plan
 
-### Phase 1 — Choose pilot artifact
+**Delegated** to child specs:
 
-- [ ] List use cases; select pilot.
-- [ ] Add JSON Schema file.
+| Phase | Issue | Spec | Focus |
+|-------|-------|------|--------|
+| A | **TECH-40** | [TECH-40.md](TECH-40.md) | Schemas, **CI**, **I1**, **I2**, versioning policy |
+| B | **TECH-41** | [TECH-41.md](TECH-41.md) | **G1**, **G2**, **G4**, **E3**, **P1**, **P2**, **P4** |
+| C | **TECH-42** | [TECH-42.md](TECH-42.md) | **B1**, **B3**, **P5**, **TECH-19** alignment |
 
-### Phase 2 — Validator
+**Placeholder:** **TECH-43** — **B2** append-only JSON lines (see **BACKLOG.md**).
 
-- [ ] Wire Node script or CI step.
-- [ ] Add golden good + bad fixture tests.
+## 8. Acceptance Criteria (umbrella)
 
-### Phase 3 — Document
-
-- [ ] Update **TECH-21** backlog Acceptance checkbox when done.
-
-## 8. Acceptance Criteria
-
-- [ ] Plan + pilot schema + validator merged.
-- [ ] **Unity / game:** no save breakage; if pilot is Editor-only, state explicitly in Decision Log.
-- [ ] Glossary-aligned vocabulary in schema `description` fields where applicable.
+- [ ] **TECH-40**, **TECH-41**, and **TECH-42** each meet their spec **§8 Acceptance**.
+- [ ] **Save data** format unchanged without a tracked migration issue.
+- [ ] Brainstorm **§FAQ** and **§Retained** ideas stay aligned with implemented phases (update as rows are **Accepted** / **Deferred**).
 
 ## 9. Issues Found During Development
 
@@ -93,6 +95,6 @@ N/A unless pilot touches runtime — then no behavior regression.
 
 - 
 
-## Open Questions (resolve before / during implementation)
+## Open Questions
 
-None — tooling only; pilot choice is **implementation**, not game logic.
+- I1**/**I2** should be **gitignored**. Eventually we will have a database with a single source of truth for the spec and glossary.

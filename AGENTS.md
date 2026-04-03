@@ -37,7 +37,7 @@ These Markdown files are **reference specs** (per [glossary.md](.cursor/specs/gl
 | `water-terrain-system.md` | Height model, water bodies, cliffs, shores, cascades |
 | `managers-reference.md` | All managers and helper services: responsibilities, dependencies |
 | `glossary.md` | Domain term definitions |
-| `unity-development-context.md` | **Unity** patterns for this repo: **MonoBehaviour** lifecycle, **Inspector** / **`SerializeField`**, **`FindObjectOfType`** policy, **Script Execution Order**, 2D sorting vs **Sorting order** (pointer to geography §7) |
+| `unity-development-context.md` | **Unity** patterns for this repo: **MonoBehaviour** lifecycle, **Inspector** / **`SerializeField`**, **`FindObjectOfType`** policy, **Script Execution Order**, 2D sorting vs **Sorting order** (pointer to geography §7), **Editor** agent diagnostics exports (§10) |
 | `REFERENCE-SPEC-STRUCTURE.md` | Meta: conventions for writing and extending **reference specs** in this folder (terminology, MCP, new-file checklist) |
 
 Do not add bug write-ups, agent prompts, or one-off specs under `.cursor/specs/`. Use `BACKLOG.md` while work is open; delete temporary markdown after completion.
@@ -61,6 +61,8 @@ Project-specific specs for features or complex bugs **in active development** li
 ### Project docs outside `.cursor/specs/`
 
 Charters and discovery for cross-cutting programs live under `docs/` as listed in `ARCHITECTURE.md`. The **territory-ia** MCP is documented in [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) and [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md).
+
+**Umbrella backlog programs** (one charter spec + phased child issues): **[TECH-21](.cursor/projects/TECH-21.md)** — **JSON** schemas, validation, indexes, runtime DTOs (**TECH-40** → **TECH-41** → **TECH-42**); **[TECH-36](.cursor/projects/TECH-36.md)** — **computational** **compute-lib** + Unity extractions + MCP tools (**TECH-37** → **TECH-38** → **TECH-39**). For **`backlog_issue`**, child rows still have their own **Spec** paths—read the umbrella charter when scope spans multiple phases.
 
 ## Terminology and information consistency
 
@@ -88,7 +90,7 @@ Cursor loads **`.cursor/rules/terminology-consistency.mdc`** (`alwaysApply`) as 
 
 ### Working on an issue
 
-1. Read `BACKLOG.md` to get the full issue context
+1. Prefer **`backlog_issue`** (territory-ia) for the issue id when MCP is enabled; otherwise read `BACKLOG.md`. If the issue is a **child** of **TECH-21** or **TECH-36**, skim the **umbrella** spec (`.cursor/projects/TECH-21.md` or `TECH-36.md`) for program intent, then open the **child** spec (**TECH-40**–**TECH-42** or **TECH-37**–**TECH-39**).
 2. Read the files listed in the issue's "Files" field
 3. Plan mode: analyze and propose a plan
 4. Agent mode: implement, then move issue to "In progress"
@@ -111,7 +113,7 @@ When the user asks which is the next issue, respond with it and **ask if they wa
 
 ### Completing issues
 
-Only when user confirms verification. Mark `[x]`, move to "Completed (last 30 days)" with date. Items older than ~7 days → `BACKLOG-ARCHIVE.md`.
+Only when user confirms verification. Mark `[x]`, move to **Completed (last 30 days)** with date. Items older than ~7 days → `BACKLOG-ARCHIVE.md` (use the **Recent archive** section for batches moved from Completed). **`backlog_issue` MCP** returns **open** issues from `BACKLOG.md` only — completed-only ids may live only in the archive.
 
 ### Priority order
 

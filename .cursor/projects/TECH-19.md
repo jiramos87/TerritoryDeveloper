@@ -43,6 +43,7 @@ N/A — infrastructure.
 | Area | Pointer |
 |------|---------|
 | Backlog | `BACKLOG.md` — **TECH-19**, **TECH-18** |
+| JSON / **JSONB** patterns (future game rows) | **TECH-21** program — [TECH-42](TECH-42.md) (documented envelopes and row+**JSONB**; implement after **TECH-41** when product needs them) |
 | Sources | `.cursor/specs/glossary.md`, `.cursor/rules/invariants.mdc` |
 
 ## 5. Proposed Design

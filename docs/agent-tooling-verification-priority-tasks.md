@@ -63,7 +63,7 @@ Each row is a **single deliverable** or a **tightly coupled bundle**. Skip numbe
 | 20 | **MCP: `unity_context_section`** — slices of **unity-development-context.md** | MCP | Medium–high — **BUG-16**, **BUG-17**, **FEAT-19** | **TECH-18** Phase |
 | 21 | **Scenario / fixture generator** — from project templates or YAML → Play Mode tests or serialized fixtures | Script / Unity | Medium — reproducible **BUG-52**-class regressions | **TECH-31** (`.cursor/projects/TECH-31.md`) |
 | 22 | **Invariant validation report in harness** — sample checks (HeightMap vs `Cell.height`, road cache assumptions, shore samples) emitted as JSON | Unity / test | Medium — teaches agents via failures | **TECH-15** / **TECH-16** harness phases |
-| 23 | **Sorting / region debug export** — optional `sorting-debug.md` for selected cells (formula inputs, order) | Unity Editor | Medium — **Sorting order** investigations (geo §7) | **TECH-28** completed — **Export Sorting Debug (Markdown)** |
+| 23 | **Sorting / region debug export** — optional `sorting-debug.md` for selected cells (formula inputs, order) | Unity Editor | Medium — **Sorting order** investigations (geo §7) | **TECH-28** completed — **Export Sorting Debug (Markdown)**; expected behavior **unity-development-context.md** §10; gaps → **BUG-53** |
 | 24 | **Ring / centroid recompute what-if** — compare full recompute vs throttled; report desync risk | Script / Unity | Lower — research; schedule after row 4 | **TECH-32** (`.cursor/projects/TECH-32.md`); **FEAT-43** |
 | 25 | **ProfilerMarker / allocation grouping** — names mirror spec steps; post-run parser groups AUTO vs manual | Code + script | Medium — attribution for memory spikes | **TECH-16** |
 | 26 | **Prefab manifest** — missing script references under `Assets/Prefabs` | Unity batch / Editor | Medium — **ART-01**–**ART-04** | **TECH-33** |
@@ -71,7 +71,7 @@ Each row is a **single deliverable** or a **tightly coupled bundle**. Skip numbe
 | 28 | **Generate `gridmanager-regions.json`** from `#region` + optional MCP `gridmanager_region_map` | Script + MCP | Medium — **TECH-01** extraction | **TECH-34** (+ **TECH-18** for MCP) |
 | 29 | **MCP: `persistence_restore_checklist`** | MCP | Medium — **BUG-20** | **TECH-18** Phase |
 | 30 | **MCP: `economy_concepts`**, **`ui_input_patterns`** | MCP | Medium — economy/UI issue clusters | **TECH-18** Phase |
-| 31 | **JSON schema validation** for save DTOs or exported fixtures | Script | Medium — **TECH-21** pilot | **TECH-21** (`.cursor/projects/TECH-21.md`) |
+| 31 | **JSON schema validation** for save DTOs or exported fixtures | Script | Medium — **TECH-21** program pilot (**TECH-40**) | **TECH-40** (`.cursor/projects/TECH-40.md`; umbrella **TECH-21.md**) |
 | 32 | **MCP: `coding_conventions_slice`** | MCP | Lower–medium — prefab naming, SerializeField policy | **TECH-18** Phase |
 | 33 | **Public API list per manager** + XML doc presence report | Script | Lower–medium — **TECH-02** | **TECH-02** |
 | 34 | **Magic numbers extraction report** (thresholded literals) | Script | Lower — **TECH-03** planning | **TECH-03** |
