@@ -6,7 +6,7 @@
 2. Use `.cursor/rules/agent-router.mdc` to find the right specs for your task
 3. **Context from IA (Cursor agents):** In **Agent** chats with tools enabled, treat **territory-ia** MCP as the **default** way to load specs and rules unless a tool call truly cannot run. **Do not** open whole spec files with `read_file` when a slice suffices. Suggested order: **`backlog_issue`** when you have an issue id (`BUG-37`, `FEAT-44`, …) → `list_specs` (if keys unknown) → `router_for_task` for domain → `glossary_discover` / `glossary_lookup` → `spec_outline` / `spec_section` (or `invariants_summary`, `list_rules` / `rule_content` as needed). For **`glossary_discover`** and **`glossary_lookup`**, arguments must be **English** (the glossary is English-only): if the developer writes in another language, **translate** their concepts into English domain terms before calling. If MCP is disabled in the host, fall back to `.cursor/rules/agent-router.mdc` and targeted `read_file`. Stale content: MCP caches parses per server process—after large edits to a doc, prefer a fresh `read_file` on that path or restart the MCP server. Reference: [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md).
 4. **If asked to work on an issue:** use **`backlog_issue`** for that id when MCP is available; otherwise read `BACKLOG.md` (and see `BACKLOG.md` for priority and workflow).
-5. **Project specs:** When **reviewing or enriching** `.cursor/projects/{ISSUE_ID}.md` before code, use [`.cursor/skills/project-spec-kickoff/SKILL.md`](.cursor/skills/project-spec-kickoff/SKILL.md) (or the paste template at [`.cursor/templates/project-spec-review-prompt.md`](.cursor/templates/project-spec-review-prompt.md)). When **executing** the spec’s **Implementation Plan**, use [`.cursor/skills/project-spec-implement/SKILL.md`](.cursor/skills/project-spec-implement/SKILL.md). Both define ordered **territory-ia** recipes (`backlog_issue` → `invariants_summary` when applicable → `router_for_task` → `spec_section` → `glossary_*` → …). Skill index and authoring rules: [`.cursor/skills/README.md`](.cursor/skills/README.md).
+5. **Project specs:** When **reviewing or enriching** `.cursor/projects/{ISSUE_ID}.md` before code, use [`.cursor/skills/project-spec-kickoff/SKILL.md`](.cursor/skills/project-spec-kickoff/SKILL.md) (or the paste template at [`.cursor/templates/project-spec-review-prompt.md`](.cursor/templates/project-spec-review-prompt.md)). When **executing** the spec’s **Implementation Plan**, use [`.cursor/skills/project-spec-implement/SKILL.md`](.cursor/skills/project-spec-implement/SKILL.md). After **MCP** / **schema** / **IA index**–touching work, use [`.cursor/skills/project-implementation-validation/SKILL.md`](.cursor/skills/project-implementation-validation/SKILL.md) for **CI**-aligned **Node** checks (optional but recommended). When **closing** the issue after verified work (migrate IA, delete the temporary spec, **BACKLOG** **Completed**), use [`.cursor/skills/project-spec-close/SKILL.md`](.cursor/skills/project-spec-close/SKILL.md). **Kickoff**, **implement**, and **close** define ordered **territory-ia** recipes where applicable (`backlog_issue` → `invariants_summary` when applicable → `router_for_task` → `spec_section` → `glossary_*` → …). Skill index and authoring rules: [`.cursor/skills/README.md`](.cursor/skills/README.md).
 
 System invariants and guardrails are in `.cursor/rules/invariants.mdc` (always loaded).
 Task-to-spec routing is in `.cursor/rules/agent-router.mdc` (always loaded).
@@ -16,7 +16,7 @@ Full dependency map is in `ARCHITECTURE.md`.
 
 ```
 .cursor/rules/        → Guardrails (auto-loaded by Cursor, light)
-.cursor/skills/       → Cursor Agent Skills (thin workflows; see README — **project-spec-kickoff**, **project-spec-implement**)
+.cursor/skills/       → Cursor Agent Skills (thin workflows; see README — **project-spec-kickoff**, **project-spec-implement**, **project-implementation-validation**, **project-spec-close**)
 .cursor/specs/        → Deep reference (read on demand per task)
 ARCHITECTURE.md       → System layers, dependency map
 AGENTS.md             → This file: workflow, policies, checklist
@@ -55,6 +55,7 @@ Project-specific specs for features or complex bugs **in active development** li
 | Naming | `{ISSUE_ID}.md` (e.g. `FEAT-44.md`, `BUG-45.md`) |
 | Lifecycle | Create → refine → implement → verify → close |
 | On completion | Migrate lessons learned to canonical docs before deleting |
+| Dead path check | Before/after deleting a project spec, run `npm run validate:dead-project-specs` (repo root) so durable docs do not keep links to `.cursor/projects/{ISSUE_ID}.md`. Use **`BACKLOG.md`** / **`BACKLOG-ARCHIVE.md`** by issue id for the durable trace. See **PROJECT-SPEC-STRUCTURE** — **Closeout checklist**. Advisory-only: `node tools/validate-dead-project-spec-paths.mjs --advisory` or `CI_DEAD_SPEC_ADVISORY=1`. |
 
 **Requirements vs implementation:** When authoring or extending a project spec, separate **product / game-logic** content (what the player and simulation rules do—using [`.cursor/specs/glossary.md`](.cursor/specs/glossary.md) terms) from **implementation** content (files, classes, algorithms). The **implementing agent** chooses code-level solutions **unless** a chosen approach would **change** the game behavior defined in the spec; in that case, record the conflict in the spec **Decision Log** or ask the product owner before proceeding.
 
@@ -64,7 +65,7 @@ Project-specific specs for features or complex bugs **in active development** li
 
 Charters and discovery for cross-cutting programs live under `docs/` as listed in `ARCHITECTURE.md`. The **territory-ia** MCP is documented in [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) and [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md).
 
-**Umbrella backlog programs** (one charter spec + phased child issues): **[TECH-21](.cursor/projects/TECH-21.md)** — **JSON** schemas, validation, indexes, runtime DTOs (**TECH-40** → **TECH-41** → **TECH-42**); **[TECH-36](.cursor/projects/TECH-36.md)** — **computational** **compute-lib** + Unity extractions + MCP tools (**TECH-37** → **TECH-38** → **TECH-39**). For **`backlog_issue`**, child rows still have their own **Spec** paths—read the umbrella charter when scope spans multiple phases.
+**Umbrella backlog programs** (one charter spec + phased child issues): **[TECH-21](.cursor/projects/TECH-21.md)** — **JSON** schemas, validation, indexes, runtime DTOs (**TECH-40** completed — **TECH-41** → **TECH-42**); **[TECH-36](.cursor/projects/TECH-36.md)** — **computational** **compute-lib** + Unity extractions + MCP tools (**TECH-37** → **TECH-38** → **TECH-39**). For **`backlog_issue`**, child rows still have their own **Spec** paths—read the umbrella charter when scope spans multiple phases.
 
 ## Terminology and information consistency
 
@@ -92,7 +93,7 @@ Cursor loads **`.cursor/rules/terminology-consistency.mdc`** (`alwaysApply`) as 
 
 ### Working on an issue
 
-1. Prefer **`backlog_issue`** (territory-ia) for the issue id when MCP is enabled; otherwise read `BACKLOG.md`. If the issue is a **child** of **TECH-21** or **TECH-36**, skim the **umbrella** spec (`.cursor/projects/TECH-21.md` or `TECH-36.md`) for program intent, then open the **child** spec (**TECH-40**–**TECH-42** or **TECH-37**–**TECH-39**).
+1. Prefer **`backlog_issue`** (territory-ia) for the issue id when MCP is enabled; otherwise read `BACKLOG.md`. If the issue is a **child** of **TECH-21** or **TECH-36**, skim the **umbrella** spec (`.cursor/projects/TECH-21.md` or `TECH-36.md`) for program intent, then open the **child** spec (**TECH-41**–**TECH-42** for JSON payloads — **TECH-40** completed; or **TECH-37**–**TECH-39** for **compute-lib**).
 2. Read the files listed in the issue's "Files" field
 3. Plan mode: analyze and propose a plan
 4. Agent mode: implement, then move issue to "In progress"
@@ -100,6 +101,8 @@ Cursor loads **`.cursor/rules/terminology-consistency.mdc`** (`alwaysApply`) as 
 ### After implementing
 
 Keep the issue **"In progress"**. Only move to "Completed" when the user explicitly confirms.
+
+If the work used a temporary **project spec** (`.cursor/projects/{ISSUE_ID}.md`) and you are **closing** out: follow [`.cursor/skills/project-spec-close/SKILL.md`](.cursor/skills/project-spec-close/SKILL.md) — **persist** lessons and decisions to **glossary**, **reference specs**, **`ARCHITECTURE.md`**, **`.cursor/rules/`**, and **`docs/`** (and **MCP** docs if tools changed) **before** deleting the spec; then run `npm run validate:dead-project-specs`; only **then** move the row to **Completed (last 30 days)** after the user confirms (see **Completing issues** below). Shipped as **TECH-51** (completed — [`BACKLOG.md`](BACKLOG.md) **§ Completed**); **glossary** defines **project-spec-close**. **TECH-52** (same section) defines **project-implementation-validation**.
 
 ### Next issue and AI agent prompts
 
@@ -137,3 +140,5 @@ Only when user confirms verification. Mark `[x]`, move to **Completed (last 30 d
 - [ ] New prefabs follow `coding-conventions.mdc` naming (do not rename existing assets)
 - [ ] Temporary `Debug.Log` diagnostics follow `coding-conventions.mdc` (remove or gate before merge)
 - [ ] Wording for touched domains matches `glossary.md` / linked specs (and backlog text stays consistent if the issue was edited)
+- [ ] If you changed links or **`Spec:`** lines for `.cursor/projects/*.md`, run `npm run validate:dead-project-specs` (repo root)
+- [ ] If you changed **`tools/mcp-ia-server`**, **`docs/schemas`**, **`.cursor/specs`** bodies that feed **IA indexes**, or **`glossary.md`**, follow [`.cursor/skills/project-implementation-validation/SKILL.md`](.cursor/skills/project-implementation-validation/SKILL.md) (or run the same **`npm`** steps manually — see [`.github/workflows/ia-tools.yml`](.github/workflows/ia-tools.yml))

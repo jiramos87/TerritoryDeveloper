@@ -3,7 +3,7 @@
 > **Issue:** [TECH-30](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-02
-> **Last updated:** 2026-04-02
+> **Last updated:** 2026-04-03
 
 **Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — task **9**.
 
@@ -42,6 +42,12 @@ N/A.
 | Area | Pointer |
 |------|---------|
 | Files | `.cursor/projects/*.md`, `BACKLOG.md` |
+| Dead path hygiene (**TECH-50** completed) | `npm run validate:dead-project-specs` — [`tools/validate-dead-project-spec-paths.mjs`](../../tools/validate-dead-project-spec-paths.mjs). **Coordinate:** share **Node** helpers with **TECH-30** when that script lands. |
+
+### 4.3 Implementation investigation notes (**TECH-50** cross-link)
+
+- **TECH-30** validates that **issue ids** cited **inside** active project specs exist in **BACKLOG.md**.
+- **TECH-50** (completed) validates that **paths** under `.cursor/projects/*.md` cited in durable docs (and open **BACKLOG** `Spec:` lines) **exist on disk**. Different scope from **TECH-30**; prefer one shared `tools/` module if implementing **TECH-30** soon.
 
 ## 5. Proposed Design
 

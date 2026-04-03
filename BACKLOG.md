@@ -15,9 +15,9 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Type: technical / data interchange
   - Files: umbrella only — see **TECH-40**, **TECH-41**, **TECH-42**; charter `.cursor/projects/TECH-21.md`; [`projects/TECH-21-json-use-cases-brainstorm.md`](projects/TECH-21-json-use-cases-brainstorm.md); reference `.cursor/specs/persistence-system.md`, `docs/planned-domain-ideas.md`
   - Spec: `.cursor/projects/TECH-21.md`
-  - Notes: **Program charter** for **JSON** DTOs, **CI** validation, **spec/glossary** machine indexes (no full-spec duplication — **TECH-18**), **Geography initialization** / harness payloads (**TECH-15**, **TECH-38** Wave D, **TECH-39** `geography_init_params_validate`), and **TECH-19**-ready row+blob patterns. **Phased delivery:** **TECH-40** (infra + indexes + schema policy), **TECH-41** (current game/tooling payloads + **parse-once** / catalogs), **TECH-42** (future domains + DB/API envelopes + streaming guidance). **Related:** **TECH-36** program (**compute-lib** shares Zod/schemas with MCP), **FEAT-46**–**FEAT-48** (planned parameters in [`docs/planned-domain-ideas.md`](docs/planned-domain-ideas.md)), **TECH-16** tick harness JSON, **FEAT-37c** (**Load pipeline** — completed, [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)).
+  - Notes: **Program charter** for **JSON** DTOs, **CI** validation, **spec/glossary** machine indexes (no full-spec duplication — **TECH-18**), **Geography initialization** / harness payloads (**TECH-15**, **TECH-38** Wave D, **TECH-39** `geography_init_params_validate`), and **TECH-19**-ready row+blob patterns. **Phased delivery:** **TECH-40** (**Phase A** completed — **§ Completed**); **TECH-41** (current game/tooling payloads + **parse-once** / catalogs); **TECH-42** (future domains + DB/API envelopes + streaming guidance). **Related:** **TECH-36** program (**compute-lib** shares Zod/schemas with MCP), **FEAT-46**–**FEAT-48** (planned parameters in [`docs/planned-domain-ideas.md`](docs/planned-domain-ideas.md)), **TECH-16** tick harness JSON, **FEAT-37c** (**Load pipeline** — completed, [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)).
   - Acceptance: **TECH-40**, **TECH-41**, and **TECH-42** each satisfy their own **Acceptance** lines in this file (program **complete** when all three **complete**); player **Save data** never regresses without an explicit migration issue
-  - Depends on: none (child order **TECH-40** → **TECH-41** → **TECH-42**)
+  - Depends on: none (child order **TECH-40** completed → **TECH-41** → **TECH-42**)
 
 - [ ] **TECH-36** — **Computational program** (umbrella): **geometry**, **stochastics**, **algorithms** + **territory-ia** tools
   - Type: tooling / code health / agent enablement
@@ -52,21 +52,13 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Depends on: **TECH-37** (soft: **TECH-38** for **heavy** tools)
 
 
-- [ ] **TECH-40** — **JSON** infra: artifact identity, schemas, **CI** validation, **spec** + **glossary** indexes
-  - Type: tooling / data interchange
-  - Files: `docs/schemas/` (pilot schema + fixtures); repo root `package.json` (delegates `validate:fixtures` / `generate:ia-indexes`); `tools/mcp-ia-server/scripts/validate-fixtures.ts`, `generate-ia-indexes.ts`, `data/spec-index.json`, `data/glossary-index.json`; `.github/workflows/ia-tools.yml`; `projects/TECH-21-json-use-cases-brainstorm.md` (policy §); `docs/mcp-ia-server.md`
-  - Spec: `.cursor/projects/TECH-40.md`
-  - Notes: **Phase A** of **TECH-21**. Defines **`artifact` / `kind`** naming + when to use in-file **`schema_version`** vs schema **`$id` / filename** only; JSON Schema + **`npm run validate:fixtures`** (or equivalent); **I1** spec index manifest; **I2** glossary→anchor index; **P3** = validate in **CI**, not in player hot paths. **Related:** **TECH-24** (parser regression), **TECH-30** (issue id validation in specs), **TECH-34** (generated JSON pattern).
-  - Acceptance: documented versioning policy + ≥1 checked-in schema + CI validation green; **I1** + **I2** generated artifacts or scripts merged per `.cursor/projects/TECH-40.md` §8
-  - Depends on: none (soft: align with **TECH-37** Zod naming when touching **compute-lib**)
-
 - [ ] **TECH-41** — **JSON** payloads for **current** systems: **geography** params, **cell**/**chunk** interchange, snapshots, DTO layers
   - Type: technical / performance enablement
   - Files: `StreamingAssets/` or `Assets/.../Resources/` (if adopted), `Assets/Scripts/` (DTOs, one-shot load), `tools/reports/`, **TECH-38** harness outputs; **TECH-16** profiler JSON shapes (if schema-owned here); `.cursor/specs/persistence-system.md` when **CellData**-shaped tooling touches **Save data** semantics
   - Spec: `.cursor/projects/TECH-41.md`
   - Notes: **Phase B** of **TECH-21**. **G4** **Geography initialization** parameter files (**FEAT-46**-aligned knobs as they exist today); **G2** single-**cell** / **chunk** JSON for tools (**HeightMap** / **Cell** fields consistent with glossary); **G1** read-only world snapshots (Editor/dev); **E3** documented layering (**MonoBehaviour** ↔ interchange DTO ↔ **CellData**); **P1** parse-once at boot / **Load pipeline** / init boundaries; **P2** static **catalog** arrays (not per **simulation tick**); **P4** optional `by_id` for hot static catalogs. Coordinate **TECH-39** validation tool inputs.
   - Acceptance: at least one **runtime or Editor** JSON load path + one **export** path documented with glossary-aligned fields; **no** unintentional **Save data** format change — see `.cursor/projects/TECH-41.md` §8
-  - Depends on: **TECH-40**
+  - Depends on: none (**TECH-40** **Phase A** completed — [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-40**)
 
 - [ ] **TECH-42** — **JSON** for **future** domains: DB shapes, API envelopes, large-document **streaming**
   - Type: technical / architecture (future-facing)
@@ -74,15 +66,15 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Spec: `.cursor/projects/TECH-42.md`
   - Notes: **Phase C** of **TECH-21**. **B1** row + JSONB column pattern; **B3** idempotent **patch** envelope as **API contract** (not one fixed table); **P5** when **Load pipeline** or exports need incremental readers; links **FEAT-47**/**FEAT-48** data needs without implementing them. **B2** tracked separately (**TECH-43** — backlog only, no project spec).
   - Acceptance: written patterns merged per `.cursor/projects/TECH-42.md` §8; **TECH-19** field naming compatible where applicable
-  - Depends on: **TECH-41** (soft: **TECH-40** for shared schema policy)
+  - Depends on: **TECH-41** (soft: **TECH-40** completed — shared schema policy in **glossary** / `docs/schemas/`)
 
 - [ ] **TECH-43** — Append-only **JSON** line **event log** (telemetry / sim anomalies) — **backlog placeholder**
   - Type: technical / observability (future)
   - Files: TBD (`tools/`, optional **Postgres** table, ship pipeline)
   - Spec: none (promote to `.cursor/projects/TECH-43.md` when scheduled)
-  - Notes: Idea from **TECH-21** brainstorm **B2**; **schema_version** per line; same validator family as **TECH-40** when implemented. **Does not** start until **TECH-40** schema pipeline exists.
+  - Notes: Idea from **TECH-21** brainstorm **B2**; **schema_version** per line; same validator family as **TECH-40** (completed — **§ Completed**). **Schema** pipeline exists under `docs/schemas/` + **`npm run validate:fixtures`**.
   - Acceptance: issue refined with concrete consumer + storage choice; optional schema + sample sink
-  - Depends on: **TECH-40** (soft)
+  - Depends on: none (soft: **TECH-40** completed — **§ Completed**)
 
 - [ ] **TECH-19** — Game PostgreSQL database; first milestone — IA schema for MCP + basic tools
   - Type: infrastructure / tooling
@@ -152,14 +144,6 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Acceptance: ≥1 **measurable** improvement merged (new tool **or** clear ranking/UX win on existing tools) + docs updated; **`npm run verify`** green
   - Depends on: none (soft: dogfood with **project-spec-kickoff**; **TECH-18** for long-term search architecture)
 
-- [ ] **TECH-50** — **Doc hygiene:** **cascade** references when **project specs** close; **dead links**; **BACKLOG** as durable anchor
-  - Type: tooling / doc hygiene / agent enablement
-  - Files: `tools/` (Node or shell script); optional root or `tools/` `package.json` `npm run`; `.cursor/projects/PROJECT-SPEC-STRUCTURE.md`; `AGENTS.md`; optional `tools/mcp-ia-server/` + `docs/mcp-ia-server.md`; `docs/agent-tooling-verification-priority-tasks.md` (task index if applicable)
-  - Spec: `.cursor/projects/TECH-50.md`
-  - Notes: **Policy:** When a **project spec** (`.cursor/projects/{ISSUE_ID}.md`) is **deleted** after verified completion, **durable** docs (skills, `docs/`, rules, `AGENTS.md`, etc.) must **not** keep **markdown links** or “see spec at …” pointers to that path. The **durable** trace is the **issue** row in **`BACKLOG.md`** (or **`BACKLOG-ARCHIVE.md`**). **Deliverables:** (1) **Script** — scan repo for links/paths to missing `.cursor/projects/*.md` (and optionally stale `Spec:` lines in **BACKLOG**); exit non-zero for **CI** or documented advisory mode. (2) **Optional** **territory-ia** MCP tool — thin wrapper or shared core with the script so agents discover broken references without ad-hoc `rg`. (3) **Docs** — closeout checklist in **PROJECT-SPEC-STRUCTURE** + pointer in **AGENTS.md** (project spec lifecycle). **Coordinate** with **TECH-30** (issue id validation **inside** active `.cursor/projects/*.md`) to avoid duplicate **Node** utilities—prefer one package or shared module if both land.
-  - Acceptance: merged script (or integrated into **TECH-30** deliverable with **TECH-50** scope covered) + documented `npm run` (or equivalent); **PROJECT-SPEC-STRUCTURE** / **AGENTS** updated; optional MCP tool documented in **`docs/mcp-ia-server.md`** if shipped; **`npm run verify`** green if MCP code changes
-  - Depends on: none (soft: **TECH-30** — merge or share implementation)
-
 - [ ] **TECH-24** — territory-ia MCP: parser regression policy (tests/fixtures when parsers change)
   - Type: tooling / code health
   - Files: `tools/mcp-ia-server/` (tests, fixtures, `scripts/verify-mcp.ts` or equivalent), `docs/mcp-ia-server.md`, `tools/mcp-ia-server/README.md`
@@ -170,7 +154,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Type: tooling / doc hygiene
   - Files: `tools/` (Node script), optional `package.json` `npm run` at repo root or under `tools/`
   - Spec: `.cursor/projects/TECH-30.md`
-  - Notes: Every `[BUG-XX]` / `[TECH-XX]` / etc. front matter or link in active project specs must exist in `BACKLOG.md`. `docs/agent-tooling-verification-priority-tasks.md` task 9. **Related:** **TECH-50** (dead links to **deleted** project specs repo-wide — coordinate implementation).
+  - Notes: Every `[BUG-XX]` / `[TECH-XX]` / etc. front matter or link in active project specs must exist in `BACKLOG.md`. `docs/agent-tooling-verification-priority-tasks.md` task 9. **Related:** **TECH-50** completed — `npm run validate:dead-project-specs` (repo-wide missing `.cursor/projects/*.md` paths); coordinate shared **Node** helpers when implementing **TECH-30**.
   - Depends on: none
 
 - [ ] **TECH-29** — CI / script: **simulation tick** call-order drift detector
@@ -403,7 +387,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Spec sections: `.cursor/specs/ui-design-system.md` — **§3.3** (toolbar), **§1.3** (anchors/margins), **§4.3** (Canvas Scaler) as applicable.
   - Notes: Replace the bottom-centered horizontal **ribbon** with a **left-docked vertical** panel. Structure: **one row per category** (demolition, **RCI** **zoning**, **utility buildings**, **streets**, environment/**forests**, etc.), with **buttons laid out horizontally within each row** (e.g. `VerticalLayoutGroup` of rows, each row `HorizontalLayoutGroup`, or equivalent manual layout). Re-anchor dependent UI (e.g. **zone density** / tool option overlays) so they align to the new sidebar instead of the old bottom bar. Verify safe area and Canvas Scaler at reference resolutions; avoid overlapping the mini-map and debug readouts. Document final hierarchy in `docs/ui-design-system-context.md`. Link program charter: `docs/ui-design-system-project.md` (Backlog bridge). Spec/docs ticketed and cross-linked in **TECH-08** (completed).
 
-*(Agent–Unity / MCP tooling **TECH-21** program **TECH-40**–**TECH-42**, **TECH-23**–**TECH-39** (including **TECH-36** program **TECH-37**–**TECH-39**), **TECH-43** (placeholder), **TECH-45**–**TECH-47** (**Cursor Skill** pack), **TECH-48** (MCP discovery from project specs), **TECH-50** (project spec closeout / dead link hygiene), **TECH-15**/**TECH-16** performance+harness — listed in **§ Agent ↔ Unity & MCP context lane** above. **Shipped skills:** **project-spec-kickoff**, **project-spec-implement**, `.cursor/skills/README.md` — see **§ Completed**.)*
+*(Agent–Unity / MCP tooling **TECH-21** program **TECH-40**–**TECH-42**, **TECH-23**–**TECH-39** (including **TECH-36** program **TECH-37**–**TECH-39**), **TECH-43** (placeholder), **TECH-45**–**TECH-47** (**Cursor Skill** pack), **TECH-48** (MCP discovery from project specs), **TECH-15**/**TECH-16** performance+harness — listed in **§ Agent ↔ Unity & MCP context lane** above. **TECH-49**–**TECH-52** (**Cursor Skills** kickoff / implement / close / **project-implementation-validation**) and **TECH-50** (dead project-spec path scanner) — **§ Completed**. **Shipped skills:** **project-spec-kickoff**, **project-spec-implement**, **project-spec-close**, **project-implementation-validation**; `.cursor/skills/README.md` — see **§ Completed**.)*
 
 ## Low Priority
 
@@ -518,7 +502,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-*(**TECH-18**, **TECH-19**, **TECH-21** program (**TECH-40**–**TECH-42**, **TECH-43**), **TECH-45**–**TECH-48**, **TECH-50** — listed in **§ Agent ↔ Unity & MCP context lane** above; **TECH-49** completed — **§ Completed**; **TECH-20** / **TECH-25** / **TECH-28** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**; other recent completions under **§ Completed**.)*
+*(**TECH-18**, **TECH-19**, **TECH-21** program (**TECH-40**–**TECH-42**, **TECH-43**), **TECH-45**–**TECH-48** — listed in **§ Agent ↔ Unity & MCP context lane** above; **TECH-49** / **TECH-50** / **TECH-51** / **TECH-52** completed — **§ Completed**; **TECH-20** / **TECH-25** / **TECH-28** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**; other recent completions under **§ Completed**.)*
 
 - [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects
   - Type: audio/feature
@@ -528,6 +512,13 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
 ---
 
 ## Completed (last 30 days)
+
+- [x] **TECH-40** — **JSON** infra: artifact identity, schemas, **CI** validation, **spec** + **glossary** indexes (2026-04-11)
+  - Type: tooling / data interchange
+  - Files: `docs/schemas/` (pilot schema + fixtures); repo root `package.json` (`validate:fixtures`, `generate:ia-indexes`, `validate:dead-project-specs`, `test:ia`); `tools/mcp-ia-server/scripts/validate-fixtures.ts`, `generate-ia-indexes.ts`, `src/ia-index/glossary-spec-ref.ts`, `data/spec-index.json`, `data/glossary-index.json`; `.github/workflows/ia-tools.yml`; `projects/TECH-21-json-use-cases-brainstorm.md` (policy §); `docs/mcp-ia-server.md`; `.cursor/specs/glossary.md` — **Documentation** (**IA index manifest**, **Interchange JSON**); [REFERENCE-SPEC-STRUCTURE.md](.cursor/specs/REFERENCE-SPEC-STRUCTURE.md) § Conventions item 7
+  - Spec: (removed after closure — **glossary** + **REFERENCE-SPEC-STRUCTURE** + [`docs/schemas/README.md`](docs/schemas/README.md) + [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); umbrella [`.cursor/projects/TECH-21.md`](.cursor/projects/TECH-21.md); this row)
+  - Notes: **Completed (verified — `/project-spec-close`):** **Phase A** of **TECH-21**. **`artifact`** / **`schema_version`** policy; JSON Schema Draft **2020-12** pilot **`geography_init_params`**; **`npm run validate:fixtures`**; committed **I1**/**I2** with **`generate:ia-indexes -- --check`** in **CI**; **`backlog_issue`** repo integration test uses open **TECH-41** ( **TECH-40** resolves as **completed** once listed under **§ Completed**). **Related:** **TECH-24**, **TECH-30**, **TECH-34**; **TECH-41** / **TECH-43** **Depends on** updated; skill/template examples use **TECH-41.md** path ( **TECH-50** scanner).
+  - Depends on: none (soft: align **TECH-37** **Zod** when touching **compute-lib**)
 
 - [x] **TECH-44** — **Cursor Skills:** **infrastructure** + **kickoff** skill (project **spec** review / IA alignment) (2026-04-11)
   - Type: documentation / agent enablement (**Cursor Skill** + repo docs — no runtime game code)
@@ -542,6 +533,29 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Spec: (removed after closure — workflow in **`.cursor/skills/project-spec-implement/SKILL.md`**; closure record in this row)
   - Notes: **Completed (verified per user request to implement):** **project-spec-implement** **`SKILL.md`** with **Tool recipe (territory-ia)** (per-phase loop, **Branching**, **Seed prompt**, **unity-development-context** §10 pointer); README index row; **AGENTS.md** project-spec bullets + doc hierarchy; study doc **§4.4**; **`docs/mcp-ia-server.md`** “Project spec workflows”; paste template “After review: implement”. **Dry-run:** Meta — authoring followed the recipe while implementing this issue.
   - Depends on: none (soft: **TECH-44**)
+
+- [x] **TECH-50** — **Doc hygiene:** **cascade** references when **project specs** close; **dead links**; **BACKLOG** as durable anchor (2026-04-03)
+  - Type: tooling / doc hygiene / agent enablement
+  - Files: `tools/validate-dead-project-spec-paths.mjs`; repo root `package.json` (`validate:dead-project-specs`); `.github/workflows/ia-tools.yml`; `.cursor/projects/PROJECT-SPEC-STRUCTURE.md`; `AGENTS.md`; `docs/mcp-ia-server.md`; `docs/agent-tooling-verification-priority-tasks.md`; `tools/mcp-ia-server/README.md` (pointer only)
+  - Spec: (removed after closure — **PROJECT-SPEC-STRUCTURE** closeout + **Lessons learned (TECH-50 closure)**; **`docs/mcp-ia-server.md`** **Project spec path hygiene**; this row)
+  - Notes: **Completed (verified per user):** `npm run validate:dead-project-specs` + CI gate; **BACKLOG** checks strict **`Spec:`** lines on open rows only; **BACKLOG-ARCHIVE.md** excluded; advisory `--advisory` / `CI_DEAD_SPEC_ADVISORY=1`. **Lessons:** See **PROJECT-SPEC-STRUCTURE** — **Lessons learned (TECH-50 closure)**. **Deferred:** optional **territory-ia** MCP tool; shared **Node** module with **TECH-30**.
+  - Depends on: none (soft: **TECH-30** — merge or share implementation)
+  - Related: **TECH-51** completed — **`project-spec-close`** documents `npm run validate:dead-project-specs` in the closure workflow
+
+- [x] **TECH-51** — **Cursor Skill:** **`project-spec-close`** — full **issue** / **project spec** closure workflow (IA, lessons, **BACKLOG**, cascade) (2026-04-03)
+  - Type: documentation / agent enablement (**Cursor Skill** + process)
+  - Files: `.cursor/skills/project-spec-close/SKILL.md`; `.cursor/skills/README.md`; `.cursor/skills/project-spec-kickoff/SKILL.md`; `.cursor/skills/project-spec-implement/SKILL.md`; `AGENTS.md`; `docs/cursor-agents-skills-mcp-study.md` §4.4; `docs/mcp-ia-server.md`; `.cursor/specs/glossary.md` — **Documentation**; `.cursor/projects/PROJECT-SPEC-STRUCTURE.md`
+  - Spec: (removed after closure — **`.cursor/skills/project-spec-close/SKILL.md`**; **PROJECT-SPEC-STRUCTURE** **Closeout checklist** + **Lessons learned (TECH-51 closure)**; **glossary** **Project spec** / **project-spec-close**; this row)
+  - Notes: **Completed (verified per user — `/project-spec-close`):** **IA persistence checklist** + ordered **Tool recipe (territory-ia)**; **persist IA → delete project spec → `validate:dead-project-specs` → BACKLOG Completed** (user-confirmed). **Decisions:** no duplicate **TECH-50** scanner in the skill; composite **closeout_preflight** MCP deferred (**TECH-48** / follow-up). **Related:** **TECH-52** completed — optional **`project-implementation-validation`** before closeout cascade when IA-heavy.
+  - Depends on: none (soft: **TECH-50**, **TECH-44**, **TECH-49**)
+
+- [x] **TECH-52** — **Cursor Skill:** **`project-implementation-validation`** — post-implementation tests + available code validations (2026-04-03)
+  - Type: documentation / agent enablement (**Cursor Skill** + process)
+  - Files: `.cursor/skills/project-implementation-validation/SKILL.md`; `.cursor/skills/README.md`; `.cursor/skills/project-spec-implement/SKILL.md`; `.cursor/skills/project-spec-kickoff/SKILL.md`; `.cursor/skills/project-spec-close/SKILL.md`; `AGENTS.md`; `docs/mcp-ia-server.md`; `docs/cursor-agents-skills-mcp-study.md` §4.4; `tools/mcp-ia-server/README.md`
+  - Spec: (removed after closure — **`.cursor/skills/project-implementation-validation/SKILL.md`**; **glossary** **Documentation** — **project-implementation-validation**; **PROJECT-SPEC-STRUCTURE** — **Lessons learned (TECH-52 closure)**; this row)
+  - Notes: **Completed (verified per user — `/project-spec-close`):** ordered **validation manifest** (**IA tools** **CI** parity + advisory **`verify`**); **skip** matrix; **failure policy**; cross-links to **implement** / **close** / **kickoff**; **Phase 3** root aggregate **`npm run`** not shipped (optional **BACKLOG** follow-up). **Deferred:** **`run_validations`** MCP (**TECH-48** / follow-up); **Unity** one-liner → **TECH-15** / **TECH-16** / **UTF**.
+  - Depends on: none (soft: **TECH-49**, **TECH-50**, **TECH-51**)
+  - Related: **TECH-48** — MCP “validation bundle” tool out of scope unless new issue
 
 *(Older batch moved to [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) § **Recent archive** on 2026-04-10. Add new completions here for ~30 days, then archive.)*
 

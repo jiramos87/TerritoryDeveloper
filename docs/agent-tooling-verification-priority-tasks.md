@@ -49,7 +49,8 @@ Each row is a **single deliverable** or a **tightly coupled bundle**. Skip numbe
 | 6 | **Hot-path static scan manifest** — generate or maintain list from `ARCHITECTURE.md` / managers-reference; extend scanner to **prioritize** AUTO / per-frame participants | Script | Medium–high — focuses **BUG-14** / performance reviews | **TECH-26** Phase 2 |
 | 7 | **`unity-development-context.md`** — Unity lifecycle, Inspector / `SerializeField`, `FindObjectOfType` policy, execution order, 2D sorting vs script-driven **Sorting order** | Doc | Very high — prerequisite for IDE-native Unity literacy; helps **BUG-16**, **BUG-17**, **FEAT-19** | **TECH-20** + **TECH-25** completed |
 | 8 | **Minimap `RebuildTexture` cost metric** — one-shot or throttled; JSON/ms/size | Unity Editor / script | Medium — informs **BUG-48** throttle vs rebuild | **BUG-48** (`.cursor/projects/BUG-48.md`) |
-| 9 | **Validate BACKLOG issue IDs** referenced in `.cursor/projects/*.md` | Node / npm script | Medium — doc hygiene; fewer broken agent references | **TECH-30** (`.cursor/projects/TECH-30.md`) |
+| 9 | **Validate BACKLOG issue IDs** referenced in `.cursor/projects/*.md` | Node / npm script | Medium — doc hygiene; fewer broken agent references | **TECH-30** (`.cursor/projects/TECH-30.md`); complements row **9a** |
+| 9a | **Dead** `.cursor/projects/*.md` **paths** repo-wide (durable docs + open **BACKLOG** **`Spec:`**) | Node / npm script | Medium — agents and **Spec:** rows stay navigable after spec deletion | **TECH-50** completed (2026-04-03) — `npm run validate:dead-project-specs`; [`tools/validate-dead-project-spec-paths.mjs`](../tools/validate-dead-project-spec-paths.mjs) |
 | 10 | **Glossary ↔ spec link checker** — paths in glossary “Spec” column exist; optional anchor check | Script | Medium — IA drift control | **TECH-27** (`.cursor/projects/TECH-27.md`) |
 | 11 | **TECH-19 — PostgreSQL IA schema** — migrations, seed, minimal read surface for glossary/spec/relationships | Infra | Very high — foundation for durable search and MCP evolution | **TECH-19** (`.cursor/projects/TECH-19.md`) |
 | 12 | **TECH-18 — IA migration + extended MCP** — primary retrieval path; regen markdown as needed | Infra / MCP | Very high — unlocks tools below at scale | **TECH-18** (`.cursor/projects/TECH-18.md`) |
@@ -71,7 +72,7 @@ Each row is a **single deliverable** or a **tightly coupled bundle**. Skip numbe
 | 28 | **Generate `gridmanager-regions.json`** from `#region` + optional MCP `gridmanager_region_map` | Script + MCP | Medium — **TECH-01** extraction | **TECH-34** (+ **TECH-18** for MCP) |
 | 29 | **MCP: `persistence_restore_checklist`** | MCP | Medium — **BUG-20** | **TECH-18** Phase |
 | 30 | **MCP: `economy_concepts`**, **`ui_input_patterns`** | MCP | Medium — economy/UI issue clusters | **TECH-18** Phase |
-| 31 | **JSON schema validation** for save DTOs or exported fixtures | Script | Medium — **TECH-21** program pilot (**TECH-40**) | **TECH-40** (`.cursor/projects/TECH-40.md`; umbrella **TECH-21.md**) |
+| 31 | **JSON schema validation** for interchange fixtures (not **Save data** layout) | Script | Medium — **TECH-21** **Phase A** shipped | **TECH-40** (completed — [`BACKLOG.md`](../BACKLOG.md) **§ Completed**; [`docs/schemas/README.md`](../docs/schemas/README.md); umbrella [`.cursor/projects/TECH-21.md`](../.cursor/projects/TECH-21.md)) |
 | 32 | **MCP: `coding_conventions_slice`** | MCP | Lower–medium — prefab naming, SerializeField policy | **TECH-18** Phase |
 | 33 | **Public API list per manager** + XML doc presence report | Script | Lower–medium — **TECH-02** | **TECH-02** |
 | 34 | **Magic numbers extraction report** (thresholded literals) | Script | Lower — **TECH-03** planning | **TECH-03** |

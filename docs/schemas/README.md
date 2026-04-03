@@ -6,7 +6,7 @@ Machine-readable contracts for **interchange** JSON (tools, **MCP**, fixtures)โ€
 
 - **JSON Schema** uses **Draft 2020-12** (`$schema`: `https://json-schema.org/draft/2020-12/schema`).
 - **Schema files**: prefer version in the basename, e.g. `geography-init-params.v1.schema.json`, plus a stable **`$id`** URL or `territory-developer:` URI for tooling.
-- **Payloads** must include string **`artifact`** (logical model id). Optional integer **`schema_version`** when a consumer must branch without loading a schema file (see [`projects/TECH-21-json-use-cases-brainstorm.md`](../../projects/TECH-21-json-use-cases-brainstorm.md) **FAQ** and [`.cursor/projects/TECH-40.md`](../../.cursor/projects/TECH-40.md)).
+- **Payloads** must include string **`artifact`** (logical model id). Optional integer **`schema_version`** when a consumer must branch without loading a schema file (see [`projects/TECH-21-json-use-cases-brainstorm.md`](../../projects/TECH-21-json-use-cases-brainstorm.md) **FAQ** and **glossary** **Interchange JSON (artifact)**; **TECH-21** **Phase A** closure: [`BACKLOG.md`](../../BACKLOG.md) **ยง Completed** **TECH-40**).
 
 ## Layout
 

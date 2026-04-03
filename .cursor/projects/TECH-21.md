@@ -3,9 +3,9 @@
 > **Issue:** [TECH-21](../../BACKLOG.md)  
 > **Status:** Draft  
 > **Created:** 2026-04-02  
-> **Last updated:** 2026-04-03
+> **Last updated:** 2026-04-11
 
-**Phased delivery (separate backlog issues + project specs):** **[TECH-40](TECH-40.md)** (infra, schemas, **CI** validation, **I1**/**I2** indexes), **[TECH-41](TECH-41.md)** (current **runtime**/**Editor** payloads: **G1**/**G2**/**G4**, **E3**, **P1**/**P2**/**P4**), **[TECH-42](TECH-42.md)** (future **TECH-19** shapes: **B1**/**B3**, **P5**). **B2** append-only log → **[TECH-43](../../BACKLOG.md)** (backlog placeholder, no project spec yet).
+**Phased delivery (separate backlog issues + project specs):** **TECH-40** (**Phase A** — completed; durable: [`docs/schemas/README.md`](../../docs/schemas/README.md), [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md), **glossary** **IA index manifest** / **Interchange JSON**; closure record [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** **TECH-40**), **[TECH-41](TECH-41.md)** (current **runtime**/**Editor** payloads: **G1**/**G2**/**G4**, **E3**, **P1**/**P2**/**P4**), **[TECH-42](TECH-42.md)** (future **TECH-19** shapes: **B1**/**B3**, **P5**). **B2** append-only log → **[TECH-43](../../BACKLOG.md)** (backlog placeholder, no project spec yet).
 
 **Brainstorm (exploration + FAQ):** [`projects/TECH-21-json-use-cases-brainstorm.md`](../../projects/TECH-21-json-use-cases-brainstorm.md)
 
@@ -21,7 +21,7 @@ This file is the **program charter** for **TECH-21**. Executable work lives in *
 
 | Topic | Decision |
 |-------|----------|
-| Umbrella vs child specs | **TECH-21** = charter only; **TECH-40**/**41**/**42** hold **Implementation Plan** checklists. |
+| Umbrella vs child specs | **TECH-21** = charter only; **TECH-41**/**42** hold **Implementation Plan** checklists; **TECH-40** (**Phase A**) completed — **BACKLOG** **§ Completed**. |
 | Spec duplication | No full **reference spec** bodies in JSON; **I1**/**I2** are **indexes** and anchors only. |
 | `schema_version` | Optional in payload when JSON Schema `$id` / filename semver suffices; required when **DB**, **Save-adjacent** export, or **MCP** consumer needs **one integer** for **branching migrations**. See brainstorm **§FAQ**. |
 | Artifact identity | Every interchange JSON type carries a logical `artifact` (or `kind`) string; **SQL** table name is separate at persistence layer. |
@@ -66,6 +66,7 @@ TECH-36 / TECH-37–39 — soft coordination on **GeographyInitParams** / Zod
 | 2026-04-02 | Spec created | Backlog integration | — |
 | 2026-04-03 | Link brainstorm use-case doc | Prioritize scenarios before **pilot** | Inline only in spec |
 | 2026-04-03 | Split **TECH-40**/**41**/**42** | Separate infra, current payloads, future DB/API | Single **TECH-21** issue only |
+| 2026-04-11 | **TECH-40** closed | **Phase A** shipped: `docs/schemas/`, **IA index** JSON, **IA tools** **CI**; project spec removed per **`project-spec-close`** | — |
 
 ## 7. Implementation Plan
 
@@ -73,7 +74,7 @@ TECH-36 / TECH-37–39 — soft coordination on **GeographyInitParams** / Zod
 
 | Phase | Issue | Spec | Focus |
 |-------|-------|------|--------|
-| A | **TECH-40** | [TECH-40.md](TECH-40.md) | Schemas, **CI**, **I1**, **I2**, versioning policy |
+| A | **TECH-40** | (completed — see **BACKLOG** **§ Completed** **TECH-40**; **glossary** / **docs/schemas** / **docs/mcp-ia-server.md**) | Schemas, **CI**, **I1**, **I2**, versioning policy |
 | B | **TECH-41** | [TECH-41.md](TECH-41.md) | **G1**, **G2**, **G4**, **E3**, **P1**, **P2**, **P4** |
 | C | **TECH-42** | [TECH-42.md](TECH-42.md) | **B1**, **B3**, **P5**, **TECH-19** alignment |
 
@@ -97,4 +98,4 @@ TECH-36 / TECH-37–39 — soft coordination on **GeographyInitParams** / Zod
 
 ## Open Questions
 
-- I1**/**I2** should be **gitignored**. Eventually we will have a database with a single source of truth for the spec and glossary.
+- **N/A (program charter).** **Phase A** committed **I1**/**I2** under `tools/mcp-ia-server/data/` with **CI** drift checks; future **TECH-19** / **TECH-18** may add DB-backed IA without removing Markdown source of truth.

@@ -13,11 +13,13 @@ This skill **does not** call MCP tools itself. In an **Agent** chat with **terri
 
 Until **TECH-48** ships richer discovery from project-spec prose, use the **manual** recipe (no composite MCP tool).
 
-**Related:** **TECH-48** (MCP discovery improvements), **TECH-45** / **TECH-46** / **TECH-47** (domain guardrail skills), **TECH-49** — **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (shipped), **TECH-23** (MCP preflight culture). **Conventions:** [`.cursor/skills/README.md`](../README.md).
+**Related:** **TECH-48** (MCP discovery improvements), **TECH-45** / **TECH-46** / **TECH-47** (domain guardrail skills), **TECH-49** — **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (shipped), **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (**TECH-52** completed — optional **npm** checks after **MCP** / schema / **IA index** work), **[`project-spec-close`](../project-spec-close/SKILL.md)** (when the issue is done — persist IA, delete spec, **BACKLOG** **Completed**), **TECH-23** (MCP preflight culture). **Conventions:** [`.cursor/skills/README.md`](../README.md).
+
+**When the issue is verified and you are closing:** use **[`project-spec-close`](../project-spec-close/SKILL.md)** after implementation — not this kickoff skill.
 
 ## Seed prompt (parameterize)
 
-Replace `{SPEC_PATH}` with the project spec path (e.g. `.cursor/projects/TECH-40.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
+Replace `{SPEC_PATH}` with the project spec path (e.g. `.cursor/projects/TECH-41.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
 
 ```markdown
 Review @{SPEC_PATH} and ensure it uses canonical terms from the glossary and reference specs.

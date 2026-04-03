@@ -28,6 +28,7 @@ Permanent **reference specs** live here as `*.md` files. They are the long-lived
 4. **territory-ia MCP** — All `*.md` files in this directory are registered automatically. Optional short aliases live in `tools/mcp-ia-server/src/config.ts` (`SPEC_KEY_ALIASES`). After adding a file, confirm `list_specs` and, if useful, add an alias.
 5. **Reusable IA pattern** — Domain-agnostic guide to file-backed specs + MCP tools: [`docs/mcp-markdown-ia-pattern.md`](../../docs/mcp-markdown-ia-pattern.md).
 6. **agent-router task domains** — When adding rows to [`.cursor/rules/agent-router.mdc`](../rules/agent-router.mdc) (**Task → Spec routing**), phrase **Task domain** cells so MCP **`router_for_task`** does not mis-route: matching uses substring overlap and tokens (length ≥ 3). For example, wording such as “not isometric **math**” can match a user query **“grid math”** (token `math`) and return the wrong spec before the geography quick-reference table. Prefer distinct wording (e.g. “stacking rules” when contrasting with isometric **Sorting order**).
+7. **IA index manifests (I1 / I2)** — After material edits to `.cursor/specs/*.md` or `glossary.md`, run `npm run generate:ia-indexes` from the repository root and commit `tools/mcp-ia-server/data/spec-index.json` and `glossary-index.json` so **CI** stays green (`generate:ia-indexes -- --check`). See [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) and glossary **IA index manifest**.
 
 ## Terminology
 

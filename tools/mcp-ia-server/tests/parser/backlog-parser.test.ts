@@ -91,21 +91,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../../../");
 
 test(
-  "parseBacklogIssue loads open TECH-40 from repo BACKLOG.md",
+  "parseBacklogIssue loads open TECH-41 from repo BACKLOG.md",
   { skip: !fs.existsSync(path.join(repoRoot, "BACKLOG.md")) },
   () => {
     const prev = process.env.REPO_ROOT;
     process.env.REPO_ROOT = repoRoot;
     try {
-      const p = parseBacklogIssue(repoRoot, "TECH-40");
+      const p = parseBacklogIssue(repoRoot, "TECH-41");
       assert.ok(p);
-      assert.equal(p!.issue_id, "TECH-40");
+      assert.equal(p!.issue_id, "TECH-41");
       assert.equal(p!.status, "open");
       assert.ok(
         p!.title.toLowerCase().includes("json") ||
-          p!.title.toLowerCase().includes("schema"),
+          p!.title.toLowerCase().includes("payload"),
       );
-      assert.ok(p!.raw_markdown.includes("TECH-40"));
+      assert.ok(p!.raw_markdown.includes("TECH-41"));
     } finally {
       process.env.REPO_ROOT = prev;
     }

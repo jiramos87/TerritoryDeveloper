@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-03T16:44:10.027Z",
+  "last_generated": "2026-04-03T20:42:15.100Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -35,43 +35,43 @@
           "section_id": "terminology",
           "title": "Terminology",
           "depth": 2,
-          "line_start": 32
+          "line_start": 33
         },
         {
           "section_id": "new-reference-spec-checklist",
           "title": "New reference spec checklist",
           "depth": 2,
-          "line_start": 38
+          "line_start": 39
         },
         {
           "section_id": "minimal-template-copy-for-a-new-md",
           "title": "Minimal template (copy for a new `*.md`)",
           "depth": 2,
-          "line_start": 45
+          "line_start": 46
         },
         {
           "section_id": "title-territory-developer",
           "title": "{Title} — Territory Developer",
           "depth": 1,
-          "line_start": 48
+          "line_start": 49
         },
         {
           "section_id": "1",
           "title": "1. …",
           "depth": 2,
-          "line_start": 52
+          "line_start": 53
         },
         {
           "section_id": "glossary-alignment",
           "title": "Glossary alignment",
           "depth": 2,
-          "line_start": 56
+          "line_start": 57
         },
         {
           "section_id": "deprecated-prose-canonical-terms-authoring",
           "title": "Deprecated prose → canonical terms (authoring)",
           "depth": 2,
-          "line_start": 61
+          "line_start": 62
         }
       ]
     },
@@ -179,7 +179,7 @@
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 213
+          "line_start": 218
         }
       ]
     },

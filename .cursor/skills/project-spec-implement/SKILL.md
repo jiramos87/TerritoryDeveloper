@@ -12,18 +12,19 @@ This skill **does not** call MCP tools itself. In an **Agent** chat with **terri
 
 Until **TECH-48** ships richer discovery from project-spec prose, use the **manual** recipe (no composite MCP tool).
 
-**Related:** **TECH-49** — completed (`BACKLOG.md` § Completed); **TECH-44** / **project-spec-kickoff** (review spec **before** code); **TECH-48** (future MCP discovery); **TECH-23** (MCP preflight culture); **TECH-45** / **TECH-46** / **TECH-47** (domain guardrail skills when shipped). **Conventions:** [`.cursor/skills/README.md`](../README.md).
+**Related:** **TECH-49** — completed (`BACKLOG.md` § Completed); **TECH-44** / **project-spec-kickoff** (review spec **before** code); **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (optional **Node** / **CI**-parity checks after **MCP** / schema / **IA index**–touching work); **[`project-spec-close`](../project-spec-close/SKILL.md)** (after phases ship — closeout / IA persistence / delete spec); **TECH-48** (future MCP discovery); **TECH-23** (MCP preflight culture); **TECH-45** / **TECH-46** / **TECH-47** (domain guardrail skills when shipped). **Conventions:** [`.cursor/skills/README.md`](../README.md).
 
 ## Relationship to kickoff
 
 - Use **[`project-spec-kickoff`](../project-spec-kickoff/SKILL.md)** when the spec needs **editorial** work: **Open Questions**, vague **Goals**, or glossary alignment **before** coding.
 - Use **this** skill when the goal is to **execute** `## 7. Implementation Plan` in order with minimal diffs.
+- After implementation is **verified** and you need to **migrate lessons**, update **glossary** / **reference specs**, **delete** the project spec, and finish **BACKLOG** closure — use **[`project-spec-close`](../project-spec-close/SKILL.md)**.
 
 Default: spec **Status** is **Final** or **In Review** with game-logic **Open Questions** resolved. If the user insists on coding from **Draft** or unresolved **Open Questions**, state the risk in chat and prefer **kickoff** first.
 
 ## Seed prompt (parameterize)
 
-Replace `{SPEC_PATH}` with the project spec path (e.g. `.cursor/projects/TECH-40.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
+Replace `{SPEC_PATH}` with the project spec path (e.g. `.cursor/projects/TECH-41.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
 
 ```markdown
 Implement @{SPEC_PATH} following its ## 7. Implementation Plan in order.
@@ -58,7 +59,7 @@ Run **in order**. Repeat steps **5–11** for each **Implementation Plan** phase
 
 11. **Optional deep guardrails** — **`list_rules`** / **`rule_content`** if **`invariants_summary`** is not enough.
 
-12. **Phase exit** — Re-read touched **Acceptance** bullets; run applicable **`AGENTS.md`** **Pre-commit Checklist** (Unity build, XML docs, English logs, domain checks).
+12. **Phase exit** — Re-read touched **Acceptance** bullets; run applicable **`AGENTS.md`** **Pre-commit Checklist** (Unity build, XML docs, English logs, domain checks). For work that touched **`tools/mcp-ia-server`**, **`docs/schemas`**, or bodies that feed **IA indexes**, consider **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** before handoff.
 
 ### Editor / agent diagnostics
 
@@ -89,3 +90,5 @@ When work enters these areas, open the corresponding skill (**when shipped**) in
 ## Completion and backlog
 
 Map work to the project spec **§8 Acceptance** and the backlog **Acceptance** line. **Do not** move the issue to **Completed** in `BACKLOG.md` without **explicit user confirmation** ([`AGENTS.md`](../../../AGENTS.md)).
+
+When the diff is **IA**-heavy (**MCP**, **fixtures**, **glossary** / **reference spec** sources for indexes), run or document **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** so **CI**-aligned **Node** checks are not skipped.

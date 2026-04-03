@@ -54,3 +54,34 @@ Temporary specs for an active **BACKLOG** item live here as `{ISSUE_ID}.md` (e.g
 1. Create `{ISSUE_ID}.md` from the template → refine Open Questions and acceptance → **Final** when stable.
 2. Implement → keep **Issues Found** up to date.
 3. On user-confirmed completion: migrate durable content to canonical docs; archive issue; **delete** the project spec.
+
+### Closeout checklist (before deleting `{ISSUE_ID}.md`)
+
+After the owner **confirms** verification (**AGENTS.md** — do not mark **Completed** in **BACKLOG** until then):
+
+1. **Migrate** normative content: **Lessons Learned**, **Decision Log** items, and any rules that belong in [reference specs](../specs/) (see [glossary](../specs/glossary.md)), [`.cursor/rules/`](../rules/), `docs/`, `ARCHITECTURE.md` — not in the deleted file.
+2. **Cascade links:** Search durable docs (`.cursor/skills/`, `.cursor/rules/`, `docs/`, `projects/`, `AGENTS.md`, `ARCHITECTURE.md`, etc.) for markdown links, backticks, or plain paths to `.cursor/projects/{ISSUE_ID}.md` and replace them with **`BACKLOG.md`** / **`BACKLOG-ARCHIVE.md`** references by **issue id** (and section anchor if useful). Do not leave pointers to a removed path.
+3. **Umbrella / sibling specs:** Update remaining `.cursor/projects/*.md` that depended on this issue (**Depends on**, **Implementation Plan**, **Acceptance**) so they do not describe the closed work as pending.
+4. **BACKLOG row:** When moving the issue to **Completed**, adjust the **`Spec:`** line to a **removed-after-closure** pattern (see completed rows in **`BACKLOG.md`**) instead of a live `.cursor/projects/…` path.
+5. **Verify:** Run `npm run validate:dead-project-specs` from the repo root (or `node tools/validate-dead-project-spec-paths.mjs`) so CI and agents catch any missed stale path. The **`project-spec-close`** Cursor skill ([`.cursor/skills/project-spec-close/SKILL.md`](../skills/project-spec-close/SKILL.md)) orchestrates the full closeout sequence (**TECH-51** completed — see [`BACKLOG.md`](../../BACKLOG.md) **§ Completed**).
+
+### Lessons learned (**TECH-50** closure, 2026-04-03)
+
+- **`BACKLOG.md`:** The repo scanner checks **open** top-level issue rows and **only** lines where the entire **`Spec:`** value is a single backtick-wrapped `.cursor/projects/{ISSUE_ID}.md` path. **Notes** prose may mention future or placeholder paths without failing CI.
+- **`BACKLOG-ARCHIVE.md`** is **not** scanned — completed history may still mention removed spec paths.
+- **Advisory mode:** `node tools/validate-dead-project-spec-paths.mjs --advisory` or `CI_DEAD_SPEC_ADVISORY=1` prints hits but exits 0.
+- **Authoring:** Do not put a resolvable `.cursor/projects/*.md` string in durable markdown unless that file exists, or the validator will flag it.
+- **Follow-up:** Optional **territory-ia** MCP wrapper and shared **Node** helpers with **TECH-30** remain separate backlog / implementation work (**TECH-50** shipped script + CI + docs only).
+
+### Lessons learned (**TECH-51** closure, 2026-04-03)
+
+- **Ordering:** Closeout must follow **persist IA → delete project spec → `validate:dead-project-specs` → BACKLOG Completed** (user-confirmed). The **`project-spec-close`** skill encodes this; skipping **persist** first orphans definitions and breaks agent paths.
+- **Scanner scope:** **`project-spec-close`** invokes **`npm run validate:dead-project-specs`** only — no second **Node** scanner in the skill; new stale-reference classes belong in **TECH-50** / **TECH-30** or a new **BACKLOG** row.
+- **MCP:** Composite **closeout_preflight** (or similar) remains **deferred** — **TECH-48** / follow-up may subsume; **v1** is **territory-ia** **Tool recipe** + file edits only.
+
+### Lessons learned (**TECH-52** closure, 2026-04-03)
+
+- **CI parity:** The **`project-implementation-validation`** manifest mirrors the **IA tools** **Node** job (dead **project spec** paths → **MCP** **`npm test`** → **`validate:fixtures`** → **`generate:ia-indexes --check`**), plus an **advisory** **`npm run verify`** row under **`tools/mcp-ia-server`** — update the skill when **CI** adds required steps.
+- **Skip matrix:** Pure **Unity** / **C#** diffs may skip the **Node** manifest; **MCP** / **schema** / **glossary** or **reference spec** bodies that feed indexes should run the full subset.
+- **Aggregate script:** Root **`npm run validate:implementation`** (or similar) remains a **separate** **BACKLOG** decision — not shipped with **TECH-52**.
+- **Glossary:** **project-implementation-validation** is documented next to **project-spec-close** under **Documentation** for agent searchability.

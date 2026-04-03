@@ -25,6 +25,8 @@ Repo **Cursor Skills** define **ordered** MCP usage for `.cursor/projects/{ISSUE
 
 - **Review / enrich before code:** [`.cursor/skills/project-spec-kickoff/SKILL.md`](../.cursor/skills/project-spec-kickoff/SKILL.md).
 - **Execute Implementation Plan:** [`.cursor/skills/project-spec-implement/SKILL.md`](../.cursor/skills/project-spec-implement/SKILL.md).
+- **Close after verified work:** [`.cursor/skills/project-spec-close/SKILL.md`](../.cursor/skills/project-spec-close/SKILL.md) — persist IA (**glossary**, **reference specs**, **`ARCHITECTURE.md`**, rules, **`docs/`**), delete `.cursor/projects/{ISSUE_ID}.md`, `npm run validate:dead-project-specs`, **BACKLOG** **Completed** (user-confirmed).
+- **Post-implementation validation (TECH-52, completed 2026-04-03):** [`.cursor/skills/project-implementation-validation/SKILL.md`](../.cursor/skills/project-implementation-validation/SKILL.md) — optional ordered **`npm`** checks (**dead project spec** paths, **`tools/mcp-ia-server`** tests, **`validate:fixtures`**, **`generate:ia-indexes --check`**, advisory **`verify`**) aligned with [`.github/workflows/ia-tools.yml`](../.github/workflows/ia-tools.yml). Use after **MCP** / **schema** / index-source edits; **project-spec-close** may reference this before the mandatory **`validate:dead-project-specs`** cascade step.
 
 See also [`AGENTS.md`](../AGENTS.md) (Before You Start) and [`.cursor/skills/README.md`](../.cursor/skills/README.md).
 
@@ -57,6 +59,7 @@ Full-text search across all IA documents is tracked as **TECH-18**; database-bac
 **TECH-21** program (**TECH-40**–**TECH-42**): JSON Schema, **CI** fixture validation, and **generated** **spec**/**glossary** index JSON (machine manifests only — **not** a second copy of spec bodies; see **TECH-18**).
 
 - **Schemas + fixtures:** [`docs/schemas/README.md`](../docs/schemas/README.md). Validate from repo root: `npm run validate:fixtures` (delegates to `tools/mcp-ia-server`).
+- **Project spec path hygiene (TECH-50, completed 2026-04-03):** From repo root, `npm run validate:dead-project-specs` runs [`tools/validate-dead-project-spec-paths.mjs`](../tools/validate-dead-project-spec-paths.mjs) (durable docs + open **BACKLOG** **`Spec:`** lines). The **IA tools** workflow runs it when `.cursor/**`, `docs/**`, `projects/**`, or related paths change. **Lessons / edge cases:** see **PROJECT-SPEC-STRUCTURE** — **Lessons learned (TECH-50 closure)**. Optional MCP tool + **TECH-30** shared **Node** module: future backlog work, not part of **TECH-50** delivery.
 - **I1 / I2 indexes (committed):** `tools/mcp-ia-server/data/spec-index.json` (**spec** keys, paths, heading `section_id`s) and `glossary-index.json` (**glossary** term → `spec_key` + `anchor`). Regenerate after editing `.cursor/specs/*.md` or `glossary.md`: `npm run generate:ia-indexes` under `tools/mcp-ia-server/` (or `npm run generate:ia-indexes` from the repo root — forwards extra args such as `--check`). **CI** runs `generate:ia-indexes -- --check` in the **IA tools** workflow so committed JSON stays in sync. MCP **may** later read these files; **`list_specs`**, **`spec_outline`**, and **`spec_section`** remain authoritative for slice retrieval today.
 
 Program charter: [`.cursor/projects/TECH-21.md`](../.cursor/projects/TECH-21.md).
