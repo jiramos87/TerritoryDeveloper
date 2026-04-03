@@ -5,7 +5,7 @@
 > **Created:** 2026-04-02
 > **Last updated:** 2026-04-02
 
-**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — [unity-development-context.md](../../.cursor/specs/unity-development-context.md) (lifecycle / execution order); **TECH-28** (Editor context export for repro snapshots).
+**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — [unity-development-context.md](../../.cursor/specs/unity-development-context.md) (lifecycle / execution order); **TECH-28** (completed) — **Territory Developer → Reports** exports under `tools/reports/`.
 
 ## 1. Summary
 

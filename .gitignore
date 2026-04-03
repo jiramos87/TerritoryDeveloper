@@ -48,6 +48,10 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+# Agent diagnostics exports (TECH-28 — local-only; regenerate from Unity Editor)
+tools/reports/*.json
+tools/reports/*.md
+
 # MCP IA server (Node)
 tools/mcp-ia-server/node_modules/
 tools/mcp-ia-server/dist/

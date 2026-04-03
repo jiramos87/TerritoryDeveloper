@@ -391,21 +391,21 @@ async function main(): Promise<void> {
     throw new Error("glossary_discover expected suggestions array when no matches");
   }
 
-  const bl25 = parseJsonFromToolResult(
+  const bl28 = parseJsonFromToolResult(
     await client.callTool({
       name: "backlog_issue",
-      arguments: { issue_id: "TECH-25" },
+      arguments: { issue_id: "TECH-28" },
     }),
   ) as { issue_id?: string; status?: string; error?: string; files?: string; backlog_section?: string };
-  if (bl25.error || bl25.issue_id !== "TECH-25" || bl25.status !== "open") {
-    throw new Error("backlog_issue TECH-25 failed");
+  if (bl28.error || bl28.issue_id !== "TECH-28" || bl28.status !== "completed") {
+    throw new Error("backlog_issue TECH-28 failed (expected completed)");
   }
-  if (!bl25.files?.includes("unity-development-context")) {
-    throw new Error("backlog_issue TECH-25 expected Files to mention unity-development-context");
+  if (!/tools\/reports|GridManager|Editor/i.test(bl28.files ?? "")) {
+    throw new Error("backlog_issue TECH-28 expected Files to mention tools/reports, Editor, or GridManager");
   }
-  if (!/agent|unity|mcp/i.test(bl25.backlog_section ?? "")) {
+  if (!/agent|unity|mcp|completed/i.test(bl28.backlog_section ?? "")) {
     throw new Error(
-      "backlog_issue TECH-25 expected backlog_section to mention agent/Unity/MCP lane",
+      "backlog_issue TECH-28 expected backlog_section to mention agent/Unity/MCP or Completed",
     );
   }
 

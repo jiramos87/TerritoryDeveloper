@@ -11,20 +11,6 @@
 
 Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP platform** → **agent workflow & CI helpers** → **research tooling**.
 
-- [ ] **TECH-25** — Incremental authoring milestones for `unity-development-context.md`
-  - Type: documentation / agent tooling
-  - Files: `.cursor/specs/unity-development-context.md`; optional `projects/agent-friendly-tasks-with-territory-ia-context.md` pointer
-  - Spec: `.cursor/projects/TECH-25.md`
-  - Notes: Land improvements in slice-sized PRs (MonoBehaviour lifecycle, **`SerializeField`** / Inspector, **`FindObjectOfType`** policy, Script Execution Order, 2D **`sortingOrder`** vs sorting layers). Umbrella reference spec shipped with **TECH-20** (completed); this issue tracks optional depth / polish. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
-  - Depends on: none
-
-- [ ] **TECH-28** — Unity Editor: **agent diagnostics** (export context JSON, optional **sorting** debug export)
-  - Type: tooling / agent workflow
-  - Files: `Assets/Scripts/Editor/` (new menu or utility), `tools/reports/` (output; gitignore policy as agreed), optional `GridManager` read-only hooks
-  - Spec: `.cursor/projects/TECH-28.md`
-  - Notes: Editor menu writes `tools/reports/agent-context-{timestamp}.json` (`schema_version`, scene, selection, sample **cell** / grid facts). Optional `sorting-debug.md` for **Sorting order** investigations (geo §7). `docs/agent-tooling-verification-priority-tasks.md` tasks 2, 23. Aligns with **unity-development-context.md** / **BUG-16**–**BUG-17** onboarding themes.
-  - Depends on: none
-
 - [ ] **TECH-15** — New Game / **geography initialization** performance
   - Type: performance / optimization
   - Files: `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `GridManager.cs`, `InterstateManager.cs`, `ForestManager.cs`, `RegionalMapManager.cs`, `ProceduralRiverGenerator.cs` (as applicable)
@@ -415,11 +401,25 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
 
 ## Completed (last 30 days)
 
+- [x] **TECH-28** — Unity Editor: **agent diagnostics** (context JSON + sorting debug export) (2026-04-02)
+  - Type: tooling / agent workflow
+  - Files: `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs`, `tools/reports/` (generated output; see `.gitignore`), `.gitignore`
+  - Spec: (project spec removed after closure)
+  - Notes: **Completed (verified per user):** **Territory Developer → Reports → Export Agent Context** writes `tools/reports/agent-context-{timestamp}.json` (`schema_version`, `exported_at_utc`, scene, selection, bounded **Cell** / **HeightMap** / **WaterMap** sample via **`GridManager.GetCell`** only). **Export Sorting Debug (Markdown)** writes `sorting-debug-{timestamp}.md` in **Play Mode** using **`TerrainManager`** sorting APIs and capped **`SpriteRenderer`** `sortingOrder` listing. **Agents:** reference `@tools/reports/agent-context-….json` or `@tools/reports/sorting-debug-….md` in Cursor prompts (paths under repo root). `docs/agent-tooling-verification-priority-tasks.md` tasks 2, 23.
+  - Depends on: none
+
+- [x] **TECH-25** — Incremental authoring milestones for `unity-development-context.md` (2026-04-02)
+  - Type: documentation / agent tooling
+  - Files: `.cursor/specs/unity-development-context.md`; `projects/agent-friendly-tasks-with-territory-ia-context.md` (pointer wording); `docs/agent-tooling-verification-priority-tasks.md`; `BACKLOG.md`; `tools/mcp-ia-server/scripts/verify-mcp.ts` (backlog smoke test → **TECH-28**)
+  - Spec: (project spec removed after closure)
+  - Notes: **Completed (verified per user):** Merged milestone slices **M1**–**M7** into **`unity-development-context.md`** — lifecycle (**`ZoneManager`**, **`WaterManager`**, coroutine/`Invoke` examples), Inspector / **Addressables** guard, **`SerializeField`** scan note + **`DemandManager`**, prefab/**YAML**/**meta** cautions, **`GridManager`** + **`GridSortingOrderService`** sorting entry points (formula still geo §7), **`GeographyManager`** init + **BUG-16** pointer, **`GetComponent`** per-frame row, glossary (**Geography initialization**), §1 roadmap (**TECH-18**, **TECH-26**, **TECH-28**). **`npm run verify`** under **`tools/mcp-ia-server/`**.
+  - Depends on: **TECH-20** (umbrella spec)
+
 - [x] **TECH-20** — In-repo Unity development context for agents (spec + concept index) (2026-04-02)
   - Type: documentation / agent tooling
   - Files: `.cursor/specs/unity-development-context.md`; `AGENTS.md`; `.cursor/rules/agent-router.mdc`; `tools/mcp-ia-server/src/config.ts` (`unity` / `unityctx` → `unity-development-context`); `docs/mcp-ia-server.md`; `tools/mcp-ia-server/README.md`; `tools/mcp-ia-server/scripts/verify-mcp.ts`; `tools/mcp-ia-server/tests/parser/backlog-parser.test.ts`; `tools/mcp-ia-server/tests/tools/build-registry.test.ts`; `tools/mcp-ia-server/tests/tools/config-aliases.test.ts`; [`.cursor/specs/REFERENCE-SPEC-STRUCTURE.md`](.cursor/specs/REFERENCE-SPEC-STRUCTURE.md) (router authoring note)
   - Spec: [`.cursor/specs/unity-development-context.md`](.cursor/specs/unity-development-context.md) (authoritative); project spec removed after closure
-  - Notes: **Completed (verified per user):** First-party **Unity** reference for **MonoBehaviour** / **Inspector** / **`FindObjectOfType`** / execution order; **territory-ia** `list_specs` key `unity-development-context`; **agent-router** row avoids **`router_for_task`** token collisions with geography queries (see **REFERENCE-SPEC-STRUCTURE**). Unblocks **TECH-18** `unity_context_section`; **TECH-25** tracks optional doc polish.
+  - Notes: **Completed (verified per user):** First-party **Unity** reference for **MonoBehaviour** / **Inspector** / **`FindObjectOfType`** / execution order; **territory-ia** `list_specs` key `unity-development-context`; **agent-router** row avoids **`router_for_task`** token collisions with geography queries (see **REFERENCE-SPEC-STRUCTURE**). Unblocks **TECH-18** `unity_context_section`; follow-up polish shipped in **TECH-25** (completed).
   - Depends on: none
 
 - [x] **BUG-37** — Manual **street** drawing clears **buildings** and **zones** on cells adjacent to the **road stroke** (2026-04-02)

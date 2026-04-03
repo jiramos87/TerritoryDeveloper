@@ -97,7 +97,7 @@ Labels:
 
 **FEAT-09–16**, **FEAT-18–19**, **FEAT-39–41**, **AUDIO-01**, **ART-01–04** → **C** (new systems, assets, or large design surface). Agents may **prototype** or **document** subtasks, but production merge without human/Unity review is risky.
 
-**TECH-18–21** → **B–C** depending on milestone; **unity-development-context.md** (**TECH-20** completed) remains a strong **B** target for *documentation-only* polish via **TECH-25**.
+**TECH-18–21** → **B–C** depending on milestone; **unity-development-context.md** (**TECH-20** + **TECH-25** completed) remains a strong **B** target for *small, slice-sized* doc follow-ups if new Unity conventions appear.
 
 ---
 
@@ -111,13 +111,13 @@ These are **incremental** work items that improve agent success **without** wait
 |--------------|--------|
 | Invariant preflight | [**TECH-23**](../BACKLOG.md#code-health-technical-debt) |
 | MCP parser tests/fixtures | [**TECH-24**](../BACKLOG.md#code-health-technical-debt) |
-| `unity-development-context.md` slice milestones | [**TECH-25**](../BACKLOG.md#agent--unity--mcp-context-lane-highest-priority) (umbrella doc shipped [**TECH-20** completed](../BACKLOG.md#completed-last-30-days)) |
+| `unity-development-context.md` slice milestones | [**TECH-25**](../BACKLOG.md#completed-last-30-days) (**completed** 2026-04-02; umbrella **TECH-20**) |
 | Scripted mechanical checks | [**TECH-26**](../BACKLOG.md#code-health-technical-debt) |
 | Backlog glossary alignment | [**TECH-27**](../BACKLOG.md#code-health-technical-debt) |
 
 1. **“Invariant preflight” issue template** — For any BUG/FEAT, require first comment: paste output plan referencing `invariants_summary` + `router_for_task` + at least one `spec_section` call. Reduces forgotten road/height rules. **→ [TECH-23](../BACKLOG.md#code-health-technical-debt)**
 2. **Narrow MCP-only regressions** — Extend `tools/mcp-ia-server` tests/fixtures when parsers change (already pattern from FEAT-45); no Unity. **→ [TECH-24](../BACKLOG.md#code-health-technical-debt)**
-3. **`unity-development-context.md` slices** — Extend or polish the reference spec in small PRs (lifecycle, SerializeField policy, `FindObjectOfType` policy, execution order). Each PR is **A** for an agent with `spec_section` alignment to `coding-conventions.mdc`. **→ [TECH-25](../BACKLOG.md#agent--unity--mcp-context-lane-highest-priority)** (umbrella shipped with **TECH-20** completed).
+3. **`unity-development-context.md` slices** — Optional future polish (lifecycle, SerializeField policy, `FindObjectOfType` policy, execution order) in small PRs; baseline milestones shipped with [**TECH-25** completed](../BACKLOG.md#completed-last-30-days). New slices stay **A**–**B** if they only touch this spec and `coding-conventions.mdc` vocabulary.
 4. **Scripted checks** (see [`docs/agent-tooling-verification-priority-tasks.md`](../docs/agent-tooling-verification-priority-tasks.md) task 1) — e.g. `FindObjectOfType` inside `Update` scanner, optional `gridArray` gate: **A/B** for agents in Node/shell; lowers human vigilance for mechanical violations. **→ [TECH-26](../BACKLOG.md#code-health-technical-debt)**
 5. **Backlog cross-links** — Ensure “Depends on” and Spec fields use glossary terms; human or agent **A** task, improves `backlog_issue` usefulness. **→ [TECH-27](../BACKLOG.md#code-health-technical-debt)**
 
@@ -136,7 +136,7 @@ These are **incremental** work items that improve agent success **without** wait
 
 ## 6. Summary
 
-- **Best backlog candidates for a mostly-autonomous agent today:** **BUG-12**, **BUG-14**, **TECH-14** (with reference audit), and **documentation/tooling** follow-ups [**TECH-23**](../BACKLOG.md#code-health-technical-debt)–[**TECH-27**](../BACKLOG.md#code-health-technical-debt) (see [§4](#4-new-task-ideas-optimized-for-the-current-mcp-not-future-tech-1819)) plus optional [**TECH-25**](../BACKLOG.md#agent--unity--mcp-context-lane-highest-priority) (`unity-development-context.md` polish; umbrella **TECH-20** completed).
+- **Best backlog candidates for a mostly-autonomous agent today:** **BUG-12**, **BUG-14**, **TECH-14** (with reference audit), and **documentation/tooling** follow-ups [**TECH-23**](../BACKLOG.md#code-health-technical-debt)–[**TECH-27**](../BACKLOG.md#code-health-technical-debt) (see [§4](#4-new-task-ideas-optimized-for-the-current-mcp-not-future-tech-1819)). **`unity-development-context.md`** baseline polish: [**TECH-25** completed](../BACKLOG.md#completed-last-30-days).
 - **Reasonable with discipline and Editor verification:** **BUG-19**, **BUG-17**, **FEAT-03**, parts of **TECH-02/03/05**, **TECH-13** (audited).
 - **Poor fit for “hands-off” agent implementation:** **BUG-28**, **BUG-31**, **BUG-44**, **BUG-49**, **BUG-52**, **TECH-01**, **FEAT-21–23**, **FEAT-35–36**, **FEAT-43**, performance (**TECH-15/16**), and **new gameplay systems**—unless the human splits the work into verified milestones with spec anchors.
 
