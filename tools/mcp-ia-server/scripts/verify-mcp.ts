@@ -64,8 +64,8 @@ async function main(): Promise<void> {
     await client.callTool({ name: "list_specs", arguments: {} }),
   ) as Array<{ key: string; category: string }>;
   console.log("list_specs count:", all.length);
-  if (all.length !== 22) {
-    throw new Error(`Expected 22 IA documents, got ${all.length}`);
+  if (all.length !== 23) {
+    throw new Error(`Expected 23 IA documents, got ${all.length}`);
   }
 
   const rules = parseJsonFromToolResult(
@@ -88,6 +88,26 @@ async function main(): Promise<void> {
     throw new Error("spec_outline isometric-geography-system failed");
   }
   console.log("spec_outline isometric-geography-system top-level headings:", outline.outline.length);
+
+  const unityOutline = parseJsonFromToolResult(
+    await client.callTool({
+      name: "spec_outline",
+      arguments: { spec: "unity" },
+    }),
+  ) as { outline: unknown[]; error?: string };
+  if (unityOutline.error || !Array.isArray(unityOutline.outline)) {
+    throw new Error("spec_outline unity (alias → unity-development-context) failed");
+  }
+
+  const unitySec = parseJsonFromToolResult(
+    await client.callTool({
+      name: "spec_section",
+      arguments: { spec: "unity-development-context", section: "1" },
+    }),
+  ) as { content?: string; error?: string };
+  if (unitySec.error || !unitySec.content?.includes("Purpose and scope")) {
+    throw new Error("spec_section unity-development-context section 1 failed");
+  }
 
   const inv = parseJsonFromToolResult(
     await client.callTool({
@@ -371,21 +391,21 @@ async function main(): Promise<void> {
     throw new Error("glossary_discover expected suggestions array when no matches");
   }
 
-  const bl37 = parseJsonFromToolResult(
+  const bl20 = parseJsonFromToolResult(
     await client.callTool({
       name: "backlog_issue",
-      arguments: { issue_id: "BUG-37" },
+      arguments: { issue_id: "TECH-20" },
     }),
   ) as { issue_id?: string; status?: string; error?: string; files?: string; backlog_section?: string };
-  if (bl37.error || bl37.issue_id !== "BUG-37" || bl37.status !== "open") {
-    throw new Error("backlog_issue BUG-37 failed");
+  if (bl20.error || bl20.issue_id !== "TECH-20" || bl20.status !== "open") {
+    throw new Error("backlog_issue TECH-20 failed");
   }
-  if (!bl37.files?.includes("RoadManager")) {
-    throw new Error("backlog_issue BUG-37 expected Files to mention RoadManager");
+  if (!bl20.files?.includes("unity-development-context")) {
+    throw new Error("backlog_issue TECH-20 expected Files to mention unity-development-context");
   }
-  if (!/in progress|high priority|\bhigh\b/i.test(bl37.backlog_section ?? "")) {
+  if (!/agent|unity|mcp/i.test(bl20.backlog_section ?? "")) {
     throw new Error(
-      "backlog_issue BUG-37 expected In Progress or High Priority backlog_section",
+      "backlog_issue TECH-20 expected backlog_section to mention agent/Unity/MCP lane",
     );
   }
 

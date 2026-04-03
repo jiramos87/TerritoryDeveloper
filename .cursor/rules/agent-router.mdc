@@ -24,6 +24,7 @@ Read **only** the specs relevant to your task. Use this table to navigate.
 | In-game notifications | `.cursor/specs/managers-reference.md` — **Game notifications** | GameNotificationManager singleton |
 | Slopes, sorting, geography | `.cursor/specs/isometric-geography-system.md` §1–§7 | Coordinates, heights, sorting formula |
 | UI changes | `.cursor/specs/ui-design-system.md` | Foundations, components |
+| Unity / MonoBehaviour / Inspector wiring, Script Execution Order, 2D renderer `sortingOrder` / layers (not isometric stacking rules) | `.cursor/specs/unity-development-context.md` | Full spec; defer Sorting order formula to `isometric-geography-system.md` §7 |
 | Coding standards | `.cursor/rules/coding-conventions.mdc` | XML docs, naming, prefabs |
 | Domain terms | `.cursor/specs/glossary.md` | Quick definitions |
 | Backlog / issues | `BACKLOG.md` (only if task involves an issue) | — |
@@ -53,4 +54,4 @@ Read **only** the specs relevant to your task. Use this table to navigate.
 
 ## MCP — territory-ia (default when tools are available)
 
-In **Agent** mode with the **territory-ia** server enabled, use these tools **by default** to build context—**before** bulk `read_file` on `.cursor/specs/*.md`: `backlog_issue` (when you have `BUG-`/`FEAT-`/`TECH-`/… id), `router_for_task`, `glossary_discover` (rough **English** keywords → canonical terms; translate from the chat if the human did not write in English), `glossary_lookup` (known **English** term), `spec_outline`, `spec_section` (aliases: `geo`, `roads`, …), `invariants_summary`, `list_rules`, `rule_content`. Start with `list_specs` if you need keys. Same routing priorities as the table above; MCP returns slices and structured errors (including fuzzy suggestions). If a tool is unavailable, use this document and targeted file reads.
+In **Agent** mode with the **territory-ia** server enabled, use these tools **by default** to build context—**before** bulk `read_file` on `.cursor/specs/*.md`: `backlog_issue` (when you have `BUG-`/`FEAT-`/`TECH-`/… id), `router_for_task`, `glossary_discover` (rough **English** keywords → canonical terms; translate from the chat if the human did not write in English), `glossary_lookup` (known **English** term), `spec_outline`, `spec_section` (aliases: `geo`, `roads`, `unity` / `unityctx` → `unity-development-context`, …), `invariants_summary`, `list_rules`, `rule_content`. Start with `list_specs` if you need keys. Same routing priorities as the table above; MCP returns slices and structured errors (including fuzzy suggestions). If a tool is unavailable, use this document and targeted file reads.

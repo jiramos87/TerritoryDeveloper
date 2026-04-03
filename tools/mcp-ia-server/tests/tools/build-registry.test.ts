@@ -9,14 +9,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../../../");
 
 test(
-  "buildRegistry finds 22 IA entries when repo fixtures exist",
+  "buildRegistry finds 23 IA entries when repo fixtures exist",
   { skip: !fs.existsSync(path.join(repoRoot, ".cursor/specs/glossary.md")) },
   () => {
     const prev = process.env.REPO_ROOT;
     process.env.REPO_ROOT = repoRoot;
     try {
       const r = buildRegistry();
-      assert.equal(r.length, 22);
+      assert.equal(r.length, 23);
+      assert.ok(r.some((e) => e.key === "unity-development-context"));
       const rules = r.filter((e) => e.category === "rule");
       assert.equal(rules.length, 11);
     } finally {

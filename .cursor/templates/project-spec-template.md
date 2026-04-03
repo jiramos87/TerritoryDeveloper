@@ -116,6 +116,7 @@
   Rules: Use canonical terms from .cursor/specs/glossary.md only.
   Ask about GAME LOGIC and definitions — not specific code, APIs, or class names.
   The implementing agent resolves technical approach unless it would change intended behavior (then Decision Log or ask user).
+  TOOLING-ONLY issues (CI, MCP, scripts, docs with no gameplay change): write "None — tooling only; see §8 Acceptance criteria" (or developer policy questions such as CI blocking vs advisory). Do not invent fake game rules to fill this section.
 -->
 
 1. …

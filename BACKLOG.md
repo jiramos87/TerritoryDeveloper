@@ -2,8 +2,143 @@
 
 > Single source of truth for project issues. Ordered by priority (highest first).
 > To work on an issue: reference it with `@BACKLOG.md` in the Cursor conversation.
+>
+> **Agent ↔ Unity context (2026-04-02):** Work that improves **territory-ia** / MCP understanding of **Unity**, **Unity → workspace JSON** (and other machine-readable exports), **structured logs / harness output**, and **scene–prefab** introspection for IDE agents is **prioritized ahead** of unrelated refactors. The ordered lane is **§ Agent ↔ Unity & MCP context lane** below. Gameplay blockers in **§ High Priority** still take precedence when they stop play or corrupt saves.
 
 ---
+
+## Agent ↔ Unity & MCP context lane (highest priority)
+
+Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP platform** → **agent workflow & CI helpers** → **research tooling**.
+
+- [ ] **TECH-20** — In-repo Unity development context for agents (spec + concept index)
+  - Type: documentation / agent tooling
+  - Files: new `.cursor/specs/unity-development-context.md` (or agreed name); `AGENTS.md` and `.cursor/rules/agent-router.mdc` (pointer + “read when…” row); optional short glossary subsection or cross-links to `.cursor/specs/glossary.md` for shared terms
+  - Spec: `.cursor/projects/TECH-20.md`
+  - Notes: **Goal:** Give agents a **first-party** reference for **Unity concepts that routinely come up in this codebase** (e.g. MonoBehaviour lifecycle, `SerializeField` / Inspector wiring, scenes & prefabs, 2D sorting layers vs `sortingOrder`, `ScriptableObject` when used, `FindObjectOfType` policy here, execution order pitfalls, common Unity patterns **as constrained by this project** — not a full Unity manual). **Policy:** Agents should **default to this spec + existing `.cursor/` docs** for Unity API and workflow questions and **avoid opening general web/docs searches** unless the task **requires** version-specific behavior, undocumented APIs, or verification outside what the repo states. **Scope:** Curated sections, stable anchors, and links to **in-repo** examples (file/class references) where helpful. **Out of scope:** Duplicating Microsoft/Unity manual pages verbatim; replacing official docs when the user explicitly asks for external authority. **Acceptance:** `agent-router` lists when to read this spec; a new contributor agent can implement a typical Inspector + manager change using only repo context for Unity basics. **Related:** **TECH-17** (MCP can later expose this document like other specs). **Enables:** **TECH-18** **`unity_context_section`** once the spec file exists.
+  - Depends on: none
+
+- [ ] **TECH-25** — **TECH-20** incremental authoring milestones for `unity-development-context.md`
+  - Type: documentation / agent tooling
+  - Files: `.cursor/specs/unity-development-context.md` (when created per **TECH-20**), cross-link **TECH-20**; optional `projects/agent-friendly-tasks-with-territory-ia-context.md` pointer
+  - Notes: Land **TECH-20** in slice-sized PRs (MonoBehaviour lifecycle, **`SerializeField`** / Inspector, **`FindObjectOfType`** policy, Script Execution Order, 2D **`sortingOrder`** vs sorting layers). This issue tracks milestone checklist so one agent need not ship the entire doc at once. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
+  - Depends on: none (complements **TECH-20**)
+
+- [ ] **TECH-28** — Unity Editor: **agent diagnostics** (export context JSON, optional **sorting** debug export)
+  - Type: tooling / agent workflow
+  - Files: `Assets/Scripts/Editor/` (new menu or utility), `tools/reports/` (output; gitignore policy as agreed), optional `GridManager` read-only hooks
+  - Spec: `.cursor/projects/TECH-28.md`
+  - Notes: Editor menu writes `tools/reports/agent-context-{timestamp}.json` (`schema_version`, scene, selection, sample **cell** / grid facts). Optional `sorting-debug.md` for **Sorting order** investigations (geo §7). `docs/agent-tooling-verification-priority-tasks.md` tasks 2, 23. Aligns with **TECH-20** / **BUG-16**–**BUG-17** onboarding themes.
+  - Depends on: none
+
+- [ ] **TECH-15** — New Game / **geography initialization** performance
+  - Type: performance / optimization
+  - Files: `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `GridManager.cs`, `InterstateManager.cs`, `ForestManager.cs`, `RegionalMapManager.cs`, `ProceduralRiverGenerator.cs` (as applicable)
+  - Spec: `.cursor/projects/TECH-15.md`
+  - Notes: Reduce wall-clock time and frame spikes when starting a **New Game** (**geography initialization**): **HeightMap**, lakes, procedural **rivers** (**FEAT-38**), **interstate**, **forests**, **map border** signs, **sorting order** passes, etc. **Priority:** Land the **Editor/batch JSON profiler** under `tools/reports/` (see spec) *before* or in parallel with deep optimization — agents need **measurable** phase breakdowns. **Related:** **FEAT-37c** optimizes **Load Game** (no regen) — this issue targets **geography initialization** cost only. **Tooling:** `docs/agent-tooling-verification-priority-tasks.md` (tasks 3, 22).
+
+- [ ] **TECH-16** — **Simulation tick** performance v2 (per-tick **AUTO systems** pipeline)
+  - Type: performance / optimization
+  - Files: `SimulationManager.cs`, `TimeManager.cs`, `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `AutoResourcePlanner.cs`, `UrbanCentroidService.cs`, `GrowthBudgetManager.cs`, `DemandManager.cs`, `CityStats.cs` (as applicable)
+  - Spec: `.cursor/projects/TECH-16.md`
+  - Notes: Second-pass optimization of the **simulation tick** after early **Simulation optimization** work (completed). **Priority:** Ship **spec-labeled tick harness** JSON + **ProfilerMarker** names (see spec) so agents and CI can read **AUTO** pipeline cost *before* micro-optimizing allocations. **Related:** **BUG-14** (per-frame UI `FindObjectOfType`); **TECH-01** (manager decomposition may help profiling and hotspots). **Tooling:** `docs/agent-tooling-verification-priority-tasks.md` (tasks 4, 25); drift detection **TECH-29**.
+
+- [ ] **TECH-33** — Asset introspection: **prefab** manifest + scene **MonoBehaviour** listing
+  - Type: tooling
+  - Files: `tools/` (Unity `-batchmode` or Editor script), `Assets/Prefabs/`, agreed scene path (e.g. `MainScene.unity`)
+  - Spec: `.cursor/projects/TECH-33.md`
+  - Notes: List prefabs with missing script references; list MonoBehaviour types/paths in scene for **BUG-19** / **TECH-07**. `docs/agent-tooling-verification-priority-tasks.md` tasks 26, 27.
+  - Depends on: none
+
+- [ ] **TECH-19** — Game PostgreSQL database; first milestone — IA schema for MCP + basic tools
+  - Type: infrastructure / tooling
+  - Files: new project outside `Assets/Scripts/` (PostgreSQL schema, migrations, optional small service or MCP-adjacent module); seed scripts as needed
+  - Spec: `.cursor/projects/TECH-19.md`
+  - Notes: **Goal:** Introduce a **game-owned** PostgreSQL database (long-term: not only AI — analytics, metagame, ops, etc.; document intended product uses as they land). **First concrete milestone:** tables and migrations for **Information Architecture** data that MCP will eventually query: e.g. `glossary` (term, conceptual_def, technical_def, spec_address, section, category), `spec_sections` (spec_abbrev, section_id, title, content, parent_section), `invariants`, `relationships` (term_a, relation, term_b) — adjust names/types to match implementation. Ship a **minimal** programmatic surface (SQL views, repo functions, or thin API) plus a **basic** tool set (same *families* as **TECH-17**, but **wired to Postgres** where applicable) to prove read paths. **Optional:** seed a small subset from `.cursor/specs/glossary.md` to validate the pipeline. **Does not** ingest full specs or replace Markdown as source of truth — that is **TECH-18**. **Stack:** PostgreSQL (psql / DBeaver compatible), migrations (tool of choice).
+  - Depends on: none
+
+- [ ] **TECH-18** — Migrate Information Architecture from Markdown to PostgreSQL (MCP evolution)
+  - Type: infrastructure / tooling
+  - Files: All `.cursor/specs/*.md`, `.cursor/rules/agent-router.mdc`, `.cursor/rules/invariants.mdc`, `ARCHITECTURE.md`; MCP server from **TECH-17** (initially **file-backed**); schema / migrations / seed from **TECH-19**; `tools/mcp-ia-server/src/index.ts`, `docs/mcp-ia-server.md`
+  - Spec: `.cursor/projects/TECH-18.md`
+  - Notes: **Goal:** After **TECH-17** (MCP over **`.md` / `.mdc`**) and **TECH-19** (Postgres + IA tables), **migrate authoritative IA content** into PostgreSQL and evolve the **same MCP** so **primary** retrieval is DB-backed. Markdown becomes **generated or secondary** for human reading. **Explicit dependency:** This work **extends the MCP built first on Markdown** in **TECH-17** — same tool contracts where possible, swapping implementation to query **TECH-19**’s database. **Scope:** (1) Parse and ingest spec sections (`isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, etc.) into `spec_sections`. (2) Populate `relationships` (e.g. HeightMap↔Cell.height, PathTerraformPlan→Phase-1→Apply). (3) Populate `invariants` from `invariants.mdc`. (4) Extend tools: `what_do_i_need_to_know(task_description)`, `search_specs(query)`, `dependency_chain(term)`. (5) Script to regenerate `.md` from DB for review. (6) Update `agent-router.mdc` — MCP tools first, Markdown fallback second. **Acceptance:** Agent resolves a multi-spec task (e.g. “bridge over multi-level lake”) via MCP reading ≤ ~500 tokens of context instead of many full-file reads. **Phased MCP tools** (bundles, `backlog_search`, **`unity_context_section` after TECH-20** doc, etc.): see `.cursor/projects/TECH-18.md` and `docs/agent-tooling-verification-priority-tasks.md` (tasks 12–20, 28–32, 35). **Deferred unless reopened:** `findobjectoftype_scan`, `find_symbol` MCP tools (prefer **TECH-26** script).
+  - Depends on: TECH-17, TECH-19
+
+- [ ] **TECH-21** — Extend and leverage **JSON** in the game system (serialization, tooling, future backend)
+  - Type: technical / data interchange
+  - Files: `.cursor/specs/persistence-system.md` (when save or interchange shapes stabilize); save/load and **geography initialization** code paths that already emit or consume structured data; optional `StreamingAssets`/config JSON; `tools/mcp-ia-server/` and other Node **scripts** that benefit from shared JSON schemas; future backend modules from **TECH-19** (align payloads and migrations)
+  - Spec: `.cursor/projects/TECH-21.md`
+  - Notes: **Goals:** (1) **Runtime** — improve **performance** and maintainability where **JSON** or other **serialized** DTO-style data beats ad-hoc string/binary formats or repeated heavy reflection (profile before wide refactors). (2) **Development** — use **JSON** artifacts and TypeScript/JavaScript parsing for **agentic** tools, batch **scripts**, and validation (schemas, fixtures, golden files). (3) **Future backend** — define which **domain models** are safe to represent as **JSON** (save subsets, telemetry, IA exports, API bodies) and how they will map to **database** tables or documents when **TECH-19**+ lands; document versioning and migration expectations. **Out of scope until decided:** replacing the entire **save/load** pipeline without a phased plan; duplicating authoritative **spec** sources in JSON (see **TECH-18**). **Related:** **TECH-15** (**New Game** / **geography initialization** performance), **TECH-16** (**simulation tick** performance), **FEAT-37c** (**Load Game** optimizations), **TECH-19** / **TECH-18** (Postgres + MCP evolution).
+  - Acceptance: Written plan (issue update or short doc under `docs/` agreed in review) listing prioritized **JSON** use cases (game vs tooling vs future API); at least one **pilot** implementation or exported schema that proves the pattern (e.g. config slice, tool fixture format, or save-adjacent export) without breaking existing **save data**; glossary/spec terms used consistently for any new named payloads
+  - Depends on: none (coordinate with **TECH-19** when backend schema work starts)
+
+- [ ] **TECH-23** — Agent workflow: MCP **invariant preflight** for issue kickoff
+  - Type: documentation / process
+  - Files: `AGENTS.md`, optional `.cursor/templates/` or **How to Use This Backlog** section in this file, `docs/mcp-ia-server.md` (short pointer)
+  - Notes: Document that implementation chats for **BUG-**/**FEAT-**/**TECH-** work should record **territory-ia** **`invariants_summary`**, **`router_for_task`**, and at least one **`spec_section`** (or equivalent slice) before substantive code edits—reduces **road preparation family**, **HeightMap**/**cell** sync, and per-frame **`FindObjectOfType`** mistakes. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
+  - Depends on: none
+
+- [ ] **TECH-24** — territory-ia MCP: parser regression policy (tests/fixtures when parsers change)
+  - Type: tooling / code health
+  - Files: `tools/mcp-ia-server/` (tests, fixtures, `scripts/verify-mcp.ts` or equivalent), `docs/mcp-ia-server.md`, `tools/mcp-ia-server/README.md`
+  - Notes: When changing markdown parsers, fuzzy matching, or glossary ranking, extend **`node:test`** fixtures and keep **`npm run verify`** green (pattern from **FEAT-45**). No Unity. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
+  - Depends on: none
+
+- [ ] **TECH-30** — Validate **BACKLOG** issue IDs referenced in `.cursor/projects/*.md`
+  - Type: tooling / doc hygiene
+  - Files: `tools/` (Node script), optional `package.json` `npm run` at repo root or under `tools/`
+  - Spec: `.cursor/projects/TECH-30.md`
+  - Notes: Every `[BUG-XX]` / `[TECH-XX]` / etc. front matter or link in active project specs must exist in `BACKLOG.md`. `docs/agent-tooling-verification-priority-tasks.md` task 9.
+  - Depends on: none
+
+- [ ] **TECH-29** — CI / script: **simulation tick** call-order drift detector
+  - Type: tooling / CI
+  - Files: `tools/` (Node or shell), checked-in ordered manifest (derived from `.cursor/specs/simulation-system.md` **Tick execution order**), optional `.github/workflows/`; `SimulationManager.cs` as truth source to diff
+  - Spec: `.cursor/projects/TECH-29.md`
+  - Notes: Fail CI (or print advisory) when `ProcessSimulationTick` step order diverges from manifest without matching spec update. `docs/agent-tooling-verification-priority-tasks.md` task 5. Phase labels should stay aligned with **TECH-16** harness.
+  - Depends on: **TECH-16** (stable spec-labeled phase names in harness — soft dependency for naming parity)
+
+- [ ] **TECH-31** — **AUTO** / **simulation** scenario or fixture generator (regression capsules)
+  - Type: tooling / test infrastructure
+  - Files: `tools/`, Unity test assembly or Editor scripts, optional YAML/fixtures under `tools/fixtures/` or `Tests/`
+  - Spec: `.cursor/projects/TECH-31.md`
+  - Notes: Expand project templates or hand-authored constraints into Play Mode tests or serialized grid fixtures for **BUG-52**-class cases. `docs/agent-tooling-verification-priority-tasks.md` task 21.
+  - Depends on: none
+
+- [ ] **TECH-34** — Generate **`gridmanager-regions.json`** from `GridManager.cs` `#region` blocks
+  - Type: tooling / IA
+  - Files: `tools/` (Node or C# extractor), output e.g. `tools/mcp-ia-server/data/gridmanager-regions.json`; `GridManager.cs`
+  - Spec: `.cursor/projects/TECH-34.md`
+  - Notes: Supports **TECH-01** extraction planning and optional future MCP `gridmanager_region_map`. `docs/agent-tooling-verification-priority-tasks.md` task 28. Coordinate MCP registration with **TECH-18** when applicable.
+  - Depends on: none (MCP wiring: **TECH-18**)
+
+- [ ] **TECH-27** — **BACKLOG.md** glossary alignment pass (**Depends on** / **Spec** / **Files** / **Notes**)
+  - Type: documentation / IA hygiene
+  - Files: `BACKLOG.md`, `.cursor/specs/glossary.md`, optional `tools/` link-check script
+  - Spec: `.cursor/projects/TECH-27.md`
+  - Notes: Audit open issues so **Depends on**, **Spec**, **Files**, and **Notes** use vocabulary from **`.cursor/specs/glossary.md`** and linked **reference specs** where practical—improves **`backlog_issue`** usefulness and cross-agent consistency. **Optional automation:** script verifying glossary “Spec” column paths (and optional heading anchors) exist (`docs/agent-tooling-verification-priority-tasks.md` task 10). Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
+  - Depends on: none
+
+- [ ] **TECH-26** — Repo scripts / CI: mechanical checks (**FindObjectOfType** in **Update**; optional **`gridArray`** gate)
+  - Type: tooling / CI
+  - Files: new script under `tools/` (Node or shell), optional CI workflow; align wording with `.cursor/rules/invariants.mdc`
+  - Spec: `.cursor/projects/TECH-26.md`
+  - Notes: Implement scanner for **`FindObjectOfType`** inside **`Update`/`LateUpdate`/`FixedUpdate`** (supports **BUG-14** prevention) and optional **`rg`** gate blocking new **`gridArray`/`cellArray`** use outside **`GridManager`** (**TECH-04**). **Phase 2:** hot-path static scan manifest from `ARCHITECTURE.md` / managers-reference to prioritize files in AUTO or per-frame paths (`docs/agent-tooling-verification-priority-tasks.md` tasks 1, 6). Priority order: `docs/agent-tooling-verification-priority-tasks.md`. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
+  - Depends on: none
+
+- [ ] **TECH-32** — **Urban growth rings** / centroid recompute what-if (research tooling)
+  - Type: tooling / research
+  - Files: `tools/` or Unity Editor batch; parameters from **FEAT-43** / **FEAT-36** notes as inputs
+  - Spec: `.cursor/projects/TECH-32.md`
+  - Notes: Compare full **UrbanCentroidService** recompute every tick vs throttled/approximate strategies; report desync or behavior risk vs glossary **sim §Rings**. Non-player-facing evidence for tuning. `docs/agent-tooling-verification-priority-tasks.md` task 24.
+  - Depends on: none (coordinates with **FEAT-43**)
+
+- [ ] **TECH-35** — Research spike: property-based / random mutation **invariant** fuzzing (optional)
+  - Type: research / test harness
+  - Files: TBD test assembly or `tools/` prototype
+  - Spec: `.cursor/projects/TECH-35.md`
+  - Notes: High setup cost; only if geometric / ordering bugs justify. Predicates from **invariants** (HeightMap/**cell** sync, **road cache**, **shore band**, etc.). `docs/agent-tooling-verification-priority-tasks.md` task 38. **Non-goals:** production fuzz in player builds.
+  - Depends on: none
 
 ## High Priority
 - [ ] **BUG-44** — **Cliff** prefabs: black gaps when a **water body** (**river** or **lake**) meets the **east** or **south** **map border**
@@ -36,12 +171,14 @@
 - [ ] **BUG-12** — Happiness UI always shows 50%
   - Type: fix
   - Files: `CityStatsUIController.cs` (GetHappiness)
+  - Spec: `.cursor/projects/BUG-12.md`
   - Notes: `GetHappiness()` returns hardcoded `50.0f` instead of reading `cityStats.happiness`. Blocks FEAT-23 (dynamic happiness).
 
 - [ ] **BUG-14** — `FindObjectOfType` in Update/per-frame degrades performance
   - Type: fix (performance)
   - Files: `CursorManager.cs` (Update), `UIManager.cs` (UpdateUI)
-  - Notes: `CursorManager.Update()` calls `FindObjectOfType<UIManager>()` every frame. `UIManager.UpdateUI()` calls `FindObjectOfType` for 4 managers repeatedly. Must be cached in Start().
+  - Spec: `.cursor/projects/BUG-14.md`
+  - Notes: `CursorManager` caches `UIManager` in `Start()`; **`UIManager.UpdateUI()`** still calls `FindObjectOfType` for **EmploymentManager**, **DemandManager**, and **StatisticsManager** each frame — cache in `Awake`/`Start`. **`UpdateGridCoordinatesDebugText`** may also call `FindObjectOfType` from `LateUpdate`; remove per-frame lookups per **invariants**. See project spec for current code pointers. **Prevention:** **TECH-26** CI/script scanner flags new per-frame **`FindObjectOfType`** use.
 
 ## Medium Priority
 - [ ] **BUG-49** — Manual **street** drawing: preview builds the **road stroke** cell-by-cell (animated); should show full path at once
@@ -55,6 +192,7 @@
 - [ ] **BUG-19** — Mouse scroll wheel in Load Game scrollable menu also triggers camera zoom
   - Type: fix (UX)
   - Files: `CameraController.cs` (HandleScrollZoom), `UIManager.cs` (loadGameMenu, savedGamesListContainer), `MainScene.unity` (LoadGameMenuPanel / Scroll View hierarchy)
+  - Spec: `.cursor/projects/BUG-19.md`
   - Notes: When scrolling over the Load Game save list, the mouse wheel scrolls the list AND zooms the camera. The scroll should only move the list up/down, not affect camera zoom or other game mechanisms that use the scroll wheel.
   - Proposed solution: In `CameraController.HandleScrollZoom()`, check `EventSystem.current.IsPointerOverGameObject()` before processing scroll. If the pointer is over UI (e.g. Load Game panel, Building Selector, any scrollable popup), skip the zoom logic and let the UI consume the scroll. This mirrors how `GridManager` already gates mouse clicks via `IsPointerOverGameObject()`. Requires `using UnityEngine.EventSystems`. Verify that the Load Game ScrollRect (Scroll View) has proper raycast target so `IsPointerOverGameObject()` returns true when hovering over it.
 
@@ -66,12 +204,14 @@
 - [ ] **BUG-17** — `cachedCamera` is null when creating `ChunkCullingSystem`
   - Type: fix
   - Files: `GridManager.cs`
+  - Spec: `.cursor/projects/BUG-17.md`
   - Notes: In InitializeGrid() ChunkCullingSystem is created with `cachedCamera`, but it is only assigned in Update(). May cause NullReferenceException.
 
 - [ ] **BUG-48** — Minimap stays stale until toggling a layer (e.g. data-visualization / **desirability** / **urban centroid**)
   - Type: bug
   - Files: `MiniMapController.cs` (`RebuildTexture`, `Update`; layer toggles call `RebuildTexture` but nothing runs on **simulation tick**), `TimeManager.cs` / `SimulationManager.cs` if wiring refresh to the **simulation tick** or a shared event
-  - Notes: **Observed:** The procedural minimap **does not refresh** as the city changes unless the player **toggles a minimap layer** (or other actions that call `RebuildTexture`, such as opening the panel). **Expected:** The minimap should track **zones**, **streets**, **open water**, **forests**, etc. **without** requiring layer toggles. **Implementation:** Rebuild at least **once per simulation tick** while the minimap is visible, **or** a **performance-balanced** approach (throttled full rebuild, dirty rect / incremental update, or event-driven refresh when grid/**zone**/**street**/**water body** data changes) — profile full `RebuildTexture` cost first. Class summary in code states rebuilds on **geography initialization** completion, grid restore, panel open, and layer changes **not** on a fixed timer — that gap is this bug. **Related:** completed **BUG-32** (water on minimap); **FEAT-42** (optional **HeightMap** layer).
+  - Spec: `.cursor/projects/BUG-48.md`
+  - Notes: **Observed:** The procedural minimap **does not refresh** as the city changes unless the player **toggles a minimap layer** (or other actions that call `RebuildTexture`, such as opening the panel). **Expected:** The minimap should track **zones**, **streets**, **open water**, **forests**, etc. **without** requiring layer toggles. **Implementation:** Rebuild at least **once per simulation tick** while the minimap is visible, **or** a **performance-balanced** approach (throttled full rebuild, dirty rect / incremental update, or event-driven refresh when grid/**zone**/**street**/**water body** data changes) — profile full `RebuildTexture` cost first (see project spec; measurement tooling **task 8** in `docs/agent-tooling-verification-priority-tasks.md`). Class summary in code states rebuilds on **geography initialization** completion, grid restore, panel open, and layer changes **not** on a fixed timer — that gap is this bug. **Related:** completed **BUG-32** (water on minimap); **FEAT-42** (optional **HeightMap** layer).
   - Depends on: none
 
 - [ ] **BUG-52** — **AUTO** zoning: persistent **grass cells** between **undeveloped light zoning** and new **AUTO** **street** segments (gaps not filled on later **simulation ticks**)
@@ -118,6 +258,7 @@
 - [ ] **FEAT-03** — **Forest (coverage)** mode hold-to-place
   - Type: feature
   - Files: `ForestManager.cs`, `GridManager.cs`
+  - Spec: `.cursor/projects/FEAT-03.md`
   - Notes: Currently requires click per **cell**. Allow continuous drag.
 
 - [ ] **FEAT-04** — Random **forest (coverage)** spray tool
@@ -133,24 +274,14 @@
 - [ ] **FEAT-08** — **Zone density** and **desirability** simulation: evolution to larger **buildings**
   - Type: feature
   - Files: `GrowthManager.cs`, `ZoneManager.cs`, `DemandManager.cs`, `CityStats.cs`
-  - Notes: Existing **buildings** evolve to larger versions based on **zone density** and **desirability**.
-
-- [ ] **TECH-15** — New Game / **geography initialization** performance
-  - Type: performance / optimization
-  - Files: `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `GridManager.cs`, `InterstateManager.cs`, `ForestManager.cs`, `RegionalMapManager.cs`, `ProceduralRiverGenerator.cs` (as applicable)
-  - Notes: Reduce wall-clock time and frame spikes when starting a **New Game** (**geography initialization**): **HeightMap**, lakes, procedural **rivers** (**FEAT-38**), **interstate**, **forests**, **map border** signs, **sorting order** passes, etc. Profile the pipeline; consider batched or deferred work across frames, fewer redundant passes, algorithmic improvements, and deferring non-critical visuals until after the map is interactive. **Related:** **FEAT-37c** optimizes **Load Game** (no regen) — this issue targets **geography initialization** cost only.
-
-- [ ] **TECH-16** — **Simulation tick** performance v2 (per-tick **AUTO systems** pipeline)
-  - Type: performance / optimization
-  - Files: `SimulationManager.cs`, `TimeManager.cs`, `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `AutoResourcePlanner.cs`, `UrbanCentroidService.cs`, `GrowthBudgetManager.cs`, `DemandManager.cs`, `CityStats.cs` (as applicable)
-  - Notes: Second-pass optimization of the **simulation tick** after early **Simulation optimization** work (completed). Profile `ProcessSimulationTick` and callees (**tick execution order**); reduce redundant work, hot-path cost, spatial queries, and per-tick allocations; preserve gameplay unless changes are explicitly agreed. **Related:** **BUG-14** (per-frame UI `FindObjectOfType`); **TECH-01** (manager decomposition may help profiling and hotspots).
-
+  - Notes: Existing **buildings** evolve to larger versions based on **zone density** and **desirability**. (**TECH-15** / **TECH-16** — performance + harness work — live under **§ Agent ↔ Unity & MCP context lane**.)
 
 ## Code Health (technical debt)
 
 - [ ] **TECH-13** — Remove obsolete **urbanization proposal** system (dead code, UI, models)
   - Type: refactor (cleanup)
   - Files: `UrbanizationProposalManager.cs`, `ProposalUIController.cs`, `UrbanizationProposal.cs` (and related), `SimulationManager.cs`, `UIManager.cs`, scene references, **save data** if any
+  - Spec: `.cursor/projects/TECH-13.md`
   - Notes: The **urbanization proposal** feature is **obsolete** and intentionally **disabled**; the game is stable without it. **Keep** `UrbanizationProposalManager` disconnected from the simulation — do **not** re-enable proposals. **Keep** `UrbanCentroidService` / **urban growth rings** for **AUTO** roads and zoning (FEAT-32). This issue tracks **full removal** of proposal-specific code and UI after a safe audit (no **save data** breakage). Supersedes former **BUG-15** / **BUG-13**.
 
 - [ ] **TECH-04** — Remove direct access to `gridArray`/`cellArray` outside GridManager
@@ -161,16 +292,19 @@
 - [ ] **TECH-02** — Change public fields to `[SerializeField] private` in managers
   - Type: refactor
   - Files: `ZoneManager.cs`, `RoadManager.cs`, `GridManager.cs`, `CityStats.cs`, `AutoZoningManager.cs`, `AutoRoadBuilder.cs`, `UIManager.cs`, `WaterManager.cs`
+  - Spec: `.cursor/projects/TECH-02.md`
   - Notes: Dependencies and prefabs exposed as `public` allow accidental access from any class. Use `[SerializeField] private` to encapsulate.
 
 - [ ] **TECH-03** — Extract magic numbers to constants or ScriptableObjects
   - Type: refactor
   - Files: multiple (GridManager, CityStats, RoadManager, UIManager, TimeManager, TerrainManager, WaterManager, EconomyManager, ForestManager, InterstateManager, etc.)
+  - Spec: `.cursor/projects/TECH-03.md`
   - Notes: **Building** costs, economic balance, **height generation** parameters, **sorting order** offsets (**type offsets**, **DEPTH_MULTIPLIER**, **HEIGHT_MULTIPLIER**), **pathfinding cost model** weights, initial dates, probabilities — all hardcoded. Extract to named constants or configuration ScriptableObject for easier tuning.
 
 - [ ] **TECH-05** — Extract duplicated dependency resolution pattern
   - Type: refactor
   - Files: ~25+ managers with `if (X == null) X = FindObjectOfType<X>()` block
+  - Spec: `.cursor/projects/TECH-05.md`
   - Notes: Consider helper method, base class, or extension method to reduce duplication of Inspector + FindObjectOfType fallback pattern.
 
 - [ ] **TECH-07** — ControlPanel: left vertical sidebar layout (category rows)
@@ -178,6 +312,8 @@
   - Files: `MainScene.unity` (`ControlPanel` hierarchy, RectTransform anchors, `LayoutGroup` / `ContentSizeFitter` as needed), `UIManager.cs` (only if toolbar/submenu positioning or references must follow the new dock), `UnitControllers/*SelectorButton.cs` (only if button wiring or parent references break after reparenting)
   - Spec sections: `.cursor/specs/ui-design-system.md` — **§3.3** (toolbar), **§1.3** (anchors/margins), **§4.3** (Canvas Scaler) as applicable.
   - Notes: Replace the bottom-centered horizontal **ribbon** with a **left-docked vertical** panel. Structure: **one row per category** (demolition, **RCI** **zoning**, **utility buildings**, **streets**, environment/**forests**, etc.), with **buttons laid out horizontally within each row** (e.g. `VerticalLayoutGroup` of rows, each row `HorizontalLayoutGroup`, or equivalent manual layout). Re-anchor dependent UI (e.g. **zone density** / tool option overlays) so they align to the new sidebar instead of the old bottom bar. Verify safe area and Canvas Scaler at reference resolutions; avoid overlapping the mini-map and debug readouts. Document final hierarchy in `docs/ui-design-system-context.md`. Link program charter: `docs/ui-design-system-project.md` (Backlog bridge). Spec/docs ticketed and cross-linked in **TECH-08** (completed).
+
+*(Agent–Unity / MCP tooling **TECH-23**–**TECH-35**, **TECH-15**/**TECH-16** performance+harness — listed in **§ Agent ↔ Unity & MCP context lane** above.)*
 
 ## Low Priority
 
@@ -204,6 +340,7 @@
 - [ ] **TECH-14** — Remove residual placeholder / test scripts
   - Type: refactor (cleanup)
   - Files: `CityManager.cs` (namespace-only stub), `TestScript.cs` (compile smoke test)
+  - Spec: `.cursor/projects/TECH-14.md`
   - Notes: Delete or replace with real content only if nothing references them; verify no scene/Inspector references.
 
 - [ ] **FEAT-11** — Education level / Schools
@@ -273,30 +410,7 @@
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-- [ ] **TECH-19** — Game PostgreSQL database; first milestone — IA schema for MCP + basic tools
-  - Type: infrastructure / tooling
-  - Files: new project outside `Assets/Scripts/` (PostgreSQL schema, migrations, optional small service or MCP-adjacent module); seed scripts as needed
-  - Notes: **Goal:** Introduce a **game-owned** PostgreSQL database (long-term: not only AI — analytics, metagame, ops, etc.; document intended product uses as they land). **First concrete milestone:** tables and migrations for **Information Architecture** data that MCP will eventually query: e.g. `glossary` (term, conceptual_def, technical_def, spec_address, section, category), `spec_sections` (spec_abbrev, section_id, title, content, parent_section), `invariants`, `relationships` (term_a, relation, term_b) — adjust names/types to match implementation. Ship a **minimal** programmatic surface (SQL views, repo functions, or thin API) plus a **basic** tool set (same *families* as **TECH-17**, but **wired to Postgres** where applicable) to prove read paths. **Optional:** seed a small subset from `.cursor/specs/glossary.md` to validate the pipeline. **Does not** ingest full specs or replace Markdown as source of truth — that is **TECH-18**. **Stack:** PostgreSQL (psql / DBeaver compatible), migrations (tool of choice).
-  - Depends on: none
-
-- [ ] **TECH-18** — Migrate Information Architecture from Markdown to PostgreSQL (MCP evolution)
-  - Type: infrastructure / tooling
-  - Files: All `.cursor/specs/*.md`, `.cursor/rules/agent-router.mdc`, `.cursor/rules/invariants.mdc`, `ARCHITECTURE.md`; MCP server from **TECH-17** (initially **file-backed**); schema / migrations / seed from **TECH-19**
-  - Notes: **Goal:** After **TECH-17** (MCP over **`.md` / `.mdc`**) and **TECH-19** (Postgres + IA tables), **migrate authoritative IA content** into PostgreSQL and evolve the **same MCP** so **primary** retrieval is DB-backed. Markdown becomes **generated or secondary** for human reading. **Explicit dependency:** This work **extends the MCP built first on Markdown** in **TECH-17** — same tool contracts where possible, swapping implementation to query **TECH-19**’s database. **Scope:** (1) Parse and ingest spec sections (`isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, etc.) into `spec_sections`. (2) Populate `relationships` (e.g. HeightMap↔Cell.height, PathTerraformPlan→Phase-1→Apply). (3) Populate `invariants` from `invariants.mdc`. (4) Extend tools: `what_do_i_need_to_know(task_description)`, `search_specs(query)`, `dependency_chain(term)`. (5) Script to regenerate `.md` from DB for review. (6) Update `agent-router.mdc` — MCP tools first, Markdown fallback second. **Acceptance:** Agent resolves a multi-spec task (e.g. “bridge over multi-level lake”) via MCP reading ≤ ~500 tokens of context instead of many full-file reads.
-  - Depends on: TECH-17, TECH-19
-
-- [ ] **TECH-20** — In-repo Unity development context for agents (spec + concept index)
-  - Type: documentation / agent tooling
-  - Files: new `.cursor/specs/unity-development-context.md` (or agreed name); `AGENTS.md` and `.cursor/rules/agent-router.mdc` (pointer + “read when…” row); optional short glossary subsection or cross-links to `.cursor/specs/glossary.md` for shared terms
-  - Notes: **Goal:** Give agents a **first-party** reference for **Unity concepts that routinely come up in this codebase** (e.g. MonoBehaviour lifecycle, `SerializeField` / Inspector wiring, scenes & prefabs, 2D sorting layers vs `sortingOrder`, `ScriptableObject` when used, `FindObjectOfType` policy here, execution order pitfalls, common Unity patterns **as constrained by this project** — not a full Unity manual). **Policy:** Agents should **default to this spec + existing `.cursor/` docs** for Unity API and workflow questions and **avoid opening general web/docs searches** unless the task **requires** version-specific behavior, undocumented APIs, or verification outside what the repo states. **Scope:** Curated sections, stable anchors, and links to **in-repo** examples (file/class references) where helpful. **Out of scope:** Duplicating Microsoft/Unity manual pages verbatim; replacing official docs when the user explicitly asks for external authority. **Acceptance:** `agent-router` lists when to read this spec; a new contributor agent can implement a typical Inspector + manager change using only repo context for Unity basics. **Related:** **TECH-17** (MCP can later expose this document like other specs).
-  - Depends on: none
-
-- [ ] **TECH-21** — Extend and leverage **JSON** in the game system (serialization, tooling, future backend)
-  - Type: technical / data interchange
-  - Files: `.cursor/specs/persistence-system.md` (when save or interchange shapes stabilize); save/load and **geography initialization** code paths that already emit or consume structured data; optional `StreamingAssets`/config JSON; `tools/mcp-ia-server/` and other Node **scripts** that benefit from shared JSON schemas; future backend modules from **TECH-19** (align payloads and migrations)
-  - Notes: **Goals:** (1) **Runtime** — improve **performance** and maintainability where **JSON** or other **serialized** DTO-style data beats ad-hoc string/binary formats or repeated heavy reflection (profile before wide refactors). (2) **Development** — use **JSON** artifacts and TypeScript/JavaScript parsing for **agentic** tools, batch **scripts**, and validation (schemas, fixtures, golden files). (3) **Future backend** — define which **domain models** are safe to represent as **JSON** (save subsets, telemetry, IA exports, API bodies) and how they will map to **database** tables or documents when **TECH-19**+ lands; document versioning and migration expectations. **Out of scope until decided:** replacing the entire **save/load** pipeline without a phased plan; duplicating authoritative **spec** sources in JSON (see **TECH-18**). **Related:** **TECH-15** (**New Game** / **geography initialization** performance), **TECH-16** (**simulation tick** performance), **FEAT-37c** (**Load Game** optimizations), **TECH-19** / **TECH-18** (Postgres + MCP evolution).
-  - Acceptance: Written plan (issue update or short doc under `docs/` agreed in review) listing prioritized **JSON** use cases (game vs tooling vs future API); at least one **pilot** implementation or exported schema that proves the pattern (e.g. config slice, tool fixture format, or save-adjacent export) without breaking existing **save data**; glossary/spec terms used consistently for any new named payloads
-  - Depends on: none (coordinate with **TECH-19** when backend schema work starts)
+*(**TECH-18**, **TECH-19**, **TECH-20**, **TECH-21** — listed in **§ Agent ↔ Unity & MCP context lane** above; not duplicated here.)*
 
 - [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects
   - Type: audio/feature

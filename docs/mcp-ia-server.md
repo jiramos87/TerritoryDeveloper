@@ -25,7 +25,7 @@ When starting work on **`BUG-XX` / `FEAT-XX` / `TECH-XX`** (etc.), call **`backl
 |------|------|
 | `backlog_issue` | One issue from `BACKLOG.md` by id (`issue_id`); structured fields + `raw_markdown`. Nested sub-items (e.g. TECH-01 under BUG-20) supported. |
 | `list_specs` | Discover registered documents (`key`, path, category, description). |
-| `spec_outline` | Heading tree for a spec/rule/doc; supports aliases (`geo`, `roads`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
+| `spec_outline` | Heading tree for a spec/rule/doc; supports aliases (`geo`, `roads`, `unity` / `unityctx` → `unity-development-context`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
 | `spec_section` | Body under one heading (id, slug, substring, or fuzzy heading match); `max_chars` truncation. Parameters `spec` + `section` are canonical; aliases `key`/`doc` for spec and `section_heading`/`heading` for section are accepted (numeric section coerced to string) so mis-keyed tool calls still succeed. |
 | `glossary_discover` | Rough **English** keywords → ranked glossary terms (term, definition, Spec column); use before `glossary_lookup` when the exact term is unknown. Translate from the conversation if needed. |
 | `glossary_lookup` | Glossary **English** term; exact then fuzzy (typos). Use the exact **Term** string from the table when possible. |

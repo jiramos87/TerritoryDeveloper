@@ -32,6 +32,8 @@ export const SPEC_KEY_ALIASES: Record<string, string> = {
   agents: "agents",
   refspec: "reference-spec-structure",
   specstructure: "reference-spec-structure",
+  unity: "unity-development-context",
+  unityctx: "unity-development-context",
 };
 
 /**

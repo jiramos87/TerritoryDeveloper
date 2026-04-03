@@ -37,6 +37,7 @@ These Markdown files are **reference specs** (per [glossary.md](.cursor/specs/gl
 | `water-terrain-system.md` | Height model, water bodies, cliffs, shores, cascades |
 | `managers-reference.md` | All managers and helper services: responsibilities, dependencies |
 | `glossary.md` | Domain term definitions |
+| `unity-development-context.md` | **Unity** patterns for this repo: **MonoBehaviour** lifecycle, **Inspector** / **`SerializeField`**, **`FindObjectOfType`** policy, **Script Execution Order**, 2D sorting vs **Sorting order** (pointer to geography §7) |
 | `REFERENCE-SPEC-STRUCTURE.md` | Meta: conventions for writing and extending **reference specs** in this folder (terminology, MCP, new-file checklist) |
 
 Do not add bug write-ups, agent prompts, or one-off specs under `.cursor/specs/`. Use `BACKLOG.md` while work is open; delete temporary markdown after completion.

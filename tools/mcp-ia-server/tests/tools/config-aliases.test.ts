@@ -41,6 +41,11 @@ test("resolveSpecKeyAlias maps refspec aliases to reference-spec-structure", () 
   assert.equal(resolveSpecKeyAlias("specstructure"), "reference-spec-structure");
 });
 
+test("resolveSpecKeyAlias maps unity aliases to unity-development-context", () => {
+  assert.equal(resolveSpecKeyAlias("unity"), "unity-development-context");
+  assert.equal(resolveSpecKeyAlias("unityctx"), "unity-development-context");
+});
+
 test("findEntryForSpecDoc uses roads alias for spec not rule", () => {
   const e = findEntryForSpecDoc(mockRegistry, "roads");
   assert.equal(e?.key, "roads-system");
