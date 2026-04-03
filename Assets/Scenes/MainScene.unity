@@ -11352,9 +11352,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2554f07997e242c2adef24969c46277, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugShoreRefreshSecondRing: 1
-  debugWaterShoreCornerPrefabs: 1
-  terrainDebugLogCellsEnabled: 1
   gridManager: {fileID: 1880690383}
   zoneManager: {fileID: 955926521}
   waterManager: {fileID: 1132506491}
@@ -12497,9 +12494,11 @@ MonoBehaviour:
   initializeOnStart: 1
   useTerrainForWater: 1
   initializeForestsOnStart: 1
-  generateStandardWaterBodies: 0
-  generateProceduralRiversOnInit: 0
-  generateTestRiverOnInit: 1
+  useFlatTerrainOnNewGame: 0
+  flatTerrainHeight: 5
+  generateStandardWaterBodies: 1
+  generateProceduralRiversOnInit: 1
+  generateTestRiverOnInit: 0
   testRiverSegmentBedWidths: 03000000040000000500000006000000
 --- !u!1 &1205150777
 GameObject:
@@ -16828,7 +16827,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -260.99478, y: -10.571716}
+  m_AnchoredPosition: {x: -260.99475, y: -10.571655}
   m_SizeDelta: {x: -521.9894, y: -455.8174}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1664159913
@@ -19518,7 +19517,6 @@ MonoBehaviour:
   mouseGridSortingOrder: 0
   isInitialized: 0
   chunkSize: 16
-  restoreGridDebugLogs: 0
 --- !u!1 &1888940540
 GameObject:
   m_ObjectHideFlags: 0
