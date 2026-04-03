@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-03T20:42:15.100Z",
+  "last_generated": "2026-04-03T21:02:54.976Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -893,19 +893,19 @@
           "section_id": "load-pipeline",
           "title": "Load pipeline",
           "depth": 2,
-          "line_start": 10
+          "line_start": 12
         },
         {
           "section_id": "visual-restore-details",
           "title": "Visual restore details",
           "depth": 2,
-          "line_start": 21
+          "line_start": 23
         },
         {
           "section_id": "key-files",
           "title": "Key files",
           "depth": 2,
-          "line_start": 28
+          "line_start": 30
         }
       ]
     },
