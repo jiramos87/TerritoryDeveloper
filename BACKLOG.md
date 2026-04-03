@@ -54,7 +54,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
 
 - [ ] **TECH-40** — **JSON** infra: artifact identity, schemas, **CI** validation, **spec** + **glossary** indexes
   - Type: tooling / data interchange
-  - Files: `docs/schemas/` or `tools/schemas/` (TBD in spec); `package.json` / `tools/` validate script; optional generated `tools/mcp-ia-server/data/spec-index.json` (name TBD); `projects/TECH-21-json-use-cases-brainstorm.md` (policy §); `docs/mcp-ia-server.md` if indexes consumed by MCP later
+  - Files: `docs/schemas/` (pilot schema + fixtures); repo root `package.json` (delegates `validate:fixtures` / `generate:ia-indexes`); `tools/mcp-ia-server/scripts/validate-fixtures.ts`, `generate-ia-indexes.ts`, `data/spec-index.json`, `data/glossary-index.json`; `.github/workflows/ia-tools.yml`; `projects/TECH-21-json-use-cases-brainstorm.md` (policy §); `docs/mcp-ia-server.md`
   - Spec: `.cursor/projects/TECH-40.md`
   - Notes: **Phase A** of **TECH-21**. Defines **`artifact` / `kind`** naming + when to use in-file **`schema_version`** vs schema **`$id` / filename** only; JSON Schema + **`npm run validate:fixtures`** (or equivalent); **I1** spec index manifest; **I2** glossary→anchor index; **P3** = validate in **CI**, not in player hot paths. **Related:** **TECH-24** (parser regression), **TECH-30** (issue id validation in specs), **TECH-34** (generated JSON pattern).
   - Acceptance: documented versioning policy + ≥1 checked-in schema + CI validation green; **I1** + **I2** generated artifacts or scripts merged per `.cursor/projects/TECH-40.md` §8
@@ -123,6 +123,43 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Notes: Document that implementation chats for **BUG-**/**FEAT-**/**TECH-** work should record **territory-ia** **`invariants_summary`**, **`router_for_task`**, and at least one **`spec_section`** (or equivalent slice) before substantive code edits—reduces **road preparation family**, **HeightMap**/**cell** sync, and per-frame **`FindObjectOfType`** mistakes. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
   - Depends on: none
 
+- [ ] **TECH-45** — **Cursor Skill:** **road** modification guardrails (**road stroke**, **road preparation family**, cache)
+  - Type: documentation / agent enablement (**Cursor Skill** only)
+  - Files: `.cursor/skills/` (TBD subfolder + `SKILL.md`); optional one-line pointer in `AGENTS.md`
+  - Notes: **Deliverable type:** **Cursor Skill**. Checklist: **road placement** only through **road preparation family** ending in **`PathTerraformPlan`** + Phase-1 + **`Apply`** — never **`ComputePathPlan`** alone; call **`InvalidateRoadCache()`** after **road** changes; pull normative detail via **territory-ia** (`router_for_task` → **roads** / **geo**) — do not duplicate **`roads-system`** in the skill body. **Pattern:** [.cursor/skills/README.md](.cursor/skills/README.md) (thin skill + **Tool recipe** + MCP pointers).
+  - Acceptance: **Skill** file committed; **`description`** names **road stroke**, **wet run**, **interstate**/**bridge** touchpoints where relevant
+  - Depends on: none (soft: [.cursor/skills/README.md](.cursor/skills/README.md) conventions)
+
+- [ ] **TECH-46** — **Cursor Skill:** **terrain** / **HeightMap** / **water** / **shore** edit guardrails
+  - Type: documentation / agent enablement (**Cursor Skill** only)
+  - Files: `.cursor/skills/` (TBD subfolder + `SKILL.md`); optional pointer in `AGENTS.md`
+  - Notes: **Deliverable type:** **Cursor Skill**. Checklist: keep **`HeightMap[x,y]`** and **`Cell.height`** in sync; **water** placement/removal → **`RefreshShoreTerrainAfterWaterUpdate`**; **shore band** and **river** monotonicity per **invariants**; use **`spec_section`** / **`router_for_task`** for **water-terrain** and **geo** slices — no spec paste. **Pattern:** [.cursor/skills/README.md](.cursor/skills/README.md).
+  - Acceptance: **Skill** file committed; **`description`** triggers on **terraform**, **water map**, **cliff**, **shore** edits
+  - Depends on: none (soft: [.cursor/skills/README.md](.cursor/skills/README.md))
+
+- [ ] **TECH-47** — **Cursor Skill:** new **`MonoBehaviour`** **manager** wiring pattern
+  - Type: documentation / agent enablement (**Cursor Skill** only)
+  - Files: `.cursor/skills/` (TBD subfolder + `SKILL.md`); optional pointer in `AGENTS.md` or `.cursor/specs/unity-development-context.md` **Decision Log**
+  - Notes: **Deliverable type:** **Cursor Skill**. Checklist: scene **component**, never `new`; **`[SerializeField] private`** refs + **`FindObjectOfType`** fallback in **`Awake`**; **no new singletons**; do not add responsibilities to **`GridManager`** — extract helpers; align with **`.cursor/specs/unity-development-context.md`** via MCP slice when needed. **Pattern:** [.cursor/skills/README.md](.cursor/skills/README.md).
+  - Acceptance: **Skill** file committed; **`description`** states “new manager / **MonoBehaviour** service” triggers
+  - Depends on: none (soft: [.cursor/skills/README.md](.cursor/skills/README.md))
+
+- [ ] **TECH-48** — **territory-ia** MCP: discovery from **project specs** (terms, domains, spec slices)
+  - Type: tooling / agent enablement
+  - Files: `tools/mcp-ia-server/src/` (new or extended handlers, parsers); `tools/mcp-ia-server/README.md`; `docs/mcp-ia-server.md`; optional fixtures under `tools/mcp-ia-server/`; align notes with `.cursor/projects/TECH-18.md` when **search**/**bundle** tools land
+  - Spec: none (promote to `.cursor/projects/TECH-48.md` when design stabilizes)
+  - Notes: **Goal:** Make **project-spec-kickoff** and similar workflows cheaper and safer by improving how MCP turns **implementation**-oriented text (project **spec** body, backlog **Files**) into **glossary** matches and **`spec_section`** targets. **Candidate directions:** (1) Path-based tool: input `.cursor/projects/{ISSUE}.md` → ranked **glossary** candidates + suggested **`router_for_task`** **domain** strings + ordered **`spec_section`** queue with **max_chars** budget. (2) Improve **`glossary_discover`** ranking using tokens extracted from **`backlog_issue`** **Files**/**Notes** when `issue_id` is bundled in the same turn. (3) Optional composite read helper (defer if **TECH-18** `search_specs` / bundles subsume). **Does not** replace **`.cursor/skills/project-spec-kickoff/SKILL.md`** prose until tools are **shipped** and **`npm run verify`** green.
+  - Acceptance: ≥1 **measurable** improvement merged (new tool **or** clear ranking/UX win on existing tools) + docs updated; **`npm run verify`** green
+  - Depends on: none (soft: dogfood with **project-spec-kickoff**; **TECH-18** for long-term search architecture)
+
+- [ ] **TECH-50** — **Doc hygiene:** **cascade** references when **project specs** close; **dead links**; **BACKLOG** as durable anchor
+  - Type: tooling / doc hygiene / agent enablement
+  - Files: `tools/` (Node or shell script); optional root or `tools/` `package.json` `npm run`; `.cursor/projects/PROJECT-SPEC-STRUCTURE.md`; `AGENTS.md`; optional `tools/mcp-ia-server/` + `docs/mcp-ia-server.md`; `docs/agent-tooling-verification-priority-tasks.md` (task index if applicable)
+  - Spec: `.cursor/projects/TECH-50.md`
+  - Notes: **Policy:** When a **project spec** (`.cursor/projects/{ISSUE_ID}.md`) is **deleted** after verified completion, **durable** docs (skills, `docs/`, rules, `AGENTS.md`, etc.) must **not** keep **markdown links** or “see spec at …” pointers to that path. The **durable** trace is the **issue** row in **`BACKLOG.md`** (or **`BACKLOG-ARCHIVE.md`**). **Deliverables:** (1) **Script** — scan repo for links/paths to missing `.cursor/projects/*.md` (and optionally stale `Spec:` lines in **BACKLOG**); exit non-zero for **CI** or documented advisory mode. (2) **Optional** **territory-ia** MCP tool — thin wrapper or shared core with the script so agents discover broken references without ad-hoc `rg`. (3) **Docs** — closeout checklist in **PROJECT-SPEC-STRUCTURE** + pointer in **AGENTS.md** (project spec lifecycle). **Coordinate** with **TECH-30** (issue id validation **inside** active `.cursor/projects/*.md`) to avoid duplicate **Node** utilities—prefer one package or shared module if both land.
+  - Acceptance: merged script (or integrated into **TECH-30** deliverable with **TECH-50** scope covered) + documented `npm run` (or equivalent); **PROJECT-SPEC-STRUCTURE** / **AGENTS** updated; optional MCP tool documented in **`docs/mcp-ia-server.md`** if shipped; **`npm run verify`** green if MCP code changes
+  - Depends on: none (soft: **TECH-30** — merge or share implementation)
+
 - [ ] **TECH-24** — territory-ia MCP: parser regression policy (tests/fixtures when parsers change)
   - Type: tooling / code health
   - Files: `tools/mcp-ia-server/` (tests, fixtures, `scripts/verify-mcp.ts` or equivalent), `docs/mcp-ia-server.md`, `tools/mcp-ia-server/README.md`
@@ -133,7 +170,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Type: tooling / doc hygiene
   - Files: `tools/` (Node script), optional `package.json` `npm run` at repo root or under `tools/`
   - Spec: `.cursor/projects/TECH-30.md`
-  - Notes: Every `[BUG-XX]` / `[TECH-XX]` / etc. front matter or link in active project specs must exist in `BACKLOG.md`. `docs/agent-tooling-verification-priority-tasks.md` task 9.
+  - Notes: Every `[BUG-XX]` / `[TECH-XX]` / etc. front matter or link in active project specs must exist in `BACKLOG.md`. `docs/agent-tooling-verification-priority-tasks.md` task 9. **Related:** **TECH-50** (dead links to **deleted** project specs repo-wide — coordinate implementation).
   - Depends on: none
 
 - [ ] **TECH-29** — CI / script: **simulation tick** call-order drift detector
@@ -366,7 +403,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Spec sections: `.cursor/specs/ui-design-system.md` — **§3.3** (toolbar), **§1.3** (anchors/margins), **§4.3** (Canvas Scaler) as applicable.
   - Notes: Replace the bottom-centered horizontal **ribbon** with a **left-docked vertical** panel. Structure: **one row per category** (demolition, **RCI** **zoning**, **utility buildings**, **streets**, environment/**forests**, etc.), with **buttons laid out horizontally within each row** (e.g. `VerticalLayoutGroup` of rows, each row `HorizontalLayoutGroup`, or equivalent manual layout). Re-anchor dependent UI (e.g. **zone density** / tool option overlays) so they align to the new sidebar instead of the old bottom bar. Verify safe area and Canvas Scaler at reference resolutions; avoid overlapping the mini-map and debug readouts. Document final hierarchy in `docs/ui-design-system-context.md`. Link program charter: `docs/ui-design-system-project.md` (Backlog bridge). Spec/docs ticketed and cross-linked in **TECH-08** (completed).
 
-*(Agent–Unity / MCP tooling **TECH-21** program **TECH-40**–**TECH-42**, **TECH-23**–**TECH-39** (including **TECH-36** program **TECH-37**–**TECH-39**), **TECH-43** (placeholder), **TECH-15**/**TECH-16** performance+harness — listed in **§ Agent ↔ Unity & MCP context lane** above.)*
+*(Agent–Unity / MCP tooling **TECH-21** program **TECH-40**–**TECH-42**, **TECH-23**–**TECH-39** (including **TECH-36** program **TECH-37**–**TECH-39**), **TECH-43** (placeholder), **TECH-45**–**TECH-47** (**Cursor Skill** pack), **TECH-48** (MCP discovery from project specs), **TECH-50** (project spec closeout / dead link hygiene), **TECH-15**/**TECH-16** performance+harness — listed in **§ Agent ↔ Unity & MCP context lane** above. **Shipped skills:** **project-spec-kickoff**, **project-spec-implement**, `.cursor/skills/README.md` — see **§ Completed**.)*
 
 ## Low Priority
 
@@ -481,7 +518,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-*(**TECH-18**, **TECH-19**, **TECH-21** program (**TECH-40**–**TECH-42**, **TECH-43**) — listed in **§ Agent ↔ Unity & MCP context lane** above; **TECH-20** / **TECH-25** / **TECH-28** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**.)*
+*(**TECH-18**, **TECH-19**, **TECH-21** program (**TECH-40**–**TECH-42**, **TECH-43**), **TECH-45**–**TECH-48**, **TECH-50** — listed in **§ Agent ↔ Unity & MCP context lane** above; **TECH-49** completed — **§ Completed**; **TECH-20** / **TECH-25** / **TECH-28** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**; other recent completions under **§ Completed**.)*
 
 - [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects
   - Type: audio/feature
@@ -492,7 +529,21 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
 
 ## Completed (last 30 days)
 
-*(No entries — the previous batch was moved to [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) § **Recent archive** on 2026-04-10. Add new completions here for ~30 days, then archive.)*
+- [x] **TECH-44** — **Cursor Skills:** **infrastructure** + **kickoff** skill (project **spec** review / IA alignment) (2026-04-11)
+  - Type: documentation / agent enablement (**Cursor Skill** + repo docs — no runtime game code)
+  - Files: `.cursor/skills/README.md`; `.cursor/skills/project-spec-kickoff/SKILL.md`; `.cursor/templates/project-spec-review-prompt.md`; `AGENTS.md`; `docs/cursor-agents-skills-mcp-study.md`
+  - Spec: (removed after closure — conventions live under **`.cursor/skills/`** and **§4.4** of [`docs/cursor-agents-skills-mcp-study.md`](docs/cursor-agents-skills-mcp-study.md))
+  - Notes: **Completed (verified per user):** Part 1 **README** + authoring rules; Part 2 **project-spec-kickoff** **`SKILL.md`** with **Tool recipe (territory-ia)** (`backlog_issue` → `invariants_summary` → `router_for_task` → …); paste template; **AGENTS.md** item 5 + doc hierarchy pointer; study doc **§4.4**. **Lesson (persisted in README):** **`router_for_task`** `domain` strings should match **`.cursor/rules/agent-router.mdc`** task-domain row labels (e.g. `Save / load`), not ad-hoc phrases. **Follow-up:** **TECH-48** (MCP discovery), **TECH-45**–**TECH-47** (domain skills).
+  - Depends on: none
+
+- [x] **TECH-49** — **Cursor Skill:** **implement** a **project spec** (execution workflow after kickoff) (2026-04-03)
+  - Type: documentation / agent enablement (**Cursor Skill** only)
+  - Files: `.cursor/skills/project-spec-implement/SKILL.md`; `.cursor/skills/README.md`; `.cursor/skills/project-spec-kickoff/SKILL.md` (cross-link); `AGENTS.md`; `docs/cursor-agents-skills-mcp-study.md`; `docs/mcp-ia-server.md`; `.cursor/templates/project-spec-review-prompt.md`
+  - Spec: (removed after closure — workflow in **`.cursor/skills/project-spec-implement/SKILL.md`**; closure record in this row)
+  - Notes: **Completed (verified per user request to implement):** **project-spec-implement** **`SKILL.md`** with **Tool recipe (territory-ia)** (per-phase loop, **Branching**, **Seed prompt**, **unity-development-context** §10 pointer); README index row; **AGENTS.md** project-spec bullets + doc hierarchy; study doc **§4.4**; **`docs/mcp-ia-server.md`** “Project spec workflows”; paste template “After review: implement”. **Dry-run:** Meta — authoring followed the recipe while implementing this issue.
+  - Depends on: none (soft: **TECH-44**)
+
+*(Older batch moved to [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) § **Recent archive** on 2026-04-10. Add new completions here for ~30 days, then archive.)*
 
 > Full history: [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
 

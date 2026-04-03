@@ -1,0 +1,1351 @@
+{
+  "artifact": "spec_index",
+  "schema_version": 1,
+  "last_generated": "2026-04-03T16:44:10.027Z",
+  "specs": [
+    {
+      "key": "reference-spec-structure",
+      "path": ".cursor/specs/REFERENCE-SPEC-STRUCTURE.md",
+      "sections": [
+        {
+          "section_id": "reference-spec-structure-cursor-specs",
+          "title": "Reference spec structure — `.cursor/specs/`",
+          "depth": 1,
+          "line_start": 1
+        },
+        {
+          "section_id": "which-guide-to-use",
+          "title": "Which guide to use",
+          "depth": 2,
+          "line_start": 5
+        },
+        {
+          "section_id": "reference-spec-vs-project-spec",
+          "title": "Reference spec vs project spec",
+          "depth": 2,
+          "line_start": 13
+        },
+        {
+          "section_id": "conventions",
+          "title": "Conventions",
+          "depth": 2,
+          "line_start": 23
+        },
+        {
+          "section_id": "terminology",
+          "title": "Terminology",
+          "depth": 2,
+          "line_start": 32
+        },
+        {
+          "section_id": "new-reference-spec-checklist",
+          "title": "New reference spec checklist",
+          "depth": 2,
+          "line_start": 38
+        },
+        {
+          "section_id": "minimal-template-copy-for-a-new-md",
+          "title": "Minimal template (copy for a new `*.md`)",
+          "depth": 2,
+          "line_start": 45
+        },
+        {
+          "section_id": "title-territory-developer",
+          "title": "{Title} — Territory Developer",
+          "depth": 1,
+          "line_start": 48
+        },
+        {
+          "section_id": "1",
+          "title": "1. …",
+          "depth": 2,
+          "line_start": 52
+        },
+        {
+          "section_id": "glossary-alignment",
+          "title": "Glossary alignment",
+          "depth": 2,
+          "line_start": 56
+        },
+        {
+          "section_id": "deprecated-prose-canonical-terms-authoring",
+          "title": "Deprecated prose → canonical terms (authoring)",
+          "depth": 2,
+          "line_start": 61
+        }
+      ]
+    },
+    {
+      "key": "glossary",
+      "path": ".cursor/specs/glossary.md",
+      "sections": [
+        {
+          "section_id": "glossary-territory-developer",
+          "title": "Glossary — Territory Developer",
+          "depth": 1,
+          "line_start": 1
+        },
+        {
+          "section_id": "index-quick-skim",
+          "title": "Index (quick skim)",
+          "depth": 2,
+          "line_start": 10
+        },
+        {
+          "section_id": "grid-coordinates",
+          "title": "Grid & Coordinates",
+          "depth": 2,
+          "line_start": 30
+        },
+        {
+          "section_id": "height-system",
+          "title": "Height System",
+          "depth": 2,
+          "line_start": 45
+        },
+        {
+          "section_id": "terrain-slopes",
+          "title": "Terrain & Slopes",
+          "depth": 2,
+          "line_start": 54
+        },
+        {
+          "section_id": "water",
+          "title": "Water",
+          "depth": 2,
+          "line_start": 69
+        },
+        {
+          "section_id": "rivers",
+          "title": "Rivers",
+          "depth": 2,
+          "line_start": 91
+        },
+        {
+          "section_id": "world-generation",
+          "title": "World generation",
+          "depth": 2,
+          "line_start": 103
+        },
+        {
+          "section_id": "roads-bridges",
+          "title": "Roads & Bridges",
+          "depth": 2,
+          "line_start": 109
+        },
+        {
+          "section_id": "pathfinding",
+          "title": "Pathfinding",
+          "depth": 2,
+          "line_start": 135
+        },
+        {
+          "section_id": "zones-buildings",
+          "title": "Zones & Buildings",
+          "depth": 2,
+          "line_start": 144
+        },
+        {
+          "section_id": "simulation-growth",
+          "title": "Simulation & Growth",
+          "depth": 2,
+          "line_start": 156
+        },
+        {
+          "section_id": "city-systems",
+          "title": "City systems",
+          "depth": 2,
+          "line_start": 168
+        },
+        {
+          "section_id": "persistence",
+          "title": "Persistence",
+          "depth": 2,
+          "line_start": 180
+        },
+        {
+          "section_id": "prefabs-visual-layer",
+          "title": "Prefabs & Visual Layer",
+          "depth": 2,
+          "line_start": 191
+        },
+        {
+          "section_id": "documentation",
+          "title": "Documentation",
+          "depth": 2,
+          "line_start": 205
+        },
+        {
+          "section_id": "planned-terminology-backlog-backed-non-authoritative",
+          "title": "Planned terminology (backlog-backed, non-authoritative)",
+          "depth": 2,
+          "line_start": 213
+        }
+      ]
+    },
+    {
+      "key": "isometric-geography-system",
+      "path": ".cursor/specs/isometric-geography-system.md",
+      "sections": [
+        {
+          "section_id": "isometric-geography-system-technical-specification",
+          "title": "Isometric Geography System — Technical Specification",
+          "depth": 1,
+          "line_start": 1
+        },
+        {
+          "section_id": "0",
+          "title": "0. Canonical scope and doc hierarchy",
+          "depth": 2,
+          "line_start": 5
+        },
+        {
+          "section_id": "0.1",
+          "title": "0.1 What this spec owns",
+          "depth": 3,
+          "line_start": 7
+        },
+        {
+          "section_id": "0.2",
+          "title": "0.2 What lives elsewhere",
+          "depth": 3,
+          "line_start": 18
+        },
+        {
+          "section_id": "0.3",
+          "title": "0.3 Quick reference for AI agents",
+          "depth": 3,
+          "line_start": 30
+        },
+        {
+          "section_id": "1",
+          "title": "1. Isometric Grid Fundamentals",
+          "depth": 2,
+          "line_start": 52
+        },
+        {
+          "section_id": "1.1",
+          "title": "1.1 Coordinate System",
+          "depth": 3,
+          "line_start": 54
+        },
+        {
+          "section_id": "1.2",
+          "title": "1.2 Direction Convention",
+          "depth": 3,
+          "line_start": 71
+        },
+        {
+          "section_id": "1.3",
+          "title": "1.3 Inverse Conversion (World → Grid)",
+          "depth": 3,
+          "line_start": 86
+        },
+        {
+          "section_id": "2",
+          "title": "2. Height System",
+          "depth": 2,
+          "line_start": 99
+        },
+        {
+          "section_id": "2.1",
+          "title": "2.1 HeightMap",
+          "depth": 3,
+          "line_start": 101
+        },
+        {
+          "section_id": "2.2",
+          "title": "2.2 Height Generation",
+          "depth": 3,
+          "line_start": 113
+        },
+        {
+          "section_id": "2.3",
+          "title": "2.3 Height Constraint",
+          "depth": 3,
+          "line_start": 117
+        },
+        {
+          "section_id": "2.4",
+          "title": "2.4 Height authority and procedural water",
+          "depth": 3,
+          "line_start": 123
+        },
+        {
+          "section_id": "2.4.1",
+          "title": "2.4.1 Shore band height coherence",
+          "depth": 4,
+          "line_start": 129
+        },
+        {
+          "section_id": "2.5",
+          "title": "2.5 Minimal neighbor refresh after lake shore",
+          "depth": 3,
+          "line_start": 139
+        },
+        {
+          "section_id": "3",
+          "title": "3. Terrain Slope Types",
+          "depth": 2,
+          "line_start": 145
+        },
+        {
+          "section_id": "3.1",
+          "title": "3.1 The TerrainSlopeType Enum",
+          "depth": 3,
+          "line_start": 147
+        },
+        {
+          "section_id": "3.2",
+          "title": "3.2 Naming Convention",
+          "depth": 3,
+          "line_start": 158
+        },
+        {
+          "section_id": "3.3",
+          "title": "3.3 Slope Categories",
+          "depth": 3,
+          "line_start": 165
+        },
+        {
+          "section_id": "3.3.1",
+          "title": "3.3.1 Flat",
+          "depth": 4,
+          "line_start": 167
+        },
+        {
+          "section_id": "3.3.2",
+          "title": "3.3.2 Orthogonal (Cardinal) Slopes — N, S, E, W",
+          "depth": 4,
+          "line_start": 171
+        },
+        {
+          "section_id": "3.3.3",
+          "title": "3.3.3 Diagonal Slopes — NE, NW, SE, SW",
+          "depth": 4,
+          "line_start": 183
+        },
+        {
+          "section_id": "3.3.4",
+          "title": "3.3.4 Corner / Upslope Types — NEUp, NWUp, SEUp, SWUp",
+          "depth": 4,
+          "line_start": 195
+        },
+        {
+          "section_id": "4",
+          "title": "4. Slope Determination Algorithm",
+          "depth": 2,
+          "line_start": 209
+        },
+        {
+          "section_id": "4.1",
+          "title": "4.1 Land Slope Selection (`DetermineSlopePrefab`)",
+          "depth": 3,
+          "line_start": 211
+        },
+        {
+          "section_id": "4.2",
+          "title": "4.2 Water Shore Slope Selection (`DetermineWaterShorePrefabs`)",
+          "depth": 3,
+          "line_start": 222
+        },
+        {
+          "section_id": "4.3",
+          "title": "4.3 `RequiresSlope` vs Slope Selection",
+          "depth": 3,
+          "line_start": 236
+        },
+        {
+          "section_id": "4.4",
+          "title": "4.4 `GetTerrainSlopeTypeAt`",
+          "depth": 3,
+          "line_start": 240
+        },
+        {
+          "section_id": "5",
+          "title": "5. Geographic Elements",
+          "depth": 2,
+          "line_start": 246
+        },
+        {
+          "section_id": "5.1",
+          "title": "5.1 Flat Terrain (Plains)",
+          "depth": 3,
+          "line_start": 248
+        },
+        {
+          "section_id": "5.2",
+          "title": "5.2 Hills and Mountains",
+          "depth": 3,
+          "line_start": 252
+        },
+        {
+          "section_id": "5.3",
+          "title": "5.3 Orthogonal Hillside (Cardinal Slope Line)",
+          "depth": 3,
+          "line_start": 256
+        },
+        {
+          "section_id": "5.4",
+          "title": "5.4 Diagonal Hillside",
+          "depth": 3,
+          "line_start": 259
+        },
+        {
+          "section_id": "5.5",
+          "title": "5.5 Concave Corners (Upslope / Valley)",
+          "depth": 3,
+          "line_start": 262
+        },
+        {
+          "section_id": "5.6",
+          "title": "5.6 Convex Corners (Diagonal Slope at Hill Corner)",
+          "depth": 3,
+          "line_start": 265
+        },
+        {
+          "section_id": "5.6.1",
+          "title": "5.6.1 Lake edges: layered model (water + shore + cliffs)",
+          "depth": 3,
+          "line_start": 268
+        },
+        {
+          "section_id": "5.6.2",
+          "title": "5.6.2 Water–water cascades (cardinal surface step)",
+          "depth": 4,
+          "line_start": 286
+        },
+        {
+          "section_id": "5.7",
+          "title": "5.7 Cliffs",
+          "depth": 3,
+          "line_start": 299
+        },
+        {
+          "section_id": "5.8",
+          "title": "5.8 Coastal Transitions (Water Slopes)",
+          "depth": 3,
+          "line_start": 306
+        },
+        {
+          "section_id": "5.9",
+          "title": "5.9 Bays and shore corners",
+          "depth": 3,
+          "line_start": 311
+        },
+        {
+          "section_id": "5.10",
+          "title": "5.10 Cut-Through Corridors",
+          "depth": 3,
+          "line_start": 328
+        },
+        {
+          "section_id": "5.11",
+          "title": "5.11 Sea Level Water",
+          "depth": 3,
+          "line_start": 331
+        },
+        {
+          "section_id": "6",
+          "title": "6. Prefab Inventory",
+          "depth": 2,
+          "line_start": 336
+        },
+        {
+          "section_id": "6.1",
+          "title": "6.1 Land Slope Prefabs (12)",
+          "depth": 3,
+          "line_start": 338
+        },
+        {
+          "section_id": "6.2",
+          "title": "6.2 Water Slope Prefabs (12)",
+          "depth": 3,
+          "line_start": 344
+        },
+        {
+          "section_id": "6.3",
+          "title": "6.3 Infrastructure Prefabs",
+          "depth": 3,
+          "line_start": 350
+        },
+        {
+          "section_id": "6.4",
+          "title": "6.4 Slope Variant Naming Convention",
+          "depth": 3,
+          "line_start": 361
+        },
+        {
+          "section_id": "7",
+          "title": "7. Sorting Order System",
+          "depth": 2,
+          "line_start": 375
+        },
+        {
+          "section_id": "7.1",
+          "title": "7.1 Formula",
+          "depth": 3,
+          "line_start": 377
+        },
+        {
+          "section_id": "7.2",
+          "title": "7.2 Type Offsets",
+          "depth": 3,
+          "line_start": 389
+        },
+        {
+          "section_id": "7.3",
+          "title": "7.3 Design Rationale",
+          "depth": 3,
+          "line_start": 401
+        },
+        {
+          "section_id": "7.4",
+          "title": "7.4 Save / Load — cell visuals and building sorting",
+          "depth": 3,
+          "line_start": 406
+        },
+        {
+          "section_id": "8",
+          "title": "8. Terraforming System",
+          "depth": 2,
+          "line_start": 419
+        },
+        {
+          "section_id": "8.1",
+          "title": "8.1 Overview",
+          "depth": 3,
+          "line_start": 421
+        },
+        {
+          "section_id": "8.2",
+          "title": "8.2 Scale-with-Slopes Mode",
+          "depth": 3,
+          "line_start": 425
+        },
+        {
+          "section_id": "8.3",
+          "title": "8.3 Cut-Through Mode",
+          "depth": 3,
+          "line_start": 429
+        },
+        {
+          "section_id": "8.4",
+          "title": "8.4 Diagonal Step Expansion",
+          "depth": 3,
+          "line_start": 439
+        },
+        {
+          "section_id": "8.5",
+          "title": "8.5 Terraform Actions",
+          "depth": 3,
+          "line_start": 443
+        },
+        {
+          "section_id": "8.6",
+          "title": "8.6 River junction straightening",
+          "depth": 3,
+          "line_start": 451
+        },
+        {
+          "section_id": "9",
+          "title": "9. Road Prefab Selection on Terrain",
+          "depth": 2,
+          "line_start": 457
+        },
+        {
+          "section_id": "9.1",
+          "title": "9.1 Road Prefab Resolver",
+          "depth": 3,
+          "line_start": 461
+        },
+        {
+          "section_id": "9.2",
+          "title": "9.2 Road Prefab Types",
+          "depth": 3,
+          "line_start": 468
+        },
+        {
+          "section_id": "9.3",
+          "title": "9.3 Slope Road Prefab Mapping",
+          "depth": 3,
+          "line_start": 484
+        },
+        {
+          "section_id": "10",
+          "title": "10. Pathfinding Cost Model",
+          "depth": 2,
+          "line_start": 498
+        },
+        {
+          "section_id": "11",
+          "title": "11. Water map, lakes, and persistence",
+          "depth": 2,
+          "line_start": 515
+        },
+        {
+          "section_id": "11.1",
+          "title": "11.1 Mental model",
+          "depth": 3,
+          "line_start": 517
+        },
+        {
+          "section_id": "11.2",
+          "title": "11.2 Data structures",
+          "depth": 3,
+          "line_start": 521
+        },
+        {
+          "section_id": "11.3",
+          "title": "11.3 Lake generation",
+          "depth": 3,
+          "line_start": 530
+        },
+        {
+          "section_id": "11.4",
+          "title": "11.4 Valid lake — rules",
+          "depth": 3,
+          "line_start": 539
+        },
+        {
+          "section_id": "11.5",
+          "title": "11.5 Save / load",
+          "depth": 3,
+          "line_start": 543
+        },
+        {
+          "section_id": "11.6",
+          "title": "11.6 Shore refresh after lakes",
+          "depth": 3,
+          "line_start": 549
+        },
+        {
+          "section_id": "11.7",
+          "title": "11.7 Multi-body contact: bed alignment and junction merge",
+          "depth": 3,
+          "line_start": 553
+        },
+        {
+          "section_id": "11.8",
+          "title": "11.8 River / multi-surface junction geometry (cascades, brinks)",
+          "depth": 3,
+          "line_start": 575
+        },
+        {
+          "section_id": "11.8.1",
+          "title": "11.8.1 Shore neighbor topology vs junction diagonal prefabs",
+          "depth": 4,
+          "line_start": 581
+        },
+        {
+          "section_id": "12",
+          "title": "12. Procedural rivers",
+          "depth": 2,
+          "line_start": 597
+        },
+        {
+          "section_id": "12.1",
+          "title": "12.1 Initialization order",
+          "depth": 3,
+          "line_start": 601
+        },
+        {
+          "section_id": "12.2",
+          "title": "12.2 Scope",
+          "depth": 3,
+          "line_start": 605
+        },
+        {
+          "section_id": "12.3",
+          "title": "12.3 Merge and adjacency to lakes/sea",
+          "depth": 3,
+          "line_start": 610
+        },
+        {
+          "section_id": "12.4",
+          "title": "12.4 Geometry (implementation contracts)",
+          "depth": 3,
+          "line_start": 614
+        },
+        {
+          "section_id": "12.5",
+          "title": "12.5 Shore band continuity (inner corners)",
+          "depth": 3,
+          "line_start": 631
+        },
+        {
+          "section_id": "13",
+          "title": "13. Streets, interstates, bridges, shared validation",
+          "depth": 2,
+          "line_start": 639
+        },
+        {
+          "section_id": "13.1",
+          "title": "13.1 Road validation pipeline; two plan constructors",
+          "depth": 3,
+          "line_start": 641
+        },
+        {
+          "section_id": "13.2",
+          "title": "13.2 Manual draw pipeline",
+          "depth": 3,
+          "line_start": 658
+        },
+        {
+          "section_id": "13.3",
+          "title": "13.3 Slope climb vs carve",
+          "depth": 3,
+          "line_start": 663
+        },
+        {
+          "section_id": "13.4",
+          "title": "13.4 Bridges and water approach",
+          "depth": 3,
+          "line_start": 667
+        },
+        {
+          "section_id": "13.5",
+          "title": "13.5 Interstate pathfinding",
+          "depth": 3,
+          "line_start": 676
+        },
+        {
+          "section_id": "13.6",
+          "title": "13.6 Cut-through robustness",
+          "depth": 3,
+          "line_start": 680
+        },
+        {
+          "section_id": "13.7",
+          "title": "13.7 Resolver rules",
+          "depth": 3,
+          "line_start": 684
+        },
+        {
+          "section_id": "13.8",
+          "title": "13.8 Optional polish (backlog)",
+          "depth": 3,
+          "line_start": 697
+        },
+        {
+          "section_id": "13.9",
+          "title": "13.9 AUTO simulation: pathfinding walkability, reservations, perpendicular growth (BUG-47)",
+          "depth": 3,
+          "line_start": 703
+        },
+        {
+          "section_id": "13.10",
+          "title": "13.10 Land slope eligibility for road strokes (BUG-51)",
+          "depth": 3,
+          "line_start": 715
+        },
+        {
+          "section_id": "14",
+          "title": "14. Lake / cliff / shore — engineering notes",
+          "depth": 2,
+          "line_start": 729
+        },
+        {
+          "section_id": "14.1",
+          "title": "14.1 Glossary",
+          "depth": 3,
+          "line_start": 731
+        },
+        {
+          "section_id": "14.5",
+          "title": "14.5 Domain vocabulary — roads, grid, and spacing",
+          "depth": 3,
+          "line_start": 742
+        },
+        {
+          "section_id": "14.2",
+          "title": "14.2 Resolved techniques",
+          "depth": 3,
+          "line_start": 757
+        },
+        {
+          "section_id": "14.3",
+          "title": "14.3 Symptom → direction",
+          "depth": 3,
+          "line_start": 762
+        },
+        {
+          "section_id": "14.4",
+          "title": "14.4 Debug and picking",
+          "depth": 3,
+          "line_start": 771
+        }
+      ]
+    },
+    {
+      "key": "managers-reference",
+      "path": ".cursor/specs/managers-reference.md",
+      "sections": [
+        {
+          "section_id": "managers-services-reference",
+          "title": "Managers & Services — Reference",
+          "depth": 1,
+          "line_start": 1
+        },
+        {
+          "section_id": "manager-responsibilities",
+          "title": "Manager Responsibilities",
+          "depth": 2,
+          "line_start": 6
+        },
+        {
+          "section_id": "helper-services",
+          "title": "Helper Services",
+          "depth": 2,
+          "line_start": 39
+        },
+        {
+          "section_id": "zones-buildings",
+          "title": "Zones & Buildings",
+          "depth": 2,
+          "line_start": 54
+        },
+        {
+          "section_id": "rci-model",
+          "title": "RCI model",
+          "depth": 3,
+          "line_start": 60
+        },
+        {
+          "section_id": "zone-lifecycle",
+          "title": "Zone lifecycle",
+          "depth": 3,
+          "line_start": 65
+        },
+        {
+          "section_id": "zone-density",
+          "title": "Zone density",
+          "depth": 3,
+          "line_start": 72
+        },
+        {
+          "section_id": "pivot-cell-and-multi-cell-buildings",
+          "title": "Pivot cell and multi-cell buildings",
+          "depth": 3,
+          "line_start": 77
+        },
+        {
+          "section_id": "building-footprint",
+          "title": "Building footprint",
+          "depth": 3,
+          "line_start": 82
+        },
+        {
+          "section_id": "building-placement-and-restore",
+          "title": "Building placement and restore",
+          "depth": 3,
+          "line_start": 86
+        },
+        {
+          "section_id": "demand-r-c-i",
+          "title": "Demand (R / C / I)",
+          "depth": 2,
+          "line_start": 90
+        },
+        {
+          "section_id": "world-features",
+          "title": "World features",
+          "depth": 2,
+          "line_start": 100
+        },
+        {
+          "section_id": "game-notifications",
+          "title": "Game notifications",
+          "depth": 2,
+          "line_start": 108
+        },
+        {
+          "section_id": "architectural-patterns",
+          "title": "Architectural patterns",
+          "depth": 2,
+          "line_start": 114
+        },
+        {
+          "section_id": "obsolete",
+          "title": "Obsolete",
+          "depth": 2,
+          "line_start": 123
+        }
+      ]
+    },
+    {
+      "key": "persistence-system",
+      "path": ".cursor/specs/persistence-system.md",
+      "sections": [
+        {
+          "section_id": "persistence-system-reference-spec",
+          "title": "Persistence System — Reference Spec",
+          "depth": 1,
+          "line_start": 1
+        },
+        {
+          "section_id": "save",
+          "title": "Save",
+          "depth": 2,
+          "line_start": 6
+        },
+        {
+          "section_id": "load-pipeline",
+          "title": "Load pipeline",
+          "depth": 2,
+          "line_start": 10
+        },
+        {
+          "section_id": "visual-restore-details",
+          "title": "Visual restore details",
+          "depth": 2,
+          "line_start": 21
+        },
+        {
+          "section_id": "key-files",
+          "title": "Key files",
+          "depth": 2,
+          "line_start": 28
+        }
+      ]
+    },
+    {
+      "key": "roads-system",
+      "path": ".cursor/specs/roads-system.md",
+      "sections": [
+        {
+          "section_id": "roads-system-reference-spec",
+          "title": "Roads System — Reference Spec",
+          "depth": 1,
+          "line_start": 1
+        },
+        {
+          "section_id": "road-validation-pipeline-geography-spec-13-1",
+          "title": "Road validation pipeline (geography spec §13.1)",
+          "depth": 2,
+          "line_start": 6
+        },
+        {
+          "section_id": "two-ways-to-build-the-plan",
+          "title": "Two ways to build the plan",
+          "depth": 3,
+          "line_start": 10
+        },
+        {
+          "section_id": "validation-by-mode",
+          "title": "Validation by mode",
+          "depth": 3,
+          "line_start": 17
+        },
+        {
+          "section_id": "land-slope-stroke-policy-bug-51-closure",
+          "title": "Land slope stroke policy (BUG-51 closure)",
+          "depth": 2,
+          "line_start": 25
+        },
+        {
+          "section_id": "auto-simulation-pathfinding-spec-13-9",
+          "title": "AUTO simulation pathfinding (spec §13.9)",
+          "depth": 2,
+          "line_start": 46
+        },
+        {
+          "section_id": "resolver-rules-spec-13-7",
+          "title": "Resolver rules (spec §13.7)",
+          "depth": 2,
+          "line_start": 53
+        },
+        {
+          "section_id": "domain-vocabulary-glossary",
+          "title": "Domain vocabulary (glossary)",
+          "depth": 2,
+          "line_start": 66
+        },
+        {
+          "section_id": "key-files",
+          "title": "Key files",
+          "depth": 2,
+          "line_start": 70
+        }
+      ]
+    },
+    {
+      "key": "simulation-system",
+      "path": ".cursor/specs/simulation-system.md",
+      "sections": [
+        {
+          "section_id": "simulation-system-reference-spec",
+          "title": "Simulation System — Reference Spec",
+          "depth": 1,
+          "line_start": 1
+        },
+        {
+          "section_id": "tick-execution-order",
+          "title": "Tick execution order",
+          "depth": 2,
+          "line_start": 5
+        },
+        {
+          "section_id": "urban-centroid-and-growth-rings",
+          "title": "Urban centroid and growth rings",
+          "depth": 3,
+          "line_start": 15
+        },
+        {
+          "section_id": "system-dependencies",
+          "title": "System dependencies",
+          "depth": 2,
+          "line_start": 21
+        },
+        {
+          "section_id": "road-reservation-for-auto-zoning-bug-47",
+          "title": "Road reservation for AUTO zoning (BUG-47)",
+          "depth": 2,
+          "line_start": 32
+        },
+        {
+          "section_id": "auto-street-placement-rules",
+          "title": "AUTO street placement rules",
+          "depth": 2,
+          "line_start": 36
+        },
+        {
+          "section_id": "obsolete-system-urbanizationproposal",
+          "title": "Obsolete system — UrbanizationProposal",
+          "depth": 2,
+          "line_start": 42
+        },
+        {
+          "section_id": "key-files",
+          "title": "Key files",
+          "depth": 2,
+          "line_start": 48
+        }
+      ]
+    },
+    {
+      "key": "ui-design-system",
+      "path": ".cursor/specs/ui-design-system.md",
+      "sections": [
+        {
+          "section_id": "ui-ux-design-system-spec",
+          "title": "UI / UX Design System — Spec",
+          "depth": 1,
+          "line_start": 1
+        },
+        {
+          "section_id": "overview",
+          "title": "Overview",
+          "depth": 2,
+          "line_start": 3
+        },
+        {
+          "section_id": "domain-vocabulary",
+          "title": "Domain vocabulary",
+          "depth": 3,
+          "line_start": 10
+        },
+        {
+          "section_id": "related-files-code-and-assets",
+          "title": "Related files (code and assets)",
+          "depth": 2,
+          "line_start": 16
+        },
+        {
+          "section_id": "1",
+          "title": "1. Foundations",
+          "depth": 2,
+          "line_start": 30
+        },
+        {
+          "section_id": "1.1",
+          "title": "1.1 Color",
+          "depth": 3,
+          "line_start": 32
+        },
+        {
+          "section_id": "1.2",
+          "title": "1.2 Typography",
+          "depth": 3,
+          "line_start": 43
+        },
+        {
+          "section_id": "1.3",
+          "title": "1.3 Spacing and layout",
+          "depth": 3,
+          "line_start": 50
+        },
+        {
+          "section_id": "1.4",
+          "title": "1.4 Iconography",
+          "depth": 3,
+          "line_start": 56
+        },
+        {
+          "section_id": "1.5",
+          "title": "1.5 Motion (optional)",
+          "depth": 3,
+          "line_start": 60
+        },
+        {
+          "section_id": "2",
+          "title": "2. Components",
+          "depth": 2,
+          "line_start": 66
+        },
+        {
+          "section_id": "2.1",
+          "title": "2.1 Button — primary",
+          "depth": 3,
+          "line_start": 70
+        },
+        {
+          "section_id": "2.2",
+          "title": "2.2 Button — secondary",
+          "depth": 3,
+          "line_start": 76
+        },
+        {
+          "section_id": "2.3",
+          "title": "2.3 Panel / card",
+          "depth": 3,
+          "line_start": 80
+        },
+        {
+          "section_id": "2.4",
+          "title": "2.4 List / scroll",
+          "depth": 3,
+          "line_start": 84
+        },
+        {
+          "section_id": "2.5",
+          "title": "2.5 Tooltip",
+          "depth": 3,
+          "line_start": 89
+        },
+        {
+          "section_id": "2.6",
+          "title": "2.6 Modal / dialog",
+          "depth": 3,
+          "line_start": 93
+        },
+        {
+          "section_id": "3",
+          "title": "3. Patterns",
+          "depth": 2,
+          "line_start": 101
+        },
+        {
+          "section_id": "3.1",
+          "title": "3.1 HUD information density",
+          "depth": 3,
+          "line_start": 103
+        },
+        {
+          "section_id": "3.2",
+          "title": "3.2 Popups",
+          "depth": 3,
+          "line_start": 107
+        },
+        {
+          "section_id": "3.3",
+          "title": "3.3 Tool selection / toolbar",
+          "depth": 3,
+          "line_start": 112
+        },
+        {
+          "section_id": "3.4",
+          "title": "3.4 Feedback and errors",
+          "depth": 3,
+          "line_start": 121
+        },
+        {
+          "section_id": "3.5",
+          "title": "3.5 World vs UI input",
+          "depth": 3,
+          "line_start": 125
+        },
+        {
+          "section_id": "4",
+          "title": "4. Unity mapping",
+          "depth": 2,
+          "line_start": 131
+        },
+        {
+          "section_id": "4.1",
+          "title": "4.1 Naming",
+          "depth": 3,
+          "line_start": 133
+        },
+        {
+          "section_id": "4.2",
+          "title": "4.2 Scripting",
+          "depth": 3,
+          "line_start": 138
+        },
+        {
+          "section_id": "4.3",
+          "title": "4.3 Canvas",
+          "depth": 3,
+          "line_start": 143
+        },
+        {
+          "section_id": "5",
+          "title": "5. Acceptance criteria (per issue)",
+          "depth": 2,
+          "line_start": 149
+        },
+        {
+          "section_id": "6",
+          "title": "6. Revision history",
+          "depth": 2,
+          "line_start": 160
+        }
+      ]
+    },
+    {
+      "key": "unity-development-context",
+      "path": ".cursor/specs/unity-development-context.md",
+      "sections": [
+        {
+          "section_id": "unity-development-context-territory-developer",
+          "title": "Unity development context — Territory Developer",
+          "depth": 1,
+          "line_start": 1
+        },
+        {
+          "section_id": "table-of-contents",
+          "title": "Table of contents",
+          "depth": 2,
+          "line_start": 5
+        },
+        {
+          "section_id": "1",
+          "title": "1. Purpose and scope",
+          "depth": 2,
+          "line_start": 20
+        },
+        {
+          "section_id": "2",
+          "title": "2. MonoBehaviour lifecycle",
+          "depth": 2,
+          "line_start": 34
+        },
+        {
+          "section_id": "3",
+          "title": "3. Inspector, SerializeField, and dependency resolution",
+          "depth": 2,
+          "line_start": 52
+        },
+        {
+          "section_id": "4",
+          "title": "4. Scenes, prefabs, and renaming",
+          "depth": 2,
+          "line_start": 66
+        },
+        {
+          "section_id": "5",
+          "title": "5. 2D sorting layers, sortingOrder, and Sorting order",
+          "depth": 2,
+          "line_start": 76
+        },
+        {
+          "section_id": "6",
+          "title": "6. Script Execution Order and initialization",
+          "depth": 2,
+          "line_start": 91
+        },
+        {
+          "section_id": "7",
+          "title": "7. Anti-patterns and project guardrails",
+          "depth": 2,
+          "line_start": 105
+        },
+        {
+          "section_id": "8",
+          "title": "8. ScriptableObject",
+          "depth": 2,
+          "line_start": 118
+        },
+        {
+          "section_id": "9",
+          "title": "9. Glossary alignment",
+          "depth": 2,
+          "line_start": 124
+        },
+        {
+          "section_id": "10",
+          "title": "10. Editor agent diagnostics (machine-readable exports)",
+          "depth": 2,
+          "line_start": 134
+        }
+      ]
+    },
+    {
+      "key": "water-terrain-system",
+      "path": ".cursor/specs/water-terrain-system.md",
+      "sections": [
+        {
+          "section_id": "water-terrain-system-reference-spec",
+          "title": "Water & Terrain System — Reference Spec",
+          "depth": 1,
+          "line_start": 1
+        },
+        {
+          "section_id": "height-model-geography-spec-2",
+          "title": "Height model (geography spec §2)",
+          "depth": 2,
+          "line_start": 8
+        },
+        {
+          "section_id": "slopes-spec-3-4",
+          "title": "Slopes (spec §3–§4)",
+          "depth": 2,
+          "line_start": 14
+        },
+        {
+          "section_id": "layered-visual-model-spec-5-6-5-9",
+          "title": "Layered visual model (spec §5.6–§5.9)",
+          "depth": 2,
+          "line_start": 19
+        },
+        {
+          "section_id": "cliff-rules",
+          "title": "Cliff rules",
+          "depth": 3,
+          "line_start": 28
+        },
+        {
+          "section_id": "cascade-rules",
+          "title": "Cascade rules",
+          "depth": 3,
+          "line_start": 32
+        },
+        {
+          "section_id": "water-map-and-lakes-spec-11",
+          "title": "Water map and lakes (spec §11)",
+          "depth": 2,
+          "line_start": 36
+        },
+        {
+          "section_id": "procedural-rivers-spec-12",
+          "title": "Procedural rivers (spec §12)",
+          "depth": 2,
+          "line_start": 42
+        },
+        {
+          "section_id": "shore-band-constraint-spec-2-4-1",
+          "title": "Shore band constraint (spec §2.4.1)",
+          "depth": 2,
+          "line_start": 49
+        },
+        {
+          "section_id": "key-files",
+          "title": "Key files",
+          "depth": 2,
+          "line_start": 53
+        }
+      ]
+    }
+  ]
+}

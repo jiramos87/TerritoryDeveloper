@@ -19,6 +19,15 @@ Task-to-spec priorities match **`.cursor/rules/agent-router.mdc`**. That rule fi
 
 When starting work on **`BUG-XX` / `FEAT-XX` / `TECH-XX`** (etc.), call **`backlog_issue`** with `issue_id` first to get `Files`, `Spec`, `Notes`, `Acceptance`, `status`, and `raw_markdown` without loading all of `BACKLOG.md`. Then use `router_for_task` / `glossary_discover` / `glossary_lookup` / `spec_section` as needed. Older issues may live only in `BACKLOG-ARCHIVE.md` (not covered by v1 `backlog_issue`).
 
+## Project spec workflows (Cursor Skills)
+
+Repo **Cursor Skills** define **ordered** MCP usage for `.cursor/projects/{ISSUE_ID}.md`:
+
+- **Review / enrich before code:** [`.cursor/skills/project-spec-kickoff/SKILL.md`](../.cursor/skills/project-spec-kickoff/SKILL.md).
+- **Execute Implementation Plan:** [`.cursor/skills/project-spec-implement/SKILL.md`](../.cursor/skills/project-spec-implement/SKILL.md).
+
+See also [`AGENTS.md`](../AGENTS.md) (Before You Start) and [`.cursor/skills/README.md`](../.cursor/skills/README.md).
+
 ## Tools (10)
 
 | Tool | Role |
@@ -45,6 +54,11 @@ When starting work on **`BUG-XX` / `FEAT-XX` / `TECH-XX`** (etc.), call **`backl
 
 Full-text search across all IA documents is tracked as **TECH-18**; database-backed IA and evolved tools are **TECH-19** / **TECH-18** in [`BACKLOG.md`](../BACKLOG.md).
 
-**TECH-21** program (**TECH-40**–**TECH-42**): JSON Schema, **CI** fixture validation, and optional **generated** **spec**/**glossary** index JSON (machine manifests only — **not** a second copy of spec bodies; see **TECH-18**). If those artifacts land under `tools/` or `docs/schemas/`, MCP **may** later consume them for faster path resolution; until then, **`list_specs`**, **`spec_outline`**, and **`spec_section`** remain authoritative for slice retrieval. Charter: [`.cursor/projects/TECH-21.md`](../.cursor/projects/TECH-21.md).
+**TECH-21** program (**TECH-40**–**TECH-42**): JSON Schema, **CI** fixture validation, and **generated** **spec**/**glossary** index JSON (machine manifests only — **not** a second copy of spec bodies; see **TECH-18**).
+
+- **Schemas + fixtures:** [`docs/schemas/README.md`](../docs/schemas/README.md). Validate from repo root: `npm run validate:fixtures` (delegates to `tools/mcp-ia-server`).
+- **I1 / I2 indexes (committed):** `tools/mcp-ia-server/data/spec-index.json` (**spec** keys, paths, heading `section_id`s) and `glossary-index.json` (**glossary** term → `spec_key` + `anchor`). Regenerate after editing `.cursor/specs/*.md` or `glossary.md`: `npm run generate:ia-indexes` under `tools/mcp-ia-server/` (or `npm run generate:ia-indexes` from the repo root — forwards extra args such as `--check`). **CI** runs `generate:ia-indexes -- --check` in the **IA tools** workflow so committed JSON stays in sync. MCP **may** later read these files; **`list_specs`**, **`spec_outline`**, and **`spec_section`** remain authoritative for slice retrieval today.
+
+Program charter: [`.cursor/projects/TECH-21.md`](../.cursor/projects/TECH-21.md).
 
 For a **domain-neutral** description of this architecture (Markdown corpus, registry, parser spine, tool families, verification) — useful when starting a similar MCP in another repo — see [`mcp-markdown-ia-pattern.md`](mcp-markdown-ia-pattern.md).

@@ -21,8 +21,12 @@ Abstract pattern (reusable outside this game): [`docs/mcp-markdown-ia-pattern.md
 | `npm start` | Run compiled `dist/index.js` (stdio MCP). |
 | `npm test` | Unit tests (`node:test` + `tsx`) for parser and tool helpers. |
 | `npm run test:watch` | Tests in watch mode. |
-| `npm run test:coverage` | Parser line coverage with **c8** (gate ≥90% on `src/parser/**`). |
+| `npm run test:coverage` | Parser + **ia-index** line coverage with **c8** (gate ≥90%). |
 | `npm run verify` | From this directory: spawns the server the same way as Cursor (via repo root + `npx -y tsx …`) and exercises all **10** tools through the MCP SDK client. |
+| `npm run validate:fixtures` | **AJV** (JSON Schema Draft 2020-12): valid fixtures under `docs/schemas/fixtures/` must pass; invalid fixtures must fail. |
+| `npm run generate:ia-indexes` | Writes `data/spec-index.json` and `data/glossary-index.json`. Pass `--check` to assert they match the generator (used in **CI**). |
+
+From the **repository root**, `package.json` exposes `npm run validate:fixtures` and `npm run generate:ia-indexes` via `npm --prefix tools/mcp-ia-server`.
 
 ## Cursor integration
 

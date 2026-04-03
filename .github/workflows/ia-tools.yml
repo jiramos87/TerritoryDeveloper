@@ -1,0 +1,35 @@
+name: IA tools
+
+on:
+  push:
+    paths:
+      - ".cursor/specs/**"
+      - "docs/schemas/**"
+      - "tools/mcp-ia-server/**"
+      - ".github/workflows/ia-tools.yml"
+      - "package.json"
+  pull_request:
+    paths:
+      - ".cursor/specs/**"
+      - "docs/schemas/**"
+      - "tools/mcp-ia-server/**"
+      - ".github/workflows/ia-tools.yml"
+      - "package.json"
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/mcp-ia-server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: tools/mcp-ia-server/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run validate:fixtures
+      - run: npm run generate:ia-indexes -- --check

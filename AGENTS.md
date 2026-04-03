@@ -6,6 +6,7 @@
 2. Use `.cursor/rules/agent-router.mdc` to find the right specs for your task
 3. **Context from IA (Cursor agents):** In **Agent** chats with tools enabled, treat **territory-ia** MCP as the **default** way to load specs and rules unless a tool call truly cannot run. **Do not** open whole spec files with `read_file` when a slice suffices. Suggested order: **`backlog_issue`** when you have an issue id (`BUG-37`, `FEAT-44`, …) → `list_specs` (if keys unknown) → `router_for_task` for domain → `glossary_discover` / `glossary_lookup` → `spec_outline` / `spec_section` (or `invariants_summary`, `list_rules` / `rule_content` as needed). For **`glossary_discover`** and **`glossary_lookup`**, arguments must be **English** (the glossary is English-only): if the developer writes in another language, **translate** their concepts into English domain terms before calling. If MCP is disabled in the host, fall back to `.cursor/rules/agent-router.mdc` and targeted `read_file`. Stale content: MCP caches parses per server process—after large edits to a doc, prefer a fresh `read_file` on that path or restart the MCP server. Reference: [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md).
 4. **If asked to work on an issue:** use **`backlog_issue`** for that id when MCP is available; otherwise read `BACKLOG.md` (and see `BACKLOG.md` for priority and workflow).
+5. **Project specs:** When **reviewing or enriching** `.cursor/projects/{ISSUE_ID}.md` before code, use [`.cursor/skills/project-spec-kickoff/SKILL.md`](.cursor/skills/project-spec-kickoff/SKILL.md) (or the paste template at [`.cursor/templates/project-spec-review-prompt.md`](.cursor/templates/project-spec-review-prompt.md)). When **executing** the spec’s **Implementation Plan**, use [`.cursor/skills/project-spec-implement/SKILL.md`](.cursor/skills/project-spec-implement/SKILL.md). Both define ordered **territory-ia** recipes (`backlog_issue` → `invariants_summary` when applicable → `router_for_task` → `spec_section` → `glossary_*` → …). Skill index and authoring rules: [`.cursor/skills/README.md`](.cursor/skills/README.md).
 
 System invariants and guardrails are in `.cursor/rules/invariants.mdc` (always loaded).
 Task-to-spec routing is in `.cursor/rules/agent-router.mdc` (always loaded).
@@ -15,6 +16,7 @@ Full dependency map is in `ARCHITECTURE.md`.
 
 ```
 .cursor/rules/        → Guardrails (auto-loaded by Cursor, light)
+.cursor/skills/       → Cursor Agent Skills (thin workflows; see README — **project-spec-kickoff**, **project-spec-implement**)
 .cursor/specs/        → Deep reference (read on demand per task)
 ARCHITECTURE.md       → System layers, dependency map
 AGENTS.md             → This file: workflow, policies, checklist

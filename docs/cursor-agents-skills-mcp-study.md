@@ -72,6 +72,14 @@ Consider an external memory MCP or DB only if you need **user-specific** or **hi
 2. Keep **English** in Skill bodies aligned with **glossary** terms when touching domain language (same rule as MCP `glossary_*` tools).
 3. Reference **TECH-18** / **TECH-19** roadmap: future **DB-backed** IA changes *implementation* of tools, not the **split** “facts in IA / procedures in Skills.”
 
+### 4.4 Shipped repo skills (Part 1 + kickoff + implement)
+
+- **Index:** [`.cursor/skills/README.md`](../.cursor/skills/README.md) — naming rules, thin-skill policy, **`glossary_discover`** array requirement.
+- **Kickoff skill:** [`.cursor/skills/project-spec-kickoff/SKILL.md`](../.cursor/skills/project-spec-kickoff/SKILL.md) — **numbered** **territory-ia** tool recipe for `.cursor/projects/*.md` review *(shipped — see `BACKLOG.md` § Completed)*.
+- **Implement skill:** [`.cursor/skills/project-spec-implement/SKILL.md`](../.cursor/skills/project-spec-implement/SKILL.md) — **per-phase** **territory-ia** recipe to execute a project spec’s **Implementation Plan** after the spec is ready *(shipped — see `BACKLOG.md` § Completed for **TECH-49**)*.
+- **Paste template:** [`.cursor/templates/project-spec-review-prompt.md`](../.cursor/templates/project-spec-review-prompt.md) when Skills are not loaded; **kickoff** tool order remains authoritative in **`project-spec-kickoff/SKILL.md`**; **implementation** order in **`project-spec-implement/SKILL.md`**. **Router hint:** `router_for_task` **`domain`** strings should match **agent-router.mdc** table labels (persisted in [`.cursor/skills/README.md`](../.cursor/skills/README.md) **Lessons learned**).
+- **MCP follow-up:** **TECH-48** — discovery from project-spec prose (ranked glossary / section queue); may shorten the manual recipe after tools ship.
+
 ---
 
 ## 5. Specialist agents, subagents, and token cost
@@ -135,7 +143,7 @@ Sample **invariants_summary** (abridged intent): sync height map and cell height
 - `AGENTS.md` — agent workflow, MCP-first retrieval, `.cursor/projects/` policy  
 - `docs/mcp-ia-server.md` — territory-ia tools and policy  
 - `docs/mcp-markdown-ia-pattern.md` — slice-based IA pattern  
-- `BACKLOG.md` — **TECH-17** (shipped MCP), **TECH-18**, **TECH-19**, **TECH-21** program (**TECH-40**–**TECH-42**, **TECH-43**)  
+- `BACKLOG.md` — **TECH-17** (shipped MCP), **TECH-18**, **TECH-19**, **TECH-21** program (**TECH-40**–**TECH-42**, **TECH-43**), **TECH-48** (MCP discovery from project specs)  
 - `.cursor/rules/invariants.mdc` — system invariants (also exposed via MCP `invariants_summary`)
 
 ---

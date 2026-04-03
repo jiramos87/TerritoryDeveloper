@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "territory-developer:schemas/geography-init-params.v1",
+  "title": "GeographyInitParams interchange (v1)",
+  "description": "Declarative Geography initialization parameters (interchange DTO). Not Save data.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["artifact", "schema_version", "seed", "map"],
+  "properties": {
+    "artifact": {
+      "type": "string",
+      "const": "geography_init_params",
+      "description": "Logical model id for validators and agents."
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Breaking-revision integer; bump only when consumers must migrate."
+    },
+    "seed": {
+      "type": "integer",
+      "description": "RNG seed for procedural geography."
+    },
+    "map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "water": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "seaBias": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "rivers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" }
+      }
+    },
+    "forest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "coverageTarget": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

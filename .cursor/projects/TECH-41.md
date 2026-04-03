@@ -37,6 +37,7 @@ Implement **glossary-aligned** **JSON** for **today’s** game and tooling: **G4
 
 - **TECH-38** §7.5 defines **GeographyInitParams** DTO and harness direction.
 - **TECH-16** tick harness JSON may adopt schemas owned here or in **TECH-16** spec — avoid duplicate definitions (**Decision Log** picks source of truth).
+- **TECH-40** (shipped in repo): interchange JSON uses string **`artifact`** and optional **`schema_version`** per [`.cursor/projects/TECH-40.md`](TECH-40.md). Pilot **JSON Schema** for **`geography_init_params`**: `docs/schemas/geography-init-params.v1.schema.json` — align **G4** / **TECH-39** **Zod** field names with that shape when you implement loaders.
 
 ## 5. Proposed Design
 

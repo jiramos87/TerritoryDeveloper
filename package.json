@@ -1,0 +1,10 @@
+{
+  "name": "territory-developer",
+  "private": true,
+  "description": "Unity project root scripts delegate to tools/mcp-ia-server (IA / JSON tooling).",
+  "scripts": {
+    "validate:fixtures": "npm --prefix tools/mcp-ia-server run validate:fixtures",
+    "generate:ia-indexes": "cd tools/mcp-ia-server && npx tsx scripts/generate-ia-indexes.ts",
+    "test:ia": "npm --prefix tools/mcp-ia-server test"
+  }
+}

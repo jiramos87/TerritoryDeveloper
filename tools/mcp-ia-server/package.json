@@ -9,15 +9,18 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "verify": "tsx scripts/verify-mcp.ts",
-    "test": "node --import tsx --test tests/parser/*.test.ts tests/tools/*.test.ts",
-    "test:watch": "node --import tsx --test --watch tests/parser/*.test.ts tests/tools/*.test.ts",
-    "test:coverage": "c8 --src src --include 'src/parser/**/*.ts' --exclude '**/*.test.ts' --check-coverage --lines 90 --reporter text node --import tsx --test tests/parser/*.test.ts tests/tools/*.test.ts"
+    "validate:fixtures": "tsx scripts/validate-fixtures.ts",
+    "generate:ia-indexes": "tsx scripts/generate-ia-indexes.ts",
+    "test": "node --import tsx --test tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts",
+    "test:watch": "node --import tsx --test --watch tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts",
+    "test:coverage": "c8 --src src --include 'src/parser/**/*.ts' --include 'src/ia-index/**/*.ts' --exclude '**/*.test.ts' --check-coverage --lines 90 --reporter text node --import tsx --test tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "ajv": "^8.18.0",
     "gray-matter": "^4.0.3",
     "zod": "^4.3.6"
   },

@@ -1,0 +1,451 @@
+{
+  "artifact": "glossary_index",
+  "schema_version": 1,
+  "last_generated": "2026-04-03T16:44:10.030Z",
+  "terms": {
+    "Cell": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "1"
+    },
+    "HeightMap": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "2"
+    },
+    "Sorting order": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "7"
+    },
+    "Tile dimensions": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "1.1"
+    },
+    "Direction convention": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "1.2"
+    },
+    "Height offset": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "1.1"
+    },
+    "World ↔ Grid conversion": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "1.1"
+    },
+    "Moore neighborhood": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "2.4.1"
+    },
+    "Cardinal neighbor": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "2.3"
+    },
+    "Grass cell": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "14.5"
+    },
+    "Height range": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "2.1"
+    },
+    "Sea level": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "2.1"
+    },
+    "Height constraint": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "2.3"
+    },
+    "Height generation": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "2.2"
+    },
+    "Slope type": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "3"
+    },
+    "Slope categories": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "3.3"
+    },
+    "Cliff": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "5.7"
+    },
+    "Shore band": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "2.4.1"
+    },
+    "Surface-height gate": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "4.2"
+    },
+    "Rim": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "14.1"
+    },
+    "Bay": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "5.9"
+    },
+    "Cliff face visibility": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "5.7"
+    },
+    "Cliff suppression": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "5.6.1"
+    },
+    "Cut-through corridor": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "5.10"
+    },
+    "Water body": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.2"
+    },
+    "Water map": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.2"
+    },
+    "Open water": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.2"
+    },
+    "Water-shore (land)": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.2"
+    },
+    "Surface height (S)": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.1"
+    },
+    "Visual reference (V)": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "2.4.1"
+    },
+    "Water body kind": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.2"
+    },
+    "Depression-fill": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.3"
+    },
+    "Spill height": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.3"
+    },
+    "Junction": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.8"
+    },
+    "Pass A (bed alignment)": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.7"
+    },
+    "Pass B (junction merge)": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.7"
+    },
+    "Brink": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.8"
+    },
+    "Lake exclusion": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.7"
+    },
+    "Shore refresh": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.6"
+    },
+    "Cascade": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "5.6.2"
+    },
+    "Corner promotion": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "12.5"
+    },
+    "River": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "12"
+    },
+    "River bed (H_bed)": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "11.1"
+    },
+    "River bank": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "12.4"
+    },
+    "River width": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "12.4"
+    },
+    "Forced river": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "12.4"
+    },
+    "River spacing": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "12.4"
+    },
+    "Chebyshev distance": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "12.4"
+    },
+    "Geography initialization": {
+      "spec_key": "architecture",
+      "anchor": ""
+    },
+    "Terraform plan": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "8"
+    },
+    "Road validation pipeline": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "13.1"
+    },
+    "Road stroke": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "14.5"
+    },
+    "Phase-1 validation": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "13.1"
+    },
+    "Interstate": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "13.5"
+    },
+    "Street (ordinary road)": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "14.5"
+    },
+    "Street or interstate": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "13.1"
+    },
+    "Map border": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "14.5"
+    },
+    "Water-slope tile": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "5.8"
+    },
+    "Road cache invalidation": {
+      "spec_key": "roads-system",
+      "anchor": ""
+    },
+    "Cut-through": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "8.3"
+    },
+    "baseHeight (terraform)": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "8.3"
+    },
+    "Scale-with-slopes": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "8.2"
+    },
+    "Deck span": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "13.4"
+    },
+    "Bridge lip": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "13.4"
+    },
+    "Wet run": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "13.4"
+    },
+    "Locked chord": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "13.4"
+    },
+    "Longest valid prefix": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "13.2"
+    },
+    "Land slope eligibility": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "13.10"
+    },
+    "Resolver rules": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "13.7"
+    },
+    "Road reservation": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "13.9"
+    },
+    "Pathfinding cost model": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "10"
+    },
+    "**A* search**": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "10"
+    },
+    "Interstate cost model": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "10"
+    },
+    "Diagonal step expansion": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "8.4"
+    },
+    "RCI": {
+      "spec_key": "managers-reference",
+      "anchor": "zones"
+    },
+    "Zone": {
+      "spec_key": "managers-reference",
+      "anchor": "zones"
+    },
+    "Zone density": {
+      "spec_key": "managers-reference",
+      "anchor": "zones"
+    },
+    "Pivot cell": {
+      "spec_key": "managers-reference",
+      "anchor": "zones"
+    },
+    "Building footprint": {
+      "spec_key": "managers-reference",
+      "anchor": "zones"
+    },
+    "Undeveloped light zoning": {
+      "spec_key": "managers-reference",
+      "anchor": "zones"
+    },
+    "Building": {
+      "spec_key": "managers-reference",
+      "anchor": "zones"
+    },
+    "Simulation tick": {
+      "spec_key": "simulation-system",
+      "anchor": ""
+    },
+    "AUTO systems": {
+      "spec_key": "simulation-system",
+      "anchor": ""
+    },
+    "Tick execution order": {
+      "spec_key": "simulation-system",
+      "anchor": ""
+    },
+    "Growth budget": {
+      "spec_key": "simulation-system",
+      "anchor": ""
+    },
+    "Urban centroid": {
+      "spec_key": "simulation-system",
+      "anchor": ""
+    },
+    "Urban growth rings": {
+      "spec_key": "simulation-system",
+      "anchor": "rings"
+    },
+    "Urbanization proposal": {
+      "spec_key": "simulation-system",
+      "anchor": ""
+    },
+    "Demand (R / C / I)": {
+      "spec_key": "managers-reference",
+      "anchor": "demand"
+    },
+    "Tax base": {
+      "spec_key": "managers-reference",
+      "anchor": "demand"
+    },
+    "Desirability": {
+      "spec_key": "managers-reference",
+      "anchor": "demand"
+    },
+    "Forest (coverage)": {
+      "spec_key": "managers-reference",
+      "anchor": "world"
+    },
+    "Regional map": {
+      "spec_key": "managers-reference",
+      "anchor": "world"
+    },
+    "Utility building": {
+      "spec_key": "managers-reference",
+      "anchor": "world"
+    },
+    "Game notification": {
+      "spec_key": "managers-reference",
+      "anchor": "notifications"
+    },
+    "Save data": {
+      "spec_key": "persistence-system",
+      "anchor": "save"
+    },
+    "CellData": {
+      "spec_key": "persistence-system",
+      "anchor": "save"
+    },
+    "Water map data": {
+      "spec_key": "persistence-system",
+      "anchor": "save"
+    },
+    "Legacy save": {
+      "spec_key": "persistence-system",
+      "anchor": "load-pipeline"
+    },
+    "Visual restore": {
+      "spec_key": "persistence-system",
+      "anchor": "visual-restore-details"
+    },
+    "Load pipeline order": {
+      "spec_key": "persistence-system",
+      "anchor": "load-pipeline"
+    },
+    "Land slope prefabs": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "6.1"
+    },
+    "Water slope prefabs": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "6.2"
+    },
+    "Slope variant naming": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "6.4"
+    },
+    "Infrastructure prefabs": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "6.3"
+    },
+    "Sorting formula": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "7.1"
+    },
+    "Sorting components": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "7.1"
+    },
+    "DEPTH_MULTIPLIER": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "7.1"
+    },
+    "HEIGHT_MULTIPLIER": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "7.1"
+    },
+    "Type offsets": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "7.2"
+    },
+    "Reference spec": {
+      "spec_key": "agents",
+      "anchor": ""
+    }
+  }
+}
