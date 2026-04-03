@@ -9,7 +9,7 @@
 
 ## 1. Summary
 
-After **TECH-19** provides the **PostgreSQL** schema and read surface, migrate **Information Architecture** consumption so **territory-ia** MCP can use **DB-backed** retrieval as the **primary** path (Markdown generated or secondary). Implement additional tools in **phases**: cross-spec search, kickoff checklist, dependency edges, markdown-backed quick tools, domain **topic bundles**, and **`unity_context_section`** once **`.cursor/specs/unity-development-context.md`** exists (**TECH-20**).
+After **TECH-19** provides the **PostgreSQL** schema and read surface, migrate **Information Architecture** consumption so **territory-ia** MCP can use **DB-backed** retrieval as the **primary** path (Markdown generated or secondary). Implement additional tools in **phases**: cross-spec search, kickoff checklist, dependency edges, markdown-backed quick tools, domain **topic bundles**, and **`unity_context_section`** over **`.cursor/specs/unity-development-context.md`** (reference spec; shipped **TECH-20** completed).
 
 ## 2. Goals and Non-Goals
 
@@ -72,7 +72,7 @@ Agents retrieve IA with **lower token cost** and fewer manual `spec_section` cha
 
 **Phase D — Unity context**
 
-- `unity_context_section` — slices of **unity-development-context.md**; **blocked until TECH-20** file exists.
+- `unity_context_section` — slices of **unity-development-context.md** (file present; implement when this phase is scheduled).
 
 **Phase E — TECH-34 integration**
 

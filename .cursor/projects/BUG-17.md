@@ -5,7 +5,7 @@
 > **Created:** 2026-04-02
 > **Last updated:** 2026-04-02
 
-**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — **TECH-20** (Unity lifecycle / execution order); **TECH-28** (Editor context export for repro snapshots).
+**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — [unity-development-context.md](../../.cursor/specs/unity-development-context.md) (lifecycle / execution order); **TECH-28** (Editor context export for repro snapshots).
 
 ## 1. Summary
 
@@ -43,7 +43,7 @@
 |------|---------|
 | Backlog | `BACKLOG.md` — BUG-17 |
 | Code | `GridManager.cs` — **`InitializeGrid`**, **`ChunkCullingSystem`**, **`Update`** |
-| Related | **BUG-16** (init ordering), **TECH-20** (execution order doc) |
+| Related | **BUG-16** (init ordering), **unity-development-context.md** (execution order) |
 
 ### 4.3 Implementation investigation notes (optional)
 

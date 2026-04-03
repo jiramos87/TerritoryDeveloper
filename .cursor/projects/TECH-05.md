@@ -5,7 +5,7 @@
 > **Created:** 2026-04-02
 > **Last updated:** 2026-04-02
 
-**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — **TECH-20** ( **`FindObjectOfType`** policy ); **TECH-26** (scanner) after changes.
+**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — [`.cursor/specs/unity-development-context.md`](../../.cursor/specs/unity-development-context.md) (**`FindObjectOfType`** policy); **TECH-26** (scanner) after changes.
 
 ## 1. Summary
 
@@ -27,7 +27,7 @@
 
 | # | Role | Story | Acceptance criteria |
 |---|------|-------|---------------------|
-| 1 | Developer | I want one idiom for wiring managers. | Helper used in pilot managers; docs in **TECH-20** or **coding-conventions**. |
+| 1 | Developer | I want one idiom for wiring managers. | Helper used in pilot managers; docs in **unity-development-context** or **coding-conventions**. |
 | 2 | Player | I want no behavior change. | Same init order outcomes for pilot scenes. |
 
 ## 4. Current State
@@ -58,7 +58,7 @@ No change.
 
 1. Prototype helper API (name, namespace) in **`Utilities`** or agreed folder.
 2. Migrate 2–3 pilot managers; measure readability.
-3. Document pattern in **`coding-conventions.mdc`** or **TECH-20** companion section.
+3. Document pattern in **`coding-conventions.mdc`** or **unity-development-context.md**.
 4. Optionally roll out incrementally (follow-up PRs).
 
 ## 6. Decision Log

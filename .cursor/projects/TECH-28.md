@@ -5,7 +5,7 @@
 > **Created:** 2026-04-02
 > **Last updated:** 2026-04-02
 
-**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — tasks **2**, **23**. Supports **TECH-20** / **BUG-16**–**BUG-17** debugging narratives.
+**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — tasks **2**, **23**. Supports **unity-development-context.md** / **BUG-16**–**BUG-17** debugging narratives.
 
 ## 1. Summary
 

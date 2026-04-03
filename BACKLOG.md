@@ -11,24 +11,18 @@
 
 Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP platform** → **agent workflow & CI helpers** → **research tooling**.
 
-- [ ] **TECH-20** — In-repo Unity development context for agents (spec + concept index)
+- [ ] **TECH-25** — Incremental authoring milestones for `unity-development-context.md`
   - Type: documentation / agent tooling
-  - Files: new `.cursor/specs/unity-development-context.md` (or agreed name); `AGENTS.md` and `.cursor/rules/agent-router.mdc` (pointer + “read when…” row); optional short glossary subsection or cross-links to `.cursor/specs/glossary.md` for shared terms
-  - Spec: `.cursor/projects/TECH-20.md`
-  - Notes: **Goal:** Give agents a **first-party** reference for **Unity concepts that routinely come up in this codebase** (e.g. MonoBehaviour lifecycle, `SerializeField` / Inspector wiring, scenes & prefabs, 2D sorting layers vs `sortingOrder`, `ScriptableObject` when used, `FindObjectOfType` policy here, execution order pitfalls, common Unity patterns **as constrained by this project** — not a full Unity manual). **Policy:** Agents should **default to this spec + existing `.cursor/` docs** for Unity API and workflow questions and **avoid opening general web/docs searches** unless the task **requires** version-specific behavior, undocumented APIs, or verification outside what the repo states. **Scope:** Curated sections, stable anchors, and links to **in-repo** examples (file/class references) where helpful. **Out of scope:** Duplicating Microsoft/Unity manual pages verbatim; replacing official docs when the user explicitly asks for external authority. **Acceptance:** `agent-router` lists when to read this spec; a new contributor agent can implement a typical Inspector + manager change using only repo context for Unity basics. **Related:** **TECH-17** (MCP can later expose this document like other specs). **Enables:** **TECH-18** **`unity_context_section`** once the spec file exists.
+  - Files: `.cursor/specs/unity-development-context.md`; optional `projects/agent-friendly-tasks-with-territory-ia-context.md` pointer
+  - Spec: `.cursor/projects/TECH-25.md`
+  - Notes: Land improvements in slice-sized PRs (MonoBehaviour lifecycle, **`SerializeField`** / Inspector, **`FindObjectOfType`** policy, Script Execution Order, 2D **`sortingOrder`** vs sorting layers). Umbrella reference spec shipped with **TECH-20** (completed); this issue tracks optional depth / polish. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
   - Depends on: none
-
-- [ ] **TECH-25** — **TECH-20** incremental authoring milestones for `unity-development-context.md`
-  - Type: documentation / agent tooling
-  - Files: `.cursor/specs/unity-development-context.md` (when created per **TECH-20**), cross-link **TECH-20**; optional `projects/agent-friendly-tasks-with-territory-ia-context.md` pointer
-  - Notes: Land **TECH-20** in slice-sized PRs (MonoBehaviour lifecycle, **`SerializeField`** / Inspector, **`FindObjectOfType`** policy, Script Execution Order, 2D **`sortingOrder`** vs sorting layers). This issue tracks milestone checklist so one agent need not ship the entire doc at once. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
-  - Depends on: none (complements **TECH-20**)
 
 - [ ] **TECH-28** — Unity Editor: **agent diagnostics** (export context JSON, optional **sorting** debug export)
   - Type: tooling / agent workflow
   - Files: `Assets/Scripts/Editor/` (new menu or utility), `tools/reports/` (output; gitignore policy as agreed), optional `GridManager` read-only hooks
   - Spec: `.cursor/projects/TECH-28.md`
-  - Notes: Editor menu writes `tools/reports/agent-context-{timestamp}.json` (`schema_version`, scene, selection, sample **cell** / grid facts). Optional `sorting-debug.md` for **Sorting order** investigations (geo §7). `docs/agent-tooling-verification-priority-tasks.md` tasks 2, 23. Aligns with **TECH-20** / **BUG-16**–**BUG-17** onboarding themes.
+  - Notes: Editor menu writes `tools/reports/agent-context-{timestamp}.json` (`schema_version`, scene, selection, sample **cell** / grid facts). Optional `sorting-debug.md` for **Sorting order** investigations (geo §7). `docs/agent-tooling-verification-priority-tasks.md` tasks 2, 23. Aligns with **unity-development-context.md** / **BUG-16**–**BUG-17** onboarding themes.
   - Depends on: none
 
 - [ ] **TECH-15** — New Game / **geography initialization** performance
@@ -410,7 +404,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-*(**TECH-18**, **TECH-19**, **TECH-20**, **TECH-21** — listed in **§ Agent ↔ Unity & MCP context lane** above; not duplicated here.)*
+*(**TECH-18**, **TECH-19**, **TECH-21** — listed in **§ Agent ↔ Unity & MCP context lane** above; **TECH-20** completed below; not duplicated here.)*
 
 - [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects
   - Type: audio/feature
@@ -420,6 +414,13 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
 ---
 
 ## Completed (last 30 days)
+
+- [x] **TECH-20** — In-repo Unity development context for agents (spec + concept index) (2026-04-02)
+  - Type: documentation / agent tooling
+  - Files: `.cursor/specs/unity-development-context.md`; `AGENTS.md`; `.cursor/rules/agent-router.mdc`; `tools/mcp-ia-server/src/config.ts` (`unity` / `unityctx` → `unity-development-context`); `docs/mcp-ia-server.md`; `tools/mcp-ia-server/README.md`; `tools/mcp-ia-server/scripts/verify-mcp.ts`; `tools/mcp-ia-server/tests/parser/backlog-parser.test.ts`; `tools/mcp-ia-server/tests/tools/build-registry.test.ts`; `tools/mcp-ia-server/tests/tools/config-aliases.test.ts`; [`.cursor/specs/REFERENCE-SPEC-STRUCTURE.md`](.cursor/specs/REFERENCE-SPEC-STRUCTURE.md) (router authoring note)
+  - Spec: [`.cursor/specs/unity-development-context.md`](.cursor/specs/unity-development-context.md) (authoritative); project spec removed after closure
+  - Notes: **Completed (verified per user):** First-party **Unity** reference for **MonoBehaviour** / **Inspector** / **`FindObjectOfType`** / execution order; **territory-ia** `list_specs` key `unity-development-context`; **agent-router** row avoids **`router_for_task`** token collisions with geography queries (see **REFERENCE-SPEC-STRUCTURE**). Unblocks **TECH-18** `unity_context_section`; **TECH-25** tracks optional doc polish.
+  - Depends on: none
 
 - [x] **BUG-37** — Manual **street** drawing clears **buildings** and **zones** on cells adjacent to the **road stroke** (2026-04-02)
   - Type: bug

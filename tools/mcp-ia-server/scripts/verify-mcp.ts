@@ -391,21 +391,21 @@ async function main(): Promise<void> {
     throw new Error("glossary_discover expected suggestions array when no matches");
   }
 
-  const bl20 = parseJsonFromToolResult(
+  const bl25 = parseJsonFromToolResult(
     await client.callTool({
       name: "backlog_issue",
-      arguments: { issue_id: "TECH-20" },
+      arguments: { issue_id: "TECH-25" },
     }),
   ) as { issue_id?: string; status?: string; error?: string; files?: string; backlog_section?: string };
-  if (bl20.error || bl20.issue_id !== "TECH-20" || bl20.status !== "open") {
-    throw new Error("backlog_issue TECH-20 failed");
+  if (bl25.error || bl25.issue_id !== "TECH-25" || bl25.status !== "open") {
+    throw new Error("backlog_issue TECH-25 failed");
   }
-  if (!bl20.files?.includes("unity-development-context")) {
-    throw new Error("backlog_issue TECH-20 expected Files to mention unity-development-context");
+  if (!bl25.files?.includes("unity-development-context")) {
+    throw new Error("backlog_issue TECH-25 expected Files to mention unity-development-context");
   }
-  if (!/agent|unity|mcp/i.test(bl20.backlog_section ?? "")) {
+  if (!/agent|unity|mcp/i.test(bl25.backlog_section ?? "")) {
     throw new Error(
-      "backlog_issue TECH-20 expected backlog_section to mention agent/Unity/MCP lane",
+      "backlog_issue TECH-25 expected backlog_section to mention agent/Unity/MCP lane",
     );
   }
 

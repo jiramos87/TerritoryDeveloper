@@ -29,7 +29,7 @@
 1. **Agent safety and feedback first** — Cheap mechanical checks and Unity→workspace exports reduce bad diffs and improve prompts **before** large IA refactors.
 2. **Measure, then optimize** — Profiling harnesses (**TECH-15**, **TECH-16**) precede aggressive optimization work.
 3. **Correctness gates for ordered systems** — Tick-order drift detection before deep AUTO/scenario investment.
-4. **Human/Unity literacy in-repo** — **`unity-development-context.md`** (**TECH-20**) before MCP slices that assume that body exists (**`unity_context_section`**).
+4. **Human/Unity literacy in-repo** — **`unity-development-context.md`** (shipped **TECH-20** completed) before MCP slices that assume that body exists (**`unity_context_section`**).
 5. **IA platform** — **TECH-19** → **TECH-18** unlocks search, relationships, and advanced MCP tools at scale.
 6. **Domain bundles last among high-impact MCP** — They multiply value **after** cross-spec search / kickoff tools exist.
 
@@ -42,12 +42,12 @@ Each row is a **single deliverable** or a **tightly coupled bundle**. Skip numbe
 | # | Task | Type | Impact / need | Primary backlog / notes |
 |---|------|------|---------------|-------------------------|
 | 1 | **Mechanical repo checks:** scanner for `FindObjectOfType` in `Update` / `LateUpdate` / `FixedUpdate`; optional **`rg`** CI gate blocking new `gridArray` / `cellArray` outside `GridManager` | Script / CI | Very high — enforces [`invariants.mdc`](../.cursor/rules/invariants.mdc); stops recurring **BUG-14**-class and **TECH-04** violations during agent edits | **TECH-26** (`.cursor/projects/TECH-26.md`) |
-| 2 | **Editor menu: “Export agent context”** — write `tools/reports/agent-context-{timestamp}.json` (scene, seed if available, selection, sample cell / grid facts, `schema_version`) | Unity Editor | High — closes Unity↔IDE gap; makes prompts and `.cursor/projects/` specs reproducible | **TECH-28**; aligns with **TECH-20** / **BUG-16**–**BUG-17** |
+| 2 | **Editor menu: “Export agent context”** — write `tools/reports/agent-context-{timestamp}.json` (scene, seed if available, selection, sample cell / grid facts, `schema_version`) | Unity Editor | High — closes Unity↔IDE gap; makes prompts and `.cursor/projects/` specs reproducible | **TECH-28**; aligns with **unity-development-context.md** / **BUG-16**–**BUG-17** |
 | 3 | **New Game / geography initialization profiler** — timed phases → JSON under `tools/reports/` (wall time, optional GC) | Unity Editor / batch | High — evidence base for **TECH-15**; avoids blind micro-optimization | **TECH-15** (`.cursor/projects/TECH-15.md`) |
 | 4 | **Simulation tick harness** — N ticks on fixed seed/scene; JSON with **spec-labeled** phases (GrowthBudget, centroid/rings, AutoRoadBuilder, AutoZoningManager, AutoResourcePlanner, …) | Unity Editor / batch | Very high — grounds **TECH-16**, **BUG-52**, **FEAT-43** / **FEAT-36** work in numbers | **TECH-16** (`.cursor/projects/TECH-16.md`) |
 | 5 | **Simulation tick order drift detector** — compare `SimulationManager` call order to manifest derived from `simulation-system.md` / `spec_section` (or checked-in ordered list) | Script / CI | High — cheap insurance on strict tick order | **TECH-29** (`.cursor/projects/TECH-29.md`) |
 | 6 | **Hot-path static scan manifest** — generate or maintain list from `ARCHITECTURE.md` / managers-reference; extend scanner to **prioritize** AUTO / per-frame participants | Script | Medium–high — focuses **BUG-14** / performance reviews | **TECH-26** Phase 2 |
-| 7 | **`unity-development-context.md`** — Unity lifecycle, Inspector / `SerializeField`, `FindObjectOfType` policy, execution order, 2D sorting vs script-driven **Sorting order** | Doc | Very high — prerequisite for IDE-native Unity literacy; helps **BUG-16**, **BUG-17**, **FEAT-19** | **TECH-20**, **TECH-25** |
+| 7 | **`unity-development-context.md`** — Unity lifecycle, Inspector / `SerializeField`, `FindObjectOfType` policy, execution order, 2D sorting vs script-driven **Sorting order** | Doc | Very high — prerequisite for IDE-native Unity literacy; helps **BUG-16**, **BUG-17**, **FEAT-19** | **TECH-20** completed; optional polish **TECH-25** |
 | 8 | **Minimap `RebuildTexture` cost metric** — one-shot or throttled; JSON/ms/size | Unity Editor / script | Medium — informs **BUG-48** throttle vs rebuild | **BUG-48** (`.cursor/projects/BUG-48.md`) |
 | 9 | **Validate BACKLOG issue IDs** referenced in `.cursor/projects/*.md` | Node / npm script | Medium — doc hygiene; fewer broken agent references | **TECH-30** (`.cursor/projects/TECH-30.md`) |
 | 10 | **Glossary ↔ spec link checker** — paths in glossary “Spec” column exist; optional anchor check | Script | Medium — IA drift control | **TECH-27** (`.cursor/projects/TECH-27.md`) |
@@ -60,7 +60,7 @@ Each row is a **single deliverable** or a **tightly coupled bundle**. Skip numbe
 | 17 | **MCP: `geo_topic_bundle`** — merged slice: shore, cliff, **Sorting order**, map border, `H_bed`, … | MCP | High — **BUG-44**, **BUG-28**, **FEAT-39**, **FEAT-41** | **TECH-18** Phase |
 | 18 | **MCP: `roads_topic_bundle`** — validation, resolver, bridge / wet run | MCP | High — **BUG-31**, **BUG-49** | **TECH-18** Phase |
 | 19 | **MCP: `simulation_tick_outline`** — ordered tick + AUTO / rings cross-links | MCP | High — **BUG-52**, **FEAT-43**, **FEAT-36** | **TECH-18** Phase |
-| 20 | **MCP: `unity_context_section`** — slices of **TECH-20** doc | MCP | Medium–high — **BUG-16**, **BUG-17**, **FEAT-19** | **TECH-18** Phase (after **TECH-20** doc) |
+| 20 | **MCP: `unity_context_section`** — slices of **unity-development-context.md** | MCP | Medium–high — **BUG-16**, **BUG-17**, **FEAT-19** | **TECH-18** Phase |
 | 21 | **Scenario / fixture generator** — from project templates or YAML → Play Mode tests or serialized fixtures | Script / Unity | Medium — reproducible **BUG-52**-class regressions | **TECH-31** (`.cursor/projects/TECH-31.md`) |
 | 22 | **Invariant validation report in harness** — sample checks (HeightMap vs `Cell.height`, road cache assumptions, shore samples) emitted as JSON | Unity / test | Medium — teaches agents via failures | **TECH-15** / **TECH-16** harness phases |
 | 23 | **Sorting / region debug export** — optional `sorting-debug.md` for selected cells (formula inputs, order) | Unity Editor | Medium — **Sorting order** investigations (geo §7) | **TECH-28** |
