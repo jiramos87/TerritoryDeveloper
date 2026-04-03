@@ -54,9 +54,9 @@ See also [`AGENTS.md`](../AGENTS.md) (Before You Start) and [`.cursor/skills/REA
 
 ## Future work (out of scope for TECH-17)
 
-Full-text search across all IA documents is tracked as **TECH-18**; database-backed IA and evolved tools are **TECH-19** / **TECH-18** in [`BACKLOG.md`](../BACKLOG.md).
+Full-text search across all IA documents is tracked as **TECH-18**; database-backed IA and evolved tools are **TECH-44b** / **TECH-18** in [`BACKLOG.md`](../BACKLOG.md).
 
-**TECH-21** program (**TECH-40**–**TECH-42**): JSON Schema, **CI** fixture validation, and **generated** **spec**/**glossary** index JSON (machine manifests only — **not** a second copy of spec bodies; see **TECH-18**).
+**TECH-21** program (**TECH-40**–**TECH-41** **§ Completed**, **TECH-44a**): JSON Schema, **CI** fixture validation, and **generated** **spec**/**glossary** index JSON (machine manifests only — **not** a second copy of spec bodies; see **TECH-18**). **Postgres** program: **TECH-44** (**TECH-44b**, **TECH-44c**).
 
 - **Schemas + fixtures:** [`docs/schemas/README.md`](../docs/schemas/README.md). Validate from repo root: `npm run validate:fixtures` (delegates to `tools/mcp-ia-server`).
 - **Project spec path hygiene (TECH-50, completed 2026-04-03):** From repo root, `npm run validate:dead-project-specs` runs [`tools/validate-dead-project-spec-paths.mjs`](../tools/validate-dead-project-spec-paths.mjs) (durable docs + open **BACKLOG** **`Spec:`** lines). The **IA tools** workflow runs it when `.cursor/**`, `docs/**`, `projects/**`, or related paths change. **Lessons / edge cases:** see **PROJECT-SPEC-STRUCTURE** — **Lessons learned (TECH-50 closure)**. Optional MCP tool + **TECH-30** shared **Node** module: future backlog work, not part of **TECH-50** delivery.

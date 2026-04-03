@@ -9,13 +9,13 @@
 
 ## 1. Summary
 
-After **TECH-19** provides the **PostgreSQL** schema and read surface, migrate **Information Architecture** consumption so **territory-ia** MCP can use **DB-backed** retrieval as the **primary** path (Markdown generated or secondary). Implement additional tools in **phases**: cross-spec search, kickoff checklist, dependency edges, markdown-backed quick tools, domain **topic bundles**, and **`unity_context_section`** over **`.cursor/specs/unity-development-context.md`** (reference spec; **TECH-20** completed — [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md)). **Depends on:** **TECH-19**; **TECH-17** baseline MCP is archived (same file).
+After **TECH-44b** provides the **PostgreSQL** schema and read surface, migrate **Information Architecture** consumption so **territory-ia** MCP can use **DB-backed** retrieval as the **primary** path (Markdown generated or secondary). Implement additional tools in **phases**: cross-spec search, kickoff checklist, dependency edges, markdown-backed quick tools, domain **topic bundles**, and **`unity_context_section`** over **`.cursor/specs/unity-development-context.md`** (reference spec; **TECH-20** completed — [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md)). **Depends on:** **TECH-44b**; **TECH-17** baseline MCP is archived (same file).
 
 ## 2. Goals and Non-Goals
 
 ### 2.1 Goals
 
-1. **DB read path** proven for glossary, spec sections, invariants, relationships — aligned with **TECH-19** tables.
+1. **DB read path** proven for glossary, spec sections, invariants, relationships — aligned with **TECH-44b** tables.
 2. New tools registered in `tools/mcp-ia-server/src/index.ts` with **`snake_case`** names; docs in [docs/mcp-ia-server.md](../../docs/mcp-ia-server.md) and package README per project policy.
 3. Phased rollout; existing tools keep working until each phase flips.
 
@@ -44,7 +44,7 @@ N/A — infrastructure.
 | Area | Pointer |
 |------|---------|
 | MCP | `tools/mcp-ia-server/` — **TECH-17** baseline |
-| DB | **TECH-19** schema / migrations |
+| DB | **TECH-44b** schema / migrations |
 | Rules | `.cursor/rules/terminology-consistency.mdc` — tool naming |
 
 ## 5. Proposed Design
@@ -86,7 +86,7 @@ Agents retrieve IA with **lower token cost** and fewer manual `spec_section` cha
 
 ## 7. Implementation Plan
 
-### Phase 1 — Wire MCP to **TECH-19** read API
+### Phase 1 — Wire MCP to **TECH-44b** read API
 
 - [ ] Implement DB client layer; feature-flag or env for DB vs file fallback.
 - [ ] Migrate one tool end-to-end (e.g. `glossary_lookup`) as pilot.

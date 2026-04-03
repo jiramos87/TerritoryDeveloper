@@ -98,7 +98,7 @@ Labels:
 
 **FEAT-09–16**, **FEAT-18–19**, **FEAT-39–41**, **AUDIO-01**, **ART-01–04** → **C** (new systems, assets, or large design surface). Agents may **prototype** or **document** subtasks, but production merge without human/Unity review is risky.
 
-**TECH-18**–**TECH-20**, **TECH-21** program (**TECH-40**–**TECH-42**), **TECH-43** → **B–C** depending on milestone; **unity-development-context.md** (**TECH-20** + **TECH-25** completed) remains a strong **B** target for *small, slice-sized* doc follow-ups if new Unity conventions appear.
+**TECH-18**–**TECH-20**, **TECH-21** program (**TECH-40**–**TECH-41** **§ Completed**, **TECH-44a**), **TECH-44** program (**TECH-44b**/**c**; **TECH-53**/**TECH-54** backlog-only), **TECH-43** → **B–C** depending on milestone; **unity-development-context.md** (**TECH-20** + **TECH-25** completed) remains a strong **B** target for *small, slice-sized* doc follow-ups if new Unity conventions appear.
 
 ---
 

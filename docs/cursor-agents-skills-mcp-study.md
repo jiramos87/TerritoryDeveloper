@@ -1,7 +1,7 @@
 # Study: Cursor agents, session persistence, Skills, MCP, and Territory Developer
 
 **Audience:** Maintainers deciding how much to rely on the IDE versus repo-owned IA (Information Architecture).  
-**Sources:** Cursor product behavior (public docs + host conventions), this repo’s `AGENTS.md`, `docs/mcp-ia-server.md`, `docs/mcp-markdown-ia-pattern.md`, `BACKLOG.md` (e.g. **TECH-17** / **TECH-18** / **TECH-19**), and **territory-ia** MCP tool outputs sampled during this write-up (`backlog_issue`, `spec_outline`, `invariants_summary`, `glossary_discover`, `router_for_task`).
+**Sources:** Cursor product behavior (public docs + host conventions), this repo’s `AGENTS.md`, `docs/mcp-ia-server.md`, `docs/mcp-markdown-ia-pattern.md`, `BACKLOG.md` (e.g. **TECH-17** / **TECH-18** / **TECH-44b**), and **territory-ia** MCP tool outputs sampled during this write-up (`backlog_issue`, `spec_outline`, `invariants_summary`, `glossary_discover`, `router_for_task`).
 
 ---
 
@@ -10,7 +10,7 @@
 | Question | Short answer |
 |----------|----------------|
 | Does Cursor persist “agent sessions”? | **Partially.** Conversation threads and UI history persist in the product; **durable, repo-owned “memory”** of decisions and domain state is **not** a substitute for specs, rules, backlog, and tools like **territory-ia**. |
-| Should we implement persistence in development? | **Yes, at the information layer** (Markdown + MCP + Git), which this repo already does. **Optional:** third-party “memory” MCPs or future DB-backed IA (**TECH-19** / **TECH-18**) for richer retrieval—not for replacing specs. |
+| Should we implement persistence in development? | **Yes, at the information layer** (Markdown + MCP + Git), which this repo already does. **Optional:** third-party “memory” MCPs or future DB-backed IA (**TECH-44b** / **TECH-18**) for richer retrieval—not for replacing specs. |
 | Are Skills the same as agentic state? | **No.** **Skills** are **static, versioned instructions** the host may attach when relevant. **Agentic state** is **transient context** (thread, tool results, approvals). They complement each other. |
 | Skills + existing MCP? | **Layered:** MCP = **pull structured facts** on demand; Skills = **how to behave** on recurring workflows. Avoid duplicating glossary/spec text inside Skills—point to MCP and `AGENTS.md` instead. |
 | Specialist agents? | **Sometimes.** Narrow sub-tasks can **reduce** tokens if the parent passes a tight brief; **fan-out** and summarization can **increase** cost. **territory-ia** already targets token efficiency via **slices**. |
@@ -70,7 +70,7 @@ Consider an external memory MCP or DB only if you need **user-specific** or **hi
 
 1. Add **project Skills** under `.cursor/skills/` (or team convention) for **non-domain** workflows: MCP verify, issue kickoff, PR checklist.
 2. Keep **English** in Skill bodies aligned with **glossary** terms when touching domain language (same rule as MCP `glossary_*` tools).
-3. Reference **TECH-18** / **TECH-19** roadmap: future **DB-backed** IA changes *implementation* of tools, not the **split** “facts in IA / procedures in Skills.”
+3. Reference **TECH-18** / **TECH-44b** roadmap: future **DB-backed** IA changes *implementation* of tools, not the **split** “facts in IA / procedures in Skills.”
 
 ### 4.4 Shipped repo skills (Part 1 + kickoff + implement + validation + close)
 
@@ -125,8 +125,8 @@ Sample **invariants_summary** (abridged intent): sync height map and cell height
 
 ### 6.3 Backlog alignment
 
-- **TECH-18 / TECH-19:** Longer-term **search and DB** for IA; complements Cursor Skills (procedures stay thin; facts stay queryable).
-- **TECH-21** program (**TECH-40**–**TECH-42**): Machine-readable indexes (**TECH-40**), validated DTOs (**TECH-41**), future DB patterns (**TECH-42**) — **reduces** need for agents to “remember” schema details if CI and docs enforce them.
+- **TECH-18 / TECH-44b:** Longer-term **search and DB** for IA; complements Cursor Skills (procedures stay thin; facts stay queryable).
+- **TECH-21** program (**TECH-40**–**TECH-41** **§ Completed**, **TECH-44a**): Machine-readable indexes (**TECH-40**), validated DTOs (**TECH-41**), DB/API patterns (**TECH-44a**) — **reduces** need for agents to “remember” schema details if CI and docs enforce them. **TECH-44** (**TECH-44b**/**c**; **TECH-53**/**TECH-54**): Postgres + **E1** repro registry; **E2**/**E3** follow-ups (backlog-only rows).
 
 ---
 
@@ -145,7 +145,7 @@ Sample **invariants_summary** (abridged intent): sync height map and cell height
 - `AGENTS.md` — agent workflow, MCP-first retrieval, `.cursor/projects/` policy  
 - `docs/mcp-ia-server.md` — territory-ia tools and policy  
 - `docs/mcp-markdown-ia-pattern.md` — slice-based IA pattern  
-- `BACKLOG.md` — **TECH-17** (shipped MCP), **TECH-18**, **TECH-19**, **TECH-21** program (**TECH-40**–**TECH-42**, **TECH-43**), **TECH-48** (MCP discovery from project specs)  
+- `BACKLOG.md` — **TECH-17** (shipped MCP), **TECH-18**, **TECH-44** program (**TECH-44a**/**b**/**c**), **TECH-21** program, **TECH-43**, **TECH-48** (MCP discovery from project specs)  
 - `.cursor/rules/invariants.mdc` — system invariants (also exposed via MCP `invariants_summary`)
 
 ---

@@ -18,7 +18,7 @@
 |------------------|-------------|---------------------|
 | **Unity ↔ IDE feedback** | Structured artifacts (`tools/reports/`), Editor export, glossary-aligned bug reports | Feeds **measurement** and **context JSON**; pairs with simulation harness output shape |
 | **Spec-driven AUTO / performance** | Spec-labeled profiler phases, tick drift, scenario generators, ring what-if | Same `tools/reports/` contract; **depends** on simulation spec vocabulary (`simulation-system.md`) |
-| **Backlog-driven MCP vs scripts** | TECH-19/18 foundation, `search_specs`, domain bundles, Node/Unity scripts | **Splits delivery:** MCP for low-token retrieval; scripts for volume/CI; master “impact list” informed ordering below |
+| **Backlog-driven MCP vs scripts** | TECH-44b/18 foundation, `search_specs`, domain bundles, Node/Unity scripts | **Splits delivery:** MCP for low-token retrieval; scripts for volume/CI; master “impact list” informed ordering below |
 
 **Design rule (carried forward):** Keep **heavy or noisy** output in **scripts** and **artifacts**; keep **MCP** responses **small and structured**. Do not duplicate the same check as both a mandatory MCP tool and a CI script unless one is a thin wrapper.
 
@@ -30,7 +30,7 @@
 2. **Measure, then optimize** — Profiling harnesses (**TECH-15**, **TECH-16**) precede aggressive optimization work.
 3. **Correctness gates for ordered systems** — Tick-order drift detection before deep AUTO/scenario investment.
 4. **Human/Unity literacy in-repo** — **`unity-development-context.md`** (shipped **TECH-20** completed) before MCP slices that assume that body exists (**`unity_context_section`**).
-5. **IA platform** — **TECH-19** → **TECH-18** unlocks search, relationships, and advanced MCP tools at scale.
+5. **IA platform** — **TECH-44b** → **TECH-18** unlocks search, relationships, and advanced MCP tools at scale.
 6. **Domain bundles last among high-impact MCP** — They multiply value **after** cross-spec search / kickoff tools exist.
 
 ---
@@ -52,7 +52,7 @@ Each row is a **single deliverable** or a **tightly coupled bundle**. Skip numbe
 | 9 | **Validate BACKLOG issue IDs** referenced in `.cursor/projects/*.md` | Node / npm script | Medium — doc hygiene; fewer broken agent references | **TECH-30** (`.cursor/projects/TECH-30.md`); complements row **9a** |
 | 9a | **Dead** `.cursor/projects/*.md` **paths** repo-wide (durable docs + open **BACKLOG** **`Spec:`**) | Node / npm script | Medium — agents and **Spec:** rows stay navigable after spec deletion | **TECH-50** completed (2026-04-03) — `npm run validate:dead-project-specs`; [`tools/validate-dead-project-spec-paths.mjs`](../tools/validate-dead-project-spec-paths.mjs) |
 | 10 | **Glossary ↔ spec link checker** — paths in glossary “Spec” column exist; optional anchor check | Script | Medium — IA drift control | **TECH-27** (`.cursor/projects/TECH-27.md`) |
-| 11 | **TECH-19 — PostgreSQL IA schema** — migrations, seed, minimal read surface for glossary/spec/relationships | Infra | Very high — foundation for durable search and MCP evolution | **TECH-19** (`.cursor/projects/TECH-19.md`) |
+| 11 | **TECH-44b — PostgreSQL IA schema** — migrations, seed, minimal read surface for glossary/spec/relationships | Infra | Very high — foundation for durable search and MCP evolution | **TECH-44b** (`.cursor/projects/TECH-44b.md`); patterns **TECH-44a** |
 | 12 | **TECH-18 — IA migration + extended MCP** — primary retrieval path; regen markdown as needed | Infra / MCP | Very high — unlocks tools below at scale | **TECH-18** (`.cursor/projects/TECH-18.md`) |
 | 13 | **MCP: `search_specs` / `ia_search`** — ranked snippets across registered specs + rules | MCP | Very high — replaces manual `spec_section` chains for multi-domain bugs | **TECH-18** Phase |
 | 14 | **MCP: `what_do_i_need_to_know(task_description)`** — checklist: specs, glossary, invariants, typical files | MCP | High — structured kickoff | **TECH-18** Phase |
@@ -85,7 +85,7 @@ Each row is a **single deliverable** or a **tightly coupled bundle**. Skip numbe
 
 ## 4. Parallelization note
 
-Rows **1–6** and **3–4** can **partially overlap** across people (e.g. one owner on **TECH-26**, another on **TECH-15**), but **row 5** should assume **row 4**’s phase names are stable. **Rows 11–20** require **TECH-19/18** sequencing as in **BACKLOG.md**.
+Rows **1–6** and **3–4** can **partially overlap** across people (e.g. one owner on **TECH-26**, another on **TECH-15**), but **row 5** should assume **row 4**’s phase names are stable. **Rows 11–20** require **TECH-44b/18** sequencing as in **BACKLOG.md**.
 
 ---
 

@@ -19,7 +19,7 @@ This file is the **program charter** for **TECH-36**. Executable work lives in *
 
 **Direction (product):** The game plan includes an **editor** / in-game **geography** authoring flow for **territory** / **urban** area maps, with **isometric** terrain logic exposed through a **control panel** (e.g. **map** size, **water** share, **forests**, **height** / hills, **sea** / **river** / **lake** mix, and related knobs). The same parameter model and code paths should be **reusable** for future **player** tools and **AUTO** systems (**terraform**, **basin** / **elevation** edits, **forests**, **water bodies** in **depressions**).
 
-**Tracking:** **[FEAT-46](../../BACKLOG.md)** (backlog only — no project spec until prioritized). **TECH-37**/**TECH-38** supply **pure** helpers and harness **JSON**; **TECH-21** program (**TECH-40**–**TECH-42**) owns **schema**/**artifact** policy and **Geography initialization** **DTO** files that **FEAT-46** can bind to UI later.
+**Tracking:** **[FEAT-46](../../BACKLOG.md)** (backlog only — no project spec until prioritized). **TECH-37**/**TECH-38** supply **pure** helpers and harness **JSON**; **TECH-21** program (**TECH-40** / **TECH-41** **§ Completed**, **TECH-44a**) owns **schema**/**artifact** policy and **Geography initialization** **DTO** files that **FEAT-46** can bind to UI later.
 
 ### 2.2 Desirability, pathfinding, and multipolar growth
 

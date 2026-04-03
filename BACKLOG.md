@@ -13,17 +13,17 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
 
 - [ ] **TECH-21** — **JSON program** (umbrella): interchange, schemas, runtime payloads, future backend shapes
   - Type: technical / data interchange
-  - Files: umbrella only — see **TECH-40**, **TECH-41**, **TECH-42**; charter `.cursor/projects/TECH-21.md`; [`projects/TECH-21-json-use-cases-brainstorm.md`](projects/TECH-21-json-use-cases-brainstorm.md); reference `.cursor/specs/persistence-system.md`, `docs/planned-domain-ideas.md`
+  - Files: umbrella only — see **TECH-40**, **TECH-41**, **TECH-44a**; charter `.cursor/projects/TECH-21.md`; [`projects/TECH-21-json-use-cases-brainstorm.md`](projects/TECH-21-json-use-cases-brainstorm.md); reference `.cursor/specs/persistence-system.md`, `docs/planned-domain-ideas.md`
   - Spec: `.cursor/projects/TECH-21.md`
-  - Notes: **Program charter** for **JSON** DTOs, **CI** validation, **spec/glossary** machine indexes (no full-spec duplication — **TECH-18**), **Geography initialization** / harness payloads (**TECH-15**, **TECH-38** Wave D, **TECH-39** `geography_init_params_validate`), and **TECH-19**-ready row+blob patterns. **Phased delivery:** **TECH-40** / **TECH-41** (**§ Completed**); **TECH-42** (future domains + DB/API envelopes + streaming guidance). **Related:** **TECH-36** program (**compute-lib** shares Zod/schemas with MCP), **FEAT-46**–**FEAT-48** (planned parameters in [`docs/planned-domain-ideas.md`](docs/planned-domain-ideas.md)), **TECH-16** tick harness JSON, **FEAT-37c** (**Load pipeline** — completed, [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)).
-  - Acceptance: **TECH-40**, **TECH-41**, and **TECH-42** each satisfy their own **Acceptance** lines in this file (program **complete** when all three **complete**); player **Save data** never regresses without an explicit migration issue
-  - Depends on: none (child order **TECH-40** / **TECH-41** **§ Completed** → **TECH-42**)
+  - Notes: **Program charter** for **JSON** DTOs, **CI** validation, **spec/glossary** machine indexes (no full-spec duplication — **TECH-18**), **Geography initialization** / harness payloads (**TECH-15**, **TECH-38** Wave D, **TECH-39** `geography_init_params_validate`), and **Postgres**-ready row+blob patterns (**TECH-44** program: **TECH-44b**/**c**). **Phased delivery:** **TECH-40** / **TECH-41** (**§ Completed**); **TECH-44a** (Phase C **documentation** — **B1**/**B3**/**P5**). **Related:** **TECH-36** program (**compute-lib** shares Zod/schemas with MCP), **FEAT-46**–**FEAT-48** (planned parameters in [`docs/planned-domain-ideas.md`](docs/planned-domain-ideas.md)), **TECH-16** tick harness JSON, **FEAT-37c** (**Load pipeline** — completed, [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)), merged **TECH-44** charter ([`.cursor/projects/TECH-44.md`](.cursor/projects/TECH-44.md)) for **TECH-44b**/**c**.
+  - Acceptance: **TECH-40**, **TECH-41**, and **TECH-44a** each satisfy their own **Acceptance** lines in this file (program **complete** when all three **complete**); player **Save data** never regresses without an explicit migration issue
+  - Depends on: none (child order **TECH-40** / **TECH-41** **§ Completed** → **TECH-44a**)
 
 - [ ] **TECH-36** — **Computational program** (umbrella): **geometry**, **stochastics**, **algorithms** + **territory-ia** tools
   - Type: tooling / code health / agent enablement
   - Files: umbrella only — see **TECH-37**, **TECH-38**, **TECH-39**; charter `.cursor/projects/TECH-36.md`; reference specs: `.cursor/specs/isometric-geography-system.md`, `.cursor/specs/simulation-system.md`, `.cursor/specs/managers-reference.md`
   - Spec: `.cursor/projects/TECH-36.md`
-  - Notes: **Program charter** with resolved product/tooling decisions. **Phased delivery:** **TECH-37** (**`tools/compute-lib/`** + pilot **`registerTool`**), **TECH-38** (Unity **pure** **compute** + **`tools/`** harnesses), **TECH-39** (computational **MCP** suite). **Related:** **TECH-21** program (**TECH-40**–**TECH-42** — JSON DTOs/schemas), **TECH-28** (completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)), **TECH-32**, **TECH-35**; product follow-ups **FEAT-46** (geography authoring UI), **FEAT-47** (**multipolar** **urban growth rings**), **FEAT-48** (**water body** volume / **surface height (S)**).
+  - Notes: **Program charter** with resolved product/tooling decisions. **Phased delivery:** **TECH-37** (**`tools/compute-lib/`** + pilot **`registerTool`**), **TECH-38** (Unity **pure** **compute** + **`tools/`** harnesses), **TECH-39** (computational **MCP** suite). **Related:** **TECH-21** program (**TECH-40** / **TECH-41** **§ Completed**, **TECH-44a** — JSON DTOs/schemas), **TECH-28** (completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)), **TECH-32**, **TECH-35**; product follow-ups **FEAT-46** (geography authoring UI), **FEAT-47** (**multipolar** **urban growth rings**), **FEAT-48** (**water body** volume / **surface height (S)**).
   - Acceptance: **TECH-37**, **TECH-38**, and **TECH-39** each satisfy their own **Acceptance** lines in this file (program **complete** when all three **complete**)
   - Depends on: none (child issues **TECH-37** → **TECH-38** → **TECH-39** track implementation order)
 
@@ -52,13 +52,53 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Depends on: **TECH-37** (soft: **TECH-38** for **heavy** tools)
 
 
-- [ ] **TECH-42** — **JSON** for **future** domains: DB shapes, API envelopes, large-document **streaming**
-  - Type: technical / architecture (future-facing)
-  - Files: `.cursor/projects/TECH-19.md` (cross-links only until DB lands); `docs/planned-domain-ideas.md` (parameter evolution); optional design appendix under `docs/`
-  - Spec: `.cursor/projects/TECH-42.md`
-  - Notes: **Phase C** of **TECH-21**. **B1** row + JSONB column pattern; **B3** idempotent **patch** envelope as **API contract** (not one fixed table); **P5** when **Load pipeline** or exports need incremental readers; links **FEAT-47**/**FEAT-48** data needs without implementing them. **B2** tracked separately (**TECH-43** — backlog only, no project spec).
-  - Acceptance: written patterns merged per `.cursor/projects/TECH-42.md` §8; **TECH-19** field naming compatible where applicable
-  - Depends on: **TECH-41** (completed — [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-41**; soft: **TECH-40** — shared schema policy in **glossary** / `docs/schemas/`)
+- [ ] **TECH-44** — **Postgres + interchange patterns** (merged **TECH-19** + **TECH-42**): charter + **E1**–**E3** follow-ups
+  - Type: technical / infrastructure + architecture (program umbrella)
+  - Files: charter only — **TECH-44a**, **TECH-44b**, **TECH-44c**; [`projects/ia-driven-dev-backend-database-value.md`](projects/ia-driven-dev-backend-database-value.md)
+  - Spec: `.cursor/projects/TECH-44.md`
+  - Notes: **Single program** for **B1**/**B3**/**P5** patterns, first **Postgres** milestone, and **E1** (**TECH-44c**). **Follow-ups (no project spec):** **TECH-53** (**E2** validation history), **TECH-54** (**E3** patch staging). **Child execution order:** **TECH-44a** → **TECH-44b** → **TECH-44c**; **TECH-53**/**TECH-54** after **TECH-44b** unless recorded otherwise in **Decision Log**. Do not expand **TECH-44c** scope.
+  - Acceptance: charter **§4** program checklist (**TECH-44a**/**b**/**c** specs **§8** satisfied)
+  - Depends on: **TECH-41** **§ Completed** (soft: **TECH-40**)
+
+- [ ] **TECH-44a** — **Interchange + PostgreSQL patterns** (**B1**, **B3**, **P5**)
+  - Type: technical / architecture (documentation)
+  - Files: `docs/planned-domain-ideas.md` (parameter evolution); optional design appendix under `docs/`
+  - Spec: `.cursor/projects/TECH-44a.md`
+  - Notes: **Phase C** of **TECH-21** (documentation). Former **TECH-42** scope. Program charter: [`.cursor/projects/TECH-44.md`](.cursor/projects/TECH-44.md). **B2** → **TECH-43** only.
+  - Acceptance: written patterns per `.cursor/projects/TECH-44a.md` §8; compatible with **TECH-40** **`artifact`** policy
+  - Depends on: **TECH-41** **§ Completed** (soft: **TECH-40**)
+
+- [ ] **TECH-44b** — Game **PostgreSQL** database; first milestone — **IA** schema + minimal read surface
+  - Type: infrastructure / tooling
+  - Files: new project outside `Assets/Scripts/` (PostgreSQL schema, migrations, optional small service or MCP-adjacent module); seed scripts as needed
+  - Spec: `.cursor/projects/TECH-44b.md`
+  - Notes: Former **TECH-19** scope. **Patterns** from **TECH-44a** apply to **JSONB** / interchange rows. **Goal:** **game-owned** database; **IA** tables (`glossary`, `spec_sections`, `invariants`, `relationships` — names adjustable); minimal read path for **TECH-18** pilot. **Does not** replace Markdown as source of truth — **TECH-18**. Program: [`.cursor/projects/TECH-44.md`](.cursor/projects/TECH-44.md).
+  - Acceptance: per `.cursor/projects/TECH-44b.md` §8
+  - Depends on: **TECH-44a**
+
+- [ ] **TECH-44c** — **Dev repro bundle registry** (**E1**)
+  - Type: tooling / agent enablement
+  - Files: migrations (extends **TECH-44b**); `docs/` or `tools/` registration script; optional Editor hook
+  - Spec: `.cursor/projects/TECH-44c.md`
+  - Notes: First **B1** dev table linking **Agent context** / **Sorting debug** exports to **BACKLOG** issue id + `git` SHA. **Follow-ups:** **TECH-53** (**E2**), **TECH-54** (**E3**) — see **TECH-44** charter **§3**.
+  - Acceptance: per `.cursor/projects/TECH-44c.md` §6
+  - Depends on: **TECH-44b**
+
+- [ ] **TECH-53** — **Schema validation history** (former **TECH-44** **E2**)
+  - Type: technical / CI / data
+  - Files: `.github/workflows/` (e.g. extend **ia-tools**), `docs/schemas/`, `docs/schemas/fixtures/`; optional **Postgres** table via **TECH-44b** migrations
+  - Spec: none (backlog-only — no `.cursor/projects/` spec)
+  - Notes: Persist per-CI-run outcomes of **`npm run validate:fixtures`** / **JSON Schema** checks so regressions on **Interchange JSON** and fixtures are visible over time. Align row shape with **TECH-44a** **B1** if stored in **Postgres**. Charter pointer: [`.cursor/projects/TECH-44.md`](.cursor/projects/TECH-44.md) **§3**.
+  - Acceptance: agreed storage (artifact file, DB rows, or workflow summary) + documented query or review path; English **Notes** updated when implementation choice is fixed
+  - Depends on: **TECH-44b** (soft: **TECH-40** **§ Completed**)
+
+- [ ] **TECH-54** — **Agent patch proposal staging** (former **TECH-44** **E3**)
+  - Type: tooling / agent workflow
+  - Files: optional **Postgres** migrations; `tools/` or thin HTTP handler; `docs/`
+  - Spec: none (backlog-only — no `.cursor/projects/` spec)
+  - Notes: Queue **B3**-style idempotent patch envelopes (**TECH-44a**) with explicit lifecycle (**pending** / **approved** / **rejected**) before humans merge changes to git; **`natural_key`** for deduplication. **Not** player **Save data**. Charter pointer: [`.cursor/projects/TECH-44.md`](.cursor/projects/TECH-44.md) **§3**.
+  - Acceptance: documented state machine + at least one insert/list path (script, SQL, or API); conflict policy recorded in issue **Notes** or **TECH-44a** **Decision Log** when implementing
+  - Depends on: **TECH-44b** (soft: **TECH-44a**)
 
 - [ ] **TECH-43** — Append-only **JSON** line **event log** (telemetry / sim anomalies) — **backlog placeholder**
   - Type: technical / observability (future)
@@ -68,19 +108,12 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Acceptance: issue refined with concrete consumer + storage choice; optional schema + sample sink
   - Depends on: none (soft: **TECH-40** completed — **§ Completed**)
 
-- [ ] **TECH-19** — Game PostgreSQL database; first milestone — IA schema for MCP + basic tools
-  - Type: infrastructure / tooling
-  - Files: new project outside `Assets/Scripts/` (PostgreSQL schema, migrations, optional small service or MCP-adjacent module); seed scripts as needed
-  - Spec: `.cursor/projects/TECH-19.md`
-  - Notes: **Goal:** Introduce a **game-owned** PostgreSQL database (long-term: not only AI — analytics, metagame, ops, etc.; document intended product uses as they land). **First concrete milestone:** tables and migrations for **Information Architecture** data that MCP will eventually query: e.g. `glossary` (term, conceptual_def, technical_def, spec_address, section, category), `spec_sections` (spec_abbrev, section_id, title, content, parent_section), `invariants`, `relationships` (term_a, relation, term_b) — adjust names/types to match implementation. Ship a **minimal** programmatic surface (SQL views, repo functions, or thin API) plus a **basic** tool set (same *families* as **TECH-17**, but **wired to Postgres** where applicable) to prove read paths. **Optional:** seed a small subset from `.cursor/specs/glossary.md` to validate the pipeline. **Does not** ingest full specs or replace Markdown as source of truth — that is **TECH-18**. **Stack:** PostgreSQL (psql / DBeaver compatible), migrations (tool of choice).
-  - Depends on: none
-
 - [ ] **TECH-18** — Migrate Information Architecture from Markdown to PostgreSQL (MCP evolution)
   - Type: infrastructure / tooling
-  - Files: All `.cursor/specs/*.md`, `.cursor/rules/agent-router.mdc`, `.cursor/rules/invariants.mdc`, `ARCHITECTURE.md`; MCP server from **TECH-17** (initially **file-backed**); schema / migrations / seed from **TECH-19**; `tools/mcp-ia-server/src/index.ts`, `docs/mcp-ia-server.md`
+  - Files: All `.cursor/specs/*.md`, `.cursor/rules/agent-router.mdc`, `.cursor/rules/invariants.mdc`, `ARCHITECTURE.md`; MCP server from **TECH-17** (initially **file-backed**); schema / migrations / seed from **TECH-44b**; `tools/mcp-ia-server/src/index.ts`, `docs/mcp-ia-server.md`
   - Spec: `.cursor/projects/TECH-18.md`
-  - Notes: **Goal:** After **TECH-17** (MCP over **`.md` / `.mdc`**) and **TECH-19** (Postgres + IA tables), **migrate authoritative IA content** into PostgreSQL and evolve the **same MCP** so **primary** retrieval is DB-backed. Markdown becomes **generated or secondary** for human reading. **Explicit dependency:** This work **extends the MCP built first on Markdown** in **TECH-17** — same tool contracts where possible, swapping implementation to query **TECH-19**’s database. **Scope:** (1) Parse and ingest spec sections (`isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, etc.) into `spec_sections`. (2) Populate `relationships` (e.g. HeightMap↔Cell.height, PathTerraformPlan→Phase-1→Apply). (3) Populate `invariants` from `invariants.mdc`. (4) Extend tools: `what_do_i_need_to_know(task_description)`, `search_specs(query)`, `dependency_chain(term)`. (5) Script to regenerate `.md` from DB for review. (6) Update `agent-router.mdc` — MCP tools first, Markdown fallback second. **Acceptance:** Agent resolves a multi-spec task (e.g. “bridge over multi-level lake”) via MCP reading ≤ ~500 tokens of context instead of many full-file reads. **Phased MCP tools** (bundles, `backlog_search`, **`unity_context_section` after TECH-20** doc, etc.): see `.cursor/projects/TECH-18.md` and `docs/agent-tooling-verification-priority-tasks.md` (tasks 12–20, 28–32, 35). **Deferred unless reopened:** `findobjectoftype_scan`, `find_symbol` MCP tools (prefer **TECH-26** script).
-  - Depends on: **TECH-19** (**TECH-17** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
+  - Notes: **Goal:** After **TECH-17** (MCP over **`.md` / `.mdc`**) and **TECH-44b** (Postgres + IA tables), **migrate authoritative IA content** into PostgreSQL and evolve the **same MCP** so **primary** retrieval is DB-backed. Markdown becomes **generated or secondary** for human reading. **Explicit dependency:** This work **extends the MCP built first on Markdown** in **TECH-17** — same tool contracts where possible, swapping implementation to query **TECH-44b**’s database. **Scope:** (1) Parse and ingest spec sections (`isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, etc.) into `spec_sections`. (2) Populate `relationships` (e.g. HeightMap↔Cell.height, PathTerraformPlan→Phase-1→Apply). (3) Populate `invariants` from `invariants.mdc`. (4) Extend tools: `what_do_i_need_to_know(task_description)`, `search_specs(query)`, `dependency_chain(term)`. (5) Script to regenerate `.md` from DB for review. (6) Update `agent-router.mdc` — MCP tools first, Markdown fallback second. **Acceptance:** Agent resolves a multi-spec task (e.g. “bridge over multi-level lake”) via MCP reading ≤ ~500 tokens of context instead of many full-file reads. **Phased MCP tools** (bundles, `backlog_search`, **`unity_context_section` after TECH-20** doc, etc.): see `.cursor/projects/TECH-18.md` and `docs/agent-tooling-verification-priority-tasks.md` (tasks 12–20, 28–32, 35). **Deferred unless reopened:** `findobjectoftype_scan`, `find_symbol` MCP tools (prefer **TECH-26** script).
+  - Depends on: **TECH-44b** (**TECH-17** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
 
 - [ ] **TECH-15** — New Game / **geography initialization** performance
   - Type: performance / optimization
@@ -379,7 +412,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Spec sections: `.cursor/specs/ui-design-system.md` — **§3.3** (toolbar), **§1.3** (anchors/margins), **§4.3** (Canvas Scaler) as applicable.
   - Notes: Replace the bottom-centered horizontal **ribbon** with a **left-docked vertical** panel. Structure: **one row per category** (demolition, **RCI** **zoning**, **utility buildings**, **streets**, environment/**forests**, etc.), with **buttons laid out horizontally within each row** (e.g. `VerticalLayoutGroup` of rows, each row `HorizontalLayoutGroup`, or equivalent manual layout). Re-anchor dependent UI (e.g. **zone density** / tool option overlays) so they align to the new sidebar instead of the old bottom bar. Verify safe area and Canvas Scaler at reference resolutions; avoid overlapping the mini-map and debug readouts. Document final hierarchy in `docs/ui-design-system-context.md`. Link program charter: `docs/ui-design-system-project.md` (Backlog bridge). Spec/docs ticketed and cross-linked in **TECH-08** (completed).
 
-*(Agent–Unity / MCP tooling **TECH-21** program **TECH-40**–**TECH-42**, **TECH-23**–**TECH-39** (including **TECH-36** program **TECH-37**–**TECH-39**), **TECH-43** (placeholder), **TECH-45**–**TECH-47** (**Cursor Skill** pack), **TECH-48** (MCP discovery from project specs), **TECH-15**/**TECH-16** performance+harness — listed in **§ Agent ↔ Unity & MCP context lane** above. **TECH-49**–**TECH-52** (**Cursor Skills** kickoff / implement / close / **project-implementation-validation**) and **TECH-50** (dead project-spec path scanner) — **§ Completed**. **Shipped skills:** **project-spec-kickoff**, **project-spec-implement**, **project-spec-close**, **project-implementation-validation**; `.cursor/skills/README.md` — see **§ Completed**.)*
+*(Agent–Unity / MCP tooling **TECH-21** program **TECH-40**–**TECH-41** **§ Completed** / **TECH-44a**, **TECH-44** program (**TECH-44b**, **TECH-44c**, **TECH-53**, **TECH-54**), **TECH-23**–**TECH-39** (including **TECH-36** program **TECH-37**–**TECH-39**), **TECH-43** (placeholder), **TECH-45**–**TECH-47** (**Cursor Skill** pack), **TECH-48** (MCP discovery from project specs), **TECH-15**/**TECH-16** performance+harness — listed in **§ Agent ↔ Unity & MCP context lane** above. **TECH-49**–**TECH-52** (**Cursor Skills** kickoff / implement / close / **project-implementation-validation**) and **TECH-50** (dead project-spec path scanner) — **§ Completed**. **Shipped skills:** **project-spec-kickoff**, **project-spec-implement**, **project-spec-close**, **project-implementation-validation**; `.cursor/skills/README.md` — see **§ Completed**.)*
 
 ## Low Priority
 
@@ -494,7 +527,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-*(**TECH-18**, **TECH-19**, **TECH-21** program (**TECH-40**–**TECH-42**, **TECH-43**), **TECH-45**–**TECH-48** — listed in **§ Agent ↔ Unity & MCP context lane** above; **TECH-49** / **TECH-50** / **TECH-51** / **TECH-52** completed — **§ Completed**; **TECH-20** / **TECH-25** / **TECH-28** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**; other recent completions under **§ Completed**.)*
+*(**TECH-18**, **TECH-44** program (**TECH-44a** / **TECH-44b** / **TECH-44c** / **TECH-53** / **TECH-54**), **TECH-21** program (**TECH-40**–**TECH-41** **§ Completed**, **TECH-44a**, **TECH-43**), **TECH-45**–**TECH-48** — listed in **§ Agent ↔ Unity & MCP context lane** above; **TECH-49** / **TECH-50** / **TECH-51** / **TECH-52** completed — **§ Completed**; **TECH-20** / **TECH-25** / **TECH-28** completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**; other recent completions under **§ Completed**.)*
 
 - [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects
   - Type: audio/feature
@@ -509,14 +542,14 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Type: technical / performance enablement
   - Files: `Assets/StreamingAssets/Config/geography-default.json`; `Assets/Scripts/Managers/GameManagers/GeographyInitParamsDto.cs`, `GeographyInitParamsLoader.cs`; `GeographyManager.cs`, `MapGenerationSeed.cs`; `Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs`; `docs/schemas/cell-chunk-interchange.v1.schema.json`, `world-snapshot-dev.v1.schema.json`, `docs/schemas/README.md`; `tools/mcp-ia-server/src/schemas/geography-init-params-zod.ts`, `scripts/validate-fixtures.ts`, `tests/schemas/`; `.cursor/specs/glossary.md` — **Interchange JSON**, **geography_init_params**; **`ARCHITECTURE.md`** — **Interchange JSON**; **persistence-system** / **unity-development-context** cross-links
   - Spec: (removed after closure — **glossary** + **`ARCHITECTURE.md`** + [`docs/schemas/README.md`](docs/schemas/README.md) + **unity-development-context** §10; umbrella [`.cursor/projects/TECH-21.md`](.cursor/projects/TECH-21.md); this row)
-  - Notes: **Completed (verified — `/project-spec-close`):** **Phase B** of **TECH-21**. **G4** optional **`geography_init_params`** load from **StreamingAssets**; **G1**/**G2** Editor exports under **`tools/reports/`**; Zod parity + **`validate:fixtures`**; **E3** layering documented; **Save data** unchanged. **Deferred to FEAT-46:** apply **`water.seaBias`** / **`forest.coverageTarget`** to simulation. **`backlog_issue`** test target moved to open **TECH-42**.
+  - Notes: **Completed (verified — `/project-spec-close`):** **Phase B** of **TECH-21**. **G4** optional **`geography_init_params`** load from **StreamingAssets**; **G1**/**G2** Editor exports under **`tools/reports/`**; Zod parity + **`validate:fixtures`**; **E3** layering documented; **Save data** unchanged. **Deferred to FEAT-46:** apply **`water.seaBias`** / **`forest.coverageTarget`** to simulation. **`backlog_issue`** test target: open **TECH-21**-program child (e.g. **TECH-44a**).
   - Depends on: none (**TECH-40** completed — **§ Completed** **TECH-40**)
 
 - [x] **TECH-40** — **JSON** infra: artifact identity, schemas, **CI** validation, **spec** + **glossary** indexes (2026-04-11)
   - Type: tooling / data interchange
   - Files: `docs/schemas/` (pilot schema + fixtures); repo root `package.json` (`validate:fixtures`, `generate:ia-indexes`, `validate:dead-project-specs`, `test:ia`); `tools/mcp-ia-server/scripts/validate-fixtures.ts`, `generate-ia-indexes.ts`, `src/ia-index/glossary-spec-ref.ts`, `data/spec-index.json`, `data/glossary-index.json`; `.github/workflows/ia-tools.yml`; `projects/TECH-21-json-use-cases-brainstorm.md` (policy §); `docs/mcp-ia-server.md`; `.cursor/specs/glossary.md` — **Documentation** (**IA index manifest**, **Interchange JSON**); [REFERENCE-SPEC-STRUCTURE.md](.cursor/specs/REFERENCE-SPEC-STRUCTURE.md) § Conventions item 7
   - Spec: (removed after closure — **glossary** + **REFERENCE-SPEC-STRUCTURE** + [`docs/schemas/README.md`](docs/schemas/README.md) + [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); umbrella [`.cursor/projects/TECH-21.md`](.cursor/projects/TECH-21.md); this row)
-  - Notes: **Completed (verified — `/project-spec-close`):** **Phase A** of **TECH-21**. **`artifact`** / **`schema_version`** policy; JSON Schema Draft **2020-12** pilot **`geography_init_params`**; **`npm run validate:fixtures`**; committed **I1**/**I2** with **`generate:ia-indexes -- --check`** in **CI**. **`backlog_issue`** integration test uses an open **TECH-21**-program child (e.g. **TECH-42**). **Related:** **TECH-24**, **TECH-30**, **TECH-34**; **TECH-43** **Depends on** updated.
+  - Notes: **Completed (verified — `/project-spec-close`):** **Phase A** of **TECH-21**. **`artifact`** / **`schema_version`** policy; JSON Schema Draft **2020-12** pilot **`geography_init_params`**; **`npm run validate:fixtures`**; committed **I1**/**I2** with **`generate:ia-indexes -- --check`** in **CI**. **`backlog_issue`** integration test uses an open **TECH-21**-program child (e.g. **TECH-44a**). **Related:** **TECH-24**, **TECH-30**, **TECH-34**; **TECH-43** **Depends on** updated.
   - Depends on: none (soft: align **TECH-37** **Zod** when touching **compute-lib**)
 
 - [x] **TECH-44** — **Cursor Skills:** **infrastructure** + **kickoff** skill (project **spec** review / IA alignment) (2026-04-11)

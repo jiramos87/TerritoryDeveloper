@@ -1,27 +1,27 @@
-# IA aplicada al desarrollo de Territory Developer (Spec-Driven + agentes + territory-ia)
+# AI-assisted development for Territory Developer (spec-driven + agents + territory-ia)
 
-**Propósito:** Versión del prompt en [`ia-driven-dev.md`](ia-driven-dev.md) **ajustada a este repositorio**: vocabulario canónico (glossary + specs), **territory-ia** MCP, `AGENTS.md`, **reference specs** vs **project specs**, y la realidad técnica del juego (Unity 2D isométrico, **GridManager**, **Save data**, sin PostgreSQL en el core del producto salvo futuro **TECH-42**).
+**Purpose:** English adaptation of the prompt in [`ia-driven-dev.md`](ia-driven-dev.md) for **this repository**: canonical vocabulary (glossary + specs), **territory-ia** MCP, `AGENTS.md`, **reference specs** vs **project specs**, and the game’s technical reality (Unity 2D isometric, **GridManager**, **Save data**, no PostgreSQL in the product core until **TECH-44b**/**c** land).
 
-**Fuentes consultadas (territory-ia):** `invariants_summary`, `router_for_task` (save/load, simulation, unity), `glossary_discover` / `glossary_lookup`, `spec_section` (**unity-development-context** §10), `backlog_issue` (**TECH-21**).
-
----
-
-## 1. Contraste: prompt genérico vs este proyecto
-
-| Aspecto | Prompt original (genérico) | Territory Developer (este repo) |
-|--------|----------------------------|----------------------------------|
-| **Fuente de verdad de comportamiento** | Specs abstractas | [`.cursor/specs/`](.cursor/specs/glossary.md) (geo canónica: `isometric-geography-system.md`) + [`glossary.md`](.cursor/specs/glossary.md) |
-| **Issues y pipeline humano** | Issues + cron genérico | [`BACKLOG.md`](BACKLOG.md) (`BUG-` / `FEAT-` / `TECH-` / …); skills [`.cursor/skills/project-spec-kickoff`](.cursor/skills/project-spec-kickoff/SKILL.md) y [project-spec-implement](.cursor/skills/project-spec-implement/SKILL.md) |
-| **MCP** | Tools + skills genéricos | **territory-ia** (`backlog_issue`, `spec_section`, `glossary_*`, `router_for_task`, `invariants_summary`, …) — ver [`docs/mcp-ia-server.md`](../docs/mcp-ia-server.md) |
-| **Persistencia / DB** | PostgreSQL en el ejemplo | **Save data** y **Load pipeline** en runtime Unity ([`persistence-system.md`](../.cursor/specs/persistence-system.md)); programa **JSON** **TECH-21** → **TECH-40**/**41**/**42** para esquemas, DTOs y *futuros* envelopes DB/API |
-| **Exposición runtime → agente** | API HTTP, WebSockets, etc. (idea) | **Ya:** menús Editor **Territory Developer → Reports** → export JSON/Markdown bajo `tools/reports/` (**Agent context**, **Sorting debug**) — [`unity-development-context.md`](../.cursor/specs/unity-development-context.md) §10 |
-| **Riesgos de arquitectura** | ECS, control loop genérico | **Invariants** estrictos: `HeightMap[x,y]` == `Cell.height`; **roads** vía familia de preparación → `PathTerraformPlan` + Phase-1 + `Apply`; sin nuevos singletons; sin `gridArray`/`cellArray` fuera de **GridManager** — usar **`GetCell(x, y)`** |
+**Sources consulted (territory-ia):** `invariants_summary`, `router_for_task` (save/load, simulation, unity), `glossary_discover` / `glossary_lookup`, `spec_section` (**unity-development-context** section 10), `backlog_issue` (**TECH-21**).
 
 ---
 
-## 2. Prompt ajustado (copiar para otro agente o chat)
+## 1. Contrast: generic prompt vs this project
 
-Use este bloque como **system / user prompt** cuando quieras que un agente trabaje **dentro** de Territory Developer:
+| Aspect | Original prompt (generic) | Territory Developer (this repo) |
+|--------|---------------------------|-----------------------------------|
+| **Behavior source of truth** | Abstract specs | [`.cursor/specs/`](.cursor/specs/glossary.md) (canonical geo: `isometric-geography-system.md`) + [`glossary.md`](.cursor/specs/glossary.md) |
+| **Issues and human pipeline** | Issues + generic cron | [`BACKLOG.md`](BACKLOG.md) (`BUG-` / `FEAT-` / `TECH-` / …); skills [`.cursor/skills/project-spec-kickoff`](.cursor/skills/project-spec-kickoff/SKILL.md) and [project-spec-implement](.cursor/skills/project-spec-implement/SKILL.md) |
+| **MCP** | Generic tools + skills | **territory-ia** (`backlog_issue`, `spec_section`, `glossary_*`, `router_for_task`, `invariants_summary`, …) — see [`docs/mcp-ia-server.md`](../docs/mcp-ia-server.md) |
+| **Persistence / DB** | PostgreSQL in the example | **Save data** and **Load pipeline** in Unity runtime ([`persistence-system.md`](../.cursor/specs/persistence-system.md)); **JSON** program **TECH-21** → **TECH-40** / **41** / **TECH-44a**; **TECH-44** (**TECH-44b**/**c**) for Postgres + first dev rows |
+| **Runtime → agent exposure** | HTTP API, WebSockets, etc. (idea) | **Already:** Editor menus **Territory Developer → Reports** → JSON/Markdown export under `tools/reports/` (**Agent context**, **Sorting debug**) — [`unity-development-context.md`](../.cursor/specs/unity-development-context.md) section 10 |
+| **Architecture risks** | ECS, generic control loop | Strict **invariants**: `HeightMap[x,y]` == `Cell.height`; **roads** via preparation family → `PathTerraformPlan` + Phase-1 + `Apply`; no new singletons; no `gridArray` / `cellArray` outside **GridManager** — use **`GetCell(x, y)`** |
+
+---
+
+## 2. Adjusted prompt (copy for another agent or chat)
+
+Use this block as a **system / user prompt** when you want an agent to work **inside** Territory Developer:
 
 ```markdown
 You are assisting on **Territory Developer**: Unity 2D isometric city-builder (C#, MonoBehaviour managers).
@@ -50,143 +50,143 @@ You are assisting on **Territory Developer**: Unity 2D isometric city-builder (C
 
 **Testing:** Prefer **Unity Test Framework** where added; align tests with spec acceptance and invariants. No broad test suite is assumed today — propose minimal tests per change.
 
-**JSON / interchange program:** Respect **TECH-21** charter and children **TECH-40**, **TECH-41**, **TECH-42**; see `projects/TECH-21-json-use-cases-brainstorm.md` for snapshot / **cell** chunk / **Geography initialization** ideas.
+**JSON / interchange program:** Respect **TECH-21** charter and children **TECH-40**, **TECH-41**, **TECH-44a**; **Postgres** program **TECH-44** (**TECH-44b**, **TECH-44c**); see `projects/TECH-21-json-use-cases-brainstorm.md` for snapshot / **cell** chunk / **Geography initialization** ideas.
 
 Deliver: concrete file paths, spec citations, and changes that respect the above.
 ```
 
 ---
 
-## 3. Respuestas al documento original (preguntas 1–6), ancladas al proyecto
+## 3. Answers to the original document (questions 1–6), tied to this project
 
-### 3.1 Testing y validación automatizada
+### 3.1 Automated testing and validation
 
-- **¿En qué etapa del pipeline integrar tests?**  
-  Después de **enriquecer** el **project spec** y **antes** de dar por cerrada la implementación: la **Acceptance** del issue (y las secciones del spec) deben mapearse a pruebas ejecutables. En CI del repo, los chequeos **JSON Schema** (**TECH-40**) ya son una capa de validación *fuera* de Unity; dentro de Unity, el punto natural es **post-implementación** y **regresión** antes de mover el issue a **Completed** (solo con confirmación humana, según `AGENTS.md`).
+- **At which pipeline stage should tests integrate?**  
+  After **enriching** the **project spec** and **before** treating implementation as done: the issue **Acceptance** (and spec sections) should map to executable checks. In repo CI, **JSON Schema** checks (**TECH-40**) are already a validation layer *outside* Unity; inside Unity, the natural point is **post-implementation** and **regression** before moving an issue to **Completed** (human confirmation only, per `AGENTS.md`).
 
-- **¿Qué tipos de testing?**  
-  - **Unit tests (Edit Mode):** lógica pura o helpers extraídos (alineado con *no* hinchar **GridManager** — extraer a clases helper testeables).  
-  - **Play Mode tests:** escenas con **GridManager** inicializado, **Road validation pipeline**, **Water map**, **Load pipeline** (con coste mayor).  
-  - **“Simulation testing”:** fijar **simulation tick** / **AUTO** en escenarios reproducibles (**TECH-16** / harness JSON en backlog relacionado) — encaja con el programa **JSON** y fixtures, no sustituye specs.
+- **Which test types fit best?**  
+  - **Unit tests (Edit Mode):** pure logic or extracted helpers (aligned with *not* bloating **GridManager** — extract testable helper classes).  
+  - **Play Mode tests:** scenes with initialized **GridManager**, **Road validation pipeline**, **Water map**, **Load pipeline** (higher cost).  
+  - **“Simulation testing”:** pin **simulation tick** / **AUTO** to reproducible scenarios (**TECH-16** / harness JSON in related backlog items) — fits the **JSON** program and fixtures; it does not replace specs.
 
-- **TDD + Spec-Driven + agentes:**  
-  Escribir primero la **Acceptance** en **BACKLOG.md** y criterios en `.cursor/projects/{ISSUE_ID}.md` en vocabulario canónico; luego tests que fallen; luego implementación. Los agentes usan **territory-ia** para no “inventar” reglas que ya están en **geo §13** (roads) o **simulation-system**.
+- **TDD + spec-driven + agents:**  
+  Write **Acceptance** in **BACKLOG.md** and criteria in `.cursor/projects/{ISSUE_ID}.md` in canonical vocabulary first; then failing tests; then implementation. Agents use **territory-ia** so they do not “invent” rules already in **geo** section 13 (roads) or **simulation-system**.
 
-### 3.2 Testing en Unity con soporte de IA
+### 3.2 Unity testing with AI support
 
-- **Prácticas:** Unity Test Framework, ensamblados `*.Tests`, evitar **FindObjectOfType** en bucles de test por frame (mismo invariante que en juego).  
-- **Generar / ejecutar / evaluar por agentes:** el agente lee resultados de `UnityTest` en CI o salida local; para **estado del mundo**, adjuntar `tools/reports/agent-context-*.json` al prompt tras exportar desde el Editor.
+- **Practices:** Unity Test Framework, `*.Tests` assemblies, avoid **FindObjectOfType** in per-frame test loops (same invariant as in-game).  
+- **Generate / run / evaluate by agents:** the agent reads `UnityTest` results from CI or local output; for **world state**, attach `tools/reports/agent-context-*.json` to the prompt after exporting from the Editor.
 
-### 3.3 Exposición del estado del runtime
+### 3.3 Exposing runtime state
 
-- **Técnicas ya previstas en spec:** exportación **machine-readable** §10 de **unity-development-context** (`agent-context` JSON, `sorting-debug` MD).  
-- **Ampliación coherente con backlog:** **G1** / **G2** en [`TECH-21-json-use-cases-brainstorm.md`](TECH-21-json-use-cases-brainstorm.md) (**world_snapshot**, **cell_chunk**) — siempre **read-only** y respetando consistencia **HeightMap** / **Cell.height**.  
-- **HTTP/WebSockets:** candidatas a **TECH-42** (envelopes API), no requisito inmediato si Editor + archivos + MCP cubren IA en IDE.
+- **Techniques already specified:** machine-readable export in **unity-development-context** section 10 (`agent-context` JSON, `sorting-debug` Markdown).  
+- **Backlog-aligned extension:** **G1** / **G2** in [`TECH-21-json-use-cases-brainstorm.md`](TECH-21-json-use-cases-brainstorm.md) (**world_snapshot**, **cell_chunk**) — always **read-only** and respecting **HeightMap** / **Cell.height** consistency.  
+- **HTTP / WebSockets:** candidates for **TECH-44** program (**B3**/**P5**), not an immediate requirement if Editor + files + MCP cover IDE-side AI.
 
-### 3.4 Integración Unity ↔ IA (IDE / agentes)
+### 3.4 Unity ↔ AI integration (IDE / agents)
 
-- **Reducir fricción:** menús **Reports** + `@tools/reports/...` en el chat; **territory-ia** para evitar pegar specs enteras.  
-- **Patrones:**  
-  - *Observability-first*: exports acotados y glosario-alineados (§10).  
-  - *Debugging interfaces for agents*: **Sorting debug** MD + **Agent context** JSON.  
-  - *Game state as a service*: solo si se formaliza servidor o batchmode headless; el producto actual es **Editor/Play Mode** centrado.
+- **Reduce friction:** **Reports** menus + `@tools/reports/...` in chat; **territory-ia** to avoid pasting whole specs.  
+- **Patterns:**  
+  - *Observability-first:* bounded, glossary-aligned exports (section 10).  
+  - *Debugging interfaces for agents:* **Sorting debug** Markdown + **Agent context** JSON.  
+  - *Game state as a service:* only if you formalize a server or headless batchmode; the current product is **Editor / Play Mode** focused.
 
-### 3.5 Herramientas y ecosistema
+### 3.5 Tools and ecosystem
 
-- **Unity Test Framework** — adecuado cuando se añadan tests.  
-- **territory-ia** + índices **TECH-40** (spec/glossary indexes) — ya en el repo.  
-- **Zod / JSON Schema** — validación CI para payloads (**Geography initialization**, etc.).  
-- **Instrumentación:** no duplicar la fórmula de **Sorting order** fuera de **isometric-geography-system** §7; usar APIs públicas de **TerrainManager** donde el spec lo indique.
+- **Unity Test Framework** — appropriate when adding tests.  
+- **territory-ia** + **TECH-40** indexes (spec/glossary) — already in the repo.  
+- **Zod / JSON Schema** — CI validation for payloads (**Geography initialization**, etc.).  
+- **Instrumentation:** do not duplicate the **Sorting order** formula outside **isometric-geography-system** section 7; use public **TerrainManager** APIs where the spec says so.
 
-### 3.6 Diseño de herramientas propias (complejidad y arquitectura)
+### 3.6 Custom tooling design (complexity and architecture)
 
-- **Complejidad:** exportar lecturas acotadas (JSON/MD) es **baja**; **control loop** remoto (acciones sobre el runtime) es **alta** (seguridad, determinismo, **invariants**).  
-- **Arquitectura recomendada aquí:** **event-driven** en el sentido de “acción del jugador / simulación produce efectos acotados”; **cliente-servidor** solo si hay backend explícito (**TECH-42**). **ECS** no es el modelo dominante documentado; priorizar **managers** + helpers testeables.
-
----
-
-## 4. Objetivo final (reformulado para Territory Developer)
-
-- Los agentes **entienden** el estado vía **territory-ia**, specs parciales, y exports **Agent context** / **Sorting debug**.  
-- **Validan** implementaciones contra **invariants**, **Road validation pipeline**, **Save data** / **Load pipeline**, y esquemas **JSON** del programa **TECH-21**.  
-- **Proponen cambios** en código y specs temporales (`.cursor/projects/`) sin violar guardrails (**GridManager**, **roads**, **water**/**shore**).
+- **Complexity:** exporting bounded reads (JSON/Markdown) is **low**; a remote **control loop** (actions on the runtime) is **high** (security, determinism, **invariants**).  
+- **Architecture recommended here:** **event-driven** in the sense that “player action / simulation produces bounded effects”; **client-server** only with an explicit backend (**TECH-44b**/**c**). **ECS** is not the dominant documented model; prefer **managers** + testable helpers.
 
 ---
 
-## 5. Ejemplos breves (brainstorming) por propuesta
+## 4. End goal (rephrased for Territory Developer)
 
-> Cada ejemplo es **ilustrativo** (no necesariamente implementado). Vocabulario en línea con glossary/specs.
+- Agents **understand** state via **territory-ia**, partial specs, and **Agent context** / **Sorting debug** exports.  
+- They **validate** implementations against **invariants**, **Road validation pipeline**, **Save data** / **Load pipeline**, and **JSON** schemas from the **TECH-21** program.  
+- They **propose changes** to code and temporary specs (`.cursor/projects/`) without violating guardrails (**GridManager**, **roads**, **water** / **shore**).
 
-### 5.1 Pipeline de issue → spec → tests → código
+---
 
-- **Ejemplo:** Issue **BUG-XX** “**wet run** mal clasificado en esquina de **Road validation pipeline**”. Agente: `backlog_issue` → `spec_section` **geo** §13 → test Play Mode que coloca un trazo y aserta prefab esperado → fix en helper de carreteras → `InvalidateRoadCache()` en el camino de apply.
+## 5. Short brainstorming examples per proposal
 
-### 5.2 Unit test (helper extraído de **GridManager**)
+> Each example is **illustrative** (not necessarily implemented). Wording aligns with glossary/specs.
 
-- **Ejemplo:** Extraer cálculo de **Chebyshev distance** o de coste de **Pathfinding cost model** a clase estática; test Edit Mode con tabla de casos tomada de **geo §10** comentarios de spec.
+### 5.1 Issue → spec → tests → code pipeline
 
-### 5.3 Play Mode: invariante **HeightMap** / **Cell.height**
+- **Example:** Issue **BUG-XX** — **wet run** misclassified at a **Road validation pipeline** corner. Agent: `backlog_issue` → `spec_section` **geo** section 13 → Play Mode test that places a stroke and asserts expected prefab → fix in road helper → `InvalidateRoadCache()` on the apply path.
 
-- **Ejemplo:** Tras operación de terraform de prueba, iterar una muestra de celdas con **GetCell** y comprobar `height == HeightMap[x,y]`.
+### 5.2 Unit test (helper extracted from **GridManager**)
 
-### 5.4 Uso de **Export Agent Context**
+- **Example:** Extract **Chebyshev distance** or **Pathfinding cost model** math to a static class; Edit Mode test with a case table from **geo** section 10 spec commentary.
 
-- **Ejemplo:** Tras reproducir un bug de **Water map** / **Shore band**, el desarrollador exporta JSON, lo referencia en Cursor como `@tools/reports/agent-context-….json`, y pide al agente comparar con **geo** §11 / **water-terrain-system**.
+### 5.3 Play Mode: **HeightMap** / **Cell.height** invariant
 
-### 5.5 Uso de **Export Sorting Debug**
+- **Example:** After a test terraform operation, iterate a sample of cells with **GetCell** and assert `height == HeightMap[x,y]`.
 
-- **Ejemplo:** Bug visual en **Cliff** / capas 2D: export MD en Play Mode; el agente cruza con **Sorting order** en **isometric-geography-system** §7 sin rederivar la fórmula a mano.
+### 5.4 Using **Export Agent Context**
 
-### 5.6 **TDD + spec** para **Geography initialization**
+- **Example:** After reproducing a **Water map** / **Shore band** bug, the developer exports JSON, references it in Cursor as `@tools/reports/agent-context-….json`, and asks the agent to compare with **geo** section 11 / **water-terrain-system**.
 
-- **Ejemplo:** Nuevo fixture `geography-init-params.good.json` bajo `docs/schemas/fixtures/` falla CI si el schema cambia; luego código **parse-once** (**TECH-41**) que consume el DTO.
+### 5.5 Using **Export Sorting Debug**
 
-### 5.7 Snapshot **G1** (brainstorm **TECH-21**)
+- **Example:** Visual bug on **Cliff** / 2D layers: export Markdown in Play Mode; the agent cross-checks **Sorting order** in **isometric-geography-system** section 7 without hand-deriving the formula.
 
-- **Ejemplo:** Menú dev “Export **world_snapshot** (bounds 32×32)” escribe JSON con **cells** parciales y resumen de cuerpos de agua; agente externo valida con **Zod** y detecta **Junction** inconsistente.
+### 5.6 **TDD + spec** for **Geography initialization**
+
+- **Example:** New fixture `geography-init-params.good.json` under `docs/schemas/fixtures/` breaks CI if the schema changes; then **parse-once** code (**TECH-41**) consuming the DTO.
+
+### 5.7 Snapshot **G1** (**TECH-21** brainstorm)
+
+- **Example:** Dev menu “Export **world_snapshot** (32×32 bounds)” writes JSON with partial **cells** and water-body summary; external agent validates with **Zod** and flags inconsistent **Junction** data.
 
 ### 5.8 **cell_chunk** **G2**
 
-- **Ejemplo:** Script de revisión que pide por CLI un chunk centrado en (x,y) y valida **waterBodyId** contra reglas de **Open water** / **Rim** descritas en spec.
+- **Example:** Review script requests a chunk centered at (x, y) via CLI and validates **waterBodyId** against **Open water** / **Rim** rules from spec.
 
-### 5.9 **territory-ia** como “API de lectura” para el agente
+### 5.9 **territory-ia** as a read API for the agent
 
-- **Ejemplo:** Antes de tocar **rivers**, `router_for_task` “water” → `spec_section` **water** o **geo** §12 → `glossary_lookup` “River bed (H_bed)” para no violar monotonía **H_bed** hacia la salida.
+- **Example:** Before touching **rivers**, `router_for_task` “water” → `spec_section` **water** or **geo** section 12 → `glossary_lookup` “River bed (H_bed)” to avoid violating **H_bed** monotonicity toward the exit.
 
-### 5.10 Regresión **Save data** (sin PostgreSQL)
+### 5.10 **Save data** regression (no PostgreSQL)
 
-- **Ejemplo:** Test o checklist manual: guardar partida, **Load pipeline**, comparar hash de subset de **CellData** o conteo de **zones** (según **persistence-system**).
+- **Example:** Test or manual checklist: save game, **Load pipeline**, compare hash of a **CellData** subset or **zones** count (per **persistence-system**).
 
-### 5.11 Cron / CI (sustituto del “cron” del prompt original)
+### 5.11 Cron / CI (stand-in for the original prompt’s “cron”)
 
-- **Ejemplo:** Workflow GitHub Actions que ejecuta `npm test` en `tools/mcp-ia-server` + validación **JSON Schema** de `docs/schemas/`; Unity tests opcionales cuando existan en el proyecto.
+- **Example:** GitHub Actions workflow running `npm test` in `tools/mcp-ia-server` + **JSON Schema** validation for `docs/schemas/`; optional Unity tests when the project adds them.
 
-### 5.12 “Control loop” remoto (futuro, **TECH-42**)
+### 5.12 Remote “control loop” (future, **TECH-44** program)
 
-- **Ejemplo:** Servicio dev que acepta solo comandos idempotentes (“simular **simulation tick** N”, “exportar snapshot”) — sin exponer escritura directa en **HeightMap** sin pasar por **Terraform plan** / managers.
+- **Example:** Dev service accepting only idempotent commands (“simulate **simulation tick** N”, “export snapshot”) — no direct **HeightMap** writes without going through **Terraform plan** / managers.
 
-### 5.13 Derivación de nuevos issues (paso 7 del pipeline original)
+### 5.13 Deriving new issues (step 7 of the original pipeline)
 
-- **Ejemplo:** Al cerrar un spec, el agente propone **TECH-** o **BUG-** hijos en **BACKLOG.md** cuando la **Decision Log** deje deuda (p. ej. **InvalidateRoadCache** faltante en un camino).
+- **Example:** When closing a spec, the agent proposes child **TECH-** or **BUG-** rows in **BACKLOG.md** when the **Decision Log** leaves debt (e.g. missing **InvalidateRoadCache** on a path).
 
 ### 5.14 Skill **project-spec-kickoff** + MCP
 
-- **Ejemplo:** Para **FEAT-YY**, el humano dispara kickoff; el agente recorre `glossary_discover` con keywords en inglés (“growth ring”, “AUTO”) y reescribe **Open Questions** solo con términos canónicos.
+- **Example:** For **FEAT-YY**, the human runs kickoff; the agent runs `glossary_discover` with English keywords (“growth ring”, “AUTO”) and rewrites **Open Questions** using only canonical terms.
 
 ### 5.15 Skill **project-spec-implement**
 
-- **Ejemplo:** Checklist fase por fase: tras cada fase, export **Agent context** y un test mínimo nuevo que cubra la **Acceptance** añadida.
+- **Example:** Phase checklist: after each phase, export **Agent context** and add one minimal test covering the new **Acceptance** line.
 
 ---
 
-## 6. Checklist rápido para el autor del prompt
+## 6. Quick checklist for prompt authors
 
-- [ ] ¿El issue id existe en **BACKLOG.md** y se llamó `backlog_issue`?  
-- [ ] ¿Se leyeron **invariants** antes de tocar **roads** / **water** / **HeightMap**?  
-- [ ] ¿Los términos de producto están en inglés canónico en **Open Questions** / **Acceptance**?  
-- [ ] ¿Hay archivo `@tools/reports/agent-context-….json` o **Sorting debug** si el bug es de mundo o capas?  
-- [ ] ¿Cambios **JSON** alineados con **TECH-21** y schemas en `docs/schemas/`?
+- [ ] Does the issue id exist in **BACKLOG.md** and did you call `backlog_issue`?  
+- [ ] Did you read **invariants** before changing **roads** / **water** / **HeightMap**?  
+- [ ] Are product terms in canonical English in **Open Questions** / **Acceptance**?  
+- [ ] Is there `@tools/reports/agent-context-….json` or **Sorting debug** for world or layering bugs?  
+- [ ] Are **JSON** changes aligned with **TECH-21** and schemas under `docs/schemas/`?
 
 ---
 
-*Documento generado para alinear el prompt genérico de `ia-driven-dev.md` con Territory Developer. Para detalle de payloads JSON, seguir [`TECH-21-json-use-cases-brainstorm.md`](TECH-21-json-use-cases-brainstorm.md) y los charter **TECH-21** / **TECH-40**–**42**.*
+*This document aligns the generic `ia-driven-dev.md` prompt with Territory Developer. For JSON payload detail, follow [`TECH-21-json-use-cases-brainstorm.md`](TECH-21-json-use-cases-brainstorm.md) and the **TECH-21** / **TECH-44** charters.*

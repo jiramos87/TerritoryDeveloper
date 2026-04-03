@@ -22,7 +22,7 @@ Expand **territory-ia** with a **family** of **`snake_case`** **computational** 
 
 ### 2.2 Non-Goals
 
-1. Replacing **`spec_section`**, **`glossary_lookup`**, or **IA** **Postgres** (**TECH-18**/**TECH-19**).
+1. Replacing **`spec_section`**, **`glossary_lookup`**, or **IA** **Postgres** (**TECH-18**/**TECH-44b**).
 2. **Remote** **network** **execution** — **local** **repo** **only**.
 3. **Player-facing** **UI**.
 
