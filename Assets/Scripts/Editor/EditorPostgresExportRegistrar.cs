@@ -34,6 +34,9 @@ public static class EditorPostgresExportRegistrar
     /// <summary><c>--kind world_snapshot_dev</c> — dev world snapshot interchange JSON.</summary>
     public const string KindWorldSnapshotDev = "world_snapshot_dev";
 
+    /// <summary><c>--kind ui_inventory</c> — <c>Export UI Inventory (JSON)</c> multi-scene <b>uGUI</b> snapshot (<b>UI design system</b> baseline).</summary>
+    public const string KindUiInventory = "ui_inventory";
+
     const string MenuRoot = "Territory Developer/Reports/";
 
     [MenuItem(MenuRoot + "Postgres registry — settings…", priority = 95)]

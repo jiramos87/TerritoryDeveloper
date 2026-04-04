@@ -91,7 +91,7 @@ Labels:
 | **TECH-03** | **B** | Constants extraction; tedious but can touch many files; avoid behavior change. |
 | **TECH-04** | **B–C** | Enforces `GetCell`; subtle if any path assumed direct array semantics. |
 | **TECH-05** | **B** | Pattern duplication; wide sweep, moderate review cost. |
-| **TECH-07** | **C** | Scene hierarchy + layout; MCP has UI spec slices but Unity is source of truth. |
+| **Toolbar / ControlPanel** | **C** | Scene hierarchy + layout; MCP has UI spec slices (**`ui-design-system.md`** **§3.3**) but Unity is source of truth. |
 | **TECH-14** | **A** | Stub cleanup **if** reference search confirms no scene/scripts depend on them. |
 
 ### 3.4 Low priority / new systems

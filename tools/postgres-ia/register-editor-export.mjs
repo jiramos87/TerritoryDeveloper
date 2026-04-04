@@ -3,7 +3,7 @@
  * TECH-55b — insert one Editor Reports row with full document JSONB + metadata payload.
  *
  * Usage:
- *   node register-editor-export.mjs --kind agent_context|sorting_debug|terrain_cell_chunk|world_snapshot_dev \
+ *   node register-editor-export.mjs --kind agent_context|sorting_debug|terrain_cell_chunk|world_snapshot_dev|ui_inventory \
  *     --document-file <repo-relative> [--issue BUG-37] [--sha <git>]
  *
  * Reads UTF-8 from --document-file: JSON kinds expect JSON; sorting_debug expects Markdown (wrapped in DB).
@@ -25,6 +25,7 @@ const TABLE_BY_KIND = {
   sorting_debug: 'editor_export_sorting_debug',
   terrain_cell_chunk: 'editor_export_terrain_cell_chunk',
   world_snapshot_dev: 'editor_export_world_snapshot_dev',
+  ui_inventory: 'editor_export_ui_inventory',
 };
 
 const EXPECTED_ARTIFACT = {
@@ -128,6 +129,18 @@ function readDocumentAndPayload(kind, relDocPath) {
           ? doc.schema_version
           : 1;
     return { document: doc, payload, interchangeRevision: Number.isFinite(sv) ? sv : 1 };
+  }
+
+  if (kind === 'ui_inventory') {
+    const payload = {
+      artifact: doc.artifact ?? 'ui_inventory_dev',
+      schema_version:
+        typeof doc.schema_version === 'number' ? doc.schema_version : 1,
+      source_relative_path: relDocPath,
+    };
+    const schemaVersion =
+      typeof doc.schema_version === 'number' ? doc.schema_version : 1;
+    return { document: doc, payload, interchangeRevision: schemaVersion };
   }
 
   if (kind === 'terrain_cell_chunk' || kind === 'world_snapshot_dev') {

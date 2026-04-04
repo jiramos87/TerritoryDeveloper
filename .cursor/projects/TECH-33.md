@@ -5,7 +5,7 @@
 > **Created:** 2026-04-02
 > **Last updated:** 2026-04-02
 
-**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — tasks **26**, **27**. Supports **ART-01**–**ART-04**, **BUG-19**, **TECH-07**.
+**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — tasks **26**, **27**. Supports **ART-01**–**ART-04**, **BUG-19**, **UI** / **toolbar** layout work.
 
 ## 1. Summary
 
@@ -74,7 +74,7 @@ N/A.
 ## 8. Acceptance Criteria
 
 - [ ] **Unity:** Script runs without exception; output file readable.
-- [ ] **BUG-19** / **TECH-07** can cite report paths in **Notes** when used.
+- [ ] **BUG-19** / **toolbar**-related rows can cite report paths in **Notes** when used.
 
 ## 9. Issues Found During Development
 

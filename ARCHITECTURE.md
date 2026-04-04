@@ -94,7 +94,7 @@ Data is split into three layers: **runtime** (`MonoBehaviour` managers and live 
 
 ### UI / UX design system
 
-Cross-cutting effort: reference spec [`.cursor/specs/ui-design-system.md`](.cursor/specs/ui-design-system.md) (**as-built** baseline: [`BACKLOG.md`](BACKLOG.md) **TECH-68**); program charter, codebase inventory, and roadmap [`.cursor/projects/TECH-67.md`](.cursor/projects/TECH-67.md) (**TECH-67** umbrella). **Glossary:** **UI design system (reference spec)**, **UI-as-code program (TECH-67)**.
+Cross-cutting effort: reference spec [`.cursor/specs/ui-design-system.md`](.cursor/specs/ui-design-system.md) (**as-built** baseline + committed [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json)); program charter, codebase inventory, and roadmap [`.cursor/projects/TECH-67.md`](.cursor/projects/TECH-67.md) (**TECH-67** umbrella). **Glossary:** **UI design system (reference spec)**, **UI-as-code program (TECH-67)**.
 
 ### Water
 

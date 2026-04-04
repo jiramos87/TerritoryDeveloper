@@ -46,6 +46,7 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0002_ia_read_surface.sq
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0003_dev_repro_bundle.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0004_editor_export_tables.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0005_editor_export_document.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0006_editor_export_ui_inventory.sql
 ```
 
 If you use manual `psql` on a fresh DB, insert migration rows so the Node runner does not re-apply:
@@ -119,7 +120,7 @@ npm run db:register-repro -- --issue TECH-00 \
 
 **DB-first:** when **`DATABASE_URL`** resolves (process environment, **EditorPrefs** `TerritoryDeveloper.EditorExportRegistry.DatabaseUrl`, or repo-root **`.env.local`** `DATABASE_URL=…`), **Unity** tries **Postgres** first: the full export body is stored in column **`document jsonb`** (plus **`payload jsonb`** metadata). **GIN** indexes support **`jsonb_path_ops`** queries on **`document`**. If the insert fails or no URL is set, the Editor writes the same content under **`tools/reports/`** (gitignored) with the usual filenames — see [`.cursor/specs/unity-development-context.md`](../.cursor/specs/unity-development-context.md) **§10**.
 
-Migrations: **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.sql`** (`backlog_issue_id` nullable; **`document`** required on new inserts).
+Migrations: **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.sql`** (`backlog_issue_id` nullable; **`document`** required on new inserts), **`0006_editor_export_ui_inventory.sql`**.
 
 | Table | Menu item |
 |-------|-----------|
@@ -127,6 +128,7 @@ Migrations: **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.
 | `editor_export_sorting_debug` | **Export Sorting Debug (Markdown)** |
 | `editor_export_terrain_cell_chunk` | **Export Cell Chunk (Interchange)** (Play Mode) |
 | `editor_export_world_snapshot_dev` | **Export World Snapshot (Dev Interchange)** (Play Mode) |
+| `editor_export_ui_inventory` | **Export UI Inventory (JSON)** (Edit Mode; **`ui-design-system.md`** / **UI** inventory baseline) |
 
 **Settings:** **Territory Developer → Reports → Postgres registry — settings…** — optional **`backlog_issue_id`** (metadata for SQL filters; may be empty), optional **`DATABASE_URL`** (local only), optional **Node executable** path, optional verbose logging after successful inserts.
 
@@ -142,7 +144,7 @@ npm run db:register-editor-export -- --kind agent_context \
   --issue TECH-00
 ```
 
-`--kind`: `agent_context`, `sorting_debug`, `terrain_cell_chunk`, `world_snapshot_dev`. **Sorting debug** files are Markdown text; the script wraps them as `{"format":"markdown","body":"…"}` in **`document`**.
+`--kind`: `agent_context`, `sorting_debug`, `terrain_cell_chunk`, `world_snapshot_dev`, `ui_inventory`. **Sorting debug** files are Markdown text; the script wraps them as `{"format":"markdown","body":"…"}` in **`document`**.
 
 **Example `document` queries:**
 
