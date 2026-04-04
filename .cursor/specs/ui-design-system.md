@@ -2,11 +2,11 @@
 
 ## Overview
 
-This spec defines **foundations**, **components**, and **patterns** for Territory Developer’s in-game UI so that backlog issues can reference concrete sections. **Program charter**, **codebase inventory**, and **exploration** live in [`projects/ui-as-code-exploration.md`](../../projects/ui-as-code-exploration.md) (**TECH-67** umbrella workbook — not a reference spec). **Executable issues:** [`BACKLOG.md`](../../BACKLOG.md). **First spec milestone:** document **as-built** (**shipped**) **UI** in **§1–§4** and major **§2–§3** surfaces — see **TECH-68** (`.cursor/projects/TECH-68.md`).
+This spec defines **foundations**, **components**, and **patterns** for Territory Developer’s in-game UI so that backlog issues can reference concrete sections. **Program charter**, **codebase inventory**, **backlog bridge**, and **roadmap** live in [`.cursor/projects/TECH-67.md`](../projects/TECH-67.md) (**UI-as-code program** umbrella — not a reference spec). **Executable issues:** [`BACKLOG.md`](../../BACKLOG.md). **First spec milestone:** document **as-built** (**shipped**) **UI** in **§1–§4** and major **§2–§3** surfaces — see **TECH-68** (`.cursor/projects/TECH-68.md`). **Scenes:** **UI** spans **`MainMenu`**, **`MainScene`** (future **`CityScene`**), and future surfaces (e.g. **`RegionScene`**) — **TECH-68** exports and prose are **per scene**.
 
 ### As-built vs target
 
-- **As-built (current):** What the game **actually** uses today — **Canvas** settings, **colors**, **fonts** / sizes, **margins**, **anchors**, **HUD** / **toolbar** / **popup** layout, and representative **UX** behaviors. Sourced from **`MainScene.unity`**, **prefabs**, **`UIManager`**, and **controllers**. This is the **default** meaning of tables in **§1** until a row is explicitly marked **Target**.
+- **As-built (current):** What the game **actually** uses today — **Canvas** settings, **colors**, **fonts** / sizes, **margins**, **anchors**, **HUD** / **toolbar** / **popup** layout, and representative **UX** behaviors. Sourced from **`MainMenu.unity`**, **`MainScene.unity`** (or renamed **city** scene), **prefabs**, **`UIManager`**, and **controllers**. This is the **default** meaning of tables in **§1** until a row is explicitly marked **Target**.
 - **Target (planned):** Future layout or tokens defined by **BACKLOG** issues (e.g. **TECH-07** **ControlPanel**). Keep **Target** subsections or labeled rows **alongside** **as-built** so refactors stay traceable.
 
 ### Domain vocabulary
@@ -114,7 +114,7 @@ Each component should list **variants**, **states**, and **when to use**. Link p
 ### 3.3 Tool selection / toolbar
 
 - Selected vs unselected tool buttons; connection to `CursorManager` and mode flags on `UIManager`.
-- **Scene:** Primary toolbar lives in `MainScene.unity` (GameObject **`ControlPanel`**). Inventory and constraints: [`projects/ui-as-code-exploration.md`](../../projects/ui-as-code-exploration.md) (**Codebase inventory** — **ControlPanel**).
+- **Scene:** Primary toolbar lives in `MainScene.unity` (GameObject **`ControlPanel`**). Inventory and constraints: [`.cursor/projects/TECH-67.md`](../projects/TECH-67.md) **§4.4** (**Codebase inventory** — **ControlPanel**).
 - **Layout variants (document the active one in context and verify in Play Mode):**
   - **Current (legacy):** horizontal strip, **bottom-center** dock — category groups as columns in one row.
   - **Target layout:** **left** dock, **vertical** panel — **one row per category** (stacked vertically), **buttons within each row remain horizontal**. Use consistent spacing (`§1.3`) and anchors so overlays (e.g. zoning density options) re-anchor to the sidebar instead of the old bottom bar. Avoid overlapping the mini-map and corner HUD.
@@ -166,4 +166,5 @@ When opening a backlog issue for UI work, include:
 | *YYYY-MM-DD* | Initial draft scaffold |
 | 2026-03-20 | §3.3 — ControlPanel toolbar layout variants; cross-link **unity-development-context** |
 | 2026-04-04 | Overview links → **`projects/ui-as-code-exploration.md`** (retired `docs/ui-design-system-project.md` / `docs/ui-design-system-context.md`) |
+| 2026-04-06 | Program notes → **`.cursor/projects/TECH-67.md`**; delete **`projects/ui-as-code-exploration.md`** (inventory **§4.4**) |
 | 2026-04-04 | **As-built vs target** subsection; **TECH-68** as first **UI-as-code** spec milestone (**glossary** **UI design system (reference spec)**) |
