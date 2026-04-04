@@ -7,6 +7,8 @@
 
 **Parent program:** [TECH-36](TECH-36.md) · **Next phase:** [TECH-38](TECH-38.md)
 
+**Spec pipeline program:** [TECH-60](TECH-60.md) lists **TECH-37** as a **prerequisite** for **compute-lib**, **golden** tests, and **MCP**-adjacent validation — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
+
 ## 1. Summary
 
 Establish **`tools/compute-lib/`** as the shared **TypeScript** package for **JSON** schemas, **pure** math that is safe to duplicate under **golden** tests, and imports consumed by **`tools/mcp-ia-server/`**. Define **C#** conventions for **pure** **computational** helpers under **`Assets/Scripts/`**. Ship **one** new **territory-ia** **`registerTool`** pilot that proves end-to-end wiring, **`npm run verify`**, and **`docs/mcp-ia-server.md`** updates.

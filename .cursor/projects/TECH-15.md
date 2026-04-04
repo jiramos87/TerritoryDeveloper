@@ -7,6 +7,8 @@
 
 **Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — tasks **3**, **22**.
 
+**Spec pipeline program:** [TECH-60](TECH-60.md) lists this issue as a **prerequisite** for **geography initialization** **JSON** harnesses and long-term verification — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
+
 ## 1. Summary
 
 Deliver a **repeatable profiler** for **New Game** / **geography initialization** that writes **JSON** under `tools/reports/` (or agreed path) with **wall-clock** per major phase and optional **GC / allocation** summaries. Optionally extend the same harness to emit **sample invariant checks** (e.g. **HeightMap** vs **cell** height on a sparse sample) so agents get machine-readable evidence before **TECH-15** optimization work.

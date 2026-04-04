@@ -25,13 +25,13 @@ Project-local **Cursor Skills** live here. Each skill is a folder with a **`SKIL
 
 | Skill folder | Purpose | Backlog |
 |--------------|---------|---------|
+| [`project-new/`](project-new/SKILL.md) | Create a new **`BACKLOG.md`** row + **`.cursor/projects/{ISSUE_ID}.md`** stub from a user prompt (**territory-ia** + optional **`web_search`**) | **TECH-56** completed — [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** |
 | [`project-spec-kickoff/`](project-spec-kickoff/SKILL.md) | Review or enrich `.cursor/projects/{ISSUE_ID}.md` before implementation; ordered MCP context pull | *(shipped — see `BACKLOG.md` § Completed)* |
 | [`project-spec-implement/`](project-spec-implement/SKILL.md) | Execute a project spec’s **Implementation Plan** after the spec is ready; per-phase MCP slices + checklist | *(shipped — see `BACKLOG.md` § Completed)* |
-| [`project-spec-close/`](project-spec-close/SKILL.md) | Close an issue that used a **project spec**: persist IA (glossary, reference specs, **ARCHITECTURE**, rules, docs) → delete spec → `validate:dead-project-specs` → **BACKLOG** **Completed** (user-confirmed) | **TECH-51** completed — see [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** |
 | [`project-implementation-validation/`](project-implementation-validation/SKILL.md) | After implementation: **Node** checks aligned with **IA tools** CI (dead spec paths, **MCP** tests, fixtures, **IA index** `--check`); optional **`verify`** | **TECH-52** completed — [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** |
-| [`project-new/`](project-new/SKILL.md) | Create a new **`BACKLOG.md`** row + **`.cursor/projects/{ISSUE_ID}.md`** stub from a user prompt (**territory-ia** + optional **`web_search`**) | **TECH-56** completed — [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** |
+| [`project-spec-close/`](project-spec-close/SKILL.md) | Close an issue that used a **project spec**: persist IA (glossary, reference specs, **ARCHITECTURE**, rules, docs) → delete spec → `validate:dead-project-specs` → **BACKLOG** **Completed** (user-confirmed) | **TECH-51** completed — see [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** |
 
-Planned: **TECH-45** (roads), **TECH-46** (terrain / water), **TECH-47** (new **MonoBehaviour** manager).
+Planned: **TECH-45** (roads), **TECH-46** (terrain / water), **TECH-47** (new **MonoBehaviour** manager); **TECH-63** — spec pipeline **layer C** (**Skills** + **project spec** template; umbrella **TECH-60** — see [`.cursor/projects/TECH-60.md`](../projects/TECH-60.md)).
 
 ## Optional template
 

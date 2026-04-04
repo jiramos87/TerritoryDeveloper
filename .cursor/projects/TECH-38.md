@@ -7,6 +7,8 @@
 
 **Parent program:** [TECH-36](TECH-36.md) · **Depends on:** **TECH-37** (schemas, **compute-lib**, pilot pattern) · **Feeds:** [TECH-39](TECH-39.md)
 
+**Spec pipeline program:** [TECH-60](TECH-60.md) lists **TECH-38** as a **prerequisite** for **pure** **C#** surfaces, **`tools/reports/`** **JSON**, and **UTF** / **batchmode** hooks — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
+
 ## 1. Summary
 
 Extract and consolidate **pure** **computational** logic from **MonoBehaviour** **managers** into **`Assets/Scripts/Utilities/`** (and focused helpers), add **Edit Mode** / **Play Mode** tests where viable, and add **`tools/`** **batch** / **Node** scripts that consume **JSON** fixtures (**TECH-41** interchange DTOs + **TECH-40** schemas where checked in, **TECH-31**, **TECH-28**) to validate **stochastic** **geography initialization** and **graph** algorithms without always launching full Play Mode. Prepare **ring** / **distance** **math** for future **FEAT-47** (**multipolar** **urban centroids**) without changing live **simulation** behavior until that issue executes.

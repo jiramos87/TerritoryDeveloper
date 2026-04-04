@@ -7,6 +7,8 @@
 
 **Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — task **38**. **High setup cost**; schedule only if geometric / ordering bugs justify.
 
+**Spec pipeline program:** [TECH-60](TECH-60.md) lists this issue as an optional **prerequisite** for **invariant** fuzzing beyond **Node**-side checks — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
+
 ## 1. Summary
 
 Explore **property-based** or **randomized mutation** tests that assert **invariants** from [`.cursor/rules/invariants.mdc`](../../.cursor/rules/invariants.mdc): e.g. **HeightMap** / **cell** height sync, **InvalidateRoadCache** after **road** edits, **shore band** constraints, **H_bed** monotonicity along **rivers**. Deliverable is a **spike report** (this spec **Decision Log** + optional prototype under `Tests/` or `tools/`) recommending whether to promote to full **TECH-** issue or abandon.

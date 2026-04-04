@@ -7,6 +7,8 @@
 
 **Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — task **21**. Targets **BUG-52**-class regressions.
 
+**Spec pipeline program:** [TECH-60](TECH-60.md) lists this issue as a **prerequisite** for **AUTO** / **simulation** regression capsules and **test contracts** in **Unity** — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
+
 ## 1. Summary
 
 Build tooling that turns **structured constraints** (YAML, JSON, or thin front matter on `.cursor/templates/project-spec-template.md`) into **Unity Play Mode tests** or **serialized fixtures** (grid seeds) so **AUTO** **road** / **zoning** behavior can be reproduced without hand-building scenes. Vocabulary in fixture files must follow **glossary** and **simulation-system** (**tick execution order**, **AUTO systems**).

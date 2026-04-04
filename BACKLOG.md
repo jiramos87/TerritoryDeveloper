@@ -1,13 +1,51 @@
 # Backlog — Territory Developer
 
-> Single source of truth for project issues. Ordered by priority (highest first): **§ Compute-lib program**, then **§ Agent ↔ Unity & MCP context lane**, then **High** / **Medium** / **Code Health** / **Low**.
+> Single source of truth for project issues. Ordered by priority (highest first): **§ Spec pipeline & verification program**, then **§ Compute-lib program**, then **§ Agent ↔ Unity & MCP context lane**, then **High** / **Medium** / **Code Health** / **Low**.
 > To work on an issue: reference it with `@BACKLOG.md` in the Cursor conversation.
 >
-> **Priority:** **§ Compute-lib program** (**TECH-36** / **TECH-37** → **TECH-38** → **TECH-39**) is the **default first** open workstream (dependency order enforced in that section). **§ Agent ↔ Unity & MCP context lane** follows (Unity exports, MCP platform, CI, adjacent research). **Gameplay** blockers in **§ High Priority** are **interrupt** work when they **stop play** or **corrupt saves**.
+> **Priority:** **§ Spec pipeline & verification program** (**TECH-60** umbrella; phased **TECH-61** → **TECH-62** → **TECH-63**) improves the **spec-driven** agent workflow (scripts, **territory-ia** MCP, Cursor **Skills**), **test contracts**, and long-term verification. It **coordinates with** (does not replace) **§ Compute-lib program** (**TECH-36** / **TECH-37** → **TECH-38** → **TECH-39**) for **pure** math, **golden** **JSON**, and **UTF**-ready surfaces; and with **§ Agent ↔ Unity & MCP context lane** rows listed as **prerequisites** under **TECH-60**. **Gameplay** blockers in **§ High Priority** remain **interrupt** work when they **stop play** or **corrupt saves**.
 
 ---
 
-## Compute-lib program (first priority)
+## Spec pipeline & verification program (first priority)
+
+**Dependency order:** **TECH-61** (repo scripts / validation infrastructure) → **TECH-62** (**territory-ia** MCP extensions) → **TECH-63** (Cursor **Skills** + **project spec** template). **TECH-60** is the umbrella — progress is tracked on **TECH-61**–**TECH-63**. **Prerequisites** for **Unity** test harnesses, **grid**/**invariant** checks, and **project spec** hygiene are **existing** issues (canonical rows in **§ Compute-lib program** or **§ Agent ↔ Unity & MCP context lane** below); see **TECH-60** **Notes** and [`.cursor/projects/TECH-60.md`](.cursor/projects/TECH-60.md).
+
+**Exploration source:** [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md).
+
+- [ ] **TECH-60** — **Spec pipeline & verification program** (umbrella): agent workflow, MCP, scripts, **test contracts**
+  - Type: tooling / documentation / agent enablement
+  - Files: umbrella only — see **TECH-61**, **TECH-62**, **TECH-63**; charter `.cursor/projects/TECH-60.md`; cross-links: [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md), `.cursor/skills/README.md`, `docs/mcp-ia-server.md`
+  - Spec: `.cursor/projects/TECH-60.md`
+  - Notes: **Program charter** for improvements proposed in **spec-pipeline-exploration** (impact preflight, composite MCP reads, filtered **invariants**, aggregate **`npm run`**, **§7b Test Contracts**, phased **Skills** updates). **Prerequisites (canonical backlog rows + existing specs):** **TECH-37**, **TECH-38** — **§ Compute-lib program** (`.cursor/projects/TECH-37.md`, `.cursor/projects/TECH-38.md`); **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** — **§ Agent ↔ Unity & MCP context lane** (`.cursor/projects/TECH-15.md`, `.cursor/projects/TECH-16.md`, `.cursor/projects/TECH-31.md`, `.cursor/projects/TECH-35.md`, `.cursor/projects/TECH-30.md`). **Related:** **TECH-48** (MCP discovery — may overlap **TECH-62**); **TECH-23** (MCP preflight culture); **TECH-45**–**TECH-47** (domain **Skills** — align in **TECH-63**).
+  - Acceptance: **TECH-61**, **TECH-62**, and **TECH-63** each satisfy their own **Acceptance** lines in this file (program **complete** when all three **complete**)
+  - Depends on: none (prerequisites tracked as separate rows below; see **Notes**)
+
+- [ ] **TECH-61** — **Spec pipeline** layer **A**: repo **scripts** + validation **infrastructure** (`npm run`, optional `tools/invariant-checks/`)
+  - Type: tooling / CI / agent enablement
+  - Files: root `package.json`; `tools/` (new or extended **Node** scripts); optional `tools/invariant-checks/`; `.github/workflows/` only if CI must call new targets; [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md) (reference only)
+  - Spec: `.cursor/projects/TECH-61.md`
+  - Notes: **Deliverables:** aggregate validation command(s) (e.g. **`validate:all`**), optional **`impact:check`**, **`diff:summary`**, **`validate:backlog-deps`**, stubs for **`test:invariants`** / **`test:golden`** when fixtures exist; align with **TECH-52** closure note on root aggregate script. **Does not** register MCP tools ( **TECH-62** ).
+  - Acceptance: per `.cursor/projects/TECH-61.md` §8; new **`npm run`** targets documented in root `package.json` / `docs/` as needed; **`npm run validate:dead-project-specs`** still passes
+  - Depends on: none (soft: **TECH-50** **§ Completed** — dead project-spec scanner)
+
+- [ ] **TECH-62** — **Spec pipeline** layer **B**: **territory-ia** MCP tools + handler improvements
+  - Type: tooling / agent enablement
+  - Files: `tools/mcp-ia-server/src/` (tools, parsers); `tools/mcp-ia-server/tests/`; `tools/mcp-ia-server/scripts/verify-mcp.ts`; `docs/mcp-ia-server.md`; `tools/mcp-ia-server/README.md`
+  - Spec: `.cursor/projects/TECH-62.md`
+  - Notes: **Candidate tools / enhancements** (prioritize per spec **Decision Log**): **`context_bundle`** composite read; **`router_for_task`** file-path hints; filtered **`invariants_for_files`** (or **`invariants_summary`** args); **`backlog_issue`** **`depends_on_status`**; **`project_spec_status`**; **`spec_section`** `include_children`. Reuse **`project-spec-closeout-parse.ts`** where possible (**TECH-58**). **Overlap:** **TECH-48** — coordinate or merge scope.
+  - Acceptance: per `.cursor/projects/TECH-62.md` §8; **`npm run test:ia`** and **`npm run verify`** green; tool names **`snake_case`** per **terminology-consistency**
+  - Depends on: **TECH-61** (soft: shared **Node** helpers / script patterns; **TECH-61** need not be **Completed** to start spikes)
+
+- [ ] **TECH-63** — **Spec pipeline** layer **C**: Cursor **Skills** + **project spec** template (**test contracts**, workflow steps)
+  - Type: documentation / agent enablement (**Cursor Skill** + template edits)
+  - Files: `.cursor/skills/project-spec-kickoff/SKILL.md`, `.cursor/skills/project-spec-implement/SKILL.md`, `.cursor/skills/project-implementation-validation/SKILL.md`, `.cursor/skills/project-spec-close/SKILL.md`, `.cursor/skills/project-new/SKILL.md` (as needed); `.cursor/templates/project-spec-template.md`; `.cursor/skills/README.md`; optional `AGENTS.md` pointer
+  - Spec: `.cursor/projects/TECH-63.md`
+  - Notes: **Deliverables:** **§7b Test Contracts** (or equivalent) in **project spec** template; **Skills** updates for impact preflight, inter-phase checks, validation manifest rows (**Unity** / **golden** path placeholders per **TECH-15**/**TECH-16**/**TECH-31**); align **TECH-45**–**TECH-47** pointers in **`.cursor/skills/README.md`**. **Does not** implement MCP handlers ( **TECH-62** ).
+  - Acceptance: per `.cursor/projects/TECH-63.md` §8; template and **Skills** remain **thin** (MCP slices, not pasted **reference spec** bodies)
+  - Depends on: **TECH-62** (soft: final **Tool recipe** order should reflect shipped MCP tools; **TECH-63** can start template/**Skill** drafts in parallel)
+
+## Compute-lib program (second priority)
 
 **Dependency order:** **TECH-37** must complete before **TECH-38** and before **TECH-39**. **TECH-38** supplies **batchmode** / **golden** **JSON** for **TECH-39** “heavy” tools; **TECH-39** may ship tool shells after **TECH-37** with honest **NOT_AVAILABLE** until **TECH-38** lands. **TECH-36** is the umbrella — progress is tracked on **TECH-37**–**TECH-39**. **Related research** (**TECH-32**, **TECH-35**) is listed here after the phased rows; both remain **`Depends on: none`** but should **follow** **TECH-38** in practice when comparing to extracted **pure** modules or **RNG**/**invariant** surfaces.
 
@@ -15,7 +53,7 @@
   - Type: tooling / code health / agent enablement
   - Files: umbrella only — see **TECH-37**, **TECH-38**, **TECH-39**; charter `.cursor/projects/TECH-36.md`; reference specs: `.cursor/specs/isometric-geography-system.md`, `.cursor/specs/simulation-system.md`, `.cursor/specs/managers-reference.md`
   - Spec: `.cursor/projects/TECH-36.md`
-  - Notes: **Program charter** with resolved product/tooling decisions. **Phased delivery:** **TECH-37** (**`tools/compute-lib/`** + pilot **`registerTool`**), **TECH-38** (Unity **pure** **compute** + **`tools/`** harnesses), **TECH-39** (computational **MCP** suite). **Related:** **JSON program (TECH-21)** **§ Completed** (**TECH-40** / **TECH-41** / **TECH-44a** — JSON DTOs/schemas; [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md); **glossary**), **TECH-28** (completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)), **TECH-32**, **TECH-35**; product follow-ups **FEAT-46** (geography authoring UI), **FEAT-47** (**multipolar** **urban growth rings**), **FEAT-48** (**water body** volume / **surface height (S)**).
+  - Notes: **Program charter** with resolved product/tooling decisions. **Phased delivery:** **TECH-37** (**`tools/compute-lib/`** + pilot **`registerTool`**), **TECH-38** (Unity **pure** **compute** + **`tools/`** harnesses), **TECH-39** (computational **MCP** suite). **Coordination:** **TECH-60** (**§ Spec pipeline & verification program**) lists **TECH-37**/**TECH-38** as **prerequisites** for **test contracts** / **golden** **JSON** / **invariant** checks — [`.cursor/projects/TECH-60.md`](.cursor/projects/TECH-60.md). **Related:** **JSON program (TECH-21)** **§ Completed** (**TECH-40** / **TECH-41** / **TECH-44a** — JSON DTOs/schemas; [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md); **glossary**), **TECH-28** (completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)), **TECH-32**, **TECH-35**; product follow-ups **FEAT-46** (geography authoring UI), **FEAT-47** (**multipolar** **urban growth rings**), **FEAT-48** (**water body** volume / **surface height (S)**).
   - Acceptance: **TECH-37**, **TECH-38**, and **TECH-39** each satisfy their own **Acceptance** lines in this file (program **complete** when all three **complete**)
   - Depends on: none (child issues **TECH-37** → **TECH-38** → **TECH-39** track implementation order)
 
@@ -59,7 +97,7 @@
 
 ## Agent ↔ Unity & MCP context lane
 
-Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**TECH-36** program rows live in **§ Compute-lib program** above.)
+Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**TECH-36** program rows live in **§ Compute-lib program** above.) **Prerequisites** for **§ Spec pipeline & verification program** (**TECH-60**): **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (this lane — existing `.cursor/projects/*.md`); **TECH-37**, **TECH-38** (**§ Compute-lib program**).
 
 - [ ] **TECH-59** — **territory-ia** MCP: stage **Editor** export registry payload (**BACKLOG** issue id + JSON documents)
   - Type: tooling / agent enablement
@@ -384,7 +422,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Spec sections: `.cursor/specs/ui-design-system.md` — **§3.3** (toolbar), **§1.3** (anchors/margins), **§4.3** (Canvas Scaler) as applicable.
   - Notes: Replace the bottom-centered horizontal **ribbon** with a **left-docked vertical** panel. Structure: **one row per category** (demolition, **RCI** **zoning**, **utility buildings**, **streets**, environment/**forests**, etc.), with **buttons laid out horizontally within each row** (e.g. `VerticalLayoutGroup` of rows, each row `HorizontalLayoutGroup`, or equivalent manual layout). Re-anchor dependent UI (e.g. **zone density** / tool option overlays) so they align to the new sidebar instead of the old bottom bar. Verify safe area and Canvas Scaler at reference resolutions; avoid overlapping the mini-map and debug readouts. Document final hierarchy in `docs/ui-design-system-context.md`. Link program charter: `docs/ui-design-system-project.md` (Backlog bridge). Spec/docs ticketed and cross-linked in **TECH-08** (completed).
 
-*(Agent–Unity / MCP tooling **TECH-21** **§ Completed** — **JSON program (TECH-21)** (**TECH-40**–**TECH-41** **§ Completed**, **TECH-44a** **§ Completed**; **glossary**), **TECH-44** program (**umbrella § Completed** — [`BACKLOG.md`](BACKLOG.md); **TECH-44b**/**c** **§ Completed**; **Editor export registry** **TECH-55**/**TECH-55b** **§ Completed**; open follow-ups **TECH-53**, **TECH-54**). **Compute-lib:** **TECH-36** / **TECH-37**–**TECH-39** / **TECH-32** / **TECH-35** — **§ Compute-lib program** above. **Other open Agent-lane** rows (**TECH-15**/**TECH-16**, **TECH-18**, **TECH-23**–**TECH-31**, **TECH-33**–**TECH-34**, **TECH-43**, **TECH-45**–**TECH-48**, **TECH-59**, **BUG-53**) — **§ Agent ↔ Unity & MCP context lane**. **TECH-57** (kickoff), **TECH-49**–**TECH-52** (implement / close / **project-implementation-validation**), **TECH-56** (**project-new**), **TECH-50** (dead project-spec path scanner), **TECH-58** (**project-spec-close** helpers: **`project_spec_closeout_digest`**, **`spec_sections`**, **`closeout:*`**) — **§ Completed**. **Shipped skills:** **project-spec-kickoff**, **project-spec-implement**, **project-spec-close**, **project-implementation-validation**, **project-new**; `.cursor/skills/README.md` — see **§ Completed**.)*
+*(**Spec pipeline & verification:** **TECH-60** / **TECH-61**–**TECH-63** — **§ Spec pipeline & verification program** above; exploration [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md). **Agent–Unity / MCP tooling TECH-21 § Completed** — **JSON program (TECH-21)** (**TECH-40**–**TECH-41** **§ Completed**, **TECH-44a** **§ Completed**; **glossary**), **TECH-44** program (**umbrella § Completed** — [`BACKLOG.md`](BACKLOG.md); **TECH-44b**/**c** **§ Completed**; **Editor export registry** **TECH-55**/**TECH-55b** **§ Completed**; open follow-ups **TECH-53**, **TECH-54**). **Compute-lib:** **TECH-36** / **TECH-37**–**TECH-39** / **TECH-32** / **TECH-35** — **§ Compute-lib program** above. **Other open Agent-lane** rows (**TECH-15**/**TECH-16**, **TECH-18**, **TECH-23**–**TECH-31**, **TECH-33**–**TECH-34**, **TECH-43**, **TECH-45**–**TECH-48**, **TECH-59**, **BUG-53**) — **§ Agent ↔ Unity & MCP context lane**. **TECH-57** (kickoff), **TECH-49**–**TECH-52** (implement / close / **project-implementation-validation**), **TECH-56** (**project-new**), **TECH-50** (dead project-spec path scanner), **TECH-58** (**project-spec-close** helpers: **`project_spec_closeout_digest`**, **`spec_sections`**, **`closeout:*`**) — **§ Completed**. **Shipped skills:** **project-spec-kickoff**, **project-spec-implement**, **project-spec-close**, **project-implementation-validation**, **project-new**; `.cursor/skills/README.md` — see **§ Completed**.)*
 
 ## Low Priority
 
@@ -658,11 +696,12 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
 - **Depends on** (optional): IDs of issues that must be completed first
 
 ### Section Order
-1. **Compute-lib program** (**TECH-36** umbrella; phased **TECH-37** → **TECH-38** → **TECH-39**; related **TECH-32**, **TECH-35**)
-2. **Agent ↔ Unity & MCP context lane** (Unity exports, MCP, CI, performance harnesses, adjacent tooling)
-3. In progress (actively being developed — insert above **High priority** when used)
-4. High priority (critical bugs, core gameplay blockers)
-5. Medium priority (important features, balance, improvements)
-6. Code Health (technical debt, refactors, performance)
-7. Low priority (new systems, polish, content)
-8. Completed (last 30 days)
+1. **Spec pipeline & verification program** (**TECH-60** umbrella; phased **TECH-61** → **TECH-62** → **TECH-63**)
+2. **Compute-lib program** (**TECH-36** umbrella; phased **TECH-37** → **TECH-38** → **TECH-39**; related **TECH-32**, **TECH-35**)
+3. **Agent ↔ Unity & MCP context lane** (Unity exports, MCP, CI, performance harnesses, adjacent tooling)
+4. In progress (actively being developed — insert above **High priority** when used)
+5. High priority (critical bugs, core gameplay blockers)
+6. Medium priority (important features, balance, improvements)
+7. Code Health (technical debt, refactors, performance)
+8. Low priority (new systems, polish, content)
+9. Completed (last 30 days)

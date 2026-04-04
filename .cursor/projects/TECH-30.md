@@ -7,6 +7,8 @@
 
 **Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — task **9**.
 
+**Spec pipeline program:** [TECH-60](TECH-60.md) lists this issue for **project spec** / **BACKLOG** id hygiene alongside the spec-driven pipeline — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
+
 ## 1. Summary
 
 Implement a **Node** (or shell) script that scans **`.cursor/projects/*.md`** for references to backlog ids (`BUG-`, `FEAT-`, `TECH-`, `ART-`, `AUDIO-` per `AGENTS.md`) and verifies each id exists in **`BACKLOG.md`** (open or completed sections — configurable). Exit non-zero on orphan references so agents do not follow dead links.
