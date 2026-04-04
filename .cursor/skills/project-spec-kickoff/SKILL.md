@@ -19,7 +19,7 @@ Until **TECH-48** ships richer discovery from project-spec prose, use the **manu
 
 ## Seed prompt (parameterize)
 
-Replace `{SPEC_PATH}` with the project spec path (e.g. `.cursor/projects/TECH-44a.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
+Replace `{SPEC_PATH}` with the project spec path (e.g. `.cursor/projects/TECH-59.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
 
 ```markdown
 Review @{SPEC_PATH} and ensure it uses canonical terms from the glossary and reference specs.

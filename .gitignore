@@ -51,8 +51,16 @@ crashlytics-build.properties
 # Agent diagnostics exports (TECH-28 — local-only; regenerate from Unity Editor)
 tools/reports/*.json
 tools/reports/*.md
+tools/reports/.staging/
 
 # MCP IA server (Node)
 tools/mcp-ia-server/node_modules/
 tools/mcp-ia-server/dist/
 tools/mcp-ia-server/coverage/
+
+# Postgres IA tooling (TECH-44b)
+tools/postgres-ia/node_modules/
+
+# Local env (never commit secrets)
+.env
+.env.local

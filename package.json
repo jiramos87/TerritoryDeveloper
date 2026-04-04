@@ -6,6 +6,14 @@
     "validate:dead-project-specs": "node tools/validate-dead-project-spec-paths.mjs",
     "validate:fixtures": "npm --prefix tools/mcp-ia-server run validate:fixtures",
     "generate:ia-indexes": "cd tools/mcp-ia-server && npx tsx scripts/generate-ia-indexes.ts",
-    "test:ia": "npm --prefix tools/mcp-ia-server test"
+    "test:ia": "npm --prefix tools/mcp-ia-server test",
+    "db:migrate": "npm --prefix tools/postgres-ia run migrate",
+    "db:seed:glossary": "npm --prefix tools/postgres-ia run seed:glossary",
+    "db:glossary": "npm --prefix tools/postgres-ia run glossary-by-key --",
+    "db:register-repro": "npm --prefix tools/postgres-ia run register-repro --",
+    "db:register-editor-export": "npm --prefix tools/postgres-ia run register-editor-export --",
+    "closeout:worksheet": "cd tools/mcp-ia-server && npx tsx scripts/project-spec-closeout-report.ts --",
+    "closeout:dependents": "cd tools/mcp-ia-server && npx tsx scripts/project-spec-dependents.ts --",
+    "closeout:verify": "npm run validate:dead-project-specs && npm run generate:ia-indexes -- --check"
   }
 }

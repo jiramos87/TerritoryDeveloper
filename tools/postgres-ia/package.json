@@ -1,0 +1,19 @@
+{
+  "name": "postgres-ia-tools",
+  "private": true,
+  "type": "module",
+  "description": "Postgres IA migrations (TECH-44b), dev repro registry (TECH-44c), glossary helpers.",
+  "scripts": {
+    "migrate": "node apply-migrations.mjs",
+    "glossary-by-key": "node glossary-by-key.mjs",
+    "seed:glossary": "node seed-glossary-sample.mjs",
+    "register-repro": "node register-dev-repro.mjs",
+    "register-editor-export": "node register-editor-export.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}

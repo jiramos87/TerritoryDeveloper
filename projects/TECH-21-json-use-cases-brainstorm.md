@@ -1,10 +1,10 @@
 # TECH-21 — JSON use cases (brainstorm + exploration)
 
-**Purpose:** Support the **[TECH-21](../.cursor/projects/TECH-21.md) program** (**TECH-40** → **TECH-41** → **TECH-44a**) and **[TECH-44](../.cursor/projects/TECH-44.md)** (**TECH-44b**/**c**) with **exploration notes**, a **versioning FAQ**, and **mapping** from ideas to backlog issues. **Not** authoritative game behavior — [`.cursor/specs/glossary.md`](../.cursor/specs/glossary.md) and reference specs win.
+**Purpose:** Support the **[TECH-21](../.cursor/projects/TECH-21.md) program** (**TECH-40** → **TECH-41** → **TECH-44a** **§ Completed**) and the completed **TECH-44** program (**TECH-44b**/**c** — [`BACKLOG.md`](../BACKLOG.md) **§ Completed** **TECH-44**; **Program extension mapping** [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md)) with **exploration notes**, a **versioning FAQ**, and **mapping** from ideas to backlog issues. **Not** authoritative game behavior — [`.cursor/specs/glossary.md`](../.cursor/specs/glossary.md) and reference specs win. **B1**/**B3**/**P5** norms: [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md).
 
 **Status:** Living draft — trim or mark **Accepted** / **Deferred** as implementation lands.
 
-**Program specs:** **TECH-40** (infra — completed; [`BACKLOG.md`](../BACKLOG.md) **§ Completed**), **TECH-41** (current payloads — completed; same section), [TECH-44a](../.cursor/projects/TECH-44a.md) (patterns), [TECH-44](../.cursor/projects/TECH-44.md) (**TECH-44b**/**c** — Postgres). Durable pointers: [`docs/schemas/README.md`](../docs/schemas/README.md), **glossary** **Interchange JSON** / **geography_init_params**, [`ARCHITECTURE.md`](../ARCHITECTURE.md).
+**Program specs:** **TECH-40** (infra — completed; [`BACKLOG.md`](../BACKLOG.md) **§ Completed**), **TECH-41** (current payloads — completed; same section), **TECH-44a** (patterns — completed; [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md)), **TECH-44** umbrella (completed — same **§ Completed** section; **TECH-44b**/**c** Postgres milestones). Durable pointers: [`docs/schemas/README.md`](../docs/schemas/README.md), **glossary** **Interchange JSON** / **geography_init_params** / **Postgres interchange patterns (B1, B3, P5)**, [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 
 **Related:** **[TECH-36](../.cursor/projects/TECH-36.md)** program (**TECH-37**–**TECH-39** shares **GeographyInitParams** / **Zod** with MCP); [TECH-38](../.cursor/projects/TECH-38.md) Wave D (geography harness JSON); [TECH-39](../.cursor/projects/TECH-39.md) `geography_init_params_validate`; [`docs/planned-domain-ideas.md`](../docs/planned-domain-ideas.md) (**FEAT-46**–**FEAT-48**); [agent-friendly-tasks-with-territory-ia-context.md](agent-friendly-tasks-with-territory-ia-context.md) (**I1** reduces multi-`spec_section` churn).
 
@@ -30,7 +30,7 @@
 | **G3** | Removed from active track | **Save data** migration manifest belongs to a **future** issue when a binary/JSON **Save** format change is scheduled; overlaps **TECH-44b** migrations — do not block **TECH-40**. |
 | **I3** | Removed | Backlog cross-index is better handled by **TECH-30** (issue id validation) + optional follow-up; **I1**/**I2** cover IA navigation first. |
 | **D1**–**D3** | Deferred to **TECH-16** / **TECH-31** | **Simulation tick** profile JSON and **AUTO systems** ledgers are owned by performance/fixture workstreams; **TECH-41** may **reference** their shapes but does not own the harness. |
-| **E1**–**E2** | Deferred | Stable domain ids and normalize-vs-embed policy move to **TECH-44b** / **TECH-44a** when API surfaces exist; **E3** is enough for **TECH-41** layering story. |
+| **E1**–**E2** | Deferred | Stable domain ids and normalize-vs-embed policy move to **TECH-44b** / [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md) when API surfaces exist; **E3** is enough for **TECH-41** layering story. |
 
 ---
 
@@ -44,10 +44,10 @@
 | **I1** | Spec index manifest | **TECH-40** |
 | **I2** | Glossary term → anchor index | **TECH-40** |
 | **E3** | DTO **layers** (manager ↔ interchange ↔ **CellData**) | **TECH-41** (doc + boundaries) |
-| **B1** | Row + **JSONB** pattern | **TECH-44a** (norms); **TECH-44b**/**c** (implement) |
+| **B1** | Row + **JSONB** pattern | [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md) (norms; **TECH-44a** **§ Completed**); **TECH-44b**/**c** (implement) |
 | **B2** | Append-only JSON lines | **[TECH-43](../BACKLOG.md)** (backlog only) |
-| **B3** | Idempotent **patch** envelope | **TECH-44a** (contract, not one table) |
-| **P1**–**P5** | Load/parse strategies | **TECH-41** / **TECH-44a** (see below) |
+| **B3** | Idempotent **patch** envelope | [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md) (contract, not one table) |
+| **P1**–**P5** | Load/parse strategies | **TECH-41** / [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md) (see below) |
 
 ---
 
@@ -128,7 +128,7 @@
 **Shape (illustrative):**  
 Row: `(id, save_slot, schema_version, updated_at, payload jsonb)` where `payload` holds `{ "artifact": "city_snapshot", ... }`.
 
-**Integration:** Documented in **TECH-44a**; implemented under **TECH-44b**/**c**. Enables **index** on scalars and **flexible** inner structure.
+**Integration:** Documented in [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md); implemented under **TECH-44b**/**c**. Enables **index** on scalars and **flexible** inner structure.
 
 ---
 
@@ -136,7 +136,7 @@ Row: `(id, save_slot, schema_version, updated_at, payload jsonb)` where `payload
 
 **Intent:** **NDJSON** / JSON Lines for telemetry or sim anomalies — one JSON object per line, optional **`schema_version`** per line.
 
-**Integration:** **Not** part of **TECH-40**–**TECH-44a** deliverables beyond a pointer. Tracked as **[TECH-43](../BACKLOG.md)** until a consumer and storage are chosen.
+**Integration:** **Not** part of **TECH-40**–**TECH-41** deliverables beyond a pointer. Tracked as **[TECH-43](../BACKLOG.md)** until a consumer and storage are chosen.
 
 ---
 
@@ -149,7 +149,7 @@ Row: `(id, save_slot, schema_version, updated_at, payload jsonb)` where `payload
 
 **Standard vs table:** This is a **message contract** (HTTP body, queue message, or **RPC** payload), **not** a single mandatory table. **SQL** might use `UPDATE ... FROM jsonb` or an **outbox** table storing the same envelope as **JSONB**.
 
-**Integration:** **TECH-44a** text + examples; implementation with **TECH-44b**.
+**Integration:** [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md) text + examples; implementation with **TECH-44b**.
 
 ---
 
@@ -185,7 +185,7 @@ Row: `(id, save_slot, schema_version, updated_at, payload jsonb)` where `payload
 
 **Scope:** Use for **large static catalogs** and selected interchange DTOs — **not** a mandate for **every** future **entity** model. Some entities are naturally **row-oriented** in **DB** without a bundled `by_id` map in JSON.
 
-**Integration:** **TECH-41** for static game data; **TECH-44a** when **JSONB** documents mirror the same pattern.
+**Integration:** **TECH-41** for static game data; [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md) when **JSONB** documents mirror the same pattern.
 
 ---
 
@@ -195,7 +195,7 @@ Row: `(id, save_slot, schema_version, updated_at, payload jsonb)` where `payload
 
 **Triggers:** Profiling shows large allocations or frame spikes on load; **G1** exports beyond modest bounds.
 
-**Integration:** **TECH-44a** guidance first; **TECH-41** implements only if **G1** grows large enough to warrant it.
+**Integration:** [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md) guidance first; **TECH-41** implements only if **G1** grows large enough to warrant it.
 
 ---
 
@@ -204,7 +204,7 @@ Row: `(id, save_slot, schema_version, updated_at, payload jsonb)` where `payload
 1. **Risk to Save data** — default **no** on-disk change.  
 2. **Glossary / persistence alignment** — names and schema `description`s.  
 3. **Tooling reuse** — one validator (**TECH-40**).  
-4. **Path to TECH-44b** — **B1**/**B3** documented in **TECH-44a**.
+4. **Path to TECH-44b** — **B1**/**B3** documented in [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md).
 
 ---
 

@@ -48,6 +48,7 @@ async function main(): Promise<void> {
     "list_specs",
     "spec_outline",
     "spec_section",
+    "spec_sections",
     "glossary_lookup",
     "glossary_discover",
     "router_for_task",
@@ -55,6 +56,7 @@ async function main(): Promise<void> {
     "list_rules",
     "rule_content",
     "backlog_issue",
+    "project_spec_closeout_digest",
   ];
   for (const n of required) {
     if (!names.includes(n)) throw new Error(`Missing MCP tool: ${n}`);
@@ -419,6 +421,41 @@ async function main(): Promise<void> {
   ) as { error?: string };
   if (blBad.error !== "unknown_issue") {
     throw new Error("backlog_issue unknown_issue expected for fake id");
+  }
+
+  const batch = parseJsonFromToolResult(
+    await client.callTool({
+      name: "spec_sections",
+      arguments: {
+        sections: [
+          { spec: "geo", section: "1", max_chars: 400 },
+          { spec: "roads", section: "validation", max_chars: 400 },
+        ],
+      },
+    }),
+  ) as { results?: Record<string, unknown>; error?: string };
+  if (batch.error) throw new Error(`spec_sections error: ${batch.error}`);
+  const br = batch.results ?? {};
+  if (Object.keys(br).length < 1) throw new Error("spec_sections expected at least one result key");
+  const firstKey = Object.keys(br)[0];
+  const first = br[firstKey] as { error?: string; content?: string };
+  if (first.error) throw new Error(`spec_sections slice error: ${first.error}`);
+  if (!first.content) throw new Error("spec_sections expected content on first slice");
+
+  const digest = parseJsonFromToolResult(
+    await client.callTool({
+      name: "project_spec_closeout_digest",
+      arguments: { issue_id: "TECH-59" },
+    }),
+  ) as { schema_version?: number; spec_path?: string; error?: string };
+  if (digest.error) {
+    throw new Error(
+      `project_spec_closeout_digest: ${(digest as { message?: string }).message ?? digest.error}`,
+    );
+  }
+  if (digest.schema_version !== 1) throw new Error("project_spec_closeout_digest schema_version 1 expected");
+  if (digest.spec_path !== ".cursor/projects/TECH-59.md") {
+    throw new Error("project_spec_closeout_digest spec_path mismatch");
   }
 
   await transport.close();

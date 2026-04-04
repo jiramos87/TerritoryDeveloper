@@ -15,10 +15,12 @@ import { registerInvariantsSummary } from "./tools/invariants-summary.js";
 import { registerListRules } from "./tools/list-rules.js";
 import { registerRuleContent } from "./tools/rule-content.js";
 import { registerBacklogIssue } from "./tools/backlog-issue.js";
+import { registerSpecSections } from "./tools/spec-sections.js";
+import { registerProjectSpecCloseoutDigest } from "./tools/project-spec-closeout-digest.js";
 
 const server = new McpServer({
   name: "territory-ia",
-  version: "0.4.2",
+  version: "0.4.3",
   description:
     "Information Architecture server for Territory Developer — exposes specs, rules, glossary, backlog issues, and architecture docs via MCP tools.",
 });
@@ -35,6 +37,8 @@ registerInvariantsSummary(server, registry);
 registerListRules(server, registry);
 registerRuleContent(server, registry);
 registerBacklogIssue(server);
+registerSpecSections(server, registry);
+registerProjectSpecCloseoutDigest(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

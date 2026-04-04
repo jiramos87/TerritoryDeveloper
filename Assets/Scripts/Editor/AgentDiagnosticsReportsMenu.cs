@@ -27,9 +27,24 @@ public static class AgentDiagnosticsReportsMenu
     {
         try
         {
-            string path = WriteAgentContextJson();
-            EditorUtility.RevealInFinder(path);
-            Debug.Log($"[AgentDiagnostics] Wrote agent context: {path}");
+            string stamp = UtcTimestampForFilename();
+            string baseName = $"agent-context-{stamp}";
+            string json = BuildAgentContextJsonString();
+            bool dbOk = EditorPostgresExportRegistrar.TryPersistReport(
+                EditorPostgresExportRegistrar.KindAgentContext,
+                json,
+                false,
+                baseName,
+                out string path);
+            if (path != null)
+            {
+                EditorUtility.RevealInFinder(path);
+                Debug.Log($"[AgentDiagnostics] Wrote agent context: {path}");
+            }
+            else if (dbOk)
+            {
+                // Quiet success: stored in Postgres only (TECH-55b).
+            }
         }
         catch (Exception ex)
         {
@@ -42,9 +57,24 @@ public static class AgentDiagnosticsReportsMenu
     {
         try
         {
-            string path = WriteSortingDebugMarkdown();
-            EditorUtility.RevealInFinder(path);
-            Debug.Log($"[AgentDiagnostics] Wrote sorting debug: {path}");
+            string stamp = UtcTimestampForFilename();
+            string baseName = $"sorting-debug-{stamp}";
+            string md = BuildSortingDebugMarkdownString();
+            bool dbOk = EditorPostgresExportRegistrar.TryPersistReport(
+                EditorPostgresExportRegistrar.KindSortingDebug,
+                md,
+                true,
+                baseName,
+                out string path);
+            if (path != null)
+            {
+                EditorUtility.RevealInFinder(path);
+                Debug.Log($"[AgentDiagnostics] Wrote sorting debug: {path}");
+            }
+            else if (dbOk)
+            {
+                // Quiet success: stored in Postgres only (TECH-55b).
+            }
         }
         catch (Exception ex)
         {
@@ -52,12 +82,8 @@ public static class AgentDiagnosticsReportsMenu
         }
     }
 
-    static string WriteAgentContextJson()
+    static string BuildAgentContextJsonString()
     {
-        EnsureReportsDirectory();
-        string stamp = UtcTimestampForFilename();
-        string path = Path.Combine(GetReportsDirectory(), $"agent-context-{stamp}.json");
-
         var report = new AgentContextReportDto
         {
             schema_version = SchemaVersion,
@@ -71,17 +97,11 @@ public static class AgentDiagnosticsReportsMenu
             grid = BuildGridSampleDto()
         };
 
-        string json = JsonUtility.ToJson(report, true);
-        File.WriteAllText(path, json, Encoding.UTF8);
-        return path;
+        return JsonUtility.ToJson(report, true);
     }
 
-    static string WriteSortingDebugMarkdown()
+    static string BuildSortingDebugMarkdownString()
     {
-        EnsureReportsDirectory();
-        string stamp = UtcTimestampForFilename();
-        string path = Path.Combine(GetReportsDirectory(), $"sorting-debug-{stamp}.md");
-
         var sb = new StringBuilder();
         sb.AppendLine("# Sorting debug export");
         sb.AppendLine();
@@ -97,8 +117,7 @@ public static class AgentDiagnosticsReportsMenu
             sb.AppendLine("## Not available in Edit Mode");
             sb.AppendLine();
             sb.AppendLine("Enter **Play Mode** with an initialized **grid** (`GridManager.InitializeGrid` has run) to emit per-cell **Sorting order** breakdowns.");
-            File.WriteAllText(path, sb.ToString(), Encoding.UTF8);
-            return path;
+            return sb.ToString();
         }
 
         GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
@@ -107,8 +126,7 @@ public static class AgentDiagnosticsReportsMenu
             sb.AppendLine("## Grid not ready");
             sb.AppendLine();
             sb.AppendLine("No initialized **GridManager** in Play Mode — start a **New Game** or load a scene after **geography initialization**.");
-            File.WriteAllText(path, sb.ToString(), Encoding.UTF8);
-            return path;
+            return sb.ToString();
         }
 
         TerrainManager terrain = grid.terrainManager;
@@ -117,8 +135,7 @@ public static class AgentDiagnosticsReportsMenu
             sb.AppendLine("## TerrainManager missing");
             sb.AppendLine();
             sb.AppendLine("**GridManager.terrainManager** is null; cannot compute terrain sorting orders.");
-            File.WriteAllText(path, sb.ToString(), Encoding.UTF8);
-            return path;
+            return sb.ToString();
         }
 
         if (!TryResolveSeedCell(grid, out int seedX, out int seedY))
@@ -142,8 +159,7 @@ public static class AgentDiagnosticsReportsMenu
             AppendCellSortingSection(sb, grid, terrain, p.x, p.y);
         }
 
-        File.WriteAllText(path, sb.ToString(), Encoding.UTF8);
-        return path;
+        return sb.ToString();
     }
 
     static void AppendCellSortingSection(StringBuilder sb, GridManager grid, TerrainManager terrain, int x, int y)

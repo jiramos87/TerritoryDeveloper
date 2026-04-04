@@ -141,6 +141,87 @@ function topLevelSectionHints(
   return roots.map((h) => ({ sectionId: h.sectionId, title: h.title }));
 }
 
+/** Payload shape returned as JSON from `spec_section` / `spec_sections` (success or error). */
+export type SpecSectionPayload = Record<string, unknown>;
+
+/**
+ * Extract one spec section (same resolution rules as the `spec_section` MCP tool).
+ * Shared by `spec_section` and `spec_sections` batch tool (TECH-58).
+ */
+export function runSpecSectionExtract(
+  registry: SpecRegistryEntry[],
+  specKey: string,
+  sectionQ: string,
+  maxChars: number,
+): SpecSectionPayload {
+  const entry = findEntryForSpecDoc(registry, specKey);
+  if (!entry) {
+    const available_keys = registry.map((e) => e.key).sort();
+    return {
+      error: "unknown_spec",
+      message: `No document found for key '${specKey}'. Use list_specs to see available documents.`,
+      available_keys,
+    };
+  }
+
+  const doc = parseDocument(entry.filePath);
+  let match = extractSection(doc, sectionQ);
+  let fuzzySuggestion: string | undefined;
+
+  if (match == null) {
+    const headingItems = flattenHeadingTree(doc.headings).map((h) => ({
+      node: h,
+      title: h.title,
+    }));
+    const fuzzy = fuzzyFindByHeadingTitle(
+      sectionQ,
+      headingItems,
+      (x) => x.title,
+      { threshold: 0.4, maxResults: 5, minTokenLength: 4 },
+    );
+    if (fuzzy[0] && fuzzy[0].score < FUZZY_STRONG_THRESHOLD) {
+      const heading = fuzzy[0].item.node;
+      match = buildExtractMatch(doc.filePath, heading);
+      fuzzySuggestion = `Matched to '${heading.title}' (fuzzy).`;
+    } else {
+      return {
+        error: "unknown_section",
+        message: `No section found for '${sectionQ}' in '${entry.key}'. Use spec_outline to list sections.`,
+        available_sections: topLevelSectionHints(entry, 20),
+        suggestions: fuzzy.map((f) => f.item.title),
+      };
+    }
+  }
+
+  if (match !== null && "kind" in match) {
+    return {
+      error: "unknown_section",
+      message: `Multiple sections match '${sectionQ}'. Narrow the section id or title.`,
+      available_sections: match.candidates.slice(0, 20),
+    };
+  }
+
+  const { heading, content, lineStart, lineEnd } = match as ExtractSectionMatch;
+  const { text, truncated, totalChars } = truncateContent(content, maxChars);
+
+  return {
+    key: entry.key,
+    sectionId: heading.sectionId,
+    title: heading.title,
+    lineStart,
+    lineEnd,
+    content: text,
+    truncated,
+    totalChars,
+    ...(fuzzySuggestion
+      ? {
+          matchType: "fuzzy" as const,
+          suggestion: fuzzySuggestion,
+        }
+      : {}),
+  };
+}
+
 /**
  * Register the spec_section tool.
  */
@@ -168,73 +249,9 @@ export function registerSpecSection(
         }
         const { spec: specKey, section: sectionQ, max_chars: maxChars } =
           normalized;
-
-        const entry = findEntryForSpecDoc(registry, specKey);
-        if (!entry) {
-          const available_keys = registry.map((e) => e.key).sort();
-          return jsonResult({
-            error: "unknown_spec",
-            message: `No document found for key '${specKey}'. Use list_specs to see available documents.`,
-            available_keys,
-          });
-        }
-
-        const doc = parseDocument(entry.filePath);
-        let match = extractSection(doc, sectionQ);
-        let fuzzySuggestion: string | undefined;
-
-        if (match == null) {
-          const headingItems = flattenHeadingTree(doc.headings).map((h) => ({
-            node: h,
-            title: h.title,
-          }));
-          const fuzzy = fuzzyFindByHeadingTitle(
-            sectionQ,
-            headingItems,
-            (x) => x.title,
-            { threshold: 0.4, maxResults: 5, minTokenLength: 4 },
-          );
-          if (fuzzy[0] && fuzzy[0].score < FUZZY_STRONG_THRESHOLD) {
-            const heading = fuzzy[0].item.node;
-            match = buildExtractMatch(doc.filePath, heading);
-            fuzzySuggestion = `Matched to '${heading.title}' (fuzzy).`;
-          } else {
-            return jsonResult({
-              error: "unknown_section",
-              message: `No section found for '${sectionQ}' in '${entry.key}'. Use spec_outline to list sections.`,
-              available_sections: topLevelSectionHints(entry, 20),
-              suggestions: fuzzy.map((f) => f.item.title),
-            });
-          }
-        }
-
-        if (match !== null && "kind" in match) {
-          return jsonResult({
-            error: "unknown_section",
-            message: `Multiple sections match '${sectionQ}'. Narrow the section id or title.`,
-            available_sections: match.candidates.slice(0, 20),
-          });
-        }
-
-        const { heading, content, lineStart, lineEnd } = match as ExtractSectionMatch;
-        const { text, truncated, totalChars } = truncateContent(content, maxChars);
-
-        return jsonResult({
-          key: entry.key,
-          sectionId: heading.sectionId,
-          title: heading.title,
-          lineStart,
-          lineEnd,
-          content: text,
-          truncated,
-          totalChars,
-          ...(fuzzySuggestion
-            ? {
-                matchType: "fuzzy" as const,
-                suggestion: fuzzySuggestion,
-              }
-            : {}),
-        });
+        return jsonResult(
+          runSpecSectionExtract(registry, specKey, sectionQ, maxChars),
+        );
       }),
   );
 }

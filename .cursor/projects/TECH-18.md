@@ -44,7 +44,7 @@ N/A — infrastructure.
 | Area | Pointer |
 |------|---------|
 | MCP | `tools/mcp-ia-server/` — **TECH-17** baseline |
-| DB | **TECH-44b** schema / migrations |
+| DB | **`db/migrations/`** (IA tables + `ia_glossary_row_by_key`), **`tools/postgres-ia/`** (migrate / seed / glossary-by-key), **`DATABASE_URL`** — see [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) and [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) **PostgreSQL IA (TECH-44b) integration point for TECH-18** |
 | Rules | `.cursor/rules/terminology-consistency.mdc` — tool naming |
 
 ## 5. Proposed Design

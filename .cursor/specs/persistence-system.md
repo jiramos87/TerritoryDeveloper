@@ -9,6 +9,8 @@
 
 **Interchange JSON** (tools, MCP, StreamingAssets config) is separate from Save data: schemas and DTOs use `artifact` / `schema_version` per `docs/schemas/README.md`. Do not treat `tools/reports/*-interchange-*.json` or `world_snapshot_dev` exports as Load pipeline inputs unless a dedicated issue defines migration (see `ARCHITECTURE.md` — Interchange JSON).
 
+**Future PostgreSQL rows** (game-owned DB, **TECH-44** program): normative row + **JSONB**, idempotent **patch** envelope, streaming guidance, and SQL vs interchange naming live in [`docs/postgres-interchange-patterns.md`](../../docs/postgres-interchange-patterns.md). That layer does **not** replace **Save data** or **Load pipeline** without a dedicated migration issue.
+
 ## Load pipeline
 
 Restore order matters — do not reorder:

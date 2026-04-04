@@ -22,7 +22,7 @@ Abstract pattern (reusable outside this game): [`docs/mcp-markdown-ia-pattern.md
 | `npm test` | Unit tests (`node:test` + `tsx`) for parser and tool helpers. |
 | `npm run test:watch` | Tests in watch mode. |
 | `npm run test:coverage` | Parser + **ia-index** line coverage with **c8** (gate ≥90%). |
-| `npm run verify` | From this directory: spawns the server the same way as Cursor (via repo root + `npx -y tsx …`) and exercises all **10** tools through the MCP SDK client. |
+| `npm run verify` | From this directory: spawns the server the same way as Cursor (via repo root + `npx -y tsx …`) and exercises all **12** tools through the MCP SDK client. |
 | `npm run validate:fixtures` | **AJV** (JSON Schema Draft 2020-12): valid fixtures under `docs/schemas/fixtures/` must pass; invalid fixtures must fail. |
 | `npm run generate:ia-indexes` | Writes `data/spec-index.json` and `data/glossary-index.json`. Pass `--check` to assert they match the generator (used in **CI**). |
 
@@ -43,7 +43,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 |----------|---------|
 | `REPO_ROOT` | Root used to resolve `.cursor/specs`, `.cursor/rules`, and root markdown. Defaults to `process.cwd()`. |
 
-## Tools (10)
+## Tools (12)
 
 | Tool | Description |
 |------|-------------|
@@ -51,6 +51,8 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`list_specs`** | Registry entries: `key`, `relativePath`, `description`, `category`, `lineCount`. Optional filter `category` (e.g. `rule`). |
 | **`spec_outline`** | Nested heading outline with line ranges. `spec` accepts key, filename, or alias (`geo` → `isometric-geography-system`, `roads` → `roads-system`, `unity` / `unityctx` → `unity-development-context`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
 | **`spec_section`** | Body for one section: canonical `spec` + `section` (id `13.4`, slug, title substring, or fuzzy typo). Aliases: `key` / `doc` → spec; `section_heading` / `heading` → section; numeric `section` coerced to string. `max_chars` or `maxChars` (default 3000) with `truncated` / `totalChars`. |
+| **`spec_sections`** | Batch: `sections` array; each element uses the same shape as **`spec_section`**. Response `results` map keyed by `spec::section`. Optional `max_requests` (default 20, max 50). |
+| **`project_spec_closeout_digest`** | Exactly one of `issue_id` or `spec_path` (`.cursor/projects/{ISSUE_ID}.md`). Returns structured closeout prep JSON (`schema_version` 1, section bodies, `cited_issue_ids`, keywords, heuristic `checklist_hints`). Read-only. |
 | **`glossary_discover`** | Keyword discovery over glossary rows (**English** `query` / `keywords` only — translate from the user’s language before calling). Scores **Term**, **Definition**, **Spec**, and category; returns ranked `term`, `specReference`, optional `spec` alias + `registryKey`, `matchReasons`, `score`. Params: `query` and/or `keywords` (alias `terms`); `q` / `search` for query; `max_results` / `maxResults` (default 10, cap 25). |
 | **`glossary_lookup`** | Glossary row: exact (case-insensitive) then fuzzy; **`term` must be English** (glossary language). Bracket text like `[x,y]` normalized for matching. |
 | **`router_for_task`** | Match `domain` string to specs using tables in `agent-router.mdc`. |
@@ -64,10 +66,22 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 - `list_specs` → `{}`
 - `spec_outline` → `{ "spec": "geo" }`
 - `spec_section` → `{ "spec": "geo", "section": "13.4", "max_chars": 8000 }` (or `{ "key": "geo", "section_heading": 14 }`)
+- `spec_sections` → `{ "sections": [ { "spec": "geo", "section": "1" }, { "spec": "roads", "section": "validation" } ] }`
+- `project_spec_closeout_digest` → `{ "issue_id": "TECH-59" }` or `{ "spec_path": ".cursor/projects/TECH-59.md" }`
 - `glossary_discover` → `{ "query": "manual street trace neighbors", "max_results": 8 }`
 - `glossary_lookup` → `{ "term": "wet run" }`
 - `router_for_task` → `{ "domain": "roads" }`
 - `rule_content` → `{ "rule": "roads", "max_chars": 50000 }`
+
+## Closeout CLI (from repository root)
+
+Shipped with **TECH-58**; scripts live under `scripts/` (they default `REPO_ROOT` to the repository root).
+
+| Root `npm run` | Purpose |
+|----------------|---------|
+| `closeout:worksheet -- --issue TECH-59` | Print Markdown worksheet; add `--json` for digest JSON only. |
+| `closeout:dependents -- --issue TECH-59` | List `file:line` hits for the id or `.cursor/projects/TECH-59.md` (see script header for scan roots / limitations). |
+| `closeout:verify` | Runs `validate:dead-project-specs` then `generate:ia-indexes --check`. Local convenience; **CI** **ia-tools** remains the gate for merges. |
 
 ## Architecture
 
@@ -89,6 +103,8 @@ flowchart LR
     LS[list-specs.ts]
     SO[spec-outline.ts]
     SS[spec-section.ts]
+    SSB[spec-sections.ts]
+    PSD[project-spec-closeout-digest.ts]
     GL[glossary-lookup.ts]
     GD[glossary-discover.ts]
     RF[router-for-task.ts]
@@ -101,6 +117,8 @@ flowchart LR
   IDX --> LS
   IDX --> SO
   IDX --> SS
+  IDX --> SSB
+  IDX --> PSD
   IDX --> GL
   IDX --> GD
   IDX --> RF
@@ -114,6 +132,10 @@ flowchart LR
   SS --> CFG
   SS --> PAR
   SS --> FZ
+  SSB --> CFG
+  SSB --> PAR
+  SSB --> FZ
+  PSD --> CFG
   GL --> CFG
   GL --> GP
   GL --> FZ

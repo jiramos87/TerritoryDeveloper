@@ -12,7 +12,7 @@ This skill **does not** call MCP tools itself. In an **Agent** chat with **terri
 
 Until **TECH-48** ships richer discovery from project-spec prose, use the **manual** recipe (no composite MCP tool).
 
-**Related:** **TECH-49** — completed (`BACKLOG.md` § Completed); **TECH-44** / **project-spec-kickoff** (review spec **before** code); **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (optional **Node** / **CI**-parity checks after **MCP** / schema / **IA index**–touching work); **[`project-spec-close`](../project-spec-close/SKILL.md)** (after phases ship — closeout / IA persistence / delete spec); **TECH-48** (future MCP discovery); **TECH-23** (MCP preflight culture); **TECH-45** / **TECH-46** / **TECH-47** (domain guardrail skills when shipped). **Conventions:** [`.cursor/skills/README.md`](../README.md).
+**Related:** **TECH-49** — completed (`BACKLOG.md` § Completed); **TECH-57** / **project-spec-kickoff** (review spec **before** code); **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (optional **Node** / **CI**-parity checks after **MCP** / schema / **IA index**–touching work); **[`project-spec-close`](../project-spec-close/SKILL.md)** (after phases ship — closeout / IA persistence / delete spec); **TECH-48** (future MCP discovery); **TECH-23** (MCP preflight culture); **TECH-45** / **TECH-46** / **TECH-47** (domain guardrail skills when shipped). **Conventions:** [`.cursor/skills/README.md`](../README.md).
 
 ## Relationship to kickoff
 
@@ -24,7 +24,7 @@ Default: spec **Status** is **Final** or **In Review** with game-logic **Open Qu
 
 ## Seed prompt (parameterize)
 
-Replace `{SPEC_PATH}` with the project spec path (e.g. `.cursor/projects/TECH-44a.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
+Replace `{SPEC_PATH}` with the project spec path (e.g. `.cursor/projects/TECH-59.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
 
 ```markdown
 Implement @{SPEC_PATH} following its ## 7. Implementation Plan in order.

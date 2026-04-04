@@ -13,7 +13,7 @@
 | **Behavior source of truth** | Abstract specs | [`.cursor/specs/`](.cursor/specs/glossary.md) (canonical geo: `isometric-geography-system.md`) + [`glossary.md`](.cursor/specs/glossary.md) |
 | **Issues and human pipeline** | Issues + generic cron | [`BACKLOG.md`](BACKLOG.md) (`BUG-` / `FEAT-` / `TECH-` / …); skills [`.cursor/skills/project-spec-kickoff`](.cursor/skills/project-spec-kickoff/SKILL.md) and [project-spec-implement](.cursor/skills/project-spec-implement/SKILL.md) |
 | **MCP** | Generic tools + skills | **territory-ia** (`backlog_issue`, `spec_section`, `glossary_*`, `router_for_task`, `invariants_summary`, …) — see [`docs/mcp-ia-server.md`](../docs/mcp-ia-server.md) |
-| **Persistence / DB** | PostgreSQL in the example | **Save data** and **Load pipeline** in Unity runtime ([`persistence-system.md`](../.cursor/specs/persistence-system.md)); **JSON** program **TECH-21** → **TECH-40** / **41** / **TECH-44a**; **TECH-44** (**TECH-44b**/**c**) for Postgres + first dev rows |
+| **Persistence / DB** | PostgreSQL in the example | **Save data** and **Load pipeline** in Unity runtime ([`persistence-system.md`](../.cursor/specs/persistence-system.md)); **JSON** program **TECH-21** → **TECH-40** / **41** / **TECH-44a** **§ Completed** ([`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md)); **TECH-44** (**TECH-44b**/**c**) for Postgres + first dev rows |
 | **Runtime → agent exposure** | HTTP API, WebSockets, etc. (idea) | **Already:** Editor menus **Territory Developer → Reports** → JSON/Markdown export under `tools/reports/` (**Agent context**, **Sorting debug**) — [`unity-development-context.md`](../.cursor/specs/unity-development-context.md) section 10 |
 | **Architecture risks** | ECS, generic control loop | Strict **invariants**: `HeightMap[x,y]` == `Cell.height`; **roads** via preparation family → `PathTerraformPlan` + Phase-1 + `Apply`; no new singletons; no `gridArray` / `cellArray` outside **GridManager** — use **`GetCell(x, y)`** |
 
@@ -50,7 +50,7 @@ You are assisting on **Territory Developer**: Unity 2D isometric city-builder (C
 
 **Testing:** Prefer **Unity Test Framework** where added; align tests with spec acceptance and invariants. No broad test suite is assumed today — propose minimal tests per change.
 
-**JSON / interchange program:** Respect **TECH-21** charter and children **TECH-40**, **TECH-41**, **TECH-44a**; **Postgres** program **TECH-44** (**TECH-44b**, **TECH-44c**); see `projects/TECH-21-json-use-cases-brainstorm.md` for snapshot / **cell** chunk / **Geography initialization** ideas.
+**JSON / interchange program:** Respect **TECH-21** charter and children **TECH-40**, **TECH-41**, **TECH-44a** (completed — [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md)); **Postgres** program **TECH-44** (**TECH-44b**, **TECH-44c**); see `projects/TECH-21-json-use-cases-brainstorm.md` for snapshot / **cell** chunk / **Geography initialization** ideas.
 
 Deliver: concrete file paths, spec citations, and changes that respect the above.
 ```

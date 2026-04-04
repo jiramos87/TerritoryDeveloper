@@ -29,9 +29,24 @@ public static class InterchangeJsonReportsMenu
 
         try
         {
-            string path = WriteCellChunkInterchangeJson(0, 0, DefaultChunkW, DefaultChunkH);
-            EditorUtility.RevealInFinder(path);
-            Debug.Log($"[Interchange] Wrote cell chunk: {path}");
+            string stamp = UtcTimestampForFilename();
+            string baseName = $"cell-chunk-interchange-{stamp}";
+            string json = BuildCellChunkInterchangeJsonString(0, 0, DefaultChunkW, DefaultChunkH);
+            bool dbOk = EditorPostgresExportRegistrar.TryPersistReport(
+                EditorPostgresExportRegistrar.KindTerrainCellChunk,
+                json,
+                false,
+                baseName,
+                out string path);
+            if (path != null)
+            {
+                EditorUtility.RevealInFinder(path);
+                Debug.Log($"[Interchange] Wrote cell chunk: {path}");
+            }
+            else if (dbOk)
+            {
+                // Quiet: Postgres only (TECH-55b).
+            }
         }
         catch (Exception ex)
         {
@@ -50,9 +65,24 @@ public static class InterchangeJsonReportsMenu
 
         try
         {
-            string path = WriteWorldSnapshotDevJson(includeHeightRaster: true);
-            EditorUtility.RevealInFinder(path);
-            Debug.Log($"[Interchange] Wrote world snapshot: {path}");
+            string stamp = UtcTimestampForFilename();
+            string baseName = $"world-snapshot-dev-{stamp}";
+            string json = BuildWorldSnapshotDevJsonString(includeHeightRaster: true);
+            bool dbOk = EditorPostgresExportRegistrar.TryPersistReport(
+                EditorPostgresExportRegistrar.KindWorldSnapshotDev,
+                json,
+                false,
+                baseName,
+                out string path);
+            if (path != null)
+            {
+                EditorUtility.RevealInFinder(path);
+                Debug.Log($"[Interchange] Wrote world snapshot: {path}");
+            }
+            else if (dbOk)
+            {
+                // Quiet: Postgres only (TECH-55b).
+            }
         }
         catch (Exception ex)
         {
@@ -60,12 +90,8 @@ public static class InterchangeJsonReportsMenu
         }
     }
 
-    static string WriteCellChunkInterchangeJson(int x0, int y0, int w, int h)
+    static string BuildCellChunkInterchangeJsonString(int x0, int y0, int w, int h)
     {
-        EnsureReportsDirectory();
-        string stamp = UtcTimestampForFilename();
-        string filePath = Path.Combine(GetReportsDirectory(), $"cell-chunk-interchange-{stamp}.json");
-
         GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
         TerrainManager terrain = grid != null ? grid.terrainManager : UnityEngine.Object.FindObjectOfType<TerrainManager>();
         if (grid == null || !grid.isInitialized)
@@ -115,17 +141,11 @@ public static class InterchangeJsonReportsMenu
             notes = "Subset fields for tooling (TECH-41 G2). height is HeightMap when available, else Cell.height."
         };
 
-        string json = JsonUtility.ToJson(root, true);
-        File.WriteAllText(filePath, json, Encoding.UTF8);
-        return filePath;
+        return JsonUtility.ToJson(root, true);
     }
 
-    static string WriteWorldSnapshotDevJson(bool includeHeightRaster)
+    static string BuildWorldSnapshotDevJsonString(bool includeHeightRaster)
     {
-        EnsureReportsDirectory();
-        string stamp = UtcTimestampForFilename();
-        string filePath = Path.Combine(GetReportsDirectory(), $"world-snapshot-dev-{stamp}.json");
-
         GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
         WaterManager waterManager = UnityEngine.Object.FindObjectOfType<WaterManager>();
         TerrainManager terrain = grid != null ? grid.terrainManager : UnityEngine.Object.FindObjectOfType<TerrainManager>();
@@ -184,22 +204,7 @@ public static class InterchangeJsonReportsMenu
             notes = "Diagnostics only — not Save data or Load pipeline input (TECH-41 G1)."
         };
 
-        string json = JsonUtility.ToJson(root, true);
-        File.WriteAllText(filePath, json, Encoding.UTF8);
-        return filePath;
-    }
-
-    static void EnsureReportsDirectory()
-    {
-        string dir = GetReportsDirectory();
-        if (!Directory.Exists(dir))
-            Directory.CreateDirectory(dir);
-    }
-
-    static string GetReportsDirectory()
-    {
-        string projectRoot = Path.GetDirectoryName(Application.dataPath);
-        return Path.Combine(projectRoot, "tools", "reports");
+        return JsonUtility.ToJson(root, true);
     }
 
     static string UtcTimestampForFilename()

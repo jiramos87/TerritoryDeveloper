@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-03T21:13:25.324Z",
+  "last_generated": "2026-04-04T01:43:59.161Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -446,6 +446,18 @@
     "Reference spec": {
       "spec_key": "agents",
       "anchor": ""
+    },
+    "project-new": {
+      "spec_key": "agents",
+      "anchor": ""
+    },
+    "Dev repro bundle": {
+      "spec_key": "unity-development-context",
+      "anchor": "10"
+    },
+    "Editor export registry": {
+      "spec_key": "unity-development-context",
+      "anchor": "10"
     },
     "geography_init_params": {
       "spec_key": "persistence-system",
