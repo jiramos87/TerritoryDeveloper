@@ -93,7 +93,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Type: tooling
   - Files: `tools/` (Unity `-batchmode` or Editor script), `Assets/Prefabs/`, agreed scene path (e.g. `MainScene.unity`)
   - Spec: `.cursor/projects/TECH-33.md`
-  - Notes: List prefabs with missing script references; list MonoBehaviour types/paths in scene for **BUG-19** / **TECH-07**. `docs/agent-tooling-verification-priority-tasks.md` tasks 26, 27.
+  - Notes: List prefabs with missing script references; list MonoBehaviour types/paths in scene for **BUG-19** / **toolbar** layout work. `docs/agent-tooling-verification-priority-tasks.md` tasks 26, 27.
   - Depends on: none
 
 - [ ] **TECH-23** — Agent workflow: MCP **invariant preflight** for issue kickoff
@@ -189,34 +189,27 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
 
 ## UI-as-code program (exploration)
 
-**Charter:** Reduce **manual Unity Editor** work for **HUD**, **menus**, **panels**, and **toolbars** by making **UI** composable from the **IDE** (Cursor) and **AI agents** — via **reference spec** clarity (`.cursor/specs/ui-design-system.md`), a future **runtime C#** UI kit, **Editor** / **CLI** automation aligned with **Unity**’s standard **Canvas** / **uGUI** / **TextMeshPro** workflows, and **Cursor Skills** + optional **territory-ia** affordances. **UI** spans **multiple scenes** (**`MainMenu`**, **`MainScene`** / future **`CityScene`**, future **`RegionScene`**, etc.); **TECH-68** exports and spec prose are **per scene**. **First deliverable:** **TECH-68** — document **as-built** (**current**) **UI** in **`ui-design-system.md`** (baseline before target-state refactors). **Program notes:** [`.cursor/projects/TECH-67.md`](.cursor/projects/TECH-67.md) (**§4.4** inventory, **§4.6** backlog bridge).
+**Charter:** Reduce **manual Unity Editor** work for **HUD**, **menus**, **panels**, and **toolbars** by making **UI** composable from the **IDE** (Cursor) and **AI agents** — via **reference spec** clarity (`.cursor/specs/ui-design-system.md`), a future **runtime C#** UI kit, **Editor** / **CLI** automation aligned with **Unity**’s standard **Canvas** / **uGUI** / **TextMeshPro** workflows, and **Cursor Skills** + optional **territory-ia** affordances. **UI** spans **multiple scenes** (**`MainMenu`**, **`MainScene`** / future **`CityScene`**, future **`RegionScene`**, etc.); **UI** inventory export and spec prose are **per scene**. **As-built baseline (shipped):** **`ui-design-system.md`** + committed [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json) — see **glossary** **UI design system (reference spec)**. **Program notes:** [`.cursor/projects/TECH-67.md`](.cursor/projects/TECH-67.md) (**§4.4** inventory, **§4.6** backlog bridge).
 
 - [ ] **TECH-67** — **UI-as-code program** (umbrella): **IDE**-first **UI** authoring + **`ui-design-system.md`** + runtime kit + agent tooling
   - Type: tooling / documentation / agent enablement
   - Files: `.cursor/specs/ui-design-system.md`; `.cursor/projects/TECH-67.md` (charter + **§4.4** inventory + roadmap); `Assets/Scripts/` (runtime **UI** helpers — TBD); `Assets/Scripts/Editor/` (**Editor** automation — TBD); `.cursor/skills/` (TBD); `tools/` (optional **Node** / **Unity** **`batchmode`** — TBD); `tools/mcp-ia-server/` (optional **MCP** tools — TBD)
   - Spec: `.cursor/projects/TECH-67.md`
   - Spec sections: `.cursor/specs/ui-design-system.md` — **§1** **Foundations**, **§3** patterns (**toolbar** / layout), **§4** **Canvas** / scaler notes as applicable; `.cursor/specs/unity-development-context.md` **§10** when **Editor** exports or **Reports** overlap
-  - Notes: **Non-goal (umbrella):** Replace **Unity**’s **authoring** stack — stay compatible with **Inspector**, **Prefab** workflow, and **Scene** merges. **First child:** **TECH-68** (**as-built** **`ui-design-system.md`**). **Related layout debt:** **TECH-07** (**ControlPanel**); **TECH-33** (**prefab** / scene introspection) may feed **UI** manifests. **Coordination:** **BUG-53** if **Editor** menus confuse agents; **TECH-59** if **Editor** staging/registry patterns apply.
-  - Acceptance: **§8** in **`.cursor/projects/TECH-67.md`**; **TECH-68** **§8** satisfied (**as-built** reference spec); further **child** rows for runtime kit + **Editor**/**agent** tooling as scoped; **TECH-67** **§4.4** inventory kept current when **UI** hierarchies shift
+  - Notes: **Non-goal (umbrella):** Replace **Unity**’s **authoring** stack — stay compatible with **Inspector**, **Prefab** workflow, and **Scene** merges. **As-built** baseline: **`ui-design-system.md`** + **`docs/reports/ui-inventory-as-built-baseline.json`**. **TECH-33** (**prefab** / scene introspection) may feed **UI** manifests. **Coordination:** **BUG-53** if **Editor** menus confuse agents; **TECH-59** if **Editor** staging/registry patterns apply.
+  - Acceptance: **§8** in **`.cursor/projects/TECH-67.md`**; **as-built** reference spec + baseline JSON maintained; further **child** rows for runtime kit + **Editor**/**agent** tooling as scoped; **TECH-67** **§4.4** inventory kept current when **UI** hierarchies shift
   - Depends on: none (soft: **TECH-33**)
-  - Related: **TECH-68**, **TECH-07**, **TECH-33**, **TECH-59**, **BUG-53**
+  - Related: **TECH-69**, **TECH-33**, **TECH-59**, **BUG-53**
 
-- [ ] **TECH-68** — **As-built** **UI** documentation: align **`ui-design-system.md`** with **shipped** **Canvas** / **HUD** / **popups** (**colors**, **type**, **spacing**, **layout**, **UX**)
-  - Type: documentation / agent enablement
-  - Files: `.cursor/specs/ui-design-system.md`; `Assets/Scenes/MainMenu.unity`; `Assets/Scenes/MainScene.unity` (future **`CityScene`** / **`RegionScene`** per **TECH-68** allowlist); `Assets/Scripts/Managers/GameManagers/UIManager.cs`; `Assets/Scripts/Controllers/UnitControllers/`; `Assets/Scripts/Controllers/GameControllers/` (as referenced by scenes); UI **prefabs** under `Assets/` as discovered; `.cursor/projects/TECH-67.md` **§4.4** (**Codebase inventory** updates if hierarchy changes)
-  - Spec: `.cursor/projects/TECH-68.md`
-  - Spec sections: `.cursor/specs/ui-design-system.md` — **§1–§4**, **§2–§3** per **`.cursor/projects/TECH-68.md`** **§7**; **§3.3** **current** **vs** **target** (**TECH-07**)
-  - Notes: **Baseline** pass — describe **reality** first (**glossary** **UI design system (reference spec)**). Does **not** implement **TECH-07**. After merge, run `npm run generate:ia-indexes` and `--check`.
-  - Acceptance: per **`.cursor/projects/TECH-68.md`** **§8**
-  - Depends on: none (soft: **TECH-67** program context)
-  - Related: **TECH-67**, **TECH-07**, **TECH-33**
-
-- [ ] **TECH-07** — ControlPanel: left vertical sidebar layout (category rows)
-  - Type: refactor (UI/UX)
-  - Files: `MainScene.unity` (`ControlPanel` hierarchy, RectTransform anchors, `LayoutGroup` / `ContentSizeFitter` as needed), `UIManager.cs` (only if toolbar/submenu positioning or references must follow the new dock), `UnitControllers/*SelectorButton.cs` (only if button wiring or parent references break after reparenting)
-  - Spec sections: `.cursor/specs/ui-design-system.md` — **§3.3** (toolbar), **§1.3** (anchors/margins), **§4.3** (Canvas Scaler) as applicable.
-  - Notes: Replace the bottom-centered horizontal **ribbon** with a **left-docked vertical** panel. Structure: **one row per category** (demolition, **RCI** **zoning**, **utility buildings**, **streets**, environment/**forests**, etc.), with **buttons laid out horizontally within each row** (e.g. `VerticalLayoutGroup` of rows, each row `HorizontalLayoutGroup`, or equivalent manual layout). Re-anchor dependent UI (e.g. **zone density** / tool option overlays) so they align to the new sidebar instead of the old bottom bar. Verify safe area and Canvas Scaler at reference resolutions; avoid overlapping the mini-map and debug readouts. Document final **Canvas** path / **LayoutGroup** setup in **`ui-design-system.md`** **§3.3** and **TECH-67** **§4.4** (**ControlPanel**). Program bridge: **TECH-67** **§4.6**. **Soft:** complete **TECH-68** first so **`ui-design-system.md`** records **as-built** **toolbar** before refactor.
-  - Related: **TECH-67**, **TECH-68**
+- [ ] **TECH-69** — **UI improvements using UI-as-code** (**TECH-67** program capstone): theme + prefabs + **MainMenu** serialize + **typography** policy + **`UIManager`** facades + modal/input + **Editor**/**Skill** tooling
+  - Type: refactor / tooling / UX (umbrella closeout)
+  - Files: `Assets/Scenes/MainMenu.unity`; `MainScene.unity`; `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`; `UIManager.cs`; `Assets/Scripts/Controllers/`; new **UI** prefabs / **`ScriptableObject`** theme under `Assets/` (paths per spec); `Assets/Scripts/Editor/`; `.cursor/specs/ui-design-system.md`; `.cursor/projects/TECH-67.md` (**§4.4**); optional `tools/`; optional `.cursor/skills/`; optional `tools/mcp-ia-server/`; `docs/ui-as-built-critique-TECH-67.md`
+  - Spec: `.cursor/projects/TECH-69.md`
+  - Spec sections: `.cursor/specs/ui-design-system.md` — **§1–§4**, **§2–§3**, **§3.5**; `.cursor/specs/unity-development-context.md` **§10**; `.cursor/specs/managers-reference.md` (**UIManager**); `docs/ui-as-built-critique-TECH-67.md` (proposal trace **P1–P9**)
+  - Notes: **Execute toward end of TECH-67** after **Phase 1–4** milestones (**as-built** baseline, **ControlPanel** / **toolbar** in scene, interim kit/**Editor** children as filed). Implements refined **P1–P9** from critique + **§5.2**/**§5.4** tool design in `.cursor/projects/TECH-69.md`. **Coordination:** **BUG-19** (scroll vs **camera**), **BUG-14** (**FindObjectOfType**), **TECH-33** (manifests), **TECH-59** (**Editor** registry if exports extend), **BUG-53** (**Reports** menus).
+  - Acceptance: per `.cursor/projects/TECH-69.md` **§8**
+  - Depends on: **TECH-67** (umbrella)
+  - Related: **TECH-67**, **TECH-33**, **TECH-59**, **BUG-19**, **BUG-14**, **BUG-53**
 
 ## Gameplay & simulation lane
 

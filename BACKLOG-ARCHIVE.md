@@ -181,6 +181,29 @@
 
 ## Recent archive (moved from BACKLOG.md, 2026-04-10)
 
+- [x] **TECH-07** — **ControlPanel**: left vertical sidebar layout (category rows) (2026-04-04)
+  - Type: refactor (UI/UX)
+  - Files: `Assets/Scenes/MainScene.unity` (**`UI/City/Canvas`**, **`ControlPanel`** hierarchy); `UIManager.cs`; `Assets/Scripts/Controllers/UnitControllers/*SelectorButton.cs` (as wired); `.cursor/specs/ui-design-system.md` **§3.3**, **§1.3**, **§4.3**; [`.cursor/projects/TECH-67.md`](.cursor/projects/TECH-67.md) **§4.4**
+  - Spec: (removed after closure — **`ui-design-system.md`** **§3.3** **toolbar**; **glossary** **UI design system (reference spec)**; [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **TECH-08** historical doc bridge; this row)
+  - Notes: **Completed (manual scene work + backlog purge):** **Left**-docked **vertical** **toolbar** implemented directly in **`MainScene.unity`**; open **BACKLOG** row retired. **Trace:** prior doc ticket **TECH-08** (archived) linked **§3.3** target copy to this work.
+  - Depends on: none (soft: **TECH-67** program context)
+  - Related: **TECH-67**
+
+- [x] **TECH-68** — **As-built** **UI** documentation: align **`ui-design-system.md`** with **shipped** **Canvas** / **HUD** / **popups** (2026-04-04)
+  - Type: documentation / agent enablement
+  - Files: `.cursor/specs/ui-design-system.md`; `.cursor/specs/glossary.md` (**UI design system (reference spec)**, **UI-as-code program (TECH-67)**); `.cursor/specs/unity-development-context.md` **§10** (UI inventory baseline row); [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json); [`docs/reports/README.md`](docs/reports/README.md); [`ARCHITECTURE.md`](ARCHITECTURE.md) (**UI-as-code** trace); `Assets/Scripts/Editor/UiInventoryReportsMenu.cs`; `Assets/Scripts/Editor/EditorPostgresExportRegistrar.cs`; [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md); [`.cursor/projects/TECH-67.md`](.cursor/projects/TECH-67.md) (**umbrella** Phase **1**)
+  - Spec: (removed after closure — **glossary** **UI design system (reference spec)**; **`ui-design-system.md`** **Machine-readable traceability**; **`unity-development-context.md`** **§10**; this row)
+  - Notes: **Completed (verified — `/project-spec-close` + user):** **As-built** reference spec + committed **UI** inventory baseline; **Editor** export + **Postgres** **`ui_inventory`** kind documented without backlog id branding. **Umbrella:** **TECH-67** **§8** first bullet checked; **TECH-69** **Depends on** no longer cites this row.
+  - Depends on: none (soft: **TECH-67** program context)
+
+- [x] **TECH-70** — **UI-as-code** umbrella maintenance & multi-scene **UI** traceability (2026-04-04)
+  - Type: documentation / tooling / agent enablement
+  - Files: [`.cursor/projects/TECH-67.md`](.cursor/projects/TECH-67.md) (**§4.4**, **§4.6**, **§4.9**, **§7** Phase **0**); [`.cursor/specs/ui-design-system.md`](.cursor/specs/ui-design-system.md); [`Assets/Scripts/Editor/UiInventoryReportsMenu.cs`](Assets/Scripts/Editor/UiInventoryReportsMenu.cs); [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json); [`docs/reports/README.md`](docs/reports/README.md); [`.cursor/specs/unity-development-context.md`](.cursor/specs/unity-development-context.md) **§10**; [`db/migrations/0006_editor_export_ui_inventory.sql`](db/migrations/0006_editor_export_ui_inventory.sql) (**Postgres** **`editor_export_ui_inventory`**)
+  - Spec: (removed after closure — **TECH-67** **§7** Phase **0** + **§4.6** backlog bridge; **`ui-design-system.md`** **§1.2** stub + **Machine-readable traceability**; [`docs/reports/README.md`](docs/reports/README.md) **Postgres vs baseline** note; this row)
+  - Notes: **Completed (verified — `/project-spec-close` + user):** Umbrella **§4.9** resolutions + **Decision Log**; **baseline JSON** aligned to **Postgres** **`document`** (export timestamp); **`RegionScene`** / **`CityScene`** rename deferred with triggers in **TECH-67** **§6**; **`validate:all`** green on implementation pass. Ongoing **Phase 0** hygiene stays on **TECH-67** (no separate open row).
+  - Depends on: none (soft: **TECH-67** program context)
+  - Related: **TECH-67**, **TECH-69**, **TECH-33**, **BUG-53**
+
 - [x] **TECH-28** — Unity Editor: **agent diagnostics** (context JSON + sorting debug export) (2026-04-02)
   - Type: tooling / agent workflow
   - Files: `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs`, `tools/reports/` (generated output; see `.gitignore`), `.gitignore`
@@ -353,7 +376,7 @@
 - [x] **TECH-08** — UI design system docs: TECH-07 (ControlPanel sidebar) ticketed and wired (2026-03-20)
   - Type: documentation
   - Files: `BACKLOG.md` (TECH-07), `docs/ui-design-system-project.md` (Backlog bridge), `docs/ui-design-system-context.md` (Toolbar — ControlPanel), `.cursor/specs/ui-design-system.md` (§3.3 layout variants), `ARCHITECTURE.md`, `AGENTS.md`, `.cursor/rules/managers-guide.mdc`
-  - Notes: Executable toolbar refactor remains **TECH-07** (open). This issue records the documentation and cross-links only.
+  - Notes: This issue records the documentation and cross-links only. **TECH-07** (executable **ControlPanel** layout) was later completed manually in **`MainScene.unity`** and archived (**Recent archive**, **2026-04-04**).
 
 - [x] **BUG-25** — Fix bugs in manual street segment drawing (2026-03-19)
   - Type: fix
