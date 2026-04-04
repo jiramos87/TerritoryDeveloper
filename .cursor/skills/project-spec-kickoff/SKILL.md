@@ -25,6 +25,7 @@ Replace `{SPEC_PATH}` with the project spec path (e.g. `.cursor/projects/TECH-59
 Review @{SPEC_PATH} and ensure it uses canonical terms from the glossary and reference specs.
 Analyze stated goals; avoid negatively affecting current subsystems unless the spec explicitly accepts tradeoffs.
 Make ## 7. Implementation Plan more concrete where possible.
+For **FEAT-** / **BUG-** specs, ensure ## 7b. Test Contracts maps **§8 Acceptance** to verifiable checks (see `.cursor/templates/project-spec-template.md`).
 Follow the MCP tool sequence in this skill's "Tool recipe (territory-ia)" section (do not skip steps unless the spec is tooling-only and cannot touch game subsystems).
 If you make material edits, update related Information Architecture: linked project specs, glossary rows, and reference spec sections so implementation stays aligned.
 ```
@@ -35,11 +36,11 @@ Run these steps **in order** unless the project spec is explicitly **pure doc hy
 
 1. **Parse target** — Load `{SPEC_PATH}` (user `@` attach or `read_file`). Extract **`ISSUE_ID`** from the `> **Issue:**` line (e.g. `TECH-40`, `BUG-48`).
 
-2. **`backlog_issue`** — If `ISSUE_ID` is known, call with `issue_id` to pull **Files**, **Notes**, **Spec**, **Depends on**, **Acceptance** into context.
+2. **`backlog_issue`** — If `ISSUE_ID` is known, call with `issue_id` to pull **Files**, **Notes**, **Spec**, **Depends on**, **Acceptance**, and **`depends_on_status`** into context. If **`depends_on_status`** includes any entry with **`satisfied`: false** and **`soft_only`** false (hard dependency not met), **stop** and surface it to the user unless they explicitly override in chat.
 
 3. **`invariants_summary`** — Call **once** per review session if the spec implies **code** or **game subsystem** changes. Skip only when the spec is strictly documentation/IA hygiene and cannot affect runtime.
 
-4. **Domain routing** — From **Summary**, **Goals**, backlog **Files**, and **Notes**, list **1–3 domains** (e.g. roads, water, simulation, Save / load, UI). For each domain, call **`router_for_task`** with `domain` set to a string that matches the **agent-router** table vocabulary (e.g. `Road logic, placement, bridges`, `Save / load`, `Water, terrain, cliffs, shores`).
+4. **Domain routing** — From **Summary**, **Goals**, backlog **Files**, and **Notes**, list **1–3 domains** (e.g. roads, water, simulation, Save / load, UI). For each domain, call **`router_for_task`** with `domain` set to a string that matches the **agent-router** table vocabulary (e.g. `Road logic, placement, bridges`, `Save / load`, `Water, terrain, cliffs, shores`). If **`router_for_task`** returns **`no_matching_domain`** or weak matches, retry with **`files`** using repo-relative paths from the backlog **Files** line (**glossary** **territory-ia spec-pipeline layer B (TECH-62)**).
 
 5. **`spec_section`** — For each routed reference spec, fetch **only** the sections the project spec implies (by **section** id, heading substring, or slug per MCP docs). Use **`max_chars`** to cap size. **Do not** read entire `.cursor/specs/*.md` files unless **`spec_outline`** shows you cannot target sections otherwise.
 
@@ -54,6 +55,14 @@ Run these steps **in order** unless the project spec is explicitly **pure doc hy
 - **Roads / streets / interstate / bridge / wet run** → ensure **roads-system** and **isometric-geography-system** slices (validation, **road stroke**, path costs) appear in the fetched set via **`router_for_task`** + **`spec_section`**.
 - **Water / HeightMap / shore / river / lake / water map** → **water-terrain-system** + relevant **geo** sections.
 - **JSON / schema / artifact / DTO / interchange** (especially **Save**-adjacent) → **persistence-system** (**Load pipeline**, **Save data** semantics); do **not** change on-disk **Save data** unless the issue explicitly requires it. Cross-check **TECH-21** program notes in **BACKLOG** when applicable.
+
+### Impact preflight (optional)
+
+Lightweight check before deep editorial work ([`projects/spec-pipeline-exploration.md`](../../../projects/spec-pipeline-exploration.md) **§2.1**):
+
+1. Classify backlog **Files** (and planned **Implementation Plan** paths) as **read** vs **write**.
+2. For each **write** path that may touch runtime **C#** or scenes, plan to call **`invariants_summary`** (if not already done) and cross-check **`.cursor/rules/invariants.mdc`** guardrails.
+3. Flag cross-subsystem edits (e.g. **roads** + **HeightMap** / **water**) so **`spec_section`** pulls both domains before implementation.
 
 After MCP slices, perform the **editorial** pass: **Open Questions**, **Implementation Plan** phases, **Decision Log**, and cross-links to sibling `.cursor/projects/*.md`.
 

@@ -9,7 +9,13 @@ import {
   scrapeIssueFields,
   normalizeIssueId,
   parseBacklogIssue,
+  extractCitedIssueIds,
+  isSoftDependencyMention,
+  resolveDependsOnStatus,
 } from "../../src/parser/backlog-parser.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(__dirname, "../../../../");
 
 const FIXTURE = `## High Priority
 
@@ -32,6 +38,38 @@ const FIXTURE = `## High Priority
 test("normalizeIssueId uppercases prefix and lowercases letter suffix", () => {
   assert.equal(normalizeIssueId("bug-37"), "BUG-37");
   assert.equal(normalizeIssueId("FEAT-37B"), "FEAT-37b");
+});
+
+test("extractCitedIssueIds dedupes and preserves order", () => {
+  assert.deepEqual(extractCitedIssueIds("Depends on: **TECH-37**, **TECH-38**"), [
+    "TECH-37",
+    "TECH-38",
+  ]);
+  assert.deepEqual(
+    extractCitedIssueIds("none (soft: **TECH-50** **§ Completed**)"),
+    ["TECH-50"],
+  );
+  assert.deepEqual(extractCitedIssueIds("no ids here"), []);
+});
+
+test("isSoftDependencyMention true only when id appears after soft:", () => {
+  const line =
+    "Depends on: **TECH-37** (soft: **TECH-38** for **heavy** tools)";
+  assert.equal(isSoftDependencyMention(line, "TECH-37"), false);
+  assert.equal(isSoftDependencyMention(line, "TECH-38"), true);
+});
+
+test("resolveDependsOnStatus marks completed TECH-61 for TECH-62 line", {
+  skip: !fs.existsSync(path.join(repoRoot, "BACKLOG.md")),
+}, () => {
+  const line =
+    "Depends on: **TECH-61** **§ Completed** (soft: shared **Node** helpers)";
+  const rows = resolveDependsOnStatus(repoRoot, line);
+  const m61 = rows.find((r) => r.id === "TECH-61");
+  assert.ok(m61);
+  assert.equal(m61!.status, "completed");
+  assert.equal(m61!.satisfied, true);
+  assert.equal(m61!.soft_only, false);
 });
 
 test("findIssueHeaderLine tracks section and finds nested TECH-01", () => {
@@ -86,9 +124,6 @@ test("completed status from header line via full parse path", () => {
   const block = sliceIssueBlock(lines, idx);
   assert.ok(block[0]!.includes("[x]"));
 });
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(__dirname, "../../../../");
 
 test(
   "parseBacklogIssue loads open TECH-36 from repo BACKLOG.md",

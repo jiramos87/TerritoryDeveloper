@@ -11,7 +11,7 @@ Temporary specs for an active **BACKLOG** item live here as `{ISSUE_ID}.md` (e.g
 
 ## Umbrella program specs (multi-issue)
 
-Some **BACKLOG** programs use a **parent** project spec plus **child** specs (e.g. **TECH-60** with **TECH-61** / **TECH-62** / **TECH-63** — **§ Spec pipeline & verification program** in [`BACKLOG.md`](../../BACKLOG.md)). Each child links to the parent in its header (**Parent program**). Unless the charter says otherwise, each file follows the **section order** below. **Acceptance** for the program may require every child spec **Completed** before closing the umbrella.
+Some **BACKLOG** programs use a **parent** project spec plus **child** specs (e.g. **TECH-60** **§ Completed** with **TECH-61**–**TECH-63** — **glossary** **territory-ia spec-pipeline program (TECH-60)**; [`BACKLOG.md`](../../BACKLOG.md) **§ Completed**). Each child links to the parent in its header (**Parent program**). Unless the charter says otherwise, each file follows the **section order** below. **Acceptance** for the program may require every child spec **Completed** before closing the umbrella.
 
 ## Required front matter
 
@@ -36,7 +36,7 @@ Some **BACKLOG** programs use a **parent** project spec plus **child** specs (e.
 5. **Proposed Design** — **Target behavior (product)** first; **architecture / code** marked as agent-owned unless the user fixed a design.
 6. **Decision Log** — Dated choices; alternatives considered.
 7. **Implementation Plan** — Phased checklists (agent executes unless a step would change game logic).
-7b. **Test Contracts** (optional; **tooling / verification**) — When shipped (**TECH-60** program / **TECH-63**), a table mapping **§8 Acceptance** to checks (**Node**, **golden** **JSON**, **manual**, future **Unity** **UTF**). Use **glossary** terms for *what* is verified. **Not** a substitute for **`## Open Questions`**, which remain **game logic** only (see below). Heading may be **`## 7b. Test Contracts`** between **§7** and **§8**; **`project_spec_closeout_digest`** may omit this section until the parser gains a **`test_contracts`** key (**TECH-62**).
+7b. **Test Contracts** (optional; **tooling / verification**) — **Template:** [`.cursor/templates/project-spec-template.md`](../templates/project-spec-template.md) includes **`## 7b. Test Contracts`** with columns **Acceptance / goal** \| **Check type** \| **Command or artifact** \| **Notes** (e.g. **Node**, **golden** **JSON**, **manual**, future **Unity** **UTF**, advisory **`verify`**). Use **glossary** terms for *what* is verified. **Not** a substitute for **`## Open Questions`**, which remain **game logic** only (see below). **`project_spec_closeout_digest`** does **not** extract **§7b** today — adding a **`test_contracts`** field requires extending `tools/mcp-ia-server/src/parser/project-spec-closeout-parse.ts` in a **separate** **BACKLOG** / **TECH-** follow-up (out of scope for **TECH-63** template + **Skills** ship).
 8. **Acceptance Criteria** — Testable conditions mapped to goals / stories.
 9. **Issues Found During Development** — Table during implementation.
 10. **Lessons Learned** — Fill at closure; migrate to specs / `AGENTS.md` / glossary as needed.

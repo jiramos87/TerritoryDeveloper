@@ -47,7 +47,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 
 | Tool | Description |
 |------|-------------|
-| **`backlog_issue`** | One **open** issue from `BACKLOG.md`: `issue_id` (e.g. `BUG-37`). Returns `status`, `backlog_section`, `Files` / `Spec` / `Notes` / `Acceptance` / `depends_on`, `raw_markdown`. Completed-only ids: `BACKLOG-ARCHIVE.md`. Not in `list_specs`. |
+| **`backlog_issue`** | One **open** issue from `BACKLOG.md`: `issue_id` (e.g. `BUG-37`). Returns `status`, `backlog_section`, `Files` / `Spec` / `Notes` / `Acceptance` / `depends_on`, `depends_on_status` (cited ids: `open` / `completed` / `not_in_backlog`, `soft_only`, `satisfied`), `raw_markdown`. Completed-only ids: `BACKLOG-ARCHIVE.md`. Not in `list_specs`. |
 | **`list_specs`** | Registry entries: `key`, `relativePath`, `description`, `category`, `lineCount`. Optional filter `category` (e.g. `rule`). |
 | **`spec_outline`** | Nested heading outline with line ranges. `spec` accepts key, filename, or alias (`geo` → `isometric-geography-system`, `roads` → `roads-system`, `unity` / `unityctx` → `unity-development-context`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
 | **`spec_section`** | Body for one section: canonical `spec` + `section` (id `13.4`, slug, title substring, or fuzzy typo). Aliases: `key` / `doc` → spec; `section_heading` / `heading` → section; numeric `section` coerced to string. `max_chars` or `maxChars` (default 3000) with `truncated` / `totalChars`. |
@@ -55,7 +55,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`project_spec_closeout_digest`** | Exactly one of `issue_id` or `spec_path` (`.cursor/projects/{ISSUE_ID}.md`). Returns structured closeout prep JSON (`schema_version` 1, section bodies, `cited_issue_ids`, keywords, heuristic `checklist_hints`). Read-only. |
 | **`glossary_discover`** | Keyword discovery over glossary rows (**English** `query` / `keywords` only — translate from the user’s language before calling). Scores **Term**, **Definition**, **Spec**, and category; returns ranked `term`, `specReference`, optional `spec` alias + `registryKey`, `matchReasons`, `score`. Params: `query` and/or `keywords` (alias `terms`); `q` / `search` for query; `max_results` / `maxResults` (default 10, cap 25). |
 | **`glossary_lookup`** | Glossary row: exact (case-insensitive) then fuzzy; **`term` must be English** (glossary language). Bracket text like `[x,y]` normalized for matching. |
-| **`router_for_task`** | Match `domain` string to specs using tables in `agent-router.mdc`. |
+| **`router_for_task`** | Match task hints to specs using `agent-router.mdc` tables. Provide **`domain`** and/or **`files`** (max 40 paths); at least one required. Merges optional **`file_domain_hints`** from path heuristics with table rows. |
 | **`invariants_summary`** | Invariants + guardrails from `invariants.mdc`. |
 | **`list_rules`** | All `.mdc` rules with frontmatter (`alwaysApply`, `globs`, description). |
 | **`rule_content`** | Rule markdown body without frontmatter. `rule: "roads"` resolves **`roads.mdc`** (use `spec_section` / `spec_outline` with alias `roads` for the **roads-system** spec). |
@@ -70,7 +70,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 - `project_spec_closeout_digest` → `{ "issue_id": "TECH-59" }` or `{ "spec_path": ".cursor/projects/TECH-59.md" }`
 - `glossary_discover` → `{ "query": "manual street trace neighbors", "max_results": 8 }`
 - `glossary_lookup` → `{ "term": "wet run" }`
-- `router_for_task` → `{ "domain": "roads" }`
+- `router_for_task` → `{ "domain": "roads" }` or `{ "files": ["Assets/Scripts/Managers/GameManagers/GridManager.cs"] }`
 - `rule_content` → `{ "rule": "roads", "max_chars": 50000 }`
 
 ## Closeout CLI (from repository root)

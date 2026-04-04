@@ -7,7 +7,7 @@
 
 **Parent program:** [TECH-36](TECH-36.md) · **Depends on:** **TECH-37** (schemas, **compute-lib**, pilot pattern) · **Feeds:** [TECH-39](TECH-39.md)
 
-**Spec pipeline program:** [TECH-60](TECH-60.md) lists **TECH-38** as a **prerequisite** for **pure** **C#** surfaces, **`tools/reports/`** **JSON**, and **UTF** / **batchmode** hooks — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
+**Spec pipeline program:** **TECH-60** **§ Completed** — **glossary** **territory-ia spec-pipeline program (TECH-60)** lists **TECH-38** as a **prerequisite** for **pure** **C#** surfaces, **`tools/reports/`** **JSON**, and **UTF** / **batchmode** hooks — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
 
 ## 1. Summary
 

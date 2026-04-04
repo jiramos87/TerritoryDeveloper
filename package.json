@@ -1,8 +1,9 @@
 {
   "name": "territory-developer",
   "private": true,
-  "description": "Unity project root scripts delegate to tools/mcp-ia-server (IA / JSON tooling).",
+  "description": "Unity project root scripts delegate to tools/mcp-ia-server (IA / JSON tooling). Run npm ci in tools/mcp-ia-server if npm run test:ia fails with missing modules. npm run validate:all chains IA checks (see project-implementation-validation skill).",
   "scripts": {
+    "validate:all": "npm run validate:dead-project-specs && npm run test:ia && npm run validate:fixtures && npm run generate:ia-indexes -- --check",
     "validate:dead-project-specs": "node tools/validate-dead-project-spec-paths.mjs",
     "validate:fixtures": "npm --prefix tools/mcp-ia-server run validate:fixtures",
     "generate:ia-indexes": "cd tools/mcp-ia-server && npx tsx scripts/generate-ia-indexes.ts",

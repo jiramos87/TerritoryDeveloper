@@ -148,9 +148,90 @@ export function scrapeIssueFields(blockLines: string[]): Omit<
   };
 }
 
+/** Issue ids cited in prose (e.g. Depends on, Notes). */
+const CITED_ISSUE_ID = /\b(BUG|FEAT|TECH|ART|AUDIO)-(\d+)([a-z]?)\b/gi;
+
+export type DependencyLookupStatus = "open" | "completed" | "not_in_backlog";
+
+export interface DependsOnStatusEntry {
+  id: string;
+  status: DependencyLookupStatus;
+  /** True when the cited issue is completed in BACKLOG.md (or only soft / non-blocking — see `soft_only`). */
+  satisfied: boolean;
+  /** True when the line marks the id as soft (e.g. "soft: **TECH-37**"). */
+  soft_only: boolean;
+}
+
 /**
- * Parse BACKLOG.md for `issueId`; returns null if not found.
+ * Extract normalized backlog ids from free text (Depends on, Notes, etc.).
+ * Does not return duplicates; order is first occurrence.
  */
+export function extractCitedIssueIds(text: string): string[] {
+  if (!text.trim()) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const t = text.replace(/\r\n/g, "\n");
+  CITED_ISSUE_ID.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = CITED_ISSUE_ID.exec(t)) !== null) {
+    const raw = `${m[1]}-${m[2]}${m[3] ?? ""}`;
+    const id = normalizeIssueId(raw);
+    if (!seen.has(id)) {
+      seen.add(id);
+      out.push(id);
+    }
+  }
+  return out;
+}
+
+/**
+ * True when this occurrence of `id` in `dependsOnLine` is explicitly marked soft
+ * (e.g. "soft: **TECH-37**" or "(soft: **TECH-50**)").
+ */
+export function isSoftDependencyMention(
+  dependsOnLine: string,
+  id: string,
+): boolean {
+  const canonical = normalizeIssueId(id);
+  const lower = dependsOnLine.toLowerCase();
+  const softIdx = lower.indexOf("soft");
+  if (softIdx < 0) return false;
+  const afterSoft = dependsOnLine.slice(softIdx);
+  const idVariants = [canonical, `**${canonical}**`, `**${canonical.toLowerCase()}**`];
+  return idVariants.some((v) => afterSoft.includes(v));
+}
+
+/**
+ * Resolve each cited id in a Depends on line against BACKLOG.md (open vs completed).
+ * Ids not found in BACKLOG.md are `not_in_backlog` (e.g. archive-only or typo).
+ */
+export function resolveDependsOnStatus(
+  repoRoot: string,
+  dependsOnLine: string | undefined,
+): DependsOnStatusEntry[] {
+  if (!dependsOnLine?.trim()) return [];
+  const ids = extractCitedIssueIds(dependsOnLine);
+  const out: DependsOnStatusEntry[] = [];
+  for (const id of ids) {
+    const parsed = parseBacklogIssue(repoRoot, id);
+    let status: DependencyLookupStatus;
+    if (!parsed) {
+      status = "not_in_backlog";
+    } else {
+      status = parsed.status;
+    }
+    const softOnly = isSoftDependencyMention(dependsOnLine, id);
+    const satisfied = status === "completed" || softOnly;
+    out.push({
+      id,
+      status,
+      satisfied,
+      soft_only: softOnly,
+    });
+  }
+  return out;
+}
+
 export function parseBacklogIssue(
   repoRoot: string,
   issueId: string,

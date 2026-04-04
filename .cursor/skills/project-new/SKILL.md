@@ -52,7 +52,7 @@ Run **in order** unless the prompt is **pure meta** (e.g. only repo hygiene with
 
 5. **`invariants_summary`** — If the **new** issue likely touches **runtime C#** or **game subsystems**. Skip for strict doc/IA-only issues.
 
-6. **`backlog_issue`** — For each **open** related **`ISSUE_ID`** you will cite in **Depends on** / **Related** / **Notes**, to pull **Files** and **Notes**. **`backlog_issue`** returns **open** rows from **`BACKLOG.md`** only ([`AGENTS.md`](../../../AGENTS.md)). **Completed-only** ids (e.g. skills listed under **§ Completed**) — confirm wording in [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md) or durable docs; do **not** expect **`backlog_issue`** to resolve them.
+6. **`backlog_issue`** — For each **open** related **`ISSUE_ID`** you will cite in **Depends on** / **Related** / **Notes**, to pull **Files**, **Notes**, and **`depends_on_status`**. If **`depends_on_status`** shows unsatisfied hard dependencies for that id, align **Depends on** / **Notes** or wait until prerequisites are met. **`backlog_issue`** returns **open** rows from **`BACKLOG.md`** only ([`AGENTS.md`](../../../AGENTS.md)). **Completed-only** ids (e.g. skills listed under **§ Completed**) — confirm wording in [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md) or durable docs; do **not** expect **`backlog_issue`** to resolve them.
 
 7. **`list_specs`** / **`spec_outline`** — **Only** if you do not know the `spec` key for **`spec_section`**.
 

@@ -2,8 +2,9 @@
 name: project-implementation-validation
 description: >
   Use after substantive implementation when you need repo Node checks aligned with CI: dead project spec
-  paths, MCP package tests, JSON fixtures, IA index drift. Triggers: "post-implementation validation",
-  "run npm checks after TECH-xx", "validate fixtures", "IA tools parity", "MCP tests", "generate:ia-indexes --check".
+  paths, MCP package tests, JSON fixtures, IA index drift. Root shortcut: npm run validate:all (steps 1–4).
+  Triggers: "post-implementation validation", "run npm checks after TECH-xx", "validate fixtures", "IA tools parity",
+  "MCP tests", "generate:ia-indexes --check", "validate:all".
 ---
 
 # Project implementation validation (post-implementation checks)
@@ -36,7 +37,11 @@ Run from **repository root** unless **Cwd** says otherwise. Script names match r
 | 4 | `npm run generate:ia-indexes -- --check` | repo root | Ensures committed **`spec-index.json`** / **`glossary-index.json`** match **markdown** sources |
 | 5 | `npm run verify` | `tools/mcp-ia-server` | **Advisory** — **not** in **IA tools** **Node** job today; run when touching **MCP** registration, parsers, or tool handlers (**TECH-24** culture) |
 
+**Single command (steps 1–4):** From repo root, `npm run validate:all` runs the same ordered checks as steps 1–4 above (**TECH-61**). It does **not** run `npm ci`; install **`tools/mcp-ia-server`** dependencies first if **`test:ia`** fails (see root **`package.json`** `description`).
+
 **Equivalent in package folder:** For step 2, `cd tools/mcp-ia-server && npm test` after `npm ci` matches **CI** exactly.
+
+**Project specs:** New **`.cursor/projects/{ISSUE_ID}.md`** stubs should include **`## 7b. Test Contracts`** ([`.cursor/templates/project-spec-template.md`](../../templates/project-spec-template.md)) so **Acceptance** maps to these **Node** checks where applicable.
 
 ## Future / N/A (placeholders)
 

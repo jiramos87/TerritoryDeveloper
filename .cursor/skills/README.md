@@ -9,6 +9,8 @@ Project-local **Cursor Skills** live here. Each skill is a folder with a **`SKIL
 ## Lessons learned (from shipped kickoff work)
 
 - **`router_for_task`:** Pass **`domain`** strings that match **`.cursor/rules/agent-router.mdc`** “Task domain” row labels (e.g. `Save / load`, `Road logic, placement, bridges`). Ad-hoc phrases often return **`no_matching_domain`** — use the router table vocabulary.
+- **`router_for_task`** **`files`:** You may pass **`files`** (repo-relative paths) with or instead of **`domain`**; the server merges path heuristics (**glossary** **territory-ia spec-pipeline layer B (TECH-62)**).
+- **`backlog_issue`** **`depends_on_status`:** Each cited **Depends on** id returns **`open`** / **`completed`** / **`not_in_backlog`**, **`soft_only`**, **`satisfied`** — use it in **kickoff** / **implement** / **close** / **project-new** recipes (**TECH-62**).
 
 ## Conventions
 
@@ -31,7 +33,7 @@ Project-local **Cursor Skills** live here. Each skill is a folder with a **`SKIL
 | [`project-implementation-validation/`](project-implementation-validation/SKILL.md) | After implementation: **Node** checks aligned with **IA tools** CI (dead spec paths, **MCP** tests, fixtures, **IA index** `--check`); optional **`verify`** | **TECH-52** completed — [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** |
 | [`project-spec-close/`](project-spec-close/SKILL.md) | Close an issue that used a **project spec**: persist IA (glossary, reference specs, **ARCHITECTURE**, rules, docs) → delete spec → `validate:dead-project-specs` → **BACKLOG** **Completed** (user-confirmed) | **TECH-51** completed — see [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** |
 
-Planned: **TECH-45** (roads), **TECH-46** (terrain / water), **TECH-47** (new **MonoBehaviour** manager); **TECH-63** — spec pipeline **layer C** (**Skills** + **project spec** template; umbrella **TECH-60** — see [`.cursor/projects/TECH-60.md`](../projects/TECH-60.md)).
+Planned: **TECH-45** (roads), **TECH-46** (terrain / water), **TECH-47** (new **MonoBehaviour** manager). **Spec pipeline program § Completed:** **TECH-60**–**TECH-63** — **glossary** **territory-ia spec-pipeline program (TECH-60)**; [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** **TECH-60**–**TECH-63**.
 
 ## Optional template
 

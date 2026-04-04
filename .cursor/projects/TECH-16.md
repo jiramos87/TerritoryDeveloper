@@ -7,7 +7,7 @@
 
 **Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — tasks **4**, **22**, **25**. **TECH-29** consumes stable phase **ids** from this work.
 
-**Spec pipeline program:** [TECH-60](TECH-60.md) lists this issue as a **prerequisite** for **simulation tick** harness **JSON** and **UTF**-oriented validation — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
+**Spec pipeline program:** **TECH-60** **§ Completed** — **glossary** **territory-ia spec-pipeline program (TECH-60)** lists this issue as a **prerequisite** for **simulation tick** harness **JSON** and **UTF**-oriented validation — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
 
 ## 1. Summary
 

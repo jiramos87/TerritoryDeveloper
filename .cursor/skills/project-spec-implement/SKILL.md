@@ -35,17 +35,17 @@ Update the project spec **Decision Log** / **Issues Found** when you discover ga
 
 ## Tool recipe (territory-ia) — implementation session
 
-Run **in order**. Repeat steps **5–11** for each **Implementation Plan** phase (or each coherent batch of checkboxes).
+Run **in order**. Repeat steps **5–12** for each **Implementation Plan** phase (or each coherent batch of checkboxes).
 
 1. **Parse target** — Load `{SPEC_PATH}` (`@` attach or `read_file`). Extract **`ISSUE_ID`** from `> **Issue:**`.
 
-2. **`backlog_issue`** — If `ISSUE_ID` is known, call with `issue_id` to pull **Files**, **Notes**, **Depends on**, **Acceptance**.
+2. **`backlog_issue`** — If `ISSUE_ID` is known, call with `issue_id` to pull **Files**, **Notes**, **Depends on**, **Acceptance**, and **`depends_on_status`**. If any **`depends_on_status`** entry has **`satisfied`: false** and **`soft_only`** false, **stop** and surface unsatisfied hard dependencies unless the user explicitly overrides.
 
 3. **`invariants_summary`** — **Once** per session if **any** phase can touch runtime **C#** or scene behavior. **Skip** only for pure doc/IA deliverables (no game code in any phase).
 
 4. **Phase intent** — State which plan checkboxes are in scope; list files/classes from the plan + backlog **Files**.
 
-5. **Domain routing** — From phase text + **Files**, list **1–3** domains. For each, **`router_for_task`** with `domain` matching **`.cursor/rules/agent-router.mdc`** table labels (e.g. `Road logic, placement, bridges`, `Water, terrain, cliffs, shores`, `Save / load`, `Unity / MonoBehaviour`).
+5. **Domain routing** — From phase text + **Files**, list **1–3** domains. For each, **`router_for_task`** with `domain` matching **`.cursor/rules/agent-router.mdc`** table labels (e.g. `Road logic, placement, bridges`, `Water, terrain, cliffs, shores`, `Save / load`, `Unity / MonoBehaviour`). If **`router_for_task`** returns **`no_matching_domain`** or weak matches, retry with **`files`** using repo-relative paths from the backlog **Files** line (**glossary** **territory-ia spec-pipeline layer B (TECH-62)**).
 
 6. **`spec_section`** — For each routed spec, fetch **only** sections the phase needs; set **`max_chars`**. **Do not** read entire `.cursor/specs/*.md` unless **`spec_outline`** forces it.
 
@@ -59,7 +59,11 @@ Run **in order**. Repeat steps **5–11** for each **Implementation Plan** phase
 
 11. **Optional deep guardrails** — **`list_rules`** / **`rule_content`** if **`invariants_summary`** is not enough.
 
-12. **Phase exit** — Re-read touched **Acceptance** bullets; run applicable **`AGENTS.md`** **Pre-commit Checklist** (Unity build, XML docs, English logs, domain checks). For work that touched **`tools/mcp-ia-server`**, **`docs/schemas`**, or bodies that feed **IA indexes**, consider **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** before handoff.
+12. **Phase exit** — Re-read **§8 Acceptance** (and **§7b Test Contracts** if present) for the completed phase; run applicable **`AGENTS.md`** **Pre-commit Checklist** (Unity build, XML docs, English logs, domain checks). If the phase touched **`tools/mcp-ia-server`**, **`docs/schemas`**, **`.cursor/specs/glossary.md`**, **reference spec** bodies that feed **IA indexes**, or committed **`tools/mcp-ia-server/data/*-index.json`**, run **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (or **`npm run validate:all`** from repo root) before starting the next phase. Record surprises in the project spec **§9 Issues Found During Development**.
+
+### Phase rollback
+
+If a phase fails verification, revert the phase’s commits (e.g. **`git revert`** / **`git stash`**) or restore files, document the failure in **§9 Issues Found**, then re-run the phase after fixing the root cause ([`projects/spec-pipeline-exploration.md`](../../../projects/spec-pipeline-exploration.md) **§2.4**).
 
 ### Editor / agent diagnostics
 

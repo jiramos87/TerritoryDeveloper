@@ -7,7 +7,7 @@
 
 **Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — task **38**. **High setup cost**; schedule only if geometric / ordering bugs justify.
 
-**Spec pipeline program:** [TECH-60](TECH-60.md) lists this issue as an optional **prerequisite** for **invariant** fuzzing beyond **Node**-side checks — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
+**Spec pipeline program:** **TECH-60** **§ Completed** — **glossary** **territory-ia spec-pipeline program (TECH-60)** lists this issue as an optional **prerequisite** for **invariant** fuzzing beyond **Node**-side checks — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
 
 ## 1. Summary
 

@@ -7,7 +7,7 @@
 
 **Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — task **21**. Targets **BUG-52**-class regressions.
 
-**Spec pipeline program:** [TECH-60](TECH-60.md) lists this issue as a **prerequisite** for **AUTO** / **simulation** regression capsules and **test contracts** in **Unity** — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
+**Spec pipeline program:** **TECH-60** **§ Completed** — **glossary** **territory-ia spec-pipeline program (TECH-60)** lists this issue as a **prerequisite** for **AUTO** / **simulation** regression capsules and **test contracts** in **Unity** — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
 
 ## 1. Summary
 

@@ -20,7 +20,7 @@ import { registerProjectSpecCloseoutDigest } from "./tools/project-spec-closeout
 
 const server = new McpServer({
   name: "territory-ia",
-  version: "0.4.3",
+  version: "0.4.4",
   description:
     "Information Architecture server for Territory Developer — exposes specs, rules, glossary, backlog issues, and architecture docs via MCP tools.",
 });

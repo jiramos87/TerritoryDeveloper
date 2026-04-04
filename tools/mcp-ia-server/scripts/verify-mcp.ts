@@ -274,6 +274,29 @@ async function main(): Promise<void> {
     throw new Error("router_for_task no_matching_domain expected");
   }
 
+  const routeEmpty = parseJsonFromToolResult(
+    await client.callTool({
+      name: "router_for_task",
+      arguments: {},
+    }),
+  ) as { error?: string; message?: string };
+  if (routeEmpty.error !== "invalid_input") {
+    throw new Error("router_for_task empty args expected invalid_input");
+  }
+
+  const routeFiles = parseJsonFromToolResult(
+    await client.callTool({
+      name: "router_for_task",
+      arguments: { files: ["Assets/Scripts/Managers/UnitManagers/WaterMap.cs"] },
+    }),
+  ) as { matches?: unknown[]; error?: string; file_domain_hints?: string[] };
+  if (routeFiles.error || !routeFiles.matches?.length) {
+    throw new Error("router_for_task files-only WaterMap.cs failed");
+  }
+  if (!Array.isArray(routeFiles.file_domain_hints) || routeFiles.file_domain_hints.length < 1) {
+    throw new Error("router_for_task files-only expected file_domain_hints");
+  }
+
   const invSum = parseJsonFromToolResult(
     await client.callTool({ name: "invariants_summary", arguments: {} }),
   ) as { invariants?: string[]; guardrails?: string[]; error?: string };
@@ -398,7 +421,14 @@ async function main(): Promise<void> {
       name: "backlog_issue",
       arguments: { issue_id: "TECH-37" },
     }),
-  ) as { issue_id?: string; status?: string; error?: string; files?: string; backlog_section?: string };
+  ) as {
+    issue_id?: string;
+    status?: string;
+    error?: string;
+    files?: string;
+    backlog_section?: string;
+    depends_on_status?: Array<{ id?: string; satisfied?: boolean; soft_only?: boolean; status?: string }>;
+  };
   if (bl37.error || bl37.issue_id !== "TECH-37" || bl37.status !== "open") {
     throw new Error("backlog_issue TECH-37 failed (expected open)");
   }
@@ -407,10 +437,32 @@ async function main(): Promise<void> {
       "backlog_issue TECH-37 expected Files to mention compute-lib, mcp-ia-server, or Utilities/Compute",
     );
   }
-  if (!/agent|unity|mcp/i.test(bl37.backlog_section ?? "")) {
+  if (!/compute|mcp|agent|unity|spec pipeline/i.test(bl37.backlog_section ?? "")) {
     throw new Error(
-      "backlog_issue TECH-37 expected backlog_section to mention agent/Unity/MCP context lane",
+      "backlog_issue TECH-37 expected backlog_section to mention compute-lib / MCP / agent lane / spec pipeline section",
     );
+  }
+  const soft21 = bl37.depends_on_status?.find((r) => r.id === "TECH-21");
+  if (!soft21 || soft21.status !== "completed" || soft21.soft_only !== true || soft21.satisfied !== true) {
+    throw new Error("backlog_issue TECH-37 expected depends_on_status for soft TECH-21 completed");
+  }
+
+  const bl38 = parseJsonFromToolResult(
+    await client.callTool({
+      name: "backlog_issue",
+      arguments: { issue_id: "TECH-38" },
+    }),
+  ) as {
+    issue_id?: string;
+    error?: string;
+    depends_on_status?: Array<{ id?: string; satisfied?: boolean; soft_only?: boolean; status?: string }>;
+  };
+  if (bl38.error || bl38.issue_id !== "TECH-38") {
+    throw new Error("backlog_issue TECH-38 failed");
+  }
+  const dep37 = bl38.depends_on_status?.find((r) => r.id === "TECH-37");
+  if (!dep37 || dep37.status !== "open" || dep37.satisfied !== false || dep37.soft_only !== false) {
+    throw new Error("backlog_issue TECH-38 expected TECH-37 open unsatisfied hard dep");
   }
 
   const blBad = parseJsonFromToolResult(

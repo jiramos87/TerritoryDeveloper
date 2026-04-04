@@ -7,7 +7,7 @@
 
 **Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — task **9**.
 
-**Spec pipeline program:** [TECH-60](TECH-60.md) lists this issue for **project spec** / **BACKLOG** id hygiene alongside the spec-driven pipeline — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
+**Spec pipeline program:** **TECH-60** **§ Completed** — **glossary** **territory-ia spec-pipeline program (TECH-60)** lists this issue for **project spec** / **BACKLOG** id hygiene alongside the spec-driven pipeline — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
 
 ## 1. Summary
 

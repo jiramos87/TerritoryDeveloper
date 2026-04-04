@@ -7,7 +7,7 @@
 
 **Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — tasks **3**, **22**.
 
-**Spec pipeline program:** [TECH-60](TECH-60.md) lists this issue as a **prerequisite** for **geography initialization** **JSON** harnesses and long-term verification — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
+**Spec pipeline program:** **TECH-60** **§ Completed** — **glossary** **territory-ia spec-pipeline program (TECH-60)** lists this issue as a **prerequisite** for **geography initialization** **JSON** harnesses and long-term verification — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
 
 ## 1. Summary
 

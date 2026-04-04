@@ -86,6 +86,19 @@
 
 - [ ] …
 
+<!--
+  ## 7b. Test Contracts — see ../projects/PROJECT-SPEC-STRUCTURE.md (list item "7b. Test Contracts").
+  Tooling / verification table only. Use glossary terms for *what* is checked. Not a substitute for ## Open Questions (game logic).
+  **FEAT-** / **BUG-** specs with runtime **C#**, **Play Mode**, or **Load pipeline** claims: fill at least one row per **§8** bullet (or **TBD** + owner). Doc-only **TECH-**/**ART-**/**AUDIO-**: a single **N/A** row is OK when **§8** has no testable claims.
+-->
+
+## 7b. Test Contracts
+
+| Acceptance / goal | Check type | Command or artifact | Notes |
+|-------------------|------------|---------------------|-------|
+| Example: change touches MCP, schemas, glossary, or **reference spec** bodies that feed **IA indexes** | Node | `npm run validate:all` (repo root) | Chains **validate:dead-project-specs**, **test:ia**, **validate:fixtures**, **generate:ia-indexes --check** |
+| … | … | … | … |
+
 ## 8. Acceptance Criteria
 
 <!-- Conditions that must be true for the project to be considered complete.

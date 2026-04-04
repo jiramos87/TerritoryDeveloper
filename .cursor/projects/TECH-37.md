@@ -7,7 +7,7 @@
 
 **Parent program:** [TECH-36](TECH-36.md) · **Next phase:** [TECH-38](TECH-38.md)
 
-**Spec pipeline program:** [TECH-60](TECH-60.md) lists **TECH-37** as a **prerequisite** for **compute-lib**, **golden** tests, and **MCP**-adjacent validation — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
+**Spec pipeline program:** **TECH-60** **§ Completed** — **glossary** **territory-ia spec-pipeline program (TECH-60)** lists **TECH-37** as a **prerequisite** for **compute-lib**, **golden** tests, and **MCP**-adjacent validation — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
 
 ## 1. Summary
 
