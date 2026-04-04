@@ -3,29 +3,21 @@
 > Single source of truth for project issues. Ordered by priority (highest first): **§ Compute-lib program**, then **§ Agent ↔ Unity & MCP context lane**, then **High** / **Medium** / **Code Health** / **Low**.
 > To work on an issue: reference it with `@BACKLOG.md` in the Cursor conversation.
 >
-> **Priority:** **§ Spec pipeline & verification program** (**TECH-60**–**TECH-63**) is **§ Completed** — **glossary** **territory-ia spec-pipeline program (TECH-60)**; exploration [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md). **§ Compute-lib program** (**TECH-36** / **TECH-37** → **TECH-38** → **TECH-39**) covers **pure** math, **golden** **JSON**, and **UTF**-ready surfaces that **prerequisite** rows (**TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30**, **TECH-37**, **TECH-38**) still advance. **Gameplay** blockers in **§ High Priority** remain **interrupt** work when they **stop play** or **corrupt saves**.
+> **Priority:** **§ Spec pipeline & verification program** (**TECH-60**–**TECH-63**) is **§ Completed** — **glossary** **territory-ia spec-pipeline program (TECH-60)**; exploration [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md). **§ Compute-lib program** (**TECH-36**; **TECH-37** **§ Completed**; **TECH-38** → **TECH-39**) covers **pure** math, **golden** **JSON**, and **UTF**-ready surfaces that **prerequisite** rows (**TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30**, **TECH-38**) still advance. **Gameplay** blockers in **§ High Priority** remain **interrupt** work when they **stop play** or **corrupt saves**.
 
 ---
 
 ## Compute-lib program (first priority)
 
-**Dependency order:** **TECH-37** must complete before **TECH-38** and before **TECH-39**. **TECH-38** supplies **batchmode** / **golden** **JSON** for **TECH-39** “heavy” tools; **TECH-39** may ship tool shells after **TECH-37** with honest **NOT_AVAILABLE** until **TECH-38** lands. **TECH-36** is the umbrella — progress is tracked on **TECH-37**–**TECH-39**. **Related research** (**TECH-32**, **TECH-35**) is listed here after the phased rows; both remain **`Depends on: none`** but should **follow** **TECH-38** in practice when comparing to extracted **pure** modules or **RNG**/**invariant** surfaces.
+**Dependency order:** **TECH-37** **§ Completed** — **TECH-38** and **TECH-39** follow. **TECH-38** supplies **batchmode** / **golden** **JSON** for **TECH-39** “heavy” tools; **TECH-39** may ship tool shells with honest **NOT_AVAILABLE** until **TECH-38** lands. **TECH-36** is the umbrella — progress is tracked on **TECH-38**–**TECH-39**. **Related research** (**TECH-32**, **TECH-35**) is listed here after the phased rows; both remain **`Depends on: none`** but should **follow** **TECH-38** in practice when comparing to extracted **pure** modules or **RNG**/**invariant** surfaces.
 
 - [ ] **TECH-36** — **Computational program** (umbrella): **geometry**, **stochastics**, **algorithms** + **territory-ia** tools
   - Type: tooling / code health / agent enablement
-  - Files: umbrella only — see **TECH-37**, **TECH-38**, **TECH-39**; charter `.cursor/projects/TECH-36.md`; reference specs: `.cursor/specs/isometric-geography-system.md`, `.cursor/specs/simulation-system.md`, `.cursor/specs/managers-reference.md`
+  - Files: umbrella only — **TECH-37** **§ Completed** (**glossary** **territory-compute-lib (TECH-37)**); see **TECH-38**, **TECH-39**; charter `.cursor/projects/TECH-36.md`; reference specs: `.cursor/specs/isometric-geography-system.md`, `.cursor/specs/simulation-system.md`, `.cursor/specs/managers-reference.md`
   - Spec: `.cursor/projects/TECH-36.md`
-  - Notes: **Program charter** with resolved product/tooling decisions. **Phased delivery:** **TECH-37** (**`tools/compute-lib/`** + pilot **`registerTool`**), **TECH-38** (Unity **pure** **compute** + **`tools/`** harnesses), **TECH-39** (computational **MCP** suite). **Coordination:** **TECH-60** **§ Completed** (**glossary** **territory-ia spec-pipeline program (TECH-60)**) listed **TECH-37**/**TECH-38** as **prerequisites** for **test contracts** / **golden** **JSON** / **invariant** checks — [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-60**. **Related:** **JSON program (TECH-21)** **§ Completed** (**TECH-40** / **TECH-41** / **TECH-44a** — JSON DTOs/schemas; [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md); **glossary**), **TECH-28** (completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)), **TECH-32**, **TECH-35**; product follow-ups **FEAT-46** (geography authoring UI), **FEAT-47** (**multipolar** **urban growth rings**), **FEAT-48** (**water body** volume / **surface height (S)**).
-  - Acceptance: **TECH-37**, **TECH-38**, and **TECH-39** each satisfy their own **Acceptance** lines in this file (program **complete** when all three **complete**)
-  - Depends on: none (child issues **TECH-37** → **TECH-38** → **TECH-39** track implementation order)
-
-- [ ] **TECH-37** — **Computational** infra: **`tools/compute-lib/`** + pilot **MCP** tool (**World ↔ Grid**)
-  - Type: tooling
-  - Files: `tools/compute-lib/` (new package); `tools/mcp-ia-server/`; `Assets/Scripts/Utilities/Compute/` (convention **README** / optional stub); `docs/mcp-ia-server.md`, `tools/mcp-ia-server/README.md`
-  - Spec: `.cursor/projects/TECH-37.md`
-  - Notes: **Phase A** of **TECH-36**. Shared **Zod**/**TS** **schemas**; **`isometric_world_to_grid`** (or equivalent) **`registerTool`**; **golden** tests **Node** ↔ Unity export. **Architectural rule:** **C#** authoritative for **grid** truth; **compute-lib** only for **verified** **pure** math.
-  - Acceptance: **`tools/compute-lib`** tests pass; **MCP** **`npm run verify`** green with pilot tool; docs updated per `.cursor/projects/TECH-37.md` §8
-  - Depends on: none (soft: **TECH-21** **§ Completed**)
+  - Notes: **Program charter** with resolved product/tooling decisions. **Phased delivery:** **TECH-37** **§ Completed** (**glossary** **territory-compute-lib (TECH-37)** — **`tools/compute-lib/`** + pilot **`isometric_world_to_grid`**), **TECH-38** (Unity **pure** **compute** + **`tools/`** harnesses), **TECH-39** (computational **MCP** suite). **Coordination:** **TECH-60** **§ Completed** (**glossary** **territory-ia spec-pipeline program (TECH-60)**) listed **TECH-37**/**TECH-38** as **prerequisites** for **test contracts** / **golden** **JSON** / **invariant** checks — [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-60**. **Related:** **JSON program (TECH-21)** **§ Completed** (**TECH-40** / **TECH-41** / **TECH-44a** — JSON DTOs/schemas; [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md); **glossary**), **TECH-28** (completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)), **TECH-32**, **TECH-35**; product follow-ups **FEAT-46** (geography authoring UI), **FEAT-47** (**multipolar** **urban growth rings**), **FEAT-48** (**water body** volume / **surface height (S)**).
+  - Acceptance: **TECH-37** **§ Completed**; **TECH-38** and **TECH-39** each satisfy their own **Acceptance** lines in this file (program **complete** when **TECH-38** and **TECH-39** **complete**)
+  - Depends on: none (child issues **TECH-38** → **TECH-39** track remaining implementation order)
 
 - [ ] **TECH-38** — **Core** **computational** modules (Unity **utilities** + **`tools/`** harnesses)
   - Type: code health / performance enablement
@@ -33,7 +25,7 @@
   - Spec: `.cursor/projects/TECH-38.md`
   - Notes: **Phase B** of **TECH-36**. **Behavior-preserving** extractions; **UrbanGrowthRingMath** **multipolar**-ready for **FEAT-47**; **stochastic** **geography initialization** documentation; **no** second **pathfinding** authority. Prepare **batchmode** hooks for **TECH-39**.
   - Acceptance: inventory doc + **≥ 3** **pure** modules with tests or **golden** **JSON**; **RNG** derivation doc; **invariants** respected — see `.cursor/projects/TECH-38.md` §8
-  - Depends on: **TECH-37**
+  - Depends on: **TECH-37** **§ Completed**
 
 - [ ] **TECH-39** — **territory-ia** **computational** **MCP** tool suite
   - Type: tooling / agent enablement
@@ -41,7 +33,7 @@
   - Spec: `.cursor/projects/TECH-39.md`
   - Notes: **Phase C** of **TECH-36**. **`growth_ring_classify`**, **`grid_distance`**, **`pathfinding_cost_preview`**, **`geography_init_params_validate`**, **`desirability_top_cells`** (honest **NOT_AVAILABLE** until **TECH-38** **batchmode**); **many** **`snake_case`** tools, shared **compute-lib** core.
   - Acceptance: **≥ 4** new tools beyond **TECH-37** pilot (or **Decision Log** consolidation); **`npm run verify`** green; docs updated — see `.cursor/projects/TECH-39.md` §8
-  - Depends on: **TECH-37** (soft: **TECH-38** for **heavy** tools)
+  - Depends on: **TECH-37** **§ Completed** (soft: **TECH-38** for **heavy** tools)
 
 - [ ] **TECH-32** — **Urban growth rings** / centroid recompute what-if (research tooling)
   - Type: tooling / research
@@ -59,7 +51,7 @@
 
 ## Agent ↔ Unity & MCP context lane
 
-Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**TECH-36** program rows live in **§ Compute-lib program** above.) **Prerequisites** mapped by **TECH-60** **§ Completed** (**glossary** **territory-ia spec-pipeline program (TECH-60)**): **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (this lane — existing `.cursor/projects/*.md`); **TECH-37**, **TECH-38** (**§ Compute-lib program**).
+Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**TECH-36** program rows live in **§ Compute-lib program** above.) **Prerequisites** mapped by **TECH-60** **§ Completed** (**glossary** **territory-ia spec-pipeline program (TECH-60)**): **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (this lane — existing `.cursor/projects/*.md`); **TECH-37** **§ Completed**, **TECH-38** (**§ Compute-lib program**).
 
 - [ ] **TECH-59** — **territory-ia** MCP: stage **Editor** export registry payload (**BACKLOG** issue id + JSON documents)
   - Type: tooling / agent enablement
@@ -510,6 +502,13 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
 
 ## Completed (last 30 days)
 
+- [x] **TECH-37** — **Computational** infra: **`tools/compute-lib/`** + pilot **MCP** tool (**World ↔ Grid**) (2026-04-04)
+  - Type: tooling
+  - Files: `tools/compute-lib/`; `tools/mcp-ia-server/`; `Assets/Scripts/Utilities/Compute/`; `docs/mcp-ia-server.md`, `tools/mcp-ia-server/README.md`; [`.github/workflows/ia-tools.yml`](.github/workflows/ia-tools.yml)
+  - Spec: (removed after closure — **glossary** **territory-compute-lib (TECH-37)**; geo §1.3 **Agent tooling** note; [`ARCHITECTURE.md`](ARCHITECTURE.md) **territory-ia** tools + **`tools/compute-lib/`**; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`.cursor/projects/TECH-36.md`](.cursor/projects/TECH-36.md) umbrella; [`BACKLOG.md`](BACKLOG.md) **§ Completed**; this row)
+  - Notes: **Completed (verified — `/project-spec-close` + user):** **`territory-compute-lib`**, **`isometric_world_to_grid`**, **`IsometricGridMath`**, golden **`world-to-grid.json`**, **IA tools** **CI** builds **compute-lib** before **mcp-ia-server**. **Authority:** **C#** / **Unity** remain **grid** truth; **Node** duplicates **verified** planar **World ↔ Grid** inverse only (**glossary** **World ↔ Grid conversion**).
+  - Depends on: none (soft: **TECH-21** **§ Completed**)
+
 - [x] **TECH-60** — **Spec pipeline & verification program** (umbrella): agent workflow, MCP, scripts, **test contracts** (2026-04-04)
   - Type: tooling / documentation / agent enablement
   - Files: [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md); [`.cursor/skills/README.md`](.cursor/skills/README.md); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`.github/workflows/ia-tools.yml`](.github/workflows/ia-tools.yml); **§ Completed** children **TECH-61**–**TECH-63** (this file)
@@ -572,7 +571,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Type: documentation / agent enablement (**Cursor Skill** + **BACKLOG** / `.cursor/projects/` hygiene)
   - Files: `.cursor/skills/project-new/SKILL.md`; [`.cursor/skills/README.md`](.cursor/skills/README.md); `AGENTS.md` item 5; `.cursor/specs/glossary.md` — **project-new**; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) **Project spec workflows**
   - Spec: (removed after closure — [`.cursor/skills/project-new/SKILL.md`](.cursor/skills/project-new/SKILL.md); **glossary** **project-new**; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`BACKLOG.md`](BACKLOG.md) **§ Completed**; this row)
-  - Notes: **Completed (verified — `/project-spec-close`):** **create-first** **Tool recipe (territory-ia)**; **`backlog_issue`** **open-issues-only** + [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) for completed-only ids; optional **`web_search`** external-only; **`npm run validate:dead-project-specs`** after new **`Spec:`** paths. **Decision Log:** skill folder **`project-new`**; revisit recipe when **TECH-48** ships. Complements **kickoff** / **implement** / **close** / **project-implementation-validation**.
+  - Notes: **Completed (verified — `/project-spec-close`):** **create-first** **Tool recipe (territory-ia)**; **`backlog_issue`** resolves **open** + **§ Completed (last 30 days)** in **`BACKLOG.md`** ([`docs/mcp-ia-server.md`](docs/mcp-ia-server.md)); [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) for **archive-only** ids; optional **`web_search`** external-only; **`npm run validate:dead-project-specs`** after new **`Spec:`** paths. **Decision Log:** skill folder **`project-new`**; revisit recipe when **TECH-48** ships. Complements **kickoff** / **implement** / **close** / **project-implementation-validation**.
   - Depends on: none (soft: [.cursor/skills/README.md](.cursor/skills/README.md); **TECH-49**–**TECH-52** **§ Completed** for sibling patterns)
 
 - [x] **TECH-44** — **Postgres + interchange patterns** (merged program umbrella; charter closed) (2026-04-05)

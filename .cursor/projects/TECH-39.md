@@ -5,7 +5,7 @@
 > **Created:** 2026-04-03
 > **Last updated:** 2026-04-03
 
-**Parent program:** [TECH-36](TECH-36.md) · **Depends on:** **TECH-37** ( **`compute-lib`**, **`registerTool`** pattern, **verify** harness) · **Soft:** **TECH-38** (stable **C#** **APIs** / **batchmode** **exports** for **heavy** tools)
+**Parent program:** [TECH-36](TECH-36.md) · **Depends on:** **TECH-37** **§ Completed** ( **`compute-lib`**, **`registerTool`** pattern, **verify** harness) · **Soft:** **TECH-38** (stable **C#** **APIs** / **batchmode** **exports** for **heavy** tools)
 
 ## 1. Summary
 
@@ -99,6 +99,7 @@ Expand **territory-ia** with a **family** of **`snake_case`** **computational** 
 |------|----------|-----------|
 | 2026-04-03 | **Explicit** **`ok`** **boolean** | Easier **agent** **branching** **than** **exceptions** **only** |
 | 2026-04-03 | **Batchmode** **for** **desirability** **top-k** | **C#** **authoritative** **scores** |
+| 2026-04-04 | Pilot tool **`isometric_world_to_grid`** lives in **`tools/mcp-ia-server/src/tools/isometric-world-to-grid.ts`**; imports **`territory-compute-lib`** | §7.1 may **refactor** into **`src/tools/compute/`** without changing **tool** **name** |
 
 ## 7. Implementation Plan
 

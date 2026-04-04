@@ -3,15 +3,30 @@
 > **Issue:** [TECH-38](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-03
-> **Last updated:** 2026-04-03
+> **Last updated:** 2026-04-04
 
-**Parent program:** [TECH-36](TECH-36.md) · **Depends on:** **TECH-37** (schemas, **compute-lib**, pilot pattern) · **Feeds:** [TECH-39](TECH-39.md)
+**Parent program:** [TECH-36](TECH-36.md) · **Depends on:** **TECH-37** **§ Completed** (**glossary** **territory-compute-lib (TECH-37)** — **`tools/compute-lib/`**, **`isometric_world_to_grid`**, **`verify`** harness) · **Feeds:** [TECH-39](TECH-39.md)
+
+**Program phase:** **Phase B** of [TECH-36](TECH-36.md) **§7** — **behavior-preserving** **C#** extractions; **batchmode** / **golden** **JSON** hooks; **UrbanGrowthRingMath** (or equivalent) **multipolar**-ready; **no** second **pathfinding** authority. **Phase C** (**TECH-39**) consumes this output for **heavy** **MCP** tools.
 
 **Spec pipeline program:** **TECH-60** **§ Completed** — **glossary** **territory-ia spec-pipeline program (TECH-60)** lists **TECH-38** as a **prerequisite** for **pure** **C#** surfaces, **`tools/reports/`** **JSON**, and **UTF** / **batchmode** hooks — [`projects/spec-pipeline-exploration.md`](../../projects/spec-pipeline-exploration.md).
 
+**territory-ia retrieval:** `router_for_task` / `glossary_discover` / `glossary_lookup` / `spec_section` — keep prose aligned with the umbrella domain table in [TECH-36](TECH-36.md) (§1 table + **§5.1** spec anchors).
+
+| Domain (umbrella) | Canonical terms |
+|-------------------|-----------------|
+| World ↔ grid | **World ↔ Grid conversion** — **geo** §1.1, §1.3; **Node** **`isometric_world_to_grid`** = planar inverse only |
+| Growth bias | **Urban centroid**, **urban growth rings**, **Multipolar urban growth** — **sim** §Rings; product **FEAT-47** / tuning **FEAT-43** |
+| Path preview vs commit | **Pathfinding cost model** — **geo** §10; committed **road stroke** → **road preparation family** + **geo** §13 — **roads-system.md**; **wet run**, **bridge lip** — **geo** §14.5 |
+| Water / height | **Surface height (S)**, **water body**, **shore band**, **H_bed** — **water-terrain-system** + **geo** §11–§12 |
+| Init / interchange | **Geography initialization**, **`geography_init_params`** — **persistence-system**; **JSON program (TECH-21)** **§ Completed** — do not change on-disk **Save data** unless a **FEAT-**/**BUG-** requires it |
+| Scoring | **Desirability** — **managers-reference**; **not** interchangeable with **A*** edge costs for **AUTO** unless a **FEAT-** says so ([TECH-36](TECH-36.md) **§3.2**) |
+
 ## 1. Summary
 
-Extract and consolidate **pure** **computational** logic from **MonoBehaviour** **managers** into **`Assets/Scripts/Utilities/`** (and focused helpers), add **Edit Mode** / **Play Mode** tests where viable, and add **`tools/`** **batch** / **Node** scripts that consume **JSON** fixtures (**TECH-41** interchange DTOs + **TECH-40** schemas where checked in, **TECH-31**, **TECH-28**) to validate **stochastic** **geography initialization** and **graph** algorithms without always launching full Play Mode. Prepare **ring** / **distance** **math** for future **FEAT-47** (**multipolar** **urban centroids**) without changing live **simulation** behavior until that issue executes.
+Extract and consolidate **pure** **computational** logic from **MonoBehaviour** **managers** into **`Assets/Scripts/Utilities/`** (and focused helpers), add **Edit Mode** / **Play Mode** tests where viable, and add **`tools/`** **batch** / **Node** scripts that consume **JSON** fixtures (**TECH-41** interchange DTOs + **TECH-40** schemas where checked in, **TECH-31**, **TECH-28** archived pattern) to validate **stochastic** **geography initialization** and **graph** algorithms without always launching full Play Mode. Prepare **urban growth rings** / **distance** **math** for **glossary** **Multipolar urban growth** (**FEAT-47**) without changing live **simulation** behavior until that issue executes.
+
+**Authority (same as TECH-36 §1 / §3.4):** **C#** / **Unity** remain authoritative for **grid** truth, **HeightMap** ↔ **Cell.height**, **water map**, and legality of committed **road** work. **`tools/compute-lib/`** stays limited to **verified** **TypeScript** / **Zod** and **golden** vectors; **TECH-38** adds **C#** **pure** modules and **Unity** **batchmode** **JSON** exports **TECH-39** will call for **heavy** previews.
 
 ## 2. Goals and Non-Goals
 
@@ -27,7 +42,7 @@ Extract and consolidate **pure** **computational** logic from **MonoBehaviour** 
 
 1. Implement **FEAT-46** UI or **FEAT-48** **water** **volume** gameplay (helpers only if behind tests and feature-flagged / unused in player).
 2. Replace **UrbanCentroidService** **public** API for **multipolar** data — **FEAT-47** owns behavior flip; **TECH-38** only supplies **tested** **building blocks**.
-3. Registering new **MCP** tools (**TECH-39**).
+3. Registering new **MCP** tools (**TECH-39**) or expanding **TECH-59** (**Editor** export registry staging) — coordinate **README** / **`docs/mcp-ia-server.md`** only when both lanes touch the same files ([TECH-36](TECH-36.md) **§5.3**).
 
 ## 3. User / Developer Stories
 
@@ -90,7 +105,16 @@ Script: read **JSON** `{ seed, mapSize, lakeSettings, riverSettings, ... }` → 
 
 ### 5.4 Desirability vs pathfinding (implementation rule)
 
-- **`DesirabilityFieldSampler`** (illustrative name) may use **grid** distance and **pole** list; **must not** be used as **A*** **cost** unless **FEAT-** explicitly unifies — document in **XML** **`<remarks>`**.
+- **`DesirabilityFieldSampler`** (illustrative name) may use **grid** distance and **pole** list; **must not** be used as **A*** **cost** unless **FEAT-** explicitly unifies — document in **XML** **`<remarks>`** (charter: [TECH-36](TECH-36.md) **§3.2**).
+
+### 5.5 Cross-cutting invariants (implementers)
+
+Do not violate [`.cursor/rules/invariants.mdc`](../rules/invariants.mdc). For this issue, pay special attention to:
+
+- **`HeightMap[x,y]`** and **`Cell.height`** in sync on every write; **no** **direct** **`gridArray`** / **`cellArray`** access outside **`GridManager`** — use **`GetCell`**.
+- **Road** modifications → **`InvalidateRoadCache()`**; **placing** a **road** → **road preparation family** (never **`ComputePathPlan`** alone).
+- **Water** placement/removal → **`RefreshShoreTerrainAfterWaterUpdate`** where applicable; **rivers:** **`H_bed`** monotonically non-increasing toward exit (**geo** §12).
+- **No new singletons**; **no** **`FindObjectOfType`** in **`Update`** or per-frame loops; **no** new responsibilities **inside** **`GridManager`** — extract helpers (**invariants** + [TECH-36](TECH-36.md) **§6**).
 
 ## 6. Decision Log
 
@@ -98,12 +122,14 @@ Script: read **JSON** `{ seed, mapSize, lakeSettings, riverSettings, ... }` → 
 |------|----------|-----------|
 | 2026-04-03 | **Multipolar** math extracted before **FEAT-47** behavior | Reduces risk; **FEAT-47** swaps **data** |
 | 2026-04-03 | **Desirability** **scoring** ≠ **path** **cost** | User direction + **road preparation** invariant |
+| 2026-04-04 | **TECH-37** landed **`tools/compute-lib/test/fixtures/world-to-grid.json`**, **`IsometricGridMath`** stub under **`Assets/Scripts/Utilities/Compute/`** | **Wave A** (§7.2): add **UTF** against fixture; optional dedup with **`GridManager`** / **`CoordinateConversionService`** |
+| 2026-04-04 | Spec kickoff: align header, vocabulary table, §5.5 **invariants**, §7b **Test Contracts**, **TECH-39** handoff tool names, post-**TECH-37** preconditions | **TECH-36** umbrella parity + **PROJECT-SPEC-STRUCTURE** §7b |
 
 ## 7. Implementation Plan
 
 ### 7.0 Preconditions
 
-- [ ] Read **TECH-37** **Decision Log** for **compute-lib** **fixture** paths and **Zod** **field** names.
+- [ ] Use **TECH-37** **§ Completed** artifacts (no project spec file): **`tools/compute-lib/test/fixtures/world-to-grid.json`**, **`tools/compute-lib/src/isometric/worldToGrid.ts`** (**Zod** field names), **glossary** **territory-compute-lib (TECH-37)**, existing **`Assets/Scripts/Utilities/Compute/README.md`** + **`IsometricGridMath.cs`** stub.
 - [ ] Pull latest **TECH-15** / **TECH-16** **profiler** **JSON** (if available) and list top 10 **C#** **methods** by time under **GeographyManager** / **TerrainManager** / **SimulationManager** / **Auto***.
 
 ### 7.1 Inventory phase (documentation-only PR acceptable)
@@ -112,12 +138,12 @@ Script: read **JSON** `{ seed, mapSize, lakeSettings, riverSettings, ... }` → 
 - [ ] Produce **`tools/reports/TECH-38-compute-inventory.md`** (English): table **File**, **Symbol**, **Spec term**, **Pure?** (Y/N/Maybe), **Risk**.
 - [ ] Review with **sim** §Rings + **geo** §10; mark **blockers** (e.g. hidden **MonoBehaviour** **state**).
 
-### 7.2 Wave A — **IsometricGridMath**
+### 7.2 Wave A — **IsometricGridMath** (parity with **compute-lib**)
 
-- [ ] Create **`Assets/Scripts/Utilities/Compute/IsometricGridMath.cs`** with **`/// <summary>`** referencing **geo** §1.
-- [ ] Move **math** from **`CoordinateConversionService`**; keep **public** API stable or obsolete with **wrapper** forwarding.
-- [ ] Add **`IsometricGridMathTests.cs`** (**UTF**) comparing against **`tools/compute-lib/test/fixtures/world-to-grid.json`** (load **JSON** in test **assembly** or duplicate **vectors** in **C#** **const**).
-- [ ] **ProfilerMarker** `IsometricGridMath.Convert` (optional) if still **hot** after move.
+- [ ] **Extend** existing **`Assets/Scripts/Utilities/Compute/IsometricGridMath.cs`** (stub from **TECH-37**): keep **`/// <summary>`** on the type referencing **geo** §1.1 / §1.3; implement **full** **World ↔ Grid** parity with **`CoordinateConversionService`** / **`GridManager`** expectations.
+- [ ] Move or delegate **math** from **`CoordinateConversionService`** into **`IsometricGridMath`**; keep **public** call-site API stable (**obsolete** + forward if needed).
+- [ ] Add **`IsometricGridMathTests.cs`** (**UTF**) loading **`tools/compute-lib/test/fixtures/world-to-grid.json`** (or embedded **const** vectors) — same cases as **Node** **golden** tests.
+- [ ] **ProfilerMarker** on **hot** entry points (optional) if profiling shows regressions vs baseline.
 
 ### 7.3 Wave B — **UrbanGrowthRingMath**
 
@@ -159,8 +185,18 @@ Script: read **JSON** `{ seed, mapSize, lakeSettings, riverSettings, ... }` → 
 
 ### 7.9 Handoff to **TECH-39**
 
-- [ ] List **stable** **operations** ready for **MCP**: e.g. **`isometric_world_to_grid`** (already **TECH-37**), **`growth_ring_classify`**, **`path_cost_preview`**, **`desirability_top_k`**.
-- [ ] For each, specify **input** **JSON** **shape** and **authority**: **C#** **batchmode** **required** vs **compute-lib** **only**.
+- [ ] List **stable** **operations** ready for **MCP**, aligned with [`BACKLOG.md`](../../BACKLOG.md) **TECH-39** **Notes**: **`isometric_world_to_grid`** (**TECH-37** / **compute-lib**), **`growth_ring_classify`**, **`grid_distance`**, **`pathfinding_cost_preview`**, **`geography_init_params_validate`**, **`desirability_top_cells`** (and any **Decision Log** renames).
+- [ ] For each, specify **input** **JSON** **shape**, **authority** (**C#** **batchmode** vs **compute-lib** **only**), and **NOT_AVAILABLE** / stub policy until **Wave** **D** / **batchmode** **JSON** exists.
+
+## 7b. Test Contracts
+
+| Acceptance / goal | Check type | Command or artifact | Notes |
+|-------------------|------------|---------------------|-------|
+| **§8** inventory markdown | Review | **`tools/reports/TECH-38-compute-inventory.md`** merged | English; links **spec** terms |
+| **≥ 3** **pure** modules + tests / **golden** | **Unity** **UTF** + optional **Node** | Test assemblies + **`tools/compute-lib`** fixtures / **`npm test`** under **`tools/compute-lib`** | **Wave A** ↔ **`world-to-grid.json`** |
+| **RNG** derivation doc | Review | **`tools/reports/TECH-38-rng-derivation.md`** | **Geography initialization** seed chain |
+| **Regression** / **AUTO** parity (**UrbanCentroidService**) | **Play Mode** or snapshot | Document in **Decision Log** | **> 5%** **Profiler** regression → **Decision Log** per §7.8 |
+| **IA** / **glossary** / **MCP** index sources touched | **Node** | **`npm run validate:all`** (repo root) | Optional; after doc edits per **project-implementation-validation** |
 
 ## 8. Acceptance Criteria
 
@@ -180,6 +216,6 @@ Script: read **JSON** `{ seed, mapSize, lakeSettings, riverSettings, ... }` → 
 
 - 
 
-## Open Questions
+## Open Questions (resolve before / during implementation)
 
-None — **multipolar** / **water** **volume** / **dashboard** tracked under **FEAT-47** / **FEAT-48** / **FEAT-46** and [TECH-36](TECH-36.md).
+**N/A for game-logic definitions in this spec** — **TECH-38** is **tooling** / **extraction** scope. Product rules for **Multipolar urban growth**, **geography** authoring UI, and **water body** **volume** / **surface height (S)** remain under **FEAT-47**, **FEAT-46**, **FEAT-48** and [TECH-36](TECH-36.md) **§3** (use **Open Questions** on those issues when they get project specs). If an extraction **would** change observable **AUTO** or **Save** behavior, record the conflict in **Decision Log** or split a **BUG-**/**FEAT-** before shipping.

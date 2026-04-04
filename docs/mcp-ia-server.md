@@ -17,7 +17,7 @@ Task-to-spec priorities match **`.cursor/rules/agent-router.mdc`**. That rule fi
 
 ## Issue kickoff workflow
 
-When starting work on **`BUG-XX` / `FEAT-XX` / `TECH-XX`** (etc.), call **`backlog_issue`** with `issue_id` first to get `Files`, `Spec`, `Notes`, `Acceptance`, `status`, and `raw_markdown` without loading all of `BACKLOG.md`. Then use `router_for_task` / `glossary_discover` / `glossary_lookup` / `spec_section` (or **`spec_sections`** when several slices are needed in one turn) as needed. Older issues may live only in `BACKLOG-ARCHIVE.md` (not covered by v1 `backlog_issue`).
+When starting work on **`BUG-XX` / `FEAT-XX` / `TECH-XX`** (etc.), call **`backlog_issue`** with `issue_id` first to get `Files`, `Spec`, `Notes`, `Acceptance`, `status`, and `raw_markdown` without loading all of `BACKLOG.md`. **`status`** is **`open`** or **`completed`** when the row lives under **§ Completed (last 30 days)** in the same file. Then use `router_for_task` / `glossary_discover` / `glossary_lookup` / `spec_section` (or **`spec_sections`** when several slices are needed in one turn) as needed. Issues moved to **`BACKLOG-ARCHIVE.md`** only are not covered by v1 **`backlog_issue`**.
 
 ## Project spec workflows (Cursor Skills)
 
@@ -31,11 +31,11 @@ Repo **Cursor Skills** define **ordered** MCP usage for `.cursor/projects/{ISSUE
 
 See also [`AGENTS.md`](../AGENTS.md) (Before You Start) and [`.cursor/skills/README.md`](../.cursor/skills/README.md).
 
-## Tools (12)
+## Tools (13)
 
 | Tool | Role |
 |------|------|
-| `backlog_issue` | One **open** issue from `BACKLOG.md` by id (`issue_id`); structured fields + `raw_markdown` + `depends_on_status` (per cited id in **Depends on:**: `open` / `completed` / `not_in_backlog`, `soft_only`, `satisfied`). Nested sub-items (e.g. TECH-01 under BUG-20) supported. Completed-only rows: `BACKLOG-ARCHIVE.md` (**Recent archive** / older sections). |
+| `backlog_issue` | One matching issue from `BACKLOG.md` by id (`issue_id`): **open** checklist rows or **§ Completed (last 30 days)**; structured fields + `raw_markdown` + `depends_on_status` (per cited id in **Depends on:**: `open` / `completed` / `not_in_backlog`, `soft_only`, `satisfied`). Nested sub-items (e.g. TECH-01 under BUG-20) supported. **Archive-only** ids: `BACKLOG-ARCHIVE.md` (**Recent archive** / older sections). |
 | `list_specs` | Discover registered documents (`key`, path, category, description). |
 | `spec_outline` | Heading tree for a spec/rule/doc; supports aliases (`geo`, `roads`, `unity` / `unityctx` → `unity-development-context`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
 | `spec_section` | Body under one heading (id, slug, substring, or fuzzy heading match); `max_chars` truncation. Parameters `spec` + `section` are canonical; aliases `key`/`doc` for spec and `section_heading`/`heading` for section are accepted (numeric section coerced to string) so mis-keyed tool calls still succeed. |
@@ -47,10 +47,11 @@ See also [`AGENTS.md`](../AGENTS.md) (Before You Start) and [`.cursor/skills/REA
 | `invariants_summary` | Numbered invariants and guardrails from `invariants.mdc`. |
 | `list_rules` | All `.mdc` rules with frontmatter metadata. |
 | `rule_content` | Rule body without YAML frontmatter; `rule` key resolves `roads` → `roads.mdc` (not the `roads-system` spec alias). |
+| `isometric_world_to_grid` | **Computational:** planar world (`world_x`, `world_y`) → logical **cell** indices (`cell_x`, `cell_y`) per **isometric-geography-system** §1.3 (glossary: **World ↔ Grid conversion**). Optional `origin_x` / `origin_y`. Implemented in **`tools/compute-lib`**; **Unity** height-aware picking is out of scope. |
 
 ## Implementation and operations
 
-- **Code:** `tools/mcp-ia-server/` (TypeScript, `@modelcontextprotocol/sdk`).
+- **Code:** `tools/mcp-ia-server/` (TypeScript, `@modelcontextprotocol/sdk`); shared **pure** math in **`tools/compute-lib/`** (`territory-compute-lib`, **TECH-37**).
 - **Cursor:** `.cursor/mcp.json` launches `npx -y tsx tools/mcp-ia-server/src/index.ts` from the repo root; set `REPO_ROOT` if the host cwd is not the repository root.
 - **Verify:** From `tools/mcp-ia-server/`, run `npm run verify` (spawns server like Cursor and calls tools via the SDK).
 - **Full developer README:** `tools/mcp-ia-server/README.md`.

@@ -57,6 +57,7 @@ async function main(): Promise<void> {
     "rule_content",
     "backlog_issue",
     "project_spec_closeout_digest",
+    "isometric_world_to_grid",
   ];
   for (const n of required) {
     if (!names.includes(n)) throw new Error(`Missing MCP tool: ${n}`);
@@ -429,17 +430,19 @@ async function main(): Promise<void> {
     backlog_section?: string;
     depends_on_status?: Array<{ id?: string; satisfied?: boolean; soft_only?: boolean; status?: string }>;
   };
-  if (bl37.error || bl37.issue_id !== "TECH-37" || bl37.status !== "open") {
-    throw new Error("backlog_issue TECH-37 failed (expected open)");
+  if (bl37.error || bl37.issue_id !== "TECH-37" || bl37.status !== "completed") {
+    throw new Error("backlog_issue TECH-37 failed (expected completed)");
   }
   if (!/compute-lib|mcp-ia-server|Utilities\/Compute/i.test(bl37.files ?? "")) {
     throw new Error(
       "backlog_issue TECH-37 expected Files to mention compute-lib, mcp-ia-server, or Utilities/Compute",
     );
   }
-  if (!/compute|mcp|agent|unity|spec pipeline/i.test(bl37.backlog_section ?? "")) {
+  if (
+    !/compute|mcp|agent|unity|spec pipeline|completed/i.test(bl37.backlog_section ?? "")
+  ) {
     throw new Error(
-      "backlog_issue TECH-37 expected backlog_section to mention compute-lib / MCP / agent lane / spec pipeline section",
+      "backlog_issue TECH-37 expected backlog_section (open program area or § Completed)",
     );
   }
   const soft21 = bl37.depends_on_status?.find((r) => r.id === "TECH-21");
@@ -461,8 +464,8 @@ async function main(): Promise<void> {
     throw new Error("backlog_issue TECH-38 failed");
   }
   const dep37 = bl38.depends_on_status?.find((r) => r.id === "TECH-37");
-  if (!dep37 || dep37.status !== "open" || dep37.satisfied !== false || dep37.soft_only !== false) {
-    throw new Error("backlog_issue TECH-38 expected TECH-37 open unsatisfied hard dep");
+  if (!dep37 || dep37.status !== "completed" || dep37.satisfied !== true || dep37.soft_only !== false) {
+    throw new Error("backlog_issue TECH-38 expected TECH-37 completed satisfied hard dep");
   }
 
   const blBad = parseJsonFromToolResult(
@@ -508,6 +511,23 @@ async function main(): Promise<void> {
   if (digest.schema_version !== 1) throw new Error("project_spec_closeout_digest schema_version 1 expected");
   if (digest.spec_path !== ".cursor/projects/TECH-59.md") {
     throw new Error("project_spec_closeout_digest spec_path mismatch");
+  }
+
+  const isoGrid = parseJsonFromToolResult(
+    await client.callTool({
+      name: "isometric_world_to_grid",
+      arguments: {
+        world_x: -0.5,
+        world_y: 1.75,
+        tile_width: 1,
+        tile_height: 0.5,
+      },
+    }),
+  ) as { ok?: boolean; cell_x?: number; cell_y?: number };
+  if (!isoGrid.ok || isoGrid.cell_x !== 3 || isoGrid.cell_y !== 4) {
+    throw new Error(
+      `isometric_world_to_grid golden case failed: ${JSON.stringify(isoGrid)}`,
+    );
   }
 
   await transport.close();

@@ -22,7 +22,7 @@ Abstract pattern (reusable outside this game): [`docs/mcp-markdown-ia-pattern.md
 | `npm test` | Unit tests (`node:test` + `tsx`) for parser and tool helpers. |
 | `npm run test:watch` | Tests in watch mode. |
 | `npm run test:coverage` | Parser + **ia-index** line coverage with **c8** (gate ≥90%). |
-| `npm run verify` | From this directory: spawns the server the same way as Cursor (via repo root + `npx -y tsx …`) and exercises all **12** tools through the MCP SDK client. |
+| `npm run verify` | From this directory: spawns the server the same way as Cursor (via repo root + `npx -y tsx …`) and exercises all **13** tools through the MCP SDK client. |
 | `npm run validate:fixtures` | **AJV** (JSON Schema Draft 2020-12): valid fixtures under `docs/schemas/fixtures/` must pass; invalid fixtures must fail. |
 | `npm run generate:ia-indexes` | Writes `data/spec-index.json` and `data/glossary-index.json`. Pass `--check` to assert they match the generator (used in **CI**). |
 
@@ -43,11 +43,11 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 |----------|---------|
 | `REPO_ROOT` | Root used to resolve `.cursor/specs`, `.cursor/rules`, and root markdown. Defaults to `process.cwd()`. |
 
-## Tools (12)
+## Tools (13)
 
 | Tool | Description |
 |------|-------------|
-| **`backlog_issue`** | One **open** issue from `BACKLOG.md`: `issue_id` (e.g. `BUG-37`). Returns `status`, `backlog_section`, `Files` / `Spec` / `Notes` / `Acceptance` / `depends_on`, `depends_on_status` (cited ids: `open` / `completed` / `not_in_backlog`, `soft_only`, `satisfied`), `raw_markdown`. Completed-only ids: `BACKLOG-ARCHIVE.md`. Not in `list_specs`. |
+| **`backlog_issue`** | One matching issue from `BACKLOG.md` (**open** or **§ Completed (last 30 days)**): `issue_id` (e.g. `BUG-37`). Returns `status`, `backlog_section`, `Files` / `Spec` / `Notes` / `Acceptance` / `depends_on`, `depends_on_status` (cited ids: `open` / `completed` / `not_in_backlog`, `soft_only`, `satisfied`), `raw_markdown`. **Archive-only** ids: `BACKLOG-ARCHIVE.md`. Not in `list_specs`. |
 | **`list_specs`** | Registry entries: `key`, `relativePath`, `description`, `category`, `lineCount`. Optional filter `category` (e.g. `rule`). |
 | **`spec_outline`** | Nested heading outline with line ranges. `spec` accepts key, filename, or alias (`geo` → `isometric-geography-system`, `roads` → `roads-system`, `unity` / `unityctx` → `unity-development-context`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
 | **`spec_section`** | Body for one section: canonical `spec` + `section` (id `13.4`, slug, title substring, or fuzzy typo). Aliases: `key` / `doc` → spec; `section_heading` / `heading` → section; numeric `section` coerced to string. `max_chars` or `maxChars` (default 3000) with `truncated` / `totalChars`. |
@@ -59,6 +59,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`invariants_summary`** | Invariants + guardrails from `invariants.mdc`. |
 | **`list_rules`** | All `.mdc` rules with frontmatter (`alwaysApply`, `globs`, description). |
 | **`rule_content`** | Rule markdown body without frontmatter. `rule: "roads"` resolves **`roads.mdc`** (use `spec_section` / `spec_outline` with alias `roads` for the **roads-system** spec). |
+| **`isometric_world_to_grid`** | **Computational** ( **`tools/compute-lib`** ): planar `world_x` / `world_y` + `tile_width` / `tile_height` → `cell_x` / `cell_y` (**isometric-geography-system** §1.3; glossary **World ↔ Grid conversion**). Optional `origin_x` / `origin_y`. Returns `{ ok, cell_x, cell_y }` or `{ ok: false, error }`. |
 
 **Examples (conceptual):**
 
@@ -72,6 +73,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 - `glossary_lookup` → `{ "term": "wet run" }`
 - `router_for_task` → `{ "domain": "roads" }` or `{ "files": ["Assets/Scripts/Managers/GameManagers/GridManager.cs"] }`
 - `rule_content` → `{ "rule": "roads", "max_chars": 50000 }`
+- `isometric_world_to_grid` → `{ "world_x": 0, "world_y": 0, "tile_width": 1, "tile_height": 0.5 }`
 
 ## Closeout CLI (from repository root)
 
@@ -111,6 +113,7 @@ flowchart LR
     IS[invariants-summary.ts]
     LR[list-rules.ts]
     RC[rule-content.ts]
+    IW[isometric-world-to-grid.ts]
   end
   IDX --> CFG
   IDX --> BI
@@ -125,6 +128,7 @@ flowchart LR
   IDX --> IS
   IDX --> LR
   IDX --> RC
+  IDX --> IW
   LS --> CFG
   LS --> PAR
   SO --> CFG
@@ -182,3 +186,5 @@ flowchart LR
 ## Dependency note
 
 The implementation uses **`@modelcontextprotocol/sdk`** (stable 1.x). The split package `@modelcontextprotocol/server` is a separate distribution; pin and imports should follow the SDK you install.
+
+**`territory-compute-lib`** (`file:../compute-lib`) supplies **`isometric_world_to_grid`** and other **TECH-37**+ **pure** math. **`npm run verify`** runs **`npm run build`** in **`../compute-lib`** first so **`dist/`** exists (that folder is gitignored; **CI** builds it in **`ia-tools`** before **`mcp-ia-server`** **`npm ci`**).

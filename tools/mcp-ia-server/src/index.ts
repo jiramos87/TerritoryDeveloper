@@ -17,6 +17,7 @@ import { registerRuleContent } from "./tools/rule-content.js";
 import { registerBacklogIssue } from "./tools/backlog-issue.js";
 import { registerSpecSections } from "./tools/spec-sections.js";
 import { registerProjectSpecCloseoutDigest } from "./tools/project-spec-closeout-digest.js";
+import { registerIsometricWorldToGrid } from "./tools/isometric-world-to-grid.js";
 
 const server = new McpServer({
   name: "territory-ia",
@@ -39,6 +40,7 @@ registerRuleContent(server, registry);
 registerBacklogIssue(server);
 registerSpecSections(server, registry);
 registerProjectSpecCloseoutDigest(server);
+registerIsometricWorldToGrid(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

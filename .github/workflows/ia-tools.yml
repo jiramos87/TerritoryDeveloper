@@ -10,6 +10,7 @@ on:
       - "BACKLOG.md"
       - "ARCHITECTURE.md"
       - "tools/mcp-ia-server/**"
+      - "tools/compute-lib/**"
       - "tools/validate-dead-project-spec-paths.mjs"
       - ".github/workflows/ia-tools.yml"
       - "package.json"
@@ -22,6 +23,7 @@ on:
       - "BACKLOG.md"
       - "ARCHITECTURE.md"
       - "tools/mcp-ia-server/**"
+      - "tools/compute-lib/**"
       - "tools/validate-dead-project-spec-paths.mjs"
       - ".github/workflows/ia-tools.yml"
       - "package.json"
@@ -38,10 +40,15 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: tools/mcp-ia-server/package-lock.json
+          cache-dependency-path: |
+            tools/mcp-ia-server/package-lock.json
+            tools/compute-lib/package-lock.json
       - name: Dead project spec paths (TECH-50)
         working-directory: ${{ github.workspace }}
         run: node tools/validate-dead-project-spec-paths.mjs
+      - name: Build territory-compute-lib (TECH-37)
+        working-directory: tools/compute-lib
+        run: npm ci && npm run build
       - run: npm ci
       - run: npm test
       - run: npm run validate:fixtures
