@@ -72,7 +72,7 @@ Each row is a **single deliverable** or a **tightly coupled bundle**. Skip numbe
 | 28 | **Generate `gridmanager-regions.json`** from `#region` + optional MCP `gridmanager_region_map` | Script + MCP | Medium — **TECH-01** extraction | **TECH-34** (+ **TECH-18** for MCP) |
 | 29 | **MCP: `persistence_restore_checklist`** | MCP | Medium — **BUG-20** | **TECH-18** Phase |
 | 30 | **MCP: `economy_concepts`**, **`ui_input_patterns`** | MCP | Medium — economy/UI issue clusters | **TECH-18** Phase |
-| 31 | **JSON schema validation** for interchange fixtures (not **Save data** layout) | Script | Medium — **TECH-21** **Phase A** shipped | **TECH-40** (completed — [`BACKLOG.md`](../BACKLOG.md) **§ Completed**; [`docs/schemas/README.md`](../docs/schemas/README.md); umbrella [`.cursor/projects/TECH-21.md`](../.cursor/projects/TECH-21.md)) |
+| 31 | **JSON schema validation** for interchange fixtures (not **Save data** layout) | Script | Medium — **JSON program (TECH-21)** **Phase A** shipped | **TECH-40** (completed — [`BACKLOG.md`](../BACKLOG.md) **§ Completed**; [`docs/schemas/README.md`](../docs/schemas/README.md); **glossary** **JSON program (TECH-21)**) |
 | 32 | **MCP: `coding_conventions_slice`** | MCP | Lower–medium — prefab naming, SerializeField policy | **TECH-18** Phase |
 | 33 | **Public API list per manager** + XML doc presence report | Script | Lower–medium — **TECH-02** | **TECH-02** |
 | 34 | **Magic numbers extraction report** (thresholded literals) | Script | Lower — **TECH-03** planning | **TECH-03** |

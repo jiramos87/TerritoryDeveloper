@@ -126,7 +126,7 @@ Sample **invariants_summary** (abridged intent): sync height map and cell height
 ### 6.3 Backlog alignment
 
 - **TECH-18 / TECH-44b:** Longer-term **search and DB** for IA; complements Cursor Skills (procedures stay thin; facts stay queryable).
-- **TECH-21** program (**TECH-40**–**TECH-41** **§ Completed**, **TECH-44a** **§ Completed** — [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md)): Machine-readable indexes (**TECH-40**), validated DTOs (**TECH-41**), DB/API patterns in that doc — **reduces** need for agents to “remember” schema details if CI and docs enforce them. **TECH-44** (**umbrella § Completed** — [`BACKLOG.md`](../BACKLOG.md); **TECH-44b**/**c**; open **TECH-53**/**TECH-54**/**TECH-55**): Postgres + **E1** repro registry; **E2**/**E3** follow-ups (backlog-only rows).
+- **JSON program (TECH-21)** (**§ Completed** — [`BACKLOG.md`](../BACKLOG.md); **glossary**; **TECH-40**–**TECH-41** **§ Completed**, **TECH-44a** **§ Completed** — [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md)): Machine-readable indexes (**TECH-40**), validated DTOs (**TECH-41**), DB/API patterns in that doc — **reduces** need for agents to “remember” schema details if CI and docs enforce them. **TECH-44** (**umbrella § Completed** — [`BACKLOG.md`](../BACKLOG.md); **TECH-44b**/**c**; open **TECH-53**/**TECH-54**/**TECH-55**): Postgres + **E1** repro registry; **E2**/**E3** follow-ups (backlog-only rows).
 
 ---
 
@@ -145,7 +145,7 @@ Sample **invariants_summary** (abridged intent): sync height map and cell height
 - `AGENTS.md` — agent workflow, MCP-first retrieval, `.cursor/projects/` policy  
 - `docs/mcp-ia-server.md` — territory-ia tools and policy  
 - `docs/mcp-markdown-ia-pattern.md` — slice-based IA pattern  
-- `BACKLOG.md` — **TECH-17** (shipped MCP), **TECH-18**, **TECH-44** program (**umbrella § Completed**; **TECH-44a**/**b**/**c** **§ Completed**; open **TECH-55**/**TECH-53**/**TECH-54**), **TECH-21** program, **TECH-43**, **TECH-48** (MCP discovery from project specs)  
+- `BACKLOG.md` — **TECH-17** (shipped MCP), **TECH-18**, **TECH-44** program (**umbrella § Completed**; **TECH-44a**/**b**/**c** **§ Completed**; open **TECH-55**/**TECH-53**/**TECH-54**), **TECH-21** **§ Completed** (**JSON program**), **TECH-43**, **TECH-48** (MCP discovery from project specs)  
 - `.cursor/rules/invariants.mdc` — system invariants (also exposed via MCP `invariants_summary`)
 
 ---

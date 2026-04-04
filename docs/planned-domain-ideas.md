@@ -17,7 +17,7 @@
 
 **Reuse:** The same structured parameters should feed **geography initialization**, future **player** tools (**terraform**, **basin** carving, **elevations**), **forest** placement, **water bodies** in **depressions**, and **AUTO** modes that depend on map template data.
 
-**Technical alignment:** **TECH-21** program (**TECH-40**–**TECH-41** **§ Completed**, **TECH-44a** **§ Completed** — [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md); JSON schemas, **Geography initialization** params, **CI** validation), **TECH-44** (**umbrella § Completed** — [`BACKLOG.md`](../BACKLOG.md); **TECH-44b**/**c** — Postgres), **TECH-36** program (**TECH-37**–**TECH-39**) for shared **compute** and **MCP** surfaces; no spec change required until **FEAT-46** is scheduled for implementation.
+**Technical alignment:** **JSON program (TECH-21)** **§ Completed** (**TECH-40**–**TECH-41** **§ Completed**, **TECH-44a** **§ Completed** — [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md), **glossary**; JSON schemas, **Geography initialization** params, **CI** validation), **TECH-44** (**umbrella § Completed** — [`BACKLOG.md`](../BACKLOG.md); **TECH-44b**/**c** — Postgres), **TECH-36** program (**TECH-37**–**TECH-39**) for shared **compute** and **MCP** surfaces; no spec change required until **FEAT-46** is scheduled for implementation.
 
 ## 2. Multipolar growth, desirability poles, and connurbation (**FEAT-47**)
 
