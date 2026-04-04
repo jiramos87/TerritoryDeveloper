@@ -3,7 +3,7 @@
 > **Issue:** [TECH-16](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-02
-> **Last updated:** 2026-04-02
+> **Last updated:** 2026-04-04 (**TECH-39** **carryover:** **sim** **/** **AUTO** **top** **methods** **/** **`GridPathfinder`** **markers**)
 
 **Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — tasks **4**, **22**, **25**. **TECH-29** consumes stable phase **ids** from this work.
 
@@ -66,6 +66,7 @@ No change when harness is disabled.
 | Date | Decision | Rationale | Alternatives considered |
 |------|----------|-----------|------------------------|
 | 2026-04-02 | Phase ids must match simulation spec order | **TECH-29** drift detector | Ad-hoc names |
+| 2026-04-04 | **Former** **TECH-39** **§7.11.1** **sim** **slice** **merged** **here** | **Tick** **harness** **already** **owns** **`ProfilerMarker`** **names** **;** **extend** **with** **`GridPathfinder`** **/** **`GridManager`** **delegates** **when** **profiles** **justify** | **Single** **perf** **program** **for** **AUTO** **pipeline** |
 
 ## 7. Implementation Plan
 
@@ -78,6 +79,8 @@ No change when harness is disabled.
 
 - [ ] Wrap each step in `ProfilerMarker` or `AutoProfiler` pattern.
 - [ ] Document marker names in this spec and **TECH-29** manifest source.
+- [ ] (**TECH-39** **§ Completed** **relocation**) After harness JSON exists: summarize top methods under `SimulationManager` / `AutoRoadBuilder` / `AutoZoningManager` / `AutoResourcePlanner` / `UrbanCentroidService` (for comparison with **TECH-15** New Game profile).
+- [ ] (Optional) Add markers or sub-samples for `GridPathfinder` / `GridManager` road path entry points if deep profile shows them in top N during sim ticks (coordinate with **TECH-15** for regression story).
 
 ### Phase 3 — Optional invariant samples
 

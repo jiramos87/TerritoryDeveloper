@@ -92,7 +92,7 @@ gridX = round((posY + posX) / 2)
 gridY = round((posY - posX) / 2)
 ```
 
-> **Agent tooling:** The **territory-ia** MCP tool **`isometric_world_to_grid`** (implementation in **`tools/compute-lib`**, **glossary** **territory-compute-lib (TECH-37)**) applies the **inverse** formulas above to **planar** world coordinates only. It does **not** implement height-aware picking below.
+> **Agent tooling:** The **territory-ia** MCP tool **`isometric_world_to_grid`** (implementation in **`tools/compute-lib`**, **glossary** **territory-compute-lib**) applies the **inverse** formulas above to **planar** world coordinates only. It does **not** implement height-aware picking below.
 
 Height-aware picking tests a 3×3 candidate area, selecting the cell with the highest sorting order whose sprite bounds contain the cursor.
 
@@ -646,8 +646,8 @@ All persistent **street** or **interstate** placement must end with a **`PathTer
 
 **Plan construction** may use either:
 
-1. **`ComputePathPlan`** — default for filtered strokes (slope climb, cut-through, flatten neighbors as designed). Built inside `TryPrepareFromFilteredPathList` after bridge / FEAT-44 stroke checks on the filtered path.
-2. **`TryBuildDeckSpanOnlyWaterBridgePlan`** (code name) — for **manual** draw when a **locked lip→exit chord** is active over water/shore (FEAT-44). Produces a plan with **no height mutations** (`TerraformAction.None` on path cells), `waterBridgeTerraformRelaxation`, and `waterBridgeDeckDisplayHeight` from the same assignment rules as the full pipeline. Phase-1 then skips strict cliff/water edges when there are no mutations (see `PathTerraformPlan`). This avoids false failures when the player’s **full polyline** (e.g. tail, round-trip) would otherwise force cut-through or |Δh| checks unrelated to the bridge core.
+1. **`ComputePathPlan`** — default for filtered strokes (slope climb, cut-through, flatten neighbors as designed). Built inside `TryPrepareFromFilteredPathList` after bridge / **manual water-span deck** stroke checks on the filtered path.
+2. **`TryBuildDeckSpanOnlyWaterBridgePlan`** (code name) — for **manual** draw when a **locked lip→exit chord** is active over water/shore (**manual water-span deck**). Produces a plan with **no height mutations** (`TerraformAction.None` on path cells), `waterBridgeTerraformRelaxation`, and `waterBridgeDeckDisplayHeight` from the same assignment rules as the full pipeline. Phase-1 then skips strict cliff/water edges when there are no mutations (see `PathTerraformPlan`). This avoids false failures when the player’s **full polyline** (e.g. tail, round-trip) would otherwise force cut-through or |Δh| checks unrelated to the bridge core.
 
 Both paths converge on **`TryValidatePhase1Heights`**, **`Apply`**, and **`RoadPrefabResolver.ResolveForPath`**.
 
@@ -673,7 +673,7 @@ When no consecutive |Δh| > 1, ascending steps use `None` + `postTerraformSlopeT
 - Coastal terrain refresh uses terrain-only child destruction so bridge tiles survive.
 - **Locked chord (manual):** when the stroke qualifies, `RoadManager` fixes a **straight cardinal chord** from lip through wet cells to far dry land at matching bridge height; preview/commit prefer a **deck-span-only** plan for that merged path so the deck sits at **display height** above water/cliffs without requiring the wet run to pass **cut-through** `ComputePathPlan`. Tail segments still obey stroke rules (e.g. no turn on water); invalid tails may be dropped by prefix search when not using the locked plan.
 - **Programmatic chord (AUTO street segment):** `TryExtendCardinalStreetPathWithBridgeChord` appends the same `WalkStraightChordFromLipThroughWetToFarDry` span when the stroke ends on dry land and the next cardinal step is water or water-slope (shore), so planning sees the full crossing (high-deck first deck may sit on shore). `AutoRoadBuilder` then runs longest-prefix and programmatic deck-span; it **prefers** the deck-span result when the stroke contains wet/shore cells or it yields a longer expanded path, so a valid land-only prefix does not block the bridge. Curved A* connectors omit the extension (no fixed segment direction).
-- **Cliffs vs deck:** elevated deck placement is driven by **lip / land-before-wet** height and resolver rules; absence of dedicated “cliff bridge” terraform does not block the span if the plan carries no terrain mutations and FEAT-44 height checks pass.
+- **Cliffs vs deck:** elevated deck placement is driven by **lip / land-before-wet** height and resolver rules; absence of dedicated “cliff bridge” terraform does not block the span if the plan carries no terrain mutations and **manual water-span deck** height checks pass.
 
 ### 13.5 Interstate pathfinding
 
@@ -702,7 +702,7 @@ On **legal** land cells (§13.10), slope/corner plan outputs use travel-aligned 
 - Pass `postTerraformSlopeType` into refresh after cut-through.
 - Interstate vs slope sorting; border entry/exit prefabs.
 
-### 13.9 AUTO simulation: pathfinding walkability, reservations, perpendicular growth (BUG-47)
+### 13.9 AUTO simulation: pathfinding walkability, reservations, perpendicular growth
 
 These rules apply to **`AutoRoadBuilder`**, **`AutoZoningManager`**, and **`GridPathfinder`** / **`RoadCacheService`** during simulation ticks — not to manual street draw or generic `FindPath` used elsewhere.
 
@@ -712,9 +712,9 @@ These rules apply to **`AutoRoadBuilder`**, **`AutoZoningManager`**, and **`Grid
 4. **Zoning reservations:** **`GetRoadExtensionCells`** and **`GetRoadAxialCorridorCells`** define cells where **`AutoZoningManager` must not place zones**, preserving axial strips for future street alignment. Extension cells may include the same expanded land types as in (3) when classifying the cell beyond an edge.
 5. **Perpendicular vs parallel spacing:** When scoring a growth direction **perpendicular** to the dominant **street**/**interstate** axis at a **cell** edge, **`HasParallelRoadTooClose`** is called with **`excludeAlongDir`** set to that dominant axis so the parent **street** line is not mistaken for a separate parallel arterial.
 6. **Commit path:** Placing AUTO **streets** still uses the shared validation surface (§13.1) — **road validation pipeline**: `PathTerraformPlan`, `Apply`, prefab resolution — unchanged.
-7. **Junction prefabs after batch `PlaceRoadTileFromResolved`:** `AutoRoadBuilder` accumulates placed cells per tick and calls **`RoadManager.RefreshRoadPrefabsAfterBatchPlacement`** once (deduped set: each new tile plus cardinal road neighbors). Skips bridge deck cells so FEAT-44 deck height is preserved. Single-tile **`PlaceRoadTileAt`** still uses per-placement **`UpdateAdjacentRoadPrefabsAt`**.
+7. **Junction prefabs after batch `PlaceRoadTileFromResolved`:** `AutoRoadBuilder` accumulates placed cells per tick and calls **`RoadManager.RefreshRoadPrefabsAfterBatchPlacement`** once (deduped set: each new tile plus cardinal road neighbors). Skips bridge deck cells so **manual water-span deck** height is preserved. Single-tile **`PlaceRoadTileAt`** still uses per-placement **`UpdateAdjacentRoadPrefabsAt`**.
 
-### 13.10 Land slope eligibility for road strokes (BUG-51)
+### 13.10 Land slope eligibility for road strokes
 
 **Allowed land** for any road stroke (manual, AUTO, interstate): **`TerrainSlopeType.Flat`** and **cardinal ramps only** (`North`, `South`, `East`, `West`). Pure diagonals and all `*Up` corner types are **disallowed**.
 

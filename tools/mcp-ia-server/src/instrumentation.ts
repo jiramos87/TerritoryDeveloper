@@ -13,7 +13,9 @@ export async function runWithToolTiming<T>(
   try {
     return await fn();
   } finally {
-    const ms = performance.now() - t0;
-    console.error(`[territory-ia] ${toolName} ${ms.toFixed(1)}ms`);
+    if (process.env.DEBUG_MCP_COMPUTE === "1") {
+      const ms = performance.now() - t0;
+      console.error(`[territory-ia] ${toolName} ${ms.toFixed(1)}ms`);
+    }
   }
 }

@@ -38,7 +38,7 @@ export function registerBacklogIssue(server: McpServer): void {
     "backlog_issue",
     {
       description:
-        "Load a single issue from BACKLOG.md by id (open or § Completed (last 30 days); not BACKLOG-ARCHIVE.md): title, status, Files/Spec/Notes, depends_on_status for cited ids, raw block. Use first when starting work on BUG-XX/FEAT-XX/TECH-XX.",
+        "Load a single issue by id from BACKLOG.md (open rows) or BACKLOG-ARCHIVE.md (historical completions): title, status, Files/Spec/Notes, depends_on_status for cited ids, raw block. Use first when starting work on BUG-XX/FEAT-XX/TECH-XX.",
       inputSchema: inputShape,
     },
     async (args) =>
@@ -56,8 +56,8 @@ export function registerBacklogIssue(server: McpServer): void {
         if (!parsed) {
           return jsonResult({
             error: "unknown_issue",
-            message: `No issue '${issueId}' in BACKLOG.md (open or § Completed (last 30 days)). Check spelling, id format (e.g. BUG-37), or BACKLOG-ARCHIVE.md (§ Recent archive or Pre-2026-03-22) for older completions.`,
-            hint: "This tool does not load BACKLOG-ARCHIVE.md; ids moved there return unknown_issue.",
+            message: `No issue '${issueId}' in BACKLOG.md or BACKLOG-ARCHIVE.md. Check spelling, id format (e.g. BUG-37), or confirm the row exists in the archive.`,
+            hint: "backlog_issue searches BACKLOG.md first, then BACKLOG-ARCHIVE.md.",
           });
         }
 

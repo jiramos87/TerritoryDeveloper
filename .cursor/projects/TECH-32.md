@@ -3,7 +3,7 @@
 > **Issue:** [TECH-32](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-02
-> **Last updated:** 2026-04-02
+> **Last updated:** 2026-04-04 (**TECH-39** **§ Completed** **relocation** **→** **TECH-64**)
 
 **Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — task **24**. Coordinates with **FEAT-43** / **FEAT-36** tuning.
 
@@ -54,6 +54,7 @@ Default game unchanged.
 
 - Fork or instrument service behind `#if UNITY_EDITOR` or dedicated test assembly.
 - Run N ticks × M strategies; aggregate.
+- **TECH-39** **§ Completed** relocation: baseline **Play Mode** / snapshot evidence for **UrbanCentroidService** / **AUTO** vs a stored reference is owned by **[TECH-64](../../BACKLOG.md)**; this issue consumes those artifacts for drift / strategy metrics (trace **glossary** **Computational MCP tools (TECH-39)** + [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** **TECH-39** **Notes**).
 
 ## 6. Decision Log
 
@@ -66,6 +67,7 @@ Default game unchanged.
 - [ ] Define drift metric (e.g. Hamming distance on ring bucket per cell).
 - [ ] Implement comparison harness.
 - [ ] Document results path under `tools/reports/`.
+- [ ] (**TECH-64** dependency) When Play Mode UTF exists: import or reference parity snapshots from **TECH-64** for before/after strategy comparisons (optional gate).
 
 ## 8. Acceptance Criteria
 

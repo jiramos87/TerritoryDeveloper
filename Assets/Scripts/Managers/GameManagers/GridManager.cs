@@ -11,6 +11,7 @@ using Territory.Forests;
 using Territory.Buildings;
 using Territory.Roads;
 using Territory.Timing;
+using Territory.Utilities.Compute;
 
 namespace Territory.Core
 {
@@ -1062,13 +1063,8 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <returns>Grid coordinates as a Vector2 (x, y).</returns>
     public Vector2 GetGridPosition(Vector2 worldPoint)
     {
-        float posX = worldPoint.x / (tileWidth / 2);
-        float posY = worldPoint.y / (tileHeight / 2);
-
-        int gridX = Mathf.RoundToInt((posY + posX) / 2);
-        int gridY = Mathf.RoundToInt((posY - posX) / 2);
-
-        return new Vector2(gridX, gridY);
+        Vector2Int g = IsometricGridMath.WorldToGridPlanar(worldPoint, tileWidth, tileHeight);
+        return new Vector2(g.x, g.y);
     }
 
     /// <summary>
@@ -1389,12 +1385,7 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <returns>World-space position as a Vector2.</returns>
     public Vector2 GetWorldPositionVector(int gridX, int gridY, int height)
     {
-        float heightOffset = (height - 1) * (tileHeight / 2);
-
-        float posX = (gridX - gridY) * (tileWidth / 2);
-        float posY = (gridX + gridY) * (tileHeight / 2) + heightOffset;
-
-        return new Vector2(posX, posY);
+        return IsometricGridMath.GridToWorldPlanar(gridX, gridY, tileWidth, tileHeight, height);
     }
 
     private Vector2 GetWorldPositionVectorDown(int gridX, int gridY, int height)

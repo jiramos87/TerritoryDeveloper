@@ -15,7 +15,7 @@ alwaysApply: true
 8. Rivers: `H_bed` monotonically non-increasing toward exit
 9. Cliff visible faces: south + east only — N/W not instantiated
 10. Road placement: always through the **road preparation family** ending in `PathTerraformPlan` + Phase-1 + `Apply` — never `ComputePathPlan` alone
-11. `UrbanizationProposal`: NEVER re-enable — obsolete (TECH-13)
+11. `UrbanizationProposal`: NEVER re-enable — obsolete (see **glossary** **Urbanization proposal**)
 12. Specs under `.cursor/specs/` for permanent domains only; use `.cursor/projects/` for issue-specific specs
 
 # Guardrails (IF → THEN)

@@ -14,6 +14,7 @@
 8. [ScriptableObject](#8-scriptableobject)
 9. [Glossary alignment](#9-glossary-alignment)
 10. [Editor agent diagnostics (machine-readable exports)](#10-editor-agent-diagnostics-machine-readable-exports)
+11. [Unity Test Framework — Edit Mode compute parity](#11-unity-test-framework--edit-mode-compute-parity)
 
 ---
 
@@ -27,7 +28,7 @@
 
 **Out of scope here:** Full **Unity** manual text; authoritative **cell** geometry, **HeightMap**, **road preparation family**, water, cliffs, and **Sorting order** formulas — see [`isometric-geography-system.md`](isometric-geography-system.md) and linked specs.
 
-**Territory-ia and exports:** This file is registered as **`unity-development-context`** (aliases **`unity`**, **`unityctx`**) for **`spec_outline`** / **`spec_section`**. Roadmap items in [`BACKLOG.md`](../../BACKLOG.md) (verify status there): **[TECH-18](../../BACKLOG.md)** may evolve MCP toward a **`unity_context_section`**-style retrieval path over a database; **[TECH-26](../../BACKLOG.md)** plans mechanical repo checks (e.g. **`FindObjectOfType`** in **`Update`**). **Editor** JSON/Markdown exports shipped under **[TECH-28](../../BACKLOG.md)** (completed — see [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md)); **expected menus, prerequisites, and outputs** are defined in **§10** below. Treat output paths and tool names for other issues as **planned** until the corresponding backlog item is completed. If menus or **Sorting** export fail in practice, track **[BUG-53](../../BACKLOG.md)**.
+**Territory-ia and exports:** This file is registered as **`unity-development-context`** (aliases **`unity`**, **`unityctx`**) for **`spec_outline`** / **`spec_section`**. **Open** roadmap items (DB-backed MCP slices, mechanical repo checks, **Editor** export follow-ups) live in [`BACKLOG.md`](../../BACKLOG.md) — verify status there, not in this spec. **Shipped** **Editor** JSON/Markdown exports are summarized in [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md); **expected menus, prerequisites, and outputs** are defined in **§10** below. Treat output paths and tool names for in-flight work as **planned** until the corresponding **BACKLOG** row ships. If menus or **Sorting** export fail in practice, file or update the relevant **open** row in [`BACKLOG.md`](../../BACKLOG.md).
 
 ---
 
@@ -94,7 +95,7 @@ Managers and controllers are **scene** `MonoBehaviour` components; they are **no
 
 **Geography and New Game:** **`GeographyManager`** coordinates **terrain**, **water**, **forests**, and related **geography initialization** from **`Start`** ( **`initializeOnStart`**, **`FindObjectOfType`** fallbacks for unassigned refs) ([`GeographyManager.cs`](../../Assets/Scripts/Managers/GameManagers/GeographyManager.cs)). It is the stable high-level entry for **New Game** map build wiring in scenes that include it; detailed phase order and save/load distinctions live in [`isometric-geography-system.md`](isometric-geography-system.md), [`water-terrain-system.md`](water-terrain-system.md), and [`simulation-system.md`](simulation-system.md) — do not invent call order here.
 
-**Initialization races:** If **Manager A** needs **Manager B** in its `Awake`, ensure **B** runs first (execution order), move resolution to `Start`, or use explicit init methods called from a known coordinator. **[BUG-16](../../BACKLOG.md)** tracks **geography initialization** vs **`TimeManager`** ordering suspicion — see that issue for context, not for redefining gameplay rules here.
+**Initialization races:** If **Manager A** needs **Manager B** in its `Awake`, ensure **B** runs first (execution order), move resolution to `Start`, or use explicit init methods called from a known coordinator. Any **geography initialization** vs **`TimeManager`** ordering investigation is tracked on [`BACKLOG.md`](../../BACKLOG.md) — use that for context, not for redefining gameplay rules here.
 
 **Prefer** deterministic setup: **Inspector** wires first; `FindObjectOfType` fallback second; avoid lazy resolution in hot paths. `GameDebugInfoBuilder` re-calls `ResolveRefsIfNeeded()` before building strings so late-instantiated scenes still work — that pattern is for **debug** utilities, not per-frame gameplay.
 
@@ -143,10 +144,11 @@ For **Unity**-only vocabulary (**MonoBehaviour**, **Inspector**, **SerializeFiel
 | Sorting debug | `tools/reports/sorting-debug-{UTC-timestamp}.md` | Per-**cell** lines derived from **`TerrainManager`** public sorting APIs and sampled **`SpriteRenderer.sortingOrder`**; narrative ties to [`isometric-geography-system.md`](isometric-geography-system.md) **Sorting order** (do not duplicate formula authority here) |
 | Cell chunk interchange | `tools/reports/cell-chunk-interchange-{UTC-timestamp}.json` | **Play Mode**; **`artifact`**: `terrain_cell_chunk` — **Cell** subset + heights ( **`HeightMap`** when available); [`cell-chunk-interchange.v1.schema.json`](../../docs/schemas/cell-chunk-interchange.v1.schema.json) |
 | World snapshot dev | `tools/reports/world-snapshot-dev-{UTC-timestamp}.json` | **Play Mode**; **`artifact`**: `world_snapshot_dev` — **Water map** body-id histogram + optional **HeightMap** raster; not Save data ([`world-snapshot-dev.v1.schema.json`](../../docs/schemas/world-snapshot-dev.v1.schema.json)) |
+| Geography init report (dev) | `tools/reports/last-geography-init.json` (stable filename; gitignored) | **Play Mode** after **Geography initialization**; **`artifact`**: `geography_init_report` — master seed, effective toggles, optional string **`interchange_snapshot_json`** when **`geography_init_params`** loaded; **`npm run validate:geography-init-report`**; **glossary** **Computational MCP tools** |
 
 When **Postgres** is configured (see below), **Reports** exports are stored **in the database** first (**full body** in **`document jsonb`** — glossary **Editor export registry**); **no** under-`tools/reports/` file is written on success. If **Postgres** is unavailable or the insert fails, the Editor writes `*.json` / `*.md` under `tools/reports/` as a fallback — those files are **gitignored**; the folder may contain **`.gitkeep`** only in VCS. Agents should reference on-disk exports with workspace paths (e.g. `@tools/reports/agent-context-….json`) when files exist.
 
-**Postgres registry (dev):** (1) **Bundle** row linking **Agent context** + optional **Sorting debug** paths: **`dev_repro_bundle`** via **`register-dev-repro.mjs`** / **`npm run db:register-repro`** — [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) (**Dev repro bundle registry**); glossary **Dev repro bundle**. (2) **Per-export** rows: tables `editor_export_*` (migrations **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.sql`**), **`register-editor-export.mjs`** with **`--document-file`**, **`EditorPostgresExportRegistrar.TryPersistReport`** — [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) (**Editor export registry**); glossary **Editor export registry**. **`DATABASE_URL`**: process env, **EditorPrefs**, or repo **`.env.local`**. Optional **`node`** path in **EditorPrefs** / **`NODE_BINARY`** when **Unity**’s **PATH** omits **Volta**/**nvm**. Apply **`npm run db:migrate`** before expecting **`editor_export_*`** tables. Optional **`backlog_issue_id`** in **EditorPrefs**. Shipped **TECH-55** + **TECH-55b** (completed — [`BACKLOG.md`](../../BACKLOG.md) **§ Completed**); **MCP** staging follow-up **TECH-59** (open).
+**Postgres registry (dev):** (1) **Bundle** row linking **Agent context** + optional **Sorting debug** paths: **`dev_repro_bundle`** via **`register-dev-repro.mjs`** / **`npm run db:register-repro`** — [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) (**Dev repro bundle registry**); glossary **Dev repro bundle**. (2) **Per-export** rows: tables `editor_export_*` (migrations **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.sql`**), **`register-editor-export.mjs`** with **`--document-file`**, **`EditorPostgresExportRegistrar.TryPersistReport`** — [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) (**Editor export registry**); glossary **Editor export registry**. **`DATABASE_URL`**: process env, **EditorPrefs**, or repo **`.env.local`**. Optional **`node`** path in **EditorPrefs** / **`NODE_BINARY`** when **Unity**’s **PATH** omits **Volta**/**nvm**. Apply **`npm run db:migrate`** before expecting **`editor_export_*`** tables. Optional **`backlog_issue_id`** in **EditorPrefs**. **Charter trace** for shipped registry work: [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md); **MCP** staging follow-ups: [`BACKLOG.md`](../../BACKLOG.md).
 
 **Expected Unity Editor behavior:**
 
@@ -155,6 +157,7 @@ When **Postgres** is configured (see below), **Reports** exports are stored **in
    - **Export Sorting Debug (Markdown)**
    - **Export Cell Chunk (Interchange)** — [`InterchangeJsonReportsMenu.cs`](../../Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs); **Play Mode** only
    - **Export World Snapshot (Dev Interchange)** — same; **Play Mode** only
+   - **Export Geography Init Report (last-geography-init.json)** — [`GeographyInitReportMenu.cs`](../../Assets/Scripts/Editor/GeographyInitReportMenu.cs); **Play Mode** only
 2. **When menus appear:** After the project compiles successfully, **Unity** discovers `[MenuItem]` on `AgentDiagnosticsReportsMenu` ([`AgentDiagnosticsReportsMenu.cs`](../../Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs)) and `InterchangeJsonReportsMenu`. If the submenu is missing, check **Console** for script compile errors in **Editor** scripts.
 3. **Export Agent Context (JSON):** Must run in **Edit Mode** or **Play Mode** without throwing. If **`GridManager`** is absent or **`isInitialized`** is false, the JSON still validates; the `grid` block documents that state and may omit **cell** samples.
 4. **Export Sorting Debug (Markdown):**
@@ -162,4 +165,21 @@ When **Postgres** is configured (see below), **Reports** exports are stored **in
    - **Play Mode:** Requires an initialized **`GridManager`** (`isInitialized`), a non-null **`TerrainManager`**, and valid **`GetCell`** data for sampled coordinates. Output lists **`TerrainManager`** constants (`TERRAIN_BASE_ORDER`, `DEPTH_MULTIPLIER`, `HEIGHT_MULTIPLIER`), per-**cell** computed orders, and a capped list of **`SpriteRenderer`** `sortingOrder` values on the **cell** `GameObject` tree.
 5. **Grid reads:** Diagnostics code must use **`GridManager.GetCell(x, y)`** only for **cell** access — no new direct **`gridArray`** / **`cellArray`** use outside **`GridManager`** ([`.cursor/rules/invariants.mdc`](../rules/invariants.mdc)).
 
-**Active issue:** **[BUG-53](../../BACKLOG.md)** tracks reports that menus do not appear or that **Sorting** export does not match the expectations above.
+**Verification:** If menus do not appear or **Sorting** export does not match the expectations above, use [`BACKLOG.md`](../../BACKLOG.md) for the active bug row and attach **Console** output plus an **Agent context** / **Sorting debug** export when filing details.
+
+---
+
+## 11. Unity Test Framework — Edit Mode compute parity
+
+**Purpose:** **Pure** **C#** **computational** helpers under **`Assets/Scripts/Utilities/Compute/`** are covered by **Unity Test Framework** **Edit Mode** tests without loading **Play Mode** scenes.
+
+**Layout:**
+
+| Item | Path / note |
+|------|-------------|
+| **Game** **asmdef** | **`TerritoryDeveloper.Game.asmdef`** under **`Assets/Scripts/`** — references **`Assembly-CSharp`** so **Utilities/Compute** types compile in a named assembly |
+| **Edit Mode** **tests** | **`Assets/Tests/EditMode/`** — **`TerritoryDeveloper.EditModeTests.asmdef`** references **`TerritoryDeveloper.Game`** |
+| **Golden** **parity** | **`ComputeLibParityTests`** loads **`tools/compute-lib/test/fixtures/world-to-grid.json`** — same vectors as **`tools/compute-lib`** **Node** tests (**glossary** **territory-compute-lib**) |
+| **Committed** **reports** | **`tools/reports/compute-utilities-inventory.md`**, **`tools/reports/compute-utilities-rng-derivation.md`** (expanded **2026-04-04**; **Editor** **geography** **export** **gitignored** under **`tools/reports/*.json`**) — exceptions in **`.gitignore`** |
+
+**Scope note:** **C# compute utilities** include **`IsometricGridMath`**, **`UrbanGrowthRingMath`**, **`GridDistanceMath`**, **`PathfindingCostKernel`**, **Editor** **`last-geography-init.json`** (**`geography_init_report`**), **RNG** doc, **sampler** UTF — **glossary** **C# compute utilities**, **Computational MCP tools**; open follow-ups on [`BACKLOG.md`](../../BACKLOG.md) **§ Compute-lib program**.

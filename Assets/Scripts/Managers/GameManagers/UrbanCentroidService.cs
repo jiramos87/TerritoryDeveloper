@@ -50,6 +50,12 @@ public class UrbanCentroidService : MonoBehaviour
         return urbanMetrics.GetCentroid();
     }
 
+    /// <summary>Discrete pole for multipolar / connurbation experiments (FEAT-47); does not change ring math by itself.</summary>
+    public UrbanCentroidPole GetUrbanCentroidPole(float weight = 1f)
+    {
+        return UrbanCentroidPole.FromContinuous(GetCentroid(), weight);
+    }
+
     /// <summary>Effective urban radius for ring classification.</summary>
     public float GetUrbanRadius()
     {

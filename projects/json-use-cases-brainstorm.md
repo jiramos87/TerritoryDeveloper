@@ -6,7 +6,7 @@
 
 **Program specs:** **TECH-40** (infra — completed; [`BACKLOG.md`](../BACKLOG.md) **§ Completed**), **TECH-41** (current payloads — completed; same section), **TECH-44a** (patterns — completed; [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md)), **TECH-44** umbrella (completed — same **§ Completed** section; **TECH-44b**/**c** Postgres milestones). Durable pointers: [`docs/schemas/README.md`](../docs/schemas/README.md), **glossary** **Interchange JSON** / **geography_init_params** / **Postgres interchange patterns (B1, B3, P5)**, [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 
-**Related:** **[TECH-36](../.cursor/projects/TECH-36.md)** program (**TECH-37**–**TECH-39** shares **GeographyInitParams** / **Zod** with MCP); [TECH-38](../.cursor/projects/TECH-38.md) Wave D (geography harness JSON); [TECH-39](../.cursor/projects/TECH-39.md) `geography_init_params_validate`; [`docs/planned-domain-ideas.md`](../docs/planned-domain-ideas.md) (**FEAT-46**–**FEAT-48**); [agent-friendly-tasks-with-territory-ia-context.md](agent-friendly-tasks-with-territory-ia-context.md) (**I1** reduces multi-`spec_section` churn).
+**Related:** **glossary** **[Compute-lib program](../.cursor/specs/glossary.md)** (**TECH-37** archived, **TECH-39** computational **MCP** suite archived — **GeographyInitParams** / **Zod** with MCP; charter — [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md)); **TECH-38** + **glossary** **Computational MCP tools (TECH-39)** ([`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) **TECH-39**) — geography harness JSON + **`geography_init_params_validate`**; [`docs/planned-domain-ideas.md`](../docs/planned-domain-ideas.md) (**FEAT-46**–**FEAT-48**); [agent-friendly-tasks-with-territory-ia-context.md](agent-friendly-tasks-with-territory-ia-context.md) (**I1** reduces multi-`spec_section` churn).
 
 ---
 
@@ -82,7 +82,7 @@
 **Shape (truncated):**  
 `{ "artifact": "geography_init_params", "schema_version": 1, "seed": 42, "map": { "width": 128, "height": 128 }, "water": { "seaBias": 0.2 }, "rivers": { "enabled": true }, "forest": { "coverageTarget": 0.15 } }`
 
-**Integration:** Loaded **once** at **Geography initialization** (**P1**). **TECH-39** `geography_init_params_validate` and **TECH-37** **Zod** must accept the same shape. **TECH-38** RNG derivation doc lists how **seed** fans out to **procedural** **rivers** and **depression-fill**.
+**Integration:** Loaded **once** at **Geography initialization** (**P1**). **`geography_init_params_validate`** (**glossary** **Computational MCP tools (TECH-39)**) and **TECH-37** **Zod** must accept the same shape. **TECH-38** RNG derivation doc lists how **seed** fans out to **procedural** **rivers** and **depression-fill**.
 
 ---
 
@@ -210,6 +210,6 @@ Row: `(id, save_slot, schema_version, updated_at, payload jsonb)` where `payload
 
 ## Open discussion points
 
-- **G1** default **bounds** and whether **MCP** may request **batchmode** **snapshot** export (**TECH-39** / **TECH-28**).  
+- **G1** default **bounds** and whether **MCP** may request **batchmode** **snapshot** export (**TECH-66** / **TECH-28**).  
 - **I1**/**I2**: committed snapshots vs **CI**-only artifacts.  
 - **English-only** keys in interchange JSON vs localized **display** strings in separate columns/files.

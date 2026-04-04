@@ -11,7 +11,7 @@ Temporary specs for an active **BACKLOG** item live here as `{ISSUE_ID}.md` (e.g
 
 ## Umbrella program specs (multi-issue)
 
-Some **BACKLOG** programs use a **parent** project spec plus **child** specs (e.g. **TECH-60** **§ Completed** with **TECH-61**–**TECH-63** — **glossary** **territory-ia spec-pipeline program (TECH-60)**; [`BACKLOG.md`](../../BACKLOG.md) **§ Completed**). Each child links to the parent in its header (**Parent program**). Unless the charter says otherwise, each file follows the **section order** below. **Acceptance** for the program may require every child spec **Completed** before closing the umbrella.
+Some **BACKLOG** programs use a **parent** project spec plus **child** specs (e.g. **TECH-60** **§ Completed** with **TECH-61**–**TECH-63** — **glossary** **territory-ia spec-pipeline program (TECH-60)**; [`BACKLOG.md`](../../BACKLOG.md) **§ Completed**). Each child links to the parent in its header (**Parent program**). Unless the charter says otherwise, each file follows the **section order** below. **Acceptance** for closing the **umbrella** **project spec** depends on the **BACKLOG** row: some programs require every child **Completed** first; others retire the **umbrella** from open **BACKLOG** while **follow-ups** remain (see **glossary** **Compute-lib program** + [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) vs [`BACKLOG.md`](../../BACKLOG.md) **§ Compute-lib program**).
 
 ## Required front matter
 
@@ -62,38 +62,38 @@ Some **BACKLOG** programs use a **parent** project spec plus **child** specs (e.
 
 ### Closeout checklist (before deleting `{ISSUE_ID}.md`)
 
-After the owner **confirms** verification (**AGENTS.md** — do not mark **Completed** in **BACKLOG** until then):
+After the owner **confirms** verification (**AGENTS.md**):
 
 1. **Migrate** normative content: **Lessons Learned**, **Decision Log** items, and any rules that belong in [reference specs](../specs/) (see [glossary](../specs/glossary.md)), [`.cursor/rules/`](../rules/), `docs/`, `ARCHITECTURE.md` — not in the deleted file.
-2. **Cascade links:** Search durable docs (`.cursor/skills/`, `.cursor/rules/`, `docs/`, `projects/`, `AGENTS.md`, `ARCHITECTURE.md`, etc.) for markdown links, backticks, or plain paths to `.cursor/projects/{ISSUE_ID}.md` and replace them with **`BACKLOG.md`** / **`BACKLOG-ARCHIVE.md`** references by **issue id** (and section anchor if useful). Do not leave pointers to a removed path.
+2. **Cascade links:** Search durable docs (`.cursor/skills/`, `.cursor/rules/`, `docs/`, `projects/`, `AGENTS.md`, `ARCHITECTURE.md`, etc.) for markdown links, backticks, or plain paths to `.cursor/projects/{ISSUE_ID}.md` and replace them with **`BACKLOG.md`** / **`BACKLOG-ARCHIVE.md`** references (and section anchor if useful). Do not leave pointers to a removed path.
 3. **Umbrella / sibling specs:** Update remaining `.cursor/projects/*.md` that depended on this issue (**Depends on**, **Implementation Plan**, **Acceptance**) so they do not describe the closed work as pending.
-4. **BACKLOG row:** When moving the issue to **Completed**, adjust the **`Spec:`** line to a **removed-after-closure** pattern (see completed rows in **`BACKLOG.md`**) instead of a live `.cursor/projects/…` path.
-5. **Verify:** Run `npm run validate:dead-project-specs` from the repo root (or `node tools/validate-dead-project-spec-paths.mjs`) so CI and agents catch any missed stale path. The **`project-spec-close`** Cursor skill ([`.cursor/skills/project-spec-close/SKILL.md`](../skills/project-spec-close/SKILL.md)) orchestrates the full closeout sequence (**TECH-51** completed — see [`BACKLOG.md`](../../BACKLOG.md) **§ Completed**). **Closeout helpers (**TECH-58** **§ Completed**):** territory-ia **`project_spec_closeout_digest`**, **`spec_sections`**, and root **`npm run closeout:*`** — see [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) **Project spec workflows**.
+4. **BACKLOG + archive:** **Remove** the row from **`BACKLOG.md`**. **Append** **`[x]`** to **`BACKLOG-ARCHIVE.md`** with **`Spec:`** → **removed-after-closure** pattern. **Strip** the closed issue id from **glossary**, **reference specs**, **rules**, **skills**, `docs/`, `projects/`, and code comments ([**terminology-consistency**](../rules/terminology-consistency.mdc), **`project-spec-close`** skill).
+5. **Verify:** Run `npm run validate:dead-project-specs` from the repo root (or `node tools/validate-dead-project-spec-paths.mjs`) so CI and agents catch any missed stale path. The **`project-spec-close`** Cursor skill ([`.cursor/skills/project-spec-close/SKILL.md`](../skills/project-spec-close/SKILL.md)) orchestrates the full sequence. **Closeout helpers:** territory-ia **`project_spec_closeout_digest`**, **`spec_sections`**, and root **`npm run closeout:*`** — see [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) **Project spec workflows**.
 
-### Lessons learned (**TECH-50** closure, 2026-04-03)
+### Lessons learned (dead project-spec path scanner, 2026-04-03)
 
 - **`BACKLOG.md`:** The repo scanner checks **open** top-level issue rows and **only** lines where the entire **`Spec:`** value is a single backtick-wrapped `.cursor/projects/{ISSUE_ID}.md` path. **Notes** prose may mention future or placeholder paths without failing CI.
 - **`BACKLOG-ARCHIVE.md`** is **not** scanned — completed history may still mention removed spec paths.
 - **Advisory mode:** `node tools/validate-dead-project-spec-paths.mjs --advisory` or `CI_DEAD_SPEC_ADVISORY=1` prints hits but exits 0.
 - **Authoring:** Do not put a resolvable `.cursor/projects/*.md` string in durable markdown unless that file exists, or the validator will flag it.
-- **Follow-up:** Optional **territory-ia** MCP wrapper and shared **Node** helpers with **TECH-30** remain separate backlog / implementation work (**TECH-50** shipped script + CI + docs only).
+- **Follow-up:** Optional **territory-ia** MCP wrapper and shared **Node** helpers remain separate **BACKLOG** work; the scanner shipped as script + **CI** + docs only.
 
-### Lessons learned (**TECH-51** closure, 2026-04-03)
+### Lessons learned (project-spec-close ordering, 2026-04-03)
 
-- **Ordering:** Closeout must follow **persist IA → delete project spec → `validate:dead-project-specs` → BACKLOG Completed** (user-confirmed). The **`project-spec-close`** skill encodes this; skipping **persist** first orphans definitions and breaks agent paths.
-- **Scanner scope:** **`project-spec-close`** invokes **`npm run validate:dead-project-specs`** only — no second **Node** scanner in the skill; new stale-reference classes belong in **TECH-50** / **TECH-30** or a new **BACKLOG** row.
-- **MCP:** Composite **closeout_preflight** (or similar) remains **deferred** — **TECH-48** / follow-up may subsume; **v1** is **territory-ia** **Tool recipe** + file edits only.
+- **Ordering:** Closeout must follow **persist IA → delete project spec → `validate:dead-project-specs` → remove BACKLOG row → append archive → id purge** (user-confirmed). The **`project-spec-close`** skill encodes this; skipping **persist** first orphans definitions and breaks agent paths.
+- **Scanner scope:** **`project-spec-close`** invokes **`npm run validate:dead-project-specs`** only — no second **Node** scanner in the skill; new stale-reference classes belong on **BACKLOG** or extend the existing validator.
+- **MCP:** Composite **closeout_preflight** (or similar) remains **deferred**; **v1** is **territory-ia** **Tool recipe** + file edits only.
 
-### Lessons learned (**TECH-58** closure, 2026-04-03)
+### Lessons learned (closeout helpers + digest, 2026-04-03)
 
 - **Shipped helpers:** **`project_spec_closeout_digest`** (structured extract from `.cursor/projects/{ISSUE_ID}.md`), **`spec_sections`** (batch **`spec_section`**), root **`npm run closeout:worksheet`** / **`closeout:dependents`** / **`closeout:verify`**. Documented in [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) and **`.cursor/skills/project-spec-close/SKILL.md`** (**Efficiency**).
-- **Shared parser:** `tools/mcp-ia-server/src/parser/project-spec-closeout-parse.ts` — intended for reuse when **TECH-48** ships path-based discovery; avoid duplicating competing MCP wrappers.
-- **Ordering:** Closeout sequence (**persist IA → delete project spec → `validate:dead-project-specs` → BACKLOG Completed**) unchanged from **TECH-51**.
-- **Ownership:** **TECH-50** remains the **dead project-spec path** scanner; **TECH-30** remains **BACKLOG** id validation inside project specs — **TECH-58** does not replace them.
+- **Shared parser:** `tools/mcp-ia-server/src/parser/project-spec-closeout-parse.ts` — intended for reuse when path-based discovery ships; avoid duplicating competing MCP wrappers.
+- **Ordering:** Closeout sequence (**persist IA → delete project spec → `validate:dead-project-specs` → archive + id purge**) unchanged from the **`project-spec-close`** skill baseline.
+- **Ownership:** The dead project-spec path scanner and **BACKLOG** id validation inside project specs remain separate **BACKLOG** concerns — closeout helpers do not replace them.
 
-### Lessons learned (**TECH-52** closure, 2026-04-03)
+### Lessons learned (project-implementation-validation CI parity, 2026-04-03)
 
 - **CI parity:** The **`project-implementation-validation`** manifest mirrors the **IA tools** **Node** job (dead **project spec** paths → **MCP** **`npm test`** → **`validate:fixtures`** → **`generate:ia-indexes --check`**), plus an **advisory** **`npm run verify`** row under **`tools/mcp-ia-server`** — update the skill when **CI** adds required steps.
 - **Skip matrix:** Pure **Unity** / **C#** diffs may skip the **Node** manifest; **MCP** / **schema** / **glossary** or **reference spec** bodies that feed indexes should run the full subset.
-- **Aggregate script:** Root **`npm run validate:implementation`** (or similar) remains a **separate** **BACKLOG** decision — not shipped with **TECH-52**.
+- **Aggregate script:** Root **`npm run validate:implementation`** (or similar) remains a **separate** **BACKLOG** decision.
 - **Glossary:** **project-implementation-validation** is documented next to **project-spec-close** under **Documentation** for agent searchability.

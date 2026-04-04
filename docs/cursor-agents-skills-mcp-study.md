@@ -1,7 +1,7 @@
 # Study: Cursor agents, session persistence, Skills, MCP, and Territory Developer
 
 **Audience:** Maintainers deciding how much to rely on the IDE versus repo-owned IA (Information Architecture).  
-**Sources:** Cursor product behavior (public docs + host conventions), this repo’s `AGENTS.md`, `docs/mcp-ia-server.md`, `docs/mcp-markdown-ia-pattern.md`, `BACKLOG.md` (e.g. **TECH-17** / **TECH-18** / **TECH-44b**), and **territory-ia** MCP tool outputs sampled during this write-up (`backlog_issue`, `spec_outline`, `invariants_summary`, `glossary_discover`, `router_for_task`).
+**Sources:** Cursor product behavior (public docs + host conventions), this repo’s `AGENTS.md`, `docs/mcp-ia-server.md`, `docs/mcp-markdown-ia-pattern.md`, `BACKLOG.md` / `BACKLOG-ARCHIVE.md`, and **territory-ia** MCP tool outputs sampled during this write-up (`backlog_issue`, `spec_outline`, `invariants_summary`, `glossary_discover`, `router_for_task`).
 
 ---
 
@@ -10,7 +10,7 @@
 | Question | Short answer |
 |----------|----------------|
 | Does Cursor persist “agent sessions”? | **Partially.** Conversation threads and UI history persist in the product; **durable, repo-owned “memory”** of decisions and domain state is **not** a substitute for specs, rules, backlog, and tools like **territory-ia**. |
-| Should we implement persistence in development? | **Yes, at the information layer** (Markdown + MCP + Git), which this repo already does. **Optional:** third-party “memory” MCPs or future DB-backed IA (**TECH-44b** / **TECH-18**) for richer retrieval—not for replacing specs. |
+| Should we implement persistence in development? | **Yes, at the information layer** (Markdown + MCP + Git), which this repo already does. **Optional:** third-party “memory” MCPs or future DB-backed IA (see [`BACKLOG.md`](../BACKLOG.md), [`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md)) for richer retrieval—not for replacing specs. |
 | Are Skills the same as agentic state? | **No.** **Skills** are **static, versioned instructions** the host may attach when relevant. **Agentic state** is **transient context** (thread, tool results, approvals). They complement each other. |
 | Skills + existing MCP? | **Layered:** MCP = **pull structured facts** on demand; Skills = **how to behave** on recurring workflows. Avoid duplicating glossary/spec text inside Skills—point to MCP and `AGENTS.md` instead. |
 | Specialist agents? | **Sometimes.** Narrow sub-tasks can **reduce** tokens if the parent passes a tight brief; **fan-out** and summarization can **increase** cost. **territory-ia** already targets token efficiency via **slices**. |
@@ -59,7 +59,7 @@ Consider an external memory MCP or DB only if you need **user-specific** or **hi
 | **Specs / glossary** | Canonical definitions | `.cursor/specs/glossary.md`, `isometric-geography-system.md` |
 | **Rules** | Always-on guardrails | `.cursor/rules/invariants.mdc`, `agent-router.mdc` |
 | **MCP (territory-ia)** | **On-demand slices** | `spec_section`, `glossary_lookup`, `backlog_issue`, `invariants_summary` |
-| **Skills** | **Process** and **orchestration** | “Starting a TECH issue: call `backlog_issue`, then `router_for_task`, then implement; never paste full geo spec.” |
+| **Skills** | **Process** and **orchestration** | “Starting a **BACKLOG** tech row: call `backlog_issue`, then `router_for_task`, then implement; never paste full geo spec.” |
 
 ### 4.2 Anti-patterns
 
@@ -70,17 +70,17 @@ Consider an external memory MCP or DB only if you need **user-specific** or **hi
 
 1. Add **project Skills** under `.cursor/skills/` (or team convention) for **non-domain** workflows: MCP verify, issue kickoff, PR checklist.
 2. Keep **English** in Skill bodies aligned with **glossary** terms when touching domain language (same rule as MCP `glossary_*` tools).
-3. Reference **TECH-18** / **TECH-44b** roadmap: future **DB-backed** IA changes *implementation* of tools, not the **split** “facts in IA / procedures in Skills.”
+3. Reference **open** [`BACKLOG.md`](../BACKLOG.md) rows for **DB-backed** IA: future work changes *implementation* of tools, not the **split** “facts in IA / procedures in Skills.”
 
 ### 4.4 Shipped repo skills (Part 1 + kickoff + implement + validation + close)
 
 - **Index:** [`.cursor/skills/README.md`](../.cursor/skills/README.md) — naming rules, thin-skill policy, **`glossary_discover`** array requirement.
-- **Kickoff skill:** [`.cursor/skills/project-spec-kickoff/SKILL.md`](../.cursor/skills/project-spec-kickoff/SKILL.md) — **numbered** **territory-ia** tool recipe for `.cursor/projects/*.md` review *(shipped — see `BACKLOG.md` § Completed)*.
-- **Implement skill:** [`.cursor/skills/project-spec-implement/SKILL.md`](../.cursor/skills/project-spec-implement/SKILL.md) — **per-phase** **territory-ia** recipe to execute a project spec’s **Implementation Plan** after the spec is ready *(shipped — see `BACKLOG.md` § Completed for **TECH-49**)*.
-- **Validation skill:** [`.cursor/skills/project-implementation-validation/SKILL.md`](../.cursor/skills/project-implementation-validation/SKILL.md) — ordered **`npm`** checks (**dead project spec** paths, **MCP** tests, **fixtures**, **IA index** `--check`, optional **`verify`**) aligned with **IA tools** **CI**; use after **MCP** / **schema** / index-source edits (**TECH-52** completed 2026-04-03 — `BACKLOG.md` **§ Completed**).
-- **Close skill:** [`.cursor/skills/project-spec-close/SKILL.md`](../.cursor/skills/project-spec-close/SKILL.md) — **persist IA first** (glossary, reference specs, **`ARCHITECTURE.md`**, rules, **`docs/`**, MCP docs if needed), **then** delete `.cursor/projects/{ISSUE_ID}.md`, run **`npm run validate:dead-project-specs`**, **then** **BACKLOG** **Completed** after user confirmation. **TECH-51** (completed 2026-04-03) shipped this skill; ordering avoids orphaned definitions and dead links to removed specs.
+- **Kickoff skill:** [`.cursor/skills/project-spec-kickoff/SKILL.md`](../.cursor/skills/project-spec-kickoff/SKILL.md) — **numbered** **territory-ia** tool recipe for `.cursor/projects/*.md` review *(shipped — trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md))*.
+- **Implement skill:** [`.cursor/skills/project-spec-implement/SKILL.md`](../.cursor/skills/project-spec-implement/SKILL.md) — **per-phase** **territory-ia** recipe to execute a project spec’s **Implementation Plan** after the spec is ready *(shipped — trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md))*.
+- **Validation skill:** [`.cursor/skills/project-implementation-validation/SKILL.md`](../.cursor/skills/project-implementation-validation/SKILL.md) — ordered **`npm`** checks (**dead project spec** paths, **MCP** tests, **fixtures**, **IA index** `--check`, optional **`verify`**) aligned with **IA tools** **CI**; use after **MCP** / **schema** / index-source edits.
+- **Close skill:** [`.cursor/skills/project-spec-close/SKILL.md`](../.cursor/skills/project-spec-close/SKILL.md) — **persist IA first**, delete `.cursor/projects/{ISSUE_ID}.md`, **`npm run validate:dead-project-specs`**, **remove** the row from **`BACKLOG.md`**, **append** **`[x]`** to **`BACKLOG-ARCHIVE.md`**, **purge** the closed id from durable docs — see skill body *(shipped — trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md))*.
 - **Paste template:** [`.cursor/templates/project-spec-review-prompt.md`](../.cursor/templates/project-spec-review-prompt.md) when Skills are not loaded; **kickoff** tool order remains authoritative in **`project-spec-kickoff/SKILL.md`**; **implementation** order in **`project-spec-implement/SKILL.md`**; **post-implementation Node checks** in **`project-implementation-validation/SKILL.md`**; **closeout** order in **`project-spec-close/SKILL.md`**. **Router hint:** `router_for_task` **`domain`** strings should match **agent-router.mdc** table labels (persisted in [`.cursor/skills/README.md`](../.cursor/skills/README.md) **Lessons learned**).
-- **MCP follow-up:** **TECH-48** — discovery from project-spec prose (ranked glossary / section queue); may shorten the manual recipe after tools ship.
+- **MCP follow-up:** discovery from project-spec prose (ranked glossary / section queue) — open [`BACKLOG.md`](../BACKLOG.md).
 
 ---
 
@@ -118,15 +118,15 @@ Sample **invariants_summary** (abridged intent): sync height map and cell height
 
 ### 6.2 MCP sampling used for this document
 
-- **`backlog_issue` (`TECH-17`):** Confirms shipped MCP tool set and file-backed sources — baseline for **TECH-18** evolution.
+- **`backlog_issue`:** Confirms shipped MCP tool set and file-backed sources — baseline for future **DB-backed** evolution.
 - **`spec_outline` (`AGENTS.md`):** Confirms documentation hierarchy (specs, project specs, backlog workflow) as the **canonical** agent guide.
 - **`glossary_discover`:** No rows for generic “MCP agent information” keywords — expected; domain glossary targets **game** terms, not tooling vocabulary.
 - **`router_for_task`:** Domain table is **game-domain** routed (roads, water, simulation, etc.); “documentation” strings do not map — tooling is covered by **rules + AGENTS**, not the geography router.
 
 ### 6.3 Backlog alignment
 
-- **TECH-18 / TECH-44b:** Longer-term **search and DB** for IA; complements Cursor Skills (procedures stay thin; facts stay queryable).
-- **JSON program (TECH-21)** (**§ Completed** — [`BACKLOG.md`](../BACKLOG.md); **glossary**; **TECH-40**–**TECH-41** **§ Completed**, **TECH-44a** **§ Completed** — [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md)): Machine-readable indexes (**TECH-40**), validated DTOs (**TECH-41**), DB/API patterns in that doc — **reduces** need for agents to “remember” schema details if CI and docs enforce them. **TECH-44** (**umbrella § Completed** — [`BACKLOG.md`](../BACKLOG.md); **TECH-44b**/**c**; open **TECH-53**/**TECH-54**/**TECH-55**): Postgres + **E1** repro registry; **E2**/**E3** follow-ups (backlog-only rows).
+- **DB-backed IA / search:** Longer-term **search and DB** for IA; complements Cursor Skills (procedures stay thin; facts stay queryable) — see [`BACKLOG.md`](../BACKLOG.md).
+- **JSON interchange program** + **Postgres interchange patterns** ([`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md), **glossary**, [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md)): machine-readable indexes, validated DTOs, DB/API patterns — **reduces** need for agents to “remember” schema details if **CI** and docs enforce them. **E1** repro registry shipped; **E2**/**E3** follow-ups remain on [`BACKLOG.md`](../BACKLOG.md).
 
 ---
 
@@ -145,7 +145,7 @@ Sample **invariants_summary** (abridged intent): sync height map and cell height
 - `AGENTS.md` — agent workflow, MCP-first retrieval, `.cursor/projects/` policy  
 - `docs/mcp-ia-server.md` — territory-ia tools and policy  
 - `docs/mcp-markdown-ia-pattern.md` — slice-based IA pattern  
-- `BACKLOG.md` — **TECH-17** (shipped MCP), **TECH-18**, **TECH-44** program (**umbrella § Completed**; **TECH-44a**/**b**/**c** **§ Completed**; open **TECH-55**/**TECH-53**/**TECH-54**), **TECH-21** **§ Completed** (**JSON program**), **TECH-43**, **TECH-48** (MCP discovery from project specs)  
+- `BACKLOG.md` / `BACKLOG-ARCHIVE.md` — open vs completed rows; **no** backlog ids in **glossary** / **reference specs** (see **terminology-consistency**)  
 - `.cursor/rules/invariants.mdc` — system invariants (also exposed via MCP `invariants_summary`)
 
 ---

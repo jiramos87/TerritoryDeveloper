@@ -14,7 +14,7 @@ This skill **does not** call MCP tools itself. In an **Agent** chat with **terri
 
 **Contrast with [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md):** **kickoff** starts from an **existing** project spec file (`backlog_issue` first). **This** skill starts from the **user prompt** to **create** the backlog row and spec stub. After the stub exists, use **kickoff** to refine it, **[`project-spec-implement`](../project-spec-implement/SKILL.md)** to execute the plan, and **[`project-spec-close`](../project-spec-close/SKILL.md)** when closing.
 
-**Related:** **TECH-56** completed — [`BACKLOG.md`](../../../BACKLOG.md) **§ Completed**; **TECH-48** (future MCP discovery from spec-shaped text — revisit this recipe when shipped); **TECH-23** (MCP preflight culture); **TECH-30** (validate issue ids in project specs); **TECH-57** (Cursor Skills kickoff — [`BACKLOG.md`](../../../BACKLOG.md) **§ Completed**). Sibling skills: **kickoff** / **implement** / **close** / [**`project-implementation-validation`**](../project-implementation-validation/SKILL.md). **Conventions:** [`.cursor/skills/README.md`](../README.md).
+**Related:** Sibling skills — **kickoff** / **implement** / **close** / [**`project-implementation-validation`**](../project-implementation-validation/SKILL.md). Open **MCP** / **Skills** / **project-spec** hygiene rows — [`BACKLOG.md`](../../../BACKLOG.md). Shipped skill trace — [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md). **Conventions:** [`.cursor/skills/README.md`](../README.md).
 
 ## Seed prompt (parameterize)
 
@@ -52,7 +52,7 @@ Run **in order** unless the prompt is **pure meta** (e.g. only repo hygiene with
 
 5. **`invariants_summary`** — If the **new** issue likely touches **runtime C#** or **game subsystems**. Skip for strict doc/IA-only issues.
 
-6. **`backlog_issue`** — For each related **`ISSUE_ID`** you will cite in **Depends on** / **Related** / **Notes**, to pull **Files**, **Notes**, **`status`**, and **`depends_on_status`**. If **`depends_on_status`** shows unsatisfied hard dependencies for that id, align **Depends on** / **Notes** or wait until prerequisites are met. **`backlog_issue`** resolves **open** rows and **§ Completed (last 30 days)** in **`BACKLOG.md`** ([`AGENTS.md`](../../../AGENTS.md), [`docs/mcp-ia-server.md`](../../../docs/mcp-ia-server.md)). **Archive-only** ids — confirm wording in [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md) or durable docs; do **not** expect **`backlog_issue`** to resolve them.
+6. **`backlog_issue`** — For each related **`ISSUE_ID`** you will cite in **Depends on** / **Related** / **Notes**, to pull **Files**, **Notes**, **`status`**, and **`depends_on_status`**. If **`depends_on_status`** shows unsatisfied hard dependencies for that id, align **Depends on** / **Notes** or wait until prerequisites are met. **`backlog_issue`** searches **`BACKLOG.md`** then [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md) ([`AGENTS.md`](../../../AGENTS.md), [`docs/mcp-ia-server.md`](../../../docs/mcp-ia-server.md)).
 
 7. **`list_specs`** / **`spec_outline`** — **Only** if you do not know the `spec` key for **`spec_section`**.
 
@@ -62,7 +62,7 @@ Mirror **kickoff** branching when classifying the **new** issue:
 
 - **Roads / bridge / wet run** → **roads-system** + **geo** slices via **`router_for_task`** + **`spec_section`**.
 - **Water / HeightMap / shore / river** → **water-terrain-system** + **geo**.
-- **JSON / schema / Save / interchange** → **persistence-system**; do **not** propose on-disk **Save data** changes unless the user explicitly requires them; see **TECH-21** program notes in **`BACKLOG.md`** when applicable.
+- **JSON / schema / Save / interchange** → **persistence-system**; do **not** propose on-disk **Save data** changes unless the user explicitly requires them; see **glossary** **JSON interchange program** and [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md) when applicable.
 
 ## File and backlog checklist
 
@@ -72,7 +72,7 @@ Mirror **kickoff** branching when classifying the **new** issue:
 
 3. **Priority section** — Insert the row in the section that matches **severity** and **existing `BACKLOG.md` structure** (e.g. **High priority**, **Code Health**, **Agent ↔ Unity & MCP context lane**). Follow **Priority order** in [`AGENTS.md`](../../../AGENTS.md) when choosing among standard sections.
 
-4. **Backlog row** — Include **Type**, **Files**, **Notes**, **Spec:** **`.cursor/projects/{ISSUE_ID}.md`**, **Depends on** / **Acceptance** as appropriate. Every **`[FEAT-XX]`** / **`TECH-XX`** you mention must exist in **`BACKLOG.md`** or be described as a **future** id only after you reserve it in the same edit batch (**TECH-30**).
+4. **Backlog row** — Include **Type**, **Files**, **Notes**, **Spec:** **`.cursor/projects/{ISSUE_ID}.md`**, **Depends on** / **Acceptance** as appropriate. Every **`BUG-`/`FEAT-`/`TECH-`-** id you cite must exist in **`BACKLOG.md`** (or be reserved in the **same** edit batch you add it).
 
 5. **Project spec** — Copy [`.cursor/templates/project-spec-template.md`](../../templates/project-spec-template.md) to **`.cursor/projects/{ISSUE_ID}.md`**. Fill header (**Issue** link to **`BACKLOG.md`**), **Summary**, **Goals**, stub **Implementation Plan**, **Open Questions** per [`.cursor/projects/PROJECT-SPEC-STRUCTURE.md`](../../projects/PROJECT-SPEC-STRUCTURE.md) (tooling-only: **None** or point to **Acceptance**).
 
@@ -82,4 +82,4 @@ Mirror **kickoff** branching when classifying the **new** issue:
 
 ## Follow-up (planned domain skills)
 
-When **implementing** code in these areas, prefer future **TECH-45** / **TECH-46** / **TECH-47** skills when shipped — see **`project-spec-implement`** branching.
+When **implementing** code in roads, terrain/water, or new managers, follow **`project-spec-implement`** branching and any **domain** skills listed on [`BACKLOG.md`](../../../BACKLOG.md).

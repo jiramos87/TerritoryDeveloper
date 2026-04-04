@@ -110,7 +110,7 @@ Each row is a **candidate** for a future **TECH-** / **FEAT-** issue; none are c
 2. [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md) — **B1** / **B3** / **P5**, naming.  
 3. **TECH-44b** (completed — [`BACKLOG.md`](../BACKLOG.md) **§ Completed**) — **IA** Postgres milestone: [`docs/postgres-ia-dev-setup.md`](../docs/postgres-ia-dev-setup.md), **`db/migrations/`**.  
 4. **TECH-44c** (completed — [`BACKLOG.md`](../BACKLOG.md) **§ Completed**) — **E1** **`dev_repro_bundle`** repro registry: [`docs/postgres-ia-dev-setup.md`](../docs/postgres-ia-dev-setup.md), glossary **Dev repro bundle**.  
-5. [`TECH-21-json-use-cases-brainstorm.md`](TECH-21-json-use-cases-brainstorm.md) — **G1** / **G2** / **Geography initialization**.  
+5. [`projects/json-use-cases-brainstorm.md`](./json-use-cases-brainstorm.md) — **G1** / **G2** / **Geography initialization**.  
 6. [`ia-driven-dev-territory-prompt.md`](ia-driven-dev-territory-prompt.md) — agent workflow and Editor exports.
 
 ---

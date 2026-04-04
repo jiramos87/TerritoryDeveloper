@@ -4,13 +4,13 @@ Project-local **Cursor Skills** live here. Each skill is a folder with a **`SKIL
 
 **Conventions** (folder naming, thin-skill rules, **`glossary_discover`** array requirement, **Tool recipe** pattern) are defined in this README. For the **study** write-up, see [`docs/cursor-agents-skills-mcp-study.md`](../../docs/cursor-agents-skills-mcp-study.md).
 
-**MCP improvements** for richer discovery from project-spec prose: **TECH-48** (`BACKLOG.md`).
+**MCP improvements** for richer discovery from project-spec prose: see [`BACKLOG.md`](../../BACKLOG.md) (**Agent** / **MCP** rows).
 
 ## Lessons learned (from shipped kickoff work)
 
 - **`router_for_task`:** Pass **`domain`** strings that match **`.cursor/rules/agent-router.mdc`** “Task domain” row labels (e.g. `Save / load`, `Road logic, placement, bridges`). Ad-hoc phrases often return **`no_matching_domain`** — use the router table vocabulary.
-- **`router_for_task`** **`files`:** You may pass **`files`** (repo-relative paths) with or instead of **`domain`**; the server merges path heuristics (**glossary** **territory-ia spec-pipeline layer B (TECH-62)**).
-- **`backlog_issue`** **`depends_on_status`:** Each cited **Depends on** id returns **`open`** / **`completed`** / **`not_in_backlog`**, **`soft_only`**, **`satisfied`** — use it in **kickoff** / **implement** / **close** / **project-new** recipes (**TECH-62**).
+- **`router_for_task`** **`files`:** You may pass **`files`** (repo-relative paths) with or instead of **`domain`**; the server merges path heuristics (**glossary** **territory-ia spec-pipeline layer B**).
+- **`backlog_issue`** **`depends_on_status`:** Each cited **Depends on** id returns **`open`** / **`completed`** / **`not_in_backlog`**, **`soft_only`**, **`satisfied`** — use it in **kickoff** / **implement** / **close** / **project-new** recipes (**glossary** **territory-ia spec-pipeline layer B**).
 
 ## Conventions
 
@@ -25,15 +25,15 @@ Project-local **Cursor Skills** live here. Each skill is a folder with a **`SKIL
 
 ## Index
 
-| Skill folder | Purpose | Backlog |
-|--------------|---------|---------|
-| [`project-new/`](project-new/SKILL.md) | Create a new **`BACKLOG.md`** row + **`.cursor/projects/{ISSUE_ID}.md`** stub from a user prompt (**territory-ia** + optional **`web_search`**) | **TECH-56** completed — [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** |
-| [`project-spec-kickoff/`](project-spec-kickoff/SKILL.md) | Review or enrich `.cursor/projects/{ISSUE_ID}.md` before implementation; ordered MCP context pull | *(shipped — see `BACKLOG.md` § Completed)* |
-| [`project-spec-implement/`](project-spec-implement/SKILL.md) | Execute a project spec’s **Implementation Plan** after the spec is ready; per-phase MCP slices + checklist | *(shipped — see `BACKLOG.md` § Completed)* |
-| [`project-implementation-validation/`](project-implementation-validation/SKILL.md) | After implementation: **Node** checks aligned with **IA tools** CI (dead spec paths, **MCP** tests, fixtures, **IA index** `--check`); optional **`verify`** | **TECH-52** completed — [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** |
-| [`project-spec-close/`](project-spec-close/SKILL.md) | Close an issue that used a **project spec**: persist IA (glossary, reference specs, **ARCHITECTURE**, rules, docs) → delete spec → `validate:dead-project-specs` → **BACKLOG** **Completed** (user-confirmed) | **TECH-51** completed — see [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** |
+| Skill folder | Purpose | Trace |
+|--------------|---------|-------|
+| [`project-new/`](project-new/SKILL.md) | Create a new **`BACKLOG.md`** row + **`.cursor/projects/{ISSUE_ID}.md`** stub from a user prompt (**territory-ia** + optional **`web_search`**) | [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) |
+| [`project-spec-kickoff/`](project-spec-kickoff/SKILL.md) | Review or enrich `.cursor/projects/{ISSUE_ID}.md` before implementation; ordered MCP context pull | *(shipped — archive)* |
+| [`project-spec-implement/`](project-spec-implement/SKILL.md) | Execute a project spec’s **Implementation Plan** after the spec is ready; per-phase MCP slices + checklist | *(shipped — archive)* |
+| [`project-implementation-validation/`](project-implementation-validation/SKILL.md) | After implementation: **Node** checks aligned with **IA tools** CI (dead spec paths, **MCP** tests, fixtures, **IA index** `--check`); optional **`verify`** | [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) |
+| [`project-spec-close/`](project-spec-close/SKILL.md) | Close an issue: persist IA → delete spec → `validate:dead-project-specs` → **remove** **`BACKLOG.md`** row → **append** **`BACKLOG-ARCHIVE.md`** → **id purge** | [`project-spec-close/SKILL.md`](project-spec-close/SKILL.md) |
 
-Planned: **TECH-45** (roads), **TECH-46** (terrain / water), **TECH-47** (new **MonoBehaviour** manager). **Spec pipeline program § Completed:** **TECH-60**–**TECH-63** — **glossary** **territory-ia spec-pipeline program (TECH-60)**; [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** **TECH-60**–**TECH-63**.
+**Planned / follow-up domain skills** (roads, terrain/water, new **MonoBehaviour** managers): see [`BACKLOG.md`](../../BACKLOG.md). **Spec pipeline program:** **glossary** **territory-ia spec-pipeline program**; charter [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md).
 
 ## Optional template
 

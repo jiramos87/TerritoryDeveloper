@@ -17,25 +17,25 @@ Task-to-spec priorities match **`.cursor/rules/agent-router.mdc`**. That rule fi
 
 ## Issue kickoff workflow
 
-When starting work on **`BUG-XX` / `FEAT-XX` / `TECH-XX`** (etc.), call **`backlog_issue`** with `issue_id` first to get `Files`, `Spec`, `Notes`, `Acceptance`, `status`, and `raw_markdown` without loading all of `BACKLOG.md`. **`status`** is **`open`** or **`completed`** when the row lives under **§ Completed (last 30 days)** in the same file. Then use `router_for_task` / `glossary_discover` / `glossary_lookup` / `spec_section` (or **`spec_sections`** when several slices are needed in one turn) as needed. Issues moved to **`BACKLOG-ARCHIVE.md`** only are not covered by v1 **`backlog_issue`**.
+When starting work on **`BUG-XX` / `FEAT-XX` / `TECH-XX`** (etc.), call **`backlog_issue`** with `issue_id` first to get `Files`, `Spec`, `Notes`, `Acceptance`, `status`, and `raw_markdown` without loading all of `BACKLOG.md`. **`status`** is **`open`** for rows in **`BACKLOG.md`** or **`completed`** when the checklist row is **`[x]`** in **`BACKLOG-ARCHIVE.md`**. Then use `router_for_task` / `glossary_discover` / `glossary_lookup` / `spec_section` (or **`spec_sections`** when several slices are needed in one turn) as needed.
 
 ## Project spec workflows (Cursor Skills)
 
 Repo **Cursor Skills** define **ordered** MCP usage for `.cursor/projects/{ISSUE_ID}.md`:
 
-- **Create new issue + project spec stub from a prompt:** [`.cursor/skills/project-new/SKILL.md`](../.cursor/skills/project-new/SKILL.md) (**TECH-56**, completed — [`BACKLOG.md`](../BACKLOG.md) **§ Completed**).
+- **Create new issue + project spec stub from a prompt:** [`.cursor/skills/project-new/SKILL.md`](../.cursor/skills/project-new/SKILL.md) (**project-new** — trace in [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md)).
 - **Review / enrich before code:** [`.cursor/skills/project-spec-kickoff/SKILL.md`](../.cursor/skills/project-spec-kickoff/SKILL.md).
 - **Execute Implementation Plan:** [`.cursor/skills/project-spec-implement/SKILL.md`](../.cursor/skills/project-spec-implement/SKILL.md).
-- **Close after verified work:** [`.cursor/skills/project-spec-close/SKILL.md`](../.cursor/skills/project-spec-close/SKILL.md) — persist IA (**glossary**, **reference specs**, **`ARCHITECTURE.md`**, rules, **`docs/`**), delete `.cursor/projects/{ISSUE_ID}.md`, `npm run validate:dead-project-specs`, **BACKLOG** **Completed** (user-confirmed). **TECH-58 helpers:** MCP **`project_spec_closeout_digest`** (structured extract from the project spec after **`backlog_issue`**), **`spec_sections`** (batch **`spec_section`** slices), and root **`npm run closeout:worksheet`**, **`closeout:dependents`**, **`closeout:verify`** (dead-spec validation + **`generate:ia-indexes --check`** — local convenience, **CI** remains authoritative via **IA tools** workflow).
-- **Post-implementation validation (TECH-52, completed 2026-04-03):** [`.cursor/skills/project-implementation-validation/SKILL.md`](../.cursor/skills/project-implementation-validation/SKILL.md) — optional ordered **`npm`** checks (**dead project spec** paths, **`tools/mcp-ia-server`** tests, **`validate:fixtures`**, **`generate:ia-indexes --check`**, advisory **`verify`**) aligned with [`.github/workflows/ia-tools.yml`](../.github/workflows/ia-tools.yml). From repo root, **`npm run validate:all`** runs steps 1–4 in one shot (**TECH-61**); run **`npm ci`** under **`tools/mcp-ia-server`** first if **`test:ia`** fails with missing modules. Use after **MCP** / **schema** / index-source edits; **project-spec-close** may reference this before the mandatory **`validate:dead-project-specs`** cascade step.
+- **Close after verified work:** [`.cursor/skills/project-spec-close/SKILL.md`](../.cursor/skills/project-spec-close/SKILL.md) — persist IA (**glossary**, **reference specs**, **`ARCHITECTURE.md`**, rules, **`docs/`**), delete `.cursor/projects/{ISSUE_ID}.md`, `npm run validate:dead-project-specs`, **remove** the row from [`BACKLOG.md`](../BACKLOG.md), append **`[x]`** to [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md), **purge** the closed id from durable docs and code (user-confirmed). **Closeout helpers:** MCP **`project_spec_closeout_digest`**, **`spec_sections`**, and root **`npm run closeout:worksheet`**, **`closeout:dependents`**, **`closeout:verify`**.
+- **Post-implementation validation:** [`.cursor/skills/project-implementation-validation/SKILL.md`](../.cursor/skills/project-implementation-validation/SKILL.md) — optional ordered **`npm`** checks (**dead project spec** paths, **`tools/mcp-ia-server`** tests, **`validate:fixtures`**, **`generate:ia-indexes --check`**, advisory **`verify`**) aligned with [`.github/workflows/ia-tools.yml`](../.github/workflows/ia-tools.yml). From repo root, **`npm run validate:all`** runs steps 1–4 in one shot; run **`npm ci`** under **`tools/mcp-ia-server`** first if **`test:ia`** fails with missing modules. Use after **MCP** / **schema** / index-source edits; **project-spec-close** may reference this before the mandatory **`validate:dead-project-specs`** cascade step.
 
 See also [`AGENTS.md`](../AGENTS.md) (Before You Start) and [`.cursor/skills/README.md`](../.cursor/skills/README.md).
 
-## Tools (13)
+## Tools (18)
 
 | Tool | Role |
 |------|------|
-| `backlog_issue` | One matching issue from `BACKLOG.md` by id (`issue_id`): **open** checklist rows or **§ Completed (last 30 days)**; structured fields + `raw_markdown` + `depends_on_status` (per cited id in **Depends on:**: `open` / `completed` / `not_in_backlog`, `soft_only`, `satisfied`). Nested sub-items (e.g. TECH-01 under BUG-20) supported. **Archive-only** ids: `BACKLOG-ARCHIVE.md` (**Recent archive** / older sections). |
+| `backlog_issue` | One matching issue by id (`issue_id`): **`BACKLOG.md`** (**open** rows) then **`BACKLOG-ARCHIVE.md`** (**`[x]`** completions); structured fields + `raw_markdown` + `depends_on_status` (per cited id in **Depends on:**: `open` / `completed` / `not_in_backlog`, `soft_only`, `satisfied`). Nested sub-items under a parent row are supported. |
 | `list_specs` | Discover registered documents (`key`, path, category, description). |
 | `spec_outline` | Heading tree for a spec/rule/doc; supports aliases (`geo`, `roads`, `unity` / `unityctx` → `unity-development-context`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
 | `spec_section` | Body under one heading (id, slug, substring, or fuzzy heading match); `max_chars` truncation. Parameters `spec` + `section` are canonical; aliases `key`/`doc` for spec and `section_heading`/`heading` for section are accepted (numeric section coerced to string) so mis-keyed tool calls still succeed. |
@@ -48,17 +48,26 @@ See also [`AGENTS.md`](../AGENTS.md) (Before You Start) and [`.cursor/skills/REA
 | `list_rules` | All `.mdc` rules with frontmatter metadata. |
 | `rule_content` | Rule body without YAML frontmatter; `rule` key resolves `roads` → `roads.mdc` (not the `roads-system` spec alias). |
 | `isometric_world_to_grid` | **Computational:** planar world (`world_x`, `world_y`) → logical **cell** indices (`cell_x`, `cell_y`) per **isometric-geography-system** §1.3 (glossary: **World ↔ Grid conversion**). Optional `origin_x` / `origin_y`. Implemented in **`tools/compute-lib`**; **Unity** height-aware picking is out of scope. |
+| `growth_ring_classify` | **Computational:** **Urban growth rings** / **Urban centroid** distance bands vs effective radius (simulation-system §Rings); parity with C# **UrbanGrowthRingMath**. |
+| `grid_distance` | **Computational:** **Chebyshev** or **Manhattan** between integer cells — **not** geo §10 pathfinding edge costs. |
+| `pathfinding_cost_preview` | **Computational v1:** Manhattan steps × cost — **approximation** only; not geo §10 **A\*** costs or road legality. |
+| `geography_init_params_validate` | **Computational:** Zod check for **Geography initialization** interchange v1 (aligned with `docs/schemas/geography-init-params.v1.schema.json`). |
+| `desirability_top_cells` | **Reserved:** returns **`NOT_AVAILABLE`** until a Unity **`batchmode`** export ships for **Desirability** sampling (see **glossary** **Desirability** and open [`BACKLOG.md`](../BACKLOG.md)). |
+
+### Computational tools vs spec slices
+
+Use **`spec_section`**, **`spec_sections`**, **`glossary_*`**, and **`router_for_task`** when you need **authoritative prose**, definitions, or routing from the Markdown IA corpus. Use **computational** tools (`isometric_world_to_grid`, `growth_ring_classify`, `grid_distance`, `pathfinding_cost_preview`, `geography_init_params_validate`) for **small deterministic numeric / validation** checks derived from the same rules as the game or interchange schemas. They **do not** replace specs: e.g. **`pathfinding_cost_preview`** v1 is explicitly **not** the full geo §10 cost model. Heavy grid queries (**`desirability_top_cells`**) stay **`NOT_AVAILABLE`** until Unity batchmode hooks land — see **glossary** **Computational MCP tools** and **Compute-lib program**; charter trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).
 
 ## Implementation and operations
 
-- **Code:** `tools/mcp-ia-server/` (TypeScript, `@modelcontextprotocol/sdk`); shared **pure** math in **`tools/compute-lib/`** (`territory-compute-lib`, **TECH-37**).
+- **Code:** `tools/mcp-ia-server/` (TypeScript, `@modelcontextprotocol/sdk`); shared **pure** math in **`tools/compute-lib/`** (**territory-compute-lib** package).
 - **Cursor:** `.cursor/mcp.json` launches `npx -y tsx tools/mcp-ia-server/src/index.ts` from the repo root; set `REPO_ROOT` if the host cwd is not the repository root.
 - **Verify:** From `tools/mcp-ia-server/`, run `npm run verify` (spawns server like Cursor and calls tools via the SDK).
 - **Full developer README:** `tools/mcp-ia-server/README.md`.
 
-## PostgreSQL IA (TECH-44b) integration point for TECH-18
+## PostgreSQL IA (dev schema) and future DB-backed retrieval
 
-**TECH-18** will move **territory-ia** retrieval toward a **DB-backed** path using the **TECH-44b** schema. Until that ships, MCP tools remain **file-backed** (Markdown / generated JSON indexes).
+Open **BACKLOG** rows track **DB-backed** **territory-ia** retrieval and **full-text** search over the Markdown corpus. Until those ship, MCP tools remain **file-backed** (Markdown / generated JSON indexes). **DDL** and setup for the first **Postgres** **IA** tables live under **`db/migrations/`** and [`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md).
 
 | Item | Location |
 |------|----------|
@@ -68,16 +77,16 @@ See also [`AGENTS.md`](../AGENTS.md) (Before You Start) and [`.cursor/skills/REA
 | **Connection** | **`DATABASE_URL`** only (see repository **`.env.example`**; never commit secrets) |
 | **Example read** | SQL function **`ia_glossary_row_by_key(text)`** — `SELECT * FROM ia_glossary_row_by_key('heightmap');` after optional seed |
 
-**Suggested MCP module (future):** a small `pg` client in `tools/mcp-ia-server/` (or shared package) that reads **`DATABASE_URL`**, runs parameterized queries / calls the functions above, and maps rows into existing tool response shapes — **TECH-18** scope; **TECH-44b** does not register new MCP tools.
+**Suggested MCP module (future):** a small `pg` client in `tools/mcp-ia-server/` (or shared package) that reads **`DATABASE_URL`**, runs parameterized queries / calls the functions above, and maps rows into existing tool response shapes. The shipped **Postgres** **IA** migrations do **not** register new MCP tools by themselves.
 
-## Future work (out of scope for TECH-17)
+## Future work (tracked in BACKLOG)
 
-Full-text search across all IA documents is tracked as **TECH-18**; database-backed IA and evolved tools are **TECH-44b** / **TECH-18** in [`BACKLOG.md`](../BACKLOG.md).
+Full-text search, database-backed IA slice retrieval, and evolved tool shapes are **open** [`BACKLOG.md`](../BACKLOG.md) work — this doc stays file-backed until those land.
 
-**JSON program (TECH-21)** (**§ Completed** — [`BACKLOG.md`](../BACKLOG.md); **glossary**): **TECH-40**–**TECH-41** **§ Completed**, **TECH-44a** **§ Completed** — [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md). JSON Schema, **CI** fixture validation, and **generated** **spec**/**glossary** index JSON (machine manifests only — **not** a second copy of spec bodies; see **TECH-18**). **Postgres** program: **TECH-44** (**umbrella § Completed** — [`BACKLOG.md`](../BACKLOG.md); **TECH-44b**, **TECH-44c**; **Program extension mapping** in [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md)).
+**JSON interchange program** and **Postgres interchange patterns** — **glossary** rows + [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md); charter trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md). JSON Schema, **CI** fixture validation, and **generated** **spec**/**glossary** index JSON (machine manifests only — **not** a second copy of spec bodies).
 
 - **Schemas + fixtures:** [`docs/schemas/README.md`](../docs/schemas/README.md). Validate from repo root: `npm run validate:fixtures` (delegates to `tools/mcp-ia-server`).
-- **Project spec path hygiene (TECH-50, completed 2026-04-03):** From repo root, `npm run validate:dead-project-specs` runs [`tools/validate-dead-project-spec-paths.mjs`](../tools/validate-dead-project-spec-paths.mjs) (durable docs + open **BACKLOG** **`Spec:`** lines). The **IA tools** workflow runs it when `.cursor/**`, `docs/**`, `projects/**`, or related paths change. **Lessons / edge cases:** see **PROJECT-SPEC-STRUCTURE** — **Lessons learned (TECH-50 closure)**. Optional MCP tool + **TECH-30** shared **Node** module: future backlog work, not part of **TECH-50** delivery.
+- **Project spec path hygiene:** From repo root, `npm run validate:dead-project-specs` runs [`tools/validate-dead-project-spec-paths.mjs`](../tools/validate-dead-project-spec-paths.mjs) (durable docs + open **BACKLOG** **`Spec:`** lines). The **IA tools** workflow runs it when `.cursor/**`, `docs/**`, `projects/**`, or related paths change. **Lessons / edge cases:** see **PROJECT-SPEC-STRUCTURE** — **Lessons learned (dead project spec paths)**.
 - **I1 / I2 indexes (committed):** `tools/mcp-ia-server/data/spec-index.json` (**spec** keys, paths, heading `section_id`s) and `glossary-index.json` (**glossary** term → `spec_key` + `anchor`). Regenerate after editing `.cursor/specs/*.md` or `glossary.md`: `npm run generate:ia-indexes` under `tools/mcp-ia-server/` (or `npm run generate:ia-indexes` from the repo root — forwards extra args such as `--check`). **CI** runs `generate:ia-indexes -- --check` in the **IA tools** workflow so committed JSON stays in sync. MCP **may** later read these files; **`list_specs`**, **`spec_outline`**, **`spec_section`**, and **`spec_sections`** remain authoritative for slice retrieval today.
 
 For a **domain-neutral** description of this architecture (Markdown corpus, registry, parser spine, tool families, verification) — useful when starting a similar MCP in another repo — see [`mcp-markdown-ia-pattern.md`](mcp-markdown-ia-pattern.md).

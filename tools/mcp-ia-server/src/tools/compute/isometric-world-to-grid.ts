@@ -8,19 +8,9 @@ import {
   isometricWorldToGridInputShape,
   worldToGridPlanar,
 } from "territory-compute-lib";
-import { runWithToolTiming } from "../instrumentation.js";
 import { ZodError } from "zod";
-
-function jsonResult(payload: unknown) {
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: JSON.stringify(payload, null, 2),
-      },
-    ],
-  };
-}
+import { runWithToolTiming } from "../../instrumentation.js";
+import { jsonToolResult } from "./jsonToolResult.js";
 
 /**
  * Register the isometric_world_to_grid tool (World ↔ Grid conversion — inverse §1.3).
@@ -50,26 +40,26 @@ export function registerIsometricWorldToGrid(server: McpServer): void {
             originX: input.origin_x,
             originY: input.origin_y,
           });
-          return jsonResult({
+          return jsonToolResult({
             ok: true as const,
             cell_x: cellX,
             cell_y: cellY,
           });
         } catch (e) {
           if (e instanceof ZodError) {
-            return jsonResult({
+            return jsonToolResult({
               ok: false as const,
               error: {
-                code: "invalid_input" as const,
+                code: "VALIDATION_ERROR" as const,
                 message: e.issues.map((i) => i.message).join("; ") || "Invalid input",
               },
             });
           }
           const msg = e instanceof Error ? e.message : String(e);
-          return jsonResult({
+          return jsonToolResult({
             ok: false as const,
             error: {
-              code: "conversion_error" as const,
+              code: "VALIDATION_ERROR" as const,
               message: msg,
             },
           });

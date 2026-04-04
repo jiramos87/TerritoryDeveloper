@@ -1,6 +1,6 @@
 # territory-compute-lib
 
-Shared **TypeScript** package for **pure** isometric math and **Zod** schemas consumed by **`tools/mcp-ia-server/`** (see **TECH-37** / [TECH-36](../../.cursor/projects/TECH-36.md) **§3.4**).
+Shared **TypeScript** package for **pure** isometric math and **Zod** schemas consumed by **`tools/mcp-ia-server/`** (see **TECH-37** **§ Completed** — [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md); **glossary** **Compute-lib program**).
 
 ## Authority
 

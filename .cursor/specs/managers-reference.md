@@ -122,4 +122,4 @@ In-game toasts and alerts (funds, placement errors, hints). Delivered only throu
 
 ## Obsolete
 
-- **`UrbanizationProposalManager`** and related proposal UI — obsolete, not run from `ProcessSimulationTick()`. Do not re-enable. Removal: TECH-13.
+- **`UrbanizationProposalManager`** and related proposal UI — obsolete, not run from `ProcessSimulationTick()`. Do not re-enable. **Glossary** **Urbanization proposal**; removal tracked on [`BACKLOG.md`](../../BACKLOG.md).

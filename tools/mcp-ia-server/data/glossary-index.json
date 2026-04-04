@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-04T12:21:49.906Z",
+  "last_generated": "2026-04-04T18:59:33.384Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -447,9 +447,17 @@
       "spec_key": "agents",
       "anchor": ""
     },
+    "UI design system (reference spec)": {
+      "spec_key": "ui-design-system",
+      "anchor": "spec-key"
+    },
     "project-new": {
       "spec_key": "agents",
       "anchor": ""
+    },
+    "Compute-lib program": {
+      "spec_key": "glossary",
+      "anchor": "territory-compute-lib"
     },
     "Dev repro bundle": {
       "spec_key": "unity-development-context",

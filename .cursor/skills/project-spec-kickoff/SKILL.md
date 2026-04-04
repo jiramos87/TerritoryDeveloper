@@ -2,7 +2,7 @@
 name: project-spec-kickoff
 description: >
   Use when reviewing, tightening, or enriching a .cursor/projects/{ISSUE_ID}.md project spec before
-  writing code—especially for BUG-/FEAT-/TECH- work, JSON or infra program specs (e.g. TECH-40),
+  writing code—especially for BUG-/FEAT-/TECH- work, JSON or infra program specs,
   or when aligning vocabulary with the glossary. Triggers include "kickoff spec", "review project spec",
   "enrich TECH-xx.md", "canonical terms audit", "Implementation Plan too vague", "pre-implementation spec pass".
 ---
@@ -11,15 +11,15 @@ description: >
 
 This skill **does not** call MCP tools itself. In an **Agent** chat with **territory-ia** enabled, follow the **Tool recipe** below in order so context is loaded as **slices**, not whole reference specs.
 
-Until **TECH-48** ships richer discovery from project-spec prose, use the **manual** recipe (no composite MCP tool).
+Until richer **MCP** discovery from project-spec prose ships, use the **manual** recipe (no composite MCP tool).
 
-**Related:** **TECH-48** (MCP discovery improvements), **TECH-45** / **TECH-46** / **TECH-47** (domain guardrail skills), **TECH-49** — **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (shipped), **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (**TECH-52** completed — optional **npm** checks after **MCP** / schema / **IA index** work), **[`project-spec-close`](../project-spec-close/SKILL.md)** (when the issue is done — persist IA, delete spec, **BACKLOG** **Completed**), **TECH-23** (MCP preflight culture). **Conventions:** [`.cursor/skills/README.md`](../README.md).
+**Related:** **[`project-spec-implement`](../project-spec-implement/SKILL.md)**, **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (optional **npm** checks after **MCP** / schema / **IA index** work), **[`project-spec-close`](../project-spec-close/SKILL.md)** (verified close — persist IA, delete spec, **archive** row, **id purge**). Open follow-ups — [`BACKLOG.md`](../../../BACKLOG.md). **Conventions:** [`.cursor/skills/README.md`](../README.md).
 
 **When the issue is verified and you are closing:** use **[`project-spec-close`](../project-spec-close/SKILL.md)** after implementation — not this kickoff skill.
 
 ## Seed prompt (parameterize)
 
-Replace `{SPEC_PATH}` with the project spec path (e.g. `.cursor/projects/TECH-59.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
+Replace `{SPEC_PATH}` with the project spec path from the backlog **Spec:** line (`.cursor/projects/{ISSUE_ID}.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
 
 ```markdown
 Review @{SPEC_PATH} and ensure it uses canonical terms from the glossary and reference specs.
@@ -34,13 +34,13 @@ If you make material edits, update related Information Architecture: linked proj
 
 Run these steps **in order** unless the project spec is explicitly **pure doc hygiene** with no code or subsystem touch (then skip only the steps noted).
 
-1. **Parse target** — Load `{SPEC_PATH}` (user `@` attach or `read_file`). Extract **`ISSUE_ID`** from the `> **Issue:**` line (e.g. `TECH-40`, `BUG-48`).
+1. **Parse target** — Load `{SPEC_PATH}` (user `@` attach or `read_file`). Extract **`ISSUE_ID`** from the `> **Issue:**` line (e.g. `FEAT-44`, `BUG-48`).
 
 2. **`backlog_issue`** — If `ISSUE_ID` is known, call with `issue_id` to pull **Files**, **Notes**, **Spec**, **Depends on**, **Acceptance**, and **`depends_on_status`** into context. If **`depends_on_status`** includes any entry with **`satisfied`: false** and **`soft_only`** false (hard dependency not met), **stop** and surface it to the user unless they explicitly override in chat.
 
 3. **`invariants_summary`** — Call **once** per review session if the spec implies **code** or **game subsystem** changes. Skip only when the spec is strictly documentation/IA hygiene and cannot affect runtime.
 
-4. **Domain routing** — From **Summary**, **Goals**, backlog **Files**, and **Notes**, list **1–3 domains** (e.g. roads, water, simulation, Save / load, UI). For each domain, call **`router_for_task`** with `domain` set to a string that matches the **agent-router** table vocabulary (e.g. `Road logic, placement, bridges`, `Save / load`, `Water, terrain, cliffs, shores`). If **`router_for_task`** returns **`no_matching_domain`** or weak matches, retry with **`files`** using repo-relative paths from the backlog **Files** line (**glossary** **territory-ia spec-pipeline layer B (TECH-62)**).
+4. **Domain routing** — From **Summary**, **Goals**, backlog **Files**, and **Notes**, list **1–3 domains** (e.g. roads, water, simulation, Save / load, UI). For each domain, call **`router_for_task`** with `domain` set to a string that matches the **agent-router** table vocabulary (e.g. `Road logic, placement, bridges`, `Save / load`, `Water, terrain, cliffs, shores`). If **`router_for_task`** returns **`no_matching_domain`** or weak matches, retry with **`files`** using repo-relative paths from the backlog **Files** line (**glossary** **territory-ia spec-pipeline layer B**).
 
 5. **`spec_section`** — For each routed reference spec, fetch **only** the sections the project spec implies (by **section** id, heading substring, or slug per MCP docs). Use **`max_chars`** to cap size. **Do not** read entire `.cursor/specs/*.md` files unless **`spec_outline`** shows you cannot target sections otherwise.
 
@@ -54,7 +54,7 @@ Run these steps **in order** unless the project spec is explicitly **pure doc hy
 
 - **Roads / streets / interstate / bridge / wet run** → ensure **roads-system** and **isometric-geography-system** slices (validation, **road stroke**, path costs) appear in the fetched set via **`router_for_task`** + **`spec_section`**.
 - **Water / HeightMap / shore / river / lake / water map** → **water-terrain-system** + relevant **geo** sections.
-- **JSON / schema / artifact / DTO / interchange** (especially **Save**-adjacent) → **persistence-system** (**Load pipeline**, **Save data** semantics); do **not** change on-disk **Save data** unless the issue explicitly requires it. Cross-check **TECH-21** program notes in **BACKLOG** when applicable.
+- **JSON / schema / artifact / DTO / interchange** (especially **Save**-adjacent) → **persistence-system** (**Load pipeline**, **Save data** semantics); do **not** change on-disk **Save data** unless the issue explicitly requires it. Cross-check **JSON interchange program** notes in **BACKLOG** when applicable.
 
 ### Impact preflight (optional)
 
@@ -76,8 +76,6 @@ Under **`## Open Questions (resolve before / during implementation)`** in `.curs
 
 ## Follow-up skills (planned)
 
-- **TECH-45** — Road modification guardrails.
-- **TECH-46** — Terrain / **HeightMap** / water / shore guardrails.
-- **TECH-47** — New **MonoBehaviour** manager wiring.
+Domain guardrail skills (roads, terrain/water, new managers) — see [`BACKLOG.md`](../../../BACKLOG.md).
 
-Use **this** skill first for **spec quality**; use **[`project-spec-implement`](../project-spec-implement/SKILL.md)** to run the **Implementation Plan** when the spec is ready; use **TECH-45** / **TECH-46** / **TECH-47** domain skills when **implementing** in those areas.
+Use **this** skill first for **spec quality**; use **[`project-spec-implement`](../project-spec-implement/SKILL.md)** to run the **Implementation Plan** when the spec is ready; use any shipped domain skills from **BACKLOG** when **implementing** in those areas.

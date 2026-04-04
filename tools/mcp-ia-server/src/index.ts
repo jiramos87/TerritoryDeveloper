@@ -17,13 +17,20 @@ import { registerRuleContent } from "./tools/rule-content.js";
 import { registerBacklogIssue } from "./tools/backlog-issue.js";
 import { registerSpecSections } from "./tools/spec-sections.js";
 import { registerProjectSpecCloseoutDigest } from "./tools/project-spec-closeout-digest.js";
-import { registerIsometricWorldToGrid } from "./tools/isometric-world-to-grid.js";
+import {
+  registerDesirabilityTopCells,
+  registerGeographyInitParamsValidate,
+  registerGridDistance,
+  registerGrowthRingClassify,
+  registerIsometricWorldToGrid,
+  registerPathfindingCostPreview,
+} from "./tools/compute/index.js";
 
 const server = new McpServer({
   name: "territory-ia",
-  version: "0.4.4",
+  version: "0.4.5",
   description:
-    "Information Architecture server for Territory Developer — exposes specs, rules, glossary, backlog issues, and architecture docs via MCP tools.",
+    "Information Architecture server for Territory Developer — exposes specs, rules, glossary, backlog issues, architecture docs, and computational helpers via MCP tools.",
 });
 
 const registry = buildRegistry();
@@ -41,6 +48,11 @@ registerBacklogIssue(server);
 registerSpecSections(server, registry);
 registerProjectSpecCloseoutDigest(server);
 registerIsometricWorldToGrid(server);
+registerGrowthRingClassify(server);
+registerGridDistance(server);
+registerPathfindingCostPreview(server);
+registerGeographyInitParamsValidate(server);
+registerDesirabilityTopCells(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

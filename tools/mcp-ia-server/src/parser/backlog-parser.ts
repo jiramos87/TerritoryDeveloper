@@ -7,6 +7,7 @@ import path from "node:path";
 import { splitLines } from "./markdown-parser.js";
 
 const BACKLOG_FILE = "BACKLOG.md";
+const BACKLOG_ARCHIVE_FILE = "BACKLOG-ARCHIVE.md";
 
 /** Checklist item with **ISSUE_ID** (BUG-37, FEAT-37b, TECH-01, …). */
 const CHECKLIST_HEADER =
@@ -202,8 +203,8 @@ export function isSoftDependencyMention(
 }
 
 /**
- * Resolve each cited id in a Depends on line against BACKLOG.md (open vs completed).
- * Ids not found in BACKLOG.md are `not_in_backlog` (e.g. archive-only or typo).
+ * Resolve each cited id in a Depends on line against BACKLOG.md then BACKLOG-ARCHIVE.md (open vs completed).
+ * Ids not found in either file are `not_in_backlog` (e.g. typo or removed id).
  */
 export function resolveDependsOnStatus(
   repoRoot: string,
@@ -232,11 +233,12 @@ export function resolveDependsOnStatus(
   return out;
 }
 
-export function parseBacklogIssue(
+function parseBacklogIssueFromFile(
   repoRoot: string,
   issueId: string,
+  relativePath: string,
 ): ParsedBacklogIssue | null {
-  const filePath = path.join(repoRoot, BACKLOG_FILE);
+  const filePath = path.join(repoRoot, relativePath);
   if (!fs.existsSync(filePath)) return null;
 
   const raw = fs.readFileSync(filePath, "utf8");
@@ -261,4 +263,14 @@ export function parseBacklogIssue(
     ...fieldParts,
     raw_markdown: blockLines.join("\n"),
   };
+}
+
+export function parseBacklogIssue(
+  repoRoot: string,
+  issueId: string,
+): ParsedBacklogIssue | null {
+  return (
+    parseBacklogIssueFromFile(repoRoot, issueId, BACKLOG_FILE) ??
+    parseBacklogIssueFromFile(repoRoot, issueId, BACKLOG_ARCHIVE_FILE)
+  );
 }

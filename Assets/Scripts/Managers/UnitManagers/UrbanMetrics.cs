@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Territory.Core;
 using Territory.Zones;
+using Territory.Utilities.Compute;
 
 namespace Territory.Simulation
 {
@@ -59,13 +60,6 @@ public struct RingStreetParams
 /// </summary>
 public class UrbanMetrics
 {
-    private const float MIN_URBAN_RADIUS = 20f;
-    private const float RADIUS_SCALE = 1.8f;
-
-    private const float INNER_BOUNDARY = 0.70f;
-    private const float MID_BOUNDARY = 1.00f;
-    private const float OUTER_BOUNDARY = 1.80f;
-
     private float centroidSumX;
     private float centroidSumY;
     private int urbanCellCount;
@@ -123,28 +117,21 @@ public class UrbanMetrics
     /// <summary>Effective urban radius for ring classification.</summary>
     public float GetUrbanRadius()
     {
-        float r = RADIUS_SCALE * Mathf.Sqrt(urbanCellCount / Mathf.PI);
-        return Mathf.Max(MIN_URBAN_RADIUS, r);
+        return UrbanGrowthRingMath.ComputeUrbanRadiusFromCellCount(urbanCellCount);
     }
 
     /// <summary>Returns the 3 ring boundary distances (at 70%, 100%, 180% of radius) for visualization.</summary>
     public float[] GetRingBoundaryDistances()
     {
-        float r = GetUrbanRadius();
-        return new[] { r * INNER_BOUNDARY, r * MID_BOUNDARY, r * OUTER_BOUNDARY };
+        return UrbanGrowthRingMath.GetRingBoundaryDistances(GetUrbanRadius());
     }
 
     /// <summary>Classifies a cell position by urban ring based on distance to centroid.</summary>
     public UrbanRing GetUrbanRing(Vector2 cellPos)
     {
         Vector2 centroid = GetCentroid();
-        float dist = Vector2.Distance(cellPos, centroid);
         float radius = GetUrbanRadius();
-
-        if (dist <= radius * INNER_BOUNDARY) return UrbanRing.Inner;
-        if (dist <= radius * MID_BOUNDARY) return UrbanRing.Mid;
-        if (dist <= radius * OUTER_BOUNDARY) return UrbanRing.Outer;
-        return UrbanRing.Rural;
+        return UrbanGrowthRingMath.ClassifyRing(cellPos.x, cellPos.y, centroid.x, centroid.y, radius);
     }
 
     /// <summary>Base zone probabilities (R, C, I) for the given ring.</summary>

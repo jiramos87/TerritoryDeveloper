@@ -127,7 +127,7 @@ Add tools only when they **reduce average tokens** or **prevent repeated mistake
 ## 8. Evolution paths
 
 1. **New tools** — Glossary keyword discovery, dependency graph, `search_docs` with BM25 — keep contracts backward-compatible when possible.
-2. **Database** — Ingest sections into SQL; keep tool **names** stable, swap implementation to query DB (see Territory **TECH-18** direction).
+2. **Database** — Ingest sections into SQL; keep tool **names** stable, swap implementation to query DB (see Territory [`BACKLOG.md`](../BACKLOG.md) for DB-backed IA direction).
 3. **Embeddings** — Hybrid: registry + slices for precision, retrieval API for recall.
 4. **CI** — Run `npm test` + verify script on pull requests touching specs or server code.
 
@@ -135,4 +135,4 @@ Add tools only when they **reduce average tokens** or **prevent repeated mistake
 
 ## 9. Summary
 
-The pattern is **not** “MCP instead of docs” — it is **MCP as a typed, low-token API** over the same Markdown source of truth. Invest once in **line-accurate parsing** and a **registry**; add tools incrementally; harden with **tests, verify script, aliases, and structured errors**. Territory Developer’s **TECH-17** series documents one full implementation path; this guide captures the reusable skeleton for any domain.
+The pattern is **not** “MCP instead of docs” — it is **MCP as a typed, low-token API** over the same Markdown source of truth. Invest once in **line-accurate parsing** and a **registry**; add tools incrementally; harden with **tests, verify script, aliases, and structured errors**. Territory Developer’s **territory-ia** package (`tools/mcp-ia-server/`) documents one full implementation path; this guide captures the reusable skeleton for any domain.

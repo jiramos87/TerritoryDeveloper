@@ -16,7 +16,7 @@
 
 > **Glossary index:** `glossary.md` cites this subsection as **sim §Rings**.
 
-Each tick, `UrbanCentroidService.RecalculateFromGrid` updates the **urban centroid** (development-weighted center of the city) and **ring metrics** — distance bands from that center. `AutoRoadBuilder` and `AutoZoningManager` use centroid and rings to bias growth (typically stronger near the core, weaker in outer rings; tuning in backlog e.g. FEAT-43). Ring logic is separate from the obsolete UrbanizationProposal system (see below).
+Each tick, `UrbanCentroidService.RecalculateFromGrid` updates the **urban centroid** (development-weighted center of the city) and **ring metrics** — distance bands from that center. `AutoRoadBuilder` and `AutoZoningManager` use centroid and rings to bias growth (typically stronger near the core, weaker in outer rings; tuning in [`BACKLOG.md`](../../BACKLOG.md)). Ring logic is separate from the obsolete UrbanizationProposal system (see below).
 
 ## System dependencies
 
@@ -29,7 +29,7 @@ Each tick, `UrbanCentroidService.RecalculateFromGrid` updates the **urban centro
 | `GrowthBudgetManager` | CityStats |
 | `UrbanCentroidService` | GridManager (reads cell data for centroid computation) |
 
-## Road reservation for AUTO zoning (BUG-47)
+## Road reservation for AUTO zoning
 
 Each tick, `AutoZoningManager` builds a set from `GridManager.GetRoadExtensionCells()` and `GetRoadAxialCorridorCells()` and does **not zone** those cells, so axial strips stay clear for `AutoRoadBuilder`. See geography spec §13.9.
 
@@ -41,7 +41,7 @@ Each tick, `AutoZoningManager` builds a set from `GridManager.GetRoadExtensionCe
 
 ## Obsolete system — UrbanizationProposal
 
-`UrbanizationProposalManager` and related proposal UI are **obsolete** — intentionally not called from `ProcessSimulationTick()`. **NEVER re-enable.** Full removal tracked as TECH-13 in `BACKLOG.md`.
+`UrbanizationProposalManager` and related proposal UI are **obsolete** — intentionally not called from `ProcessSimulationTick()`. **NEVER re-enable.** Full removal is tracked on [`BACKLOG.md`](../../BACKLOG.md); **glossary** **Urbanization proposal**.
 
 `UrbanCentroidService` and ring-based AUTO growth **remain supported** — they are NOT part of the obsolete proposal system.
 

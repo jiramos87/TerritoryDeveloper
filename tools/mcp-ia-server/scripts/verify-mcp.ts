@@ -458,14 +458,31 @@ async function main(): Promise<void> {
   ) as {
     issue_id?: string;
     error?: string;
+    status?: string;
+  };
+  if (bl38.error || bl38.issue_id !== "TECH-38" || bl38.status !== "open") {
+    throw new Error("backlog_issue TECH-38 failed (expected open row in BACKLOG.md)");
+  }
+
+  const bl39 = parseJsonFromToolResult(
+    await client.callTool({
+      name: "backlog_issue",
+      arguments: { issue_id: "TECH-39" },
+    }),
+  ) as {
+    issue_id?: string;
+    error?: string;
+    status?: string;
     depends_on_status?: Array<{ id?: string; satisfied?: boolean; soft_only?: boolean; status?: string }>;
   };
-  if (bl38.error || bl38.issue_id !== "TECH-38") {
-    throw new Error("backlog_issue TECH-38 failed");
+  if (bl39.error || bl39.issue_id !== "TECH-39" || bl39.status !== "completed") {
+    throw new Error("backlog_issue TECH-39 failed (expected completed row in BACKLOG-ARCHIVE.md)");
   }
-  const dep37 = bl38.depends_on_status?.find((r) => r.id === "TECH-37");
-  if (!dep37 || dep37.status !== "completed" || dep37.satisfied !== true || dep37.soft_only !== false) {
-    throw new Error("backlog_issue TECH-38 expected TECH-37 completed satisfied hard dep");
+  const dep38 = bl39.depends_on_status?.find((r) => r.id === "TECH-38");
+  if (!dep38 || dep38.status !== "open" || dep38.soft_only !== true || dep38.satisfied !== true) {
+    throw new Error(
+      "backlog_issue TECH-39 expected depends_on_status for soft TECH-38 (open, soft_only, satisfied)",
+    );
   }
 
   const blBad = parseJsonFromToolResult(

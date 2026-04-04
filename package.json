@@ -6,6 +6,7 @@
     "validate:all": "npm run validate:dead-project-specs && npm run test:ia && npm run validate:fixtures && npm run generate:ia-indexes -- --check",
     "validate:dead-project-specs": "node tools/validate-dead-project-spec-paths.mjs",
     "validate:fixtures": "npm --prefix tools/mcp-ia-server run validate:fixtures",
+    "validate:geography-init-report": "node tools/scripts/validate-geography-init.mjs",
     "generate:ia-indexes": "cd tools/mcp-ia-server && npx tsx scripts/generate-ia-indexes.ts",
     "test:ia": "npm --prefix tools/mcp-ia-server test",
     "db:migrate": "npm --prefix tools/postgres-ia run migrate",

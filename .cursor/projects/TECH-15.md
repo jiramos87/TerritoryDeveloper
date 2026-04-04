@@ -3,7 +3,7 @@
 > **Issue:** [TECH-15](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-02
-> **Last updated:** 2026-04-02
+> **Last updated:** 2026-04-04 (**TECH-39** **carryover:** **top**-**method** **ranking** **/** **optional** **`ProfilerMarker`** **on** **geography**-**hot** **paths**)
 
 **Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — tasks **3**, **22**.
 
@@ -69,6 +69,7 @@ No player-visible behavior change when profiler is **off**.
 | Date | Decision | Rationale | Alternatives considered |
 |------|----------|-----------|------------------------|
 | 2026-04-02 | Spec created from agent-tooling roadmap | Tracks task 3 + 22 | — |
+| 2026-04-04 | **Former** **TECH-39** **§7.11.1** **geography** **slice** **merged** **here** | **Profiler** **JSON** **is** **the** **right** **home** **for** **“top** **methods**” **under** **GeographyManager** **/** **TerrainManager** **/** **water** **/** **rivers** | **Avoid** **duplicating** **perf** **checklists** **in** **TECH-39** |
 
 ## 7. Implementation Plan
 
@@ -82,6 +83,8 @@ No player-visible behavior change when profiler is **off**.
 
 - [ ] Align phase names with hotspots named in **TECH-15** backlog.
 - [ ] Optional read-only samples for **HeightMap**/**cell** height agreement on N random cells.
+- [ ] (**TECH-39** **§ Completed** **relocation**) From Deep Profile / profiler JSON exports: list top C# methods attributed to geography init (`GeographyManager`, `TerrainManager`, `WaterManager`, `ProceduralRiverGenerator`, `ForestManager`, `InterstateManager` as applicable).
+- [ ] (Optional) `ProfilerMarker` (or scoped `BeginSample`) on geography-hot paths only when a baseline shows regression (do not add markers without numbers).
 
 ## 8. Acceptance Criteria
 

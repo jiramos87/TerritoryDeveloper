@@ -1,8 +1,7 @@
-# Water junction merge — implementation plan (BUG-45)
+# Water junction merge — implementation plan (historical)
 
-> **Issue:** [BUG-45](../BACKLOG.md)  
-> **Canonical geography:** [`.cursor/specs/isometric-geography-system.md`](../.cursor/specs/isometric-geography-system.md) (§12.7 after update)  
-> **Status:** **shipped** — Pass A/B, lake-at-step exclusions, full-cardinal cascades (incl. mirror N/W lower pool), `SelectPerpendicularWaterCornerPrefabs`, lake–river rim fallback; see `BACKLOG.md` **[BUG-45](../BACKLOG.md)** (completed 2026-03-27) and spec §12.7 / §5.6.2.
+> **Canonical geography:** [`.cursor/specs/isometric-geography-system.md`](../.cursor/specs/isometric-geography-system.md) (§12.7, §5.6.2)  
+> **Status:** **shipped** (2026-03-27) — Pass A/B, lake-at-step exclusions, full-cardinal cascades (incl. mirror N/W lower pool), `SelectPerpendicularWaterCornerPrefabs`, lake–river rim fallback. **Durable trace:** [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) (search **water junction** / junction merge).
 
 ## 1. Goal
 
@@ -68,7 +67,7 @@ Fix broken visuals where two **registered** water cells meet on a **cardinal** e
 - After merge, **upper** cells still have **`S_high`**. Ensure **south/east** water cliff stacks spawn on:  
   - open **upper** water toward **lower** water (existing), and  
   - **upper** cells classified as **water-shore / diagonal** at the junction, when the **visible** face still needs a **vertical** drop to the lower surface.  
-- For **`ΔS > 1`**, keep **`segmentCount`** tied to surface delta; **underwater cull** and sort cap behavior must match §5.6.2 / BUG-40.
+- For **`ΔS > 1`**, keep **`segmentCount`** tied to surface delta; **underwater cull** and sort cap behavior must match §5.6.2 and prior water-cascade rules in **geo** / **water-terrain-system**.
 
 ### Phase 6 — Terrain and cell refresh
 
@@ -109,4 +108,4 @@ When an **upper** cell touches **several** lower-surface neighbors with differen
 ## 7. Completion criteria
 
 - §12.7 and this plan match shipped behavior.  
-- **[BUG-45](../BACKLOG.md)** marked **Completed** in `BACKLOG.md` (2026-03-27) after user verification in Unity (per project workflow).
+- Row archived 2026-03-27 after user verification in Unity (per project workflow); see [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).

@@ -1,24 +1,22 @@
 # PostgreSQL + Interchange JSON patterns (B1, B3, P5)
 
-**Status:** Durable documentation (migrated from completed **TECH-44a** — see [`BACKLOG.md`](../BACKLOG.md) **§ Completed**). **Merged Postgres program:** **TECH-44** (umbrella — completed — [`BACKLOG.md`](../BACKLOG.md) **§ Completed** **TECH-44**); **extension IDs** and execution order are in **Program extension mapping (E1–E3)** below. **First DB milestone:** **TECH-44b** **§ Completed**; **E1** **§ Completed** (**TECH-44c**).
+**Status:** Durable architecture reference. **Charter trace** for the **Postgres** + **interchange** program lives in [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md). **Open** follow-ups live in [`BACKLOG.md`](../BACKLOG.md). This file does **not** duplicate backlog ids — use those two files for row-level history.
 
 This document defines **architecture patterns** for **PostgreSQL** and HTTP/sync clients **without** changing player **Save data**. Canonical separation: [`.cursor/specs/persistence-system.md`](../.cursor/specs/persistence-system.md) (**Save**, **Load pipeline order**); [`docs/schemas/README.md`](schemas/README.md) (**Interchange JSON** **`artifact`** / **`schema_version`**).
 
 ## Program extension mapping (E1–E3)
 
-Backlog mapping for the completed **TECH-44** program (charter removed after closure). **Open** rows remain in [`BACKLOG.md`](../BACKLOG.md) until shipped or superseded.
+| ID | Direction | Trace |
+|----|-----------|-------|
+| **E1** | **Repro bundle registry** | Shipped — [`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md) (**Dev repro bundle registry**); glossary **Dev repro bundle**; [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) |
+| **E2** | **Schema validation history** | Open — [`BACKLOG.md`](../BACKLOG.md) |
+| **E3** | **Agent patch proposal staging** | Open — [`BACKLOG.md`](../BACKLOG.md) |
 
-| ID | Direction | Backlog row | Durable trace |
-|----|-----------|-------------|---------------|
-| **E1** | **Repro bundle registry** | **TECH-44c** **§ Completed** | [`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md) (**Dev repro bundle registry**); glossary **Dev repro bundle** |
-| **E2** | **Schema validation history** | **TECH-53** | — |
-| **E3** | **Agent patch proposal staging** | **TECH-54** | — |
+**Editor export registry:** Shipped — glossary **Editor export registry**; **Editor** **Reports** → **Postgres** (one **B1** table per export family + **`document jsonb`** full body, **DB-first** with **`tools/reports/`** fallback): migrations **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.sql`**; **`register-editor-export.mjs`** **`--document-file`** ([`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md)); [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).
 
-**Editor export registry (completed):** **TECH-55** + **TECH-55b** **§ Completed** — [`BACKLOG.md`](../BACKLOG.md); glossary **Editor export registry**; **Editor** **Reports** → **Postgres** (one **B1** table per export family + **`document jsonb`** full body, **DB-first** with **`tools/reports/`** fallback): migrations **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.sql`**; **`register-editor-export.mjs`** **`--document-file`** ([`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md) **Editor export registry**).
+**Phased delivery (core):** Patterns in this document → first **Postgres** **IA** DDL ([`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md), **`db/migrations/`**) → **E1** **`dev_repro_bundle`**. Out-of-charter follow-ups remain on [`BACKLOG.md`](../BACKLOG.md).
 
-**Phased delivery (core — all § Completed):** **TECH-44a** (patterns in this document) → **TECH-44b** ([`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md), **`db/migrations/`**) → **TECH-44c** (**E1** **`dev_repro_bundle`**). **TECH-53** / **TECH-54** remain out-of-charter follow-ups (see [`BACKLOG.md`](../BACKLOG.md)).
-
-**Out of scope for this program:** Player **Save data** migration; **Markdown** replacement (**TECH-18**); **B2** append-only lines (**TECH-43**).
+**Out of scope for this program:** Player **Save data** migration; **Markdown** IA replacement (open backlog); **B2** append-only **JSON Lines** (open backlog).
 
 ## Persistence and interchange (guardrails)
 
@@ -26,7 +24,7 @@ Backlog mapping for the completed **TECH-44** program (charter removed after clo
 |-------|-----------|--------|
 | Player **Save data** / **Load pipeline** | Unity runtime + **persistence-system** | Do not use **Postgres** as a **Load pipeline** input without a dedicated **BACKLOG** migration issue. |
 | **Interchange JSON** | **`artifact`** + optional **`schema_version`**; JSON Schema under `docs/schemas/` | Editor exports, MCP fixtures, init config — not the binary **Save** file format. |
-| **Postgres** (**TECH-44b** onward) | **SQL** names and migrations | Keep **SQL** identifiers in a **separate** namespace from interchange field names (see **Naming: SQL vs interchange** below). |
+| **Postgres** (dev **IA** tables onward) | **SQL** names and migrations | Keep **SQL** identifiers in a **separate** namespace from interchange field names (see **Naming: SQL vs interchange** below). |
 
 Any **B1** row that mirrors interchange shape inside **JSONB** should document expected top-level keys (`artifact`, `schema_version`, domain body) when the blob round-trips through the same validators as file-based interchange.
 
@@ -37,7 +35,7 @@ Any **B1** row that mirrors interchange shape inside **JSONB** should document e
 **Illustrative example (not a migration mandate):**
 
 ```sql
--- Example only — table/column names are product decisions under TECH-44b.
+-- Example only — table/column names are product decisions under the Postgres IA migrations.
 CREATE TABLE city_snapshot (
   id              bigserial PRIMARY KEY,
   save_slot       text NOT NULL,
@@ -52,7 +50,7 @@ CREATE INDEX city_snapshot_player_slot ON city_snapshot (player_id, save_slot);
 **Rules of thumb:**
 
 - **Scalars** for: identity, tenancy, **updated_at**, slot keys, flags used in **WHERE** / **JOIN** daily.
-- **JSONB** for: document-shaped **interchange** bodies, partial **CellData**-like slices, **FEAT-47** / **FEAT-48** experimental fields — document expected top-level keys when mirroring **Interchange JSON** policy.
+- **JSONB** for: document-shaped **interchange** bodies, partial **CellData**-like slices, **multipolar rings** / **water volume** experimental fields (see [`planned-domain-ideas.md`](planned-domain-ideas.md)) — document expected top-level keys when mirroring **Interchange JSON** policy.
 - **Split tables** when: secondary indexes on JSON paths become hot, referential integrity between aggregates matters, or row size hurts **VACUUM** / backup SLAs.
 
 ## B3 — Idempotent upsert envelope (standard)
@@ -78,11 +76,11 @@ CREATE INDEX city_snapshot_player_slot ON city_snapshot (player_id, save_slot);
 **Normative rules:**
 
 - **`artifact`**: logical model id for the **patch**. Consumers map **`artifact` + `schema_version`** to validation (**JSON Schema**, **Zod**, etc.) — same branching idea as **Interchange JSON** in [`docs/schemas/README.md`](schemas/README.md).
-- **`natural_key`**: stable business identity for idempotency (composite unique in the consumer’s store, e.g. `(artifact, schema_version, natural_key)` or tenant-scoped variant). Conflict policy and HTTP **Idempotency-Key** vs body **`natural_key`** are recorded when the first implementing service ships (**TECH-44b** / **TECH-44c**).
+- **`natural_key`**: stable business identity for idempotency (composite unique in the consumer’s store, e.g. `(artifact, schema_version, natural_key)` or tenant-scoped variant). Conflict policy and HTTP **Idempotency-Key** vs body **`natural_key`** are recorded when the first implementing service ships (see open [`BACKLOG.md`](../BACKLOG.md) rows).
 - **`patch`**: payload only; no **SQL** or raw **DDL** in interchange JSON.
 - **Replay:** duplicate-delivery semantics (**at-least-once** vs **409** / **412**) — document in the implementing issue’s **Decision Log**, not here.
 
-**B2** (append-only **JSON Lines**) remains **[TECH-43](../BACKLOG.md)** backlog-only (no spec until scheduled).
+**B2** (append-only **JSON Lines**) remains **backlog-only** until scheduled (see [`BACKLOG.md`](../BACKLOG.md)).
 
 ## P5 — Streaming and large documents
 
@@ -94,7 +92,7 @@ CREATE INDEX city_snapshot_player_slot ON city_snapshot (player_id, save_slot);
 
 | Approach | When |
 |----------|------|
-| **NDJSON** / **JSON Lines** | Append-only logs (**TECH-43**). |
+| **NDJSON** / **JSON Lines** | Append-only logs (open backlog). |
 | Chunked files | Split by **chunk** bounds (same idea as **`terrain_cell_chunk`**) + manifest. |
 | **Utf8JsonReader** (.NET) / streaming **JSON** APIs | Large files on game-adjacent services without full DOM load. |
 | **Pagination** / **cursor** HTTP | API returns windows; complements **B3**. |
@@ -103,20 +101,20 @@ CREATE INDEX city_snapshot_player_slot ON city_snapshot (player_id, save_slot);
 
 ## Naming: SQL vs interchange
 
-| Concept | Interchange JSON | SQL / migrations (**TECH-44b**) |
+| Concept | Interchange JSON | SQL / migrations (Postgres **IA**) |
 |---------|------------------|----------------------------------|
 | Logical model id | **`artifact`** (string) | Prefer **not** a column named `artifact` unless it stores that string literally; consider `interchange_kind`, `document_type`, or encode in **JSONB** only. |
 | Consumer branching integer | **`schema_version`** | `interchange_revision`, `payload_version`, or row **`schema_version`** if the team agrees it mirrors interchange semantics. |
 | Player save blob | N/A | **GameSaveData** pipeline — not this document. |
 
-## FEAT-47 / FEAT-48 (field names only, no behavior)
+## Multipolar rings / water volume (field names only, no behavior)
 
-- **FEAT-47:** Multipolar **urban growth rings** — optional keys inside **B1** payloads for experiment metadata only (e.g. centroid ids, ring indices). Does **not** change **AUTO** pipeline or **Rings** behavior.
-- **FEAT-48:** **Water body** / **surface height (S)** — optional keys for scenario ids and measured samples; **Water map data** and live **Water map** authority remain in Unity **persistence-system** until a future issue explicitly migrates them.
+- **Multipolar urban growth rings:** optional keys inside **B1** payloads for experiment metadata only (e.g. centroid ids, ring indices). Does **not** change **AUTO** pipeline or **Rings** behavior.
+- **Water body / surface height (S):** optional keys for scenario ids and measured samples; **Water map data** and live **Water map** authority remain in Unity **persistence-system** until a future issue explicitly migrates them.
 
 ## Related pointers
 
-- [`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md) — first **Postgres** **IA** tables (**TECH-44b** completed — [`BACKLOG.md`](../BACKLOG.md) **§ Completed**); **E1** **`dev_repro_bundle`** registry (**TECH-44c**) with **`artifact`**: `dev_repro_bundle` inside **`payload jsonb`**; migrations under **`db/migrations/`**.
+- [`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md) — first **Postgres** **IA** tables (charter trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md)); **E1** **`dev_repro_bundle`** registry with **`artifact`**: `dev_repro_bundle` inside **`payload jsonb`**; migrations under **`db/migrations/`**.
 - [`projects/ia-driven-dev-backend-database-value.md`](../projects/ia-driven-dev-backend-database-value.md) — workflow mapping.
-- [`projects/TECH-21-json-use-cases-brainstorm.md`](../projects/TECH-21-json-use-cases-brainstorm.md) — **G1** / **G2**, versioning **FAQ**.
+- [`projects/json-use-cases-brainstorm.md`](../projects/json-use-cases-brainstorm.md) — **G1** / **G2**, versioning **FAQ**.
 - **Glossary:** **Interchange JSON (artifact)**, **Save data**, **Load pipeline order**, **Water map data**, **CellData**, **Postgres interchange patterns (B1, B3, P5)**.

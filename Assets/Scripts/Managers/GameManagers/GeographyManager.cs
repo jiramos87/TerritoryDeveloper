@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using System.Collections.Generic;
 using Territory.Core;
@@ -19,6 +21,7 @@ namespace Territory.Geography
 /// terrain height, water bodies (optional lakes/sea, optional FEAT-38 rivers, optional test river), and forests.
 /// Inspector toggles: <see cref="generateStandardWaterBodies"/>, <see cref="generateProceduralRiversOnInit"/>, <see cref="generateTestRiverOnInit"/>, <see cref="useFlatTerrainOnNewGame"/>.
 /// Optional interchange: <see cref="loadGeographyInitParamsFromStreamingAssets"/> loads <c>geography_init_params</c> from StreamingAssets (TECH-41).
+/// Diagnostics: <see cref="BuildGeographyInitReportJson"/> for TECH-39 harness export (<c>tools/reports/last-geography-init.json</c>).
 /// </summary>
 public class GeographyManager : MonoBehaviour
 {
@@ -66,6 +69,9 @@ public class GeographyManager : MonoBehaviour
     public bool loadGeographyInitParamsFromStreamingAssets = false;
     [Tooltip("Path relative to StreamingAssets (e.g. Config/geography-default.json).")]
     public string geographyInitParamsRelativePath = "Config/geography-default.json";
+
+    /// <summary>Last successful <c>geography_init_params</c> load this session (for harness export). Null when interchange load is off or failed.</summary>
+    private GeographyInitParamsDto lastLoadedGeographyInitParams;
 
     /// <summary>Advisory <c>map</c> from last successful interchange load (for dimension mismatch warning).</summary>
     private GeographyInitMapDto geographyInitMapAdvisory;
@@ -201,6 +207,7 @@ public class GeographyManager : MonoBehaviour
 #endif
         geographyInitMapAdvisory = null;
         riversEnabledFromInterchange = null;
+        lastLoadedGeographyInitParams = null;
         try
         {
             if (!loadGeographyInitParamsFromStreamingAssets)
@@ -218,6 +225,7 @@ public class GeographyManager : MonoBehaviour
                 return;
             }
 
+            lastLoadedGeographyInitParams = dto;
             MapGenerationSeed.SetSessionMasterSeed(dto.seed);
             if (dto.rivers != null)
                 riversEnabledFromInterchange = dto.rivers.enabled;
@@ -248,6 +256,49 @@ public class GeographyManager : MonoBehaviour
             DebugHelper.LogWarning(
                 $"GeographyManager: Interchange map ({geographyInitMapAdvisory.width}x{geographyInitMapAdvisory.height}) does not match grid ({gridManager.width}x{gridManager.height}). Interchange map is advisory only (TECH-41).");
         }
+    }
+
+    /// <summary>Removes <c>interchange_snapshot_json</c> when Unity <see cref="JsonUtility"/> emitted <c>""</c> for a null string (we want the key omitted).</summary>
+    private static readonly Regex StripEmptyInterchangeSnapshotJsonProperty = new Regex(
+        @"\r?\n[ \t]*""interchange_snapshot_json""\s*:\s*"""",?\s*|,\s*""interchange_snapshot_json""\s*:\s*""""",
+        RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// JSON snapshot for TECH-39 geography harness (<c>tools/reports/last-geography-init.json</c>). Use in Play Mode after init; not Save data.
+    /// </summary>
+    public string BuildGeographyInitReportJson()
+    {
+        MapGenerationSeed.EnsureSessionMasterSeed();
+        var root = new GeographyInitReportRootDto
+        {
+            artifact = "geography_init_report",
+            schema_version = 1,
+            exported_utc_unix_seconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            master_seed = MapGenerationSeed.MasterSeed,
+            interchange_file_was_applied = lastLoadedGeographyInitParams != null,
+            interchange_snapshot_json = lastLoadedGeographyInitParams != null
+                ? JsonUtility.ToJson(lastLoadedGeographyInitParams)
+                : null,
+            map_width = gridManager != null ? gridManager.width : 0,
+            map_height = gridManager != null ? gridManager.height : 0,
+            generate_standard_water_bodies = generateStandardWaterBodies,
+            procedural_rivers_enabled_effective = GetEffectiveProceduralRiversOnInit(),
+            generate_test_river_on_init = generateTestRiverOnInit,
+            forest_coverage_percentage = GetForestCoverageForReport(),
+            notes = "Not Save data. interchange_snapshot_json set when StreamingAssets geography_init_params loaded successfully this pipeline run."
+        };
+        string json = JsonUtility.ToJson(root, true);
+        if (lastLoadedGeographyInitParams == null)
+            json = StripEmptyInterchangeSnapshotJsonProperty.Replace(json, string.Empty);
+        return json;
+    }
+
+    private float GetForestCoverageForReport()
+    {
+        if (forestManager == null)
+            return 0f;
+        var map = forestManager.GetForestMap();
+        return map != null ? map.GetForestCoveragePercentage() : 0f;
     }
 
     /// <summary>

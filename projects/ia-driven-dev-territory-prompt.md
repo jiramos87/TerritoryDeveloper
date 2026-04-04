@@ -1,8 +1,8 @@
 # AI-assisted development for Territory Developer (spec-driven + agents + territory-ia)
 
-**Purpose:** English adaptation of the prompt in [`ia-driven-dev.md`](ia-driven-dev.md) for **this repository**: canonical vocabulary (glossary + specs), **territory-ia** MCP, `AGENTS.md`, **reference specs** vs **project specs**, and the game’s technical reality (Unity 2D isometric, **GridManager**, **Save data**, no PostgreSQL in the product core until **TECH-44b**/**c** land).
+**Purpose:** English adaptation of the prompt in [`ia-driven-dev.md`](ia-driven-dev.md) for **this repository**: canonical vocabulary (glossary + specs), **territory-ia** MCP, `AGENTS.md`, **reference specs** vs **project specs**, and the game’s technical reality (Unity 2D isometric, **GridManager**, **Save data**). **Postgres** in this repo is **dev IA** only ([`docs/postgres-ia-dev-setup.md`](../docs/postgres-ia-dev-setup.md)) — not player **Save data**.
 
-**Sources consulted (territory-ia):** `invariants_summary`, `router_for_task` (save/load, simulation, unity), `glossary_discover` / `glossary_lookup`, `spec_section` (**unity-development-context** section 10), `backlog_issue` (e.g. **TECH-36** — open **Agent** lane row).
+**Sources consulted (territory-ia):** `invariants_summary`, `router_for_task` (save/load, simulation, unity), `glossary_discover` / `glossary_lookup`, `spec_section` (**unity-development-context** section 10), `backlog_issue` for the active row you are implementing.
 
 ---
 
@@ -13,7 +13,7 @@
 | **Behavior source of truth** | Abstract specs | [`.cursor/specs/`](.cursor/specs/glossary.md) (canonical geo: `isometric-geography-system.md`) + [`glossary.md`](.cursor/specs/glossary.md) |
 | **Issues and human pipeline** | Issues + generic cron | [`BACKLOG.md`](BACKLOG.md) (`BUG-` / `FEAT-` / `TECH-` / …); skills [`.cursor/skills/project-spec-kickoff`](.cursor/skills/project-spec-kickoff/SKILL.md) and [project-spec-implement](.cursor/skills/project-spec-implement/SKILL.md) |
 | **MCP** | Generic tools + skills | **territory-ia** (`backlog_issue`, `spec_section`, `glossary_*`, `router_for_task`, `invariants_summary`, …) — see [`docs/mcp-ia-server.md`](../docs/mcp-ia-server.md) |
-| **Persistence / DB** | PostgreSQL in the example | **Save data** and **Load pipeline** in Unity runtime ([`persistence-system.md`](../.cursor/specs/persistence-system.md)); **JSON program (TECH-21)** **§ Completed** → **TECH-40** / **41** / **TECH-44a** ([`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md), **glossary**); **TECH-44** (**TECH-44b**/**c**) for Postgres + first dev rows |
+| **Persistence / DB** | PostgreSQL in the example | **Save data** and **Load pipeline** in Unity runtime ([`persistence-system.md`](../.cursor/specs/persistence-system.md)); **JSON interchange program** + [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md) + **glossary**; **Postgres** dev tables per [`docs/postgres-ia-dev-setup.md`](../docs/postgres-ia-dev-setup.md) |
 | **Runtime → agent exposure** | HTTP API, WebSockets, etc. (idea) | **Already:** Editor menus **Territory Developer → Reports** → JSON/Markdown export under `tools/reports/` (**Agent context**, **Sorting debug**) — [`unity-development-context.md`](../.cursor/specs/unity-development-context.md) section 10 |
 | **Architecture risks** | ECS, generic control loop | Strict **invariants**: `HeightMap[x,y]` == `Cell.height`; **roads** via preparation family → `PathTerraformPlan` + Phase-1 + `Apply`; no new singletons; no `gridArray` / `cellArray` outside **GridManager** — use **`GetCell(x, y)`** |
 
@@ -42,7 +42,7 @@ You are assisting on **Territory Developer**: Unity 2D isometric city-builder (C
 
 **Specs:**
 - Permanent behavior: `.cursor/specs/` only.
-- Active feature/bug specs: `.cursor/projects/{ISSUE_ID}.md` from template; close by migrating lessons to canonical docs.
+- Active feature/bug specs: `.cursor/projects/{ISSUE_ID}.md` from template; close by migrating lessons to canonical docs, archiving the **BACKLOG** row, and purging the closed id from durable docs (**project-spec-close** skill).
 
 **Runtime → agent friction reduction:**
 - Prefer **Editor** exports: **Territory Developer → Reports → Export Agent Context** → `tools/reports/agent-context-*.json` (bounded **grid** sample: **Cell**, **HeightMap**, **WaterMap** fields per spec).
@@ -50,7 +50,7 @@ You are assisting on **Territory Developer**: Unity 2D isometric city-builder (C
 
 **Testing:** Prefer **Unity Test Framework** where added; align tests with spec acceptance and invariants. No broad test suite is assumed today — propose minimal tests per change.
 
-**JSON / interchange program:** Respect **JSON program (TECH-21)** **§ Completed** and children **TECH-40**, **TECH-41**, **TECH-44a** (completed — [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md), **glossary**); **Postgres** program **TECH-44** (**TECH-44b**, **TECH-44c**); see `projects/TECH-21-json-use-cases-brainstorm.md` for snapshot / **cell** chunk / **Geography initialization** ideas.
+**JSON / interchange:** Respect **JSON interchange program** + [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md) + **glossary**; see [`projects/json-use-cases-brainstorm.md`](json-use-cases-brainstorm.md) for snapshot / **cell** chunk / **Geography initialization** ideas.
 
 Deliver: concrete file paths, spec citations, and changes that respect the above.
 ```
@@ -62,12 +62,12 @@ Deliver: concrete file paths, spec citations, and changes that respect the above
 ### 3.1 Automated testing and validation
 
 - **At which pipeline stage should tests integrate?**  
-  After **enriching** the **project spec** and **before** treating implementation as done: the issue **Acceptance** (and spec sections) should map to executable checks. In repo CI, **JSON Schema** checks (**TECH-40**) are already a validation layer *outside* Unity; inside Unity, the natural point is **post-implementation** and **regression** before moving an issue to **Completed** (human confirmation only, per `AGENTS.md`).
+  After **enriching** the **project spec** and **before** treating implementation as done: the issue **Acceptance** (and spec sections) should map to executable checks. In repo **CI**, **JSON Schema** + fixtures are a validation layer *outside* Unity; inside Unity, the natural point is **post-implementation** and **regression** before archiving the row (human confirmation only, per `AGENTS.md`).
 
 - **Which test types fit best?**  
   - **Unit tests (Edit Mode):** pure logic or extracted helpers (aligned with *not* bloating **GridManager** — extract testable helper classes).  
   - **Play Mode tests:** scenes with initialized **GridManager**, **Road validation pipeline**, **Water map**, **Load pipeline** (higher cost).  
-  - **“Simulation testing”:** pin **simulation tick** / **AUTO** to reproducible scenarios (**TECH-16** / harness JSON in related backlog items) — fits the **JSON** program and fixtures; it does not replace specs.
+  - **“Simulation testing”:** pin **simulation tick** / **AUTO** to reproducible scenarios (harness JSON on [`BACKLOG.md`](BACKLOG.md)) — fits the **JSON** interchange program and fixtures; it does not replace specs.
 
 - **TDD + spec-driven + agents:**  
   Write **Acceptance** in **BACKLOG.md** and criteria in `.cursor/projects/{ISSUE_ID}.md` in canonical vocabulary first; then failing tests; then implementation. Agents use **territory-ia** so they do not “invent” rules already in **geo** section 13 (roads) or **simulation-system**.
@@ -80,8 +80,8 @@ Deliver: concrete file paths, spec citations, and changes that respect the above
 ### 3.3 Exposing runtime state
 
 - **Techniques already specified:** machine-readable export in **unity-development-context** section 10 (`agent-context` JSON, `sorting-debug` Markdown).  
-- **Backlog-aligned extension:** **G1** / **G2** in [`TECH-21-json-use-cases-brainstorm.md`](TECH-21-json-use-cases-brainstorm.md) (**world_snapshot**, **cell_chunk**) — always **read-only** and respecting **HeightMap** / **Cell.height** consistency.  
-- **HTTP / WebSockets:** candidates for **TECH-44** program (**B3**/**P5**), not an immediate requirement if Editor + files + MCP cover IDE-side AI.
+- **Backlog-aligned extension:** **G1** / **G2** in [`json-use-cases-brainstorm.md`](json-use-cases-brainstorm.md) (**world_snapshot**, **cell_chunk**) — always **read-only** and respecting **HeightMap** / **Cell.height** consistency.  
+- **HTTP / WebSockets:** candidates for **Postgres interchange patterns** (**B3**/**P5**), not an immediate requirement if Editor + files + MCP cover IDE-side AI.
 
 ### 3.4 Unity ↔ AI integration (IDE / agents)
 
@@ -94,21 +94,21 @@ Deliver: concrete file paths, spec citations, and changes that respect the above
 ### 3.5 Tools and ecosystem
 
 - **Unity Test Framework** — appropriate when adding tests.  
-- **territory-ia** + **TECH-40** indexes (spec/glossary) — already in the repo.  
+- **territory-ia** + generated **spec**/**glossary** indexes — already in the repo.  
 - **Zod / JSON Schema** — CI validation for payloads (**Geography initialization**, etc.).  
 - **Instrumentation:** do not duplicate the **Sorting order** formula outside **isometric-geography-system** section 7; use public **TerrainManager** APIs where the spec says so.
 
 ### 3.6 Custom tooling design (complexity and architecture)
 
 - **Complexity:** exporting bounded reads (JSON/Markdown) is **low**; a remote **control loop** (actions on the runtime) is **high** (security, determinism, **invariants**).  
-- **Architecture recommended here:** **event-driven** in the sense that “player action / simulation produces bounded effects”; **client-server** only with an explicit backend (**TECH-44b**/**c**). **ECS** is not the dominant documented model; prefer **managers** + testable helpers.
+- **Architecture recommended here:** **event-driven** in the sense that “player action / simulation produces bounded effects”; **client-server** only with an explicit backend (see **Postgres** / interchange docs for dev patterns). **ECS** is not the dominant documented model; prefer **managers** + testable helpers.
 
 ---
 
 ## 4. End goal (rephrased for Territory Developer)
 
 - Agents **understand** state via **territory-ia**, partial specs, and **Agent context** / **Sorting debug** exports.  
-- They **validate** implementations against **invariants**, **Road validation pipeline**, **Save data** / **Load pipeline**, and **JSON** schemas from **JSON program (TECH-21)** **§ Completed** (`docs/schemas/`, **glossary**).  
+- They **validate** implementations against **invariants**, **Road validation pipeline**, **Save data** / **Load pipeline**, and **JSON** schemas under `docs/schemas/` (**glossary** **Interchange JSON**).  
 - They **propose changes** to code and temporary specs (`.cursor/projects/`) without violating guardrails (**GridManager**, **roads**, **water** / **shore**).
 
 ---
@@ -139,9 +139,9 @@ Deliver: concrete file paths, spec citations, and changes that respect the above
 
 ### 5.6 **TDD + spec** for **Geography initialization**
 
-- **Example:** New fixture `geography-init-params.good.json` under `docs/schemas/fixtures/` breaks CI if the schema changes; then **parse-once** code (**TECH-41**) consuming the DTO.
+- **Example:** New fixture `geography-init-params.good.json` under `docs/schemas/fixtures/` breaks CI if the schema changes; then **parse-once** C# consuming the DTO.
 
-### 5.7 Snapshot **G1** (**JSON program (TECH-21)** brainstorm)
+### 5.7 Snapshot **G1** (JSON interchange brainstorm)
 
 - **Example:** Dev menu “Export **world_snapshot** (32×32 bounds)” writes JSON with partial **cells** and water-body summary; external agent validates with **Zod** and flags inconsistent **Junction** data.
 
@@ -161,17 +161,17 @@ Deliver: concrete file paths, spec citations, and changes that respect the above
 
 - **Example:** GitHub Actions workflow running `npm test` in `tools/mcp-ia-server` + **JSON Schema** validation for `docs/schemas/`; optional Unity tests when the project adds them.
 
-### 5.12 Remote “control loop” (future, **TECH-44** program)
+### 5.12 Remote “control loop” (future)
 
 - **Example:** Dev service accepting only idempotent commands (“simulate **simulation tick** N”, “export snapshot”) — no direct **HeightMap** writes without going through **Terraform plan** / managers.
 
 ### 5.13 Deriving new issues (step 7 of the original pipeline)
 
-- **Example:** When closing a spec, the agent proposes child **TECH-** or **BUG-** rows in **BACKLOG.md** when the **Decision Log** leaves debt (e.g. missing **InvalidateRoadCache** on a path).
+- **Example:** When closing a spec, the agent proposes child rows in **BACKLOG.md** when the **Decision Log** leaves debt (e.g. missing **InvalidateRoadCache** on a path).
 
 ### 5.14 Skill **project-spec-kickoff** + MCP
 
-- **Example:** For **FEAT-YY**, the human runs kickoff; the agent runs `glossary_discover` with English keywords (“growth ring”, “AUTO”) and rewrites **Open Questions** using only canonical terms.
+- **Example:** For a new **FEAT-** row, the human runs kickoff; the agent runs `glossary_discover` with English keywords (“growth ring”, “AUTO”) and rewrites **Open Questions** using only canonical terms.
 
 ### 5.15 Skill **project-spec-implement**
 
@@ -185,8 +185,8 @@ Deliver: concrete file paths, spec citations, and changes that respect the above
 - [ ] Did you read **invariants** before changing **roads** / **water** / **HeightMap**?  
 - [ ] Are product terms in canonical English in **Open Questions** / **Acceptance**?  
 - [ ] Is there `@tools/reports/agent-context-….json` or **Sorting debug** for world or layering bugs?  
-- [ ] Are **JSON** changes aligned with **JSON program (TECH-21)** **§ Completed** and schemas under `docs/schemas/`?
+- [ ] Are **JSON** changes aligned with **JSON interchange program** and schemas under `docs/schemas/`?
 
 ---
 
-*This document aligns the generic `ia-driven-dev.md` prompt with Territory Developer. For JSON payload detail, follow [`TECH-21-json-use-cases-brainstorm.md`](TECH-21-json-use-cases-brainstorm.md) and **glossary** **JSON program (TECH-21)** / [`BACKLOG.md`](../BACKLOG.md) **§ Completed** **TECH-21**; **Postgres** — **TECH-44** **§ Completed**.*
+*This document aligns the generic `ia-driven-dev.md` prompt with Territory Developer. For JSON payload detail, follow [`projects/json-use-cases-brainstorm.md`](json-use-cases-brainstorm.md) and **glossary** **JSON interchange program**; **Postgres** dev setup — [`docs/postgres-ia-dev-setup.md`](../docs/postgres-ia-dev-setup.md); charter trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).*

@@ -1,6 +1,6 @@
-# PostgreSQL — IA dev setup (TECH-44b + TECH-44c + TECH-55 / TECH-55b)
+# PostgreSQL — IA dev setup
 
-**Scope:** Local or shared **dev** database for **Information Architecture** tables (`glossary`, `spec_sections`, `invariants`, `relationships`), the **dev repro bundle registry** (`dev_repro_bundle`, **TECH-44c**), and the **per-export Editor Reports registry** (**TECH-55** — `editor_export_*` tables). This is **not** player **Save data** or **Load pipeline** input — see [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md).
+**Scope:** Local or shared **dev** database for **Information Architecture** tables (`glossary`, `spec_sections`, `invariants`, `relationships`), the **dev repro bundle registry** (`dev_repro_bundle`, **E1** in [`postgres-interchange-patterns.md`](postgres-interchange-patterns.md)), and the **per-export Editor Reports registry** (`editor_export_*` tables). This is **not** player **Save data** or **Load pipeline** input — see [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md). **Charter trace:** [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).
 
 ## Prerequisites
 
@@ -76,20 +76,20 @@ npm --prefix tools/postgres-ia run glossary-by-key -- heightmap
 SELECT * FROM ia_glossary_row_by_key('heightmap');
 ```
 
-## Dev repro bundle registry (**TECH-44c**, **E1**)
+## Dev repro bundle registry (**E1**)
 
 Registers **metadata** for **Editor** exports under **`tools/reports/`** (paths are **gitignored** — see [`.cursor/specs/unity-development-context.md`](../.cursor/specs/unity-development-context.md) **§10**): **Agent context** JSON (`agent-context-*.json`), optional **Sorting debug** Markdown (`sorting-debug-*.md`). Rows use **B1** shape: scalars + **`payload jsonb`** with **Interchange JSON**–style keys **`artifact`**: `dev_repro_bundle`, **`schema_version`**: `1` (see [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md)).
 
 **Table:** `dev_repro_bundle` — columns `backlog_issue_id`, `git_sha`, `exported_at_utc` (defaults to **INSERT** time), `interchange_revision` (mirrors **`schema_version`** for this artifact), `payload`.
 
-**`backlog_issue_id`:** Store the canonical form matching **territory-ia** `normalizeIssueId` (e.g. `bug-37` → `BUG-37`, `FEAT-37B` → `FEAT-37b`). The **`register-dev-repro.mjs`** script applies the same rules.
+**`backlog_issue_id`:** Store the canonical form matching **territory-ia** `normalizeIssueId` (case-insensitive input normalized to **`BUG-`/`FEAT-`/`TECH-`-** style). The **`register-dev-repro.mjs`** script applies the same rules.
 
 **Example INSERT** (adjust paths to your export files):
 
 ```sql
 INSERT INTO dev_repro_bundle (backlog_issue_id, git_sha, interchange_revision, payload)
 VALUES (
-  'TECH-44c',
+  'TECH-00',
   'a1b2c3d4e5f678901234567890abcdef12345678',
   1,
   '{
@@ -105,19 +105,19 @@ VALUES (
 **Example SELECT** (latest rows for an issue):
 
 ```sql
-SELECT * FROM dev_repro_list_by_issue('TECH-44c', 10);
+SELECT * FROM dev_repro_list_by_issue('TECH-00', 10);
 ```
 
 **CLI registration** (uses `git rev-parse HEAD` for SHA unless `--sha` is set):
 
 ```bash
-npm run db:register-repro -- --issue TECH-44c \
+npm run db:register-repro -- --issue TECH-00 \
   --agent-context tools/reports/agent-context-2026-04-04T12-00-00Z.json
 ```
 
-## Editor export registry (**TECH-55** + **TECH-55b**)
+## Editor export registry (per-export **Postgres** history)
 
-**DB-first (TECH-55b):** when **`DATABASE_URL`** resolves (process environment, **EditorPrefs** `TerritoryDeveloper.EditorExportRegistry.DatabaseUrl`, or repo-root **`.env.local`** `DATABASE_URL=…`), **Unity** tries **Postgres** first: the full export body is stored in column **`document jsonb`** (plus **`payload jsonb`** metadata). **GIN** indexes support **`jsonb_path_ops`** queries on **`document`**. If the insert fails or no URL is set, the Editor writes the same content under **`tools/reports/`** (gitignored) with the usual filenames — see [`.cursor/specs/unity-development-context.md`](../.cursor/specs/unity-development-context.md) **§10**.
+**DB-first:** when **`DATABASE_URL`** resolves (process environment, **EditorPrefs** `TerritoryDeveloper.EditorExportRegistry.DatabaseUrl`, or repo-root **`.env.local`** `DATABASE_URL=…`), **Unity** tries **Postgres** first: the full export body is stored in column **`document jsonb`** (plus **`payload jsonb`** metadata). **GIN** indexes support **`jsonb_path_ops`** queries on **`document`**. If the insert fails or no URL is set, the Editor writes the same content under **`tools/reports/`** (gitignored) with the usual filenames — see [`.cursor/specs/unity-development-context.md`](../.cursor/specs/unity-development-context.md) **§10**.
 
 Migrations: **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.sql`** (`backlog_issue_id` nullable; **`document`** required on new inserts).
 
@@ -139,7 +139,7 @@ Migrations: **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.
 ```bash
 npm run db:register-editor-export -- --kind agent_context \
   --document-file tools/reports/.staging/body-example.json \
-  --issue BUG-37
+  --issue TECH-00
 ```
 
 `--kind`: `agent_context`, `sorting_debug`, `terrain_cell_chunk`, `world_snapshot_dev`. **Sorting debug** files are Markdown text; the script wraps them as `{"format":"markdown","body":"…"}` in **`document`**.
@@ -154,7 +154,7 @@ LIMIT 5;
 
 SELECT id, document->'artifact' AS artifact
 FROM editor_export_terrain_cell_chunk
-WHERE backlog_issue_id = 'BUG-37'
+WHERE backlog_issue_id = 'TECH-00'
 ORDER BY exported_at_utc DESC
 LIMIT 10;
 
@@ -167,24 +167,24 @@ LIMIT 5;
 
 **Unlabeled rows:** `WHERE backlog_issue_id IS NULL`.
 
-**Manual bundle** (**TECH-44c**) remains available via **`npm run db:register-repro`** — it inserts a single **`dev_repro_bundle`** row that can point at both **Agent context** and **Sorting debug** paths. **TECH-55** / **TECH-55b** add **per-export** history (**`document jsonb`**) in separate tables.
+**Manual bundle** (**E1**) remains available via **`npm run db:register-repro`** — it inserts a single **`dev_repro_bundle`** row that can point at both **Agent context** and **Sorting debug** paths. The **`editor_export_*`** tables add **per-export** history (**`document jsonb`**) in separate tables.
 
 ## CI note
 
 Spinning **Postgres** in **CI** for this milestone remains **optional** (developer **Docker** / local **Homebrew** + documented **`npm run db:migrate`**).
 
-## Shipped decisions (TECH-44b closure — durable record)
+## Shipped decisions (first Postgres **IA** milestone — durable record)
 
 | Topic | Choice |
 |-------|--------|
 | **Migrations** | Versioned SQL under **`db/migrations/`**; `tools/postgres-ia/apply-migrations.mjs` runs each file with **`psql -f`** and records versions in **`schema_migrations`** via **`pg`** (avoids multi-statement splitting in **node-postgres**). |
 | **Milestone 1 shape** | Normalized columns only — **no JSONB**; follow [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md) when **JSONB** is added later. |
-| **MCP** | **territory-ia** stays **file-backed** until **TECH-18**; see [`docs/mcp-ia-server.md`](mcp-ia-server.md). |
+| **MCP** | **territory-ia** stays **file-backed** until **DB-backed** retrieval ships; see [`docs/mcp-ia-server.md`](mcp-ia-server.md). |
 
-**Backlog:** **TECH-44b** completed 2026-04-03 — trace in [`BACKLOG.md`](../BACKLOG.md) **§ Completed (last 30 days)**.
+**Archive:** First **Postgres** **IA** milestone completed 2026-04-03 — trace in [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) (**2026-04-04** batch).
 
 ## Related
 
-- **Program / patterns:** [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md) (including **Program extension mapping (E1–E3)**); [`BACKLOG.md`](../BACKLOG.md) **§ Completed** **TECH-44** (closed umbrella)
-- **TECH-18 handoff:** [`docs/mcp-ia-server.md`](mcp-ia-server.md) — **PostgreSQL IA (TECH-44b) integration point for TECH-18**
+- **Program / patterns:** [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md) (including **Program extension mapping (E1–E3)**); [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) (closed **Postgres** charter)
+- **Future DB-backed MCP:** [`docs/mcp-ia-server.md`](mcp-ia-server.md) — **PostgreSQL IA (dev schema) and future DB-backed retrieval**
 - **Tooling README:** [`tools/postgres-ia/README.md`](../tools/postgres-ia/README.md)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Territory.Zones;
 using Territory.Terrain;
 using Territory.Utilities;
+using Territory.Utilities.Compute;
 
 namespace Territory.Core
 {
@@ -147,33 +148,29 @@ namespace Territory.Core
             if (!IsWalkable(toX, toY, allowUndevelopedLightZoning)) return int.MaxValue;
             if (grid.terrainManager == null) return RoadPathCostConstants.Flat;
 
-            if (grid.terrainManager.IsWaterSlopeCell(toX, toY))
-                return RoadPathCostConstants.WaterSlopeCost;
-
-            var heightMap = grid.terrainManager.GetHeightMap();
-            int heightDiff = 0;
+            var tm = grid.terrainManager;
+            int hFrom = 0;
+            int hTo = 0;
+            var heightMap = tm.GetHeightMap();
             if (heightMap != null)
             {
-                int hFrom = heightMap.GetHeight(fromX, fromY);
-                int hTo = heightMap.GetHeight(toX, toY);
-                int absDh = Mathf.Abs(hTo - hFrom);
-                if (absDh > 1)
-                {
-                    var tm = grid.terrainManager;
-                    bool coastalFrom = tm.IsRegisteredOpenWaterAt(fromX, fromY) || tm.IsWaterSlopeCell(fromX, fromY)
-                        || tm.IsDryShoreOrRimMembershipEligible(fromX, fromY);
-                    bool coastalTo = tm.IsRegisteredOpenWaterAt(toX, toY) || tm.IsWaterSlopeCell(toX, toY)
-                        || tm.IsDryShoreOrRimMembershipEligible(toX, toY);
-                    if (!coastalFrom && !coastalTo)
-                        return int.MaxValue;
-                    heightDiff = 1;
-                }
-                else
-                    heightDiff = absDh;
+                hFrom = heightMap.GetHeight(fromX, fromY);
+                hTo = heightMap.GetHeight(toX, toY);
             }
 
-            TerrainSlopeType t = grid.terrainManager.GetTerrainSlopeTypeAt(toX, toY);
-            return RoadPathCostConstants.GetStepCost(t, heightDiff);
+            bool coastalFrom = tm.IsRegisteredOpenWaterAt(fromX, fromY) || tm.IsWaterSlopeCell(fromX, fromY)
+                || tm.IsDryShoreOrRimMembershipEligible(fromX, fromY);
+            bool coastalTo = tm.IsRegisteredOpenWaterAt(toX, toY) || tm.IsWaterSlopeCell(toX, toY)
+                || tm.IsDryShoreOrRimMembershipEligible(toX, toY);
+
+            var ctx = new PathfindingCostKernel.PathfindingMoveContext(
+                hFrom,
+                hTo,
+                tm.GetTerrainSlopeTypeAt(toX, toY),
+                tm.IsWaterSlopeCell(toX, toY),
+                coastalFrom,
+                coastalTo);
+            return PathfindingCostKernel.GetOrdinaryRoadMoveCost(in ctx);
         }
 
         private bool IsWalkable(int x, int y, bool allowUndevelopedLightZoning)

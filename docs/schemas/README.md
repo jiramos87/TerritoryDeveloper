@@ -6,7 +6,7 @@ Machine-readable contracts for **interchange** JSON (tools, **MCP**, fixtures)â€
 
 - **JSON Schema** uses **Draft 2020-12** (`$schema`: `https://json-schema.org/draft/2020-12/schema`).
 - **Schema files**: prefer version in the basename, e.g. `geography-init-params.v1.schema.json`, plus a stable **`$id`** URL or `territory-developer:` URI for tooling.
-- **Payloads** must include string **`artifact`** (logical model id). Optional integer **`schema_version`** when a consumer must branch without loading a schema file (see [`projects/TECH-21-json-use-cases-brainstorm.md`](../../projects/TECH-21-json-use-cases-brainstorm.md) **FAQ** and **glossary** **Interchange JSON (artifact)**; **TECH-21** **Phase A** closure: [`BACKLOG.md`](../../BACKLOG.md) **Â§ Completed** **TECH-40**).
+- **Payloads** must include string **`artifact`** (logical model id). Optional integer **`schema_version`** when a consumer must branch without loading a schema file (see [`projects/json-use-cases-brainstorm.md`](../../projects/json-use-cases-brainstorm.md) **FAQ** and **glossary** **Interchange JSON (artifact)**; **IA index manifest** / fixtures **CI**: [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) + root **`package.json`** **`validate:fixtures`**).
 
 ## Layout
 
@@ -17,9 +17,9 @@ Machine-readable contracts for **interchange** JSON (tools, **MCP**, fixtures)â€
 
 ## Pilot
 
-- **`geography-init-params.v1.schema.json`** â€” **`artifact`**: `geography_init_params`; aligns with **TECH-21** brainstorm **G4** and **TECH-41** / **TECH-39** naming goals. Zod mirror: `tools/mcp-ia-server/src/schemas/geography-init-params-zod.ts` (CI via `validate:fixtures` + unit tests).
+- **`geography-init-params.v1.schema.json`** â€” **`artifact`**: `geography_init_params`; aligns with [`projects/json-use-cases-brainstorm.md`](../../projects/json-use-cases-brainstorm.md) **G4** and **glossary** **Geography initialization** / **Computational MCP tools** naming goals. Zod mirror: `tools/mcp-ia-server/src/schemas/geography-init-params-zod.ts` (CI via `validate:fixtures` + unit tests).
 
-## TECH-41 interchange (tooling exports)
+## Interchange schemas (tooling exports)
 
 | Schema | `artifact` | Role |
 |--------|------------|------|
