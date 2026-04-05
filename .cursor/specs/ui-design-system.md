@@ -2,12 +2,12 @@
 
 ## Overview
 
-This spec defines **foundations**, **components**, and **patterns** for Territory Developer’s in-game UI so that backlog issues can reference concrete sections. **Program charter**, **codebase inventory**, **backlog bridge**, and **roadmap** live in [`.cursor/projects/TECH-67.md`](../projects/TECH-67.md) (**UI-as-code program** umbrella — not a reference spec). **Executable issues:** [`BACKLOG.md`](../../BACKLOG.md). **As-built** tables in **§1**, **§4**, and major **§2–§3** surfaces are sourced from the committed machine snapshot [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) (refresh when scenes change; see [`docs/reports/README.md`](../../docs/reports/README.md)). **Scenes:** **UI** spans **`MainMenu`**, **`MainScene`** (future **`CityScene`**), and future surfaces (e.g. **`RegionScene`**) — exports and prose are **per scene**.
+This spec defines **foundations**, **components**, and **patterns** for Territory Developer’s in-game UI so that backlog issues can reference concrete sections. The **UI-as-code program** (IDE- and agent-friendly **UI** workflows) is **§ Completed** — trace [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) **Recent archive**; **codebase inventory (uGUI)** lives in **this spec** (**Codebase inventory (uGUI)** below). **Executable issues:** [`BACKLOG.md`](../../BACKLOG.md). **As-built** tables in **§1**, **§4**, and major **§2–§3** surfaces are sourced from the committed machine snapshot [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) (refresh when scenes change; see [`docs/reports/README.md`](../../docs/reports/README.md)). **Scenes:** **UI** spans **`MainMenu`**, **`MainScene`** (future **`CityScene`**), and future surfaces (e.g. **`RegionScene`**) — exports and prose are **per scene**.
 
 ### As-built vs target
 
-- **As-built (current):** What the game **actually** uses today — **Canvas** settings, **colors**, **fonts** / sizes, **margins**, **anchors**, **HUD** / **toolbar** / **popup** layout, and representative **UX** behaviors. Primary **city** snapshot: **`MainScene.unity`** → **`UI/City/Canvas`** (paths in JSON are relative to that **Canvas** root, e.g. `Canvas/ControlPanel`). **Main menu:** **`MainMenu.unity`** has **no** serialized **Canvas** in the scene file; when **`MainMenuController`** builds UI at runtime (`BuildUI`), it creates **`Canvas`** + **`CanvasScaler`** as documented in **§3.0** and **§4.3**.
-- **Target (planned):** Future layout or tokens defined by **BACKLOG** issues (e.g. **TECH-69** theme / prefab work). Keep **Target** subsections or labeled rows **alongside** **as-built** so refactors stay traceable.
+- **As-built (current):** What the game **actually** uses today — **Canvas** settings, **colors**, **fonts** / sizes, **margins**, **anchors**, **HUD** / **toolbar** / **popup** layout, and representative **UX** behaviors. Primary **city** snapshot: **`MainScene.unity`** → **`UI/City/Canvas`** (paths in JSON are relative to that **Canvas** root, e.g. `Canvas/ControlPanel`). **Main menu:** **`MainMenu.unity`** ships a serialized **`MainMenuCanvas`** (**Screen Space Overlay**, **1280×720** scaler) with **`MainMenuController`** on **`MenuBootstrap`**; overlay panels (**Load City**, **Options**) are still created at runtime when their **Inspector** references are **null** — see **`MainMenuController`**. If **all** **Button** references are **null**, **`BuildUI()`** remains the dev fallback (**§3.0**).
+- **Target (planned):** Future layout or tokens defined by **BACKLOG** issues (e.g. **FEAT-** polish rows). Keep **Target** subsections or labeled rows **alongside** **as-built** so refactors stay traceable.
 
 ### Domain vocabulary
 
@@ -19,16 +19,45 @@ Backlog items and player-facing copy that name gameplay systems should use [`glo
 
 | Area | Location / notes |
 |------|------------------|
-| Main UI orchestration | `Assets/Scripts/Managers/GameManagers/UIManager.cs` |
-| Main menu (runtime UI builder) | `Assets/Scripts/Managers/GameManagers/MainMenuController.cs` — optional **Inspector**-wired UI vs `BuildUI()` |
+| Main UI orchestration | `UIManager.cs` + **`UIManager.PopupStack.cs`**, **`UIManager.Hud.cs`**, **`UIManager.Toolbar.cs`**, **`UIManager.Utilities.cs`** |
+| Main menu | `Assets/Scripts/Managers/GameManagers/MainMenuController.cs` — serialized **`MainMenuCanvas`** + **`MenuBootstrap`**; `BuildUI()` fallback when buttons unassigned |
+| **UiTheme** (tokens) | `Assets/Scripts/Managers/GameManagers/UiTheme.cs` — default asset **`Assets/UI/Theme/DefaultUiTheme.asset`** |
 | Popup controllers | `Assets/Scripts/Controllers/UnitControllers/*Popup*.cs`, `DetailsPopupController.cs`, `DataPopupController.cs`, etc. |
 | HUD / stats | `CityStatsUIController.cs`, `UIManager.cs` (many legacy `Text` references) |
 | Input vs UI | `EventSystem`, `CameraController.cs`, `GridManager.cs` (`IsPointerOverGameObject` patterns) |
 | **City** scene asset | `Assets/Scenes/MainScene.unity` — **`UI/City/Canvas`** hierarchy (authoritative in **Editor**) |
-| **Main menu** scene asset | `Assets/Scenes/MainMenu.unity` — scene file contains **no** **Canvas** YAML; menu **Canvas** may be **runtime**-created (**§3.0**) |
+| **Main menu** scene asset | `Assets/Scenes/MainMenu.unity` — serialized **`MainMenuCanvas`** / **`MainMenuRoot`** / menu **Buttons** + **`EventSystem`**; **`MenuBootstrap`** holds **`MainMenuController`** |
 | **As-built** JSON (committed) | [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) — bounded **`scenes[]`** sample |
 
 Add prefab paths under `Assets/` as they are standardized.
+
+### Codebase inventory (uGUI)
+
+*Scene object names and **Inspector** wiring can drift — verify in **Unity** when updating **as-built** docs or refactors. Update this subsection when hierarchies or roles change.*
+
+**Stack:** **Unity UI (uGUI)** — **Canvas**, **Graphic** (**Image**, **Text** / **TMP**, etc.), **EventSystem**. Primary orchestrator: **`UIManager`** (`Territory.UI`) — **`partial`** across **`UIManager.cs`** (fields, lifecycle) + **`UIManager.PopupStack.cs`**, **`UIManager.Hud.cs`**, **`UIManager.Toolbar.cs`**, **`UIManager.Utilities.cs`**. **`CursorManager`**, **`GameNotificationManager`**, and **UnitControllers** handle focused interactions.
+
+**Architectural placement** (see also **`ARCHITECTURE.md`**): **UI layer** — **`UIManager`**, **`CursorManager`**, **`GameNotificationManager`**, controllers. **Input** — **`GridManager`** and others gate world input when the pointer is over UI (**`IsPointerOverGameObject`**); scroll vs camera is a recurring UX area (**BACKLOG**).
+
+**Primary entry points**
+
+| File | Role |
+|------|------|
+| `UIManager.cs` + **`UIManager.*.cs` partials** | Main **HUD**, **popups** (**PopupType**: load game, details, building selector, stats, tax), **toolbar** / zone and tool selection, demand visualization |
+| `Assets/Scripts/Managers/GameManagers/CursorManager.cs` | Cursor state with tools and UI |
+| `Assets/Scripts/Managers/GameManagers/GameNotificationManager.cs` | **Game notification** path (**singleton**, `DontDestroyOnLoad`) |
+
+**Controllers (representative)** — **`GameControllers/`**: **`CameraController.cs`** (zoom vs UI scroll), **`CityStatsUIController.cs`**, **`MiniMapController.cs`**. **`UnitControllers/`**: **`BuildingSelectorMenuController`**, **`DetailsPopupController`**, **`DataPopupController`**, **`GrowthBudgetSlidersController`**, **`SpeedButtonsController`**, **`*SelectorButton.cs`**, **`MiniMapLayerButton`**, **`ShowStatsButton`**, **`ShowTaxes`**, **`SimulateGrowthToggle`**, etc. Other managers feed **HUD** data (**`StatisticsManager`**, **`EconomyManager`**, **`TimeManager`**) without owning every widget.
+
+**City scene and `ControlPanel`:** Primary layout **`Assets/Scenes/MainScene.unity`** (or future **`CityScene.unity`**). **City** **Canvas** root in scene: **`UI/City/Canvas`** (**Screen Space Overlay**; **Canvas Scaler** reference **800×600** in **UI** inventory export). **`ControlPanel`**: **left**-docked **vertical** construction **toolbar** (category rows, **horizontal** tool groups per row); wired via **`UIManager`** and **`UnitControllers/*SelectorButton.cs`**. **Normative layout:** **§3.3**. **`SampleScene.unity`** also lives under **`Assets/Scenes/`** (default **Unity** template); it is **not** on **`UiInventoryReportsMenu`** **`SceneAllowlist`** — **as-built** docs and the committed baseline cover **MainScene** + **MainMenu** only.
+
+**Main menu scene:** **`Assets/Scenes/MainMenu.unity`** — scene YAML may contain **no** serialized **Canvas** in older flows; **`MainMenuController`** wires **Inspector** **Button**s and/or **`MainMenuCanvas`**; **`BuildUI()`** remains a dev fallback when strip references are **null**. **Edit Mode** **UI** inventory export should include **`MainMenuCanvas`** when present; use **§3.0** + code for **as-built** menu **UI**.
+
+**Technical constraints:** **Canvas Scaler** — **§4.3**. **EventSystem** — UI must consume pointer events so world tools (e.g. camera zoom) do not fire through panels. **Performance** — no **`FindObjectOfType`** in **`Update`** (**.cursor/rules/invariants.mdc**). **Coupling** — **`UIManager`** is large; prefer small controllers or shared helpers (**AGENTS.md**).
+
+**Known pain points:** Scroll wheel over UI lists also moving **camera** (**BUG-19** class); **`FindObjectOfType`** in hot paths (**BUG-14**); happiness / stats display inconsistencies (**BACKLOG**).
+
+**Ongoing hygiene:** When **UI** hierarchies change, refresh **§1–§4** (as needed), this **Codebase inventory**, and the committed baseline JSON per [`docs/reports/README.md`](../../docs/reports/README.md). After **BACKLOG** **`Spec:`** edits under `.cursor/projects/`, run `npm run validate:dead-project-specs` (repo root). After **glossary** / **reference spec** body edits consumed by **territory-ia**, run `npm run generate:ia-indexes -- --check`. Extend **`UiInventoryReportsMenu`** allowlist when **`RegionScene`** / **`CityScene`** assets land or rename.
 
 ---
 
@@ -53,7 +82,7 @@ Colors are **Unity `Graphic.color`** on **uGUI** **Image** / **Text** (legacy). 
 
 ### 1.2 Typography
 
-**Product stack (target):** **TBD** — **TECH-69** **Phase D** records **TextMeshPro** migration vs continuing **legacy `UnityEngine.UI.Text`**. Until then, treat **as-built** rows below and the **UI** inventory export as authoritative.
+**Product stack (target):** **Shipped decision:** Keep **legacy `UnityEngine.UI.Text`** for **existing** **city** **HUD** / panels until a future issue scopes a **TMP** migration wave. **New** work may use **TMP** only when the issue explicitly chooses it (avoid mixed stacks on the same row). **Main menu** strip uses **legacy `Text`** + **`UiTheme`** font sizes.
 
 **As-built:** The **city** scene uses **legacy `UnityEngine.UI.Text`** heavily (`UIManager` serialized fields). **`TextMeshProUGUI`** appears sporadically (e.g. some `Text (Legacy)` sibling naming in hierarchy; export shows **`LiberationSans SDF`** / **`LiberationSans`** on a small number of nodes).
 
@@ -62,13 +91,13 @@ Colors are **Unity `Graphic.color`** on **uGUI** **Image** / **Text** (legacy). 
 | **HUD / panel key** | `LegacyRuntime` | 10 | Normal | Stat keys — `…/PopulationKey`, `…/MoneyKey`, demand keys, etc. |
 | **HUD / panel value** | `LegacyRuntime` | 36 | Normal | Large numeric readouts — `…/PopulationValue`, `…/MoneyValue`, demand values |
 | **City name / title** | `LegacyRuntime` | 12–14 | Normal | `PlayerCityName`, panel titles |
-| **TMP occasional** | `LiberationSans SDF`, `LiberationSans` | 8, 28 | Normal | Rare nodes — prefer one stack per new work (**TECH-67** **§4.9**) |
+| **TMP occasional** | `LiberationSans SDF`, `LiberationSans` | 8, 28 | Normal | Rare nodes — prefer one stack per new work (**§1.2** policy) |
 
 ### 1.3 Spacing and layout
 
 - **Main menu (code-built):** When `MainMenuController.BuildUI()` runs, vertical stack uses **button** size **200×40**, **spacing 10** px, centered anchor — see `MainMenuController.cs`.
 - **City scene:** **Toolbar** **`Canvas/ControlPanel`** is a **left**-docked **vertical** panel: **one row per category** (demolition, roads, utilities, **RCI** zoning, environment, etc.) with **horizontal** **Button** groups per row (**LayoutGroup** as authored in **`MainScene.unity`**). **LayoutGroups** also appear under scroll views (**BuildingSelector**, **LoadGame**).
-- **Grid / token spacing:** No single **4px/8px** token is enforced globally — treat **as-built** as **per-panel** until a **theme** helper or **TECH-69**-scoped tokens land.
+- **Grid / token spacing:** No single **4px/8px** token is enforced globally — treat **as-built** as **per-panel** until a **theme** helper or **§5.2** token work lands.
 - **Anchors:** **Stats** and **date** clusters live under **`Canvas/DataPanelButtons`** with mixed anchors (see JSON **`anchor_min` / `anchor_max`** per node).
 
 ### 1.4 Iconography
@@ -83,7 +112,7 @@ Colors are **Unity `Graphic.color`** on **uGUI** **Image** / **Text** (legacy). 
 
 ## 2. Components
 
-**As-built:** There is **no** single shared **UI** prefab library yet; shipped UI combines **Unity** default **Button** + **Image** + legacy **Text**, **ScrollRect** patterns, and **Slider** under **`TaxPanel`**. The following stays normative for **new** work where no issue overrides it.
+**As-built:** Shipped **city** UI still combines scene-authored **Button** + **Image** + legacy **Text**; **v0** reusable prefabs live under **`Assets/UI/Prefabs/`** after running **Territory Developer → UI → Scaffold UI Prefab Library v0** (**`UiPrefabLibraryScaffoldMenu`**). The following stays normative for **new** work where no issue overrides it.
 
 ### 2.1 Button — primary
 
@@ -119,9 +148,10 @@ Colors are **Unity `Graphic.color`** on **uGUI** **Image** / **Text** (legacy). 
 
 ### 3.0 Main menu (**MainMenu** scene)
 
-- **Flow:** **Continue**, **New Game**, **Load City**, **Options** — `MainMenuController` wires **Button** listeners; **Load City** / **Options** use nested panels when built at runtime.
-- **As-built Canvas:** If **Inspector** references are **null**, **`BuildUI()`** creates **`Canvas`** (**Screen Space Overlay**), **`CanvasScaler`**: **Scale With Screen Size**, **reference resolution 1280×720**, **match** **0.5**, plus **GraphicRaycaster** and **EventSystem** if missing.
-- **Export note:** **Edit Mode** **UI** inventory export lists **zero** **`canvases`** for **`MainMenu.unity`** when the scene file has **no** serialized **Canvas**; **as-built** menu **UI** is defined by **`MainMenuController`** + **Play Mode** (or **Inspector**-assigned objects when used).
+- **Flow:** **Continue**, **New Game**, **Load City**, **Options** — `MainMenuController` wires **Button** listeners; **Load City** / **Options** panels are created at runtime under the serialized **`Canvas`** when those **Inspector** references are **null** (`EnsureSerializedMenuPanels`).
+- **As-built Canvas:** **`MainMenuCanvas`** in **`MainMenu.unity`** — **Screen Space Overlay**, **`CanvasScaler`**: **Scale With Screen Size**, **reference resolution 1280×720**, **match** **0.5**, **GraphicRaycaster**. **`EventSystem`** is a root **GameObject**. Optional **`UiTheme`** on **`MainMenuController`** tints the four menu **Buttons** on **`Start`**.
+- **Fallback:** If **`continueButton`** (and the serialized strip) is **unassigned**, **`BuildUI()`** creates a full runtime tree (legacy path).
+- **Export note:** **Edit Mode** **UI** inventory export includes **`MainMenuCanvas`**; refresh [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) after hierarchy edits.
 
 ### 3.1 HUD information density
 
@@ -131,6 +161,7 @@ Colors are **Unity `Graphic.color`** on **uGUI** **Image** / **Text** (legacy). 
 ### 3.2 Popups
 
 - **`PopupType`** (`UIManager.cs`): **LoadGame**, **Details**, **BuildingSelector**, **StatsPanel**, **TaxPanel**.
+- **Shared modal contract:** Surfaces above that participate in the **Esc** stack call **`UIManager.RegisterPopupOpened(PopupType)`** when shown so **`UIManager`** closes **last-opened first** (see **`UIManager.PopupStack`**). Prefer full-screen or panel **Image** **`raycastTarget`** on dimmers so pointer hit tests reach **UI** before the **grid**. **InsufficientFunds** / **Notification** panels follow economy flows; add them to the **Esc** stack only if a future issue wires **`RegisterPopupOpened`** for them.
 - **Representative Canvas paths (city scene):**
   - **LoadGame** → `Canvas/LoadGameMenuPanel` (+ **Scroll View**)
   - **BuildingSelector** → `Canvas/ControlPanel/BuildingSelectorPopupPanel`
@@ -143,7 +174,7 @@ Colors are **Unity `Graphic.color`** on **uGUI** **Image** / **Text** (legacy). 
 ### 3.3 Tool selection / toolbar
 
 - **Scene path:** **`Canvas/ControlPanel`** under **`UI/City/Canvas`** (**MainScene**).
-- **Inventory and constraints:** [`.cursor/projects/TECH-67.md`](../projects/TECH-67.md) **§4.4** (**Codebase inventory**).
+- **Inventory and constraints:** **Codebase inventory (uGUI)** (this spec, **Related files**).
 - **As-built (current):** **Left**-docked **vertical** **toolbar**: category **rows** (e.g. demolition, roads, utilities, **RCI** zoning, environment) with **horizontal** tool **`Button`** groups per row; dependent overlays (e.g. zoning density) re-anchored to the sidebar; avoid overlapping **mini-map** and corner **HUD** (**Editor**-authored layout in **`MainScene.unity`**).
 - **Implementation note:** Prefer documented **LayoutGroup** hierarchy when refactoring; confirm **`Canvas Scaler`** (**§4.3**) at reference resolutions. Refresh [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) after hierarchy changes ([`docs/reports/README.md`](../../docs/reports/README.md)).
 
@@ -155,7 +186,12 @@ Colors are **Unity `Graphic.color`** on **uGUI** **Image** / **Text** (legacy). 
 ### 3.5 World vs UI input
 
 - **Expectation:** Pointer over **UI** should consume events so **camera** / **grid** tools do not fire through panels; **`GridManager`** / **`CameraController`** use **`IsPointerOverGameObject`** patterns.
-- **Scroll:** **ScrollRect** over lists vs **camera** zoom — **BUG-19** class issues; test **LoadGame** and **BuildingSelector** scroll views in **Play Mode**.
+- **Scroll wheel vs zoom (checklist):**
+  1. **`CameraController.HandleScrollZoom`** returns early when **`EventSystem.current.IsPointerOverGameObject()`** is true so list scroll does not change **orthographic** zoom (**BUG-19** fix — see **§3.5**).
+  2. **Load Game** list: wheel over **`ScrollRect`** / **Viewport** / **Content** — list scrolls, **map** zoom does not.
+  3. **Building selector** popup: same expectation over its **Scroll View** subtree.
+  4. **Raycasts:** **Viewport** / list item **Graphic** components keep **`raycastTarget`** enabled where hit testing must see the **UI** (see **BUG-19** spec).
+- **Regression test:** **Play Mode** — open **Load Game**, scroll wheel over save list; open **Building Selector**, scroll over building list; pointer over **map** — zoom still steps.
 
 ---
 
@@ -163,7 +199,7 @@ Colors are **Unity `Graphic.color`** on **uGUI** **Image** / **Text** (legacy). 
 
 ### 4.1 Naming
 
-- **As-built:** Functional names on **ControlPanel** children (`*SelectorButton`, `*Panel`); some duplicate **Unity** auto-names (`TotalGrowthLabel (1)`). Prefer descriptive names on new objects; **§4.1** prefab prefix convention (**`UI_Button_Primary`**, etc.) remains **target** — not enforced globally yet.
+- **As-built:** Functional names on **ControlPanel** children (`*SelectorButton`, `*Panel`); **Tax** panel uses **`TaxGrowthBudgetPercentLabel`** (static caption for growth budget %) alongside **`TotalGrowthLabel`** (dynamic value). Prefer descriptive names on new objects; **§4.1** prefab prefix convention (**`UI_Button_Primary`**, etc.) remains **target** — not enforced globally yet.
 - Controllers stay focused; avoid duplicating styling logic across many **`MonoBehaviour`**s — prefer shared prefab variants or a small theme helper if introduced in a dedicated **BACKLOG** tech row.
 
 ### 4.2 Scripting
@@ -176,10 +212,18 @@ Colors are **Unity `Graphic.color`** on **uGUI** **Image** / **Text** (legacy). 
 | Scene | Canvas path (scene / code) | `RenderMode` | **Canvas Scaler** (as-built) |
 |-------|----------------------------|--------------|------------------------------|
 | **MainScene** | `UI/City/Canvas` | **Screen Space Overlay** | **Scale With Screen Size**, reference **800×600**, **match** **0.5** — from **UI** inventory baseline export |
-| **MainMenu** | Runtime: root object **`Canvas`** (when `BuildUI()`) | **Screen Space Overlay** | **Scale With Screen Size**, reference **1280×720**, **match** **0.5** — from `MainMenuController.cs` |
-| **MainMenu** | **Inspector**-wired UI | *Per instance* | If **Canvas** is authored in scene later, re-run export and update this table |
+| **MainMenu** | Serialized **`MainMenuCanvas`** | **Screen Space Overlay** | **Scale With Screen Size**, reference **1280×720**, **match** **0.5** |
+| **MainMenu** | Runtime: root **`Canvas`** (when `BuildUI()` only) | **Screen Space Overlay** | Same as above — dev fallback |
 
-**Acceptance testing:** Sanity-check **HUD** and **ControlPanel** at **800×600** and **1920×1080** (and **1280×720** for menu) when changing scaler or anchors.
+**Acceptance matrix (spot-check in Play Mode):**
+
+| Resolution | **MainScene** (**HUD** + **ControlPanel**) | **MainMenu** |
+|------------|--------------------------------------------|--------------|
+| **800×600** | Toolbar clears **mini-map** / corners; readable **Stats** cluster | Menu stack centered; no clipped **Buttons** |
+| **1280×720** | Baseline for **toolbar** layout (**§3.3**) | Reference resolution for scaler |
+| **1920×1080** | No overlap regressions on **ControlPanel** / **DataPanelButtons** | Menu stack centered |
+
+When changing **Canvas Scaler** or root anchors, re-run the checks above and refresh the **UI** inventory baseline if hierarchies change.
 
 ---
 
@@ -192,6 +236,17 @@ When opening a backlog issue for UI work, include:
 3. **Play Mode checks:** resolution sanity, hover/click, scroll not leaking to camera where applicable.
 4. **Regression:** related systems (`UIManager`, listed controllers) still wire in Inspector.
 
+### 5.2 Theme and prefab paths
+
+| Asset | Path / notes |
+|-------|----------------|
+| **`UiTheme`** script | `Assets/Scripts/Managers/GameManagers/UiTheme.cs` |
+| **Default theme** asset | `Assets/UI/Theme/DefaultUiTheme.asset` — assign on **`MainMenuController.menuTheme`** (optional) |
+| **Prefab library v0** | `Assets/UI/Prefabs/UI_ToolButton.prefab`, `UI_StatRow.prefab`, `UI_ScrollListShell.prefab`, `UI_ModalShell.prefab` — generated by **Territory Developer → UI → Scaffold UI Prefab Library v0** (`UiPrefabLibraryScaffoldMenu.cs`); re-run to overwrite; then wire into scenes as needed |
+| **`UIManager` partials** | `UIManager.PopupStack.cs`, `UIManager.Hud.cs`, `UIManager.Toolbar.cs`, `UIManager.Utilities.cs` alongside `UIManager.cs` |
+
+**Editor:** **Territory Developer → Reports → Validate UI Theme asset** (`UiThemeValidationMenu.cs`).
+
 ---
 
 ## 6. Revision history
@@ -201,9 +256,12 @@ When opening a backlog issue for UI work, include:
 | *YYYY-MM-DD* | Initial draft scaffold |
 | 2026-03-20 | §3.3 — ControlPanel toolbar layout variants; cross-link **unity-development-context** |
 | 2026-04-04 | Overview links → **`projects/ui-as-code-exploration.md`** (retired `docs/ui-design-system-project.md` / `docs/ui-design-system-context.md`) |
-| 2026-04-06 | Program notes → **`.cursor/projects/TECH-67.md`**; delete **`projects/ui-as-code-exploration.md`** (inventory **§4.4**) |
+| 2026-04-06 | Program notes in closed umbrella project spec (later migrated here — **Codebase inventory (uGUI)**); delete **`projects/ui-as-code-exploration.md`** |
+| 2026-04-10 | **UI-as-code program** umbrella **§ Completed**; **Codebase inventory (uGUI)** inlined from closed project spec |
 | 2026-04-04 | **As-built vs target** subsection; **UI-as-code** program baseline for **`ui-design-system.md`** (**glossary** **UI design system (reference spec)**) |
 | 2026-04-04 | **§1**–**§4**, **§2**–**§3** **as-built** from [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json); **§3.0** **Main menu**; **§6** traceability note |
+| 2026-04-04 | Serialized **`MainMenu`**, **`UiTheme`**, **§1.2** typography decision, **§4.3** resolution matrix, **§5.2** theme paths |
+| 2026-04-04 | **`UIManager` `partial`** split; **§3.2** modal **Esc** contract; **§3.5** scroll-zoom checklist + **BUG-19** code path; **§5.2** prefab scaffold menu; **v0** prefabs via **`UiPrefabLibraryScaffoldMenu`** |
 
 ### Machine-readable traceability (UI inventory baseline)
 

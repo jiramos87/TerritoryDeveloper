@@ -1,8 +1,8 @@
 # UI as-built critique — design-system reality vs product goals
 
-**Program:** [TECH-67](../.cursor/projects/TECH-67.md) (**UI-as-code program** umbrella)  
+**Program:** **UI-as-code program** (**§ Completed** — [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) **Recent archive**); normative **`.cursor/specs/ui-design-system.md`**.  
 **Source of truth for this critique:** [`.cursor/specs/ui-design-system.md`](../.cursor/specs/ui-design-system.md) **as-built** sections (§1–§4, §2–§3), grounded in committed inventory [`docs/reports/ui-inventory-as-built-baseline.json`](reports/ui-inventory-as-built-baseline.json).  
-**Execution / capstone:** [TECH-69](../.cursor/projects/TECH-69.md) (**BACKLOG** — **UI improvements using UI-as-code**) implements the **P1–P9** track below (refined **§5.3** in that spec) plus **Editor** / **Cursor Skill** / optional **MCP** tooling (**TECH-69** **§5.2**, **§7** Phase **H**).  
+**Execution / capstone:** **P1–P9** below map to **shipped** work and normative **`ui-design-system.md`** sections (**§5.2** theme/prefab paths, **§3** patterns). Historical **BACKLOG** trace: [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) **Recent archive**.  
 **Language:** Planning note only; gameplay rules stay in **FEAT-**/**BUG-** issues.
 
 **Last updated:** 2026-04-04
@@ -11,7 +11,7 @@
 
 ## 1. Purpose
 
-The reference spec describes **what shipped**, not an ideal design system. This document **critiques that reality** so **TECH-67** children target **real pain**. **Improvements** are **not** open-ended: they roll into **TECH-69** at **umbrella** closeout (see **§8**).
+The reference spec describes **what shipped**, not an ideal design system. This document **critiques that reality** so **BACKLOG** follow-ups target **real pain**. **Improvements** are **not** open-ended: they land in **`ui-design-system.md`** and open issues at program milestones (see **§8**).
 
 ---
 
@@ -70,7 +70,7 @@ The reference spec describes **what shipped**, not an ideal design system. This 
 
 **Impact:** Every new stat line increases **merge conflicts** and **Inspector** wiring burden; testing **UI** in isolation is hard.
 
-**Severity:** High for team velocity; aligns with **TECH-67** **§4.4** “**UIManager** keeps growing” risk.
+**Severity:** High for team velocity; aligns with **`ui-design-system.md`** **Codebase inventory (uGUI)** “**UIManager** keeps growing” risk.
 
 ### 3.6 HUD density and hierarchy
 
@@ -90,7 +90,7 @@ The reference spec describes **what shipped**, not an ideal design system. This 
 
 ### 3.8 Naming and hygiene
 
-**Issue:** §4.1 notes **Unity** duplicate names (`TotalGrowthLabel (1)`) and **typos** in object names (e.g. export showed `UnenmploymentPanel` in JSON — if still present in scene, it propagates to scripts and docs).
+**Issue (addressed):** §4.1 previously noted **Unity** duplicate names (`TotalGrowthLabel (1)`) and the **`UnenmploymentPanel`** typo — renamed in **`MainScene.unity`** to **`TaxGrowthBudgetPercentLabel`** and **`UnemploymentPanel`** respectively; refresh **`docs/reports/ui-inventory-as-built-baseline.json`** when running the **UI inventory** export.
 
 **Impact:** Search, refactor, and **agent** navigation suffer.
 
@@ -98,21 +98,21 @@ The reference spec describes **what shipped**, not an ideal design system. This 
 
 ---
 
-## 4. Concrete improvement proposals → **TECH-69**
+## 4. Concrete improvement proposals (P1–P9)
 
-Original IDs **P1–P9** are **refined** and **scheduled** in [`.cursor/projects/TECH-69.md`](../.cursor/projects/TECH-69.md) **§5.3** / **§7** (Phases **A–H**). Summary:
+Original IDs **P1–P9** are **refined** against **`ui-design-system.md`** (**§5.2** and **§3**). Summary:
 
-| # | Proposal | Rationale (ties to §3) | Capstone phase |
+| # | Proposal | Rationale (ties to §3) | Normative trace |
 |---|----------|----------------------|----------------|
-| **P1** | **Unify menu authoring:** Serialize **MainMenu** **Canvas** in **`MainMenu.unity`** (or prefab); narrow **`BuildUI()`**. | §3.3 | **TECH-69** Phase **B** |
-| **P2** | **Typography policy:** **TMP** migration **or** **legacy Text** freeze — **Decision Log** then waves. | §3.2 | **TECH-69** Phase **D** |
-| **P3** | **Minimal theme:** **`ScriptableObject`** (**`UiTheme`**) for **Color** + sizes (+ optional **TMP** refs). | §3.1 | **TECH-69** Phase **C** |
-| **P4** | **Prefab library v0:** tool button, stat row, scroll shell, modal shell. | §3.4 | **TECH-69** Phase **C** |
-| **P5** | **Canvas Scaler** strategy + resolution matrix; align with **`ui-design-system.md`** **§3.3** / **§4.3**. | §2 / §4.3 | **TECH-69** Phase **E** |
-| **P6** | **Split **`UIManager`** by surface** (facades; **no** rule changes). | §3.5 | **TECH-69** Phase **F** |
-| **P7** | **Modal contract** (overlay, close, optional **Esc**) for **`PopupType`**. | §3.7 | **TECH-69** Phase **G** |
-| **P8** | **Rename / cleanup** (typos, `(1)` duplicates) + spec path update. | §3.8 | **TECH-69** Phase **A** (front-loaded) |
-| **P9** | **Scroll vs camera** — product checklist + **BUG-19** alignment. | §3.5 | **TECH-69** Phase **G** |
+| **P1** | **Unify menu authoring:** Serialize **MainMenu** **Canvas** in **`MainMenu.unity`** (or prefab); narrow **`BuildUI()`**. | §3.3 | **`ui-design-system.md`** **§5.2** / **§3.0** |
+| **P2** | **Typography policy:** **TMP** migration **or** **legacy Text** freeze — **Decision Log** then waves. | §3.2 | **`ui-design-system.md`** **§1.2** |
+| **P3** | **Minimal theme:** **`ScriptableObject`** (**`UiTheme`**) for **Color** + sizes (+ optional **TMP** refs). | §3.1 | **`ui-design-system.md`** **§5.2** |
+| **P4** | **Prefab library v0:** tool button, stat row, scroll shell, modal shell. | §3.4 | **`ui-design-system.md`** **§5.2** |
+| **P5** | **Canvas Scaler** strategy + resolution matrix; align with **`ui-design-system.md`** **§3.3** / **§4.3**. | §2 / §4.3 | **`ui-design-system.md`** **§4.3** |
+| **P6** | **Split **`UIManager`** by surface** (facades; **no** rule changes). | §3.5 | **`UIManager.*.cs` partials** |
+| **P7** | **Modal contract** (overlay, close, optional **Esc**) for **`PopupType`**. | §3.7 | **`ui-design-system.md`** **§3.2** |
+| **P8** | **Rename / cleanup** (typos, `(1)` duplicates) + spec path update. | §3.8 | **Scene** + baseline JSON refresh |
+| **P9** | **Scroll vs camera** — product checklist + **BUG-19** alignment. | §3.5 | **`ui-design-system.md`** **§3.5** |
 
 **§3.3** documents the **shipped** **toolbar** in **`MainScene.unity`**; **P5**/**P8** coordinate with scaler and rename hygiene around that layout.
 
@@ -120,17 +120,17 @@ Original IDs **P1–P9** are **refined** and **scheduled** in [`.cursor/projects
 
 ## 5. Tooling to implement (umbrella implications)
 
-**Authoritative detail:** [TECH-69](../.cursor/projects/TECH-69.md) **§5.2** / **§7** Phase **H**. At a glance:
+**Authoritative detail:** **`ui-design-system.md`** **§5.2**; **`unity-development-context.md`** **§10**. At a glance:
 
 | Layer | Deliverable | Why |
 |-------|-------------|-----|
 | **Runtime** | **`UiTheme`** + prefab **v0** under `Assets/` | Makes **§1** prescriptive; agents instantiate **prefabs** instead of one-off hierarchies. |
 | **Editor** | **MenuItem** validate/scaffold (**Territory Developer** subtree per **`unity-development-context.md`** **§10**) | Catches drift vs **UI** inventory / **theme**. |
-| **Repo** | Optional **Node** diff (**inventory JSON** vs theme export) | Advisory **CI** when **TECH-69** defines export shape. |
+| **Repo** | Optional **Node** diff (**inventory JSON** vs theme export) | Advisory **CI** when export shape is defined. |
 | **Cursor** | **Skill** — “add **HUD** row using **`UI_StatRow`** + **`UiTheme`**” | Encodes safe recipes post-**P4**. |
 | **territory-ia** | Optional **`snake_case`** tool (e.g. theme token slice) | Only if **MCP** cost accepted; **`npm run verify`** + docs. |
 
-**TECH-67** **§7** **Phase 3–4** may file **interim** children **or** fold kit + **Editor** work into **TECH-69** (**Option B** default in umbrella spec).
+**Runtime** kit + **Editor** work shipped under program **Option B**; future **BACKLOG** rows may still split spikes if needed.
 
 ---
 
@@ -146,8 +146,7 @@ Original IDs **P1–P9** are **refined** and **scheduled** in [`.cursor/projects
 ## 7. References
 
 - [`.cursor/specs/ui-design-system.md`](../.cursor/specs/ui-design-system.md)
-- [`.cursor/projects/TECH-67.md`](../.cursor/projects/TECH-67.md)
-- [`.cursor/projects/TECH-69.md`](../.cursor/projects/TECH-69.md) — **capstone**
+- [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) — **Recent archive** (**UI-as-code program** umbrella + capstone)
 - [`docs/reports/ui-inventory-as-built-baseline.json`](reports/ui-inventory-as-built-baseline.json)
 - **BACKLOG:** **BUG-19**, **BUG-14**
 
@@ -157,8 +156,8 @@ Original IDs **P1–P9** are **refined** and **scheduled** in [`.cursor/projects
 
 | Item | Location |
 |------|----------|
-| **BACKLOG** row | **TECH-69** — **UI improvements using UI-as-code** |
-| **Project spec** | `.cursor/projects/TECH-69.md` |
-| **Umbrella** | **TECH-67** **§7** Phase **5**, **§8** third bullet |
+| **Normative shipped UI** | **`ui-design-system.md`** (**§5.2**, **§3**) |
+| **Program capstone (archived)** | [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) **Recent archive** |
+| **Umbrella (archived)** | [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) **Recent archive** |
 
-When **TECH-69** **§8** is satisfied, update **`ui-design-system.md`** **as-built** tables for **shipped** **theme**/**prefabs** and migrate durable **Lessons** per **project-spec-close** (program-level).
+Keep **`ui-design-system.md`** **as-built** tables aligned with **shipped** **theme**/**prefabs**; migrate durable **Lessons** per **project-spec-close** when closing umbrella children.

@@ -32,6 +32,7 @@ Project-local **Cursor Skills** live here. Each skill is a folder with a **`SKIL
 | [`project-spec-implement/`](project-spec-implement/SKILL.md) | Execute a project spec’s **Implementation Plan** after the spec is ready; per-phase MCP slices + checklist | *(shipped — archive)* |
 | [`project-implementation-validation/`](project-implementation-validation/SKILL.md) | After implementation: **Node** checks aligned with **IA tools** CI (dead spec paths, **MCP** tests, fixtures, **IA index** `--check`); optional **`verify`** | [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) |
 | [`project-spec-close/`](project-spec-close/SKILL.md) | Close an issue: persist IA → delete spec → `validate:dead-project-specs` → **remove** **`BACKLOG.md`** row → **append** **`BACKLOG-ARCHIVE.md`** → **id purge** | [`project-spec-close/SKILL.md`](project-spec-close/SKILL.md) |
+| [`ui-hud-row-theme/`](ui-hud-row-theme/SKILL.md) | Add or adjust **HUD** / **menu** rows using **`UiTheme`** + **`ui-design-system.md`** | **glossary** **UI-as-code program**; **`ui-design-system.md`** **§5.2** |
 
 **Planned / follow-up domain skills** (roads, terrain/water, new **MonoBehaviour** managers): see [`BACKLOG.md`](../../BACKLOG.md). **Spec pipeline program:** **glossary** **territory-ia spec-pipeline program**; charter [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md).
 

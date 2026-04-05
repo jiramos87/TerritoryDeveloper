@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-04T21:22:55.852Z",
+  "last_generated": "2026-04-05T02:08:51.159Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -450,6 +450,10 @@
     "UI design system (reference spec)": {
       "spec_key": "ui-design-system",
       "anchor": "spec-key"
+    },
+    "UI-as-code program": {
+      "spec_key": "glossary",
+      "anchor": "ui-design-system-reference-spec"
     },
     "project-new": {
       "spec_key": "agents",

@@ -74,7 +74,7 @@ If the pointer is over UI that should consume scroll (at minimum the **Load Game
 
 ### Phase 1 — Camera gate
 
-- [ ] Implement **`IsPointerOverGameObject`** guard in **`CameraController.HandleScrollZoom`**.
+- [x] Implement **`IsPointerOverGameObject`** guard in **`CameraController.HandleScrollZoom`** (2026-04-04 — see **`ui-design-system.md`** **§3.5**).
 - [ ] Compile; smoke test zoom on map vs over **Load Game** panel.
 
 ### Phase 2 — UI raycast verification

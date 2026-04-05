@@ -154,14 +154,16 @@ When **Postgres** is configured (see below), **Reports** exports are stored **in
 
 **Expected Unity Editor behavior:**
 
-1. **Menu location:** Top bar **Territory Developer → Reports**:
+1. **Menu location — Reports:** Top bar **Territory Developer → Reports**:
    - **Export Agent Context**
    - **Export Sorting Debug (Markdown)**
    - **Export UI Inventory (JSON)** — [`UiInventoryReportsMenu.cs`](../../Assets/Scripts/Editor/UiInventoryReportsMenu.cs); **Edit Mode**; opens allowlisted **UI** scenes in sequence (**`ui-design-system.md`** baseline)
+   - **Validate UI Theme asset** — [`UiThemeValidationMenu.cs`](../../Assets/Scripts/Editor/UiThemeValidationMenu.cs); **Edit Mode**; checks **`Assets/UI/Theme/DefaultUiTheme.asset`**
    - **Export Cell Chunk (Interchange)** — [`InterchangeJsonReportsMenu.cs`](../../Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs); **Play Mode** only
    - **Export World Snapshot (Dev Interchange)** — same; **Play Mode** only
    - **Export Geography Init Report (last-geography-init.json)** — [`GeographyInitReportMenu.cs`](../../Assets/Scripts/Editor/GeographyInitReportMenu.cs); **Play Mode** only
-2. **When menus appear:** After the project compiles successfully, **Unity** discovers `[MenuItem]` on `AgentDiagnosticsReportsMenu` ([`AgentDiagnosticsReportsMenu.cs`](../../Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs)), `UiInventoryReportsMenu`, and `InterchangeJsonReportsMenu`. If the submenu is missing, check **Console** for script compile errors in **Editor** scripts.
+1b. **Menu location — UI:** **Territory Developer → UI → Scaffold UI Prefab Library v0** — [`UiPrefabLibraryScaffoldMenu.cs`](../../Assets/Scripts/Editor/UiPrefabLibraryScaffoldMenu.cs); **Edit Mode**; writes **`Assets/UI/Prefabs/UI_*.prefab`** (overwrites on re-run).
+2. **When menus appear:** After the project compiles successfully, **Unity** discovers `[MenuItem]` on `AgentDiagnosticsReportsMenu` ([`AgentDiagnosticsReportsMenu.cs`](../../Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs)), `UiInventoryReportsMenu`, `UiThemeValidationMenu`, `InterchangeJsonReportsMenu`, and `UiPrefabLibraryScaffoldMenu`. If the submenu is missing, check **Console** for script compile errors in **Editor** scripts.
 3. **Export Agent Context (JSON):** Must run in **Edit Mode** or **Play Mode** without throwing. If **`GridManager`** is absent or **`isInitialized`** is false, the JSON still validates; the `grid` block documents that state and may omit **cell** samples.
 4. **Export Sorting Debug (Markdown):**
    - **Edit Mode:** Writes a **stub** file stating that full **Sorting order** breakdown requires **Play Mode** with an initialized **grid** — this is **expected**, not a failure.

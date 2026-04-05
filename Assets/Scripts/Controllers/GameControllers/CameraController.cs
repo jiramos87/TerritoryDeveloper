@@ -325,6 +325,10 @@ public class CameraController : MonoBehaviour
         if (Mathf.Approximately(scroll, 0f))
             return;
 
+        // Do not zoom when scrolling over UI (Load Game list, Building Selector, etc.) — see BUG-19 / ui-design-system §3.5.
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            return;
+
         scrollAccumulator += scroll;
         float t = Time.unscaledTime - lastZoomStepTime;
         if (t < zoomStepCooldown)

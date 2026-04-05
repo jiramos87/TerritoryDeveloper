@@ -2256,7 +2256,7 @@ GameObject:
   - component: {fileID: 172977745}
   - component: {fileID: 172977744}
   m_Layer: 5
-  m_Name: TotalGrowthLabel (1)
+  m_Name: TaxGrowthBudgetPercentLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -18777,7 +18777,7 @@ GameObject:
   - component: {fileID: 1805487331}
   - component: {fileID: 1805487330}
   m_Layer: 5
-  m_Name: UnenmploymentPanel
+  m_Name: UnemploymentPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

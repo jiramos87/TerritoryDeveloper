@@ -22,6 +22,8 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Button newGameButton;
     [SerializeField] private Button loadCityButton;
     [SerializeField] private Button optionsButton;
+    [Header("Theme (optional)")]
+    [SerializeField] private UiTheme menuTheme;
     [SerializeField] private GameObject loadCityPanel;
     [SerializeField] private Transform savedGamesListContainer;
     [SerializeField] private GameObject savedGameButtonPrefab;
@@ -38,9 +40,62 @@ public class MainMenuController : MonoBehaviour
         if (continueButton == null)
             BuildUI();
         else
+        {
+            EnsureSerializedMenuPanels();
             WireExistingUI();
+        }
 
+        ApplyMenuThemeIfAny();
         UpdateContinueButtonState();
+    }
+
+    /// <summary>
+    /// When menu buttons are authored in the scene but overlay panels are omitted,
+    /// create the load/options panels under the serialized <see cref="Canvas"/> at runtime.
+    /// </summary>
+    private void ApplyMenuThemeIfAny()
+    {
+        if (menuTheme == null)
+            return;
+        ApplyThemeToMenuStrip(continueButton, newGameButton, loadCityButton, optionsButton);
+    }
+
+    private void ApplyThemeToMenuStrip(Button continueBtn, Button newGameBtn, Button loadCityBtn, Button optionsBtn)
+    {
+        if (menuTheme == null)
+            return;
+        foreach (Button b in new[] { continueBtn, newGameBtn, loadCityBtn, optionsBtn })
+        {
+            if (b == null)
+                continue;
+            var graphic = b.GetComponent<Image>();
+            if (graphic != null)
+                graphic.color = menuTheme.MenuButtonColor;
+            var label = b.GetComponentInChildren<Text>();
+            if (label != null)
+            {
+                label.color = menuTheme.MenuButtonTextColor;
+                label.fontSize = menuTheme.MenuButtonFontSize;
+            }
+        }
+    }
+
+    private void EnsureSerializedMenuPanels()
+    {
+        Canvas canvas = continueButton != null ? continueButton.GetComponentInParent<Canvas>() : null;
+        if (canvas == null)
+            return;
+
+        Transform canvasTransform = canvas.transform;
+        if (loadCityPanel == null)
+            loadCityPanel = CreateLoadCityPanel(canvasTransform);
+        if (optionsPanel == null)
+            optionsPanel = CreateOptionsPanel(canvasTransform);
+
+        if (loadCityPanel != null)
+            loadCityPanel.SetActive(false);
+        if (optionsPanel != null)
+            optionsPanel.SetActive(false);
     }
 
     private void WireExistingUI()
@@ -108,6 +163,8 @@ public class MainMenuController : MonoBehaviour
             es.AddComponent<UnityEngine.EventSystems.EventSystem>();
             es.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
         }
+
+        ApplyThemeToMenuStrip(continueButton, newGameButton, loadCityButton, optionsButton);
     }
 
     private Button CreateButton(Transform parent, string label, Vector2 pos, float w, float h)

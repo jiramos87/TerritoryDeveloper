@@ -25,7 +25,7 @@
 | **AutoResourcePlanner** | Automatic resource building planning |
 | **GrowthManager** | Zone growth logic |
 | **GrowthBudgetManager** | Growth budget per category |
-| **UIManager** | Main UI: popups, toolbar/tool state, demand bar. See `.cursor/specs/ui-design-system.md` |
+| **UIManager** | Main **city** UI: popups, toolbar/tool state, demand bar. **`partial`** class: **`UIManager.cs`** (lifecycle, fields), **`UIManager.PopupStack.cs`**, **`UIManager.Hud.cs`**, **`UIManager.Toolbar.cs`**, **`UIManager.Utilities.cs`**. Shared tokens: **`UiTheme`** + **`ui-design-system.md`** (**Main menu** uses **`MainMenuController`**, not **`UIManager`**) |
 | **CursorManager** | Placement preview, visual cursor |
 | **TimeManager** | Game speed control, simulation ticks |
 | **GameNotificationManager** | **Singleton.** In-game notifications |

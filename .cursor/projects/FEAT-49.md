@@ -49,7 +49,7 @@ Add an in-game **local sector inspector**: the player or developer defines a **r
 
 ### 4.2 Systems map
 
-- **Backlog:** **FEAT-35** (reuse selection pattern); **TECH-59** (optional **MCP** staging for **EditorPrefs** + **JSON**); **TECH-55b** **§ Completed** — **Editor export registry**; **TECH-67** / **ui-design-system** for panel patterns.
+- **Backlog:** **FEAT-35** (reuse selection pattern); **TECH-59** (optional **MCP** staging for **EditorPrefs** + **JSON**); **TECH-55b** **§ Completed** — **Editor export registry**; **`ui-design-system.md`** / **glossary** **UI-as-code program** for panel patterns.
 - **Specs:** `.cursor/specs/ui-design-system.md` (foundations, components); `.cursor/specs/managers-reference.md` — **Zones & Buildings**; `.cursor/specs/roads-system.md` + **isometric-geography-system** §9, §10, §13, §14.5 (**street**, **wet run**, **pathfinding costs**); `.cursor/specs/water-terrain-system.md` + **geo** §2–§5; `.cursor/specs/unity-development-context.md` §10 (**Editor** diagnostics, **Postgres** path).
 - **Runtime:** `GridManager` (**`GetCell`**, no direct **grid** array access from new code), `RoadManager`, `TerrainManager`, `WaterManager`, `UIManager`, `CursorManager` (or equivalents for input routing).
 
