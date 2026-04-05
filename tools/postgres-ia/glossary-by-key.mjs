@@ -5,7 +5,13 @@
  * Example: node glossary-by-key.mjs heightmap
  */
 
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import { resolveDatabaseUrl } from './resolve-database-url.mjs';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = resolve(__dirname, '../..');
 
 const termKey = process.argv[2]?.trim();
 if (!termKey) {
@@ -13,9 +19,11 @@ if (!termKey) {
   process.exit(1);
 }
 
-const databaseUrl = process.env.DATABASE_URL?.trim();
+const databaseUrl = resolveDatabaseUrl(REPO_ROOT);
 if (!databaseUrl) {
-  console.error('Missing DATABASE_URL. See docs/postgres-ia-dev-setup.md.');
+  console.error(
+    'Missing database URL: set DATABASE_URL or config/postgres-dev.json. See docs/postgres-ia-dev-setup.md.',
+  );
   process.exit(1);
 }
 

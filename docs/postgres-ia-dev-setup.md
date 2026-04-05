@@ -1,6 +1,6 @@
 # PostgreSQL — IA dev setup
 
-**Scope:** Local or shared **dev** database for **Information Architecture** tables (`glossary`, `spec_sections`, `invariants`, `relationships`), the **dev repro bundle registry** (`dev_repro_bundle`, **E1** in [`postgres-interchange-patterns.md`](postgres-interchange-patterns.md)), and the **per-export Editor Reports registry** (`editor_export_*` tables). This is **not** player **Save data** or **Load pipeline** input — see [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md). **Charter trace:** [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).
+**Scope:** Local or shared **dev** database for **Information Architecture** tables (`glossary`, `spec_sections`, `invariants`, `relationships`), the **IA project spec journal** (`ia_project_spec_journal` — **glossary** **IA project spec journal**), the **dev repro bundle registry** (`dev_repro_bundle`, **E1** in [`postgres-interchange-patterns.md`](postgres-interchange-patterns.md)), and the **per-export Editor Reports registry** (`editor_export_*` tables). This is **not** player **Save data** or **Load pipeline** input — see [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md). **Charter trace:** [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).
 
 ## Prerequisites
 
@@ -10,9 +10,9 @@
 
 ## Environment
 
-Set **`DATABASE_URL`** to a PostgreSQL connection URI (never commit secrets). Names only — see repository **`.env.example`**.
+**Default (versioned):** [`config/postgres-dev.json`](../config/postgres-dev.json) supplies **`database_url`** for local tooling and **territory-ia** when **`DATABASE_URL`** is unset and the process is **not** running under **`CI=true`** / **`GITHUB_ACTIONS`**. Agents can read that file from the repo. Override with **`DATABASE_URL`** for passwords, other hosts, or production (never commit secrets — see **`.env.example`**).
 
-Example:
+Example override:
 
 ```bash
 export DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:5432/territory_ia_dev'
@@ -47,6 +47,7 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0003_dev_repro_bundle.s
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0004_editor_export_tables.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0005_editor_export_document.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0006_editor_export_ui_inventory.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0007_ia_project_spec_journal.sql
 ```
 
 If you use manual `psql` on a fresh DB, insert migration rows so the Node runner does not re-apply:
@@ -171,6 +172,21 @@ LIMIT 5;
 
 **Manual bundle** (**E1**) remains available via **`npm run db:register-repro`** — it inserts a single **`dev_repro_bundle`** row that can point at both **Agent context** and **Sorting debug** paths. The **`editor_export_*`** tables add **per-export** history (**`document jsonb`**) in separate tables.
 
+## IA project spec journal
+
+**Table:** **`ia_project_spec_journal`** — append-only rows for **Decision Log** and **Lessons learned** Markdown bodies copied from `.cursor/projects/{ISSUE_ID}.md` at **project-spec-close**. Columns include **`backlog_issue_id`**, **`entry_kind`** (`decision_log` \| `lessons_learned`), **`body_markdown`**, **`keywords`** (`text[]` for overlap search), **`source_spec_path`**, **`recorded_at`**, optional **`git_sha`**, and generated **`body_tsv`** (**GIN** full-text).
+
+**Write:** **territory-ia** MCP **`project_spec_journal_persist`** or from repo root **`npm run db:persist-project-journal -- --issue TECH-58`** (optional **`--git-sha`**). Requires migration **`0007`** applied (`npm run db:migrate`).
+
+**Read / search:** MCP **`project_spec_journal_search`**, **`project_spec_journal_get`**, **`project_spec_journal_update`**. Example **SQL**:
+
+```sql
+SELECT id, backlog_issue_id, entry_kind, left(body_markdown, 200), recorded_at
+FROM ia_project_spec_journal
+ORDER BY recorded_at DESC
+LIMIT 10;
+```
+
 ## CI note
 
 Spinning **Postgres** in **CI** for this milestone remains **optional** (developer **Docker** / local **Homebrew** + documented **`npm run db:migrate`**).
@@ -181,7 +197,7 @@ Spinning **Postgres** in **CI** for this milestone remains **optional** (develop
 |-------|--------|
 | **Migrations** | Versioned SQL under **`db/migrations/`**; `tools/postgres-ia/apply-migrations.mjs` runs each file with **`psql -f`** and records versions in **`schema_migrations`** via **`pg`** (avoids multi-statement splitting in **node-postgres**). |
 | **Milestone 1 shape** | Normalized columns only — **no JSONB**; follow [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md) when **JSONB** is added later. |
-| **MCP** | **territory-ia** stays **file-backed** until **DB-backed** retrieval ships; see [`docs/mcp-ia-server.md`](mcp-ia-server.md). |
+| **MCP** | **Normative** spec tools stay **file-backed**; optional **`project_spec_journal_*`** tools use **`pg`** when **`DATABASE_URL`** is set — see [`docs/mcp-ia-server.md`](mcp-ia-server.md). |
 
 **Archive:** First **Postgres** **IA** milestone completed 2026-04-03 — trace in [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) (**2026-04-04** batch).
 

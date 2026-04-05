@@ -3,7 +3,7 @@
  * Applies ordered SQL files under db/migrations/ using psql (full-file DDL).
  * Records versions in schema_migrations after each successful file.
  *
- * Requires: psql on PATH, DATABASE_URL (postgresql://...).
+ * Requires: psql on PATH, and DATABASE_URL or config/postgres-dev.json (see docs/postgres-ia-dev-setup.md).
  */
 
 import { readdir } from 'node:fs/promises';
@@ -11,15 +11,18 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import pg from 'pg';
+import { resolveDatabaseUrl } from './resolve-database-url.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../..');
 const MIGRATIONS_DIR = join(REPO_ROOT, 'db/migrations');
 
 function requireDatabaseUrl() {
-  const url = process.env.DATABASE_URL?.trim();
+  const url = resolveDatabaseUrl(REPO_ROOT);
   if (!url) {
-    console.error('Missing DATABASE_URL. See docs/postgres-ia-dev-setup.md and .env.example.');
+    console.error(
+      'Missing database URL: set DATABASE_URL or add config/postgres-dev.json. See docs/postgres-ia-dev-setup.md.',
+    );
     process.exit(1);
   }
   return url;

@@ -57,6 +57,10 @@ async function main(): Promise<void> {
     "rule_content",
     "backlog_issue",
     "project_spec_closeout_digest",
+    "project_spec_journal_persist",
+    "project_spec_journal_search",
+    "project_spec_journal_get",
+    "project_spec_journal_update",
     "isometric_world_to_grid",
   ];
   for (const n of required) {
@@ -528,6 +532,30 @@ async function main(): Promise<void> {
   if (digest.schema_version !== 1) throw new Error("project_spec_closeout_digest schema_version 1 expected");
   if (digest.spec_path !== ".cursor/projects/TECH-59.md") {
     throw new Error("project_spec_closeout_digest spec_path mismatch");
+  }
+
+  const journalSearch = parseJsonFromToolResult(
+    await client.callTool({
+      name: "project_spec_journal_search",
+      arguments: { query: "project spec", max_results: 3 },
+    }),
+  ) as {
+    error?: string;
+    message?: string;
+    full_text_hits?: unknown[];
+  };
+  if (journalSearch.error === "db_unconfigured") {
+    console.log(
+      "project_spec_journal_search: no DB URL (CI, or unset env with no dev config)",
+    );
+  } else if (journalSearch.error === "db_error") {
+    console.log(
+      "project_spec_journal_search: Postgres unreachable (OK when no local server)",
+    );
+  } else if (!Array.isArray(journalSearch.full_text_hits)) {
+    throw new Error(
+      "project_spec_journal_search expected full_text_hits[] or db_unconfigured / db_error",
+    );
   }
 
   const isoGrid = parseJsonFromToolResult(

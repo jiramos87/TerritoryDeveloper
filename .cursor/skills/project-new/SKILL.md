@@ -56,6 +56,13 @@ Run **in order** unless the prompt is **pure meta** (e.g. only repo hygiene with
 
 7. **`list_specs`** / **`spec_outline`** — **Only** if you do not know the `spec` key for **`spec_section`**.
 
+### Optional: IA project spec journal (Postgres)
+
+**Only when** the user prompt is **ambiguous**, cross-cutting, or the user asked for **exploration** / **design critique** alignment — and **not** for every new issue. Requires **`DATABASE_URL`** (see [`docs/postgres-ia-dev-setup.md`](../../../docs/postgres-ia-dev-setup.md)).
+
+1. **`project_spec_journal_search`** — **English** `query` (short phrase) and/or `raw_text_for_tokens` from the translated prompt; **`max_results`** ≤ **8**. Prefer excerpts; use **`project_spec_journal_get`** only when a hit clearly applies.
+2. If the tool returns **`db_unconfigured`**, skip without noise. **Do not** substitute bulk **`spec_section`** reads — keep reference-spec pulls **surgical** per steps 3–4.
+
 ### Branching (minimum set)
 
 Mirror **kickoff** branching when classifying the **new** issue:

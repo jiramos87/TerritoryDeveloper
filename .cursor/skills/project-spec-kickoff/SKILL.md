@@ -50,6 +50,14 @@ Run these steps **in order** unless the project spec is explicitly **pure doc hy
 
 8. **`spec_outline`** / **`list_specs`** — Use **only** if you do not know which `spec` key to pass to **`spec_section`**.
 
+### Optional: IA project spec journal (Postgres)
+
+**Only when** **Open Questions** are still fuzzy, **Summary** / **Goals** are unclear, or the user asked for **exploration** / **design critique** context — not on every kickoff. Requires **`DATABASE_URL`**.
+
+1. **`project_spec_journal_search`** — **English** `query` built from ambiguous spec phrases and/or `raw_text_for_tokens` from **Summary** + **Goals**; **`max_results`** ≤ **8**.
+2. Use **`project_spec_journal_get`** sparingly for full **`body_markdown`** when an excerpt is insufficient.
+3. If **`db_unconfigured`**, skip. Keep **`spec_section`** usage **minimal** per steps 4–5 above.
+
 ### Branching (minimum set)
 
 - **Roads / streets / interstate / bridge / wet run** → ensure **roads-system** and **isometric-geography-system** slices (validation, **road stroke**, path costs) appear in the fetched set via **`router_for_task`** + **`spec_section`**.

@@ -7,7 +7,7 @@
  *     --document-file <repo-relative> [--issue BUG-37] [--sha <git>]
  *
  * Reads UTF-8 from --document-file: JSON kinds expect JSON; sorting_debug expects Markdown (wrapped in DB).
- * Requires: DATABASE_URL (env), git in PATH for rev-parse (unless --sha).
+ * Requires: DATABASE_URL or config/postgres-dev.json; git in PATH for rev-parse (unless --sha).
  * backlog_issue_id is optional (NULL when --issue omitted).
  */
 
@@ -16,6 +16,7 @@ import { spawnSync } from 'node:child_process';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import { resolveDatabaseUrl } from './resolve-database-url.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../..');
@@ -196,9 +197,11 @@ const { document, payload, interchangeRevision } = readDocumentAndPayload(
   relDoc,
 );
 
-const databaseUrl = process.env.DATABASE_URL?.trim();
+const databaseUrl = resolveDatabaseUrl(REPO_ROOT);
 if (!databaseUrl) {
-  console.error('Missing DATABASE_URL. See docs/postgres-ia-dev-setup.md.');
+  console.error(
+    'Missing database URL: set DATABASE_URL or config/postgres-dev.json. See docs/postgres-ia-dev-setup.md.',
+  );
   process.exit(1);
 }
 

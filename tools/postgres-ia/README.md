@@ -2,7 +2,9 @@
 
 Small **Node** helpers for the game-owned **PostgreSQL** **IA** schema, **E1** **dev repro bundle** registry (**TECH-44c**), and **TECH-55** **Editor** export registry: apply ordered SQL under [`db/migrations/`](../../db/migrations/), seed sample **glossary** rows, **glossary-by-key** smoke read, **register-dev-repro**, and **register-editor-export**.
 
-**Canonical setup** (Docker one-liner, **`DATABASE_URL`**, SQL examples): [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md).
+**Connection URI resolution:** **`DATABASE_URL`** env, else committed [`config/postgres-dev.json`](../../config/postgres-dev.json) (skipped when **`CI=true`** / **`GITHUB_ACTIONS`**). Implemented in **`resolve-database-url.mjs`**.
+
+**Canonical setup** (Docker one-liner, overrides, SQL examples): [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md).
 
 ## Scripts
 
@@ -22,4 +24,4 @@ export DATABASE_URL='postgresql://...'
 npm --prefix tools/postgres-ia run migrate
 ```
 
-Root shortcuts (optional): `npm run db:migrate`, `npm run db:seed:glossary`, `npm run db:glossary -- <term_key>`, `npm run db:register-repro -- --issue TECH-44c …`, `npm run db:register-editor-export -- --kind agent_context --document-file tools/reports/.staging/body.json`.
+Root shortcuts (optional): `npm run db:migrate`, `npm run db:seed:glossary`, `npm run db:glossary -- <term_key>`, `npm run db:register-repro -- --issue TECH-44c …`, `npm run db:register-editor-export -- --kind agent_context --document-file tools/reports/.staging/body.json`, `npm run db:persist-project-journal -- --issue FEAT-44` (after migration **`0007_ia_project_spec_journal`** — see **glossary** **IA project spec journal**).

@@ -1,0 +1,3 @@
+{
+  "database_url": "postgresql://javier@localhost:5432/territory_ia_dev"
+}

@@ -7,7 +7,7 @@
 
 ---
 
-## Compute-lib program (first priority)
+## Compute-lib program
 
 **Dependency order:** Pilot **compute-lib** + **World ↔ Grid** MCP shipped — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md), **glossary** **territory-compute-lib**. **TECH-39** (computational **MCP** suite) **§ Completed** — same archive + **glossary** **Computational MCP tools (TECH-39)**. **TECH-38** (**C#** **pure** modules + harnesses) extends **`Utilities/Compute/`** and **`tools/reports/`** against **glossary** **Compute-lib program** + reference specs (no umbrella **Depends on**). **Related research** (**TECH-32**, **TECH-35**): `Depends on: none`, but run after **TECH-38** surfaces exist when comparing **UrbanGrowthRingMath** / **RNG** notes.
 

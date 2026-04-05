@@ -9,13 +9,14 @@
  *     [--sorting-debug tools/reports/sorting-debug-....md] \
  *     [--notes "short note"] [--sha abc1234]
  *
- * Requires: DATABASE_URL, git in PATH for rev-parse (unless --sha).
+ * Requires: DATABASE_URL or config/postgres-dev.json; git in PATH for rev-parse (unless --sha).
  */
 
 import { spawnSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import { resolveDatabaseUrl } from './resolve-database-url.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../..');
@@ -89,9 +90,11 @@ if (args.agentContext) payload.agent_context_relative_path = args.agentContext;
 if (args.sortingDebug) payload.sorting_debug_relative_path = args.sortingDebug;
 if (args.notes) payload.notes = args.notes;
 
-const databaseUrl = process.env.DATABASE_URL?.trim();
+const databaseUrl = resolveDatabaseUrl(REPO_ROOT);
 if (!databaseUrl) {
-  console.error('Missing DATABASE_URL. See docs/postgres-ia-dev-setup.md.');
+  console.error(
+    'Missing database URL: set DATABASE_URL or config/postgres-dev.json. See docs/postgres-ia-dev-setup.md.',
+  );
   process.exit(1);
 }
 
