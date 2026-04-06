@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-05T10:58:20.295Z",
+  "last_generated": "2026-04-06T19:47:16.756Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -1079,157 +1079,169 @@
           "section_id": "1.2",
           "title": "1.2 Typography",
           "depth": 3,
-          "line_start": 83
+          "line_start": 98
         },
         {
           "section_id": "1.3",
           "title": "1.3 Spacing and layout",
           "depth": 3,
-          "line_start": 96
+          "line_start": 113
+        },
+        {
+          "section_id": "1.3.1",
+          "title": "1.3.1 HUD and uGUI hygiene (agents, **UI** inventory, **Edit Mode**)",
+          "depth": 4,
+          "line_start": 120
         },
         {
           "section_id": "1.4",
           "title": "1.4 Iconography",
           "depth": 3,
-          "line_start": 103
+          "line_start": 136
         },
         {
           "section_id": "1.5",
           "title": "1.5 Motion (optional)",
           "depth": 3,
-          "line_start": 107
+          "line_start": 140
         },
         {
           "section_id": "2",
           "title": "2. Components",
           "depth": 2,
-          "line_start": 113
+          "line_start": 146
         },
         {
           "section_id": "2.1",
           "title": "2.1 Button — primary",
           "depth": 3,
-          "line_start": 117
+          "line_start": 150
         },
         {
           "section_id": "2.2",
           "title": "2.2 Button — secondary",
           "depth": 3,
-          "line_start": 122
+          "line_start": 155
         },
         {
           "section_id": "2.3",
           "title": "2.3 Panel / card",
           "depth": 3,
-          "line_start": 126
+          "line_start": 159
         },
         {
           "section_id": "2.4",
           "title": "2.4 List / scroll",
           "depth": 3,
-          "line_start": 130
+          "line_start": 163
         },
         {
           "section_id": "2.5",
           "title": "2.5 Tooltip",
           "depth": 3,
-          "line_start": 135
+          "line_start": 168
         },
         {
           "section_id": "2.6",
           "title": "2.6 Modal / dialog",
           "depth": 3,
-          "line_start": 139
+          "line_start": 172
         },
         {
           "section_id": "3",
           "title": "3. Patterns",
           "depth": 2,
-          "line_start": 147
+          "line_start": 180
         },
         {
           "section_id": "3.0",
           "title": "3.0 Main menu (**MainMenu** scene)",
           "depth": 3,
-          "line_start": 149
+          "line_start": 182
         },
         {
           "section_id": "3.1",
           "title": "3.1 HUD information density",
           "depth": 3,
-          "line_start": 156
+          "line_start": 189
         },
         {
           "section_id": "3.2",
           "title": "3.2 Popups",
           "depth": 3,
-          "line_start": 161
+          "line_start": 194
         },
         {
           "section_id": "3.3",
           "title": "3.3 Tool selection / toolbar",
           "depth": 3,
-          "line_start": 174
+          "line_start": 207
         },
         {
           "section_id": "3.4",
           "title": "3.4 Feedback and errors",
           "depth": 3,
-          "line_start": 181
+          "line_start": 214
         },
         {
           "section_id": "3.5",
           "title": "3.5 World vs UI input",
           "depth": 3,
-          "line_start": 186
+          "line_start": 219
         },
         {
           "section_id": "4",
           "title": "4. Unity mapping",
           "depth": 2,
-          "line_start": 198
+          "line_start": 232
         },
         {
           "section_id": "4.1",
           "title": "4.1 Naming",
           "depth": 3,
-          "line_start": 200
+          "line_start": 234
         },
         {
           "section_id": "4.2",
           "title": "4.2 Scripting",
           "depth": 3,
-          "line_start": 205
+          "line_start": 239
         },
         {
           "section_id": "4.3",
           "title": "4.3 Canvas",
           "depth": 3,
-          "line_start": 210
+          "line_start": 244
         },
         {
           "section_id": "5",
           "title": "5. Acceptance criteria (per issue)",
           "depth": 2,
-          "line_start": 230
+          "line_start": 264
         },
         {
           "section_id": "5.2",
           "title": "5.2 Theme and prefab paths",
           "depth": 3,
-          "line_start": 239
+          "line_start": 273
+        },
+        {
+          "section_id": "5.3",
+          "title": "5.3 Shipped polish patterns (implementation reference)",
+          "depth": 3,
+          "line_start": 284
         },
         {
           "section_id": "6",
           "title": "6. Revision history",
           "depth": 2,
-          "line_start": 252
+          "line_start": 297
         },
         {
           "section_id": "machine-readable-traceability-ui-inventory-baseline",
           "title": "Machine-readable traceability (UI inventory baseline)",
           "depth": 3,
-          "line_start": 266
+          "line_start": 312
         }
       ]
     },

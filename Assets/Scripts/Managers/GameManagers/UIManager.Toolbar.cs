@@ -26,6 +26,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.ResidentialLightZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RequestToolbarChromeRefresh();
     }
 
     public void OnMediumResidentialButtonClicked()
@@ -34,6 +35,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.ResidentialMediumZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RequestToolbarChromeRefresh();
     }
 
     public void OnHeavyResidentialButtonClicked()
@@ -42,6 +44,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.ResidentialHeavyZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RequestToolbarChromeRefresh();
     }
 
     public void OnLightCommercialButtonClicked()
@@ -50,6 +53,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.CommercialLightZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RequestToolbarChromeRefresh();
     }
 
     public void OnMediumCommercialButtonClicked()
@@ -58,6 +62,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.CommercialMediumZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RequestToolbarChromeRefresh();
     }
 
     public void OnHeavyCommercialButtonClicked()
@@ -66,6 +71,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.CommercialHeavyZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RequestToolbarChromeRefresh();
     }
 
     public void OnLightIndustrialButtonClicked()
@@ -74,6 +80,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.IndustrialLightZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RequestToolbarChromeRefresh();
     }
 
     public void OnMediumIndustrialButtonClicked()
@@ -82,6 +89,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.IndustrialMediumZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RequestToolbarChromeRefresh();
     }
 
     public void OnHeavyIndustrialButtonClicked()
@@ -90,6 +98,7 @@ public partial class UIManager
         selectedZoneType = Zone.ZoneType.IndustrialHeavyZoning;
         SetGhostPreview(zoneManager.GetRandomZonePrefab(selectedZoneType, 1), 1);
         CheckAndShowDemandFeedback(selectedZoneType);
+        RequestToolbarChromeRefresh();
     }
 
     private void CheckAndShowDemandFeedback(Zone.ZoneType zoneType)
@@ -135,12 +144,14 @@ public partial class UIManager
         {
             SetGhostPreview(gridManager.roadManager.roadTilePrefab1, 1);
         }
+        RequestToolbarChromeRefresh();
     }
 
     public void OnGrassButtonClicked()
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.Grass;
+        RequestToolbarChromeRefresh();
     }
 
     public void OnNuclearPowerPlantButtonClicked()
@@ -155,6 +166,7 @@ public partial class UIManager
         selectedBuilding = powerPlant;
 
         cursorManager.ShowBuildingPreview(powerPlantAPrefab, 3);
+        RequestToolbarChromeRefresh();
     }
 
     public Zone.ZoneType GetSelectedZoneType()
@@ -241,6 +253,7 @@ public partial class UIManager
         ClearCurrentTool();
         cursorManager.SetBullDozerCursor();
         bulldozeMode = true;
+        RequestToolbarChromeRefresh();
     }
 
     public bool isBulldozeMode()
@@ -254,10 +267,12 @@ public partial class UIManager
         ClearCurrentTool();
         if (wasDetailsMode)
         {
+            RequestToolbarChromeRefresh();
             return;
         }
         detailsMode = true;
         cursorManager.SetDetailsCursor();
+        RequestToolbarChromeRefresh();
     }
 
     public void OnRaiseResidentialTaxButtonClicked()

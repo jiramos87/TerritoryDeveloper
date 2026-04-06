@@ -12,9 +12,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a7f6e5d4c3b2a1098f7e6d5c4b3a201, type: 3}
   m_Name: DefaultUiTheme
   m_EditorClassIdentifier: 
-  primaryButtonColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
-  primaryButtonTextColor: {r: 1, g: 1, b: 1, a: 1}
+  primaryButtonColor: {r: 0.15686275, g: 0.17254902, b: 0.20784314, a: 1}
+  primaryButtonTextColor: {r: 0.9098039, g: 0.91764706, b: 0.9411765, a: 1}
   primaryButtonFontSize: 18
-  menuButtonColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
-  menuButtonTextColor: {r: 1, g: 1, b: 1, a: 1}
+  menuButtonColor: {r: 0.15686275, g: 0.17254902, b: 0.20784314, a: 1}
+  menuButtonTextColor: {r: 0.9098039, g: 0.91764706, b: 0.9411765, a: 1}
   menuButtonFontSize: 18
+  surfaceBase: {r: 0.06666667, g: 0.07450981, b: 0.09411765, a: 1}
+  surfaceCardHud: {r: 0.10980392, g: 0.12156863, b: 0.14901961, a: 0.88}
+  surfaceToolbar: {r: 0.06666667, g: 0.07450981, b: 0.09411765, a: 0.94}
+  surfaceElevated: {r: 0.15686275, g: 0.17254902, b: 0.20784314, a: 1}
+  borderSubtle: {r: 0.18039216, g: 0.2, b: 0.2509804, a: 1}
+  textPrimary: {r: 0.9098039, g: 0.91764706, b: 0.9411765, a: 1}
+  textSecondary: {r: 0.54509807, g: 0.56078434, b: 0.6431373, a: 1}
+  accentPrimary: {r: 0.2901961, g: 0.61960787, b: 1, a: 1}
+  accentPositive: {r: 0.20392157, g: 0.78039217, b: 0.34901962, a: 1}
+  accentNegative: {r: 1, g: 0.27058825, b: 0.22745098, a: 1}
+  modalDimmerColor: {r: 0, g: 0, b: 0, a: 0.6666667}
+  fontSizeDisplay: 28
+  fontSizeHeading: 18
+  fontSizeBody: 14
+  fontSizeCaption: 11
+  spacingUnit: 4
+  panelPadding: 16

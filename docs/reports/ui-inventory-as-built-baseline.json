@@ -1,1 +1,2861 @@
-{"notes":"UI design system baseline inventory. scenes_exported=2, max_nodes=1200, max_depth=24. SampleScene.unity is excluded unless added to allowlist. Nodes: RectTransform with Graphic, LayoutGroup, or canvas root.","scenes":[{"canvases":[{"path":"MainMenuCanvas","nodes":[{"path":"MainMenuCanvas","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,0.000","anchor_min":"0.000,0.000","color_rgba":"","components":["Canvas","CanvasScaler","GraphicRaycaster"],"text_sample":""},{"path":"MainMenuCanvas/MainMenuRoot/ContinueButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.200,0.200,0.200,1.000","components":["CanvasRenderer","Button","Image"],"text_sample":""},{"path":"MainMenuCanvas/MainMenuRoot/ContinueButton/Text","active":true,"font_name":"LegacyRuntime","font_size":18,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":"Continue"},{"path":"MainMenuCanvas/MainMenuRoot/NewGameButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.200,0.200,0.200,1.000","components":["CanvasRenderer","Button","Image"],"text_sample":""},{"path":"MainMenuCanvas/MainMenuRoot/NewGameButton/Text","active":true,"font_name":"LegacyRuntime","font_size":18,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":"New Game"},{"path":"MainMenuCanvas/MainMenuRoot/LoadCityButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.200,0.200,0.200,1.000","components":["CanvasRenderer","Button","Image"],"text_sample":""},{"path":"MainMenuCanvas/MainMenuRoot/LoadCityButton/Text","active":true,"font_name":"LegacyRuntime","font_size":18,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":"Load City"},{"path":"MainMenuCanvas/MainMenuRoot/OptionsButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.200,0.200,0.200,1.000","components":["CanvasRenderer","Button","Image"],"text_sample":""},{"path":"MainMenuCanvas/MainMenuRoot/OptionsButton/Text","active":true,"font_name":"LegacyRuntime","font_size":18,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":"Options"}],"scaler":{"ui_scale_mode":"ScaleWithScreenSize","match_width_or_height":0.5,"reference_resolution_x":1280,"reference_resolution_y":720},"render_mode":"ScreenSpaceOverlay"}],"scene_name":"MainMenu","scene_asset_path":"Assets/Scenes/MainMenu.unity"},{"canvases":[{"path":"UI/City/Canvas","nodes":[{"path":"Canvas","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,0.000","anchor_min":"0.000,0.000","color_rgba":"","components":["Canvas","CanvasScaler","GraphicRaycaster","DebugUIHit"],"text_sample":""},{"path":"Canvas/ControlPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.165,0.275,0.447,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/ControlPanel/BuildingSelectorPopupPanel","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,0.392","components":["CanvasRenderer","Image","BuildingSelectorMenuController"],"text_sample":""},{"path":"Canvas/ControlPanel/BuildingSelectorPopupPanel/Scroll View","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image","ScrollRect"],"text_sample":""},{"path":"Canvas/ControlPanel/BuildingSelectorPopupPanel/Scroll View/Viewport","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,0.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Mask"],"text_sample":""},{"path":"Canvas/ControlPanel/BuildingSelectorPopupPanel/Scroll View/Viewport/Content","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"","components":["ContentSizeFitter","HorizontalLayoutGroup"],"text_sample":""},{"path":"Canvas/ControlPanel/BuildingSelectorPopupPanel/Scroll View/Scrollbar Horizontal","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,0.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Scrollbar"],"text_sample":""},{"path":"Canvas/ControlPanel/BuildingSelectorPopupPanel/Scroll View/Scrollbar Horizontal/Sliding Area/Handle","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/ControlPanel/BulldozerButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/ControlPanel/RoadsSelectorButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","RoadsSelectorButton"],"text_sample":""},{"path":"Canvas/ControlPanel/PowerBuildingSelectorButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","PowerBuildingsSelectButton"],"text_sample":""},{"path":"Canvas/ControlPanel/EnviromentalSelectorButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","EnvironmentalSelectorButton"],"text_sample":""},{"path":"Canvas/ControlPanel/WaterBuildingSelectorButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","WaterBuildingSelectorButton"],"text_sample":""},{"path":"Canvas/ControlPanel/ResidentialZoningSelectorButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","ResidentialZoningSelectorButton"],"text_sample":""},{"path":"Canvas/ControlPanel/CommercialZoningSelectorButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","CommercialZoningSelectorButton"],"text_sample":""},{"path":"Canvas/ControlPanel/IndustrialZoningSelectorButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","IndustrialZoningSelectorButton"],"text_sample":""},{"path":"Canvas/LoadGameMenuPanel","active":false,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,0.392","components":["CanvasRenderer","Image","GameManager"],"text_sample":""},{"path":"Canvas/LoadGameMenuPanel/Scroll View","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,0.392","components":["CanvasRenderer","Image","ScrollRect"],"text_sample":""},{"path":"Canvas/LoadGameMenuPanel/Scroll View/Viewport","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Mask"],"text_sample":""},{"path":"Canvas/LoadGameMenuPanel/Scroll View/Viewport/Content","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,1.000","color_rgba":"","components":["VerticalLayoutGroup","ContentSizeFitter"],"text_sample":""},{"path":"Canvas/LoadGameMenuPanel/Scroll View/Scrollbar Horizontal","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,0.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Scrollbar"],"text_sample":""},{"path":"Canvas/LoadGameMenuPanel/Scroll View/Scrollbar Horizontal/Sliding Area/Handle","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/LoadGameMenuPanel/Scroll View/Scrollbar Vertical","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"1.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Scrollbar"],"text_sample":""},{"path":"Canvas/LoadGameMenuPanel/Scroll View/Scrollbar Vertical/Sliding Area/Handle","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/LoadGameMenuPanel/SelectGameText","active":true,"font_name":"LegacyRuntime","font_size":14,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Select a saved game"},{"path":"Canvas/InsufficientFundsPanel","active":false,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"0.934,0.207,0.262,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/InsufficientFundsPanel/InsufficientFundsText","active":true,"font_name":"LegacyRuntime","font_size":9,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/NotificationPanel","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,0.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/NotificationPanel/NotificationText","active":true,"font_name":"LiberationSans SDF","font_size":8,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","TextMeshProUGUI"],"text_sample":""},{"path":"Canvas/DataPanelButtons","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.133,0.227,0.373,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/DatePanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.282,0.318,0.388,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/DatePanel/PlayerCityName","active":true,"font_name":"LegacyRuntime","font_size":12,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":"City Name"},{"path":"Canvas/DataPanelButtons/DemandWarningPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel","active":false,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.133,0.227,0.373,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/ResidentialTaxText","active":true,"font_name":"LegacyRuntime","font_size":12,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.937,0.878,0.878,1.000","components":["CanvasRenderer","Text"],"text_sample":"Residential Tax"},{"path":"Canvas/DataPanelButtons/TaxPanel/ResidentialTaxText/LowerResidentialTaxButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/ResidentialTaxText/RaiseResidentialTaxButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/CommercialTaxText ","active":true,"font_name":"LegacyRuntime","font_size":12,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.937,0.878,0.878,1.000","components":["CanvasRenderer","Text"],"text_sample":"Commercial Tax"},{"path":"Canvas/DataPanelButtons/TaxPanel/CommercialTaxText /LowerCommercialTaxButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/CommercialTaxText /RaiseCommercialTaxButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/IndustrialTaxText","active":true,"font_name":"LegacyRuntime","font_size":12,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.937,0.878,0.878,1.000","components":["CanvasRenderer","Text"],"text_sample":"Industrial Tax"},{"path":"Canvas/DataPanelButtons/TaxPanel/IndustrialTaxText/LowerIndustrialTaxButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/IndustrialTaxText/RaiseIndustrialTaxButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/TotalGrowthBudgetSlider/Background","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,0.750","anchor_min":"0.000,0.250","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/TotalGrowthBudgetSlider/Fill Area/Fill","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/TotalGrowthBudgetSlider/Handle Slide Area/Handle","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/RoadGrowthSlider/Background","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,0.750","anchor_min":"0.000,0.250","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/RoadGrowthSlider/Fill Area/Fill","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/RoadGrowthSlider/Handle Slide Area/Handle","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/EnergyGrowthSlider/Background","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,0.750","anchor_min":"0.000,0.250","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/EnergyGrowthSlider/Fill Area/Fill","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/EnergyGrowthSlider/Handle Slide Area/Handle","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/WaterGrowthSlider/Background","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,0.750","anchor_min":"0.000,0.250","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/WaterGrowthSlider/Fill Area/Fill","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/WaterGrowthSlider/Handle Slide Area/Handle","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/ZoningGrowthSlider/Background","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,0.750","anchor_min":"0.000,0.250","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/ZoningGrowthSlider/Fill Area/Fill","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/ZoningGrowthSlider/Handle Slide Area/Handle","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/TotalGrowthLabel","active":true,"font_name":"LegacyRuntime","font_size":12,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/TaxGrowthBudgetPercentLabel","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":"Growth Budget %"},{"path":"Canvas/DataPanelButtons/TaxPanel/RoadGrowthLabel","active":true,"font_name":"LegacyRuntime","font_size":12,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/RoadGrowthLabel (1)","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":"Road %"},{"path":"Canvas/DataPanelButtons/TaxPanel/EnergyGrowthLabel","active":true,"font_name":"LegacyRuntime","font_size":12,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/EnergyGrowthLabel (1)","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":"Energy %"},{"path":"Canvas/DataPanelButtons/TaxPanel/WaterGrowthLabel","active":true,"font_name":"LegacyRuntime","font_size":12,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/WaterGrowthLabel (1)","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":"Water %"},{"path":"Canvas/DataPanelButtons/TaxPanel/ZoningGrowthLabel","active":true,"font_name":"LegacyRuntime","font_size":12,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/TaxPanel/ZoningGrowthLabel (1)","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":"Zoning %"},{"path":"Canvas/DataPanelButtons/StatsPanel","active":false,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.165,0.275,0.447,1.000","components":["CanvasRenderer","Image","UIDocument","CityStats","VerticalLayoutGroup","ScrollRect"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/StatsPanelTitle","active":true,"font_name":"LiberationSans","font_size":28,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":"CITY STATISTICS"},{"path":"Canvas/DataPanelButtons/StatsPanel/PopulationPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/PopulationPanel/PopulationKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Population"},{"path":"Canvas/DataPanelButtons/StatsPanel/PopulationPanel/PopulationIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/PopulationPanel/PopulationValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/MoneyPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/MoneyPanel/MoneyKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Money"},{"path":"Canvas/DataPanelButtons/StatsPanel/MoneyPanel/MoneyIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/MoneyPanel/MoneyValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/HappinessPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/HappinessPanel/HappinessKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Happiness"},{"path":"Canvas/DataPanelButtons/StatsPanel/HappinessPanel/HappinessIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/HappinessPanel/HappinessValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/CityPowerOutputPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/CityPowerOutputPanel/CityPowerOutputKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Power output"},{"path":"Canvas/DataPanelButtons/StatsPanel/CityPowerOutputPanel/CityPowerOutputIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/CityPowerOutputPanel/CityPowerOutputValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/CityPowerConsumptionPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/CityPowerConsumptionPanel/CityPowerConsumptionKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Power consumption"},{"path":"Canvas/DataPanelButtons/StatsPanel/CityPowerConsumptionPanel/CityPowerConsumptionIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/CityPowerConsumptionPanel/CityPowerConsumptionValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/UnemploymentPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/UnemploymentPanel/UnemploymentKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Unemployment"},{"path":"Canvas/DataPanelButtons/StatsPanel/UnemploymentPanel/UnemploymentIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/UnemploymentPanel/UnemploymentValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/TotalJobsPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/TotalJobsPanel/TotalJobsKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Total jobs"},{"path":"Canvas/DataPanelButtons/StatsPanel/TotalJobsPanel/TotalJobsIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/TotalJobsPanel/TotalJobsValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandResidentialPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandResidentialPanel/DemandResidentialKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Residential demand"},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandResidentialPanel/DemandResidentialIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandResidentialPanel/DemandResidentialValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandCommercialPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandCommercialPanel/DemandCommercialKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Commercial demand"},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandCommercialPanel/DemandCommercialIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandCommercialPanel/DemandCommercialValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandIndustrialPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandIndustrialPanel/DemandIndustrialKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Industrial demand"},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandIndustrialPanel/DemandIndustrialIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandIndustrialPanel/DemandIndustrialValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandFeedbackPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandFeedbackPanel/DemandFeedbackKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Demand feedback"},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandFeedbackPanel/DemandFeedbackIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/DemandFeedbackPanel/DemandFeedbackValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/TotalJobsCreatedPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/TotalJobsCreatedPanel/TotalJobsCreatedKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Total jobs created"},{"path":"Canvas/DataPanelButtons/StatsPanel/TotalJobsCreatedPanel/TotalJobsCreatedIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/TotalJobsCreatedPanel/TotalJobsCreatedValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/AvailableJobsPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/AvailableJobsPanel/AvailableJobsKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Available jobs"},{"path":"Canvas/DataPanelButtons/StatsPanel/AvailableJobsPanel/AvailableJobsIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/AvailableJobsPanel/AvailableJobsValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/JobsTakenPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/JobsTakenPanel/JobsTakenKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Jobs taken"},{"path":"Canvas/DataPanelButtons/StatsPanel/JobsTakenPanel/JobsTakenIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/JobsTakenPanel/JobsTakenValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/CityWaterOutputPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/CityWaterOutputPanel/CityWaterOutputKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Water output"},{"path":"Canvas/DataPanelButtons/StatsPanel/CityWaterOutputPanel/CityWaterOutputIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/CityWaterOutputPanel/CityWaterOutputValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/CityWaterConsumptionPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"0.498,0.498,0.498,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/CityWaterConsumptionPanel/CityWaterConsumptionKey","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,0.986,0.986,1.000","components":["CanvasRenderer","Text"],"text_sample":"Water consumption"},{"path":"Canvas/DataPanelButtons/StatsPanel/CityWaterConsumptionPanel/CityWaterConsumptionIcon","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/StatsPanel/CityWaterConsumptionPanel/CityWaterConsumptionValue","active":true,"font_name":"LegacyRuntime","font_size":36,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":""},{"path":"Canvas/DataPanelButtons/DetailsPanel","active":false,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/DetailsPanel/DetailsImage","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/DetailsPanel/DetailsNameText","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Building name"},{"path":"Canvas/DataPanelButtons/DetailsPanel/DetailsOccupancyText","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Occupancy"},{"path":"Canvas/DataPanelButtons/DetailsPanel/DetailsHappinessText","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Happiness"},{"path":"Canvas/DataPanelButtons/DetailsPanel/DetailsPowerOutputText","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Power output"},{"path":"Canvas/DataPanelButtons/DetailsPanel/DetailsPowerConsumptionText","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Power consumption"},{"path":"Canvas/DataPanelButtons/DetailsPanel/DetailsDateBuiltText","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Date of construction"},{"path":"Canvas/DataPanelButtons/DetailsPanel/DetailsBuildingTypeText","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Building type"},{"path":"Canvas/DataPanelButtons/DetailsPanel/DetailsSortingOrderText","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Sorting order"},{"path":"Canvas/DataPanelButtons/SaveButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/LoadButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameSavedText","active":false,"font_name":"LegacyRuntime","font_size":17,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Text"],"text_sample":"Game saved!"},{"path":"Canvas/DataPanelButtons/NewGameButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,0.000","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons/ShowStatsButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","ShowStatsButton"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons/ShowTaxesButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.824,0.849,0.887,1.000","components":["CanvasRenderer","Image","Button","ShowTaxesButton"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons/ZoomInButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons/ZoomOutButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons/ShowMiniMapButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","ShowMiniMapButton"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons/ShowMiniMapButton/Text (Legacy)","active":true,"font_name":"LegacyRuntime","font_size":10,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Mini Map"},{"path":"Canvas/DataPanelButtons/GameButtons/SpeedButtonsPanel","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,1.000","anchor_min":"0.000,1.000","color_rgba":"1.000,1.000,1.000,0.392","components":["CanvasRenderer","Image","HorizontalLayoutGroup"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons/SpeedButtonsPanel/PauseButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,0.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons/SpeedButtonsPanel/Speed1Button","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,0.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons/SpeedButtonsPanel/Speed2Button","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,0.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons/SpeedButtonsPanel/Speed3Button","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,0.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons/SpeedButtonsPanel/Speed4Button","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,0.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons/SimulateGrowthToggle","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.663,0.733,0.776,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/DataPanelButtons/GameButtons/SimulateGrowthToggle/Text (Legacy)","active":true,"font_name":"LegacyRuntime","font_size":8,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"AUTO"},{"path":"Canvas/DebugPanel","active":false,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/DebugPanel/DetailsDebugText","active":true,"font_name":"LegacyRuntime","font_size":14,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"New Text"},{"path":"Canvas/ProposalUI","active":false,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,0.392","components":["CanvasRenderer","Image"],"text_sample":""},{"path":"Canvas/ProposalUI/NameText","active":true,"font_name":"LegacyRuntime","font_size":14,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Name"},{"path":"Canvas/ProposalUI/CostText","active":true,"font_name":"LegacyRuntime","font_size":14,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Cost"},{"path":"Canvas/ProposalUI/AcceptButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/ProposalUI/AcceptButton/Text (Legacy)","active":true,"font_name":"LegacyRuntime","font_size":14,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Accept"},{"path":"Canvas/ProposalUI/RejectButton","active":true,"font_name":"","font_size":0,"anchor_max":"0.500,0.500","anchor_min":"0.500,0.500","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button"],"text_sample":""},{"path":"Canvas/ProposalUI/RejectButton/Text (Legacy)","active":true,"font_name":"LegacyRuntime","font_size":14,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Reject"},{"path":"Canvas/MiniMapPanel","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,0.392","components":["CanvasRenderer","Image","MiniMapController"],"text_sample":""},{"path":"Canvas/MiniMapPanel/MiniMapImage","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","RawImage"],"text_sample":""},{"path":"Canvas/MiniMapPanel/ViewportRect","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,0.000","components":["CanvasRenderer","Image","Outline"],"text_sample":""},{"path":"Canvas/MiniMapPanel/LayerButtonsRow","active":true,"font_name":"","font_size":0,"anchor_max":"1.000,1.000","anchor_min":"0.000,1.000","color_rgba":"","components":["HorizontalLayoutGroup"],"text_sample":""},{"path":"Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonStreets","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,0.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","MiniMapLayerButton"],"text_sample":""},{"path":"Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonStreets/Text (Legacy)","active":true,"font_name":"LegacyRuntime","font_size":14,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"St"},{"path":"Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonZones","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,0.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","MiniMapLayerButton"],"text_sample":""},{"path":"Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonZones/Text (Legacy)","active":true,"font_name":"LegacyRuntime","font_size":14,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Zn"},{"path":"Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonForests","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,0.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","MiniMapLayerButton"],"text_sample":""},{"path":"Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonForests/Text (Legacy)","active":true,"font_name":"LegacyRuntime","font_size":14,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Fr"},{"path":"Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonDesirability","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,0.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","MiniMapLayerButton"],"text_sample":""},{"path":"Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonDesirability/Text (Legacy)","active":true,"font_name":"LegacyRuntime","font_size":14,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"De"},{"path":"Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonCentroid","active":true,"font_name":"","font_size":0,"anchor_max":"0.000,0.000","anchor_min":"0.000,0.000","color_rgba":"1.000,1.000,1.000,1.000","components":["CanvasRenderer","Image","Button","MiniMapLayerButton"],"text_sample":""},{"path":"Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonCentroid/Text (Legacy)","active":true,"font_name":"LegacyRuntime","font_size":14,"anchor_max":"1.000,1.000","anchor_min":"0.000,0.000","color_rgba":"0.196,0.196,0.196,1.000","components":["CanvasRenderer","Text"],"text_sample":"Ct"}],"scaler":{"ui_scale_mode":"ScaleWithScreenSize","match_width_or_height":0.5,"reference_resolution_x":800,"reference_resolution_y":600},"render_mode":"ScreenSpaceOverlay"}],"scene_name":"MainScene","scene_asset_path":"Assets/Scenes/MainScene.unity"}],"artifact":"ui_inventory_dev","unity_version":"2022.3.21f1","schema_version":1,"exported_at_utc":"2026-04-04T23:15:10.5709250Z"}
+{
+  "artifact": "ui_inventory_dev",
+  "exported_at_utc": "2026-04-06T19:18:34.4832060Z",
+  "notes": "UI design system baseline inventory. scenes_exported=2, max_nodes=1200, max_depth=24. SampleScene.unity is excluded unless added to allowlist. Nodes: RectTransform with Graphic, LayoutGroup, or canvas root.",
+  "scenes": [
+    {
+      "canvases": [
+        {
+          "nodes": [
+            {
+              "active": true,
+              "anchor_max": "0.000,0.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "",
+              "components": [
+                "Canvas",
+                "CanvasScaler",
+                "GraphicRaycaster"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "MainMenuCanvas",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.200,0.200,0.200,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Button",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "MainMenuCanvas/MainMenuRoot/ContinueButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 18,
+              "path": "MainMenuCanvas/MainMenuRoot/ContinueButton/Text",
+              "text_sample": "Continue"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.200,0.200,0.200,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Button",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "MainMenuCanvas/MainMenuRoot/NewGameButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 18,
+              "path": "MainMenuCanvas/MainMenuRoot/NewGameButton/Text",
+              "text_sample": "New Game"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.200,0.200,0.200,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Button",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "MainMenuCanvas/MainMenuRoot/LoadCityButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 18,
+              "path": "MainMenuCanvas/MainMenuRoot/LoadCityButton/Text",
+              "text_sample": "Load City"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.200,0.200,0.200,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Button",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "MainMenuCanvas/MainMenuRoot/OptionsButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 18,
+              "path": "MainMenuCanvas/MainMenuRoot/OptionsButton/Text",
+              "text_sample": "Options"
+            }
+          ],
+          "path": "MainMenuCanvas",
+          "render_mode": "ScreenSpaceOverlay",
+          "scaler": {
+            "match_width_or_height": 0.5,
+            "reference_resolution_x": 1280,
+            "reference_resolution_y": 720,
+            "ui_scale_mode": "ScaleWithScreenSize"
+          }
+        }
+      ],
+      "scene_asset_path": "Assets/Scenes/MainMenu.unity",
+      "scene_name": "MainMenu"
+    },
+    {
+      "canvases": [
+        {
+          "nodes": [
+            {
+              "active": true,
+              "anchor_max": "0.000,0.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "",
+              "components": [
+                "Canvas",
+                "CanvasScaler",
+                "GraphicRaycaster",
+                "DebugUIHit"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.165,0.275,0.447,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "BuildingSelectorMenuController"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/BuildingSelectorPopupPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "ScrollRect"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/BuildingSelectorPopupPanel/Scroll View",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Mask"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/BuildingSelectorPopupPanel/Scroll View/Viewport",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "",
+              "components": [
+                "ContentSizeFitter",
+                "HorizontalLayoutGroup"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/BuildingSelectorPopupPanel/Scroll View/Viewport/Content",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,0.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Scrollbar"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/BuildingSelectorPopupPanel/Scroll View/Scrollbar Horizontal",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/BuildingSelectorPopupPanel/Scroll View/Scrollbar Horizontal/Sliding Area/Handle",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/BulldozerButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "RoadsSelectorButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/RoadsSelectorButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "PowerBuildingsSelectButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/PowerBuildingSelectorButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "EnvironmentalSelectorButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/EnviromentalSelectorButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "WaterBuildingSelectorButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/WaterBuildingSelectorButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "ResidentialZoningSelectorButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/ResidentialZoningSelectorButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "CommercialZoningSelectorButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/CommercialZoningSelectorButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "IndustrialZoningSelectorButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ControlPanel/IndustrialZoningSelectorButton",
+              "text_sample": ""
+            },
+            {
+              "active": false,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "GameManager"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/LoadGameMenuPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "ScrollRect"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/LoadGameMenuPanel/Scroll View",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Mask"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/LoadGameMenuPanel/Scroll View/Viewport",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "",
+              "components": [
+                "VerticalLayoutGroup",
+                "ContentSizeFitter"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/LoadGameMenuPanel/Scroll View/Viewport/Content",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,0.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Scrollbar"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/LoadGameMenuPanel/Scroll View/Scrollbar Horizontal",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/LoadGameMenuPanel/Scroll View/Scrollbar Horizontal/Sliding Area/Handle",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "1.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Scrollbar"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/LoadGameMenuPanel/Scroll View/Scrollbar Vertical",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/LoadGameMenuPanel/Scroll View/Scrollbar Vertical/Sliding Area/Handle",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 14,
+              "path": "Canvas/LoadGameMenuPanel/SelectGameText",
+              "text_sample": "Select a saved game"
+            },
+            {
+              "active": false,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "0.934,0.207,0.262,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/InsufficientFundsPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 9,
+              "path": "Canvas/InsufficientFundsPanel/InsufficientFundsText",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,0.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/NotificationPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "TextMeshProUGUI"
+              ],
+              "font_name": "LiberationSans SDF",
+              "font_size": 8,
+              "path": "Canvas/NotificationPanel/NotificationText",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.133,0.227,0.373,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.282,0.318,0.388,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/DatePanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 12,
+              "path": "Canvas/DataPanelButtons/DatePanel/PlayerCityName",
+              "text_sample": "City Name"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/DemandWarningPanel",
+              "text_sample": ""
+            },
+            {
+              "active": false,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.133,0.227,0.373,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.937,0.878,0.878,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 12,
+              "path": "Canvas/DataPanelButtons/TaxPanel/ResidentialTaxText",
+              "text_sample": "Residential Tax"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/ResidentialTaxText/LowerResidentialTaxButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/ResidentialTaxText/RaiseResidentialTaxButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.937,0.878,0.878,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 12,
+              "path": "Canvas/DataPanelButtons/TaxPanel/CommercialTaxText ",
+              "text_sample": "Commercial Tax"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/CommercialTaxText /LowerCommercialTaxButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/CommercialTaxText /RaiseCommercialTaxButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.937,0.878,0.878,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 12,
+              "path": "Canvas/DataPanelButtons/TaxPanel/IndustrialTaxText",
+              "text_sample": "Industrial Tax"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/IndustrialTaxText/LowerIndustrialTaxButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/IndustrialTaxText/RaiseIndustrialTaxButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,0.750",
+              "anchor_min": "0.000,0.250",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/TotalGrowthBudgetSlider/Background",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/TotalGrowthBudgetSlider/Fill Area/Fill",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/TotalGrowthBudgetSlider/Handle Slide Area/Handle",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,0.750",
+              "anchor_min": "0.000,0.250",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/RoadGrowthSlider/Background",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/RoadGrowthSlider/Fill Area/Fill",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/RoadGrowthSlider/Handle Slide Area/Handle",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,0.750",
+              "anchor_min": "0.000,0.250",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/EnergyGrowthSlider/Background",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/EnergyGrowthSlider/Fill Area/Fill",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/EnergyGrowthSlider/Handle Slide Area/Handle",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,0.750",
+              "anchor_min": "0.000,0.250",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/WaterGrowthSlider/Background",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/WaterGrowthSlider/Fill Area/Fill",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/WaterGrowthSlider/Handle Slide Area/Handle",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,0.750",
+              "anchor_min": "0.000,0.250",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/ZoningGrowthSlider/Background",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/ZoningGrowthSlider/Fill Area/Fill",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/TaxPanel/ZoningGrowthSlider/Handle Slide Area/Handle",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 12,
+              "path": "Canvas/DataPanelButtons/TaxPanel/TotalGrowthLabel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/TaxPanel/TaxGrowthBudgetPercentLabel",
+              "text_sample": "Growth Budget"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 12,
+              "path": "Canvas/DataPanelButtons/TaxPanel/RoadGrowthLabel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/TaxPanel/RoadGrowthLabel (1)",
+              "text_sample": "Road %"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 12,
+              "path": "Canvas/DataPanelButtons/TaxPanel/EnergyGrowthLabel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/TaxPanel/EnergyGrowthLabel (1)",
+              "text_sample": "Energy %"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 12,
+              "path": "Canvas/DataPanelButtons/TaxPanel/WaterGrowthLabel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/TaxPanel/WaterGrowthLabel (1)",
+              "text_sample": "Water %"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 12,
+              "path": "Canvas/DataPanelButtons/TaxPanel/ZoningGrowthLabel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/TaxPanel/ZoningGrowthLabel (1)",
+              "text_sample": "Zoning %"
+            },
+            {
+              "active": false,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.165,0.275,0.447,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "UIDocument",
+                "CityStats",
+                "VerticalLayoutGroup",
+                "ScrollRect"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LiberationSans",
+              "font_size": 28,
+              "path": "Canvas/DataPanelButtons/StatsPanel/StatsPanelTitle",
+              "text_sample": "CITY STATISTICS"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/PopulationPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/PopulationPanel/PopulationKey",
+              "text_sample": "Population"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/PopulationPanel/PopulationIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/PopulationPanel/PopulationValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/MoneyPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/MoneyPanel/MoneyKey",
+              "text_sample": "Money"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/MoneyPanel/MoneyIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/MoneyPanel/MoneyValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/HappinessPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/HappinessPanel/HappinessKey",
+              "text_sample": "Happiness"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/HappinessPanel/HappinessIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/HappinessPanel/HappinessValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityPowerOutputPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityPowerOutputPanel/CityPowerOutputKey",
+              "text_sample": "Power output"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityPowerOutputPanel/CityPowerOutputIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityPowerOutputPanel/CityPowerOutputValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityPowerConsumptionPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityPowerConsumptionPanel/CityPowerConsumptionKey",
+              "text_sample": "Power consumption"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityPowerConsumptionPanel/CityPowerConsumptionIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityPowerConsumptionPanel/CityPowerConsumptionValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/UnemploymentPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/UnemploymentPanel/UnemploymentKey",
+              "text_sample": "Unemployment"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/UnemploymentPanel/UnemploymentIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/UnemploymentPanel/UnemploymentValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/TotalJobsPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/TotalJobsPanel/TotalJobsKey",
+              "text_sample": "Total jobs"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/TotalJobsPanel/TotalJobsIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/TotalJobsPanel/TotalJobsValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandResidentialPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandResidentialPanel/DemandResidentialKey",
+              "text_sample": "Residential demand"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandResidentialPanel/DemandResidentialIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandResidentialPanel/DemandResidentialValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandCommercialPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandCommercialPanel/DemandCommercialKey",
+              "text_sample": "Commercial demand"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandCommercialPanel/DemandCommercialIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandCommercialPanel/DemandCommercialValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandIndustrialPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandIndustrialPanel/DemandIndustrialKey",
+              "text_sample": "Industrial demand"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandIndustrialPanel/DemandIndustrialIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandIndustrialPanel/DemandIndustrialValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandFeedbackPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandFeedbackPanel/DemandFeedbackKey",
+              "text_sample": "Demand feedback"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandFeedbackPanel/DemandFeedbackIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/DemandFeedbackPanel/DemandFeedbackValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/TotalJobsCreatedPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/TotalJobsCreatedPanel/TotalJobsCreatedKey",
+              "text_sample": "Total jobs created"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/TotalJobsCreatedPanel/TotalJobsCreatedIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/TotalJobsCreatedPanel/TotalJobsCreatedValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/AvailableJobsPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/AvailableJobsPanel/AvailableJobsKey",
+              "text_sample": "Available jobs"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/AvailableJobsPanel/AvailableJobsIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/AvailableJobsPanel/AvailableJobsValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/JobsTakenPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/JobsTakenPanel/JobsTakenKey",
+              "text_sample": "Jobs taken"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/JobsTakenPanel/JobsTakenIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/JobsTakenPanel/JobsTakenValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityWaterOutputPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityWaterOutputPanel/CityWaterOutputKey",
+              "text_sample": "Water output"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityWaterOutputPanel/CityWaterOutputIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityWaterOutputPanel/CityWaterOutputValue",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "0.498,0.498,0.498,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityWaterConsumptionPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,0.986,0.986,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityWaterConsumptionPanel/CityWaterConsumptionKey",
+              "text_sample": "Water consumption"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityWaterConsumptionPanel/CityWaterConsumptionIcon",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 36,
+              "path": "Canvas/DataPanelButtons/StatsPanel/CityWaterConsumptionPanel/CityWaterConsumptionValue",
+              "text_sample": ""
+            },
+            {
+              "active": false,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/DetailsPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/DetailsPanel/DetailsImage",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/DetailsPanel/DetailsNameText",
+              "text_sample": "Building name"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/DetailsPanel/DetailsOccupancyText",
+              "text_sample": "Occupancy"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/DetailsPanel/DetailsHappinessText",
+              "text_sample": "Happiness"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/DetailsPanel/DetailsPowerOutputText",
+              "text_sample": "Power output"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/DetailsPanel/DetailsPowerConsumptionText",
+              "text_sample": "Power consumption"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/DetailsPanel/DetailsDateBuiltText",
+              "text_sample": "Date of construction"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/DetailsPanel/DetailsBuildingTypeText",
+              "text_sample": "Building type"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/DetailsPanel/DetailsSortingOrderText",
+              "text_sample": "Sorting order"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/SaveButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/LoadButton",
+              "text_sample": ""
+            },
+            {
+              "active": false,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 17,
+              "path": "Canvas/DataPanelButtons/GameSavedText",
+              "text_sample": "Game saved!"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/NewGameButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,0.000",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/GameButtons",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "ShowStatsButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/GameButtons/ShowStatsButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.824,0.849,0.887,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "ShowTaxesButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/GameButtons/ShowTaxesButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 14,
+              "path": "Canvas/DataPanelButtons/GameButtons/ShowTaxesButton/ButtonMoneyText",
+              "text_sample": "$ 0"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/GameButtons/ZoomInButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/GameButtons/ZoomOutButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "ShowMiniMapButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/GameButtons/ShowMiniMapButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 10,
+              "path": "Canvas/DataPanelButtons/GameButtons/ShowMiniMapButton/Text (Legacy)",
+              "text_sample": "Mini Map"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "1.000,1.000,1.000,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "HorizontalLayoutGroup"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/GameButtons/SpeedButtonsPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/GameButtons/SpeedButtonsPanel/PauseButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/GameButtons/SpeedButtonsPanel/Speed1Button",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/GameButtons/SpeedButtonsPanel/Speed2Button",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/GameButtons/SpeedButtonsPanel/Speed3Button",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/GameButtons/SpeedButtonsPanel/Speed4Button",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.663,0.733,0.776,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DataPanelButtons/GameButtons/SimulateGrowthToggle",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 8,
+              "path": "Canvas/DataPanelButtons/GameButtons/SimulateGrowthToggle/Text (Legacy)",
+              "text_sample": "AUTO"
+            },
+            {
+              "active": false,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/DebugPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 14,
+              "path": "Canvas/DebugPanel/DetailsDebugText",
+              "text_sample": "New Text"
+            },
+            {
+              "active": false,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ProposalUI",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 14,
+              "path": "Canvas/ProposalUI/NameText",
+              "text_sample": "Name"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 14,
+              "path": "Canvas/ProposalUI/CostText",
+              "text_sample": "Cost"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ProposalUI/AcceptButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 14,
+              "path": "Canvas/ProposalUI/AcceptButton/Text (Legacy)",
+              "text_sample": "Accept"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.500,0.500",
+              "anchor_min": "0.500,0.500",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/ProposalUI/RejectButton",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 14,
+              "path": "Canvas/ProposalUI/RejectButton/Text (Legacy)",
+              "text_sample": "Reject"
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,0.392",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "MiniMapController"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/MiniMapPanel",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "RawImage"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/MiniMapPanel/MiniMapImage",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "1.000,1.000,1.000,0.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Outline"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/MiniMapPanel/ViewportRect",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "",
+              "components": [
+                "HorizontalLayoutGroup"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/MiniMapPanel/LayerButtonsRow",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "MiniMapLayerButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonStreets",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 14,
+              "path": "Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonStreets/Text (Legacy)",
+              "text_sample": "St"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "MiniMapLayerButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonZones",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 14,
+              "path": "Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonZones/Text (Legacy)",
+              "text_sample": "Zn"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "MiniMapLayerButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonForests",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 14,
+              "path": "Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonForests/Text (Legacy)",
+              "text_sample": "Fr"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "MiniMapLayerButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonDesirability",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 14,
+              "path": "Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonDesirability/Text (Legacy)",
+              "text_sample": "De"
+            },
+            {
+              "active": true,
+              "anchor_max": "0.000,1.000",
+              "anchor_min": "0.000,1.000",
+              "color_rgba": "1.000,1.000,1.000,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Image",
+                "Button",
+                "MiniMapLayerButton"
+              ],
+              "font_name": "",
+              "font_size": 0,
+              "path": "Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonCentroid",
+              "text_sample": ""
+            },
+            {
+              "active": true,
+              "anchor_max": "1.000,1.000",
+              "anchor_min": "0.000,0.000",
+              "color_rgba": "0.196,0.196,0.196,1.000",
+              "components": [
+                "CanvasRenderer",
+                "Text"
+              ],
+              "font_name": "LegacyRuntime",
+              "font_size": 14,
+              "path": "Canvas/MiniMapPanel/LayerButtonsRow/LayerButtonCentroid/Text (Legacy)",
+              "text_sample": "Ct"
+            }
+          ],
+          "path": "UI/City/Canvas",
+          "render_mode": "ScreenSpaceOverlay",
+          "scaler": {
+            "match_width_or_height": 0.5,
+            "reference_resolution_x": 800,
+            "reference_resolution_y": 600,
+            "ui_scale_mode": "ScaleWithScreenSize"
+          }
+        }
+      ],
+      "scene_asset_path": "Assets/Scenes/MainScene.unity",
+      "scene_name": "MainScene"
+    }
+  ],
+  "schema_version": 1,
+  "unity_version": "2022.3.21f1"
+}

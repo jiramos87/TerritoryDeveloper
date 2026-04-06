@@ -21,6 +21,8 @@ public static class UiThemeValidationMenu
             return;
         }
 
-        Debug.Log($"[UI Theme] OK: loaded {DefaultThemePath} (menu button font size={theme.MenuButtonFontSize}).");
+        Debug.Log($"[UI Theme] OK: loaded {DefaultThemePath} — menu font={theme.MenuButtonFontSize}, " +
+                  $"display/body/caption={theme.FontSizeDisplay}/{theme.FontSizeBody}/{theme.FontSizeCaption}, " +
+                  $"surfaceCardHud.a={theme.SurfaceCardHud.a:F2}.");
     }
 }

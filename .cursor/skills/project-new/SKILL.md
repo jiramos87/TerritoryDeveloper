@@ -75,7 +75,7 @@ Mirror **kickoff** branching when classifying the **new** issue:
 
 1. **Choose prefix** — **`BUG-`**, **`FEAT-`**, **`TECH-`**, **`ART-`**, **`AUDIO-`** per [`AGENTS.md`](../../../AGENTS.md) **Issue ID convention**.
 
-2. **Next id** — Scan **`BACKLOG.md`** and [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md) for the highest existing number in that prefix; use the next free id.
+2. **Next id** — Scan **`BACKLOG.md`** and [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md) for the **highest** existing number in that prefix; assign **max + 1**. **Never reuse** a number already present in **either** file (ids are **monotonic** per prefix for the life of the repo). See [`AGENTS.md`](../../../AGENTS.md) **Backlog Workflow** — **Adding new issues**.
 
 3. **Priority section** — Insert the row in the section that matches **severity** and **existing `BACKLOG.md` structure** (e.g. **High priority**, **Code Health**, **Agent ↔ Unity & MCP context lane**). Follow **Priority order** in [`AGENTS.md`](../../../AGENTS.md) when choosing among standard sections.
 

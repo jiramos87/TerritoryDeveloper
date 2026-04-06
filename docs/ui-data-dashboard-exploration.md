@@ -1,10 +1,10 @@
-# Data dashboard — exploration and prerequisite subsystems (FEAT-50 context)
+# Data dashboard — exploration and prerequisite subsystems
 
-> **Related issue (aesthetic prerequisite):** [FEAT-50](../BACKLOG.md) — project spec [`.cursor/projects/FEAT-50.md`](../.cursor/projects/FEAT-50.md)  
-> **Reference spec:** [`.cursor/specs/ui-design-system.md`](../.cursor/specs/ui-design-system.md)  
-> **Program trace:** **UI-as-code program** (**glossary**); **`ui-design-system.md`** **§5.2**
+> **Open delivery:** [FEAT-51](../BACKLOG.md) — project spec [`.cursor/projects/FEAT-51.md`](../.cursor/projects/FEAT-51.md)  
+> **Visual tokens (shipped):** [`.cursor/specs/ui-design-system.md`](../.cursor/specs/ui-design-system.md) **§1**, **§5.2** (**`UiTheme`**, **`DefaultUiTheme.asset`**)  
+> **Program trace:** **UI-as-code program** (**glossary**)
 
-This document captures **future** work: mechanisms, methods, and subsystems needed **before** in-game **data dashboards** (charts, dense stat grids, time-range sync) are feasible. It is **not** part of the **FEAT-50** polish delivery; **FEAT-50** supplies **palette**, **typography** rhythm, **spacing**, and **surface** tokens that dashboard cards should reuse so the product stays visually coherent.
+This document captures **future** work: mechanisms, methods, and subsystems needed **before** in-game **data dashboards** (charts, dense stat grids, time-range sync) are feasible. It is **not** a polish-only delivery. Shipped **HUD** / **MainMenu** visual polish reuses **`UiTheme`** and **`ui-design-system.md`**; dashboard **cards** and **charts** should consume the same **palette**, **typography** rhythm, **spacing**, and **surface** tokens so the product stays visually coherent.
 
 ---
 
@@ -70,7 +70,7 @@ This document captures **future** work: mechanisms, methods, and subsystems need
 | **UI Toolkit** + vectors | Fits data-heavy UI; official binding roadmap | Migration cost vs current **uGUI** investment |
 | **RenderTexture** hosting | Could embed external renderers | Latency, DPI, pipeline complexity |
 
-**Recommended approach:** Spike **XCharts** (or equivalent) behind an **`IChartView`** / provider abstraction so the engine can be swapped. Theme charts using the same **surface** / **accent** tokens as **FEAT-50** to avoid a “second UI.”
+**Recommended approach:** Spike **XCharts** (or equivalent) behind an **`IChartView`** / provider abstraction so the engine can be swapped. Theme charts using the same **surface** / **accent** tokens as **`UiTheme`** / **`ui-design-system.md`** to avoid a “second UI.”
 
 **Considerations:** Validate performance with target **Canvas** scaler resolutions and worst-case sample counts before committing.
 
@@ -133,7 +133,7 @@ This document captures **future** work: mechanisms, methods, and subsystems need
 
 2.6 Map overlay / info-view (parallel; spatial complement)
 
-FEAT-50 tokens (palette, type scale, spacing, surfaces) ──> consistent dashboard chrome
+UiTheme / ui-design-system tokens (palette, type scale, spacing, surfaces) ──> consistent dashboard chrome
 ```
 
 **Conclusion:** Critical path for **chart dashboards**: **history → aggregation → charts → layout**. **Binding** and **info views** can proceed in parallel once ownership and backlog items exist.
@@ -145,7 +145,7 @@ FEAT-50 tokens (palette, type scale, spacing, surfaces) ──> consistent dashb
 1. **Spike issue:** Evaluate **XCharts** (or alternative) under repo **LICENSE** / maintenance constraints before a full dashboard **FEAT-**.
 2. **UI stack:** Long term, compare staying on **uGUI** vs a phased **UI Toolkit** path (see Unity’s Timberborn case study: migration reduced merge pain for complex runtime UI—not a mandate for this repo).
 3. **Info views:** Split **§2.6** into a dedicated backlog row when product priority is set; link to **isometric-geography-system** / **grid** performance notes.
-4. **FEAT-50 handoff:** When polish ships, add **Target** / **as-built** chart-friendly tokens (e.g. faint grid line color) in **ui-design-system** so dashboards do not invent a second palette.
+4. **Chart-friendly tokens:** Add **Target** / **as-built** chart-oriented fields (e.g. faint grid line color) in **`ui-design-system.md`** / **`UiTheme`** when **FEAT-51** scopes them so dashboards do not invent a second palette.
 
 ---
 
@@ -157,4 +157,4 @@ FEAT-50 tokens (palette, type scale, spacing, surfaces) ──> consistent dashb
 
 ---
 
-*Last updated: 2026-04-05 — split from the former **FEAT-50** exploration doc; dashboard mechanics live here, visual polish objectives live in `.cursor/projects/FEAT-50.md`.*
+*Last updated: 2026-04-11 — exploration charter for **FEAT-51**; rename from legacy filename; polish delivery trace in [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).*

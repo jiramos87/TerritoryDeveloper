@@ -112,7 +112,7 @@ When the user asks which is the next issue, respond with it and **ask if they wa
 
 ### Adding new issues
 
-- Use next available ID in the appropriate category
+- **Issue id (per prefix):** Use the **next** number for the chosen prefix (`BUG-`, `FEAT-`, `TECH-`, `ART-`, `AUDIO-`). Scan **[`BACKLOG.md`](BACKLOG.md)** and **[`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)** for the **highest** existing number with that prefix, then assign **max + 1**. **Do not reuse** an id that already appears in **either** file — archived rows keep that id for traceability, and **`backlog_issue`** resolves **`BACKLOG.md`** first, then **`BACKLOG-ARCHIVE.md`**.
 - Include: Type, Files, Notes, Depends on (if applicable)
 - Prefer `BACKLOG.md` + `.cursor/specs/` for durable rules
 

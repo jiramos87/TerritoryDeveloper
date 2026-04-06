@@ -1,13 +1,15 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Territory.Utilities;
 
 namespace Territory.UI
 {
 /// <summary>
 /// UI controller for the building selector popup. Manages item display, selection callbacks,
-/// and coordinates with CursorManager for placement preview.
+/// coordinates with CursorManager for placement preview, and applies faster <see cref="ScrollRect"/> wheel sensitivity for the popup list.
 /// </summary>
 public class BuildingSelectorMenuController : MonoBehaviour
 {
@@ -15,14 +17,36 @@ public class BuildingSelectorMenuController : MonoBehaviour
     public CursorManager cursorManager;
     public GameObject popupPanel;
     [SerializeField] private UIManager uiManager;
+    [SerializeField] private float popupFadeSeconds = 0.12f;
+    [Tooltip("Mouse wheel speed inside building selector ScrollRect (higher = faster).")]
+    [SerializeField] private float buildingMenuScrollSensitivity = 3.5f;
 
     // Keep track of all selector buttons that can be pressed
     private List<Button> allSelectorButtons = new List<Button>();
+    private Coroutine popupFadeRoutine;
+
+    private float FadeDuration => uiManager != null ? uiManager.PopupFadeDurationSeconds : popupFadeSeconds;
 
     public void Start()
     {
         popupPanel.SetActive(false);
         CacheAllSelectorButtons();
+        ApplyBuildingMenuScrollSpeed();
+    }
+
+    /// <summary>
+    /// Increases <see cref="ScrollRect.scrollSensitivity"/> for lists inside the building selector popup.
+    /// </summary>
+    private void ApplyBuildingMenuScrollSpeed()
+    {
+        if (popupPanel == null)
+            return;
+        ScrollRect[] scrolls = popupPanel.GetComponentsInChildren<ScrollRect>(true);
+        foreach (ScrollRect sr in scrolls)
+        {
+            if (sr != null)
+                sr.scrollSensitivity = buildingMenuScrollSensitivity;
+        }
     }
 
     /// <summary>
@@ -76,14 +100,43 @@ public class BuildingSelectorMenuController : MonoBehaviour
 
     private void OpenPopup()
     {
+        if (uiManager == null)
+            uiManager = FindObjectOfType<UIManager>();
+        if (uiManager != null)
+            uiManager.RegisterPopupOpened(PopupType.BuildingSelector);
+        if (popupFadeRoutine != null)
+            StopCoroutine(popupFadeRoutine);
         popupPanel.SetActive(true);
-        if (uiManager == null) uiManager = FindObjectOfType<UIManager>();
-        if (uiManager != null) uiManager.RegisterPopupOpened(PopupType.BuildingSelector);
+        popupFadeRoutine = StartCoroutine(OpenPopupFadeRoutine());
+    }
+
+    private IEnumerator OpenPopupFadeRoutine()
+    {
+        CanvasGroup cg = UiCanvasGroupUtility.EnsureCanvasGroup(popupPanel);
+        cg.blocksRaycasts = true;
+        cg.interactable = false;
+        cg.alpha = 0f;
+        yield return UiCanvasGroupUtility.FadeUnscaled(cg, 0f, 1f, FadeDuration);
+        cg.interactable = true;
+        popupFadeRoutine = null;
     }
 
     public void ClosePopup()
     {
+        if (popupFadeRoutine != null)
+            StopCoroutine(popupFadeRoutine);
+        if (popupPanel == null || !popupPanel.activeSelf)
+            return;
+        popupFadeRoutine = StartCoroutine(ClosePopupFadeRoutine());
+    }
+
+    private IEnumerator ClosePopupFadeRoutine()
+    {
+        CanvasGroup cg = popupPanel.GetComponent<CanvasGroup>();
+        if (cg != null)
+            yield return UiCanvasGroupUtility.FadeUnscaled(cg, cg.alpha, 0f, FadeDuration);
         popupPanel.SetActive(false);
+        popupFadeRoutine = null;
     }
 
     public bool IsPopupActive()

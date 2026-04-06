@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -72,8 +73,8 @@ public partial class UIManager
 
     public void OnLoadButtonClicked()
     {
-        loadGameMenu.SetActive(true);
-        RegisterPopupOpened(PopupType.LoadGame);
+        if (loadGameMenu == null)
+            return;
 
         foreach (Transform child in savedGamesListContainer)
         {
@@ -97,13 +98,30 @@ public partial class UIManager
             newButton.GetComponentInChildren<Text>().text = entry.displayName;
             newButton.GetComponent<Button>().onClick.AddListener(() => OnSavedGameSelected(entry.path));
         }
+
+        if (loadMenuFadeRoutine != null)
+            StopCoroutine(loadMenuFadeRoutine);
+        RegisterPopupOpened(PopupType.LoadGame);
+        loadMenuFadeRoutine = StartCoroutine(OpenLoadGameMenuFadeRoutine());
+    }
+
+    private IEnumerator OpenLoadGameMenuFadeRoutine()
+    {
+        CanvasGroup cg = UiCanvasGroupUtility.EnsureCanvasGroup(loadGameMenu);
+        cg.blocksRaycasts = true;
+        cg.interactable = false;
+        cg.alpha = 0f;
+        loadGameMenu.SetActive(true);
+        yield return UiCanvasGroupUtility.FadeUnscaled(cg, 0f, 1f, PopupFadeDurationSeconds);
+        cg.interactable = true;
+        loadMenuFadeRoutine = null;
     }
 
     // Called when a saved game is selected
     public void OnSavedGameSelected(string saveFilePath)
     {
-        loadGameMenu.SetActive(false); // Close the load game menu
-        OnLoadGameButtonClicked(saveFilePath); // Load the selected game
+        CloseLoadGameMenu();
+        OnLoadGameButtonClicked(saveFilePath);
     }
 
     public void OnLoadGameButtonClicked(string saveFilePath)
@@ -113,7 +131,20 @@ public partial class UIManager
 
     public void CloseLoadGameMenu()
     {
+        if (loadGameMenu == null || !loadGameMenu.activeSelf)
+            return;
+        if (loadMenuFadeRoutine != null)
+            StopCoroutine(loadMenuFadeRoutine);
+        loadMenuFadeRoutine = StartCoroutine(CloseLoadGameMenuFadeRoutine());
+    }
+
+    private IEnumerator CloseLoadGameMenuFadeRoutine()
+    {
+        CanvasGroup cg = loadGameMenu.GetComponent<CanvasGroup>();
+        if (cg != null)
+            yield return UiCanvasGroupUtility.FadeUnscaled(cg, cg.alpha, 0f, PopupFadeDurationSeconds);
         loadGameMenu.SetActive(false);
+        loadMenuFadeRoutine = null;
     }
 
     public void OnNewGameButtonClicked()
@@ -135,6 +166,7 @@ public partial class UIManager
 
             if (waterPumpPrefab == null)
             {
+                RequestToolbarChromeRefresh();
                 return;
             }
 
@@ -150,6 +182,7 @@ public partial class UIManager
             selectedBuilding = waterPlant;
 
             cursorManager.ShowBuildingPreview(waterPumpPrefab, 2);
+            RequestToolbarChromeRefresh();
         }
         catch (System.Exception ex)
         {
@@ -161,41 +194,69 @@ public partial class UIManager
     {
         ClearCurrentTool();
         selectedZoneType = Zone.ZoneType.Water;
+        RequestToolbarChromeRefresh();
     }
 
     public void ShowInsufficientFundsTooltip(string itemType, int cost)
     {
-        if (insufficientFundsPanel == null || insufficientFundsText == null) return;
+        if (insufficientFundsPanel == null || insufficientFundsText == null)
+            return;
 
         insufficientFundsText.text = $"Cannot afford {itemType}!\nCost: ${cost}\nAvailable: ${cityStats.money}";
-        insufficientFundsPanel.SetActive(true);
 
-        // Cancel any existing hide coroutine
         if (hideTooltipCoroutine != null)
             StopCoroutine(hideTooltipCoroutine);
+        hideTooltipCoroutine = StartCoroutine(ShowInsufficientFundsFadeInThenAutoHide());
+    }
 
-        // Start a new hide coroutine
+    private IEnumerator ShowInsufficientFundsFadeInThenAutoHide()
+    {
+        CanvasGroup cg = UiCanvasGroupUtility.EnsureCanvasGroup(insufficientFundsPanel);
+        cg.blocksRaycasts = true;
+        cg.interactable = true;
+        cg.alpha = 0f;
+        insufficientFundsPanel.SetActive(true);
+        yield return UiCanvasGroupUtility.FadeUnscaled(cg, 0f, 1f, PopupFadeDurationSeconds);
+        hideTooltipCoroutine = null;
         hideTooltipCoroutine = StartCoroutine(HideTooltipAfterDelay());
     }
 
-    private System.Collections.IEnumerator HideTooltipAfterDelay()
+    private IEnumerator HideTooltipAfterDelay()
     {
-        yield return new WaitForSeconds(tooltipDisplayTime);
-        insufficientFundsPanel.SetActive(false);
+        yield return new WaitForSecondsRealtime(tooltipDisplayTime);
+        if (insufficientFundsPanel != null && insufficientFundsPanel.activeSelf)
+        {
+            CanvasGroup cg = insufficientFundsPanel.GetComponent<CanvasGroup>();
+            if (cg != null)
+                yield return UiCanvasGroupUtility.FadeUnscaled(cg, cg.alpha, 0f, PopupFadeDurationSeconds);
+            insufficientFundsPanel.SetActive(false);
+        }
+
         hideTooltipCoroutine = null;
     }
 
-    // Use this to hide the tooltip manually if needed
+    /// <summary>
+    /// Hides the insufficient-funds overlay with a short fade when a <see cref="CanvasGroup"/> is present.
+    /// </summary>
     public void HideInsufficientFundsTooltip()
     {
-        if (insufficientFundsPanel != null)
-            insufficientFundsPanel.SetActive(false);
-
         if (hideTooltipCoroutine != null)
         {
             StopCoroutine(hideTooltipCoroutine);
             hideTooltipCoroutine = null;
         }
+
+        if (insufficientFundsPanel == null || !insufficientFundsPanel.activeSelf)
+            return;
+        StartCoroutine(HideInsufficientFundsFadeRoutine());
+    }
+
+    private IEnumerator HideInsufficientFundsFadeRoutine()
+    {
+        CanvasGroup cg = insufficientFundsPanel.GetComponent<CanvasGroup>();
+        if (cg != null)
+            yield return UiCanvasGroupUtility.FadeUnscaled(cg, cg.alpha, 0f, PopupFadeDurationSeconds);
+        insufficientFundsPanel.SetActive(false);
     }
 
     public void OnForestButtonClicked(Forest.ForestType forestType)
@@ -213,6 +274,7 @@ public partial class UIManager
         selectedForest = null; // Clear any existing instance
 
         SetGhostPreview(forestData.prefab, 0);
+        RequestToolbarChromeRefresh();
     }
 
     /// <summary>
@@ -381,11 +443,13 @@ public partial class UIManager
     public void ExitBulldozeMode()
     {
         ClearCurrentTool();
+        RequestToolbarChromeRefresh();
     }
 
     public void ExitDetailsMode()
     {
         ClearCurrentTool();
+        RequestToolbarChromeRefresh();
     }
 
     public bool IsBuildingPlacementMode()
@@ -398,6 +462,7 @@ public partial class UIManager
         ClearCurrentTool();
         buildingSelectorMenuController.ClosePopup();
         buildingSelectorMenuController.DeselectAndUnpressAllButtons();
+        RequestToolbarChromeRefresh();
     }
     #endregion
 }

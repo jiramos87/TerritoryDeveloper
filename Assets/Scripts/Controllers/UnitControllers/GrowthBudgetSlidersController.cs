@@ -225,7 +225,7 @@ public class GrowthBudgetSlidersController : MonoBehaviour
         {
             int pct = growthBudgetManager.GetGrowthBudgetPercent();
             int amount = growthBudgetManager.GetTotalBudget();
-            totalBudgetLabel.text = "<size=10>" + pct + "%</size>\n<size=8>$" + amount + "</size>";
+            totalBudgetLabel.text = pct + "%\n$" + amount.ToString("N0");
         }
     }
 }

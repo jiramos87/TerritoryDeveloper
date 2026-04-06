@@ -27,8 +27,22 @@ public partial class UIManager
         populationText.text = cityStats.population.ToString();
         int delta = economyManager != null ? economyManager.GetMonthlyIncomeDelta() : 0;
         string deltaStr = delta >= 0 ? $"(+${delta:N0})" : $"(-${Mathf.Abs(delta):N0})";
-        moneyText.text = $"{cityStats.money:N0} {deltaStr}";
-        buttonMoneyText.text = $"${cityStats.money:N0} {deltaStr}";
+        if (hudUiTheme != null)
+        {
+            string primaryHex = ColorUtility.ToHtmlStringRGBA(hudUiTheme.TextPrimary);
+            string deltaHex = ColorUtility.ToHtmlStringRGBA(delta >= 0 ? hudUiTheme.AccentPositive : hudUiTheme.AccentNegative);
+            if (moneyText != null)
+                moneyText.text = $"<color=#{primaryHex}>{cityStats.money:N0}</color> <color=#{deltaHex}>{deltaStr}</color>";
+            if (buttonMoneyText != null)
+                buttonMoneyText.text = $"<color=#{primaryHex}>${cityStats.money:N0}</color> <color=#{deltaHex}>{deltaStr}</color>";
+        }
+        else
+        {
+            if (moneyText != null)
+                moneyText.text = $"{cityStats.money:N0} {deltaStr}";
+            if (buttonMoneyText != null)
+                buttonMoneyText.text = $"${cityStats.money:N0} {deltaStr}";
+        }
         happinessText.text = cityStats.happiness.ToString();
 
         cityPowerOutputText.text = cityStats.cityPowerOutput.ToString() + " MW";
@@ -68,6 +82,8 @@ public partial class UIManager
                 " (" + demand.GetIndustrialDemand().demandLevel.ToString("F0") + ")";
         }
 
+        UpdateDemandBarFills(demand);
+
         // Update demand feedback for selected zone type
         UpdateDemandFeedback();
 
@@ -87,6 +103,7 @@ public partial class UIManager
         if (gameDebugInfoBuilder != null && useFullDebugText && gridManager != null)
         {
             gridCoordinatesText.text = gameDebugInfoBuilder.GetFullDebugText(gridManager.mouseGridPosition, gridManager.selectedPoint);
+            RefreshGridCoordinatesChromeLayout();
             return;
         }
         if (gridManager == null)
@@ -112,6 +129,14 @@ public partial class UIManager
             }
         }
         gridCoordinatesText.text = line;
+        RefreshGridCoordinatesChromeLayout();
+    }
+
+    private void HideConstructionCostDisplay()
+    {
+        if (constructionCostText == null)
+            return;
+        constructionCostText.gameObject.SetActive(false);
     }
 
     private void UpdateConstructionCostDisplay()
@@ -122,14 +147,14 @@ public partial class UIManager
         // Hide when pointer is over UI
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
-            constructionCostText.gameObject.SetActive(false);
+            HideConstructionCostDisplay();
             return;
         }
 
         // Hide when not in placement mode
         if (bulldozeMode || detailsMode)
         {
-            constructionCostText.gameObject.SetActive(false);
+            HideConstructionCostDisplay();
             return;
         }
 
@@ -151,7 +176,7 @@ public partial class UIManager
         }
         else if (selectedZone == Zone.ZoneType.Grass)
         {
-            constructionCostText.gameObject.SetActive(false);
+            HideConstructionCostDisplay();
             return;
         }
         else if (selectedZone == Zone.ZoneType.Road && gridManager != null && gridManager.roadManager != null)
@@ -179,7 +204,7 @@ public partial class UIManager
             ZoneAttributes attrs = zoneManager.GetZoneAttributes(selectedZone);
             if (attrs == null)
             {
-                constructionCostText.gameObject.SetActive(false);
+                HideConstructionCostDisplay();
                 return;
             }
 
@@ -197,18 +222,20 @@ public partial class UIManager
         }
         else
         {
-            constructionCostText.gameObject.SetActive(false);
+            HideConstructionCostDisplay();
             return;
         }
 
         constructionCostText.text = displayText;
-        constructionCostText.color = (cityStats != null && cityStats.CanAfford(cost)) ? Color.green : Color.red;
+        bool canAfford = cityStats != null && cityStats.CanAfford(cost);
+        if (hudUiTheme != null)
+            constructionCostText.color = canAfford ? hudUiTheme.AccentPositive : hudUiTheme.AccentNegative;
+        else
+            constructionCostText.color = canAfford ? Color.green : Color.red;
 
         RectTransform rectTransform = constructionCostText.GetComponent<RectTransform>();
         if (rectTransform != null)
-        {
             rectTransform.position = (Vector3)((Vector2)Input.mousePosition + constructionCostOffset);
-        }
 
         constructionCostText.gameObject.SetActive(true);
     }
@@ -220,6 +247,104 @@ public partial class UIManager
             selectedZone != Zone.ZoneType.Road &&
             selectedZone != Zone.ZoneType.Water &&
             selectedZone != Zone.ZoneType.None;
+    }
+
+    private void UpdateDemandBarFills(DemandManager demand)
+    {
+        if (demand == null)
+            return;
+        ApplyDemandLevelToFill(demandResidentialBarFill, demand.GetResidentialDemand().demandLevel, GetHeavyZoningDemandBarColor(0));
+        ApplyDemandLevelToFill(demandCommercialBarFill, demand.GetCommercialDemand().demandLevel, GetHeavyZoningDemandBarColor(1));
+        ApplyDemandLevelToFill(demandIndustrialBarFill, demand.GetIndustrialDemand().demandLevel, GetHeavyZoningDemandBarColor(2));
+    }
+
+    /// <summary>
+    /// R/C/I demand bar tint: <paramref name="rci"/> 0 = residential heavy zoning, 1 = commercial heavy, 2 = industrial heavy (prefab sample, else strong green / blue / yellow).
+    /// </summary>
+    private Color GetHeavyZoningDemandBarColor(int rci)
+    {
+        GameObject prefab = null;
+        if (zoneManager != null)
+        {
+            switch (rci)
+            {
+                case 0:
+                    prefab = GetFirstNonNullPrefab(zoneManager.residentialHeavyZoningPrefabs);
+                    break;
+                case 1:
+                    prefab = GetFirstNonNullPrefab(zoneManager.commercialHeavyZoningPrefabs);
+                    break;
+                case 2:
+                    prefab = GetFirstNonNullPrefab(zoneManager.industrialHeavyZoningPrefabs);
+                    break;
+            }
+        }
+
+        Color sampled = SampleZoningPrefabTint(prefab);
+        // Prefabs usually keep SpriteRenderer/Image color at white (1,1,1) — tint lives in the sprite; treat grey/white as "no sample".
+        if (sampled.a > 0.5f && IsChromaticBarTint(sampled))
+            return sampled;
+
+        Color[] fallback =
+        {
+            new Color(0.15f, 0.82f, 0.35f, 1f),
+            new Color(0.25f, 0.52f, 1f, 1f),
+            new Color(1f, 0.82f, 0.12f, 1f),
+        };
+        return fallback[Mathf.Clamp(rci, 0, 2)];
+    }
+
+    /// <summary>
+    /// True when <paramref name="c"/> is not near grey/white (prefab <see cref="SpriteRenderer.color"/> defaults are unusable for HUD bars).
+    /// </summary>
+    private static bool IsChromaticBarTint(Color c)
+    {
+        float max = Mathf.Max(c.r, Mathf.Max(c.g, c.b));
+        float min = Mathf.Min(c.r, Mathf.Min(c.g, c.b));
+        return (max - min) >= 0.14f;
+    }
+
+    private static GameObject GetFirstNonNullPrefab(List<GameObject> list)
+    {
+        if (list == null)
+            return null;
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i] != null)
+                return list[i];
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Reads a representative tint from a zoning tile prefab (sprite or uGUI <see cref="Image"/>).
+    /// </summary>
+    private static Color SampleZoningPrefabTint(GameObject prefab)
+    {
+        if (prefab == null)
+            return new Color(0f, 0f, 0f, 0f);
+        var sr = prefab.GetComponent<SpriteRenderer>();
+        if (sr == null)
+            sr = prefab.GetComponentInChildren<SpriteRenderer>(true);
+        if (sr != null)
+            return sr.color;
+        var img = prefab.GetComponent<UnityEngine.UI.Image>();
+        if (img == null)
+            img = prefab.GetComponentInChildren<UnityEngine.UI.Image>(true);
+        if (img != null)
+            return img.color;
+        return new Color(0f, 0f, 0f, 0f);
+    }
+
+    private void ApplyDemandLevelToFill(Image fill, float demandLevel, Color barColor)
+    {
+        if (fill == null)
+            return;
+        float n = Mathf.Clamp01((demandLevel + 100f) / 200f);
+        fill.fillAmount = n;
+        barColor.a = 1f;
+        fill.color = barColor;
     }
 
     private void UpdateDemandFeedback()
@@ -236,26 +361,26 @@ public partial class UIManager
         string feedback = gridManager.GetDemandFeedback(selectedZone);
         demandFeedbackText.text = feedback;
 
-        // Enhanced color coding for demand levels
+        // Enhanced color coding for demand levels (theme tokens when assigned)
         if (feedback.Contains("✓"))
         {
-            demandFeedbackText.color = Color.green;
+            demandFeedbackText.color = hudUiTheme != null ? hudUiTheme.AccentPositive : Color.green;
         }
         else if (feedback.Contains("No Jobs Available"))
         {
-            demandFeedbackText.color = Color.red; // Critical error - no jobs for residents
+            demandFeedbackText.color = hudUiTheme != null ? hudUiTheme.AccentNegative : Color.red;
         }
         else if (feedback.Contains("Need Residents"))
         {
-            demandFeedbackText.color = Color.yellow; // Warning color for residential requirement
+            demandFeedbackText.color = hudUiTheme != null ? hudUiTheme.AccentPrimary : Color.yellow;
         }
         else if (feedback.Contains("✗"))
         {
-            demandFeedbackText.color = Color.red;
+            demandFeedbackText.color = hudUiTheme != null ? hudUiTheme.AccentNegative : Color.red;
         }
         else
         {
-            demandFeedbackText.color = Color.white;
+            demandFeedbackText.color = hudUiTheme != null ? hudUiTheme.TextPrimary : Color.white;
         }
     }
 

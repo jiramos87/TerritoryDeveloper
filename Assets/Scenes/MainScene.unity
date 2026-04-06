@@ -2279,7 +2279,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -66.383, y: 62.2}
-  m_SizeDelta: {x: 76.2414, y: 30}
+  m_SizeDelta: {x: 100, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &172977744
 MonoBehaviour:
@@ -2314,7 +2314,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Growth Budget %
+  m_Text: Growth Budget
 --- !u!222 &172977745
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5363,6 +5363,8 @@ MonoBehaviour:
   demandWarningPanel: {fileID: 2014187735}
   insufficientFundsPanel: {fileID: 2036862804}
   dataPopupController: {fileID: 1421362056}
+  hudUiTheme: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
+  controlPanelBackgroundImage: {fileID: 1596321762}
 --- !u!1 &524023764
 GameObject:
   m_ObjectHideFlags: 0
@@ -8892,8 +8894,6 @@ GameObject:
   - component: {fileID: 900489267}
   - component: {fileID: 900489269}
   - component: {fileID: 900489268}
-  - component: {fileID: 900489271}
-  - component: {fileID: 900489270}
   m_Layer: 5
   m_Name: ButtonMoneyText
   m_TagString: Untagged
@@ -8962,52 +8962,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 900489266}
   m_CullTransparentMesh: 1
---- !u!114 &900489270
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 900489266}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
-  m_ReferencePixelsPerUnit: 100
-  m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
-  m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
-  m_PhysicalUnit: 3
-  m_FallbackScreenDPI: 96
-  m_DefaultSpriteDPI: 96
-  m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
---- !u!223 &900489271
-Canvas:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 900489266}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_RenderMode: 2
-  m_Camera: {fileID: 0}
-  m_PlaneDistance: 100
-  m_PixelPerfect: 0
-  m_ReceivesEvents: 1
-  m_OverrideSorting: 0
-  m_OverridePixelPerfect: 0
-  m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 0
-  m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: 0
-  m_SortingOrder: 0
-  m_TargetDisplay: 0
 --- !u!1 &902246126
 GameObject:
   m_ObjectHideFlags: 0

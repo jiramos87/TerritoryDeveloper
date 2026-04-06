@@ -2,7 +2,7 @@
 
 ## Overview
 
-This spec defines **foundations**, **components**, and **patterns** for Territory Developer’s in-game UI so that backlog issues can reference concrete sections. The **UI-as-code program** (IDE- and agent-friendly **UI** workflows) is **§ Completed** — trace [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) **Recent archive**; **codebase inventory (uGUI)** lives in **this spec** (**Codebase inventory (uGUI)** below). **Executable issues:** [`BACKLOG.md`](../../BACKLOG.md). **As-built** tables in **§1**, **§4**, and major **§2–§3** surfaces are sourced from the committed machine snapshot [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) (refresh when scenes change; see [`docs/reports/README.md`](../../docs/reports/README.md)). **Scenes:** **UI** spans **`MainMenu`**, **`MainScene`** (future **`CityScene`**), and future surfaces (e.g. **`RegionScene`**) — exports and prose are **per scene**.
+This spec defines **foundations**, **components**, and **patterns** for Territory Developer’s in-game UI so that backlog issues can reference concrete sections. The **UI-as-code program** (IDE- and agent-friendly **UI** workflows) is **§ Completed** — trace [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) **Recent archive**; **codebase inventory (uGUI)** lives in **this spec** (**Codebase inventory (uGUI)** below). **Executable issues:** [`BACKLOG.md`](../../BACKLOG.md). **As-built** tables in **§1**, **§4**, and major **§2–§3** surfaces are sourced from the committed machine snapshot [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json) (refresh when scenes change; see [`docs/reports/README.md`](../../docs/reports/README.md)); the JSON was last promoted from **Postgres** **`editor_export_ui_inventory`** (export row **id** **8**, repo **git** **`2245403e3531b5779c52b3480be6bd0ba085946c`**). **Scenes:** **UI** spans **`MainMenu`**, **`MainScene`** (future **`CityScene`**), and future surfaces (e.g. **`RegionScene`**) — exports and prose are **per scene**.
 
 ### As-built vs target
 
@@ -80,9 +80,26 @@ Colors are **Unity `Graphic.color`** on **uGUI** **Image** / **Text** (legacy). 
 
 **Varies:** Full-screen tints, notification bars, and one-off sprites — grep the JSON or re-run **Export UI Inventory** after changes.
 
+**Target (`UiTheme` / DefaultUiTheme):** Runtime HUD and menu polish read **`Assets/UI/Theme/DefaultUiTheme.asset`** via **`UIManager.hudUiTheme`** and **`MainMenuController.menuTheme`**. Canonical RGBA (0–1) ship on the asset:
+
+| Token (code) | Role |
+|----------------|------|
+| `surfaceBase` | Deepest neutral base |
+| `surfaceCardHud` | HUD / popup card (alpha ~0.88 for map bleed-through) |
+| `surfaceToolbar` | **ControlPanel** strip (alpha ~0.94) |
+| `surfaceElevated` | Elevated controls |
+| `borderSubtle` | Dividers |
+| `textPrimary` / `textSecondary` | Body vs muted labels |
+| `accentPrimary` / `accentPositive` / `accentNegative` | Interactive / surplus / deficit |
+| `modalDimmerColor` | Fullscreen popup dimmer |
+
+Re-run **Export UI Inventory** after wide **Graphic.color** edits so **as-built** JSON stays aligned.
+
 ### 1.2 Typography
 
 **Product stack (target):** **Shipped decision:** Keep **legacy `UnityEngine.UI.Text`** for **existing** **city** **HUD** / panels until a future issue scopes a **TMP** migration wave. **New** work may use **TMP** only when the issue explicitly chooses it (avoid mixed stacks on the same row). **Main menu** strip uses **legacy `Text`** + **`UiTheme`** font sizes.
+
+**Target (`UiTheme` typography):** `fontSizeDisplay` (hero stats), `fontSizeHeading`, `fontSizeBody`, `fontSizeCaption` on **`DefaultUiTheme.asset`**; **`UIManager`** applies them on **Start** when **`hudUiTheme`** is assigned (**`MainScene`**).
 
 **As-built:** The **city** scene uses **legacy `UnityEngine.UI.Text`** heavily (`UIManager` serialized fields). **`TextMeshProUGUI`** appears sporadically (e.g. some `Text (Legacy)` sibling naming in hierarchy; export shows **`LiberationSans SDF`** / **`LiberationSans`** on a small number of nodes).
 
@@ -99,6 +116,22 @@ Colors are **Unity `Graphic.color`** on **uGUI** **Image** / **Text** (legacy). 
 - **City scene:** **Toolbar** **`Canvas/ControlPanel`** is a **left**-docked **vertical** panel: **one row per category** (demolition, roads, utilities, **RCI** zoning, environment, etc.) with **horizontal** **Button** groups per row (**LayoutGroup** as authored in **`MainScene.unity`**). **LayoutGroups** also appear under scroll views (**BuildingSelector**, **LoadGame**).
 - **Grid / token spacing:** No single **4px/8px** token is enforced globally — treat **as-built** as **per-panel** until a **theme** helper or **§5.2** token work lands.
 - **Anchors:** **Stats** and **date** clusters live under **`Canvas/DataPanelButtons`** with mixed anchors (see JSON **`anchor_min` / `anchor_max`** per node).
+
+#### 1.3.1 HUD and uGUI hygiene (agents, **UI** inventory, **Edit Mode**)
+
+Norms for **MainScene** / **MainMenu** hierarchies so **Editor** exports, **MCP** path references, and **Transform.Find** stay reliable. **New** work should follow these. Track **implementation** drift in [`BACKLOG.md`](../../BACKLOG.md) under **§ UI-as-code program** (open **TECH-** row with a linked `.cursor/projects/{ISSUE_ID}.md` when used). **Backlog id policy:** **TECH** numbers increase monotonically; **do not reuse** a **TECH** id that already appears in [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) for a different program — e.g. **TECH-60** there is the **completed** **spec pipeline & verification program** umbrella, not **HUD** hygiene work.
+
+- **Canvas vs leaf graphics:** Keep **Canvas** + **CanvasScaler** on the **root** overlay (or a documented world-space root). Do **not** add **Canvas** + **CanvasScaler** on the same **GameObject** as ordinary **HUD** **Text** / **Image** leaves unless there is an explicit, documented reason.
+- **`Transform.Find` depth:** **`Transform.Find`** only searches **immediate children**. Align sibling **HUD** widgets under the same parent (or cache a **hud root** reference) instead of assuming deep discovery by name.
+- **Full-stretch anchors:** **`anchorMin` / `anchorMax`** `(0,0)`–`(1,1)` makes **rect height** depend on **parent height + `sizeDelta.y`**. Do not copy that pattern to small floating strips without applying the layout math; prefer explicit top/bottom anchors and fixed heights for agent-editable **HUD** blocks.
+- **Corner anchors:** For **`anchorMin` = `anchorMax` = (0,0)**, **`anchoredPosition`** is relative to the parent **rect** corner—revalidate after parent size changes.
+- **Stacking and overlap:** Keep a deliberate **vertical gap** between fixed **HUD** regions (e.g. debug readouts vs **MiniMapPanel**) unless overlap is intentional; pair semi-transparent chrome with an explicit stacking policy when layers coincide.
+- **Naming:** No **trailing spaces** in **GameObject** names (they break **`Transform.Find`** and diffs). Prefer stable, unique names over **`Unity`** auto-suffixes such as **` (1)`** on nodes referenced from code or tooling.
+- **Text stack:** Prefer **one** text stack (**legacy** **Text** *or* **TextMeshProUGUI**) per **surface** in **new** work; document known mixes until consolidated (**§1.2**).
+- **UI Toolkit + uGUI:** **UIDocument** alongside **uGUI** under one panel (e.g. **`StatsPanel`**) is allowed but raises agent cost—keep **UXML** vs **`SerializeField`** boundaries obvious in code or **managers-reference** when extended.
+- **Obsolete player flows:** The glossary **Urbanization proposal** is **obsolete**—do not treat **`ProposalUI`** as normal **HUD**; remove, hide, or disconnect it when implementation confirms the flow is inactive (**invariants**).
+- **Components on panel roots:** Avoid unrelated **`MonoBehaviour`** types on fullscreen **panel** roots (e.g. core **managers** on **`LoadGameMenuPanel`**)—prefer dedicated **controller** types so **Inspector** and exports stay readable.
+- **Inventory limits:** **UI** inventory export reflects the **serialized** hierarchy; **runtime-only** instances may be missing until the scene is saved (or a **Play Mode** capture exists). Re-run export and refresh the committed baseline after hierarchy edits ([`docs/reports/README.md`](../../docs/reports/README.md)).
 
 ### 1.4 Iconography
 
@@ -192,6 +225,7 @@ Colors are **Unity `Graphic.color`** on **uGUI** **Image** / **Text** (legacy). 
   3. **Building selector** popup: same expectation over its **Scroll View** subtree.
   4. **Raycasts:** **Viewport** / list item **Graphic** components keep **`raycastTarget`** enabled where hit testing must see the **UI** (see **BUG-19** spec).
 - **Regression test:** **Play Mode** — open **Load Game**, scroll wheel over save list; open **Building Selector**, scroll over building list; pointer over **map** — zoom still steps.
+- **Touch and keyboard:** **`EventSystem.current.IsPointerOverGameObject()`** without a **finger id** can miss **touch** over **`ScrollRect`**; **`CameraController`** should use the active touch’s **`fingerId`** when present. **WASD** (and right-drag) **camera** movement should also respect **UI** hit tests when a blocking overlay is up — same policy as scroll zoom (**BUG-19** class).
 
 ---
 
@@ -247,6 +281,17 @@ When opening a backlog issue for UI work, include:
 
 **Editor:** **Territory Developer → Reports → Validate UI Theme asset** (`UiThemeValidationMenu.cs`).
 
+### 5.3 Shipped polish patterns (implementation reference)
+
+Normative behavior stays in **§1–§3**; the following are **consistency** notes for agents extending **`UiTheme`**-driven **HUD** without duplicating one-off **YAML** or coroutines:
+
+- **Theme-first runtime chrome:** Runtime-created **HUD** pieces (**tax** section dividers, **RCI** demand gauge tracks, **welcome** briefing shell, **grid** coordinate readout backing) should read **`UIManager`**’s assigned **`hudUiTheme`** when present so **`DefaultUiTheme.asset`** edits propagate without large scene diffs.
+- **Shared popup fade:** Prefer one utility (**`UiCanvasGroupUtility`**: **`EnsureCanvasGroup`** + **`FadeUnscaled`**) for **CanvasGroup** open/close on **popup** roots instead of per-controller coroutine copies.
+- **Welcome vs **Esc** stack:** A **PlayerPrefs**-gated onboarding panel should **not** register on **`UIManager`**’s **popup** stack; show and dismiss it **before** **Esc** stack processing so **Load Game** / **Stats** ordering stays predictable.
+- **Floating readouts:** Minimal **Text** + **Shadow** (no full-width chip) reduces noise when a label follows the cursor over the **map**.
+- **Demand gauge tint:** Sample **heavy** **RCI** zoning prefab colors (e.g. **`ZoneManager`** lists) for **filled Image** tints so **HUD** matches **map** language, with bright **fallbacks** if lists are empty.
+- **UI inventory sampling:** **`UiInventoryReportsMenu`** omits **RectTransforms** without **Graphic** / **LayoutGroup**; gaps in the committed baseline JSON are expected — validate with ancestor coverage rules, not a full scene tree listing.
+
 ---
 
 ## 6. Revision history
@@ -262,6 +307,7 @@ When opening a backlog issue for UI work, include:
 | 2026-04-04 | **§1**–**§4**, **§2**–**§3** **as-built** from [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json); **§3.0** **Main menu**; **§6** traceability note |
 | 2026-04-04 | Serialized **`MainMenu`**, **`UiTheme`**, **§1.2** typography decision, **§4.3** resolution matrix, **§5.2** theme paths |
 | 2026-04-04 | **`UIManager` `partial`** split; **§3.2** modal **Esc** contract; **§3.5** scroll-zoom checklist + **BUG-19** code path; **§5.2** prefab scaffold menu; **v0** prefabs via **`UiPrefabLibraryScaffoldMenu`** |
+| 2026-04-11 | **§3.5** touch / **WASD** **UI** blocking note; **§5.3** shipped **UiTheme** / **HUD** polish implementation patterns (migrated from closed project spec) |
 
 ### Machine-readable traceability (UI inventory baseline)
 

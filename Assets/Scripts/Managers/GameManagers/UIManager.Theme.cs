@@ -1,0 +1,705 @@
+using System;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace Territory.UI
+{
+    /// <summary>
+    /// Applies <see cref="UiTheme"/> tokens to city HUD texts and common panel chrome (partial of <see cref="UIManager"/>).
+    /// </summary>
+    public partial class UIManager
+    {
+        [Header("Theme (optional)")]
+        [Tooltip("Assign DefaultUiTheme or a variant; when null, HUD keeps scene-authored colors.")]
+        [SerializeField] private UiTheme hudUiTheme;
+
+        [Header("Toolbar / theme wiring (optional)")]
+        [Tooltip("Background Image on the ControlPanel strip. When null, resolved once from GameObject name ControlPanel in Awake.")]
+        [SerializeField] private Image controlPanelBackgroundImage;
+
+        private void Awake()
+        {
+            if (controlPanelBackgroundImage == null)
+            {
+                GameObject go = GameObject.Find("ControlPanel");
+                if (go != null)
+                    controlPanelBackgroundImage = go.GetComponent<Image>();
+            }
+        }
+
+        /// <summary>
+        /// Applies typography and surface colors once at startup when <see cref="hudUiTheme"/> is assigned.
+        /// </summary>
+        private void ApplyHudUiThemeIfConfigured()
+        {
+            EnsureGridCoordinatesDebugChrome();
+            EnsureDemandGaugeBars();
+
+            if (hudUiTheme == null)
+                return;
+
+            ApplyHeroStatRow(populationText);
+            ApplyHeroStatRow(moneyText);
+            ApplyHeroStatRow(happinessText);
+            ApplyHeroStatRow(cityNameText);
+            ApplyToolbarMoneyRow(buttonMoneyText);
+
+            ApplyBodyStatRow(dateText);
+            ApplyBodyStatRow(cityPowerOutputText);
+            ApplyBodyStatRow(cityPowerConsumptionText);
+            ApplyBodyStatRow(cityWaterOutputText);
+            ApplyBodyStatRow(cityWaterConsumptionText);
+            ApplyBodyStatRow(residentialTaxText, styleSiblingLabels: false);
+            ApplyBodyStatRow(commercialTaxText, styleSiblingLabels: false);
+            ApplyBodyStatRow(industrialTaxText, styleSiblingLabels: false);
+            ApplyBodyStatRow(unemploymentRateText);
+            ApplyBodyStatRow(totalJobsText);
+            ApplyBodyStatRow(totalJobsCreatedText);
+            ApplyBodyStatRow(availableJobsText);
+            ApplyBodyStatRow(jobsTakenText);
+            ApplyBodyStatRow(demandResidentialText);
+            ApplyBodyStatRow(demandCommercialText);
+            ApplyBodyStatRow(demandIndustrialText);
+            ApplyBodyStatRow(demandFeedbackText);
+
+            ApplyCaptionText(detailsDebugText);
+
+            ApplyBodyStatRow(detailsNameText);
+            ApplyBodyStatRow(detailsOccupancyText);
+            ApplyBodyStatRow(detailsHappinessText);
+            ApplyBodyStatRow(detailsPowerOutputText);
+            ApplyBodyStatRow(detailsPowerConsumptionText);
+            ApplyBodyStatRow(detailsDateBuiltText);
+            ApplyBodyStatRow(detailsBuildingTypeText);
+            ApplyBodyStatRow(detailsSortingOrderText);
+            ApplyBodyStatRow(detailsDesirabilityText);
+            ApplyBodyStatRow(insufficientFundsText);
+            ApplyBodyStatRow(GameSavedText);
+
+            if (constructionCostText != null)
+            {
+                constructionCostText.fontSize = hudUiTheme.FontSizeBody;
+                constructionCostText.color = hudUiTheme.TextPrimary;
+            }
+
+            TintPanelRootBehindReference("StatsPanel", populationText, hudUiTheme.SurfaceCardHud);
+            TintPanelRootBehindReference("DatePanel", dateText, hudUiTheme.SurfaceCardHud);
+            TintPanelRootBehindReference("TaxPanel", residentialTaxText, hudUiTheme.SurfaceCardHud);
+            ApplyTaxPanelBudgetRowTexts();
+            EnsureTaxPanelDividerStripes();
+            TintPanelRootBehindReference("DetailsPanel", detailsNameText, hudUiTheme.SurfaceCardHud);
+
+            if (demandWarningPanel != null)
+            {
+                var dw = demandWarningPanel.GetComponent<Image>();
+                if (dw != null)
+                    dw.color = hudUiTheme.SurfaceCardHud;
+            }
+
+            if (controlPanelBackgroundImage != null)
+                controlPanelBackgroundImage.color = hudUiTheme.SurfaceToolbar;
+
+            ApplyLoadGameAndFundsPanels();
+        }
+
+        private const string GridCoordinatesChromeName = "Fe50GridCoordinatesChrome";
+        private const string GridCoordinatesChromeNameAlt = "Fe50GridCoordinatesPanel";
+        private const string GridCoordinatesTextInsetName = "Fe50GridCoordinatesTextInset";
+        private const string GridCoordinatesTextHolderAlt = "Fe50GridCoordinatesText";
+
+        /// <summary>Space between grid debug chrome bottom edge and top of <c>MiniMapPanel</c> (includes layer tabs).</summary>
+        private const float GridCoordinatesChromeGapAboveMinimap = 30f;
+
+        private static bool IsGridCoordinatesChromeRootName(string n)
+        {
+            return n == GridCoordinatesChromeName || n == GridCoordinatesChromeNameAlt;
+        }
+
+        private static bool IsGridCoordinatesTextHolderName(string n)
+        {
+            return n == GridCoordinatesTextInsetName || n == GridCoordinatesTextHolderAlt;
+        }
+
+        /// <summary>
+        /// Direct child of HUD canvas that also parents <c>MiniMapPanel</c> (required for <see cref="Transform.Find"/>).
+        /// </summary>
+        private static Transform FindHudCanvasRootWithMiniMap(Transform from)
+        {
+            for (Transform p = from; p != null; p = p.parent)
+            {
+                if (p.Find("MiniMapPanel") != null)
+                    return p;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Ensures chrome is a sibling of <c>MiniMapPanel</c> under the same canvas; otherwise <see cref="Transform.Find(string)"/> never sees the minimap.
+        /// </summary>
+        private static void EnsureGridCoordinatesChromeSiblingsMiniMap(RectTransform chromeRt)
+        {
+            if (chromeRt == null)
+                return;
+            Transform p = chromeRt.parent;
+            if (p != null && p.Find("MiniMapPanel") != null)
+                return;
+            Transform mount = FindHudCanvasRootWithMiniMap(chromeRt);
+            if (mount == null)
+                return;
+            Transform mm = mount.Find("MiniMapPanel");
+            chromeRt.SetParent(mount, false);
+            if (mm != null)
+                chromeRt.SetSiblingIndex(mm.GetSiblingIndex() + 1);
+        }
+
+        /// <summary>
+        /// Wraps <see cref="gridCoordinatesText"/> in a semi-transparent HUD panel with white copy for contrast over the map.
+        /// </summary>
+        private void EnsureGridCoordinatesDebugChrome()
+        {
+            if (gridCoordinatesText == null)
+                return;
+
+            Transform t = gridCoordinatesText.transform;
+            RectTransform textRt = gridCoordinatesText.GetComponent<RectTransform>();
+
+            if (t.parent != null && IsGridCoordinatesTextHolderName(t.parent.name)
+                && t.parent.parent != null && IsGridCoordinatesChromeRootName(t.parent.parent.name))
+            {
+                EnsureGridCoordinatesTextLayoutDriver(textRt);
+                ApplyGridCoordinatesChromeTextInset(t.parent.GetComponent<RectTransform>());
+                ApplyGridCoordinatesChromeTextStyle();
+                RectTransform chromeRt = t.parent.parent.GetComponent<RectTransform>();
+                EnsureGridCoordinatesChromeSiblingsMiniMap(chromeRt);
+                AlignGridCoordinatesChromeToMiniMap(chromeRt);
+                return;
+            }
+
+            if (t.parent != null && IsGridCoordinatesChromeRootName(t.parent.name))
+            {
+                RectTransform chromeRt = t.parent.GetComponent<RectTransform>();
+                EnsureGridCoordinatesTextUnderInset(chromeRt.transform, textRt);
+                ApplyGridCoordinatesChromeTextStyle();
+                EnsureGridCoordinatesChromeSiblingsMiniMap(chromeRt);
+                AlignGridCoordinatesChromeToMiniMap(chromeRt);
+                return;
+            }
+
+            Transform originalParent = t.parent;
+            int siblingIndex = t.GetSiblingIndex();
+            Transform chromeMount = FindHudCanvasRootWithMiniMap(t) ?? originalParent;
+
+            GameObject chrome = new GameObject(GridCoordinatesChromeName, typeof(RectTransform));
+            chrome.transform.SetParent(chromeMount, false);
+            Transform mmForOrder = chromeMount.Find("MiniMapPanel");
+            if (mmForOrder != null)
+                chrome.transform.SetSiblingIndex(mmForOrder.GetSiblingIndex() + 1);
+            else
+                chrome.transform.SetSiblingIndex(siblingIndex);
+            RectTransform chromeRtNew = chrome.GetComponent<RectTransform>();
+            chromeRtNew.anchorMin = textRt.anchorMin;
+            chromeRtNew.anchorMax = textRt.anchorMax;
+            chromeRtNew.pivot = textRt.pivot;
+            chromeRtNew.anchoredPosition = textRt.anchoredPosition;
+            chromeRtNew.sizeDelta = textRt.sizeDelta + new Vector2(36f, 18f);
+            chromeRtNew.localScale = textRt.localScale;
+
+            GameObject bgGo = new GameObject("Fe50GridDebugBg", typeof(RectTransform), typeof(Image));
+            bgGo.transform.SetParent(chrome.transform, false);
+            bgGo.transform.SetAsFirstSibling();
+            RectTransform bgRt = bgGo.GetComponent<RectTransform>();
+            bgRt.anchorMin = Vector2.zero;
+            bgRt.anchorMax = Vector2.one;
+            bgRt.offsetMin = Vector2.zero;
+            bgRt.offsetMax = Vector2.zero;
+            Image bgImg = bgGo.GetComponent<Image>();
+            bgImg.raycastTarget = false;
+            Color panel = hudUiTheme != null ? hudUiTheme.SurfaceToolbar : new Color(0.07f, 0.08f, 0.11f, 1f);
+            panel.a = hudUiTheme != null ? Mathf.Clamp(hudUiTheme.SurfaceToolbar.a * 0.92f, 0.78f, 0.9f) : 0.86f;
+            bgImg.color = panel;
+
+            EnsureGridCoordinatesTextUnderInset(chrome.transform, textRt);
+
+            ApplyGridCoordinatesChromeTextStyle();
+            EnsureGridCoordinatesChromeSiblingsMiniMap(chromeRtNew);
+            AlignGridCoordinatesChromeToMiniMap(chromeRtNew);
+        }
+
+        /// <summary>
+        /// Insets debug copy from the chrome edges (plain <see cref="RectTransform"/>; no layout groups).
+        /// </summary>
+        private static void ApplyGridCoordinatesChromeTextInset(RectTransform insetRt)
+        {
+            if (insetRt == null)
+                return;
+            VerticalLayoutGroup vlg = insetRt.GetComponent<VerticalLayoutGroup>();
+            if (vlg != null)
+                UnityEngine.Object.Destroy(vlg);
+
+            insetRt.anchorMin = Vector2.zero;
+            insetRt.anchorMax = Vector2.one;
+            insetRt.anchoredPosition = Vector2.zero;
+            insetRt.sizeDelta = Vector2.zero;
+            insetRt.offsetMin = new Vector2(18f, 10f);
+            insetRt.offsetMax = new Vector2(-18f, -10f);
+        }
+
+        /// <summary>
+        /// Removes nested canvas/scaler and layout drivers so legacy <see cref="Text"/> draws on the root HUD canvas.
+        /// </summary>
+        private static void EnsureGridCoordinatesTextLayoutDriver(RectTransform textRt)
+        {
+            if (textRt == null)
+                return;
+            ContentSizeFitter fitter = textRt.GetComponent<ContentSizeFitter>();
+            if (fitter != null)
+                UnityEngine.Object.Destroy(fitter);
+            LayoutElement le = textRt.GetComponent<LayoutElement>();
+            if (le != null)
+                UnityEngine.Object.Destroy(le);
+
+            // CanvasScaler requires Canvas — remove scaler first. Disable before Destroy so a same-frame second pass cannot trip the dependency.
+            CanvasScaler scaler = textRt.GetComponent<CanvasScaler>();
+            if (scaler != null)
+            {
+                scaler.enabled = false;
+                UnityEngine.Object.Destroy(scaler);
+            }
+            Canvas nested = textRt.GetComponent<Canvas>();
+            if (nested != null)
+            {
+                nested.enabled = false;
+                UnityEngine.Object.Destroy(nested);
+            }
+
+            textRt.anchorMin = Vector2.zero;
+            textRt.anchorMax = Vector2.one;
+            textRt.pivot = new Vector2(0.5f, 0.5f);
+            textRt.anchoredPosition = Vector2.zero;
+            textRt.sizeDelta = Vector2.zero;
+            textRt.offsetMin = Vector2.zero;
+            textRt.offsetMax = Vector2.zero;
+        }
+
+        /// <summary>
+        /// Ensures an inset holder exists under chrome and <see cref="gridCoordinatesText"/> is a layout-driven child with real padding.
+        /// </summary>
+        private static void EnsureGridCoordinatesTextUnderInset(Transform chromeTransform, RectTransform textRt)
+        {
+            if (chromeTransform == null || textRt == null)
+                return;
+
+            Transform insetTransform = chromeTransform.Find(GridCoordinatesTextInsetName);
+            if (insetTransform == null)
+                insetTransform = chromeTransform.Find(GridCoordinatesTextHolderAlt);
+            if (insetTransform == null)
+            {
+                GameObject insetGo = new GameObject(GridCoordinatesTextInsetName, typeof(RectTransform));
+                insetTransform = insetGo.transform;
+                insetTransform.SetParent(chromeTransform, false);
+                Transform bg = chromeTransform.Find("Fe50GridDebugBg");
+                if (bg != null)
+                    insetTransform.SetSiblingIndex(bg.GetSiblingIndex() + 1);
+            }
+
+            RectTransform insetRt = insetTransform.GetComponent<RectTransform>();
+            ApplyGridCoordinatesChromeTextInset(insetRt);
+
+            textRt.SetParent(insetTransform, false);
+            EnsureGridCoordinatesTextLayoutDriver(textRt);
+        }
+
+        /// <summary>
+        /// Places grid debug chrome above the minimap with the same width and a compact, nearly square height.
+        /// Do not copy <c>MiniMapPanel</c> stretch anchors: with anchors (0,0)-(1,1), height = parent.height + sizeDelta.y,
+        /// so a small positive sizeDelta.y fills almost the entire screen.
+        /// </summary>
+        private static void AlignGridCoordinatesChromeToMiniMap(RectTransform chromeRt)
+        {
+            if (chromeRt == null)
+                return;
+            Canvas.ForceUpdateCanvases();
+            EnsureGridCoordinatesChromeSiblingsMiniMap(chromeRt);
+            RectTransform parentRt = chromeRt.parent as RectTransform;
+            if (parentRt == null)
+                return;
+            Transform mmTransform = parentRt.Find("MiniMapPanel");
+            RectTransform mmRt = mmTransform != null ? mmTransform.GetComponent<RectTransform>() : null;
+            if (mmRt == null)
+                return;
+
+            if (!GridCoordinatesTryGetMiniMapBoundsInParent(parentRt, mmRt, out float minX, out float maxX, out float minY, out float maxY))
+                return;
+            float mmWidth = maxX - minX;
+            if (mmWidth < 32f)
+                mmWidth = Mathf.Max(mmRt.rect.width, 80f);
+
+            Text dbg = chromeRt.GetComponentInChildren<Text>();
+            float innerW = Mathf.Max(mmWidth - 36f, 48f);
+            float contentH = EstimateGridCoordinatesTextPreferredHeight(dbg, innerW);
+            float gap = GridCoordinatesChromeGapAboveMinimap;
+            float boxW = mmWidth;
+            // Hug text height; avoid forcing ~square height (left empty space overlapping tabs/minimap).
+            float boxH = Mathf.Clamp(Mathf.Max(contentH + 20f, 48f), 44f, 200f);
+
+            chromeRt.anchorMin = Vector2.zero;
+            chromeRt.anchorMax = Vector2.zero;
+            chromeRt.pivot = Vector2.zero;
+            Rect parentRect = parentRt.rect;
+            Vector2 anchorRefBottomLeft = new Vector2(
+                Mathf.Lerp(parentRect.xMin, parentRect.xMax, 0f),
+                Mathf.Lerp(parentRect.yMin, parentRect.yMax, 0f));
+            chromeRt.anchoredPosition = new Vector2(minX, maxY + gap) - anchorRefBottomLeft;
+            chromeRt.sizeDelta = new Vector2(boxW, boxH);
+        }
+
+        /// <summary>
+        /// Minimap axis-aligned bounds in <paramref name="parentRt"/> local space (same parent as chrome + minimap).
+        /// </summary>
+        private static bool GridCoordinatesTryGetMiniMapBoundsInParent(RectTransform parentRt, RectTransform mmRt, out float minX, out float maxX, out float minY, out float maxY)
+        {
+            minX = maxX = minY = maxY = 0f;
+            if (parentRt == null || mmRt == null)
+                return false;
+            Rect r = mmRt.rect;
+            Vector3[] corners =
+            {
+                new Vector3(r.xMin, r.yMin, 0f),
+                new Vector3(r.xMin, r.yMax, 0f),
+                new Vector3(r.xMax, r.yMax, 0f),
+                new Vector3(r.xMax, r.yMin, 0f),
+            };
+            minX = minY = float.PositiveInfinity;
+            maxX = maxY = float.NegativeInfinity;
+            for (int i = 0; i < 4; i++)
+            {
+                Vector3 pl = parentRt.InverseTransformPoint(mmRt.TransformPoint(corners[i]));
+                minX = Mathf.Min(minX, pl.x);
+                maxX = Mathf.Max(maxX, pl.x);
+                minY = Mathf.Min(minY, pl.y);
+                maxY = Mathf.Max(maxY, pl.y);
+            }
+            return maxX > minX && maxY > minY;
+        }
+
+        /// <summary>
+        /// Re-sizes/places chrome after <see cref="gridCoordinatesText"/> changes (Awake uses empty string; full debug grows height).
+        /// </summary>
+        private void RefreshGridCoordinatesChromeLayout()
+        {
+            if (gridCoordinatesText == null)
+                return;
+            Transform t = gridCoordinatesText.transform;
+            if (t.parent == null || t.parent.parent == null)
+                return;
+            if (!IsGridCoordinatesTextHolderName(t.parent.name) || t.parent.parent == null
+                || !IsGridCoordinatesChromeRootName(t.parent.parent.name))
+                return;
+            RectTransform chromeRt = t.parent.parent.GetComponent<RectTransform>();
+            if (chromeRt != null)
+                AlignGridCoordinatesChromeToMiniMap(chromeRt);
+        }
+
+        private static float EstimateGridCoordinatesTextPreferredHeight(Text text, float innerWidth)
+        {
+            if (text == null)
+                return 64f;
+            string sample = string.IsNullOrEmpty(text.text) ? " " : text.text;
+            float w = Mathf.Max(innerWidth, 40f);
+            TextGenerationSettings settings = text.GetGenerationSettings(new Vector2(w, 0.01f));
+            float px = text.cachedTextGeneratorForLayout.GetPreferredHeight(sample, settings);
+            return Mathf.Clamp(px, 28f, 400f);
+        }
+
+        private void ApplyGridCoordinatesChromeTextStyle()
+        {
+            if (gridCoordinatesText == null)
+                return;
+            gridCoordinatesText.color = Color.white;
+            gridCoordinatesText.fontSize = hudUiTheme != null ? Mathf.Max(hudUiTheme.FontSizeCaption, 11) : 12;
+            gridCoordinatesText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            gridCoordinatesText.verticalOverflow = VerticalWrapMode.Overflow;
+            // Scene default was MiddleLeft — large vertical chrome looked like "padding" while copy stayed flush left.
+            gridCoordinatesText.alignment = TextAnchor.UpperLeft;
+        }
+
+        /// <summary>
+        /// Adds horizontal demand gauges under R/C/I stat rows when missing (taller fills, heavy-zoning tint in <see cref="UIManager.Hud"/>).
+        /// </summary>
+        private void EnsureDemandGaugeBars()
+        {
+            EnsureDemandGaugeForPanel(demandResidentialText, "DemandResidentialPanel", ref demandResidentialBarFill);
+            EnsureDemandGaugeForPanel(demandCommercialText, "DemandCommercialPanel", ref demandCommercialBarFill);
+            EnsureDemandGaugeForPanel(demandIndustrialText, "DemandIndustrialPanel", ref demandIndustrialBarFill);
+        }
+
+        private void EnsureDemandGaugeForPanel(Text anchorText, string panelExactName, ref Image fillImageRef)
+        {
+            if (anchorText == null)
+                return;
+            Transform panel = FindNamedAncestor(anchorText.transform, panelExactName);
+            if (panel == null)
+                return;
+            Transform existing = panel.Find("Fe50DemandGauge");
+            if (existing != null)
+            {
+                RectTransform gaugeRtExisting = existing.GetComponent<RectTransform>();
+                if (gaugeRtExisting != null)
+                {
+                    gaugeRtExisting.offsetMin = new Vector2(8f, 5f);
+                    gaugeRtExisting.offsetMax = new Vector2(-8f, 18f);
+                }
+
+                if (fillImageRef == null)
+                {
+                    Transform fillT = existing.Find("Fe50DemandGaugeFill");
+                    if (fillT != null)
+                        fillImageRef = fillT.GetComponent<Image>();
+                }
+
+                return;
+            }
+
+            var panelBg = panel.GetComponent<Image>();
+            Sprite sprite = panelBg != null ? panelBg.sprite : null;
+
+            GameObject gauge = new GameObject("Fe50DemandGauge", typeof(RectTransform));
+            gauge.transform.SetParent(panel, false);
+            RectTransform gaugeRt = gauge.GetComponent<RectTransform>();
+            gaugeRt.anchorMin = new Vector2(0f, 0f);
+            gaugeRt.anchorMax = new Vector2(1f, 0f);
+            gaugeRt.pivot = new Vector2(0.5f, 0f);
+            gaugeRt.offsetMin = new Vector2(8f, 5f);
+            gaugeRt.offsetMax = new Vector2(-8f, 18f);
+
+            GameObject trackGo = new GameObject("Fe50DemandGaugeTrack", typeof(RectTransform), typeof(Image));
+            trackGo.transform.SetParent(gauge.transform, false);
+            RectTransform trackRt = trackGo.GetComponent<RectTransform>();
+            trackRt.anchorMin = Vector2.zero;
+            trackRt.anchorMax = Vector2.one;
+            trackRt.offsetMin = Vector2.zero;
+            trackRt.offsetMax = Vector2.zero;
+            Image trackImg = trackGo.GetComponent<Image>();
+            trackImg.sprite = sprite;
+            trackImg.type = Image.Type.Simple;
+            trackImg.raycastTarget = false;
+            Color trackCol = hudUiTheme != null ? hudUiTheme.BorderSubtle : new Color(0.12f, 0.13f, 0.16f, 1f);
+            trackCol.a = Mathf.Max(0.55f, trackCol.a * 0.85f);
+            trackImg.color = trackCol;
+
+            GameObject fillGo = new GameObject("Fe50DemandGaugeFill", typeof(RectTransform), typeof(Image));
+            fillGo.transform.SetParent(gauge.transform, false);
+            RectTransform fillRt = fillGo.GetComponent<RectTransform>();
+            fillRt.anchorMin = Vector2.zero;
+            fillRt.anchorMax = Vector2.one;
+            fillRt.offsetMin = Vector2.zero;
+            fillRt.offsetMax = Vector2.zero;
+            Image fillImg = fillGo.GetComponent<Image>();
+            fillImg.sprite = sprite;
+            fillImg.type = Image.Type.Filled;
+            fillImg.fillMethod = Image.FillMethod.Horizontal;
+            fillImg.fillOrigin = (int)Image.OriginHorizontal.Left;
+            fillImg.fillAmount = 0.5f;
+            fillImg.raycastTarget = false;
+            fillImageRef = fillImg;
+        }
+
+        private static Transform FindNamedAncestor(Transform t, string exactName)
+        {
+            while (t != null)
+            {
+                if (t.name == exactName)
+                    return t;
+                t = t.parent;
+            }
+
+            return null;
+        }
+
+        private void ApplyHeroStatRow(Text valueText)
+        {
+            if (valueText == null)
+                return;
+            StyleSiblingLabelTexts(valueText.transform, hudUiTheme.FontSizeCaption, hudUiTheme.TextSecondary);
+            valueText.fontSize = hudUiTheme.FontSizeDisplay;
+            valueText.color = hudUiTheme.TextPrimary;
+            valueText.supportRichText = true;
+        }
+
+        /// <summary>
+        /// Toolbar chip next to ShowTaxesButton: compact menu size, rich money/delta, no sibling restyling (avoids touching unrelated HUD texts).
+        /// </summary>
+        private void ApplyToolbarMoneyRow(Text valueText)
+        {
+            if (valueText == null || hudUiTheme == null)
+                return;
+            valueText.fontSize = hudUiTheme.MenuButtonFontSize;
+            valueText.color = hudUiTheme.TextPrimary;
+            valueText.supportRichText = true;
+            valueText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            valueText.verticalOverflow = VerticalWrapMode.Truncate;
+        }
+
+        private void ApplyBodyStatRow(Text textField, bool styleSiblingLabels = true)
+        {
+            if (textField == null)
+                return;
+            if (styleSiblingLabels)
+                StyleSiblingLabelTexts(textField.transform, hudUiTheme.FontSizeCaption, hudUiTheme.TextSecondary);
+            textField.fontSize = hudUiTheme.FontSizeBody;
+            textField.color = hudUiTheme.TextPrimary;
+            textField.supportRichText = true;
+        }
+
+        /// <summary>
+        /// TaxPanel holds many <see cref="Text"/> rows as direct children; <see cref="ApplyBodyStatRow"/> sibling styling would cross-bleed between them.
+        /// This pass applies caption tokens to static "%" titles and body tokens to growth budget value labels only.
+        /// </summary>
+        private void ApplyTaxPanelBudgetRowTexts()
+        {
+            if (hudUiTheme == null || residentialTaxText == null)
+                return;
+            Transform taxPanel = residentialTaxText.transform.parent;
+            if (taxPanel == null)
+                return;
+
+            foreach (Transform child in taxPanel)
+            {
+                Text t = child.GetComponent<Text>();
+                if (t == null)
+                    continue;
+                string n = child.name;
+                if (n == "ResidentialTaxText" || n.StartsWith("CommercialTaxText", StringComparison.Ordinal) || n == "IndustrialTaxText")
+                    continue;
+
+                if (n == "TaxGrowthBudgetPercentLabel" ||
+                    (n.Contains("GrowthLabel", StringComparison.Ordinal) && n.Contains("(1)", StringComparison.Ordinal)))
+                {
+                    ApplyCaptionText(t);
+                    continue;
+                }
+
+                if (n == "TotalGrowthLabel" || n == "RoadGrowthLabel" || n == "EnergyGrowthLabel" || n == "WaterGrowthLabel" || n == "ZoningGrowthLabel")
+                    ApplyBodyStatRow(t, styleSiblingLabels: false);
+            }
+        }
+
+        /// <summary>
+        /// Adds thin horizontal rules between growth-budget sliders, category sliders, and tax rows when missing (runtime Tax panel dividers).
+        /// </summary>
+        private void EnsureTaxPanelDividerStripes()
+        {
+            if (hudUiTheme == null || residentialTaxText == null)
+                return;
+            Transform taxPanel = residentialTaxText.transform.parent;
+            if (taxPanel == null || taxPanel.Find("Fe50TaxDividerUpper") != null)
+                return;
+
+            var panelBg = taxPanel.GetComponent<Image>();
+            Sprite stripeSprite = panelBg != null ? panelBg.sprite : null;
+
+            Color line = hudUiTheme.BorderSubtle;
+            CreateTaxPanelDivider(taxPanel, "Fe50TaxDividerUpper", stripeSprite, line, new Vector2(0f, 48f), new Vector2(200f, 1f));
+            CreateTaxPanelDivider(taxPanel, "Fe50TaxDividerLower", stripeSprite, line, new Vector2(0f, -40f), new Vector2(200f, 1f));
+        }
+
+        private static void CreateTaxPanelDivider(Transform parent, string objectName, Sprite sprite, Color lineColor, Vector2 anchoredPosition, Vector2 sizeDelta)
+        {
+            GameObject go = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            go.transform.SetParent(parent, false);
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = sizeDelta;
+            rt.anchoredPosition = anchoredPosition;
+            var img = go.GetComponent<Image>();
+            img.sprite = sprite;
+            img.type = Image.Type.Simple;
+            img.raycastTarget = false;
+            img.color = lineColor;
+        }
+
+        private void ApplyCaptionText(Text textField)
+        {
+            if (textField == null)
+                return;
+            textField.fontSize = hudUiTheme.FontSizeCaption;
+            textField.color = hudUiTheme.TextSecondary;
+        }
+
+        private static void StyleSiblingLabelTexts(Transform valueTransform, int captionSize, Color captionColor)
+        {
+            Transform parent = valueTransform.parent;
+            if (parent == null)
+                return;
+            foreach (Transform child in parent)
+            {
+                if (child == valueTransform)
+                    continue;
+                var t = child.GetComponent<Text>();
+                if (t == null)
+                    continue;
+                t.fontSize = captionSize;
+                t.color = captionColor;
+            }
+        }
+
+        /// <summary>
+        /// Walks parents from a serialized HUD <see cref="Text"/> until <paramref name="panelName"/> and tints its <see cref="Image"/>.
+        /// Supports inactive stat panels (avoids <c>GameObject.Find</c> missing disabled objects).
+        /// </summary>
+        private void TintPanelRootBehindReference(string panelName, Text anchorText, Color color)
+        {
+            if (anchorText == null)
+                return;
+            Transform t = anchorText.transform;
+            for (int depth = 0; depth < 24 && t != null; depth++)
+            {
+                if (t.name == panelName)
+                {
+                    var image = t.GetComponent<Image>();
+                    if (image != null)
+                        image.color = color;
+                    return;
+                }
+                t = t.parent;
+            }
+        }
+
+        private void ApplyLoadGameAndFundsPanels()
+        {
+            if (loadGameMenu != null)
+            {
+                var rootImage = loadGameMenu.GetComponent<Image>();
+                if (rootImage != null)
+                    rootImage.color = hudUiTheme.ModalDimmerColor;
+                foreach (Transform child in loadGameMenu.transform)
+                {
+                    var img = child.GetComponent<Image>();
+                    if (img != null)
+                    {
+                        img.color = hudUiTheme.SurfaceCardHud;
+                        break;
+                    }
+                }
+            }
+
+            if (insufficientFundsPanel != null)
+            {
+                var rootImage = insufficientFundsPanel.GetComponent<Image>();
+                if (rootImage != null)
+                    rootImage.color = hudUiTheme.ModalDimmerColor;
+                foreach (Transform child in insufficientFundsPanel.transform)
+                {
+                    var img = child.GetComponent<Image>();
+                    if (img != null)
+                    {
+                        img.color = hudUiTheme.SurfaceCardHud;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}

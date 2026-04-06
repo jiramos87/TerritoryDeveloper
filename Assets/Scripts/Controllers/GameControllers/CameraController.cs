@@ -160,6 +160,22 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
+    /// True when the primary pointer is over a uGUI raycast target (mouse or first touch). Used to avoid map zoom/pan through scrollable popups (BUG-19).
+    /// </summary>
+    private static bool IsPointerOverBlockingUi()
+    {
+        if (EventSystem.current == null)
+            return false;
+        if (Input.touchCount > 0)
+        {
+            Touch t = Input.GetTouch(0);
+            return EventSystem.current.IsPointerOverGameObject(t.fingerId);
+        }
+
+        return EventSystem.current.IsPointerOverGameObject();
+    }
+
+    /// <summary>
     /// Handles right-click drag-to-pan. When the user holds right mouse and moves beyond threshold,
     /// the camera follows the movement (1:1 screen-to-world). Skips when cursor is over UI.
     /// </summary>
@@ -168,10 +184,8 @@ public class CameraController : MonoBehaviour
         if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
             panInertiaVelocity = Vector2.zero;
 
-        if (EventSystem.current == null || EventSystem.current.IsPointerOverGameObject())
-        {
+        if (IsPointerOverBlockingUi())
             return;
-        }
 
         if (Input.GetMouseButtonDown(1))
         {
@@ -286,6 +300,9 @@ public class CameraController : MonoBehaviour
     /// </summary>
     private void HandleMovement()
     {
+        if (IsPointerOverBlockingUi())
+            return;
+
         // Raw axis = no built-in smoothing; immediate response
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
@@ -326,7 +343,7 @@ public class CameraController : MonoBehaviour
             return;
 
         // Do not zoom when scrolling over UI (Load Game list, Building Selector, etc.) — see BUG-19 / ui-design-system §3.5.
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        if (IsPointerOverBlockingUi())
             return;
 
         scrollAccumulator += scroll;

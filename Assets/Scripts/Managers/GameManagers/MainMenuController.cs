@@ -46,6 +46,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         ApplyMenuThemeIfAny();
+        ApplyMenuOverlayPanelsFromTheme();
         UpdateContinueButtonState();
     }
 
@@ -77,6 +78,34 @@ public class MainMenuController : MonoBehaviour
                 label.color = menuTheme.MenuButtonTextColor;
                 label.fontSize = menuTheme.MenuButtonFontSize;
             }
+        }
+    }
+
+    /// <summary>
+    /// Tints load-city and options overlay roots when a <see cref="UiTheme"/> is assigned (modal dimmer + card surface).
+    /// </summary>
+    private void ApplyMenuOverlayPanelsFromTheme()
+    {
+        if (menuTheme == null)
+            return;
+        ApplyOverlayToPanelRoot(loadCityPanel);
+        ApplyOverlayToPanelRoot(optionsPanel);
+    }
+
+    private void ApplyOverlayToPanelRoot(GameObject panelRoot)
+    {
+        if (panelRoot == null)
+            return;
+        var rootImage = panelRoot.GetComponent<Image>();
+        if (rootImage != null)
+            rootImage.color = menuTheme.ModalDimmerColor;
+        foreach (Transform child in panelRoot.transform)
+        {
+            var img = child.GetComponent<Image>();
+            if (img == null)
+                continue;
+            img.color = menuTheme.SurfaceCardHud;
+            break;
         }
     }
 
@@ -165,6 +194,7 @@ public class MainMenuController : MonoBehaviour
         }
 
         ApplyThemeToMenuStrip(continueButton, newGameButton, loadCityButton, optionsButton);
+        ApplyMenuOverlayPanelsFromTheme();
     }
 
     private Button CreateButton(Transform parent, string label, Vector2 pos, float w, float h)
