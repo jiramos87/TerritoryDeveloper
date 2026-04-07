@@ -1,5 +1,5 @@
 /**
- * MCP tools: unity_bridge_command, unity_bridge_get — Postgres-backed IDE agent bridge (agent_bridge_job).
+ * MCP tools: unity_bridge_command, unity_bridge_get, unity_compile — Postgres-backed IDE agent bridge (agent_bridge_job).
  */
 
 import { randomUUID } from "node:crypto";
@@ -9,7 +9,8 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getIaDatabasePool } from "../ia-db/pool.js";
 import { runWithToolTiming } from "../instrumentation.js";
 
-const timeoutMsSchema = z
+/** Exported for `unity_compile` and unit tests. */
+export const unityBridgeTimeoutMsSchema = z
   .number()
   .int()
   .min(1000)
@@ -21,12 +22,21 @@ const timeoutMsSchema = z
 
 const unityBridgeCommandInputShape = {
   kind: z
-    .enum(["export_agent_context", "get_console_logs", "capture_screenshot"])
+    .enum([
+      "export_agent_context",
+      "get_console_logs",
+      "capture_screenshot",
+      "enter_play_mode",
+      "exit_play_mode",
+      "get_play_mode_status",
+      "debug_context_bundle",
+      "get_compilation_status",
+    ])
     .default("export_agent_context")
     .describe(
-      "Bridge command kind: export_agent_context (Reports → Export Agent Context); get_console_logs (buffered Unity Console); capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/).",
+      "Bridge command kind: export_agent_context (Reports → Export Agent Context); get_console_logs (buffered Unity Console); capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/); enter_play_mode (Editor enters Play Mode, waits for GridManager.isInitialized); exit_play_mode (Editor exits Play Mode); get_play_mode_status (immediate edit_mode / play_mode_loading / play_mode_ready + optional grid dimensions); debug_context_bundle (one round-trip: Moore export + optional Game-view screenshot + console + anomaly scan; requires seed_cell, Play Mode + initialized GridManager); get_compilation_status (synchronous: EditorApplication.isCompiling, EditorUtility.scriptCompilationFailed, recent Console error lines in response.compilation_status).",
     ),
-  timeout_ms: timeoutMsSchema,
+  timeout_ms: unityBridgeTimeoutMsSchema,
   since_utc: z
     .string()
     .optional()
@@ -72,12 +82,43 @@ const unityBridgeCommandInputShape = {
     .string()
     .optional()
     .describe(
-      'export_agent_context only: Moore neighborhood center as "x,y" (e.g. "3,0"). Omit to use selected Cell or (0,0).',
+      'export_agent_context: Moore neighborhood center as "x,y" (e.g. "3,0"); omit to use selected Cell or (0,0). debug_context_bundle: required "x,y" seed for export + scan.',
+    ),
+  include_screenshot: z
+    .boolean()
+    .default(true)
+    .describe(
+      "debug_context_bundle only: when false, skip Game view PNG (bundle.screenshot.skipped true). Default true.",
+    ),
+  include_console: z
+    .boolean()
+    .default(true)
+    .describe(
+      "debug_context_bundle only: when false, skip console snapshot (bundle.console.skipped true). Default true.",
+    ),
+  include_anomaly_scan: z
+    .boolean()
+    .default(true)
+    .describe(
+      "debug_context_bundle only: when false, skip Moore neighborhood anomaly rules (bundle.anomaly_scan_skipped true). Default true.",
     ),
 };
 
 /** Exported for unit tests (Zod validation of MCP arguments). */
-export const unityBridgeCommandInputSchema = z.object(unityBridgeCommandInputShape);
+export const unityBridgeCommandInputSchema = z
+  .object(unityBridgeCommandInputShape)
+  .superRefine((data, ctx) => {
+    if (data.kind === "debug_context_bundle") {
+      const s = data.seed_cell?.trim();
+      if (!s) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'seed_cell is required for debug_context_bundle (e.g. "62,0").',
+          path: ["seed_cell"],
+        });
+      }
+    }
+  });
 
 export type UnityBridgeCommandInput = z.infer<typeof unityBridgeCommandInputSchema>;
 
@@ -99,6 +140,40 @@ export type UnityBridgeResponsePayload = {
   postgres_only: boolean;
   error: string | null;
   log_lines?: UnityBridgeLogLine[];
+  /** Populated for enter_play_mode / exit_play_mode / get_play_mode_status (Unity AgentBridgeCommandRunner). */
+  play_mode_state?: string;
+  ready?: boolean;
+  already_playing?: boolean;
+  already_stopped?: boolean;
+  has_grid_dimensions?: boolean;
+  grid_width?: number;
+  grid_height?: number;
+  /** Populated for debug_context_bundle (Unity AgentBridgeCommandRunner). */
+  bundle?: {
+    cell_export: { artifact_path: string; ok: boolean };
+    screenshot: { artifact_path: string; ok: boolean; skipped: boolean };
+    console: {
+      log_lines: UnityBridgeLogLine[];
+      line_count: number;
+      skipped: boolean;
+    };
+    anomalies: Array<{
+      rule: string;
+      cell_x: number;
+      cell_y: number;
+      severity: string;
+      message: string;
+    }>;
+    anomaly_count: number;
+    anomaly_scan_skipped: boolean;
+  };
+  /** Populated for get_compilation_status (Unity AgentBridgeCommandRunner). */
+  compilation_status?: {
+    compiling: boolean;
+    compilation_failed: boolean;
+    last_error_excerpt: string;
+    recent_error_messages: UnityBridgeLogLine[];
+  };
 };
 
 const getInputShape = {
@@ -189,18 +264,45 @@ function buildRequestEnvelope(
       },
     };
   }
-  return {
-    ...base,
-    params: {
-      camera: input.camera ?? null,
-      filename_stem: input.filename_stem ?? null,
-      include_ui: input.include_ui,
-    },
-  };
+  if (input.kind === "capture_screenshot") {
+    return {
+      ...base,
+      params: {
+        camera: input.camera ?? null,
+        filename_stem: input.filename_stem ?? null,
+        include_ui: input.include_ui,
+      },
+    };
+  }
+  if (input.kind === "debug_context_bundle") {
+    const trimmed = input.seed_cell?.trim() ?? "";
+    return {
+      ...base,
+      params: {
+        seed_cell: trimmed,
+        include_screenshot: input.include_screenshot,
+        include_console: input.include_console,
+        include_anomaly_scan: input.include_anomaly_scan,
+        filename_stem: input.filename_stem ?? null,
+        since_utc: input.since_utc ?? null,
+        severity_filter: input.severity_filter,
+        tag_filter: input.tag_filter ?? null,
+        max_lines: input.max_lines,
+      },
+    };
+  }
+  if (input.kind === "get_compilation_status") {
+    return { ...base, params: {} };
+  }
+  return { ...base, params: {} };
 }
 
 /**
- * Core logic (exported for unit tests via {@link UnityBridgeCommandRunOptions.pool}).
+ * Core logic for MCP **`unity_bridge_command`** (also used by CLI helpers so they do not duplicate
+ * the Postgres queue contract): {@link ../../scripts/bridge-playmode-smoke.ts},
+ * {@link ../../scripts/run-unity-bridge-once.ts}.
+ *
+ * Exported for unit tests via {@link UnityBridgeCommandRunOptions.pool}.
  */
 export async function runUnityBridgeCommand(
   input: UnityBridgeCommandInput,
@@ -393,12 +495,21 @@ export async function runUnityBridgeGet(
 /**
  * Register unity_bridge_command and unity_bridge_get.
  */
+const unityCompileInputShape = {
+  timeout_ms: unityBridgeTimeoutMsSchema,
+};
+
+const unityCompileInputSchema = z.object(unityCompileInputShape);
+
+/**
+ * Register unity_bridge_command, unity_bridge_get, and unity_compile (alias for get_compilation_status).
+ */
 export function registerUnityBridgeCommand(server: McpServer): void {
   server.registerTool(
     "unity_bridge_command",
     {
       description:
-        "IDE agent bridge: enqueue a Unity Editor job in Postgres agent_bridge_job (pending). Kinds: export_agent_context (agent context JSON + optional Postgres registry; optional seed_cell \"x,y\" for Moore neighborhood center), get_console_logs (buffered Console lines in response.log_lines), capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/; include_ui for Game view + Overlay UI). Requires DATABASE_URL / config/postgres-dev.json, migration 0008, Unity on REPO_ROOT. Polls until completed, failed, or timeout_ms (default 30000, max 30000). Removes pending row on MCP timeout.",
+        "IDE agent bridge: enqueue a Unity Editor job in Postgres agent_bridge_job (pending). Kinds: export_agent_context (agent context JSON + optional Postgres registry; optional seed_cell \"x,y\" for Moore neighborhood center), get_console_logs (buffered Console lines in response.log_lines), capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/; include_ui for Game view + Overlay UI), enter_play_mode (EditorApplication.EnterPlaymode; completes when GridManager.isInitialized; response.ready, play_mode_state, grid_width/height), exit_play_mode (ExitPlaymode; completes when back in Edit Mode), get_play_mode_status (immediate response: play_mode_state edit_mode|play_mode_loading|play_mode_ready), debug_context_bundle (single job: Moore export + optional screenshot + console + anomaly scan; response.bundle; requires seed_cell; Play Mode + GridManager ready), get_compilation_status (synchronous compile snapshot: response.compilation_status with compiling, compilation_failed, last_error_excerpt, recent_error_messages). Requires DATABASE_URL / config/postgres-dev.json, migration 0008, Unity on REPO_ROOT. Polls until completed, failed, or timeout_ms (default 30000, max 30000). Removes pending row on MCP timeout.",
       inputSchema: unityBridgeCommandInputShape,
     },
     async (args) =>
@@ -441,6 +552,34 @@ export function registerUnityBridgeCommand(server: McpServer): void {
           return jsonResult(result);
         }
         return jsonResult(result);
+      }),
+  );
+
+  server.registerTool(
+    "unity_compile",
+    {
+      description:
+        "IDE agent bridge shortcut: same enqueue/complete path as unity_bridge_command with kind get_compilation_status. Returns response.compilation_status (compiling, compilation_failed, last_error_excerpt, recent_error_messages from buffered Console errors). Use when the Editor is open on REPO_ROOT; prefer npm run unity:compile-check (batchmode) only when no Editor holds the project lock. Requires DATABASE_URL, migration 0008, timeout_ms default 30000.",
+      inputSchema: unityCompileInputShape,
+    },
+    async (args) =>
+      runWithToolTiming("unity_compile", async () => {
+        const parsed = unityCompileInputSchema.safeParse(args ?? {});
+        if (!parsed.success) {
+          return jsonResult({
+            error: "invalid_input",
+            message: parsed.error.flatten().fieldErrors,
+          });
+        }
+
+        const result = await runUnityBridgeCommand({
+          kind: "get_compilation_status",
+          timeout_ms: parsed.data.timeout_ms,
+        });
+        if (!result.ok) {
+          return jsonResult(result);
+        }
+        return jsonResult(result.response);
       }),
   );
 }

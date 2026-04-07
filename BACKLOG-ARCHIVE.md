@@ -68,7 +68,7 @@
   - Spec: (removed after closure — glossary **Editor export registry**; **unity-development-context** §10; **postgres-ia-dev-setup** **Editor export registry** + **Node**/**PATH** troubleshooting; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-55**; this row)
   - Notes: **Completed (verified — `/project-spec-close` + user):** **DB-first** **`document jsonb`**; **`tools/reports/`** fallback; quiet success **`Debug.Log`** (optional verbose **EditorPrefs**); **`DATABASE_URL`** via **EditorPrefs** / **`.env.local`**; **`node`** resolution for GUI-launched **Unity** (**Volta**/Homebrew/**EditorPrefs**/**`NODE_BINARY`**); optional **`backlog_issue_id`** (**NULL** when unset); no backlog id as **Editor** product branding. **Operational:** run **`npm run db:migrate`** (**`0004`**/**`0005`**) before **`editor_export_*`** exist; **Postgres** user in **`DATABASE_URL`** must match local roles (e.g. Homebrew vs `postgres`).
   - Depends on: **TECH-55** **§ Completed**
-  - Related: **TECH-44b**/**c** **§ Completed**, **Close Dev Loop** (TECH-75a–c, absorbed former **TECH-59**)
+  - Related: **TECH-44b**/**c** **§ Completed**, **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived; absorbed former **TECH-59**)
 
 - [x] **TECH-55** — **Automated Editor report registry** (Postgres, per **Reports** export type) (2026-04-04)
   - Type: tooling / agent enablement
@@ -76,7 +76,7 @@
   - Spec: (removed after closure — glossary **Editor export registry**; **unity-development-context** §10; **postgres-ia-dev-setup**; **postgres-interchange-patterns** **Program extension mapping**; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-55b**; this row)
   - Notes: **Completed (verified — `/project-spec-close` + user):** Per-export **`editor_export_*`** **B1** tables, **`register-editor-export.mjs`**, **`EditorPostgresExportRegistrar`**; **`normalizeIssueId`** parity with **`backlog-parser.ts`**. **TECH-55b** superseded persistence to **DB-first** full body + filesystem fallback (same closure batch). Does not replace **`dev_repro_bundle`** (**TECH-44c**).
   - Depends on: **TECH-44b** **§ Completed** (soft: **TECH-44c** **§ Completed**)
-  - Related: **TECH-55b** **§ Completed**, **Close Dev Loop** (TECH-75a–c)
+  - Related: **TECH-55b** **§ Completed**, **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived)
 
 - [x] **TECH-58** — **Agent closeout efficiency:** **project-spec-close** (**MCP** + **Node**) (2026-04-03)
   - Type: tooling / agent enablement
@@ -108,7 +108,7 @@
 
 - [x] **TECH-44b** — Game **PostgreSQL** database; first milestone — **IA** schema + minimal read surface (2026-04-03)
   - Type: infrastructure / tooling
-  - Files: `db/migrations/`; `tools/postgres-ia/`; `docs/postgres-ia-dev-setup.md`; `.env.example`; repo root `package.json` (`db:migrate`, `db:seed:glossary`, `db:glossary`); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) (**PostgreSQL IA** subsection for **TECH-18**); `.cursor/specs/glossary.md` — **Postgres interchange patterns** row (**TECH-44b** milestone); [`ARCHITECTURE.md`](ARCHITECTURE.md); [`projects/ia-driven-dev-backend-database-value.md`](projects/ia-driven-dev-backend-database-value.md); `docs/agent-tooling-verification-priority-tasks.md` (row 11); [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-44**; `.cursor/projects/TECH-18.md` (**Current State**); `tools/mcp-ia-server/tests/parser/backlog-parser.test.ts` (open-issue fixture — e.g. **TECH-75a**)
+  - Files: `db/migrations/`; `tools/postgres-ia/`; `docs/postgres-ia-dev-setup.md`; `.env.example`; repo root `package.json` (`db:migrate`, `db:seed:glossary`, `db:glossary`); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) (**PostgreSQL IA** subsection for **TECH-18**); `.cursor/specs/glossary.md` — **Postgres interchange patterns** row (**TECH-44b** milestone); [`ARCHITECTURE.md`](ARCHITECTURE.md); [`projects/ia-driven-dev-backend-database-value.md`](projects/ia-driven-dev-backend-database-value.md); `docs/agent-tooling-verification-priority-tasks.md` (row 11); [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-44**; `.cursor/projects/TECH-18.md` (**Current State**); `tools/mcp-ia-server/tests/parser/backlog-parser.test.ts` (open-issue fixture — e.g. **TECH-75d**)
   - Spec: (removed after closure — [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md) **Shipped decisions**; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); **glossary** **Postgres interchange patterns**; [`ARCHITECTURE.md`](ARCHITECTURE.md); [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-44**; this row)
   - Notes: **Completed (verified — `/project-spec-close` + local migrate/seed/smoke):** Versioned **IA** tables (`glossary`, `spec_sections`, `invariants`, `relationships`); **`ia_glossary_row_by_key`**; **`tools/postgres-ia/`** migrate/seed/read scripts; **`DATABASE_URL`** / **`.env.example`**; **MCP** remains **file-backed** until **TECH-18**. Does **not** replace Markdown authoring or **I1**/**I2** **CI** checks.
   - Depends on: **TECH-44a** **§ Completed**
@@ -124,14 +124,14 @@
   - Type: technical / performance enablement
   - Files: `Assets/StreamingAssets/Config/geography-default.json`; `Assets/Scripts/Managers/GameManagers/GeographyInitParamsDto.cs`, `GeographyInitParamsLoader.cs`; `GeographyManager.cs`, `MapGenerationSeed.cs`; `Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs`; `docs/schemas/cell-chunk-interchange.v1.schema.json`, `world-snapshot-dev.v1.schema.json`, `docs/schemas/README.md`; `tools/mcp-ia-server/src/schemas/geography-init-params-zod.ts`, `scripts/validate-fixtures.ts`, `tests/schemas/`; `.cursor/specs/glossary.md` — **Interchange JSON**, **geography_init_params**; **`ARCHITECTURE.md`** — **Interchange JSON**; **persistence-system** / **unity-development-context** cross-links
   - Spec: (removed after closure — **glossary** + **`ARCHITECTURE.md`** + [`docs/schemas/README.md`](docs/schemas/README.md) + **unity-development-context** §10 + **JSON program (TECH-21)**; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-21**; this row)
-  - Notes: **Completed (verified — `/project-spec-close`):** **Phase B** of **JSON program (TECH-21)**. **G4** optional **`geography_init_params`** load from **StreamingAssets**; **G1**/**G2** Editor exports under **`tools/reports/`**; Zod parity + **`validate:fixtures`**; **E3** layering documented; **Save data** unchanged. **Deferred to FEAT-46:** apply **`water.seaBias`** / **`forest.coverageTarget`** to simulation. **`backlog_issue`** test target: open **Agent** lane row (e.g. **TECH-75a**).
+  - Notes: **Completed (verified — `/project-spec-close`):** **Phase B** of **JSON program (TECH-21)**. **G4** optional **`geography_init_params`** load from **StreamingAssets**; **G1**/**G2** Editor exports under **`tools/reports/`**; Zod parity + **`validate:fixtures`**; **E3** layering documented; **Save data** unchanged. **Deferred to FEAT-46:** apply **`water.seaBias`** / **`forest.coverageTarget`** to simulation. **`backlog_issue`** test target: open **Agent** lane row (e.g. **TECH-75d**).
   - Depends on: none (**TECH-40** completed — **§ Completed** **TECH-40**)
 
 - [x] **TECH-40** — **JSON** infra: artifact identity, schemas, **CI** validation, **spec** + **glossary** indexes (2026-04-11)
   - Type: tooling / data interchange
   - Files: `docs/schemas/` (pilot schema + fixtures); repo root `package.json` (`validate:fixtures`, `generate:ia-indexes`, `validate:dead-project-specs`, `test:ia`); `tools/mcp-ia-server/scripts/validate-fixtures.ts`, `generate-ia-indexes.ts`, `src/ia-index/glossary-spec-ref.ts`, `data/spec-index.json`, `data/glossary-index.json`; `.github/workflows/ia-tools.yml`; `projects/json-use-cases-brainstorm.md` (policy §); `docs/mcp-ia-server.md`; `.cursor/specs/glossary.md` — **Documentation** (**IA index manifest**, **Interchange JSON**); [REFERENCE-SPEC-STRUCTURE.md](.cursor/specs/REFERENCE-SPEC-STRUCTURE.md) § Conventions item 7
   - Spec: (removed after closure — **glossary** + **REFERENCE-SPEC-STRUCTURE** + [`docs/schemas/README.md`](docs/schemas/README.md) + [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) + **JSON program (TECH-21)**; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-21**; this row)
-  - Notes: **Completed (verified — `/project-spec-close`):** **Phase A** of **JSON program (TECH-21)**. **`artifact`** / **`schema_version`** policy; JSON Schema Draft **2020-12** pilot **`geography_init_params`**; **`npm run validate:fixtures`**; committed **I1**/**I2** with **`generate:ia-indexes -- --check`** in **CI**. **`backlog_issue`** integration test uses an open issue in the **Agent** lane (e.g. **TECH-75a**). **Related:** **TECH-24**, **TECH-30**, **TECH-34**; **TECH-43** **Depends on** updated.
+  - Notes: **Completed (verified — `/project-spec-close`):** **Phase A** of **JSON program (TECH-21)**. **`artifact`** / **`schema_version`** policy; JSON Schema Draft **2020-12** pilot **`geography_init_params`**; **`npm run validate:fixtures`**; committed **I1**/**I2** with **`generate:ia-indexes -- --check`** in **CI**. **`backlog_issue`** integration test uses an open issue in the **Agent** lane (e.g. **TECH-75d**). **Related:** **TECH-24**, **TECH-30**, **TECH-34**; **TECH-43** **Depends on** updated.
   - Depends on: none (soft: align **TECH-37** **Zod** when touching **compute-lib**)
 
 - [x] **TECH-57** — **Cursor Skills:** **infrastructure** + **kickoff** skill (project **spec** review / IA alignment) (2026-04-11)
@@ -181,6 +181,54 @@
 
 ## Recent archive (moved from BACKLOG.md, 2026-04-10)
 
+- [x] **TECH-75** — **Close Dev Loop** orchestration: agent-driven Play Mode verification (2026-04-07)
+  - Type: orchestration spec (no umbrella BACKLOG row)
+  - Files: (removed after closure — **glossary** **IDE agent bridge**; **`close-dev-loop`** Skill; **`bridge-environment-preflight`** Skill; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); **IA project spec journal**; this row)
+  - Spec: (removed after closure)
+  - Notes: **Completed (verified):** All sub-issues shipped: **TECH-75a** (Play Mode bridge `kind` values), **TECH-75b** (`debug_context_bundle` + anomaly scanner), **TECH-75c** (`close-dev-loop` Skill + compile gate), **TECH-75d** (dev environment preflight). Agent can enter Play Mode, collect evidence, detect anomalies, verify fixes, and exit — zero human Unity interaction. MVP exit criteria met. Absorbed **TECH-59** (MCP staging superseded by direct Play Mode control). Open follow-ups: `unity_debug_bundle` sugar tool (deferred); Game view auto-focus; multi-seed-cell bundle.
+  - Depends on: none
+  - Related: **TECH-75a**, **TECH-75b**, **TECH-75c**, **TECH-75d** (all **§ Recent archive**)
+
+- [x] **TECH-75d** — **Close Dev Loop**: dev environment **preflight** (Postgres + **IDE agent bridge** readiness) (2026-04-07)
+  - Type: tooling / agent enablement (**scripts** + **Cursor Skill** + docs)
+  - Files: `tools/mcp-ia-server/scripts/bridge-preflight.ts`; root `package.json` (`db:bridge-preflight`); `.cursor/skills/bridge-environment-preflight/SKILL.md`; `.cursor/skills/README.md`; `.cursor/skills/close-dev-loop/SKILL.md` (Step 0); `.cursor/skills/ide-bridge-evidence/SKILL.md`; `AGENTS.md`; `docs/postgres-ia-dev-setup.md`; `docs/mcp-ia-server.md`; `config/README.md`; orchestration archived (this file **Recent archive**) §7
+  - Spec: (removed after closure — **bridge-environment-preflight** Skill; **close-dev-loop** Step 0; [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md) **Bridge environment preflight**; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); **IA project spec journal**; this row)
+  - Notes: **Completed (verified):** Node preflight script (`bridge-preflight.ts`) with stable exit codes 0–4; imports `resolveIaDatabaseUrl`; checks Postgres connectivity and `agent_bridge_job` table presence. `npm run db:bridge-preflight` at repo root. **bridge-environment-preflight** Cursor Skill with bounded repair policy (one attempt per failure class). **close-dev-loop** Step 0 upgraded from optional to concrete. All four exit codes verified on dev machine (0/1/2/3 + post-migrate restore).
+  - Depends on: none (soft: **`close-dev-loop`** shipped)
+  - Related: **TECH-75** orchestration, **TECH-75b** (**§ Recent archive**), **TECH-75c** (**§ Recent archive**), **TECH-75a**
+
+- [x] **TECH-75b** — **Close Dev Loop**: context bundle + anomaly detection (2026-04-09)
+  - Type: tooling / agent enablement
+  - Files: `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`; `Assets/Scripts/Editor/AgentBridgeAnomalyScanner.cs`; `tools/mcp-ia-server/src/tools/unity-bridge-command.ts`; `tools/mcp-ia-server/scripts/bridge-playmode-smoke.ts`; `tools/mcp-ia-server/tests/tools/unity-bridge-command.test.ts`; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); `tools/mcp-ia-server/README.md`; [`.cursor/specs/glossary.md`](.cursor/specs/glossary.md) **IDE agent bridge**; [`.cursor/specs/unity-development-context.md`](.cursor/specs/unity-development-context.md) §10; [`.cursor/skills/ide-bridge-evidence/SKILL.md`](.cursor/skills/ide-bridge-evidence/SKILL.md); orchestration archived (this file **Recent archive**) §7
+  - Spec: (removed after closure — **glossary** **IDE agent bridge**; **unity-development-context** §10; **ide-bridge-evidence**; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); **IA project spec journal**; **this row**)
+  - Notes: **Completed (verified — `/project-spec-close` + user):** Bridge **`kind`** **`debug_context_bundle`** — Moore **Agent context** export + deferred **Game view** screenshot + console snapshot + **`AgentBridgeAnomalyScanner`** rules (`missing_border_cliff`, `heightmap_cell_desync`, `redundant_shore_cliff`). CLI **`npm run db:bridge-playmode-smoke`** uses **`runUnityBridgeCommand`** (same path as MCP **`unity_bridge_command`**). Optional **`unity_debug_bundle`** MCP sugar still deferred (open **BACKLOG** follow-up if scoped).
+  - Depends on: none (Play Mode bridge **`kind`** values — this file **TECH-75a**)
+  - Related: **TECH-75** orchestration, **TECH-75c** (**§ Completed** — this file **Recent archive**), **TECH-75a**
+
+- [x] **TECH-75c** — **Close Dev Loop**: Cursor Skill orchestrating fix → verify → report (2026-04-09)
+  - Type: documentation / agent enablement (**Cursor Skill**) + bridge **`kind`**
+  - Files: `.cursor/skills/close-dev-loop/SKILL.md`; `.cursor/skills/README.md`; [`AGENTS.md`](AGENTS.md); root [`package.json`](package.json) **`unity:compile-check`**; `tools/scripts/unity-compile-check.sh`; `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` (**`get_compilation_status`**); `tools/mcp-ia-server/src/tools/unity-bridge-command.ts` (**`unity_compile`**); `tools/mcp-ia-server/tests/tools/unity-bridge-command.test.ts`; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md); [`.cursor/specs/unity-development-context.md`](.cursor/specs/unity-development-context.md) §10; [`.cursor/specs/glossary.md`](.cursor/specs/glossary.md); [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md) (**Agent bridge job queue** troubleshooting); [`ARCHITECTURE.md`](ARCHITECTURE.md); orchestration archived (this file **Recent archive**) §7
+  - Spec: (removed after closure — **`.cursor/skills/close-dev-loop/SKILL.md`**; **glossary** **IDE agent bridge**; **unity-development-context** §10; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); **IA project spec journal**; **this row**)
+  - Notes: **Completed (verified — `/project-spec-close` + user):** **`close-dev-loop`** Skill (before/after **`debug_context_bundle`**, **compile gate**: **`get_compilation_status`** / **`unity_compile`**, **`npm run unity:compile-check`**, **`get_console_logs`**); **`JsonUtility`** response shape note in **unity-development-context** §10. Optional **`unity_debug_bundle`** MCP sugar still deferred.
+  - Depends on: none (soft: **`debug_context_bundle`** — **this file** **TECH-75b**)
+  - Related: **TECH-75** orchestration, **TECH-75b**, **TECH-75d** (archived), **TECH-75a**
+
+- [x] **BUG-54** — **Utility building** / **zoning** overlay stripped **brown cliff** stacks on **map border** **cells** (void toward **off-grid** exterior) (2026-04-10)
+  - Type: bug (rendering / terrain layering)
+  - Files: `GridManager.cs` (`DestroyCellChildren`, `DestroyCellChildrenExceptForest`), `TerrainManager.cs` (`IsCliffStackTerrainObject`), `BuildingPlacementService.cs`, `ZoneManager.cs` (`PlaceZone`, `PlaceZoneAt`, `RestoreZoneTile`); [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) §5.7 **Cell child cleanup (overlays)**
+  - Spec: (removed after closure — normative **geo** §5.7 bullet **Cell child cleanup (overlays)**; **this row**)
+  - Notes: **Completed (verified — `/project-spec-close` + user):** **`TerrainManager.IsCliffStackTerrainObject`**; **`GridManager.DestroyCellChildren`** skips **cliff** (and existing **slope**) instances during **`destroyFlatGrass`** **building** cleanup; **`DestroyCellChildrenExceptForest`** applies the same skips so **undeveloped light zoning** brush and restore do not wipe **map border** stacks. **`RestoreTerrainForCell`** early exit on **building**-occupied **cells** prevented relying on post-place **cliff** rebuild alone.
+  - Depends on: none
+  - Related: **BUG-20**, **BUG-31**; archived **BUG-44** (water × **map border** — different cause)
+
+- [x] **TECH-75a** — **Close Dev Loop**: Play Mode bridge commands + readiness signal (2026-04-08)
+  - Type: tooling / agent enablement
+  - Files: `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`; `tools/mcp-ia-server/src/tools/unity-bridge-command.ts`; `tools/mcp-ia-server/tests/tools/unity-bridge-command.test.ts`; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); `tools/mcp-ia-server/README.md`; [`.cursor/specs/unity-development-context.md`](.cursor/specs/unity-development-context.md) §10; [`.cursor/specs/glossary.md`](.cursor/specs/glossary.md) **IDE agent bridge**; [`.cursor/skills/ide-bridge-evidence/SKILL.md`](.cursor/skills/ide-bridge-evidence/SKILL.md); [`AGENTS.md`](AGENTS.md); [`ARCHITECTURE.md`](ARCHITECTURE.md) (**IDE agent bridge** bullet)
+  - Spec: (removed after closure — **glossary** **IDE agent bridge**; **unity-development-context** §10; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) **Play Mode bridge smoke (MCP, agent-led)**; orchestration archived (this file **Recent archive**) §7 phase 1; **this row**)
+  - Notes: **Completed (verified — `/project-spec-close` + user):** Bridge **`kind`** **`enter_play_mode`**, **`exit_play_mode`**, **`get_play_mode_status`**; readiness via **`GridManager.isInitialized`**; **`UnityEditor.SessionState`** for enter/exit wait across domain reload; **`GameView`** focus via reflection before **`EnterPlaymode`**; concurrent same-type jobs rejected; deferred screenshot pump unified in **`OnEditorUpdate`**. **MCP** smoke + optional **Play Mode** sequence documented in **`AGENTS.md`** / **`docs/mcp-ia-server.md`**. **Subsequent Close Dev Loop:** context bundle **TECH-75b** (this file); **`close-dev-loop`** Skill **TECH-75c** (this file **Recent archive**); **TECH-75d** dev preflight on [`BACKLOG.md`](BACKLOG.md).
+  - Depends on: none (extends **TECH-73**/**TECH-74** Phase 1 bridge)
+  - Related: **TECH-75** orchestration, **TECH-75b** (archived this file), **TECH-75c**, **TECH-73**, **TECH-74**, **TECH-59** (absorbed)
+
 - [x] **BUG-44** — **Cliff** prefabs: black gaps when a **water body** meets the **east** or **south** **map border** (2026-04-07)
   - Type: bug
   - Files: `TerrainManager.cs` (`PlaceCliffWalls`, `GetCliffWallDropSouth`, `GetCliffWallDropEast`, `ResolveCliffWallDropAfterSuppression`, `PlaceCliffWallStackCore`, `ShouldSuppressBrownCliffTowardOffGridForWaterShorePrimary`); [`.cursor/specs/isometric-geography-system.md`](.cursor/specs/isometric-geography-system.md) §5.6.1, §5.7; [`.cursor/specs/glossary.md`](.cursor/specs/glossary.md) **Map border**, **Cliff suppression**; [`ARCHITECTURE.md`](ARCHITECTURE.md) **Water** subsection
@@ -191,19 +239,19 @@
 
 - [x] **TECH-59** — **territory-ia** MCP: stage **Editor** export registry payload — **absorbed into Close Dev Loop** (2026-04-07)
   - Type: tooling / agent enablement
-  - Files: (no implementation shipped — scope absorbed into **TECH-75a–c**)
-  - Spec: (deleted — `.cursor/projects/TECH-59.md` removed; concept superseded by **Close Dev Loop** orchestration [`.cursor/projects/TECH-75.md`](.cursor/projects/TECH-75.md))
-  - Notes: **Absorbed (not implemented):** Original goal was MCP staging for **Editor export registry** payload (**`backlog_issue_id`** + JSON documents) with a Unity menu to apply. Superseded because the **Close Dev Loop** program (TECH-75a–c) lets the agent enter Play Mode and collect evidence directly, eliminating the need to pre-stage registry parameters. Registry staging may reappear as a sub-task if needed, but is no longer a standalone issue.
+  - Files: (no implementation shipped — scope absorbed into **Close Dev Loop** (**TECH-75**))
+  - Spec: (deleted — `.cursor/projects/TECH-59.md` removed; concept superseded by **Close Dev Loop** orchestration archived (this file **Recent archive**))
+  - Notes: **Absorbed (not implemented):** Original goal was MCP staging for **Editor export registry** payload (**`backlog_issue_id`** + JSON documents) with a Unity menu to apply. Superseded because the **Close Dev Loop** program (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived) lets the agent enter Play Mode and collect evidence directly, eliminating the need to pre-stage registry parameters. Registry staging may reappear as a sub-task if needed, but is no longer a standalone issue.
   - Depends on: none
-  - Related: **Close Dev Loop** (TECH-75a–c), **TECH-55b** **§ Completed**, **TECH-48**
+  - Related: **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived), **TECH-55b** **§ Completed**, **TECH-48**
 
 - [x] **TECH-73** — **Unity** ↔ **IDE** **agent bridge** program (**Phase 1** — **Postgres** **`agent_bridge_job`**) (2026-04-06)
   - Type: tooling / agent enablement (program umbrella — Phase 1 shipped)
   - Files: [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md) (charter / optional later phases); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md); `db/migrations/0008_agent_bridge_job.sql`; `tools/postgres-ia/agent-bridge-dequeue.mjs`; `tools/postgres-ia/agent-bridge-complete.mjs`; `tools/mcp-ia-server/src/tools/unity-bridge-command.ts`; `tools/mcp-ia-server/scripts/run-unity-bridge-once.ts`; root **`npm run db:bridge-agent-context`**; `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`; `Assets/Scripts/Editor/EditorPostgresBridgeJobs.cs`; `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs` (**ExportAgentContextForAgentBridge**); `Assets/Scripts/Editor/EditorPostgresExportRegistrar.cs`; [`.cursor/specs/unity-development-context.md`](.cursor/specs/unity-development-context.md) §10; [`.cursor/specs/glossary.md`](.cursor/specs/glossary.md) **IDE agent bridge**, **Editor export registry**
   - Spec: (removed after closure — **glossary** **IDE agent bridge**; **unity-development-context** §10; [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); **this row**)
-  - Notes: **Completed (verified — `/project-spec-close` + user):** **territory-ia** **`unity_bridge_command`** / **`unity_bridge_get`** + **Unity** **Node** dequeue/complete; **`TryPersistReport`** **Postgres-only** (no **`tools/reports/`** fallback for registry exports). **Optional later phases** (HTTP): charter doc + open **BACKLOG** when scoped. **Console** / **screenshot** bridge kinds shipped — **TECH-74** **§ Completed** (this file). **Close Dev Loop** (TECH-75a–c) supersedes **TECH-59** staging concept — agent drives Play Mode directly.
+  - Notes: **Completed (verified — `/project-spec-close` + user):** **territory-ia** **`unity_bridge_command`** / **`unity_bridge_get`** + **Unity** **Node** dequeue/complete; **`TryPersistReport`** **Postgres-only** (no **`tools/reports/`** fallback for registry exports). **Optional later phases** (HTTP): charter doc + open **BACKLOG** when scoped. **Console** / **screenshot** bridge kinds shipped — **TECH-74** **§ Completed** (this file). **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived) supersedes **TECH-59** staging concept — agent drives Play Mode directly.
   - Depends on: none (soft: glossary **Editor export registry** — **TECH-55**/**TECH-55b** archived; **unity-development-context** §10 **Reports** menus)
-  - Related: **Close Dev Loop** (TECH-75a–c), **TECH-48**, **TECH-33**, **TECH-38**, **TECH-18**, **BUG-53**, **TECH-74**
+  - Related: **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived), **TECH-48**, **TECH-33**, **TECH-38**, **TECH-18**, **BUG-53**, **TECH-74**
 
 - [x] **TECH-74** — **territory-ia** MCP + **IDE agent bridge**: **`get_console_logs`** and **`capture_screenshot`** (2026-04-07)
   - Type: tooling / agent enablement
@@ -211,15 +259,15 @@
   - Spec: (removed after closure — **glossary** **IDE agent bridge**; **unity-development-context** §10; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md) §4.3 **Shipped**; **TECH-73** **§ Completed** **Phase 1** sibling; **this row**)
   - Notes: **Completed (verified — `/project-spec-close` + user):** **`unity_bridge_command`** **`kind`** **`get_console_logs`** / **`capture_screenshot`**; **`response.log_lines`**; **Play Mode** PNG under **`tools/reports/bridge-screenshots/`**; **`params.include_ui`** uses **Game view** **`ScreenCapture`** (**Overlay** UI); **`runUnityBridgeCommand`** **`timeout_ms`** default/clamp; **`@territory/mcp-ia-server`** **0.4.13**. **Node:** **`npm run verify`** / **`npm run test:ia`** green. **Skills:** optional **Play** evidence workflow **`ide-bridge-evidence`**. Charter §5.1 sugar tool names remain aliases only.
   - Depends on: none (soft: **TECH-24** when parser / **Zod** shapes for bridge tools change)
-  - Related: **TECH-73**, **Close Dev Loop** (TECH-75a–c), **TECH-48**, **TECH-24**
+  - Related: **TECH-73**, **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived), **TECH-48**, **TECH-24**
 
 - [x] **BUG-53** — **Unity Editor:** **Territory Developer → Reports** menu / **Export Sorting Debug** tooling gap (2026-04-06)
   - Type: bug (tooling / agent workflow)
   - Files: `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs`; `tools/reports/` path resolution (`Application.dataPath` parent); [`.cursor/specs/unity-development-context.md`](.cursor/specs/unity-development-context.md) §10 (**Editor agent diagnostics**); [`ARCHITECTURE.md`](ARCHITECTURE.md) **Editor agent diagnostics** bullet; [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md) §2.4 / §7 / §10 (**Agent** bridge next steps)
   - Spec: [`.cursor/specs/unity-development-context.md`](.cursor/specs/unity-development-context.md) §10 (authoritative — no project spec)
-  - Notes: **Completed (verified — `/project-spec-close` + user):** **Territory Developer → Reports** shows **Export Agent Context** and **Export Sorting Debug (Markdown)** after compile; **Sorting** full breakdown in **Play Mode** with initialized **grid** matches §10; **Edit Mode** stub behavior unchanged. **Original ship:** [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **TECH-28**. **Bridge** doc updated so **Reports** is no longer listed as an open prerequisite; **Close Dev Loop** (TECH-75a–c) supersedes the staging concept.
+  - Notes: **Completed (verified — `/project-spec-close` + user):** **Territory Developer → Reports** shows **Export Agent Context** and **Export Sorting Debug (Markdown)** after compile; **Sorting** full breakdown in **Play Mode** with initialized **grid** matches §10; **Edit Mode** stub behavior unchanged. **Original ship:** [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **TECH-28**. **Bridge** doc updated so **Reports** is no longer listed as an open prerequisite; **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived) supersedes the staging concept.
   - Depends on: none
-  - Related: **TECH-28**, **Close Dev Loop** (TECH-75a–c), **TECH-64**
+  - Related: **TECH-28**, **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived), **TECH-64**
 
 - [x] **FEAT-50** — **UI** visual polish: aesthetic refinement (**HUD**, panels, **toolbar**, **MainMenu**) (2026-04-11)
   - Type: feature / UX polish
@@ -235,7 +283,7 @@
   - Spec: (removed after closure — **glossary** **IA project spec journal**; [`config/README.md`](config/README.md); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md); [`ARCHITECTURE.md`](ARCHITECTURE.md) **territory-ia** tool list + **Postgres** dev surfaces; **this row**)
   - Notes: **Completed (verified — `/project-spec-close` + user):** **`ia_project_spec_journal`** + MCP **`project_spec_journal_*`**; **Skills** **J1** + optional **project-new** / **project-spec-kickoff** journal search; committed dev URI **`config/postgres-dev.json`** + **`resolve-database-url`** (**postgres-ia** + **mcp-ia-server**); **`npm run db:persist-project-journal`** at closeout.
   - Depends on: none (soft: **TECH-24** for parser policy when extending closeout parser)
-  - Related: **TECH-48**, **TECH-18**, **Close Dev Loop** (TECH-75a–c)
+  - Related: **TECH-48**, **TECH-18**, **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived)
 
 - [x] **TECH-67** — **UI-as-code program** (umbrella) (2026-04-10)
   - Type: tooling / documentation / agent enablement (program closeout)
@@ -251,7 +299,7 @@
   - Spec: (removed after closure — normative **`ui-design-system.md`** **§5.2**, **§3.2**, **§3.5**; **`unity-development-context.md`** **§10**; **`managers-reference`** **UIManager**; **glossary** **UI-as-code program**; **TECH-67** umbrella row (archived same batch); this row)
   - Notes: **Completed (verified — `/project-spec-close` + user):** **`UiTheme`** + **MainMenu** serialization; **`partial` `UIManager`**; **Editor** **Validate UI Theme** + **Scaffold UI Prefab Library v0**; **`ui-hud-row-theme`** **Skill**; **typography** policy and **Canvas Scaler** matrix in **`ui-design-system.md`**; **modal** **Esc** contract + **§3.5** scroll vs zoom (**BUG-19** code path). **Deferred:** optional **territory-ia** **`ui_theme_tokens`** — file under open **BACKLOG** if product wants it.
   - Depends on: **TECH-67** (umbrella)
-  - Related: **TECH-67**, **TECH-33**, **Close Dev Loop** (TECH-75a–c), **BUG-19**, **BUG-14**, **BUG-53**, **FEAT-50**
+  - Related: **TECH-67**, **TECH-33**, **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived), **BUG-19**, **BUG-14**, **BUG-53**, **FEAT-50**
 
 - [x] **TECH-07** — **ControlPanel**: left vertical sidebar layout (category rows) (2026-04-04)
   - Type: refactor (UI/UX)

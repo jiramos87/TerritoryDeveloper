@@ -1,0 +1,17 @@
+diff --git a/node_modules/pg/lib/connection-parameters.js b/node_modules/pg/lib/connection-parameters.js
+index c153932..09a981f 100644
+--- a/node_modules/pg/lib/connection-parameters.js
++++ b/node_modules/pg/lib/connection-parameters.js
+@@ -7,6 +7,12 @@ const defaults = require('./defaults')
+ const parse = require('pg-connection-string').parse // parses a connection string
+ 
+ const val = function (key, config, envVar) {
++  // Empty-string password from URI (e.g. postgresql://user@host/db) must remain '' for SCRAM;
++  // otherwise this falls through to defaults.password (null) and the client throws
++  // "SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string".
++  if (key === 'password' && config.password === '') {
++    return ''
++  }
+   if (config[key]) {
+     return config[key]
+   }

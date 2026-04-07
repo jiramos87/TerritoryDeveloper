@@ -1,5 +1,5 @@
 /**
- * Resolve Postgres URI: DATABASE_URL env first, else repo config/postgres-dev.json (versioned local default).
+ * Resolve Postgres URI: DATABASE_URL env first, else repo config/postgres-dev.json.
  */
 
 import fs from "node:fs";

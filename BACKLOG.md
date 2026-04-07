@@ -1,9 +1,9 @@
 # Backlog — Territory Developer
 
-> Single source of truth for project issues. Ordered by priority (highest first): **§ Compute-lib program**, then **§ Agent ↔ Unity & MCP context lane**, then **§ UI-as-code program** (umbrella **§ Completed** — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**), then **§ Gameplay & simulation lane**, then **High** / **Medium** / **Code Health** / **Low**.
+> Single source of truth for project issues. Ordered by priority (highest first): **§ Compute-lib program**, then **§ Agent ↔ Unity & MCP context lane**, then **§ IA evolution lane**, then **§ UI-as-code program** (umbrella **§ Completed** — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**), then **§ Economic depth lane**, then **§ Gameplay & simulation lane**, then **High** / **Medium** / **Code Health** / **Low**.
 > To work on an issue: reference it with `@BACKLOG.md` in the Cursor conversation.
 >
-> **Priority:** **Spec pipeline** and **compute-lib** program charter are closed — trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) and **glossary** (**territory-ia spec-pipeline program**, **Compute-lib program**). Exploration: [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md). **§ UI-as-code program** umbrella **§ Completed** — **glossary** **UI-as-code program**; **`ui-design-system.md`** (**Codebase inventory (uGUI)**); [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**. **§ Compute-lib program** below (**TECH-38** + **TECH-32**/**TECH-35** research; **TECH-39** computational **MCP** suite — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **§ Agent ↔ Unity & MCP context lane** follows, then **§ UI-as-code program** (open **FEAT-51** **game data dashboard**), then **§ Gameplay & simulation lane** (player-facing **simulation** / **AUTO** / density). **Gameplay** blockers in **§ High Priority** stay **interrupt** work when they **stop play** or **corrupt saves**.
+> **Priority:** **Spec pipeline** and **compute-lib** program charter are closed — trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) and **glossary** (**territory-ia spec-pipeline program**, **Compute-lib program**). Exploration: [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md). **§ UI-as-code program** umbrella **§ Completed** — **glossary** **UI-as-code program**; **`ui-design-system.md`** (**Codebase inventory (uGUI)**); [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**. **§ Compute-lib program** below (**TECH-38** + **TECH-32**/**TECH-35** research; **TECH-39** computational **MCP** suite — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **§ Agent ↔ Unity & MCP context lane** follows, then **§ IA evolution lane** (**TECH-76**–**TECH-83**: IA overview, FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning — [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md)), then **§ UI-as-code program** (open **FEAT-51**), then **§ Economic depth lane** (**BUG-12** → **FEAT-23** → **FEAT-21** → **FEAT-22** → **FEAT-52** → **FEAT-53** → **FEAT-09** — economy, happiness, services, districts), then **§ Gameplay & simulation lane** (player-facing **AUTO** / density). **Gameplay** blockers in **§ High Priority** stay **interrupt** work when they **stop play** or **corrupt saves**.
 
 ---
 
@@ -35,31 +35,7 @@
 
 ## Agent ↔ Unity & MCP context lane
 
-Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration: [`.cursor/projects/TECH-75.md`](.cursor/projects/TECH-75.md) (glossary **IDE agent bridge** — [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); **Phase 1** archived [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **TECH-75a → TECH-75b → TECH-75c** deliver the MVP closed loop (agent enters Play Mode, collects evidence, verifies fix). Remaining lane items follow: **JSON / reports** plumbing → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**§ Compute-lib program** above: **TECH-38** + **TECH-32**/**TECH-35**.) **Prerequisites for later items:** **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (existing `.cursor/projects/*.md`); **TECH-38** + archived **TECH-39** (**§ Compute-lib program** / [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **Spec-pipeline** charter: **glossary** **territory-ia spec-pipeline program** + archive.
-
-- [ ] **TECH-75a** — **Close Dev Loop**: Play Mode bridge commands + readiness signal
-  - Type: tooling / agent enablement
-  - Files: `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`; `tools/mcp-ia-server/src/tools/unity-bridge-command.ts` (docs for new `kind` values); `docs/mcp-ia-server.md`; `tools/mcp-ia-server/README.md`; [`.cursor/specs/unity-development-context.md`](.cursor/specs/unity-development-context.md) §10
-  - Spec: `.cursor/projects/TECH-75.md` (orchestration — §7 **TECH-75a**)
-  - Notes: New bridge `kind` values: `enter_play_mode`, `exit_play_mode`, `get_play_mode_status`. Readiness signal polls `GridManager` init after entering Play Mode. Guards for idempotency (already in/out of Play Mode). Extends shipped **Phase 1** bridge (archived **TECH-73** / **TECH-74**).
-  - Acceptance: agent round-trips `enter_play_mode` → `get_play_mode_status` → `exit_play_mode` without human Unity interaction; `npm run test:ia` green
-  - Depends on: none (extends shipped bridge)
-
-- [ ] **TECH-75b** — **Close Dev Loop**: context bundle + anomaly detection
-  - Type: tooling / agent enablement
-  - Files: `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`; `Assets/Scripts/Editor/AgentBridgeAnomalyScanner.cs` (new); `tools/mcp-ia-server/src/tools/unity-bridge-command.ts` (optional sugar tool); `docs/mcp-ia-server.md`; `tools/mcp-ia-server/README.md`
-  - Spec: `.cursor/projects/TECH-75.md` (orchestration — §7 **TECH-75b**)
-  - Notes: New bridge `kind`: `debug_context_bundle`. One call returns: Moore neighborhood cell data, screenshot path, console lines, `anomalies` array. **Anomaly scanner** flags: missing border cliffs, `HeightMap`/`Cell.height` desync, redundant shore cliffs toward off-grid. Extensible rule set.
-  - Acceptance: `debug_context_bundle` at a known seed cell returns combined payload with anomalies; `npm run test:ia` green
-  - Depends on: **TECH-75a** (Play Mode must be active for meaningful data)
-
-- [ ] **TECH-75c** — **Close Dev Loop**: Cursor Skill orchestrating fix → verify → report
-  - Type: documentation / agent enablement (**Cursor Skill**)
-  - Files: `.cursor/skills/close-dev-loop/SKILL.md` (new); `.cursor/skills/README.md`; `AGENTS.md` (pointer)
-  - Spec: `.cursor/projects/TECH-75.md` (orchestration — §7 **TECH-75c**)
-  - Notes: Skill recipe: pre-fix capture → implement → post-fix capture → diff → report to human. Integrates `enter_play_mode`, `debug_context_bundle`, `exit_play_mode`. Before/after anomaly count delta + screenshot paths. Optional link from `project-spec-implement` as a verification step.
-  - Acceptance: Skill file committed; agent can execute the full fix → verify cycle presenting before/after diff to human
-  - Depends on: **TECH-75b** (needs bundle + anomaly detection)
+Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration shipped (glossary **IDE agent bridge** — [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); Play Mode bridge **`kind`** values, **`debug_context_bundle`**, **`close-dev-loop`** Skill, and **dev environment preflight** archived [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**). Remaining lane items follow: **JSON / reports** plumbing → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**§ Compute-lib program** above: **TECH-38** + **TECH-32**/**TECH-35**.) **Prerequisites for later items:** **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (existing `.cursor/projects/*.md`); **TECH-38** + archived **TECH-39** (**§ Compute-lib program** / [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **Spec-pipeline** charter: **glossary** **territory-ia spec-pipeline program** + archive.
 
 - [ ] **TECH-53** — **Schema validation history** (Postgres extension **E2** track)
   - Type: technical / CI / data
@@ -194,6 +170,74 @@ Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration
   - Notes: Implement scanner for **`FindObjectOfType`** inside **`Update`/`LateUpdate`/`FixedUpdate`** (supports **BUG-14** prevention) and optional **`rg`** gate blocking new **`gridArray`/`cellArray`** use outside **`GridManager`** (**TECH-04**). **Phase 2:** hot-path static scan manifest from `ARCHITECTURE.md` / managers-reference to prioritize files in AUTO or per-frame paths (`docs/agent-tooling-verification-priority-tasks.md` tasks 1, 6). Priority order: `docs/agent-tooling-verification-priority-tasks.md`. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
   - Depends on: none
 
+## IA evolution lane
+
+Evolve the **Information Architecture** system from documentation retrieval to a learning, bidirectional, graph-queryable platform. **Dependency order:** **TECH-76** (overview doc) first — no code dependencies, establishes shared vocabulary for the lane. **TECH-77** (FTS) and **TECH-78** (skill chaining) are independent. **TECH-79** (agent memory) and **TECH-80** (bidirectional IA) need Postgres tables (independent of each other). **TECH-81** (knowledge graph) is the long-term evolution — benefits from **TECH-77** index infrastructure and **TECH-79** session data. **TECH-82** (gameplay entity model) bridges IA tooling and game data. **TECH-83** (simulation parameter tuning) uses the bridge and optional **TECH-82** metrics tables. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md).
+
+- [ ] **TECH-76** — **Information Architecture** system overview document
+  - Type: documentation
+  - Files: `docs/information-architecture-overview.md` (new); `AGENTS.md`; `ARCHITECTURE.md` (cross-link)
+  - Spec: `.cursor/projects/TECH-76.md`
+  - Notes: Single ~200-line document describing the IA philosophy, layer diagram, knowledge lifecycle, consistency mechanisms, and extension checklists. The "system about the system" — for agents and human contributors to understand *why* the IA is structured this way.
+  - Acceptance: document committed with layer diagram, lifecycle description, and extension checklists for spec/tool/skill/glossary/rule; linked from `AGENTS.md` and `ARCHITECTURE.md`
+  - Depends on: none
+
+- [ ] **TECH-77** — **Unified semantic search** across all IA surfaces (FTS in Postgres)
+  - Type: tooling / agent enablement
+  - Files: `tools/mcp-ia-server/src/` (new tool + ingest); `db/migrations/`; `docs/mcp-ia-server.md`
+  - Spec: `.cursor/projects/TECH-77.md`
+  - Notes: Single `ia_search(query, scope?)` MCP tool backed by Postgres FTS that returns ranked results across glossary, spec sections, invariants, rules, backlog issues, and journal entries. Extends the `body_tsv` GIN pattern from `ia_project_spec_journal`. Does not replace existing precise tools (`spec_section`, `glossary_lookup`).
+  - Acceptance: `ia_search` registered; searches across all IA surfaces with source attribution; `npm run verify` green
+  - Depends on: none (soft: TECH-76 for shared vocabulary)
+
+- [ ] **TECH-78** — **Skill chaining engine** (`suggest_skill_chain` MCP tool)
+  - Type: tooling / agent enablement
+  - Files: `tools/mcp-ia-server/src/` (new tool + SKILL.md parser); `.cursor/skills/*/SKILL.md` (read-only); `docs/mcp-ia-server.md`
+  - Spec: `.cursor/projects/TECH-78.md`
+  - Notes: MCP tool that reads all SKILL.md files, matches trigger conditions against a task description, and returns an ordered skill chain with pre-populated MCP tool call sequences. Understands skill lifecycle dependencies (kickoff → implement → close-dev-loop → close). When given an `issue_id`, enriches the chain with `backlog_issue` data.
+  - Acceptance: `suggest_skill_chain` registered; returns correct chains for known task descriptions; `npm run verify` green
+  - Depends on: none
+
+- [ ] **TECH-79** — **Agent memory across sessions** (persistent agent context)
+  - Type: tooling / agent enablement
+  - Files: `tools/mcp-ia-server/src/` (logging middleware + new tool); `db/migrations/`; `docs/mcp-ia-server.md`
+  - Spec: `.cursor/projects/TECH-79.md`
+  - Notes: Log MCP tool calls per issue in `agent_session_log` Postgres table. New `ia_recommend(issue_id?, domain?)` MCP tool uses historical patterns to recommend spec sections, glossary terms, and tool sequences. Fire-and-forget logging — never blocks tool responses.
+  - Acceptance: tool calls transparently logged; `ia_recommend` returns recommendations based on historical data; graceful `db_unconfigured` degradation
+  - Depends on: none
+
+- [ ] **TECH-80** — **Bidirectional IA**: agents propose **glossary** additions and flag **spec** ambiguity
+  - Type: tooling / agent enablement
+  - Files: `tools/mcp-ia-server/src/` (3 new tools); `db/migrations/`; `docs/mcp-ia-server.md`
+  - Spec: `.cursor/projects/TECH-80.md`
+  - Notes: `suggest_ia_improvement(kind, content, context?)` for agents to propose glossary additions, flag spec ambiguity, or suggest invariant additions. `ia_suggestions_pending` and `ia_suggestion_resolve` for human review lifecycle (`proposed` → `accepted` / `rejected`). Human review mandatory.
+  - Acceptance: three tools registered; full lifecycle (propose → list → resolve) works; `npm run verify` green
+  - Depends on: none
+
+- [ ] **TECH-81** — **Knowledge graph**: evolve IA from document retrieval to entity-relationship model
+  - Type: tooling / agent enablement (long-term)
+  - Files: `tools/mcp-ia-server/src/` (graph ingest + 2 new tools); `db/migrations/`; `docs/mcp-ia-server.md`
+  - Spec: `.cursor/projects/TECH-81.md`
+  - Notes: Postgres-backed entity-relationship graph (managers, data structures, invariants, glossary terms, spec sections as nodes; "depends on"/"modifies"/"validates" as edges). `dependency_chain(entity)` and `impact_analysis(entity)` MCP tools for transitive queries. Ingest from glossary cross-references, ARCHITECTURE.md dependencies, invariant entity mentions, spec cross-links.
+  - Acceptance: graph tables populated from current IA; `dependency_chain` and `impact_analysis` return correct transitive relationships; visualization JSON export
+  - Depends on: none (soft: TECH-77 for FTS infrastructure; TECH-79 for usage-based edge enrichment)
+
+- [ ] **TECH-82** — **Entity model** for gameplay database (time-series, events, snapshots, building identity)
+  - Type: tooling / gameplay infrastructure
+  - Files: `db/migrations/`; new C# `MetricsRecorder` helper; `tools/postgres-ia/` (bridge scripts); `tools/mcp-ia-server/src/` (query tools); `docs/postgres-ia-dev-setup.md`; `SimulationManager.cs`, `EconomyManager.cs`, `ZoneManager.cs` (integration hooks)
+  - Spec: `.cursor/projects/TECH-82.md`
+  - Notes: Four phases: (1) `city_metrics_history` — per-tick city metric snapshots for FEAT-51 dashboard. (2) `city_events` — financial event sourcing for FEAT-21 expenses. (3) `grid_snapshots` — periodic grid state for diffing/analysis. (4) `buildings` table — individual building identity for FEAT-08 density evolution. All fire-and-forget; game fully playable without Postgres.
+  - Acceptance: Phase 1 at minimum: metrics recorded per tick, MCP query tool returns time-series; game playable without DB
+  - Depends on: none (soft: FEAT-51 as primary consumer of Phase 1; FEAT-21 for Phase 2; FEAT-08 for Phase 4)
+
+- [ ] **TECH-83** — **Agent-driven simulation parameter tuning**
+  - Type: tooling / agent enablement
+  - Files: `tools/mcp-ia-server/src/` (3 new tools); `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` (new bridge commands); `db/migrations/` (experiment results); `docs/mcp-ia-server.md`
+  - Spec: `.cursor/projects/TECH-83.md`
+  - Notes: MCP tools to read (`sim_params_read`), modify (`sim_params_write`), and evaluate (`sim_experiment`) simulation parameters at runtime. Agents can A/B test parameter changes (growth budget, demand rates, ring fractions) by running N ticks and measuring outcomes. State snapshot/restore for experiment isolation. Results persisted in Postgres.
+  - Acceptance: parameter catalog complete; write→read roundtrip works; experiment runs N ticks and returns metric comparison; game state restored after experiment
+  - Depends on: none (soft: TECH-82 Phase 1 for richer metric collection)
+
 ## UI-as-code program (exploration)
 
 **Charter (§ Completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**):** Reduce **manual Unity Editor** work for **HUD**, **menus**, **panels**, and **toolbars** by making **UI** composable from the **IDE** (Cursor) and **AI agents** — via **reference spec** clarity (**`ui-design-system.md`**), shipped **runtime** **`UiTheme`** + **`UIManager` partials** + prefab **v0**, **Editor** menus (**`unity-development-context.md`** **§10**), **Cursor Skills**, and optional **territory-ia** affordances. **UI** spans **multiple scenes**; **UI** inventory export and spec prose are **per scene**. **As-built baseline:** **`ui-design-system.md`** + committed [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json) — **glossary** **UI design system (reference spec)**. **Codebase inventory (uGUI):** **`ui-design-system.md`** **Related files**. **Ongoing:** refresh **inventory** + baseline JSON when hierarchies shift; optional **`ui_theme_tokens` MCP** — file a new **BACKLOG** row if product wants it.
@@ -218,32 +262,59 @@ Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration
   - Depends on: none
   - Related: **FEAT-51**
 
-## Gameplay & simulation lane
+## Economic depth lane
 
-Player-facing **simulation**, **AUTO** growth, **happiness** feedback, and **urban growth rings** / **zone density** depth. Order: **BUG-12** before **FEAT-23** (dependency). **§ High Priority** still holds map/render/save **interrupt** bugs.
-
-- [ ] **FEAT-21** — Expenses and maintenance system
-  - Type: feature
-  - Files: `EconomyManager.cs`, `CityStats.cs`
-  - Notes: No expenses: no **street** maintenance, no service costs, no salaries. Without expenses there is no economic tension. Add upkeep for **streets**, **utility buildings**, and services.
-
-- [ ] **FEAT-22** — **Tax base** feedback on **demand (R / C / I)** and happiness
-  - Type: feature
-  - Files: `EconomyManager.cs`, `DemandManager.cs`, `CityStats.cs`
-  - Notes: High taxes do not affect **demand (R / C / I)** or happiness. Loop: high taxes → less residential **demand** → less growth → less income.
-  - Depends on: none (legacy tax feedback fix — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
+Transform the economy from "money goes up forever" to a genuine city-builder economic simulation with tension, feedback loops, and player-visible consequences. **Sequential dependency order:** **BUG-12** (trivial fix, unblocks everything) → **FEAT-23** (dynamic happiness) → **FEAT-21** (expenses/maintenance) → **FEAT-22** (tax→demand feedback) → **FEAT-09** (trade/production — deep economy, moved from § Low Priority). **FEAT-52** (city services coverage) and **FEAT-53** (districts) extend the lane with spatial economic depth. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md) §4.
 
 - [ ] **BUG-12** — Happiness UI always shows 50%
   - Type: fix
   - Files: `CityStatsUIController.cs` (GetHappiness)
   - Spec: `.cursor/projects/BUG-12.md`
-  - Notes: `GetHappiness()` returns hardcoded `50.0f` instead of reading `cityStats.happiness`. Blocks FEAT-23 (dynamic happiness).
+  - Notes: `GetHappiness()` returns hardcoded `50.0f` instead of reading `cityStats.happiness`. Blocks FEAT-23 (dynamic happiness). **Trivial fix — one line.**
 
 - [ ] **FEAT-23** — Dynamic happiness based on city conditions
   - Type: feature
   - Files: `CityStats.cs`, `DemandManager.cs`, `EmploymentManager.cs`
   - Notes: Happiness only increases when placing **zones** (+100 per **building**). No effect from unemployment, **tax base**, services or pollution. Should be continuous multi-factor calculation with decay.
   - Depends on: BUG-12
+
+- [ ] **FEAT-21** — Expenses and maintenance system
+  - Type: feature
+  - Files: `EconomyManager.cs`, `CityStats.cs`
+  - Notes: No expenses: no **street** maintenance, no service costs, no salaries. Without expenses there is no economic tension. Add upkeep for **streets**, **utility buildings**, and services. **TECH-82** Phase 2 (city events) provides the financial audit trail.
+  - Depends on: none (soft: FEAT-23 for happiness impact of budget stress)
+
+- [ ] **FEAT-22** — **Tax base** feedback on **demand (R / C / I)** and happiness
+  - Type: feature
+  - Files: `EconomyManager.cs`, `DemandManager.cs`, `CityStats.cs`
+  - Notes: High taxes do not affect **demand (R / C / I)** or happiness. Loop: high taxes → less residential **demand** → less growth → less income.
+  - Depends on: none (legacy tax feedback fix — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)); soft: FEAT-23 for happiness factor
+
+- [ ] **FEAT-52** — **City services coverage** model (fire, police, education, health)
+  - Type: feature (new system)
+  - Files: new `ServiceCoverageManager.cs`; `CityStats.cs`; `DemandManager.cs`; `GridManager.cs`; `GridPathfinder.cs`; `MiniMapController.cs`
+  - Spec: `.cursor/projects/FEAT-52.md`
+  - Notes: Generic **service coverage** system: each service **building** has a coverage **radius** computed from the **road network**. **Cells** within coverage receive **happiness** and **desirability** bonuses; **cells** outside suffer penalties. Coverage gaps visible on **minimap** as danger zones. Framework for FEAT-11 (education), FEAT-12 (police), FEAT-13 (fire). Ships with at least one concrete service type (fire station).
+  - Acceptance: per `.cursor/projects/FEAT-52.md` §8; coverage affects happiness and desirability; minimap layer shows coverage heatmap
+  - Depends on: none (soft: BUG-12 and FEAT-23 for happiness integration)
+
+- [ ] **FEAT-53** — **District / neighborhood** system
+  - Type: feature (new system)
+  - Files: new `DistrictManager.cs`; `Cell.cs` / `CellData.cs`; `CityStats.cs`; `EconomyManager.cs`; `MiniMapController.cs`; `UIManager.cs`; `GameSaveManager.cs`
+  - Spec: `.cursor/projects/FEAT-53.md`
+  - Notes: Player-defined **districts** (contiguous **cell** regions with name and color). Per-**district** statistics: **population**, **happiness**, **zone** distribution, **density**, **tax** revenue. Optional per-**district** **tax** policy overrides. **Minimap** district overlay. Coordinates with FEAT-47 (**multipolar** **urban centroids**) — each **urban pole** naturally becomes a **district**.
+  - Acceptance: per `.cursor/projects/FEAT-53.md` §8; districts persist across save/load; per-district stats and tax overrides functional; minimap district layer
+  - Depends on: none (soft: FEAT-22 for tax system depth; FEAT-47 for multipolar coordination)
+
+- [ ] **FEAT-09** — Trade / Production / Salaries (deep economy)
+  - Type: feature (new system)
+  - Files: `EconomyManager.cs`, `CityStats.cs` (+ new managers)
+  - Notes: Economic system of production, trade between **RCI** **zones** and salaries. Long-term lane goal: full economic loop from production through trade to consumption.
+  - Depends on: FEAT-21, FEAT-22
+
+## Gameplay & simulation lane
+
+Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zone density** depth. **Economic** issues moved to **§ Economic depth lane** above. **§ High Priority** still holds map/render/save **interrupt** bugs.
 
 - [ ] **BUG-52** — **AUTO** zoning: persistent **grass cells** between **undeveloped light zoning** and new **AUTO** **street** segments (gaps not filled on later **simulation ticks**)
   - Type: bug (behavior / regression suspicion)
@@ -383,14 +454,9 @@ Player-facing **simulation**, **AUTO** growth, **happiness** feedback, and **urb
   - Notes: Consider helper method, base class, or extension method to reduce duplication of Inspector + FindObjectOfType fallback pattern.
 
 
-*(Umbrella programs (**spec-pipeline**, **JSON**/**Postgres** interchange, **compute-lib**, **Cursor Skills**) and **Editor export registry** are archived under [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) with **glossary** pointers. Open **Agent** lane rows are listed in **§ Agent ↔ Unity & MCP context lane**; **§ Gameplay & simulation lane** lists **BUG-12**, **FEAT-23**, **BUG-52**, **FEAT-43**, **FEAT-08**; **§ Compute-lib program** above holds **TECH-38** + **TECH-32**/**TECH-35**; **TECH-39** **MCP** suite is archived.)*
+*(Umbrella programs (**spec-pipeline**, **JSON**/**Postgres** interchange, **compute-lib**, **Cursor Skills**) and **Editor export registry** are archived under [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) with **glossary** pointers. **§ IA evolution lane** holds **TECH-76**–**TECH-83** (IA system overview, FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning). **§ Economic depth lane** holds **BUG-12** → **FEAT-23** → **FEAT-21** → **FEAT-22** → **FEAT-52** → **FEAT-53** → **FEAT-09**. **§ Gameplay & simulation lane** lists **BUG-52**, **FEAT-43**, **FEAT-08**. **§ Compute-lib program** above holds **TECH-38** + **TECH-32**/**TECH-35**; **TECH-39** **MCP** suite is archived.)*
 
 ## Low Priority
-
-- [ ] **FEAT-09** — Trade / Production / Salaries
-  - Type: feature (new system)
-  - Files: `EconomyManager.cs`, `CityStats.cs` (+ new managers)
-  - Notes: Economic system of production, trade between **RCI** **zones** and salaries.
 
 - [ ] **FEAT-18** — **Height generation** (improved terrain generator)
   - Type: feature
@@ -498,7 +564,7 @@ Player-facing **simulation**, **AUTO** growth, **happiness** feedback, and **urb
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-*(Program history: [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Open lanes: **§ Compute-lib program**, **§ Agent ↔ Unity & MCP context lane**, then standard priority sections.)*
+*(Program history: [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Open lanes: **§ Compute-lib program**, **§ Agent ↔ Unity & MCP context lane**, **§ IA evolution lane**, **§ Economic depth lane**, **§ Gameplay & simulation lane**, then standard priority sections.)*
 
 - [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects
   - Type: audio/feature

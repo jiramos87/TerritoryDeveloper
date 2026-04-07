@@ -1,7 +1,7 @@
 {
   "name": "territory-developer",
   "private": true,
-  "description": "Unity project root scripts delegate to tools/mcp-ia-server (IA / JSON tooling). Run npm ci in tools/mcp-ia-server if npm run test:ia fails with missing modules. npm run validate:all chains IA checks (see project-implementation-validation skill).",
+  "description": "Unity project root scripts delegate to tools/mcp-ia-server (IA / JSON tooling). Run npm ci in tools/mcp-ia-server if npm run test:ia fails with missing modules. npm run validate:all chains IA checks (see project-implementation-validation skill). Bridge smoke: npm run db:bridge-playmode-smoke (Postgres + Unity on repo root; DATABASE_URL or config/postgres-dev.json). Local compile smoke (no Editor lock): UNITY_EDITOR_PATH=… npm run unity:compile-check.",
   "scripts": {
     "validate:all": "npm run validate:dead-project-specs && npm run test:ia && npm run validate:fixtures && npm run generate:ia-indexes -- --check",
     "validate:dead-project-specs": "node tools/validate-dead-project-spec-paths.mjs",
@@ -10,6 +10,7 @@
     "generate:ia-indexes": "cd tools/mcp-ia-server && npx tsx scripts/generate-ia-indexes.ts",
     "test:ia": "npm --prefix tools/mcp-ia-server test",
     "db:migrate": "npm --prefix tools/postgres-ia run migrate",
+    "db:setup-local": "bash tools/scripts/setup-territory-ia-postgres.sh",
     "db:seed:glossary": "npm --prefix tools/postgres-ia run seed:glossary",
     "db:glossary": "npm --prefix tools/postgres-ia run glossary-by-key --",
     "db:register-repro": "npm --prefix tools/postgres-ia run register-repro --",
@@ -18,6 +19,9 @@
     "closeout:dependents": "cd tools/mcp-ia-server && npx tsx scripts/project-spec-dependents.ts --",
     "closeout:verify": "npm run validate:dead-project-specs && npm run generate:ia-indexes -- --check",
     "db:persist-project-journal": "cd tools/mcp-ia-server && npx tsx scripts/persist-project-spec-journal.ts --",
-    "db:bridge-agent-context": "npx --prefix tools/mcp-ia-server tsx tools/mcp-ia-server/scripts/run-unity-bridge-once.ts"
+    "db:bridge-agent-context": "npx --prefix tools/mcp-ia-server tsx tools/mcp-ia-server/scripts/run-unity-bridge-once.ts",
+    "db:bridge-preflight": "npx tsx tools/mcp-ia-server/scripts/bridge-preflight.ts",
+    "db:bridge-playmode-smoke": "npm --prefix tools/mcp-ia-server run bridge-playmode-smoke --",
+    "unity:compile-check": "bash tools/scripts/unity-compile-check.sh"
   }
 }

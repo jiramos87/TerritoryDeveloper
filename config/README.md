@@ -4,11 +4,15 @@
 
 Default **local** PostgreSQL URI for **Information Architecture** dev tools (`npm run db:migrate`, **territory-ia** `project_spec_journal_*` when the MCP process has no `DATABASE_URL`, scripts under `tools/postgres-ia/`).
 
+**Port:** the committed URI uses **host port `5434`** so Territory IA can coexist with another Postgres on **`5432`**. Your local server (Postgres.app, Homebrew, etc.) must **listen on that port**, or change this file to match your real port. Docker is **not** required — see **Local PostgreSQL** in [`docs/postgres-ia-dev-setup.md`](../docs/postgres-ia-dev-setup.md).
+
 **Precedence:** environment variable **`DATABASE_URL`** overrides this file when set.
 
 **CI:** when **`CI=true`** or **`GITHUB_ACTIONS`** is set, Node tools and **territory-ia** **do not** read this file (no accidental `localhost` connections in GitHub Actions). Set **`DATABASE_URL`** explicitly in a job only when you run integration tests against a service container.
 
-**Scope:** committed defaults for a shared local database name and host — **not** for production secrets. Use `.env` / `.env.local` (gitignored) for passwords or non-shared URLs; agents and CI typically cannot read those files.
+**Scope:** local dev URI for IA tooling. **`DATABASE_URL`** overrides this file. Prefer env-only credentials in teams that avoid committing passwords; CI never reads this file.
+
+**Bridge preflight:** `npm run db:bridge-preflight` uses **`resolveIaDatabaseUrl`** (same **`DATABASE_URL`** → `postgres-dev.json` fallback). Exit codes 0–4 — see [`docs/postgres-ia-dev-setup.md`](../docs/postgres-ia-dev-setup.md) (**Bridge environment preflight**).
 
 See [`docs/postgres-ia-dev-setup.md`](../docs/postgres-ia-dev-setup.md).
 

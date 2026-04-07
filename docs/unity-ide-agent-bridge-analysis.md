@@ -4,7 +4,7 @@
 **Scope:** Close the loop between Unity runtime/Editor and IDE agents so that AI-assisted development, debugging, and validation can happen with minimal manual intervention.
 **Audience:** Developers and Cursor agents planning infrastructure for autonomous debugging, data export, and closed-loop fix verification.
 
-**Trace:** **glossary** **IDE agent bridge** — **Phase 1** archived [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md); optional later phases remain in this charter. **Open:** **Close Dev Loop** orchestration ([`.cursor/projects/TECH-75.md`](../.cursor/projects/TECH-75.md)) in [`BACKLOG.md`](../BACKLOG.md) **§ Agent ↔ Unity & MCP context lane**.
+**Trace:** **glossary** **IDE agent bridge** — **Phase 1** archived [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md); optional later phases remain in this charter. **Close Dev Loop** orchestration shipped — [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) **Recent archive**.
 
 **Related:**
 - [`docs/mcp-ia-server.md`](mcp-ia-server.md) — territory-ia MCP (current tool surface)
@@ -82,7 +82,7 @@ All exports live under `Assets/Scripts/Editor/` (Editor-only assembly, excluded 
 
 | Issue | Relevance to bridge |
 |-------|-------------------|
-| **TECH-75a–c** (Close Dev Loop) | Play Mode bridge commands + context bundle + anomaly detection + Cursor Skill — see [`.cursor/projects/TECH-75.md`](../.cursor/projects/TECH-75.md) |
+| **Close Dev Loop** (**TECH-75** orchestration; **`close-dev-loop`** Skill + Play Mode **`kind`** + **`debug_context_bundle`** + dev environment preflight — [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) **Recent archive**) | **`close-dev-loop`** + compile gate + preflight shipped — archived [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) |
 | **TECH-33** | Asset introspection: prefab manifest + scene MonoBehaviour listing — BACKLOG cites `-batchmode` as one option; Agent Bridge here assumes **Editor open** + bridge commands, not CI |
 | **TECH-15** | Geography initialization performance — needs profiler harness under `tools/reports/` |
 | **TECH-16** | Simulation tick performance — needs spec-labeled tick harness JSON |
@@ -469,7 +469,7 @@ Verify AUTO systems behavior:
 
 | Issue | How bridge helps |
 |-------|-----------------|
-| **Close Dev Loop** (TECH-75a–c) | Agent enters Play Mode, collects evidence, verifies fix — supersedes registry staging concept |
+| **Close Dev Loop** (**TECH-75**; **`close-dev-loop`** + **`debug_context_bundle`** + dev preflight archived [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md)) | Agent enters Play Mode, collects evidence, verifies fix — supersedes registry staging concept |
 | **TECH-15** (Geography init performance) | Agent can trigger Export Geography Init Report and read timing data without developer intervention |
 | **TECH-16** (Simulation tick performance) | Agent can trigger exports after sim ticks to measure phases |
 | **Editor Reports** (§10 contract) | Bridge adds an alternate dispatch path; menus remain the human baseline |
@@ -490,7 +490,7 @@ A new **TECH-** issue should be created to track the Unity Agent Bridge as a pro
 2. HTTP bridge (real-time, localhost)
 3. Streaming, screenshots, before/after comparison automation (still **Editor-centric**; no headless CI)
 
-**Dependencies:** None hard. Soft: keep **Reports** exports aligned with **unity-development-context** §10; **Close Dev Loop** (TECH-75a–c) absorbs staging concept.
+**Dependencies:** None hard. Soft: keep **Reports** exports aligned with **unity-development-context** §10; **Close Dev Loop** (**TECH-75**; **`close-dev-loop`** archived; context bundle archived) absorbs staging concept.
 
 ---
 
@@ -588,7 +588,7 @@ Ordered by **dependency and payoff**, without calendar or sprint framing.
 5. **Parameterized exports** — cell chunk bounds, sorting debug seed, aligned with existing menu behavior
 6. **Sugar MCP tools** — thin wrappers (`unity_export_cell_chunk`, `unity_export_sorting_debug`, …) if they reduce agent token cost
 7. **`debug-sorting-order` Cursor Skill** — documents the tool recipe end-to-end
-8. **Close Dev Loop** (TECH-75a–c) supersedes registry staging — see [`.cursor/projects/TECH-75.md`](../.cursor/projects/TECH-75.md)
+8. **Close Dev Loop** (**`close-dev-loop`** + context bundle + preflight archived [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md)) supersedes registry staging
 
 ### C — When file latency hurts
 

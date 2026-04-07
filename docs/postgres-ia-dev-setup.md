@@ -10,23 +10,46 @@
 
 ## Environment
 
-**Default (versioned):** [`config/postgres-dev.json`](../config/postgres-dev.json) supplies **`database_url`** for local tooling and **territory-ia** when **`DATABASE_URL`** is unset and the process is **not** running under **`CI=true`** / **`GITHUB_ACTIONS`**. Agents can read that file from the repo. Override with **`DATABASE_URL`** for passwords, other hosts, or production (never commit secrets — see **`.env.example`**).
+**Connection:** **`DATABASE_URL`** env wins; otherwise local tooling and **territory-ia** read [`config/postgres-dev.json`](../config/postgres-dev.json) when **`CI`** / **`GITHUB_ACTIONS`** are unset. **`REPO_ROOT`** is the repository root (where **`config/`** and **`ProjectSettings/`** live); Unity and bridge scripts resolve it automatically.
 
-Example override:
+**Default host port (5434):** [`config/postgres-dev.json`](../config/postgres-dev.json) uses **host port `5434`** so this database can run **alongside** another PostgreSQL on **`5432`** (common when other tools use Docker or a second stack). **Your server must listen on the same port as the URI** — if nothing is bound to **5434**, clients return **connection refused**. This project **does not require Docker**; use Postgres.app, Homebrew, or any local install (see below). Docker is **optional** for contributors who prefer a container.
+
+Put your full URI (including password when **SCRAM** requires it) in **`postgres-dev.json`** for shared dev defaults, or set **`DATABASE_URL`** only (e.g. in a gitignored **`.env`** — see **`.env.example`**) so credentials never land in version control.
+
+Example env override:
 
 ```bash
-export DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:5432/territory_ia_dev'
+export DATABASE_URL='postgresql://postgres:postgres@localhost:5434/territory_ia_dev'
 ```
 
 Optional: create a `.env` file at the repo root (gitignored) and load it before running scripts, e.g. `set -a && source .env && set +a` (shell-dependent).
 
-## Quick start (Docker)
+## Local PostgreSQL (Postgres.app, Homebrew — no Docker)
 
-One-off server (adjust password/port as needed):
+1. **Create** database **`territory_ia_dev`** (and a login role if needed). The committed [`config/postgres-dev.json`](../config/postgres-dev.json) expects user **`postgres`** with password **`postgres`** — change either the database role or the JSON so they match.
+2. **Port:** If your local server still uses **`5432`** but another process already owns **`5432`**, configure **this** server to use **`5434`**:
+   - **Postgres.app:** open the app → select your server → **Server Settings…** (or open the data directory from the menu) → edit **`postgresql.conf`** → set **`port = 5434`** → restart the server. Ensure **`listen_addresses`** allows TCP to **`localhost`** (default is often enough).
+   - **Homebrew:** edit **`postgresql.conf`** in your data directory (e.g. under **`opt/postgresql@…/`** or **`/usr/local/var/postgres`**), set **`port = 5434`**, then **`brew services restart postgresql@…`** (match your version).
+3. **Verify** before DBeaver or MCP:
 
 ```bash
-docker run --name territory-ia-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=territory_ia_dev -p 5432:5432 -d postgres:16
-export DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:5432/territory_ia_dev'
+export DATABASE_URL="$(node -p "JSON.parse(require('fs').readFileSync('config/postgres-dev.json','utf8')).database_url")"
+psql "$DATABASE_URL" -c 'SELECT 1 AS ok;'
+```
+
+On macOS you can confirm something is listening: **`lsof -nP -iTCP:5434 -sTCP:LISTEN`**.
+
+**Bash helper (Postgres.app port + database + migrate):** from the repository root, **`npm run db:setup-local -- help`** — commands **`configure-port`**, **`server-start`**, **`server-restart`** (`pg_ctl` on the latest **`var-*`** data dir, or **`POSTGRES_APP_PGDATA`**), **`init-db`**, **`migrate`**, **`all`** (see **`tools/scripts/setup-territory-ia-postgres.sh`**). Reads host, port, user, password, and database name from [`config/postgres-dev.json`](../config/postgres-dev.json). **`init-db`** requires a superuser-style login (the default **`postgres`** role is fine).
+
+If you truly have **no** conflict on **`5432`**, you may point **`postgres-dev.json`** at **`localhost:5432`** instead — keep the file in sync with the server.
+
+## Optional: Quick start (Docker)
+
+For contributors who want a throwaway server on **host port 5434** (maps container **5432**). Remove or rename an existing container named **`territory-ia-pg`** if it already exists.
+
+```bash
+docker run --name territory-ia-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=territory_ia_dev -p 5434:5432 -d postgres:16
+export DATABASE_URL='postgresql://postgres:postgres@localhost:5434/territory_ia_dev'
 ```
 
 ## Apply migrations
@@ -173,9 +196,35 @@ LIMIT 5;
 
 **Manual bundle** (**E1**) remains available via **`npm run db:register-repro`** — it inserts a single **`dev_repro_bundle`** row that can point at both **Agent context** and **Sorting debug** paths. The **`editor_export_*`** tables add **per-export** history (**`document jsonb`**) in separate tables.
 
+## Bridge environment preflight
+
+Before relying on **`unity_bridge_command`** or **`unity_compile`**, run the preflight from the repository root:
+
+```bash
+npm run db:bridge-preflight
+```
+
+The script reuses the same **`resolveIaDatabaseUrl`** logic as **territory-ia** MCP: **`DATABASE_URL`** env wins, else **`config/postgres-dev.json`** when not in CI.
+
+**Exit codes (stable — agents branch on these):**
+
+| Code | Meaning | Suggested repair |
+|------|---------|------------------|
+| `0` | OK — Postgres reachable, **`agent_bridge_job`** present | — |
+| `1` | No URL — neither **`DATABASE_URL`** nor **`config/postgres-dev.json`** `database_url` resolved | Set **`DATABASE_URL`** or add `database_url` to **`config/postgres-dev.json`** |
+| `2` | Connection refused / timeout | Start Postgres (`npm run db:setup-local` or `pg_ctl start`) |
+| `3` | Table missing — **`agent_bridge_job`** not found | `npm run db:migrate` (migration **0008**) |
+| `4` | Unexpected SQL error | Check stderr; manual fix |
+
+**Unity vs MCP URL alignment:** **Unity Editor** may resolve its database URL via **EditorPrefs** (`TerritoryDeveloper.EditorExportRegistry.DatabaseUrl`) or repo-root **`.env.local`**. The preflight script and **territory-ia** MCP do **not** read those Unity-only sources. If **`unity_bridge_command`** returns **`timeout`** while preflight shows exit `0`, the most likely cause is **Unity** targeting a different database — align the **Editor** value with the URI in **`config/postgres-dev.json`** or **`DATABASE_URL`** (see **Agent bridge job queue** troubleshooting below).
+
+**Cursor Skill:** [`.cursor/skills/bridge-environment-preflight/SKILL.md`](../.cursor/skills/bridge-environment-preflight/SKILL.md) — bounded repair policy for agents.
+
 ## Agent bridge job queue
 
 **Table:** **`agent_bridge_job`** — **`command_id`** (**uuid**), **`kind`**, **`status`** (`pending` → `processing` → `completed` / `failed`), **`request`**, **`response`**, **`error`**. **territory-ia** MCP **`unity_bridge_command`** inserts **`pending`** rows and polls; **Unity** **`AgentBridgeCommandRunner`** runs **`tools/postgres-ia/agent-bridge-dequeue.mjs`** (claim + **`processing`**) and **`agent-bridge-complete.mjs`** (write **`response`** / **`failed`**). Requires the same **`DATABASE_URL`** as **`register-editor-export.mjs`**. See [`docs/mcp-ia-server.md`](mcp-ia-server.md) and **unity-development-context** §10.
+
+**Troubleshooting — MCP `timeout` while jobs stay `pending`:** If **`unity_bridge_command`** (or **`unity_compile`**) returns **`timeout`** but **Postgres** accepts connections, **Unity** is likely dequeuing against a **different** connection string than the **MCP** host. Align **`DATABASE_URL`** (or **EditorPrefs** / **`.env.local`**) in the **Unity Editor** with the value **Cursor** / **`territory-ia`** uses (see **Connection** at the top of this doc). **MCP** and **Unity** must target the **same** database and schema (**migration `0008`** applied).
 
 ## IA project spec journal
 

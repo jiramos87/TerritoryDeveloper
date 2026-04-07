@@ -4,7 +4,7 @@ Small **Node** helpers for the game-owned **PostgreSQL** **IA** schema, **E1** *
 
 **Connection URI resolution:** **`DATABASE_URL`** env, else committed [`config/postgres-dev.json`](../../config/postgres-dev.json) (skipped when **`CI=true`** / **`GITHUB_ACTIONS`**). Implemented in **`resolve-database-url.mjs`**.
 
-**Canonical setup** (Docker one-liner, overrides, SQL examples): [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md).
+**Canonical setup** (Postgres.app / Homebrew, Docker optional, overrides): [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md). From repo root: **`npm run db:setup-local -- help`** (`tools/scripts/setup-territory-ia-postgres.sh`).
 
 ## Scripts
 

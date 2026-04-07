@@ -64,6 +64,7 @@ async function main(): Promise<void> {
     "isometric_world_to_grid",
     "unity_bridge_command",
     "unity_bridge_get",
+    "unity_compile",
   ];
   for (const n of required) {
     if (!names.includes(n)) throw new Error(`Missing MCP tool: ${n}`);
@@ -523,7 +524,7 @@ async function main(): Promise<void> {
   const digest = parseJsonFromToolResult(
     await client.callTool({
       name: "project_spec_closeout_digest",
-      arguments: { issue_id: "TECH-75" },
+      arguments: { issue_id: "FEAT-49" },
     }),
   ) as { schema_version?: number; spec_path?: string; error?: string };
   if (digest.error) {
@@ -532,7 +533,7 @@ async function main(): Promise<void> {
     );
   }
   if (digest.schema_version !== 1) throw new Error("project_spec_closeout_digest schema_version 1 expected");
-  if (digest.spec_path !== ".cursor/projects/TECH-75.md") {
+  if (digest.spec_path !== ".cursor/projects/FEAT-49.md") {
     throw new Error("project_spec_closeout_digest spec_path mismatch");
   }
 

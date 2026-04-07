@@ -2,7 +2,7 @@
 
 Use this in any chat when **Cursor Skills** are not loaded. The **authoritative** MCP tool order is in **[`.cursor/skills/project-spec-kickoff/SKILL.md`](../skills/project-spec-kickoff/SKILL.md)** (see **Tool recipe (territory-ia)**).
 
-Replace `{SPEC_PATH}` with your project spec (e.g. `.cursor/projects/TECH-75.md`).
+Replace `{SPEC_PATH}` with your project spec (e.g. `.cursor/projects/FEAT-49.md`).
 
 ---
 

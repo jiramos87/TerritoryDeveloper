@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using Territory.Core;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,10 +10,22 @@ using UnityEngine;
 /// Polls Postgres via <c>agent-bridge-dequeue.mjs</c>, dispatches bridge <c>kind</c> values to existing
 /// <b>Territory Developer → Reports</b> entry points or bridge helpers, then completes jobs with <c>agent-bridge-complete.mjs</c>.
 /// Requires <c>DATABASE_URL</c> (same as <see cref="EditorPostgresExportRegistrar"/>).
+/// Play Mode bridge kinds use <see cref="SessionState"/> so completion survives domain reload when entering or exiting Play Mode.
+/// <c>get_compilation_status</c> completes synchronously (compile snapshot for IDE agents).
 /// </summary>
 public static class AgentBridgeCommandRunner
 {
     const int PollEveryNFrames = 30;
+
+    /// <summary>Wall-clock budget for <c>GridManager.isInitialized</c> after Play Mode starts (under MCP <c>timeout_ms</c> 30s).</summary>
+    const double EnterPlayModeGridWaitMaxSeconds = 24.0;
+
+    const string SessionEnterCommandIdKey = "TerritoryDeveloper.AgentBridge.EnterPending.command_id";
+    const string SessionEnterRepoRootKey = "TerritoryDeveloper.AgentBridge.EnterPending.repo_root";
+    const string SessionEnterStartedUtcKey = "TerritoryDeveloper.AgentBridge.EnterPending.started_utc";
+
+    const string SessionExitCommandIdKey = "TerritoryDeveloper.AgentBridge.ExitPending.command_id";
+    const string SessionExitRepoRootKey = "TerritoryDeveloper.AgentBridge.ExitPending.repo_root";
 
     /// <summary>
     /// Full-game <see cref="ScreenCapture.CaptureScreenshot"/> writes after the game view renders.
@@ -29,6 +42,22 @@ public static class AgentBridgeCommandRunner
         public string AbsolutePath;
         public string RepoRelativePath;
         public DateTime StartedUtc;
+
+        /// <summary>When set, completion builds <c>debug_context_bundle</c> JSON instead of plain screenshot observability.</summary>
+        public DebugBundleCompletionStash DebugBundle;
+    }
+
+    /// <summary>Holds synchronous <c>debug_context_bundle</c> results while a screenshot file is still pending.</summary>
+    sealed class DebugBundleCompletionStash
+    {
+        public string CellExportRelPath;
+        public bool CellExportOk;
+        public string CellExportError;
+        public AgentBridgeLogLineDto[] ConsoleLines;
+        public bool ConsoleSkipped;
+        public AgentBridgeAnomalyRecordDto[] Anomalies;
+        public bool AnomalyScanSkipped;
+        public bool ScreenshotIncluded;
     }
 
     static readonly List<DeferredScreenshotWork> s_deferredScreenshots = new List<DeferredScreenshotWork>();
@@ -44,6 +73,17 @@ public static class AgentBridgeCommandRunner
 
     static void OnEditorUpdate()
     {
+        try
+        {
+            PumpEnterPlayModeWait();
+            PumpExitPlayModeWait();
+            PumpDeferredScreenshotCompletions();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[AgentBridge] Unexpected error in pump loop: {ex.Message}");
+        }
+
         s_frameCounter++;
         if (s_frameCounter < PollEveryNFrames)
             return;
@@ -99,13 +139,417 @@ public static class AgentBridgeCommandRunner
             case "capture_screenshot":
                 RunCaptureScreenshot(repoRoot, commandId, dq.request_json);
                 break;
+            case "enter_play_mode":
+                RunEnterPlayMode(repoRoot, commandId);
+                break;
+            case "exit_play_mode":
+                RunExitPlayMode(repoRoot, commandId);
+                break;
+            case "get_play_mode_status":
+                RunGetPlayModeStatus(repoRoot, commandId);
+                break;
+            case "debug_context_bundle":
+                RunDebugContextBundle(repoRoot, commandId, dq.request_json);
+                break;
+            case "get_compilation_status":
+                RunGetCompilationStatus(repoRoot, commandId, dq.request_json);
+                break;
             default:
                 TryFinalizeFailed(
                     repoRoot,
                     commandId,
-                    $"Unknown kind '{dq.kind}'. Supported: export_agent_context, get_console_logs, capture_screenshot.");
+                    $"Unknown kind '{dq.kind}'. Supported: export_agent_context, get_console_logs, capture_screenshot, enter_play_mode, exit_play_mode, get_play_mode_status, debug_context_bundle, get_compilation_status.");
                 break;
         }
+    }
+
+    static void FocusGameViewIfPossible()
+    {
+        try
+        {
+            Type gameViewType = Type.GetType("UnityEditor.GameView,UnityEditor");
+            if (gameViewType == null)
+                return;
+            EditorWindow.GetWindow(gameViewType);
+        }
+        catch
+        {
+            // Game view focus is best-effort for ScreenCapture / Overlay UI.
+        }
+    }
+
+    static void ClearEnterPlaySessionState()
+    {
+        SessionState.EraseString(SessionEnterCommandIdKey);
+        SessionState.EraseString(SessionEnterRepoRootKey);
+        SessionState.EraseString(SessionEnterStartedUtcKey);
+    }
+
+    static void ClearExitPlaySessionState()
+    {
+        SessionState.EraseString(SessionExitCommandIdKey);
+        SessionState.EraseString(SessionExitRepoRootKey);
+    }
+
+    static void PumpEnterPlayModeWait()
+    {
+        string cmdId = SessionState.GetString(SessionEnterCommandIdKey, string.Empty);
+        if (string.IsNullOrEmpty(cmdId))
+            return;
+
+        string repoRoot = SessionState.GetString(SessionEnterRepoRootKey, string.Empty);
+        if (string.IsNullOrEmpty(repoRoot))
+        {
+            ClearEnterPlaySessionState();
+            return;
+        }
+
+        string startedRaw = SessionState.GetString(SessionEnterStartedUtcKey, string.Empty);
+        if (!DateTime.TryParse(
+                startedRaw,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind,
+                out DateTime startedUtc))
+        {
+            startedUtc = DateTime.UtcNow;
+        }
+
+        if ((DateTime.UtcNow - startedUtc).TotalSeconds > EnterPlayModeGridWaitMaxSeconds)
+        {
+            string failJson = BuildPlayModeBridgeResponseJson(
+                cmdId,
+                ok: false,
+                storage: "play_mode",
+                error: "GridManager did not finish initializing within 24 seconds; check Play Mode / scene load errors and retry enter_play_mode.",
+                playModeState: "play_mode_loading",
+                ready: false,
+                alreadyPlaying: false,
+                alreadyStopped: false,
+                hasGridDimensions: false,
+                gridWidth: 0,
+                gridHeight: 0);
+            ClearEnterPlaySessionState();
+            CompleteOrFail(repoRoot, cmdId, failJson);
+            return;
+        }
+
+        if (!EditorApplication.isPlaying)
+        {
+            string failJson = BuildPlayModeBridgeResponseJson(
+                cmdId,
+                ok: false,
+                storage: "play_mode",
+                error: "Play Mode was not active before GridManager initialized; enter_play_mode was cancelled or failed.",
+                playModeState: "edit_mode",
+                ready: false,
+                alreadyPlaying: false,
+                alreadyStopped: false,
+                hasGridDimensions: false,
+                gridWidth: 0,
+                gridHeight: 0);
+            ClearEnterPlaySessionState();
+            CompleteOrFail(repoRoot, cmdId, failJson);
+            return;
+        }
+
+        GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
+        if (grid != null && grid.isInitialized)
+        {
+            string okJson = BuildPlayModeBridgeResponseJson(
+                cmdId,
+                ok: true,
+                storage: "play_mode",
+                error: string.Empty,
+                playModeState: "play_mode_ready",
+                ready: true,
+                alreadyPlaying: false,
+                alreadyStopped: false,
+                hasGridDimensions: true,
+                gridWidth: grid.width,
+                gridHeight: grid.height);
+            ClearEnterPlaySessionState();
+            CompleteOrFail(repoRoot, cmdId, okJson);
+        }
+    }
+
+    static void PumpExitPlayModeWait()
+    {
+        string cmdId = SessionState.GetString(SessionExitCommandIdKey, string.Empty);
+        if (string.IsNullOrEmpty(cmdId))
+            return;
+
+        string repoRoot = SessionState.GetString(SessionExitRepoRootKey, string.Empty);
+        if (string.IsNullOrEmpty(repoRoot))
+        {
+            ClearExitPlaySessionState();
+            return;
+        }
+
+        if (EditorApplication.isPlaying)
+            return;
+
+        string okJson = BuildPlayModeBridgeResponseJson(
+            cmdId,
+            ok: true,
+            storage: "play_mode",
+            error: string.Empty,
+            playModeState: "edit_mode",
+            ready: false,
+            alreadyPlaying: false,
+            alreadyStopped: false,
+            hasGridDimensions: false,
+            gridWidth: 0,
+            gridHeight: 0);
+        ClearExitPlaySessionState();
+        CompleteOrFail(repoRoot, cmdId, okJson);
+    }
+
+    static void RunEnterPlayMode(string repoRoot, string commandId)
+    {
+        string pendingEnter = SessionState.GetString(SessionEnterCommandIdKey, string.Empty);
+        if (!string.IsNullOrEmpty(pendingEnter) && !string.Equals(pendingEnter, commandId, StringComparison.Ordinal))
+        {
+            TryFinalizeFailed(
+                repoRoot,
+                commandId,
+                "Another enter_play_mode request is still waiting for GridManager; wait for it to complete before enqueueing a new one.");
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(SessionState.GetString(SessionExitCommandIdKey, string.Empty)))
+        {
+            TryFinalizeFailed(
+                repoRoot,
+                commandId,
+                "exit_play_mode is in progress; wait for it to complete before enter_play_mode.");
+            return;
+        }
+
+        if (EditorApplication.isPlaying)
+        {
+            GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
+            if (grid != null && grid.isInitialized)
+            {
+                string json = BuildPlayModeBridgeResponseJson(
+                    commandId,
+                    ok: true,
+                    storage: "play_mode",
+                    error: string.Empty,
+                    playModeState: "play_mode_ready",
+                    ready: true,
+                    alreadyPlaying: true,
+                    alreadyStopped: false,
+                    hasGridDimensions: true,
+                    gridWidth: grid.width,
+                    gridHeight: grid.height);
+                CompleteOrFail(repoRoot, commandId, json);
+                return;
+            }
+
+            SessionState.SetString(SessionEnterCommandIdKey, commandId);
+            SessionState.SetString(SessionEnterRepoRootKey, repoRoot);
+            SessionState.SetString(SessionEnterStartedUtcKey, DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
+            return;
+        }
+
+        FocusGameViewIfPossible();
+        SessionState.SetString(SessionEnterCommandIdKey, commandId);
+        SessionState.SetString(SessionEnterRepoRootKey, repoRoot);
+        SessionState.SetString(SessionEnterStartedUtcKey, DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
+        EditorApplication.EnterPlaymode();
+    }
+
+    static void RunExitPlayMode(string repoRoot, string commandId)
+    {
+        if (!EditorApplication.isPlaying)
+        {
+            string json = BuildPlayModeBridgeResponseJson(
+                commandId,
+                ok: true,
+                storage: "play_mode",
+                error: string.Empty,
+                playModeState: "edit_mode",
+                ready: false,
+                alreadyPlaying: false,
+                alreadyStopped: true,
+                hasGridDimensions: false,
+                gridWidth: 0,
+                gridHeight: 0);
+            CompleteOrFail(repoRoot, commandId, json);
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(SessionState.GetString(SessionExitCommandIdKey, string.Empty)))
+        {
+            TryFinalizeFailed(
+                repoRoot,
+                commandId,
+                "Another exit_play_mode request is already in progress.");
+            return;
+        }
+
+        ClearEnterPlaySessionState();
+        SessionState.SetString(SessionExitCommandIdKey, commandId);
+        SessionState.SetString(SessionExitRepoRootKey, repoRoot);
+        EditorApplication.ExitPlaymode();
+    }
+
+    static void RunGetPlayModeStatus(string repoRoot, string commandId)
+    {
+        if (!EditorApplication.isPlaying)
+        {
+            string json = BuildPlayModeBridgeResponseJson(
+                commandId,
+                ok: true,
+                storage: "play_mode",
+                error: string.Empty,
+                playModeState: "edit_mode",
+                ready: false,
+                alreadyPlaying: false,
+                alreadyStopped: false,
+                hasGridDimensions: false,
+                gridWidth: 0,
+                gridHeight: 0);
+            CompleteOrFail(repoRoot, commandId, json);
+            return;
+        }
+
+        GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
+        bool init = grid != null && grid.isInitialized;
+        string state = init ? "play_mode_ready" : "play_mode_loading";
+        string jsonPlaying = BuildPlayModeBridgeResponseJson(
+            commandId,
+            ok: true,
+            storage: "play_mode",
+            error: string.Empty,
+            playModeState: state,
+            ready: init,
+            alreadyPlaying: false,
+            alreadyStopped: false,
+            hasGridDimensions: init,
+            gridWidth: init ? grid.width : 0,
+            gridHeight: init ? grid.height : 0);
+        CompleteOrFail(repoRoot, commandId, jsonPlaying);
+    }
+
+    /// <summary>
+    /// Synchronous compilation snapshot for IDE agents: <see cref="EditorApplication.isCompiling"/>,
+    /// <see cref="EditorUtility.scriptCompilationFailed"/>, and recent buffered Console error lines.
+    /// </summary>
+    static void RunGetCompilationStatus(string repoRoot, string commandId, string requestJson)
+    {
+        if (!TryParseRequestEnvelope(requestJson, out AgentBridgeRequestEnvelopeDto env, out string parseErr))
+        {
+            TryFinalizeFailed(repoRoot, commandId, parseErr);
+            return;
+        }
+
+        if (!string.Equals(env.kind, "get_compilation_status", StringComparison.OrdinalIgnoreCase))
+        {
+            TryFinalizeFailed(repoRoot, commandId, "Request kind mismatch for get_compilation_status.");
+            return;
+        }
+
+        bool compiling = EditorApplication.isCompiling;
+        bool compilationFailed = EditorUtility.scriptCompilationFailed;
+
+        List<AgentBridgeConsoleBuffer.LogEntry> rawErrors = AgentBridgeConsoleBuffer.Query(
+            null,
+            "error",
+            null,
+            30);
+
+        const int maxMessages = 20;
+        var messageDtos = new List<AgentBridgeLogLineDto>(Math.Min(rawErrors.Count, maxMessages));
+        for (int i = 0; i < rawErrors.Count && messageDtos.Count < maxMessages; i++)
+        {
+            AgentBridgeConsoleBuffer.LogEntry e = rawErrors[i];
+            messageDtos.Add(
+                new AgentBridgeLogLineDto
+                {
+                    timestamp_utc = new DateTime(e.utcTicks, DateTimeKind.Utc).ToString("o"),
+                    severity = e.severity ?? "error",
+                    message = e.message ?? string.Empty,
+                    stack = e.stack ?? string.Empty,
+                });
+        }
+
+        string excerpt = string.Empty;
+        if (messageDtos.Count > 0)
+        {
+            excerpt = messageDtos[0].message ?? string.Empty;
+            if (excerpt.Length > 500)
+                excerpt = excerpt.Substring(0, 500);
+        }
+
+        var compilation = new AgentBridgeCompilationStatusDto
+        {
+            compiling = compiling,
+            compilation_failed = compilationFailed,
+            last_error_excerpt = excerpt,
+            recent_error_messages = messageDtos.ToArray(),
+        };
+
+        var resp = new AgentBridgeResponseFileDto
+        {
+            schema_version = 1,
+            artifact = "unity_agent_bridge_response",
+            command_id = commandId,
+            ok = true,
+            completed_at_utc = DateTime.UtcNow.ToString("o"),
+            storage = "compilation_status",
+            postgres_only = false,
+            error = string.Empty,
+            artifact_paths = Array.Empty<string>(),
+            log_lines = Array.Empty<AgentBridgeLogLineDto>(),
+            play_mode_state = string.Empty,
+            ready = false,
+            already_playing = false,
+            already_stopped = false,
+            has_grid_dimensions = false,
+            grid_width = 0,
+            grid_height = 0,
+            compilation_status = compilation,
+        };
+
+        string json = JsonUtility.ToJson(resp, true);
+        CompleteOrFail(repoRoot, commandId, json);
+    }
+
+    static string BuildPlayModeBridgeResponseJson(
+        string commandId,
+        bool ok,
+        string storage,
+        string error,
+        string playModeState,
+        bool ready,
+        bool alreadyPlaying,
+        bool alreadyStopped,
+        bool hasGridDimensions,
+        int gridWidth,
+        int gridHeight)
+    {
+        var resp = new AgentBridgeResponseFileDto
+        {
+            schema_version = 1,
+            artifact = "unity_agent_bridge_response",
+            command_id = commandId,
+            ok = ok,
+            completed_at_utc = DateTime.UtcNow.ToString("o"),
+            storage = storage,
+            postgres_only = false,
+            error = ok ? string.Empty : (error ?? string.Empty),
+            artifact_paths = Array.Empty<string>(),
+            log_lines = Array.Empty<AgentBridgeLogLineDto>(),
+            play_mode_state = playModeState ?? string.Empty,
+            ready = ready,
+            already_playing = alreadyPlaying,
+            already_stopped = alreadyStopped,
+            has_grid_dimensions = hasGridDimensions,
+            grid_width = gridWidth,
+            grid_height = gridHeight,
+        };
+        return JsonUtility.ToJson(resp, true);
     }
 
     static void RunExportAgentContext(string repoRoot, string commandId, string requestJson)
@@ -252,7 +696,7 @@ public static class AgentBridgeCommandRunner
 
         if (deferredToNextEditorFrame)
         {
-            ScheduleDeferredScreenshotComplete(repoRoot, commandId, absPath, relPath);
+            ScheduleDeferredScreenshotComplete(repoRoot, commandId, absPath, relPath, null);
             return;
         }
 
@@ -271,7 +715,8 @@ public static class AgentBridgeCommandRunner
         string repoRoot,
         string commandId,
         string absolutePath,
-        string repoRelativePath)
+        string repoRelativePath,
+        DebugBundleCompletionStash debugBundleOrNull)
     {
         s_deferredScreenshots.Add(
             new DeferredScreenshotWork
@@ -281,9 +726,8 @@ public static class AgentBridgeCommandRunner
                 AbsolutePath = absolutePath,
                 RepoRelativePath = repoRelativePath,
                 StartedUtc = DateTime.UtcNow,
+                DebugBundle = debugBundleOrNull,
             });
-        EditorApplication.update -= PumpDeferredScreenshotCompletions;
-        EditorApplication.update += PumpDeferredScreenshotCompletions;
     }
 
     static void PumpDeferredScreenshotCompletions()
@@ -297,6 +741,24 @@ public static class AgentBridgeCommandRunner
                 continue;
 
             s_deferredScreenshots.RemoveAt(i);
+            if (w.DebugBundle != null)
+            {
+                bool screenshotOk = exists;
+                string shotPath = exists ? w.RepoRelativePath : string.Empty;
+                string shotErr = exists
+                    ? string.Empty
+                    : "Screenshot file was not created within 15 seconds; keep the Game view visible and retry debug_context_bundle in Play Mode.";
+                string bundleJson = BuildDebugBundleResponseJsonFromStash(
+                    w.CommandId,
+                    w.DebugBundle,
+                    screenshotRelPath: shotPath,
+                    screenshotOk: screenshotOk,
+                    screenshotSkipped: false,
+                    screenshotError: shotErr);
+                CompleteOrFail(w.RepoRoot, w.CommandId, bundleJson);
+                continue;
+            }
+
             if (exists)
             {
                 string okJson = BuildObservabilityResponseJson(
@@ -323,9 +785,275 @@ public static class AgentBridgeCommandRunner
                 CompleteOrFail(w.RepoRoot, w.CommandId, failJson);
             }
         }
+    }
 
-        if (s_deferredScreenshots.Count == 0)
-            EditorApplication.update -= PumpDeferredScreenshotCompletions;
+    static void RunDebugContextBundle(string repoRoot, string commandId, string requestJson)
+    {
+        if (!TryParseRequestEnvelope(requestJson, out AgentBridgeRequestEnvelopeDto env, out string parseErr))
+        {
+            TryFinalizeFailed(repoRoot, commandId, parseErr);
+            return;
+        }
+
+        if (!string.Equals(env.kind, "debug_context_bundle", StringComparison.Ordinal))
+        {
+            TryFinalizeFailed(repoRoot, commandId, "Request kind mismatch for debug_context_bundle.");
+            return;
+        }
+
+        if (!EditorApplication.isPlaying)
+        {
+            TryFinalizeFailed(repoRoot, commandId, "debug_context_bundle requires Play Mode.");
+            return;
+        }
+
+        GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
+        if (grid == null || !grid.isInitialized)
+        {
+            TryFinalizeFailed(
+                repoRoot,
+                commandId,
+                "debug_context_bundle requires an initialized GridManager in Play Mode (wait for play_mode_ready after enter_play_mode).");
+            return;
+        }
+
+        AgentBridgeParamsPayloadDto p = env.bridge_params ?? new AgentBridgeParamsPayloadDto();
+        string seedRaw = string.IsNullOrWhiteSpace(p.seed_cell) ? string.Empty : p.seed_cell.Trim();
+        if (!TryParseSeedCellString(seedRaw, out int seedX, out int seedY))
+        {
+            TryFinalizeFailed(
+                repoRoot,
+                commandId,
+                "debug_context_bundle requires bridge_params.seed_cell as \"x,y\" (e.g. \"62,0\").");
+            return;
+        }
+
+        bool includeScreenshot = RequestJsonContainsParamKey(requestJson, "include_screenshot")
+            ? p.include_screenshot
+            : true;
+        bool includeConsole = RequestJsonContainsParamKey(requestJson, "include_console")
+            ? p.include_console
+            : true;
+        bool includeAnomalyScan = RequestJsonContainsParamKey(requestJson, "include_anomaly_scan")
+            ? p.include_anomaly_scan
+            : true;
+
+        AgentBridgeAgentContextOutcome outcome = AgentDiagnosticsReportsMenu.ExportAgentContextForAgentBridge(
+            seedX,
+            seedY,
+            writeBridgeArtifactFile: true);
+
+        AgentBridgeLogLineDto[] consoleLines = Array.Empty<AgentBridgeLogLineDto>();
+        if (includeConsole)
+        {
+            int maxLines = p.max_lines > 0 ? p.max_lines : 200;
+            if (maxLines > 2000)
+                maxLines = 2000;
+
+            DateTime? sinceUtc = null;
+            if (!string.IsNullOrWhiteSpace(p.since_utc))
+            {
+                if (!DateTime.TryParse(
+                        p.since_utc,
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal,
+                        out DateTime parsed))
+                {
+                    TryFinalizeFailed(repoRoot, commandId, "Invalid since_utc; use ISO-8601 UTC.");
+                    return;
+                }
+
+                sinceUtc = parsed;
+            }
+
+            string severityFilter = string.IsNullOrWhiteSpace(p.severity_filter) ? "all" : p.severity_filter.Trim();
+            string tagFilter = string.IsNullOrWhiteSpace(p.tag_filter) ? null : p.tag_filter;
+
+            List<AgentBridgeConsoleBuffer.LogEntry> lines = AgentBridgeConsoleBuffer.Query(
+                sinceUtc,
+                severityFilter,
+                tagFilter,
+                maxLines);
+
+            consoleLines = new AgentBridgeLogLineDto[lines.Count];
+            for (int i = 0; i < lines.Count; i++)
+            {
+                AgentBridgeConsoleBuffer.LogEntry e = lines[i];
+                consoleLines[i] = new AgentBridgeLogLineDto
+                {
+                    timestamp_utc = new DateTime(e.utcTicks, DateTimeKind.Utc).ToString("o"),
+                    severity = e.severity ?? "log",
+                    message = e.message ?? string.Empty,
+                    stack = e.stack ?? string.Empty,
+                };
+            }
+        }
+
+        AgentBridgeAnomalyRecordDto[] anomalies = Array.Empty<AgentBridgeAnomalyRecordDto>();
+        if (includeAnomalyScan)
+        {
+            List<AgentBridgeAnomalyRecordDto> scan = AgentBridgeAnomalyScanner.ScanNeighborhood(seedX, seedY);
+            anomalies = scan.ToArray();
+        }
+
+        var stash = new DebugBundleCompletionStash
+        {
+            CellExportRelPath = outcome.ArtifactPathRepoRelative ?? string.Empty,
+            CellExportOk = outcome.Success,
+            CellExportError = outcome.ErrorMessage ?? string.Empty,
+            ConsoleLines = consoleLines,
+            ConsoleSkipped = !includeConsole,
+            Anomalies = anomalies,
+            AnomalyScanSkipped = !includeAnomalyScan,
+            ScreenshotIncluded = includeScreenshot,
+        };
+
+        if (!includeScreenshot)
+        {
+            string json = BuildDebugBundleResponseJsonFromStash(
+                commandId,
+                stash,
+                screenshotRelPath: string.Empty,
+                screenshotOk: true,
+                screenshotSkipped: true,
+                screenshotError: string.Empty);
+            CompleteOrFail(repoRoot, commandId, json);
+            return;
+        }
+
+        string stem = string.IsNullOrWhiteSpace(p.filename_stem) ? "debug-bundle" : p.filename_stem.Trim();
+        if (!AgentBridgeScreenshotCapture.TryBeginCapture(
+                repoRoot,
+                string.Empty,
+                stem,
+                includeGameViewWithOverlayUi: true,
+                out string relPath,
+                out string absPath,
+                out bool deferredToNextEditorFrame,
+                out string err))
+        {
+            string failBundle = BuildDebugBundleResponseJsonFromStash(
+                commandId,
+                stash,
+                screenshotRelPath: string.Empty,
+                screenshotOk: false,
+                screenshotSkipped: false,
+                screenshotError: err ?? "Screenshot failed.");
+            CompleteOrFail(repoRoot, commandId, failBundle);
+            return;
+        }
+
+        if (deferredToNextEditorFrame)
+        {
+            ScheduleDeferredScreenshotComplete(repoRoot, commandId, absPath, relPath, stash);
+            return;
+        }
+
+        string okJson = BuildDebugBundleResponseJsonFromStash(
+            commandId,
+            stash,
+            screenshotRelPath: relPath ?? string.Empty,
+            screenshotOk: true,
+            screenshotSkipped: false,
+            screenshotError: string.Empty);
+        CompleteOrFail(repoRoot, commandId, okJson);
+    }
+
+    static bool RequestJsonContainsParamKey(string requestJson, string key)
+    {
+        if (string.IsNullOrEmpty(requestJson) || string.IsNullOrEmpty(key))
+            return false;
+        return requestJson.IndexOf($"\"{key}\"", StringComparison.Ordinal) >= 0;
+    }
+
+    static bool TryParseSeedCellString(string raw, out int x, out int y)
+    {
+        x = 0;
+        y = 0;
+        if (string.IsNullOrWhiteSpace(raw))
+            return false;
+        string trimmed = raw.Trim();
+        int comma = trimmed.IndexOf(',');
+        if (comma <= 0 || comma >= trimmed.Length - 1)
+            return false;
+        string xs = trimmed.Substring(0, comma).Trim();
+        string ys = trimmed.Substring(comma + 1).Trim();
+        return int.TryParse(xs, NumberStyles.Integer, CultureInfo.InvariantCulture, out x) &&
+               int.TryParse(ys, NumberStyles.Integer, CultureInfo.InvariantCulture, out y);
+    }
+
+    static string BuildDebugBundleResponseJsonFromStash(
+        string commandId,
+        DebugBundleCompletionStash s,
+        string screenshotRelPath,
+        bool screenshotOk,
+        bool screenshotSkipped,
+        string screenshotError)
+    {
+        bool overallOk = s.CellExportOk;
+        if (s.ScreenshotIncluded && !screenshotSkipped && !screenshotOk)
+            overallOk = false;
+
+        string error = string.Empty;
+        if (!overallOk)
+        {
+            if (!s.CellExportOk && !string.IsNullOrEmpty(s.CellExportError))
+                error = s.CellExportError;
+            else if (s.ScreenshotIncluded && !screenshotSkipped && !screenshotOk && !string.IsNullOrEmpty(screenshotError))
+                error = screenshotError;
+            else if (!s.CellExportOk)
+                error = "Cell export failed.";
+            else
+                error = "debug_context_bundle completed with errors.";
+        }
+
+        var bundle = new AgentBridgeBundleDto
+        {
+            cell_export = new AgentBridgeBundleCellExportDto
+            {
+                artifact_path = s.CellExportRelPath ?? string.Empty,
+                ok = s.CellExportOk,
+            },
+            screenshot = new AgentBridgeBundleScreenshotDto
+            {
+                artifact_path = screenshotRelPath ?? string.Empty,
+                ok = screenshotSkipped || screenshotOk,
+                skipped = screenshotSkipped,
+            },
+            console = new AgentBridgeBundleConsoleDto
+            {
+                log_lines = s.ConsoleLines ?? Array.Empty<AgentBridgeLogLineDto>(),
+                line_count = s.ConsoleLines != null ? s.ConsoleLines.Length : 0,
+                skipped = s.ConsoleSkipped,
+            },
+            anomalies = s.Anomalies ?? Array.Empty<AgentBridgeAnomalyRecordDto>(),
+            anomaly_count = s.Anomalies != null ? s.Anomalies.Length : 0,
+            anomaly_scan_skipped = s.AnomalyScanSkipped,
+        };
+
+        var resp = new AgentBridgeResponseFileDto
+        {
+            schema_version = 1,
+            artifact = "unity_agent_bridge_response",
+            command_id = commandId,
+            ok = overallOk,
+            completed_at_utc = DateTime.UtcNow.ToString("o"),
+            storage = "debug_context_bundle",
+            postgres_only = false,
+            error = error,
+            artifact_paths = Array.Empty<string>(),
+            log_lines = Array.Empty<AgentBridgeLogLineDto>(),
+            play_mode_state = string.Empty,
+            ready = false,
+            already_playing = false,
+            already_stopped = false,
+            has_grid_dimensions = false,
+            grid_width = 0,
+            grid_height = 0,
+            bundle = bundle,
+        };
+
+        return JsonUtility.ToJson(resp, true);
     }
 
     static void CompleteOrFail(string repoRoot, string commandId, string responseJson)
@@ -390,6 +1118,13 @@ public static class AgentBridgeCommandRunner
             postgres_only = outcome.PostgresOnly,
             error = outcome.Success ? string.Empty : outcome.ErrorMessage,
             log_lines = Array.Empty<AgentBridgeLogLineDto>(),
+            play_mode_state = string.Empty,
+            ready = false,
+            already_playing = false,
+            already_stopped = false,
+            has_grid_dimensions = false,
+            grid_width = 0,
+            grid_height = 0,
         };
 
         if (outcome.Success && !string.IsNullOrEmpty(outcome.ArtifactPathRepoRelative))
@@ -421,6 +1156,13 @@ public static class AgentBridgeCommandRunner
             error = ok ? string.Empty : (error ?? string.Empty),
             artifact_paths = artifactPaths ?? Array.Empty<string>(),
             log_lines = logLines ?? Array.Empty<AgentBridgeLogLineDto>(),
+            play_mode_state = string.Empty,
+            ready = false,
+            already_playing = false,
+            already_stopped = false,
+            has_grid_dimensions = false,
+            grid_width = 0,
+            grid_height = 0,
         };
         return JsonUtility.ToJson(resp, true);
     }
@@ -449,6 +1191,15 @@ class AgentBridgeParamsPayloadDto
     public bool include_ui;
     /// <summary>Optional <c>export_agent_context</c> only: <c>"cellX,cellY"</c> Moore neighborhood seed (e.g. <c>3,0</c>).</summary>
     public string seed_cell;
+
+    /// <summary><c>debug_context_bundle</c>: when JSON omits the key, runner defaults to <c>true</c>.</summary>
+    public bool include_screenshot;
+
+    /// <summary><c>debug_context_bundle</c>: when JSON omits the key, runner defaults to <c>true</c>.</summary>
+    public bool include_console;
+
+    /// <summary><c>debug_context_bundle</c>: when JSON omits the key, runner defaults to <c>true</c>.</summary>
+    public bool include_anomaly_scan;
 }
 
 [Serializable]
@@ -458,6 +1209,21 @@ class AgentBridgeLogLineDto
     public string severity;
     public string message;
     public string stack;
+}
+
+/// <summary>Populated for <c>get_compilation_status</c> under <see cref="AgentBridgeResponseFileDto.compilation_status"/>.</summary>
+[Serializable]
+class AgentBridgeCompilationStatusDto
+{
+    public bool compiling;
+
+    public bool compilation_failed;
+
+    /// <summary>Short excerpt from the most recent buffered error line (truncated).</summary>
+    public string last_error_excerpt;
+
+    /// <summary>Up to 20 recent Console lines with severity <c>error</c> from <see cref="AgentBridgeConsoleBuffer"/>.</summary>
+    public AgentBridgeLogLineDto[] recent_error_messages;
 }
 
 [Serializable]
@@ -473,4 +1239,69 @@ class AgentBridgeResponseFileDto
     public bool postgres_only;
     public string error;
     public AgentBridgeLogLineDto[] log_lines;
+
+    /// <summary>Populated for <c>enter_play_mode</c>, <c>exit_play_mode</c>, <c>get_play_mode_status</c>: <c>edit_mode</c>, <c>play_mode_loading</c>, or <c>play_mode_ready</c>.</summary>
+    public string play_mode_state;
+
+    /// <summary>True when <see cref="GridManager"/> has finished <c>InitializeGrid()</c> (play-mode bridge kinds only).</summary>
+    public bool ready;
+
+    public bool already_playing;
+    public bool already_stopped;
+
+    /// <summary>When true, <see cref="grid_width"/> and <see cref="grid_height"/> are valid.</summary>
+    public bool has_grid_dimensions;
+
+    public int grid_width;
+    public int grid_height;
+
+    /// <summary>Populated for <c>debug_context_bundle</c> only.</summary>
+    public AgentBridgeBundleDto bundle;
+
+    /// <summary>Populated for <c>get_compilation_status</c> only.</summary>
+    public AgentBridgeCompilationStatusDto compilation_status;
+}
+
+[Serializable]
+class AgentBridgeBundleDto
+{
+    public AgentBridgeBundleCellExportDto cell_export;
+    public AgentBridgeBundleScreenshotDto screenshot;
+    public AgentBridgeBundleConsoleDto console;
+    public AgentBridgeAnomalyRecordDto[] anomalies;
+    public int anomaly_count;
+    public bool anomaly_scan_skipped;
+}
+
+[Serializable]
+class AgentBridgeBundleCellExportDto
+{
+    public string artifact_path;
+    public bool ok;
+}
+
+[Serializable]
+class AgentBridgeBundleScreenshotDto
+{
+    public string artifact_path;
+    public bool ok;
+    public bool skipped;
+}
+
+[Serializable]
+class AgentBridgeBundleConsoleDto
+{
+    public AgentBridgeLogLineDto[] log_lines;
+    public int line_count;
+    public bool skipped;
+}
+
+[Serializable]
+public class AgentBridgeAnomalyRecordDto
+{
+    public string rule;
+    public int cell_x;
+    public int cell_y;
+    public string severity;
+    public string message;
 }

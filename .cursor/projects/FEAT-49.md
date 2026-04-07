@@ -66,7 +66,7 @@ Add an in-game **local sector inspector**: the player or developer defines a **r
 1. **Modes:** A dedicated tool or debug-gated entry toggles **local sector inspector**; exiting clears overlay unless user “pins” a snapshot (**TBD** in **Open Questions**).
 2. **Layers** are informational tabs or dropdown entries; v1 = **Streets**, **Terrain / water**.
 3. **Export** produces **JSON** with: bounds, **schema_version**, timestamp, optional **`backlog_issue_id`** when used from **Editor** workflow, and per-**layer** payloads. Storage follows **unity-development-context** §10 (**DB-first** when **Postgres** available).
-4. **Future (not in v1):** A **Cursor Skill** or **territory-ia** tool could request the latest **sector snapshot** **JSON** (from **Postgres** or staged file) so an agent can reason over the same **layer** summaries without driving **Unity** UI—coordinate with **TECH-48** / **Close Dev Loop** (TECH-75a–c) when that becomes a backlog item.
+4. **Future (not in v1):** A **Cursor Skill** or **territory-ia** tool could request the latest **sector snapshot** **JSON** (from **Postgres** or staged file) so an agent can reason over the same **layer** summaries without driving **Unity** UI—coordinate with **TECH-48** / **Close Dev Loop** (**`close-dev-loop`** + preflight archived [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md)) when that becomes a backlog item.
 
 ### 5.2 Architecture / implementation (agent-owned unless fixed by design)
 

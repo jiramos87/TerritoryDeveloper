@@ -2822,6 +2822,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
+    /// Agent / Editor diagnostics (<c>debug_context_bundle</c>): same predicate as <see cref="CellUsesWaterShorePrimaryPrefab"/> without exposing private helpers.
+    /// </summary>
+    public bool DoesCellUseWaterShorePrimaryPrefab(Cell cell) => CellUsesWaterShorePrimaryPrefab(cell);
+
+    /// <summary>
     /// Diagonal shore tiles (NE/NW/SE/SW Upslope or SlopeWater), not Bay — used for Y offset and diagonal downslope selection.
     /// </summary>
     private bool IsDiagonalShoreWaterPrefab(GameObject prefab)
@@ -3966,6 +3971,22 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             || IsPrefabInstance(obj, northWestBayPrefab)
             || IsPrefabInstance(obj, southEastBayPrefab)
             || IsPrefabInstance(obj, southWestBayPrefab);
+    }
+
+    /// <summary>
+    /// Returns true if <paramref name="obj"/> is a brown cliff wall stack segment or a water–water cascade cliff
+    /// instance (same prefab matching as <see cref="RemoveExistingCliffWalls"/> / cascade cleanup).
+    /// Used by <see cref="GridManager.DestroyCellChildren"/> so building placement does not strip map-border cliffs.
+    /// </summary>
+    public bool IsCliffStackTerrainObject(GameObject obj)
+    {
+        if (obj == null) return false;
+        return IsPrefabInstance(obj, southCliffWallPrefab)
+            || IsPrefabInstance(obj, eastCliffWallPrefab)
+            || IsPrefabInstance(obj, northCliffWallPrefab)
+            || IsPrefabInstance(obj, westCliffWallPrefab)
+            || IsPrefabInstance(obj, cliffWaterSouthPrefab)
+            || IsPrefabInstance(obj, cliffWaterEastPrefab);
     }
 
     private bool IsPrefabInstance(GameObject obj, GameObject prefab)

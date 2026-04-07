@@ -876,6 +876,9 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <paramref name="destroyFlatGrass"/> is true (building/utility placement so the cell has a single visual layer).
     /// Used by DemolishCellAt (including expropriation with showAnimation: false): any child with
     /// ZoneCategory.Zoning is removed from the zone manager lists (removeZonedPositionFromList) before destroy.
+    /// Brown cliff and water–water cascade stack children are skipped (see <see cref="TerrainManager.IsCliffStackTerrainObject"/>)
+    /// so building footprint cleanup does not remove map-border cliff stacks; bulldoze paths still refresh cliffs via
+    /// <see cref="TerrainManager.RestoreTerrainForCell"/>.
     /// </summary>
     public void DestroyCellChildren(GameObject cell, Vector2 gridPosition, GameObject excludeFromDestroy)
     {
@@ -899,6 +902,8 @@ public class GridManager : MonoBehaviour, IGridManager
                 continue;
             if (terrainManager != null && (terrainManager.IsWaterSlopeObject(child.gameObject) || terrainManager.IsLandSlopeObject(child.gameObject)))
                 continue;
+            if (terrainManager != null && terrainManager.IsCliffStackTerrainObject(child.gameObject))
+                continue;
 
             if (zone != null && zone.zoneCategory == Zone.ZoneCategory.Zoning)
             {
@@ -912,7 +917,9 @@ public class GridManager : MonoBehaviour, IGridManager
     }
 
     /// <summary>
-    /// Same as DestroyCellChildren but preserves the cell's forest object so zoning can be merged with forest.
+    /// Same as <see cref="DestroyCellChildren"/> but preserves the cell's forest object so zoning can be merged with forest.
+    /// Also preserves land/water slope tiles and cliff stack instances (same rules as <see cref="DestroyCellChildren"/>)
+    /// so map-border cliffs are not stripped when placing or restoring zoning overlays.
     /// </summary>
     public void DestroyCellChildrenExceptForest(GameObject cell, Vector2 gridPosition)
     {
@@ -925,6 +932,10 @@ public class GridManager : MonoBehaviour, IGridManager
         foreach (Transform child in cell.transform)
         {
             if (forestObject != null && child.gameObject == forestObject)
+                continue;
+            if (terrainManager != null && (terrainManager.IsWaterSlopeObject(child.gameObject) || terrainManager.IsLandSlopeObject(child.gameObject)))
+                continue;
+            if (terrainManager != null && terrainManager.IsCliffStackTerrainObject(child.gameObject))
                 continue;
             toDestroy.Add(child);
         }
