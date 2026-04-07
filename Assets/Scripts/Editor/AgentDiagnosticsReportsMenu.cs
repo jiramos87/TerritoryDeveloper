@@ -16,6 +16,7 @@ public static class AgentDiagnosticsReportsMenu
 {
     const string SchemaVersion = "1";
     const int MaxContextCells = 16;
+    const int MaxCellChildNames = 24;
     const int MaxSortingDebugCells = 25;
     const int MaxMonoBehaviourTypeNames = 20;
     const int MaxHierarchyPathChars = 500;
@@ -29,7 +30,7 @@ public static class AgentDiagnosticsReportsMenu
         {
             string stamp = UtcTimestampForFilename();
             string baseName = $"agent-context-{stamp}";
-            string json = BuildAgentContextJsonString();
+            string json = BuildAgentContextJsonString(null, null);
             bool dbOk = EditorPostgresExportRegistrar.TryPersistReport(
                 EditorPostgresExportRegistrar.KindAgentContext,
                 json,
@@ -72,24 +73,39 @@ public static class AgentDiagnosticsReportsMenu
     /// Same persistence as <see cref="ExportAgentContext"/> without Finder or extra logging side effects.
     /// Used by the Postgres-backed IDE agent bridge; menus keep calling <see cref="ExportAgentContext"/>.
     /// </summary>
-    public static AgentBridgeAgentContextOutcome ExportAgentContextForAgentBridge()
+    /// <param name="overrideSeedX">When both overrides are set and in grid bounds, Moore sample is centered here instead of selection / (0,0).</param>
+    public static AgentBridgeAgentContextOutcome ExportAgentContextForAgentBridge(
+        int? overrideSeedX = null,
+        int? overrideSeedY = null,
+        bool writeBridgeArtifactFile = false)
     {
         try
         {
             string stamp = UtcTimestampForFilename();
             string baseName = $"agent-context-{stamp}";
-            string json = BuildAgentContextJsonString();
+            string json = BuildAgentContextJsonString(overrideSeedX, overrideSeedY);
             bool dbOk = EditorPostgresExportRegistrar.TryPersistReport(
                 EditorPostgresExportRegistrar.KindAgentContext,
                 json,
                 false,
                 baseName,
                 out _);
-            if (dbOk)
+            if (!dbOk)
+            {
+                return AgentBridgeAgentContextOutcome.Fail(
+                    "Agent context export failed: Postgres did not accept the report. Configure DATABASE_URL and migrations; see docs/postgres-ia-dev-setup.md.");
+            }
+
+            if (!writeBridgeArtifactFile)
                 return AgentBridgeAgentContextOutcome.OkPostgresOnly();
 
-            return AgentBridgeAgentContextOutcome.Fail(
-                "Agent context export failed: Postgres did not accept the report. Configure DATABASE_URL and migrations; see docs/postgres-ia-dev-setup.md.");
+            EnsureReportsDirectory();
+            string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            string bridgeName = $"agent-context-bridge-{stamp}.json";
+            string absBridge = Path.Combine(projectRoot, "tools", "reports", bridgeName);
+            File.WriteAllText(absBridge, json, Encoding.UTF8);
+            string repoRel = "tools/reports/" + bridgeName;
+            return AgentBridgeAgentContextOutcome.OkPostgresWithDiskArtifact(repoRel);
         }
         catch (Exception ex)
         {
@@ -97,7 +113,7 @@ public static class AgentDiagnosticsReportsMenu
         }
     }
 
-    static string BuildAgentContextJsonString()
+    static string BuildAgentContextJsonString(int? overrideSeedX = null, int? overrideSeedY = null)
     {
         var report = new AgentContextReportDto
         {
@@ -109,7 +125,7 @@ public static class AgentDiagnosticsReportsMenu
             active_scene_name = Truncate(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name, 200),
             notes = BuildContextNotes(),
             selection = BuildSelectionDto(),
-            grid = BuildGridSampleDto()
+            grid = BuildGridSampleDto(overrideSeedX, overrideSeedY)
         };
 
         return JsonUtility.ToJson(report, true);
@@ -262,7 +278,7 @@ public static class AgentDiagnosticsReportsMenu
         return dto;
     }
 
-    static GridSampleDto BuildGridSampleDto()
+    static GridSampleDto BuildGridSampleDto(int? overrideSeedX = null, int? overrideSeedY = null)
     {
         var dto = new GridSampleDto();
         GridManager grid = UnityEngine.Object.FindObjectOfType<GridManager>();
@@ -285,7 +301,29 @@ public static class AgentDiagnosticsReportsMenu
             return dto;
         }
 
-        TryResolveSeedCell(grid, out int seedX, out int seedY);
+        int seedX;
+        int seedY;
+        if (overrideSeedX.HasValue && overrideSeedY.HasValue)
+        {
+            int ox = overrideSeedX.Value;
+            int oy = overrideSeedY.Value;
+            if (ox >= 0 && oy >= 0 && ox < grid.width && oy < grid.height)
+            {
+                seedX = ox;
+                seedY = oy;
+            }
+            else
+            {
+                TryResolveSeedCell(grid, out seedX, out seedY);
+                dto.notes =
+                    $"**seed_cell** override ({ox},{oy}) out of bounds for grid {grid.width}×{grid.height}; fell back to selection or (0,0). ";
+            }
+        }
+        else
+        {
+            TryResolveSeedCell(grid, out seedX, out seedY);
+        }
+
         dto.seed_cell_x = seedX;
         dto.seed_cell_y = seedY;
 
@@ -327,6 +365,8 @@ public static class AgentDiagnosticsReportsMenu
                 if (c.water_map_reports_open_water)
                     c.water_map_classification = waterMap.GetBodyClassificationAt(p.x, p.y).ToString();
             }
+
+            c.cell_child_names = CollectCellChildNames(cell);
 
             samples.Add(c);
         }
@@ -392,6 +432,27 @@ public static class AgentDiagnosticsReportsMenu
         }
 
         return result;
+    }
+
+    static string[] CollectCellChildNames(Cell cell)
+    {
+        if (cell == null || cell.gameObject == null)
+            return Array.Empty<string>();
+
+        Transform root = cell.gameObject.transform;
+        int n = root.childCount;
+        if (n <= 0)
+            return Array.Empty<string>();
+
+        int cap = Math.Min(n, MaxCellChildNames);
+        var names = new string[cap];
+        for (int i = 0; i < cap; i++)
+        {
+            Transform ch = root.GetChild(i);
+            names[i] = ch != null ? Truncate(ch.name, 120) : "";
+        }
+
+        return names;
     }
 
     static void EnsureReportsDirectory()
@@ -465,6 +526,12 @@ public readonly struct AgentBridgeAgentContextOutcome
     public static AgentBridgeAgentContextOutcome OkPostgresOnly() =>
         new(true, "", true, "postgres", "");
 
+    /// <summary>
+    /// Postgres row written and a UTF-8 JSON copy under <c>tools/reports/</c> for IDE agents (bridge <c>artifact_paths</c>).
+    /// </summary>
+    public static AgentBridgeAgentContextOutcome OkPostgresWithDiskArtifact(string repoRelativePath) =>
+        new(true, "", true, "postgres", repoRelativePath ?? "");
+
     public static AgentBridgeAgentContextOutcome Fail(string message) =>
         new(false, message ?? "Unknown error.", false, "none", "");
 }
@@ -517,4 +584,5 @@ class CellSampleDto
     public bool is_interstate;
     public bool water_map_reports_open_water;
     public string water_map_classification;
+    public string[] cell_child_names = Array.Empty<string>();
 }

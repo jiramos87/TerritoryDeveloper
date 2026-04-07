@@ -4,7 +4,7 @@
 **Scope:** Close the loop between Unity runtime/Editor and IDE agents so that AI-assisted development, debugging, and validation can happen with minimal manual intervention.
 **Audience:** Developers and Cursor agents planning infrastructure for autonomous debugging, data export, and closed-loop fix verification.
 
-**Trace:** **glossary** **IDE agent bridge** — **Phase 1** archived [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md); optional later phases remain in this charter. **Open:** **TECH-59** (MCP staging for **Editor export registry**) in [`BACKLOG.md`](../BACKLOG.md) **§ Agent ↔ Unity & MCP context lane**.
+**Trace:** **glossary** **IDE agent bridge** — **Phase 1** archived [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md); optional later phases remain in this charter. **Open:** **Close Dev Loop** orchestration ([`.cursor/projects/TECH-75.md`](../.cursor/projects/TECH-75.md)) in [`BACKLOG.md`](../BACKLOG.md) **§ Agent ↔ Unity & MCP context lane**.
 
 **Related:**
 - [`docs/mcp-ia-server.md`](mcp-ia-server.md) — territory-ia MCP (current tool surface)
@@ -82,7 +82,7 @@ All exports live under `Assets/Scripts/Editor/` (Editor-only assembly, excluded 
 
 | Issue | Relevance to bridge |
 |-------|-------------------|
-| **TECH-59** | MCP tool to stage Editor export registry payload (issue id + JSON) — **direct precursor** to agent-triggered exports |
+| **TECH-75a–c** (Close Dev Loop) | Play Mode bridge commands + context bundle + anomaly detection + Cursor Skill — see [`.cursor/projects/TECH-75.md`](../.cursor/projects/TECH-75.md) |
 | **TECH-33** | Asset introspection: prefab manifest + scene MonoBehaviour listing — BACKLOG cites `-batchmode` as one option; Agent Bridge here assumes **Editor open** + bridge commands, not CI |
 | **TECH-15** | Geography initialization performance — needs profiler harness under `tools/reports/` |
 | **TECH-16** | Simulation tick performance — needs spec-labeled tick harness JSON |
@@ -164,7 +164,7 @@ Agent reads  ← result
 - Zero networking dependencies
 - Works in both Editor and via `-batchmode`
 - Lower latency than batchmode (no Unity restart) if Editor is running
-- Already partially conceived in **TECH-59** (staging file for registry payload)
+- Staging pattern superseded by **Close Dev Loop** (agent drives Play Mode directly)
 - **Existing precedent:** `EditorPostgresExportRegistrar` already writes/reads staging files under `tools/reports/.staging/`
 
 ### 3.4 `Application.logMessageReceived` — real-time log forwarding
@@ -220,7 +220,7 @@ Unity can run Edit Mode and Play Mode tests from the command line and emit XML/J
 | `EditorConnection` | Yes (dev builds) | Yes | Low | High | No (custom protocol) |
 | Test Framework | No (project lock) | PlayMode tests | High | Medium | Partial |
 
-**Recommendation:** **File command queue** as the Phase 1 minimum viable bridge (lowest risk, builds on TECH-59 staging pattern), with **HTTP server** as the Phase 2 upgrade for real-time interaction. `-batchmode` remains a **technical** option when the project is not open in Editor; **do not** treat CLI/headless automation as a program goal (§3.1, §3.7).
+**Recommendation:** **File command queue** as the Phase 1 minimum viable bridge (lowest risk, builds on proven staging patterns), with **HTTP server** as the Phase 2 upgrade for real-time interaction. `-batchmode` remains a **technical** option when the project is not open in Editor; **do not** treat CLI/headless automation as a program goal (§3.1, §3.7).
 
 ---
 
@@ -469,14 +469,14 @@ Verify AUTO systems behavior:
 
 | Issue | How bridge helps |
 |-------|-----------------|
-| **TECH-59** (MCP staging for Editor export registry) | Phase 1 subsumes and extends TECH-59's staging concept — the bridge generalizes it from "stage issue id" to "stage any command" |
+| **Close Dev Loop** (TECH-75a–c) | Agent enters Play Mode, collects evidence, verifies fix — supersedes registry staging concept |
 | **TECH-15** (Geography init performance) | Agent can trigger Export Geography Init Report and read timing data without developer intervention |
 | **TECH-16** (Simulation tick performance) | Agent can trigger exports after sim ticks to measure phases |
 | **Editor Reports** (§10 contract) | Bridge adds an alternate dispatch path; menus remain the human baseline |
 | **TECH-33** (Asset introspection) | Bridge command `export_prefab_manifest` when Editor is open; independent of batchmode |
 | **TECH-38** (Batchmode hooks) | May share utilities if TECH-38 ships for other reasons; bridge does **not** depend on batchmode or CI |
 | **BUG-28** (Sorting order: slope vs interstate) | Agent can autonomously debug using sorting debug export |
-| **BUG-44** (Cliff gaps at map border) | Agent can export cell chunk at border cells + sorting data |
+| **Map border** terrain / **cliff** regressions | Agent can export cell chunk at border cells + sorting data (`export_agent_context`, `seed_cell`) |
 | **HUD** / **MainMenu** polish (shipped **`UiTheme`**) | Agent can trigger **UI** inventory export to verify theme changes |
 
 ### 7.2 Proposed new backlog issue
@@ -490,7 +490,7 @@ A new **TECH-** issue should be created to track the Unity Agent Bridge as a pro
 2. HTTP bridge (real-time, localhost)
 3. Streaming, screenshots, before/after comparison automation (still **Editor-centric**; no headless CI)
 
-**Dependencies:** None hard. Soft: keep **Reports** exports aligned with **unity-development-context** §10; TECH-59 (absorb staging concept).
+**Dependencies:** None hard. Soft: keep **Reports** exports aligned with **unity-development-context** §10; **Close Dev Loop** (TECH-75a–c) absorbs staging concept.
 
 ---
 
@@ -543,7 +543,7 @@ A new **TECH-** issue should be created to track the Unity Agent Bridge as a pro
 ### Q: Can Unity receive triggers from external tools?
 
 **Yes**, through multiple mechanisms:
-1. **File watching** (proven pattern — TECH-59 staging) — Unity's `EditorApplication.update` polls a directory
+1. **File watching** (proven staging pattern) — Unity's `EditorApplication.update` polls a directory
 2. **HTTP listener** — `System.Net.HttpListener` or lightweight embedded server
 3. **`-batchmode -executeMethod`** — CLI invocation when the project is not open in Editor (**not** a target workflow for this program; see §3.1)
 4. **`EditorConnection` / `PlayerConnection`** — built-in IPC (more complex, designed for profiler)
@@ -588,7 +588,7 @@ Ordered by **dependency and payoff**, without calendar or sprint framing.
 5. **Parameterized exports** — cell chunk bounds, sorting debug seed, aligned with existing menu behavior
 6. **Sugar MCP tools** — thin wrappers (`unity_export_cell_chunk`, `unity_export_sorting_debug`, …) if they reduce agent token cost
 7. **`debug-sorting-order` Cursor Skill** — documents the tool recipe end-to-end
-8. **TECH-59** — decide merge vs supersede once staging and bridge overlap is clear
+8. **Close Dev Loop** (TECH-75a–c) supersedes registry staging — see [`.cursor/projects/TECH-75.md`](../.cursor/projects/TECH-75.md)
 
 ### C — When file latency hurts
 

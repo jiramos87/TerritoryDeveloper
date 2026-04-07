@@ -98,7 +98,7 @@ Cross-cutting effort: reference spec [`.cursor/specs/ui-design-system.md`](.curs
 
 ### Water
 
-`WaterMap` stores per-cell body ids; `WaterBody` holds surface height. Procedural lakes (depression-fill), procedural rivers (after lakes, before interstate), shore/cliff/cascade visuals. See geography spec §11–§12.
+`WaterMap` stores per-cell body ids; `WaterBody` holds surface height. Procedural lakes (depression-fill), procedural rivers (after lakes, before interstate), shore/cliff/cascade visuals. **`TerrainManager`** **`PlaceCliffWalls`** seals **south**/**east** **map border** voids with brown **cliff** stacks to **`MIN_HEIGHT`**, and skips duplicate brown faces toward void when the cell uses **water-shore** primary art. See geography spec §5.7, §11–§12.
 
 ### Isometric geography (canonical spec)
 

@@ -91,7 +91,7 @@ public static class AgentBridgeCommandRunner
         switch (dq.kind)
         {
             case "export_agent_context":
-                RunExportAgentContext(repoRoot, commandId);
+                RunExportAgentContext(repoRoot, commandId, dq.request_json);
                 break;
             case "get_console_logs":
                 RunGetConsoleLogs(repoRoot, commandId, dq.request_json);
@@ -108,9 +108,35 @@ public static class AgentBridgeCommandRunner
         }
     }
 
-    static void RunExportAgentContext(string repoRoot, string commandId)
+    static void RunExportAgentContext(string repoRoot, string commandId, string requestJson)
     {
-        AgentBridgeAgentContextOutcome outcome = AgentDiagnosticsReportsMenu.ExportAgentContextForAgentBridge();
+        int? seedX = null;
+        int? seedY = null;
+        if (TryParseRequestEnvelope(requestJson, out AgentBridgeRequestEnvelopeDto env, out _) &&
+            env != null &&
+            string.Equals(env.kind, "export_agent_context", StringComparison.OrdinalIgnoreCase) &&
+            env.bridge_params != null &&
+            !string.IsNullOrWhiteSpace(env.bridge_params.seed_cell))
+        {
+            string raw = env.bridge_params.seed_cell.Trim();
+            int comma = raw.IndexOf(',');
+            if (comma > 0 && comma < raw.Length - 1)
+            {
+                string xs = raw.Substring(0, comma).Trim();
+                string ys = raw.Substring(comma + 1).Trim();
+                if (int.TryParse(xs, NumberStyles.Integer, CultureInfo.InvariantCulture, out int px) &&
+                    int.TryParse(ys, NumberStyles.Integer, CultureInfo.InvariantCulture, out int py))
+                {
+                    seedX = px;
+                    seedY = py;
+                }
+            }
+        }
+
+        AgentBridgeAgentContextOutcome outcome = AgentDiagnosticsReportsMenu.ExportAgentContextForAgentBridge(
+            seedX,
+            seedY,
+            writeBridgeArtifactFile: true);
         string responseJson = BuildAgentContextResponseJson(commandId, outcome);
         CompleteOrFail(repoRoot, commandId, responseJson);
     }
@@ -366,7 +392,7 @@ public static class AgentBridgeCommandRunner
             log_lines = Array.Empty<AgentBridgeLogLineDto>(),
         };
 
-        if (outcome.Success && !outcome.PostgresOnly && !string.IsNullOrEmpty(outcome.ArtifactPathRepoRelative))
+        if (outcome.Success && !string.IsNullOrEmpty(outcome.ArtifactPathRepoRelative))
             resp.artifact_paths = new[] { outcome.ArtifactPathRepoRelative };
         else
             resp.artifact_paths = Array.Empty<string>();
@@ -421,6 +447,8 @@ class AgentBridgeParamsPayloadDto
     public string camera;
     public string filename_stem;
     public bool include_ui;
+    /// <summary>Optional <c>export_agent_context</c> only: <c>"cellX,cellY"</c> Moore neighborhood seed (e.g. <c>3,0</c>).</summary>
+    public string seed_cell;
 }
 
 [Serializable]

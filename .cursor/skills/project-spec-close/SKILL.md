@@ -43,7 +43,7 @@ For each closure, walk this list; tick **N/A** only when the closed issue truly 
 
 ## Id purge (mandatory for the closed issue)
 
-After drafting the archived row, **search the repository** for the closed issue id (e.g. `FEAT-44`, `BUG-12`, `TECH-59`) and **remove or rewrite** every hit **except**:
+After drafting the archived row, **search the repository** for the closed issue id (e.g. `FEAT-44`, `BUG-12`, `TECH-48`) and **remove or rewrite** every hit **except**:
 
 - The new **`[x]`** block in [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md) for that closure (and any **existing** archive rows that already reference that id historically), and
 - **Open** rows in [`BACKLOG.md`](../../../BACKLOG.md) that are **still** tracking other work (do not remove *their* ids).

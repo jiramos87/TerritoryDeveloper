@@ -186,6 +186,16 @@ describe("unityBridgeCommandInputSchema", () => {
     if (r.success) assert.equal(r.data.include_ui, false);
   });
 
+  it("accepts export_agent_context with seed_cell", () => {
+    const r = unityBridgeCommandInputSchema.safeParse({
+      kind: "export_agent_context",
+      timeout_ms: 5000,
+      seed_cell: "3,0",
+    });
+    assert.equal(r.success, true);
+    if (r.success) assert.equal(r.data.seed_cell, "3,0");
+  });
+
   it("rejects timeout_ms above 30000", () => {
     const r = unityBridgeCommandInputSchema.safeParse({
       kind: "export_agent_context",

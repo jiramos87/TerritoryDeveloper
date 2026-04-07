@@ -38,7 +38,6 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -5363,6 +5362,8 @@ MonoBehaviour:
   demandWarningPanel: {fileID: 2014187735}
   insufficientFundsPanel: {fileID: 2036862804}
   dataPopupController: {fileID: 1421362056}
+  popupFadeDurationSeconds: 0.12
+  showWelcomeBriefingOnFirstRun: 1
   hudUiTheme: {fileID: 11400000, guid: 404142434445464748494a4b4c4d4e4f, type: 2}
   controlPanelBackgroundImage: {fileID: 1596321762}
 --- !u!1 &524023764
@@ -11886,6 +11887,8 @@ MonoBehaviour:
   detailsPanel: {fileID: 1918051079}
   waterConsumptionText: {fileID: 323551595}
   waterOutputText: {fileID: 366043617}
+  uiManager: {fileID: 0}
+  popupFadeSeconds: 0.12
 --- !u!4 &1158038490
 Transform:
   m_ObjectHideFlags: 0
@@ -12450,10 +12453,12 @@ MonoBehaviour:
   initializeForestsOnStart: 1
   useFlatTerrainOnNewGame: 0
   flatTerrainHeight: 5
-  generateStandardWaterBodies: 1
-  generateProceduralRiversOnInit: 1
-  generateTestRiverOnInit: 0
+  generateStandardWaterBodies: 0
+  generateProceduralRiversOnInit: 0
+  generateTestRiverOnInit: 1
   testRiverSegmentBedWidths: 03000000040000000500000006000000
+  loadGeographyInitParamsFromStreamingAssets: 0
+  geographyInitParamsRelativePath: Config/geography-default.json
 --- !u!1 &1205150777
 GameObject:
   m_ObjectHideFlags: 0
@@ -16781,7 +16786,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -260.99475, y: -10.571655}
+  m_AnchoredPosition: {x: -260.9948, y: -10.571655}
   m_SizeDelta: {x: -521.9894, y: -455.8174}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1664159913
@@ -17512,6 +17517,8 @@ MonoBehaviour:
   cursorManager: {fileID: 2043502345}
   popupPanel: {fileID: 1710728774}
   uiManager: {fileID: 515320935}
+  popupFadeSeconds: 0.12
+  buildingMenuScrollSensitivity: 3.5
 --- !u!1 &1711789253
 GameObject:
   m_ObjectHideFlags: 0
@@ -20226,6 +20233,8 @@ MonoBehaviour:
   cursorManager: {fileID: 2043502345}
   popupPanel: {fileID: 1710728774}
   uiManager: {fileID: 0}
+  popupFadeSeconds: 0.12
+  buildingMenuScrollSensitivity: 3.5
 --- !u!4 &1975260510
 Transform:
   m_ObjectHideFlags: 0

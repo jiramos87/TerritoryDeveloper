@@ -71,7 +71,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`pathfinding_cost_preview`** | **Computational v1:** Manhattan steps × `unit_cost_per_step` — labeled **approximation** only; not committed **A\*** / geo §10 costs. |
 | **`geography_init_params_validate`** | **Computational:** Zod validation for **Geography initialization** interchange v1 (`artifact` + `schema_version` 1). Pass document fields as the tool argument object. |
 | **`desirability_top_cells`** | **Stub:** returns `NOT_AVAILABLE` until **TECH-66** (`BACKLOG.md`) Unity **`batchmode`** export exists. |
-| **`unity_bridge_command`** | **IDE agent bridge** (glossary): **`kind`** **`export_agent_context`** \| **`get_console_logs`** \| **`capture_screenshot`** + **`timeout_ms`** (default **30000**, max **30000**). Inserts **`agent_bridge_job`** (**`request` jsonb** includes **`params`** per kind). **`get_console_logs`:** optional **`since_utc`**, **`severity_filter`**, **`tag_filter`**, **`max_lines`** (1–2000). **`capture_screenshot`:** optional **`camera`** (GameObject name), **`filename_stem`**, **`include_ui`** (boolean, default false — **Game view** + Overlay UI via **`ScreenCapture`**; ignores **`camera`** when true). Requires **`DATABASE_URL`**, migration **0008**, Unity on **REPO_ROOT**, **`AgentBridgeCommandRunner`**. |
+| **`unity_bridge_command`** | **IDE agent bridge** (glossary): **`kind`** **`export_agent_context`** \| **`get_console_logs`** \| **`capture_screenshot`** + **`timeout_ms`** (default **30000**, max **30000**). Inserts **`agent_bridge_job`** (**`request` jsonb** includes **`params`** per kind). **`export_agent_context`:** optional **`seed_cell`** (`"x,y"` Moore center, e.g. **`"3,0"`**; else selection or `(0,0)`). **`get_console_logs`:** optional **`since_utc`**, **`severity_filter`**, **`tag_filter`**, **`max_lines`** (1–2000). **`capture_screenshot`:** optional **`camera`** (GameObject name), **`filename_stem`**, **`include_ui`** (boolean, default false — **Game view** + Overlay UI via **`ScreenCapture`**; ignores **`camera`** when true). Requires **`DATABASE_URL`**, migration **0008**, Unity on **REPO_ROOT**, **`AgentBridgeCommandRunner`**. |
 | **`unity_bridge_get`** | **IDE agent bridge** (glossary): read **`agent_bridge_job`** by **`command_id`**; optional **`wait_ms`** for short blocking poll. |
 
 **Examples (conceptual):**
@@ -81,8 +81,8 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 - `spec_outline` → `{ "spec": "geo" }`
 - `spec_section` → `{ "spec": "geo", "section": "13.4", "max_chars": 8000 }` (or `{ "key": "geo", "section_heading": 14 }`)
 - `spec_sections` → `{ "sections": [ { "spec": "geo", "section": "1" }, { "spec": "roads", "section": "validation" } ] }`
-- `project_spec_closeout_digest` → `{ "issue_id": "TECH-59" }` or `{ "spec_path": ".cursor/projects/TECH-59.md" }`
-- `project_spec_journal_persist` → `{ "issue_id": "TECH-59", "git_sha": "abc123…" }`
+- `project_spec_closeout_digest` → `{ "issue_id": "TECH-75" }` or `{ "spec_path": ".cursor/projects/TECH-75.md" }`
+- `project_spec_journal_persist` → `{ "issue_id": "TECH-75", "git_sha": "abc123…" }`
 - `project_spec_journal_search` → `{ "query": "road stroke decision", "max_results": 8 }`
 - `glossary_discover` → `{ "query": "manual street trace neighbors", "max_results": 8 }`
 - `glossary_lookup` → `{ "term": "wet run" }`
@@ -103,8 +103,8 @@ Shipped with **TECH-58**; scripts live under `scripts/` (they default `REPO_ROOT
 
 | Root `npm run` | Purpose |
 |----------------|---------|
-| `closeout:worksheet -- --issue TECH-59` | Print Markdown worksheet; add `--json` for digest JSON only. |
-| `closeout:dependents -- --issue TECH-59` | List `file:line` hits for the id or `.cursor/projects/TECH-59.md` (see script header for scan roots / limitations). |
+| `closeout:worksheet -- --issue TECH-75` | Print Markdown worksheet; add `--json` for digest JSON only. |
+| `closeout:dependents -- --issue TECH-75` | List `file:line` hits for the id or `.cursor/projects/TECH-75.md` (see script header for scan roots / limitations). |
 | `closeout:verify` | Runs `validate:dead-project-specs` then `generate:ia-indexes --check`. Local convenience; **CI** **ia-tools** remains the gate for merges. |
 
 ## Architecture

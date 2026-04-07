@@ -68,6 +68,12 @@ const unityBridgeCommandInputShape = {
     .describe(
       "capture_screenshot only: when true, use ScreenCapture of the Game view (includes Screen Space - Overlay UI). When false (default), prefer Camera render (world / Camera-mode UI only). Ignores camera when true.",
     ),
+  seed_cell: z
+    .string()
+    .optional()
+    .describe(
+      'export_agent_context only: Moore neighborhood center as "x,y" (e.g. "3,0"). Omit to use selected Cell or (0,0).',
+    ),
 };
 
 /** Exported for unit tests (Zod validation of MCP arguments). */
@@ -167,7 +173,10 @@ function buildRequestEnvelope(
     kind: input.kind,
   };
   if (input.kind === "export_agent_context") {
-    return { ...base, params: {} };
+    const trimmed = input.seed_cell?.trim();
+    const params =
+      trimmed && trimmed.length > 0 ? { seed_cell: trimmed } : {};
+    return { ...base, params };
   }
   if (input.kind === "get_console_logs") {
     return {
@@ -389,7 +398,7 @@ export function registerUnityBridgeCommand(server: McpServer): void {
     "unity_bridge_command",
     {
       description:
-        "IDE agent bridge: enqueue a Unity Editor job in Postgres agent_bridge_job (pending). Kinds: export_agent_context (agent context JSON + optional Postgres registry), get_console_logs (buffered Console lines in response.log_lines), capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/; include_ui for Game view + Overlay UI). Requires DATABASE_URL / config/postgres-dev.json, migration 0008, Unity on REPO_ROOT. Polls until completed, failed, or timeout_ms (default 30000, max 30000). Removes pending row on MCP timeout.",
+        "IDE agent bridge: enqueue a Unity Editor job in Postgres agent_bridge_job (pending). Kinds: export_agent_context (agent context JSON + optional Postgres registry; optional seed_cell \"x,y\" for Moore neighborhood center), get_console_logs (buffered Console lines in response.log_lines), capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/; include_ui for Game view + Overlay UI). Requires DATABASE_URL / config/postgres-dev.json, migration 0008, Unity on REPO_ROOT. Polls until completed, failed, or timeout_ms (default 30000, max 30000). Removes pending row on MCP timeout.",
       inputSchema: unityBridgeCommandInputShape,
     },
     async (args) =>

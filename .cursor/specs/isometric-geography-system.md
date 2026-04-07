@@ -281,7 +281,7 @@ Three cooperating layers:
 
 **Face ownership:** Do not combine independent cliff stacks with a shore ramp on the same cardinal face — that duplicates the transition. Shore prefabs may embed bank art; cliff stacks attach to other faces.
 
-**One-step suppression:** Applies only when high cell is shore-eligible AND lower neighbor is water or water-shore. Single Δh skips cliff on that face. Non-eligible rim plateaus keep one cliff segment. Δh ≥ 2 always stacks on visible faces.
+**One-step suppression:** Applies only when high cell is shore-eligible AND lower neighbor is water or water-shore. Single Δh skips cliff on that face. Non-eligible rim plateaus keep one cliff segment. Δh ≥ 2 always stacks on visible faces. Toward **off-grid** void on **S**/**E**, **water-shore** primary cells skip the duplicate brown **cliff** (§5.7 **Map border × water-shore**).
 
 **Fallback border corners:** Must have `HeightMap`/`Cell.height` consistent with the lake surface.
 
@@ -302,7 +302,8 @@ When two cardinally adjacent cells are both registered water and `S_high > S_low
 - **Pattern:** Cardinal Δh > 1 (e.g. cell h=3, south neighbor h=1).
 - **Visible faces:** Only **south** and **east** meshes instantiated (`IsCliffCardinalFaceVisibleToCamera`). N/W are hidden behind the terrain diamond. `Cell.cliffFaces` still records N/S/E/W bits for hydrology.
 - **Water classification** uses registered water, not raw `SEA_LEVEL`. One-step drops toward water are suppressed only if the high cell passes the shore eligibility gate; rim plateaus keep one cliff segment. Δh ≥ 2 uses stacked segments on visible faces.
-- **Map border (exterior void):** S/E **map border** neighbors outside the grid use virtual foot at `SEA_LEVEL` so cliff meshes cover elevated **map border** cells.
+- **Map border (exterior void):** When the **south** or **east** cardinal neighbor is **off the grid** (playable void), brown **cliff** stacks use **`MIN_HEIGHT`** as the virtual lower foot: segment count and stack depth match **land height down to `MIN_HEIGHT`**, same as filling a full drop inland. Do **not** shorten the stack using only the highest in-bounds neighbor below the cell — that leaves visible gaps on **map border** plateaus and water-adjacent edges. Do **not** add **water–water cascade** art on those outermost cells to paper over voids.
+- **Map border × water-shore:** If the **high** cell’s primary terrain is **water-shore** art and the face looks toward **off-grid** void on **S** or **E**, **do not** instantiate an extra brown **cliff** on that face — the shore prefab already owns the visible transition (same **face ownership** principle as §5.6.1).
 - **N/W faces:** Not instantiated for interior cells. **Map border** N/W cliff art is a future follow-up.
 
 ### 5.8 Coastal Transitions (Water Slopes)
@@ -753,7 +754,7 @@ Canonical procedural detail: **`roads-system.md`** (Land slope stroke policy).
 | **baseHeight** | Cut-through target elevation: path cells flattened to this value when not using scale-with-slopes (§8.3). |
 | **Grass cell** | Undeveloped land substrate (typical grass `cellType`) — no **street**/**interstate**; zoning, forests, and manual A* treat it as buildable/walkable per mode (§13.9). |
 | **Street (ordinary road)** | Non-**interstate** placement by player or AUTO using the **road validation pipeline** (§13.1–§13.2); contrasts with **map border** **interstate** (§13.5). |
-| **Map border** | Outer boundary of the playable grid: cells on `x=0`, `y=0`, `maxX`, or `maxY`. **Interstate** endpoints, virtual cliff feet, and exit rules reference the **map border** (§5.7, §13.5). Not a generic **cell** edge — use **Moore**/**cardinal neighbor** wording for local geometry. |
+| **Map border** | Outer boundary of the playable grid: cells on `x=0`, `y=0`, `maxX`, or `maxY`. **Interstate** endpoints, **south**/**east** brown **cliff** stacks toward **off-grid** void (foot at **`MIN_HEIGHT`**), and exit rules reference the **map border** (§5.7, §13.5). Not a generic **cell** edge — use **Moore**/**cardinal neighbor** wording for local geometry. |
 | **Chebyshev distance** | `max(|Δx|,|Δy|)` on the grid; used to dilate river corridors and spacing between entries (§12.4). |
 
 ### 14.2 Resolved techniques

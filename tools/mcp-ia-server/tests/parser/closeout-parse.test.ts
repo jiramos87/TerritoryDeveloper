@@ -80,11 +80,11 @@ describe("project-spec-closeout-parse", () => {
   });
 
   it("resolveProjectSpecFile accepts issue_id only", () => {
-    const r = resolveProjectSpecFile("/repo", { issue_id: "tech-59" });
+    const r = resolveProjectSpecFile("/repo", { issue_id: "tech-75" });
     assert.equal(r.ok, true);
     if (r.ok) {
-      assert.match(r.absPath, /TECH-59\.md$/);
-      assert.equal(r.relPosix, ".cursor/projects/TECH-59.md");
+      assert.match(r.absPath, /TECH-75\.md$/);
+      assert.equal(r.relPosix, ".cursor/projects/TECH-75.md");
     }
   });
 

@@ -523,7 +523,7 @@ async function main(): Promise<void> {
   const digest = parseJsonFromToolResult(
     await client.callTool({
       name: "project_spec_closeout_digest",
-      arguments: { issue_id: "TECH-59" },
+      arguments: { issue_id: "TECH-75" },
     }),
   ) as { schema_version?: number; spec_path?: string; error?: string };
   if (digest.error) {
@@ -532,7 +532,7 @@ async function main(): Promise<void> {
     );
   }
   if (digest.schema_version !== 1) throw new Error("project_spec_closeout_digest schema_version 1 expected");
-  if (digest.spec_path !== ".cursor/projects/TECH-59.md") {
+  if (digest.spec_path !== ".cursor/projects/TECH-75.md") {
     throw new Error("project_spec_closeout_digest spec_path mismatch");
   }
 

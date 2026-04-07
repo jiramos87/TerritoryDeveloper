@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-07T00:13:36.944Z",
+  "last_generated": "2026-04-07T14:51:34.835Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -425,355 +425,355 @@
           "section_id": "5.8",
           "title": "5.8 Coastal Transitions (Water Slopes)",
           "depth": 3,
-          "line_start": 308
+          "line_start": 309
         },
         {
           "section_id": "5.9",
           "title": "5.9 Bays and shore corners",
           "depth": 3,
-          "line_start": 313
+          "line_start": 314
         },
         {
           "section_id": "5.10",
           "title": "5.10 Cut-Through Corridors",
           "depth": 3,
-          "line_start": 330
+          "line_start": 331
         },
         {
           "section_id": "5.11",
           "title": "5.11 Sea Level Water",
           "depth": 3,
-          "line_start": 333
+          "line_start": 334
         },
         {
           "section_id": "6",
           "title": "6. Prefab Inventory",
           "depth": 2,
-          "line_start": 338
+          "line_start": 339
         },
         {
           "section_id": "6.1",
           "title": "6.1 Land Slope Prefabs (12)",
           "depth": 3,
-          "line_start": 340
+          "line_start": 341
         },
         {
           "section_id": "6.2",
           "title": "6.2 Water Slope Prefabs (12)",
           "depth": 3,
-          "line_start": 346
+          "line_start": 347
         },
         {
           "section_id": "6.3",
           "title": "6.3 Infrastructure Prefabs",
           "depth": 3,
-          "line_start": 352
+          "line_start": 353
         },
         {
           "section_id": "6.4",
           "title": "6.4 Slope Variant Naming Convention",
           "depth": 3,
-          "line_start": 363
+          "line_start": 364
         },
         {
           "section_id": "7",
           "title": "7. Sorting Order System",
           "depth": 2,
-          "line_start": 377
+          "line_start": 378
         },
         {
           "section_id": "7.1",
           "title": "7.1 Formula",
           "depth": 3,
-          "line_start": 379
+          "line_start": 380
         },
         {
           "section_id": "7.2",
           "title": "7.2 Type Offsets",
           "depth": 3,
-          "line_start": 391
+          "line_start": 392
         },
         {
           "section_id": "7.3",
           "title": "7.3 Design Rationale",
           "depth": 3,
-          "line_start": 403
+          "line_start": 404
         },
         {
           "section_id": "7.4",
           "title": "7.4 Save / Load — cell visuals and building sorting",
           "depth": 3,
-          "line_start": 408
+          "line_start": 409
         },
         {
           "section_id": "8",
           "title": "8. Terraforming System",
           "depth": 2,
-          "line_start": 421
+          "line_start": 422
         },
         {
           "section_id": "8.1",
           "title": "8.1 Overview",
           "depth": 3,
-          "line_start": 423
+          "line_start": 424
         },
         {
           "section_id": "8.2",
           "title": "8.2 Scale-with-Slopes Mode",
           "depth": 3,
-          "line_start": 427
+          "line_start": 428
         },
         {
           "section_id": "8.3",
           "title": "8.3 Cut-Through Mode",
           "depth": 3,
-          "line_start": 431
+          "line_start": 432
         },
         {
           "section_id": "8.4",
           "title": "8.4 Diagonal Step Expansion",
           "depth": 3,
-          "line_start": 441
+          "line_start": 442
         },
         {
           "section_id": "8.5",
           "title": "8.5 Terraform Actions",
           "depth": 3,
-          "line_start": 445
+          "line_start": 446
         },
         {
           "section_id": "8.6",
           "title": "8.6 River junction straightening",
           "depth": 3,
-          "line_start": 453
+          "line_start": 454
         },
         {
           "section_id": "9",
           "title": "9. Road Prefab Selection on Terrain",
           "depth": 2,
-          "line_start": 459
+          "line_start": 460
         },
         {
           "section_id": "9.1",
           "title": "9.1 Road Prefab Resolver",
           "depth": 3,
-          "line_start": 463
+          "line_start": 464
         },
         {
           "section_id": "9.2",
           "title": "9.2 Road Prefab Types",
           "depth": 3,
-          "line_start": 470
+          "line_start": 471
         },
         {
           "section_id": "9.3",
           "title": "9.3 Slope Road Prefab Mapping",
           "depth": 3,
-          "line_start": 486
+          "line_start": 487
         },
         {
           "section_id": "10",
           "title": "10. Pathfinding Cost Model",
           "depth": 2,
-          "line_start": 500
+          "line_start": 501
         },
         {
           "section_id": "11",
           "title": "11. Water map, lakes, and persistence",
           "depth": 2,
-          "line_start": 517
+          "line_start": 518
         },
         {
           "section_id": "11.1",
           "title": "11.1 Mental model",
           "depth": 3,
-          "line_start": 519
+          "line_start": 520
         },
         {
           "section_id": "11.2",
           "title": "11.2 Data structures",
           "depth": 3,
-          "line_start": 523
+          "line_start": 524
         },
         {
           "section_id": "11.3",
           "title": "11.3 Lake generation",
           "depth": 3,
-          "line_start": 532
+          "line_start": 533
         },
         {
           "section_id": "11.4",
           "title": "11.4 Valid lake — rules",
           "depth": 3,
-          "line_start": 541
+          "line_start": 542
         },
         {
           "section_id": "11.5",
           "title": "11.5 Save / load",
           "depth": 3,
-          "line_start": 545
+          "line_start": 546
         },
         {
           "section_id": "11.6",
           "title": "11.6 Shore refresh after lakes",
           "depth": 3,
-          "line_start": 551
+          "line_start": 552
         },
         {
           "section_id": "11.7",
           "title": "11.7 Multi-body contact: bed alignment and junction merge",
           "depth": 3,
-          "line_start": 555
+          "line_start": 556
         },
         {
           "section_id": "11.8",
           "title": "11.8 River / multi-surface junction geometry (cascades, brinks)",
           "depth": 3,
-          "line_start": 577
+          "line_start": 578
         },
         {
           "section_id": "11.8.1",
           "title": "11.8.1 Shore neighbor topology vs junction diagonal prefabs",
           "depth": 4,
-          "line_start": 583
+          "line_start": 584
         },
         {
           "section_id": "12",
           "title": "12. Procedural rivers",
           "depth": 2,
-          "line_start": 599
+          "line_start": 600
         },
         {
           "section_id": "12.1",
           "title": "12.1 Initialization order",
           "depth": 3,
-          "line_start": 603
+          "line_start": 604
         },
         {
           "section_id": "12.2",
           "title": "12.2 Scope",
           "depth": 3,
-          "line_start": 607
+          "line_start": 608
         },
         {
           "section_id": "12.3",
           "title": "12.3 Merge and adjacency to lakes/sea",
           "depth": 3,
-          "line_start": 612
+          "line_start": 613
         },
         {
           "section_id": "12.4",
           "title": "12.4 Geometry (implementation contracts)",
           "depth": 3,
-          "line_start": 616
+          "line_start": 617
         },
         {
           "section_id": "12.5",
           "title": "12.5 Shore band continuity (inner corners)",
           "depth": 3,
-          "line_start": 633
+          "line_start": 634
         },
         {
           "section_id": "13",
           "title": "13. Streets, interstates, bridges, shared validation",
           "depth": 2,
-          "line_start": 641
+          "line_start": 642
         },
         {
           "section_id": "13.1",
           "title": "13.1 Road validation pipeline; two plan constructors",
           "depth": 3,
-          "line_start": 643
+          "line_start": 644
         },
         {
           "section_id": "13.2",
           "title": "13.2 Manual draw pipeline",
           "depth": 3,
-          "line_start": 660
+          "line_start": 661
         },
         {
           "section_id": "13.3",
           "title": "13.3 Slope climb vs carve",
           "depth": 3,
-          "line_start": 665
+          "line_start": 666
         },
         {
           "section_id": "13.4",
           "title": "13.4 Bridges and water approach",
           "depth": 3,
-          "line_start": 669
+          "line_start": 670
         },
         {
           "section_id": "13.5",
           "title": "13.5 Interstate pathfinding",
           "depth": 3,
-          "line_start": 678
+          "line_start": 679
         },
         {
           "section_id": "13.6",
           "title": "13.6 Cut-through robustness",
           "depth": 3,
-          "line_start": 682
+          "line_start": 683
         },
         {
           "section_id": "13.7",
           "title": "13.7 Resolver rules",
           "depth": 3,
-          "line_start": 686
+          "line_start": 687
         },
         {
           "section_id": "13.8",
           "title": "13.8 Optional polish (backlog)",
           "depth": 3,
-          "line_start": 699
+          "line_start": 700
         },
         {
           "section_id": "13.9",
           "title": "13.9 AUTO simulation: pathfinding walkability, reservations, perpendicular growth",
           "depth": 3,
-          "line_start": 705
+          "line_start": 706
         },
         {
           "section_id": "13.10",
           "title": "13.10 Land slope eligibility for road strokes",
           "depth": 3,
-          "line_start": 717
+          "line_start": 718
         },
         {
           "section_id": "14",
           "title": "14. Lake / cliff / shore — engineering notes",
           "depth": 2,
-          "line_start": 731
+          "line_start": 732
         },
         {
           "section_id": "14.1",
           "title": "14.1 Glossary",
           "depth": 3,
-          "line_start": 733
+          "line_start": 734
         },
         {
           "section_id": "14.5",
           "title": "14.5 Domain vocabulary — roads, grid, and spacing",
           "depth": 3,
-          "line_start": 744
+          "line_start": 745
         },
         {
           "section_id": "14.2",
           "title": "14.2 Resolved techniques",
           "depth": 3,
-          "line_start": 759
+          "line_start": 760
         },
         {
           "section_id": "14.3",
           "title": "14.3 Symptom → direction",
           "depth": 3,
-          "line_start": 764
+          "line_start": 765
         },
         {
           "section_id": "14.4",
           "title": "14.4 Debug and picking",
           "depth": 3,
-          "line_start": 773
+          "line_start": 774
         }
       ]
     },

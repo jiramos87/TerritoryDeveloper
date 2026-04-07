@@ -99,7 +99,7 @@ This requires the backlog parser to resolve cited ids — minor extension to `pa
 **Proposal:** A `context_bundle` tool that accepts:
 ```json
 {
-  "issue_id": "TECH-59",
+  "issue_id": "TECH-75",
   "include_invariants": true,
   "domains": ["roads", "save"],
   "spec_sections": [{"spec": "geo", "section": "13.4", "max_chars": 2000}],
@@ -151,7 +151,7 @@ As described in §2.5 — add `depends_on_status` to the response by parsing cit
 
 ## 4. Script improvements and new scripts
 
-### 4.1 `npm run impact:check -- --issue TECH-59`
+### 4.1 `npm run impact:check -- --issue TECH-75`
 
 A new script that, given an issue id:
 1. Reads the project spec's Implementation Plan and Files.
@@ -160,7 +160,7 @@ A new script that, given an issue id:
 
 This powers the pre-implementation impact analysis (§2.1).
 
-### 4.2 `npm run diff:summary -- --issue TECH-59` (or `--branch feature/TECH-59`)
+### 4.2 `npm run diff:summary -- --issue TECH-75` (or `--branch feature/TECH-75`)
 
 A script that examines git history for an issue and produces:
 1. Changed files grouped by subsystem.
@@ -174,7 +174,7 @@ This powers §2.3 and could also feed `project-spec-close` step 4.
 
 Currently `closeout:verify` runs `validate:dead-project-specs` + `generate:ia-indexes --check`. Extend it to also check that if the diff touched `.cursor/specs/glossary.md`, the committed `glossary-index.json` is in sync (already covered by `generate:ia-indexes --check`, but make the error message explicit about which source changed).
 
-### 4.4 `npm run validate:backlog-deps -- --issue TECH-59`
+### 4.4 `npm run validate:backlog-deps -- --issue TECH-75`
 
 A script that parses the `Depends on` field of a backlog issue and checks whether all cited ids are in Completed status. Emits warnings for open dependencies. Lightweight version of TECH-30 scoped to one issue.
 

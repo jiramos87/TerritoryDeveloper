@@ -126,18 +126,18 @@ test("completed status from header line via full parse path", () => {
 });
 
 test(
-  "parseBacklogIssue loads open TECH-59 from repo BACKLOG.md",
+  "parseBacklogIssue loads open TECH-75a from repo BACKLOG.md",
   { skip: !fs.existsSync(path.join(repoRoot, "BACKLOG.md")) },
   () => {
     const prev = process.env.REPO_ROOT;
     process.env.REPO_ROOT = repoRoot;
     try {
-      const p = parseBacklogIssue(repoRoot, "TECH-59");
+      const p = parseBacklogIssue(repoRoot, "TECH-75a");
       assert.ok(p);
-      assert.equal(p!.issue_id, "TECH-59");
+      assert.equal(p!.issue_id, "TECH-75a");
       assert.equal(p!.status, "open");
-      assert.ok(p!.title.toLowerCase().includes("mcp"));
-      assert.ok(p!.raw_markdown.includes("TECH-59"));
+      assert.ok(p!.title.toLowerCase().includes("close dev loop"));
+      assert.ok(p!.raw_markdown.includes("TECH-75a"));
     } finally {
       process.env.REPO_ROOT = prev;
     }

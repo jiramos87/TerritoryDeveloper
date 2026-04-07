@@ -30,6 +30,7 @@ public enum TerrainSlopeType
 /// slope prefab (flat, N/S/E/W slopes, corner slopes, water slopes). Coordinates with GridManager
 /// for cell height assignment and WaterManager for water-slope prefab variants.
 /// Water–water surface steps: <see cref="RefreshWaterCascadeCliffs"/> (same segment stack as brown <c>PlaceCliffWallStack</c>).
+/// Map-border south/east cliffs toward the off-grid void stack brown segments down to <see cref="MIN_HEIGHT"/>; water-shore primary tiles skip duplicate faces toward that void.
 /// QA uniform new-game terrain: <see cref="SetNewGameFlatTerrainOptions"/> (driven from <see cref="Territory.Geography.GeographyManager"/>).
 /// </summary>
 public class TerrainManager : MonoBehaviour, ITerrainManager
@@ -108,7 +109,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     [SerializeField] private float cliffWallEastFaceNudgeTileWidthFraction = -1.0f;
     [Tooltip("World Y offset for East cliff art vs shared-edge midpoint, as a fraction of tileHeight. Set to 0 when the sprite art sits on the east face.")]
     [SerializeField] private float cliffWallEastFaceNudgeTileHeightFraction = 1.0f;
-    [Tooltip("When the cell uses a water-shore primary prefab, cliff world Y is decreased by this fraction of tileHeight (0.5 matches legacy sloped-shore alignment). Set to 0 if cliffs align without the extra drop.")]
+    [Tooltip("When the cell uses a water-shore primary prefab and the cliff lower neighbor is on-grid, cliff world Y is decreased by this fraction of tileHeight (0.5 matches legacy sloped-shore alignment). Skipped when the lower neighbor is off-grid. Set to 0 if cliffs align without the extra drop.")]
     [SerializeField] private float cliffWallWaterShoreYOffsetTileHeightFraction = 1.0f;
 
     public GameObject northEastBayPrefab;
@@ -185,6 +186,14 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// <summary>Cardinal offsets (south, north, east, west) for neighbor scans — order matches four-direction loops.</summary>
     static readonly int[] CardinalDx = { -1, 1, 0, 0 };
     static readonly int[] CardinalDy = { 0, 0, -1, 1 };
+
+    /// <summary>
+    /// South/east face toward off-grid void: water-shore primary prefabs already include visible transition art on that edge; skip duplicate brown cliff stacks.
+    /// </summary>
+    private bool ShouldSuppressBrownCliffTowardOffGridForWaterShorePrimary(Cell cell)
+    {
+        return cell != null && CellUsesWaterShorePrimaryPrefab(cell);
+    }
 
     // Sorting order constants for different object types
     public const int TERRAIN_BASE_ORDER = 0;
@@ -1984,7 +1993,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         {
             if (cell != null)
                 cell.cliffFaces |= CliffFaceFlags.South;
-            int southLowH = heightMap.IsValidPosition(x - 1, y) ? heightMap.GetHeight(x - 1, y) : SEA_LEVEL;
+            int southLowH = heightMap.IsValidPosition(x - 1, y)
+                ? heightMap.GetHeight(x - 1, y)
+                : MIN_HEIGHT;
             PlaceCliffWallStack(cell, CliffCardinalFace.South, x, y, x - 1, y, currentHeight, southLowH, dSouth);
         }
 
@@ -1993,7 +2004,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         {
             if (cell != null)
                 cell.cliffFaces |= CliffFaceFlags.East;
-            int eastLowH = heightMap.IsValidPosition(x, y - 1) ? heightMap.GetHeight(x, y - 1) : SEA_LEVEL;
+            int eastLowH = heightMap.IsValidPosition(x, y - 1)
+                ? heightMap.GetHeight(x, y - 1)
+                : MIN_HEIGHT;
             PlaceCliffWallStack(cell, CliffCardinalFace.East, x, y, x, y - 1, currentHeight, eastLowH, dEast);
         }
 
@@ -2064,7 +2077,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         int diff,
         ISet<Vector2Int> terraformCutCorridorCells)
     {
-        // Map edge (south/east): lower cell is outside the grid — use virtual sea-level foot (see §5.7).
+        // Map edge (south/east): lower cell is outside the grid — caller passes diff and lowerHeight (typically to MIN_HEIGHT).
         if (heightMap == null || !heightMap.IsValidPosition(lowerX, lowerY))
         {
             if (diff <= 0)
@@ -2158,12 +2171,23 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         int lowerX = x - 1;
         int lowerY = y;
         bool lowerValid = heightMap != null && heightMap.IsValidPosition(lowerX, lowerY);
-        int heightAtSouth = lowerValid ? heightMap.GetHeight(lowerX, lowerY) : SEA_LEVEL;
+        if (!lowerValid)
+        {
+            Cell c = gridManager != null ? gridManager.GetCell(x, y) : null;
+            if (ShouldSuppressBrownCliffTowardOffGridForWaterShorePrimary(c))
+                return 0;
+            int diffVoid = currentHeight - MIN_HEIGHT;
+            if (diffVoid <= 0)
+                return 0;
+            return ResolveCliffWallDropAfterSuppression(x, y, currentHeight, lowerX, lowerY, MIN_HEIGHT, diffVoid, terraformCutCorridorCells);
+        }
+
+        int heightAtSouth = heightMap.GetHeight(lowerX, lowerY);
         if (heightAtSouth >= currentHeight)
             return 0;
         int diff = currentHeight - heightAtSouth;
 
-        if (lowerValid && ShouldSuppressCliffFaceTowardLowerCell(x, y, lowerX, lowerY, heightAtSouth, currentHeight))
+        if (ShouldSuppressCliffFaceTowardLowerCell(x, y, lowerX, lowerY, heightAtSouth, currentHeight))
         {
             if (diff == 1 && NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtSouth, lowerX, lowerY)
                 && !IsWaterSlopeCell(lowerX, lowerY))
@@ -2179,12 +2203,23 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         int lowerX = x;
         int lowerY = y - 1;
         bool lowerValid = heightMap != null && heightMap.IsValidPosition(lowerX, lowerY);
-        int heightAtEast = lowerValid ? heightMap.GetHeight(lowerX, lowerY) : SEA_LEVEL;
+        if (!lowerValid)
+        {
+            Cell c = gridManager != null ? gridManager.GetCell(x, y) : null;
+            if (ShouldSuppressBrownCliffTowardOffGridForWaterShorePrimary(c))
+                return 0;
+            int diffVoid = currentHeight - MIN_HEIGHT;
+            if (diffVoid <= 0)
+                return 0;
+            return ResolveCliffWallDropAfterSuppression(x, y, currentHeight, lowerX, lowerY, MIN_HEIGHT, diffVoid, terraformCutCorridorCells);
+        }
+
+        int heightAtEast = heightMap.GetHeight(lowerX, lowerY);
         if (heightAtEast >= currentHeight)
             return 0;
         int diff = currentHeight - heightAtEast;
 
-        if (lowerValid && ShouldSuppressCliffFaceTowardLowerCell(x, y, lowerX, lowerY, heightAtEast, currentHeight))
+        if (ShouldSuppressCliffFaceTowardLowerCell(x, y, lowerX, lowerY, heightAtEast, currentHeight))
         {
             if (diff == 1 && NeedsCutThroughOneStepCliffToCorridor(terraformCutCorridorCells, currentHeight, heightAtEast, lowerX, lowerY)
                 && !IsWaterSlopeCell(lowerX, lowerY))
@@ -2359,7 +2394,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
             Vector2 world = GetCliffWallSegmentWorldPositionOnSharedEdge(cell, topH, s, cliffStackAnchorWorldY);
 
-            if (cliffStackAnchorWorldY == null && CellUsesWaterShorePrimaryPrefab(cell))
+            // Water-shore Y nudge aligns brown cliffs to adjacent open water on a real lower cell; skip when lower is off-grid.
+            if (cliffStackAnchorWorldY == null && CellUsesWaterShorePrimaryPrefab(cell)
+                && heightMap.IsValidPosition(lowX, lowY))
                 world.y -= gridManager.tileHeight * cliffWallWaterShoreYOffsetTileHeightFraction;
 
             GameObject cliffWall = Instantiate(cliffPrefab, new Vector3(world.x, world.y, z), rot);

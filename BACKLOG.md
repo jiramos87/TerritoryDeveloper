@@ -35,16 +35,31 @@
 
 ## Agent ↔ Unity & MCP context lane
 
-Ordered for **closed-loop agent ↔ Unity** (glossary **IDE agent bridge** — [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); **Phase 1** archived [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **Editor export registry** staging (**TECH-59**) → **JSON / reports** plumbing → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**§ Compute-lib program** above: **TECH-38** + **TECH-32**/**TECH-35**.) **Prerequisites:** **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (this lane — existing `.cursor/projects/*.md`); **TECH-38** + archived **TECH-39** (**§ Compute-lib program** / [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **Spec-pipeline** charter: **glossary** **territory-ia spec-pipeline program** + archive.
+Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration: [`.cursor/projects/TECH-75.md`](.cursor/projects/TECH-75.md) (glossary **IDE agent bridge** — [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); **Phase 1** archived [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **TECH-75a → TECH-75b → TECH-75c** deliver the MVP closed loop (agent enters Play Mode, collects evidence, verifies fix). Remaining lane items follow: **JSON / reports** plumbing → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**§ Compute-lib program** above: **TECH-38** + **TECH-32**/**TECH-35**.) **Prerequisites for later items:** **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (existing `.cursor/projects/*.md`); **TECH-38** + archived **TECH-39** (**§ Compute-lib program** / [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **Spec-pipeline** charter: **glossary** **territory-ia spec-pipeline program** + archive.
 
-- [ ] **TECH-59** — **territory-ia** MCP: stage **Editor** export registry payload (**BACKLOG** issue id + JSON documents)
+- [ ] **TECH-75a** — **Close Dev Loop**: Play Mode bridge commands + readiness signal
   - Type: tooling / agent enablement
-  - Files: `tools/mcp-ia-server/src/` (new **`registerTool`** handler + validation); `tools/mcp-ia-server/tests/`; `tools/mcp-ia-server/README.md`; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); `Assets/Scripts/Editor/` (menu: read staged file → apply **EditorPrefs** / optional one-shot register); **`.gitignore`** (staging path); optional JSON schema under `docs/schemas/` or fixture under `tools/mcp-ia-server/`; [`.cursor/skills/README.md`](.cursor/skills/README.md) pointer if agent recipe updates
-  - Spec: `.cursor/projects/TECH-59.md`
-  - Notes: **Problem:** Agents cannot set **Unity** **EditorPrefs**; developers should not re-type **`backlog_issue_id`** and JSON shapes by hand every time. **Direction:** MCP tool accepts **`issue_id`** + one or more **JSON** objects (typed by **export kind** or free-form envelope per **Decision Log**), writes a **gitignored** **staging file** under the repo; Unity menu **Apply MCP-staged registry…** loads file, validates, sets **EditorPrefs** (**`TerritoryDeveloper.EditorExportRegistry.BacklogIssueId`**), and optionally triggers the existing **Node** / **Postgres** path so the dev **clicks once**. **Non-goals:** MCP opens **TCP** to **Postgres**; no secrets in MCP arguments (connection string stays **EditorPrefs** / env). **Overlap:** **TECH-48** (MCP discovery — different scope); **Editor export registry** (glossary) shipped — staging may align when implemented.
-  - Acceptance: per `.cursor/projects/TECH-59.md` §8; **`npm run verify`** / **`npm run test:ia`** green when MCP code ships
-  - Depends on: none (soft: **TECH-24** for parser/test policy)
-  - Related: glossary **IDE agent bridge** (archived **Phase 1** — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)); **TECH-48**, **TECH-18** (long-term DB-backed IA); glossary **Editor export registry**
+  - Files: `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`; `tools/mcp-ia-server/src/tools/unity-bridge-command.ts` (docs for new `kind` values); `docs/mcp-ia-server.md`; `tools/mcp-ia-server/README.md`; [`.cursor/specs/unity-development-context.md`](.cursor/specs/unity-development-context.md) §10
+  - Spec: `.cursor/projects/TECH-75.md` (orchestration — §7 **TECH-75a**)
+  - Notes: New bridge `kind` values: `enter_play_mode`, `exit_play_mode`, `get_play_mode_status`. Readiness signal polls `GridManager` init after entering Play Mode. Guards for idempotency (already in/out of Play Mode). Extends shipped **Phase 1** bridge (archived **TECH-73** / **TECH-74**).
+  - Acceptance: agent round-trips `enter_play_mode` → `get_play_mode_status` → `exit_play_mode` without human Unity interaction; `npm run test:ia` green
+  - Depends on: none (extends shipped bridge)
+
+- [ ] **TECH-75b** — **Close Dev Loop**: context bundle + anomaly detection
+  - Type: tooling / agent enablement
+  - Files: `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`; `Assets/Scripts/Editor/AgentBridgeAnomalyScanner.cs` (new); `tools/mcp-ia-server/src/tools/unity-bridge-command.ts` (optional sugar tool); `docs/mcp-ia-server.md`; `tools/mcp-ia-server/README.md`
+  - Spec: `.cursor/projects/TECH-75.md` (orchestration — §7 **TECH-75b**)
+  - Notes: New bridge `kind`: `debug_context_bundle`. One call returns: Moore neighborhood cell data, screenshot path, console lines, `anomalies` array. **Anomaly scanner** flags: missing border cliffs, `HeightMap`/`Cell.height` desync, redundant shore cliffs toward off-grid. Extensible rule set.
+  - Acceptance: `debug_context_bundle` at a known seed cell returns combined payload with anomalies; `npm run test:ia` green
+  - Depends on: **TECH-75a** (Play Mode must be active for meaningful data)
+
+- [ ] **TECH-75c** — **Close Dev Loop**: Cursor Skill orchestrating fix → verify → report
+  - Type: documentation / agent enablement (**Cursor Skill**)
+  - Files: `.cursor/skills/close-dev-loop/SKILL.md` (new); `.cursor/skills/README.md`; `AGENTS.md` (pointer)
+  - Spec: `.cursor/projects/TECH-75.md` (orchestration — §7 **TECH-75c**)
+  - Notes: Skill recipe: pre-fix capture → implement → post-fix capture → diff → report to human. Integrates `enter_play_mode`, `debug_context_bundle`, `exit_play_mode`. Before/after anomaly count delta + screenshot paths. Optional link from `project-spec-implement` as a verification step.
+  - Acceptance: Skill file committed; agent can execute the full fix → verify cycle presenting before/after diff to human
+  - Depends on: **TECH-75b** (needs bundle + anomaly detection)
 
 - [ ] **TECH-53** — **Schema validation history** (Postgres extension **E2** track)
   - Type: technical / CI / data
@@ -250,13 +265,6 @@ Player-facing **simulation**, **AUTO** growth, **happiness** feedback, and **urb
   - Notes: Existing **buildings** evolve to larger versions based on **zone density** and **desirability**. (**TECH-15** / **TECH-16** — performance + harness work — live under **§ Agent ↔ Unity & MCP context lane**.)
 
 ## High Priority
-- [ ] **BUG-44** — **Cliff** prefabs: black gaps when a **water body** (**river** or **lake**) meets the **east** or **south** **map border**
-  - Type: bug
-  - Files: `TerrainManager.cs` (`PlaceCliffWalls`, `PlaceCliffWallStack`, **map border** / max-X / max-Y edge cases vs **open water** cells), `WaterManager.cs` / `WaterMap.cs` if edge water placement interacts with **shore refresh**; **cliff** / **water-shore** prefabs under `Assets/Prefabs/` (per `.cursor/rules/coding-conventions.mdc` for new or adjusted assets)
-  - Spec: `.cursor/specs/isometric-geography-system.md` (**map border**, water, **cliffs**, **sorting order** — sections covering shore/**cliff** stacks at boundaries)
-  - Notes: **Observed:** Where a **river** channel or **lake** reaches the **east** or **south** **map border**, the **cliff** geometry that seals the edge is **missing or too short** under the water tiles, exposing **black void**; **grass cells** on the same **map border** still show correct **cliff** faces. Suggests **map border** **cliff** stacks or prefab variants do not account for **lower river bed** (`H_bed`) elevation at those edges. **Expected:** Continuous **cliff** wall to the same depth as neighboring land **cliffs**, or dedicated **map border** + water prefabs so no holes at east/south × water. **Related:** prior shore/**cliff** merge work may share root cause — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
-  - Depends on: none
-
 - [ ] **BUG-31** — Wrong prefabs at interstate entry/exit (border)
   - Type: fix
   - Files: `RoadPrefabResolver.cs`, `RoadManager.cs`

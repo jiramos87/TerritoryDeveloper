@@ -1,8 +1,8 @@
 #!/usr/bin/env npx tsx
 /**
  * Emit a closeout worksheet (Markdown or JSON) from a project spec — TECH-58.
- * Usage: npx tsx scripts/project-spec-closeout-report.ts --issue TECH-59 [--json]
- *     or npx tsx scripts/project-spec-closeout-report.ts --path .cursor/projects/TECH-59.md [--json]
+ * Usage: npx tsx scripts/project-spec-closeout-report.ts --issue TECH-75 [--json]
+ *     or npx tsx scripts/project-spec-closeout-report.ts --path .cursor/projects/TECH-75.md [--json]
  */
 
 import fs from "node:fs";
@@ -76,8 +76,8 @@ function main(): void {
   const { issue_id, spec_path, json } = parseArgs(process.argv.slice(2));
   if (!issue_id && !spec_path) {
     console.error(
-      "Usage: project-spec-closeout-report.ts --issue TECH-59 [--json]\n" +
-        "    or project-spec-closeout-report.ts --path .cursor/projects/TECH-59.md [--json]",
+      "Usage: project-spec-closeout-report.ts --issue TECH-75 [--json]\n" +
+        "    or project-spec-closeout-report.ts --path .cursor/projects/TECH-75.md [--json]",
     );
     process.exit(1);
   }

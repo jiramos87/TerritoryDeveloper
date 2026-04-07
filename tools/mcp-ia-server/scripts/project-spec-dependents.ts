@@ -1,7 +1,7 @@
 #!/usr/bin/env npx tsx
 /**
  * List repo text files that cite a backlog issue id or its project spec path — TECH-58.
- * Usage: npx tsx scripts/project-spec-dependents.ts --issue TECH-59
+ * Usage: npx tsx scripts/project-spec-dependents.ts --issue TECH-75
  *
  * Limitations: may miss plain mentions without word boundaries; BACKLOG-ARCHIVE.md is scanned
  * (historical rows often cite closed specs). Does not replace manual umbrella/sibling review.
@@ -74,7 +74,7 @@ function parseIssue(argv: string[]): string | null {
 function main(): void {
   const raw = parseIssue(process.argv.slice(2));
   if (!raw) {
-    console.error("Usage: project-spec-dependents.ts --issue TECH-59");
+    console.error("Usage: project-spec-dependents.ts --issue TECH-75");
     process.exit(1);
   }
   const issue_id = normalizeIssueId(raw);
