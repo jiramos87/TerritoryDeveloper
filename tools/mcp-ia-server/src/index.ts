@@ -26,12 +26,13 @@ import {
   registerIsometricWorldToGrid,
   registerPathfindingCostPreview,
 } from "./tools/compute/index.js";
+import { registerUnityBridgeCommand } from "./tools/unity-bridge-command.js";
 
 const server = new McpServer({
   name: "territory-ia",
-  version: "0.4.6",
+  version: "0.4.13",
   description:
-    "Information Architecture server for Territory Developer — exposes specs, rules, glossary, backlog issues, architecture docs, optional Postgres project-spec journal, and computational helpers via MCP tools.",
+    "Information Architecture server for Territory Developer — exposes specs, rules, glossary, backlog issues, architecture docs, optional Postgres project-spec journal, computational helpers, and Unity Editor bridge commands (Postgres agent_bridge_job) via MCP tools.",
 });
 
 const registry = buildRegistry();
@@ -55,6 +56,7 @@ registerGridDistance(server);
 registerPathfindingCostPreview(server);
 registerGeographyInitParamsValidate(server);
 registerDesirabilityTopCells(server);
+registerUnityBridgeCommand(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

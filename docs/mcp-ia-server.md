@@ -10,7 +10,7 @@ Task-to-spec priorities match **`.cursor/rules/agent-router.mdc`**. That rule fi
 
 - **Terminology:** Tool names (`snake_case`) and descriptions should align with [`AGENTS.md`](../AGENTS.md) — glossary-backed domain terms, same vocabulary as specs and backlog. When adding or renaming tools, update this file and [`tools/mcp-ia-server/README.md`](../tools/mcp-ia-server/README.md) together with `registerTool` in code.
 - **Glossary tools (`glossary_discover`, `glossary_lookup`):** The on-disk glossary is **English**. Agents must pass **English** in `query` / `keywords` / `term`. If the human conversation is in another language, **translate** the concepts into English (canonical domain words such as **street**, **road stroke**, **wet run**) before calling these tools. The server does not provide multilingual matching.
-- **Workspace expectation:** This repo is set up so **Cursor** can run **territory-ia** from `.cursor/mcp.json`. Agents with tool access should **prefer MCP** for IA lookups in **Agent** chats. For **`project_spec_journal_*`** tools, set **`DATABASE_URL`** in the MCP host environment if you need to override committed [`config/postgres-dev.json`](../config/postgres-dev.json) (read when **`DATABASE_URL`** is unset and not in **CI**). Otherwise tools use that file or return **`db_unconfigured`** when no URL resolves.
+- **Workspace expectation:** This repo is set up so **Cursor** can run **territory-ia** from `.cursor/mcp.json` (optional **`REPO_ROOT`**; often `"."` relative to the workspace). Agents with tool access should **prefer MCP** for IA lookups in **Agent** chats. When **`REPO_ROOT`** is unset, the server walks up from **`process.cwd()`** for `config/postgres-dev.json` or `.cursor/specs/glossary.md`, so **`npm`** / **`tsx`** from **`tools/mcp-ia-server/`** still resolves the repo root. For **`project_spec_journal_*`** and **`unity_bridge_*`**, set **`DATABASE_URL`** in the MCP host environment if you need to override committed [`config/postgres-dev.json`](../config/postgres-dev.json) (read when **`DATABASE_URL`** is unset and not in **CI**). Otherwise tools use that file or return **`db_unconfigured`** when no URL resolves.
 - **Human / IDE settings:** Whether tool runs require a click to approve is controlled by **Cursor** (e.g. auto-run or approval settings for MCP/tools)—not by this repo. Adjust in Cursor **Settings** if you want fewer prompts.
 - **Not guaranteed every turn:** The model still chooses whether to call a tool; repo rules and `AGENTS.md` exist to **bias** behavior toward MCP first.
 - **Cursor User Rules (optional):** In **Cursor Settings → Rules for AI** (or your global user rules), add a one-liner such as: *In the territory-developer workspace, prefer territory-ia MCP tools (`backlog_issue`, then spec/glossary/router tools) before reading whole spec files.* The repo cannot enforce IDE settings; this duplicates the intent of `AGENTS.md` for every chat.
@@ -31,7 +31,7 @@ Repo **Cursor Skills** define **ordered** MCP usage for `.cursor/projects/{ISSUE
 
 See also [`AGENTS.md`](../AGENTS.md) (Before You Start) and [`.cursor/skills/README.md`](../.cursor/skills/README.md).
 
-## Tools (22)
+## Tools (24)
 
 | Tool | Role |
 |------|------|
@@ -57,6 +57,8 @@ See also [`AGENTS.md`](../AGENTS.md) (Before You Start) and [`.cursor/skills/REA
 | `pathfinding_cost_preview` | **Computational v1:** Manhattan steps × cost — **approximation** only; not geo §10 **A\*** costs or road legality. |
 | `geography_init_params_validate` | **Computational:** Zod check for **Geography initialization** interchange v1 (aligned with `docs/schemas/geography-init-params.v1.schema.json`). |
 | `desirability_top_cells` | **Reserved:** returns **`NOT_AVAILABLE`** until a Unity **`batchmode`** export ships for **Desirability** sampling (see **glossary** **Desirability** and open [`BACKLOG.md`](../BACKLOG.md)). |
+| `unity_bridge_command` | **IDE agent bridge** (glossary): inserts **`agent_bridge_job`** (**Postgres**, migration **`0008`**), polls until **`completed`** / **`failed`** or **`timeout_ms`** (default **30000**, max **30000**). **`kind`:** **`export_agent_context`** (agent context + registry), **`get_console_logs`** (buffered Console → **`response.log_lines`**), **`capture_screenshot`** (**Play Mode** PNG under **`tools/reports/bridge-screenshots/`**; optional **`include_ui`** for **Game view** **`ScreenCapture`** including **Screen Space - Overlay** UI). Request **`params`** live in **`request` jsonb**; see **Zod** tool schema. Requires **`DATABASE_URL`** / **`config/postgres-dev.json`**, **Unity Editor** on **`REPO_ROOT`**, and **`AgentBridgeCommandRunner`**. Returns **`unity_agent_bridge_response`** (**`artifact_paths`**, optional **`log_lines`**, **`error`**, …). Removes the row on timeout if still **`pending`**. |
+| `unity_bridge_get` | **IDE agent bridge** (glossary): **`SELECT`** **`agent_bridge_job`** by **`command_id`**. Optional **`wait_ms`** (≤10000) to block until terminal status. Returns **`status`**, **`kind`**, **`response`**, **`error`**. Same DB requirement as **`unity_bridge_command`**. |
 
 ### Computational tools vs spec slices
 
@@ -67,6 +69,7 @@ Use **`spec_section`**, **`spec_sections`**, **`glossary_*`**, and **`router_for
 - **Code:** `tools/mcp-ia-server/` (TypeScript, `@modelcontextprotocol/sdk`); shared **pure** math in **`tools/compute-lib/`** (**territory-compute-lib** package).
 - **Cursor:** `.cursor/mcp.json` launches `npx -y tsx tools/mcp-ia-server/src/index.ts` from the repo root; set `REPO_ROOT` if the host cwd is not the repository root.
 - **Verify:** From `tools/mcp-ia-server/`, run `npm run verify` (spawns server like Cursor and calls tools via the SDK).
+- **Bridge smoke (CLI):** From the repository root, `npm run db:bridge-agent-context` runs the same enqueue/poll logic as **`unity_bridge_command`** (Postgres + Unity Editor required). Optional env **`BRIDGE_TIMEOUT_MS`** (default **30000**, max **30000**).
 - **Full developer README:** `tools/mcp-ia-server/README.md`.
 
 ## PostgreSQL IA (dev schema) and future DB-backed retrieval
@@ -82,7 +85,7 @@ Use **`spec_section`**, **`spec_sections`**, **`glossary_*`**, and **`router_for
 | **Example read** | SQL function **`ia_glossary_row_by_key(text)`** — `SELECT * FROM ia_glossary_row_by_key('heightmap');` after optional seed |
 | **Journal write (CLI)** | Root **`npm run db:persist-project-journal`** — same payload as **`project_spec_journal_persist`** |
 
-**MCP `pg` client:** `tools/mcp-ia-server` depends on **`pg`** and registers **`project_spec_journal_*`** when the server runs with **`DATABASE_URL`** in the host environment (returns **`db_unconfigured`** otherwise).
+**MCP `pg` client:** `tools/mcp-ia-server` depends on **`pg`** and registers **`project_spec_journal_*`**, **`unity_bridge_command`**, and **`unity_bridge_get`** against the shared IA DB URL (returns **`db_unconfigured`** when **`resolveIaDatabaseUrl()`** is null — e.g. **CI** without **`DATABASE_URL`**).
 
 ## Future work (tracked in BACKLOG)
 

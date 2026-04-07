@@ -6,7 +6,7 @@
 > **Last updated:** 2026-04-03
 
 **Depends on:** none (soft: **TECH-55** / **TECH-55b** **§ Completed** — [`BACKLOG.md`](../../BACKLOG.md) — for full **Postgres** + **Reports** UX)  
-**Related:** **TECH-55** / **TECH-55b** (completed — glossary **Editor export registry**), **TECH-48** (MCP discovery), **TECH-24** (MCP test policy), **TECH-18** (future DB-backed IA)
+**Related:** glossary **IDE agent bridge** (archived **Phase 1** — [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md); **Postgres** queue separate from this spec’s **staging file** pattern), **TECH-55** / **TECH-55b** (completed — glossary **Editor export registry**), **TECH-48** (MCP discovery), **TECH-24** (MCP test policy), **TECH-18** (future DB-backed IA)
 
 ## 1. Summary
 

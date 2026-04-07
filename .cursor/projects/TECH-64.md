@@ -62,7 +62,7 @@ Ship a **Territory Developer**–specific **Play Mode** testing path in the **Un
 ### 4.3 Implementation investigation notes
 
 - **Ad-hoc** = generated or copied-from-template **per debug session**, not necessarily committed long-term; policy (commit vs **gitignored** scratch) — **Decision Log**.
-- **Play Mode** **UTF** may need a **bootstrap** scene or **SceneManager** load of **`MainScene`** (or agreed test scene) — verify **GridManager** **`isInitialized`** timing vs **TECH-28** / **BUG-53** lessons.
+- **Play Mode** **UTF** may need a **bootstrap** scene or **SceneManager** load of **`MainScene`** (or agreed test scene) — verify **GridManager** **`isInitialized`** timing vs **TECH-28** / **unity-development-context** §10 (**Editor** diagnostics) lessons.
 
 ## 5. Proposed Design
 

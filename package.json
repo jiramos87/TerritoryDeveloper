@@ -17,6 +17,7 @@
     "closeout:worksheet": "cd tools/mcp-ia-server && npx tsx scripts/project-spec-closeout-report.ts --",
     "closeout:dependents": "cd tools/mcp-ia-server && npx tsx scripts/project-spec-dependents.ts --",
     "closeout:verify": "npm run validate:dead-project-specs && npm run generate:ia-indexes -- --check",
-    "db:persist-project-journal": "cd tools/mcp-ia-server && npx tsx scripts/persist-project-spec-journal.ts --"
+    "db:persist-project-journal": "cd tools/mcp-ia-server && npx tsx scripts/persist-project-spec-journal.ts --",
+    "db:bridge-agent-context": "npx --prefix tools/mcp-ia-server tsx tools/mcp-ia-server/scripts/run-unity-bridge-once.ts"
   }
 }

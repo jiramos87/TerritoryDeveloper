@@ -22,7 +22,8 @@ Abstract pattern (reusable outside this game): [`docs/mcp-markdown-ia-pattern.md
 | `npm test` | Unit tests (`node:test` + `tsx`) for parser and tool helpers. |
 | `npm run test:watch` | Tests in watch mode. |
 | `npm run test:coverage` | Parser + **ia-index** line coverage with **c8** (gate ≥90%). |
-| `npm run verify` | From this directory: spawns the server the same way as Cursor (via repo root + `npx -y tsx …`) and exercises all **22** tools through the MCP SDK client. |
+| `npm run verify` | From this directory: spawns the server the same way as Cursor (via repo root + `npx -y tsx …`) and exercises all **24** tools through the MCP SDK client. |
+| `scripts/run-unity-bridge-once.ts` | From repo root: `npm run db:bridge-agent-context` — one **`unity_bridge_command`**-equivalent call (needs Postgres + Unity). Optional **`BRIDGE_TIMEOUT_MS`**. |
 | `npm run validate:fixtures` | **AJV** (JSON Schema Draft 2020-12): valid fixtures under `docs/schemas/fixtures/` must pass; invalid fixtures must fail. |
 | `npm run generate:ia-indexes` | Writes `data/spec-index.json` and `data/glossary-index.json`. Pass `--check` to assert they match the generator (used in **CI**). |
 
@@ -44,7 +45,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | `REPO_ROOT` | Root used to resolve `.cursor/specs`, `.cursor/rules`, and root markdown. Defaults to `process.cwd()`. |
 | `DATABASE_URL` | Optional **PostgreSQL** URI; overrides committed **`config/postgres-dev.json`** when set. When no URL resolves (and not **CI**), **`project_spec_journal_*`** return **`db_unconfigured`**. |
 
-## Tools (22)
+## Tools (24)
 
 | Tool | Description |
 |------|-------------|
@@ -70,6 +71,8 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`pathfinding_cost_preview`** | **Computational v1:** Manhattan steps × `unit_cost_per_step` — labeled **approximation** only; not committed **A\*** / geo §10 costs. |
 | **`geography_init_params_validate`** | **Computational:** Zod validation for **Geography initialization** interchange v1 (`artifact` + `schema_version` 1). Pass document fields as the tool argument object. |
 | **`desirability_top_cells`** | **Stub:** returns `NOT_AVAILABLE` until **TECH-66** (`BACKLOG.md`) Unity **`batchmode`** export exists. |
+| **`unity_bridge_command`** | **IDE agent bridge** (glossary): **`kind`** **`export_agent_context`** \| **`get_console_logs`** \| **`capture_screenshot`** + **`timeout_ms`** (default **30000**, max **30000**). Inserts **`agent_bridge_job`** (**`request` jsonb** includes **`params`** per kind). **`get_console_logs`:** optional **`since_utc`**, **`severity_filter`**, **`tag_filter`**, **`max_lines`** (1–2000). **`capture_screenshot`:** optional **`camera`** (GameObject name), **`filename_stem`**, **`include_ui`** (boolean, default false — **Game view** + Overlay UI via **`ScreenCapture`**; ignores **`camera`** when true). Requires **`DATABASE_URL`**, migration **0008**, Unity on **REPO_ROOT**, **`AgentBridgeCommandRunner`**. |
+| **`unity_bridge_get`** | **IDE agent bridge** (glossary): read **`agent_bridge_job`** by **`command_id`**; optional **`wait_ms`** for short blocking poll. |
 
 **Examples (conceptual):**
 
@@ -91,6 +94,8 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 - `pathfinding_cost_preview` → `{ "from_cell": { "x": 0, "y": 0 }, "to_cell": { "x": 2, "y": 3 } }`
 - `geography_init_params_validate` → body of `docs/schemas/fixtures/geography-init-params.good.json`
 - `desirability_top_cells` → `{}`
+- `unity_bridge_command` → `{ "timeout_ms": 30000 }` (requires **Postgres** + **Unity** on **REPO_ROOT**)
+- `unity_bridge_get` → `{ "command_id": "<uuid from bridge command>", "wait_ms": 0 }`
 
 ## Closeout CLI (from repository root)
 

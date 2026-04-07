@@ -12,7 +12,7 @@ This skill **does not** call MCP tools itself. In an **Agent** chat with **terri
 
 Until richer **MCP** discovery from project-spec prose ships, use the **manual** recipe (no composite MCP tool).
 
-**Related:** **[`project-spec-kickoff`](../project-spec-kickoff/SKILL.md)** (review spec **before** code); **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (optional **Node** / **CI**-parity checks after **MCP** / schema / **IA index**–touching work); **[`project-spec-close`](../project-spec-close/SKILL.md)** (after verification — closeout / IA persistence / delete spec / **archive** / **id purge**). **Conventions:** [`.cursor/skills/README.md`](../README.md). Trace — [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md).
+**Related:** **[`project-spec-kickoff`](../project-spec-kickoff/SKILL.md)** (review spec **before** code); **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (optional **Node** / **CI**-parity checks after **MCP** / schema / **IA index**–touching work); **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (optional **Play Mode** logs/screenshots for **§7b** / **§8**); **[`project-spec-close`](../project-spec-close/SKILL.md)** (after verification — closeout / IA persistence / delete spec / **archive** / **id purge**). **Conventions:** [`.cursor/skills/README.md`](../README.md). Trace — [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md).
 
 ## Relationship to kickoff
 
@@ -59,7 +59,7 @@ Run **in order**. Repeat steps **5–12** for each **Implementation Plan** phase
 
 11. **Optional deep guardrails** — **`list_rules`** / **`rule_content`** if **`invariants_summary`** is not enough.
 
-12. **Phase exit** — Re-read **§8 Acceptance** (and **§7b Test Contracts** if present) for the completed phase; run applicable **`AGENTS.md`** **Pre-commit Checklist** (Unity build, XML docs, English logs, domain checks). If the phase touched **`tools/mcp-ia-server`**, **`docs/schemas`**, **`.cursor/specs/glossary.md`**, **reference spec** bodies that feed **IA indexes**, or committed **`tools/mcp-ia-server/data/*-index.json`**, run **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (or **`npm run validate:all`** from repo root) before starting the next phase. Record surprises in the project spec **§9 Issues Found During Development**.
+12. **Phase exit** — Re-read **§8 Acceptance** (and **§7b Test Contracts** if present) for the completed phase; run applicable **`AGENTS.md`** **Pre-commit Checklist** (Unity build, XML docs, English logs, domain checks). If **§7b** lists **IDE agent bridge** checks and the session has **territory-ia** + **Postgres** + **Unity** on **REPO_ROOT**, optionally run **`unity_bridge_command`** per **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** and attach **`log_lines`** / **`artifact_paths`** to chat or the issue. If the phase touched **`tools/mcp-ia-server`**, **`docs/schemas`**, **`.cursor/specs/glossary.md`**, **reference spec** bodies that feed **IA indexes**, or committed **`tools/mcp-ia-server/data/*-index.json`**, run **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (or **`npm run validate:all`** from repo root) before starting the next phase. Record surprises in the project spec **§9 Issues Found During Development**.
 
 ### Phase rollback
 
@@ -68,6 +68,10 @@ If a phase fails verification, revert the phase’s commits (e.g. **`git revert`
 ### Editor / agent diagnostics
 
 When a phase involves **sorting**, **grid** sampling, or **Edit Mode** vs **Play Mode**, use **`unity-development-context`** **§10** (**Territory Developer → Reports** → **`tools/reports/`** exports). Attach generated paths in chat; artifacts are **gitignored** by policy.
+
+### IDE agent bridge (optional Play evidence)
+
+For phases that change **in-game** or **HUD** behavior, after **Play Mode** verification you may collect **Console** excerpts or **Game view** PNGs via **`unity_bridge_command`** (**`get_console_logs`**, **`capture_screenshot`**, **`include_ui: true`** for **Overlay** UI). Prerequisites and limits: **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)**. This is **optional** and **dev-machine-only**; it does not replace **Node** validation.
 
 ### Branching (minimum set) — during implementation
 

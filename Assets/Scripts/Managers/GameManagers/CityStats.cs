@@ -135,6 +135,8 @@ public class CityStats : MonoBehaviour, ICityStats
     public void RemoveMoney(int value)
     {
         money -= value;
+        if (value > 0)
+            Debug.Log($"Treasury charged ${value:N0}. Balance: ${money:N0}.");
     }
 
     /// <summary>

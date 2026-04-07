@@ -152,7 +152,7 @@ Manual streets use longest-valid-prefix terraform validation; interstate uses fu
 - **FindObjectOfType pattern:** Inspector wiring + null-check fallback in Awake/Start.
 - **Namespaces:** Most scripts under `Territory.*` (`Core`, `Terrain`, `Roads`, `Zones`, `Forests`, `Buildings`, `Economy`, `UI`, `Geography`, `Timing`, `Utilities`, `Simulation`, `Persistence`). A few legacy scripts in global namespace.
 - **Spec policy:** See `AGENTS.md`. Full spec inventory in `.cursor/specs/`; agent routing in `.cursor/rules/agent-router.mdc`. Optional MCP access to the same files: `docs/mcp-ia-server.md`; generic pattern notes: `docs/mcp-markdown-ia-pattern.md`.
-- **Editor agent diagnostics (IA for agents):** `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs` emits JSON/Markdown under `tools/reports/` (gitignored outputs). Expected menus, prerequisites, and field vocabulary are documented in `.cursor/specs/unity-development-context.md` §10; **BUG-53** tracks gaps if the **Unity Editor** does not match that contract.
+- **Editor agent diagnostics (IA for agents):** `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs` emits JSON/Markdown under `tools/reports/` (gitignored outputs). Expected menus, prerequisites, and field vocabulary are documented in `.cursor/specs/unity-development-context.md` §10; regressions belong in a new **BACKLOG** row with **Console** output and sample exports.
 
 ## Known Trade-offs
 

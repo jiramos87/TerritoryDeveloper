@@ -9,7 +9,8 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Editor exports for TECH-41 interchange JSON under <c>tools/reports/</c> (gitignored): cell/chunk subset and dev world snapshot.
+/// Editor exports for TECH-41 interchange JSON (cell/chunk subset and dev world snapshot) via
+/// <see cref="EditorPostgresExportRegistrar.TryPersistReport"/> (Postgres-only).
 /// Uses <see cref="GridManager.GetCell"/> and <see cref="TerrainManager.GetHeightMap"/> — no direct grid array access.
 /// </summary>
 public static class InterchangeJsonReportsMenu
@@ -37,16 +38,9 @@ public static class InterchangeJsonReportsMenu
                 json,
                 false,
                 baseName,
-                out string path);
-            if (path != null)
-            {
-                EditorUtility.RevealInFinder(path);
-                Debug.Log($"[Interchange] Wrote cell chunk: {path}");
-            }
-            else if (dbOk)
-            {
-                // Quiet: Postgres only (TECH-55b).
-            }
+                out _);
+            if (dbOk)
+                Debug.Log("[Interchange] Cell chunk stored in Postgres (editor_export_terrain_cell_chunk).");
         }
         catch (Exception ex)
         {
@@ -73,16 +67,9 @@ public static class InterchangeJsonReportsMenu
                 json,
                 false,
                 baseName,
-                out string path);
-            if (path != null)
-            {
-                EditorUtility.RevealInFinder(path);
-                Debug.Log($"[Interchange] Wrote world snapshot: {path}");
-            }
-            else if (dbOk)
-            {
-                // Quiet: Postgres only (TECH-55b).
-            }
+                out _);
+            if (dbOk)
+                Debug.Log("[Interchange] World snapshot stored in Postgres (editor_export_world_snapshot_dev).");
         }
         catch (Exception ex)
         {

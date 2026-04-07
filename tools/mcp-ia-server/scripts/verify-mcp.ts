@@ -62,6 +62,8 @@ async function main(): Promise<void> {
     "project_spec_journal_get",
     "project_spec_journal_update",
     "isometric_world_to_grid",
+    "unity_bridge_command",
+    "unity_bridge_get",
   ];
   for (const n of required) {
     if (!names.includes(n)) throw new Error(`Missing MCP tool: ${n}`);
@@ -179,8 +181,8 @@ async function main(): Promise<void> {
       },
     }),
   ) as { content?: string; error?: string };
-  if (secRoads.error || !secRoads.content?.includes("BUG-51")) {
-    throw new Error("spec_section roads-system title match failed");
+  if (secRoads.error || !secRoads.content?.includes("TerrainSlopeType.Flat")) {
+    throw new Error("spec_section roads-system Land slope stroke policy failed");
   }
 
   const secBad = parseJsonFromToolResult(
@@ -572,6 +574,58 @@ async function main(): Promise<void> {
   if (!isoGrid.ok || isoGrid.cell_x !== 3 || isoGrid.cell_y !== 4) {
     throw new Error(
       `isometric_world_to_grid golden case failed: ${JSON.stringify(isoGrid)}`,
+    );
+  }
+
+  const bridgeResult = parseJsonFromToolResult(
+    await client.callTool({
+      name: "unity_bridge_command",
+      arguments: { timeout_ms: 2500 },
+    }),
+  ) as {
+    error?: string;
+    command_id?: string;
+    message?: string;
+    ok?: boolean;
+    artifact?: string;
+  };
+  const bridgeMsg = String(bridgeResult.message ?? "");
+  const bridgeCompletedOk =
+    bridgeResult.ok === true &&
+    bridgeResult.artifact === "unity_agent_bridge_response";
+  const bridgeOkError =
+    bridgeCompletedOk ||
+    bridgeResult.error === "db_unconfigured" ||
+    bridgeResult.error === "timeout" ||
+    (bridgeResult.error === "db_error" &&
+      /agent_bridge_job|does not exist/i.test(bridgeMsg));
+  if (!bridgeOkError) {
+    throw new Error(
+      `unity_bridge_command expected success response, db_unconfigured, timeout, or db_error (missing migration), got ${JSON.stringify(bridgeResult)}`,
+    );
+  }
+  if (bridgeResult.error === "timeout" && !bridgeResult.command_id) {
+    throw new Error("unity_bridge_command timeout should include command_id");
+  }
+
+  const bridgeGet = parseJsonFromToolResult(
+    await client.callTool({
+      name: "unity_bridge_get",
+      arguments: {
+        command_id: "550e8400-e29b-41d4-a716-446655440000",
+        wait_ms: 0,
+      },
+    }),
+  ) as { error?: string; message?: string };
+  const getMsg = String(bridgeGet.message ?? "");
+  const getOkError =
+    bridgeGet.error === "db_unconfigured" ||
+    bridgeGet.error === "not_found" ||
+    (bridgeGet.error === "db_error" &&
+      /agent_bridge_job|does not exist/i.test(getMsg));
+  if (!getOkError) {
+    throw new Error(
+      `unity_bridge_get expected db_unconfigured, not_found, or db_error (missing migration), got ${JSON.stringify(bridgeGet)}`,
     );
   }
 

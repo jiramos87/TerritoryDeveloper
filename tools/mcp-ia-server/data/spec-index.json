@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-06T19:47:16.756Z",
+  "last_generated": "2026-04-07T00:13:36.944Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -179,7 +179,7 @@
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 234
+          "line_start": 235
         }
       ]
     },
@@ -1326,6 +1326,12 @@
           "title": "11. Unity Test Framework — Edit Mode compute parity",
           "depth": 2,
           "line_start": 177
+        },
+        {
+          "section_id": "decision-log",
+          "title": "Decision Log",
+          "depth": 2,
+          "line_start": 194
         }
       ]
     },

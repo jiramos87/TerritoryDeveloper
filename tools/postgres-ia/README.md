@@ -24,4 +24,4 @@ export DATABASE_URL='postgresql://...'
 npm --prefix tools/postgres-ia run migrate
 ```
 
-Root shortcuts (optional): `npm run db:migrate`, `npm run db:seed:glossary`, `npm run db:glossary -- <term_key>`, `npm run db:register-repro -- --issue TECH-44c …`, `npm run db:register-editor-export -- --kind agent_context --document-file tools/reports/.staging/body.json`, `npm run db:persist-project-journal -- --issue FEAT-44` (after migration **`0007_ia_project_spec_journal`** — see **glossary** **IA project spec journal**).
+Root shortcuts (optional): `npm run db:migrate`, `npm run db:seed:glossary`, `npm run db:glossary -- <term_key>`, `npm run db:register-repro -- --issue TECH-44c …`, `npm run db:register-editor-export -- --kind agent_context --document-file path/to/body.json`, `npm run db:persist-project-journal -- --issue FEAT-44` (after migration **`0007_ia_project_spec_journal`** — see **glossary** **IA project spec journal**).

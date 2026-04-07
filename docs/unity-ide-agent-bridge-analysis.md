@@ -4,6 +4,8 @@
 **Scope:** Close the loop between Unity runtime/Editor and IDE agents so that AI-assisted development, debugging, and validation can happen with minimal manual intervention.
 **Audience:** Developers and Cursor agents planning infrastructure for autonomous debugging, data export, and closed-loop fix verification.
 
+**Trace:** **glossary** **IDE agent bridge** — **Phase 1** archived [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md); optional later phases remain in this charter. **Open:** **TECH-59** (MCP staging for **Editor export registry**) in [`BACKLOG.md`](../BACKLOG.md) **§ Agent ↔ Unity & MCP context lane**.
+
 **Related:**
 - [`docs/mcp-ia-server.md`](mcp-ia-server.md) — territory-ia MCP (current tool surface)
 - [`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md) — Postgres dev schema, Editor export registry
@@ -60,15 +62,15 @@ All exports live under `Assets/Scripts/Editor/` (Editor-only assembly, excluded 
 | `UiThemeValidationMenu.cs` | Validate UI Theme | Edit + Play | Console output: theme token validation |
 | `EditorPostgresExportRegistrar.cs` | Postgres registry — settings... | N/A | EditorPrefs window for issue id, DATABASE_URL, node path |
 
-**Data pipeline:** Each export tries Postgres first (via `EditorPostgresExportRegistrar.TryPersistReport` → spawns `register-editor-export.mjs` with `DATABASE_URL`). On failure or no DB, falls back to `tools/reports/` (gitignored). The `document jsonb` column stores full export bodies with GIN indexes.
+**Data pipeline:** Exports that use **`EditorPostgresExportRegistrar.TryPersistReport`** are **Postgres-only** when the registry path runs (`register-editor-export.mjs` with **`DATABASE_URL`**); there is **no** workspace fallback under **`tools/reports/`** (staging uses a temp file or absolute path). The **`document jsonb`** column stores full export bodies with **GIN** indexes.
 
 ### 2.2 What exists in MCP (territory-ia)
 
-22 registered tools including:
+23 registered tools including:
 - **IA slice tools:** `spec_section`, `spec_sections`, `glossary_discover`, `glossary_lookup`, `router_for_task`, `invariants_summary`, etc.
 - **Computational tools:** `isometric_world_to_grid`, `growth_ring_classify`, `grid_distance`, `pathfinding_cost_preview`, `geography_init_params_validate`
 - **Stubs:** `desirability_top_cells` → `NOT_AVAILABLE` (awaiting Unity batchmode hook)
-- **No runtime bridge tools exist yet**
+- **Unity Editor bridge (Phase 1):** `unity_bridge_command` / `unity_bridge_get` — `export_agent_context` via **Postgres** **`agent_bridge_job`** (**`DATABASE_URL`**, migration **0008**, **Unity** open on **REPO_ROOT**, **AgentBridgeCommandRunner** + **Node** dequeue/complete scripts); see **glossary** **IDE agent bridge** and [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).
 
 ### 2.3 What exists in Postgres
 
@@ -85,10 +87,11 @@ All exports live under `Assets/Scripts/Editor/` (Editor-only assembly, excluded 
 | **TECH-15** | Geography initialization performance — needs profiler harness under `tools/reports/` |
 | **TECH-16** | Simulation tick performance — needs spec-labeled tick harness JSON |
 | **TECH-38** | Core computational modules + batchmode hooks preparation |
-| **BUG-53** | Editor Reports menu missing/broken — prerequisite for any automation |
 | **TECH-18** | Migrate IA from Markdown to PostgreSQL — long-term MCP evolution |
 | **TECH-43** | Append-only JSON line event log — telemetry/anomaly streaming |
 | **TECH-54** | Agent patch proposal staging (E3) — agent → Unity change proposals |
+
+**Reports menus:** Expected **Territory Developer → Reports** behavior is normative in [`.cursor/specs/unity-development-context.md`](../.cursor/specs/unity-development-context.md) §10. A prior tooling-gap row was verified and archived (**Recent archive** in [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md)).
 
 ---
 
@@ -315,8 +318,8 @@ tools/reports/.agent-bridge/
 | `export_geography_init` | `GeographyInitReportMenu.ExportGeographyInitReport()` | Play | — |
 | `export_ui_inventory` | `UiInventoryReportsMenu.ExportUiInventory()` | Edit | — |
 | `validate_ui_theme` | `UiThemeValidationMenu.ValidateTheme()` | Edit + Play | — |
-| `capture_screenshot` | New: `ScreenCapture` wrapper | Play | `camera` (optional), `path` |
-| `get_console_logs` | New: buffered log capture | Any | `since_utc`, `severity_filter`, `tag_filter`, `max_lines` |
+| `capture_screenshot` | **Shipped:** default named `Camera` render; optional `include_ui` → `ScreenCapture` (Game view + Overlay UI) → `tools/reports/bridge-screenshots/*.png` | Play | `camera` (optional GameObject name), `filename_stem` (optional), `include_ui` (optional bool) — **`unity_bridge_command`** **`kind`** |
+| `get_console_logs` | **Shipped:** `AgentBridgeConsoleBuffer` (cleared on domain reload) | Edit + Play | `since_utc`, `severity_filter`, `tag_filter`, `max_lines` — **`unity_bridge_command`** **`kind`**; **`response.log_lines`** |
 | `get_play_mode_status` | New: is game running? | Any | — |
 
 ### 4.4 Unity-side implementation (Editor script)
@@ -469,7 +472,7 @@ Verify AUTO systems behavior:
 | **TECH-59** (MCP staging for Editor export registry) | Phase 1 subsumes and extends TECH-59's staging concept — the bridge generalizes it from "stage issue id" to "stage any command" |
 | **TECH-15** (Geography init performance) | Agent can trigger Export Geography Init Report and read timing data without developer intervention |
 | **TECH-16** (Simulation tick performance) | Agent can trigger exports after sim ticks to measure phases |
-| **BUG-53** (Reports menu missing) | Bridge provides an alternative path; also motivates fixing the menu |
+| **Editor Reports** (§10 contract) | Bridge adds an alternate dispatch path; menus remain the human baseline |
 | **TECH-33** (Asset introspection) | Bridge command `export_prefab_manifest` when Editor is open; independent of batchmode |
 | **TECH-38** (Batchmode hooks) | May share utilities if TECH-38 ships for other reasons; bridge does **not** depend on batchmode or CI |
 | **BUG-28** (Sorting order: slope vs interstate) | Agent can autonomously debug using sorting debug export |
@@ -487,7 +490,7 @@ A new **TECH-** issue should be created to track the Unity Agent Bridge as a pro
 2. HTTP bridge (real-time, localhost)
 3. Streaming, screenshots, before/after comparison automation (still **Editor-centric**; no headless CI)
 
-**Dependencies:** None hard. Soft: BUG-53 (ensure menu items work), TECH-59 (absorb staging concept).
+**Dependencies:** None hard. Soft: keep **Reports** exports aligned with **unity-development-context** §10; TECH-59 (absorb staging concept).
 
 ---
 
@@ -497,7 +500,7 @@ A new **TECH-** issue should be created to track the Unity Agent Bridge as a pro
 
 1. **Export logic is complete and tested** — 7 Editor menu items producing well-structured JSON/Markdown
 2. **Postgres pipeline works** — DB-first with fallback; `document jsonb` with GIN indexes
-3. **MCP server is mature** — 22 tools, Zod validation, test infrastructure, `npm run verify`
+3. **MCP server is mature** — 24 tools (including **`unity_bridge_command`** / **`unity_bridge_get`** for Phase 1), Zod validation, test infrastructure, `npm run verify`
 4. **File interchange is proven** — `tools/reports/` convention, `.staging/` directory pattern, gitignore policy
 5. **Glossary vocabulary is stable** — tool names, response shapes, and domain terms are well-defined
 
@@ -575,9 +578,9 @@ Ordered by **dependency and payoff**, without calendar or sprint framing.
 
 ### A — Ship the minimal loop first
 
-1. **Fix BUG-53** if Reports menu items are not working — prerequisite for reliable dispatch
+1. Confirm **Territory Developer → Reports** matches [`.cursor/specs/unity-development-context.md`](../.cursor/specs/unity-development-context.md) §10 (compile **Editor** scripts, check **Console** on failure) — prerequisite for reliable dispatch
 2. **`AgentBridgeCommandRunner.cs`** — file polling + dispatch to existing export methods (no duplicate export logic)
-3. **`unity_bridge_command` MCP tool** (or equivalent) — write command file, read response file
+3. **`unity_bridge_command` / `unity_bridge_get` MCP tools** — **Postgres** **`agent_bridge_job`** queue + poll / read by **`command_id`**
 4. **Backlog row** — track the bridge as a **TECH-** issue when you want traceability in `BACKLOG.md`
 
 ### B — Hardening after the loop works

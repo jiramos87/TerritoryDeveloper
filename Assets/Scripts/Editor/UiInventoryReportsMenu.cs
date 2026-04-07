@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// Editor-only multi-scene <b>uGUI</b> snapshot for <b>UI design system</b> baseline inventory: bounded JSON under <c>tools/reports/</c> (or <b>Postgres</b> when configured).
+/// Editor-only multi-scene <b>uGUI</b> snapshot for <b>UI design system</b> baseline inventory: bounded JSON persisted via <b>Postgres</b> (<see cref="EditorPostgresExportRegistrar.TryPersistReport"/>).
 /// Menu: <b>Territory Developer → Reports → Export UI Inventory (JSON)</b>.
 /// </summary>
 public static class UiInventoryReportsMenu
@@ -94,17 +94,10 @@ public static class UiInventoryReportsMenu
                 json,
                 false,
                 baseName,
-                out string path);
+                out _);
 
-            if (path != null)
-            {
-                EditorUtility.RevealInFinder(path);
-                Debug.Log($"[UI Inventory] Wrote UI inventory JSON: {path} (nodes sampled: {_nodesEmitted})");
-            }
-            else if (dbOk)
-            {
+            if (dbOk)
                 Debug.Log($"[UI Inventory] Stored in Postgres (nodes sampled: {_nodesEmitted}).");
-            }
         }
         catch (Exception ex)
         {

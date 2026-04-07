@@ -1,0 +1,11 @@
+{
+    "schema_version": 1,
+    "artifact": "unity_agent_bridge_response",
+    "command_id": "af5551f3-6424-44ca-9803-772649b56f6e",
+    "ok": true,
+    "completed_at_utc": "2026-04-06T22:02:36.4750980Z",
+    "storage": "postgres",
+    "artifact_paths": [],
+    "postgres_only": true,
+    "error": ""
+}

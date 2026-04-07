@@ -4,7 +4,7 @@
  *
  * Usage:
  *   node register-editor-export.mjs --kind agent_context|sorting_debug|terrain_cell_chunk|world_snapshot_dev|ui_inventory \
- *     --document-file <repo-relative> [--issue BUG-37] [--sha <git>]
+ *     --document-file <repo-relative|absolute> [--issue BUG-37] [--sha <git>]
  *
  * Reads UTF-8 from --document-file: JSON kinds expect JSON; sorting_debug expects Markdown (wrapped in DB).
  * Requires: DATABASE_URL or config/postgres-dev.json; git in PATH for rev-parse (unless --sha).
@@ -13,7 +13,7 @@
 
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { dirname, relative, resolve } from 'node:path';
+import { dirname, isAbsolute, normalize, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { resolveDatabaseUrl } from './resolve-database-url.mjs';
@@ -89,13 +89,12 @@ function assertUnderRepo(rel) {
   }
 }
 
-function readDocumentAndPayload(kind, relDocPath) {
-  const abs = resolve(REPO_ROOT, relDocPath);
+function readDocumentAndPayload(kind, absDocumentPath, sourceRelativePath) {
   let raw;
   try {
-    raw = readFileSync(abs, 'utf8');
+    raw = readFileSync(absDocumentPath, 'utf8');
   } catch (e) {
-    console.error('Cannot read document file:', abs, e.message);
+    console.error('Cannot read document file:', absDocumentPath, e.message);
     process.exit(1);
   }
 
@@ -104,7 +103,7 @@ function readDocumentAndPayload(kind, relDocPath) {
     const payload = {
       artifact: 'editor_export_sorting_debug',
       schema_version: 1,
-      source_relative_path: relDocPath,
+      source_relative_path: sourceRelativePath,
     };
     return { document, payload, interchangeRevision: 1 };
   }
@@ -113,7 +112,7 @@ function readDocumentAndPayload(kind, relDocPath) {
   try {
     doc = JSON.parse(raw);
   } catch (e) {
-    console.error('Invalid JSON document:', relDocPath, e.message);
+    console.error('Invalid JSON document:', absDocumentPath, e.message);
     process.exit(1);
   }
 
@@ -121,7 +120,7 @@ function readDocumentAndPayload(kind, relDocPath) {
     const payload = {
       artifact: 'editor_export_agent_context',
       schema_version: 1,
-      source_relative_path: relDocPath,
+      source_relative_path: sourceRelativePath,
     };
     const sv =
       typeof doc.schema_version === 'string'
@@ -137,7 +136,7 @@ function readDocumentAndPayload(kind, relDocPath) {
       artifact: doc.artifact ?? 'ui_inventory_dev',
       schema_version:
         typeof doc.schema_version === 'number' ? doc.schema_version : 1,
-      source_relative_path: relDocPath,
+      source_relative_path: sourceRelativePath,
     };
     const schemaVersion =
       typeof doc.schema_version === 'number' ? doc.schema_version : 1;
@@ -156,7 +155,7 @@ function readDocumentAndPayload(kind, relDocPath) {
     const payload = {
       artifact: doc.artifact ?? expected,
       schema_version: schemaVersion,
-      source_relative_path: relDocPath,
+      source_relative_path: sourceRelativePath,
     };
     return { document: doc, payload, interchangeRevision: schemaVersion };
   }
@@ -168,7 +167,7 @@ const args = parseArgs(process.argv);
 const kinds = Object.keys(TABLE_BY_KIND).join('|');
 if (!args.kind || !args.documentFile) {
   console.error(
-    `Usage: node register-editor-export.mjs --kind ${kinds} --document-file <repo-relative> [--issue <id>] [--sha <git>]`,
+    `Usage: node register-editor-export.mjs --kind ${kinds} --document-file <repo-relative|absolute> [--issue <id>] [--sha <git>]`,
   );
   process.exit(1);
 }
@@ -178,8 +177,18 @@ if (!TABLE_BY_KIND[args.kind]) {
   process.exit(1);
 }
 
-const relDoc = normalizeRelPath(args.documentFile);
-assertUnderRepo(relDoc);
+const rawDoc = String(args.documentFile).trim();
+let absDocumentPath;
+let sourceRelativePath;
+if (isAbsolute(rawDoc)) {
+  absDocumentPath = normalize(resolve(rawDoc));
+  sourceRelativePath = '(temp_staging)';
+} else {
+  const relDoc = normalizeRelPath(rawDoc);
+  assertUnderRepo(relDoc);
+  absDocumentPath = resolve(REPO_ROOT, relDoc);
+  sourceRelativePath = relDoc;
+}
 
 const backlogIssueId =
   args.issue != null && String(args.issue).trim() !== ''
@@ -194,7 +203,8 @@ if (!gitSha) {
 
 const { document, payload, interchangeRevision } = readDocumentAndPayload(
   args.kind,
-  relDoc,
+  absDocumentPath,
+  sourceRelativePath,
 );
 
 const databaseUrl = resolveDatabaseUrl(REPO_ROOT);

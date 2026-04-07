@@ -54,7 +54,7 @@ tools/reports/*.md
 !tools/reports/compute-utilities-inventory.md
 !tools/reports/compute-utilities-rng-derivation.md
 tools/reports/.staging/
-
+tools/reports/bridge-screenshots/
 # MCP IA server (Node)
 tools/mcp-ia-server/node_modules/
 tools/mcp-ia-server/dist/

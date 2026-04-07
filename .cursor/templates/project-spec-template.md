@@ -97,6 +97,7 @@
 | Acceptance / goal | Check type | Command or artifact | Notes |
 |-------------------|------------|---------------------|-------|
 | Example: change touches MCP, schemas, glossary, or **reference spec** bodies that feed **IA indexes** | Node | `npm run validate:all` (repo root) | Chains **validate:dead-project-specs**, **test:ia**, **validate:fixtures**, **generate:ia-indexes --check** |
+| Example: Play / HUD acceptance — console clean + screenshot with **Overlay** UI | MCP / dev machine | **territory-ia** **`unity_bridge_command`**: **`get_console_logs`** (`severity_filter`); **`capture_screenshot`** (`include_ui: true`) | **N/A** in CI; **Postgres** **0008** + **Unity** on **REPO_ROOT**; see **`.cursor/skills/ide-bridge-evidence/SKILL.md`** |
 | … | … | … | … |
 
 ## 8. Acceptance Criteria

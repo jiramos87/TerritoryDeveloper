@@ -5,8 +5,8 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// TECH-55b: tries <b>Postgres</b> first for <b>Territory Developer → Reports</b> exports (full <b>JSONB</b> document).
-/// On failure or missing <c>DATABASE_URL</c>, writes under <c>tools/reports/</c>. Success path is quiet unless verbose prefs are on.
+/// TECH-55b: persists <b>Territory Developer → Reports</b> exports to <b>Postgres</b> (full <b>JSONB</b> document) via <c>register-editor-export.mjs</c>.
+/// **Postgres-only:** no <c>tools/reports/</c> fallback. Success path is quiet unless verbose prefs are on.
 /// </summary>
 public static class EditorPostgresExportRegistrar
 {
@@ -115,14 +115,14 @@ public static class EditorPostgresExportRegistrar
     }
 
     /// <summary>
-    /// Persists a report: tries <c>register-editor-export.mjs</c> with <paramref name="utf8Body"/> in a staging file first;
-    /// on success removes staging and does not write <c>tools/reports/</c>. On failure or no DB URL, writes the fallback file.
+    /// Persists a report: writes a temp staging file, runs <c>register-editor-export.mjs</c>, then deletes staging.
+    /// **Postgres-only:** no <c>tools/reports/</c> fallback — configure <c>DATABASE_URL</c> (env, EditorPrefs, or <c>.env.local</c>).
     /// </summary>
     /// <param name="kind">One of the <c>Kind*</c> constants.</param>
     /// <param name="utf8Body">File body (JSON text or Markdown).</param>
     /// <param name="isMarkdown">True for sorting debug export.</param>
-    /// <param name="fileBaseNameWithoutExtension">e.g. <c>agent-context-20260403-120000</c> (no extension).</param>
-    /// <param name="filesystemPathWritten">Non-null when a file was written under <c>tools/reports/</c>.</param>
+    /// <param name="fileBaseNameWithoutExtension">Unused for persistence (call-site compatibility).</param>
+    /// <param name="filesystemPathWritten">Always <c>null</c> (no workspace export files).</param>
     /// <returns>True if a Postgres row was inserted successfully.</returns>
     public static bool TryPersistReport(
         string kind,
@@ -132,6 +132,7 @@ public static class EditorPostgresExportRegistrar
         out string filesystemPathWritten)
     {
         filesystemPathWritten = null;
+        _ = fileBaseNameWithoutExtension;
         if (string.IsNullOrEmpty(utf8Body))
         {
             Debug.LogError("[EditorPostgresExportRegistrar] Empty export body.");
@@ -141,34 +142,15 @@ public static class EditorPostgresExportRegistrar
         string repoRoot = GetRepoRoot();
         string dbUrl = ResolveEffectiveDatabaseUrl(repoRoot);
         string ext = isMarkdown ? ".md" : ".json";
-        string reportsDir = Path.Combine(repoRoot, "tools", "reports");
-        string fallbackAbs = Path.Combine(reportsDir, fileBaseNameWithoutExtension + ext);
-
-        // Local scratch path — cannot assign to `out filesystemPathWritten` inside a local function (CS1628).
-        string fallbackPathWritten = null;
-
-        void WriteFallback()
-        {
-            try
-            {
-                Directory.CreateDirectory(reportsDir);
-                File.WriteAllText(fallbackAbs, utf8Body, new UTF8Encoding(false));
-                fallbackPathWritten = fallbackAbs;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[EditorPostgresExportRegistrar] Failed to write fallback file: {ex.Message}");
-            }
-        }
 
         if (string.IsNullOrWhiteSpace(dbUrl))
         {
-            WriteFallback();
-            filesystemPathWritten = fallbackPathWritten;
+            Debug.LogError(
+                "[EditorPostgresExportRegistrar] Reports export requires Postgres: set DATABASE_URL (process env, EditorPrefs TerritoryDeveloper.EditorExportRegistry.DatabaseUrl, or .env.local). See docs/postgres-ia-dev-setup.md.");
             return false;
         }
 
-        string stagingDir = Path.Combine(reportsDir, ".staging");
+        string stagingDir = Path.Combine(Path.GetTempPath(), "TerritoryDeveloperEditorExportStaging");
         string stagingName = $"body-{Guid.NewGuid():N}{ext}";
         string stagingAbs = Path.Combine(stagingDir, stagingName);
 
@@ -180,12 +162,9 @@ public static class EditorPostgresExportRegistrar
         catch (Exception ex)
         {
             Debug.LogError($"[EditorPostgresExportRegistrar] Staging failed: {ex.Message}");
-            WriteFallback();
-            filesystemPathWritten = fallbackPathWritten;
             return false;
         }
 
-        string relStaging = ToRepoRelativePath(repoRoot, stagingAbs);
         string scriptPath = Path.Combine(repoRoot, "tools", "postgres-ia", "register-editor-export.mjs");
         if (!File.Exists(scriptPath))
         {
@@ -199,13 +178,12 @@ public static class EditorPostgresExportRegistrar
                 // ignored
             }
 
-            WriteFallback();
-            filesystemPathWritten = fallbackPathWritten;
             return false;
         }
 
         string issue = EditorPrefs.GetString(BacklogIssueIdPrefsKey, "").Trim();
-        string arguments = $"\"{scriptPath}\" --kind {kind} --document-file \"{relStaging}\"";
+        string documentFileArg = stagingAbs.Replace('\\', '/');
+        string arguments = $"\"{scriptPath}\" --kind {kind} --document-file \"{documentFileArg}\"";
         if (!string.IsNullOrEmpty(issue))
             arguments += $" --issue \"{issue}\"";
 
@@ -274,9 +252,11 @@ public static class EditorPostgresExportRegistrar
         }
 
         if (!dbOk)
-            WriteFallback();
+        {
+            Debug.LogError(
+                "[EditorPostgresExportRegistrar] Postgres insert failed; no filesystem fallback. Fix DATABASE_URL / migration / register-editor-export.mjs output (see Console above).");
+        }
 
-        filesystemPathWritten = fallbackPathWritten;
         return dbOk;
     }
 
@@ -309,6 +289,17 @@ public static class EditorPostgresExportRegistrar
 
         return null;
     }
+
+    /// <summary>
+    /// Repository root (parent of <c>Assets</c>). Exposed for IDE agent bridge path resolution.
+    /// </summary>
+    public static string GetRepositoryRoot() => GetRepoRoot();
+
+    /// <summary>
+    /// Path relative to <see cref="GetRepositoryRoot"/> using forward slashes (workspace-style).
+    /// </summary>
+    public static string ToRepositoryRelativePath(string absolutePath) =>
+        ToRepoRelativePath(GetRepoRoot(), absolutePath);
 
     static string GetRepoRoot()
     {

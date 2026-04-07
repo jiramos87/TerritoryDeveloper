@@ -16,7 +16,7 @@ Full dependency map is in `ARCHITECTURE.md`.
 
 ```
 .cursor/rules/        → Guardrails (auto-loaded by Cursor, light)
-.cursor/skills/       → Cursor Agent Skills (thin workflows; see README — **project-new**, **project-spec-kickoff**, **project-spec-implement**, **project-implementation-validation**, **project-spec-close**)
+.cursor/skills/       → Cursor Agent Skills (thin workflows; see README — **project-new**, **project-spec-kickoff**, **project-spec-implement**, **project-implementation-validation**, **ide-bridge-evidence**, **project-spec-close**)
 .cursor/specs/        → Deep reference (read on demand per task)
 ARCHITECTURE.md       → System layers, dependency map
 AGENTS.md             → This file: workflow, policies, checklist

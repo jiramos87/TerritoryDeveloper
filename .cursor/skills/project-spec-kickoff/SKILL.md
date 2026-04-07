@@ -13,7 +13,7 @@ This skill **does not** call MCP tools itself. In an **Agent** chat with **terri
 
 Until richer **MCP** discovery from project-spec prose ships, use the **manual** recipe (no composite MCP tool).
 
-**Related:** **[`project-spec-implement`](../project-spec-implement/SKILL.md)**, **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (optional **npm** checks after **MCP** / schema / **IA index** work), **[`project-spec-close`](../project-spec-close/SKILL.md)** (verified close — persist IA, delete spec, **archive** row, **id purge**). Open follow-ups — [`BACKLOG.md`](../../../BACKLOG.md). **Conventions:** [`.cursor/skills/README.md`](../README.md).
+**Related:** **[`project-spec-implement`](../project-spec-implement/SKILL.md)**, **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (optional **npm** checks after **MCP** / schema / **IA index** work), **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (optional **§7b** rows for **Unity** logs/screenshots via MCP), **[`project-spec-close`](../project-spec-close/SKILL.md)** (verified close — persist IA, delete spec, **archive** row, **id purge**). Open follow-ups — [`BACKLOG.md`](../../../BACKLOG.md). **Conventions:** [`.cursor/skills/README.md`](../README.md).
 
 **When the issue is verified and you are closing:** use **[`project-spec-close`](../project-spec-close/SKILL.md)** after implementation — not this kickoff skill.
 
@@ -73,6 +73,16 @@ Lightweight check before deep editorial work ([`projects/spec-pipeline-explorati
 3. Flag cross-subsystem edits (e.g. **roads** + **HeightMap** / **water**) so **`spec_section`** pulls both domains before implementation.
 
 After MCP slices, perform the **editorial** pass: **Open Questions**, **Implementation Plan** phases, **Decision Log**, and cross-links to sibling `.cursor/projects/*.md`.
+
+## §7b Test Contracts and IDE bridge (optional alignment)
+
+When enriching **`## 7b. Test Contracts`** ([`.cursor/projects/PROJECT-SPEC-STRUCTURE.md`](../../projects/PROJECT-SPEC-STRUCTURE.md) list item **7b**):
+
+- Map **§8 Acceptance** bullets to **verifiable** checks: **Node** (`npm run …`), **Unity** manual steps, and/or **MCP** tools — use **glossary** terms for *what* is verified, not backlog ids.
+- If acceptance depends on **Play Mode** **Console** output (e.g. no **`error`** lines after an action) or a **visual** check (HUD, map + chrome), add table rows that name **`unity_bridge_command`** **`kind`** values (**`get_console_logs`**, **`capture_screenshot`**) and relevant parameters (**`severity_filter`**, **`include_ui: true`** when **Screen Space - Overlay** must appear). Point implementers to **unity-development-context** §10 and **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)**.
+- Mark bridge-backed rows as **MCP / dev machine** (or **Manual / dev machine**) in **Check type** so **CI** expectations stay clear — bridge jobs are **N/A** in **`.github/workflows/ia-tools.yml`**.
+
+This kickoff skill **does not** require calling the bridge during review; it ensures **§7b** prose matches tools that exist in **territory-ia**.
 
 ## Open Questions policy (project specs)
 

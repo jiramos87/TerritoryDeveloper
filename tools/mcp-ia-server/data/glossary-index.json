@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-06T19:47:16.760Z",
+  "last_generated": "2026-04-07T00:13:36.948Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -468,6 +468,10 @@
       "anchor": "10"
     },
     "Editor export registry": {
+      "spec_key": "unity-development-context",
+      "anchor": "10"
+    },
+    "IDE agent bridge": {
       "spec_key": "unity-development-context",
       "anchor": "10"
     },

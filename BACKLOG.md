@@ -35,7 +35,7 @@
 
 ## Agent ↔ Unity & MCP context lane
 
-Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**§ Compute-lib program** above: **TECH-38** + **TECH-32**/**TECH-35**.) **Prerequisites:** **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (this lane — existing `.cursor/projects/*.md`); **TECH-38** + archived **TECH-39** (**§ Compute-lib program** / [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **Spec-pipeline** charter: **glossary** **territory-ia spec-pipeline program** + archive.
+Ordered for **closed-loop agent ↔ Unity** (glossary **IDE agent bridge** — [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); **Phase 1** archived [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **Editor export registry** staging (**TECH-59**) → **JSON / reports** plumbing → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**§ Compute-lib program** above: **TECH-38** + **TECH-32**/**TECH-35**.) **Prerequisites:** **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (this lane — existing `.cursor/projects/*.md`); **TECH-38** + archived **TECH-39** (**§ Compute-lib program** / [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **Spec-pipeline** charter: **glossary** **territory-ia spec-pipeline program** + archive.
 
 - [ ] **TECH-59** — **territory-ia** MCP: stage **Editor** export registry payload (**BACKLOG** issue id + JSON documents)
   - Type: tooling / agent enablement
@@ -44,7 +44,7 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Notes: **Problem:** Agents cannot set **Unity** **EditorPrefs**; developers should not re-type **`backlog_issue_id`** and JSON shapes by hand every time. **Direction:** MCP tool accepts **`issue_id`** + one or more **JSON** objects (typed by **export kind** or free-form envelope per **Decision Log**), writes a **gitignored** **staging file** under the repo; Unity menu **Apply MCP-staged registry…** loads file, validates, sets **EditorPrefs** (**`TerritoryDeveloper.EditorExportRegistry.BacklogIssueId`**), and optionally triggers the existing **Node** / **Postgres** path so the dev **clicks once**. **Non-goals:** MCP opens **TCP** to **Postgres**; no secrets in MCP arguments (connection string stays **EditorPrefs** / env). **Overlap:** **TECH-48** (MCP discovery — different scope); **Editor export registry** (glossary) shipped — staging may align when implemented.
   - Acceptance: per `.cursor/projects/TECH-59.md` §8; **`npm run verify`** / **`npm run test:ia`** green when MCP code ships
   - Depends on: none (soft: **TECH-24** for parser/test policy)
-  - Related: **TECH-48**, **TECH-18** (long-term DB-backed IA); glossary **Editor export registry**
+  - Related: glossary **IDE agent bridge** (archived **Phase 1** — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)); **TECH-48**, **TECH-18** (long-term DB-backed IA); glossary **Editor export registry**
 
 - [ ] **TECH-53** — **Schema validation history** (Postgres extension **E2** track)
   - Type: technical / CI / data
@@ -177,14 +177,6 @@ Ordered for **MCP Unity context** → **JSON / reports from Unity** → **MCP pl
   - Files: new script under `tools/` (Node or shell), optional CI workflow; align wording with `.cursor/rules/invariants.mdc`
   - Spec: `.cursor/projects/TECH-26.md`
   - Notes: Implement scanner for **`FindObjectOfType`** inside **`Update`/`LateUpdate`/`FixedUpdate`** (supports **BUG-14** prevention) and optional **`rg`** gate blocking new **`gridArray`/`cellArray`** use outside **`GridManager`** (**TECH-04**). **Phase 2:** hot-path static scan manifest from `ARCHITECTURE.md` / managers-reference to prioritize files in AUTO or per-frame paths (`docs/agent-tooling-verification-priority-tasks.md` tasks 1, 6). Priority order: `docs/agent-tooling-verification-priority-tasks.md`. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
-  - Depends on: none
-
-- [ ] **BUG-53** — **Unity Editor:** **Territory Developer → Reports** menu missing, or **Export Sorting Debug** ineffective / not discoverable
-  - Type: bug (tooling / agent workflow)
-  - Files: `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs` (`MenuItem` paths, **Play Mode** vs **Edit Mode** branches); Unity **Editor** script compilation / **asmdef** (if introduced later); `tools/reports/` path resolution (`Application.dataPath` parent)
-  - Spec: `.cursor/specs/unity-development-context.md` §10 (**Editor agent diagnostics** — expected menus, outputs, prerequisites)
-  - Notes: **Observed:** Developer does not see **Export Sorting Debug (Markdown)** or the whole **Reports** submenu, or expects full **Sorting order** data while still in **Edit Mode** / before **`GridManager`** **isInitialized**. **Expected (canonical):** Both **Export Agent Context** and **Export Sorting Debug (Markdown)** appear under **Territory Developer → Reports** whenever `AgentDiagnosticsReportsMenu.cs` compiles in an **Editor** folder assembly. **Sorting** markdown with per-**cell** **`TerrainManager`** breakdowns requires **Play Mode** after **geography initialization** (`GridManager.InitializeGrid`); **Edit Mode** only writes a stub explaining that. **Export Agent Context** (JSON) should still run in **Edit Mode** / **Play Mode** and write under `tools/reports/`. **Related:** agent diagnostics menu shipped — trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Investigate compile errors, wrong scene/package, menu path mismatch, or UX gap (e.g. single combined command, **Console** log on success).
-  - Acceptance: On a clean clone, after Unity imports scripts, both menu items are visible; **Sorting** export behavior matches §10; document any platform-specific caveat in the spec **Decision Log** or backlog **Notes**
   - Depends on: none
 
 ## UI-as-code program (exploration)

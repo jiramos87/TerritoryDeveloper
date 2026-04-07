@@ -12,7 +12,7 @@ This document defines **architecture patterns** for **PostgreSQL** and HTTP/sync
 | **E2** | **Schema validation history** | Open — [`BACKLOG.md`](../BACKLOG.md) |
 | **E3** | **Agent patch proposal staging** | Open — [`BACKLOG.md`](../BACKLOG.md) |
 
-**Editor export registry:** Shipped — glossary **Editor export registry**; **Editor** **Reports** → **Postgres** (one **B1** table per export family + **`document jsonb`** full body, **DB-first** with **`tools/reports/`** fallback): migrations **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.sql`**; **`register-editor-export.mjs`** **`--document-file`** ([`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md)); [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).
+**Editor export registry:** Shipped — glossary **Editor export registry**; **Editor** **Reports** → **Postgres** (one **B1** table per export family + **`document jsonb`** full body; **Postgres-only**, no workspace fallback): migrations **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.sql`**; **`register-editor-export.mjs`** **`--document-file`** ([`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md)); [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md). **IDE bridge queue:** **`agent_bridge_job`** (**`0008_agent_bridge_job.sql`**) — MCP **`unity_bridge_command`** / **`unity_bridge_get`** + Unity **`AgentBridgeCommandRunner`** (see **postgres-ia-dev-setup**).
 
 **Phased delivery (core):** Patterns in this document → first **Postgres** **IA** DDL ([`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md), **`db/migrations/`**) → **E1** **`dev_repro_bundle`**. Out-of-charter follow-ups remain on [`BACKLOG.md`](../BACKLOG.md).
 

@@ -9,8 +9,8 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Editor-only exports under <c>tools/reports/</c> for agent diagnostics (TECH-28): bounded grid snapshot JSON
-/// and optional sorting debug markdown. Uses <see cref="GridManager.GetCell"/> only — no direct grid array access.
+/// Editor-only agent diagnostics (TECH-28): bounded grid snapshot JSON and sorting debug markdown, persisted via
+/// <see cref="EditorPostgresExportRegistrar.TryPersistReport"/> (Postgres-only). Uses <see cref="GridManager.GetCell"/> only — no direct grid array access.
 /// </summary>
 public static class AgentDiagnosticsReportsMenu
 {
@@ -35,16 +35,9 @@ public static class AgentDiagnosticsReportsMenu
                 json,
                 false,
                 baseName,
-                out string path);
-            if (path != null)
-            {
-                EditorUtility.RevealInFinder(path);
-                Debug.Log($"[AgentDiagnostics] Wrote agent context: {path}");
-            }
-            else if (dbOk)
-            {
-                // Quiet success: stored in Postgres only (TECH-55b).
-            }
+                out _);
+            if (dbOk)
+                Debug.Log("[AgentDiagnostics] Agent context stored in Postgres (editor_export_agent_context).");
         }
         catch (Exception ex)
         {
@@ -65,20 +58,42 @@ public static class AgentDiagnosticsReportsMenu
                 md,
                 true,
                 baseName,
-                out string path);
-            if (path != null)
-            {
-                EditorUtility.RevealInFinder(path);
-                Debug.Log($"[AgentDiagnostics] Wrote sorting debug: {path}");
-            }
-            else if (dbOk)
-            {
-                // Quiet success: stored in Postgres only (TECH-55b).
-            }
+                out _);
+            if (dbOk)
+                Debug.Log("[AgentDiagnostics] Sorting debug stored in Postgres (editor_export_sorting_debug).");
         }
         catch (Exception ex)
         {
             Debug.LogError($"[AgentDiagnostics] Export Sorting Debug failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Same persistence as <see cref="ExportAgentContext"/> without Finder or extra logging side effects.
+    /// Used by the Postgres-backed IDE agent bridge; menus keep calling <see cref="ExportAgentContext"/>.
+    /// </summary>
+    public static AgentBridgeAgentContextOutcome ExportAgentContextForAgentBridge()
+    {
+        try
+        {
+            string stamp = UtcTimestampForFilename();
+            string baseName = $"agent-context-{stamp}";
+            string json = BuildAgentContextJsonString();
+            bool dbOk = EditorPostgresExportRegistrar.TryPersistReport(
+                EditorPostgresExportRegistrar.KindAgentContext,
+                json,
+                false,
+                baseName,
+                out _);
+            if (dbOk)
+                return AgentBridgeAgentContextOutcome.OkPostgresOnly();
+
+            return AgentBridgeAgentContextOutcome.Fail(
+                "Agent context export failed: Postgres did not accept the report. Configure DATABASE_URL and migrations; see docs/postgres-ia-dev-setup.md.");
+        }
+        catch (Exception ex)
+        {
+            return AgentBridgeAgentContextOutcome.Fail(ex.Message);
         }
     }
 
@@ -425,6 +440,33 @@ public static class AgentDiagnosticsReportsMenu
             return string.IsNullOrEmpty(scene.path) ? scene.name : scene.path;
         }
     }
+}
+
+/// <summary>
+/// Outcome of <see cref="AgentDiagnosticsReportsMenu.ExportAgentContextForAgentBridge"/> (IDE agent bridge).
+/// </summary>
+public readonly struct AgentBridgeAgentContextOutcome
+{
+    public bool Success { get; }
+    public string ErrorMessage { get; }
+    public bool PostgresOnly { get; }
+    public string Storage { get; }
+    public string ArtifactPathRepoRelative { get; }
+
+    AgentBridgeAgentContextOutcome(bool success, string error, bool postgresOnly, string storage, string artifactRel)
+    {
+        Success = success;
+        ErrorMessage = error ?? "";
+        PostgresOnly = postgresOnly;
+        Storage = storage ?? "none";
+        ArtifactPathRepoRelative = artifactRel ?? "";
+    }
+
+    public static AgentBridgeAgentContextOutcome OkPostgresOnly() =>
+        new(true, "", true, "postgres", "");
+
+    public static AgentBridgeAgentContextOutcome Fail(string message) =>
+        new(false, message ?? "Unknown error.", false, "none", "");
 }
 
 [Serializable]

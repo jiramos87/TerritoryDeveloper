@@ -1,6 +1,6 @@
 # PostgreSQL — IA dev setup
 
-**Scope:** Local or shared **dev** database for **Information Architecture** tables (`glossary`, `spec_sections`, `invariants`, `relationships`), the **IA project spec journal** (`ia_project_spec_journal` — **glossary** **IA project spec journal**), the **dev repro bundle registry** (`dev_repro_bundle`, **E1** in [`postgres-interchange-patterns.md`](postgres-interchange-patterns.md)), and the **per-export Editor Reports registry** (`editor_export_*` tables). This is **not** player **Save data** or **Load pipeline** input — see [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md). **Charter trace:** [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).
+**Scope:** Local or shared **dev** database for **Information Architecture** tables (`glossary`, `spec_sections`, `invariants`, `relationships`), the **IA project spec journal** (`ia_project_spec_journal` — **glossary** **IA project spec journal**), the **dev repro bundle registry** (`dev_repro_bundle`, **E1** in [`postgres-interchange-patterns.md`](postgres-interchange-patterns.md)), the **per-export Editor Reports registry** (`editor_export_*` tables), and the **IDE agent bridge** queue (`agent_bridge_job` — **glossary** **IDE agent bridge**). This is **not** player **Save data** or **Load pipeline** input — see [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md). **Charter trace:** [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).
 
 ## Prerequisites
 
@@ -48,12 +48,13 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0004_editor_export_tabl
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0005_editor_export_document.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0006_editor_export_ui_inventory.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0007_ia_project_spec_journal.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0008_agent_bridge_job.sql
 ```
 
 If you use manual `psql` on a fresh DB, insert migration rows so the Node runner does not re-apply:
 
 ```sql
-INSERT INTO schema_migrations (version) VALUES ('0001_ia_tables'), ('0002_ia_read_surface'), ('0003_dev_repro_bundle'), ('0004_editor_export_tables'), ('0005_editor_export_document');
+INSERT INTO schema_migrations (version) VALUES ('0001_ia_tables'), ('0002_ia_read_surface'), ('0003_dev_repro_bundle'), ('0004_editor_export_tables'), ('0005_editor_export_document'), ('0006_editor_export_ui_inventory'), ('0007_ia_project_spec_journal'), ('0008_agent_bridge_job');
 ```
 
 ## Optional glossary seed
@@ -119,9 +120,9 @@ npm run db:register-repro -- --issue TECH-00 \
 
 ## Editor export registry (per-export **Postgres** history)
 
-**DB-first:** when **`DATABASE_URL`** resolves (process environment, **EditorPrefs** `TerritoryDeveloper.EditorExportRegistry.DatabaseUrl`, or repo-root **`.env.local`** `DATABASE_URL=…`), **Unity** tries **Postgres** first: the full export body is stored in column **`document jsonb`** (plus **`payload jsonb`** metadata). **GIN** indexes support **`jsonb_path_ops`** queries on **`document`**. If the insert fails or no URL is set, the Editor writes the same content under **`tools/reports/`** (gitignored) with the usual filenames — see [`.cursor/specs/unity-development-context.md`](../.cursor/specs/unity-development-context.md) **§10**.
+**Postgres-only:** when **`DATABASE_URL`** resolves (process environment, **EditorPrefs** `TerritoryDeveloper.EditorExportRegistry.DatabaseUrl`, or repo-root **`.env.local`** `DATABASE_URL=…`), **Unity** runs **`register-editor-export.mjs`**: the full export body is stored in column **`document jsonb`** (plus **`payload jsonb`** metadata). **GIN** indexes support **`jsonb_path_ops`** queries on **`document`**. There is **no** workspace fallback under **`tools/reports/`** for these menus — see [`.cursor/specs/unity-development-context.md`](../.cursor/specs/unity-development-context.md) **§10**. **Staging** for **`--document-file`** uses a temp directory or an absolute path (see **`register-editor-export.mjs`**).
 
-Migrations: **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.sql`** (`backlog_issue_id` nullable; **`document`** required on new inserts), **`0006_editor_export_ui_inventory.sql`**.
+Migrations: **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.sql`** (`backlog_issue_id` nullable; **`document`** required on new inserts), **`0006_editor_export_ui_inventory.sql`**, **`0008_agent_bridge_job.sql`** (**IDE agent bridge** queue — **`agent_bridge_job`**).
 
 | Table | Menu item |
 |-------|-----------|
@@ -137,11 +138,11 @@ Migrations: **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.
 
 **Apply schema:** `npm run db:migrate`.
 
-**CLI** (body from a UTF-8 file under the repo; **`--issue`** optional):
+**CLI** (body from a UTF-8 file — repo-relative or absolute; **`--issue`** optional):
 
 ```bash
 npm run db:register-editor-export -- --kind agent_context \
-  --document-file tools/reports/.staging/body-example.json \
+  --document-file path/to/body-example.json \
   --issue TECH-00
 ```
 
@@ -171,6 +172,10 @@ LIMIT 5;
 **Unlabeled rows:** `WHERE backlog_issue_id IS NULL`.
 
 **Manual bundle** (**E1**) remains available via **`npm run db:register-repro`** — it inserts a single **`dev_repro_bundle`** row that can point at both **Agent context** and **Sorting debug** paths. The **`editor_export_*`** tables add **per-export** history (**`document jsonb`**) in separate tables.
+
+## Agent bridge job queue
+
+**Table:** **`agent_bridge_job`** — **`command_id`** (**uuid**), **`kind`**, **`status`** (`pending` → `processing` → `completed` / `failed`), **`request`**, **`response`**, **`error`**. **territory-ia** MCP **`unity_bridge_command`** inserts **`pending`** rows and polls; **Unity** **`AgentBridgeCommandRunner`** runs **`tools/postgres-ia/agent-bridge-dequeue.mjs`** (claim + **`processing`**) and **`agent-bridge-complete.mjs`** (write **`response`** / **`failed`**). Requires the same **`DATABASE_URL`** as **`register-editor-export.mjs`**. See [`docs/mcp-ia-server.md`](mcp-ia-server.md) and **unity-development-context** §10.
 
 ## IA project spec journal
 

@@ -45,13 +45,39 @@ export function resolveSpecKeyAlias(spec: string): string {
   return SPEC_KEY_ALIASES[t] ?? spec.trim();
 }
 
+const REPO_ROOT_MARKERS: readonly (readonly string[])[] = [
+  ["config", "postgres-dev.json"],
+  [".cursor", "specs", "glossary.md"],
+];
+
 /**
- * Resolve repository root: REPO_ROOT env (relative to cwd if not absolute), else cwd.
+ * Walk parents from {@link startDir} looking for committed repo markers (Postgres dev config or glossary).
+ */
+export function findRepositoryRootWalkingUp(startDir: string): string | null {
+  let dir = path.resolve(startDir);
+  const fsRoot = path.parse(dir).root;
+  for (let i = 0; i < 32 && dir !== fsRoot; i++) {
+    for (const segs of REPO_ROOT_MARKERS) {
+      const marker = path.join(dir, ...segs);
+      if (fs.existsSync(marker)) return dir;
+    }
+    dir = path.dirname(dir);
+  }
+  return null;
+}
+
+/**
+ * Resolve repository root: **`REPO_ROOT`** env (relative to cwd if not absolute), else walk up from **`cwd`**
+ * for {@link REPO_ROOT_MARKERS}, else **`process.cwd()`** — so Node scripts work from **`tools/mcp-ia-server/`** without env.
  */
 export function resolveRepoRoot(): string {
   const raw = process.env.REPO_ROOT;
-  if (raw === undefined || raw === "") return process.cwd();
-  return path.isAbsolute(raw) ? raw : path.resolve(process.cwd(), raw);
+  if (raw !== undefined && raw !== "") {
+    return path.isAbsolute(raw) ? raw : path.resolve(process.cwd(), raw);
+  }
+  const found = findRepositoryRootWalkingUp(process.cwd());
+  if (found) return found;
+  return process.cwd();
 }
 
 function toPosixRelative(repoRoot: string, absolutePath: string): string {

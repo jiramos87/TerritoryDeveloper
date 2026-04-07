@@ -11,7 +11,7 @@ description: >
 
 This skill **does not** call MCP tools itself. It is a **checklist** of **existing** **`npm`** commands — **not** a second copy of `tools/validate-dead-project-spec-paths.mjs` or the **MCP** scripts.
 
-**Related:** **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (phase exit → **Pre-commit Checklist** — **this** skill adds **automated** **Node** steps). **[`project-spec-close`](../project-spec-close/SKILL.md)** (optional: run **after** **IA persistence** when the change touched **MCP**, **schemas**, or **spec/glossary** bodies that feed indexes — **before** mandatory `npm run validate:dead-project-specs` in closeout). **CI parity:** [`.github/workflows/ia-tools.yml`](../../../.github/workflows/ia-tools.yml). **Dead project-spec paths:** `npm run validate:dead-project-specs`. **Conventions:** [`.cursor/skills/README.md`](../README.md).
+**Related:** **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (phase exit → **Pre-commit Checklist** — **this** skill adds **automated** **Node** steps). **[`project-spec-close`](../project-spec-close/SKILL.md)** (optional: run **after** **IA persistence** when the change touched **MCP**, **schemas**, or **spec/glossary** bodies that feed indexes — **before** mandatory `npm run validate:dead-project-specs` in closeout). **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (optional **Unity** logs/screenshots via MCP — **not** part of this manifest). **CI parity:** [`.github/workflows/ia-tools.yml`](../../../.github/workflows/ia-tools.yml). **Dead project-spec paths:** `npm run validate:dead-project-specs`. **Conventions:** [`.cursor/skills/README.md`](../README.md).
 
 ## Failure policy
 
@@ -42,6 +42,13 @@ Run from **repository root** unless **Cwd** says otherwise. Script names match r
 **Equivalent in package folder:** For step 2, `cd tools/mcp-ia-server && npm test` after `npm ci` matches **CI** exactly.
 
 **Project specs:** New **`.cursor/projects/{ISSUE_ID}.md`** stubs should include **`## 7b. Test Contracts`** ([`.cursor/templates/project-spec-template.md`](../../templates/project-spec-template.md)) so **Acceptance** maps to these **Node** checks where applicable.
+
+## Optional: IDE agent bridge evidence (dev machine — **N/A** in CI)
+
+When **§8 Acceptance** or **§7b** calls for **Play Mode** **Console** excerpts or **Game view** screenshots (e.g. HUD visible, no **`error`** severities), an agent **with** **territory-ia** and a configured dev machine **may** call **`unity_bridge_command`** (**`get_console_logs`**, **`capture_screenshot`**, **`include_ui`** for **Overlay** UI). See **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** for prerequisites, parameters, and limits.
+
+- **Do not** add these calls as mandatory rows in the **Validation manifest** above — **GitHub Actions** does not run **Unity** or **Postgres** bridge dequeue for game projects.
+- Treat bridge output as **human / agent evidence** attached to the issue or chat, not a substitute for **`npm run validate:all`**.
 
 ## Future / N/A (placeholders)
 
