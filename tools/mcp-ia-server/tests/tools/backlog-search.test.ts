@@ -52,9 +52,9 @@ test(
   () => {
     const issues = parseAllBacklogIssues(repoRoot, "open");
     assert.ok(issues.length > 0);
-    const bug12 = issues.find((i) => i.issue_id === "BUG-12");
-    assert.ok(bug12, "BUG-12 should be in open backlog");
-    assert.equal(bug12!.status, "open");
+    const bug14 = issues.find((i) => i.issue_id === "BUG-14");
+    assert.ok(bug14, "BUG-14 should be in open backlog");
+    assert.equal(bug14!.status, "open");
   },
 );
 

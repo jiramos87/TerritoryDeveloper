@@ -9,12 +9,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveRepoRoot } from "../src/config.js";
+import { loadRepoDotenvIfNotCi } from "../src/ia-db/repo-dotenv.js";
 import {
   buildProjectSpecCloseoutDigest,
   resolveProjectSpecFile,
 } from "../src/parser/project-spec-closeout-parse.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+loadRepoDotenvIfNotCi(resolveRepoRoot());
 if (!process.env.REPO_ROOT) {
   process.env.REPO_ROOT = path.resolve(__dirname, "../../..");
 }

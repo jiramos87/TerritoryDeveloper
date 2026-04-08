@@ -12,7 +12,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=load-repo-env.inc.sh
+source "${SCRIPT_DIR}/load-repo-env.inc.sh"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+territory_load_repo_dotenv_files "$REPO_ROOT"
 CONFIG_JSON="${REPO_ROOT}/config/postgres-dev.json"
 POSTGRES_APP_SUPPORT="${HOME}/Library/Application Support/Postgres"
 

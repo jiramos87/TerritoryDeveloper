@@ -3,7 +3,7 @@
  *
  * Exit codes (stable contract for agents):
  *   0  OK — Postgres reachable, agent_bridge_job table present
- *   1  No URL — neither DATABASE_URL env nor config/postgres-dev.json resolved a value
+ *   1  No URL — CI without DATABASE_URL (local dev resolves `.env`, `config/postgres-dev.json`, or built-in default)
  *   2  Connection refused / timeout — URL resolved but Postgres unreachable
  *   3  Table missing — connected, but agent_bridge_job does not exist (migration 0008 not applied)
  *   4  Unexpected SQL error — connected, query failed for another reason
@@ -11,8 +11,8 @@
  * Usage from repository root:
  *   npm run db:bridge-preflight
  *
- * URL resolution: reuses resolveIaDatabaseUrl (DATABASE_URL env → config/postgres-dev.json when not CI).
- * Unity may additionally use EditorPrefs / .env.local — this script does not read those sources.
+ * URL resolution: reuses resolveIaDatabaseUrl (repo `.env` / `.env.local` when not CI, then DATABASE_URL,
+ * then `config/postgres-dev.json`, then dev default URI). Unity may use EditorPrefs for its own client.
  * See docs/postgres-ia-dev-setup.md for alignment notes.
  */
 
@@ -24,10 +24,7 @@ async function main(): Promise<number> {
   const url = resolveIaDatabaseUrl();
   if (!url) {
     console.error(
-      "bridge-preflight: exit 1 — no DATABASE_URL env and no database_url in config/postgres-dev.json.",
-    );
-    console.error(
-      "  Set DATABASE_URL or add database_url to config/postgres-dev.json.",
+      "bridge-preflight: exit 1 — no database URL (CI: set DATABASE_URL; local: use .env or config/postgres-dev.json).",
     );
     return 1;
   }

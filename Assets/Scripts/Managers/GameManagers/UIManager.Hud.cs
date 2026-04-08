@@ -55,34 +55,30 @@ public partial class UIManager
         commercialTaxText.text = "Commercial Tax: " + economyManager.GetCommercialTax() + "%";
         industrialTaxText.text = "Industrial Tax: " + economyManager.GetIndustrialTax() + "%";
 
-        EmploymentManager employment = FindObjectOfType<EmploymentManager>();
-        DemandManager demand = FindObjectOfType<DemandManager>();
-        StatisticsManager stats = FindObjectOfType<StatisticsManager>();
-
-        if (employment != null)
+        if (employmentManager != null)
         {
-            unemploymentRateText.text = employment.unemploymentRate.ToString("F1") + "%";
-            totalJobsText.text = employment.GetAvailableJobs().ToString();
+            unemploymentRateText.text = employmentManager.unemploymentRate.ToString("F1") + "%";
+            totalJobsText.text = employmentManager.GetAvailableJobs().ToString();
 
             if (totalJobsCreatedText != null)
-                totalJobsCreatedText.text = employment.GetTotalJobs().ToString();
+                totalJobsCreatedText.text = employmentManager.GetTotalJobs().ToString();
             if (availableJobsText != null)
-                availableJobsText.text = employment.GetAvailableJobs().ToString();
+                availableJobsText.text = employmentManager.GetAvailableJobs().ToString();
             if (jobsTakenText != null)
-                jobsTakenText.text = employment.GetJobsTakenByResidents().ToString();
+                jobsTakenText.text = employmentManager.GetJobsTakenByResidents().ToString();
         }
 
-        if (demand != null)
+        if (demandManager != null)
         {
-            demandResidentialText.text = demand.GetResidentialDemand().demandStatus +
-                " (" + demand.GetResidentialDemand().demandLevel.ToString("F0") + ")";
-            demandCommercialText.text = demand.GetCommercialDemand().demandStatus +
-                " (" + demand.GetCommercialDemand().demandLevel.ToString("F0") + ")";
-            demandIndustrialText.text = demand.GetIndustrialDemand().demandStatus +
-                " (" + demand.GetIndustrialDemand().demandLevel.ToString("F0") + ")";
+            demandResidentialText.text = demandManager.GetResidentialDemand().demandStatus +
+                " (" + demandManager.GetResidentialDemand().demandLevel.ToString("F0") + ")";
+            demandCommercialText.text = demandManager.GetCommercialDemand().demandStatus +
+                " (" + demandManager.GetCommercialDemand().demandLevel.ToString("F0") + ")";
+            demandIndustrialText.text = demandManager.GetIndustrialDemand().demandStatus +
+                " (" + demandManager.GetIndustrialDemand().demandLevel.ToString("F0") + ")";
         }
 
-        UpdateDemandBarFills(demand);
+        UpdateDemandBarFills(demandManager);
 
         // Update demand feedback for selected zone type
         UpdateDemandFeedback();
@@ -98,8 +94,6 @@ public partial class UIManager
     {
         if (gridCoordinatesText == null)
             return;
-        if (gameDebugInfoBuilder == null)
-            gameDebugInfoBuilder = FindObjectOfType<GameDebugInfoBuilder>();
         if (gameDebugInfoBuilder != null && useFullDebugText && gridManager != null)
         {
             gridCoordinatesText.text = gameDebugInfoBuilder.GetFullDebugText(gridManager.mouseGridPosition, gridManager.selectedPoint);
@@ -113,8 +107,6 @@ public partial class UIManager
         int cx = gridManager.chunkSize > 0 ? x / gridManager.chunkSize : 0;
         int cy = gridManager.chunkSize > 0 ? y / gridManager.chunkSize : 0;
         string line = "x: " + x + ", y: " + y + ", chunk: (" + cx + "," + cy + ")";
-        if (waterManager == null)
-            waterManager = FindObjectOfType<WaterManager>();
         if (waterManager != null && x >= 0 && x < gridManager.width && y >= 0 && y < gridManager.height)
         {
             int s = waterManager.GetWaterSurfaceHeight(x, y);

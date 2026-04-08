@@ -138,7 +138,8 @@ Task: "fix road rendering at border"
 | `npm run test:ia` | MCP parsers and tools work correctly | CI test suite |
 | `npm run validate:fixtures` | JSON Schema fixtures valid | CI validation |
 | `npm run generate:ia-indexes -- --check` | IA indexes (spec-index.json, glossary-index.json) not stale | CI check |
-| `npm run validate:all` | Chains all four checks above | CI umbrella |
+| `npm run validate:all` | Dead project-spec paths, **`compute-lib:build`**, **`test:ia`**, **`validate:fixtures`**, **`generate:ia-indexes --check`** | CI umbrella (subset; **CI** also runs **`npm ci`** in packages) |
+| `npm run verify:local` | **`validate:all`** then **`post-implementation-verify.sh --skip-node-checks`**: **`unity:compile-check`**, **`db:migrate`**, **`db:bridge-preflight`**, **macOS** Editor + **`db:bridge-playmode-smoke`**. **`verify:post-implementation`** = alias. [`tools/scripts/verify-local.sh`](../tools/scripts/verify-local.sh). Dev machine; **not** CI. | Local post-implementation |
 | [coding-conventions.mdc](../.cursor/rules/coding-conventions.mdc) | C# naming, XML docs, prefab conventions | Globs-apply rule (`**/*.cs`) |
 
 ---
@@ -173,7 +174,7 @@ Skills under [.cursor/skills/](../.cursor/skills/) define ordered MCP tool recip
 | **Create** issue | [project-new](../.cursor/skills/project-new/SKILL.md) | glossary_discover → router_for_task → spec_section → backlog_issue |
 | **Refine** spec | [project-spec-kickoff](../.cursor/skills/project-spec-kickoff/SKILL.md) | backlog_issue → invariants_summary → router_for_task → spec_section → glossary_* |
 | **Implement** | [project-spec-implement](../.cursor/skills/project-spec-implement/SKILL.md) | Per-phase: router → spec_section → glossary → code → compile gate |
-| **Validate** (Node) | [project-implementation-validation](../.cursor/skills/project-implementation-validation/SKILL.md) | npm scripts (validate:dead-project-specs, test:ia, validate:fixtures, generate:ia-indexes --check) |
+| **Validate** (Node + local bridge) | [project-implementation-validation](../.cursor/skills/project-implementation-validation/SKILL.md) | **`npm run validate:all`** (includes **`compute-lib:build`**); **`npm run verify:local`** (full dev chain; **`verify:post-implementation`** alias) |
 | **Debug** (Play Mode) | [ide-bridge-evidence](../.cursor/skills/ide-bridge-evidence/SKILL.md) / [close-dev-loop](../.cursor/skills/close-dev-loop/SKILL.md) | unity_bridge_command (debug_context_bundle, compile gate, before/after diff) |
 | **Preflight** (bridge) | [bridge-environment-preflight](../.cursor/skills/bridge-environment-preflight/SKILL.md) | Postgres + agent_bridge_job readiness check |
 | **Close** issue | [project-spec-close](../.cursor/skills/project-spec-close/SKILL.md) | closeout_digest → persist IA → journal_persist → delete spec → archive |

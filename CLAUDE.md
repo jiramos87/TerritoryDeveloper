@@ -12,7 +12,7 @@ This repository is configured for **Claude Code** with project-scoped MCP (`.mcp
 
 **Glossary tools:** Pass **English** in `glossary_discover` / `glossary_lookup` (translate from the conversation if the human writes in another language). For `glossary_discover`, use a **JSON array** for keywords.
 
-**Postgres / Unity bridge:** `project_spec_journal_*`, `unity_bridge_command`, `unity_bridge_get`, and `unity_compile` need a resolvable DB URL (`DATABASE_URL` or `config/postgres-dev.json`) and, for bridge tools, Unity Editor on `REPO_ROOT`. See `docs/mcp-ia-server.md` and `docs/postgres-ia-dev-setup.md`.
+**Postgres / Unity bridge:** `project_spec_journal_*`, `unity_bridge_command`, `unity_bridge_get`, and `unity_compile` need a resolvable DB URL (`DATABASE_URL` or `config/postgres-dev.json`) and, for bridge tools, Unity Editor on `REPO_ROOT`. Root **`npm run verify:local`** (alias **`verify:post-implementation`**) chains **`validate:all`** (**IA** **Node** checks including **`territory-compute-lib`** build), **`unity:compile-check`**, **`db:migrate`**, **`db:bridge-preflight`**, **macOS** **Editor** save/quit + relaunch, and **`db:bridge-playmode-smoke`** — see **`docs/mcp-ia-server.md`** and **`ARCHITECTURE.md`** (**Local verification**). **`docs/postgres-ia-dev-setup.md`** covers DB setup and the **`agent_bridge_job`** queue.
 
 If MCP is unavailable, use `.cursor/rules/agent-router.mdc` and targeted file reads. Canonical workflow and policies: **`AGENTS.md`**.
 

@@ -4,7 +4,8 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { buildRegistry } from "./config.js";
+import { buildRegistry, resolveRepoRoot } from "./config.js";
+import { loadRepoDotenvIfNotCi } from "./ia-db/repo-dotenv.js";
 import { registerListSpecs } from "./tools/list-specs.js";
 import { registerSpecOutline } from "./tools/spec-outline.js";
 import { registerSpecSection } from "./tools/spec-section.js";
@@ -30,6 +31,8 @@ import { registerUnityBridgeCommand } from "./tools/unity-bridge-command.js";
 import { registerBacklogSearch } from "./tools/backlog-search.js";
 import { registerInvariantPreflight } from "./tools/invariant-preflight.js";
 import { registerFindObjectOfTypeScan } from "./tools/findobjectoftype-scan.js";
+
+loadRepoDotenvIfNotCi(resolveRepoRoot());
 
 const server = new McpServer({
   name: "territory-ia",

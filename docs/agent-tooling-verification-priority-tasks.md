@@ -6,7 +6,7 @@
 
 **Audience:** Developers and Cursor agents planning tooling, **CI**, **MCP**, and **Unity Editor** utilities.
 
-**Related:** [`docs/mcp-ia-server.md`](mcp-ia-server.md), [`AGENTS.md`](../AGENTS.md), [`projects/agent-friendly-tasks-with-territory-ia-context.md`](../projects/agent-friendly-tasks-with-territory-ia-context.md), [`.cursor/rules/agent-router.mdc`](../.cursor/rules/agent-router.mdc).
+**Related:** [`docs/mcp-ia-server.md`](mcp-ia-server.md), [`AGENTS.md`](../AGENTS.md), [`ARCHITECTURE.md`](../ARCHITECTURE.md) (**Local verification** — **`npm run verify:local`**), [`projects/agent-friendly-tasks-with-territory-ia-context.md`](../projects/agent-friendly-tasks-with-territory-ia-context.md), [`.cursor/rules/agent-router.mdc`](../.cursor/rules/agent-router.mdc).
 
 **territory-ia:** Use **`router_for_task`**, **`spec_outline`**, **`spec_section`**, **`glossary_discover`**, **`invariants_summary`**, and **`backlog_issue`** when scoping tasks that touch simulation, roads, water, sorting, or invariants — keep script/MCP **outputs** aligned with the same vocabulary.
 
@@ -32,6 +32,8 @@
 4. **Human/Unity literacy in-repo** — **`unity-development-context.md`** before MCP slices that assume that body exists.
 5. **IA platform** — **Postgres** dev schema and future **DB-backed** retrieval unlock search, relationships, and advanced MCP tools at scale.
 6. **Domain bundles last among high-impact MCP** — They multiply value **after** cross-spec search / kickoff tools exist.
+
+**Local post-implementation (single entry point):** From the repository root, **`npm run verify:local`** chains **`validate:all`** (**IA tools** checks including **`territory-compute-lib`** build) with the **Unity** / **Postgres** bridge script ([`tools/scripts/verify-local.sh`](../tools/scripts/verify-local.sh)). **`npm run verify:post-implementation`** is an alias. Use when a dev machine has **Postgres** and **Unity** set up; **not** a **CI** substitute. See [`.cursor/skills/project-implementation-validation/SKILL.md`](../.cursor/skills/project-implementation-validation/SKILL.md).
 
 ---
 

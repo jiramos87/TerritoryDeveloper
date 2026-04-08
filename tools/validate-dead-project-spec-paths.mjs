@@ -15,9 +15,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadRepoDotenvIfNotCi } from "./postgres-ia/repo-dotenv.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
+loadRepoDotenvIfNotCi(REPO_ROOT);
 
 const PROJECT_SPEC_PATH_RE =
   /\.cursor\/projects\/((?:BUG|FEAT|TECH|ART|AUDIO)-\d+[a-z]?)\.md/gi;

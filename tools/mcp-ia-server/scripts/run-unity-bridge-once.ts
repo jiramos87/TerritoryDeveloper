@@ -6,7 +6,11 @@
  * Env: BRIDGE_TIMEOUT_MS (default 30000, max 30000), DATABASE_URL (optional override).
  */
 
+import { resolveRepoRoot } from "../src/config.js";
+import { loadRepoDotenvIfNotCi } from "../src/ia-db/repo-dotenv.js";
 import { runUnityBridgeCommand } from "../src/tools/unity-bridge-command.js";
+
+loadRepoDotenvIfNotCi(resolveRepoRoot());
 
 const timeout = Math.min(
   30_000,

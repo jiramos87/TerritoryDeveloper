@@ -1,12 +1,27 @@
 #!/usr/bin/env bash
 # Local compile smoke: Unity -batchmode import + script compile, then quit.
-# Requires UNITY_EDITOR_PATH to the Unity binary (macOS example inside Unity.app/.../MacOS/Unity).
+# UNITY_EDITOR_PATH: repo .env / .env.local, else macOS Unity Hub path derived from ProjectSettings/ProjectVersion.txt.
 # Do not run while another Unity Editor instance has this project open (project lock).
 set -euo pipefail
-REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=load-repo-env.inc.sh
+source "${SCRIPT_DIR}/load-repo-env.inc.sh"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+territory_load_repo_dotenv_files "$REPO_ROOT"
+
 UNITY_BIN="${UNITY_EDITOR_PATH:-}"
+if [[ -z "$UNITY_BIN" && "$(uname -s)" == "Darwin" ]]; then
+  _unity_ver="$(grep -E '^m_EditorVersion:' "${REPO_ROOT}/ProjectSettings/ProjectVersion.txt" 2>/dev/null | head -1 | awk '{print $2}')"
+  if [[ -n "$_unity_ver" ]]; then
+    _unity_cand="/Applications/Unity/Hub/Editor/${_unity_ver}/Unity.app/Contents/MacOS/Unity"
+    if [[ -x "$_unity_cand" ]]; then
+      UNITY_BIN="$_unity_cand"
+    fi
+  fi
+  unset _unity_ver _unity_cand
+fi
 if [[ -z "$UNITY_BIN" ]]; then
-  echo "unity-compile-check: set UNITY_EDITOR_PATH to your Unity editor binary (see ProjectSettings/ProjectVersion.txt)." >&2
+  echo "unity-compile-check: set UNITY_EDITOR_PATH in .env or export it (see ProjectSettings/ProjectVersion.txt)." >&2
   exit 2
 fi
 if [[ ! -x "$UNITY_BIN" ]] && [[ ! -f "$UNITY_BIN" ]]; then

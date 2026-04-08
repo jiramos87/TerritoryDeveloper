@@ -48,6 +48,8 @@ public partial class UIManager : MonoBehaviour
     public BuildingSelectorMenuController buildingSelectorMenuController;
     public CityStats cityStats;
     private WaterManager waterManager;
+    [SerializeField] private EmploymentManager employmentManager;
+    [SerializeField] private DemandManager demandManager;
 
     [Header("Mini-map")]
     [SerializeField] private MiniMapController miniMapController;
@@ -171,6 +173,13 @@ public partial class UIManager : MonoBehaviour
 
         if (waterManager == null)
             waterManager = FindObjectOfType<WaterManager>();
+
+        if (employmentManager == null)
+            employmentManager = FindObjectOfType<EmploymentManager>();
+        if (demandManager == null)
+            demandManager = FindObjectOfType<DemandManager>();
+        if (gameDebugInfoBuilder == null)
+            gameDebugInfoBuilder = FindObjectOfType<GameDebugInfoBuilder>();
 
         selectedZoneType = Zone.ZoneType.Grass;
         bulldozeMode = false;

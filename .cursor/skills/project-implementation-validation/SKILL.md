@@ -2,9 +2,10 @@
 name: project-implementation-validation
 description: >
   Use after substantive implementation when you need repo Node checks aligned with CI: dead project spec
-  paths, MCP package tests, JSON fixtures, IA index drift. Root shortcut: npm run validate:all (steps 1–4).
+  paths, MCP package tests, JSON fixtures, IA index drift. Root: npm run validate:all (includes compute-lib build + steps 1–4).
+  Full local chain (Unity/Postgres when applicable): npm run verify:local (alias: verify:post-implementation).
   Triggers: "post-implementation validation", "run npm checks after backlog work", "validate fixtures", "IA tools parity",
-  "MCP tests", "generate:ia-indexes --check", "validate:all".
+  "MCP tests", "generate:ia-indexes --check", "validate:all", "verify:local".
 ---
 
 # Project implementation validation (post-implementation checks)
@@ -31,13 +32,16 @@ Run from **repository root** unless **Cwd** says otherwise. Script names match r
 
 | Step | Command | Cwd | Notes |
 |------|---------|-----|--------|
+| 0 | `npm run compute-lib:build` | repo root | **`territory-compute-lib`** **`tsc`** — same ordering as **CI** before **`test:ia`**; included inside **`validate:all`** |
 | 1 | `npm run validate:dead-project-specs` | repo root | Open **BACKLOG** **`Spec:`** must point at existing `.cursor/projects/*.md` |
 | 2 | `npm run test:ia` | repo root | Delegates to `npm --prefix tools/mcp-ia-server test` — same tests **CI** runs after `npm ci` under **`tools/mcp-ia-server`** |
 | 3 | `npm run validate:fixtures` | repo root | Delegates via `--prefix` to **`tools/mcp-ia-server`** |
 | 4 | `npm run generate:ia-indexes -- --check` | repo root | Ensures committed **`spec-index.json`** / **`glossary-index.json`** match **markdown** sources |
 | 5 | `npm run verify` | `tools/mcp-ia-server` | **Advisory** — **not** in **IA tools** **Node** job today; run when touching **MCP** registration, parsers, or tool handlers |
 
-**Single command (steps 1–4):** From repo root, `npm run validate:all` runs the same ordered checks as steps 1–4 above. It does **not** run `npm ci`; install **`tools/mcp-ia-server`** dependencies first if **`test:ia`** fails (see root **`package.json`** `description`).
+**Single command (steps 0–4):** From repo root, `npm run validate:all` runs **dead project spec** paths, **`compute-lib:build`**, then steps 2–4 above. It does **not** run `npm ci`; install **`tools/compute-lib`** / **`tools/mcp-ia-server`** dependencies first if **`compute-lib:build`** or **`test:ia`** fails (see root **`package.json`** `description`).
+
+**Full local closed loop (canonical — macOS default orchestration, no env flag):** From repo root, **`npm run verify:local`** runs **`validate:all`** then [`tools/scripts/post-implementation-verify.sh`](../../../tools/scripts/post-implementation-verify.sh) with **`--skip-node-checks`**: if **`Temp/UnityLockfile`** exists, AppleScript **Save** + **Quit** and wait up to **30s** → **`unity:compile-check`** → **`db:migrate`** → **`db:bridge-preflight`** → if the lock exists again, repeat save/quit + **30s** → **`open`** Unity on **`REPO_ROOT`**, wait up to **60s** for the lock → **`db:bridge-playmode-smoke`** (optional: **`npm run verify:local -- "x,y"`** for **`seed_cell`**). **`npm run verify:post-implementation`** is an **alias** for **`verify:local`**. **Non-macOS:** same through **`db:bridge-preflight`**, then prints manual bridge instructions. Requires **Postgres**, **`.env`** / **`config/postgres-dev.json`**, **Accessibility** for **System Events** if save/quit automation is used, and **AgentBridgeCommandRunner** after Editor starts. **Canonical** reference: [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) **Local verification**.
 
 **Equivalent in package folder:** For step 2, `cd tools/mcp-ia-server && npm test` after `npm ci` matches **CI** exactly.
 
@@ -48,7 +52,7 @@ Run from **repository root** unless **Cwd** says otherwise. Script names match r
 When **§8 Acceptance** or **§7b** calls for **Play Mode** **Console** excerpts or **Game view** screenshots (e.g. HUD visible, no **`error`** severities), an agent **with** **territory-ia** and a configured dev machine **may** call **`unity_bridge_command`** (**`get_console_logs`**, **`capture_screenshot`**, **`include_ui`** for **Overlay** UI). See **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** for prerequisites, parameters, and limits.
 
 - **Do not** add these calls as mandatory rows in the **Validation manifest** above — **GitHub Actions** does not run **Unity** or **Postgres** bridge dequeue for game projects.
-- Treat bridge output as **human / agent evidence** attached to the issue or chat, not a substitute for **`npm run validate:all`**.
+- Treat bridge output as **human / agent evidence** attached to the issue or chat, not a substitute for **`npm run validate:all`** or **`npm run verify:local`**.
 
 ## Future / N/A (placeholders)
 
@@ -72,6 +76,6 @@ Replace `{CHANGED_AREAS}` with a short note on what shipped (e.g. **MCP** parser
 
 ```markdown
 Run **project-implementation-validation** after implementing {CHANGED_AREAS}.
-Use `.cursor/skills/project-implementation-validation/SKILL.md`: apply **When to skip**, then run the **Validation manifest** steps in order; stop on first failure.
+Use `.cursor/skills/project-implementation-validation/SKILL.md`: apply **When to skip**, then run **`npm run validate:all`** and/or **`npm run verify:local`** (canonical local post-implementation when **Postgres** + **Unity** bridge apply); stop on first failure.
 Do not reimplement the dead-spec scanner — use `npm run validate:dead-project-specs` only.
 ```

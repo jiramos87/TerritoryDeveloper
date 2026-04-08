@@ -10,11 +10,11 @@
 
 ## Environment
 
-**Connection:** **`DATABASE_URL`** env wins; otherwise local tooling and **territory-ia** read [`config/postgres-dev.json`](../config/postgres-dev.json) when **`CI`** / **`GITHUB_ACTIONS`** are unset. **`REPO_ROOT`** is the repository root (where **`config/`** and **`ProjectSettings/`** live); Unity and bridge scripts resolve it automatically.
+**Connection (Node / **territory-ia**):** when **`CI`** / **`GITHUB_ACTIONS`** are unset, tooling loads repo-root **`.env`** then **`.env.local`** (keys only fill empty `process.env` entries), then uses **`DATABASE_URL`** if set, then [`config/postgres-dev.json`](../config/postgres-dev.json), then the same dev URI as that file if the JSON is missing. In **CI**, only **`DATABASE_URL`** applies (no dotenv file load). **`REPO_ROOT`** is the repository root (where **`config/`** and **`ProjectSettings/`** live); scripts resolve it automatically unless you override with **`REPO_ROOT`** in **`.env`**.
 
 **Default host port (5434):** [`config/postgres-dev.json`](../config/postgres-dev.json) uses **host port `5434`** so this database can run **alongside** another PostgreSQL on **`5432`** (common when other tools use Docker or a second stack). **Your server must listen on the same port as the URI** — if nothing is bound to **5434**, clients return **connection refused**. This project **does not require Docker**; use Postgres.app, Homebrew, or any local install (see below). Docker is **optional** for contributors who prefer a container.
 
-Put your full URI (including password when **SCRAM** requires it) in **`postgres-dev.json`** for shared dev defaults, or set **`DATABASE_URL`** only (e.g. in a gitignored **`.env`** — see **`.env.example`**) so credentials never land in version control.
+Put your full URI (including password when **SCRAM** requires it) in **`postgres-dev.json`** for shared dev defaults, or set **`DATABASE_URL`** in a gitignored repo-root **`.env`** so credentials never land in version control.
 
 Example env override:
 
@@ -22,7 +22,7 @@ Example env override:
 export DATABASE_URL='postgresql://postgres:postgres@localhost:5434/territory_ia_dev'
 ```
 
-Optional: create a `.env` file at the repo root (gitignored) and load it before running scripts, e.g. `set -a && source .env && set +a` (shell-dependent).
+Optional: keep a repo-root **`.env`** (gitignored) with local overrides; Node tools and **`npm run unity:compile-check`** load it automatically (see **`tools/scripts/load-repo-env.inc.sh`** and **`tools/mcp-ia-server/src/ia-db/repo-dotenv.ts`**). **`.env.example`** is only a pointer to create **`.env`** — variable documentation lives in your **`.env`**.
 
 ## Local PostgreSQL (Postgres.app, Homebrew — no Docker)
 

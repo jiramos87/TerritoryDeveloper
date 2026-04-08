@@ -12,6 +12,7 @@ import {
   parseDocument,
 } from "../src/parser/markdown-parser.js";
 import { parseGlossary } from "../src/parser/glossary-parser.js";
+import { loadRepoDotenvIfNotCi } from "../src/ia-db/repo-dotenv.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../..");
@@ -145,6 +146,7 @@ function assertIndexesMatchCommitted(
 }
 
 function main(): void {
+  loadRepoDotenvIfNotCi(repoRoot);
   const check = process.argv.includes("--check");
 
   process.env.REPO_ROOT = repoRoot;

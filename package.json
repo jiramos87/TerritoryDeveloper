@@ -1,9 +1,10 @@
 {
   "name": "territory-developer",
   "private": true,
-  "description": "Unity project root scripts delegate to tools/mcp-ia-server (IA / JSON tooling). Run npm ci in tools/mcp-ia-server if npm run test:ia fails with missing modules. npm run validate:all chains IA checks (see project-implementation-validation skill). Bridge smoke: npm run db:bridge-playmode-smoke (Postgres + Unity on repo root; DATABASE_URL or config/postgres-dev.json). Local compile smoke (no Editor lock): UNITY_EDITOR_PATH=… npm run unity:compile-check.",
+  "description": "Unity project root scripts delegate to tools/mcp-ia-server (IA / JSON tooling). Local post-implementation checks: npm run verify:local (canonical) — validate:all (includes territory-compute-lib build) then Unity/Postgres bridge chain; npm run verify:post-implementation is an alias. Run npm ci in tools/compute-lib / tools/mcp-ia-server if build or test:ia fails. Bridge-only: npm run db:bridge-playmode-smoke. Local compile smoke: UNITY_EDITOR_PATH in repo-root .env, npm run unity:compile-check.",
   "scripts": {
-    "validate:all": "npm run validate:dead-project-specs && npm run test:ia && npm run validate:fixtures && npm run generate:ia-indexes -- --check",
+    "compute-lib:build": "npm --prefix tools/compute-lib run build",
+    "validate:all": "npm run validate:dead-project-specs && npm run compute-lib:build && npm run test:ia && npm run validate:fixtures && npm run generate:ia-indexes -- --check",
     "validate:dead-project-specs": "node tools/validate-dead-project-spec-paths.mjs",
     "validate:fixtures": "npm --prefix tools/mcp-ia-server run validate:fixtures",
     "validate:geography-init-report": "node tools/scripts/validate-geography-init.mjs",
@@ -22,6 +23,8 @@
     "db:bridge-agent-context": "npx --prefix tools/mcp-ia-server tsx tools/mcp-ia-server/scripts/run-unity-bridge-once.ts",
     "db:bridge-preflight": "npx tsx tools/mcp-ia-server/scripts/bridge-preflight.ts",
     "db:bridge-playmode-smoke": "npm --prefix tools/mcp-ia-server run bridge-playmode-smoke --",
-    "unity:compile-check": "bash tools/scripts/unity-compile-check.sh"
+    "unity:compile-check": "bash tools/scripts/unity-compile-check.sh",
+    "verify:local": "bash tools/scripts/verify-local.sh",
+    "verify:post-implementation": "npm run verify:local"
   }
 }

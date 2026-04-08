@@ -112,6 +112,16 @@ The **territory-ia** MCP server ([`tools/mcp-ia-server/`](tools/mcp-ia-server/),
 
 **JSON interchange program (completed):** **glossary** **JSON interchange program** — JSON Schema + **CI** **`validate:fixtures`**, **IA index manifest**, **Geography initialization** / Editor tooling payloads, **Postgres interchange patterns** (**B1**/**B3**/**P5**) in [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md) (**Program extension mapping (E1–E3)**). **Postgres** dev surfaces: **`db/migrations/`**, [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md), **`tools/postgres-ia/`**, [`config/postgres-dev.json`](config/postgres-dev.json) (optional committed local default URI; **CI** skips file fallback), **glossary** **Dev repro bundle**, **Editor export registry**, **IA project spec journal**. **Charter trace:** [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Exploration / versioning FAQ: [`projects/json-use-cases-brainstorm.md`](projects/json-use-cases-brainstorm.md). Generated indexes are **supplementary** to Markdown and MCP until explicitly wired; they do not replace **`list_specs`** / **`spec_section`** as authoritative sources.
 
+### Local verification (post-implementation)
+
+| Command | Role |
+|---------|------|
+| **`npm run verify:local`** | **Canonical** dev-machine chain: **`validate:all`** (dead project-spec paths, **`npm run compute-lib:build`**, **`test:ia`**, **`validate:fixtures`**, **`generate:ia-indexes --check`**) then [`tools/scripts/post-implementation-verify.sh`](tools/scripts/post-implementation-verify.sh) with **`--skip-node-checks`** (**`unity:compile-check`**, **`db:migrate`**, **`db:bridge-preflight`**, **macOS** Editor save/quit + relaunch + **`db:bridge-playmode-smoke`**; **non-macOS** stops after **`db:bridge-preflight`** — see script). Implemented by [`tools/scripts/verify-local.sh`](tools/scripts/verify-local.sh). Optional seed: **`npm run verify:local -- "x,y"`**. |
+| **`npm run verify:post-implementation`** | Alias for **`verify:local`**. |
+| **`npm run validate:all`** | **IA tools** subset only (no Unity / Postgres bridge). **`compute-lib:build`** matches **CI** ordering before **`test:ia`** ([`.github/workflows/ia-tools.yml`](.github/workflows/ia-tools.yml)). |
+
+**Not for CI.** Workflow notes: [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md), [`.cursor/skills/project-implementation-validation/SKILL.md`](.cursor/skills/project-implementation-validation/SKILL.md).
+
 ## Full Dependency Map
 
 | Manager | Dependencies |

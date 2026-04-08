@@ -10,10 +10,12 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import pg from 'pg';
+import { loadRepoDotenvIfNotCi } from './repo-dotenv.mjs';
 import { resolveDatabaseUrl } from './resolve-database-url.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../..');
+loadRepoDotenvIfNotCi(REPO_ROOT);
 const GLOSSARY_PATH = join(REPO_ROOT, '.cursor/specs/glossary.md');
 
 const MAX_ROWS = Number.parseInt(process.env.SEED_GLOSSARY_MAX ?? '20', 10);
