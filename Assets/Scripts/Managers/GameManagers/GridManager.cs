@@ -648,7 +648,7 @@ public class GridManager : MonoBehaviour, IGridManager
             }
         }
 
-        if (buildingType == null && zoneType != Zone.ZoneType.Grass)
+        if (zoneType != Zone.ZoneType.Grass)
         {
             cityStats.HandleBuildingDemolition(zoneType, zoneManager.GetZoneAttributes(zoneType));
         }

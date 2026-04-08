@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-07T21:27:41.793Z",
+  "last_generated": "2026-04-08T01:32:30.581Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -161,25 +161,25 @@
           "section_id": "persistence",
           "title": "Persistence",
           "depth": 2,
-          "line_start": 180
+          "line_start": 182
         },
         {
           "section_id": "prefabs-visual-layer",
           "title": "Prefabs & Visual Layer",
           "depth": 2,
-          "line_start": 191
+          "line_start": 193
         },
         {
           "section_id": "documentation",
           "title": "Documentation",
           "depth": 2,
-          "line_start": 205
+          "line_start": 207
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 235
+          "line_start": 237
         }
       ]
     },
@@ -851,25 +851,25 @@
           "section_id": "world-features",
           "title": "World features",
           "depth": 2,
-          "line_start": 100
+          "line_start": 102
         },
         {
           "section_id": "game-notifications",
           "title": "Game notifications",
           "depth": 2,
-          "line_start": 108
+          "line_start": 111
         },
         {
           "section_id": "architectural-patterns",
           "title": "Architectural patterns",
           "depth": 2,
-          "line_start": 114
+          "line_start": 117
         },
         {
           "section_id": "obsolete",
           "title": "Obsolete",
           "depth": 2,
-          "line_start": 123
+          "line_start": 126
         }
       ]
     },

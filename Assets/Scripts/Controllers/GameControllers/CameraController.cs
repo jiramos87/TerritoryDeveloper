@@ -160,7 +160,7 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// True when the primary pointer is over a uGUI raycast target (mouse or first touch). Used to avoid map zoom/pan through scrollable popups (BUG-19).
+    /// True when the primary pointer is over a uGUI raycast target (mouse or first touch). Used to avoid map zoom/pan through scrollable popups.
     /// </summary>
     private static bool IsPointerOverBlockingUi()
     {
@@ -342,7 +342,7 @@ public class CameraController : MonoBehaviour
         if (Mathf.Approximately(scroll, 0f))
             return;
 
-        // Do not zoom when scrolling over UI (Load Game list, Building Selector, etc.) — see BUG-19 / ui-design-system §3.5.
+        // Do not zoom when scrolling over UI (Load Game list, Building Selector, etc.) — see ui-design-system §3.5.
         if (IsPointerOverBlockingUi())
             return;
 

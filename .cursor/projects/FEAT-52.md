@@ -42,7 +42,7 @@ Implement a generic service coverage system where each service building (fire st
 
 ### 4.1 Domain behavior
 
-**Desirability** exists as a per-cell float computed once during geography initialization based on terrain context (water proximity, forest proximity). There is no dynamic service-based desirability. **Happiness** is a single aggregate number in CityStats (currently hardcoded to 50% — BUG-12). There are no service buildings beyond power plants and water plants, which affect resource supply/consumption but not coverage or happiness.
+**Desirability** exists as a per-cell float computed once during geography initialization based on terrain context (water proximity, forest proximity). There is no dynamic service-based desirability. **Happiness** is a single aggregate number in CityStats (now wired to live data). There are no service buildings beyond power plants and water plants, which affect resource supply/consumption but not coverage or happiness.
 
 ### 4.2 Systems map
 
@@ -131,7 +131,7 @@ Implementation approach left to the implementing agent. Key considerations: cove
 | Acceptance / goal | Check type | Command or artifact | Notes |
 |-------------------|------------|---------------------|-------|
 | Coverage computes correctly for known grid | Play Mode / Unit test | Place fire station, verify coverage scores at known distances | Manual or automated |
-| Happiness changes with coverage | Play Mode | Compare happiness before/after placing service building | BUG-12 must be fixed first |
+| Happiness changes with coverage | Play Mode | Compare happiness before/after placing service building | — |
 | Game compiles | MCP / dev machine | `unity_compile` or `npm run unity:compile-check` | |
 | No per-frame performance regression | Manual | Profile with/without coverage recalculation | |
 

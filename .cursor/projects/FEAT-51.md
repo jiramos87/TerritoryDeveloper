@@ -49,7 +49,7 @@ The **HUD** exposes many **current** scalars (**money**, **population**, **happi
 | Area | Pointers |
 |------|----------|
 | Exploration (mechanisms) | [`docs/ui-data-dashboard-exploration.md`](../../docs/ui-data-dashboard-exploration.md) |
-| **UI** stack | [`.cursor/specs/ui-design-system.md`](../../.cursor/specs/ui-design-system.md) **§1** Foundations, **§3** patterns (**modal**, scroll vs **camera** — **BUG-19**) |
+| **UI** stack | [`.cursor/specs/ui-design-system.md`](../../.cursor/specs/ui-design-system.md) **§1** Foundations, **§3** patterns (**modal**, scroll vs **camera** — **§3.5**) |
 | **Simulation** | [`.cursor/specs/simulation-system.md`](../../.cursor/specs/simulation-system.md) (**simulation tick**, **AUTO** — consume metrics after tick, do not redefine tick order here) |
 | **Persistence** | [`.cursor/specs/persistence-system.md`](../../.cursor/specs/persistence-system.md) — if history must survive **Save**/**Load** |
 | **Managers** | [`StatisticsManager`](../../Assets/Scripts/Managers/GameManagers/), [`EconomyManager`](../../Assets/Scripts/Managers/GameManagers/), [`DemandManager`](../../Assets/Scripts/Managers/GameManagers/), **`CityStats`**, **`TimeManager`** |
@@ -101,7 +101,7 @@ Deterministic derivations only for **player-visible** formulas; document in **De
 
 ### Phase 3 — Dashboard shell
 
-- [ ] **Dashboard** layout: **cards**, **scroll**, entry point wiring; align **modal** / pointer policy with **BUG-19** / **`ui-design-system.md`**.
+- [ ] **Dashboard** layout: **cards**, **scroll**, entry point wiring; align **modal** / pointer policy with **`ui-design-system.md`** **§3.5**.
 - [ ] Replace ad hoc polling with subscriptions or tick-aligned refresh (**BUG-14**).
 
 ### Phase 4 — Product hardening
@@ -122,7 +122,7 @@ Deterministic derivations only for **player-visible** formulas; document in **De
 - [ ] Bounded **time-series** collection for an agreed **metric** set; no unbounded per-**cell** history by default.
 - [ ] At least one **themed** **chart** and one **dashboard** **preset** shipped behind a player-visible entry point.
 - [ ] No new **singletons**; no **`FindObjectOfType`** in dashboard **`Update`** loops.
-- [ ] **Scroll** / **zoom** coexistence documented or verified against **BUG-19** where the dashboard uses **ScrollRect**.
+- [ ] **Scroll** / **zoom** coexistence documented or verified against **`ui-design-system.md`** **§3.5** where the dashboard uses **ScrollRect**.
 - [ ] Exploration doc remains the **mechanism** reference; **FEAT-51** **Decision Log** records chart library choice and persistence stance.
 
 ## 9. Issues Found During Development

@@ -128,7 +128,7 @@ The **territory-ia** MCP server ([`tools/mcp-ia-server/`](tools/mcp-ia-server/),
 | EconomyManager | CityStats, TimeManager, GameNotificationManager |
 | DemandManager | EmploymentManager, CityStats, ForestManager, GridManager |
 | InterstateManager | GridManager, TerrainManager, RoadManager |
-| CityStats | TimeManager, WaterManager, ForestManager |
+| CityStats | TimeManager, WaterManager, ForestManager, EconomyManager, EmploymentManager |
 | AutoRoadBuilder | GridManager, RoadManager, GrowthBudgetManager, CityStats, InterstateManager, TerrainManager |
 | AutoZoningManager | GridManager, ZoneManager, GrowthBudgetManager, CityStats, DemandManager |
 | AutoResourcePlanner | CityStats, GridManager, GrowthBudgetManager, UIManager |

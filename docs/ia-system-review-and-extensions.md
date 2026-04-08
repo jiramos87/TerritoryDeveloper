@@ -325,9 +325,8 @@ Prioritized by "impact on the player's experience of a living, responsive city":
 
 | Rank | Issue | Why high impact |
 |------|-------|-----------------|
-| 1 | **BUG-12** (Happiness always 50%) | **Blocks the entire feedback loop.** Without real happiness, the player has no signal that their choices matter. Fixes FEAT-23 dependency. Trivial fix (one line). |
-| 2 | **FEAT-21** (Expenses/maintenance) | **No economic tension = no game.** Without expenses, money only goes up. This single feature transforms Territory from a sandbox to a simulation. |
-| 3 | **FEAT-23** (Dynamic happiness) | With BUG-12 fixed, this gives the player continuous feedback. Multi-factor happiness (employment, taxes, services, pollution) is the core loop of city-builders. |
+| 1 | **FEAT-21** (Expenses/maintenance) | **No economic tension = no game.** Without expenses, money only goes up. This single feature transforms Territory from a sandbox to a simulation. |
+| 2 | ~~Dynamic happiness~~ (shipped) | Multi-factor happiness (employment, taxes, services, pollution) is the core loop of city-builders. Shipped with pollution model. |
 | 4 | **FEAT-22** (Tax→demand feedback) | Closes the economic loop: taxes affect demand, demand affects growth, growth affects income. Without this, tax sliders are decorative. |
 | 5 | **FEAT-43** (Growth ring tuning) | The AUTO simulation is the "life" of the city. Gradual center→edge gradient makes cities look organic vs artificial. |
 | 6 | **BUG-52** (AUTO zoning gaps) | Visible artifacts that break immersion. Gap cells between roads and zones look like bugs to the player. |
@@ -343,8 +342,7 @@ Prioritized by "impact on the player's experience of a living, responsive city":
 **Goal:** Transform the economy from "money goes up forever" to a genuine city-builder economic simulation.
 
 ```
-BUG-12 (fix happiness display) ← trivial, unblocks everything
-  → FEAT-23 (dynamic happiness: employment, taxes, services, pollution)
+Dynamic happiness (shipped: employment, taxes, services, pollution)
     → FEAT-21 (expenses: road maintenance, service costs, building upkeep)
       → FEAT-22 (tax→demand feedback loop)
         → FEAT-09 (trade/production/salaries — deep economy)
@@ -436,5 +434,5 @@ The IA system is remarkably complete and well-designed. The main opportunities a
 1. **Documentation:** A single "system overview" document explaining the IA philosophy and architecture
 2. **IA evolution:** Semantic search, knowledge graph, agent memory, bidirectional learning
 3. **Entity model:** Time-series persistence, event sourcing, building identity — all building on the existing Postgres infrastructure
-4. **Gameplay impact:** The "Economic Depth" lane (BUG-12 → FEAT-23 → FEAT-21 → FEAT-22) delivers the most player value per effort invested
+4. **Gameplay impact:** The "Economic Depth" lane (FEAT-21 → FEAT-22; happiness + pollution shipped) delivers the most player value per effort invested
 5. **New systems:** Service coverage, demand heatmaps, districts, and agent-driven parameter tuning would each deepen the simulation significantly

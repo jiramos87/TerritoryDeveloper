@@ -26,7 +26,7 @@ The reference spec describes **what shipped**, not an ideal design system. This 
 | **Scenes** | **MainScene** **`UI/City/Canvas`** holds almost all **UI**; **MainMenu** may have **zero** serialized **Canvas** — **runtime `BuildUI()`** vs **Inspector** wiring is a **bifurcated** authoring model. |
 | **Canvas scaler** | **800×600** (**city**) vs **1280×720** (**menu** code path) — different reference baselines for one product. |
 | **Orchestration** | **`UIManager`** centralizes **many** serialized **`Text`** references and **popup** routing; controllers exist but **coupling** and **surface area** remain high. |
-| **Input / UX** | **Scroll** vs **camera** is a **known** friction class (**§3.5**, **BUG-19**); **tooltip** is a **single float** on **`UIManager`**, not a component pattern. |
+| **Input / UX** | **Scroll** vs **camera** is a **known** friction class (**§3.5**); **tooltip** is a **single float** on **`UIManager`**, not a component pattern. |
 
 ---
 
@@ -112,7 +112,7 @@ Original IDs **P1–P9** are **refined** against **`ui-design-system.md`** (**§
 | **P6** | **Split **`UIManager`** by surface** (facades; **no** rule changes). | §3.5 | **`UIManager.*.cs` partials** |
 | **P7** | **Modal contract** (overlay, close, optional **Esc**) for **`PopupType`**. | §3.7 | **`ui-design-system.md`** **§3.2** |
 | **P8** | **Rename / cleanup** (typos, `(1)` duplicates) + spec path update. | §3.8 | **Scene** + baseline JSON refresh |
-| **P9** | **Scroll vs camera** — product checklist + **BUG-19** alignment. | §3.5 | **`ui-design-system.md`** **§3.5** |
+| **P9** | **Scroll vs camera** — product checklist alignment. | §3.5 | **`ui-design-system.md`** **§3.5** |
 
 **§3.3** documents the **shipped** **toolbar** in **`MainScene.unity`**; **P5**/**P8** coordinate with scaler and rename hygiene around that layout.
 
@@ -148,7 +148,7 @@ Original IDs **P1–P9** are **refined** against **`ui-design-system.md`** (**§
 - [`.cursor/specs/ui-design-system.md`](../.cursor/specs/ui-design-system.md)
 - [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) — **Recent archive** (**UI-as-code program** umbrella + capstone)
 - [`docs/reports/ui-inventory-as-built-baseline.json`](reports/ui-inventory-as-built-baseline.json)
-- **BACKLOG:** **BUG-19**, **BUG-14**
+- **BACKLOG:** **BUG-14**
 
 ---
 

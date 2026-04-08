@@ -54,6 +54,15 @@ public class GrowthBudgetSlidersController : MonoBehaviour
         SyncFromManager();
     }
 
+    void OnDestroy()
+    {
+        if (totalBudgetSlider != null) totalBudgetSlider.onValueChanged.RemoveAllListeners();
+        if (roadPercentSlider != null) roadPercentSlider.onValueChanged.RemoveAllListeners();
+        if (energyPercentSlider != null) energyPercentSlider.onValueChanged.RemoveAllListeners();
+        if (waterPercentSlider != null) waterPercentSlider.onValueChanged.RemoveAllListeners();
+        if (zoningPercentSlider != null) zoningPercentSlider.onValueChanged.RemoveAllListeners();
+    }
+
     void Update()
     {
         if (slidersContainer != null && cityStats != null)

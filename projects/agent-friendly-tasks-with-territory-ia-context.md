@@ -61,7 +61,7 @@ Labels:
 
 | ID | Suitability | Rationale |
 |----|-------------|-----------|
-| **BUG-12** | **A** | Single file, explicit bug: replace hardcoded happiness with `cityStats.happiness`. Low domain coupling. |
+| ~~**BUG-12**~~ | **Done** | Fixed: happiness display now reads `cityStats.happiness`. See [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md). |
 | **BUG-14** | **A** | Directly matches invariant “no FindObjectOfType in Update”; cache in `Awake`/`Start`. Two files, mechanical. |
 | **BUG-28** | **C** | Sorting between slope and interstate — `GridManager` sorting region + terrain/road interaction; easy to break visuals. |
 | **BUG-31** | **C** | `RoadPrefabResolver` / border entry-exit; road validation and prefab rules. |
@@ -72,7 +72,6 @@ Labels:
 
 | ID | Suitability | Rationale |
 |----|-------------|-----------|
-| **BUG-19** | **B** | Backlog proposes `EventSystem.current.IsPointerOverGameObject()`; touches `CameraController` + UI; scene/ScrollRect verification needed. |
 | **BUG-49** | **C** | Preview vs full stroke; must stay aligned with road validation / `TryPrepareRoadPlacementPlan` family. |
 | **BUG-48** | **B–C** | Minimap refresh strategy; performance trade-offs; may need profiling script (see [`docs/agent-tooling-verification-priority-tasks.md`](../docs/agent-tooling-verification-priority-tasks.md)). |
 | **BUG-52** | **C** | AUTO zoning gaps, tick order, road cache invalidation; regression suspicion after BUG-37. |
@@ -136,8 +135,8 @@ These are **incremental** work items that improve agent success **without** wait
 
 ## 6. Summary
 
-- **Best backlog candidates for a mostly-autonomous agent today:** **BUG-12**, **BUG-14**, **TECH-14** (with reference audit), and **documentation/tooling** follow-ups [**TECH-23**](../BACKLOG.md#code-health-technical-debt)–[**TECH-27**](../BACKLOG.md#code-health-technical-debt) (see [§4](#4-new-task-ideas-optimized-for-the-current-mcp-not-future-tech-1819)). **`unity-development-context.md`** baseline polish: [**TECH-25** completed](../BACKLOG.md#completed-last-30-days).
-- **Reasonable with discipline and Editor verification:** **BUG-19**, **BUG-17**, **FEAT-03**, parts of **TECH-02/03/05**, **TECH-13** (audited).
+- **Best backlog candidates for a mostly-autonomous agent today:** **BUG-14**, **TECH-14** (with reference audit), and **documentation/tooling** follow-ups [**TECH-23**](../BACKLOG.md#code-health-technical-debt)–[**TECH-27**](../BACKLOG.md#code-health-technical-debt) (see [§4](#4-new-task-ideas-optimized-for-the-current-mcp-not-future-tech-1819)). **`unity-development-context.md`** baseline polish: [**TECH-25** completed](../BACKLOG.md#completed-last-30-days).
+- **Reasonable with discipline and Editor verification:** **BUG-17**, **FEAT-03**, parts of **TECH-02/03/05**, **TECH-13** (audited).
 - **Poor fit for “hands-off” agent implementation:** **BUG-28**, **BUG-31**, **BUG-49**, **BUG-52**, **TECH-01**, **FEAT-21–23**, **FEAT-35–36**, **FEAT-43**, performance (**TECH-15/16**), and **new gameplay systems**—unless the human splits the work into verified milestones with spec anchors.
 
 ---

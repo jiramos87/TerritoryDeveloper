@@ -55,7 +55,7 @@ Add prefab paths under `Assets/` as they are standardized.
 
 **Technical constraints:** **Canvas Scaler** — **§4.3**. **EventSystem** — UI must consume pointer events so world tools (e.g. camera zoom) do not fire through panels. **Performance** — no **`FindObjectOfType`** in **`Update`** (**.cursor/rules/invariants.mdc**). **Coupling** — **`UIManager`** is large; prefer small controllers or shared helpers (**AGENTS.md**).
 
-**Known pain points:** Scroll wheel over UI lists also moving **camera** (**BUG-19** class); **`FindObjectOfType`** in hot paths (**BUG-14**); happiness / stats display inconsistencies (**BACKLOG**).
+**Known pain points:** Scroll wheel over UI lists also moving **camera** (fixed — see **§3.5**); **`FindObjectOfType`** in hot paths (**BUG-14**); happiness / stats display inconsistencies (**BACKLOG**).
 
 **Ongoing hygiene:** When **UI** hierarchies change, refresh **§1–§4** (as needed), this **Codebase inventory**, and the committed baseline JSON per [`docs/reports/README.md`](../../docs/reports/README.md). After **BACKLOG** **`Spec:`** edits under `.cursor/projects/`, run `npm run validate:dead-project-specs` (repo root). After **glossary** / **reference spec** body edits consumed by **territory-ia**, run `npm run generate:ia-indexes -- --check`. Extend **`UiInventoryReportsMenu`** allowlist when **`RegionScene`** / **`CityScene`** assets land or rename.
 
@@ -163,7 +163,7 @@ Norms for **MainScene** / **MainMenu** hierarchies so **Editor** exports, **MCP*
 ### 2.4 List / scroll
 
 - **As-built:** **`Scroll View` / `Viewport` / `Content`** under **`BuildingSelectorPopupPanel`** and **`LoadGameMenuPanel`**.
-- **Input:** Scroll vs **camera** — see **§3.5** and **BUG-19**.
+- **Input:** Scroll vs **camera** — see **§3.5**.
 
 ### 2.5 Tooltip
 
@@ -220,12 +220,12 @@ Norms for **MainScene** / **MainMenu** hierarchies so **Editor** exports, **MCP*
 
 - **Expectation:** Pointer over **UI** should consume events so **camera** / **grid** tools do not fire through panels; **`GridManager`** / **`CameraController`** use **`IsPointerOverGameObject`** patterns.
 - **Scroll wheel vs zoom (checklist):**
-  1. **`CameraController.HandleScrollZoom`** returns early when **`EventSystem.current.IsPointerOverGameObject()`** is true so list scroll does not change **orthographic** zoom (**BUG-19** fix — see **§3.5**).
+  1. **`CameraController.HandleScrollZoom`** returns early when **`EventSystem.current.IsPointerOverGameObject()`** is true so list scroll does not change **orthographic** zoom.
   2. **Load Game** list: wheel over **`ScrollRect`** / **Viewport** / **Content** — list scrolls, **map** zoom does not.
   3. **Building selector** popup: same expectation over its **Scroll View** subtree.
-  4. **Raycasts:** **Viewport** / list item **Graphic** components keep **`raycastTarget`** enabled where hit testing must see the **UI** (see **BUG-19** spec).
+  4. **Raycasts:** **Viewport** / list item **Graphic** components keep **`raycastTarget`** enabled where hit testing must see the **UI**.
 - **Regression test:** **Play Mode** — open **Load Game**, scroll wheel over save list; open **Building Selector**, scroll over building list; pointer over **map** — zoom still steps.
-- **Touch and keyboard:** **`EventSystem.current.IsPointerOverGameObject()`** without a **finger id** can miss **touch** over **`ScrollRect`**; **`CameraController`** should use the active touch’s **`fingerId`** when present. **WASD** (and right-drag) **camera** movement should also respect **UI** hit tests when a blocking overlay is up — same policy as scroll zoom (**BUG-19** class).
+- **Touch and keyboard:** **`EventSystem.current.IsPointerOverGameObject()`** without a **finger id** can miss **touch** over **`ScrollRect`**; **`CameraController`** should use the active touch’s **`fingerId`** when present. **WASD** (and right-drag) **camera** movement should also respect **UI** hit tests when a blocking overlay is up — same policy as scroll zoom.
 
 ---
 
@@ -306,7 +306,7 @@ Normative behavior stays in **§1–§3**; the following are **consistency** not
 | 2026-04-04 | **As-built vs target** subsection; **UI-as-code** program baseline for **`ui-design-system.md`** (**glossary** **UI design system (reference spec)**) |
 | 2026-04-04 | **§1**–**§4**, **§2**–**§3** **as-built** from [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json); **§3.0** **Main menu**; **§6** traceability note |
 | 2026-04-04 | Serialized **`MainMenu`**, **`UiTheme`**, **§1.2** typography decision, **§4.3** resolution matrix, **§5.2** theme paths |
-| 2026-04-04 | **`UIManager` `partial`** split; **§3.2** modal **Esc** contract; **§3.5** scroll-zoom checklist + **BUG-19** code path; **§5.2** prefab scaffold menu; **v0** prefabs via **`UiPrefabLibraryScaffoldMenu`** |
+| 2026-04-04 | **`UIManager` `partial`** split; **§3.2** modal **Esc** contract; **§3.5** scroll-zoom checklist; **§5.2** prefab scaffold menu; **v0** prefabs via **`UiPrefabLibraryScaffoldMenu`** |
 | 2026-04-11 | **§3.5** touch / **WASD** **UI** blocking note; **§5.3** shipped **UiTheme** / **HUD** polish implementation patterns (migrated from closed project spec) |
 
 ### Machine-readable traceability (UI inventory baseline)

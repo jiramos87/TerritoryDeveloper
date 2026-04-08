@@ -36,6 +36,12 @@ public class SimulateGrowthToggle : MonoBehaviour
         RefreshVisual();
     }
 
+    void OnDestroy()
+    {
+        if (toggleButton != null)
+            toggleButton.onClick.RemoveListener(OnToggleClick);
+    }
+
     void OnToggleClick()
     {
         if (cityStats == null) return;

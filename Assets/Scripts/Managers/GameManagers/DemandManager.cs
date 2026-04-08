@@ -76,7 +76,7 @@ public class DemandManager : MonoBehaviour
     [Tooltip("Unemployment rate (%) above which residential demand drops and C/I demand rises.")]
     public float unemploymentThreshold = 15f;
     [Tooltip("Residential target reduction per % unemployment above threshold.")]
-    public float unemploymentResidentialPenalty = 1.5f;
+    public float unemploymentResidentialPenalty = 1.2f;
     [Tooltip("Commercial/Industrial target boost per % unemployment above threshold.")]
     public float unemploymentJobBoost = 1.2f;
 
@@ -136,22 +136,26 @@ public class DemandManager : MonoBehaviour
         if (cityStats == null) return;
 
         // Calculate zones without buildings
-        buildingTracker.residentialZonesWithoutBuildings =
-            (cityStats.residentialLightZoningCount + cityStats.residentialMediumZoningCount + cityStats.residentialHeavyZoningCount);
-
-        buildingTracker.commercialZonesWithoutBuildings =
-            (cityStats.commercialLightZoningCount + cityStats.commercialMediumZoningCount + cityStats.commercialHeavyZoningCount);
-
-        buildingTracker.industrialZonesWithoutBuildings =
-            (cityStats.industrialLightZoningCount + cityStats.industrialMediumZoningCount + cityStats.industrialHeavyZoningCount);
-
-        // Track new buildings since last update
+        // Track current building totals (needed for both zone counting and new-building tracking)
         int currentResidentialBuildings = cityStats.residentialLightBuildingCount +
             cityStats.residentialMediumBuildingCount + cityStats.residentialHeavyBuildingCount;
         int currentCommercialBuildings = cityStats.commercialLightBuildingCount +
             cityStats.commercialMediumBuildingCount + cityStats.commercialHeavyBuildingCount;
         int currentIndustrialBuildings = cityStats.industrialLightBuildingCount +
             cityStats.industrialMediumBuildingCount + cityStats.industrialHeavyBuildingCount;
+
+        // Calculate zones without buildings (total zones minus zones that already have buildings)
+        buildingTracker.residentialZonesWithoutBuildings = Mathf.Max(0,
+            (cityStats.residentialLightZoningCount + cityStats.residentialMediumZoningCount + cityStats.residentialHeavyZoningCount)
+            - currentResidentialBuildings);
+
+        buildingTracker.commercialZonesWithoutBuildings = Mathf.Max(0,
+            (cityStats.commercialLightZoningCount + cityStats.commercialMediumZoningCount + cityStats.commercialHeavyZoningCount)
+            - currentCommercialBuildings);
+
+        buildingTracker.industrialZonesWithoutBuildings = Mathf.Max(0,
+            (cityStats.industrialLightZoningCount + cityStats.industrialMediumZoningCount + cityStats.industrialHeavyZoningCount)
+            - currentIndustrialBuildings);
 
         buildingTracker.newResidentialBuildings = Mathf.Max(0, currentResidentialBuildings - previousResidentialBuildings);
         buildingTracker.newCommercialBuildings = Mathf.Max(0, currentCommercialBuildings - previousCommercialBuildings);
@@ -168,6 +172,25 @@ public class DemandManager : MonoBehaviour
         UpdateResidentialDemand();
         UpdateCommercialDemand();
         UpdateIndustrialDemand();
+        ApplyHappinessModifier();
+    }
+
+    /// <summary>
+    /// Scales all RCI demand levels by a happiness multiplier.
+    /// Happiness 80 = 1.1x, happiness 50 = 1.0x, happiness 30 = 0.9x (linear remap from 0–100 to 0.8–1.2).
+    /// </summary>
+    private void ApplyHappinessModifier()
+    {
+        if (cityStats == null) return;
+        float normalized = cityStats.GetNormalizedHappiness(); // 0–1
+        float multiplier = 0.8f + normalized * 0.4f; // maps 0→0.8, 0.5→1.0, 1.0→1.2
+        residentialDemand.demandLevel *= multiplier;
+        commercialDemand.demandLevel *= multiplier;
+        industrialDemand.demandLevel *= multiplier;
+
+        residentialDemand.demandLevel = Mathf.Clamp(residentialDemand.demandLevel, -100f, 100f);
+        commercialDemand.demandLevel = Mathf.Clamp(commercialDemand.demandLevel, -100f, 100f);
+        industrialDemand.demandLevel = Mathf.Clamp(industrialDemand.demandLevel, -100f, 100f);
     }
 
     private void UpdateResidentialDemand()

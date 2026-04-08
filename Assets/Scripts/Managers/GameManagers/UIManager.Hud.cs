@@ -43,7 +43,7 @@ public partial class UIManager
             if (buttonMoneyText != null)
                 buttonMoneyText.text = $"${cityStats.money:N0} {deltaStr}";
         }
-        happinessText.text = cityStats.happiness.ToString();
+        happinessText.text = $"{cityStats.happiness:F0}/100";
 
         cityPowerOutputText.text = cityStats.cityPowerOutput.ToString() + " MW";
         cityPowerConsumptionText.text = cityStats.cityPowerConsumption.ToString() + " MW";

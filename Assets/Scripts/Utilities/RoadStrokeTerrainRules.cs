@@ -38,7 +38,7 @@ namespace Territory.Utilities
             {
                 int x = Mathf.RoundToInt(path[i].x);
                 int y = Mathf.RoundToInt(path[i].y);
-                if (heightMap != null && heightMap.IsValidPosition(x, y) && heightMap.GetHeight(x, y) <= 0)
+                if (heightMap != null && heightMap.IsValidPosition(x, y) && heightMap.GetHeight(x, y) < 0)
                 {
                     result.Add(path[i]);
                     continue;

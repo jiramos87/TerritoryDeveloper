@@ -68,7 +68,7 @@ Player activates "District tool" from toolbar. Click cells to add them to the cu
 |--------|-------------|
 | Population | Sum of `Cell.population` for cells in district |
 | Zone distribution | Count of R/C/I cells by density tier |
-| Happiness | Average happiness of populated cells in district (once FEAT-23 ships) |
+| Happiness | City-wide happiness score (0–100, shipped); per-district breakdown deferred to this issue |
 | Tax revenue | Per-district sum based on district tax rates × building counts |
 | Density | Total buildings / total cells in district |
 | Employment | District-scoped employment ratio |

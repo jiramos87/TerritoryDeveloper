@@ -4,6 +4,15 @@
 
 ---
 
+## Completed (moved from BACKLOG.md, 2026-04-07)
+
+- [x] **FEAT-23** — Dynamic happiness based on city conditions (2026-04-07)
+  - Type: feature
+  - Files: `CityStats.cs`, `DemandManager.cs`, `EmploymentManager.cs`, `CityStatsUIController.cs`, `UIManager.Hud.cs`, `AgentBridgeCommandRunner.cs`
+  - Notes: Replaced unbounded `int` happiness accumulator with normalized 0–100 float score recalculated each simulation tick from 6 weighted factors (employment, tax burden, service coverage stub, forest bonus, development base, pollution penalty). Convergence rate scales with population. Introduced foundational city-wide **pollution** model (industrial buildings + power plants − forest absorption). Happiness feeds back into **demand (R / C / I)** via multiplier in `DemandManager`. Old saves clamp happiness to 0–100 on load. Migrated: **glossary** (Happiness, Pollution), **mgrs** §Demand + §World, **ARCHITECTURE.md** dependency table.
+
+---
+
 ## Completed (moved from BACKLOG.md, 2026-04-04)
 
 - [x] **TECH-36** — **Computational program** (umbrella; charter closed) (2026-04-04)
@@ -181,6 +190,19 @@
 
 ## Recent archive (moved from BACKLOG.md, 2026-04-10)
 
+- [x] **BUG-12** — Happiness UI always shows 50% (2026-04-07)
+  - Type: fix
+  - Files: `CityStatsUIController.cs` (GetHappiness), `GridManager.cs` (HandleBuildingStatsReset), `CityStats.cs` (RemoveMoney Debug.Log)
+  - Spec: (removed after closure — no glossary/reference spec changes; Decision Log persisted to Postgres journal)
+  - Notes: **Completed (verified — `/project-spec-close` + user):** `GetHappiness()` now reads `cityStats.happiness` instead of returning hardcoded `50.0f`. Format changed from `{F1}%` to `{N0}` (raw integer) for consistency with legacy HUD. Also fixed: bulldoze not reversing stats for developed buildings (`HandleBuildingStatsReset` skipped `HandleBuildingDemolition` when `buildingType != null`); removed noisy `Debug.Log` in `RemoveMoney`. `GetHappinessColor` thresholds kept as-is — revisit in **FEAT-23**.
+
+- [x] **TECH-76** — **Information Architecture** system overview document (2026-04-07)
+  - Type: documentation
+  - Files: `docs/information-architecture-overview.md` (new); `AGENTS.md` (cross-link); `ARCHITECTURE.md` (cross-link)
+  - Spec: (removed after closure — this row)
+  - Notes: **Completed (verified).** Single ~220-line document at [`docs/information-architecture-overview.md`](docs/information-architecture-overview.md) describing the IA system as a coherent design: philosophy (slice don't load, one vocabulary, knowledge flows back), layer diagram (ASCII), 6-stage knowledge lifecycle, semantic model axes (vocabulary/routing/invariants), consistency mechanisms table, MCP tool ecosystem, skill system lifecycle table, optional Postgres layer, and 6 extension checklists (reference spec, MCP tool, skill, glossary term, rule, Postgres table). Cross-linked from `AGENTS.md` documentation hierarchy and `ARCHITECTURE.md` § Agent IA. **IA evolution lane** context: [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md).
+  - Depends on: none
+
 - [x] **TECH-84** — **High-priority MCP diagnostic & discovery tools** (six-tool suite) (2026-04-07)
   - Type: tooling / agent enablement
   - Files: `tools/mcp-ia-server/src/tools/backlog-search.ts`, `tools/mcp-ia-server/src/tools/invariant-preflight.ts`, `tools/mcp-ia-server/src/tools/findobjectoftype-scan.ts`; `tools/mcp-ia-server/src/tools/unity-bridge-command.ts` (extended `kind` enum); `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` (three new bridge cases + `CreateOk` factory); `tools/mcp-ia-server/src/index.ts`; `docs/mcp-ia-server.md` (28 tools); `tools/mcp-ia-server/README.md` (27 tools)
@@ -267,6 +289,14 @@
   - Notes: **Completed (verified — `/project-spec-close` + user):** **`unity_bridge_command`** **`kind`** **`get_console_logs`** / **`capture_screenshot`**; **`response.log_lines`**; **Play Mode** PNG under **`tools/reports/bridge-screenshots/`**; **`params.include_ui`** uses **Game view** **`ScreenCapture`** (**Overlay** UI); **`runUnityBridgeCommand`** **`timeout_ms`** default/clamp; **`@territory/mcp-ia-server`** **0.4.13**. **Node:** **`npm run verify`** / **`npm run test:ia`** green. **Skills:** optional **Play** evidence workflow **`ide-bridge-evidence`**. Charter §5.1 sugar tool names remain aliases only.
   - Depends on: none (soft: **TECH-24** when parser / **Zod** shapes for bridge tools change)
   - Related: **TECH-73**, **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived), **TECH-48**, **TECH-24**
+
+- [x] **BUG-19** — Mouse scroll wheel in Load Game scrollable menu also triggers camera zoom (2026-04-07)
+  - Type: fix (UX)
+  - Files: `CameraController.cs` (HandleScrollZoom — `IsPointerOverBlockingUi` guard)
+  - Spec: (removed — fix shipped as part of **TECH-69** UI-as-code capstone; normative **`ui-design-system.md`** **§3.5** scroll-zoom checklist)
+  - Notes: **Closed (resolved by other issue):** The `IsPointerOverGameObject` guard in `CameraController.HandleScrollZoom` was implemented during **TECH-69**. Scroll over UI panels (Load Game, Building Selector) no longer triggers camera zoom.
+  - Depends on: none
+  - Related: **TECH-69**, **TECH-67**
 
 - [x] **BUG-53** — **Unity Editor:** **Territory Developer → Reports** menu / **Export Sorting Debug** tooling gap (2026-04-06)
   - Type: bug (tooling / agent workflow)

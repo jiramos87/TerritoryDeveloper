@@ -102,7 +102,7 @@ public class Cell : MonoBehaviour
         this.prefab = cellData.prefab;
         this.prefabName = cellData.prefabName;
         this.secondaryPrefabName = cellData.secondaryPrefabName ?? "";
-        this.zoneType = (Zone.ZoneType)System.Enum.Parse(typeof(Zone.ZoneType), cellData.zoneType);
+        this.zoneType = System.Enum.TryParse(cellData.zoneType, out Zone.ZoneType parsedZone) ? parsedZone : Zone.ZoneType.Grass;
         this.waterBodyType = cellData.GetWaterBodyType();
         this.waterBodyId = cellData.waterBodyId;
         this.occupiedBuildingName = cellData.occupiedBuildingName;
@@ -111,7 +111,7 @@ public class Cell : MonoBehaviour
         this.transformPosition = cellData.transformPosition;
         this.prefab = cellData.prefab;
         this.prefabName = cellData.prefabName;
-        this.forestType = (Forest.ForestType)System.Enum.Parse(typeof(Forest.ForestType), cellData.forestType);
+        this.forestType = System.Enum.TryParse(cellData.forestType, out Forest.ForestType parsedForest) ? parsedForest : Forest.ForestType.None;
         this.forestPrefabName = cellData.forestPrefabName;
         this.desirability = cellData.desirability;
         this.closeForestCount = cellData.closeForestCount;

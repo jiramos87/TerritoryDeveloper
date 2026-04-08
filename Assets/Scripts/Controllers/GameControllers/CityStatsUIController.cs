@@ -44,6 +44,15 @@ public class CityStatsUIController : MonoBehaviour
         SetupEventHandlers();
     }
 
+    void OnDestroy()
+    {
+        if (statsContainer != null)
+        {
+            statsContainer.UnregisterCallback<MouseEnterEvent>(OnStatsMouseEnter);
+            statsContainer.UnregisterCallback<MouseLeaveEvent>(OnStatsMouseLeave);
+        }
+    }
+
     void Update()
     {
         // Update UI every frame (you might want to optimize this)
@@ -189,10 +198,10 @@ public class CityStatsUIController : MonoBehaviour
             int population = GetPopulation();
             populationLabel.text = $"Population: {population:N0}";
 
-            // Update happiness - adjust based on your implementation
+            // Update happiness (0–100 normalized score)
             float happiness = GetHappiness();
             happinessLabel.style.color = GetHappinessColor(happiness);
-            happinessLabel.text = $"Happiness: {happiness:F1}%";
+            happinessLabel.text = $"Happiness: {happiness:F0}/100";
 
             // Update treasury - adjust based on your EconomyManager implementation
             int treasury = GetTreasury();
@@ -232,23 +241,11 @@ public class CityStatsUIController : MonoBehaviour
     }
 
     /// <summary>
-    /// Get happiness from CityStats - modify this method to match your actual implementation
+    /// Returns the current city happiness score from CityStats.
     /// </summary>
     private float GetHappiness()
     {
-        // Try different common method names - uncomment the one that matches your implementation
-
-        // Option 1: If you have a happiness field/property
-        // return cityStats.averageHappiness;
-
-        // Option 2: If you have a GetAverageHappiness method
-        // return cityStats.GetAverageHappiness();
-
-        // Option 3: If you calculate happiness differently
-        // return cityStats.CalculateHappiness();
-
-        // Placeholder - replace with your actual implementation
-        return 50.0f;
+        return cityStats.happiness;
     }
 
     /// <summary>

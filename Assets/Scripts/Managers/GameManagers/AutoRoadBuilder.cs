@@ -241,6 +241,14 @@ public class AutoRoadBuilder : MonoBehaviour
                 newProjectsStarted++;
         }
 
+        // Refresh road data after street projects placed roads, so expropriation sees fresh state
+        if (newProjectsStarted > 0)
+        {
+            gridManager.InvalidateRoadCache();
+            edges = gridManager.GetRoadEdgePositions();
+            roadSet = new HashSet<Vector2Int>(gridManager.GetAllRoadPositions());
+        }
+
         if (newProjectsStarted == 0 && toPlace > 0)
         {
             if (TryExpropriateForLongBlockedSegment(edges, roadSet))

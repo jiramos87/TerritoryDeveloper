@@ -1075,9 +1075,9 @@ public static class AgentBridgeCommandRunner
             return;
         }
 
-        var economyMgr = UnityEngine.Object.FindObjectOfType<Territory.Core.EconomyManager>();
-        var cityStats = UnityEngine.Object.FindObjectOfType<Territory.Core.CityStats>();
-        var demandMgr = UnityEngine.Object.FindObjectOfType<Territory.Core.DemandManager>();
+        var economyMgr = UnityEngine.Object.FindObjectOfType<Territory.Economy.EconomyManager>();
+        var cityStats = UnityEngine.Object.FindObjectOfType<Territory.Economy.CityStats>();
+        var demandMgr = UnityEngine.Object.FindObjectOfType<Territory.Economy.DemandManager>();
 
         if (cityStats == null)
         {
@@ -1089,6 +1089,7 @@ public static class AgentBridgeCommandRunner
         {
             population = cityStats.population,
             happiness = cityStats.happiness,
+            pollution = cityStats.pollution,
             money = cityStats.money,
             residential_tax = economyMgr != null ? economyMgr.residentialIncomeTax : 0,
             commercial_tax = economyMgr != null ? economyMgr.commercialIncomeTax : 0,
@@ -1506,7 +1507,8 @@ class AgentBridgeBundleDto
 class AgentBridgeEconomySnapshotDto
 {
     public int population;
-    public int happiness;
+    public float happiness;
+    public float pollution;
     public int money;
     public int residential_tax;
     public int commercial_tax;

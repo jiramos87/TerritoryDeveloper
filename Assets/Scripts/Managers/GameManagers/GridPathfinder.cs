@@ -213,7 +213,7 @@ namespace Territory.Core
             if (grid.terrainManager == null)
                 return true;
             HeightMap hm = grid.terrainManager.GetHeightMap();
-            if (hm != null && hm.IsValidPosition(x, y) && hm.GetHeight(x, y) <= 0)
+            if (hm != null && hm.IsValidPosition(x, y) && hm.GetHeight(x, y) < 0)
                 return true;
             if (grid.terrainManager.IsWaterSlopeCell(x, y))
                 return true;

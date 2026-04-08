@@ -161,11 +161,14 @@ public class AutoZoningManager : MonoBehaviour
                 Vector2Int cellLeft = new Vector2Int(origin.x + k * dir.x + j * perp.x, origin.y + k * dir.y + j * perp.y);
                 if (CanZoneCell(cellLeft, roadReservationCells))
                 {
-                    if (growthBudgetManager.TrySpend(GrowthCategory.Zoning, attrs.ConstructionCost) && zoneManager.PlaceZoneAt(new Vector2(cellLeft.x, cellLeft.y), zoneType))
+                    if (zoneManager.PlaceZoneAt(new Vector2(cellLeft.x, cellLeft.y), zoneType))
                     {
-                        placed++;
-                        placedThisTick++;
-                        budget -= attrs.ConstructionCost;
+                        if (growthBudgetManager.TrySpend(GrowthCategory.Zoning, attrs.ConstructionCost))
+                        {
+                            placed++;
+                            placedThisTick++;
+                            budget -= attrs.ConstructionCost;
+                        }
                     }
                     else
                         leftDone = false;
@@ -177,11 +180,14 @@ public class AutoZoningManager : MonoBehaviour
                 Vector2Int cellRight = new Vector2Int(origin.x + k * dir.x - j * perp.x, origin.y + k * dir.y - j * perp.y);
                 if (CanZoneCell(cellRight, roadReservationCells))
                 {
-                    if (growthBudgetManager.TrySpend(GrowthCategory.Zoning, attrs.ConstructionCost) && zoneManager.PlaceZoneAt(new Vector2(cellRight.x, cellRight.y), zoneType))
+                    if (zoneManager.PlaceZoneAt(new Vector2(cellRight.x, cellRight.y), zoneType))
                     {
-                        placed++;
-                        placedThisTick++;
-                        budget -= attrs.ConstructionCost;
+                        if (growthBudgetManager.TrySpend(GrowthCategory.Zoning, attrs.ConstructionCost))
+                        {
+                            placed++;
+                            placedThisTick++;
+                            budget -= attrs.ConstructionCost;
+                        }
                     }
                     else
                         rightDone = false;

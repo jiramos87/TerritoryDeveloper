@@ -221,8 +221,8 @@ public class CellData
         // Ensure building size is at least 1
         buildingSize = Mathf.Max(1, buildingSize);
 
-        // Ensure height is at least 1
-        height = Mathf.Max(1, height);
+        // Ensure height is not negative (height 0 is valid for map borders)
+        height = Mathf.Max(0, height);
 
         // Ensure forest counts are not negative
         closeForestCount = Mathf.Max(0, closeForestCount);

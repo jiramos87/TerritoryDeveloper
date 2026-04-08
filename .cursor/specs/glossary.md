@@ -21,7 +21,7 @@
 | **Pathfinding** | A*, costs, diagonal steps |
 | **Zones** | RCI, density, pivot, footprint, undeveloped light |
 | **Simulation** | tick, AUTO, budget, centroid, rings |
-| **City** | demand, tax, desirability, forest, regional, utility, notification |
+| **City** | demand, tax, desirability, happiness, pollution, forest, regional, utility, notification |
 | **Persistence** | save, CellData, water map data, visual restore, load order |
 | **Prefabs** | land/water slopes, sorting formula, type offsets |
 | **Documentation** | reference spec, project spec, **IA index manifest**, **UI design system (reference spec)**, **UI-as-code program**, **Compute-lib program**, **territory-compute-lib**, **C# compute utilities**, **Computational MCP tools**, **interchange JSON**, **Dev repro bundle**, **Editor export registry**, **IDE agent bridge**, **project-new**, **project-spec-close**, **project-implementation-validation**, **`validate:all`** (root **`npm run`**) |
@@ -175,6 +175,8 @@
 | **Forest (coverage)** | Tree cover on land — **sparse**, **medium**, or **dense** — affecting demand and player forest tools. | mgrs §World |
 | **Regional map** | The broader region with **neighboring cities**; context for regional systems and UI. | mgrs §World |
 | **Utility building** | Non-RCI service structure (water, power, etc.), often multi-cell; placed manually or by AUTO resource planning. | mgrs §World |
+| **Happiness** | City-wide citizen satisfaction score, normalized 0–100. Recalculated each **simulation tick** from weighted factors: employment rate, **tax base** pressure, **service coverage**, **forest** bonus, development base, and **pollution** penalty. Converges smoothly toward a target (lerp per tick). Feeds back into **demand (R / C / I)** as a multiplier. | mgrs §Demand |
+| **Pollution** | City-wide environmental degradation score. Sources: **industrial** **buildings** (heavy > medium > light), polluting **utility buildings** (power plants — nuclear = medium, fossil = high). Sinks: **forest** coverage (trees absorb pollution), future parks. Base pollution may later be affected by geographic and climatic factors. Influences **happiness** as a negative factor. | mgrs §World |
 | **Game notification** | Player-facing message (money, errors, hints) shown as a toast or alert. Only the notification singleton may enqueue UI messages. | mgrs §Notifications |
 
 ## Persistence

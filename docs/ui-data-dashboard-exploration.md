@@ -102,7 +102,7 @@ This document captures **future** work: mechanisms, methods, and subsystems need
 - `DashboardCard` prefab: header, chart host **RectTransform**, optional KPI row.
 - Top **tabs** for presets; **ScrollRect** when content exceeds viewport.
 
-**Considerations:** Reuse **modal** stack / input policy from **`ui-design-system.md`** **§3.2** / **BUG-19** so scroll does not fight **camera** zoom.
+**Considerations:** Reuse **modal** stack / input policy from **`ui-design-system.md`** **§3.2** / **§3.5** so scroll does not fight **camera** zoom.
 
 ---
 

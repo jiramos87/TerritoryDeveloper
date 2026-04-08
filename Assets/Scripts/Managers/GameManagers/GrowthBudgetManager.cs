@@ -60,7 +60,7 @@ public class GrowthBudgetManager : MonoBehaviour
         int spent = GetSpent(cat);
         int available = Mathf.Max(0, budgetForCat - spent);
         if (pct > 0 && minAvailablePerCategory > 0 && available < minAvailablePerCategory)
-            return Mathf.Min(available, minAvailablePerCategory);
+            return minAvailablePerCategory;
         return available;
     }
 

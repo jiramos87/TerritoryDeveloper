@@ -21,6 +21,7 @@ public class CityStats : MonoBehaviour, ICityStats
     public WaterManager waterManager;
     public ForestManager forestManager;
     private EmploymentManager _employmentManager;
+    private EconomyManager _economyManager;
     private StatisticsManager _statisticsManager;
     #endregion
 
@@ -30,7 +31,8 @@ public class CityStats : MonoBehaviour, ICityStats
     public int population;
     public int money;
 
-    public int happiness;
+    public float happiness = 50f;
+    public float pollution;
     public int residentialZoneCount;
 
     public int residentialBuildingCount;
@@ -106,6 +108,8 @@ public class CityStats : MonoBehaviour, ICityStats
             forestManager = FindObjectOfType<ForestManager>();
         if (_employmentManager == null)
             _employmentManager = FindObjectOfType<EmploymentManager>();
+        if (_economyManager == null)
+            _economyManager = FindObjectOfType<EconomyManager>();
         if (_statisticsManager == null)
             _statisticsManager = FindObjectOfType<StatisticsManager>();
     }
@@ -135,18 +139,8 @@ public class CityStats : MonoBehaviour, ICityStats
     public void RemoveMoney(int value)
     {
         money -= value;
-        if (value > 0)
-            Debug.Log($"Treasury charged ${value:N0}. Balance: ${money:N0}.");
     }
 
-    /// <summary>
-    /// Adds (or subtracts, if negative) the given amount to the city happiness score.
-    /// </summary>
-    /// <param name="value">The happiness delta.</param>
-    public void AddHappiness(int value)
-    {
-        happiness += value;
-    }
     #endregion
 
     #region Zone Statistics
@@ -841,6 +835,10 @@ public class CityStats : MonoBehaviour, ICityStats
 
         // Update forest statistics
         UpdateForestStatistics();
+
+        // Recalculate pollution then happiness (order matters: pollution feeds into happiness)
+        RecalculatePollution();
+        RecalculateHappiness();
     }
 
     /// <summary>
@@ -863,7 +861,6 @@ public class CityStats : MonoBehaviour, ICityStats
     {
         RemoveMoney(zoneAttributes.ConstructionCost);
         AddPopulation(zoneAttributes.Population);
-        AddHappiness(zoneAttributes.Happiness);
         AddZoneBuildingCount(zoneType);
         AddPowerConsumption(zoneAttributes.PowerConsumption);
         AddWaterConsumption(zoneAttributes.WaterConsumption);
@@ -878,7 +875,6 @@ public class CityStats : MonoBehaviour, ICityStats
     {
         AddMoney(zoneAttributes.ConstructionCost / 5);
         AddPopulation(-zoneAttributes.Population);
-        AddHappiness(-zoneAttributes.Happiness);
         RemoveZoneBuildingCount(zoneType);
         RemovePowerConsumption(zoneAttributes.PowerConsumption);
         RemoveWaterConsumption(zoneAttributes.WaterConsumption);
@@ -906,20 +902,129 @@ public class CityStats : MonoBehaviour, ICityStats
     }
 
     /// <summary>
-    /// Get forest-based happiness bonus
+    /// Returns the forest happiness bonus normalized to 0–1.
+    /// Diminishing returns above 20 forest cells; capped at maxForestBonus.
     /// </summary>
-    public int GetForestHappinessBonus()
+    public float GetForestHappinessBonus()
     {
-        // Each forest cell provides +1 happiness, with diminishing returns
         float bonus = forestCellCount * 1.0f;
-
-        // Apply diminishing returns for large forests
         if (forestCellCount > 20)
-        {
             bonus = 20f + (forestCellCount - 20) * 0.5f;
+        return Mathf.Min(bonus, MAX_FOREST_BONUS);
+    }
+    #endregion
+
+    #region Happiness & Pollution
+    // --- Happiness weights (sum of positive weights = 50 points above the 50 baseline) ---
+    private const float HAPPINESS_BASELINE = 50f;
+    private const float WEIGHT_EMPLOYMENT = 30f;
+    private const float WEIGHT_TAX = 15f;
+    private const float WEIGHT_SERVICES = 20f;
+    private const float WEIGHT_FOREST = 10f;
+    private const float WEIGHT_DEVELOPMENT = 15f;
+    private const float WEIGHT_POLLUTION = 10f;
+
+    // Convergence
+    private const float BASE_CONVERGENCE_RATE = 0.15f;
+    private const float POPULATION_SCALE_FACTOR = 500f;
+
+    // Tax comfort threshold (average tax rate at or below this has no penalty)
+    private const float COMFORTABLE_TAX_RATE = 10f;
+    private const float MAX_TAX_RATE_FOR_SCALE = 50f;
+
+    // Forest normalization
+    private const float MAX_FOREST_BONUS = 60f;
+
+    // Service coverage stub (FEAT-52)
+    private const float SERVICE_COVERAGE_STUB = 0.5f;
+
+    // --- Pollution constants ---
+    private const float POLLUTION_INDUSTRIAL_HEAVY = 3.0f;
+    private const float POLLUTION_INDUSTRIAL_MEDIUM = 2.0f;
+    private const float POLLUTION_INDUSTRIAL_LIGHT = 1.0f;
+    private const float POLLUTION_NUCLEAR = 2.0f;
+    private const float FOREST_ABSORPTION_RATE = 0.3f;
+    private const float POLLUTION_CAP = 200f;
+
+    /// <summary>
+    /// Recalculates city-wide pollution from industrial buildings and power plants,
+    /// minus forest absorption. Called once per simulation tick before RecalculateHappiness.
+    /// </summary>
+    public void RecalculatePollution()
+    {
+        float rawPollution =
+            industrialHeavyBuildingCount * POLLUTION_INDUSTRIAL_HEAVY +
+            industrialMediumBuildingCount * POLLUTION_INDUSTRIAL_MEDIUM +
+            industrialLightBuildingCount * POLLUTION_INDUSTRIAL_LIGHT;
+
+        // All power plants currently use nuclear; add per-type when more types ship
+        int nuclearCount = powerPlants.Count;
+        rawPollution += nuclearCount * POLLUTION_NUCLEAR;
+
+        float forestAbsorption = Mathf.Min(forestCellCount * FOREST_ABSORPTION_RATE, rawPollution);
+        pollution = Mathf.Max(rawPollution - forestAbsorption, 0f);
+    }
+
+    /// <summary>
+    /// Recalculates happiness as a 0–100 score from weighted factors, converging smoothly.
+    /// Called once per simulation tick after employment, economy, and pollution updates.
+    /// </summary>
+    public void RecalculateHappiness()
+    {
+        // Employment factor (0–1): higher employment = happier
+        float employmentFactor = 0.5f;
+        if (_employmentManager != null)
+            employmentFactor = _employmentManager.GetEmploymentRate() / 100f;
+
+        // Tax factor (0 to -1): higher taxes above comfort threshold = penalty
+        float taxFactor = 0f;
+        if (_economyManager != null)
+        {
+            float avgTax = (_economyManager.residentialIncomeTax +
+                            _economyManager.commercialIncomeTax +
+                            _economyManager.industrialIncomeTax) / 3f;
+            if (avgTax > COMFORTABLE_TAX_RATE)
+            {
+                taxFactor = -Mathf.Clamp01((avgTax - COMFORTABLE_TAX_RATE) /
+                            (MAX_TAX_RATE_FOR_SCALE - COMFORTABLE_TAX_RATE));
+            }
         }
 
-        return Mathf.RoundToInt(bonus);
+        // Service coverage factor (stub 0.5 until FEAT-52)
+        float serviceFactor = SERVICE_COVERAGE_STUB;
+
+        // Forest factor (0–1)
+        float forestFactor = Mathf.Clamp01(GetForestHappinessBonus() / MAX_FOREST_BONUS);
+
+        // Development factor (0–1): ratio of buildings to zoned cells
+        int totalBuildings = residentialBuildingCount + commercialBuildingCount + industrialBuildingCount;
+        int totalZoned = residentialZoneCount + commercialZoneCount + industrialZoneCount;
+        float developmentFactor = totalZoned > 0 ? Mathf.Clamp01((float)totalBuildings / totalZoned) : 0f;
+
+        // Pollution factor (0–1)
+        float pollutionFactor = Mathf.Clamp01(pollution / POLLUTION_CAP);
+
+        float targetHappiness = HAPPINESS_BASELINE
+            + employmentFactor * WEIGHT_EMPLOYMENT
+            + taxFactor * WEIGHT_TAX
+            + serviceFactor * WEIGHT_SERVICES
+            + forestFactor * WEIGHT_FOREST
+            + developmentFactor * WEIGHT_DEVELOPMENT
+            - pollutionFactor * WEIGHT_POLLUTION;
+
+        targetHappiness = Mathf.Clamp(targetHappiness, 0f, 100f);
+
+        // Convergence rate scales with population (larger cities change more slowly)
+        float convergenceRate = BASE_CONVERGENCE_RATE / (1f + population / POPULATION_SCALE_FACTOR);
+        happiness = Mathf.Lerp(happiness, targetHappiness, convergenceRate);
+    }
+
+    /// <summary>
+    /// Returns happiness normalized to 0–1 for use as a demand multiplier.
+    /// </summary>
+    public float GetNormalizedHappiness()
+    {
+        return Mathf.Clamp01(happiness / 100f);
     }
     #endregion
 
@@ -936,6 +1041,7 @@ public class CityStats : MonoBehaviour, ICityStats
             population = population,
             money = money,
             happiness = happiness,
+            pollution = pollution,
             residentialZoneCount = residentialZoneCount,
             residentialBuildingCount = residentialBuildingCount,
             commercialZoneCount = commercialZoneCount,
@@ -986,7 +1092,8 @@ public class CityStats : MonoBehaviour, ICityStats
         currentDate = cityStatsData.currentDate;
         population = cityStatsData.population;
         money = cityStatsData.money;
-        happiness = cityStatsData.happiness;
+        happiness = Mathf.Clamp(cityStatsData.happiness, 0f, 100f);
+        pollution = Mathf.Max(cityStatsData.pollution, 0f);
         residentialZoneCount = cityStatsData.residentialZoneCount;
         residentialBuildingCount = cityStatsData.residentialBuildingCount;
         commercialZoneCount = cityStatsData.commercialZoneCount;
@@ -1035,6 +1142,8 @@ public class CityStats : MonoBehaviour, ICityStats
 
         population = 0;
         money = 20000;
+        happiness = 50f;
+        pollution = 0f;
         currentDate = new System.DateTime(2024, 8, 27);
         residentialZoneCount = 0;
         commercialZoneCount = 0;
@@ -1159,7 +1268,8 @@ public struct CityStatsData
     public System.DateTime currentDate;
     public int population;
     public int money;
-    public int happiness;
+    public float happiness;
+    public float pollution;
     public int residentialZoneCount;
     public int residentialBuildingCount;
     public int commercialZoneCount;

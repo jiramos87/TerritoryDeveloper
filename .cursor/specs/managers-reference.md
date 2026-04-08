@@ -17,7 +17,7 @@
 | **GeographyManager** | Orchestrator for all terrain initialization (terrain + water + forest + grid) |
 | **DemandManager** | R/C/I demand calculation based on population, employment, forests |
 | **EconomyManager** | Taxes, money, financial transactions |
-| **CityStats** | Global statistics aggregator: population, employment, water/power capacity |
+| **CityStats** | Global statistics aggregator: population, employment, water/power capacity, **happiness** (0–100, multi-factor, per-tick recalculation), **pollution** (city-wide aggregate) |
 | **EmploymentManager** | Employment and unemployment calculation by zone |
 | **SimulationManager** | Automatic simulation cycle orchestrator |
 | **AutoRoadBuilder** | Automatic **street** network extension |
@@ -93,6 +93,8 @@ The set of grid cells covered by a single building instance (one tile or a recta
 
 Residential, commercial, and industrial **demand** scores express how strongly each zone type wants to grow. They are derived from population, employment, forest cover, taxes, and related aggregates (`DemandManager`, `CityStats`, `EmploymentManager`). The demand bar in the UI and `AutoZoningManager` use these values when choosing where to zone.
 
+**Happiness** — City-wide 0–100 satisfaction score recalculated each tick from employment rate, tax burden, service coverage, forest bonus, development base, and pollution penalty; converges smoothly via lerp. Applied as a multiplier to R/C/I demand (`CityStats`, `DemandManager`).
+
 **Tax base** — RCI development and population contribute to taxable capacity read by `EconomyManager` / `CityStats`; tax rates and income loop back into happiness and demand (see backlog for planned depth).
 
 **Desirability** — per-cell attractiveness for zoning and AUTO growth based on terrain context (e.g. proximity to water, forests), computed after geography initialization. See `ARCHITECTURE.md` (initialization order, `GeographyManager` desirability pass) when changing how cells become more or less attractive.
@@ -104,6 +106,7 @@ Residential, commercial, and industrial **demand** scores express how strongly e
 - **Forest** — Vegetation on land in **sparse**, **medium**, or **dense** states; affects demand and map tools (`ForestManager`).
 - **Regional map** — Neighboring cities in the wider region; ties to regional systems and UI (`RegionalMapManager`).
 - **Utility building** — Service structures (e.g. water treatment, power plants), distinct from RCI. Placement, multi-cell footprints, and AUTO placement follow `AutoResourcePlanner`, `ZoneManager`, and the same pivot rules as RCI buildings where applicable.
+- **Pollution** — City-wide environmental degradation. Sources: industrial **buildings** (heavy > medium > light contribution), polluting **utility buildings** (power plants — nuclear emits medium pollution, fossil-fuel plants emit high; future plants vary). Sinks: **forest** coverage absorbs pollution (diminishing returns at scale), future parks. Geographic and climatic base pollution planned for later. Pollution feeds into the **happiness** formula as a negative factor.
 
 ## Game notifications
 
