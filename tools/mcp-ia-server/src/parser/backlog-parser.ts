@@ -274,3 +274,63 @@ export function parseBacklogIssue(
     parseBacklogIssueFromFile(repoRoot, issueId, BACKLOG_ARCHIVE_FILE)
   );
 }
+
+/**
+ * Parse ALL issues from a single backlog file (BACKLOG.md or BACKLOG-ARCHIVE.md).
+ */
+function parseAllIssuesFromFile(
+  repoRoot: string,
+  relativePath: string,
+): ParsedBacklogIssue[] {
+  const filePath = path.join(repoRoot, relativePath);
+  if (!fs.existsSync(filePath)) return [];
+
+  const raw = fs.readFileSync(filePath, "utf8");
+  const lines = splitLines(raw);
+  const issues: ParsedBacklogIssue[] = [];
+  let backlog_section = "";
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    const h = line.match(/^##+\s+(.+)$/);
+    if (h) {
+      backlog_section = h[1]!.trim();
+      continue;
+    }
+    const m = line.match(CHECKLIST_HEADER);
+    if (!m) continue;
+
+    const blockLines = sliceIssueBlock(lines, i);
+    const status: BacklogIssueStatus = m[2] === "x" ? "completed" : "open";
+    const id = m[3]!;
+    const title = parseTitleFromHeaderRest(m[4] ?? "");
+    const fieldParts = scrapeIssueFields(blockLines);
+
+    issues.push({
+      issue_id: id,
+      title,
+      status,
+      backlog_section: backlog_section,
+      ...fieldParts,
+      raw_markdown: blockLines.join("\n"),
+    });
+  }
+  return issues;
+}
+
+/**
+ * Parse all issues from BACKLOG.md and/or BACKLOG-ARCHIVE.md.
+ */
+export function parseAllBacklogIssues(
+  repoRoot: string,
+  scope: "open" | "archive" | "all" = "all",
+): ParsedBacklogIssue[] {
+  const issues: ParsedBacklogIssue[] = [];
+  if (scope === "open" || scope === "all") {
+    issues.push(...parseAllIssuesFromFile(repoRoot, BACKLOG_FILE));
+  }
+  if (scope === "archive" || scope === "all") {
+    issues.push(...parseAllIssuesFromFile(repoRoot, BACKLOG_ARCHIVE_FILE));
+  }
+  return issues;
+}

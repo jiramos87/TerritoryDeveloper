@@ -27,10 +27,13 @@ import {
   registerPathfindingCostPreview,
 } from "./tools/compute/index.js";
 import { registerUnityBridgeCommand } from "./tools/unity-bridge-command.js";
+import { registerBacklogSearch } from "./tools/backlog-search.js";
+import { registerInvariantPreflight } from "./tools/invariant-preflight.js";
+import { registerFindObjectOfTypeScan } from "./tools/findobjectoftype-scan.js";
 
 const server = new McpServer({
   name: "territory-ia",
-  version: "0.4.14",
+  version: "0.5.0",
   description:
     "Information Architecture server for Territory Developer — exposes specs, rules, glossary, backlog issues, architecture docs, optional Postgres project-spec journal, computational helpers, and Unity Editor bridge commands (Postgres agent_bridge_job) via MCP tools.",
 });
@@ -57,6 +60,9 @@ registerPathfindingCostPreview(server);
 registerGeographyInitParamsValidate(server);
 registerDesirabilityTopCells(server);
 registerUnityBridgeCommand(server);
+registerBacklogSearch(server);
+registerInvariantPreflight(server, registry);
+registerFindObjectOfTypeScan(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

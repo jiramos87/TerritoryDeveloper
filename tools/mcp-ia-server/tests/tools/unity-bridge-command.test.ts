@@ -302,6 +302,65 @@ describe("unityBridgeCommandInputSchema", () => {
   });
 });
 
+describe("new bridge kinds (economy, prefab, sorting)", () => {
+  it("accepts economy_balance_snapshot kind", () => {
+    const r = unityBridgeCommandInputSchema.safeParse({
+      kind: "economy_balance_snapshot",
+      timeout_ms: 5000,
+    });
+    assert.equal(r.success, true);
+    if (r.success) assert.equal(r.data.kind, "economy_balance_snapshot");
+  });
+
+  it("accepts prefab_manifest kind", () => {
+    const r = unityBridgeCommandInputSchema.safeParse({
+      kind: "prefab_manifest",
+      timeout_ms: 5000,
+    });
+    assert.equal(r.success, true);
+    if (r.success) assert.equal(r.data.kind, "prefab_manifest");
+  });
+
+  it("accepts sorting_order_debug with seed_cell", () => {
+    const r = unityBridgeCommandInputSchema.safeParse({
+      kind: "sorting_order_debug",
+      timeout_ms: 5000,
+      seed_cell: "3,0",
+    });
+    assert.equal(r.success, true);
+    if (r.success) {
+      assert.equal(r.data.kind, "sorting_order_debug");
+      assert.equal(r.data.seed_cell, "3,0");
+    }
+  });
+
+  it("requires seed_cell for sorting_order_debug", () => {
+    const r = unityBridgeCommandInputSchema.safeParse({
+      kind: "sorting_order_debug",
+      timeout_ms: 5000,
+    });
+    assert.equal(r.success, false);
+  });
+
+  it("economy_balance_snapshot returns db_unconfigured when pool is null", async () => {
+    const r = await runUnityBridgeCommand(
+      { kind: "economy_balance_snapshot", timeout_ms: 1000 },
+      { pool: null },
+    );
+    assert.equal(r.ok, false);
+    if (!r.ok) assert.equal(r.error, "db_unconfigured");
+  });
+
+  it("prefab_manifest returns db_unconfigured when pool is null", async () => {
+    const r = await runUnityBridgeCommand(
+      { kind: "prefab_manifest", timeout_ms: 1000 },
+      { pool: null },
+    );
+    assert.equal(r.ok, false);
+    if (!r.ok) assert.equal(r.error, "db_unconfigured");
+  });
+});
+
 describe("runUnityBridgeGet", () => {
   it("returns db_unconfigured when pool is null", async () => {
     const r = await runUnityBridgeGet(

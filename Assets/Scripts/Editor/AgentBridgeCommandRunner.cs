@@ -154,11 +154,20 @@ public static class AgentBridgeCommandRunner
             case "get_compilation_status":
                 RunGetCompilationStatus(repoRoot, commandId, dq.request_json);
                 break;
+            case "economy_balance_snapshot":
+                RunEconomyBalanceSnapshot(repoRoot, commandId, dq.request_json);
+                break;
+            case "prefab_manifest":
+                RunPrefabManifest(repoRoot, commandId, dq.request_json);
+                break;
+            case "sorting_order_debug":
+                RunSortingOrderDebug(repoRoot, commandId, dq.request_json);
+                break;
             default:
                 TryFinalizeFailed(
                     repoRoot,
                     commandId,
-                    $"Unknown kind '{dq.kind}'. Supported: export_agent_context, get_console_logs, capture_screenshot, enter_play_mode, exit_play_mode, get_play_mode_status, debug_context_bundle, get_compilation_status.");
+                    $"Unknown kind '{dq.kind}'. Supported: export_agent_context, get_console_logs, capture_screenshot, enter_play_mode, exit_play_mode, get_play_mode_status, debug_context_bundle, get_compilation_status, economy_balance_snapshot, prefab_manifest, sorting_order_debug.");
                 break;
         }
     }
@@ -1056,6 +1065,191 @@ public static class AgentBridgeCommandRunner
         return JsonUtility.ToJson(resp, true);
     }
 
+    // ── economy_balance_snapshot ──────────────────────────────────────────
+
+    static void RunEconomyBalanceSnapshot(string repoRoot, string commandId, string requestJson)
+    {
+        if (!TryParseRequestEnvelope(requestJson, out AgentBridgeRequestEnvelopeDto env, out string parseErr))
+        {
+            TryFinalizeFailed(repoRoot, commandId, parseErr);
+            return;
+        }
+
+        var economyMgr = UnityEngine.Object.FindObjectOfType<Territory.Core.EconomyManager>();
+        var cityStats = UnityEngine.Object.FindObjectOfType<Territory.Core.CityStats>();
+        var demandMgr = UnityEngine.Object.FindObjectOfType<Territory.Core.DemandManager>();
+
+        if (cityStats == null)
+        {
+            TryFinalizeFailed(repoRoot, commandId, "CityStats not found in scene. Is a game loaded?");
+            return;
+        }
+
+        var snapshot = new AgentBridgeEconomySnapshotDto
+        {
+            population = cityStats.population,
+            happiness = cityStats.happiness,
+            money = cityStats.money,
+            residential_tax = economyMgr != null ? economyMgr.residentialIncomeTax : 0,
+            commercial_tax = economyMgr != null ? economyMgr.commercialIncomeTax : 0,
+            industrial_tax = economyMgr != null ? economyMgr.industrialIncomeTax : 0,
+            residential_building_count = cityStats.residentialBuildingCount,
+            commercial_building_count = cityStats.commercialBuildingCount,
+            industrial_building_count = cityStats.industrialBuildingCount,
+        };
+
+        if (demandMgr != null)
+        {
+            snapshot.residential_demand = demandMgr.residentialDemand?.demandLevel ?? 0f;
+            snapshot.commercial_demand = demandMgr.commercialDemand?.demandLevel ?? 0f;
+            snapshot.industrial_demand = demandMgr.industrialDemand?.demandLevel ?? 0f;
+        }
+
+        var resp = AgentBridgeResponseFileDto.CreateOk(commandId, "economy_balance_snapshot");
+        resp.economy_snapshot = snapshot;
+
+        CompleteOrFail(repoRoot, commandId, JsonUtility.ToJson(resp, true));
+    }
+
+    // ── prefab_manifest ─────────────────────────────────────────────────
+
+    static void RunPrefabManifest(string repoRoot, string commandId, string requestJson)
+    {
+        if (!TryParseRequestEnvelope(requestJson, out AgentBridgeRequestEnvelopeDto env, out string parseErr))
+        {
+            TryFinalizeFailed(repoRoot, commandId, parseErr);
+            return;
+        }
+
+        var manifestEntries = new List<AgentBridgePrefabManifestEntryDto>();
+
+        var allBehaviours = UnityEngine.Object.FindObjectsOfType<MonoBehaviour>(true);
+        foreach (var mb in allBehaviours)
+        {
+            if (mb == null) continue;
+            string goPath = GetGameObjectPath(mb.gameObject);
+            manifestEntries.Add(new AgentBridgePrefabManifestEntryDto
+            {
+                game_object_path = goPath,
+                component_type = mb.GetType().Name,
+                is_missing_script = false,
+            });
+        }
+
+        var allGameObjects = UnityEngine.Object.FindObjectsOfType<GameObject>(true);
+        foreach (var go in allGameObjects)
+        {
+            var components = go.GetComponents<Component>();
+            foreach (var comp in components)
+            {
+                if (comp == null)
+                {
+                    manifestEntries.Add(new AgentBridgePrefabManifestEntryDto
+                    {
+                        game_object_path = GetGameObjectPath(go),
+                        component_type = "(missing script)",
+                        is_missing_script = true,
+                    });
+                }
+            }
+        }
+
+        var manifest = new AgentBridgePrefabManifestDto
+        {
+            total_monobehaviours = allBehaviours.Length,
+            missing_script_count = manifestEntries.FindAll(e => e.is_missing_script).Count,
+            entries = manifestEntries.ToArray(),
+        };
+
+        var resp = AgentBridgeResponseFileDto.CreateOk(commandId, "prefab_manifest");
+        resp.prefab_manifest = manifest;
+
+        CompleteOrFail(repoRoot, commandId, JsonUtility.ToJson(resp, true));
+    }
+
+    static string GetGameObjectPath(GameObject go)
+    {
+        string path = go.name;
+        Transform parent = go.transform.parent;
+        while (parent != null)
+        {
+            path = parent.name + "/" + path;
+            parent = parent.parent;
+        }
+        return path;
+    }
+
+    // ── sorting_order_debug ─────────────────────────────────────────────
+
+    static void RunSortingOrderDebug(string repoRoot, string commandId, string requestJson)
+    {
+        if (!TryParseRequestEnvelope(requestJson, out AgentBridgeRequestEnvelopeDto env, out string parseErr))
+        {
+            TryFinalizeFailed(repoRoot, commandId, parseErr);
+            return;
+        }
+
+        string seedCell = env.bridge_params?.seed_cell ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(seedCell))
+        {
+            TryFinalizeFailed(repoRoot, commandId, "seed_cell is required for sorting_order_debug (e.g. \"3,0\").");
+            return;
+        }
+
+        string[] parts = seedCell.Split(',');
+        if (parts.Length != 2 ||
+            !int.TryParse(parts[0].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int cellX) ||
+            !int.TryParse(parts[1].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int cellY))
+        {
+            TryFinalizeFailed(repoRoot, commandId, $"Invalid seed_cell format '{seedCell}'. Expected 'x,y' (e.g. '3,0').");
+            return;
+        }
+
+        var gridMgr = UnityEngine.Object.FindObjectOfType<Territory.Core.GridManager>();
+        if (gridMgr == null)
+        {
+            TryFinalizeFailed(repoRoot, commandId, "GridManager not found in scene.");
+            return;
+        }
+
+        Territory.Core.Cell cell = gridMgr.GetCell(cellX, cellY);
+        if (cell == null)
+        {
+            TryFinalizeFailed(repoRoot, commandId, $"No cell at ({cellX},{cellY}).");
+            return;
+        }
+
+        var rendererEntries = new List<AgentBridgeSortingRendererDto>();
+
+        // Collect SpriteRenderers on the cell GameObject and children
+        var spriteRenderers = cell.gameObject.GetComponentsInChildren<SpriteRenderer>(true);
+        foreach (var sr in spriteRenderers)
+        {
+            rendererEntries.Add(new AgentBridgeSortingRendererDto
+            {
+                name = sr.gameObject.name,
+                sorting_layer = sr.sortingLayerName,
+                sorting_order = sr.sortingOrder,
+                sprite_name = sr.sprite != null ? sr.sprite.name : string.Empty,
+                enabled = sr.enabled,
+            });
+        }
+
+        var sortingDebug = new AgentBridgeSortingOrderDebugDto
+        {
+            cell_x = cellX,
+            cell_y = cellY,
+            cell_height = cell.height,
+            renderer_count = rendererEntries.Count,
+            renderers = rendererEntries.ToArray(),
+        };
+
+        var resp = AgentBridgeResponseFileDto.CreateOk(commandId, "sorting_order_debug");
+        resp.sorting_order_debug = sortingDebug;
+
+        CompleteOrFail(repoRoot, commandId, JsonUtility.ToJson(resp, true));
+    }
+
     static void CompleteOrFail(string repoRoot, string commandId, string responseJson)
     {
         if (!EditorPostgresBridgeJobs.TryCompleteSuccess(repoRoot, commandId, responseJson, out string completeLog))
@@ -1260,6 +1454,40 @@ class AgentBridgeResponseFileDto
 
     /// <summary>Populated for <c>get_compilation_status</c> only.</summary>
     public AgentBridgeCompilationStatusDto compilation_status;
+
+    /// <summary>Populated for <c>economy_balance_snapshot</c> only.</summary>
+    public AgentBridgeEconomySnapshotDto economy_snapshot;
+
+    /// <summary>Populated for <c>prefab_manifest</c> only.</summary>
+    public AgentBridgePrefabManifestDto prefab_manifest;
+
+    /// <summary>Populated for <c>sorting_order_debug</c> only.</summary>
+    public AgentBridgeSortingOrderDebugDto sorting_order_debug;
+
+    /// <summary>Factory: creates a response with all default fields pre-filled.</summary>
+    public static AgentBridgeResponseFileDto CreateOk(string commandId, string storage)
+    {
+        return new AgentBridgeResponseFileDto
+        {
+            schema_version = 1,
+            artifact = "unity_agent_bridge_response",
+            command_id = commandId,
+            ok = true,
+            completed_at_utc = DateTime.UtcNow.ToString("o"),
+            storage = storage,
+            postgres_only = false,
+            error = string.Empty,
+            artifact_paths = Array.Empty<string>(),
+            log_lines = Array.Empty<AgentBridgeLogLineDto>(),
+            play_mode_state = string.Empty,
+            ready = false,
+            already_playing = false,
+            already_stopped = false,
+            has_grid_dimensions = false,
+            grid_width = 0,
+            grid_height = 0,
+        };
+    }
 }
 
 [Serializable]
@@ -1271,6 +1499,62 @@ class AgentBridgeBundleDto
     public AgentBridgeAnomalyRecordDto[] anomalies;
     public int anomaly_count;
     public bool anomaly_scan_skipped;
+}
+
+/// <summary>Populated for <c>economy_balance_snapshot</c> under response <c>economy_snapshot</c>.</summary>
+[Serializable]
+class AgentBridgeEconomySnapshotDto
+{
+    public int population;
+    public int happiness;
+    public int money;
+    public int residential_tax;
+    public int commercial_tax;
+    public int industrial_tax;
+    public int residential_building_count;
+    public int commercial_building_count;
+    public int industrial_building_count;
+    public float residential_demand;
+    public float commercial_demand;
+    public float industrial_demand;
+}
+
+/// <summary>Populated for <c>prefab_manifest</c> under response <c>prefab_manifest</c>.</summary>
+[Serializable]
+class AgentBridgePrefabManifestDto
+{
+    public int total_monobehaviours;
+    public int missing_script_count;
+    public AgentBridgePrefabManifestEntryDto[] entries;
+}
+
+[Serializable]
+class AgentBridgePrefabManifestEntryDto
+{
+    public string game_object_path;
+    public string component_type;
+    public bool is_missing_script;
+}
+
+/// <summary>Populated for <c>sorting_order_debug</c> under response <c>sorting_order_debug</c>.</summary>
+[Serializable]
+class AgentBridgeSortingOrderDebugDto
+{
+    public int cell_x;
+    public int cell_y;
+    public int cell_height;
+    public int renderer_count;
+    public AgentBridgeSortingRendererDto[] renderers;
+}
+
+[Serializable]
+class AgentBridgeSortingRendererDto
+{
+    public string name;
+    public string sorting_layer;
+    public int sorting_order;
+    public string sprite_name;
+    public bool enabled;
 }
 
 [Serializable]

@@ -31,10 +31,13 @@ const unityBridgeCommandInputShape = {
       "get_play_mode_status",
       "debug_context_bundle",
       "get_compilation_status",
+      "economy_balance_snapshot",
+      "prefab_manifest",
+      "sorting_order_debug",
     ])
     .default("export_agent_context")
     .describe(
-      "Bridge command kind: export_agent_context (Reports → Export Agent Context); get_console_logs (buffered Unity Console); capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/); enter_play_mode (Editor enters Play Mode, waits for GridManager.isInitialized); exit_play_mode (Editor exits Play Mode); get_play_mode_status (immediate edit_mode / play_mode_loading / play_mode_ready + optional grid dimensions); debug_context_bundle (one round-trip: Moore export + optional Game-view screenshot + console + anomaly scan; requires seed_cell, Play Mode + initialized GridManager); get_compilation_status (synchronous: EditorApplication.isCompiling, EditorUtility.scriptCompilationFailed, recent Console error lines in response.compilation_status).",
+      "Bridge command kind: export_agent_context (Reports → Export Agent Context); get_console_logs (buffered Unity Console); capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/); enter_play_mode (Editor enters Play Mode, waits for GridManager.isInitialized); exit_play_mode (Editor exits Play Mode); get_play_mode_status (immediate edit_mode / play_mode_loading / play_mode_ready + optional grid dimensions); debug_context_bundle (one round-trip: Moore export + optional Game-view screenshot + console + anomaly scan; requires seed_cell, Play Mode + initialized GridManager); get_compilation_status (synchronous: EditorApplication.isCompiling, EditorUtility.scriptCompilationFailed, recent Console error lines in response.compilation_status); economy_balance_snapshot (reads population, happiness, money, tax rates, R/C/I demand from EconomyManager/CityStats/DemandManager); prefab_manifest (lists scene MonoBehaviours and detects missing script references); sorting_order_debug (requires seed_cell \"x,y\": returns all SpriteRenderers on a cell with sorting layer/order).",
     ),
   timeout_ms: unityBridgeTimeoutMsSchema,
   since_utc: z
@@ -114,6 +117,16 @@ export const unityBridgeCommandInputSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'seed_cell is required for debug_context_bundle (e.g. "62,0").',
+          path: ["seed_cell"],
+        });
+      }
+    }
+    if (data.kind === "sorting_order_debug") {
+      const s = data.seed_cell?.trim();
+      if (!s) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'seed_cell is required for sorting_order_debug (e.g. "3,0").',
           path: ["seed_cell"],
         });
       }
@@ -293,6 +306,16 @@ function buildRequestEnvelope(
   }
   if (input.kind === "get_compilation_status") {
     return { ...base, params: {} };
+  }
+  if (input.kind === "economy_balance_snapshot") {
+    return { ...base, params: {} };
+  }
+  if (input.kind === "prefab_manifest") {
+    return { ...base, params: {} };
+  }
+  if (input.kind === "sorting_order_debug") {
+    const trimmed = input.seed_cell?.trim();
+    return { ...base, params: { seed_cell: trimmed ?? "" } };
   }
   return { ...base, params: {} };
 }
@@ -509,7 +532,7 @@ export function registerUnityBridgeCommand(server: McpServer): void {
     "unity_bridge_command",
     {
       description:
-        "IDE agent bridge: enqueue a Unity Editor job in Postgres agent_bridge_job (pending). Kinds: export_agent_context (agent context JSON + optional Postgres registry; optional seed_cell \"x,y\" for Moore neighborhood center), get_console_logs (buffered Console lines in response.log_lines), capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/; include_ui for Game view + Overlay UI), enter_play_mode (EditorApplication.EnterPlaymode; completes when GridManager.isInitialized; response.ready, play_mode_state, grid_width/height), exit_play_mode (ExitPlaymode; completes when back in Edit Mode), get_play_mode_status (immediate response: play_mode_state edit_mode|play_mode_loading|play_mode_ready), debug_context_bundle (single job: Moore export + optional screenshot + console + anomaly scan; response.bundle; requires seed_cell; Play Mode + GridManager ready), get_compilation_status (synchronous compile snapshot: response.compilation_status with compiling, compilation_failed, last_error_excerpt, recent_error_messages). Requires DATABASE_URL / config/postgres-dev.json, migration 0008, Unity on REPO_ROOT. Polls until completed, failed, or timeout_ms (default 30000, max 30000). Removes pending row on MCP timeout.",
+        "IDE agent bridge: enqueue a Unity Editor job in Postgres agent_bridge_job (pending). Kinds: export_agent_context (agent context JSON + optional Postgres registry; optional seed_cell \"x,y\" for Moore neighborhood center), get_console_logs (buffered Console lines in response.log_lines), capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/; include_ui for Game view + Overlay UI), enter_play_mode (EditorApplication.EnterPlaymode; completes when GridManager.isInitialized; response.ready, play_mode_state, grid_width/height), exit_play_mode (ExitPlaymode; completes when back in Edit Mode), get_play_mode_status (immediate response: play_mode_state edit_mode|play_mode_loading|play_mode_ready), debug_context_bundle (single job: Moore export + optional screenshot + console + anomaly scan; response.bundle; requires seed_cell; Play Mode + GridManager ready), get_compilation_status (synchronous compile snapshot: response.compilation_status with compiling, compilation_failed, last_error_excerpt, recent_error_messages), economy_balance_snapshot (reads population, happiness, money, tax rates, R/C/I demand in response.economy_snapshot), prefab_manifest (lists scene MonoBehaviours + missing script references in response.prefab_manifest), sorting_order_debug (requires seed_cell; returns SpriteRenderers at cell with sorting_layer/sorting_order in response.sorting_order_debug). Requires DATABASE_URL / config/postgres-dev.json, migration 0008, Unity on REPO_ROOT. Polls until completed, failed, or timeout_ms (default 30000, max 30000). Removes pending row on MCP timeout.",
       inputSchema: unityBridgeCommandInputShape,
     },
     async (args) =>

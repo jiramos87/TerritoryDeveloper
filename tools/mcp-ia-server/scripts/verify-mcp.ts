@@ -65,6 +65,9 @@ async function main(): Promise<void> {
     "unity_bridge_command",
     "unity_bridge_get",
     "unity_compile",
+    "backlog_search",
+    "invariant_preflight",
+    "findobjectoftype_scan",
   ];
   for (const n of required) {
     if (!names.includes(n)) throw new Error(`Missing MCP tool: ${n}`);

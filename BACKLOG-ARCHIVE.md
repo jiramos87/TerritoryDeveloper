@@ -181,6 +181,13 @@
 
 ## Recent archive (moved from BACKLOG.md, 2026-04-10)
 
+- [x] **TECH-84** — **High-priority MCP diagnostic & discovery tools** (six-tool suite) (2026-04-07)
+  - Type: tooling / agent enablement
+  - Files: `tools/mcp-ia-server/src/tools/backlog-search.ts`, `tools/mcp-ia-server/src/tools/invariant-preflight.ts`, `tools/mcp-ia-server/src/tools/findobjectoftype-scan.ts`; `tools/mcp-ia-server/src/tools/unity-bridge-command.ts` (extended `kind` enum); `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` (three new bridge cases + `CreateOk` factory); `tools/mcp-ia-server/src/index.ts`; `docs/mcp-ia-server.md` (28 tools); `tools/mcp-ia-server/README.md` (27 tools)
+  - Spec: (removed after closure — **IA project spec journal**; this row)
+  - Notes: **Completed (verified).** Six MCP tools shipped in **territory-ia** v0.5.0: **(1) `backlog_search`** — keyword search across backlog issues. **(2) `invariant_preflight`** — composite context bundle (invariants + router + spec sections) for an issue. **(3) `findobjectoftype_scan`** — static C# scan for per-frame `FindObjectOfType` violations. **(4) `economy_balance_snapshot`** — bridge: economy/happiness/demand from Play Mode. **(5) `prefab_manifest`** — bridge: scene MonoBehaviours + missing scripts. **(6) `sorting_order_debug`** — bridge: renderers + sorting order at a cell. 115 tests pass; `npm run verify` green. Also added `parseAllBacklogIssues` to `backlog-parser.ts`, exported `parseInvariantsBody` and `collectRouterData` for internal reuse, C# `AgentBridgeResponseFileDto.CreateOk` factory method. **Migrated content:** [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md), [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md).
+  - Depends on: none
+
 - [x] **TECH-75** — **Close Dev Loop** orchestration: agent-driven Play Mode verification (2026-04-07)
   - Type: orchestration spec (no umbrella BACKLOG row)
   - Files: (removed after closure — **glossary** **IDE agent bridge**; **`close-dev-loop`** Skill; **`bridge-environment-preflight`** Skill; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); **IA project spec journal**; this row)

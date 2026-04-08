@@ -20,7 +20,7 @@ function jsonResult(payload: unknown) {
   };
 }
 
-function parseInvariantsBody(body: string): {
+export function parseInvariantsBody(body: string): {
   invariants: string[];
   guardrails: string[];
 } {

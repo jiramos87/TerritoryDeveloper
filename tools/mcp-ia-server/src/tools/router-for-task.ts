@@ -71,7 +71,7 @@ function domainMatches(haystack: string, needle: string): boolean {
   return false;
 }
 
-function collectRouterData(bodyLines: string[]): {
+export function collectRouterData(bodyLines: string[]): {
   matchesForDomain: (d: string) => RouterMatchRow[];
   allDomainLabels: string[];
 } {
