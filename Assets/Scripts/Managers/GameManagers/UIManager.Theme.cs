@@ -107,8 +107,26 @@ namespace Territory.UI
         private const string GridCoordinatesTextInsetName = "Fe50GridCoordinatesTextInset";
         private const string GridCoordinatesTextHolderAlt = "Fe50GridCoordinatesText";
 
-        /// <summary>Space between grid debug chrome bottom edge and top of <c>MiniMapPanel</c> (includes layer tabs).</summary>
+        private const string GridCoordinatesScrollRootName = "Fe50GridCoordinatesScrollRoot";
+        private const string GridCoordinatesViewportName = "Fe50GridCoordinatesViewport";
+        private const string GridCoordinatesContentName = "Fe50GridCoordinatesContent";
+
+        private const string ControlPanelObjectName = "ControlPanel";
+
+        /// <summary>Top HUD strip that must stay unobstructed above the grid debug chrome (sibling under the same HUD root as <see cref="ControlPanelObjectName"/>).</summary>
+        private const string DataPanelButtonsObjectName = "DataPanelButtons";
+
+        /// <summary>Space between grid debug chrome bottom edge and top of <see cref="ControlPanelObjectName"/>.</summary>
+        private const float GridCoordinatesChromeGapAboveControlPanel = 10f;
+
+        /// <summary>Space between the bottom of <see cref="DataPanelButtonsObjectName"/> and the top of the grid debug chrome.</summary>
+        private const float GridCoordinatesGapBelowDataPanelButtons = 8f;
+
+        /// <summary>Space between grid debug chrome bottom edge and top of <c>MiniMapPanel</c> (fallback layout).</summary>
         private const float GridCoordinatesChromeGapAboveMinimap = 30f;
+
+        /// <summary>Max outer size (width = height) for the square grid debug chrome.</summary>
+        private const float GridCoordinatesChromeMaxSquareSide = 220f;
 
         private static bool IsGridCoordinatesChromeRootName(string n)
         {
@@ -121,35 +139,65 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Direct child of HUD canvas that also parents <c>MiniMapPanel</c> (required for <see cref="Transform.Find"/>).
+        /// Walks parents to find the grid debug chrome root (inset or scroll lives under it).
         /// </summary>
-        private static Transform FindHudCanvasRootWithMiniMap(Transform from)
+        private static Transform FindGridCoordinatesChromeRoot(Transform from)
         {
             for (Transform p = from; p != null; p = p.parent)
             {
-                if (p.Find("MiniMapPanel") != null)
+                if (IsGridCoordinatesChromeRootName(p.name))
+                    return p;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Returns the text inset <see cref="RectTransform"/> under chrome, if present.
+        /// </summary>
+        private static RectTransform FindGridCoordinatesInset(RectTransform chromeRt)
+        {
+            if (chromeRt == null)
+                return null;
+            Transform t = chromeRt.Find(GridCoordinatesTextInsetName);
+            if (t == null)
+                t = chromeRt.Find(GridCoordinatesTextHolderAlt);
+            return t != null ? t.GetComponent<RectTransform>() : null;
+        }
+
+        /// <summary>
+        /// HUD layout root that parents <c>ControlPanel</c> and/or <c>MiniMapPanel</c> (same <see cref="Transform"/> in MainScene).
+        /// </summary>
+        private static Transform FindHudLayoutRoot(Transform from)
+        {
+            for (Transform p = from; p != null; p = p.parent)
+            {
+                if (p.Find(ControlPanelObjectName) != null || p.Find("MiniMapPanel") != null)
                     return p;
             }
             return null;
         }
 
         /// <summary>
-        /// Ensures chrome is a sibling of <c>MiniMapPanel</c> under the same canvas; otherwise <see cref="Transform.Find(string)"/> never sees the minimap.
+        /// Parents grid debug chrome under the HUD layout root and draws it just after <c>ControlPanel</c> when present, else after <c>MiniMapPanel</c>.
         /// </summary>
-        private static void EnsureGridCoordinatesChromeSiblingsMiniMap(RectTransform chromeRt)
+        private static void EnsureGridCoordinatesChromeHudMount(RectTransform chromeRt)
         {
             if (chromeRt == null)
                 return;
-            Transform p = chromeRt.parent;
-            if (p != null && p.Find("MiniMapPanel") != null)
-                return;
-            Transform mount = FindHudCanvasRootWithMiniMap(chromeRt);
+            Transform mount = FindHudLayoutRoot(chromeRt);
             if (mount == null)
                 return;
-            Transform mm = mount.Find("MiniMapPanel");
             chromeRt.SetParent(mount, false);
-            if (mm != null)
-                chromeRt.SetSiblingIndex(mm.GetSiblingIndex() + 1);
+            Transform cp = mount.Find(ControlPanelObjectName);
+            if (cp != null)
+                chromeRt.SetSiblingIndex(cp.GetSiblingIndex() + 1);
+            else
+            {
+                Transform mm = mount.Find("MiniMapPanel");
+                if (mm != null)
+                    chromeRt.SetSiblingIndex(mm.GetSiblingIndex() + 1);
+            }
         }
 
         /// <summary>
@@ -163,36 +211,29 @@ namespace Territory.UI
             Transform t = gridCoordinatesText.transform;
             RectTransform textRt = gridCoordinatesText.GetComponent<RectTransform>();
 
-            if (t.parent != null && IsGridCoordinatesTextHolderName(t.parent.name)
-                && t.parent.parent != null && IsGridCoordinatesChromeRootName(t.parent.parent.name))
+            Transform chromeRoot = FindGridCoordinatesChromeRoot(t);
+            if (chromeRoot != null)
             {
-                EnsureGridCoordinatesTextLayoutDriver(textRt);
-                ApplyGridCoordinatesChromeTextInset(t.parent.GetComponent<RectTransform>());
-                ApplyGridCoordinatesChromeTextStyle();
-                RectTransform chromeRt = t.parent.parent.GetComponent<RectTransform>();
-                EnsureGridCoordinatesChromeSiblingsMiniMap(chromeRt);
-                AlignGridCoordinatesChromeToMiniMap(chromeRt);
-                return;
-            }
-
-            if (t.parent != null && IsGridCoordinatesChromeRootName(t.parent.name))
-            {
-                RectTransform chromeRt = t.parent.GetComponent<RectTransform>();
+                RectTransform chromeRt = chromeRoot.GetComponent<RectTransform>();
                 EnsureGridCoordinatesTextUnderInset(chromeRt.transform, textRt);
                 ApplyGridCoordinatesChromeTextStyle();
-                EnsureGridCoordinatesChromeSiblingsMiniMap(chromeRt);
-                AlignGridCoordinatesChromeToMiniMap(chromeRt);
+                EnsureGridCoordinatesChromeHudMount(chromeRt);
+                AlignGridCoordinatesChrome(chromeRt);
+                UpdateGridCoordinatesScrollLayout(chromeRt, gridCoordinatesText);
                 return;
             }
 
             Transform originalParent = t.parent;
             int siblingIndex = t.GetSiblingIndex();
-            Transform chromeMount = FindHudCanvasRootWithMiniMap(t) ?? originalParent;
+            Transform chromeMount = FindHudLayoutRoot(t) ?? originalParent;
 
             GameObject chrome = new GameObject(GridCoordinatesChromeName, typeof(RectTransform));
             chrome.transform.SetParent(chromeMount, false);
+            Transform cpForOrder = chromeMount.Find(ControlPanelObjectName);
             Transform mmForOrder = chromeMount.Find("MiniMapPanel");
-            if (mmForOrder != null)
+            if (cpForOrder != null)
+                chrome.transform.SetSiblingIndex(cpForOrder.GetSiblingIndex() + 1);
+            else if (mmForOrder != null)
                 chrome.transform.SetSiblingIndex(mmForOrder.GetSiblingIndex() + 1);
             else
                 chrome.transform.SetSiblingIndex(siblingIndex);
@@ -221,8 +262,9 @@ namespace Territory.UI
             EnsureGridCoordinatesTextUnderInset(chrome.transform, textRt);
 
             ApplyGridCoordinatesChromeTextStyle();
-            EnsureGridCoordinatesChromeSiblingsMiniMap(chromeRtNew);
-            AlignGridCoordinatesChromeToMiniMap(chromeRtNew);
+            EnsureGridCoordinatesChromeHudMount(chromeRtNew);
+            AlignGridCoordinatesChrome(chromeRtNew);
+            UpdateGridCoordinatesScrollLayout(chromeRtNew, gridCoordinatesText);
         }
 
         /// <summary>
@@ -305,12 +347,212 @@ namespace Territory.UI
             RectTransform insetRt = insetTransform.GetComponent<RectTransform>();
             ApplyGridCoordinatesChromeTextInset(insetRt);
 
-            textRt.SetParent(insetTransform, false);
+            EnsureGridCoordinatesScrollUnderInset(insetRt, textRt);
             EnsureGridCoordinatesTextLayoutDriver(textRt);
         }
 
         /// <summary>
-        /// Places grid debug chrome above the minimap with the same width and a compact, nearly square height.
+        /// Adds a <see cref="ScrollRect"/> under the inset so long grid debug copy scrolls inside the panel instead of overflowing.
+        /// </summary>
+        private static void EnsureGridCoordinatesScrollUnderInset(RectTransform insetRt, RectTransform textRt)
+        {
+            if (insetRt == null || textRt == null)
+                return;
+
+            Transform scrollRootT = insetRt.Find(GridCoordinatesScrollRootName);
+            if (scrollRootT == null)
+            {
+                GameObject scrollGo = new GameObject(GridCoordinatesScrollRootName, typeof(RectTransform), typeof(ScrollRect));
+                scrollRootT = scrollGo.transform;
+                scrollRootT.SetParent(insetRt, false);
+                RectTransform scrollRt = scrollGo.GetComponent<RectTransform>();
+                scrollRt.anchorMin = Vector2.zero;
+                scrollRt.anchorMax = Vector2.one;
+                scrollRt.offsetMin = Vector2.zero;
+                scrollRt.offsetMax = Vector2.zero;
+
+                GameObject vpGo = new GameObject(GridCoordinatesViewportName, typeof(RectTransform), typeof(RectMask2D), typeof(Image));
+                vpGo.transform.SetParent(scrollRootT, false);
+                RectTransform vpRt = vpGo.GetComponent<RectTransform>();
+                vpRt.anchorMin = Vector2.zero;
+                vpRt.anchorMax = Vector2.one;
+                vpRt.offsetMin = Vector2.zero;
+                vpRt.offsetMax = Vector2.zero;
+                Image vpImg = vpGo.GetComponent<Image>();
+                vpImg.color = new Color(0f, 0f, 0f, 0.01f);
+                vpImg.raycastTarget = true;
+
+                GameObject contentGo = new GameObject(GridCoordinatesContentName, typeof(RectTransform));
+                contentGo.transform.SetParent(vpGo.transform, false);
+                RectTransform contentRt = contentGo.GetComponent<RectTransform>();
+                contentRt.anchorMin = new Vector2(0f, 1f);
+                contentRt.anchorMax = new Vector2(1f, 1f);
+                contentRt.pivot = new Vector2(0.5f, 1f);
+                contentRt.anchoredPosition = Vector2.zero;
+                contentRt.sizeDelta = Vector2.zero;
+
+                ScrollRect sr = scrollGo.GetComponent<ScrollRect>();
+                sr.viewport = vpRt;
+                sr.content = contentRt;
+                sr.horizontal = false;
+                sr.vertical = true;
+                sr.movementType = ScrollRect.MovementType.Clamped;
+                sr.scrollSensitivity = 24f;
+                sr.inertia = true;
+                sr.decelerationRate = 0.135f;
+            }
+
+            Transform viewportT = scrollRootT.Find(GridCoordinatesViewportName);
+            Transform contentTransform = viewportT != null ? viewportT.Find(GridCoordinatesContentName) : null;
+            RectTransform contentParent = contentTransform != null ? contentTransform.GetComponent<RectTransform>() : null;
+            if (contentParent == null)
+                return;
+
+            textRt.SetParent(contentParent, false);
+            textRt.anchorMin = Vector2.zero;
+            textRt.anchorMax = Vector2.one;
+            textRt.pivot = new Vector2(0.5f, 0.5f);
+            textRt.anchoredPosition = Vector2.zero;
+            textRt.offsetMin = Vector2.zero;
+            textRt.offsetMax = Vector2.zero;
+            textRt.localScale = Vector3.one;
+        }
+
+        /// <summary>
+        /// Sizes scroll content from text preferred height and enables vertical scrolling only when it exceeds the viewport.
+        /// </summary>
+        private static void UpdateGridCoordinatesScrollLayout(RectTransform chromeRt, Text dbgText)
+        {
+            if (chromeRt == null)
+                return;
+
+            RectTransform insetRt = FindGridCoordinatesInset(chromeRt);
+            if (insetRt == null)
+                return;
+
+            Transform scrollRootT = insetRt.Find(GridCoordinatesScrollRootName);
+            if (scrollRootT == null)
+                return;
+
+            ScrollRect sr = scrollRootT.GetComponent<ScrollRect>();
+            if (sr == null)
+                return;
+
+            RectTransform viewport = sr.viewport;
+            RectTransform content = sr.content as RectTransform;
+            if (viewport == null || content == null)
+                return;
+
+            Canvas.ForceUpdateCanvases();
+
+            float viewW = Mathf.Max(viewport.rect.width, 40f);
+            float viewH = Mathf.Max(viewport.rect.height, 1f);
+
+            float prefH = EstimateGridCoordinatesTextPreferredHeight(dbgText, viewW);
+            float contentH = Mathf.Max(prefH, viewH);
+            content.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, contentH);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+
+            bool needScroll = prefH > viewH + 0.5f;
+            sr.vertical = needScroll;
+            sr.enabled = true;
+            if (!needScroll)
+                sr.verticalNormalizedPosition = 1f;
+
+            Canvas.ForceUpdateCanvases();
+        }
+
+        /// <summary>
+        /// Positions grid debug chrome above <c>ControlPanel</c> when available; otherwise above the minimap.
+        /// </summary>
+        private static void AlignGridCoordinatesChrome(RectTransform chromeRt)
+        {
+            if (chromeRt == null)
+                return;
+            Canvas.ForceUpdateCanvases();
+            EnsureGridCoordinatesChromeHudMount(chromeRt);
+            if (TryAlignGridCoordinatesChromeToControlPanel(chromeRt))
+                return;
+            AlignGridCoordinatesChromeToMiniMap(chromeRt);
+        }
+
+        /// <summary>
+        /// Square grid debug chrome above a reference panel top, capped so its top stays below <see cref="DataPanelButtonsObjectName"/> when present.
+        /// </summary>
+        private static void GridCoordinatesApplySquareChromeLayout(
+            RectTransform chromeRt,
+            RectTransform parentRt,
+            float minX,
+            float referenceTopY,
+            float gapAboveReference,
+            float widthBand)
+        {
+            float minChromeBottom = referenceTopY + gapAboveReference;
+
+            float limitTop = float.PositiveInfinity;
+            Transform dpTransform = parentRt.Find(DataPanelButtonsObjectName);
+            RectTransform dpRt = dpTransform != null ? dpTransform.GetComponent<RectTransform>() : null;
+            if (dpRt != null && GridCoordinatesTryGetRectBoundsInParent(parentRt, dpRt, out _, out _, out float dpMinY, out _))
+                limitTop = dpMinY - GridCoordinatesGapBelowDataPanelButtons;
+
+            float verticalRoom = limitTop - minChromeBottom;
+            if (!float.IsFinite(verticalRoom) || verticalRoom > 5000f)
+                verticalRoom = GridCoordinatesChromeMaxSquareSide;
+            verticalRoom = Mathf.Max(verticalRoom, 1f);
+
+            float panelW = Mathf.Max(widthBand, 44f);
+            float side = Mathf.Min(Mathf.Min(panelW, GridCoordinatesChromeMaxSquareSide), verticalRoom);
+            side = Mathf.Max(side, 1f);
+
+            float chromeBottomY = minChromeBottom;
+            float chromeTopY = chromeBottomY + side;
+            if (float.IsFinite(limitTop) && chromeTopY > limitTop)
+            {
+                chromeBottomY = limitTop - side;
+                chromeBottomY = Mathf.Max(chromeBottomY, minChromeBottom);
+            }
+
+            Rect parentRect = parentRt.rect;
+            Vector2 anchorRefBottomLeft = new Vector2(
+                Mathf.Lerp(parentRect.xMin, parentRect.xMax, 0f),
+                Mathf.Lerp(parentRect.yMin, parentRect.yMax, 0f));
+            chromeRt.anchorMin = Vector2.zero;
+            chromeRt.anchorMax = Vector2.zero;
+            chromeRt.pivot = Vector2.zero;
+            chromeRt.anchoredPosition = new Vector2(minX, chromeBottomY) - anchorRefBottomLeft;
+            chromeRt.sizeDelta = new Vector2(side, side);
+        }
+
+        /// <summary>
+        /// Places grid debug chrome just above the left <c>ControlPanel</c> (square, same width band as the toolbar).
+        /// </summary>
+        private static bool TryAlignGridCoordinatesChromeToControlPanel(RectTransform chromeRt)
+        {
+            RectTransform parentRt = chromeRt.parent as RectTransform;
+            if (parentRt == null)
+                return false;
+            Transform cpTransform = parentRt.Find(ControlPanelObjectName);
+            RectTransform cpRt = cpTransform != null ? cpTransform.GetComponent<RectTransform>() : null;
+            if (cpRt == null)
+                return false;
+            if (!GridCoordinatesTryGetRectBoundsInParent(parentRt, cpRt, out float minX, out float maxX, out _, out float cpMaxY))
+                return false;
+            float panelW = maxX - minX;
+            if (panelW < 32f)
+                panelW = Mathf.Max(cpRt.rect.width, 80f);
+
+            GridCoordinatesApplySquareChromeLayout(
+                chromeRt,
+                parentRt,
+                minX,
+                cpMaxY,
+                GridCoordinatesChromeGapAboveControlPanel,
+                panelW);
+            return true;
+        }
+
+        /// <summary>
+        /// Places grid debug chrome above the minimap with the same width band and a square size (capped below <see cref="DataPanelButtonsObjectName"/> when present).
         /// Do not copy <c>MiniMapPanel</c> stretch anchors: with anchors (0,0)-(1,1), height = parent.height + sizeDelta.y,
         /// so a small positive sizeDelta.y fills almost the entire screen.
         /// </summary>
@@ -319,7 +561,7 @@ namespace Territory.UI
             if (chromeRt == null)
                 return;
             Canvas.ForceUpdateCanvases();
-            EnsureGridCoordinatesChromeSiblingsMiniMap(chromeRt);
+            EnsureGridCoordinatesChromeHudMount(chromeRt);
             RectTransform parentRt = chromeRt.parent as RectTransform;
             if (parentRt == null)
                 return;
@@ -328,40 +570,30 @@ namespace Territory.UI
             if (mmRt == null)
                 return;
 
-            if (!GridCoordinatesTryGetMiniMapBoundsInParent(parentRt, mmRt, out float minX, out float maxX, out float minY, out float maxY))
+            if (!GridCoordinatesTryGetRectBoundsInParent(parentRt, mmRt, out float minX, out float maxX, out _, out float mmMaxY))
                 return;
             float mmWidth = maxX - minX;
             if (mmWidth < 32f)
                 mmWidth = Mathf.Max(mmRt.rect.width, 80f);
 
-            Text dbg = chromeRt.GetComponentInChildren<Text>();
-            float innerW = Mathf.Max(mmWidth - 36f, 48f);
-            float contentH = EstimateGridCoordinatesTextPreferredHeight(dbg, innerW);
-            float gap = GridCoordinatesChromeGapAboveMinimap;
-            float boxW = mmWidth;
-            // Hug text height; avoid forcing ~square height (left empty space overlapping tabs/minimap).
-            float boxH = Mathf.Clamp(Mathf.Max(contentH + 20f, 48f), 44f, 200f);
-
-            chromeRt.anchorMin = Vector2.zero;
-            chromeRt.anchorMax = Vector2.zero;
-            chromeRt.pivot = Vector2.zero;
-            Rect parentRect = parentRt.rect;
-            Vector2 anchorRefBottomLeft = new Vector2(
-                Mathf.Lerp(parentRect.xMin, parentRect.xMax, 0f),
-                Mathf.Lerp(parentRect.yMin, parentRect.yMax, 0f));
-            chromeRt.anchoredPosition = new Vector2(minX, maxY + gap) - anchorRefBottomLeft;
-            chromeRt.sizeDelta = new Vector2(boxW, boxH);
+            GridCoordinatesApplySquareChromeLayout(
+                chromeRt,
+                parentRt,
+                minX,
+                mmMaxY,
+                GridCoordinatesChromeGapAboveMinimap,
+                mmWidth);
         }
 
         /// <summary>
-        /// Minimap axis-aligned bounds in <paramref name="parentRt"/> local space (same parent as chrome + minimap).
+        /// Axis-aligned bounds of <paramref name="childRt"/> in <paramref name="parentRt"/> local space.
         /// </summary>
-        private static bool GridCoordinatesTryGetMiniMapBoundsInParent(RectTransform parentRt, RectTransform mmRt, out float minX, out float maxX, out float minY, out float maxY)
+        private static bool GridCoordinatesTryGetRectBoundsInParent(RectTransform parentRt, RectTransform childRt, out float minX, out float maxX, out float minY, out float maxY)
         {
             minX = maxX = minY = maxY = 0f;
-            if (parentRt == null || mmRt == null)
+            if (parentRt == null || childRt == null)
                 return false;
-            Rect r = mmRt.rect;
+            Rect r = childRt.rect;
             Vector3[] corners =
             {
                 new Vector3(r.xMin, r.yMin, 0f),
@@ -373,7 +605,7 @@ namespace Territory.UI
             maxX = maxY = float.NegativeInfinity;
             for (int i = 0; i < 4; i++)
             {
-                Vector3 pl = parentRt.InverseTransformPoint(mmRt.TransformPoint(corners[i]));
+                Vector3 pl = parentRt.InverseTransformPoint(childRt.TransformPoint(corners[i]));
                 minX = Mathf.Min(minX, pl.x);
                 maxX = Mathf.Max(maxX, pl.x);
                 minY = Mathf.Min(minY, pl.y);
@@ -389,15 +621,14 @@ namespace Territory.UI
         {
             if (gridCoordinatesText == null)
                 return;
-            Transform t = gridCoordinatesText.transform;
-            if (t.parent == null || t.parent.parent == null)
+            Transform chromeRoot = FindGridCoordinatesChromeRoot(gridCoordinatesText.transform);
+            if (chromeRoot == null)
                 return;
-            if (!IsGridCoordinatesTextHolderName(t.parent.name) || t.parent.parent == null
-                || !IsGridCoordinatesChromeRootName(t.parent.parent.name))
+            RectTransform chromeRt = chromeRoot.GetComponent<RectTransform>();
+            if (chromeRt == null)
                 return;
-            RectTransform chromeRt = t.parent.parent.GetComponent<RectTransform>();
-            if (chromeRt != null)
-                AlignGridCoordinatesChromeToMiniMap(chromeRt);
+            AlignGridCoordinatesChrome(chromeRt);
+            UpdateGridCoordinatesScrollLayout(chromeRt, gridCoordinatesText);
         }
 
         private static float EstimateGridCoordinatesTextPreferredHeight(Text text, float innerWidth)
@@ -408,7 +639,7 @@ namespace Territory.UI
             float w = Mathf.Max(innerWidth, 40f);
             TextGenerationSettings settings = text.GetGenerationSettings(new Vector2(w, 0.01f));
             float px = text.cachedTextGeneratorForLayout.GetPreferredHeight(sample, settings);
-            return Mathf.Clamp(px, 28f, 400f);
+            return Mathf.Clamp(px, 28f, 10000f);
         }
 
         private void ApplyGridCoordinatesChromeTextStyle()

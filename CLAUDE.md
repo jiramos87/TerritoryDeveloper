@@ -14,6 +14,8 @@ This repository is configured for **Claude Code** with project-scoped MCP (`.mcp
 
 **Postgres / Unity bridge:** `project_spec_journal_*`, `unity_bridge_command`, `unity_bridge_get`, and `unity_compile` need a resolvable DB URL (`DATABASE_URL` or `config/postgres-dev.json`) and, for bridge tools, Unity Editor on `REPO_ROOT`. Root **`npm run verify:local`** (alias **`verify:post-implementation`**) chains **`validate:all`** (**IA** **Node** checks including **`territory-compute-lib`** build), **`unity:compile-check`**, **`db:migrate`**, **`db:bridge-preflight`**, **macOS** **Editor** save/quit + relaunch, and **`db:bridge-playmode-smoke`** — see **`docs/mcp-ia-server.md`** and **`ARCHITECTURE.md`** (**Local verification**). **`docs/postgres-ia-dev-setup.md`** covers DB setup and the **`agent_bridge_job`** queue.
 
+**Unity batch compile:** Run **`npm run unity:compile-check`** from the repo root when needed. **Do not** skip because **`$UNITY_EDITOR_PATH`** is empty in the agent shell — **`tools/scripts/unity-compile-check.sh`** loads **`.env`** / **`.env.local`** (see **`tools/scripts/load-repo-env.inc.sh`**) and can infer the **macOS** Hub path from **`ProjectSettings/ProjectVersion.txt`**.
+
 If MCP is unavailable, use `.cursor/rules/agent-router.mdc` and targeted file reads. Canonical workflow and policies: **`AGENTS.md`**.
 
 ## Skills (read the matching `SKILL.md`)

@@ -60,7 +60,7 @@ Immediate completion (no **Play Mode** transition). **`play_mode_state`:** **`ed
 
 ### `get_compilation_status` / `unity_compile`
 
-Synchronous compile snapshot (**Edit Mode**). **`response.compilation_status`:** **`compiling`**, **`compilation_failed`** (**`EditorUtility.scriptCompilationFailed`**), **`last_error_excerpt`** (truncated), **`recent_error_messages`** (buffered **Console** **`error`** lines). Use after **C#** edits when the **Editor** is open. For **batchmode** compile-only smoke without an **Editor** lock on the project, use root **`npm run unity:compile-check`** with **`UNITY_EDITOR_PATH`**.
+Synchronous compile snapshot (**Edit Mode**). **`response.compilation_status`:** **`compiling`**, **`compilation_failed`** (**`EditorUtility.scriptCompilationFailed`**), **`last_error_excerpt`** (truncated), **`recent_error_messages`** (buffered **Console** **`error`** lines). Use after **C#** edits when the **Editor** is open. For **batchmode** compile-only smoke without an **Editor** lock on the project, run root **`npm run unity:compile-check`** (loads **`.env`** / **`.env.local`**; **do not** skip because **`$UNITY_EDITOR_PATH`** is unset in the agent shell).
 
 ### `export_agent_context`
 

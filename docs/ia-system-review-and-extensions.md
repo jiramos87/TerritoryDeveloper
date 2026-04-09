@@ -327,7 +327,7 @@ Prioritized by "impact on the player's experience of a living, responsive city":
 |------|-------|-----------------|
 | 1 | ~~**Monthly maintenance**~~ (shipped) | Recurring **street** and **utility building** upkeep creates economic tension; see **glossary** **Monthly maintenance**. |
 | 2 | ~~Dynamic happiness~~ (shipped) | Multi-factor happiness (employment, taxes, services, pollution) is the core loop of city-builders. Shipped with pollution model. |
-| 3 | **FEAT-22** (Tax→demand feedback) | Closes the economic loop: taxes affect demand, demand affects growth, growth affects income. Without this, tax sliders are decorative. |
+| 3 | ~~**Tax→demand feedback**~~ (shipped) | **Tax** rates feed **happiness** and **per-sector demand**; same-day refresh after daily **happiness** — **managers-reference** **Demand (R / C / I)**. |
 | 4 | **FEAT-43** (Growth ring tuning) | The AUTO simulation is the "life" of the city. Gradual center→edge gradient makes cities look organic vs artificial. |
 | 5 | **BUG-52** (AUTO zoning gaps) | Visible artifacts that break immersion. Gap cells between roads and zones look like bugs to the player. |
 | 6 | **FEAT-08** (Zone density evolution) | Buildings upgrading over time is the hallmark visual feedback of city growth in the genre. |
@@ -344,7 +344,7 @@ Prioritized by "impact on the player's experience of a living, responsive city":
 ```
 Dynamic happiness (shipped: employment, taxes, services, pollution)
     → Monthly maintenance (shipped: streets, power plants — glossary)
-      → FEAT-22 (tax→demand feedback loop)
+      → Tax→demand feedback (shipped — **managers-reference** **Demand (R / C / I)**)
         → FEAT-09 (trade/production/salaries — deep economy)
 ```
 
@@ -434,5 +434,5 @@ The IA system is remarkably complete and well-designed. The main opportunities a
 1. **Documentation:** A single "system overview" document explaining the IA philosophy and architecture
 2. **IA evolution:** Semantic search, knowledge graph, agent memory, bidirectional learning
 3. **Entity model:** Time-series persistence, event sourcing, building identity — all building on the existing Postgres infrastructure
-4. **Gameplay impact:** The "Economic Depth" lane (**monthly maintenance** shipped → **FEAT-22**; happiness + pollution shipped) delivers strong player value per effort invested
+4. **Gameplay impact:** The "Economic Depth" lane (**monthly maintenance** and **tax→demand** feedback shipped; happiness + pollution shipped) delivers strong player value per effort invested
 5. **New systems:** Service coverage, demand heatmaps, districts, and agent-driven parameter tuning would each deepen the simulation significantly

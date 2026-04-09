@@ -43,12 +43,12 @@ test("inferDomainHintsFromPath returns hints for road files", () => {
 });
 
 test(
-  "parseBacklogIssue returns files for FEAT-22",
+  "parseBacklogIssue resolves archived FEAT-22 from BACKLOG-ARCHIVE.md",
   { skip: !fs.existsSync(path.join(repoRoot, "BACKLOG.md")) },
   () => {
     const issue = parseBacklogIssue(repoRoot, "FEAT-22");
     assert.ok(issue);
     assert.equal(issue!.issue_id, "FEAT-22");
-    assert.ok(issue!.files, "FEAT-22 should have a Files field");
+    assert.ok(issue!.files, "archived issue should retain a Files field");
   },
 );

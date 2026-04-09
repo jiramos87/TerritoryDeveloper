@@ -4,6 +4,15 @@
 
 ---
 
+## Completed (moved from BACKLOG.md, 2026-04-09)
+
+- [x] **FEAT-22** — **Tax base** feedback on **demand (R / C / I)** and happiness (2026-04-09)
+  - Type: feature
+  - Files: `EconomyManager.cs`, `DemandManager.cs`, `CityStats.cs`, `EmploymentManager.cs`, `UIManager.Theme.cs`, `UIManager.Hud.cs`, `UIManager.Toolbar.cs`
+  - Spec: (removed after closure — **glossary** **Tax base**, **Demand (R / C / I)**, **Happiness**; **managers-reference** **Demand (R / C / I)**; **simulation-system** daily pass note; this row)
+  - Notes: **Hybrid model:** **per-sector** tax scaling on R/C/I **demand** plus **happiness**-**target** multiplier; **highest** (not average) **tax** rate vs comfort band for **happiness**; same-day **demand** refresh after **happiness** in `PerformDailyUpdates`; **tax** UI calls `RefreshHappinessAfterPolicyChange()`. Tunable weights on **`CityStats`** / **`DemandManager`**. Grid debug **HUD** chrome: **ScrollRect** for long copy; square panel aligned between **DataPanelButtons** and **ControlPanel**.
+  - Depends on: none (happiness + **monthly maintenance** shipped — **glossary** / archive)
+
 ## Completed (moved from BACKLOG.md, 2026-04-08)
 
 - [x] **FEAT-21** — Expenses and maintenance system (2026-04-08)

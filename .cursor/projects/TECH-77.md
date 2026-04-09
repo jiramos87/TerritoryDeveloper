@@ -67,7 +67,7 @@ ia_search("shore band water height")
 ```
 ia_search("expenses maintenance", scope: "backlog")
 → [
-    { source: "backlog", issue_id: "FEAT-22", title: "Tax base feedback on demand (R / C / I) and happiness", score: 0.92 }
+    { source: "backlog", issue_id: "FEAT-52", title: "City services coverage model (fire, police, education, health)", score: 0.88 }
   ]
 ```
 

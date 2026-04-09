@@ -266,6 +266,12 @@ public class EconomyManager : MonoBehaviour
     #endregion
 
     #region Tax Management Methods
+    private void NotifyTaxRatesAffectHappiness()
+    {
+        if (cityStats != null)
+            cityStats.RefreshHappinessAfterPolicyChange();
+    }
+
     /// <summary>
     /// Raise residential tax rate
     /// </summary>
@@ -274,6 +280,7 @@ public class EconomyManager : MonoBehaviour
         if (residentialIncomeTax < maxTaxRate)
         {
             residentialIncomeTax += 1;
+            NotifyTaxRatesAffectHappiness();
             if (gameNotificationManager != null)
                 gameNotificationManager.PostInfo($"Residential tax raised to {residentialIncomeTax}%");
         }
@@ -291,6 +298,7 @@ public class EconomyManager : MonoBehaviour
         if (residentialIncomeTax > minTaxRate)
         {
             residentialIncomeTax -= 1;
+            NotifyTaxRatesAffectHappiness();
             if (gameNotificationManager != null)
                 gameNotificationManager.PostInfo($"Residential tax lowered to {residentialIncomeTax}%");
         }
@@ -308,6 +316,7 @@ public class EconomyManager : MonoBehaviour
         if (commercialIncomeTax < maxTaxRate)
         {
             commercialIncomeTax += 1;
+            NotifyTaxRatesAffectHappiness();
             if (gameNotificationManager != null)
                 gameNotificationManager.PostInfo($"Commercial tax raised to {commercialIncomeTax}%");
         }
@@ -325,6 +334,7 @@ public class EconomyManager : MonoBehaviour
         if (commercialIncomeTax > minTaxRate)
         {
             commercialIncomeTax -= 1;
+            NotifyTaxRatesAffectHappiness();
             if (gameNotificationManager != null)
                 gameNotificationManager.PostInfo($"Commercial tax lowered to {commercialIncomeTax}%");
         }
@@ -342,6 +352,7 @@ public class EconomyManager : MonoBehaviour
         if (industrialIncomeTax < maxTaxRate)
         {
             industrialIncomeTax += 1;
+            NotifyTaxRatesAffectHappiness();
             if (gameNotificationManager != null)
                 gameNotificationManager.PostInfo($"Industrial tax raised to {industrialIncomeTax}%");
         }
@@ -359,6 +370,7 @@ public class EconomyManager : MonoBehaviour
         if (industrialIncomeTax > minTaxRate)
         {
             industrialIncomeTax -= 1;
+            NotifyTaxRatesAffectHappiness();
             if (gameNotificationManager != null)
                 gameNotificationManager.PostInfo($"Industrial tax lowered to {industrialIncomeTax}%");
         }
@@ -380,14 +392,17 @@ public class EconomyManager : MonoBehaviour
         if (IsResidentialZone(zoneType))
         {
             residentialIncomeTax = newRate;
+            NotifyTaxRatesAffectHappiness();
         }
         else if (IsCommercialZone(zoneType))
         {
             commercialIncomeTax = newRate;
+            NotifyTaxRatesAffectHappiness();
         }
         else if (IsIndustrialZone(zoneType))
         {
             industrialIncomeTax = newRate;
+            NotifyTaxRatesAffectHappiness();
         }
         else
         {

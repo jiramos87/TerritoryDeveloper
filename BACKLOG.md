@@ -3,7 +3,7 @@
 > Single source of truth for project issues. Ordered by priority (highest first): **§ Compute-lib program**, then **§ Agent ↔ Unity & MCP context lane**, then **§ IA evolution lane**, then **§ UI-as-code program** (umbrella **§ Completed** — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**), then **§ Economic depth lane**, then **§ Gameplay & simulation lane**, then **High** / **Medium** / **Code Health** / **Low**.
 > To work on an issue: reference it with `@BACKLOG.md` in the Cursor conversation.
 >
-> **Priority:** **Spec pipeline** and **compute-lib** program charter are closed — trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) and **glossary** (**territory-ia spec-pipeline program**, **Compute-lib program**). Exploration: [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md). **§ UI-as-code program** umbrella **§ Completed** — **glossary** **UI-as-code program**; **`ui-design-system.md`** (**Codebase inventory (uGUI)**); [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**. **§ Compute-lib program** below (**TECH-38** + **TECH-32**/**TECH-35** research; **TECH-39** computational **MCP** suite — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **§ Agent ↔ Unity & MCP context lane** follows, then **§ IA evolution lane** (**TECH-77**–**TECH-83**: FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning — [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md)), then **§ UI-as-code program** (open **FEAT-51**), then **§ Economic depth lane** (**FEAT-21** → **FEAT-22** → **FEAT-52** → **FEAT-53** → **FEAT-09** — economy, services, districts; happiness + pollution shipped), then **§ Gameplay & simulation lane** (player-facing **AUTO** / density). **Gameplay** blockers in **§ High Priority** stay **interrupt** work when they **stop play** or **corrupt saves**.
+> **Priority:** **Spec pipeline** and **compute-lib** program charter are closed — trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) and **glossary** (**territory-ia spec-pipeline program**, **Compute-lib program**). Exploration: [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md). **§ UI-as-code program** umbrella **§ Completed** — **glossary** **UI-as-code program**; **`ui-design-system.md`** (**Codebase inventory (uGUI)**); [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**. **§ Compute-lib program** below (**TECH-38** + **TECH-32**/**TECH-35** research; **TECH-39** computational **MCP** suite — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **§ Agent ↔ Unity & MCP context lane** follows, then **§ IA evolution lane** (**TECH-77**–**TECH-83**: FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning — [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md)), then **§ UI-as-code program** (open **FEAT-51**), then **§ Economic depth lane** (**FEAT-52** → **FEAT-53** → **FEAT-09** — economy, services, districts; **monthly maintenance**, **tax→demand** feedback, happiness + pollution shipped — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)), then **§ Gameplay & simulation lane** (player-facing **AUTO** / density). **Gameplay** blockers in **§ High Priority** stay **interrupt** work when they **stop play** or **corrupt saves**.
 
 ---
 
@@ -256,13 +256,7 @@ Evolve the **Information Architecture** system from documentation retrieval to a
 
 ## Economic depth lane
 
-Transform the economy from "money goes up forever" to a genuine city-builder economic simulation with tension, feedback loops, and player-visible consequences. **Sequential dependency order:** dynamic happiness (done — see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **monthly maintenance** (shipped — **glossary** **Monthly maintenance**) → **FEAT-22** (tax→demand feedback) → **FEAT-09** (trade/production — deep economy, moved from § Low Priority). **FEAT-52** (city services coverage) and **FEAT-53** (districts) extend the lane with spatial economic depth. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md) §4.
-
-- [ ] **FEAT-22** — **Tax base** feedback on **demand (R / C / I)** and happiness
-  - Type: feature
-  - Files: `EconomyManager.cs`, `DemandManager.cs`, `CityStats.cs`
-  - Notes: High taxes do not affect **demand (R / C / I)** or happiness. Loop: high taxes → less residential **demand** → less growth → less income.
-  - Depends on: none (legacy tax feedback fix — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md); happiness system shipped)
+Transform the economy from "money goes up forever" to a genuine city-builder economic simulation with tension, feedback loops, and player-visible consequences. **Sequential dependency order:** dynamic happiness (done — see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **monthly maintenance** (shipped — **glossary** **Monthly maintenance**) → **tax→demand feedback** (shipped — **managers-reference** **Demand (R / C / I)**; [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **FEAT-09** (trade/production — deep economy, moved from § Low Priority). **FEAT-52** (city services coverage) and **FEAT-53** (districts) extend the lane with spatial economic depth. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md) §4.
 
 - [ ] **FEAT-52** — **City services coverage** model (fire, police, education, health)
   - Type: feature (new system)
@@ -278,13 +272,13 @@ Transform the economy from "money goes up forever" to a genuine city-builder eco
   - Spec: `.cursor/projects/FEAT-53.md`
   - Notes: Player-defined **districts** (contiguous **cell** regions with name and color). Per-**district** statistics: **population**, **happiness**, **zone** distribution, **density**, **tax** revenue. Optional per-**district** **tax** policy overrides. **Minimap** district overlay. Coordinates with FEAT-47 (**multipolar** **urban centroids**) — each **urban pole** naturally becomes a **district**.
   - Acceptance: per `.cursor/projects/FEAT-53.md` §8; districts persist across save/load; per-district stats and tax overrides functional; minimap district layer
-  - Depends on: none (soft: FEAT-22 for tax system depth; FEAT-47 for multipolar coordination)
+  - Depends on: none (soft: FEAT-47 for multipolar coordination; **tax→demand** loop shipped — **managers-reference** **Demand (R / C / I)**)
 
 - [ ] **FEAT-09** — Trade / Production / Salaries (deep economy)
   - Type: feature (new system)
   - Files: `EconomyManager.cs`, `CityStats.cs` (+ new managers)
   - Notes: Economic system of production, trade between **RCI** **zones** and salaries. Long-term lane goal: full economic loop from production through trade to consumption.
-  - Depends on: FEAT-22
+  - Depends on: none (**tax→demand** feedback shipped — **managers-reference** **Demand (R / C / I)**; [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
 
 ## Gameplay & simulation lane
 
@@ -431,7 +425,7 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
   - Notes: Consider helper method, base class, or extension method to reduce duplication of Inspector + FindObjectOfType fallback pattern.
 
 
-*(Umbrella programs (**spec-pipeline**, **JSON**/**Postgres** interchange, **compute-lib**, **Cursor Skills**) and **Editor export registry** are archived under [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) with **glossary** pointers. **§ IA evolution lane** holds **TECH-77**–**TECH-83** (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning). **§ Economic depth lane** holds **monthly maintenance** (shipped — **glossary**) → **FEAT-22** → **FEAT-52** → **FEAT-53** → **FEAT-09** (happiness + pollution shipped). **§ Gameplay & simulation lane** lists **BUG-52**, **FEAT-43**, **FEAT-08**. **§ Compute-lib program** above holds **TECH-38** + **TECH-32**/**TECH-35**; **TECH-39** **MCP** suite is archived.)*
+*(Umbrella programs (**spec-pipeline**, **JSON**/**Postgres** interchange, **compute-lib**, **Cursor Skills**) and **Editor export registry** are archived under [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) with **glossary** pointers. **§ IA evolution lane** holds **TECH-77**–**TECH-83** (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning). **§ Economic depth lane** holds **monthly maintenance** (shipped — **glossary**) → **tax→demand feedback** (shipped — **managers-reference** **Demand**) → **FEAT-52** → **FEAT-53** → **FEAT-09** (happiness + pollution shipped). **§ Gameplay & simulation lane** lists **BUG-52**, **FEAT-43**, **FEAT-08**. **§ Compute-lib program** above holds **TECH-38** + **TECH-32**/**TECH-35**; **TECH-39** **MCP** suite is archived.)*
 
 ## Low Priority
 

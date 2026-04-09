@@ -278,31 +278,37 @@ public partial class UIManager
     public void OnRaiseResidentialTaxButtonClicked()
     {
         economyManager.RaiseResidentialTax();
+        UpdateUI();
     }
 
     public void OnLowerResidentialTaxButtonClicked()
     {
         economyManager.LowerResidentialTax();
+        UpdateUI();
     }
 
     public void OnRaiseCommercialTaxButtonClicked()
     {
         economyManager.RaiseCommercialTax();
+        UpdateUI();
     }
 
     public void OnLowerCommercialTaxButtonClicked()
     {
         economyManager.LowerCommercialTax();
+        UpdateUI();
     }
 
     public void OnRaiseIndustrialTaxButtonClicked()
     {
         economyManager.RaiseIndustrialTax();
+        UpdateUI();
     }
 
     public void OnLowerIndustrialTaxButtonClicked()
     {
         economyManager.LowerIndustrialTax();
+        UpdateUI();
     }
     #endregion
 }

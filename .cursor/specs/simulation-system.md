@@ -61,4 +61,6 @@ Each tick, `AutoZoningManager` builds a set from `GridManager.GetRoadExtensionCe
 
 ## Calendar and monthly economy
 
-Outside `ProcessSimulationTick`, `TimeManager` advances the **simulation** date and invokes `EconomyManager.ProcessDailyEconomy()`. On the first day of each in-game calendar month, `EconomyManager` runs **tax base** collection then **monthly maintenance** (order matters: income before upkeep). This is separate from per-tick **AUTO** work but shares **CityStats** treasury and **game notification** feedback.
+Outside `ProcessSimulationTick`, `TimeManager` advances the **simulation** date each in-game **day** and calls `CityStats.PerformDailyUpdates()` **before** zoning placement and `ProcessSimulationTick()`. That daily pass updates employment, statistics, forest stats, pollution, **happiness** (target + lerp), then refreshes R/C/I **demand** so **tax** and **happiness** targets apply on the **same** day to **demand** (see **managers-reference** **Demand (R / C / I)**).
+
+On calendar day 1, after the daily pass, `TimeManager` also calls `EconomyManager.ProcessDailyEconomy()`. On the first day of each in-game calendar month, `EconomyManager` runs **tax base** collection then **monthly maintenance** (order matters: income before upkeep). This is separate from per-tick **AUTO** work but shares **CityStats** treasury and **game notification** feedback.

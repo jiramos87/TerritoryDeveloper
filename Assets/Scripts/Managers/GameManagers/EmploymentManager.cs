@@ -39,7 +39,7 @@ public class JobData
 
 /// <summary>
 /// Calculates employment and unemployment rates across all zones.
-/// Coordinates with CityStats for population data and DemandManager for employment-based demand adjustments.
+/// Coordinates with CityStats for population data and DemandManager; R/C/I demand refreshes after daily happiness via <see cref="RefreshRCIDemandAfterDailyStats"/>.
 /// </summary>
 public class EmploymentManager : MonoBehaviour
 {
@@ -86,7 +86,17 @@ public class EmploymentManager : MonoBehaviour
         CalculatePopulationMetrics();
         TrackNewBuildingsAndJobs();
         CalculateCurrentEmployment();
-        UpdateDemand();
+    }
+
+    /// <summary>
+    /// Refreshes R/C/I demand after city-wide stats and happiness targets are updated for the day.
+    /// Called from <see cref="CityStats.PerformDailyUpdates"/> after <see cref="CityStats.RecalculateHappiness"/>
+    /// so demand uses same-tick tax and happiness targets.
+    /// </summary>
+    public void RefreshRCIDemandAfterDailyStats()
+    {
+        if (demandManager != null)
+            demandManager.UpdateRCIDemand(this);
     }
 
     private void CalculatePopulationMetrics()
@@ -219,14 +229,6 @@ public class EmploymentManager : MonoBehaviour
             case Zone.ZoneType.IndustrialMediumBuilding: return ZoneAttributes.IndustrialMediumBuilding;
             case Zone.ZoneType.IndustrialHeavyBuilding: return ZoneAttributes.IndustrialHeavyBuilding;
             default: return null;
-        }
-    }
-
-    private void UpdateDemand()
-    {
-        if (demandManager != null)
-        {
-            demandManager.UpdateRCIDemand(this);
         }
     }
 

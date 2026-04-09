@@ -51,9 +51,9 @@ public class BuildingTracker
 
 /// <summary>
 /// Calculates residential, commercial, and industrial demand levels based on population,
-/// employment ratios, forest coverage, and zone capacity. Provides demand data that drives
-/// zone growth decisions in GrowthManager and AutoZoningManager. Updated periodically by
-/// EmploymentManager and CityStats.
+/// employment ratios, forest coverage, zone capacity, per-sector tax pressure, and city-wide happiness.
+/// Provides demand data that drives zone growth decisions in GrowthManager and AutoZoningManager.
+/// Refreshed each in-game day from <see cref="EmploymentManager.RefreshRCIDemandAfterDailyStats"/> after <see cref="CityStats.RecalculateHappiness"/>.
 /// </summary>
 public class DemandManager : MonoBehaviour
 {
@@ -91,8 +91,20 @@ public class DemandManager : MonoBehaviour
     public bool autoGrowthEnabled = true;
     public float growthThreshold = 5f; // Lower threshold since we start with 10
 
+    [Header("Tax pressure on demand (per sector)")]
+    [Tooltip("Rates at or below this (percent) do not reduce demand for that sector.")]
+    [Range(0f, 30f)]
+    public float comfortableTaxRateForDemand = 10f;
+    [Tooltip("Upper tax rate (percent) used to normalize excess above the comfort threshold.")]
+    [Range(20f, 100f)]
+    public float maxTaxRateForDemandScale = 50f;
+    [Tooltip("At maximum excess tax, demand for that sector is multiplied by (1 - this).")]
+    [Range(0f, 0.6f)]
+    public float taxDemandPenaltyAtMax = 0.35f;
+
     private EmploymentManager employmentManager;
     private CityStats cityStats;
+    private EconomyManager economyManager;
     private ForestManager forestManager;
     private GridManager gridManager;
 
@@ -106,6 +118,7 @@ public class DemandManager : MonoBehaviour
         InitializeDemand();
         employmentManager = FindObjectOfType<EmploymentManager>();
         cityStats = FindObjectOfType<CityStats>();
+        economyManager = FindObjectOfType<EconomyManager>();
         forestManager = FindObjectOfType<ForestManager>();
         gridManager = FindObjectOfType<GridManager>();
         buildingTracker = new BuildingTracker();
@@ -172,18 +185,44 @@ public class DemandManager : MonoBehaviour
         UpdateResidentialDemand();
         UpdateCommercialDemand();
         UpdateIndustrialDemand();
+        ApplySectorTaxPressure();
         ApplyHappinessModifier();
     }
 
     /// <summary>
-    /// Scales all RCI demand levels by a happiness multiplier.
-    /// Happiness 80 = 1.1x, happiness 50 = 1.0x, happiness 30 = 0.9x (linear remap from 0–100 to 0.8–1.2).
+    /// Reduces each sector's demand when that sector's tax rate is above the comfort threshold.
+    /// </summary>
+    private void ApplySectorTaxPressure()
+    {
+        if (economyManager == null) return;
+
+        float denom = maxTaxRateForDemandScale - comfortableTaxRateForDemand;
+        if (denom <= 0.01f) denom = 0.01f;
+
+        residentialDemand.demandLevel *= GetTaxPressureMultiplier(economyManager.residentialIncomeTax, denom);
+        commercialDemand.demandLevel *= GetTaxPressureMultiplier(economyManager.commercialIncomeTax, denom);
+        industrialDemand.demandLevel *= GetTaxPressureMultiplier(economyManager.industrialIncomeTax, denom);
+
+        residentialDemand.demandLevel = Mathf.Clamp(residentialDemand.demandLevel, -100f, 100f);
+        commercialDemand.demandLevel = Mathf.Clamp(commercialDemand.demandLevel, -100f, 100f);
+        industrialDemand.demandLevel = Mathf.Clamp(industrialDemand.demandLevel, -100f, 100f);
+    }
+
+    private float GetTaxPressureMultiplier(int taxRatePercent, float denom)
+    {
+        if (taxRatePercent <= comfortableTaxRateForDemand)
+            return 1f;
+        float excess = Mathf.Clamp01((taxRatePercent - comfortableTaxRateForDemand) / denom);
+        return 1f - taxDemandPenaltyAtMax * excess;
+    }
+
+    /// <summary>
+    /// Scales all RCI demand levels by a multiplier from <b>today's</b> happiness target (see <see cref="CityStats.GetHappinessDemandMultiplier"/>).
     /// </summary>
     private void ApplyHappinessModifier()
     {
         if (cityStats == null) return;
-        float normalized = cityStats.GetNormalizedHappiness(); // 0–1
-        float multiplier = 0.8f + normalized * 0.4f; // maps 0→0.8, 0.5→1.0, 1.0→1.2
+        float multiplier = cityStats.GetHappinessDemandMultiplier();
         residentialDemand.demandLevel *= multiplier;
         commercialDemand.demandLevel *= multiplier;
         industrialDemand.demandLevel *= multiplier;

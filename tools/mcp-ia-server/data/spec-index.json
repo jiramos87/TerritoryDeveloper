@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-09T01:05:45.452Z",
+  "last_generated": "2026-04-09T02:28:05.814Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -851,25 +851,25 @@
           "section_id": "world-features",
           "title": "World features",
           "depth": 2,
-          "line_start": 104
+          "line_start": 106
         },
         {
           "section_id": "game-notifications",
           "title": "Game notifications",
           "depth": 2,
-          "line_start": 113
+          "line_start": 115
         },
         {
           "section_id": "architectural-patterns",
           "title": "Architectural patterns",
           "depth": 2,
-          "line_start": 119
+          "line_start": 121
         },
         {
           "section_id": "obsolete",
           "title": "Obsolete",
           "depth": 2,
-          "line_start": 128
+          "line_start": 130
         }
       ]
     },

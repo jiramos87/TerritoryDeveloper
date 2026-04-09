@@ -42,7 +42,7 @@ This skill is the **end-to-end** recipe for **visual / terrain** bugs where the 
 4. **IMPLEMENT FIX** — Edit **C#** / assets per analysis (**English** comments and logs).
 5. **COMPILE GATE** — After **C#** edits, **do not** call **`enter_play_mode`** until compilation is acceptable. Preference order (first that applies):
    - **a.** **`unity_bridge_command`** **`kind`:** **`get_compilation_status`** or **`unity_compile`** (same payload; **`unity_compile`** is a thin MCP alias) when the **Editor** is open for the bridge — read **`response.compilation_status`** (**`compiling`**, **`compilation_failed`**, **`last_error_excerpt`**, **`recent_error_messages`**). If **`compiling`** is true, wait and poll again (bounded retries, e.g. 5–8 attempts, ~2–3 s apart) up to **`timeout_ms`**.
-   - **b.** If **`UNITY_EDITOR_PATH`** is set **and** no **Editor** holds a **lock** on this **projectPath**, run from repo root: **`npm run unity:compile-check`** (Unity **`-batchmode -nographics -quit`**). **Never** run this while the **Editor** has the same project open.
+   - **b.** If no **Editor** holds a **lock** on this **projectPath**, run from repo root: **`npm run unity:compile-check`** (Unity **`-batchmode -nographics -quit`**). **Do not** skip this because **`$UNITY_EDITOR_PATH`** is empty in the agent shell — **`tools/scripts/unity-compile-check.sh`** sources repo-root **`.env`** / **`.env.local`** and (on **macOS**) can resolve the Hub binary from **`ProjectSettings/ProjectVersion.txt`**. **Never** run this while the **Editor** has the same project open.
    - **c.** **`unity_bridge_command`** **`kind`:** **`get_console_logs`** — look for **`error CS`** / compiler errors; optional success cues (Unity-version-specific, e.g. **`Compilation`** / **`Reload`** phrases in **log** lines) are **heuristic**.
    - **d.** Short bounded wait (10–20 s), then repeat **c** if still ambiguous.
    - **e.** On confirmed compile errors → return to step 4, then repeat step 5.
@@ -55,7 +55,7 @@ This skill is the **end-to-end** recipe for **visual / terrain** bugs where the 
 ## Compile gate notes
 
 - **`get_compilation_status`** reflects **`EditorApplication.isCompiling`**, **`EditorUtility.scriptCompilationFailed`**, and recent **error**-severity lines from **`AgentBridgeConsoleBuffer`** (cleared on script domain reload).
-- **`npm run unity:compile-check`** writes **`tools/reports/unity-compile-check-*.log`**; exit non-zero on failure. Requires **`UNITY_EDITOR_PATH`** to the **Unity** binary (see **`ProjectSettings/ProjectVersion.txt`** for version). Example macOS: **`…/Unity.app/Contents/MacOS/Unity`**.
+- **`npm run unity:compile-check`** writes **`tools/reports/unity-compile-check-*.log`**; exit non-zero on failure. Put **`UNITY_EDITOR_PATH`** in repo-root **`.env`** (or rely on **macOS** Hub path inference from **`ProjectSettings/ProjectVersion.txt`**). Example macOS: **`…/Unity.app/Contents/MacOS/Unity`**. **Do not** pre-check **`$UNITY_EDITOR_PATH`** in the agent shell before **`npm run`** — the script loads dotenv.
 
 ## Seed prompt (parameterize)
 

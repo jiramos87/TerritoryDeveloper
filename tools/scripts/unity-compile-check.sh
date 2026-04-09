@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Local compile smoke: Unity -batchmode import + script compile, then quit.
-# UNITY_EDITOR_PATH: repo .env / .env.local, else macOS Unity Hub path derived from ProjectSettings/ProjectVersion.txt.
+# UNITY_EDITOR_PATH: repo .env / .env.local (sourced below), else macOS Unity Hub path derived from ProjectSettings/ProjectVersion.txt.
+# AI agents: do not skip running this script because $UNITY_EDITOR_PATH is unset in the parent shell — dotenv is loaded here.
 # Do not run while another Unity Editor instance has this project open (project lock).
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

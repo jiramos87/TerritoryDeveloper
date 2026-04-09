@@ -847,6 +847,20 @@ public class CityStats : MonoBehaviour, ICityStats
         // Recalculate pollution then happiness (order matters: pollution feeds into happiness)
         RecalculatePollution();
         RecalculateHappiness();
+
+        // Demand uses same-tick happiness targets and tax rates (see EmploymentManager.RefreshRCIDemandAfterDailyStats)
+        if (_employmentManager != null) _employmentManager.RefreshRCIDemandAfterDailyStats();
+    }
+
+    /// <summary>
+    /// Re-runs pollution, happiness, and R/C/I demand when tax or other policy inputs change from the UI mid-day
+    /// (daily ticks already call <see cref="PerformDailyUpdates"/>).
+    /// </summary>
+    public void RefreshHappinessAfterPolicyChange()
+    {
+        RecalculatePollution();
+        RecalculateHappiness();
+        if (_employmentManager != null) _employmentManager.RefreshRCIDemandAfterDailyStats();
     }
 
     /// <summary>
@@ -923,18 +937,29 @@ public class CityStats : MonoBehaviour, ICityStats
     #endregion
 
     #region Happiness & Pollution
-    // --- Happiness weights (sum of positive weights = 50 points above the 50 baseline) ---
+    // --- Happiness weights: positives must not push raw sum far above 100 before tax, or Mathf.Clamp hides tax pressure ---
     private const float HAPPINESS_BASELINE = 50f;
     private const float WEIGHT_EMPLOYMENT = 30f;
-    private const float WEIGHT_TAX = 15f;
     private const float WEIGHT_SERVICES = 20f;
     private const float WEIGHT_FOREST = 10f;
-    private const float WEIGHT_DEVELOPMENT = 15f;
     private const float WEIGHT_POLLUTION = 10f;
+
+    [Header("Happiness formula (tuning)")]
+    [Tooltip("Applied as taxFactor × this (taxFactor is 0 to -1). Higher = stronger mood hit from rates above the comfort band.")]
+    [SerializeField] private float happinessWeightTax = 27f;
+    [Tooltip("Weighted by (buildings / zoned cells), 0–1.")]
+    [SerializeField] private float happinessWeightDevelopment = 12f;
+    [Tooltip("0–1 stub until service coverage ships (FEAT-52). Multiplied by WEIGHT_SERVICES.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float happinessServiceCoverageStub = 0.4f;
 
     // Convergence
     private const float BASE_CONVERGENCE_RATE = 0.15f;
     private const float POPULATION_SCALE_FACTOR = 500f;
+
+    /// <summary>Maps target happiness 0–100 to demand multiplier (low happiness suppresses R/C/I appetite).</summary>
+    private const float DEMAND_HAPPINESS_MULT_MIN = 0.8f;
+    private const float DEMAND_HAPPINESS_MULT_MAX = 1.2f;
 
     // Tax comfort threshold (average tax rate at or below this has no penalty)
     private const float COMFORTABLE_TAX_RATE = 10f;
@@ -942,9 +967,6 @@ public class CityStats : MonoBehaviour, ICityStats
 
     // Forest normalization
     private const float MAX_FOREST_BONUS = 60f;
-
-    // Service coverage stub (FEAT-52)
-    private const float SERVICE_COVERAGE_STUB = 0.5f;
 
     // --- Pollution constants ---
     private const float POLLUTION_INDUSTRIAL_HEAVY = 3.0f;
@@ -974,32 +996,31 @@ public class CityStats : MonoBehaviour, ICityStats
     }
 
     /// <summary>
-    /// Recalculates happiness as a 0–100 score from weighted factors, converging smoothly.
-    /// Called once per simulation tick after employment, economy, and pollution updates.
+    /// Computes the immediate happiness target from employment, tax, services, forest, development, and pollution.
+    /// Used for display convergence and for same-tick demand feedback.
     /// </summary>
-    public void RecalculateHappiness()
+    private float ComputeTargetHappiness()
     {
         // Employment factor (0–1): higher employment = happier
         float employmentFactor = 0.5f;
         if (_employmentManager != null)
             employmentFactor = _employmentManager.GetEmploymentRate() / 100f;
 
-        // Tax factor (0 to -1): higher taxes above comfort threshold = penalty
+        // Tax factor (0 to -1): use the highest R/C/I rate so raising one slider visibly affects happiness (average diluted the effect).
         float taxFactor = 0f;
         if (_economyManager != null)
         {
-            float avgTax = (_economyManager.residentialIncomeTax +
-                            _economyManager.commercialIncomeTax +
-                            _economyManager.industrialIncomeTax) / 3f;
-            if (avgTax > COMFORTABLE_TAX_RATE)
+            float maxTax = Mathf.Max(
+                _economyManager.residentialIncomeTax,
+                Mathf.Max(_economyManager.commercialIncomeTax, _economyManager.industrialIncomeTax));
+            if (maxTax > COMFORTABLE_TAX_RATE)
             {
-                taxFactor = -Mathf.Clamp01((avgTax - COMFORTABLE_TAX_RATE) /
+                taxFactor = -Mathf.Clamp01((maxTax - COMFORTABLE_TAX_RATE) /
                             (MAX_TAX_RATE_FOR_SCALE - COMFORTABLE_TAX_RATE));
             }
         }
 
-        // Service coverage factor (stub 0.5 until FEAT-52)
-        float serviceFactor = SERVICE_COVERAGE_STUB;
+        float serviceFactor = Mathf.Clamp01(happinessServiceCoverageStub);
 
         // Forest factor (0–1)
         float forestFactor = Mathf.Clamp01(GetForestHappinessBonus() / MAX_FOREST_BONUS);
@@ -1014,13 +1035,22 @@ public class CityStats : MonoBehaviour, ICityStats
 
         float targetHappiness = HAPPINESS_BASELINE
             + employmentFactor * WEIGHT_EMPLOYMENT
-            + taxFactor * WEIGHT_TAX
+            + taxFactor * happinessWeightTax
             + serviceFactor * WEIGHT_SERVICES
             + forestFactor * WEIGHT_FOREST
-            + developmentFactor * WEIGHT_DEVELOPMENT
+            + developmentFactor * happinessWeightDevelopment
             - pollutionFactor * WEIGHT_POLLUTION;
 
-        targetHappiness = Mathf.Clamp(targetHappiness, 0f, 100f);
+        return Mathf.Clamp(targetHappiness, 0f, 100f);
+    }
+
+    /// <summary>
+    /// Recalculates happiness as a 0–100 score from weighted factors, converging smoothly.
+    /// Called once per simulation tick after employment, economy, and pollution updates.
+    /// </summary>
+    public void RecalculateHappiness()
+    {
+        float targetHappiness = ComputeTargetHappiness();
 
         // Convergence rate scales with population (larger cities change more slowly)
         float convergenceRate = BASE_CONVERGENCE_RATE / (1f + population / POPULATION_SCALE_FACTOR);
@@ -1028,11 +1058,21 @@ public class CityStats : MonoBehaviour, ICityStats
     }
 
     /// <summary>
-    /// Returns happiness normalized to 0–1 for use as a demand multiplier.
+    /// Returns happiness normalized to 0–1 for UI or diagnostics (current converged value).
     /// </summary>
     public float GetNormalizedHappiness()
     {
         return Mathf.Clamp01(happiness / 100f);
+    }
+
+    /// <summary>
+    /// Demand multiplier derived from <b>today's</b> happiness target (not the lerped score), so tax and
+    /// employment changes affect R/C/I demand on the same daily tick.
+    /// </summary>
+    public float GetHappinessDemandMultiplier()
+    {
+        float normalized = Mathf.Clamp01(ComputeTargetHappiness() / 100f);
+        return DEMAND_HAPPINESS_MULT_MIN + normalized * (DEMAND_HAPPINESS_MULT_MAX - DEMAND_HAPPINESS_MULT_MIN);
     }
     #endregion
 
