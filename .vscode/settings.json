@@ -1,0 +1,6 @@
+{
+  "explorer.excludeGitIgnore": true,
+  "files.watcherExclude": {
+    "**/tools/reports/**": true
+  }
+}
