@@ -186,13 +186,48 @@ export function extractCitedIssueIds(text: string): string[] {
 }
 
 /**
+ * True when `**id**` is immediately followed by `(soft: …)` and the parenthetical does not
+ * cite a *different* issue id (e.g. TECH-31: `**TECH-82** (soft: Phase 1 …)`).
+ * Excludes `**TECH-37** (soft: **TECH-38** …)` where the soft note applies to another id.
+ */
+function isLeadingIssueIdWithSoftParen(
+  dependsOnLine: string,
+  id: string,
+): boolean {
+  const canonical = normalizeIssueId(id);
+  const escaped = canonical.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`\\*\\*${escaped}\\*\\*\\s*\\(\\s*soft\\s*:`, "i");
+  const m = re.exec(dependsOnLine);
+  if (!m || m.index === undefined) return false;
+  const openIdx = dependsOnLine.indexOf("(", m.index);
+  if (openIdx < 0) return false;
+  let depth = 0;
+  for (let i = openIdx; i < dependsOnLine.length; i++) {
+    const c = dependsOnLine[i]!;
+    if (c === "(") depth++;
+    else if (c === ")") {
+      depth--;
+      if (depth === 0) {
+        const inner = dependsOnLine.slice(openIdx + 1, i);
+        const innerIds = extractCitedIssueIds(inner);
+        if (innerIds.length === 0) return true;
+        return innerIds.every((x) => normalizeIssueId(x) === canonical);
+      }
+    }
+  }
+  return false;
+}
+
+/**
  * True when this occurrence of `id` in `dependsOnLine` is explicitly marked soft
- * (e.g. "soft: **TECH-37**" or "(soft: **TECH-50**)").
+ * (e.g. "soft: **TECH-37**", "(soft: **TECH-50**)", or "**TECH-82** (soft: …)" when the
+ * parenthetical does not cite another issue id).
  */
 export function isSoftDependencyMention(
   dependsOnLine: string,
   id: string,
 ): boolean {
+  if (isLeadingIssueIdWithSoftParen(dependsOnLine, id)) return true;
   const canonical = normalizeIssueId(id);
   const lower = dependsOnLine.toLowerCase();
   const softIdx = lower.indexOf("soft");

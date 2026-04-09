@@ -2,7 +2,7 @@
 
 **Backlog:** [TECH-31](../BACKLOG.md) (open row under **Agent ↔ Unity & MCP context lane**).  
 **Cursor spec (stub + Open Questions):** [`.cursor/projects/TECH-31.md`](../.cursor/projects/TECH-31.md).  
-**Related:** [TECH-82](../BACKLOG.md) (**city metrics** / **city history** — Stage **31d**). **Batch** **test mode** tooling (**31a2**): [`projects/TECH-31a2-batch-testmode-tooling.md`](TECH-31a2-batch-testmode-tooling.md). **Agent test-mode verify** skill (**31a3**): [`projects/TECH-31a3-agent-test-mode-verify-skill.md`](TECH-31a3-agent-test-mode-verify-skill.md). **Spec-pipeline** prerequisite: glossary **territory-ia spec-pipeline program**; exploration [spec-pipeline-exploration.md](spec-pipeline-exploration.md).
+**Related:** [TECH-82](../BACKLOG.md) (**city metrics** / **city history** — Stage **31d**). **Batch** **test mode** tooling (program stage **31a2**, shipped): **glossary** **Agent test mode batch** — [`ARCHITECTURE.md`](../ARCHITECTURE.md) **Local verification**, [`tools/fixtures/scenarios/README.md`](../tools/fixtures/scenarios/README.md). **Agent test-mode verify** skill (**31a3**): [`projects/TECH-31a3-agent-test-mode-verify-skill.md`](TECH-31a3-agent-test-mode-verify-skill.md). **Spec-pipeline** prerequisite: glossary **territory-ia spec-pipeline program**; exploration [spec-pipeline-exploration.md](spec-pipeline-exploration.md).
 
 This file is the **human-oriented orchestrator**: stage order, links to **implementation specs**, progress checkboxes, and **lessons learned**. Detailed requirements per stage live in **`projects/TECH-31*.md`** below—not in this table alone.
 
@@ -17,7 +17,7 @@ Complete stages in order unless the **Decision Log** records a deliberate parall
 | Stage | Focus | Implementation spec | Primary BACKLOG anchor |
 |-------|--------|---------------------|-------------------------|
 | **31a** | **Test mode** + load path + **32×32** policy + fixture layout + driver matrix | [TECH-31a-test-mode-and-load.md](TECH-31a-test-mode-and-load.md) | **TECH-31** |
-| **31a2** | **Batchmode** shell + **Unity** quit helper + **Editor** **`executeMethod`** + **`npm run unity:testmode-batch`** | [TECH-31a2-batch-testmode-tooling.md](TECH-31a2-batch-testmode-tooling.md) | **TECH-31** |
+| **31a2** | **Batchmode** shell + **Unity** quit helper + **Editor** **`executeMethod`** + **`npm run unity:testmode-batch`** (shipped — **glossary** **Agent test mode batch**; [`ARCHITECTURE.md`](../ARCHITECTURE.md), [`tools/fixtures/scenarios/README.md`](../tools/fixtures/scenarios/README.md)) | *(stage spec removed after IA migration — 2026-04-09)* | **TECH-31** |
 | **31a3** | **`agent-test-mode-verify`** **Cursor Skill** (orchestration, **Path A/B**, handoff to human **QA**) | [TECH-31a3-agent-test-mode-verify-skill.md](TECH-31a3-agent-test-mode-verify-skill.md) | **TECH-31** |
 | **31b** | Descriptor → **builder** → **`GameSaveData`** artifact (invariants-safe) | [TECH-31b-scenario-builder.md](TECH-31b-scenario-builder.md) | **TECH-31** |
 | **31c** | Verification without DB metrics: **N** ticks, **UTF**/scripted run, **close-dev-loop** recipe | [TECH-31c-verification-pipeline.md](TECH-31c-verification-pipeline.md) | **TECH-31** |
@@ -31,7 +31,7 @@ Complete stages in order unless the **Decision Log** records a deliberate parall
 Update this section as stages complete (owner / date optional).
 
 - [x] **31a** — Test mode + load + contracts (2026-04-09)
-- [ ] **31a2** — Batch **test mode** tooling (shell + **executeMethod**)
+- [x] **31a2** — Batch **test mode** tooling (shell + **executeMethod**) (2026-04-09)
 - [ ] **31a3** — **agent-test-mode-verify** skill (orchestration + docs)
 - [ ] **31b** — Scenario builder + reference descriptor/artifact
 - [ ] **31c** — File-based verification pipeline + documented **close-dev-loop** recipe
@@ -43,7 +43,7 @@ Update this section as stages complete (owner / date optional).
 Satisfied when all relevant stage specs are done and **TECH-82** Phase 1 meets its own row if **31d** is in scope for the release:
 
 - At least one automated Unity run on a committed scenario; **test mode** launch documented (**scenario id** or path, **32×32**).
-- **`npm run unity:testmode-batch`** (or documented equivalent) runs **load** + report after **31a2** ships.
+- **`npm run unity:testmode-batch`** runs **load** + report (**glossary** **Agent test mode batch**).
 - Builder docs: **AUTO** + at least one non-**AUTO** pattern.
 - **`npm run unity:compile-check`** after tooling changes; **MCP** tool registered in **`docs/mcp-ia-server.md`**.
 - Program **Test contracts** table in [`.cursor/projects/TECH-31.md`](../.cursor/projects/TECH-31.md) (or migrated here if desired) lists driver args and **CI** tick bound.
@@ -56,14 +56,15 @@ Satisfied when all relevant stage specs are done and **TECH-82** Phase 1 meets i
 | 2026-04-02 | Program chartered as **TECH-31** | Original monolithic spec |
 | 2026-04-09 | Staged implementation specs under **`projects/`**; **31d** = **TECH-82** Phase 1 alignment | Human-readable sequence; **BACKLOG** rows remain **TECH-31** + **TECH-82** |
 | 2026-04-09 | Insert **31a2** (batch tooling) + **31a3** (**agent-test-mode-verify** skill); former standalone row folded into **TECH-31** | **31b** prerequisites explicit |
+| 2026-04-09 | Close **31a2** stage doc; normative operator detail → **glossary** **Agent test mode batch**, **`ARCHITECTURE.md`**, **unity-development-context** §10, scenarios **README** | **project-spec-close** (program stage; **TECH-31** row stays open) |
 
-*(Per-stage decisions belong in each **`TECH-31*.md`** Decision Log or **Issues Found**.)*
+*(Per-stage decisions belong in each **`TECH-31*.md`** Decision Log or **Issues Found** — or the program **Decision Log** when the stage file was removed.)*
 
 ## Lessons learned (migrate at **TECH-31** closeout)
 
 | Date | Stage | Lesson | Where to persist (if durable) |
 |------|-------|--------|------------------------------|
-|  |  |  |  |
+| 2026-04-09 | **31a2** | **`SessionState`** alone did not carry batch **Play Mode** pump across **domain reload** in **`-batchmode`**; use a transient **`tools/reports/.agent-testmode-batch-state.json`** (or equivalent disk **Editor** state). Unity **`-quit`** after **`executeMethod`** returns can exit before **`EditorApplication.update`** runs — omit **`-quit`**; terminate with **`EditorApplication.Exit`**. | **glossary** **Agent test mode batch**, **`ARCHITECTURE.md`**, [`tools/fixtures/scenarios/README.md`](../tools/fixtures/scenarios/README.md) |
 
 ## Issues found (program-wide)
 

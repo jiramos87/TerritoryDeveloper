@@ -19,6 +19,8 @@ Task-to-spec priorities match **`.cursor/rules/agent-router.mdc`**. That rule fi
 
 When starting work on **`BUG-XX` / `FEAT-XX` / `TECH-XX`** (etc.), call **`backlog_issue`** with `issue_id` first to get `Files`, `Spec`, `Notes`, `Acceptance`, `status`, and `raw_markdown` without loading all of `BACKLOG.md`. **`status`** is **`open`** for rows in **`BACKLOG.md`** or **`completed`** when the checklist row is **`[x]`** in **`BACKLOG-ARCHIVE.md`**. Then use `router_for_task` / `glossary_discover` / `glossary_lookup` / `spec_section` (or **`spec_sections`** when several slices are needed in one turn) as needed.
 
+**`depends_on_status` / `soft_only`:** The parser treats an id as **soft** when it appears after the first `soft` token on the **Depends on** line (e.g. `Soft: **TECH-15**`) or when the line uses **`**TECH-82** (soft: …)`** and the parenthetical does **not** cite a different issue id (so `**TECH-37** (soft: **TECH-38** …)` still leaves **TECH-37** as non-soft). Open soft dependencies get **`satisfied`: true** so **project-spec-kickoff** does not block on them.
+
 ## Project spec workflows (Cursor Skills)
 
 Repo **Cursor Skills** define **ordered** MCP usage for `.cursor/projects/{ISSUE_ID}.md`:

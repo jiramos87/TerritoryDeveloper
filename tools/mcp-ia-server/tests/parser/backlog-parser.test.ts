@@ -52,11 +52,31 @@ test("extractCitedIssueIds dedupes and preserves order", () => {
   assert.deepEqual(extractCitedIssueIds("no ids here"), []);
 });
 
-test("isSoftDependencyMention true only when id appears after soft:", () => {
+test("isSoftDependencyMention: soft after first 'soft' token", () => {
   const line =
     "Depends on: **TECH-37** (soft: **TECH-38** for **heavy** tools)";
   assert.equal(isSoftDependencyMention(line, "TECH-37"), false);
   assert.equal(isSoftDependencyMention(line, "TECH-38"), true);
+});
+
+test("isSoftDependencyMention: **ID** (soft: …) when paren has no other issue id", () => {
+  const line =
+    "Depends on: **TECH-82** (soft: Phase 1 **metrics** for verification). Soft: **TECH-15**";
+  assert.equal(isSoftDependencyMention(line, "TECH-82"), true);
+  assert.equal(isSoftDependencyMention(line, "TECH-15"), true);
+});
+
+test("resolveDependsOnStatus TECH-31-style line marks TECH-82 soft when open", {
+  skip: !fs.existsSync(path.join(repoRoot, "BACKLOG.md")),
+}, () => {
+  const parsed = parseBacklogIssue(repoRoot, "TECH-31");
+  assert.ok(parsed?.depends_on);
+  const rows = resolveDependsOnStatus(repoRoot, parsed!.depends_on);
+  const t82 = rows.find((r) => r.id === "TECH-82");
+  assert.ok(t82);
+  assert.equal(t82!.soft_only, true);
+  assert.equal(t82!.satisfied, true);
+  assert.equal(t82!.status, "open");
 });
 
 test("resolveDependsOnStatus marks completed TECH-61 for TECH-62 line", {

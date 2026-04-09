@@ -6,7 +6,7 @@
 > **Last updated:** 2026-04-09
 
 **Program tracker (stages, progress, lessons):** [`projects/TECH-31-agent-scenario-generator-program.md`](../../projects/TECH-31-agent-scenario-generator-program.md).  
-**Implementation specs (sequential):** [31a — test mode + load](../../projects/TECH-31a-test-mode-and-load.md) → [31a2 — batch tooling](../../projects/TECH-31a2-batch-testmode-tooling.md) → [31a3 — agent test-mode verify skill](../../projects/TECH-31a3-agent-test-mode-verify-skill.md) → [31b — builder](../../projects/TECH-31b-scenario-builder.md) → [31c — verification](../../projects/TECH-31c-verification-pipeline.md) → [31d — **TECH-82** Phase 1 + metrics](../../projects/TECH-31d-city-metrics-TECH-82-phase1.md) → [31e — MCP](../../projects/TECH-31e-mcp-tool-and-workflows.md).
+**Implementation specs (sequential):** [31a — test mode + load](../../projects/TECH-31a-test-mode-and-load.md) → **31a2** (**Agent test mode batch** — shipped; [`ARCHITECTURE.md`](../../ARCHITECTURE.md) **Local verification**, [`tools/fixtures/scenarios/README.md`](../../tools/fixtures/scenarios/README.md), **glossary**) → [31a3 — agent test-mode verify skill](../../projects/TECH-31a3-agent-test-mode-verify-skill.md) → [31b — builder](../../projects/TECH-31b-scenario-builder.md) → [31c — verification](../../projects/TECH-31c-verification-pipeline.md) → [31d — **TECH-82** Phase 1 + metrics](../../projects/TECH-31d-city-metrics-TECH-82-phase1.md) → [31e — MCP](../../projects/TECH-31e-mcp-tool-and-workflows.md).
 
 Normative detail for each stage lives in those **`projects/TECH-31*.md`** files. This stub retains **BACKLOG** **`Spec:`** resolution, **Open Questions** (game logic), and aggregate **Test contracts** for **MCP** / closeout tools that read `.cursor/projects/TECH-31.md` only.
 
@@ -20,7 +20,7 @@ Build an **agent-facing** **scenario generator**: structured intent → **`GameS
 
 | Acceptance / goal | Check type | Command or artifact | Notes |
 |-------------------|------------|---------------------|--------|
-| Reference scenario loads in **test mode** | Unity **UTF** or scripted run | One-command local + optional **CI** | Stages **31a** / **31a2** / **31c**; **`npm run unity:testmode-batch`** when **31a2** ships |
+| Reference scenario loads in **test mode** | Unity **UTF** or scripted run | One-command local + optional **CI** | Stages **31a** / **31c**; **`npm run unity:testmode-batch`** (**glossary** **Agent test mode batch**) |
 | Project compiles after tooling | Batch compile | `npm run unity:compile-check` (repo root) | Per **AGENTS.md** |
 | Bridge-assisted spot check (dev) | Manual / agent | **close-dev-loop** + **`debug_context_bundle`** | **Postgres** + **Editor** on **REPO_ROOT** |
 | **City history** spot check (dev) | Agent / SQL / MCP | **TECH-82** **`city_metrics_query`** after **N** ticks | Stage **31d** |

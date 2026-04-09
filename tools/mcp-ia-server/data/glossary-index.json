@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-09T02:28:05.818Z",
+  "last_generated": "2026-04-09T17:15:13.085Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -458,6 +458,10 @@
     "Reference spec": {
       "spec_key": "agents",
       "anchor": ""
+    },
+    "Agent test mode batch": {
+      "spec_key": "persistence-system",
+      "anchor": "load-pipeline"
     },
     "UI design system (reference spec)": {
       "spec_key": "ui-design-system",

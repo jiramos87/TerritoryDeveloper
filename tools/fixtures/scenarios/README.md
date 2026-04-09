@@ -30,9 +30,31 @@ Honored only in **Editor**, **development builds**, or when **`TERRITORY_ALLOW_T
 | `-testScenarioId {id}` | Load `{id}` via `ScenarioPathResolver` under this directory. |
 | `-testScenarioPath {path}` | Load that `.json` file directly (`Path.GetFullPath` from the player working directory — prefer an **absolute** path in automation). |
 
-**Editor / development player:** pass the arguments on the process command line (e.g. **Player → Resolution and Presentation → Command-line arguments** in the Editor, or your IDE run configuration). A **UTF** / `-batchmode` **executeMethod** harness is tracked under **TECH-15** / **TECH-16**; until it lands, use Editor Play Mode with CLI args or a **development build** player.
+**Editor / development player:** pass the arguments on the process command line (e.g. **Player → Resolution and Presentation → Command-line arguments** in the Editor, or your IDE run configuration).
 
-Example args only:
+### Batch (`-batchmode`) — **Agent test mode batch**
+
+From the **repository root** (loads **`.env`** / **`.env.local`** for **`UNITY_EDITOR_PATH`**; **macOS** can infer Hub Unity from **`ProjectSettings/ProjectVersion.txt`** — same as **`npm run unity:compile-check`**):
+
+```bash
+npm run unity:testmode-batch
+```
+
+This runs **`tools/scripts/unity-testmode-batch.sh`**, which launches Unity with **`-batchmode`**, **`-nographics`**, **`-executeMethod Territory.Testing.AgentTestModeBatchRunner.Run`**, and forwards scenario flags. The script does **not** pass **`-quit`**: the C# runner must finish **Play Mode** work and then calls **`EditorApplication.Exit`** (adding **`-quit`** would exit before the update pump runs). Default scenario id is **`reference-flat-32x32`** when you omit **`--scenario-id`** / **`--scenario-path`**.
+
+| Argument (shell) | Forwarded to Unity |
+|------------------|-------------------|
+| `--scenario-id ID` | `-testScenarioId ID` |
+| `--scenario-path PATH` | `-testScenarioPath PATH` |
+| `--simulation-ticks N` | `-testSimulationTicks N` (default **0** in script; capped in C#) |
+| `--quit-editor-first` | Runs **`tools/scripts/unity-quit-project.sh`** first (**`Temp/UnityLockfile`** + **`lsof`**, **SIGTERM** then **SIGKILL**) |
+| `--` … | Extra Unity CLI tokens |
+
+Machine-readable result: **`tools/reports/agent-testmode-batch-*.json`** (and a Unity log under **`tools/reports/unity-testmode-batch-*.log`**). While a run is in progress, **`tools/reports/.agent-testmode-batch-state.json`** may exist (transient; same ignore rules as other report artifacts). **`unity-quit-project.sh --help`** documents lock-based quit and why **`pkill`** / global **AppleScript** quit is not the default.
+
+**Exit codes** (runner / shell): see **`unity-testmode-batch.sh --help`** (**0** success; **2** missing Unity binary; **3** quit helper failed; **4** / **6** / **7** from **`EditorApplication.Exit`** in **`AgentTestModeBatchRunner`**).
+
+Example args only (Editor Play Mode or batch):
 
 ```text
 -testScenarioId reference-flat-32x32
@@ -42,6 +64,12 @@ Or an absolute path:
 
 ```text
 -testScenarioPath /absolute/path/to/save.json
+```
+
+Optional simulation steps after **`GameSaveManager.LoadGame`** (same entry point as **TimeManager** — **`SimulationManager.ProcessSimulationTick`**):
+
+```text
+-testSimulationTicks 3
 ```
 
 ## Agent / Editor queue (no CLI restart)
@@ -57,7 +85,7 @@ Then enter **Play Mode** (or enqueue **`unity_bridge_command`** `enter_play_mode
 | Driver | **Postgres** | Notes |
 |--------|----------------|-------|
 | Editor Play Mode + CLI args or **queue file** | No | Queue file + **`enter_play_mode`** suits agents without Hub CLI. |
-| **UTF** / `-batchmode` | No | Preferred for **CI** once harness lands (**TECH-15** / **TECH-16**). |
+| **`npm run unity:testmode-batch`** (`-batchmode` + **`AgentTestModeBatchRunner.Run`**) | No | Load smoke + optional **`ProcessSimulationTick`** loop; **`tools/reports/`** JSON (**glossary** **Agent test mode batch**). **UTF** / broader **CI** harness still tracked under **TECH-15** / **TECH-16**. |
 | **`verify:local`** / bridge smoke | Yes (when used) | Full dev chain; see **`ARCHITECTURE.md`** — **Local verification**. |
 
 ## Regenerating `reference-flat-32x32`

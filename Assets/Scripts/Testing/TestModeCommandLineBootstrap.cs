@@ -131,8 +131,9 @@ namespace Territory.Testing
 
         /// <summary>
         /// Parses <c>-testScenarioId</c> or <c>-testScenarioPath</c>. Path wins if both are present.
+        /// Also used by <b>Editor</b> <c>-batchmode</c> <c>-executeMethod</c> batch runner (<c>AgentTestModeBatchRunner.Run</c>).
         /// </summary>
-        internal static bool TryParse(string[] args, out string scenarioId, out string absolutePath)
+        public static bool TryParse(string[] args, out string scenarioId, out string absolutePath)
         {
             scenarioId = null;
             absolutePath = null;
