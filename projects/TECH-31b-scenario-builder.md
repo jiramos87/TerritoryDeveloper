@@ -2,7 +2,7 @@
 
 **Program:** [TECH-31-agent-scenario-generator-program.md](TECH-31-agent-scenario-generator-program.md) **Stage 31b**.  
 **Backlog:** [TECH-31](../BACKLOG.md).  
-**Prerequisite stages:** **31a** (load path and artifact layout exist).
+**Prerequisite stages:** **31a** (load path and artifact layout); **31a2** (**batchmode** **test mode** tooling for agent smoke on generated saves); **31a3** (**agent-test-mode-verify** skill — optional for builder development but required for the **program** agent workflow before relying on **31b** in unattended loops).
 
 ## Summary
 

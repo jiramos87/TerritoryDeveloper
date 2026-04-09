@@ -17,6 +17,7 @@ namespace Territory.Persistence
 /// Handles serialization and deserialization of the complete game state.
 /// Coordinates with GridManager for grid data, WaterManager for <see cref="WaterMapData"/>, CityStats for city state, and TimeManager for time state.
 /// Load restores height map and water map before <see cref="GridManager.RestoreGrid"/> (snapshot visuals; no terrain/water slope regen or global sorting recalc).
+/// Agent **test mode** resolves committed JSON under <c>tools/fixtures/scenarios/</c> via CLI (<see cref="Territory.Testing.TestModeCommandLineBootstrap"/>) and still loads through <see cref="LoadGame"/> only.
 /// </summary>
 public class GameSaveManager : MonoBehaviour
 {

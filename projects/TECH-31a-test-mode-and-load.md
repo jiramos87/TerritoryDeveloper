@@ -36,12 +36,12 @@ Introduce a gated **test mode** entry path, load a **committed** **`GameSaveData
 
 ## Implementation checklist
 
-- [ ] **Test mode** flag + boot + **TEST-MODE** UI; security gate.
-- [ ] **32×32** map policy + documented constraints.
-- [ ] Load scenario by id/path via **`GameSaveManager`**.
-- [ ] Artifact folder layout + naming; **scenario id** rules.
-- [ ] README + driver matrix (**UTF** / **batchmode** / bridge) + **Postgres** callouts for later stages.
-- [ ] **Implementing agent verification gate** (below): **`npm run validate:all`** then **`npm run unity:compile-check`**; both exit **0** before asking a human to review or confirm.
+- [x] **Test mode** flag + boot + **TEST-MODE** UI; security gate.
+- [x] **32×32** map policy + documented constraints.
+- [x] Load scenario by id/path via **`GameSaveManager`**.
+- [x] Artifact folder layout + naming; **scenario id** rules.
+- [x] README + driver matrix (**UTF** / **batchmode** / bridge) + **Postgres** callouts for later stages.
+- [x] **Implementing agent verification gate** (below): **`npm run validate:all`** then **`npm run unity:compile-check`**; both exit **0** before asking a human to review or confirm.
 
 ## Implementing agent verification gate (mandatory)
 
@@ -68,6 +68,9 @@ Document in the stage **README** that implementers follow this gate so runs are 
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-04-09 | Implementing agents must run **`npm run validate:all`** then **`npm run unity:compile-check`** before human review | **CI**-parity **IA** checks plus Unity compile; **`verify:local`** does not replace the explicit **`validate:all`** gate |
+| 2026-04-09 | **Test mode** CLI: **`-testScenarioId`**, **`-testScenarioPath`**; gate **Editor** / **DEVELOPMENT_BUILD** / **`TERRITORY_ALLOW_TEST_MODE`** | Release builds cannot enable **test mode**; **`GameStartInfo`** + **`GameBootstrap`** keep a single **`LoadGame`** path |
+| 2026-04-09 | **Editor** queue file **`tools/fixtures/scenarios/.queued-test-scenario-id`** (gitignored) | Agents + **`unity_bridge_command`** **`enter_play_mode`** without restarting Unity with CLI args |
+| 2026-04-09 | **Follow-on:** **31a2** (**`npm run unity:testmode-batch`**, **executeMethod**, shell quit) then **31a3** (**agent-test-mode-verify** skill) | Keeps **31a** focused on runtime + contracts; **31b** prerequisites documented in program tracker |
 
 ## Issues Found During Development
 
