@@ -778,6 +778,14 @@ public class CityStats : MonoBehaviour, ICityStats
     }
 
     /// <summary>
+    /// Returns how many power plants are registered for output aggregation (used for upkeep and pollution).
+    /// </summary>
+    public int GetRegisteredPowerPlantCount()
+    {
+        return powerPlants.Count;
+    }
+
+    /// <summary>
     /// Returns the total power output from all registered power plants.
     /// </summary>
     /// <returns>Total city power output.</returns>

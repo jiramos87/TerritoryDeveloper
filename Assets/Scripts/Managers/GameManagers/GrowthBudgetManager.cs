@@ -6,8 +6,8 @@ namespace Territory.Simulation
 public enum GrowthCategory { Roads, Energy, Water, Zoning }
 
 /// <summary>
-/// Manages growth budget allocation across residential, commercial, and industrial categories.
-/// Provides budget data to simulation managers for growth decisions based on CityStats.
+/// Manages growth budget allocation across roads, energy, water, and zoning categories.
+/// Derives the monthly pool from projected net cash flow (tax minus maintenance) when positive, otherwise from treasury.
 /// </summary>
 public class GrowthBudgetManager : MonoBehaviour
 {
@@ -97,13 +97,13 @@ public class GrowthBudgetManager : MonoBehaviour
     {
         if (cityStats == null) return;
         int pct = Mathf.Clamp(data.growthBudgetPercent, 0, 100);
-        int projectedIncome = economyManager != null ? economyManager.GetProjectedMonthlyIncome() : 0;
-        int baseAmount = projectedIncome > 0 ? projectedIncome : cityStats.money;
+        int projectedNet = economyManager != null ? economyManager.GetMonthlyIncomeDelta() : 0;
+        int baseAmount = projectedNet > 0 ? projectedNet : cityStats.money;
         cachedEffectiveTotalBudget = baseAmount * pct / 100;
         cacheValid = true;
     }
 
-    /// <summary>Sets the growth budget as a percentage of projected monthly income (0-100). Falls back to city money when income is 0.</summary>
+    /// <summary>Sets the growth budget as a percentage of projected net monthly cash flow (tax minus maintenance) (0-100). Falls back to city money when the projection is not positive.</summary>
     public void SetGrowthBudgetPercent(int percent)
     {
         data.growthBudgetPercent = Mathf.Clamp(percent, 0, 100);

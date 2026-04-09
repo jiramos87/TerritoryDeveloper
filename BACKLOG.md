@@ -261,6 +261,7 @@ Transform the economy from "money goes up forever" to a genuine city-builder eco
 - [ ] **FEAT-21** — Expenses and maintenance system
   - Type: feature
   - Files: `EconomyManager.cs`, `CityStats.cs`
+  - Spec: `.cursor/projects/FEAT-21.md`
   - Notes: No expenses: no **street** maintenance, no service costs, no salaries. Without expenses there is no economic tension. Add upkeep for **streets**, **utility buildings**, and services. **TECH-82** Phase 2 (city events) provides the financial audit trail.
   - Depends on: none (happiness system shipped — see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
 

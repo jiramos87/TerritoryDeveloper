@@ -7,7 +7,7 @@ using Territory.Utilities;
 namespace Territory.Economy
 {
 /// <summary>
-/// Manages the city's economy including taxation, money management, and financial transactions.
+/// Manages the city's economy including taxation, monthly maintenance, money management, and financial transactions.
 /// Acts as the main interface for all economic operations in the game.
 /// </summary>
 public class EconomyManager : MonoBehaviour
@@ -16,6 +16,12 @@ public class EconomyManager : MonoBehaviour
     public CityStats cityStats;
     public TimeManager timeManager;
     public GameNotificationManager gameNotificationManager;
+
+    [Header("Monthly maintenance")]
+    [Tooltip("Upkeep charged per road cell (ZoneType.Road) on the first day of each month, after tax collection.")]
+    public int maintenanceCostPerRoadCell = 8;
+    [Tooltip("Upkeep charged per registered power plant on the first day of each month, after tax collection.")]
+    public int maintenanceCostPerPowerPlant = 350;
 
     [Header("Tax Rates")]
     public int residentialIncomeTax = 10;
@@ -50,12 +56,21 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Process monthly economic activities including tax collection
+    /// Process monthly economic activities: tax collection first, then maintenance charges.
     /// </summary>
     private void ProcessMonthlyEconomy()
     {
         if (cityStats == null) return;
 
+        ApplyMonthlyTaxCollection();
+        ProcessMonthlyMaintenance();
+    }
+
+    /// <summary>
+    /// Collects building-based tax income and notifies the player.
+    /// </summary>
+    private void ApplyMonthlyTaxCollection()
+    {
         int residentialIncome = cityStats.residentialBuildingCount * residentialIncomeTax;
         int commercialIncome = cityStats.commercialBuildingCount * commercialIncomeTax;
         int industrialIncome = cityStats.industrialBuildingCount * industrialIncomeTax;
@@ -72,13 +87,70 @@ public class EconomyManager : MonoBehaviour
             );
     }
 
+    /// <summary>
+    /// Charges street and utility upkeep for the current month (after taxes are applied).
+    /// </summary>
+    private void ProcessMonthlyMaintenance()
+    {
+        int streetCost = ComputeMonthlyStreetMaintenanceCost();
+        int utilityCost = ComputeMonthlyUtilityMaintenanceCost();
+        int total = streetCost + utilityCost;
+        if (total <= 0)
+            return;
+
+        if (!SpendMoney(total, "Monthly maintenance", notifyInsufficientFunds: false))
+        {
+            if (gameNotificationManager != null)
+            {
+                gameNotificationManager.PostError(
+                    "Maintenance Unpaid\n" +
+                    $"Upkeep of ${total} could not be paid (streets: ${streetCost}, power plants: ${utilityCost}). Balance: ${GetCurrentMoney()}."
+                );
+            }
+            return;
+        }
+
+        if (gameNotificationManager != null)
+        {
+            int roads = cityStats.roadCount;
+            int plants = cityStats.GetRegisteredPowerPlantCount();
+            gameNotificationManager.PostInfo(
+                "Monthly Maintenance\n" +
+                $"Paid ${total} for upkeep.\n" +
+                $"Streets ({roads} cells): ${streetCost}, Power plants ({plants}): ${utilityCost}"
+            );
+        }
+    }
+
+    /// <summary>
+    /// Computes monthly street upkeep from the road cell count (includes interstate and ordinary roads).
+    /// </summary>
+    private int ComputeMonthlyStreetMaintenanceCost()
+    {
+        if (maintenanceCostPerRoadCell <= 0 || cityStats == null)
+            return 0;
+        return Mathf.Max(0, cityStats.roadCount) * maintenanceCostPerRoadCell;
+    }
+
+    /// <summary>
+    /// Computes monthly utility upkeep from registered power plants.
+    /// </summary>
+    private int ComputeMonthlyUtilityMaintenanceCost()
+    {
+        if (maintenanceCostPerPowerPlant <= 0 || cityStats == null)
+            return 0;
+        return Mathf.Max(0, cityStats.GetRegisteredPowerPlantCount()) * maintenanceCostPerPowerPlant;
+    }
+
     #region Money Management Methods
     /// <summary>
-    /// Spend money from the city treasury
+    /// Spend money from the city treasury.
     /// </summary>
-    /// <param name="amount">Amount to spend</param>
-    /// <returns>True if the transaction was successful, false if insufficient funds</returns>
-    public bool SpendMoney(int amount)
+    /// <param name="amount">Amount to spend.</param>
+    /// <param name="contextForInsufficientFunds">Optional short label included in the insufficient-funds notification (e.g. "Monthly maintenance").</param>
+    /// <param name="notifyInsufficientFunds">When false, no notification is sent on failure (caller handles messaging).</param>
+    /// <returns>True if the transaction was successful, false if insufficient funds.</returns>
+    public bool SpendMoney(int amount, string contextForInsufficientFunds = null, bool notifyInsufficientFunds = true)
     {
         if (cityStats == null)
         {
@@ -94,18 +166,22 @@ public class EconomyManager : MonoBehaviour
 
         if (GetCurrentMoney() >= amount)
         {
-            cityStats.money -= amount;
+            cityStats.RemoveMoney(amount);
             return true;
         }
-        else
+
+        if (notifyInsufficientFunds && gameNotificationManager != null)
         {
-            if (gameNotificationManager != null)
-                gameNotificationManager.PostError(
-                    "Insufficient Funds" +
-                    $"Cannot spend ${amount}. Current balance is ${GetCurrentMoney()}."
-                );
-            return false;
+            string prefix = string.IsNullOrEmpty(contextForInsufficientFunds)
+                ? ""
+                : contextForInsufficientFunds + "\n";
+            gameNotificationManager.PostError(
+                "Insufficient Funds\n" +
+                prefix +
+                $"Cannot spend ${amount}. Current balance is ${GetCurrentMoney()}."
+            );
         }
+        return false;
     }
 
     /// <summary>
@@ -491,11 +567,19 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns projected monthly income (tax revenue). Negative when expenses exceed income (future).
+    /// Returns projected net monthly cash flow (tax revenue minus recurring maintenance).
     /// </summary>
     public int GetMonthlyIncomeDelta()
     {
-        return GetProjectedMonthlyIncome();
+        return GetProjectedMonthlyIncome() - GetProjectedMonthlyMaintenance();
+    }
+
+    /// <summary>
+    /// Returns projected monthly maintenance (streets plus registered power plants) at current rates.
+    /// </summary>
+    public int GetProjectedMonthlyMaintenance()
+    {
+        return ComputeMonthlyStreetMaintenanceCost() + ComputeMonthlyUtilityMaintenanceCost();
     }
 
     /// <summary>
@@ -533,6 +617,7 @@ public class EconomyManager : MonoBehaviour
         {
             currentMoney = GetCurrentMoney(),
             projectedMonthlyIncome = GetProjectedMonthlyIncome(),
+            projectedMonthlyMaintenance = GetProjectedMonthlyMaintenance(),
             residentialTaxRate = residentialIncomeTax,
             commercialTaxRate = commercialIncomeTax,
             industrialTaxRate = industrialIncomeTax,
@@ -550,6 +635,7 @@ public struct EconomicSummary
 {
     public int currentMoney;
     public int projectedMonthlyIncome;
+    public int projectedMonthlyMaintenance;
     public int residentialTaxRate;
     public int commercialTaxRate;
     public int industrialTaxRate;
