@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-08T01:32:30.586Z",
+  "last_generated": "2026-04-09T01:05:45.457Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -360,6 +360,10 @@
       "anchor": "demand"
     },
     "Tax base": {
+      "spec_key": "managers-reference",
+      "anchor": "demand"
+    },
+    "Monthly maintenance": {
       "spec_key": "managers-reference",
       "anchor": "demand"
     },

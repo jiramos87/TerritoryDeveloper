@@ -4,6 +4,15 @@
 
 ---
 
+## Completed (moved from BACKLOG.md, 2026-04-08)
+
+- [x] **FEAT-21** — Expenses and maintenance system (2026-04-08)
+  - Type: feature
+  - Files: `EconomyManager.cs`, `CityStats.cs`, `GrowthBudgetManager.cs`
+  - Spec: (removed after closure — **glossary** **Monthly maintenance**; **managers-reference** §Demand; **simulation-system** **Calendar and monthly economy**; this row)
+  - Notes: **Monthly maintenance** after **tax base** on calendar day 1; **street** cost from `roadCount`, **power plant** cost from `GetRegisteredPowerPlantCount()`; `SpendMoney` uses `RemoveMoney`; HUD / growth budget use net projected cash flow. Optional **TECH-82** **city events** audit trail still open.
+  - Depends on: none (happiness system shipped — see **FEAT-23** below)
+
 ## Completed (moved from BACKLOG.md, 2026-04-07)
 
 - [x] **FEAT-23** — Dynamic happiness based on city conditions (2026-04-07)

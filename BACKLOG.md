@@ -218,9 +218,9 @@ Evolve the **Information Architecture** system from documentation retrieval to a
   - Type: tooling / gameplay infrastructure
   - Files: `db/migrations/`; new C# `MetricsRecorder` helper; `tools/postgres-ia/` (bridge scripts); `tools/mcp-ia-server/src/` (query tools); `docs/postgres-ia-dev-setup.md`; `SimulationManager.cs`, `EconomyManager.cs`, `ZoneManager.cs` (integration hooks)
   - Spec: `.cursor/projects/TECH-82.md`
-  - Notes: Four phases: (1) `city_metrics_history` — per-tick city metric snapshots for FEAT-51 dashboard. (2) `city_events` — financial event sourcing for FEAT-21 expenses. (3) `grid_snapshots` — periodic grid state for diffing/analysis. (4) `buildings` table — individual building identity for FEAT-08 density evolution. All fire-and-forget; game fully playable without Postgres.
+  - Notes: Four phases: (1) `city_metrics_history` — per-tick city metric snapshots for FEAT-51 dashboard. (2) `city_events` — financial event sourcing for **monthly maintenance** and other treasury movements (see **glossary** **Monthly maintenance**). (3) `grid_snapshots` — periodic grid state for diffing/analysis. (4) `buildings` table — individual building identity for FEAT-08 density evolution. All fire-and-forget; game fully playable without Postgres.
   - Acceptance: Phase 1 at minimum: metrics recorded per tick, MCP query tool returns time-series; game playable without DB
-  - Depends on: none (soft: FEAT-51 as primary consumer of Phase 1; FEAT-21 for Phase 2; FEAT-08 for Phase 4)
+  - Depends on: none (soft: FEAT-51 as primary consumer of Phase 1; Phase 2 aligns with **EconomyManager** chokepoints; FEAT-08 for Phase 4)
 
 - [ ] **TECH-83** — **Agent-driven simulation parameter tuning**
   - Type: tooling / agent enablement
@@ -256,14 +256,7 @@ Evolve the **Information Architecture** system from documentation retrieval to a
 
 ## Economic depth lane
 
-Transform the economy from "money goes up forever" to a genuine city-builder economic simulation with tension, feedback loops, and player-visible consequences. **Sequential dependency order:** dynamic happiness (done — see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **FEAT-21** (expenses/maintenance) → **FEAT-22** (tax→demand feedback) → **FEAT-09** (trade/production — deep economy, moved from § Low Priority). **FEAT-52** (city services coverage) and **FEAT-53** (districts) extend the lane with spatial economic depth. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md) §4.
-
-- [ ] **FEAT-21** — Expenses and maintenance system
-  - Type: feature
-  - Files: `EconomyManager.cs`, `CityStats.cs`
-  - Spec: `.cursor/projects/FEAT-21.md`
-  - Notes: No expenses: no **street** maintenance, no service costs, no salaries. Without expenses there is no economic tension. Add upkeep for **streets**, **utility buildings**, and services. **TECH-82** Phase 2 (city events) provides the financial audit trail.
-  - Depends on: none (happiness system shipped — see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
+Transform the economy from "money goes up forever" to a genuine city-builder economic simulation with tension, feedback loops, and player-visible consequences. **Sequential dependency order:** dynamic happiness (done — see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **monthly maintenance** (shipped — **glossary** **Monthly maintenance**) → **FEAT-22** (tax→demand feedback) → **FEAT-09** (trade/production — deep economy, moved from § Low Priority). **FEAT-52** (city services coverage) and **FEAT-53** (districts) extend the lane with spatial economic depth. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md) §4.
 
 - [ ] **FEAT-22** — **Tax base** feedback on **demand (R / C / I)** and happiness
   - Type: feature
@@ -291,7 +284,7 @@ Transform the economy from "money goes up forever" to a genuine city-builder eco
   - Type: feature (new system)
   - Files: `EconomyManager.cs`, `CityStats.cs` (+ new managers)
   - Notes: Economic system of production, trade between **RCI** **zones** and salaries. Long-term lane goal: full economic loop from production through trade to consumption.
-  - Depends on: FEAT-21, FEAT-22
+  - Depends on: FEAT-22
 
 ## Gameplay & simulation lane
 
@@ -438,7 +431,7 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
   - Notes: Consider helper method, base class, or extension method to reduce duplication of Inspector + FindObjectOfType fallback pattern.
 
 
-*(Umbrella programs (**spec-pipeline**, **JSON**/**Postgres** interchange, **compute-lib**, **Cursor Skills**) and **Editor export registry** are archived under [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) with **glossary** pointers. **§ IA evolution lane** holds **TECH-77**–**TECH-83** (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning). **§ Economic depth lane** holds **FEAT-21** → **FEAT-22** → **FEAT-52** → **FEAT-53** → **FEAT-09** (happiness + pollution shipped). **§ Gameplay & simulation lane** lists **BUG-52**, **FEAT-43**, **FEAT-08**. **§ Compute-lib program** above holds **TECH-38** + **TECH-32**/**TECH-35**; **TECH-39** **MCP** suite is archived.)*
+*(Umbrella programs (**spec-pipeline**, **JSON**/**Postgres** interchange, **compute-lib**, **Cursor Skills**) and **Editor export registry** are archived under [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) with **glossary** pointers. **§ IA evolution lane** holds **TECH-77**–**TECH-83** (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning). **§ Economic depth lane** holds **monthly maintenance** (shipped — **glossary**) → **FEAT-22** → **FEAT-52** → **FEAT-53** → **FEAT-09** (happiness + pollution shipped). **§ Gameplay & simulation lane** lists **BUG-52**, **FEAT-43**, **FEAT-08**. **§ Compute-lib program** above holds **TECH-38** + **TECH-32**/**TECH-35**; **TECH-39** **MCP** suite is archived.)*
 
 ## Low Priority
 

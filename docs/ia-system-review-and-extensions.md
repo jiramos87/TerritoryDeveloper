@@ -236,7 +236,7 @@ CREATE TABLE city_events (
 **Integration point:** EconomyManager.SpendMoney() and AddMoney() are the chokepoints for all financial flows. Wrapping them to emit events is non-invasive.
 
 **Gameplay value:**
-- Enables FEAT-21 (expenses system) with a clear audit trail
+- Supports a clear audit trail for **monthly maintenance** and other treasury movements (see **glossary** **Monthly maintenance**)
 - Dashboard shows income vs expenses breakdown
 - Agents can diagnose "why is the city going bankrupt?" by querying recent events
 
@@ -325,15 +325,15 @@ Prioritized by "impact on the player's experience of a living, responsive city":
 
 | Rank | Issue | Why high impact |
 |------|-------|-----------------|
-| 1 | **FEAT-21** (Expenses/maintenance) | **No economic tension = no game.** Without expenses, money only goes up. This single feature transforms Territory from a sandbox to a simulation. |
+| 1 | ~~**Monthly maintenance**~~ (shipped) | Recurring **street** and **utility building** upkeep creates economic tension; see **glossary** **Monthly maintenance**. |
 | 2 | ~~Dynamic happiness~~ (shipped) | Multi-factor happiness (employment, taxes, services, pollution) is the core loop of city-builders. Shipped with pollution model. |
-| 4 | **FEAT-22** (Tax→demand feedback) | Closes the economic loop: taxes affect demand, demand affects growth, growth affects income. Without this, tax sliders are decorative. |
-| 5 | **FEAT-43** (Growth ring tuning) | The AUTO simulation is the "life" of the city. Gradual center→edge gradient makes cities look organic vs artificial. |
-| 6 | **BUG-52** (AUTO zoning gaps) | Visible artifacts that break immersion. Gap cells between roads and zones look like bugs to the player. |
-| 7 | **FEAT-08** (Zone density evolution) | Buildings upgrading over time is the hallmark visual feedback of city growth in the genre. |
-| 8 | **BUG-14** (FindObjectOfType in Update) | Performance tax on every frame. Fixing this improves the baseline experience for all players. |
-| 9 | **TECH-01** (GridManager decomposition) | Not player-facing directly, but unblocks faster development of everything else. 2070-line hub class slows every feature. |
-| 10 | **FEAT-51** (Game data dashboard) | Gives observability. Players love watching their city grow in charts. Also helps developers tune simulation parameters. |
+| 3 | **FEAT-22** (Tax→demand feedback) | Closes the economic loop: taxes affect demand, demand affects growth, growth affects income. Without this, tax sliders are decorative. |
+| 4 | **FEAT-43** (Growth ring tuning) | The AUTO simulation is the "life" of the city. Gradual center→edge gradient makes cities look organic vs artificial. |
+| 5 | **BUG-52** (AUTO zoning gaps) | Visible artifacts that break immersion. Gap cells between roads and zones look like bugs to the player. |
+| 6 | **FEAT-08** (Zone density evolution) | Buildings upgrading over time is the hallmark visual feedback of city growth in the genre. |
+| 7 | **BUG-14** (FindObjectOfType in Update) | Performance tax on every frame. Fixing this improves the baseline experience for all players. |
+| 8 | **TECH-01** (GridManager decomposition) | Not player-facing directly, but unblocks faster development of everything else. 2070-line hub class slows every feature. |
+| 9 | **FEAT-51** (Game data dashboard) | Gives observability. Players love watching their city grow in charts. Also helps developers tune simulation parameters. |
 
 ### 4.2 Proposed multi-issue lanes (new)
 
@@ -343,7 +343,7 @@ Prioritized by "impact on the player's experience of a living, responsive city":
 
 ```
 Dynamic happiness (shipped: employment, taxes, services, pollution)
-    → FEAT-21 (expenses: road maintenance, service costs, building upkeep)
+    → Monthly maintenance (shipped: streets, power plants — glossary)
       → FEAT-22 (tax→demand feedback loop)
         → FEAT-09 (trade/production/salaries — deep economy)
 ```
@@ -434,5 +434,5 @@ The IA system is remarkably complete and well-designed. The main opportunities a
 1. **Documentation:** A single "system overview" document explaining the IA philosophy and architecture
 2. **IA evolution:** Semantic search, knowledge graph, agent memory, bidirectional learning
 3. **Entity model:** Time-series persistence, event sourcing, building identity — all building on the existing Postgres infrastructure
-4. **Gameplay impact:** The "Economic Depth" lane (FEAT-21 → FEAT-22; happiness + pollution shipped) delivers the most player value per effort invested
+4. **Gameplay impact:** The "Economic Depth" lane (**monthly maintenance** shipped → **FEAT-22**; happiness + pollution shipped) delivers strong player value per effort invested
 5. **New systems:** Service coverage, demand heatmaps, districts, and agent-driven parameter tuning would each deepen the simulation significantly

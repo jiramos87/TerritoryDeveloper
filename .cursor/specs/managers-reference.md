@@ -16,15 +16,15 @@
 | **InterstateManager** | **Interstate** placement linking the grid to the **map border** |
 | **GeographyManager** | Orchestrator for all terrain initialization (terrain + water + forest + grid) |
 | **DemandManager** | R/C/I demand calculation based on population, employment, forests |
-| **EconomyManager** | Taxes, money, financial transactions |
-| **CityStats** | Global statistics aggregator: population, employment, water/power capacity, **happiness** (0–100, multi-factor, per-tick recalculation), **pollution** (city-wide aggregate) |
+| **EconomyManager** | **Tax base** collection, **monthly maintenance**, treasury **money** via `SpendMoney` / `AddMoney`, tax rates |
+| **CityStats** | Global statistics aggregator: population, employment, water/power capacity, **roadCount**, registered **power plant** list, **happiness** (0–100, multi-factor, per-tick recalculation), **pollution** (city-wide aggregate) |
 | **EmploymentManager** | Employment and unemployment calculation by zone |
 | **SimulationManager** | Automatic simulation cycle orchestrator |
 | **AutoRoadBuilder** | Automatic **street** network extension |
 | **AutoZoningManager** | Automatic zoning of cells adjacent to **streets**/**interstates** |
 | **AutoResourcePlanner** | Automatic resource building planning |
 | **GrowthManager** | Zone growth logic |
-| **GrowthBudgetManager** | Growth budget per category |
+| **GrowthBudgetManager** | Growth budget per category; monthly total pool from projected net cash flow (**EconomyManager**) when positive |
 | **UIManager** | Main **city** UI: popups, toolbar/tool state, demand bar. **`partial`** class: **`UIManager.cs`** (lifecycle, fields), **`UIManager.PopupStack.cs`**, **`UIManager.Hud.cs`**, **`UIManager.Toolbar.cs`**, **`UIManager.Utilities.cs`**. Shared tokens: **`UiTheme`** + **`ui-design-system.md`** (**Main menu** uses **`MainMenuController`**, not **`UIManager`**) |
 | **CursorManager** | Placement preview, visual cursor |
 | **TimeManager** | Game speed control, simulation ticks |
@@ -96,6 +96,8 @@ Residential, commercial, and industrial **demand** scores express how strongly e
 **Happiness** — City-wide 0–100 satisfaction score recalculated each tick from employment rate, tax burden, service coverage, forest bonus, development base, and pollution penalty; converges smoothly via lerp. Applied as a multiplier to R/C/I demand (`CityStats`, `DemandManager`).
 
 **Tax base** — RCI development and population contribute to taxable capacity read by `EconomyManager` / `CityStats`; tax rates and income loop back into happiness and demand (see backlog for planned depth).
+
+**Monthly maintenance** — On calendar day 1 (via `TimeManager` → `EconomyManager.ProcessDailyEconomy` → `ProcessMonthlyEconomy`), after monthly **tax base** income is credited, `EconomyManager` charges **street** upkeep from `CityStats.roadCount` and **utility building** upkeep from `CityStats.GetRegisteredPowerPlantCount()` (v1: **power plants** only). Successful payment posts an informational **game notification** with a category breakdown; if the treasury cannot afford the full amount, no debit occurs and a **game notification** error explains the shortfall. Tunable per-road and per-plant costs live on `EconomyManager`. **Growth budget** projections subtract this maintenance from projected tax when computing net monthly cash flow.
 
 **Desirability** — per-cell attractiveness for zoning and AUTO growth based on terrain context (e.g. proximity to water, forests), computed after geography initialization. See `ARCHITECTURE.md` (initialization order, `GeographyManager` desirability pass) when changing how cells become more or less attractive.
 

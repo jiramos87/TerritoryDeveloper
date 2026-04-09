@@ -26,7 +26,7 @@ Each tick, `UrbanCentroidService.RecalculateFromGrid` updates the **urban centro
 | `AutoZoningManager` | GridManager, ZoneManager, GrowthBudgetManager, CityStats, DemandManager |
 | `AutoResourcePlanner` | CityStats, GridManager, GrowthBudgetManager, UIManager |
 | `GrowthManager` | GridManager, DemandManager |
-| `GrowthBudgetManager` | CityStats |
+| `GrowthBudgetManager` | CityStats, EconomyManager |
 | `UrbanCentroidService` | GridManager (reads cell data for centroid computation) |
 
 ## Road reservation for AUTO zoning
@@ -57,3 +57,8 @@ Each tick, `AutoZoningManager` builds a set from `GridManager.GetRoadExtensionCe
 | `GrowthBudgetManager.cs` | Per-category growth budget |
 | `UrbanCentroidService.cs` | Urban centroid and ring metrics |
 | `TimeManager.cs` | Game speed, tick scheduling |
+| `EconomyManager.cs` | Daily/monthly economy: **tax base** and **monthly maintenance** on calendar day 1 (see **glossary** **Monthly maintenance**, **managers-reference** §Demand) |
+
+## Calendar and monthly economy
+
+Outside `ProcessSimulationTick`, `TimeManager` advances the **simulation** date and invokes `EconomyManager.ProcessDailyEconomy()`. On the first day of each in-game calendar month, `EconomyManager` runs **tax base** collection then **monthly maintenance** (order matters: income before upkeep). This is separate from per-tick **AUTO** work but shares **CityStats** treasury and **game notification** feedback.

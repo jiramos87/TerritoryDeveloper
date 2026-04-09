@@ -77,7 +77,7 @@ Labels:
 | **BUG-52** | **C** | AUTO zoning gaps, tick order, road cache invalidation; regression suspicion after BUG-37. |
 | **BUG-16**, **BUG-17** | **B** | Init order / null camera; localized but timing bugs need Play mode verification. |
 | **FEAT-03** | **B** | Forest hold-to-place; input + `ForestManager` pattern; less core than roads/water. |
-| **FEAT-21–23**, **FEAT-36**, **FEAT-43**, **FEAT-35** | **C** | Economy loops, AUTO expansion, growth rings, area bulldoze — design and multi-system effects. |
+| **FEAT-22–23**, **FEAT-36**, **FEAT-43**, **FEAT-35** | **C** | Economy loops, AUTO expansion, growth rings, area bulldoze — design and multi-system effects. |
 | **TECH-15**, **TECH-16** | **C** | Performance without mandatory harness in repo; agent risks guessing optimizations. |
 
 ### 3.3 Code health
@@ -137,7 +137,7 @@ These are **incremental** work items that improve agent success **without** wait
 
 - **Best backlog candidates for a mostly-autonomous agent today:** **BUG-14**, **TECH-14** (with reference audit), and **documentation/tooling** follow-ups [**TECH-23**](../BACKLOG.md#code-health-technical-debt)–[**TECH-27**](../BACKLOG.md#code-health-technical-debt) (see [§4](#4-new-task-ideas-optimized-for-the-current-mcp-not-future-tech-1819)). **`unity-development-context.md`** baseline polish: [**TECH-25** completed](../BACKLOG.md#completed-last-30-days).
 - **Reasonable with discipline and Editor verification:** **BUG-17**, **FEAT-03**, parts of **TECH-02/03/05**, **TECH-13** (audited).
-- **Poor fit for “hands-off” agent implementation:** **BUG-28**, **BUG-31**, **BUG-49**, **BUG-52**, **TECH-01**, **FEAT-21–23**, **FEAT-35–36**, **FEAT-43**, performance (**TECH-15/16**), and **new gameplay systems**—unless the human splits the work into verified milestones with spec anchors.
+- **Poor fit for “hands-off” agent implementation:** **BUG-28**, **BUG-31**, **BUG-49**, **BUG-52**, **TECH-01**, **FEAT-22–23**, **FEAT-35–36**, **FEAT-43**, performance (**TECH-15/16**), and **new gameplay systems**—unless the human splits the work into verified milestones with spec anchors.
 
 ---
 

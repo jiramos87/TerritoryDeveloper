@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-08T01:32:30.581Z",
+  "last_generated": "2026-04-09T01:05:45.452Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -161,25 +161,25 @@
           "section_id": "persistence",
           "title": "Persistence",
           "depth": 2,
-          "line_start": 182
+          "line_start": 183
         },
         {
           "section_id": "prefabs-visual-layer",
           "title": "Prefabs & Visual Layer",
           "depth": 2,
-          "line_start": 193
+          "line_start": 194
         },
         {
           "section_id": "documentation",
           "title": "Documentation",
           "depth": 2,
-          "line_start": 207
+          "line_start": 208
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 237
+          "line_start": 238
         }
       ]
     },
@@ -851,25 +851,25 @@
           "section_id": "world-features",
           "title": "World features",
           "depth": 2,
-          "line_start": 102
+          "line_start": 104
         },
         {
           "section_id": "game-notifications",
           "title": "Game notifications",
           "depth": 2,
-          "line_start": 111
+          "line_start": 113
         },
         {
           "section_id": "architectural-patterns",
           "title": "Architectural patterns",
           "depth": 2,
-          "line_start": 117
+          "line_start": 119
         },
         {
           "section_id": "obsolete",
           "title": "Obsolete",
           "depth": 2,
-          "line_start": 126
+          "line_start": 128
         }
       ]
     },
@@ -1020,6 +1020,12 @@
           "title": "Key files",
           "depth": 2,
           "line_start": 48
+        },
+        {
+          "section_id": "calendar-and-monthly-economy",
+          "title": "Calendar and monthly economy",
+          "depth": 2,
+          "line_start": 62
         }
       ]
     },

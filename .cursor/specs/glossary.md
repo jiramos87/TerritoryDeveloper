@@ -21,7 +21,7 @@
 | **Pathfinding** | A*, costs, diagonal steps |
 | **Zones** | RCI, density, pivot, footprint, undeveloped light |
 | **Simulation** | tick, AUTO, budget, centroid, rings |
-| **City** | demand, tax, desirability, happiness, pollution, forest, regional, utility, notification |
+| **City** | demand, tax, desirability, happiness, pollution, forest, regional, utility, notification, monthly maintenance |
 | **Persistence** | save, CellData, water map data, visual restore, load order |
 | **Prefabs** | land/water slopes, sorting formula, type offsets |
 | **Documentation** | reference spec, project spec, **IA index manifest**, **UI design system (reference spec)**, **UI-as-code program**, **Compute-lib program**, **territory-compute-lib**, **C# compute utilities**, **Computational MCP tools**, **interchange JSON**, **Dev repro bundle**, **Editor export registry**, **IDE agent bridge**, **project-new**, **project-spec-close**, **project-implementation-validation**, **`validate:all`**, **`verify:local`**, **`verify:post-implementation`** (alias) (root **`npm run`**) |
@@ -160,7 +160,7 @@
 | **Simulation tick** | One automatic city update — roads extend, zones spread, utilities plan when time advances. Driven by `TimeManager` → `SimulationManager.ProcessSimulationTick()`. | sim |
 | **AUTO systems** | The three autopilots that grow the city each tick — streets, zoning, utilities. `AutoRoadBuilder`, `AutoZoningManager`, `AutoResourcePlanner` in fixed order after centroid/budget. | sim |
 | **Tick execution order** | Strict sequence inside a tick so later systems see fresh data. Budget valid → centroid recompute → roads → zoning → resource planner (see simulation spec list). | sim |
-| **Growth budget** | Per-category cap on how much AUTO may spend or place each tick. Prevents runaway sprawl; sourced from `GrowthBudgetManager` + `CityStats`. | sim |
+| **Growth budget** | Per-category cap on how much AUTO may spend or place each tick. Prevents runaway sprawl; total pool comes from `GrowthBudgetManager` using projected net monthly cash flow (**tax base** income minus **monthly maintenance**) when positive, otherwise treasury (`CityStats`). | sim, mgrs §Demand |
 | **Urban centroid** | A statistical “center of mass” of development used to bias growth rings. `UrbanCentroidService` computes centroid and ring metrics for road/zoning targeting. | sim, sim §Rings |
 | **Urban growth rings** | Distance bands from the urban centroid — AUTO uses them to weight where roads and zones expand (typically denser near core). Recalculated each tick before AUTO systems run. | sim §Rings |
 | **Urbanization proposal** | **OBSOLETE** — legacy expansion proposal UI and manager; **never re-enable** (see **invariants**). Not part of `UrbanCentroidService` / ring AUTO. | sim |
@@ -171,6 +171,7 @@
 |------|-----------|------|
 | **Demand (R / C / I)** | How much the city “wants” each zone type to grow this cycle — pressure from jobs, population, forests, and taxes. Drives the demand bar and AUTO zoning targets. | mgrs §Demand |
 | **Tax base** | Economic capacity tied to zoned development and population that **tax rates** apply to — income flows through `EconomyManager` / `CityStats` and feeds back into demand and happiness systems. | mgrs §Demand |
+| **Monthly maintenance** | Recurring **city** expense on the first **simulation** calendar day of each month: **street** upkeep from `CityStats.roadCount` (road cells) and **utility building** upkeep from registered **power plant** count; collected after **tax base** income for that day. Debits use `EconomyManager.SpendMoney`; insufficient funds skip the charge with a **game notification**. HUD net **money** hint uses projected tax minus projected maintenance. | mgrs §Demand |
 | **Desirability** | How attractive a tile is for growth based on nearby terrain (water, forest, etc.), computed after geography init. Biases AUTO roads/zoning toward nicer locations. | mgrs §Demand, `ARCHITECTURE.md` |
 | **Forest (coverage)** | Tree cover on land — **sparse**, **medium**, or **dense** — affecting demand and player forest tools. | mgrs §World |
 | **Regional map** | The broader region with **neighboring cities**; context for regional systems and UI. | mgrs §World |

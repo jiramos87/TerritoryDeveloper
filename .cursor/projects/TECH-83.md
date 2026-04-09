@@ -33,7 +33,7 @@ Create MCP tools to read, modify, and evaluate simulation parameters at runtime 
 | 1 | AI agent | As an agent tuning FEAT-43 (growth rings), I want to try 3 different ring boundary fractions and compare the zone distribution after 100 ticks each | `sim_experiment({ ring_inner: 0.3, ring_mid: 0.6 }, ticks: 100, metrics: ["zone_r_count", "zone_c_count", "zone_i_count", "development_gradient"])` returns per-tick metrics; repeat with different fractions; compare |
 | 2 | AI agent | As an agent debugging BUG-52 (AUTO zoning gaps), I want to increase `autoZoningCandidateRadius` from 2 to 3 and see if gaps disappear | `sim_params_write({ autoZoningCandidateRadius: 3 })` → run 50 ticks → compare gap cell count vs baseline |
 | 3 | Developer | As a developer, I want to see all tunable parameters with their current values | `sim_params_read()` returns structured catalog with parameter name, current value, default, range, description, owning manager |
-| 4 | Developer | As a developer working on FEAT-21 (expenses), I want to experiment with maintenance costs without recompiling | `sim_params_write({ roadMaintenanceCostPerCell: 5.0 })` modifies at runtime |
+| 4 | Developer | As a developer tuning **monthly maintenance** or simulation balance, I want to experiment with costs without recompiling | `sim_params_write({ roadMaintenanceCostPerCell: 5.0 })` modifies at runtime |
 | 5 | IA maintainer | As a maintainer, I want experiment results persisted so agents can reference prior tuning sessions | Postgres table `sim_experiments` stores params, tick count, metric snapshots, and comparison notes |
 
 ## 4. Current State

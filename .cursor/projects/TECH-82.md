@@ -7,7 +7,7 @@
 
 ## 1. Summary
 
-Extend the Postgres infrastructure from agent/debug use to gameplay data persistence: time-series city metrics, financial event sourcing, grid state snapshots, and building identity tracking. Enables the game data dashboard (FEAT-51), financial audit trails (FEAT-21), simulation analysis, and building lifecycle tracking (FEAT-08) — all with graceful degradation when Postgres is unavailable.
+Extend the Postgres infrastructure from agent/debug use to gameplay data persistence: time-series city metrics, financial event sourcing, grid state snapshots, and building identity tracking. Enables the game data dashboard (FEAT-51), financial audit trails for **monthly maintenance** and other treasury flows (**glossary** **Monthly maintenance**), simulation analysis, and building lifecycle tracking (FEAT-08) — all with graceful degradation when Postgres is unavailable.
 
 ## 2. Goals and Non-Goals
 
@@ -78,7 +78,7 @@ SimulationManager.ProcessSimulationTick()
     → INSERT into city_metrics_history (fire-and-forget)
 ```
 
-**Phase 2 — Financial events (enables FEAT-21 expenses):**
+**Phase 2 — Financial events** (treasury and monthly maintenance audit trail):
 
 EconomyManager wraps money operations to emit categorized events:
 

@@ -43,12 +43,12 @@ test("inferDomainHintsFromPath returns hints for road files", () => {
 });
 
 test(
-  "parseBacklogIssue returns files for FEAT-21",
+  "parseBacklogIssue returns files for FEAT-22",
   { skip: !fs.existsSync(path.join(repoRoot, "BACKLOG.md")) },
   () => {
-    const issue = parseBacklogIssue(repoRoot, "FEAT-21");
+    const issue = parseBacklogIssue(repoRoot, "FEAT-22");
     assert.ok(issue);
-    assert.equal(issue!.issue_id, "FEAT-21");
-    assert.ok(issue!.files, "FEAT-21 should have a Files field");
+    assert.equal(issue!.issue_id, "FEAT-22");
+    assert.ok(issue!.files, "FEAT-22 should have a Files field");
   },
 );

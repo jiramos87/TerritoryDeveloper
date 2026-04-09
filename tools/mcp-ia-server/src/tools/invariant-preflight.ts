@@ -25,7 +25,7 @@ const inputShape = {
   issue_id: z
     .string()
     .describe(
-      "Backlog issue id (e.g. FEAT-21, BUG-12). Pulls issue data, infers domains from Files/Notes, then bundles invariants + router matches + relevant spec sections.",
+      "Backlog issue id (e.g. FEAT-22, BUG-12). Pulls issue data, infers domains from Files/Notes, then bundles invariants + router matches + relevant spec sections.",
     ),
 };
 
