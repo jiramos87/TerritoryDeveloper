@@ -3,11 +3,11 @@
 > **Issue:** [TECH-82](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-07
-> **Last updated:** 2026-04-07
+> **Last updated:** 2026-04-09
 
 ## 1. Summary
 
-Extend the Postgres infrastructure from agent/debug use to gameplay data persistence: time-series city metrics, financial event sourcing, grid state snapshots, and building identity tracking. Enables the game data dashboard (FEAT-51), financial audit trails for **monthly maintenance** and other treasury flows (**glossary** **Monthly maintenance**), simulation analysis, and building lifecycle tracking (FEAT-08) — all with graceful degradation when Postgres is unavailable.
+Extend the Postgres infrastructure from agent/debug use to gameplay data persistence: time-series city metrics, financial event sourcing, grid state snapshots, and building identity tracking. Enables the game data dashboard (FEAT-51), financial audit trails for **monthly maintenance** and other treasury flows (**glossary** **Monthly maintenance**), simulation analysis, building lifecycle tracking (FEAT-08), and **agent scenario verification** (**TECH-31** **test mode**: per-tick **city history** for assertions and MCP queries after a loadable scenario runs)—all with graceful degradation when Postgres is unavailable.
 
 ## 2. Goals and Non-Goals
 
@@ -23,7 +23,7 @@ Extend the Postgres infrastructure from agent/debug use to gameplay data persist
 
 ### 2.2 Non-Goals (Out of Scope)
 
-1. Replacing the existing `GameSaveData` save/load pipeline (this runs alongside it)
+1. Replacing the existing `GameSaveData` save/load pipeline (this runs alongside it); **TECH-31** remains **save-authoritative** for frozen scenarios—metrics tables are **verification** and **history**, not the primary scenario artifact.
 2. Real-time gameplay that depends on database reads (all game logic stays in Unity C#)
 3. Multiplayer or networked database access
 4. Production deployment infrastructure (this is dev/analytics tooling that enriches gameplay analysis)
@@ -37,6 +37,7 @@ Extend the Postgres infrastructure from agent/debug use to gameplay data persist
 | 3 | Developer | As a developer diagnosing BUG-52 (AUTO zoning gaps), I want to diff grid state between tick 50 and tick 100 to see which cells were zoned | `grid_snapshot_diff(tick_a: 50, tick_b: 100)` returns changed cells with before/after zone types |
 | 4 | Developer | As a developer tuning FEAT-43 (growth rings), I want to see how development spreads over 200 simulation ticks | Query `city_metrics_history` for zone count progression + `grid_snapshots` for spatial distribution |
 | 5 | AI agent | As an agent debugging a simulation anomaly, I want `debug_context_bundle` to include recent metric trends and event history for the seed cell's neighborhood | Bundle includes last 10 ticks of metrics + recent events near the seed cell |
+| 6 | AI agent | As an agent running a **TECH-31** scenario in **test mode**, I want per-tick metrics after load so I can assert **city history** (budget, population, demand) over N **simulation ticks** | `city_metrics_history` populated during scenario run; optional **scenario id** metadata for dev queries (see **Open Questions**) |
 
 ## 4. Current State
 
@@ -65,9 +66,9 @@ Extend the Postgres infrastructure from agent/debug use to gameplay data persist
 
 ### 5.1 Target behavior (product)
 
-**Phase 1 — Time-series metrics (enables FEAT-51 dashboard):**
+**Phase 1 — Time-series metrics (enables FEAT-51 dashboard and TECH-31 assertions):**
 
-After each simulation tick, a lightweight `MetricsRecorder` captures key values and writes them via the Postgres bridge. The dashboard reads this data for charts.
+After each simulation tick, a lightweight `MetricsRecorder` captures key values and writes them via the Postgres bridge. The dashboard reads this data for charts. **TECH-31** uses the same stream (when Postgres is configured) as the **contract** for time-varying state after a scenario load—complementing **`debug_context_bundle`** and **UTF** snapshots.
 
 Example data flow:
 ```
@@ -118,15 +119,16 @@ Implementation approach left to the implementing agent. Key design constraint: a
 | 2026-04-07 | Optional enrichment, not required for gameplay | Game must work without Postgres; this is analytics/dashboard infrastructure | Required dependency; SQLite embedded |
 | 2026-04-07 | Use existing Node.js bridge pattern | Proven infrastructure (agent_bridge_job); avoids new C#→Postgres dependency | Direct C# Npgsql; REST API; file-based logging |
 | 2026-04-07 | Four phases, each independently valuable | Each phase enables specific backlog items without waiting for the full system | Ship all at once; minimal viable only |
+| 2026-04-09 | Phase 1 is a **soft prerequisite** for **TECH-31** “**city history**” verification | **Save** pins initial state; **metrics** pin evolution across ticks | Assertions from **save** + **bundle** only (acceptable early **TECH-31** milestone) |
 
 ## 7. Implementation Plan
 
 ### Phase 1 — Time-series infrastructure
 
-- [ ] Design `city_metrics_history` table and migration
+- [ ] Design `city_metrics_history` table and migration (consider optional **scenario id** / **run id** column or JSON metadata for **TECH-31** **test mode**—see **Open Questions**)
 - [ ] MetricsRecorder helper class (C#) with bridge write
 - [ ] `city_metrics_query` MCP tool
-- [ ] Integration with SimulationManager tick
+- [ ] Integration with SimulationManager tick (ensure **test mode** does not skip recording when Postgres is available)
 
 ### Phase 2 — Financial events
 
@@ -179,3 +181,4 @@ Implementation approach left to the implementing agent. Key design constraint: a
 1. What is the optimal snapshot frequency for grid state? Every 10 ticks? Every 50? Should it be configurable?
 2. Should building identity survive across save/load cycles, or is it session-scoped?
 3. How much metric history should be retained? Pruning policy (e.g., keep last 1000 ticks, aggregate older data)?
+4. How should **TECH-31** **test mode** runs be **correlated** in Postgres: **`scenario_id`** on `city_metrics_history`, a separate **`agent_test_run`** table, or session-scoped only with timestamps?
