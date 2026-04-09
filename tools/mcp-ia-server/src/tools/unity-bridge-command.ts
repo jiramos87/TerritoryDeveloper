@@ -9,15 +9,18 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getIaDatabasePool } from "../ia-db/pool.js";
 import { runWithToolTiming } from "../instrumentation.js";
 
+/** Upper bound for `timeout_ms` on `unity_bridge_command` / `unity_compile`. Agents use 40s initial + escalation protocol (see docs/agent-led-verification-policy.md). */
+export const UNITY_BRIDGE_TIMEOUT_MS_MAX = 120_000;
+
 /** Exported for `unity_compile` and unit tests. */
 export const unityBridgeTimeoutMsSchema = z
   .number()
   .int()
   .min(1000)
-  .max(30_000)
+  .max(UNITY_BRIDGE_TIMEOUT_MS_MAX)
   .default(30_000)
   .describe(
-    "Max time to wait for Unity to dequeue, run the command, and complete the job row (requires Postgres + Unity on REPO_ROOT). Capped at 30s; deferred ScreenCapture completes within ~15s on the Unity side when healthy.",
+    "Max time to wait for Unity to dequeue, run the command, and complete the job row (requires Postgres + Unity on REPO_ROOT). Capped at 120s; default 30s. Agents: use 40s initial, then escalation protocol (npm run unity:ensure-editor + retry 60s). Deferred ScreenCapture completes within ~15s on the Unity side when healthy.",
   );
 
 const unityBridgeCommandInputShape = {
@@ -353,7 +356,7 @@ export async function runUnityBridgeCommand(
   const envelope = buildRequestEnvelope(commandId, input);
 
   const timeoutMs = Math.min(
-    30_000,
+    UNITY_BRIDGE_TIMEOUT_MS_MAX,
     Math.max(1000, input.timeout_ms ?? 30_000),
   );
 
@@ -422,7 +425,7 @@ export async function runUnityBridgeCommand(
       ok: false,
       error: "timeout",
       message:
-        "Unity did not complete the bridge job within timeout_ms. Ensure Postgres migration 0008 is applied, DATABASE_URL matches Unity, and the Editor is open (AgentBridgeCommandRunner polls via agent-bridge-dequeue.mjs). Pending rows are removed on MCP timeout; if Unity was dequeueing, check for stuck processing rows.",
+        "Unity did not complete the bridge job within timeout_ms. Run `npm run unity:ensure-editor` to launch Unity if not running. Ensure Postgres migration 0008 is applied, DATABASE_URL matches Unity, and the Editor is open (AgentBridgeCommandRunner polls via agent-bridge-dequeue.mjs). Pending rows are removed on MCP timeout; if Unity was dequeueing, check for stuck processing rows.",
       command_id: commandId,
     };
   } catch (e) {
@@ -532,7 +535,7 @@ export function registerUnityBridgeCommand(server: McpServer): void {
     "unity_bridge_command",
     {
       description:
-        "IDE agent bridge: enqueue a Unity Editor job in Postgres agent_bridge_job (pending). Kinds: export_agent_context (agent context JSON + optional Postgres registry; optional seed_cell \"x,y\" for Moore neighborhood center), get_console_logs (buffered Console lines in response.log_lines), capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/; include_ui for Game view + Overlay UI), enter_play_mode (EditorApplication.EnterPlaymode; completes when GridManager.isInitialized; response.ready, play_mode_state, grid_width/height), exit_play_mode (ExitPlaymode; completes when back in Edit Mode), get_play_mode_status (immediate response: play_mode_state edit_mode|play_mode_loading|play_mode_ready), debug_context_bundle (single job: Moore export + optional screenshot + console + anomaly scan; response.bundle; requires seed_cell; Play Mode + GridManager ready), get_compilation_status (synchronous compile snapshot: response.compilation_status with compiling, compilation_failed, last_error_excerpt, recent_error_messages), economy_balance_snapshot (reads population, happiness, money, tax rates, R/C/I demand in response.economy_snapshot), prefab_manifest (lists scene MonoBehaviours + missing script references in response.prefab_manifest), sorting_order_debug (requires seed_cell; returns SpriteRenderers at cell with sorting_layer/sorting_order in response.sorting_order_debug). Requires DATABASE_URL / config/postgres-dev.json, migration 0008, Unity on REPO_ROOT. Polls until completed, failed, or timeout_ms (default 30000, max 30000). Removes pending row on MCP timeout.",
+        "IDE agent bridge: enqueue a Unity Editor job in Postgres agent_bridge_job (pending). Kinds: export_agent_context (agent context JSON + optional Postgres registry; optional seed_cell \"x,y\" for Moore neighborhood center), get_console_logs (buffered Console lines in response.log_lines), capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/; include_ui for Game view + Overlay UI), enter_play_mode (EditorApplication.EnterPlaymode; completes when GridManager.isInitialized; response.ready, play_mode_state, grid_width/height), exit_play_mode (ExitPlaymode; completes when back in Edit Mode), get_play_mode_status (immediate response: play_mode_state edit_mode|play_mode_loading|play_mode_ready), debug_context_bundle (single job: Moore export + optional screenshot + console + anomaly scan; response.bundle; requires seed_cell; Play Mode + GridManager ready), get_compilation_status (synchronous compile snapshot: response.compilation_status with compiling, compilation_failed, last_error_excerpt, recent_error_messages), economy_balance_snapshot (reads population, happiness, money, tax rates, R/C/I demand in response.economy_snapshot), prefab_manifest (lists scene MonoBehaviours + missing script references in response.prefab_manifest), sorting_order_debug (requires seed_cell; returns SpriteRenderers at cell with sorting_layer/sorting_order in response.sorting_order_debug). Requires DATABASE_URL / config/postgres-dev.json, migration 0008, Unity on REPO_ROOT. Polls until completed, failed, or timeout_ms (default 30000, max 120000). On timeout, run `npm run unity:ensure-editor` then retry with timeout_ms 60000. Removes pending row on MCP timeout.",
       inputSchema: unityBridgeCommandInputShape,
     },
     async (args) =>
@@ -582,7 +585,7 @@ export function registerUnityBridgeCommand(server: McpServer): void {
     "unity_compile",
     {
       description:
-        "IDE agent bridge shortcut: same enqueue/complete path as unity_bridge_command with kind get_compilation_status. Returns response.compilation_status (compiling, compilation_failed, last_error_excerpt, recent_error_messages from buffered Console errors). Use when the Editor is open on REPO_ROOT; prefer npm run unity:compile-check (batchmode) only when no Editor holds the project lock. Requires DATABASE_URL, migration 0008, timeout_ms default 30000.",
+        "IDE agent bridge shortcut: same enqueue/complete path as unity_bridge_command with kind get_compilation_status. Returns response.compilation_status (compiling, compilation_failed, last_error_excerpt, recent_error_messages from buffered Console errors). Use when the Editor is open on REPO_ROOT; prefer npm run unity:compile-check (batchmode) only when no Editor holds the project lock. Requires DATABASE_URL, migration 0008, timeout_ms default 30000, max 120000.",
       inputSchema: unityCompileInputShape,
     },
     async (args) =>

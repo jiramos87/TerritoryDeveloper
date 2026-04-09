@@ -12,6 +12,8 @@ description: >
 
 This skill documents **optional**, **dev-machine-only** use of **territory-ia** **`unity_bridge_command`** / **`unity_bridge_get`** (glossary **IDE agent bridge**). It **does not** replace **CI** or **`npm run validate:all`** — there is no Unity in the **IA tools** workflow job.
 
+**Owner policy:** [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) — agents **attempt** bridge verification when **Postgres** + **Editor** can apply; use **`timeout_ms`:** **`40000`** (40 s initial) on **`unity_bridge_command`** / **`unity_compile`** for agent-led passes. On **timeout**, follow the **timeout escalation protocol** (`npm run unity:ensure-editor` → retry 60 s). Ceiling: **120 s** (`UNITY_BRIDGE_TIMEOUT_MS_MAX`).
+
 **Related:** **[`bridge-environment-preflight`](../bridge-environment-preflight/SKILL.md)** — run before first bridge call in a session or when **`unity_bridge_command`** fails with DB errors. **[`project-spec-kickoff`](../project-spec-kickoff/SKILL.md)** (write **§7b** rows that reference these tools). **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (optional verification after phases). **[`close-dev-loop`](../close-dev-loop/SKILL.md)** (full before/after **`debug_context_bundle`** cycle + compile gate). **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (Node checks; bridge is a separate optional subsection). **Normative IA:** [`docs/mcp-ia-server.md`](../../../docs/mcp-ia-server.md), **unity-development-context** §10, [`docs/unity-ide-agent-bridge-analysis.md`](../../../docs/unity-ide-agent-bridge-analysis.md).
 
 ## Prerequisites (all required)
@@ -20,7 +22,7 @@ This skill documents **optional**, **dev-machine-only** use of **territory-ia** 
 |-------------|--------|
 | **`DATABASE_URL`** or **`config/postgres-dev.json`** | Same policy as **Editor export registry** |
 | Migration **`0008_agent_bridge_job.sql`** applied | `npm run db:migrate` — see [`docs/postgres-ia-dev-setup.md`](../../../docs/postgres-ia-dev-setup.md) |
-| **Unity Editor** open on **repository root** | **`AgentBridgeCommandRunner`** polls **`agent-bridge-dequeue.mjs`** |
+| **Unity Editor** open on **repository root** | **`AgentBridgeCommandRunner`** polls **`agent-bridge-dequeue.mjs`**. If not running, run **`npm run unity:ensure-editor`** (macOS; exit 0 = ready) |
 | **Play Mode** for **`capture_screenshot`** | **Edit Mode** returns a **completed** job with **`ok: false`** and an English **`error`** |
 | **Close Dev Loop** | Use **`enter_play_mode`** before evidence kinds if the agent should not click **Play** manually; then **`get_play_mode_status`**, **`debug_context_bundle`** (optional one-shot export + screenshot + console + **`bundle.anomalies`**), **`capture_screenshot`** / **`export_agent_context`** as needed; **`exit_play_mode`** when done |
 
@@ -40,7 +42,7 @@ Record **`command_id`** values in chat or the **project spec** **Lessons learned
 
 | Tool | Role |
 |------|------|
-| **`unity_bridge_command`** | Inserts **`agent_bridge_job`**, polls until **`completed`** / **`failed`** or **`timeout_ms`** (default **30000**, max **30000**) |
+| **`unity_bridge_command`** | Inserts **`agent_bridge_job`**, polls until **`completed`** / **`failed`** or **`timeout_ms`** (default **30000**, max **120000** — use **`40000`** initial for agent-led verification; on timeout follow **escalation protocol**) |
 | **`unity_bridge_get`** | Read **`response`** by **`command_id`** (optional **`wait_ms`**) |
 | **`unity_compile`** | Shortcut: same queue path as **`unity_bridge_command`** with **`kind`:** **`get_compilation_status`** |
 
@@ -83,7 +85,7 @@ Writes **`tools/reports/bridge-screenshots/*.png`** (gitignored). Optional: **`f
 
 ## Operational limits
 
-- **`timeout_ms`:** **30000** ms default and **maximum** on the MCP tool — do not rely on longer waits.
+- **`timeout_ms`:** **30000** ms default; **120000** ms maximum (`UNITY_BRIDGE_TIMEOUT_MS_MAX`). Use **40000** for the initial agent-led call; on timeout, follow the **escalation protocol** in [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md).
 - **Stuck `processing`:** Rare; if the Editor lost domain reload mid-defer, fail the row with **`agent-bridge-complete.mjs --failed`** (see **postgres-ia-dev-setup** **Agent bridge job queue**).
 
 ## CLI equivalent (no Cursor MCP)

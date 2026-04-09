@@ -235,12 +235,21 @@ describe("unityBridgeCommandInputSchema", () => {
     if (r.success) assert.equal(r.data.seed_cell, "3,0");
   });
 
-  it("rejects timeout_ms above 30000", () => {
+  it("rejects timeout_ms above 120000", () => {
     const r = unityBridgeCommandInputSchema.safeParse({
       kind: "export_agent_context",
-      timeout_ms: 35000,
+      timeout_ms: 125000,
     });
     assert.equal(r.success, false);
+  });
+
+  it("accepts timeout_ms 120000", () => {
+    const r = unityBridgeCommandInputSchema.safeParse({
+      kind: "get_play_mode_status",
+      timeout_ms: 120_000,
+    });
+    assert.equal(r.success, true);
+    if (r.success) assert.equal(r.data.timeout_ms, 120_000);
   });
 
   it("defaults timeout_ms to 30000", () => {

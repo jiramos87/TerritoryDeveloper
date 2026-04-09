@@ -10,6 +10,16 @@ Authoritative **save**-shaped JSON for **test mode** and future agent tooling. L
   1. `{scenario-id}/save.json`
   2. `{scenario-id}.json` in this folder
 
+## Agent-generated saves (v1 until **31b**)
+
+For ad-hoc **agent**-produced **`GameSaveData`** JSON (not committed), use a **run-scoped** directory so paths stay stable and the tree stays out of git:
+
+- **Path:** `tools/fixtures/scenarios/agent-generated/{run-id}/save.json`
+- **`{run-id}`:** opaque folder name (timestamp, issue slug, or UUID). The directory **`tools/fixtures/scenarios/agent-generated/`** is **gitignored**.
+- **Semantics:** same **`GameSaveData`** compatibility rules as committed scenarios; **Load pipeline** is **`GameSaveManager.LoadGame`** only (**persistence-system**), whether driven by **`-testScenarioPath`** (absolute path) or future **scenario builder** output.
+- **Agent test mode batch:** pass **`--scenario-path`** with an **absolute** path to `save.json` (see **`unity-testmode-batch.sh --help`**).
+- **Program stage 31b:** when the **scenario builder** ships, prefer its documented artifact layout — see [`projects/TECH-31b-scenario-builder.md`](../../projects/TECH-31b-scenario-builder.md) and [`projects/TECH-31-agent-scenario-generator-program.md`](../../projects/TECH-31-agent-scenario-generator-program.md) stage **31b**.
+
 ## **32×32** test map policy
 
 - Reference scenarios for **TECH-31** stage **31a** use a **32×32** grid (`gridWidth` / `gridHeight` and `gridData` bounds must agree).

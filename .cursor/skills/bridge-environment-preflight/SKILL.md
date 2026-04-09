@@ -11,7 +11,7 @@ description: >
 
 Run **before** any **`unity_bridge_command`** / **`unity_compile`** / **`unity_bridge_get`** call, or at the start of a **close-dev-loop** session. The preflight checks that **Postgres** is reachable and migration **0008** (**`agent_bridge_job`**) is applied — the two prerequisites for the **IDE agent bridge** queue.
 
-**Related:** **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (Play Mode evidence). **[`close-dev-loop`](../close-dev-loop/SKILL.md)** (Step 0 references this Skill). **Normative IA:** [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) (**Bridge environment preflight**), [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md), **unity-development-context** §10.
+**Related:** **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (Play Mode evidence). **[`close-dev-loop`](../close-dev-loop/SKILL.md)** (Step 0 references this Skill). **Agent-led verification:** after exit **0**, use **`unity_bridge_command`** with **`timeout_ms`:** **`40000`** (initial; on timeout follow **escalation protocol** in [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md): `npm run unity:ensure-editor` → retry 60 s). **Normative IA:** [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) (**Bridge environment preflight**), [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md), **unity-development-context** §10.
 
 ## Prerequisites
 

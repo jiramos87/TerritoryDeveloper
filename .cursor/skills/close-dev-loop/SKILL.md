@@ -12,6 +12,8 @@ description: >
 
 This skill is the **end-to-end** recipe for **visual / terrain** bugs where the agent can compare **before** and **after** using **`debug_context_bundle`** (**Moore** export + screenshot + console + **`bundle.anomalies`**). **Canonical IA:** glossary **IDE agent bridge**, **unity-development-context** §10, [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md).
 
+**Bridge waits:** pass **`timeout_ms`:** **`40000`** (initial) on **`unity_bridge_command`** / **`unity_compile`** for agent-led cycles. On timeout, follow the **timeout escalation protocol** (`npm run unity:ensure-editor` → retry 60 s). Ceiling: **120 s** (`UNITY_BRIDGE_TIMEOUT_MS_MAX`). **Policy:** [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md).
+
 **Related:** **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (one-off logs/screenshots). **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (optional: run this recipe after a phase that changes **Play Mode** visuals). **Optional Step 0:** when **`.cursor/skills/bridge-environment-preflight/SKILL.md`** exists, use it for **Postgres** / **`agent_bridge_job`** checks before the bridge loop; otherwise confirm **`DATABASE_URL`** and **`npm run db:migrate`** per [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md). **Normative tool names:** **territory-ia** **`unity_bridge_command`**, **`unity_compile`**, **`unity_bridge_get`**, **`backlog_issue`**, **`router_for_task`**, **`spec_section`**.
 
 ## Prerequisites (all required for the bridge path)
@@ -20,7 +22,7 @@ This skill is the **end-to-end** recipe for **visual / terrain** bugs where the 
 |-------------|--------|
 | **`DATABASE_URL`** or **`config/postgres-dev.json`** | Same as **Editor export registry** |
 | Migration **`0008_agent_bridge_job.sql`** | `npm run db:migrate` — [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) |
-| **Unity Editor** open on **repository root** | **`AgentBridgeCommandRunner`** polls dequeue |
+| **Unity Editor** open on **repository root** | **`AgentBridgeCommandRunner`** polls dequeue. If not running, run **`npm run unity:ensure-editor`** (macOS; exit 0 = ready) |
 | **territory-ia** MCP with **`unity_bridge_command`** | Cursor **Agent** mode |
 
 ## Parameterize (replace before running)

@@ -23,6 +23,7 @@
     "db:bridge-agent-context": "npx --prefix tools/mcp-ia-server tsx tools/mcp-ia-server/scripts/run-unity-bridge-once.ts",
     "db:bridge-preflight": "npx tsx tools/mcp-ia-server/scripts/bridge-preflight.ts",
     "db:bridge-playmode-smoke": "npm --prefix tools/mcp-ia-server run bridge-playmode-smoke --",
+    "unity:ensure-editor": "bash tools/scripts/ensure-unity-editor.sh",
     "unity:compile-check": "bash tools/scripts/unity-compile-check.sh",
     "unity:testmode-batch": "bash tools/scripts/unity-testmode-batch.sh",
     "verify:local": "bash tools/scripts/verify-local.sh",

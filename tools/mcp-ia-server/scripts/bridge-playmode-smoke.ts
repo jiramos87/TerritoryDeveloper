@@ -20,6 +20,7 @@ import { resolveRepoRoot } from "../src/config.js";
 import { loadRepoDotenvIfNotCi } from "../src/ia-db/repo-dotenv.js";
 import {
   runUnityBridgeCommand,
+  UNITY_BRIDGE_TIMEOUT_MS_MAX,
   type UnityBridgeCommandInput,
 } from "../src/tools/unity-bridge-command.js";
 
@@ -29,7 +30,7 @@ async function main(): Promise<number> {
   const repo = resolveRepoRoot();
   loadRepoDotenvIfNotCi(repo);
   const timeout_ms = Math.min(
-    30_000,
+    UNITY_BRIDGE_TIMEOUT_MS_MAX,
     Math.max(1000, Number(process.env.BRIDGE_TIMEOUT_MS ?? 30_000) || 30_000),
   );
   console.error(`bridge-playmode-smoke: REPO_ROOT=${repo} seed_cell=${seedCell}`);

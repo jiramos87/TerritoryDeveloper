@@ -25,116 +25,14 @@ set -- "${PASSTHROUGH[@]}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=load-repo-env.inc.sh
 source "${SCRIPT_DIR}/load-repo-env.inc.sh"
+# shellcheck source=unity-editor-helpers.inc.sh
+source "${SCRIPT_DIR}/unity-editor-helpers.inc.sh"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "${REPO_ROOT}"
 territory_load_repo_dotenv_files "${REPO_ROOT}"
 
 LOCK_FILE="${REPO_ROOT}/Temp/UnityLockfile"
-
-territory_resolve_unity_bin() {
-  UNITY_BIN="${UNITY_EDITOR_PATH:-}"
-  if [[ -z "${UNITY_BIN}" && "$(uname -s)" == "Darwin" ]]; then
-    local _uv _cand
-    _uv="$(grep -E '^m_EditorVersion:' "${REPO_ROOT}/ProjectSettings/ProjectVersion.txt" 2>/dev/null | head -1 | awk '{print $2}')"
-    if [[ -n "${_uv}" ]]; then
-      _cand="/Applications/Unity/Hub/Editor/${_uv}/Unity.app/Contents/MacOS/Unity"
-      if [[ -x "${_cand}" ]]; then
-        UNITY_BIN="${_cand}"
-      fi
-    fi
-  fi
-  if [[ -z "${UNITY_BIN}" ]]; then
-    echo "post-implementation-verify: set UNITY_EDITOR_PATH in .env (see ProjectSettings/ProjectVersion.txt)." >&2
-    return 1
-  fi
-  if [[ ! -x "${UNITY_BIN}" ]] && [[ ! -f "${UNITY_BIN}" ]]; then
-    echo "post-implementation-verify: invalid UNITY_EDITOR_PATH: ${UNITY_BIN}" >&2
-    return 1
-  fi
-  # Unity.app bundle path (for open -a): .../Unity.app/Contents/MacOS/Unity -> .../Unity.app
-  UNITY_APP="$(cd "$(dirname "${UNITY_BIN}")/../.." && pwd)"
-  return 0
-}
-
-territory_project_lock_present() {
-  [[ -f "${LOCK_FILE}" ]]
-}
-
-# Best-effort: frontmost Unity, save, quit. Requires macOS Accessibility for System Events (may prompt once).
-territory_unity_save_and_quit_applescript() {
-  if [[ "$(uname -s)" != "Darwin" ]]; then
-    return 0
-  fi
-  osascript <<'EOF' 2>/dev/null || true
-tell application "System Events"
-  if (exists process "Unity") then
-    tell process "Unity"
-      set frontmost to true
-    end tell
-    delay 0.4
-    keystroke "s" using command down
-    delay 0.6
-    keystroke "q" using command down
-  end if
-end tell
-EOF
-}
-
-# Wait until Unity releases the project lock (or timeout seconds).
-territory_wait_lock_cleared() {
-  local max_seconds="$1"
-  local waited=0
-  echo "post-implementation-verify: waiting up to ${max_seconds}s for Editor to release project lock..." >&2
-  while (( waited < max_seconds )); do
-    if ! territory_project_lock_present; then
-      echo "post-implementation-verify: project lock cleared after ${waited}s." >&2
-      return 0
-    fi
-    sleep 1
-    waited=$((waited + 1))
-  done
-  echo "post-implementation-verify: timeout — ${LOCK_FILE} still present after ${max_seconds}s. Close Unity manually, or remove a stale lock after a crash, then re-run." >&2
-  return 1
-}
-
-# Wait until Unity creates the project lock (Editor finished opening project), or timeout seconds.
-territory_wait_lock_present() {
-  local max_seconds="$1"
-  local waited=0
-  echo "post-implementation-verify: waiting up to ${max_seconds}s for Unity Editor to open project..." >&2
-  while (( waited < max_seconds )); do
-    if territory_project_lock_present; then
-      echo "post-implementation-verify: project lock present after ${waited}s (Editor likely ready)." >&2
-      sleep 5
-      return 0
-    fi
-    sleep 1
-    waited=$((waited + 1))
-  done
-  echo "post-implementation-verify: timeout — no ${LOCK_FILE} after ${max_seconds}s. Is Unity starting? Re-run smoke after Editor loads." >&2
-  return 1
-}
-
-territory_if_locked_save_quit_and_wait() {
-  if [[ "$(uname -s)" != "Darwin" ]]; then
-    return 0
-  fi
-  if ! territory_project_lock_present; then
-    return 0
-  fi
-  echo "post-implementation-verify: Unity has this project open — saving and quitting Editor before batch compile / relaunch." >&2
-  territory_unity_save_and_quit_applescript
-  sleep 2
-  territory_wait_lock_cleared 30
-}
-
-territory_launch_unity_editor() {
-  if [[ "$(uname -s)" != "Darwin" ]]; then
-    return 1
-  fi
-  echo "post-implementation-verify: opening Unity Editor: ${UNITY_APP} -projectPath ${REPO_ROOT}" >&2
-  open -a "${UNITY_APP}" --args -projectPath "${REPO_ROOT}"
-}
+_TERRITORY_LOG_PREFIX="post-implementation-verify"
 
 run_step() {
   echo "post-implementation-verify: === $* ===" >&2

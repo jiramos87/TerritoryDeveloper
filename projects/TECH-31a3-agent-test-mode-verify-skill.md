@@ -41,23 +41,23 @@ Finalize **`.cursor/skills/agent-test-mode-verify/SKILL.md`** as the **normative
 
 ### Phase 1 — Skill completion
 
-- [ ] Remove **pointer-only** / **pending** prose from [`.cursor/skills/agent-test-mode-verify/SKILL.md`](../.cursor/skills/agent-test-mode-verify/SKILL.md); keep YAML `description` triggers aligned with **Summary** above.
-- [ ] **Tool recipe** (ordered): **gate** → **`npm run validate:all`** when diff touches **MCP** / schemas / fixtures / skills → **`npm run unity:compile-check`** when **C#** under **`Assets/`** changed (or bridge **`get_compilation_status`** / **`unity_compile`** per **`close-dev-loop`**) → **Path A** or **Path B** → bounded **iterate** → **handoff**.
-- [ ] **Path A** — Document: repo-root **`npm run unity:testmode-batch`** (→ **`tools/scripts/unity-testmode-batch.sh`**); **`Territory.Testing.AgentTestModeBatchRunner.Run`**; optional **`tools/scripts/unity-quit-project.sh`** for project lock; artifact **`tools/reports/agent-testmode-batch-*.json`** (**glossary** **Agent test mode batch**; **Load pipeline** via **`GameSaveManager.LoadGame`** only).
-- [ ] **Path B** — Document: write **`.queued-test-scenario-id`** (see [`tools/fixtures/scenarios/README.md`](../tools/fixtures/scenarios/README.md)); **`npm run db:bridge-preflight`**; territory-ia **`unity_bridge_command`** (**`enter_play_mode`** → **`get_play_mode_status`** → **`debug_context_bundle`** with **`params.seed_cell`** / optional **`get_console_logs`**, **`capture_screenshot`**) → **`exit_play_mode`** (**glossary** **IDE agent bridge**).
-- [ ] **`{MAX_ITERATIONS}`** default **2**, same as [`.cursor/skills/close-dev-loop/SKILL.md`](../.cursor/skills/close-dev-loop/SKILL.md).
-- [ ] **Exit-code / failure-class** table: **shell** exit from **`unity-testmode-batch.sh`** / **`unity-quit-project.sh`**; **Unity** **`EditorApplication.Exit`** codes from batch runner; MCP / bridge **`db_unconfigured`**, job **`timeout`**, and **`get_compilation_status`** / **`compilation_failed`** (point to **`ide-bridge-evidence`** / **`bridge-environment-preflight`**).
+- [x] Remove **pointer-only** / **pending** prose from [`.cursor/skills/agent-test-mode-verify/SKILL.md`](../.cursor/skills/agent-test-mode-verify/SKILL.md); keep YAML `description` triggers aligned with **Summary** above.
+- [x] **Tool recipe** (ordered): **gate** → **`npm run validate:all`** when diff touches **MCP** / schemas / fixtures / skills → **`npm run unity:compile-check`** when **C#** under **`Assets/`** changed (or bridge **`get_compilation_status`** / **`unity_compile`** per **`close-dev-loop`**) → **Path A** or **Path B** → bounded **iterate** → **handoff**.
+- [x] **Path A** — Document: repo-root **`npm run unity:testmode-batch`** (→ **`tools/scripts/unity-testmode-batch.sh`**); **`Territory.Testing.AgentTestModeBatchRunner.Run`**; optional **`tools/scripts/unity-quit-project.sh`** for project lock; artifact **`tools/reports/agent-testmode-batch-*.json`** (**glossary** **Agent test mode batch**; **Load pipeline** via **`GameSaveManager.LoadGame`** only).
+- [x] **Path B** — Document: write **`.queued-test-scenario-id`** (see [`tools/fixtures/scenarios/README.md`](../tools/fixtures/scenarios/README.md)); **`npm run db:bridge-preflight`**; territory-ia **`unity_bridge_command`** (**`enter_play_mode`** → **`get_play_mode_status`** → **`debug_context_bundle`** with **`params.seed_cell`** / optional **`get_console_logs`**, **`capture_screenshot`**) → **`exit_play_mode`** (**glossary** **IDE agent bridge**).
+- [x] **`{MAX_ITERATIONS}`** default **2**, same as [`.cursor/skills/close-dev-loop/SKILL.md`](../.cursor/skills/close-dev-loop/SKILL.md).
+- [x] **Exit-code / failure-class** table: **shell** exit from **`unity-testmode-batch.sh`** / **`unity-quit-project.sh`**; **Unity** **`EditorApplication.Exit`** codes from batch runner; MCP / bridge **`db_unconfigured`**, job **`timeout`**, and **`get_compilation_status`** / **`compilation_failed`** (point to **`ide-bridge-evidence`** / **`bridge-environment-preflight`**).
 
 ### Phase 2 — Docs + **E2E**
 
-- [ ] **`AGENTS.md`**, **`ARCHITECTURE.md`**: one short subsection each linking **SKILL.md**, **Agent test mode batch**, and **Local verification**.
-- [ ] **E2E** in **skill** body: one worked example for **Path A** (fixture id **`reference-flat-32x32`**, expected log lines, report glob) and one for **Path B** (Postgres + Editor on **REPO_ROOT**, **seed_cell** example).
-- [ ] **`npm run validate:all`** after **`AGENTS.md`** / **`ARCHITECTURE.md`** edits.
+- [x] **`AGENTS.md`**, **`ARCHITECTURE.md`**: one short subsection each linking **SKILL.md**, **Agent test mode batch**, and **Local verification**.
+- [x] **E2E** in **skill** body: one worked example for **Path A** (fixture id **`reference-flat-32x32`**, expected log lines, report glob) and one for **Path B** (Postgres + Editor on **REPO_ROOT**, **seed_cell** example).
+- [x] **`npm run validate:all`** after **`AGENTS.md`** / **`ARCHITECTURE.md`** edits.
 
 ### Phase 3 — **Scenario** contract until **31b**
 
-- [ ] Document **`tools/fixtures/scenarios/agent-generated/{run-id}/save.json`**; ensure [`.gitignore`](../.gitignore) ignores **`tools/fixtures/scenarios/agent-generated/`** if missing.
-- [ ] Cross-link program stage **31b** when **scenario builder** output path is stable.
+- [x] Document **`tools/fixtures/scenarios/agent-generated/{run-id}/save.json`**; ensure [`.gitignore`](../.gitignore) ignores **`tools/fixtures/scenarios/agent-generated/`** if missing.
+- [x] Cross-link program stage **31b** when **scenario builder** output path is stable.
 
 ## 7b. Test contracts
 
@@ -67,14 +67,14 @@ Finalize **`.cursor/skills/agent-test-mode-verify/SKILL.md`** as the **normative
 | **IA / Node** | Node | `npm run validate:all` | After **`AGENTS.md`** / **`ARCHITECTURE.md`** / skill edits |
 | **Unity compile** (if **C#** touched in same effort) | Node | `npm run unity:compile-check` | Per **`AGENTS.md`**; not skipped when **`UNITY_EDITOR_PATH`** unset in agent shell |
 | **Path A** **E2E** | Manual / dev machine | `npm run unity:testmode-batch` + **`tools/reports/agent-testmode-batch-*.json`** | Committed scenario (e.g. **`reference-flat-32x32`**); **Load pipeline** exercised |
-| **Path B** **E2E** | MCP / dev machine | `npm run db:bridge-preflight` → **`unity_bridge_command`** **`enter_play_mode`** → **`debug_context_bundle`** → **`exit_play_mode`** | **`DATABASE_URL`** + Editor on **REPO_ROOT**; see **`ide-bridge-evidence`** |
+| **Path B** **E2E** | MCP / dev machine | `npm run db:bridge-preflight` → **`unity_bridge_command`** (**`timeout_ms`:** **40000**) **`enter_play_mode`** → **`debug_context_bundle`** → **`exit_play_mode`** | **`DATABASE_URL`** + Editor on **REPO_ROOT**; see **`ide-bridge-evidence`**; **Verification** block: [`docs/agent-led-verification-policy.md`](../docs/agent-led-verification-policy.md) |
 | **Compile gate (bridge)** | MCP / dev machine | **`unity_bridge_command`** **`get_compilation_status`** or **`unity_compile`** | Same queue as **IDE agent bridge** |
 | **Console / UI spot-check (optional)** | MCP / dev machine | **`get_console_logs`**, **`capture_screenshot`** (`include_ui` when overlay must show) | **`unity-development-context`** §10 |
 
 ## Acceptance criteria
 
-- [ ] **`SKILL.md`** is **normative** (this spec + **glossary** **Agent test mode batch** + **IDE agent bridge** vocabulary).
-- [ ] **`AGENTS.md`** + **`ARCHITECTURE.md`** updated with links to the skill and batch entry point.
+- [x] **`SKILL.md`** is **normative** (this spec + **glossary** **Agent test mode batch** + **IDE agent bridge** vocabulary).
+- [x] **`AGENTS.md`** + **`ARCHITECTURE.md`** updated with links to the skill and batch entry point.
 - [ ] **Path A** and **Path B** each exercised once on **macOS** (owner sign-off); **`npm run validate:all`** green after doc edits.
 
 ## Decision Log

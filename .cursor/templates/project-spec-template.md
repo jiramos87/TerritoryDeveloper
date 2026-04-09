@@ -97,6 +97,7 @@
 | Acceptance / goal | Check type | Command or artifact | Notes |
 |-------------------|------------|---------------------|-------|
 | Example: change touches MCP, schemas, glossary, or **reference spec** bodies that feed **IA indexes** | Node | `npm run validate:all` (repo root) | Chains **validate:dead-project-specs**, **test:ia**, **validate:fixtures**, **generate:ia-indexes --check** |
+| Example: agent **Verification** block (substantive **C#** / **Load pipeline** / **test mode** work) | Agent report | **`validate:all`** + **`unity:compile-check`** (if **Assets/** **C#**) + **`npm run unity:testmode-batch`** + **`unity_bridge_command`** (**`timeout_ms`:** **40000** initial; escalation protocol on timeout) | [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md); **`.cursor/skills/agent-test-mode-verify/SKILL.md`** |
 | Example: Play / HUD acceptance — console clean + screenshot with **Overlay** UI | MCP / dev machine | **territory-ia** **`unity_bridge_command`**: **`get_console_logs`** (`severity_filter`); **`capture_screenshot`** (`include_ui: true`) | **N/A** in CI; **Postgres** **0008** + **Unity** on **REPO_ROOT**; see **`.cursor/skills/ide-bridge-evidence/SKILL.md`** |
 | … | … | … | … |
 

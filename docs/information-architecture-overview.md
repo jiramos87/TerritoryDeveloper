@@ -4,6 +4,21 @@
 > For day-to-day agent workflow, see [`AGENTS.md`](../AGENTS.md).
 > For MCP tool catalog, see [`docs/mcp-ia-server.md`](mcp-ia-server.md).
 
+## 0. Autoreference (where this document lives)
+
+This file is the **canonical narrative** for the **Information Architecture** **stack** implemented in this repository. The stack **describes itself** through:
+
+| Layer | Self-description |
+|-------|------------------|
+| **This overview** | Layer diagram (§2), lifecycle (§3), MCP map (§6) |
+| **[`AGENTS.md`](../AGENTS.md)** | Agent workflow, checklist, links into rules and skills |
+| **[`ARCHITECTURE.md`](../ARCHITECTURE.md)** | Runtime dependency map + **Local verification** |
+| **[`.cursor/rules/`](../.cursor/rules/)** | Always-on and globs rules (guardrails, MCP defaults) |
+| **[`.cursor/skills/`](../.cursor/skills/)** | Ordered recipes (implement, validate, bridge, test mode) |
+| **[`tools/mcp-ia-server/`](../tools/mcp-ia-server/)** | **territory-ia** tool implementations |
+
+**Agent-led verification** (Unity batch + IDE bridge reporting policy): [`docs/agent-led-verification-policy.md`](agent-led-verification-policy.md) and [`.cursor/rules/agent-verification-directives.mdc`](../.cursor/rules/agent-verification-directives.mdc).
+
 ---
 
 ## 1. Design philosophy
@@ -87,9 +102,9 @@ Every issue follows a lifecycle where knowledge is created, refined, used, and t
                    Per-phase loop: router_for_task → spec_section → glossary_* → code → compile gate
                    → code changes + updated spec Decision Log / Issues Found
 
-4. VERIFY          close-dev-loop skill (dev machine)
-                   unity_bridge_command: debug_context_bundle (before/after), compile gate
-                   → console excerpts, screenshots, anomaly diffs
+4. VERIFY          agent-test-mode-verify / close-dev-loop / ide-bridge-evidence (dev machine)
+                   Agent test mode batch + optional IDE agent bridge; see agent-led-verification-policy.md
+                   → batch JSON, bridge evidence, compile gate
 
 5. VALIDATE        project-implementation-validation skill
                    npm run validate:dead-project-specs, test:ia, validate:fixtures, generate:ia-indexes --check

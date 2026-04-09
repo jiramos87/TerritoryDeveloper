@@ -3,17 +3,17 @@
  * Run from repository root or any subdirectory; optional REPO_ROOT.
  *
  * Usage: npx tsx tools/mcp-ia-server/scripts/run-unity-bridge-once.ts
- * Env: BRIDGE_TIMEOUT_MS (default 30000, max 30000), DATABASE_URL (optional override).
+ * Env: BRIDGE_TIMEOUT_MS (default 30000, max 120000), DATABASE_URL (optional override).
  */
 
 import { resolveRepoRoot } from "../src/config.js";
 import { loadRepoDotenvIfNotCi } from "../src/ia-db/repo-dotenv.js";
-import { runUnityBridgeCommand } from "../src/tools/unity-bridge-command.js";
+import { runUnityBridgeCommand, UNITY_BRIDGE_TIMEOUT_MS_MAX } from "../src/tools/unity-bridge-command.js";
 
 loadRepoDotenvIfNotCi(resolveRepoRoot());
 
 const timeout = Math.min(
-  30_000,
+  UNITY_BRIDGE_TIMEOUT_MS_MAX,
   Math.max(1000, Number(process.env.BRIDGE_TIMEOUT_MS ?? 30_000) || 30_000),
 );
 

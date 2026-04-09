@@ -32,7 +32,7 @@ Update this section as stages complete (owner / date optional).
 
 - [x] **31a** — Test mode + load + contracts (2026-04-09)
 - [x] **31a2** — Batch **test mode** tooling (shell + **executeMethod**) (2026-04-09)
-- [ ] **31a3** — **agent-test-mode-verify** skill (orchestration + docs)
+- [x] **31a3** — **agent-test-mode-verify** skill (orchestration + docs) (2026-04-09)
 - [ ] **31b** — Scenario builder + reference descriptor/artifact
 - [ ] **31c** — File-based verification pipeline + documented **close-dev-loop** recipe
 - [ ] **31d** — **TECH-82** Phase 1 + **test mode** metrics path (see **TECH-82** acceptance)

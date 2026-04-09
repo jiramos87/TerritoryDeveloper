@@ -67,3 +67,5 @@ tools/postgres-ia/node_modules/
 
 # Agent / Editor one-shot test-mode queue (scenario load)
 tools/fixtures/scenarios/.queued-test-scenario-id
+# Ad-hoc agent-written GameSaveData fixtures (run-scoped directories)
+tools/fixtures/scenarios/agent-generated/

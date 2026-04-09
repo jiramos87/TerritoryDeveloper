@@ -12,7 +12,7 @@ description: >
 
 This skill **does not** call MCP tools itself. It is a **checklist** of **existing** **`npm`** commands — **not** a second copy of `tools/validate-dead-project-spec-paths.mjs` or the **MCP** scripts.
 
-**Related:** **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (phase exit → **Pre-commit Checklist** — **this** skill adds **automated** **Node** steps). **[`project-spec-close`](../project-spec-close/SKILL.md)** (optional: run **after** **IA persistence** when the change touched **MCP**, **schemas**, or **spec/glossary** bodies that feed indexes — **before** mandatory `npm run validate:dead-project-specs` in closeout). **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (optional **Unity** logs/screenshots via MCP — **not** part of this manifest). **CI parity:** [`.github/workflows/ia-tools.yml`](../../../.github/workflows/ia-tools.yml). **Dead project-spec paths:** `npm run validate:dead-project-specs`. **Conventions:** [`.cursor/skills/README.md`](../README.md).
+**Related:** **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (phase exit → **Pre-commit Checklist** — **this** skill adds **automated** **Node** steps). **[`project-spec-close`](../project-spec-close/SKILL.md)** (optional: run **after** **IA persistence** when the change touched **MCP**, **schemas**, or **spec/glossary** bodies that feed indexes — **before** mandatory `npm run validate:dead-project-specs` in closeout). **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (optional **Unity** logs/screenshots via MCP — **not** part of this manifest). **[`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md)** + [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) — **Verification** block (**validate:all**, compile, **Agent test mode batch**, **IDE agent bridge** with **`timeout_ms` 40000** initial + escalation protocol) for agent completion messages. **CI parity:** [`.github/workflows/ia-tools.yml`](../../../.github/workflows/ia-tools.yml). **Dead project-spec paths:** `npm run validate:dead-project-specs`. **Conventions:** [`.cursor/skills/README.md`](../README.md).
 
 ## Failure policy
 
@@ -46,6 +46,10 @@ Run from **repository root** unless **Cwd** says otherwise. Script names match r
 **Equivalent in package folder:** For step 2, `cd tools/mcp-ia-server && npm test` after `npm ci` matches **CI** exactly.
 
 **Project specs:** New **`.cursor/projects/{ISSUE_ID}.md`** stubs should include **`## 7b. Test Contracts`** ([`.cursor/templates/project-spec-template.md`](../../templates/project-spec-template.md)) so **Acceptance** maps to these **Node** checks where applicable.
+
+## Verification block (agent messages — alongside this manifest)
+
+When reporting **Verification** after substantive implementation, follow [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md): include **`npm run validate:all`** (exit code), **`npm run unity:compile-check`** if **`Assets/`** **C#** changed, **Path A** **`npm run unity:testmode-batch`** summary, and **Path B** **`unity_bridge_command`** outcome with **`timeout_ms`:** **`40000`** initial (escalation protocol on timeout; or **N/A** + reason). This is **separate** from the **Validation manifest** table above (Node-only **CI** parity).
 
 ## Optional: IDE agent bridge evidence (dev machine — **N/A** in CI)
 
