@@ -205,7 +205,8 @@ const getInputShape = {
     ),
 };
 
-const unityBridgeGetInputSchema = z.object(getInputShape);
+/** Exported for tests and IA tooling that mirror MCP `unity_bridge_get` inputSchema. */
+export const unityBridgeGetInputSchema = z.object(getInputShape);
 
 export type UnityBridgeGetInput = z.infer<typeof unityBridgeGetInputSchema>;
 
@@ -525,7 +526,8 @@ const unityCompileInputShape = {
   timeout_ms: unityBridgeTimeoutMsSchema,
 };
 
-const unityCompileInputSchema = z.object(unityCompileInputShape);
+/** Exported for tests and IA tooling that mirror MCP `unity_compile` inputSchema. */
+export const unityCompileInputSchema = z.object(unityCompileInputShape);
 
 /**
  * Register unity_bridge_command, unity_bridge_get, and unity_compile (alias for get_compilation_status).
@@ -536,7 +538,9 @@ export function registerUnityBridgeCommand(server: McpServer): void {
     {
       description:
         "IDE agent bridge: enqueue a Unity Editor job in Postgres agent_bridge_job (pending). Kinds: export_agent_context (agent context JSON + optional Postgres registry; optional seed_cell \"x,y\" for Moore neighborhood center), get_console_logs (buffered Console lines in response.log_lines), capture_screenshot (Play Mode PNG under tools/reports/bridge-screenshots/; include_ui for Game view + Overlay UI), enter_play_mode (EditorApplication.EnterPlaymode; completes when GridManager.isInitialized; response.ready, play_mode_state, grid_width/height), exit_play_mode (ExitPlaymode; completes when back in Edit Mode), get_play_mode_status (immediate response: play_mode_state edit_mode|play_mode_loading|play_mode_ready), debug_context_bundle (single job: Moore export + optional screenshot + console + anomaly scan; response.bundle; requires seed_cell; Play Mode + GridManager ready), get_compilation_status (synchronous compile snapshot: response.compilation_status with compiling, compilation_failed, last_error_excerpt, recent_error_messages), economy_balance_snapshot (reads population, happiness, money, tax rates, R/C/I demand in response.economy_snapshot), prefab_manifest (lists scene MonoBehaviours + missing script references in response.prefab_manifest), sorting_order_debug (requires seed_cell; returns SpriteRenderers at cell with sorting_layer/sorting_order in response.sorting_order_debug). Requires DATABASE_URL / config/postgres-dev.json, migration 0008, Unity on REPO_ROOT. Polls until completed, failed, or timeout_ms (default 30000, max 120000). On timeout, run `npm run unity:ensure-editor` then retry with timeout_ms 60000. Removes pending row on MCP timeout.",
-      inputSchema: unityBridgeCommandInputShape,
+      // Full Zod object (not a raw shape) so @modelcontextprotocol/sdk JSON Schema matches
+      // unityBridgeCommandInputSchema.safeParse in the handler (timeout_ms max = UNITY_BRIDGE_TIMEOUT_MS_MAX).
+      inputSchema: unityBridgeCommandInputSchema,
     },
     async (args) =>
       runWithToolTiming("unity_bridge_command", async () => {
@@ -561,7 +565,7 @@ export function registerUnityBridgeCommand(server: McpServer): void {
     {
       description:
         "IDE agent bridge: read agent_bridge_job by command_id (from unity_bridge_command). Default: single SELECT. With wait_ms > 0, blocks until completed/failed or wait_ms elapses. Returns status, kind, response JSON, and error text.",
-      inputSchema: getInputShape,
+      inputSchema: unityBridgeGetInputSchema,
     },
     async (args) =>
       runWithToolTiming("unity_bridge_get", async () => {
@@ -586,7 +590,7 @@ export function registerUnityBridgeCommand(server: McpServer): void {
     {
       description:
         "IDE agent bridge shortcut: same enqueue/complete path as unity_bridge_command with kind get_compilation_status. Returns response.compilation_status (compiling, compilation_failed, last_error_excerpt, recent_error_messages from buffered Console errors). Use when the Editor is open on REPO_ROOT; prefer npm run unity:compile-check (batchmode) only when no Editor holds the project lock. Requires DATABASE_URL, migration 0008, timeout_ms default 30000, max 120000.",
-      inputSchema: unityCompileInputShape,
+      inputSchema: unityCompileInputSchema,
     },
     async (args) =>
       runWithToolTiming("unity_compile", async () => {

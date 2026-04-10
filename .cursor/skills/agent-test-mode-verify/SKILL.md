@@ -23,7 +23,7 @@ description: >
 
 | Path | Requires |
 |------|----------|
-| **Path A** (**Agent test mode batch**) | Repo root; **`UNITY_EDITOR_PATH`** or **macOS** Hub inference (see **`tools/scripts/unity-compile-check.sh`** / **`unity-testmode-batch.sh`**); Unity **not** holding **project lock** (or use **`--quit-editor-first`**). No **Postgres**. |
+| **Path A** (**Agent test mode batch**) | Repo root; **`UNITY_EDITOR_PATH`** or **macOS** Hub inference (see **`tools/scripts/unity-compile-check.sh`** / **`unity-testmode-batch.sh`**). **No** other Unity process may hold **`REPO_ROOT`**: agents **must** pass **`--quit-editor-first`** on the batch command (or quit the Editor / run **`unity-quit-project.sh`** first). No **Postgres**. |
 | **Path B** (**IDE agent bridge**) | **`DATABASE_URL`** or **`config/postgres-dev.json`**; migration **`0008_agent_bridge_job.sql`**; **Unity Editor** open on **REPO_ROOT** (if not running, run **`npm run unity:ensure-editor`** — macOS; exit 0 = ready); **territory-ia** **`unity_bridge_command`**. Run **`npm run db:bridge-preflight`** before the first bridge call in a session ([**`bridge-environment-preflight`**](../bridge-environment-preflight/SKILL.md)). On bridge timeout, follow the **timeout escalation protocol** in [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md). |
 
 ## Gate — run vs skip
@@ -44,13 +44,21 @@ If **none** of the following apply, **skip** this loop, state **why** in the han
 2. **`npm run validate:all`** (repo root) when the diff touches **MCP** / schemas / **IA** indexes / **fixtures** / **`.cursor/skills/`** / **`.cursor/specs/`** bodies that feed indexes — same policy as **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)**.
 3. **Compile gate** — After **`Assets/`** **C#** changes: prefer **`unity_bridge_command`** **`kind`:** **`get_compilation_status`** or **`unity_compile`** when the **Editor** is open for **Path B**; otherwise **`npm run unity:compile-check`** from repo root (**do not** skip because **`$UNITY_EDITOR_PATH`** is unset — dotenv + **macOS** Hub fallback). **Never** run **`unity:compile-check`** while the **Editor** holds the same **projectPath** lock. Full preference order: **[`close-dev-loop`](../close-dev-loop/SKILL.md)** § **Compile gate**.
 4. **Scenario** — **v1:** committed id (e.g. **`reference-flat-32x32`**) or **`tools/fixtures/scenarios/agent-generated/{run-id}/save.json`** with **`--scenario-path`** (absolute path). **v2:** when **program** stage **31b** ships, prefer the builder output path documented in [`projects/TECH-31b-scenario-builder.md`](../../../projects/TECH-31b-scenario-builder.md) (stable artifact location).
-5. **Path A** or **Path B** (below).
+5. **Path A** or **Path B** (below). When running **both** in one session, do **Path A** first (use **`--quit-editor-first`** so batch can take the lock), then **`npm run unity:ensure-editor`** (macOS) before **Path B**.
 6. **Iterate** — On failure, fix code or environment, then repeat from step 2 up to **`{MAX_ITERATIONS}`** (default **2**, same as **`close-dev-loop`**).
 7. **Handoff** — English verdict, artifact paths, exit codes; request **human** **normal-game** **QA** (no **test mode** CLI flags / no reliance on agent-only queue file in player builds).
 
 ## Path A — **Agent test mode batch**
 
-From **repository root**:
+**Project lock:** Batchmode cannot open **`REPO_ROOT`** while the **Unity Editor** has it open. **Do not** run Path A without releasing the lock when an Editor might be running — use **`--quit-editor-first`** (or quit the Editor first).
+
+From **repository root**, **recommended** (macOS / typical agent verification):
+
+```bash
+npm run unity:testmode-batch -- --quit-editor-first --scenario-id reference-flat-32x32
+```
+
+Minimal form when you are sure **no** Editor holds the project:
 
 ```bash
 npm run unity:testmode-batch
@@ -59,7 +67,7 @@ npm run unity:testmode-batch
 - Invokes **`tools/scripts/unity-testmode-batch.sh`**: Unity **`-batchmode`** **`-nographics`** **`-executeMethod`** **`Territory.Testing.AgentTestModeBatchRunner.Run`** (no **`-quit`** on the shell — **`EditorApplication.Exit`** from C#).
 - Default **`--scenario-id`**:**`reference-flat-32x32`** when omitted.
 - Optional **`--scenario-path`** for ad-hoc **`GameSaveData`** JSON (prefer **absolute** path).
-- Optional **`--quit-editor-first`** → **`tools/scripts/unity-quit-project.sh`** (**`Temp/UnityLockfile`** / **`lsof`**).
+- **`--quit-editor-first`** (recommended for agents) → **`tools/scripts/unity-quit-project.sh`** (**`Temp/UnityLockfile`** / **`lsof`**) so the batch run can acquire the lock.
 - **Load pipeline:** runner resolves the scenario file then calls **`GameSaveManager.LoadGame`** only; optional **`-testSimulationTicks`** → **`SimulationManager.ProcessSimulationTick`** (same tick entry as normal simulation).
 - Artifacts: **`tools/reports/agent-testmode-batch-*.json`**, Unity log **`tools/reports/unity-testmode-batch-*.log`**. Transient **`tools/reports/.agent-testmode-batch-state.json`** may appear during the run (ignored with other report artifacts).
 
@@ -67,7 +75,7 @@ npm run unity:testmode-batch
 
 ```bash
 cd /path/to/territory-developer
-npm run unity:testmode-batch -- --scenario-id reference-flat-32x32
+npm run unity:testmode-batch -- --quit-editor-first --scenario-id reference-flat-32x32
 ```
 
 Expect Unity log lines containing **`[AgentTestModeBatch]`** (e.g. state written, report path). Inspect the newest **`tools/reports/agent-testmode-batch-*.json`**: **`ok: true`**, **`exit_code: 0`**, **`scenario_id`** set.
@@ -126,7 +134,7 @@ With **Postgres** configured and **Editor** on **REPO_ROOT**:
 ```markdown
 Run the agent-test-mode-verify workflow for the completed spec work.
 Follow .cursor/skills/agent-test-mode-verify/SKILL.md (Path A: glossary Agent test mode batch; Path B: glossary IDE agent bridge).
-Use territory-ia unity_bridge_command when Path B applies (timeout_ms: 40000); use npm run unity:testmode-batch when Path A applies.
+Use territory-ia unity_bridge_command when Path B applies (timeout_ms: 40000); use npm run unity:testmode-batch -- --quit-editor-first (plus scenario flags) when Path A applies if an Editor might hold REPO_ROOT.
 Fixtures must stay GameSaveData-shaped; load only through GameSaveManager.LoadGame (persistence-system Load pipeline).
 End with a Verification section per docs/agent-led-verification-policy.md (validate:all, compile if C#, batch JSON, bridge outcome).
 Max iterations: {MAX_ITERATIONS}.
@@ -141,4 +149,4 @@ Max iterations: {MAX_ITERATIONS}.
 
 ## Verification block (agent completion messages)
 
-After substantive work, include a **Verification** section matching [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md): **`npm run validate:all`** (exit code); **`npm run unity:compile-check`** if **`Assets/`** **C#** changed (**N/A** + reason otherwise); **Path A** — **`npm run unity:testmode-batch`** exit code + **`agent-testmode-batch-*.json`** **`ok`/`exit_code`**; **Path B** — **`db:bridge-preflight`** then bridge calls with **`timeout_ms`:** **`40000`** — outcome (**`ok`**, **`error`**, **`timeout`**, **`command_id`**). If **Path B** not run, state why.
+After substantive work, include a **Verification** section matching [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md): **`npm run validate:all`** (exit code); **`npm run unity:compile-check`** if **`Assets/`** **C#** changed (**N/A** + reason otherwise); **Path A** — **`npm run unity:testmode-batch`** (prefer **`--quit-editor-first`** when relevant) exit code + **`agent-testmode-batch-*.json`** **`ok`/`exit_code`**; **Path B** — **`db:bridge-preflight`** then bridge calls with **`timeout_ms`:** **`40000`** — outcome (**`ok`**, **`error`**, **`timeout`**, **`command_id`**). If **Path B** not run, state why.

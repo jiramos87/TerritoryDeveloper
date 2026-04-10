@@ -1,5 +1,7 @@
 # TECH-31a3 — **Agent test-mode verify** skill (orchestration + human **QA** handoff)
 
+**Stage status:** **Closed** (2026-04-09). All acceptance criteria and §7b test-contract rows satisfied; proceed to **31b** per [program tracker](TECH-31-agent-scenario-generator-program.md).
+
 > **Program issue:** [TECH-31](../BACKLOG.md) — stage **31a3** (child spec; aggregate **Open Questions** / **§7b** for the program live in [`.cursor/projects/TECH-31.md`](../.cursor/projects/TECH-31.md)).
 
 **Program:** [TECH-31-agent-scenario-generator-program.md](TECH-31-agent-scenario-generator-program.md) **Stage 31a3**.  
@@ -8,7 +10,7 @@
 
 ## Summary
 
-Finalize **`.cursor/skills/agent-test-mode-verify/SKILL.md`** as the **normative** agent workflow: **gate** (run vs skip), **Path A** (**Agent test mode batch** / **`npm run unity:testmode-batch`**), **Path B** (**IDE agent bridge** **hybrid** with **`.queued-test-scenario-id`**), bounded **iterate-until-green** with **`validate:all`** / **compile** gates, and a **structured handoff** requesting **human** **normal-game** **QA** only at the end. Integrate with **`project-spec-implement`** (already cross-linked) and **`close-dev-loop`** (**compose**, do not fork). **Does not** replace **human** **issue** verification per **`AGENTS.md`**.
+**Finalized** **`.cursor/skills/agent-test-mode-verify/SKILL.md`** as the **normative** agent workflow: **gate** (run vs skip), **Path A** (**Agent test mode batch** / **`npm run unity:testmode-batch`**), **Path B** (**IDE agent bridge** **hybrid** with **`.queued-test-scenario-id`**), bounded **iterate-until-green** with **`validate:all`** / **compile** gates, and a **structured handoff** requesting **human** **normal-game** **QA** only at the end. Integrate with **`project-spec-implement`** (already cross-linked) and **`close-dev-loop`** (**compose**, do not fork). **Does not** replace **human** **issue** verification per **`AGENTS.md`**.
 
 ## Goals
 
@@ -26,8 +28,8 @@ Finalize **`.cursor/skills/agent-test-mode-verify/SKILL.md`** as the **normative
 
 ## Current state
 
-- **Stub** skill exists; **`project-spec-implement`** already references it.
-- Program stage **31a2** delivered **`unity:testmode-batch`** + **`executeMethod`** + lock-based **quit**; this stage **documents consumption** and **polishes** orchestration prose.
+- **Closed** (2026-04-09): **`agent-test-mode-verify/SKILL.md`** is normative; **`project-spec-implement`** cross-links it.
+- Program stage **31a2** delivered **`unity:testmode-batch`** + **`executeMethod`** + lock-based **quit**; **31a3** delivered orchestration docs, §7b checks, and **Path A** / **Path B** **macOS** sign-off.
 
 ## Proposed design (implementation-owned)
 
@@ -61,21 +63,21 @@ Finalize **`.cursor/skills/agent-test-mode-verify/SKILL.md`** as the **normative
 
 ## 7b. Test contracts
 
-| Acceptance / goal | Check type | Command or artifact | Notes |
-|-------------------|------------|---------------------|--------|
-| **Skill** normative | Manual | Read [`.cursor/skills/agent-test-mode-verify/SKILL.md`](../.cursor/skills/agent-test-mode-verify/SKILL.md) | Full recipe, exit table, **seed prompt**; no stub-only pointer |
-| **IA / Node** | Node | `npm run validate:all` | After **`AGENTS.md`** / **`ARCHITECTURE.md`** / skill edits |
-| **Unity compile** (if **C#** touched in same effort) | Node | `npm run unity:compile-check` | Per **`AGENTS.md`**; not skipped when **`UNITY_EDITOR_PATH`** unset in agent shell |
-| **Path A** **E2E** | Manual / dev machine | `npm run unity:testmode-batch` + **`tools/reports/agent-testmode-batch-*.json`** | Committed scenario (e.g. **`reference-flat-32x32`**); **Load pipeline** exercised |
-| **Path B** **E2E** | MCP / dev machine | `npm run db:bridge-preflight` → **`unity_bridge_command`** (**`timeout_ms`:** **40000**) **`enter_play_mode`** → **`debug_context_bundle`** → **`exit_play_mode`** | **`DATABASE_URL`** + Editor on **REPO_ROOT**; see **`ide-bridge-evidence`**; **Verification** block: [`docs/agent-led-verification-policy.md`](../docs/agent-led-verification-policy.md) |
-| **Compile gate (bridge)** | MCP / dev machine | **`unity_bridge_command`** **`get_compilation_status`** or **`unity_compile`** | Same queue as **IDE agent bridge** |
-| **Console / UI spot-check (optional)** | MCP / dev machine | **`get_console_logs`**, **`capture_screenshot`** (`include_ui` when overlay must show) | **`unity-development-context`** §10 |
+| Acceptance / goal | Check type | Command or artifact | Notes | Done |
+|-------------------|------------|---------------------|--------|:----:|
+| **Skill** normative | Manual | Read [`.cursor/skills/agent-test-mode-verify/SKILL.md`](../.cursor/skills/agent-test-mode-verify/SKILL.md) | Full recipe, exit table, **seed prompt**; no stub-only pointer | [x] |
+| **IA / Node** | Node | `npm run validate:all` | After **`AGENTS.md`** / **`ARCHITECTURE.md`** / skill edits | [x] |
+| **Unity compile** (if **C#** touched in same effort) | Node | `npm run unity:compile-check` | Per **`AGENTS.md`**; not skipped when **`UNITY_EDITOR_PATH`** unset in agent shell | [x] |
+| **Path A** **E2E** | Manual / dev machine | `npm run unity:testmode-batch` + **`tools/reports/agent-testmode-batch-*.json`** | Committed scenario (e.g. **`reference-flat-32x32`**); **Load pipeline** exercised | [x] |
+| **Path B** **E2E** | MCP / dev machine | `npm run db:bridge-preflight` → **`unity_bridge_command`** (**`timeout_ms`:** **40000**) **`enter_play_mode`** → **`debug_context_bundle`** → **`exit_play_mode`** | **`DATABASE_URL`** + Editor on **REPO_ROOT**; see **`ide-bridge-evidence`**; **Verification** block: [`docs/agent-led-verification-policy.md`](../docs/agent-led-verification-policy.md) | [x] |
+| **Compile gate (bridge)** | MCP / dev machine | **`unity_bridge_command`** **`get_compilation_status`** or **`unity_compile`** | Same queue as **IDE agent bridge** | [x] |
+| **Console / UI spot-check (optional)** | MCP / dev machine | **`get_console_logs`**, **`capture_screenshot`** (`include_ui` when overlay must show) | **`unity-development-context`** §10 | [x] |
 
 ## Acceptance criteria
 
 - [x] **`SKILL.md`** is **normative** (this spec + **glossary** **Agent test mode batch** + **IDE agent bridge** vocabulary).
 - [x] **`AGENTS.md`** + **`ARCHITECTURE.md`** updated with links to the skill and batch entry point.
-- [ ] **Path A** and **Path B** each exercised once on **macOS** (owner sign-off); **`npm run validate:all`** green after doc edits.
+- [x] **Path A** and **Path B** each exercised once on **macOS** (owner sign-off); **`npm run validate:all`** green after doc edits.
 
 ## Decision Log
 
@@ -83,6 +85,7 @@ Finalize **`.cursor/skills/agent-test-mode-verify/SKILL.md`** as the **normative
 |------|----------|-----------|
 | 2026-04-09 | Consolidated former standalone **backlog** row into **TECH-31** as **31a3** | Single **program** trace; **31b** prereqs explicit |
 | 2026-04-09 | **Compose** **`close-dev-loop`** | Avoid duplicate **Moore** **diff** prose |
+| 2026-04-09 | **Stage 31a3 closed** | All §7b rows + acceptance criteria checked; **Path A** / **Path B** **macOS** sign-off complete |
 
 ## Issues Found During Development
 

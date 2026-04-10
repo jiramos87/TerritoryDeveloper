@@ -4,11 +4,16 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { normalizeObjectSchema } from "@modelcontextprotocol/sdk/server/zod-compat.js";
+import { toJsonSchemaCompat } from "@modelcontextprotocol/sdk/server/zod-json-schema-compat.js";
 import type { Pool, QueryResult } from "pg";
 import {
   runUnityBridgeCommand,
   runUnityBridgeGet,
+  UNITY_BRIDGE_TIMEOUT_MS_MAX,
   unityBridgeCommandInputSchema,
+  unityBridgeGetInputSchema,
+  unityCompileInputSchema,
   type UnityBridgeResponsePayload,
 } from "../../src/tools/unity-bridge-command.js";
 
@@ -250,6 +255,45 @@ describe("unityBridgeCommandInputSchema", () => {
     });
     assert.equal(r.success, true);
     if (r.success) assert.equal(r.data.timeout_ms, 120_000);
+  });
+
+  it("MCP list_tools JSON Schema: unity_bridge_command timeout_ms.maximum is UNITY_BRIDGE_TIMEOUT_MS_MAX", () => {
+    const normalized = normalizeObjectSchema(unityBridgeCommandInputSchema);
+    assert.ok(normalized);
+    const jsonSchema = toJsonSchemaCompat(normalized, {
+      strictUnions: true,
+      pipeStrategy: "input",
+    });
+    const timeoutProp = jsonSchema.properties?.timeout_ms as
+      | { maximum?: number }
+      | undefined;
+    assert.equal(timeoutProp?.maximum, UNITY_BRIDGE_TIMEOUT_MS_MAX);
+  });
+
+  it("MCP list_tools JSON Schema: unity_compile timeout_ms.maximum is UNITY_BRIDGE_TIMEOUT_MS_MAX", () => {
+    const normalized = normalizeObjectSchema(unityCompileInputSchema);
+    assert.ok(normalized);
+    const jsonSchema = toJsonSchemaCompat(normalized, {
+      strictUnions: true,
+      pipeStrategy: "input",
+    });
+    const timeoutProp = jsonSchema.properties?.timeout_ms as
+      | { maximum?: number }
+      | undefined;
+    assert.equal(timeoutProp?.maximum, UNITY_BRIDGE_TIMEOUT_MS_MAX);
+  });
+
+  it("MCP list_tools JSON Schema: unity_bridge_get wait_ms.maximum is 10000", () => {
+    const normalized = normalizeObjectSchema(unityBridgeGetInputSchema);
+    assert.ok(normalized);
+    const jsonSchema = toJsonSchemaCompat(normalized, {
+      strictUnions: true,
+      pipeStrategy: "input",
+    });
+    const waitProp = jsonSchema.properties?.wait_ms as
+      | { maximum?: number }
+      | undefined;
+    assert.equal(waitProp?.maximum, 10_000);
   });
 
   it("defaults timeout_ms to 30000", () => {

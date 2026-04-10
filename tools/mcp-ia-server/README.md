@@ -116,6 +116,8 @@ Shipped with **TECH-58**; scripts live under `scripts/` (they default `REPO_ROOT
 
 ## Architecture
 
+**IDE agent bridge** tools use **full Zod object schemas** in `registerTool` so `@modelcontextprotocol/sdk` emits JSON Schema for **`tools/list`** with **`timeout_ms.maximum`** = **`UNITY_BRIDGE_TIMEOUT_MS_MAX`** (120000). Unit tests in `tests/tools/unity-bridge-command.test.ts` assert that contract (hosts such as **Cursor** validate arguments against the listed schema).
+
 ```mermaid
 flowchart LR
   subgraph entry [Entry]

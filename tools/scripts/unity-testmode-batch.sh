@@ -2,6 +2,7 @@
 # Unity -batchmode test-mode load smoke: -executeMethod Territory.Testing.AgentTestModeBatchRunner.Run
 # Sources repo .env / .env.local for UNITY_EDITOR_PATH; macOS Hub fallback matches unity-compile-check.sh.
 # AI agents: do not skip because $UNITY_EDITOR_PATH is unset — dotenv is loaded here.
+# If the Unity Editor already has REPO_ROOT open, pass --quit-editor-first (or quit Editor) before batch — see docs/agent-led-verification-policy.md Path A.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=load-repo-env.inc.sh

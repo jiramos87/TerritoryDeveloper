@@ -73,7 +73,7 @@ Use **`spec_section`**, **`spec_sections`**, **`glossary_*`**, and **`router_for
 
 ## Implementation and operations
 
-- **Code:** `tools/mcp-ia-server/` (TypeScript, `@modelcontextprotocol/sdk`); shared **pure** math in **`tools/compute-lib/`** (**territory-compute-lib** package).
+- **Code:** `tools/mcp-ia-server/` (TypeScript, `@modelcontextprotocol/sdk`); shared **pure** math in **`tools/compute-lib/`** (**territory-compute-lib** package). **Bridge tools** register **full Zod object schemas** for **`unity_bridge_command`**, **`unity_bridge_get`**, and **`unity_compile`** so MCP **`tools/list`** JSON Schema matches runtime validation (**`timeout_ms`** maximum **`UNITY_BRIDGE_TIMEOUT_MS_MAX`** = **120000**). Hosts such as **Cursor** validate tool arguments against that schema; restart the **territory-ia** MCP server after changing the cap so clients refresh metadata (see [`docs/agent-led-verification-policy.md`](agent-led-verification-policy.md) **territory-ia MCP and `timeout_ms`**).
 - **Cursor:** `.cursor/mcp.json` launches `npx -y tsx tools/mcp-ia-server/src/index.ts` from the repo root; set `REPO_ROOT` if the host cwd is not the repository root.
 - **Claude Code:** project-scoped **`.mcp.json`** at the repository root uses the same **`mcpServers.territory-ia`** entry; approve the server when the CLI prompts. Agent-facing notes and **skills** pointers: **`CLAUDE.md`**.
 - **Verify:** From `tools/mcp-ia-server/`, run `npm run verify` (spawns server like Cursor and calls tools via the SDK).

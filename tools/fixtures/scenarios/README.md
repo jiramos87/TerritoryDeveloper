@@ -50,6 +50,8 @@ From the **repository root** (loads **`.env`** / **`.env.local`** for **`UNITY_E
 npm run unity:testmode-batch
 ```
 
+**Agents / IDE open:** If the **Unity Editor** already has the repo open, batchmode cannot take the **project lock** — use **`npm run unity:testmode-batch -- --quit-editor-first`** (plus scenario flags) or quit the Editor first. See [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md).
+
 This runs **`tools/scripts/unity-testmode-batch.sh`**, which launches Unity with **`-batchmode`**, **`-nographics`**, **`-executeMethod Territory.Testing.AgentTestModeBatchRunner.Run`**, and forwards scenario flags. The script does **not** pass **`-quit`**: the C# runner must finish **Play Mode** work and then calls **`EditorApplication.Exit`** (adding **`-quit`** would exit before the update pump runs). Default scenario id is **`reference-flat-32x32`** when you omit **`--scenario-id`** / **`--scenario-path`**.
 
 | Argument (shell) | Forwarded to Unity |

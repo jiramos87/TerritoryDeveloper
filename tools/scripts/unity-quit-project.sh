@@ -96,10 +96,13 @@ while IFS= read -r _pid; do
   [[ -n "$_pid" ]] && _pids2+=("$_pid")
 done < <(pids_for_lock)
 
-for pid in "${_pids2[@]}"; do
-  echo "unity-quit-project: SIGKILL pid=$pid" >&2
-  kill -KILL "$pid" 2>/dev/null || true
-done
+# With set -u, Bash 5.x errors on "${_pids2[@]}" when the array is empty.
+if [[ ${#_pids2[@]} -gt 0 ]]; then
+  for pid in "${_pids2[@]}"; do
+    echo "unity-quit-project: SIGKILL pid=$pid" >&2
+    kill -KILL "$pid" 2>/dev/null || true
+  done
+fi
 
 sleep 2
 if [[ -f "$LOCK" ]]; then

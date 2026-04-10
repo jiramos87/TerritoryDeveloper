@@ -49,7 +49,7 @@ Run from **repository root** unless **Cwd** says otherwise. Script names match r
 
 ## Verification block (agent messages — alongside this manifest)
 
-When reporting **Verification** after substantive implementation, follow [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md): include **`npm run validate:all`** (exit code), **`npm run unity:compile-check`** if **`Assets/`** **C#** changed, **Path A** **`npm run unity:testmode-batch`** summary, and **Path B** **`unity_bridge_command`** outcome with **`timeout_ms`:** **`40000`** initial (escalation protocol on timeout; or **N/A** + reason). This is **separate** from the **Validation manifest** table above (Node-only **CI** parity).
+When reporting **Verification** after substantive implementation, follow [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md): include **`npm run validate:all`** (exit code), **`npm run unity:compile-check`** if **`Assets/`** **C#** changed, **Path A** **`npm run unity:testmode-batch`** summary (prefer **`--quit-editor-first`** when an Editor might hold **`REPO_ROOT`**), and **Path B** **`unity_bridge_command`** outcome with **`timeout_ms`:** **`40000`** initial (escalation protocol on timeout; or **N/A** + reason). This is **separate** from the **Validation manifest** table above (Node-only **CI** parity).
 
 ## Optional: IDE agent bridge evidence (dev machine — **N/A** in CI)
 
