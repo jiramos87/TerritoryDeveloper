@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-09T17:15:13.085Z",
+  "last_generated": "2026-04-10T09:49:09.978Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -494,6 +494,10 @@
     "geography_init_params": {
       "spec_key": "persistence-system",
       "anchor": ""
+    },
+    "scenario_descriptor_v1": {
+      "spec_key": "persistence-system",
+      "anchor": "load-pipeline"
     }
   }
 }

@@ -1,0 +1,8 @@
+{
+  "artifact": "scenario_descriptor_v1",
+  "schemaVersion": 1,
+  "scenarioId": "bad-map",
+  "layoutKind": "declarative",
+  "map": { "width": 64, "height": 64 },
+  "terrain": { "mode": "uniform", "uniformHeight": 1 }
+}

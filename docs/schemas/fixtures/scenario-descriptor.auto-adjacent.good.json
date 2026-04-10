@@ -1,0 +1,8 @@
+{
+  "artifact": "scenario_descriptor_v1",
+  "schemaVersion": 1,
+  "scenarioId": "descriptor-auto-adjacent-template",
+  "layoutKind": "autoAdjacent",
+  "map": { "width": 32, "height": 32 },
+  "terrain": { "mode": "uniform", "uniformHeight": 1 }
+}

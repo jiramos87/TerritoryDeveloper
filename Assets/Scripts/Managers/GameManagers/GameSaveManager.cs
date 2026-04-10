@@ -18,6 +18,7 @@ namespace Territory.Persistence
 /// Coordinates with GridManager for grid data, WaterManager for <see cref="WaterMapData"/>, CityStats for city state, and TimeManager for time state.
 /// Load restores height map and water map before <see cref="GridManager.RestoreGrid"/> (snapshot visuals; no terrain/water slope regen or global sorting recalc).
 /// Agent **test mode** resolves committed JSON under <c>tools/fixtures/scenarios/</c> via CLI (<see cref="Territory.Testing.TestModeCommandLineBootstrap"/>) and still loads through <see cref="LoadGame"/> only.
+/// Scenario builder batch tooling writes snapshots via <see cref="TryWriteGameSaveToPath"/>.
 /// </summary>
 public class GameSaveManager : MonoBehaviour
 {
@@ -34,6 +35,47 @@ public class GameSaveManager : MonoBehaviour
     public MiniMapController miniMapController;
 
     public void SaveGame(string customSaveName = null)
+    {
+        GameSaveData saveData = BuildCurrentGameSaveData(customSaveName);
+
+        string path = Path.Combine(Application.persistentDataPath, saveData.saveName + ".json");
+        File.WriteAllText(path, JsonUtility.ToJson(saveData));
+
+        PlayerPrefs.SetString("LastSavePath", path);
+        PlayerPrefs.Save();
+
+        if (GameNotificationManager.Instance != null)
+            GameNotificationManager.Instance.PostNotification("Game saved successfully", GameNotificationManager.NotificationType.Success, 3f);
+    }
+
+    /// <summary>
+    /// Writes the current scene state as <see cref="GameSaveData"/> JSON to an absolute path (scenario builder / batch tooling).
+    /// Does not touch <c>PlayerPrefs</c> or HUD notifications.
+    /// </summary>
+    /// <param name="absolutePath">Destination <c>.json</c> path.</param>
+    /// <param name="saveNameForPayload"><see cref="GameSaveData.saveName"/> field; when null, uses <see cref="CityStats.cityName"/> + timestamp.</param>
+    /// <param name="error">Set when the write fails.</param>
+    /// <returns>True when the file was written.</returns>
+    public bool TryWriteGameSaveToPath(string absolutePath, string saveNameForPayload, out string error)
+    {
+        error = null;
+        try
+        {
+            GameSaveData saveData = BuildCurrentGameSaveData(saveNameForPayload);
+            string dir = Path.GetDirectoryName(absolutePath);
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
+            File.WriteAllText(absolutePath, JsonUtility.ToJson(saveData));
+            return true;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
+    GameSaveData BuildCurrentGameSaveData(string customSaveName)
     {
         GameSaveData saveData = new GameSaveData();
         saveData.cityName = cityStats.cityName;
@@ -59,22 +101,10 @@ public class GameSaveManager : MonoBehaviour
         GrowthBudgetManager growthBudgetManager = FindObjectOfType<GrowthBudgetManager>();
         if (growthBudgetManager != null)
             saveData.growthBudget = growthBudgetManager.data.Clone();
-        // Proposal flow disabled: do not persist pending proposals
         saveData.pendingProposals = new List<UrbanizationProposal>();
         if (miniMapController != null)
             saveData.minimapActiveLayers = (int)miniMapController.GetActiveLayers();
-        // saveData.playerSettings = GetPlayerSettings();
-
-        string json = JsonUtility.ToJson(saveData);
-
-        string path = Path.Combine(Application.persistentDataPath, saveData.saveName + ".json");
-        File.WriteAllText(path, json);
-
-        PlayerPrefs.SetString("LastSavePath", path);
-        PlayerPrefs.Save();
-
-        if (GameNotificationManager.Instance != null)
-            GameNotificationManager.Instance.PostNotification("Game saved successfully", GameNotificationManager.NotificationType.Success, 3f);
+        return saveData;
     }
 
     /// <summary>

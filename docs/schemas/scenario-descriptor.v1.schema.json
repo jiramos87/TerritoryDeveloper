@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "territory-developer:schemas/scenario-descriptor.v1",
+  "title": "Scenario descriptor (v1)",
+  "description": "Structured intent for assembling GameSaveData-shaped scenarios. Interchange JSON (not Save data). Property names use camelCase so Unity JsonUtility can parse the same file.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["artifact", "schemaVersion", "scenarioId", "layoutKind", "map", "terrain"],
+  "properties": {
+    "artifact": {
+      "type": "string",
+      "const": "scenario_descriptor_v1",
+      "description": "Logical model id for validators and agents."
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1,
+      "description": "Breaking-revision integer; bump only when consumers must migrate."
+    },
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Kebab-case scenario id (matches tools/fixtures/scenarios layout)."
+    },
+    "layoutKind": {
+      "type": "string",
+      "enum": ["declarative", "autoAdjacent"],
+      "description": "declarative = authored layers; autoAdjacent = simulation-driven (document workflow only — Node builder skips road strokes)."
+    },
+    "map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "const": 32 },
+        "height": { "type": "integer", "const": 32 }
+      }
+    },
+    "terrain": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "uniformHeight"],
+          "properties": {
+            "mode": { "type": "string", "const": "uniform" },
+            "uniformHeight": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 32
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "heightsRowMajor"],
+          "properties": {
+            "mode": { "type": "string", "const": "rowMajor" },
+            "heightsRowMajor": {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 1, "maximum": 32 },
+              "minItems": 1024,
+              "maxItems": 1024,
+              "description": "Index order y * width + x (matches Node gridData row order)."
+            }
+          }
+        }
+      ]
+    },
+    "waterMapData": {
+      "type": ["object", "null"],
+      "description": "Optional WaterMapData-compatible object; Unity builder applies after terrain. Omit or null to keep base save water.",
+      "additionalProperties": true
+    },
+    "roadStrokes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "cells"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["street", "interstate"]
+          },
+          "cells": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["x", "y"],
+              "properties": {
+                "x": { "type": "integer", "minimum": 0, "maximum": 31 },
+                "y": { "type": "integer", "minimum": 0, "maximum": 31 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "saveOverlay": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "saveName": { "type": "string" },
+        "cityName": { "type": "string" },
+        "inGameTime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["day", "month", "year"],
+          "properties": {
+            "day": { "type": "integer", "minimum": 1, "maximum": 31 },
+            "month": { "type": "integer", "minimum": 1, "maximum": 12 },
+            "year": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    }
+  }
+}

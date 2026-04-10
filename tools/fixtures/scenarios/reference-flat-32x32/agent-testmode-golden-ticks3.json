@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "simulation_ticks": 3,
+  "population": 0,
+  "money": 20000,
+  "roadCount": 0,
+  "grassCount": 1024,
+  "residentialZoneCount": 0,
+  "commercialZoneCount": 0,
+  "industrialZoneCount": 0,
+  "residentialBuildingCount": 0,
+  "commercialBuildingCount": 0,
+  "industrialBuildingCount": 0,
+  "forestCellCount": 0
+}

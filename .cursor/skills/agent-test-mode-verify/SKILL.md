@@ -43,7 +43,7 @@ If **none** of the following apply, **skip** this loop, state **why** in the han
 1. **Gate** — Apply the table above; if skip, document and stop (or run **`validate:all`** only if the diff still warrants it).
 2. **`npm run validate:all`** (repo root) when the diff touches **MCP** / schemas / **IA** indexes / **fixtures** / **`.cursor/skills/`** / **`.cursor/specs/`** bodies that feed indexes — same policy as **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)**.
 3. **Compile gate** — After **`Assets/`** **C#** changes: prefer **`unity_bridge_command`** **`kind`:** **`get_compilation_status`** or **`unity_compile`** when the **Editor** is open for **Path B**; otherwise **`npm run unity:compile-check`** from repo root (**do not** skip because **`$UNITY_EDITOR_PATH`** is unset — dotenv + **macOS** Hub fallback). **Never** run **`unity:compile-check`** while the **Editor** holds the same **projectPath** lock. Full preference order: **[`close-dev-loop`](../close-dev-loop/SKILL.md)** § **Compile gate**.
-4. **Scenario** — **v1:** committed id (e.g. **`reference-flat-32x32`**) or **`tools/fixtures/scenarios/agent-generated/{run-id}/save.json`** with **`--scenario-path`** (absolute path). **v2:** when **program** stage **31b** ships, prefer the builder output path documented in [`projects/TECH-31b-scenario-builder.md`](../../../projects/TECH-31b-scenario-builder.md) (stable artifact location).
+4. **Scenario** — **v1:** committed id (e.g. **`reference-flat-32x32`**) or **`tools/fixtures/scenarios/agent-generated/{run-id}/save.json`** with **`--scenario-path`** (absolute path). **v2:** prefer **`scenario_descriptor_v1`** output layout from [`tools/fixtures/scenarios/BUILDER.md`](../../../tools/fixtures/scenarios/BUILDER.md) (**glossary** **scenario_descriptor_v1**).
 5. **Path A** or **Path B** (below). When running **both** in one session, do **Path A** first (use **`--quit-editor-first`** so batch can take the lock), then **`npm run unity:ensure-editor`** (macOS) before **Path B**.
 6. **Iterate** — On failure, fix code or environment, then repeat from step 2 up to **`{MAX_ITERATIONS}`** (default **2**, same as **`close-dev-loop`**).
 7. **Handoff** — English verdict, artifact paths, exit codes; request **human** **normal-game** **QA** (no **test mode** CLI flags / no reliance on agent-only queue file in player builds).
@@ -69,7 +69,8 @@ npm run unity:testmode-batch
 - Optional **`--scenario-path`** for ad-hoc **`GameSaveData`** JSON (prefer **absolute** path).
 - **`--quit-editor-first`** (recommended for agents) → **`tools/scripts/unity-quit-project.sh`** (**`Temp/UnityLockfile`** / **`lsof`**) so the batch run can acquire the lock.
 - **Load pipeline:** runner resolves the scenario file then calls **`GameSaveManager.LoadGame`** only; optional **`-testSimulationTicks`** → **`SimulationManager.ProcessSimulationTick`** (same tick entry as normal simulation).
-- Artifacts: **`tools/reports/agent-testmode-batch-*.json`**, Unity log **`tools/reports/unity-testmode-batch-*.log`**. Transient **`tools/reports/.agent-testmode-batch-state.json`** may appear during the run (ignored with other report artifacts).
+- Optional **`--golden-path`** / **`-testGoldenPath`**: asserts integer **CityStats** fields against a committed JSON next to the scenario — mismatch → exit **8** (see [`tools/fixtures/scenarios/README.md`](../../../tools/fixtures/scenarios/README.md) **Golden CityStats**).
+- Artifacts: **`tools/reports/agent-testmode-batch-*.json`** (report **`schema_version`** **2** may include **`city_stats`**), Unity log **`tools/reports/unity-testmode-batch-*.log`**. Transient **`tools/reports/.agent-testmode-batch-state.json`** may appear during the run (ignored with other report artifacts).
 
 ### Path A — worked example (**macOS**)
 
@@ -114,9 +115,10 @@ With **Postgres** configured and **Editor** on **REPO_ROOT**:
 | **`unity-quit-project.sh`** | **0** | No lock or lock released. |
 | | **1** | Invalid args. |
 | | **3** | Lock still held after **SIGTERM**/**SIGKILL**. |
-| **`AgentTestModeBatchRunner`** (**`EditorApplication.Exit`**) | **4** | Test mode disallowed; bad/missing **`-testScenarioId`**/**`-testScenarioPath`**; missing save; **MainScene** open failure. |
+| **`AgentTestModeBatchRunner`** (**`EditorApplication.Exit`**) | **4** | Test mode disallowed; bad/missing **`-testScenarioId`**/**`-testScenarioPath`**; missing golden file; **MainScene** open failure. |
 | | **6** | **Play Mode** / grid wait failure; **`LoadGame`** or simulation exception; unexpected **update** error. |
 | | **7** | Timed out waiting for **Play Mode** to stop after load. |
+| | **8** | Golden **CityStats** JSON mismatch (**`-testGoldenPath`** / **`--golden-path`**). |
 | **MCP** / bridge | **`db_unconfigured`** / connection errors | No **`DATABASE_URL`** — configure per [`docs/postgres-ia-dev-setup.md`](../../../docs/postgres-ia-dev-setup.md). |
 | | Job **`timeout`** / **`timeout_ms`** | **Unity** did not complete the job — see **`ide-bridge-evidence`**; check **Editor** logs. |
 | **`get_compilation_status`** | **`compiling`**, **`compilation_failed`**, **`last_error_excerpt`** | Same queue as **IDE agent bridge**; see **`close-dev-loop`** compile gate. |

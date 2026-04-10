@@ -248,6 +248,81 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
+    /// Scenario builder / batch tooling: commits a street <b>road stroke</b> through
+    /// <see cref="TryPrepareRoadPlacementPlan"/> + <see cref="PathTerraformPlan.Apply"/> + resolve/place
+    /// (same preparation family as manual placement), without affordability checks or money changes.
+    /// </summary>
+    /// <param name="pathRaw">Polyline in grid space (at least two cells).</param>
+    /// <param name="error">Glossary-aligned reason when preparation or apply fails.</param>
+    public bool TryCommitStreetStrokeForScenarioBuild(List<Vector2> pathRaw, out string error)
+    {
+        error = null;
+        if (pathRaw == null || pathRaw.Count < 2)
+        {
+            error = "road stroke must list at least two cells";
+            return false;
+        }
+
+        if (terraformingService == null || terrainManager == null || gridManager == null)
+        {
+            error = "road stroke apply failed: TerrainManager or GridManager not available";
+            return false;
+        }
+
+        HeightMap heightMap = terrainManager.GetHeightMap();
+        if (heightMap == null)
+        {
+            error = "road stroke apply failed: HeightMap missing";
+            return false;
+        }
+
+        if (roadPrefabResolver == null)
+            roadPrefabResolver = new RoadPrefabResolver(gridManager, terrainManager, this);
+        if (roadPrefabResolver == null)
+        {
+            error = "road stroke apply failed: RoadPrefabResolver could not be created";
+            return false;
+        }
+
+        var streetCtx = new RoadPathValidationContext { forbidCutThrough = false };
+        if (!TryPrepareRoadPlacementPlan(pathRaw, streetCtx, false, out List<Vector2> expandedPath, out PathTerraformPlan plan))
+        {
+            error =
+                "road stroke rejected by road preparation (TryPrepareRoadPlacementPlan): invalid wet run, shore band, cut-through, or Phase-1 height feasibility";
+            return false;
+        }
+
+        if (!plan.Apply(heightMap, terrainManager))
+        {
+            error = "road stroke PathTerraformPlan.Apply failed (terrain / HeightMap)";
+            return false;
+        }
+
+        List<RoadPrefabResolver.ResolvedRoadTile> resolved = roadPrefabResolver.ResolveForPath(expandedPath, plan);
+        placementPathPositions = new HashSet<Vector2>();
+        foreach (RoadPrefabResolver.ResolvedRoadTile r in resolved)
+            placementPathPositions.Add(new Vector2(r.gridPos.x, r.gridPos.y));
+        for (int i = 0; i < resolved.Count; i++)
+        {
+            PlaceRoadTileFromResolved(resolved[i]);
+            UpdateAdjacentRoadPrefabsAt(new Vector2(resolved[i].gridPos.x, resolved[i].gridPos.y));
+        }
+
+        RefreshAllAdjacentRoadsOutsidePath();
+        placementPathPositions = null;
+        for (int i = 0; i < resolved.Count; i++)
+        {
+            if (IsBridgeDeckRoadPrefab(resolved[i].prefab))
+                continue;
+            RefreshRoadPrefabAt(new Vector2(resolved[i].gridPos.x, resolved[i].gridPos.y));
+        }
+
+        cityStats.AddPowerConsumption(resolved.Count * ZoneAttributes.Road.PowerConsumption);
+        gridManager.InvalidateRoadCache();
+        return true;
+    }
+
+    /// <summary>
     /// True if terraform plan is buildable under <paramref name="ctx"/> (e.g. interstate forbids cut-through).
     /// </summary>
     public bool ValidateTerraformPlanWithContext(PathTerraformPlan plan, RoadPathValidationContext ctx)

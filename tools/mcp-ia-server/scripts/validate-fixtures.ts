@@ -26,6 +26,17 @@ const FIXTURE_SETS: FixtureSet[] = [
       "docs/schemas/fixtures/geography-init-params.bad-missing-map.json",
     ],
   },
+  {
+    schemaRelative: "docs/schemas/scenario-descriptor.v1.schema.json",
+    valid: [
+      "docs/schemas/fixtures/scenario-descriptor.good.json",
+      "docs/schemas/fixtures/scenario-descriptor.auto-adjacent.good.json",
+    ],
+    invalid: [
+      "docs/schemas/fixtures/scenario-descriptor.bad-missing-artifact.json",
+      "docs/schemas/fixtures/scenario-descriptor.bad-map-size.json",
+    ],
+  },
 ];
 
 function readJson(filePath: string): unknown {

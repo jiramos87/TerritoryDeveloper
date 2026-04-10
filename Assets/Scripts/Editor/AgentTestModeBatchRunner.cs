@@ -2,7 +2,9 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using Territory.Core;
+using Territory.Economy;
 using Territory.Persistence;
 using Territory.Simulation;
 using UnityEditor;
@@ -26,6 +28,11 @@ namespace Territory.Testing
         /// <summary>Same scenario flags as <see cref="TestModeCommandLineBootstrap"/>.</summary>
         public const string ArgSimulationTicks = "-testSimulationTicks";
 
+        /// <summary>Optional committed JSON of <see cref="AgentTestModeBatchCitySnapshotDto"/>; mismatch → exit code 8.</summary>
+        public const string ArgGoldenPath = "-testGoldenPath";
+
+        public const int ExitCodeGoldenMismatch = 8;
+
         public const string MainScenePath = "Assets/Scenes/MainScene.unity";
 
         /// <summary>Transient state file under <c>tools/reports/</c> (dotfile; ignored by <c>tools/reports/**</c>).</summary>
@@ -40,12 +47,39 @@ namespace Territory.Testing
             WaitStopped = 2
         }
 
+        /// <summary>
+        /// Integer <b>CityStats</b> slice for golden checks (stable across platforms; no floats).
+        /// Serialized to committed JSON under <c>tools/fixtures/scenarios/…</c>.
+        /// </summary>
+        [Serializable]
+        public class AgentTestModeBatchCitySnapshotDto
+        {
+            public int schema_version = 1;
+            public int simulation_ticks;
+            public int population;
+            public int money;
+            public int roadCount;
+            public int grassCount;
+            public int residentialZoneCount;
+            public int commercialZoneCount;
+            public int industrialZoneCount;
+            public int residentialBuildingCount;
+            public int commercialBuildingCount;
+            public int industrialBuildingCount;
+            public int forestCellCount;
+        }
+
         [Serializable]
         class AgentTestModeBatchStateDto
         {
             public int phase;
             public string save_path = "";
             public string scenario_id = "";
+            public string golden_path = "";
+            public string city_stats_snapshot_json = "";
+            public bool golden_checked;
+            public bool golden_matched;
+            public string golden_diff = "";
             public int ticks_requested;
             public int ticks_applied;
             public int exit_code;
@@ -56,11 +90,16 @@ namespace Territory.Testing
         [Serializable]
         class AgentTestModeBatchReportDto
         {
-            public int schema_version = 1;
+            public int schema_version = 2;
             public string kind = "agent-testmode-batch";
             public bool ok;
             public string scenario_id = "";
             public string save_path = "";
+            public string golden_path = "";
+            public bool golden_checked;
+            public bool golden_matched;
+            public string golden_diff = "";
+            public AgentTestModeBatchCitySnapshotDto city_stats;
             public int simulation_ticks_requested;
             public int simulation_ticks_applied;
             public int exit_code;
@@ -152,6 +191,17 @@ namespace Territory.Testing
             }
 
             int ticksRequested = ParseSimulationTicks(args);
+            string goldenPath = ParseTestGoldenPath(args);
+            if (!string.IsNullOrEmpty(goldenPath))
+            {
+                goldenPath = Path.GetFullPath(goldenPath);
+                if (!File.Exists(goldenPath))
+                {
+                    FailImmediate(4, $"Golden file not found: {goldenPath}");
+                    return;
+                }
+            }
+
             try
             {
                 EditorSceneManager.OpenScene(MainScenePath, OpenSceneMode.Single);
@@ -167,6 +217,7 @@ namespace Territory.Testing
                 phase = (int)BatchPhase.WaitGrid,
                 save_path = savePath,
                 scenario_id = scenarioId ?? string.Empty,
+                golden_path = goldenPath ?? string.Empty,
                 ticks_requested = ticksRequested,
                 ticks_applied = 0,
                 exit_code = 0,
@@ -195,6 +246,105 @@ namespace Territory.Testing
             }
 
             return 0;
+        }
+
+        static string ParseTestGoldenPath(string[] args)
+        {
+            if (args == null || args.Length == 0)
+                return null;
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i] == ArgGoldenPath && i + 1 < args.Length)
+                    return args[i + 1]?.Trim();
+            }
+
+            return null;
+        }
+
+        static AgentTestModeBatchCitySnapshotDto BuildCitySnapshot(CityStats cityStats, int ticksApplied)
+        {
+            if (cityStats == null)
+                return null;
+            return new AgentTestModeBatchCitySnapshotDto
+            {
+                schema_version = 1,
+                simulation_ticks = ticksApplied,
+                population = cityStats.population,
+                money = cityStats.money,
+                roadCount = cityStats.roadCount,
+                grassCount = cityStats.grassCount,
+                residentialZoneCount = cityStats.residentialZoneCount,
+                commercialZoneCount = cityStats.commercialZoneCount,
+                industrialZoneCount = cityStats.industrialZoneCount,
+                residentialBuildingCount = cityStats.residentialBuildingCount,
+                commercialBuildingCount = cityStats.commercialBuildingCount,
+                industrialBuildingCount = cityStats.industrialBuildingCount,
+                forestCellCount = cityStats.forestCellCount
+            };
+        }
+
+        static bool TryCompareGolden(string goldenPath, AgentTestModeBatchCitySnapshotDto actual, int ticksRequested, out string diff)
+        {
+            diff = null;
+            if (string.IsNullOrEmpty(goldenPath) || actual == null)
+                return true;
+
+            string json;
+            try
+            {
+                json = File.ReadAllText(goldenPath);
+            }
+            catch (Exception ex)
+            {
+                diff = $"Could not read golden file: {ex.Message}";
+                return false;
+            }
+
+            AgentTestModeBatchCitySnapshotDto expected = JsonUtility.FromJson<AgentTestModeBatchCitySnapshotDto>(json);
+            if (expected == null)
+            {
+                diff = "Golden JSON deserialized to null.";
+                return false;
+            }
+
+            if (expected.schema_version != 1)
+            {
+                diff = $"Unsupported golden schema_version {expected.schema_version} (expected 1).";
+                return false;
+            }
+
+            if (expected.simulation_ticks != ticksRequested)
+            {
+                diff = $"Golden simulation_ticks {expected.simulation_ticks} does not match requested ticks {ticksRequested}.";
+                return false;
+            }
+
+            var sb = new StringBuilder();
+            void Cmp(string name, int a, int b)
+            {
+                if (a != b)
+                    sb.AppendLine($"{name}: golden={a} actual={b}");
+            }
+
+            Cmp(nameof(actual.population), expected.population, actual.population);
+            Cmp(nameof(actual.money), expected.money, actual.money);
+            Cmp(nameof(actual.roadCount), expected.roadCount, actual.roadCount);
+            Cmp(nameof(actual.grassCount), expected.grassCount, actual.grassCount);
+            Cmp(nameof(actual.residentialZoneCount), expected.residentialZoneCount, actual.residentialZoneCount);
+            Cmp(nameof(actual.commercialZoneCount), expected.commercialZoneCount, actual.commercialZoneCount);
+            Cmp(nameof(actual.industrialZoneCount), expected.industrialZoneCount, actual.industrialZoneCount);
+            Cmp(nameof(actual.residentialBuildingCount), expected.residentialBuildingCount, actual.residentialBuildingCount);
+            Cmp(nameof(actual.commercialBuildingCount), expected.commercialBuildingCount, actual.commercialBuildingCount);
+            Cmp(nameof(actual.industrialBuildingCount), expected.industrialBuildingCount, actual.industrialBuildingCount);
+            Cmp(nameof(actual.forestCellCount), expected.forestCellCount, actual.forestCellCount);
+
+            if (sb.Length > 0)
+            {
+                diff = sb.ToString().TrimEnd();
+                return false;
+            }
+
+            return true;
         }
 
         static void OnEditorUpdate()
@@ -265,10 +415,49 @@ namespace Territory.Testing
                 }
 
                 state.ticks_applied = applied;
-                state.exit_code = 0;
-                state.error = string.Empty;
-                WriteState(state);
-                TryWriteReportFromState(state, ok: true, error: null);
+                CityStats cityStats = UnityEngine.Object.FindObjectOfType<CityStats>();
+                AgentTestModeBatchCitySnapshotDto snapshot = BuildCitySnapshot(cityStats, applied);
+                if (snapshot != null)
+                    state.city_stats_snapshot_json = JsonUtility.ToJson(snapshot, prettyPrint: false);
+
+                state.golden_checked = !string.IsNullOrEmpty(state.golden_path);
+                state.golden_matched = true;
+                state.golden_diff = string.Empty;
+                if (state.golden_checked)
+                {
+                    if (snapshot == null)
+                    {
+                        state.golden_matched = false;
+                        state.golden_diff = "CityStats not found; cannot compare golden.";
+                        state.exit_code = ExitCodeGoldenMismatch;
+                        state.error = state.golden_diff;
+                        WriteState(state);
+                        TryWriteReportFromState(state, ok: false, error: state.error);
+                    }
+                    else if (!TryCompareGolden(state.golden_path, snapshot, state.ticks_requested, out string gdiff))
+                    {
+                        state.golden_matched = false;
+                        state.golden_diff = gdiff ?? "Golden mismatch.";
+                        state.exit_code = ExitCodeGoldenMismatch;
+                        state.error = $"Golden mismatch:\n{state.golden_diff}";
+                        WriteState(state);
+                        TryWriteReportFromState(state, ok: false, error: state.error);
+                    }
+                    else
+                    {
+                        state.exit_code = 0;
+                        state.error = string.Empty;
+                        WriteState(state);
+                        TryWriteReportFromState(state, ok: true, error: null);
+                    }
+                }
+                else
+                {
+                    state.exit_code = 0;
+                    state.error = string.Empty;
+                    WriteState(state);
+                    TryWriteReportFromState(state, ok: true, error: null);
+                }
             }
             catch (Exception ex)
             {
@@ -362,7 +551,7 @@ namespace Territory.Testing
         static void TryWriteReportFromState(AgentTestModeBatchStateDto state, bool ok, string error)
         {
             int exitCode = state.exit_code != 0 ? state.exit_code : (ok ? 0 : 6);
-            TryWriteReportBody(ok, error, exitCode, state.save_path, state.scenario_id, state.ticks_requested, state.ticks_applied);
+            TryWriteReportBody(ok, error, exitCode, state.save_path, state.scenario_id, state.ticks_requested, state.ticks_applied, state);
         }
 
         static void TryWriteReportImmediate(bool ok, string error, int exitCode)
@@ -378,7 +567,7 @@ namespace Territory.Testing
             }
 
             ticksRequested = ParseSimulationTicks(Environment.GetCommandLineArgs());
-            TryWriteReportBody(ok, error, exitCode, savePath, scenarioId, ticksRequested, ticksApplied);
+            TryWriteReportBody(ok, error, exitCode, savePath, scenarioId, ticksRequested, ticksApplied, null);
         }
 
         static void TryWriteReportBody(
@@ -388,7 +577,8 @@ namespace Territory.Testing
             string savePath,
             string scenarioId,
             int ticksRequested,
-            int ticksApplied)
+            int ticksApplied,
+            AgentTestModeBatchStateDto extraState)
         {
             try
             {
@@ -398,11 +588,31 @@ namespace Territory.Testing
                 string fileName = $"agent-testmode-batch-{DateTime.UtcNow:yyyyMMdd-HHmmss}.json";
                 string fullPath = Path.Combine(reportsDir, fileName);
 
+                AgentTestModeBatchCitySnapshotDto cityStatsDto = null;
+                string goldenPath = string.Empty;
+                bool goldenChecked = false;
+                bool goldenMatched = false;
+                string goldenDiff = string.Empty;
+                if (extraState != null)
+                {
+                    goldenPath = extraState.golden_path ?? string.Empty;
+                    goldenChecked = extraState.golden_checked;
+                    goldenMatched = extraState.golden_matched;
+                    goldenDiff = extraState.golden_diff ?? string.Empty;
+                    if (!string.IsNullOrEmpty(extraState.city_stats_snapshot_json))
+                        cityStatsDto = JsonUtility.FromJson<AgentTestModeBatchCitySnapshotDto>(extraState.city_stats_snapshot_json);
+                }
+
                 var dto = new AgentTestModeBatchReportDto
                 {
                     ok = ok,
                     scenario_id = scenarioId ?? string.Empty,
                     save_path = savePath ?? string.Empty,
+                    golden_path = goldenPath,
+                    golden_checked = goldenChecked,
+                    golden_matched = goldenMatched,
+                    golden_diff = goldenDiff,
+                    city_stats = cityStatsDto,
                     simulation_ticks_requested = ticksRequested,
                     simulation_ticks_applied = ticksApplied,
                     exit_code = exitCode,

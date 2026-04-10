@@ -1,6 +1,6 @@
 # TECH-31a3 — **Agent test-mode verify** skill (orchestration + human **QA** handoff)
 
-**Stage status:** **Closed** (2026-04-09). All acceptance criteria and §7b test-contract rows satisfied; proceed to **31b** per [program tracker](TECH-31-agent-scenario-generator-program.md).
+**Stage status:** **Closed** (2026-04-09). All acceptance criteria and test-contract rows satisfied; later program stages **31b**–**31c** shipped per [program tracker](TECH-31-agent-scenario-generator-program.md) (**31c** adds optional **`--golden-path`** / exit **8** — see **glossary** **Agent test mode batch**).
 
 > **Program issue:** [TECH-31](../BACKLOG.md) — stage **31a3** (child spec; aggregate **Open Questions** / **§7b** for the program live in [`.cursor/projects/TECH-31.md`](../.cursor/projects/TECH-31.md)).
 
@@ -16,7 +16,7 @@
 
 1. **Complete** **`SKILL.md`**: triggers, prerequisites, **exit-code** / failure-class table (mapping **Agent test mode batch** shell/C# codes + bridge failures), full **tool recipe** (**territory-ia** + **Node**/**shell** order), **seed prompt**.
 2. **Gating heuristics** (document in **SKILL.md** as a short table): run the loop when the diff or **§7b** / **§8** touches **`GameSaveManager`** / **`GameSaveData`**, **test mode** bootstrap, **Load pipeline**-relevant saves, **GridManager** / **simulation** tick harness, or **HUD** / **Play Mode** assertions; otherwise **skip** and record **why** in the handoff.
-3. **Scenario path** **v1**: reference **`reference-flat-32x32`** + **`tools/fixtures/scenarios/agent-generated/{run-id}/save.json`** conventions; **v2**: hook **31b** builder output when shipped.
+3. **Scenario path** **v1**: reference **`reference-flat-32x32`** + **`tools/fixtures/scenarios/agent-generated/{run-id}/save.json`** conventions; **v2**: **`scenario_descriptor_v1`** output per [`tools/fixtures/scenarios/BUILDER.md`](../tools/fixtures/scenarios/BUILDER.md).
 4. **`AGENTS.md`** + **`ARCHITECTURE.md`** short subsections pointing to the skill.
 5. **macOS** **E2E** documented once (**Path A** and **Path B**).
 
@@ -59,7 +59,7 @@
 ### Phase 3 — **Scenario** contract until **31b**
 
 - [x] Document **`tools/fixtures/scenarios/agent-generated/{run-id}/save.json`**; ensure [`.gitignore`](../.gitignore) ignores **`tools/fixtures/scenarios/agent-generated/`** if missing.
-- [x] Cross-link program stage **31b** when **scenario builder** output path is stable.
+- [x] Cross-link **scenario builder** output (**glossary** **scenario_descriptor_v1**, [`BUILDER.md`](../tools/fixtures/scenarios/BUILDER.md)).
 
 ## 7b. Test contracts
 

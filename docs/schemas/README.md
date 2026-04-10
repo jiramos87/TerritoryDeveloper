@@ -25,3 +25,4 @@ Machine-readable contracts for **interchange** JSON (tools, **MCP**, fixtures)â€
 |--------|------------|------|
 | `cell-chunk-interchange.v1.schema.json` | `terrain_cell_chunk` | Axis-aligned **chunk** of **Cell** subset + height (Editor export, **Play Mode**) |
 | `world-snapshot-dev.v1.schema.json` | `world_snapshot_dev` | **Water map** histogram + optional **HeightMap** raster (diagnostics only) |
+| `scenario-descriptor.v1.schema.json` | `scenario_descriptor_v1` | **Agent scenario generator** descriptor (camelCase keys for Unity **JsonUtility**). Node terrain-only emit; Unity batch for **road stroke** via **road preparation** + **Apply**. **glossary** **scenario_descriptor_v1**; [`tools/fixtures/scenarios/BUILDER.md`](../../tools/fixtures/scenarios/BUILDER.md). |

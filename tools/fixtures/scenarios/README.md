@@ -10,7 +10,7 @@ Authoritative **save**-shaped JSON for **test mode** and future agent tooling. L
   1. `{scenario-id}/save.json`
   2. `{scenario-id}.json` in this folder
 
-## Agent-generated saves (v1 until **31b**)
+## Agent-generated saves (ad hoc runs)
 
 For ad-hoc **agent**-produced **`GameSaveData`** JSON (not committed), use a **run-scoped** directory so paths stay stable and the tree stays out of git:
 
@@ -18,13 +18,17 @@ For ad-hoc **agent**-produced **`GameSaveData`** JSON (not committed), use a **r
 - **`{run-id}`:** opaque folder name (timestamp, issue slug, or UUID). The directory **`tools/fixtures/scenarios/agent-generated/`** is **gitignored**.
 - **Semantics:** same **`GameSaveData`** compatibility rules as committed scenarios; **Load pipeline** is **`GameSaveManager.LoadGame`** only (**persistence-system**), whether driven by **`-testScenarioPath`** (absolute path) or future **scenario builder** output.
 - **Agent test mode batch:** pass **`--scenario-path`** with an **absolute** path to `save.json` (see **`unity-testmode-batch.sh --help`**).
-- **Program stage 31b:** when the **scenario builder** ships, prefer its documented artifact layout — see [`projects/TECH-31b-scenario-builder.md`](../../projects/TECH-31b-scenario-builder.md) and [`projects/TECH-31-agent-scenario-generator-program.md`](../../projects/TECH-31-agent-scenario-generator-program.md) stage **31b**.
+- **Scenario builder:** prefer the documented artifact layout in [`BUILDER.md`](./BUILDER.md) and the program tracker [`projects/TECH-31-agent-scenario-generator-program.md`](../../projects/TECH-31-agent-scenario-generator-program.md).
 
 ## **32×32** test map policy
 
 - Reference scenarios for **TECH-31** stage **31a** use a **32×32** grid (`gridWidth` / `gridHeight` and `gridData` bounds must agree).
 - The **MainScene** `GridManager` may still default to a larger Inspector size; **load** overwrites `width` / `height` from the save before `ResetGridForLoad`.
 - After changing grid size, verify **camera** framing and **chunk culling** (`chunkSize` vs map) in Play Mode if anything looks off.
+
+## Scenario builder (**scenario_descriptor_v1**)
+
+Descriptor contract, Node vs Unity split, **road stroke** pipeline, and **AUTO-adjacent** workflow: [`BUILDER.md`](./BUILDER.md) (**glossary** **scenario_descriptor_v1**).
 
 ## **`GameSaveData` compatibility**
 
@@ -59,12 +63,13 @@ This runs **`tools/scripts/unity-testmode-batch.sh`**, which launches Unity with
 | `--scenario-id ID` | `-testScenarioId ID` |
 | `--scenario-path PATH` | `-testScenarioPath PATH` |
 | `--simulation-ticks N` | `-testSimulationTicks N` (default **0** in script; capped in C#) |
+| `--golden-path PATH` | `-testGoldenPath PATH` — committed JSON of integer **CityStats** fields (see **Golden CityStats** below); mismatch → Unity exit **8** |
 | `--quit-editor-first` | Runs **`tools/scripts/unity-quit-project.sh`** first (**`Temp/UnityLockfile`** + **`lsof`**, **SIGTERM** then **SIGKILL**) |
 | `--` … | Extra Unity CLI tokens |
 
 Machine-readable result: **`tools/reports/agent-testmode-batch-*.json`** (and a Unity log under **`tools/reports/unity-testmode-batch-*.log`**). While a run is in progress, **`tools/reports/.agent-testmode-batch-state.json`** may exist (transient; same ignore rules as other report artifacts). **`unity-quit-project.sh --help`** documents lock-based quit and why **`pkill`** / global **AppleScript** quit is not the default.
 
-**Exit codes** (runner / shell): see **`unity-testmode-batch.sh --help`** (**0** success; **2** missing Unity binary; **3** quit helper failed; **4** / **6** / **7** from **`EditorApplication.Exit`** in **`AgentTestModeBatchRunner`**).
+**Exit codes** (runner / shell): see **`unity-testmode-batch.sh --help`** (**0** success; **2** missing Unity binary; **3** quit helper failed; **4** / **6** / **7** / **8** from **`EditorApplication.Exit`** in **`AgentTestModeBatchRunner`** — **8** = golden mismatch).
 
 Example args only (Editor Play Mode or batch):
 
@@ -92,12 +97,37 @@ Optional simulation steps after **`GameSaveManager.LoadGame`** (same entry point
 
 Then enter **Play Mode** (or enqueue **`unity_bridge_command`** `enter_play_mode`). On the first loaded scene, `TestModeCommandLineBootstrap` resolves the id, **deletes** the file, sets **`GameStartInfo`**, and loads **MainScene** like CLI mode. The file is **gitignored**.
 
+## Golden **CityStats** snapshots (**Agent test mode batch**)
+
+Committed files next to a scenario (e.g. **`reference-flat-32x32/agent-testmode-golden-ticks0.json`**) hold a **stable integer** slice of **CityStats** after **`LoadGame`** + **`simulation_ticks`** **N** **`ProcessSimulationTick`** calls. Shape matches the report’s **`city_stats`** object (**`schema_version`:** **1** inside the golden; batch report wrapper **`schema_version`:** **2**).
+
+- **`simulation_ticks`** in the golden must equal **`-testSimulationTicks`** (or **`--simulation-ticks`**) for that run.
+- Float fields (**happiness**, **pollution**, etc.) are **not** part of the golden v1 contract — extend the DTO only when a tolerance policy is agreed.
+- **Regenerate** when **`GameSaveData`** / load behavior changes expected counts, or when **simulation** logic changes post-tick stats:
+  1. Run **`npm run unity:testmode-batch -- --scenario-id <id> --simulation-ticks N`** (no golden).
+  2. Copy **`city_stats`** from the newest **`tools/reports/agent-testmode-batch-*.json`** into the scenario’s **`agent-testmode-golden-ticksN.json`** (or update in place).
+  3. Re-run with **`--golden-path`** to confirm exit **0**.
+
+**Example (reference scenario, golden assert):**
+
+```bash
+npm run unity:testmode-batch -- \
+  --scenario-id reference-flat-32x32 \
+  --simulation-ticks 3 \
+  --golden-path "$(pwd)/tools/fixtures/scenarios/reference-flat-32x32/agent-testmode-golden-ticks3.json"
+```
+
+## **CI** simulation tick bound and **RNG**
+
+- **Recommended maximum `N` for CI** (when a workflow enables **`unity:testmode-batch`**): **10_000** (same as the C# clamp in **`AgentTestModeBatchRunner`**). Prefer the **smallest `N`** that still covers the behavior under test.
+- **UnityEngine.Random** is **not** re-seeded by the batch runner. For **`reference-flat-32x32`** with **`simulateGrowth`** off and no **AUTO** activity, post-tick **CityStats** integers stayed stable at **`N` = 0** and **`N` = 3** at the time the shipped goldens were recorded. Scenarios that invoke stochastic **simulation** paths need an explicit **seed** story (game code or fixture) before relying on goldens across machines — document the seed next to the golden file when added.
+
 ## Driver matrix (local vs **CI**)
 
 | Driver | **Postgres** | Notes |
 |--------|----------------|-------|
 | Editor Play Mode + CLI args or **queue file** | No | Queue file + **`enter_play_mode`** suits agents without Hub CLI. |
-| **`npm run unity:testmode-batch`** (`-batchmode` + **`AgentTestModeBatchRunner.Run`**) | No | Load smoke + optional **`ProcessSimulationTick`** loop; **`tools/reports/`** JSON (**glossary** **Agent test mode batch**). **UTF** / broader **CI** harness still tracked under **TECH-15** / **TECH-16**. |
+| **`npm run unity:testmode-batch`** (`-batchmode` + **`AgentTestModeBatchRunner.Run`**) | No | Load smoke + optional **`ProcessSimulationTick`** loop + optional **golden** JSON; **`tools/reports/`** JSON (**glossary** **Agent test mode batch**). **UTF** / broader **CI** harness still tracked under **TECH-15** / **TECH-16**. |
 | **`verify:local`** / bridge smoke | Yes (when used) | Full dev chain; see **`ARCHITECTURE.md`** — **Local verification**. |
 
 ## Regenerating `reference-flat-32x32`

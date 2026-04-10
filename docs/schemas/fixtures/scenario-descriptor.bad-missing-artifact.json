@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "bad",
+  "layoutKind": "declarative",
+  "map": { "width": 32, "height": 32 },
+  "terrain": { "mode": "uniform", "uniformHeight": 1 }
+}

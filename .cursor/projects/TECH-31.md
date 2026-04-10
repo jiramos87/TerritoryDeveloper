@@ -1,12 +1,12 @@
 # TECH-31 — Agent scenario generator (orchestrator stub)
 
 > **Issue:** [TECH-31](../../BACKLOG.md)
-> **Status:** Draft
+> **Status:** In progress
 > **Created:** 2026-04-02
-> **Last updated:** 2026-04-09
+> **Last updated:** 2026-04-10
 
 **Program tracker (stages, progress, lessons):** [`projects/TECH-31-agent-scenario-generator-program.md`](../../projects/TECH-31-agent-scenario-generator-program.md).  
-**Implementation specs (sequential):** [31a — test mode + load](../../projects/TECH-31a-test-mode-and-load.md) → **31a2** (**Agent test mode batch** — shipped; [`ARCHITECTURE.md`](../../ARCHITECTURE.md) **Local verification**, [`tools/fixtures/scenarios/README.md`](../../tools/fixtures/scenarios/README.md), **glossary**) → [31a3 — agent test-mode verify skill](../../projects/TECH-31a3-agent-test-mode-verify-skill.md) → [31b — builder](../../projects/TECH-31b-scenario-builder.md) → [31c — verification](../../projects/TECH-31c-verification-pipeline.md) → [31d — **TECH-82** Phase 1 + metrics](../../projects/TECH-31d-city-metrics-TECH-82-phase1.md) → [31e — MCP](../../projects/TECH-31e-mcp-tool-and-workflows.md).
+**Implementation specs (sequential):** [31a — test mode + load](../../projects/TECH-31a-test-mode-and-load.md) → **31a2** (**Agent test mode batch** — shipped; [`ARCHITECTURE.md`](../../ARCHITECTURE.md) **Local verification**, [`tools/fixtures/scenarios/README.md`](../../tools/fixtures/scenarios/README.md), **glossary**) → [31a3 — agent test-mode verify skill](../../projects/TECH-31a3-agent-test-mode-verify-skill.md) → **31b** (**scenario_descriptor_v1** / scenario builder — shipped; **glossary**, [`tools/fixtures/scenarios/BUILDER.md`](../../tools/fixtures/scenarios/BUILDER.md), [`docs/schemas/README.md`](../../docs/schemas/README.md)) → [31c — verification](../../projects/TECH-31c-verification-pipeline.md) (**closed** 2026-04-10; retained as reference) → [31d — **TECH-82** Phase 1 + metrics](../../projects/TECH-31d-city-metrics-TECH-82-phase1.md) → [31e — MCP](../../projects/TECH-31e-mcp-tool-and-workflows.md).
 
 Normative detail for each stage lives in those **`projects/TECH-31*.md`** files. This stub retains **BACKLOG** **`Spec:`** resolution, **Open Questions** (game logic), and aggregate **Test contracts** for **MCP** / closeout tools that read `.cursor/projects/TECH-31.md` only.
 
@@ -18,13 +18,15 @@ Build an **agent-facing** **scenario generator**: structured intent → **`GameS
 
 ## Test contracts (aggregate)
 
+Normative detail for batch driver, **golden** JSON, **CI** tick cap (**10000**), and **close-dev-loop** seed cells: [`projects/TECH-31c-verification-pipeline.md`](../../projects/TECH-31c-verification-pipeline.md) (stage **31c** complete). This table stays a short roll-up for tools that read only this stub.
+
 | Acceptance / goal | Check type | Command or artifact | Notes |
 |-------------------|------------|---------------------|--------|
-| Reference scenario loads in **test mode** | Unity **UTF** or scripted run | One-command local + optional **CI** | Stages **31a** / **31c**; **`npm run unity:testmode-batch`** (**glossary** **Agent test mode batch**) |
+| Reference scenario loads in **test mode** | Unity / optional **CI** | **`npm run unity:testmode-batch`** — args: **`--scenario-id`** / **`--scenario-path`**, **`--simulation-ticks N`** (max **10000**), **`--golden-path`** (optional), **`--quit-editor-first`** | **glossary** **Agent test mode batch**; [`tools/fixtures/scenarios/README.md`](../../tools/fixtures/scenarios/README.md); report **`schema_version`** **2** + optional **`city_stats`** |
 | Project compiles after tooling | Batch compile | `npm run unity:compile-check` (repo root) | Per **AGENTS.md** |
-| Bridge-assisted spot check (dev) | Manual / agent | **close-dev-loop** + **`debug_context_bundle`** | **Postgres** + **Editor** on **REPO_ROOT** |
+| Bridge-assisted spot check (dev) | Manual / agent | **close-dev-loop** + **`debug_context_bundle`** | **Postgres** + **Editor** on **REPO_ROOT**; recipe for **`reference-flat-32x32`**: **31c** spec |
 | **City history** spot check (dev) | Agent / SQL / MCP | **TECH-82** **`city_metrics_query`** after **N** ticks | Stage **31d** |
-| Descriptor / fixture schema valid | Node / **CI** | **`validate:fixtures`** or sibling | Stage **31b** when schema exists |
+| Descriptor / fixture schema valid | Node / **CI** | **`validate:fixtures`** | **glossary** **scenario_descriptor_v1** (+ **`geography_init_params`**); see [`docs/schemas/README.md`](../../docs/schemas/README.md) |
 | **MCP** scenario tool | **MCP** + docs | **`docs/mcp-ia-server.md`** | Stage **31e** |
 
 ## Acceptance criteria (roll-up)

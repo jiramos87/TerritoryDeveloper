@@ -23,6 +23,7 @@ Scenario (pass at least one; same resolution as TestModeCommandLineBootstrap):
 
 Options:
   --simulation-ticks N      -> forwarded as -testSimulationTicks N (default: 0, max 10000 in C#)
+  --golden-path PATH        -> forwarded as -testGoldenPath PATH (committed JSON; mismatch exits 8 — see scenarios README)
   --quit-editor-first       -> run tools/scripts/unity-quit-project.sh before launch
   --wait-quit-seconds N     -> passed to unity-quit-project.sh (default: 45)
   -h, --help                -> this message
@@ -40,6 +41,7 @@ Exit codes (shell):
   4  Propagated from batch runner: bad args, missing save, MainScene open failure
   6  Load / simulation failure inside Unity
   7  Timed out waiting for Play Mode to stop (C# runner)
+  8  Golden CityStats snapshot mismatch (-testGoldenPath)
 
 Other non-zero: Unity process exit code from EditorApplication.Exit (see tools/reports/agent-testmode-batch-*.json).
 
@@ -72,6 +74,7 @@ fi
 SCENARIO_ID=""
 SCENARIO_PATH=""
 SIM_TICKS=""
+GOLDEN_PATH=""
 QUIT_FIRST=false
 WAIT_QUIT_SECS=45
 EXTRA=()
@@ -92,6 +95,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --simulation-ticks)
       SIM_TICKS="$2"
+      shift 2
+      ;;
+    --golden-path)
+      GOLDEN_PATH="$2"
       shift 2
       ;;
     --quit-editor-first)
@@ -148,6 +155,10 @@ fi
 
 if [[ -n "$SIM_TICKS" ]]; then
   UNITY_ARGS+=(-testSimulationTicks "$SIM_TICKS")
+fi
+
+if [[ -n "$GOLDEN_PATH" ]]; then
+  UNITY_ARGS+=(-testGoldenPath "$GOLDEN_PATH")
 fi
 
 if [[ ${#EXTRA[@]} -gt 0 ]]; then

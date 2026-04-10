@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-09T17:15:13.081Z",
+  "last_generated": "2026-04-10T09:49:09.974Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -179,7 +179,7 @@
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 239
+          "line_start": 240
         }
       ]
     },

@@ -2,7 +2,7 @@
 
 **Program:** [TECH-31-agent-scenario-generator-program.md](TECH-31-agent-scenario-generator-program.md) **Stage 31e**.  
 **Backlog:** [TECH-31](../BACKLOG.md).  
-**Prerequisite stages:** **31a**–**31c** minimum; **31d** if **MCP** responses should mention **city history** queries.
+**Prerequisite stages:** **31a**–**31c** (file-based verification + **Agent test mode batch** goldens — shipped); **31d** if **MCP** responses should mention **city history** queries.
 
 ## Summary
 
