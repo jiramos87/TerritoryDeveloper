@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for BUG-17 — cachedCamera null when creating ChunkCullingSystem."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # BUG-17 — cachedCamera null when creating ChunkCullingSystem
 
 > **Issue:** [BUG-17](../../BACKLOG.md)

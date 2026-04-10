@@ -1,7 +1,11 @@
 ---
+purpose: "Use when executing a ia/projects/{ISSUE_ID}.md Implementation Plan (shipping checklist phases), after the spec is ready—not for spec review."
+audience: agent
+loaded_by: skill:project-spec-implement
+slices_via: none
 name: project-spec-implement
 description: >
-  Use when executing a .cursor/projects/{ISSUE_ID}.md Implementation Plan (shipping checklist phases),
+  Use when executing a ia/projects/{ISSUE_ID}.md Implementation Plan (shipping checklist phases),
   after the spec is ready—not for spec review. Triggers: "implement project spec", "execute project spec",
   "follow Implementation Plan", "ship spec phases", implement BUG-/FEAT-/TECH- project spec.
 ---
@@ -12,7 +16,7 @@ This skill **does not** call MCP tools itself. In an **Agent** chat with **terri
 
 Until richer **MCP** discovery from project-spec prose ships, use the **manual** recipe (no composite MCP tool).
 
-**Related:** **[`project-spec-kickoff`](../project-spec-kickoff/SKILL.md)** (review spec **before** code); **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (optional **Node** / **CI**-parity checks; **`npm run verify:local`** for chained **validate:all** + batch compile + **migrate** + **bridge-preflight** + **macOS** Editor relaunch + **db:bridge-playmode-smoke** — **`verify:post-implementation`** alias); **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (optional **Play Mode** logs/screenshots for **§7b** / **§8**); **[`close-dev-loop`](../close-dev-loop/SKILL.md)** (optional full fix → verify → report when acceptance depends on **Play Mode** visuals and **`debug_context_bundle`**); **[`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md)** (optional **after** substantive **Load pipeline** / **test mode** / in-game **§7b** work — **batchmode** and/or bridge **hybrid** so the human defers **Unity** until **final** normal **QA**; normative plan **[`projects/TECH-31a3-agent-test-mode-verify-skill.md`](../../../projects/TECH-31a3-agent-test-mode-verify-skill.md)** under **TECH-31**); **[`project-spec-close`](../project-spec-close/SKILL.md)** (after verification — closeout / IA persistence / delete spec / **archive** / **id purge**). **Agent completion — Verification** block (**validate:all**, compile, batch, bridge **`timeout_ms` 40000** initial + escalation protocol): [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md). **Conventions:** [`.cursor/skills/README.md`](../README.md). Trace — [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md).
+**Related:** **[`project-spec-kickoff`](../project-spec-kickoff/SKILL.md)** (review spec **before** code); **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (optional **Node** / **CI**-parity checks; **`npm run verify:local`** for chained **validate:all** + batch compile + **migrate** + **bridge-preflight** + **macOS** Editor relaunch + **db:bridge-playmode-smoke** — **`verify:post-implementation`** alias); **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (optional **Play Mode** logs/screenshots for **§7b** / **§8**); **[`close-dev-loop`](../close-dev-loop/SKILL.md)** (optional full fix → verify → report when acceptance depends on **Play Mode** visuals and **`debug_context_bundle`**); **[`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md)** (optional **after** substantive **Load pipeline** / **test mode** / in-game **§7b** work — **batchmode** and/or bridge **hybrid** so the human defers **Unity** until **final** normal **QA**; normative plan **[`projects/TECH-31a3-agent-test-mode-verify-skill.md`](../../../projects/TECH-31a3-agent-test-mode-verify-skill.md)** under **TECH-31**); **[`project-spec-close`](../project-spec-close/SKILL.md)** (after verification — closeout / IA persistence / delete spec / **archive** / **id purge**). **Agent completion — Verification** block (**validate:all**, compile, batch, bridge **`timeout_ms` 40000** initial + escalation protocol): [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md). **Conventions:** [`ia/skills/README.md`](../README.md). Trace — [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md).
 
 ## Relationship to kickoff
 
@@ -24,7 +28,7 @@ Default: spec **Status** is **Final** or **In Review** with game-logic **Open Qu
 
 ## Seed prompt (parameterize)
 
-Replace `{SPEC_PATH}` with the project spec path from the backlog **Spec:** line (`.cursor/projects/{ISSUE_ID}.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
+Replace `{SPEC_PATH}` with the project spec path from the backlog **Spec:** line (`ia/projects/{ISSUE_ID}.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.
 
 ```markdown
 Implement @{SPEC_PATH} following its ## 7. Implementation Plan in order.
@@ -45,9 +49,9 @@ Run **in order**. Repeat steps **5–12** for each **Implementation Plan** phase
 
 4. **Phase intent** — State which plan checkboxes are in scope; list files/classes from the plan + backlog **Files**.
 
-5. **Domain routing** — From phase text + **Files**, list **1–3** domains. For each, **`router_for_task`** with `domain` matching **`.cursor/rules/agent-router.mdc`** table labels (e.g. `Road logic, placement, bridges`, `Water, terrain, cliffs, shores`, `Save / load`, `Unity / MonoBehaviour`). If **`router_for_task`** returns **`no_matching_domain`** or weak matches, retry with **`files`** using repo-relative paths from the backlog **Files** line (**glossary** **territory-ia spec-pipeline layer B**).
+5. **Domain routing** — From phase text + **Files**, list **1–3** domains. For each, **`router_for_task`** with `domain` matching **`ia/rules/agent-router.md`** table labels (e.g. `Road logic, placement, bridges`, `Water, terrain, cliffs, shores`, `Save / load`, `Unity / MonoBehaviour`). If **`router_for_task`** returns **`no_matching_domain`** or weak matches, retry with **`files`** using repo-relative paths from the backlog **Files** line (**glossary** **territory-ia spec-pipeline layer B**).
 
-6. **`spec_section`** — For each routed spec, fetch **only** sections the phase needs; set **`max_chars`**. **Do not** read entire `.cursor/specs/*.md` unless **`spec_outline`** forces it.
+6. **`spec_section`** — For each routed spec, fetch **only** sections the phase needs; set **`max_chars`**. **Do not** read entire `ia/specs/*.md` unless **`spec_outline`** forces it.
 
 7. **`glossary_discover`** — When terms are ambiguous; pass **`keywords` as a JSON array**; **English** only (translate from chat if needed).
 
@@ -59,7 +63,7 @@ Run **in order**. Repeat steps **5–12** for each **Implementation Plan** phase
 
 11. **Optional deep guardrails** — **`list_rules`** / **`rule_content`** if **`invariants_summary`** is not enough.
 
-12. **Phase exit** — Re-read **§8 Acceptance** (and **§7b Test Contracts** if present) for the completed phase; run applicable **`AGENTS.md`** **Pre-commit Checklist** (Unity build, XML docs, English logs, domain checks). If **§7b** lists **IDE agent bridge** checks and the session has **territory-ia** + **Postgres** + **Unity** on **REPO_ROOT**, optionally run **`unity_bridge_command`** per **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** and attach **`log_lines`** / **`artifact_paths`** to chat or the issue. If the phase touched **`tools/mcp-ia-server`**, **`docs/schemas`**, **`.cursor/specs/glossary.md`**, **reference spec** bodies that feed **IA indexes**, or committed **`tools/mcp-ia-server/data/*-index.json`**, run **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (or **`npm run validate:all`** / **`npm run verify:local`** from repo root when the full dev chain applies) before starting the next phase. When the **project spec** or user calls for **agent-led** **test mode** verification (or **§7b** explicitly references it), optionally run **[`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md)** after **`validate:all`** / compile gates — see **[`projects/TECH-31a3-agent-test-mode-verify-skill.md`](../../../projects/TECH-31a3-agent-test-mode-verify-skill.md)**. Record surprises in the project spec **§9 Issues Found During Development**.
+12. **Phase exit** — Re-read **§8 Acceptance** (and **§7b Test Contracts** if present) for the completed phase; run applicable **`AGENTS.md`** **Pre-commit Checklist** (Unity build, XML docs, English logs, domain checks). If **§7b** lists **IDE agent bridge** checks and the session has **territory-ia** + **Postgres** + **Unity** on **REPO_ROOT**, optionally run **`unity_bridge_command`** per **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** and attach **`log_lines`** / **`artifact_paths`** to chat or the issue. If the phase touched **`tools/mcp-ia-server`**, **`docs/schemas`**, **`ia/specs/glossary.md`**, **reference spec** bodies that feed **IA indexes**, or committed **`tools/mcp-ia-server/data/*-index.json`**, run **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (or **`npm run validate:all`** / **`npm run verify:local`** from repo root when the full dev chain applies) before starting the next phase. When the **project spec** or user calls for **agent-led** **test mode** verification (or **§7b** explicitly references it), optionally run **[`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md)** after **`validate:all`** / compile gates — see **[`projects/TECH-31a3-agent-test-mode-verify-skill.md`](../../../projects/TECH-31a3-agent-test-mode-verify-skill.md)**. Record surprises in the project spec **§9 Issues Found During Development**.
 
 ### Phase rollback
 

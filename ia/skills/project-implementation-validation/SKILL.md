@@ -1,4 +1,8 @@
 ---
+purpose: Use after substantive implementation when you need repo Node checks aligned with CI: dead project spec paths, MCP package tests, JSON fixtures, IA index drift.
+audience: agent
+loaded_by: skill:project-implementation-validation
+slices_via: none
 name: project-implementation-validation
 description: >
   Use after substantive implementation when you need repo Node checks aligned with CI: dead project spec
@@ -12,7 +16,7 @@ description: >
 
 This skill **does not** call MCP tools itself. It is a **checklist** of **existing** **`npm`** commands — **not** a second copy of `tools/validate-dead-project-spec-paths.mjs` or the **MCP** scripts.
 
-**Related:** **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (phase exit → **Pre-commit Checklist** — **this** skill adds **automated** **Node** steps). **[`project-spec-close`](../project-spec-close/SKILL.md)** (optional: run **after** **IA persistence** when the change touched **MCP**, **schemas**, or **spec/glossary** bodies that feed indexes — **before** mandatory `npm run validate:dead-project-specs` in closeout). **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (optional **Unity** logs/screenshots via MCP — **not** part of this manifest). **[`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md)** + [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) — **Verification** block (**validate:all**, compile, **Agent test mode batch**, **IDE agent bridge** with **`timeout_ms` 40000** initial + escalation protocol) for agent completion messages. **CI parity:** [`.github/workflows/ia-tools.yml`](../../../.github/workflows/ia-tools.yml). **Dead project-spec paths:** `npm run validate:dead-project-specs`. **Conventions:** [`.cursor/skills/README.md`](../README.md).
+**Related:** **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (phase exit → **Pre-commit Checklist** — **this** skill adds **automated** **Node** steps). **[`project-spec-close`](../project-spec-close/SKILL.md)** (optional: run **after** **IA persistence** when the change touched **MCP**, **schemas**, or **spec/glossary** bodies that feed indexes — **before** mandatory `npm run validate:dead-project-specs` in closeout). **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (optional **Unity** logs/screenshots via MCP — **not** part of this manifest). **[`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md)** + [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) — **Verification** block (**validate:all**, compile, **Agent test mode batch**, **IDE agent bridge** with **`timeout_ms` 40000** initial + escalation protocol) for agent completion messages. **CI parity:** [`.github/workflows/ia-tools.yml`](../../../.github/workflows/ia-tools.yml). **Dead project-spec paths:** `npm run validate:dead-project-specs`. **Conventions:** [`ia/skills/README.md`](../README.md).
 
 ## Failure policy
 
@@ -23,7 +27,7 @@ Run steps **in order**. If any step fails, **stop**, report the error output, an
 | Situation | Guidance |
 |-----------|----------|
 | Diff is **only** runtime **C#** / **Unity** assets | You may mark **all** manifest rows **N/A** and follow **[`AGENTS.md`](../../../AGENTS.md)** **Pre-commit Checklist** (Unity build, domain checks) instead. |
-| Diff touches **`tools/mcp-ia-server`**, **`docs/schemas`**, **`.cursor/specs`** bodies, **`.cursor/specs/glossary.md`**, or committed **`tools/mcp-ia-server/data/*-index.json`** | Run the full **IA tools**-aligned subset below (at least steps 1–4). |
+| Diff touches **`tools/mcp-ia-server`**, **`docs/schemas`**, **`ia/specs`** bodies, **`ia/specs/glossary.md`**, or committed **`tools/mcp-ia-server/data/*-index.json`** | Run the full **IA tools**-aligned subset below (at least steps 1–4). |
 | Diff only fixes **BACKLOG** prose without **`Spec:`** or **MCP** paths | Step 1 may suffice; use judgment — **CI** still runs the full **Node** job on relevant paths. |
 
 ## Validation manifest (v1)
@@ -33,7 +37,7 @@ Run from **repository root** unless **Cwd** says otherwise. Script names match r
 | Step | Command | Cwd | Notes |
 |------|---------|-----|--------|
 | 0 | `npm run compute-lib:build` | repo root | **`territory-compute-lib`** **`tsc`** — same ordering as **CI** before **`test:ia`**; included inside **`validate:all`** |
-| 1 | `npm run validate:dead-project-specs` | repo root | Open **BACKLOG** **`Spec:`** must point at existing `.cursor/projects/*.md` |
+| 1 | `npm run validate:dead-project-specs` | repo root | Open **BACKLOG** **`Spec:`** must point at existing `ia/projects/*.md` |
 | 2 | `npm run test:ia` | repo root | Delegates to `npm --prefix tools/mcp-ia-server test` — same tests **CI** runs after `npm ci` under **`tools/mcp-ia-server`** |
 | 3 | `npm run validate:fixtures` | repo root | Delegates via `--prefix` to **`tools/mcp-ia-server`** |
 | 4 | `npm run generate:ia-indexes -- --check` | repo root | Ensures committed **`spec-index.json`** / **`glossary-index.json`** match **markdown** sources |
@@ -45,11 +49,11 @@ Run from **repository root** unless **Cwd** says otherwise. Script names match r
 
 **Equivalent in package folder:** For step 2, `cd tools/mcp-ia-server && npm test` after `npm ci` matches **CI** exactly.
 
-**Project specs:** New **`.cursor/projects/{ISSUE_ID}.md`** stubs should include **`## 7b. Test Contracts`** ([`.cursor/templates/project-spec-template.md`](../../templates/project-spec-template.md)) so **Acceptance** maps to these **Node** checks where applicable.
+**Project specs:** New **`ia/projects/{ISSUE_ID}.md`** stubs should include **`## 7b. Test Contracts`** ([`ia/templates/project-spec-template.md`](../../templates/project-spec-template.md)) so **Acceptance** maps to these **Node** checks where applicable.
 
 ## Verification block (agent messages — alongside this manifest)
 
-When reporting **Verification** after substantive implementation, follow [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md): include **`npm run validate:all`** (exit code), **`npm run unity:compile-check`** if **`Assets/`** **C#** changed, **Path A** **`npm run unity:testmode-batch`** summary (prefer **`--quit-editor-first`** when an Editor might hold **`REPO_ROOT`**), and **Path B** **`unity_bridge_command`** outcome with **`timeout_ms`:** **`40000`** initial (escalation protocol on timeout; or **N/A** + reason). This is **separate** from the **Validation manifest** table above (Node-only **CI** parity).
+The Verification block format, Path A / Path B sequencing, and bridge timeouts live in [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) — read that doc; do **not** restate it here. The Validation manifest table above is the **Node-only CI parity** subset of the same chain.
 
 ## Optional: IDE agent bridge evidence (dev machine — **N/A** in CI)
 
@@ -80,6 +84,6 @@ Replace `{CHANGED_AREAS}` with a short note on what shipped (e.g. **MCP** parser
 
 ```markdown
 Run **project-implementation-validation** after implementing {CHANGED_AREAS}.
-Use `.cursor/skills/project-implementation-validation/SKILL.md`: apply **When to skip**, then run **`npm run validate:all`** and/or **`npm run verify:local`** (canonical local post-implementation when **Postgres** + **Unity** bridge apply); stop on first failure.
+Use `ia/skills/project-implementation-validation/SKILL.md`: apply **When to skip**, then run **`npm run validate:all`** and/or **`npm run verify:local`** (canonical local post-implementation when **Postgres** + **Unity** bridge apply); stop on first failure.
 Do not reimplement the dead-spec scanner — use `npm run validate:dead-project-specs` only.
 ```

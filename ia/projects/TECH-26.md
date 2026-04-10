@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-26 — Mechanical CI/repo checks: FindObjectOfType in hot paths and optional grid gate."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-26 — Mechanical CI/repo checks: FindObjectOfType in hot paths and optional grid gate
 
 > **Issue:** [TECH-26](../../BACKLOG.md)

@@ -1,3 +1,9 @@
+---
+purpose: "Reference spec for Managers & Services — Reference."
+audience: agent
+loaded_by: router
+slices_via: spec_section
+---
 # Managers & Services — Reference
 
 > Complete reference of all managers and helper services: responsibilities, dependencies, and patterns.

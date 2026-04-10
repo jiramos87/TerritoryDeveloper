@@ -1,4 +1,8 @@
 ---
+purpose: Add or adjust a HUD/menu row using UiTheme and the UI design system.
+audience: agent
+loaded_by: skill:ui-hud-row-theme
+slices_via: none
 name: ui-hud-row-theme
 description: Add or adjust a HUD/menu row using UiTheme and the UI design system. Use when touching MainMenu strip, shared colors, or font sizes for new uGUI rows.
 ---
@@ -12,7 +16,7 @@ description: Add or adjust a HUD/menu row using UiTheme and the UI design system
 
 ## Recipe
 
-1. Read **`.cursor/specs/ui-design-system.md`** **§1**, **§3.0**, **§4.3**, and **§5.2** (theme / prefab paths).
+1. Read **`ia/specs/ui-design-system.md`** **§1**, **§3.0**, **§4.3**, and **§5.2** (theme / prefab paths).
 2. Prefer **`Territory.UI.UiTheme`** (`Assets/UI/Theme/DefaultUiTheme.asset`) for **menu** strip colors and sizes; extend **`UiTheme.cs`** fields if you need new token groups (keep **XML** summary accurate).
 3. For **city** **HUD**, migrate incrementally — **§1.2** **typography** policy applies (**legacy `Text`** vs **TMP**); do not mix stacks on the same row without a **Decision Log** row in the relevant **BACKLOG** issue or a follow-up issue.
 4. After **`.unity`** hierarchy edits, refresh **`docs/reports/ui-inventory-as-built-baseline.json`** via **Territory Developer → Reports → Export UI Inventory (JSON)** (see **`docs/reports/README.md`**).

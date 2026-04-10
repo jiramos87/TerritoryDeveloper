@@ -1,4 +1,8 @@
 ---
+purpose: "Orchestrates agent-driven fix → verify cycle: Play Mode baseline and post-fix debug_context_bundle at seed cells, compile gate (get_compilation_status / unity_compile, npm run unity:compile-check, or get_console_logs),…"
+audience: agent
+loaded_by: skill:close-dev-loop
+slices_via: none
 name: close-dev-loop
 description: >
   Orchestrates agent-driven fix → verify cycle: Play Mode baseline and post-fix debug_context_bundle at
@@ -14,7 +18,7 @@ This skill is the **end-to-end** recipe for **visual / terrain** bugs where the 
 
 **Bridge waits:** pass **`timeout_ms`:** **`40000`** (initial) on **`unity_bridge_command`** / **`unity_compile`** for agent-led cycles. On timeout, follow the **timeout escalation protocol** (`npm run unity:ensure-editor` → retry 60 s). Ceiling: **120 s** (`UNITY_BRIDGE_TIMEOUT_MS_MAX`). **Policy:** [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md).
 
-**Related:** **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (one-off logs/screenshots). **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (optional: run this recipe after a phase that changes **Play Mode** visuals). **Optional Step 0:** when **`.cursor/skills/bridge-environment-preflight/SKILL.md`** exists, use it for **Postgres** / **`agent_bridge_job`** checks before the bridge loop; otherwise confirm **`DATABASE_URL`** and **`npm run db:migrate`** per [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md). **Normative tool names:** **territory-ia** **`unity_bridge_command`**, **`unity_compile`**, **`unity_bridge_get`**, **`backlog_issue`**, **`router_for_task`**, **`spec_section`**.
+**Related:** **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (one-off logs/screenshots). **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (optional: run this recipe after a phase that changes **Play Mode** visuals). **Optional Step 0:** when **`ia/skills/bridge-environment-preflight/SKILL.md`** exists, use it for **Postgres** / **`agent_bridge_job`** checks before the bridge loop; otherwise confirm **`DATABASE_URL`** and **`npm run db:migrate`** per [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md). **Normative tool names:** **territory-ia** **`unity_bridge_command`**, **`unity_compile`**, **`unity_bridge_get`**, **`backlog_issue`**, **`router_for_task`**, **`spec_section`**.
 
 ## Prerequisites (all required for the bridge path)
 
@@ -63,7 +67,7 @@ This skill is the **end-to-end** recipe for **visual / terrain** bugs where the 
 
 ```markdown
 Run the close-dev-loop workflow for issue {ISSUE_ID} with seed cells {SEED_CELLS}.
-Follow .cursor/skills/close-dev-loop/SKILL.md: territory-ia bridge commands, compile gate order, max {MAX_ITERATIONS} fix iterations.
+Follow ia/skills/close-dev-loop/SKILL.md: territory-ia bridge commands, compile gate order, max {MAX_ITERATIONS} fix iterations.
 ```
 
 ## Step 0 — environment preflight

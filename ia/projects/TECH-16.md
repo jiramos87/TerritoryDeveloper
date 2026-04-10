@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-16 — Simulation tick harness, ProfilerMarkers, and profiling outputs."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-16 — Simulation tick harness, ProfilerMarkers, and profiling outputs
 
 > **Issue:** [TECH-16](../../BACKLOG.md)

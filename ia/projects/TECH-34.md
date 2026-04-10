@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-34 — Generate gridmanager-regions.json from GridManager #region blocks."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-34 — Generate `gridmanager-regions.json` from GridManager `#region` blocks
 
 > **Issue:** [TECH-34](../../BACKLOG.md)

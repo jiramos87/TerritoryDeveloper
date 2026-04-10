@@ -1,4 +1,8 @@
 ---
+purpose: "Simulation domain — guardrails and spec pointers"
+audience: agent
+loaded_by: router
+slices_via: none
 description: Simulation domain — guardrails and spec pointers
 globs:
   - "**/SimulationManager*.cs"
@@ -13,7 +17,7 @@ alwaysApply: false
 
 # Simulation Domain
 
-**Deep spec:** `.cursor/specs/simulation-system.md`
+**Deep spec:** `ia/specs/simulation-system.md`
 
 ## Guardrails
 

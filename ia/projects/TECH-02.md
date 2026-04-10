@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-02 — Change public fields to [SerializeField] private in managers."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-02 — Change public fields to [SerializeField] private in managers
 
 > **Issue:** [TECH-02](../../BACKLOG.md)

@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-15 — New Game / geography initialization profiler and harness outputs."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-15 — New Game / geography initialization profiler and harness outputs
 
 > **Issue:** [TECH-15](../../BACKLOG.md)

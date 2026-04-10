@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for FEAT-51 — In-game game data dashboard (charts and dense stats)."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # FEAT-51 — In-game game data dashboard (charts and dense stats)
 
 > **Issue:** [FEAT-51](../../BACKLOG.md)

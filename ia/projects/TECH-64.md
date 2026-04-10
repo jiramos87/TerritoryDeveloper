@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-64 — Play Mode test harness + agent **/create-play-mode-test** workflow."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-64 — Play Mode test harness + agent **`/create-play-mode-test`** workflow
 
 > **Issue:** [TECH-64](../../BACKLOG.md)

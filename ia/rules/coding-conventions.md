@@ -1,4 +1,8 @@
 ---
+purpose: "C# coding standards for Territory Developer"
+audience: agent
+loaded_by: router
+slices_via: none
 description: C# coding standards for Territory Developer
 globs: "**/*.cs"
 alwaysApply: false
@@ -6,7 +10,7 @@ alwaysApply: false
 
 # Coding Conventions
 
-Language: see `project-overview.mdc`.
+Language: see `project-overview.md`.
 
 ## Documentation Requirements
 - Every class MUST have a `/// <summary>` (2-4 lines): responsibility, key dependencies, how it fits in the system

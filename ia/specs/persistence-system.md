@@ -1,3 +1,9 @@
+---
+purpose: "Reference spec for Persistence System — Reference Spec."
+audience: agent
+loaded_by: router
+slices_via: spec_section
+---
 # Persistence System — Reference Spec
 
 > Deep reference for save/load pipeline, visual restore, and data serialization.

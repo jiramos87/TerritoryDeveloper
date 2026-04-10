@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-72 — HUD / uGUI scene hygiene for agents (UI inventory alignment)."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-72 — HUD / uGUI scene hygiene for agents (UI inventory alignment)
 
 > **Issue:** [TECH-72](../../BACKLOG.md)  

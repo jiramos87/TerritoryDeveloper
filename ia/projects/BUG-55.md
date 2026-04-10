@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for BUG-55 — Codebase audit: critical simulation, data integrity, and controller bugs."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # BUG-55 — Codebase audit: critical simulation, data integrity, and controller bugs
 
 > **Issue:** [BUG-55](../../BACKLOG.md)

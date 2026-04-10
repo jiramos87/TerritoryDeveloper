@@ -1,155 +1,147 @@
 # AI Agent Guide — Territory Developer
 
-## Before You Start
+> **TL;DR.** Use **`territory-ia`** MCP first (`backlog_issue` → `router_for_task` → `glossary_*` → `spec_section`). Ship work through the project-spec lifecycle (create → kickoff → implement → validate → close). Emit a **Verification** block per [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md) at completion. Hard guardrails: [`ia/rules/invariants.md`](ia/rules/invariants.md). Native host surface (Claude Code hooks, slash commands, subagents): [`CLAUDE.md`](CLAUDE.md).
 
-1. Check the `/// <summary>` on the class you are about to modify
-2. Use `ia/rules/agent-router.md` to find the right specs for your task
-3. **Context from IA (Cursor agents):** In **Agent** chats with tools enabled, treat **territory-ia** MCP as the **default** way to load specs and rules unless a tool call truly cannot run. **Do not** open whole spec files with `read_file` when a slice suffices. Suggested order: **`backlog_issue`** when you have an issue id (`BUG-37`, `FEAT-44`, …) → `list_specs` (if keys unknown) → `router_for_task` for domain → `glossary_discover` / `glossary_lookup` → `spec_outline` / `spec_section` / `spec_sections` (or `invariants_summary`, `list_rules` / `rule_content` as needed). For **project-spec-close** on `ia/projects/{ISSUE_ID}.md`, use **`project_spec_closeout_digest`** after **`backlog_issue`** (see that skill). For **`glossary_discover`** and **`glossary_lookup`**, arguments must be **English** (the glossary is English-only): if the developer writes in another language, **translate** their concepts into English domain terms before calling. If MCP is disabled in the host, fall back to `ia/rules/agent-router.md` and targeted `read_file`. Stale content: MCP caches parses per server process—after large edits to a doc, prefer a fresh `read_file` on that path or restart the MCP server. Reference: [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md).
-4. **If asked to work on an issue:** use **`backlog_issue`** for that id when MCP is available; otherwise read `BACKLOG.md` (and see `BACKLOG.md` for priority and workflow).
-5. **Project specs:** Stubs use [`ia/templates/project-spec-template.md`](ia/templates/project-spec-template.md), including **`## 7b. Test Contracts`** (tooling checks — [`ia/projects/PROJECT-SPEC-STRUCTURE.md`](ia/projects/PROJECT-SPEC-STRUCTURE.md) list item **7b**). When **creating** a new **BACKLOG** issue and **`ia/projects/{ISSUE_ID}.md`** from a user prompt, use [`ia/skills/project-new/SKILL.md`](ia/skills/project-new/SKILL.md). When **reviewing or enriching** `ia/projects/{ISSUE_ID}.md` before code, use [`ia/skills/project-spec-kickoff/SKILL.md`](ia/skills/project-spec-kickoff/SKILL.md) (or the paste template at [`ia/templates/project-spec-review-prompt.md`](ia/templates/project-spec-review-prompt.md)). When **executing** the spec’s **Implementation Plan**, use [`ia/skills/project-spec-implement/SKILL.md`](ia/skills/project-spec-implement/SKILL.md). After **MCP** / **schema** / **IA index**–touching work, use [`ia/skills/project-implementation-validation/SKILL.md`](ia/skills/project-implementation-validation/SKILL.md) for **CI**-aligned **Node** checks (optional but recommended); on a configured dev machine, **`npm run verify:local`** runs **`validate:all`** plus the **Unity** / **Postgres** chain ([`ARCHITECTURE.md`](ARCHITECTURE.md) **Local verification**). When **closing** the issue after verified work (migrate IA, delete the temporary spec, **move the row to** [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md), **purge the id from durable docs**), use [`ia/skills/project-spec-close/SKILL.md`](ia/skills/project-spec-close/SKILL.md). **Kickoff**, **implement**, and **close** define ordered **territory-ia** recipes where applicable (`backlog_issue` → `project_spec_closeout_digest` when closing a project spec → `invariants_summary` when applicable → `router_for_task` → `spec_section` / `spec_sections` → `glossary_*` → …); **`project-new`** uses a **create-first** tool order (see that skill). Skill index and authoring rules: [`ia/skills/README.md`](ia/skills/README.md).
-6. **IDE agent bridge — Play Mode smoke:** **Before** the first bridge call in a session, run **`npm run db:bridge-preflight`** (exit codes 0–4; bounded repair policy in [`ia/skills/bridge-environment-preflight/SKILL.md`](ia/skills/bridge-environment-preflight/SKILL.md)). When **`unity_bridge_command`** is available and **Postgres** resolves, **run the Play Mode sequence yourself**. If the **Unity Editor** is not running, run **`npm run unity:ensure-editor`** first (macOS; exit 0 = ready) — see [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md) **timeout escalation protocol**. Sequence for bridge or close-loop verification: **`get_play_mode_status`** → **`enter_play_mode`** → **`get_play_mode_status`** → **`exit_play_mode`**. Prefer that over asking the human to click **Play**/**Stop**. Optional **`capture_screenshot`** (**`include_ui: true`**) for **Game view** visibility. After **C#** edits, use **`unity_compile`** or **`unity_bridge_command`** with **`kind`:** **`get_compilation_status`** for a compile snapshot before re-entering **Play Mode**; when no **Editor** holds the project lock, run root **`npm run unity:compile-check`** — **do not** skip it because **`$UNITY_EDITOR_PATH`** is unset in the agent shell; **`tools/scripts/unity-compile-check.sh`** loads repo-root **`.env`** / **`.env.local`** and (on **macOS**) can fall back to the Hub path from **`ProjectSettings/ProjectVersion.txt`**. For **local post-implementation** checks (dev machine, **not** CI), run **`npm run verify:local`** from the repository root (**`validate:all`** including **`territory-compute-lib`** build, then batch compile, **`db:migrate`**, **`db:bridge-preflight`**, **macOS** Editor save/quit + relaunch + **`db:bridge-playmode-smoke`**). **`npm run verify:post-implementation`** is an alias. See [`ARCHITECTURE.md`](ARCHITECTURE.md) (**Local verification**) and [`ia/skills/project-implementation-validation/SKILL.md`](ia/skills/project-implementation-validation/SKILL.md). Full before/after **debug_context_bundle** loop: [`ia/skills/close-dev-loop/SKILL.md`](ia/skills/close-dev-loop/SKILL.md). See [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) (**Implementation and operations**) and [`ia/skills/ide-bridge-evidence/SKILL.md`](ia/skills/ide-bridge-evidence/SKILL.md).
+## 1. Before you start
 
-System invariants and guardrails are in `ia/rules/invariants.md` (always loaded).
-Task-to-spec routing is in `ia/rules/agent-router.md` (always loaded).
-Full dependency map is in `ARCHITECTURE.md`.
+1. Read the `/// <summary>` on the C# class you are about to modify.
+2. If you have an issue id, call **`backlog_issue`** (territory-ia). Otherwise read [`BACKLOG.md`](BACKLOG.md).
+3. Use [`ia/rules/agent-router.md`](ia/rules/agent-router.md) to find the right specs for the task.
+4. **MCP first**: in MCP-enabled hosts, treat **`territory-ia`** as the default retrieval path. Suggested order: `backlog_issue` → `router_for_task` → `glossary_discover` / `glossary_lookup` (English only — translate from the conversation) → `spec_outline` / `spec_section` / `spec_sections` → `invariants_summary` / `list_rules` / `rule_content`. For closing a project spec: `project_spec_closeout_digest` after `backlog_issue`. Reference: [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md).
+5. **Stale content:** the territory-ia MCP server caches per-process. After large edits to a doc, prefer a fresh `read_file` on that path or restart the MCP server.
 
-## Documentation hierarchy
+## 2. Lifecycle skills (open the matching `SKILL.md`)
+
+| Stage | Skill | Triggers |
+|---|---|---|
+| **Create** | [`project-new`](ia/skills/project-new/SKILL.md) | New `BACKLOG.md` row + `ia/projects/{ISSUE_ID}-{slug}.md` from a prompt |
+| **Refine** | [`project-spec-kickoff`](ia/skills/project-spec-kickoff/SKILL.md) | Review or enrich a project spec before code |
+| **Implement** | [`project-spec-implement`](ia/skills/project-spec-implement/SKILL.md) | Execute a spec's Implementation Plan |
+| **Validate (Node)** | [`project-implementation-validation`](ia/skills/project-implementation-validation/SKILL.md) | Post-implementation Node checks aligned with CI |
+| **Verify (Unity)** | [`agent-test-mode-verify`](ia/skills/agent-test-mode-verify/SKILL.md) + [`ide-bridge-evidence`](ia/skills/ide-bridge-evidence/SKILL.md) + [`close-dev-loop`](ia/skills/close-dev-loop/SKILL.md) | Path A batch / Path B IDE bridge evidence |
+| **Bridge preflight** | [`bridge-environment-preflight`](ia/skills/bridge-environment-preflight/SKILL.md) | Before any `unity_bridge_command` in a session |
+| **Close stage** | [`project-stage-close`](ia/skills/project-stage-close/SKILL.md) | End of each non-final stage of a multi-stage spec |
+| **Close issue** | [`project-spec-close`](ia/skills/project-spec-close/SKILL.md) | Migrate lessons → durable IA, archive backlog row, delete spec |
+| **UI rows** | [`ui-hud-row-theme`](ia/skills/ui-hud-row-theme/SKILL.md) | HUD/menu rows with `UiTheme` and the UI design spec |
+
+Skill index + conventions: [`ia/skills/README.md`](ia/skills/README.md).
+
+## 3. Verification policy (canonical)
+
+The verification policy is canonicalized at [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md) and surfaced as the always-on rule [`ia/rules/agent-verification-directives.md`](ia/rules/agent-verification-directives.md). Read the policy doc for the **Verification block** format (Node / IA, Unity compile, Path A batch, Path B bridge), the bridge timeout (40 s initial, escalation, 120 s ceiling), and the Path A project-lock release. Do **not** restate the policy here, in skills, or in rules.
+
+## 4. Documentation hierarchy
 
 ```
-docs/information-architecture-overview.md → IA system overview: philosophy, layers, lifecycle, extension guide
-ia/rules/        → Guardrails (auto-loaded by Cursor, light)
-ia/skills/       → Cursor Agent Skills (thin workflows; see README — **project-new**, **project-spec-kickoff**, **project-spec-implement**, **project-implementation-validation**, **agent-test-mode-verify**, **ide-bridge-evidence**, **bridge-environment-preflight**, **close-dev-loop**, **project-spec-close**)
-ia/specs/        → Deep reference (read on demand per task)
-ARCHITECTURE.md       → System layers, dependency map
-AGENTS.md             → This file: workflow, policies, checklist
-BACKLOG.md            → Issue tracking (read only when relevant)
-docs/mcp-ia-server.md → territory-ia MCP (default retrieval path in Agent when enabled)
-docs/mcp-markdown-ia-pattern.md → Reusable pattern: Markdown IA + Node MCP tools (any domain)
-docs/information-architecture-overview.md → IA stack overview (autoreference + layers)
-docs/agent-led-verification-policy.md → Agent completion Verification block (batch + bridge, timeout 40s)
+docs/information-architecture-overview.md → IA philosophy, layers, lifecycle, extension guide
+docs/agent-led-verification-policy.md     → canonical Verification policy
+docs/mcp-ia-server.md                     → territory-ia MCP tool catalog + recipes
+ia/rules/                                 → guardrails (always-loaded; light)
+ia/skills/                                → workflow recipes (orchestration, not facts)
+ia/specs/                                 → deep reference (read on demand per task)
+ia/projects/                              → temporary project specs (deleted on close)
+ia/templates/                             → project spec template + frontmatter schema
+ARCHITECTURE.md                           → runtime layers, dependency map, Local verification
+BACKLOG.md / BACKLOG-ARCHIVE.md           → issue tracking (root)
+CLAUDE.md / AGENTS.md                     → host entry points (root)
+MEMORY.md                                 → project-level architectural memory (root)
 ```
-
-### Agent test-mode verification
-
-When **§7b** / **§8** or the diff warrants **Load pipeline** / **test mode** / **Play Mode** harness checks after **`project-spec-implement`**, follow [`ia/skills/agent-test-mode-verify/SKILL.md`](ia/skills/agent-test-mode-verify/SKILL.md): **glossary** **Agent test mode batch** (**`npm run unity:testmode-batch`**, use **`--quit-editor-first`** when an Editor might hold **`REPO_ROOT`** — [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md)) and/or **glossary** **IDE agent bridge** (**territory-ia** **`unity_bridge_command`**). **Fixtures** remain **`GameSaveData`**-shaped; load only through **`GameSaveManager.LoadGame`** (**persistence-system** **Load pipeline**). Chaining with **`validate:all`**, **`unity:compile-check`**, and full dev verification: [`ARCHITECTURE.md`](ARCHITECTURE.md) **Local verification**.
-
-**Policy (owner):** [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md) — agents **attempt** batch + bridge verification when applicable; **`unity_bridge_command`** **`timeout_ms`** up to **40000** for agent-led passes; completion messages include a **Verification** block (**validate:all**, compile if **C#**, batch JSON summary, bridge outcome). **Always-on rule:** [`ia/rules/agent-verification-directives.md`](ia/rules/agent-verification-directives.md).
 
 ### `ia/specs/` inventory
 
-These Markdown files are **reference specs** (per [glossary.md](ia/specs/glossary.md) — **Reference spec**): permanent deep reference for domain behavior and vocabulary. Authoring layout and checklist: [REFERENCE-SPEC-STRUCTURE.md](ia/specs/REFERENCE-SPEC-STRUCTURE.md).
-
 | File | Scope |
 |------|-------|
-| `isometric-geography-system.md` | Canonical: terrain, water, cliffs, shores, sorting, terraform, roads, rivers, pathfinding |
-| `ui-design-system.md` | UI foundations, components, patterns |
-| `roads-system.md` | Road placement pipeline, validation, resolver, bridge rules, land slope stroke policy |
-| `simulation-system.md` | Simulation tick order, AUTO pipeline, growth |
-| `persistence-system.md` | Save/load pipeline, visual restore |
-| `water-terrain-system.md` | Height model, water bodies, cliffs, shores, cascades |
-| `managers-reference.md` | All managers and helper services: responsibilities, dependencies |
-| `glossary.md` | Domain term definitions |
-| `unity-development-context.md` | **Unity** patterns for this repo: **MonoBehaviour** lifecycle, **Inspector** / **`SerializeField`**, **`FindObjectOfType`** policy, **Script Execution Order**, 2D sorting vs **Sorting order** (pointer to geography §7), **Editor** agent diagnostics exports (§10) |
-| `REFERENCE-SPEC-STRUCTURE.md` | Meta: conventions for writing and extending **reference specs** in this folder (terminology, MCP, new-file checklist) |
+| [`isometric-geography-system.md`](ia/specs/isometric-geography-system.md) | Canonical: terrain, water, cliffs, shores, sorting, terraform, roads, rivers, pathfinding |
+| [`ui-design-system.md`](ia/specs/ui-design-system.md) | UI foundations, components, patterns |
+| [`roads-system.md`](ia/specs/roads-system.md) | Road placement pipeline, validation, resolver, bridge rules, land slope stroke policy |
+| [`simulation-system.md`](ia/specs/simulation-system.md) | Simulation tick order, AUTO pipeline, growth |
+| [`persistence-system.md`](ia/specs/persistence-system.md) | Save/load pipeline, visual restore |
+| [`water-terrain-system.md`](ia/specs/water-terrain-system.md) | Height model, water bodies, cliffs, shores, cascades |
+| [`managers-reference.md`](ia/specs/managers-reference.md) | All managers and helper services: responsibilities, dependencies |
+| [`glossary.md`](ia/specs/glossary.md) | Domain term definitions (English only) |
+| [`unity-development-context.md`](ia/specs/unity-development-context.md) | Unity patterns: MonoBehaviour lifecycle, Inspector / `SerializeField`, `FindObjectOfType` policy, Script Execution Order |
+| [`REFERENCE-SPEC-STRUCTURE.md`](ia/specs/REFERENCE-SPEC-STRUCTURE.md) | Meta: how to author and extend reference specs |
 
-Do not add bug write-ups, agent prompts, or one-off specs under `ia/specs/`. Use `BACKLOG.md` while work is open; delete temporary markdown after completion.
+Do **not** add bug write-ups, agent prompts, or one-off specs under `ia/specs/`. Use `BACKLOG.md` while work is open; delete temporary markdown after completion.
 
-### `ia/projects/` policy
+## 5. `ia/projects/` policy
 
-Project-specific specs for features or complex bugs **in active development** live under `ia/projects/`. These are **temporary** — deleted after verified completion.
+Project-specific specs for features or complex bugs **in active development** live under `ia/projects/`. They are **temporary** — deleted after verified completion.
 
 | Aspect | Rule |
 |--------|------|
-| Template | `ia/templates/project-spec-template.md` |
-| Structure | `ia/projects/PROJECT-SPEC-STRUCTURE.md` (section order, requirements vs implementation) |
-| Naming | `{ISSUE_ID}.md` (e.g. `FEAT-44.md`, `BUG-45.md`) |
+| Template | [`ia/templates/project-spec-template.md`](ia/templates/project-spec-template.md) |
+| Structure | [`ia/projects/PROJECT-SPEC-STRUCTURE.md`](ia/projects/PROJECT-SPEC-STRUCTURE.md) |
+| Naming | `{ISSUE_ID}-{description}.md` (e.g. `TECH-85-ia-migration.md`); legacy `{ISSUE_ID}.md` still accepted by validators / journal tools |
 | Lifecycle | Create → refine → implement → verify → close |
-| On completion | Migrate lessons learned to canonical docs before deleting |
-| Dead path check | Before/after deleting a project spec, run `npm run validate:dead-project-specs` (repo root) so durable docs do not keep links to `ia/projects/{ISSUE_ID}.md`. Use **`BACKLOG.md`** / **`BACKLOG-ARCHIVE.md`** by issue id for the durable trace. See **PROJECT-SPEC-STRUCTURE** — **Closeout checklist**. Advisory-only: `node tools/validate-dead-project-spec-paths.mjs --advisory` or `CI_DEAD_SPEC_ADVISORY=1`. |
+| On completion | Migrate lessons learned to canonical docs **before** deleting (`project-spec-close`) |
+| Dead-path check | `npm run validate:dead-project-specs` (advisory: `--advisory` or `CI_DEAD_SPEC_ADVISORY=1`) |
+| Frontmatter | Four-field IA header (`purpose`, `audience`, `loaded_by`, `slices_via`); validator: `npm run validate:frontmatter` |
 
-**Requirements vs implementation:** When authoring or extending a project spec, separate **product / game-logic** content (what the player and simulation rules do—using [`ia/specs/glossary.md`](ia/specs/glossary.md) terms) from **implementation** content (files, classes, algorithms). The **implementing agent** chooses code-level solutions **unless** a chosen approach would **change** the game behavior defined in the spec; in that case, record the conflict in the spec **Decision Log** or ask the product owner before proceeding.
+**Requirements vs implementation.** Separate **product / game-logic** content (player + simulation rules — using [`ia/specs/glossary.md`](ia/specs/glossary.md) terms) from **implementation** content (files, classes, algorithms). The implementing agent picks code-level solutions **unless** doing so would change spec-defined game behavior; in that case, record the conflict in the spec **Decision Log** or ask the product owner.
 
-**`## Open Questions` section:** Every collaborative project spec SHOULD include `## Open Questions (resolve before / during implementation)`. Questions there MUST be phrased in **canonical domain vocabulary** (glossary + linked specs) and MUST target **definitions and intended game logic only**—not specific APIs, class names, or implementation mechanics. Technical investigation and coding strategy belong under **Implementation plan**, **Implementation investigation notes**, or the agent’s own workflow—not under Open Questions.
+**Open Questions.** Every collaborative project spec SHOULD include `## Open Questions (resolve before / during implementation)`. Phrase questions in canonical domain vocabulary; target definitions and intended game logic only — implementation choices belong under **Implementation Plan** or **Implementation investigation notes**.
+
+**Multi-stage specs.** Large rewrites (e.g. TECH-85) declare top-level **stages** with internal **phases**, executed by one fresh agent per stage, with [`project-stage-close`](ia/skills/project-stage-close/SKILL.md) closing each non-final stage and the umbrella `project-spec-close` closing the last one.
 
 ### Project docs outside `ia/specs/`
 
-Charters and discovery for cross-cutting programs live under `docs/` as listed in `ARCHITECTURE.md`. The **territory-ia** MCP is documented in [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) and [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md).
+Charters and discovery for cross-cutting programs live under `docs/`. Umbrella programs:
 
-**Umbrella programs (charters):** **JSON interchange program** — **glossary** row + [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md), [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), [`projects/json-use-cases-brainstorm.md`](projects/json-use-cases-brainstorm.md); **Postgres** dev surfaces (**Dev repro bundle**, **Editor export registry**, **Program extension mapping (E1–E3)**) in the same docs; **charter trace** [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). **Compute-lib program** — **glossary** **Compute-lib program**; **charter trace** [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md); ongoing work [`BACKLOG.md`](BACKLOG.md) **§ Compute-lib program**. **Durable IA** does **not** embed backlog issue ids — see [`ia/rules/terminology-consistency.md`](ia/rules/terminology-consistency.md).
+- **JSON interchange program** — glossary row + [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md), [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md), [`projects/json-use-cases-brainstorm.md`](projects/json-use-cases-brainstorm.md); charter trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
+- **Compute-lib program** — glossary **Compute-lib program**; charter trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md); ongoing work in [`BACKLOG.md`](BACKLOG.md) **§ Compute-lib program**.
 
-## Terminology and information consistency
+Durable IA does **not** embed backlog issue ids — see [`ia/rules/terminology-consistency.md`](ia/rules/terminology-consistency.md).
 
-Keep **one vocabulary** across code, specs, rules, backlog, tutorials, and MCP descriptions so agents and humans search and reason reliably.
+## 6. Terminology and information consistency
 
 | Source | Use for |
 |--------|---------|
-| [`ia/specs/glossary.md`](ia/specs/glossary.md) | Canonical **domain** terms; always check before naming features, bugs, or user-facing copy in docs. |
-| Linked specs (e.g. geography, roads) | **Definitions** trump glossary if they differ (glossary defers to spec). |
-| [`ia/rules/coding-conventions.md`](ia/rules/coding-conventions.md) | C# identifiers, XML docs, prefab naming for **new** assets. |
-| [`BACKLOG.md`](BACKLOG.md) | Issue id prefixes per **Issue ID convention** below; write **Files**, **Notes**, and **Acceptance** using the same words as specs/glossary. |
-| [`tools/mcp-ia-server/`](tools/mcp-ia-server/) | **Tool names** (`snake_case`) must match `registerTool` in code; keep [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) and the package README in sync. |
+| [`ia/specs/glossary.md`](ia/specs/glossary.md) | Canonical domain terms; check before naming features, bugs, or user-facing copy |
+| Linked specs | Definitions trump glossary on conflict (glossary defers to spec) |
+| [`ia/rules/coding-conventions.md`](ia/rules/coding-conventions.md) | C# identifiers, XML docs, prefab naming for new assets |
+| [`BACKLOG.md`](BACKLOG.md) | Issue id prefixes; **Files** / **Notes** / **Acceptance** reuse spec/glossary vocabulary |
+| [`tools/mcp-ia-server/`](tools/mcp-ia-server/) | Tool names (`snake_case`) match `registerTool` in code; keep [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) and the package README in sync |
 
-**New or changed concepts:** update the **glossary** and the **relevant spec** section—do not leave terminology only in backlog entries or informal docs.
+New or changed concepts → update glossary **and** the relevant spec section. Don't leave terminology only in backlog or chat. Always-loaded rule body: [`ia/rules/terminology-consistency.md`](ia/rules/terminology-consistency.md).
 
-Cursor loads **`ia/rules/terminology-consistency.md`** (`alwaysApply`) as a short reminder; this section is the full checklist.
+## 7. Backlog workflow
 
-## Backlog Workflow
+[`BACKLOG.md`](BACKLOG.md) is the single source of truth for project issues. Id prefixes: `BUG-`, `FEAT-`, `TECH-`, `ART-`, `AUDIO-`. **`backlog_issue` MCP** resolves ids from `BACKLOG.md` first, then `BACKLOG-ARCHIVE.md`.
 
-`BACKLOG.md` is the single source of truth for project issues.
+**Working on an issue.**
 
-### Issue ID convention
+1. Prefer `backlog_issue` (territory-ia) for the id; otherwise read `BACKLOG.md`.
+2. Read the files listed in the issue's **Files** field.
+3. Plan mode: analyze and propose a plan.
+4. Agent mode: implement, then move issue to **In progress**.
 
-`BUG-XX` bugs | `FEAT-XX` features | `TECH-XX` tech debt | `ART-XX` art | `AUDIO-XX` audio
+**After implementing.** Keep the issue **In progress** until the user confirms verification.
 
-### Working on an issue
+**Closing an issue with a project spec.** Follow [`project-spec-close`](ia/skills/project-spec-close/SKILL.md): persist lessons to glossary, reference specs, `ARCHITECTURE.md`, `ia/rules/`, `docs/` (and MCP docs if tools changed) **before** deleting the spec; run `npm run validate:dead-project-specs`; remove the row from `BACKLOG.md`; append `[x]` to `BACKLOG-ARCHIVE.md`; purge the closed id from durable IA and code.
 
-1. Prefer **`backlog_issue`** (territory-ia) for the issue id when MCP is enabled; otherwise read `BACKLOG.md`. If the issue sits under **§ Compute-lib program** (see **glossary** **Compute-lib program**), read that **BACKLOG** section and any **`ia/projects/{ISSUE_ID}.md`** on the row. For **JSON** interchange scope, use **glossary** **JSON interchange program** and [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md). For **Postgres** / **E1**–**E3** extension work, use that doc **Program extension mapping** plus [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md) (**Dev repro bundle**, **Editor export registry**). For **compute-lib** tooling, use **glossary** **territory-compute-lib**, **Computational MCP tools**, **C# compute utilities**. Then open the **child** spec or backlog row.
-2. Read the files listed in the issue's "Files" field
-3. Plan mode: analyze and propose a plan
-4. Agent mode: implement, then move issue to "In progress"
+**Adding new issues.**
 
-### After implementing
+- **Id (per prefix):** scan both `BACKLOG.md` and `BACKLOG-ARCHIVE.md` for the highest existing number with the chosen prefix; assign **max + 1**. Do **not** reuse ids — archived rows keep them for traceability.
+- Include: Type, Files, Notes, Depends on (if applicable).
+- Prefer `BACKLOG.md` + `ia/specs/` for durable rules.
 
-Keep the issue **"In progress"** until the user confirms verification.
+**Priority order:** In progress → High priority → Medium priority → Code Health → Low priority.
 
-If the work used a temporary **project spec** (`ia/projects/{ISSUE_ID}.md`) and you are **closing** out: follow [`ia/skills/project-spec-close/SKILL.md`](ia/skills/project-spec-close/SKILL.md) — **persist** lessons to **glossary**, **reference specs**, **`ARCHITECTURE.md`**, **`ia/rules/`**, and **`docs/`** (and **MCP** docs if tools changed) **before** deleting the spec; run `npm run validate:dead-project-specs`; **remove** the row from [`BACKLOG.md`](BACKLOG.md); **append** **`[x]`** to [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md); **purge** the closed issue id from durable IA and code per that skill. **Glossary** defines **project-spec-close** and **project-implementation-validation**.
+**Next-issue prompts.** When the user asks which is next, respond with it and **ask if they want an AI agent prompt** — a prompt for another agent to analyze, evaluate, and propose a development plan. Format the prompt body inside a fenced ` ```markdown ` block, in English unless the user requests otherwise.
 
-### Next issue and AI agent prompts
+## 8. Pre-commit checklist
 
-When the user asks which is the next issue, respond with it and **ask if they want an AI agent prompt** — a prompt for another agent to analyze, evaluate, and propose a development plan.
-
-**Format:** Respond with Markdown; put full prompt inside a fenced code block tagged `markdown`. Prompt body in English unless user requests otherwise.
-
-### Adding new issues
-
-- **Issue id (per prefix):** Use the **next** number for the chosen prefix (`BUG-`, `FEAT-`, `TECH-`, `ART-`, `AUDIO-`). Scan **[`BACKLOG.md`](BACKLOG.md)** and **[`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)** for the **highest** existing number with that prefix, then assign **max + 1**. **Do not reuse** an id that already appears in **either** file — archived rows keep that id for traceability, and **`backlog_issue`** resolves **`BACKLOG.md`** first, then **`BACKLOG-ARCHIVE.md`**.
-- Include: Type, Files, Notes, Depends on (if applicable)
-- Prefer `BACKLOG.md` + `ia/specs/` for durable rules
-
-### Completing issues
-
-Only when the user confirms verification. **Remove** the row from [`BACKLOG.md`](BACKLOG.md) and **append** **`[x]`** (with date) to [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) — there is **no** completed section in **BACKLOG.md**. Strip the closed issue id from **glossary**, **reference specs**, **rules**, **skills**, `docs/`, and code comments (**project-spec-close**). **`backlog_issue` MCP** resolves ids from **`BACKLOG.md`** first, then **`BACKLOG-ARCHIVE.md`**.
-
-### Priority order
-
-1. In progress
-2. High priority (critical bugs, core gameplay blockers)
-3. Medium priority (important features, balance issues)
-4. Code Health (technical debt, refactors)
-5. Low priority (new systems, polish, content)
-
-## Pre-commit Checklist
-
-- [ ] Code compiles (Build in Unity or, from repo root, **`npm run unity:compile-check`** — do **not** require **`$UNITY_EDITOR_PATH`** in the agent shell; the script reads **`.env`** / **`.env.local`**)
+- [ ] Code compiles (Build in Unity or `npm run unity:compile-check`)
 - [ ] Class-level `/// <summary>` exists and is accurate
 - [ ] New public methods have XML documentation
-- [ ] Debug.Log messages and comments are in English
-- [ ] If GridManager was touched, verify sorting order with different height levels
-- [ ] If roads were modified, verify `InvalidateRoadCache()` is called where needed
-- [ ] If a new manager was added, it follows the Inspector + FindObjectOfType pattern
-- [ ] New prefabs follow `coding-conventions.mdc` naming (do not rename existing assets)
-- [ ] Temporary `Debug.Log` diagnostics follow `coding-conventions.mdc` (remove or gate before merge)
-- [ ] Wording for touched domains matches `glossary.md` / linked specs (and backlog text stays consistent if the issue was edited)
-- [ ] If you changed links or **`Spec:`** lines for `ia/projects/*.md`, run `npm run validate:dead-project-specs` (repo root)
-- [ ] If you changed **`tools/mcp-ia-server`**, **`docs/schemas`**, **`ia/specs`** bodies that feed **IA indexes**, or **`glossary.md`**, follow [`ia/skills/project-implementation-validation/SKILL.md`](ia/skills/project-implementation-validation/SKILL.md) (or run **`npm run validate:all`** / the full local chain **`npm run verify:local`** when Postgres + Unity bridge apply — see [`ARCHITECTURE.md`](ARCHITECTURE.md) **Local verification** and [`.github/workflows/ia-tools.yml`](.github/workflows/ia-tools.yml))
-- [ ] For substantive implementation, include a **Verification** block in the agent message per [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md): **`npm run validate:all`** (exit code); **`npm run unity:compile-check`** if **`Assets/`** **C#** changed; **Path A** **`npm run unity:testmode-batch`** (prefer **`--quit-editor-first`** when relevant; exit code + **`agent-testmode-batch-*.json`** **`ok`/`exit_code`**); **Path B** bridge attempt with **`timeout_ms`:** **`40000`** or **N/A** + reason
+- [ ] `Debug.Log` messages and comments are in English
+- [ ] If `GridManager` was touched, verify sorting order with different height levels
+- [ ] If roads were modified, `InvalidateRoadCache()` is called where needed
+- [ ] If a new manager was added, it follows the Inspector + `FindObjectOfType` pattern
+- [ ] New prefabs follow [`coding-conventions.md`](ia/rules/coding-conventions.md) naming (don't rename existing assets)
+- [ ] Temporary `Debug.Log` diagnostics removed or gated per [`coding-conventions.md`](ia/rules/coding-conventions.md)
+- [ ] Touched-domain wording matches `glossary.md` / linked specs
+- [ ] If you changed links or `Spec:` lines for `ia/projects/*.md`: `npm run validate:dead-project-specs`
+- [ ] If you changed `tools/mcp-ia-server`, `docs/schemas`, `ia/specs` bodies, or `glossary.md`: `npm run validate:all` (or `npm run verify:local` when Postgres + Unity bridge apply)
+- [ ] Substantive implementation: include the **Verification** block per [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md)

@@ -1,4 +1,8 @@
 ---
+purpose: "Persistence domain — guardrails and spec pointers"
+audience: agent
+loaded_by: router
+slices_via: none
 description: Persistence domain — guardrails and spec pointers
 globs:
   - "**/GameSaveManager*.cs"
@@ -10,8 +14,8 @@ alwaysApply: false
 
 # Persistence Domain
 
-**Deep spec:** `.cursor/specs/persistence-system.md`
-**Geography spec:** `.cursor/specs/isometric-geography-system.md` §7.4, §11.5
+**Deep spec:** `ia/specs/persistence-system.md`
+**Geography spec:** `ia/specs/isometric-geography-system.md` §7.4, §11.5
 
 ## Guardrails
 

@@ -1,4 +1,8 @@
 ---
+purpose: Close a non-final stage of a multi-stage project spec — phase checklists, decision log, lessons, optional journal persist, handoff message — without touching BACKLOG or deleting the spec.
+audience: agent
+loaded_by: skill:project-stage-close
+slices_via: none
 name: project-stage-close
 description: >
   Use at the end of each non-final stage of a multi-stage project spec (e.g. TECH-85). Marks the
@@ -115,7 +119,7 @@ Produce a fenced markdown code block the user can paste **verbatim** into a fres
 - **Verification summary** — exit codes / outcomes from the Verification block produced per [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md). One row per check.
 - **Pointer to the spec** — `{SPEC_PATH}` and the explicit instruction "read §5.3, §6 Decision Log, §9 Issues Found, §10 Lessons Learned, and the §7 phases for the **next** stage before doing anything else".
 - **Inherited blockers / decisions** — anything the next stage agent needs to know that is not already obvious from the spec (e.g. resolved-but-deferred questions, empirical findings from the stage just closed, environmental gotchas).
-- **Hard boundaries** — explicit "do NOT" list for the next stage if relevant (e.g. "do not delete `.cursor/mcp.json` until Phase 2.2"; "do not touch `tools/mcp-ia-server/src/` until Phase 2.3").
+- **Hard boundaries** — explicit "do NOT" list for the next stage if relevant (e.g. "do not touch `tools/mcp-ia-server/src/` until Phase 2.3"; "do not strip `permissions.defaultMode: \"acceptEdits\"` from `.claude/settings.json`").
 - **Final instruction** — "execute every phase of `{NEXT_STAGE_ID}` in order, then invoke `project-stage-close` skill to close the stage and produce the next handoff."
 
 ### Handoff message template
@@ -178,5 +182,5 @@ When you finish running this skill, your message to the user should contain, in 
 - **No invented dates.** Use the host-injected `currentDate` exclusively.
 - **No BACKLOG / archive edits.** Those are exclusive to the umbrella `project-spec-close` skill.
 - **No spec deletion.** Same — exclusive to the umbrella close.
-- **English only**, per project rule (`.cursor/rules/coding-conventions.mdc`).
+- **English only**, per project rule (`ia/rules/coding-conventions.md`).
 - **Thin body.** This skill orchestrates; canonical detail lives in §5.3 of whatever spec is being closed.

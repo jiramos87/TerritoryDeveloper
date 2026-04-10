@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for FEAT-52 — City services coverage model (fire, police, education, health)."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # FEAT-52 — City services coverage model (fire, police, education, health)
 
 > **Issue:** [FEAT-52](../../BACKLOG.md)

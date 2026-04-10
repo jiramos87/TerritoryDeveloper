@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for FEAT-53 — District / neighborhood system."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # FEAT-53 — District / neighborhood system
 
 > **Issue:** [FEAT-53](../../BACKLOG.md)

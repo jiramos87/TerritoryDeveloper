@@ -1,4 +1,8 @@
 ---
+purpose: Use when you need Unity Play Mode evidence (Console logs or Game view screenshots) via territory-ia unity_bridge_command for issue acceptance or debugging.
+audience: agent
+loaded_by: skill:ide-bridge-evidence
+slices_via: none
 name: ide-bridge-evidence
 description: >
   Use when you need Unity Play Mode evidence (Console logs or Game view screenshots) via territory-ia
@@ -111,5 +115,5 @@ import { runUnityBridgeCommand } from './src/tools/unity-bridge-command.ts';
 ## Seed prompt (parameterize)
 
 ```markdown
-Use **ide-bridge-evidence** (`.cursor/skills/ide-bridge-evidence/SKILL.md`): with **Postgres** configured, call **territory-ia** **`unity_bridge_command`** for {KIND: enter_play_mode | exit_play_mode | get_play_mode_status | export_agent_context | get_console_logs | capture_screenshot | debug_context_bundle} with parameters {PARAMS}. For **`capture_screenshot`**, **`export_agent_context`**, or **`debug_context_bundle`** in **Play Mode**, prefer **`enter_play_mode`** first unless Unity is already playing. Attach **`artifact_paths`**, **`bundle`**, or summarize **`log_lines`** / **`play_mode_state`** in chat for {ISSUE_ID} acceptance.
+Use **ide-bridge-evidence** (`ia/skills/ide-bridge-evidence/SKILL.md`): with **Postgres** configured, call **territory-ia** **`unity_bridge_command`** for {KIND: enter_play_mode | exit_play_mode | get_play_mode_status | export_agent_context | get_console_logs | capture_screenshot | debug_context_bundle} with parameters {PARAMS}. For **`capture_screenshot`**, **`export_agent_context`**, or **`debug_context_bundle`** in **Play Mode**, prefer **`enter_play_mode`** first unless Unity is already playing. Attach **`artifact_paths`**, **`bundle`**, or summarize **`log_lines`** / **`play_mode_state`** in chat for {ISSUE_ID} acceptance.
 ```

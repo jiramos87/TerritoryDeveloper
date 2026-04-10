@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for BUG-48 — Minimap staleness + RebuildTexture measurement acceptance."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # BUG-48 — Minimap staleness + RebuildTexture measurement acceptance
 
 > **Issue:** [BUG-48](../../BACKLOG.md)

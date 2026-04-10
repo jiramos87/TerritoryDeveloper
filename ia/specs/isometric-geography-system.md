@@ -1,3 +1,9 @@
+---
+purpose: "Reference spec for Isometric Geography System — Technical Specification."
+audience: agent
+loaded_by: router
+slices_via: spec_section
+---
 # Isometric Geography System — Technical Specification
 
 > **Canonical spec** for isometric geography (single source of truth). See `ARCHITECTURE.md` for init order and persistence.
@@ -19,13 +25,13 @@
 
 | Concern | Document |
 |---------|----------|
-| UI design system | `.cursor/specs/ui-design-system.md` |
-| Road placement pipeline | `.cursor/specs/roads-system.md` |
-| Simulation / AUTO growth | `.cursor/specs/simulation-system.md` |
-| Save / load pipeline | `.cursor/specs/persistence-system.md` |
-| Water & terrain overview | `.cursor/specs/water-terrain-system.md` |
-| Manager responsibilities | `.cursor/specs/managers-reference.md` |
-| Domain glossary | `.cursor/specs/glossary.md` |
+| UI design system | `ia/specs/ui-design-system.md` |
+| Road placement pipeline | `ia/specs/roads-system.md` |
+| Simulation / AUTO growth | `ia/specs/simulation-system.md` |
+| Save / load pipeline | `ia/specs/persistence-system.md` |
+| Water & terrain overview | `ia/specs/water-terrain-system.md` |
+| Manager responsibilities | `ia/specs/managers-reference.md` |
+| Domain glossary | `ia/specs/glossary.md` |
 
 ### 0.3 Quick reference for AI agents
 

@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-81 — Knowledge graph: evolve IA from document retrieval to queryable entity-relationship model."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-81 — Knowledge graph: evolve IA from document retrieval to queryable entity-relationship model
 
 > **Issue:** [TECH-81](../../BACKLOG.md)

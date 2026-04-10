@@ -1,3 +1,9 @@
+---
+purpose: "{ISSUE_ID} — {Title}."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # {ISSUE_ID} — {Title}
 
 > **Issue:** [{ISSUE_ID}](../../BACKLOG.md)
@@ -101,8 +107,8 @@
 | Acceptance / goal | Check type | Command or artifact | Notes |
 |-------------------|------------|---------------------|-------|
 | Example: change touches MCP, schemas, glossary, or **reference spec** bodies that feed **IA indexes** | Node | `npm run validate:all` (repo root) | Chains **validate:dead-project-specs**, **test:ia**, **validate:fixtures**, **generate:ia-indexes --check** |
-| Example: agent **Verification** block (substantive **C#** / **Load pipeline** / **test mode** work) | Agent report | **`validate:all`** + **`unity:compile-check`** (if **Assets/** **C#**) + **`npm run unity:testmode-batch`** + **`unity_bridge_command`** (**`timeout_ms`:** **40000** initial; escalation protocol on timeout) | [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md); **`.cursor/skills/agent-test-mode-verify/SKILL.md`** |
-| Example: Play / HUD acceptance — console clean + screenshot with **Overlay** UI | MCP / dev machine | **territory-ia** **`unity_bridge_command`**: **`get_console_logs`** (`severity_filter`); **`capture_screenshot`** (`include_ui: true`) | **N/A** in CI; **Postgres** **0008** + **Unity** on **REPO_ROOT**; see **`.cursor/skills/ide-bridge-evidence/SKILL.md`** |
+| Example: agent **Verification** block (substantive **C#** / **Load pipeline** / **test mode** work) | Agent report | **`validate:all`** + **`unity:compile-check`** (if **Assets/** **C#**) + **`npm run unity:testmode-batch`** + **`unity_bridge_command`** (**`timeout_ms`:** **40000** initial; escalation protocol on timeout) | [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md); **`ia/skills/agent-test-mode-verify/SKILL.md`** |
+| Example: Play / HUD acceptance — console clean + screenshot with **Overlay** UI | MCP / dev machine | **territory-ia** **`unity_bridge_command`**: **`get_console_logs`** (`severity_filter`); **`capture_screenshot`** (`include_ui: true`) | **N/A** in CI; **Postgres** **0008** + **Unity** on **REPO_ROOT**; see **`ia/skills/ide-bridge-evidence/SKILL.md`** |
 | … | … | … | … |
 
 ## 8. Acceptance Criteria
@@ -132,7 +138,7 @@
 
 <!--
   REQUIRED for collaborative specs.
-  Rules: Use canonical terms from .cursor/specs/glossary.md only.
+  Rules: Use canonical terms from ia/specs/glossary.md only.
   Ask about GAME LOGIC and definitions — not specific code, APIs, or class names.
   The implementing agent resolves technical approach unless it would change intended behavior (then Decision Log or ask user).
   TOOLING-ONLY issues (CI, MCP, scripts, docs with no gameplay change): write "None — tooling only; see §8 Acceptance criteria" (or developer policy questions such as CI blocking vs advisory). Do not invent fake game rules to fill this section.

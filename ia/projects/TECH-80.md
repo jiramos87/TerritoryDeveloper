@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-80 — Bidirectional IA: agents propose glossary additions and flag spec ambiguity."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-80 — Bidirectional IA: agents propose glossary additions and flag spec ambiguity
 
 > **Issue:** [TECH-80](../../BACKLOG.md)

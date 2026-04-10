@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-33 — Prefab manifest and scene MonoBehaviour listing."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-33 — Prefab manifest and scene MonoBehaviour listing
 
 > **Issue:** [TECH-33](../../BACKLOG.md)

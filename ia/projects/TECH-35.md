@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-35 — Research spike: property-based invariant fuzzing (optional)."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-35 — Research spike: property-based invariant fuzzing (optional)
 
 > **Issue:** [TECH-35](../../BACKLOG.md)

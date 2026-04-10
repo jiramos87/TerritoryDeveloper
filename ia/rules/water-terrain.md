@@ -1,4 +1,8 @@
 ---
+purpose: "Water and terrain domain — guardrails and spec pointers"
+audience: agent
+loaded_by: router
+slices_via: none
 description: Water and terrain domain — guardrails and spec pointers
 globs:
   - "**/WaterManager*.cs"
@@ -16,8 +20,8 @@ alwaysApply: false
 
 # Water & Terrain Domain
 
-**Deep spec:** `.cursor/specs/water-terrain-system.md`
-**Geography spec:** `.cursor/specs/isometric-geography-system.md` §2–§5, §11–§12
+**Deep spec:** `ia/specs/water-terrain-system.md`
+**Geography spec:** `ia/specs/isometric-geography-system.md` §2–§5, §11–§12
 
 ## Guardrails
 

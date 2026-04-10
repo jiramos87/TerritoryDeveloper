@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-77 — Unified semantic search across all IA surfaces (FTS in Postgres)."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-77 — Unified semantic search across all IA surfaces (FTS in Postgres)
 
 > **Issue:** [TECH-77](../../BACKLOG.md)

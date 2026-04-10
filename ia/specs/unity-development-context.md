@@ -1,3 +1,9 @@
+---
+purpose: "Reference spec for Unity development context — Territory Developer."
+audience: agent
+loaded_by: router
+slices_via: spec_section
+---
 # Unity development context — Territory Developer
 
 > First-party **Unity** and **Editor** conventions for this repository: **MonoBehaviour** wiring, **Inspector** usage, dependency resolution, and 2D rendering fields. Does **not** replace [`isometric-geography-system.md`](isometric-geography-system.md) for **Sorting order** math, terrain, or roads.
@@ -22,7 +28,7 @@
 
 **Audience:** Contributors and IDE agents working in `Assets/Scripts/` and **Unity** scenes.
 
-**Default:** Prefer this spec, [`.cursor/rules/project-overview.mdc`](../rules/project-overview.mdc), [`.cursor/rules/invariants.mdc`](../rules/invariants.mdc), [`.cursor/rules/coding-conventions.mdc`](../rules/coding-conventions.mdc), and **territory-ia** tools (`spec_section`, `glossary_discover`, etc.) before generic **Unity** web documentation.
+**Default:** Prefer this spec, [`ia/rules/project-overview.md`](../rules/project-overview.md), [`ia/rules/invariants.md`](../rules/invariants.md), [`ia/rules/coding-conventions.md`](../rules/coding-conventions.md), and **territory-ia** tools (`spec_section`, `glossary_discover`, etc.) before generic **Unity** web documentation.
 
 **When to use external docs:** Version-specific APIs, bugs, or platform details not stated in this repo.
 
@@ -34,7 +40,7 @@
 
 ## 2. MonoBehaviour lifecycle
 
-Managers and controllers are **scene** `MonoBehaviour` components; they are **not** constructed with `new`. See [`.cursor/rules/invariants.mdc`](../rules/invariants.mdc) — *IF creating a new manager → THEN MonoBehaviour scene component, never `new`*.
+Managers and controllers are **scene** `MonoBehaviour` components; they are **not** constructed with `new`. See [`ia/rules/invariants.md`](../rules/invariants.md) — *IF creating a new manager → THEN MonoBehaviour scene component, never `new`*.
 
 **`Awake`:** Use for self-setup and for resolving references that must exist before other scripts’ `Start` when order is guaranteed by **Unity** (same scene) or by **Script Execution Order** (see §6). Example: **`ZoneManager`** builds its zone prefab dictionary in **`Awake`** so lookups are ready before dependent **`Start`** logic ([`ZoneManager.cs`](../../Assets/Scripts/Managers/GameManagers/ZoneManager.cs)).
 
@@ -52,7 +58,7 @@ Managers and controllers are **scene** `MonoBehaviour` components; they are **no
 
 ## 3. Inspector, SerializeField, and dependency resolution
 
-**Target pattern (guardrail):** `[SerializeField] private` fields for dependencies, with `FindObjectOfType<T>()` **fallback** in `Awake` (or a helper called from `Awake`) when the **Inspector** reference is missing. See [`.cursor/rules/invariants.mdc`](../rules/invariants.mdc) guardrail: *IF adding a manager reference → THEN `[SerializeField] private` + `FindObjectOfType` fallback in `Awake`*.
+**Target pattern (guardrail):** `[SerializeField] private` fields for dependencies, with `FindObjectOfType<T>()` **fallback** in `Awake` (or a helper called from `Awake`) when the **Inspector** reference is missing. See [`ia/rules/invariants.md`](../rules/invariants.md) guardrail: *IF adding a manager reference → THEN `[SerializeField] private` + `FindObjectOfType` fallback in `Awake`*.
 
 **In-repo example (recommended shape):** `GameDebugInfoBuilder` keeps optional managers as `[SerializeField] private` and resolves them in `Awake` via `ResolveRefsIfNeeded()` using `FindObjectOfType` when null ([`GameDebugInfoBuilder.cs`](../../Assets/Scripts/Managers/GameManagers/GameDebugInfoBuilder.cs)). A search under `Assets/Scripts/Managers/` currently surfaces that type as the clearest full match for **`[SerializeField] private` manager refs + `FindObjectOfType`**; many other types still use public **Inspector** fields or private fields **without** `[SerializeField]` and resolve peers in **`Start`** (e.g. **`DemandManager`** — [`DemandManager.cs`](../../Assets/Scripts/Managers/GameManagers/DemandManager.cs)).
 
@@ -60,7 +66,7 @@ Managers and controllers are **scene** `MonoBehaviour` components; they are **no
 
 **Third-party stacks:** Do **not** document **Addressables** (or similar) here unless usage appears under `Assets/Scripts/` — the current snapshot has **no** **Addressables** references there; re-check with search before adding package-specific guidance.
 
-**Invariant:** Never call `FindObjectOfType` from `Update` or other per-frame paths — cache in `Awake` / `Start`. See [`.cursor/rules/invariants.mdc`](../rules/invariants.mdc).
+**Invariant:** Never call `FindObjectOfType` from `Update` or other per-frame paths — cache in `Awake` / `Start`. See [`ia/rules/invariants.md`](../rules/invariants.md).
 
 ---
 
@@ -69,8 +75,8 @@ Managers and controllers are **scene** `MonoBehaviour` components; they are **no
 - **Missing references:** After moving or renaming scripts, **prefabs** and scenes can show “Missing (Mono Script)”. Reassign scripts or use **Unity**’s script mapping / metadata repair; agents should not assume GUID stability across branches without checking **YAML** / **meta** if merges broke links.
 - **`.meta` and GUIDs:** **Unity** stores script and asset identity in `.meta` files. Duplicating a **prefab** or asset in the file system without letting the **Editor** regenerate **meta** can produce duplicate GUIDs or broken references — prefer duplicate inside the **Editor**, or run a deliberate GUID repair workflow.
 - **Scene / prefab YAML:** Serialized scenes and **prefabs** are text **YAML**; merge conflicts can drop component blocks or scramble **fileID** references. Resolve conflicts in the **Editor** when possible; after manual **YAML** edits, open the asset in **Unity** to validate.
-- **Renaming types:** Prefer updating `/// <summary>` and **XML docs** on the class when behavior changes ([`.cursor/rules/coding-conventions.mdc`](../rules/coding-conventions.mdc)).
-- **Managers in scenes:** Core gameplay types live under `Assets/Scripts/Managers/` per [`.cursor/rules/project-overview.mdc`](../rules/project-overview.mdc); scene wiring is **Inspector**-driven — document new mandatory references on the relevant **Manager** when adding dependencies.
+- **Renaming types:** Prefer updating `/// <summary>` and **XML docs** on the class when behavior changes ([`ia/rules/coding-conventions.md`](../rules/coding-conventions.md)).
+- **Managers in scenes:** Core gameplay types live under `Assets/Scripts/Managers/` per [`ia/rules/project-overview.md`](../rules/project-overview.md); scene wiring is **Inspector**-driven — document new mandatory references on the relevant **Manager** when adding dependencies.
 
 ---
 
@@ -107,18 +113,18 @@ Managers and controllers are **scene** `MonoBehaviour` components; they are **no
 
 | Do not | Do instead |
 |--------|------------|
-| New global **singletons** | **Inspector** + `FindObjectOfType` (see §3). **Exception:** `GameNotificationManager.Instance` is the documented single **singleton** ([`GameNotificationManager.cs`](../../Assets/Scripts/Managers/GameManagers/GameNotificationManager.cs)); do **not** add new ones ([`.cursor/rules/invariants.mdc`](../rules/invariants.mdc)). |
+| New global **singletons** | **Inspector** + `FindObjectOfType` (see §3). **Exception:** `GameNotificationManager.Instance` is the documented single **singleton** ([`GameNotificationManager.cs`](../../Assets/Scripts/Managers/GameManagers/GameNotificationManager.cs)); do **not** add new ones ([`ia/rules/invariants.md`](../rules/invariants.md)). |
 | `FindObjectOfType` in `Update` / per-frame loops | Cache references in `Awake` / `Start` |
 | `GetComponent<T>()` / `GetComponentInChildren<T>()` in `Update` / per-frame loops | Cache the component in `Awake` / `Start` (or resolve once when the target instance is created); same spirit as the **`FindObjectOfType`** invariant |
-| Direct `gridArray` / `cellArray` access | `GridManager.GetCell(x, y)` ([`.cursor/rules/invariants.mdc`](../rules/invariants.mdc)) |
-| New responsibilities on `GridManager` | Extract helpers ([`.cursor/rules/invariants.mdc`](../rules/invariants.mdc)) |
-| Road placement bypassing preparation pipeline | **Road preparation family** ending in `PathTerraformPlan` + Phase-1 + `Apply` ([`.cursor/rules/invariants.mdc`](../rules/invariants.mdc)) |
+| Direct `gridArray` / `cellArray` access | `GridManager.GetCell(x, y)` ([`ia/rules/invariants.md`](../rules/invariants.md)) |
+| New responsibilities on `GridManager` | Extract helpers ([`ia/rules/invariants.md`](../rules/invariants.md)) |
+| Road placement bypassing preparation pipeline | **Road preparation family** ending in `PathTerraformPlan` + Phase-1 + `Apply` ([`ia/rules/invariants.md`](../rules/invariants.md)) |
 
 ---
 
 ## 8. ScriptableObject
 
-There is **no** broad use of **`ScriptableObject`** in gameplay scripts under `Assets/Scripts/` in the current codebase snapshot. If a feature introduces **ScriptableObject** assets, follow **Unity** serialization rules and [`.cursor/rules/coding-conventions.mdc`](../rules/coding-conventions.mdc) for naming and **XML** documentation; prefer **Inspector**-friendly, immutable-ish config types.
+There is **no** broad use of **`ScriptableObject`** in gameplay scripts under `Assets/Scripts/` in the current codebase snapshot. If a feature introduces **ScriptableObject** assets, follow **Unity** serialization rules and [`ia/rules/coding-conventions.md`](../rules/coding-conventions.md) for naming and **XML** documentation; prefer **Inspector**-friendly, immutable-ish config types.
 
 ---
 
@@ -171,7 +177,7 @@ For **Unity**-only vocabulary (**MonoBehaviour**, **Inspector**, **SerializeFiel
 4. **Export Sorting Debug (Markdown):**
    - **Edit Mode:** Writes a **stub** file stating that full **Sorting order** breakdown requires **Play Mode** with an initialized **grid** — this is **expected**, not a failure.
    - **Play Mode:** Requires an initialized **`GridManager`** (`isInitialized`), a non-null **`TerrainManager`**, and valid **`GetCell`** data for sampled coordinates. Output lists **`TerrainManager`** constants (`TERRAIN_BASE_ORDER`, `DEPTH_MULTIPLIER`, `HEIGHT_MULTIPLIER`), per-**cell** computed orders, and a capped list of **`SpriteRenderer`** `sortingOrder` values on the **cell** `GameObject` tree.
-5. **Grid reads:** Diagnostics code must use **`GridManager.GetCell(x, y)`** only for **cell** access — no new direct **`gridArray`** / **`cellArray`** use outside **`GridManager`** ([`.cursor/rules/invariants.mdc`](../rules/invariants.mdc)).
+5. **Grid reads:** Diagnostics code must use **`GridManager.GetCell(x, y)`** only for **cell** access — no new direct **`gridArray`** / **`cellArray`** use outside **`GridManager`** ([`ia/rules/invariants.md`](../rules/invariants.md)).
 
 **Verification:** If menus do not appear or **Sorting** export does not match the expectations above, use [`BACKLOG.md`](../../BACKLOG.md) for the active bug row and attach **Console** output plus an **Agent context** / **Sorting debug** export when filing details.
 

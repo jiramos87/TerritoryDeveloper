@@ -1,3 +1,9 @@
+---
+purpose: "Reference spec for Simulation System — Reference Spec."
+audience: agent
+loaded_by: router
+slices_via: spec_section
+---
 # Simulation System — Reference Spec
 
 > Deep reference for the automatic simulation pipeline: tick order, AUTO systems, growth, and dependencies.

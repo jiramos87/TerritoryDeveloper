@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-31 — Agent scenario generator (orchestrator stub)."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-31 — Agent scenario generator (orchestrator stub)
 
 > **Issue:** [TECH-31](../../BACKLOG.md)

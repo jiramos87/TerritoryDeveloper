@@ -1,3 +1,9 @@
+---
+purpose: "Reference spec for UI / UX Design System — Spec."
+audience: agent
+loaded_by: router
+slices_via: spec_section
+---
 # UI / UX Design System — Spec
 
 ## Overview
@@ -53,11 +59,11 @@ Add prefab paths under `Assets/` as they are standardized.
 
 **Main menu scene:** **`Assets/Scenes/MainMenu.unity`** — scene YAML may contain **no** serialized **Canvas** in older flows; **`MainMenuController`** wires **Inspector** **Button**s and/or **`MainMenuCanvas`**; **`BuildUI()`** remains a dev fallback when strip references are **null**. **Edit Mode** **UI** inventory export should include **`MainMenuCanvas`** when present; use **§3.0** + code for **as-built** menu **UI**.
 
-**Technical constraints:** **Canvas Scaler** — **§4.3**. **EventSystem** — UI must consume pointer events so world tools (e.g. camera zoom) do not fire through panels. **Performance** — no **`FindObjectOfType`** in **`Update`** (**.cursor/rules/invariants.mdc**). **Coupling** — **`UIManager`** is large; prefer small controllers or shared helpers (**AGENTS.md**).
+**Technical constraints:** **Canvas Scaler** — **§4.3**. **EventSystem** — UI must consume pointer events so world tools (e.g. camera zoom) do not fire through panels. **Performance** — no **`FindObjectOfType`** in **`Update`** (**ia/rules/invariants.md**). **Coupling** — **`UIManager`** is large; prefer small controllers or shared helpers (**AGENTS.md**).
 
 **Known pain points:** Scroll wheel over UI lists also moving **camera** (fixed — see **§3.5**); **`FindObjectOfType`** in hot paths (**BUG-14**); happiness / stats display inconsistencies (**BACKLOG**).
 
-**Ongoing hygiene:** When **UI** hierarchies change, refresh **§1–§4** (as needed), this **Codebase inventory**, and the committed baseline JSON per [`docs/reports/README.md`](../../docs/reports/README.md). After **BACKLOG** **`Spec:`** edits under `.cursor/projects/`, run `npm run validate:dead-project-specs` (repo root). After **glossary** / **reference spec** body edits consumed by **territory-ia**, run `npm run generate:ia-indexes -- --check`. Extend **`UiInventoryReportsMenu`** allowlist when **`RegionScene`** / **`CityScene`** assets land or rename.
+**Ongoing hygiene:** When **UI** hierarchies change, refresh **§1–§4** (as needed), this **Codebase inventory**, and the committed baseline JSON per [`docs/reports/README.md`](../../docs/reports/README.md). After **BACKLOG** **`Spec:`** edits under `ia/projects/`, run `npm run validate:dead-project-specs` (repo root). After **glossary** / **reference spec** body edits consumed by **territory-ia**, run `npm run generate:ia-indexes -- --check`. Extend **`UiInventoryReportsMenu`** allowlist when **`RegionScene`** / **`CityScene`** assets land or rename.
 
 ---
 
@@ -119,7 +125,7 @@ Re-run **Export UI Inventory** after wide **Graphic.color** edits so **as-built*
 
 #### 1.3.1 HUD and uGUI hygiene (agents, **UI** inventory, **Edit Mode**)
 
-Norms for **MainScene** / **MainMenu** hierarchies so **Editor** exports, **MCP** path references, and **Transform.Find** stay reliable. **New** work should follow these. Track **implementation** drift in [`BACKLOG.md`](../../BACKLOG.md) under **§ UI-as-code program** (open **TECH-** row with a linked `.cursor/projects/{ISSUE_ID}.md` when used). **Backlog id policy:** **TECH** numbers increase monotonically; **do not reuse** a **TECH** id that already appears in [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) for a different program — e.g. **TECH-60** there is the **completed** **spec pipeline & verification program** umbrella, not **HUD** hygiene work.
+Norms for **MainScene** / **MainMenu** hierarchies so **Editor** exports, **MCP** path references, and **Transform.Find** stay reliable. **New** work should follow these. Track **implementation** drift in [`BACKLOG.md`](../../BACKLOG.md) under **§ UI-as-code program** (open **TECH-** row with a linked `ia/projects/{ISSUE_ID}.md` when used). **Backlog id policy:** **TECH** numbers increase monotonically; **do not reuse** a **TECH** id that already appears in [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) for a different program — e.g. **TECH-60** there is the **completed** **spec pipeline & verification program** umbrella, not **HUD** hygiene work.
 
 - **Canvas vs leaf graphics:** Keep **Canvas** + **CanvasScaler** on the **root** overlay (or a documented world-space root). Do **not** add **Canvas** + **CanvasScaler** on the same **GameObject** as ordinary **HUD** **Text** / **Image** leaves unless there is an explicit, documented reason.
 - **`Transform.Find` depth:** **`Transform.Find`** only searches **immediate children**. Align sibling **HUD** widgets under the same parent (or cache a **hud root** reference) instead of assuming deep discovery by name.

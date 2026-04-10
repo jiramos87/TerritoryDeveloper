@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for FEAT-03 — Forest (coverage) mode hold-to-place."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # FEAT-03 — Forest (coverage) mode hold-to-place
 
 > **Issue:** [FEAT-03](../../BACKLOG.md)

@@ -1,4 +1,8 @@
 ---
+purpose: "System invariants and guardrails — never violate"
+audience: agent
+loaded_by: always
+slices_via: none
 description: System invariants and guardrails — never violate
 alwaysApply: true
 ---
@@ -16,7 +20,7 @@ alwaysApply: true
 9. Cliff visible faces: south + east only — N/W not instantiated
 10. Road placement: always through the **road preparation family** ending in `PathTerraformPlan` + Phase-1 + `Apply` — never `ComputePathPlan` alone
 11. `UrbanizationProposal`: NEVER re-enable — obsolete (see **glossary** **Urbanization proposal**)
-12. Specs under `.cursor/specs/` for permanent domains only; use `.cursor/projects/` for issue-specific specs
+12. Specs under `ia/specs/` for permanent domains only; use `ia/projects/` for issue-specific specs
 
 # Guardrails (IF → THEN)
 
@@ -28,4 +32,4 @@ alwaysApply: true
 - IF modifying `HeightMap` → THEN also write `Cell.height` (and vice versa)
 - IF placing or removing water → THEN call `RefreshShoreTerrainAfterWaterUpdate`
 - IF closing a project spec → THEN migrate lessons learned to canonical docs before deleting
-- IF creating a project spec → THEN use `.cursor/templates/project-spec-template.md`, name `{ISSUE_ID}.md` under `.cursor/projects/`
+- IF creating a project spec → THEN use `ia/templates/project-spec-template.md`, name `{ISSUE_ID}.md` under `ia/projects/`

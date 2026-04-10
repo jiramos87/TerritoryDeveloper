@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-30 — Validate BACKLOG issue IDs in .cursor/projects/*.md."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-30 — Validate BACKLOG issue IDs in `.cursor/projects/*.md`
 
 > **Issue:** [TECH-30](../../BACKLOG.md)

@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-79 — Agent memory across sessions (persistent agent context)."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-79 — Agent memory across sessions (persistent agent context)
 
 > **Issue:** [TECH-79](../../BACKLOG.md)

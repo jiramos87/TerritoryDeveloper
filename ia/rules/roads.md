@@ -1,4 +1,8 @@
 ---
+purpose: "Roads domain — guardrails and spec pointers"
+audience: agent
+loaded_by: router
+slices_via: none
 description: Roads domain — guardrails and spec pointers
 globs:
   - "**/RoadManager*.cs"
@@ -15,8 +19,8 @@ alwaysApply: false
 
 # Roads Domain
 
-**Deep spec:** `.cursor/specs/roads-system.md`
-**Geography spec:** `.cursor/specs/isometric-geography-system.md` §9, §10, §13
+**Deep spec:** `ia/specs/roads-system.md`
+**Geography spec:** `ia/specs/isometric-geography-system.md` §9, §10, §13
 
 ## Guardrails
 

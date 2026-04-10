@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-27 — BACKLOG glossary alignment and glossary↔spec link checker."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-27 — BACKLOG glossary alignment and glossary↔spec link checker
 
 > **Issue:** [TECH-27](../../BACKLOG.md)

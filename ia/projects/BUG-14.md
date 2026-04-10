@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for BUG-14 — FindObjectOfType in Update / per-frame paths."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # BUG-14 — FindObjectOfType in Update / per-frame paths
 
 > **Issue:** [BUG-14](../../BACKLOG.md)

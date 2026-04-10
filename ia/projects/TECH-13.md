@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-13 — Remove obsolete urbanization proposal system."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-13 — Remove obsolete urbanization proposal system
 
 > **Issue:** [TECH-13](../../BACKLOG.md)

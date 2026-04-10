@@ -1,4 +1,8 @@
 ---
+purpose: "GameManagers guide — guardrails and spec pointers"
+audience: agent
+loaded_by: router
+slices_via: none
 description: GameManagers guide — guardrails and spec pointers
 globs: "**/Managers/GameManagers/*.cs"
 alwaysApply: false
@@ -6,7 +10,7 @@ alwaysApply: false
 
 # GameManagers Guide
 
-**Deep spec:** `.cursor/specs/managers-reference.md`
+**Deep spec:** `ia/specs/managers-reference.md`
 
 ## Guardrails
 

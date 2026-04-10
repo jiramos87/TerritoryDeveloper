@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-82 — Entity model for gameplay database (time-series, events, snapshots)."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-82 — Entity model for gameplay database (time-series, events, snapshots)
 
 > **Issue:** [TECH-82](../../BACKLOG.md)

@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-18 — IA migration to PostgreSQL and extended territory-ia MCP."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-18 — IA migration to PostgreSQL and extended territory-ia MCP
 
 > **Issue:** [TECH-18](../../BACKLOG.md)

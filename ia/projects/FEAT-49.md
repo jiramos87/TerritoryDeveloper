@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for FEAT-49 — Local sector inspector (rectangular grid selection, layered analysis, JSON export)."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # FEAT-49 — Local sector inspector (rectangular grid selection, layered analysis, JSON export)
 
 > **Issue:** [FEAT-49](../../BACKLOG.md)

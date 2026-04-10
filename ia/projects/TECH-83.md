@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-83 — Agent-driven simulation parameter tuning."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-83 — Agent-driven simulation parameter tuning
 
 > **Issue:** [TECH-83](../../BACKLOG.md)

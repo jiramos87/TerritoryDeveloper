@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-32 — Urban centroid / growth rings recompute what-if (research tooling)."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-32 — Urban centroid / growth rings recompute what-if (research tooling)
 
 > **Issue:** [TECH-32](../../BACKLOG.md)

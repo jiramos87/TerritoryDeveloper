@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-14 — Remove residual placeholder / test scripts."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-14 — Remove residual placeholder / test scripts
 
 > **Issue:** [TECH-14](../../BACKLOG.md)

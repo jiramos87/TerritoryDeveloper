@@ -1,4 +1,8 @@
 ---
+purpose: Verify Postgres connectivity and agent_bridge_job table before using unity_bridge_command or unity_compile.
+audience: agent
+loaded_by: skill:bridge-environment-preflight
+slices_via: none
 name: bridge-environment-preflight
 description: >
   Verify Postgres connectivity and agent_bridge_job table before using unity_bridge_command or unity_compile.
@@ -52,6 +56,6 @@ The preflight script imports **`resolveIaDatabaseUrl`** — the same two-layer r
 ## Seed prompt (parameterize)
 
 ```markdown
-Run bridge-environment-preflight (`.cursor/skills/bridge-environment-preflight/SKILL.md`):
+Run bridge-environment-preflight (`ia/skills/bridge-environment-preflight/SKILL.md`):
 `npm run db:bridge-preflight` — interpret exit codes, apply bounded repair if needed, then proceed to {NEXT_STEP: unity_bridge_command | close-dev-loop step 1}.
 ```

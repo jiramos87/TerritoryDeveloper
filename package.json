@@ -6,6 +6,7 @@
     "compute-lib:build": "npm --prefix tools/compute-lib run build",
     "validate:all": "npm run validate:dead-project-specs && npm run compute-lib:build && npm run test:ia && npm run validate:fixtures && npm run generate:ia-indexes -- --check",
     "validate:dead-project-specs": "node tools/validate-dead-project-spec-paths.mjs",
+    "validate:frontmatter": "node tools/mcp-ia-server/scripts/check-frontmatter.mjs",
     "validate:fixtures": "npm --prefix tools/mcp-ia-server run validate:fixtures",
     "validate:geography-init-report": "node tools/scripts/validate-geography-init.mjs",
     "generate:ia-indexes": "cd tools/mcp-ia-server && npx tsx scripts/generate-ia-indexes.ts",

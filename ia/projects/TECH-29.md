@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-29 — Simulation tick call-order drift detector."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-29 — Simulation tick call-order drift detector
 
 > **Issue:** [TECH-29](../../BACKLOG.md)

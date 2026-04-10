@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-78 — Skill chaining engine."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-78 — Skill chaining engine
 
 > **Issue:** [TECH-78](../../BACKLOG.md)

@@ -3,12 +3,21 @@
 #
 # Wired in .claude/settings.json under hooks.PreToolUse with matcher "Bash".
 # Reads the tool input from stdin (JSON: {tool_name, tool_input:{command,...}})
-# and exits with code 2 to **block** the tool call when the command matches a
-# destructive pattern. Exit 2 surfaces the stderr to the model so it can adjust.
+# and decides one of three outcomes for the Bash call:
 #
-# Belt-and-suspenders with .claude/settings.json permissions.deny — the hook
-# runs even when permissions are bypassed and gives a single canonical place
-# to extend the denylist without re-deploying settings.
+#   1. DENY  — destructive pattern matched. Exit 2 with stderr; surfaced to the
+#              model so it can adjust. Belt-and-suspenders with permissions.deny.
+#   2. ASK   — mutative git operation matched (commit / push / reset / etc.).
+#              Emit a permissionDecision: "ask" JSON so Claude Code prompts the
+#              human before running. Replaces the legacy permissions.ask bucket
+#              for Bash because compound commands cannot be expressed as prefix
+#              patterns in settings.json.
+#   3. ALLOW — anything else. Emit a permissionDecision: "allow" JSON so the
+#              command runs without prompting. This makes the hook the single
+#              source of truth for Bash gating: the static permissions.allow
+#              list in settings.json no longer needs to enumerate every safe
+#              prefix, and compound commands (loops, pipelines, command
+#              substitution) work without per-call human approval.
 #
 # Patterns blocked (TECH-85 / Phase 1.3):
 #   - git push --force / -f / --force-with-lease
@@ -83,4 +92,49 @@ EOF
   exit 2
 fi
 
+# Mutative git operations that should still prompt the human even though they
+# are not destructive enough to deny outright. Mirrors the legacy `ask` bucket
+# in .claude/settings.json so commit / push / branch-state-changing operations
+# never run silently. Substring match (anywhere in the command) so pipelines
+# and `cd … && git …` chains still trigger the prompt.
+ask_match=""
+case "$command_str" in
+  *"git add "*|*"git add"|*"git add."*)
+    ask_match="git add" ;;
+  *"git commit"*)
+    ask_match="git commit" ;;
+  *"git push"*)
+    ask_match="git push" ;;
+  *"git restore"*)
+    ask_match="git restore" ;;
+  *"git checkout"*)
+    ask_match="git checkout" ;;
+  *"git merge"*)
+    ask_match="git merge" ;;
+  *"git rebase"*)
+    ask_match="git rebase" ;;
+  *"git reset"*)
+    ask_match="git reset" ;;
+  *"git stash"*)
+    ask_match="git stash" ;;
+  *"git clean"*)
+    ask_match="git clean" ;;
+esac
+
+if [ -n "$ask_match" ]; then
+  # JSON-escape command_str for the reason field (backslash + double quote).
+  esc_command="$(printf '%s' "$command_str" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"bash-denylist hook: \"%s\" is a mutative git operation; confirm before running: %s"}}\n' "$ask_match" "$esc_command"
+  exit 0
+fi
+
+# Auto-approve any Bash command that is not on the denylist or the ask list.
+# Compound commands (for/while loops, pipelines, command substitution) cannot
+# be expressed as prefix patterns in .claude/settings.json `allow`, so we
+# delegate the decision to this hook. The denylist above is the single source
+# of truth for what is blocked; the ask list is the single source of truth for
+# what still prompts the human; everything else is allowed without prompting.
+cat <<'JSON'
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow","permissionDecisionReason":"bash-denylist hook: command not on project denylist or ask list"}}
+JSON
 exit 0

@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-05 — Extract duplicated dependency resolution pattern."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-05 — Extract duplicated dependency resolution pattern
 
 > **Issue:** [TECH-05](../../BACKLOG.md)

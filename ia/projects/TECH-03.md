@@ -1,3 +1,9 @@
+---
+purpose: "Project spec for TECH-03 — Extract magic numbers to constants or ScriptableObjects."
+audience: both
+loaded_by: ondemand
+slices_via: none
+---
 # TECH-03 — Extract magic numbers to constants or ScriptableObjects
 
 > **Issue:** [TECH-03](../../BACKLOG.md)

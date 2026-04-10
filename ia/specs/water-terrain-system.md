@@ -1,3 +1,9 @@
+---
+purpose: "Reference spec for Water & Terrain System — Reference Spec."
+audience: agent
+loaded_by: router
+slices_via: spec_section
+---
 # Water & Terrain System — Reference Spec
 
 > Deep reference for heightmap, slopes, water bodies, cliffs, shores, and cascades.

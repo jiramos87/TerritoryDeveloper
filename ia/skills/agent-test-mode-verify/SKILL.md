@@ -1,4 +1,8 @@
 ---
+purpose: "Run after project-spec-implement (or standalone) when agent-led test mode verification is required: gate (run vs skip), Path A (glossary Agent test mode batch) or Path B (glossary IDE agent bridge hybrid with…"
+audience: agent
+loaded_by: skill:agent-test-mode-verify
+slices_via: none
 name: agent-test-mode-verify
 description: >
   Run after project-spec-implement (or standalone) when agent-led test mode verification is required:
@@ -41,7 +45,7 @@ If **none** of the following apply, **skip** this loop, state **why** in the han
 ## Tool recipe (ordered)
 
 1. **Gate** — Apply the table above; if skip, document and stop (or run **`validate:all`** only if the diff still warrants it).
-2. **`npm run validate:all`** (repo root) when the diff touches **MCP** / schemas / **IA** indexes / **fixtures** / **`.cursor/skills/`** / **`.cursor/specs/`** bodies that feed indexes — same policy as **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)**.
+2. **`npm run validate:all`** (repo root) when the diff touches **MCP** / schemas / **IA** indexes / **fixtures** / **`ia/skills/`** / **`ia/specs/`** bodies that feed indexes — same policy as **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)**.
 3. **Compile gate** — After **`Assets/`** **C#** changes: prefer **`unity_bridge_command`** **`kind`:** **`get_compilation_status`** or **`unity_compile`** when the **Editor** is open for **Path B**; otherwise **`npm run unity:compile-check`** from repo root (**do not** skip because **`$UNITY_EDITOR_PATH`** is unset — dotenv + **macOS** Hub fallback). **Never** run **`unity:compile-check`** while the **Editor** holds the same **projectPath** lock. Full preference order: **[`close-dev-loop`](../close-dev-loop/SKILL.md)** § **Compile gate**.
 4. **Scenario** — **v1:** committed id (e.g. **`reference-flat-32x32`**) or **`tools/fixtures/scenarios/agent-generated/{run-id}/save.json`** with **`--scenario-path`** (absolute path). **v2:** prefer **`scenario_descriptor_v1`** output layout from [`tools/fixtures/scenarios/BUILDER.md`](../../../tools/fixtures/scenarios/BUILDER.md) (**glossary** **scenario_descriptor_v1**).
 5. **Path A** or **Path B** (below). When running **both** in one session, do **Path A** first (use **`--quit-editor-first`** so batch can take the lock), then **`npm run unity:ensure-editor`** (macOS) before **Path B**.
@@ -136,7 +140,7 @@ With **Postgres** configured and **Editor** on **REPO_ROOT**:
 
 ```markdown
 Run the agent-test-mode-verify workflow for the completed spec work.
-Follow .cursor/skills/agent-test-mode-verify/SKILL.md (Path A: glossary Agent test mode batch; Path B: glossary IDE agent bridge).
+Follow ia/skills/agent-test-mode-verify/SKILL.md (Path A: glossary Agent test mode batch; Path B: glossary IDE agent bridge).
 Use territory-ia unity_bridge_command when Path B applies (timeout_ms: 40000); use npm run unity:testmode-batch -- --quit-editor-first (plus scenario flags) when Path A applies if an Editor might hold REPO_ROOT.
 Fixtures must stay GameSaveData-shaped; load only through GameSaveManager.LoadGame (persistence-system Load pipeline).
 End with a Verification section per docs/agent-led-verification-policy.md (validate:all, compile if C#, batch JSON, bridge outcome).

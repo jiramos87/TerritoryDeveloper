@@ -1,3 +1,9 @@
+---
+purpose: "Reference spec for Roads System — Reference Spec."
+audience: agent
+loaded_by: router
+slices_via: spec_section
+---
 # Roads System — Reference Spec
 
 > Deep reference for road placement, pathfinding, bridge validation, and prefab resolution.
