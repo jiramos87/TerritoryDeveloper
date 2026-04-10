@@ -4,7 +4,7 @@
 **Cursor spec (stub + Open Questions):** [`.cursor/projects/TECH-31.md`](../.cursor/projects/TECH-31.md).  
 **Related:** [TECH-82](../BACKLOG.md) (**city metrics** / **city history** — Stage **31d**). **Batch** **test mode** tooling (program stage **31a2**, shipped): **glossary** **Agent test mode batch** — [`ARCHITECTURE.md`](../ARCHITECTURE.md) **Local verification**, [`tools/fixtures/scenarios/README.md`](../tools/fixtures/scenarios/README.md). **Agent test-mode verify** skill (**31a3**): [`projects/TECH-31a3-agent-test-mode-verify-skill.md`](TECH-31a3-agent-test-mode-verify-skill.md). **Spec-pipeline** prerequisite: glossary **territory-ia spec-pipeline program**; exploration [spec-pipeline-exploration.md](spec-pipeline-exploration.md).
 
-This file is the **human-oriented orchestrator**: stage order, links to **implementation specs**, progress checkboxes, and **lessons learned**. Detailed requirements per stage live in **`projects/TECH-31*.md`** below—not in this table alone.
+This file is the **human-oriented orchestrator**: stage order, links to **implementation specs**, progress checkboxes, and **lessons learned**. Detailed requirements per stage live in **`projects/TECH-31*.md`** when that stage file still exists (**31d** closed — trace **glossary** **City metrics history** and [`.cursor/projects/TECH-82.md`](../.cursor/projects/TECH-82.md))—not in this table alone.
 
 ## Program intent (one paragraph)
 
@@ -21,7 +21,7 @@ Complete stages in order unless the **Decision Log** records a deliberate parall
 | **31a3** | **`agent-test-mode-verify`** **Cursor Skill** (orchestration, **Path A/B**, handoff to human **QA**) | [TECH-31a3-agent-test-mode-verify-skill.md](TECH-31a3-agent-test-mode-verify-skill.md) | **TECH-31** |
 | **31b** | Descriptor → **builder** → **`GameSaveData`** artifact (invariants-safe) | *(stage spec removed after IA migration — 2026-04-10)* — **glossary** **scenario_descriptor_v1**, [`tools/fixtures/scenarios/BUILDER.md`](tools/fixtures/scenarios/BUILDER.md), [`docs/schemas/README.md`](../docs/schemas/README.md) | **TECH-31** |
 | **31c** | Verification without DB metrics: **N** ticks, **UTF**/scripted run, **close-dev-loop** recipe (**closed** 2026-04-10 — spec retained) | [TECH-31c-verification-pipeline.md](TECH-31c-verification-pipeline.md) | **TECH-31** |
-| **31d** | **City history** for scenarios: **TECH-82** Phase 1 (`city_metrics_history`, **`MetricsRecorder`**, MCP query) + **test mode** correlation (**scenario id** metadata — see **TECH-82** Open Questions) | [TECH-31d-city-metrics-TECH-82-phase1.md](TECH-31d-city-metrics-TECH-82-phase1.md) | **TECH-82** (Phase 1); **TECH-31** consumes |
+| **31d** | **City history** for scenarios: **TECH-82** Phase 1 (`city_metrics_history`, **`MetricsRecorder`**, **`city_metrics_query`**) + **test mode** **`scenario_id`** correlation (see **TECH-82** Decision Log) | *(stage spec removed after IA migration — 2026-04-10)* — **glossary** **City metrics history**, [`.cursor/projects/TECH-82.md`](../.cursor/projects/TECH-82.md) (**Phase 1**), [`docs/mcp-ia-server.md`](../docs/mcp-ia-server.md) (**`city_metrics_query`**), [`tools/fixtures/scenarios/README.md`](../tools/fixtures/scenarios/README.md), **managers-reference** (**MetricsRecorder**) | **TECH-82** (Phases 2–4 still open); **TECH-31** consumes |
 | **31e** | **MCP** tool + docs + skill cross-links | [TECH-31e-mcp-tool-and-workflows.md](TECH-31e-mcp-tool-and-workflows.md) | **TECH-31** |
 
 **Soft dependencies (from specs):** **TECH-15** / **TECH-16** (**UTF** / harness naming for **CI**); stable bridge **`kind`** values (**unity-development-context**, **close-dev-loop**). **TECH-83** remains optional for parameter sweeps after load.
@@ -35,12 +35,12 @@ Update this section as stages complete (owner / date optional).
 - [x] **31a3** — **agent-test-mode-verify** skill (orchestration + docs) (2026-04-09)
 - [x] **31b** — Scenario builder + reference descriptor/artifact (2026-04-10)
 - [x] **31c** — File-based verification pipeline + documented **close-dev-loop** recipe (2026-04-10)
-- [ ] **31d** — **TECH-82** Phase 1 + **test mode** metrics path (see **TECH-82** acceptance)
+- [x] **31d** — **TECH-82** Phase 1 + **test mode** metrics path (2026-04-10)
 - [ ] **31e** — **MCP** `scenario_*` tool + **`docs/mcp-ia-server.md`**
 
 ## Roll-up acceptance (maps to **TECH-31** BACKLOG **Acceptance**)
 
-Satisfied when **31e** ships and **TECH-82** Phase 1 meets its own row if **31d** is in scope for the release (see open **TECH-31** **Notes** for partial vs full closeout):
+Satisfied when **31e** ships and **TECH-82** later phases meet the open **TECH-82** row (Phase 1 shipped with **31d** — 2026-04-10; see **TECH-31** **BACKLOG** **Notes**):
 
 - At least one automated Unity run on a committed scenario; **test mode** launch documented (**scenario id** or path, **32×32**).
 - **`npm run unity:testmode-batch`** runs **load** + report (**glossary** **Agent test mode batch**); optional **`--golden-path`** integer **CityStats** assert; **CI** simulation tick cap (**10000**) and operator matrix in [`tools/fixtures/scenarios/README.md`](../tools/fixtures/scenarios/README.md) (**31c**).
@@ -61,6 +61,7 @@ Satisfied when **31e** ships and **TECH-82** Phase 1 meets its own row if **31d*
 | 2026-04-09 | Close **31a2** stage doc; normative operator detail → **glossary** **Agent test mode batch**, **`ARCHITECTURE.md`**, **unity-development-context** §10, scenarios **README** | **project-spec-close** (program stage; **TECH-31** row stays open) |
 | 2026-04-10 | Close **31b** stage doc; **scenario_descriptor_v1** contract → **glossary**, **`ARCHITECTURE.md`**, **`BUILDER.md`**, **`docs/schemas/README.md`** | **project-spec-close** (program stage; **TECH-31** row stays open) |
 | 2026-04-10 | **31c** complete: batch **golden** assert (**`-testGoldenPath`** / **`--golden-path`**, exit **8**), report **`city_stats`**, **close-dev-loop** recipe + **CI**/**RNG** docs; align **BACKLOG** **Notes**, stub **Test contracts**, roll-up acceptance | [`projects/TECH-31c-verification-pipeline.md`](TECH-31c-verification-pipeline.md) |
+| 2026-04-10 | **31d** complete: **`city_metrics_history`**, **`MetricsRecorder`**, **`city_metrics_query`**, **`scenario_id`** for **test mode**; docs + fixtures **README** + **agent-test-mode-verify** skill; stage spec removed — trace **glossary** **City metrics history** + **TECH-82** Phase 1 | [`.cursor/projects/TECH-82.md`](../.cursor/projects/TECH-82.md) |
 
 *(Per-stage decisions belong in each **`TECH-31*.md`** Decision Log or **Issues Found** — or the program **Decision Log** when the stage file was removed.)*
 

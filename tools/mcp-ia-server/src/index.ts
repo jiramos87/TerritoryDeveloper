@@ -31,6 +31,7 @@ import { registerUnityBridgeCommand } from "./tools/unity-bridge-command.js";
 import { registerBacklogSearch } from "./tools/backlog-search.js";
 import { registerInvariantPreflight } from "./tools/invariant-preflight.js";
 import { registerFindObjectOfTypeScan } from "./tools/findobjectoftype-scan.js";
+import { registerCityMetricsQuery } from "./tools/city-metrics-query.js";
 
 loadRepoDotenvIfNotCi(resolveRepoRoot());
 
@@ -38,7 +39,7 @@ const server = new McpServer({
   name: "territory-ia",
   version: "0.5.0",
   description:
-    "Information Architecture server for Territory Developer — exposes specs, rules, glossary, backlog issues, architecture docs, optional Postgres project-spec journal, computational helpers, and Unity Editor bridge commands (Postgres agent_bridge_job) via MCP tools.",
+    "Information Architecture server for Territory Developer — exposes specs, rules, glossary, backlog issues, architecture docs, optional Postgres project-spec journal, city metrics history queries, computational helpers, and Unity Editor bridge commands (Postgres agent_bridge_job) via MCP tools.",
 });
 
 const registry = buildRegistry();
@@ -66,6 +67,7 @@ registerUnityBridgeCommand(server);
 registerBacklogSearch(server);
 registerInvariantPreflight(server, registry);
 registerFindObjectOfTypeScan(server);
+registerCityMetricsQuery(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

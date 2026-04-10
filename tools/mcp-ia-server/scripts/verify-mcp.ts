@@ -68,6 +68,7 @@ async function main(): Promise<void> {
     "backlog_search",
     "invariant_preflight",
     "findobjectoftype_scan",
+    "city_metrics_query",
   ];
   for (const n of required) {
     if (!names.includes(n)) throw new Error(`Missing MCP tool: ${n}`);
@@ -77,8 +78,8 @@ async function main(): Promise<void> {
     await client.callTool({ name: "list_specs", arguments: {} }),
   ) as Array<{ key: string; category: string }>;
   console.log("list_specs count:", all.length);
-  if (all.length !== 23) {
-    throw new Error(`Expected 23 IA documents, got ${all.length}`);
+  if (all.length !== 24) {
+    throw new Error(`Expected 24 IA documents, got ${all.length}`);
   }
 
   const rules = parseJsonFromToolResult(
@@ -87,7 +88,7 @@ async function main(): Promise<void> {
       arguments: { category: "rule" },
     }),
   ) as Array<{ category: string }>;
-  if (rules.length !== 11 || rules.some((r) => r.category !== "rule")) {
+  if (rules.length !== 12 || rules.some((r) => r.category !== "rule")) {
     throw new Error("list_specs category=rule filter failed");
   }
 
@@ -322,8 +323,8 @@ async function main(): Promise<void> {
   const lr = parseJsonFromToolResult(
     await client.callTool({ name: "list_rules", arguments: {} }),
   ) as { rules?: unknown[] };
-  if ((lr.rules?.length ?? 0) !== 11) {
-    throw new Error(`list_rules expected 11 rules, got ${lr.rules?.length}`);
+  if ((lr.rules?.length ?? 0) !== 12) {
+    throw new Error(`list_rules expected 12 rules, got ${lr.rules?.length}`);
   }
 
   const rc = parseJsonFromToolResult(
@@ -630,6 +631,30 @@ async function main(): Promise<void> {
   if (!getOkError) {
     throw new Error(
       `unity_bridge_get expected db_unconfigured, not_found, or db_error (missing migration), got ${JSON.stringify(bridgeGet)}`,
+    );
+  }
+
+  const cityMetrics = parseJsonFromToolResult(
+    await client.callTool({
+      name: "city_metrics_query",
+      arguments: { last_n_rows: 5 },
+    }),
+  ) as {
+    error?: string;
+    ok?: boolean;
+    row_count?: number;
+    rows?: unknown[];
+  };
+  const cityMetricsOk =
+    cityMetrics.error === "db_unconfigured" ||
+    cityMetrics.error === "table_missing" ||
+    cityMetrics.error === "query_failed" ||
+    (cityMetrics.ok === true &&
+      typeof cityMetrics.row_count === "number" &&
+      Array.isArray(cityMetrics.rows));
+  if (!cityMetricsOk) {
+    throw new Error(
+      `city_metrics_query expected db_unconfigured, table_missing, query_failed, or ok+rows, got ${JSON.stringify(cityMetrics)}`,
     );
   }
 

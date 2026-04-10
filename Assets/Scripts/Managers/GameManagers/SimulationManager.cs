@@ -9,6 +9,8 @@ namespace Territory.Simulation
 /// </summary>
 public class SimulationManager : MonoBehaviour
 {
+    [SerializeField] private MetricsRecorder _metricsRecorder;
+
     public CityStats cityStats;
     public GrowthBudgetManager growthBudgetManager;
     public AutoRoadBuilder autoRoadBuilder;
@@ -50,11 +52,9 @@ public class SimulationManager : MonoBehaviour
             if (urbanizationProposalManager != null && urbanizationProposalManager.urbanCentroidService == null)
                 urbanizationProposalManager.urbanCentroidService = urbanCentroidService;
         }
-    }
 
-    string SimDateStr()
-    {
-        return cityStats != null ? cityStats.currentDate.ToString("yyyy-MM-dd") : "?";
+        if (_metricsRecorder == null)
+            _metricsRecorder = FindObjectOfType<MetricsRecorder>();
     }
 
     /// <summary>
@@ -62,28 +62,33 @@ public class SimulationManager : MonoBehaviour
     /// </summary>
     public void ProcessSimulationTick()
     {
-        string d = SimDateStr();
-        if (cityStats == null)
+        try
         {
-            return;
+            if (cityStats == null)
+                return;
+            if (!cityStats.simulateGrowth)
+                return;
+
+            if (growthBudgetManager != null)
+                growthBudgetManager.EnsureBudgetValid();
+
+            if (urbanCentroidService != null)
+                urbanCentroidService.RecalculateFromGrid();
+
+            if (autoRoadBuilder != null)
+                autoRoadBuilder.ProcessTick();
+
+            if (autoZoningManager != null)
+                autoZoningManager.ProcessTick();
+
+            if (autoResourcePlanner != null)
+                autoResourcePlanner.ProcessTick();
         }
-        if (!cityStats.simulateGrowth)
-            return;
-
-        if (growthBudgetManager != null)
-            growthBudgetManager.EnsureBudgetValid();
-
-        if (urbanCentroidService != null)
-            urbanCentroidService.RecalculateFromGrid();
-
-        if (autoRoadBuilder != null)
-            autoRoadBuilder.ProcessTick();
-
-        if (autoZoningManager != null)
-            autoZoningManager.ProcessTick();
-
-        if (autoResourcePlanner != null)
-            autoResourcePlanner.ProcessTick();
+        finally
+        {
+            if (_metricsRecorder != null && cityStats != null)
+                _metricsRecorder.RecordAfterSimulationTick();
+        }
     }
 
     /// <summary>

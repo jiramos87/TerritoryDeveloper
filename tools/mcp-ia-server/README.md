@@ -22,7 +22,7 @@ Abstract pattern (reusable outside this game): [`docs/mcp-markdown-ia-pattern.md
 | `npm test` | Unit tests (`node:test` + `tsx`) for parser and tool helpers. |
 | `npm run test:watch` | Tests in watch mode. |
 | `npm run test:coverage` | Parser + **ia-index** line coverage with **c8** (gate ≥90%). |
-| `npm run verify` | From this directory: spawns the server the same way as Cursor (via repo root + `npx -y tsx …`) and exercises all **27** tools through the MCP SDK client. |
+| `npm run verify` | From this directory: spawns the server the same way as Cursor (via repo root + `npx -y tsx …`) and exercises all **29** tools through the MCP SDK client. |
 | `scripts/run-unity-bridge-once.ts` | From repo root: `npm run db:bridge-agent-context` — one **`unity_bridge_command`**-equivalent call (needs Postgres + Unity). Optional **`BRIDGE_TIMEOUT_MS`**. |
 | `scripts/bridge-playmode-smoke.ts` | From repo root: `npm run db:bridge-playmode-smoke -- [seed_cell]` — same as MCP **`unity_bridge_command`** (`runUnityBridgeCommand`): **`get_play_mode_status` → `enter_play_mode` → `debug_context_bundle` → `exit_play_mode`**. Needs Postgres (**`DATABASE_URL`** or **`config/postgres-dev.json`**) and Unity Editor open on **`REPO_ROOT`** (run **`npm run unity:ensure-editor`** to auto-launch if not running). |
 | Root **`npm run verify:local`** | **`validate:all`** (includes **`compute-lib:build`**) then **`post-implementation-verify.sh --skip-node-checks`**: **`unity:compile-check`**, **`db:migrate`**, **`db:bridge-preflight`**, **macOS** **Unity** save/quit + relaunch, **`db:bridge-playmode-smoke`**. **`npm run verify:post-implementation`** is an alias. [`tools/scripts/verify-local.sh`](../../tools/scripts/verify-local.sh). See [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) and [`ARCHITECTURE.md`](../../ARCHITECTURE.md). |
@@ -47,7 +47,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | `REPO_ROOT` | Root used to resolve `.cursor/specs`, `.cursor/rules`, and root markdown. Defaults to `process.cwd()`. |
 | `DATABASE_URL` | Optional **PostgreSQL** URI; overrides committed **`config/postgres-dev.json`** when set. When no URL resolves (and not **CI**), **`project_spec_journal_*`** return **`db_unconfigured`**. |
 
-## Tools (27)
+## Tools (29)
 
 | Tool | Description |
 |------|-------------|
@@ -79,6 +79,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`backlog_search`** | Keyword search across open / archived backlog issues. `query` (required), `scope` (`open` \| `archive` \| `all`, default `open`), `max_results` (1–50, default 10). Returns ranked results with `issue_id`, `title`, `type`, `status`, `section`, `score`, truncated `notes`. |
 | **`invariant_preflight`** | Composite context tool: given `issue_id`, bundles invariants + router matches + relevant spec sections in one call. Infers domains from issue **Files**; fetches up to 6 spec sections (800 chars each). |
 | **`findobjectoftype_scan`** | Static regex scan of C# files for `FindObjectOfType` / `FindObjectsOfType` in `Update` / `LateUpdate` / `FixedUpdate` methods. Optional `path` (default `Assets/Scripts/`). Returns `violation_count` + `violations[]` (`file`, `line`, `method`, `snippet`). |
+| **`city_metrics_query`** | Read recent rows from **`city_metrics_history`** (Unity **`MetricsRecorder`** per-tick snapshots). Optional **`scenario_id`**, **`last_n_rows`** (1–500). Returns **`db_unconfigured`**, **`table_missing`**, or **`rows`**. |
 
 **Examples (conceptual):**
 

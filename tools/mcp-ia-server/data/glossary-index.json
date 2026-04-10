@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-10T09:49:09.978Z",
+  "last_generated": "2026-04-10T14:47:58.875Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -458,6 +458,10 @@
     "Reference spec": {
       "spec_key": "agents",
       "anchor": ""
+    },
+    "City metrics history": {
+      "spec_key": "managers-reference",
+      "anchor": "metricsrecorder"
     },
     "Agent test mode batch": {
       "spec_key": "persistence-system",

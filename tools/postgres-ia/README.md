@@ -1,6 +1,6 @@
 # postgres-ia-tools (TECH-44b / TECH-44c)
 
-Small **Node** helpers for the game-owned **PostgreSQL** **IA** schema, **E1** **dev repro bundle** registry (**TECH-44c**), and **TECH-55** **Editor** export registry: apply ordered SQL under [`db/migrations/`](../../db/migrations/), seed sample **glossary** rows, **glossary-by-key** smoke read, **register-dev-repro**, and **register-editor-export**.
+Small **Node** helpers for the game-owned **PostgreSQL** **IA** schema, **E1** **dev repro bundle** registry (**TECH-44c**), **TECH-55** **Editor** export registry, and optional **city metrics** inserts from Unity: apply ordered SQL under [`db/migrations/`](../../db/migrations/), seed sample **glossary** rows, **glossary-by-key** smoke read, **register-dev-repro**, **register-editor-export**, and **insert-city-metrics** (payload JSON file → **`city_metrics_history`**).
 
 **Connection URI resolution:** **`DATABASE_URL`** env, else committed [`config/postgres-dev.json`](../../config/postgres-dev.json) (skipped when **`CI=true`** / **`GITHUB_ACTIONS`**). Implemented in **`resolve-database-url.mjs`**.
 
@@ -15,6 +15,7 @@ Small **Node** helpers for the game-owned **PostgreSQL** **IA** schema, **E1** *
 | `seed:glossary` | Parse first N rows from `.cursor/specs/glossary.md` and upsert |
 | `register-repro` | `node register-dev-repro.mjs --issue …` — inserts **`dev_repro_bundle`** row |
 | `register-editor-export` | `node register-editor-export.mjs --kind … --document-file …` — **TECH-55b** **`document jsonb`** insert |
+| `insert-city-metrics` | `node insert-city-metrics.mjs --payload-file …` — one row in **`city_metrics_history`** (spawned by Unity **`MetricsRecorder`**) |
 
 From repo root:
 

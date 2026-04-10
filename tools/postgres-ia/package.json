@@ -8,7 +8,8 @@
     "glossary-by-key": "node glossary-by-key.mjs",
     "seed:glossary": "node seed-glossary-sample.mjs",
     "register-repro": "node register-dev-repro.mjs",
-    "register-editor-export": "node register-editor-export.mjs"
+    "register-editor-export": "node register-editor-export.mjs",
+    "insert-city-metrics": "node insert-city-metrics.mjs"
   },
   "engines": {
     "node": ">=18"

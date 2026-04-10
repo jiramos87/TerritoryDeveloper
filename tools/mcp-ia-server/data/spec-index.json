@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-10T09:49:09.974Z",
+  "last_generated": "2026-04-10T14:47:58.871Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -179,7 +179,7 @@
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 240
+          "line_start": 241
         }
       ]
     },
@@ -803,73 +803,73 @@
           "section_id": "zones-buildings",
           "title": "Zones & Buildings",
           "depth": 2,
-          "line_start": 54
+          "line_start": 55
         },
         {
           "section_id": "rci-model",
           "title": "RCI model",
           "depth": 3,
-          "line_start": 60
+          "line_start": 61
         },
         {
           "section_id": "zone-lifecycle",
           "title": "Zone lifecycle",
           "depth": 3,
-          "line_start": 65
+          "line_start": 66
         },
         {
           "section_id": "zone-density",
           "title": "Zone density",
           "depth": 3,
-          "line_start": 72
+          "line_start": 73
         },
         {
           "section_id": "pivot-cell-and-multi-cell-buildings",
           "title": "Pivot cell and multi-cell buildings",
           "depth": 3,
-          "line_start": 77
+          "line_start": 78
         },
         {
           "section_id": "building-footprint",
           "title": "Building footprint",
           "depth": 3,
-          "line_start": 82
+          "line_start": 83
         },
         {
           "section_id": "building-placement-and-restore",
           "title": "Building placement and restore",
           "depth": 3,
-          "line_start": 86
+          "line_start": 87
         },
         {
           "section_id": "demand-r-c-i",
           "title": "Demand (R / C / I)",
           "depth": 2,
-          "line_start": 90
+          "line_start": 91
         },
         {
           "section_id": "world-features",
           "title": "World features",
           "depth": 2,
-          "line_start": 106
+          "line_start": 107
         },
         {
           "section_id": "game-notifications",
           "title": "Game notifications",
           "depth": 2,
-          "line_start": 115
+          "line_start": 116
         },
         {
           "section_id": "architectural-patterns",
           "title": "Architectural patterns",
           "depth": 2,
-          "line_start": 121
+          "line_start": 122
         },
         {
           "section_id": "obsolete",
           "title": "Obsolete",
           "depth": 2,
-          "line_start": 130
+          "line_start": 131
         }
       ]
     },

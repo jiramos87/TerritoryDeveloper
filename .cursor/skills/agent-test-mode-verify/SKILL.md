@@ -71,6 +71,7 @@ npm run unity:testmode-batch
 - **Load pipeline:** runner resolves the scenario file then calls **`GameSaveManager.LoadGame`** only; optional **`-testSimulationTicks`** → **`SimulationManager.ProcessSimulationTick`** (same tick entry as normal simulation).
 - Optional **`--golden-path`** / **`-testGoldenPath`**: asserts integer **CityStats** fields against a committed JSON next to the scenario — mismatch → exit **8** (see [`tools/fixtures/scenarios/README.md`](../../../tools/fixtures/scenarios/README.md) **Golden CityStats**).
 - Artifacts: **`tools/reports/agent-testmode-batch-*.json`** (report **`schema_version`** **2** may include **`city_stats`**), Unity log **`tools/reports/unity-testmode-batch-*.log`**. Transient **`tools/reports/.agent-testmode-batch-state.json`** may appear during the run (ignored with other report artifacts).
+- Optional **Postgres** (dev machine): when **`DATABASE_URL`** is set and migration **`0009_city_metrics_history.sql`** is applied, **`MetricsRecorder`** appends rows to **`city_metrics_history`** for each **`ProcessSimulationTick`** call; use **`city_metrics_query`** with **`scenario_id`** equal to **`--scenario-id`** to assert time-varying aggregates. Does **not** replace committed **golden** **CityStats** JSON for **CI**-bounded checks.
 
 ### Path A — worked example (**macOS**)
 

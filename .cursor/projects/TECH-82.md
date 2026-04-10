@@ -120,15 +120,16 @@ Implementation approach left to the implementing agent. Key design constraint: a
 | 2026-04-07 | Use existing Node.js bridge pattern | Proven infrastructure (agent_bridge_job); avoids new C#→Postgres dependency | Direct C# Npgsql; REST API; file-based logging |
 | 2026-04-07 | Four phases, each independently valuable | Each phase enables specific backlog items without waiting for the full system | Ship all at once; minimal viable only |
 | 2026-04-09 | Phase 1 is a **soft prerequisite** for **TECH-31** “**city history**” verification | **Save** pins initial state; **metrics** pin evolution across ticks | Assertions from **save** + **bundle** only (acceptable early **TECH-31** milestone) |
+| 2026-04-10 | **Test mode** correlation via optional **`scenario_id`** on **`city_metrics_history`** | Agents filter **`city_metrics_query`** by **scenario id** matching **`-testScenarioId`**; no separate **`agent_test_run`** table in Phase 1 | Timestamp-only rows; dedicated run table (future if needed) |
 
 ## 7. Implementation Plan
 
 ### Phase 1 — Time-series infrastructure
 
-- [ ] Design `city_metrics_history` table and migration (consider optional **scenario id** / **run id** column or JSON metadata for **TECH-31** **test mode**—see **Open Questions**)
-- [ ] MetricsRecorder helper class (C#) with bridge write
-- [ ] `city_metrics_query` MCP tool
-- [ ] Integration with SimulationManager tick (ensure **test mode** does not skip recording when Postgres is available)
+- [x] Design `city_metrics_history` table and migration (optional **`scenario_id`** + **`metadata`** for **test mode** — see **Decision Log** 2026-04-10)
+- [x] MetricsRecorder helper class (C#) with bridge write
+- [x] `city_metrics_query` MCP tool
+- [x] Integration with SimulationManager tick (ensure **test mode** does not skip recording when Postgres is available)
 
 ### Phase 2 — Financial events
 
@@ -159,13 +160,13 @@ Implementation approach left to the implementing agent. Key design constraint: a
 
 ## 8. Acceptance Criteria
 
-- [ ] Phase 1: `city_metrics_history` populated per simulation tick; `city_metrics_query` MCP tool returns time-series data
+- [x] Phase 1: `city_metrics_history` populated per simulation tick; `city_metrics_query` MCP tool returns time-series data
 - [ ] Phase 2: `city_events` records financial transactions; `city_events_query` returns categorized events
 - [ ] Phase 3: `grid_snapshots` captured periodically; `grid_snapshot_diff` returns cell-level changes
 - [ ] Phase 4: `buildings` table tracks individual building lifecycle with construction/upgrade/demolition dates
-- [ ] All phases: graceful degradation when Postgres unavailable — game fully playable
-- [ ] All phases: fire-and-forget writes, no gameplay blocking
-- [ ] Documented in `docs/mcp-ia-server.md` and `docs/postgres-ia-dev-setup.md`
+- [x] Phase 1 (+ cross-cutting): graceful degradation when Postgres unavailable — game fully playable
+- [x] Phase 1 (+ cross-cutting): fire-and-forget writes, no gameplay blocking
+- [x] Phase 1 documented in `docs/mcp-ia-server.md` and `docs/postgres-ia-dev-setup.md` (later phases: extend same docs when shipped)
 
 ## 9. Issues Found During Development
 
@@ -181,4 +182,4 @@ Implementation approach left to the implementing agent. Key design constraint: a
 1. What is the optimal snapshot frequency for grid state? Every 10 ticks? Every 50? Should it be configurable?
 2. Should building identity survive across save/load cycles, or is it session-scoped?
 3. How much metric history should be retained? Pruning policy (e.g., keep last 1000 ticks, aggregate older data)?
-4. How should **TECH-31** **test mode** runs be **correlated** in Postgres: **`scenario_id`** on `city_metrics_history`, a separate **`agent_test_run`** table, or session-scoped only with timestamps?
+4. ~~How should **test mode** runs be **correlated** in Postgres?~~ **Resolved (2026-04-10):** optional **`scenario_id`** column on **`city_metrics_history`**, filled from **test mode** when **`DATABASE_URL`** resolves — see **Decision Log**. A dedicated **`agent_test_run`** table remains a future option if multi-table correlation is needed.

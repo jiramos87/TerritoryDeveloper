@@ -34,7 +34,7 @@ Repo **Cursor Skills** define **ordered** MCP usage for `.cursor/projects/{ISSUE
 
 See also [`AGENTS.md`](../AGENTS.md) (Before You Start) and [`.cursor/skills/README.md`](../.cursor/skills/README.md).
 
-## Tools (28)
+## Tools (29)
 
 | Tool | Role |
 |------|------|
@@ -66,6 +66,7 @@ See also [`AGENTS.md`](../AGENTS.md) (Before You Start) and [`.cursor/skills/REA
 | `backlog_search` | Keyword search across open and/or archived backlog issues. Input: `query` (string), optional `scope` (`open` \| `archive` \| `all`, default `open`), optional `max_results` (1–50, default 10). Returns ranked results with `issue_id`, `title`, `type`, `status`, `section`, `score`, truncated `notes`. Use when you need to find related issues without knowing the exact id. |
 | `invariant_preflight` | Composite context tool: given `issue_id`, returns invariants + router matches + relevant spec sections in a single call. Replaces the manual chain of `invariants_summary` → `router_for_task` → `spec_section`. Infers domains from the issue's **Files** field, fetches up to 6 spec section slices (800 chars each). |
 | `findobjectoftype_scan` | Static C# scan for `FindObjectOfType` / `FindObjectsOfType` inside `Update`, `LateUpdate`, or `FixedUpdate` methods. Input: optional `path` (default `Assets/Scripts/`). Returns `violation_count` + array of `{ file, line, method, snippet }`. Heuristic (method-block level, not full AST). Supports **BUG-14** prevention and **TECH-26** data surface. |
+| `city_metrics_query` | Read recent rows from Postgres **`city_metrics_history`** (per-tick snapshots from Unity **`MetricsRecorder`** when **`DATABASE_URL`** resolves). Optional **`scenario_id`** (test mode correlation), **`last_n_rows`** (1–500, default 50). Returns **`db_unconfigured`** without a URL, **`table_missing`** if migration **`0009`** was not applied, else **`rows`**. |
 
 ### Computational tools vs spec slices
 
@@ -95,7 +96,7 @@ Use **`spec_section`**, **`spec_sections`**, **`glossary_*`**, and **`router_for
 | **Example read** | SQL function **`ia_glossary_row_by_key(text)`** — `SELECT * FROM ia_glossary_row_by_key('heightmap');` after optional seed |
 | **Journal write (CLI)** | Root **`npm run db:persist-project-journal`** — same payload as **`project_spec_journal_persist`** |
 
-**MCP `pg` client:** `tools/mcp-ia-server` depends on **`pg`** and registers **`project_spec_journal_*`**, **`unity_bridge_command`**, and **`unity_bridge_get`** against the shared IA DB URL (returns **`db_unconfigured`** when **`resolveIaDatabaseUrl()`** is null — e.g. **CI** without **`DATABASE_URL`**).
+**MCP `pg` client:** `tools/mcp-ia-server` depends on **`pg`** and registers **`project_spec_journal_*`**, **`unity_bridge_command`**, **`unity_bridge_get`**, and **`city_metrics_query`** against the shared IA DB URL (returns **`db_unconfigured`** when **`resolveIaDatabaseUrl()`** is null — e.g. **CI** without **`DATABASE_URL`**).
 
 ## Future work (tracked in BACKLOG)
 

@@ -1,6 +1,6 @@
 # PostgreSQL — IA dev setup
 
-**Scope:** Local or shared **dev** database for **Information Architecture** tables (`glossary`, `spec_sections`, `invariants`, `relationships`), the **IA project spec journal** (`ia_project_spec_journal` — **glossary** **IA project spec journal**), the **dev repro bundle registry** (`dev_repro_bundle`, **E1** in [`postgres-interchange-patterns.md`](postgres-interchange-patterns.md)), the **per-export Editor Reports registry** (`editor_export_*` tables), and the **IDE agent bridge** queue (`agent_bridge_job` — **glossary** **IDE agent bridge**). This is **not** player **Save data** or **Load pipeline** input — see [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md). **Charter trace:** [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).
+**Scope:** Local or shared **dev** database for **Information Architecture** tables (`glossary`, `spec_sections`, `invariants`, `relationships`), the **IA project spec journal** (`ia_project_spec_journal` — **glossary** **IA project spec journal**), the **dev repro bundle registry** (`dev_repro_bundle`, **E1** in [`postgres-interchange-patterns.md`](postgres-interchange-patterns.md)), the **per-export Editor Reports registry** (`editor_export_*` tables), the **IDE agent bridge** queue (`agent_bridge_job` — **glossary** **IDE agent bridge**), and optional **gameplay verification** time-series (`city_metrics_history` — per-tick snapshots from Unity **`MetricsRecorder`**; **not** authoritative **Save data**). This is **not** player **Save data** or **Load pipeline** input — see [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md). **Charter trace:** [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md).
 
 ## Prerequisites
 
@@ -72,12 +72,13 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0005_editor_export_docu
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0006_editor_export_ui_inventory.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0007_ia_project_spec_journal.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0008_agent_bridge_job.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/0009_city_metrics_history.sql
 ```
 
 If you use manual `psql` on a fresh DB, insert migration rows so the Node runner does not re-apply:
 
 ```sql
-INSERT INTO schema_migrations (version) VALUES ('0001_ia_tables'), ('0002_ia_read_surface'), ('0003_dev_repro_bundle'), ('0004_editor_export_tables'), ('0005_editor_export_document'), ('0006_editor_export_ui_inventory'), ('0007_ia_project_spec_journal'), ('0008_agent_bridge_job');
+INSERT INTO schema_migrations (version) VALUES ('0001_ia_tables'), ('0002_ia_read_surface'), ('0003_dev_repro_bundle'), ('0004_editor_export_tables'), ('0005_editor_export_document'), ('0006_editor_export_ui_inventory'), ('0007_ia_project_spec_journal'), ('0008_agent_bridge_job'), ('0009_city_metrics_history');
 ```
 
 ## Optional glossary seed

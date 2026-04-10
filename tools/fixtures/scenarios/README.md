@@ -122,12 +122,21 @@ npm run unity:testmode-batch -- \
 - **Recommended maximum `N` for CI** (when a workflow enables **`unity:testmode-batch`**): **10_000** (same as the C# clamp in **`AgentTestModeBatchRunner`**). Prefer the **smallest `N`** that still covers the behavior under test.
 - **UnityEngine.Random** is **not** re-seeded by the batch runner. For **`reference-flat-32x32`** with **`simulateGrowth`** off and no **AUTO** activity, post-tick **CityStats** integers stayed stable at **`N` = 0** and **`N` = 3** at the time the shipped goldens were recorded. Scenarios that invoke stochastic **simulation** paths need an explicit **seed** story (game code or fixture) before relying on goldens across machines — document the seed next to the golden file when added.
 
+## Optional Postgres **`city_metrics_history`** (time-varying aggregates)
+
+When **`DATABASE_URL`** resolves for the Unity process (environment or repo-root **`.env.local`**) and **`npm run db:migrate`** has applied **`0009_city_metrics_history.sql`**, **`MetricsRecorder`** writes one row per **`SimulationManager.ProcessSimulationTick`** call (fire-and-forget via **`tools/postgres-ia/insert-city-metrics.mjs`**). **Test mode** rows include **`scenario_id`** from **`-testScenarioId`** when present.
+
+- **Assertions:** **`territory-ia`** MCP **`city_metrics_query`** (optional **`scenario_id`**, **`last_n_rows`**) or `SELECT` on **`city_metrics_history`** — complements **golden** **CityStats** JSON (float tolerance / richer history).
+- **No-DB regression:** **`npm run unity:testmode-batch`** without **`DATABASE_URL`** must stay green; recording is a no-op when no URL is configured.
+
+Keep **`--simulation-ticks`** **`N`** in sync with golden filenames and any Postgres row-count expectations (see **CI simulation tick bound** below).
+
 ## Driver matrix (local vs **CI**)
 
 | Driver | **Postgres** | Notes |
 |--------|----------------|-------|
 | Editor Play Mode + CLI args or **queue file** | No | Queue file + **`enter_play_mode`** suits agents without Hub CLI. |
-| **`npm run unity:testmode-batch`** (`-batchmode` + **`AgentTestModeBatchRunner.Run`**) | No | Load smoke + optional **`ProcessSimulationTick`** loop + optional **golden** JSON; **`tools/reports/`** JSON (**glossary** **Agent test mode batch**). **UTF** / broader **CI** harness still tracked under **TECH-15** / **TECH-16**. |
+| **`npm run unity:testmode-batch`** (`-batchmode` + **`AgentTestModeBatchRunner.Run`**) | Optional | Load smoke + optional **`ProcessSimulationTick`** loop + optional **golden** JSON; **`tools/reports/`** JSON (**glossary** **Agent test mode batch**). With **`DATABASE_URL`**, optional per-tick **`city_metrics_history`** rows (**`city_metrics_query`**). **UTF** / broader **CI** harness still tracked under **TECH-15** / **TECH-16**. |
 | **`verify:local`** / bridge smoke | Yes (when used) | Full dev chain; see **`ARCHITECTURE.md`** — **Local verification**. |
 
 ## Regenerating `reference-flat-32x32`

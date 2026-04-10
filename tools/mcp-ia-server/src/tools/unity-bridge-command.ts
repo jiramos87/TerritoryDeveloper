@@ -602,10 +602,11 @@ export function registerUnityBridgeCommand(server: McpServer): void {
           });
         }
 
-        const result = await runUnityBridgeCommand({
+        const bridgeInput = unityBridgeCommandInputSchema.parse({
           kind: "get_compilation_status",
           timeout_ms: parsed.data.timeout_ms,
         });
+        const result = await runUnityBridgeCommand(bridgeInput);
         if (!result.ok) {
           return jsonResult(result);
         }

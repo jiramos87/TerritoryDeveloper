@@ -50,6 +50,7 @@
 | **RoadStrokeTerrainRules** | Static allowlist (flat + cardinal ramps) and stroke truncation for **street**/**interstate** placement |
 | **UrbanCentroidService** | Urban centroid + ring metrics for AUTO **streets**/zoning (active, not obsolete) |
 | **GameBootstrap** | Entry point, game loading flow |
+| **MetricsRecorder** | Optional **fire-and-forget** Postgres inserts into **`city_metrics_history`** after each **`SimulationManager.ProcessSimulationTick`** invocation when **`DATABASE_URL`** resolves (**glossary** **City metrics history**). Invoked from **`SimulationManager`** in a **`finally`** block so **test mode** batch ticks still emit rows when **`simulateGrowth`** is false. Does **not** replace **Save data**. |
 
 ## Zones & Buildings
 
