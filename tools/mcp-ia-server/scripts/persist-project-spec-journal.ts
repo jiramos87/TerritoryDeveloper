@@ -5,7 +5,7 @@
  *
  * Usage (repo root):
  *   npx tsx tools/mcp-ia-server/scripts/persist-project-spec-journal.ts --issue TECH-58
- *   npx tsx tools/mcp-ia-server/scripts/persist-project-spec-journal.ts --spec-path .cursor/projects/TECH-58.md
+ *   npx tsx tools/mcp-ia-server/scripts/persist-project-spec-journal.ts --spec-path ia/projects/TECH-58.md
  *   --git-sha optional
  *
  * Requires: DATABASE_URL or config/postgres-dev.json; migration `0007_ia_project_spec_journal` applied.
@@ -47,7 +47,7 @@ async function main() {
   const args = parseArgs(process.argv);
   if (!args.issue && !args.specPath) {
     console.error(
-      "Usage: persist-project-spec-journal.ts --issue ID | --spec-path .cursor/projects/ID.md [--git-sha SHA]",
+      "Usage: persist-project-spec-journal.ts --issue ID | --spec-path ia/projects/ID[-{description}].md [--git-sha SHA]",
     );
     process.exit(1);
   }

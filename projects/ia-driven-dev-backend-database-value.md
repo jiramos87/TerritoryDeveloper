@@ -51,7 +51,7 @@ Legend: **High** = clear win with **B1**/**B3**/**P5** or **TECH-44b** IA querie
 
 ## 3. Prompt items that should stay mostly file- or Unity-first
 
-- **Invariants** and **guardrails** — canonical in `.cursor/rules/invariants.mdc`; **TECH-44b** may **mirror** for MCP queries, not replace.
+- **Invariants** and **guardrails** — canonical in `ia/rules/invariants.md`; **TECH-44b** may **mirror** for MCP queries, not replace.
 - **Reference specs** — Markdown authoritative (**TECH-18** policy); DB is a **derived** index when **TECH-44b** ships.
 - **Minimal per-change tests** — no database required to get value.
 - **Export Agent Context** / **Sorting debug** as the **default** dev loop — still the lowest-friction path; DB is optional aggregation (**TECH-44c** makes **E1** explicit).

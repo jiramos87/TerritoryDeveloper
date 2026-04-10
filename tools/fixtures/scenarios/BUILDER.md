@@ -4,7 +4,7 @@ Structured **`scenario_descriptor_v1`** JSON (see [`docs/schemas/scenario-descri
 
 ## Strict vs repair
 
-Product policy for invalid terrain / **Water map** / **road stroke** combinations is owned by [`.cursor/projects/TECH-31.md`](../../../.cursor/projects/TECH-31.md) **Open Questions**. This builder is **strict**: invalid descriptors fail with stable messages (Node or Unity). There is no silent repair outside the declared edit region.
+Product policy for invalid terrain / **Water map** / **road stroke** combinations is owned by [`ia/projects/TECH-31.md`](../../../ia/projects/TECH-31.md) **Open Questions**. This builder is **strict**: invalid descriptors fail with stable messages (Node or Unity). There is no silent repair outside the declared edit region.
 
 ## Declarative (Node) — terrain only
 

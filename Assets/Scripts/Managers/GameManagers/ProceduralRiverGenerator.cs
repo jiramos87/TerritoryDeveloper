@@ -224,7 +224,7 @@ namespace Territory.Terrain
             maxY = Mathf.Min(gh - 1, maxY + 2);
         }
 
-        /// <summary>One perpendicular strip: left bank, bed cells, right bank (see project spec <c>.cursor/specs/isometric-geography-system.md</c> §13.4).</summary>
+        /// <summary>One perpendicular strip: left bank, bed cells, right bank (see project spec <c>ia/specs/isometric-geography-system.md</c> §13.4).</summary>
         private sealed class RiverCrossSectionData
         {
             public readonly List<Vector2Int> Bed = new List<Vector2Int>(MaxRiverBedWidth);

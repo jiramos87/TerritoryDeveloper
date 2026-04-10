@@ -83,7 +83,7 @@ INSERT INTO schema_migrations (version) VALUES ('0001_ia_tables'), ('0002_ia_rea
 
 ## Optional glossary seed
 
-Upserts the first **20** parsed rows from [`.cursor/specs/glossary.md`](../.cursor/specs/glossary.md) (override with **`SEED_GLOSSARY_MAX`**):
+Upserts the first **20** parsed rows from [`ia/specs/glossary.md`](../ia/specs/glossary.md) (override with **`SEED_GLOSSARY_MAX`**):
 
 ```bash
 npm --prefix tools/postgres-ia run seed:glossary
@@ -105,7 +105,7 @@ SELECT * FROM ia_glossary_row_by_key('heightmap');
 
 ## Dev repro bundle registry (**E1**)
 
-Registers **metadata** for **Editor** exports under **`tools/reports/`** (paths are **gitignored** — see [`.cursor/specs/unity-development-context.md`](../.cursor/specs/unity-development-context.md) **§10**): **Agent context** JSON (`agent-context-*.json`), optional **Sorting debug** Markdown (`sorting-debug-*.md`). Rows use **B1** shape: scalars + **`payload jsonb`** with **Interchange JSON**–style keys **`artifact`**: `dev_repro_bundle`, **`schema_version`**: `1` (see [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md)).
+Registers **metadata** for **Editor** exports under **`tools/reports/`** (paths are **gitignored** — see [`ia/specs/unity-development-context.md`](../ia/specs/unity-development-context.md) **§10**): **Agent context** JSON (`agent-context-*.json`), optional **Sorting debug** Markdown (`sorting-debug-*.md`). Rows use **B1** shape: scalars + **`payload jsonb`** with **Interchange JSON**–style keys **`artifact`**: `dev_repro_bundle`, **`schema_version`**: `1` (see [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md)).
 
 **Table:** `dev_repro_bundle` — columns `backlog_issue_id`, `git_sha`, `exported_at_utc` (defaults to **INSERT** time), `interchange_revision` (mirrors **`schema_version`** for this artifact), `payload`.
 
@@ -144,7 +144,7 @@ npm run db:register-repro -- --issue TECH-00 \
 
 ## Editor export registry (per-export **Postgres** history)
 
-**Postgres-only:** when **`DATABASE_URL`** resolves (process environment, **EditorPrefs** `TerritoryDeveloper.EditorExportRegistry.DatabaseUrl`, or repo-root **`.env.local`** `DATABASE_URL=…`), **Unity** runs **`register-editor-export.mjs`**: the full export body is stored in column **`document jsonb`** (plus **`payload jsonb`** metadata). **GIN** indexes support **`jsonb_path_ops`** queries on **`document`**. There is **no** workspace fallback under **`tools/reports/`** for these menus — see [`.cursor/specs/unity-development-context.md`](../.cursor/specs/unity-development-context.md) **§10**. **Staging** for **`--document-file`** uses a temp directory or an absolute path (see **`register-editor-export.mjs`**).
+**Postgres-only:** when **`DATABASE_URL`** resolves (process environment, **EditorPrefs** `TerritoryDeveloper.EditorExportRegistry.DatabaseUrl`, or repo-root **`.env.local`** `DATABASE_URL=…`), **Unity** runs **`register-editor-export.mjs`**: the full export body is stored in column **`document jsonb`** (plus **`payload jsonb`** metadata). **GIN** indexes support **`jsonb_path_ops`** queries on **`document`**. There is **no** workspace fallback under **`tools/reports/`** for these menus — see [`ia/specs/unity-development-context.md`](../ia/specs/unity-development-context.md) **§10**. **Staging** for **`--document-file`** uses a temp directory or an absolute path (see **`register-editor-export.mjs`**).
 
 Migrations: **`0004_editor_export_tables.sql`**, **`0005_editor_export_document.sql`** (`backlog_issue_id` nullable; **`document`** required on new inserts), **`0006_editor_export_ui_inventory.sql`**, **`0008_agent_bridge_job.sql`** (**IDE agent bridge** queue — **`agent_bridge_job`**).
 
@@ -219,7 +219,7 @@ The script reuses the same **`resolveIaDatabaseUrl`** logic as **territory-ia** 
 
 **Unity vs MCP URL alignment:** **Unity Editor** may resolve its database URL via **EditorPrefs** (`TerritoryDeveloper.EditorExportRegistry.DatabaseUrl`) or repo-root **`.env.local`**. The preflight script and **territory-ia** MCP do **not** read those Unity-only sources. If **`unity_bridge_command`** returns **`timeout`** while preflight shows exit `0`, the most likely cause is **Unity** targeting a different database — align the **Editor** value with the URI in **`config/postgres-dev.json`** or **`DATABASE_URL`** (see **Agent bridge job queue** troubleshooting below).
 
-**Cursor Skill:** [`.cursor/skills/bridge-environment-preflight/SKILL.md`](../.cursor/skills/bridge-environment-preflight/SKILL.md) — bounded repair policy for agents.
+**Cursor Skill:** [`ia/skills/bridge-environment-preflight/SKILL.md`](../ia/skills/bridge-environment-preflight/SKILL.md) — bounded repair policy for agents.
 
 ## Agent bridge job queue
 
@@ -229,7 +229,7 @@ The script reuses the same **`resolveIaDatabaseUrl`** logic as **territory-ia** 
 
 ## IA project spec journal
 
-**Table:** **`ia_project_spec_journal`** — append-only rows for **Decision Log** and **Lessons learned** Markdown bodies copied from `.cursor/projects/{ISSUE_ID}.md` at **project-spec-close**. Columns include **`backlog_issue_id`**, **`entry_kind`** (`decision_log` \| `lessons_learned`), **`body_markdown`**, **`keywords`** (`text[]` for overlap search), **`source_spec_path`**, **`recorded_at`**, optional **`git_sha`**, and generated **`body_tsv`** (**GIN** full-text).
+**Table:** **`ia_project_spec_journal`** — append-only rows for **Decision Log** and **Lessons learned** Markdown bodies copied from `ia/projects/{ISSUE_ID}.md` at **project-spec-close**. Columns include **`backlog_issue_id`**, **`entry_kind`** (`decision_log` \| `lessons_learned`), **`body_markdown`**, **`keywords`** (`text[]` for overlap search), **`source_spec_path`**, **`recorded_at`**, optional **`git_sha`**, and generated **`body_tsv`** (**GIN** full-text).
 
 **Write:** **territory-ia** MCP **`project_spec_journal_persist`** or from repo root **`npm run db:persist-project-journal -- --issue TECH-58`** (optional **`--git-sha`**). Requires migration **`0007`** applied (`npm run db:migrate`).
 

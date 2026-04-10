@@ -2,7 +2,7 @@
 
 **Status:** Durable architecture reference. **Charter trace** for the **Postgres** + **interchange** program lives in [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md). **Open** follow-ups live in [`BACKLOG.md`](../BACKLOG.md). This file does **not** duplicate backlog ids — use those two files for row-level history.
 
-This document defines **architecture patterns** for **PostgreSQL** and HTTP/sync clients **without** changing player **Save data**. Canonical separation: [`.cursor/specs/persistence-system.md`](../.cursor/specs/persistence-system.md) (**Save**, **Load pipeline order**); [`docs/schemas/README.md`](schemas/README.md) (**Interchange JSON** **`artifact`** / **`schema_version`**).
+This document defines **architecture patterns** for **PostgreSQL** and HTTP/sync clients **without** changing player **Save data**. Canonical separation: [`ia/specs/persistence-system.md`](../ia/specs/persistence-system.md) (**Save**, **Load pipeline order**); [`docs/schemas/README.md`](schemas/README.md) (**Interchange JSON** **`artifact`** / **`schema_version`**).
 
 ## Program extension mapping (E1–E3)
 

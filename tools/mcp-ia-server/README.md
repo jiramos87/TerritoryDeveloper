@@ -1,8 +1,8 @@
 # Territory IA MCP server
 
-Local [Model Context Protocol](https://modelcontextprotocol.io/) server for **Territory Developer** information architecture. It reads the **same** on-disk sources agents already use: `.cursor/specs/*.md`, `.cursor/rules/*.mdc`, `glossary.md`, and root docs registered in `buildRegistry()` (e.g. `AGENTS.md`, `ARCHITECTURE.md`).
+Local [Model Context Protocol](https://modelcontextprotocol.io/) server for **Territory Developer** information architecture. It reads the **same** on-disk sources agents already use: `ia/specs/*.md`, `ia/rules/*.mdc`, `glossary.md`, and root docs registered in `buildRegistry()` (e.g. `AGENTS.md`, `ARCHITECTURE.md`).
 
-Canonical integration notes: [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) and [`.cursor/rules/agent-router.mdc`](../../.cursor/rules/agent-router.mdc) (subsection **MCP — territory-ia**).
+Canonical integration notes: [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) and [`ia/rules/agent-router.md`](../../ia/rules/agent-router.md) (subsection **MCP — territory-ia**).
 
 Abstract pattern (reusable outside this game): [`docs/mcp-markdown-ia-pattern.md`](../../docs/mcp-markdown-ia-pattern.md).
 
@@ -29,11 +29,11 @@ Abstract pattern (reusable outside this game): [`docs/mcp-markdown-ia-pattern.md
 | `npm run validate:fixtures` | **AJV** (JSON Schema Draft 2020-12): valid fixtures under `docs/schemas/fixtures/` must pass; invalid fixtures must fail. |
 | `npm run generate:ia-indexes` | Writes `data/spec-index.json` and `data/glossary-index.json`. Pass `--check` to assert they match the generator (used in **CI**). |
 
-From the **repository root**, `package.json` exposes `npm run validate:fixtures` and `npm run generate:ia-indexes` via `npm --prefix tools/mcp-ia-server`, and `npm run validate:dead-project-specs` (**TECH-50** completed — [`tools/validate-dead-project-spec-paths.mjs`](../validate-dead-project-spec-paths.mjs); see [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md)). For an **ordered** post-change checklist (**CI** parity), see [`.cursor/skills/project-implementation-validation/SKILL.md`](../../.cursor/skills/project-implementation-validation/SKILL.md) (**TECH-52** completed).
+From the **repository root**, `package.json` exposes `npm run validate:fixtures` and `npm run generate:ia-indexes` via `npm --prefix tools/mcp-ia-server`, and `npm run validate:dead-project-specs` (**TECH-50** completed — [`tools/validate-dead-project-spec-paths.mjs`](../validate-dead-project-spec-paths.mjs); see [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md)). For an **ordered** post-change checklist (**CI** parity), see [`ia/skills/project-implementation-validation/SKILL.md`](../../ia/skills/project-implementation-validation/SKILL.md) (**TECH-52** completed).
 
 ## Cursor integration
 
-The repo includes `.cursor/mcp.json`, which starts the server with:
+The repo includes `.mcp.json`, which starts the server with:
 
 - `npx -y tsx tools/mcp-ia-server/src/index.ts`
 - `REPO_ROOT=.` so paths resolve against the workspace root
@@ -44,7 +44,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 
 | Variable | Meaning |
 |----------|---------|
-| `REPO_ROOT` | Root used to resolve `.cursor/specs`, `.cursor/rules`, and root markdown. Defaults to `process.cwd()`. |
+| `REPO_ROOT` | Root used to resolve `ia/specs`, `ia/rules`, and root markdown. Defaults to `process.cwd()`. |
 | `DATABASE_URL` | Optional **PostgreSQL** URI; overrides committed **`config/postgres-dev.json`** when set. When no URL resolves (and not **CI**), **`project_spec_journal_*`** return **`db_unconfigured`**. |
 
 ## Tools (29)
@@ -56,7 +56,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`spec_outline`** | Nested heading outline with line ranges. `spec` accepts key, filename, or alias (`geo` → `isometric-geography-system`, `roads` → `roads-system`, `unity` / `unityctx` → `unity-development-context`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
 | **`spec_section`** | Body for one section: canonical `spec` + `section` (id `13.4`, slug, title substring, or fuzzy typo). Aliases: `key` / `doc` → spec; `section_heading` / `heading` → section; numeric `section` coerced to string. `max_chars` or `maxChars` (default 3000) with `truncated` / `totalChars`. |
 | **`spec_sections`** | Batch: `sections` array; each element uses the same shape as **`spec_section`**. Response `results` map keyed by `spec::section`. Optional `max_requests` (default 20, max 50). |
-| **`project_spec_closeout_digest`** | Exactly one of `issue_id` or `spec_path` (`.cursor/projects/{ISSUE_ID}.md`). Returns structured closeout prep JSON (`schema_version` 1, section bodies, `cited_issue_ids`, keywords, heuristic `checklist_hints`). Read-only. |
+| **`project_spec_closeout_digest`** | Exactly one of `issue_id` or `spec_path` (`ia/projects/{ISSUE_ID}.md`). Returns structured closeout prep JSON (`schema_version` 1, section bodies, `cited_issue_ids`, keywords, heuristic `checklist_hints`). Read-only. |
 | **`project_spec_journal_persist`** | Append **Decision Log** + **Lessons learned** from the project spec into **`ia_project_spec_journal`** (`DATABASE_URL` required). Optional `git_sha`. |
 | **`project_spec_journal_search`** | Full-text / keyword overlap search over the journal; optional `raw_text_for_tokens`. |
 | **`project_spec_journal_get`** | Full row by numeric `id`. |
@@ -88,7 +88,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 - `spec_outline` → `{ "spec": "geo" }`
 - `spec_section` → `{ "spec": "geo", "section": "13.4", "max_chars": 8000 }` (or `{ "key": "geo", "section_heading": 14 }`)
 - `spec_sections` → `{ "sections": [ { "spec": "geo", "section": "1" }, { "spec": "roads", "section": "validation" } ] }`
-- `project_spec_closeout_digest` → `{ "issue_id": "FEAT-49" }` or `{ "spec_path": ".cursor/projects/FEAT-49.md" }`
+- `project_spec_closeout_digest` → `{ "issue_id": "FEAT-49" }` or `{ "spec_path": "ia/projects/FEAT-49.md" }`
 - `project_spec_journal_persist` → `{ "issue_id": "FEAT-49", "git_sha": "abc123…" }`
 - `project_spec_journal_search` → `{ "query": "road stroke decision", "max_results": 8 }`
 - `glossary_discover` → `{ "query": "manual street trace neighbors", "max_results": 8 }`
@@ -112,7 +112,7 @@ Shipped with **TECH-58**; scripts live under `scripts/` (they default `REPO_ROOT
 | Root `npm run` | Purpose |
 |----------------|---------|
 | `closeout:worksheet -- --issue FEAT-49` | Print Markdown worksheet; add `--json` for digest JSON only. |
-| `closeout:dependents -- --issue FEAT-49` | List `file:line` hits for the id or `.cursor/projects/FEAT-49.md` (see script header for scan roots / limitations). |
+| `closeout:dependents -- --issue FEAT-49` | List `file:line` hits for the id or `ia/projects/FEAT-49.md` (see script header for scan roots / limitations). |
 | `closeout:verify` | Runs `validate:dead-project-specs` then `generate:ia-indexes --check`. Local convenience; **CI** **ia-tools** remains the gate for merges. |
 
 ## Architecture
@@ -205,8 +205,8 @@ flowchart LR
 
 | Symptom | Check |
 |--------|--------|
-| Tools return empty or wrong paths | `REPO_ROOT` must point at the **repository root** (folder containing `.cursor/specs`). |
-| Cursor does not list the server | `.cursor/mcp.json` and Node/npm available; restart Cursor after config changes. |
+| Tools return empty or wrong paths | `REPO_ROOT` must point at the **repository root** (folder containing `ia/specs`). |
+| Cursor does not list the server | `.mcp.json` and Node/npm available; restart Cursor after config changes. |
 | `verify` fails | Run from `tools/mcp-ia-server/` with repo dependencies installed (`npm install`); ensure working copy includes expected spec/rule files. |
 | Slow repeated calls | Parsed documents are cached in memory until process exit; restart server after large doc edits. |
 

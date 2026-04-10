@@ -18,6 +18,10 @@ This skill **does not** call MCP tools itself. In an **Agent** chat with **terri
 
 - After [`project-spec-implement`](../project-spec-implement/SKILL.md) finishes implementation, use **this** skill to **close** the loop: persist IA → delete spec → validate → **archive row** → **purge closed id from durable surfaces** (same session once the user confirms verification).
 
+## Per-stage close vs umbrella close
+
+This skill is the **umbrella close** — run **once per spec**, at the end of the **final** stage (it migrates IA, deletes the spec, removes the BACKLOG row, archives, and purges the id). For **per-stage** closes during a multi-stage spec, use [`project-stage-close`](../project-stage-close/SKILL.md) instead — it ticks the stage's §7 phases, appends to §6/§9/§10, optionally journals, and emits a handoff message for the next stage's agent **without** touching BACKLOG / archive / spec deletion.
+
 ## Normative closeout order
 
 **Do not delete** `.cursor/projects/{ISSUE_ID}.md` until **all** applicable **IA persistence** edits below are merged (or explicitly recorded as N/A with a one-line reason in chat).

@@ -13,7 +13,7 @@ Verify the current branch/worktree using **both** agent-led verification paths a
 1. **Project lock:** Batch Unity and the Unity Editor **cannot** open the same `REPO_ROOT` at once. **Path A must release the lock before batch starts.** Do **not** ask the human to quit Unity manually unless scripts fail.
    - **Always** run Path A as:  
      `npm run unity:testmode-batch -- --quit-editor-first --scenario-id reference-flat-32x32`  
-     (see policy **Path A — project lock** and [`.cursor/skills/agent-test-mode-verify/SKILL.md`](../.cursor/skills/agent-test-mode-verify/SKILL.md).)
+     (see policy **Path A — project lock** and [`ia/skills/agent-test-mode-verify/SKILL.md`](../ia/skills/agent-test-mode-verify/SKILL.md).)
 2. **Order when running both paths:** **Path A first** (with `--quit-editor-first`), then **`npm run unity:ensure-editor`** (macOS; exit 0 = Editor ready) **before Path B**, because Path B needs an Editor on `REPO_ROOT`.
 3. **Bridge timeouts:** First bridge calls use **`timeout_ms` 40000**. On **timeout**, follow the **timeout escalation protocol** in the policy (`npm run unity:ensure-editor` → retry same command with **60000**; on second timeout, `npm run db:bridge-preflight` and `get_console_logs` if useful, then escalate).
 

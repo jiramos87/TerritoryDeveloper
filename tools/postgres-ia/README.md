@@ -12,7 +12,7 @@ Small **Node** helpers for the game-owned **PostgreSQL** **IA** schema, **E1** *
 |------------|---------|
 | `migrate` | Run `apply-migrations.mjs` — requires **`psql`** on `PATH` |
 | `glossary-by-key` | `node glossary-by-key.mjs <term_key>` — uses `ia_glossary_row_by_key` |
-| `seed:glossary` | Parse first N rows from `.cursor/specs/glossary.md` and upsert |
+| `seed:glossary` | Parse first N rows from `ia/specs/glossary.md` and upsert |
 | `register-repro` | `node register-dev-repro.mjs --issue …` — inserts **`dev_repro_bundle`** row |
 | `register-editor-export` | `node register-editor-export.mjs --kind … --document-file …` — **TECH-55b** **`document jsonb`** insert |
 | `insert-city-metrics` | `node insert-city-metrics.mjs --payload-file …` — one row in **`city_metrics_history`** (spawned by Unity **`MetricsRecorder`**) |

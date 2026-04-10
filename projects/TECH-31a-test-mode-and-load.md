@@ -24,7 +24,7 @@ Introduce a gated **test mode** entry path, load a **committed** **`GameSaveData
 
 ## Open Questions (resolve before / during implementation)
 
-**N/A** for this stage (tooling and **Load pipeline** integration only). Product-level **scenario** preconditions and terrain rules stay in [`.cursor/projects/TECH-31.md`](../.cursor/projects/TECH-31.md).
+**N/A** for this stage (tooling and **Load pipeline** integration only). Product-level **scenario** preconditions and terrain rules stay in [`ia/projects/TECH-31.md`](../ia/projects/TECH-31.md).
 
 ## Risks (mitigations)
 
@@ -47,11 +47,11 @@ Introduce a gated **test mode** entry path, load a **committed** **`GameSaveData
 
 After substantive implementation work on this stage, the **implementing agent** must complete automated checks **before** requesting human intervention for review or sign-off. This keeps handoff to “green checks + any documented exceptions” instead of mid-flight questions.
 
-1. **Repo root:** run **`npm run validate:all`** (Node / **IA** tooling aligned with **CI** — dead project-spec paths, **territory-compute-lib** build, **`test:ia`**, **`validate:fixtures`**, **`generate:ia-indexes --check`**, etc.). **Required** whenever this stage touches tooling, fixtures, schemas consumed by **IA** indexes, **`tools/mcp-ia-server`**, or related docs that feed validation. Follow [`.cursor/skills/project-implementation-validation/SKILL.md`](../.cursor/skills/project-implementation-validation/SKILL.md).
+1. **Repo root:** run **`npm run validate:all`** (Node / **IA** tooling aligned with **CI** — dead project-spec paths, **territory-compute-lib** build, **`test:ia`**, **`validate:fixtures`**, **`generate:ia-indexes --check`**, etc.). **Required** whenever this stage touches tooling, fixtures, schemas consumed by **IA** indexes, **`tools/mcp-ia-server`**, or related docs that feed validation. Follow [`ia/skills/project-implementation-validation/SKILL.md`](../ia/skills/project-implementation-validation/SKILL.md).
 2. **Unity batch compile:** run **`npm run unity:compile-check`** from the repository root **whenever** Unity **C#**, scenes, or serialized assets change (**AGENTS.md** pre-commit checklist).
 3. **Order:** **`validate:all`** first, then **`unity:compile-check`**. If **`validate:all`** fails, fix or document the failure before Unity compile; do not skip **`validate:all`** because Unity passed.
 4. **Optional dev machine superset:** **`npm run verify:local`** (includes **`validate:all`** plus **Postgres** / **Editor** steps per **`ARCHITECTURE.md`**) does **not** replace the explicit **`validate:all`** requirement here — agents must still run **`validate:all`** as a named gate so **CI**-parity checks are never skipped by mistake.
-5. **Play Mode** / **IDE agent bridge** evidence (e.g. **`get_console_logs`**, **`capture_screenshot`**) is **not** mandatory for **31a** acceptance unless you extend **Test contracts** for a specific bridge-backed check; use [`.cursor/skills/ide-bridge-evidence/SKILL.md`](../.cursor/skills/ide-bridge-evidence/SKILL.md) when you add such a row.
+5. **Play Mode** / **IDE agent bridge** evidence (e.g. **`get_console_logs`**, **`capture_screenshot`**) is **not** mandatory for **31a** acceptance unless you extend **Test contracts** for a specific bridge-backed check; use [`ia/skills/ide-bridge-evidence/SKILL.md`](../ia/skills/ide-bridge-evidence/SKILL.md) when you add such a row.
 
 Document in the stage **README** that implementers follow this gate so runs are reproducible locally and in **CI**.
 

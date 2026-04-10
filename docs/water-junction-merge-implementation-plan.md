@@ -1,6 +1,6 @@
 # Water junction merge — implementation plan (historical)
 
-> **Canonical geography:** [`.cursor/specs/isometric-geography-system.md`](../.cursor/specs/isometric-geography-system.md) (§12.7, §5.6.2)  
+> **Canonical geography:** [`ia/specs/isometric-geography-system.md`](../ia/specs/isometric-geography-system.md) (§12.7, §5.6.2)  
 > **Status:** **shipped** (2026-03-27) — Pass A/B, lake-at-step exclusions, full-cardinal cascades (incl. mirror N/W lower pool), `SelectPerpendicularWaterCornerPrefabs`, lake–river rim fallback. **Durable trace:** [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) (search **water junction** / junction merge).
 
 ## 1. Goal

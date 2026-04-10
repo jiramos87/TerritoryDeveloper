@@ -31,7 +31,7 @@ Ten tools: `backlog_issue`, `list_specs`, `spec_outline`, `spec_section`, `gloss
 
 ### 1.2 In-repo guardrails
 
-`.cursor/rules/invariants.mdc`, `agent-router.mdc`, `coding-conventions.mdc`, and `ARCHITECTURE.md` complement MCP. Agents that **skip** `invariants_summary` before touching roads, water, height, or `GridManager` are much more likely to introduce regressions.
+`ia/rules/invariants.md`, `agent-router.mdc`, `coding-conventions.mdc`, and `ARCHITECTURE.md` complement MCP. Agents that **skip** `invariants_summary` before touching roads, water, height, or `GridManager` are much more likely to introduce regressions.
 
 ---
 
@@ -127,7 +127,7 @@ These are **incremental** work items that improve agent success **without** wait
 1. **`backlog_issue`** for the target id (or read `BACKLOG.md` if MCP off).
 2. **`invariants_summary`** always before code edits.
 3. **`router_for_task`** with a short domain string; then **`spec_outline`** / **`spec_section`** for the listed spec keys (avoid full-file reads when slices exist).
-4. **`glossary_discover`** (English keywords) when naming or writing notes so terminology matches [`glossary.md`](../.cursor/specs/glossary.md).
+4. **`glossary_discover`** (English keywords) when naming or writing notes so terminology matches [`glossary.md`](../ia/specs/glossary.md).
 5. After roads/water changes: explicitly verify **`InvalidateRoadCache()`**, **`RefreshShoreTerrainAfterWaterUpdate`** (when applicable), and HeightMap/cell sync per invariants.
 6. **Human/Unity:** Play mode + scene/prefab diff for anything touching Inspector, layout, or initialization order.
 

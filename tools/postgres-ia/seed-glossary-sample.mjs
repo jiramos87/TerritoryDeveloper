@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Optional seed (TECH-44b §7 Phase 3): first N glossary table rows from
- * .cursor/specs/glossary.md (| Term | Definition | Spec | blocks only).
+ * ia/specs/glossary.md (| Term | Definition | Spec | blocks only).
  * Idempotent: ON CONFLICT (term_key) DO UPDATE.
  */
 
@@ -16,7 +16,7 @@ import { resolveDatabaseUrl } from './resolve-database-url.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../..');
 loadRepoDotenvIfNotCi(REPO_ROOT);
-const GLOSSARY_PATH = join(REPO_ROOT, '.cursor/specs/glossary.md');
+const GLOSSARY_PATH = join(REPO_ROOT, 'ia/specs/glossary.md');
 
 const MAX_ROWS = Number.parseInt(process.env.SEED_GLOSSARY_MAX ?? '20', 10);
 

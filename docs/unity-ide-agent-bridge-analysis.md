@@ -11,9 +11,9 @@
 - [`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md) — Postgres dev schema, Editor export registry
 - [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md) — B1/B3/P5 interchange
 - [`docs/agent-tooling-verification-priority-tasks.md`](agent-tooling-verification-priority-tasks.md) — ordering principles
-- [`.cursor/specs/unity-development-context.md`](../.cursor/specs/unity-development-context.md) §10 — Editor agent diagnostics
+- [`ia/specs/unity-development-context.md`](../ia/specs/unity-development-context.md) §10 — Editor agent diagnostics
 - [`ARCHITECTURE.md`](../ARCHITECTURE.md) — system layers and dependency map
-- [`.cursor/specs/glossary.md`](../.cursor/specs/glossary.md) — domain vocabulary
+- [`ia/specs/glossary.md`](../ia/specs/glossary.md) — domain vocabulary
 
 ---
 
@@ -91,7 +91,7 @@ All exports live under `Assets/Scripts/Editor/` (Editor-only assembly, excluded 
 | **TECH-43** | Append-only JSON line event log — telemetry/anomaly streaming |
 | **TECH-54** | Agent patch proposal staging (E3) — agent → Unity change proposals |
 
-**Reports menus:** Expected **Territory Developer → Reports** behavior is normative in [`.cursor/specs/unity-development-context.md`](../.cursor/specs/unity-development-context.md) §10. A prior tooling-gap row was verified and archived (**Recent archive** in [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md)).
+**Reports menus:** Expected **Territory Developer → Reports** behavior is normative in [`ia/specs/unity-development-context.md`](../ia/specs/unity-development-context.md) §10. A prior tooling-gap row was verified and archived (**Recent archive** in [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md)).
 
 ---
 
@@ -578,7 +578,7 @@ Ordered by **dependency and payoff**, without calendar or sprint framing.
 
 ### A — Ship the minimal loop first
 
-1. Confirm **Territory Developer → Reports** matches [`.cursor/specs/unity-development-context.md`](../.cursor/specs/unity-development-context.md) §10 (compile **Editor** scripts, check **Console** on failure) — prerequisite for reliable dispatch
+1. Confirm **Territory Developer → Reports** matches [`ia/specs/unity-development-context.md`](../ia/specs/unity-development-context.md) §10 (compile **Editor** scripts, check **Console** on failure) — prerequisite for reliable dispatch
 2. **`AgentBridgeCommandRunner.cs`** — file polling + dispatch to existing export methods (no duplicate export logic)
 3. **`unity_bridge_command` / `unity_bridge_get` MCP tools** — **Postgres** **`agent_bridge_job`** queue + poll / read by **`command_id`**
 4. **Backlog row** — track the bridge as a **TECH-** issue when you want traceability in `BACKLOG.md`
@@ -615,4 +615,4 @@ The sorting order debugging scenario illustrates the ultimate vision: an agent t
 
 ---
 
-*Analysis prepared 2026-04-06. Uses domain vocabulary from `.cursor/specs/glossary.md` and architecture from `ARCHITECTURE.md`. MCP tool names follow `snake_case` per project convention.*
+*Analysis prepared 2026-04-06. Uses domain vocabulary from `ia/specs/glossary.md` and architecture from `ARCHITECTURE.md`. MCP tool names follow `snake_case` per project convention.*

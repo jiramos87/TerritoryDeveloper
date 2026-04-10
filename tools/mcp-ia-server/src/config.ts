@@ -47,6 +47,8 @@ export function resolveSpecKeyAlias(spec: string): string {
 
 const REPO_ROOT_MARKERS: readonly (readonly string[])[] = [
   ["config", "postgres-dev.json"],
+  ["ia", "specs", "glossary.md"],
+  // Fallback for one cycle in case anyone still launches against a pre-Stage-2 checkout.
   [".cursor", "specs", "glossary.md"],
 ];
 
@@ -137,12 +139,12 @@ function pushSortedUnique(paths: string[], dir: string, filter: (n: string) => b
  */
 export function buildRegistry(): SpecRegistryEntry[] {
   const repoRoot = resolveRepoRoot();
-  const specsDir = path.join(repoRoot, ".cursor", "specs");
-  const rulesDir = path.join(repoRoot, ".cursor", "rules");
+  const specsDir = path.join(repoRoot, "ia", "specs");
+  const rulesDir = path.join(repoRoot, "ia", "rules");
 
   const paths: string[] = [];
   pushSortedUnique(paths, specsDir, (n) => n.endsWith(".md"));
-  pushSortedUnique(paths, rulesDir, (n) => n.endsWith(".mdc"));
+  pushSortedUnique(paths, rulesDir, (n) => n.endsWith(".md"));
 
   const rootDocs = ["AGENTS.md", "ARCHITECTURE.md"].map((f) =>
     path.join(repoRoot, f),

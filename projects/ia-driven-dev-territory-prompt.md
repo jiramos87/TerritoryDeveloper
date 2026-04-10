@@ -10,11 +10,11 @@
 
 | Aspect | Original prompt (generic) | Territory Developer (this repo) |
 |--------|---------------------------|-----------------------------------|
-| **Behavior source of truth** | Abstract specs | [`.cursor/specs/`](.cursor/specs/glossary.md) (canonical geo: `isometric-geography-system.md`) + [`glossary.md`](.cursor/specs/glossary.md) |
-| **Issues and human pipeline** | Issues + generic cron | [`BACKLOG.md`](BACKLOG.md) (`BUG-` / `FEAT-` / `TECH-` / …); skills [`.cursor/skills/project-spec-kickoff`](.cursor/skills/project-spec-kickoff/SKILL.md) and [project-spec-implement](.cursor/skills/project-spec-implement/SKILL.md) |
+| **Behavior source of truth** | Abstract specs | [`ia/specs/`](ia/specs/glossary.md) (canonical geo: `isometric-geography-system.md`) + [`glossary.md`](ia/specs/glossary.md) |
+| **Issues and human pipeline** | Issues + generic cron | [`BACKLOG.md`](BACKLOG.md) (`BUG-` / `FEAT-` / `TECH-` / …); skills [`ia/skills/project-spec-kickoff`](ia/skills/project-spec-kickoff/SKILL.md) and [project-spec-implement](ia/skills/project-spec-implement/SKILL.md) |
 | **MCP** | Generic tools + skills | **territory-ia** (`backlog_issue`, `spec_section`, `glossary_*`, `router_for_task`, `invariants_summary`, …) — see [`docs/mcp-ia-server.md`](../docs/mcp-ia-server.md) |
-| **Persistence / DB** | PostgreSQL in the example | **Save data** and **Load pipeline** in Unity runtime ([`persistence-system.md`](../.cursor/specs/persistence-system.md)); **JSON interchange program** + [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md) + **glossary**; **Postgres** dev tables per [`docs/postgres-ia-dev-setup.md`](../docs/postgres-ia-dev-setup.md) |
-| **Runtime → agent exposure** | HTTP API, WebSockets, etc. (idea) | **Already:** Editor menus **Territory Developer → Reports** → JSON/Markdown export under `tools/reports/` (**Agent context**, **Sorting debug**) — [`unity-development-context.md`](../.cursor/specs/unity-development-context.md) section 10 |
+| **Persistence / DB** | PostgreSQL in the example | **Save data** and **Load pipeline** in Unity runtime ([`persistence-system.md`](../ia/specs/persistence-system.md)); **JSON interchange program** + [`docs/postgres-interchange-patterns.md`](../docs/postgres-interchange-patterns.md) + **glossary**; **Postgres** dev tables per [`docs/postgres-ia-dev-setup.md`](../docs/postgres-ia-dev-setup.md) |
+| **Runtime → agent exposure** | HTTP API, WebSockets, etc. (idea) | **Already:** Editor menus **Territory Developer → Reports** → JSON/Markdown export under `tools/reports/` (**Agent context**, **Sorting debug**) — [`unity-development-context.md`](../ia/specs/unity-development-context.md) section 10 |
 | **Architecture risks** | ECS, generic control loop | Strict **invariants**: `HeightMap[x,y]` == `Cell.height`; **roads** via preparation family → `PathTerraformPlan` + Phase-1 + `Apply`; no new singletons; no `gridArray` / `cellArray` outside **GridManager** — use **`GetCell(x, y)`** |
 
 ---
@@ -27,8 +27,8 @@ Use this block as a **system / user prompt** when you want an agent to work **in
 You are assisting on **Territory Developer**: Unity 2D isometric city-builder (C#, MonoBehaviour managers).
 
 **Authoritative context (use in this order):**
-1. **territory-ia MCP** when available: `backlog_issue` for BUG-/FEAT-/TECH- ids → `invariants_summary` → `router_for_task` for the task domain → `glossary_discover` / `glossary_lookup` (queries in **English**) → `spec_section` / `spec_outline`. Do not read entire `.cursor/specs/*.md` files when a slice suffices.
-2. **AGENTS.md** workflow; **.cursor/rules/invariants.mdc** — never violate invariants or guardrails.
+1. **territory-ia MCP** when available: `backlog_issue` for BUG-/FEAT-/TECH- ids → `invariants_summary` → `router_for_task` for the task domain → `glossary_discover` / `glossary_lookup` (queries in **English**) → `spec_section` / `spec_outline`. Do not read entire `ia/specs/*.md` files when a slice suffices.
+2. **AGENTS.md** workflow; **ia/rules/invariants.md** — never violate invariants or guardrails.
 3. **Canonical geography**: `isometric-geography-system.md` wins over other docs for grid math, **HeightMap**, **Water map**, roads, rivers, **Sorting order**.
 
 **Vocabulary:** Use glossary-linked terms: **Cell**, **HeightMap**, **Water map**, **Save data**, **Load pipeline**, **Road validation pipeline**, **Terraform plan**, **Shore band**, **River** / **River bed (H_bed)**, **Geography initialization**, **AUTO** simulation pipeline, **Sorting order**, etc. Do not invent synonyms for documented concepts.
@@ -41,8 +41,8 @@ You are assisting on **Territory Developer**: Unity 2D isometric city-builder (C
 - New managers: MonoBehaviour in scene, **SerializeField** + **FindObjectOfType** fallback in Awake — no new singletons (except documented **GameNotificationManager**).
 
 **Specs:**
-- Permanent behavior: `.cursor/specs/` only.
-- Active feature/bug specs: `.cursor/projects/{ISSUE_ID}.md` from template; close by migrating lessons to canonical docs, archiving the **BACKLOG** row, and purging the closed id from durable docs (**project-spec-close** skill).
+- Permanent behavior: `ia/specs/` only.
+- Active feature/bug specs: `ia/projects/{ISSUE_ID}.md` from template; close by migrating lessons to canonical docs, archiving the **BACKLOG** row, and purging the closed id from durable docs (**project-spec-close** skill).
 
 **Runtime → agent friction reduction:**
 - Prefer **Editor** exports: **Territory Developer → Reports → Export Agent Context** → `tools/reports/agent-context-*.json` (bounded **grid** sample: **Cell**, **HeightMap**, **WaterMap** fields per spec).
@@ -70,7 +70,7 @@ Deliver: concrete file paths, spec citations, and changes that respect the above
   - **“Simulation testing”:** pin **simulation tick** / **AUTO** to reproducible scenarios (harness JSON on [`BACKLOG.md`](BACKLOG.md)) — fits the **JSON** interchange program and fixtures; it does not replace specs.
 
 - **TDD + spec-driven + agents:**  
-  Write **Acceptance** in **BACKLOG.md** and criteria in `.cursor/projects/{ISSUE_ID}.md` in canonical vocabulary first; then failing tests; then implementation. Agents use **territory-ia** so they do not “invent” rules already in **geo** section 13 (roads) or **simulation-system**.
+  Write **Acceptance** in **BACKLOG.md** and criteria in `ia/projects/{ISSUE_ID}.md` in canonical vocabulary first; then failing tests; then implementation. Agents use **territory-ia** so they do not “invent” rules already in **geo** section 13 (roads) or **simulation-system**.
 
 ### 3.2 Unity testing with AI support
 
@@ -109,7 +109,7 @@ Deliver: concrete file paths, spec citations, and changes that respect the above
 
 - Agents **understand** state via **territory-ia**, partial specs, and **Agent context** / **Sorting debug** exports.  
 - They **validate** implementations against **invariants**, **Road validation pipeline**, **Save data** / **Load pipeline**, and **JSON** schemas under `docs/schemas/` (**glossary** **Interchange JSON**).  
-- They **propose changes** to code and temporary specs (`.cursor/projects/`) without violating guardrails (**GridManager**, **roads**, **water** / **shore**).
+- They **propose changes** to code and temporary specs (`ia/projects/`) without violating guardrails (**GridManager**, **roads**, **water** / **shore**).
 
 ---
 

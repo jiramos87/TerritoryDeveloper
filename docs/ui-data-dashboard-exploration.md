@@ -1,7 +1,7 @@
 # Data dashboard — exploration and prerequisite subsystems
 
-> **Open delivery:** [FEAT-51](../BACKLOG.md) — project spec [`.cursor/projects/FEAT-51.md`](../.cursor/projects/FEAT-51.md)  
-> **Visual tokens (shipped):** [`.cursor/specs/ui-design-system.md`](../.cursor/specs/ui-design-system.md) **§1**, **§5.2** (**`UiTheme`**, **`DefaultUiTheme.asset`**)  
+> **Open delivery:** [FEAT-51](../BACKLOG.md) — project spec [`ia/projects/FEAT-51.md`](../ia/projects/FEAT-51.md)  
+> **Visual tokens (shipped):** [`ia/specs/ui-design-system.md`](../ia/specs/ui-design-system.md) **§1**, **§5.2** (**`UiTheme`**, **`DefaultUiTheme.asset`**)  
 > **Program trace:** **UI-as-code program** (**glossary**)
 
 This document captures **future** work: mechanisms, methods, and subsystems needed **before** in-game **data dashboards** (charts, dense stat grids, time-range sync) are feasible. It is **not** a polish-only delivery. Shipped **HUD** / **MainMenu** visual polish reuses **`UiTheme`** and **`ui-design-system.md`**; dashboard **cards** and **charts** should consume the same **palette**, **typography** rhythm, **spacing**, and **surface** tokens so the product stays visually coherent.

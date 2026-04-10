@@ -10,7 +10,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../../../");
-const geoPath = path.join(repoRoot, ".cursor/specs/isometric-geography-system.md");
+const geoPath = path.join(repoRoot, "ia/specs/isometric-geography-system.md");
 
 test(
   "parseDocument geography spec under 500ms",

@@ -20,7 +20,13 @@ while [[ $# -gt 0 ]]; do
     *) PASSTHROUGH+=("$1"); shift ;;
   esac
 done
-set -- "${PASSTHROUGH[@]}"
+# Bash 3.2 (macOS default) treats `"${arr[@]}"` as unbound when the array is
+# empty under `set -u`. Reset positional args only when we actually have any.
+if [[ ${#PASSTHROUGH[@]} -gt 0 ]]; then
+  set -- "${PASSTHROUGH[@]}"
+else
+  set --
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=load-repo-env.inc.sh

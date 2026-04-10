@@ -1,7 +1,10 @@
 /**
- * Parse temporary project specs (`.cursor/projects/{ISSUE_ID}.md`) for closeout / agent workflows (TECH-58).
+ * Parse temporary project specs (`ia/projects/{ISSUE_ID}[-{description}].md`,
+ * legacy `.cursor/projects/{ISSUE_ID}.md`) for closeout / agent workflows
+ * (TECH-58, paths + descriptive suffix relaxed by TECH-85 / Stage 2).
  */
 
+import fs from "node:fs";
 import path from "node:path";
 
 /** Backlog issue id pattern (aligned with TECH-30 / BACKLOG convention). */
@@ -12,9 +15,27 @@ export const PROJECT_SPEC_ISSUE_ID_RE =
 export const CITED_ISSUE_ID_RE =
   /\b(BUG|FEAT|TECH|ART|AUDIO)-(\d+)([a-z]?)\b/gi;
 
-/** Repo-relative path under `.cursor/projects/` only (no traversal). */
+/**
+ * Repo-relative project spec path. Accepts:
+ *   - `ia/projects/{ISSUE_ID}.md` (new convention)
+ *   - `ia/projects/{ISSUE_ID}-{description}.md` (descriptive variant per TECH-85 Q8)
+ *   - `.cursor/projects/{ISSUE_ID}.md` (legacy, kept for one cycle)
+ * Never matches traversal (`..` is rejected separately by callers).
+ */
 export const PROJECT_SPEC_REL_PATH_RE =
-  /^\.cursor\/projects\/(BUG|FEAT|TECH|ART|AUDIO)-\d+[a-z]?\.md$/i;
+  /^(?:\.cursor|ia)\/projects\/(BUG|FEAT|TECH|ART|AUDIO)-\d+[a-z]?(?:-[A-Za-z0-9._-]+)?\.md$/i;
+
+/**
+ * Pull the bare `{ISSUE_ID}` (e.g. `TECH-85`) out of a project spec basename
+ * such as `TECH-85-ia-migration` or `TECH-75`. Returns null if the basename
+ * does not start with a recognised issue id.
+ */
+export function issueIdFromProjectSpecBasename(base: string): string | null {
+  const m =
+    /^((?:BUG|FEAT|TECH|ART|AUDIO)-\d+[a-z]?)(?:-[A-Za-z0-9._-]+)?$/i.exec(base);
+  if (!m) return null;
+  return normalizeIssueId(m[1]);
+}
 
 const STOPWORDS = new Set([
   "that",
@@ -265,7 +286,7 @@ export function buildChecklistHints(
     ),
     U1: linesMatching(
       `${summary}\n${goals}\n${impl}`,
-      /\.mdc|\.cursor\/rules|guardrail/i,
+      /\.mdc|(?:\.cursor|ia)\/rules|guardrail/i,
       8,
     ),
     D1: linesMatching(
@@ -340,7 +361,17 @@ export type ResolveProjectSpecPathResult =
   | { ok: false; error: string; message: string };
 
 /**
- * Resolve and validate `.cursor/projects/{ISSUE_ID}.md` under repo root (no `..`).
+ * Resolve and validate a project spec path under `repoRoot` with no `..` traversal.
+ *
+ * Accepts:
+ *   - `spec_path` repo-relative under `ia/projects/` (current) or `.cursor/projects/`
+ *     (legacy back-compat for one cycle). Filename may be `{ISSUE_ID}.md` or
+ *     `{ISSUE_ID}-{description}.md` per TECH-85 Q8.
+ *   - `issue_id` only — resolution order:
+ *       1. `ia/projects/{ISSUE_ID}.md`
+ *       2. `ia/projects/{ISSUE_ID}-{description}.md` (first descriptive match by sort)
+ *       3. `.cursor/projects/{ISSUE_ID}.md` (legacy fallback, only when it exists)
+ *       4. Default to `ia/projects/{ISSUE_ID}.md` so the caller's read produces ENOENT.
  */
 export function resolveProjectSpecFile(
   repoRoot: string,
@@ -355,7 +386,7 @@ export function resolveProjectSpecFile(
         ok: false,
         error: "invalid_arguments",
         message:
-          "Provide exactly one of `issue_id` or `spec_path` (repo-relative `.cursor/projects/{ISSUE_ID}.md`).",
+          "Provide exactly one of `issue_id` or `spec_path` (repo-relative `ia/projects/{ISSUE_ID}[-{description}].md` or legacy `.cursor/projects/{ISSUE_ID}.md`).",
       };
     }
   }
@@ -372,27 +403,28 @@ export function resolveProjectSpecFile(
         message: "`spec_path` must not contain `..`.",
       };
     }
-    if (!p.startsWith(".cursor/")) {
-      p = path.posix.join(".cursor/projects", path.basename(p));
+    if (!p.startsWith(".cursor/") && !p.startsWith("ia/")) {
+      p = path.posix.join("ia/projects", path.basename(p));
     }
     if (!PROJECT_SPEC_REL_PATH_RE.test(p)) {
       return {
         ok: false,
         error: "invalid_path",
         message:
-          "`spec_path` must match `.cursor/projects/{BUG|FEAT|TECH|ART|AUDIO}-<n>[suffix].md`.",
+          "`spec_path` must match `(ia|.cursor)/projects/{BUG|FEAT|TECH|ART|AUDIO}-<n>[suffix][-{description}].md`.",
       };
     }
     relPosix = p;
     const base = path.posix.basename(p, ".md");
-    issue_id = normalizeIssueId(base);
-    if (!PROJECT_SPEC_ISSUE_ID_RE.test(issue_id)) {
+    const derived = issueIdFromProjectSpecBasename(base);
+    if (!derived) {
       return {
         ok: false,
         error: "invalid_path",
         message: "Could not derive a valid `issue_id` from `spec_path`.",
       };
     }
+    issue_id = derived;
     if (hasIssue) {
       const other = normalizeIssueId(String(params.issue_id).trim());
       if (other !== issue_id) {
@@ -413,7 +445,44 @@ export function resolveProjectSpecFile(
           "`issue_id` must match `BUG-|FEAT-|TECH-|ART-|AUDIO-` + digits + optional letter suffix.",
       };
     }
-    relPosix = `.cursor/projects/${issue_id}.md`;
+
+    const tryAbs = (rel: string) =>
+      path.resolve(repoRoot, ...rel.split("/"));
+
+    relPosix = `ia/projects/${issue_id}.md`;
+    if (!fs.existsSync(tryAbs(relPosix))) {
+      let pickedDescriptive: string | null = null;
+      try {
+        const iaProjectsDir = path.join(repoRoot, "ia", "projects");
+        if (fs.existsSync(iaProjectsDir)) {
+          const prefix = `${issue_id}-`;
+          const entries = fs
+            .readdirSync(iaProjectsDir)
+            .filter(
+              (n) =>
+                n.startsWith(prefix) &&
+                n.endsWith(".md") &&
+                PROJECT_SPEC_REL_PATH_RE.test(`ia/projects/${n}`),
+            )
+            .sort();
+          if (entries.length > 0) {
+            pickedDescriptive = entries[0];
+          }
+        }
+      } catch {
+        // ignore directory read failures — fall through to legacy/default
+      }
+
+      if (pickedDescriptive) {
+        relPosix = `ia/projects/${pickedDescriptive}`;
+      } else {
+        const legacy = `.cursor/projects/${issue_id}.md`;
+        if (fs.existsSync(tryAbs(legacy))) {
+          relPosix = legacy;
+        }
+        // else: keep the default `ia/projects/{ID}.md`; the caller's read will ENOENT honestly.
+      }
+    }
   }
 
   const absPath = path.resolve(repoRoot, ...relPosix.split("/"));

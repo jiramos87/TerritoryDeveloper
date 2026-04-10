@@ -13,7 +13,7 @@ import { findEntryByKey } from "../config.js";
 import { runWithToolTiming } from "../instrumentation.js";
 
 const GEO_SPEC_REF =
-  ".cursor/specs/isometric-geography-system.md (see Read sections column)";
+  "ia/specs/isometric-geography-system.md (see Read sections column)";
 
 const MAX_FILES = 40;
 
@@ -175,7 +175,7 @@ export function inferDomainHintsFromPath(filePath: string): string[] {
   if (/zonemanager|zone\.cs|building|rci/i.test(lower)) {
     hints.add("Zones, buildings, RCI");
   }
-  if (/uicontroller|ui-design/i.test(p) || /\.cursor\/specs\/ui/i.test(p)) {
+  if (/uicontroller|ui-design/i.test(p) || /(\.cursor|ia)\/specs\/ui/i.test(p)) {
     hints.add("UI changes");
   }
   if (

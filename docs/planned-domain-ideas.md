@@ -1,6 +1,6 @@
 # Planned domain ideas (product backlog)
 
-> **Purpose:** Register **future** game and tooling directions in one place. **Not** authoritative rules: **`BACKLOG.md`** issue text and, when implemented, **`.cursor/specs/*.md`** define behavior. This doc supports design discussion and **IA** search; glossary pointers live under [Planned terminology](../.cursor/specs/glossary.md#planned-domain-terms).
+> **Purpose:** Register **future** game and tooling directions in one place. **Not** authoritative rules: **`BACKLOG.md`** issue text and, when implemented, **`ia/specs/*.md`** define behavior. This doc supports design discussion and **IA** search; glossary pointers live under [Planned terminology](../ia/specs/glossary.md#planned-domain-terms).
 
 **Last updated:** 2026-04-10 (backlog hygiene: open **`BACKLOG.md`** + [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) **Recent archive** for completed prerequisites)
 
@@ -43,7 +43,7 @@
 |------|------|
 | **Compute-lib program** | Charter (archived): **compute** libraries + **territory-ia** tools — [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md); ongoing **C#** utilities + research rows on [`BACKLOG.md`](../BACKLOG.md) **§ Compute-lib program** |
 | **Pure C# compute helpers** | e.g. **ring** math multipolar-ready, optional **basin** / volume stubs for water-volume work |
-| **Geography authoring / multipolar / water volume** | Product directions **without** `.cursor/projects/` specs until prioritized on [`BACKLOG.md`](../BACKLOG.md) |
+| **Geography authoring / multipolar / water volume** | Product directions **without** `ia/projects/` specs until prioritized on [`BACKLOG.md`](../BACKLOG.md) |
 
 ## 5. When to promote to reference specs
 

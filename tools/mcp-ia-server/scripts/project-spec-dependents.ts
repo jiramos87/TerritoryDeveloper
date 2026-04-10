@@ -86,7 +86,8 @@ function main(): void {
   }
 
   const repoRoot = resolveRepoRoot();
-  const specPathLiteral = `.cursor/projects/${issue_id}.md`;
+  const specPathIa = `ia/projects/${issue_id}.md`;
+  const specPathLegacy = `.cursor/projects/${issue_id}.md`;
   const idRe = new RegExp(`\\b${issue_id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
 
   const files: string[] = [];
@@ -94,7 +95,10 @@ function main(): void {
     const p = path.join(repoRoot, name);
     if (fs.existsSync(p)) files.push(p);
   }
-  for (const sub of [".cursor", "docs", "projects", ".github"]) {
+  // After TECH-85 / Stage 2 the canonical content lives under `ia/`; `.cursor/`
+  // remains as back-compat symlinks. Scan `ia/` directly so directory-level
+  // symlinks under `.cursor/` are not double-counted or skipped.
+  for (const sub of ["ia", "docs", "projects", ".github"]) {
     const d = path.join(repoRoot, sub);
     if (fs.existsSync(d)) collectTextFiles(d, repoRoot, files);
   }
@@ -114,7 +118,11 @@ function main(): void {
     const rel = path.relative(repoRoot, abs);
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      if (line.includes(specPathLiteral) || idRe.test(line)) {
+      if (
+        line.includes(specPathIa) ||
+        line.includes(specPathLegacy) ||
+        idRe.test(line)
+      ) {
         hits.push({ file: rel.split(path.sep).join("/"), line: i + 1, text: line.trim() });
       }
       idRe.lastIndex = 0;
@@ -122,7 +130,7 @@ function main(): void {
   }
 
   if (hits.length === 0) {
-    console.log(`project-spec-dependents: no hits for ${issue_id} / ${specPathLiteral}`);
+    console.log(`project-spec-dependents: no hits for ${issue_id} / ${specPathIa}`);
     process.exit(0);
   }
 

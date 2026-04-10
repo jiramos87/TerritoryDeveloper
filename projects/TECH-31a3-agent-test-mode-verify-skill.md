@@ -2,7 +2,7 @@
 
 **Stage status:** **Closed** (2026-04-09). All acceptance criteria and test-contract rows satisfied; later program stages **31b**–**31c** shipped per [program tracker](TECH-31-agent-scenario-generator-program.md) (**31c** adds optional **`--golden-path`** / exit **8** — see **glossary** **Agent test mode batch**).
 
-> **Program issue:** [TECH-31](../BACKLOG.md) — stage **31a3** (child spec; aggregate **Open Questions** / **§7b** for the program live in [`.cursor/projects/TECH-31.md`](../.cursor/projects/TECH-31.md)).
+> **Program issue:** [TECH-31](../BACKLOG.md) — stage **31a3** (child spec; aggregate **Open Questions** / **§7b** for the program live in [`ia/projects/TECH-31.md`](../ia/projects/TECH-31.md)).
 
 **Program:** [TECH-31-agent-scenario-generator-program.md](TECH-31-agent-scenario-generator-program.md) **Stage 31a3**.  
 **Backlog:** [TECH-31](../BACKLOG.md).  
@@ -10,7 +10,7 @@
 
 ## Summary
 
-**Finalized** **`.cursor/skills/agent-test-mode-verify/SKILL.md`** as the **normative** agent workflow: **gate** (run vs skip), **Path A** (**Agent test mode batch** / **`npm run unity:testmode-batch`**), **Path B** (**IDE agent bridge** **hybrid** with **`.queued-test-scenario-id`**), bounded **iterate-until-green** with **`validate:all`** / **compile** gates, and a **structured handoff** requesting **human** **normal-game** **QA** only at the end. Integrate with **`project-spec-implement`** (already cross-linked) and **`close-dev-loop`** (**compose**, do not fork). **Does not** replace **human** **issue** verification per **`AGENTS.md`**.
+**Finalized** **`ia/skills/agent-test-mode-verify/SKILL.md`** as the **normative** agent workflow: **gate** (run vs skip), **Path A** (**Agent test mode batch** / **`npm run unity:testmode-batch`**), **Path B** (**IDE agent bridge** **hybrid** with **`.queued-test-scenario-id`**), bounded **iterate-until-green** with **`validate:all`** / **compile** gates, and a **structured handoff** requesting **human** **normal-game** **QA** only at the end. Integrate with **`project-spec-implement`** (already cross-linked) and **`close-dev-loop`** (**compose**, do not fork). **Does not** replace **human** **issue** verification per **`AGENTS.md`**.
 
 ## Goals
 
@@ -43,11 +43,11 @@
 
 ### Phase 1 — Skill completion
 
-- [x] Remove **pointer-only** / **pending** prose from [`.cursor/skills/agent-test-mode-verify/SKILL.md`](../.cursor/skills/agent-test-mode-verify/SKILL.md); keep YAML `description` triggers aligned with **Summary** above.
+- [x] Remove **pointer-only** / **pending** prose from [`ia/skills/agent-test-mode-verify/SKILL.md`](../ia/skills/agent-test-mode-verify/SKILL.md); keep YAML `description` triggers aligned with **Summary** above.
 - [x] **Tool recipe** (ordered): **gate** → **`npm run validate:all`** when diff touches **MCP** / schemas / fixtures / skills → **`npm run unity:compile-check`** when **C#** under **`Assets/`** changed (or bridge **`get_compilation_status`** / **`unity_compile`** per **`close-dev-loop`**) → **Path A** or **Path B** → bounded **iterate** → **handoff**.
 - [x] **Path A** — Document: repo-root **`npm run unity:testmode-batch`** (→ **`tools/scripts/unity-testmode-batch.sh`**); **`Territory.Testing.AgentTestModeBatchRunner.Run`**; optional **`tools/scripts/unity-quit-project.sh`** for project lock; artifact **`tools/reports/agent-testmode-batch-*.json`** (**glossary** **Agent test mode batch**; **Load pipeline** via **`GameSaveManager.LoadGame`** only).
 - [x] **Path B** — Document: write **`.queued-test-scenario-id`** (see [`tools/fixtures/scenarios/README.md`](../tools/fixtures/scenarios/README.md)); **`npm run db:bridge-preflight`**; territory-ia **`unity_bridge_command`** (**`enter_play_mode`** → **`get_play_mode_status`** → **`debug_context_bundle`** with **`params.seed_cell`** / optional **`get_console_logs`**, **`capture_screenshot`**) → **`exit_play_mode`** (**glossary** **IDE agent bridge**).
-- [x] **`{MAX_ITERATIONS}`** default **2**, same as [`.cursor/skills/close-dev-loop/SKILL.md`](../.cursor/skills/close-dev-loop/SKILL.md).
+- [x] **`{MAX_ITERATIONS}`** default **2**, same as [`ia/skills/close-dev-loop/SKILL.md`](../ia/skills/close-dev-loop/SKILL.md).
 - [x] **Exit-code / failure-class** table: **shell** exit from **`unity-testmode-batch.sh`** / **`unity-quit-project.sh`**; **Unity** **`EditorApplication.Exit`** codes from batch runner; MCP / bridge **`db_unconfigured`**, job **`timeout`**, and **`get_compilation_status`** / **`compilation_failed`** (point to **`ide-bridge-evidence`** / **`bridge-environment-preflight`**).
 
 ### Phase 2 — Docs + **E2E**
@@ -65,7 +65,7 @@
 
 | Acceptance / goal | Check type | Command or artifact | Notes | Done |
 |-------------------|------------|---------------------|--------|:----:|
-| **Skill** normative | Manual | Read [`.cursor/skills/agent-test-mode-verify/SKILL.md`](../.cursor/skills/agent-test-mode-verify/SKILL.md) | Full recipe, exit table, **seed prompt**; no stub-only pointer | [x] |
+| **Skill** normative | Manual | Read [`ia/skills/agent-test-mode-verify/SKILL.md`](../ia/skills/agent-test-mode-verify/SKILL.md) | Full recipe, exit table, **seed prompt**; no stub-only pointer | [x] |
 | **IA / Node** | Node | `npm run validate:all` | After **`AGENTS.md`** / **`ARCHITECTURE.md`** / skill edits | [x] |
 | **Unity compile** (if **C#** touched in same effort) | Node | `npm run unity:compile-check` | Per **`AGENTS.md`**; not skipped when **`UNITY_EDITOR_PATH`** unset in agent shell | [x] |
 | **Path A** **E2E** | Manual / dev machine | `npm run unity:testmode-batch` + **`tools/reports/agent-testmode-batch-*.json`** | Committed scenario (e.g. **`reference-flat-32x32`**); **Load pipeline** exercised | [x] |
@@ -95,4 +95,4 @@
 
 ## Open Questions (resolve before / during implementation)
 
-**N/A** (tooling / workflow). **Game** **scenario** **Open Questions** live in **`.cursor/projects/TECH-31.md`**.
+**N/A** (tooling / workflow). **Game** **scenario** **Open Questions** live in **`ia/projects/TECH-31.md`**.

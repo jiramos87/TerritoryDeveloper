@@ -1,5 +1,5 @@
 /**
- * MCP tool: project_spec_closeout_digest — structured extract from `.cursor/projects/{ISSUE_ID}.md` (TECH-58).
+ * MCP tool: project_spec_closeout_digest — structured extract from `ia/projects/{ISSUE_ID}[-{description}].md` (TECH-58, paths updated by TECH-85 / Stage 2).
  */
 
 import fs from "node:fs";
@@ -23,7 +23,7 @@ const inputShape = {
     .string()
     .optional()
     .describe(
-      "Repo-relative path `.cursor/projects/{ISSUE_ID}.md`. Exactly one of `issue_id` or `spec_path` required.",
+      "Repo-relative path under `ia/projects/` or `.cursor/projects/` (legacy). Filename may be `{ISSUE_ID}.md` or `{ISSUE_ID}-{description}.md` (per TECH-85 Q8). Exactly one of `issue_id` or `spec_path` required.",
     ),
 };
 
@@ -46,7 +46,7 @@ export function registerProjectSpecCloseoutDigest(server: McpServer): void {
     "project_spec_closeout_digest",
     {
       description:
-        "Parse a temporary project spec under `.cursor/projects/` for **project-spec-close**: H2 sections (Summary, Lessons Learned, Decision Log, …), cited issue ids, optional glossary_discover keywords, and heuristic G1–I1 checklist hints. Does not edit files or author normative spec prose. Requires exactly one of `issue_id` or `spec_path`.",
+        "Parse a temporary project spec under `ia/projects/` (or legacy `.cursor/projects/`) for **project-spec-close**: H2 sections (Summary, Lessons Learned, Decision Log, …), cited issue ids, optional glossary_discover keywords, and heuristic G1–I1 checklist hints. Filenames may be `{ISSUE_ID}.md` or `{ISSUE_ID}-{description}.md` (per TECH-85 Q8). Does not edit files or author normative spec prose. Requires exactly one of `issue_id` or `spec_path`.",
       inputSchema: inputShape,
     },
     async (args) =>

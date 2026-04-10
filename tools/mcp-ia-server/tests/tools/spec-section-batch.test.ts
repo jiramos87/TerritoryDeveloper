@@ -16,7 +16,7 @@ const repoRoot = path.resolve(__dirname, "../../../../");
 describe("runSpecSectionExtract batch helper", () => {
   it(
     "returns two slices for geo + glossary",
-    { skip: !fs.existsSync(path.join(repoRoot, ".cursor/specs/glossary.md")) },
+    { skip: !fs.existsSync(path.join(repoRoot, "ia/specs/glossary.md")) },
     () => {
       const prev = process.env.REPO_ROOT;
       process.env.REPO_ROOT = repoRoot;

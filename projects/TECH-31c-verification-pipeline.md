@@ -2,7 +2,7 @@
 
 **Stage status:** **Closed** (2026-04-10). This file remains the **reference** for **31c** acceptance, **Test contracts**, and the **`reference-flat-32x32`** **close-dev-loop** recipe. Normative operator detail is also in [`tools/fixtures/scenarios/README.md`](../tools/fixtures/scenarios/README.md) and **glossary** **Agent test mode batch**. Next program stage: **31d** (**TECH-82** Phase 1) when scheduled.
 
-> **Program issue:** [TECH-31](../BACKLOG.md) — stage **31c** (child spec; aggregate **Open Questions** and stub **Test contracts** live in [`.cursor/projects/TECH-31.md`](../.cursor/projects/TECH-31.md)).
+> **Program issue:** [TECH-31](../BACKLOG.md) — stage **31c** (child spec; aggregate **Open Questions** and stub **Test contracts** live in [`ia/projects/TECH-31.md`](../ia/projects/TECH-31.md)).
 
 **Program:** [TECH-31-agent-scenario-generator-program.md](TECH-31-agent-scenario-generator-program.md) **Stage 31c**.  
 **Backlog:** [TECH-31](../BACKLOG.md).  
@@ -14,7 +14,7 @@
 
 ## Summary
 
-Automate: load a committed scenario through **`GameSaveManager.LoadGame`** (**persistence-system** **Load pipeline**) in **test mode** → run **N** **simulation ticks** (each tick follows **simulation-system** **Tick execution order** via **`SimulationManager.ProcessSimulationTick()`**) → assert or emit report JSON using **`debug_context_bundle`**, golden files, and/or **UTF**—**without** **TECH-82** **Postgres** **city_metrics_query**. Document a **bounded** **N** for **CI**. Compose with [`.cursor/skills/close-dev-loop/SKILL.md`](../.cursor/skills/close-dev-loop/SKILL.md) and [`.cursor/skills/agent-test-mode-verify/SKILL.md`](../.cursor/skills/agent-test-mode-verify/SKILL.md) (**Path A** / **Path B** when applicable).
+Automate: load a committed scenario through **`GameSaveManager.LoadGame`** (**persistence-system** **Load pipeline**) in **test mode** → run **N** **simulation ticks** (each tick follows **simulation-system** **Tick execution order** via **`SimulationManager.ProcessSimulationTick()`**) → assert or emit report JSON using **`debug_context_bundle`**, golden files, and/or **UTF**—**without** **TECH-82** **Postgres** **city_metrics_query**. Document a **bounded** **N** for **CI**. Compose with [`ia/skills/close-dev-loop/SKILL.md`](../ia/skills/close-dev-loop/SKILL.md) and [`ia/skills/agent-test-mode-verify/SKILL.md`](../ia/skills/agent-test-mode-verify/SKILL.md) (**Path A** / **Path B** when applicable).
 
 ## Goals
 
@@ -49,11 +49,11 @@ Automate: load a committed scenario through **`GameSaveManager.LoadGame`** (**pe
 
 **Reference scenario (`reference-flat-32x32`) — Path B (**close-dev-loop**):**
 
-1. Preflight: **`npm run db:bridge-preflight`** (see [`.cursor/skills/bridge-environment-preflight/SKILL.md`](../.cursor/skills/bridge-environment-preflight/SKILL.md)).
+1. Preflight: **`npm run db:bridge-preflight`** (see [`ia/skills/bridge-environment-preflight/SKILL.md`](../ia/skills/bridge-environment-preflight/SKILL.md)).
 2. Queue load: one line **`reference-flat-32x32`** in **`tools/fixtures/scenarios/.queued-test-scenario-id`** (or **Player** **`-testScenarioId`**).
 3. **`unity_bridge_command`** **`enter_play_mode`** → poll **`get_play_mode_status`** until the grid is ready.
 4. **Seed cells (32×32 map):** use **`"0,0"`** (origin corner), **`"16,16"`** (interior), and optionally **`"31,31"`** (opposite corner) as **`debug_context_bundle`** **`seed_cell`** values — same **Moore** neighborhood export as **close-dev-loop**.
-5. Inspect **`bundle.anomaly_count`**, **`bundle.anomalies`**, **`bundle.cell_export`**, and optional screenshot paths per [`.cursor/skills/ide-bridge-evidence/SKILL.md`](../.cursor/skills/ide-bridge-evidence/SKILL.md).
+5. Inspect **`bundle.anomaly_count`**, **`bundle.anomalies`**, **`bundle.cell_export`**, and optional screenshot paths per [`ia/skills/ide-bridge-evidence/SKILL.md`](../ia/skills/ide-bridge-evidence/SKILL.md).
 6. **`exit_play_mode`**.
 
 **Relation to goldens:** Path A goldens assert **aggregate** **CityStats** integers after load + **N** ticks. Path B exports **per-cell** terrain / sorting context — use both when a change could affect either aggregates or local **Moore** neighborhoods.
@@ -74,8 +74,8 @@ Automate: load a committed scenario through **`GameSaveManager.LoadGame`** (**pe
 | **Agent test mode batch** on clean tree | Unity / **CI** (when enabled) | `npm run unity:testmode-batch` | **Chosen driver** for **31c**. Args: **`--scenario-id`**, **`--scenario-path`**, **`--simulation-ticks N`** (CI cap **10000** = C# clamp), **`--golden-path`** (optional assert), **`--quit-editor-first`**. Newest **`tools/reports/agent-testmode-batch-*.json`**: **`ok`**, **`exit_code`**, optional **`city_stats`**. |
 | Golden regression (**reference-flat-32x32**) | Unity / local | `npm run unity:testmode-batch -- --scenario-id reference-flat-32x32 --simulation-ticks 0 --golden-path "$(pwd)/tools/fixtures/scenarios/reference-flat-32x32/agent-testmode-golden-ticks0.json"` | Same for **`ticks3`** + **`agent-testmode-golden-ticks3.json`**. |
 | Project compiles after **Assets/** **C#** or batch driver changes | Unity / **CI** | `npm run unity:compile-check` | Per **AGENTS.md** |
-| Agent-led verification handoff (optional dev) | Agent report | **`validate:all`** + **`unity:compile-check`** (if **C#**) + Path A / B per [`.cursor/skills/agent-test-mode-verify/SKILL.md`](../.cursor/skills/agent-test-mode-verify/SKILL.md) | **`unity_bridge_command`** **`timeout_ms`:** **40000** initial; [`docs/agent-led-verification-policy.md`](../docs/agent-led-verification-policy.md) |
-| **Play Mode** / console / HUD spot check (optional) | MCP / dev machine | **territory-ia** **`unity_bridge_command`**: **`get_console_logs`**, **`capture_screenshot`** (`include_ui` when **Overlay** matters) | **N/A** in **CI**; [`.cursor/skills/ide-bridge-evidence/SKILL.md`](../.cursor/skills/ide-bridge-evidence/SKILL.md); **unity-development-context** (Editor reports) |
+| Agent-led verification handoff (optional dev) | Agent report | **`validate:all`** + **`unity:compile-check`** (if **C#**) + Path A / B per [`ia/skills/agent-test-mode-verify/SKILL.md`](../ia/skills/agent-test-mode-verify/SKILL.md) | **`unity_bridge_command`** **`timeout_ms`:** **40000** initial; [`docs/agent-led-verification-policy.md`](../docs/agent-led-verification-policy.md) |
+| **Play Mode** / console / HUD spot check (optional) | MCP / dev machine | **territory-ia** **`unity_bridge_command`**: **`get_console_logs`**, **`capture_screenshot`** (`include_ui` when **Overlay** matters) | **N/A** in **CI**; [`ia/skills/ide-bridge-evidence/SKILL.md`](../ia/skills/ide-bridge-evidence/SKILL.md); **unity-development-context** (Editor reports) |
 
 ## 8. Acceptance Criteria
 
@@ -88,7 +88,7 @@ Automate: load a committed scenario through **`GameSaveManager.LoadGame`** (**pe
 
 ## Open Questions (resolve before / during implementation)
 
-None — tooling-only. Frozen preconditions for scenarios and goldens (economy, **CityStats**, descriptor strictness) are owned by [`.cursor/projects/TECH-31.md`](../.cursor/projects/TECH-31.md) **Open Questions**.
+None — tooling-only. Frozen preconditions for scenarios and goldens (economy, **CityStats**, descriptor strictness) are owned by [`ia/projects/TECH-31.md`](../ia/projects/TECH-31.md) **Open Questions**.
 
 ## Decision Log
 

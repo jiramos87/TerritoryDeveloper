@@ -22,7 +22,7 @@
 ### 2.1 What the product typically retains
 
 - **Chat / Agent threads** in the IDE (history UI, resuming a conversation in the same workspace).
-- **Project rules** under `.cursor/rules/` and workspace configuration (e.g. `.cursor/mcp.json`) — **Git-tracked**, so they persist across machines when committed.
+- **Project rules** under `ia/rules/` and workspace configuration (e.g. `.mcp.json`) — **Git-tracked**, so they persist across machines when committed.
 - **Agent transcripts** (when enabled by the host) may be stored locally for review; this is **not** a contractual API for your game or CI — treat as **debug/audit**, not source of truth.
 
 ### 2.2 What does *not* replace project IA
@@ -33,7 +33,7 @@
 
 ### 2.3 When to add custom “memory”
 
-Consider an external memory MCP or DB only if you need **user-specific** or **high-churn** facts that do not belong in specs (e.g. personal preferences, experiment logs). **Domain rules** for Territory Developer should remain in `.cursor/specs/`, `.cursor/rules/`, and `BACKLOG.md` so humans and agents share one vocabulary (see `AGENTS.md` — terminology consistency).
+Consider an external memory MCP or DB only if you need **user-specific** or **high-churn** facts that do not belong in specs (e.g. personal preferences, experiment logs). **Domain rules** for Territory Developer should remain in `ia/specs/`, `ia/rules/`, and `BACKLOG.md` so humans and agents share one vocabulary (see `AGENTS.md` — terminology consistency).
 
 ---
 
@@ -43,7 +43,7 @@ Consider an external memory MCP or DB only if you need **user-specific** or **hi
 |-----------|-------------------------|---------------------|
 | **Lifetime** | Bound to a conversation / task run | **Stable** until you edit the skill |
 | **Content** | Messages, file edits, tool I/O, errors | Procedures, checklists, when-to-use descriptions |
-| **Discovery** | Linear chat context | Host discovers skills from configured paths (e.g. project `.cursor/skills/`, user-level skills); activation is **description-driven** + optional explicit invocation |
+| **Discovery** | Linear chat context | Host discovers skills from configured paths (e.g. project `ia/skills/`, user-level skills); activation is **description-driven** + optional explicit invocation |
 | **Best for** | Executing the *current* change | **Repeatable workflows** (releases, backlog hygiene, MCP verification) |
 
 **Conclusion:** Skills are **not** persistence of agent state; they are **packaged playbooks**. Persistence of *truth* for this game is **Git + MCP-backed docs**.
@@ -56,30 +56,30 @@ Consider an external memory MCP or DB only if you need **user-specific** or **hi
 
 | Layer | Responsibility | Territory Developer example |
 |-------|----------------|------------------------------|
-| **Specs / glossary** | Canonical definitions | `.cursor/specs/glossary.md`, `isometric-geography-system.md` |
-| **Rules** | Always-on guardrails | `.cursor/rules/invariants.mdc`, `agent-router.mdc` |
+| **Specs / glossary** | Canonical definitions | `ia/specs/glossary.md`, `isometric-geography-system.md` |
+| **Rules** | Always-on guardrails | `ia/rules/invariants.md`, `agent-router.mdc` |
 | **MCP (territory-ia)** | **On-demand slices** | `spec_section`, `glossary_lookup`, `backlog_issue`, `invariants_summary` |
 | **Skills** | **Process** and **orchestration** | “Starting a **BACKLOG** tech row: call `backlog_issue`, then `router_for_task`, then implement; never paste full geo spec.” |
 
 ### 4.2 Anti-patterns
 
 - **Duplicating** long spec sections inside Skills → drift from glossary/specs; use **short** pointers (“call `spec_section` for roads validation”).
-- **Using Skills instead of backlog/spec updates** for decisions that affect game behavior → those belong in **`.cursor/projects/`** or **reference specs**, then migrated per project policy.
+- **Using Skills instead of backlog/spec updates** for decisions that affect game behavior → those belong in **`ia/projects/`** or **reference specs**, then migrated per project policy.
 
 ### 4.3 Practical incorporation steps
 
-1. Add **project Skills** under `.cursor/skills/` (or team convention) for **non-domain** workflows: MCP verify, issue kickoff, PR checklist.
+1. Add **project Skills** under `ia/skills/` (or team convention) for **non-domain** workflows: MCP verify, issue kickoff, PR checklist.
 2. Keep **English** in Skill bodies aligned with **glossary** terms when touching domain language (same rule as MCP `glossary_*` tools).
 3. Reference **open** [`BACKLOG.md`](../BACKLOG.md) rows for **DB-backed** IA: future work changes *implementation* of tools, not the **split** “facts in IA / procedures in Skills.”
 
 ### 4.4 Shipped repo skills (Part 1 + kickoff + implement + validation + close)
 
-- **Index:** [`.cursor/skills/README.md`](../.cursor/skills/README.md) — naming rules, thin-skill policy, **`glossary_discover`** array requirement.
-- **Kickoff skill:** [`.cursor/skills/project-spec-kickoff/SKILL.md`](../.cursor/skills/project-spec-kickoff/SKILL.md) — **numbered** **territory-ia** tool recipe for `.cursor/projects/*.md` review *(shipped — trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md))*.
-- **Implement skill:** [`.cursor/skills/project-spec-implement/SKILL.md`](../.cursor/skills/project-spec-implement/SKILL.md) — **per-phase** **territory-ia** recipe to execute a project spec’s **Implementation Plan** after the spec is ready *(shipped — trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md))*.
-- **Validation skill:** [`.cursor/skills/project-implementation-validation/SKILL.md`](../.cursor/skills/project-implementation-validation/SKILL.md) — ordered **`npm`** checks (**dead project spec** paths, **MCP** tests, **fixtures**, **IA index** `--check`, optional **`verify`**) aligned with **IA tools** **CI**; use after **MCP** / **schema** / index-source edits.
-- **Close skill:** [`.cursor/skills/project-spec-close/SKILL.md`](../.cursor/skills/project-spec-close/SKILL.md) — **persist IA first**, delete `.cursor/projects/{ISSUE_ID}.md`, **`npm run validate:dead-project-specs`**, **remove** the row from **`BACKLOG.md`**, **append** **`[x]`** to **`BACKLOG-ARCHIVE.md`**, **purge** the closed id from durable docs — see skill body *(shipped — trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md))*.
-- **Paste template:** [`.cursor/templates/project-spec-review-prompt.md`](../.cursor/templates/project-spec-review-prompt.md) when Skills are not loaded; **kickoff** tool order remains authoritative in **`project-spec-kickoff/SKILL.md`**; **implementation** order in **`project-spec-implement/SKILL.md`**; **post-implementation Node checks** in **`project-implementation-validation/SKILL.md`**; **closeout** order in **`project-spec-close/SKILL.md`**. **Router hint:** `router_for_task` **`domain`** strings should match **agent-router.mdc** table labels (persisted in [`.cursor/skills/README.md`](../.cursor/skills/README.md) **Lessons learned**).
+- **Index:** [`ia/skills/README.md`](../ia/skills/README.md) — naming rules, thin-skill policy, **`glossary_discover`** array requirement.
+- **Kickoff skill:** [`ia/skills/project-spec-kickoff/SKILL.md`](../ia/skills/project-spec-kickoff/SKILL.md) — **numbered** **territory-ia** tool recipe for `ia/projects/*.md` review *(shipped — trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md))*.
+- **Implement skill:** [`ia/skills/project-spec-implement/SKILL.md`](../ia/skills/project-spec-implement/SKILL.md) — **per-phase** **territory-ia** recipe to execute a project spec’s **Implementation Plan** after the spec is ready *(shipped — trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md))*.
+- **Validation skill:** [`ia/skills/project-implementation-validation/SKILL.md`](../ia/skills/project-implementation-validation/SKILL.md) — ordered **`npm`** checks (**dead project spec** paths, **MCP** tests, **fixtures**, **IA index** `--check`, optional **`verify`**) aligned with **IA tools** **CI**; use after **MCP** / **schema** / index-source edits.
+- **Close skill:** [`ia/skills/project-spec-close/SKILL.md`](../ia/skills/project-spec-close/SKILL.md) — **persist IA first**, delete `ia/projects/{ISSUE_ID}.md`, **`npm run validate:dead-project-specs`**, **remove** the row from **`BACKLOG.md`**, **append** **`[x]`** to **`BACKLOG-ARCHIVE.md`**, **purge** the closed id from durable docs — see skill body *(shipped — trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md))*.
+- **Paste template:** [`ia/templates/project-spec-review-prompt.md`](../ia/templates/project-spec-review-prompt.md) when Skills are not loaded; **kickoff** tool order remains authoritative in **`project-spec-kickoff/SKILL.md`**; **implementation** order in **`project-spec-implement/SKILL.md`**; **post-implementation Node checks** in **`project-implementation-validation/SKILL.md`**; **closeout** order in **`project-spec-close/SKILL.md`**. **Router hint:** `router_for_task` **`domain`** strings should match **agent-router.mdc** table labels (persisted in [`ia/skills/README.md`](../ia/skills/README.md) **Lessons learned**).
 - **MCP follow-up:** discovery from project-spec prose (ranked glossary / section queue) — open [`BACKLOG.md`](../BACKLOG.md).
 
 ---
@@ -114,7 +114,7 @@ The simulation stack (grid, **HeightMap** / **Cell.height**, roads, water, shore
 - Explaining **why** a road must use the **road preparation family** (not `ComputePathPlan` alone).
 - Keeping **glossary** terms consistent across C#, specs, and backlog.
 
-Sample **invariants_summary** (abridged intent): sync height map and cell height; **InvalidateRoadCache** after roads; no new singletons; no **GridManager** bloat; shore and river constraints; specs live in `.cursor/specs/` vs `.cursor/projects/` per policy.
+Sample **invariants_summary** (abridged intent): sync height map and cell height; **InvalidateRoadCache** after roads; no new singletons; no **GridManager** bloat; shore and river constraints; specs live in `ia/specs/` vs `ia/projects/` per policy.
 
 ### 6.2 MCP sampling used for this document
 
@@ -142,12 +142,12 @@ Sample **invariants_summary** (abridged intent): sync height map and cell height
 
 ## 8. References (in-repo)
 
-- `AGENTS.md` — agent workflow, MCP-first retrieval, `.cursor/projects/` policy  
+- `AGENTS.md` — agent workflow, MCP-first retrieval, `ia/projects/` policy  
 - `docs/mcp-ia-server.md` — territory-ia tools and policy  
 - `docs/mcp-markdown-ia-pattern.md` — slice-based IA pattern  
 - `BACKLOG.md` / `BACKLOG-ARCHIVE.md` — open vs completed rows; **no** backlog ids in **glossary** / **reference specs** (see **terminology-consistency**)  
-- `.cursor/rules/invariants.mdc` — system invariants (also exposed via MCP `invariants_summary`)
+- `ia/rules/invariants.md` — system invariants (also exposed via MCP `invariants_summary`)
 
 ---
 
-*Document type: engineering study / ADR companion (not a reference spec). For permanent game behavior definitions, use `.cursor/specs/` and the glossary.*
+*Document type: engineering study / ADR companion (not a reference spec). For permanent game behavior definitions, use `ia/specs/` and the glossary.*

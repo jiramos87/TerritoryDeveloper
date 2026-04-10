@@ -10,7 +10,7 @@ const repoRoot = path.resolve(__dirname, "../../../../");
 
 test(
   "buildRegistry finds 24 IA entries when repo fixtures exist",
-  { skip: !fs.existsSync(path.join(repoRoot, ".cursor/specs/glossary.md")) },
+  { skip: !fs.existsSync(path.join(repoRoot, "ia/specs/glossary.md")) },
   () => {
     const prev = process.env.REPO_ROOT;
     process.env.REPO_ROOT = repoRoot;

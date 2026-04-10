@@ -13,11 +13,11 @@ This file is the **canonical narrative** for the **Information Architecture** **
 | **This overview** | Layer diagram (§2), lifecycle (§3), MCP map (§6) |
 | **[`AGENTS.md`](../AGENTS.md)** | Agent workflow, checklist, links into rules and skills |
 | **[`ARCHITECTURE.md`](../ARCHITECTURE.md)** | Runtime dependency map + **Local verification** |
-| **[`.cursor/rules/`](../.cursor/rules/)** | Always-on and globs rules (guardrails, MCP defaults) |
-| **[`.cursor/skills/`](../.cursor/skills/)** | Ordered recipes (implement, validate, bridge, test mode) |
+| **[`ia/rules/`](../ia/rules/)** | Always-on and globs rules (guardrails, MCP defaults) |
+| **[`ia/skills/`](../ia/skills/)** | Ordered recipes (implement, validate, bridge, test mode) |
 | **[`tools/mcp-ia-server/`](../tools/mcp-ia-server/)** | **territory-ia** tool implementations |
 
-**Agent-led verification** (Unity batch + IDE bridge reporting policy): [`docs/agent-led-verification-policy.md`](agent-led-verification-policy.md) and [`.cursor/rules/agent-verification-directives.mdc`](../.cursor/rules/agent-verification-directives.mdc).
+**Agent-led verification** (Unity batch + IDE bridge reporting policy): [`docs/agent-led-verification-policy.md`](agent-led-verification-policy.md) and [`ia/rules/agent-verification-directives.md`](../ia/rules/agent-verification-directives.md).
 
 ---
 
@@ -28,7 +28,7 @@ Territory Developer uses a **hierarchical, file-backed Information Architecture*
 Three principles:
 
 1. **Slice, don't load.** Agents fetch spec *sections* and glossary *terms* via MCP tools, not whole files. A 778-line geography spec becomes a 50-line slice about shore bands.
-2. **One vocabulary everywhere.** A single [glossary](../.cursor/specs/glossary.md) governs naming across code, specs, backlog, rules, skills, and MCP tools. Consistency makes search reliable and reduces ambiguity.
+2. **One vocabulary everywhere.** A single [glossary](../ia/specs/glossary.md) governs naming across code, specs, backlog, rules, skills, and MCP tools. Consistency makes search reliable and reduces ambiguity.
 3. **Knowledge flows back.** Lessons learned during implementation migrate from temporary project specs into permanent reference specs, glossary, and rules before the project spec is deleted. Nothing is learned only once.
 
 ---
@@ -43,29 +43,29 @@ Three principles:
 └──────────────┬──────────────────────────────────────────────────────┘
                │ creates / references
 ┌──────────────▼──────────────────────────────────────────────────────┐
-│              .cursor/projects/{ISSUE_ID}.md                         │
+│              ia/projects/{ISSUE_ID}.md                         │
 │  Temporary project specs — goals, implementation plan, decisions    │
 │  ← project_spec_closeout_digest, project_spec_journal_* MCP tools  │
 └──────────────┬──────────────────────────────────────────────────────┘
                │ uses (via MCP slices)
 ┌──────────────▼──────────────────────────────────────────────────────┐
-│              .cursor/specs/*.md  (permanent reference specs)        │
+│              ia/specs/*.md  (permanent reference specs)        │
 │  Domain behavior, canonical rules, stable §-numbered sections      │
 │  ← spec_section, spec_sections, spec_outline, list_specs MCP tools │
 ├─────────────────────────────────────────────────────────────────────┤
-│              .cursor/specs/glossary.md  (vocabulary hub)            │
+│              ia/specs/glossary.md  (vocabulary hub)            │
 │  Term → Definition → Spec → Category                               │
 │  ← glossary_discover, glossary_lookup MCP tools                    │
 └──────────────┬──────────────────────────────────────────────────────┘
                │ enforced by
 ┌──────────────▼──────────────────────────────────────────────────────┐
-│              .cursor/rules/*.mdc  (always-apply guardrails)         │
+│              ia/rules/*.mdc  (always-apply guardrails)         │
 │  invariants, agent-router, terminology-consistency, mcp-ia-default  │
 │  ← invariants_summary, router_for_task, list_rules, rule_content   │
 └──────────────┬──────────────────────────────────────────────────────┘
                │ orchestrated by
 ┌──────────────▼──────────────────────────────────────────────────────┐
-│              .cursor/skills/*/SKILL.md  (agent workflows)           │
+│              ia/skills/*/SKILL.md  (agent workflows)           │
 │  Ordered MCP tool recipes for each lifecycle stage                  │
 │  project-new → kickoff → implement → validate → close-dev-loop →   │
 │  close                                                              │
@@ -92,7 +92,7 @@ Every issue follows a lifecycle where knowledge is created, refined, used, and t
 ```
 1. CREATE          project-new skill
                    backlog_issue + glossary_discover + router_for_task + spec_section
-                   → BACKLOG.md row + .cursor/projects/{ISSUE_ID}.md stub
+                   → BACKLOG.md row + ia/projects/{ISSUE_ID}.md stub
 
 2. REFINE          project-spec-kickoff skill
                    backlog_issue → invariants_summary → router_for_task → spec_section → glossary_*
@@ -126,9 +126,9 @@ Three axes connect the entire IA:
 
 | Axis | Source | Purpose |
 |------|--------|---------|
-| **Vocabulary** | [glossary.md](../.cursor/specs/glossary.md) | Canonical term definitions; one name per concept across all surfaces |
-| **Task routing** | [agent-router.mdc](../.cursor/rules/agent-router.mdc) | Maps task domains to specs and sections; powers `router_for_task` MCP tool |
-| **Invariants** | [invariants.mdc](../.cursor/rules/invariants.mdc) | 12 hard constraints + IF→THEN guardrails that must never be violated |
+| **Vocabulary** | [glossary.md](../ia/specs/glossary.md) | Canonical term definitions; one name per concept across all surfaces |
+| **Task routing** | [agent-router.mdc](../ia/rules/agent-router.md) | Maps task domains to specs and sections; powers `router_for_task` MCP tool |
+| **Invariants** | [invariants.mdc](../ia/rules/invariants.md) | 12 hard constraints + IF→THEN guardrails that must never be violated |
 
 Agents use these three axes to navigate from a task description to the precise context they need:
 
@@ -146,16 +146,16 @@ Task: "fix road rendering at border"
 
 | Mechanism | What it enforces | How |
 |-----------|-----------------|-----|
-| [terminology-consistency.mdc](../.cursor/rules/terminology-consistency.mdc) | Single vocabulary across code, specs, backlog, MCP | Always-apply Cursor rule |
-| [invariants.mdc](../.cursor/rules/invariants.mdc) | 12 hard invariants + guardrails | Always-apply Cursor rule; `invariants_summary` MCP tool |
-| [mcp-ia-default.mdc](../.cursor/rules/mcp-ia-default.mdc) | Agents use MCP tools before reading whole files | Always-apply Cursor rule |
+| [terminology-consistency.mdc](../ia/rules/terminology-consistency.md) | Single vocabulary across code, specs, backlog, MCP | Always-apply Cursor rule |
+| [invariants.mdc](../ia/rules/invariants.md) | 12 hard invariants + guardrails | Always-apply Cursor rule; `invariants_summary` MCP tool |
+| [mcp-ia-default.mdc](../ia/rules/mcp-ia-default.md) | Agents use MCP tools before reading whole files | Always-apply Cursor rule |
 | `npm run validate:dead-project-specs` | No dangling links to deleted project specs | CI script |
 | `npm run test:ia` | MCP parsers and tools work correctly | CI test suite |
 | `npm run validate:fixtures` | JSON Schema fixtures valid | CI validation |
 | `npm run generate:ia-indexes -- --check` | IA indexes (spec-index.json, glossary-index.json) not stale | CI check |
 | `npm run validate:all` | Dead project-spec paths, **`compute-lib:build`**, **`test:ia`**, **`validate:fixtures`**, **`generate:ia-indexes --check`** | CI umbrella (subset; **CI** also runs **`npm ci`** in packages) |
 | `npm run verify:local` | **`validate:all`** then **`post-implementation-verify.sh --skip-node-checks`**: **`unity:compile-check`**, **`db:migrate`**, **`db:bridge-preflight`**, **macOS** Editor + **`db:bridge-playmode-smoke`**. **`verify:post-implementation`** = alias. [`tools/scripts/verify-local.sh`](../tools/scripts/verify-local.sh). Dev machine; **not** CI. | Local post-implementation |
-| [coding-conventions.mdc](../.cursor/rules/coding-conventions.mdc) | C# naming, XML docs, prefab conventions | Globs-apply rule (`**/*.cs`) |
+| [coding-conventions.mdc](../ia/rules/coding-conventions.md) | C# naming, XML docs, prefab conventions | Globs-apply rule (`**/*.cs`) |
 
 ---
 
@@ -166,10 +166,10 @@ The **territory-ia** MCP server ([tools/mcp-ia-server/](../tools/mcp-ia-server/)
 | Category | Tools | Data source |
 |----------|-------|-------------|
 | **Backlog** | `backlog_issue` | BACKLOG.md / BACKLOG-ARCHIVE.md |
-| **Specs** | `list_specs`, `spec_outline`, `spec_section`, `spec_sections` | .cursor/specs/, .cursor/rules/, AGENTS.md, ARCHITECTURE.md |
+| **Specs** | `list_specs`, `spec_outline`, `spec_section`, `spec_sections` | ia/specs/, ia/rules/, AGENTS.md, ARCHITECTURE.md |
 | **Glossary** | `glossary_discover`, `glossary_lookup` | glossary.md |
-| **Routing/Rules** | `router_for_task`, `invariants_summary`, `list_rules`, `rule_content` | agent-router.mdc, invariants.mdc, .cursor/rules/*.mdc |
-| **Project specs** | `project_spec_closeout_digest` | .cursor/projects/{ISSUE_ID}.md |
+| **Routing/Rules** | `router_for_task`, `invariants_summary`, `list_rules`, `rule_content` | agent-router.mdc, invariants.mdc, ia/rules/*.mdc |
+| **Project specs** | `project_spec_closeout_digest` | ia/projects/{ISSUE_ID}.md |
 | **Journal** | `project_spec_journal_persist`, `_search`, `_get`, `_update` | Postgres `ia_project_spec_journal` |
 | **Compute** | `grid_distance`, `growth_ring_classify`, `isometric_world_to_grid`, `pathfinding_cost_preview`, `geography_init_params_validate` | territory-compute-lib + Zod |
 | **Unity bridge** | `unity_bridge_command`, `unity_bridge_get`, `unity_compile` | Postgres `agent_bridge_job` |
@@ -182,20 +182,20 @@ Full tool documentation: [docs/mcp-ia-server.md](mcp-ia-server.md).
 
 ## 7. Skill system
 
-Skills under [.cursor/skills/](../.cursor/skills/) define ordered MCP tool recipes for each lifecycle stage. They don't execute tools — they tell the agent which tools to call, in what order, with what parameters.
+Skills under [ia/skills/](../ia/skills/) define ordered MCP tool recipes for each lifecycle stage. They don't execute tools — they tell the agent which tools to call, in what order, with what parameters.
 
 | Lifecycle stage | Skill | Core MCP recipe |
 |-----------------|-------|-----------------|
-| **Create** issue | [project-new](../.cursor/skills/project-new/SKILL.md) | glossary_discover → router_for_task → spec_section → backlog_issue |
-| **Refine** spec | [project-spec-kickoff](../.cursor/skills/project-spec-kickoff/SKILL.md) | backlog_issue → invariants_summary → router_for_task → spec_section → glossary_* |
-| **Implement** | [project-spec-implement](../.cursor/skills/project-spec-implement/SKILL.md) | Per-phase: router → spec_section → glossary → code → compile gate |
-| **Validate** (Node + local bridge) | [project-implementation-validation](../.cursor/skills/project-implementation-validation/SKILL.md) | **`npm run validate:all`** (includes **`compute-lib:build`**); **`npm run verify:local`** (full dev chain; **`verify:post-implementation`** alias) |
-| **Debug** (Play Mode) | [ide-bridge-evidence](../.cursor/skills/ide-bridge-evidence/SKILL.md) / [close-dev-loop](../.cursor/skills/close-dev-loop/SKILL.md) | unity_bridge_command (debug_context_bundle, compile gate, before/after diff) |
-| **Preflight** (bridge) | [bridge-environment-preflight](../.cursor/skills/bridge-environment-preflight/SKILL.md) | Postgres + agent_bridge_job readiness check |
-| **Close** issue | [project-spec-close](../.cursor/skills/project-spec-close/SKILL.md) | closeout_digest → persist IA → journal_persist → delete spec → archive |
-| **UI row** | [ui-hud-row-theme](../.cursor/skills/ui-hud-row-theme/SKILL.md) | spec_section (ui-design-system §1, §3.0, §4.3, §5.2) |
+| **Create** issue | [project-new](../ia/skills/project-new/SKILL.md) | glossary_discover → router_for_task → spec_section → backlog_issue |
+| **Refine** spec | [project-spec-kickoff](../ia/skills/project-spec-kickoff/SKILL.md) | backlog_issue → invariants_summary → router_for_task → spec_section → glossary_* |
+| **Implement** | [project-spec-implement](../ia/skills/project-spec-implement/SKILL.md) | Per-phase: router → spec_section → glossary → code → compile gate |
+| **Validate** (Node + local bridge) | [project-implementation-validation](../ia/skills/project-implementation-validation/SKILL.md) | **`npm run validate:all`** (includes **`compute-lib:build`**); **`npm run verify:local`** (full dev chain; **`verify:post-implementation`** alias) |
+| **Debug** (Play Mode) | [ide-bridge-evidence](../ia/skills/ide-bridge-evidence/SKILL.md) / [close-dev-loop](../ia/skills/close-dev-loop/SKILL.md) | unity_bridge_command (debug_context_bundle, compile gate, before/after diff) |
+| **Preflight** (bridge) | [bridge-environment-preflight](../ia/skills/bridge-environment-preflight/SKILL.md) | Postgres + agent_bridge_job readiness check |
+| **Close** issue | [project-spec-close](../ia/skills/project-spec-close/SKILL.md) | closeout_digest → persist IA → journal_persist → delete spec → archive |
+| **UI row** | [ui-hud-row-theme](../ia/skills/ui-hud-row-theme/SKILL.md) | spec_section (ui-design-system §1, §3.0, §4.3, §5.2) |
 
-Skill conventions: [.cursor/skills/README.md](../.cursor/skills/README.md).
+Skill conventions: [ia/skills/README.md](../ia/skills/README.md).
 
 ---
 
@@ -218,8 +218,8 @@ Setup: [docs/postgres-ia-dev-setup.md](postgres-ia-dev-setup.md). Migrations: `d
 
 ### Adding a reference spec
 
-1. Create `.cursor/specs/{name}.md` with stable `##`-numbered sections
-2. Add a row to the `.cursor/specs/` inventory table in [AGENTS.md](../AGENTS.md)
+1. Create `ia/specs/{name}.md` with stable `##`-numbered sections
+2. Add a row to the `ia/specs/` inventory table in [AGENTS.md](../AGENTS.md)
 3. Optionally add a short alias in `tools/mcp-ia-server/src/config.ts` (`SPEC_KEY_ALIASES`)
 4. Confirm `list_specs` returns the new spec
 5. Run `npm run generate:ia-indexes` and commit the updated index files
@@ -239,25 +239,25 @@ Setup: [docs/postgres-ia-dev-setup.md](postgres-ia-dev-setup.md). Migrations: `d
 
 ### Adding a skill
 
-1. Create `.cursor/skills/{skill-name}/SKILL.md` with YAML frontmatter (`name`, `description` with trigger phrases)
+1. Create `ia/skills/{skill-name}/SKILL.md` with YAML frontmatter (`name`, `description` with trigger phrases)
 2. Include a numbered "Tool recipe (territory-ia)" section with ordered MCP calls
 3. Keep the body thin — point to `spec_section`/`router_for_task` instead of pasting spec content
-4. Add a row to [.cursor/skills/README.md](../.cursor/skills/README.md) index table
+4. Add a row to [ia/skills/README.md](../ia/skills/README.md) index table
 5. Optionally add a pointer in [AGENTS.md](../AGENTS.md) and [CLAUDE.md](../CLAUDE.md)
-6. Follow conventions in [.cursor/skills/README.md](../.cursor/skills/README.md)
+6. Follow conventions in [ia/skills/README.md](../ia/skills/README.md)
 
 ### Adding a glossary term
 
-1. Add a row to the table in [.cursor/specs/glossary.md](../.cursor/specs/glossary.md): Term, Definition, Spec reference, Category
+1. Add a row to the table in [ia/specs/glossary.md](../ia/specs/glossary.md): Term, Definition, Spec reference, Category
 2. If the term has normative behavior, define or cite it in the relevant reference spec section
 3. Run `npm run generate:ia-indexes` and commit `glossary-index.json`
 4. Verify with `glossary_lookup` that the new term resolves
 
 ### Adding a rule
 
-1. Create `.cursor/rules/{name}.mdc` with YAML frontmatter (`description`, `alwaysApply`, optional `globs`)
+1. Create `ia/rules/{name}.mdc` with YAML frontmatter (`description`, `alwaysApply`, optional `globs`)
 2. Keep it short — rules are always-loaded guardrails, not full specs
-3. If it routes tasks to specs, consider adding rows to [agent-router.mdc](../.cursor/rules/agent-router.mdc) instead
+3. If it routes tasks to specs, consider adding rows to [agent-router.mdc](../ia/rules/agent-router.md) instead
 4. Optionally update [AGENTS.md](../AGENTS.md) if the rule is significant
 
 ### Adding a Postgres table
@@ -279,14 +279,14 @@ Setup: [docs/postgres-ia-dev-setup.md](postgres-ia-dev-setup.md). Migrations: `d
 | [BACKLOG.md](../BACKLOG.md) | Single source of truth for project issues |
 | [BACKLOG-ARCHIVE.md](../BACKLOG-ARCHIVE.md) | Closed issues with date and trace |
 | [CLAUDE.md](../CLAUDE.md) | Claude Code project instructions (MCP, skills, rules summary) |
-| [.cursor/specs/glossary.md](../.cursor/specs/glossary.md) | Canonical domain term definitions |
-| [.cursor/specs/REFERENCE-SPEC-STRUCTURE.md](../.cursor/specs/REFERENCE-SPEC-STRUCTURE.md) | How to author and extend reference specs |
-| [.cursor/projects/PROJECT-SPEC-STRUCTURE.md](../.cursor/projects/PROJECT-SPEC-STRUCTURE.md) | How to author project specs; closure checklist |
-| [.cursor/rules/agent-router.mdc](../.cursor/rules/agent-router.mdc) | Task → spec routing tables |
-| [.cursor/rules/invariants.mdc](../.cursor/rules/invariants.mdc) | 12 system invariants + guardrails |
-| [.cursor/rules/terminology-consistency.mdc](../.cursor/rules/terminology-consistency.mdc) | Vocabulary consistency rule |
-| [.cursor/rules/mcp-ia-default.mdc](../.cursor/rules/mcp-ia-default.mdc) | MCP-first retrieval rule |
-| [.cursor/skills/README.md](../.cursor/skills/README.md) | Skill index and conventions |
+| [ia/specs/glossary.md](../ia/specs/glossary.md) | Canonical domain term definitions |
+| [ia/specs/REFERENCE-SPEC-STRUCTURE.md](../ia/specs/REFERENCE-SPEC-STRUCTURE.md) | How to author and extend reference specs |
+| [ia/projects/PROJECT-SPEC-STRUCTURE.md](../ia/projects/PROJECT-SPEC-STRUCTURE.md) | How to author project specs; closure checklist |
+| [ia/rules/agent-router.md](../ia/rules/agent-router.md) | Task → spec routing tables |
+| [ia/rules/invariants.md](../ia/rules/invariants.md) | 12 system invariants + guardrails |
+| [ia/rules/terminology-consistency.md](../ia/rules/terminology-consistency.md) | Vocabulary consistency rule |
+| [ia/rules/mcp-ia-default.md](../ia/rules/mcp-ia-default.md) | MCP-first retrieval rule |
+| [ia/skills/README.md](../ia/skills/README.md) | Skill index and conventions |
 | [docs/mcp-ia-server.md](mcp-ia-server.md) | MCP tool catalog, recipes, operations |
 | [docs/mcp-markdown-ia-pattern.md](mcp-markdown-ia-pattern.md) | Reusable domain-agnostic IA+MCP pattern |
 | [docs/postgres-ia-dev-setup.md](postgres-ia-dev-setup.md) | Postgres dev setup, migrations, bridge queue |

@@ -537,8 +537,10 @@ async function main(): Promise<void> {
     );
   }
   if (digest.schema_version !== 1) throw new Error("project_spec_closeout_digest schema_version 1 expected");
-  if (digest.spec_path !== ".cursor/projects/FEAT-49.md") {
-    throw new Error("project_spec_closeout_digest spec_path mismatch");
+  if (digest.spec_path !== "ia/projects/FEAT-49.md") {
+    throw new Error(
+      `project_spec_closeout_digest spec_path mismatch: expected ia/projects/FEAT-49.md, got ${digest.spec_path}`,
+    );
   }
 
   const journalSearch = parseJsonFromToolResult(
@@ -659,7 +661,7 @@ async function main(): Promise<void> {
   }
 
   await transport.close();
-  console.log("OK — MCP server and tools verified (stdio, same launch as .cursor/mcp.json).");
+  console.log("OK — MCP server and tools verified (stdio, same launch as root .mcp.json).");
 }
 
 main().catch((e) => {

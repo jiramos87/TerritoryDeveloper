@@ -1,12 +1,14 @@
-# Project spec structure — `.cursor/projects/`
+# Project spec structure — `ia/projects/`
 
-Temporary specs for an active **BACKLOG** item live here as `{ISSUE_ID}.md` (e.g. `BUG-37.md`, `FEAT-44.md`). They are deleted after verified completion; lessons migrate to canonical docs.
+Temporary specs for an active **BACKLOG** item live here. **New specs use the descriptive naming convention `{ISSUE_ID}-{description}.md`** (e.g. `BUG-37-zone-cleanup.md`, `FEAT-44-water-junction.md`, `TECH-85-ia-migration.md`). The legacy bare `{ISSUE_ID}.md` form (e.g. `BUG-37.md`) is still accepted for back-compat with pre-TECH-85 specs but should not be used for new files. The descriptive `{description}` suffix carries valuable context for humans and grep alike. Specs are deleted after verified completion; lessons migrate to canonical docs.
+
+> **Naming convention (TECH-85 Q8 resolution, 2026-04-10):** `{ISSUE_ID}-{description}.md` is the canonical form for all new project specs. The `{ISSUE_ID}` prefix is one of `BUG-`, `FEAT-`, `TECH-`, `ART-`, `AUDIO-` followed by the issue number and optional letter suffix. The `{description}` is filename-safe (letters, digits, dots, underscores, hyphens), kebab-case, and short enough to scan. Both `project_spec_journal_persist` and `project_spec_closeout_digest` accept either form.
 
 ## Which template to use
 
 | Document | Purpose |
 |----------|---------|
-| [`.cursor/templates/project-spec-template.md`](../templates/project-spec-template.md) | Copy-paste skeleton when creating a new `{ISSUE_ID}.md`. |
+| [`ia/templates/project-spec-template.md`](../templates/project-spec-template.md) | Copy-paste skeleton when creating a new `{ISSUE_ID}-{description}.md`. |
 | This file | Section order, naming rules, and how to split **requirements** vs **implementation**. |
 
 ## Umbrella program specs (multi-issue)
@@ -56,7 +58,7 @@ Some **BACKLOG** programs use a **parent** project spec plus **child** specs (e.
 
 ## Lifecycle
 
-1. Create `{ISSUE_ID}.md` from the template → refine Open Questions and acceptance → **Final** when stable.
+1. Create `{ISSUE_ID}-{description}.md` from the template (or the legacy bare `{ISSUE_ID}.md` form for pre-TECH-85 specs) → refine Open Questions and acceptance → **Final** when stable.
 2. Implement → keep **Issues Found** up to date.
 3. On user-confirmed completion: migrate durable content to canonical docs; archive issue; **delete** the project spec.
 

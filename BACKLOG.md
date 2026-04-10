@@ -22,25 +22,25 @@
 - [ ] **TECH-32** — **Urban growth rings** / centroid recompute what-if (research tooling)
   - Type: tooling / research
   - Files: `tools/` or Unity Editor batch; parameters from **FEAT-43** / **FEAT-36** notes as inputs
-  - Spec: `.cursor/projects/TECH-32.md`
+  - Spec: `ia/projects/TECH-32.md`
   - Notes: Compare full **UrbanCentroidService** recompute every tick vs throttled/approximate strategies; report desync or behavior risk vs glossary **sim §Rings**. Non-player-facing evidence for tuning. `docs/agent-tooling-verification-priority-tasks.md` task 24. **Order:** Prefer running against **TECH-38** **UrbanGrowthRingMath** / harness **JSON** once **Phase B** exists; until then, baseline against current **MonoBehaviour** code.
   - Depends on: none (coordinates with **FEAT-43**; soft: **TECH-38** for **pure** module parity)
 
 - [ ] **TECH-35** — Research spike: property-based / random mutation **invariant** fuzzing (optional)
   - Type: research / test harness
   - Files: TBD test assembly or `tools/` prototype
-  - Spec: `.cursor/projects/TECH-35.md`
+  - Spec: `ia/projects/TECH-35.md`
   - Notes: High setup cost; only if geometric / ordering bugs justify. Predicates from **invariants** (HeightMap/**cell** sync, **road cache**, **shore band**, etc.). `docs/agent-tooling-verification-priority-tasks.md` task 38. **Non-goals:** production fuzz in player builds. **Order:** Easiest once **TECH-38** exposes stable **pure** surfaces + documented **RNG** derivation.
   - Depends on: none (soft: **TECH-38**)
 
 ## Agent ↔ Unity & MCP context lane
 
-Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration shipped (glossary **IDE agent bridge** — [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); Play Mode bridge **`kind`** values, **`debug_context_bundle`**, **`close-dev-loop`** Skill, and **dev environment preflight** archived [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**). Remaining lane items follow: **JSON / reports** plumbing → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**§ Compute-lib program** above: **TECH-38** + **TECH-32**/**TECH-35**.) **Prerequisites for later items:** **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (existing `.cursor/projects/*.md`); **TECH-38** + archived **TECH-39** (**§ Compute-lib program** / [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **Spec-pipeline** charter: **glossary** **territory-ia spec-pipeline program** + archive.
+Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration shipped (glossary **IDE agent bridge** — [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); Play Mode bridge **`kind`** values, **`debug_context_bundle`**, **`close-dev-loop`** Skill, and **dev environment preflight** archived [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**). Remaining lane items follow: **JSON / reports** plumbing → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**§ Compute-lib program** above: **TECH-38** + **TECH-32**/**TECH-35**.) **Prerequisites for later items:** **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (existing `ia/projects/*.md`); **TECH-38** + archived **TECH-39** (**§ Compute-lib program** / [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **Spec-pipeline** charter: **glossary** **territory-ia spec-pipeline program** + archive.
 
 - [ ] **TECH-53** — **Schema validation history** (Postgres extension **E2** track)
   - Type: technical / CI / data
   - Files: `.github/workflows/` (e.g. extend **ia-tools**), `docs/schemas/`, `docs/schemas/fixtures/`; optional **Postgres** table (IA schema milestone in archive)
-  - Spec: none (backlog-only — no `.cursor/projects/` spec)
+  - Spec: none (backlog-only — no `ia/projects/` spec)
   - Notes: Persist per-CI-run outcomes of **`npm run validate:fixtures`** / **JSON Schema** checks so regressions on **Interchange JSON** and fixtures are visible over time. Align row shape with [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md) **B1** if stored in **Postgres**. Program pointer: same doc **Program extension mapping (E1–E3)**; Postgres umbrella trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
   - Acceptance: agreed storage (artifact file, DB rows, or workflow summary) + documented query or review path; English **Notes** updated when implementation choice is fixed
   - Depends on: none (soft: IA **Postgres** milestone + JSON infra in archive)
@@ -48,7 +48,7 @@ Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration
 - [ ] **TECH-54** — **Agent patch proposal staging** (Postgres extension **E3** track)
   - Type: tooling / agent workflow
   - Files: optional **Postgres** migrations; `tools/` or thin HTTP handler; `docs/`
-  - Spec: none (backlog-only — no `.cursor/projects/` spec)
+  - Spec: none (backlog-only — no `ia/projects/` spec)
   - Notes: Queue **B3**-style idempotent patch envelopes ([`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md)) with explicit lifecycle (**pending** / **approved** / **rejected**) before humans merge changes to git; **`natural_key`** for deduplication. **Not** player **Save data**. Program pointer: same doc **Program extension mapping (E1–E3)**; Postgres umbrella trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
   - Acceptance: documented state machine + at least one insert/list path (script, SQL, or API); conflict policy recorded in issue **Notes** or [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md) / [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md) when implementing
   - Depends on: none (soft: IA **Postgres** milestone + interchange patterns doc in archive)
@@ -56,69 +56,69 @@ Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration
 - [ ] **TECH-43** — Append-only **JSON** line **event log** (telemetry / sim anomalies) — **backlog placeholder**
   - Type: technical / observability (future)
   - Files: TBD (`tools/`, optional **Postgres** table, ship pipeline)
-  - Spec: none (promote to `.cursor/projects/TECH-43.md` when scheduled)
+  - Spec: none (promote to `ia/projects/TECH-43.md` when scheduled)
   - Notes: Idea from **JSON interchange program** brainstorm **B2** (`projects/json-use-cases-brainstorm.md`); **schema_version** per line; same validator family as shipped JSON infra (archive). **Schema** pipeline exists under `docs/schemas/` + **`npm run validate:fixtures`**.
   - Acceptance: issue refined with concrete consumer + storage choice; optional schema + sample sink
   - Depends on: none (soft: JSON infra milestone in archive)
 
 - [ ] **TECH-18** — Migrate Information Architecture from Markdown to PostgreSQL (MCP evolution)
   - Type: infrastructure / tooling
-  - Files: All `.cursor/specs/*.md`, `.cursor/rules/agent-router.mdc`, `.cursor/rules/invariants.mdc`, `ARCHITECTURE.md`; MCP server (file-backed **territory-ia** — shipped, see archive); schema / migrations / seed from IA **Postgres** milestone (archive); `tools/mcp-ia-server/src/index.ts`, `docs/mcp-ia-server.md`
-  - Spec: `.cursor/projects/TECH-18.md`
-  - Notes: **Goal:** After file-backed MCP and IA **Postgres** tables, **migrate authoritative IA content** into PostgreSQL and evolve the **same MCP** so **primary** retrieval is DB-backed. Markdown becomes **generated or secondary** for human reading. **Explicit dependency:** This work **extends the MCP built first on Markdown** — same tool contracts where possible, swapping implementation to query the IA database. **Scope:** (1) Parse and ingest spec sections (`isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, etc.) into `spec_sections`. (2) Populate `relationships` (e.g. HeightMap↔Cell.height, PathTerraformPlan→Phase-1→Apply). (3) Populate `invariants` from `invariants.mdc`. (4) Extend tools: `what_do_i_need_to_know(task_description)`, `search_specs(query)`, `dependency_chain(term)`. (5) Script to regenerate `.md` from DB for review. (6) Update `agent-router.mdc` — MCP tools first, Markdown fallback second. **Acceptance:** Agent resolves a multi-spec task (e.g. “bridge over multi-level lake”) via MCP reading ≤ ~500 tokens of context instead of many full-file reads. **Phased MCP tools** (bundles, `backlog_search`, **`unity_context_section`** after **unity-development-context** spec, etc.): see `.cursor/projects/TECH-18.md` and `docs/agent-tooling-verification-priority-tasks.md` (tasks 12–20, 28–32, 35). **Deferred unless reopened:** `findobjectoftype_scan`, `find_symbol` MCP tools (prefer **TECH-26** script).
+  - Files: All `ia/specs/*.md`, `ia/rules/agent-router.md`, `ia/rules/invariants.md`, `ARCHITECTURE.md`; MCP server (file-backed **territory-ia** — shipped, see archive); schema / migrations / seed from IA **Postgres** milestone (archive); `tools/mcp-ia-server/src/index.ts`, `docs/mcp-ia-server.md`
+  - Spec: `ia/projects/TECH-18.md`
+  - Notes: **Goal:** After file-backed MCP and IA **Postgres** tables, **migrate authoritative IA content** into PostgreSQL and evolve the **same MCP** so **primary** retrieval is DB-backed. Markdown becomes **generated or secondary** for human reading. **Explicit dependency:** This work **extends the MCP built first on Markdown** — same tool contracts where possible, swapping implementation to query the IA database. **Scope:** (1) Parse and ingest spec sections (`isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, etc.) into `spec_sections`. (2) Populate `relationships` (e.g. HeightMap↔Cell.height, PathTerraformPlan→Phase-1→Apply). (3) Populate `invariants` from `invariants.mdc`. (4) Extend tools: `what_do_i_need_to_know(task_description)`, `search_specs(query)`, `dependency_chain(term)`. (5) Script to regenerate `.md` from DB for review. (6) Update `agent-router.mdc` — MCP tools first, Markdown fallback second. **Acceptance:** Agent resolves a multi-spec task (e.g. “bridge over multi-level lake”) via MCP reading ≤ ~500 tokens of context instead of many full-file reads. **Phased MCP tools** (bundles, `backlog_search`, **`unity_context_section`** after **unity-development-context** spec, etc.): see `ia/projects/TECH-18.md` and `docs/agent-tooling-verification-priority-tasks.md` (tasks 12–20, 28–32, 35). **Deferred unless reopened:** `findobjectoftype_scan`, `find_symbol` MCP tools (prefer **TECH-26** script).
   - Depends on: none (soft: MCP baseline + IA **Postgres** milestone — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
 
 - [ ] **TECH-15** — New Game / **geography initialization** performance
   - Type: performance / optimization
   - Files: `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `GridManager.cs`, `InterstateManager.cs`, `ForestManager.cs`, `RegionalMapManager.cs`, `ProceduralRiverGenerator.cs` (as applicable)
-  - Spec: `.cursor/projects/TECH-15.md`
+  - Spec: `ia/projects/TECH-15.md`
   - Notes: Reduce wall-clock time and frame spikes when starting a **New Game** (**geography initialization**): **HeightMap**, lakes, procedural **rivers** (shipped — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)), **interstate**, **forests**, **map border** signs, **sorting order** passes, etc. **Priority:** Land the **Editor/batch JSON profiler** under `tools/reports/` (see spec) *before* or in parallel with deep optimization — agents need **measurable** phase breakdowns. **Related:** **Load Game** / **water map** persist work is archived — this issue targets **geography initialization** cost only. **Tooling:** `docs/agent-tooling-verification-priority-tasks.md` (tasks 3, 22).
 
 - [ ] **TECH-16** — **Simulation tick** performance v2 (per-tick **AUTO systems** pipeline)
   - Type: performance / optimization
   - Files: `SimulationManager.cs`, `TimeManager.cs`, `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `AutoResourcePlanner.cs`, `UrbanCentroidService.cs`, `GrowthBudgetManager.cs`, `DemandManager.cs`, `CityStats.cs` (as applicable)
-  - Spec: `.cursor/projects/TECH-16.md`
+  - Spec: `ia/projects/TECH-16.md`
   - Notes: Second-pass optimization of the **simulation tick** after early **Simulation optimization** work (completed). **Priority:** Ship **spec-labeled tick harness** JSON + **ProfilerMarker** names (see spec) so agents and CI can read **AUTO** pipeline cost *before* micro-optimizing allocations. **Related:** **BUG-14** (per-frame UI `FindObjectOfType`); **TECH-01** (manager decomposition may help profiling and hotspots). **Tooling:** `docs/agent-tooling-verification-priority-tasks.md` (tasks 4, 25); drift detection **TECH-29**.
 
 - [ ] **TECH-33** — Asset introspection: **prefab** manifest + scene **MonoBehaviour** listing
   - Type: tooling
   - Files: `tools/` (Unity `-batchmode` or Editor script), `Assets/Prefabs/`, agreed scene path (e.g. `MainScene.unity`)
-  - Spec: `.cursor/projects/TECH-33.md`
+  - Spec: `ia/projects/TECH-33.md`
   - Notes: List prefabs with missing script references; list MonoBehaviour types/paths in scene for **toolbar** layout work. `docs/agent-tooling-verification-priority-tasks.md` tasks 26, 27.
   - Depends on: none
 
 - [ ] **TECH-23** — Agent workflow: MCP **invariant preflight** for issue kickoff
   - Type: documentation / process
-  - Files: `AGENTS.md`, optional `.cursor/templates/` or **How to Use This Backlog** section in this file, `docs/mcp-ia-server.md` (short pointer)
+  - Files: `AGENTS.md`, optional `ia/templates/` or **How to Use This Backlog** section in this file, `docs/mcp-ia-server.md` (short pointer)
   - Notes: Document that implementation chats for **BUG-**/**FEAT-**/**TECH-** work should record **territory-ia** **`invariants_summary`**, **`router_for_task`**, and at least one **`spec_section`** (or equivalent slice) before substantive code edits—reduces **road preparation family**, **HeightMap**/**cell** sync, and per-frame **`FindObjectOfType`** mistakes. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
   - Depends on: none
 
 - [ ] **TECH-45** — **Cursor Skill:** **road** modification guardrails (**road stroke**, **road preparation family**, cache)
   - Type: documentation / agent enablement (**Cursor Skill** only)
-  - Files: `.cursor/skills/` (TBD subfolder + `SKILL.md`); optional one-line pointer in `AGENTS.md`
-  - Notes: **Deliverable type:** **Cursor Skill**. Checklist: **road placement** only through **road preparation family** ending in **`PathTerraformPlan`** + Phase-1 + **`Apply`** — never **`ComputePathPlan`** alone; call **`InvalidateRoadCache()`** after **road** changes; pull normative detail via **territory-ia** (`router_for_task` → **roads** / **geo**) — do not duplicate **`roads-system`** in the skill body. **Pattern:** [.cursor/skills/README.md](.cursor/skills/README.md) (thin skill + **Tool recipe** + MCP pointers).
+  - Files: `ia/skills/` (TBD subfolder + `SKILL.md`); optional one-line pointer in `AGENTS.md`
+  - Notes: **Deliverable type:** **Cursor Skill**. Checklist: **road placement** only through **road preparation family** ending in **`PathTerraformPlan`** + Phase-1 + **`Apply`** — never **`ComputePathPlan`** alone; call **`InvalidateRoadCache()`** after **road** changes; pull normative detail via **territory-ia** (`router_for_task` → **roads** / **geo**) — do not duplicate **`roads-system`** in the skill body. **Pattern:** [ia/skills/README.md](ia/skills/README.md) (thin skill + **Tool recipe** + MCP pointers).
   - Acceptance: **Skill** file committed; **`description`** names **road stroke**, **wet run**, **interstate**/**bridge** touchpoints where relevant
-  - Depends on: none (soft: [.cursor/skills/README.md](.cursor/skills/README.md) conventions)
+  - Depends on: none (soft: [ia/skills/README.md](ia/skills/README.md) conventions)
 
 - [ ] **TECH-46** — **Cursor Skill:** **terrain** / **HeightMap** / **water** / **shore** edit guardrails
   - Type: documentation / agent enablement (**Cursor Skill** only)
-  - Files: `.cursor/skills/` (TBD subfolder + `SKILL.md`); optional pointer in `AGENTS.md`
-  - Notes: **Deliverable type:** **Cursor Skill**. Checklist: keep **`HeightMap[x,y]`** and **`Cell.height`** in sync; **water** placement/removal → **`RefreshShoreTerrainAfterWaterUpdate`**; **shore band** and **river** monotonicity per **invariants**; use **`spec_section`** / **`router_for_task`** for **water-terrain** and **geo** slices — no spec paste. **Pattern:** [.cursor/skills/README.md](.cursor/skills/README.md).
+  - Files: `ia/skills/` (TBD subfolder + `SKILL.md`); optional pointer in `AGENTS.md`
+  - Notes: **Deliverable type:** **Cursor Skill**. Checklist: keep **`HeightMap[x,y]`** and **`Cell.height`** in sync; **water** placement/removal → **`RefreshShoreTerrainAfterWaterUpdate`**; **shore band** and **river** monotonicity per **invariants**; use **`spec_section`** / **`router_for_task`** for **water-terrain** and **geo** slices — no spec paste. **Pattern:** [ia/skills/README.md](ia/skills/README.md).
   - Acceptance: **Skill** file committed; **`description`** triggers on **terraform**, **water map**, **cliff**, **shore** edits
-  - Depends on: none (soft: [.cursor/skills/README.md](.cursor/skills/README.md))
+  - Depends on: none (soft: [ia/skills/README.md](ia/skills/README.md))
 
 - [ ] **TECH-47** — **Cursor Skill:** new **`MonoBehaviour`** **manager** wiring pattern
   - Type: documentation / agent enablement (**Cursor Skill** only)
-  - Files: `.cursor/skills/` (TBD subfolder + `SKILL.md`); optional pointer in `AGENTS.md` or `.cursor/specs/unity-development-context.md` **Decision Log**
-  - Notes: **Deliverable type:** **Cursor Skill**. Checklist: scene **component**, never `new`; **`[SerializeField] private`** refs + **`FindObjectOfType`** fallback in **`Awake`**; **no new singletons**; do not add responsibilities to **`GridManager`** — extract helpers; align with **`.cursor/specs/unity-development-context.md`** via MCP slice when needed. **Pattern:** [.cursor/skills/README.md](.cursor/skills/README.md).
+  - Files: `ia/skills/` (TBD subfolder + `SKILL.md`); optional pointer in `AGENTS.md` or `ia/specs/unity-development-context.md` **Decision Log**
+  - Notes: **Deliverable type:** **Cursor Skill**. Checklist: scene **component**, never `new`; **`[SerializeField] private`** refs + **`FindObjectOfType`** fallback in **`Awake`**; **no new singletons**; do not add responsibilities to **`GridManager`** — extract helpers; align with **`ia/specs/unity-development-context.md`** via MCP slice when needed. **Pattern:** [ia/skills/README.md](ia/skills/README.md).
   - Acceptance: **Skill** file committed; **`description`** states “new manager / **MonoBehaviour** service” triggers
-  - Depends on: none (soft: [.cursor/skills/README.md](.cursor/skills/README.md))
+  - Depends on: none (soft: [ia/skills/README.md](ia/skills/README.md))
 
 - [ ] **TECH-48** — **territory-ia** MCP: discovery from **project specs** (terms, domains, spec slices)
   - Type: tooling / agent enablement
-  - Files: `tools/mcp-ia-server/src/` (new or extended handlers, parsers); `tools/mcp-ia-server/README.md`; `docs/mcp-ia-server.md`; optional fixtures under `tools/mcp-ia-server/`; align notes with `.cursor/projects/TECH-18.md` when **search**/**bundle** tools land
-  - Spec: none (promote to `.cursor/projects/TECH-48.md` when design stabilizes)
-  - Notes: **Goal:** Make **project-spec-kickoff** and similar workflows cheaper and safer by improving how MCP turns **implementation**-oriented text (project **spec** body, backlog **Files**) into **glossary** matches and **`spec_section`** targets. **Candidate directions:** (1) Path-based tool: input `.cursor/projects/{ISSUE}.md` → ranked **glossary** candidates + suggested **`router_for_task`** **domain** strings + ordered **`spec_section`** queue with **max_chars** budget. (2) Improve **`glossary_discover`** ranking using tokens extracted from **`backlog_issue`** **Files**/**Notes** when `issue_id` is bundled in the same turn. (3) Optional composite read helper (defer if **TECH-18** `search_specs` / bundles subsume). **Does not** replace **`.cursor/skills/project-spec-kickoff/SKILL.md`** prose until tools are **shipped** and **`npm run verify`** green. **Related:** closeout helpers shipped (**`project_spec_closeout_digest`**, **`spec_sections`**, **`closeout:*`**, **`project-spec-closeout-parse.ts`**) — trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
+  - Files: `tools/mcp-ia-server/src/` (new or extended handlers, parsers); `tools/mcp-ia-server/README.md`; `docs/mcp-ia-server.md`; optional fixtures under `tools/mcp-ia-server/`; align notes with `ia/projects/TECH-18.md` when **search**/**bundle** tools land
+  - Spec: none (promote to `ia/projects/TECH-48.md` when design stabilizes)
+  - Notes: **Goal:** Make **project-spec-kickoff** and similar workflows cheaper and safer by improving how MCP turns **implementation**-oriented text (project **spec** body, backlog **Files**) into **glossary** matches and **`spec_section`** targets. **Candidate directions:** (1) Path-based tool: input `ia/projects/{ISSUE}.md` → ranked **glossary** candidates + suggested **`router_for_task`** **domain** strings + ordered **`spec_section`** queue with **max_chars** budget. (2) Improve **`glossary_discover`** ranking using tokens extracted from **`backlog_issue`** **Files**/**Notes** when `issue_id` is bundled in the same turn. (3) Optional composite read helper (defer if **TECH-18** `search_specs` / bundles subsume). **Does not** replace **`ia/skills/project-spec-kickoff/SKILL.md`** prose until tools are **shipped** and **`npm run verify`** green. **Related:** closeout helpers shipped (**`project_spec_closeout_digest`**, **`spec_sections`**, **`closeout:*`**, **`project-spec-closeout-parse.ts`**) — trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
   - Acceptance: ≥1 **measurable** improvement merged (new tool **or** clear ranking/UX win on existing tools) + docs updated; **`npm run verify`** green
   - Depends on: none (soft: dogfood with **project-spec-kickoff**; **TECH-18** for long-term search architecture)
 
@@ -128,65 +128,65 @@ Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration
   - Notes: When changing markdown parsers, fuzzy matching, or glossary ranking, extend **`node:test`** fixtures and keep **`npm run verify`** green (same pattern as **`glossary_discover`** / parser fixtures — see archive). No Unity. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
   - Depends on: none
 
-- [ ] **TECH-30** — Validate **BACKLOG** issue IDs referenced in `.cursor/projects/*.md`
+- [ ] **TECH-30** — Validate **BACKLOG** issue IDs referenced in `ia/projects/*.md`
   - Type: tooling / doc hygiene
   - Files: `tools/` (Node script), optional `package.json` `npm run` at repo root or under `tools/`
-  - Spec: `.cursor/projects/TECH-30.md`
-  - Notes: Every `[BUG-XX]` / `[TECH-XX]` / etc. front matter or link in active project specs must exist in `BACKLOG.md` (open rows) or `BACKLOG-ARCHIVE.md` when cited as historical. `docs/agent-tooling-verification-priority-tasks.md` task 9. **Related:** `npm run validate:dead-project-specs` (repo-wide missing `.cursor/projects/*.md` paths) — shipped; coordinate shared **Node** helpers when implementing **TECH-30**.
+  - Spec: `ia/projects/TECH-30.md`
+  - Notes: Every `[BUG-XX]` / `[TECH-XX]` / etc. front matter or link in active project specs must exist in `BACKLOG.md` (open rows) or `BACKLOG-ARCHIVE.md` when cited as historical. `docs/agent-tooling-verification-priority-tasks.md` task 9. **Related:** `npm run validate:dead-project-specs` (repo-wide missing `ia/projects/*.md` paths) — shipped; coordinate shared **Node** helpers when implementing **TECH-30**.
   - Depends on: none
 
 - [ ] **TECH-29** — CI / script: **simulation tick** call-order drift detector
   - Type: tooling / CI
-  - Files: `tools/` (Node or shell), checked-in ordered manifest (derived from `.cursor/specs/simulation-system.md` **Tick execution order**), optional `.github/workflows/`; `SimulationManager.cs` as truth source to diff
-  - Spec: `.cursor/projects/TECH-29.md`
+  - Files: `tools/` (Node or shell), checked-in ordered manifest (derived from `ia/specs/simulation-system.md` **Tick execution order**), optional `.github/workflows/`; `SimulationManager.cs` as truth source to diff
+  - Spec: `ia/projects/TECH-29.md`
   - Notes: Fail CI (or print advisory) when `ProcessSimulationTick` step order diverges from manifest without matching spec update. `docs/agent-tooling-verification-priority-tasks.md` task 5. Phase labels should stay aligned with **TECH-16** harness.
   - Depends on: **TECH-16** (stable spec-labeled phase names in harness — soft dependency for naming parity)
 
 - [ ] **TECH-31** — **Agent scenario generator** (**test mode**, **32×32** **test map**, loadable **save**-shaped scenarios, MCP tool)
   - Type: tooling / test infrastructure
   - Files: `tools/`, `tools/fixtures/scenarios/`, `tools/scripts/unity-testmode-batch.sh`, `tools/scripts/unity-quit-project.sh` (or agreed `Assets/` test paths), Unity test assembly or Editor scripts, scenario descriptors + committed save artifacts; `GameSaveManager` / **`GameSaveData`** integration (**persistence-system**); bridge- or export-friendly hooks (glossary **IDE agent bridge**); `tools/mcp-ia-server/src/` (final phase MCP tool); `docs/mcp-ia-server.md`
-  - Spec: `.cursor/projects/TECH-31.md`
-  - Notes: **Program tracker** (stages, progress, lessons): [`projects/TECH-31-agent-scenario-generator-program.md`](projects/TECH-31-agent-scenario-generator-program.md) — **31a** → **31a2** → **31a3** → **31b** → **31c** → **31d** → **31e**. **Shipped through 31d (2026-04-10):** includes everything through **31c** (see prior archive notes) plus **TECH-82** Phase 1: Postgres **`city_metrics_history`**, Unity **`MetricsRecorder`**, **territory-ia** **`city_metrics_query`**, **test mode** **`scenario_id`** correlation — **glossary** **City metrics history**, [`.cursor/projects/TECH-82.md`](.cursor/projects/TECH-82.md), [`tools/fixtures/scenarios/README.md`](tools/fixtures/scenarios/README.md) (**optional Postgres** section), **agent-test-mode-verify** skill. **Remaining:** **31e** = **territory-ia** **MCP** scenario resolver tool + **`docs/mcp-ia-server.md`**. **Cursor stub** (Open Questions + aggregate test contracts): `.cursor/projects/TECH-31.md`. **Agent-facing** intent → **`GameSaveData`-compatible** artifact + **scenario id** (**kebab-case**); **32×32** **test mode**; bounded **simulation**; **UTF** / **`debug_context_bundle`** / golden JSON; optional **glossary** **City metrics history** when **Postgres** is configured. **Core builder** validation per stub **Open Questions**; **minimal UI** (**TEST-MODE**); release builds cannot enable **test mode**. Keep expected values aligned across stub **Test contracts**, **31c** normative table, committed **`agent-testmode-golden-*.json`**, and **Acceptance** below. `docs/agent-tooling-verification-priority-tasks.md`. **Acceptance roll-up:** full **Acceptance** line is the **issue closeout** bar; **31e** (**MCP** scenario tool) still required before removing this row (**TECH-82** Phases 2–4 remain on the **TECH-82** backlog row).
+  - Spec: `ia/projects/TECH-31.md`
+  - Notes: **Program tracker** (stages, progress, lessons): [`projects/TECH-31-agent-scenario-generator-program.md`](projects/TECH-31-agent-scenario-generator-program.md) — **31a** → **31a2** → **31a3** → **31b** → **31c** → **31d** → **31e**. **Shipped through 31d (2026-04-10):** includes everything through **31c** (see prior archive notes) plus **TECH-82** Phase 1: Postgres **`city_metrics_history`**, Unity **`MetricsRecorder`**, **territory-ia** **`city_metrics_query`**, **test mode** **`scenario_id`** correlation — **glossary** **City metrics history**, [`ia/projects/TECH-82.md`](ia/projects/TECH-82.md), [`tools/fixtures/scenarios/README.md`](tools/fixtures/scenarios/README.md) (**optional Postgres** section), **agent-test-mode-verify** skill. **Remaining:** **31e** = **territory-ia** **MCP** scenario resolver tool + **`docs/mcp-ia-server.md`**. **Cursor stub** (Open Questions + aggregate test contracts): `ia/projects/TECH-31.md`. **Agent-facing** intent → **`GameSaveData`-compatible** artifact + **scenario id** (**kebab-case**); **32×32** **test mode**; bounded **simulation**; **UTF** / **`debug_context_bundle`** / golden JSON; optional **glossary** **City metrics history** when **Postgres** is configured. **Core builder** validation per stub **Open Questions**; **minimal UI** (**TEST-MODE**); release builds cannot enable **test mode**. Keep expected values aligned across stub **Test contracts**, **31c** normative table, committed **`agent-testmode-golden-*.json`**, and **Acceptance** below. `docs/agent-tooling-verification-priority-tasks.md`. **Acceptance roll-up:** full **Acceptance** line is the **issue closeout** bar; **31e** (**MCP** scenario tool) still required before removing this row (**TECH-82** Phases 2–4 remain on the **TECH-82** backlog row).
   - Acceptance: at least one automated Unity run (**Edit Mode** or **Play Mode**) on a clean tree with a committed scenario; documented **test mode** launch (**scenario id** or path, **32×32**); builder docs for **AUTO** and at least one non-**AUTO** pattern; **close-dev-loop** and **TECH-82** **city history** composition documented (**close-dev-loop** + Path A/B driver matrix: **31c** + stub; **city history**: **31d** / **TECH-82**); **`npm run unity:compile-check`** after tooling changes; **MCP** tool registered and described in **`docs/mcp-ia-server.md`** (**31e**); project stub **Test contracts** + **31c** normative table list chosen batch driver, args, **CI** simulation tick bound, and optional golden assert; optional **BUG-52** **Notes** link when first **AUTO** scenario lands
   - Depends on: **TECH-82** (soft: Phase 1 **metrics** for time-series **city history** verification; load/build milestones may ship first using **save** + **`debug_context_bundle`** only). Soft: stable bridge **`kind`** values and export shapes (**unity-development-context**, **close-dev-loop** skill). Soft: **TECH-15** / **TECH-16** for **UTF**/**batchmode** vs bridge and harness labels when defining **CI** vs dev drivers.
 
 - [ ] **TECH-34** — Generate **`gridmanager-regions.json`** from `GridManager.cs` `#region` blocks
   - Type: tooling / IA
   - Files: `tools/` (Node or C# extractor), output e.g. `tools/mcp-ia-server/data/gridmanager-regions.json`; `GridManager.cs`
-  - Spec: `.cursor/projects/TECH-34.md`
+  - Spec: `ia/projects/TECH-34.md`
   - Notes: Supports **TECH-01** extraction planning and optional future MCP `gridmanager_region_map`. `docs/agent-tooling-verification-priority-tasks.md` task 28. Coordinate MCP registration with **TECH-18** when applicable.
   - Depends on: none (MCP wiring: **TECH-18**)
 
 - [ ] **TECH-27** — **BACKLOG.md** glossary alignment pass (**Depends on** / **Spec** / **Files** / **Notes**)
   - Type: documentation / IA hygiene
-  - Files: `BACKLOG.md`, `.cursor/specs/glossary.md`, optional `tools/` link-check script
-  - Spec: `.cursor/projects/TECH-27.md`
-  - Notes: Audit open issues so **Depends on**, **Spec**, **Files**, and **Notes** use vocabulary from **`.cursor/specs/glossary.md`** and linked **reference specs** where practical—improves **`backlog_issue`** usefulness and cross-agent consistency. **Optional automation:** script verifying glossary “Spec” column paths (and optional heading anchors) exist (`docs/agent-tooling-verification-priority-tasks.md` task 10). Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
+  - Files: `BACKLOG.md`, `ia/specs/glossary.md`, optional `tools/` link-check script
+  - Spec: `ia/projects/TECH-27.md`
+  - Notes: Audit open issues so **Depends on**, **Spec**, **Files**, and **Notes** use vocabulary from **`ia/specs/glossary.md`** and linked **reference specs** where practical—improves **`backlog_issue`** usefulness and cross-agent consistency. **Optional automation:** script verifying glossary “Spec” column paths (and optional heading anchors) exist (`docs/agent-tooling-verification-priority-tasks.md` task 10). Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
   - Depends on: none
 
 - [ ] **TECH-26** — Repo scripts / CI: mechanical checks (**FindObjectOfType** in **Update**; optional **`gridArray`** gate)
   - Type: tooling / CI
-  - Files: new script under `tools/` (Node or shell), optional CI workflow; align wording with `.cursor/rules/invariants.mdc`
-  - Spec: `.cursor/projects/TECH-26.md`
+  - Files: new script under `tools/` (Node or shell), optional CI workflow; align wording with `ia/rules/invariants.md`
+  - Spec: `ia/projects/TECH-26.md`
   - Notes: Implement scanner for **`FindObjectOfType`** inside **`Update`/`LateUpdate`/`FixedUpdate`** (supports **BUG-14** prevention) and optional **`rg`** gate blocking new **`gridArray`/`cellArray`** use outside **`GridManager`** (**TECH-04**). **Phase 2:** hot-path static scan manifest from `ARCHITECTURE.md` / managers-reference to prioritize files in AUTO or per-frame paths (`docs/agent-tooling-verification-priority-tasks.md` tasks 1, 6). Priority order: `docs/agent-tooling-verification-priority-tasks.md`. Source: `projects/agent-friendly-tasks-with-territory-ia-context.md` §4.
   - Depends on: none
 
 ## IA evolution lane
 
-Evolve the **Information Architecture** system from documentation retrieval to a learning, bidirectional, graph-queryable platform. **TECH-77** (FTS) and **TECH-78** (skill chaining) are independent. **TECH-79** (agent memory) and **TECH-80** (bidirectional IA) need Postgres tables (independent of each other). **TECH-81** (knowledge graph) is the long-term evolution — benefits from **TECH-77** index infrastructure and **TECH-79** session data. **TECH-82** (gameplay entity model) bridges IA tooling and game data. **TECH-83** (simulation parameter tuning) uses the bridge and optional **TECH-82** metrics tables. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md). **IA system overview:** [`docs/information-architecture-overview.md`](docs/information-architecture-overview.md).
+Evolve the **Information Architecture** system from documentation retrieval to a learning, bidirectional, graph-queryable platform. **TECH-77** (FTS) and **TECH-78** (skill chaining) are independent. **TECH-79** (agent memory) and **TECH-80** (bidirectional IA) need Postgres tables (independent of each other). **TECH-81** (knowledge graph) is the long-term evolution — benefits from **TECH-77** index infrastructure and **TECH-79** session data. **TECH-82** (gameplay entity model) bridges IA tooling and game data. **TECH-83** (simulation parameter tuning) uses the bridge and optional **TECH-82** metrics tables. **TECH-85** (IA migration to neutral `ia/` namespace + native Claude Code layer) is a structural rebase: every other lane item will inherit the new namespace, frontmatter convention, subagent surface, and code-intelligence MCP additions. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md). **IA system overview:** [`docs/information-architecture-overview.md`](docs/information-architecture-overview.md).
 
 - [ ] **TECH-77** — **Unified semantic search** across all IA surfaces (FTS in Postgres)
   - Type: tooling / agent enablement
   - Files: `tools/mcp-ia-server/src/` (new tool + ingest); `db/migrations/`; `docs/mcp-ia-server.md`
-  - Spec: `.cursor/projects/TECH-77.md`
+  - Spec: `ia/projects/TECH-77.md`
   - Notes: Single `ia_search(query, scope?)` MCP tool backed by Postgres FTS that returns ranked results across glossary, spec sections, invariants, rules, backlog issues, and journal entries. Extends the `body_tsv` GIN pattern from `ia_project_spec_journal`. Does not replace existing precise tools (`spec_section`, `glossary_lookup`).
   - Acceptance: `ia_search` registered; searches across all IA surfaces with source attribution; `npm run verify` green
   - Depends on: none
 
 - [ ] **TECH-78** — **Skill chaining engine** (`suggest_skill_chain` MCP tool)
   - Type: tooling / agent enablement
-  - Files: `tools/mcp-ia-server/src/` (new tool + SKILL.md parser); `.cursor/skills/*/SKILL.md` (read-only); `docs/mcp-ia-server.md`
-  - Spec: `.cursor/projects/TECH-78.md`
+  - Files: `tools/mcp-ia-server/src/` (new tool + SKILL.md parser); `ia/skills/*/SKILL.md` (read-only); `docs/mcp-ia-server.md`
+  - Spec: `ia/projects/TECH-78.md`
   - Notes: MCP tool that reads all SKILL.md files, matches trigger conditions against a task description, and returns an ordered skill chain with pre-populated MCP tool call sequences. Understands skill lifecycle dependencies (kickoff → implement → close-dev-loop → close). When given an `issue_id`, enriches the chain with `backlog_issue` data.
   - Acceptance: `suggest_skill_chain` registered; returns correct chains for known task descriptions; `npm run verify` green
   - Depends on: none
@@ -194,7 +194,7 @@ Evolve the **Information Architecture** system from documentation retrieval to a
 - [ ] **TECH-79** — **Agent memory across sessions** (persistent agent context)
   - Type: tooling / agent enablement
   - Files: `tools/mcp-ia-server/src/` (logging middleware + new tool); `db/migrations/`; `docs/mcp-ia-server.md`
-  - Spec: `.cursor/projects/TECH-79.md`
+  - Spec: `ia/projects/TECH-79.md`
   - Notes: Log MCP tool calls per issue in `agent_session_log` Postgres table. New `ia_recommend(issue_id?, domain?)` MCP tool uses historical patterns to recommend spec sections, glossary terms, and tool sequences. Fire-and-forget logging — never blocks tool responses.
   - Acceptance: tool calls transparently logged; `ia_recommend` returns recommendations based on historical data; graceful `db_unconfigured` degradation
   - Depends on: none
@@ -202,7 +202,7 @@ Evolve the **Information Architecture** system from documentation retrieval to a
 - [ ] **TECH-80** — **Bidirectional IA**: agents propose **glossary** additions and flag **spec** ambiguity
   - Type: tooling / agent enablement
   - Files: `tools/mcp-ia-server/src/` (3 new tools); `db/migrations/`; `docs/mcp-ia-server.md`
-  - Spec: `.cursor/projects/TECH-80.md`
+  - Spec: `ia/projects/TECH-80.md`
   - Notes: `suggest_ia_improvement(kind, content, context?)` for agents to propose glossary additions, flag spec ambiguity, or suggest invariant additions. `ia_suggestions_pending` and `ia_suggestion_resolve` for human review lifecycle (`proposed` → `accepted` / `rejected`). Human review mandatory.
   - Acceptance: three tools registered; full lifecycle (propose → list → resolve) works; `npm run verify` green
   - Depends on: none
@@ -210,7 +210,7 @@ Evolve the **Information Architecture** system from documentation retrieval to a
 - [ ] **TECH-81** — **Knowledge graph**: evolve IA from document retrieval to entity-relationship model
   - Type: tooling / agent enablement (long-term)
   - Files: `tools/mcp-ia-server/src/` (graph ingest + 2 new tools); `db/migrations/`; `docs/mcp-ia-server.md`
-  - Spec: `.cursor/projects/TECH-81.md`
+  - Spec: `ia/projects/TECH-81.md`
   - Notes: Postgres-backed entity-relationship graph (managers, data structures, invariants, glossary terms, spec sections as nodes; "depends on"/"modifies"/"validates" as edges). `dependency_chain(entity)` and `impact_analysis(entity)` MCP tools for transitive queries. Ingest from glossary cross-references, ARCHITECTURE.md dependencies, invariant entity mentions, spec cross-links.
   - Acceptance: graph tables populated from current IA; `dependency_chain` and `impact_analysis` return correct transitive relationships; visualization JSON export
   - Depends on: none (soft: TECH-77 for FTS infrastructure; TECH-79 for usage-based edge enrichment)
@@ -218,7 +218,7 @@ Evolve the **Information Architecture** system from documentation retrieval to a
 - [ ] **TECH-82** — **Entity model** for gameplay database (time-series, events, snapshots, building identity)
   - Type: tooling / gameplay infrastructure
   - Files: `db/migrations/`; new C# `MetricsRecorder` helper; `tools/postgres-ia/` (bridge scripts); `tools/mcp-ia-server/src/` (query tools); `docs/postgres-ia-dev-setup.md`; `SimulationManager.cs`, `EconomyManager.cs`, `ZoneManager.cs` (integration hooks)
-  - Spec: `.cursor/projects/TECH-82.md`
+  - Spec: `ia/projects/TECH-82.md`
   - Notes: Four phases: (1) `city_metrics_history` — per-tick city metric snapshots for FEAT-51 dashboard and **TECH-31** **test mode** **city history** assertions — **program stage 31d** in [`projects/TECH-31-agent-scenario-generator-program.md`](projects/TECH-31-agent-scenario-generator-program.md) tracks ordering vs **TECH-31** **31a**–**31c**. (2) `city_events` — financial event sourcing for **monthly maintenance** and other treasury movements (see **glossary** **Monthly maintenance**). (3) `grid_snapshots` — periodic grid state for diffing/analysis. (4) `buildings` table — individual building identity for FEAT-08 density evolution. All fire-and-forget; game fully playable without Postgres. Scenarios remain **save**-authoritative; DB rows are observability, not the scenario file.
   - Acceptance: Phase 1 at minimum: metrics recorded per tick, MCP query tool returns time-series; game playable without DB
   - Depends on: none (soft: FEAT-51 as primary consumer of Phase 1; **TECH-31** for **scenario** run correlation / **test mode** recording expectations; Phase 2 aligns with **EconomyManager** chokepoints; FEAT-08 for Phase 4)
@@ -226,10 +226,18 @@ Evolve the **Information Architecture** system from documentation retrieval to a
 - [ ] **TECH-83** — **Agent-driven simulation parameter tuning**
   - Type: tooling / agent enablement
   - Files: `tools/mcp-ia-server/src/` (3 new tools); `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` (new bridge commands); `db/migrations/` (experiment results); `docs/mcp-ia-server.md`
-  - Spec: `.cursor/projects/TECH-83.md`
+  - Spec: `ia/projects/TECH-83.md`
   - Notes: MCP tools to read (`sim_params_read`), modify (`sim_params_write`), and evaluate (`sim_experiment`) simulation parameters at runtime. Agents can A/B test parameter changes (growth budget, demand rates, ring fractions) by running N ticks and measuring outcomes. State snapshot/restore for experiment isolation. Results persisted in Postgres.
   - Acceptance: parameter catalog complete; write→read roundtrip works; experiment runs N ticks and returns metric comparison; game state restored after experiment
   - Depends on: none (soft: TECH-82 Phase 1 for richer metric collection)
+
+- [ ] **TECH-85** — **IA migration** to neutral `ia/` namespace + native **Claude Code** layer (subagents, hooks, slash commands, output styles, project memory)
+  - Type: tooling / IA infrastructure / agent enablement
+  - Files: `ia/{specs,rules,skills,projects,templates}` (new canonical locations, with back-compat symlinks for Cursor); `tools/mcp-ia-server/src/config.ts`; `tools/mcp-ia-server/src/tools/router-for-task.ts`, `project-spec-journal.ts`, `project-spec-closeout-digest.ts`; `tools/mcp-ia-server/src/parser/project-spec-closeout-parse.ts`; `tools/mcp-ia-server/scripts/generate-ia-indexes.ts`; `tools/validate-dead-project-spec-paths.mjs`; `.claude/{settings.json,skills/,agents/,output-styles/,commands/}`; `tools/scripts/claude-hooks/`; `MEMORY.md`; new MCP tools `tools/mcp-ia-server/src/tools/{unity-callers-of,unity-subscribers-of,csharp-class-summary,glossary-lookup}.ts`; sed pass over `docs/`, `AGENTS.md`, `CLAUDE.md`, `BACKLOG.md`, `BACKLOG-ARCHIVE.md`, `ARCHITECTURE.md`, `Assets/Scripts/**/*.cs` comments
+  - Spec: `ia/projects/TECH-85-ia-migration.md`
+  - Notes: Five phases: **(1) Quick wins on Claude Code** — `.claude/settings.json` with finer permissions, `.claude/skills/` symlinks, four hooks (`SessionStart` prewarm, `PreToolUse(Bash)` denylist, `PostToolUse(Edit|Write)` cs-edit reminder, `Stop` verification reminder), `MEMORY.md` seed, slash command stubs. No breaking changes. **(2) Structural migration** — move the IA tree to `ia/{specs,rules,skills,projects,templates}`; rename rule extensions `.mdc` → `.md`; recreate back-compat symlinks for Cursor; MCP server paths updated; sed pass; indexes regenerated. **(3) Frontmatter universal + densification + verification policy consolidation** — every `ia/**/*.md` carries `purpose`/`audience`/`loaded_by`/`slices_via`; AGENTS.md, BACKLOG.md, CLAUDE.md, information-architecture-overview.md densified; four overlapping verification surfaces reduced to one canonical doc + three 5-line stubs. **(4) Native subagents + slash commands + output styles** — five subagents (`spec-kickoff`, `spec-implementer`, `verifier`, `test-mode-loop`, `closeout`) with model split (Opus orchestrators, Sonnet executors); five slash commands (`/kickoff`, `/implement`, `/verify`, `/testmode`, `/closeout`); two output styles (`verification-report`, `closeout-digest`). **(5) MCP code intelligence + glossary as graph** — three new tools (`unity_callers_of`, `unity_subscribers_of`, `csharp_class_summary`) over `Assets/Scripts/`; `glossary_lookup` extended to return `{related, cited_in, appears_in_code}`. Cursor remains a first-class consumer via back-compat symlinks (cross-extension `.mdc` → `.md` smoke-tested in Phase 2). Master plan and per-phase checklists live in **`ia/projects/TECH-85-ia-migration.md`**.
+  - Acceptance: `ia/` populated with frontmatter; back-compat symlinks resolve and Cursor `alwaysApply` still fires; MCP server reads from `ia/`; `npm run validate:all` and `npm run verify:local` green; 5 subagents + 5 slash commands + 4 hooks + 2 output styles operative under `.claude/`; 3 new MCP tools registered; `glossary_lookup` returns graph shape; no legacy pre-`ia/` namespace paths in `docs/` or code comments outside the symlinks themselves; verification policy consolidated to a single canonical doc; `MEMORY.md` exists with at least one architectural entry
+  - Depends on: none (soft: TECH-77 FTS infrastructure complements Phase 5; TECH-79 agent memory is conceptually adjacent to project `MEMORY.md`)
 
 ## UI-as-code program (exploration)
 
@@ -237,21 +245,21 @@ Evolve the **Information Architecture** system from documentation retrieval to a
 
 - [ ] **FEAT-51** — **Game data dashboard**: **time-series** **simulation** metrics, charts, dense **HUD**-style **cards** (**uGUI**)
   - Type: feature / UX + **simulation** observability
-  - Files: [`docs/ui-data-dashboard-exploration.md`](docs/ui-data-dashboard-exploration.md) (mechanisms and dependency graph); [`.cursor/projects/FEAT-51.md`](.cursor/projects/FEAT-51.md); `.cursor/specs/ui-design-system.md` (**modal**, **scroll**, **UiTheme**); `.cursor/specs/simulation-system.md` (**simulation tick** sampling — read-only); `.cursor/specs/persistence-system.md` (if **Save**/**Load** of history); `Assets/Scripts/Managers/GameManagers/` (**CityStats**, **EconomyManager**, **DemandManager**, **StatisticsManager**, **TimeManager**); new **UI** prefabs / partials as implemented
-  - Spec: `.cursor/projects/FEAT-51.md`
-  - Spec sections: `.cursor/specs/ui-design-system.md` — **§1** **Foundations**, **§3** patterns, **§5.3** polish patterns; `.cursor/specs/simulation-system.md`; `.cursor/specs/persistence-system.md` (optional persistence); [`docs/ui-data-dashboard-exploration.md`](docs/ui-data-dashboard-exploration.md)
+  - Files: [`docs/ui-data-dashboard-exploration.md`](docs/ui-data-dashboard-exploration.md) (mechanisms and dependency graph); [`ia/projects/FEAT-51.md`](ia/projects/FEAT-51.md); `ia/specs/ui-design-system.md` (**modal**, **scroll**, **UiTheme**); `ia/specs/simulation-system.md` (**simulation tick** sampling — read-only); `ia/specs/persistence-system.md` (if **Save**/**Load** of history); `Assets/Scripts/Managers/GameManagers/` (**CityStats**, **EconomyManager**, **DemandManager**, **StatisticsManager**, **TimeManager**); new **UI** prefabs / partials as implemented
+  - Spec: `ia/projects/FEAT-51.md`
+  - Spec sections: `ia/specs/ui-design-system.md` — **§1** **Foundations**, **§3** patterns, **§5.3** polish patterns; `ia/specs/simulation-system.md`; `ia/specs/persistence-system.md` (optional persistence); [`docs/ui-data-dashboard-exploration.md`](docs/ui-data-dashboard-exploration.md)
   - Notes: Delivers **exploration** **§2.1–§2.5** (history → derived metrics → chart engine → **dashboard** layout). Reuse **UI-as-code** **tokens** (**glossary** **UI design system (reference spec)**); **map** **info view** (**§2.6**) is **out of scope** — separate **FEAT-** when prioritized. **Spike** chart library (**XCharts** or equivalent) per **Decision Log**. Add chart-specific **`UiTheme`** fields in this issue or a follow-up **TECH-** row when scoped.
-  - Acceptance: per `.cursor/projects/FEAT-51.md` **§8**; chart choice and persistence stance recorded in spec **Decision Log**
+  - Acceptance: per `ia/projects/FEAT-51.md` **§8**; chart choice and persistence stance recorded in spec **Decision Log**
   - Depends on: none (soft: **BUG-14** — no per-frame **`FindObjectOfType`** in dashboard UI)
   - Related: **BUG-14**
 
 - [ ] **TECH-72** — **HUD** / **uGUI** scene hygiene for agents (**UI** inventory alignment)
   - Type: code health / **UI**-as-code enablement
-  - Files: `Assets/Scenes/MainScene.unity`; `Assets/Scenes/MainMenu.unity` (if matching issues appear); `UIManager.cs` + **`UIManager.*.cs`** partials; `CityStatsUIController.cs`; **`ProposalUIController.cs`**, **`UrbanizationProposalManager.cs`** (if removing obsolete **Proposal** chrome); `.cursor/specs/ui-design-system.md` — **§1.3.1**; `docs/reports/ui-inventory-as-built-baseline.json` (refresh after scene edits)
-  - Spec: `.cursor/projects/TECH-72.md`
-  - Spec sections: `.cursor/specs/ui-design-system.md` — **§1.3.1** **HUD and uGUI hygiene**; `.cursor/specs/unity-development-context.md` **§10** when re-exporting **UI** inventory
+  - Files: `Assets/Scenes/MainScene.unity`; `Assets/Scenes/MainMenu.unity` (if matching issues appear); `UIManager.cs` + **`UIManager.*.cs`** partials; `CityStatsUIController.cs`; **`ProposalUIController.cs`**, **`UrbanizationProposalManager.cs`** (if removing obsolete **Proposal** chrome); `ia/specs/ui-design-system.md` — **§1.3.1**; `docs/reports/ui-inventory-as-built-baseline.json` (refresh after scene edits)
+  - Spec: `ia/projects/TECH-72.md`
+  - Spec sections: `ia/specs/ui-design-system.md` — **§1.3.1** **HUD and uGUI hygiene**; `ia/specs/unity-development-context.md` **§10** when re-exporting **UI** inventory
   - Notes: Remediate **as-built** drift flagged against **Postgres** **`editor_export_ui_inventory`** **id** **8** / committed baseline: **`CommercialTaxText `** trailing space; **`RoadGrowthLabel (1)`** auto-rename; **`Canvas/DataPanelButtons/NewGameButton`** name collision vs **MainMenu**; **`GameManager`** on **`LoadGameMenuPanel`** root; **`StatsPanel`** **UIDocument** + **uGUI** boundary documentation; **`NotificationPanel`** **TMP** + legacy mix policy; **`ProposalUI`** vs glossary **Urbanization proposal** (**obsolete**)—confirm inert then remove or disconnect. **No** **simulation** rule changes. **Id policy:** **TECH-60** is **archived** for the **spec pipeline program** — do not reuse; this row uses the next **TECH** id (**TECH-72** after **TECH-71** in archive).
-  - Acceptance: per `.cursor/projects/TECH-72.md` **§8**; baseline JSON re-exported after scene changes; **§1.3.1** violations in scope either fixed or explicitly documented in spec **Decision Log**
+  - Acceptance: per `ia/projects/TECH-72.md` **§8**; baseline JSON re-exported after scene changes; **§1.3.1** violations in scope either fixed or explicitly documented in spec **Decision Log**
   - Depends on: none
   - Related: **FEAT-51**
 
@@ -262,17 +270,17 @@ Transform the economy from "money goes up forever" to a genuine city-builder eco
 - [ ] **FEAT-52** — **City services coverage** model (fire, police, education, health)
   - Type: feature (new system)
   - Files: new `ServiceCoverageManager.cs`; `CityStats.cs`; `DemandManager.cs`; `GridManager.cs`; `GridPathfinder.cs`; `MiniMapController.cs`
-  - Spec: `.cursor/projects/FEAT-52.md`
+  - Spec: `ia/projects/FEAT-52.md`
   - Notes: Generic **service coverage** system: each service **building** has a coverage **radius** computed from the **road network**. **Cells** within coverage receive **happiness** and **desirability** bonuses; **cells** outside suffer penalties. Coverage gaps visible on **minimap** as danger zones. Framework for FEAT-11 (education), FEAT-12 (police), FEAT-13 (fire). Ships with at least one concrete service type (fire station).
-  - Acceptance: per `.cursor/projects/FEAT-52.md` §8; coverage affects happiness and desirability; minimap layer shows coverage heatmap
+  - Acceptance: per `ia/projects/FEAT-52.md` §8; coverage affects happiness and desirability; minimap layer shows coverage heatmap
   - Depends on: none (happiness system shipped — see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
 
 - [ ] **FEAT-53** — **District / neighborhood** system
   - Type: feature (new system)
   - Files: new `DistrictManager.cs`; `Cell.cs` / `CellData.cs`; `CityStats.cs`; `EconomyManager.cs`; `MiniMapController.cs`; `UIManager.cs`; `GameSaveManager.cs`
-  - Spec: `.cursor/projects/FEAT-53.md`
+  - Spec: `ia/projects/FEAT-53.md`
   - Notes: Player-defined **districts** (contiguous **cell** regions with name and color). Per-**district** statistics: **population**, **happiness**, **zone** distribution, **density**, **tax** revenue. Optional per-**district** **tax** policy overrides. **Minimap** district overlay. Coordinates with FEAT-47 (**multipolar** **urban centroids**) — each **urban pole** naturally becomes a **district**.
-  - Acceptance: per `.cursor/projects/FEAT-53.md` §8; districts persist across save/load; per-district stats and tax overrides functional; minimap district layer
+  - Acceptance: per `ia/projects/FEAT-53.md` §8; districts persist across save/load; per-district stats and tax overrides functional; minimap district layer
   - Depends on: none (soft: FEAT-47 for multipolar coordination; **tax→demand** loop shipped — **managers-reference** **Demand (R / C / I)**)
 
 - [ ] **FEAT-09** — Trade / Production / Salaries (deep economy)
@@ -288,7 +296,7 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
 - [ ] **BUG-52** — **AUTO** zoning: persistent **grass cells** between **undeveloped light zoning** and new **AUTO** **street** segments (gaps not filled on later **simulation ticks**)
   - Type: bug (behavior / regression suspicion)
   - Files: `AutoZoningManager.cs`, `AutoRoadBuilder.cs`, `SimulationManager.cs` / `TimeManager.cs` (**tick execution order**, **AUTO systems**), `GrowthBudgetManager.cs` (**growth budget** vs eligibility), `RoadCacheService.cs` (**road cache** / zoneability neighbors), `GridManager.cs` if placement queries change; `TerrainManager.cs` (`RestoreTerrainForCell`) only if investigation ties gap cells to post–street-commit terrain refresh behavior
-  - Spec: `.cursor/specs/simulation-system.md` (**simulation tick**, **AUTO** pipeline), `.cursor/specs/managers-reference.md` (**Zones & Buildings**, **Demand**), `.cursor/specs/isometric-geography-system.md` §13.9 (**road reservation** / AUTO interaction) as needed
+  - Spec: `ia/specs/simulation-system.md` (**simulation tick**, **AUTO** pipeline), `ia/specs/managers-reference.md` (**Zones & Buildings**, **Demand**), `ia/specs/isometric-geography-system.md` §13.9 (**road reservation** / AUTO interaction) as needed
   - Notes: **Observed:** After **AUTO** places **streets** (path and visuals OK), **AUTO** zoning creates **RCI** **undeveloped light zoning** patches of varying sizes (acceptable), but strips of **grass cells** often remain **Moore**-adjacent to the **road stroke** — typically a **one-cell** buffer between **zoning** and **street**. Those gap **cells** appear to stay unzoned across many later **simulation ticks**, as if permanently ineligible, not merely deferred by **growth budget**. **Expected:** Variable patch sizes are fine; any **grass cell** that remains valid for **AUTO** zoning (per design) should eventually be a candidate on a future **simulation tick** unless explicitly ruled out by documented rules (e.g. corridor reservation). **Regression suspicion:** surfaced after **TerrainManager** path-terraform refresh skipped **building**-occupied **cells**; verify no accidental exclusion of road-adjacent **grass cells** in zone candidate sets, **road cache invalidation**, or neighbor queries. **Related:** **FEAT-36** (AUTO zoning candidate expansion); **FEAT-43** (**growth rings** / weights); **AUTO** road/zoning coordination fixes in archive.
   - Acceptance: Repro in **AUTO** simulation: document coordinates of gap **grass cells**; confirm whether they are excluded from `AutoZoningManager` (or equivalent) forever or until manual action; fix or document intended rule so gaps either fill over time or are explained in spec/backlog.
   - Depends on: none
@@ -309,7 +317,7 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
 - [ ] **BUG-55** — Codebase audit: critical simulation, data integrity, and controller bugs (10 fixes)
   - Type: fix (crasher + data corruption + simulation logic + memory leak)
   - Files: `EmploymentManager.cs`, `AutoZoningManager.cs`, `CellData.cs`, `GrowthBudgetManager.cs`, `AutoRoadBuilder.cs`, `DemandManager.cs`, `Cell.cs`, `RoadStrokeTerrainRules.cs`, `GridPathfinder.cs`, `SimulateGrowthToggle.cs`, `GrowthBudgetSlidersController.cs`, `CityStatsUIController.cs`
-  - Spec: `.cursor/projects/BUG-55.md`
+  - Spec: `ia/projects/BUG-55.md`
   - Notes: Full audit ([`docs/audit-codebase-2026-04-07.md`](docs/audit-codebase-2026-04-07.md)). **Crashers:** EmploymentManager div/0 when no jobs exist; Cell `Enum.Parse` crash on corrupt saves. **Data corruption:** AutoZoningManager spends budget without placing zone (no refund); CellData forces height=1 on valid height-0 border cells (progressive terrain corruption on save/load). **Sim logic:** GrowthBudgetManager minimum never enforced (`Mathf.Min` inverted); BuildingTracker counts all zones instead of empty ones; road cache stale within tick; water height `<= 0` misclassifies valid terrain; demand asymmetry (1.5 penalty vs 1.2 boost). **Memory leaks:** 3 controllers missing `OnDestroy()` listener cleanup.
   - Acceptance: all 10 fixes landed; Unity compiles; no crash on New Game or Load Game; growth budget and demand stabilize
   - Depends on: none
@@ -338,14 +346,14 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
 - [ ] **BUG-14** — `FindObjectOfType` in Update/per-frame degrades performance
   - Type: fix (performance)
   - Files: `CursorManager.cs` (Update), `UIManager.cs` (UpdateUI)
-  - Spec: `.cursor/projects/BUG-14.md`
+  - Spec: `ia/projects/BUG-14.md`
   - Notes: `CursorManager` caches `UIManager` in `Start()`; **`UIManager.UpdateUI()`** still calls `FindObjectOfType` for **EmploymentManager**, **DemandManager**, and **StatisticsManager** each frame — cache in `Awake`/`Start`. **`UpdateGridCoordinatesDebugText`** may also call `FindObjectOfType` from `LateUpdate`; remove per-frame lookups per **invariants**. See project spec for current code pointers. **Prevention:** **TECH-26** CI/script scanner flags new per-frame **`FindObjectOfType`** use.
 
 ## Medium Priority
 - [ ] **BUG-49** — Manual **street** drawing: preview builds the **road stroke** cell-by-cell (animated); should show full path at once
   - Type: bug (UX / preview)
   - Files: `RoadManager.cs` (`HandleRoadDrawing`, preview placement / ghost or temp prefab updates per frame), `GridManager.cs` if road mode input drives incremental preview; any coroutine or per-tick preview extension of the **road stroke**
-  - Spec: `.cursor/specs/isometric-geography-system.md` §14 (manual **streets** — preview behavior)
+  - Spec: `ia/specs/isometric-geography-system.md` §14 (manual **streets** — preview behavior)
   - Notes: **Observed:** While drawing a **street**, **preview mode** visually **extends the road stroke one cell at a time**, like an animation, instead of updating the full proposed **road stroke** in one step. **Expected:** **No** step-by-step or staggered preview animation. The game should **compute the full valid road stroke** (same rules as commit / **road validation pipeline** / `TryPrepareRoadPlacementPlan` or equivalent) for the current **stroke**, **then** instantiate or refresh **preview** prefabs for that complete **road stroke** in a single update — or batch updates without visible per-cell delay. **Related:** street commit vs terrain refresh fixes in archive — keep preview/commit paths consistent.
   - Acceptance: **Street** preview shows the full computed **road stroke** in one visual update; no visible cell-by-cell animation during drag
   - Depends on: none
@@ -358,20 +366,20 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
 - [ ] **BUG-17** — `cachedCamera` is null when creating `ChunkCullingSystem`
   - Type: fix
   - Files: `GridManager.cs`
-  - Spec: `.cursor/projects/BUG-17.md`
+  - Spec: `ia/projects/BUG-17.md`
   - Notes: In InitializeGrid() ChunkCullingSystem is created with `cachedCamera`, but it is only assigned in Update(). May cause NullReferenceException.
 
 - [ ] **BUG-48** — Minimap stays stale until toggling a layer (e.g. data-visualization / **desirability** / **urban centroid**)
   - Type: bug
   - Files: `MiniMapController.cs` (`RebuildTexture`, `Update`; layer toggles call `RebuildTexture` but nothing runs on **simulation tick**), `TimeManager.cs` / `SimulationManager.cs` if wiring refresh to the **simulation tick** or a shared event
-  - Spec: `.cursor/projects/BUG-48.md`
+  - Spec: `ia/projects/BUG-48.md`
   - Notes: **Observed:** The procedural minimap **does not refresh** as the city changes unless the player **toggles a minimap layer** (or other actions that call `RebuildTexture`, such as opening the panel). **Expected:** The minimap should track **zones**, **streets**, **open water**, **forests**, etc. **without** requiring layer toggles. **Implementation:** Rebuild at least **once per simulation tick** while the minimap is visible, **or** a **performance-balanced** approach (throttled full rebuild, dirty rect / incremental update, or event-driven refresh when grid/**zone**/**street**/**water body** data changes) — profile full `RebuildTexture` cost first (see project spec; measurement tooling **task 8** in `docs/agent-tooling-verification-priority-tasks.md`). Class summary in code states rebuilds on **geography initialization** completion, grid restore, panel open, and layer changes **not** on a fixed timer — that gap is this bug. **Related:** water layer alignment shipped in archive; **FEAT-42** (optional **HeightMap** layer).
   - Depends on: none
 
 - [ ] **FEAT-36** — Expand **AUTO** zoning and **AUTO** road candidates to include **forests** and cells meeting **land slope eligibility**
   - Type: feature
   - Files: `GridManager.cs`, `AutoZoningManager.cs`, `AutoRoadBuilder.cs`
-  - Notes: Treat **grass cells**, **forest (coverage)** cells, and cardinal-ramp **slopes** (per **land slope eligibility**) as valid candidates for **AUTO** zoning and **AUTO** road expansion. Capture any design notes in this issue or in `.cursor/specs/isometric-geography-system.md` if rules become stable.
+  - Notes: Treat **grass cells**, **forest (coverage)** cells, and cardinal-ramp **slopes** (per **land slope eligibility**) as valid candidates for **AUTO** zoning and **AUTO** road expansion. Capture any design notes in this issue or in `ia/specs/isometric-geography-system.md` if rules become stable.
 
 - [ ] **FEAT-35** — Area demolition tool (bulldozer drag-to-select)
   - Type: feature
@@ -381,7 +389,7 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
 - [ ] **FEAT-03** — **Forest (coverage)** mode hold-to-place
   - Type: feature
   - Files: `ForestManager.cs`, `GridManager.cs`
-  - Spec: `.cursor/projects/FEAT-03.md`
+  - Spec: `ia/projects/FEAT-03.md`
   - Notes: Currently requires click per **cell**. Allow continuous drag.
 
 - [ ] **FEAT-04** — Random **forest (coverage)** spray tool
@@ -399,7 +407,7 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
 - [ ] **TECH-13** — Remove obsolete **urbanization proposal** system (dead code, UI, models)
   - Type: refactor (cleanup)
   - Files: `UrbanizationProposalManager.cs`, `ProposalUIController.cs`, `UrbanizationProposal.cs` (and related), `SimulationManager.cs`, `UIManager.cs`, scene references, **save data** if any
-  - Spec: `.cursor/projects/TECH-13.md`
+  - Spec: `ia/projects/TECH-13.md`
   - Notes: The **urbanization proposal** feature is **obsolete** and intentionally **disabled**; the game is stable without it. **Keep** `UrbanizationProposalManager` disconnected from the simulation — do **not** re-enable proposals. **Keep** `UrbanCentroidService` / **urban growth rings** for **AUTO** roads and zoning. This issue tracks **full removal** of proposal-specific code and UI after a safe audit (no **save data** breakage). Supersedes older proposal bugs — see archive.
 
 - [ ] **TECH-04** — Remove direct access to `gridArray`/`cellArray` outside GridManager
@@ -410,19 +418,19 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
 - [ ] **TECH-02** — Change public fields to `[SerializeField] private` in managers
   - Type: refactor
   - Files: `ZoneManager.cs`, `RoadManager.cs`, `GridManager.cs`, `CityStats.cs`, `AutoZoningManager.cs`, `AutoRoadBuilder.cs`, `UIManager.cs`, `WaterManager.cs`
-  - Spec: `.cursor/projects/TECH-02.md`
+  - Spec: `ia/projects/TECH-02.md`
   - Notes: Dependencies and prefabs exposed as `public` allow accidental access from any class. Use `[SerializeField] private` to encapsulate.
 
 - [ ] **TECH-03** — Extract magic numbers to constants or ScriptableObjects
   - Type: refactor
   - Files: multiple (GridManager, CityStats, RoadManager, UIManager, TimeManager, TerrainManager, WaterManager, EconomyManager, ForestManager, InterstateManager, etc.)
-  - Spec: `.cursor/projects/TECH-03.md`
+  - Spec: `ia/projects/TECH-03.md`
   - Notes: **Building** costs, economic balance, **height generation** parameters, **sorting order** offsets (**type offsets**, **DEPTH_MULTIPLIER**, **HEIGHT_MULTIPLIER**), **pathfinding cost model** weights, initial dates, probabilities — all hardcoded. Extract to named constants or configuration ScriptableObject for easier tuning.
 
 - [ ] **TECH-05** — Extract duplicated dependency resolution pattern
   - Type: refactor
   - Files: ~25+ managers with `if (X == null) X = FindObjectOfType<X>()` block
-  - Spec: `.cursor/projects/TECH-05.md`
+  - Spec: `ia/projects/TECH-05.md`
   - Notes: Consider helper method, base class, or extension method to reduce duplication of Inspector + FindObjectOfType fallback pattern.
 
 
@@ -448,7 +456,7 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
 - [ ] **TECH-14** — Remove residual placeholder / test scripts
   - Type: refactor (cleanup)
   - Files: `CityManager.cs` (namespace-only stub), `TestScript.cs` (compile smoke test)
-  - Spec: `.cursor/projects/TECH-14.md`
+  - Spec: `ia/projects/TECH-14.md`
   - Notes: Delete or replace with real content only if nothing references them; verify no scene/Inspector references.
 
 - [ ] **FEAT-11** — Education level / Schools
@@ -505,7 +513,7 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
 - [ ] **FEAT-46** — **Geography** authoring: **territory** / **urban** area **map** editor + parameter dashboard
   - Type: feature (tools / **New Game** flow)
   - Files: `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `ForestManager.cs`, `UIManager.cs` (or dedicated **Editor** / in-game **wizard**); **JSON** / **ScriptableObject** templates (align **glossary** **Interchange JSON** + **Compute-lib program** / **territory-compute-lib (TECH-37)**)
-  - Notes: In-game or **Editor** flow to author **city** / **territory** **maps** with **isometric** terrain controls: **map** size, **water** / **forest** / **height** mix, **sea** / **river** / **lake** proportions, etc. Reuse the same parameter pipeline for future **player** **terraform**, **basin** / **elevation** tools, **water body** placement in **depressions**, and **AUTO** **geography**-driven tools. **Spec:** canonical **geography initialization** + **water-terrain** + **geo** when implemented (no `.cursor/projects/` spec until scheduled).
+  - Notes: In-game or **Editor** flow to author **city** / **territory** **maps** with **isometric** terrain controls: **map** size, **water** / **forest** / **height** mix, **sea** / **river** / **lake** proportions, etc. Reuse the same parameter pipeline for future **player** **terraform**, **basin** / **elevation** tools, **water body** placement in **depressions**, and **AUTO** **geography**-driven tools. **Spec:** canonical **geography initialization** + **water-terrain** + **geo** when implemented (no `ia/projects/` spec until scheduled).
   - Depends on: none (coordinates **FEAT-18**, **FEAT-41**; soft: **glossary** **Compute-lib program** / **JSON program (TECH-21)** docs)
 
 - [ ] **FEAT-47** — **Multipolar** **urban centroid** model, per-pole **urban growth rings**, **connurbation**

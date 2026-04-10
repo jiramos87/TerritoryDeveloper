@@ -37,7 +37,7 @@ export function registerProjectSpecJournalTools(server: McpServer): void {
     "project_spec_journal_persist",
     {
       description:
-        "Append **Decision Log** and **Lessons learned** bodies from a `.cursor/projects/{ISSUE_ID}.md` file into **Postgres** table `ia_project_spec_journal` (requires `DATABASE_URL` or committed `config/postgres-dev.json` when not in CI). Use during **project-spec-close** **before** deleting the spec. Inserts one row per non-empty section. Idempotent re-runs append additional rows.",
+        "Append **Decision Log** and **Lessons learned** bodies from a project spec under `ia/projects/{ISSUE_ID}[-{description}].md` (or legacy `.cursor/projects/{ISSUE_ID}.md`) into **Postgres** table `ia_project_spec_journal` (requires `DATABASE_URL` or committed `config/postgres-dev.json` when not in CI). Use during **project-spec-close** (umbrella close) **before** deleting the spec, or during **project-stage-close** to capture per-stage progress. Inserts one row per non-empty section. Idempotent re-runs append additional rows.",
       inputSchema: {
         issue_id: z
           .string()
@@ -49,7 +49,7 @@ export function registerProjectSpecJournalTools(server: McpServer): void {
           .string()
           .optional()
           .describe(
-            "Repo-relative `.cursor/projects/{ISSUE_ID}.md`. Exactly one of `issue_id` or `spec_path` required.",
+            "Repo-relative path under `ia/projects/` or `.cursor/projects/` (legacy). Filename may be `{ISSUE_ID}.md` or `{ISSUE_ID}-{description}.md` per TECH-85 Q8. Exactly one of `issue_id` or `spec_path` required.",
           ),
         git_sha: z
           .string()

@@ -1,11 +1,11 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-10T14:47:58.871Z",
+  "last_generated": "2026-04-10T20:09:24.215Z",
   "specs": [
     {
       "key": "reference-spec-structure",
-      "path": ".cursor/specs/REFERENCE-SPEC-STRUCTURE.md",
+      "path": "ia/specs/REFERENCE-SPEC-STRUCTURE.md",
       "sections": [
         {
           "section_id": "reference-spec-structure-cursor-specs",
@@ -77,7 +77,7 @@
     },
     {
       "key": "glossary",
-      "path": ".cursor/specs/glossary.md",
+      "path": "ia/specs/glossary.md",
       "sections": [
         {
           "section_id": "glossary-territory-developer",
@@ -185,7 +185,7 @@
     },
     {
       "key": "isometric-geography-system",
-      "path": ".cursor/specs/isometric-geography-system.md",
+      "path": "ia/specs/isometric-geography-system.md",
       "sections": [
         {
           "section_id": "isometric-geography-system-technical-specification",
@@ -779,7 +779,7 @@
     },
     {
       "key": "managers-reference",
-      "path": ".cursor/specs/managers-reference.md",
+      "path": "ia/specs/managers-reference.md",
       "sections": [
         {
           "section_id": "managers-services-reference",
@@ -875,7 +875,7 @@
     },
     {
       "key": "persistence-system",
-      "path": ".cursor/specs/persistence-system.md",
+      "path": "ia/specs/persistence-system.md",
       "sections": [
         {
           "section_id": "persistence-system-reference-spec",
@@ -911,7 +911,7 @@
     },
     {
       "key": "roads-system",
-      "path": ".cursor/specs/roads-system.md",
+      "path": "ia/specs/roads-system.md",
       "sections": [
         {
           "section_id": "roads-system-reference-spec",
@@ -971,7 +971,7 @@
     },
     {
       "key": "simulation-system",
-      "path": ".cursor/specs/simulation-system.md",
+      "path": "ia/specs/simulation-system.md",
       "sections": [
         {
           "section_id": "simulation-system-reference-spec",
@@ -1031,7 +1031,7 @@
     },
     {
       "key": "ui-design-system",
-      "path": ".cursor/specs/ui-design-system.md",
+      "path": "ia/specs/ui-design-system.md",
       "sections": [
         {
           "section_id": "ui-ux-design-system-spec",
@@ -1253,7 +1253,7 @@
     },
     {
       "key": "unity-development-context",
-      "path": ".cursor/specs/unity-development-context.md",
+      "path": "ia/specs/unity-development-context.md",
       "sections": [
         {
           "section_id": "unity-development-context-territory-developer",
@@ -1343,7 +1343,7 @@
     },
     {
       "key": "water-terrain-system",
-      "path": ".cursor/specs/water-terrain-system.md",
+      "path": "ia/specs/water-terrain-system.md",
       "sections": [
         {
           "section_id": "water-terrain-system-reference-spec",

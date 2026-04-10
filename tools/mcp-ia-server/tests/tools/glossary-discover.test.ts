@@ -12,14 +12,14 @@ function fakeRegistry(): SpecRegistryEntry[] {
     {
       key: "roads-system",
       fileName: "roads-system.md",
-      filePath: "/x/.cursor/specs/roads-system.md",
+      filePath: "/x/ia/specs/roads-system.md",
       description: "",
       category: "spec",
     },
     {
       key: "roads",
-      fileName: "roads.mdc",
-      filePath: "/x/.cursor/rules/roads.mdc",
+      fileName: "roads.md",
+      filePath: "/x/ia/rules/roads.md",
       description: "",
       category: "rule",
     },
@@ -29,7 +29,7 @@ function fakeRegistry(): SpecRegistryEntry[] {
 describe("resolveSpecKeyFromReference", () => {
   it("resolves first spec document token, not a rule with overlapping name", () => {
     const r = resolveSpecKeyFromReference(
-      "roads-system §3; see also roads.mdc",
+      "roads-system §3; see also roads.md",
       fakeRegistry(),
     );
     assert.ok(r);
@@ -42,7 +42,7 @@ describe("resolveSpecKeyFromReference", () => {
       {
         key: "isometric-geography-system",
         fileName: "isometric-geography-system.md",
-        filePath: "/x/.cursor/specs/isometric-geography-system.md",
+        filePath: "/x/ia/specs/isometric-geography-system.md",
         description: "",
         category: "spec",
       },

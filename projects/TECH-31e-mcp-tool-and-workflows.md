@@ -12,7 +12,7 @@ Register a **territory-ia** **MCP** tool (name TBD, e.g. `scenario_resolve` / `t
 
 - Tool inputs: **scenario id** and/or inline descriptor reference path.
 - Tool outputs: paths, invariant-safe hints, links to verification steps—keep responses small per agent-tooling rules.
-- Cross-link [`.cursor/skills/close-dev-loop/SKILL.md`](../.cursor/skills/close-dev-loop/SKILL.md).
+- Cross-link [`ia/skills/close-dev-loop/SKILL.md`](../ia/skills/close-dev-loop/SKILL.md).
 - Run **`project-implementation-validation`** subset if **`tools/mcp-ia-server`** or **`docs/schemas`** change.
 
 ## Non-goals

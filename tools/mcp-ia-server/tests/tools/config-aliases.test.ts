@@ -11,21 +11,21 @@ const mockRegistry: SpecRegistryEntry[] = [
   {
     key: "isometric-geography-system",
     fileName: "isometric-geography-system.md",
-    filePath: "/repo/.cursor/specs/isometric-geography-system.md",
+    filePath: "/repo/ia/specs/isometric-geography-system.md",
     description: "",
     category: "spec",
   },
   {
     key: "roads-system",
     fileName: "roads-system.md",
-    filePath: "/repo/.cursor/specs/roads-system.md",
+    filePath: "/repo/ia/specs/roads-system.md",
     description: "",
     category: "spec",
   },
   {
     key: "roads",
-    fileName: "roads.mdc",
-    filePath: "/repo/.cursor/rules/roads.mdc",
+    fileName: "roads.md",
+    filePath: "/repo/ia/rules/roads.md",
     description: "Roads rule",
     category: "rule",
   },
@@ -51,7 +51,7 @@ test("findEntryForSpecDoc uses roads alias for spec not rule", () => {
   assert.equal(e?.key, "roads-system");
 });
 
-test("findRuleEntry resolves roads.mdc", () => {
+test("findRuleEntry resolves roads rule", () => {
   const e = findRuleEntry(mockRegistry, "roads");
   assert.equal(e?.key, "roads");
   assert.equal(e?.category, "rule");

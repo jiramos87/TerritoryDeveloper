@@ -2,7 +2,7 @@
 /**
  * Emit a closeout worksheet (Markdown or JSON) from a project spec — TECH-58.
  * Usage: npx tsx scripts/project-spec-closeout-report.ts --issue FEAT-49 [--json]
- *     or npx tsx scripts/project-spec-closeout-report.ts --path .cursor/projects/FEAT-49.md [--json]
+ *     or npx tsx scripts/project-spec-closeout-report.ts --path ia/projects/FEAT-49.md [--json]
  */
 
 import fs from "node:fs";
@@ -79,7 +79,7 @@ function main(): void {
   if (!issue_id && !spec_path) {
     console.error(
       "Usage: project-spec-closeout-report.ts --issue FEAT-49 [--json]\n" +
-        "    or project-spec-closeout-report.ts --path .cursor/projects/FEAT-49.md [--json]",
+        "    or project-spec-closeout-report.ts --path ia/projects/FEAT-49.md [--json]",
     );
     process.exit(1);
   }

@@ -172,7 +172,7 @@ This powers §2.3 and could also feed `project-spec-close` step 4.
 
 ### 4.3 Enhance `closeout:verify` to include diff-based IA checks
 
-Currently `closeout:verify` runs `validate:dead-project-specs` + `generate:ia-indexes --check`. Extend it to also check that if the diff touched `.cursor/specs/glossary.md`, the committed `glossary-index.json` is in sync (already covered by `generate:ia-indexes --check`, but make the error message explicit about which source changed).
+Currently `closeout:verify` runs `validate:dead-project-specs` + `generate:ia-indexes --check`. Extend it to also check that if the diff touched `ia/specs/glossary.md`, the committed `glossary-index.json` is in sync (already covered by `generate:ia-indexes --check`, but make the error message explicit about which source changed).
 
 ### 4.4 `npm run validate:backlog-deps -- --issue TECH-75`
 
@@ -418,7 +418,7 @@ Add to the validation manifest:
 
 | Artifact | Type | Location | Powers |
 |----------|------|----------|--------|
-| §7b Test Contracts | Template section | `.cursor/templates/project-spec-template.md` | Kickoff, implement |
+| §7b Test Contracts | Template section | `ia/templates/project-spec-template.md` | Kickoff, implement |
 | `context_bundle` | MCP tool | `tools/mcp-ia-server/src/tools/context-bundle.ts` | All skills |
 | `invariants_for_files` | MCP tool | `tools/mcp-ia-server/src/tools/invariants-for-files.ts` | Implement, close |
 | `project_spec_status` | MCP tool | `tools/mcp-ia-server/src/tools/project-spec-status.ts` | Implement |

@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "enabledMcpjsonServers": ["territory-ia"],
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "TodoWrite",
+      "Edit",
+      "Write",
+      "MultiEdit",
+      "NotebookEdit",
+      "Bash(git status)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git symbolic-ref:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git config --get:*)",
+      "Bash(npm run validate:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run generate:ia-indexes:*)",
+      "Bash(npm run db:bridge-preflight)",
+      "Bash(npm run db:bridge-preflight:*)",
+      "Bash(npm run unity:compile-check)",
+      "Bash(npm run unity:compile-check:*)",
+      "Bash(npm run unity:ensure-editor)",
+      "Bash(npm run unity:ensure-editor:*)",
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(wc:*)",
+      "Bash(test:*)",
+      "Bash(true)",
+      "Bash(false)",
+      "Bash(mkdir:*)",
+      "Bash(mkdir -p:*)",
+      "Bash(ln:*)",
+      "Bash(ln -s:*)",
+      "Bash(ln -sf:*)",
+      "Bash(ln -sfn:*)",
+      "Bash(chmod:*)",
+      "Bash(chmod +x:*)",
+      "Bash(touch:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(mktemp:*)",
+      "Bash(printf:*)",
+      "Bash(echo:*)",
+      "Bash(awk:*)",
+      "Bash(sed:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(sort:*)",
+      "Bash(uniq:*)",
+      "Bash(cut:*)",
+      "Bash(tr:*)",
+      "Bash(diff:*)",
+      "Bash(realpath:*)",
+      "Bash(readlink:*)",
+      "Bash(file:*)",
+      "Bash(stat:*)",
+      "Bash(basename:*)",
+      "Bash(dirname:*)",
+      "Bash(env)",
+      "Bash(pwd)",
+      "Bash(which:*)",
+      "Bash(npm run db:migrate:*)",
+      "Bash(npm run db:persist-project-journal:*)",
+      "mcp__territory-ia__*"
+    ],
+    "ask": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git restore:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git rebase:*)",
+      "Bash(git reset:*)",
+      "Bash(git push:*)",
+      "Bash(git stash:*)",
+      "Bash(git clean:*)",
+      "Bash(npm run verify:*)",
+      "Bash(npm run unity:testmode-batch:*)",
+      "Bash(rm:*)",
+      "Bash(rmdir:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push --force-with-lease*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -fd*)",
+      "Bash(git clean -fdx*)",
+      "Bash(rm -rf .cursor*)",
+      "Bash(rm -rf ia*)",
+      "Bash(rm -rf MEMORY.md*)",
+      "Bash(rm -rf .claude*)",
+      "Bash(rm -rf .git*)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~*)",
+      "Bash(sudo:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tools/scripts/claude-hooks/session-start-prewarm.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tools/scripts/claude-hooks/bash-denylist.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tools/scripts/claude-hooks/cs-edit-reminder.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tools/scripts/claude-hooks/verification-reminder.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

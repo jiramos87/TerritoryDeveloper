@@ -1,7 +1,7 @@
 # UI as-built critique — design-system reality vs product goals
 
-**Program:** **UI-as-code program** (**§ Completed** — [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) **Recent archive**); normative **`.cursor/specs/ui-design-system.md`**.  
-**Source of truth for this critique:** [`.cursor/specs/ui-design-system.md`](../.cursor/specs/ui-design-system.md) **as-built** sections (§1–§4, §2–§3), grounded in committed inventory [`docs/reports/ui-inventory-as-built-baseline.json`](reports/ui-inventory-as-built-baseline.json).  
+**Program:** **UI-as-code program** (**§ Completed** — [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) **Recent archive**); normative **`ia/specs/ui-design-system.md`**.  
+**Source of truth for this critique:** [`ia/specs/ui-design-system.md`](../ia/specs/ui-design-system.md) **as-built** sections (§1–§4, §2–§3), grounded in committed inventory [`docs/reports/ui-inventory-as-built-baseline.json`](reports/ui-inventory-as-built-baseline.json).  
 **Execution / capstone:** **P1–P9** below map to **shipped** work and normative **`ui-design-system.md`** sections (**§5.2** theme/prefab paths, **§3** patterns). Historical **BACKLOG** trace: [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) **Recent archive**.  
 **Language:** Planning note only; gameplay rules stay in **FEAT-**/**BUG-** issues.
 
@@ -145,7 +145,7 @@ Original IDs **P1–P9** are **refined** against **`ui-design-system.md`** (**§
 
 ## 7. References
 
-- [`.cursor/specs/ui-design-system.md`](../.cursor/specs/ui-design-system.md)
+- [`ia/specs/ui-design-system.md`](../ia/specs/ui-design-system.md)
 - [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md) — **Recent archive** (**UI-as-code program** umbrella + capstone)
 - [`docs/reports/ui-inventory-as-built-baseline.json`](reports/ui-inventory-as-built-baseline.json)
 - **BACKLOG:** **BUG-14**

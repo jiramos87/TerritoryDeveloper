@@ -52,7 +52,7 @@ interface GlossaryIndexDocument {
 }
 
 function buildSpecIndex(): SpecIndexDocument {
-  const specsDir = path.join(repoRoot, ".cursor", "specs");
+  const specsDir = path.join(repoRoot, "ia", "specs");
   const names = fs
     .readdirSync(specsDir)
     .filter((n) => n.endsWith(".md"))
@@ -89,7 +89,7 @@ function buildSpecIndex(): SpecIndexDocument {
 }
 
 function buildGlossaryIndex(): GlossaryIndexDocument {
-  const glossaryPath = path.join(repoRoot, ".cursor", "specs", "glossary.md");
+  const glossaryPath = path.join(repoRoot, "ia", "specs", "glossary.md");
   const entries = parseGlossary(glossaryPath);
   const terms: Record<string, { spec_key: string; anchor: string }> = {};
 
