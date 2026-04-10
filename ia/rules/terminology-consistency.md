@@ -9,14 +9,8 @@ alwaysApply: true
 
 # Terminology and information consistency
 
-When you **add or change** code, `ia/specs/`, `ia/rules/`, `BACKLOG.md`, `docs/`, how-tos, tutorials, or **territory-ia** MCP tool names and descriptions:
+- Use `ia/specs/glossary.md` vocabulary across code, specs, rules, `BACKLOG.md`, `docs/`, MCP tool names. Prefer glossary table names (`HeightMap`, `wet run`, `road stroke`, etc.) over ad-hoc synonyms. If glossary and a spec disagree, **the spec wins** (per glossary header).
+- Issue ids (`BUG-` / `FEAT-` / `TECH-` / `ART-` / `AUDIO-`) appear **only** in `BACKLOG.md` (open) and `BACKLOG-ARCHIVE.md` (closed) — never in glossary, reference specs, rules (except this line), skills, `docs/`, or code comments.
+- New domain term → add a glossary row **and** update the authoritative spec section. Do not leave the term only in backlog or chat.
 
-1. **Domain language** — Use the same terms as [`ia/specs/glossary.md`](ia/specs/glossary.md) and the **linked specs** (especially `isometric-geography-system.md` for roads, water, slopes, sorting). Prefer **glossary table names** (`HeightMap`, `wet run`, `road stroke`, etc.) over ad-hoc synonyms. If the glossary and a spec disagree, **the spec wins** (per glossary header).
-2. **C# and assets** — Follow [`ia/rules/coding-conventions.md`](ia/rules/coding-conventions.md) for identifiers, XML docs, and new prefab naming.
-3. **Backlog** — Issue ids (`BUG-` / `FEAT-` / `TECH-` / …) appear **only** in [`BACKLOG.md`](BACKLOG.md) (open rows) and [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). **Do not** cite those ids in **glossary**, **reference specs**, **rules** (except this line), **skills**, `docs/` narratives, or code comments—use **glossary** terms and links to specs. In **BACKLOG** **Notes** / **Files** / **Acceptance**, reuse vocabulary from specs/glossary so rows stay consistent with durable IA.
-4. **MCP tools** — Tool names are **snake_case** and must match server registration (`tools/mcp-ia-server/src/index.ts`); update [`tools/mcp-ia-server/README.md`](tools/mcp-ia-server/README.md) and [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) when adding or renaming tools.
-5. **New concepts** — If you introduce a **new** domain term or redefine behavior, add or update the **glossary** row and the **authoritative spec** section; do not leave the term only in backlog or chat.
-6. **Project specs** (`ia/projects/{ISSUE_ID}.md`) — Use glossary terms in **Open Questions**; those questions define **game logic**, not implementation (see [`AGENTS.md`](AGENTS.md) `ia/projects/` policy and [`PROJECT-SPEC-STRUCTURE.md`](../projects/PROJECT-SPEC-STRUCTURE.md)).
-7. **Reference specs** (`ia/specs/*.md`) — Follow [`REFERENCE-SPEC-STRUCTURE.md`](../specs/REFERENCE-SPEC-STRUCTURE.md) for permanent spec authoring; prefer glossary vocabulary and keep **isometric-geography-system.md** authoritative for shared terrain/road/water rules.
-
-Full workflow: [`AGENTS.md`](AGENTS.md) — Terminology and information consistency.
+Authoring guidance (C# conventions, MCP tool registration, project-spec / reference-spec authoring): see [`ia/rules/terminology-consistency-authoring.md`](terminology-consistency-authoring.md) — fetch via `rule_content terminology-consistency-authoring` when editing those surfaces. Full workflow: [`AGENTS.md`](../../AGENTS.md) — Terminology and information consistency.

@@ -3,6 +3,7 @@
 @ia/rules/invariants.md
 @ia/rules/terminology-consistency.md
 @ia/rules/mcp-ia-default.md
+@ia/rules/agent-output-caveman.md
 
 ## 1. What this repo is
 
@@ -16,33 +17,29 @@ Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files
 
 | File | What it is |
 |---|---|
-| `MEMORY.md` (root) | Project memory. One-line entries; promote to `.claude/memory/{slug}.md` only when an entry exceeds ~10 lines (per Q12). |
+| `MEMORY.md` (root) | Repo-scoped project memory. One-line entries; promote to `.claude/memory/{slug}.md` when an entry exceeds ~10 lines. Distinct from user auto-memory under `~/.claude-personal/projects/.../memory/` (cross-project, per-user). |
 | `.claude/settings.json` | Hooks + permissions. **Do not strip `defaultMode: "acceptEdits"`** and **do not split the `mcp__territory-ia__*` wildcard** — both regress per-call approval friction (TECH-85 §6 / §9 issue #4 / §10). |
 | `.claude/skills/{name}` | Directory-level symlinks → `ia/skills/{name}/`. Same recipes Cursor reads. |
-| `.claude/commands/*.md` | Slash command stubs (`/kickoff /implement /verify /testmode /closeout`); real wrappers land in **TECH-85 Stage 4** (subagent dispatch). |
-| `ia/skills/*/SKILL.md` | Workflow recipes — open the matching `SKILL.md` when the task triggers. Index: `ia/skills/README.md`. |
-| `ia/rules/{invariants,terminology-consistency,mcp-ia-default}.md` | Always-loaded guardrails (imported above). |
+| `.claude/agents/*.md` | 5 native subagents — `spec-kickoff`, `spec-implementer`, `verifier`, `test-mode-loop`, `closeout`. Opus orchestrators (kickoff / implementer / closeout); Sonnet executors (verifier / test-mode-loop). Each body carries a `caveman:caveman` directive (subagents run in fresh context and do not inherit the parent SessionStart hook). |
+| `.claude/commands/*.md` | Slash command dispatchers → subagents under `.claude/agents/{name}.md` (`/kickoff`, `/implement`, `/verify`, `/testmode`, `/closeout`). Each forwards a caveman-asserting prompt. `/closeout` confirmation prompts stay full English. |
+| `.claude/output-styles/*.md` | 2 output styles — `verification-report` (JSON header + caveman summary, used by `/verify`) and `closeout-digest` (JSON header + caveman summary, used by `/closeout`). |
+| `ia/skills/*/SKILL.md` | Workflow recipes — open the matching `SKILL.md` when the task triggers. Index: `ia/skills/README.md`. The 6 lifecycle recipes (`project-spec-kickoff`, `project-spec-implement`, `project-implementation-validation`, `agent-test-mode-verify`, `project-spec-close`, `project-stage-close`) carry a caveman preamble so direct (non-subagent) invocations inherit the same default. |
+| `ia/rules/{invariants,terminology-consistency,mcp-ia-default,agent-output-caveman}.md` | Always-loaded guardrails (imported above). |
 | `docs/agent-led-verification-policy.md` | Single canonical Verification policy. |
 
-## 4. Hooks (declared in `.claude/settings.json`, scripts under `tools/scripts/claude-hooks/`)
+## 4. Hooks
 
-| Event | Script | Behavior |
-|---|---|---|
-| `SessionStart` | `session-start-prewarm.sh` | Branch + last `verify:local` exit + last bridge preflight exit + top in-progress issues. Reads marker files; does not run preflights. |
-| `PreToolUse(Bash)` | `bash-denylist.sh` | **Blocks** `git push --force*`, `git reset --hard*`, `git clean -fd*`, `rm -rf {.cursor,ia,MEMORY.md,.claude,.git,/,~}*`, `sudo *` (exit 2). |
-| `PostToolUse(Edit\|Write\|MultiEdit)` | `cs-edit-reminder.sh` | Advisory after editing `Assets/**/*.cs` — run `npm run unity:compile-check`. |
-| `Stop` | `verification-reminder.sh` | Advisory at session stop when `Assets/**/*.cs` or `tools/mcp-ia-server/**` was touched — emit a Verification block per the policy doc. |
+Hooks live in `.claude/settings.json` + `tools/scripts/claude-hooks/`. Bash denylist (PreToolUse) blocks: `git push --force*`, `git reset --hard*`, `git clean -fd*`, `rm -rf {.cursor,ia,MEMORY.md,.claude,.git,/,~}*`, `sudo *` (exit 2). Verification policy: `docs/agent-led-verification-policy.md`.
 
 ## 5. Key commands
 
 | Command | When |
 |---|---|
 | `npm run validate:all` | After IA / MCP / fixture / index work. Same chain CI runs. |
-| `npm run validate:frontmatter` | After editing files under `ia/` — confirms the four-field IA frontmatter. Advisory. |
 | `npm run unity:compile-check` | After C# edits. Loads `.env` / `.env.local`; **do not** skip because `$UNITY_EDITOR_PATH` is empty in the agent shell. |
 | `npm run verify:local` (alias `verify:post-implementation`) | Full local chain on a configured dev machine: `validate:all` + `unity:compile-check` + `db:migrate` + `db:bridge-preflight` + Editor save/quit + `db:bridge-playmode-smoke`. See `ARCHITECTURE.md` (**Local verification**). |
-| `npm run unity:testmode-batch -- --quit-editor-first --scenario-id …` | Path A test mode batch. Always release the project lock first. |
-| `npm run db:bridge-preflight` | Before any `unity_bridge_command` call in a session. |
+
+Other commands (`validate:frontmatter`, `unity:testmode-batch`, `db:bridge-preflight`) live in `docs/agent-led-verification-policy.md` and the relevant skill bodies (`agent-test-mode-verify`, `bridge-environment-preflight`).
 
 ## 6. Where to find more
 

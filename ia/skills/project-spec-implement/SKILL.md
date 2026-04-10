@@ -12,6 +12,8 @@ description: >
 
 # Project spec implementation (execution)
 
+**Output style — caveman default.** Follow `caveman:caveman` skill rules for all responses produced while running this skill (drop articles/filler/pleasantries/hedging; fragments OK; pattern `[thing] [action] [reason]. [next step].`). Standard exceptions apply: code, commits, security/auth content, verbatim error/tool output, structured MCP inputs/outputs, destructive-op confirmations. The directive applies whether the skill is invoked via the `spec-implementer` subagent or directly inline. Project anchor: [`ia/rules/agent-output-caveman.md`](../../rules/agent-output-caveman.md).
+
 This skill **does not** call MCP tools itself. In an **Agent** chat with **territory-ia** enabled, follow the **Tool recipe** below so context stays **slices**, not whole reference specs.
 
 Until richer **MCP** discovery from project-spec prose ships, use the **manual** recipe (no composite MCP tool).

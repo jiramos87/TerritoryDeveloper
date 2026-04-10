@@ -17,6 +17,8 @@ description: >
 
 # Project stage close (per-stage close for multi-stage project specs)
 
+**Output style — caveman default.** Follow `caveman:caveman` skill rules for the chat message output produced while running this skill (drop articles/filler/pleasantries/hedging; fragments OK; pattern `[thing] [action] [reason]. [next step].`). Standard exceptions apply: code, commits, security/auth content, verbatim error/tool output, structured MCP inputs/outputs, destructive-op confirmations. **The handoff message in step 8 must itself be caveman-shaped** and must include an explicit "follow `caveman:caveman` skill rules" line forwarded verbatim to the next stage's fresh agent — without that directive baked into the pasted prompt, the next stage runs in clean context with no inherited SessionStart hook and falls back to verbose default phrasing. The skill is invoked inline (not via a subagent), so the preamble lives here directly. Project anchor: [`ia/rules/agent-output-caveman.md`](../../rules/agent-output-caveman.md).
+
 This skill is **inline** — invoked directly by the stage-executing agent, **not** dispatched to a subagent. It runs once at the end of every non-final stage of a multi-stage project spec, leaving the spec in a clean handoff state for a fresh agent to pick up the next stage.
 
 **Distinction from [`project-spec-close`](../project-spec-close/SKILL.md):** that skill is the **umbrella close** — it migrates lessons to canonical IA, deletes the project spec, removes the BACKLOG row, appends to BACKLOG-ARCHIVE, and purges the closed id. It runs **once per spec**, at the end of the **very last stage**. This skill (`project-stage-close`) runs **N times per spec**, once per non-final stage, and **never** touches BACKLOG / archive / spec deletion.
@@ -126,6 +128,8 @@ Produce a fenced markdown code block the user can paste **verbatim** into a fres
 
 ```markdown
 You are executing **{NEXT_STAGE_ID}** of {ISSUE_ID} in Territory Developer.
+
+Follow `caveman:caveman` skill rules for all responses (drop articles/filler/pleasantries/hedging; fragments OK; pattern `[thing] [action] [reason]. [next step].`). Standard exceptions apply: code, commits, security/auth content, verbatim error/tool output, structured MCP inputs/outputs, destructive-op confirmations. Project anchor: `ia/rules/agent-output-caveman.md`. This directive must live in the pasted prompt because the next stage runs in a fresh context window with no inherited SessionStart hook from the parent.
 
 ## Repository
 `/Users/javier/bacayo-studio/territory-developer` (branch: `{branch}`)

@@ -15,6 +15,8 @@ description: >
 
 # Agent test-mode verification loop
 
+**Output style — caveman default.** Follow `caveman:caveman` skill rules for all responses produced while running this skill (drop articles/filler/pleasantries/hedging; fragments OK; pattern `[thing] [action] [reason]. [next step].`). Standard exceptions apply: code, commits, security/auth content, verbatim error/tool output, structured batch report contents (`tools/reports/agent-testmode-batch-*.json`), MCP `unity_bridge_command` JSON inputs/outputs, destructive-op confirmations. The directive applies whether the skill is invoked via the `test-mode-loop` subagent or directly inline. Project anchor: [`ia/rules/agent-output-caveman.md`](../../rules/agent-output-caveman.md).
+
 **Design trace (program stage):** [`projects/TECH-31a3-agent-test-mode-verify-skill.md`](../../../projects/TECH-31a3-agent-test-mode-verify-skill.md) (**TECH-31** — [`BACKLOG.md`](../../../BACKLOG.md)). **Does not** replace human issue verification per [`AGENTS.md`](../../../AGENTS.md).
 
 **Vocabulary:** **glossary** **Agent test mode batch** (headless **Editor** **`npm run unity:testmode-batch`**, no **Postgres** queue). **glossary** **IDE agent bridge** (**territory-ia** **`unity_bridge_command`**, **Postgres** **`agent_bridge_job`**, **Unity Editor** on **REPO_ROOT**). **Fixtures** and **Load pipeline** semantics: **persistence-system** — scenario JSON is **`GameSaveData`**-shaped; runtime load goes through **`GameSaveManager.LoadGame`** only (same entry as normal load), not ad-hoc grid mutation. Operator matrix and flags: [`tools/fixtures/scenarios/README.md`](../../../tools/fixtures/scenarios/README.md).
