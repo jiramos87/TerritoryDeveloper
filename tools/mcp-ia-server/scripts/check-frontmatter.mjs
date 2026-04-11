@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 /**
- * TECH-85 — Stage 3 / Phase 3.2.
- *
  * Validate that every Markdown file under `ia/{specs,rules,skills/{name}/SKILL.md,
  * projects,templates}` carries the four required IA frontmatter fields:
  *

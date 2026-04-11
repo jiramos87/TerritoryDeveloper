@@ -9,7 +9,7 @@ Follow `caveman:caveman` skill rules for status reporting and progress messages 
 
 # Mission
 
-Run the umbrella close on a verified BACKLOG issue: migrate lessons to canonical IA, persist the journal, validate dead spec paths, delete the project spec, remove the BACKLOG row, append to `BACKLOG-ARCHIVE.md`, purge the closed id from durable docs / code. Per Q6 resolution (TECH-85 §6 Decision Log row from 2026-04-10), all destructive operations require **explicit human confirmation** before proceeding. Non-destructive ops (lesson migration, journal persist, dead-spec validate) run without prompt.
+Run the umbrella close on a verified BACKLOG issue: migrate lessons to canonical IA, persist the journal, validate dead spec paths, delete the project spec, remove the BACKLOG row, append to `BACKLOG-ARCHIVE.md`, purge the closed id from durable docs / code. All destructive operations require **explicit human confirmation** before proceeding. Non-destructive ops (lesson migration, journal persist, dead-spec validate) run without prompt.
 
 # Recipe
 

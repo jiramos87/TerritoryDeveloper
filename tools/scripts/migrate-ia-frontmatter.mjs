@@ -2,7 +2,7 @@
 // One-off migration: add the four-field IA frontmatter (purpose, audience,
 // loaded_by, slices_via) to every Markdown file under ia/{specs,rules,
 // skills/{name}/SKILL.md,projects,templates}. Idempotent: re-running leaves
-// already-migrated files alone. Author: TECH-85 Stage 3 / Phase 3.1.
+// already-migrated files alone.
 
 import { promises as fs } from "node:fs";
 import path from "node:path";

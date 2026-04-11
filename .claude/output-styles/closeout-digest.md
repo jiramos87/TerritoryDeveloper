@@ -73,24 +73,24 @@ Standard caveman exceptions still apply: code identifiers, commit messages, secu
 
 ```json
 {
-  "issue_id": "TECH-85",
-  "spec_path": "ia/projects/TECH-85-ia-migration.md",
+  "issue_id": "TECH-11",
+  "spec_path": "ia/projects/TECH-11-example-spec.md",
   "lessons_migrated": {
     "count": 33,
     "targets": [
       { "surface": "docs/information-architecture-overview.md", "bullets": 12 },
       { "surface": "AGENTS.md", "bullets": 8 },
       { "surface": "ia/specs/glossary.md", "bullets": 5 },
-      { "surface": ".claude/memory/tech-85-permissions.md", "bullets": 8 }
+      { "surface": ".claude/memory/tech-11-permissions.md", "bullets": 8 }
     ]
   },
   "journal_persist": { "outcome": "ok", "row_ids": ["123", "124"], "reason": null },
   "validate_dead_specs_pre": { "exit_code": 0 },
   "validate_all_pre":        { "exit_code": 0 },
   "confirmation_gate":       { "result": "yes", "aborted_items": [] },
-  "spec_deleted":            { "path": "ia/projects/TECH-85-ia-migration.md", "ok": true },
-  "backlog_row_removed":     { "id": "TECH-85", "ok": true },
-  "archive_appended":        { "line": "[x] **TECH-85** — IA migration to neutral `ia/` namespace + native Claude Code layer", "ok": true },
+  "spec_deleted":            { "path": "ia/projects/TECH-11-example-spec.md", "ok": true },
+  "backlog_row_removed":     { "id": "TECH-11", "ok": true },
+  "archive_appended":        { "line": "[x] **TECH-11** — example issue title", "ok": true },
   "id_purged_from": [
     { "file": "docs/information-architecture-overview.md", "occurrences": 2 },
     { "file": "AGENTS.md", "occurrences": 1 }
@@ -103,8 +103,8 @@ Standard caveman exceptions still apply: code identifiers, commit messages, secu
 - journal ok. row_ids 123/124.
 - validate pre 0/0. green.
 - confirmation gate yes. all destructive ops authorized.
-- spec deleted `ia/projects/TECH-85-ia-migration.md`.
-- BACKLOG row TECH-85 removed.
+- spec deleted `ia/projects/TECH-11-example-spec.md`.
+- BACKLOG row TECH-11 removed.
 - archive appended.
 - id purged from 2 files (3 occurrences total).
 - validate post 0. green.

@@ -18,7 +18,7 @@ Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files
 | File | What it is |
 |---|---|
 | `MEMORY.md` (root) | Repo-scoped project memory. One-line entries; promote to `.claude/memory/{slug}.md` when an entry exceeds ~10 lines. Distinct from user auto-memory under `~/.claude-personal/projects/.../memory/` (cross-project, per-user). |
-| `.claude/settings.json` | Hooks + permissions. **Do not strip `defaultMode: "acceptEdits"`** and **do not split the `mcp__territory-ia__*` wildcard** — both regress per-call approval friction (TECH-85 §6 / §9 issue #4 / §10). |
+| `.claude/settings.json` | Hooks + permissions. **Do not strip `defaultMode: "acceptEdits"`** and **do not split the `mcp__territory-ia__*` wildcard** — both regress per-call approval friction. |
 | `.claude/skills/{name}` | Directory-level symlinks → `ia/skills/{name}/`. Same recipes Cursor reads. |
 | `.claude/agents/*.md` | 5 native subagents — `spec-kickoff`, `spec-implementer`, `verifier`, `test-mode-loop`, `closeout`. Opus orchestrators (kickoff / implementer / closeout); Sonnet executors (verifier / test-mode-loop). Each body carries a `caveman:caveman` directive (subagents run in fresh context and do not inherit the parent SessionStart hook). |
 | `.claude/commands/*.md` | Slash command dispatchers → subagents under `.claude/agents/{name}.md` (`/kickoff`, `/implement`, `/verify`, `/testmode`, `/closeout`). Each forwards a caveman-asserting prompt. `/closeout` confirmation prompts stay full English. |
@@ -46,4 +46,3 @@ Other commands (`validate:frontmatter`, `unity:testmode-batch`, `db:bridge-prefl
 - Workflow + lifecycle: `AGENTS.md`
 - IA stack overview: `docs/information-architecture-overview.md`
 - MCP tool catalog: `docs/mcp-ia-server.md`
-- TECH-85 native Claude Code migration plan: `ia/projects/TECH-85-ia-migration.md`

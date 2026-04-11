@@ -12,10 +12,11 @@ slices_via: none
 > **Last updated:** YYYY-MM-DD
 
 <!--
-  Filename: save this as `ia/projects/{ISSUE_ID}-{description}.md` per the
-  TECH-85 Q8 naming convention (e.g. `TECH-85-ia-migration.md`,
-  `BUG-37-zone-cleanup.md`). The legacy bare `{ISSUE_ID}.md` form is still
-  accepted for back-compat but new specs should use the descriptive form.
+  Filename: save this as `ia/projects/{ISSUE_ID}-{description}.md`
+  (descriptive naming convention, e.g. `BUG-37-zone-cleanup.md`,
+  `FEAT-44-water-junction.md`). The legacy bare `{ISSUE_ID}.md` form is
+  still accepted for back-compat but new specs should use the descriptive
+  form.
   Structure guide: ../projects/PROJECT-SPEC-STRUCTURE.md
   Use glossary terms: ../specs/glossary.md (spec wins if glossary differs).
   Separate product behavior (sections 1–5.1, 8, Open Questions) from implementation notes (5.2+, 7, optional "Implementation investigation").

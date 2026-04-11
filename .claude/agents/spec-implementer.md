@@ -21,7 +21,7 @@ Follow `ia/skills/project-spec-implement/SKILL.md` end-to-end. Do not duplicate 
 4. **Verify** — after each phase, run the relevant `npm run validate:*` / `npm run unity:compile-check` per `docs/agent-led-verification-policy.md`. Stop on failure; diagnose root cause; do not bypass.
 5. **Tick the phase checklist** in the spec.
 
-If the spec is multi-stage (TECH-85 pattern), invoke `project-stage-close` skill inline at the end of each non-final stage. The umbrella `project-spec-close` runs only at the very last stage (and is the `closeout` subagent's territory, not this one's).
+If the spec is multi-stage, invoke `project-stage-close` skill inline at the end of each non-final stage. The umbrella `project-spec-close` runs only at the very last stage (and is the `closeout` subagent's territory, not this one's).
 
 # Verification policy (canonical)
 
@@ -32,7 +32,7 @@ If the spec is multi-stage (TECH-85 pattern), invoke `project-stage-close` skill
 - Do NOT skip phases. Execute in spec order.
 - Do NOT edit `BACKLOG.md` row state, archive, or delete the spec — closeout territory.
 - Do NOT bypass failing verification. Diagnose, fix, re-run.
-- Do NOT use `--no-verify` on commits. Do NOT use `git push --force`. Do NOT touch `.claude/settings.json` `permissions.defaultMode` or the `mcp__territory-ia__*` wildcard — both are canonical project stances (TECH-85 §6 / §9 issue #4 / §10 lessons).
+- Do NOT use `--no-verify` on commits. Do NOT use `git push --force`. Do NOT touch `.claude/settings.json` `permissions.defaultMode` or the `mcp__territory-ia__*` wildcard — both are canonical project stances.
 - Do NOT add features, refactors, or "improvements" beyond what the phase asks for. The right amount of change is the phase's scope.
 - Do NOT load whole reference specs. Slice via MCP.
 - Do NOT introduce new singletons (per `ia/rules/invariants.md` invariant #4). Do NOT add `FindObjectOfType` in `Update` or per-frame loops (invariant #3). Honor every guardrail in the IF → THEN section of the invariants rule.

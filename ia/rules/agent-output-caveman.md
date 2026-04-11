@@ -21,4 +21,4 @@ Exceptions (write normal English):
 6. Destructive-op confirmations — `/closeout` deletes, force-push warnings.
 7. When the user says "normal" / "stop caveman" / "in Spanish" — overrides for that turn.
 
-Authoring guidance (subagent / skill / slash command / handoff file templates, where-to-apply checklist, TECH-85 anchor): see [`ia/rules/agent-output-caveman-authoring.md`](agent-output-caveman-authoring.md) — fetch via `rule_content agent-output-caveman-authoring` when editing those surfaces.
+Authoring guidance (subagent / skill / slash command / handoff file templates, where-to-apply checklist): see [`ia/rules/agent-output-caveman-authoring.md`](agent-output-caveman-authoring.md) — fetch via `rule_content agent-output-caveman-authoring` when editing those surfaces.

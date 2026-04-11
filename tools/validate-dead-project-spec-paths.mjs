@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * TECH-50 — Report references to project spec paths that do not exist.
+ * Report references to project spec paths that do not exist.
  *
- * After TECH-85 / Stage 2 the canonical location is `ia/projects/{ISSUE_ID}[-{description}].md`,
- * with `.cursor/projects/{ISSUE_ID}.md` kept as a back-compat symlink for one cycle.
+ * The canonical location is `ia/projects/{ISSUE_ID}[-{description}].md`, with
+ * `.cursor/projects/{ISSUE_ID}.md` kept as a back-compat symlink for one cycle.
  *
  * Usage:
  *   node tools/validate-dead-project-spec-paths.mjs [--advisory]
@@ -26,8 +26,8 @@ loadRepoDotenvIfNotCi(REPO_ROOT);
 
 /**
  * Project spec path scan: accepts both `ia/projects/{ID}[-{description}].md`
- * (current convention per TECH-85 Q8) and the legacy `.cursor/projects/{ID}.md`
- * back-compat path.
+ * (current convention) and the legacy `.cursor/projects/{ID}.md` back-compat
+ * path.
  */
 const PROJECT_SPEC_PATH_RE =
   /(\.cursor|ia)\/projects\/((?:BUG|FEAT|TECH|ART|AUDIO)-\d+[a-z]?(?:-[A-Za-z0-9._-]+)?)\.md/gi;
@@ -161,10 +161,10 @@ function collectTextFiles(dir, repoRoot, out) {
   for (const ent of entries) {
     const abs = path.join(dir, ent.name);
     const rel = path.relative(repoRoot, abs);
-    // After TECH-85 / Stage 2, parts of `.cursor/` are directory-level symlinks
-    // and the .mdc files inside `.cursor/rules/` are file-level symlinks. Resolve
-    // each entry via fs.statSync (follows symlinks) so the canonical content
-    // under `ia/` is still discovered when the caller passes a path through `.cursor/`.
+    // Parts of `.cursor/` are directory-level symlinks and the .mdc files
+    // inside `.cursor/rules/` are file-level symlinks. Resolve each entry via
+    // fs.statSync (follows symlinks) so the canonical content under `ia/` is
+    // still discovered when the caller passes a path through `.cursor/`.
     let isDir = ent.isDirectory();
     let isFile = ent.isFile();
     if (!isDir && !isFile && ent.isSymbolicLink()) {
@@ -209,8 +209,8 @@ function main() {
     if (fs.existsSync(p)) files.push(p);
   }
 
-  // After TECH-85 / Stage 2 the canonical IA content lives under `ia/`. Scan
-  // `ia/` directly so directory-level symlinks under `.cursor/` are not double-counted.
+  // Canonical IA content lives under `ia/`. Scan `ia/` directly so
+  // directory-level symlinks under `.cursor/` are not double-counted.
   // `.cursor/` is intentionally omitted — every entry is now a symlink into `ia/`.
   for (const sub of ["ia", "docs", "projects", ".github"]) {
     const d = path.join(REPO_ROOT, sub);

@@ -32,6 +32,9 @@ import { registerBacklogSearch } from "./tools/backlog-search.js";
 import { registerInvariantPreflight } from "./tools/invariant-preflight.js";
 import { registerFindObjectOfTypeScan } from "./tools/findobjectoftype-scan.js";
 import { registerCityMetricsQuery } from "./tools/city-metrics-query.js";
+import { registerUnityCallersOf } from "./tools/unity-callers-of.js";
+import { registerUnitySubscribersOf } from "./tools/unity-subscribers-of.js";
+import { registerCsharpClassSummary } from "./tools/csharp-class-summary.js";
 
 loadRepoDotenvIfNotCi(resolveRepoRoot());
 
@@ -68,6 +71,9 @@ registerBacklogSearch(server);
 registerInvariantPreflight(server, registry);
 registerFindObjectOfTypeScan(server);
 registerCityMetricsQuery(server);
+registerUnityCallersOf(server);
+registerUnitySubscribersOf(server);
+registerCsharpClassSummary(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

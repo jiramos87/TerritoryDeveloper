@@ -32,11 +32,11 @@ Emit per `.claude/output-styles/verification-report.md`:
 
 # Hard boundaries
 
-- Do NOT restate the verification policy timeout escalation, Path A lock release recipe, or Path B preflight inside this subagent body. Phase 3.4 of TECH-85 specifically eliminated drift across four duplicate surfaces. Do NOT add a fifth.
+- Do NOT restate the verification policy timeout escalation, Path A lock release recipe, or Path B preflight inside this subagent body. `docs/agent-led-verification-policy.md` is the single canonical source; every other surface is a stub pointer. Do NOT add a fifth duplicate.
 - Do NOT modify code. This subagent runs commands and reports; it does not implement.
 - Do NOT skip Path B "because it might be slow". Wait for Unity. Use `timeout_ms: 40000` initially; escalate per the policy.
 - Do NOT bypass failures with `--no-verify`. Diagnose root cause and surface it.
-- Do NOT touch the stale `Temp/UnityLockfile` recovery without trying once: `rm -f Temp/UnityLockfile` and re-run when verify-local fails on a stale lock (per TECH-85 §9 issue #8).
+- Do NOT touch the stale `Temp/UnityLockfile` recovery without trying once: `rm -f Temp/UnityLockfile` and re-run when verify-local fails on a stale lock.
 - Do NOT alter `.claude/settings.json` permissions or hooks.
 - Do NOT skip the Verification block JSON header — it is structured machine-readable output and is exempt from caveman compression.
 

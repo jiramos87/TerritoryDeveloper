@@ -84,21 +84,21 @@ describe("project-spec-closeout-parse", () => {
     assert.equal(r.ok, true);
     if (r.ok) {
       assert.match(r.absPath, /TECH-75\.md$/);
-      // After TECH-85 / Stage 2 the new default is `ia/projects/...`; the legacy
-      // `.cursor/projects/...` only wins when the legacy file actually exists.
-      // /repo is fake here, so neither lookup hits and the default applies.
+      // Default resolution is `ia/projects/...`; the legacy `.cursor/projects/...`
+      // only wins when the legacy file actually exists. /repo is fake here, so
+      // neither lookup hits and the default applies.
       assert.equal(r.relPosix, "ia/projects/TECH-75.md");
     }
   });
 
   it("resolveProjectSpecFile accepts ia/projects descriptive spec_path", () => {
     const r = resolveProjectSpecFile("/repo", {
-      spec_path: "ia/projects/TECH-85-ia-migration.md",
+      spec_path: "ia/projects/TECH-99-descriptive-name.md",
     });
     assert.equal(r.ok, true);
     if (r.ok) {
-      assert.equal(r.relPosix, "ia/projects/TECH-85-ia-migration.md");
-      assert.equal(r.issue_id, "TECH-85");
+      assert.equal(r.relPosix, "ia/projects/TECH-99-descriptive-name.md");
+      assert.equal(r.issue_id, "TECH-99");
     }
   });
 

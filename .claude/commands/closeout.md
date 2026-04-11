@@ -1,11 +1,11 @@
 ---
-description: Close an issue end-to-end — umbrella close (NOT per-stage). Dispatches the `closeout` subagent for the given issue with explicit confirmation before destructive operations (per Q6 resolution).
-argument-hint: "{ISSUE_ID} (e.g. TECH-85)"
+description: Close an issue end-to-end — umbrella close (NOT per-stage). Dispatches the `closeout` subagent for the given issue with explicit confirmation before destructive operations.
+argument-hint: "{ISSUE_ID} (e.g. BUG-14)"
 ---
 
 # /closeout — dispatch `closeout` subagent
 
-Use the **`closeout`** subagent (defined in `.claude/agents/closeout.md`) to run the umbrella close on `$ARGUMENTS`. The subagent **pauses for explicit human confirmation** before destructive operations (spec deletion, BACKLOG row removal, archive append, id purge), per Q6 resolution from TECH-85 §6 Decision Log. Per-stage close inside a multi-stage spec uses the inline `project-stage-close` skill, not this command.
+Use the **`closeout`** subagent (defined in `.claude/agents/closeout.md`) to run the umbrella close on `$ARGUMENTS`. The subagent **pauses for explicit human confirmation** before destructive operations (spec deletion, BACKLOG row removal, archive append, id purge). Per-stage close inside a multi-stage spec uses the inline `project-stage-close` skill, not this command.
 
 ## Subagent prompt (forward verbatim)
 

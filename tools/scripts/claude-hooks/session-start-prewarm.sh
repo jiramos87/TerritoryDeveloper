@@ -6,7 +6,7 @@
 # injected as additional context for the model. Keep the output short and
 # scannable — every line is consumed by the model context window.
 #
-# Behavior (TECH-85 / Stage 3 shrink pass):
+# Behavior:
 #   - branch:        current git branch (or detached HEAD info)
 #   - tree:          dirty file count from `git status --porcelain`
 #   - verify:local:  exit code of the most recent `npm run verify:local`,

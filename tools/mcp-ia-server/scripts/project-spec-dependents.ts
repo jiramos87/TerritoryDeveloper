@@ -95,9 +95,9 @@ function main(): void {
     const p = path.join(repoRoot, name);
     if (fs.existsSync(p)) files.push(p);
   }
-  // After TECH-85 / Stage 2 the canonical content lives under `ia/`; `.cursor/`
-  // remains as back-compat symlinks. Scan `ia/` directly so directory-level
-  // symlinks under `.cursor/` are not double-counted or skipped.
+  // Canonical content lives under `ia/`; `.cursor/` is back-compat symlinks.
+  // Scan `ia/` directly so directory-level symlinks under `.cursor/` are not
+  // double-counted or skipped.
   for (const sub of ["ia", "docs", "projects", ".github"]) {
     const d = path.join(repoRoot, sub);
     if (fs.existsSync(d)) collectTextFiles(d, repoRoot, files);

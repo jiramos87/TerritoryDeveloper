@@ -5,14 +5,13 @@ loaded_by: skill:project-stage-close
 slices_via: none
 name: project-stage-close
 description: >
-  Use at the end of each non-final stage of a multi-stage project spec (e.g. TECH-85). Marks the
-  stage's phase checklists complete, updates Last updated, appends Decision Log / Issues Found /
-  Lessons Learned, optionally persists a Postgres journal entry, verifies the spec is in a clean
-  handoff state, and emits a paste-ready handoff message for the next stage's fresh agent. Does
-  NOT touch BACKLOG.md, BACKLOG-ARCHIVE.md, or delete the spec — that is the umbrella
-  `project-spec-close` skill, run only at the end of the very last stage. Triggers: "close
-  stage", "stage close", "finish stage X", "handoff to next stage", "project stage close",
-  "stage handoff".
+  Use at the end of each non-final stage of a multi-stage project spec. Marks the stage's phase
+  checklists complete, updates Last updated, appends Decision Log / Issues Found / Lessons
+  Learned, optionally persists a Postgres journal entry, verifies the spec is in a clean handoff
+  state, and emits a paste-ready handoff message for the next stage's fresh agent. Does NOT touch
+  BACKLOG.md, BACKLOG-ARCHIVE.md, or delete the spec — that is the umbrella `project-spec-close`
+  skill, run only at the end of the very last stage. Triggers: "close stage", "stage close",
+  "finish stage X", "handoff to next stage", "project stage close", "stage handoff".
 ---
 
 # Project stage close (per-stage close for multi-stage project specs)
@@ -23,7 +22,7 @@ This skill is **inline** — invoked directly by the stage-executing agent, **no
 
 **Distinction from [`project-spec-close`](../project-spec-close/SKILL.md):** that skill is the **umbrella close** — it migrates lessons to canonical IA, deletes the project spec, removes the BACKLOG row, appends to BACKLOG-ARCHIVE, and purges the closed id. It runs **once per spec**, at the end of the **very last stage**. This skill (`project-stage-close`) runs **N times per spec**, once per non-final stage, and **never** touches BACKLOG / archive / spec deletion.
 
-**Origin:** introduced by [TECH-85](../../projects/TECH-85-ia-migration.md) §5.3. Stage 1 of that migration is bootstrap-recursive — Phase 1.1 creates this skill, Phase 1.5 invokes it. Going forward, every multi-stage project spec is expected to use this pattern.
+**Origin:** introduced as part of the native Claude Code migration (stage/phase execution model). Going forward, every multi-stage project spec is expected to use this pattern.
 
 ## Relationship to other lifecycle skills
 
@@ -41,8 +40,8 @@ This skill is **inline** — invoked directly by the stage-executing agent, **no
 
 ## Inputs (gather before running)
 
-- **`{ISSUE_ID}`** — e.g. `TECH-85`
-- **`{SPEC_PATH}`** — e.g. `ia/projects/TECH-85-ia-migration.md` (during the migration itself, the path is whatever is current; after Stage 2, it lives under `ia/projects/`)
+- **`{ISSUE_ID}`** — e.g. `TECH-11`
+- **`{SPEC_PATH}`** — e.g. `ia/projects/{ID}.md` or `ia/projects/{ID}-{description}.md`
 - **`{STAGE_ID}`** — e.g. `Stage 1`
 - **`{STAGE_TITLE}`** — e.g. `Quick wins on Claude Code (no breaking changes)`
 - **`{NEXT_STAGE_ID}`** — e.g. `Stage 2` (omit when closing the final stage — but use the umbrella skill in that case)
@@ -108,7 +107,7 @@ Before emitting the handoff message, verify:
 - §6 / §9 / §10 edits parse cleanly (no broken table rows or stray markdown).
 - Internal links in the spec still resolve (relative paths to `BACKLOG.md`, sibling specs, rules, skills).
 - No contradictory open questions remain unresolved for the **next** stage's work — if any do, escalate in the handoff message rather than silently passing them on.
-- **`.claude/settings.json` still has `permissions.defaultMode: "acceptEdits"` and the `mcp__territory-ia__*` wildcard in `permissions.allow`** — both are canonical project stances (TECH-85 §6 decision rows from 2026-04-10, §9 issue #4, §10 lessons). If a recent edit stripped either one, restore it before handoff so the next stage's agent does not hit per-call approval friction. Verify with: `python3 -c 'import json; d=json.load(open(".claude/settings.json"))["permissions"]; assert d["defaultMode"]=="acceptEdits", d["defaultMode"]; assert "mcp__territory-ia__*" in d["allow"], "wildcard missing"; print("OK")'`.
+- **`.claude/settings.json` still has `permissions.defaultMode: "acceptEdits"` and the `mcp__territory-ia__*` wildcard in `permissions.allow`** — both are canonical project stances. If a recent edit stripped either one, restore it before handoff so the next stage's agent does not hit per-call approval friction. Verify with: `python3 -c 'import json; d=json.load(open(".claude/settings.json"))["permissions"]; assert d["defaultMode"]=="acceptEdits", d["defaultMode"]; assert "mcp__territory-ia__*" in d["allow"], "wildcard missing"; print("OK")'`.
 
 If anything fails this check, fix it before emitting the handoff message.
 

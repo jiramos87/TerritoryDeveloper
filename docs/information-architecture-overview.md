@@ -76,7 +76,7 @@ Three principles:
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-`ia/` is the canonical namespace; `.cursor/{specs,rules,skills,projects,templates}` are back-compat symlinks (`.cursor/rules/{name}.mdc → ia/rules/{name}.md` is a cross-extension symlink). `.claude/skills/{name}` symlinks point at `ia/skills/{name}/` directly. Native Claude Code surface (hooks, slash commands, subagents, project memory at `MEMORY.md`) lives under `.claude/` — see [`CLAUDE.md`](../CLAUDE.md) and [`ia/projects/TECH-85-ia-migration.md`](../ia/projects/TECH-85-ia-migration.md).
+`ia/` is the canonical namespace; `.cursor/{specs,rules,skills,projects,templates}` are back-compat symlinks (`.cursor/rules/{name}.mdc → ia/rules/{name}.md` is a cross-extension symlink). `.claude/skills/{name}` symlinks point at `ia/skills/{name}/` directly. Native Claude Code surface (hooks, slash commands, subagents, project memory at `MEMORY.md`) lives under `.claude/` — see [`CLAUDE.md`](../CLAUDE.md). Canonical stances: `acceptEdits` defaultMode, `mcp__territory-ia__*` wildcard, 4-layer caveman directive.
 
 **Data flows:**
 - **Down:** agents query MCP tools → tools read specs/glossary/rules/backlog from filesystem or Postgres

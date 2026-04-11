@@ -26,5 +26,3 @@ Runtime stub: [`ia/rules/agent-output-caveman.md`](agent-output-caveman.md). Fet
 Drop a one-line directive near the top of the body, above any task instructions. Example wording:
 
 > Follow `caveman:caveman` skill rules for all responses (drop articles/filler/pleasantries/hedging; fragments OK). Standard exceptions apply: code, commits, security/auth, verbatim errors, structured output, destructive-op confirmations.
-
-Anchored history: TECH-85 §6 Decision Log row from 2026-04-10 captures the original rationale and rejected alternatives.

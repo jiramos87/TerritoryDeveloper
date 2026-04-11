@@ -10,8 +10,6 @@
 # Heuristic: scan `git status --porcelain` for modified/added paths under
 # Assets/**/*.cs or tools/mcp-ia-server/**. This is best-effort and advisory;
 # always exits 0.
-#
-# TECH-85 / Phase 1.3.
 
 set +e
 

@@ -28,7 +28,7 @@ Forward the following prompt to the subagent via the Agent tool with `subagent_t
 >
 > ## Hard boundaries
 >
-> - Do NOT restate verification policy timeout escalation, Path A lock release, or Path B preflight inside the response. Phase 3.4 of TECH-85 eliminated drift across four duplicates.
+> - Do NOT restate verification policy timeout escalation, Path A lock release, or Path B preflight inside the response. `docs/agent-led-verification-policy.md` is the single canonical source.
 > - Do NOT modify code. This subagent runs commands and reports.
 > - Do NOT skip Path B "because it might be slow". Wait for Unity per the policy.
 > - Do NOT bypass failures with `--no-verify`. Diagnose root cause and report it.

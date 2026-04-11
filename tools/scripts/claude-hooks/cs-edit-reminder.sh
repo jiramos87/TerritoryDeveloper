@@ -8,8 +8,6 @@
 #
 # Always exits 0. This is a soft reminder, not a gate. The model can still
 # defer the compile until verification time.
-#
-# TECH-85 / Phase 1.3.
 
 set +e
 

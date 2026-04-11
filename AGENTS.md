@@ -72,7 +72,7 @@ Project-specific specs for features or complex bugs **in active development** li
 |--------|------|
 | Template | [`ia/templates/project-spec-template.md`](ia/templates/project-spec-template.md) |
 | Structure | [`ia/projects/PROJECT-SPEC-STRUCTURE.md`](ia/projects/PROJECT-SPEC-STRUCTURE.md) |
-| Naming | `{ISSUE_ID}-{description}.md` (e.g. `TECH-85-ia-migration.md`); legacy `{ISSUE_ID}.md` still accepted by validators / journal tools |
+| Naming | `{ISSUE_ID}-{description}.md` (e.g. `BUG-37-zone-cleanup.md`); legacy bare `{ISSUE_ID}.md` still accepted by validators / journal tools |
 | Lifecycle | Create → refine → implement → verify → close |
 | On completion | Migrate lessons learned to canonical docs **before** deleting (`project-spec-close`) |
 | Dead-path check | `npm run validate:dead-project-specs` (advisory: `--advisory` or `CI_DEAD_SPEC_ADVISORY=1`) |
@@ -82,7 +82,7 @@ Project-specific specs for features or complex bugs **in active development** li
 
 **Open Questions.** Every collaborative project spec SHOULD include `## Open Questions (resolve before / during implementation)`. Phrase questions in canonical domain vocabulary; target definitions and intended game logic only — implementation choices belong under **Implementation Plan** or **Implementation investigation notes**.
 
-**Multi-stage specs.** Large rewrites (e.g. TECH-85) declare top-level **stages** with internal **phases**, executed by one fresh agent per stage, with [`project-stage-close`](ia/skills/project-stage-close/SKILL.md) closing each non-final stage and the umbrella `project-spec-close` closing the last one.
+**Multi-stage specs.** Large rewrites declare top-level **stages** with internal **phases**, executed by one fresh agent per stage, with [`project-stage-close`](ia/skills/project-stage-close/SKILL.md) closing each non-final stage and the umbrella `project-spec-close` closing the last one.
 
 ### Project docs outside `ia/specs/`
 

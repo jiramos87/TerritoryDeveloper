@@ -1,6 +1,6 @@
 ---
 description: Execute a project spec's Implementation Plan phase by phase. Dispatches the `spec-implementer` subagent against `ia/projects/{ID}*.md` in isolated context.
-argument-hint: "{ISSUE_ID} (e.g. TECH-85)"
+argument-hint: "{ISSUE_ID} (e.g. TECH-11)"
 ---
 
 # /implement — dispatch `spec-implementer` subagent
@@ -15,7 +15,7 @@ Forward the following prompt to the subagent via the Agent tool with `subagent_t
 >
 > ## Mission
 >
-> Run the `project-spec-implement` skill (`ia/skills/project-spec-implement/SKILL.md`) end-to-end on the project spec at `ia/projects/$ARGUMENTS*.md`. Resolve the actual filename via Glob — the spec may be `$ARGUMENTS.md` or `$ARGUMENTS-{description}.md` (per Q8 descriptive naming convention).
+> Run the `project-spec-implement` skill (`ia/skills/project-spec-implement/SKILL.md`) end-to-end on the project spec at `ia/projects/$ARGUMENTS*.md`. Resolve the actual filename via Glob — the spec may be `$ARGUMENTS.md` or `$ARGUMENTS-{description}.md` (descriptive naming convention).
 >
 > ## Phase loop
 >

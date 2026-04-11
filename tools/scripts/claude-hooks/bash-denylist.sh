@@ -19,7 +19,7 @@
 #              prefix, and compound commands (loops, pipelines, command
 #              substitution) work without per-call human approval.
 #
-# Patterns blocked (TECH-85 / Phase 1.3):
+# Patterns blocked:
 #   - git push --force / -f / --force-with-lease
 #   - git reset --hard
 #   - git clean -fd / -fdx
@@ -84,9 +84,9 @@ if [ -n "$deny_match" ]; then
   cat >&2 <<EOF
 [territory-developer · bash-denylist] BLOCKED: '$deny_match' is on the project denylist.
   command: $command_str
-  Why: TECH-85 / Phase 1.3 — destructive bash is enforced at the hook layer to
-  protect .cursor / ia / .claude / MEMORY.md / .git from accidental removal,
-  and to prevent force-push to shared branches. If you genuinely need this,
+  Why: destructive bash is enforced at the hook layer to protect
+  .cursor / ia / .claude / MEMORY.md / .git from accidental removal, and
+  to prevent force-push to shared branches. If you genuinely need this,
   ask the human to run it manually outside Claude Code.
 EOF
   exit 2

@@ -1,13 +1,12 @@
 /**
  * Parse temporary project specs (`ia/projects/{ISSUE_ID}[-{description}].md`,
- * legacy `.cursor/projects/{ISSUE_ID}.md`) for closeout / agent workflows
- * (TECH-58, paths + descriptive suffix relaxed by TECH-85 / Stage 2).
+ * legacy `.cursor/projects/{ISSUE_ID}.md`) for closeout / agent workflows.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 
-/** Backlog issue id pattern (aligned with TECH-30 / BACKLOG convention). */
+/** Backlog issue id pattern (aligned with BACKLOG convention). */
 export const PROJECT_SPEC_ISSUE_ID_RE =
   /^(BUG|FEAT|TECH|ART|AUDIO)-\d+[a-z]?$/i;
 
@@ -17,8 +16,8 @@ export const CITED_ISSUE_ID_RE =
 
 /**
  * Repo-relative project spec path. Accepts:
- *   - `ia/projects/{ISSUE_ID}.md` (new convention)
- *   - `ia/projects/{ISSUE_ID}-{description}.md` (descriptive variant per TECH-85 Q8)
+ *   - `ia/projects/{ISSUE_ID}.md`
+ *   - `ia/projects/{ISSUE_ID}-{description}.md` (descriptive variant)
  *   - `.cursor/projects/{ISSUE_ID}.md` (legacy, kept for one cycle)
  * Never matches traversal (`..` is rejected separately by callers).
  */
@@ -26,9 +25,9 @@ export const PROJECT_SPEC_REL_PATH_RE =
   /^(?:\.cursor|ia)\/projects\/(BUG|FEAT|TECH|ART|AUDIO)-\d+[a-z]?(?:-[A-Za-z0-9._-]+)?\.md$/i;
 
 /**
- * Pull the bare `{ISSUE_ID}` (e.g. `TECH-85`) out of a project spec basename
- * such as `TECH-85-ia-migration` or `TECH-75`. Returns null if the basename
- * does not start with a recognised issue id.
+ * Pull the bare `{ISSUE_ID}` out of a project spec basename
+ * such as `TECH-11-descriptive-suffix` or `BUG-12`. Returns null if the
+ * basename does not start with a recognised issue id.
  */
 export function issueIdFromProjectSpecBasename(base: string): string | null {
   const m =
@@ -366,7 +365,7 @@ export type ResolveProjectSpecPathResult =
  * Accepts:
  *   - `spec_path` repo-relative under `ia/projects/` (current) or `.cursor/projects/`
  *     (legacy back-compat for one cycle). Filename may be `{ISSUE_ID}.md` or
- *     `{ISSUE_ID}-{description}.md` per TECH-85 Q8.
+ *     `{ISSUE_ID}-{description}.md` (descriptive suffix).
  *   - `issue_id` only — resolution order:
  *       1. `ia/projects/{ISSUE_ID}.md`
  *       2. `ia/projects/{ISSUE_ID}-{description}.md` (first descriptive match by sort)

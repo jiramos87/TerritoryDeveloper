@@ -1,13 +1,10 @@
 #!/usr/bin/env node
-// One-off Phase 3.3 cleanup: rewrite `.cursor/{specs,rules,skills,projects,
-// templates}` and well-known `*.mdc` rule references inside the active IA
-// surfaces (specs, rules, skills, templates, the project-spec meta files) to
-// the neutral `ia/` namespace and `.md` extension. Intentionally SKIPS:
-//
-//   - ia/projects/{ID}.md project specs (historical context — migrated /
-//     deleted at issue close, not at namespace migration time)
-//   - ia/projects/TECH-85-ia-migration.md (the migration spec itself, which
-//     legitimately documents the `.cursor/` → `ia/` rename)
+// One-off cleanup: rewrite `.cursor/{specs,rules,skills,projects,templates}`
+// and well-known `*.mdc` rule references inside the active IA surfaces
+// (specs, rules, skills, templates, the project-spec meta files) to the
+// neutral `ia/` namespace and `.md` extension. Intentionally SKIPS
+// `ia/projects/{ID}.md` project specs — they carry historical context and
+// are migrated or deleted at issue close, not at namespace migration time.
 //
 // Run from repo root: `node tools/scripts/rewrite-cursor-paths-in-ia.mjs`.
 
@@ -25,7 +22,6 @@ const EXTRA_FILES = ["ia/projects/PROJECT-SPEC-STRUCTURE.md"];
 
 // Skip patterns (always preserve these files exactly as-is).
 function isSkipped(rel) {
-  if (rel === "ia/projects/TECH-85-ia-migration.md") return true;
   if (rel.startsWith("ia/projects/") && rel !== "ia/projects/PROJECT-SPEC-STRUCTURE.md") return true;
   return false;
 }

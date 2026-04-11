@@ -49,7 +49,7 @@ export function registerProjectSpecJournalTools(server: McpServer): void {
           .string()
           .optional()
           .describe(
-            "Repo-relative path under `ia/projects/` or `.cursor/projects/` (legacy). Filename may be `{ISSUE_ID}.md` or `{ISSUE_ID}-{description}.md` per TECH-85 Q8. Exactly one of `issue_id` or `spec_path` required.",
+            "Repo-relative path under `ia/projects/` or `.cursor/projects/` (legacy). Filename may be `{ISSUE_ID}.md` or `{ISSUE_ID}-{description}.md` (descriptive suffix). Exactly one of `issue_id` or `spec_path` required.",
           ),
         git_sha: z
           .string()

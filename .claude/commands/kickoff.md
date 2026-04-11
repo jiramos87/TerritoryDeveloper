@@ -1,6 +1,6 @@
 ---
 description: Review or enrich a project spec before implementation. Dispatches the `spec-kickoff` subagent against `ia/projects/{ID}*.md` in isolated context.
-argument-hint: "{ISSUE_ID} (e.g. TECH-85)"
+argument-hint: "{ISSUE_ID} (e.g. TECH-11)"
 ---
 
 # /kickoff — dispatch `spec-kickoff` subagent
@@ -15,7 +15,7 @@ Forward the following prompt to the subagent via the Agent tool with `subagent_t
 >
 > ## Mission
 >
-> Run the `project-spec-kickoff` skill (`ia/skills/project-spec-kickoff/SKILL.md`) end-to-end on the project spec at `ia/projects/$ARGUMENTS*.md`. Resolve the actual filename via Glob — the spec may be `$ARGUMENTS.md` or `$ARGUMENTS-{description}.md` (per Q8 descriptive naming convention).
+> Run the `project-spec-kickoff` skill (`ia/skills/project-spec-kickoff/SKILL.md`) end-to-end on the project spec at `ia/projects/$ARGUMENTS*.md`. Resolve the actual filename via Glob — the spec may be `$ARGUMENTS.md` or `$ARGUMENTS-{description}.md` (descriptive naming convention).
 >
 > ## MCP first
 >
