@@ -5,37 +5,37 @@ argument-hint: "{ISSUE_ID} (e.g. TECH-11)"
 
 # /implement — dispatch `spec-implementer` subagent
 
-Use the **`spec-implementer`** subagent (defined in `.claude/agents/spec-implementer.md`) to execute the Implementation Plan for `$ARGUMENTS`.
+Use `spec-implementer` subagent (`.claude/agents/spec-implementer.md`) to execute Implementation Plan for `$ARGUMENTS`.
 
 ## Subagent prompt (forward verbatim)
 
-Forward the following prompt to the subagent via the Agent tool with `subagent_type: "spec-implementer"`:
+Forward via Agent tool with `subagent_type: "spec-implementer"`:
 
-> Follow `caveman:caveman` skill rules for all responses (drop articles/filler/pleasantries/hedging; fragments OK; pattern `[thing] [action] [reason]. [next step].`). Standard exceptions apply: code, commits, security/auth content, verbatim error/tool output, structured MCP inputs/outputs, destructive-op confirmations. Project anchor: `ia/rules/agent-output-caveman.md`.
+> Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
 >
 > ## Mission
 >
-> Run the `project-spec-implement` skill (`ia/skills/project-spec-implement/SKILL.md`) end-to-end on the project spec at `ia/projects/$ARGUMENTS*.md`. Resolve the actual filename via Glob — the spec may be `$ARGUMENTS.md` or `$ARGUMENTS-{description}.md` (descriptive naming convention).
+> Run `project-spec-implement` skill (`ia/skills/project-spec-implement/SKILL.md`) end-to-end on `ia/projects/$ARGUMENTS*.md`. Resolve filename via Glob — may be `$ARGUMENTS.md` or `$ARGUMENTS-{description}.md`.
 >
 > ## Phase loop
 >
-> 1. Read the spec (focus on §5 Proposed Design, §6 Decision Log, §7 Implementation Plan, §9 Issues Found, §10 Lessons Learned). Start at the first unticked phase.
-> 2. Pull MCP context per phase — `backlog_issue` + `router_for_task` + targeted `spec_section` / `spec_sections` slices. Call `invariants_summary` once when runtime C# / subsystem changes are involved.
-> 3. Implement the phase with minimal diffs. Use `Edit` for existing files, `Write` only for genuinely new files.
-> 4. Verify after each phase per `docs/agent-led-verification-policy.md`. Stop on failure; diagnose root cause.
-> 5. Tick the phase checklist in the spec.
+> 1. Read spec (focus §5 Proposed Design, §6 Decision Log, §7 Implementation Plan, §9 Issues Found, §10 Lessons Learned). Start at first unticked phase.
+> 2. MCP context per phase — `backlog_issue` + `router_for_task` + targeted `spec_section` / `spec_sections`. `invariants_summary` once when runtime C#/subsystem changes involved.
+> 3. Implement with minimal diffs. `Edit` for existing files, `Write` only for new files.
+> 4. Verify after each phase per `docs/agent-led-verification-policy.md`. Stop on failure; root-cause.
+> 5. Tick phase checklist.
 >
-> If the spec is multi-stage, invoke the `project-stage-close` skill **inline** at the end of each non-final stage. The umbrella close is the `closeout` subagent's job (run via `/closeout`), not yours.
+> Multi-stage → invoke `project-stage-close` skill **inline** at end of each non-final stage. Umbrella close = `closeout` subagent (`/closeout`), not yours.
 >
 > ## Hard boundaries
 >
 > - Do NOT skip phases. Execute in spec order.
 > - Do NOT bypass failing verification with `--no-verify`.
-> - Do NOT use `git push --force`. Do NOT touch `.claude/settings.json` `permissions.defaultMode` or the `mcp__territory-ia__*` wildcard.
-> - Do NOT add features, refactors, or improvements beyond the phase scope.
+> - Do NOT `git push --force`. Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard.
+> - Do NOT add features/refactors/improvements beyond phase scope.
 > - Do NOT introduce new singletons or `FindObjectOfType` in `Update` (per `ia/rules/invariants.md`).
 > - Do NOT load whole reference specs. Slice via MCP.
-> - Do NOT edit `BACKLOG.md` row state, archive, or delete the spec — closeout territory.
+> - Do NOT edit BACKLOG row state, archive, or delete spec — closeout territory.
 >
 > ## Output
 >

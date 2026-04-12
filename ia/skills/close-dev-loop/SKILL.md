@@ -14,56 +14,56 @@ description: >
 
 # Close Dev Loop — fix → verify → report (IDE agent bridge)
 
-This skill is the **end-to-end** recipe for **visual / terrain** bugs where the agent can compare **before** and **after** using **`debug_context_bundle`** (**Moore** export + screenshot + console + **`bundle.anomalies`**). **Canonical IA:** glossary **IDE agent bridge**, **unity-development-context** §10, [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md).
+Visual/terrain bug recipe. Before/after via `debug_context_bundle` (Moore export + screenshot + console + anomalies). **Canonical:** glossary IDE agent bridge, unity-development-context §10, [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md).
 
-**Bridge waits:** pass **`timeout_ms`:** **`40000`** (initial) on **`unity_bridge_command`** / **`unity_compile`** for agent-led cycles. On timeout, follow the **timeout escalation protocol** (`npm run unity:ensure-editor` → retry 60 s). Ceiling: **120 s** (`UNITY_BRIDGE_TIMEOUT_MS_MAX`). **Policy:** [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md).
+**Timeouts:** `timeout_ms: 40000` initial; on timeout → `npm run unity:ensure-editor` → retry 60 s. Ceiling 120 s. Policy: [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md).
 
-**Related:** **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (one-off logs/screenshots). **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (optional: run this recipe after a phase that changes **Play Mode** visuals). **Optional Step 0:** when **`ia/skills/bridge-environment-preflight/SKILL.md`** exists, use it for **Postgres** / **`agent_bridge_job`** checks before the bridge loop; otherwise confirm **`DATABASE_URL`** and **`npm run db:migrate`** per [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md). **Normative tool names:** **territory-ia** **`unity_bridge_command`**, **`unity_compile`**, **`unity_bridge_get`**, **`backlog_issue`**, **`router_for_task`**, **`spec_section`**.
+**Related:** [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) · [`project-spec-implement`](../project-spec-implement/SKILL.md) · [`bridge-environment-preflight`](../bridge-environment-preflight/SKILL.md) (Step 0).
 
-## Prerequisites (all required for the bridge path)
+## Prerequisites
 
 | Requirement | Notes |
-|-------------|--------|
-| **`DATABASE_URL`** or **`config/postgres-dev.json`** | Same as **Editor export registry** |
-| Migration **`0008_agent_bridge_job.sql`** | `npm run db:migrate` — [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) |
-| **Unity Editor** open on **repository root** | **`AgentBridgeCommandRunner`** polls dequeue. If not running, run **`npm run unity:ensure-editor`** (macOS; exit 0 = ready) |
-| **territory-ia** MCP with **`unity_bridge_command`** | Cursor **Agent** mode |
+|---|---|
+| `DATABASE_URL` or `config/postgres-dev.json` | Editor export registry |
+| Migration `0008_agent_bridge_job.sql` | `npm run db:migrate` |
+| Unity Editor on repo root | Missing → `npm run unity:ensure-editor` |
+| territory-ia MCP | Agent mode |
 
-## Parameterize (replace before running)
+## Parameterize
 
 | Placeholder | Meaning |
-|-------------|---------|
-| **`{ISSUE_ID}`** | **`BUG-` / `FEAT-` / `TECH-`** id from **`backlog_issue`** |
-| **`{SEED_CELLS}`** | 1–3 **`"x,y"`** strings from repro steps (e.g. **`"62,0"`**, **`"93,0"`**) |
-| **`{MAX_ITERATIONS}`** | Auto fix cycles before escalating (default **2**, per project spec) |
+|---|---|
+| `{ISSUE_ID}` | `BUG-`/`FEAT-`/`TECH-` from `backlog_issue` |
+| `{SEED_CELLS}` | 1–3 `"x,y"` from repro steps |
+| `{MAX_ITERATIONS}` | Fix cycles before escalating (default 2) |
 
 ## Tool recipe (territory-ia) — execution order
 
-1. **CONTEXT** — **`backlog_issue`** with **`issue_id`:** **`{ISSUE_ID}`** → **`router_for_task`** / **`spec_section`** as needed for the bug domain.
-2. **IDENTIFY REPRO CELLS** — From backlog **Notes** / project spec, set **`{SEED_CELLS}`** (1–3 **Moore** centers).
-3. **BASELINE CAPTURE**
-   - **`unity_bridge_command`** **`kind`:** **`enter_play_mode`** → poll **`get_play_mode_status`** until **`play_mode_ready`** and **`ready: true`** if needed.
-   - For each cell in **`{SEED_CELLS}`:** **`unity_bridge_command`** **`kind`:** **`debug_context_bundle`**, **`seed_cell`:** **`"x,y"`** — store **`response.bundle`** ( **`anomaly_count`**, **`anomalies`**, **`cell_export`**, screenshot path, console summary).
-   - **`unity_bridge_command`** **`kind`:** **`exit_play_mode`**.
-4. **IMPLEMENT FIX** — Edit **C#** / assets per analysis (**English** comments and logs).
-5. **COMPILE GATE** — After **C#** edits, **do not** call **`enter_play_mode`** until compilation is acceptable. Preference order (first that applies):
-   - **a.** **`unity_bridge_command`** **`kind`:** **`get_compilation_status`** or **`unity_compile`** (same payload; **`unity_compile`** is a thin MCP alias) when the **Editor** is open for the bridge — read **`response.compilation_status`** (**`compiling`**, **`compilation_failed`**, **`last_error_excerpt`**, **`recent_error_messages`**). If **`compiling`** is true, wait and poll again (bounded retries, e.g. 5–8 attempts, ~2–3 s apart) up to **`timeout_ms`**.
-   - **b.** If no **Editor** holds a **lock** on this **projectPath**, run from repo root: **`npm run unity:compile-check`** (Unity **`-batchmode -nographics -quit`**). **Do not** skip this because **`$UNITY_EDITOR_PATH`** is empty in the agent shell — **`tools/scripts/unity-compile-check.sh`** sources repo-root **`.env`** / **`.env.local`** and (on **macOS**) can resolve the Hub binary from **`ProjectSettings/ProjectVersion.txt`**. **Never** run this while the **Editor** has the same project open.
-   - **c.** **`unity_bridge_command`** **`kind`:** **`get_console_logs`** — look for **`error CS`** / compiler errors; optional success cues (Unity-version-specific, e.g. **`Compilation`** / **`Reload`** phrases in **log** lines) are **heuristic**.
-   - **d.** Short bounded wait (10–20 s), then repeat **c** if still ambiguous.
-   - **e.** On confirmed compile errors → return to step 4, then repeat step 5.
-6. **POST-FIX CAPTURE** — Same as step 3 (**`enter_play_mode`** → per-cell **`debug_context_bundle`** → **`exit_play_mode`**).
-7. **DIFF** — Per seed cell: **`anomaly_count`** delta; **`anomalies`** added/removed; **height** / child-name hints from export JSON if present; screenshot **paths**.
-8. **VERDICT** — Structured summary for the developer (before/after counts, remaining **`anomalies`**, screenshot **paths**).
-9. **ITERATE** — If **`anomalies`** remain and the cause is clear, go to step 4. Stop after **`{MAX_ITERATIONS}`** (default **2**) and escalate.
+1. **CONTEXT** — `backlog_issue` `issue_id: {ISSUE_ID}` → `router_for_task` / `spec_section` as needed.
+2. **REPRO CELLS** — From Notes / spec set `{SEED_CELLS}` (1–3 Moore centers).
+3. **BASELINE**
+   - `unity_bridge_command` `kind: enter_play_mode` → poll `get_play_mode_status` until `play_mode_ready` + `ready: true`.
+   - Per cell: `unity_bridge_command` `kind: debug_context_bundle`, `seed_cell: "x,y"` — store `response.bundle` (`anomaly_count`, `anomalies`, `cell_export`, screenshot, console).
+   - `unity_bridge_command` `kind: exit_play_mode`.
+4. **FIX** — Edit C# / assets. English comments + logs.
+5. **COMPILE GATE** — After C# edits, do NOT `enter_play_mode` until compile clean. Preference order:
+   - **a.** `unity_bridge_command` `kind: get_compilation_status` or `unity_compile` (alias) when Editor holds the bridge — read `response.compilation_status` (`compiling`, `compilation_failed`, `last_error_excerpt`, `recent_error_messages`). If `compiling`, poll (5–8 attempts, ~2–3 s) up to `timeout_ms`.
+   - **b.** No Editor lock on `projectPath` → `npm run unity:compile-check` from repo root (`-batchmode -nographics -quit`). Script sources `.env` / `.env.local`; macOS resolves Hub binary from `ProjectSettings/ProjectVersion.txt`. Never run while Editor has same project open.
+   - **c.** `unity_bridge_command` `kind: get_console_logs` — scan `error CS` / compiler errors. Success cues heuristic.
+   - **d.** Short wait (10–20 s), repeat **c** if ambiguous.
+   - **e.** Confirmed errors → step 4.
+6. **POST-FIX** — Repeat step 3.
+7. **DIFF** — Per cell: `anomaly_count` delta; added/removed `anomalies`; height/child-name hints from export JSON; screenshot paths.
+8. **VERDICT** — Structured summary (before/after counts, remaining anomalies, screenshot paths).
+9. **ITERATE** — Anomalies remain + cause clear → step 4. Stop after `{MAX_ITERATIONS}` (default 2), escalate.
 10. **HANDOFF** — Human approves or requests changes.
 
 ## Compile gate notes
 
-- **`get_compilation_status`** reflects **`EditorApplication.isCompiling`**, **`EditorUtility.scriptCompilationFailed`**, and recent **error**-severity lines from **`AgentBridgeConsoleBuffer`** (cleared on script domain reload).
-- **`npm run unity:compile-check`** writes **`tools/reports/unity-compile-check-*.log`**; exit non-zero on failure. Put **`UNITY_EDITOR_PATH`** in repo-root **`.env`** (or rely on **macOS** Hub path inference from **`ProjectSettings/ProjectVersion.txt`**). Example macOS: **`…/Unity.app/Contents/MacOS/Unity`**. **Do not** pre-check **`$UNITY_EDITOR_PATH`** in the agent shell before **`npm run`** — the script loads dotenv.
+- `get_compilation_status` reflects `EditorApplication.isCompiling`, `EditorUtility.scriptCompilationFailed`, recent error lines from `AgentBridgeConsoleBuffer` (cleared on domain reload).
+- `npm run unity:compile-check` writes `tools/reports/unity-compile-check-*.log`; non-zero exit on failure. `UNITY_EDITOR_PATH` in repo-root `.env` or macOS Hub inference. Example: `…/Unity.app/Contents/MacOS/Unity`. Do NOT pre-check `$UNITY_EDITOR_PATH` — script loads dotenv.
 
-## Seed prompt (parameterize)
+## Seed prompt
 
 ```markdown
 Run the close-dev-loop workflow for issue {ISSUE_ID} with seed cells {SEED_CELLS}.
@@ -72,17 +72,17 @@ Follow ia/skills/close-dev-loop/SKILL.md: territory-ia bridge commands, compile 
 
 ## Step 0 — environment preflight
 
-**Before step 3**, run [**`bridge-environment-preflight`**](../bridge-environment-preflight/SKILL.md) or its equivalent:
+Before step 3, run [`bridge-environment-preflight`](../bridge-environment-preflight/SKILL.md) or:
 
 ```
 npm run db:bridge-preflight
 ```
 
-- **Exit 0** → proceed to step 1 (CONTEXT).
-- **Exit 1** (no URL) → report to developer; do not retry.
-- **Exit 2** (server down) → `npm run db:setup-local` once → re-run preflight.
-- **Exit 3** (table missing) → `npm run db:migrate` once → re-run preflight.
-- **Exit 4** (SQL error) → report code + stderr; do not retry.
-- Still failing after one repair → report and escalate; do not loop.
+- Exit 0 → step 1 (CONTEXT).
+- Exit 1 (no URL) → report, no retry.
+- Exit 2 (server down) → `npm run db:setup-local` once → re-run.
+- Exit 3 (table missing) → `npm run db:migrate` once → re-run.
+- Exit 4 (SQL error) → report code + stderr, no retry.
+- Still failing after one repair → report, escalate, no loop.
 
-See [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) (**Bridge environment preflight**) for URL resolution and Unity vs MCP alignment notes.
+See [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) (Bridge environment preflight) for URL resolution + Unity/MCP alignment.

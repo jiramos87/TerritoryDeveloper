@@ -2,9 +2,9 @@
 
 ## Overview
 
-Territory Developer is a 2D isometric city-builder built in Unity with C#. Players place roads, zones (residential/commercial/industrial), buildings, and manage their city's economy, resources, and growth.
+2D isometric city-builder. Unity + C#. Players place roads, zones (residential/commercial/industrial), buildings; manage economy, resources, growth.
 
-All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. No dependency injection — managers reference each other via Inspector fields with `FindObjectOfType<T>()` fallback in Awake/Start.
+All game logic in MonoBehaviour classes under `Assets/Scripts/`. No DI — managers reference each other via Inspector fields + `FindObjectOfType<T>()` fallback in Awake/Start.
 
 ## System Layers
 
@@ -59,34 +59,34 @@ All game logic lives in MonoBehaviour classes under `Assets/Scripts/`. No depend
 
 ### Initialization
 
-`GeographyManager` orchestrates startup:
-1. Regional map with neighboring cities
-2. Optional **interchange** load of `geography_init_params` from StreamingAssets (session **MapGenerationSeed** + optional procedural-rivers override); then grid + heightmap (40×40 designer template centered; procedural fill on larger maps)
+`GeographyManager` startup:
+1. Regional map + neighboring cities
+2. Optional **interchange** load of `geography_init_params` from StreamingAssets (session **MapGenerationSeed** + optional procedural-rivers override); grid + heightmap (40×40 designer template centered; procedural fill on larger maps)
 3. Water map + lake bodies (depression-fill or legacy sea-level mask)
 4. Interstate highways (up to 3 random attempts + deterministic fallback)
 5. Forests (conditional)
-6. Water desirability, sorting order recalculation, border signs
-7. Zone manager ready for player zoning
+6. Water desirability, sorting order recalc, border signs
+7. Zone manager ready
 
-### Simulation (each tick)
+### Simulation (per tick)
 
-SimulationManager executes in order:
+SimulationManager order:
 1. Growth budget validation
-2. Urban centroid / ring recalculation
+2. Urban centroid / ring recalc
 3. Auto road extension
 4. Auto zoning (cells adjacent to roads)
 5. Auto resource planning (water, power)
 
-The legacy UrbanizationProposal system is obsolete and not invoked.
+Legacy UrbanizationProposal obsolete; not invoked.
 
 ### Player Input
 
-GridManager dispatches clicks by active mode → zoning, road drawing, building placement, or bulldozer.
+GridManager dispatches clicks by active mode → zoning, road drawing, building placement, bulldozer.
 
 ### Persistence
 
-- **Save:** Grid data (`List<CellData>`) + `WaterMapData` serialized on `GameSaveData`.
-- **Load:** Restore heightmap → restore water map (or legacy path) → restore grid → sync water body ids with shore membership. Snapshot applies saved prefabs, sorting order, water body type/id. Does **not** run global slope restoration or sorting recalculation (see geography spec §7.4).
+- **Save:** Grid data (`List<CellData>`) + `WaterMapData` on `GameSaveData`.
+- **Load:** Restore heightmap → water map (or legacy path) → grid → sync water body ids w/ shore membership. Snapshot applies saved prefabs, sorting order, water body type/id. Does NOT run global slope restoration / sorting recalc (geography spec §7.4).
 
 ### Interchange JSON (config and tooling, TECH-41)
 
@@ -162,15 +162,15 @@ Manual streets use longest-valid-prefix terraform validation; interstate uses fu
 
 ## Architectural Decisions
 
-- **GridManager as hub:** Central coordinator for cell operations. Keeps access consistent but makes it large.
+- **GridManager as hub:** Central coordinator for cell operations. Consistent access; large class.
 - **FindObjectOfType pattern:** Inspector wiring + null-check fallback in Awake/Start.
-- **Namespaces:** Most scripts under `Territory.*` (`Core`, `Terrain`, `Roads`, `Zones`, `Forests`, `Buildings`, `Economy`, `UI`, `Geography`, `Timing`, `Utilities`, `Simulation`, `Persistence`). A few legacy scripts in global namespace.
-- **Spec policy:** See `AGENTS.md`. Full spec inventory in `ia/specs/`; agent routing in `ia/rules/agent-router.md`. Optional MCP access to the same files: `docs/mcp-ia-server.md`; generic pattern notes: `docs/mcp-markdown-ia-pattern.md`.
+- **Namespaces:** Most under `Territory.*` (`Core`, `Terrain`, `Roads`, `Zones`, `Forests`, `Buildings`, `Economy`, `UI`, `Geography`, `Timing`, `Utilities`, `Simulation`, `Persistence`). Few legacy in global namespace.
+- **Spec policy:** `AGENTS.md`. Spec inventory `ia/specs/`; agent routing `ia/rules/agent-router.md`. Optional MCP: `docs/mcp-ia-server.md`; generic pattern: `docs/mcp-markdown-ia-pattern.md`.
 - **Editor agent diagnostics (IA for agents):** `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs` emits JSON/Markdown under `tools/reports/` (gitignored outputs). Expected menus, prerequisites, and field vocabulary are documented in `ia/specs/unity-development-context.md` §10; regressions belong in a new **BACKLOG** row with **Console** output and sample exports.
 - **IDE agent bridge (Postgres queue):** **`unity_bridge_command`**, **`unity_bridge_get`**, and **`unity_compile`** (alias for **`get_compilation_status`**) enqueue work for **`AgentBridgeCommandRunner`** via **`agent_bridge_job`** — see **`docs/mcp-ia-server.md`** and **unity-development-context** §10. Bridge **`kind`** values include **`get_compilation_status`** (compile snapshot in **`response.compilation_status`**) for agents when the **Editor** holds the project open. When **MCP** + **Unity** are available on the dev machine, **AI agents** should run the **Play Mode** smoke sequence documented there (**`get_play_mode_status`** → **`enter_play_mode`** → **`get_play_mode_status`** → **`exit_play_mode`**) to reduce manual **Play**/**Stop** clicks; full before/after **`debug_context_bundle`** workflow: **`ia/skills/close-dev-loop/SKILL.md`**.
 
 ## Known Trade-offs
 
 - **High coupling:** Managers reference each other directly.
-- **GridManager size:** ~2070 lines; decomposition tracked in `BACKLOG.md`.
-- **No event system:** Direct method calls, not events.
+- **GridManager size:** ~2070 lines; decomposition → `BACKLOG.md`.
+- **No event system:** Direct method calls.

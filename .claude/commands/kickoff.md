@@ -5,36 +5,36 @@ argument-hint: "{ISSUE_ID} (e.g. TECH-11)"
 
 # /kickoff — dispatch `spec-kickoff` subagent
 
-Use the **`spec-kickoff`** subagent (defined in `.claude/agents/spec-kickoff.md`) to review and enrich the project spec for `$ARGUMENTS`.
+Use `spec-kickoff` subagent (`.claude/agents/spec-kickoff.md`) to review + enrich project spec for `$ARGUMENTS`.
 
 ## Subagent prompt (forward verbatim)
 
-Forward the following prompt to the subagent via the Agent tool with `subagent_type: "spec-kickoff"`:
+Forward via Agent tool with `subagent_type: "spec-kickoff"`:
 
-> Follow `caveman:caveman` skill rules for all responses (drop articles/filler/pleasantries/hedging; fragments OK; pattern `[thing] [action] [reason]. [next step].`). Standard exceptions apply: code, commits, security/auth content, verbatim error/tool output, structured MCP inputs/outputs. Project anchor: `ia/rules/agent-output-caveman.md`.
+> Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
 >
 > ## Mission
 >
-> Run the `project-spec-kickoff` skill (`ia/skills/project-spec-kickoff/SKILL.md`) end-to-end on the project spec at `ia/projects/$ARGUMENTS*.md`. Resolve the actual filename via Glob — the spec may be `$ARGUMENTS.md` or `$ARGUMENTS-{description}.md` (descriptive naming convention).
+> Run `project-spec-kickoff` skill (`ia/skills/project-spec-kickoff/SKILL.md`) end-to-end on `ia/projects/$ARGUMENTS*.md`. Resolve filename via Glob — may be `$ARGUMENTS.md` or `$ARGUMENTS-{description}.md`.
 >
 > ## MCP first
 >
-> 1. `mcp__territory-ia__backlog_issue` for `$ARGUMENTS` — pull Files / Notes / Spec / Acceptance / depends_on_status.
-> 2. `mcp__territory-ia__invariants_summary` once if the spec implies code or game subsystem changes.
-> 3. `mcp__territory-ia__router_for_task` per domain (1–3 from Summary / Goals / Files).
-> 4. `mcp__territory-ia__spec_section` (or `spec_sections` batch) for routed reference specs — slices, never whole files.
-> 5. `mcp__territory-ia__glossary_discover` with English keyword array, then narrow with `glossary_lookup`.
+> 1. `mcp__territory-ia__backlog_issue` for `$ARGUMENTS` — Files / Notes / Spec / Acceptance / depends_on_status.
+> 2. `mcp__territory-ia__invariants_summary` once if code/subsystem changes implied.
+> 3. `mcp__territory-ia__router_for_task` per domain (1–3 from Summary/Goals/Files).
+> 4. `mcp__territory-ia__spec_section` or `spec_sections` batch for routed specs — slices, never whole files.
+> 5. `mcp__territory-ia__glossary_discover` with English keyword array → narrow via `glossary_lookup`.
 >
 > ## Editorial pass
 >
-> Tighten Open Questions, Implementation Plan phases, Decision Log, sibling spec cross-links. Edit the spec in place. Do **not** execute the Implementation Plan (that is the `spec-implementer` subagent's job). Do **not** close the issue (that is the `closeout` subagent's job).
+> Tighten Open Questions, Implementation Plan phases, Decision Log, sibling cross-links. Edit spec in place. Do NOT execute Implementation Plan (= `spec-implementer`). Do NOT close issue (= `closeout`).
 >
 > ## Hard boundaries
 >
 > - Do NOT load whole reference specs when slices suffice.
-> - Do NOT touch `BACKLOG.md` row state, archive, or id purge.
-> - Do NOT delete the spec.
-> - Do NOT skip `invariants_summary` when runtime C# / subsystem changes are implied.
+> - Do NOT touch BACKLOG row state, archive, id purge.
+> - Do NOT delete spec.
+> - Do NOT skip `invariants_summary` when runtime C#/subsystem changes implied.
 >
 > ## Output
 >

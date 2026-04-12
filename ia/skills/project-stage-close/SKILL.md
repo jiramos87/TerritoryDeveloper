@@ -16,123 +16,77 @@ description: >
 
 # Project stage close (per-stage close for multi-stage project specs)
 
-**Output style — caveman default.** Follow `caveman:caveman` skill rules for the chat message output produced while running this skill (drop articles/filler/pleasantries/hedging; fragments OK; pattern `[thing] [action] [reason]. [next step].`). Standard exceptions apply: code, commits, security/auth content, verbatim error/tool output, structured MCP inputs/outputs, destructive-op confirmations. **The handoff message in step 8 must itself be caveman-shaped** and must include an explicit "follow `caveman:caveman` skill rules" line forwarded verbatim to the next stage's fresh agent — without that directive baked into the pasted prompt, the next stage runs in clean context with no inherited SessionStart hook and falls back to verbose default phrasing. The skill is invoked inline (not via a subagent), so the preamble lives here directly. Project anchor: [`ia/rules/agent-output-caveman.md`](../../rules/agent-output-caveman.md).
+Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md). **Critical:** handoff message (step 8) must be caveman-shaped AND include explicit `caveman:caveman` directive forwarded verbatim — next stage's fresh agent has no SessionStart hook.
 
-This skill is **inline** — invoked directly by the stage-executing agent, **not** dispatched to a subagent. It runs once at the end of every non-final stage of a multi-stage project spec, leaving the spec in a clean handoff state for a fresh agent to pick up the next stage.
+Inline skill — stage-executing agent invokes directly, not dispatched to subagent. Runs once per non-final stage, leaves spec in clean handoff state.
 
-**Distinction from [`project-spec-close`](../project-spec-close/SKILL.md):** that skill is the **umbrella close** — it migrates lessons to canonical IA, deletes the project spec, removes the BACKLOG row, appends to BACKLOG-ARCHIVE, and purges the closed id. It runs **once per spec**, at the end of the **very last stage**. This skill (`project-stage-close`) runs **N times per spec**, once per non-final stage, and **never** touches BACKLOG / archive / spec deletion.
+**vs [`project-spec-close`](../project-spec-close/SKILL.md):** umbrella close (final stage only) — migrates IA, deletes spec, removes BACKLOG row, archives, purges id. This skill runs N times per spec, **never** touches BACKLOG / archive / deletion.
 
-**Origin:** introduced as part of the native Claude Code migration (stage/phase execution model). Going forward, every multi-stage project spec is expected to use this pattern.
+**Related:** [`project-spec-implement`](../project-spec-implement/SKILL.md) (run stages) · [`project-spec-close`](../project-spec-close/SKILL.md) (final-stage umbrella). After implement finishes stage + verification passes → run this skill → emit handoff.
 
-## Relationship to other lifecycle skills
+## When to use
 
-- After [`project-spec-implement`](../project-spec-implement/SKILL.md) finishes the **stage**'s implementation phases and verification has passed, run **this** skill to close the stage and emit a handoff for the next stage's agent.
-- Run [`project-spec-close`](../project-spec-close/SKILL.md) **only** at the end of the final stage (umbrella close).
-
-## When to use vs when not to use
-
-| Situation | Skill to run |
+| Situation | Skill |
 |---|---|
-| Closing a non-final stage of a multi-stage spec | **`project-stage-close`** (this one) |
-| Closing the final stage of a multi-stage spec | **`project-spec-close`** (umbrella) |
-| Closing a single-stage / flat spec | **`project-spec-close`** |
-| Closing a step/stage in an **orchestrator** doc | **`project-stage-close`** with orchestrator rules below |
-| Mid-stage checkpoint with no agent handoff needed | Neither — keep working |
+| Non-final stage of multi-stage spec | **this** |
+| Final stage / single-stage spec | **`project-spec-close`** |
+| Orchestrator step/stage | **this** + orchestrator rules below |
+| Mid-stage checkpoint, no handoff | Neither |
 
 ## Orchestrator step/stage close
 
-When closing a step or stage in an **orchestrator document** (per `ia/rules/orchestrator-vs-spec.md`):
-- Migrate learnings backward per `ia/rules/project-hierarchy.md` (task->phase->stage->step).
-- Delete the child orchestrator doc (step-level or stage-level) **after** learnings are migrated.
-- Update the parent orchestrator's status to reflect completed step/stage.
-- **Never** delete the global orchestrator itself — only child orchestrator docs are ephemeral.
+Per `ia/rules/orchestrator-vs-spec.md`:
+- Migrate learnings backward per `ia/rules/project-hierarchy.md` (task→phase→stage→step).
+- Delete child orchestrator doc **after** learnings migrated.
+- Update parent orchestrator status.
+- **Never** delete global orchestrator — only child docs are ephemeral.
 
-## Inputs (gather before running)
+## Inputs
 
-- **`{ISSUE_ID}`** — e.g. `TECH-11`
-- **`{SPEC_PATH}`** — e.g. `ia/projects/{ID}.md` or `ia/projects/{ID}-{description}.md`
-- **`{STAGE_ID}`** — e.g. `Stage 1`
-- **`{STAGE_TITLE}`** — e.g. `Quick wins on Claude Code (no breaking changes)`
-- **`{NEXT_STAGE_ID}`** — e.g. `Stage 2` (omit when closing the final stage — but use the umbrella skill in that case)
-- **Verification block** — already produced per [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) before invoking this skill
-- **Stage decisions / issues / lessons** — collected during stage execution
+| Placeholder | Example |
+|---|---|
+| `{ISSUE_ID}` | `TECH-11` |
+| `{SPEC_PATH}` | `ia/projects/{ID}.md` |
+| `{STAGE_ID}` / `{STAGE_TITLE}` | `Stage 1` / title text |
+| `{NEXT_STAGE_ID}` | `Stage 2` (omit for final — use umbrella skill) |
+| Verification block | Already produced per [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) |
 
 ## 8-step procedure
 
-Run **in order**. Skip a step only when it is genuinely **N/A** (state why in chat).
+Run in order. Skip only when genuinely N/A (state why).
 
-### 1. Mark phase checklists complete in §7
+### 1. Mark phase checklists in §7
+Tick every `- [ ]` under `### {STAGE_ID} — {STAGE_TITLE}` that completed. Deferred tasks: leave unticked + note in §9.
 
-Open `{SPEC_PATH}` and tick every `- [ ]` checkbox under **`### {STAGE_ID} — {STAGE_TITLE}`** that the stage actually completed. Use `Edit` with the surrounding context (phase header) so the change is unambiguous. If a phase task was **not** completed and is intentionally deferred, leave the box unticked and add a one-line note in §9 Issues Found explaining the deferral.
+### 2. Update Last updated
+Replace `> **Last updated:** YYYY-MM-DD` with today's date from `currentDate` context. Never invent date.
 
-### 2. Update **Last updated** in the spec header
+### 3. Append §6 Decision Log
+Per stage decision: `| {today} | {decision} | {rationale} | {alternatives} |`. No decisions → `| {today} | {STAGE_ID} closed with no new decisions | — | — |`.
 
-Locate the `> **Last updated:** YYYY-MM-DD` line near the top of the spec and replace the date with **today's date**. Use the date the host injects via the `currentDate` context block (e.g. `2026-04-10`) — do not invent a date.
+### 4. Append §9 Issues Found
+Per unexpected issue: `| {n} | {description} | {root cause} | {resolution or "deferred to {NEXT_STAGE_ID}"} |`. No issues → leave untouched.
 
-### 3. Append to §6 Decision Log
+### 5. Append §10 Lessons Learned
+Reusable insights as bullets. Accumulate across stages — umbrella close migrates to canonical IA.
 
-For every stage-specific decision that emerged during execution (especially deviations from the spec, resolved ambiguities, or empirically locked options), append a row to the **§6 Decision Log** table:
+### 6. Optional: journal persist
+`project_spec_journal_persist` with `issue_id`, `spec_path`, `stage_id`. Outcomes: `ok` (note row id) · `db_unconfigured` (graceful skip) · `db_error` (log, proceed).
 
-```
-| {today} | {decision in one line} | {rationale} | {alternatives considered} |
-```
+### 7. Sanity-check handoff state
+- All closing-stage `- [ ]` now `- [x]` (or deferred in §9).
+- Last updated = today.
+- §6/§9/§10 markdown parses cleanly.
+- Internal links resolve.
+- No contradictory open questions for next stage — escalate in handoff if any.
+- `.claude/settings.json`: `defaultMode: "acceptEdits"` + `mcp__territory-ia__*` wildcard present. Verify: `python3 -c 'import json; d=json.load(open(".claude/settings.json"))["permissions"]; assert d["defaultMode"]=="acceptEdits", d["defaultMode"]; assert "mcp__territory-ia__*" in d["allow"], "wildcard missing"; print("OK")'`.
+- Fix failures before emitting handoff.
 
-If no new decisions were made during the stage, add a single row of the form `| {today} | {STAGE_ID} closed with no new decisions | — | — |` so the log records that the stage ran cleanly.
+### 8. Emit handoff message
 
-### 4. Append to §9 Issues Found During Development
+Fenced markdown block for verbatim paste into fresh agent session. Must include: issue id + closed stage, branch state, verification summary (exit codes), spec pointer ("read §5.3, §6, §9, §10, and next-stage §7 phases first"), inherited blockers/decisions, hard boundaries ("do NOT" list), final instruction ("execute {NEXT_STAGE_ID} phases in order, then `project-stage-close`").
 
-For every unexpected issue that surfaced during the stage (broken assumption, hidden dependency, deferred task), append a row:
-
-```
-| {n} | {description} | {root cause} | {resolution or "deferred to {NEXT_STAGE_ID}"} |
-```
-
-If no issues were found, leave §9 untouched (do **not** invent placeholder rows).
-
-### 5. Append to §10 Lessons Learned
-
-For every reusable insight from the stage, add a bullet under **§10 Lessons Learned**. These accumulate across stages — the umbrella `project-spec-close` migrates them to canonical IA at the very end. Phrase each lesson so a future maintainer can act on it without re-reading the spec.
-
-### 6. **Optional:** persist a journal entry to Postgres
-
-Call `mcp__territory-ia__project_spec_journal_persist` with:
-
-- `issue_id` = `{ISSUE_ID}`
-- `spec_path` = `{SPEC_PATH}`
-- `stage_id` = `{STAGE_ID}` (when the tool supports it; otherwise prefix the journal `kind` / `notes` so the entry is searchable)
-
-Acceptable outcomes:
-
-- **`ok`** — entry persisted; note the row id in chat.
-- **`db_unconfigured`** — neither `DATABASE_URL` nor `config/postgres-dev.json` resolves; **graceful skip**, state the skip reason in chat. Do not block stage close on this.
-- **`db_error`** — log the error in chat. The stage close may still proceed; consider this a soft warning unless the user explicitly waives DB capture.
-
-### 7. Sanity-check the spec is in clean handoff state
-
-Before emitting the handoff message, verify:
-
-- All `- [ ]` checkboxes for the closing stage are now `- [x]` (or have a documented deferral in §9).
-- The **Last updated** date matches today.
-- §6 / §9 / §10 edits parse cleanly (no broken table rows or stray markdown).
-- Internal links in the spec still resolve (relative paths to `BACKLOG.md`, sibling specs, rules, skills).
-- No contradictory open questions remain unresolved for the **next** stage's work — if any do, escalate in the handoff message rather than silently passing them on.
-- **`.claude/settings.json` still has `permissions.defaultMode: "acceptEdits"` and the `mcp__territory-ia__*` wildcard in `permissions.allow`** — both are canonical project stances. If a recent edit stripped either one, restore it before handoff so the next stage's agent does not hit per-call approval friction. Verify with: `python3 -c 'import json; d=json.load(open(".claude/settings.json"))["permissions"]; assert d["defaultMode"]=="acceptEdits", d["defaultMode"]; assert "mcp__territory-ia__*" in d["allow"], "wildcard missing"; print("OK")'`.
-
-If anything fails this check, fix it before emitting the handoff message.
-
-### 8. Emit a handoff message
-
-Produce a fenced markdown code block the user can paste **verbatim** into a fresh agent session to start `{NEXT_STAGE_ID}`. The block must include:
-
-- **Issue id** (`{ISSUE_ID}`) and **stage just closed** (`{STAGE_ID}`).
-- **Branch state** — current branch name and a one-line summary of what shipped in this stage.
-- **Verification summary** — exit codes / outcomes from the Verification block produced per [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md). One row per check.
-- **Pointer to the spec** — `{SPEC_PATH}` and the explicit instruction "read §5.3, §6 Decision Log, §9 Issues Found, §10 Lessons Learned, and the §7 phases for the **next** stage before doing anything else".
-- **Inherited blockers / decisions** — anything the next stage agent needs to know that is not already obvious from the spec (e.g. resolved-but-deferred questions, empirical findings from the stage just closed, environmental gotchas).
-- **Hard boundaries** — explicit "do NOT" list for the next stage if relevant (e.g. "do not touch `tools/mcp-ia-server/src/` until Phase 2.3"; "do not strip `permissions.defaultMode: \"acceptEdits\"` from `.claude/settings.json`").
-- **Final instruction** — "execute every phase of `{NEXT_STAGE_ID}` in order, then invoke `project-stage-close` skill to close the stage and produce the next handoff."
-
-### Handoff message template
+### Handoff template
 
 ```markdown
 You are executing **{NEXT_STAGE_ID}** of {ISSUE_ID} in Territory Developer.
@@ -168,31 +122,28 @@ to close the stage and emit the handoff for the agent that will execute the stag
 that follows.
 ```
 
-Replace placeholders in `{curly braces}` before pasting.
+Replace `{curly braces}` placeholders before pasting.
 
-## Output expected from this skill (single chat message)
+## Output (single chat message)
 
-When you finish running this skill, your message to the user should contain, in order:
+1. Bullet list of spec edits (sections, line counts).
+2. Journal persistence outcome (`ok` / `db_unconfigured` / `db_error`).
+3. Sanity-check summary (one line per step 7 item).
+4. Handoff message in fenced code block, ready to copy.
 
-1. A short bullet list of edits made to the spec (which sections, how many lines).
-2. The journal persistence outcome (`ok` / `db_unconfigured` / `db_error` + note).
-3. The sanity-check summary (one line per item from step 7).
-4. The handoff message in a fenced markdown code block, ready for the user to copy.
-
-## Failure modes and how to handle them
+## Failure modes
 
 | Failure | Handling |
 |---|---|
-| Cannot edit the spec (file locked, missing) | Report the error; do not invent a handoff. The stage is not closed until the spec is updated. |
-| Verification was not produced before invoking this skill | Stop. Run verification first per [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md), then re-invoke this skill. |
-| Postgres journal returns `db_error` | Report the error; proceed with steps 7–8 unless the user explicitly says otherwise. The stage close is not blocked on optional journal capture. |
-| §6 / §9 / §10 tables are malformed after edit | Re-read the file, locate the broken rows, fix them. Do not emit the handoff until the markdown parses cleanly. |
-| The closing stage left unticked phases that are **not** intentional deferrals | Stop. Either complete those phases or document them as deferrals in §9 Issues Found before proceeding. |
+| Cannot edit spec (locked/missing) | Report error; no handoff. Stage not closed until spec updated. |
+| No verification block produced | Stop. Run verification per [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) first. |
+| `db_error` from journal | Report; proceed with steps 7–8 unless user blocks. |
+| Malformed §6/§9/§10 after edit | Re-read, fix broken rows. No handoff until markdown parses. |
+| Unticked phases not documented as deferrals | Stop. Complete or document in §9 first. |
 
 ## Conventions
 
-- **No invented dates.** Use the host-injected `currentDate` exclusively.
-- **No BACKLOG / archive edits.** Those are exclusive to the umbrella `project-spec-close` skill.
-- **No spec deletion.** Same — exclusive to the umbrella close.
-- **English only**, per project rule (`ia/rules/coding-conventions.md`).
-- **Thin body.** This skill orchestrates; canonical detail lives in §5.3 of whatever spec is being closed.
+- No invented dates — use `currentDate` only.
+- No BACKLOG / archive / spec deletion — umbrella `project-spec-close` exclusive.
+- English only (`ia/rules/coding-conventions.md`).
+- Thin body — canonical detail in §5.3 of the spec being closed.

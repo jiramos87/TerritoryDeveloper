@@ -15,22 +15,22 @@ description: >
 
 # Agent test-mode verification loop
 
-**Output style — caveman default.** Follow `caveman:caveman` skill rules for all responses produced while running this skill (drop articles/filler/pleasantries/hedging; fragments OK; pattern `[thing] [action] [reason]. [next step].`). Standard exceptions apply: code, commits, security/auth content, verbatim error/tool output, structured batch report contents (`tools/reports/agent-testmode-batch-*.json`), MCP `unity_bridge_command` JSON inputs/outputs, destructive-op confirmations. The directive applies whether the skill is invoked via the `test-mode-loop` subagent or directly inline. Project anchor: [`ia/rules/agent-output-caveman.md`](../../rules/agent-output-caveman.md).
+Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md). **Additional exceptions:** structured batch report contents (`tools/reports/agent-testmode-batch-*.json`), MCP `unity_bridge_command` JSON inputs/outputs.
 
-**Design trace (program stage):** [`projects/TECH-31a3-agent-test-mode-verify-skill.md`](../../../projects/TECH-31a3-agent-test-mode-verify-skill.md) (**TECH-31** — [`BACKLOG.md`](../../../BACKLOG.md)). **Does not** replace human issue verification per [`AGENTS.md`](../../../AGENTS.md).
+Does not replace human issue verification per AGENTS.md.
 
-**Vocabulary:** **glossary** **Agent test mode batch** (headless **Editor** **`npm run unity:testmode-batch`**, no **Postgres** queue). **glossary** **IDE agent bridge** (**territory-ia** **`unity_bridge_command`**, **Postgres** **`agent_bridge_job`**, **Unity Editor** on **REPO_ROOT**). **Fixtures** and **Load pipeline** semantics: **persistence-system** — scenario JSON is **`GameSaveData`**-shaped; runtime load goes through **`GameSaveManager.LoadGame`** only (same entry as normal load), not ad-hoc grid mutation. Operator matrix and flags: [`tools/fixtures/scenarios/README.md`](../../../tools/fixtures/scenarios/README.md).
+**Vocabulary:** Agent test mode batch = headless Editor `npm run unity:testmode-batch` (no Postgres). IDE agent bridge = `unity_bridge_command` + Postgres `agent_bridge_job` + Editor on REPO_ROOT. Fixtures: `GameSaveData`-shaped; load via `GameSaveManager.LoadGame` only. Operator matrix: [`tools/fixtures/scenarios/README.md`](../../../tools/fixtures/scenarios/README.md).
 
-**Related:** **[`project-spec-implement`](../project-spec-implement/SKILL.md)** (optional phase exit). **[`close-dev-loop`](../close-dev-loop/SKILL.md)** — **compose** for compile gate order and rich **`debug_context_bundle`** before/after diffs; **do not** duplicate its **Moore**-neighborhood diff prose here. **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (one-off logs/screenshots). **[`bridge-environment-preflight`](../bridge-environment-preflight/SKILL.md)** (**Postgres** / table checks). **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (**`validate:all`**). **Program tracker:** [`projects/TECH-31-agent-scenario-generator-program.md`](../../../projects/TECH-31-agent-scenario-generator-program.md).
+**Related:** [`project-spec-implement`](../project-spec-implement/SKILL.md) · [`close-dev-loop`](../close-dev-loop/SKILL.md) (compile gate + `debug_context_bundle` diffs) · [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) · [`bridge-environment-preflight`](../bridge-environment-preflight/SKILL.md) · [`project-implementation-validation`](../project-implementation-validation/SKILL.md).
 
-**Owner policy (durable):** [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) — during agent implementation, **Unity** is a **test** surface; **attempt** **Path A** and **Path B** when tools and environment allow; do not skip bridge work only for convenience. **Bridge** **`timeout_ms`:** use **`40000`** (40s) for agent-led verification unless a shorter bound is justified. **IA autoreference:** [`docs/information-architecture-overview.md`](../../../docs/information-architecture-overview.md).
+**Policy:** [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) — attempt Path A and Path B when tools allow; do not skip bridge for convenience. Bridge `timeout_ms`: `40000` default.
 
-## Prerequisites by path
+## Prerequisites
 
 | Path | Requires |
 |------|----------|
-| **Path A** (**Agent test mode batch**) | Repo root; **`UNITY_EDITOR_PATH`** or **macOS** Hub inference (see **`tools/scripts/unity-compile-check.sh`** / **`unity-testmode-batch.sh`**). **No** other Unity process may hold **`REPO_ROOT`**: agents **must** pass **`--quit-editor-first`** on the batch command (or quit the Editor / run **`unity-quit-project.sh`** first). No **Postgres**. |
-| **Path B** (**IDE agent bridge**) | **`DATABASE_URL`** or **`config/postgres-dev.json`**; migration **`0008_agent_bridge_job.sql`**; **Unity Editor** open on **REPO_ROOT** (if not running, run **`npm run unity:ensure-editor`** — macOS; exit 0 = ready); **territory-ia** **`unity_bridge_command`**. Run **`npm run db:bridge-preflight`** before the first bridge call in a session ([**`bridge-environment-preflight`**](../bridge-environment-preflight/SKILL.md)). On bridge timeout, follow the **timeout escalation protocol** in [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md). |
+| **Path A** (batch) | Repo root; `UNITY_EDITOR_PATH` or macOS Hub inference. No other Unity process on REPO_ROOT — **must** pass `--quit-editor-first`. No Postgres needed. |
+| **Path B** (bridge) | `DATABASE_URL` or `config/postgres-dev.json`; migration `0008`; Editor open on REPO_ROOT (`npm run unity:ensure-editor`); `unity_bridge_command`. Run `npm run db:bridge-preflight` first session call. Timeout → escalation protocol in verification policy. |
 
 ## Gate — run vs skip
 
@@ -46,97 +46,66 @@ If **none** of the following apply, **skip** this loop, state **why** in the han
 
 ## Tool recipe (ordered)
 
-1. **Gate** — Apply the table above; if skip, document and stop (or run **`validate:all`** only if the diff still warrants it).
-2. **`npm run validate:all`** (repo root) when the diff touches **MCP** / schemas / **IA** indexes / **fixtures** / **`ia/skills/`** / **`ia/specs/`** bodies that feed indexes — same policy as **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)**.
-3. **Compile gate** — After **`Assets/`** **C#** changes: prefer **`unity_bridge_command`** **`kind`:** **`get_compilation_status`** or **`unity_compile`** when the **Editor** is open for **Path B**; otherwise **`npm run unity:compile-check`** from repo root (**do not** skip because **`$UNITY_EDITOR_PATH`** is unset — dotenv + **macOS** Hub fallback). **Never** run **`unity:compile-check`** while the **Editor** holds the same **projectPath** lock. Full preference order: **[`close-dev-loop`](../close-dev-loop/SKILL.md)** § **Compile gate**.
-4. **Scenario** — **v1:** committed id (e.g. **`reference-flat-32x32`**) or **`tools/fixtures/scenarios/agent-generated/{run-id}/save.json`** with **`--scenario-path`** (absolute path). **v2:** prefer **`scenario_descriptor_v1`** output layout from [`tools/fixtures/scenarios/BUILDER.md`](../../../tools/fixtures/scenarios/BUILDER.md) (**glossary** **scenario_descriptor_v1**).
-5. **Path A** or **Path B** (below). When running **both** in one session, do **Path A** first (use **`--quit-editor-first`** so batch can take the lock), then **`npm run unity:ensure-editor`** (macOS) before **Path B**.
-6. **Iterate** — On failure, fix code or environment, then repeat from step 2 up to **`{MAX_ITERATIONS}`** (default **2**, same as **`close-dev-loop`**).
-7. **Handoff** — English verdict, artifact paths, exit codes; request **human** **normal-game** **QA** (no **test mode** CLI flags / no reliance on agent-only queue file in player builds).
+1. **Gate** — Apply table above; skip → document + stop.
+2. **`validate:all`** — When diff touches MCP/schemas/IA indexes/fixtures/specs.
+3. **Compile gate** — After C# changes: prefer `unity_bridge_command` `get_compilation_status`/`unity_compile` (Editor open, Path B); else `npm run unity:compile-check`. Never run compile-check while Editor holds projectPath lock. Full order: [`close-dev-loop`](../close-dev-loop/SKILL.md) § Compile gate.
+4. **Scenario** — Committed id (e.g. `reference-flat-32x32`) or agent-generated path with `--scenario-path`. Prefer `scenario_descriptor_v1` layout from [`BUILDER.md`](../../../tools/fixtures/scenarios/BUILDER.md).
+5. **Path A or B** (below). Both in one session → Path A first (`--quit-editor-first`), then `unity:ensure-editor` before Path B.
+6. **Iterate** — On failure, fix + repeat from step 2 up to `{MAX_ITERATIONS}` (default 2).
+7. **Handoff** — Verdict, artifact paths, exit codes; request human normal-game QA.
 
-## Path A — **Agent test mode batch**
+## Path A — Agent test mode batch
 
-**Project lock:** Batchmode cannot open **`REPO_ROOT`** while the **Unity Editor** has it open. **Do not** run Path A without releasing the lock when an Editor might be running — use **`--quit-editor-first`** (or quit the Editor first).
-
-From **repository root**, **recommended** (macOS / typical agent verification):
+Project lock: batchmode needs REPO_ROOT exclusively. Use `--quit-editor-first` when Editor might be running.
 
 ```bash
 npm run unity:testmode-batch -- --quit-editor-first --scenario-id reference-flat-32x32
 ```
 
-Minimal form when you are sure **no** Editor holds the project:
+- Invokes `unity-testmode-batch.sh`: Unity `-batchmode -nographics -executeMethod Territory.Testing.AgentTestModeBatchRunner.Run`.
+- Default `--scenario-id`: `reference-flat-32x32`. Optional `--scenario-path` for ad-hoc JSON (absolute path).
+- `--quit-editor-first` → `unity-quit-project.sh` (Lockfile/lsof) to release lock.
+- Load pipeline: `GameSaveManager.LoadGame` only; optional `-testSimulationTicks` → `ProcessSimulationTick`.
+- `--golden-path` / `-testGoldenPath`: asserts CityStats fields vs committed JSON — mismatch → exit 8.
+- Artifacts: `tools/reports/agent-testmode-batch-*.json` (schema_version 2), `unity-testmode-batch-*.log`.
+- Optional Postgres: `DATABASE_URL` + migration `0009` → `MetricsRecorder` appends `city_metrics_history`; query via `city_metrics_query`. Does not replace golden CityStats JSON.
 
-```bash
-npm run unity:testmode-batch
-```
+## Path B — IDE agent bridge hybrid
 
-- Invokes **`tools/scripts/unity-testmode-batch.sh`**: Unity **`-batchmode`** **`-nographics`** **`-executeMethod`** **`Territory.Testing.AgentTestModeBatchRunner.Run`** (no **`-quit`** on the shell — **`EditorApplication.Exit`** from C#).
-- Default **`--scenario-id`**:**`reference-flat-32x32`** when omitted.
-- Optional **`--scenario-path`** for ad-hoc **`GameSaveData`** JSON (prefer **absolute** path).
-- **`--quit-editor-first`** (recommended for agents) → **`tools/scripts/unity-quit-project.sh`** (**`Temp/UnityLockfile`** / **`lsof`**) so the batch run can acquire the lock.
-- **Load pipeline:** runner resolves the scenario file then calls **`GameSaveManager.LoadGame`** only; optional **`-testSimulationTicks`** → **`SimulationManager.ProcessSimulationTick`** (same tick entry as normal simulation).
-- Optional **`--golden-path`** / **`-testGoldenPath`**: asserts integer **CityStats** fields against a committed JSON next to the scenario — mismatch → exit **8** (see [`tools/fixtures/scenarios/README.md`](../../../tools/fixtures/scenarios/README.md) **Golden CityStats**).
-- Artifacts: **`tools/reports/agent-testmode-batch-*.json`** (report **`schema_version`** **2** may include **`city_stats`**), Unity log **`tools/reports/unity-testmode-batch-*.log`**. Transient **`tools/reports/.agent-testmode-batch-state.json`** may appear during the run (ignored with other report artifacts).
-- Optional **Postgres** (dev machine): when **`DATABASE_URL`** is set and migration **`0009_city_metrics_history.sql`** is applied, **`MetricsRecorder`** appends rows to **`city_metrics_history`** for each **`ProcessSimulationTick`** call; use **`city_metrics_query`** with **`scenario_id`** equal to **`--scenario-id`** to assert time-varying aggregates. Does **not** replace committed **golden** **CityStats** JSON for **CI**-bounded checks.
+Use when batch CLI unavailable or need `debug_context_bundle`/screenshots in open Editor.
 
-### Path A — worked example (**macOS**)
+1. Write scenario id (single line) to `tools/fixtures/scenarios/.queued-test-scenario-id` (gitignored). Queue file is id-only — path-based loads use `-testScenarioPath`.
+2. `npm run db:bridge-preflight` — exit codes per `bridge-environment-preflight` (0 proceed; 1 no URL; 2 server; 3 migrate; 4 SQL error).
+3. `unity_bridge_command` `enter_play_mode`, `timeout_ms: 40000` → poll `get_play_mode_status` until ready.
+4. `unity_bridge_command` `debug_context_bundle`, `timeout_ms: 40000`, `seed_cell: "x,y"`. Optionally `get_console_logs`, `capture_screenshot` (`include_ui: true`) per `ide-bridge-evidence`.
+5. `unity_bridge_command` `exit_play_mode`, `timeout_ms: 40000`.
 
-```bash
-cd /path/to/territory-developer
-npm run unity:testmode-batch -- --quit-editor-first --scenario-id reference-flat-32x32
-```
+Load pipeline: `TestModeCommandLineBootstrap` consumes queue file; load remains `GameSaveManager.LoadGame` only.
 
-Expect Unity log lines containing **`[AgentTestModeBatch]`** (e.g. state written, report path). Inspect the newest **`tools/reports/agent-testmode-batch-*.json`**: **`ok: true`**, **`exit_code: 0`**, **`scenario_id`** set.
+## Exit codes
 
-## Path B — **IDE agent bridge** hybrid
+| Source | Code | Meaning |
+|--------|------|---------|
+| `unity-testmode-batch.sh` | 0 | Success |
+| | 1 | Bad args or both id+path set |
+| | 2 | Unity binary missing — set `UNITY_EDITOR_PATH` |
+| | 3 | Lock still held after quit attempt |
+| | Other | Propagated Unity/`EditorApplication.Exit` code |
+| `AgentTestModeBatchRunner` | 4 | Bad/missing scenario; golden file missing; MainScene failure |
+| | 6 | Play Mode/grid wait failure; LoadGame/simulation exception |
+| | 7 | Timed out waiting for Play Mode stop |
+| | 8 | Golden CityStats mismatch |
+| MCP/bridge | `db_unconfigured` | No `DATABASE_URL` |
+| | `timeout` | Unity did not complete job |
+| `get_compilation_status` | `compilation_failed` | See `close-dev-loop` compile gate |
 
-Use when batch **Hub** CLI is unavailable or you need **`debug_context_bundle`** / screenshots in an open **Editor**.
+## Placeholders
 
-1. Write a **single line** (scenario id) to **`tools/fixtures/scenarios/.queued-test-scenario-id`** (gitignored). Or use an ad-hoc save: there is no queue file for arbitrary paths — for **path**-based loads in **Editor**, use **Player** command-line **`-testScenarioPath`** or extend flow per [`tools/fixtures/scenarios/README.md`](../../../tools/fixtures/scenarios/README.md); the queue file is **id-only**.
-2. **`npm run db:bridge-preflight`** — interpret exit codes per **`bridge-environment-preflight`** (0 proceed; 1 no URL; 2 server; 3 migrate; 4 SQL error).
-3. **`unity_bridge_command`** **`kind`:** **`enter_play_mode`**, **`timeout_ms`:** **`40000`** → poll **`get_play_mode_status`** (**same `timeout_ms`**) until **`play_mode_ready`** / grid ready as needed.
-4. **`unity_bridge_command`** **`kind`:** **`debug_context_bundle`**, **`timeout_ms`:** **`40000`**, **`seed_cell`:** **`"x,y"`** (required). Optionally **`get_console_logs`**, **`capture_screenshot`** (**`include_ui: true`** when overlay must show) per **`ide-bridge-evidence`**.
-5. **`unity_bridge_command`** **`kind`:** **`exit_play_mode`**, **`timeout_ms`:** **`40000`**.
-
-**Load pipeline:** **`TestModeCommandLineBootstrap`** consumes the queue file and drives the same **test mode** entry as CLI; load remains **`GameSaveManager.LoadGame`** only.
-
-### Path B — worked example
-
-With **Postgres** configured and **Editor** on **REPO_ROOT**:
-
-1. `echo reference-flat-32x32 > tools/fixtures/scenarios/.queued-test-scenario-id` (one line, no extra newline if possible).
-2. `npm run db:bridge-preflight`
-3. **`unity_bridge_command`** **`enter_play_mode`** → **`get_play_mode_status`** until ready.
-4. **`unity_bridge_command`** **`debug_context_bundle`** with **`seed_cell`:** **`"0,0"`** (adjust to your map).
-5. **`unity_bridge_command`** **`exit_play_mode`**.
-
-## Exit codes and failure classes
-
-| Source | Code / class | Meaning / action |
-|--------|----------------|------------------|
-| **`unity-testmode-batch.sh`** | **0** | Success (**Unity** exit **0**). |
-| | **1** | Bad script args or both id and path set. |
-| | **2** | Unity binary missing / not executable — set **`UNITY_EDITOR_PATH`** or **macOS** Hub path. |
-| | **3** | **`--quit-editor-first`** / **`unity-quit-project.sh`** — lock still held (**exit 3** from quit helper) or quit failed. |
-| | **Other** | Propagated **Unity** / **`EditorApplication.Exit`** code. |
-| **`unity-quit-project.sh`** | **0** | No lock or lock released. |
-| | **1** | Invalid args. |
-| | **3** | Lock still held after **SIGTERM**/**SIGKILL**. |
-| **`AgentTestModeBatchRunner`** (**`EditorApplication.Exit`**) | **4** | Test mode disallowed; bad/missing **`-testScenarioId`**/**`-testScenarioPath`**; missing golden file; **MainScene** open failure. |
-| | **6** | **Play Mode** / grid wait failure; **`LoadGame`** or simulation exception; unexpected **update** error. |
-| | **7** | Timed out waiting for **Play Mode** to stop after load. |
-| | **8** | Golden **CityStats** JSON mismatch (**`-testGoldenPath`** / **`--golden-path`**). |
-| **MCP** / bridge | **`db_unconfigured`** / connection errors | No **`DATABASE_URL`** — configure per [`docs/postgres-ia-dev-setup.md`](../../../docs/postgres-ia-dev-setup.md). |
-| | Job **`timeout`** / **`timeout_ms`** | **Unity** did not complete the job — see **`ide-bridge-evidence`**; check **Editor** logs. |
-| **`get_compilation_status`** | **`compiling`**, **`compilation_failed`**, **`last_error_excerpt`** | Same queue as **IDE agent bridge**; see **`close-dev-loop`** compile gate. |
-
-## Parameterize (replace before running)
-
-| Placeholder | Meaning |
-|-------------|---------|
-| **`{MAX_ITERATIONS}`** | Fix → re-verify cycles (default **2**). |
-| **`{SCENARIO_ID}`** | Kebab-case id under **`tools/fixtures/scenarios/`** (e.g. **`reference-flat-32x32`**). |
-| **`{SEED_CELL}`** | **`"x,y"`** for **`debug_context_bundle`** on **Path B**. |
+| Key | Default / meaning |
+|-----|-------------------|
+| `{MAX_ITERATIONS}` | 2 (fix→re-verify cycles) |
+| `{SCENARIO_ID}` | Kebab-case id under `tools/fixtures/scenarios/` |
+| `{SEED_CELL}` | `"x,y"` for `debug_context_bundle` (Path B) |
 
 ## Seed prompt (parameterize)
 
@@ -156,6 +125,6 @@ Max iterations: {MAX_ITERATIONS}.
 - **Artifacts:** newest **`agent-testmode-batch-*.json`** path; bridge **`bundle`** / screenshot paths if any.
 - **Human ask:** confirm behavior in **normal** game (no **test mode** flags).
 
-## Verification block (agent completion messages)
+## Verification block
 
-After substantive work, include a **Verification** section matching [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md): **`npm run validate:all`** (exit code); **`npm run unity:compile-check`** if **`Assets/`** **C#** changed (**N/A** + reason otherwise); **Path A** — **`npm run unity:testmode-batch`** (prefer **`--quit-editor-first`** when relevant) exit code + **`agent-testmode-batch-*.json`** **`ok`/`exit_code`**; **Path B** — **`db:bridge-preflight`** then bridge calls with **`timeout_ms`:** **`40000`** — outcome (**`ok`**, **`error`**, **`timeout`**, **`command_id`**). If **Path B** not run, state why.
+Include per [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md): `validate:all` (exit code); `unity:compile-check` if C# changed (N/A + reason otherwise); Path A exit code + report JSON `ok`/`exit_code`; Path B `db:bridge-preflight` + bridge calls (`timeout_ms: 40000`) — outcome. If Path B not run, state why.

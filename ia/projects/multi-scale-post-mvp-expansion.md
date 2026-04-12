@@ -228,6 +228,20 @@ MVP dormant control is **budget allocation per child**, one parameter per parent
 - Structured event bubble-up from child-scale entities surfaced in a dedicated feed, not just a text summary.
 - Cross-scale event routing rules (which events surface at which scale, with what priority).
 
+### 6.4. Scale-switch UX — post-MVP polish
+
+MVP ships semantic zoom + procedural fog mask + minimal `ScaleToolProvider` (see master plan Step 3). Post-MVP:
+
+- **Truly continuous rendering across scales** — remove fog mask; LOD streaming + progressive detail across zoom bands. Fog = MVP escape hatch.
+- **Animated fly-to** on city-node click from region view (cinematic alternative to scroll-zoom).
+- **Minimap integration** with scale transitions (click minimap → transition to that scale).
+- **Asymmetric transition styles** — different zoom-out vs zoom-in animations if playtesting warrants.
+- **Full per-scale tool depth** — rich region + country toolsets beyond MVP minimum.
+- **Per-scale keybinding policy** — decision between per-scale vs semantic-consistent key mapping as tool depth grows.
+- **Shift+scroll fast cross-scale zoom** — power-user shortcut.
+- **Pinch-to-zoom** touch support.
+- **Per-scale tool state persisted across saves** — MVP persists in-session only; save/load persistence post-MVP.
+
 ### Why deferred
 
 MVP ships a per-scale dashboard (active scale only) and a plain loading screen. Both are functionally sufficient to demonstrate scale switching; neither is polished enough to ship as a finished experience. Polish ladders on after the three-scale loop is proven.

@@ -12,37 +12,35 @@ slices_via: none
 > **Last updated:** YYYY-MM-DD
 
 <!--
-  Filename: save this as `ia/projects/{ISSUE_ID}-{description}.md`
-  (descriptive naming convention, e.g. `BUG-37-zone-cleanup.md`,
-  `FEAT-44-water-junction.md`). The legacy bare `{ISSUE_ID}.md` form is
-  still accepted for back-compat but new specs should use the descriptive
-  form.
+  Filename: `ia/projects/{ISSUE_ID}-{description}.md` (e.g. `BUG-37-zone-cleanup.md`,
+  `FEAT-44-water-junction.md`). Legacy bare `{ISSUE_ID}.md` accepted for back-compat.
   Structure guide: ../projects/PROJECT-SPEC-STRUCTURE.md
-  Use glossary terms: ../specs/glossary.md (spec wins if glossary differs).
-  Separate product behavior (sections 1–5.1, 8, Open Questions) from implementation notes (5.2+, 7, optional "Implementation investigation").
+  Glossary: ../specs/glossary.md (spec wins on conflict).
+  Separate product behavior (§1–5.1, §8, Open Questions) from impl notes (§5.2+, §7, optional "Implementation investigation").
+  Authoring style: caveman prose (drop articles/filler/hedging; fragments OK). Tables, code, seed prompts stay normal.
 -->
 
 ## 1. Summary
 
-<!-- 2-3 sentences: what this project does and why it matters. Domain vocabulary only. -->
+<!-- 2–3 sentences. What + why. Domain vocabulary only. -->
 
 ## 2. Goals and Non-Goals
 
 ### 2.1 Goals
 
-<!-- Specific, measurable outcomes this project delivers. -->
+<!-- Specific, measurable outcomes. -->
 
 1. …
 
 ### 2.2 Non-Goals (Out of Scope)
 
-<!-- What this project explicitly does NOT address. Prevents scope creep. -->
+<!-- Explicit exclusions. Prevents scope creep. -->
 
 1. …
 
 ## 3. User / Developer Stories
 
-<!-- Who benefits and how. Use the format: "As a [role], I want [capability] so that [benefit]." -->
+<!-- Format: "As a [role], I want [capability] so that [benefit]." -->
 
 | # | Role | Story | Acceptance criteria |
 |---|------|-------|---------------------|
@@ -53,21 +51,21 @@ slices_via: none
 
 ### 4.1 Domain behavior
 
-<!-- Observed vs expected using canonical terms (glossary). No code. -->
+<!-- Observed vs expected. Glossary terms. No code. -->
 
 ### 4.2 Systems map
 
-<!-- Short pointers: backlog Files, subsystems, spec sections. Optional file/class table for implementers. -->
+<!-- Backlog Files, subsystems, spec sections. Optional file/class table for implementers. -->
 
 ### 4.3 Implementation investigation notes (optional)
 
-<!-- Technical hypotheses for the implementing agent — not product requirements. -->
+<!-- Tech hypotheses for implementing agent — not product requirements. -->
 
 ## 5. Proposed Design
 
 ### 5.1 Target behavior (product)
 
-<!-- Player-visible rules and definitions; glossary-aligned. -->
+<!-- Player-visible rules + definitions; glossary-aligned. -->
 
 ### 5.2 Architecture / implementation (agent-owned unless fixed by design)
 
@@ -79,7 +77,7 @@ slices_via: none
 
 ## 6. Decision Log
 
-<!-- Record non-obvious choices made during spec work. Keep updating as the project evolves. -->
+<!-- Non-obvious choices. Update as project evolves. -->
 
 | Date | Decision | Rationale | Alternatives considered |
 |------|----------|-----------|------------------------|
@@ -87,7 +85,7 @@ slices_via: none
 
 ## 7. Implementation Plan
 
-<!-- Ordered phases with concrete deliverables. Each phase should be independently testable. -->
+<!-- Ordered phases; concrete deliverables; independently testable. -->
 
 ### Phase 1 — {Name}
 
@@ -98,31 +96,30 @@ slices_via: none
 - [ ] …
 
 <!--
-  ## 7b. Test Contracts — see ../projects/PROJECT-SPEC-STRUCTURE.md (list item "7b. Test Contracts").
-  Tooling / verification table only. Use glossary terms for *what* is checked. Not a substitute for ## Open Questions (game logic).
-  **FEAT-** / **BUG-** specs with runtime **C#**, **Play Mode**, or **Load pipeline** claims: fill at least one row per **§8** bullet (or **TBD** + owner). Doc-only **TECH-**/**ART-**/**AUDIO-**: a single **N/A** row is OK when **§8** has no testable claims.
+  ## 7b. Test Contracts — ../projects/PROJECT-SPEC-STRUCTURE.md (list item "7b. Test Contracts").
+  Tooling / verification table. Glossary terms for *what* is checked. Not a substitute for ## Open Questions.
+  **FEAT-** / **BUG-** specs w/ runtime **C#**, **Play Mode**, **Load pipeline** claims: 1+ row per **§8** bullet (or **TBD** + owner).
+  Doc-only **TECH-**/**ART-**/**AUDIO-**: single **N/A** row OK when **§8** has no testable claims.
 -->
 
 ## 7b. Test Contracts
 
 | Acceptance / goal | Check type | Command or artifact | Notes |
 |-------------------|------------|---------------------|-------|
-| Example: change touches MCP, schemas, glossary, or **reference spec** bodies that feed **IA indexes** | Node | `npm run validate:all` (repo root) | Chains **validate:dead-project-specs**, **test:ia**, **validate:fixtures**, **generate:ia-indexes --check** |
+| Example: change touches MCP, schemas, glossary, or **reference spec** bodies feeding **IA indexes** | Node | `npm run validate:all` (repo root) | Chains **validate:dead-project-specs**, **test:ia**, **validate:fixtures**, **generate:ia-indexes --check** |
 | Example: agent **Verification** block (substantive **C#** / **Load pipeline** / **test mode** work) | Agent report | **`validate:all`** + **`unity:compile-check`** (if **Assets/** **C#**) + **`npm run unity:testmode-batch`** + **`unity_bridge_command`** (**`timeout_ms`:** **40000** initial; escalation protocol on timeout) | [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md); **`ia/skills/agent-test-mode-verify/SKILL.md`** |
-| Example: Play / HUD acceptance — console clean + screenshot with **Overlay** UI | MCP / dev machine | **territory-ia** **`unity_bridge_command`**: **`get_console_logs`** (`severity_filter`); **`capture_screenshot`** (`include_ui: true`) | **N/A** in CI; **Postgres** **0008** + **Unity** on **REPO_ROOT**; see **`ia/skills/ide-bridge-evidence/SKILL.md`** |
+| Example: Play / HUD acceptance — console clean + screenshot w/ **Overlay** UI | MCP / dev machine | **territory-ia** **`unity_bridge_command`**: **`get_console_logs`** (`severity_filter`); **`capture_screenshot`** (`include_ui: true`) | **N/A** in CI; **Postgres** **0008** + **Unity** on **REPO_ROOT**; see **`ia/skills/ide-bridge-evidence/SKILL.md`** |
 | … | … | … | … |
 
 ## 8. Acceptance Criteria
 
-<!-- Conditions that must be true for the project to be considered complete.
-     These should map back to §2.1 Goals and §3 Stories. -->
+<!-- Conditions for project complete. Map back to §2.1 Goals + §3 Stories. -->
 
 - [ ] …
 
 ## 9. Issues Found During Development
 
-<!-- Problems discovered during implementation that were not anticipated in the spec.
-     Include root cause and resolution (or link to new backlog items). -->
+<!-- Unanticipated problems. Root cause + resolution (or link to new backlog items). -->
 
 | # | Description | Root cause | Resolution |
 |---|-------------|------------|------------|
@@ -130,8 +127,7 @@ slices_via: none
 
 ## 10. Lessons Learned
 
-<!-- Insights to carry forward into specs, rules, or architecture docs after the project closes.
-     On completion: migrate relevant entries to AGENTS.md, coding-conventions, or canonical specs. -->
+<!-- Carry-forward insights. On completion: migrate to AGENTS.md, coding-conventions, canonical specs. -->
 
 - …
 
@@ -139,10 +135,10 @@ slices_via: none
 
 <!--
   REQUIRED for collaborative specs.
-  Rules: Use canonical terms from ia/specs/glossary.md only.
-  Ask about GAME LOGIC and definitions — not specific code, APIs, or class names.
-  The implementing agent resolves technical approach unless it would change intended behavior (then Decision Log or ask user).
-  TOOLING-ONLY issues (CI, MCP, scripts, docs with no gameplay change): write "None — tooling only; see §8 Acceptance criteria" (or developer policy questions such as CI blocking vs advisory). Do not invent fake game rules to fill this section.
+  Rules: canonical glossary terms only.
+  Ask GAME LOGIC + definitions — NOT code, APIs, class names.
+  Implementing agent resolves tech approach unless it changes intended behavior (then Decision Log or ask user).
+  TOOLING-ONLY (CI, MCP, scripts, docs with no gameplay change): write "None — tooling only; see §8 Acceptance criteria" (or dev policy questions like CI blocking vs advisory). Do NOT invent fake game rules to fill.
 -->
 
 1. …

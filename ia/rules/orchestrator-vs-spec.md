@@ -11,20 +11,20 @@ alwaysApply: true
 
 ## Orchestrator document
 
-- **Permanent** coordination doc that tracks a multi-step plan (e.g. `ia/projects/multi-scale-master-plan.md`).
-- Owns the step/stage skeleton; child specs are created lazily beneath it.
-- **NOT closeable** via `project-spec-close` or `closeout`. Never deleted by automation.
-- Status transitions: `Draft` -> `In Review` -> `In Progress` -> `Final`.
-- Step and stage orchestrators (children of the global orchestrator) **are** deleted when their parent step/stage closes, but only after learnings are migrated per `project-hierarchy.md`.
+- **Permanent** coordination doc tracking multi-step plan (e.g. `ia/projects/multi-scale-master-plan.md`).
+- Owns step/stage skeleton; child specs created lazily beneath.
+- **NOT closeable** via `project-spec-close` / `closeout`. Never deleted by automation.
+- Status: `Draft` → `In Review` → `In Progress` → `Final`.
+- Step/stage orchestrators (children of global) deleted when parent step/stage closes — only after learnings migrated per `project-hierarchy.md`.
 
 ## Project spec
 
-- **Temporary** per-issue doc (`ia/projects/{ISSUE_ID}.md`) tied to a single BACKLOG row.
+- **Temporary** per-issue doc (`ia/projects/{ISSUE_ID}.md`) tied to 1 BACKLOG row.
 - Created from `ia/templates/project-spec-template.md` via `project-new`.
 - Deleted on close via `project-spec-close` after IA persistence + journal capture.
 
 ## Guards
 
-- `project-spec-close`: **refuse** to delete any file matching orchestrator patterns (e.g. `*master-plan*`, `step-*-*.md`, `stage-*-*.md` under orchestrator directories).
-- `project-spec-kickoff`: recognize orchestrator docs and route to step/stage review instead of issue-level kickoff.
-- `project-spec-implement`: navigate orchestrator step/stage structure when the target is a step or stage, not a single issue.
+- `project-spec-close`: **refuse** to delete files matching orchestrator patterns (`*master-plan*`, `step-*-*.md`, `stage-*-*.md` under orchestrator dirs).
+- `project-spec-kickoff`: recognize orchestrator docs, route to step/stage review — not issue-level kickoff.
+- `project-spec-implement`: navigate orchestrator step/stage structure when target = step/stage, not single issue.

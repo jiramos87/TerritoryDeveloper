@@ -13,19 +13,17 @@ description: >
 
 # Project spec kickoff and IA alignment
 
-**Output style — caveman default.** Follow `caveman:caveman` skill rules for all responses produced while running this skill (drop articles/filler/pleasantries/hedging; fragments OK; pattern `[thing] [action] [reason]. [next step].`). Standard exceptions apply: code, commits, security/auth content, verbatim error/tool output, structured MCP inputs/outputs, destructive-op confirmations. The directive applies whether the skill is invoked via the `spec-kickoff` subagent or directly inline. Project anchor: [`ia/rules/agent-output-caveman.md`](../../rules/agent-output-caveman.md).
+Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md) (loaded by parent context or agent def).
 
-This skill **does not** call MCP tools itself. In an **Agent** chat with **territory-ia** enabled, follow the **Tool recipe** below in order so context is loaded as **slices**, not whole reference specs.
+No MCP calls from skill body. Follow **Tool recipe** below — context as slices, not whole specs.
 
-Until richer **MCP** discovery from project-spec prose ships, use the **manual** recipe (no composite MCP tool).
+**Related:** [`project-spec-implement`](../project-spec-implement/SKILL.md) · [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (`npm` checks) · [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) (§7b Play Mode) · [`project-spec-close`](../project-spec-close/SKILL.md) (verified close). **Conventions:** [`ia/skills/README.md`](../README.md).
 
-**Related:** **[`project-spec-implement`](../project-spec-implement/SKILL.md)**, **[`project-implementation-validation`](../project-implementation-validation/SKILL.md)** (optional **npm** checks after **MCP** / schema / **IA index** work), **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)** (optional **§7b** rows for **Unity** logs/screenshots via MCP), **[`project-spec-close`](../project-spec-close/SKILL.md)** (verified close — persist IA, delete spec, **archive** row, **id purge**). Open follow-ups — [`BACKLOG.md`](../../../BACKLOG.md). **Conventions:** [`ia/skills/README.md`](../README.md).
-
-**When the issue is verified and you are closing:** use **[`project-spec-close`](../project-spec-close/SKILL.md)** after implementation — not this kickoff skill.
+Verified + closing → use [`project-spec-close`](../project-spec-close/SKILL.md), not this skill.
 
 ## Orchestrator routing
 
-If the target file is an **orchestrator document** (e.g. `*master-plan*`, `step-*-*.md`, `stage-*-*.md`), route to **step/stage review** instead of issue-level kickoff. Orchestrator docs follow `ia/rules/project-hierarchy.md` and `ia/rules/orchestrator-vs-spec.md` — they are never deleted and use the step/stage/phase/task hierarchy instead of the flat project spec lifecycle.
+Orchestrator docs (`*master-plan*`, `step-*-*.md`, `stage-*-*.md`) → step/stage review, not issue-level kickoff. Per `ia/rules/project-hierarchy.md` + `ia/rules/orchestrator-vs-spec.md`.
 
 ## Seed prompt (parameterize)
 
@@ -42,68 +40,54 @@ If you make material edits, update related Information Architecture: linked proj
 
 ## Tool recipe (territory-ia)
 
-Run these steps **in order** unless the project spec is explicitly **pure doc hygiene** with no code or subsystem touch (then skip only the steps noted).
+Run in order. Skip steps only when spec is pure doc hygiene (no code/subsystem touch).
 
-1. **Parse target** — Load `{SPEC_PATH}` (user `@` attach or `read_file`). Extract **`ISSUE_ID`** from the `> **Issue:**` line (e.g. `FEAT-44`, `BUG-48`).
+1. **Parse target** — Load `{SPEC_PATH}`. Extract `ISSUE_ID` from `> **Issue:**`.
+2. **`backlog_issue`** — Pull Files, Notes, Depends on, Acceptance, `depends_on_status`. Hard dep unsatisfied (`satisfied: false`, `soft_only: false`) → **stop** unless user overrides.
+3. **`invariants_summary`** — Once per session if spec implies code/game changes. Skip for pure doc/IA.
+4. **Domain routing** — 1–3 domains from Summary/Goals/Files. `router_for_task` with `domain` matching agent-router vocabulary. On `no_matching_domain`: retry with `files` (repo-relative paths).
+5. **`spec_section`** — Only sections spec implies; set `max_chars`. No full `ia/specs/*.md` unless `spec_outline` forces it.
+6. **`glossary_discover`** — `keywords` as JSON array, English tokens from ambiguous prose. Run after domain hints — avoid generic keywords.
+7. **`glossary_lookup`** — Exact term strings from discover or glossary table.
+8. **`spec_outline`** / **`list_specs`** — Only if `spec` key unknown.
 
-2. **`backlog_issue`** — If `ISSUE_ID` is known, call with `issue_id` to pull **Files**, **Notes**, **Spec**, **Depends on**, **Acceptance**, and **`depends_on_status`** into context. If **`depends_on_status`** includes any entry with **`satisfied`: false** and **`soft_only`** false (hard dependency not met), **stop** and surface it to the user unless they explicitly override in chat.
+### Optional: journal (Postgres)
 
-3. **`invariants_summary`** — Call **once** per review session if the spec implies **code** or **game subsystem** changes. Skip only when the spec is strictly documentation/IA hygiene and cannot affect runtime.
+Only when Open Questions fuzzy, Summary/Goals unclear, or user requests exploration context. Requires `DATABASE_URL`.
 
-4. **Domain routing** — From **Summary**, **Goals**, backlog **Files**, and **Notes**, list **1–3 domains** (e.g. roads, water, simulation, Save / load, UI). For each domain, call **`router_for_task`** with `domain` set to a string that matches the **agent-router** table vocabulary (e.g. `Road logic, placement, bridges`, `Save / load`, `Water, terrain, cliffs, shores`). If **`router_for_task`** returns **`no_matching_domain`** or weak matches, retry with **`files`** using repo-relative paths from the backlog **Files** line (**glossary** **territory-ia spec-pipeline layer B**).
+1. `project_spec_journal_search` — English `query`; `max_results` ≤ 8.
+2. `project_spec_journal_get` — sparingly, when excerpt insufficient.
+3. `db_unconfigured` → skip.
 
-5. **`spec_section`** — For each routed reference spec, fetch **only** the sections the project spec implies (by **section** id, heading substring, or slug per MCP docs). Use **`max_chars`** to cap size. **Do not** read entire `ia/specs/*.md` files unless **`spec_outline`** shows you cannot target sections otherwise.
+### Branching
 
-6. **`glossary_discover`** — Pass **`keywords` as a JSON array** of **English** tokens extracted from ambiguous prose (translate from the user's language first). Run **after** domain hints so keywords are **not** generic (`MCP`, `information`, `agent` alone). Example: `["HeightMap", "schema_version", "Load pipeline", "road preparation"]`.
-
-7. **`glossary_lookup`** — For high-confidence **Term** strings from the glossary table or discover results, narrow with exact **`glossary_lookup`** calls.
-
-8. **`spec_outline`** / **`list_specs`** — Use **only** if you do not know which `spec` key to pass to **`spec_section`**.
-
-### Optional: IA project spec journal (Postgres)
-
-**Only when** **Open Questions** are still fuzzy, **Summary** / **Goals** are unclear, or the user asked for **exploration** / **design critique** context — not on every kickoff. Requires **`DATABASE_URL`**.
-
-1. **`project_spec_journal_search`** — **English** `query` built from ambiguous spec phrases and/or `raw_text_for_tokens` from **Summary** + **Goals**; **`max_results`** ≤ **8**.
-2. Use **`project_spec_journal_get`** sparingly for full **`body_markdown`** when an excerpt is insufficient.
-3. If **`db_unconfigured`**, skip. Keep **`spec_section`** usage **minimal** per steps 4–5 above.
-
-### Branching (minimum set)
-
-- **Roads / streets / interstate / bridge / wet run** → ensure **roads-system** and **isometric-geography-system** slices (validation, **road stroke**, path costs) appear in the fetched set via **`router_for_task`** + **`spec_section`**.
-- **Water / HeightMap / shore / river / lake / water map** → **water-terrain-system** + relevant **geo** sections.
-- **JSON / schema / artifact / DTO / interchange** (especially **Save**-adjacent) → **persistence-system** (**Load pipeline**, **Save data** semantics); do **not** change on-disk **Save data** unless the issue explicitly requires it. Cross-check **JSON interchange program** notes in **BACKLOG** when applicable.
+- **Roads/bridges/wet run** → roads-system + isometric-geography-system via `router_for_task` + `spec_section`.
+- **Water/HeightMap/shore** → water-terrain-system + geo sections.
+- **JSON/schema/DTO** (Save-adjacent) → persistence-system (Load pipeline, Save data); no on-disk Save data changes unless issue requires.
 
 ### Impact preflight (optional)
 
-Lightweight check before deep editorial work ([`projects/spec-pipeline-exploration.md`](../../../projects/spec-pipeline-exploration.md) **§2.1**):
+1. Classify backlog Files as read vs write.
+2. Write paths touching runtime C# → `invariants_summary` + `ia/rules/invariants.md` cross-check.
+3. Flag cross-subsystem edits → `spec_section` pulls both domains.
 
-1. Classify backlog **Files** (and planned **Implementation Plan** paths) as **read** vs **write**.
-2. For each **write** path that may touch runtime **C#** or scenes, plan to call **`invariants_summary`** (if not already done) and cross-check **`ia/rules/invariants.md`** guardrails.
-3. Flag cross-subsystem edits (e.g. **roads** + **HeightMap** / **water**) so **`spec_section`** pulls both domains before implementation.
+After MCP slices → editorial pass: Open Questions, Implementation Plan, Decision Log, sibling spec cross-links.
 
-After MCP slices, perform the **editorial** pass: **Open Questions**, **Implementation Plan** phases, **Decision Log**, and cross-links to sibling `ia/projects/*.md`.
+## §7b Test Contracts (optional alignment)
 
-## §7b Test Contracts and IDE bridge (optional alignment)
+When enriching `## 7b. Test Contracts` ([`PROJECT-SPEC-STRUCTURE.md`](../../projects/PROJECT-SPEC-STRUCTURE.md)):
+- Map §8 Acceptance → verifiable checks: Node (`npm run …`), Unity manual, MCP tools. Use glossary terms, not backlog ids.
+- Play Mode Console / visual checks → add `unity_bridge_command` kind values (`get_console_logs`, `capture_screenshot`) + params (`severity_filter`, `include_ui: true`). Point to [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md).
+- Bridge-backed rows: mark **Check type** as `MCP / dev machine` — N/A in CI.
 
-When enriching **`## 7b. Test Contracts`** ([`ia/projects/PROJECT-SPEC-STRUCTURE.md`](../../projects/PROJECT-SPEC-STRUCTURE.md) list item **7b**):
+Kickoff does not call bridge — ensures §7b prose matches territory-ia tools.
 
-- Map **§8 Acceptance** bullets to **verifiable** checks: **Node** (`npm run …`), **Unity** manual steps, and/or **MCP** tools — use **glossary** terms for *what* is verified, not backlog ids.
-- If acceptance depends on **Play Mode** **Console** output (e.g. no **`error`** lines after an action) or a **visual** check (HUD, map + chrome), add table rows that name **`unity_bridge_command`** **`kind`** values (**`get_console_logs`**, **`capture_screenshot`**) and relevant parameters (**`severity_filter`**, **`include_ui: true`** when **Screen Space - Overlay** must appear). Point implementers to **unity-development-context** §10 and **[`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md)**.
-- Mark bridge-backed rows as **MCP / dev machine** (or **Manual / dev machine**) in **Check type** so **CI** expectations stay clear — bridge jobs are **N/A** in **`.github/workflows/ia-tools.yml`**.
+## Open Questions policy
 
-This kickoff skill **does not** require calling the bridge during review; it ensures **§7b** prose matches tools that exist in **territory-ia**.
+- Canonical game vocabulary from glossary/reference specs only.
+- Game logic and definitions — not APIs, class names, implementation mechanics.
+- Tooling-only issues: Open Questions N/A or point to Acceptance/Decision Log per [`PROJECT-SPEC-STRUCTURE.md`](../../projects/PROJECT-SPEC-STRUCTURE.md).
 
-## Open Questions policy (project specs)
+## Follow-up
 
-Under **`## Open Questions (resolve before / during implementation)`** in `ia/projects/*.md`:
-
-- Use **canonical game vocabulary** from **glossary** / reference specs only.
-- Ask about **game logic** and definitions—not APIs, class names, or implementation mechanics.
-- **Tooling-only** issues: state that Open Questions are **N/A** or point to **Acceptance** / **Decision Log** per [ia/projects/PROJECT-SPEC-STRUCTURE.md](../../projects/PROJECT-SPEC-STRUCTURE.md).
-
-## Follow-up skills (planned)
-
-Domain guardrail skills (roads, terrain/water, new managers) — see [`BACKLOG.md`](../../../BACKLOG.md).
-
-Use **this** skill first for **spec quality**; use **[`project-spec-implement`](../project-spec-implement/SKILL.md)** to run the **Implementation Plan** when the spec is ready; use any shipped domain skills from **BACKLOG** when **implementing** in those areas.
+Domain guardrail skills (roads, terrain/water, new managers) — see [`BACKLOG.md`](../../../BACKLOG.md). This skill for spec quality → [`project-spec-implement`](../project-spec-implement/SKILL.md) for execution → domain skills from BACKLOG when implementing.

@@ -14,103 +14,86 @@ description: >
 
 # Project spec close (verified issue / spec closure)
 
-**Output style — caveman default.** Follow `caveman:caveman` skill rules for status reporting and progress messages produced while running this skill (drop articles/filler/pleasantries/hedging; fragments OK; pattern `[thing] [action] [reason]. [next step].`). Standard exceptions apply: code, commits, security/auth content, verbatim error/tool output, structured MCP inputs/outputs, **and confirmation prompts before destructive operations** — those stay in normal English so the human is not asked to disambiguate fragments under risk (per Q6 resolution: spec deletion, BACKLOG row removal, archive append, and id purge all require explicit human confirmation in full English). The directive applies whether the skill is invoked via the `closeout` subagent or directly inline. Project anchor: [`ia/rules/agent-output-caveman.md`](../../rules/agent-output-caveman.md).
+Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md). **Additional exception:** confirmation prompts before destructive operations stay normal English (spec deletion, BACKLOG row removal, archive append, id purge require explicit human confirmation).
 
-This skill **does not** call MCP tools itself. In an **Agent** chat with **territory-ia** enabled, follow the **Tool recipe (territory-ia)** below in order.
+No MCP calls from skill body. Follow **Tool recipe** below in order.
 
-**Related:** [`project-new`](../project-new/SKILL.md), [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md), [`project-spec-implement`](../project-spec-implement/SKILL.md), [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) (optional **Play** evidence before user sign-off — **not** closeout-required), `npm run validate:dead-project-specs` ([`tools/validate-dead-project-spec-paths.mjs`](../../../tools/validate-dead-project-spec-paths.mjs)), MCP **`project_spec_closeout_digest`**, **`project_spec_journal_persist`**, **`spec_sections`** + root **`closeout:*`** ([`docs/mcp-ia-server.md`](../../../docs/mcp-ia-server.md)). **Conventions:** [`ia/skills/README.md`](../README.md). **IA policy:** [`ia/rules/terminology-consistency.md`](../../../ia/rules/terminology-consistency.md), [`ia/projects/PROJECT-SPEC-STRUCTURE.md`](../../projects/PROJECT-SPEC-STRUCTURE.md).
+**Related:** [`project-new`](../project-new/SKILL.md) · [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md) · [`project-spec-implement`](../project-spec-implement/SKILL.md) · [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) (optional Play evidence) · `npm run validate:dead-project-specs` · MCP `project_spec_closeout_digest` / `project_spec_journal_persist` / `spec_sections` ([`docs/mcp-ia-server.md`](../../../docs/mcp-ia-server.md)). **Policy:** [`terminology-consistency.md`](../../../ia/rules/terminology-consistency.md), [`PROJECT-SPEC-STRUCTURE.md`](../../projects/PROJECT-SPEC-STRUCTURE.md).
 
-## Relationship to kickoff / implement
+After implement → this skill closes loop: persist IA → delete spec → validate → archive row → purge id.
 
-- After [`project-spec-implement`](../project-spec-implement/SKILL.md) finishes implementation, use **this** skill to **close** the loop: persist IA → delete spec → validate → **archive row** → **purge closed id from durable surfaces** (same session once the user confirms verification).
+**Umbrella close** — once per spec, final stage. Per-stage closes → [`project-stage-close`](../project-stage-close/SKILL.md).
 
-## Per-stage close vs umbrella close
+**Orchestrator guard:** closes project specs only. Refuse `*master-plan*`, `step-*-*.md`, `stage-*-*.md`. See [`orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
 
-This skill is the **umbrella close** — run **once per spec**, at the end of the **final** stage (it migrates IA, deletes the spec, removes the BACKLOG row, archives, and purges the id). For **per-stage** closes during a multi-stage spec, use [`project-stage-close`](../project-stage-close/SKILL.md) instead — it ticks the stage's §7 phases, appends to §6/§9/§10, optionally journals, and emits a handoff message for the next stage's agent **without** touching BACKLOG / archive / spec deletion.
-
-## Orchestrator guard
-
-**This skill closes project specs only — NOT orchestrator documents.** Before proceeding, verify the target is a per-issue project spec (`ia/projects/{ISSUE_ID}.md`). **Refuse** to delete files matching orchestrator patterns: `*master-plan*`, `step-*-*.md`, `stage-*-*.md` under orchestrator directories. See [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
-
-## Normative closeout order
-
-**Do not delete** `ia/projects/{ISSUE_ID}.md` until **all** applicable **IA persistence** edits below are merged (or explicitly recorded as N/A with a one-line reason in chat).
-
-**There is no “Completed” section in `BACKLOG.md`.** Completed work exists **only** in [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md).
+Do not delete `ia/projects/{ISSUE_ID}.md` until all IA persistence edits merged (or N/A with reason). No “Completed” section in BACKLOG — completed work only in [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md).
 
 ## IA persistence checklist
 
-For each closure, walk this list; tick **N/A** only when the closed issue truly did not touch that surface:
+Walk list per closure; N/A only when issue truly did not touch that surface:
 
-| # | Durable target | What to migrate from the project spec |
-|---|----------------|--------------------------------------|
-| G1 | [`ia/specs/glossary.md`](../../../ia/specs/glossary.md) | New or changed **domain** terms; **definitions** from resolved **Open Questions** / **Summary**; ensure **Spec** column points at authoritative **reference spec** sections. **Do not** embed backlog issue ids in new or edited rows ([`terminology-consistency.md`](../../../ia/rules/terminology-consistency.md)). |
-| R1 | [`ia/specs/*.md`](../../../ia/specs/) (**reference specs**) | **Normative** behavior, invariants, or vocabulary that shipped. Follow [**REFERENCE-SPEC-STRUCTURE.md**](../../../ia/specs/REFERENCE-SPEC-STRUCTURE.md). |
-| A1 | [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) | New/changed **managers**, layers, or dependency facts. **No** backlog id citations. |
-| U1 | [`ia/rules/*.md`](../../../ia/rules/) | New guardrails or edits. Exception: [`terminology-consistency.md`](../../../ia/rules/terminology-consistency.md) may mention id *pattern* for BACKLOG files only. |
-| D1 | [`docs/`](../../../docs/) | Charters, how-tos; **no** closed-issue id strings unless the file is explicitly archive-oriented. |
-| M1 | **MCP** docs + server | If tools changed: [`tools/mcp-ia-server/src/index.ts`](../../../tools/mcp-ia-server/src/index.ts), [`docs/mcp-ia-server.md`](../../../docs/mcp-ia-server.md), [`tools/mcp-ia-server/README.md`](../../../tools/mcp-ia-server/README.md). |
-| I1 | **Generated IA indexes** | If **G1** or **R1** changed bodies that feed indexes, run `npm run generate:ia-indexes` from repo root; ensure **`generate:ia-indexes -- --check`** passes where **CI** expects it. |
-| J1 | **Postgres** **`ia_project_spec_journal`** ([`docs/postgres-ia-dev-setup.md`](../../../docs/postgres-ia-dev-setup.md) §IA project spec journal) | **Verbose** **Decision Log** + **Lessons learned** only — use MCP **`project_spec_journal_persist`** (same `issue_id` / `spec_path` as **`project_spec_closeout_digest`**, optional `git_sha`) **after** normative **G1–I1** edits, **before** deleting the project spec. **CLI:** `npm run db:persist-project-journal` from repo root. **Skip** with one chat line when neither **`DATABASE_URL`** nor [`config/postgres-dev.json`](../../../config/postgres-dev.json) yields a URL (or **CI** skips the file fallback without **`DATABASE_URL`**). **On `db_error`:** do **not** delete `ia/projects/{ISSUE_ID}.md` until **DB** is healthy or the user **explicitly waives** journal capture. |
+| # | Target | Migrate |
+|---|--------|---------|
+| G1 | [`glossary.md`](../../../ia/specs/glossary.md) | New/changed domain terms; definitions from resolved Open Questions/Summary; Spec column → authoritative reference spec. No backlog ids. |
+| R1 | [`ia/specs/*.md`](../../../ia/specs/) | Normative behavior, invariants, vocabulary that shipped. Follow [`REFERENCE-SPEC-STRUCTURE.md`](../../../ia/specs/REFERENCE-SPEC-STRUCTURE.md). |
+| A1 | [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) | New/changed managers, layers, dependency facts. No backlog ids. |
+| U1 | [`ia/rules/*.md`](../../../ia/rules/) | New guardrails or edits. |
+| D1 | [`docs/`](../../../docs/) | Charters, how-tos; no closed-issue ids. |
+| M1 | MCP docs + server | If tools changed: `index.ts`, `mcp-ia-server.md`, `README.md`. |
+| I1 | Generated IA indexes | If G1/R1 changed bodies → `npm run generate:ia-indexes`; `--check` must pass for CI. |
+| J1 | Postgres `ia_project_spec_journal` | Decision Log + Lessons via `project_spec_journal_persist` after G1–I1, before spec deletion. CLI: `npm run db:persist-project-journal`. Skip when no `DATABASE_URL`/`config/postgres-dev.json`. On `db_error`: do not delete spec until DB healthy or user waives. |
 
-**Conflict rule:** If a **Lesson** or **Decision Log** entry **contradicts** a **reference spec**, **patch the spec** (or **glossary** + spec) in the same closure batch **or** file a **follow-up** **BACKLOG** item — do not leave silent drift.
+**Conflict rule:** Lesson/Decision contradicts reference spec → patch spec (or glossary + spec) in same batch or file follow-up BACKLOG item.
 
-## Id purge (mandatory for the closed issue)
+## Id purge (mandatory)
 
-After drafting the archived row, **search the repository** for the closed issue id (e.g. `FEAT-44`, `BUG-12`, `TECH-48`) and **remove or rewrite** every hit **except**:
+After archiving, search repo for closed issue id — remove/rewrite every hit **except**: new `[x]` block in [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md) + existing archive history for that id, and open BACKLOG rows still tracking other work.
 
-- The new **`[x]`** block in [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md) for that closure (and any **existing** archive rows that already reference that id historically), and
-- **Open** rows in [`BACKLOG.md`](../../../BACKLOG.md) that are **still** tracking other work (do not remove *their* ids).
-
-**Targets for purge:** `ia/specs/glossary.md`, `ia/specs/*.md` reference specs, `ia/rules/*.md` (except the terminology rule’s generic pattern line), `ia/skills/**/*.md`, `docs/**`, `projects/**`, `ARCHITECTURE.md`, `tools/**` docstrings/comments, `Assets/**` comments, **renaming** committed files whose **names** contain the id when practical.
-
-**Do not** strip the id from **other** issues’ open **BACKLOG** rows or from **unrelated** archive history unless you are explicitly closing that issue too.
+**Targets:** `ia/specs/glossary.md`, `ia/specs/*.md`, `ia/rules/*.md` (except terminology rule pattern line), `ia/skills/**/*.md`, `docs/**`, `projects/**`, `ARCHITECTURE.md`, `tools/**` docstrings, `Assets/**` comments. Rename committed files containing id when practical.
 
 ## Tool recipe (territory-ia) — closure session
 
-Run **in order** unless a step is **N/A** (state why in chat).
+Run in order. N/A → state why in chat.
 
-1. **User confirmation** — Implementation **verified**? (Single confirmation gates the rest of the closeout.)
-2. **`backlog_issue`** with `issue_id` — refresh **Files**, **Notes**, **Depends on**, **Acceptance**, and **`depends_on_status`**. If any entry has **`satisfied`: false** and **`soft_only`** false, resolve or get explicit user override before spending effort on closeout.
-3. **`project_spec_closeout_digest`** with `issue_id` **or** `spec_path` — structured extract. If the tool is unavailable, fall back to **`read_file`** on `ia/projects/{ISSUE_ID}.md`.
-4. **IA persistence (edit durable docs)** — Apply checklist rows **G1–I1** using **`router_for_task`** + **`spec_section`** / **`spec_sections`** + **`glossary_discover`** / **`glossary_lookup`** (**English**). Use **`list_rules`** / **`rule_content`** when editing rules under **`ia/rules/`**.
-4b. **`project_spec_journal_persist`** — When a DB URL resolves (**`DATABASE_URL`** or [`config/postgres-dev.json`](../../../config/postgres-dev.json), not **CI**-skipped), persist **Decision Log** + **Lessons learned** to **`ia_project_spec_journal`** (see checklist **J1**). Otherwise note one-line skip.
-4c. **Optional (`project-implementation-validation`)** — After step 4 (and **I1** when applicable), consider [`project-implementation-validation`](../project-implementation-validation/SKILL.md) before step 7.
-5. **`invariants_summary`** — When closure touches **runtime** **C#**, scene behavior, or **invariants** / guardrail docs.
-6. **Multi-issue** — Patch umbrella / sibling `ia/projects/*.md` for **honesty**. Optional: `npm run closeout:dependents -- --issue {ISSUE_ID}` from repo root, then verify manually.
-7. **Delete** `ia/projects/{ISSUE_ID}.md` — only after **J1** succeeded or was **waived** / **skipped** (**db_unconfigured**).
-8. **Cascade** — `npm run validate:dead-project-specs` from repo root **or** user relies on **CI**; fix hits **or** advisory mode only with explicit reason (**PROJECT-SPEC-STRUCTURE** closeout lessons).
-9. **BACKLOG + archive (immediate)** — **Remove** the issue’s row from **[`BACKLOG.md`](../../../BACKLOG.md)**. **Append** a **`[x]`** row with date to **[`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md)**; **`Spec:`** → removed-after-closure pattern; **Notes** cite where **glossary** / **reference spec** / **ARCHITECTURE** / rules / **docs** now hold migrated content.
-10. **Id purge** — Run **Id purge** section above for `{ISSUE_ID}`.
-11. **I1** — If glossary/spec bodies changed, `npm run generate:ia-indexes` and **`--check`** as required by **CI**.
+1. **User confirmation** — Implementation verified? (Single gate for rest of closeout.)
+2. **`backlog_issue`** — refresh Files, Notes, Depends on, Acceptance, `depends_on_status`. Hard dep unsatisfied → resolve or user override.
+3. **`project_spec_closeout_digest`** — structured extract. Unavailable → `read_file` fallback.
+4. **IA persistence** — Apply G1–I1 via `router_for_task` + `spec_section`/`spec_sections` + `glossary_discover`/`glossary_lookup` (English). `list_rules`/`rule_content` for rules edits.
+4b. **`project_spec_journal_persist`** — When DB URL resolves, persist Decision Log + Lessons (J1). Otherwise one-line skip.
+4c. **Optional** — [`project-implementation-validation`](../project-implementation-validation/SKILL.md) after step 4 when I1 applies.
+5. **`invariants_summary`** — When closure touches runtime C#, scene behavior, or guardrail docs.
+6. **Multi-issue** — Patch umbrella/sibling `ia/projects/*.md`. Optional: `npm run closeout:dependents -- --issue {ISSUE_ID}`.
+7. **Delete** `ia/projects/{ISSUE_ID}.md` — only after J1 succeeded/waived/skipped.
+8. **Cascade** — `npm run validate:dead-project-specs`; fix hits or advisory with reason.
+9. **BACKLOG + archive** — Remove row from BACKLOG. Append `[x]` row with date to BACKLOG-ARCHIVE; `Spec:` → removed-after-closure pattern; Notes cite where content migrated.
+10. **Id purge** — Per section above for `{ISSUE_ID}`.
+11. **I1** — If glossary/spec bodies changed, `npm run generate:ia-indexes` + `--check`.
 
-## Multi-issue (umbrella / siblings)
+## Multi-issue
 
-When **Depends on** or the project spec references an **umbrella** program (**glossary**: **JSON interchange program**, **Compute-lib program**, …) or **sibling** `ia/projects/*.md`:
-
-- Load umbrella or sibling specs (`read_file` and/or **`backlog_issue`** for related ids).
-- Update **Implementation Plan**, **Acceptance**, **Decision Log**, and **Depends on** so completed vs pending work is accurate.
-- Do this **before** deleting the closed child spec.
+When spec references umbrella program or sibling `ia/projects/*.md`:
+- Load umbrella/sibling specs (`read_file`/`backlog_issue` for related ids).
+- Update Implementation Plan, Acceptance, Decision Log, Depends on for accuracy.
+- Do **before** deleting closed child spec.
 
 ## Manual fallback (no local Node)
 
-If `npm run validate:dead-project-specs` cannot run: search the repo for the `ia/projects/{ISSUE_ID}.md` filename; fix **markdown** links and **BACKLOG** **`Spec:`** lines; prefer **CI** **IA tools** workflow when available.
+No `npm` → search repo for `ia/projects/{ISSUE_ID}.md`; fix markdown links + BACKLOG `Spec:` lines; prefer CI IA tools workflow.
 
-## Branching (when editing reference specs)
+## Branching
 
-Mirror **project-spec-kickoff** / **project-spec-implement**: **`router_for_task`** with **`ia/rules/agent-router.md`** domain labels → **`spec_section`** or **`spec_sections`** — do not load entire `ia/specs/*.md` files unless unavoidable.
+`router_for_task` with agent-router domain labels → `spec_section`/`spec_sections`. No full `ia/specs/*.md` unless unavoidable.
+- **Roads/bridges/wet run** → roads-system + isometric-geography-system.
+- **Water/HeightMap/shore** → water-terrain-system + geo sections.
+- **Save/load/DTO** → persistence-system; no on-disk Save data changes unless issue required.
 
-- **Roads / bridges / wet run** → **roads-system** + **isometric-geography-system**.
-- **Water / HeightMap / shore / river** → **water-terrain-system** + **geo** sections.
-- **Save / load / DTO** → **persistence-system**; do **not** change on-disk **Save data** unless the issue required it.
+## Efficiency shortcuts
 
-## Efficiency
-
-- **`project_spec_closeout_digest`** — one call replaces ad-hoc Markdown parsing for step 3.
-- **`spec_sections`** — batch slice fetch for step 4.
-- **`npm run closeout:worksheet -- --issue {ISSUE_ID}`** — printable Markdown worksheet (`--json` for raw digest).
-- **`npm run closeout:dependents -- --issue {ISSUE_ID}`** — citation scan for step 6.
-- **`npm run closeout:verify`** — after persistence when **I1** may apply: **`validate:dead-project-specs`** + **`generate:ia-indexes --check`**.
+- `project_spec_closeout_digest` — replaces ad-hoc parsing (step 3).
+- `spec_sections` — batch slice fetch (step 4).
+- `npm run closeout:worksheet -- --issue {ISSUE_ID}` — printable worksheet (`--json` for raw).
+- `npm run closeout:dependents -- --issue {ISSUE_ID}` — citation scan (step 6).
+- `npm run closeout:verify` — `validate:dead-project-specs` + `generate:ia-indexes --check` (after I1).
 
 ## Seed prompt (parameterize)
 

@@ -21,4 +21,4 @@ Exceptions (write normal English):
 6. Destructive-op confirmations — `/closeout` deletes, force-push warnings.
 7. When the user says "normal" / "stop caveman" / "in Spanish" — overrides for that turn.
 
-Authoring guidance (subagent / skill / slash command / handoff file templates, where-to-apply checklist): see [`ia/rules/agent-output-caveman-authoring.md`](agent-output-caveman-authoring.md) — fetch via `rule_content agent-output-caveman-authoring` when editing those surfaces.
+Authoring surfaces (caveman applies): subagent / skill / slash command / handoff files, new `ia/projects/{ISSUE_ID}*.md` specs (§1–§10 prose), new or modified **BACKLOG.md** / **BACKLOG-ARCHIVE.md** rows (Notes / Acceptance prose; row structure + bolded glossary terms + id cross-refs + path links stay verbatim). Full where-to-apply checklist: [`ia/rules/agent-output-caveman-authoring.md`](agent-output-caveman-authoring.md) — fetch via `rule_content agent-output-caveman-authoring`.

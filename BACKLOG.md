@@ -1,18 +1,18 @@
 # Backlog — Territory Developer
 
-> Single source of truth for project issues. To work on one, reference it with `@BACKLOG.md` in the agent conversation. Closed work lives in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Use **`mcp__territory-ia__backlog_issue`** for slice access.
+> Single source of truth for project issues. Reference via `@BACKLOG.md` in agent conversation. Closed work → [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Use **`mcp__territory-ia__backlog_issue`** for slice access.
 >
-> **Lane order (highest priority first):** § Compute-lib program → § Agent ↔ Unity & MCP context lane → § IA evolution lane → § UI-as-code program → § Economic depth lane → § Gameplay & simulation lane → § High / § Medium / § Code Health / § Low. **Gameplay blockers** in § High Priority stay **interrupt** work when they stop play or corrupt saves.
+> **Lane order (highest first):** § Compute-lib program → § Agent ↔ Unity & MCP context lane → § IA evolution lane → § UI-as-code program → § Economic depth lane → § Gameplay & simulation lane → § High / § Medium / § Code Health / § Low. **Gameplay blockers** in § High Priority stay **interrupt** work — stop play / corrupt saves.
 >
-> **Closed program charters** (trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) + glossary): **Spec-pipeline** (territory-ia spec-pipeline program; exploration in [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md)) · **UI-as-code program** umbrella (UI-as-code program; **`ui-design-system.md`** Codebase inventory (uGUI)) · **TECH-39 computational MCP suite** (Computational MCP tools (TECH-39)).
+> **Closed program charters** (trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) + glossary): **Spec-pipeline** (territory-ia spec-pipeline program; exploration [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md)) · **UI-as-code program** umbrella (UI-as-code program; **`ui-design-system.md`** Codebase inventory (uGUI)) · **TECH-39 computational MCP suite** (Computational MCP tools (TECH-39)).
 >
-> **Active programs** below: **§ Compute-lib program** (TECH-38 + TECH-32 / TECH-35 research) · **§ IA evolution lane** TECH-77–TECH-83 (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning — [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md)) · **§ UI-as-code program** open FEAT-51 · **§ Economic depth lane** FEAT-52 → FEAT-53 → FEAT-09 (economy, services, districts; monthly maintenance, tax→demand feedback, happiness + pollution already shipped) · **§ Gameplay & simulation lane** player-facing AUTO / density.
+> **Active programs:** **§ Compute-lib program** (TECH-38 + TECH-32 / TECH-35 research) · **§ IA evolution lane** TECH-77–TECH-83 (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning — [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md)) · **§ UI-as-code program** open FEAT-51 · **§ Economic depth lane** FEAT-52 → FEAT-53 → FEAT-09 (economy, services, districts; monthly maintenance, tax→demand feedback, happiness + pollution shipped) · **§ Gameplay & simulation lane** player-facing AUTO / density.
 
 ---
 
 ## Compute-lib program
 
-**Dependency order.** Pilot compute-lib + World ↔ Grid MCP shipped (see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) + glossary `territory-compute-lib`). TECH-39 (computational MCP suite) closed (glossary `Computational MCP tools (TECH-39)`). **TECH-38** (C# pure modules + harnesses) extends `Utilities/Compute/` and `tools/reports/`. Research items **TECH-32** and **TECH-35** have `Depends on: none` but should run after TECH-38 surfaces exist (compare against UrbanGrowthRingMath / RNG notes).
+**Dependency order.** Pilot compute-lib + World ↔ Grid MCP shipped ([`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) + glossary `territory-compute-lib`). TECH-39 (computational MCP suite) closed (glossary `Computational MCP tools (TECH-39)`). **TECH-38** (C# pure modules + harnesses) extends `Utilities/Compute/` + `tools/reports/`. Research **TECH-32** + **TECH-35** marked `Depends on: none` but run after TECH-38 surfaces exist (compare vs UrbanGrowthRingMath / RNG notes).
 
 - [ ] **TECH-38** — **Core** **computational** modules (Unity **utilities** + **`tools/`** harnesses)
   - Type: code health / performance enablement
@@ -38,7 +38,7 @@
 
 ## Agent ↔ Unity & MCP context lane
 
-Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration shipped (glossary **IDE agent bridge** — [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); Play Mode bridge **`kind`** values, **`debug_context_bundle`**, **`close-dev-loop`** Skill, and **dev environment preflight** archived [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**). Remaining lane items follow: **JSON / reports** plumbing → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**§ Compute-lib program** above: **TECH-38** + **TECH-32**/**TECH-35**.) **Prerequisites for later items:** **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (existing `ia/projects/*.md`); **TECH-38** + archived **TECH-39** (**§ Compute-lib program** / [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **Spec-pipeline** charter: **glossary** **territory-ia spec-pipeline program** + archive.
+Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration shipped (glossary **IDE agent bridge** — [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); Play Mode bridge **`kind`** values, **`debug_context_bundle`**, **`close-dev-loop`** Skill, **dev environment preflight** archived [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**). Remaining lane order: **JSON / reports** plumbing → **MCP platform** → **agent workflow & CI helpers** → **research tooling**. (**§ Compute-lib program** above: **TECH-38** + **TECH-32**/**TECH-35**.) **Prerequisites for later items:** **TECH-15**, **TECH-16**, **TECH-31**, **TECH-35**, **TECH-30** (existing `ia/projects/*.md`); **TECH-38** + archived **TECH-39** (**§ Compute-lib program** / [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). **Spec-pipeline** charter: **glossary** **territory-ia spec-pipeline program** + archive.
 
 - [ ] **TECH-53** — **Schema validation history** (Postgres extension **E2** track)
   - Type: technical / CI / data
@@ -176,7 +176,7 @@ Ordered for **closed-loop agent ↔ Unity** — **Close Dev Loop** orchestration
 
 ## IA evolution lane
 
-Evolve the **Information Architecture** system from documentation retrieval to a learning, bidirectional, graph-queryable platform. **TECH-77** (FTS) and **TECH-78** (skill chaining) are independent. **TECH-79** (agent memory) and **TECH-80** (bidirectional IA) need Postgres tables (independent of each other). **TECH-81** (knowledge graph) is the long-term evolution — benefits from **TECH-77** index infrastructure and **TECH-79** session data. **TECH-82** (gameplay entity model) bridges IA tooling and game data. **TECH-83** (simulation parameter tuning) uses the bridge and optional **TECH-82** metrics tables. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md). **IA system overview:** [`docs/information-architecture-overview.md`](docs/information-architecture-overview.md).
+Evolve **Information Architecture** from doc retrieval → learning, bidirectional, graph-queryable platform. **TECH-77** (FTS) + **TECH-78** (skill chaining) independent. **TECH-79** (agent memory) + **TECH-80** (bidirectional IA) need Postgres tables (independent). **TECH-81** (knowledge graph) long-term — benefits from **TECH-77** index + **TECH-79** session data. **TECH-82** (gameplay entity model) bridges IA tooling + game data. **TECH-83** (sim param tuning) uses bridge + optional **TECH-82** metrics tables. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md). **Overview:** [`docs/information-architecture-overview.md`](docs/information-architecture-overview.md).
 
 - [ ] **TECH-77** — **Unified semantic search** across all IA surfaces (FTS in Postgres)
   - Type: tooling / agent enablement
@@ -236,7 +236,7 @@ Evolve the **Information Architecture** system from documentation retrieval to a
 
 ## UI-as-code program (exploration)
 
-**Charter (§ Completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**):** Reduce **manual Unity Editor** work for **HUD**, **menus**, **panels**, and **toolbars** by making **UI** composable from the **IDE** (Cursor) and **AI agents** — via **reference spec** clarity (**`ui-design-system.md`**), shipped **runtime** **`UiTheme`** + **`UIManager` partials** + prefab **v0**, **Editor** menus (**`unity-development-context.md`** **§10**), **Cursor Skills**, and optional **territory-ia** affordances. **UI** spans **multiple scenes**; **UI** inventory export and spec prose are **per scene**. **As-built baseline:** **`ui-design-system.md`** + committed [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json) — **`ui-design-system.md`**. **Codebase inventory (uGUI):** **`ui-design-system.md`** **Related files**. **Ongoing:** refresh **inventory** + baseline JSON when hierarchies shift; optional **`ui_theme_tokens` MCP** — file a new **BACKLOG** row if product wants it.
+**Charter (§ Completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**):** Reduce **manual Unity Editor** work for **HUD** / **menus** / **panels** / **toolbars** — make **UI** composable from **IDE** (Cursor) + **AI agents**. Shipped: **reference spec** (**`ui-design-system.md`**), **runtime** **`UiTheme`** + **`UIManager` partials** + prefab **v0**, **Editor** menus (**`unity-development-context.md`** **§10**), **Cursor Skills**, optional **territory-ia** affordances. **UI** spans **multiple scenes**; **UI** inventory export + spec prose **per scene**. **As-built baseline:** **`ui-design-system.md`** + committed [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json). **Codebase inventory (uGUI):** **`ui-design-system.md`** **Related files**. **Ongoing:** refresh **inventory** + baseline JSON when hierarchies shift; optional **`ui_theme_tokens` MCP** — new **BACKLOG** row if product wants it.
 
 - [ ] **FEAT-51** — **Game data dashboard**: **time-series** **simulation** metrics, charts, dense **HUD**-style **cards** (**uGUI**)
   - Type: feature / UX + **simulation** observability
@@ -260,7 +260,7 @@ Evolve the **Information Architecture** system from documentation retrieval to a
 
 ## Economic depth lane
 
-Transform the economy from "money goes up forever" to a genuine city-builder economic simulation with tension, feedback loops, and player-visible consequences. **Sequential dependency order:** dynamic happiness (done — see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **monthly maintenance** (shipped — **glossary** **Monthly maintenance**) → **tax→demand feedback** (shipped — **managers-reference** **Demand (R / C / I)**; [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **FEAT-09** (trade/production — deep economy, moved from § Low Priority). **FEAT-52** (city services coverage) and **FEAT-53** (districts) extend the lane with spatial economic depth. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md) §4.
+Transform economy from "money goes up forever" → genuine city-builder sim w/ tension, feedback loops, player-visible consequences. **Sequential dependency order:** dynamic happiness (done — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **monthly maintenance** (shipped — **glossary** **Monthly maintenance**) → **tax→demand feedback** (shipped — **managers-reference** **Demand (R / C / I)**; [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)) → **FEAT-09** (trade/production — deep economy, moved from § Low Priority). **FEAT-52** (city services coverage) + **FEAT-53** (districts) extend spatial economic depth. **Context:** [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md) §4.
 
 - [ ] **FEAT-52** — **City services coverage** model (fire, police, education, health)
   - Type: feature (new system)
@@ -286,7 +286,7 @@ Transform the economy from "money goes up forever" to a genuine city-builder eco
 
 ## Gameplay & simulation lane
 
-Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zone density** depth. **Economic** issues moved to **§ Economic depth lane** above. **§ High Priority** still holds map/render/save **interrupt** bugs.
+Player-facing **simulation**, **AUTO** growth, **urban growth rings** / **zone density** depth. **Economic** issues → **§ Economic depth lane** above. **§ High Priority** still holds map/render/save **interrupt** bugs.
 
 - [ ] **BUG-52** — **AUTO** zoning: persistent **grass cells** between **undeveloped light zoning** and new **AUTO** **street** segments (gaps not filled on later **simulation ticks**)
   - Type: bug (behavior / regression suspicion)
@@ -559,33 +559,33 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
 
 ## How to Use This Backlog
 
-1. **Work on an issue**: Open chat in Cursor, reference `@BACKLOG.md` and request analysis or implementation of the issue by ID (e.g. "Analyze BUG-01 and propose a plan").
-2. **Reprioritize**: Move the issue up or down within its section, or change section.
-3. **Add new issue**: Assign the next available ID in the appropriate category and place in the correct priority section.
-4. **Complete issue**: Remove the row from **BACKLOG.md** and append a **`[x]`** row with date to [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) only (there is **no** “Completed” section in **BACKLOG.md**). After closure, **strip citations to that issue id** from durable docs (glossary, reference specs, rules, skills, `docs/`, code comments) per **project-spec-close** — **BACKLOG.md** (open rows), **BACKLOG-ARCHIVE.md**, and the new archived row may still name the id.
-5. **In progress**: Move to "In progress" section when starting work.
-6. **Dependencies**: Use `Depends on: ID` when an open issue must wait on another. **Convention:** every ID in `Depends on:` must appear **above** the dependent in this file (earlier in the same section or in a higher-priority section), **or** be **completed** in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) — then write `Depends on: none` and cite the archived id in **Notes**. Check dependencies before starting.
+1. **Work on issue:** Open chat in Cursor, reference `@BACKLOG.md`, request analysis / implementation by ID (e.g. "Analyze BUG-01, propose plan").
+2. **Reprioritize:** Move row up/down within section, or change section.
+3. **Add new issue:** Next available ID per category, place in correct priority section.
+4. **Complete issue:** Remove row from **BACKLOG.md**; append **`[x]`** row w/ date to [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) only (**no** "Completed" section in **BACKLOG.md**). After closure, **strip citations** to that issue id from durable docs (glossary, reference specs, rules, skills, `docs/`, code comments) per **project-spec-close** — **BACKLOG.md** (open rows), **BACKLOG-ARCHIVE.md**, new archived row may still name id.
+5. **In progress:** Move to "In progress" section when starting.
+6. **Dependencies:** `Depends on: ID` when open issue waits on another. **Convention:** every ID in `Depends on:` must appear **above** the dependent in this file (earlier in same section / higher-priority section), **or** be **completed** in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) — then write `Depends on: none` + cite archived id in **Notes**. Check deps before starting.
 
 ### ID Convention
 | Prefix | Category |
 |--------|----------|
-| `BUG-XX` | Bugs and broken functionality |
-| `FEAT-XX` | Features and enhancements |
+| `BUG-XX` | Bugs / broken functionality |
+| `FEAT-XX` | Features / enhancements |
 | `TECH-XX` | Technical debt, refactors, code health |
 | `ART-XX` | Art assets, prefabs, sprites |
-| `AUDIO-XX` | Audio assets and audio system features |
+| `AUDIO-XX` | Audio assets / audio system |
 
 ### Issue Fields
-- **Type**: fix, feature, refactor, art/assets, audio/feature, etc.
-- **Files**: main files involved
-- **Notes**: context, problem description or expected solution
-- **Acceptance** (optional): concrete pass/fail criteria for verification
-- **Depends on** (optional): IDs of issues that must be completed first
+- **Type:** fix, feature, refactor, art/assets, audio/feature, etc.
+- **Files:** main files involved
+- **Notes:** context, problem description, expected solution
+- **Acceptance** (optional): concrete pass/fail criteria
+- **Depends on** (optional): IDs that must complete first
 
 ### Section Order
-1. **Compute-lib program** (**TECH-38** open; **TECH-39** archived; pilot **compute-lib** in archive; related **TECH-32**, **TECH-35**; charter — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
-2. **Agent ↔ Unity & MCP context lane** (Unity exports, MCP, CI, performance harnesses, adjacent tooling)
-3. In progress (actively being developed — insert above **High priority** when used)
+1. **Compute-lib program** (**TECH-38** open; **TECH-39** archived; pilot **compute-lib** archived; related **TECH-32**, **TECH-35**; charter — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
+2. **Agent ↔ Unity & MCP context lane** (Unity exports, MCP, CI, perf harnesses, adjacent tooling)
+3. In progress (active — insert above **High priority** when used)
 4. High priority (critical bugs, core gameplay blockers)
 5. Medium priority (important features, balance, improvements)
 6. Code Health (technical debt, refactors, performance)

@@ -9,33 +9,33 @@ alwaysApply: true
 
 # Project hierarchy — execution units
 
-Four levels, loosely bound. Applies to **all** orchestrator documents and project specs, not just one plan.
+Four levels, loosely bound. All orchestrator docs + project specs.
 
 | Level | Definition | Materialization | Lifecycle |
 |-------|-----------|-----------------|-----------|
-| **Step** | Major product milestone | Stable; defined in the global orchestrator | Permanent in orchestrator |
-| **Stage** | Coherent sub-milestone inside a step | Semi-stable; orchestrator doc created lazily when parent step enters `In Progress` | Deleted after step closes |
-| **Phase** | Shippable compilable increment (measured in merged PRs) | Rewritable until `In Progress`; frozen while active | Deleted after stage closes |
-| **Task** | Atomic unit of work; maps to exactly one BACKLOG row + `ia/projects/{ISSUE_ID}.md` | Fully defined only when parent phase enters `In Progress` | Spec deleted on issue close per `project-spec-close` |
+| **Step** | Major product milestone | Stable; in global orchestrator | Permanent in orchestrator |
+| **Stage** | Sub-milestone inside step | Semi-stable; orchestrator created lazily when parent step → `In Progress` | Deleted after step closes |
+| **Phase** | Shippable compilable increment (merged PRs) | Rewritable until `In Progress`; frozen while active | Deleted after stage closes |
+| **Task** | Atomic unit; 1 BACKLOG row + `ia/projects/{ISSUE_ID}.md` | Defined when parent phase → `In Progress` | Spec deleted on issue close per `project-spec-close` |
 
 ## Learnings flow backward
 
-Task closes -> phase Lessons Learned. Phase closes -> stage rollup. Stage closes -> step Decision Log -> next step's skeleton.
+Task close → phase Lessons Learned. Phase close → stage rollup. Stage close → step Decision Log → next step skeleton.
 
 ## Lazy materialization
 
-- Step and stage orchestrators materialize **only** when their parent enters `In Progress`.
-- Do not pre-create orchestrator docs for future steps.
+- Step/stage orchestrators materialize only when parent → `In Progress`.
+- Do NOT pre-create orchestrator docs for future steps.
 
 ## Ephemeral spec lifecycle
 
-Specs are **temporary**. After implementation completes:
-- Migrate canonical knowledge to glossary, reference specs, `ARCHITECTURE.md`, rules, `docs/`.
-- Persist verbose Decision Log + Lessons Learned to Postgres journal (`project_spec_journal_persist`).
-- Delete the spec. Only permanent, canonical documentation survives.
+Specs temporary. After implementation:
+- Migrate canonical knowledge → glossary, reference specs, `ARCHITECTURE.md`, rules, `docs/`.
+- Persist verbose Decision Log + Lessons Learned → Postgres journal (`project_spec_journal_persist`).
+- Delete spec. Only canonical docs survive.
 
 ## Status enum
 
-All project specs and orchestrator documents use: **`Draft`** | **`In Review`** | **`In Progress`** | **`Final`**.
+All specs + orchestrators use: **`Draft`** | **`In Review`** | **`In Progress`** | **`Final`**.
 
-`In Progress` format includes active context: `In Progress — Step 2 / Stage 3 / TECH-42` (showing the currently active execution unit).
+`In Progress` format includes active context: `In Progress — Step 2 / Stage 3 / TECH-42`.
