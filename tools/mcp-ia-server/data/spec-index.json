@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-12T15:14:49.029Z",
+  "last_generated": "2026-04-12T16:05:00.625Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -76,6 +76,42 @@
       ]
     },
     {
+      "key": "game-overview",
+      "path": "ia/specs/game-overview.md",
+      "sections": [
+        {
+          "section_id": "game-overview-territory-developer",
+          "title": "Game Overview — Territory Developer",
+          "depth": 1,
+          "line_start": 8
+        },
+        {
+          "section_id": "vision",
+          "title": "Vision",
+          "depth": 2,
+          "line_start": 12
+        },
+        {
+          "section_id": "core-design-principles",
+          "title": "Core design principles",
+          "depth": 3,
+          "line_start": 21
+        },
+        {
+          "section_id": "stack",
+          "title": "Stack",
+          "depth": 2,
+          "line_start": 31
+        },
+        {
+          "section_id": "scales",
+          "title": "Scales",
+          "depth": 2,
+          "line_start": 35
+        }
+      ]
+    },
+    {
       "key": "glossary",
       "path": "ia/specs/glossary.md",
       "sections": [
@@ -95,91 +131,97 @@
           "section_id": "grid-coordinates",
           "title": "Grid & Coordinates",
           "depth": 2,
-          "line_start": 36
+          "line_start": 37
         },
         {
           "section_id": "height-system",
           "title": "Height System",
           "depth": 2,
-          "line_start": 51
+          "line_start": 52
         },
         {
           "section_id": "terrain-slopes",
           "title": "Terrain & Slopes",
           "depth": 2,
-          "line_start": 60
+          "line_start": 61
         },
         {
           "section_id": "water",
           "title": "Water",
           "depth": 2,
-          "line_start": 75
+          "line_start": 76
         },
         {
           "section_id": "rivers",
           "title": "Rivers",
           "depth": 2,
-          "line_start": 97
+          "line_start": 98
         },
         {
           "section_id": "world-generation",
           "title": "World generation",
           "depth": 2,
-          "line_start": 109
+          "line_start": 110
         },
         {
           "section_id": "roads-bridges",
           "title": "Roads & Bridges",
           "depth": 2,
-          "line_start": 115
+          "line_start": 116
         },
         {
           "section_id": "pathfinding",
           "title": "Pathfinding",
           "depth": 2,
-          "line_start": 141
+          "line_start": 142
         },
         {
           "section_id": "zones-buildings",
           "title": "Zones & Buildings",
           "depth": 2,
-          "line_start": 150
+          "line_start": 151
         },
         {
           "section_id": "simulation-growth",
           "title": "Simulation & Growth",
           "depth": 2,
-          "line_start": 162
+          "line_start": 163
         },
         {
           "section_id": "city-systems",
           "title": "City systems",
           "depth": 2,
-          "line_start": 174
+          "line_start": 175
         },
         {
           "section_id": "persistence",
           "title": "Persistence",
           "depth": 2,
-          "line_start": 189
+          "line_start": 190
         },
         {
           "section_id": "prefabs-visual-layer",
           "title": "Prefabs & Visual Layer",
           "depth": 2,
-          "line_start": 200
+          "line_start": 201
         },
         {
           "section_id": "documentation",
           "title": "Documentation",
           "depth": 2,
-          "line_start": 214
+          "line_start": 215
+        },
+        {
+          "section_id": "multi-scale-simulation",
+          "title": "Multi-scale simulation",
+          "depth": 2,
+          "line_start": 230
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 229
+          "line_start": 254
         }
       ]
     },

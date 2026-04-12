@@ -309,6 +309,15 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
   - Depends on: none (**pollution** model shipped — see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
 
 ## High Priority
+
+- [x] **TECH-86** — Lifecycle skill refactor: project hierarchy rules + orchestrator-vs-spec distinction
+  - Type: IA / process / tooling
+  - Files: `ia/rules/project-hierarchy.md` (new), `ia/rules/orchestrator-vs-spec.md` (new), `ia/skills/project-spec-close/SKILL.md`, `ia/skills/project-spec-kickoff/SKILL.md`, `ia/skills/project-spec-implement/SKILL.md`, `ia/skills/project-stage-close/SKILL.md`, `ia/templates/project-spec-template.md`, `AGENTS.md`, `ia/specs/glossary.md`
+  - Spec: `ia/projects/TECH-86.md`
+  - Notes: Prerequisite for multi-scale master plan going to `In Progress`. Extracts step/stage/phase/task hierarchy from master plan into global rules. Teaches lifecycle skills the orchestrator-vs-spec distinction. Expands status enum to `Draft | In Review | In Progress | Final`.
+  - Acceptance: two new rules loaded always; lifecycle skills refuse to close orchestrators; template status enum updated; glossary process terms added
+  - Depends on: none
+
 - [ ] **BUG-55** — Codebase audit: critical simulation, data integrity, and controller bugs (10 fixes)
   - Type: fix (crasher + data corruption + simulation logic + memory leak)
   - Files: `EmploymentManager.cs`, `AutoZoningManager.cs`, `CellData.cs`, `GrowthBudgetManager.cs`, `AutoRoadBuilder.cs`, `DemandManager.cs`, `Cell.cs`, `RoadStrokeTerrainRules.cs`, `GridPathfinder.cs`, `SimulateGrowthToggle.cs`, `GrowthBudgetSlidersController.cs`, `CityStatsUIController.cs`

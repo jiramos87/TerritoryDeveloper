@@ -7,7 +7,7 @@ slices_via: none
 # {ISSUE_ID} — {Title}
 
 > **Issue:** [{ISSUE_ID}](../../BACKLOG.md)
-> **Status:** Draft | In Review | Final
+> **Status:** Draft | In Review | In Progress | Final
 > **Created:** YYYY-MM-DD
 > **Last updated:** YYYY-MM-DD
 

@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-12T15:14:49.092Z",
+  "last_generated": "2026-04-12T16:05:00.695Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -11,6 +11,27 @@
         "Pathfinding cost model"
       ],
       "cited_in": []
+    },
+    "Active scale": {
+      "related": [
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution algorithm",
+        "Evolution parameters"
+      ],
+      "cited_in": [
+        {
+          "spec": "game-overview",
+          "section_id": "vision",
+          "section_title": "Vision"
+        },
+        {
+          "spec": "game-overview",
+          "section_id": "core-design-principles",
+          "section_title": "Core design principles"
+        }
+      ]
     },
     "Agent test mode batch": {
       "related": [
@@ -899,6 +920,26 @@
         }
       ]
     },
+    "Child-scale entity": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Dormant scale",
+        "Evolution algorithm",
+        "Evolution parameters"
+      ],
+      "cited_in": []
+    },
+    "City cell / Region cell / Country cell": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution algorithm"
+      ],
+      "cited_in": []
+    },
     "City metrics history": {
       "related": [
         "Agent test mode batch",
@@ -1410,6 +1451,56 @@
           "section_title": "1. Isometric Grid Fundamentals"
         }
       ]
+    },
+    "Dormant scale": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Evolution algorithm",
+        "Evolution parameters"
+      ],
+      "cited_in": []
+    },
+    "Evolution algorithm": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution parameters"
+      ],
+      "cited_in": []
+    },
+    "Evolution parameters": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution algorithm"
+      ],
+      "cited_in": []
+    },
+    "Evolution-invariant": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution algorithm"
+      ],
+      "cited_in": []
+    },
+    "Evolution-mutable": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution algorithm"
+      ],
+      "cited_in": []
     },
     "Forced river": {
       "related": [
@@ -2606,6 +2697,16 @@
       ],
       "cited_in": []
     },
+    "Multi-scale save tree": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution algorithm"
+      ],
+      "cited_in": []
+    },
     "Multipolar urban growth": {
       "related": [
         "Cell",
@@ -2687,6 +2788,36 @@
         }
       ]
     },
+    "Orchestrator document": {
+      "related": [
+        "Agent test mode batch",
+        "City metrics history",
+        "geography_init_params",
+        "Happiness",
+        "IDE agent bridge"
+      ],
+      "cited_in": []
+    },
+    "Parent-scale stub": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution algorithm"
+      ],
+      "cited_in": []
+    },
+    "Parity budget": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution algorithm"
+      ],
+      "cited_in": []
+    },
     "Pass A (bed alignment)": {
       "related": [
         "Brink",
@@ -2752,6 +2883,16 @@
         }
       ]
     },
+    "Player-authored dormant control": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution algorithm"
+      ],
+      "cited_in": []
+    },
     "Pollution": {
       "related": [
         "Happiness",
@@ -2782,6 +2923,26 @@
           "section_title": "Calendar and monthly economy"
         }
       ]
+    },
+    "Procedural scale generation": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution algorithm"
+      ],
+      "cited_in": []
+    },
+    "Project hierarchy": {
+      "related": [
+        "Agent test mode batch",
+        "City metrics history",
+        "geography_init_params",
+        "Happiness",
+        "IDE agent bridge"
+      ],
+      "cited_in": []
     },
     "Project spec": {
       "related": [
@@ -2889,6 +3050,16 @@
           "section_title": "5.3 Shipped polish patterns (implementation reference)"
         }
       ]
+    },
+    "Reconstruction": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution algorithm"
+      ],
+      "cited_in": []
     },
     "Reference spec": {
       "related": [
@@ -3393,6 +3564,26 @@
         }
       ]
     },
+    "Scale switch": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution algorithm"
+      ],
+      "cited_in": []
+    },
+    "Scale-switch event bubble-up / constraint push-down": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "City cell / Region cell / Country cell",
+        "Dormant scale"
+      ],
+      "cited_in": []
+    },
     "Scale-with-slopes": {
       "related": [
         "Cell",
@@ -3537,6 +3728,16 @@
         }
       ]
     },
+    "Simulation scale": {
+      "related": [
+        "Active scale",
+        "Cell",
+        "Child-scale entity",
+        "Dormant scale",
+        "Evolution algorithm"
+      ],
+      "cited_in": []
+    },
     "Simulation tick": {
       "related": [
         "Agent test mode batch",
@@ -3545,7 +3746,13 @@
         "Geography initialization",
         "geography_init_params"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "game-overview",
+          "section_id": "scales",
+          "section_title": "Scales"
+        }
+      ]
     },
     "Slope categories": {
       "related": [

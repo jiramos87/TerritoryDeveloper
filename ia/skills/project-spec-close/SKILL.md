@@ -28,6 +28,10 @@ This skill **does not** call MCP tools itself. In an **Agent** chat with **terri
 
 This skill is the **umbrella close** — run **once per spec**, at the end of the **final** stage (it migrates IA, deletes the spec, removes the BACKLOG row, archives, and purges the id). For **per-stage** closes during a multi-stage spec, use [`project-stage-close`](../project-stage-close/SKILL.md) instead — it ticks the stage's §7 phases, appends to §6/§9/§10, optionally journals, and emits a handoff message for the next stage's agent **without** touching BACKLOG / archive / spec deletion.
 
+## Orchestrator guard
+
+**This skill closes project specs only — NOT orchestrator documents.** Before proceeding, verify the target is a per-issue project spec (`ia/projects/{ISSUE_ID}.md`). **Refuse** to delete files matching orchestrator patterns: `*master-plan*`, `step-*-*.md`, `stage-*-*.md` under orchestrator directories. See [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md).
+
 ## Normative closeout order
 
 **Do not delete** `ia/projects/{ISSUE_ID}.md` until **all** applicable **IA persistence** edits below are merged (or explicitly recorded as N/A with a one-line reason in chat).

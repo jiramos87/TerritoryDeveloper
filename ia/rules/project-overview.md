@@ -13,17 +13,10 @@ alwaysApply: true
 
 **Stack:** Unity 2D isometric city-builder; C# MonoBehaviour classes; `Territory.*` namespaces (partial migration); no DI — Inspector fields + `FindObjectOfType<T>()` fallback in Awake/Start.
 
-**Folder layout (`Assets/Scripts/`):**
-- `Managers/GameManagers/` — core game logic: grid, terrain, zones, roads, economy, simulation, helpers
-- `Managers/UnitManagers/` — data models: Cell, Zone, Building, Forest, HeightMap, CellData, WaterMap, etc.
-- `Controllers/GameControllers/` — CameraController, CityStatsUIController, etc.
-- `Controllers/UnitControllers/` — UI buttons, popups, sliders
-- `Utilities/` — DebugHelper, RoadPathCostConstants, AutoSimulationRoadRules, RoadStrokeTerrainRules, etc.
+**Game vision and scales:** See [`ia/specs/game-overview.md`](../specs/game-overview.md).
 
 **Key patterns:** GridManager is the central hub for cell operations. Only singleton: `GameNotificationManager.Instance`. Managers are MonoBehaviour scene components (never `new`). Dependencies via Inspector + `FindObjectOfType` fallback.
 
-**Documentation hierarchy:** `AGENTS.md` (workflow) → `ia/rules/` (guardrails, including `terminology-consistency.md` for shared vocabulary) → `ia/specs/` (deep reference) → `ARCHITECTURE.md` (dependency map). **IA stack overview (autoreference):** `docs/information-architecture-overview.md`. **Agent-led verification (batch + bridge reporting):** `docs/agent-led-verification-policy.md`, `ia/rules/agent-verification-directives.md`. **territory-ia** MCP under `tools/mcp-ia-server/` reads those same sources for low-token tool calls; see `docs/mcp-ia-server.md` and `agent-router.md` (MCP subsection). **Cursor agents with tools should prefer territory-ia MCP for spec/rule slices before reading whole markdown files.**
+**Documentation hierarchy:** `AGENTS.md` (workflow) → `ia/rules/` (guardrails) → `ia/specs/` (deep reference) → `ARCHITECTURE.md` (dependency map). MCP: prefer `territory-ia` tools over reading whole spec files.
 
-**Local post-implementation verification (dev machine, not CI):** From the repository root, **`npm run verify:local`** runs **`validate:all`** (dead project-spec paths, **`territory-compute-lib`** **`npm run build`**, **`test:ia`**, **`validate:fixtures`**, **`generate:ia-indexes --check`**) then [`tools/scripts/post-implementation-verify.sh`](../../tools/scripts/post-implementation-verify.sh) (**Unity** batch compile, **`db:migrate`**, **`db:bridge-preflight`**, **macOS** Editor lifecycle + **`db:bridge-playmode-smoke`**). **`npm run verify:post-implementation`** is an alias. See **`ARCHITECTURE.md`** (Local verification) and [`ia/skills/project-implementation-validation/SKILL.md`](../skills/project-implementation-validation/SKILL.md).
-
-**Agent terminals — Unity batch compile:** Run **`npm run unity:compile-check`** from the **repository root** when you need a batch compile. **Do not** skip it because **`$UNITY_EDITOR_PATH`** is empty in the agent shell: [`tools/scripts/unity-compile-check.sh`](../../tools/scripts/unity-compile-check.sh) sources repo-root **`.env`** / **`.env.local`** via [`tools/scripts/load-repo-env.inc.sh`](../../tools/scripts/load-repo-env.inc.sh). On **macOS**, if the variable is still unset after that, the script tries the Unity Hub path from **`ProjectSettings/ProjectVersion.txt`**. Never gate on a raw shell **`test -n "$UNITY_EDITOR_PATH"`** before **`npm run unity:compile-check`**.
+**Verification:** `npm run verify:local` from repo root. See `ARCHITECTURE.md` (Local verification) and `CLAUDE.md` §5.

@@ -36,7 +36,16 @@ This skill is **inline** — invoked directly by the stage-executing agent, **no
 | Closing a non-final stage of a multi-stage spec | **`project-stage-close`** (this one) |
 | Closing the final stage of a multi-stage spec | **`project-spec-close`** (umbrella) |
 | Closing a single-stage / flat spec | **`project-spec-close`** |
+| Closing a step/stage in an **orchestrator** doc | **`project-stage-close`** with orchestrator rules below |
 | Mid-stage checkpoint with no agent handoff needed | Neither — keep working |
+
+## Orchestrator step/stage close
+
+When closing a step or stage in an **orchestrator document** (per `ia/rules/orchestrator-vs-spec.md`):
+- Migrate learnings backward per `ia/rules/project-hierarchy.md` (task->phase->stage->step).
+- Delete the child orchestrator doc (step-level or stage-level) **after** learnings are migrated.
+- Update the parent orchestrator's status to reflect completed step/stage.
+- **Never** delete the global orchestrator itself — only child orchestrator docs are ephemeral.
 
 ## Inputs (gather before running)
 

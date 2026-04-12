@@ -30,7 +30,8 @@ slices_via: glossary_lookup
 | **City** | demand, tax, desirability, happiness, pollution, forest, regional, utility, notification, monthly maintenance |
 | **Persistence** | save, CellData, water map data, visual restore, load order |
 | **Prefabs** | land/water slopes, sorting formula, type offsets |
-| **Documentation** | reference spec, project spec, interchange JSON, geography_init_params, scenario_descriptor_v1, City metrics history, Agent test mode batch, IDE agent bridge |
+| **Documentation** | reference spec, project spec, orchestrator document, project hierarchy, interchange JSON, geography_init_params, scenario_descriptor_v1, City metrics history, Agent test mode batch, IDE agent bridge |
+| **Multi-scale simulation** | simulation scale, active scale, dormant scale, child-scale entity, evolution algorithm, evolution parameters, evolution-invariant, evolution-mutable, parity budget, reconstruction, procedural scale generation, scale switch, multi-scale save tree, city/region/country cell, parent-scale stub, event bubble-up, constraint push-down, player-authored dormant control |
 | **Planned (non-authoritative)** | backlog-backed future terms — [§ Planned terminology](#planned-domain-terms) |
 
 ## Grid & Coordinates
@@ -223,6 +224,30 @@ slices_via: glossary_lookup
 | **City metrics history** | Optional Postgres time-series of per-**simulation tick** city aggregates (population, happiness, R/C/I demand, etc.). Not **Save data**. | mgrs §MetricsRecorder, [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) |
 | **Agent test mode batch** | Headless Unity Editor path for committed scenarios: loads a save, optionally runs **simulation tick**s and golden-path assertions. Requires project lock release. | unity-dev §10, [`docs/agent-led-verification-policy.md`](../../docs/agent-led-verification-policy.md) |
 | **IDE agent bridge** | Postgres job queue letting IDE agents control the Unity Editor: console logs, screenshots, Play Mode, compilation status, debug context bundles. | unity-dev §10, [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) |
+| **Orchestrator document** | Permanent coordination Markdown under `ia/projects/` tracking a multi-step plan (e.g. master plan, step-level or stage-level orchestrators). NOT closeable via `project-spec-close`. Contrasts with **project spec** (temporary, issue-scoped). | [`ia/rules/orchestrator-vs-spec.md`](../rules/orchestrator-vs-spec.md), [`ia/rules/project-hierarchy.md`](../rules/project-hierarchy.md) |
+| **Project hierarchy** | Four-level execution structure: **step** (major milestone) > **stage** (sub-milestone) > **phase** (shippable increment) > **task** (atomic BACKLOG row). Orchestrator docs materialize lazily; specs are ephemeral. | [`ia/rules/project-hierarchy.md`](../rules/project-hierarchy.md) |
+
+## Multi-scale simulation
+
+| Term | Definition | Spec |
+|------|-----------|------|
+| **Simulation scale** | Named level of the simulation stack (`CITY`, `REGION`, `COUNTRY`). Enum + `ISimulationModel` contract. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Active scale** | The single scale currently running its full tick loop. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Dormant scale** | Any scale that is not active. Holds a snapshot + evolution parameters. Does not tick. Evolution is applied by its **parent-scale entity**, not by itself. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Child-scale entity** | Representation of a dormant child inside its parent. A region holds one entity per dormant city; a country holds one per dormant region. Carries a **pending evolution delta** layered over the child's last-materialized snapshot and a `last_active_at` calendar stamp. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Evolution algorithm** | Pure function `evolve(snapshot, Δt, params) → snapshot'` that fast-forwards a dormant scale at scale-switch time. Deterministic in MVP (no shaping-events channel). Scale-specific: city, region, country. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Evolution parameters** | Tunable inputs to an evolution algorithm for a given scale node: growth coefficients, policy multipliers, RNG seed, and (at region/country) player-authored parameters set from the parent scale's UI. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Evolution-invariant** | State the evolution algorithm must preserve verbatim. For the city: everything the player actively touched (main road backbone, landmarks, districts, player-assigned budgets, explicit zoning decisions). Evolution may additively create new main roads or density, but may not overwrite or remove a player-touched surface. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Evolution-mutable** | State the algorithm may rewrite: default-generated density, untouched cells, population mix, zoning not explicitly chosen. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Parity budget** | Maximum allowed divergence between an algorithmic projection and a live-sim re-run over the same interval. Measured empirically via playtest, not a single static threshold. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Reconstruction** | Materializing a playable live scale state from its snapshot + the parent entity's pending evolution delta up to "now". Happens at scale-switch time. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Procedural scale generation** | Creation of a never-visited scale node (city, region) from parent-scale parameters + deterministic seed. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Scale switch** | Player-driven transition from one active scale to another. Steps: (a) save leaving scale, (b) apply entering scale's pending evolution delta, (c) load the entering scale into playable form. UX approach under exploration. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md), [`docs/scale-switch-ux-exploration.md`](../../docs/scale-switch-ux-exploration.md) |
+| **Multi-scale save tree** | Relational save structure: main `game_save` table + per-scale tables (`city_nodes`, `region_nodes`, `country_nodes`), each with JSON column for cell data + typed foreign-key columns + `evolution_params jsonb` + `pending_delta jsonb` + `last_active_at`. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **City cell / Region cell / Country cell** | Scale-specific refinements of the generic **Cell**. Same isometric primitive, sized and semantically typed per scale. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Parent-scale stub** | Minimum conceptual representation of a parent scale inside the city MVP: `region_id` + `country_id` references + at least one neighbor-city stub + interstate-border data semantics admitting a region-facing interpretation. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Scale-switch event bubble-up / constraint push-down** | Event and parameter transport across scales, applied at switch time (not continuously). MVP ships both as thin hooks. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
+| **Player-authored dormant control** | At region scale, player sets budget allocation per dormant child city. At country scale, player sets budget allocation per dormant region. Extended parameter surface is post-MVP. | [`multi-scale-master-plan.md`](../projects/multi-scale-master-plan.md) |
 
 <a id="planned-domain-terms"></a>
 

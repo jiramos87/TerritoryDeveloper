@@ -23,6 +23,10 @@ Until richer **MCP** discovery from project-spec prose ships, use the **manual**
 
 **When the issue is verified and you are closing:** use **[`project-spec-close`](../project-spec-close/SKILL.md)** after implementation — not this kickoff skill.
 
+## Orchestrator routing
+
+If the target file is an **orchestrator document** (e.g. `*master-plan*`, `step-*-*.md`, `stage-*-*.md`), route to **step/stage review** instead of issue-level kickoff. Orchestrator docs follow `ia/rules/project-hierarchy.md` and `ia/rules/orchestrator-vs-spec.md` — they are never deleted and use the step/stage/phase/task hierarchy instead of the flat project spec lifecycle.
+
 ## Seed prompt (parameterize)
 
 Replace `{SPEC_PATH}` with the project spec path from the backlog **Spec:** line (`ia/projects/{ISSUE_ID}.md`). Use `{ISSUE_ID}` from the spec header `> **Issue:**` line when present.

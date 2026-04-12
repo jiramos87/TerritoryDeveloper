@@ -26,6 +26,10 @@ Until richer **MCP** discovery from project-spec prose ships, use the **manual**
 - Use **this** skill when the goal is to **execute** `## 7. Implementation Plan` in order with minimal diffs.
 - After implementation is **verified** and you need to **migrate lessons**, update **glossary** / **reference specs**, **delete** the project spec, **remove** the **BACKLOG** row, **append** **archive**, **purge** ids — use **[`project-spec-close`](../project-spec-close/SKILL.md)**.
 
+## Orchestrator navigation
+
+When the target is an **orchestrator document** (e.g. `*master-plan*`, `step-*-*.md`, `stage-*-*.md`), navigate its step/stage structure per `ia/rules/project-hierarchy.md`. Orchestrators define the skeleton; actual implementation happens in lazily-created child project specs. Do not attempt to execute orchestrator-level exit criteria directly — create child specs first.
+
 Default: spec **Status** is **Final** or **In Review** with game-logic **Open Questions** resolved. If the user insists on coding from **Draft** or unresolved **Open Questions**, state the risk in chat and prefer **kickoff** first.
 
 ## Seed prompt (parameterize)

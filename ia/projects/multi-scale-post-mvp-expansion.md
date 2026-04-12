@@ -14,7 +14,7 @@
 
 - The MVP master plan proves the three-scale game loop — city ↔ region ↔ country switching, dormant evolution, reconstruction, minimum head-of-state loop — and nothing more. It is intentionally thin on polish, content, variance, and process tooling.
 - This document holds everything that the brainstorm considered load-bearing for a *richer* experience but that is **not** required for the three-scale loop itself to function. When the MVP ships and stabilizes, items from this document get promoted into a follow-up expansion plan (a new master plan doc, or extensions of the existing one).
-- Do **not** file BACKLOG rows for items in this document during the MVP backlog triage pass (Step −1 stage 2 of the MVP master plan). The triage pass files only MVP rows under `§ Multi-scale simulation lane`. Post-MVP rows are filed later, during a dedicated post-MVP triage pass.
+- Do **not** file BACKLOG rows for items in this document during the MVP backlog triage pass. The triage pass files only MVP rows under `§ Multi-scale simulation lane`. Post-MVP rows are filed later, during a dedicated post-MVP triage pass.
 
 ---
 
@@ -318,7 +318,8 @@ None of these are part of the three-scale MVP target. They are explicitly listed
 - **Research-gated spikes** — `TECH-32` (urban growth ring what-if tooling), `TECH-35` (property-based invariant fuzzing). Nice to have for confidence; not load-bearing for the three-scale loop.
 - **`TECH-81` knowledge graph.** Cross-scale dependency queries. Only justified once scale dependency queries become common; MVP does not need them.
 - **IA evolution lane** — `TECH-77`, `TECH-78`, `TECH-79`, `TECH-80`, `TECH-83`. Discretionary, schedule where they unblock post-MVP plan work.
-- **Scale unlock trigger — "% map usage" half.** MVP uses population alone. Add the map-usage half when it produces gameplay-meaningful unlock pacing.
+- **Scale unlock mechanism (full).** MVP defers all scale unlock work — player starts with all three scales available. Post-MVP: persisted per-save unlock state, population threshold trigger, "% map usage" half, unlock UX entry point.
+- **Scale unlock trigger — "% map usage" half.** Add when it produces gameplay-meaningful unlock pacing.
 - **Mutation / training parity harness.** MVP parity harness is playtest-only. Mutation testing and training-run parity checks are richer measurement techniques for a future pass.
 - **Shaping-events channel in the evolution algorithm signature.** MVP signature is `evolve(snapshot, Δt, params) → snapshot'`. The `events` channel reappears with §2.
 
@@ -357,3 +358,4 @@ Consolidated view of every brainstorm open question that is not answered inside 
 Append-only.
 
 - **2026-04-11** — Initial cut. Extracted from the brainstorm seed (now retained only in git history on `feature/multi-scale-plan`, `chore: brainstorm*` commits) during the MVP master plan promotion. Captures climate (§1), shaping events and disasters (§2), city depth (§3), region + country content depth (§4), extended dormant control (§5), cross-scale dashboard and UX polish (§6), process-engineering gap closures (§7), agent parallelization (§8), world/solar/long-tail (§9), scale-neutral spine polish (§10), deferred open questions (§11). All items are **explicitly deferred** — no BACKLOG rows, no orchestrator documents, no step/stage placement inside the MVP master plan.
+- **2026-04-12** — Scale unlock mechanism promoted from MVP to post-MVP (§10). MVP ships all three scales available from start; unlock mechanic is content polish, not architecture. Dashboards already covered in §6.

@@ -39,7 +39,9 @@ docs/mcp-ia-server.md                     → territory-ia MCP tool catalog + re
 ia/rules/                                 → guardrails (always-loaded; light)
 ia/skills/                                → workflow recipes (orchestration, not facts)
 ia/specs/                                 → deep reference (read on demand per task)
-ia/projects/                              → temporary project specs (deleted on close)
+ia/projects/                              → temporary project specs (deleted on close); orchestrator docs (permanent)
+ia/rules/project-hierarchy.md             → step/stage/phase/task execution hierarchy
+ia/rules/orchestrator-vs-spec.md          → orchestrator vs project spec distinction
 ia/templates/                             → project spec template + frontmatter schema
 ARCHITECTURE.md                           → runtime layers, dependency map, Local verification
 BACKLOG.md / BACKLOG-ARCHIVE.md           → issue tracking (root)
