@@ -31,6 +31,10 @@
       "Bash(sudo:*)"
     ]
   },
+  "env": {
+    "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "65"
+  },
   "hooks": {
     "SessionStart": [
       {
