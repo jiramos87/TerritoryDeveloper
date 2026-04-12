@@ -73,7 +73,7 @@ Mirror **kickoff** branching when classifying the **new** issue:
 
 - **Roads / bridge / wet run** → **roads-system** + **geo** slices via **`router_for_task`** + **`spec_section`**.
 - **Water / HeightMap / shore / river** → **water-terrain-system** + **geo**.
-- **JSON / schema / Save / interchange** → **persistence-system**; do **not** propose on-disk **Save data** changes unless the user explicitly requires them; see **glossary** **JSON interchange program** and [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md) when applicable.
+- **JSON / schema / Save / interchange** → **persistence-system**; do **not** propose on-disk **Save data** changes unless the user explicitly requires them; see `ARCHITECTURE.md` §Interchange JSON and [`BACKLOG-ARCHIVE.md`](../../../BACKLOG-ARCHIVE.md) when applicable.
 
 ## File and backlog checklist
 

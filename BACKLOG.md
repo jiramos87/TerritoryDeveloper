@@ -17,8 +17,8 @@
 - [ ] **TECH-38** — **Core** **computational** modules (Unity **utilities** + **`tools/`** harnesses)
   - Type: code health / performance enablement
   - Files: `Assets/Scripts/Utilities/Compute/`; `GridManager.cs` (**CoordinateConversionService**), `GridPathfinder.cs`, `UrbanCentroidService.cs`, `ProceduralRiverGenerator.cs`, `TerrainManager.cs`, `WaterManager.cs`, `DemandManager.cs` / `CityStats.cs` (as extractions land); `tools/reports/`; **UTF** tests
-  - Spec: none — **glossary** **C# compute utilities**; `tools/reports/compute-utilities-inventory.md`, `tools/reports/compute-utilities-rng-derivation.md`
-  - Notes: **Behavior-preserving** extractions; **UrbanGrowthRingMath** **multipolar**-ready for **FEAT-47**; **stochastic** **geography initialization** documentation; **no** second **pathfinding** authority. Prepare **batchmode** hooks for **TECH-66** / **glossary** **Computational MCP tools (TECH-39)** follow-ups. **Context:** **glossary** **Compute-lib program**, **territory-compute-lib (TECH-37)**, **Computational MCP tools (TECH-39)** ([`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)).
+  - Spec: none — unity-development-context §11; `tools/reports/compute-utilities-inventory.md`, `tools/reports/compute-utilities-rng-derivation.md`
+  - Notes: **Behavior-preserving** extractions; **UrbanGrowthRingMath** **multipolar**-ready for **FEAT-47**; **stochastic** **geography initialization** documentation; **no** second **pathfinding** authority. Prepare **batchmode** hooks for **TECH-66** follow-ups. **Context:** [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) (TECH-37/TECH-39 archived).
   - Acceptance: inventory doc + **≥ 3** **pure** modules with tests or **golden** **JSON**; **RNG** derivation doc; **invariants** respected — see `tools/reports/compute-utilities-inventory.md` and bullets above
   - Depends on: none (pilot milestone in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
 
@@ -236,14 +236,14 @@ Evolve the **Information Architecture** system from documentation retrieval to a
 
 ## UI-as-code program (exploration)
 
-**Charter (§ Completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**):** Reduce **manual Unity Editor** work for **HUD**, **menus**, **panels**, and **toolbars** by making **UI** composable from the **IDE** (Cursor) and **AI agents** — via **reference spec** clarity (**`ui-design-system.md`**), shipped **runtime** **`UiTheme`** + **`UIManager` partials** + prefab **v0**, **Editor** menus (**`unity-development-context.md`** **§10**), **Cursor Skills**, and optional **territory-ia** affordances. **UI** spans **multiple scenes**; **UI** inventory export and spec prose are **per scene**. **As-built baseline:** **`ui-design-system.md`** + committed [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json) — **glossary** **UI design system (reference spec)**. **Codebase inventory (uGUI):** **`ui-design-system.md`** **Related files**. **Ongoing:** refresh **inventory** + baseline JSON when hierarchies shift; optional **`ui_theme_tokens` MCP** — file a new **BACKLOG** row if product wants it.
+**Charter (§ Completed — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) **Recent archive**):** Reduce **manual Unity Editor** work for **HUD**, **menus**, **panels**, and **toolbars** by making **UI** composable from the **IDE** (Cursor) and **AI agents** — via **reference spec** clarity (**`ui-design-system.md`**), shipped **runtime** **`UiTheme`** + **`UIManager` partials** + prefab **v0**, **Editor** menus (**`unity-development-context.md`** **§10**), **Cursor Skills**, and optional **territory-ia** affordances. **UI** spans **multiple scenes**; **UI** inventory export and spec prose are **per scene**. **As-built baseline:** **`ui-design-system.md`** + committed [`docs/reports/ui-inventory-as-built-baseline.json`](docs/reports/ui-inventory-as-built-baseline.json) — **`ui-design-system.md`**. **Codebase inventory (uGUI):** **`ui-design-system.md`** **Related files**. **Ongoing:** refresh **inventory** + baseline JSON when hierarchies shift; optional **`ui_theme_tokens` MCP** — file a new **BACKLOG** row if product wants it.
 
 - [ ] **FEAT-51** — **Game data dashboard**: **time-series** **simulation** metrics, charts, dense **HUD**-style **cards** (**uGUI**)
   - Type: feature / UX + **simulation** observability
   - Files: [`docs/ui-data-dashboard-exploration.md`](docs/ui-data-dashboard-exploration.md) (mechanisms and dependency graph); [`ia/projects/FEAT-51.md`](ia/projects/FEAT-51.md); `ia/specs/ui-design-system.md` (**modal**, **scroll**, **UiTheme**); `ia/specs/simulation-system.md` (**simulation tick** sampling — read-only); `ia/specs/persistence-system.md` (if **Save**/**Load** of history); `Assets/Scripts/Managers/GameManagers/` (**CityStats**, **EconomyManager**, **DemandManager**, **StatisticsManager**, **TimeManager**); new **UI** prefabs / partials as implemented
   - Spec: `ia/projects/FEAT-51.md`
   - Spec sections: `ia/specs/ui-design-system.md` — **§1** **Foundations**, **§3** patterns, **§5.3** polish patterns; `ia/specs/simulation-system.md`; `ia/specs/persistence-system.md` (optional persistence); [`docs/ui-data-dashboard-exploration.md`](docs/ui-data-dashboard-exploration.md)
-  - Notes: Delivers **exploration** **§2.1–§2.5** (history → derived metrics → chart engine → **dashboard** layout). Reuse **UI-as-code** **tokens** (**glossary** **UI design system (reference spec)**); **map** **info view** (**§2.6**) is **out of scope** — separate **FEAT-** when prioritized. **Spike** chart library (**XCharts** or equivalent) per **Decision Log**. Add chart-specific **`UiTheme`** fields in this issue or a follow-up **TECH-** row when scoped.
+  - Notes: Delivers **exploration** **§2.1–§2.5** (history → derived metrics → chart engine → **dashboard** layout). Reuse **UI-as-code** **tokens** (**`ui-design-system.md`**); **map** **info view** (**§2.6**) is **out of scope** — separate **FEAT-** when prioritized. **Spike** chart library (**XCharts** or equivalent) per **Decision Log**. Add chart-specific **`UiTheme`** fields in this issue or a follow-up **TECH-** row when scoped.
   - Acceptance: per `ia/projects/FEAT-51.md` **§8**; chart choice and persistence stance recorded in spec **Decision Log**
   - Depends on: none (soft: **BUG-14** — no per-frame **`FindObjectOfType`** in dashboard UI)
   - Related: **BUG-14**
@@ -507,9 +507,9 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
 
 - [ ] **FEAT-46** — **Geography** authoring: **territory** / **urban** area **map** editor + parameter dashboard
   - Type: feature (tools / **New Game** flow)
-  - Files: `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `ForestManager.cs`, `UIManager.cs` (or dedicated **Editor** / in-game **wizard**); **JSON** / **ScriptableObject** templates (align **glossary** **Interchange JSON** + **Compute-lib program** / **territory-compute-lib (TECH-37)**)
+  - Files: `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `ForestManager.cs`, `UIManager.cs` (or dedicated **Editor** / in-game **wizard**); **JSON** / **ScriptableObject** templates (align `ARCHITECTURE.md` §Interchange JSON)
   - Notes: In-game or **Editor** flow to author **city** / **territory** **maps** with **isometric** terrain controls: **map** size, **water** / **forest** / **height** mix, **sea** / **river** / **lake** proportions, etc. Reuse the same parameter pipeline for future **player** **terraform**, **basin** / **elevation** tools, **water body** placement in **depressions**, and **AUTO** **geography**-driven tools. **Spec:** canonical **geography initialization** + **water-terrain** + **geo** when implemented (no `ia/projects/` spec until scheduled).
-  - Depends on: none (coordinates **FEAT-18**, **FEAT-41**; soft: **glossary** **Compute-lib program** / **JSON program (TECH-21)** docs)
+  - Depends on: none (coordinates **FEAT-18**, **FEAT-41**; soft: [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) TECH-21/TECH-36 docs)
 
 - [ ] **FEAT-47** — **Multipolar** **urban centroid** model, per-pole **urban growth rings**, **connurbation**
   - Type: feature (**simulation** / **AUTO** architecture)
@@ -574,7 +574,7 @@ Player-facing **simulation**, **AUTO** growth, and **urban growth rings** / **zo
 - **Depends on** (optional): IDs of issues that must be completed first
 
 ### Section Order
-1. **Compute-lib program** (**TECH-38** open; **TECH-39** archived; pilot **compute-lib** in archive; related **TECH-32**, **TECH-35**; charter — **glossary** **Compute-lib program** / [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
+1. **Compute-lib program** (**TECH-38** open; **TECH-39** archived; pilot **compute-lib** in archive; related **TECH-32**, **TECH-35**; charter — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
 2. **Agent ↔ Unity & MCP context lane** (Unity exports, MCP, CI, performance harnesses, adjacent tooling)
 3. In progress (actively being developed — insert above **High priority** when used)
 4. High priority (critical bugs, core gameplay blockers)

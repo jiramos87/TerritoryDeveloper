@@ -98,7 +98,7 @@ gridX = round((posY + posX) / 2)
 gridY = round((posY - posX) / 2)
 ```
 
-> **Agent tooling:** The **territory-ia** MCP tool **`isometric_world_to_grid`** (implementation in **`tools/compute-lib`**, **glossary** **territory-compute-lib**) applies the **inverse** formulas above to **planar** world coordinates only. It does **not** implement height-aware picking below.
+> **Agent tooling:** The **territory-ia** MCP tool **`isometric_world_to_grid`** (implementation in **`tools/compute-lib`**) applies the **inverse** formulas above to **planar** world coordinates only. It does **not** implement height-aware picking below.
 
 Height-aware picking tests a 3×3 candidate area, selecting the cell with the highest sorting order whose sprite bounds contain the cursor.
 

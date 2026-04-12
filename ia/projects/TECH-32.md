@@ -60,7 +60,7 @@ Default game unchanged.
 
 - Fork or instrument service behind `#if UNITY_EDITOR` or dedicated test assembly.
 - Run N ticks × M strategies; aggregate.
-- **TECH-39** **§ Completed** relocation: baseline **Play Mode** / snapshot evidence for **UrbanCentroidService** / **AUTO** vs a stored reference is owned by **[TECH-64](../../BACKLOG.md)**; this issue consumes those artifacts for drift / strategy metrics (trace **glossary** **Computational MCP tools (TECH-39)** + [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** **TECH-39** **Notes**).
+- **TECH-39** **§ Completed** relocation: baseline **Play Mode** / snapshot evidence for **UrbanCentroidService** / **AUTO** vs a stored reference is owned by **[TECH-64](../../BACKLOG.md)**; this issue consumes those artifacts for drift / strategy metrics (trace [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) TECH-39 + [`BACKLOG.md`](../../BACKLOG.md) **§ Completed** **TECH-39** **Notes**).
 
 ## 6. Decision Log
 

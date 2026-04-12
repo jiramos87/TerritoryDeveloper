@@ -17,7 +17,7 @@
 
 **Reuse:** The same structured parameters should feed **geography initialization**, future **player** tools (**terraform**, **basin** carving, **elevations**), **forest** placement, **water bodies** in **depressions**, and **AUTO** modes that depend on map template data.
 
-**Technical alignment:** **JSON interchange program** + [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md) + **glossary**; JSON schemas, **Geography initialization** params, **CI** validation; **Postgres** dev surfaces ([`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md)); **glossary** **Compute-lib program** for shared **compute** and **MCP** surfaces. No spec change required until this theme is scheduled for implementation on [`BACKLOG.md`](../BACKLOG.md).
+**Technical alignment:** [`docs/postgres-interchange-patterns.md`](postgres-interchange-patterns.md) + **glossary**; JSON schemas, **Geography initialization** params, **CI** validation; **Postgres** dev surfaces ([`docs/postgres-ia-dev-setup.md`](postgres-ia-dev-setup.md)). No spec change required until this theme is scheduled for implementation on [`BACKLOG.md`](../BACKLOG.md).
 
 ## 2. Multipolar growth, desirability poles, and connurbation
 

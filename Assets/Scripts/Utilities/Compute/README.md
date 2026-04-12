@@ -1,6 +1,6 @@
 # Territory.Utilities.Compute
 
-**Pure** static helpers (**no** `MonoBehaviour`). **glossary** **Compute-lib program** (**TECH-37**/**TECH-39** archived; **TECH-38** open on [`BACKLOG.md`](../../../../BACKLOG.md) **§ Compute-lib program**).
+**Pure** static helpers (**no** `MonoBehaviour`). **TECH-37**/**TECH-39** archived ([`BACKLOG-ARCHIVE.md`](../../../../BACKLOG-ARCHIVE.md)); **TECH-38** open on [`BACKLOG.md`](../../../../BACKLOG.md) **§ Compute-lib program**.
 
 - **`IsometricGridMath`** — planar **World ↔ Grid** ( **`GridManager.GetGridPosition`** / **`GetWorldPositionVector`** delegate here); golden parity with **`tools/compute-lib/test/fixtures/world-to-grid.json`**.
 - **`UrbanGrowthRingMath`** — **urban growth ring** bands vs centroid + radius (single pole); **`ClassifyRingMultipolar`** for minimum distance to multiple poles (**FEAT-47** direction). **`UrbanMetrics`** delegates to this class.

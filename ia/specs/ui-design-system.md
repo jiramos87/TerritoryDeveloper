@@ -309,7 +309,7 @@ Normative behavior stays in **§1–§3**; the following are **consistency** not
 | 2026-04-04 | Overview links → **`projects/ui-as-code-exploration.md`** (retired `docs/ui-design-system-project.md` / `docs/ui-design-system-context.md`) |
 | 2026-04-06 | Program notes in closed umbrella project spec (later migrated here — **Codebase inventory (uGUI)**); delete **`projects/ui-as-code-exploration.md`** |
 | 2026-04-10 | **UI-as-code program** umbrella **§ Completed**; **Codebase inventory (uGUI)** inlined from closed project spec |
-| 2026-04-04 | **As-built vs target** subsection; **UI-as-code** program baseline for **`ui-design-system.md`** (**glossary** **UI design system (reference spec)**) |
+| 2026-04-04 | **As-built vs target** subsection; **UI-as-code** program baseline for **`ui-design-system.md`** |
 | 2026-04-04 | **§1**–**§4**, **§2**–**§3** **as-built** from [`docs/reports/ui-inventory-as-built-baseline.json`](../../docs/reports/ui-inventory-as-built-baseline.json); **§3.0** **Main menu**; **§6** traceability note |
 | 2026-04-04 | Serialized **`MainMenu`**, **`UiTheme`**, **§1.2** typography decision, **§4.3** resolution matrix, **§5.2** theme paths |
 | 2026-04-04 | **`UIManager` `partial`** split; **§3.2** modal **Esc** contract; **§3.5** scroll-zoom checklist; **§5.2** prefab scaffold menu; **v0** prefabs via **`UiPrefabLibraryScaffoldMenu`** |

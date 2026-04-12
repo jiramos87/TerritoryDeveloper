@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-11T00:48:24.383Z",
+  "last_generated": "2026-04-12T15:14:49.033Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -455,45 +455,9 @@
       "spec_key": "isometric-geography-system",
       "anchor": "7.2"
     },
-    "Reference spec": {
-      "spec_key": "agents",
-      "anchor": ""
-    },
-    "City metrics history": {
-      "spec_key": "managers-reference",
-      "anchor": "metricsrecorder"
-    },
-    "Agent test mode batch": {
-      "spec_key": "persistence-system",
-      "anchor": "load-pipeline"
-    },
-    "UI design system (reference spec)": {
-      "spec_key": "ui-design-system",
-      "anchor": "spec-key"
-    },
-    "UI-as-code program": {
-      "spec_key": "glossary",
-      "anchor": "ui-design-system-reference-spec"
-    },
-    "project-new": {
-      "spec_key": "agents",
-      "anchor": ""
-    },
-    "Compute-lib program": {
-      "spec_key": "glossary",
-      "anchor": "territory-compute-lib"
-    },
-    "Dev repro bundle": {
-      "spec_key": "unity-development-context",
-      "anchor": "10"
-    },
-    "Editor export registry": {
-      "spec_key": "unity-development-context",
-      "anchor": "10"
-    },
-    "IDE agent bridge": {
-      "spec_key": "unity-development-context",
-      "anchor": "10"
+    "Interchange JSON (artifact)": {
+      "spec_key": "architecture",
+      "anchor": "interchange-json"
     },
     "geography_init_params": {
       "spec_key": "persistence-system",
@@ -502,6 +466,18 @@
     "scenario_descriptor_v1": {
       "spec_key": "persistence-system",
       "anchor": "load-pipeline"
+    },
+    "City metrics history": {
+      "spec_key": "managers-reference",
+      "anchor": "metricsrecorder"
+    },
+    "Agent test mode batch": {
+      "spec_key": "unity-dev",
+      "anchor": "10"
+    },
+    "IDE agent bridge": {
+      "spec_key": "unity-dev",
+      "anchor": "10"
     }
   }
 }

@@ -9,7 +9,7 @@ slices_via: none
 > **Issue:** [TECH-64](../../BACKLOG.md)
 > **Status:** Draft
 > **Created:** 2026-04-04
-> **Last updated:** 2026-04-04 (**glossary** **Computational MCP tools (TECH-39)** **deferred** **parity** — **UrbanCentroidService** **/** **AUTO** **capture** **scoped** **here**)
+> **Last updated:** 2026-04-04 ([`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) TECH-39 **deferred** **parity** — **UrbanCentroidService** **/** **AUTO** **capture** **scoped** **here**)
 
 **Planned delivery split (this spec tracks the umbrella until children exist):**
 
@@ -27,14 +27,14 @@ Ship a **Territory Developer**–specific **Play Mode** testing path in the **Un
 
 ### 2.1 Goals
 
-1. **Play Mode** **UTF** assembly(ies) and at least one **reference** test proving **game** context loads and writes a bounded **JSON** (or agreed **Interchange JSON** subset) to **`tools/reports/`** or integrates with **Editor export registry** patterns (**glossary** **Editor export registry**).
+1. **Play Mode** **UTF** assembly(ies) and at least one **reference** test proving **game** context loads and writes a bounded **JSON** (or agreed **Interchange JSON** subset) to **`tools/reports/`** or integrates with **Editor export registry** patterns ([`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) §Editor export registry).
 2. **Scaffolding** (templates / snippets) for **ad-hoc** tests: naming, folder layout, **`[UnityTest]`** patterns, teardown, and **invariants** (**HeightMap** ↔ **Cell.height**, **road** **cache**, **no** **`FindObjectOfType`** in **`Update`** in *new* test code per **invariants**).
 3. **Agent-oriented** automation: **Phase 2** **MCP** tools (or documented **`npm run …`** steps) to create or locate a test stub and **Phase 3** **Skill** **`/create-play-mode-test`** with an ordered **Tool recipe** (aligned with **TECH-63** **§7b** culture).
 4. Document overlap with **unity-development-context** §10 (**Territory Developer → Reports**) — **Play Mode** exports today are manual menus; this issue adds **repeatable** **UTF**-driven capture for **agents**.
 
 ### 2.2 Non-Goals
 
-1. Replacing **Edit Mode** **golden** tests or **`tools/compute-lib`** parity (**glossary** **Compute-lib program** / **C# compute utilities (TECH-38)** — open [`BACKLOG.md`](../../BACKLOG.md) **§ Compute-lib program**).
+1. Replacing **Edit Mode** **golden** tests or **`tools/compute-lib`** parity ([`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) / unity-development-context §11 — open [`BACKLOG.md`](../../BACKLOG.md) **§ Compute-lib program**).
 2. Player-facing test UI or shipping **Play Mode** tests in standalone builds (tests stay **Editor** / **test assemblies** only).
 3. Full **CI** headless **Unity** runner in **Phase 1** (optional follow-up; note **license** / **runner** cost in **Decision Log** when scoped).
 4. Defining new **Save data** **DTO** shapes unless a **FEAT-**/**BUG-** explicitly requires it (**persistence-system**).
@@ -95,7 +95,7 @@ Ship a **Territory Developer**–specific **Play Mode** testing path in the **Un
 |------|----------|-----------|-------------------------|
 | 2026-04-04 | Umbrella issue **TECH-64** with **three** delivery parts (infra → MCP → Skill) | Matches user intent; allows parallel planning before child **BACKLOG** rows | Single mega-issue without phases |
 | 2026-04-04 | Final **Skill** trigger **`/create-play-mode-test`** | Clear, action-oriented, consistent with **`/project-new`** style | **`/play-mode-test`**, **`/utf-play-debug`** |
-| 2026-04-04 | **Computational** **MCP** **suite** **closed** — **UrbanCentroid** **/** **AUTO** **parity** **lives** **under** **TECH-64** | **Play** **Mode** **/** **bounded** **JSON** **is** **the** **right** **substrate** **for** **`UrbanCentroidService`** **/** **AUTO** **observable** **diffs** | **No** **TECH-39** **project** **spec** — **trace** **glossary** **Computational MCP tools (TECH-39)** |
+| 2026-04-04 | **Computational** **MCP** **suite** **closed** — **UrbanCentroid** **/** **AUTO** **parity** **lives** **under** **TECH-64** | **Play** **Mode** **/** **bounded** **JSON** **is** **the** **right** **substrate** **for** **`UrbanCentroidService`** **/** **AUTO** **observable** **diffs** | **No** **TECH-39** **project** **spec** — **trace** [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) TECH-39 |
 
 ## 7. Implementation Plan
 
@@ -104,7 +104,7 @@ Ship a **Territory Developer**–specific **Play Mode** testing path in the **Un
 - [ ] Add **`TerritoryDeveloper.PlayModeTests`** (or agreed name) **asmdef** referencing **`TerritoryDeveloper.Game`** + **TestAssemblies**; **Editor** platform rules per Unity docs.
 - [ ] One **reference** **`[UnityTest]`** that enters **Play Mode**, loads **game** context (**scene** policy in **Decision Log**), waits for **`GridManager.isInitialized`** (or documents skip), writes bounded **JSON** under **`tools/reports/`** (gitignored pattern documented).
 - [ ] Cross-link **unity-development-context** §10 in code comments or **`docs/`** pointer.
-- [ ] (**glossary** **Computational MCP tools (TECH-39)** **deferred** **parity**) Optional follow-on test or menu-scripted capture: record minimal `UrbanCentroidService` (centroid, radius, optional ring sample cells) + one AUTO observable (e.g. road / zone counts TBD) after N sim ticks; store under `tools/reports/` for baseline diffs (document schema in Decision Log) — feeds **[TECH-32](../../BACKLOG.md)** research without changing gameplay defaults.
+- [ ] ([`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) TECH-39 **deferred** **parity**) Optional follow-on test or menu-scripted capture: record minimal `UrbanCentroidService` (centroid, radius, optional ring sample cells) + one AUTO observable (e.g. road / zone counts TBD) after N sim ticks; store under `tools/reports/` for baseline diffs (document schema in Decision Log) — feeds **[TECH-32](../../BACKLOG.md)** research without changing gameplay defaults.
 
 ### Phase B — **MCP** + **Node** helpers
 
@@ -131,7 +131,7 @@ Ship a **Territory Developer**–specific **Play Mode** testing path in the **Un
 
 ## 8. Acceptance Criteria
 
-- [ ] **Phase A:** **Play Mode** test assembly + at least one committed test + documented **JSON** output path (includes optional centroid / AUTO capture when scoped — **glossary** **Computational MCP tools (TECH-39)** deferred parity).
+- [ ] **Phase A:** **Play Mode** test assembly + at least one committed test + documented **JSON** output path (includes optional centroid / AUTO capture when scoped — [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) TECH-39 deferred parity).
 - [ ] **Phase B:** **MCP** and/or **Node** path documented; **`verify`** green when server code ships.
 - [ ] **Phase C:** **`/create-play-mode-test`** **Skill** merged and listed in **Skills** **README**.
 - [ ] **Invariants** and **unity-development-context** §10 **GridManager** access rules respected in **new** test / **Editor** code.

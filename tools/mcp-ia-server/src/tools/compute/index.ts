@@ -1,5 +1,5 @@
 /**
- * Computational MCP tool registrations (pilot **TECH-37** + suite — **glossary** **Computational MCP tools (TECH-39)**).
+ * Computational MCP tool registrations (pilot TECH-37 + suite — see docs/mcp-ia-server.md).
  */
 
 export { registerIsometricWorldToGrid } from "./isometric-world-to-grid.js";
