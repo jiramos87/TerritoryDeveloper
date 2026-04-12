@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Territory.Forests
 {
 /// <summary>
-/// Sparse forest implementation with minimal water consumption and environmental impact
+/// Sparse forest impl. Minimal water consumption + env impact.
 /// </summary>
 public class SparseForest : MonoBehaviour, IForest
 {
@@ -17,7 +17,7 @@ public class SparseForest : MonoBehaviour, IForest
     public Forest.ForestType ForestType { get; private set; }
 
     /// <summary>
-    /// Initialize sparse forest with its characteristics
+    /// Init sparse forest with characteristics.
     /// </summary>
     public void Initialize()
     {
@@ -31,7 +31,7 @@ public class SparseForest : MonoBehaviour, IForest
     public GameObject GameObjectReference => this == null ? null : gameObject;
 
     /// <summary>
-    /// Get water consumption for this forest type
+    /// Water consumption for this forest type.
     /// </summary>
     public int GetWaterConsumption()
     {

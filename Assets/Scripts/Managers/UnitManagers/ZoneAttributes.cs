@@ -3,8 +3,7 @@ using UnityEngine;
 namespace Territory.Zones
 {
 /// <summary>
-/// Static readonly class defining zone and building attributes (construction cost, population capacity,
-/// job capacity, water/power consumption) for each zone type.
+/// Static readonly attributes per zone type: construction cost, population capacity, job capacity, water/power consumption.
 /// </summary>
 public class ZoneAttributes
 {

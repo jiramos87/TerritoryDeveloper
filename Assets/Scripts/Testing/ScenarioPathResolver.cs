@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Territory.Testing
 {
     /// <summary>
-    /// Resolves committed <see cref="Territory.Persistence.GameSaveData"/> scenario files under
+    /// Resolve committed <see cref="Territory.Persistence.GameSaveData"/> scenario files under
     /// <c>tools/fixtures/scenarios/</c> by <b>scenario id</b> (<b>kebab-case</b>, ASCII).
     /// </summary>
     public static class ScenarioPathResolver
@@ -12,7 +12,7 @@ namespace Territory.Testing
         const string FixturesRelativeDir = "tools/fixtures/scenarios";
 
         /// <summary>
-        /// Repository root (parent of <c>Assets</c>), using <see cref="Application.dataPath"/>.
+        /// Repo root (parent of <c>Assets</c>) via <see cref="Application.dataPath"/>.
         /// </summary>
         public static string GetRepositoryRoot()
         {
@@ -20,7 +20,7 @@ namespace Territory.Testing
         }
 
         /// <summary>
-        /// Absolute path to the scenarios root (<c>tools/fixtures/scenarios</c>).
+        /// Absolute path to scenarios root (<c>tools/fixtures/scenarios</c>).
         /// </summary>
         public static string GetScenariosRootDirectory()
         {
@@ -28,11 +28,11 @@ namespace Territory.Testing
         }
 
         /// <summary>
-        /// Tries <c>{id}/save.json</c> then <c>{id}.json</c> under the scenarios folder.
+        /// Try <c>{id}/save.json</c> then <c>{id}.json</c> under scenarios folder.
         /// </summary>
-        /// <param name="scenarioId"><b>Scenario id</b> (file-system safe; expected <b>kebab-case</b>).</param>
-        /// <param name="absolutePath">Resolved path when return value is true.</param>
-        /// <returns>True when a file exists.</returns>
+        /// <param name="scenarioId"><b>Scenario id</b>. File-system safe; expected <b>kebab-case</b>.</param>
+        /// <param name="absolutePath">Resolved path when return true.</param>
+        /// <returns>True when file exists.</returns>
         public static bool TryResolveScenarioId(string scenarioId, out string absolutePath)
         {
             absolutePath = null;

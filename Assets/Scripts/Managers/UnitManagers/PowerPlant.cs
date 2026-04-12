@@ -6,8 +6,8 @@ using Territory.Zones;
 namespace Territory.Buildings
 {
 /// <summary>
-/// MonoBehaviour component for power plant buildings placed on the grid.
-/// Tracks power capacity and coordinates with AnimatorManager for animation speed.
+/// MonoBehaviour for power plant buildings on grid. Tracks power capacity.
+/// Coordinates with <see cref="AnimatorManager"/> for anim speed.
 /// </summary>
 public class PowerPlant : MonoBehaviour, IBuilding
 {

@@ -5,13 +5,13 @@ using Territory.Terrain;
 namespace Territory.Utilities
 {
     /// <summary>
-    /// Land slope eligibility for any road stroke (manual, AUTO, interstate). Diagonal and corner-up terrain
-    /// is not allowed; paths truncate or pathfinding must not step onto those cells (BUG-51 policy).
+    /// Land slope eligibility for road strokes (manual, AUTO, interstate). Diagonal + corner-up terrain
+    /// disallowed → paths truncate or pathfinding must not step onto those cells.
     /// </summary>
     public static class RoadStrokeTerrainRules
     {
         /// <summary>
-        /// Allowed: <see cref="TerrainSlopeType.Flat"/> and cardinal ramps (N/S/E/W). All other land slope types are disallowed.
+        /// Allowed: <see cref="TerrainSlopeType.Flat"/> + cardinal ramps (N/S/E/W). All other land slope types disallowed.
         /// </summary>
         public static bool IsLandSlopeAllowedForRoadStroke(TerrainSlopeType slopeType)
         {
@@ -24,7 +24,7 @@ namespace Territory.Utilities
 
         /// <summary>
         /// Longest prefix of <paramref name="path"/> whose cells pass <see cref="IsLandSlopeAllowedForRoadStroke"/> at integer grid coords.
-        /// Returns empty list if the first cell is disallowed or <paramref name="terrainManager"/> is null.
+        /// Empty list if first cell disallowed or <paramref name="terrainManager"/> null.
         /// </summary>
         public static List<Vector2> TruncatePathAtFirstDisallowedLandSlope(IList<Vector2> path, TerrainManager terrainManager)
         {

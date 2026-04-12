@@ -3,9 +3,9 @@ using System.Collections.Generic;
 namespace Territory.Terrain
 {
     /// <summary>
-    /// A connected water mass (lake, sea, or river) with a single flat surface height shared by all cells.
-    /// Terrain floor is stored in <see cref="HeightMap"/>; depth is implicit (surface - terrain).
-    /// <see cref="Classification"/> is fixed at creation; merges only join bodies with the same classification (FEAT-38).
+    /// Connected water mass (lake, sea, river). Single flat surface height shared by all cells.
+    /// Terrain floor in <see cref="HeightMap"/>; depth implicit (surface - terrain).
+    /// <see cref="Classification"/> fixed at creation. Merges only join bodies with same classification.
     /// </summary>
     public sealed class WaterBody
     {

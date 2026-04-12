@@ -9,20 +9,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../../../");
 
 test(
-  "buildRegistry finds 30 IA entries when repo fixtures exist",
+  "buildRegistry finds 31 IA entries when repo fixtures exist",
   { skip: !fs.existsSync(path.join(repoRoot, "ia/specs/glossary.md")) },
   () => {
     const prev = process.env.REPO_ROOT;
     process.env.REPO_ROOT = repoRoot;
     try {
       const r = buildRegistry();
-      assert.equal(r.length, 30);
+      assert.equal(r.length, 31);
       assert.ok(r.some((e) => e.key === "unity-development-context"));
       const rules = r.filter((e) => e.category === "rule");
-      assert.equal(rules.length, 17);
+      assert.equal(rules.length, 18);
       assert.ok(rules.some((e) => e.key === "agent-output-caveman"));
       assert.ok(rules.some((e) => e.key === "agent-output-caveman-authoring"));
       assert.ok(rules.some((e) => e.key === "terminology-consistency-authoring"));
+      assert.ok(rules.some((e) => e.key === "xml-doc-caveman"));
     } finally {
       process.env.REPO_ROOT = prev;
     }

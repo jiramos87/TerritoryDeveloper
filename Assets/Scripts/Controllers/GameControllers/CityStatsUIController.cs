@@ -5,8 +5,7 @@ using Territory.Economy;
 namespace Territory.UI
 {
 /// <summary>
-/// Manages the city statistics UI panel using UI Toolkit
-/// Integrates with the existing CityStats system from the city builder
+/// Manage city stats UI panel via UI Toolkit. Integrates with existing <see cref="CityStats"/> system.
 /// </summary>
 public class CityStatsUIController : MonoBehaviour
 {
@@ -59,9 +58,7 @@ public class CityStatsUIController : MonoBehaviour
         UpdateStatisticsDisplay();
     }
 
-    /// <summary>
-    /// Initialize the UI elements programmatically
-    /// </summary>
+    /// <summary>Init UI elements programmatically.</summary>
     private void InitializeUI()
     {
         if (uiDocument == null)
@@ -99,9 +96,7 @@ public class CityStatsUIController : MonoBehaviour
         root.Add(toggleStatsButton);
     }
 
-    /// <summary>
-    /// Create a formatted stat label with title and value
-    /// </summary>
+    /// <summary>Create formatted stat label (title + value).</summary>
     private Label CreateStatLabel(string statName, string initialValue)
     {
         var label = new Label($"{statName}: {initialValue}");
@@ -117,9 +112,7 @@ public class CityStatsUIController : MonoBehaviour
         return label;
     }
 
-    /// <summary>
-    /// Setup styling for the stats container
-    /// </summary>
+    /// <summary>Style stats container.</summary>
     private void SetupStatsContainerStyle(VisualElement container)
     {
         container.style.position = Position.Absolute;
@@ -145,9 +138,7 @@ public class CityStatsUIController : MonoBehaviour
         container.style.paddingRight = 5;
     }
 
-    /// <summary>
-    /// Setup styling for the title label
-    /// </summary>
+    /// <summary>Style title label.</summary>
     private void SetupTitleStyle(Label titleLabel)
     {
         titleLabel.style.fontSize = 20;
@@ -157,9 +148,7 @@ public class CityStatsUIController : MonoBehaviour
         titleLabel.style.marginBottom = 10;
     }
 
-    /// <summary>
-    /// Setup styling for the toggle button
-    /// </summary>
+    /// <summary>Style toggle button.</summary>
     private void SetupToggleButtonStyle(Button button)
     {
         button.style.position = Position.Absolute;
@@ -175,9 +164,7 @@ public class CityStatsUIController : MonoBehaviour
         button.style.borderBottomRightRadius = 5;
     }
 
-    /// <summary>
-    /// Setup event handlers for UI interactions
-    /// </summary>
+    /// <summary>Wire event handlers for UI interactions.</summary>
     private void SetupEventHandlers()
     {
         // Add hover effects to stats container
@@ -185,9 +172,7 @@ public class CityStatsUIController : MonoBehaviour
         statsContainer.RegisterCallback<MouseLeaveEvent>(OnStatsMouseLeave);
     }
 
-    /// <summary>
-    /// Update the statistics display with current game data
-    /// </summary>
+    /// <summary>Update stats display with current game data.</summary>
     private void UpdateStatisticsDisplay()
     {
         if (cityStats == null || economyManager == null) return;
@@ -220,9 +205,7 @@ public class CityStatsUIController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Get population from CityStats - modify this method to match your actual implementation
-    /// </summary>
+    /// <summary>Get population from <see cref="CityStats"/> — modify to match actual implementation.</summary>
     private int GetPopulation()
     {
         // Try different common method names - uncomment the one that matches your implementation
@@ -240,25 +223,19 @@ public class CityStatsUIController : MonoBehaviour
         return 0;
     }
 
-    /// <summary>
-    /// Returns the current city happiness score from CityStats.
-    /// </summary>
+    /// <summary>Current city happiness score from <see cref="CityStats"/>.</summary>
     private float GetHappiness()
     {
         return cityStats.happiness;
     }
 
-    /// <summary>
-    /// Get treasury from EconomyManager.
-    /// </summary>
+    /// <summary>Treasury from <see cref="EconomyManager"/>.</summary>
     private int GetTreasury()
     {
         return economyManager != null ? economyManager.GetCurrentMoney() : 0;
     }
 
-    /// <summary>
-    /// Get unemployment rate - modify this method to match your actual implementation
-    /// </summary>
+    /// <summary>Unemployment rate — modify to match actual implementation.</summary>
     private float GetUnemploymentRate()
     {
         // Try different approaches - uncomment the one that matches your implementation
@@ -275,9 +252,7 @@ public class CityStatsUIController : MonoBehaviour
         return 5.0f;
     }
 
-    /// <summary>
-    /// Get color based on happiness level
-    /// </summary>
+    /// <summary>Color by happiness level.</summary>
     private Color GetHappinessColor(float happiness)
     {
         if (happiness >= 80f) return Color.green;
@@ -286,9 +261,7 @@ public class CityStatsUIController : MonoBehaviour
         return Color.red;
     }
 
-    /// <summary>
-    /// Get color based on unemployment rate
-    /// </summary>
+    /// <summary>Color by unemployment rate.</summary>
     private Color GetUnemploymentColor(float unemploymentRate)
     {
         if (unemploymentRate <= 3f) return Color.green;
@@ -297,9 +270,7 @@ public class CityStatsUIController : MonoBehaviour
         return Color.red;
     }
 
-    /// <summary>
-    /// Toggle the visibility of the stats panel
-    /// </summary>
+    /// <summary>Toggle stats panel visibility.</summary>
     private void ToggleStatsVisibility()
     {
         isStatsVisible = !isStatsVisible;
@@ -307,25 +278,19 @@ public class CityStatsUIController : MonoBehaviour
         toggleStatsButton.text = isStatsVisible ? "Hide Stats" : "Show Stats";
     }
 
-    /// <summary>
-    /// Handle mouse entering the stats area (visual feedback)
-    /// </summary>
+    /// <summary>Mouse enter stats area (visual feedback).</summary>
     private void OnStatsMouseEnter(MouseEnterEvent evt)
     {
         statsContainer.style.backgroundColor = new Color(0, 0, 0, 0.9f);
     }
 
-    /// <summary>
-    /// Handle mouse leaving the stats area (visual feedback)
-    /// </summary>
+    /// <summary>Mouse leave stats area (visual feedback).</summary>
     private void OnStatsMouseLeave(MouseLeaveEvent evt)
     {
         statsContainer.style.backgroundColor = new Color(0, 0, 0, 0.8f);
     }
 
-    /// <summary>
-    /// Add a new custom stat to the display
-    /// </summary>
+    /// <summary>Add new custom stat to display.</summary>
     public void AddCustomStat(string statName, string value, Color textColor = default)
     {
         var customLabel = CreateStatLabel(statName, value);
@@ -335,9 +300,7 @@ public class CityStatsUIController : MonoBehaviour
         statsContainer.Add(customLabel);
     }
 
-    /// <summary>
-    /// Remove a custom stat from the display
-    /// </summary>
+    /// <summary>Remove custom stat from display.</summary>
     public void RemoveCustomStat(string statName)
     {
         var labelToRemove = statsContainer.Q<Label>($"{statName.ToLower()}-label");

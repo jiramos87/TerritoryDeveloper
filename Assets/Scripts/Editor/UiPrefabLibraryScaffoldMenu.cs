@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Scaffolds prefab library v0 under <c>Assets/UI/Prefabs/</c> (tool button, stat row, scroll shell, modal shell).
+/// Scaffold prefab library v0 under <c>Assets/UI/Prefabs/</c>: tool button, stat row, scroll shell, modal shell.
 /// Menu: <b>Territory Developer → UI → Scaffold UI Prefab Library v0</b>.
 /// </summary>
 public static class UiPrefabLibraryScaffoldMenu

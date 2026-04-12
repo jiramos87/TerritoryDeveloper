@@ -4,8 +4,8 @@ using UnityEngine.UI;
 namespace Territory.Testing
 {
     /// <summary>
-    /// Creates a minimal on-screen <b>TEST-MODE</b> label when <see cref="TestModeSessionState.ActiveThisSession"/> is true.
-    /// Lives on a <c>DontDestroyOnLoad</c> object created by <see cref="TestModeCommandLineBootstrap"/>.
+    /// Create minimal on-screen <b>TEST-MODE</b> label when <see cref="TestModeSessionState.ActiveThisSession"/> true.
+    /// Lives on <c>DontDestroyOnLoad</c> object created by <see cref="TestModeCommandLineBootstrap"/>.
     /// </summary>
     public sealed class TestModeHudDriver : MonoBehaviour
     {

@@ -4,25 +4,25 @@ using Territory.Core;
 namespace Territory.Terrain
 {
     /// <summary>
-    /// Shore membership: <see cref="Cell.waterBodyId"/> sync with <see cref="WaterMap"/> and dry shoreline affiliation.
+    /// Shore membership: <see cref="Cell.waterBodyId"/> sync with <see cref="WaterMap"/> + dry shoreline affiliation.
     /// </summary>
     public partial class WaterManager
     {
         /// <summary>
-        /// Runtime query for open water vs dry shore/rim membership and logical surface height.
+        /// Runtime query → open water vs dry shore/rim membership + logical surface height.
         /// </summary>
         public struct CellWaterContext
         {
             public bool IsOpenWater;
             public bool HasWaterBodyMembership;
             public int WaterBodyId;
-            /// <summary>Logical surface <c>S</c> from <see cref="WaterBody.SurfaceHeight"/>, or -1 if none.</summary>
+            /// <summary>Logical surface <c>S</c> from <see cref="WaterBody.SurfaceHeight"/>; -1 if none.</summary>
             public int SurfaceHeight;
             public WaterBodyType Classification;
         }
 
         /// <summary>
-        /// Returns <see cref="Cell.waterBodyId"/> when set; for open water matches <see cref="WaterMap"/>.
+        /// Return <see cref="Cell.waterBodyId"/> when set; open water matches <see cref="WaterMap"/>.
         /// </summary>
         public int GetCellWaterBodyId(int x, int y)
         {
@@ -33,7 +33,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Logical surface height <c>S</c> for the cell&apos;s water body, or -1 if none.
+        /// Logical surface height <c>S</c> for cell&apos;s water body; -1 if none.
         /// </summary>
         public int TryGetCellWaterSurfaceHeight(int x, int y)
         {
@@ -45,7 +45,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Full water/shore context for gameplay and debug.
+        /// Full water/shore context for gameplay + debug.
         /// </summary>
         public CellWaterContext GetCellWaterContext(int x, int y)
         {
@@ -85,8 +85,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Among Moore neighbors with registered water, picks the body with the <b>lowest</b> logical surface <c>S</c>
-        /// (beach of that pool when multiple surfaces meet). Tie: lowest body id. Open water returns this cell&apos;s id.
+        /// Among Moore neighbors with registered water, pick body with <b>lowest</b> logical surface <c>S</c>
+        /// (beach of that pool when multiple surfaces meet). Tie → lowest body id. Open water returns this cell&apos;s id.
         /// </summary>
         public int ComputeShoreAffiliationFromLowestLogicalSurfaceAmongMooreWater(int x, int y)
         {
@@ -134,7 +134,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Resolves dry-land <see cref="Cell.waterBodyId"/> using river–river junction brinks (§12.8) when applicable,
+        /// Resolve dry-land <see cref="Cell.waterBodyId"/> via river–river junction brinks (§12.8) when applicable,
         /// else <see cref="ComputeShoreAffiliationFromLowestLogicalSurfaceAmongMooreWater"/>.
         /// </summary>
         public int ComputeShoreAffiliationForDryLandCell(int x, int y)
@@ -155,7 +155,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// True when dry <paramref name="x"/>,<paramref name="y"/> is classified as an upper-pool brink at a river–river cascade (§12.8).
+        /// True → dry <paramref name="x"/>,<paramref name="y"/> classified as upper-pool brink at river–river cascade (§12.8).
         /// </summary>
         public bool IsDryLandUpperRiverJunctionBrink(int x, int y)
         {
@@ -166,7 +166,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// True when dry land is a <see cref="RiverJunctionBrinkRole.LowerBrink"/> at a river–river cascade (§12.8).
+        /// True → dry land is <see cref="RiverJunctionBrinkRole.LowerBrink"/> at river–river cascade (§12.8).
         /// </summary>
         public bool IsDryLandLowerRiverJunctionBrink(int x, int y)
         {
@@ -177,7 +177,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// True when <see cref="WaterMap.TryGetDryLandRiverJunctionBrink"/> returns upper or lower brink <b>and</b> this cell is the sole
+        /// True → <see cref="WaterMap.TryGetDryLandRiverJunctionBrink"/> returns upper/lower brink <b>and</b> this cell sole
         /// closest-to-junction shore in its cardinal land component for that river–river step (<see cref="WaterMap.IsDryLandRiverJunctionBrinkClosestToCascadeStep"/>).
         /// Diagonal <c>*SlopeWaterPrefab</c> over Bay applies only on that one tile per shore strip (§12.8).
         /// </summary>
@@ -193,8 +193,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Shore affiliation: returns <see cref="Cell.waterBodyId"/> when set on dry land; otherwise
-        /// <see cref="ComputeShoreAffiliationForDryLandCell"/>. Open water returns map body id.
+        /// Shore affiliation: <see cref="Cell.waterBodyId"/> when set on dry land; otherwise
+        /// <see cref="ComputeShoreAffiliationForDryLandCell"/>. Open water → map body id.
         /// </summary>
         public int GetShoreAffiliatedWaterBodyIdForLandCell(int x, int y)
         {
@@ -209,7 +209,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Sets <see cref="Cell.waterBodyId"/> from <see cref="WaterMap"/> for registered water.
+        /// Set <see cref="Cell.waterBodyId"/> from <see cref="WaterMap"/> for registered water.
         /// </summary>
         public void SyncOpenWaterCellBodyIdAt(int x, int y)
         {
@@ -223,7 +223,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Ensures every open-water cell has <see cref="Cell.waterBodyId"/> matching the map.
+        /// Ensure every open-water cell has <see cref="Cell.waterBodyId"/> matching map.
         /// </summary>
         public void SyncAllOpenWaterCellsBodyIdsFromMap()
         {
@@ -240,7 +240,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Updates dry shore/rim membership or syncs open water; clears id on island (terrain above body <c>S</c>).
+        /// Update dry shore/rim membership or sync open water; clear id on island (terrain above body <c>S</c>).
         /// </summary>
         public void ApplyShoreMembershipForLandCell(int x, int y)
         {
@@ -283,7 +283,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// After height changes: refresh membership for this cell and Moore neighbors.
+        /// After height changes → refresh membership for this cell + Moore neighbors.
         /// </summary>
         public void OnLandCellHeightCommitted(int x, int y)
         {
@@ -306,10 +306,10 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Topological &quot;water&quot; for <see cref="TerrainManager.DetermineWaterShorePrefabs"/> Moore masks when the shore cell has an affiliated body.
-        /// Registered water must match <paramref name="ownerBodyId"/>; sea-level terrain without a map entry matches a sea body at <see cref="seaLevel"/>.
-        /// Dry junction-brink land is <b>not</b> treated as water here — diagonal <c>*SlopeWaterPrefab</c> at river–river cascades is driven by
-        /// <see cref="ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink"/> on the shore cell (isometric spec §12.8.1).
+        /// Topological &quot;water&quot; for <see cref="TerrainManager.DetermineWaterShorePrefabs"/> Moore masks when shore cell has affiliated body.
+        /// Registered water must match <paramref name="ownerBodyId"/>; sea-level terrain without map entry matches sea body at <see cref="seaLevel"/>.
+        /// Dry junction-brink land <b>not</b> treated as water here — diagonal <c>*SlopeWaterPrefab</c> at river–river cascades driven by
+        /// <see cref="ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink"/> on shore cell (isometric spec §12.8.1).
         /// </summary>
         public bool IsOpenWaterForShoreTopology(int nx, int ny, int ownerBodyId)
         {
@@ -333,8 +333,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Extended neighbor &quot;wet&quot; mask for junction cascade shore post-pass only: same as <see cref="IsOpenWaterForShoreTopology"/>,
-        /// plus dry <see cref="WaterMap.TryGetDryLandRiverJunctionBrink"/> cells whose affiliation or river–river step matches the shore owner (§12.8.1).
+        /// Extended neighbor &quot;wet&quot; mask for junction cascade shore post-pass only: same as <see cref="IsOpenWaterForShoreTopology"/>
+        /// + dry <see cref="WaterMap.TryGetDryLandRiverJunctionBrink"/> cells whose affiliation or river–river step matches shore owner (§12.8.1).
         /// </summary>
         public bool NeighborMatchesShoreOwnerForJunctionTopology(int nx, int ny, int ownerBodyId)
         {

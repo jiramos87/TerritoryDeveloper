@@ -9,9 +9,9 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Editor exports for TECH-41 interchange JSON (cell/chunk subset and dev world snapshot) via
+/// Editor exports → interchange JSON (cell/chunk subset + dev world snapshot) via
 /// <see cref="EditorPostgresExportRegistrar.TryPersistReport"/> (Postgres-only).
-/// Uses <see cref="GridManager.GetCell"/> and <see cref="TerrainManager.GetHeightMap"/> — no direct grid array access.
+/// Uses <see cref="GridManager.GetCell"/> + <see cref="TerrainManager.GetHeightMap"/> — no direct grid array access.
 /// </summary>
 public static class InterchangeJsonReportsMenu
 {

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Territory.UI
 {
 /// <summary>
-/// UI button that activates environmental/forest placement tools in UIManager.
+/// UI button → activates environmental/forest placement tools in <see cref="UIManager"/>.
 /// </summary>
 public class EnvironmentalSelectorButton : MonoBehaviour
 {

@@ -63,8 +63,8 @@ public enum TrendDirection
 }
 
 /// <summary>
-/// Tracks historical trends for key city metrics (population, employment, economy).
-/// Coordinates with EmploymentManager, DemandManager, EconomyManager, and CityStats for data collection.
+/// Track historical trends for key city metrics (population, employment, economy).
+/// Coordinates with EmploymentManager, DemandManager, EconomyManager, CityStats for data collection.
 /// </summary>
 public class StatisticsManager : MonoBehaviour
 {

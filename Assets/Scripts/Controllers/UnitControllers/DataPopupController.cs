@@ -6,8 +6,8 @@ using Territory.Utilities;
 namespace Territory.UI
 {
     /// <summary>
-    /// UI controller for the data/statistics popup panel. Displays city stats from UIManager and CityStats.
-    /// Opens and closes with short <see cref="CanvasGroup"/> fades when supported.
+    /// UI controller for data/stats popup panel. Displays city stats from <see cref="UIManager"/> + <see cref="CityStats"/>.
+    /// Open/close with short <see cref="CanvasGroup"/> fades when supported.
     /// </summary>
     public class DataPopupController : MonoBehaviour
     {

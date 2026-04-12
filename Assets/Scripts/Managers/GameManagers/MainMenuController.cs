@@ -9,8 +9,8 @@ using Territory.Persistence;
 namespace Territory.UI
 {
 /// <summary>
-/// Controls the main menu UI: Continue, New Game, Load City, Options.
-/// Handles scene transition to MainScene with appropriate GameStartInfo.
+/// Main menu UI: Continue, New Game, Load City, Options. Scene transition → MainScene
+/// with appropriate <see cref="GameStartInfo"/>.
 /// </summary>
 public class MainMenuController : MonoBehaviour
 {
@@ -51,8 +51,8 @@ public class MainMenuController : MonoBehaviour
     }
 
     /// <summary>
-    /// When menu buttons are authored in the scene but overlay panels are omitted,
-    /// create the load/options panels under the serialized <see cref="Canvas"/> at runtime.
+    /// When menu buttons authored in scene but overlay panels omitted → create load/options panels
+    /// under serialized <see cref="Canvas"/> at runtime.
     /// </summary>
     private void ApplyMenuThemeIfAny()
     {
@@ -82,7 +82,7 @@ public class MainMenuController : MonoBehaviour
     }
 
     /// <summary>
-    /// Tints load-city and options overlay roots when a <see cref="UiTheme"/> is assigned (modal dimmer + card surface).
+    /// Tints load-city + options overlay roots when <see cref="UiTheme"/> assigned (modal dimmer + card surface).
     /// </summary>
     private void ApplyMenuOverlayPanelsFromTheme()
     {

@@ -8,8 +8,8 @@ using Territory.Utilities;
 namespace Territory.UI
 {
 /// <summary>
-/// UI controller for the building selector popup. Manages item display, selection callbacks,
-/// coordinates with CursorManager for placement preview, and applies faster <see cref="ScrollRect"/> wheel sensitivity for the popup list.
+/// UI controller for building selector popup. Manages item display, selection callbacks,
+/// coords with <see cref="CursorManager"/> (placement preview), applies faster <see cref="ScrollRect"/> wheel sensitivity for popup list.
 /// </summary>
 public class BuildingSelectorMenuController : MonoBehaviour
 {
@@ -35,7 +35,7 @@ public class BuildingSelectorMenuController : MonoBehaviour
     }
 
     /// <summary>
-    /// Increases <see cref="ScrollRect.scrollSensitivity"/> for lists inside the building selector popup.
+    /// Bump <see cref="ScrollRect.scrollSensitivity"/> for lists inside building selector popup.
     /// </summary>
     private void ApplyBuildingMenuScrollSpeed()
     {
@@ -50,7 +50,7 @@ public class BuildingSelectorMenuController : MonoBehaviour
     }
 
     /// <summary>
-    /// Cache all selector buttons in the scene for efficient deselection
+    /// Cache all scene selector buttons → efficient deselection.
     /// </summary>
     private void CacheAllSelectorButtons()
     {
@@ -145,7 +145,7 @@ public class BuildingSelectorMenuController : MonoBehaviour
     }
 
     /// <summary>
-    /// Deselects all selector buttons and resets their visual state to target graphic
+    /// Deselect all selector buttons + reset visual state → target graphic.
     /// </summary>
     public void DeselectAndUnpressAllButtons()
     {
@@ -174,7 +174,7 @@ public class BuildingSelectorMenuController : MonoBehaviour
     }
 
     /// <summary>
-    /// Resets a button's visual state to the target graphic
+    /// Reset button visual state → target graphic.
     /// </summary>
     private void ResetButtonVisualState(Button button)
     {
@@ -191,7 +191,7 @@ public class BuildingSelectorMenuController : MonoBehaviour
     }
 
     /// <summary>
-    /// Call this when new selector buttons are added to update the cache
+    /// Call when new selector buttons added → refresh cache.
     /// </summary>
     public void RefreshSelectorButtonCache()
     {

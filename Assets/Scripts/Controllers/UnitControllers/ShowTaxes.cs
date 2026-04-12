@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Territory.UI
 {
 /// <summary>
-/// UI button that toggles the tax management popup via DataPopupController.
+/// UI button → toggles tax mgmt popup via <see cref="DataPopupController"/>.
 /// </summary>
 public class ShowTaxesButton : MonoBehaviour
 {

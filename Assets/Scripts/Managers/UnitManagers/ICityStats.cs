@@ -3,8 +3,8 @@ using Territory.Buildings;
 namespace Territory.Economy
 {
 /// <summary>
-/// Contract for city-wide statistics: money, population, happiness, and resource tracking.
-/// Read this interface to understand CityStats's public API without reading its full implementation.
+/// Contract for city-wide stats: money, population, happiness, resource tracking.
+/// Read this interface to understand <see cref="CityStats"/> public API without full impl.
 /// </summary>
 public interface ICityStats
 {

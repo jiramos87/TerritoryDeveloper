@@ -12,9 +12,9 @@ using UnityEngine;
 namespace Territory.Testing
 {
     /// <summary>
-    /// Unity <c>-batchmode</c> entry: open <see cref="AgentTestModeBatchRunner.MainScenePath"/>, enter <b>Play Mode</b>,
-    /// load base <b>Save data</b>, apply <see cref="ScenarioDescriptorRuntimeApplier"/>, write <see cref="GameSaveData"/> JSON
-    /// to <c>-outputScenarioSavePath</c>, then exit the Editor.
+    /// Unity <c>-batchmode</c> entry. Flow: open <see cref="AgentTestModeBatchRunner.MainScenePath"/> → enter <b>Play Mode</b> →
+    /// load base <b>Save data</b> → apply <see cref="ScenarioDescriptorRuntimeApplier"/> → write <see cref="GameSaveData"/> JSON
+    /// to <c>-outputScenarioSavePath</c> → exit Editor.
     /// </summary>
     public static class ScenarioDescriptorBatchBuilder
     {

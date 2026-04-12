@@ -5,9 +5,9 @@ using Territory.Zones;
 namespace Territory.Simulation
 {
 /// <summary>
-/// Shared service for urban centroid and ring classification. Owns UrbanMetrics and exposes
-/// centroid, ring, and street/zone params. Used by AutoZoningManager, AutoRoadBuilder,
-/// UrbanizationProposalManager, and MiniMapController. Recalculates from grid each simulation tick.
+/// Shared service for urban centroid + ring classification. Owns <see cref="UrbanMetrics"/>; exposes
+/// centroid, ring, street/zone params. Consumers: <c>AutoZoningManager</c>, <c>AutoRoadBuilder</c>,
+/// <c>UrbanizationProposalManager</c>, <c>MiniMapController</c>. Recalc from grid each simulation tick.
 /// </summary>
 public class UrbanCentroidService : MonoBehaviour
 {
@@ -17,7 +17,7 @@ public class UrbanCentroidService : MonoBehaviour
     private Vector2 previousCentroid = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
     private bool hasPreviousCentroid;
 
-    /// <summary>True if centroid moved significantly from last tick (enables densification boost in new core).</summary>
+    /// <summary>True → centroid moved significantly from last tick (enables densification boost in new core).</summary>
     public bool CentroidShiftedRecently { get; private set; }
 
     void Start()
@@ -26,7 +26,7 @@ public class UrbanCentroidService : MonoBehaviour
             gridManager = FindObjectOfType<GridManager>();
     }
 
-    /// <summary>Recalculates centroid from grid. Call once per simulation tick before roads/zoning.</summary>
+    /// <summary>Recalc centroid from grid. Call once per simulation tick before roads/zoning.</summary>
     public void RecalculateFromGrid()
     {
         if (gridManager == null || !gridManager.isInitialized)
@@ -50,7 +50,7 @@ public class UrbanCentroidService : MonoBehaviour
         return urbanMetrics.GetCentroid();
     }
 
-    /// <summary>Discrete pole for multipolar / connurbation experiments (FEAT-47); does not change ring math by itself.</summary>
+    /// <summary>Discrete pole for multipolar/connurbation experiments. Does not change ring math by itself.</summary>
     public UrbanCentroidPole GetUrbanCentroidPole(float weight = 1f)
     {
         return UrbanCentroidPole.FromContinuous(GetCentroid(), weight);

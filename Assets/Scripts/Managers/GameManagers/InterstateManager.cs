@@ -9,9 +9,8 @@ using Territory.Utilities;
 namespace Territory.Roads
 {
 /// <summary>
-/// Manages the Interstate Highway: generation at game start, connectivity checks,
-/// and validation for player road placement (streets must grow from the interstate).
-/// Border entry/exit candidates are ranked by flat land toward the interior so routes avoid harsh corner climbs when alternatives exist.
+/// Manage Interstate Highway: gen at game start, connectivity checks, validation for player road placement (streets must grow from interstate).
+/// Border entry/exit candidates ranked by flat land toward interior → routes avoid harsh corner climbs when alternatives exist.
 /// </summary>
 public class InterstateManager : MonoBehaviour
 {
@@ -26,19 +25,19 @@ public class InterstateManager : MonoBehaviour
     private List<Vector2Int> interstatePositions = new List<Vector2Int>();
     private bool isConnectedToInterstate;
 
-    /// <summary>Border and position of the interstate entry/exit points (set during generation or RebuildFromGrid).</summary>
+    /// <summary>Border + position of interstate entry/exit points (set during gen or RebuildFromGrid).</summary>
     public Vector2Int? EntryPoint { get; private set; }
     public Vector2Int? ExitPoint { get; private set; }
     public int EntryBorder { get; private set; } = -1;
     public int ExitBorder { get; private set; } = -1;
 
     /// <summary>
-    /// Whether the player's road network is connected to the interstate (updated monthly).
+    /// Whether player road network connected to interstate (updated monthly).
     /// </summary>
     public bool IsConnectedToInterstate => isConnectedToInterstate;
 
     /// <summary>
-    /// Read-only list of grid positions that are part of the interstate.
+    /// Read-only list of grid positions part of interstate.
     /// </summary>
     public IReadOnlyList<Vector2Int> InterstatePositions => interstatePositions;
 
@@ -53,11 +52,11 @@ public class InterstateManager : MonoBehaviour
 
     #region Interstate Placement
     /// <summary>
-    /// Generate interstate route, place tiles using centralized terraform + resolve pipeline.
+    /// Generate interstate route, place tiles via centralized terraform + resolve pipeline.
     /// Call after water map, before forest map.
     /// </summary>
     /// <param name="attemptOffset">Added to seed so each retry tries different paths.</param>
-    /// <returns>True if a path was found and tiles were placed successfully.</returns>
+    /// <returns>True if path found + tiles placed successfully.</returns>
     public bool GenerateAndPlaceInterstate(int attemptOffset = 0)
     {
         if (roadManager == null) roadManager = FindObjectOfType<RoadManager>();
@@ -72,8 +71,8 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Tries all border cells deterministically. Chooses the best valid path by cost (shortest/most economical).
-    /// Entry and exit are derived from the best path, not chosen first.
+    /// Try all border cells deterministically. Pick best valid path by cost (shortest/most economical).
+    /// Entry + exit derived from best path, not chosen first.
     /// Call when random attempts fail. Guarantees interstate if any valid route exists.
     /// </summary>
     public bool TryGenerateInterstateDeterministic()
@@ -192,11 +191,11 @@ public class InterstateManager : MonoBehaviour
     #region Interstate Generation
     const int MaxRouteAttempts = 80;
     const int PathTriesPerPair = 8;
-    /// <summary>Base seed for interstate pathfinding. Combined with run-varying seed so each game yields different routes.</summary>
+    /// <summary>Base seed for interstate pathfinding. Combined with run-varying seed → each game yields different routes.</summary>
     const int InterstateGenSeed = 12345 + 100;
 
     /// <summary>
-    /// Returns border indices (0=South, 1=North, 2=West, 3=East) that have at least one land cell valid for interstate.
+    /// Return border indices (0=South, 1=North, 2=West, 3=East) with ≥1 land cell valid for interstate.
     /// </summary>
     private static List<int> GetBordersWithLand(int w, int h, HeightMap heightMap, TerrainManager terrainManager)
     {
@@ -234,8 +233,8 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Generate interstate route and store positions. Retries until valid path exists (two land connections, path reaches exit).
-    /// Does not place tiles (call GenerateAndPlaceInterstate after).
+    /// Generate interstate route + store positions. Retries until valid path exists (two land connections, path reaches exit).
+    /// Does not place tiles — call GenerateAndPlaceInterstate after.
     /// </summary>
     /// <param name="attemptOffset">Added to seed so each retry tries different paths.</param>
     public List<Vector2Int> GenerateInterstateRoute(int attemptOffset = 0)
@@ -323,7 +322,7 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// True if cell is valid for interstate land: positive height and flat or cardinal ramp only (same stroke rule as streets; diagonal/corner-up excluded).
+    /// True if cell valid for interstate land: positive height + flat or cardinal ramp only (same stroke rule as streets; diagonal/corner-up excluded).
     /// </summary>
     private static bool IsCellAllowedForInterstate(int x, int y, int w, int h, HeightMap heightMap, TerrainManager terrainManager)
     {
@@ -341,7 +340,7 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns the only allowed first step from a border cell so the road enters in a cardinal (N-S or E-W) direction.
+    /// Return only allowed first step from border cell → road enters in cardinal (N-S or E-W) direction.
     /// </summary>
     private static Vector2Int? GetFirstStepFromBorder(Vector2Int start, int w, int h)
     {
@@ -353,8 +352,7 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Higher = better interstate endpoint. Favors low border height, land neighbors at h=1, a flat mandatory first step inside the map,
-    /// and a first-step neighborhood with more h=1 cells (gentle entry before climbing).
+    /// Higher = better interstate endpoint. Favors low border height, land neighbors at h=1, flat mandatory first step inside map, first-step neighborhood with more h=1 cells (gentle entry before climbing).
     /// </summary>
     private static int ComputeInterstateBorderEndpointScore(Vector2Int c, int w, int h, HeightMap heightMap, TerrainManager terrainManager)
     {
@@ -444,7 +442,7 @@ public class InterstateManager : MonoBehaviour
     const int MaxRiverWidthForBridge = 5;
 
     /// <summary>
-    /// True if stepping onto this water cell is valid as a bridge: toward end there is a narrow strip of water then solid ground.
+    /// True if stepping onto this water cell valid as bridge: toward end, narrow strip of water then solid ground.
     /// </summary>
     private static bool IsValidBridgeSegment(List<Vector2Int> path, Vector2Int waterCell, Vector2Int end, int w, int h, HeightMap heightMap)
     {
@@ -504,7 +502,7 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns border cells for interstate: excludes water-slope tiles, sorts by endpoint quality (flat interior and gentle mandatory first step).
+    /// Return border cells for interstate: exclude water-slope tiles, sort by endpoint quality (flat interior + gentle mandatory first step).
     /// </summary>
     private List<Vector2Int> GetValidBorderCellsWithPreference(int border, int w, int h, HeightMap heightMap)
     {
@@ -536,13 +534,13 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// A* pathfinding for interstate. Runs low-terrain and full-terrain A* when both reach the goal, then keeps the lower <see cref="ComputePathCost"/> route (avoids mandatory long flat detours).
-    /// Steps that increase Manhattan distance to the goal add <see cref="RoadPathCostConstants.InterstateAwayFromGoalPenalty"/>. Falls back to BiasedWalkPath if both A* runs fail.
-    /// Rule D: when primary path crosses a hill, tries parallel offset paths and picks the one with lower cost.
+    /// A* pathfinding for interstate. Runs low-terrain + full-terrain A* when both reach goal, keeps lower <see cref="ComputePathCost"/> route (avoids mandatory long flat detours).
+    /// Steps increasing Manhattan dist to goal add <see cref="RoadPathCostConstants.InterstateAwayFromGoalPenalty"/>. Falls back to BiasedWalkPath if both A* runs fail.
+    /// Rule D: if primary path crosses hill, try parallel offset paths + pick lower cost.
     /// </summary>
     /// <summary>
-    /// Runs low-terrain and full-terrain A* when both reach <paramref name="end"/>; returns the path with lower <see cref="ComputePathCost"/>.
-    /// Previously only the low-terrain path was used when it succeeded, which forced long flat detours around hills.
+    /// Run low-terrain + full-terrain A* when both reach <paramref name="end"/>; return path with lower <see cref="ComputePathCost"/>.
+    /// Previously only low-terrain path used when it succeeded → forced long flat detours around hills.
     /// </summary>
     List<Vector2Int> PickLowerCostInterstateAStarPath(Vector2Int start, Vector2Int end, int w, int h, HeightMap heightMap)
     {
@@ -604,7 +602,7 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Removes redundant collinear points when the direct step prev→next is valid.
+    /// Remove redundant collinear points when direct step prev→next valid.
     /// Similar to GridPathfinder.SmoothPath but uses interstate validity checks.
     /// </summary>
     private List<Vector2Int> SmoothInterstatePath(List<Vector2Int> path, int w, int h, HeightMap heightMap, Vector2Int pathEnd)
@@ -674,8 +672,7 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// A* for interstate. When avoidHighTerrain is true, blocks land cells at height &gt; 1
-    /// so the path stays on flat/low terrain (no cut-through, no scaling hills).
+    /// A* for interstate. When avoidHighTerrain true, block land cells at height &gt; 1 → path stays on flat/low terrain (no cut-through, no scaling hills).
     /// </summary>
     private List<Vector2Int> RunInterstateAStar(Vector2Int start, Vector2Int end, int w, int h, HeightMap heightMap, bool avoidHighTerrain = false)
     {
@@ -1001,7 +998,7 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Check if the given grid position is an interstate cell.
+    /// Check if given grid position is interstate cell.
     /// </summary>
     public bool IsInterstateAt(int x, int y)
     {
@@ -1011,7 +1008,7 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Check if the given grid position is an interstate cell.
+    /// Check if given grid position is interstate cell.
     /// </summary>
     public bool IsInterstateAt(Vector2 gridPos)
     {
@@ -1019,7 +1016,7 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// BFS from all interstate cells through road cells. Sets isConnectedToInterstate if any player road is reached.
+    /// BFS from all interstate cells through road cells. Set isConnectedToInterstate if any player road reached.
     /// </summary>
     public void CheckInterstateConnectivity()
     {
@@ -1071,7 +1068,7 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Whether the player can start placing a street from this position (must touch interstate or connected road chain).
+    /// Whether player can start placing street from this position (must touch interstate or connected road chain).
     /// </summary>
     public bool CanPlaceStreetFrom(Vector2 gridPosition)
     {
@@ -1081,7 +1078,7 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Whether the player can start placing a street from (x,y). Valid if any cardinal neighbor is interstate or road connected to interstate.
+    /// Whether player can start placing street from (x,y). Valid if any cardinal neighbor is interstate or road connected to interstate.
     /// </summary>
     public bool CanPlaceStreetFrom(int x, int y)
     {
@@ -1104,7 +1101,7 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// BFS from (startX, startY) through road cells; returns true if an interstate cell is reached.
+    /// BFS from (startX, startY) through road cells; return true if interstate cell reached.
     /// </summary>
     private bool IsStreetConnectedToInterstate(int startX, int startY)
     {
@@ -1140,7 +1137,7 @@ public class InterstateManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Set connectivity flag (e.g. when loading from save).
+    /// Set connectivity flag (e.g. on load from save).
     /// </summary>
     public void SetConnectedToInterstate(bool connected)
     {

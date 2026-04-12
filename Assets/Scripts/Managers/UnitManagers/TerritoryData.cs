@@ -4,10 +4,8 @@ using Territory.Utilities;
 namespace Territory.Geography
 {
 /// <summary>
-/// Data model for a single territory in the regional map.
-/// Each territory contains one city (or is uninhabited).
-/// Serializable for save/load via JsonUtility.
-/// Border convention: 0=South, 1=North, 2=West, 3=East (same as InterstateManager).
+/// Data model for single territory in regional map. Each territory has 1 city (or uninhabited).
+/// Serializable for save/load via JsonUtility. Border convention: 0=South, 1=North, 2=West, 3=East (same as <see cref="InterstateManager"/>).
 /// </summary>
 [System.Serializable]
 public class TerritoryData

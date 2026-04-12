@@ -12,7 +12,7 @@ using Territory.Simulation;
 namespace Territory.UI
 {
 /// <summary>
-/// Layer flags for the mini-map. Multiple layers can be active at once.
+/// Mini-map layer flags. Multiple layers active simultaneously.
 /// </summary>
 [System.Flags]
 public enum MiniMapLayer
@@ -26,10 +26,10 @@ public enum MiniMapLayer
 }
 
 /// <summary>
-/// Renders a procedural mini-map from grid cell data and provides click-to-navigate.
-/// Displays zones, roads, water, interstate (thicker), and a viewport rectangle.
-/// Supports multiple toggleable layers: streets, zones, forests, desirability, centroid.
-/// Texture rebuilds on geography completion, grid restore, panel open, and layer changes (not on a fixed timer).
+/// Render procedural mini-map from grid cells + click-to-navigate.
+/// Shows zones, roads, water, interstate (thicker), viewport rect.
+/// Toggleable layers: streets, zones, forests, desirability, centroid.
+/// Texture rebuilds on geography complete, grid restore, panel open, layer change (not fixed timer).
 /// Hides during full-screen popups (LoadGame, BuildingSelector).
 /// </summary>
 public class MiniMapController : MonoBehaviour, IPointerClickHandler
@@ -80,10 +80,10 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
     #endregion
 
     #region Public API
-    /// <summary>Whether the mini-map panel is currently visible.</summary>
+    /// <summary>True if mini-map panel visible.</summary>
     public bool IsVisible => (miniMapPanel != null ? miniMapPanel : gameObject).activeSelf;
 
-    /// <summary>Shows or hides the mini-map panel. Rebuilds the texture when opening so the map stays current.</summary>
+    /// <summary>Show/hide mini-map panel. Rebuilds texture on open → stays current.</summary>
     public void SetVisible(bool visible)
     {
         GameObject target = miniMapPanel != null ? miniMapPanel : gameObject;
@@ -92,26 +92,26 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
             RebuildTexture();
     }
 
-    /// <summary>Toggles the given layer on or off.</summary>
+    /// <summary>Toggle given layer on/off.</summary>
     public void ToggleLayer(MiniMapLayer layer)
     {
         activeLayers ^= layer;
         RebuildTexture();
     }
 
-    /// <summary>Returns true if the given layer is currently active.</summary>
+    /// <summary>True if layer currently active.</summary>
     public bool IsLayerActive(MiniMapLayer layer)
     {
         return (activeLayers & layer) != 0;
     }
 
-    /// <summary>Returns the currently active layers bitmask.</summary>
+    /// <summary>Active layers bitmask.</summary>
     public MiniMapLayer GetActiveLayers()
     {
         return activeLayers;
     }
 
-    /// <summary>Sets the active layers (used when restoring from save).</summary>
+    /// <summary>Set active layers (used on save restore).</summary>
     public void SetActiveLayers(MiniMapLayer layers)
     {
         activeLayers = layers;
@@ -167,7 +167,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         RebuildTexture();
     }
 
-    /// <summary>Rebuilds the procedural map texture from cell data.</summary>
+    /// <summary>Rebuild procedural map texture from cell data.</summary>
     public void RebuildTexture()
     {
         if (gridManager == null || !gridManager.isInitialized || mapImage == null)
@@ -262,8 +262,8 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    /// <summary>Builds road set by scanning the grid directly (cell.zoneType == Road).
-    /// Bypasses cache to ensure auto-generated roads, manual roads, and restored roads all show correctly.</summary>
+    /// <summary>Build road set by scanning grid directly (cell.zoneType == Road).
+    /// Bypass cache → auto-generated, manual, restored roads all show correctly.</summary>
     private void BuildRoadSet()
     {
         roadSet = new HashSet<Vector2Int>();
@@ -337,7 +337,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         return ColorGrass;
     }
 
-    /// <summary>Computes min/max desirability for land cells (excludes water, roads) for dynamic color scaling.</summary>
+    /// <summary>Compute min/max desirability for land cells (excludes water, roads) → dynamic color scaling.</summary>
     private void ComputeDesirabilityRange(int w, int h)
     {
         desirabilityMin = float.MaxValue;

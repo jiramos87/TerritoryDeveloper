@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Territory.UI
 {
 /// <summary>
-/// UI button that activates road placement mode via BuildingSelectorMenuController.
+/// UI button → activates road placement mode via <see cref="BuildingSelectorMenuController"/>.
 /// </summary>
 public class RoadsSelectorButton : MonoBehaviour
 {

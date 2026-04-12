@@ -6,8 +6,7 @@ using Territory.Simulation;
 namespace Territory.UI
 {
 /// <summary>
-/// UI controller for growth budget allocation sliders. Allows players to adjust R/C/I growth budgets
-/// via GrowthBudgetManager.
+/// UI controller for growth budget allocation sliders. Player adjusts R/C/I growth budgets via <see cref="GrowthBudgetManager"/>.
 /// </summary>
 public class GrowthBudgetSlidersController : MonoBehaviour
 {
@@ -103,7 +102,7 @@ public class GrowthBudgetSlidersController : MonoBehaviour
     }
 
     /// <summary>
-    /// Redistribute so the changed category gets newValue and the other three share (100 - newValue) proportionally. Sum always 100.
+    /// Redistribute: changed category gets newValue, other 3 split (100 - newValue) proportionally. Sum = 100 always.
     /// </summary>
     void RedistributeCategoryPercent(GrowthCategory changed, int newValue)
     {

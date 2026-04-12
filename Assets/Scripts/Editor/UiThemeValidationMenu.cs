@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Editor checks for <see cref="UiTheme"/> assets used by menu and HUD styling.
+/// Editor checks for <see cref="UiTheme"/> assets used by menu + HUD styling.
 /// Menu: <b>Territory Developer → Reports → Validate UI Theme asset</b>.
 /// </summary>
 public static class UiThemeValidationMenu

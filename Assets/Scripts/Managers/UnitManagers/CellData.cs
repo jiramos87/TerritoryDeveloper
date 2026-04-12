@@ -7,8 +7,7 @@ using Territory.Terrain;
 namespace Territory.Core
 {
 /// <summary>
-/// Serializable data structure for saving and loading cell information.
-/// Updated to support the new Forest.ForestType system while maintaining backward compatibility.
+/// Serializable data for save/load of cell. Supports new <see cref="Forest.ForestType"/> system, keeps legacy compat.
 /// </summary>
 [System.Serializable]
 public class CellData
@@ -28,14 +27,14 @@ public class CellData
     public int buildingSize;
     public int happiness;
     public string prefabName;
-    /// <summary>Optional second terrain/shore prefab (e.g. lake shore with two layered children).</summary>
+    /// <summary>Optional 2nd terrain/shore prefab (e.g. lake shore with 2 layered children).</summary>
     public string secondaryPrefabName;
     public string zoneType;
     /// <summary>Serialized <see cref="WaterBodyType"/> for water cells; empty/None for dry cells.</summary>
     public string waterBodyType;
 
     /// <summary>
-    /// <see cref="Territory.Terrain.WaterBody.id"/> for open water and dry shoreline membership (0 = none).
+    /// <see cref="Territory.Terrain.WaterBody.id"/> for open water + dry shoreline membership (0 = none).
     /// Must match <see cref="Territory.Terrain.WaterMap"/> for registered water cells.
     /// </summary>
     public int waterBodyId;
@@ -69,7 +68,7 @@ public class CellData
     public GameObject prefab;
 
     /// <summary>
-    /// Constructor with parameters for easy creation
+    /// Ctor with params for easy creation.
     /// </summary>
     public CellData(int x, int y, int height = 1)
     {
@@ -118,7 +117,7 @@ public class CellData
     }
 
     /// <summary>
-    /// Get the forest type as enum (with error handling)
+    /// Get forest type as enum (with error handling).
     /// </summary>
     public Forest.ForestType GetForestType()
     {
@@ -138,7 +137,7 @@ public class CellData
     }
 
     /// <summary>
-    /// Set the forest type from enum
+    /// Set forest type from enum.
     /// </summary>
     public void SetForestType(Forest.ForestType newForestType)
     {
@@ -154,7 +153,7 @@ public class CellData
     }
 
     /// <summary>
-    /// Get the zone type as enum
+    /// Get zone type as enum.
     /// </summary>
     public Zone.ZoneType GetZoneType()
     {
@@ -166,7 +165,7 @@ public class CellData
     }
 
     /// <summary>
-    /// Set the zone type from enum
+    /// Set zone type from enum.
     /// </summary>
     public void SetZoneType(Zone.ZoneType newZoneType)
     {
@@ -174,7 +173,7 @@ public class CellData
     }
 
     /// <summary>
-    /// Returns the persisted water body classification; legacy saves infer Lake when zone is Water and type was unset.
+    /// Return persisted water body classification. Legacy saves infer Lake when zone=Water + type unset.
     /// </summary>
     public WaterBodyType GetWaterBodyType()
     {
@@ -190,7 +189,7 @@ public class CellData
     }
 
     /// <summary>
-    /// Stores <see cref="WaterBodyType"/> for save serialization.
+    /// Store <see cref="WaterBodyType"/> for save serialization.
     /// </summary>
     public void SetWaterBodyType(WaterBodyType type)
     {
@@ -198,7 +197,7 @@ public class CellData
     }
 
     /// <summary>
-    /// Check if this cell has any forest
+    /// Check if cell has any forest.
     /// </summary>
     public bool HasForest()
     {
@@ -206,7 +205,7 @@ public class CellData
     }
 
     /// <summary>
-    /// Validate and fix any inconsistent data
+    /// Validate + fix inconsistent data.
     /// </summary>
     public void ValidateData()
     {
@@ -253,7 +252,7 @@ public class CellData
     }
 
     /// <summary>
-    /// Create a copy of this CellData
+    /// Create copy of this CellData.
     /// </summary>
     public CellData Clone()
     {

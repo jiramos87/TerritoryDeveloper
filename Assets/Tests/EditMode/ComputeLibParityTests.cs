@@ -7,7 +7,7 @@ using Territory.Utilities.Compute;
 namespace Territory.Tests.EditMode
 {
     /// <summary>
-    /// Edit Mode parity tests for TECH-38 pure compute helpers (golden JSON + ring metrics).
+    /// Edit Mode parity tests for pure compute helpers. Golden JSON + ring metrics.
     /// </summary>
     public class ComputeLibParityTests
     {

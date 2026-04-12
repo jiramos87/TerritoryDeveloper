@@ -3,8 +3,8 @@ using UnityEngine;
 namespace Territory.UI
 {
     /// <summary>
-    /// Serializable color and typography tokens for uGUI menus and HUD.
-    /// Assign a single asset instance from scenes or coordinators; extend fields as panels migrate off Inspector literals.
+    /// Serializable color + typography tokens for uGUI menus + HUD. Assign single asset instance from
+    /// scenes/coordinators; extend fields as panels migrate off Inspector literals.
     /// </summary>
     [CreateAssetMenu(fileName = "UiTheme", menuName = "Territory/UI/Ui Theme", order = 0)]
     public class UiTheme : ScriptableObject

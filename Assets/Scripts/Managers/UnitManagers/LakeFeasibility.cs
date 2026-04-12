@@ -5,7 +5,7 @@ namespace Territory.Terrain
 {
     /// <summary>
     /// Shared plateau spill checks used by <see cref="WaterMap"/> depression-fill.
-    /// <see cref="TerrainManager"/> uses this to carve minimal bowls so procedural lake budgets can be met.
+    /// <see cref="TerrainManager"/> uses this to carve minimal bowls → procedural lake budgets met.
     /// </summary>
     public static class LakeFeasibility
     {
@@ -20,8 +20,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Plateau spill height — same algorithm as <c>WaterMap.GetPlateauSpillHeight</c>:
-        /// minimum height over cardinal neighbors outside the seed's same-height 4-connected component.
+        /// Plateau spill height — same algo as <c>WaterMap.GetPlateauSpillHeight</c>:
+        /// min height over cardinal neighbors outside seed's same-height 4-connected component.
         /// </summary>
         public static int GetPlateauSpillHeight(int x, int y, HeightMap hm)
         {
@@ -76,7 +76,7 @@ namespace Territory.Terrain
             return spill;
         }
 
-        /// <summary>True if water could sit above the cell floor (spill strictly above terrain height).</summary>
+        /// <summary>True if water could sit above cell floor (spill strictly above terrain height).</summary>
         public static bool PassesSpillTest(int x, int y, HeightMap hm)
         {
             if (!hm.IsValidPosition(x, y))
@@ -85,7 +85,7 @@ namespace Territory.Terrain
             return spill > hm.GetHeight(x, y);
         }
 
-        /// <summary>Counts grid cells where <see cref="PassesSpillTest"/> holds.</summary>
+        /// <summary>Count grid cells where <see cref="PassesSpillTest"/> holds.</summary>
         public static int CountSpillPassingCells(HeightMap hm)
         {
             int w = hm.Width;
@@ -103,8 +103,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Forces a strict cardinal bowl: center one step above <see cref="TerrainManager.MIN_HEIGHT"/>,
-        /// four neighbors at least one step higher — enough for spill &gt; center height.
+        /// Force strict cardinal bowl: center 1 step above <see cref="TerrainManager.MIN_HEIGHT"/>,
+        /// 4 neighbors ≥1 step higher → enough for spill &gt; center height.
         /// Only raises neighbor heights (never lowers rims). Requires 1 ≤ x &lt; w-1, 1 ≤ y &lt; h-1.
         /// </summary>
         public static void CarveMinimalCardinalBowl(HeightMap hm, int x, int y)

@@ -6,7 +6,7 @@ using Territory.Utilities;
 namespace Territory.UI
 {
     /// <summary>
-    /// UI controller for the cell details popup. Shows detailed information about a selected grid cell.
+    /// UI controller for cell details popup. Shows detail info for selected grid cell.
     /// </summary>
     public class DetailsPopupController : MonoBehaviour
     {

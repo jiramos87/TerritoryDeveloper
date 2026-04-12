@@ -8,9 +8,9 @@ using Territory.UI;
 namespace Territory.Core
 {
     /// <summary>
-    /// Handles building validation, placement, and footprint attribute updates for both
-    /// player-initiated and programmatic (auto-resource-planner) building placement.
-    /// Extracted from GridManager to reduce its responsibilities.
+    /// Handle building validation, placement, footprint attr updates for
+    /// player-initiated + programmatic (auto-resource-planner) building placement.
+    /// Extracted from <see cref="GridManager"/> to reduce its responsibilities.
     /// </summary>
     public class BuildingPlacementService
     {
@@ -24,8 +24,8 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Returns true if a building of the given size can be placed at the grid position.
-        /// Infers water plant status from the currently selected building.
+        /// True if building of given size placeable at grid position.
+        /// Infers water plant status from currently selected building.
         /// </summary>
         public bool CanPlaceBuilding(Vector2 gridPosition, int buildingSize)
         {
@@ -34,7 +34,7 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Returns true if a building of the given size can be placed at the grid position, with explicit water plant flag.
+        /// True if building of given size placeable at grid position, with explicit water plant flag.
         /// </summary>
         public bool CanPlaceBuilding(Vector2 gridPosition, int buildingSize, bool isWaterPlant)
         {
@@ -42,7 +42,7 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Returns the reason why building placement would fail at this position, or null if placement would succeed.
+        /// Return reason building placement would fail at position, or null if would succeed.
         /// </summary>
         public string GetBuildingPlacementFailReason(Vector2 gridPosition, int buildingSize, bool isWaterPlant)
         {
@@ -228,8 +228,8 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Places a building at the grid position after checking affordability and validity.
-        /// Deducts construction cost and posts notifications.
+        /// Place building at grid position after checking affordability + validity.
+        /// Deduct construction cost + post notifications.
         /// </summary>
         public void PlaceBuilding(Vector2 gridPos, IBuilding iBuilding)
         {
@@ -260,7 +260,7 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Instantiates a building tile at the grid position, sets sorting order, and updates cell attributes.
+        /// Instantiate building tile at grid position, set sorting order, update cell attrs.
         /// </summary>
         public void PlaceBuildingTile(IBuilding iBuilding, Vector2 gridPos)
         {
@@ -282,7 +282,7 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Instantiates a building prefab at the grid position for save/load restore. Does not update cell attributes.
+        /// Instantiate building prefab at grid position for save/load restore. Does NOT update cell attrs.
         /// </summary>
         public void LoadBuildingTile(GameObject prefab, Vector2 gridPos, int buildingSize)
         {
@@ -299,8 +299,8 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Restores a multi-cell building (PowerPlant, WaterPlant) from save. Uses correct position and sorting order.
-        /// Call instead of PlaceZoneBuildingTile for buildingSize > 1 to fix grass-over-building render bug.
+        /// Restore multi-cell building (PowerPlant, WaterPlant) from save. Uses correct position + sorting order.
+        /// Call instead of PlaceZoneBuildingTile for buildingSize > 1 → fix grass-over-building render bug.
         /// </summary>
         public void RestoreBuildingTile(GameObject prefab, Vector2 gridPos, int buildingSize)
         {
@@ -327,8 +327,8 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Place a building programmatically (e.g. auto resource planner). Caller is responsible for budget and affordability.
-        /// Does not deduct money. Returns true if placed.
+        /// Place building programmatically (e.g. auto resource planner). Caller owns budget + affordability.
+        /// Does NOT deduct money. Return true if placed.
         /// </summary>
         public bool PlaceBuildingProgrammatic(Vector2 gridPos, IBuilding buildingTemplate)
         {

@@ -4,8 +4,8 @@ using UnityEngine;
 namespace Territory.Terrain
 {
 /// <summary>
-/// Contract for terrain heightmap access, slope queries, and sorting order calculations.
-/// Read this interface to understand TerrainManager's public API without reading its full implementation.
+/// Contract for terrain heightmap access, slope queries, sorting order calc.
+/// Read this interface to understand <see cref="TerrainManager"/> public API without full impl.
 /// </summary>
 public interface ITerrainManager
 {

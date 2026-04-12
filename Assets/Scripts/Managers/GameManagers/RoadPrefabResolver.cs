@@ -7,14 +7,14 @@ using Territory.Zones;
 namespace Territory.Roads
 {
 /// <summary>
-/// Centralized road prefab selection. Resolves prefab, world position, and sorting order
-/// for path-based placement (uses PathTerraformPlan) or single-cell placement (uses
-/// neighbor connectivity and live terrain). Extracted from RoadManager for reuse by
-/// manual tools, interstate, and AutoRoadBuilder.
+/// Centralized road prefab selection. Resolve prefab, world position, sorting order →
+/// path-based placement (via PathTerraformPlan) or single-cell (neighbor connectivity +
+/// live terrain). Extracted from RoadManager → reused by manual tools, interstate,
+/// AutoRoadBuilder.
 /// </summary>
 public class RoadPrefabResolver
 {
-    /// <summary>How the current path cell connects to other cells on the same stroke (BUG-51 route-first).</summary>
+    /// <summary>How current path cell connects to other cells on same stroke (route-first).</summary>
     private enum PathRouteTopology
     {
         Isolated,
@@ -28,7 +28,7 @@ public class RoadPrefabResolver
     private readonly TerrainManager terrainManager;
     private readonly RoadManager roadManager;
 
-    /// <summary>Cardinal steps from a high-deck lip toward qualifying lower dry neighbors (bridge normal / perpendicular to local shore).</summary>
+    /// <summary>Cardinal steps from high-deck lip → qualifying lower dry neighbors (bridge normal / perpendicular to local shore).</summary>
     private readonly List<Vector2Int> scratchHighDeckBridgeNormals = new List<Vector2Int>(4);
 
     private static readonly int[] DirX = { 1, -1, 0, 0 };
@@ -42,7 +42,7 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// Result of prefab resolution: prefab to instantiate, world position, and sorting order.
+    /// Prefab resolution result: prefab to instantiate, world position, sorting order.
     /// </summary>
     public struct ResolvedRoadTile
     {
@@ -50,23 +50,23 @@ public class RoadPrefabResolver
         public GameObject prefab;
         public Vector2 worldPos;
         public int sortingOrder;
-        /// <summary>When true, <see cref="segmentPrevGridPos"/> is the path predecessor cell for this tile (BUG-51 refresh alignment).</summary>
+        /// <summary>True → <see cref="segmentPrevGridPos"/> is path predecessor cell for this tile (refresh alignment).</summary>
         public bool hasSegmentPrevHint;
         public Vector2Int segmentPrevGridPos;
-        /// <summary>When true, <see cref="segmentNextGridPos"/> is the path successor cell (route-first refresh).</summary>
+        /// <summary>True → <see cref="segmentNextGridPos"/> is path successor cell (route-first refresh).</summary>
         public bool hasSegmentNextHint;
         public Vector2Int segmentNextGridPos;
-        /// <summary>Grid step <c>curr - prev</c> on the path (cardinal); zero if unknown.</summary>
+        /// <summary>Grid step <c>curr - prev</c> on path (cardinal); zero if unknown.</summary>
         public Vector2Int routeEntryStep;
-        /// <summary>Grid step <c>next - curr</c> on the path (cardinal); zero if last cell.</summary>
+        /// <summary>Grid step <c>next - curr</c> on path (cardinal); zero if last cell.</summary>
         public Vector2Int routeExitStep;
     }
 
     /// <summary>
-    /// Resolves prefabs for a full path using the terraform plan. Uses postTerraformSlopeType
-    /// from the plan (Rule 5: terraform wins on cut-through). In scale-with-slopes mode, may fall back
-    /// to live terrain slope mapping when the plan leaves Flat but the cell was not flattened (BUG-30).
-    /// Ensures continuity (Rule 1) and elbows at turns (Rule 2).
+    /// Resolve prefabs for full path via terraform plan. Uses postTerraformSlopeType
+    /// from plan (Rule 5: terraform wins on cut-through). Scale-with-slopes mode may fall back
+    /// → live terrain slope mapping when plan leaves Flat but cell not flattened.
+    /// Ensure continuity (Rule 1) + elbows at turns (Rule 2).
     /// </summary>
     public List<ResolvedRoadTile> ResolveForPath(List<Vector2> path, PathTerraformPlan plan)
     {
@@ -155,8 +155,8 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// Resolves prefab for a single cell using neighbor connectivity. Used for RefreshRoadPrefabAt
-    /// and PlaceRoadTileAt when no path context exists.
+    /// Resolve prefab for single cell via neighbor connectivity. Used by RefreshRoadPrefabAt
+    /// + PlaceRoadTileAt when no path context exists.
     /// </summary>
     public ResolvedRoadTile? ResolveForCell(Vector2 currGridPos, Vector2 prevGridPos)
     {
@@ -265,7 +265,7 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// Resolves prefab for ghost preview (single cell, no path). Slope cells get slope prefab, water gets bridge.
+    /// Resolve prefab for ghost preview (single cell, no path). Slope cells → slope prefab, water → bridge.
     /// </summary>
     public void ResolveForGhostPreview(Vector2 gridPos, out GameObject prefab, out Vector2 worldPos, out int sortingOrder)
     {
@@ -323,11 +323,11 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// When <paramref name="allowLiveSlopeFallback"/> is true (scale-with-slopes, no flatten action),
-    /// and the plan left <paramref name="postSlope"/> as Flat, uses the same diagonal→orthogonal mapping
-    /// as <see cref="TryGetSlopePrefabForStraightSegment"/> so ramp prefabs match live terrain (BUG-30).
+    /// When <paramref name="allowLiveSlopeFallback"/> true (scale-with-slopes, no flatten action)
+    /// + plan left <paramref name="postSlope"/> as Flat → uses same diagonal→orthogonal mapping
+    /// as <see cref="TryGetSlopePrefabForStraightSegment"/> so ramp prefabs match live terrain.
     /// </summary>
-    /// <param name="pathOnlyNeighbors">If true, only <paramref name="pathCellSet"/> counts for junction topology (BUG-51: ignore foreign roads during stroke resolve).</param>
+    /// <param name="pathOnlyNeighbors">True → only <paramref name="pathCellSet"/> counts for junction topology (ignore foreign roads during stroke resolve).</param>
     private GameObject ResolvePrefabForPathCell(Vector2 prev, Vector2 curr, HashSet<Vector2Int> pathCellSet, int height, TerrainSlopeType postSlope, bool allowLiveSlopeFallback, PathTerraformPlan plan, HeightMap heightMap, bool pathOnlyNeighbors)
     {
         Vector2 dirIn = curr - prev;
@@ -442,7 +442,7 @@ public class RoadPrefabResolver
         return PathRouteTopology.Isolated;
     }
 
-    /// <summary>Neighbor counts for path resolve: path cell set, optionally union with existing roads.</summary>
+    /// <summary>Neighbor counts for path resolve: path cell set, optional union with existing roads.</summary>
     bool PathNeighborForResolve(HashSet<Vector2Int> pathCellSet, int nx, int ny, bool pathOnlyNeighbors)
     {
         if (pathCellSet != null && pathCellSet.Contains(new Vector2Int(nx, ny)))
@@ -478,7 +478,7 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// Cardinal step from a high deck lip: neighbor strictly lower and (open water / water-slope OR dry cell whose Moore neighborhood touches registered water).
+    /// Cardinal step from high deck lip: neighbor strictly lower + (open water / water-slope OR dry cell whose Moore neighborhood touches registered water).
     /// </summary>
     bool LowerCardinalQualifiesAsHighDeckWaterStep(int nx, int ny, int hn, int lipHeight, WaterManager wm)
     {
@@ -490,7 +490,7 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// High-deck lip toward water: includes direct cardinal step onto open water or water-slope (preview deck on last land tile before wet cells).
+    /// High-deck lip toward water: includes direct cardinal step onto open water / water-slope (preview deck on last land tile before wet cells).
     /// </summary>
     bool DryLandCardinalLowerTouchesRegisteredWater(int x, int y, int h, HeightMap heightMap)
     {
@@ -538,7 +538,7 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// Cardinal offsets from (x,y) toward qualifying lower neighbors (dry→water corridor or direct water/slope step).
+    /// Cardinal offsets from (x,y) → qualifying lower neighbors (dry→water corridor or direct water/slope step).
     /// </summary>
     void CollectHighDeckBridgeNormals(int x, int y, int h, HeightMap heightMap, List<Vector2Int> outNormals)
     {
@@ -563,7 +563,7 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// Preview path must run along the bridge axis (normal to local shore), not tangentially along the cliff. Single-cell path (zero dir) allowed so the cursor can rest on the lip.
+    /// Preview path must run along bridge axis (normal to local shore), not tangentially along cliff. Single-cell path (zero dir) allowed → cursor can rest on lip.
     /// </summary>
     bool CardinalApproachParallelToHighDeckNormal(Vector2 dirIn, List<Vector2Int> bridgeNormals)
     {
@@ -617,7 +617,7 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// FEAT-44: horizontal/vertical bridge deck prefabs.
+    /// Horizontal/vertical bridge deck prefabs.
     /// </summary>
     bool IsBridgeDeckRoadPrefab(GameObject prefab)
     {
@@ -626,9 +626,9 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// FEAT-44: when <see cref="RefreshRoadPrefabAt"/> re-resolves a bridge deck via <see cref="ResolveForCell"/>, there is no
-    /// <see cref="PathTerraformPlan.waterBridgeDeckDisplayHeight"/> — infer the deck Y from adjacent dry road cells or by walking
-    /// through registered open water along the bridge axis to the next non-water road (same land height as path-based placement).
+    /// When <see cref="RefreshRoadPrefabAt"/> re-resolves bridge deck via <see cref="ResolveForCell"/>, no
+    /// <see cref="PathTerraformPlan.waterBridgeDeckDisplayHeight"/> → infer deck Y from adjacent dry road cells or walk
+    /// through registered open water along bridge axis to next non-water road (same land height as path-based placement).
     /// </summary>
     bool TryInferWaterBridgeDeckDisplayHeight(int x, int y, out int deckH)
     {
@@ -682,7 +682,7 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// True for the four cardinal ramp road prefabs (used for world placement when plan slope is Flat but terrain is sloped).
+    /// True for four cardinal ramp road prefabs (world placement when plan slope Flat but terrain sloped).
     /// </summary>
     private bool IsCardinalSlopeRoadPrefab(GameObject prefab)
     {
@@ -720,9 +720,9 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// Returns elbow prefab for exactly two cardinal neighbors. Single source of truth for Rule A (elbow connectivity).
+    /// Return elbow prefab for exactly two cardinal neighbors. Single source of truth for Rule A (elbow connectivity).
     /// Mapping: Left+Up=ElbowDownRight, Right+Up=ElbowDownLeft, Left+Down=ElbowUpRight, Right+Down=ElbowUpLeft.
-    /// Returns null if not an elbow case (more or fewer than 2 cardinal neighbors).
+    /// Null if not elbow case (≠2 cardinal neighbors).
     /// </summary>
     private GameObject TryGetElbowPrefab(bool hasLeft, bool hasRight, bool hasUp, bool hasDown)
     {
@@ -734,8 +734,8 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// Validates that the resolved prefab's exits match the path's in/out directions (Rule B).
-    /// Returns true if valid or not an elbow case; false if elbow prefab does not match path connectivity.
+    /// Validate resolved prefab exits match path in/out directions (Rule B).
+    /// True if valid or not elbow case; false if elbow prefab does not match path connectivity.
     /// </summary>
     private bool ValidatePrefabExitsMatchPath(Vector2 curr, HashSet<Vector2Int> pathCellSet, GameObject prefab)
     {
@@ -801,7 +801,7 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// Matches <see cref="TerraformingService"/> travel→slope mapping (downhill-facing type).
+    /// Match <see cref="TerraformingService"/> travel→slope mapping (downhill-facing type).
     /// Grid: +x=North, -x=South, +y=West, -y=East.
     /// </summary>
     private static TerrainSlopeType GetSlopeTypeFromTravelVector(int dx, int dy)
@@ -814,7 +814,7 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// Cardinal ramp prefab from prev→curr travel and segment heights (BUG-30; same rule as GetPostTerraformSlopeTypeAlongExit).
+    /// Cardinal ramp prefab from prev→curr travel + segment heights (same rule as GetPostTerraformSlopeTypeAlongExit).
     /// </summary>
     private GameObject TryRampRoadPrefabFromPrevTravel(Vector2 currGridPos, int currentHeight, Vector2 prevGridPos)
     {
@@ -1080,7 +1080,7 @@ public class RoadPrefabResolver
     }
 
     /// <summary>
-    /// True if the adjacent cell is part of the current path (any segment) or already has a road.
+    /// True if adjacent cell part of current path (any segment) or already has road.
     /// </summary>
     private bool PathCellContainsOrRoad(HashSet<Vector2Int> pathCellSet, int nx, int ny)
     {

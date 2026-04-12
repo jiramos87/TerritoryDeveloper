@@ -17,11 +17,11 @@ using Territory.Persistence;
 namespace Territory.Geography
 {
 /// <summary>
-/// GeographyManager coordinates the initialization and management of all geographical features:
-/// terrain height, water bodies (optional lakes/sea, optional FEAT-38 rivers, optional test river), and forests.
+/// GeographyManager coordinates init + management of all geographical features:
+/// terrain height, water bodies (optional lakes/sea, optional rivers, optional test river), forests.
 /// Inspector toggles: <see cref="generateStandardWaterBodies"/>, <see cref="generateProceduralRiversOnInit"/>, <see cref="generateTestRiverOnInit"/>, <see cref="useFlatTerrainOnNewGame"/>.
-/// Optional interchange: <see cref="loadGeographyInitParamsFromStreamingAssets"/> loads <c>geography_init_params</c> from StreamingAssets (TECH-41).
-/// Diagnostics: <see cref="BuildGeographyInitReportJson"/> for TECH-39 harness export (<c>tools/reports/last-geography-init.json</c>).
+/// Optional interchange: <see cref="loadGeographyInitParamsFromStreamingAssets"/> loads <c>geography_init_params</c> from StreamingAssets.
+/// Diagnostics: <see cref="BuildGeographyInitReportJson"/> for harness export (<c>tools/reports/last-geography-init.json</c>).
 /// </summary>
 public class GeographyManager : MonoBehaviour
 {
@@ -70,12 +70,12 @@ public class GeographyManager : MonoBehaviour
     [Tooltip("Path relative to StreamingAssets (e.g. Config/geography-default.json).")]
     public string geographyInitParamsRelativePath = "Config/geography-default.json";
 
-    /// <summary>Last successful <c>geography_init_params</c> load this session (for harness export). Null when interchange load is off or failed.</summary>
+    /// <summary>Last successful <c>geography_init_params</c> load this session (for harness export). Null → interchange load off or failed.</summary>
     private GeographyInitParamsDto lastLoadedGeographyInitParams;
 
-    /// <summary>Advisory <c>map</c> from last successful interchange load (for dimension mismatch warning).</summary>
+    /// <summary>Advisory <c>map</c> from last successful interchange load → dimension mismatch warning.</summary>
     private GeographyInitMapDto geographyInitMapAdvisory;
-    /// <summary>When set, overrides <see cref="generateProceduralRiversOnInit"/> for the current pipeline run.</summary>
+    /// <summary>Set → overrides <see cref="generateProceduralRiversOnInit"/> for current pipeline run.</summary>
     private bool? riversEnabledFromInterchange;
 
     // Current geographical data (for save/load operations)
@@ -198,7 +198,7 @@ public class GeographyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Loads <c>geography_init_params</c> from StreamingAssets when enabled; sets <see cref="MapGenerationSeed"/> and optional river override.
+    /// Load <c>geography_init_params</c> from StreamingAssets when enabled; set <see cref="MapGenerationSeed"/> + optional river override.
     /// </summary>
     private void ApplyGeographyInitInterchangeAtPipelineStart()
     {
@@ -254,17 +254,17 @@ public class GeographyManager : MonoBehaviour
         if (gridManager.width != geographyInitMapAdvisory.width || gridManager.height != geographyInitMapAdvisory.height)
         {
             DebugHelper.LogWarning(
-                $"GeographyManager: Interchange map ({geographyInitMapAdvisory.width}x{geographyInitMapAdvisory.height}) does not match grid ({gridManager.width}x{gridManager.height}). Interchange map is advisory only (TECH-41).");
+                $"GeographyManager: Interchange map ({geographyInitMapAdvisory.width}x{geographyInitMapAdvisory.height}) does not match grid ({gridManager.width}x{gridManager.height}). Interchange map is advisory only.");
         }
     }
 
-    /// <summary>Removes <c>interchange_snapshot_json</c> when Unity <see cref="JsonUtility"/> emitted <c>""</c> for a null string (we want the key omitted).</summary>
+    /// <summary>Strip <c>interchange_snapshot_json</c> when Unity <see cref="JsonUtility"/> emits <c>""</c> for null string → key omitted.</summary>
     private static readonly Regex StripEmptyInterchangeSnapshotJsonProperty = new Regex(
         @"\r?\n[ \t]*""interchange_snapshot_json""\s*:\s*"""",?\s*|,\s*""interchange_snapshot_json""\s*:\s*""""",
         RegexOptions.CultureInvariant);
 
     /// <summary>
-    /// JSON snapshot for TECH-39 geography harness (<c>tools/reports/last-geography-init.json</c>). Use in Play Mode after init; not Save data.
+    /// JSON snapshot for geography harness (<c>tools/reports/last-geography-init.json</c>). Use in Play Mode after init. Not Save data.
     /// </summary>
     public string BuildGeographyInitReportJson()
     {
@@ -302,7 +302,7 @@ public class GeographyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Refreshes the mini-map texture once terrain, water, interstate, forests (if any), and sorting are ready.
+    /// Refresh mini-map texture once terrain, water, interstate, forests (if any), sorting ready.
     /// </summary>
     private void NotifyMiniMapAfterGeographyReady()
     {
@@ -313,8 +313,8 @@ public class GeographyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Populates closeWaterCount for all cells and recalculates desirability.
-    /// Call after ForestManager.InitializeForestMap() so both forest and water contribute to desirability.
+    /// Populate <c>closeWaterCount</c> for all cells + recalc desirability.
+    /// Call after <see cref="ForestManager.InitializeForestMap"/> → both forest + water contribute to desirability.
     /// </summary>
     private void InitializeWaterDesirability()
     {
@@ -408,8 +408,8 @@ public class GeographyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Re-initializes geography after ResetGrid (New Game). Applies terrain, water, interstate, forests,
-    /// and recalculates sorting order. Call after gridManager.ResetGrid().
+    /// Re-init geography after ResetGrid (New Game). Apply terrain, water, interstate, forests, recalc sorting order.
+    /// Call after <see cref="GridManager.ResetGrid"/>.
     /// </summary>
     public void ReinitializeGeographyForNewGame()
     {
@@ -486,8 +486,8 @@ public class GeographyManager : MonoBehaviour
 
     #region Terrain Setup
     /// <summary>
-    /// If cell (x, y) is immediately east of a multi-cell building (i.e. x == that building's maxFx+1),
-    /// returns true and the building's current sorting order so we can draw this cell's content on top (buildingOrder+1).
+    /// If cell (x, y) immediately east of multi-cell building (x == building's <c>maxFx+1</c>) →
+    /// return true + building sorting order so cell content draws on top (<c>buildingOrder+1</c>).
     /// </summary>
     private bool TryGetEastAdjacentBuildingOrder(int x, int y, out int buildingOrder)
     {
@@ -515,8 +515,8 @@ public class GeographyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// If cell (x, y) is immediately south of a multi-cell building (i.e. (x+1, y) is the building's minFx column),
-    /// returns true and the building's current sorting order so we can draw this cell's content on top (buildingOrder+1).
+    /// If cell (x, y) immediately south of multi-cell building ((x+1, y) == building's <c>minFx</c> column) →
+    /// return true + building sorting order so cell content draws on top (<c>buildingOrder+1</c>).
     /// </summary>
     private bool TryGetSouthAdjacentBuildingOrder(int x, int y, out int buildingOrder)
     {
@@ -544,8 +544,8 @@ public class GeographyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// If cell (x, y) is immediately west of a multi-cell building (i.e. (x, y+1) is the building's minFy row),
-    /// returns true and the building's current sorting order so we can draw this cell's content on top (buildingOrder+1).
+    /// If cell (x, y) immediately west of multi-cell building ((x, y+1) == building's <c>minFy</c> row) →
+    /// return true + building sorting order so cell content draws on top (<c>buildingOrder+1</c>).
     /// </summary>
     private bool TryGetWestAdjacentBuildingOrder(int x, int y, out int buildingOrder)
     {
@@ -573,8 +573,7 @@ public class GeographyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns the maximum sorting order that any content on the cell at (x,y) would have.
-    /// Used so the building can place itself behind "front" adjacent cells.
+    /// Max sorting order of any content on cell (x,y). Used so building places itself behind "front" adjacent cells.
     /// </summary>
     private int GetCellMaxContentSortingOrder(int x, int y)
     {
@@ -631,9 +630,8 @@ public class GeographyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns the maximum sorting order over a multi-cell building's footprint, capped so the building
-    /// draws behind "front" adjacent cells (left and top) so forest/terrain can draw on top.
-    /// Ensures the building always draws above content on its own footprint (e.g. grass during LoadGame).
+    /// Max sorting order over multi-cell building footprint. Capped so building draws behind "front" adjacent cells
+    /// (left + top) → forest/terrain draws on top. Building always draws above content on its own footprint (e.g. grass during LoadGame).
     /// </summary>
     private int GetMultiCellBuildingMaxSortingOrder(int pivotX, int pivotY, int buildingSize)
     {

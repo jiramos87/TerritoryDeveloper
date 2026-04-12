@@ -6,8 +6,8 @@ using UnityEngine;
 namespace Territory.Testing
 {
     /// <summary>
-    /// Root DTO for <c>scenario_descriptor_v1</c> interchange JSON (camelCase keys for <see cref="JsonUtility"/>).
-    /// Used by <see cref="ScenarioDescriptorRuntimeApplier"/> and batch tooling — not player <b>Save data</b>.
+    /// Root DTO for <c>scenario_descriptor_v1</c> interchange JSON. camelCase keys for <see cref="JsonUtility"/>.
+    /// Used by <see cref="ScenarioDescriptorRuntimeApplier"/> + batch tooling — not player <b>Save data</b>.
     /// </summary>
     [Serializable]
     public sealed class ScenarioDescriptorV1

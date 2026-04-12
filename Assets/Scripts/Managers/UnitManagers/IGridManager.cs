@@ -5,8 +5,8 @@ using Territory.Zones;
 namespace Territory.Core
 {
 /// <summary>
-/// Contract for grid operations: cell access, coordinate conversion, and grid state queries.
-/// Read this interface to understand GridManager's public API without reading its full implementation.
+/// Contract for grid ops: cell access, coord conversion, grid state queries.
+/// Read this interface to understand <see cref="GridManager"/> public API without full impl.
 /// </summary>
 public interface IGridManager
 {

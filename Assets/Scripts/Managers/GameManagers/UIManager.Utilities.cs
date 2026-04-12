@@ -236,7 +236,7 @@ public partial class UIManager
     }
 
     /// <summary>
-    /// Hides the insufficient-funds overlay with a short fade when a <see cref="CanvasGroup"/> is present.
+    /// Hide insufficient-funds overlay with short fade when <see cref="CanvasGroup"/> present.
     /// </summary>
     public void HideInsufficientFundsTooltip()
     {
@@ -278,7 +278,7 @@ public partial class UIManager
     }
 
     /// <summary>
-    /// Get the appropriate prefab for forest type
+    /// Get prefab for forest type.
     /// </summary>
     public GameObject GetForestPrefabForType(Forest.ForestType forestType)
     {
@@ -296,7 +296,7 @@ public partial class UIManager
     }
 
     /// <summary>
-    /// Create forest instance only when actually placing
+    /// Create forest instance only on actual placement.
     /// </summary>
     public IForest CreateForestInstance(Forest.ForestType forestType)
     {
@@ -336,7 +336,7 @@ public partial class UIManager
     }
 
     /// <summary>
-    /// Specific methods for backward compatibility
+    /// Backward-compat shims.
     /// </summary>
     public void OnSparseForestButtonClicked()
     {
@@ -354,7 +354,7 @@ public partial class UIManager
     }
 
     /// <summary>
-    /// Get currently selected forest, creating instance if needed
+    /// Get selected forest; create instance if needed.
     /// </summary>
     public IForest GetSelectedForest()
     {
@@ -399,10 +399,10 @@ public partial class UIManager
     }
 
     /// <summary>
-    /// Shows demolition animation for multi-tile buildings at the center position
+    /// Show demolition animation for multi-tile buildings at center position.
     /// </summary>
-    /// <param name="centerCell">The center cell of the building being demolished</param>
-    /// <param name="buildingSize">Size of the building for positioning</param>
+    /// <param name="centerCell">Center cell of demolished building.</param>
+    /// <param name="buildingSize">Building size → positioning.</param>
     public void ShowDemolitionAnimationCentered(GameObject centerCell, int buildingSize, int preCapturedSortingOrder)
     {
         if (demolitionExplosionPrefab == null || centerCell == null)

@@ -10,16 +10,16 @@ using UnityEngine;
 namespace Territory.Testing
 {
     /// <summary>
-    /// Applies a <see cref="ScenarioDescriptorV1"/> in <b>Play Mode</b> after a base <b>Save data</b> load: terrain / <b>Water map</b>,
+    /// Apply <see cref="ScenarioDescriptorV1"/> in <b>Play Mode</b> after base <b>Save data</b> load: terrain + <b>Water map</b>,
     /// optional <b>road stroke</b> commits via <see cref="RoadManager.TryCommitStreetStrokeForScenarioBuild"/> /
-    /// <see cref="RoadManager.PlaceInterstateFromPath"/>, then callers export with <see cref="GameSaveManager.TryWriteGameSaveToPath"/>.
+    /// <see cref="RoadManager.PlaceInterstateFromPath"/>. Callers export via <see cref="GameSaveManager.TryWriteGameSaveToPath"/>.
     /// </summary>
     public static class ScenarioDescriptorRuntimeApplier
     {
         const string ExpectedArtifact = "scenario_descriptor_v1";
 
         /// <summary>
-        /// Parses JSON and mutates the loaded scene (terrain, water, roads, optional time/city overlay).
+        /// Parse JSON + mutate loaded scene: terrain, water, roads, optional time/city overlay.
         /// </summary>
         public static bool TryApplyFromJson(string json, out string error)
         {
@@ -216,7 +216,7 @@ namespace Territory.Testing
             return true;
         }
 
-        /// <summary>Save name for export: overlay, then scenario id, then fallback.</summary>
+        /// <summary>Save name for export: overlay → scenario id → fallback.</summary>
         public static string ResolveSaveNameForExport(ScenarioDescriptorV1 d)
         {
             if (d?.saveOverlay != null && !string.IsNullOrEmpty(d.saveOverlay.saveName))

@@ -5,7 +5,7 @@ using UnityEngine.UI;
 namespace Territory.UI
 {
 /// <summary>
-/// UI button that opens the power buildings selector menu via BuildingSelectorMenuController.
+/// UI button → opens power buildings selector menu via <see cref="BuildingSelectorMenuController"/>.
 /// </summary>
 public class PowerBuildingsSelectButton : MonoBehaviour
 {
@@ -49,7 +49,7 @@ public class PowerBuildingsSelectButton : MonoBehaviour
     }
 
     /// <summary>
-    /// Resets this button to its default visual state
+    /// Reset button → default visual state.
     /// </summary>
     public void DeselectButton()
     {

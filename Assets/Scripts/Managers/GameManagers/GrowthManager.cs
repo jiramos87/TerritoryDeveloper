@@ -7,8 +7,8 @@ using Territory.Zones;
 namespace Territory.Simulation
 {
 /// <summary>
-/// Handles zone growth logic, determining when and where zones should develop.
-/// Coordinates with GridManager for cell state and DemandManager for demand-based growth eligibility.
+/// Zone growth logic — when + where zones develop. Coords with <see cref="GridManager"/> (cell state)
+/// + <see cref="DemandManager"/> (demand-based growth eligibility).
 /// </summary>
 [System.Obsolete("Auto-zoning is now handled by AutoZoningManager. This component is kept for reference only.")]
 public class GrowthManager : MonoBehaviour

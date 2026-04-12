@@ -27,7 +27,7 @@ public struct ProposedCell
 }
 
 /// <summary>
-/// Data class representing an urbanization expansion proposal with road paths, zone positions, status, and cost estimation.
+/// Urbanization expansion proposal data: road paths, zone positions, status, cost estimate.
 /// </summary>
 [System.Serializable]
 public class UrbanizationProposal

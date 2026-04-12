@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Territory.Forests
 {
 /// <summary>
-/// Defines the ForestType enum (None, Sparse, Medium, Dense) for categorizing forest density levels.
+/// ForestType enum (None, Sparse, Medium, Dense) for forest density levels.
 /// </summary>
 public class Forest
 {

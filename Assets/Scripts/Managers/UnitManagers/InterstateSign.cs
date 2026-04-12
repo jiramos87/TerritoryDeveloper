@@ -4,9 +4,8 @@ using Territory.Geography;
 namespace Territory.Roads
 {
 /// <summary>
-/// Visual component for a highway sign at the border of the map.
-/// Shows the destination city name, population hint, and directional arrow.
-/// Rendered in world-space (not UI Canvas) so it integrates with isometric sorting.
+/// Visual highway sign at map border. Shows destination city name, population hint, directional arrow.
+/// Rendered in world-space (not UI Canvas) → integrates with isometric sorting.
 /// </summary>
 public class InterstateSign : MonoBehaviour
 {

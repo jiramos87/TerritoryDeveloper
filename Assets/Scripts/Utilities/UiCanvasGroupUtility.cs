@@ -4,12 +4,12 @@ using UnityEngine;
 namespace Territory.Utilities
 {
     /// <summary>
-    /// Shared <see cref="CanvasGroup"/> helpers for popup fade-in/out (unscaled time for pause-safe UI).
+    /// Shared <see cref="CanvasGroup"/> helpers for popup fade-in/out. Unscaled time → pause-safe UI.
     /// </summary>
     public static class UiCanvasGroupUtility
     {
         /// <summary>
-        /// Ensures a <see cref="CanvasGroup"/> on <paramref name="root"/> for alpha-driven show/hide.
+        /// Ensure <see cref="CanvasGroup"/> on <paramref name="root"/> for alpha-driven show/hide.
         /// </summary>
         public static CanvasGroup EnsureCanvasGroup(GameObject root)
         {
@@ -22,7 +22,7 @@ namespace Territory.Utilities
         }
 
         /// <summary>
-        /// Lerps <see cref="CanvasGroup.alpha"/> from <paramref name="from"/> to <paramref name="to"/> using <see cref="Time.unscaledDeltaTime"/>.
+        /// Lerp <see cref="CanvasGroup.alpha"/> <paramref name="from"/> → <paramref name="to"/> via <see cref="Time.unscaledDeltaTime"/>.
         /// </summary>
         public static IEnumerator FadeUnscaled(CanvasGroup cg, float from, float to, float duration)
         {

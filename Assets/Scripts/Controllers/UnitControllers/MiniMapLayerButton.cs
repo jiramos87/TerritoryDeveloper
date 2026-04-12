@@ -5,7 +5,7 @@ using Territory.UI;
 namespace Territory.UI
 {
 /// <summary>
-/// UI button that toggles a mini-map layer on or off. Uses color feedback for on/off state.
+/// UI button → toggles mini-map layer on/off. Color feedback for state.
 /// </summary>
 public class MiniMapLayerButton : MonoBehaviour
 {

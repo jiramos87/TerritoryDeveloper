@@ -4,9 +4,9 @@ using UnityEngine;
 namespace Territory.Persistence
 {
     /// <summary>
-    /// Interchange DTO for <c>geography_init_params</c> (TECH-41 / TECH-40 JSON Schema v1).
-    /// Not Save data — loaded from <see cref="GeographyInitParamsLoader"/> at Geography initialization.
-    /// Field names match <c>docs/schemas/geography-init-params.v1.schema.json</c> for <see cref="JsonUtility"/> and Node/Zod parity.
+    /// Interchange DTO for <c>geography_init_params</c> (JSON Schema v1). Not Save data — loaded from
+    /// <see cref="GeographyInitParamsLoader"/> at Geography init. Field names match
+    /// <c>docs/schemas/geography-init-params.v1.schema.json</c> → <see cref="JsonUtility"/> + Node/Zod parity.
     /// </summary>
     [Serializable]
     public class GeographyInitParamsDto

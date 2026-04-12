@@ -4,12 +4,12 @@ using Territory.Terrain;
 namespace Territory.Utilities.Compute
 {
     /// <summary>
-    /// Read-only ordinary-road step cost (GridPathfinder / manual road preview alignment). No <see cref="Territory.Core.GridManager"/> —
-    /// callers supply heights, slope type, and coastal eligibility from <see cref="TerrainManager"/> queries (TECH-39 §7.11.3).
+    /// Read-only ordinary-road step cost (<c>GridPathfinder</c> / manual road preview alignment). No <see cref="Territory.Core.GridManager"/> —
+    /// callers supply heights, slope type, coastal eligibility from <see cref="TerrainManager"/> queries.
     /// </summary>
     public static class PathfindingCostKernel
     {
-        /// <summary>Inputs for one cardinal step onto <c>(toX, toY)</c>; coastal flags match <see cref="TerrainManager"/> shore/rim eligibility used in pathfinding.</summary>
+        /// <summary>Inputs for one cardinal step onto <c>(toX, toY)</c>. Coastal flags match <see cref="TerrainManager"/> shore/rim eligibility used in pathfinding.</summary>
         public readonly struct PathfindingMoveContext
         {
             public readonly int HeightFrom;
@@ -36,7 +36,7 @@ namespace Territory.Utilities.Compute
             }
         }
 
-        /// <summary>Matches <see cref="Territory.Core.GridPathfinder"/> height / water-slope / slope-type rules before road-spacing penalty.</summary>
+        /// <summary>Match <see cref="Territory.Core.GridPathfinder"/> height / water-slope / slope-type rules before road-spacing penalty.</summary>
         public static int GetOrdinaryRoadMoveCost(in PathfindingMoveContext ctx)
         {
             if (ctx.IsWaterSlopeCellAtTo)

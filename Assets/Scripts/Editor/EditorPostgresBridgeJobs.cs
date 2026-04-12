@@ -5,14 +5,14 @@ using System.Text;
 using UnityEngine;
 
 /// <summary>
-/// Runs <c>tools/postgres-ia/agent-bridge-dequeue.mjs</c> and <c>agent-bridge-complete.mjs</c> with the same
-/// <see cref="EditorPostgresExportRegistrar.ResolveNodeExecutablePath"/> / <c>DATABASE_URL</c> policy as the export registrar.
+/// Runs <c>tools/postgres-ia/agent-bridge-dequeue.mjs</c> + <c>agent-bridge-complete.mjs</c> with same
+/// <see cref="EditorPostgresExportRegistrar.ResolveNodeExecutablePath"/> / <c>DATABASE_URL</c> policy as export registrar.
 /// </summary>
 public static class EditorPostgresBridgeJobs
 {
     const int ScriptTimeoutMs = 120_000;
 
-    /// <summary>Stdout JSON shape from <c>agent-bridge-dequeue.mjs</c> (Unity <see cref="JsonUtility"/>).</summary>
+    /// <summary>Stdout JSON shape from <c>agent-bridge-dequeue.mjs</c> → Unity <see cref="JsonUtility"/>.</summary>
     [Serializable]
     public class DequeueStdoutDto
     {
@@ -24,7 +24,7 @@ public static class EditorPostgresBridgeJobs
     }
 
     /// <summary>
-    /// Claims one pending bridge job or returns <paramref name="dto"/> with <c>empty == true</c>. Returns <c>false</c> if the script failed or stdout was not valid JSON.
+    /// Claim one pending bridge job → <paramref name="dto"/> with <c>empty == true</c> when none. Returns <c>false</c> on script failure or invalid JSON stdout.
     /// </summary>
     public static bool TryDequeue(string repoRoot, out DequeueStdoutDto dto, out string logDetail)
     {
@@ -63,7 +63,7 @@ public static class EditorPostgresBridgeJobs
         return dto != null && dto.ok;
     }
 
-    /// <summary>Writes <paramref name="responseJsonUtf8"/> to a temp file and runs <c>agent-bridge-complete.mjs --response-file</c>.</summary>
+    /// <summary>Write <paramref name="responseJsonUtf8"/> to temp file → run <c>agent-bridge-complete.mjs --response-file</c>.</summary>
     public static bool TryCompleteSuccess(string repoRoot, string commandId, string responseJsonUtf8, out string logDetail)
     {
         logDetail = "";
@@ -96,7 +96,7 @@ public static class EditorPostgresBridgeJobs
         }
     }
 
-    /// <summary>Marks the job <c>failed</c> with an English error (quotes/newlines sanitized for process arguments).</summary>
+    /// <summary>Mark job <c>failed</c> with English error; quotes/newlines sanitized for process argv.</summary>
     public static bool TryCompleteFailed(string repoRoot, string commandId, string englishError, out string logDetail)
     {
         string safe = SanitizeErrorForArgv(englishError ?? "Unknown error.");

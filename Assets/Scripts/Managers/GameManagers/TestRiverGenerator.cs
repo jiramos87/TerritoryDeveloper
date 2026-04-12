@@ -5,11 +5,14 @@ using UnityEngine;
 namespace Territory.Terrain
 {
     /// <summary>
-    /// Debug / QA: straight grid West→East test river (four equal-length surface segments S=4,3,2,1), flat beds per segment.
-    /// Centerline is fixed grid <c>x</c> (map-width center, clamped to corridor margins) and decreasing <c>y</c> from west toward east (canonical spec: +y = West, East neighbor is (x, y−1)).
-    /// Runs after standard lakes and procedural rivers when enabled from <see cref="Territory.Geography.GeographyManager"/>.
-    /// Does not run inner-corner shore promotion (that step was lifting forced bed heights and blocking water assignment on S=3 and S=1 segments).
-    /// Full grid span on <c>y</c> (west → east); <c>x</c> is <c>width / 2</c> clamped to [10, width−10] for corridor width. Post-gen refresh uses <see cref="WaterManager.UpdateWaterVisuals"/> with Pass A/B skipped so §12.7 junction merge does not collapse multi-surface segments.
+    /// Debug/QA straight grid West→East test river: four equal-length surface segments S=4,3,2,1, flat beds per segment.
+    /// Centerline = fixed <c>x</c> (map-width center, clamped to corridor margins), decreasing <c>y</c> west→east
+    /// (canonical spec: +y = West, East neighbor = (x, y−1)). Runs after standard lakes + procedural rivers when
+    /// enabled from <see cref="Territory.Geography.GeographyManager"/>. Skips inner-corner shore promotion — that step
+    /// lifted forced bed heights + blocked water assignment on S=3 / S=1 segments.
+    /// Full grid span on <c>y</c>; <c>x</c> = <c>width / 2</c> clamped to [10, width−10]. Post-gen refresh uses
+    /// <see cref="WaterManager.UpdateWaterVisuals"/> with Pass A/B skipped → §12.7 junction merge does not collapse
+    /// multi-surface segments.
     /// </summary>
     public static class TestRiverGenerator
     {
@@ -21,8 +24,9 @@ namespace Territory.Terrain
         private static readonly int[] SegmentTargetBedHeights = { 3, 2, 1, 0 };
 
         /// <summary>
-        /// Carves terrain, assigns river bodies, and logs parameters. Caller runs <see cref="WaterMap.MergeAdjacentBodiesWithSameSurface"/>
-        /// and <see cref="WaterManager.UpdateWaterVisuals"/> after this returns.
+        /// Carve terrain + assign river bodies + log params. Caller runs
+        /// <see cref="WaterMap.MergeAdjacentBodiesWithSameSurface"/> + <see cref="WaterManager.UpdateWaterVisuals"/>
+        /// after return.
         /// </summary>
         public static void Generate(
             WaterManager waterManager,
@@ -137,7 +141,7 @@ namespace Territory.Terrain
             return w;
         }
 
-        /// <summary>Four contiguous travel-index ranges [0, count−1] with equal length (remainder to first segments).</summary>
+        /// <summary>Four contiguous travel-index ranges [0, count−1], equal length (remainder → first segments).</summary>
         private static void ComputeSegmentIndexRanges(int count, out int[] segStart, out int[] segEnd)
         {
             segStart = new int[4];
@@ -189,7 +193,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Flow along decreasing y (East); perpendicular strip varies x. Uses N–S footprint rules (path axis along y) like FEAT-38 N–S rivers.
+        /// Flow along decreasing y (East); perpendicular strip varies x. Uses N–S footprint rules (path axis along y)
+        /// like N–S rivers.
         /// </summary>
         private static TestCrossSection BuildWestToEastCrossSection(
             WaterMap wm,
@@ -250,7 +255,7 @@ namespace Territory.Terrain
             return sec;
         }
 
-        /// <param name="relaxNsEndpointRows">When true (QA test river), north/south map rows are allowed on the first and last centerline steps only (full y span 0–height−1).</param>
+        /// <param name="relaxNsEndpointRows">True (QA test river) → N/S map rows allowed only on first + last centerline steps (full y span 0–height−1).</param>
         private static bool IsFootprintCellAllowedOnBorder(int wx, int wy, int gw, int gh, bool flowIsNorthSouth, bool flowPositive, bool isFirstSegment, bool isLastSegment, bool relaxNsEndpointRows = false)
         {
             if (flowIsNorthSouth)

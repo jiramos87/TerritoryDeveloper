@@ -14,12 +14,12 @@ using UnityEngine;
 namespace Territory.Testing
 {
     /// <summary>
-    /// <b>Editor</b> <c>-batchmode</c> entry: open <see cref="MainScenePath"/>, enter <b>Play Mode</b>,
-    /// resolve <b>test mode</b> scenario args via <see cref="TestModeCommandLineBootstrap.TryParse"/>,
-    /// load through <see cref="GameSaveManager.LoadGame"/> only, optionally run bounded <see cref="SimulationManager.ProcessSimulationTick"/>,
-    /// write <c>tools/reports/agent-testmode-batch-*.json</c>, then exit the Editor with <see cref="EditorApplication.Exit"/>.
-    /// Persists in-flight state in <c>tools/reports/.agent-testmode-batch-state.json</c> (gitignored) across Play Mode domain reloads
-    /// because <see cref="SessionState"/> is not reliable for this flow in <c>-batchmode</c>.
+    /// <b>Editor</b> <c>-batchmode</c> entry. Flow: open <see cref="MainScenePath"/> → enter <b>Play Mode</b> →
+    /// resolve <b>test mode</b> scenario args via <see cref="TestModeCommandLineBootstrap.TryParse"/> →
+    /// load through <see cref="GameSaveManager.LoadGame"/> only → optionally run bounded <see cref="SimulationManager.ProcessSimulationTick"/> →
+    /// write <c>tools/reports/agent-testmode-batch-*.json</c> → exit via <see cref="EditorApplication.Exit"/>.
+    /// State persisted in <c>tools/reports/.agent-testmode-batch-state.json</c> (gitignored) across Play Mode domain reloads;
+    /// <see cref="SessionState"/> unreliable in <c>-batchmode</c>.
     /// </summary>
     public static class AgentTestModeBatchRunner
     {
@@ -28,14 +28,14 @@ namespace Territory.Testing
         /// <summary>Same scenario flags as <see cref="TestModeCommandLineBootstrap"/>.</summary>
         public const string ArgSimulationTicks = "-testSimulationTicks";
 
-        /// <summary>Optional committed JSON of <see cref="AgentTestModeBatchCitySnapshotDto"/>; mismatch → exit code 8.</summary>
+        /// <summary>Optional committed JSON of <see cref="AgentTestModeBatchCitySnapshotDto"/>. Mismatch → exit 8.</summary>
         public const string ArgGoldenPath = "-testGoldenPath";
 
         public const int ExitCodeGoldenMismatch = 8;
 
         public const string MainScenePath = "Assets/Scenes/MainScene.unity";
 
-        /// <summary>Transient state file under <c>tools/reports/</c> (dotfile; ignored by <c>tools/reports/**</c>).</summary>
+        /// <summary>Transient state file under <c>tools/reports/</c>; dotfile, gitignored by <c>tools/reports/**</c>.</summary>
         public const string StateFileName = ".agent-testmode-batch-state.json";
 
         const double GridWaitMaxSeconds = 120.0;
@@ -48,8 +48,8 @@ namespace Territory.Testing
         }
 
         /// <summary>
-        /// Integer <b>CityStats</b> slice for golden checks (stable across platforms; no floats).
-        /// Serialized to committed JSON under <c>tools/fixtures/scenarios/…</c>.
+        /// Integer <b>CityStats</b> slice for golden checks. Stable across platforms; no floats.
+        /// Serialized → committed JSON under <c>tools/fixtures/scenarios/…</c>.
         /// </summary>
         [Serializable]
         public class AgentTestModeBatchCitySnapshotDto

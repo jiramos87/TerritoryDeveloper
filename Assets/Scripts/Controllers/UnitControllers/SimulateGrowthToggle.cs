@@ -5,7 +5,7 @@ using Territory.Economy;
 namespace Territory.UI
 {
 /// <summary>
-/// UI toggle that enables/disables automatic city growth simulation in CityStats.
+/// UI toggle → enables/disables auto city growth sim in <see cref="CityStats"/>.
 /// </summary>
 public class SimulateGrowthToggle : MonoBehaviour
 {

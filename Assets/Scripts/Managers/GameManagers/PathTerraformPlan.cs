@@ -7,15 +7,12 @@ using Territory.Core;
 namespace Territory.Terrain
 {
 /// <summary>
-/// Holds the result of path-level terraforming analysis. Contains per-cell actions,
-/// target heights, and post-terraform slope types. Apply/Revert modify the heightmap
-/// and terrain visuals for preview or permanent placement.
+/// Result of path-level terraforming analysis. Per-cell actions, target heights, post-terraform slope types.
+/// Apply/Revert modify heightmap + terrain visuals for preview or permanent placement.
 /// </summary>
 public class PathTerraformPlan
 {
-    /// <summary>
-    /// Per-cell terraforming plan. Populated by TerraformingService.ComputePathPlan.
-    /// </summary>
+    /// <summary>Per-cell terraform plan. Populated by TerraformingService.ComputePathPlan.</summary>
     public struct CellPlan
     {
         public Vector2Int position;
@@ -32,24 +29,24 @@ public class PathTerraformPlan
     public bool isValid = true;
 
     /// <summary>
-    /// When true, only path cells are flattened; adjacent terrain keeps its height, creating
-    /// a "cut" with slopes/cliffs between higher sectors and the lowered road.
+    /// True → only path cells flattened; adjacent terrain keeps height.
+    /// Creates "cut" with slopes/cliffs between higher sectors + lowered road.
     /// </summary>
     public bool isCutThrough;
 
     /// <summary>
-    /// When true (FEAT-44 water bridge after <see cref="TerraformingService.ComputePathPlan"/>), Phase1 validate/apply skip strict |Δh|≤1
-    /// across edges that touch open water or water-slope shore, and cut-through mode skips beside-cliff invalidation for that path.
+    /// True (FEAT-44 water bridge after <see cref="TerraformingService.ComputePathPlan"/>) → Phase1 validate/apply skip strict |Δh|≤1
+    /// on edges touching open water or water-slope shore. Cut-through mode skips beside-cliff invalidation for that path.
     /// </summary>
     public bool waterBridgeTerraformRelaxation;
 
     /// <summary>
-    /// FEAT-44: one uniform height for <b>all</b> bridge deck prefabs on the span (world Y / sorting). Set by <see cref="TerraformingService.TryAssignWaterBridgeDeckDisplayHeight"/> / <see cref="TerraformingService.ComputePathPlan"/> when <see cref="waterBridgeTerraformRelaxation"/> applies. 0 = unset (legacy placement).
+    /// FEAT-44: uniform height for <b>all</b> bridge deck prefabs on span (world Y / sorting). Set by <see cref="TerraformingService.TryAssignWaterBridgeDeckDisplayHeight"/> / <see cref="TerraformingService.ComputePathPlan"/> when <see cref="waterBridgeTerraformRelaxation"/> applies. 0 = unset (legacy placement).
     /// </summary>
     public int waterBridgeDeckDisplayHeight;
 
     /// <summary>
-    /// Phase 1 only: write planned terraform heights. Skips registered open water and water-slope cells (same rules as <see cref="Apply"/>; geography spec water map).
+    /// Phase 1 only: write planned terraform heights. Skips registered open water + water-slope cells (same rules as <see cref="Apply"/>; geography spec water map).
     /// </summary>
     void WritePhase1TerraformHeights(HeightMap heightMap, TerrainManager terrainManager)
     {
@@ -73,9 +70,7 @@ public class PathTerraformPlan
         }
     }
 
-    /// <summary>
-    /// Reverts heights written in Phase 1 using stored <see cref="CellPlan.originalHeight"/>.
-    /// </summary>
+    /// <summary>Revert heights written in Phase 1 using stored <see cref="CellPlan.originalHeight"/>.</summary>
     void RevertPhase1TerraformHeights(HeightMap heightMap)
     {
         foreach (var cell in pathCells)
@@ -91,11 +86,11 @@ public class PathTerraformPlan
     }
 
     /// <summary>
-    /// Applies Phase 1 height writes and <see cref="ValidateNoHeightDiffGreaterThanOne"/> without Phase 2 terrain meshes, then restores heights.
+    /// Apply Phase 1 height writes + <see cref="ValidateNoHeightDiffGreaterThanOne"/> without Phase 2 terrain meshes, then restore heights.
     /// Use so preview/path prep match <see cref="Apply"/> feasibility before modifying sprites.
     /// </summary>
-    /// <param name="logPhase1HeightFailure">When validation fails, invoked once with the failing cardinal edge (or null if unknown).</param>
-    /// <param name="logDryCliffPhase1Detail">When non-null, emits verbose lines for strict Phase1 |Δh|&gt;1 edges and dry-cliff skip decisions (use with road diagnostic cursor only).</param>
+    /// <param name="logPhase1HeightFailure">On validation fail, invoked once with failing cardinal edge (or null if unknown).</param>
+    /// <param name="logDryCliffPhase1Detail">If non-null, emits verbose lines for strict Phase1 |Δh|&gt;1 edges + dry-cliff skip decisions. Use with road diagnostic cursor only.</param>
     public bool TryValidatePhase1Heights(HeightMap heightMap, TerrainManager terrainManager, Action<string> logPhase1HeightFailure = null, Action<string> logDryCliffPhase1Detail = null)
     {
         if (heightMap == null || terrainManager == null) return false;
@@ -133,10 +128,10 @@ public class PathTerraformPlan
     }
 
     /// <summary>
-    /// Applies the terraforming plan: sets heights on the heightmap and refreshes terrain visuals.
-    /// Two-phase: first set all heights so RestoreTerrainForCell sees correct neighbors, then restore terrain.
-    /// Uses forceFlat/forceSlopeType so terrain matches the plan regardless of apply order.
-    /// Returns false if validation fails (height diff &gt; 1); in that case reverts and does not apply Phase 2.
+    /// Apply terraform plan: set heights on heightmap + refresh terrain visuals.
+    /// Two-phase: set all heights first so RestoreTerrainForCell sees correct neighbors, then restore terrain.
+    /// Uses forceFlat/forceSlopeType → terrain matches plan regardless of apply order.
+    /// Return false on validation fail (|Δh|&gt;1); reverts + skips Phase 2.
     /// </summary>
     public bool Apply(HeightMap heightMap, TerrainManager terrainManager)
     {
@@ -210,9 +205,7 @@ public class PathTerraformPlan
         return true;
     }
 
-    /// <summary>
-    /// Positions lowered by this plan's flatten actions; used for 1-step cliff walls toward the cut (BUG-29).
-    /// </summary>
+    /// <summary>Positions lowered by this plan's flatten actions. Used for 1-step cliff walls toward cut (BUG-29).</summary>
     HashSet<Vector2Int> BuildTerraformCutCorridorSet()
     {
         if (!isCutThrough)
@@ -232,10 +225,10 @@ public class PathTerraformPlan
     }
 
     /// <summary>
-    /// Expands <paramref name="touchedCore"/> by repeatedly restoring all 8-neighbors not yet touched (one wave per iteration).
+    /// Expand <paramref name="touchedCore"/> by repeatedly restoring all 8-neighbors not yet touched (one wave per iteration).
     /// </summary>
     /// <summary>
-    /// Phase 3 neighbor refresh: do not rebuild open water, registered water, or water-slope tiles (FEAT-44 bridge — avoids grass pillars in the river).
+    /// Phase 3 neighbor refresh: skip open water, registered water, water-slope tiles (FEAT-44 bridge — avoids grass pillars in river).
     /// </summary>
     static bool ShouldSkipPhase3NeighborTerrainRefresh(HeightMap heightMap, TerrainManager terrainManager, int x, int y)
     {
@@ -275,10 +268,10 @@ public class PathTerraformPlan
     }
 
     /// <summary>
-    /// Returns false if any affected cell has a neighbor with height difference greater than 1.
+    /// Return false if any affected cell has neighbor with |Δh|&gt;1.
     /// Used after Phase 1 to avoid invalid terrain (black voids, degenerate slopes).
-    /// Skips edges where the stroke sits on high ground and a cardinal neighbor is dry land strictly lower (pre-existing cliff), same rule as FEAT-44 relaxed Phase1 for water bridges.
-    /// Also skips high dry land (on or beside stroke) dropping to a lower registered water-slope shore cell so manual roads can preview to cliff lips above NorthSlopeWaterPrefab tiles without full water-bridge relaxation.
+    /// Skip edges where stroke sits on high ground + cardinal neighbor is dry land strictly lower (pre-existing cliff); same rule as FEAT-44 relaxed Phase1 for water bridges.
+    /// Also skip high dry land (on or beside stroke) dropping to lower registered water-slope shore cell → manual roads preview to cliff lips above NorthSlopeWaterPrefab tiles without full water-bridge relaxation.
     /// </summary>
     bool ValidateNoHeightDiffGreaterThanOne(HeightMap heightMap, TerrainManager terrainManager, out string failureDetail, Action<string> logDryCliffPhase1Detail = null)
     {
@@ -342,9 +335,7 @@ public class PathTerraformPlan
         return true;
     }
 
-    /// <summary>
-    /// True if <paramref name="gx,gy"/> is cardinally adjacent to any cell in <paramref name="pathCellsOnly"/>.
-    /// </summary>
+    /// <summary>True if <paramref name="gx,gy"/> cardinally adjacent to any cell in <paramref name="pathCellsOnly"/>.</summary>
     static bool IsCardinalNeighborOfPathStroke(int gx, int gy, HashSet<Vector2Int> pathCellsOnly)
     {
         if (pathCellsOnly == null || pathCellsOnly.Count == 0) return false;
@@ -360,7 +351,7 @@ public class PathTerraformPlan
     }
 
     /// <summary>
-    /// Strict Phase1: allow |Δh|&gt;1 when the higher cell is dry (not open water / not water-slope) on or beside the stroke and the lower cell is a registered water-slope shore (e.g. NorthSlopeWaterPrefab below a grass cliff lip).
+    /// Strict Phase1: allow |Δh|&gt;1 when higher cell is dry (not open water / not water-slope) on or beside stroke + lower cell is registered water-slope shore (e.g. NorthSlopeWaterPrefab below grass cliff lip).
     /// </summary>
     static bool HighDryLandToWaterSlopeSkipsPhase1Strict(
         HeightMap heightMap, TerrainManager terrainManager, int x0, int y0, int x1, int y1, HashSet<Vector2Int> pathCellsOnly, out string explain)
@@ -423,7 +414,7 @@ public class PathTerraformPlan
     }
 
     /// <summary>
-    /// True if any path or adjacent cell would perform a terraform height write after water/shore skips in <see cref="WritePhase1TerraformHeights"/>.
+    /// True if any path or adjacent cell would write terraform height after water/shore skips in <see cref="WritePhase1TerraformHeights"/>.
     /// Deck-only water bridge plans return false (all <see cref="TerraformingService.TerraformAction.None"/> on path cells).
     /// </summary>
     public bool HasTerraformHeightMutation() => PlanHasTerraformHeightMutation();
@@ -445,8 +436,8 @@ public class PathTerraformPlan
 
     /// <summary>
     /// Like <see cref="ValidateNoHeightDiffGreaterThanOne"/> but ignores cardinal edges where either cell is open water (height ≤ sea)
-    /// or water-slope shore, or <b>both</b> ends lie on planned path cells (deck spans natural |Δh|&gt;1 along the stroke). FEAT-44 bridge preview/commit.
-    /// Only edges incident to at least one <see cref="pathCells"/> position are checked so recursive <c>adjacentCells</c> blobs cannot fail the plan far from the stroke.
+    /// or water-slope shore, or <b>both</b> ends on planned path cells (deck spans natural |Δh|&gt;1 along stroke). FEAT-44 bridge preview/commit.
+    /// Only edges incident to ≥1 <see cref="pathCells"/> position checked → recursive <c>adjacentCells</c> blobs cannot fail plan far from stroke.
     /// </summary>
     bool ValidateNoHeightDiffGreaterThanOneWaterBridgeRelaxed(HeightMap heightMap, TerrainManager terrainManager, out string failureDetail)
     {
@@ -507,8 +498,8 @@ public class PathTerraformPlan
     }
 
     /// <summary>
-    /// True when a natural dry cliff drops away from the road stroke: the higher tile is on the stroke OR is cardinally adjacent to the stroke,
-    /// the lower tile is off the stroke and not water, and the higher tile is strictly above the lower. Matches FEAT-44 relaxed “deck beside gorge” intent for strict Phase1 when the stroke ends one tile short of the cliff lip (P3 ring pulls the lip into checkSet).
+    /// True when natural dry cliff drops away from road stroke: higher tile on stroke OR cardinally adjacent to stroke,
+    /// lower tile off stroke + not water, higher strictly above lower. Matches FEAT-44 relaxed “deck beside gorge” intent for strict Phase1 when stroke ends one tile short of cliff lip (P3 ring pulls lip into checkSet).
     /// </summary>
     static bool DryLandCliffDropsAwayFromPathStroke(HeightMap heightMap, TerrainManager terrainManager, int x0, int y0, int x1, int y1, HashSet<Vector2Int> pathCellsOnly, out string explain)
     {
@@ -569,7 +560,7 @@ public class PathTerraformPlan
     }
 
     /// <summary>
-    /// FEAT-44 Phase1: skip |Δh|&gt;1 checks for edges that are intentionally steep (water, shore, full path deck span, or dry cliff dropping away from the deck).
+    /// FEAT-44 Phase1: skip |Δh|&gt;1 checks for intentionally steep edges (water, shore, full path deck span, or dry cliff dropping away from deck).
     /// </summary>
     static bool WaterBridgeRelaxationSkipsHeightEdge(HeightMap heightMap, TerrainManager terrainManager, int x0, int y0, int x1, int y1, HashSet<Vector2Int> pathCorridor)
     {
@@ -587,8 +578,8 @@ public class PathTerraformPlan
     }
 
     /// <summary>
-    /// Reverts the terraforming plan: restores original heights and refreshes terrain visuals.
-    /// Call when canceling a preview. Two-phase like Apply so terrain sees correct neighbor heights.
+    /// Revert terraform plan: restore original heights + refresh terrain visuals.
+    /// Call on preview cancel. Two-phase like Apply → terrain sees correct neighbor heights.
     /// </summary>
     public void Revert(HeightMap heightMap, TerrainManager terrainManager)
     {

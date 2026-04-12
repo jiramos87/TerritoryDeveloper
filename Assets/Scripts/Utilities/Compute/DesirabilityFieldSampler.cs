@@ -4,14 +4,14 @@ using System.Collections.Generic;
 namespace Territory.Utilities.Compute
 {
     /// <summary>
-    /// Read-only top-<c>k</c> sampling over a desirability or score field (row-major <c>x</c> fast). Does not read the live grid;
-    /// callers pass arrays (TECH-39 §7.11.6). Do not wire AUTO zoning here without a dedicated FEAT issue.
+    /// Read-only top-<c>k</c> sampling over desirability/score field (row-major <c>x</c> fast). Does not read live grid;
+    /// callers pass arrays. Do not wire AUTO zoning here without dedicated FEAT issue.
     /// </summary>
     public static class DesirabilityFieldSampler
     {
         /// <summary>
-        /// Fills <paramref name="outIndices"/> with up to <paramref name="k"/> cell indices in row-major order, highest score first.
-        /// Ties break toward lower index. Expects <c>scoresRowMajor.Length == width * height</c>.
+        /// Fill <paramref name="outIndices"/> with up to <paramref name="k"/> cell indices, row-major order, highest score first.
+        /// Ties → lower index. Expects <c>scoresRowMajor.Length == width * height</c>.
         /// </summary>
         public static void TryGetTopKCellIndicesByScore(
             float[] scoresRowMajor,

@@ -1,17 +1,17 @@
 namespace Territory.Utilities.Compute
 {
     /// <summary>
-    /// Read-only open-water queries for predicate helpers (TECH-39 §7.11.5). Use <see cref="TerrainOpenWaterMapView"/> from gameplay code.
+    /// Read-only open-water queries for predicate helpers. Use <see cref="TerrainOpenWaterMapView"/> from gameplay code.
     /// </summary>
     public interface IOpenWaterMapView
     {
         bool IsValidGridPosition(int x, int y);
-        /// <summary>Registered open water per <see cref="Territory.Terrain.TerrainManager.IsRegisteredOpenWaterAt"/> (water map authority).</summary>
+        /// <summary>Registered open water per <see cref="Territory.Terrain.TerrainManager.IsRegisteredOpenWaterAt"/>. Water map authority.</summary>
         bool IsRegisteredOpenWaterAt(int x, int y);
     }
 
     /// <summary>
-    /// Moore-neighborhood (8) predicates relative to geography / water topology helpers.
+    /// Moore-neighborhood (8) predicates over geography / water topology.
     /// </summary>
     public static class WaterAdjacency
     {
@@ -37,7 +37,7 @@ namespace Territory.Utilities.Compute
     }
 
     /// <summary>
-    /// <see cref="IOpenWaterMapView"/> over <see cref="Territory.Terrain.TerrainManager"/> (same assembly; no extra manager logic).
+    /// <see cref="IOpenWaterMapView"/> over <see cref="Territory.Terrain.TerrainManager"/>. Same assembly; no extra manager logic.
     /// </summary>
     public readonly struct TerrainOpenWaterMapView : IOpenWaterMapView
     {

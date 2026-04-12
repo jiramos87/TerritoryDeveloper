@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Territory.Forests
 {
 /// <summary>
-/// Medium forest implementation with moderate water consumption and environmental impact
+/// Medium forest impl. Moderate water consumption + env impact.
 /// </summary>
 public class MediumForest : MonoBehaviour, IForest
 {
@@ -17,7 +17,7 @@ public class MediumForest : MonoBehaviour, IForest
     public Forest.ForestType ForestType { get; private set; }
 
     /// <summary>
-    /// Initialize medium forest with its characteristics
+    /// Init medium forest with characteristics.
     /// </summary>
     public void Initialize()
     {
@@ -31,7 +31,7 @@ public class MediumForest : MonoBehaviour, IForest
     public GameObject GameObjectReference => this == null ? null : gameObject;
 
     /// <summary>
-    /// Get water consumption for this forest type
+    /// Water consumption for this forest type.
     /// </summary>
     public int GetWaterConsumption()
     {

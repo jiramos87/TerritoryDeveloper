@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Territory.Buildings
 {
 /// <summary>
-/// Handles the visual demolition animation when a building or zone is bulldozed.
+/// Visual demolition animation when building/zone bulldozed.
 /// </summary>
 public class DemolitionAnimation : MonoBehaviour
 {

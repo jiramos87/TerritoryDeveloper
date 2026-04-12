@@ -6,9 +6,7 @@ using Territory.Core;
 
 namespace Territory.Geography
 {
-/// <summary>
-/// Manages the regional map: generation, querying neighbor data for interstate routing and border signs.
-/// </summary>
+/// <summary>Manage regional map: generation, neighbor data queries for interstate routing + border signs.</summary>
 public class RegionalMapManager : MonoBehaviour
 {
     [Header("References")]
@@ -165,8 +163,8 @@ public class RegionalMapManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Copies the current city name from CityStats to the player territory in the regional map.
-    /// Call before saving so the saved map contains the (possibly player-edited) name.
+    /// Copy current city name from CityStats → player territory in regional map.
+    /// Call before save → saved map contains (possibly player-edited) name.
     /// </summary>
     public void SyncCityNameToPlayerTerritory()
     {

@@ -7,10 +7,9 @@ using Territory.Buildings;
 namespace Territory.UI
 {
 /// <summary>
-/// Manages the visual cursor and placement preview system. Shows ghost prefabs for buildings,
-/// roads, and zones as the player moves the mouse over the grid. Handles cursor texture changes
-/// for different tool modes (bulldozer, details, placement). Coordinates with GridManager for
-/// grid position and placement validation.
+/// Visual cursor + placement preview. Shows ghost prefabs for buildings, roads, zones as mouse
+/// moves over grid. Cursor texture swaps per tool mode (bulldozer, details, placement).
+/// Coords with <see cref="GridManager"/> for grid pos + placement validation.
 /// </summary>
 public class CursorManager : MonoBehaviour
 {

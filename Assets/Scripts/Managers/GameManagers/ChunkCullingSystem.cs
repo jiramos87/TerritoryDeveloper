@@ -3,9 +3,9 @@ using UnityEngine;
 namespace Territory.Core
 {
     /// <summary>
-    /// Chunk-based camera culling system. Divides the grid into rectangular chunks and
-    /// toggles their visibility based on the camera viewport, avoiding draw calls for
-    /// off-screen tiles. Extracted from GridManager to reduce its responsibilities.
+    /// Chunk-based camera culling system. Divides grid into rectangular chunks +
+    /// toggles visibility based on camera viewport → avoid draw calls for
+    /// off-screen tiles. Extracted from <see cref="GridManager"/> to reduce responsibilities.
     /// </summary>
     public class ChunkCullingSystem
     {
@@ -33,8 +33,8 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Checks whether the camera has moved and, if so, activates/deactivates chunks
-        /// based on the visible grid range. Call from LateUpdate.
+        /// Check if camera moved; if so, activate/deactivate chunks
+        /// based on visible grid range. Call from <c>LateUpdate</c>.
         /// </summary>
         public void UpdateVisibility()
         {

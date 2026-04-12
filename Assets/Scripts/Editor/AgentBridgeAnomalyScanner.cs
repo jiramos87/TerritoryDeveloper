@@ -6,12 +6,12 @@ using UnityEngine;
 
 /// <summary>
 /// Rule-based anomaly scan for <c>debug_context_bundle</c> Moore neighborhood exports (IDE agent bridge).
-/// Operates only on the 3×3 neighborhood around a seed cell; does not walk the full grid.
+/// Operates only on 3×3 neighborhood around seed cell; does not walk full grid.
 /// </summary>
 public static class AgentBridgeAnomalyScanner
 {
     /// <summary>
-    /// Scans the Moore neighborhood (up to nine in-bounds cells) around <paramref name="centerX"/>, <paramref name="centerY"/>.
+    /// Scan Moore neighborhood (up to 9 in-bounds cells) around <paramref name="centerX"/>, <paramref name="centerY"/>.
     /// </summary>
     public static List<AgentBridgeAnomalyRecordDto> ScanNeighborhood(int centerX, int centerY)
     {
@@ -177,7 +177,7 @@ public static class AgentBridgeAnomalyScanner
     }
 
     /// <summary>
-    /// Brown land cliff stack (not water-cascade): Cliff in name, no Water; and South or East in name to match void-facing stacks.
+    /// Brown land cliff stack (not water-cascade): Cliff in name, no Water; South or East in name → match void-facing stacks.
     /// </summary>
     static bool CellTransformHasDirectionalBrownCliffChild(Transform root, bool southOrEastSouth)
     {

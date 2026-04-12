@@ -3,14 +3,14 @@ using UnityEngine;
 namespace Territory.Utilities.Compute
 {
     /// <summary>
-    /// Pure isometric grid ↔ world math aligned with <c>GridManager</c> and
-    /// <c>isometric-geography-system.md</c> §1.1 / §1.3 (see <c>tools/compute-lib</c> golden tests, TECH-37).
-    /// Runtime gameplay remains authoritative on <see cref="Territory.Core.GridManager"/>; use this for shared static helpers only.
+    /// Pure isometric grid ↔ world math aligned with <c>GridManager</c> +
+    /// <c>isometric-geography-system.md</c> §1.1 / §1.3. See <c>tools/compute-lib</c> golden tests.
+    /// Runtime gameplay authoritative on <see cref="Territory.Core.GridManager"/>; use this for shared static helpers only.
     /// </summary>
     public static class IsometricGridMath
     {
         /// <summary>
-        /// Planar world → logical cell (matches <see cref="Territory.Core.GridManager.GetGridPosition"/>).
+        /// Planar world → logical cell. Matches <see cref="Territory.Core.GridManager.GetGridPosition"/>.
         /// </summary>
         public static Vector2Int WorldToGridPlanar(
             Vector2 world,
@@ -27,7 +27,7 @@ namespace Territory.Utilities.Compute
         }
 
         /// <summary>
-        /// Grid → world with optional terrain height level (matches <see cref="Territory.Core.GridManager.GetWorldPositionVector"/>).
+        /// Grid → world with optional terrain height level. Matches <see cref="Territory.Core.GridManager.GetWorldPositionVector"/>.
         /// </summary>
         public static Vector2 GridToWorldPlanar(
             int gridX,

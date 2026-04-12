@@ -7,8 +7,8 @@ using Territory.Utilities.Compute;
 namespace Territory.Simulation
 {
 /// <summary>
-/// Urban ring classification for density gradient and sector-based zoning.
-/// Inner = urban center (dense, no industrial), Mid = residential, Outer = transition to rural, Rural = sparse.
+/// Urban ring classification for density gradient + sector-based zoning.
+/// Inner=urban center (dense, no industrial), Mid=residential, Outer=transition to rural, Rural=sparse.
 /// </summary>
 public enum UrbanRing
 {
@@ -19,7 +19,7 @@ public enum UrbanRing
 }
 
 /// <summary>
-/// Base zone type probabilities (R, C, I) per urban ring for sector-coherent auto-zoning.
+/// Base zone type probs (R, C, I) per urban ring for sector-coherent auto-zoning.
 /// </summary>
 [System.Serializable]
 public struct RingZoneProbabilities
@@ -30,7 +30,7 @@ public struct RingZoneProbabilities
 }
 
 /// <summary>
-/// Light/Medium/Heavy zoning probabilities per urban ring for density gradient (FEAT-29).
+/// Light/Medium/Heavy zoning probs per urban ring for density gradient.
 /// </summary>
 [System.Serializable]
 public struct RingZoningDensity
@@ -41,7 +41,7 @@ public struct RingZoningDensity
 }
 
 /// <summary>
-/// Street extension parameters per urban ring for density gradient (FEAT-29).
+/// Street extension params per urban ring for density gradient.
 /// </summary>
 [System.Serializable]
 public struct RingStreetParams
@@ -54,9 +54,9 @@ public struct RingStreetParams
 }
 
 /// <summary>
-/// Tracks urban centroid and radius, classifies cells by urban ring.
-/// Shared by AutoZoningManager and AutoRoadBuilder for sector-coherent zoning and road density gradient.
-/// Plain C# class (not MonoBehaviour); instantiated and wired by AutoZoningManager.
+/// Track urban centroid + radius. Classify cells by urban ring.
+/// Shared by <see cref="AutoZoningManager"/> + <see cref="AutoRoadBuilder"/> for sector-coherent zoning + road density gradient.
+/// Plain C# class (not MonoBehaviour); instantiated + wired by <see cref="AutoZoningManager"/>.
 /// </summary>
 public class UrbanMetrics
 {
@@ -114,19 +114,19 @@ public class UrbanMetrics
         return new Vector2(centroidSumX / urbanCellCount, centroidSumY / urbanCellCount);
     }
 
-    /// <summary>Effective urban radius for ring classification.</summary>
+    /// <summary>Effective urban radius for ring classif.</summary>
     public float GetUrbanRadius()
     {
         return UrbanGrowthRingMath.ComputeUrbanRadiusFromCellCount(urbanCellCount);
     }
 
-    /// <summary>Returns the 3 ring boundary distances (at 70%, 100%, 180% of radius) for visualization.</summary>
+    /// <summary>Return 3 ring boundary distances (at 70%, 100%, 180% of radius) for viz.</summary>
     public float[] GetRingBoundaryDistances()
     {
         return UrbanGrowthRingMath.GetRingBoundaryDistances(GetUrbanRadius());
     }
 
-    /// <summary>Classifies a cell position by urban ring based on distance to centroid.</summary>
+    /// <summary>Classify cell position by urban ring based on distance to centroid.</summary>
     public UrbanRing GetUrbanRing(Vector2 cellPos)
     {
         Vector2 centroid = GetCentroid();
@@ -134,19 +134,19 @@ public class UrbanMetrics
         return UrbanGrowthRingMath.ClassifyRing(cellPos.x, cellPos.y, centroid.x, centroid.y, radius);
     }
 
-    /// <summary>Base zone probabilities (R, C, I) for the given ring.</summary>
+    /// <summary>Base zone probs (R, C, I) for given ring.</summary>
     public RingZoneProbabilities GetBaseZoneProbabilities(UrbanRing ring)
     {
         return zoneProbabilitiesByRing[(int)ring];
     }
 
-    /// <summary>Street extension parameters for the given ring.</summary>
+    /// <summary>Street extension params for given ring.</summary>
     public RingStreetParams GetStreetParamsForRing(UrbanRing ring)
     {
         return streetParamsByRing[(int)ring];
     }
 
-    /// <summary>Light/Medium/Heavy zoning probabilities for the given ring.</summary>
+    /// <summary>Light/Medium/Heavy zoning probs for given ring.</summary>
     public RingZoningDensity GetZoningDensityForRing(UrbanRing ring)
     {
         return densityByRing[(int)ring];
@@ -190,22 +190,22 @@ public class UrbanMetrics
         }
     }
 
-    /// <summary>No-op: centroid is recalculated from grid each tick (buildings only).</summary>
+    /// <summary>No-op. Centroid recalculated from grid each tick (buildings only).</summary>
     public void OnUrbanCellAdded(Vector2 pos)
     {
     }
 
-    /// <summary>No-op: centroid is recalculated from grid each tick (buildings only).</summary>
+    /// <summary>No-op. Centroid recalculated from grid each tick (buildings only).</summary>
     public void OnUrbanCellRemoved(Vector2 pos)
     {
     }
 
-    /// <summary>No-op: centroid is recalculated from grid each tick (buildings only).</summary>
+    /// <summary>No-op. Centroid recalculated from grid each tick (buildings only).</summary>
     public void OnUrbanCellsBulldozed(IReadOnlyList<Vector2Int> positions)
     {
     }
 
-    /// <summary>Recalculates centroid from grid. Only counts constructed buildings (excludes roads, interstate, zoning without spawn).</summary>
+    /// <summary>Recalc centroid from grid. Counts only constructed buildings (excl. roads, interstate, zoning without spawn).</summary>
     public void RecalculateFromGrid(GridManager gridManager)
     {
         if (gridManager == null) return;

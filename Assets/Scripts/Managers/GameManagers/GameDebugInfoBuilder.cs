@@ -10,9 +10,8 @@ using Territory.Buildings;
 namespace Territory.Utilities
 {
 /// <summary>
-/// Centralized builder for in-game debug / analysis text shown in the UI (e.g. coordinates,
-/// cell under cursor, building placement info, fail reason). Use this to keep debug strings
-/// consistent and to improve LLM/developer analysis from screenshots.
+/// Centralized builder for in-game debug/analysis text in UI (coordinates, cell under cursor, building placement, fail reason).
+/// Keeps debug strings consistent → improves LLM/dev analysis from screenshots.
 /// </summary>
 public class GameDebugInfoBuilder : MonoBehaviour
 {
@@ -31,7 +30,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Resolve manager references from the scene if not assigned.
+    /// Resolve manager refs from scene if not assigned.
     /// </summary>
     private void ResolveRefsIfNeeded()
     {
@@ -42,8 +41,8 @@ public class GameDebugInfoBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns a single line with grid coordinates, chunk id, logical water surface height, and water body classification + id when in bounds, e.g.
-    /// "x: 12, y: 9, chunk: (0,0), S: 2, body: Lake id=3" or "..., S: n/a, body: n/a" when the cell is dry.
+    /// Single line: grid coords, chunk id, logical water surface height, water body classification + id when in bounds. E.g.
+    /// <c>"x: 12, y: 9, chunk: (0,0), S: 2, body: Lake id=3"</c> or <c>"..., S: n/a, body: n/a"</c> when cell dry.
     /// </summary>
     public string GetCoordinatesLine(Vector2 gridPosition)
     {
@@ -71,8 +70,8 @@ public class GameDebugInfoBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns debug info for the cell under the cursor: height, zoneType, isWater, hasForest, adjacentToWater.
-    /// Uses TerrainManager.HeightMap, Cell, and WaterManager when available.
+    /// Debug info for cell under cursor: height, zoneType, isWater, hasForest, adjacentToWater.
+    /// Uses <see cref="TerrainManager"/> HeightMap, <see cref="Cell"/>, <see cref="WaterManager"/> when available.
     /// </summary>
     public string GetCellUnderCursorInfo(Vector2 gridPosition)
     {
@@ -107,8 +106,8 @@ public class GameDebugInfoBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Names of prefab instances associated with a cell: stored terrain/shore/forest labels, then live GameObject names
-    /// for terrain prefab, forest, and occupied building (deduplicated, insertion order).
+    /// Prefab instance names for cell: stored terrain/shore/forest labels, then live GameObject names
+    /// for terrain prefab, forest, occupied building (dedup, insertion order).
     /// </summary>
     private static string FormatCellInstantiatedPrefabNames(Cell cell)
     {
@@ -136,8 +135,8 @@ public class GameDebugInfoBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Debug line for the last clicked cell: coordinates (chunk, water S/body when in bounds), terrain height h,
-    /// and instantiated prefab name(s) for that cell.
+    /// Debug line for last clicked cell: coords (chunk, water S/body when in bounds), terrain height h,
+    /// instantiated prefab name(s) for cell.
     /// </summary>
     public string GetSelectedPointDebugLine(Vector2 selectedPoint)
     {
@@ -170,7 +169,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns a short line listing footprint tile coordinates, e.g. "Footprint: (12,9)(13,9)(12,10)(13,10)".
+    /// Short line listing footprint tile coords. E.g. <c>"Footprint: (12,9)(13,9)(12,10)(13,10)"</c>.
     /// </summary>
     public string GetFootprintTilesLine(Vector2 gridPosition, int buildingSize)
     {
@@ -190,7 +189,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns a multi-line summary of footprint cells: coords, height, zoneType, isWater, adjacentToWater per tile.
+    /// Multi-line summary of footprint cells: coords, height, zoneType, isWater, adjacentToWater per tile.
     /// </summary>
     private string GetFootprintSummary(Vector2 gridPosition, int buildingSize)
     {
@@ -224,7 +223,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns building placement debug block: building name, footprint size, footprint summary, and fail reason if any.
+    /// Building placement debug block: name, footprint size, footprint summary, fail reason if any.
     /// </summary>
     public string GetBuildingPlacementInfo(Vector2 gridPosition, int buildingSize, string buildingName, bool isWaterPlant)
     {
@@ -249,12 +248,11 @@ public class GameDebugInfoBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns the full debug text for the current cursor position: coordinates, cell under cursor,
-    /// last-click grid cell (coords, h, prefab names), and (if a building is selected) building placement info.
-    /// Use this for the main debug panel.
+    /// Full debug text for cursor position: coords, cell under cursor, last-click grid cell (coords, h, prefab names),
+    /// and (if building selected) building placement info. Main debug panel.
     /// </summary>
     /// <param name="gridPosition">Current cursor grid position.</param>
-    /// <param name="selectedPoint">Last clicked grid position (left or right). Use (-1,-1) for none.</param>
+    /// <param name="selectedPoint">Last clicked grid position (left or right). (-1,-1) → none.</param>
     public string GetFullDebugText(Vector2 gridPosition, Vector2 selectedPoint)
     {
         ResolveRefsIfNeeded();
@@ -282,7 +280,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Short one-line debug string (coordinates + cell summary). Use when UI space is limited.
+    /// Short one-line debug string (coords + cell summary). Use when UI space limited.
     /// </summary>
     public string GetShortDebugLine(Vector2 gridPosition)
     {

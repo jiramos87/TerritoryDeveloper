@@ -4,8 +4,8 @@ using UnityEngine;
 namespace Territory.Timing
 {
 /// <summary>
-/// Controls animation speed scaling for animated game objects (e.g., water tiles).
-/// Synchronizes animator playback speed with TimeManager's game speed setting.
+/// Control animation speed scaling for animated objects (e.g., water tiles).
+/// Sync animator playback speed with <see cref="TimeManager"/> game speed.
 /// </summary>
 public class AnimatorManager : MonoBehaviour
 {

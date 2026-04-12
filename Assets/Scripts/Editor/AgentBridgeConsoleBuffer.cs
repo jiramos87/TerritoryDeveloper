@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Ring buffer of Unity Console lines for the IDE agent bridge (<c>get_console_logs</c>).
+/// Ring buffer of Unity Console lines for IDE agent bridge (<c>get_console_logs</c>).
 /// Subscribes on first Editor load; clears on script domain reload. Thread-safe adds via lock.
 /// </summary>
 [InitializeOnLoad]
@@ -86,7 +86,7 @@ public static class AgentBridgeConsoleBuffer
         };
     }
 
-    /// <summary>Clears buffered lines (domain reload and explicit tests).</summary>
+    /// <summary>Clear buffered lines (domain reload + explicit tests).</summary>
     public static void Clear()
     {
         lock (s_lock)
@@ -96,7 +96,7 @@ public static class AgentBridgeConsoleBuffer
     }
 
     /// <summary>
-    /// Returns up to <paramref name="maxLines"/> matching entries, oldest first among the tail window.
+    /// Return up to <paramref name="maxLines"/> matching entries, oldest first in tail window.
     /// </summary>
     public static List<LogEntry> Query(
         DateTime? sinceUtc,

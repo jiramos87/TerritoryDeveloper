@@ -7,17 +7,17 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Polls Postgres via <c>agent-bridge-dequeue.mjs</c>, dispatches bridge <c>kind</c> values to existing
-/// <b>Territory Developer → Reports</b> entry points or bridge helpers, then completes jobs with <c>agent-bridge-complete.mjs</c>.
-/// Requires <c>DATABASE_URL</c> (same as <see cref="EditorPostgresExportRegistrar"/>).
-/// Play Mode bridge kinds use <see cref="SessionState"/> so completion survives domain reload when entering or exiting Play Mode.
-/// <c>get_compilation_status</c> completes synchronously (compile snapshot for IDE agents).
+/// Poll Postgres via <c>agent-bridge-dequeue.mjs</c> → dispatch bridge <c>kind</c> to existing
+/// <b>Territory Developer → Reports</b> entry points or bridge helpers → complete jobs via <c>agent-bridge-complete.mjs</c>.
+/// Requires <c>DATABASE_URL</c> — same as <see cref="EditorPostgresExportRegistrar"/>.
+/// Play Mode bridge kinds use <see cref="SessionState"/> → completion survives domain reload on Play Mode enter/exit.
+/// <c>get_compilation_status</c> completes synchronously; compile snapshot for IDE agents.
 /// </summary>
 public static class AgentBridgeCommandRunner
 {
     const int PollEveryNFrames = 30;
 
-    /// <summary>Wall-clock budget for <c>GridManager.isInitialized</c> after Play Mode starts (under MCP <c>timeout_ms</c> 30s).</summary>
+    /// <summary>Wall-clock budget for <c>GridManager.isInitialized</c> after Play Mode start; under MCP <c>timeout_ms</c> 30s.</summary>
     const double EnterPlayModeGridWaitMaxSeconds = 24.0;
 
     const string SessionEnterCommandIdKey = "TerritoryDeveloper.AgentBridge.EnterPending.command_id";
@@ -28,10 +28,9 @@ public static class AgentBridgeCommandRunner
     const string SessionExitRepoRootKey = "TerritoryDeveloper.AgentBridge.ExitPending.repo_root";
 
     /// <summary>
-    /// Full-game <see cref="ScreenCapture.CaptureScreenshot"/> writes after the game view renders.
-    /// Poll on <see cref="EditorApplication.update"/> until the file exists or a short wall-clock budget
-    /// elapses (keeps MCP <c>timeout_ms</c> ≤ 30s practical; frame counts alone are unreliable when the
-    /// Editor update rate drops).
+    /// Full-game <see cref="ScreenCapture.CaptureScreenshot"/> writes after game view renders.
+    /// Poll <see cref="EditorApplication.update"/> until file exists or short wall-clock budget elapses.
+    /// Keeps MCP <c>timeout_ms</c> ≤ 30s practical; frame counts alone unreliable when Editor update rate drops.
     /// </summary>
     const double DeferredScreenshotMaxWaitSeconds = 15.0;
 
@@ -43,11 +42,11 @@ public static class AgentBridgeCommandRunner
         public string RepoRelativePath;
         public DateTime StartedUtc;
 
-        /// <summary>When set, completion builds <c>debug_context_bundle</c> JSON instead of plain screenshot observability.</summary>
+        /// <summary>When set → completion builds <c>debug_context_bundle</c> JSON instead of plain screenshot observability.</summary>
         public DebugBundleCompletionStash DebugBundle;
     }
 
-    /// <summary>Holds synchronous <c>debug_context_bundle</c> results while a screenshot file is still pending.</summary>
+    /// <summary>Holds synchronous <c>debug_context_bundle</c> results while screenshot file still pending.</summary>
     sealed class DebugBundleCompletionStash
     {
         public string CellExportRelPath;
@@ -442,8 +441,8 @@ public static class AgentBridgeCommandRunner
     }
 
     /// <summary>
-    /// Synchronous compilation snapshot for IDE agents: <see cref="EditorApplication.isCompiling"/>,
-    /// <see cref="EditorUtility.scriptCompilationFailed"/>, and recent buffered Console error lines.
+    /// Synchronous compilation snapshot for IDE agents → <see cref="EditorApplication.isCompiling"/>,
+    /// <see cref="EditorUtility.scriptCompilationFailed"/>, + recent buffered Console error lines.
     /// </summary>
     static void RunGetCompilationStatus(string repoRoot, string commandId, string requestJson)
     {
@@ -1384,16 +1383,16 @@ class AgentBridgeParamsPayloadDto
     public string camera;
     public string filename_stem;
     public bool include_ui;
-    /// <summary>Optional <c>export_agent_context</c> only: <c>"cellX,cellY"</c> Moore neighborhood seed (e.g. <c>3,0</c>).</summary>
+    /// <summary><c>export_agent_context</c> only: optional <c>"cellX,cellY"</c> Moore neighborhood seed (e.g. <c>3,0</c>).</summary>
     public string seed_cell;
 
-    /// <summary><c>debug_context_bundle</c>: when JSON omits the key, runner defaults to <c>true</c>.</summary>
+    /// <summary><c>debug_context_bundle</c>: JSON omits key → runner defaults <c>true</c>.</summary>
     public bool include_screenshot;
 
-    /// <summary><c>debug_context_bundle</c>: when JSON omits the key, runner defaults to <c>true</c>.</summary>
+    /// <summary><c>debug_context_bundle</c>: JSON omits key → runner defaults <c>true</c>.</summary>
     public bool include_console;
 
-    /// <summary><c>debug_context_bundle</c>: when JSON omits the key, runner defaults to <c>true</c>.</summary>
+    /// <summary><c>debug_context_bundle</c>: JSON omits key → runner defaults <c>true</c>.</summary>
     public bool include_anomaly_scan;
 }
 
@@ -1406,7 +1405,7 @@ class AgentBridgeLogLineDto
     public string stack;
 }
 
-/// <summary>Populated for <c>get_compilation_status</c> under <see cref="AgentBridgeResponseFileDto.compilation_status"/>.</summary>
+/// <summary>Populated for <c>get_compilation_status</c> → <see cref="AgentBridgeResponseFileDto.compilation_status"/>.</summary>
 [Serializable]
 class AgentBridgeCompilationStatusDto
 {
@@ -1414,10 +1413,10 @@ class AgentBridgeCompilationStatusDto
 
     public bool compilation_failed;
 
-    /// <summary>Short excerpt from the most recent buffered error line (truncated).</summary>
+    /// <summary>Short excerpt from most recent buffered error line; truncated.</summary>
     public string last_error_excerpt;
 
-    /// <summary>Up to 20 recent Console lines with severity <c>error</c> from <see cref="AgentBridgeConsoleBuffer"/>.</summary>
+    /// <summary>Up to 20 recent Console lines severity <c>error</c> from <see cref="AgentBridgeConsoleBuffer"/>.</summary>
     public AgentBridgeLogLineDto[] recent_error_messages;
 }
 
@@ -1435,37 +1434,37 @@ class AgentBridgeResponseFileDto
     public string error;
     public AgentBridgeLogLineDto[] log_lines;
 
-    /// <summary>Populated for <c>enter_play_mode</c>, <c>exit_play_mode</c>, <c>get_play_mode_status</c>: <c>edit_mode</c>, <c>play_mode_loading</c>, or <c>play_mode_ready</c>.</summary>
+    /// <summary>Populated for <c>enter_play_mode</c> / <c>exit_play_mode</c> / <c>get_play_mode_status</c> → <c>edit_mode</c> / <c>play_mode_loading</c> / <c>play_mode_ready</c>.</summary>
     public string play_mode_state;
 
-    /// <summary>True when <see cref="GridManager"/> has finished <c>InitializeGrid()</c> (play-mode bridge kinds only).</summary>
+    /// <summary>True → <see cref="GridManager"/> finished <c>InitializeGrid()</c>; play-mode bridge kinds only.</summary>
     public bool ready;
 
     public bool already_playing;
     public bool already_stopped;
 
-    /// <summary>When true, <see cref="grid_width"/> and <see cref="grid_height"/> are valid.</summary>
+    /// <summary>True → <see cref="grid_width"/> + <see cref="grid_height"/> valid.</summary>
     public bool has_grid_dimensions;
 
     public int grid_width;
     public int grid_height;
 
-    /// <summary>Populated for <c>debug_context_bundle</c> only.</summary>
+    /// <summary>Populated for <c>debug_context_bundle</c>.</summary>
     public AgentBridgeBundleDto bundle;
 
-    /// <summary>Populated for <c>get_compilation_status</c> only.</summary>
+    /// <summary>Populated for <c>get_compilation_status</c>.</summary>
     public AgentBridgeCompilationStatusDto compilation_status;
 
-    /// <summary>Populated for <c>economy_balance_snapshot</c> only.</summary>
+    /// <summary>Populated for <c>economy_balance_snapshot</c>.</summary>
     public AgentBridgeEconomySnapshotDto economy_snapshot;
 
-    /// <summary>Populated for <c>prefab_manifest</c> only.</summary>
+    /// <summary>Populated for <c>prefab_manifest</c>.</summary>
     public AgentBridgePrefabManifestDto prefab_manifest;
 
-    /// <summary>Populated for <c>sorting_order_debug</c> only.</summary>
+    /// <summary>Populated for <c>sorting_order_debug</c>.</summary>
     public AgentBridgeSortingOrderDebugDto sorting_order_debug;
 
-    /// <summary>Factory: creates a response with all default fields pre-filled.</summary>
+    /// <summary>Factory → response with all default fields pre-filled.</summary>
     public static AgentBridgeResponseFileDto CreateOk(string commandId, string storage)
     {
         return new AgentBridgeResponseFileDto
@@ -1502,7 +1501,7 @@ class AgentBridgeBundleDto
     public bool anomaly_scan_skipped;
 }
 
-/// <summary>Populated for <c>economy_balance_snapshot</c> under response <c>economy_snapshot</c>.</summary>
+/// <summary>Populated for <c>economy_balance_snapshot</c> → response <c>economy_snapshot</c>.</summary>
 [Serializable]
 class AgentBridgeEconomySnapshotDto
 {
@@ -1521,7 +1520,7 @@ class AgentBridgeEconomySnapshotDto
     public float industrial_demand;
 }
 
-/// <summary>Populated for <c>prefab_manifest</c> under response <c>prefab_manifest</c>.</summary>
+/// <summary>Populated for <c>prefab_manifest</c> → response <c>prefab_manifest</c>.</summary>
 [Serializable]
 class AgentBridgePrefabManifestDto
 {
@@ -1538,7 +1537,7 @@ class AgentBridgePrefabManifestEntryDto
     public bool is_missing_script;
 }
 
-/// <summary>Populated for <c>sorting_order_debug</c> under response <c>sorting_order_debug</c>.</summary>
+/// <summary>Populated for <c>sorting_order_debug</c> → response <c>sorting_order_debug</c>.</summary>
 [Serializable]
 class AgentBridgeSortingOrderDebugDto
 {

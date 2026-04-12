@@ -50,10 +50,9 @@ public class BuildingTracker
 }
 
 /// <summary>
-/// Calculates residential, commercial, and industrial demand levels based on population,
-/// employment ratios, forest coverage, zone capacity, per-sector tax pressure, and city-wide happiness.
-/// Provides demand data that drives zone growth decisions in GrowthManager and AutoZoningManager.
-/// Refreshed each in-game day from <see cref="EmploymentManager.RefreshRCIDemandAfterDailyStats"/> after <see cref="CityStats.RecalculateHappiness"/>.
+/// Calc R/C/I demand levels from population + employment ratios + forest coverage + zone capacity +
+/// per-sector tax pressure + city-wide happiness. Drives zone growth in <see cref="GrowthManager"/> + AutoZoningManager.
+/// Refreshed daily by <see cref="EmploymentManager.RefreshRCIDemandAfterDailyStats"/> after <see cref="CityStats.RecalculateHappiness"/>.
 /// </summary>
 public class DemandManager : MonoBehaviour
 {
@@ -189,9 +188,7 @@ public class DemandManager : MonoBehaviour
         ApplyHappinessModifier();
     }
 
-    /// <summary>
-    /// Reduces each sector's demand when that sector's tax rate is above the comfort threshold.
-    /// </summary>
+    /// <summary>Reduce sector demand when sector tax rate above comfort threshold.</summary>
     private void ApplySectorTaxPressure()
     {
         if (economyManager == null) return;
@@ -217,7 +214,8 @@ public class DemandManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Scales all RCI demand levels by a multiplier from <b>today's</b> happiness target (see <see cref="CityStats.GetHappinessDemandMultiplier"/>).
+    /// Scale all RCI demand levels by multiplier from <b>today's</b> happiness target
+    /// (see <see cref="CityStats.GetHappinessDemandMultiplier"/>).
     /// </summary>
     private void ApplyHappinessModifier()
     {
@@ -339,7 +337,7 @@ public class DemandManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Environmental bonus no longer affects RCI demand. Kept for API compatibility; returns 0.
+    /// Environmental bonus no longer affects RCI demand. Kept for API compat; returns 0.
     /// Geographic attraction uses per-cell desirability in ZoneManager.GetWeightedSection.
     /// </summary>
     private float GetEnvironmentalDemandBonus()
@@ -347,9 +345,7 @@ public class DemandManager : MonoBehaviour
         return 0f;
     }
 
-    /// <summary>
-    /// Get demand bonus for a specific cell based on its desirability
-    /// </summary>
+    /// <summary>Demand bonus for specific cell based on its desirability.</summary>
     public float GetCellDesirabilityBonus(int x, int y)
     {
         if (gridManager == null) return 0f;
@@ -484,8 +480,8 @@ public class DemandManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Maps demand level [-100, 100] to spawn probability factor [0, 1].
-    /// Used by AutoZoningManager and ZoneManager for demand-weighted decisions.
+    /// Map demand level [-100, 100] → spawn probability factor [0, 1].
+    /// Used by AutoZoningManager + ZoneManager for demand-weighted decisions.
     /// </summary>
     public float GetDemandSpawnFactor(Zone.ZoneType zoneType)
     {

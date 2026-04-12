@@ -5,21 +5,21 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// TECH-55b: persists <b>Territory Developer → Reports</b> exports to <b>Postgres</b> (full <b>JSONB</b> document) via <c>register-editor-export.mjs</c>.
-/// **Postgres-only:** no <c>tools/reports/</c> fallback. Success path is quiet unless verbose prefs are on.
+/// Persist <b>Territory Developer → Reports</b> exports to <b>Postgres</b> (full <b>JSONB</b> document) via <c>register-editor-export.mjs</c>.
+/// Postgres-only — no <c>tools/reports/</c> fallback. Success path quiet unless verbose prefs on.
 /// </summary>
 public static class EditorPostgresExportRegistrar
 {
-    /// <summary>EditorPrefs key for optional <c>BACKLOG.md</c> issue id (metadata for SQL filters).</summary>
+    /// <summary>EditorPrefs key → optional <c>BACKLOG.md</c> issue id (SQL filter metadata).</summary>
     public const string BacklogIssueIdPrefsKey = "TerritoryDeveloper.EditorExportRegistry.BacklogIssueId";
 
-    /// <summary>Optional Postgres connection URI (local only; never commit). Overrides process env when non-empty.</summary>
+    /// <summary>Optional Postgres URI; local only, never commit. Overrides process env when non-empty.</summary>
     public const string DatabaseUrlPrefsKey = "TerritoryDeveloper.EditorExportRegistry.DatabaseUrl";
 
-    /// <summary>When true, log a short message after a successful registry insert.</summary>
+    /// <summary>True → log short message after successful registry insert.</summary>
     public const string VerboseLoggingPrefsKey = "TerritoryDeveloper.EditorExportRegistry.VerboseLogging";
 
-    /// <summary>Optional absolute path to the <c>node</c> binary. Unity GUI often lacks shell <c>PATH</c> (Volta, nvm, fnm).</summary>
+    /// <summary>Optional absolute path to <c>node</c> binary. Unity GUI often lacks shell <c>PATH</c> (Volta, nvm, fnm).</summary>
     public const string NodeExecutablePrefsKey = "TerritoryDeveloper.EditorExportRegistry.NodeExecutablePath";
 
     /// <summary><c>--kind agent_context</c> — <c>Export Agent Context</c> JSON.</summary>
@@ -34,7 +34,7 @@ public static class EditorPostgresExportRegistrar
     /// <summary><c>--kind world_snapshot_dev</c> — dev world snapshot interchange JSON.</summary>
     public const string KindWorldSnapshotDev = "world_snapshot_dev";
 
-    /// <summary><c>--kind ui_inventory</c> — <c>Export UI Inventory (JSON)</c> multi-scene <b>uGUI</b> snapshot (<b>UI design system</b> baseline).</summary>
+    /// <summary><c>--kind ui_inventory</c> — <c>Export UI Inventory (JSON)</c> multi-scene <b>uGUI</b> snapshot; <b>UI design system</b> baseline.</summary>
     public const string KindUiInventory = "ui_inventory";
 
     const string MenuRoot = "Territory Developer/Reports/";
@@ -46,7 +46,7 @@ public static class EditorPostgresExportRegistrar
     }
 
     /// <summary>
-    /// Resolves <c>DATABASE_URL</c>: <see cref="EditorPrefs"/> (non-empty), then process environment, then repo <c>.env.local</c>.
+    /// Resolve <c>DATABASE_URL</c>: <see cref="EditorPrefs"/> non-empty → process env → repo <c>.env.local</c>.
     /// </summary>
     public static string ResolveEffectiveDatabaseUrl(string repoRoot)
     {
@@ -62,7 +62,7 @@ public static class EditorPostgresExportRegistrar
     }
 
     /// <summary>
-    /// Resolves the <c>node</c> executable for subprocess spawn. GUI-launched Unity often has no Volta/nvm <c>PATH</c>.
+    /// Resolve <c>node</c> executable for subprocess spawn. GUI-launched Unity often lacks Volta/nvm <c>PATH</c>.
     /// </summary>
     public static string ResolveNodeExecutablePath()
     {
@@ -115,15 +115,15 @@ public static class EditorPostgresExportRegistrar
     }
 
     /// <summary>
-    /// Persists a report: writes a temp staging file, runs <c>register-editor-export.mjs</c>, then deletes staging.
-    /// **Postgres-only:** no <c>tools/reports/</c> fallback — configure <c>DATABASE_URL</c> (env, EditorPrefs, or <c>.env.local</c>).
+    /// Persist report: write temp staging file → run <c>register-editor-export.mjs</c> → delete staging.
+    /// Postgres-only, no <c>tools/reports/</c> fallback — configure <c>DATABASE_URL</c> via env, EditorPrefs, or <c>.env.local</c>.
     /// </summary>
-    /// <param name="kind">One of the <c>Kind*</c> constants.</param>
-    /// <param name="utf8Body">File body (JSON text or Markdown).</param>
-    /// <param name="isMarkdown">True for sorting debug export.</param>
-    /// <param name="fileBaseNameWithoutExtension">Unused for persistence (call-site compatibility).</param>
-    /// <param name="filesystemPathWritten">Always <c>null</c> (no workspace export files).</param>
-    /// <returns>True if a Postgres row was inserted successfully.</returns>
+    /// <param name="kind">One of <c>Kind*</c> constants.</param>
+    /// <param name="utf8Body">File body — JSON text or Markdown.</param>
+    /// <param name="isMarkdown">True → sorting debug export.</param>
+    /// <param name="fileBaseNameWithoutExtension">Unused for persistence; call-site compat.</param>
+    /// <param name="filesystemPathWritten">Always <c>null</c>; no workspace export files.</param>
+    /// <returns>True → Postgres row inserted successfully.</returns>
     public static bool TryPersistReport(
         string kind,
         string utf8Body,
@@ -291,12 +291,12 @@ public static class EditorPostgresExportRegistrar
     }
 
     /// <summary>
-    /// Repository root (parent of <c>Assets</c>). Exposed for IDE agent bridge path resolution.
+    /// Repository root — parent of <c>Assets</c>. Exposed for IDE agent bridge path resolution.
     /// </summary>
     public static string GetRepositoryRoot() => GetRepoRoot();
 
     /// <summary>
-    /// Path relative to <see cref="GetRepositoryRoot"/> using forward slashes (workspace-style).
+    /// Path relative to <see cref="GetRepositoryRoot"/>, forward slashes, workspace-style.
     /// </summary>
     public static string ToRepositoryRelativePath(string absolutePath) =>
         ToRepoRelativePath(GetRepoRoot(), absolutePath);
@@ -324,7 +324,7 @@ public static class EditorPostgresExportRegistrar
 }
 
 /// <summary>
-/// Postgres export registry: optional <c>BACKLOG.md</c> issue id, optional <c>DATABASE_URL</c>, optional <c>node</c> path, verbose logging.
+/// Postgres export registry settings: optional <c>BACKLOG.md</c> issue id, <c>DATABASE_URL</c>, <c>node</c> path, verbose logging.
 /// </summary>
 sealed class EditorPostgresExportRegistrySettingsWindow : EditorWindow
 {

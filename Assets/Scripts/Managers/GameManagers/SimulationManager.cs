@@ -4,8 +4,8 @@ using Territory.Economy;
 namespace Territory.Simulation
 {
 /// <summary>
-/// Central orchestrator for automatic city growth simulation.
-/// Called by TimeManager each day; runs roads -> zoning -> resources when simulateGrowth is true. Proposal flow disabled.
+/// Central orchestrator for auto city growth sim.
+/// Called by TimeManager each day. Runs roads → zoning → resources when simulateGrowth true. Proposal flow disabled.
 /// </summary>
 public class SimulationManager : MonoBehaviour
 {
@@ -57,9 +57,7 @@ public class SimulationManager : MonoBehaviour
             _metricsRecorder = FindObjectOfType<MetricsRecorder>();
     }
 
-    /// <summary>
-    /// Called by TimeManager once per in-game day. Runs all auto-growth systems in order when simulateGrowth is true.
-    /// </summary>
+    /// <summary>Called by TimeManager once per in-game day. Runs all auto-growth systems in order when simulateGrowth true.</summary>
     public void ProcessSimulationTick()
     {
         try
@@ -91,9 +89,7 @@ public class SimulationManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Called by TimeManager on day 1 of each month. Resets per-cycle budget spending.
-    /// </summary>
+    /// <summary>Called by TimeManager day 1 of each month. Reset per-cycle budget spending.</summary>
     public void ProcessMonthlyReset()
     {
         if (growthBudgetManager != null)

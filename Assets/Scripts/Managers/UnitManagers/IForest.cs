@@ -3,8 +3,7 @@ using UnityEngine;
 namespace Territory.Forests
 {
 /// <summary>
-/// Interface contract for forest types.
-/// Defines ForestType, ConstructionCost, WaterConsumption, Prefab, ForestSize, and GameObjectReference properties.
+/// Contract for forest types. Props: ForestType, ConstructionCost, WaterConsumption, Prefab, ForestSize, GameObjectReference.
 /// </summary>
 public interface IForest
 {

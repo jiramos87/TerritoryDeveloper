@@ -7,10 +7,10 @@ using Territory.Economy;
 namespace Territory.Simulation
 {
 /// <summary>
-/// Automatically zones cells along completed road segments during simulation steps.
-/// Uses segment-based strip zoning: reads PendingZoningSegments from AutoRoadBuilder,
-/// selects zone type by demand and density by urban ring, zones rectangular strips
-/// perpendicular to each segment.
+/// Auto-zone cells along completed road segments during sim steps.
+/// Uses segment-based strip zoning: reads PendingZoningSegments from <see cref="AutoRoadBuilder"/>,
+/// picks zone type by demand + density by urban ring, zones rectangular strips
+/// perp to each segment.
 /// </summary>
 public class AutoZoningManager : MonoBehaviour
 {
@@ -22,9 +22,9 @@ public class AutoZoningManager : MonoBehaviour
     public AutoRoadBuilder autoRoadBuilder;
     public UrbanCentroidService urbanCentroidService;
 
-    /// <summary>Max cells to zone per simulation tick across all segments.</summary>
+    /// <summary>Max cells to zone per sim tick across all segments.</summary>
     public int maxZonedCellsPerTick = 32;
-    /// <summary>Safety cap per tick; actual limit is driven by growth budget. Kept high so budget controls volume.</summary>
+    /// <summary>Safety cap per tick; actual limit driven by growth budget. Kept high so budget controls volume.</summary>
     private const int MaxZonedCellsPerTickSafetyCap = 300;
 
     string SimDateStr()
@@ -62,7 +62,7 @@ public class AutoZoningManager : MonoBehaviour
         }
     }
 
-    /// <summary>Returns UrbanMetrics from service for backward compatibility (e.g. MiniMapController).</summary>
+    /// <summary>Return <see cref="UrbanMetrics"/> from service for back-compat (e.g. MiniMapController).</summary>
     public UrbanMetrics GetUrbanMetrics()
     {
         return urbanCentroidService != null ? urbanCentroidService.GetUrbanMetrics() : null;
@@ -129,7 +129,7 @@ public class AutoZoningManager : MonoBehaviour
             pendingSegments.RemoveAt(toRemove[r]);
     }
 
-    /// <summary>Zones strips along a segment. Returns cells placed this call.</summary>
+    /// <summary>Zone strips along segment. Return cells placed this call.</summary>
     private int ZoneSegmentStrip(ref AutoRoadBuilder.PendingZoningSegment seg, ref int placedThisTick, ref int budget, HashSet<Vector2Int> roadReservationCells)
     {
         int L = seg.segment.length;
@@ -202,7 +202,7 @@ public class AutoZoningManager : MonoBehaviour
         return placed;
     }
 
-    /// <summary>True if cell can be zoned: in bounds, not water, Grass or has forest, not road/interstate; not in road extension or axial corridor (BUG-47).</summary>
+    /// <summary>True if cell zoneable: in bounds, not water, Grass or has forest, not road/interstate; not in road extension or axial corridor.</summary>
     private bool CanZoneCell(Vector2Int cell, HashSet<Vector2Int> roadReservationCells)
     {
         if (cell.x < 0 || cell.x >= gridManager.width || cell.y < 0 || cell.y >= gridManager.height)
@@ -230,7 +230,7 @@ public class AutoZoningManager : MonoBehaviour
         return true;
     }
 
-    /// <summary>Selects zone type (R, C, or I) for the segment based on demand. Equal probability among types with demand > 0. Industrial is excluded in Inner ring.</summary>
+    /// <summary>Pick zone type (R, C, or I) for segment based on demand. Equal prob among types with demand > 0. Industrial excluded in Inner ring.</summary>
     private Zone.ZoneType SelectZoneTypeForSegment(AutoRoadBuilder.CompletedSegment segment)
     {
         float r = demandManager != null ? demandManager.GetResidentialDemand().demandLevel : 0f;

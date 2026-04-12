@@ -7,7 +7,7 @@ using Territory.Timing;
 namespace Territory.UI
 {
 /// <summary>
-/// UI controller for game speed buttons (pause, 1x, 2x, 3x). Forwards speed changes to TimeManager.
+/// UI controller for game speed buttons (pause, 1x, 2x, 3x). Forwards speed changes → <see cref="TimeManager"/>.
 /// </summary>
 public class SpeedButtonsController : MonoBehaviour
 {
@@ -34,7 +34,7 @@ public class SpeedButtonsController : MonoBehaviour
     }
 
     /// <summary>
-    /// Initialize the button list for efficient state management
+    /// Init button list → efficient state mgmt.
     /// </summary>
     private void InitializeButtons()
     {
@@ -78,8 +78,7 @@ public class SpeedButtonsController : MonoBehaviour
     }
 
     /// <summary>
-    /// Update button visual states to reflect current speed selection
-    /// Called when speed changes via keyboard or button clicks
+    /// Update button visuals → reflect current speed. Called on keyboard or button change.
     /// </summary>
     public void UpdateButtonStates(int selectedSpeedIndex)
     {
@@ -103,9 +102,7 @@ public class SpeedButtonsController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Get button reference by speed index
-    /// </summary>
+    /// <summary>Button by speed index.</summary>
     private Button GetButtonByIndex(int speedIndex)
     {
         switch (speedIndex)
@@ -120,9 +117,7 @@ public class SpeedButtonsController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Set button to normal visual state (deselect)
-    /// </summary>
+    /// <summary>Set button → normal visual (deselect).</summary>
     private void SetButtonToNormalState(Button button)
     {
         if (button == null) return;
@@ -137,9 +132,7 @@ public class SpeedButtonsController : MonoBehaviour
         button.OnDeselect(null);
     }
 
-    /// <summary>
-    /// Set button to selected visual state (shows selected/pressed sprite)
-    /// </summary>
+    /// <summary>Set button → selected visual (selected/pressed sprite).</summary>
     private void SetButtonToSelectedState(Button button)
     {
         if (button == null) return;
@@ -154,9 +147,7 @@ public class SpeedButtonsController : MonoBehaviour
         button.OnSelect(null);
     }
 
-    /// <summary>
-    /// Public method called by TimeManager when speed changes via keyboard
-    /// </summary>
+    /// <summary>Called by <see cref="TimeManager"/> on keyboard speed change.</summary>
     public void OnSpeedChangedExternally(int newSpeedIndex)
     {
         if (newSpeedIndex != currentSelectedSpeed)
@@ -165,17 +156,13 @@ public class SpeedButtonsController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Get the currently selected speed index
-    /// </summary>
+    /// <summary>Current selected speed index.</summary>
     public int GetCurrentSelectedSpeed()
     {
         return currentSelectedSpeed;
     }
 
-    /// <summary>
-    /// Force refresh of button states - useful for debugging or manual refresh
-    /// </summary>
+    /// <summary>Force refresh button states. Debug/manual use.</summary>
     public void RefreshButtonStates()
     {
         UpdateButtonStates(currentSelectedSpeed);

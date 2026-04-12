@@ -88,7 +88,7 @@ public partial class UIManager
     }
 
     /// <summary>
-    /// Writes <see cref="gridCoordinatesText"/> from <see cref="GridManager.mouseGridPosition"/>; called from <see cref="LateUpdate"/> so it stays in sync with grid picking after <see cref="GridManager.Update"/>.
+    /// Write <see cref="gridCoordinatesText"/> from <see cref="GridManager.mouseGridPosition"/>. Called from <see cref="LateUpdate"/> → stays in sync with grid picking after <see cref="GridManager.Update"/>.
     /// </summary>
     void UpdateGridCoordinatesDebugText()
     {
@@ -251,7 +251,7 @@ public partial class UIManager
     }
 
     /// <summary>
-    /// R/C/I demand bar tint: <paramref name="rci"/> 0 = residential heavy zoning, 1 = commercial heavy, 2 = industrial heavy (prefab sample, else strong green / blue / yellow).
+    /// R/C/I demand bar tint. <paramref name="rci"/>: 0=residential heavy, 1=commercial heavy, 2=industrial heavy. Prefab sample, else strong green/blue/yellow.
     /// </summary>
     private Color GetHeavyZoningDemandBarColor(int rci)
     {
@@ -287,7 +287,7 @@ public partial class UIManager
     }
 
     /// <summary>
-    /// True when <paramref name="c"/> is not near grey/white (prefab <see cref="SpriteRenderer.color"/> defaults are unusable for HUD bars).
+    /// True if <paramref name="c"/> not near grey/white (prefab <see cref="SpriteRenderer.color"/> defaults unusable for HUD bars).
     /// </summary>
     private static bool IsChromaticBarTint(Color c)
     {
@@ -310,7 +310,7 @@ public partial class UIManager
     }
 
     /// <summary>
-    /// Reads a representative tint from a zoning tile prefab (sprite or uGUI <see cref="Image"/>).
+    /// Read representative tint from zoning tile prefab (sprite or uGUI <see cref="Image"/>).
     /// </summary>
     private static Color SampleZoningPrefabTint(GameObject prefab)
     {

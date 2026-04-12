@@ -3,8 +3,8 @@ using System.Collections.Generic;
 namespace Territory.Utilities
 {
 /// <summary>
-/// Generates unique procedural city names from combinable components.
-/// Stateless utility — all methods are static. Uses System.Random for deterministic seed-based generation.
+/// Generate unique procedural city names from combinable components.
+/// Stateless utility — all methods static. Uses <c>System.Random</c> for deterministic seed-based generation.
 /// </summary>
 public static class CityNameGenerator
 {
@@ -48,8 +48,8 @@ public static class CityNameGenerator
     }
 
     /// <summary>
-    /// Generate a name guaranteed unique within the provided set.
-    /// Adds the name to usedNames before returning.
+    /// Generate name guaranteed unique within provided set.
+    /// Adds name to usedNames before returning.
     /// </summary>
     public static string GenerateUnique(System.Random rng, HashSet<string> usedNames)
     {

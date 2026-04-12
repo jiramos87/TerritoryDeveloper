@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Territory.UI
 {
 /// <summary>
-/// UI button that toggles the statistics popup via DataPopupController.
+/// UI button → toggles stats popup via <see cref="DataPopupController"/>.
 /// </summary>
 public class ShowStatsButton : MonoBehaviour
 {

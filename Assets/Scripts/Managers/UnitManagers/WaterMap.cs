@@ -6,32 +6,32 @@ using UnityEngine;
 namespace Territory.Terrain
 {
     /// <summary>
-    /// Dry-land role at a river–river cardinal surface step (§12.8). Used for shore affiliation and prefab selection.
+    /// Dry-land role at river–river cardinal surface step (§12.8). Used for shore affiliation + prefab selection.
     /// </summary>
     public enum RiverJunctionBrinkRole
     {
         None,
-        /// <summary>Dry cell on the upper-pool side of a river–river cascade (Moore-adjacent to the high-surface water cell).</summary>
+        /// <summary>Dry cell on upper-pool side of river–river cascade (Moore-adjacent to high-surface water cell).</summary>
         UpperBrink,
-        /// <summary>Dry cell cardinally adjacent to the low-surface water cell of a river–river step.</summary>
+        /// <summary>Dry cell cardinally adjacent to low-surface water cell of river–river step.</summary>
         LowerBrink
     }
 
     /// <summary>
-    /// Stores water as an overlay on the height map: each cell has a water body id (0 = dry).
-    /// Bodies carry a shared surface height; terrain depth is implicit (surface &gt; terrain floor).
+    /// Water overlay on height map. Each cell has water body id (0 = dry).
+    /// Bodies carry shared surface height. Terrain depth implicit (surface &gt; terrain floor).
     /// </summary>
     public sealed class WaterMap
     {
         public const int FormatVersionV2 = 2;
 
-        /// <summary>V3: <see cref="WaterBodySerialized.bodyClassification"/> per body (FEAT-38). Loads still accept V2 without it.</summary>
+        /// <summary>V3: <see cref="WaterBodySerialized.bodyClassification"/> per body. Loads still accept V2 without it.</summary>
         public const int FormatVersionV3 = 3;
 
-        /// <summary>Neighbor outside the grid is treated as higher than any terrain cell (see <see cref="HeightMap"/> range 0–5).</summary>
+        /// <summary>Neighbor outside grid treated higher than any terrain cell (see <see cref="HeightMap"/> range 0–5).</summary>
         private const int OutsideMapSpillHeight = 6;
 
-        /// <summary>Reserved id for player-painted water (does not collide with procedural lake ids 1..N).</summary>
+        /// <summary>Reserved id for player-painted water. Does not collide with procedural lake ids 1..N.</summary>
         public const int LegacyPaintWaterBodyId = 10001;
 
         private int[,] waterBodyIds;
@@ -88,7 +88,7 @@ namespace Territory.Terrain
             return waterBodyIds[x, y];
         }
 
-        /// <summary>Returns -1 when the cell is not water.</summary>
+        /// <summary>Return -1 when cell not water.</summary>
         public int GetSurfaceHeightAt(int x, int y)
         {
             int id = GetWaterBodyId(x, y);
@@ -102,7 +102,7 @@ namespace Territory.Terrain
             return bodyId != 0 && bodies.TryGetValue(bodyId, out WaterBody b) ? b : null;
         }
 
-        /// <summary>Classification of the body at this cell, or <see cref="WaterBodyType.None"/> when dry.</summary>
+        /// <summary>Classification of body at this cell, or <see cref="WaterBodyType.None"/> when dry.</summary>
         public WaterBodyType GetBodyClassificationAt(int x, int y)
         {
             int id = GetWaterBodyId(x, y);
@@ -112,9 +112,9 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// True when this <b>water</b> cell is on the lower side of a cardinal water-water surface step (<c>S_high &gt; S_low</c>)
-        /// and the step is not <see cref="IsLakeSurfaceStepContactForbidden"/> (river cascades / multi-body junctions; §12.7).
-        /// Used with land-shore affiliation to detect downstream shores beside cascades.
+        /// True when this <b>water</b> cell on lower side of cardinal water-water surface step (<c>S_high &gt; S_low</c>)
+        /// + step not <see cref="IsLakeSurfaceStepContactForbidden"/> (river cascades / multi-body junctions; §12.7).
+        /// Used with land-shore affiliation → detect downstream shores beside cascades.
         /// </summary>
         public bool IsWaterCellLowerSideOfCardinalSurfaceStep(int x, int y)
         {
@@ -142,15 +142,15 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Classifies dry land at a <b>river–river</b> cardinal surface step: upper-pool brink vs lower-pool brink (§12.8).
-        /// Upper brinks affiliate to the <b>high</b> surface body; lower brinks to the <b>low</b> surface body.
-        /// <b>Lower</b> is tested before <b>upper</b> so land that cardinally touches the low pool (shore-line closure at a cascade)
-        /// keeps the lower <see cref="WaterBody"/> id even when Moore-adjacent to the high cell.
+        /// Classify dry land at <b>river–river</b> cardinal surface step: upper-pool brink vs lower-pool brink (§12.8).
+        /// Upper brinks affiliate to <b>high</b> surface body; lower brinks to <b>low</b> surface body.
+        /// <b>Lower</b> tested before <b>upper</b> → land cardinally touching low pool (shore-line closure at cascade)
+        /// keeps lower <see cref="WaterBody"/> id even when Moore-adjacent to high cell.
         /// </summary>
         /// <param name="x">Grid X.</param>
         /// <param name="y">Grid Y.</param>
-        /// <param name="role">None when not dry, not a qualifying step, or non-river contact.</param>
-        /// <param name="affiliatedBodyId"><see cref="GetWaterBodyId"/> for the affiliated pool when <paramref name="role"/> is not None.</param>
+        /// <param name="role">None when not dry, not qualifying step, or non-river contact.</param>
+        /// <param name="affiliatedBodyId"><see cref="GetWaterBodyId"/> for affiliated pool when <paramref name="role"/> not None.</param>
         /// <returns>True when <paramref name="role"/> is <see cref="RiverJunctionBrinkRole.UpperBrink"/> or <see cref="RiverJunctionBrinkRole.LowerBrink"/>.</returns>
         public bool TryGetDryLandRiverJunctionBrink(int x, int y, out RiverJunctionBrinkRole role, out int affiliatedBodyId)
         {
@@ -158,7 +158,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Same as <see cref="TryGetDryLandRiverJunctionBrink"/> but also outputs the high- and low-surface water cells of the qualifying river–river step (§12.8).
+        /// Same as <see cref="TryGetDryLandRiverJunctionBrink"/> but also outputs high- + low-surface water cells of qualifying river–river step (§12.8).
         /// </summary>
         /// <param name="highX">High-surface water cell X for the step.</param>
         /// <param name="highY">High-surface water cell Y for the step.</param>
@@ -281,10 +281,10 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Among dry land cells that share the same river–river step and <paramref name="role"/>, connected by cardinal land adjacency
-        /// (same step tuple from <see cref="TryGetDryLandRiverJunctionBrinkWithStep"/>), returns true only for the cell closest to the
-        /// cascade junction (minimum Manhattan sum to high and low step cells; tie-break by distance to high, then by grid order).
-        /// Ensures a single diagonal <c>SlopeWater</c> closure tile per shore strip at a junction (§12.8).
+        /// Among dry land cells sharing same river–river step + <paramref name="role"/>, connected by cardinal land adjacency
+        /// (same step tuple from <see cref="TryGetDryLandRiverJunctionBrinkWithStep"/>), return true only for cell closest to
+        /// cascade junction (min Manhattan sum to high + low step cells; tie-break by distance to high, then grid order).
+        /// Ensures single diagonal <c>SlopeWater</c> closure tile per shore strip at junction (§12.8).
         /// </summary>
         public bool IsDryLandRiverJunctionBrinkClosestToCascadeStep(
             int x, int y, RiverJunctionBrinkRole role, int stepHighX, int stepHighY, int stepLowX, int stepLowY)
@@ -377,8 +377,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// True when <paramref name="highX"/>,<paramref name="highY"/> and <paramref name="lowX"/>,<paramref name="lowY"/> are cardinally adjacent,
-        /// both <see cref="WaterBodyType.River"/>, and <c>S_high &gt; S_low</c> without lake-forbidden skip.
+        /// True when <paramref name="highX"/>,<paramref name="highY"/> + <paramref name="lowX"/>,<paramref name="lowY"/> cardinally adjacent,
+        /// both <see cref="WaterBodyType.River"/>, + <c>S_high &gt; S_low</c> without lake-forbidden skip.
         /// </summary>
         private bool IsRiverRiverCardinalSurfaceStepHighToLow(int highX, int highY, int lowX, int lowY)
         {
@@ -398,9 +398,9 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// When two registered water cells share a cardinal edge with <c>S_high &gt; S_low</c>, Pass A/B junction processing
-        /// and water–water cascades are skipped if <b>either</b> body is a <see cref="WaterBodyType.Lake"/> (§12.7). River–river
-        /// steps are unaffected; Sea is not treated as Lake for this rule.
+        /// When 2 registered water cells share cardinal edge with <c>S_high &gt; S_low</c>, Pass A/B junction processing
+        /// + water–water cascades skipped if <b>either</b> body is <see cref="WaterBodyType.Lake"/> (§12.7). River–river
+        /// steps unaffected. Sea not treated as Lake for this rule.
         /// </summary>
         /// <param name="highX">Higher logical surface cell.</param>
         /// <param name="highY">Higher logical surface cell.</param>
@@ -420,7 +420,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// True when some cardinal river–river surface step between <paramref name="bodyA"/> and <paramref name="bodyB"/>
+        /// True when some cardinal river–river surface step between <paramref name="bodyA"/> + <paramref name="bodyB"/>
         /// lies within Chebyshev distance <paramref name="searchRadius"/> of <paramref name="x"/>,<paramref name="y"/>.
         /// Used by <see cref="WaterManager.NeighborMatchesShoreOwnerForJunctionTopology"/> for junction cascade shore post-pass (§12.8.1).
         /// </summary>
@@ -457,15 +457,14 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// BUG-45 / §12.7: When a <see cref="WaterBodyType.Lake"/> cell cardinally touches a <see cref="WaterBodyType.River"/>
-        /// at a strictly lower logical surface, Pass A/B and water–water cascades are skipped
-        /// (<see cref="IsLakeSurfaceStepContactForbidden"/>). This fallback removes those lake water cells and sets dry rim
-        /// terrain height to the lake&apos;s logical <see cref="WaterBody.SurfaceHeight"/> <c>S</c> so the upper pool reads as a
-        /// closed basin; <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> then selects shore prefabs.
+        /// §12.7: <see cref="WaterBodyType.Lake"/> cell cardinally touching <see cref="WaterBodyType.River"/> at strictly lower
+        /// logical surface → Pass A/B + water–water cascades skipped (<see cref="IsLakeSurfaceStepContactForbidden"/>).
+        /// Fallback removes lake water cells, sets dry rim terrain height to lake&apos;s logical <see cref="WaterBody.SurfaceHeight"/> <c>S</c>
+        /// → upper pool reads as closed basin. <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> then selects shore prefabs.
         /// Call after <see cref="ApplyWaterSurfaceJunctionMerge"/>, before <see cref="WaterManager.PlaceWater"/>.
         /// </summary>
-        /// <param name="restoredCells">Cells converted from lake water to dry (for terrain restore and post–lake-shore height fix).</param>
-        /// <returns><c>true</c> if any cell was converted.</returns>
+        /// <param name="restoredCells">Cells converted lake → dry (for terrain restore + post–lake-shore height fix).</param>
+        /// <returns><c>true</c> if any cell converted.</returns>
         public bool ApplyLakeHighToRiverLowContactFallback(HeightMap heightMap, GridManager gridManager, out List<(int x, int y, int lakeSurface)> restoredCells)
         {
             restoredCells = new List<(int, int, int)>();
@@ -539,7 +538,7 @@ namespace Territory.Terrain
             return proceduralRiverEntryAnchors;
         }
 
-        /// <summary>Records the entry centerline cell for one procedural river pass (FEAT-38 diagnostics).</summary>
+        /// <summary>Records entry centerline cell for one procedural river pass (diagnostics).</summary>
         public void RecordProceduralRiverEntryAnchor(int x, int y)
         {
             if (IsValidPosition(x, y))
@@ -547,8 +546,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Inclusive axis-aligned bounding box of every cell with a non-zero water body id.
-        /// Returns <c>false</c> when the map has no water.
+        /// Inclusive axis-aligned bounding box of every cell with non-zero water body id.
+        /// Returns <c>false</c> when map has no water.
         /// </summary>
         public bool TryGetAllWaterBoundingBox(out int minX, out int minY, out int maxX, out int maxY)
         {
@@ -646,9 +645,9 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// True when a cardinal neighbor is registered water at the same logical surface <paramref name="surface"/>.
-        /// Skips Pass A bed alignment and Pass B contact-bed reassignment for cells that still connect to the upper pool
-        /// along a cardinal edge (§12.7 — straight waterfall brink, not a widened junction strip only).
+        /// True when cardinal neighbor is registered water at same logical surface <paramref name="surface"/>.
+        /// Skips Pass A bed alignment + Pass B contact-bed reassignment for cells still connecting to upper pool
+        /// along cardinal edge (§12.7 — straight waterfall brink, not widened junction strip only).
         /// </summary>
         private bool HasCardinalWaterNeighborAtSameSurface(int x, int y, int surface)
         {
@@ -669,14 +668,14 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// BUG-45 / multi-body contact: For each water cell on the <b>higher</b> logical surface that cardinally touches
-        /// water at a <b>strictly lower</b> surface, sets <see cref="HeightMap"/> bed height to the <b>minimum</b> bed
-        /// among those lower-surface neighbors only. Does <b>not</b> change <c>waterBodyIds</c>, merge bodies, or fill dry cells.
-        /// Skips edges where <see cref="IsLakeSurfaceStepContactForbidden"/> applies (§12.7). Idempotent; safe to run from
+        /// Multi-body contact: each water cell on <b>higher</b> logical surface cardinally touching water at <b>strictly lower</b>
+        /// surface → sets <see cref="HeightMap"/> bed height to <b>minimum</b> bed among those lower-surface neighbors only.
+        /// Does <b>not</b> change <c>waterBodyIds</c>, merge bodies, or fill dry cells.
+        /// Skips edges where <see cref="IsLakeSurfaceStepContactForbidden"/> applies (§12.7). Idempotent; safe from
         /// <see cref="WaterManager.UpdateWaterVisuals"/> before <c>PlaceWater</c>.
-        /// Skips cells with a cardinal neighbor on the same logical surface (upper-pool continuity at cascades).
+        /// Skips cells with cardinal neighbor on same logical surface (upper-pool continuity at cascades).
         /// </summary>
-        /// <returns><c>true</c> if any cell height was written.</returns>
+        /// <returns><c>true</c> if any cell height written.</returns>
         private bool AlignUpperSurfaceContactBorderBedHeightsOnce(HeightMap hm)
         {
             int[] d4x = { 1, -1, 0, 0 };
@@ -723,10 +722,10 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Aligns <see cref="HeightMap"/> beds only on the cardinal contact strip where a higher logical water surface
-        /// meets a lower one (see §12.7). Does not reclassify cells or merge bodies.
-        /// Runs multiple passes so minimum lower-pool beds propagate along the contact strip (junction width).
-        /// Call from <see cref="WaterManager.UpdateWaterVisuals"/> when a <see cref="HeightMap"/> is available.
+        /// Aligns <see cref="HeightMap"/> beds only on cardinal contact strip where higher logical water surface meets lower (§12.7).
+        /// Does not reclassify cells or merge bodies.
+        /// Multiple passes → minimum lower-pool beds propagate along contact strip (junction width).
+        /// Call from <see cref="WaterManager.UpdateWaterVisuals"/> when <see cref="HeightMap"/> available.
         /// </summary>
         public void ApplyMultiBodySurfaceBoundaryNormalization(HeightMap heightMap)
         {
@@ -741,18 +740,17 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// BUG-45 Pass B: extends the lower logical surface along cardinal contacts where <c>S_high &gt; S_low</c>,
-        /// so <see cref="PlaceWater"/> and cascade cliffs see continuous lower pool geometry.
-        /// Absorbs dry land (including former water-shore) in the strip away from the high cell, and dry cells on the
-        /// <b>upper-bank</b> perpendicular to the contact (beside each high cell at the junction) so the lower body
-        /// can replace shore wedges between two surface levels. The next <see cref="WaterManager.UpdateWaterVisuals"/>
-        /// pass replaces terrain with open water where absorbed.
+        /// Pass B: extends lower logical surface along cardinal contacts where <c>S_high &gt; S_low</c>
+        /// → <see cref="PlaceWater"/> + cascade cliffs see continuous lower pool geometry.
+        /// Absorbs dry land (incl. former water-shore) in strip away from high cell, + dry cells on <b>upper-bank</b>
+        /// perpendicular to contact (beside each high cell at junction) → lower body replaces shore wedges between two surface levels.
+        /// Next <see cref="WaterManager.UpdateWaterVisuals"/> pass replaces terrain with open water where absorbed.
         /// After dry absorption, <b>contact-bed reassignment</b> moves upper-pool <b>water</b> cells cardinally touching
-        /// lower-surface water into that neighbor’s body (§12.7): if the upper bed is still above the neighbor’s bed, it is
-        /// lowered to match first, then <c>waterBodyId</c> is updated so logical <c>S</c> matches the lecho.
-        /// Assigns <see cref="waterBodyIds"/> to an existing body at <paramref name="sLow"/> (deterministic: contact cell’s id;
-        /// does not merge two lower bodies). Idempotent. Updates <see cref="HeightMap"/> beds; sync <see cref="GridManager.SetCellHeight"/>
-        /// when <paramref name="gridManager"/> is non-null.
+        /// lower-surface water into that neighbor’s body (§12.7): upper bed above neighbor’s bed → lowered to match first,
+        /// then <c>waterBodyId</c> updated so logical <c>S</c> matches lecho.
+        /// Assigns <see cref="waterBodyIds"/> to existing body at <paramref name="sLow"/> (deterministic: contact cell’s id;
+        /// does not merge two lower bodies). Idempotent. Updates <see cref="HeightMap"/> beds; syncs <see cref="GridManager.SetCellHeight"/>
+        /// when <paramref name="gridManager"/> non-null.
         /// </summary>
         /// <returns><c>true</c> if any cell or height changed.</returns>
         public bool ApplyWaterSurfaceJunctionMerge(HeightMap heightMap, GridManager gridManager, out int dirtyMinX, out int dirtyMinY, out int dirtyMaxX, out int dirtyMaxY)
@@ -909,11 +907,11 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// One sweep: for each water cell on the higher side of a cardinal <c>S_high &gt; S_low</c> contact, pick a
-        /// lower-surface neighbor (not lake-forbidden) whose bed is not above this cell’s bed. If this cell’s bed is
-        /// still higher than the neighbor’s, align it to the neighbor’s bed first, then reassign <c>waterBodyId</c> to
-        /// the lower body. When multiple lower neighbors qualify, prefers the lowest <c>S_low</c> then the lowest body id.
-        /// Skips cells that still have a cardinal neighbor on the same logical surface (upper-segment continuity at cascades).
+        /// One sweep: each water cell on higher side of cardinal <c>S_high &gt; S_low</c> contact → pick
+        /// lower-surface neighbor (not lake-forbidden) whose bed not above this cell’s bed. Cell’s bed still higher than
+        /// neighbor’s → align to neighbor’s bed first, then reassign <c>waterBodyId</c> to lower body.
+        /// Multiple lower neighbors qualify → prefers lowest <c>S_low</c> then lowest body id.
+        /// Skips cells still having cardinal neighbor on same logical surface (upper-segment continuity at cascades).
         /// </summary>
         private bool TryReassignUpperWaterCellsMatchingLowerContactBed(HeightMap hm, GridManager grid, System.Action<int, int> expandDirty)
         {
@@ -984,8 +982,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Moves one upper-pool water cell to the lower neighbor’s body. When the upper bed is still above the lower
-        /// cell’s bed, aligns <see cref="HeightMap"/> (and <see cref="GridManager.SetCellHeight"/>) to the lower bed first.
+        /// Moves one upper-pool water cell to lower neighbor’s body. Upper bed still above lower cell’s bed →
+        /// aligns <see cref="HeightMap"/> (+ <see cref="GridManager.SetCellHeight"/>) to lower bed first.
         /// </summary>
         private bool TryReassignSingleUpperWaterCellToLowerBody(int hx, int hy, int lx, int ly, HeightMap hm, GridManager grid)
         {
@@ -1027,7 +1025,7 @@ namespace Territory.Terrain
 
         /// <summary>
         /// Counts consecutive cells from <paramref name="startX"/>,<paramref name="startY"/> stepping by
-        /// <paramref name="stepX"/>,<paramref name="stepY"/> (unit cardinal) that share <paramref name="surface"/> and <paramref name="bodyId"/>.
+        /// <paramref name="stepX"/>,<paramref name="stepY"/> (unit cardinal) sharing <paramref name="surface"/> + <paramref name="bodyId"/>.
         /// </summary>
         private int CountUpperExtentAlongStep(int startX, int startY, int stepX, int stepY, int surface, int bodyId)
         {
@@ -1044,8 +1042,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Registers a dry cell on the lower surface body and aligns its bed to adjacent lower-surface water.
-        /// Does not take cells from other water bodies. Skips cells with a placed building.
+        /// Registers dry cell on lower surface body + aligns its bed to adjacent lower-surface water.
+        /// Does not take cells from other water bodies. Skips cells with placed building.
         /// </summary>
         private bool TryAbsorbDryCellIntoLowerBody(int x, int y, int targetBodyId, int sLow, HeightMap hm, GridManager grid, out bool changed)
         {
@@ -1088,7 +1086,7 @@ namespace Territory.Terrain
             return true;
         }
 
-        /// <summary>Minimum bed among cardinal neighbors that are water at <paramref name="sLow"/>; otherwise current terrain height.</summary>
+        /// <summary>Minimum bed among cardinal neighbors that are water at <paramref name="sLow"/>; else current terrain height.</summary>
         private int ProposeLowerJunctionBedHeight(int x, int y, int sLow, HeightMap hm)
         {
             int[] d4x = { 1, -1, 0, 0 };
@@ -1123,9 +1121,9 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Fills natural depressions in the height map with lake bodies (FEAT-37a).
+        /// Fills natural depressions in height map with lake bodies.
         /// </summary>
-        /// <param name="seaLevelForArtificialFallback">Used when carving fallback lakes so surface height stays above sea.</param>
+        /// <param name="seaLevelForArtificialFallback">Used when carving fallback lakes → surface height stays above sea.</param>
         public void InitializeLakesFromDepressionFill(HeightMap heightMap, LakeFillSettings settings, int seaLevelForArtificialFallback = 0)
         {
             ClearAllWater();
@@ -1258,7 +1256,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Orders candidates by spill headroom (descending), then terrain height, then random tie-break (BUG-36).
+        /// Orders candidates by spill headroom (descending), then terrain height, then random tie-break.
         /// </summary>
         private void SortSeedCandidatesBySpillHeadroom(List<Vector2Int> cells, HeightMap heightMap, System.Random rnd)
         {
@@ -1293,7 +1291,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Second pass: seeds that are minima in a larger window (lakes between plateaus), same spill/basin rules, optional cap via bbox.
+        /// Second pass: seeds that are minima in larger window (lakes between plateaus), same spill/basin rules, optional cap via bbox.
         /// </summary>
         private void TryFillBoundedLocalDepressions(HeightMap heightMap, LakeFillSettings settings, System.Random rnd, bool[,] claimed, ref int bodiesCreated, int effectiveMaxLakeBodies)
         {
@@ -1364,14 +1362,14 @@ namespace Territory.Terrain
             }
         }
 
-        /// <summary>True if an artificial rectangle's width/height match procedural <see cref="LakeBoundingBoxFits"/> axis limits.</summary>
+        /// <summary>True if artificial rectangle's width/height match procedural <see cref="LakeBoundingBoxFits"/> axis limits.</summary>
         private static bool ArtificialRectangleBboxFits(LakeFillSettings settings, int rw, int rh)
         {
             return rw >= settings.MinLakeBoundingExtent && rw <= settings.MaxLakeBoundingExtent
                 && rh >= settings.MinLakeBoundingExtent && rh <= settings.MaxLakeBoundingExtent;
         }
 
-        /// <summary>True if axis-aligned bounds of the lake (in grid cells) are within configured min/max extent on both axes.</summary>
+        /// <summary>True if axis-aligned bounds of lake (grid cells) within configured min/max extent on both axes.</summary>
         private static bool LakeBoundingBoxFits(LakeFillSettings settings, List<Vector2Int> basinCells)
         {
             if (basinCells == null || basinCells.Count == 0)
@@ -1392,8 +1390,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// After lake depression-fill, marks cells at or below <paramref name="seaLevel"/> that are still dry.
-        /// Matches terrain sea placement (<c>PlaceSeaLevelWater</c>) so <see cref="WaterManager.IsWaterAt"/> and minimap stay consistent.
+        /// After lake depression-fill, marks cells at or below <paramref name="seaLevel"/> still dry.
+        /// Matches terrain sea placement (<c>PlaceSeaLevelWater</c>) → <see cref="WaterManager.IsWaterAt"/> + minimap stay consistent.
         /// </summary>
         public void MergeSeaLevelDryCellsFromHeightMap(HeightMap heightMap, int seaLevel)
         {
@@ -1415,7 +1413,7 @@ namespace Territory.Terrain
             }
         }
 
-        /// <summary>Legacy: all cells at or below sea level become one body (id 1) at <paramref name="seaLevel"/> surface.</summary>
+        /// <summary>Legacy: all cells at or below sea level → one body (id 1) at <paramref name="seaLevel"/> surface.</summary>
         public void InitializeWaterBodiesBasedOnHeight(HeightMap heightMap, int seaLevel)
         {
             ClearAllWater();
@@ -1602,7 +1600,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Minimum in a (2r+1)×(2r+1) window with variation: center is ≤ all cells in the window and some cell in the window is higher (excludes flat plateaus).
+        /// Minimum in (2r+1)×(2r+1) window with variation: center ≤ all cells + some cell higher (excludes flat plateaus).
         /// </summary>
         private bool IsLocalMinimumInWindow(int x, int y, HeightMap hm, int radius)
         {
@@ -1629,10 +1627,10 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Spill height for the seed's same-height plateau: minimum height over all cardinal neighbors
-        /// of the 4-connected component at <paramref name="x"/>,<paramref name="y"/> that lie outside the component.
+        /// Spill height for seed's same-height plateau: minimum height over all cardinal neighbors
+        /// of 4-connected component at <paramref name="x"/>,<paramref name="y"/> lying outside component.
         /// Off-map neighbors use <see cref="OutsideMapSpillHeight"/>.
-        /// If the plateau is the entire grid (uniform flat terrain), returns <c>seedH</c> so callers reject (no valid depression).
+        /// Plateau = entire grid (uniform flat terrain) → returns <c>seedH</c> so callers reject (no valid depression).
         /// </summary>
         private int GetPlateauSpillHeight(int x, int y, HeightMap hm)
         {
@@ -1724,9 +1722,9 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// BUG-46 / §13.3: Merge cardinally adjacent cells that belong to different bodies but share the same logical
-        /// <see cref="WaterBody.SurfaceHeight"/> (rivers with rivers, lakes with lakes, lake+sea). Call after procedural
-        /// river placement so parallel segments at the same surface become one <see cref="WaterBody"/> id where they touch.
+        /// §13.3: Merge cardinally adjacent cells belonging to different bodies but sharing same logical
+        /// <see cref="WaterBody.SurfaceHeight"/> (rivers+rivers, lakes+lakes, lake+sea). Call after procedural
+        /// river placement → parallel segments at same surface become one <see cref="WaterBody"/> id where they touch.
         /// </summary>
         public void MergeAdjacentBodiesWithSameSurface()
         {
@@ -1790,10 +1788,10 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Carves axis-aligned rectangles and registers them as lakes until <paramref name="targetBodies"/> is reached or placement fails.
-        /// Returns the number of new bodies placed in this call (before any merge the caller may run afterward).
+        /// Carves axis-aligned rectangles + registers them as lakes until <paramref name="targetBodies"/> reached or placement fails.
+        /// Returns count of new bodies placed this call (before any merge caller may run afterward).
         /// </summary>
-        /// <summary>Distance from map border for artificial lakes; smaller on tiny grids so 1×1 lakes can still be placed.</summary>
+        /// <summary>Distance from map border for artificial lakes; smaller on tiny grids → 1×1 lakes can still be placed.</summary>
         private int ComputeArtificialEdgeMargin()
         {
             int m = Mathf.Min(width, height);
@@ -1905,7 +1903,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// True if any cardinal neighbor outside the rectangle touches water with the same surface height (would merge on next merge pass).
+        /// True if any cardinal neighbor outside rectangle touches water with same surface height (would merge on next merge pass).
         /// </summary>
         private bool HasCardinalNeighborOutsideRectWithSameSurface(int x0, int y0, int rw, int rh, int surface)
         {
@@ -1953,8 +1951,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Lowest height among cardinal neighbors strictly outside the axis-aligned rectangle (the lake rim).
-        /// Used to carve a basin at least one step below surrounding land when possible.
+        /// Lowest height among cardinal neighbors strictly outside axis-aligned rectangle (lake rim).
+        /// Used to carve basin at least one step below surrounding land when possible.
         /// </summary>
         private static int GetMinCardinalHeightOutsideRectangle(HeightMap heightMap, int x0, int y0, int rw, int rh)
         {
@@ -1985,11 +1983,11 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Artificial rectangles only carve interior cells. Land cells that touch a lake corner only diagonally
-        /// (no cardinal neighbor inside the rectangle) could stay too high vs the resolved surface — clamp them
-        /// to <paramref name="surface"/> so rim/bay continuity matches cardinal shores (BUG-42). After init,
+        /// Artificial rectangles only carve interior cells. Land cells touching lake corner only diagonally
+        /// (no cardinal neighbor inside rectangle) could stay too high vs resolved surface → clamp them
+        /// to <paramref name="surface"/> so rim/bay continuity matches cardinal shores. After init,
         /// <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> also lowers any Moore shore land above
-        /// adjacent water logical surface (see isometric spec §2.4.1).
+        /// adjacent water logical surface (isometric spec §2.4.1).
         /// </summary>
         private static void CoerceDiagonalCornerRimForArtificialLake(HeightMap heightMap, int x0, int y0, int rw, int rh, int surface)
         {
@@ -2156,7 +2154,7 @@ namespace Territory.Terrain
             return true;
         }
 
-        /// <summary>Creates a new river body and returns its id (FEAT-38).</summary>
+        /// <summary>Creates new river body + returns its id.</summary>
         public int CreateRiverWaterBody(int surfaceHeight)
         {
             int bodyId = nextBodyId++;
@@ -2164,7 +2162,7 @@ namespace Territory.Terrain
             return bodyId;
         }
 
-        /// <summary>Assigns a dry cell to an existing river body.</summary>
+        /// <summary>Assigns dry cell to existing river body.</summary>
         public bool TryAssignCellToRiverBody(int x, int y, int bodyId)
         {
             if (!IsValidPosition(x, y))
@@ -2180,10 +2178,10 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Moves a cell from any water body into an existing river body (procedural river bed overlapping prior lake/sea).
+        /// Moves cell from any water body into existing river body (procedural river bed overlapping prior lake/sea).
         /// Dry cells delegate to <see cref="TryAssignCellToRiverBody"/>.
-        /// Does not reassign <see cref="WaterBodyType.Lake"/> cells when the lake&apos;s <see cref="WaterBody.SurfaceHeight"/>
-        /// differs from the river body&apos;s surface (§12.7 — same rule as <see cref="IsLakeSurfaceStepContactForbidden"/> at contacts).
+        /// Does not reassign <see cref="WaterBodyType.Lake"/> cells when lake&apos;s <see cref="WaterBody.SurfaceHeight"/>
+        /// differs from river body&apos;s surface (§12.7 — same rule as <see cref="IsLakeSurfaceStepContactForbidden"/> at contacts).
         /// </summary>
         public bool TryReassignCellFromAnyWaterToRiverBody(int x, int y, int riverBodyId)
         {
@@ -2211,36 +2209,36 @@ namespace Territory.Terrain
 
     }
 
-    /// <summary>Parameters for procedural lake placement (depression fill). Tuned in code only — not exposed on <see cref="WaterManager"/> until terrain generator UI (see FEAT-18 / BACKLOG).</summary>
+    /// <summary>Params for procedural lake placement (depression fill). Code-tuned only — not exposed on <see cref="WaterManager"/> until terrain generator UI.</summary>
     [Serializable]
     public sealed class LakeFillSettings
     {
-        /// <summary>Applied only after spill &gt; seed height (hydrologically feasible). Use &lt; 1 to thin redundant seeds on dense minima maps.</summary>
+        /// <summary>Applied only after spill &gt; seed height (hydrologically feasible). &lt; 1 thins redundant seeds on dense minima maps.</summary>
         public float LakeAcceptProbability = 1f;
         public int MinLakeCells = 6;
         /// <summary>Hard upper bound on procedural lake bodies (safety cap).</summary>
         public int MaxLakeBodies = 48;
 
-        /// <summary>Caps procedural lake count from scaled budget until map-size UI exists. Default 4.</summary>
+        /// <summary>Caps procedural lake count from scaled budget until map-size UI. Default 4.</summary>
         public int ProceduralLakeBudgetHardCap = 4;
 
         /// <summary>Extra spill-passing cells carved in terrain (margin over effective lake budget). See <see cref="TerrainManager"/> lake feasibility.</summary>
         public int LakeFeasibilityExtraBowls = 2;
 
-        /// <summary>Default only; <see cref="WaterManager.InitializeWaterMap"/> sets this from <see cref="Territory.Persistence.MapGenerationSeed"/> before lake fill (BUG-36).</summary>
+        /// <summary>Default only; <see cref="WaterManager.InitializeWaterMap"/> sets this from <see cref="Territory.Persistence.MapGenerationSeed"/> before lake fill.</summary>
         public int RandomSeed = 54321;
 
         /// <summary>
-        /// When true, <see cref="GetEffectiveMaxLakeBodies"/> scales with map area then caps by <see cref="ProceduralLakeBudgetHardCap"/>.
-        /// When false (default), the target lake count is <see cref="ProceduralLakeBudgetHardCap"/> clamped to <see cref="MaxLakeBodies"/>, independent of map size.
-        /// TODO(FEAT-18): wire from terrain generation options.
+        /// True → <see cref="GetEffectiveMaxLakeBodies"/> scales with map area, caps by <see cref="ProceduralLakeBudgetHardCap"/>.
+        /// False (default) → target lake count is <see cref="ProceduralLakeBudgetHardCap"/> clamped to <see cref="MaxLakeBodies"/>, independent of map size.
+        /// TODO: wire from terrain generation options.
         /// </summary>
         public bool UseScaledProceduralLakeBudget = false;
 
         /// <summary>Reference edge length in cells (128×128 = 16384 cells).</summary>
         public int ReferenceMapSide = 128;
 
-        /// <summary>Target number of procedural lakes on a map of <see cref="ReferenceMapSide"/>×<see cref="ReferenceMapSide"/> (used only when <see cref="UseScaledProceduralLakeBudget"/> is true).</summary>
+        /// <summary>Target procedural lake count on <see cref="ReferenceMapSide"/>×<see cref="ReferenceMapSide"/> map (only when <see cref="UseScaledProceduralLakeBudget"/> true).</summary>
         public int ProceduralLakeBudgetAtReference = 10;
 
         /// <summary>Extra random grid positions tried as basin seeds (mesas without strict local minima need this).</summary>
@@ -2249,22 +2247,22 @@ namespace Territory.Terrain
         /// <summary>Radius for <see cref="IsLocalMinimumInWindow"/> (e.g. 2 = 5×5). Relaxes seeds vs 4-neighbor strict minima.</summary>
         public int LocalMinWindowRadius = 2;
 
-        /// <summary>Minimum width and minimum height (in grid cells) of a lake's axis-aligned bounding box on each axis.</summary>
+        /// <summary>Min width + min height (grid cells) of lake's axis-aligned bounding box on each axis.</summary>
         public int MinLakeBoundingExtent = 2;
         /// <summary>
-        /// Maximum width and maximum height (in grid cells) of a lake's axis-aligned bounding box — same rule as procedural depression-fill (<see cref="LakeBoundingBoxFits"/>).
-        /// Artificial fallback uses these bounds so carved lakes never exceed procedural footprint limits.
+        /// Max width + max height (grid cells) of lake's axis-aligned bounding box — same rule as procedural depression-fill (<see cref="LakeBoundingBoxFits"/>).
+        /// Artificial fallback uses these bounds → carved lakes never exceed procedural footprint limits.
         /// </summary>
         public int MaxLakeBoundingExtent = 10;
 
-        /// <summary>If true, runs an extra pass with larger window minima and <see cref="BoundedLocalDepressionMaxBasinCells"/>.</summary>
+        /// <summary>True → runs extra pass with larger window minima + <see cref="BoundedLocalDepressionMaxBasinCells"/>.</summary>
         public bool RunBoundedLocalDepressionPass = true;
         public int BoundedLocalDepressionWindowRadius = 3;
         public int BoundedLocalDepressionMaxBasinCells = 100;
         public float BoundedLocalDepressionAcceptScale = 0.85f;
 
         /// <summary>
-        /// Area-scaled lake count capped by <see cref="MaxLakeBodies"/> (for diagnostics when comparing to fixed <see cref="ProceduralLakeBudgetHardCap"/>).
+        /// Area-scaled lake count capped by <see cref="MaxLakeBodies"/> (diagnostics when comparing to fixed <see cref="ProceduralLakeBudgetHardCap"/>).
         /// </summary>
         public int GetAreaScaledLakeBudgetDiagnostic(int mapWidth, int mapHeight)
         {
@@ -2276,7 +2274,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Target procedural lake body count: either <see cref="ProceduralLakeBudgetHardCap"/> (clamped) when area scaling is off, or area-scaled value capped by the hard cap when scaling is on.
+        /// Target procedural lake body count: <see cref="ProceduralLakeBudgetHardCap"/> (clamped) when area scaling off, or area-scaled value capped by hard cap when scaling on.
         /// </summary>
         public int GetEffectiveMaxLakeBodies(int mapWidth, int mapHeight)
         {
@@ -2287,7 +2285,7 @@ namespace Territory.Terrain
             return Mathf.Min(ProceduralLakeBudgetHardCap, scaled);
         }
 
-        /// <summary>At least <see cref="RandomExtraSeedAttempts"/>, scaled up for maps larger than the reference area.</summary>
+        /// <summary>At least <see cref="RandomExtraSeedAttempts"/>, scaled up for maps larger than reference area.</summary>
         public int GetScaledRandomExtraSeedAttempts(int mapWidth, int mapHeight)
         {
             int refArea = Mathf.Max(1, ReferenceMapSide * ReferenceMapSide);
@@ -2319,7 +2317,7 @@ namespace Territory.Terrain
         public int id;
         public int surfaceHeight;
 
-        /// <summary>Values from <see cref="WaterBodyType"/> (Lake, Sea, River). 0 / missing = treat as Lake on load.</summary>
+        /// <summary>Values from <see cref="WaterBodyType"/> (Lake, Sea, River). 0 / missing → treat as Lake on load.</summary>
         public int bodyClassification;
 
         public int[] cellIndicesFlat;

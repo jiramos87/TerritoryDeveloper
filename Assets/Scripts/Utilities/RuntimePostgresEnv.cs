@@ -5,13 +5,13 @@ using UnityEngine;
 namespace Territory.Integration
 {
     /// <summary>
-    /// Resolves optional Postgres connection and Node executable for runtime-spawned
-    /// <c>tools/postgres-ia</c> scripts (no EditorPrefs; suitable for Play Mode and batch).
+    /// Resolve Postgres connection + Node executable for runtime-spawned
+    /// <c>tools/postgres-ia</c> scripts. No EditorPrefs → Play Mode + batch safe.
     /// </summary>
     public static class RuntimePostgresEnv
     {
         /// <summary>
-        /// Returns a non-empty database URL from <c>DATABASE_URL</c> or repo-root <c>.env.local</c>, or null.
+        /// Return non-empty DB URL from <c>DATABASE_URL</c> or repo-root <c>.env.local</c>, else null.
         /// </summary>
         public static string TryGetDatabaseUrl(string repoRoot)
         {
@@ -26,7 +26,7 @@ namespace Territory.Integration
         }
 
         /// <summary>
-        /// Resolves <c>node</c> for subprocess spawn (mirrors Editor defaults where possible).
+        /// Resolve <c>node</c> for subprocess spawn. Mirrors Editor defaults where possible.
         /// </summary>
         public static string ResolveNodeExecutablePath()
         {

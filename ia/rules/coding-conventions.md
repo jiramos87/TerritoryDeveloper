@@ -16,6 +16,7 @@ Language: `project-overview.md`.
 
 - Every class MUST have `/// <summary>` (2–4 lines): responsibility, key deps, system fit.
 - Public methods MUST have `/// <summary>` + `<param>` / `<returns>` when applicable.
+- XML doc prose authored caveman **Full** style — see [`xml-doc-caveman.md`](xml-doc-caveman.md). Tags (`<see cref>`, `<paramref>`), identifiers, numeric literals stay verbatim.
 - Files >300 lines MUST use `#region` grouped by category.
 - Inspector fields MUST use `[Header("Category Name")]`.
 

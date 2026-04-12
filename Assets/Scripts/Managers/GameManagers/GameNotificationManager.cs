@@ -8,8 +8,8 @@ using Territory.Utilities;
 namespace Territory.UI
 {
 /// <summary>
-/// Manages in-game notifications for game logic events, providing persistent
-/// message display in the UI for player feedback on actions and system states.
+/// Manage in-game notifications for game logic events. Persistent UI message
+/// display → player feedback on actions + system states.
 /// </summary>
 public class GameNotificationManager : MonoBehaviour
 {
@@ -40,7 +40,7 @@ public class GameNotificationManager : MonoBehaviour
     private CanvasGroup notificationCanvasGroup;
 
     /// <summary>
-    /// Represents different types of notifications with appropriate styling
+    /// Notification types with styling.
     /// </summary>
     public enum NotificationType
     {
@@ -51,7 +51,7 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Internal structure for queued notification messages
+    /// Queued notification message struct.
     /// </summary>
     private struct NotificationMessage
     {
@@ -84,7 +84,7 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Initialize UI components and ensure proper setup
+    /// Init UI components + verify setup.
     /// </summary>
     private void InitializeComponents()
     {
@@ -111,47 +111,47 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Post an informational notification message
+    /// Post info notification.
     /// </summary>
-    /// <param name="message">The message to display</param>
+    /// <param name="message">Message to display.</param>
     public void PostInfo(string message)
     {
         PostNotification(message, NotificationType.Info);
     }
 
     /// <summary>
-    /// Post a success notification message
+    /// Post success notification.
     /// </summary>
-    /// <param name="message">The message to display</param>
+    /// <param name="message">Message to display.</param>
     public void PostSuccess(string message)
     {
         PostNotification(message, NotificationType.Success);
     }
 
     /// <summary>
-    /// Post a warning notification message
+    /// Post warning notification.
     /// </summary>
-    /// <param name="message">The message to display</param>
+    /// <param name="message">Message to display.</param>
     public void PostWarning(string message)
     {
         PostNotification(message, NotificationType.Warning);
     }
 
     /// <summary>
-    /// Post an error notification message
+    /// Post error notification.
     /// </summary>
-    /// <param name="message">The message to display</param>
+    /// <param name="message">Message to display.</param>
     public void PostError(string message)
     {
         PostNotification(message, NotificationType.Error);
     }
 
     /// <summary>
-    /// Post a notification with custom duration
+    /// Post notification with custom duration.
     /// </summary>
-    /// <param name="message">The message to display</param>
-    /// <param name="type">The type of notification</param>
-    /// <param name="customDuration">Custom display duration in seconds</param>
+    /// <param name="message">Message to display.</param>
+    /// <param name="type">Notification type.</param>
+    /// <param name="customDuration">Display duration (seconds).</param>
     public void PostNotification(string message, NotificationType type, float customDuration)
     {
         // Validate input
@@ -181,17 +181,17 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Post a notification with default duration
+    /// Post notification with default duration.
     /// </summary>
-    /// <param name="message">The message to display</param>
-    /// <param name="type">The type of notification</param>
+    /// <param name="message">Message to display.</param>
+    /// <param name="type">Notification type.</param>
     public void PostNotification(string message, NotificationType type)
     {
         PostNotification(message, type, notificationDuration);
     }
 
     /// <summary>
-    /// Start displaying the next notification in the queue
+    /// Start displaying next queued notification.
     /// </summary>
     private void StartNextNotification()
     {
@@ -213,9 +213,9 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Coroutine to handle the full lifecycle of displaying a notification
+    /// Coroutine → full notification display lifecycle.
     /// </summary>
-    /// <param name="notification">The notification to display</param>
+    /// <param name="notification">Notification to display.</param>
     private IEnumerator DisplayNotificationCoroutine(NotificationMessage notification)
     {
         // Setup message content and styling
@@ -237,9 +237,9 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Configure the notification display based on message type and content
+    /// Configure display per message type + content.
     /// </summary>
-    /// <param name="notification">The notification to configure</param>
+    /// <param name="notification">Notification to configure.</param>
     private void SetupNotificationDisplay(NotificationMessage notification)
     {
         // Set message text
@@ -264,12 +264,12 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Utility coroutine for fading CanvasGroup alpha values
+    /// Coroutine → fade CanvasGroup alpha.
     /// </summary>
-    /// <param name="canvasGroup">The CanvasGroup to fade</param>
-    /// <param name="startAlpha">Starting alpha value</param>
-    /// <param name="endAlpha">Ending alpha value</param>
-    /// <param name="duration">Duration of the fade</param>
+    /// <param name="canvasGroup">CanvasGroup to fade.</param>
+    /// <param name="startAlpha">Start alpha.</param>
+    /// <param name="endAlpha">End alpha.</param>
+    /// <param name="duration">Fade duration.</param>
     private IEnumerator FadeCanvasGroup(CanvasGroup canvasGroup, float startAlpha, float endAlpha, float duration)
     {
         float elapsedTime = 0f;
@@ -286,7 +286,7 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Clear all pending notifications from the queue
+    /// Clear all pending queued notifications.
     /// </summary>
     public void ClearNotificationQueue()
     {
@@ -303,9 +303,9 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Get the current number of pending notifications
+    /// Get pending notification count.
     /// </summary>
-    /// <returns>Number of notifications in queue</returns>
+    /// <returns>Queue count.</returns>
     public int GetQueueCount()
     {
         return messageQueue.Count;
@@ -314,10 +314,10 @@ public class GameNotificationManager : MonoBehaviour
     #region Convenience Methods for Common Game Events
 
     /// <summary>
-    /// Post insufficient funds notification
+    /// Post insufficient funds notification.
     /// </summary>
-    /// <param name="itemType">Type of item (building, infrastructure, etc.)</param>
-    /// <param name="cost">Cost of the item</param>
+    /// <param name="itemType">Item type (building, infrastructure, etc.).</param>
+    /// <param name="cost">Item cost.</param>
     public void PostInsufficientFunds(string itemType, int cost)
     {
         string message = $"Insufficient funds for {itemType}. Need ${cost:N0}";
@@ -325,9 +325,9 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Post building placement error notification
+    /// Post building placement error notification.
     /// </summary>
-    /// <param name="reason">Reason for placement failure</param>
+    /// <param name="reason">Placement failure reason.</param>
     public void PostBuildingPlacementError(string reason = "area is not available")
     {
         string message = $"Cannot place building: {reason}";
@@ -335,9 +335,9 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Post successful building construction notification
+    /// Post building constructed notification.
     /// </summary>
-    /// <param name="buildingName">Name of the building constructed</param>
+    /// <param name="buildingName">Constructed building name.</param>
     public void PostBuildingConstructed(string buildingName)
     {
         string message = $"{buildingName} constructed successfully";
@@ -345,10 +345,10 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Post zone growth notification
+    /// Post zone growth notification.
     /// </summary>
-    /// <param name="zoneType">Type of zone that grew</param>
-    /// <param name="count">Number of new buildings</param>
+    /// <param name="zoneType">Zone type that grew.</param>
+    /// <param name="count">New building count.</param>
     public void PostZoneGrowth(string zoneType, int count)
     {
         string message = $"{count} new {zoneType} building{(count > 1 ? "s" : "")} constructed";
@@ -356,10 +356,10 @@ public class GameNotificationManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Post economic event notification
+    /// Post economic event notification.
     /// </summary>
-    /// <param name="eventDescription">Description of the economic event</param>
-    /// <param name="isPositive">Whether the event is positive or negative</param>
+    /// <param name="eventDescription">Economic event description.</param>
+    /// <param name="isPositive">True → positive, false → negative.</param>
     public void PostEconomicEvent(string eventDescription, bool isPositive)
     {
         NotificationType type = isPositive ? NotificationType.Success : NotificationType.Warning;

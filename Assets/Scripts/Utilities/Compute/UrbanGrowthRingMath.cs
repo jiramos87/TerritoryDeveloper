@@ -4,9 +4,9 @@ using Territory.Simulation;
 namespace Territory.Utilities.Compute
 {
     /// <summary>
-    /// Pure urban growth ring classification (distance from cell to centroid vs effective radius).
+    /// Pure urban growth ring classification: distance cell→centroid vs effective radius.
     /// Mirrors <see cref="UrbanMetrics"/> thresholds for single-centroid mode; multipolar extension uses
-    /// minimum distance to poles (see <see cref="ClassifyRingMultipolar"/>). simulation-system §Rings.
+    /// min distance to poles (see <see cref="ClassifyRingMultipolar"/>). simulation-system §Rings.
     /// </summary>
     public static class UrbanGrowthRingMath
     {
@@ -18,7 +18,7 @@ namespace Territory.Utilities.Compute
         public const float OuterBoundaryFraction = 1.80f;
 
         /// <summary>
-        /// Effective urban radius from building cell count (same formula as <see cref="UrbanMetrics.GetUrbanRadius"/>).
+        /// Effective urban radius from building cell count. Same formula as <see cref="UrbanMetrics.GetUrbanRadius"/>.
         /// </summary>
         public static float ComputeUrbanRadiusFromCellCount(int urbanCellCount)
         {
@@ -27,7 +27,7 @@ namespace Territory.Utilities.Compute
         }
 
         /// <summary>
-        /// Ring from Euclidean distance to one centroid (legacy single-pole behavior).
+        /// Ring from Euclidean distance to one centroid. Legacy single-pole behavior.
         /// </summary>
         public static UrbanRing ClassifyRing(
             float cellX,
@@ -41,8 +41,8 @@ namespace Territory.Utilities.Compute
         }
 
         /// <summary>
-        /// Multipolar-ready: classify using minimum Euclidean distance to any pole (equal weight).
-        /// Empty pole list falls back to <paramref name="fallbackRing"/>.
+        /// Multipolar-ready: classify via min Euclidean distance to any pole (equal weight).
+        /// Empty pole list → <paramref name="fallbackRing"/>.
         /// </summary>
         public static UrbanRing ClassifyRingMultipolar(
             float cellX,

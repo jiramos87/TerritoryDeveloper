@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Territory.UI
 {
 /// <summary>
-/// UI button that activates industrial zone placement mode in UIManager.
+/// UI button → activates industrial zone placement mode in <see cref="UIManager"/>.
 /// </summary>
 public class IndustrialZoningSelectorButton : MonoBehaviour
 {

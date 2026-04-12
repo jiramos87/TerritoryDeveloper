@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// Editor-only multi-scene <b>uGUI</b> snapshot for <b>UI design system</b> baseline inventory: bounded JSON persisted via <b>Postgres</b> (<see cref="EditorPostgresExportRegistrar.TryPersistReport"/>).
+/// Editor-only multi-scene <b>uGUI</b> snapshot for <b>UI design system</b> baseline inventory. Bounded JSON persisted via <b>Postgres</b> (<see cref="EditorPostgresExportRegistrar.TryPersistReport"/>).
 /// Menu: <b>Territory Developer → Reports → Export UI Inventory (JSON)</b>.
 /// </summary>
 public static class UiInventoryReportsMenu
@@ -21,7 +21,7 @@ public static class UiInventoryReportsMenu
     const int MaxTextSampleChars = 80;
     const int MaxComponentsPerNode = 12;
 
-    /// <summary>UI inventory scene allowlist — extend for <b>CityScene</b> / <b>RegionScene</b> when shipped.</summary>
+    /// <summary>UI inventory scene allowlist. Extend for <b>CityScene</b> / <b>RegionScene</b> when shipped.</summary>
     static readonly string[] SceneAllowlist =
     {
         "Assets/Scenes/MainMenu.unity",

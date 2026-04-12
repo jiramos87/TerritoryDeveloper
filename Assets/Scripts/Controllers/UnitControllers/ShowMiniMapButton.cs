@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Territory.UI
 {
 /// <summary>
-/// UI button that toggles the mini-map visibility via MiniMapController.
+/// UI button → toggles mini-map visibility via <see cref="MiniMapController"/>.
 /// </summary>
 public class ShowMiniMapButton : MonoBehaviour
 {

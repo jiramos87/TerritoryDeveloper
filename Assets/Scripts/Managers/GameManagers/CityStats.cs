@@ -10,9 +10,9 @@ using Territory.Zones;
 namespace Territory.Economy
 {
 /// <summary>
-/// Global statistics aggregator for the city. Tracks population, money, happiness, employment,
-/// water/power capacity and consumption, zone counts, and resource budgets. Many managers read
-/// from CityStats to make decisions. Updated by TimeManager, WaterManager, and ForestManager.
+/// Global stats aggregator for city. Tracks population, money, happiness, employment,
+/// water/power capacity + consumption, zone counts, resource budgets. Many managers read
+/// from <see cref="CityStats"/> to decide. Updated by <see cref="TimeManager"/>, <see cref="WaterManager"/>, <see cref="ForestManager"/>.
 /// </summary>
 public class CityStats : MonoBehaviour, ICityStats
 {
@@ -114,28 +114,22 @@ public class CityStats : MonoBehaviour, ICityStats
             _statisticsManager = FindObjectOfType<StatisticsManager>();
     }
 
-    /// <summary>
-    /// Adds (or subtracts, if negative) the given amount to the city population.
-    /// </summary>
-    /// <param name="value">The population delta.</param>
+    /// <summary>Add (or subtract if negative) amount to city population.</summary>
+    /// <param name="value">Population delta.</param>
     public void AddPopulation(int value)
     {
         population += value;
     }
 
-    /// <summary>
-    /// Adds the specified amount to the city treasury.
-    /// </summary>
-    /// <param name="value">The amount of money to add.</param>
+    /// <summary>Add amount to city treasury.</summary>
+    /// <param name="value">Money to add.</param>
     public void AddMoney(int value)
     {
         money += value;
     }
 
-    /// <summary>
-    /// Subtracts the specified amount from the city treasury.
-    /// </summary>
-    /// <param name="value">The amount of money to remove.</param>
+    /// <summary>Subtract amount from city treasury.</summary>
+    /// <param name="value">Money to remove.</param>
     public void RemoveMoney(int value)
     {
         money -= value;
@@ -144,446 +138,344 @@ public class CityStats : MonoBehaviour, ICityStats
     #endregion
 
     #region Zone Statistics
-    /// <summary>
-    /// Increments the residential zone count by one.
-    /// </summary>
+    /// <summary>Inc residential zone count by 1.</summary>
     public void AddResidentialZoneCount()
     {
         residentialZoneCount++;
     }
 
-    /// <summary>
-    /// Decrements the residential zone count by one.
-    /// </summary>
+    /// <summary>Dec residential zone count by 1.</summary>
     public void RemoveResidentialZoneCount()
     {
         residentialZoneCount--;
     }
 
-    /// <summary>
-    /// Increments the residential building count by one.
-    /// </summary>
+    /// <summary>Inc residential building count by 1.</summary>
     public void AddResidentialBuildingCount()
     {
         residentialBuildingCount++;
     }
 
-    /// <summary>
-    /// Decrements the residential building count by one.
-    /// </summary>
+    /// <summary>Dec residential building count by 1.</summary>
     public void RemoveResidentialBuildingCount()
     {
         residentialBuildingCount--;
     }
 
-    /// <summary>
-    /// Increments the commercial zone count by one.
-    /// </summary>
+    /// <summary>Inc commercial zone count by 1.</summary>
     public void AddCommercialZoneCount()
     {
         commercialZoneCount++;
     }
 
-    /// <summary>
-    /// Decrements the commercial zone count by one.
-    /// </summary>
+    /// <summary>Dec commercial zone count by 1.</summary>
     public void RemoveCommercialZoneCount()
     {
         commercialZoneCount--;
     }
 
-    /// <summary>
-    /// Increments the commercial building count by one.
-    /// </summary>
+    /// <summary>Inc commercial building count by 1.</summary>
     public void AddCommercialBuildingCount()
     {
         commercialBuildingCount++;
     }
 
-    /// <summary>
-    /// Decrements the commercial building count by one.
-    /// </summary>
+    /// <summary>Dec commercial building count by 1.</summary>
     public void RemoveCommercialBuildingCount()
     {
         commercialBuildingCount--;
     }
 
-    /// <summary>
-    /// Increments the industrial zone count by one.
-    /// </summary>
+    /// <summary>Inc industrial zone count by 1.</summary>
     public void AddIndustrialZoneCount()
     {
         industrialZoneCount++;
     }
 
-    /// <summary>
-    /// Decrements the industrial zone count by one.
-    /// </summary>
+    /// <summary>Dec industrial zone count by 1.</summary>
     public void RemoveIndustrialZoneCount()
     {
         industrialZoneCount--;
     }
 
-    /// <summary>
-    /// Increments the industrial building count by one.
-    /// </summary>
+    /// <summary>Inc industrial building count by 1.</summary>
     public void AddIndustrialBuildingCount()
     {
         industrialBuildingCount++;
     }
 
-    /// <summary>
-    /// Decrements the industrial building count by one.
-    /// </summary>
+    /// <summary>Dec industrial building count by 1.</summary>
     public void RemoveIndustrialBuildingCount()
     {
         industrialBuildingCount--;
     }
 
-    /// <summary>
-    /// Increments the residential light building count and the aggregate residential building count.
-    /// </summary>
+    /// <summary>Inc residential light building count + aggregate residential building count.</summary>
     public void AddResidentialLightBuildingCount()
     {
         residentialLightBuildingCount++;
         AddResidentialBuildingCount();
     }
 
-    /// <summary>
-    /// Decrements the residential light building count and the aggregate residential building count.
-    /// </summary>
+    /// <summary>Dec residential light building count + aggregate residential building count.</summary>
     public void RemoveResidentialLightBuildingCount()
     {
         residentialLightBuildingCount--;
         RemoveResidentialBuildingCount();
     }
 
-    /// <summary>
-    /// Increments the residential light zoning count and the aggregate residential zone count.
-    /// </summary>
+    /// <summary>Inc residential light zoning count + aggregate residential zone count.</summary>
     public void AddResidentialLightZoningCount()
     {
         residentialLightZoningCount++;
         AddResidentialZoneCount();
     }
 
-    /// <summary>
-    /// Decrements the residential light zoning count and the aggregate residential zone count.
-    /// </summary>
+    /// <summary>Dec residential light zoning count + aggregate residential zone count.</summary>
     public void RemoveResidentialLightZoningCount()
     {
         residentialLightZoningCount--;
         RemoveResidentialZoneCount();
     }
 
-    /// <summary>
-    /// Increments the residential medium building count and the aggregate residential building count.
-    /// </summary>
+    /// <summary>Inc residential medium building count + aggregate residential building count.</summary>
     public void AddResidentialMediumBuildingCount()
     {
         residentialMediumBuildingCount++;
         AddResidentialBuildingCount();
     }
 
-    /// <summary>
-    /// Decrements the residential medium building count and the aggregate residential building count.
-    /// </summary>
+    /// <summary>Dec residential medium building count + aggregate residential building count.</summary>
     public void RemoveResidentialMediumBuildingCount()
     {
         residentialMediumBuildingCount--;
         RemoveResidentialBuildingCount();
     }
 
-    /// <summary>
-    /// Increments the residential medium zoning count and the aggregate residential zone count.
-    /// </summary>
+    /// <summary>Inc residential medium zoning count + aggregate residential zone count.</summary>
     public void AddResidentialMediumZoningCount()
     {
         residentialMediumZoningCount++;
         AddResidentialZoneCount();
     }
 
-    /// <summary>
-    /// Decrements the residential medium zoning count and the aggregate residential zone count.
-    /// </summary>
+    /// <summary>Dec residential medium zoning count + aggregate residential zone count.</summary>
     public void RemoveResidentialMediumZoningCount()
     {
         residentialMediumZoningCount--;
         RemoveResidentialZoneCount();
     }
 
-    /// <summary>
-    /// Increments the residential heavy building count and the aggregate residential building count.
-    /// </summary>
+    /// <summary>Inc residential heavy building count + aggregate residential building count.</summary>
     public void AddResidentialHeavyBuildingCount()
     {
         residentialHeavyBuildingCount++;
         AddResidentialBuildingCount();
     }
 
-    /// <summary>
-    /// Decrements the residential heavy building count and the aggregate residential building count.
-    /// </summary>
+    /// <summary>Dec residential heavy building count + aggregate residential building count.</summary>
     public void RemoveResidentialHeavyBuildingCount()
     {
         residentialHeavyBuildingCount--;
         RemoveResidentialBuildingCount();
     }
 
-    /// <summary>
-    /// Increments the residential heavy zoning count and the aggregate residential zone count.
-    /// </summary>
+    /// <summary>Inc residential heavy zoning count + aggregate residential zone count.</summary>
     public void AddResidentialHeavyZoningCount()
     {
         residentialHeavyZoningCount++;
         AddResidentialZoneCount();
     }
 
-    /// <summary>
-    /// Decrements the residential heavy zoning count and the aggregate residential zone count.
-    /// </summary>
+    /// <summary>Dec residential heavy zoning count + aggregate residential zone count.</summary>
     public void RemoveResidentialHeavyZoningCount()
     {
         residentialHeavyZoningCount--;
         RemoveResidentialZoneCount();
     }
 
-    /// <summary>
-    /// Increments the commercial light building count and the aggregate commercial building count.
-    /// </summary>
+    /// <summary>Inc commercial light building count + aggregate commercial building count.</summary>
     public void AddCommercialLightBuildingCount()
     {
         commercialLightBuildingCount++;
         AddCommercialBuildingCount();
     }
 
-    /// <summary>
-    /// Decrements the commercial light building count and the aggregate commercial building count.
-    /// </summary>
+    /// <summary>Dec commercial light building count + aggregate commercial building count.</summary>
     public void RemoveCommercialLightBuildingCount()
     {
         commercialLightBuildingCount--;
         RemoveCommercialBuildingCount();
     }
 
-    /// <summary>
-    /// Increments the commercial light zoning count and the aggregate commercial zone count.
-    /// </summary>
+    /// <summary>Inc commercial light zoning count + aggregate commercial zone count.</summary>
     public void AddCommercialLightZoningCount()
     {
         commercialLightZoningCount++;
         AddCommercialZoneCount();
     }
 
-    /// <summary>
-    /// Decrements the commercial light zoning count and the aggregate commercial zone count.
-    /// </summary>
+    /// <summary>Dec commercial light zoning count + aggregate commercial zone count.</summary>
     public void RemoveCommercialLightZoningCount()
     {
         commercialLightZoningCount--;
         RemoveCommercialZoneCount();
     }
 
-    /// <summary>
-    /// Increments the commercial medium building count and the aggregate commercial building count.
-    /// </summary>
+    /// <summary>Inc commercial medium building count + aggregate commercial building count.</summary>
     public void AddCommercialMediumBuildingCount()
     {
         commercialMediumBuildingCount++;
         AddCommercialBuildingCount();
     }
 
-    /// <summary>
-    /// Decrements the commercial medium building count and the aggregate commercial building count.
-    /// </summary>
+    /// <summary>Dec commercial medium building count + aggregate commercial building count.</summary>
     public void RemoveCommercialMediumBuildingCount()
     {
         commercialMediumBuildingCount--;
         RemoveCommercialBuildingCount();
     }
 
-    /// <summary>
-    /// Increments the commercial medium zoning count and the aggregate commercial zone count.
-    /// </summary>
+    /// <summary>Inc commercial medium zoning count + aggregate commercial zone count.</summary>
     public void AddCommercialMediumZoningCount()
     {
         commercialMediumZoningCount++;
         AddCommercialZoneCount();
     }
 
-    /// <summary>
-    /// Decrements the commercial medium zoning count and the aggregate commercial zone count.
-    /// </summary>
+    /// <summary>Dec commercial medium zoning count + aggregate commercial zone count.</summary>
     public void RemoveCommercialMediumZoningCount()
     {
         commercialMediumZoningCount--;
         RemoveCommercialZoneCount();
     }
 
-    /// <summary>
-    /// Increments the commercial heavy building count and the aggregate commercial building count.
-    /// </summary>
+    /// <summary>Inc commercial heavy building count + aggregate commercial building count.</summary>
     public void AddCommercialHeavyBuildingCount()
     {
         commercialHeavyBuildingCount++;
         AddCommercialBuildingCount();
     }
 
-    /// <summary>
-    /// Decrements the commercial heavy building count and the aggregate commercial building count.
-    /// </summary>
+    /// <summary>Dec commercial heavy building count + aggregate commercial building count.</summary>
     public void RemoveCommercialHeavyBuildingCount()
     {
         commercialHeavyBuildingCount--;
         RemoveCommercialBuildingCount();
     }
 
-    /// <summary>
-    /// Increments the commercial heavy zoning count and the aggregate commercial zone count.
-    /// </summary>
+    /// <summary>Inc commercial heavy zoning count + aggregate commercial zone count.</summary>
     public void AddCommercialHeavyZoningCount()
     {
         commercialHeavyZoningCount++;
         AddCommercialZoneCount();
     }
 
-    /// <summary>
-    /// Decrements the commercial heavy zoning count and the aggregate commercial zone count.
-    /// </summary>
+    /// <summary>Dec commercial heavy zoning count + aggregate commercial zone count.</summary>
     public void RemoveCommercialHeavyZoningCount()
     {
         commercialHeavyZoningCount--;
         RemoveCommercialZoneCount();
     }
 
-    /// <summary>
-    /// Increments the industrial light building count and the aggregate industrial building count.
-    /// </summary>
+    /// <summary>Inc industrial light building count + aggregate industrial building count.</summary>
     public void AddIndustrialLightBuildingCount()
     {
         industrialLightBuildingCount++;
         AddIndustrialBuildingCount();
     }
 
-    /// <summary>
-    /// Decrements the industrial light building count and the aggregate industrial building count.
-    /// </summary>
+    /// <summary>Dec industrial light building count + aggregate industrial building count.</summary>
     public void RemoveIndustrialLightBuildingCount()
     {
         industrialLightBuildingCount--;
         RemoveIndustrialBuildingCount();
     }
 
-    /// <summary>
-    /// Increments the industrial light zoning count and the aggregate industrial zone count.
-    /// </summary>
+    /// <summary>Inc industrial light zoning count + aggregate industrial zone count.</summary>
     public void AddIndustrialLightZoningCount()
     {
         industrialLightZoningCount++;
         AddIndustrialZoneCount();
     }
 
-    /// <summary>
-    /// Decrements the industrial light zoning count and the aggregate industrial zone count.
-    /// </summary>
+    /// <summary>Dec industrial light zoning count + aggregate industrial zone count.</summary>
     public void RemoveIndustrialLightZoningCount()
     {
         industrialLightZoningCount--;
         RemoveIndustrialZoneCount();
     }
 
-    /// <summary>
-    /// Increments the industrial medium building count and the aggregate industrial building count.
-    /// </summary>
+    /// <summary>Inc industrial medium building count + aggregate industrial building count.</summary>
     public void AddIndustrialMediumBuildingCount()
     {
         industrialMediumBuildingCount++;
         AddIndustrialBuildingCount();
     }
 
-    /// <summary>
-    /// Decrements the industrial medium building count and the aggregate industrial building count.
-    /// </summary>
+    /// <summary>Dec industrial medium building count + aggregate industrial building count.</summary>
     public void RemoveIndustrialMediumBuildingCount()
     {
         industrialMediumBuildingCount--;
         RemoveIndustrialBuildingCount();
     }
 
-    /// <summary>
-    /// Increments the industrial medium zoning count and the aggregate industrial zone count.
-    /// </summary>
+    /// <summary>Inc industrial medium zoning count + aggregate industrial zone count.</summary>
     public void AddIndustrialMediumZoningCount()
     {
         industrialMediumZoningCount++;
         AddIndustrialZoneCount();
     }
 
-    /// <summary>
-    /// Decrements the industrial medium zoning count and the aggregate industrial zone count.
-    /// </summary>
+    /// <summary>Dec industrial medium zoning count + aggregate industrial zone count.</summary>
     public void RemoveIndustrialMediumZoningCount()
     {
         industrialMediumZoningCount--;
         RemoveIndustrialZoneCount();
     }
 
-    /// <summary>
-    /// Increments the industrial heavy building count and the aggregate industrial building count.
-    /// </summary>
+    /// <summary>Inc industrial heavy building count + aggregate industrial building count.</summary>
     public void AddIndustrialHeavyBuildingCount()
     {
         industrialHeavyBuildingCount++;
         AddIndustrialBuildingCount();
     }
 
-    /// <summary>
-    /// Decrements the industrial heavy building count and the aggregate industrial building count.
-    /// </summary>
+    /// <summary>Dec industrial heavy building count + aggregate industrial building count.</summary>
     public void RemoveIndustrialHeavyBuildingCount()
     {
         industrialHeavyBuildingCount--;
         RemoveIndustrialBuildingCount();
     }
 
-    /// <summary>
-    /// Increments the industrial heavy zoning count and the aggregate industrial zone count.
-    /// </summary>
+    /// <summary>Inc industrial heavy zoning count + aggregate industrial zone count.</summary>
     public void AddIndustrialHeavyZoningCount()
     {
         industrialHeavyZoningCount++;
         AddIndustrialZoneCount();
     }
 
-    /// <summary>
-    /// Decrements the industrial heavy zoning count and the aggregate industrial zone count.
-    /// </summary>
+    /// <summary>Dec industrial heavy zoning count + aggregate industrial zone count.</summary>
     public void RemoveIndustrialHeavyZoningCount()
     {
         industrialHeavyZoningCount--;
         RemoveIndustrialZoneCount();
     }
 
-    /// <summary>
-    /// Increments the road count by one.
-    /// </summary>
+    /// <summary>Inc road count by 1.</summary>
     public void AddRoadCount()
     {
         roadCount++;
     }
 
-    /// <summary>
-    /// Increments the grass tile count by one.
-    /// </summary>
+    /// <summary>Inc grass tile count by 1.</summary>
     public void AddGrassCount()
     {
         grassCount++;
     }
 
-    /// <summary>
-    /// Increments the appropriate zone or building counter for the given zone type.
-    /// </summary>
-    /// <param name="zoneType">The zone type whose counter should be incremented.</param>
+    /// <summary>Inc appropriate zone or building counter for given zone type.</summary>
+    /// <param name="zoneType">Zone type whose counter to increment.</param>
     public void AddZoneBuildingCount(Zone.ZoneType zoneType)
     {
         switch (zoneType)
@@ -651,10 +543,8 @@ public class CityStats : MonoBehaviour, ICityStats
         }
     }
 
-    /// <summary>
-    /// Decrements the appropriate zone or building counter for the given zone type.
-    /// </summary>
-    /// <param name="zoneType">The zone type whose counter should be decremented.</param>
+    /// <summary>Dec appropriate zone or building counter for given zone type.</summary>
+    /// <param name="zoneType">Zone type whose counter to decrement.</param>
     public void RemoveZoneBuildingCount(Zone.ZoneType zoneType)
     {
         switch (zoneType)
@@ -724,20 +614,16 @@ public class CityStats : MonoBehaviour, ICityStats
     #endregion
 
     #region Resource Capacity
-    /// <summary>
-    /// Returns true if the city treasury has at least the specified amount.
-    /// </summary>
-    /// <param name="cost">The cost to check against.</param>
-    /// <returns>True if the city can afford the cost.</returns>
+    /// <summary>Return true if treasury ≥ cost.</summary>
+    /// <param name="cost">Cost to check.</param>
+    /// <returns>True if affordable.</returns>
     public bool CanAfford(int cost)
     {
         return money >= cost;
     }
 
-    /// <summary>
-    /// Registers a power plant and recalculates total city power output.
-    /// </summary>
-    /// <param name="powerPlant">The power plant to register.</param>
+    /// <summary>Register power plant + recalc total city power output.</summary>
+    /// <param name="powerPlant">Plant to register.</param>
     public void RegisterPowerPlant(PowerPlant powerPlant)
     {
         powerPlants.Add(powerPlant);
@@ -751,10 +637,8 @@ public class CityStats : MonoBehaviour, ICityStats
         cityPowerOutput = totalPowerOutput;
     }
 
-    /// <summary>
-    /// Unregisters a power plant and recalculates total city power output.
-    /// </summary>
-    /// <param name="powerPlant">The power plant to unregister.</param>
+    /// <summary>Unregister power plant + recalc total city power output.</summary>
+    /// <param name="powerPlant">Plant to unregister.</param>
     public void UnregisterPowerPlant(PowerPlant powerPlant)
     {
         powerPlants.Remove(powerPlant);
@@ -768,53 +652,41 @@ public class CityStats : MonoBehaviour, ICityStats
         cityPowerOutput = totalPowerOutput;
     }
 
-    /// <summary>
-    /// Clears all registered power plants and resets city power output to zero.
-    /// </summary>
+    /// <summary>Clear registered plants + reset city power output to 0.</summary>
     public void ResetPowerPlants()
     {
         powerPlants.Clear();
         cityPowerOutput = 0;
     }
 
-    /// <summary>
-    /// Returns how many power plants are registered for output aggregation (used for upkeep and pollution).
-    /// </summary>
+    /// <summary>Count of registered plants for output aggregation (upkeep + pollution).</summary>
     public int GetRegisteredPowerPlantCount()
     {
         return powerPlants.Count;
     }
 
-    /// <summary>
-    /// Returns the total power output from all registered power plants.
-    /// </summary>
+    /// <summary>Total power output from all registered plants.</summary>
     /// <returns>Total city power output.</returns>
     public int GetTotalPowerOutput()
     {
         return cityPowerOutput;
     }
 
-    /// <summary>
-    /// Adds the specified amount to the city's total power consumption.
-    /// </summary>
-    /// <param name="value">The power consumption to add.</param>
+    /// <summary>Add amount to city total power consumption.</summary>
+    /// <param name="value">Power consumption to add.</param>
     public void AddPowerConsumption(int value)
     {
         cityPowerConsumption += value;
     }
 
-    /// <summary>
-    /// Subtracts the specified amount from the city's total power consumption.
-    /// </summary>
-    /// <param name="value">The power consumption to remove.</param>
+    /// <summary>Subtract amount from city total power consumption.</summary>
+    /// <param name="value">Power consumption to remove.</param>
     public void RemovePowerConsumption(int value)
     {
         cityPowerConsumption -= value;
     }
 
-    /// <summary>
-    /// Returns the total power consumption across the city.
-    /// </summary>
+    /// <summary>Total city-wide power consumption.</summary>
     /// <returns>Total city power consumption.</returns>
     public int GetTotalPowerConsumption()
     {
@@ -823,17 +695,13 @@ public class CityStats : MonoBehaviour, ICityStats
     #endregion
 
     #region Update Methods
-    /// <summary>
-    /// Performs monthly update logic (placeholder for future monthly calculations).
-    /// </summary>
+    /// <summary>Monthly update logic (placeholder for future monthly calcs).</summary>
     public void PerformMonthlyUpdates()
     {
 
     }
 
-    /// <summary>
-    /// Performs daily update logic: syncs the date, updates employment, statistics, and forest data.
-    /// </summary>
+    /// <summary>Daily update: sync date, update employment + stats + forest data.</summary>
     public void PerformDailyUpdates()
     {
         currentDate = timeManager.GetCurrentDate();
@@ -853,7 +721,7 @@ public class CityStats : MonoBehaviour, ICityStats
     }
 
     /// <summary>
-    /// Re-runs pollution, happiness, and R/C/I demand when tax or other policy inputs change from the UI mid-day
+    /// Re-run pollution + happiness + R/C/I demand when tax or policy inputs change mid-day from UI
     /// (daily ticks already call <see cref="PerformDailyUpdates"/>).
     /// </summary>
     public void RefreshHappinessAfterPolicyChange()
@@ -863,10 +731,8 @@ public class CityStats : MonoBehaviour, ICityStats
         if (_employmentManager != null) _employmentManager.RefreshRCIDemandAfterDailyStats();
     }
 
-    /// <summary>
-    /// Returns true if the city's power output exceeds its power consumption.
-    /// </summary>
-    /// <returns>True if power supply is sufficient.</returns>
+    /// <summary>True if city power output &gt; consumption.</summary>
+    /// <returns>True if power supply sufficient.</returns>
     public bool GetCityPowerAvailability()
     {
         return cityPowerOutput > cityPowerConsumption;
@@ -874,11 +740,9 @@ public class CityStats : MonoBehaviour, ICityStats
     #endregion
 
     #region Economy
-    /// <summary>
-    /// Applies the cost, population, happiness, power, and water effects of placing a new zone or building.
-    /// </summary>
-    /// <param name="zoneType">The type of zone or building being placed.</param>
-    /// <param name="zoneAttributes">The attributes defining costs and stat contributions.</param>
+    /// <summary>Apply cost + population + happiness + power + water effects of new zone/building placement.</summary>
+    /// <param name="zoneType">Zone/building type placed.</param>
+    /// <param name="zoneAttributes">Attributes → costs + stat contributions.</param>
     public void HandleZoneBuildingPlacement(Zone.ZoneType zoneType, ZoneAttributes zoneAttributes)
     {
         RemoveMoney(zoneAttributes.ConstructionCost);
@@ -888,11 +752,9 @@ public class CityStats : MonoBehaviour, ICityStats
         AddWaterConsumption(zoneAttributes.WaterConsumption);
     }
 
-    /// <summary>
-    /// Reverses the stat effects of a demolished building, refunding a portion of the construction cost.
-    /// </summary>
-    /// <param name="zoneType">The type of zone or building being demolished.</param>
-    /// <param name="zoneAttributes">The attributes used to reverse stat contributions.</param>
+    /// <summary>Reverse stat effects of demolished building + refund fraction of build cost.</summary>
+    /// <param name="zoneType">Zone/building type demolished.</param>
+    /// <param name="zoneAttributes">Attributes → reverse stat contributions.</param>
     public void HandleBuildingDemolition(Zone.ZoneType zoneType, ZoneAttributes zoneAttributes)
     {
         AddMoney(zoneAttributes.ConstructionCost / 5);
@@ -902,18 +764,14 @@ public class CityStats : MonoBehaviour, ICityStats
         RemoveWaterConsumption(zoneAttributes.WaterConsumption);
     }
 
-    /// <summary>
-    /// Update forest statistics (called by ForestManager)
-    /// </summary>
+    /// <summary>Update forest stats (called by ForestManager).</summary>
     public void UpdateForestStats(ForestStatistics forestStats)
     {
         forestCellCount = forestStats.totalForestCells;
         forestCoveragePercentage = forestStats.forestCoveragePercentage;
     }
 
-    /// <summary>
-    /// Update forest statistics from ForestManager
-    /// </summary>
+    /// <summary>Update forest stats from ForestManager.</summary>
     private void UpdateForestStatistics()
     {
         if (forestManager != null)
@@ -924,8 +782,7 @@ public class CityStats : MonoBehaviour, ICityStats
     }
 
     /// <summary>
-    /// Returns the forest happiness bonus normalized to 0–1.
-    /// Diminishing returns above 20 forest cells; capped at maxForestBonus.
+    /// Forest happiness bonus normalized 0–1. Diminishing returns above 20 forest cells; capped at maxForestBonus.
     /// </summary>
     public float GetForestHappinessBonus()
     {
@@ -977,8 +834,8 @@ public class CityStats : MonoBehaviour, ICityStats
     private const float POLLUTION_CAP = 200f;
 
     /// <summary>
-    /// Recalculates city-wide pollution from industrial buildings and power plants,
-    /// minus forest absorption. Called once per simulation tick before RecalculateHappiness.
+    /// Recalc city-wide pollution from industrial buildings + power plants, minus forest absorption.
+    /// Called once per sim tick before RecalculateHappiness.
     /// </summary>
     public void RecalculatePollution()
     {
@@ -996,8 +853,8 @@ public class CityStats : MonoBehaviour, ICityStats
     }
 
     /// <summary>
-    /// Computes the immediate happiness target from employment, tax, services, forest, development, and pollution.
-    /// Used for display convergence and for same-tick demand feedback.
+    /// Compute immediate happiness target from employment + tax + services + forest + development + pollution.
+    /// Used for display convergence + same-tick demand feedback.
     /// </summary>
     private float ComputeTargetHappiness()
     {
@@ -1045,8 +902,8 @@ public class CityStats : MonoBehaviour, ICityStats
     }
 
     /// <summary>
-    /// Recalculates happiness as a 0–100 score from weighted factors, converging smoothly.
-    /// Called once per simulation tick after employment, economy, and pollution updates.
+    /// Recalc happiness as 0–100 score from weighted factors, converging smoothly.
+    /// Called once per sim tick after employment + economy + pollution updates.
     /// </summary>
     public void RecalculateHappiness()
     {
@@ -1057,17 +914,15 @@ public class CityStats : MonoBehaviour, ICityStats
         happiness = Mathf.Lerp(happiness, targetHappiness, convergenceRate);
     }
 
-    /// <summary>
-    /// Returns happiness normalized to 0–1 for UI or diagnostics (current converged value).
-    /// </summary>
+    /// <summary>Happiness normalized 0–1 for UI/diagnostics (current converged value).</summary>
     public float GetNormalizedHappiness()
     {
         return Mathf.Clamp01(happiness / 100f);
     }
 
     /// <summary>
-    /// Demand multiplier derived from <b>today's</b> happiness target (not the lerped score), so tax and
-    /// employment changes affect R/C/I demand on the same daily tick.
+    /// Demand multiplier from <b>today's</b> happiness target (not lerped score) → tax + employment changes
+    /// affect R/C/I demand on same daily tick.
     /// </summary>
     public float GetHappinessDemandMultiplier()
     {
@@ -1077,10 +932,8 @@ public class CityStats : MonoBehaviour, ICityStats
     #endregion
 
     #region Utility Methods
-    /// <summary>
-    /// Snapshots all city statistics into a serializable data struct for saving.
-    /// </summary>
-    /// <returns>A CityStatsData struct containing all current city statistics.</returns>
+    /// <summary>Snapshot all city stats into serializable data struct for saving.</summary>
+    /// <returns>CityStatsData struct with current stats.</returns>
     public CityStatsData GetCityStatsData()
     {
         CityStatsData cityStatsData = new CityStatsData
@@ -1131,10 +984,8 @@ public class CityStats : MonoBehaviour, ICityStats
         return cityStatsData;
     }
 
-    /// <summary>
-    /// Restores all city statistics from a previously saved data struct.
-    /// </summary>
-    /// <param name="cityStatsData">The saved data to restore from.</param>
+    /// <summary>Restore all city stats from previously saved data struct.</summary>
+    /// <param name="cityStatsData">Saved data to restore from.</param>
     public void RestoreCityStatsData(CityStatsData cityStatsData)
     {
         currentDate = cityStatsData.currentDate;
@@ -1181,9 +1032,7 @@ public class CityStats : MonoBehaviour, ICityStats
         communes = cityStatsData.communes != null ? new List<CommuneData>(cityStatsData.communes) : new List<CommuneData>();
     }
 
-    /// <summary>
-    /// Resets all city statistics to their default values (new game state).
-    /// </summary>
+    /// <summary>Reset all city stats to defaults (new game state).</summary>
     public void ResetCityStats()
     {
         ResetPowerPlants();
@@ -1212,7 +1061,7 @@ public class CityStats : MonoBehaviour, ICityStats
     }
 
     /// <summary>
-    /// Set the city name (e.g. when the player renames the city). This becomes the canonical name until changed again or loaded from save.
+    /// Set city name (e.g. player rename). Becomes canonical name until changed again or loaded from save.
     /// </summary>
     public void SetCityName(string newName)
     {
@@ -1220,16 +1069,12 @@ public class CityStats : MonoBehaviour, ICityStats
             cityName = newName.Trim();
     }
 
-    /// <summary>
-    /// Finds and returns the EmploymentManager in the scene.
-    /// </summary>
-    /// <returns>The EmploymentManager instance, or null if not found.</returns>
+    /// <summary>Find + return EmploymentManager in scene.</summary>
+    /// <returns>EmploymentManager instance or null.</returns>
     public EmploymentManager GetEmploymentManager() => _employmentManager;
 
-    /// <summary>
-    /// Adds the specified amount to both the local and WaterManager water consumption trackers.
-    /// </summary>
-    /// <param name="value">The water consumption to add.</param>
+    /// <summary>Add amount to both local + WaterManager water consumption trackers.</summary>
+    /// <param name="value">Water consumption to add.</param>
     public void AddWaterConsumption(int value)
     {
         cityWaterConsumption += value;
@@ -1239,10 +1084,8 @@ public class CityStats : MonoBehaviour, ICityStats
         }
     }
 
-    /// <summary>
-    /// Subtracts the specified amount from both the local and WaterManager water consumption trackers.
-    /// </summary>
-    /// <param name="value">The water consumption to remove.</param>
+    /// <summary>Subtract amount from both local + WaterManager water consumption trackers.</summary>
+    /// <param name="value">Water consumption to remove.</param>
     public void RemoveWaterConsumption(int value)
     {
         cityWaterConsumption -= value;
@@ -1252,28 +1095,22 @@ public class CityStats : MonoBehaviour, ICityStats
         }
     }
 
-    /// <summary>
-    /// Returns the total water consumption across the city.
-    /// </summary>
+    /// <summary>Total city-wide water consumption.</summary>
     /// <returns>Total city water consumption.</returns>
     public int GetTotalWaterConsumption()
     {
         return cityWaterConsumption;
     }
 
-    /// <summary>
-    /// Returns the total water output across the city.
-    /// </summary>
+    /// <summary>Total city-wide water output.</summary>
     /// <returns>Total city water output.</returns>
     public int GetTotalWaterOutput()
     {
         return cityWaterOutput;
     }
 
-    /// <summary>
-    /// Returns true if the city's water output exceeds its water consumption. Syncs with WaterManager first.
-    /// </summary>
-    /// <returns>True if water supply is sufficient.</returns>
+    /// <summary>True if city water output &gt; consumption. Syncs with WaterManager first.</summary>
+    /// <returns>True if water supply sufficient.</returns>
     public bool GetCityWaterAvailability()
     {
         // Sync with water manager
@@ -1286,9 +1123,7 @@ public class CityStats : MonoBehaviour, ICityStats
         return cityWaterOutput > cityWaterConsumption;
     }
 
-    /// <summary>
-    /// Syncs the local water output value from the WaterManager.
-    /// </summary>
+    /// <summary>Sync local water output value from WaterManager.</summary>
     public void UpdateWaterOutput()
     {
         if (waterManager != null)
@@ -1297,15 +1132,11 @@ public class CityStats : MonoBehaviour, ICityStats
         }
     }
 
-    /// <summary>
-    /// Returns the total number of forest cells in the city.
-    /// </summary>
+    /// <summary>Total forest cell count.</summary>
     /// <returns>Forest cell count.</returns>
     public int GetForestCellCount() => forestCellCount;
-    /// <summary>
-    /// Returns the percentage of the grid covered by forest.
-    /// </summary>
-    /// <returns>Forest coverage as a percentage.</returns>
+    /// <summary>Percentage of grid covered by forest.</summary>
+    /// <returns>Forest coverage %.</returns>
     public float GetForestCoveragePercentage() => forestCoveragePercentage;
     #endregion
 }

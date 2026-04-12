@@ -4,8 +4,8 @@ using System.Collections.Generic;
 namespace Territory.Roads
 {
 /// <summary>
-/// Contract for road placement, drawing, and prefab selection.
-/// Read this interface to understand RoadManager's public API without reading its full implementation.
+/// Contract for road placement, drawing, prefab selection.
+/// Read this interface to understand <see cref="RoadManager"/> public API without full impl.
 /// </summary>
 public interface IRoadManager
 {

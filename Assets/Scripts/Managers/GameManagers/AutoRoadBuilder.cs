@@ -10,8 +10,8 @@ using Territory.Utilities;
 namespace Territory.Simulation
 {
 /// <summary>
-/// Automatically extends the road network during simulation steps by finding optimal paths from existing road edges.
-/// Coordinates with GridManager for pathfinding, RoadManager for road placement, and TerrainManager for terrain constraints.
+/// Auto-extend road network during sim steps via optimal paths from existing road edges.
+/// Coords with <see cref="GridManager"/> (pathfinding), <see cref="RoadManager"/> (placement), <see cref="TerrainManager"/> (terrain constraints).
 /// </summary>
 public class AutoRoadBuilder : MonoBehaviour
 {
@@ -30,24 +30,24 @@ public class AutoRoadBuilder : MonoBehaviour
     #region Configuration
     [Header("Budget per tick")]
     public int maxTilesPerTick = 10;
-    /// <summary>Safety cap per tick; actual limit is driven by growth budget. Kept high so budget controls volume.</summary>
+    /// <summary>Safety cap per tick; actual limit driven by growth budget. Kept high so budget controls volume.</summary>
     private const int MaxPerTickSafetyCap = 300;
 
     [Header("Street project: segment-based growth")]
     public int minStreetLength = 4;
-    /// <summary>When edges &lt; 4 (recovery), use this lower min length so short streets can open new fronts.</summary>
+    /// <summary>When edges &lt; 4 (recovery), use lower min length so short streets open new fronts.</summary>
     public int minStreetLengthRecovery = 3;
     public int maxStreetLength = 20;
     public int maxActiveProjects = 5;
-    /// <summary>Min distance from an existing parallel road when starting a new street from an edge (avoids adjacent parallel roads).</summary>
+    /// <summary>Min distance from existing parallel road when starting new street from edge (avoids adjacent parallel roads).</summary>
     public int minParallelSpacingFromEdge = 3;
-    /// <summary>Min distance between two edges when starting new projects in the same tick (avoids multiple intersections in adjacent cells).</summary>
+    /// <summary>Min distance between two edges when starting new projects same tick (avoids multiple intersections in adjacent cells).</summary>
     public int minEdgeSpacing = 2;
-    /// <summary>Max water tiles in a straight line for auto bridge (bridge "less than 6 tiles" = up to 5 water cells).</summary>
+    /// <summary>Max water tiles in straight line for auto bridge (bridge "less than 6 tiles" = up to 5 water cells).</summary>
     public const int MaxBridgeWaterTiles = 5;
-    /// <summary>When connecting to interstate or between clusters, prefer paths that stay this many cells away from existing roads (0 = no preference).</summary>
+    /// <summary>When connecting to interstate or between clusters, prefer paths this many cells away from existing roads (0 = no preference).</summary>
     public int minRoadSpacingWhenConnecting = 4;
-    /// <summary>Unused; roads now prefer high-desirability directions to connect forests/water to urban core.</summary>
+    /// <summary>Unused; roads now prefer high-desirability dirs to connect forests/water to urban core.</summary>
     [SerializeField] float desirabilityGrowthPenalty = 0f;
 
     [Header("Ring-dependent overrides (FEAT-32)")]
@@ -56,7 +56,7 @@ public class AutoRoadBuilder : MonoBehaviour
     [Tooltip("Reduction to minEdgeSpacing in Inner (allows more intersections).")]
     public int coreInnerMinEdgeSpacing = 1;
 
-    /// <summary>Completed segment data published for AutoZoningManager to zone strips along.</summary>
+    /// <summary>Completed segment data published for <see cref="AutoZoningManager"/> to zone strips along.</summary>
     public struct CompletedSegment
     {
         public Vector2Int origin;
@@ -65,7 +65,7 @@ public class AutoRoadBuilder : MonoBehaviour
         public UrbanRing ring;
     }
 
-    /// <summary>Segment with zoning progress; AutoZoningManager updates zonedUpToIndex and removes when done.</summary>
+    /// <summary>Segment with zoning progress; <see cref="AutoZoningManager"/> updates zonedUpToIndex + removes when done.</summary>
     public struct PendingZoningSegment
     {
         public CompletedSegment segment;
@@ -82,16 +82,16 @@ public class AutoRoadBuilder : MonoBehaviour
     private static readonly int[] Dx = { 1, -1, 0, 0 };
     private static readonly int[] Dy = { 0, 0, 1, -1 };
 
-    /// <summary>Segments completed this tick; cleared at start of each ProcessTick.</summary>
+    /// <summary>Segments completed this tick; cleared at start of each <c>ProcessTick</c>.</summary>
     public List<CompletedSegment> CompletedSegmentsThisTick { get; private set; } = new List<CompletedSegment>();
 
-    /// <summary>Segments built that still need zoning; AutoZoningManager removes when fully zoned.</summary>
+    /// <summary>Segments built still needing zoning; <see cref="AutoZoningManager"/> removes when fully zoned.</summary>
     public List<PendingZoningSegment> PendingZoningSegments { get; private set; } = new List<PendingZoningSegment>();
 
-    /// <summary>Cells expropriated this tick; must not be zoned until road is placed.</summary>
+    /// <summary>Cells expropriated this tick; must not zone until road placed.</summary>
     public HashSet<Vector2Int> ExpropriatedCellsPendingRoad { get; private set; } = new HashSet<Vector2Int>();
 
-    /// <summary>Positions placed via <see cref="RoadManager.PlaceRoadTileFromResolved"/> this tick; deduped batch refresh for T-junction/cross prefabs.</summary>
+    /// <summary>Positions placed via <see cref="RoadManager.PlaceRoadTileFromResolved"/> this tick; dedup batch refresh for T-junction/cross prefabs.</summary>
     private readonly List<Vector2Int> batchPlacedFromResolvedRoadCells = new List<Vector2Int>();
 
     #endregion
@@ -102,7 +102,7 @@ public class AutoRoadBuilder : MonoBehaviour
         return cityStats != null ? cityStats.currentDate.ToString("yyyy-MM-dd") : "?";
     }
 
-    /// <summary>Places a road tile from a resolved prefab (path pipeline).</summary>
+    /// <summary>Place road tile from resolved prefab (path pipeline).</summary>
     private bool PlaceRoadTileInBatch(RoadPrefabResolver.ResolvedRoadTile resolved)
     {
         roadManager.PlaceRoadTileFromResolved(resolved);
@@ -110,7 +110,7 @@ public class AutoRoadBuilder : MonoBehaviour
         return true;
     }
 
-    /// <summary>Places a single road tile at position (no path context). Used for expropriated cells and edge extension.</summary>
+    /// <summary>Place single road tile at position (no path context). Used for expropriated cells + edge extension.</summary>
     private bool PlaceRoadTileInBatch(Vector2 pos)
     {
         return roadManager.PlaceRoadTileAt(pos);
@@ -130,7 +130,7 @@ public class AutoRoadBuilder : MonoBehaviour
     }
 
     /// <summary>Shared street validation (bridges + terraform; cut-through allowed). Uses <see cref="RoadManager.TryPrepareRoadPlacementPlanLongestValidPrefix"/>; for straight cardinal segments (street projects), falls back to programmatic lip→chord deck-span.</summary>
-    /// <param name="straightBuildDirection">When set, segment must be a straight line in this cardinal direction (simulation street extension).</param>
+    /// <param name="straightBuildDirection">When set, segment must be straight line in this cardinal dir (sim street extension).</param>
     bool TryGetStreetPlacementPlan(List<Vector2> pathVec2, Vector2Int? straightBuildDirection, out List<Vector2> expandedPath, out PathTerraformPlan plan)
     {
         if (roadManager != null)
@@ -276,7 +276,7 @@ public class AutoRoadBuilder : MonoBehaviour
             gridManager.InvalidateRoadCache();
     }
 
-    /// <summary>One deduplicated junction refresh after all <see cref="PlaceRoadTileFromResolved"/> placements in the tick.</summary>
+    /// <summary>One dedup junction refresh after all <see cref="PlaceRoadTileFromResolved"/> placements in tick.</summary>
     void FlushBatchRoadPrefabRefresh()
     {
         if (batchPlacedFromResolvedRoadCells.Count == 0 || roadManager == null)
@@ -286,8 +286,8 @@ public class AutoRoadBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Builds a complete street segment in one tick using the path pipeline. Strokes that cross water require a firm dry exit cell, enough remaining tile budget
-    /// for every new road tile on the resolved path, and all-or-nothing placement (single lump <see cref="GrowthBudgetManager.TrySpend"/>); otherwise the plan is reverted and nothing is placed.
+    /// Build complete street segment in one tick via path pipeline. Strokes crossing water require firm dry exit cell, enough remaining tile budget
+    /// for every new road tile on resolved path, all-or-nothing placement (single lump <see cref="GrowthBudgetManager.TrySpend"/>); otherwise plan reverted + nothing placed.
     /// </summary>
     private int BuildFullSegmentInOneTick(StreetProject p, ref int budgetRemaining, HashSet<Vector2Int> roadSet)
     {
@@ -625,9 +625,9 @@ public class AutoRoadBuilder : MonoBehaviour
 
     #region Road Placement
     /// <summary>
-    /// When no new street projects can start, only expropriate if a long segment (length > maxLength for ring)
-    /// has both perpendicular strips fully occupied. Demolishes L cells in one perpendicular direction from
-    /// a road cell at distance L from an intersection. Never expropriates for interstate or cluster connection.
+    /// When no new street projects can start, expropriate only if long segment (length > maxLength for ring)
+    /// has both perpendicular strips fully occupied. Demolish L cells in one perp dir from
+    /// road cell at distance L from intersection. Never expropriate for interstate or cluster connection.
     /// </summary>
     private bool TryExpropriateForLongBlockedSegment(List<Vector2Int> edges, HashSet<Vector2Int> roadSet)
     {
@@ -694,7 +694,7 @@ public class AutoRoadBuilder : MonoBehaviour
         return false;
     }
 
-    /// <summary>Place roads in expropriated cells to prevent opportunistic zoning. Returns tiles placed.</summary>
+    /// <summary>Place roads in expropriated cells to prevent opportunistic zoning. Return tiles placed.</summary>
     private int PlaceRoadsInExpropriatedCells(ref int budgetRemaining)
     {
         int placed = 0;
@@ -720,7 +720,7 @@ public class AutoRoadBuilder : MonoBehaviour
         return placed;
     }
 
-    /// <summary>Place at most one road tile from current road edges (used after expropriation to fill freed space first).</summary>
+    /// <summary>Place at most one road tile from current road edges (used after expropriation → fill freed space first).</summary>
     private int TryPlaceOneTileFromEdges(List<Vector2Int> edges)
     {
         if (edges.Count == 0)
@@ -796,7 +796,7 @@ public class AutoRoadBuilder : MonoBehaviour
         return count;
     }
 
-    /// <summary>Average desirability of cells along a direction from start (FEAT-26). Samples up to sampleCount cells.</summary>
+    /// <summary>Avg desirability of cells along dir from start. Sample up to sampleCount cells.</summary>
     private float GetAverageDesirabilityInDirection(Vector2Int start, Vector2Int dir, int sampleCount)
     {
         float sum = 0f;
@@ -818,7 +818,7 @@ public class AutoRoadBuilder : MonoBehaviour
         return count > 0 ? sum / count : 0f;
     }
 
-    /// <summary>Returns the dominant road direction at this edge (for perpendicular preference). Zero if no clear direction.</summary>
+    /// <summary>Return dominant road dir at edge (for perp preference). Zero if no clear dir.</summary>
     private Vector2Int GetRoadDirectionAtEdge(Vector2Int edge, HashSet<Vector2Int> roadSet)
     {
         int roadX = 0, roadY = 0;
@@ -849,7 +849,7 @@ public class AutoRoadBuilder : MonoBehaviour
         }
     }
 
-    /// <summary>Min edge spacing; lower in Inner to allow more intersections (FEAT-32).</summary>
+    /// <summary>Min edge spacing; lower in Inner → more intersections.</summary>
     private int GetEffectiveMinEdgeSpacing(UrbanRing ring)
     {
         if ((ring == UrbanRing.Inner) && minEdgeSpacing > coreInnerMinEdgeSpacing)
@@ -877,7 +877,7 @@ public class AutoRoadBuilder : MonoBehaviour
             : p.parallelSpacing;
     }
 
-    /// <summary>Enumerates straight segments from the road grid. Each segment is (origin, dir, length).</summary>
+    /// <summary>Enumerate straight segments from road grid. Each segment = (origin, dir, length).</summary>
     private List<(Vector2Int origin, Vector2Int dir, int length)> GetStraightSegmentsFromGrid(HashSet<Vector2Int> roadSet, List<Vector2Int> edges)
     {
         var segments = new List<(Vector2Int origin, Vector2Int dir, int length)>();
@@ -922,7 +922,7 @@ public class AutoRoadBuilder : MonoBehaviour
         return segments;
     }
 
-    /// <summary>True if both perpendicular strips (left and right) are fully occupied for k in 0..length-2.</summary>
+    /// <summary>True if both perp strips (left + right) fully occupied for k in 0..length-2.</summary>
     private bool IsSegmentFullyBlocked(Vector2Int origin, Vector2Int dir, int length, HashSet<Vector2Int> roadSet)
     {
         Vector2Int perp = new Vector2Int(-dir.y, dir.x);
@@ -1002,7 +1002,7 @@ public class AutoRoadBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// True if a road can be placed at (x,y): cell exists, not building/road/interstate, (Grass or has forest or water for bridge), and RoadManager allows placement.
+    /// True if road placeable at (x,y): cell exists, not building/road/interstate, (Grass or has forest or water for bridge), <see cref="RoadManager"/> allows placement.
     /// </summary>
     private bool IsCellPlaceableForRoad(int x, int y)
     {
@@ -1016,7 +1016,7 @@ public class AutoRoadBuilder : MonoBehaviour
         return terrainManager.CanPlaceRoad(x, y, allowWaterSlopeForWaterBridgeTrace: true);
     }
 
-    /// <summary>Returns a short reason why the cell is not placeable for road (for debug logs).</summary>
+    /// <summary>Return short reason cell not placeable for road (debug logs).</summary>
     private string GetCellPlaceableRejectReason(int x, int y)
     {
         Cell c = gridManager.GetCell(x, y);
@@ -1032,7 +1032,7 @@ public class AutoRoadBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Number of cardinal neighbors of this road cell that are Grass (available for extension or zoning).
+    /// Count cardinal neighbors of road cell that are Grass (available for extension or zoning).
     /// </summary>
     private int CountGrassNeighbors(Vector2Int roadPos)
     {
@@ -1047,14 +1047,14 @@ public class AutoRoadBuilder : MonoBehaviour
         return count;
     }
 
-    /// <summary>True if this edge (road cell) is on the interstate. Used to relax minLength for interstate connections.</summary>
+    /// <summary>True if edge (road cell) on interstate. Used to relax minLength for interstate connections.</summary>
     private bool IsEdgeOnInterstate(Vector2Int edge)
     {
         Cell c = gridManager.GetCell(edge.x, edge.y);
         return c != null && c.isInterstate;
     }
 
-    /// <summary>True if the cell at tip + len*dir (the first unbuildable cell) is slope or water. Used for slope-connection mode.</summary>
+    /// <summary>True if cell at tip + len*dir (first unbuildable cell) is slope or water. Used for slope-connection mode.</summary>
     private bool IsDirectionBlockedBySlopeOrWater(Vector2Int tip, Vector2Int dir, int len)
     {
         int bx = tip.x + len * dir.x, by = tip.y + len * dir.y;
@@ -1068,7 +1068,7 @@ public class AutoRoadBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// True if (x,y) is valid for a road in direction streetDir: flat, cardinal, diagonal and corner slopes allowed; terraforming handles diagonal/corner. Water (height 0) is always suitable for bridge. Shore (water-slope) cells use the same bridge-trace gate as pathfinding (FEAT-44).
+    /// True if (x,y) valid for road in dir streetDir: flat, cardinal, diagonal + corner slopes allowed; terraforming handles diagonal/corner. Water (height 0) always suitable for bridge. Shore (water-slope) cells use same bridge-trace gate as pathfinding.
     /// </summary>
     private bool IsSuitableForRoad(int x, int y, Vector2Int streetDir)
     {
@@ -1101,8 +1101,8 @@ public class AutoRoadBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// True if there is already a road parallel to dir within minSpacing tiles of edge (would create too-dense grid).
-    /// When branching perpendicular from a parent street, pass excludeAlongDir = parent direction so we don't count the parent segment as "parallel".
+    /// True if road already parallel to dir within minSpacing tiles of edge (would create too-dense grid).
+    /// When branching perp from parent street, pass excludeAlongDir = parent dir so parent segment not counted as "parallel".
     /// </summary>
     private bool HasParallelRoadTooClose(Vector2Int edge, Vector2Int dir, int minSpacing, HashSet<Vector2Int> roadSet, Vector2Int? excludeAlongDir = null)
     {
@@ -1140,7 +1140,7 @@ public class AutoRoadBuilder : MonoBehaviour
     #endregion
 
     #region Utility Methods
-    /// <summary>Finds path from road network to interstate and places road tiles using the path pipeline. Never expropriates; if path is blocked by buildings, returns 0.</summary>
+    /// <summary>Find path from road network to interstate + place road tiles via path pipeline. Never expropriate; if path blocked by buildings → return 0.</summary>
     private int TryConnectToInterstate(int maxTiles, List<Vector2Int> roadPositions)
     {
         if (interstateManager == null || gridManager == null || roadManager == null || terraformingService == null || terrainManager == null) return 0;
@@ -1243,7 +1243,7 @@ public class AutoRoadBuilder : MonoBehaviour
         return clusters;
     }
 
-    /// <summary>Connects two road clusters via FindPath using the path pipeline. Never expropriates; if path is blocked by buildings, returns 0.</summary>
+    /// <summary>Connect two road clusters via FindPath using path pipeline. Never expropriate; if path blocked by buildings → return 0.</summary>
     private int TryConnectDisconnected(List<List<Vector2Int>> clusters, int maxTiles)
     {
         if (clusters.Count < 2) return 0;

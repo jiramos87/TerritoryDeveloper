@@ -6,7 +6,7 @@ using Territory.Utilities.Compute;
 namespace Territory.Tests.EditMode
 {
     /// <summary>
-    /// Top-k sampling over synthetic score fields (TECH-39 §7.11.6).
+    /// Top-k sampling over synthetic score fields.
     /// </summary>
     public class DesirabilityFieldSamplerTests
     {

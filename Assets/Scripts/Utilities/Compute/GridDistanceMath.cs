@@ -1,8 +1,8 @@
 namespace Territory.Utilities.Compute
 {
     /// <summary>
-    /// Pure grid metric helpers (Chebyshev / Manhattan on integer cells). Used for previews and
-    /// future MCP <c>grid_distance</c>; does not define pathfinding edge costs (geo §10).
+    /// Pure grid metric helpers (Chebyshev / Manhattan on integer cells). For previews +
+    /// MCP <c>grid_distance</c>. Does not define pathfinding edge costs.
     /// </summary>
     public static class GridDistanceMath
     {

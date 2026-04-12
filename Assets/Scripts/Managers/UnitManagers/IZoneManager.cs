@@ -4,8 +4,8 @@ using Territory.Zones;
 namespace Territory.Zones
 {
 /// <summary>
-/// Contract for zone placement, zone queries, and zone building lifecycle.
-/// Read this interface to understand ZoneManager's public API without reading its full implementation.
+/// Contract for zone placement, zone queries, zone building lifecycle.
+/// Read this interface to understand <see cref="ZoneManager"/> public API without full impl.
 /// </summary>
 public interface IZoneManager
 {

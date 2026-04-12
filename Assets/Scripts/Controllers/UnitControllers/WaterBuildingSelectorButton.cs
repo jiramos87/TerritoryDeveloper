@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Territory.UI
 {
 /// <summary>
-/// UI button that opens the water buildings selector menu via BuildingSelectorMenuController.
+/// UI button → opens water buildings selector menu via <see cref="BuildingSelectorMenuController"/>.
 /// </summary>
 public class WaterBuildingSelectorButton : MonoBehaviour
 {

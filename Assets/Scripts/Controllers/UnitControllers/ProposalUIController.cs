@@ -5,7 +5,7 @@ using Territory.Simulation;
 namespace Territory.UI
 {
 /// <summary>
-/// UI controller for displaying and managing urbanization proposals from UrbanizationProposalManager.
+/// UI controller: display + manage urbanization proposals from <see cref="UrbanizationProposalManager"/>.
 /// </summary>
 public class ProposalUIController : MonoBehaviour
 {

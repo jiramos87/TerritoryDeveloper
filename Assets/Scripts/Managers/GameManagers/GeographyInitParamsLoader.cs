@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Territory.Persistence
 {
     /// <summary>
-    /// Loads <see cref="GeographyInitParamsDto"/> from disk (StreamingAssets interchange, TECH-41).
+    /// Load <see cref="GeographyInitParamsDto"/> from disk (StreamingAssets interchange).
     /// </summary>
     public static class GeographyInitParamsLoader
     {
@@ -13,11 +13,11 @@ namespace Territory.Persistence
         public const int ExpectedSchemaVersion = 1;
 
         /// <summary>
-        /// Reads UTF-8 JSON and validates artifact / schema / required <c>map</c> bounds.
+        /// Read UTF-8 JSON + validate artifact / schema / required <c>map</c> bounds.
         /// </summary>
-        /// <param name="absolutePath">Full path to the JSON file.</param>
-        /// <param name="dto">Parsed DTO when return value is true.</param>
-        /// <param name="errorMessage">Human-readable failure reason when return value is false.</param>
+        /// <param name="absolutePath">Full JSON file path.</param>
+        /// <param name="dto">Parsed DTO when return true.</param>
+        /// <param name="errorMessage">Failure reason when return false.</param>
         public static bool TryLoadFromPath(string absolutePath, out GeographyInitParamsDto dto, out string errorMessage)
         {
             dto = null;

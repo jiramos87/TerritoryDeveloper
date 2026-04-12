@@ -4,14 +4,14 @@ using Territory.Zones;
 namespace Territory.Utilities
 {
     /// <summary>
-    /// Shared predicates for AUTO simulation road growth (BUG-47): undeveloped light zoning and land cells
-    /// that may be traversed or replaced by roads without duplicating logic across RoadCacheService,
-    /// GridPathfinder, and AutoRoadBuilder.
+    /// Shared predicates for AUTO sim road growth: undeveloped light zoning + land cells
+    /// that roads may traverse or replace. Avoids duplication across <c>RoadCacheService</c>,
+    /// <c>GridPathfinder</c>, <c>AutoRoadBuilder</c>.
     /// </summary>
     public static class AutoSimulationRoadRules
     {
         /// <summary>
-        /// True when the cell uses R/C/I light zoning only (no medium/heavy).
+        /// True when cell uses R/C/I light zoning only (no medium/heavy).
         /// </summary>
         public static bool IsUndevelopedLightZoning(Cell c)
         {
@@ -22,8 +22,8 @@ namespace Territory.Utilities
         }
 
         /// <summary>
-        /// Land cells AUTO may plan roads through: grass, forest, or empty light zoning.
-        /// Excludes road, interstate, buildings, water, and non-light zoning.
+        /// Land cells AUTO may route roads through: grass, forest, or empty light zoning.
+        /// Excludes: road, interstate, buildings, water, non-light zoning.
         /// </summary>
         public static bool IsAutoRoadLandCell(GridManager grid, int x, int y)
         {

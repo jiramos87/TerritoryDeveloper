@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Territory.Core
 {
 /// <summary>
-/// Serializable data container for commune/district information within the territory.
+/// Serializable commune/district data in territory.
 /// </summary>
 [System.Serializable]
 public class CommuneData

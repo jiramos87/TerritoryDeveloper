@@ -7,11 +7,11 @@ using Territory.Persistence;
 namespace Territory.Testing
 {
     /// <summary>
-    /// Resolves optional <b>test mode</b> scenario launch intent from CLI (<c>-testScenarioId</c> / <c>-testScenarioPath</c>)
-    /// or, in the <b>Editor</b> only, a one-line queue file under <c>tools/fixtures/scenarios/.queued-test-scenario-id</c>
-    /// (consumed on success so agents can trigger a load before <c>enter_play_mode</c> without restarting Unity).
-    /// Loads through <see cref="GameStartInfo"/> + <see cref="GameBootstrap"/> → <see cref="GameSaveManager.LoadGame"/>.
-    /// Only active when <see cref="TestModeSecurity.IsTestModeEntryAllowed"/>.
+    /// Resolve optional <b>test mode</b> scenario launch intent from CLI (<c>-testScenarioId</c> / <c>-testScenarioPath</c>)
+    /// or, <b>Editor</b>-only, one-line queue file under <c>tools/fixtures/scenarios/.queued-test-scenario-id</c>
+    /// (consumed on success → agents can trigger load before <c>enter_play_mode</c> without restarting Unity).
+    /// Loads via <see cref="GameStartInfo"/> + <see cref="GameBootstrap"/> → <see cref="GameSaveManager.LoadGame"/>.
+    /// Active only when <see cref="TestModeSecurity.IsTestModeEntryAllowed"/>.
     /// </summary>
     public static class TestModeCommandLineBootstrap
     {
@@ -19,7 +19,7 @@ namespace Territory.Testing
         const string ArgScenarioPath = "-testScenarioPath";
 
 #if UNITY_EDITOR
-        /// <summary>Single-line <b>scenario id</b> (ASCII, <b>kebab-case</b>); read once per Play session then deleted.</summary>
+        /// <summary>Single-line <b>scenario id</b> (ASCII, <b>kebab-case</b>). Read once per Play session then deleted.</summary>
         public const string EditorQueuedScenarioFileName = ".queued-test-scenario-id";
 #endif
 
@@ -130,7 +130,7 @@ namespace Territory.Testing
         }
 
         /// <summary>
-        /// Parses <c>-testScenarioId</c> or <c>-testScenarioPath</c>. Path wins if both are present.
+        /// Parse <c>-testScenarioId</c> or <c>-testScenarioPath</c>. Path wins if both present.
         /// Also used by <b>Editor</b> <c>-batchmode</c> <c>-executeMethod</c> batch runner (<c>AgentTestModeBatchRunner.Run</c>).
         /// </summary>
         public static bool TryParse(string[] args, out string scenarioId, out string absolutePath)

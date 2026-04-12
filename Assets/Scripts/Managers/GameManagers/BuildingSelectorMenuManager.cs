@@ -7,8 +7,8 @@ using TMPro;
 namespace Territory.UI
 {
 /// <summary>
-/// Manages the building selector popup menu data and item types.
-/// Provides prefab references and item configuration for the BuildingSelectorMenuController UI.
+/// Manage building selector popup menu data + item types.
+/// Provide prefab refs + item config for <c>BuildingSelectorMenuController</c> UI.
 /// </summary>
 public class BuildingSelectorMenuManager : MonoBehaviour
 {

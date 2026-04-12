@@ -8,7 +8,7 @@ using Territory.Zones;
 namespace Territory.UI
 {
     /// <summary>
-    /// Toolbar strip: caches direct child <see cref="Button"/> graphics under <see cref="ControlPanel"/> and tints the active tool using <see cref="UiTheme.SurfaceElevated"/> (partial of <see cref="UIManager"/>).
+    /// Toolbar strip: cache direct child <see cref="Button"/> graphics under <see cref="ControlPanel"/>, tint active tool via <see cref="UiTheme.SurfaceElevated"/> (partial of <see cref="UIManager"/>).
     /// </summary>
     public partial class UIManager
     {
@@ -24,7 +24,7 @@ namespace Territory.UI
         private bool toolbarChromeDirty;
 
         /// <summary>
-        /// Marks toolbar chrome for refresh on the next <see cref="LateUpdate"/> so selection state is settled after <see cref="ClearCurrentTool"/> + tool setup in the same click frame.
+        /// Mark toolbar chrome for refresh next <see cref="LateUpdate"/> → selection state settles after <see cref="ClearCurrentTool"/> + tool setup in same click frame.
         /// </summary>
         private void RequestToolbarChromeRefresh()
         {
@@ -78,7 +78,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Maps current tool state to a direct child name under <see cref="ControlPanel"/> (see MainScene hierarchy).
+        /// Map current tool state → direct child name under <see cref="ControlPanel"/> (MainScene hierarchy).
         /// </summary>
         private string GetActiveControlPanelDirectChildName()
         {

@@ -6,7 +6,7 @@ using static Territory.Utilities.UiCanvasGroupUtility;
 namespace Territory.UI
 {
     /// <summary>
-    /// First-session welcome panel with <see cref="CanvasGroup"/> fade (partial of <see cref="UIManager"/>).
+    /// First-session welcome panel, <see cref="CanvasGroup"/> fade (partial of <see cref="UIManager"/>).
     /// </summary>
     public partial class UIManager
     {
@@ -142,7 +142,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Hides the welcome panel with a short fade and persists dismissal in <see cref="PlayerPrefs"/>.
+        /// Hide welcome panel with short fade + persist dismissal in <see cref="PlayerPrefs"/>.
         /// </summary>
         public void DismissWelcomeBriefing()
         {

@@ -3,8 +3,7 @@ using UnityEngine;
 namespace Territory.Zones
 {
 /// <summary>
-/// Interface contract for placeable buildings.
-/// Defines BuildingType, ConstructionCost, Prefab, BuildingSize, and GameObjectReference properties.
+/// Contract for placeable buildings. Props: BuildingType, ConstructionCost, Prefab, BuildingSize, GameObjectReference.
 /// </summary>
 public interface IBuilding
 {

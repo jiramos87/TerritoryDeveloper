@@ -4,10 +4,9 @@ using System.Collections.Generic;
 namespace Territory.Terrain
 {
 /// <summary>
-/// Registry for slope-variant prefabs (zoning overlays and buildings).
-/// Holds a flat list of all slope prefabs; at Awake builds a name-keyed dictionary.
-/// Given a flat (base) prefab and a TerrainSlopeType, derives the slope variant
-/// name via naming convention ({baseName}_{slopeCode}Slope) and returns the match.
+/// Registry for slope-variant prefabs (zoning overlays + buildings).
+/// Holds flat list of all slope prefabs. Awake builds name-keyed dictionary.
+/// Given flat (base) prefab + TerrainSlopeType, derive slope variant name via convention ({baseName}_{slopeCode}Slope) + return match.
 /// </summary>
 public class SlopePrefabRegistry : MonoBehaviour
 {
@@ -21,9 +20,7 @@ public class SlopePrefabRegistry : MonoBehaviour
         BuildRegistry();
     }
 
-    /// <summary>
-    /// Builds the name-to-prefab dictionary from the slopePrefabs list.
-    /// </summary>
+    /// <summary>Build name-to-prefab dictionary from slopePrefabs list.</summary>
     public void BuildRegistry()
     {
         registry = new Dictionary<string, GameObject>();
@@ -36,9 +33,8 @@ public class SlopePrefabRegistry : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns the slope variant of flatPrefab for the given slope type,
-    /// or null if no variant exists in the registry.
-    /// Returns flatPrefab unchanged if slopeType is Flat.
+    /// Return slope variant of flatPrefab for given slope type, or null if no variant in registry.
+    /// Return flatPrefab unchanged if slopeType is Flat.
     /// </summary>
     public GameObject GetSlopeVariant(GameObject flatPrefab, TerrainSlopeType slopeType)
     {
@@ -55,9 +51,7 @@ public class SlopePrefabRegistry : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Finds a prefab by exact name in the slope registry. Used by FindPrefabByName for save/load.
-    /// </summary>
+    /// <summary>Find prefab by exact name in slope registry. Used by FindPrefabByName for save/load.</summary>
     public GameObject FindByName(string prefabName)
     {
         if (string.IsNullOrEmpty(prefabName)) return null;
@@ -67,9 +61,7 @@ public class SlopePrefabRegistry : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Returns the suffix string for the given slope type (e.g. North -> "_NSlope").
-    /// </summary>
+    /// <summary>Return suffix string for given slope type (e.g. North → "_NSlope").</summary>
     public static string GetSlopeSuffix(TerrainSlopeType slopeType)
     {
         switch (slopeType)
@@ -90,10 +82,7 @@ public class SlopePrefabRegistry : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Extracts the slope type from a prefab name that follows the naming convention.
-    /// Returns Flat if no slope suffix is found.
-    /// </summary>
+    /// <summary>Extract slope type from prefab name matching naming convention. Return Flat if no slope suffix.</summary>
     public static TerrainSlopeType ParseSlopeFromName(string prefabName)
     {
         if (string.IsNullOrEmpty(prefabName)) return TerrainSlopeType.Flat;

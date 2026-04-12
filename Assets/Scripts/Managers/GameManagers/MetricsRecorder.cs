@@ -11,8 +11,8 @@ using UnityEngine;
 namespace Territory.Simulation
 {
     /// <summary>
-    /// Optional per-simulation-tick snapshots of aggregate city metrics written to Postgres via
-    /// <c>tools/postgres-ia/insert-city-metrics.mjs</c> (fire-and-forget; never blocks gameplay).
+    /// Optional per-sim-tick snapshots of aggregate city metrics → Postgres via
+    /// <c>tools/postgres-ia/insert-city-metrics.mjs</c>. Fire-and-forget; never blocks gameplay.
     /// </summary>
     public sealed class MetricsRecorder : MonoBehaviour
     {
@@ -38,7 +38,7 @@ namespace Territory.Simulation
 
         /// <summary>
         /// Call from <see cref="SimulationManager.ProcessSimulationTick"/> after tick logic (e.g. in <c>finally</c>).
-        /// No-op when <see cref="CityStats"/> is missing or no database URL is configured.
+        /// No-op if <see cref="CityStats"/> missing or no DB URL configured.
         /// </summary>
         public void RecordAfterSimulationTick()
         {

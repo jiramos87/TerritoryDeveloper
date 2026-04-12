@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Writes <c>tools/reports/last-geography-init.json</c> (gitignored) from <see cref="GeographyManager.BuildGeographyInitReportJson"/> (TECH-39 §7.11.4).
+/// Write <c>tools/reports/last-geography-init.json</c> (gitignored) from <see cref="GeographyManager.BuildGeographyInitReportJson"/>.
 /// </summary>
 public static class GeographyInitReportMenu
 {

@@ -7,8 +7,8 @@ using Territory.Utilities;
 namespace Territory.Economy
 {
 /// <summary>
-/// Manages the city's economy including taxation, monthly maintenance, money management, and financial transactions.
-/// Acts as the main interface for all economic operations in the game.
+/// Manage city economy: taxation, monthly maintenance, money, financial transactions.
+/// Main interface for all economic ops.
 /// </summary>
 public class EconomyManager : MonoBehaviour
 {
@@ -44,7 +44,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Process daily economic activities
+    /// Process daily economic activities.
     /// </summary>
     public void ProcessDailyEconomy()
     {
@@ -56,7 +56,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Process monthly economic activities: tax collection first, then maintenance charges.
+    /// Process monthly economy: tax collection first, then maintenance.
     /// </summary>
     private void ProcessMonthlyEconomy()
     {
@@ -67,7 +67,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Collects building-based tax income and notifies the player.
+    /// Collect building-based tax income + notify player.
     /// </summary>
     private void ApplyMonthlyTaxCollection()
     {
@@ -88,7 +88,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Charges street and utility upkeep for the current month (after taxes are applied).
+    /// Charge street + utility upkeep for current month (after taxes).
     /// </summary>
     private void ProcessMonthlyMaintenance()
     {
@@ -123,7 +123,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Computes monthly street upkeep from the road cell count (includes interstate and ordinary roads).
+    /// Compute monthly street upkeep from road cell count (interstate + ordinary roads).
     /// </summary>
     private int ComputeMonthlyStreetMaintenanceCost()
     {
@@ -133,7 +133,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Computes monthly utility upkeep from registered power plants.
+    /// Compute monthly utility upkeep from registered power plants.
     /// </summary>
     private int ComputeMonthlyUtilityMaintenanceCost()
     {
@@ -144,12 +144,12 @@ public class EconomyManager : MonoBehaviour
 
     #region Money Management Methods
     /// <summary>
-    /// Spend money from the city treasury.
+    /// Spend money from city treasury.
     /// </summary>
     /// <param name="amount">Amount to spend.</param>
-    /// <param name="contextForInsufficientFunds">Optional short label included in the insufficient-funds notification (e.g. "Monthly maintenance").</param>
-    /// <param name="notifyInsufficientFunds">When false, no notification is sent on failure (caller handles messaging).</param>
-    /// <returns>True if the transaction was successful, false if insufficient funds.</returns>
+    /// <param name="contextForInsufficientFunds">Optional short label for insufficient-funds notification (e.g. "Monthly maintenance").</param>
+    /// <param name="notifyInsufficientFunds">If false, no notification on failure (caller handles messaging).</param>
+    /// <returns>True if transaction successful, false if insufficient funds.</returns>
     public bool SpendMoney(int amount, string contextForInsufficientFunds = null, bool notifyInsufficientFunds = true)
     {
         if (cityStats == null)
@@ -185,9 +185,9 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Add money to the city treasury
+    /// Add money to city treasury.
     /// </summary>
-    /// <param name="amount">Amount to add</param>
+    /// <param name="amount">Amount to add.</param>
     public void AddMoney(int amount)
     {
         if (cityStats == null)
@@ -206,9 +206,9 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Get current money in the city treasury
+    /// Get current money in city treasury.
     /// </summary>
-    /// <returns>Current money amount</returns>
+    /// <returns>Current money amount.</returns>
     public int GetCurrentMoney()
     {
         if (cityStats == null)
@@ -221,21 +221,21 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Check if the city can afford a specific amount
+    /// Check if city can afford amount.
     /// </summary>
-    /// <param name="amount">Amount to check</param>
-    /// <returns>True if the city can afford it, false otherwise</returns>
+    /// <param name="amount">Amount to check.</param>
+    /// <returns>True if affordable.</returns>
     public bool CanAfford(int amount)
     {
         return GetCurrentMoney() >= amount;
     }
 
     /// <summary>
-    /// Transfer money between accounts (future use for trade, loans, etc.)
+    /// Transfer money between accounts (future: trade, loans, etc.).
     /// </summary>
-    /// <param name="amount">Amount to transfer</param>
-    /// <param name="description">Description of the transfer</param>
-    /// <returns>True if transfer was successful</returns>
+    /// <param name="amount">Amount to transfer.</param>
+    /// <param name="description">Transfer description.</param>
+    /// <returns>True if transfer successful.</returns>
     public bool TransferMoney(int amount, string description = "")
     {
         if (SpendMoney(amount))
@@ -248,10 +248,10 @@ public class EconomyManager : MonoBehaviour
         return false;
     }
     /// <summary>
-    /// Get the main category of a zone type (Residential, Commercial, Industrial, Other)
+    /// Get main category of zone type (Residential, Commercial, Industrial, Other).
     /// </summary>
-    /// <param name="zoneType">Zone type to categorize</param>
-    /// <returns>Main zone category as string</returns>
+    /// <param name="zoneType">Zone type to categorize.</param>
+    /// <returns>Main zone category as string.</returns>
     public string GetZoneMainCategory(Zone.ZoneType zoneType)
     {
         if (IsResidentialZone(zoneType))
@@ -273,7 +273,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Raise residential tax rate
+    /// Raise residential tax rate.
     /// </summary>
     public void RaiseResidentialTax()
     {
@@ -291,7 +291,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Lower residential tax rate
+    /// Lower residential tax rate.
     /// </summary>
     public void LowerResidentialTax()
     {
@@ -309,7 +309,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Raise commercial tax rate
+    /// Raise commercial tax rate.
     /// </summary>
     public void RaiseCommercialTax()
     {
@@ -327,7 +327,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Lower commercial tax rate
+    /// Lower commercial tax rate.
     /// </summary>
     public void LowerCommercialTax()
     {
@@ -345,7 +345,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Raise industrial tax rate
+    /// Raise industrial tax rate.
     /// </summary>
     public void RaiseIndustrialTax()
     {
@@ -363,7 +363,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Lower industrial tax rate
+    /// Lower industrial tax rate.
     /// </summary>
     public void LowerIndustrialTax()
     {
@@ -381,10 +381,10 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Set tax rate for a specific zone type
+    /// Set tax rate for specific zone type.
     /// </summary>
-    /// <param name="zoneType">Type of zone</param>
-    /// <param name="newRate">New tax rate</param>
+    /// <param name="zoneType">Zone type.</param>
+    /// <param name="newRate">New tax rate.</param>
     public void SetTaxRate(Zone.ZoneType zoneType, int newRate)
     {
         newRate = Mathf.Clamp(newRate, minTaxRate, maxTaxRate);
@@ -413,7 +413,7 @@ public class EconomyManager : MonoBehaviour
 
     #region Tax Getters
     /// <summary>
-    /// Get residential tax rate
+    /// Get residential tax rate.
     /// </summary>
     public int GetResidentialTax()
     {
@@ -421,7 +421,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Get commercial tax rate
+    /// Get commercial tax rate.
     /// </summary>
     public int GetCommercialTax()
     {
@@ -429,7 +429,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Get industrial tax rate
+    /// Get industrial tax rate.
     /// </summary>
     public int GetIndustrialTax()
     {
@@ -437,10 +437,10 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Get tax rate for a specific zone type
+    /// Get tax rate for specific zone type.
     /// </summary>
-    /// <param name="zoneType">Type of zone</param>
-    /// <returns>Tax rate for the zone type</returns>
+    /// <param name="zoneType">Zone type.</param>
+    /// <returns>Tax rate for zone type.</returns>
     public int GetTaxRate(Zone.ZoneType zoneType)
     {
         if (IsResidentialZone(zoneType))
@@ -464,10 +464,10 @@ public class EconomyManager : MonoBehaviour
 
     #region Zone Type Helper Methods
     /// <summary>
-    /// Check if a zone type is residential
+    /// Check if zone type is residential.
     /// </summary>
-    /// <param name="zoneType">Zone type to check</param>
-    /// <returns>True if residential, false otherwise</returns>
+    /// <param name="zoneType">Zone type to check.</param>
+    /// <returns>True if residential.</returns>
     public bool IsResidentialZone(Zone.ZoneType zoneType)
     {
         return zoneType == Zone.ZoneType.ResidentialLightBuilding ||
@@ -479,10 +479,10 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Check if a zone type is commercial
+    /// Check if zone type is commercial.
     /// </summary>
-    /// <param name="zoneType">Zone type to check</param>
-    /// <returns>True if commercial, false otherwise</returns>
+    /// <param name="zoneType">Zone type to check.</param>
+    /// <returns>True if commercial.</returns>
     public bool IsCommercialZone(Zone.ZoneType zoneType)
     {
         return zoneType == Zone.ZoneType.CommercialLightBuilding ||
@@ -494,10 +494,10 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Check if a zone type is industrial
+    /// Check if zone type is industrial.
     /// </summary>
-    /// <param name="zoneType">Zone type to check</param>
-    /// <returns>True if industrial, false otherwise</returns>
+    /// <param name="zoneType">Zone type to check.</param>
+    /// <returns>True if industrial.</returns>
     public bool IsIndustrialZone(Zone.ZoneType zoneType)
     {
         return zoneType == Zone.ZoneType.IndustrialLightBuilding ||
@@ -509,10 +509,10 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Check if a zone type is a building (not zoning)
+    /// Check if zone type is building (not zoning).
     /// </summary>
-    /// <param name="zoneType">Zone type to check</param>
-    /// <returns>True if building, false otherwise</returns>
+    /// <param name="zoneType">Zone type to check.</param>
+    /// <returns>True if building.</returns>
     public bool IsBuildingZone(Zone.ZoneType zoneType)
     {
         return zoneType == Zone.ZoneType.ResidentialLightBuilding ||
@@ -528,10 +528,10 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Check if a zone type is zoning (not building)
+    /// Check if zone type is zoning (not building).
     /// </summary>
-    /// <param name="zoneType">Zone type to check</param>
-    /// <returns>True if zoning, false otherwise</returns>
+    /// <param name="zoneType">Zone type to check.</param>
+    /// <returns>True if zoning.</returns>
     public bool IsZoningType(Zone.ZoneType zoneType)
     {
         return zoneType == Zone.ZoneType.ResidentialLightZoning ||
@@ -546,10 +546,10 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Get the density level of a zone type
+    /// Get density level of zone type.
     /// </summary>
-    /// <param name="zoneType">Zone type to check</param>
-    /// <returns>Density level (Light, Medium, Heavy) or empty string if not applicable</returns>
+    /// <param name="zoneType">Zone type to check.</param>
+    /// <returns>Density level (Light, Medium, Heavy) or empty string if N/A.</returns>
     public string GetZoneDensity(Zone.ZoneType zoneType)
     {
         string zoneTypeName = zoneType.ToString();
@@ -567,9 +567,9 @@ public class EconomyManager : MonoBehaviour
 
     #region Economic Statistics
     /// <summary>
-    /// Calculate projected monthly income based on current zones and tax rates
+    /// Calc projected monthly income from current zones + tax rates.
     /// </summary>
-    /// <returns>Projected monthly income</returns>
+    /// <returns>Projected monthly income.</returns>
     public int GetProjectedMonthlyIncome()
     {
         if (cityStats == null) return 0;
@@ -582,7 +582,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns projected net monthly cash flow (tax revenue minus recurring maintenance).
+    /// Return projected net monthly cash flow (tax revenue − recurring maintenance).
     /// </summary>
     public int GetMonthlyIncomeDelta()
     {
@@ -590,7 +590,7 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns projected monthly maintenance (streets plus registered power plants) at current rates.
+    /// Return projected monthly maintenance (streets + registered power plants) at current rates.
     /// </summary>
     public int GetProjectedMonthlyMaintenance()
     {
@@ -598,9 +598,9 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Get economic health indicator based on tax rates and income
+    /// Get economic health indicator from tax rates + income.
     /// </summary>
-    /// <returns>Economic health score (0-100)</returns>
+    /// <returns>Economic health score (0-100).</returns>
     public float GetEconomicHealth()
     {
         if (cityStats == null) return 0f;
@@ -623,9 +623,9 @@ public class EconomyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Get economic summary for UI display
+    /// Get economic summary for UI display.
     /// </summary>
-    /// <returns>Economic summary data</returns>
+    /// <returns>Economic summary data.</returns>
     public EconomicSummary GetEconomicSummary()
     {
         return new EconomicSummary
@@ -643,7 +643,7 @@ public class EconomyManager : MonoBehaviour
 }
 
 /// <summary>
-/// Economic summary data structure
+/// Economic summary data struct.
 /// </summary>
 [System.Serializable]
 public struct EconomicSummary

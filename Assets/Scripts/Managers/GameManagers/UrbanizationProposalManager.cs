@@ -12,10 +12,10 @@ using Territory.Utilities;
 namespace Territory.Simulation
 {
 /// <summary>
-/// Manages urban expansion proposals that extend the city's road and zone network.
-/// Periodically evaluates growth conditions, generates road layout proposals from existing
-/// road edges, and creates zone proposals adjacent to new roads. Coordinates with GridManager
-/// for pathfinding, RoadManager for road placement, and DemandManager for demand-based decisions.
+/// Urban expansion proposals extending city road + zone network. Periodically evaluates growth,
+/// generates road layout proposals from existing road edges, + creates zone proposals adjacent to
+/// new roads. Coordinates with <see cref="GridManager"/> (pathfinding), <see cref="RoadManager"/>
+/// (road placement), <see cref="DemandManager"/> (demand-based decisions).
 /// </summary>
 public class UrbanizationProposalManager : MonoBehaviour
 {

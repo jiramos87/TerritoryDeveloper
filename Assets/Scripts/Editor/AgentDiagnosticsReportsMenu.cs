@@ -9,7 +9,7 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Editor-only agent diagnostics (TECH-28): bounded grid snapshot JSON and sorting debug markdown, persisted via
+/// Editor-only agent diagnostics. Bounded grid snapshot JSON + sorting debug markdown; persisted via
 /// <see cref="EditorPostgresExportRegistrar.TryPersistReport"/> (Postgres-only). Uses <see cref="GridManager.GetCell"/> only — no direct grid array access.
 /// </summary>
 public static class AgentDiagnosticsReportsMenu
@@ -70,10 +70,10 @@ public static class AgentDiagnosticsReportsMenu
     }
 
     /// <summary>
-    /// Same persistence as <see cref="ExportAgentContext"/> without Finder or extra logging side effects.
-    /// Used by the Postgres-backed IDE agent bridge; menus keep calling <see cref="ExportAgentContext"/>.
+    /// Same persistence as <see cref="ExportAgentContext"/>, no Finder or extra logging side effects.
+    /// Used by Postgres-backed IDE agent bridge; menus keep calling <see cref="ExportAgentContext"/>.
     /// </summary>
-    /// <param name="overrideSeedX">When both overrides are set and in grid bounds, Moore sample is centered here instead of selection / (0,0).</param>
+    /// <param name="overrideSeedX">When both overrides set + in grid bounds → Moore sample centered here instead of selection / (0,0).</param>
     public static AgentBridgeAgentContextOutcome ExportAgentContextForAgentBridge(
         int? overrideSeedX = null,
         int? overrideSeedY = null,
@@ -399,7 +399,7 @@ public static class AgentDiagnosticsReportsMenu
     }
 
     /// <summary>
-    /// Chebyshev-ring expansion: center first, then distance 1, 2, … until maxCells or grid exhausted.
+    /// Chebyshev-ring expansion: center → distance 1, 2, … until maxCells or grid exhausted.
     /// </summary>
     static List<Vector2Int> CollectMooreExpansion(int seedX, int seedY, int w, int h, int maxCells)
     {
@@ -504,7 +504,7 @@ public static class AgentDiagnosticsReportsMenu
 }
 
 /// <summary>
-/// Outcome of <see cref="AgentDiagnosticsReportsMenu.ExportAgentContextForAgentBridge"/> (IDE agent bridge).
+/// Outcome of <see cref="AgentDiagnosticsReportsMenu.ExportAgentContextForAgentBridge"/> → IDE agent bridge.
 /// </summary>
 public readonly struct AgentBridgeAgentContextOutcome
 {
@@ -527,7 +527,7 @@ public readonly struct AgentBridgeAgentContextOutcome
         new(true, "", true, "postgres", "");
 
     /// <summary>
-    /// Postgres row written and a UTF-8 JSON copy under <c>tools/reports/</c> for IDE agents (bridge <c>artifact_paths</c>).
+    /// Postgres row written + UTF-8 JSON copy under <c>tools/reports/</c> for IDE agents (bridge <c>artifact_paths</c>).
     /// </summary>
     public static AgentBridgeAgentContextOutcome OkPostgresWithDiskArtifact(string repoRelativePath) =>
         new(true, "", true, "postgres", repoRelativePath ?? "");

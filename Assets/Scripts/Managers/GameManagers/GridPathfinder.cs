@@ -8,9 +8,8 @@ using Territory.Utilities.Compute;
 namespace Territory.Core
 {
     /// <summary>
-    /// A* pathfinding over the grid for road building. Supports flat/slope terrain costs and
-    /// optional road-spacing penalty so new roads keep distance from existing ones.
-    /// Extracted from GridManager to reduce its responsibilities.
+    /// A* pathfinding over grid for road building. Flat/slope terrain costs + optional road-spacing penalty
+    /// → new roads keep distance from existing ones. Extracted from <see cref="GridManager"/> to reduce responsibilities.
     /// </summary>
     public class GridPathfinder
     {
@@ -22,9 +21,9 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// A* path over walkable cells (grass or road). Strongly prefers flat terrain; slopes cost 35-60 so paths
-        /// tend to go around hills rather than cross them. Max nodes scales with Manhattan distance (min 200).
-        /// Returns smoothed path including start and end, or empty if not found.
+        /// A* path over walkable cells (grass or road). Strongly prefers flat terrain; slopes cost 35-60 → paths
+        /// go around hills vs cross them. Max nodes scales with Manhattan distance (min 200).
+        /// Returns smoothed path including start + end; empty if not found.
         /// </summary>
         public List<Vector2Int> FindPath(Vector2Int from, Vector2Int to)
         {
@@ -32,7 +31,7 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// A* for AUTO simulation only: walkable cells include undeveloped light zoning (BUG-47). Manual draw uses <see cref="FindPath"/>.
+        /// A* for AUTO sim only: walkable cells include undeveloped light zoning. Manual draw → <see cref="FindPath"/>.
         /// </summary>
         public List<Vector2Int> FindPathForAutoSimulation(Vector2Int from, Vector2Int to)
         {
@@ -40,7 +39,7 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// A* with road-spacing penalty for AUTO simulation; allows undeveloped light zoning as walkable (BUG-47).
+        /// A* with road-spacing penalty for AUTO sim. Allows undeveloped light zoning as walkable.
         /// </summary>
         public List<Vector2Int> FindPathWithRoadSpacingForAutoSimulation(Vector2Int from, Vector2Int to, int minDistanceFromRoad)
         {
@@ -53,10 +52,10 @@ namespace Territory.Core
         private readonly Vector2Int[] neighborBuffer = new Vector2Int[4];
 
         /// <summary>
-        /// A* path with optional extra cost for cells close to existing roads, so paths tend to keep
-        /// minDistanceFromRoad cells away and leave space for zones.
-        /// When minDistanceFromRoad is 0, behaves like FindPath.
-        /// Uses shared cost model from RoadPathCostConstants; maxNodes = max(200, manhattan * 4).
+        /// A* path with optional extra cost for cells close to existing roads → paths keep
+        /// <paramref name="minDistanceFromRoad"/> cells away + leave space for zones.
+        /// <paramref name="minDistanceFromRoad"/>=0 → behaves like <see cref="FindPath"/>.
+        /// Uses shared cost model from <see cref="RoadPathCostConstants"/>; maxNodes = max(200, manhattan * 4).
         /// </summary>
         public List<Vector2Int> FindPathWithRoadSpacing(Vector2Int from, Vector2Int to, int minDistanceFromRoad)
         {
@@ -239,8 +238,7 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Removes redundant zigzag points: when prev and next are cardinal neighbors,
-        /// the middle point can be skipped if the direct step is valid.
+        /// Remove redundant zigzag points: when prev + next cardinal neighbors, skip middle if direct step valid.
         /// </summary>
         private List<Vector2Int> SmoothPath(List<Vector2Int> path, bool allowUndevelopedLightZoning)
         {

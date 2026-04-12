@@ -30,6 +30,7 @@ Read only task-relevant specs. Use table to navigate.
 | UI changes | `ia/specs/ui-design-system.md` | Foundations, components |
 | Unity/MonoBehaviour/Inspector wiring, Script Execution Order, 2D renderer `sortingOrder`/layers (not isometric stacking), Editor Reports exports (Postgres registry + bridge) | `ia/specs/unity-development-context.md` | Full spec; defer Sorting order formula to geography §7; Editor agent diagnostics (menus, Postgres `editor_export_*`, `agent_bridge_job`) in §10 |
 | Coding standards | `ia/rules/coding-conventions.md` | XML docs, naming, prefabs |
+| XML doc style (C#) | `ia/rules/xml-doc-caveman.md` | Caveman Full style for `/// <summary>` / `<param>` / `<returns>` / `<exception>` / `<remarks>` |
 | Domain terms | `ia/specs/glossary.md` | Quick definitions |
 | Backlog / issues | `BACKLOG.md` (only if task involves issue) | — |
 | Full dependency map | `ARCHITECTURE.md` | System layers, dep table |

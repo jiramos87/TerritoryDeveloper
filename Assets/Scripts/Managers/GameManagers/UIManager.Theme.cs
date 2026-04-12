@@ -5,7 +5,7 @@ using UnityEngine.UI;
 namespace Territory.UI
 {
     /// <summary>
-    /// Applies <see cref="UiTheme"/> tokens to city HUD texts and common panel chrome (partial of <see cref="UIManager"/>).
+    /// Apply <see cref="UiTheme"/> tokens to city HUD texts + common panel chrome (partial of <see cref="UIManager"/>).
     /// </summary>
     public partial class UIManager
     {
@@ -28,7 +28,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Applies typography and surface colors once at startup when <see cref="hudUiTheme"/> is assigned.
+        /// Apply typography + surface colors once at startup when <see cref="hudUiTheme"/> assigned.
         /// </summary>
         private void ApplyHudUiThemeIfConfigured()
         {
@@ -113,19 +113,19 @@ namespace Territory.UI
 
         private const string ControlPanelObjectName = "ControlPanel";
 
-        /// <summary>Top HUD strip that must stay unobstructed above the grid debug chrome (sibling under the same HUD root as <see cref="ControlPanelObjectName"/>).</summary>
+        /// <summary>Top HUD strip; must stay unobstructed above grid debug chrome (sibling under same HUD root as <see cref="ControlPanelObjectName"/>).</summary>
         private const string DataPanelButtonsObjectName = "DataPanelButtons";
 
-        /// <summary>Space between grid debug chrome bottom edge and top of <see cref="ControlPanelObjectName"/>.</summary>
+        /// <summary>Gap: grid debug chrome bottom → top of <see cref="ControlPanelObjectName"/>.</summary>
         private const float GridCoordinatesChromeGapAboveControlPanel = 10f;
 
-        /// <summary>Space between the bottom of <see cref="DataPanelButtonsObjectName"/> and the top of the grid debug chrome.</summary>
+        /// <summary>Gap: bottom of <see cref="DataPanelButtonsObjectName"/> → top of grid debug chrome.</summary>
         private const float GridCoordinatesGapBelowDataPanelButtons = 8f;
 
-        /// <summary>Space between grid debug chrome bottom edge and top of <c>MiniMapPanel</c> (fallback layout).</summary>
+        /// <summary>Gap: grid debug chrome bottom → top of <c>MiniMapPanel</c> (fallback layout).</summary>
         private const float GridCoordinatesChromeGapAboveMinimap = 30f;
 
-        /// <summary>Max outer size (width = height) for the square grid debug chrome.</summary>
+        /// <summary>Max outer size (w=h) of square grid debug chrome.</summary>
         private const float GridCoordinatesChromeMaxSquareSide = 220f;
 
         private static bool IsGridCoordinatesChromeRootName(string n)
@@ -139,7 +139,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Walks parents to find the grid debug chrome root (inset or scroll lives under it).
+        /// Walk parents → find grid debug chrome root (inset or scroll lives under it).
         /// </summary>
         private static Transform FindGridCoordinatesChromeRoot(Transform from)
         {
@@ -153,7 +153,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Returns the text inset <see cref="RectTransform"/> under chrome, if present.
+        /// Return text inset <see cref="RectTransform"/> under chrome if present.
         /// </summary>
         private static RectTransform FindGridCoordinatesInset(RectTransform chromeRt)
         {
@@ -166,7 +166,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// HUD layout root that parents <c>ControlPanel</c> and/or <c>MiniMapPanel</c> (same <see cref="Transform"/> in MainScene).
+        /// HUD layout root parenting <c>ControlPanel</c> and/or <c>MiniMapPanel</c> (same <see cref="Transform"/> in MainScene).
         /// </summary>
         private static Transform FindHudLayoutRoot(Transform from)
         {
@@ -179,7 +179,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Parents grid debug chrome under the HUD layout root and draws it just after <c>ControlPanel</c> when present, else after <c>MiniMapPanel</c>.
+        /// Parent grid debug chrome under HUD layout root; draw just after <c>ControlPanel</c> if present, else after <c>MiniMapPanel</c>.
         /// </summary>
         private static void EnsureGridCoordinatesChromeHudMount(RectTransform chromeRt)
         {
@@ -201,7 +201,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Wraps <see cref="gridCoordinatesText"/> in a semi-transparent HUD panel with white copy for contrast over the map.
+        /// Wrap <see cref="gridCoordinatesText"/> in semi-transparent HUD panel, white copy → contrast over map.
         /// </summary>
         private void EnsureGridCoordinatesDebugChrome()
         {
@@ -268,7 +268,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Insets debug copy from the chrome edges (plain <see cref="RectTransform"/>; no layout groups).
+        /// Inset debug copy from chrome edges (plain <see cref="RectTransform"/>, no layout groups).
         /// </summary>
         private static void ApplyGridCoordinatesChromeTextInset(RectTransform insetRt)
         {
@@ -287,7 +287,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Removes nested canvas/scaler and layout drivers so legacy <see cref="Text"/> draws on the root HUD canvas.
+        /// Strip nested canvas/scaler + layout drivers → legacy <see cref="Text"/> draws on root HUD canvas.
         /// </summary>
         private static void EnsureGridCoordinatesTextLayoutDriver(RectTransform textRt)
         {
@@ -324,7 +324,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Ensures an inset holder exists under chrome and <see cref="gridCoordinatesText"/> is a layout-driven child with real padding.
+        /// Ensure inset holder exists under chrome; <see cref="gridCoordinatesText"/> is layout-driven child with real padding.
         /// </summary>
         private static void EnsureGridCoordinatesTextUnderInset(Transform chromeTransform, RectTransform textRt)
         {
@@ -352,7 +352,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Adds a <see cref="ScrollRect"/> under the inset so long grid debug copy scrolls inside the panel instead of overflowing.
+        /// Add <see cref="ScrollRect"/> under inset → long grid debug copy scrolls inside panel vs overflowing.
         /// </summary>
         private static void EnsureGridCoordinatesScrollUnderInset(RectTransform insetRt, RectTransform textRt)
         {
@@ -419,7 +419,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Sizes scroll content from text preferred height and enables vertical scrolling only when it exceeds the viewport.
+        /// Size scroll content from text preferred height; enable vertical scroll only when exceeds viewport.
         /// </summary>
         private static void UpdateGridCoordinatesScrollLayout(RectTransform chromeRt, Text dbgText)
         {
@@ -463,7 +463,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Positions grid debug chrome above <c>ControlPanel</c> when available; otherwise above the minimap.
+        /// Position grid debug chrome above <c>ControlPanel</c> if available, else above minimap.
         /// </summary>
         private static void AlignGridCoordinatesChrome(RectTransform chromeRt)
         {
@@ -477,7 +477,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Square grid debug chrome above a reference panel top, capped so its top stays below <see cref="DataPanelButtonsObjectName"/> when present.
+        /// Square grid debug chrome above reference panel top; cap top below <see cref="DataPanelButtonsObjectName"/> when present.
         /// </summary>
         private static void GridCoordinatesApplySquareChromeLayout(
             RectTransform chromeRt,
@@ -524,7 +524,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Places grid debug chrome just above the left <c>ControlPanel</c> (square, same width band as the toolbar).
+        /// Place grid debug chrome just above left <c>ControlPanel</c> (square, same width band as toolbar).
         /// </summary>
         private static bool TryAlignGridCoordinatesChromeToControlPanel(RectTransform chromeRt)
         {
@@ -552,9 +552,8 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Places grid debug chrome above the minimap with the same width band and a square size (capped below <see cref="DataPanelButtonsObjectName"/> when present).
-        /// Do not copy <c>MiniMapPanel</c> stretch anchors: with anchors (0,0)-(1,1), height = parent.height + sizeDelta.y,
-        /// so a small positive sizeDelta.y fills almost the entire screen.
+        /// Place grid debug chrome above minimap, same width band, square (capped below <see cref="DataPanelButtonsObjectName"/> when present).
+        /// Do NOT copy <c>MiniMapPanel</c> stretch anchors: anchors (0,0)-(1,1) → height = parent.height + sizeDelta.y, so small positive sizeDelta.y fills almost entire screen.
         /// </summary>
         private static void AlignGridCoordinatesChromeToMiniMap(RectTransform chromeRt)
         {
@@ -615,7 +614,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Re-sizes/places chrome after <see cref="gridCoordinatesText"/> changes (Awake uses empty string; full debug grows height).
+        /// Re-size/place chrome after <see cref="gridCoordinatesText"/> changes (Awake uses empty string; full debug grows height).
         /// </summary>
         private void RefreshGridCoordinatesChromeLayout()
         {
@@ -655,7 +654,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Adds horizontal demand gauges under R/C/I stat rows when missing (taller fills, heavy-zoning tint in <see cref="UIManager.Hud"/>).
+        /// Add horizontal demand gauges under R/C/I stat rows if missing (taller fills, heavy-zoning tint in <see cref="UIManager.Hud"/>).
         /// </summary>
         private void EnsureDemandGaugeBars()
         {
@@ -758,7 +757,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Toolbar chip next to ShowTaxesButton: compact menu size, rich money/delta, no sibling restyling (avoids touching unrelated HUD texts).
+        /// Toolbar chip next to ShowTaxesButton: compact menu size, rich money/delta, no sibling restyling (avoid touching unrelated HUD texts).
         /// </summary>
         private void ApplyToolbarMoneyRow(Text valueText)
         {
@@ -783,8 +782,8 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// TaxPanel holds many <see cref="Text"/> rows as direct children; <see cref="ApplyBodyStatRow"/> sibling styling would cross-bleed between them.
-        /// This pass applies caption tokens to static "%" titles and body tokens to growth budget value labels only.
+        /// TaxPanel holds many <see cref="Text"/> rows as direct children → <see cref="ApplyBodyStatRow"/> sibling styling would cross-bleed.
+        /// Pass: caption tokens for static "%" titles; body tokens for growth budget value labels only.
         /// </summary>
         private void ApplyTaxPanelBudgetRowTexts()
         {
@@ -816,7 +815,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Adds thin horizontal rules between growth-budget sliders, category sliders, and tax rows when missing (runtime Tax panel dividers).
+        /// Add thin horizontal rules between growth-budget sliders, category sliders, tax rows if missing (runtime Tax panel dividers).
         /// </summary>
         private void EnsureTaxPanelDividerStripes()
         {
@@ -877,7 +876,7 @@ namespace Territory.UI
         }
 
         /// <summary>
-        /// Walks parents from a serialized HUD <see cref="Text"/> until <paramref name="panelName"/> and tints its <see cref="Image"/>.
+        /// Walk parents from serialized HUD <see cref="Text"/> until <paramref name="panelName"/>; tint its <see cref="Image"/>.
         /// Supports inactive stat panels (avoids <c>GameObject.Find</c> missing disabled objects).
         /// </summary>
         private void TintPanelRootBehindReference(string panelName, Text anchorText, Color color)

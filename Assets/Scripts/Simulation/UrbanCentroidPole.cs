@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Territory.Simulation
 {
     /// <summary>
-    /// Discrete grid pole for urban centroid / connurbation blending (FEAT-47). Complements continuous <see cref="UrbanCentroidService.GetCentroid"/>.
+    /// Discrete grid pole for urban centroid / connurbation blending. Complements continuous <see cref="UrbanCentroidService.GetCentroid"/>.
     /// </summary>
     [Serializable]
     public struct UrbanCentroidPole
@@ -20,7 +20,7 @@ namespace Territory.Simulation
             this.weight = weight;
         }
 
-        /// <summary>Rounded grid cell from a continuous centroid (e.g. center of mass).</summary>
+        /// <summary>Rounded grid cell from continuous centroid (e.g. center of mass).</summary>
         public static UrbanCentroidPole FromContinuous(Vector2 continuousCentroid, float weight = 1f)
         {
             return new UrbanCentroidPole(

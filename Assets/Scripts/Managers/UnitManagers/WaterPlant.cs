@@ -5,8 +5,7 @@ using Territory.Zones;
 namespace Territory.Buildings
 {
 /// <summary>
-/// MonoBehaviour component for water treatment plant buildings placed on the grid.
-/// Tracks water capacity.
+/// MonoBehaviour for water treatment plant buildings placed on grid. Tracks water capacity.
 /// </summary>
 public class WaterPlant : MonoBehaviour, IBuilding
 {

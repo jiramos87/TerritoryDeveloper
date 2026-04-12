@@ -3,8 +3,8 @@ using UnityEngine;
 namespace Territory.Zones
 {
 /// <summary>
-/// MonoBehaviour component attached to zone GameObjects.
-/// Stores ZoneType (residential, commercial, industrial, road, etc.), zone category, and building level.
+/// MonoBehaviour attached to zone GameObjects.
+/// Stores ZoneType (residential, commercial, industrial, road, etc.), zone category, building level.
 /// </summary>
 public class Zone : MonoBehaviour
 {
@@ -59,9 +59,7 @@ public class Zone : MonoBehaviour
         SetZoneCategoryFromType();
     }
 
-    /// <summary>
-    /// Automatically set zone category based on zone type
-    /// </summary>
+    /// <summary>Auto-set zone category from zone type.</summary>
     private void SetZoneCategoryFromType()
     {
         switch (zoneType)
@@ -113,17 +111,13 @@ public class Zone : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Check if this zone type is a building
-    /// </summary>
+    /// <summary>True if zone type is building.</summary>
     public bool IsBuilding()
     {
         return zoneCategory == ZoneCategory.Building;
     }
 
-    /// <summary>
-    /// Check if this zone type is environmental (forest, water, grass)
-    /// </summary>
+    /// <summary>True if zone type environmental (forest, water, grass).</summary>
     public bool IsEnvironmental()
     {
         return zoneCategory == ZoneCategory.Forest ||
@@ -131,17 +125,13 @@ public class Zone : MonoBehaviour
                zoneCategory == ZoneCategory.Grass;
     }
 
-    /// <summary>
-    /// Check if this zone type affects desirability
-    /// </summary>
+    /// <summary>True if zone type affects desirability.</summary>
     public bool AffectsDesirability()
     {
         return zoneCategory == ZoneCategory.Forest || zoneCategory == ZoneCategory.Water;
     }
 
-    /// <summary>
-    /// Get the environmental impact value for this zone type
-    /// </summary>
+    /// <summary>Environmental impact value for zone type.</summary>
     public float GetEnvironmentalImpact()
     {
         switch (zoneType)

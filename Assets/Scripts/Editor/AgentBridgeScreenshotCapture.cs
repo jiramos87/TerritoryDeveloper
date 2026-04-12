@@ -5,20 +5,20 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Play Mode screenshot capture for the IDE agent bridge (<c>capture_screenshot</c>).
-/// Default capture prefers <see cref="Camera.main"/> (synchronous PNG) in Play Mode; falls back to
-/// <see cref="ScreenCapture.CaptureScreenshot"/> with a path relative to the project folder when no main camera exists.
-/// When <paramref name="includeGameViewWithOverlayUi"/> is true, always uses <see cref="ScreenCapture.CaptureScreenshot"/>
-/// (Game view, includes Screen Space - Overlay UI); the <paramref name="cameraNameOrEmpty"/> argument is ignored.
-/// Named <see cref="Camera"/> capture writes PNG synchronously. Output: <c>tools/reports/bridge-screenshots/</c> (gitignored).
+/// Play Mode screenshot capture for IDE agent bridge (<c>capture_screenshot</c>).
+/// Default prefers <see cref="Camera.main"/> (sync PNG) in Play Mode. Falls back to
+/// <see cref="ScreenCapture.CaptureScreenshot"/> with project-relative path when no main camera.
+/// When <paramref name="includeGameViewWithOverlayUi"/> true → always <see cref="ScreenCapture.CaptureScreenshot"/>
+/// (Game view, includes Screen Space - Overlay UI); <paramref name="cameraNameOrEmpty"/> ignored.
+/// Named <see cref="Camera"/> capture writes PNG sync. Output: <c>tools/reports/bridge-screenshots/</c> (gitignored).
 /// </summary>
 public static class AgentBridgeScreenshotCapture
 {
     static readonly Regex s_safeStem = new Regex(@"[^a-zA-Z0-9_-]+", RegexOptions.Compiled);
 
     /// <summary>
-    /// Prepares capture. When <paramref name="deferredToNextEditorFrame"/> is true, the file is written at end of frame;
-    /// the caller must complete the bridge job after the game view renders (see <c>AgentBridgeCommandRunner</c> pump).
+    /// Prepare capture. When <paramref name="deferredToNextEditorFrame"/> true → file written at end of frame;
+    /// caller must complete bridge job after game view renders (see <c>AgentBridgeCommandRunner</c> pump).
     /// </summary>
     public static bool TryBeginCapture(
         string repoRoot,

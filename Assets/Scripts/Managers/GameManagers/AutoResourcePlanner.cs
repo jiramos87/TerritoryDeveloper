@@ -9,8 +9,8 @@ using Territory.Zones;
 namespace Territory.Simulation
 {
 /// <summary>
-/// Automatically plans and places resource buildings (power plants, water plants) when city capacity is insufficient.
-/// Coordinates with CityStats for capacity checks and GridManager for placement validation.
+/// Auto-plan + place resource buildings (power plants, water plants) when city capacity insufficient.
+/// Coords with <see cref="CityStats"/> (capacity checks) + <see cref="GridManager"/> (placement validation).
 /// </summary>
 public class AutoResourcePlanner : MonoBehaviour
 {
@@ -157,7 +157,7 @@ public class AutoResourcePlanner : MonoBehaviour
         return null;
     }
 
-    /// <summary>Fallback: search any cell adjacent to any road (not just edges) when edges are scarce.</summary>
+    /// <summary>Fallback: search any cell adjacent to any road (not just edges) when edges scarce.</summary>
     private Vector2Int? FindPlacementAdjacentToAnyRoad(int buildingSize, bool isPowerPlant)
     {
         var roads = gridManager.GetAllRoadPositions();

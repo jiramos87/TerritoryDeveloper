@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Territory.Forests
 {
 /// <summary>
-/// Implements IForest for dense forest type with its specific cost, water consumption, prefab, and size properties.
+/// <see cref="IForest"/> impl for dense forest: cost, water consumption, prefab, size.
 /// </summary>
 public class DenseForest : MonoBehaviour, IForest
 {

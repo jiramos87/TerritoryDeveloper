@@ -8,13 +8,13 @@ using Territory.Persistence;
 namespace Territory.Terrain
 {
 /// <summary>
-/// Generates and manages water bodies on the grid. Lakes use depression-fill on the height map (FEAT-37a);
-/// sea-level terrain cells are merged into <see cref="WaterMap"/> after fill so they match <c>PlaceSeaLevelWater</c>.
-/// Save serializes <see cref="WaterMap.GetSerializableData"/> (FEAT-37c); load uses <see cref="RestoreWaterMapFromSaveData"/>.
-/// Procedural rivers (FEAT-38): <see cref="GenerateProceduralRiversForNewGame"/> after lake init, before interstate.
-/// QA: <see cref="SetGenerateStandardWater"/> and <see cref="GenerateTestRiver"/> are driven from GeographyManager (Inspector toggles on <c>Territory.Geography.GeographyManager</c>).
-/// Legacy sea-level threshold remains for paint tool / old save restore. Coordinates with GridManager,
-/// TerrainManager, and ZoneManager. <see cref="LakeFillSettings"/> are created in code (not Inspector) until terrain UI exists.
+/// Generate + manage water bodies on grid. Lakes → depression-fill on height map;
+/// sea-level terrain cells merged into <see cref="WaterMap"/> after fill → match <c>PlaceSeaLevelWater</c>.
+/// Save → <see cref="WaterMap.GetSerializableData"/>; load → <see cref="RestoreWaterMapFromSaveData"/>.
+/// Procedural rivers: <see cref="GenerateProceduralRiversForNewGame"/> after lake init, before interstate.
+/// QA: <see cref="SetGenerateStandardWater"/> + <see cref="GenerateTestRiver"/> driven from GeographyManager (Inspector toggles on <c>Territory.Geography.GeographyManager</c>).
+/// Legacy sea-level threshold kept for paint tool / old save restore. Coordinates with GridManager,
+/// TerrainManager, ZoneManager. <see cref="LakeFillSettings"/> built in code (not Inspector) until terrain UI exists.
 /// </summary>
 public partial class WaterManager : MonoBehaviour
 {
@@ -27,10 +27,10 @@ public partial class WaterManager : MonoBehaviour
     [Tooltip("When true, procedural lakes come from depression-fill on the height map (multi-level surfaces). When false, any cell with terrain height <= seaLevel is water (legacy).")]
     public bool useLakeDepressionFill = true;
 
-    /// <summary>Lake depression-fill parameters — not serialized; tune defaults in <see cref="LakeFillSettings"/> (terrain generator UI will expose these later).</summary>
+    /// <summary>Lake depression-fill params — not serialized; tune defaults in <see cref="LakeFillSettings"/> (terrain generator UI will expose later).</summary>
     private LakeFillSettings lakeFillSettings;
 
-    /// <summary>Read-only access for terrain feasibility and diagnostics.</summary>
+    /// <summary>Read-only access → terrain feasibility + diagnostics.</summary>
     public LakeFillSettings LakeFillSettings => lakeFillSettings;
 
     [Tooltip("Legacy: height at or below which water is placed when useLakeDepressionFill is false; also used for painted water and restore from old saves.")]
@@ -38,7 +38,7 @@ public partial class WaterManager : MonoBehaviour
 
     private WaterMap waterMap;
 
-    /// <summary>When false, <see cref="InitializeWaterMap"/> only allocates an empty <see cref="WaterMap"/> (no lakes/sea from terrain).</summary>
+    /// <summary>False → <see cref="InitializeWaterMap"/> only allocates empty <see cref="WaterMap"/> (no lakes/sea from terrain).</summary>
     private bool generateStandardWaterBodies = true;
 
     private List<WaterPlant> waterPlants = new List<WaterPlant>();
@@ -89,7 +89,7 @@ public partial class WaterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// When <paramref name="enabled"/> is false, the next <see cref="InitializeWaterMap"/> creates an empty <see cref="WaterMap"/> without lake/sea placement from terrain.
+    /// <paramref name="enabled"/> false → next <see cref="InitializeWaterMap"/> creates empty <see cref="WaterMap"/> without lake/sea placement from terrain.
     /// Call from <see cref="Territory.Geography.GeographyManager"/> before <see cref="InitializeWaterMap"/> when toggling QA options.
     /// </summary>
     public void SetGenerateStandardWater(bool enabled)
@@ -140,9 +140,9 @@ public partial class WaterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// QA straight grid West→East test river (four segments S=4..1; see <see cref="TestRiverGenerator"/>). Run after <see cref="InitializeWaterMap"/> and optional <see cref="GenerateProceduralRiversForNewGame"/>.
+    /// QA straight grid West→East test river (four segments S=4..1; see <see cref="TestRiverGenerator"/>). Run after <see cref="InitializeWaterMap"/> + optional <see cref="GenerateProceduralRiversForNewGame"/>.
     /// </summary>
-    /// <param name="segmentBedWidths">Four entries (bed width 1–3 per segment); null uses default 1,2,3,2.</param>
+    /// <param name="segmentBedWidths">Four entries (bed width 1–3 per segment); null → default 1,2,3,2.</param>
     public void GenerateTestRiver(int[] segmentBedWidths = null)
     {
         if (waterMap == null || terrainManager == null || gridManager == null || terrainManager.GetHeightMap() == null)
@@ -155,7 +155,7 @@ public partial class WaterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Procedural static rivers (FEAT-38): run after <see cref="InitializeWaterMap"/> (lakes/sea), before interstate.
+    /// Procedural static rivers: run after <see cref="InitializeWaterMap"/> (lakes/sea), before interstate.
     /// </summary>
     public void GenerateProceduralRiversForNewGame()
     {
@@ -172,9 +172,9 @@ public partial class WaterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Builds the inclusive rect for <see cref="TerrainManager.ApplyHeightMapToRegion"/> after lake fill: union of
-    /// all water cells (with margin for shore/cliffs) and the artificial carve dirty rect when present.
-    /// Matches the fallback path so procedural lakes get the same terrain + cliff refresh as carved rectangles.
+    /// Build inclusive rect for <see cref="TerrainManager.ApplyHeightMapToRegion"/> after lake fill: union of
+    /// all water cells (margin for shore/cliffs) + artificial carve dirty rect when present.
+    /// Match fallback path → procedural lakes get same terrain + cliff refresh as carved rectangles.
     /// </summary>
     static bool TryGetLakeTerrainRefreshRegion(WaterMap wm, int gridWidth, int gridHeight, out int minX, out int minY, out int maxX, out int maxY)
     {
@@ -221,8 +221,8 @@ public partial class WaterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Restores WaterMap from serialized save data, or best-effort from legacy CellData when <paramref name="data"/> is missing.
-    /// Call after RestoreHeightMapFromGridData and before RestoreGrid.
+    /// Restore WaterMap from serialized save data, or best-effort from legacy CellData when <paramref name="data"/> missing.
+    /// Call after RestoreHeightMapFromGridData + before RestoreGrid.
     /// </summary>
     public void RestoreWaterMapFromSaveData(WaterMapData data, int gridWidth, int gridHeight, List<CellData> gridData)
     {
@@ -241,7 +241,7 @@ public partial class WaterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Restores WaterMap from saved grid data only (legacy saves). Prefer <see cref="RestoreWaterMapFromSaveData"/>.
+    /// Restore WaterMap from saved grid data only (legacy saves). Prefer <see cref="RestoreWaterMapFromSaveData"/>.
     /// </summary>
     public void RestoreWaterMapFromGridData(List<CellData> gridData)
     {
@@ -254,7 +254,7 @@ public partial class WaterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Resolves a water tile prefab by saved prefab name for load restore. Falls back to random when not found.
+    /// Resolve water tile prefab by saved prefab name for load restore. Fallback → random when not found.
     /// </summary>
     public GameObject FindWaterPrefabByName(string prefabName)
     {
@@ -298,7 +298,7 @@ public partial class WaterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Registers a sea-level cell in <see cref="WaterMap"/> when terrain placed water without going through lake fill (e.g. <c>PlaceSeaLevelWater</c> at runtime).
+    /// Register sea-level cell in <see cref="WaterMap"/> when terrain placed water without lake fill (e.g. <c>PlaceSeaLevelWater</c> at runtime).
     /// </summary>
     public void TryRegisterSeaLevelWaterCell(int x, int y)
     {
@@ -313,7 +313,7 @@ public partial class WaterManager : MonoBehaviour
         waterMap.AddLegacyPaintedWaterCell(x, y, seaLevel, WaterBodyType.Sea);
     }
 
-    /// <summary>Returns -1 if the cell is not water.</summary>
+    /// <summary>-1 if cell not water.</summary>
     public int GetWaterSurfaceHeight(int x, int y)
     {
         if (waterMap == null) return -1;
@@ -498,13 +498,13 @@ public partial class WaterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Refreshes every water cell prefab and water–water cascade cliffs. Unless <paramref name="skipMultiBodySurfacePasses"/> is true: Pass A + B (§12.7) bed normalization, then junction merge,
-    /// then lake–river high/low fallback (dry rim at <c>S</c> where Pass A/B are skipped for lakes), then <see cref="PlaceWater"/>,
-    /// <see cref="TerrainManager.RefreshWaterCascadeCliffs"/>, and <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> when
-    /// depression-fill is enabled, Pass B merged any junction cells, or the fallback ran (BUG-45).
+    /// Refresh every water cell prefab + water–water cascade cliffs. Unless <paramref name="skipMultiBodySurfacePasses"/> true: Pass A + B (§12.7) bed normalization → junction merge →
+    /// lake–river high/low fallback (dry rim at <c>S</c> where Pass A/B skipped for lakes) → <see cref="PlaceWater"/>,
+    /// <see cref="TerrainManager.RefreshWaterCascadeCliffs"/>, <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> when
+    /// depression-fill enabled, Pass B merged junction cells, or fallback ran.
     /// </summary>
-    /// <param name="expandShoreRefreshSecondRing">When true, expands the land shore refresh halo (procedural river confluences).</param>
-    /// <param name="skipMultiBodySurfacePasses">When true, skips Pass A/B (§12.7 bed normalization and junction merge). Use after QA test river so intentional multi-surface segments are not merged into the lowest pool.</param>
+    /// <param name="expandShoreRefreshSecondRing">True → expand land shore refresh halo (procedural river confluences).</param>
+    /// <param name="skipMultiBodySurfacePasses">True → skip Pass A/B (§12.7 bed normalization + junction merge). Use after QA test river → intentional multi-surface segments not merged into lowest pool.</param>
     public void UpdateWaterVisuals(bool expandShoreRefreshSecondRing = false, bool skipMultiBodySurfacePasses = false)
     {
         if (waterMap == null || gridManager == null) return;
@@ -566,8 +566,8 @@ public partial class WaterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Re-applies logical surface height and terrain after <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> —
-    /// <see cref="TerrainManager.ClampShoreLandHeightsToAdjacentWaterSurface"/> can pull rim cells toward the lower pool&apos;s <c>S</c>.
+    /// Re-apply logical surface height + terrain after <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> —
+    /// <see cref="TerrainManager.ClampShoreLandHeightsToAdjacentWaterSurface"/> can pull rim cells toward lower pool&apos;s <c>S</c>.
     /// </summary>
     private void ReapplyLakeRiverFallbackRimTerrain(List<(int x, int y, int lakeSurface)> lakeRiverRimCells, HeightMap hm)
     {

@@ -11,8 +11,8 @@ using Territory.Utilities;
 namespace Territory.Forests
 {
 /// <summary>
-/// Manages forest placement, removal, and environmental effects in the city simulation.
-/// Works with the IForest interface to support different forest types (Sparse, Dense, Dense).
+/// Manage forest placement, removal, env effects in city sim.
+/// Works with <c>IForest</c> → supports forest types (Sparse, Dense, Dense).
 /// </summary>
 public class ForestManager : MonoBehaviour
 {
@@ -146,7 +146,7 @@ public class ForestManager : MonoBehaviour
     private const float ForestChunkProbability = 0.4f;
     private const float ForestCellInChunkProbability = 0.5f;
 
-    /// <summary>Builds initial forest matrix by chunks: fewer Random calls, natural clusters. 0 = None, 1 = Sparse, 2 = Medium, 3 = Dense.</summary>
+    /// <summary>Build initial forest matrix by chunks → fewer Random calls + natural clusters. 0=None, 1=Sparse, 2=Medium, 3=Dense.</summary>
     private int[,] BuildInitialForestCellsChunkBased(int gridWidth, int gridHeight)
     {
         int[,] initialForestCells = new int[gridHeight, gridWidth];
@@ -195,7 +195,7 @@ public class ForestManager : MonoBehaviour
         return initialForestCells;
     }
 
-    /// <summary>Dry land suitable for forest seeding: above sea level in height map, not logical water, and not lake/coast border (water-slope cells).</summary>
+    /// <summary>Dry land suitable for forest seeding: above sea level in height map, not logical water, not lake/coast border (water-slope cells).</summary>
     private bool IsDryLandForForestSeed(int x, int y, HeightMap heightMap)
     {
         if (waterManager != null && waterManager.IsWaterAt(x, y))
@@ -348,12 +348,11 @@ public class ForestManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Restores forest at the given cell during Load. Destroys any existing forest visual,
-    /// updates ForestMap, and when forestType != None places the correct prefab.
-    /// Call for every cell to sync ForestMap with saved data (including None to clear initial gen).
+    /// Restore forest at cell during Load. Destroy existing forest visual, update <see cref="ForestMap"/>,
+    /// when forestType != None place correct prefab. Call per cell to sync map with saved data (incl. None → clear initial gen).
     /// </summary>
-    /// <param name="updateStats">If false, skips UpdateForestStatistics (call RefreshForestStatistics after batch restore).</param>
-    /// <param name="savedSpriteSortingOrder">When set (load restore), applies persisted forest sprite order (e.g. terrain base + 5).</param>
+    /// <param name="updateStats">False → skip UpdateForestStatistics (call RefreshForestStatistics after batch restore).</param>
+    /// <param name="savedSpriteSortingOrder">Set (load restore) → apply persisted forest sprite order (e.g. terrain base + 5).</param>
     public void RestoreForestAt(int x, int y, Forest.ForestType forestType, string forestPrefabName, bool updateStats = true, int? savedSpriteSortingOrder = null)
     {
         if (forestMap == null || gridManager == null) return;
@@ -399,7 +398,7 @@ public class ForestManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Refreshes forest statistics (e.g. after batch restore). Call once after RestoreForestAt for all cells.
+    /// Refresh forest statistics (e.g. after batch restore). Call once after <see cref="RestoreForestAt"/> for all cells.
     /// </summary>
     public void RefreshForestStatistics()
     {
@@ -449,7 +448,7 @@ public class ForestManager : MonoBehaviour
     }
 
     /// <summary>
-    /// True if this land cell is orthogonally adjacent to logical water (any surface height). Uses <see cref="WaterManager.IsWaterAt"/>, not terrain height alone (FEAT-37).
+    /// True → land cell orthogonally adjacent to logical water (any surface height). Uses <see cref="WaterManager.IsWaterAt"/>, not terrain height alone.
     /// </summary>
     private bool IsRiverOrCoastEdge(int x, int y)
     {
@@ -471,7 +470,7 @@ public class ForestManager : MonoBehaviour
         return false;
     }
 
-    /// <summary>Allocates an empty <see cref="ForestMap"/> when procedural init was skipped so manual placement still works.</summary>
+    /// <summary>Allocate empty <see cref="ForestMap"/> when procedural init skipped → manual placement still works.</summary>
     private void EnsureForestMapForManualPlacement()
     {
         if (forestMap != null || gridManager == null)
@@ -490,8 +489,8 @@ public class ForestManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Height map used for terrain logic (river edge, etc.). Prefer terrainManager; fallback to gridManager.terrainManager
-    /// so we use initial/terrain heights, not Cell.height (water slope cells have Cell.height=0 but terrain height=1).
+    /// Height map for terrain logic (river edge, etc.). Prefer terrainManager; fallback gridManager.terrainManager
+    /// → use initial/terrain heights, not Cell.height (water slope cells have Cell.height=0 but terrain height=1).
     /// </summary>
     private HeightMap GetTerrainHeightMap()
     {
@@ -700,7 +699,7 @@ public class ForestManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns the forest prefab to use for this cell based on terrain (flat vs slope). On slopes uses the 12 slope prefabs (medium).
+    /// Return forest prefab for cell based on terrain (flat vs slope). On slopes → 12 slope prefabs (medium).
     /// </summary>
     private GameObject GetForestPrefabForCell(int x, int y, Forest.ForestType forestType)
     {
@@ -834,7 +833,7 @@ public class ForestManager : MonoBehaviour
 }
 
 /// <summary>
-/// Data structure for forest statistics with type-specific counts
+/// Forest statistics with type-specific counts.
 /// </summary>
 [System.Serializable]
 public struct ForestStatistics

@@ -25,25 +25,24 @@ public enum TerrainSlopeType
 }
 
 /// <summary>
-/// Generates and manages the terrain heightmap, slope types, and terrain tile prefab selection.
-/// Determines slope direction for each cell based on neighbor heights and selects the appropriate
-/// slope prefab (flat, N/S/E/W slopes, corner slopes, water slopes). Coordinates with GridManager
-/// for cell height assignment and WaterManager for water-slope prefab variants.
+/// Generate + manage terrain heightmap, slope types, terrain tile prefab selection.
+/// Per cell → pick slope dir from neighbor heights; pick slope prefab (flat, N/S/E/W, corners, water).
+/// Coord with GridManager (cell heights) + WaterManager (water-slope variants).
 /// Water–water surface steps: <see cref="RefreshWaterCascadeCliffs"/> (same segment stack as brown <c>PlaceCliffWallStack</c>).
-/// Map-border south/east cliffs toward the off-grid void stack brown segments down to <see cref="MIN_HEIGHT"/>; water-shore primary tiles skip duplicate faces toward that void.
+/// Map-border south/east cliffs toward off-grid void → stack brown segments down to <see cref="MIN_HEIGHT"/>; water-shore primary tiles skip duplicate faces toward that void.
 /// QA uniform new-game terrain: <see cref="SetNewGameFlatTerrainOptions"/> (driven from <see cref="Territory.Geography.GeographyManager"/>).
 /// </summary>
 public class TerrainManager : MonoBehaviour, ITerrainManager
 {
     /// <summary>
-    /// When true, logs when <see cref="RestoreTerrainForCell"/> exits early (null cell, overlay, invalid position).
-    /// Used to diagnose cut-through / BUG-29 voids vs sorting issues.
+    /// When true → log early exits in <see cref="RestoreTerrainForCell"/> (null cell, overlay, invalid position).
+    /// Diagnoses cut-through voids vs sorting issues.
     /// </summary>
     public static bool LogTerraformRestoreDiagnostics = false;
 
     /// <summary>
-    /// Single-cell shore prefab diagnostics (temporary). Change coordinates to trace another cell.
-    /// Also update <see cref="WaterManager.PlaceWater"/> and <c>ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink</c> (WaterManager.Membership) when changing.
+    /// Single-cell shore prefab diagnostics (temporary). Change coords to trace another cell.
+    /// Also update <see cref="WaterManager.PlaceWater"/> + <c>ShouldForceDiagonalSlopeWaterAtRiverJunctionBrink</c> (WaterManager.Membership) when changing.
     /// </summary>
     private const int ShoreDiagX = 66;
     private const int ShoreDiagY = 62;
@@ -93,9 +92,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public GameObject westCliffWallPrefab;
 
     [Header("Water–water cascade cliffs (BUG-42)")]
-    /// <summary>Water-facing cliff stack on the south diamond edge (same placement model as <see cref="southCliffWallPrefab"/>).</summary>
+    /// <summary>Water-facing cliff stack on south diamond edge (same placement model as <see cref="southCliffWallPrefab"/>).</summary>
     public GameObject cliffWaterSouthPrefab;
-    /// <summary>Water-facing cliff stack on the east diamond edge (same placement model as <see cref="eastCliffWallPrefab"/>).</summary>
+    /// <summary>Water-facing cliff stack on east diamond edge (same placement model as <see cref="eastCliffWallPrefab"/>).</summary>
     public GameObject cliffWaterEastPrefab;
 
     [Header("Cliff wall placement")]
@@ -119,7 +118,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     #endregion
 
     /// <summary>
-    /// Finds a terrain prefab (slope, water slope, sea level water, bay) by name. Used when restoring saved games.
+    /// Find terrain prefab (slope, water slope, sea level water, bay) by name. Used when restoring saved games.
     /// </summary>
     public GameObject FindTerrainPrefabByName(string prefabName)
     {
@@ -151,11 +150,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     #region Configuration
     public const int MIN_HEIGHT = 0;
     public const int MAX_HEIGHT = 5;
-    /// <summary>Reserved for future sea bodies (surface S = 0). Do not use as a proxy for “is water” — use <see cref="IsRegisteredOpenWaterAt"/> and logical surface S (spec §11).</summary>
+    /// <summary>Reserved for future sea bodies (surface S = 0). Not a proxy for "is water" — use <see cref="IsRegisteredOpenWaterAt"/> + logical surface S (spec §11).</summary>
     public const int SEA_LEVEL = 0;
 
     /// <summary>
-    /// True when <see cref="WaterMap"/> registers open water. Beds may be above <see cref="SEA_LEVEL"/>; this is authoritative for roads/terraform (geography spec water map).
+    /// True when <see cref="WaterMap"/> registers open water. Beds may be above <see cref="SEA_LEVEL"/>; authoritative for roads/terraform (geography spec water map).
     /// </summary>
     public bool IsRegisteredOpenWaterAt(int x, int y)
     {
@@ -165,7 +164,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Path/terraform: skip height writes and primary terrain mesh rebuilds for registered open water and water-shore slope cells (matches <see cref="PathTerraformPlan"/> Apply/Revert).
+    /// Path/terraform: skip height writes + primary terrain mesh rebuilds for registered open water + water-shore slope cells (matches <see cref="PathTerraformPlan"/> Apply/Revert).
     /// </summary>
     public bool ShouldSkipRoadTerraformSurfaceAt(int x, int y, HeightMap heightMap)
     {
@@ -177,18 +176,18 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Land may use water-shore prefabs only when its height is at most this many steps above the <b>visual reference
-    /// height</b> derived from an adjacent body's logical surface <c>S</c> (same as water tile placement:
-    /// <c>max(MIN_HEIGHT, S - 1)</c>). See <see cref="IsLandEligibleForWaterShorePrefabs"/> and isometric spec §2.4.1.
+    /// Land uses water-shore prefabs only when height ≤ this many steps above <b>visual reference height</b>
+    /// derived from adjacent body's logical surface <c>S</c> (same as water tile placement:
+    /// <c>max(MIN_HEIGHT, S - 1)</c>). See <see cref="IsLandEligibleForWaterShorePrefabs"/> + isometric spec §2.4.1.
     /// </summary>
     public const int MAX_LAND_HEIGHT_ABOVE_ADJACENT_WATER_SURFACE_FOR_SHORE_PREFABS = 1;
 
-    /// <summary>Cardinal offsets (south, north, east, west) for neighbor scans — order matches four-direction loops.</summary>
+    /// <summary>Cardinal offsets (S, N, E, W) for neighbor scans — order matches four-direction loops.</summary>
     static readonly int[] CardinalDx = { -1, 1, 0, 0 };
     static readonly int[] CardinalDy = { 0, 0, -1, 1 };
 
     /// <summary>
-    /// South/east face toward off-grid void: water-shore primary prefabs already include visible transition art on that edge; skip duplicate brown cliff stacks.
+    /// S/E face toward off-grid void: water-shore primary prefabs already include transition art on that edge → skip duplicate brown cliff stacks.
     /// </summary>
     private bool ShouldSuppressBrownCliffTowardOffGridForWaterShorePrimary(Cell cell)
     {
@@ -197,9 +196,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     // Sorting order constants for different object types
     public const int TERRAIN_BASE_ORDER = 0;
-    /// <summary>Offset for land slope sorting. 1 = slightly in front of terrain so slopes (especially east-facing) render correctly.</summary>
+    /// <summary>Offset for land slope sorting. 1 = slightly in front of terrain so slopes (esp. east-facing) render correctly.</summary>
     public const int SLOPE_OFFSET = 1;
-    /// <summary>Cliff sprites must sort strictly below the cell's primary terrain/shore sprite; subtract this from <see cref="Cell.sortingOrder"/> for the top stack segment.</summary>
+    /// <summary>Cliff sprites must sort strictly below cell's primary terrain/shore sprite; subtract from <see cref="Cell.sortingOrder"/> for top stack segment.</summary>
     private const int CliffSortingBelowCellTerrain = 1;
     public const int BUILDING_OFFSET = 10; // Buildings should be above terrain
     public const int EFFECT_OFFSET = 30; // Effects should be above terrain
@@ -207,7 +206,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public const int HEIGHT_MULTIPLIER = 10; // Must be < DEPTH_MULTIPLIER/MAX_HEIGHT so depth dominates (hilltops don't draw over foreground forest)
 
     /// <summary>
-    /// When true for the next initial load, <see cref="LoadInitialHeightMap"/> fills the grid uniformly (no 40×40 template, no procedural extension).
+    /// When true for next initial load → <see cref="LoadInitialHeightMap"/> fills grid uniformly (no 40×40 template, no procedural extension).
     /// Set via <see cref="SetNewGameFlatTerrainOptions"/> from <see cref="Territory.Geography.GeographyManager"/> before <see cref="GridManager.InitializeGrid"/>.
     /// Cleared after <see cref="InitializeHeightMap"/> or <see cref="StartTerrainGeneration"/>.
     /// </summary>
@@ -217,10 +216,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     #region Height Map Generation
     /// <summary>
-    /// Configures the next <see cref="LoadInitialHeightMap"/> to use a uniform height across the map (QA / method testing).
+    /// Configure next <see cref="LoadInitialHeightMap"/> to use uniform height across map (QA / method testing).
     /// </summary>
-    /// <param name="enabled">When true, skips template and procedural terrain for the next load only.</param>
-    /// <param name="uniformHeight">Height for every cell; clamped to <see cref="MIN_HEIGHT"/>–<see cref="MAX_HEIGHT"/>.</param>
+    /// <param name="enabled">True → skip template + procedural terrain for next load only.</param>
+    /// <param name="uniformHeight">Height per cell; clamped to <see cref="MIN_HEIGHT"/>–<see cref="MAX_HEIGHT"/>.</param>
     public void SetNewGameFlatTerrainOptions(bool enabled, int uniformHeight)
     {
         newGameFlatTerrainEnabled = enabled;
@@ -232,7 +231,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         newGameFlatTerrainEnabled = false;
     }
     /// <summary>
-    /// Initializes the heightmap and applies it to the grid, creating initial terrain elevations.
+    /// Init heightmap + apply to grid → initial terrain elevations.
     /// </summary>
     public void StartTerrainGeneration()
     {
@@ -248,17 +247,17 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Returns the current heightmap instance, or null if not yet initialized.
+    /// Return current heightmap instance, or null if not yet initialized.
     /// </summary>
-    /// <returns>The active HeightMap, or null.</returns>
+    /// <returns>Active HeightMap, or null.</returns>
     public HeightMap GetHeightMap()
     {
         return heightMap;
     }
 
     /// <summary>
-    /// Returns the heightMap, creating or loading it if null. Call this before RestoreTerrainForCell
-    /// and pass the result to RestoreTerrainForCell(x, y, map) so the same map is used.
+    /// Return heightMap, creating or loading if null. Call before RestoreTerrainForCell
+    /// + pass result to RestoreTerrainForCell(x, y, map) so same map is used.
     /// </summary>
     public HeightMap GetOrCreateHeightMap()
     {
@@ -267,7 +266,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Creates a fresh heightmap from the grid dimensions, loads initial height data, and applies it to the grid.
+    /// Create fresh heightmap from grid dims, load initial height data, apply to grid.
     /// </summary>
     public void InitializeHeightMap()
     {
@@ -280,11 +279,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// After procedural height generation, carves minimal cardinal bowls until
+    /// After procedural height gen → carve minimal cardinal bowls until
     /// <see cref="LakeFeasibility.CountSpillPassingCells"/> reaches
     /// <c>2 × ProceduralLakeBudgetHardCap + LakeFeasibilityExtraBowls</c> (capped by map area).
-    /// Uses shuffled full interior scans so the target is met for any map size when physically possible.
-    /// Skips if <see cref="waterManager"/> is missing or lake fill is disabled.
+    /// Shuffled full interior scans → target met for any map size when physically possible.
+    /// Skip if <see cref="waterManager"/> missing or lake fill disabled.
     /// </summary>
     private void EnsureGuaranteedLakeDepressions()
     {
@@ -369,7 +368,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Restores heightMap from saved grid data. Call before RestoreGrid so terrain/water systems use correct heights.
+    /// Restore heightMap from saved grid data. Call before RestoreGrid so terrain/water systems use correct heights.
     /// </summary>
     public void RestoreHeightMapFromGridData(List<CellData> gridData)
     {
@@ -386,8 +385,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Applies restored heightMap positions to all cell GameObjects. Call after RestoreHeightMapFromGridData
-    /// and before RestoreGrid so buildings (e.g. water plant) are parented to correctly positioned cells.
+    /// Apply restored heightMap positions to all cell GameObjects. Call after RestoreHeightMapFromGridData
+    /// + before RestoreGrid so buildings (e.g. water plant) parent to correctly positioned cells.
     /// </summary>
     public void ApplyRestoredPositionsToGrid()
     {
@@ -411,10 +410,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Ensures heightMap exists and has initial data (for RestoreTerrainForCell when init order skipped).
-    /// Tries: 1) create from gridManager, 2) borrow from another TerrainManager in scene.
-    /// Does not call ApplyHeightMapToGrid so the visible grid is not reset.
-    /// Public so GridManager can call it on the same TM reference before RestoreTerrainForCell.
+    /// Ensure heightMap exists + has initial data (for RestoreTerrainForCell when init order skipped).
+    /// Try: 1) create from gridManager, 2) borrow from another TerrainManager in scene.
+    /// Does not call ApplyHeightMapToGrid → visible grid not reset.
+    /// Public so GridManager can call on same TM reference before RestoreTerrainForCell.
     /// </summary>
     public void EnsureHeightMapLoaded()
     {
@@ -445,19 +444,19 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     private const int OriginalMapSize = 40;
-    /// <summary>Low-frequency Perlin (large horizontal plateaus for extended map).</summary>
+    /// <summary>Low-freq Perlin (large horizontal plateaus for extended map).</summary>
     private const float ExtendedPerlinScaleCoarse = 58f;
-    /// <summary>Medium-frequency detail; mixed lightly with coarse.</summary>
+    /// <summary>Medium-freq detail; mixed lightly with coarse.</summary>
     private const float ExtendedPerlinScaleFine = 38f;
     private const float ExtendedPerlinCoarseWeight = 0.72f;
     private const float ExtendedNoiseRemapLow = 0.32f;
     private const float ExtendedNoiseRemapRange = 0.58f;
     private const int BorderBlendWidth = 16;
     private const int ExtendedTerrainSmoothPasses = 2;
-    /// <summary>Fine Perlin scale for sparse one-step dips (FEAT-37a lake seeds outside the 40×40 template).</summary>
+    /// <summary>Fine Perlin scale for sparse one-step dips (lake seeds outside 40×40 template).</summary>
     private const float ExtendedMicroLakeNoiseScale = 9f;
 
-    /// <summary>Original 40×40 height map (rows y, cols x). When the grid is larger, placed <b>centered</b>; procedural fill surrounds it.</summary>
+    /// <summary>Original 40×40 height map (rows y, cols x). Grid larger → placed <b>centered</b>; procedural fill surrounds.</summary>
     private static int[,] GetOriginal40x40Heights()
     {
         return new int[,] {
@@ -546,8 +545,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Fills cells outside the centered 40×40 template with low-frequency Perlin terrain, layered plateaus, and 3×3 smoothing.
-    /// Blends at the template border. Lakes are placed later via <see cref="WaterMap.InitializeLakesFromDepressionFill"/> (FEAT-37a).
+    /// Fill cells outside centered 40×40 template → low-freq Perlin terrain, layered plateaus, 3×3 smoothing.
+    /// Blend at template border. Lakes placed later via <see cref="WaterMap.InitializeLakesFromDepressionFill"/>.
     /// </summary>
     private void FillExtendedTerrainProcedural(int[,] heights, int w, int h, int templateOriginX, int templateOriginY)
     {
@@ -588,7 +587,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Sparse fine-scale height dips outside the template so depression-fill can find valid lake seeds on extended terrain.
+    /// Sparse fine-scale height dips outside template → depression-fill finds valid lake seeds on extended terrain.
     /// </summary>
     private static void ApplyExtendedMicroLakeRoughness(int[,] heights, int w, int h, int ox, int oy)
     {
@@ -612,7 +611,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         }
     }
 
-    /// <summary>Blends procedural height toward the centered template along the four sides and four corner bands.</summary>
+    /// <summary>Blend procedural height toward centered template along 4 sides + 4 corner bands.</summary>
     private static void TryGetTemplateBorderBlend(int x, int y, int ox, int oy, int[,] template, int perlinHeight, out int edgeHeight, out float blend)
     {
         edgeHeight = perlinHeight;
@@ -686,7 +685,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         }
     }
 
-    /// <summary>3×3 box blur on procedural cells only (outside centered template); softens terraces and sharp pits.</summary>
+    /// <summary>3×3 box blur on procedural cells only (outside centered template); softens terraces + sharp pits.</summary>
     private static void SmoothExtendedTerrainHeights(int[,] heights, int w, int h, int ox, int oy, int passes)
     {
         int txMax = ox + OriginalMapSize;
@@ -723,7 +722,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         }
     }
 
-    /// <summary>Maps Perlin [0,1] to land height 1–5: favors wide plains and mid plateaus; fewer peaks (FEAT-37a / large lakes).</summary>
+    /// <summary>Map Perlin [0,1] to land height 1–5: favor wide plains + mid plateaus; fewer peaks (large lakes).</summary>
     private static int PerlinToHeightExtended(float n)
     {
         if (n < 0.28f) return 1;
@@ -734,8 +733,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Applies terrain (slopes, water, cliff walls) to all cells based on heightMap.
-    /// Same mechanism used by New Game. Call after RestoreHeightMapFromGridData + ApplyRestoredPositionsToGrid for Load.
+    /// Apply terrain (slopes, water, cliff walls) to all cells based on heightMap.
+    /// Same mechanism as New Game. Call after RestoreHeightMapFromGridData + ApplyRestoredPositionsToGrid for Load.
     /// </summary>
     public void ApplyHeightMapToGrid()
     {
@@ -753,8 +752,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Reapplies terrain for an inclusive heightmap rectangle (e.g. after artificial lake carving).
-    /// Uses the same diagonal sweep order as <see cref="ApplyHeightMapToGrid"/> for consistent slope resolution.
+    /// Reapply terrain for inclusive heightmap rect (e.g. after artificial lake carving).
+    /// Same diagonal sweep order as <see cref="ApplyHeightMapToGrid"/> → consistent slope resolution.
     /// </summary>
     public void ApplyHeightMapToRegion(int minX, int minY, int maxX, int maxY)
     {
@@ -778,12 +777,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// After lake/river water visuals exist, refreshes land cells adjacent to water so shore/bay slopes and
-    /// <see cref="PlaceCliffWalls"/> stay consistent (BUG-42). Default: each shore cell plus one cardinal land
-    /// neighbor outward from water (minimal audit). Adds a Moore ring of dry cells around the <b>high</b> water cell on
+    /// After lake/river water visuals exist → refresh land cells adjacent to water so shore/bay slopes +
+    /// <see cref="PlaceCliffWalls"/> stay consistent. Default: each shore cell + 1 cardinal land
+    /// neighbor outward from water (minimal audit). Add Moore ring of dry cells around <b>high</b> water cell on
     /// <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> edges (§12.7 lake rim). Pass <paramref name="expandSecondChebyshevRing"/> true after procedural river
-    /// generation so confluence mouths get a wider Chebyshev-2 halo refresh.
-    /// Then runs junction shore post-pass and <see cref="ApplyUpperBrinkShoreWaterCascadeCliffStacks"/> (§12.8.1).
+    /// generation → confluence mouths get wider Chebyshev-2 halo refresh.
+    /// Then runs junction shore post-pass + <see cref="ApplyUpperBrinkShoreWaterCascadeCliffStacks"/> (§12.8.1).
     /// Call after <see cref="WaterManager.UpdateWaterVisuals"/>.
     /// </summary>
     public void RefreshShoreTerrainAfterWaterUpdate(WaterManager wm, bool expandSecondChebyshevRing = false)
@@ -885,10 +884,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// After <see cref="ApplyJunctionCascadeShorePostPass"/>, builds <see cref="cliffWaterSouthPrefab"/> / <see cref="cliffWaterEastPrefab"/> stacks on
-    /// dry land classified as <see cref="RiverJunctionBrinkRole.UpperBrink"/> only, parented to that shore cell. Uses the same cardinal edge and
-    /// mirror rules as <see cref="RefreshWaterCascadeCliffs"/> (South when the lower pool is south or north of the high cell; East when east or west).
-    /// Anchor Y follows the upper pool water plane (§5.6.2, §12.8.1).
+    /// After <see cref="ApplyJunctionCascadeShorePostPass"/> → build <see cref="cliffWaterSouthPrefab"/> / <see cref="cliffWaterEastPrefab"/> stacks on
+    /// dry land classified as <see cref="RiverJunctionBrinkRole.UpperBrink"/> only, parented to that shore cell. Same cardinal edge +
+    /// mirror rules as <see cref="RefreshWaterCascadeCliffs"/> (South when lower pool is S/N of high cell; East when E/W).
+    /// Anchor Y follows upper pool water plane (§5.6.2, §12.8.1).
     /// </summary>
     private void ApplyUpperBrinkShoreWaterCascadeCliffStacks(WaterManager wm)
     {
@@ -972,8 +971,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// After the main shore refresh, re-applies shore prefabs for dry land on upper/lower river–river junction brinks using an extended
-    /// neighbor mask and forced diagonal <c>*SlopeWaterPrefab</c> so cascade edges do not stay on cardinal-only tiles (§12.8.1).
+    /// After main shore refresh → re-apply shore prefabs for dry land on upper/lower river–river junction brinks using extended
+    /// neighbor mask + forced diagonal <c>*SlopeWaterPrefab</c> → cascade edges don't stay on cardinal-only tiles (§12.8.1).
     /// </summary>
     private void ApplyJunctionCascadeShorePostPass(WaterManager wm)
     {
@@ -1019,9 +1018,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Adds extra dry cells in the Moore neighborhood of the <b>higher</b> water cell on each cardinal edge where
-    /// <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> applies (Lake at a surface step — §12.7). Ensures
-    /// <see cref="UpdateTileElevation"/> revisits rim grass/cliffs so lake shore can close before the escarpment instead
+    /// Add extra dry cells in Moore neighborhood of <b>higher</b> water cell on each cardinal edge where
+    /// <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> applies (Lake at surface step — §12.7).
+    /// <see cref="UpdateTileElevation"/> revisits rim grass/cliffs → lake shore closes before escarpment instead
     /// of leaving gaps next to lower-pool water.
     /// </summary>
     private void AddDryMooreRingAroundLakeRimForbiddenSurfaceSteps(WaterMap wmMap, HashSet<Vector2Int> shore)
@@ -1075,10 +1074,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Lowers dry cells in the Moore shore ring when they sit above the <b>logical surface</b> of their affiliated
-    /// adjacent water body, so plateau heights do not dominate <see cref="PlaceWaterShore"/> (§2.4.1). At multi-surface
-    /// junctions (e.g. waterfall), uses <see cref="Cell.waterBodyId"/> or <see cref="WaterManager.GetShoreAffiliatedWaterBodyIdForLandCell"/>
-    /// so shore-line terrain stays aligned with that body&apos;s <c>S</c>, not the minimum <c>S</c> across all neighboring pools.
+    /// Lower dry cells in Moore shore ring when above <b>logical surface</b> of affiliated adjacent water body →
+    /// plateau heights don't dominate <see cref="PlaceWaterShore"/> (§2.4.1). At multi-surface junctions (e.g. waterfall),
+    /// use <see cref="Cell.waterBodyId"/> or <see cref="WaterManager.GetShoreAffiliatedWaterBodyIdForLandCell"/>
+    /// → shore-line terrain stays aligned with that body&apos;s <c>S</c>, not min <c>S</c> across all neighboring pools.
     /// Only decreases <see cref="HeightMap"/>; never raises terrain.
     /// </summary>
     private void ClampShoreLandHeightsToAdjacentWaterSurface(WaterManager wm, WaterMap wmMap, HashSet<Vector2Int> shoreCells)
@@ -1233,9 +1232,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True if the cell has any child with ZoneCategory.Zoning (residential/commercial/industrial overlay).
-    /// Used to skip terrain refresh on those cells so <see cref="PathTerraformPlan.Apply"/> Phase 2/3 does not replace the overlay.
-    /// Building / footprint protection uses <see cref="GridManager.IsCellOccupiedByBuilding"/> (BUG-37).
+    /// True if cell has any child with ZoneCategory.Zoning (residential/commercial/industrial overlay).
+    /// Skip terrain refresh on those cells → <see cref="PathTerraformPlan.Apply"/> Phase 2/3 doesn't replace overlay.
+    /// Building / footprint protection uses <see cref="GridManager.IsCellOccupiedByBuilding"/>.
     /// </summary>
     private bool CellHasZoningOverlay(Cell cell)
     {
@@ -1250,18 +1249,18 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Reapplies terrain for a single cell from the heightMap (e.g. after demolition).
-    /// Restores height, world position, sorting order, and slope prefab if needed.
-    /// Returns true if this cell was restored as a water slope (caller should not add grass tile).
+    /// Reapply terrain for single cell from heightMap (e.g. after demolition).
+    /// Restore height, world position, sorting order, slope prefab if needed.
+    /// Return true if cell restored as water slope (caller should not add grass tile).
     /// Cut-through boundaries: Phase 3 refreshes neighbors of flattened path cells. Those neighbors
-    /// have mixed flattened/non-flattened neighbors; RequiresSlope and DetermineSlopePrefab use the
-    /// updated heightmap so slope selection matches the new landscape. forceFlat/forceSlopeType are
-    /// used for path and adjacent cells in Phase 2; Phase 3 neighbors use live heightmap.
+    /// have mixed flattened/non-flattened neighbors; RequiresSlope + DetermineSlopePrefab use
+    /// updated heightmap → slope selection matches new landscape. forceFlat/forceSlopeType are
+    /// used for path + adjacent cells in Phase 2; Phase 3 neighbors use live heightmap.
     /// </summary>
-    /// <param name="useHeightMap">If non-null, this map is used (and assigned to heightMap) so restore works even when instance field was null.</param>
-    /// <param name="forceFlat">When true, use flat terrain regardless of neighbor heights. Used for terraformed path transition cells.</param>
-    /// <param name="forceSlopeType">When set, use this orthogonal slope prefab instead of DetermineSlopePrefab. Used for terraformed path slope cells.</param>
-    /// <param name="terraformCutCorridorCells">When non-null (cut-through apply), places land–land cliff walls for 1-step drops toward these cells (BUG-29).</param>
+    /// <param name="useHeightMap">Non-null → this map used (+ assigned to heightMap) so restore works even when instance field null.</param>
+    /// <param name="forceFlat">True → use flat terrain regardless of neighbor heights. For terraformed path transition cells.</param>
+    /// <param name="forceSlopeType">When set → use this orthogonal slope prefab instead of DetermineSlopePrefab. For terraformed path slope cells.</param>
+    /// <param name="terraformCutCorridorCells">Non-null (cut-through apply) → place land–land cliff walls for 1-step drops toward these cells.</param>
     public bool RestoreTerrainForCell(int x, int y, HeightMap useHeightMap = null, bool forceFlat = false, TerrainSlopeType? forceSlopeType = null, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
         if (useHeightMap != null)
@@ -1351,7 +1350,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Returns the terrain prefab for an orthogonal slope type. Used when forcing slope prefab for terraformed path cells.
+    /// Return terrain prefab for orthogonal slope type. Used when forcing slope prefab for terraformed path cells.
     /// </summary>
     GameObject GetOrthogonalSlopePrefab(TerrainSlopeType slopeType)
     {
@@ -1378,10 +1377,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Destroys only slope and grass children, preserving road, forest, and buildings.
+    /// Destroy only slope + grass children, preserve road, forest, buildings.
     /// Used when replacing slope with flat grass (plateau or flat terrain).
-    /// Uses DestroyImmediate to avoid deferred Destroy causing multiple grass instances when
-    /// RestoreTerrainForCell is called repeatedly in the same frame (e.g. during interstate generation).
+    /// DestroyImmediate avoids deferred Destroy → multiple grass instances when
+    /// RestoreTerrainForCell called repeatedly in same frame (e.g. interstate generation).
     /// </summary>
     private void DestroyTerrainChildrenOnly(Cell cell)
     {
@@ -1439,7 +1438,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// True if terrain at (x,y) allows building placement. Flat terrain always allowed.
-    /// Slopes allowed only for 1x1 buildings (FEAT-34).
+    /// Slopes allowed only for 1x1 buildings.
     /// </summary>
     private bool IsTerrainPlaceableForBuilding(int x, int y, int buildingSize = 1)
     {
@@ -1449,8 +1448,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True if this land cell may use water-shore prefabs: among 8 neighbors, some water/sea exists whose logical
-    /// surface <c>S</c> yields a visual reference <c>V = max(MIN_HEIGHT, S - 1)</c> (aligned with
+    /// True if land cell may use water-shore prefabs: among 8 neighbors, some water/sea exists whose logical
+    /// surface <c>S</c> yields visual reference <c>V = max(MIN_HEIGHT, S - 1)</c> (aligned with
     /// <see cref="WaterManager.PlaceWater"/>) such that
     /// <c>landHeight &lt;= V + <see cref="MAX_LAND_HEIGHT_ABOVE_ADJACENT_WATER_SURFACE_FOR_SHORE_PREFABS"/></c>.
     /// Higher rim cells fall through to land slopes + cliff stacks.
@@ -1482,7 +1481,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Same height index used for water tile world placement (FEAT-37 Option A): one step below logical spill surface.
+    /// Same height index as water tile world placement: 1 step below logical spill surface.
     /// </summary>
     private static int GetWaterVisualReferenceHeightFromLogicalSurface(int logicalSurface)
     {
@@ -1490,7 +1489,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Surface height for water at the neighbor, or -1 if the cell is not water/sea. Uses <see cref="WaterManager"/>
+    /// Surface height for water at neighbor, or -1 if cell not water/sea. Uses <see cref="WaterManager"/>
     /// / <see cref="WaterMap"/> when registered; sea-level terrain before registration uses <see cref="WaterManager.seaLevel"/>.
     /// </summary>
     private int TryGetSurfaceHeightForWaterNeighbor(int nx, int ny)
@@ -1521,9 +1520,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Returns true if this cell has at least one neighbor (including diagonals) at sea level (height 0).
-    /// Used to allow water plants on coastal slope tiles. Uses 8 neighbors to match RequiresSlope,
-    /// so cells that only touch water diagonally are still considered coastal.
+    /// True if cell has ≥1 neighbor (incl. diagonals) at sea level (height 0).
+    /// Allows water plants on coastal slope tiles. 8 neighbors to match RequiresSlope,
+    /// so cells that only touch water diagonally still count as coastal.
     /// </summary>
     private bool IsAdjacentToWaterHeight(int x, int y)
     {
@@ -1550,8 +1549,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True if this cell is a water-shore tile (land within one height step of an adjacent water body's surface).
-    /// Rim cells far above the water surface are false so roads/terraform treat them as normal terrain.
+    /// True if cell is water-shore tile (land within 1 height step of adjacent water body's surface).
+    /// Rim cells far above water surface → false, so roads/terraform treat as normal terrain.
     /// </summary>
     public bool IsWaterSlopeCell(int x, int y)
     {
@@ -1607,11 +1606,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True for the <b>transition</b> tile that sits one step below inland land toward open water (cardinal sea or
-    /// registered water) — this cell should host water-slope prefabs, not rim cliffs. A flat plateau rim next to a
-    /// rectangular lake has the same height as land behind along the edge, so no cardinal land neighbor is strictly
-    /// higher; those cells are <b>not</b> ramp tiles and can receive cliffs toward the water. (Cardinal-only water
-    /// alone matched every fallback lake rim and suppressed all rim cliffs.)
+    /// True for <b>transition</b> tile 1 step below inland land toward open water (cardinal sea or
+    /// registered water) → hosts water-slope prefabs, not rim cliffs. Flat plateau rim next to
+    /// rectangular lake has same height as land behind along edge → no cardinal land neighbor strictly
+    /// higher; those cells <b>not</b> ramp tiles + can receive cliffs toward water. (Cardinal-only water
+    /// alone matched every fallback lake rim + suppressed all rim cliffs.)
     /// </summary>
     private bool IsWaterShoreRampTerrainCell(int x, int y, WaterManager wm = null)
     {
@@ -1664,8 +1663,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Replaces terrain with flat grass. Destroys slope and grass children, then places grass.
-    /// Used when cell is flat or a plateau (no higher neighbors).
+    /// Replace terrain with flat grass. Destroy slope + grass children, then place grass.
+    /// Used when cell flat or plateau (no higher neighbors).
     /// </summary>
     private void PlaceFlatTerrain(int x, int y)
     {
@@ -1701,7 +1700,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Places a slope tile from the given prefab. Used by RestoreGrid for Load when saved prefabName is a slope.
+    /// Place slope tile from given prefab. Used by RestoreGrid for Load when saved prefabName is slope.
     /// </summary>
     public void PlaceSlopeFromPrefab(int x, int y, GameObject slopePrefab, int cellHeight = -1)
     {
@@ -1757,8 +1756,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Restores water slopes on land cells adjacent to water. Call after RestoreGrid during Load.
-    /// Skips cells with buildings. Does not modify water cells (WaterManager already placed them).
+    /// Restore water slopes on land cells adjacent to water. Call after RestoreGrid during Load.
+    /// Skip cells with buildings. Does not modify water cells (WaterManager already placed them).
     /// </summary>
     public void RestoreWaterSlopesFromHeightMap()
     {
@@ -1794,8 +1793,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Restores land slopes and water slopes for terrain-only cells. Call after RestoreGrid during Load.
-    /// Skips cells with buildings, roads, or zoning.
+    /// Restore land slopes + water slopes for terrain-only cells. Call after RestoreGrid during Load.
+    /// Skip cells with buildings, roads, or zoning.
     /// </summary>
     public void RestoreTerrainSlopesFromHeightMap()
     {
@@ -1868,7 +1867,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Instantiates one or more lake/coast shore prefabs (cardinal, Bay, or upslope+downslope pair) as children of the cell.
+    /// Instantiate 1+ lake/coast shore prefabs (cardinal, Bay, or upslope+downslope pair) as children of cell.
     /// </summary>
     private void PlaceWaterShore(int x, int y, List<GameObject> waterShorePrefabs)
     {
@@ -1939,8 +1938,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Restores lake/coast shore visuals from saved prefab names (load path).
-    /// Sorting uses the same formulas as the private PlaceWaterShore path (Bay / water-slope orders). The savedPrimarySort argument is kept for call-site compatibility with older saves and is not applied.
+    /// Restore lake/coast shore visuals from saved prefab names (load path).
+    /// Sorting uses same formulas as private PlaceWaterShore path (Bay / water-slope orders). savedPrimarySort arg kept for call-site compatibility with older saves + not applied.
     /// </summary>
     public void RestoreWaterShorePrefabsFromSave(int x, int y, string primaryName, string secondaryName, int savedPrimarySort)
     {
@@ -1961,7 +1960,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         PlaceWaterShore(x, y, list);
     }
 
-    /// <param name="terraformCutCorridorCells">Cells lowered by cut-through terraform; enables 1-step land–land cliff faces toward the corridor (BUG-29).</param>
+    /// <param name="terraformCutCorridorCells">Cells lowered by cut-through terraform → enable 1-step land–land cliff faces toward corridor.</param>
     private void PlaceCliffWalls(int x, int y, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
         int currentHeight = heightMap.GetHeight(x, y);
@@ -2021,7 +2020,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True when all four cardinals are sea or registered water (e.g. a 1×1 island) — no vertical cliff ring.
+    /// True when all 4 cardinals are sea or registered water (e.g. 1×1 island) → no vertical cliff ring.
     /// </summary>
     private bool IsCellSurroundedByCardinalWaterOnly(int x, int y, WaterManager wm)
     {
@@ -2042,11 +2041,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True for a <b>one-step</b> drop toward sea, registered water, or a water-shore slope tile — do not instantiate
-    /// cliff prefabs; water-slope / water visuals cover that transition. Escarpments (Δh ≥ 2) toward the same neighbor
-    /// are <b>not</b> suppressed here so stacked cliff segments can fill the vertical face (lake basins, rim voids).
-    /// Suppression applies only when the <b>high</b> cell is in the water-shore eligibility band; rim plateaus above the
-    /// shore strip (not eligible) keep cliff faces toward that lower neighbor (BUG-42 voids).
+    /// True for <b>one-step</b> drop toward sea, registered water, or water-shore slope tile → don't instantiate
+    /// cliff prefabs; water-slope / water visuals cover that transition. Escarpments (Δh ≥ 2) toward same neighbor
+    /// <b>not</b> suppressed → stacked cliff segments can fill vertical face (lake basins, rim voids).
+    /// Suppression applies only when <b>high</b> cell in water-shore eligibility band; rim plateaus above
+    /// shore strip (not eligible) keep cliff faces toward that lower neighbor.
     /// </summary>
     private bool ShouldSuppressCliffFaceTowardLowerCell(int highX, int highY, int lowerX, int lowerY, int lowerHeight, int currentHeight)
     {
@@ -2065,7 +2064,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// After one-step suppression rules, resolves segment count for dry land, narrow shore, cut-through, and rim plateau toward water/slope.
+    /// After one-step suppression rules → resolve segment count for dry land, narrow shore, cut-through, rim plateau toward water/slope.
     /// </summary>
     private int ResolveCliffWallDropAfterSuppression(
         int highX,
@@ -2122,7 +2121,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// One-step drop toward open water only: suppress a cliff on the narrow shore strip (height-1 band with higher land
+    /// One-step drop toward open water only: suppress cliff on narrow shore strip (height-1 band with higher land
     /// behind). One-step drops toward water / water-shore also use <see cref="ShouldSuppressCliffFaceTowardLowerCell"/>.
     /// </summary>
     private bool ShouldSuppressCliffTowardCardinalLower(int x, int y, int lowerX, int lowerY, int currentHeight, int lowerHeight)
@@ -2144,7 +2143,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         return inlandH > currentHeight;
     }
 
-    /// <summary>Number of stacked cliff segments on the north face (0 = none). Higher cell is (x,y); lower neighbor is north.</summary>
+    /// <summary>Stacked cliff segment count on north face (0 = none). Higher cell = (x,y); lower neighbor = north.</summary>
     private int GetCliffWallDropNorth(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
         if (!heightMap.IsValidPosition(x + 1, y))
@@ -2165,7 +2164,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         return ResolveCliffWallDropAfterSuppression(x, y, currentHeight, x + 1, y, heightAtNorth, diff, terraformCutCorridorCells);
     }
 
-    /// <summary>Number of stacked cliff segments on the south face (0 = none). Higher cell is (x,y); lower is south.</summary>
+    /// <summary>Stacked cliff segment count on south face (0 = none). Higher cell = (x,y); lower = south.</summary>
     private int GetCliffWallDropSouth(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
         int lowerX = x - 1;
@@ -2230,7 +2229,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         return ResolveCliffWallDropAfterSuppression(x, y, currentHeight, lowerX, lowerY, heightAtEast, diff, terraformCutCorridorCells);
     }
 
-    /// <summary>Number of stacked cliff segments on the west face (0 = none). Higher cell is (x,y); lower neighbor is west.</summary>
+    /// <summary>Stacked cliff segment count on west face (0 = none). Higher cell = (x,y); lower neighbor = west.</summary>
     private int GetCliffWallDropWest(int x, int y, int currentHeight, ISet<Vector2Int> terraformCutCorridorCells = null)
     {
         if (!heightMap.IsValidPosition(x, y + 1))
@@ -2252,7 +2251,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Cut-through only: 1-step land drop into the lowered corridor gets a cliff wall (avoids black voids at rim).
+    /// Cut-through only: 1-step land drop into lowered corridor gets cliff wall (avoids black voids at rim).
     /// </summary>
     private bool NeedsCutThroughOneStepCliffToCorridor(ISet<Vector2Int> terraformCutCorridorCells, int currentHeight, int neighborHeight, int nx, int ny)
     {
@@ -2266,7 +2265,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Logical water surface height at the cell across the cliff foot (low side), or -1 if that cell is not registered water.
+    /// Logical water surface height at cell across cliff foot (low side), or -1 if cell not registered water.
     /// </summary>
     private int GetWaterSurfaceHeightForCliffProbe(int probeX, int probeY)
     {
@@ -2283,7 +2282,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True when the entire height band of this segment lies strictly below the water surface (no sprite — underwater).
+    /// True when entire height band of segment strictly below water surface (no sprite — underwater).
     /// </summary>
     private static bool ShouldSkipCliffSegmentFullyUnderwater(int topH, int bottomH, int waterSurfaceHeight)
     {
@@ -2294,14 +2293,14 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Fixed isometric camera: south and east diamond edges face the player (↙ ↘). North and west are hidden behind terrain art.
+    /// Fixed isometric camera: S + E diamond edges face player (↙ ↘). N + W hidden behind terrain art.
     /// </summary>
     private static bool IsCliffCardinalFaceVisibleToCamera(CliffCardinalFace face)
     {
         return face == CliffCardinalFace.South || face == CliffCardinalFace.East;
     }
 
-    /// <summary>Inspector cliff prefab for the geometric cardinal face (not delegated by name).</summary>
+    /// <summary>Inspector cliff prefab for geometric cardinal face (not delegated by name).</summary>
     private GameObject GetCliffPrefabForCardinalFace(CliffCardinalFace face)
     {
         switch (face)
@@ -2320,8 +2319,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// World position for a cliff is the same x position as the cell, and the y position is the anchor y minus the tile height times the segment index.
-    /// Land cliffs use the cell transform (terrain floor). Water–water cascades pass <paramref name="overrideAnchorWorldY"/> at the water visual surface (FEAT-37 / <see cref="WaterManager.PlaceWater"/>).
+    /// Cliff world pos: same x as cell; y = anchor y minus tile height × segment index.
+    /// Land cliffs use cell transform (terrain floor). Water–water cascades pass <paramref name="overrideAnchorWorldY"/> at water visual surface (see <see cref="WaterManager.PlaceWater"/>).
     /// </summary>
     private Vector2 GetCliffWallSegmentWorldPositionOnSharedEdge(Cell cell, int topH, int segmentIndex, float? overrideAnchorWorldY = null)
     {
@@ -2330,7 +2329,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Places a stack of brown cliff walls on a <b>land</b> cell (see <see cref="PlaceCliffWalls"/>).
+    /// Place stack of brown cliff walls on <b>land</b> cell (see <see cref="PlaceCliffWalls"/>).
     /// </summary>
     private void PlaceCliffWallStack(Cell cell, CliffCardinalFace cardinalFace, int highX, int highY, int lowX, int lowY, int highH, int lowH, int segmentCount)
     {
@@ -2339,12 +2338,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Shared stack placement for brown cliffs and water cascade cliffs — same segment loop and sorting.
-    /// Land cliffs skip segments fully below the lower-side water surface; water–water cascades do not (logical surface vs bed heights would hide the whole stack).
+    /// Shared stack placement for brown cliffs + water cascade cliffs — same segment loop + sorting.
+    /// Land cliffs skip segments fully below lower-side water surface; water–water cascades don't (logical surface vs bed heights would hide whole stack).
     /// </summary>
-    /// <returns>Number of cliff segment sprites instantiated.</returns>
-    /// <param name="cliffStackAnchorWorldY">When set (water–water cascades), Y anchor at water visual surface; otherwise cell transform Y (terrain floor).</param>
-    /// <param name="sortingReferenceGridX">When set with <paramref name="sortingReferenceGridY"/>, used for sorting depth instead of <paramref name="highX"/>,<paramref name="highY"/> (e.g. upper-brink shore cell).</param>
+    /// <returns>Cliff segment sprite count instantiated.</returns>
+    /// <param name="cliffStackAnchorWorldY">When set (water–water cascades) → Y anchor at water visual surface; else cell transform Y (terrain floor).</param>
+    /// <param name="sortingReferenceGridX">When set with <paramref name="sortingReferenceGridY"/> → used for sorting depth instead of <paramref name="highX"/>,<paramref name="highY"/> (e.g. upper-brink shore cell).</param>
     private int PlaceCliffWallStackCore(
         Cell cell,
         GameObject cliffPrefab,
@@ -2420,13 +2419,13 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// After all water tiles are placed, builds water–water surface-step stacks for every cardinal surface step
-    /// (<c>S_high &gt; S_low</c>) using existing south/east cliff-water prefabs only (§5.6.2).
-    /// Standard edges parent stacks to the <b>upper</b> cell when the lower pool is south or east (visible faces on that cell).
-    /// When the lower pool is <b>north</b> or <b>west</b>, the same prefabs attach to the <b>lower</b> cell (south face toward
-    /// the upper pool to the south; east face toward the upper pool to the east) so cascades are not missing on those contacts.
-    /// <see cref="GetEffectiveHeightsForWaterWaterCliff"/> uses <c>segmentCount = S_high − S_low</c>. Skips edges where
-    /// <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> is true (§12.7).
+    /// After water tiles placed, build water–water surface-step stacks per cardinal step
+    /// (<c>S_high &gt; S_low</c>) using south/east cliff-water prefabs only (§5.6.2).
+    /// Standard edges → parent to <b>upper</b> cell when lower pool is south/east (visible faces there).
+    /// Lower pool <b>north</b>/<b>west</b> → same prefabs attach to <b>lower</b> cell (south face toward upper south;
+    /// east face toward upper east) so cascades not missing on those contacts.
+    /// <see cref="GetEffectiveHeightsForWaterWaterCliff"/> uses <c>segmentCount = S_high − S_low</c>. Skip edges where
+    /// <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> true (§12.7).
     /// </summary>
     public void RefreshWaterCascadeCliffs(WaterManager wm)
     {
@@ -2498,10 +2497,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Computes terrain heights and segment count for a water–water cascade. Segment count follows the
+    /// Compute terrain heights + segment count for water–water cascade. Segment count follows
     /// <b>logical</b> surface step <c>S_high − S_low</c>; bed <see cref="HeightMap"/> does not define surface height.
-    /// When high bed is not above low bed, adjusts <paramref name="lowH"/> so <c>highH &gt; lowH</c> for stack geometry
-    /// (may be below <see cref="MIN_HEIGHT"/> only for the depth calculation at equal beds — §5.6.2, §12.7).
+    /// High bed not above low bed → adjust <paramref name="lowH"/> so <c>highH &gt; lowH</c> for stack geometry
+    /// (may drop below <see cref="MIN_HEIGHT"/> only for depth calc at equal beds — §5.6.2, §12.7).
     /// </summary>
     private void GetEffectiveHeightsForWaterWaterCliff(
         int highX,
@@ -2532,11 +2531,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Instantiates water–water cascade prefabs for one cardinal step. Optional <paramref name="parentCellX"/> / <paramref name="parentCellY"/>
-    /// parent to the lower pool when the visible south/east face lies on that cell (north/west lower neighbor — mirror placement).
+    /// Instantiate water–water cascade prefabs for one cardinal step. Optional <paramref name="parentCellX"/> / <paramref name="parentCellY"/>
+    /// parent to lower pool when visible south/east face lies on that cell (north/west lower neighbor — mirror placement).
     /// </summary>
-    /// <param name="parentCellX">When set with <paramref name="parentCellY"/>, cliff children parent to this cell; otherwise to the upper pool.</param>
-    /// <param name="waterSurfaceAnchorGridX">When set with <paramref name="waterSurfaceAnchorGridY"/>, <see cref="GridManager.GetWorldPositionVector"/> for the cascade anchor Y uses this grid cell (e.g. upper-brink shore) so isometric water-plane Y matches the parent shore tile (§12.8.1).</param>
+    /// <param name="parentCellX">With <paramref name="parentCellY"/>: cliff children parent to this cell; else to upper pool.</param>
+    /// <param name="waterSurfaceAnchorGridX">With <paramref name="waterSurfaceAnchorGridY"/>: <see cref="GridManager.GetWorldPositionVector"/> cascade anchor Y uses this grid cell (e.g. upper-brink shore) so isometric water-plane Y matches parent shore tile (§12.8.1).</param>
     private void TryPlaceWaterCascadeCliffStack(
         int highX,
         int highY,
@@ -2612,7 +2611,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// Upper bound for cliff <see cref="SpriteRenderer.sortingOrder"/> so vertical cliff faces on <paramref name="highX"/>,<paramref name="highY"/>
-    /// do not render above registered water in the 8-neighbor ring when that water is strictly in front in isometric depth
+    /// don't render above registered water in 8-neighbor ring when that water strictly in front in isometric depth
     /// (<c>nx+ny &lt; highX+highY</c>, same rule as <see cref="CalculateTerrainSortingOrder"/>). Returns <see cref="int.MaxValue"/> if none.
     /// </summary>
     private int GetMaxCliffSortingOrderFromForegroundWaterNeighbors(int highX, int highY)
@@ -2655,7 +2654,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     #region Slope Calculation
 
     /// <summary>
-    /// True if the neighbor cell is sea-level terrain or registered water (lake/sea in <see cref="WaterManager"/>).
+    /// True if neighbor cell is sea-level terrain or registered water (lake/sea in <see cref="WaterManager"/>).
     /// Used for shore prefab selection at any terrain height, not only height 0.
     /// </summary>
     private bool WaterOrSeaAt(int nx, int ny)
@@ -2670,7 +2669,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Visual height index used for water sprites at <paramref name="nx"/>, <paramref name="ny"/> (logical surface minus one).
+    /// Visual height index for water sprites at <paramref name="nx"/>, <paramref name="ny"/> (logical surface − 1).
     /// </summary>
     private int GetWaterVisualHeightForNeighborCell(int nx, int ny)
     {
@@ -2689,8 +2688,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// World height index for water visuals adjacent to this shore cell: logical surface minus one (see WaterManager.PlaceWater).
-    /// Uses the minimum among cardinal water/sea neighbors; if none, falls back to diagonal neighbors (external lake corners).
+    /// World height index for water visuals adjacent to shore cell: logical surface − 1 (see WaterManager.PlaceWater).
+    /// Min among cardinal water/sea neighbors; none → fall back to diagonals (external lake corners).
     /// </summary>
     private int GetNeighborWaterVisualHeightForShore(int x, int y)
     {
@@ -2698,8 +2697,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Same as <see cref="GetNeighborWaterVisualHeightForShore(int,int)"/>, but when <paramref name="affiliatedBodyId"/> is non-zero,
-    /// only registered water neighbors whose body id matches contribute to the minimum (§12.8 upper-brink alignment).
+    /// Same as <see cref="GetNeighborWaterVisualHeightForShore(int,int)"/>, but when <paramref name="affiliatedBodyId"/> non-zero,
+    /// only registered water neighbors w/ matching body id contribute to min (§12.8 upper-brink alignment).
     /// </summary>
     private int GetNeighborWaterVisualHeightForShore(int x, int y, int affiliatedBodyId)
     {
@@ -2752,8 +2751,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True when this shore cell sits on a terrain slope toward a non-water neighbor (cardinal land higher than this cell).
-    /// Used to choose upslope+downslope water pair vs Bay on diagonal-only water patterns.
+    /// True when shore cell sits on terrain slope toward non-water neighbor (cardinal land higher than this cell).
+    /// Used to pick upslope+downslope water pair vs Bay on diagonal-only water patterns.
     /// </summary>
     private bool HasLandSlopeIgnoringWater(int x, int y)
     {
@@ -2777,7 +2776,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True when <paramref name="prefab"/> is one of the shore corner (Bay) prefabs — inner 90° (two cardinals water) or external rectangular-lake corners.
+    /// True when <paramref name="prefab"/> is a shore corner (Bay) prefab — inner 90° (two cardinals water) or external rectangular-lake corner.
     /// </summary>
     private bool IsShoreBayPrefab(GameObject prefab)
     {
@@ -2791,7 +2790,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// True when <paramref name="prefab"/> is any lake/coast shore asset from <see cref="PlaceWaterShore"/> (cardinal/corner slope water, upslope, Bay).
-    /// Uses reference equality — same prefabs as <see cref="IsWaterSlopeObject"/> plus Bay.
+    /// Reference equality — same prefabs as <see cref="IsWaterSlopeObject"/> + Bay.
     /// </summary>
     private bool IsWaterShoreTerrainPrefabAsset(GameObject prefab)
     {
@@ -2822,12 +2821,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Agent / Editor diagnostics (<c>debug_context_bundle</c>): same predicate as <see cref="CellUsesWaterShorePrimaryPrefab"/> without exposing private helpers.
+    /// Agent / Editor diagnostics (<c>debug_context_bundle</c>): same predicate as <see cref="CellUsesWaterShorePrimaryPrefab"/> w/o exposing private helpers.
     /// </summary>
     public bool DoesCellUseWaterShorePrimaryPrefab(Cell cell) => CellUsesWaterShorePrimaryPrefab(cell);
 
     /// <summary>
-    /// Diagonal shore tiles (NE/NW/SE/SW Upslope or SlopeWater), not Bay — used for Y offset and diagonal downslope selection.
+    /// Diagonal shore tiles (NE/NW/SE/SW Upslope or SlopeWater), not Bay — used for Y offset + diagonal downslope selection.
     /// </summary>
     private bool IsDiagonalShoreWaterPrefab(GameObject prefab)
     {
@@ -2844,7 +2843,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True for NE/NW/SE/SW <c>*SlopeWaterPrefab</c> only (not Upslope). Used for flat-lake corner placement vs upslope+downslope pairs.
+    /// True for NE/NW/SE/SW <c>*SlopeWaterPrefab</c> only (not Upslope). Used for flat-lake corner placement vs upslope+downslope pair.
     /// </summary>
     private bool IsCornerSlopeWaterPrefab(GameObject prefab)
     {
@@ -2859,10 +2858,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// <summary>
     /// Extra world Y for lake shore child sprites vs <see cref="GridManager.GetWorldPositionVector"/> at water visual height.
     /// Bay: 0 when <c>landH − waterVisualH ≤ 1</c> (flat rim); same terrain-step nudge as diagonals when delta &gt; 1 (deep bowls / cliffs).
-    /// Standalone corner SlopeWater: 0 (same water plane as neighbors). Diagonal Upslope or upslope+downslope pairs:
+    /// Standalone corner SlopeWater: 0 (same water plane as neighbors). Diagonal Upslope or upslope+downslope pair:
     /// <c>(landH − waterVisualH) × tileHeight × 0.25</c>. Cardinal slopes: 0.
     /// </summary>
-    /// <param name="shorePrefabCount">Number of shore prefabs placed together (2 = upslope+downslope pair).</param>
+    /// <param name="shorePrefabCount">Shore prefab count placed together (2 = upslope+downslope pair).</param>
     private float GetShoreExtraWorldYOffset(GameObject prefab, int landH, int waterVisualH, int shorePrefabCount)
     {
         if (prefab == null || gridManager == null)
@@ -2890,8 +2889,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Sorting order of the water surface sprite on <paramref name="nx"/>, <paramref name="ny"/>,
-    /// matching lake <c>PlaceWater</c> and sea-level water tiles (for Bay vs neighbor overlap).
+    /// Sorting order of water surface sprite on <paramref name="nx"/>, <paramref name="ny"/>,
+    /// matching lake <c>PlaceWater</c> + sea-level water tiles (for Bay vs neighbor overlap).
     /// </summary>
     private int GetWaterNeighborTileSortingOrder(int nx, int ny)
     {
@@ -2924,10 +2923,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// Diagonal-only water at shore. <b>Priority:</b> (1) axis-aligned rectangle outer corner → single Bay;
-    /// (2) <see cref="HasLandSlopeIgnoringWater"/> → single Bay (cliff / higher land rim matches flat-lake concave corners); else downslope if no Bay;
-    /// (3) otherwise single Bay (flat terrain, diagonal lake edge); (4) fallback upslope+downslope pair.
-    /// Rectangle corners must win over land-slope so a higher land neighbor does not force the companion pair on straight corners.
-    /// When <paramref name="forceCascadeJunctionSlopeWater"/> is true (river–river upper or lower brink, §12.8), uses the diagonal <c>*SlopeWaterPrefab</c> only.
+    /// (2) <see cref="HasLandSlopeIgnoringWater"/> → single Bay (cliff / higher land rim matches flat-lake concave corner); else downslope if no Bay;
+    /// (3) else single Bay (flat terrain, diagonal lake edge); (4) fallback upslope+downslope pair.
+    /// Rectangle corners must win over land-slope so higher land neighbor doesn't force companion pair on straight corners.
+    /// <paramref name="forceCascadeJunctionSlopeWater"/> true (river–river upper/lower brink, §12.8) → diagonal <c>*SlopeWaterPrefab</c> only.
     /// </summary>
     private List<GameObject> BuildDiagonalOnlyShorePrefabs(int x, int y, GameObject bayPrefab, GameObject upslopePrefab, GameObject downslopePrefab, bool isAxisAlignedRectangleCornerWater, bool forceCascadeJunctionSlopeWater = false)
     {
@@ -2954,7 +2953,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True when diagonal water at NE of shore is the outer corner of an axis-aligned rectangle: no water further North or East of W.
+    /// True when diagonal water at NE of shore is outer corner of axis-aligned rectangle: no water further North/East of W.
     /// </summary>
     private bool IsAxisAlignedRectangleCornerWaterNorthEast(int x, int y, System.Func<int, int, bool> waterAt)
     {
@@ -2968,7 +2967,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         IsAxisAlignedRectangleCornerWaterNorthEast(x, y, WaterOrSeaAt);
 
     /// <summary>
-    /// True when diagonal water at NW of shore is the outer corner of an axis-aligned rectangle: no water further North or West of W.
+    /// True when diagonal water at NW of shore is outer corner of axis-aligned rectangle: no water further North/West of W.
     /// </summary>
     private bool IsAxisAlignedRectangleCornerWaterNorthWest(int x, int y, System.Func<int, int, bool> waterAt)
     {
@@ -2982,7 +2981,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         IsAxisAlignedRectangleCornerWaterNorthWest(x, y, WaterOrSeaAt);
 
     /// <summary>
-    /// True when diagonal water at SE of shore is the outer corner of an axis-aligned rectangle: no water further South or East of W.
+    /// True when diagonal water at SE of shore is outer corner of axis-aligned rectangle: no water further South/East of W.
     /// </summary>
     private bool IsAxisAlignedRectangleCornerWaterSouthEast(int x, int y, System.Func<int, int, bool> waterAt)
     {
@@ -2996,7 +2995,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         IsAxisAlignedRectangleCornerWaterSouthEast(x, y, WaterOrSeaAt);
 
     /// <summary>
-    /// True when diagonal water at SW of shore is the outer corner of an axis-aligned rectangle: no water further South or West of W.
+    /// True when diagonal water at SW of shore is outer corner of axis-aligned rectangle: no water further South/West of W.
     /// </summary>
     private bool IsAxisAlignedRectangleCornerWaterSouthWest(int x, int y, System.Func<int, int, bool> waterAt)
     {
@@ -3019,8 +3018,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// True when both perpendicular cardinal neighbors are <b>registered</b> water with different logical surface heights
-    /// (BUG-45 junction), <b>except</b> when that step is a <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> edge — then
-    /// the land cell should use normal lake-rim Bay / axis-aligned shore logic instead of multi-surface diagonal slopes (§12.7).
+    /// (junction), <b>except</b> when that step is a <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> edge — then
+    /// land cell uses normal lake-rim Bay / axis-aligned shore logic instead of multi-surface diagonal slopes (§12.7).
     /// </summary>
     private bool IsMultiSurfacePerpendicularWaterCorner(int x, int y, ShoreCornerQuadrant quadrant)
     {
@@ -3104,11 +3103,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True when the perpendicular-corner triangle (two cardinal water neighbors + the diagonal cell meeting at the land
-    /// corner) is fully registered water and the three cells do not share one logical surface <c>S</c>. Covers cascade
-    /// junctions where both cardinals belong to the lower pool (same <c>S</c>) but the diagonal is upper pool — then
-    /// <see cref="IsMultiSurfacePerpendicularWaterCorner"/> is false and <see cref="IsAxisAlignedRectangleCornerWaterSouthWest"/>
-    /// (and siblings) would wrongly choose Bay (concave) instead of <c>*SlopeWaterPrefab</c> (convex land tip).
+    /// True when perpendicular-corner triangle (two cardinal water neighbors + diagonal cell at land corner)
+    /// fully registered water + three cells don't share one logical surface <c>S</c>. Covers cascade
+    /// junctions where both cardinals belong to lower pool (same <c>S</c>) but diagonal is upper pool — then
+    /// <see cref="IsMultiSurfacePerpendicularWaterCorner"/> false + <see cref="IsAxisAlignedRectangleCornerWaterSouthWest"/>
+    /// (+ siblings) would wrongly pick Bay (concave) instead of <c>*SlopeWaterPrefab</c> (convex land tip).
     /// </summary>
     private bool IsMixedSurfaceThreeCellPerpendicularCorner(int x, int y, ShoreCornerQuadrant quadrant)
     {
@@ -3159,8 +3158,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Bay vs corner slope for one perpendicular pair (two cardinals wet). Returns null if both Bay and SlopeWater prefabs are missing.
-    /// When <paramref name="forceCascadeJunctionSlopeWater"/> (river–river junction brink, §12.8), returns the diagonal <c>*SlopeWaterPrefab</c> only, matching <see cref="BuildDiagonalOnlyShorePrefabs"/>.
+    /// Bay vs corner slope for one perpendicular pair (two cardinals wet). Return null if both Bay + SlopeWater prefabs missing.
+    /// <paramref name="forceCascadeJunctionSlopeWater"/> (river–river junction brink, §12.8) → diagonal <c>*SlopeWaterPrefab</c> only, matching <see cref="BuildDiagonalOnlyShorePrefabs"/>.
     /// </summary>
     private List<GameObject> SelectPerpendicularWaterCornerPrefabs(int x, int y, ShoreCornerQuadrant quadrant, bool forceCascadeJunctionSlopeWater = false)
     {
@@ -3302,8 +3301,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// When exactly three cardinal neighbors are water, two perpendicular pairs are both true; pick the inner corner using diagonal water
-    /// (same tie-break order as legacy SE/SW/NE/NW when diagonals agree or are both dry).
+    /// Exactly three cardinal neighbors wet → two perpendicular pairs both true; pick inner corner via diagonal water
+    /// (same tie-break order as legacy SE/SW/NE/NW when diagonals agree or both dry).
     /// </summary>
     private List<GameObject> TrySelectShoreForExactlyThreeCardinalWaters(
         int x, int y,
@@ -3363,8 +3362,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Two cardinal offsets from a shore cell to probe for cascade: only along the shore-line axis (both sides), e.g. E+W for an
-    /// E–W shoreline, N+S for an N–S shoreline. Uses the same cardinal water pattern as <see cref="DetermineWaterShorePrefabs"/>.
+    /// Two cardinal offsets from shore cell to probe for cascade: along shore-line axis only (both sides), e.g. E+W for
+    /// E–W shoreline, N+S for N–S shoreline. Same cardinal water pattern as <see cref="DetermineWaterShorePrefabs"/>.
     /// </summary>
     private static bool TryGetShoreLineSearchOffsets(
         bool hasWaterAtNorth, bool hasWaterAtSouth, bool hasWaterAtEast, bool hasWaterAtWest,
@@ -3406,11 +3405,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True when <paramref name="cx"/>,<paramref name="cy"/> lies on the lower-pool cascade / junction strip: registered water
-    /// on the low side of a cardinal surface step (same <paramref name="ownerBodyId"/>), or dry land with the same shore
-    /// affiliation that connects along the shore-line axis only to such water (Pass B strip may include dry cells).
-    /// <paramref name="axisDx0"/>/<paramref name="axisDy0"/> and <paramref name="axisDx1"/>/<paramref name="axisDy1"/> are the two
-    /// cardinal directions along the shore line (e.g. east and west); dry traversal does not step off that axis.
+    /// True when <paramref name="cx"/>,<paramref name="cy"/> on lower-pool cascade / junction strip: registered water
+    /// on low side of cardinal surface step (same <paramref name="ownerBodyId"/>), or dry land w/ same shore
+    /// affiliation connecting along shore-line axis only to such water (Pass B strip may include dry cells).
+    /// <paramref name="axisDx0"/>/<paramref name="axisDy0"/> + <paramref name="axisDx1"/>/<paramref name="axisDy1"/> are
+    /// two cardinal directions along shore line (e.g. east + west); dry traversal doesn't step off that axis.
     /// </summary>
     private bool IsOnLowerCascadeOrJunctionStrip(
         int cx, int cy, int ownerBodyId, WaterMap wm, HashSet<Vector2Int> excludeFromTraversal, int depthRemaining,
@@ -3451,10 +3450,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// When true, this dry land shore cell should use a <c>*SlopeWaterPrefab</c> corner (not <c>*UpslopeWaterPrefab</c>) to close
-    /// the shore line before the terrain/water surface step at a cascade or multi-surface junction: the cell is affiliated with
-    /// the lower pool (<paramref name="ownerBodyId"/>), touches the cascade/junction strip along the shore-line axis only, and
-    /// <paramref name="quadrant"/> is the perpendicular corner orientation (multi-surface or mixed three-cell pattern).
+    /// True → dry land shore cell should use <c>*SlopeWaterPrefab</c> corner (not <c>*UpslopeWaterPrefab</c>) to close
+    /// shore line before terrain/water surface step at cascade / multi-surface junction: cell affiliated with
+    /// lower pool (<paramref name="ownerBodyId"/>), touches cascade/junction strip along shore-line axis only,
+    /// <paramref name="quadrant"/> is perpendicular corner orientation (multi-surface or mixed three-cell pattern).
     /// </summary>
     private bool ShouldPlaceShoreEnd(
         int x, int y, int ownerBodyId,
@@ -3536,18 +3535,18 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Selects lake/coast shore prefab(s) for a land cell adjacent to water. Returns one prefab or an upslope+downslope pair for diagonal slopes.
+    /// Select lake/coast shore prefab(s) for land cell adjacent to water. Return single prefab or upslope+downslope pair for diagonal slopes.
     /// Moore neighbor wet/dry uses <see cref="WaterManager.IsOpenWaterForShoreTopology"/> (affiliated body) or <see cref="WaterOrSeaAt"/> (no affiliation), unless
-    /// <paramref name="useJunctionTopologyForShorePattern"/> uses <see cref="WaterManager.NeighborMatchesShoreOwnerForJunctionTopology"/> for the junction post-pass (§12.8.1).
-    /// Perpendicular two-cardinal corners: when both cardinals are <b>registered</b> water with different logical surfaces (BUG-45), prefer
-    /// diagonal <c>*SlopeWaterPrefab</c> over Bay <b>unless</b> that edge is <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> (§12.7 — lake rim vs lower pool, no junction).
-    /// Else Bay when the diagonal water cell is an axis-aligned rectangle outer corner; when not, prefer Bay if
+    /// <paramref name="useJunctionTopologyForShorePattern"/> → <see cref="WaterManager.NeighborMatchesShoreOwnerForJunctionTopology"/> (junction post-pass, §12.8.1).
+    /// Perpendicular two-cardinal corners: both cardinals <b>registered</b> water w/ different logical surfaces → prefer
+    /// diagonal <c>*SlopeWaterPrefab</c> over Bay <b>unless</b> edge is <see cref="WaterMap.IsLakeSurfaceStepContactForbidden"/> (§12.7 — lake rim vs lower pool, no junction).
+    /// Else Bay when diagonal water cell is axis-aligned rectangle outer corner; if not, prefer Bay if
     /// <see cref="HasLandSlopeIgnoringWater"/> (cliff rim), else SlopeWater then Bay (convex land tip / large-lake shore).
-    /// Pure cardinal north or south (no east/west water on those branches) uses north/south slope only — not <see cref="BuildDiagonalOnlyShorePrefabs"/>.
-    /// River confluences and non-rectangular water patterns: isometric spec §5.9; refresh land after river stamps via <see cref="RefreshShoreTerrainAfterWaterUpdate"/>.
+    /// Pure cardinal north/south (no east/west water on those branches) → north/south slope only — not <see cref="BuildDiagonalOnlyShorePrefabs"/>.
+    /// River confluences + non-rectangular water patterns: isometric spec §5.9; refresh land after river stamps via <see cref="RefreshShoreTerrainAfterWaterUpdate"/>.
     /// </summary>
-    /// <param name="useJunctionTopologyForShorePattern">When true, junction-brink dry neighbors count as wet (post-pass only).</param>
-    /// <param name="forceJunctionDiagonalSlopeForCascade">When true, forces diagonal <c>*SlopeWaterPrefab</c> over Bay for this cell (post-pass along the cascade strip).</param>
+    /// <param name="useJunctionTopologyForShorePattern">True → junction-brink dry neighbors count as wet (post-pass only).</param>
+    /// <param name="forceJunctionDiagonalSlopeForCascade">True → force diagonal <c>*SlopeWaterPrefab</c> over Bay for this cell (post-pass along cascade strip).</param>
     private List<GameObject> DetermineWaterShorePrefabs(int x, int y, bool useJunctionTopologyForShorePattern = false, bool forceJunctionDiagonalSlopeForCascade = false)
     {
         if (heightMap == null)
@@ -3778,12 +3777,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Calculate sorting order for terrain tiles
+    /// Sorting order for terrain tiles.
     /// </summary>
-    /// <param name="x">Grid X coordinate</param>
-    /// <param name="y">Grid Y coordinate</param>
-    /// <param name="height">Terrain height</param>
-    /// <returns>Sorting order value</returns>
+    /// <param name="x">Grid X.</param>
+    /// <param name="y">Grid Y.</param>
+    /// <param name="height">Terrain height.</param>
+    /// <returns>Sorting order value.</returns>
     public int CalculateTerrainSortingOrder(int x, int y, int height)
     {
         // In isometric view, objects further back (higher x+y) should render first (lower sorting order)
@@ -3799,9 +3798,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// <summary>
     /// Sorting for water-slope tiles at (x,y): uses neighbor water visual height (surface − 1), same as <see cref="PlaceWaterShore"/>.
     /// </summary>
-    /// <param name="x">Grid X coordinate.</param>
-    /// <param name="y">Grid Y coordinate.</param>
-    /// <returns>Sorting order value for the water slope.</returns>
+    /// <param name="x">Grid X.</param>
+    /// <param name="y">Grid Y.</param>
+    /// <returns>Sorting order value for water slope.</returns>
     public int CalculateWaterSlopeSortingOrder(int x, int y)
     {
         const int WATER_SLOPE_OFFSET = 1;
@@ -3814,7 +3813,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     /// <summary>
     /// Sorting for ShoreBay (inner 90°) shore tiles only: same base as <see cref="CalculateWaterSlopeSortingOrder"/>,
-    /// then at least one step above adjacent water tiles so isometric neighbors do not cover the corner.
+    /// then ≥1 step above adjacent water tiles so isometric neighbors don't cover corner.
     /// </summary>
     public int CalculateShoreBaySortingOrder(int x, int y)
     {
@@ -3848,37 +3847,36 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Calculate sorting order for slope tiles (slightly behind terrain)
+    /// Sorting order for slope tiles (slightly behind terrain).
     /// </summary>
-    /// <param name="x">Grid X coordinate</param>
-    /// <param name="y">Grid Y coordinate</param>
-    /// <param name="height">Terrain height</param>
-    /// <returns>Sorting order value</returns>
+    /// <param name="x">Grid X.</param>
+    /// <param name="y">Grid Y.</param>
+    /// <param name="height">Terrain height.</param>
+    /// <returns>Sorting order value.</returns>
     public int CalculateSlopeSortingOrder(int x, int y, int height)
     {
         return CalculateTerrainSortingOrder(x, y, height) + SLOPE_OFFSET;
     }
 
     /// <summary>
-    /// Calculate sorting order for buildings (should be above terrain)
-    /// Call this method from your building placement code
+    /// Sorting order for buildings (above terrain). Call from building placement code.
     /// </summary>
-    /// <param name="x">Grid X coordinate</param>
-    /// <param name="y">Grid Y coordinate</param>
-    /// <param name="height">Terrain height at building location</param>
-    /// <returns>Sorting order value</returns>
+    /// <param name="x">Grid X.</param>
+    /// <param name="y">Grid Y.</param>
+    /// <param name="height">Terrain height at building location.</param>
+    /// <returns>Sorting order value.</returns>
     public int CalculateBuildingSortingOrder(int x, int y, int height)
     {
         return CalculateTerrainSortingOrder(x, y, height) + BUILDING_OFFSET;
     }
 
     /// <summary>
-    /// Calculate sorting order for any object type at given position
+    /// Sorting order for any object type at given position.
     /// </summary>
-    /// <param name="x">Grid X coordinate</param>
-    /// <param name="y">Grid Y coordinate</param>
-    /// <param name="objectType">Type of object (terrain, building, etc.)</param>
-    /// <returns>Sorting order value</returns>
+    /// <param name="x">Grid X.</param>
+    /// <param name="y">Grid Y.</param>
+    /// <param name="objectType">Object type (terrain, building, etc).</param>
+    /// <returns>Sorting order value.</returns>
     public int CalculateSortingOrder(int x, int y, ObjectType objectType)
     {
         int height = heightMap.GetHeight(x, y);
@@ -3912,10 +3910,10 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Returns true if the given GameObject is an instance of any water-slope or shore Bay prefab.
+    /// True if GameObject is instance of any water-slope or shore Bay prefab.
     /// </summary>
-    /// <param name="obj">The GameObject to check.</param>
-    /// <returns>True if the object matches a water-slope or Bay prefab.</returns>
+    /// <param name="obj">GameObject to check.</param>
+    /// <returns>True if matches water-slope or Bay prefab.</returns>
     public bool IsWaterSlopeObject(GameObject obj)
     {
         return IsPrefabInstance(obj, northSlopeWaterPrefab)
@@ -3934,7 +3932,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Returns true if the object is a land slope tile (not water slope).
+    /// True if object is land slope tile (not water slope).
     /// </summary>
     public bool IsLandSlopeObject(GameObject obj)
     {
@@ -3953,17 +3951,17 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Returns true if the given GameObject is an instance of the sea-level water prefab.
+    /// True if GameObject is instance of sea-level water prefab.
     /// </summary>
-    /// <param name="obj">The GameObject to check.</param>
-    /// <returns>True if the object matches the sea-level water prefab.</returns>
+    /// <param name="obj">GameObject to check.</param>
+    /// <returns>True if matches sea-level water prefab.</returns>
     public bool IsSeaLevelWaterObject(GameObject obj)
     {
         return IsPrefabInstance(obj, seaLevelWaterPrefab);
     }
 
     /// <summary>
-    /// Returns true if the given GameObject is an instance of any bay prefab (coastal water terrain).
+    /// True if GameObject is instance of any bay prefab (coastal water terrain).
     /// </summary>
     public bool IsShoreBayObject(GameObject obj)
     {
@@ -3974,9 +3972,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Returns true if <paramref name="obj"/> is a brown cliff wall stack segment or a water–water cascade cliff
+    /// True if <paramref name="obj"/> is brown cliff wall stack segment or water–water cascade cliff
     /// instance (same prefab matching as <see cref="RemoveExistingCliffWalls"/> / cascade cleanup).
-    /// Used by <see cref="GridManager.DestroyCellChildren"/> so building placement does not strip map-border cliffs.
+    /// Used by <see cref="GridManager.DestroyCellChildren"/> so building placement doesn't strip map-border cliffs.
     /// </summary>
     public bool IsCliffStackTerrainObject(GameObject obj)
     {
@@ -4000,7 +3998,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Height used for land slope / prefab selection. Out-of-map neighbors use <paramref name="currentHeight"/> so MIN_HEIGHT outside the grid does not fake slopes toward the void.
+    /// Height for land slope / prefab selection. Out-of-map neighbors use <paramref name="currentHeight"/> so MIN_HEIGHT outside grid doesn't fake slopes toward void.
     /// </summary>
     int GetNeighborHeightForLandSlope(int nx, int ny, int currentHeight)
     {
@@ -4050,8 +4048,8 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Returns the slope type at (x,y) for use by ForestManager etc. Uses same logic as DetermineSlopePrefab.
-    /// Returns Flat if heightMap is null or position invalid. Calls EnsureHeightMapLoaded() when heightMap is null so ForestManager can get slope type even if init order skipped.
+    /// Return slope type at (x,y) for ForestManager etc. Same logic as DetermineSlopePrefab.
+    /// Flat if heightMap null or position invalid. Calls EnsureHeightMapLoaded() when heightMap null so ForestManager gets slope type even if init order skipped.
     /// </summary>
     public TerrainSlopeType GetTerrainSlopeTypeAt(int x, int y)
     {
@@ -4102,26 +4100,26 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
     #region Utility Methods
     /// <summary>
-    /// Modifies the terrain height at the given grid position.
+    /// Modify terrain height at grid position.
     /// </summary>
-    /// <param name="x">Grid X coordinate.</param>
-    /// <param name="y">Grid Y coordinate.</param>
-    /// <param name="newHeight">The new height value to set.</param>
+    /// <param name="x">Grid X.</param>
+    /// <param name="y">Grid Y.</param>
+    /// <param name="newHeight">New height value.</param>
     public void ModifyTerrain(int x, int y, int newHeight)
     {
         // Implementation for terrain modification
     }
 
     /// <summary>
-    /// Checks whether a building of the given size can be placed at the grid position based on terrain constraints (height uniformity, slopes, water).
-    /// Allows Flat terrain only; rejects all slope types until slope building support is implemented.
+    /// Check whether building of given size can be placed at grid position per terrain constraints (height uniformity, slopes, water).
+    /// Flat terrain only; reject all slope types until slope building support implemented.
     /// </summary>
-    /// <param name="gridPosition">The grid position for placement.</param>
-    /// <param name="size">The footprint size of the building.</param>
-    /// <param name="failReason">When the method returns false, contains the specific reason for failure.</param>
-    /// <param name="allowCoastalSlope">When true, allows placement on tiles that have slope only due to being adjacent to water (e.g. for water plants).</param>
-    /// <param name="allowWaterInFootprint">When true, water tiles in the footprint are allowed (e.g. for water plants); they are skipped for height/slope checks.</param>
-    /// <returns>True if the terrain allows placement; false otherwise.</returns>
+    /// <param name="gridPosition">Grid position for placement.</param>
+    /// <param name="size">Building footprint size.</param>
+    /// <param name="failReason">On false return, specific reason for failure.</param>
+    /// <param name="allowCoastalSlope">True → allow placement on tiles w/ slope only due to water adjacency (e.g. water plants).</param>
+    /// <param name="allowWaterInFootprint">True → water tiles in footprint allowed (e.g. water plants); skipped for height/slope checks.</param>
+    /// <returns>True if terrain allows placement; false otherwise.</returns>
     public bool CanPlaceBuildingInTerrain(Vector2 gridPosition, int size, out string failReason, bool allowCoastalSlope = false, bool allowWaterInFootprint = false)
     {
         failReason = null;
@@ -4202,11 +4200,11 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// True if a road can be placed at (x,y): not occupied, and terrain is flat, cardinal, or diagonal slope.
-    /// Water cells (height 0) are allowed for bridge placement. Water slope cells (land adjacent to water)
-    /// are rejected for normal roads to keep a 1-cell buffer from coastlines. Diagonal slopes use
-    /// orthogonal road prefabs (FEAT-05). Corner slopes (NEUp, NWUp, SEUp, SWUp) have no prefabs yet and are rejected.
-    /// Implements <see cref="ITerrainManager.CanPlaceRoad(int, int)"/>; does not allow shore trace (use overload for FEAT-44).
+    /// True if road can be placed at (x,y): not occupied, terrain flat/cardinal/diagonal slope.
+    /// Water cells (height 0) allowed for bridge placement. Water slope cells (land adjacent to water)
+    /// rejected for normal roads to keep 1-cell buffer from coastlines. Diagonal slopes use
+    /// orthogonal road prefabs. Corner slopes (NEUp, NWUp, SEUp, SWUp) have no prefabs yet → rejected.
+    /// Implements <see cref="ITerrainManager.CanPlaceRoad(int, int)"/>; doesn't allow shore trace (use overload).
     /// </summary>
     public bool CanPlaceRoad(int x, int y)
     {
@@ -4214,12 +4212,12 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Same as <see cref="CanPlaceRoad(int, int)"/> with optional shore allowance for pathfinding and manual bridge strokes.
+    /// Same as <see cref="CanPlaceRoad(int, int)"/> with optional shore allowance for pathfinding + manual bridge strokes.
     /// </summary>
     /// <param name="allowWaterSlopeForWaterBridgeTrace">
-    /// When true (pathfinding / manual road stroke only), water-slope shore cells may pass so a shared
-    /// <see cref="Territory.Roads.RoadManager.TryPrepareRoadPlacementPlan"/> pass can validate water bridges (FEAT-44).
-    /// Single-tile placement and zoning must keep this false.
+    /// True (pathfinding / manual road stroke only) → water-slope shore cells may pass so shared
+    /// <see cref="Territory.Roads.RoadManager.TryPrepareRoadPlacementPlan"/> pass can validate water bridges.
+    /// Single-tile placement + zoning must keep this false.
     /// </param>
     public bool CanPlaceRoad(int x, int y, bool allowWaterSlopeForWaterBridgeTrace)
     {

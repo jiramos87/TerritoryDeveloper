@@ -4,8 +4,8 @@ using System.Collections.Generic;
 namespace Territory.Core
 {
     /// <summary>
-    /// Min-heap for A* pathfinding. Stores (position, fScore) and supports O(log n) Enqueue and Dequeue.
-    /// Used instead of List+Sort for efficient priority queue operations.
+    /// Min-heap for A* pathfinding. Stores (position, fScore); O(log n) Enqueue/Dequeue.
+    /// Replaces List+Sort → efficient priority queue.
     /// </summary>
     internal class MinHeap
     {

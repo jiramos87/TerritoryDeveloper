@@ -9,8 +9,9 @@ using Territory.Simulation;
 namespace Territory.Timing
 {
 /// <summary>
-/// Controls game speed, pause state, and simulation tick timing.
-/// Drives the simulation loop by calling SimulationManager and notifying EconomyManager, ZoneManager, and other time-dependent managers.
+/// Controls game speed, pause state, sim tick timing. Drives sim loop by calling
+/// <see cref="SimulationManager"/> + notifying <see cref="EconomyManager"/>, <see cref="ZoneManager"/>,
+/// other time-dependent managers.
 /// </summary>
 public class TimeManager : MonoBehaviour
 {

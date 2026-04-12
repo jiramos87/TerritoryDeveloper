@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Territory.UI
 {
 /// <summary>
-/// UI button that activates commercial zone placement mode in UIManager.
+/// UI button → activates commercial zone placement mode in <see cref="UIManager"/>.
 /// </summary>
 public class CommercialZoningSelectorButton : MonoBehaviour
 {

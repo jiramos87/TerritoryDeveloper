@@ -3,19 +3,19 @@ using UnityEngine;
 namespace Territory.Persistence
 {
     /// <summary>
-    /// Master seed for procedural extended terrain and lake depression-fill (BUG-36).
-    /// Rolled on each New Game; ensured once per editor/session cold start for InitializeGeography.
-    /// Not stored in save files — load restores height and water from serialized data only.
+    /// Master seed for procedural extended terrain + lake depression-fill (BUG-36).
+    /// Rolled per New Game; ensured once per editor/session cold start for InitializeGeography.
+    /// Not saved — load restores height + water from serialized data only.
     /// </summary>
     public static class MapGenerationSeed
     {
         private static bool hasMasterSeed;
         private static int masterSeed;
 
-        /// <summary>Current session master seed; valid after <see cref="EnsureSessionMasterSeed"/> or <see cref="RollNewMasterSeed"/>.</summary>
+        /// <summary>Current session master seed. Valid after <see cref="EnsureSessionMasterSeed"/> or <see cref="RollNewMasterSeed"/>.</summary>
         public static int MasterSeed => masterSeed;
 
-        /// <summary>Assigns a new random master seed (call at the start of each New Game).</summary>
+        /// <summary>Assign new random master seed. Call at start of each New Game.</summary>
         public static void RollNewMasterSeed()
         {
             masterSeed = Random.Range(int.MinValue, int.MaxValue);
@@ -24,7 +24,7 @@ namespace Territory.Persistence
             hasMasterSeed = true;
         }
 
-        /// <summary>Ensures a master seed exists for first geography init (e.g. Play in Editor without menu).</summary>
+        /// <summary>Ensure master seed exists for first geography init (e.g. Play in Editor without menu).</summary>
         public static void EnsureSessionMasterSeed()
         {
             if (!hasMasterSeed)
@@ -32,8 +32,8 @@ namespace Territory.Persistence
         }
 
         /// <summary>
-        /// Sets the session master seed from interchange <c>geography_init_params.seed</c> (TECH-41).
-        /// Replaces any prior master seed for this process (e.g. after <see cref="RollNewMasterSeed"/> from New Game menu).
+        /// Set session master seed from interchange <c>geography_init_params.seed</c> (TECH-41).
+        /// Replaces prior master seed for this process (e.g. after <see cref="RollNewMasterSeed"/> from New Game menu).
         /// </summary>
         public static void SetSessionMasterSeed(int seed)
         {
@@ -41,7 +41,7 @@ namespace Territory.Persistence
             hasMasterSeed = true;
         }
 
-        /// <summary>Stable derived seed for Perlin offsets on extended terrain (replaces fixed TerrainGenSeed).</summary>
+        /// <summary>Stable derived seed for Perlin offsets on extended terrain. Replaces fixed TerrainGenSeed.</summary>
         public static int GetTerrainProceduralOffsetSeed()
         {
             EnsureSessionMasterSeed();
@@ -55,7 +55,7 @@ namespace Territory.Persistence
             return Derive(masterSeed, 0x4D43524Fu);
         }
 
-        /// <summary>Carve threshold for sparse dips; varies slightly with the map seed so each run exposes different lake seed density on procedural terrain.</summary>
+        /// <summary>Carve threshold for sparse dips. Varies with map seed → each run exposes different lake seed density on procedural terrain.</summary>
         public static float GetMicroLakeCarveThreshold()
         {
             EnsureSessionMasterSeed();
@@ -64,7 +64,7 @@ namespace Territory.Persistence
             return Mathf.Lerp(0.024f, 0.046f, u);
         }
 
-        /// <summary>Feeds <see cref="Territory.Terrain.WaterMap.LakeFillSettings.RandomSeed"/> and terrain lake-feasibility shuffle.</summary>
+        /// <summary>Feeds <see cref="Territory.Terrain.WaterMap.LakeFillSettings.RandomSeed"/> + terrain lake-feasibility shuffle.</summary>
         public static int GetLakeFillRandomSeed()
         {
             EnsureSessionMasterSeed();

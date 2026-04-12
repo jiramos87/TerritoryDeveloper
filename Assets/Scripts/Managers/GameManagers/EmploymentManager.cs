@@ -38,8 +38,9 @@ public class JobData
 }
 
 /// <summary>
-/// Calculates employment and unemployment rates across all zones.
-/// Coordinates with CityStats for population data and DemandManager; R/C/I demand refreshes after daily happiness via <see cref="RefreshRCIDemandAfterDailyStats"/>.
+/// Calc employment + unemployment rates across all zones. Coords with <see cref="CityStats"/> (population) +
+/// <see cref="DemandManager"/>; R/C/I demand refreshes after daily happiness via
+/// <see cref="RefreshRCIDemandAfterDailyStats"/>.
 /// </summary>
 public class EmploymentManager : MonoBehaviour
 {
@@ -89,9 +90,9 @@ public class EmploymentManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Refreshes R/C/I demand after city-wide stats and happiness targets are updated for the day.
-    /// Called from <see cref="CityStats.PerformDailyUpdates"/> after <see cref="CityStats.RecalculateHappiness"/>
-    /// so demand uses same-tick tax and happiness targets.
+    /// Refresh R/C/I demand after city-wide stats + happiness targets updated for day. Called from
+    /// <see cref="CityStats.PerformDailyUpdates"/> after <see cref="CityStats.RecalculateHappiness"/>
+    /// → demand uses same-tick tax + happiness targets.
     /// </summary>
     public void RefreshRCIDemandAfterDailyStats()
     {

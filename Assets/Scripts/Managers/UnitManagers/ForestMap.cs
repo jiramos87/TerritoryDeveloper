@@ -4,8 +4,7 @@ using System.Collections.Generic;
 namespace Territory.Forests
 {
 /// <summary>
-/// Manages the forest data for the entire grid, tracking different forest types per cell.
-/// Provides efficient querying and updating of forest information.
+/// Manage forest data for whole grid. Tracks forest type per cell. Efficient query + update.
 /// </summary>
 public class ForestMap
 {
@@ -14,7 +13,7 @@ public class ForestMap
     private int height;
     
     /// <summary>
-    /// Initialize forest map with specified dimensions
+    /// Init forest map with dimensions.
     /// </summary>
     public ForestMap(int width, int height)
     {
@@ -33,7 +32,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Initialize the forest map from a predefined matrix
+    /// Init forest map from predefined matrix.
     /// </summary>
     public void InitializeFromMatrix(Forest.ForestType[,] initialForestCells)
     {
@@ -50,8 +49,7 @@ public class ForestMap
     }
 
     /// <summary>
-    /// Initialize the forest map from an integer matrix.
-    /// 0 = None, 1 = Sparse, 2 = Medium, 3 = Dense. Values outside 0-3 are treated as None.
+    /// Init forest map from int matrix. 0=None, 1=Sparse, 2=Medium, 3=Dense. Values outside 0-3 → None.
     /// </summary>
     public void InitializeFromIntMatrix(int[,] initialForestCells)
     {
@@ -71,7 +69,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Check if position is within valid bounds
+    /// Check if position within valid bounds.
     /// </summary>
     public bool IsValidPosition(int x, int y)
     {
@@ -79,7 +77,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Get the forest type at specified position
+    /// Get forest type at position.
     /// </summary>
     public Forest.ForestType GetForestType(int x, int y)
     {
@@ -90,7 +88,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Set the forest type at specified position
+    /// Set forest type at position.
     /// </summary>
     public void SetForestType(int x, int y, Forest.ForestType forestType)
     {
@@ -101,7 +99,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Check if position has any forest (not None)
+    /// Check if position has any forest (not None).
     /// </summary>
     public bool IsForest(int x, int y)
     {
@@ -109,7 +107,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Set forest state (backward compatibility method)
+    /// Set forest state (legacy compat).
     /// </summary>
     public void SetForest(int x, int y, bool hasForest)
     {
@@ -125,7 +123,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Get total count of all forest cells (excluding None)
+    /// Total count of forest cells (excl. None).
     /// </summary>
     public int GetTotalForestCells()
     {
@@ -142,7 +140,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Get count of each forest type
+    /// Count per forest type.
     /// </summary>
     public Dictionary<Forest.ForestType, int> GetForestTypeCounts()
     {
@@ -166,7 +164,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Get forest coverage percentage (excluding None type)
+    /// Forest coverage % (excl. None).
     /// </summary>
     public float GetForestCoveragePercentage()
     {
@@ -180,7 +178,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Count adjacent forest cells (any type except None)
+    /// Count adjacent forest cells (any type except None).
     /// </summary>
     public int GetAdjacentForestCount(int centerX, int centerY)
     {
@@ -207,7 +205,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Get positions adjacent to any forest around a center position
+    /// Get positions adjacent to any forest around center.
     /// </summary>
     public List<Vector2Int> GetPositionsAdjacentToForest(int centerX, int centerY)
     {
@@ -234,7 +232,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Find the nearest forest of any type to a given position
+    /// Find nearest forest of any type to position.
     /// </summary>
     public Vector2Int? FindNearestForest(int fromX, int fromY, int searchRadius = 5)
     {
@@ -261,7 +259,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Find the nearest forest of a specific type to a given position
+    /// Find nearest forest of specific type to position.
     /// </summary>
     public Vector2Int? FindNearestForestOfType(int fromX, int fromY, Forest.ForestType targetType, int searchRadius = 5)
     {
@@ -288,7 +286,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Get all forest positions of a specific type
+    /// All forest positions of specific type.
     /// </summary>
     public List<Vector2Int> GetAllForestsOfType(Forest.ForestType forestType)
     {
@@ -309,7 +307,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Get all forest positions (any type except None)
+    /// All forest positions (any type except None).
     /// </summary>
     public List<Vector2Int> GetAllForests()
     {
@@ -330,7 +328,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Check if an area has minimum forest coverage
+    /// Check if area has min forest coverage.
     /// </summary>
     public bool HasMinimumForestCoverage(int centerX, int centerY, int radius, float minimumPercentage)
     {
@@ -358,7 +356,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Clear all forests in a rectangular area
+    /// Clear forests in rectangular area.
     /// </summary>
     public void ClearArea(int startX, int startY, int endX, int endY)
     {
@@ -375,7 +373,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Clear all forests in the entire map
+    /// Clear all forests in entire map.
     /// </summary>
     public void ClearAllForest()
     {
@@ -389,7 +387,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Clear all forests of a specific type
+    /// Clear all forests of specific type.
     /// </summary>
     public void ClearAllForestOfType(Forest.ForestType forestType)
     {
@@ -406,7 +404,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Fill an area with a specific forest type
+    /// Fill area with specific forest type.
     /// </summary>
     public void FillArea(int startX, int startY, int endX, int endY, Forest.ForestType forestType)
     {
@@ -423,7 +421,7 @@ public class ForestMap
     }
     
     /// <summary>
-    /// Get grid dimensions
+    /// Grid dimensions.
     /// </summary>
     public Vector2Int GetDimensions()
     {

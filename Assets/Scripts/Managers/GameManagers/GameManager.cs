@@ -5,8 +5,8 @@ using Territory.Core;
 namespace Territory.Persistence
 {
 /// <summary>
-/// Entry point for game initialization and save/load orchestration.
-/// Coordinates with GridManager for grid restoration and GameSaveManager for persistence.
+/// Entry point for game init + save/load orchestration.
+/// Coords with <see cref="GridManager"/> (grid restore) + <see cref="GameSaveManager"/> (persistence).
 /// </summary>
 public class GameManager : MonoBehaviour
 {

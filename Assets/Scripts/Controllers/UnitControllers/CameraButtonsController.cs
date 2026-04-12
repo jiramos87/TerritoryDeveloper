@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace Territory.UI
 {
 /// <summary>
-/// UI controller for camera navigation buttons (pan, zoom). Forwards button events to CameraController.
+/// UI controller for camera nav buttons (pan, zoom). Forwards events → <see cref="CameraController"/>.
 /// </summary>
 public class CameraButtonsController : MonoBehaviour
 {

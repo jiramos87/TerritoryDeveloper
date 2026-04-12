@@ -6,9 +6,9 @@ using Territory.Core;
 namespace Territory.Terrain
 {
 /// <summary>
-/// Terraforms terrain for road placement: converts diagonal slopes to orthogonal or flattens
-/// cells when roads run along hillsides. When the path only has scalable land steps (|Δh| ≤ 1 between consecutive path cells),
-/// ascending segments prefer slope alignment (no flatten to base) to avoid spurious cut-through visuals. Used by RoadManager, AutoRoadBuilder, and InterstateManager.
+/// Terraform terrain for road placement: convert diagonal slopes to orthogonal or flatten cells when roads run along hillsides.
+/// When path has only scalable land steps (|Δh| ≤ 1 between consecutive path cells),
+/// ascending segments prefer slope alignment (no flatten to base) → avoid spurious cut-through visuals. Used by RoadManager, AutoRoadBuilder, InterstateManager.
 /// </summary>
 public class TerraformingService : MonoBehaviour
 {
@@ -25,9 +25,7 @@ public class TerraformingService : MonoBehaviour
     public int cutThroughMinCellsFromMapEdge = 2;
     #endregion
 
-    /// <summary>
-    /// Action to perform when terraforming a cell.
-    /// </summary>
+    /// <summary>Action to perform when terraforming cell.</summary>
     public enum TerraformAction
     {
         None,
@@ -35,9 +33,7 @@ public class TerraformingService : MonoBehaviour
         DiagonalToOrthogonal
     }
 
-    /// <summary>
-    /// Orthogonal direction for DiagonalToOrthogonal. Matches TerrainSlopeType cardinal values.
-    /// </summary>
+    /// <summary>Orthogonal direction for DiagonalToOrthogonal. Matches TerrainSlopeType cardinal values.</summary>
     public enum OrthogonalDirection
     {
         North,
@@ -53,9 +49,8 @@ public class TerraformingService : MonoBehaviour
     }
 
     /// <summary>
-    /// Expands diagonal steps (dx!=0 and dy!=0) into two cardinal steps so road prefabs
-    /// and terraforming logic receive only orthogonal segments. Public so RoadManager can
-    /// use the same expanded path for both ComputePathPlan and ResolveForPath.
+    /// Expand diagonal steps (dx!=0 and dy!=0) into two cardinal steps → road prefabs + terraform logic receive only orthogonal segments.
+    /// Public → RoadManager can use same expanded path for both ComputePathPlan + ResolveForPath.
     /// </summary>
     public static System.Collections.Generic.List<Vector2> ExpandDiagonalStepsToCardinal(System.Collections.Generic.IList<Vector2> path)
     {
@@ -82,9 +77,8 @@ public class TerraformingService : MonoBehaviour
     }
 
     /// <summary>
-    /// Computes the base height for path terraforming. When the path crosses slopes (has height
-    /// variation), returns the minimum height so terraforming flattens to the lower side.
-    /// Otherwise returns the last flat cell height before entering a slope.
+    /// Compute base height for path terraforming. When path crosses slopes (height variation), return min height → terraform flattens to lower side.
+    /// Else return last flat cell height before entering slope.
     /// </summary>
     public int ComputePathBaseHeight(System.Collections.Generic.IList<Vector2> path)
     {
@@ -93,10 +87,10 @@ public class TerraformingService : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns base height and whether path crosses a hill (height variation with max >= 2).
+    /// Return base height + whether path crosses hill (height variation with max ≥ 2).
     /// Used for cut-through mode: flatten only path cells, leave adjacent terrain "cut" with cliffs.
-    /// Cut-through is only used when path has consecutive height diff &gt; 1 (cannot scale with slopes).
-    /// Paths that can scale (all consecutive diffs &lt;= 1) use slope prefabs instead.
+    /// Cut-through only when path has consecutive |Δh|&gt;1 (cannot scale with slopes).
+    /// Paths that can scale (all consecutive diffs ≤ 1) use slope prefabs instead.
     /// </summary>
     (int baseHeight, bool pathCrossesHill, int maxHeight) ComputePathBaseHeightAndCutThrough(System.Collections.Generic.IList<Vector2> path)
     {
@@ -128,8 +122,8 @@ public class TerraformingService : MonoBehaviour
     }
 
     /// <summary>
-    /// True if any consecutive path cells on dry corridor (not registered open water) have height difference &gt; 1.
-    /// Used to decide cut-through: only when we cannot scale with slopes.
+    /// True if any consecutive path cells on dry corridor (not registered open water) have |Δh|&gt;1.
+    /// Used to decide cut-through: only when cannot scale with slopes.
     /// </summary>
     bool HasConsecutiveHeightDiffGreaterThanOne(System.Collections.Generic.IList<Vector2> path, HeightMap heightMap)
     {
@@ -149,11 +143,9 @@ public class TerraformingService : MonoBehaviour
     }
 
     /// <summary>
-    /// Computes a path-level terraform plan. Implements Rules 3, 4, 5, 8. Validates height
-    /// differences, marks cells for Flatten or DiagonalToOrthogonal, and sets postTerraformSlopeType
-    /// so RoadPrefabResolver can select correct prefabs.
+    /// Compute path-level terraform plan. Implements Rules 3, 4, 5, 8. Validates height diffs, marks cells for Flatten or DiagonalToOrthogonal, sets postTerraformSlopeType → RoadPrefabResolver can select correct prefabs.
     /// </summary>
-    /// <param name="waterBridgeTerraformRelaxation">When true (FEAT-44 full span or high deck above water), skip beside-steep-cliff invalidation, allow cut-through span &gt; 1 vs base (BUG-29), and allow dry–dry |Δh|&gt;1 steps adjacent to a coastal path cell.</param>
+    /// <param name="waterBridgeTerraformRelaxation">True (FEAT-44 full span or high deck above water) → skip beside-steep-cliff invalidation, allow cut-through span &gt; 1 vs base (BUG-29), allow dry–dry |Δh|&gt;1 steps adjacent to coastal path cell.</param>
     public PathTerraformPlan ComputePathPlan(IList<Vector2> path, bool waterBridgeTerraformRelaxation = false)
     {
         var plan = new PathTerraformPlan();
@@ -417,7 +409,7 @@ public class TerraformingService : MonoBehaviour
     }
 
     /// <summary>
-    /// When <paramref name="waterBridgeTerraformRelaxation"/> is on, allows a consecutive dry–dry path step with |Δh|&gt;1 if either endpoint Moore-adjoins a coastal path cell (open water, water-slope, dry shore/rim), e.g. high land → lip → wet run.
+    /// When <paramref name="waterBridgeTerraformRelaxation"/> on, allow consecutive dry–dry path step with |Δh|&gt;1 if either endpoint Moore-adjoins coastal path cell (open water, water-slope, dry shore/rim). E.g. high land → lip → wet run.
     /// </summary>
     bool PathEdgeExemptDryDryForWaterBridgeRelaxation(IList<Vector2> path, int edgeStartIdx, HeightMap heightMap, bool waterBridgeTerraformRelaxation)
     {
@@ -451,9 +443,7 @@ public class TerraformingService : MonoBehaviour
             || terrainManager.IsDryShoreOrRimMembershipEligible(cx, cy);
     }
 
-    /// <summary>
-    /// True if <paramref name="px"/>,<paramref name="py"/> Moore-adjoins a different path cell that counts as coastal for consecutive-step rules.
-    /// </summary>
+    /// <summary>True if <paramref name="px"/>,<paramref name="py"/> Moore-adjoins different path cell counting as coastal for consecutive-step rules.</summary>
     bool PathCellMooreTouchesOnPathCoastalTile(IList<Vector2> path, int px, int py)
     {
         if (path == null || terrainManager == null)

@@ -5,15 +5,15 @@ using Territory.Terrain;
 namespace Territory.Core
 {
     /// <summary>
-    /// Calculates and assigns sprite sorting orders for all tile types (terrain, zoning,
-    /// buildings, roads, sea-level) using height-aware formulas from TerrainManager.
-    /// Extracted from GridManager to reduce its responsibilities.
+    /// Sprite sorting orders for all tile types (terrain, zoning, buildings, roads, sea-level)
+    /// via height-aware formulas from <see cref="TerrainManager"/>. Extracted from <see cref="GridManager"/>
+    /// to reduce responsibilities.
     /// </summary>
     public class GridSortingOrderService
     {
         private readonly GridManager grid;
 
-        /// <summary>Offset so roads render above adjacent terrain (depth step = 100). Prevents "buried" interstate/road appearance.</summary>
+        /// <summary>Offset so roads render above adjacent terrain (depth step = 100). Prevents "buried" interstate/road look.</summary>
         public const int ROAD_SORTING_OFFSET = 106;
 
         public GridSortingOrderService(GridManager grid)
@@ -22,9 +22,9 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// After a building's sorting order is applied, re-apply pure terrain sorting to any grass/slope
-        /// zone children so they stay strictly below the building (only when flat grass was preserved).
-        /// Multi-cell footprints also call this per footprint cell (BUG-35).
+        /// After building sorting applied → re-apply pure terrain sorting to grass/slope zone children
+        /// so they stay strictly below building (only when flat grass preserved). Multi-cell footprints
+        /// call this per footprint cell.
         /// </summary>
         void SyncCellTerrainLayersBelowBuilding(int cellX, int cellY)
         {
@@ -63,9 +63,9 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Returns the maximum sorting order that any content on the cell at (x,y) would have
-        /// (terrain, forest +5, road +ROAD_SORTING_OFFSET, building +10, etc.). Used so the building can place itself
-        /// behind "front" adjacent cells and let forest/terrain draw on top.
+        /// Max sorting order any content on cell (x,y) would have (terrain, forest +5, road
+        /// +<see cref="ROAD_SORTING_OFFSET"/>, building +10, etc). Lets building sit behind "front"
+        /// adjacent cells → forest/terrain draw on top.
         /// </summary>
         private int GetCellMaxContentSortingOrder(int x, int y)
         {
@@ -116,7 +116,7 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Sets the sorting order of a tile using a legacy formula based on grid position. Prefers TerrainManager-based methods for new code.
+        /// Legacy formula based on grid position. New code → prefer <see cref="TerrainManager"/>-based methods.
         /// </summary>
         public int SetTileSortingOrder(GameObject tile, Zone.ZoneType zoneType = Zone.ZoneType.Grass)
         {
@@ -151,7 +151,7 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Sets sorting order for a zoning tile (RCI overlay) using TerrainManager so it renders below forest and buildings.
+        /// Zoning tile (RCI overlay) sorting via <see cref="TerrainManager"/> → renders below forest + buildings.
         /// </summary>
         public void SetZoningTileSortingOrder(GameObject tile, int x, int y)
         {
@@ -183,7 +183,7 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Sets sorting order for a zone building (RCI) tile using TerrainManager so it renders above forest and terrain.
+        /// Zone building (RCI) sorting via <see cref="TerrainManager"/> → renders above forest + terrain.
         /// </summary>
         public void SetZoneBuildingSortingOrder(GameObject tile, int x, int y)
         {
@@ -217,8 +217,8 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Sets sorting order for a multi-cell building using the maximum order over its footprint
-        /// so the whole building renders in front of all covered terrain.
+        /// Multi-cell building sorting via max order over footprint → whole building renders
+        /// in front of all covered terrain.
         /// </summary>
         public void SetZoneBuildingSortingOrder(GameObject tile, int pivotX, int pivotY, int buildingSize)
         {
@@ -316,8 +316,8 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Returns the sorting order to use for a road tile at (x, y) at the given height level.
-        /// Caps order when adjacent higher terrain is "in front" (cut-through scenario).
+        /// Sorting order for road tile at (x,y) at given height. Caps order when adjacent higher terrain
+        /// sits "in front" (cut-through scenario).
         /// </summary>
         public int GetRoadSortingOrderForCell(int x, int y, int height)
         {
@@ -352,8 +352,8 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Sets sorting order for a road tile using TerrainManager so it renders above grass and below forest/buildings.
-        /// Also ensures grass and other terrain in the same cell render below the road.
+        /// Road tile sorting via <see cref="TerrainManager"/> → renders above grass, below forest/buildings.
+        /// Forces grass + other terrain in same cell below road.
         /// </summary>
         public void SetRoadSortingOrder(GameObject tile, int x, int y)
         {
@@ -428,7 +428,7 @@ namespace Territory.Core
         }
 
         /// <summary>
-        /// Sets the sorting order for a sea-level tile so it renders behind all land content.
+        /// Sea-level tile sorting → renders behind all land content.
         /// </summary>
         public int SetResortSeaLevelOrder(GameObject tile, Cell cell)
         {

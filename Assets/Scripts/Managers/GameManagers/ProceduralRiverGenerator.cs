@@ -5,19 +5,19 @@ using UnityEngine;
 namespace Territory.Terrain
 {
     /// <summary>
-    /// FEAT-38: procedural static rivers after lake/sea init. Bed footprint includes prior lake/sea cells in the cross-section;
-    /// those cells are carved to <c>H_bed</c> and reassigned to the river body when allowed (lake at a different
-    /// logical <see cref="WaterBody.SurfaceHeight"/> is not carved or reassigned — §12.7 / <see cref="WaterMap.TryReassignCellFromAnyWaterToRiverBody"/>).
-    /// Cross-stream <b>bed</b> width (lecho) is 1–3 cells of <b>water</b>; corridor width = bed + 2 (one dry shore strip per side) for terrain refresh and collision with <see cref="RiverBorderMargin"/>.
-    /// Each cross-section gets one shared bed height and symmetric bank height; water bodies are split when surface height changes along the path (see <c>isometric-geography-system.md</c> §13.4).
-    /// After carving, inner-corner shore continuity is enforced on the bed footprint (see §13.5). Lake/river shore
-    /// land heights are aligned with adjacent water surfaces during <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> (§2.4.1).
-    /// Bed floor <c>H_bed</c> is <b>non-increasing</b> along the centerline from map entry toward exit so the river never climbs terrain (see §13.4).
-    /// Each river picks an axis (N–S vs E–W) and a flow direction along that axis with 50/50 randomness, so entry anchors are equally likely on north, south, west, or east borders (testing cascades from any side).
-    /// Centerline and footprint avoid map borders except at designated entry/exit edges (see <see cref="RiverBorderMargin"/>).
-    /// BUG-46: prior corridors are dilated in Chebyshev space for BFS; forced centerlines respect the same avoid set;
-    /// entry anchors on the same map border must be separated; after placement, <see cref="WaterMap.MergeAdjacentBodiesWithSameSurface"/>
-    /// unifies touching river ids at the same logical surface.
+    /// FEAT-38: procedural static rivers after lake/sea init. Bed footprint includes prior lake/sea cells in cross-section;
+    /// those cells carve to <c>H_bed</c> + reassign to river body when allowed (lake at different
+    /// logical <see cref="WaterBody.SurfaceHeight"/> not carved or reassigned — §12.7 / <see cref="WaterMap.TryReassignCellFromAnyWaterToRiverBody"/>).
+    /// Cross-stream <b>bed</b> width (lecho) = 1–3 cells of <b>water</b>; corridor width = bed + 2 (one dry shore strip per side) for terrain refresh + collision with <see cref="RiverBorderMargin"/>.
+    /// Each cross-section gets one shared bed height + symmetric bank height. Water bodies split when surface height changes along path (<c>isometric-geography-system.md</c> §13.4).
+    /// After carve, inner-corner shore continuity enforced on bed footprint (§13.5). Lake/river shore
+    /// land heights aligned with adjacent water surfaces during <see cref="TerrainManager.RefreshShoreTerrainAfterWaterUpdate"/> (§2.4.1).
+    /// Bed floor <c>H_bed</c> <b>non-increasing</b> along centerline from entry → exit → river never climbs terrain (§13.4).
+    /// Each river picks axis (N–S vs E–W) + flow direction with 50/50 randomness → entry anchors equally likely on any border (testing cascades from any side).
+    /// Centerline + footprint avoid map borders except designated entry/exit edges (see <see cref="RiverBorderMargin"/>).
+    /// BUG-46: prior corridors dilated in Chebyshev space for BFS. Forced centerlines respect same avoid set.
+    /// Entry anchors on same border must be separated. After placement, <see cref="WaterMap.MergeAdjacentBodiesWithSameSurface"/>
+    /// unifies touching river ids at same logical surface.
     /// </summary>
     public static class ProceduralRiverGenerator
     {
@@ -25,19 +25,19 @@ namespace Territory.Terrain
         private const int MaxRiverBedWidth = 3;
 
         /// <summary>
-        /// Minimum distance from centerline to the perpendicular map edges so cross-section (max total 5) fits.
+        /// Min distance from centerline to perpendicular map edges → cross-section (max total 5) fits.
         /// Interior centerline never sits on east/west (N–S flow) or north/south (E–W flow) borders.
         /// </summary>
         private const int RiverBorderMargin = 2;
 
         /// <summary>
-        /// Chebyshev dilation radius around each cell already reserved by a prior river corridor (bed + shores).
-        /// New centerlines must not enter this expanded region (minimum gap between corridors).
+        /// Chebyshev dilation radius around each cell reserved by prior river corridor (bed + shores).
+        /// New centerlines must not enter expanded region (min gap between corridors).
         /// </summary>
         private const int MinCorridorSeparationDilation = 2;
 
         /// <summary>
-        /// Minimum separation on the same map edge between new and prior entry anchors (|Δx| on north/south borders, |Δy| on west/east).
+        /// Min separation on same map edge between new + prior entry anchors (|Δx| on north/south borders, |Δy| on west/east).
         /// </summary>
         private const int MinRiverEntrySeparationOnBorder = 5;
 
@@ -45,7 +45,7 @@ namespace Territory.Terrain
         private static readonly int[] D4y = { 1, -1, 0, 0 };
 
         /// <summary>
-        /// Expands prior corridor cells so the next BFS centerline stays at least Chebyshev (dilation+1) away from reserved cells.
+        /// Expand prior corridor cells → next BFS centerline stays ≥Chebyshev (dilation+1) away from reserved cells.
         /// </summary>
         private static HashSet<Vector2Int> BuildAvoidForBfs(HashSet<Vector2Int> usedCorridors, int gw, int gh)
         {
@@ -224,7 +224,7 @@ namespace Territory.Terrain
             maxY = Mathf.Min(gh - 1, maxY + 2);
         }
 
-        /// <summary>One perpendicular strip: left bank, bed cells, right bank (see project spec <c>ia/specs/isometric-geography-system.md</c> §13.4).</summary>
+        /// <summary>One perpendicular strip: left bank, bed cells, right bank (project spec <c>ia/specs/isometric-geography-system.md</c> §13.4).</summary>
         private sealed class RiverCrossSectionData
         {
             public readonly List<Vector2Int> Bed = new List<Vector2Int>(MaxRiverBedWidth);
@@ -232,9 +232,9 @@ namespace Territory.Terrain
             public Vector2Int RightBank;
             public bool HasLeft;
             public bool HasRight;
-            /// <summary>HeightMap floor under water after carve; <c>-1</c> if section skipped.</summary>
+            /// <summary>HeightMap floor under water after carve. <c>-1</c> if section skipped.</summary>
             public int AppliedBedHeight = -1;
-            /// <summary>Shallow carve target before longitudinal clamp; <c>-1</c> if section has no bed.</summary>
+            /// <summary>Shallow carve target before longitudinal clamp. <c>-1</c> if section has no bed.</summary>
             public int CandidateBedHeight = -1;
 
             public IEnumerable<Vector2Int> AllCorridorCells()
@@ -248,7 +248,7 @@ namespace Territory.Terrain
             }
         }
 
-        /// <param name="segmentIndex">Index along centerline (entry/exit allow border footprint only here).</param>
+        /// <param name="segmentIndex">Index along centerline. Entry/exit allow border footprint only here.</param>
         private static RiverCrossSectionData BuildCrossSection(WaterMap wm, int gw, int gh, Vector2Int prev, Vector2Int cur, Vector2Int next, int bedWidth, bool flowIsNorthSouth, bool flowPositive, int segmentIndex, int pathLength)
         {
             var sec = new RiverCrossSectionData();
@@ -303,10 +303,10 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Shallow carve candidate per section, then <b>longitudinal</b> clamp: <c>H_bed[i] = min(candidate[i], H_bed[i-1])</c> from entry to exit (see <c>isometric-geography-system.md</c> §13.4).
-        /// Finally writes bed and symmetric bank heights.
+        /// Shallow carve candidate per section, then <b>longitudinal</b> clamp: <c>H_bed[i] = min(candidate[i], H_bed[i-1])</c> from entry → exit (<c>isometric-geography-system.md</c> §13.4).
+        /// Finally writes bed + symmetric bank heights.
         /// </summary>
-        /// <param name="riverBedCarvedCells">Cells where bed height was written; excludes skipped lake cells (different surface).</param>
+        /// <param name="riverBedCarvedCells">Cells where bed height written. Excludes skipped lake cells (different surface).</param>
         private static void ApplyCrossSectionHeights(WaterMap wm, HeightMap hm, List<RiverCrossSectionData> sections, HashSet<Vector2Int> riverBedCarvedCells)
         {
             foreach (RiverCrossSectionData sec in sections)
@@ -363,8 +363,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Lake cells that would require a cross-body surface step vs the river segment bed are not carved to <paramref name="hBed"/>;
-        /// keeps terrain and <see cref="WaterMap"/> consistent when the river corridor overlaps an existing lake (§12.7).
+        /// Lake cells requiring cross-body surface step vs river segment bed are not carved to <paramref name="hBed"/>.
+        /// Keeps terrain + <see cref="WaterMap"/> consistent when river corridor overlaps existing lake (§12.7).
         /// </summary>
         private static bool ShouldSkipCarvingLakeCellForRiverBed(WaterMap wm, int x, int y, int hBed)
         {
@@ -377,11 +377,11 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// After carving bed and banks, some bed cells can sit at the <b>inner corner</b> of an L-shaped shore where two
-        /// perpendicular bank neighbors are one step higher — leaving a water-height hole breaks continuous shore art
-        /// (see isometric spec §13.5). Promotes such cells from <c>H_bed</c> to <c>H_bed + 1</c> so they stay dry shore.
+        /// After carving bed + banks, some bed cells sit at <b>inner corner</b> of L-shaped shore where two
+        /// perpendicular bank neighbors are one step higher — leaving water-height hole breaks continuous shore art
+        /// (isometric spec §13.5). Promote such cells from <c>H_bed</c> → <c>H_bed + 1</c> → stay dry shore.
         /// </summary>
-        /// <param name="riverBedCarvedCells">When non-null, only these bed footprint cells received a river bed carve (skips protected lake cells).</param>
+        /// <param name="riverBedCarvedCells">If non-null, only these bed footprint cells received river bed carve (skips protected lake cells).</param>
         private static void PromoteRiverBedInnerCornerShoreContinuity(HeightMap hm, int gw, int gh, HashSet<Vector2Int> bedFootprint, HashSet<Vector2Int> riverBedCarvedCells = null)
         {
             if (hm == null || bedFootprint == null || bedFootprint.Count == 0)
@@ -625,7 +625,7 @@ namespace Territory.Terrain
             }
         }
 
-        /// <summary>Returns <c>(-1,-1)</c> if no valid dry start in the margin band (respects <paramref name="avoid"/> and entry spacing).</summary>
+        /// <summary>Return <c>(-1,-1)</c> if no valid dry start in margin band (respects <paramref name="avoid"/> + entry spacing).</summary>
         private static Vector2Int FindDryBorderStart(WaterMap wm, int gw, int gh, bool northSouth, bool flowPositive, System.Random rnd, HashSet<Vector2Int> avoid, List<Vector2Int> sameAxisEntryStarts, int minEntrySeparationOnBorder)
         {
             int m = RiverBorderMargin;
@@ -706,8 +706,8 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Deterministic fallback path when BFS fails. Respects <paramref name="avoid"/> (dilated prior corridors) like the BFS path.
-        /// Returns <c>null</c> if any row/column cannot be satisfied without water or blocked cells.
+        /// Deterministic fallback path on BFS fail. Respects <paramref name="avoid"/> (dilated prior corridors) like BFS path.
+        /// Return <c>null</c> if any row/column cannot be satisfied without water or blocked cells.
         /// </summary>
         private static List<Vector2Int> BuildForcedCenterline(WaterMap wm, int gw, int gh, bool nsAxis, bool flowPositive, System.Random rnd, HashSet<Vector2Int> avoid)
         {

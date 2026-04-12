@@ -12,19 +12,19 @@ using Territory.Utilities;
 namespace Territory.Roads
 {
 /// <summary>
-/// Shared terraform validation options for manual draw, interstate, and auto-road (same rules via <see cref="RoadManager.TryPrepareRoadPlacementPlan"/>).
+/// Shared terraform validation opts: manual draw, interstate, auto-road (same rules via <see cref="RoadManager.TryPrepareRoadPlacementPlan"/>).
 /// </summary>
 public struct RoadPathValidationContext
 {
-    /// <summary>When true (interstate), paths requiring cut-through hill flattening are invalid.</summary>
+    /// <summary>True (interstate) → paths needing cut-through hill flattening invalid.</summary>
     public bool forbidCutThrough;
 }
 
 /// <summary>
-/// Manages road placement, drawing, and prefab selection on the grid. Handles road preview
-/// during drag, selects correct road prefab based on neighbor connectivity, and coordinates
-/// with TerrainManager for slope adaptation and InterstateManager for highway connections.
-/// Shared terraform validation: <see cref="TryPrepareRoadPlacementPlan"/> and <see cref="RoadPathValidationContext"/>.
+/// Manage road placement, drawing, prefab selection on grid. Handles preview during drag,
+/// picks road prefab by neighbor connectivity, coordinates with TerrainManager (slope adapt)
+/// + InterstateManager (highway connect). Shared terraform validation:
+/// <see cref="TryPrepareRoadPlacementPlan"/>, <see cref="RoadPathValidationContext"/>.
 /// </summary>
 public class RoadManager : MonoBehaviour, IRoadManager
 {
@@ -46,14 +46,14 @@ public class RoadManager : MonoBehaviour, IRoadManager
     private RoadPrefabResolver roadPrefabResolver;
     private List<RoadPrefabResolver.ResolvedRoadTile> previewResolvedTiles = new List<RoadPrefabResolver.ResolvedRoadTile>();
     private HashSet<Vector2> placementPathPositions;
-    /// <summary>Last grid cell under cursor during manual road drag (for mouse-up placement when release cell is invalid).</summary>
+    /// <summary>Last grid cell under cursor during manual drag (for mouse-up when release cell invalid).</summary>
     private Vector2 currentDrawCursorGrid;
-    /// <summary>Speeds longest-prefix search during drag: last accepted <b>raw</b> path prefix length (see <see cref="TryPrepareRoadPlacementPlanLongestValidPrefix"/>).</summary>
+    /// <summary>Speeds longest-prefix search during drag: last accepted <b>raw</b> prefix length (see <see cref="TryPrepareRoadPlacementPlanLongestValidPrefix"/>).</summary>
     private int manualRoadLongestPrefixHint;
-    /// <summary>When true, manual preview keeps a fixed lip-to-exit chord; post-exit extension follows <see cref="GetLine"/> from the exit cell.</summary>
+    /// <summary>True → manual preview keeps fixed lip-to-exit chord; post-exit extension follows <see cref="GetLine"/> from exit cell.</summary>
     private bool manualPreviewBridgeLocked;
     private Vector2Int lockedBridgeLip;
-    /// <summary>Waterward cardinal from the lip (same sign as relaxed deck normal).</summary>
+    /// <summary>Waterward cardinal from lip (same sign as relaxed deck normal).</summary>
     private Vector2Int lockedBridgeNormal;
     private List<Vector2> lockedBridgeChord;
     private readonly List<Vector2> manualStrokeLipCandidateScratch = new List<Vector2>();
@@ -82,7 +82,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     private List<Vector2> previewRoadGridPositions = new List<Vector2>();
 
     /// <summary>
-    /// Populates the road tile prefabs list from the individual prefab fields.
+    /// Populate road tile prefabs list from individual prefab fields.
     /// </summary>
     public void Initialize()
     {
@@ -112,7 +112,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     #endregion
 
     /// <summary>
-    /// True for horizontal/vertical bridge deck prefabs (do not re-resolve with <see cref="RefreshRoadPrefabAt"/> — would drop FEAT-44 deck height).
+    /// True for horizontal/vertical bridge deck prefabs. Do not re-resolve via <see cref="RefreshRoadPrefabAt"/> → would drop deck height.
     /// </summary>
     bool IsBridgeDeckRoadPrefab(GameObject prefab)
     {
@@ -122,9 +122,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
     #region Road Drawing
     /// <summary>
-    /// Handles the full road drawing input lifecycle: start on mouse down, preview line on drag, and place on mouse up.
+    /// Full road drawing input lifecycle: start on mouse down, preview line on drag, place on mouse up.
     /// </summary>
-    /// <param name="gridPosition">The current grid position under the cursor.</param>
+    /// <param name="gridPosition">Current grid position under cursor.</param>
     public void HandleRoadDrawing(Vector2 gridPosition)
     {
         Vector2 pos = new Vector2((int)gridPosition.x, (int)gridPosition.y);
@@ -248,12 +248,12 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Scenario builder / batch tooling: commits a street <b>road stroke</b> through
+    /// Scenario builder / batch tooling: commit street <b>road stroke</b> via
     /// <see cref="TryPrepareRoadPlacementPlan"/> + <see cref="PathTerraformPlan.Apply"/> + resolve/place
-    /// (same preparation family as manual placement), without affordability checks or money changes.
+    /// (same prep family as manual placement). Skips affordability + money changes.
     /// </summary>
-    /// <param name="pathRaw">Polyline in grid space (at least two cells).</param>
-    /// <param name="error">Glossary-aligned reason when preparation or apply fails.</param>
+    /// <param name="pathRaw">Polyline in grid space (≥2 cells).</param>
+    /// <param name="error">Glossary-aligned reason when prep or apply fails.</param>
     public bool TryCommitStreetStrokeForScenarioBuild(List<Vector2> pathRaw, out string error)
     {
         error = null;
@@ -323,7 +323,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// True if terraform plan is buildable under <paramref name="ctx"/> (e.g. interstate forbids cut-through).
+    /// True if terraform plan buildable under <paramref name="ctx"/> (e.g. interstate forbids cut-through).
     /// </summary>
     public bool ValidateTerraformPlanWithContext(PathTerraformPlan plan, RoadPathValidationContext ctx)
     {
@@ -334,8 +334,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Shared pipeline: filter cells, adjacency, bridge straightening/validation, cardinal expansion, <see cref="TerraformingService.ComputePathPlan"/>,
-    /// context checks, and Phase-1 height validation (matches <see cref="PathTerraformPlan.Apply"/> feasibility). Does not apply terrain meshes.
+    /// Shared pipeline: filter cells, adjacency, bridge straighten/validate, cardinal expand,
+    /// <see cref="TerraformingService.ComputePathPlan"/>, ctx checks, Phase-1 height validate
+    /// (matches <see cref="PathTerraformPlan.Apply"/> feasibility). Does not apply terrain meshes.
     /// </summary>
     public bool TryPrepareRoadPlacementPlan(List<Vector2> pathRaw, RoadPathValidationContext ctx, bool postUserWarnings, out List<Vector2> expandedPath, out PathTerraformPlan plan)
     {
@@ -350,12 +351,12 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Like <see cref="TryPrepareRoadPlacementPlan"/> but keeps the longest <b>raw</b> path prefix for which the filtered path passes terraform + Phase-1 height checks.
-    /// Tries <see cref="TryBuildFilteredPathForRoadPlan"/> on each prefix from longest to shortest so a failing tail (e.g. staircase into a second wet run) does not block preview of a valid bridge core.
-    /// <paramref name="longestPrefixLengthHint"/> (manual drag): pass a ref field; on success it stores the <b>raw</b> prefix length (cell count from path start); reset to 0 on new stroke.
-    /// Auto-road should pass a local int with value 0.
+    /// Like <see cref="TryPrepareRoadPlacementPlan"/> but keeps longest <b>raw</b> path prefix where filtered path passes terraform + Phase-1 height checks.
+    /// Tries <see cref="TryBuildFilteredPathForRoadPlan"/> per prefix longest→shortest → failing tail (e.g. staircase into 2nd wet run) does not block preview of valid bridge core.
+    /// <paramref name="longestPrefixLengthHint"/> (manual drag): pass ref field; on success stores <b>raw</b> prefix length (cell count from path start); reset to 0 on new stroke.
+    /// Auto-road pass local int = 0.
     /// </summary>
-    /// <param name="filteredPathUsedOrNull">Filtered path (before diagonal expansion) that was accepted, or null on failure.</param>
+    /// <param name="filteredPathUsedOrNull">Filtered path (pre diagonal expansion) accepted, or null on failure.</param>
     public bool TryPrepareRoadPlacementPlanLongestValidPrefix(List<Vector2> pathRaw, RoadPathValidationContext ctx, bool postUserWarnings, ref int longestPrefixLengthHint, out List<Vector2> expandedPath, out PathTerraformPlan plan, out List<Vector2> filteredPathUsedOrNull)
     {
         expandedPath = null;
@@ -403,7 +404,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// True if the last cell of the stroke is dry land (not open water / water-slope) with positive instance height — expected exit for a completed water bridge.
+    /// True if stroke last cell is dry land (not open water / water-slope) with positive instance height → expected exit for completed water bridge.
     /// </summary>
     public bool StrokeLastCellIsFirmDryLand(IList<Vector2> stroke)
     {
@@ -425,7 +426,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// True if any grid cell on the stroke is open water, water-slope (shore), or otherwise treated as wet for bridge tracing (FEAT-44; high-deck first span may sit on shore).
+    /// True if any stroke cell is open water, water-slope (shore), or treated as wet for bridge tracing (high-deck first span may sit on shore).
     /// </summary>
     public bool StrokeHasWaterOrWaterSlopeCells(IList<Vector2> stroke)
     {
@@ -444,8 +445,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// If the last cell is dry land and the next step along <paramref name="dir"/> is water or water-slope (shore), appends the FEAT-44 chord from that lip through wet to matching far dry land
-    /// (<see cref="WalkStraightChordFromLipThroughWetToFarDry"/>). Used by <see cref="AutoRoadBuilder"/> so simulation strokes include the crossing before planning.
+    /// If last cell dry land + next step along <paramref name="dir"/> water/water-slope (shore), append chord from lip through wet to matching far dry land
+    /// (<see cref="WalkStraightChordFromLipThroughWetToFarDry"/>). Used by <see cref="AutoRoadBuilder"/> → sim strokes include crossing before planning.
     /// </summary>
     public bool TryExtendCardinalStreetPathWithBridgeChord(List<Vector2> pathVec2, Vector2Int dir)
     {
@@ -510,8 +511,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// When <see cref="TryPrepareRoadPlacementPlanLongestValidPrefix"/> fails on a straight cardinal stroke (e.g. simulation street segment), rebuilds the wet run using
-    /// the same lip→chord walk as manual preview (<see cref="WalkStraightChordFromLipThroughWetToFarDry"/>) and prepares a deck-span-only plan via <see cref="TryPrepareDeckSpanPlanFromAdjacentStroke"/>.
+    /// When <see cref="TryPrepareRoadPlacementPlanLongestValidPrefix"/> fails on straight cardinal stroke (e.g. sim street segment),
+    /// rebuild wet run via same lip→chord walk as manual preview (<see cref="WalkStraightChordFromLipThroughWetToFarDry"/>)
+    /// + prepare deck-span-only plan via <see cref="TryPrepareDeckSpanPlanFromAdjacentStroke"/>.
     /// </summary>
     public bool TryPrepareRoadPlacementPlanWithProgrammaticDeckSpanChord(List<Vector2> straightCardinalPath, Vector2Int segmentDir, RoadPathValidationContext ctx, out List<Vector2> expandedPath, out PathTerraformPlan plan)
     {
@@ -601,7 +603,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Validates an adjacent stroke for bridge rules and builds a deck-span-only terraform plan (shared by locked manual chord and programmatic auto chord).
+    /// Validate adjacent stroke for bridge rules + build deck-span-only terraform plan (shared by locked manual chord + programmatic auto chord).
     /// </summary>
     bool TryPrepareDeckSpanPlanFromAdjacentStroke(List<Vector2> adjacentPath, RoadPathValidationContext ctx, out List<Vector2> expandedPath, out PathTerraformPlan plan)
     {
@@ -675,7 +677,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Last index in <paramref name="mergedPath"/> where <paramref name="chord"/> appears as a contiguous subsequence (first match).
+    /// Last index in <paramref name="mergedPath"/> where <paramref name="chord"/> appears as contiguous subsequence (first match).
     /// </summary>
     static int FindLockedChordEndIndexInMergedPath(List<Vector2> mergedPath, List<Vector2> chord)
     {
@@ -701,9 +703,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// When <see cref="manualPreviewBridgeLocked"/> and <see cref="lockedBridgeChord"/> are set, prepares placement using a no-mutation deck-span plan
-    /// (straight chord over water/cliffs at lip height) instead of <see cref="ComputePathPlan"/>, so preview/commit are not blocked by cut-through Phase-1
-    /// on complex tails. Tries longest merged-path prefix from full length down to the end of the locked chord that still passes stroke validation.
+    /// When <see cref="manualPreviewBridgeLocked"/> + <see cref="lockedBridgeChord"/> set, prepare placement via no-mutation deck-span plan
+    /// (straight chord over water/cliffs at lip height) instead of <see cref="ComputePathPlan"/> → preview/commit not blocked by cut-through Phase-1
+    /// on complex tails. Tries longest merged-path prefix from full length down to locked chord end that still passes stroke validation.
     /// </summary>
     bool TryPrepareLockedDeckSpanBridgePlacement(List<Vector2> mergedPath, RoadPathValidationContext ctx, out List<Vector2> expandedPath, out PathTerraformPlan plan)
     {
@@ -731,8 +733,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Filters raw path, checks adjacency, straightens bridges, validates bridge rules. Shared by full plan and longest-prefix search.
-    /// When <paramref name="relaxElbowNearWaterForWaterBridge"/> is true (streets / manual roads), <see cref="HasElbowTooCloseToWater"/> allows elbows at high-deck lips and near in-stroke wet cells; interstate keeps it false via <see cref="RoadPathValidationContext.forbidCutThrough"/>.
+    /// Filter raw path, check adjacency, straighten bridges, validate bridge rules. Shared by full plan + longest-prefix search.
+    /// <paramref name="relaxElbowNearWaterForWaterBridge"/> true (streets / manual) → <see cref="HasElbowTooCloseToWater"/> allows elbows at high-deck lips + near in-stroke wet cells;
+    /// interstate keeps false via <see cref="RoadPathValidationContext.forbidCutThrough"/>.
     /// </summary>
     bool TryBuildFilteredPathForRoadPlan(List<Vector2> pathRaw, bool postUserWarnings, out List<Vector2> filteredPath, bool relaxElbowNearWaterForWaterBridge = false)
     {
@@ -795,7 +798,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// True when <paramref name="expandedPath"/> is a completed FEAT-44 water bridge (land — wet run — land); enables relaxed terraform beside cliffs / water edges.
+    /// True when <paramref name="expandedPath"/> is completed water bridge (land — wet run — land) → enables relaxed terraform beside cliffs / water edges.
     /// </summary>
     bool PathQualifiesForWaterBridgeTerraformRelaxation(List<Vector2> expandedPath)
     {
@@ -816,8 +819,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// True when a dry path cell has a cardinal neighbor strictly lower that touches registered water (Moore), i.e. high deck / cliff lip above a cauce.
-    /// Enables the same <see cref="PathTerraformPlan.waterBridgeTerraformRelaxation"/> pipeline as full FEAT-44 spans so single-tile or partial strokes can plan without <see cref="TerraformingService"/> steep-neighbor rejection.
+    /// True when dry path cell has cardinal neighbor strictly lower that touches registered water (Moore), i.e. high deck / cliff lip above cauce.
+    /// Enables same <see cref="PathTerraformPlan.waterBridgeTerraformRelaxation"/> pipeline as full spans → single-tile or partial strokes plan without <see cref="TerraformingService"/> steep-neighbor rejection.
     /// </summary>
     bool PathQualifiesForWaterAdjacentDeckTerraformRelaxation(List<Vector2> expandedPath)
     {
@@ -886,7 +889,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Diagonal expansion, <see cref="TerraformingService.ComputePathPlan"/>, context validation, and <see cref="PathTerraformPlan.TryValidatePhase1Heights"/>.
+    /// Diagonal expand, <see cref="TerraformingService.ComputePathPlan"/>, ctx validate, <see cref="PathTerraformPlan.TryValidatePhase1Heights"/>.
     /// </summary>
     bool TryPrepareFromFilteredPathList(List<Vector2> filteredPath, RoadPathValidationContext ctx, bool postUserWarnings, out List<Vector2> expandedPath, out PathTerraformPlan plan)
     {
@@ -927,7 +930,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns true when the player is actively drawing a road (mouse held after initial click).
+    /// True when player actively drawing road (mouse held after initial click).
     /// </summary>
     public bool IsDrawingRoad()
     {
@@ -935,7 +938,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns the number of tiles in the current road preview path (while drawing).
+    /// Tile count in current road preview path (while drawing).
     /// </summary>
     public int GetPreviewRoadTileCount()
     {
@@ -943,7 +946,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns the cost per road tile (50).
+    /// Cost per road tile (50).
     /// </summary>
     public int GetRoadCostPerTile()
     {
@@ -951,9 +954,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns the total cost for placing the given number of road tiles.
+    /// Total cost for placing N road tiles.
     /// </summary>
-    /// <param name="tilesCount">Number of road tiles.</param>
+    /// <param name="tilesCount">Road tile count.</param>
     /// <returns>Total construction cost.</returns>
     public int GetRoadCostForTileCount(int tilesCount)
     {
@@ -986,8 +989,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     void IRoadManager.UpdateAdjacentRoadPrefabsAt(Vector2 gridPos) => UpdateAdjacentRoadPrefabsAt(gridPos);
 
     /// <summary>
-    /// Final pass: refreshes all road cells adjacent to the placement path but not in the path.
-    /// Ensures junction prefabs (T, crossing) are correct after all tiles are placed.
+    /// Final pass: refresh all road cells adjacent to placement path but not in path.
+    /// Ensures junction prefabs (T, crossing) correct after all tiles placed.
     /// </summary>
     void RefreshAllAdjacentRoadsOutsidePath()
     {
@@ -1008,11 +1011,11 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Refreshes prefabs of all road tiles adjacent to the given position so they connect correctly.
-    /// Use after programmatic placement (e.g. AutoRoadBuilder) so existing roads update to T-junctions/crossings.
-    /// Road cache is updated incrementally by the placement caller (AddRoadToCache).
+    /// Refresh prefabs of road tiles adjacent to given pos → connect correctly.
+    /// Use after programmatic placement (e.g. AutoRoadBuilder) → existing roads update to T-junctions/crossings.
+    /// Road cache updated incrementally by placement caller (AddRoadToCache).
     /// </summary>
-    /// <param name="gridPos">Grid position of the newly placed road.</param>
+    /// <param name="gridPos">Grid pos of newly placed road.</param>
     public void UpdateAdjacentRoadPrefabsAt(Vector2 gridPos)
     {
         var toRefresh = new List<Vector2>();
@@ -1028,8 +1031,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// After batch placement via <see cref="PlaceRoadTileFromResolved"/> (AUTO / programmatic), re-resolves each unique affected road cell once:
-    /// every newly placed cell plus cardinal road neighbors. Skips bridge deck tiles (FEAT-44). Deduplicates for performance.
+    /// After batch placement via <see cref="PlaceRoadTileFromResolved"/> (AUTO / programmatic), re-resolve each unique affected road cell once:
+    /// every newly placed cell + cardinal road neighbors. Skips bridge deck tiles. Deduplicates for perf.
     /// </summary>
     public void RefreshRoadPrefabsAfterBatchPlacement(IReadOnlyList<Vector2Int> newlyPlacedRoadCells)
     {
@@ -1061,7 +1064,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         }
     }
 
-    /// <summary>True if the road visual on this cell is a horizontal/vertical bridge deck (do not batch re-resolve).</summary>
+    /// <summary>True if road visual on this cell is horizontal/vertical bridge deck (do not batch re-resolve).</summary>
     bool IsCellUsingBridgeDeckRoadPrefab(Vector2Int gridPos)
     {
         GameObject cell = gridManager.GetGridCell(new Vector2(gridPos.x, gridPos.y));
@@ -1083,8 +1086,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Picks a road neighbor as "previous" for <see cref="RefreshRoadPrefabAt"/>. Uses stored path segment hint on straight-through segments so
-    /// slope resolution matches <see cref="RoadPrefabResolver.ResolveForPath"/> travel order (BUG-51); otherwise same rules as legacy connectivity-only picker.
+    /// Pick road neighbor as "previous" for <see cref="RefreshRoadPrefabAt"/>. Uses stored path segment hint on straight-through segments
+    /// → slope resolution matches <see cref="RoadPrefabResolver.ResolveForPath"/> travel order; else same rules as legacy connectivity-only picker.
     /// </summary>
     Vector2 PickPrevGridPosForRoadRefresh(Vector2 gridPos, Cell cellOrNull)
     {
@@ -1094,7 +1097,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Clears BUG-51 route hints when the cell is no longer a straight-through segment, dead end, or stored successor is missing.
+    /// Clear route hints when cell no longer straight-through segment, dead end, or stored successor missing.
     /// </summary>
     void InvalidateRoadRouteHintsIfTopologyMismatch(Vector2 gridPos, Cell cell)
     {
@@ -1136,8 +1139,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// When the cell has a valid straight-through topology (exactly two opposite cardinal road neighbors), returns the stored predecessor if it is one of those neighbors.
-    /// Otherwise clears the hint and returns false.
+    /// When cell has valid straight-through topology (2 opposite cardinal road neighbors), return stored predecessor if one of those neighbors.
+    /// Else clear hint + return false.
     /// </summary>
     bool TryPrevGridPosFromStoredRoadSegment(Vector2 gridPos, Cell cell, out Vector2 prev)
     {
@@ -1200,7 +1203,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Deterministic road neighbor for refresh when no path-order hint applies (legacy behavior).
+    /// Deterministic road neighbor for refresh when no path-order hint applies (legacy).
     /// </summary>
     Vector2 PickPrevGridPosForRoadRefreshConnectivityOnly(Vector2 gridPos)
     {
@@ -1302,7 +1305,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Ghost road tiles only — does not call <see cref="PathTerraformPlan.Apply"/> so dragging never mutates the heightmap (commit applies in <see cref="TryFinalizeManualRoadPlacement"/>).
+    /// Ghost road tiles only. Does not call <see cref="PathTerraformPlan.Apply"/> → dragging never mutates heightmap (commit applies in <see cref="TryFinalizeManualRoadPlacement"/>).
     /// Caller must clear prior preview instances first.
     /// </summary>
     void DrawPreviewLineCore(List<Vector2> path)
@@ -1340,8 +1343,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns grid cells from start to end. Uses A* pathfinding to prefer flat terrain and go around hills;
-    /// falls back to Bresenham line when pathfinding finds no route (e.g. blocked by water).
+    /// Grid cells from start to end. A* pathfinding prefers flat terrain + goes around hills;
+    /// falls back to Bresenham when pathfinding finds no route (e.g. blocked by water).
     /// </summary>
     List<Vector2> GetLine(Vector2 start, Vector2 end)
     {
@@ -1364,9 +1367,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Raw stroke from <see cref="GetLine"/> plus, when the cursor ends on water/shore with a cardinal approach from dry land,
-    /// an auto-completed opposite-bank land cell along the same axis (same bridge height). Resets <see cref="manualRoadLongestPrefixHint"/>
-    /// when extension applies so longest-prefix search tries the full crossing first.
+    /// Raw stroke from <see cref="GetLine"/>; when cursor ends on water/shore with cardinal approach from dry land,
+    /// append auto-completed opposite-bank land cell along same axis (same bridge height). Resets <see cref="manualRoadLongestPrefixHint"/>
+    /// when extension applies → longest-prefix search tries full crossing first.
     /// </summary>
     List<Vector2> GetManualRoadPathWithOptionalBridgeExtension()
     {
@@ -1437,8 +1440,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Orders unique grid cells (cursor-proximate first) from the main stroke, a horizontal arm, and a vertical arm so deck lips
-    /// on the entry row/column are found even when <see cref="GetLine"/> start-to-cursor misses them.
+    /// Order unique grid cells (cursor-proximate first) from main stroke + horizontal arm + vertical arm → deck lips
+    /// on entry row/column found even when <see cref="GetLine"/> start-to-cursor misses them.
     /// </summary>
     void CollectManualStrokeLipCandidateCells(Vector2 strokeStart, Vector2 cursor, List<Vector2> orderedUniqueOut)
     {
@@ -1466,10 +1469,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// When the cursor lies strictly past a high-deck lip along a bridge cardinal (waterward dot &gt; 0), rebuilds the stroke as
-    /// <see cref="GetLine"/> from stroke start to the lip, a straight axis-aligned chord through water/slope (FEAT-44 style),
-    /// then <see cref="GetLine"/> from chord end to cursor. Locks the lip-to-exit chord for the rest of the drag while the cursor
-    /// stays past the entry plane. Candidates include horizontal/vertical arms so the lip is found for arbitrary cursor Y.
+    /// When cursor strictly past high-deck lip along bridge cardinal (waterward dot &gt; 0), rebuild stroke as:
+    /// <see cref="GetLine"/> stroke start → lip + straight axis-aligned chord through water/slope + <see cref="GetLine"/> chord end → cursor.
+    /// Locks lip-to-exit chord for rest of drag while cursor stays past entry plane. Candidates include horizontal/vertical arms → lip found for arbitrary cursor Y.
     /// </summary>
     List<Vector2> TryFlexBridgePreviewPathAcrossLipPlane(Vector2 strokeStart, Vector2 cursor)
     {
@@ -1639,7 +1641,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Lip cell plus straight cardinal steps through water/slope, ending on first opposite dry land that matches bridge height (FEAT-44 chord intent).
+    /// Lip cell + straight cardinal steps through water/slope, ending on first opposite dry land matching bridge height.
     /// </summary>
     List<Vector2> WalkStraightChordFromLipThroughWetToFarDry(int lx, int ly, int ddx, int ddy, int bridgeHeight, HeightMap heightMap)
     {
@@ -1694,8 +1696,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Bresenham line from start to end. Used as fallback when pathfinding finds no route.
-    /// Diagonal steps are split into two cardinal steps (staircase) so road placement matches interstate-style elbows.
+    /// Bresenham line from start to end. Fallback when pathfinding finds no route.
+    /// Diagonal steps split into 2 cardinal steps (staircase) → road placement matches interstate-style elbows.
     /// </summary>
     List<Vector2> GetLineBresenham(Vector2 start, Vector2 end)
     {
@@ -1744,7 +1746,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// True if cell is registered open water (WaterMap) or water-shore slope. Used to define bridge wet runs (geography spec water map).
+    /// True if cell registered open water (WaterMap) or water-shore slope. Defines bridge wet runs (geography spec water map).
     /// </summary>
     bool IsWaterOrWaterSlope(int x, int y, HeightMap heightMap)
     {
@@ -1754,10 +1756,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// If <paramref name="path"/> ends on water or shore, the step before the trailing wet run is dry land, and the step into the run
-    /// is a single cardinal move, extends along that axis through wet cells until the first dry land that passes
-    /// <see cref="TerrainManager.CanPlaceRoad(int,int)"/> at the same instance height as that land-before cell (FEAT-44 far endpoint).
-    /// Returns null when no extension is needed or none is found.
+    /// If <paramref name="path"/> ends on water/shore, step before trailing wet run is dry land, + step into run is single cardinal move,
+    /// extend along that axis through wet cells until first dry land passing <see cref="TerrainManager.CanPlaceRoad(int,int)"/>
+    /// at same instance height as land-before cell. Null when no extension needed or none found.
     /// </summary>
     List<Vector2> TryExtendPathAcrossWaterToOppositeLand(List<Vector2> path)
     {
@@ -1857,7 +1858,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// FEAT-44: interior of a water bridge must be registered water and/or shore (water slope), not dry land gaps.
+    /// Water bridge interior must be registered water and/or shore (water slope), not dry land gaps.
     /// </summary>
     bool IsWaterRelatedBridgeInteriorCell(int x, int y, HeightMap heightMap, WaterManager waterManager)
     {
@@ -1879,7 +1880,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// FEAT-44: deck height vs logical surface and bed on open water; land endpoints match; no orthogonal bridge overlap on wet cells.
+    /// Deck height vs logical surface + bed on open water; land endpoints match; no orthogonal bridge overlap on wet cells.
     /// </summary>
     bool ValidateFeat44WaterBridgeRules(List<Vector2> path, HeightMap heightMap, bool postUserWarnings)
     {
@@ -1960,7 +1961,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns bounds [runStart, runEnd] inclusive of the single water/shore run, or false if there is no bridge segment.
+    /// Bounds [runStart, runEnd] inclusive of single water/shore run, or false if no bridge segment.
     /// </summary>
     bool TryGetSingleBridgeRunBounds(List<Vector2> path, HeightMap heightMap, out int runStart, out int runEnd)
     {
@@ -1995,7 +1996,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Cardinal road axis through an existing road tile, or junction if both axes are used.
+    /// Cardinal road axis through existing road tile, or junction if both axes used.
     /// </summary>
     bool TryGetDominantRoadAxisAt(int x, int y, out bool horizontal, out bool isJunction)
     {
@@ -2026,8 +2027,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// True if cell is at least 2 cells from any water (not on water, not adjacent to water).
-    /// Elbows must satisfy this to be valid.
+    /// True if cell ≥2 cells from any water (not on water, not adjacent). Elbows must satisfy.
     /// </summary>
     bool IsAtLeastTwoCellsFromWater(int x, int y, HeightMap heightMap)
     {
@@ -2046,7 +2046,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// True if the path has a turn (direction change) on water or water-slope. Invalid.
+    /// True if path has turn (direction change) on water/water-slope. Invalid.
     /// </summary>
     bool HasTurnOnWaterOrCoast(List<Vector2> path, HeightMap heightMap)
     {
@@ -2067,7 +2067,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// True if the elbow vertex is a relaxed high-deck lip, or dry and within Chebyshev distance 2 of some water/slope cell on the same stroke (bridge / bank context).
+    /// True if elbow vertex is relaxed high-deck lip, or dry + within Chebyshev distance 2 of some water/slope cell on same stroke (bridge/bank context).
     /// </summary>
     bool IsElbowExemptWaterBridgeNearWaterRelaxation(int elbowIndex, List<Vector2> path, HeightMap heightMap)
     {
@@ -2104,8 +2104,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// True if the path has an elbow (turn) that is on water-slope or within 2 cells of water. Invalid.
-    /// When <paramref name="relaxElbowNearWaterForWaterBridge"/> is true, skips the check for elbows exempted by <see cref="IsElbowExemptWaterBridgeNearWaterRelaxation"/> (manual/street water-bridge previews).
+    /// True if path has elbow (turn) on water-slope or within 2 cells of water. Invalid.
+    /// <paramref name="relaxElbowNearWaterForWaterBridge"/> true → skip check for elbows exempted by <see cref="IsElbowExemptWaterBridgeNearWaterRelaxation"/> (manual/street water-bridge previews).
     /// </summary>
     bool HasElbowTooCloseToWater(List<Vector2> path, HeightMap heightMap, bool relaxElbowNearWaterForWaterBridge = false)
     {
@@ -2128,7 +2128,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Validates bridge path for interstate/auto-road: no turns on water or coast, elbows at least 2 cells from water.
+    /// Validate bridge path for interstate/auto-road: no turns on water/coast, elbows ≥2 cells from water.
     /// Rule F: last N land cells before water must be collinear (approach perpendicular to water).
     /// </summary>
     public bool ValidateBridgePath(List<Vector2Int> path, HeightMap heightMap)
@@ -2144,8 +2144,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Rule F: True if the last n land cells before any water segment have a turn (not collinear with bridge axis).
-    /// Bridge approach must be perpendicular; no turn on the last land cells before water.
+    /// Rule F: True if last n land cells before any water segment have turn (not collinear with bridge axis).
+    /// Bridge approach must be perpendicular; no turn on last land cells before water.
     /// </summary>
     bool HasTurnOnLastLandCellsBeforeWater(List<Vector2> path, HeightMap heightMap, int n = 2)
     {
@@ -2174,8 +2174,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Replaces runs of consecutive water and water-slope cells with a straight axis-aligned line.
-    /// Bridges must be horizontal or vertical; diagonal runs are aligned to the dominant axis.
+    /// Replace runs of consecutive water/water-slope cells with straight axis-aligned line.
+    /// Bridges must be horizontal or vertical; diagonal runs align to dominant axis.
     /// </summary>
     List<Vector2> StraightenBridgeSegments(List<Vector2> path, HeightMap heightMap)
     {
@@ -2273,7 +2273,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Grid cells visited by the stroke (for Bresenham chord checks: dry cliff/rim on the chord is allowed if the player path includes it).
+    /// Grid cells visited by stroke (for Bresenham chord checks: dry cliff/rim on chord allowed if player path includes it).
     /// </summary>
     static HashSet<Vector2Int> BuildPathGridCellSet(List<Vector2> path)
     {
@@ -2285,9 +2285,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// When the polyline leaves water to dry land and re-enters the same wet corridor (e.g. bridge out, land at far bank, stroke back along the chord),
-    /// <see cref="IsBridgePathValid"/> counts multiple wet runs. This verifies all wet cells lie on one horizontal or vertical line and every cell
-    /// on that axis between min and max is wet/slope or part of <paramref name="pathStrokeCells"/>, so two separate river crossings stay rejected.
+    /// When polyline leaves water to dry land + re-enters same wet corridor (e.g. bridge out, land at far bank, stroke back along chord),
+    /// <see cref="IsBridgePathValid"/> counts multiple wet runs. Verify all wet cells lie on 1 horizontal/vertical line + every cell
+    /// on axis between min/max is wet/slope or part of <paramref name="pathStrokeCells"/> → 2 separate river crossings stay rejected.
     /// </summary>
     bool WetStrokeCellsFormSingleAxisSpanFullyCovered(List<Vector2> path, HeightMap heightMap, HashSet<Vector2Int> pathStrokeCells)
     {
@@ -2351,9 +2351,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns true if the path has valid bridge segments: normally at most one contiguous water run; if the stroke re-enters the same wet span
-    /// after dry land (same-axis backtrack), <see cref="WetStrokeCellsFormSingleAxisSpanFullyCovered"/> must pass. Each bridge is axis-aligned,
-    /// and each straight wet segment only passes through water/slope or dry cells on the stroke along that chord (FEAT-44).
+    /// True if path has valid bridge segments: normally ≤1 contiguous water run; if stroke re-enters same wet span after dry land (same-axis backtrack),
+    /// <see cref="WetStrokeCellsFormSingleAxisSpanFullyCovered"/> must pass. Each bridge axis-aligned;
+    /// each straight wet segment only passes through water/slope or dry cells on stroke along that chord.
     /// </summary>
     bool IsBridgePathValid(List<Vector2> path, HeightMap heightMap)
     {
@@ -2440,8 +2440,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Cardinal path from A to B (horizontal then vertical). Excludes start point.
-    /// Used to connect bridge end to next land cell when axis alignment creates a gap.
+    /// Cardinal path A→B (horizontal then vertical). Excludes start.
+    /// Connects bridge end to next land cell when axis alignment creates gap.
     /// </summary>
     static List<Vector2> GetCardinalPath(Vector2 from, Vector2 to)
     {
@@ -2459,7 +2459,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Bresenham straight line (no staircase). Used for bridge segments.
+    /// Bresenham straight line (no staircase). For bridge segments.
     /// </summary>
     static List<Vector2> BresenhamStraightLine(int x0, int y0, int x1, int y1)
     {
@@ -2481,8 +2481,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns true if every consecutive pair in the path is adjacent (within 1 cell).
-    /// Used to reject paths with gaps (e.g. over water) that would create loose corners.
+    /// True if every consecutive pair in path adjacent (within 1 cell). Rejects paths with gaps (e.g. over water) → loose corners.
     /// </summary>
     bool IsPathFullyAdjacent(List<Vector2> path)
     {
@@ -2512,7 +2511,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
     #region Road Prefab Selection
     /// <summary>
-    /// Returns the correct road prefab for a cell. Delegates to RoadPrefabResolver.ResolveForCell.
+    /// Correct road prefab for cell. Delegates to RoadPrefabResolver.ResolveForCell.
     /// </summary>
     GameObject GetCorrectRoadPrefab(Vector2 prevGridPos, Vector2 currGridPos, bool isCenterRoadTile = true, bool isPreview = false, List<Vector2> path = null, int pathIndex = -1)
     {
@@ -2524,8 +2523,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns the height of the neighbor at (gridX + dx, gridY + dy), or int.MinValue if out of bounds.
-    /// Only use cardinal offsets: (dx, dy) one of (±1, 0) or (0, ±1).
+    /// Height of neighbor at (gridX+dx, gridY+dy), or int.MinValue if out of bounds.
+    /// Use cardinal offsets only: (dx, dy) one of (±1, 0) or (0, ±1).
     /// </summary>
     int GetNeighborHeight(int gridX, int gridY, int dx, int dy)
     {
@@ -2538,9 +2537,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns the cardinal direction for the slope prefab only when there is adjacent higher ground
-    /// (so we're on a slope). When we only have a lower neighbor (first flat tile after a slope),
-    /// returns null so a flat road prefab is used.
+    /// Cardinal direction for slope prefab only when adjacent higher ground exists (on slope).
+    /// Only lower neighbor (first flat tile after slope) → null → flat road prefab used.
     /// </summary>
     Vector2? GetTerrainSlopeDirection(Vector2 currGridPos, int currentHeight)
     {
@@ -2564,8 +2562,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns true if the prefab is a diagonal road (elbow, used when route is diagonal on sloped terrain).
-    /// Only these prefabs use higher positioning for correct visual integration with the slope.
+    /// True if prefab is diagonal road (elbow, used when route diagonal on sloped terrain).
+    /// Only these prefabs use higher positioning for correct visual integration with slope.
     /// </summary>
     bool IsDiagonalRoadPrefab(GameObject prefab)
     {
@@ -2575,9 +2573,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns the world position for a road tile. For diagonal road prefabs on sloped terrain,
-    /// uses the upper cell's position so the ramp renders with more height in the same cell.
-    /// Orthogonal slope prefabs (East/West/North/South) use the current cell position.
+    /// World position for road tile. Diagonal road prefabs on sloped terrain use upper cell pos → ramp renders with more height in same cell.
+    /// Orthogonal slope prefabs (East/West/North/South) use current cell pos.
     /// </summary>
     Vector2 GetRoadTileWorldPosition(int x, int y, GameObject prefab, int terrainHeight)
     {
@@ -2627,8 +2624,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns the correct road prefab, world position and sorting order for the single-cell ghost preview at the given grid position.
-    /// Used when hovering with the road tool (no line drawn): slope cells get slope prefab, water gets bridge at height 1, else flat road.
+    /// Correct road prefab, world pos, sorting order for single-cell ghost preview at given grid pos.
+    /// Used when hovering with road tool (no line drawn): slope cells → slope prefab, water → bridge at height 1, else flat road.
     /// </summary>
     public void GetRoadGhostPreviewForCell(Vector2 gridPos, out GameObject prefab, out Vector2 worldPos, out int sortingOrder)
     {
@@ -2691,7 +2688,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Places a single road tile from a resolved prefab. Used by path pipeline (manual draw, interstate, AutoRoadBuilder).
+    /// Place single road tile from resolved prefab. Used by path pipeline (manual draw, interstate, AutoRoadBuilder).
     /// </summary>
     public void PlaceRoadTileFromResolved(RoadPrefabResolver.ResolvedRoadTile resolved)
     {
@@ -2722,7 +2719,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         gridManager.AddRoadToCache(resolved.gridPos);
     }
 
-    /// <summary>Copies path route hints from resolved placement for BUG-51 route-first refresh alignment.</summary>
+    /// <summary>Copy path route hints from resolved placement for route-first refresh alignment.</summary>
     static void ApplyRoadRouteHintsFromResolved(Cell cell, RoadPrefabResolver.ResolvedRoadTile resolved)
     {
         if (cell == null)
@@ -2833,7 +2830,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
     #region Road Update
     /// <summary>
-    /// Returns true if a road can be placed at the given grid position (terrain, not building, not interstate).
+    /// True if road can be placed at given grid pos (terrain, not building, not interstate).
     /// </summary>
     public bool CanPlaceRoadAt(Vector2 gridPos)
     {
@@ -2852,11 +2849,11 @@ public class RoadManager : MonoBehaviour, IRoadManager
     bool IRoadManager.PlaceRoadTileAt(Vector2 gridPos) => PlaceRoadTileAt(gridPos);
 
     /// <summary>
-    /// Places a single road tile at the given grid position. Uses existing road neighbors to pick prefab.
-    /// Caller is responsible for affordability and budget. Returns true if placed.
+    /// Place single road tile at given grid pos. Uses existing road neighbors to pick prefab.
+    /// Caller responsible for affordability + budget. True if placed.
     /// Updates road cache incrementally (AddRoadToCache).
     /// </summary>
-    /// <param name="gridPos">Grid position to place the road.</param>
+    /// <param name="gridPos">Grid pos to place road.</param>
     public bool PlaceRoadTileAt(Vector2 gridPos)
     {
         if (!CanPlaceRoadAt(gridPos))
@@ -2907,9 +2904,9 @@ public class RoadManager : MonoBehaviour, IRoadManager
     public const int RoadCostPerTile = 50;
 
     /// <summary>
-    /// Returns the list of all road tile prefabs.
+    /// List of all road tile prefabs.
     /// </summary>
-    /// <returns>The road tile prefabs list.</returns>
+    /// <returns>Road tile prefabs list.</returns>
     public List<GameObject> GetRoadPrefabs()
     {
         return roadTilePrefabs;
@@ -2918,8 +2915,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
     #region Utility Methods
     /// <summary>
-    /// Returns the correct road prefab for a cell in a path (for interstate placement).
-    /// When forceFlatCells contains currGridPos, returns flat road (horizontal/vertical) regardless of terrain slope.
+    /// Correct road prefab for cell in path (interstate placement).
+    /// If forceFlatCells contains currGridPos → flat road (horizontal/vertical) ignoring terrain slope.
     /// </summary>
     public GameObject GetCorrectRoadPrefabForPath(Vector2 prevGridPos, Vector2 currGridPos, HashSet<Vector2Int> forceFlatCells = null)
     {
@@ -2936,7 +2933,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Resolves road prefabs for a path using the terraform plan. Used by AutoRoadBuilder for path-based placement.
+    /// Resolve road prefabs for path using terraform plan. Used by AutoRoadBuilder for path-based placement.
     /// </summary>
     public List<RoadPrefabResolver.ResolvedRoadTile> ResolvePathForRoads(List<Vector2> path, PathTerraformPlan plan)
     {
@@ -2947,8 +2944,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Returns true if the path would be valid for interstate placement (bridge, plan, etc).
-    /// Does not place. Used to evaluate candidate paths before choosing the best.
+    /// True if path valid for interstate placement (bridge, plan, etc).
+    /// Does not place. Used to evaluate candidate paths before picking best.
     /// </summary>
     public bool ValidateInterstatePathForPlacement(List<Vector2Int> path)
     {
@@ -2963,10 +2960,10 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Places interstate tiles along a path using the centralized terraform + resolve pipeline.
+    /// Place interstate tiles along path via centralized terraform + resolve pipeline.
     /// Call from InterstateManager after route generation.
     /// </summary>
-    /// <returns>True if placement succeeded (plan valid and Apply succeeded).</returns>
+    /// <returns>True if placement succeeded (plan valid + Apply succeeded).</returns>
     public bool PlaceInterstateFromPath(List<Vector2Int> path)
     {
         if (path == null || path.Count == 0)
@@ -2998,7 +2995,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Places an interstate tile from a resolved road tile. Applies interstate tint and sets isInterstate on the cell.
+    /// Place interstate tile from resolved road tile. Apply interstate tint + set isInterstate on cell.
     /// </summary>
     public void PlaceInterstateFromResolved(RoadPrefabResolver.ResolvedRoadTile resolved)
     {
@@ -3031,7 +3028,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Place a single road tile for the interstate at currGridPos. Clears forest and applies interstate tint.
+    /// Place single interstate road tile at currGridPos. Clear forest + apply interstate tint.
     /// </summary>
     public void PlaceInterstateTile(Vector2 prevGridPos, Vector2 currGridPos, bool isInterstate)
     {
@@ -3070,13 +3067,13 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Restores a road tile from save data. Uses the exact prefab, applies interstate tint when needed,
-    /// and sets correct sorting order. Call during RestoreGrid for Road cells.
+    /// Restore road tile from save data. Uses exact prefab, applies interstate tint when needed,
+    /// sets correct sorting order. Call during RestoreGrid for Road cells.
     /// </summary>
-    /// <param name="gridPos">Grid position to restore the road at.</param>
+    /// <param name="gridPos">Grid position to restore road at.</param>
     /// <param name="prefab">Road prefab to instantiate (from saved prefabName).</param>
-    /// <param name="isInterstate">Whether this cell is part of the interstate (applies gray tint).</param>
-    /// <param name="savedSpriteSortingOrder">When set (load restore), applies persisted sorting instead of recalculating.</param>
+    /// <param name="isInterstate">Cell is interstate (applies gray tint).</param>
+    /// <param name="savedSpriteSortingOrder">If set (load restore), apply persisted sorting instead of recalculating.</param>
     public void RestoreRoadTile(Vector2Int gridPos, GameObject prefab, bool isInterstate, int? savedSpriteSortingOrder = null)
     {
         GameObject cell = gridManager.GetGridCell(new Vector2(gridPos.x, gridPos.y));
@@ -3130,8 +3127,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>
-    /// Replace the road tile at the given position with a new prefab (e.g. after all interstate tiles placed to fix junctions). Preserves isInterstate and tint.
-    /// Road remains at same position, so cache does not need updating.
+    /// Replace road tile at given position with new prefab (e.g. after interstate tiles placed to fix junctions). Preserves isInterstate + tint.
+    /// Road stays at same position → cache not updated.
     /// </summary>
     public void ReplaceRoadTileAt(Vector2Int gridPos, GameObject newPrefab, bool keepInterstateTint)
     {

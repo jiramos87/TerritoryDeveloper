@@ -6,8 +6,8 @@ namespace Territory.Simulation
 public enum GrowthCategory { Roads, Energy, Water, Zoning }
 
 /// <summary>
-/// Manages growth budget allocation across roads, energy, water, and zoning categories.
-/// Derives the monthly pool from projected net cash flow (tax minus maintenance) when positive, otherwise from treasury.
+/// Growth budget allocation across roads, energy, water, zoning. Monthly pool derived from projected
+/// net cash flow (tax − maintenance) when positive, else from treasury.
 /// </summary>
 public class GrowthBudgetManager : MonoBehaviour
 {
@@ -49,7 +49,7 @@ public class GrowthBudgetManager : MonoBehaviour
         data.zoningBudgetPercent = Mathf.Clamp(data.zoningBudgetPercent, 0, 100);
     }
 
-    /// <summary>Minimum available budget per category when percent &gt; 0, so growth never fully stops mid-month.</summary>
+    /// <summary>Min available budget per category when percent &gt; 0 → growth never fully stops mid-month.</summary>
     public int minAvailablePerCategory = 100;
 
     public int GetAvailableBudget(GrowthCategory cat)
@@ -75,7 +75,7 @@ public class GrowthBudgetManager : MonoBehaviour
         return true;
     }
 
-    /// <summary>Refund a previous TrySpend (e.g. when placement fails). Adds money back to city and subtracts from spent.</summary>
+    /// <summary>Refund prior TrySpend (e.g. placement fail). Add money back to city + subtract from spent.</summary>
     public void RefundSpend(GrowthCategory cat, int amount)
     {
         if (amount <= 0) return;
@@ -103,14 +103,14 @@ public class GrowthBudgetManager : MonoBehaviour
         cacheValid = true;
     }
 
-    /// <summary>Sets the growth budget as a percentage of projected net monthly cash flow (tax minus maintenance) (0-100). Falls back to city money when the projection is not positive.</summary>
+    /// <summary>Set growth budget % of projected net monthly cash flow (tax − maintenance), 0–100. Falls back to city money when projection not positive.</summary>
     public void SetGrowthBudgetPercent(int percent)
     {
         data.growthBudgetPercent = Mathf.Clamp(percent, 0, 100);
         cacheValid = false;
     }
 
-    /// <summary>Returns the user's growth budget percentage (0-100).</summary>
+    /// <summary>User growth budget % (0–100).</summary>
     public int GetGrowthBudgetPercent() => data.growthBudgetPercent;
 
     public void SetCategoryPercent(GrowthCategory cat, int pct)
@@ -125,7 +125,7 @@ public class GrowthBudgetManager : MonoBehaviour
         }
     }
 
-    /// <summary>Returns the effective total growth budget (cached at month start). Computes on first use if not yet set.</summary>
+    /// <summary>Effective total growth budget (cached at month start). Computes on first use if not set.</summary>
     public int GetTotalBudget()
     {
         if (!cacheValid)

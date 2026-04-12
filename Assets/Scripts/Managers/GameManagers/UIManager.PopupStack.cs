@@ -20,7 +20,7 @@ namespace Territory.UI
 public partial class UIManager
 {
     #region Popup Management
-    /// <summary>Call when a pop-up is opened so Esc closes last-opened first.</summary>
+    /// <summary>Call when pop-up opens → Esc closes last-opened first.</summary>
     public void RegisterPopupOpened(PopupType type)
     {
         popupStack.Push(type);

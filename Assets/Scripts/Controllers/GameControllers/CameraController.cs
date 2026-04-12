@@ -6,9 +6,9 @@ using Territory.Core;
 namespace Territory.UI
 {
 /// <summary>
-/// Controls camera movement, zoom, and panning for the isometric grid view.
-/// Coordinates with GridManager for viewport bounds.
-/// Camera is independent of simulation speed: uses Time.unscaledDeltaTime so movement and zoom work during pause.
+/// Controls camera movement, zoom, pan for isometric grid view.
+/// Coords with <see cref="GridManager"/> for viewport bounds.
+/// Independent of sim speed: uses Time.unscaledDeltaTime → movement + zoom work during pause.
 /// </summary>
 [DefaultExecutionOrder(-100)]
 public class CameraController : MonoBehaviour
@@ -45,7 +45,7 @@ public class CameraController : MonoBehaviour
     [SerializeField]
     private float panInertiaMinVelocity = 0.001f;
 
-    /// <summary>True when the last right-click release was a pan (exceeded threshold). Reset each frame when not holding right.</summary>
+    /// <summary>True if last right-click release was pan (exceeded threshold). Reset each frame when not holding right.</summary>
     public bool WasLastRightClickAPan { get; private set; }
 
     private Vector3 lastMouseScreenPos;
@@ -66,17 +66,13 @@ public class CameraController : MonoBehaviour
     public GridManager gridManager;
     public CameraButtonsController cameraButtonsController;
 
-    /// <summary>
-    /// Initialize camera early in the lifecycle
-    /// </summary>
+    /// <summary>Init camera early in lifecycle.</summary>
     void Awake()
     {
         InitializeCamera();
     }
 
-    /// <summary>
-    /// Initialize camera and zoom settings
-    /// </summary>
+    /// <summary>Init camera + zoom settings.</summary>
     private void InitializeCamera()
     {
         // Get main camera reference
@@ -112,8 +108,8 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// Returns the index of the zoom level closest to the target value.
-    /// Avoids Array.IndexOf exact-float issues when startZoomLevel is set in Inspector or code.
+    /// Return index of zoom level closest to target.
+    /// Avoids Array.IndexOf exact-float issues when startZoomLevel set via Inspector or code.
     /// </summary>
     private int FindClosestZoomLevel(float target)
     {
@@ -160,7 +156,7 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// True when the primary pointer is over a uGUI raycast target (mouse or first touch). Used to avoid map zoom/pan through scrollable popups.
+    /// True if primary pointer over uGUI raycast target (mouse or first touch). Blocks map zoom/pan through scrollable popups.
     /// </summary>
     private static bool IsPointerOverBlockingUi()
     {
@@ -176,8 +172,8 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// Handles right-click drag-to-pan. When the user holds right mouse and moves beyond threshold,
-    /// the camera follows the movement (1:1 screen-to-world). Skips when cursor is over UI.
+    /// Handle right-click drag-to-pan. Hold right mouse + move past threshold → camera follows (1:1 screen→world).
+    /// Skips when cursor over UI.
     /// </summary>
     private void HandleDragToPan()
     {
@@ -250,7 +246,7 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// Applies pan inertia (fling) after drag release. Camera continues moving with exponential decay.
+    /// Apply pan inertia (fling) after drag release. Camera continues with exponential decay.
     /// </summary>
     private void ApplyPanInertia()
     {
@@ -264,10 +260,8 @@ public class CameraController : MonoBehaviour
         panInertiaVelocity *= panInertiaDamping;
     }
 
-    /// <summary>
-    /// Move camera to the center of the map
-    /// </summary>
-    /// <param name="centerWorldPosition">World position to center the camera on</param>
+    /// <summary>Move camera → map center.</summary>
+    /// <param name="centerWorldPosition">World position to center camera on.</param>
     public void MoveCameraToMapCenter(Vector3 centerWorldPosition)
     {
 
@@ -295,8 +289,8 @@ public class CameraController : MonoBehaviour
 
 
     /// <summary>
-    /// Handles WASD/arrow camera movement. Uses Time.unscaledDeltaTime so movement works during pause.
-    /// Speed scales with zoom level (zoomed out = faster movement).
+    /// Handle WASD/arrow camera movement. Uses Time.unscaledDeltaTime → works during pause.
+    /// Speed scales with zoom (zoomed out = faster).
     /// </summary>
     private void HandleMovement()
     {
@@ -334,7 +328,7 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// Handles mouse scroll zoom. Uses Time.unscaledTime for cooldown so zoom works during pause.
+    /// Handle mouse scroll zoom. Uses Time.unscaledTime for cooldown → works during pause.
     /// </summary>
     private void HandleScrollZoom()
     {
@@ -386,7 +380,7 @@ public class CameraController : MonoBehaviour
     }
 
     /// <summary>
-    /// Smoothly interpolates orthographic size toward target. Uses Time.unscaledDeltaTime so zoom works during pause.
+    /// Smooth lerp orthographic size → target. Uses Time.unscaledDeltaTime → works during pause.
     /// </summary>
     private void ApplySmoothZoom()
     {

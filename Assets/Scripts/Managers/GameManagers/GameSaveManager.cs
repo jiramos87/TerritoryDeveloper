@@ -14,10 +14,10 @@ using Territory.UI;
 namespace Territory.Persistence
 {
 /// <summary>
-/// Handles serialization and deserialization of the complete game state.
-/// Coordinates with GridManager for grid data, WaterManager for <see cref="WaterMapData"/>, CityStats for city state, and TimeManager for time state.
-/// Load restores height map and water map before <see cref="GridManager.RestoreGrid"/> (snapshot visuals; no terrain/water slope regen or global sorting recalc).
-/// Agent **test mode** resolves committed JSON under <c>tools/fixtures/scenarios/</c> via CLI (<see cref="Territory.Testing.TestModeCommandLineBootstrap"/>) and still loads through <see cref="LoadGame"/> only.
+/// Serialize + deserialize full game state.
+/// Coordinates: <see cref="GridManager"/> (grid data), <see cref="WaterManager"/> (<see cref="WaterMapData"/>), <see cref="CityStats"/>, <see cref="TimeManager"/>.
+/// Load → restore height map + water map before <see cref="GridManager.RestoreGrid"/> (snapshot visuals; no terrain/water slope regen or global sorting recalc).
+/// Agent <b>test mode</b> resolves committed JSON under <c>tools/fixtures/scenarios/</c> via CLI (<see cref="Territory.Testing.TestModeCommandLineBootstrap"/>), loads through <see cref="LoadGame"/> only.
 /// Scenario builder batch tooling writes snapshots via <see cref="TryWriteGameSaveToPath"/>.
 /// </summary>
 public class GameSaveManager : MonoBehaviour
@@ -49,13 +49,13 @@ public class GameSaveManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Writes the current scene state as <see cref="GameSaveData"/> JSON to an absolute path (scenario builder / batch tooling).
-    /// Does not touch <c>PlayerPrefs</c> or HUD notifications.
+    /// Write current scene state as <see cref="GameSaveData"/> JSON to absolute path (scenario builder / batch tooling).
+    /// No <c>PlayerPrefs</c> or HUD notifications.
     /// </summary>
     /// <param name="absolutePath">Destination <c>.json</c> path.</param>
-    /// <param name="saveNameForPayload"><see cref="GameSaveData.saveName"/> field; when null, uses <see cref="CityStats.cityName"/> + timestamp.</param>
-    /// <param name="error">Set when the write fails.</param>
-    /// <returns>True when the file was written.</returns>
+    /// <param name="saveNameForPayload"><see cref="GameSaveData.saveName"/>; null → <see cref="CityStats.cityName"/> + timestamp.</param>
+    /// <param name="error">Set on write failure.</param>
+    /// <returns>True → file written.</returns>
     public bool TryWriteGameSaveToPath(string absolutePath, string saveNameForPayload, out string error)
     {
         error = null;
@@ -108,8 +108,8 @@ public class GameSaveManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Reads save file metadata for display and sorting. Uses realWorldSaveTimeTicks when present,
-    /// otherwise falls back to file last-write time for older saves.
+    /// Read save file metadata for display + sorting. Uses <c>realWorldSaveTimeTicks</c> when present,
+    /// else falls back to file last-write time (older saves).
     /// </summary>
     public static (string displayName, DateTime sortDate) GetSaveMetadata(string filePath)
     {
@@ -214,7 +214,7 @@ public class GameSaveManager : MonoBehaviour
         else { }
     }
 
-    /// <summary>Migrates old saves that stored totalGrowthBudget (amount) to growthBudgetPercent.</summary>
+    /// <summary>Migrate old saves storing <c>totalGrowthBudget</c> (amount) → <c>growthBudgetPercent</c>.</summary>
     static void MigrateGrowthBudgetFromLegacy(GrowthBudgetManager growthBudgetManager)
     {
         var d = growthBudgetManager.data;
@@ -270,7 +270,7 @@ public class GameSaveData
     public List<CellData> gridData;
     public int gridWidth;
     public int gridHeight;
-    /// <summary>Serialized <see cref="Territory.Terrain.WaterMap"/> state (FEAT-37c). Null for legacy saves.</summary>
+    /// <summary>Serialized <see cref="Territory.Terrain.WaterMap"/> state. Null → legacy saves.</summary>
     public WaterMapData waterMapData;
     public bool isConnectedToInterstate;
     public RegionalMap regionalMap;

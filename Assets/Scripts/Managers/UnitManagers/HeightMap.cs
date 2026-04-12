@@ -3,8 +3,7 @@ using UnityEngine;
 namespace Territory.Terrain
 {
 /// <summary>
-/// Generates and stores the terrain height grid using Perlin noise.
-/// Provides height queries and height modification for the terrain system.
+/// Generate + store terrain height grid via Perlin noise. Height query + modify for terrain system.
 /// </summary>
 public class HeightMap
 {

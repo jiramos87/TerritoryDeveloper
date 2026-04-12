@@ -26,12 +26,10 @@ public enum PopupType
 }
 
 /// <summary>
-/// Manages the main game UI including popups (load game, details, building selector, stats, taxes),
-/// toolbar state, selected zone/tool tracking, demand gauge visualization, and optional first-session welcome briefing.
-/// Implementation is split across partial files (<c>UIManager.PopupStack</c>, <c>UIManager.Hud</c>, <c>UIManager.Toolbar</c>,
-/// <c>UIManager.Utilities</c>, <c>UIManager.Theme</c>, <c>UIManager.WelcomeBriefing</c>) for merge-friendly edits.
-/// Coordinates with ZoneManager for zone selection, CursorManager for cursor state, and EconomyManager for tax display.
-/// Grid coordinate debug text is refreshed in <see cref="LateUpdate"/> so it matches <see cref="GridManager.mouseGridPosition"/> after grid input runs.
+/// Main game UI: popups (load game, details, building selector, stats, taxes), toolbar state, selected zone/tool, demand gauges, first-session welcome briefing.
+/// Split across partials (<c>UIManager.PopupStack</c>, <c>UIManager.Hud</c>, <c>UIManager.Toolbar</c>, <c>UIManager.Utilities</c>, <c>UIManager.Theme</c>, <c>UIManager.WelcomeBriefing</c>) for merge-friendly edits.
+/// Coords with ZoneManager (zone selection), CursorManager (cursor state), EconomyManager (tax display).
+/// Grid coord debug text refreshed in <see cref="LateUpdate"/> → matches <see cref="GridManager.mouseGridPosition"/> after grid input runs.
 /// </summary>
 public partial class UIManager : MonoBehaviour
 {
@@ -151,7 +149,7 @@ public partial class UIManager : MonoBehaviour
     [Header("Welcome briefing (first session)")]
     [SerializeField] private bool showWelcomeBriefingOnFirstRun = true;
 
-    /// <summary>HUD demand gauge fills (created at runtime under stat panels when theme is assigned).</summary>
+    /// <summary>HUD demand gauge fills (created at runtime under stat panels when theme assigned).</summary>
     private Image demandResidentialBarFill;
     private Image demandCommercialBarFill;
     private Image demandIndustrialBarFill;
@@ -160,7 +158,7 @@ public partial class UIManager : MonoBehaviour
     private Coroutine loadMenuFadeRoutine;
     #endregion
 
-    /// <summary>Duration for CanvasGroup popup fades; clamped for safety.</summary>
+    /// <summary>CanvasGroup popup fade duration; clamped for safety.</summary>
     public float PopupFadeDurationSeconds => Mathf.Clamp(popupFadeDurationSeconds, 0.02f, 1f);
 
     #region Initialization
@@ -193,10 +191,8 @@ public partial class UIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Creates the construction cost text UI element at runtime if not assigned in the Inspector.
-    /// </summary>
-    /// <summary>
-    /// Creates a floating <see cref="Text"/> near the cursor when unassigned (no panel box — readability from <see cref="Shadow"/> only).
+    /// Create construction cost text UI at runtime if Inspector left unassigned.
+    /// Floating <see cref="Text"/> near cursor (no panel box — readability via <see cref="Shadow"/> only).
     /// </summary>
     private void EnsureConstructionCostTextExists()
     {
