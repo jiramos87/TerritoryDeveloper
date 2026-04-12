@@ -15,7 +15,7 @@ slices_via: none
 
 ## 1. Summary
 
-Implement a **Node or shell** scanner that flags **`FindObjectOfType`** (and variants) inside **`Update`**, **`LateUpdate`**, **`FixedUpdate`**, or other configured per-frame methods — aligned with [`.cursor/rules/invariants.mdc`](../../.cursor/rules/invariants.mdc). Optionally add a **`rg`-based CI gate** that **fails** when new **`gridArray`** / **`cellArray`** references appear outside **`GridManager`** (**TECH-04**). **Phase 2:** maintain a **hot-path manifest** (from `ARCHITECTURE.md` / managers-reference) so the scanner can **prioritize** or **scope** reports for **AUTO** / simulation participants.
+Implement a **Node or shell** scanner that flags **`FindObjectOfType`** (and variants) inside **`Update`**, **`LateUpdate`**, **`FixedUpdate`**, or other configured per-frame methods — aligned with [`ia/rules/invariants.md`](../rules/invariants.md). Optionally add a **`rg`-based CI gate** that **fails** when new **`gridArray`** / **`cellArray`** references appear outside **`GridManager`** (**TECH-04**). **Phase 2:** maintain a **hot-path manifest** (from `ARCHITECTURE.md` / managers-reference) so the scanner can **prioritize** or **scope** reports for **AUTO** / simulation participants.
 
 ## 2. Goals and Non-Goals
 
@@ -47,7 +47,7 @@ N/A — enforcement of existing **invariants**.
 
 | Area | Pointer |
 |------|---------|
-| Rules | `invariants.mdc` — no **FindObjectOfType** in **Update** loops |
+| Rules | `invariants.md` — no **FindObjectOfType** in **Update** loops |
 | Related bug | **BUG-14** |
 
 ## 5. Proposed Design

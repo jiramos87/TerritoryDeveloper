@@ -7,7 +7,7 @@
 
 ## 1. What this repo is
 
-Unity 2D isometric city builder with a Markdown-backed Information Architecture under `ia/{specs,rules,skills,projects,templates}` and a project-scoped MCP server (`territory-ia`, registered in `.mcp.json`). Cursor reads the same content through `.cursor/...` back-compat symlinks. Workflow specifics: `AGENTS.md`. Runtime layers + dependency map: `ARCHITECTURE.md`. IA narrative: `docs/information-architecture-overview.md`.
+Unity 2D isometric city builder with a Markdown-backed Information Architecture under `ia/{specs,rules,skills,projects,templates}` and a project-scoped MCP server (`territory-ia`, registered in `.mcp.json`). Workflow specifics: `AGENTS.md`. Runtime layers + dependency map: `ARCHITECTURE.md`. IA narrative: `docs/information-architecture-overview.md`.
 
 ## 2. MCP first
 
@@ -19,7 +19,7 @@ Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files
 |---|---|
 | `MEMORY.md` (root) | Repo-scoped project memory. One-line entries; promote to `.claude/memory/{slug}.md` when an entry exceeds ~10 lines. Distinct from user auto-memory under `~/.claude-personal/projects/.../memory/` (cross-project, per-user). |
 | `.claude/settings.json` | Hooks + permissions. **Do not strip `defaultMode: "acceptEdits"`** and **do not split the `mcp__territory-ia__*` wildcard** — both regress per-call approval friction. |
-| `.claude/skills/{name}` | Directory-level symlinks → `ia/skills/{name}/`. Same recipes Cursor reads. |
+| `.claude/skills/{name}` | Directory-level symlinks → `ia/skills/{name}/`. |
 | `.claude/agents/*.md` | 5 native subagents — `spec-kickoff`, `spec-implementer`, `verifier`, `test-mode-loop`, `closeout`. Opus orchestrators (kickoff / implementer / closeout); Sonnet executors (verifier / test-mode-loop). Each body carries a `caveman:caveman` directive (subagents run in fresh context and do not inherit the parent SessionStart hook). |
 | `.claude/commands/*.md` | Slash command dispatchers → subagents under `.claude/agents/{name}.md` (`/kickoff`, `/implement`, `/verify`, `/testmode`, `/closeout`). Each forwards a caveman-asserting prompt. `/closeout` confirmation prompts stay full English. |
 | `.claude/output-styles/*.md` | 2 output styles — `verification-report` (JSON header + caveman summary, used by `/verify`) and `closeout-digest` (JSON header + caveman summary, used by `/closeout`). |
@@ -29,7 +29,7 @@ Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files
 
 ## 4. Hooks
 
-Hooks live in `.claude/settings.json` + `tools/scripts/claude-hooks/`. Bash denylist (PreToolUse) blocks: `git push --force*`, `git reset --hard*`, `git clean -fd*`, `rm -rf {.cursor,ia,MEMORY.md,.claude,.git,/,~}*`, `sudo *` (exit 2). Verification policy: `docs/agent-led-verification-policy.md`.
+Hooks live in `.claude/settings.json` + `tools/scripts/claude-hooks/`. Bash denylist (PreToolUse) blocks: `git push --force*`, `git reset --hard*`, `git clean -fd*`, `rm -rf {ia,MEMORY.md,.claude,.git,/,~}*`, `sudo *` (exit 2). Verification policy: `docs/agent-led-verification-policy.md`.
 
 ## 5. Key commands
 

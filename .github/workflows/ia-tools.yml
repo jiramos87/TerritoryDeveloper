@@ -3,7 +3,7 @@ name: IA tools
 on:
   push:
     paths:
-      - ".cursor/**"
+      - "ia/**"
       - "docs/**"
       - "projects/**"
       - "AGENTS.md"
@@ -16,7 +16,7 @@ on:
       - "package.json"
   pull_request:
     paths:
-      - ".cursor/**"
+      - "ia/**"
       - "docs/**"
       - "projects/**"
       - "AGENTS.md"

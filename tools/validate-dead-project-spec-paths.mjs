@@ -2,8 +2,7 @@
 /**
  * Report references to project spec paths that do not exist.
  *
- * The canonical location is `ia/projects/{ISSUE_ID}[-{description}].md`, with
- * `.cursor/projects/{ISSUE_ID}.md` kept as a back-compat symlink for one cycle.
+ * The canonical location is `ia/projects/{ISSUE_ID}[-{description}].md`.
  *
  * Usage:
  *   node tools/validate-dead-project-spec-paths.mjs [--advisory]
@@ -25,16 +24,14 @@ const REPO_ROOT = path.resolve(__dirname, "..");
 loadRepoDotenvIfNotCi(REPO_ROOT);
 
 /**
- * Project spec path scan: accepts both `ia/projects/{ID}[-{description}].md`
- * (current convention) and the legacy `.cursor/projects/{ID}.md` back-compat
- * path.
+ * Project spec path scan: accepts `ia/projects/{ID}[-{description}].md`.
  */
 const PROJECT_SPEC_PATH_RE =
-  /(\.cursor|ia)\/projects\/((?:BUG|FEAT|TECH|ART|AUDIO)-\d+[a-z]?(?:-[A-Za-z0-9._-]+)?)\.md/gi;
+  /ia\/projects\/((?:BUG|FEAT|TECH|ART|AUDIO)-\d+[a-z]?(?:-[A-Za-z0-9._-]+)?)\.md/gi;
 
 /** Entire `Spec:` value is only a project-spec path (BACKLOG convention). */
 const BACKLOG_SPEC_LINE_RE =
-  /^(\s*)-\s*Spec:\s*`((?:\.cursor|ia)\/projects\/(?:BUG|FEAT|TECH|ART|AUDIO)-\d+[a-z]?(?:-[A-Za-z0-9._-]+)?\.md)`\s*$/;
+  /^(\s*)-\s*Spec:\s*`(ia\/projects\/(?:BUG|FEAT|TECH|ART|AUDIO)-\d+[a-z]?(?:-[A-Za-z0-9._-]+)?\.md)`\s*$/;
 
 const IGNORE_DIR_NAMES = new Set([
   "node_modules",
@@ -48,7 +45,6 @@ const IGNORE_DIR_NAMES = new Set([
 
 const TEXT_EXTENSIONS = new Set([
   ".md",
-  ".mdc",
   ".yml",
   ".yaml",
   ".json",
@@ -85,7 +81,7 @@ function splitBacklogTopLevelBlocks(content) {
 
 /**
  * @param {string} repoRoot
- * @param {string} relFromRoot posix-style `.cursor/projects/X.md`
+ * @param {string} relFromRoot posix-style `ia/projects/X.md`
  */
 function specPathExists(repoRoot, relFromRoot) {
   const fsPath = path.join(repoRoot, ...relFromRoot.split("/"));
@@ -107,9 +103,8 @@ function scanNonBacklogFile(filePath, repoRoot, hits) {
     let m;
     PROJECT_SPEC_PATH_RE.lastIndex = 0;
     while ((m = PROJECT_SPEC_PATH_RE.exec(line)) !== null) {
-      const prefix = m[1];
-      const id = m[2];
-      const rel = `${prefix}/projects/${id}.md`;
+      const id = m[1];
+      const rel = `ia/projects/${id}.md`;
       if (!specPathExists(repoRoot, rel)) {
         hits.push({ file: relFile, line: i + 1, target: rel });
       }
@@ -161,10 +156,6 @@ function collectTextFiles(dir, repoRoot, out) {
   for (const ent of entries) {
     const abs = path.join(dir, ent.name);
     const rel = path.relative(repoRoot, abs);
-    // Parts of `.cursor/` are directory-level symlinks and the .mdc files
-    // inside `.cursor/rules/` are file-level symlinks. Resolve each entry via
-    // fs.statSync (follows symlinks) so the canonical content under `ia/` is
-    // still discovered when the caller passes a path through `.cursor/`.
     let isDir = ent.isDirectory();
     let isFile = ent.isFile();
     if (!isDir && !isFile && ent.isSymbolicLink()) {
@@ -209,9 +200,6 @@ function main() {
     if (fs.existsSync(p)) files.push(p);
   }
 
-  // Canonical IA content lives under `ia/`. Scan `ia/` directly so
-  // directory-level symlinks under `.cursor/` are not double-counted.
-  // `.cursor/` is intentionally omitted — every entry is now a symlink into `ia/`.
   for (const sub of ["ia", "docs", "projects", ".github"]) {
     const d = path.join(REPO_ROOT, sub);
     if (fs.existsSync(d)) collectTextFiles(d, REPO_ROOT, files);
@@ -234,7 +222,7 @@ function main() {
   }
 
   if (hits.length === 0) {
-    console.log("validate-dead-project-spec-paths: OK (no missing ia/projects/*.md or .cursor/projects/*.md targets).");
+    console.log("validate-dead-project-spec-paths: OK (no missing ia/projects/*.md targets).");
     process.exit(0);
   }
 

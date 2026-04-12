@@ -1,6 +1,6 @@
 # Territory IA MCP server (territory-ia)
 
-Recommended [Model Context Protocol](https://modelcontextprotocol.io/) server that exposes the **same on-disk information architecture** the repo already uses for agents: `ia/specs/*.md`, `ia/rules/*.mdc`, `glossary.md`, root docs such as `AGENTS.md` and `ARCHITECTURE.md` (via `buildRegistry()`), and **`BACKLOG.md`** (via the `backlog_issue` tool only—not listed in `list_specs`).
+Recommended [Model Context Protocol](https://modelcontextprotocol.io/) server that exposes the **same on-disk information architecture** the repo already uses for agents: `ia/specs/*.md`, `ia/rules/*.md`, `glossary.md`, root docs such as `AGENTS.md` and `ARCHITECTURE.md` (via `buildRegistry()`), and **`BACKLOG.md`** (via the `backlog_issue` tool only—not listed in `list_specs`).
 
 ## Relationship to agent routing
 
@@ -50,10 +50,10 @@ See also [`AGENTS.md`](../AGENTS.md) (Before You Start) and [`ia/skills/README.m
 | `project_spec_journal_update` | Update `body_markdown` and optional `keywords` for corrections. |
 | `glossary_discover` | Rough **English** keywords → ranked glossary terms (term, definition, Spec column); use before `glossary_lookup` when the exact term is unknown. Translate from the conversation if needed. |
 | `glossary_lookup` | Glossary **English** term; exact then fuzzy (typos). Use the exact **Term** string from the table when possible. **Graph response** (added Stage 5): `related` (top co-occurring glossary terms from `ia/specs/*.md` section bodies, precomputed in `tools/mcp-ia-server/data/glossary-graph-index.json`), `cited_in` (spec sections that mention the term outside `glossary.md`, `{spec, section_id, section_title}`), `appears_in_code` (`{file, line}` matches under `Assets/Scripts/**/*.cs`, scanned lazily on first lookup and cached per server process). |
-| `router_for_task` | Match a task domain to specs using `agent-router.mdc` tables. Pass **`domain`** and/or **`files`** (max 40 repo-relative paths); at least one is required. Optional **`file_domain_hints`** merge path heuristics (roads, water, grid, simulation, save, UI, Editor reports, MCP package, glossary, managers) with table matches. |
-| `invariants_summary` | Numbered invariants and guardrails from `invariants.mdc`. |
-| `list_rules` | All `.mdc` rules with frontmatter metadata. |
-| `rule_content` | Rule body without YAML frontmatter; `rule` key resolves `roads` → `roads.mdc` (not the `roads-system` spec alias). |
+| `router_for_task` | Match a task domain to specs using `agent-router.md` tables. Pass **`domain`** and/or **`files`** (max 40 repo-relative paths); at least one is required. Optional **`file_domain_hints`** merge path heuristics (roads, water, grid, simulation, save, UI, Editor reports, MCP package, glossary, managers) with table matches. |
+| `invariants_summary` | Numbered invariants and guardrails from `invariants.md`. |
+| `list_rules` | All `.md` rules with frontmatter metadata. |
+| `rule_content` | Rule body without YAML frontmatter; `rule` key resolves `roads` → `roads.md` (not the `roads-system` spec alias). |
 | `isometric_world_to_grid` | **Computational:** planar world (`world_x`, `world_y`) → logical **cell** indices (`cell_x`, `cell_y`) per **isometric-geography-system** §1.3 (glossary: **World ↔ Grid conversion**). Optional `origin_x` / `origin_y`. Implemented in **`tools/compute-lib`**; **Unity** height-aware picking is out of scope. |
 | `growth_ring_classify` | **Computational:** **Urban growth rings** / **Urban centroid** distance bands vs effective radius (simulation-system §Rings); parity with C# **UrbanGrowthRingMath**. |
 | `grid_distance` | **Computational:** **Chebyshev** or **Manhattan** between integer cells — **not** geo §10 pathfinding edge costs. |

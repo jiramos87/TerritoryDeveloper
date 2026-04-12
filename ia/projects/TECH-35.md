@@ -17,7 +17,7 @@ slices_via: none
 
 ## 1. Summary
 
-Explore **property-based** or **randomized mutation** tests that assert **invariants** from [`.cursor/rules/invariants.mdc`](../../.cursor/rules/invariants.mdc): e.g. **HeightMap** / **cell** height sync, **InvalidateRoadCache** after **road** edits, **shore band** constraints, **H_bed** monotonicity along **rivers**. Deliverable is a **spike report** (this spec **Decision Log** + optional prototype under `Tests/` or `tools/`) recommending whether to promote to full **TECH-** issue or abandon.
+Explore **property-based** or **randomized mutation** tests that assert **invariants** from [`ia/rules/invariants.md`](../rules/invariants.md): e.g. **HeightMap** / **cell** height sync, **InvalidateRoadCache** after **road** edits, **shore band** constraints, **H_bed** monotonicity along **rivers**. Deliverable is a **spike report** (this spec **Decision Log** + optional prototype under `Tests/` or `tools/`) recommending whether to promote to full **TECH-** issue or abandon.
 
 ## 2. Goals and Non-Goals
 
@@ -48,7 +48,7 @@ Predicates must use **glossary** terms; violations reference invariant text.
 
 | Area | Pointer |
 |------|---------|
-| Rules | `invariants.mdc` |
+| Rules | `invariants.md` |
 | Related | **TECH-31** fixtures, **TECH-16** harness |
 
 ## 5. Proposed Design

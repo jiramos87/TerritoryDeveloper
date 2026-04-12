@@ -17,7 +17,7 @@ slices_via: none
 2. **MCP** — **`territory-ia`** tools and/or **`tools/`** **Node** helpers so an **IDE agent** can scaffold **ad-hoc** **Play Mode** checks, register a run, and read structured results without hand-copying **Console** text.
 3. **Cursor Skill** — **`/create-play-mode-test`** (proposed slash command): recipe that chains **MCP** + scripts + **BACKLOG**/**spec** context to produce a minimal runnable **Play Mode** test and interpret output for **debug** with the agent in the IDE.
 
-**Skill name (approved for final phase):** **`/create-play-mode-test`** — folder target **`.cursor/skills/create-play-mode-test/`** (kebab-case, consistent with **`project-new`**, **`project-spec-kickoff`**, etc.).
+**Skill name (approved for final phase):** **`/create-play-mode-test`** — folder target **`ia/skills/create-play-mode-test/`** (kebab-case, consistent with **`project-new`**, **`project-spec-kickoff`**, etc.).
 
 ## 1. Summary
 
@@ -63,7 +63,7 @@ Ship a **Territory Developer**–specific **Play Mode** testing path in the **Un
 | **Edit Mode** precedent | `Assets/Tests/EditMode/`, **`TerritoryDeveloper.Game`** asmdef |
 | **Editor** diagnostics | `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs`, `InterchangeJsonReportsMenu.cs` |
 | **IA / MCP** | `tools/mcp-ia-server/`, [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) |
-| **Skills** | [`.cursor/skills/README.md`](../skills/README.md), **TECH-63** **§ Completed** patterns |
+| **Skills** | [`ia/skills/README.md`](../skills/README.md), **TECH-63** **§ Completed** patterns |
 
 ### 4.3 Implementation investigation notes
 
@@ -82,7 +82,7 @@ Ship a **Territory Developer**–specific **Play Mode** testing path in the **Un
 |-------|--------|------------------------|
 | **A — Infrastructure** | **Play Mode** asmdef(s), scene load, shared **test** **utilities**, first **JSON** **artifact** writer to **`tools/reports/play-mode-test-*.json`** (name **TBD**), English **XML** **`summary`** on public test helpers |
 | **B — MCP + scripts** | **`territory-ia`** tool(s) and/or **`tools/`** **Node** CLI: template listing, optional patch application, “last run” JSON reader; **`npm run verify`** / **`test:ia`** when **MCP** code changes |
-| **C — Skill** | **`.cursor/skills/create-play-mode-test/SKILL.md`**: **`/create-play-mode-test`** recipe (**`backlog_issue`** → **`invariants_summary`** when touching runtime → **`spec_section`** **unity** §10 → scaffold steps → **Play Mode** run instructions → attach **artifact**); register in [`.cursor/skills/README.md`](../skills/README.md) |
+| **C — Skill** | **`ia/skills/create-play-mode-test/SKILL.md`**: **`/create-play-mode-test`** recipe (**`backlog_issue`** → **`invariants_summary`** when touching runtime → **`spec_section`** **unity** §10 → scaffold steps → **Play Mode** run instructions → attach **artifact**); register in [`ia/skills/README.md`](../skills/README.md) |
 
 ### 5.3 Method / algorithm notes
 
@@ -113,8 +113,8 @@ Ship a **Territory Developer**–specific **Play Mode** testing path in the **Un
 
 ### Phase C — **Skill** **`/create-play-mode-test`**
 
-- [ ] Add **`.cursor/skills/create-play-mode-test/SKILL.md`** with **Tool recipe** (territory-ia order aligned with **project-spec-implement** / **TECH-63**).
-- [ ] Update [`.cursor/skills/README.md`](../skills/README.md) index.
+- [ ] Add **`ia/skills/create-play-mode-test/SKILL.md`** with **Tool recipe** (territory-ia order aligned with **project-spec-implement** / **TECH-63**).
+- [ ] Update [`ia/skills/README.md`](../skills/README.md) index.
 - [ ] Optional: root **`package.json`** script **`play-mode-test:…`** if **Node** glue is shared.
 
 ### Phase D — Split (optional)

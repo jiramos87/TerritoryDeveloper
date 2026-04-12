@@ -15,7 +15,7 @@ slices_via: none
 
 ## 1. Summary
 
-After **TECH-44b** provides the **PostgreSQL** schema and read surface, migrate **Information Architecture** consumption so **territory-ia** MCP can use **DB-backed** retrieval as the **primary** path (Markdown generated or secondary). Implement additional tools in **phases**: cross-spec search, kickoff checklist, dependency edges, markdown-backed quick tools, domain **topic bundles**, and **`unity_context_section`** over **`.cursor/specs/unity-development-context.md`** (reference spec; **TECH-20** completed — [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md)). **Depends on:** **TECH-44b**; **TECH-17** baseline MCP is archived (same file).
+After **TECH-44b** provides the **PostgreSQL** schema and read surface, migrate **Information Architecture** consumption so **territory-ia** MCP can use **DB-backed** retrieval as the **primary** path (Markdown generated or secondary). Implement additional tools in **phases**: cross-spec search, kickoff checklist, dependency edges, markdown-backed quick tools, domain **topic bundles**, and **`unity_context_section`** over **`ia/specs/unity-development-context.md`** (reference spec; **TECH-20** completed — [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md)). **Depends on:** **TECH-44b**; **TECH-17** baseline MCP is archived (same file).
 
 ## 2. Goals and Non-Goals
 
@@ -51,7 +51,7 @@ N/A — infrastructure.
 |------|---------|
 | MCP | `tools/mcp-ia-server/` — **TECH-17** baseline |
 | DB | **`db/migrations/`** (IA tables + `ia_glossary_row_by_key`), **`tools/postgres-ia/`** (migrate / seed / glossary-by-key), **`DATABASE_URL`** — see [`docs/postgres-ia-dev-setup.md`](../../docs/postgres-ia-dev-setup.md) and [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) **PostgreSQL IA (TECH-44b) integration point for TECH-18** |
-| Rules | `.cursor/rules/terminology-consistency.mdc` — tool naming |
+| Rules | `ia/rules/terminology-consistency.md` — tool naming |
 
 ## 5. Proposed Design
 

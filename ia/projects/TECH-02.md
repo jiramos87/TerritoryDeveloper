@@ -11,7 +11,7 @@ slices_via: none
 > **Created:** 2026-04-02
 > **Last updated:** 2026-04-02
 
-**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — task **33** (public API / XML doc report) optional follow-up; [unity-development-context.md](../../.cursor/specs/unity-development-context.md) for **SerializeField** policy.
+**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — task **33** (public API / XML doc report) optional follow-up; [unity-development-context.md](../specs/unity-development-context.md) for **SerializeField** policy.
 
 ## 1. Summary
 

@@ -11,7 +11,7 @@ slices_via: none
 > **Created:** 2026-04-02
 > **Last updated:** 2026-04-02
 
-**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — task **5**. Phase **ids** must match **TECH-16** harness and `.cursor/specs/simulation-system.md` **Tick execution order**.
+**Related tooling:** [docs/agent-tooling-verification-priority-tasks.md](../../docs/agent-tooling-verification-priority-tasks.md) — task **5**. Phase **ids** must match **TECH-16** harness and `ia/specs/simulation-system.md` **Tick execution order**.
 
 ## 1. Summary
 
@@ -48,7 +48,7 @@ Canonical order (from spec): **EnsureBudgetValid** (optional) → **RecalculateF
 | Area | Pointer |
 |------|---------|
 | Code | `SimulationManager.cs` |
-| Spec | `.cursor/specs/simulation-system.md` |
+| Spec | `ia/specs/simulation-system.md` |
 
 ## 5. Proposed Design
 

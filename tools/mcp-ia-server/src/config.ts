@@ -48,8 +48,6 @@ export function resolveSpecKeyAlias(spec: string): string {
 const REPO_ROOT_MARKERS: readonly (readonly string[])[] = [
   ["config", "postgres-dev.json"],
   ["ia", "specs", "glossary.md"],
-  // Fallback for one cycle in case anyone still launches against a pre-Stage-2 checkout.
-  [".cursor", "specs", "glossary.md"],
 ];
 
 /**

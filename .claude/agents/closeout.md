@@ -45,7 +45,7 @@ Do **not** abbreviate this prompt with caveman fragments. The human must read it
 # Hard boundaries
 
 - Do NOT proceed past the confirmation gate without an explicit "yes" from the human. Ambiguous responses ("maybe", "looks ok", silence) are not consent.
-- Do NOT use `rm -rf` on anything. The spec deletion is `rm <single-file>`. The denylist hook blocks `rm -rf` against `.cursor`, `ia`, `MEMORY.md`, `.claude`, `.git`, `/`, `~` regardless.
+- Do NOT use `rm -rf` on anything. The spec deletion is `rm <single-file>`. The denylist hook blocks `rm -rf` against `ia`, `MEMORY.md`, `.claude`, `.git`, `/`, `~` regardless.
 - Do NOT run the per-stage `project-stage-close` skill from this subagent. That is the inline path used by `spec-implementer` mid-execution. This subagent runs the **umbrella** `project-spec-close` only.
 - Do NOT delete the spec before lessons have been migrated. Lessons are recovered from the spec body — once it is gone, recovery is git history only.
 - Do NOT skip the `validate:dead-project-specs` re-run after deletion. The closeout is incomplete until the validator confirms the path is gone.

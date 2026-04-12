@@ -51,8 +51,8 @@ Project **invariants** forbid **`FindObjectOfType`** inside **`Update`**, **`Lat
 | Code | `UIManager.cs` — **`Update`**, **`LateUpdate`**, **`Start`** ( **`cityStats`**, **`waterManager`** one-shot resolution; **`EnsureConstructionCostTextExists`** ) |
 | Code | `UIManager.Hud.cs` — **`UpdateUI`**, **`UpdateGridCoordinatesDebugText`** (hot-path violations) |
 | Code | `CursorManager.cs` — **`Start`** resolves **`UIManager`** once; **`Update`** uses cached reference |
-| Reference | `.cursor/specs/ui-design-system.md` (UI foundations), `.cursor/specs/managers-reference.md` (**Demand**, economy-adjacent managers) |
-| Rules | `.cursor/rules/invariants.mdc`, **`unity-development-context`** §2, §7 |
+| Reference | `ia/specs/ui-design-system.md` (UI foundations), `ia/specs/managers-reference.md` (**Demand**, economy-adjacent managers) |
+| Rules | `ia/rules/invariants.md`, **`unity-development-context`** §2, §7 |
 
 ### 4.3 Implementation investigation notes (optional)
 

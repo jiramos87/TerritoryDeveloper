@@ -1,6 +1,6 @@
 # Information Architecture — System Overview
 
-> **TL;DR.** Markdown-backed IA under `ia/{specs,rules,skills,projects,templates}` (Cursor reads the same content via `.cursor/...` back-compat symlinks). Agents slice it through the **`territory-ia`** MCP server (`backlog_issue` → `router_for_task` → `glossary_*` → `spec_section` / `spec_sections`). Lessons from temporary `ia/projects/{ID}-{slug}.md` specs migrate into glossary / reference specs / rules / docs **before** the project spec is deleted. Daily workflow: [`AGENTS.md`](../AGENTS.md) · MCP tool catalog: [`docs/mcp-ia-server.md`](mcp-ia-server.md) · Verification policy: [`docs/agent-led-verification-policy.md`](agent-led-verification-policy.md).
+> **TL;DR.** Markdown-backed IA under `ia/{specs,rules,skills,projects,templates}`. Agents slice it through the **`territory-ia`** MCP server (`backlog_issue` → `router_for_task` → `glossary_*` → `spec_section` / `spec_sections`). Lessons from temporary `ia/projects/{ID}-{slug}.md` specs migrate into glossary / reference specs / rules / docs **before** the project spec is deleted. Daily workflow: [`AGENTS.md`](../AGENTS.md) · MCP tool catalog: [`docs/mcp-ia-server.md`](mcp-ia-server.md) · Verification policy: [`docs/agent-led-verification-policy.md`](agent-led-verification-policy.md).
 
 ## 0. Autoreference (where this document lives)
 
@@ -76,7 +76,7 @@ Three principles:
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-`ia/` is the canonical namespace; `.cursor/{specs,rules,skills,projects,templates}` are back-compat symlinks (`.cursor/rules/{name}.mdc → ia/rules/{name}.md` is a cross-extension symlink). `.claude/skills/{name}` symlinks point at `ia/skills/{name}/` directly. Native Claude Code surface (hooks, slash commands, subagents, project memory at `MEMORY.md`) lives under `.claude/` — see [`CLAUDE.md`](../CLAUDE.md). Canonical stances: `acceptEdits` defaultMode, `mcp__territory-ia__*` wildcard, 4-layer caveman directive.
+`ia/` is the canonical namespace. `.claude/skills/{name}` symlinks point at `ia/skills/{name}/` directly. Native Claude Code surface (hooks, slash commands, subagents, project memory at `MEMORY.md`) lives under `.claude/` — see [`CLAUDE.md`](../CLAUDE.md). Canonical stances: `acceptEdits` defaultMode, `mcp__territory-ia__*` wildcard, 4-layer caveman directive.
 
 **Data flows:**
 - **Down:** agents query MCP tools → tools read specs/glossary/rules/backlog from filesystem or Postgres

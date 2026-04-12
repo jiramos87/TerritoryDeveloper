@@ -23,7 +23,7 @@
 #   - git push --force / -f / --force-with-lease
 #   - git reset --hard
 #   - git clean -fd / -fdx
-#   - rm -rf .cursor* / ia* / MEMORY.md* / .claude* / .git*
+#   - rm -rf ia* / MEMORY.md* / .claude* / .git*
 #   - rm -rf / / ~
 #   - sudo *
 #
@@ -62,8 +62,6 @@ case "$command_str" in
     deny_match="git reset --hard" ;;
   *"git clean -fd"*|*"git clean -fdx"*)
     deny_match="git clean -fd / -fdx" ;;
-  *"rm -rf .cursor"*|*"rm -rf ./.cursor"*)
-    deny_match="rm -rf .cursor*" ;;
   *"rm -rf ia"*|*"rm -rf ./ia"*)
     deny_match="rm -rf ia*" ;;
   *"rm -rf MEMORY.md"*|*"rm -rf ./MEMORY.md"*)
@@ -85,7 +83,7 @@ if [ -n "$deny_match" ]; then
 [territory-developer · bash-denylist] BLOCKED: '$deny_match' is on the project denylist.
   command: $command_str
   Why: destructive bash is enforced at the hook layer to protect
-  .cursor / ia / .claude / MEMORY.md / .git from accidental removal, and
+  ia / .claude / MEMORY.md / .git from accidental removal, and
   to prevent force-push to shared branches. If you genuinely need this,
   ask the human to run it manually outside Claude Code.
 EOF

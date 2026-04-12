@@ -175,7 +175,7 @@ export function inferDomainHintsFromPath(filePath: string): string[] {
   if (/zonemanager|zone\.cs|building|rci/i.test(lower)) {
     hints.add("Zones, buildings, RCI");
   }
-  if (/uicontroller|ui-design/i.test(p) || /(\.cursor|ia)\/specs\/ui/i.test(p)) {
+  if (/uicontroller|ui-design/i.test(p) || /ia\/specs\/ui/i.test(p)) {
     hints.add("UI changes");
   }
   if (

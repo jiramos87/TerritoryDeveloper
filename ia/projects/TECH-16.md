@@ -17,7 +17,7 @@ slices_via: none
 
 ## 1. Summary
 
-Provide a **simulation tick harness** that runs **N** `ProcessSimulationTick()` iterations on a fixed scene/seed and writes **JSON** with phases labeled to match **Tick execution order** in `.cursor/specs/simulation-system.md`: (1) `GrowthBudgetManager.EnsureBudgetValid` (when present), (2) `UrbanCentroidService.RecalculateFromGrid`, (3) `AutoRoadBuilder`, (4) `AutoZoningManager`, (5) `AutoResourcePlanner`. Add **`ProfilerMarker`** / marker names mirroring those steps for deep profiling and optional post-run grouping (**task 25**).
+Provide a **simulation tick harness** that runs **N** `ProcessSimulationTick()` iterations on a fixed scene/seed and writes **JSON** with phases labeled to match **Tick execution order** in `ia/specs/simulation-system.md`: (1) `GrowthBudgetManager.EnsureBudgetValid` (when present), (2) `UrbanCentroidService.RecalculateFromGrid`, (3) `AutoRoadBuilder`, (4) `AutoZoningManager`, (5) `AutoResourcePlanner`. Add **`ProfilerMarker`** / marker names mirroring those steps for deep profiling and optional post-run grouping (**task 25**).
 
 ## 2. Goals and Non-Goals
 
@@ -50,7 +50,7 @@ Provide a **simulation tick harness** that runs **N** `ProcessSimulationTick()` 
 | Area | Pointer |
 |------|---------|
 | Code | `SimulationManager.cs` — `ProcessSimulationTick` |
-| Spec | `.cursor/specs/simulation-system.md` — **Tick execution order** |
+| Spec | `ia/specs/simulation-system.md` — **Tick execution order** |
 
 ### 4.3 Implementation investigation notes (optional)
 

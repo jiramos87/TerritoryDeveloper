@@ -49,7 +49,7 @@ slices_via: none
 |------|---------|
 | Backlog | `BACKLOG.md` — FEAT-03 |
 | Code | `ForestManager.cs`, `GridManager.cs` (input / tool mode routing) |
-| Spec | `.cursor/specs/managers-reference.md` — **World features** / **forest** |
+| Spec | `ia/specs/managers-reference.md` — **World features** / **forest** |
 | Parallel pattern | **Zoning** drag: **`GridManager`** start/end grid positions |
 
 ### 4.3 Implementation investigation notes (optional)

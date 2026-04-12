@@ -55,9 +55,9 @@ The **HUD** exposes many **current** scalars (**money**, **population**, **happi
 | Area | Pointers |
 |------|----------|
 | Exploration (mechanisms) | [`docs/ui-data-dashboard-exploration.md`](../../docs/ui-data-dashboard-exploration.md) |
-| **UI** stack | [`.cursor/specs/ui-design-system.md`](../../.cursor/specs/ui-design-system.md) **§1** Foundations, **§3** patterns (**modal**, scroll vs **camera** — **§3.5**) |
-| **Simulation** | [`.cursor/specs/simulation-system.md`](../../.cursor/specs/simulation-system.md) (**simulation tick**, **AUTO** — consume metrics after tick, do not redefine tick order here) |
-| **Persistence** | [`.cursor/specs/persistence-system.md`](../../.cursor/specs/persistence-system.md) — if history must survive **Save**/**Load** |
+| **UI** stack | [`ia/specs/ui-design-system.md`](../specs/ui-design-system.md) **§1** Foundations, **§3** patterns (**modal**, scroll vs **camera** — **§3.5**) |
+| **Simulation** | [`ia/specs/simulation-system.md`](../specs/simulation-system.md) (**simulation tick**, **AUTO** — consume metrics after tick, do not redefine tick order here) |
+| **Persistence** | [`ia/specs/persistence-system.md`](../specs/persistence-system.md) — if history must survive **Save**/**Load** |
 | **Managers** | [`StatisticsManager`](../../Assets/Scripts/Managers/GameManagers/), [`EconomyManager`](../../Assets/Scripts/Managers/GameManagers/), [`DemandManager`](../../Assets/Scripts/Managers/GameManagers/), **`CityStats`**, **`TimeManager`** |
 | Visual tokens | **`UiTheme`**, **`ui-design-system.md`** **§5.2** / **§5.3** |
 

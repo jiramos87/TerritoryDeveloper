@@ -16,7 +16,7 @@ slices_via: none
 
 ## 1. Summary
 
-Bring **`MainScene.unity`** (and **`MainMenu.unity`** if the same class of issues appears) in line with **`.cursor/specs/ui-design-system.md`** **§1.3.1** so **Editor** **UI** inventory exports, **Transform.Find**, and agent-driven **UI** edits stay predictable. Work is **scene wiring, naming, and component placement** only—**no** changes to **simulation** rules, **economy** formulas, or **grid** behavior.
+Bring **`MainScene.unity`** (and **`MainMenu.unity`** if the same class of issues appears) in line with **`ia/specs/ui-design-system.md`** **§1.3.1** so **Editor** **UI** inventory exports, **Transform.Find**, and agent-driven **UI** edits stay predictable. Work is **scene wiring, naming, and component placement** only—**no** changes to **simulation** rules, **economy** formulas, or **grid** behavior.
 
 ## 2. Goals and Non-Goals
 

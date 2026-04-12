@@ -11,7 +11,7 @@
 An agent beginning work has a **layered onboarding path** that scales from light to deep:
 
 1. **`AGENTS.md`** — workflow policies, documentation hierarchy, MCP tool order, backlog conventions, pre-commit checklist. This is the single entry point.
-2. **`ia/rules/` (always-apply)** — `agent-router.mdc` routes tasks to specs; `invariants.mdc` lists 12 hard constraints; `mcp-ia-default.mdc` enforces MCP-first retrieval; `terminology-consistency.mdc` and `project-overview.mdc` provide vocabulary and project identity.
+2. **`ia/rules/` (always-apply)** — `agent-router.md` routes tasks to specs; `invariants.md` lists 12 hard constraints; `mcp-ia-default.md` enforces MCP-first retrieval; `terminology-consistency.md` and `project-overview.md` provide vocabulary and project identity.
 3. **MCP tools** — `backlog_issue` → `router_for_task` → `glossary_discover/lookup` → `spec_section` gives an agent precisely the context slice it needs without reading whole files.
 4. **Skills** — each `SKILL.md` includes a Tool Recipe with ordered MCP calls, trigger conditions, and explicit policies.
 5. **`ARCHITECTURE.md`** — system layers, dependency map, data flows, init order.

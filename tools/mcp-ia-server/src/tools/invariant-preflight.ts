@@ -137,7 +137,7 @@ export function registerInvariantPreflight(
           // Extract spec key from specToRead (e.g. "roads-system.md" -> "roads-system")
           const specRef = match.specToRead
             .replace(/\.md.*$/, "")
-            .replace(/^(?:\.cursor|ia)\/specs\//, "")
+            .replace(/^ia\/specs\//, "")
             .trim();
           if (!specRef) continue;
 

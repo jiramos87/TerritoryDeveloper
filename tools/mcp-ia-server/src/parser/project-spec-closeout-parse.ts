@@ -1,6 +1,6 @@
 /**
- * Parse temporary project specs (`ia/projects/{ISSUE_ID}[-{description}].md`,
- * legacy `.cursor/projects/{ISSUE_ID}.md`) for closeout / agent workflows.
+ * Parse temporary project specs (`ia/projects/{ISSUE_ID}[-{description}].md`)
+ * for closeout / agent workflows.
  */
 
 import fs from "node:fs";
@@ -18,11 +18,10 @@ export const CITED_ISSUE_ID_RE =
  * Repo-relative project spec path. Accepts:
  *   - `ia/projects/{ISSUE_ID}.md`
  *   - `ia/projects/{ISSUE_ID}-{description}.md` (descriptive variant)
- *   - `.cursor/projects/{ISSUE_ID}.md` (legacy, kept for one cycle)
  * Never matches traversal (`..` is rejected separately by callers).
  */
 export const PROJECT_SPEC_REL_PATH_RE =
-  /^(?:\.cursor|ia)\/projects\/(BUG|FEAT|TECH|ART|AUDIO)-\d+[a-z]?(?:-[A-Za-z0-9._-]+)?\.md$/i;
+  /^ia\/projects\/(BUG|FEAT|TECH|ART|AUDIO)-\d+[a-z]?(?:-[A-Za-z0-9._-]+)?\.md$/i;
 
 /**
  * Pull the bare `{ISSUE_ID}` out of a project spec basename
@@ -285,7 +284,7 @@ export function buildChecklistHints(
     ),
     U1: linesMatching(
       `${summary}\n${goals}\n${impl}`,
-      /\.mdc|(?:\.cursor|ia)\/rules|guardrail/i,
+      /ia\/rules|guardrail/i,
       8,
     ),
     D1: linesMatching(
@@ -363,14 +362,12 @@ export type ResolveProjectSpecPathResult =
  * Resolve and validate a project spec path under `repoRoot` with no `..` traversal.
  *
  * Accepts:
- *   - `spec_path` repo-relative under `ia/projects/` (current) or `.cursor/projects/`
- *     (legacy back-compat for one cycle). Filename may be `{ISSUE_ID}.md` or
- *     `{ISSUE_ID}-{description}.md` (descriptive suffix).
+ *   - `spec_path` repo-relative under `ia/projects/`. Filename may be
+ *     `{ISSUE_ID}.md` or `{ISSUE_ID}-{description}.md` (descriptive suffix).
  *   - `issue_id` only — resolution order:
  *       1. `ia/projects/{ISSUE_ID}.md`
  *       2. `ia/projects/{ISSUE_ID}-{description}.md` (first descriptive match by sort)
- *       3. `.cursor/projects/{ISSUE_ID}.md` (legacy fallback, only when it exists)
- *       4. Default to `ia/projects/{ISSUE_ID}.md` so the caller's read produces ENOENT.
+ *       3. Default to `ia/projects/{ISSUE_ID}.md` so the caller's read produces ENOENT.
  */
 export function resolveProjectSpecFile(
   repoRoot: string,
@@ -385,7 +382,7 @@ export function resolveProjectSpecFile(
         ok: false,
         error: "invalid_arguments",
         message:
-          "Provide exactly one of `issue_id` or `spec_path` (repo-relative `ia/projects/{ISSUE_ID}[-{description}].md` or legacy `.cursor/projects/{ISSUE_ID}.md`).",
+          "Provide exactly one of `issue_id` or `spec_path` (repo-relative `ia/projects/{ISSUE_ID}[-{description}].md`).",
       };
     }
   }
@@ -402,7 +399,7 @@ export function resolveProjectSpecFile(
         message: "`spec_path` must not contain `..`.",
       };
     }
-    if (!p.startsWith(".cursor/") && !p.startsWith("ia/")) {
+    if (!p.startsWith("ia/")) {
       p = path.posix.join("ia/projects", path.basename(p));
     }
     if (!PROJECT_SPEC_REL_PATH_RE.test(p)) {
@@ -410,7 +407,7 @@ export function resolveProjectSpecFile(
         ok: false,
         error: "invalid_path",
         message:
-          "`spec_path` must match `(ia|.cursor)/projects/{BUG|FEAT|TECH|ART|AUDIO}-<n>[suffix][-{description}].md`.",
+          "`spec_path` must match `ia/projects/{BUG|FEAT|TECH|ART|AUDIO}-<n>[suffix][-{description}].md`.",
       };
     }
     relPosix = p;
@@ -474,13 +471,8 @@ export function resolveProjectSpecFile(
 
       if (pickedDescriptive) {
         relPosix = `ia/projects/${pickedDescriptive}`;
-      } else {
-        const legacy = `.cursor/projects/${issue_id}.md`;
-        if (fs.existsSync(tryAbs(legacy))) {
-          relPosix = legacy;
-        }
-        // else: keep the default `ia/projects/{ID}.md`; the caller's read will ENOENT honestly.
       }
+      // else: keep the default `ia/projects/{ID}.md`; the caller's read will ENOENT honestly.
     }
   }
 

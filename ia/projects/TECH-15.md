@@ -52,7 +52,7 @@ Deliver a **repeatable profiler** for **New Game** / **geography initialization*
 |------|---------|
 | Backlog | `BACKLOG.md` — **TECH-15** |
 | Code | `GeographyManager.cs`, `TerrainManager.cs`, `WaterManager.cs`, `GridManager.cs`, … |
-| Spec | `.cursor/specs/isometric-geography-system.md` — **geography initialization** vocabulary |
+| Spec | `ia/specs/isometric-geography-system.md` — **geography initialization** vocabulary |
 
 ### 4.3 Implementation investigation notes (optional)
 

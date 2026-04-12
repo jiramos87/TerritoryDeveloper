@@ -1,6 +1,6 @@
 # Territory IA MCP server
 
-Local [Model Context Protocol](https://modelcontextprotocol.io/) server for **Territory Developer** information architecture. It reads the **same** on-disk sources agents already use: `ia/specs/*.md`, `ia/rules/*.mdc`, `glossary.md`, and root docs registered in `buildRegistry()` (e.g. `AGENTS.md`, `ARCHITECTURE.md`).
+Local [Model Context Protocol](https://modelcontextprotocol.io/) server for **Territory Developer** information architecture. It reads the **same** on-disk sources agents already use: `ia/specs/*.md`, `ia/rules/*.md`, `glossary.md`, and root docs registered in `buildRegistry()` (e.g. `AGENTS.md`, `ARCHITECTURE.md`).
 
 Canonical integration notes: [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) and [`ia/rules/agent-router.md`](../../ia/rules/agent-router.md) (subsection **MCP — territory-ia**).
 
@@ -63,10 +63,10 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`project_spec_journal_update`** | Patch `body_markdown` / `keywords` for a row. |
 | **`glossary_discover`** | Keyword discovery over glossary rows (**English** `query` / `keywords` only — translate from the user’s language before calling). Scores **Term**, **Definition**, **Spec**, and category; returns ranked `term`, `specReference`, optional `spec` alias + `registryKey`, `matchReasons`, `score`. Params: `query` and/or `keywords` (alias `terms`); `q` / `search` for query; `max_results` / `maxResults` (default 10, cap 25). |
 | **`glossary_lookup`** | Glossary row: exact (case-insensitive) then fuzzy; **`term` must be English** (glossary language). Bracket text like `[x,y]` normalized for matching. |
-| **`router_for_task`** | Match task hints to specs using `agent-router.mdc` tables. Provide **`domain`** and/or **`files`** (max 40 paths); at least one required. Merges optional **`file_domain_hints`** from path heuristics with table rows. |
-| **`invariants_summary`** | Invariants + guardrails from `invariants.mdc`. |
-| **`list_rules`** | All `.mdc` rules with frontmatter (`alwaysApply`, `globs`, description). |
-| **`rule_content`** | Rule markdown body without frontmatter. `rule: "roads"` resolves **`roads.mdc`** (use `spec_section` / `spec_outline` with alias `roads` for the **roads-system** spec). |
+| **`router_for_task`** | Match task hints to specs using `agent-router.md` tables. Provide **`domain`** and/or **`files`** (max 40 paths); at least one required. Merges optional **`file_domain_hints`** from path heuristics with table rows. |
+| **`invariants_summary`** | Invariants + guardrails from `invariants.md`. |
+| **`list_rules`** | All `.md` rules with frontmatter (`alwaysApply`, `globs`, description). |
+| **`rule_content`** | Rule markdown body without frontmatter. `rule: "roads"` resolves **`roads.md`** (use `spec_section` / `spec_outline` with alias `roads` for the **roads-system** spec). |
 | **`isometric_world_to_grid`** | **Computational** ( **`tools/compute-lib`** ): planar `world_x` / `world_y` + `tile_width` / `tile_height` → `cell_x` / `cell_y` (**isometric-geography-system** §1.3; glossary **World ↔ Grid conversion**). Optional `origin_x` / `origin_y`. Returns `{ ok, cell_x, cell_y }` or `{ ok: false, error }` (`VALIDATION_ERROR` for bad input). |
 | **`growth_ring_classify`** | **Computational:** urban **growth ring** from cell + centroids + `urban_cell_count` or `urban_radius` (simulation-system §Rings; parity **UrbanGrowthRingMath**). Returns `{ ok, data: { ring, urban_radius, distance_to_pole } }`. |
 | **`grid_distance`** | **Computational:** **Chebyshev** or **Manhattan** distance between integer cells (not geo §10 pathfinding costs). Optional `map_width` / `map_height` (≤ 256). |

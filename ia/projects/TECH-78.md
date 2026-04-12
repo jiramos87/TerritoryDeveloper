@@ -45,12 +45,12 @@ Build an MCP tool `suggest_skill_chain(task_description)` that reads all SKILL.m
 
 ### 4.1 Domain behavior
 
-Skills are static Markdown files under `.cursor/skills/*/SKILL.md`. Each has a YAML frontmatter with a `description` field listing trigger phrases. Agents must read the skill README or know which skill to open. There is no programmatic matching or chaining. The README at `.cursor/skills/README.md` lists all skills but doesn't describe sequencing.
+Skills are static Markdown files under `ia/skills/*/SKILL.md`. Each has a YAML frontmatter with a `description` field listing trigger phrases. Agents must read the skill README or know which skill to open. There is no programmatic matching or chaining. The README at `ia/skills/README.md` lists all skills but doesn't describe sequencing.
 
 ### 4.2 Systems map
 
-- `.cursor/skills/*/SKILL.md` — 8 active skills with frontmatter triggers and Tool Recipes
-- `.cursor/skills/README.md` — skill index and conventions
+- `ia/skills/*/SKILL.md` — 8 active skills with frontmatter triggers and Tool Recipes
+- `ia/skills/README.md` — skill index and conventions
 - `tools/mcp-ia-server/src/index.ts` — MCP tool registration
 - `tools/mcp-ia-server/src/config.ts` — registry building (extends to scan skills)
 

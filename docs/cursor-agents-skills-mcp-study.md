@@ -57,7 +57,7 @@ Consider an external memory MCP or DB only if you need **user-specific** or **hi
 | Layer | Responsibility | Territory Developer example |
 |-------|----------------|------------------------------|
 | **Specs / glossary** | Canonical definitions | `ia/specs/glossary.md`, `isometric-geography-system.md` |
-| **Rules** | Always-on guardrails | `ia/rules/invariants.md`, `agent-router.mdc` |
+| **Rules** | Always-on guardrails | `ia/rules/invariants.md`, `agent-router.md` |
 | **MCP (territory-ia)** | **On-demand slices** | `spec_section`, `glossary_lookup`, `backlog_issue`, `invariants_summary` |
 | **Skills** | **Process** and **orchestration** | “Starting a **BACKLOG** tech row: call `backlog_issue`, then `router_for_task`, then implement; never paste full geo spec.” |
 
@@ -79,7 +79,7 @@ Consider an external memory MCP or DB only if you need **user-specific** or **hi
 - **Implement skill:** [`ia/skills/project-spec-implement/SKILL.md`](../ia/skills/project-spec-implement/SKILL.md) — **per-phase** **territory-ia** recipe to execute a project spec’s **Implementation Plan** after the spec is ready *(shipped — trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md))*.
 - **Validation skill:** [`ia/skills/project-implementation-validation/SKILL.md`](../ia/skills/project-implementation-validation/SKILL.md) — ordered **`npm`** checks (**dead project spec** paths, **MCP** tests, **fixtures**, **IA index** `--check`, optional **`verify`**) aligned with **IA tools** **CI**; use after **MCP** / **schema** / index-source edits.
 - **Close skill:** [`ia/skills/project-spec-close/SKILL.md`](../ia/skills/project-spec-close/SKILL.md) — **persist IA first**, delete `ia/projects/{ISSUE_ID}.md`, **`npm run validate:dead-project-specs`**, **remove** the row from **`BACKLOG.md`**, **append** **`[x]`** to **`BACKLOG-ARCHIVE.md`**, **purge** the closed id from durable docs — see skill body *(shipped — trace [`BACKLOG-ARCHIVE.md`](../BACKLOG-ARCHIVE.md))*.
-- **Paste template:** [`ia/templates/project-spec-review-prompt.md`](../ia/templates/project-spec-review-prompt.md) when Skills are not loaded; **kickoff** tool order remains authoritative in **`project-spec-kickoff/SKILL.md`**; **implementation** order in **`project-spec-implement/SKILL.md`**; **post-implementation Node checks** in **`project-implementation-validation/SKILL.md`**; **closeout** order in **`project-spec-close/SKILL.md`**. **Router hint:** `router_for_task` **`domain`** strings should match **agent-router.mdc** table labels (persisted in [`ia/skills/README.md`](../ia/skills/README.md) **Lessons learned**).
+- **Paste template:** [`ia/templates/project-spec-review-prompt.md`](../ia/templates/project-spec-review-prompt.md) when Skills are not loaded; **kickoff** tool order remains authoritative in **`project-spec-kickoff/SKILL.md`**; **implementation** order in **`project-spec-implement/SKILL.md`**; **post-implementation Node checks** in **`project-implementation-validation/SKILL.md`**; **closeout** order in **`project-spec-close/SKILL.md`**. **Router hint:** `router_for_task` **`domain`** strings should match **agent-router.md** table labels (persisted in [`ia/skills/README.md`](../ia/skills/README.md) **Lessons learned**).
 - **MCP follow-up:** discovery from project-spec prose (ranked glossary / section queue) — open [`BACKLOG.md`](../BACKLOG.md).
 
 ---

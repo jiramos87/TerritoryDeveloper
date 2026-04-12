@@ -50,7 +50,7 @@ The **urbanization proposal** feature is **obsolete** and must **never** be re-e
 |------|---------|
 | Backlog | `BACKLOG.md` — TECH-13 |
 | Files | Per backlog: **`UrbanizationProposalManager.cs`**, **`ProposalUIController.cs`**, **`UrbanizationProposal.cs`**, **`SimulationManager.cs`**, **`UIManager.cs`**, scenes, **save data** |
-| Invariant | `.cursor/rules/invariants.mdc` — **`UrbanizationProposal`**: NEVER re-enable |
+| Invariant | `ia/rules/invariants.md` — **`UrbanizationProposal`**: NEVER re-enable |
 
 ### 4.3 Implementation investigation notes (optional)
 

@@ -49,11 +49,11 @@ The glossary is a proto-knowledge graph: each term links to a spec and category.
 
 ### 4.2 Systems map
 
-- `.cursor/specs/glossary.md` — term → spec → category (proto-graph)
-- `.cursor/rules/agent-router.mdc` — task → spec routing (proto-graph)
-- `.cursor/rules/invariants.mdc` — constraint → affected entities (implicit)
+- `ia/specs/glossary.md` — term → spec → category (proto-graph)
+- `ia/rules/agent-router.md` — task → spec routing (proto-graph)
+- `ia/rules/invariants.md` — constraint → affected entities (implicit)
 - `ARCHITECTURE.md` — manager → manager dependencies (explicit table)
-- `.cursor/specs/*.md` — cross-references between sections (implicit)
+- `ia/specs/*.md` — cross-references between sections (implicit)
 - `tools/mcp-ia-server/src/ia-db/` — Postgres infrastructure
 
 ## 5. Proposed Design

@@ -21,7 +21,6 @@
       "Bash(git reset --hard*)",
       "Bash(git clean -fd*)",
       "Bash(git clean -fdx*)",
-      "Bash(rm -rf .cursor*)",
       "Bash(rm -rf ia*)",
       "Bash(rm -rf MEMORY.md*)",
       "Bash(rm -rf .claude*)",

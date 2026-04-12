@@ -15,7 +15,7 @@ slices_via: none
 
 ## 1. Summary
 
-Audit **open** `BACKLOG.md` issues so **Depends on**, **Spec**, **Files**, and **Notes** use vocabulary from [`.cursor/specs/glossary.md`](../../.cursor/specs/glossary.md) and linked **reference specs** where practical. Optionally add an automated **link checker**: for each glossary table row, the **Spec** column path must exist in the repo; optional **anchor** validation if headings are stable enough.
+Audit **open** `BACKLOG.md` issues so **Depends on**, **Spec**, **Files**, and **Notes** use vocabulary from [`ia/specs/glossary.md`](../specs/glossary.md) and linked **reference specs** where practical. Optionally add an automated **link checker**: for each glossary table row, the **Spec** column path must exist in the repo; optional **anchor** validation if headings are stable enough.
 
 ## 2. Goals and Non-Goals
 

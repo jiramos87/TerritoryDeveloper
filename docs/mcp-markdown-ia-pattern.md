@@ -8,7 +8,7 @@
 
 ## 1. Core idea
 
-1. **Humans maintain truth in Git** as `.md` / `.mdc` (or similar) files.
+1. **Humans maintain truth in Git** as `.md` / `.md` (or similar) files.
 2. A **registry** lists every document the system knows about (key, path, category, short description).
 3. A **parser layer** turns files into structures agents can target: heading trees, line ranges, optional frontmatter, tables.
 4. **MCP tools** expose **slices** (sections, rows, routing hints) as JSON — not raw file dumps by default.
@@ -61,7 +61,7 @@ Almost everything builds on:
 
 1. **Line-accurate source map** — `lineStart` / `lineEnd` for each heading block match **physical file** lines (including frontmatter), so slices are debuggable and stable.
 2. **Heading tree** — depth, title, derived **section id** (numeric prefix or slug).
-3. **Frontmatter** — for `.mdc` or docs that use YAML; body scan must align line numbers with the full file.
+3. **Frontmatter** — for `.md` or docs that use YAML; body scan must align line numbers with the full file.
 4. **Table parser** — reusable for glossary, routing tables, any `| Col1 | Col2 |` data.
 
 ### 3.4 Tool families (minimal viable set)

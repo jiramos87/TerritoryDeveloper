@@ -69,12 +69,12 @@ describe("project-spec-closeout-parse", () => {
   it("builds digest with spec_path", () => {
     const d = buildProjectSpecCloseoutDigest(
       SAMPLE,
-      ".cursor/projects/TECH-99.md",
+      "ia/projects/TECH-99.md",
       null,
     );
     assert.equal(d.schema_version, 1);
     assert.equal(d.issue_id, "TECH-99");
-    assert.equal(d.spec_path, ".cursor/projects/TECH-99.md");
+    assert.equal(d.spec_path, "ia/projects/TECH-99.md");
     assert.ok(d.suggested_english_keywords.length > 0);
     assert.ok(d.checklist_hints?.G1?.length);
   });
@@ -84,9 +84,7 @@ describe("project-spec-closeout-parse", () => {
     assert.equal(r.ok, true);
     if (r.ok) {
       assert.match(r.absPath, /TECH-75\.md$/);
-      // Default resolution is `ia/projects/...`; the legacy `.cursor/projects/...`
-      // only wins when the legacy file actually exists. /repo is fake here, so
-      // neither lookup hits and the default applies.
+      // /repo is fake here, so neither lookup hits and the default applies.
       assert.equal(r.relPosix, "ia/projects/TECH-75.md");
     }
   });
@@ -104,20 +102,9 @@ describe("project-spec-closeout-parse", () => {
 
   it("resolveProjectSpecFile rejects traversal", () => {
     const r = resolveProjectSpecFile("/repo", {
-      spec_path: ".cursor/projects/../secrets.md",
+      spec_path: "ia/projects/../secrets.md",
     });
     assert.equal(r.ok, false);
-  });
-
-  it("resolveProjectSpecFile still accepts legacy .cursor/projects/ spec_path", () => {
-    const r = resolveProjectSpecFile("/repo", {
-      spec_path: ".cursor/projects/TECH-99.md",
-    });
-    assert.equal(r.ok, true);
-    if (r.ok) {
-      assert.equal(r.relPosix, ".cursor/projects/TECH-99.md");
-      assert.equal(r.issue_id, "TECH-99");
-    }
   });
 
   it("splitProjectSpecH2Sections keeps body under headings", () => {

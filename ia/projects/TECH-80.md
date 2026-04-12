@@ -52,9 +52,9 @@ Knowledge flows one way: docs → agent. The reverse flow (agent → docs) only 
 
 - `tools/mcp-ia-server/src/ia-db/` — Postgres pool, existing table patterns
 - `db/migrations/` — migration infrastructure
-- `.cursor/specs/glossary.md` — glossary (target for glossary_addition suggestions)
-- `.cursor/rules/invariants.mdc` — invariants (target for invariant_addition suggestions)
-- `.cursor/specs/*.md` — specs (target for spec_ambiguity suggestions)
+- `ia/specs/glossary.md` — glossary (target for glossary_addition suggestions)
+- `ia/rules/invariants.md` — invariants (target for invariant_addition suggestions)
+- `ia/specs/*.md` — specs (target for spec_ambiguity suggestions)
 
 ## 5. Proposed Design
 
