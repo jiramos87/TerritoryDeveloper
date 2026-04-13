@@ -351,7 +351,7 @@ public partial class WaterManager : MonoBehaviour
 
         // Update the grid cell to display water
         GameObject cell = gridManager.gridArray[x, y];
-        Cell cellComponent = gridManager.GetCell(x, y);
+        CityCell cellComponent = gridManager.GetCell(x, y);
         if (cellComponent == null)
             return;
 
@@ -385,7 +385,7 @@ public partial class WaterManager : MonoBehaviour
             GameObject.Destroy(child.gameObject);
         }
 
-        // Cell height follows terrain floor (HeightMap); water surface is used for the water tile and sorting.
+        // CityCell height follows terrain floor (HeightMap); water surface is used for the water tile and sorting.
         cellComponent.zoneType = Zone.ZoneType.Water;
         gridManager.SetCellHeight(new Vector2(x, y), terrainHeight);
         Vector2 cellWorldPos = gridManager.GetWorldPositionVector(x, y, terrainHeight);
@@ -462,7 +462,7 @@ public partial class WaterManager : MonoBehaviour
 
         // Update the grid cell to display grass
         GameObject cell = gridManager.gridArray[x, y];
-        Cell cellComponent = gridManager.GetCell(x, y);
+        CityCell cellComponent = gridManager.GetCell(x, y);
 
         // Destroy existing children
         foreach (Transform child in cell.transform)
@@ -582,7 +582,7 @@ public partial class WaterManager : MonoBehaviour
             hm.SetHeight(x, y, clamped);
             gridManager.SetCellHeight(new Vector2(x, y), hm.GetHeight(x, y));
             terrainManager.RestoreTerrainForCell(x, y, hm);
-            Cell cell = gridManager.GetCell(x, y);
+            CityCell cell = gridManager.GetCell(x, y);
             if (cell != null)
             {
                 cell.zoneType = Zone.ZoneType.Grass;

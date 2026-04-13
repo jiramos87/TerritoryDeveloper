@@ -943,8 +943,8 @@ public class TerraformingService : MonoBehaviour
             int ax = (int)path[re + 1].x, ay = (int)path[re + 1].y;
             if (!IsWaterOrWaterSlopeForBridgeDeckHeight(bx, by, heightMap) && !IsWaterOrWaterSlopeForBridgeDeckHeight(ax, ay, heightMap))
             {
-                Cell landBefore = gridManager.GetCell(bx, by);
-                Cell landExit = gridManager.GetCell(ax, ay);
+                CityCell landBefore = gridManager.GetCell(bx, by);
+                CityCell landExit = gridManager.GetCell(ax, ay);
                 if (landBefore != null && landExit != null)
                 {
                     int hIn = landBefore.GetCellInstanceHeight();
@@ -966,7 +966,7 @@ public class TerraformingService : MonoBehaviour
             int ax = (int)path[re + 1].x, ay = (int)path[re + 1].y;
             if (!IsWaterOrWaterSlopeForBridgeDeckHeight(ax, ay, heightMap))
             {
-                Cell landExit = gridManager.GetCell(ax, ay);
+                CityCell landExit = gridManager.GetCell(ax, ay);
                 if (landExit != null && landExit.GetCellInstanceHeight() > 0)
                 {
                     plan.waterBridgeDeckDisplayHeight = landExit.GetCellInstanceHeight();
@@ -980,7 +980,7 @@ public class TerraformingService : MonoBehaviour
             int bx = (int)path[rs - 1].x, by = (int)path[rs - 1].y;
             if (!IsWaterOrWaterSlopeForBridgeDeckHeight(bx, by, heightMap))
             {
-                Cell landBefore = gridManager.GetCell(bx, by);
+                CityCell landBefore = gridManager.GetCell(bx, by);
                 if (landBefore != null && landBefore.GetCellInstanceHeight() > 0)
                 {
                     plan.waterBridgeDeckDisplayHeight = landBefore.GetCellInstanceHeight();
@@ -997,7 +997,7 @@ public class TerraformingService : MonoBehaviour
             int y = (int)path[i].y;
             if (terrainManager.IsRegisteredOpenWaterAt(x, y))
                 continue;
-            Cell pathCell = gridManager.GetCell(x, y);
+            CityCell pathCell = gridManager.GetCell(x, y);
             if (pathCell == null)
                 continue;
             int h = pathCell.GetCellInstanceHeight();

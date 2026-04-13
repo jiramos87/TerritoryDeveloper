@@ -189,7 +189,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// <summary>
     /// S/E face toward off-grid void: water-shore primary prefabs already include transition art on that edge → skip duplicate brown cliff stacks.
     /// </summary>
-    private bool ShouldSuppressBrownCliffTowardOffGridForWaterShorePrimary(Cell cell)
+    private bool ShouldSuppressBrownCliffTowardOffGridForWaterShorePrimary(CityCell cell)
     {
         return cell != null && CellUsesWaterShorePrimaryPrefab(cell);
     }
@@ -198,7 +198,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     public const int TERRAIN_BASE_ORDER = 0;
     /// <summary>Offset for land slope sorting. 1 = slightly in front of terrain so slopes (esp. east-facing) render correctly.</summary>
     public const int SLOPE_OFFSET = 1;
-    /// <summary>Cliff sprites must sort strictly below cell's primary terrain/shore sprite; subtract from <see cref="Cell.sortingOrder"/> for top stack segment.</summary>
+    /// <summary>Cliff sprites must sort strictly below cell's primary terrain/shore sprite; subtract from <see cref="CityCell.sortingOrder"/> for top stack segment.</summary>
     private const int CliffSortingBelowCellTerrain = 1;
     public const int BUILDING_OFFSET = 10; // Buildings should be above terrain
     public const int EFFECT_OFFSET = 30; // Effects should be above terrain
@@ -396,7 +396,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         {
             for (int y = 0; y < gridManager.height; y++)
             {
-                Cell cell = gridManager.GetCell(x, y);
+                CityCell cell = gridManager.GetCell(x, y);
                 if (cell == null) continue;
                 if (!heightMap.IsValidPosition(x, y)) continue;
 
@@ -941,7 +941,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             if (wmMap.IsLakeSurfaceStepContactForbidden(highX, highY, lowX, lowY))
                 continue;
 
-            Cell shoreCell = gridManager.GetCell(p.x, p.y);
+            CityCell shoreCell = gridManager.GetCell(p.x, p.y);
             if (shoreCell != null)
                 RemoveExistingWaterCascadeCliffs(shoreCell);
 
@@ -1076,7 +1076,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// <summary>
     /// Lower dry cells in Moore shore ring when above <b>logical surface</b> of affiliated adjacent water body →
     /// plateau heights don't dominate <see cref="PlaceWaterShore"/> (§2.4.1). At multi-surface junctions (e.g. waterfall),
-    /// use <see cref="Cell.waterBodyId"/> or <see cref="WaterManager.GetShoreAffiliatedWaterBodyIdForLandCell"/>
+    /// use <see cref="CityCell.waterBodyId"/> or <see cref="WaterManager.GetShoreAffiliatedWaterBodyIdForLandCell"/>
     /// → shore-line terrain stays aligned with that body&apos;s <c>S</c>, not min <c>S</c> across all neighboring pools.
     /// Only decreases <see cref="HeightMap"/>; never raises terrain.
     /// </summary>
@@ -1117,7 +1117,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             int minSurface = minSurfaceAll;
             if (gridManager != null)
             {
-                Cell cell = gridManager.GetCell(x, y);
+                CityCell cell = gridManager.GetCell(x, y);
                 int affId = cell != null ? cell.waterBodyId : 0;
                 if (affId == 0)
                     affId = wm.GetShoreAffiliatedWaterBodyIdForLandCell(x, y);
@@ -1156,7 +1156,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     private void UpdateTileElevation(int x, int y)
     {
         int newHeight = heightMap.GetHeight(x, y);
-        Cell cell = gridManager.GetCell(x, y);
+        CityCell cell = gridManager.GetCell(x, y);
         if (cell == null) return;
         try
         {
@@ -1236,7 +1236,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// Skip terrain refresh on those cells → <see cref="PathTerraformPlan.Apply"/> Phase 2/3 doesn't replace overlay.
     /// Building / footprint protection uses <see cref="GridManager.IsCellOccupiedByBuilding"/>.
     /// </summary>
-    private bool CellHasZoningOverlay(Cell cell)
+    private bool CellHasZoningOverlay(CityCell cell)
     {
         if (cell == null) return false;
         foreach (Transform child in cell.gameObject.transform)
@@ -1276,7 +1276,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         int newHeight = heightMap.GetHeight(x, y);
         if (newHeight == SEA_LEVEL)
             return false;
-        Cell cell = gridManager.GetCell(x, y);
+        CityCell cell = gridManager.GetCell(x, y);
         if (cell == null)
             return false;
 
@@ -1366,9 +1366,9 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     #endregion
 
     #region Terrain Tile Placement
-    private void DestroyCellChildren(Cell cell)
+    private void DestroyCellChildren(CityCell cell)
     {
-        GameObject cellObject = cell.gameObject;  // Get the GameObject that holds the Cell component
+        GameObject cellObject = cell.gameObject;  // Get the GameObject that holds the CityCell component
         var toDestroy = new List<GameObject>();
         foreach (Transform child in cellObject.transform)
             toDestroy.Add(child.gameObject);
@@ -1382,7 +1382,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// DestroyImmediate avoids deferred Destroy → multiple grass instances when
     /// RestoreTerrainForCell called repeatedly in same frame (e.g. interstate generation).
     /// </summary>
-    private void DestroyTerrainChildrenOnly(Cell cell)
+    private void DestroyTerrainChildrenOnly(CityCell cell)
     {
         var toDestroy = new List<GameObject>();
         foreach (Transform child in cell.gameObject.transform)
@@ -1565,7 +1565,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>
-    /// Dry land that may carry <see cref="Cell.waterBodyId"/> for water-shore art or rim cliffs toward registered water.
+    /// Dry land that may carry <see cref="CityCell.waterBodyId"/> for water-shore art or rim cliffs toward registered water.
     /// </summary>
     public bool IsDryShoreOrRimMembershipEligible(int x, int y)
     {
@@ -1670,7 +1670,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     {
         if (gridManager == null || zoneManager == null) return;
 
-        Cell cell = gridManager.GetCell(x, y);
+        CityCell cell = gridManager.GetCell(x, y);
         if (cell == null) return;
 
         DestroyTerrainChildrenOnly(cell);
@@ -1706,7 +1706,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     {
         if (slopePrefab == null || gridManager == null) return;
 
-        Cell cell = gridManager.GetCell(x, y);
+        CityCell cell = gridManager.GetCell(x, y);
         if (cell == null) return;
 
         int currentHeight = cellHeight >= 0 ? cellHeight : (heightMap != null ? heightMap.GetHeight(x, y) : cell.height);
@@ -1780,7 +1780,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                             continue;
 
                         if (gridManager.IsCellOccupiedByBuilding(nx, ny)) continue;
-                        Cell neighborCell = gridManager.GetCell(nx, ny);
+                        CityCell neighborCell = gridManager.GetCell(nx, ny);
                         if (neighborCell != null && (neighborCell.zoneType != Zone.ZoneType.Grass || neighborCell.HasForest())) continue;
 
                         List<GameObject> waterShorePrefabs = DetermineWaterShorePrefabs(nx, ny);
@@ -1806,7 +1806,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             {
                 if (heightMap.GetHeight(x, y) == SEA_LEVEL) continue;
 
-                Cell cell = gridManager.GetCell(x, y);
+                CityCell cell = gridManager.GetCell(x, y);
                 if (cell == null) continue;
                 if (gridManager.IsCellOccupiedByBuilding(x, y)) continue;
                 if (cell.zoneType != Zone.ZoneType.Grass) continue;
@@ -1835,7 +1835,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return;
         }
 
-        Cell cell = gridManager.GetCell(x, y);
+        CityCell cell = gridManager.GetCell(x, y);
         DestroyCellChildren(cell);
 
         Vector2 worldPos = cell.transformPosition;
@@ -1848,7 +1848,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         seaLevelWaterObject.transform.SetParent(cell.gameObject.transform);
         cell.zoneType = Zone.ZoneType.Water;
         gridManager.SetCellHeight(new Vector2(x, y), 0);
-        Cell updatedCell = gridManager.GetCell(x, y);
+        CityCell updatedCell = gridManager.GetCell(x, y);
 
         int sortingOrder = CalculateTerrainSortingOrder(x, y, SEA_LEVEL);
         SpriteRenderer sr = seaLevelWaterObject.GetComponent<SpriteRenderer>();
@@ -1874,7 +1874,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         if (waterShorePrefabs == null || waterShorePrefabs.Count == 0)
             return;
 
-        Cell cell = gridManager.GetCell(x, y);
+        CityCell cell = gridManager.GetCell(x, y);
         DestroyTerrainChildrenOnly(cell);
 
         int landH = heightMap != null ? heightMap.GetHeight(x, y) : 1;
@@ -1882,7 +1882,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             landH = 1;
 
         gridManager.SetCellHeight(new Vector2(x, y), landH);
-        Cell updatedCell = gridManager.GetCell(x, y);
+        CityCell updatedCell = gridManager.GetCell(x, y);
 
         Vector2 cellWorldPos = gridManager.GetWorldPositionVector(x, y, landH);
         cell.gameObject.transform.position = cellWorldPos;
@@ -1972,7 +1972,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         if (IsCellSurroundedByCardinalWaterOnly(x, y, waterManager))
             return;
 
-        Cell cell = gridManager.GetCell(x, y);
+        CityCell cell = gridManager.GetCell(x, y);
         RemoveExistingCliffWalls(cell);
         if (cell != null)
             cell.cliffFaces = CliffFaceFlags.None;
@@ -2172,7 +2172,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         bool lowerValid = heightMap != null && heightMap.IsValidPosition(lowerX, lowerY);
         if (!lowerValid)
         {
-            Cell c = gridManager != null ? gridManager.GetCell(x, y) : null;
+            CityCell c = gridManager != null ? gridManager.GetCell(x, y) : null;
             if (ShouldSuppressBrownCliffTowardOffGridForWaterShorePrimary(c))
                 return 0;
             int diffVoid = currentHeight - MIN_HEIGHT;
@@ -2204,7 +2204,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         bool lowerValid = heightMap != null && heightMap.IsValidPosition(lowerX, lowerY);
         if (!lowerValid)
         {
-            Cell c = gridManager != null ? gridManager.GetCell(x, y) : null;
+            CityCell c = gridManager != null ? gridManager.GetCell(x, y) : null;
             if (ShouldSuppressBrownCliffTowardOffGridForWaterShorePrimary(c))
                 return 0;
             int diffVoid = currentHeight - MIN_HEIGHT;
@@ -2322,7 +2322,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// Cliff world pos: same x as cell; y = anchor y minus tile height × segment index.
     /// Land cliffs use cell transform (terrain floor). Water–water cascades pass <paramref name="overrideAnchorWorldY"/> at water visual surface (see <see cref="WaterManager.PlaceWater"/>).
     /// </summary>
-    private Vector2 GetCliffWallSegmentWorldPositionOnSharedEdge(Cell cell, int topH, int segmentIndex, float? overrideAnchorWorldY = null)
+    private Vector2 GetCliffWallSegmentWorldPositionOnSharedEdge(CityCell cell, int topH, int segmentIndex, float? overrideAnchorWorldY = null)
     {
         float anchorY = overrideAnchorWorldY ?? cell.gameObject.transform.position.y;
         return new Vector2(cell.gameObject.transform.position.x, anchorY - gridManager.tileHeight * (segmentIndex * 0.5f));
@@ -2331,7 +2331,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// <summary>
     /// Place stack of brown cliff walls on <b>land</b> cell (see <see cref="PlaceCliffWalls"/>).
     /// </summary>
-    private void PlaceCliffWallStack(Cell cell, CliffCardinalFace cardinalFace, int highX, int highY, int lowX, int lowY, int highH, int lowH, int segmentCount)
+    private void PlaceCliffWallStack(CityCell cell, CliffCardinalFace cardinalFace, int highX, int highY, int lowX, int lowY, int highH, int lowH, int segmentCount)
     {
         GameObject prefab = GetCliffPrefabForCardinalFace(cardinalFace);
         PlaceCliffWallStackCore(cell, prefab, cardinalFace, highX, highY, lowX, lowY, highH, lowH, segmentCount);
@@ -2345,7 +2345,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// <param name="cliffStackAnchorWorldY">When set (water–water cascades) → Y anchor at water visual surface; else cell transform Y (terrain floor).</param>
     /// <param name="sortingReferenceGridX">When set with <paramref name="sortingReferenceGridY"/> → used for sorting depth instead of <paramref name="highX"/>,<paramref name="highY"/> (e.g. upper-brink shore cell).</param>
     private int PlaceCliffWallStackCore(
-        Cell cell,
+        CityCell cell,
         GameObject cliffPrefab,
         CliffCardinalFace cardinalFace,
         int highX,
@@ -2447,7 +2447,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             {
                 if (!wmMap.IsWater(x, y))
                     continue;
-                Cell cell = gridManager.GetCell(x, y);
+                CityCell cell = gridManager.GetCell(x, y);
                 if (cell != null)
                     RemoveExistingWaterCascadeCliffs(cell);
             }
@@ -2559,7 +2559,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
 
         int px = parentCellX ?? highX;
         int py = parentCellY ?? highY;
-        Cell cell = gridManager.GetCell(px, py);
+        CityCell cell = gridManager.GetCell(px, py);
         if (cell == null)
             return;
 
@@ -2577,7 +2577,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         PlaceCliffWallStackCore(cell, waterCliffPrefab, face, highX, highY, lowX, lowY, highH, lowH, segmentCount, anchorY, sortRx, sortRy);
     }
 
-    private void RemoveExistingWaterCascadeCliffs(Cell cell)
+    private void RemoveExistingWaterCascadeCliffs(CityCell cell)
     {
         if (cell == null)
             return;
@@ -2589,7 +2589,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
         }
     }
 
-    private void RemoveExistingCliffWalls(Cell cell)
+    private void RemoveExistingCliffWalls(CityCell cell)
     {
         if (cell == null)
         {
@@ -2640,7 +2640,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
                     continue;
                 if (!waterManager.IsWaterAt(nx, ny))
                     continue;
-                Cell neighborCell = gridManager.GetCell(nx, ny);
+                CityCell neighborCell = gridManager.GetCell(nx, ny);
                 if (neighborCell == null)
                     continue;
                 maxAllowed = Mathf.Min(maxAllowed, neighborCell.sortingOrder - 1);
@@ -2812,7 +2812,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     }
 
     /// <summary>True when the cell's primary terrain prefab is a water-shore tile (see <see cref="PlaceWaterShore"/>).</summary>
-    private bool CellUsesWaterShorePrimaryPrefab(Cell cell)
+    private bool CellUsesWaterShorePrimaryPrefab(CityCell cell)
     {
         if (cell == null || string.IsNullOrEmpty(cell.prefabName))
             return false;
@@ -2823,7 +2823,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
     /// <summary>
     /// Agent / Editor diagnostics (<c>debug_context_bundle</c>): same predicate as <see cref="CellUsesWaterShorePrimaryPrefab"/> w/o exposing private helpers.
     /// </summary>
-    public bool DoesCellUseWaterShorePrimaryPrefab(Cell cell) => CellUsesWaterShorePrimaryPrefab(cell);
+    public bool DoesCellUseWaterShorePrimaryPrefab(CityCell cell) => CellUsesWaterShorePrimaryPrefab(cell);
 
     /// <summary>
     /// Diagonal shore tiles (NE/NW/SE/SW Upslope or SlopeWater), not Bay — used for Y offset + diagonal downslope selection.
@@ -4225,7 +4225,7 @@ public class TerrainManager : MonoBehaviour, ITerrainManager
             return false;
         if (gridManager != null)
         {
-            Cell c = gridManager.GetCell(x, y);
+            CityCell c = gridManager.GetCell(x, y);
             if (c != null && c.GetCellInstanceHeight() == 0)
                 return true;
         }

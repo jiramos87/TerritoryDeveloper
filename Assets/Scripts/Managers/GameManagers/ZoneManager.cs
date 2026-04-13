@@ -479,7 +479,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
             {
                 if (canPlaceZone(GetZoneAttributes(uiManager.GetSelectedZoneType()), new Vector2(x, y)))
                 {
-                    Cell cell = gridManager.GetCell(x, y);
+                    CityCell cell = gridManager.GetCell(x, y);
                     Vector2 worldPos = cell.transformPosition;
 
                     GameObject zoningPrefab = GetSlopeAwarePrefab(GetRandomZonePrefab(uiManager.GetSelectedZoneType()), x, y);
@@ -678,7 +678,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
 
     void PlaceZone(Vector3 gridPosition)
     {
-        Cell cell = gridManager.GetCell((int)gridPosition.x, (int)gridPosition.y);
+        CityCell cell = gridManager.GetCell((int)gridPosition.x, (int)gridPosition.y);
         Vector2 worldPosition = cell.transformPosition;
         Zone.ZoneType selectedZoneType = uiManager.GetSelectedZoneType();
 
@@ -744,7 +744,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         if (!canPlaceZone(zoneAttributes, gridPosition, requireInterstate: false))
             return false;
 
-        Cell cell = gridManager.GetCell((int)gridPosition.x, (int)gridPosition.y);
+        CityCell cell = gridManager.GetCell((int)gridPosition.x, (int)gridPosition.y);
         if (cell == null) return false;
         Vector2 worldPosition = cell.transformPosition;
 
@@ -771,7 +771,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     /// </summary>
     public void RestoreZoneTile(GameObject prefab, GameObject gridCell, Zone.ZoneType zoneType)
     {
-        Cell cell = gridCell.GetComponent<Cell>();
+        CityCell cell = gridCell.GetComponent<CityCell>();
         if (cell == null) return;
 
         Vector2 worldPosition = cell.transformPosition;
@@ -1021,7 +1021,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         float total = 0f;
         for (int i = 0; i < section.Count; i++)
         {
-            Cell c = gridManager.GetCell((int)section[i].x, (int)section[i].y);
+            CityCell c = gridManager.GetCell((int)section[i].x, (int)section[i].y);
             if (c != null)
                 total += c.desirability;
         }
@@ -1187,7 +1187,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         foreach (Vector2 zonedPosition in section)
         {
             GameObject cell = gridManager.GetGridCell(zonedPosition);
-            Cell cellComponent = gridManager.GetCell((int)zonedPosition.x, (int)zonedPosition.y);
+            CityCell cellComponent = gridManager.GetCell((int)zonedPosition.x, (int)zonedPosition.y);
             if (cellComponent != null)
                 cellComponent.RemoveForestForBuilding();
 
@@ -1223,7 +1223,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
     /// <param name="buildingSize">Building footprint size (1, 2, or 3).</param>
     public void PlaceZoneBuildingTile(GameObject prefab, GameObject gridCell, int buildingSize = 1)
     {
-        Cell cell = gridCell.GetComponent<Cell>();
+        CityCell cell = gridCell.GetComponent<CityCell>();
 
         if (buildingSize > 1 && !cell.isPivot)
         {
@@ -1251,7 +1251,7 @@ public class ZoneManager : MonoBehaviour, IZoneManager
         gridManager.SetZoneBuildingSortingOrder(zoneTile, (int)cell.x, (int)cell.y, buildingSize);
     }
 
-    void UpdatePlacedZoneCellAttributes(Cell cellComponent, Zone.ZoneType selectedZoneType, GameObject zonePrefab, ZoneAttributes zoneAttributes)
+    void UpdatePlacedZoneCellAttributes(CityCell cellComponent, Zone.ZoneType selectedZoneType, GameObject zonePrefab, ZoneAttributes zoneAttributes)
     {
         cellComponent.zoneType = selectedZoneType;
         cellComponent.population = zoneAttributes.Population;

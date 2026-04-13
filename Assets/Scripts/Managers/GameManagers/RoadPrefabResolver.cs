@@ -89,7 +89,7 @@ public class RoadPrefabResolver
 
             int x = (int)curr.x;
             int y = (int)curr.y;
-            Cell cell = gridManager.GetCell(x, y);
+            CityCell cell = gridManager.GetCell(x, y);
             if (cell == null)
             {
                 skipped++;
@@ -162,7 +162,7 @@ public class RoadPrefabResolver
     {
         int x = (int)currGridPos.x;
         int y = (int)currGridPos.y;
-        Cell cell = gridManager.GetCell(x, y);
+        CityCell cell = gridManager.GetCell(x, y);
         if (cell == null) return null;
 
         bool hasLeft = IsRoadAt(currGridPos + new Vector2(-1, 0));
@@ -275,7 +275,7 @@ public class RoadPrefabResolver
         worldPos = gridManager.GetWorldPosition(x, y);
         sortingOrder = gridManager.GetRoadSortingOrderForCell(x, y, 0);
 
-        Cell cell = gridManager.GetCell(x, y);
+        CityCell cell = gridManager.GetCell(x, y);
         if (cell == null) return;
 
         int height = cell.GetCellInstanceHeight();
@@ -641,7 +641,7 @@ public class RoadPrefabResolver
             int nx = x + DirX[d], ny = y + DirY[d];
             if (!IsValidGrid(nx, ny) || !IsRoadAt(new Vector2(nx, ny))) continue;
             if (terrainManager.IsRegisteredOpenWaterAt(nx, ny)) continue;
-            Cell cn = gridManager.GetCell(nx, ny);
+            CityCell cn = gridManager.GetCell(nx, ny);
             if (cn != null) best = Mathf.Max(best, cn.GetCellInstanceHeight());
         }
         if (best > 0)
@@ -663,7 +663,7 @@ public class RoadPrefabResolver
             }
             if (IsValidGrid(cx, cy) && IsRoadAt(new Vector2(cx, cy)) && !terrainManager.IsRegisteredOpenWaterAt(cx, cy))
             {
-                Cell c = gridManager.GetCell(cx, cy);
+                CityCell c = gridManager.GetCell(cx, cy);
                 if (c != null) best = Mathf.Max(best, c.GetCellInstanceHeight());
             }
         }
@@ -826,7 +826,7 @@ public class RoadPrefabResolver
         int px = Mathf.RoundToInt(prevGridPos.x);
         int py = Mathf.RoundToInt(prevGridPos.y);
         if (px < 0 || px >= gridManager.width || py < 0 || py >= gridManager.height) return null;
-        Cell prevCell = gridManager.GetCell(px, py);
+        CityCell prevCell = gridManager.GetCell(px, py);
         if (prevCell == null) return null;
         int hPrev = prevCell.GetCellInstanceHeight();
 
@@ -836,7 +836,7 @@ public class RoadPrefabResolver
         int dSeg;
         if (nx >= 0 && nx < gridManager.width && ny >= 0 && ny < gridManager.height)
         {
-            Cell nextCell = gridManager.GetCell(nx, ny);
+            CityCell nextCell = gridManager.GetCell(nx, ny);
             if (nextCell != null)
                 dSeg = nextCell.GetCellInstanceHeight() - currentHeight;
             else
@@ -1042,7 +1042,7 @@ public class RoadPrefabResolver
         if (upperX < 0 || upperX >= gridManager.width || upperY < 0 || upperY >= gridManager.height)
             return gridManager.GetWorldPosition(x, y);
 
-        Cell upperCell = gridManager.GetCell(upperX, upperY);
+        CityCell upperCell = gridManager.GetCell(upperX, upperY);
         if (upperCell == null)
             return gridManager.GetWorldPosition(x, y);
 
@@ -1095,7 +1095,7 @@ public class RoadPrefabResolver
         int ny = gridY + dy;
         if (nx < 0 || nx >= gridManager.width || ny < 0 || ny >= gridManager.height)
             return int.MinValue;
-        Cell c = gridManager.GetCell(nx, ny);
+        CityCell c = gridManager.GetCell(nx, ny);
         return c != null ? c.GetCellInstanceHeight() : int.MinValue;
     }
 

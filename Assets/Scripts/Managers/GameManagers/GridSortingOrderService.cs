@@ -31,7 +31,7 @@ namespace Territory.Core
             if (grid.terrainManager == null || grid.cellArray == null || grid.gridArray == null) return;
             if (cellX < 0 || cellX >= grid.width || cellY < 0 || cellY >= grid.height) return;
 
-            Cell cell = grid.cellArray[cellX, cellY];
+            CityCell cell = grid.cellArray[cellX, cellY];
             GameObject cellGo = grid.gridArray[cellX, cellY];
             if (cell == null || cellGo == null) return;
 
@@ -72,7 +72,7 @@ namespace Territory.Core
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return int.MinValue;
             if (grid.terrainManager == null) return int.MinValue;
 
-            Cell cell = (x >= 0 && x < grid.width && y >= 0 && y < grid.height) ? grid.cellArray[x, y] : null;
+            CityCell cell = (x >= 0 && x < grid.width && y >= 0 && y < grid.height) ? grid.cellArray[x, y] : null;
             if (cell == null) return int.MinValue;
 
             int terrainOrder = grid.terrainManager.CalculateTerrainSortingOrder(x, y, cell.height);
@@ -129,7 +129,7 @@ namespace Territory.Core
                 return -1001;
             }
 
-            Cell cell = grid.cellArray[x, y];
+            CityCell cell = grid.cellArray[x, y];
             tile.transform.SetParent(cell.gameObject.transform);
             SpriteRenderer sr = tile.GetComponent<SpriteRenderer>();
 
@@ -157,7 +157,7 @@ namespace Territory.Core
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return;
 
-            Cell cell = grid.cellArray[x, y];
+            CityCell cell = grid.cellArray[x, y];
             if (cell == null) return;
 
             tile.transform.SetParent(cell.gameObject.transform);
@@ -189,7 +189,7 @@ namespace Territory.Core
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return;
 
-            Cell cell = grid.cellArray[x, y];
+            CityCell cell = grid.cellArray[x, y];
             if (cell == null) return;
 
             tile.transform.SetParent(cell.gameObject.transform);
@@ -228,7 +228,7 @@ namespace Territory.Core
                 return;
             }
             if (pivotX < 0 || pivotX >= grid.width || pivotY < 0 || pivotY >= grid.height) return;
-            Cell pivotCell = grid.cellArray[pivotX, pivotY];
+            CityCell pivotCell = grid.cellArray[pivotX, pivotY];
             if (pivotCell == null) return;
             tile.transform.SetParent(pivotCell.gameObject.transform);
             if (grid.terrainManager == null)
@@ -251,7 +251,7 @@ namespace Territory.Core
                     int gridX = pivotX + x - offsetX;
                     int gridY = pivotY + y - offsetY;
                     if (gridX < 0 || gridX >= grid.width || gridY < 0 || gridY >= grid.height) continue;
-                    Cell cell = grid.cellArray[gridX, gridY];
+                    CityCell cell = grid.cellArray[gridX, gridY];
                     if (cell == null) continue;
                     int cellHeight = cell.height;
                     if (grid.terrainManager.GetHeightMap() != null)
@@ -359,7 +359,7 @@ namespace Territory.Core
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return;
 
-            Cell cell = grid.cellArray[x, y];
+            CityCell cell = grid.cellArray[x, y];
             if (cell == null) return;
 
             tile.transform.SetParent(cell.gameObject.transform);
@@ -430,7 +430,7 @@ namespace Territory.Core
         /// <summary>
         /// Sea-level tile sorting → renders behind all land content.
         /// </summary>
-        public int SetResortSeaLevelOrder(GameObject tile, Cell cell)
+        public int SetResortSeaLevelOrder(GameObject tile, CityCell cell)
         {
             int x = (int)cell.x;
             int y = (int)cell.y;

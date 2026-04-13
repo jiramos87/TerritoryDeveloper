@@ -275,7 +275,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
         {
             for (int y = 0; y < h; y++)
             {
-                Cell c = gridManager.GetCell(x, y);
+                CityCell c = gridManager.GetCell(x, y);
                 if (c != null && c.zoneType == Zone.ZoneType.Road)
                 {
                     Vector2Int pos = new Vector2Int(x, y);
@@ -303,7 +303,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
             if (isRoad) return ColorRoad;
         }
 
-        Cell cell = gridManager.GetCell(x, y);
+        CityCell cell = gridManager.GetCell(x, y);
         if (cell == null)
             return ColorGrass;
 
@@ -353,7 +353,7 @@ public class MiniMapController : MonoBehaviour, IPointerClickHandler
                     continue;
                 if (roadSet != null && roadSet.Contains(pos))
                     continue;
-                Cell cell = gridManager.GetCell(x, y);
+                CityCell cell = gridManager.GetCell(x, y);
                 if (cell == null) continue;
                 if (cell.GetZoneType() == Zone.ZoneType.Water)
                     continue;

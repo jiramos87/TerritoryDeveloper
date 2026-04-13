@@ -4,7 +4,7 @@ namespace Territory.Core
     /// Abstract base for all scale-typed cell classes (city, region, country).
     /// Carries only the scale-universal primitives shared by every cell kind.
     /// City-specific state (roads, buildings, zones, forests, water, cliffs, interstate,
-    /// desirability) lives on the concrete <see cref="Cell"/> subclass.
+    /// desirability) lives on the concrete <see cref="CityCell"/> subclass.
     /// </summary>
     public abstract class CellBase : UnityEngine.MonoBehaviour
     {

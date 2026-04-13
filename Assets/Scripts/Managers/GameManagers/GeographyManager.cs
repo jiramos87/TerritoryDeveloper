@@ -327,7 +327,7 @@ public class GeographyManager : MonoBehaviour
         {
             for (int y = 0; y < gridManager.height; y++)
             {
-                Cell cell = gridManager.GetCell(x, y);
+                CityCell cell = gridManager.GetCell(x, y);
                 if (cell == null) continue;
 
                 int count = 0;
@@ -498,12 +498,12 @@ public class GeographyManager : MonoBehaviour
         if (y < 0 || y >= height) return false;
 
         int westX = x - 1;
-        Cell westCell = gridManager.GetCell(westX, y);
+        CityCell westCell = gridManager.GetCell(westX, y);
         if (westCell == null || westCell.buildingSize <= 1) return false;
 
         GameObject pivotObj = gridManager.GetBuildingPivotCell(westCell);
         if (pivotObj == null) return false;
-        Cell pivotCell = pivotObj.GetComponent<Cell>();
+        CityCell pivotCell = pivotObj.GetComponent<CityCell>();
         if (pivotCell == null || pivotCell.buildingSize <= 1) return false;
 
         gridManager.GetBuildingFootprintOffset(pivotCell.buildingSize, out int offsetX, out int offsetY);
@@ -527,12 +527,12 @@ public class GeographyManager : MonoBehaviour
         if (x < 0 || x >= width - 1 || y < 0 || y >= height) return false;
 
         int northX = x + 1;
-        Cell northCell = gridManager.GetCell(northX, y);
+        CityCell northCell = gridManager.GetCell(northX, y);
         if (northCell == null || northCell.buildingSize <= 1) return false;
 
         GameObject pivotObj = gridManager.GetBuildingPivotCell(northCell);
         if (pivotObj == null) return false;
-        Cell pivotCell = pivotObj.GetComponent<Cell>();
+        CityCell pivotCell = pivotObj.GetComponent<CityCell>();
         if (pivotCell == null || pivotCell.buildingSize <= 1) return false;
 
         gridManager.GetBuildingFootprintOffset(pivotCell.buildingSize, out int offsetX, out int offsetY);
@@ -556,12 +556,12 @@ public class GeographyManager : MonoBehaviour
         if (x < 0 || x >= width || y < 0 || y >= height - 1) return false;
 
         int eastY = y + 1;
-        Cell eastCell = gridManager.GetCell(x, eastY);
+        CityCell eastCell = gridManager.GetCell(x, eastY);
         if (eastCell == null || eastCell.buildingSize <= 1) return false;
 
         GameObject pivotObj = gridManager.GetBuildingPivotCell(eastCell);
         if (pivotObj == null) return false;
-        Cell pivotCell = pivotObj.GetComponent<Cell>();
+        CityCell pivotCell = pivotObj.GetComponent<CityCell>();
         if (pivotCell == null || pivotCell.buildingSize <= 1) return false;
 
         gridManager.GetBuildingFootprintOffset(pivotCell.buildingSize, out int offsetX, out int offsetY);
@@ -583,7 +583,7 @@ public class GeographyManager : MonoBehaviour
         if (x < 0 || x >= width || y < 0 || y >= height) return int.MinValue;
 
         GameObject cellObj = gridManager.gridArray[x, y];
-        Cell cell = gridManager.GetCell(x, y);
+        CityCell cell = gridManager.GetCell(x, y);
         if (cell == null) return int.MinValue;
 
         int terrainOrder = terrainManager.CalculateTerrainSortingOrder(x, y, cell.height);
@@ -656,7 +656,7 @@ public class GeographyManager : MonoBehaviour
                 int gridY = pivotY + y - offsetY;
                 if (gridX < 0 || gridX >= width || gridY < 0 || gridY >= height) continue;
 
-                Cell cell = gridManager.GetCell(gridX, gridY);
+                CityCell cell = gridManager.GetCell(gridX, gridY);
                 if (cell == null) continue;
 
                 int cellHeight = cell.height;
@@ -734,11 +734,11 @@ public class GeographyManager : MonoBehaviour
             {
 
                 GameObject cell = gridManager.gridArray[x, y];
-                Cell cellComponent = gridManager.GetCell(x, y);
+                CityCell cellComponent = gridManager.GetCell(x, y);
 
                 if (cellComponent == null)
                 {
-                    DebugHelper.LogWarning($"Cell component missing at ({x}, {y})");
+                    DebugHelper.LogWarning($"CityCell component missing at ({x}, {y})");
                     continue;
                 }
 
@@ -953,7 +953,7 @@ public class GeographyManager : MonoBehaviour
                     return false;
                 if (gridManager != null && gridManager.gridArray != null)
                 {
-                    Cell cellComponent = gridManager.GetCell(x, y);
+                    CityCell cellComponent = gridManager.GetCell(x, y);
                     if (cellComponent != null && cellComponent.occupiedBuilding != null)
                         return false;
                 }
@@ -996,7 +996,7 @@ public class GeographyManager : MonoBehaviour
         {
             if (x >= 0 && x < gridManager.width && y >= 0 && y < gridManager.height)
             {
-                Cell cellComponent = gridManager.GetCell(x, y);
+                CityCell cellComponent = gridManager.GetCell(x, y);
 
                 if (cellComponent != null)
                 {

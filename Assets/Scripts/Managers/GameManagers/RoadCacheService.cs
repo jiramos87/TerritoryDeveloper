@@ -92,7 +92,7 @@ namespace Territory.Core
             {
                 for (int y = 0; y < grid.height; y++)
                 {
-                    Cell c = grid.GetCell(x, y);
+                    CityCell c = grid.GetCell(x, y);
                     if (c != null && c.zoneType == Zone.ZoneType.Road)
                         cachedRoadPositions.Add(new Vector2Int(x, y));
                 }
@@ -118,7 +118,7 @@ namespace Territory.Core
         private bool IsExpandableNeighborForRoadFrontier(int nx, int ny)
         {
             if (nx < 0 || nx >= grid.width || ny < 0 || ny >= grid.height) return false;
-            Cell n = grid.GetCell(nx, ny);
+            CityCell n = grid.GetCell(nx, ny);
             if (n == null) return false;
             if (n.zoneType == Zone.ZoneType.Grass || n.HasForest() || n.GetCellInstanceHeight() == 0)
                 return true;
@@ -169,7 +169,7 @@ namespace Territory.Core
                     int extX = e.x + extDirX;
                     int extY = e.y + extDirY;
                     if (extX < 0 || extX >= grid.width || extY < 0 || extY >= grid.height) continue;
-                    Cell extCell = grid.GetCell(extX, extY);
+                    CityCell extCell = grid.GetCell(extX, extY);
                     if (extCell == null) continue;
                     bool extOk = extCell.GetCellInstanceHeight() == 0
                         || extCell.zoneType == Zone.ZoneType.Grass
@@ -284,7 +284,7 @@ namespace Territory.Core
                 int nx = gx + Dx[i], ny = gy + Dy[i];
                 if (nx >= 0 && nx < grid.width && ny >= 0 && ny < grid.height)
                 {
-                    Cell c = grid.GetCell(nx, ny);
+                    CityCell c = grid.GetCell(nx, ny);
                     if (c != null && IsZoneableNeighbor(c, nx, ny))
                         count++;
                 }
@@ -293,7 +293,7 @@ namespace Territory.Core
         }
 
         /// <summary>True if this neighbor cell is valid for zoning (Grass, Forest, or any slope including diagonal and corner).</summary>
-        public bool IsZoneableNeighbor(Cell c, int x, int y)
+        public bool IsZoneableNeighbor(CityCell c, int x, int y)
         {
             if (c == null) return false;
             if (c.zoneType == Zone.ZoneType.Grass || c.HasForest()) return true;
@@ -316,7 +316,7 @@ namespace Territory.Core
                 int nx = x + Dx[i], ny = y + Dy[i];
                 if (nx >= 0 && nx < grid.width && ny >= 0 && ny < grid.height)
                 {
-                    Cell c = grid.GetCell(nx, ny);
+                    CityCell c = grid.GetCell(nx, ny);
                     if (c != null && c.zoneType == Zone.ZoneType.Road)
                         return true;
                 }

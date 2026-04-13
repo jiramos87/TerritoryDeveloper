@@ -302,7 +302,7 @@ public class AutoRoadBuilder : MonoBehaviour
         for (int i = 0; i < maxLen; i++)
         {
             if (x < 0 || x >= w || y < 0 || y >= h) break;
-            Cell c = gridManager.GetCell(x, y);
+            CityCell c = gridManager.GetCell(x, y);
             if (c != null && c.zoneType == Zone.ZoneType.Road) break;
             if (!IsCellPlaceableForRoad(x, y)) break;
             if (!IsSuitableForRoad(x, y, dir)) break;
@@ -382,7 +382,7 @@ public class AutoRoadBuilder : MonoBehaviour
             int n = 0;
             for (int i = 0; i < r.Count; i++)
             {
-                Cell c = gridManager.GetCell(r[i].gridPos.x, r[i].gridPos.y);
+                CityCell c = gridManager.GetCell(r[i].gridPos.x, r[i].gridPos.y);
                 if (c != null && c.zoneType != Zone.ZoneType.Road)
                     n++;
             }
@@ -395,7 +395,7 @@ public class AutoRoadBuilder : MonoBehaviour
             for (int i = 0; i < expandedPath.Count; i++)
             {
                 int x = (int)expandedPath[i].x, y = (int)expandedPath[i].y;
-                Cell c = gridManager.GetCell(x, y);
+                CityCell c = gridManager.GetCell(x, y);
                 if (c != null && c.zoneType != Zone.ZoneType.Road)
                     n++;
             }
@@ -441,7 +441,7 @@ public class AutoRoadBuilder : MonoBehaviour
 
             for (int i = 0; i < resolved.Count; i++)
             {
-                Cell c = gridManager.GetCell(resolved[i].gridPos.x, resolved[i].gridPos.y);
+                CityCell c = gridManager.GetCell(resolved[i].gridPos.x, resolved[i].gridPos.y);
                 if (c != null && c.zoneType == Zone.ZoneType.Road)
                     continue;
                 PlaceRoadTileInBatch(resolved[i]);
@@ -675,7 +675,7 @@ public class AutoRoadBuilder : MonoBehaviour
                 Vector2Int cell = new Vector2Int(anchor.x + perpSign * j * perp.x, anchor.y + perpSign * j * perp.y);
                 if (cell.x < 0 || cell.x >= w || cell.y < 0 || cell.y >= h) continue;
 
-                Cell c = gridManager.GetCell(cell.x, cell.y);
+                CityCell c = gridManager.GetCell(cell.x, cell.y);
                 if (c == null) continue;
                 if (c.GetCellInstanceHeight() == 0) continue;
                 string bt = c.GetBuildingType();
@@ -702,7 +702,7 @@ public class AutoRoadBuilder : MonoBehaviour
         foreach (Vector2Int pos in toPlace)
         {
             if (budgetRemaining <= 0) break;
-            Cell c = gridManager.GetCell(pos.x, pos.y);
+            CityCell c = gridManager.GetCell(pos.x, pos.y);
             if (c == null || c.zoneType == Zone.ZoneType.Road)
             {
                 ExpropriatedCellsPendingRoad.Remove(pos);
@@ -765,7 +765,7 @@ public class AutoRoadBuilder : MonoBehaviour
                 break;
             if (!IsSuitableForRoad(x, y, dir))
                 break;
-            Cell c = gridManager.GetCell(x, y);
+            CityCell c = gridManager.GetCell(x, y);
             bool isWater = c != null && c.GetCellInstanceHeight() == 0;
             if (isWater)
             {
@@ -774,7 +774,7 @@ public class AutoRoadBuilder : MonoBehaviour
                 {
                     int nx = x + k * dir.x, ny = y + k * dir.y;
                     if (nx < 0 || nx >= w || ny < 0 || ny >= h) break;
-                    Cell nc = gridManager.GetCell(nx, ny);
+                    CityCell nc = gridManager.GetCell(nx, ny);
                     if (nc == null || nc.GetCellInstanceHeight() == 0) continue;
                     if (!IsCellPlaceableForRoad(nx, ny) || !IsSuitableForRoad(nx, ny, dir)) continue;
                     landStep = k;
@@ -808,7 +808,7 @@ public class AutoRoadBuilder : MonoBehaviour
             x += dir.x;
             y += dir.y;
             if (x < 0 || x >= w || y < 0 || y >= h) break;
-            Cell c = gridManager.GetCell(x, y);
+            CityCell c = gridManager.GetCell(x, y);
             if (c != null)
             {
                 sum += c.desirability;
@@ -940,7 +940,7 @@ public class AutoRoadBuilder : MonoBehaviour
                     if (cell.x < 0 || cell.x >= w || cell.y < 0 || cell.y >= h) continue;
                     if (roadSet.Contains(cell)) continue;
 
-                    Cell c = gridManager.GetCell(cell.x, cell.y);
+                    CityCell c = gridManager.GetCell(cell.x, cell.y);
                     if (c == null) return false;
                     if (c.GetCellInstanceHeight() == 0) continue;
                     if (c.zoneType == Zone.ZoneType.Grass || c.HasForest()) return false;
@@ -966,7 +966,7 @@ public class AutoRoadBuilder : MonoBehaviour
                 {
                     int nx = x + rx, ny = y + ry;
                     if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
-                    Cell c = gridManager.GetCell(nx, ny);
+                    CityCell c = gridManager.GetCell(nx, ny);
                     if (c != null && (c.zoneType == Zone.ZoneType.Grass || c.HasForest()))
                         count++;
                 }
@@ -1006,7 +1006,7 @@ public class AutoRoadBuilder : MonoBehaviour
     /// </summary>
     private bool IsCellPlaceableForRoad(int x, int y)
     {
-        Cell c = gridManager.GetCell(x, y);
+        CityCell c = gridManager.GetCell(x, y);
         if (c == null || c.zoneType == Zone.ZoneType.Road) return false;
         if (gridManager.IsCellOccupiedByBuilding(x, y) || c.isInterstate) return false;
         bool isLandPlaceable = AutoSimulationRoadRules.IsAutoRoadLandCell(gridManager, x, y);
@@ -1019,7 +1019,7 @@ public class AutoRoadBuilder : MonoBehaviour
     /// <summary>Return short reason cell not placeable for road (debug logs).</summary>
     private string GetCellPlaceableRejectReason(int x, int y)
     {
-        Cell c = gridManager.GetCell(x, y);
+        CityCell c = gridManager.GetCell(x, y);
         if (c == null) return "null cell";
         if (c.zoneType == Zone.ZoneType.Road) return "already road";
         if (gridManager.IsCellOccupiedByBuilding(x, y)) return "building";
@@ -1041,7 +1041,7 @@ public class AutoRoadBuilder : MonoBehaviour
         {
             int nx = roadPos.x + Dx[i], ny = roadPos.y + Dy[i];
             if (nx < 0 || nx >= gridManager.width || ny < 0 || ny >= gridManager.height) continue;
-            Cell c = gridManager.GetCell(nx, ny);
+            CityCell c = gridManager.GetCell(nx, ny);
             if (c != null && (c.zoneType == Zone.ZoneType.Grass || c.HasForest())) count++;
         }
         return count;
@@ -1050,7 +1050,7 @@ public class AutoRoadBuilder : MonoBehaviour
     /// <summary>True if edge (road cell) on interstate. Used to relax minLength for interstate connections.</summary>
     private bool IsEdgeOnInterstate(Vector2Int edge)
     {
-        Cell c = gridManager.GetCell(edge.x, edge.y);
+        CityCell c = gridManager.GetCell(edge.x, edge.y);
         return c != null && c.isInterstate;
     }
 
@@ -1059,7 +1059,7 @@ public class AutoRoadBuilder : MonoBehaviour
     {
         int bx = tip.x + len * dir.x, by = tip.y + len * dir.y;
         if (bx < 0 || bx >= gridManager.width || by < 0 || by >= gridManager.height) return false;
-        Cell c = gridManager.GetCell(bx, by);
+        CityCell c = gridManager.GetCell(bx, by);
         if (c == null) return false;
         if (c.GetCellInstanceHeight() == 0) return true;
         if (terrainManager == null) return false;
@@ -1072,7 +1072,7 @@ public class AutoRoadBuilder : MonoBehaviour
     /// </summary>
     private bool IsSuitableForRoad(int x, int y, Vector2Int streetDir)
     {
-        Cell c = gridManager.GetCell(x, y);
+        CityCell c = gridManager.GetCell(x, y);
         if (c != null && c.GetCellInstanceHeight() == 0)
             return true;
         if (terrainManager != null && terrainManager.IsWaterSlopeCell(x, y))

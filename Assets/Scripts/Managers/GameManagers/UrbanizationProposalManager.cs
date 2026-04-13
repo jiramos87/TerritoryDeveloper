@@ -194,7 +194,7 @@ public class UrbanizationProposalManager : MonoBehaviour
             for (int ox = 0; ox < proposalLayoutSize && allGrass; ox++)
                 for (int oy = 0; oy < proposalLayoutSize && allGrass; oy++)
                 {
-                    Cell c = gridManager.GetCell(ax + ox, ay + oy);
+                    CityCell c = gridManager.GetCell(ax + ox, ay + oy);
                     if (c == null || c.zoneType != Zone.ZoneType.Grass) allGrass = false;
                 }
             if (allGrass) return new Vector2Int(ax, ay);
@@ -224,7 +224,7 @@ public class UrbanizationProposalManager : MonoBehaviour
         {
             Vector2Int world = proposal.AnchorPosition + cell.Offset;
             if (world.x < 0 || world.x >= gridManager.width || world.y < 0 || world.y >= gridManager.height) continue;
-            Cell c = gridManager.GetCell(world.x, world.y);
+            CityCell c = gridManager.GetCell(world.x, world.y);
             if (c == null) continue;
             Vector3 worldPos = c.transformPosition;
             GameObject prefab = cell.ZoneType == Zone.ZoneType.Road
@@ -247,7 +247,7 @@ public class UrbanizationProposalManager : MonoBehaviour
         proposalUIs.Add(ui);
         var controller = ui.GetComponent<ProposalUIController>();
         if (controller != null) controller.SetProposal(proposal, this);
-        Cell anchorCell = gridManager.GetCell(proposal.AnchorPosition.x, proposal.AnchorPosition.y);
+        CityCell anchorCell = gridManager.GetCell(proposal.AnchorPosition.x, proposal.AnchorPosition.y);
         if (anchorCell != null)
         {
             Vector2 pos = anchorCell.transformPosition;

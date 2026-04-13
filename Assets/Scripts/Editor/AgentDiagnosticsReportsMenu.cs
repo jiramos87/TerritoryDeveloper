@@ -173,7 +173,7 @@ public static class AgentDiagnosticsReportsMenu
         {
             sb.AppendLine("## Seed cell");
             sb.AppendLine();
-            sb.AppendLine("Could not map selection to a **Cell**; using grid origin `(0,0)` if in bounds.");
+            sb.AppendLine("Could not map selection to a **CityCell**; using grid origin `(0,0)` if in bounds.");
         }
 
         List<Vector2Int> cells = CollectMooreExpansion(seedX, seedY, grid.width, grid.height, MaxSortingDebugCells);
@@ -195,12 +195,12 @@ public static class AgentDiagnosticsReportsMenu
 
     static void AppendCellSortingSection(StringBuilder sb, GridManager grid, TerrainManager terrain, int x, int y)
     {
-        Cell cell = grid.GetCell(x, y);
-        sb.AppendLine($"## Cell ({x}, {y})");
+        CityCell cell = grid.GetCell(x, y);
+        sb.AppendLine($"## CityCell ({x}, {y})");
         sb.AppendLine();
         if (cell == null)
         {
-            sb.AppendLine("- (no **Cell** at this coordinate)");
+            sb.AppendLine("- (no **CityCell** at this coordinate)");
             sb.AppendLine();
             return;
         }
@@ -216,7 +216,7 @@ public static class AgentDiagnosticsReportsMenu
         int heightOrder = hSample * TerrainManager.HEIGHT_MULTIPLIER;
         int terrainBase = TerrainManager.TERRAIN_BASE_ORDER + depthOrder + heightOrder;
 
-        sb.AppendLine($"- **Cell.height:** {cell.height}");
+        sb.AppendLine($"- **CityCell.height:** {cell.height}");
         if (hMap >= 0)
             sb.AppendLine($"- **HeightMap** height at cell: {hMap}");
         sb.AppendLine($"- **Terrain base** (`CalculateTerrainSortingOrder`): {terrain.CalculateTerrainSortingOrder(x, y, hSample)}");
@@ -249,7 +249,7 @@ public static class AgentDiagnosticsReportsMenu
     static string BuildContextNotes()
     {
         return Truncate(
-            "Sample rule: seed from **Cell** on selected **GameObject** (or ancestor), else (0,0). " +
+            "Sample rule: seed from **CityCell** on selected **GameObject** (or ancestor), else (0,0). " +
             "Then **Moore neighborhood** expansion (Chebyshev rings) up to max cells. " +
             "Limits: max_context_cells=" + MaxContextCells +
             ", max_sorting_debug_cells=" + MaxSortingDebugCells +
@@ -336,7 +336,7 @@ public static class AgentDiagnosticsReportsMenu
 
         foreach (Vector2Int p in coords)
         {
-            Cell cell = grid.GetCell(p.x, p.y);
+            CityCell cell = grid.GetCell(p.x, p.y);
             if (cell == null)
                 continue;
 
@@ -386,7 +386,7 @@ public static class AgentDiagnosticsReportsMenu
         Transform t = go.transform;
         while (t != null)
         {
-            var cell = t.GetComponent<Cell>();
+            var cell = t.GetComponent<CityCell>();
             if (cell != null && cell.x >= 0 && cell.y >= 0 && cell.x < grid.width && cell.y < grid.height)
             {
                 sx = cell.x;
@@ -434,7 +434,7 @@ public static class AgentDiagnosticsReportsMenu
         return result;
     }
 
-    static string[] CollectCellChildNames(Cell cell)
+    static string[] CollectCellChildNames(CityCell cell)
     {
         if (cell == null || cell.gameObject == null)
             return Array.Empty<string>();

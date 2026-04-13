@@ -62,7 +62,7 @@ public class GridManager : MonoBehaviour, IGridManager
     public float halfWidth;
     public float halfHeight;
     public GameObject[,] gridArray;
-    public Cell[,] cellArray;
+    public CityCell[,] cellArray;
     public Vector2 mouseGridPosition;
     /// <summary>Last grid cell clicked (left/right). (-1,-1) if none.</summary>
     public Vector2 selectedPoint = new Vector2(-1, -1);
@@ -216,7 +216,7 @@ public class GridManager : MonoBehaviour, IGridManager
         }
 
         gridArray = new GameObject[width, height];
-        cellArray = new Cell[width, height];
+        cellArray = new CityCell[width, height];
 
         chunksX = Mathf.CeilToInt((float)width / chunkSize);
         chunksY = Mathf.CeilToInt((float)height / chunkSize);
@@ -256,7 +256,7 @@ public class GridManager : MonoBehaviour, IGridManager
                     cellData.prefabName = tilePrefab.name;
                 }
 
-                Cell cellComponent = gridCell.AddComponent<Cell>();
+                CityCell cellComponent = gridCell.AddComponent<CityCell>();
                 cellComponent.SetCellData(cellData);
 
                 gridArray[x, y] = gridCell;
@@ -323,7 +323,7 @@ public class GridManager : MonoBehaviour, IGridManager
 
             // USE: Height-aware grid position calculation
             // mouseGridPosition = GetGridPosition(worldPoint);
-            Cell mouseGridCell = GetMouseGridCell(worldPoint);
+            CityCell mouseGridCell = GetMouseGridCell(worldPoint);
             if (mouseGridCell == null)
             {
                 return;
@@ -386,7 +386,7 @@ public class GridManager : MonoBehaviour, IGridManager
     }
     #endregion
 
-    #region Cell Queries
+    #region CityCell Queries
     /// <summary>
     /// True if grid pos inside grid bounds.
     /// </summary>
@@ -407,7 +407,7 @@ public class GridManager : MonoBehaviour, IGridManager
     {
         if (x < 0 || x >= width || y < 0 || y >= height)
             return false;
-        Cell cell = cellArray[x, y];
+        CityCell cell = cellArray[x, y];
         if (cell == null) return false;
         return cell.occupiedBuilding != null || IsZoneTypeBuilding(cell.zoneType);
     }
@@ -440,7 +440,7 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <summary>
     /// Return pivot cell of multi-cell building. If given cell inside footprint, find + return pivot (isPivot=true).
     /// </summary>
-    public GameObject GetBuildingPivotCell(Cell cell)
+    public GameObject GetBuildingPivotCell(CityCell cell)
     {
         if (cell == null)
             return null;
@@ -459,7 +459,7 @@ public class GridManager : MonoBehaviour, IGridManager
                 int py = cy - j;
                 if (px >= 0 && px < width && py >= 0 && py < height)
                 {
-                    Cell pivotCandidate = cellArray[px, py];
+                    CityCell pivotCandidate = cellArray[px, py];
                     if (pivotCandidate != null && pivotCandidate.isPivot)
                         return gridArray[px, py];
                 }
@@ -486,7 +486,7 @@ public class GridManager : MonoBehaviour, IGridManager
     void HandleBulldozerClick(Vector2 gridPosition)
     {
         GameObject cell = gridArray[(int)gridPosition.x, (int)gridPosition.y];
-        Cell cellComponent = cellArray[(int)gridPosition.x, (int)gridPosition.y];
+        CityCell cellComponent = cellArray[(int)gridPosition.x, (int)gridPosition.y];
         Zone.ZoneType zoneType = cellComponent.zoneType;
 
         if (!CanBulldoze(cellComponent))
@@ -497,7 +497,7 @@ public class GridManager : MonoBehaviour, IGridManager
         HandleBulldozeTile(zoneType, cell);
     }
 
-    void RestoreCellAttributes(Cell cellComponent)
+    void RestoreCellAttributes(CityCell cellComponent)
     {
         cellComponent.buildingType = null;
         cellComponent.powerPlant = null;
@@ -516,7 +516,7 @@ public class GridManager : MonoBehaviour, IGridManager
 
     void RestoreTile(GameObject cell)
     {
-        Cell cellComponent = cell.GetComponent<Cell>();
+        CityCell cellComponent = cell.GetComponent<CityCell>();
 
         // Ensure only one grass child: remove any existing grass tiles before adding the new one
         List<Transform> toDestroy = new List<Transform>();
@@ -557,7 +557,7 @@ public class GridManager : MonoBehaviour, IGridManager
 
     void BulldozeTile(GameObject cell)
     {
-        Cell cellComponent = cell.GetComponent<Cell>();
+        CityCell cellComponent = cell.GetComponent<CityCell>();
 
         // Capture sorting order BEFORE demolition resets it
         int preSortingOrder = cellComponent.sortingOrder;
@@ -578,7 +578,7 @@ public class GridManager : MonoBehaviour, IGridManager
 
     void BulldozeBuildingTiles(GameObject cell, Zone.ZoneType zoneType, bool showAnimation = true)
     {
-        Cell cellComponent = cell.GetComponent<Cell>();
+        CityCell cellComponent = cell.GetComponent<CityCell>();
 
         int buildingSize = cellComponent.buildingSize;
 
@@ -603,7 +603,7 @@ public class GridManager : MonoBehaviour, IGridManager
             GameObject pivotCellObj = cellComponent.isPivot ? cell : GetBuildingPivotCell(cellComponent);
             if (pivotCellObj == null)
                 pivotCellObj = cell;
-            Cell pivotCell = pivotCellObj.GetComponent<Cell>();
+            CityCell pivotCell = pivotCellObj.GetComponent<CityCell>();
 
             GetBuildingFootprintOffset(buildingSize, out int offsetX, out int offsetY);
 
@@ -640,7 +640,7 @@ public class GridManager : MonoBehaviour, IGridManager
     // Create a version without animation for multi-tile cleanup
     void BulldozeTileWithoutAnimation(GameObject cell)
     {
-        Cell cellComponent = cell.GetComponent<Cell>();
+        CityCell cellComponent = cell.GetComponent<CityCell>();
 
         if (cellComponent.forestType != Forest.ForestType.None && forestManager != null)
             forestManager.RemoveForestFromCell((int)cellComponent.x, (int)cellComponent.y);
@@ -658,7 +658,7 @@ public class GridManager : MonoBehaviour, IGridManager
             roadManager.UpdateAdjacentRoadPrefabsAt(new Vector2(gx, gy));
     }
 
-    void HandleBuildingStatsReset(Cell cellComponent, Zone.ZoneType zoneType)
+    void HandleBuildingStatsReset(CityCell cellComponent, Zone.ZoneType zoneType)
     {
         string buildingType = cellComponent.GetBuildingType();
 
@@ -685,7 +685,7 @@ public class GridManager : MonoBehaviour, IGridManager
 
     void HandleBulldozeTile(Zone.ZoneType zoneType, GameObject cell, bool showAnimation = true)
     {
-        Cell cellComponent = cell.GetComponent<Cell>();
+        CityCell cellComponent = cell.GetComponent<CityCell>();
 
         HandleBuildingStatsReset(cellComponent, zoneType);
 
@@ -702,7 +702,7 @@ public class GridManager : MonoBehaviour, IGridManager
         int gy = (int)gridPosition.y;
         if (gx < 0 || gx >= width || gy < 0 || gy >= height) return false;
         GameObject cell = gridArray[gx, gy];
-        Cell cellComponent = cellArray[gx, gy];
+        CityCell cellComponent = cellArray[gx, gy];
         if (cellComponent == null || !CanBulldoze(cellComponent)) return false;
 
         Zone.ZoneType zoneType = cellComponent.zoneType;
@@ -715,7 +715,7 @@ public class GridManager : MonoBehaviour, IGridManager
         return true;
     }
 
-    bool CanBulldoze(Cell cell)
+    bool CanBulldoze(CityCell cell)
     {
         if (cell == null)
         {
@@ -766,7 +766,7 @@ public class GridManager : MonoBehaviour, IGridManager
     {
         if (Input.GetMouseButtonDown(0))
         {
-            Cell cellComponent = cellArray[(int)gridPosition.x, (int)gridPosition.y];
+            CityCell cellComponent = cellArray[(int)gridPosition.x, (int)gridPosition.y];
             uiManager.ShowTileDetails(cellComponent);
         }
     }
@@ -888,11 +888,11 @@ public class GridManager : MonoBehaviour, IGridManager
     }
     #endregion
 
-    #region Cell Destruction and Attributes
+    #region CityCell Destruction and Attributes
     /// <summary>
     /// Destroy all non-terrain children of cell at grid pos. Convenience overload, excludes nothing.
     /// </summary>
-    /// <param name="cell">Cell GameObject whose children destroyed.</param>
+    /// <param name="cell">CityCell GameObject whose children destroyed.</param>
     /// <param name="gridPosition">Grid coords (for zone list bookkeeping).</param>
     public void DestroyCellChildren(GameObject cell, Vector2 gridPosition)
     {
@@ -954,7 +954,7 @@ public class GridManager : MonoBehaviour, IGridManager
     {
         if (cell.transform.childCount == 0) return;
 
-        Cell cellComponent = cellArray[(int)gridPosition.x, (int)gridPosition.y];
+        CityCell cellComponent = cellArray[(int)gridPosition.x, (int)gridPosition.y];
         GameObject forestObject = (cellComponent != null && cellComponent.HasForest()) ? cellComponent.forestObject : null;
 
         List<Transform> toDestroy = new List<Transform>();
@@ -981,12 +981,12 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <summary>
     /// Overwrite cell zone type, population, power consumption, happiness, prefab, building size.
     /// </summary>
-    /// <param name="cellComponent">Cell to update.</param>
+    /// <param name="cellComponent">CityCell to update.</param>
     /// <param name="selectedZoneType">New zone type.</param>
     /// <param name="zoneAttributes">Attrs (population, power, happiness) to apply.</param>
     /// <param name="prefab">Prefab GameObject for this zone.</param>
     /// <param name="buildingSize">Footprint size (1 = single-cell).</param>
-    public void UpdateCellAttributes(Cell cellComponent, Zone.ZoneType selectedZoneType, ZoneAttributes zoneAttributes, GameObject prefab, int buildingSize)
+    public void UpdateCellAttributes(CityCell cellComponent, Zone.ZoneType selectedZoneType, ZoneAttributes zoneAttributes, GameObject prefab, int buildingSize)
     {
         cellComponent.zoneType = selectedZoneType;
         cellComponent.population = zoneAttributes.Population;
@@ -1062,9 +1062,9 @@ public class GridManager : MonoBehaviour, IGridManager
     /// Set sorting order for sea-level tile → renders behind all land content.
     /// </summary>
     /// <param name="tile">Tile GameObject to update.</param>
-    /// <param name="cell">Cell this tile belongs to.</param>
+    /// <param name="cell">CityCell this tile belongs to.</param>
     /// <returns>Computed sea-level sorting order.</returns>
-    public int SetResortSeaLevelOrder(GameObject tile, Cell cell)
+    public int SetResortSeaLevelOrder(GameObject tile, CityCell cell)
         => sortingService.SetResortSeaLevelOrder(tile, cell);
     #endregion
 
@@ -1112,7 +1112,7 @@ public class GridManager : MonoBehaviour, IGridManager
     /// </summary>
     private int GetTerrainHeightForGridCell(int gridX, int gridY)
     {
-        Cell c = GetCell(gridX, gridY);
+        CityCell c = GetCell(gridX, gridY);
         return c != null ? c.GetCellInstanceHeight() : 1;
     }
 
@@ -1168,7 +1168,7 @@ public class GridManager : MonoBehaviour, IGridManager
     /// If none, uses first child with SpriteRenderer (e.g. slope prefab) → hit-test works at all heights.
     /// Fallback: rect from cell.transformPosition + tile size when no such child.
     /// </summary>
-    private bool TryGetCellBaseTileScreenBounds(Cell cell, Camera cam, out Rect screenRect)
+    private bool TryGetCellBaseTileScreenBounds(CityCell cell, Camera cam, out Rect screenRect)
     {
         screenRect = new Rect(0, 0, 0, 0);
         if (cell == null || cam == null) return false;
@@ -1241,8 +1241,8 @@ public class GridManager : MonoBehaviour, IGridManager
     /// </summary>
     /// <param name="worldPoint">World-space position.</param>
     /// <param name="gridPos">Initial grid pos estimate (from GetGridPosition).</param>
-    /// <returns>Cell whose base tile contains mouse, or null if none.</returns>
-    public Cell GetCellFromWorldPoint(Vector2 worldPoint, Vector2 gridPos)
+    /// <returns>CityCell whose base tile contains mouse, or null if none.</returns>
+    public CityCell GetCellFromWorldPoint(Vector2 worldPoint, Vector2 gridPos)
     {
         if (cachedCamera == null) cachedCamera = Camera.main;
         Camera cam = cachedCamera;
@@ -1252,18 +1252,18 @@ public class GridManager : MonoBehaviour, IGridManager
         int gridY = Mathf.Clamp(Mathf.RoundToInt(gridPos.y), 0, Mathf.Max(0, height - 1));
 
         // 9 candidate cells: center + 8 neighbors (3x3)
-        List<Cell> candidates = new List<Cell>();
+        List<CityCell> candidates = new List<CityCell>();
         int[] dx = { 0, 1, -1, 0, 0, 1, 1, -1, -1 };
         int[] dy = { 0, 0, 0, 1, -1, 1, -1, 1, -1 };
         for (int i = 0; i < 9; i++)
         {
-            Cell c = GetCell(gridX + dx[i], gridY + dy[i]);
+            CityCell c = GetCell(gridX + dx[i], gridY + dy[i]);
             if (c != null) candidates.Add(c);
         }
 
         Vector2 mouseScreen = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-        List<Cell> rectHits = new List<Cell>();
-        foreach (Cell cell in candidates)
+        List<CityCell> rectHits = new List<CityCell>();
+        foreach (CityCell cell in candidates)
         {
             if (!TryGetCellBaseTileScreenBounds(cell, cam, out Rect screenRect))
                 continue;
@@ -1271,7 +1271,7 @@ public class GridManager : MonoBehaviour, IGridManager
                 rectHits.Add(cell);
         }
 
-        Cell chosen = null;
+        CityCell chosen = null;
         if (rectHits.Count == 1)
         {
             chosen = rectHits[0];
@@ -1279,10 +1279,10 @@ public class GridManager : MonoBehaviour, IGridManager
         else if (rectHits.Count > 1)
         {
             chosen = PickCellHitClosestOnScreen(mouseScreen, rectHits, cam);
-            Cell refineHit = null;
+            CityCell refineHit = null;
             for (int i = 0; i < rectHits.Count; i++)
             {
-                Cell c = rectHits[i];
+                CityCell c = rectHits[i];
                 if (c != null && c.x == gridX && c.y == gridY)
                 {
                     refineHit = c;
@@ -1309,7 +1309,7 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <summary>
     /// Squared screen-space distance from <paramref name="mouseScreen"/> to cell world center projected through <paramref name="cam"/>.
     /// </summary>
-    float GetCellScreenDistanceSqToMouse(Cell cell, Vector2 mouseScreen, Camera cam)
+    float GetCellScreenDistanceSqToMouse(CityCell cell, Vector2 mouseScreen, Camera cam)
     {
         if (cell == null || cam == null)
             return float.MaxValue;
@@ -1322,20 +1322,20 @@ public class GridManager : MonoBehaviour, IGridManager
 
     /// <summary>
     /// Multiple cells' screen rects contain cursor (isometric overlap) → pick one whose elevated
-    /// world center projects closest to mouse. Ties break by higher <see cref="Cell.sortingOrder"/>.
+    /// world center projects closest to mouse. Ties break by higher <see cref="CityCell.sortingOrder"/>.
     /// </summary>
-    private Cell PickCellHitClosestOnScreen(Vector2 mouseScreen, List<Cell> hits, Camera cam)
+    private CityCell PickCellHitClosestOnScreen(Vector2 mouseScreen, List<CityCell> hits, Camera cam)
     {
         if (hits == null || hits.Count == 0 || cam == null)
             return null;
 
-        Cell best = null;
+        CityCell best = null;
         float bestDistSq = float.MaxValue;
         int bestOrder = int.MinValue;
         const float tiePixels = 4f;
         float tieEpsSq = tiePixels * tiePixels;
 
-        foreach (Cell cell in hits)
+        foreach (CityCell cell in hits)
         {
             if (cell == null)
                 continue;
@@ -1360,17 +1360,17 @@ public class GridManager : MonoBehaviour, IGridManager
     }
 
     /// <summary>
-    /// Cell whose screen-space center closest to mouse position.
+    /// CityCell whose screen-space center closest to mouse position.
     /// Fallback when no cell's screen rect contains mouse (e.g. gaps between insets).
     /// </summary>
-    private Cell GetClosestCellByScreenDistance(Vector2 mouseScreen, List<Cell> candidates, Camera cam)
+    private CityCell GetClosestCellByScreenDistance(Vector2 mouseScreen, List<CityCell> candidates, Camera cam)
     {
         if (cam == null || candidates == null || candidates.Count == 0) return null;
 
-        Cell closest = null;
+        CityCell closest = null;
         float minDistSq = float.MaxValue;
 
-        foreach (Cell cell in candidates)
+        foreach (CityCell cell in candidates)
         {
             Vector2 worldCenter = GetCellWorldPosition(cell);
             Vector3 screenCenter = cam.WorldToScreenPoint(new Vector3(worldCenter.x, worldCenter.y, 0f));
@@ -1395,7 +1395,7 @@ public class GridManager : MonoBehaviour, IGridManager
     {
         Vector2 gridPos = RefineGridPositionForTerrainHeight(mouseWorldPoint);
 
-        Cell cell = GetCellFromWorldPoint(mouseWorldPoint, gridPos);
+        CityCell cell = GetCellFromWorldPoint(mouseWorldPoint, gridPos);
         if (cell == null)
         {
             return gridPos;
@@ -1407,11 +1407,11 @@ public class GridManager : MonoBehaviour, IGridManager
     }
 
     /// <summary>
-    /// Cell under mouse via screen-space hit testing. Closest-cell fallback when no rect contains mouse.
+    /// CityCell under mouse via screen-space hit testing. Closest-cell fallback when no rect contains mouse.
     /// </summary>
     /// <param name="mouseWorldPoint">Mouse world-space position.</param>
-    /// <returns>Cell under mouse, or null if outside grid.</returns>
-    public Cell GetMouseGridCell(Vector2 mouseWorldPoint)
+    /// <returns>CityCell under mouse, or null if outside grid.</returns>
+    public CityCell GetMouseGridCell(Vector2 mouseWorldPoint)
     {
         Vector2 gridPos = RefineGridPositionForTerrainHeight(mouseWorldPoint);
         return GetCellFromWorldPoint(mouseWorldPoint, gridPos);
@@ -1444,7 +1444,7 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <returns>World-space Vector2.</returns>
     public Vector2 GetWorldPosition(int gridX, int gridY)
     {
-        Cell cell = cellArray[gridX, gridY];
+        CityCell cell = cellArray[gridX, gridY];
         int height = cell.GetCellInstanceHeight();
         return GetWorldPositionVector(gridX, gridY, height);
     }
@@ -1452,9 +1452,9 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <summary>
     /// World-space pos of cell, accounting for terrain height.
     /// </summary>
-    /// <param name="cell">Cell to get pos for.</param>
+    /// <param name="cell">CityCell to get pos for.</param>
     /// <returns>World-space Vector2.</returns>
-    public Vector2 GetCellWorldPosition(Cell cell)
+    public Vector2 GetCellWorldPosition(CityCell cell)
     {
         int height = cell.GetCellInstanceHeight();
         return GetWorldPositionVector(cell.x, cell.y, height);
@@ -1466,7 +1466,7 @@ public class GridManager : MonoBehaviour, IGridManager
     /// </summary>
     public Vector2 GetBuildingPlacementWorldPosition(Vector2 gridPos, int buildingSize)
     {
-        Cell pivotCell = cellArray[(int)gridPos.x, (int)gridPos.y];
+        CityCell pivotCell = cellArray[(int)gridPos.x, (int)gridPos.y];
         if (buildingSize <= 1)
             return pivotCell.transformPosition;
 
@@ -1481,7 +1481,7 @@ public class GridManager : MonoBehaviour, IGridManager
                 int gridY = (int)gridPos.y + y - offsetY;
                 if (gridX >= 0 && gridX < width && gridY >= 0 && gridY < height)
                 {
-                    Cell c = cellArray[gridX, gridY];
+                    CityCell c = cellArray[gridX, gridY];
                     sum += GetCellWorldPosition(c);
                     count++;
                 }
@@ -1494,7 +1494,7 @@ public class GridManager : MonoBehaviour, IGridManager
     /// GameObject for grid cell at pos, or null if out of bounds.
     /// </summary>
     /// <param name="gridPos">Grid coords.</param>
-    /// <returns>Cell GameObject, or null.</returns>
+    /// <returns>CityCell GameObject, or null.</returns>
     public GameObject GetGridCell(Vector2 gridPos)
     {
         if (gridPos.x < 0 || gridPos.x >= gridArray.GetLength(0) ||
@@ -1513,7 +1513,7 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <param name="skipWaterMembershipRefresh">true → skip <see cref="WaterManager.OnLandCellHeightCommitted"/> (e.g. <see cref="TerrainManager.UpdateTileElevation"/> finishes membership in finally block).</param>
     public void SetCellHeight(Vector2 gridPos, int height, bool skipWaterMembershipRefresh = false)
     {
-        Cell cell = cellArray[(int)gridPos.x, (int)gridPos.y];
+        CityCell cell = cellArray[(int)gridPos.x, (int)gridPos.y];
         cell.SetCellInstanceHeight(height);
         if (skipWaterMembershipRefresh)
             return;
@@ -1576,7 +1576,7 @@ public class GridManager : MonoBehaviour, IGridManager
     public bool canPlaceBuilding(Vector2 gridPosition, int buildingSize, bool isWaterPlant)
         => placementService.CanPlaceBuilding(gridPosition, buildingSize, isWaterPlant);
 
-    void UpdatePlacedBuildingCellAttributes(Cell cell, int buildingSize, PowerPlant powerPlant, WaterPlant waterPlant, GameObject buildingPrefab, Zone.ZoneType zoneType = Zone.ZoneType.Building, GameObject building = null)
+    void UpdatePlacedBuildingCellAttributes(CityCell cell, int buildingSize, PowerPlant powerPlant, WaterPlant waterPlant, GameObject buildingPrefab, Zone.ZoneType zoneType = Zone.ZoneType.Building, GameObject building = null)
     {
         cell.occupiedBuilding = building;
         cell.buildingSize = buildingSize;
@@ -1610,7 +1610,7 @@ public class GridManager : MonoBehaviour, IGridManager
     /// Set sorting order on grass tile via grid coords directly. Avoids GetGridPosition
     /// → cannot account for height offset + would parent tile to wrong cell at h &gt; 1.
     /// </summary>
-    void SetGrassSortingOrderDirect(GameObject tile, int x, int y, int height, Cell cell)
+    void SetGrassSortingOrderDirect(GameObject tile, int x, int y, int height, CityCell cell)
     {
         if (terrainManager != null)
         {
@@ -1678,7 +1678,7 @@ public class GridManager : MonoBehaviour, IGridManager
     }
 
     /// <summary>Find building root on pivot cell after load (occupiedBuilding or children).</summary>
-    GameObject FindBuildingRootOnPivotCell(Cell cell, GameObject gridCell)
+    GameObject FindBuildingRootOnPivotCell(CityCell cell, GameObject gridCell)
     {
         if (cell == null || gridCell == null) return null;
         if (cell.occupiedBuilding != null) return cell.occupiedBuilding;
@@ -1710,7 +1710,7 @@ public class GridManager : MonoBehaviour, IGridManager
         {
             for (int y = 0; y < height; y++)
             {
-                Cell cell = cellArray[x, y];
+                CityCell cell = cellArray[x, y];
                 if (cell == null) continue;
                 if (cell.buildingSize > 1 && !cell.isPivot) continue;
                 if (!IsZoneTypeBuilding(cell.zoneType)) continue;
@@ -1740,7 +1740,7 @@ public class GridManager : MonoBehaviour, IGridManager
 
         if (zoneType == Zone.ZoneType.Water && waterManager != null)
         {
-            Cell cellComponent = cellArray[cellData.x, cellData.y];
+            CityCell cellComponent = cellArray[cellData.x, cellData.y];
             for (int i = cell.transform.childCount - 1; i >= 0; i--)
                 Destroy(cell.transform.GetChild(i).gameObject);
 
@@ -1812,7 +1812,7 @@ public class GridManager : MonoBehaviour, IGridManager
                     {
                         for (int i = cell.transform.childCount - 1; i >= 0; i--)
                             Destroy(cell.transform.GetChild(i).gameObject);
-                        Cell cc = cellArray[cellData.x, cellData.y];
+                        CityCell cc = cellArray[cellData.x, cellData.y];
                         GameObject zoneTile = Instantiate(fallbackGrass, cc.transformPosition, Quaternion.identity);
                         zoneTile.transform.SetParent(cell.transform);
                         ApplySavedSpriteSorting(zoneTile, cellData.sortingOrder);
@@ -1851,7 +1851,7 @@ public class GridManager : MonoBehaviour, IGridManager
                 for (int i = cell.transform.childCount - 1; i >= 0; i--)
                     Destroy(cell.transform.GetChild(i).gameObject);
 
-                Cell cellComponent = cellArray[cellData.x, cellData.y];
+                CityCell cellComponent = cellArray[cellData.x, cellData.y];
                 GameObject zoneTile = Instantiate(grassPrefab, cellComponent.transformPosition, Quaternion.identity);
                 zoneTile.transform.SetParent(cell.transform);
                 ApplySavedSpriteSorting(zoneTile, cellData.sortingOrder);
@@ -1907,7 +1907,7 @@ public class GridManager : MonoBehaviour, IGridManager
             else if (!(cellData.buildingSize > 1 && !cellData.isPivot))
             {
                 zoneManager.PlaceZoneBuildingTile(tilePrefab, cell, cellData.buildingSize);
-                Cell cellComponent = cellArray[cellData.x, cellData.y];
+                CityCell cellComponent = cellArray[cellData.x, cellData.y];
                 PowerPlant powerPlant = cell.GetComponentInChildren<PowerPlant>();
                 WaterPlant waterPlant = cell.GetComponentInChildren<WaterPlant>();
                 UpdatePlacedBuildingCellAttributes(cellComponent, cellData.buildingSize, powerPlant, waterPlant, tilePrefab, zoneType, null);
@@ -1988,7 +1988,7 @@ public class GridManager : MonoBehaviour, IGridManager
         {
             for (int y = 0; y < height; y++)
             {
-                Cell cellComponent = cellArray[x, y];
+                CityCell cellComponent = cellArray[x, y];
                 if (cellComponent == null) continue;
 
                 if (cellComponent.zoneType == Zone.ZoneType.Grass && gridArray[x, y].transform.childCount == 0)
@@ -2080,12 +2080,12 @@ public class GridManager : MonoBehaviour, IGridManager
     }
 
     /// <summary>
-    /// Cell at grid coords, or null if out of bounds.
+    /// CityCell at grid coords, or null if out of bounds.
     /// </summary>
     /// <param name="x">Grid X.</param>
     /// <param name="y">Grid Y.</param>
-    /// <returns>Cell component, or null.</returns>
-    public Cell GetCell(int x, int y)
+    /// <returns>CityCell component, or null.</returns>
+    public CityCell GetCell(int x, int y)
     {
         if (x >= 0 && x < width && y >= 0 && y < height)
         {
@@ -2106,7 +2106,7 @@ public class GridManager : MonoBehaviour, IGridManager
         {
             for (int y = 0; y < height; y++)
             {
-                Cell cellComponent = cellArray[x, y];
+                CityCell cellComponent = cellArray[x, y];
                 CellData cellData = cellComponent.GetCellData();
                 gridData.Add(cellData);
             }
@@ -2187,7 +2187,7 @@ public class GridManager : MonoBehaviour, IGridManager
         => roadCache.CountRoadNeighbors(gx, gy);
 
     /// <summary>True if neighbor cell valid for zoning (Grass, Forest, Flat/N-S/E-W slope).</summary>
-    public bool IsZoneableNeighbor(Cell c, int x, int y)
+    public bool IsZoneableNeighbor(CityCell c, int x, int y)
         => roadCache.IsZoneableNeighbor(c, x, y);
 
     /// <summary>True if ≥1 of 4 cardinal neighbors of (x,y) is road.</summary>

@@ -71,7 +71,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
 
     /// <summary>
     /// Debug info for cell under cursor: height, zoneType, isWater, hasForest, adjacentToWater.
-    /// Uses <see cref="TerrainManager"/> HeightMap, <see cref="Cell"/>, <see cref="WaterManager"/> when available.
+    /// Uses <see cref="TerrainManager"/> HeightMap, <see cref="CityCell"/>, <see cref="WaterManager"/> when available.
     /// </summary>
     public string GetCellUnderCursorInfo(Vector2 gridPosition)
     {
@@ -81,10 +81,10 @@ public class GameDebugInfoBuilder : MonoBehaviour
         int x = (int)gridPosition.x;
         int y = (int)gridPosition.y;
         if (x < 0 || x >= gridManager.width || y < 0 || y >= gridManager.height)
-            return "Cell: out of bounds";
+            return "CityCell: out of bounds";
 
-        Cell cell = gridManager.GetCell(x, y);
-        if (cell == null) return "Cell: null";
+        CityCell cell = gridManager.GetCell(x, y);
+        if (cell == null) return "CityCell: null";
 
         int height = cell.GetCellInstanceHeight();
         if (terrainManager != null && terrainManager.GetHeightMap() != null)
@@ -102,14 +102,14 @@ public class GameDebugInfoBuilder : MonoBehaviour
             hasForest ? "forest" : "",
             adjacentToWater ? "adjWater" : ""
         };
-        return "Cell: " + string.Join(SectionSeparator, parts).Replace(SectionSeparator + SectionSeparator, SectionSeparator).Trim();
+        return "CityCell: " + string.Join(SectionSeparator, parts).Replace(SectionSeparator + SectionSeparator, SectionSeparator).Trim();
     }
 
     /// <summary>
     /// Prefab instance names for cell: stored terrain/shore/forest labels, then live GameObject names
     /// for terrain prefab, forest, occupied building (dedup, insertion order).
     /// </summary>
-    private static string FormatCellInstantiatedPrefabNames(Cell cell)
+    private static string FormatCellInstantiatedPrefabNames(CityCell cell)
     {
         if (cell == null) return "";
 
@@ -152,7 +152,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
         if (gridManager == null)
             return sb.ToString();
 
-        Cell cell = gridManager.GetCell(sx, sy);
+        CityCell cell = gridManager.GetCell(sx, sy);
         if (cell == null)
             return sb.ToString();
 
@@ -213,7 +213,7 @@ public class GameDebugInfoBuilder : MonoBehaviour
                 string zone = "?";
                 if (gx >= 0 && gx < gridManager.width && gy >= 0 && gy < gridManager.height)
                 {
-                    Cell c = gridManager.GetCell(gx, gy);
+                    CityCell c = gridManager.GetCell(gx, gy);
                     if (c != null) zone = c.zoneType.ToString();
                 }
                 lines.Add($"  ({gx},{gy}) h:{h} {zone}" + (water ? " water" : "") + (adjWater ? " adjWater" : ""));

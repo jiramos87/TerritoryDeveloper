@@ -10,13 +10,13 @@ namespace Territory.Core
 /// </summary>
 public interface IGridManager
 {
-    Cell GetCell(int x, int y);
+    CityCell GetCell(int x, int y);
     bool IsValidGridPosition(Vector2 position);
     bool IsCellOccupiedByBuilding(int x, int y);
     Vector2 GetWorldPosition(int x, int y);
     Vector2 GetWorldPositionVector(int x, int y, int heightLevel);
     Vector2 GetGridPosition(Vector2 worldPoint);
-    Vector2 GetCellWorldPosition(Cell cell);
+    Vector2 GetCellWorldPosition(CityCell cell);
     GameObject GetGridCell(Vector2 gridPosition);
     int SetTileSortingOrder(GameObject tile, Zone.ZoneType zoneType = Zone.ZoneType.Grass);
     void SetRoadSortingOrder(GameObject tile, int x, int y);

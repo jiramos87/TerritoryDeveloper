@@ -908,7 +908,7 @@ namespace Territory.Terrain
 
         /// <summary>
         /// One sweep: each water cell on higher side of cardinal <c>S_high &gt; S_low</c> contact → pick
-        /// lower-surface neighbor (not lake-forbidden) whose bed not above this cell’s bed. Cell’s bed still higher than
+        /// lower-surface neighbor (not lake-forbidden) whose bed not above this cell’s bed. CityCell’s bed still higher than
         /// neighbor’s → align to neighbor’s bed first, then reassign <c>waterBodyId</c> to lower body.
         /// Multiple lower neighbors qualify → prefers lowest <c>S_low</c> then lowest body id.
         /// Skips cells still having cardinal neighbor on same logical surface (upper-segment continuity at cascades).
@@ -1063,7 +1063,7 @@ namespace Territory.Terrain
 
             if (grid != null)
             {
-                Cell cell = grid.GetCell(x, y);
+                CityCell cell = grid.GetCell(x, y);
                 if (cell != null && cell.occupiedBuilding != null)
                     return false;
             }

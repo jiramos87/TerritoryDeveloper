@@ -98,7 +98,7 @@ namespace Territory.Core
                         return false;
                     }
 
-                    Cell cell = grid.cellArray[gridX, gridY];
+                    CityCell cell = grid.cellArray[gridX, gridY];
                     if (cell.isInterstate)
                     {
                         failReason = "Cannot build on Interstate Highway.";
@@ -147,7 +147,7 @@ namespace Territory.Core
                     if (grid.waterManager == null || !grid.waterManager.IsWaterAt(gridX, gridY))
                     {
                         hasLandTile = true;
-                        Cell cell = grid.cellArray[gridX, gridY];
+                        CityCell cell = grid.cellArray[gridX, gridY];
                         if (cell.zoneType != Zone.ZoneType.Grass)
                         {
                             failReason = $"Tile ({gridX},{gridY}) is not Grass (current: {cell.zoneType}).";
@@ -190,7 +190,7 @@ namespace Territory.Core
             bool fromCellHeight = false;
             if (!fromHeightMap && x >= 0 && x < grid.width && y >= 0 && y < grid.height)
             {
-                Cell cell = grid.cellArray[x, y];
+                CityCell cell = grid.cellArray[x, y];
                 if (cell != null)
                 {
                     h = cell.GetCellInstanceHeight();
@@ -286,7 +286,7 @@ namespace Territory.Core
         /// </summary>
         public void LoadBuildingTile(GameObject prefab, Vector2 gridPos, int buildingSize)
         {
-            Cell pivotCell = grid.cellArray[(int)gridPos.x, (int)gridPos.y];
+            CityCell pivotCell = grid.cellArray[(int)gridPos.x, (int)gridPos.y];
             Vector2 worldPos = grid.GetBuildingPlacementWorldPosition(gridPos, buildingSize);
             if (prefab.GetComponent<WaterPlant>() != null)
                 worldPos.y += grid.tileHeight / 4f;
@@ -306,7 +306,7 @@ namespace Territory.Core
         {
             LoadBuildingTile(prefab, gridPos, buildingSize);
 
-            Cell pivotCell = grid.cellArray[(int)gridPos.x, (int)gridPos.y];
+            CityCell pivotCell = grid.cellArray[(int)gridPos.x, (int)gridPos.y];
             GameObject building = pivotCell.GetComponentInChildren<PowerPlant>()?.gameObject
                 ?? pivotCell.GetComponentInChildren<WaterPlant>()?.gameObject;
 
@@ -353,7 +353,7 @@ namespace Territory.Core
             return true;
         }
 
-        private void UpdatePlacedBuildingCellAttributes(Cell cell, int buildingSize, PowerPlant powerPlant, WaterPlant waterPlant, GameObject buildingPrefab, Zone.ZoneType zoneType = Zone.ZoneType.Building, GameObject building = null)
+        private void UpdatePlacedBuildingCellAttributes(CityCell cell, int buildingSize, PowerPlant powerPlant, WaterPlant waterPlant, GameObject buildingPrefab, Zone.ZoneType zoneType = Zone.ZoneType.Building, GameObject building = null)
         {
             cell.occupiedBuilding = building;
             cell.buildingSize = buildingSize;
@@ -374,7 +374,7 @@ namespace Territory.Core
             }
         }
 
-        private void SetCellAsBuildingPivot(Cell cell)
+        private void SetCellAsBuildingPivot(CityCell cell)
         {
             cell.isPivot = true;
         }
@@ -393,7 +393,7 @@ namespace Territory.Core
                     if (gridX >= 0 && gridX < grid.width && gridY >= 0 && gridY < grid.height)
                     {
                         GameObject gridCell = grid.gridArray[gridX, gridY];
-                        Cell cell = grid.cellArray[gridX, gridY];
+                        CityCell cell = grid.cellArray[gridX, gridY];
 
                         cell.RemoveForestForBuilding();
                         UpdatePlacedBuildingCellAttributes(cell, buildingSize, powerPlant, waterPlant, buildingPrefab, Zone.ZoneType.Building, building);

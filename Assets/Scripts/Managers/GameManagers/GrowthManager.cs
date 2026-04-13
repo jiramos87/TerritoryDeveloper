@@ -153,7 +153,7 @@ public class GrowthManager : MonoBehaviour
             return false;
 
         // Check if position is already occupied by grass (buildable)
-        Cell cell = gridManager.GetCell((int)position.x, (int)position.y);
+        CityCell cell = gridManager.GetCell((int)position.x, (int)position.y);
         if (cell == null || cell.zoneType != Zone.ZoneType.Grass)
             return false;
 
@@ -179,7 +179,7 @@ public class GrowthManager : MonoBehaviour
             if (adjacentPos.x >= 0 && adjacentPos.x < gridManager.width &&
                 adjacentPos.y >= 0 && adjacentPos.y < gridManager.height)
             {
-                Cell adjacentCell = gridManager.GetCell((int)adjacentPos.x, (int)adjacentPos.y);
+                CityCell adjacentCell = gridManager.GetCell((int)adjacentPos.x, (int)adjacentPos.y);
                 if (adjacentCell != null && IsRelatedZoneType(adjacentCell.zoneType, zoneType))
                 {
                     count++;
@@ -244,7 +244,7 @@ public class GrowthManager : MonoBehaviour
                 if (checkPos.x >= 0 && checkPos.x < gridManager.width &&
                     checkPos.y >= 0 && checkPos.y < gridManager.height)
                 {
-                    Cell cell = gridManager.GetCell((int)checkPos.x, (int)checkPos.y);
+                    CityCell cell = gridManager.GetCell((int)checkPos.x, (int)checkPos.y);
                     if (cell != null)
                     {
                         totalCells++;

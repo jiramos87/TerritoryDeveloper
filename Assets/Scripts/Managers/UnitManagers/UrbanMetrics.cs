@@ -216,7 +216,7 @@ public class UrbanMetrics
         {
             for (int y = 0; y < gridManager.height; y++)
             {
-                Cell c = gridManager.GetCell(x, y);
+                CityCell c = gridManager.GetCell(x, y);
                 if (c == null) continue;
                 if (IsBuildingZoneType(c.zoneType) && !c.isInterstate)
                 {

@@ -421,7 +421,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
             return false;
         if (terrainManager.IsRegisteredOpenWaterAt(x, y))
             return false;
-        Cell c = gridManager.GetCell(x, y);
+        CityCell c = gridManager.GetCell(x, y);
         return c != null && c.GetCellInstanceHeight() > 0;
     }
 
@@ -476,7 +476,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         if (!heightMap.IsValidPosition(nx, ny) || !IsWaterOrWaterSlope(nx, ny, heightMap))
             return false;
 
-        Cell lipCell = gridManager.GetCell(lx, ly);
+        CityCell lipCell = gridManager.GetCell(lx, ly);
         if (lipCell == null)
             return false;
         int lipH = lipCell.GetCellInstanceHeight();
@@ -553,7 +553,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         int lx = (int)straightCardinalPath[wetIndex - 1].x;
         int ly = (int)straightCardinalPath[wetIndex - 1].y;
-        Cell lipCell = gridManager.GetCell(lx, ly);
+        CityCell lipCell = gridManager.GetCell(lx, ly);
         if (lipCell == null)
             return false;
         int lipH = lipCell.GetCellInstanceHeight();
@@ -1089,7 +1089,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// Pick road neighbor as "previous" for <see cref="RefreshRoadPrefabAt"/>. Uses stored path segment hint on straight-through segments
     /// → slope resolution matches <see cref="RoadPrefabResolver.ResolveForPath"/> travel order; else same rules as legacy connectivity-only picker.
     /// </summary>
-    Vector2 PickPrevGridPosForRoadRefresh(Vector2 gridPos, Cell cellOrNull)
+    Vector2 PickPrevGridPosForRoadRefresh(Vector2 gridPos, CityCell cellOrNull)
     {
         if (cellOrNull != null && TryPrevGridPosFromStoredRoadSegment(gridPos, cellOrNull, out Vector2 hinted))
             return hinted;
@@ -1099,7 +1099,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// <summary>
     /// Clear route hints when cell no longer straight-through segment, dead end, or stored successor missing.
     /// </summary>
-    void InvalidateRoadRouteHintsIfTopologyMismatch(Vector2 gridPos, Cell cell)
+    void InvalidateRoadRouteHintsIfTopologyMismatch(Vector2 gridPos, CityCell cell)
     {
         if (cell == null || !cell.hasRoadRouteDirHints)
             return;
@@ -1142,7 +1142,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// When cell has valid straight-through topology (2 opposite cardinal road neighbors), return stored predecessor if one of those neighbors.
     /// Else clear hint + return false.
     /// </summary>
-    bool TryPrevGridPosFromStoredRoadSegment(Vector2 gridPos, Cell cell, out Vector2 prev)
+    bool TryPrevGridPosFromStoredRoadSegment(Vector2 gridPos, CityCell cell, out Vector2 prev)
     {
         prev = gridPos;
         Vector2 hint;
@@ -1254,7 +1254,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
             return;
         GameObject cell = gridManager.GetGridCell(gridPos);
         if (cell == null) return;
-        Cell cellComponentCheck = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
+        CityCell cellComponentCheck = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         if (cellComponentCheck == null) return;
 
         InvalidateRoadRouteHintsIfTopologyMismatch(gridPos, cellComponentCheck);
@@ -1331,7 +1331,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         for (int i = 0; i < resolved.Count; i++)
         {
             var tile = resolved[i];
-            Cell cell = gridManager.GetCell(tile.gridPos.x, tile.gridPos.y);
+            CityCell cell = gridManager.GetCell(tile.gridPos.x, tile.gridPos.y);
             if (cell == null) continue;
 
             GameObject previewTile = Instantiate(tile.prefab, tile.worldPos, Quaternion.identity);
@@ -1496,7 +1496,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
                 continue;
             if (terrainManager.IsRegisteredOpenWaterAt(lx, ly))
                 continue;
-            Cell lipCell = gridManager.GetCell(lx, ly);
+            CityCell lipCell = gridManager.GetCell(lx, ly);
             if (lipCell == null)
                 continue;
             int lipH = lipCell.GetCellInstanceHeight();
@@ -1677,7 +1677,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
             if (gridManager.IsCellOccupiedByBuilding(ax, ay))
                 break;
-            Cell farCell = gridManager.GetCell(ax, ay);
+            CityCell farCell = gridManager.GetCell(ax, ay);
             if (farCell == null)
                 break;
             if (farCell.isInterstate)
@@ -1796,7 +1796,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         if (dx == 0 && dy == 0)
             return null;
 
-        Cell landBeforeCell = gridManager.GetCell(bx, by);
+        CityCell landBeforeCell = gridManager.GetCell(bx, by);
         if (landBeforeCell == null)
             return null;
         int bridgeHeight = landBeforeCell.GetCellInstanceHeight();
@@ -1824,7 +1824,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
             if (gridManager.IsCellOccupiedByBuilding(nx, ny))
                 break;
-            Cell farCell = gridManager.GetCell(nx, ny);
+            CityCell farCell = gridManager.GetCell(nx, ny);
             if (farCell == null)
                 break;
             if (farCell.isInterstate)
@@ -1913,8 +1913,8 @@ public class RoadManager : MonoBehaviour, IRoadManager
             || IsWaterOrWaterSlope((int)path[landAfter].x, (int)path[landAfter].y, heightMap))
             return FailFeat44(postUserWarnings, "A water bridge needs land at both ends.");
 
-        Cell cellBefore = gridManager.GetCell((int)path[landBefore].x, (int)path[landBefore].y);
-        Cell cellAfter = gridManager.GetCell((int)path[landAfter].x, (int)path[landAfter].y);
+        CityCell cellBefore = gridManager.GetCell((int)path[landBefore].x, (int)path[landBefore].y);
+        CityCell cellAfter = gridManager.GetCell((int)path[landAfter].x, (int)path[landAfter].y);
         if (cellBefore == null || cellAfter == null)
             return false;
         int bridgeHeight = cellBefore.GetCellInstanceHeight();
@@ -2079,7 +2079,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         if (IsWaterOrWaterSlope(cx, cy, heightMap))
             return false;
 
-        Cell lipCell = gridManager.GetCell(cx, cy);
+        CityCell lipCell = gridManager.GetCell(cx, cy);
         if (lipCell != null)
         {
             int h = lipCell.GetCellInstanceHeight();
@@ -2532,7 +2532,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         int ny = gridY + dy;
         if (nx < 0 || nx >= gridManager.width || ny < 0 || ny >= gridManager.height)
             return int.MinValue;
-        Cell c = gridManager.GetCell(nx, ny);
+        CityCell c = gridManager.GetCell(nx, ny);
         return c != null ? c.GetCellInstanceHeight() : int.MinValue;
     }
 
@@ -2615,7 +2615,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         if (upperX < 0 || upperX >= gridManager.width || upperY < 0 || upperY >= gridManager.height)
             return gridManager.GetWorldPosition(x, y);
 
-        Cell upperCell = gridManager.GetCell(upperX, upperY);
+        CityCell upperCell = gridManager.GetCell(upperX, upperY);
         if (upperCell == null)
             return gridManager.GetWorldPosition(x, y);
 
@@ -2698,7 +2698,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
             return;
 
         GameObject cell = gridManager.GetGridCell(new Vector2(x, y));
-        Cell cellComponentCheck = gridManager.GetCell(x, y);
+        CityCell cellComponentCheck = gridManager.GetCell(x, y);
         if (cellComponentCheck != null && cellComponentCheck.isInterstate)
             return;
         if (cell == null || cellComponentCheck == null) return;
@@ -2720,7 +2720,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
     /// <summary>Copy path route hints from resolved placement for route-first refresh alignment.</summary>
-    static void ApplyRoadRouteHintsFromResolved(Cell cell, RoadPrefabResolver.ResolvedRoadTile resolved)
+    static void ApplyRoadRouteHintsFromResolved(CityCell cell, RoadPrefabResolver.ResolvedRoadTile resolved)
     {
         if (cell == null)
             return;
@@ -2740,7 +2740,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
             return;
 
         GameObject cell = gridManager.GetGridCell(gridPos);
-        Cell cellComponentCheck = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
+        CityCell cellComponentCheck = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         if (cellComponentCheck != null && cellComponentCheck.isInterstate)
             return;
 
@@ -2762,7 +2762,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         DestroyPreviousRoadTile(cell, gridPos);
 
-        Cell cellComponent = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
+        CityCell cellComponent = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         cellComponent.RemoveForestForBuilding();
         int terrainHeight = cellComponent.GetCellInstanceHeight();
         Vector2 worldPos = GetRoadTileWorldPosition((int)gridPos.x, (int)gridPos.y, correctRoadPrefab, terrainHeight);
@@ -2792,7 +2792,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     {
         if (gridManager != null)
         {
-            Cell cleared = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
+            CityCell cleared = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
             cleared?.ClearRoadRouteHints();
         }
 
@@ -2814,7 +2814,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     }
 
 
-    void UpdateRoadCellAttributes(Cell cellComponent, GameObject roadTile, Zone.ZoneType zoneType)
+    void UpdateRoadCellAttributes(CityCell cellComponent, GameObject roadTile, Zone.ZoneType zoneType)
     {
         cellComponent.zoneType = zoneType;
         cellComponent.prefab = roadTile;
@@ -2840,7 +2840,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
             return false;
         if (gridManager.IsCellOccupiedByBuilding(gx, gy))
             return false;
-        Cell c = gridManager.GetCell(gx, gy);
+        CityCell c = gridManager.GetCell(gx, gy);
         if (c != null && c.isInterstate)
             return false;
         return true;
@@ -2872,7 +2872,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         GameObject cell = gridManager.GetGridCell(gridPos);
         if (cell == null) return false;
-        Cell cellComponentCheck = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
+        CityCell cellComponentCheck = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         if (cellComponentCheck != null && cellComponentCheck.isInterstate)
             return false;
 
@@ -2882,7 +2882,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
 
         DestroyPreviousRoadTile(cell, gridPos);
 
-        Cell cellComponent = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
+        CityCell cellComponent = gridManager.GetCell((int)gridPos.x, (int)gridPos.y);
         cellComponent.RemoveForestForBuilding();
         int terrainHeight = cellComponent.GetCellInstanceHeight();
         Vector2 worldPos = GetRoadTileWorldPosition((int)gridPos.x, (int)gridPos.y, correctRoadPrefab, terrainHeight);
@@ -3005,7 +3005,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
             return;
 
         GameObject cell = gridManager.GetGridCell(new Vector2(x, y));
-        Cell cellComponent = gridManager.GetCell(x, y);
+        CityCell cellComponent = gridManager.GetCell(x, y);
         if (cell == null || cellComponent == null)
             return;
 
@@ -3038,7 +3038,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         if (gridManager.IsCellOccupiedByBuilding(gx, gy)) return;
 
         GameObject cell = gridManager.GetGridCell(gridPos);
-        Cell cellComponent = gridManager.GetCell(gx, gy);
+        CityCell cellComponent = gridManager.GetCell(gx, gy);
         if (cellComponent == null) return;
 
         DestroyPreviousRoadTile(cell, gridPos);
@@ -3072,13 +3072,13 @@ public class RoadManager : MonoBehaviour, IRoadManager
     /// </summary>
     /// <param name="gridPos">Grid position to restore road at.</param>
     /// <param name="prefab">Road prefab to instantiate (from saved prefabName).</param>
-    /// <param name="isInterstate">Cell is interstate (applies gray tint).</param>
+    /// <param name="isInterstate">CityCell is interstate (applies gray tint).</param>
     /// <param name="savedSpriteSortingOrder">If set (load restore), apply persisted sorting instead of recalculating.</param>
     public void RestoreRoadTile(Vector2Int gridPos, GameObject prefab, bool isInterstate, int? savedSpriteSortingOrder = null)
     {
         GameObject cell = gridManager.GetGridCell(new Vector2(gridPos.x, gridPos.y));
         if (cell == null) return;
-        Cell cellComponent = gridManager.GetCell(gridPos.x, gridPos.y);
+        CityCell cellComponent = gridManager.GetCell(gridPos.x, gridPos.y);
         if (cellComponent == null) return;
 
         var toDestroy = new List<(GameObject go, Zone zone)>();
@@ -3134,7 +3134,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
     {
         GameObject cell = gridManager.GetGridCell(new Vector2(gridPos.x, gridPos.y));
         if (cell == null) return;
-        Cell cellComponent = gridManager.GetCell(gridPos.x, gridPos.y);
+        CityCell cellComponent = gridManager.GetCell(gridPos.x, gridPos.y);
         if (cellComponent == null) return;
 
         string terrainPrefabName = null;

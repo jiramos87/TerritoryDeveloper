@@ -19,7 +19,7 @@ public static class InterchangeJsonReportsMenu
     const int DefaultChunkW = 8;
     const int DefaultChunkH = 8;
 
-    [MenuItem(MenuRoot + "Export Cell Chunk (Interchange)", priority = 20)]
+    [MenuItem(MenuRoot + "Export CityCell Chunk (Interchange)", priority = 20)]
     public static void ExportCellChunkInterchange()
     {
         if (!EditorApplication.isPlaying)
@@ -40,11 +40,11 @@ public static class InterchangeJsonReportsMenu
                 baseName,
                 out _);
             if (dbOk)
-                Debug.Log("[Interchange] Cell chunk stored in Postgres (editor_export_terrain_cell_chunk).");
+                Debug.Log("[Interchange] CityCell chunk stored in Postgres (editor_export_terrain_cell_chunk).");
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[Interchange] Export Cell Chunk failed: {ex.Message}");
+            Debug.LogError($"[Interchange] Export CityCell Chunk failed: {ex.Message}");
         }
     }
 
@@ -96,11 +96,11 @@ public static class InterchangeJsonReportsMenu
             for (int x = x0; x < x0 + w; x++)
             {
                 int heightMapValue = hm != null && hm.IsValidPosition(x, y) ? hm.GetHeight(x, y) : int.MinValue;
-                Cell cell = grid.GetCell(x, y);
+                CityCell cell = grid.GetCell(x, y);
                 int cellHeight = cell != null ? cell.height : int.MinValue;
                 if (cell != null && hm != null && hm.IsValidPosition(x, y) && heightMapValue != cellHeight)
                 {
-                    Debug.LogWarning($"[Interchange] HeightMap vs Cell.height mismatch at ({x},{y}): map={heightMapValue} cell={cellHeight}. Export uses HeightMap as authority.");
+                    Debug.LogWarning($"[Interchange] HeightMap vs CityCell.height mismatch at ({x},{y}): map={heightMapValue} cell={cellHeight}. Export uses HeightMap as authority.");
                 }
 
                 int exportHeight = hm != null && hm.IsValidPosition(x, y) ? heightMapValue : cellHeight;
@@ -125,7 +125,7 @@ public static class InterchangeJsonReportsMenu
             width = w,
             height = h,
             cells = cells.ToArray(),
-            notes = "Subset fields for tooling (TECH-41 G2). height is HeightMap when available, else Cell.height."
+            notes = "Subset fields for tooling (TECH-41 G2). height is HeightMap when available, else CityCell.height."
         };
 
         return JsonUtility.ToJson(root, true);

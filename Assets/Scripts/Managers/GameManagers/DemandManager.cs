@@ -79,7 +79,7 @@ public class DemandManager : MonoBehaviour
     [Tooltip("Commercial/Industrial target boost per % unemployment above threshold.")]
     public float unemploymentJobBoost = 1.2f;
 
-    [Header("Cell Desirability")]
+    [Header("CityCell Desirability")]
     [Tooltip("Multiplier for per-cell desirability in GetCellDesirabilityBonus. Used for geographic attraction, not demand.")]
     public float desirabilityDemandMultiplier = 0.1f;
 
@@ -349,7 +349,7 @@ public class DemandManager : MonoBehaviour
     public float GetCellDesirabilityBonus(int x, int y)
     {
         if (gridManager == null) return 0f;
-        Cell cellComponent = gridManager.GetCell(x, y);
+        CityCell cellComponent = gridManager.GetCell(x, y);
         if (cellComponent != null)
             return cellComponent.desirability * desirabilityDemandMultiplier;
         return 0f;

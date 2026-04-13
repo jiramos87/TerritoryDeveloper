@@ -956,7 +956,7 @@ public class InterstateManager : MonoBehaviour
         {
             for (int y = 0; y < h; y++)
             {
-                Cell cell = gridManager.GetCell(x, y);
+                CityCell cell = gridManager.GetCell(x, y);
                 if (cell != null && cell.isInterstate)
                     interstatePositions.Add(new Vector2Int(x, y));
             }
@@ -1003,7 +1003,7 @@ public class InterstateManager : MonoBehaviour
     public bool IsInterstateAt(int x, int y)
     {
         if (gridManager == null) return false;
-        Cell cell = gridManager.GetCell(x, y);
+        CityCell cell = gridManager.GetCell(x, y);
         return cell != null && cell.isInterstate;
     }
 
@@ -1063,7 +1063,7 @@ public class InterstateManager : MonoBehaviour
     private bool IsRoadAt(int gridX, int gridY)
     {
         if (gridManager == null) return false;
-        Cell cell = gridManager.GetCell(gridX, gridY);
+        CityCell cell = gridManager.GetCell(gridX, gridY);
         return cell != null && cell.zoneType == Zone.ZoneType.Road;
     }
 

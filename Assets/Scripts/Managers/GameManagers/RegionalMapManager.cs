@@ -127,7 +127,7 @@ public class RegionalMapManager : MonoBehaviour
         {
             Vector2Int gridPos = info.borderCellPosition;
 
-            Cell cell = gridManager.GetCell(gridPos.x, gridPos.y);
+            CityCell cell = gridManager.GetCell(gridPos.x, gridPos.y);
             if (cell == null) continue;
 
             Vector2 worldPos = gridManager.GetCellWorldPosition(cell);

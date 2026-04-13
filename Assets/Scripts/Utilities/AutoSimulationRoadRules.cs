@@ -13,7 +13,7 @@ namespace Territory.Utilities
         /// <summary>
         /// True when cell uses R/C/I light zoning only (no medium/heavy).
         /// </summary>
-        public static bool IsUndevelopedLightZoning(Cell c)
+        public static bool IsUndevelopedLightZoning(CityCell c)
         {
             if (c == null) return false;
             return c.zoneType == Zone.ZoneType.ResidentialLightZoning
@@ -28,7 +28,7 @@ namespace Territory.Utilities
         public static bool IsAutoRoadLandCell(GridManager grid, int x, int y)
         {
             if (grid == null) return false;
-            Cell c = grid.GetCell(x, y);
+            CityCell c = grid.GetCell(x, y);
             if (c == null) return false;
             if (c.zoneType == Zone.ZoneType.Road || c.isInterstate) return false;
             if (grid.IsCellOccupiedByBuilding(x, y)) return false;

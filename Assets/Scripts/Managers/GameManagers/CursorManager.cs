@@ -124,7 +124,7 @@ public class CursorManager : MonoBehaviour
             if (cachedMainCamera == null) cachedMainCamera = Camera.main;
             Vector2 mousePosition2 = GridManager.ScreenPointToWorldOnGridPlane(cachedMainCamera, Input.mousePosition);
 
-            Cell mouseCell = gridManager.GetMouseGridCell(mousePosition2);
+            CityCell mouseCell = gridManager.GetMouseGridCell(mousePosition2);
             if (mouseCell == null)
             {
                 previewInstance.SetActive(false);
@@ -160,7 +160,7 @@ public class CursorManager : MonoBehaviour
                 int buildingSize = 1;
                 if (cachedUIManager != null && cachedUIManager.GetSelectedBuilding() != null)
                     buildingSize = cachedUIManager.GetSelectedBuilding().BuildingSize;
-                Cell cell = gridManager.GetCell((int)gridPosition.x, (int)gridPosition.y);
+                CityCell cell = gridManager.GetCell((int)gridPosition.x, (int)gridPosition.y);
                 if (cell == null)
                 {
                     previewInstance.SetActive(false);

@@ -4,7 +4,7 @@ using Territory.Core;
 namespace Territory.Terrain
 {
     /// <summary>
-    /// Shore membership: <see cref="Cell.waterBodyId"/> sync with <see cref="WaterMap"/> + dry shoreline affiliation.
+    /// Shore membership: <see cref="CityCell.waterBodyId"/> sync with <see cref="WaterMap"/> + dry shoreline affiliation.
     /// </summary>
     public partial class WaterManager
     {
@@ -22,13 +22,13 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Return <see cref="Cell.waterBodyId"/> when set; open water matches <see cref="WaterMap"/>.
+        /// Return <see cref="CityCell.waterBodyId"/> when set; open water matches <see cref="WaterMap"/>.
         /// </summary>
         public int GetCellWaterBodyId(int x, int y)
         {
             if (gridManager == null)
                 return 0;
-            Cell c = gridManager.GetCell(x, y);
+            CityCell c = gridManager.GetCell(x, y);
             return c != null ? c.waterBodyId : 0;
         }
 
@@ -59,7 +59,7 @@ namespace Territory.Terrain
             };
             if (waterMap == null || gridManager == null || !waterMap.IsValidPosition(x, y))
                 return ctx;
-            Cell cell = gridManager.GetCell(x, y);
+            CityCell cell = gridManager.GetCell(x, y);
             if (cell == null)
                 return ctx;
             int id = cell.waterBodyId;
@@ -134,7 +134,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Resolve dry-land <see cref="Cell.waterBodyId"/> via river–river junction brinks (§12.8) when applicable,
+        /// Resolve dry-land <see cref="CityCell.waterBodyId"/> via river–river junction brinks (§12.8) when applicable,
         /// else <see cref="ComputeShoreAffiliationFromLowestLogicalSurfaceAmongMooreWater"/>.
         /// </summary>
         public int ComputeShoreAffiliationForDryLandCell(int x, int y)
@@ -193,7 +193,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Shore affiliation: <see cref="Cell.waterBodyId"/> when set on dry land; otherwise
+        /// Shore affiliation: <see cref="CityCell.waterBodyId"/> when set on dry land; otherwise
         /// <see cref="ComputeShoreAffiliationForDryLandCell"/>. Open water → map body id.
         /// </summary>
         public int GetShoreAffiliatedWaterBodyIdForLandCell(int x, int y)
@@ -209,13 +209,13 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Set <see cref="Cell.waterBodyId"/> from <see cref="WaterMap"/> for registered water.
+        /// Set <see cref="CityCell.waterBodyId"/> from <see cref="WaterMap"/> for registered water.
         /// </summary>
         public void SyncOpenWaterCellBodyIdAt(int x, int y)
         {
             if (waterMap == null || gridManager == null || !waterMap.IsValidPosition(x, y))
                 return;
-            Cell c = gridManager.GetCell(x, y);
+            CityCell c = gridManager.GetCell(x, y);
             if (c == null)
                 return;
             if (waterMap.IsWater(x, y))
@@ -223,7 +223,7 @@ namespace Territory.Terrain
         }
 
         /// <summary>
-        /// Ensure every open-water cell has <see cref="Cell.waterBodyId"/> matching map.
+        /// Ensure every open-water cell has <see cref="CityCell.waterBodyId"/> matching map.
         /// </summary>
         public void SyncAllOpenWaterCellsBodyIdsFromMap()
         {
@@ -248,7 +248,7 @@ namespace Territory.Terrain
                 return;
             if (terrainManager == null)
                 terrainManager = FindObjectOfType<TerrainManager>();
-            Cell cell = gridManager.GetCell(x, y);
+            CityCell cell = gridManager.GetCell(x, y);
             if (cell == null)
                 return;
             if (waterMap.IsWater(x, y))

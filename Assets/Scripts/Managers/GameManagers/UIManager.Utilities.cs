@@ -21,7 +21,7 @@ namespace Territory.UI
 public partial class UIManager
 {
     #region Utility Methods
-    public void ShowTileDetails(Cell cell)
+    public void ShowTileDetails(CityCell cell)
     {
         detailsPopupController.ShowDetails();
         RegisterPopupOpened(PopupType.Details);
@@ -376,7 +376,7 @@ public partial class UIManager
             return;
         }
 
-        Cell centerCell = cell.GetComponent<Cell>();
+        CityCell centerCell = cell.GetComponent<CityCell>();
         Vector3 explosionPosition = centerCell.transformPosition;
         explosionPosition.y += 0.1f;
 
@@ -410,7 +410,7 @@ public partial class UIManager
             ShowDemolitionAnimation(centerCell, preCapturedSortingOrder);
             return;
         }
-        Cell cell = centerCell.GetComponent<Cell>();
+        CityCell cell = centerCell.GetComponent<CityCell>();
 
         Vector3 explosionPosition = cell.transformPosition;
 

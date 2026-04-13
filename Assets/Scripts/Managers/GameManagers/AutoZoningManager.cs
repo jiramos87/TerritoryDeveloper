@@ -211,7 +211,7 @@ public class AutoZoningManager : MonoBehaviour
         if (roadReservationCells != null && roadReservationCells.Contains(cell))
             return false;
 
-        Cell c = gridManager.GetCell(cell.x, cell.y);
+        CityCell c = gridManager.GetCell(cell.x, cell.y);
         if (c == null)
             return false;
 

@@ -204,7 +204,7 @@ public class ForestManager : MonoBehaviour
             return false;
         if (heightMap != null && heightMap.IsValidPosition(x, y))
             return heightMap.GetHeight(x, y) > TerrainManager.SEA_LEVEL;
-        Cell c = gridManager != null ? gridManager.GetCell(x, y) : null;
+        CityCell c = gridManager != null ? gridManager.GetCell(x, y) : null;
         return c != null && c.height > TerrainManager.SEA_LEVEL;
     }
     #endregion
@@ -233,7 +233,7 @@ public class ForestManager : MonoBehaviour
             return false;
         }
 
-        Cell cellComponent = gridManager.GetCell(x, y);
+        CityCell cellComponent = gridManager.GetCell(x, y);
 
         if (cellComponent == null)
             return false;
@@ -313,7 +313,7 @@ public class ForestManager : MonoBehaviour
             return false;
 
         // Get the cell and remove forest
-        Cell cellComponent = gridManager.GetCell(x, y);
+        CityCell cellComponent = gridManager.GetCell(x, y);
 
         // Store water consumption for refund calculation
         int waterToRefund = GetWaterConsumptionForForestType(currentType);
@@ -358,7 +358,7 @@ public class ForestManager : MonoBehaviour
         if (forestMap == null || gridManager == null) return;
         if (!forestMap.IsValidPosition(x, y)) return;
 
-        Cell cellComponent = gridManager.GetCell(x, y);
+        CityCell cellComponent = gridManager.GetCell(x, y);
         if (cellComponent == null) return;
 
         // Destroy existing forest visual (from initial generation)
@@ -420,7 +420,7 @@ public class ForestManager : MonoBehaviour
         if (waterManager != null && waterManager.IsWaterAt(x, y))
             return false;
 
-        Cell cellComponent = gridManager.GetCell(x, y);
+        CityCell cellComponent = gridManager.GetCell(x, y);
 
         // Cannot place on river/coast edge (cardinal water); Moore-neighbor lake edges use TerrainManager.IsWaterSlopeCell.
         if (IsRiverOrCoastEdge(x, y))
@@ -490,7 +490,7 @@ public class ForestManager : MonoBehaviour
 
     /// <summary>
     /// Height map for terrain logic (river edge, etc.). Prefer terrainManager; fallback gridManager.terrainManager
-    /// → use initial/terrain heights, not Cell.height (water slope cells have Cell.height=0 but terrain height=1).
+    /// → use initial/terrain heights, not CityCell.height (water slope cells have CityCell.height=0 but terrain height=1).
     /// </summary>
     private HeightMap GetTerrainHeightMap()
     {
@@ -506,7 +506,7 @@ public class ForestManager : MonoBehaviour
         HeightMap heightMap = GetTerrainHeightMap();
         if (heightMap != null && heightMap.IsValidPosition(x, y))
             return heightMap.GetHeight(x, y);
-        Cell c = gridManager.GetCell(x, y);
+        CityCell c = gridManager.GetCell(x, y);
         if (c != null)
             return c.height;
         return TerrainManager.SEA_LEVEL;
@@ -585,7 +585,7 @@ public class ForestManager : MonoBehaviour
 
     private void PlaceForestVisual(int x, int y, Forest.ForestType forestType)
     {
-        Cell cellComponent = gridManager.GetCell(x, y);
+        CityCell cellComponent = gridManager.GetCell(x, y);
 
         // Don't place if cell already has a tree
         if (cellComponent.hasTree)
@@ -611,7 +611,7 @@ public class ForestManager : MonoBehaviour
 
         foreach (var pos in adjacentPositions)
         {
-            Cell cellComponent = gridManager.GetCell(pos.x, pos.y);
+            CityCell cellComponent = gridManager.GetCell(pos.x, pos.y);
 
             // Update close forest count
             if (forestAdded)
@@ -632,7 +632,7 @@ public class ForestManager : MonoBehaviour
         {
             for (int y = 0; y < gridManager.height; y++)
             {
-                Cell cellComponent = gridManager.GetCell(x, y);
+                CityCell cellComponent = gridManager.GetCell(x, y);
 
                 // Calculate adjacent forest count
                 cellComponent.closeForestCount = forestMap.GetAdjacentForestCount(x, y);

@@ -94,7 +94,7 @@
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
 | T1.2.1 | 1 | **TECH-90** | Done | Extract `Cell` abstract base (coord, height, shared primitives). Compile-only; no rename yet. |
-| T1.2.2 | 1 | **TECH-91** | Draft | Rename `Cell` → `CityCell` across all city sim files. Preserve `HeightMap` sync (invariant #1). |
+| T1.2.2 | 1 | **TECH-91** | Done | Rename `Cell` → `CityCell` across all city sim files. Preserve `HeightMap` sync (invariant #1). |
 | T1.2.3 | 2 | **TECH-92** | Draft | `RegionCell` placeholder type (coord + parent-region-id; no behavior). Glossary row. |
 | T1.2.4 | 2 | **TECH-93** | Draft | `CountryCell` placeholder type (coord + parent-country-id; no behavior). Glossary rows for all 3 cell types. |
 | T1.2.5 | 3 | **TECH-94** | Draft | Generic `GetCell<T>(x,y)` or scale-indexed overloads on `GridManager`. Compile gate. |

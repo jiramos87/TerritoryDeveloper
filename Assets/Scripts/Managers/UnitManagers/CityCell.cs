@@ -10,7 +10,7 @@ namespace Territory.Core
 /// Represents a single cell in the game grid with properties for buildings, roads, forests, and environmental factors.
 /// Updated to support the new Forest.ForestType system for better forest management.
 /// </summary>
-public class Cell : CellBase
+public class CityCell : CellBase
 {
     [Header("Road Connections")]
     public bool hasRoadAtLeft;
@@ -85,7 +85,7 @@ public class Cell : CellBase
 
     private string occupiedBuildingName;
 
-    public Cell(CellData cellData)
+    public CityCell(CellData cellData)
     {
         this.x = cellData.x;
         this.y = cellData.y;
@@ -363,7 +363,7 @@ public class Cell : CellBase
 
     #region Save/Load Data Methods
     /// <summary>
-    /// Get cell data for saving. Copies all serializable state from this Cell to CellData.
+    /// Get cell data for saving. Copies all serializable state from this CityCell to CellData.
     /// </summary>
     public CellData GetCellData()
     {

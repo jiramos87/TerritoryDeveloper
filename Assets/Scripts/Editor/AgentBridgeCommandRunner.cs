@@ -1010,7 +1010,7 @@ public static class AgentBridgeCommandRunner
             else if (s.ScreenshotIncluded && !screenshotSkipped && !screenshotOk && !string.IsNullOrEmpty(screenshotError))
                 error = screenshotError;
             else if (!s.CellExportOk)
-                error = "Cell export failed.";
+                error = "CityCell export failed.";
             else
                 error = "debug_context_bundle completed with errors.";
         }
@@ -1212,7 +1212,7 @@ public static class AgentBridgeCommandRunner
             return;
         }
 
-        Territory.Core.Cell cell = gridMgr.GetCell(cellX, cellY);
+        Territory.Core.CityCell cell = gridMgr.GetCell(cellX, cellY);
         if (cell == null)
         {
             TryFinalizeFailed(repoRoot, commandId, $"No cell at ({cellX},{cellY}).");

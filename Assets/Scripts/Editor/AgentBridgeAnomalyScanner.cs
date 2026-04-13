@@ -41,7 +41,7 @@ public static class AgentBridgeAnomalyScanner
                 if (!heightMap.IsValidPosition(x, y))
                     continue;
 
-                Cell cell = grid.GetCell(x, y);
+                CityCell cell = grid.GetCell(x, y);
                 if (cell == null)
                     continue;
 
@@ -55,7 +55,7 @@ public static class AgentBridgeAnomalyScanner
     }
 
     static IEnumerable<AgentBridgeAnomalyRecordDto> CheckMissingBorderCliffs(
-        Cell cell,
+        CityCell cell,
         int x,
         int y,
         HeightMap heightMap,
@@ -101,7 +101,7 @@ public static class AgentBridgeAnomalyScanner
     }
 
     static IEnumerable<AgentBridgeAnomalyRecordDto> CheckHeightMapCellDesync(
-        Cell cell,
+        CityCell cell,
         int x,
         int y,
         HeightMap heightMap)
@@ -115,13 +115,13 @@ public static class AgentBridgeAnomalyScanner
                 cell_x = x,
                 cell_y = y,
                 severity = "error",
-                message = $"HeightMap height {mapH} != Cell.height {cell.height} (invariant: keep both in sync).",
+                message = $"HeightMap height {mapH} != CityCell.height {cell.height} (invariant: keep both in sync).",
             };
         }
     }
 
     static IEnumerable<AgentBridgeAnomalyRecordDto> CheckRedundantShoreCliff(
-        Cell cell,
+        CityCell cell,
         int x,
         int y,
         HeightMap heightMap,

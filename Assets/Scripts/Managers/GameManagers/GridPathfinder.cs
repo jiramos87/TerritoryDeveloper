@@ -175,7 +175,7 @@ namespace Territory.Core
         private bool IsWalkable(int x, int y, bool allowUndevelopedLightZoning)
         {
             if (x < 0 || x >= grid.width || y < 0 || y >= grid.height) return false;
-            Cell c = grid.GetCell(x, y);
+            CityCell c = grid.GetCell(x, y);
             if (c == null) return false;
             if (c.zoneType == Zone.ZoneType.Road)
             {
