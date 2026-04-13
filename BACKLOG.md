@@ -2,7 +2,7 @@
 
 > Single source of truth for project issues. Reference via `@BACKLOG.md` in agent conversation. Closed work → [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Use **`mcp__territory-ia__backlog_issue`** for slice access.
 >
-> **Lane order (highest first):** § Compute-lib program → § Agent ↔ Unity & MCP context lane → § IA evolution lane → § UI-as-code program → § Economic depth lane → § Gameplay & simulation lane → § High / § Medium / § Code Health / § Low. **Gameplay blockers** in § High Priority stay **interrupt** work — stop play / corrupt saves.
+> **Lane order (highest first):** § Compute-lib program → § Agent ↔ Unity & MCP context lane → § IA evolution lane → § UI-as-code program → § Economic depth lane → § Gameplay & simulation lane → § Multi-scale simulation lane → § High / § Medium / § Code Health / § Low. **Gameplay blockers** in § High Priority stay **interrupt** work — stop play / corrupt saves.
 >
 > **Closed program charters** (trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) + glossary): **Spec-pipeline** (territory-ia spec-pipeline program; exploration [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md)) · **UI-as-code program** umbrella (UI-as-code program; **`ui-design-system.md`** Codebase inventory (uGUI)) · **TECH-39 computational MCP suite** (Computational MCP tools (TECH-39)).
 >
@@ -308,6 +308,34 @@ Player-facing **simulation**, **AUTO** growth, **urban growth rings** / **zone d
   - Notes: Existing **buildings** evolve to larger versions based on **zone density** and **desirability**. Includes spatial **pollution** → **desirability** penalty: **cells** near polluting sources (industrial **buildings**, power plants) receive a per-cell **desirability** malus via radius-based diffusion, discouraging residential evolution and **AUTO** zoning near polluters. Extends the city-wide **pollution** aggregate (shipped) into a per-cell spatial model. (**TECH-15** / **TECH-16** — performance + harness work — live under **§ Agent ↔ Unity & MCP context lane**.)
   - Depends on: none (**pollution** model shipped — see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
 
+## Multi-scale simulation lane
+
+Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = parent-scale conceptual stubs (code + save surfaces only; no playable parent scales). Stage 1.1 = parent-scale identity fields — filed below. Stages 1.2 (cell-type split) + 1.3 (neighbor-city stub) remain in master plan; file here when parent stage → `In Progress`.
+
+- [ ] **TECH-87** — Parent-scale identity fields on `GameSaveData` + save migration
+  - Type: infrastructure / save
+  - Files: `Assets/Scripts/SaveSystem/GameSaveData.cs`, `Assets/Scripts/SaveSystem/SaveManager.cs` (version bump + migration path), `ia/specs/save-system.md` (§schema), `ia/specs/glossary.md`
+  - Spec: `ia/projects/TECH-87.md`
+  - Notes: Add non-null `region_id` + `country_id` (GUID) to `GameSaveData`. Bump save version. Legacy saves load w/ placeholder GUIDs (deterministic per-save or freshly allocated — decide in spec §5). Glossary rows land for **parent region id** + **parent country id**. No runtime behavior change beyond ids being present. Orchestrator: [`projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) Step 1 / Stage 1.1.
+  - Acceptance: fields serialize + deserialize round-trip; legacy save loads w/ placeholder ids; save version bumped; glossary rows land; `npm run validate:all` green
+  - Depends on: none
+
+- [ ] **TECH-88** — `GridManager` parent-id surface + new-game placeholder allocation
+  - Type: infrastructure / runtime
+  - Files: `Assets/Scripts/GridManager.cs`, `Assets/Scripts/NewGame/` (new-game init path), `Assets/Scripts/SaveSystem/SaveManager.cs` (load wiring)
+  - Spec: `ia/projects/TECH-88.md`
+  - Notes: `GridManager` exposes read-only `ParentRegionId` / `ParentCountryId`. Values set from `GameSaveData` on load; new-game init allocates placeholder GUIDs + writes to save. No consumers yet — surface only. Consumed by ≥1 city system in Step 2. Orchestrator: Step 1 / Stage 1.1.
+  - Acceptance: properties readable from any city-sim code path; new-game → save → ids non-null; load rehydrates ids
+  - Depends on: **TECH-87**
+
+- [ ] **TECH-89** — Parent-id round-trip + legacy-migration tests (testmode)
+  - Type: test / verification
+  - Files: `Assets/Editor/TestMode/` (scenario), `tools/scripts/testmode/`
+  - Spec: `ia/projects/TECH-89.md`
+  - Notes: Testmode batch scenario — new-game → save → reload → assert parent ids preserved. Legacy-save fixture (pre-version-bump) → load → assert placeholder migration correct. Run via `npm run unity:testmode-batch`. Orchestrator: Step 1 / Stage 1.1.
+  - Acceptance: testmode scenario green on new-game round-trip + legacy migration; fixture committed; `npm run validate:all` + `unity:compile-check` green
+  - Depends on: **TECH-87**, **TECH-88**
+
 ## High Priority
 
 - [x] **TECH-86** — Lifecycle skill refactor: project hierarchy rules + orchestrator-vs-spec distinction
@@ -588,6 +616,7 @@ Player-facing **simulation**, **AUTO** growth, **urban growth rings** / **zone d
 3. In progress (active — insert above **High priority** when used)
 4. High priority (critical bugs, core gameplay blockers)
 5. Medium priority (important features, balance, improvements)
-6. Code Health (technical debt, refactors, performance)
-7. Low priority (new systems, polish, content)
+6. **Multi-scale simulation lane** (orchestrator [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md); file rows only when parent stage → `In Progress`)
+7. Code Health (technical debt, refactors, performance)
+8. Low priority (new systems, polish, content)
 8. **Archive** — completed work lives only in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)

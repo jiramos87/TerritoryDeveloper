@@ -1,6 +1,6 @@
 # Multi-Scale Simulation — Master Plan (MVP)
 
-> **Status:** In Review
+> **Status:** In Progress — Step 1 / Stage 1.1 / TECH-87
 >
 > **Scope:** Min load-bearing work to prove city ↔ region ↔ country game loop (dormant evolution + reconstruction). Rest → `multi-scale-post-mvp-expansion.md`.
 >
@@ -9,18 +9,23 @@
 > **Hierarchy rules:** `ia/rules/project-hierarchy.md` (step > stage > phase > task). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable).
 >
 > **Read first if landing cold:**
-> - `BACKLOG.md` · `BACKLOG-ARCHIVE.md` · `CLAUDE.md` · `AGENTS.md` · `ARCHITECTURE.md`
-> - `ia/rules/invariants.md` · `ia/specs/glossary.md` · `ia/specs/simulation-system.md`
-> - Deferred: `ia/projects/multi-scale-post-mvp-expansion.md`
-> - MCP: prefer `mcp__territory-ia__*` over full file reads.
+> - `ia/specs/game-overview.md` — vision + principles
+> - `ia/specs/simulation-system.md` — current single-scale tick loop (MCP `spec_section`)
+> - `ia/projects/multi-scale-post-mvp-expansion.md` — scope boundary (what's OUT of MVP)
+> - `ia/rules/project-hierarchy.md` + `ia/rules/orchestrator-vs-spec.md` — doc semantics
+> - MCP: `backlog_issue {id}` per referenced id; never full `BACKLOG.md` read.
 
 ---
 
 ## Steps
 
+> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level rollup.
+
 ### Step 1 — Parent-scale conceptual stubs
 
-Parent region + parent country **visible in city code + save data** before city MVP close. No playable region/country yet.
+**Status:** In Progress — Stage 1.1
+
+**Objectives:** surface parent region + country identity in city code + save. Land cell-type split as refactor base for parent scales. Plant neighbor-city stub + interstate-border read contract (inert). Zero behavior shift at city scale; no playable parent scales.
 
 **Exit criteria:**
 
@@ -32,7 +37,103 @@ Parent region + parent country **visible in city code + save data** before city 
 
 **Art:** None (code-only stubs).
 
+**Relevant surfaces (load when step opens):** `Assets/Scripts/Grid/Cell.cs`, `Assets/Scripts/SaveSystem/GameSaveData.cs`, `Assets/Scripts/GridManager.cs`, `Assets/Scripts/InterstateManager.cs`, `ia/specs/save-system.md` (§schema), `ia/rules/invariants.md` (#1, #5).
+
+#### Stage 1.1 — Parent-scale identity fields
+
+**Status:** Draft
+
+**Objectives:** city save + `GridManager` carry non-null `region_id` + `country_id` (placeholder GUIDs). Legacy saves migrate cleanly.
+
+**Exit:**
+
+- `GameSaveData` has non-null `region_id` + `country_id` (GUID).
+- `GridManager` exposes read-only `ParentRegionId` / `ParentCountryId` set at load / new-game.
+- Save/load round-trips both ids.
+- Legacy saves migrate w/ placeholder ids; no data loss; save version bumped.
+- Glossary rows land for **parent region id** + **parent country id**.
+
+**Phases:**
+
+- [ ] Phase 1 — Schema + migration (data shape, version bump, legacy load path).
+- [ ] Phase 2 — Runtime surface (`GridManager` properties + new-game placeholder allocation).
+- [ ] Phase 3 — Round-trip + migration tests (testmode batch).
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T1.1.1 | 1 | **TECH-87** | Draft | `GameSaveData` parent-id fields + save version bump + legacy migration + glossary rows. |
+| T1.1.2 | 2 | **TECH-88** | Draft | `GridManager` `ParentRegionId` / `ParentCountryId` surface + new-game placeholder allocation. |
+| T1.1.3 | 3 | **TECH-89** | Draft | Round-trip + legacy-migration tests (testmode batch scenario). |
+
+#### Stage 1.2 — Cell-type split
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** `Cell` → `CityCell` / `RegionCell` / `CountryCell`. City sim unchanged in behavior. Invariants #1 (`HeightMap` ↔ `Cell.height` sync) and #5 (`GetCell` only) preserved.
+
+**Exit:**
+
+- `Cell` base type (abstract class or interface) carries coord + shared primitives.
+- `CityCell` carries all existing city-scale fields.
+- `RegionCell` + `CountryCell` land as thin placeholders (coord + parent id refs; no behavior).
+- City sim compiles + runs against `CityCell`. Zero behavior regression (testmode smoke).
+- `GridManager` typed surface — generic `GetCell<T>(x,y)` or scale-indexed overloads; existing `GetCell(x,y)` back-compat defaults to `CityCell`.
+- Glossary rows land for three cell types.
+
+**Phases:**
+
+- [ ] Phase 1 — Base type extraction + `Cell` → `CityCell` rename (compile-only refactor).
+- [ ] Phase 2 — `RegionCell` + `CountryCell` placeholder types + glossary rows.
+- [ ] Phase 3 — `GridManager` typed surface + back-compat default.
+- [ ] Phase 4 — Regression gate (`unity:compile-check` + testmode smoke + `HeightMap` integrity).
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T1.2.1 | 1 | _pending_ | _pending_ | Extract `Cell` base. Rename existing `Cell` → `CityCell` across city sim. Preserve `HeightMap` sync. |
+| T1.2.2 | 2 | _pending_ | _pending_ | Add `RegionCell` + `CountryCell` placeholder types. Glossary rows. |
+| T1.2.3 | 3 | _pending_ | _pending_ | `GridManager` typed `GetCell` surface + back-compat default. |
+| T1.2.4 | 4 | _pending_ | _pending_ | Testmode smoke — city load + `HeightMap` / `CityCell.height` integrity check. |
+
+#### Stage 1.3 — Neighbor-city stub + interstate-border semantics
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** ≥1 neighbor stub per city at interstate border. Inert read contract for future cross-scale flow.
+
+**Exit:**
+
+- `NeighborCityStub` struct: `id` (GUID), display name, border side enum.
+- New-game init places ≥1 stub at random interstate border (seed-deterministic).
+- Interstate road exit binds to stub ref (lookup by border side).
+- Flow consumer reads stub via inert API (returns 0 / empty; no behavior).
+- Save/load preserves stubs + bindings round-trip.
+- Glossary rows land for **neighbor-city stub** + **interstate border**.
+
+**Phases:**
+
+- [ ] Phase 1 — Stub schema + save wiring.
+- [ ] Phase 2 — Interstate-border binding (new-game init + on-road-build at border).
+- [ ] Phase 3 — City-sim inert read surface + glossary rows.
+- [ ] Phase 4 — Round-trip + testmode smoke.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T1.3.1 | 1 | _pending_ | _pending_ | `NeighborCityStub` struct + `GameSaveData.neighborStubs` list + serialize. |
+| T1.3.2 | 2 | _pending_ | _pending_ | Interstate-border binding logic (new-game + on-road-build). |
+| T1.3.3 | 3 | _pending_ | _pending_ | `GridManager.GetNeighborStub(side)` inert read contract. Glossary rows. |
+| T1.3.4 | 4 | _pending_ | _pending_ | Round-trip test + testmode smoke (stub persists, binding intact). |
+
+**Backlog state (Step 1):** Stage 1.1 tasks filed as BACKLOG rows + project specs under `§ Multi-scale simulation lane` (TECH-87 / TECH-88 / TECH-89). Stages 1.2 + 1.3 tasks stay in this doc; file BACKLOG rows + specs when parent stage → `In Progress`.
+
 ### Step 2 — City MVP close
+
+**Status:** Draft (decomposition deferred until Step 1 → `Final`)
 
 City scale **stable + readable enough** to serve as aggregation source + reconstruction target. Not a finished city-builder loop.
 
@@ -45,7 +146,11 @@ City scale **stable + readable enough** to serve as aggregation source + reconst
 
 **Art:** None.
 
+**Relevant surfaces:** `backlog_issue BUG-55` / `BUG-16` / `BUG-17` / `BUG-14` / `FEAT-51` / `TECH-82`; `ia/specs/simulation-system.md`.
+
 ### Step 3 — Multi-scale infrastructure
+
+**Status:** Draft (decomposition deferred until Step 2 → `Final`)
 
 Scale-neutral spine. After Step 3: pure-compute sim modules, `SimulationScale` enum + `ISimulationModel` contract, per-scale snapshot schema (city first), relational multi-scale save, deterministic city evolution algorithm, snapshot freeze/reconstruct, procedural-scale generator, scale-switch UX skeleton — all exercised by one scale (city).
 
@@ -63,7 +168,11 @@ Scale-neutral spine. After Step 3: pure-compute sim modules, `SimulationScale` e
 
 **Art:** Procedural fog/cloud transition shader (fullscreen noise quad). Scale label UI. Per-scale toolbar icons (region + country tool sets).
 
+**Relevant surfaces:** `Assets/Scripts/SimulationManager.cs`, `Assets/Scripts/TimeManagement/TimeManager.cs`, `Assets/Scripts/SaveSystem/`, `ia/specs/simulation-system.md` (§tick-loop); `backlog_issue TECH-38` / `TECH-82` / `TECH-18` / `TECH-31` / `TECH-15` / `TECH-34` / `FEAT-46`; `ia/projects/multi-scale-post-mvp-expansion.md` §6.4 (scale-switch UX alternatives).
+
 ### Step 4 — Region MVP
+
+**Status:** Draft (decomposition deferred until Step 3 → `Final`)
 
 Region **playable as active scale** w/ own live-sim tick loop + deterministic evolution algorithm.
 
@@ -81,7 +190,11 @@ Region **playable as active scale** w/ own live-sim tick loop + deterministic ev
 
 **Art:** Region cell sprites, city-node visual at region zoom, region UI elements, procedural region art templates.
 
+**Relevant surfaces:** `backlog_issue FEAT-09` / `FEAT-47`; `ia/specs/simulation-system.md`; region sim contracts land in Step 3 — fetch then.
+
 ### Step 5 — Country MVP
+
+**Status:** Draft (decomposition deferred until Step 4 → `Final`)
 
 Country **playable as active scale**. After Step 5: three-scale MVP complete.
 
@@ -98,80 +211,17 @@ Country **playable as active scale**. After Step 5: three-scale MVP complete.
 
 **Art:** Country cell sprites, region-node visual at country zoom, country UI elements, head-of-state UI.
 
----
-
-## Existing backlog issues — role per step
-
-Source of truth: `BACKLOG.md`. MVP-critical roles only.
-
-### Step 2 — City MVP close
-
-| Issue | Role |
-|---|---|
-| `BUG-55` | Crashers + data corruption + sim logic |
-| `BUG-16` | Geography/TimeManager init race |
-| `BUG-17` | `cachedCamera` null in `ChunkCullingSystem` |
-| `BUG-14` | Per-frame `FindObjectOfType` in UI |
-| `FEAT-51` (scoped) | Minimal data dashboard + chart set |
-| `TECH-82` Phase 1 | `city_metrics_history` |
-
-### Step 3 — Multi-scale infrastructure
-
-| Issue | Role |
-|---|---|
-| `TECH-38` | Pure compute modules |
-| `TECH-15` | Geography init performance |
-| `TECH-34` | `GridManager` region manifest |
-| `TECH-82` Phases 2→4 | `city_events`, `grid_snapshots`, `buildings` identity |
-| `TECH-18` | Postgres IA migration (relational) |
-| `TECH-31` | Scenario generator (extended for snapshot + round-trip) |
-| `FEAT-46` | Geography / parameter pipeline (feeds procedural generator) |
-
-### Step 4 — Region MVP
-
-| Issue | Role |
-|---|---|
-| `FEAT-09` | Trade / production / salaries (re-scoped to inter-city at region) |
-| `FEAT-47` | Multipolar — region-level conurbation only |
+**Relevant surfaces:** country sim contracts land in Step 3 — fetch then; `ia/projects/multi-scale-post-mvp-expansion.md` (head-of-state scope boundary).
 
 ---
 
-## New feature rows to file
+## Deferred decomposition
 
-File under `§ Multi-scale simulation lane` in `BACKLOG.md` during backlog triage pass. Do NOT file earlier.
-
-**Step 1:** (1) Parent-scale stub — `region_id` + `country_id` refs, neighbor-city stub, interstate-border semantics. (2) Cell-type split — `Cell` → `CityCell` / `RegionCell` / `CountryCell`.
-
-**Step 3:** (3) `SimulationScale` enum + `ISimulationModel` contract. (4) Per-scale snapshot schema (city first). (5) Multi-scale relational save schema. (6) Single shared real-time clock. (7) Scale-switch-time event bubble-up / constraint push-down hooks (min). (8) Child-scale entity model. (9) City evolution algorithm (deterministic). (10) Snapshot → live reconstruction. (11) Procedural scale generator. (12) Scale-switch UX — semantic zoom + procedural fog mask + `ScaleToolProvider` + per-scale minimal toolbars + shared-tool strip. (13) Parity budget harness.
-
-**Step 4:** (14) Region sim model (active tick + deterministic evolution + min content). (15) Inter-city trade network solver (min). (16) Player-authored dormant control — region (budget allocation per child city).
-
-**Step 5:** (17) Country political/policy layer (active tick + deterministic evolution + min head-of-state loop). (18) Player-authored dormant control — country (budget allocation per child region). (19) Multi-scale scenario tests (extends `TECH-31`).
+Steps 2–5 stay at skeleton granularity (Objectives implicit in step blurb + Exit criteria + Relevant surfaces). Full Stage / Phase / Task decomposition lands when parent step → `In Progress`. Candidate-issue pointers live inline on each step's **Relevant surfaces** line; new-feature-row candidates surface during that step's decomposition pass, filed under `§ Multi-scale simulation lane` in `BACKLOG.md`. Do NOT pre-file Step 2–5 rows.
 
 ---
 
-## Open questions — MVP decisions
-
-Decided questions — reference only. Full post-MVP discussion: `multi-scale-post-mvp-expansion.md` §11.
-
-- **Q-new-29** — Step 1 exit checklist locked at start of Step 1 stage 1.
-- **Q-new-30** — Player invariants in `cell_data jsonb` under `player_invariants` subkey. Shaping-event logs deferred w/ shaping events.
-- **Q-new-31** — Scale-switch hook baselines: `IChildScaleEntity.ApplyPendingDelta(snapshot, deltaParams) → snapshot'`, `IScaleSwitch.Out/In`. Concrete C# shapes lock when Step 3 stage 3 opens.
-- **Q-new-32 through Q-new-38** — All deferred to post-MVP. See `multi-scale-post-mvp-expansion.md` §11.
-
----
-
-## Pointers for fresh agent
-
-1. **`ia/specs/game-overview.md`** — vision + design principles.
-2. **`ia/projects/multi-scale-post-mvp-expansion.md`** — what's NOT in MVP.
-3. **`BACKLOG.md`** — skim `§ Multi-scale simulation lane`, `§ Compute-lib program`, `§ Agent ↔ Unity & MCP context lane`, `§ High Priority`.
-4. **`CLAUDE.md` + `ia/rules/invariants.md`** — hard rules.
-5. **`ia/specs/simulation-system.md`** (via MCP `spec_section`) — current single-scale tick loop.
-6. **`ARCHITECTURE.md`** — runtime layers, dependency map.
-7. **`ia/rules/project-hierarchy.md`** — step/stage/phase/task semantics.
-8. **`ia/rules/orchestrator-vs-spec.md`** — this doc = orchestrator (permanent, not closeable).
-9. **Brainstorm seed history** in git only — `chore: brainstorm*` commits on `feature/multi-scale-plan`.
+## Orchestration guardrails
 
 **Do:**
 
