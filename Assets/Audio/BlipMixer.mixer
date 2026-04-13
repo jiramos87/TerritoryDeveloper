@@ -1,0 +1,175 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!244 &-8250009244835626936
+AudioMixerEffectController:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_EffectID: 0d6a7982264fb47448a96d6099a087d3
+  m_EffectName: Attenuation
+  m_MixLevel: 6e7c05e59f6194765a5972ce4df3d759
+  m_Parameters: []
+  m_SendTarget: {fileID: 0}
+  m_EnableWetMix: 0
+  m_Bypass: 0
+--- !u!243 &-8228700921255739312
+AudioMixerGroupController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Blip-World
+  m_AudioMixer: {fileID: 24100000}
+  m_GroupID: 46c00476c85d6475fa387a2f9151a30b
+  m_Children: []
+  m_Volume: b828cf4e3874a48489531da3cd2be1ff
+  m_Pitch: ee792268e12b244a3b38a1f8ed9c08f3
+  m_Send: 00000000000000000000000000000000
+  m_Effects:
+  - {fileID: 4213107573741004062}
+  m_UserColorIndex: 0
+  m_Mute: 0
+  m_Solo: 0
+  m_BypassEffects: 0
+--- !u!243 &-4805461625428807366
+AudioMixerGroupController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Blip-UI
+  m_AudioMixer: {fileID: 24100000}
+  m_GroupID: 4cbe4d6a6a8644657a3e31259ebb81fe
+  m_Children: []
+  m_Volume: c3a53d96306f446fba3a410ec737bca3
+  m_Pitch: ef1988df5c4204d758abee30349c04df
+  m_Send: 00000000000000000000000000000000
+  m_Effects:
+  - {fileID: -3761414949593070239}
+  m_UserColorIndex: 0
+  m_Mute: 0
+  m_Solo: 0
+  m_BypassEffects: 0
+--- !u!244 &-3761414949593070239
+AudioMixerEffectController:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_EffectID: 2f9435e1ed5d54b56a6e2538cde0fc53
+  m_EffectName: Attenuation
+  m_MixLevel: d524d4fba3c414f808dce21e119445ec
+  m_Parameters: []
+  m_SendTarget: {fileID: 0}
+  m_EnableWetMix: 0
+  m_Bypass: 0
+--- !u!241 &24100000
+AudioMixerController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: BlipMixer
+  m_OutputGroup: {fileID: 0}
+  m_MasterGroup: {fileID: 24300002}
+  m_Snapshots:
+  - {fileID: 24500006}
+  m_StartSnapshot: {fileID: 24500006}
+  m_SuspendThreshold: -80
+  m_EnableSuspend: 1
+  m_UpdateMode: 0
+  m_ExposedParameters:
+  - guid: 18a31335275204f0b8280d0a309faf0a
+    name: SfxVolume
+  m_AudioMixerGroupViews:
+  - guids:
+    - d44f505fa337342db90e732705ca31a3
+    - 4cbe4d6a6a8644657a3e31259ebb81fe
+    - 46c00476c85d6475fa387a2f9151a30b
+    - d4e5f8ee3f21648f89089ef19fc0570f
+    name: View
+  m_CurrentViewIndex: 0
+  m_TargetSnapshot: {fileID: 24500006}
+--- !u!243 &24300002
+AudioMixerGroupController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Master
+  m_AudioMixer: {fileID: 24100000}
+  m_GroupID: d44f505fa337342db90e732705ca31a3
+  m_Children:
+  - {fileID: -4805461625428807366}
+  - {fileID: -8228700921255739312}
+  - {fileID: 5769802488957328389}
+  m_Volume: 18a31335275204f0b8280d0a309faf0a
+  m_Pitch: 0577fab2582a145fb90bfedfd61444b5
+  m_Send: 00000000000000000000000000000000
+  m_Effects:
+  - {fileID: 24400004}
+  m_UserColorIndex: 7
+  m_Mute: 0
+  m_Solo: 0
+  m_BypassEffects: 0
+--- !u!244 &24400004
+AudioMixerEffectController:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_EffectID: 48337cf94fdda4939aaaf6f5bcd73646
+  m_EffectName: Attenuation
+  m_MixLevel: b3f7eb5bd58f64d06b3b886e8e469b10
+  m_Parameters: []
+  m_SendTarget: {fileID: 0}
+  m_EnableWetMix: 0
+  m_Bypass: 0
+--- !u!245 &24500006
+AudioMixerSnapshotController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Snapshot
+  m_AudioMixer: {fileID: 24100000}
+  m_SnapshotID: 8912a67946f2440e9803251d928706b3
+  m_FloatValues: {}
+  m_TransitionOverrides: {}
+--- !u!244 &4213107573741004062
+AudioMixerEffectController:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_EffectID: a23dcde768cba4242aa918643f90e950
+  m_EffectName: Attenuation
+  m_MixLevel: d700284d3d4514a23b53adc01c1f1540
+  m_Parameters: []
+  m_SendTarget: {fileID: 0}
+  m_EnableWetMix: 0
+  m_Bypass: 0
+--- !u!243 &5769802488957328389
+AudioMixerGroupController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Blip-Ambient
+  m_AudioMixer: {fileID: 24100000}
+  m_GroupID: d4e5f8ee3f21648f89089ef19fc0570f
+  m_Children: []
+  m_Volume: dfe124529400246b9a6ead74de22ebe9
+  m_Pitch: a3441136b121044b59a49fa2282e3f41
+  m_Send: 00000000000000000000000000000000
+  m_Effects:
+  - {fileID: -8250009244835626936}
+  m_UserColorIndex: 0
+  m_Mute: 0
+  m_Solo: 0
+  m_BypassEffects: 0

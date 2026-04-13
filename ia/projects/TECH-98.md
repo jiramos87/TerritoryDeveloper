@@ -7,7 +7,7 @@ slices_via: none
 # TECH-98 — BlipMixer.mixer asset + three groups + exposed SfxVolume param
 
 > **Issue:** [TECH-98](../../BACKLOG.md)
-> **Status:** In Review
+> **Status:** In Progress
 > **Created:** 2026-04-13
 > **Last updated:** 2026-04-13
 
@@ -68,11 +68,11 @@ Unity Editor authoring — `Window → Audio → Audio Mixer` → create `BlipMi
 
 ### Phase 1 — Authoring
 
-- [ ] Create `Assets/Audio/` folder if absent.
-- [ ] Author `BlipMixer.mixer` via Unity Editor; add `Blip-UI`, `Blip-World`, `Blip-Ambient` groups.
-- [ ] Expose master `SfxVolume` dB param (default 0 dB).
-- [ ] Verify groups visible in mixer window + `SfxVolume` listed under `Exposed Parameters`.
-- [ ] Commit `.mixer` + `.meta`.
+- [x] Create `Assets/Audio/` folder if absent.
+- [x] Author `BlipMixer.mixer` via Unity Editor; add `Blip-UI`, `Blip-World`, `Blip-Ambient` groups.
+- [x] Expose master `SfxVolume` dB param (default 0 dB).
+- [x] Verify groups visible in mixer window + `SfxVolume` listed under `Exposed Parameters`.
+- [x] Commit `.mixer` + `.meta`.
 
 ## 7b. Test Contracts
 
@@ -83,10 +83,10 @@ Unity Editor authoring — `Window → Audio → Audio Mixer` → create `BlipMi
 
 ## 8. Acceptance Criteria
 
-- [ ] `Assets/Audio/BlipMixer.mixer` + `.meta` committed.
-- [ ] Three groups present (`Blip-UI`, `Blip-World`, `Blip-Ambient`).
-- [ ] `SfxVolume` exposed (default 0 dB).
-- [ ] `npm run validate:all` green.
+- [x] `Assets/Audio/BlipMixer.mixer` + `.meta` committed.
+- [x] Three groups present (`Blip-UI`, `Blip-World`, `Blip-Ambient`).
+- [x] `SfxVolume` exposed (default 0 dB).
+- [x] `npm run validate:all` green.
 
 ## 10. Lessons Learned
 
