@@ -228,6 +228,13 @@
 
 ## Recent archive (moved from BACKLOG.md, 2026-04-10)
 
+- [x] **TECH-88** — `GridManager` parent-id surface + new-game placeholder allocation (2026-04-13)
+  - Type: infrastructure / runtime
+  - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`, `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs`
+  - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+  - Notes: **Completed (verified — `/project-spec-close`).** `GridManager` exposes read-only `ParentRegionId` / `ParentCountryId` (PascalCase properties; save fields stay lowercase `regionId` / `countryId` per TECH-87). One-shot `HydrateParentIds(regionId, countryId)` with null/empty guard + `_parentIdsHydrated` duplicate guard (`Debug.LogError` + return, no throw). `GameSaveManager.NewGame()` allocates `Guid.NewGuid()` pair post-`ResetGrid()` + hydrates eagerly (shifts allocation earlier than previous lazy-on-first-save). `LoadGame` hydrates after `MigrateLoadedSaveData` + local id cache, before `RestoreGrid`. `BuildCurrentGameSaveData` keeps fallback as defense-in-depth for scenario-builder paths. No consumers yet — surface only; consumed by ≥1 city system in Step 2. Orchestrator: `multi-scale-master-plan.md` Step 1 / Stage 1.1.
+  - Depends on: **TECH-87**
+
 - [x] **BUG-12** — Happiness UI always shows 50% (2026-04-07)
   - Type: fix
   - Files: `CityStatsUIController.cs` (GetHappiness), `GridManager.cs` (HandleBuildingStatsReset), `CityStats.cs` (RemoveMoney Debug.Log)

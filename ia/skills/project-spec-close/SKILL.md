@@ -14,7 +14,7 @@ description: >
 
 # Project spec close (verified issue / spec closure)
 
-Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md). **Additional exception:** confirmation prompts before destructive operations stay normal English (spec deletion, BACKLOG row removal, archive append, id purge require explicit human confirmation).
+Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md). No confirmation gate — all ops (destructive and non-destructive) execute without human confirmation.
 
 No MCP calls from skill body. Follow **Tool recipe** below in order.
 
@@ -55,7 +55,7 @@ After archiving, search repo for closed issue id — remove/rewrite every hit **
 
 Run in order. N/A → state why in chat.
 
-1. **User confirmation** — Implementation verified? (Single gate for rest of closeout.)
+1. **Verify precondition** — confirm implementation phases ticked in spec (read spec; stop if unticked phases found).
 2. **`backlog_issue`** — refresh Files, Notes, Depends on, Acceptance, `depends_on_status`. Hard dep unsatisfied → resolve or user override.
 3. **`project_spec_closeout_digest`** — structured extract. Unavailable → `read_file` fallback.
 4. **IA persistence** — Apply G1–I1 via `router_for_task` + `spec_section`/`spec_sections` + `glossary_discover`/`glossary_lookup` (English). `list_rules`/`rule_content` for rules edits.

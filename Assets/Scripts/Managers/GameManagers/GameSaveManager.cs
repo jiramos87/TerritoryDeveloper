@@ -90,6 +90,9 @@ public class GameSaveManager : MonoBehaviour
         // Write back to manager so subsequent saves in the same session reuse the same ids.
         regionId = saveData.regionId;
         countryId = saveData.countryId;
+        // Defense-in-depth: hydrate GridManager for scenario-builder / test paths that bypass NewGame().
+        if (gridManager != null && gridManager.ParentRegionId == null)
+            gridManager.HydrateParentIds(regionId, countryId);
         saveData.cityName = cityStats.cityName;
         saveData.realWorldSaveTime = DateTime.Now;
         saveData.realWorldSaveTimeTicks = DateTime.UtcNow.Ticks;
@@ -154,6 +157,8 @@ public class GameSaveManager : MonoBehaviour
             // Cache parent ids on manager so subsequent saves preserve them.
             regionId = saveData.regionId;
             countryId = saveData.countryId;
+            // Hydrate GridManager surface before RestoreGrid so consumers see non-null ids from grid-ready.
+            gridManager.HydrateParentIds(saveData.regionId, saveData.countryId);
 
             // Use saved grid dimensions (or infer from gridData for old saves) before reset
             if (saveData.gridWidth > 0 && saveData.gridHeight > 0)
@@ -270,6 +275,11 @@ public class GameSaveManager : MonoBehaviour
         if (regionalMapManager != null)
             regionalMapManager.ClearBorderSigns();
         gridManager.ResetGrid();
+
+        // Allocate placeholder parent ids eagerly so GridManager surface is non-null before first save.
+        regionId = Guid.NewGuid().ToString();
+        countryId = Guid.NewGuid().ToString();
+        gridManager.HydrateParentIds(regionId, countryId);
 
         GeographyManager geographyManager = FindObjectOfType<GeographyManager>();
         if (geographyManager != null)

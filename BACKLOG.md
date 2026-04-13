@@ -312,21 +312,13 @@ Player-facing **simulation**, **AUTO** growth, **urban growth rings** / **zone d
 
 Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = parent-scale conceptual stubs (code + save surfaces only; no playable parent scales). Stage 1.1 = parent-scale identity fields — filed below. Stages 1.2 (cell-type split) + 1.3 (neighbor-city stub) remain in master plan; file here when parent stage → `In Progress`.
 
-- [ ] **TECH-88** — `GridManager` parent-id surface + new-game placeholder allocation
-  - Type: infrastructure / runtime
-  - Files: `Assets/Scripts/GridManager.cs`, `Assets/Scripts/NewGame/` (new-game init path), `Assets/Scripts/SaveSystem/SaveManager.cs` (load wiring)
-  - Spec: `ia/projects/TECH-88.md`
-  - Notes: `GridManager` exposes read-only `ParentRegionId` / `ParentCountryId`. Values set from `GameSaveData` on load; new-game init allocates placeholder GUIDs + writes to save. No consumers yet — surface only. Consumed by ≥1 city system in Step 2. Orchestrator: Step 1 / Stage 1.1.
-  - Acceptance: properties readable from any city-sim code path; new-game → save → ids non-null; load rehydrates ids
-  - Depends on: **TECH-87**
-
 - [ ] **TECH-89** — Parent-id round-trip + legacy-migration tests (testmode)
   - Type: test / verification
   - Files: `Assets/Editor/TestMode/` (scenario), `tools/scripts/testmode/`
   - Spec: `ia/projects/TECH-89.md`
   - Notes: Testmode batch scenario — new-game → save → reload → assert parent ids preserved. Legacy-save fixture (pre-version-bump) → load → assert placeholder migration correct. Run via `npm run unity:testmode-batch`. Orchestrator: Step 1 / Stage 1.1.
   - Acceptance: testmode scenario green on new-game round-trip + legacy migration; fixture committed; `npm run validate:all` + `unity:compile-check` green
-  - Depends on: **TECH-87**, **TECH-88**
+  - Depends on: **TECH-87**
 
 ## High Priority
 

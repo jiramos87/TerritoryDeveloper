@@ -73,6 +73,36 @@ public class GridManager : MonoBehaviour, IGridManager
 
     public bool isInitialized = false;
 
+    #region Parent-scale identity
+    /// <summary>Parent region GUID. Set once via HydrateParentIds; read-only after that.</summary>
+    public string ParentRegionId { get; private set; }
+    /// <summary>Parent country GUID. Set once via HydrateParentIds; read-only after that.</summary>
+    public string ParentCountryId { get; private set; }
+    private bool _parentIdsHydrated;
+
+    /// <summary>
+    /// Set parent region + country ids for this city. Called by GameSaveManager on load and new-game.
+    /// One-shot per GridManager lifecycle: duplicate call logs error and returns without overwriting.
+    /// Null/empty args log error and return without setting.
+    /// </summary>
+    public void HydrateParentIds(string regionId, string countryId)
+    {
+        if (string.IsNullOrEmpty(regionId) || string.IsNullOrEmpty(countryId))
+        {
+            Debug.LogError("[GridManager] HydrateParentIds: regionId or countryId is null/empty — skipping hydration.");
+            return;
+        }
+        if (_parentIdsHydrated)
+        {
+            Debug.LogError("[GridManager] HydrateParentIds: already hydrated — duplicate call ignored.");
+            return;
+        }
+        ParentRegionId = regionId;
+        ParentCountryId = countryId;
+        _parentIdsHydrated = true;
+    }
+    #endregion
+
     [Header("Chunk Culling")]
     public int chunkSize = 16;
     private GameObject[,] chunkObjects;

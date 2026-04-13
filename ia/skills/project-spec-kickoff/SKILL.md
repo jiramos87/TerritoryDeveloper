@@ -32,7 +32,7 @@ Replace `{SPEC_PATH}` with the project spec path from the backlog **Spec:** line
 ```markdown
 Review @{SPEC_PATH} and ensure it uses canonical terms from the glossary and reference specs.
 Analyze stated goals; avoid negatively affecting current subsystems unless the spec explicitly accepts tradeoffs.
-Make ## 7. Implementation Plan more concrete where possible.
+Make ## 7. Implementation Plan more concrete where possible. For each bullet whose action is non-obvious (complex transform, guard pattern, new integration, non-trivial rename), add a brief inline example — a short pseudo-code snippet, a before/after method signature, or a concrete call site — immediately after the bullet. Keep examples ≤ 4 lines; omit when the bullet is self-evident.
 For **FEAT-** / **BUG-** specs, ensure ## 7b. Test Contracts maps **§8 Acceptance** to verifiable checks (see `ia/templates/project-spec-template.md`).
 Follow the MCP tool sequence in this skill's "Tool recipe (territory-ia)" section (do not skip steps unless the spec is tooling-only and cannot touch game subsystems).
 If you make material edits, update related Information Architecture: linked project specs, glossary rows, and reference spec sections so implementation stays aligned.
