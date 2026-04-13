@@ -87,36 +87,45 @@ Three principles:
 
 ## 3. Knowledge lifecycle
 
-Every issue follows a lifecycle where knowledge is created, refined, used, and then migrated into durable IA:
+Every issue follows a lifecycle where knowledge is created, refined, used, and then migrated into durable IA. Canonical stage → surface matrix + handoff contract: [`docs/agent-lifecycle.md`](agent-lifecycle.md). Always-loaded anchor: [`ia/rules/agent-lifecycle.md`](../ia/rules/agent-lifecycle.md).
 
 ```
-1. CREATE          project-new skill
-                   backlog_issue + glossary_discover + router_for_task + spec_section
-                   → BACKLOG.md row + ia/projects/{ISSUE_ID}.md stub
+0. EXPLORE         /design-explore  (optional, for fuzzy multi-step work)
+                   Compare → select → expand → architecture → subsystem impact → impl points → review
+                   → docs/{slug}.md with ## Design Expansion block persisted
 
-2. REFINE          project-spec-kickoff skill
+1. ORCHESTRATE     master-plan-new skill  (optional, multi-step only)
+                   Decompose Design Expansion into step > stage > phase > task skeleton (cardinality ≥2)
+                   → ia/projects/{slug}-master-plan.md (orchestrator — permanent, NOT closeable)
+
+2. FILE            /stage-file  (orchestrator-driven bulk)  OR  /project-new  (single issue)
+                   Emit BACKLOG row(s) + ia/projects/{ISSUE_ID}.md stub(s) from template
+                   → one row per _pending_ task; validate:dead-project-specs green
+
+3. REFINE          /kickoff
                    backlog_issue → invariants_summary → router_for_task → spec_section → glossary_*
-                   → enriched project spec with clear Open Questions, Implementation Plan
+                   → enriched project spec §1–§10 with resolved Open Questions + concrete Implementation Plan
 
-3. IMPLEMENT       project-spec-implement skill
+4. IMPLEMENT       /implement
                    Per-phase loop: router_for_task → spec_section → glossary_* → code → compile gate
-                   → code changes + updated spec Decision Log / Issues Found
+                   → code changes + per-phase Decision Log / Issues Found / Lessons Learned
 
-4. VERIFY          agent-test-mode-verify / close-dev-loop / ide-bridge-evidence (dev machine)
-                   Agent test mode batch + optional IDE agent bridge; see agent-led-verification-policy.md
-                   → batch JSON, bridge evidence, compile gate
+5. VERIFY          /verify-loop  (closed-loop + bounded fix iteration)  OR  /verify  (single-pass)
+                   Step 0 bridge preflight → Step 1 compile gate → Step 2 validate:all → Step 3 verify:local
+                   → Step 4a Path A batch / 4b Path B IDE bridge → Step 5 evidence → Step 6 fix iter (≤2)
+                   → JSON Verification block + caveman summary per docs/agent-led-verification-policy.md
 
-5. VALIDATE        project-implementation-validation skill
-                   npm run validate:dead-project-specs, test:ia, validate:fixtures, generate:ia-indexes --check
-                   → CI-aligned validation report
+6. STAGE CLOSE     project-stage-close skill  (multi-stage specs only, non-final stage)
+                   Tick §7 checklist, update Last updated, append §6 / §9 / §10, optional Postgres journal
+                   → handoff prompt for next stage's fresh agent; NO spec deletion, NO BACKLOG touch
 
-6. CLOSE           project-spec-close skill
+7. UMBRELLA CLOSE  /closeout
                    project_spec_closeout_digest → persist lessons to glossary, specs, rules, docs
                    → project_spec_journal_persist (Postgres) → delete spec → archive backlog row
                    → purge closed issue id from durable surfaces
 ```
 
-**Key invariant:** Temporary project specs are *always* deleted after closure. Any knowledge worth keeping is migrated to permanent IA surfaces first.
+**Key invariants.** Orchestrator docs (`{slug}-master-plan.md`) are permanent and NEVER closeable via `/closeout` — see [`ia/rules/orchestrator-vs-spec.md`](../ia/rules/orchestrator-vs-spec.md). Temporary project specs are *always* deleted after umbrella closure; any knowledge worth keeping is migrated to permanent IA surfaces first. Every stage owes the next a concrete handoff artifact — missing artifact = next stage refuses to start (full contract: [`docs/agent-lifecycle.md`](agent-lifecycle.md) §3).
 
 ---
 
@@ -184,18 +193,25 @@ Full tool documentation: [docs/mcp-ia-server.md](mcp-ia-server.md).
 
 Skills under [ia/skills/](../ia/skills/) define ordered MCP tool recipes for each lifecycle stage. They don't execute tools — they tell the agent which tools to call, in what order, with what parameters.
 
-| Lifecycle stage | Skill | Core MCP recipe |
-|-----------------|-------|-----------------|
-| **Create** issue | [project-new](../ia/skills/project-new/SKILL.md) | glossary_discover → router_for_task → spec_section → backlog_issue |
-| **Refine** spec | [project-spec-kickoff](../ia/skills/project-spec-kickoff/SKILL.md) | backlog_issue → invariants_summary → router_for_task → spec_section → glossary_* |
-| **Implement** | [project-spec-implement](../ia/skills/project-spec-implement/SKILL.md) | Per-phase: router → spec_section → glossary → code → compile gate |
-| **Validate** (Node + local bridge) | [project-implementation-validation](../ia/skills/project-implementation-validation/SKILL.md) | **`npm run validate:all`** (includes **`compute-lib:build`**); **`npm run verify:local`** (full dev chain; **`verify:post-implementation`** alias) |
-| **Debug** (Play Mode) | [ide-bridge-evidence](../ia/skills/ide-bridge-evidence/SKILL.md) / [close-dev-loop](../ia/skills/close-dev-loop/SKILL.md) | unity_bridge_command (debug_context_bundle, compile gate, before/after diff) |
-| **Preflight** (bridge) | [bridge-environment-preflight](../ia/skills/bridge-environment-preflight/SKILL.md) | Postgres + agent_bridge_job readiness check |
-| **Close** issue | [project-spec-close](../ia/skills/project-spec-close/SKILL.md) | closeout_digest → persist IA → journal_persist → delete spec → archive |
-| **UI row** | [ui-hud-row-theme](../ia/skills/ui-hud-row-theme/SKILL.md) | spec_section (ui-design-system §1, §3.0, §4.3, §5.2) |
+| Lifecycle stage | Skill | Slash command | Core MCP recipe |
+|-----------------|-------|---------------|-----------------|
+| **Explore** | [design-explore](../ia/skills/design-explore/SKILL.md) | `/design-explore` | router_for_task → spec_sections → glossary_* → invariants_summary → subagent review |
+| **Orchestrate** | [master-plan-new](../ia/skills/master-plan-new/SKILL.md) | *(skill only)* | glossary_discover → router_for_task → spec_sections → invariants_summary → list_specs |
+| **Bulk-file stage** | [stage-file](../ia/skills/stage-file/SKILL.md) | `/stage-file` | Shared context once → per-task `project-new` delegate |
+| **Create** issue | [project-new](../ia/skills/project-new/SKILL.md) | `/project-new` | glossary_discover → router_for_task → spec_section → backlog_issue |
+| **Refine** spec | [project-spec-kickoff](../ia/skills/project-spec-kickoff/SKILL.md) | `/kickoff` | backlog_issue → invariants_summary → router_for_task → spec_section → glossary_* |
+| **Implement** | [project-spec-implement](../ia/skills/project-spec-implement/SKILL.md) | `/implement` | Per-phase: router → spec_section → glossary → code → compile gate |
+| **Verify (closed-loop)** | [verify-loop](../ia/skills/verify-loop/SKILL.md) | `/verify-loop` | preflight → validate:all → compile gate → Path A/B → evidence → fix iter (≤2) |
+| **Verify (single-pass)** | *(composed)* | `/verify` | `validate:all` + compile gate + Path A OR Path B, read-only |
+| **Test-mode ad-hoc** | [agent-test-mode-verify](../ia/skills/agent-test-mode-verify/SKILL.md) | `/testmode` | `unity:testmode-batch` (Path A) / bridge hybrid (Path B) |
+| **Validate (Node + local bridge)** | [project-implementation-validation](../ia/skills/project-implementation-validation/SKILL.md) | *(composed by `/verify-loop`)* | `npm run validate:all` / `npm run verify:local` (alias `verify:post-implementation`) |
+| **Debug (Play Mode)** | [ide-bridge-evidence](../ia/skills/ide-bridge-evidence/SKILL.md) / [close-dev-loop](../ia/skills/close-dev-loop/SKILL.md) | *(composed by `/verify-loop`)* | `unity_bridge_command` (debug_context_bundle, compile gate, before/after diff) |
+| **Preflight (bridge)** | [bridge-environment-preflight](../ia/skills/bridge-environment-preflight/SKILL.md) | *(composed)* | Postgres + `agent_bridge_job` readiness check |
+| **Close stage** | [project-stage-close](../ia/skills/project-stage-close/SKILL.md) | *(skill only)* | Tick §7 → append §6 / §9 / §10 → journal_persist (optional) → handoff prompt |
+| **Close issue (umbrella)** | [project-spec-close](../ia/skills/project-spec-close/SKILL.md) | `/closeout` | closeout_digest → persist IA → journal_persist → delete spec → archive row |
+| **UI row** | [ui-hud-row-theme](../ia/skills/ui-hud-row-theme/SKILL.md) | *(domain skill, not in main flow)* | spec_section (ui-design-system §1, §3.0, §4.3, §5.2) |
 
-Skill conventions: [ia/skills/README.md](../ia/skills/README.md).
+Lifecycle canonical doc: [docs/agent-lifecycle.md](agent-lifecycle.md). Skill conventions + folder naming: [ia/skills/README.md](../ia/skills/README.md). Claude Code host surface (subagents + command dispatchers): [CLAUDE.md](../CLAUDE.md) §3.
 
 ---
 

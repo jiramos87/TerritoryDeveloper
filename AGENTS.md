@@ -10,21 +10,40 @@
 4. **MCP first**: in MCP-enabled hosts, `territory-ia` is default retrieval. Order: `backlog_issue` → `router_for_task` → `glossary_discover` / `glossary_lookup` (English only — translate from chat) → `spec_outline` / `spec_section` / `spec_sections` → `invariants_summary` / `list_rules` / `rule_content`. Closing project spec: `project_spec_closeout_digest` after `backlog_issue`. Ref: [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md).
 5. **Stale content:** territory-ia MCP caches per-process. After large edits, prefer fresh `read_file` or restart MCP server.
 
-## 2. Lifecycle skills (open matching `SKILL.md`)
+## 2. Agent lifecycle
 
-| Stage | Skill | Triggers |
-|---|---|---|
-| **Create** | [`project-new`](ia/skills/project-new/SKILL.md) | New `BACKLOG.md` row + `ia/projects/{ISSUE_ID}-{slug}.md` from prompt |
-| **Refine** | [`project-spec-kickoff`](ia/skills/project-spec-kickoff/SKILL.md) | Review / enrich project spec before code |
-| **Implement** | [`project-spec-implement`](ia/skills/project-spec-implement/SKILL.md) | Execute spec Implementation Plan |
-| **Validate (Node)** | [`project-implementation-validation`](ia/skills/project-implementation-validation/SKILL.md) | Post-implementation Node checks (CI-aligned) |
-| **Verify (Unity)** | [`agent-test-mode-verify`](ia/skills/agent-test-mode-verify/SKILL.md) + [`ide-bridge-evidence`](ia/skills/ide-bridge-evidence/SKILL.md) + [`close-dev-loop`](ia/skills/close-dev-loop/SKILL.md) | Path A batch / Path B IDE bridge evidence |
-| **Bridge preflight** | [`bridge-environment-preflight`](ia/skills/bridge-environment-preflight/SKILL.md) | Before any `unity_bridge_command` in session |
-| **Close stage** | [`project-stage-close`](ia/skills/project-stage-close/SKILL.md) | End of each non-final stage of multi-stage spec |
-| **Close issue** | [`project-spec-close`](ia/skills/project-spec-close/SKILL.md) | Migrate lessons → durable IA, archive row, delete spec |
-| **UI rows** | [`ui-hud-row-theme`](ia/skills/ui-hud-row-theme/SKILL.md) | HUD/menu rows w/ `UiTheme` + UI design spec |
+Canonical flow (exploration → close). Full matrix, handoff contract, decision tree: [`docs/agent-lifecycle.md`](docs/agent-lifecycle.md). Always-loaded anchor: [`ia/rules/agent-lifecycle.md`](ia/rules/agent-lifecycle.md).
 
-Skill index + conventions: [`ia/skills/README.md`](ia/skills/README.md).
+```
+/design-explore → master-plan-new (skill) → /stage-file → /project-new → /kickoff → /implement → /verify-loop → project-stage-close (skill) → /closeout
+```
+
+Single-issue path (skip first three stages): `/project-new → /kickoff → /implement → /verify-loop → /closeout`.
+
+| # | Stage | Slash command | Skill | Purpose |
+|---|-------|---------------|-------|---------|
+| 1 | Explore | [`/design-explore`](.claude/commands/design-explore.md) | [`design-explore`](ia/skills/design-explore/SKILL.md) | Exploration doc → reviewed design + `## Design Expansion` |
+| 2 | Orchestrate | *(skill only)* | [`master-plan-new`](ia/skills/master-plan-new/SKILL.md) | Design expansion → `ia/projects/{slug}-master-plan.md` (orchestrator, permanent) |
+| 3 | Bulk-file stage | [`/stage-file`](.claude/commands/stage-file.md) | [`stage-file`](ia/skills/stage-file/SKILL.md) | One orchestrator stage → N BACKLOG rows + spec stubs |
+| 4 | Single issue | [`/project-new`](.claude/commands/project-new.md) | [`project-new`](ia/skills/project-new/SKILL.md) | One BACKLOG row + one `ia/projects/{ISSUE_ID}.md` stub |
+| 5 | Refine | [`/kickoff`](.claude/commands/kickoff.md) | [`project-spec-kickoff`](ia/skills/project-spec-kickoff/SKILL.md) | Enrich spec §1–§10 before code |
+| 6 | Implement | [`/implement`](.claude/commands/implement.md) | [`project-spec-implement`](ia/skills/project-spec-implement/SKILL.md) | Execute Implementation Plan phase by phase |
+| 7 | Verify (single-pass) | [`/verify`](.claude/commands/verify.md) | composed | Lightweight Verification block, read-only |
+| 7 | Verify (closed-loop) | [`/verify-loop`](.claude/commands/verify-loop.md) | [`verify-loop`](ia/skills/verify-loop/SKILL.md) | 7-step closed loop + bounded fix iteration |
+| 7 | Test-mode ad-hoc | [`/testmode`](.claude/commands/testmode.md) | [`agent-test-mode-verify`](ia/skills/agent-test-mode-verify/SKILL.md) | Path A batch / Path B bridge hybrid in isolation |
+| 8 | Close stage | *(skill only)* | [`project-stage-close`](ia/skills/project-stage-close/SKILL.md) | Tick one stage of a multi-stage spec + handoff |
+| 9 | Close issue (umbrella) | [`/closeout`](.claude/commands/closeout.md) | [`project-spec-close`](ia/skills/project-spec-close/SKILL.md) | Migrate lessons → delete spec → archive row → purge id |
+
+Domain-skill (not in main flow): [`ui-hud-row-theme`](ia/skills/ui-hud-row-theme/SKILL.md) for HUD/menu rows with `UiTheme`. Verification building blocks (composed by `/verify-loop`, invokable standalone via `Skill` tool): [`bridge-environment-preflight`](ia/skills/bridge-environment-preflight/SKILL.md), [`project-implementation-validation`](ia/skills/project-implementation-validation/SKILL.md), [`ide-bridge-evidence`](ia/skills/ide-bridge-evidence/SKILL.md), [`close-dev-loop`](ia/skills/close-dev-loop/SKILL.md).
+
+Hard rules (enforced at handoff):
+
+- Orchestrator docs (`*master-plan*`) are permanent — NEVER closeable via `/closeout`. See [`ia/rules/orchestrator-vs-spec.md`](ia/rules/orchestrator-vs-spec.md).
+- `/verify` = single pass, read-only. `/verify-loop` = bounded fix iteration (`MAX_ITERATIONS=2`). Both defer to [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md); never restate the policy.
+- Stage close ≠ umbrella close. Per-stage = `project-stage-close` skill (no spec deletion). Umbrella = `/closeout` (deletes spec + archives row).
+- Missing handoff artifact → next stage refuses to start. Full contract: [`docs/agent-lifecycle.md`](docs/agent-lifecycle.md) §3.
+
+Skill index + conventions: [`ia/skills/README.md`](ia/skills/README.md). Claude Code host surface (hooks, agent bodies, command dispatchers): [`CLAUDE.md`](CLAUDE.md) §3.
 
 ## 3. Verification policy (canonical)
 

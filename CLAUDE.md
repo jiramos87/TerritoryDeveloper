@@ -4,6 +4,7 @@
 @ia/rules/terminology-consistency.md
 @ia/rules/mcp-ia-default.md
 @ia/rules/agent-output-caveman.md
+@ia/rules/agent-lifecycle.md
 
 ## 1. What this repo is
 
@@ -20,7 +21,7 @@ Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files
 | `MEMORY.md` (root) | Repo-scoped project memory. One-line entries; promote to `.claude/memory/{slug}.md` when an entry exceeds ~10 lines. Distinct from user auto-memory under `~/.claude-personal/projects/.../memory/` (cross-project, per-user). |
 | `.claude/settings.json` | Hooks + permissions. **Do not strip `defaultMode: "acceptEdits"`** and **do not split the `mcp__territory-ia__*` wildcard** — both regress per-call approval friction. |
 | `.claude/skills/{name}` | Directory-level symlinks → `ia/skills/{name}/`. |
-| `.claude/agents/*.md` | 5 native subagents — `spec-kickoff`, `spec-implementer`, `verifier`, `test-mode-loop`, `closeout`. Opus orchestrators (kickoff / implementer / closeout); Sonnet executors (verifier / test-mode-loop). Each body carries a `caveman:caveman` directive (subagents run in fresh context and do not inherit the parent SessionStart hook). |
+| `.claude/agents/*.md` | 5 native subagents — `spec-kickoff`, `spec-implementer`, `verifier`, `test-mode-loop`, `closeout`. Opus orchestrators (kickoff / closeout); Sonnet executors (implementer / verifier / test-mode-loop). Each body carries a `caveman:caveman` directive (subagents run in fresh context and do not inherit the parent SessionStart hook). |
 | `.claude/commands/*.md` | Slash command dispatchers → subagents under `.claude/agents/{name}.md` (`/kickoff`, `/implement`, `/verify`, `/testmode`, `/closeout`). Each forwards a caveman-asserting prompt. `/closeout` confirmation prompts stay full English. |
 | `.claude/output-styles/*.md` | 2 output styles — `verification-report` (JSON header + caveman summary, used by `/verify`) and `closeout-digest` (JSON header + caveman summary, used by `/closeout`). |
 | `ia/skills/*/SKILL.md` | Workflow recipes — open the matching `SKILL.md` when the task triggers. Index: `ia/skills/README.md`. The 6 lifecycle recipes (`project-spec-kickoff`, `project-spec-implement`, `project-implementation-validation`, `agent-test-mode-verify`, `project-spec-close`, `project-stage-close`) carry a caveman preamble so direct (non-subagent) invocations inherit the same default. |
