@@ -8,8 +8,9 @@ description: >
   Bulk-create BACKLOG rows + ia/projects/{ISSUE_ID}.md stubs for all _pending_ tasks in a
   given stage of an orchestrator spec. Each task becomes one issue (project-new workflow).
   Shared stage context loaded once; strict phase/task cardinality enforced. Triggers:
-  "/stage-file Stage 1.2", "file stage tasks", "bulk create stage issues",
+  "/stage-file {orchestrator-path} Stage 1.2", "file stage tasks", "bulk create stage issues",
   "create backlog rows for Stage X.Y", "bootstrap issues for pending stage tasks".
+  Argument order (explicit): ORCHESTRATOR_SPEC first, STAGE_ID second.
 ---
 
 # Bulk stage task filing
@@ -25,11 +26,14 @@ phase/task cardinality enforcement.
 
 ## Inputs
 
+**Argument order (positional, explicit preferred):** `ORCHESTRATOR_SPEC` first, `STAGE_ID` second.
+When the repo has multiple orchestrator docs under `ia/projects/`, always pass the path explicitly to avoid ambiguity.
+
 | Parameter | Source | Notes |
 |-----------|--------|-------|
-| `ORCHESTRATOR_SPEC` | User prompt or Glob resolve | Path to `ia/projects/{master-plan}.md` |
-| `STAGE_ID` | User prompt | e.g. `1.2` or `Stage 1.2` |
-| `ISSUE_PREFIX` | User prompt or default | `TECH-` / `FEAT-` / `BUG-` / `ART-` / `AUDIO-` — default `TECH-` |
+| `ORCHESTRATOR_SPEC` | **1st arg** (explicit path preferred) or Glob resolve | Path to `ia/projects/{master-plan}.md`. Glob fallback only when exactly one `*-master-plan.md` exists. |
+| `STAGE_ID` | **2nd arg** | e.g. `1.2` or `Stage 1.2` |
+| `ISSUE_PREFIX` | 3rd arg or default | `TECH-` / `FEAT-` / `BUG-` / `ART-` / `AUDIO-` — default `TECH-` |
 
 ## Cardinality gate
 

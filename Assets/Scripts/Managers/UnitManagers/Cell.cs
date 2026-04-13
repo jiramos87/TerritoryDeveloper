@@ -10,7 +10,7 @@ namespace Territory.Core
 /// Represents a single cell in the game grid with properties for buildings, roads, forests, and environmental factors.
 /// Updated to support the new Forest.ForestType system for better forest management.
 /// </summary>
-public class Cell : MonoBehaviour
+public class Cell : CellBase
 {
     [Header("Road Connections")]
     public bool hasRoadAtLeft;
@@ -50,13 +50,6 @@ public class Cell : MonoBehaviour
     public WaterPlant waterPlant { get; set; }
     public GameObject occupiedBuilding { get; set; }
     public GameObject prefab { get; set; }
-
-    [Header("Grid Position")]
-    public int x;
-    public int y;
-    public int sortingOrder;
-    public int height;
-    public Vector2 transformPosition;
 
     [Header("Forest Properties")]
     public Forest.ForestType forestType = Forest.ForestType.None; // Updated from hasTree

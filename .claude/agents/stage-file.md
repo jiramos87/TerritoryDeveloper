@@ -13,7 +13,7 @@ Run `ia/skills/stage-file/SKILL.md` end-to-end for the target stage. Bulk-file a
 
 # Recipe
 
-1. **Resolve inputs** — Glob-resolve orchestrator spec path. Parse stage id from user prompt (e.g. `1.2`, `Stage 1.2`). Default `ISSUE_PREFIX` = `TECH-` unless user specifies.
+1. **Resolve inputs** — Parse from user prompt: **1st token = `ORCHESTRATOR_SPEC`** (explicit path, e.g. `ia/projects/multi-scale-master-plan.md`); **2nd token = `STAGE_ID`** (e.g. `Stage 1.2` → `1.2`). Glob-resolve `ORCHESTRATOR_SPEC` only when path is omitted AND exactly one `*-master-plan.md` exists under `ia/projects/` — otherwise error and ask user to pass the path explicitly. Default `ISSUE_PREFIX` = `TECH-` unless user specifies.
 2. **Read stage** — Read orchestrator spec; extract target stage block (Objectives, Exit criteria, Phases list, task table). Collect all `_pending_` tasks.
 3. **Cardinality gate** — Count tasks per phase. Phase with 1 task → warn user + pause. Ask: split or confirm with Decision Log justification. Proceed only after confirmation.
 4. **Shared MCP context (once)** — Run in order:

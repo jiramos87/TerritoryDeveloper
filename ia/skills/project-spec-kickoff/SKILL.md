@@ -73,6 +73,15 @@ Only when Open Questions fuzzy, Summary/Goals unclear, or user requests explorat
 
 After MCP slices → editorial pass: Open Questions, Implementation Plan, Decision Log, sibling spec cross-links.
 
+## Orchestrator sync (post-kickoff)
+
+After editorial pass completes:
+
+1. **Locate orchestrator** — `Glob ia/projects/*master-plan*.md` + `ia/projects/stage-*.md`; `Grep` for `{ISSUE_ID}` in task table.
+2. **Flip status** — If row found with `Draft`, replace `Draft` → `In Review` in that row's Status column. If already `In Review` or beyond → skip silently.
+3. **Update `> **Status:**` pointer** — If the orchestrator top-of-file pointer names this ISSUE_ID, append ` (kicked off)` or refresh to show current active task.
+4. **No orchestrator found** → log one-line note in kickoff output; do not fail.
+
 ## §7b Test Contracts (optional alignment)
 
 When enriching `## 7b. Test Contracts` ([`PROJECT-SPEC-STRUCTURE.md`](../../projects/PROJECT-SPEC-STRUCTURE.md)):

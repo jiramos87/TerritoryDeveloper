@@ -1,6 +1,6 @@
 ---
 description: Bulk-file all pending tasks of an orchestrator stage as BACKLOG issues + project spec stubs. Dispatches the `stage-file` subagent with shared stage context and phase/task cardinality enforcement.
-argument-hint: "Stage {X.Y} [in {orchestrator-spec-path}] [prefix TECH-|FEAT-|BUG-]"
+argument-hint: "{orchestrator-spec-path} Stage {X.Y} [prefix TECH-|FEAT-|BUG-]"
 ---
 
 # /stage-file — dispatch `stage-file` subagent
@@ -15,7 +15,7 @@ Forward via Agent tool with `subagent_type: "stage-file"`:
 >
 > ## Mission
 >
-> Run `ia/skills/stage-file/SKILL.md` end-to-end for `$ARGUMENTS`. Resolve orchestrator spec via Glob under `ia/projects/` (typically `multi-scale-master-plan.md` unless user specifies). Parse stage id from arguments (e.g. `Stage 1.2` → `1.2`). Default issue prefix `TECH-` unless user specifies.
+> Run `ia/skills/stage-file/SKILL.md` end-to-end for `$ARGUMENTS`. **Argument order:** first token (or path segment) is the orchestrator spec path (`ORCHESTRATOR_SPEC`); second token is the stage id (`STAGE_ID`, e.g. `Stage 1.2` → `1.2`). Glob-resolve as fallback only when path is omitted and exactly one `*-master-plan.md` exists under `ia/projects/`. Default issue prefix `TECH-` unless user specifies.
 >
 > ## Phase loop
 >

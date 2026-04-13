@@ -310,7 +310,58 @@ Player-facing **simulation**, **AUTO** growth, **urban growth rings** / **zone d
 
 ## Multi-scale simulation lane
 
-Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = parent-scale conceptual stubs (code + save surfaces only; no playable parent scales). Stage 1.1 = parent-scale identity fields — filed below. Stages 1.2 (cell-type split) + 1.3 (neighbor-city stub) remain in master plan; file here when parent stage → `In Progress`.
+Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = parent-scale conceptual stubs (code + save surfaces only; no playable parent scales). Stage 1.1 = parent-scale identity fields — archived. Stage 1.2 = cell-type split — filed below. Stage 1.3 (neighbor-city stub) remains in master plan; file here when parent stage → `In Progress`.
+
+### Stage 1.2 — Cell-type split
+
+- [ ] **TECH-91** — Rename `Cell` → `CityCell` across all city sim files
+  - Type: refactor / infrastructure
+  - Files: `Assets/Scripts/Managers/UnitManagers/Cell.cs`, `Assets/Scripts/Managers/GameManagers/GridManager.cs`, all city sim files referencing `Cell`
+  - Spec: `ia/projects/TECH-91.md`
+  - Notes: Phase 1 of cell-type split. Mechanical rename; HeightMap dual-write sites updated (invariant #1); no behavior change. Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
+  - Depends on: **TECH-90**
+
+- [ ] **TECH-92** — `RegionCell` placeholder type (coord + parent-region-id; no behavior) + glossary row
+  - Type: infrastructure / IA
+  - Files: `Assets/Scripts/Managers/UnitManagers/RegionCell.cs` (new), `ia/specs/glossary.md`
+  - Spec: `ia/projects/TECH-92.md`
+  - Notes: Phase 2 of cell-type split. Plain C# class (no MonoBehaviour); no save wiring; region scale dormant in MVP. Adds glossary row for **region cell**. Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
+  - Depends on: **TECH-91**
+
+- [ ] **TECH-93** — `CountryCell` placeholder type (coord + parent-country-id; no behavior) + complete cell-type glossary
+  - Type: infrastructure / IA
+  - Files: `Assets/Scripts/Managers/UnitManagers/CountryCell.cs` (new), `ia/specs/glossary.md`
+  - Spec: `ia/projects/TECH-93.md`
+  - Notes: Phase 2 of cell-type split. Plain C# class (no MonoBehaviour); no save wiring; country scale dormant in MVP. Completes glossary rows for all 3 cell types (city cell, region cell, country cell). Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
+  - Depends on: **TECH-91**
+
+- [ ] **TECH-94** — Generic `GetCell<T>(x,y)` or scale-indexed overloads on `GridManager` + compile gate
+  - Type: infrastructure / refactor
+  - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`, `Assets/Scripts/Managers/UnitManagers/IGridManager.cs`
+  - Spec: `ia/projects/TECH-94.md`
+  - Notes: Phase 3 of cell-type split. Typed accessor; does not break existing untyped `GetCell(x,y)`. Extract to helper if GridManager grows (invariant: no new responsibilities on GridManager). Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
+  - Depends on: **TECH-92**, **TECH-93**
+
+- [ ] **TECH-95** — Back-compat `GetCell(x,y)` defaults to `CityCell`; update all callers; invariant #5 preserved
+  - Type: refactor / infrastructure
+  - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`, all callers of `GetCell`
+  - Spec: `ia/projects/TECH-95.md`
+  - Notes: Phase 3 of cell-type split. `GetCell(x,y)` return type → `CityCell`. Audit confirms invariant #5 (no direct `gridArray`/`cellArray` outside GridManager). Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
+  - Depends on: **TECH-94**
+
+- [ ] **TECH-96** — Testmode smoke: city load + sim tick, no regression (cell-type split)
+  - Type: verification
+  - Files: testmode batch scenario
+  - Spec: `ia/projects/TECH-96.md`
+  - Notes: Phase 4 regression gate. Reuses existing smoke scenario; confirms city load + sim tick complete without errors after full cell-type split (TECH-90–95). Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
+  - Depends on: **TECH-95**
+
+- [ ] **TECH-97** — Testmode assertion: `HeightMap` / `CityCell.height` integrity (invariant #1)
+  - Type: verification
+  - Files: testmode batch scenario
+  - Spec: `ia/projects/TECH-97.md`
+  - Notes: Phase 4 regression gate. Asserts `HeightMap[x,y] == CityCell.height` across all grid cells post-load; zero violations = invariant #1 satisfied. Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
+  - Depends on: **TECH-96**
 
 ## High Priority
 

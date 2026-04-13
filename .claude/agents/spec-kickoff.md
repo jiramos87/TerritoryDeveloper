@@ -22,6 +22,7 @@ Follow `ia/skills/project-spec-kickoff/SKILL.md` end-to-end. Tool sequence:
 5. `mcp__territory-ia__spec_section` or `spec_sections` batch for routed specs — slices, never whole files.
 6. `mcp__territory-ia__glossary_discover` with English keyword array → narrow via `glossary_lookup`.
 7. Editorial pass: Open Questions, Implementation Plan phases, Decision Log, sibling cross-links.
+8. **Orchestrator sync** — `Glob ia/projects/*master-plan*.md` + `ia/projects/stage-*.md`; `Grep` for ISSUE_ID in task table. Flip `Draft → In Review` in Status column. No match → log, continue.
 
 Edit spec in place with `Edit`. `Write` only for new spec files. Never read whole `ia/specs/*.md` when slices suffice.
 

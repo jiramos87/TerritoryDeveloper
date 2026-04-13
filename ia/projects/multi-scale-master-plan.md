@@ -93,14 +93,14 @@
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T1.2.1 | 1 | _pending_ | _pending_ | Extract `Cell` abstract base (coord, height, shared primitives). Compile-only; no rename yet. |
-| T1.2.2 | 1 | _pending_ | _pending_ | Rename `Cell` → `CityCell` across all city sim files. Preserve `HeightMap` sync (invariant #1). |
-| T1.2.3 | 2 | _pending_ | _pending_ | `RegionCell` placeholder type (coord + parent-region-id; no behavior). Glossary row. |
-| T1.2.4 | 2 | _pending_ | _pending_ | `CountryCell` placeholder type (coord + parent-country-id; no behavior). Glossary rows for all 3 cell types. |
-| T1.2.5 | 3 | _pending_ | _pending_ | Generic `GetCell<T>(x,y)` or scale-indexed overloads on `GridManager`. Compile gate. |
-| T1.2.6 | 3 | _pending_ | _pending_ | Back-compat `GetCell(x,y)` defaults to `CityCell`. Update all callers. Invariant #5 preserved. |
-| T1.2.7 | 4 | _pending_ | _pending_ | Testmode smoke — city load + sim tick, no regression. |
-| T1.2.8 | 4 | _pending_ | _pending_ | Testmode assertion — `HeightMap` / `CityCell.height` integrity (invariant #1). |
+| T1.2.1 | 1 | **TECH-90** | Done | Extract `Cell` abstract base (coord, height, shared primitives). Compile-only; no rename yet. |
+| T1.2.2 | 1 | **TECH-91** | Draft | Rename `Cell` → `CityCell` across all city sim files. Preserve `HeightMap` sync (invariant #1). |
+| T1.2.3 | 2 | **TECH-92** | Draft | `RegionCell` placeholder type (coord + parent-region-id; no behavior). Glossary row. |
+| T1.2.4 | 2 | **TECH-93** | Draft | `CountryCell` placeholder type (coord + parent-country-id; no behavior). Glossary rows for all 3 cell types. |
+| T1.2.5 | 3 | **TECH-94** | Draft | Generic `GetCell<T>(x,y)` or scale-indexed overloads on `GridManager`. Compile gate. |
+| T1.2.6 | 3 | **TECH-95** | Draft | Back-compat `GetCell(x,y)` defaults to `CityCell`. Update all callers. Invariant #5 preserved. |
+| T1.2.7 | 4 | **TECH-96** | Draft | Testmode smoke — city load + sim tick, no regression. |
+| T1.2.8 | 4 | **TECH-97** | Draft | Testmode assertion — `HeightMap` / `CityCell.height` integrity (invariant #1). |
 
 #### Stage 1.3 — Neighbor-city stub + interstate-border semantics
 

@@ -6,6 +6,14 @@
 
 ## Completed (moved from BACKLOG.md, 2026-04-13)
 
+- [x] **TECH-90** — Extract `Cell` abstract base type (coord, height, shared primitives) (2026-04-13)
+  - Type: refactor / infrastructure
+  - Files: `Assets/Scripts/Managers/UnitManagers/CellBase.cs` (new), `Assets/Scripts/Managers/UnitManagers/Cell.cs`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.2 Phase 1 of cell-type split. Abstract `CellBase : MonoBehaviour` extracted under `Territory.Core` carrying scale-universal primitives only (`x`, `y`, `height`, `sortingOrder`, `transformPosition`). `Cell : CellBase`; all city-specific fields (roads, buildings, zones, forests, water, cliffs, interstate, desirability) stay on `Cell`. Compile-only; zero caller edits; rename `Cell` → `CityCell` deferred to TECH-91. Invariant #1 (`HeightMap` ↔ `Cell.height`) unaffected — field inheritance preserves dual-write syntax. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+  - Acceptance: `CellBase.cs` exists w/ 5 fields only; `Cell : CellBase`; 5 fields removed from `Cell.cs`; `npm run unity:compile-check` green; `npm run validate:all` green; no caller edits outside the two files
+  - Depends on: **TECH-89**
+
 - [x] **TECH-89** — Parent-id round-trip + legacy-migration tests (testmode) (2026-04-13)
   - Type: test / verification
   - Files: `Assets/Scripts/Editor/AgentTestModeBatchRunner.cs` (DTO `schema_version` 1 → 2 + `regionId` / `countryId` fields + `IdMatches` sentinel helper), `tools/fixtures/scenarios/parent-id-seeded-32x32/` (save + golden), `tools/fixtures/scenarios/parent-id-legacy-32x32/` (save + golden), `tools/fixtures/scenarios/reference-flat-32x32/agent-testmode-golden-ticks{0,3}.json` (regen)

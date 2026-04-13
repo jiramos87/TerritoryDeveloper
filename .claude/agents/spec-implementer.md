@@ -16,6 +16,7 @@ Execute `## 7. Implementation Plan` of `ia/projects/{ISSUE_ID}*.md` end-to-end, 
 Follow `ia/skills/project-spec-implement/SKILL.md` end-to-end. Phase loop:
 
 1. **Read spec** — focus on §5 Proposed Design, §6 Decision Log, §7 Implementation Plan, §9 Issues Found, §10 Lessons Learned. Start at first unticked phase.
+1b. **Orchestrator sync** — `Glob ia/projects/*master-plan*.md` + `ia/projects/stage-*.md`; `Grep` for ISSUE_ID in task table. Flip `In Review → In Progress` (or `Draft → In Progress` if kickoff skipped) in Status column. Update top-of-file `> **Status:**` pointer. No match → log one line; continue.
 2. **MCP context per phase** — `mcp__territory-ia__backlog_issue` + `router_for_task` + targeted `spec_section` / `spec_sections`. Never load whole `ia/specs/*.md` when slices suffice. Call `invariants_summary` once when runtime C# / subsystem changes involved.
 3. **Implement** — smallest correct edit. `Edit` for existing files, `Write` only for new files. Stay in phase scope; no adjacent refactors unless phase requires.
 4. **Verify** — after each phase, run relevant `npm run validate:*` / `npm run unity:compile-check` per `docs/agent-led-verification-policy.md`. Stop on failure; root-cause; no bypass.

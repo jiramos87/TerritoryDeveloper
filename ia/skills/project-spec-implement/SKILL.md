@@ -47,6 +47,7 @@ Run in order. Repeat steps 5–12 per Implementation Plan phase.
 
 1. **Parse target** — Load `{SPEC_PATH}`. Extract `ISSUE_ID` from `> **Issue:**`.
 2. **`backlog_issue`** — Pull Files, Notes, Depends on, Acceptance, `depends_on_status`. Hard dep unsatisfied (`satisfied: false`, `soft_only: false`) → **stop** unless user overrides.
+2b. **Orchestrator sync** — `Glob ia/projects/*master-plan*.md` + `ia/projects/stage-*.md`; `Grep` for `{ISSUE_ID}` in task table. If row found: flip `In Review → In Progress` (or `Draft → In Progress` if kickoff was skipped). Update top-of-file `> **Status:**` pointer to reflect active task. No orchestrator found → log one-line note; continue.
 3. **`invariants_summary`** — Once per session if any phase touches runtime C# or scene behavior. Skip for pure doc/IA.
 4. **Phase intent** — State which checkboxes in scope; list files/classes from plan + backlog Files.
 5. **Domain routing** — 1–3 domains from phase text + Files. **`router_for_task`** with `domain` matching `ia/rules/agent-router.md` labels. On `no_matching_domain`: retry with `files` (repo-relative paths).
