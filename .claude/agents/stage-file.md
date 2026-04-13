@@ -44,7 +44,7 @@ Run `ia/skills/stage-file/SKILL.md` end-to-end for the target stage. Bulk-file a
 - Do NOT update orchestrator task table mid-loop — atomic update after all tasks filed.
 - Do NOT run `validate:all` per task — once at end only.
 - Do NOT file tasks outside the target stage.
-- Do NOT pre-file tasks for stages whose parent step is not `In Progress` (per `ia/rules/project-hierarchy.md`).
+- Do NOT file tasks outside the target stage.
 - Do NOT kickoff or implement any filed issue — that is `spec-kickoff` / `spec-implementer`.
 - Do NOT skip `validate:dead-project-specs` per task.
 - Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard.

@@ -116,5 +116,5 @@ After all tasks filed:
 - Do NOT skip validate:dead-project-specs per task — catches broken spec paths immediately.
 - Do NOT run validate:all per task — runs once at end.
 - Do NOT file tasks for phases not in the target stage.
-- Do NOT pre-file tasks for stages not yet `In Progress` in parent step (per `ia/rules/project-hierarchy.md`).
+- Do NOT file tasks outside the target stage.
 - Do NOT touch `project-hierarchy.md` cardinality rule from here — surface violations as warnings only.

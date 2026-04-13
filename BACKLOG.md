@@ -2,7 +2,7 @@
 
 > Single source of truth for project issues. Reference via `@BACKLOG.md` in agent conversation. Closed work → [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Use **`mcp__territory-ia__backlog_issue`** for slice access.
 >
-> **Lane order (highest first):** § Compute-lib program → § Agent ↔ Unity & MCP context lane → § IA evolution lane → § UI-as-code program → § Economic depth lane → § Gameplay & simulation lane → § Multi-scale simulation lane → § High / § Medium / § Code Health / § Low. **Gameplay blockers** in § High Priority stay **interrupt** work — stop play / corrupt saves.
+> **Lane order (highest first):** § Compute-lib program → § Agent ↔ Unity & MCP context lane → § IA evolution lane → § UI-as-code program → § Economic depth lane → § Gameplay & simulation lane → § Multi-scale simulation lane → § Blip audio program → § High / § Medium / § Code Health / § Low. **Gameplay blockers** in § High Priority stay **interrupt** work — stop play / corrupt saves.
 >
 > **Closed program charters** (trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) + glossary): **Spec-pipeline** (territory-ia spec-pipeline program; exploration [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md)) · **UI-as-code program** umbrella (UI-as-code program; **`ui-design-system.md`** Codebase inventory (uGUI)) · **TECH-39 computational MCP suite** (Computational MCP tools (TECH-39)).
 >
@@ -314,41 +314,6 @@ Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-ma
 
 ### Stage 1.2 — Cell-type split
 
-- [ ] **TECH-91** — Rename `Cell` → `CityCell` across all city sim files
-  - Type: refactor / infrastructure
-  - Files: `Assets/Scripts/Managers/UnitManagers/Cell.cs`, `Assets/Scripts/Managers/GameManagers/GridManager.cs`, all city sim files referencing `Cell`
-  - Spec: `ia/projects/TECH-91.md`
-  - Notes: Phase 1 of cell-type split. Mechanical rename; HeightMap dual-write sites updated (invariant #1); no behavior change. Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
-  - Depends on: **TECH-90**
-
-- [ ] **TECH-92** — `RegionCell` placeholder type (coord + parent-region-id; no behavior) + glossary row
-  - Type: infrastructure / IA
-  - Files: `Assets/Scripts/Managers/UnitManagers/RegionCell.cs` (new), `ia/specs/glossary.md`
-  - Spec: `ia/projects/TECH-92.md`
-  - Notes: Phase 2 of cell-type split. Plain C# class (no MonoBehaviour); no save wiring; region scale dormant in MVP. Adds glossary row for **region cell**. Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
-  - Depends on: **TECH-91**
-
-- [ ] **TECH-93** — `CountryCell` placeholder type (coord + parent-country-id; no behavior) + complete cell-type glossary
-  - Type: infrastructure / IA
-  - Files: `Assets/Scripts/Managers/UnitManagers/CountryCell.cs` (new), `ia/specs/glossary.md`
-  - Spec: `ia/projects/TECH-93.md`
-  - Notes: Phase 2 of cell-type split. Plain C# class (no MonoBehaviour); no save wiring; country scale dormant in MVP. Completes glossary rows for all 3 cell types (city cell, region cell, country cell). Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
-  - Depends on: **TECH-91**
-
-- [ ] **TECH-94** — Generic `GetCell<T>(x,y)` or scale-indexed overloads on `GridManager` + compile gate
-  - Type: infrastructure / refactor
-  - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`, `Assets/Scripts/Managers/UnitManagers/IGridManager.cs`
-  - Spec: `ia/projects/TECH-94.md`
-  - Notes: Phase 3 of cell-type split. Typed accessor; does not break existing untyped `GetCell(x,y)`. Extract to helper if GridManager grows (invariant: no new responsibilities on GridManager). Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
-  - Depends on: **TECH-92**, **TECH-93**
-
-- [ ] **TECH-95** — Back-compat `GetCell(x,y)` defaults to `CityCell`; update all callers; invariant #5 preserved
-  - Type: refactor / infrastructure
-  - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`, all callers of `GetCell`
-  - Spec: `ia/projects/TECH-95.md`
-  - Notes: Phase 3 of cell-type split. `GetCell(x,y)` return type → `CityCell`. Audit confirms invariant #5 (no direct `gridArray`/`cellArray` outside GridManager). Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
-  - Depends on: **TECH-94**
-
 - [ ] **TECH-96** — Testmode smoke: city load + sim tick, no regression (cell-type split)
   - Type: verification
   - Files: testmode batch scenario
@@ -362,6 +327,44 @@ Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-ma
   - Spec: `ia/projects/TECH-97.md`
   - Notes: Phase 4 regression gate. Asserts `HeightMap[x,y] == CityCell.height` across all grid cells post-load; zero violations = invariant #1 satisfied. Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
   - Depends on: **TECH-96**
+
+## Blip audio program
+
+Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra. Stage 1.1 = audio infrastructure + persistent bootstrap — filed below. Stages 1.2–1.4 + Step 2 / Step 3 remain in master plan; file rows here when parent stage → `In Progress`.
+
+### Stage 1.1 — Audio infrastructure + persistent bootstrap
+
+- [ ] **TECH-98** — `BlipMixer.mixer` asset + three groups + exposed `SfxVolume` param
+  - Type: infrastructure / asset
+  - Files: `Assets/Audio/BlipMixer.mixer` (new binary YAML asset)
+  - Spec: `ia/projects/TECH-98.md`
+  - Notes: Author via Unity Editor (`Window → Audio → Audio Mixer`). Three groups (`Blip-UI`, `Blip-World`, `Blip-Ambient`) routed through master. Expose master `SfxVolume` dB param (default 0 dB) via `Exposed Parameters` panel. Orchestrator: `blip-master-plan.md` Stage 1.1 Phase 1.
+  - Acceptance: asset + three groups + exposed param committed; `validate:all` green
+  - Depends on: none
+
+- [ ] **TECH-99** — Headless SFX volume binding in `BlipBootstrap.Awake` via `PlayerPrefs`
+  - Type: infrastructure
+  - Files: `Assets/Scripts/Audio/Blip/BlipBootstrap.cs` (new)
+  - Spec: `ia/projects/TECH-99.md`
+  - Notes: `Awake` reads `PlayerPrefs.GetFloat("BlipSfxVolumeDb", 0f)` + calls `BlipMixer.SetFloat("SfxVolume", db)`. Key string + param name as `public const string` on `BlipBootstrap`. No Settings UI MVP (deferred per `docs/blip-post-mvp-extensions.md` §4). Merge w/ TECH-100 `Awake` body. Orchestrator: `blip-master-plan.md` Stage 1.1 Phase 1.
+  - Acceptance: `BlipBootstrap.cs` committed w/ binding; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-98**
+
+- [ ] **TECH-100** — `BlipBootstrap` prefab + `DontDestroyOnLoad` + `MainMenu.unity` placement
+  - Type: infrastructure / prefab + scene
+  - Files: `Assets/Prefabs/Audio/BlipBootstrap.prefab` (new), `Assets/Scripts/Audio/Blip/BlipBootstrap.cs`, `Assets/Scenes/MainMenu.unity`
+  - Spec: `ia/projects/TECH-100.md`
+  - Notes: Prefab w/ empty child slots (`BlipCatalog`, `BlipPlayer`, `BlipMixerRouter`, `BlipCooldownRegistry` — populated Step 2). `Awake` calls `DontDestroyOnLoad(transform.root.gameObject)` per `GameNotificationManager.cs` pattern. Instance at root of `MainMenu.unity` (build index 0 per `MainMenuController.cs`). Honors invariants #3 + #4. Orchestrator: `blip-master-plan.md` Stage 1.1 Phase 2.
+  - Acceptance: prefab + scene instance + `DontDestroyOnLoad` call committed; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-99**
+
+- [ ] **TECH-101** — Scene-load suppression policy doc + glossary rows (Blip mixer group, Blip bootstrap)
+  - Type: documentation / glossary
+  - Files: `ia/specs/glossary.md`, `Assets/Scripts/Audio/Blip/BlipBootstrap.cs` (comment only)
+  - Spec: `ia/projects/TECH-101.md`
+  - Notes: No Blip fires until `BlipCatalog.Awake` sets ready flag (full flag lands Step 2; MVP ships policy doc + glossary rows + code comment). Two glossary rows — **Blip mixer group** + **Blip bootstrap** — cite `blip-master-plan.md` Stage 1.1. Orchestrator: `blip-master-plan.md` Stage 1.1 Phase 2.
+  - Acceptance: glossary rows + code comment committed; `validate:all` green
+  - Depends on: **TECH-100**
 
 ## High Priority
 
@@ -603,7 +606,7 @@ Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-ma
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-*(Program history: [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Open lanes: **§ Compute-lib program**, **§ Agent ↔ Unity & MCP context lane**, **§ IA evolution lane**, **§ Economic depth lane**, **§ Gameplay & simulation lane**, then standard priority sections.)*
+*(Program history: [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Open lanes: **§ Compute-lib program**, **§ Agent ↔ Unity & MCP context lane**, **§ IA evolution lane**, **§ Economic depth lane**, **§ Gameplay & simulation lane**, **§ Multi-scale simulation lane**, **§ Blip audio program**, then standard priority sections.)*
 
 - [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects
   - Type: audio/feature
@@ -644,6 +647,7 @@ Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-ma
 4. High priority (critical bugs, core gameplay blockers)
 5. Medium priority (important features, balance, improvements)
 6. **Multi-scale simulation lane** (orchestrator [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md); file rows only when parent stage → `In Progress`)
-7. Code Health (technical debt, refactors, performance)
-8. Low priority (new systems, polish, content)
+7. **Blip audio program** (orchestrator [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md); file rows only when parent stage → `In Progress`)
+8. Code Health (technical debt, refactors, performance)
+9. Low priority (new systems, polish, content)
 8. **Archive** — completed work lives only in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)

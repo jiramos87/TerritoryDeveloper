@@ -6,6 +6,46 @@
 
 ## Completed (moved from BACKLOG.md, 2026-04-13)
 
+- [x] **TECH-95** — Back-compat `GetCell(x,y)` defaults to `CityCell`; update all callers; invariant #5 preserved (2026-04-13)
+  - Type: refactor / infrastructure
+  - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`, `Assets/Scripts/Managers/UnitManagers/IGridManager.cs`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.2 Phase 3 (T1.2.6) closer of cell-type split — audit-only gate. Verified `GridManager.GetCell(int x, int y)` returns `CityCell` (post-TECH-91) + `IGridManager` mirror; zero `Cell`-typed locals across `Assets/Scripts/`. Classified 25 `gridArray`/`cellArray` direct-access hits: 19 helper-service touches (`BuildingPlacementService`, `GridSortingOrderService`) allowed under invariant #6 carve-out (composition reference shares trust boundary with owning class — clarification added to `ia/rules/invariants.md` #5); 6 external-manager touches (`WaterManager` lines 353, 464; `GeographyManager` lines 585, 736, 954, 995) deferred to pre-existing **TECH-04**. No code change. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+  - Acceptance: return type `CityCell` on both surfaces; zero `Cell`-typed locals; every direct-access site classified; pre-existing violations linked to TECH-04; `npm run unity:compile-check` + `npm run validate:all` green
+  - Depends on: **TECH-94**
+
+- [x] **TECH-94** — Generic `GetCell<T>(x,y)` typed accessor on `GridManager` + `IGridManager` (compile gate) (2026-04-13)
+  - Type: infrastructure / refactor
+  - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`, `Assets/Scripts/Managers/UnitManagers/IGridManager.cs`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.2 Phase 3 (T1.2.5) of cell-type split. Generic `public T GetCell<T>(int x, int y) where T : CellBase` added to `GridManager` + `IGridManager`; bounds check + `as T` cast; null on out-of-range or type mismatch. Existing untyped `CityCell GetCell(int x, int y)` byte-identical. `RegionCell` / `CountryCell` intentionally unreachable (plain classes outside `CellBase`, not in `cellArray`). Diff ≤ ~10 lines → no helper extracted (invariant #6 untouched). Caller migration = TECH-95. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+  - Acceptance: generic accessor present on both surfaces; untyped overload unchanged; null on OOB + type mismatch; `npm run unity:compile-check` + `npm run validate:all` green
+  - Depends on: **TECH-92**, **TECH-93**
+
+- [x] **TECH-93** — `CountryCell` placeholder type (coord + parent-country-id; no behavior) + complete cell-type glossary (2026-04-13)
+  - Type: infrastructure / IA
+  - Files: `Assets/Scripts/Managers/UnitManagers/CountryCell.cs` (new), `ia/specs/glossary.md`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.2 Phase 2 (T1.2.4) of cell-type split. Mirrors TECH-92 `RegionCell`. Plain C# class under `Territory.Core` (no MonoBehaviour, no `CellBase` inheritance — `CellBase : MonoBehaviour` is city-grid infra; country scale data-only in MVP). Carries read-only `X`, `Y` (int) + `ParentCountryId` (string GUID matching `GameSaveData.countryId`); single constructor; zero methods. NOT inserted into `GridManager.gridArray` (invariant #5 untouched). No save wiring; country scale dormant. Combined glossary row "City cell / Region cell / Country cell" at `glossary.md:247` covers all three — no split. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+  - Acceptance: `CountryCell` compiles under `Territory.Core`; plain C# only; not in grid/save paths; city sim + invariants #1/#5 untouched; `npm run unity:compile-check` + `npm run validate:all` green
+  - Depends on: **TECH-91**
+
+- [x] **TECH-92** — `RegionCell` placeholder type (coord + parent-region-id; no behavior) + glossary row (2026-04-13)
+  - Type: infrastructure / IA
+  - Files: `Assets/Scripts/Managers/UnitManagers/RegionCell.cs` (new), `ia/specs/glossary.md`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.2 Phase 2 of cell-type split. Plain C# class under `Territory.Core` (no MonoBehaviour, no `CellBase` inheritance — `CellBase : MonoBehaviour` is city-grid infra; region scale data-only in MVP). Carries read-only `X`, `Y` (int) + `ParentRegionId` (string GUID matching `GameSaveData.regionId`); single constructor; zero methods. NOT inserted into `GridManager.gridArray` (invariant #5 untouched). No save wiring; region scale dormant. Combined glossary row "City cell / Region cell / Country cell" at `glossary.md:247` covers it — no new row added. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+  - Acceptance: `RegionCell` compiles under `Territory.Core`; plain C# only; not in grid/save paths; city sim + invariants #1/#5 untouched; `npm run unity:compile-check` + `npm run validate:all` green
+  - Depends on: **TECH-91**
+
+- [x] **TECH-91** — Rename `Cell` → `CityCell` across all city sim files (2026-04-13)
+  - Type: refactor / infrastructure
+  - Files: `Assets/Scripts/Managers/UnitManagers/CityCell.cs` (renamed from `Cell.cs`), `Assets/Scripts/Managers/GameManagers/GridManager.cs`, all city sim files referencing `Cell`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.2 Phase 1 of cell-type split. Mechanical rename `Cell` → `CityCell` across 35 files (~300 occurrences); `git mv` preserves `.cs.meta` GUID (prefab / scene refs survive); `HeightMap` ↔ `CityCell.height` dual-write (invariant #1) intact via field inheritance from `CellBase`; `IGridManager.GetCell` returns `CityCell`; `CellBase` kept scale-universal (not renamed). Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+  - Acceptance: class + file named `CityCell`; zero stray bare `Cell` refs outside `CellBase` / `cellArray` / `GetCell`; `npm run unity:compile-check` green; `npm run validate:all` green
+  - Depends on: **TECH-90**
+
 - [x] **TECH-90** — Extract `Cell` abstract base type (coord, height, shared primitives) (2026-04-13)
   - Type: refactor / infrastructure
   - Files: `Assets/Scripts/Managers/UnitManagers/CellBase.cs` (new), `Assets/Scripts/Managers/UnitManagers/Cell.cs`

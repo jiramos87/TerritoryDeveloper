@@ -2095,6 +2095,20 @@ public class GridManager : MonoBehaviour, IGridManager
     }
 
     /// <summary>
+    /// Typed accessor for CellBase subclasses at grid coords.
+    /// MVP: cellArray stores CityCell only; non-CityCell T returns null.
+    /// </summary>
+    /// <typeparam name="T">CellBase subclass (e.g. CityCell). Constrained to CellBase.</typeparam>
+    /// <param name="x">Grid X.</param>
+    /// <param name="y">Grid Y.</param>
+    /// <returns>Cell cast to T, or null if out-of-range or type mismatch.</returns>
+    public T GetCell<T>(int x, int y) where T : CellBase
+    {
+        if (x < 0 || x >= width || y < 0 || y >= height) return null;
+        return cellArray[x, y] as T;
+    }
+
+    /// <summary>
     /// Serialize every cell in grid → list of CellData for saving.
     /// </summary>
     /// <returns>List containing one CellData per grid cell.</returns>

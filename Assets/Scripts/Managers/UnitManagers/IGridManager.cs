@@ -11,6 +11,7 @@ namespace Territory.Core
 public interface IGridManager
 {
     CityCell GetCell(int x, int y);
+    T GetCell<T>(int x, int y) where T : CellBase;
     bool IsValidGridPosition(Vector2 position);
     bool IsCellOccupiedByBuilding(int x, int y);
     Vector2 GetWorldPosition(int x, int y);
