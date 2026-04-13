@@ -4,6 +4,16 @@
 
 ---
 
+## Completed (moved from BACKLOG.md, 2026-04-13)
+
+- [x] **TECH-89** — Parent-id round-trip + legacy-migration tests (testmode) (2026-04-13)
+  - Type: test / verification
+  - Files: `Assets/Scripts/Editor/AgentTestModeBatchRunner.cs` (DTO `schema_version` 1 → 2 + `regionId` / `countryId` fields + `IdMatches` sentinel helper), `tools/fixtures/scenarios/parent-id-seeded-32x32/` (save + golden), `tools/fixtures/scenarios/parent-id-legacy-32x32/` (save + golden), `tools/fixtures/scenarios/reference-flat-32x32/agent-testmode-golden-ticks{0,3}.json` (regen)
+  - Spec: (removed after closure)
+  - Notes: Two testmode scenarios + golden-snapshot extension assert parent region id / parent country id persist through Load pipeline. Seeded modern fixture (schema v1 + committed GUIDs) → load → golden asserts `GridManager.ParentRegionId` / `.ParentCountryId` equal seeded values. Legacy fixture (schema 0, ids absent) → load → `MigrateLoadedSaveData` allocates placeholder GUIDs → `IdMatches(goldenValue, runtimeValue)` accepts `"<guid>"` sentinel iff `Guid.TryParseExact` succeeds. Existing reference-flat-32x32 goldens regenerated for DTO bump. Closes Stage 1.1 verification. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Step 1 / Stage 1.1.
+  - Acceptance: testmode scenarios green (seeded + legacy + regenerated reference); fixtures committed; `npm run validate:all` + `unity:compile-check` green
+  - Depends on: **TECH-87**
+
 ## Completed (moved from BACKLOG.md, 2026-04-12)
 
 - [x] **TECH-87** — Parent-scale identity fields on `GameSaveData` + save migration (2026-04-12)

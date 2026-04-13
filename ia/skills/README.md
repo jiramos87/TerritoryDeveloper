@@ -27,7 +27,9 @@ Project-local **Cursor Skills** live here. Each skill is a folder with a **`SKIL
 
 | Skill folder | Purpose | Trace |
 |--------------|---------|-------|
+| [`design-explore/`](design-explore/SKILL.md) | Move an exploration doc from fuzzy survey to defined design: compare approaches → select → expand → architecture → subsystem impact → impl points → examples → subagent review → persist. Seeds a master plan or `project-new`. | `docs/` exploration docs |
 | [`project-new/`](project-new/SKILL.md) | Create a new **`BACKLOG.md`** row + **`ia/projects/{ISSUE_ID}.md`** stub from a user prompt (**territory-ia** + optional **`web_search`**) | [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) |
+| [`stage-file/`](stage-file/SKILL.md) | Bulk-file all `_pending_` tasks of one orchestrator stage as BACKLOG rows + project spec stubs. Each task delegates to **`project-new`**; shared stage context loaded once; phase/task cardinality enforced. | `ia/rules/project-hierarchy.md` |
 | [`project-spec-kickoff/`](project-spec-kickoff/SKILL.md) | Review or enrich `ia/projects/{ISSUE_ID}.md` before implementation; ordered MCP context pull | *(shipped — archive)* |
 | [`project-spec-implement/`](project-spec-implement/SKILL.md) | Execute a project spec’s **Implementation Plan** after the spec is ready; per-phase MCP slices + checklist | *(shipped — archive)* |
 | [`project-implementation-validation/`](project-implementation-validation/SKILL.md) | After implementation: **`npm run validate:all`** (**compute-lib** build + dead spec paths, **MCP** tests, fixtures, **IA index** `--check`); **`npm run verify:local`** (canonical full dev chain + **macOS** bridge smoke; **`verify:post-implementation`** alias); optional **`verify`** | [`BACKLOG-ARCHIVE.md`](../../BACKLOG-ARCHIVE.md) |

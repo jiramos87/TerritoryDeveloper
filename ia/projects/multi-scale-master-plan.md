@@ -1,6 +1,6 @@
 # Multi-Scale Simulation — Master Plan (MVP)
 
-> **Status:** In Progress — Step 1 / Stage 1.1 / TECH-89 (TECH-87 + TECH-88 done)
+> **Status:** In Progress — Step 1 / Stage 1.1 done (TECH-87 + TECH-88 + TECH-89); Stage 1.2 next
 >
 > **Scope:** Min load-bearing work to prove city ↔ region ↔ country game loop (dormant evolution + reconstruction). Rest → `multi-scale-post-mvp-expansion.md`.
 >
@@ -65,7 +65,7 @@
 |---|---|---|---|---|
 | T1.1.1 | 1 | **TECH-87** | Done | `GameSaveData` parent-id fields + save version bump + legacy migration + glossary rows. |
 | T1.1.2 | 2 | **TECH-88** | Done | `GridManager` `ParentRegionId` / `ParentCountryId` surface + new-game placeholder allocation. |
-| T1.1.3 | 3 | **TECH-89** | Draft | Round-trip + legacy-migration tests (testmode batch scenario). |
+| T1.1.3 | 3 | **TECH-89** | Done | Round-trip + legacy-migration tests (testmode batch scenario). |
 
 #### Stage 1.2 — Cell-type split
 
@@ -93,10 +93,14 @@
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T1.2.1 | 1 | _pending_ | _pending_ | Extract `Cell` base. Rename existing `Cell` → `CityCell` across city sim. Preserve `HeightMap` sync. |
-| T1.2.2 | 2 | _pending_ | _pending_ | Add `RegionCell` + `CountryCell` placeholder types. Glossary rows. |
-| T1.2.3 | 3 | _pending_ | _pending_ | `GridManager` typed `GetCell` surface + back-compat default. |
-| T1.2.4 | 4 | _pending_ | _pending_ | Testmode smoke — city load + `HeightMap` / `CityCell.height` integrity check. |
+| T1.2.1 | 1 | _pending_ | _pending_ | Extract `Cell` abstract base (coord, height, shared primitives). Compile-only; no rename yet. |
+| T1.2.2 | 1 | _pending_ | _pending_ | Rename `Cell` → `CityCell` across all city sim files. Preserve `HeightMap` sync (invariant #1). |
+| T1.2.3 | 2 | _pending_ | _pending_ | `RegionCell` placeholder type (coord + parent-region-id; no behavior). Glossary row. |
+| T1.2.4 | 2 | _pending_ | _pending_ | `CountryCell` placeholder type (coord + parent-country-id; no behavior). Glossary rows for all 3 cell types. |
+| T1.2.5 | 3 | _pending_ | _pending_ | Generic `GetCell<T>(x,y)` or scale-indexed overloads on `GridManager`. Compile gate. |
+| T1.2.6 | 3 | _pending_ | _pending_ | Back-compat `GetCell(x,y)` defaults to `CityCell`. Update all callers. Invariant #5 preserved. |
+| T1.2.7 | 4 | _pending_ | _pending_ | Testmode smoke — city load + sim tick, no regression. |
+| T1.2.8 | 4 | _pending_ | _pending_ | Testmode assertion — `HeightMap` / `CityCell.height` integrity (invariant #1). |
 
 #### Stage 1.3 — Neighbor-city stub + interstate-border semantics
 
@@ -124,10 +128,14 @@
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T1.3.1 | 1 | _pending_ | _pending_ | `NeighborCityStub` struct + `GameSaveData.neighborStubs` list + serialize. |
-| T1.3.2 | 2 | _pending_ | _pending_ | Interstate-border binding logic (new-game + on-road-build). |
-| T1.3.3 | 3 | _pending_ | _pending_ | `GridManager.GetNeighborStub(side)` inert read contract. Glossary rows. |
-| T1.3.4 | 4 | _pending_ | _pending_ | Round-trip test + testmode smoke (stub persists, binding intact). |
+| T1.3.1 | 1 | _pending_ | _pending_ | `NeighborCityStub` struct (id GUID, display name, border side enum) + serialize schema. |
+| T1.3.2 | 1 | _pending_ | _pending_ | `GameSaveData.neighborStubs` list + save version bump. |
+| T1.3.3 | 2 | _pending_ | _pending_ | New-game init: place ≥1 stub at random interstate border (seed-deterministic). |
+| T1.3.4 | 2 | _pending_ | _pending_ | On-road-build: road exit at border binds to stub ref by border side. |
+| T1.3.5 | 3 | _pending_ | _pending_ | `GridManager.GetNeighborStub(side)` inert read contract (returns stub or null; no behavior). |
+| T1.3.6 | 3 | _pending_ | _pending_ | Glossary rows for `neighbor-city stub` + `interstate border`. |
+| T1.3.7 | 4 | _pending_ | _pending_ | Save/load round-trip test (stubs + bindings preserved). |
+| T1.3.8 | 4 | _pending_ | _pending_ | Testmode smoke — stub at border after new-game; binding intact after road build at border. |
 
 **Backlog state (Step 1):** Stage 1.1 tasks filed as BACKLOG rows + project specs under `§ Multi-scale simulation lane` (TECH-87 / TECH-88 / TECH-89). Stages 1.2 + 1.3 tasks stay in this doc; file BACKLOG rows + specs when parent stage → `In Progress`.
 

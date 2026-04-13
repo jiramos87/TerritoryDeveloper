@@ -18,6 +18,14 @@ Four levels, loosely bound. All orchestrator docs + project specs.
 | **Phase** | Shippable compilable increment (merged PRs) | Rewritable until `In Progress`; frozen while active | Deleted after stage closes |
 | **Task** | Atomic unit; 1 BACKLOG row + `ia/projects/{ISSUE_ID}.md` | Defined when parent phase → `In Progress` | Spec deleted on issue close per `project-spec-close` |
 
+## Phase/Task cardinality
+
+Phase must contain ≥2 tasks. Single-task phase requires explicit justification in the parent spec's Decision Log.
+
+**Why:** 1:1 phase→task mapping conflates logical grouping with atomic unit. Phase = shippable increment with verifiable exit criterion; task = one BACKLOG row + one project spec, independently implementable and closeable. Decomposing each phase into ≥2 tasks surfaces hidden coupling early and keeps individual PRs small.
+
+**Enforcement:** `stage-file` warns when a phase in the task table has only 1 task. Orchestrator author must either split the task or log the justification before filing.
+
 ## Learnings flow backward
 
 Task close → phase Lessons Learned. Phase close → stage rollup. Stage close → step Decision Log → next step skeleton.

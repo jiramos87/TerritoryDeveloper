@@ -50,11 +50,12 @@ namespace Territory.Testing
         /// <summary>
         /// Integer <b>CityStats</b> slice for golden checks. Stable across platforms; no floats.
         /// Serialized → committed JSON under <c>tools/fixtures/scenarios/…</c>.
+        /// schema_version 2 adds <c>regionId</c> / <c>countryId</c> GUID strings.
         /// </summary>
         [Serializable]
         public class AgentTestModeBatchCitySnapshotDto
         {
-            public int schema_version = 1;
+            public int schema_version = 2;
             public int simulation_ticks;
             public int population;
             public int money;
@@ -67,6 +68,8 @@ namespace Territory.Testing
             public int commercialBuildingCount;
             public int industrialBuildingCount;
             public int forestCellCount;
+            public string regionId = "";
+            public string countryId = "";
         }
 
         [Serializable]
@@ -261,13 +264,13 @@ namespace Territory.Testing
             return null;
         }
 
-        static AgentTestModeBatchCitySnapshotDto BuildCitySnapshot(CityStats cityStats, int ticksApplied)
+        static AgentTestModeBatchCitySnapshotDto BuildCitySnapshot(CityStats cityStats, int ticksApplied, GridManager grid)
         {
             if (cityStats == null)
                 return null;
             return new AgentTestModeBatchCitySnapshotDto
             {
-                schema_version = 1,
+                schema_version = 2,
                 simulation_ticks = ticksApplied,
                 population = cityStats.population,
                 money = cityStats.money,
@@ -279,9 +282,20 @@ namespace Territory.Testing
                 residentialBuildingCount = cityStats.residentialBuildingCount,
                 commercialBuildingCount = cityStats.commercialBuildingCount,
                 industrialBuildingCount = cityStats.industrialBuildingCount,
-                forestCellCount = cityStats.forestCellCount
+                forestCellCount = cityStats.forestCellCount,
+                regionId = grid != null ? (grid.ParentRegionId ?? "") : "",
+                countryId = grid != null ? (grid.ParentCountryId ?? "") : ""
             };
         }
+
+        /// <summary>
+        /// Tolerant id comparison: golden sentinel <c>"&lt;guid&gt;"</c> accepts any valid GUID string (format D).
+        /// Plain equality used for all other values (including exact GUIDs in seeded fixtures).
+        /// </summary>
+        static bool IdMatches(string goldenValue, string runtimeValue)
+            => goldenValue == "<guid>"
+                ? Guid.TryParseExact(runtimeValue, "D", out _)
+                : goldenValue == runtimeValue;
 
         static bool TryCompareGolden(string goldenPath, AgentTestModeBatchCitySnapshotDto actual, int ticksRequested, out string diff)
         {
@@ -307,9 +321,9 @@ namespace Territory.Testing
                 return false;
             }
 
-            if (expected.schema_version != 1)
+            if (expected.schema_version != 1 && expected.schema_version != 2)
             {
-                diff = $"Unsupported golden schema_version {expected.schema_version} (expected 1).";
+                diff = $"Unsupported golden schema_version {expected.schema_version} (expected 1 or 2).";
                 return false;
             }
 
@@ -337,6 +351,15 @@ namespace Territory.Testing
             Cmp(nameof(actual.commercialBuildingCount), expected.commercialBuildingCount, actual.commercialBuildingCount);
             Cmp(nameof(actual.industrialBuildingCount), expected.industrialBuildingCount, actual.industrialBuildingCount);
             Cmp(nameof(actual.forestCellCount), expected.forestCellCount, actual.forestCellCount);
+
+            // schema_version 2: tolerant id comparison (sentinel "<guid>" or exact GUID string).
+            if (expected.schema_version >= 2)
+            {
+                if (!IdMatches(expected.regionId ?? "", actual.regionId ?? ""))
+                    sb.AppendLine($"regionId: golden={expected.regionId} actual={actual.regionId}");
+                if (!IdMatches(expected.countryId ?? "", actual.countryId ?? ""))
+                    sb.AppendLine($"countryId: golden={expected.countryId} actual={actual.countryId}");
+            }
 
             if (sb.Length > 0)
             {
@@ -416,7 +439,7 @@ namespace Territory.Testing
 
                 state.ticks_applied = applied;
                 CityStats cityStats = UnityEngine.Object.FindObjectOfType<CityStats>();
-                AgentTestModeBatchCitySnapshotDto snapshot = BuildCitySnapshot(cityStats, applied);
+                AgentTestModeBatchCitySnapshotDto snapshot = BuildCitySnapshot(cityStats, applied, grid);
                 if (snapshot != null)
                     state.city_stats_snapshot_json = JsonUtility.ToJson(snapshot, prettyPrint: false);
 

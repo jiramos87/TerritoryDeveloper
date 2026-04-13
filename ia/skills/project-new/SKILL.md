@@ -36,6 +36,19 @@ Create a new backlog issue and initial project spec from this description:
 Follow `ia/skills/project-new/SKILL.md`: run the Tool recipe (territory-ia), then add the row to `BACKLOG.md`, create `ia/projects/{ISSUE_ID}.md` from `ia/templates/project-spec-template.md`, set `Spec:` on the backlog row, and link Depends on / Related with verified ids only. Run `npm run validate:dead-project-specs` before finishing the PR.
 ```
 
+## Stage context injection (called from `stage-file`)
+
+When `stage-file` invokes this skill for a task belonging to a stage, the seed prompt includes two extra blocks:
+
+- `{STAGE_CONTEXT}` — stage Objectives + Exit criteria + Phases list (from orchestrator spec). Use to populate §1 Summary context, §2.1 Goals (task contributes to which exit criterion), and §4.2 Systems map.
+- `{TASK_INTENT}` — the task table's Intent cell. Use as the primary source for §1 Summary and §7 Implementation Plan sketch.
+
+**Shared context:** `stage-file` pre-loads glossary/router/invariants ONCE for the whole stage before iterating tasks. Each `project-new` call receives that pre-loaded context in the seed prompt; skip re-running `glossary_discover` / `router_for_task` / `invariants_summary` unless the task intent diverges clearly from the shared domain.
+
+**Orchestrator task table:** `stage-file` handles updating the task row (issue id + `Draft` status) after all issues are created. `project-new` does NOT touch the orchestrator spec.
+
+**Validate:all timing:** `stage-file` runs `npm run validate:all` once after all tasks are filed. Each individual `project-new` call only runs `npm run validate:dead-project-specs`.
+
 ## When to use `web_search`
 
 Only for external facts (vendor APIs, third-party packages, standards) not in repo. Never override glossary/specs/invariants. Cite URLs in Decision Log or Notes.

@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "simulation_ticks": 3,
   "population": 0,
   "money": 20000,
@@ -11,5 +11,7 @@
   "residentialBuildingCount": 0,
   "commercialBuildingCount": 0,
   "industrialBuildingCount": 0,
-  "forestCellCount": 0
+  "forestCellCount": 0,
+  "regionId": "<guid>",
+  "countryId": "<guid>"
 }

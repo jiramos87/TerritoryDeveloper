@@ -12,6 +12,6 @@
   "commercialBuildingCount": 0,
   "industrialBuildingCount": 0,
   "forestCellCount": 0,
-  "regionId": "<guid>",
-  "countryId": "<guid>"
+  "regionId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "countryId": "f9e8d7c6-b5a4-3210-fedc-ba9876543210"
 }
