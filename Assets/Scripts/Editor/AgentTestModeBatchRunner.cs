@@ -7,6 +7,7 @@ using Territory.Core;
 using Territory.Economy;
 using Territory.Persistence;
 using Territory.Simulation;
+using Territory.Terrain;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -32,6 +33,13 @@ namespace Territory.Testing
         public const string ArgGoldenPath = "-testGoldenPath";
 
         public const int ExitCodeGoldenMismatch = 8;
+
+        /// <summary>
+        /// Exit code emitted when <see cref="HeightIntegritySweep"/> finds at least one
+        /// <c>HeightMap[x,y] != CityCell.height</c> violation (invariant #1 breach).
+        /// Distinct from golden mismatch (<c>8</c>) so agents can branch on failure class.
+        /// </summary>
+        public const int ExitCodeHeightIntegrityFail = 9;
 
         public const string MainScenePath = "Assets/Scenes/MainScene.unity";
 
@@ -72,6 +80,39 @@ namespace Territory.Testing
             public string countryId = "";
         }
 
+        /// <summary>Single <c>HeightMap[x,y] != CityCell.height</c> mismatch row (first 10 only).</summary>
+        [Serializable]
+        public class HeightIntegrityViolationDto
+        {
+            public int x;
+            public int y;
+            public int heightMap;
+            public int cell;
+        }
+
+        /// <summary>
+        /// Result of one <see cref="HeightIntegritySweep"/> pass (post-load or post-tick).
+        /// <c>violations == 0</c> means invariant #1 is satisfied for this pass.
+        /// </summary>
+        [Serializable]
+        public class HeightIntegritySweepResultDto
+        {
+            public int checked_cells;
+            public int violations;
+            public HeightIntegrityViolationDto[] first_offenders = System.Array.Empty<HeightIntegrityViolationDto>();
+        }
+
+        /// <summary>
+        /// Combined <c>height_integrity</c> object emitted in the batch report.
+        /// Contains one result per sweep pass (post-load, post-tick).
+        /// </summary>
+        [Serializable]
+        public class HeightIntegrityDto
+        {
+            public HeightIntegritySweepResultDto post_load;
+            public HeightIntegritySweepResultDto post_tick;
+        }
+
         [Serializable]
         class AgentTestModeBatchStateDto
         {
@@ -88,6 +129,8 @@ namespace Territory.Testing
             public int exit_code;
             public string error = "";
             public string started_utc = "";
+            /// <summary>JSON of <see cref="HeightIntegrityDto"/>; empty until sweep runs.</summary>
+            public string height_integrity_json = "";
         }
 
         [Serializable]
@@ -103,6 +146,11 @@ namespace Territory.Testing
             public bool golden_matched;
             public string golden_diff = "";
             public AgentTestModeBatchCitySnapshotDto city_stats;
+            /// <summary>
+            /// Height integrity sweep results — post-load and post-tick passes.
+            /// <c>null</c> when sweep could not run (grid/HeightMap unavailable).
+            /// </summary>
+            public HeightIntegrityDto height_integrity;
             public int simulation_ticks_requested;
             public int simulation_ticks_applied;
             public int exit_code;
@@ -370,6 +418,60 @@ namespace Territory.Testing
             return true;
         }
 
+        /// <summary>
+        /// Sweeps every grid cell and compares <c>HeightMap[x,y]</c> to <c>CityCell.height</c>
+        /// (invariant #1). Returns a <see cref="HeightIntegritySweepResultDto"/> with violation count
+        /// and up to 10 <see cref="HeightIntegrityViolationDto"/> rows.
+        /// </summary>
+        /// <remarks>
+        /// Called post-load and post-tick so both the load path and the simulation-tick write path are
+        /// exercised. <paramref name="grid"/> and <paramref name="hm"/> must both be non-null; caller
+        /// is responsible for null-guards before invoking.
+        /// </remarks>
+        static HeightIntegritySweepResultDto HeightIntegritySweep(GridManager grid, HeightMap hm)
+        {
+            const int MaxOffenders = 10;
+            int w = grid.width;
+            int h = grid.height;
+            int checkedCells = 0;
+            int violations = 0;
+            var offenders = new System.Collections.Generic.List<HeightIntegrityViolationDto>(MaxOffenders);
+
+            for (int x = 0; x < w; x++)
+            {
+                for (int y = 0; y < h; y++)
+                {
+                    CityCell cell = grid.GetCell<CityCell>(x, y);
+                    if (cell == null)
+                        continue;
+                    checkedCells++;
+                    int hmHeight = hm.GetHeight(x, y);
+                    int cellHeight = cell.height;
+                    if (hmHeight != cellHeight)
+                    {
+                        violations++;
+                        if (offenders.Count < MaxOffenders)
+                        {
+                            offenders.Add(new HeightIntegrityViolationDto
+                            {
+                                x = x,
+                                y = y,
+                                heightMap = hmHeight,
+                                cell = cellHeight
+                            });
+                        }
+                    }
+                }
+            }
+
+            return new HeightIntegritySweepResultDto
+            {
+                checked_cells = checkedCells,
+                violations = violations,
+                first_offenders = offenders.ToArray()
+            };
+        }
+
         static void OnEditorUpdate()
         {
             try
@@ -424,6 +526,16 @@ namespace Territory.Testing
 
                 saveManager.LoadGame(state.save_path);
 
+                // --- HeightMap integrity sweep — post-load (invariant #1) ---
+                HeightMap hmPostLoad = grid.terrainManager != null
+                    ? grid.terrainManager.GetOrCreateHeightMap()
+                    : null;
+                HeightIntegritySweepResultDto sweepPostLoad = hmPostLoad != null
+                    ? HeightIntegritySweep(grid, hmPostLoad)
+                    : null;
+                if (sweepPostLoad != null && sweepPostLoad.violations > 0)
+                    Debug.LogWarning($"[AgentTestModeBatch] Height integrity post-load: {sweepPostLoad.violations} violation(s).");
+
                 int applied = 0;
                 SimulationManager simulationManager = UnityEngine.Object.FindObjectOfType<SimulationManager>();
                 if (state.ticks_requested > 0 && simulationManager == null)
@@ -436,6 +548,24 @@ namespace Territory.Testing
                         applied++;
                     }
                 }
+
+                // --- HeightMap integrity sweep — post-tick (invariant #1) ---
+                // Only run when ticks were actually applied; reuses the same HeightMap instance.
+                HeightIntegritySweepResultDto sweepPostTick = null;
+                if (applied > 0 && hmPostLoad != null)
+                {
+                    sweepPostTick = HeightIntegritySweep(grid, hmPostLoad);
+                    if (sweepPostTick.violations > 0)
+                        Debug.LogWarning($"[AgentTestModeBatch] Height integrity post-tick: {sweepPostTick.violations} violation(s).");
+                }
+
+                // Persist height_integrity to state for report serialization.
+                var hiDto = new HeightIntegrityDto
+                {
+                    post_load = sweepPostLoad ?? new HeightIntegritySweepResultDto(),
+                    post_tick = sweepPostTick ?? new HeightIntegritySweepResultDto()
+                };
+                state.height_integrity_json = JsonUtility.ToJson(hiDto, prettyPrint: false);
 
                 state.ticks_applied = applied;
                 CityStats cityStats = UnityEngine.Object.FindObjectOfType<CityStats>();
@@ -468,18 +598,43 @@ namespace Territory.Testing
                     }
                     else
                     {
+                        // Golden matched — still check height integrity.
+                        bool hiViolation = (sweepPostLoad != null && sweepPostLoad.violations > 0)
+                                        || (sweepPostTick != null && sweepPostTick.violations > 0);
+                        if (hiViolation)
+                        {
+                            state.exit_code = ExitCodeHeightIntegrityFail;
+                            state.error = "HeightMap / CityCell.height integrity violation (invariant #1).";
+                            WriteState(state);
+                            TryWriteReportFromState(state, ok: false, error: state.error);
+                        }
+                        else
+                        {
+                            state.exit_code = 0;
+                            state.error = string.Empty;
+                            WriteState(state);
+                            TryWriteReportFromState(state, ok: true, error: null);
+                        }
+                    }
+                }
+                else
+                {
+                    bool hiViolation = (sweepPostLoad != null && sweepPostLoad.violations > 0)
+                                    || (sweepPostTick != null && sweepPostTick.violations > 0);
+                    if (hiViolation)
+                    {
+                        state.exit_code = ExitCodeHeightIntegrityFail;
+                        state.error = "HeightMap / CityCell.height integrity violation (invariant #1).";
+                        WriteState(state);
+                        TryWriteReportFromState(state, ok: false, error: state.error);
+                    }
+                    else
+                    {
                         state.exit_code = 0;
                         state.error = string.Empty;
                         WriteState(state);
                         TryWriteReportFromState(state, ok: true, error: null);
                     }
-                }
-                else
-                {
-                    state.exit_code = 0;
-                    state.error = string.Empty;
-                    WriteState(state);
-                    TryWriteReportFromState(state, ok: true, error: null);
                 }
             }
             catch (Exception ex)
@@ -616,6 +771,7 @@ namespace Territory.Testing
                 bool goldenChecked = false;
                 bool goldenMatched = false;
                 string goldenDiff = string.Empty;
+                HeightIntegrityDto hiDto = null;
                 if (extraState != null)
                 {
                     goldenPath = extraState.golden_path ?? string.Empty;
@@ -624,6 +780,8 @@ namespace Territory.Testing
                     goldenDiff = extraState.golden_diff ?? string.Empty;
                     if (!string.IsNullOrEmpty(extraState.city_stats_snapshot_json))
                         cityStatsDto = JsonUtility.FromJson<AgentTestModeBatchCitySnapshotDto>(extraState.city_stats_snapshot_json);
+                    if (!string.IsNullOrEmpty(extraState.height_integrity_json))
+                        hiDto = JsonUtility.FromJson<HeightIntegrityDto>(extraState.height_integrity_json);
                 }
 
                 var dto = new AgentTestModeBatchReportDto
@@ -636,6 +794,7 @@ namespace Territory.Testing
                     golden_matched = goldenMatched,
                     golden_diff = goldenDiff,
                     city_stats = cityStatsDto,
+                    height_integrity = hiDto,
                     simulation_ticks_requested = ticksRequested,
                     simulation_ticks_applied = ticksApplied,
                     exit_code = exitCode,

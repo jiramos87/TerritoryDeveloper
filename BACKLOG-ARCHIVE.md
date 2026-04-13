@@ -6,6 +6,22 @@
 
 ## Completed (moved from BACKLOG.md, 2026-04-13)
 
+- [x] **TECH-97** — Testmode assertion: `HeightMap` / `CityCell.height` integrity (invariant #1) (2026-04-13)
+  - Type: verification
+  - Files: testmode batch scenario
+  - Spec: (removed after closure)
+  - Notes: Stage 1.2 Phase 4 regression gate. Added `HeightIntegritySweep` in `AgentTestModeBatchRunner` — iterates grid post-load + post-tick, compares `HeightMap[x,y]` vs `CityCell.height`; emits `height_integrity` JSON block + new exit code `9` on mismatch. Regression run on `reference-flat-32x32` + `--simulation-ticks 3`: exit 0, 1024 cells checked, zero violations post-load + post-tick. Report: `tools/reports/agent-testmode-batch-20260413-212829.json`. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+  - Acceptance: `height_integrity.post_load.violations == 0` + `post_tick.violations == 0`; batch exit `0`; exit code `9` documented in `ia/skills/agent-test-mode-verify/SKILL.md`
+  - Depends on: **TECH-96**
+
+- [x] **TECH-96** — Testmode smoke: city load + sim tick, no regression (cell-type split) (2026-04-13)
+  - Type: verification
+  - Files: testmode batch scenario
+  - Spec: (removed after closure)
+  - Notes: Stage 1.2 Phase 4 regression gate. Reused `reference-flat-32x32` smoke scenario; exit 0, `simulation_ticks_applied: 3`, zero C# exceptions on commit `73fd7e8`. Confirmed cell-type split (TECH-90–95) introduced zero behavior regression. Report: `tools/reports/agent-testmode-batch-20260413-211557.json`. Lessons (stale lockfile recovery, `--simulation-ticks N` flag, `--golden-path` upgrade) migrated to `ia/skills/agent-test-mode-verify/SKILL.md` Gotchas. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+  - Acceptance: testmode batch exit 0 + zero exceptions; `GameSaveManager.LoadGame` + ≥1 sim tick confirmed; batch log + commit hash recorded
+  - Depends on: **TECH-95**
+
 - [x] **TECH-95** — Back-compat `GetCell(x,y)` defaults to `CityCell`; update all callers; invariant #5 preserved (2026-04-13)
   - Type: refactor / infrastructure
   - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`, `Assets/Scripts/Managers/UnitManagers/IGridManager.cs`

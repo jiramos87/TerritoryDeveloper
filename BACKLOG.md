@@ -310,23 +310,7 @@ Player-facing **simulation**, **AUTO** growth, **urban growth rings** / **zone d
 
 ## Multi-scale simulation lane
 
-Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = parent-scale conceptual stubs (code + save surfaces only; no playable parent scales). Stage 1.1 = parent-scale identity fields — archived. Stage 1.2 = cell-type split — filed below. Stage 1.3 (neighbor-city stub) remains in master plan; file here when parent stage → `In Progress`.
-
-### Stage 1.2 — Cell-type split
-
-- [ ] **TECH-96** — Testmode smoke: city load + sim tick, no regression (cell-type split)
-  - Type: verification
-  - Files: testmode batch scenario
-  - Spec: `ia/projects/TECH-96.md`
-  - Notes: Phase 4 regression gate. Reuses existing smoke scenario; confirms city load + sim tick complete without errors after full cell-type split (TECH-90–95). Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
-  - Depends on: **TECH-95**
-
-- [ ] **TECH-97** — Testmode assertion: `HeightMap` / `CityCell.height` integrity (invariant #1)
-  - Type: verification
-  - Files: testmode batch scenario
-  - Spec: `ia/projects/TECH-97.md`
-  - Notes: Phase 4 regression gate. Asserts `HeightMap[x,y] == CityCell.height` across all grid cells post-load; zero violations = invariant #1 satisfied. Orchestrator: `multi-scale-master-plan.md` Stage 1.2.
-  - Depends on: **TECH-96**
+Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = parent-scale conceptual stubs (code + save surfaces only; no playable parent scales). Stage 1.1 = parent-scale identity fields — archived. Stage 1.2 = cell-type split — archived. Stage 1.3 (neighbor-city stub) remains in master plan; file here when parent stage → `In Progress`.
 
 ## Blip audio program
 

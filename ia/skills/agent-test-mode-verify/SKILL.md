@@ -95,9 +95,16 @@ Load pipeline: `TestModeCommandLineBootstrap` consumes queue file; load remains 
 | | 6 | Play Mode/grid wait failure; LoadGame/simulation exception |
 | | 7 | Timed out waiting for Play Mode stop |
 | | 8 | Golden CityStats mismatch |
+| | 9 | `HeightMap[x,y] != CityCell.height` invariant #1 violation (post-load or post-tick sweep) |
 | MCP/bridge | `db_unconfigured` | No `DATABASE_URL` |
 | | `timeout` | Unity did not complete job |
 | `get_compilation_status` | `compilation_failed` | See `close-dev-loop` compile gate |
+
+## Gotchas
+
+- **Stale `UnityLockfile` after Editor crash / SIGTERM** — lockfile can survive as orphan; `lsof` check before assuming lock is live. Remove if no live process holds it, else `--quit-editor-first` fails with exit 3.
+- **Sim tick requires explicit `--simulation-ticks N`** — default run applies 0 ticks; report `simulation_ticks_applied: 0` only validates load pipeline, not sim harness. Regression gates that must exercise tick path need `--simulation-ticks 3` (or higher).
+- **Golden path assertion (stricter gate)** — `reference-flat-32x32` ships committed `agent-testmode-golden-ticks3.json`. Add `--golden-path <file>` to upgrade from smoke (exit 0) to value assertion (exit 8 on mismatch).
 
 ## Placeholders
 
