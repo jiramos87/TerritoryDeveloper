@@ -62,7 +62,7 @@ Run in order. N/A → state why in chat.
 4b. **`project_spec_journal_persist`** — When DB URL resolves, persist Decision Log + Lessons (J1). Otherwise one-line skip.
 4c. **Optional** — [`project-implementation-validation`](../project-implementation-validation/SKILL.md) after step 4 when I1 applies.
 5. **`invariants_summary`** — When closure touches runtime C#, scene behavior, or guardrail docs.
-6. **Multi-issue** — Patch umbrella/sibling `ia/projects/*.md`. Optional: `npm run closeout:dependents -- --issue {ISSUE_ID}`.
+6. **Multi-issue** — Patch umbrella/sibling `ia/projects/*.md`. **Mandatory for umbrella/master-plan orchestrators** (`*master-plan*.md`, `step-*-*.md`, `stage-*-*.md`): tick matching Phase checkbox(es), flip task-table Status column `Draft` → `Done` for the closing issue, update top-of-file `> **Status:**` pointer to next in-progress task. Optional: `npm run closeout:dependents -- --issue {ISSUE_ID}`.
 7. **Delete** `ia/projects/{ISSUE_ID}.md` — only after J1 succeeded/waived/skipped.
 8. **Cascade** — `npm run validate:dead-project-specs`; fix hits or advisory with reason.
 9. **BACKLOG + archive** — Remove row from BACKLOG. Append `[x]` row with date to BACKLOG-ARCHIVE; `Spec:` → removed-after-closure pattern; Notes cite where content migrated.
@@ -74,6 +74,7 @@ Run in order. N/A → state why in chat.
 When spec references umbrella program or sibling `ia/projects/*.md`:
 - Load umbrella/sibling specs (`read_file`/`backlog_issue` for related ids).
 - Update Implementation Plan, Acceptance, Decision Log, Depends on for accuracy.
+- **Umbrella/master-plan sync (mandatory):** tick Phase checkboxes the closed issue completed, set task-table Status `Draft`/`In Progress` → `Done`, refresh top-of-file `> **Status:**` pointer (`... / {NEXT_ISSUE} ({CLOSED_ISSUE} done)`).
 - Do **before** deleting closed child spec.
 
 ## Manual fallback (no local Node)

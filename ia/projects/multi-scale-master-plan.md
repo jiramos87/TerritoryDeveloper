@@ -1,6 +1,6 @@
 # Multi-Scale Simulation — Master Plan (MVP)
 
-> **Status:** In Progress — Step 1 / Stage 1.1 / TECH-87
+> **Status:** In Progress — Step 1 / Stage 1.1 / TECH-88 (TECH-87 done)
 >
 > **Scope:** Min load-bearing work to prove city ↔ region ↔ country game loop (dormant evolution + reconstruction). Rest → `multi-scale-post-mvp-expansion.md`.
 >
@@ -55,7 +55,7 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Schema + migration (data shape, version bump, legacy load path).
+- [x] Phase 1 — Schema + migration (data shape, version bump, legacy load path).
 - [ ] Phase 2 — Runtime surface (`GridManager` properties + new-game placeholder allocation).
 - [ ] Phase 3 — Round-trip + migration tests (testmode batch).
 
@@ -63,7 +63,7 @@
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T1.1.1 | 1 | **TECH-87** | Draft | `GameSaveData` parent-id fields + save version bump + legacy migration + glossary rows. |
+| T1.1.1 | 1 | **TECH-87** | Done | `GameSaveData` parent-id fields + save version bump + legacy migration + glossary rows. |
 | T1.1.2 | 2 | **TECH-88** | Draft | `GridManager` `ParentRegionId` / `ParentCountryId` surface + new-game placeholder allocation. |
 | T1.1.3 | 3 | **TECH-89** | Draft | Round-trip + legacy-migration tests (testmode batch scenario). |
 
