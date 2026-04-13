@@ -4,6 +4,16 @@
 
 ---
 
+## Completed (moved from BACKLOG.md, 2026-04-12)
+
+- [x] **TECH-87** — Parent-scale identity fields on `GameSaveData` + save migration (2026-04-12)
+  - Type: infrastructure / save
+  - Files: `Assets/Scripts/SaveSystem/GameSaveData.cs`, `Assets/Scripts/SaveSystem/SaveManager.cs` (version bump + migration path), `ia/specs/save-system.md` (§schema), `ia/specs/glossary.md`
+  - Spec: (removed after closure)
+  - Notes: Added non-null `region_id` + `country_id` (GUID) to `GameSaveData`. Bumped save version. Legacy saves load w/ placeholder GUIDs. Glossary rows landed for **parent region id** + **parent country id**. No runtime behavior change beyond ids being present. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Step 1 / Stage 1.1.
+  - Acceptance: fields serialize + deserialize round-trip; legacy save loads w/ placeholder ids; save version bumped; glossary rows land; `npm run validate:all` green
+  - Depends on: none
+
 ## Completed (moved from BACKLOG.md, 2026-04-11)
 
 - [x] **TECH-85** — IA migration to neutral `ia/` namespace + native Claude Code layer (2026-04-11)

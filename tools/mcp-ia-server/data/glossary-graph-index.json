@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-12T16:05:00.695Z",
+  "last_generated": "2026-04-13T01:23:58.082Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -2797,6 +2797,38 @@
         "IDE agent bridge"
       ],
       "cited_in": []
+    },
+    "Parent country id": {
+      "related": [
+        "Parent region id",
+        "Active scale",
+        "Cell",
+        "CellData",
+        "Child-scale entity"
+      ],
+      "cited_in": [
+        {
+          "spec": "persistence-system",
+          "section_id": "save",
+          "section_title": "Save"
+        }
+      ]
+    },
+    "Parent region id": {
+      "related": [
+        "Parent country id",
+        "Active scale",
+        "Cell",
+        "CellData",
+        "Child-scale entity"
+      ],
+      "cited_in": [
+        {
+          "spec": "persistence-system",
+          "section_id": "save",
+          "section_title": "Save"
+        }
+      ]
     },
     "Parent-scale stub": {
       "related": [

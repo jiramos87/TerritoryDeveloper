@@ -26,6 +26,11 @@ public class GameSaveManager : MonoBehaviour
     public string cityName;
     public DateTime realWorldSaveTime;
 
+    /// <summary>Parent region id (GUID string) for the loaded / active city. Populated on load or first save.</summary>
+    [NonSerialized] public string regionId;
+    /// <summary>Parent country id (GUID string) for the loaded / active city. Populated on load or first save.</summary>
+    [NonSerialized] public string countryId;
+
     // public PlayerSettingsData playerSettings;
 
     public GridManager gridManager;
@@ -78,6 +83,13 @@ public class GameSaveManager : MonoBehaviour
     GameSaveData BuildCurrentGameSaveData(string customSaveName)
     {
         GameSaveData saveData = new GameSaveData();
+        saveData.schemaVersion = GameSaveData.CurrentSchemaVersion;
+        // Preserve ids across save/load cycles; allocate fresh GUIDs only on first-ever save (no prior load).
+        saveData.regionId = string.IsNullOrEmpty(regionId) ? Guid.NewGuid().ToString() : regionId;
+        saveData.countryId = string.IsNullOrEmpty(countryId) ? Guid.NewGuid().ToString() : countryId;
+        // Write back to manager so subsequent saves in the same session reuse the same ids.
+        regionId = saveData.regionId;
+        countryId = saveData.countryId;
         saveData.cityName = cityStats.cityName;
         saveData.realWorldSaveTime = DateTime.Now;
         saveData.realWorldSaveTimeTicks = DateTime.UtcNow.Ticks;
@@ -138,6 +150,10 @@ public class GameSaveManager : MonoBehaviour
         {
             string json = File.ReadAllText(saveFilePath);
             GameSaveData saveData = JsonUtility.FromJson<GameSaveData>(json);
+            MigrateLoadedSaveData(saveData);
+            // Cache parent ids on manager so subsequent saves preserve them.
+            regionId = saveData.regionId;
+            countryId = saveData.countryId;
 
             // Use saved grid dimensions (or infer from gridData for old saves) before reset
             if (saveData.gridWidth > 0 && saveData.gridHeight > 0)
@@ -214,6 +230,23 @@ public class GameSaveManager : MonoBehaviour
         else { }
     }
 
+    /// <summary>
+    /// Migrate <paramref name="data"/> to <see cref="GameSaveData.CurrentSchemaVersion"/>.
+    /// Run post-deserialize, pre-restore. Idempotent — safe to call on already-migrated data.
+    /// Schema 0 → 1: allocate placeholder GUIDs for missing <c>regionId</c> / <c>countryId</c>.
+    /// </summary>
+    static void MigrateLoadedSaveData(GameSaveData data)
+    {
+        if (data.schemaVersion < 1 || string.IsNullOrEmpty(data.regionId))
+            data.regionId = Guid.NewGuid().ToString();
+        if (data.schemaVersion < 1 || string.IsNullOrEmpty(data.countryId))
+            data.countryId = Guid.NewGuid().ToString();
+        data.schemaVersion = GameSaveData.CurrentSchemaVersion;
+
+        if (string.IsNullOrEmpty(data.regionId) || string.IsNullOrEmpty(data.countryId))
+            throw new InvalidOperationException("[GameSaveManager] MigrateLoadedSaveData: parent ids still empty after migration — save data integrity error.");
+    }
+
     /// <summary>Migrate old saves storing <c>totalGrowthBudget</c> (amount) → <c>growthBudgetPercent</c>.</summary>
     static void MigrateGrowthBudgetFromLegacy(GrowthBudgetManager growthBudgetManager)
     {
@@ -262,6 +295,13 @@ public class GameSaveManager : MonoBehaviour
 [System.Serializable]
 public class GameSaveData
 {
+    /// <summary>Save schema version. 0 = legacy. Current = <see cref="CurrentSchemaVersion"/>.</summary>
+    public int schemaVersion;
+    /// <summary>Parent region GUID (string). Populated at new-game init or legacy-save migration. Non-null post-load.</summary>
+    public string regionId;
+    /// <summary>Parent country GUID (string). Populated at new-game init or legacy-save migration. Non-null post-load.</summary>
+    public string countryId;
+
     public string saveName;
     public string cityName;
     public DateTime realWorldSaveTime;
@@ -280,5 +320,8 @@ public class GameSaveData
     public GrowthBudgetData growthBudget;
     public List<UrbanizationProposal> pendingProposals;
     public int minimapActiveLayers;
+
+    /// <summary>Current save schema version. Bump when adding migration-required fields.</summary>
+    public const int CurrentSchemaVersion = 1;
 }
 }

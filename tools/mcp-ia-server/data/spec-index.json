@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-12T16:05:00.625Z",
+  "last_generated": "2026-04-13T01:23:58.012Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -221,7 +221,7 @@
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 254
+          "line_start": 256
         }
       ]
     },
@@ -935,19 +935,19 @@
           "section_id": "load-pipeline",
           "title": "Load pipeline",
           "depth": 2,
-          "line_start": 20
+          "line_start": 24
         },
         {
           "section_id": "visual-restore-details",
           "title": "Visual restore details",
           "depth": 2,
-          "line_start": 31
+          "line_start": 35
         },
         {
           "section_id": "key-files",
           "title": "Key files",
           "depth": 2,
-          "line_start": 38
+          "line_start": 42
         }
       ]
     },

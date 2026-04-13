@@ -312,14 +312,6 @@ Player-facing **simulation**, **AUTO** growth, **urban growth rings** / **zone d
 
 Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = parent-scale conceptual stubs (code + save surfaces only; no playable parent scales). Stage 1.1 = parent-scale identity fields — filed below. Stages 1.2 (cell-type split) + 1.3 (neighbor-city stub) remain in master plan; file here when parent stage → `In Progress`.
 
-- [ ] **TECH-87** — Parent-scale identity fields on `GameSaveData` + save migration
-  - Type: infrastructure / save
-  - Files: `Assets/Scripts/SaveSystem/GameSaveData.cs`, `Assets/Scripts/SaveSystem/SaveManager.cs` (version bump + migration path), `ia/specs/save-system.md` (§schema), `ia/specs/glossary.md`
-  - Spec: `ia/projects/TECH-87.md`
-  - Notes: Add non-null `region_id` + `country_id` (GUID) to `GameSaveData`. Bump save version. Legacy saves load w/ placeholder GUIDs (deterministic per-save or freshly allocated — decide in spec §5). Glossary rows land for **parent region id** + **parent country id**. No runtime behavior change beyond ids being present. Orchestrator: [`projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) Step 1 / Stage 1.1.
-  - Acceptance: fields serialize + deserialize round-trip; legacy save loads w/ placeholder ids; save version bumped; glossary rows land; `npm run validate:all` green
-  - Depends on: none
-
 - [ ] **TECH-88** — `GridManager` parent-id surface + new-game placeholder allocation
   - Type: infrastructure / runtime
   - Files: `Assets/Scripts/GridManager.cs`, `Assets/Scripts/NewGame/` (new-game init path), `Assets/Scripts/SaveSystem/SaveManager.cs` (load wiring)
