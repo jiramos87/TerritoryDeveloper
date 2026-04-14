@@ -70,6 +70,8 @@ Additional call sites + `BlipId` rows. Each lands with glossary rows + integrati
 - `SysUndo` / `SysRedo` — command-stack hooks.
 - `SysAutosaveIndicator` — autosave pulse; 10 s cooldown. Suppresses manual-save SFX during autosave burst.
 - `WorldCameraClamp` — zoom/pan clamp hit; 200 ms cooldown.
+- `WorldCellSelected` per-scale variants — `RegionCellSelected` / `CountryCellSelected`. MVP `WorldCellSelected` fires scale-agnostic from `GridManager`. Per-scale patches + cooldown tuning land when sibling `ia/projects/multi-scale-master-plan.md` Step 4 introduces region-active-scale selection UX (typically softer for parent scales — larger cell footprint reads as heavier "thunk").
+- `SysScaleTransition` — fog-mask / scale-label fade cue on scale switch. Sibling `ia/projects/multi-scale-master-plan.md` Step 3 introduces the transition surface (procedural fog shader + scale label UI + `ScaleToolProvider` toolbar rebuild during fog mask); audio cue opportunity lives here until that step opens. Two-stage patch candidate (short whoosh on fog-in + resolved tone on fog-out) to reinforce the zoom-band boundary.
 
 ---
 

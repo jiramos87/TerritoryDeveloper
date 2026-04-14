@@ -101,6 +101,50 @@ public class GridManager : MonoBehaviour, IGridManager
         ParentCountryId = countryId;
         _parentIdsHydrated = true;
     }
+
+    /// <summary>
+    /// Cached neighbor-city stubs for this city session. Set once via HydrateNeighborStubs.
+    /// Read-only after hydration; empty until hydrated (not null).
+    /// </summary>
+    private System.Collections.Generic.IReadOnlyList<NeighborCityStub> _neighborStubs = System.Array.Empty<NeighborCityStub>();
+    private bool _neighborStubsHydrated;
+
+    /// <summary>
+    /// Populate the neighbor-city stub cache for this session.
+    /// Called by <see cref="Territory.Persistence.GameSaveManager"/> on NewGame and LoadGame,
+    /// after <see cref="HydrateParentIds"/>. One-shot: duplicate call logs error and returns.
+    /// Null input logs error and returns.
+    /// </summary>
+    public void HydrateNeighborStubs(System.Collections.Generic.IEnumerable<NeighborCityStub> stubs)
+    {
+        if (stubs == null)
+        {
+            Debug.LogError("[GridManager] HydrateNeighborStubs: stubs argument is null — skipping hydration.");
+            return;
+        }
+        if (_neighborStubsHydrated)
+        {
+            Debug.LogError("[GridManager] HydrateNeighborStubs: already hydrated — duplicate call ignored.");
+            return;
+        }
+        _neighborStubs = new System.Collections.Generic.List<NeighborCityStub>(stubs).AsReadOnly();
+        _neighborStubsHydrated = true;
+    }
+
+    /// <summary>
+    /// Return the first <see cref="NeighborCityStub"/> whose <c>borderSide</c> matches <paramref name="side"/>,
+    /// or <c>null</c> if no stub is registered on that side. Linear scan over ≤4 entries (MVP cardinality).
+    /// Null return is not an error — it means no neighbor city on that border.
+    /// </summary>
+    public NeighborCityStub? GetNeighborStub(BorderSide side)
+    {
+        foreach (var stub in _neighborStubs)
+        {
+            if (stub.borderSide == side)
+                return stub;
+        }
+        return null;
+    }
     #endregion
 
     [Header("Chunk Culling")]

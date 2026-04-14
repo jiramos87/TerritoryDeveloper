@@ -6,6 +6,46 @@
 
 ## Completed (moved from BACKLOG.md, 2026-04-13)
 
+- [x] **TECH-109** — Testmode smoke: stub at border after new-game + binding intact after interstate build (2026-04-14)
+  - Type: verification
+  - Files: `Assets/Scripts/Editor/AgentTestModeBatchRunner.cs`, `Assets/Scripts/Editor/Testing/NeighborStubSmokeDriver.cs`, `tools/fixtures/scenarios/README.md`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.3 Phase 4 closer — regression gate rolling up stage exit criteria. Added `-testNewGame` (+ optional `-testSeed N`) flag to batch runner; post-`NewGame`, `NeighborStubSmokeDriver` (Editor-only) picks seeded stub's `borderSide`, invokes `InterstateManager.GenerateAndPlaceInterstate()` — canonical single-call entry that internally runs road preparation family + `InvalidateRoadCache()` + `NeighborCityBindingRecorder.RecordExits` (invariants #2 + #10 satisfied). Assertions: `stub_count >= 1`, `binding_count >= 1`, `resolver_matches == binding_count`, zero C# exceptions across ≥1 sim tick. Report JSON carries `neighbor_stub_smoke` block; mismatch reuses `ExitCodeGoldenMismatch` (8) w/ distinct `failure_detail` string for CI triage. `MapGenerationSeed.SetSessionMasterSeed(int)` (TECH-41 infra) pre-existed — `-testSeed` just delegates. Scenario id `neighbor-stub-new-game-smoke-32x32` reuses 32x32 map geometry gated by flag — no new `save.json`. No golden compare (seed GUID non-determinism per **TECH-104**); complement to **TECH-108** (load-path fixture). Closes Stage 1.3 exit. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.3.
+  - Acceptance: testmode batch exit 0; all assertions pass; zero C# exceptions; report attached; `npm run validate:all` + `npm run unity:compile-check` green
+  - Depends on: **TECH-104**, **TECH-106**
+
+- [x] **TECH-110** — Master-plan **HTML** progress tracker (`tools/progress-tracker/`) (2026-04-14)
+  - Type: tooling / dev-ergonomics (no runtime Unity impact)
+  - Files: `tools/progress-tracker/` (`parse.mjs`, `render.mjs`, `index.mjs`, `package.json`, `README.md`, `tests/parse.test.mjs`, `tests/render.test.mjs`); root `package.json` (`progress` script); `docs/progress.html` (generated, committed); `ia/skills/project-stage-close/SKILL.md` + `ia/skills/project-spec-close/SKILL.md` (regen hook)
+  - Spec: (removed after closure)
+  - Notes: Static **HTML** generator parses **orchestrator document** Markdown (`ia/projects/*master-plan*.md`) → emits single `docs/progress.html` w/ per-plan progress cards (green bar, current step/stage/phase/task, status breakdown, phase checklist, sibling-coordination notes) + overall combined header. Pure fn parser + renderer — same bytes in → same HTML bytes out (no wall-clock, no git-log, no `Date.now`); `git diff docs/progress.html` empty on repeat runs. Inline CSS, zero JS deps. Regen wired into `project-stage-close` + `project-spec-close` skills so lifecycle events auto-refresh output (no CI / watcher / pre-commit). Parsing contract + hook contract documented in `tools/progress-tracker/README.md`. Decisions: drop git-log timestamp (breaks determinism); lifecycle-skill hook over watcher (state flips are discrete lifecycle events); static HTML over SPA (zero deps). Orchestrator doc rules per `ia/rules/orchestrator-vs-spec.md`.
+  - Acceptance: `npm run progress` regenerates `docs/progress.html` deterministically; HTML renders w/ no external fetches; green bar % matches manual `Done` / total task count per plan; step/stage/phase/task surfaces across all plan states; sibling-orchestrator warnings visible per card; `npm run validate:all` green
+  - Depends on: none
+
+- [x] **TECH-108** — Save/load round-trip test: stubs + bindings preserved (2026-04-14)
+  - Type: verification
+  - Files: `Assets/Scripts/Editor/AgentTestModeBatchRunner.cs`, `tools/fixtures/scenarios/neighbor-stub-roundtrip-32x32/`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.3 Phase 4 opener. Verification-only — committed schema-3 fixture + sibling golden `agent-testmode-golden-neighbor-stubs.json` prove `GameSaveData.neighborStubs` + `neighborCityBindings` survive **save data** round-trip byte-identical. `AgentTestModeBatchRunner` extended: filename-suffix dispatch (`neighbor-stubs` → neighbor compare branch) post-`LoadGame`; sort-stable JSON compare; diff to `golden_diff`; mismatch → `ExitCodeGoldenMismatch` (8). Rejected live save→reload in batch (no road-build driver — **TECH-109** smoke covers live-build angle). Sibling DTO file (not schema bump) avoids regen ripple. Hand-authored GUIDs — seed determinism covered by **TECH-104**. Inline fix: `NeighborStubSeeder.cs` missing `using Territory.Persistence` added (pre-existing bug; invariants untouched). Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.3.
+  - Acceptance: testmode batch exit 0; projected DTO byte-equal to golden; report under `tools/reports/agent-testmode-batch-*.json`; `unity:compile-check` + `validate:all` green; invariants untouched
+  - Depends on: **TECH-103**
+
+- [x] **TECH-107** — Glossary rows: **neighbor-city stub** + **interstate border** (2026-04-14)
+  - Type: IA / glossary
+  - Files: `ia/specs/glossary.md`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.3 Phase 3 closer (docs-only). Added **neighbor-city stub** row under Multi-scale simulation (cites master plan + `NeighborCityStub.cs`) + **interstate border** row under Roads & Bridges (cites geo §13.5, cross-ref **Interstate** + **Map border**). Terminology consistency — no synonyms; existing rows untouched. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.3.
+  - Acceptance: both rows present + alphabetized within category; canonical cross-refs; `npm run validate:all` green
+  - Depends on: **TECH-102**
+
+- [x] **TECH-106** — `GridManager.GetNeighborStub(BorderSide)` inert read contract (2026-04-14)
+  - Type: infrastructure / runtime
+  - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`, `Assets/Scripts/Managers/UnitManagers/IGridManager.cs`, `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.3 Phase 3 opener (T1.3.5). Read-only `GetNeighborStub(BorderSide side) → NeighborCityStub?` mirrors **TECH-88** `ParentRegionId` / `ParentCountryId` one-shot hydrate + read pattern. `HydrateNeighborStubs(IEnumerable<NeighborCityStub>)` on concrete `GridManager` (off interface, matches TECH-88); linear scan over cached `IReadOnlyList<NeighborCityStub>` (≤4 at MVP). Hydration wired in `GameSaveManager.NewGame` (post-`SeedInitial`) + `LoadGame` (post-`HydrateParentIds`). Duplicate call → `Debug.LogError` + return. Null on unmatched side is silent (normal condition). Zero consumers yet — inert. Invariant #6 preserved (thin accessor under TECH-88 precedent). Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.3.
+  - Acceptance: accessor present on `GridManager` + `IGridManager`; null on unmatched side; zero city-sim behavior change; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-103**, **TECH-104**
+
 - [x] **TECH-105** — On-road-build: **interstate** exit at **map border** binds to stub by `BorderSide` (2026-04-13)
   - Type: infrastructure / roads
   - Files: `Assets/Scripts/Managers/GameManagers/RoadManager.cs`, `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs`, `Assets/Scripts/Managers/UnitManagers/NeighborCityStub.cs`, `Assets/Scripts/Managers/UnitManagers/NeighborCityBindingRecorder.cs` (new)

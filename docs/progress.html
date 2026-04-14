@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Territory Developer — Progress</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: #0f0f0f;
+  color: #d4d4d4;
+  margin: 0;
+  padding: 1rem 2rem 3rem;
+  line-height: 1.5;
+}
+h1 { margin: 0 0 0.5rem; font-size: 1.4rem; color: #e8e8e8; }
+h2.plan-title { margin: 0; font-size: 1.1rem; color: #e8e8e8; }
+.overall-header {
+  background: #1a1a2e;
+  border: 1px solid #2a2a5a;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.plan-card {
+  background: #181818;
+  border: 1px solid #2c2c2c;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.plan-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+.plan-status {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+.progress-bar-wrap {
+  flex: 1;
+  min-width: 120px;
+  max-width: 400px;
+  height: 14px;
+  background: #2a2a2a;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2d8a4e, #40bf72);
+  border-radius: 7px;
+  transition: width 0s;
+}
+.progress-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #a0e0b0;
+  min-width: 3rem;
+}
+.task-counts { font-size: 0.82rem; color: #888; }
+.breakdown-row { margin-bottom: 0.85rem; }
+.badge {
+  display: inline-block;
+  font-size: 0.74rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  margin-right: 0.25rem;
+  font-weight: 500;
+}
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  margin-bottom: 0.85rem;
+}
+.info-table th {
+  text-align: left;
+  color: #888;
+  font-weight: 500;
+  width: 130px;
+  padding: 0.25rem 0.5rem 0.25rem 0;
+  white-space: nowrap;
+}
+.info-table td { padding: 0.25rem 0; color: #ccc; }
+.phase-section { margin-bottom: 0.85rem; font-size: 0.85rem; }
+.phase-list {
+  margin: 0.35rem 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+.phase-list li { margin: 0.15rem 0; }
+.phase-done { color: #72c28a; }
+.phase-pending { color: #999; }
+.muted { color: #666; font-style: italic; }
+.sibling-box {
+  background: #1a1a0a;
+  border: 1px solid #4a4a00;
+  border-radius: 5px;
+  padding: 0.7rem 1rem;
+  font-size: 0.8rem;
+  color: #c0b870;
+}
+.sibling-box ul { margin: 0.3rem 0 0 1rem; padding: 0; }
+.sibling-box li { margin: 0.2rem 0; }
+
+/* Status colors */
+.status-done      { background: #1a3a25; color: #72c28a; border: 1px solid #2d6a3a; }
+.status-inprogress{ background: #1a2a40; color: #70a0e0; border: 1px solid #2a4a70; }
+.status-inreview  { background: #2a1a40; color: #b080e0; border: 1px solid #4a2a70; }
+.status-draft     { background: #2a2a1a; color: #c0b060; border: 1px solid #5a5a2a; }
+.status-pending   { background: #222; color: #888; border: 1px solid #444; }
+.status-other     { background: #222; color: #aaa; border: 1px solid #444; }
+</style>
+</head>
+<body>
+
+<header class="overall-header">
+  <h1>Territory Developer — Master Plan Progress</h1>
+  <div class="overall-summary">
+    <div class="progress-row">
+      <div class="progress-bar-wrap" title="32% complete">
+      <div class="progress-bar-fill" style="width:32%"></div>
+    </div>
+    <span class="progress-label">32%</span>
+      <span class="task-counts">23 / 72 tasks Done across 3 plans</span>
+    </div>
+  </div>
+</header>
+<main>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <h2 class="plan-title">Blip — Master Plan (MVP)</h2>
+    <span class="plan-status status-inprogress">In Progress — Step 1 / Stage 1.1 archived (TECH-98..TECH-101 closed; stage ready for rollup)</span>
+  </div>
+
+  <div class="progress-row">
+    <div class="progress-bar-wrap" title="17% complete">
+      <div class="progress-bar-fill" style="width:17%"></div>
+    </div>
+    <span class="progress-label">17%</span>
+    <span class="task-counts">4 / 23 tasks Done</span>
+  </div>
+
+  <div class="breakdown-row">
+    <span class="badge status-done">Done: 4</span> <span class="badge status-pending">pending: 19</span> <span class="badge status-other">Total: 23</span>
+  </div>
+
+  <table class="info-table">
+    <tr><th>Active step</th><td>Step 1 — DSP foundations + audio infra</td></tr>
+    <tr><th>Active stage</th><td>Stage 1.2 — Patch data model</td></tr>
+    <tr><th>Active task</th><td>T1.2.1: `BlipPatch : ScriptableObject` class + MVP fields + `CreateAssetMenu(&quot;Territory/Audio/Blip Patch&quot;)`. No `AnimationCurve`…</td></tr>
+  </table>
+
+  <div class="phase-section">
+    <strong>Phase checklist (active stage):</strong>
+    <ul class="phase-list"><li class="phase-pending">&#x25A1; Phase 1 — `BlipPatch` SO authoring surface + MVP enums + `OnValidate` clamps.</li><li class="phase-pending">&#x25A1; Phase 2 — `BlipPatchFlat` flatten + content-hash persistence.</li></ul>
+  </div>
+
+  
+  <div class="sibling-box">
+    <strong>Sibling / parallel-work coordination:</strong>
+    <ul><li>**Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**</li><li>- `ia/projects/multi-scale-master-plan.md` — mutates `GridManager.cs` + `GameSaveManager.cs` + save schema. Blip Step 3.3 World lane kickoff must re-read `GridManager` selection surface now that multi-scale Stage 1.3 is archived. `WorldCellSelected` stays scale-agnostic in MVP; per-scale variants tracked in `docs/blip-post-mvp-extensions.md` §4.</li><li>- `ia/projects/sprite-gen-master-plan.md` — Python tool + new `Assets/Sprites/Generated/` output. Disjoint C# surface; no blip collision on runtime code.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
+  </div>
+</div>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <h2 class="plan-title">Multi-Scale Simulation — Master Plan (MVP)</h2>
+    <span class="plan-status status-inprogress">In Progress — Step 1 / Stage 1.3 archived (testmode smoke closed — all Stage 1.3 tasks archived)</span>
+  </div>
+
+  <div class="progress-row">
+    <div class="progress-bar-wrap" title="100% complete">
+      <div class="progress-bar-fill" style="width:100%"></div>
+    </div>
+    <span class="progress-label">100%</span>
+    <span class="task-counts">19 / 19 tasks Done</span>
+  </div>
+
+  <div class="breakdown-row">
+    <span class="badge status-done">Done: 19</span> <span class="badge status-other">Total: 19</span>
+  </div>
+
+  <table class="info-table">
+    <tr><th>Active step</th><td>Step 2 — City MVP close</td></tr>
+    <tr><th>Active stage</th><td><em>—</em></td></tr>
+    <tr><th>Active task</th><td><em>All tasks done</em></td></tr>
+  </table>
+
+  <div class="phase-section">
+    <strong>Phase checklist (active stage):</strong>
+    <em class="muted">No active stage</em>
+  </div>
+
+  
+  <div class="sibling-box">
+    <strong>Sibling / parallel-work coordination:</strong>
+    <ul><li>**Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**</li><li>- `ia/projects/blip-master-plan.md` — audio subsystem. Stage 1.1 archived (TECH-98..101); Stages 1.2–1.4 pending. Blip Step 3.3 (World lane call sites) wires into `GridManager.cs` cell-select + road/building tools + save hooks — coordinate so blip Step 3 kickoff lands after multi-scale `GridManager` mutations settle.</li><li>- `ia/projects/sprite-gen-master-plan.md` — Python sprite generator (`tools/sprite-gen/`) + `Assets/Sprites/Generated/` output. City-scale 1×1 building footprints only in v1; region / country scale sprite needs surface when this orchestrator's Step 4 opens — not yet scoped anywhere.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
+  </div>
+</div>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <h2 class="plan-title">Isometric Sprite Generator — Master Plan (Tools / Art Pipeline)</h2>
+    <span class="plan-status status-draft">Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)</span>
+  </div>
+
+  <div class="progress-row">
+    <div class="progress-bar-wrap" title="0% complete">
+      <div class="progress-bar-fill" style="width:0%"></div>
+    </div>
+    <span class="progress-label">0%</span>
+    <span class="task-counts">0 / 30 tasks Done</span>
+  </div>
+
+  <div class="breakdown-row">
+    <span class="badge status-pending">pending: 30</span> <span class="badge status-other">Total: 30</span>
+  </div>
+
+  <table class="info-table">
+    <tr><th>Active step</th><td>Step 1 — Geometry MVP</td></tr>
+    <tr><th>Active stage</th><td>Stage 1.1 — Scaffolding + Primitive Renderer (Layer 1)</td></tr>
+    <tr><th>Active task</th><td>T1.1.1: Create `tools/sprite-gen/` folder skeleton: `src/__init__.py`, `src/primitives/__init__.py`, `tests/fixtures/` dir, `out…</td></tr>
+  </table>
+
+  <div class="phase-section">
+    <strong>Phase checklist (active stage):</strong>
+    <ul class="phase-list"><li class="phase-pending">&#x25A1; Phase 1 — Project bootstrap + canvas math module.</li><li class="phase-pending">&#x25A1; Phase 2 — iso_cube + iso_prism primitives with NW-light shade pass.</li><li class="phase-pending">&#x25A1; Phase 3 — Unit tests for canvas math + primitives.</li></ul>
+  </div>
+
+  
+  <div class="sibling-box">
+    <strong>Sibling / parallel-work coordination:</strong>
+    <ul><li>**Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**</li><li>- `ia/projects/multi-scale-master-plan.md` — adds `RegionCell` / `CountryCell` types + parent-scale stubs + save-schema bumps. Sprite-gen v1 renders only city-scale 1×1 buildings; region / country scale sprite needs (cell sprites, city-node-at-region-zoom, region-node-at-country-zoom) surface when multi-scale Step 4 opens — see Deferred decomposition below.</li><li>- `ia/projects/blip-master-plan.md` — audio subsystem. Disjoint surfaces (Python tool vs Unity C#); no sprite-gen collision.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
+  </div>
+</div>
+</main>
+<footer style="font-size:0.75rem;color:#555;margin-top:2rem;text-align:center">
+  Generated by <code>npm run progress</code> (tools/progress-tracker) — static snapshot, no live data.
+</footer>
+</body>
+</html>

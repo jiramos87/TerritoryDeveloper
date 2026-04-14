@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-14T01:11:12.734Z",
+  "last_generated": "2026-04-14T13:27:38.212Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -2314,6 +2314,16 @@
         }
       ]
     },
+    "Interstate border": {
+      "related": [
+        "baseHeight (terraform)",
+        "Bridge lip",
+        "Cardinal neighbor",
+        "Cell",
+        "Cliff"
+      ],
+      "cited_in": []
+    },
     "Interstate cost model": {
       "related": [
         "**A* search**",
@@ -2734,6 +2744,16 @@
         "Desirability",
         "Geography authoring",
         "Geography initialization"
+      ],
+      "cited_in": []
+    },
+    "Neighbor-city stub": {
+      "related": [
+        "Cell",
+        "Interstate",
+        "Map border",
+        "Active scale",
+        "baseHeight (terraform)"
       ],
       "cited_in": []
     },

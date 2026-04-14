@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-14T01:11:12.645Z",
+  "last_generated": "2026-04-14T13:27:38.139Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -173,61 +173,61 @@
           "section_id": "pathfinding",
           "title": "Pathfinding",
           "depth": 2,
-          "line_start": 143
+          "line_start": 144
         },
         {
           "section_id": "zones-buildings",
           "title": "Zones & Buildings",
           "depth": 2,
-          "line_start": 152
+          "line_start": 153
         },
         {
           "section_id": "simulation-growth",
           "title": "Simulation & Growth",
           "depth": 2,
-          "line_start": 164
+          "line_start": 165
         },
         {
           "section_id": "city-systems",
           "title": "City systems",
           "depth": 2,
-          "line_start": 176
+          "line_start": 177
         },
         {
           "section_id": "persistence",
           "title": "Persistence",
           "depth": 2,
-          "line_start": 191
+          "line_start": 192
         },
         {
           "section_id": "audio",
           "title": "Audio",
           "depth": 2,
-          "line_start": 202
+          "line_start": 203
         },
         {
           "section_id": "prefabs-visual-layer",
           "title": "Prefabs & Visual Layer",
           "depth": 2,
-          "line_start": 209
+          "line_start": 210
         },
         {
           "section_id": "documentation",
           "title": "Documentation",
           "depth": 2,
-          "line_start": 223
+          "line_start": 224
         },
         {
           "section_id": "multi-scale-simulation",
           "title": "Multi-scale simulation",
           "depth": 2,
-          "line_start": 238
+          "line_start": 239
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 264
+          "line_start": 266
         }
       ]
     },

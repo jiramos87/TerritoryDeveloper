@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-14T01:11:12.649Z",
+  "last_generated": "2026-04-14T13:27:38.142Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -216,6 +216,10 @@
       "anchor": "13.1"
     },
     "Interstate": {
+      "spec_key": "isometric-geography-system",
+      "anchor": "13.5"
+    },
+    "Interstate border": {
       "spec_key": "isometric-geography-system",
       "anchor": "13.5"
     },

@@ -314,43 +314,57 @@ Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-ma
 
 ### Stage 1.3 — Neighbor-city stub + interstate-border semantics
 
-- [ ] **TECH-106** — `GridManager.GetNeighborStub(BorderSide)` inert read contract
-  - Type: infrastructure / runtime
-  - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`, `Assets/Scripts/Managers/UnitManagers/IGridManager.cs`
-  - Spec: `ia/projects/TECH-106.md`
-  - Notes: Stage 1.3 Phase 3 opener. Read-only `GetNeighborStub(BorderSide side) → NeighborCityStub?` mirrors **TECH-88** `ParentRegionId` / `ParentCountryId` surface. Null when no stub on that side. Zero consumers yet; future cross-scale flow reads via this. Thin accessor under TECH-88 precedent (invariant #6 — no new responsibility added). Orchestrator: Stage 1.3.
-  - Acceptance: accessor present on `GridManager` + `IGridManager`; null on unmatched side; zero city-sim behavior change; `npm run unity:compile-check` + `npm run validate:all` green
-  - Depends on: **TECH-103**, **TECH-104**
-
-- [ ] **TECH-107** — Glossary rows: **neighbor-city stub** + **interstate border**
-  - Type: IA / glossary
-  - Files: `ia/specs/glossary.md`
-  - Spec: `ia/projects/TECH-107.md`
-  - Notes: Stage 1.3 Phase 3 closer (docs-only). Adds **neighbor-city stub** row under Multi-scale simulation (cites master plan + `NeighborCityStub.cs`) + **interstate border** row under Roads & Bridges (cites geo §13.5, cross-ref **Interstate** + **Map border**). Terminology consistency — no synonyms; existing rows untouched. Orchestrator: Stage 1.3.
-  - Acceptance: both rows present + alphabetized within category; canonical cross-refs; `npm run validate:all` green (chains `test:ia` + indexes)
-  - Depends on: **TECH-102**
-
-- [ ] **TECH-108** — Save/load round-trip test: stubs + bindings preserved
-  - Type: verification
-  - Files: testmode batch scenario (`tools/`, `AgentTestModeBatchRunner`)
-  - Spec: `ia/projects/TECH-108.md`
-  - Notes: Stage 1.3 Phase 4 opener. Mirrors **TECH-89** round-trip precedent. Scenario: new-game → build interstate to border → save → load → assert `neighborStubs` + bindings byte-equal pre/post. Exit 0, report under `tools/reports/`. Orchestrator: Stage 1.3.
-  - Acceptance: testmode batch exit 0; stub + binding fields equal pre vs post save; report attached; `npm run validate:all` green
-  - Depends on: **TECH-103**
-
-- [ ] **TECH-109** — Testmode smoke: stub at border after new-game + binding intact after interstate build
-  - Type: verification
-  - Files: testmode batch scenario (`tools/`, `AgentTestModeBatchRunner`)
-  - Spec: `ia/projects/TECH-109.md`
-  - Notes: Stage 1.3 Phase 4 closer — regression gate rolling up stage exit criteria. Assertions: `stub_count >= 1` post-new-game, binding present post-interstate-build, `GridManager.GetNeighborStub(boundSide) != null`, ≥1 sim tick zero exceptions. Closes Stage 1.3 exit (≥1 stub per city + inert read API verified live). Orchestrator: Stage 1.3.
-  - Acceptance: testmode batch exit 0; all assertions pass; zero C# exceptions; report attached; `npm run validate:all` green
-  - Depends on: **TECH-104**, **TECH-106**
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ## Blip audio program
 
 Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra. Stage 1.1 = audio infrastructure + persistent bootstrap — filed below. Stages 1.2–1.4 + Step 2 / Step 3 remain in master plan; file rows here when parent stage → `In Progress`.
 
 ### Stage 1.1 — Audio infrastructure + persistent bootstrap
+
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 1.2 — Patch data model
+
+- [ ] **TECH-111** — `BlipPatch : ScriptableObject` authoring surface (MVP fields)
+  - Type: infrastructure / authoring
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs`
+  - Spec: `ia/projects/TECH-111-blip-patch-scriptable-object.md`
+  - Notes: Stage 1.2 Phase 1 opener per [`blip-master-plan.md`](projects/blip-master-plan.md). MVP fields — `oscillators[0..3]`, `envelope`, `filter`, `variantCount`, jitter triplet, `voiceLimit`, `priority`, `cooldownMs`, `deterministic`, `mixerGroup` (authoring-only ref), `durationSeconds`, `useLutOscillators` (reserved), `patchHash`. `CreateAssetMenu("Territory/Audio/Blip Patch")`. No `AnimationCurve`. No `mode` field (`BlipMode` enum deferred post-MVP per `docs/blip-post-mvp-extensions.md` §1).
+  - Acceptance: `BlipPatch.cs` compiles + CreateAssetMenu reachable; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-112** (nested structs + enums)
+
+- [ ] **TECH-112** — MVP struct + enum definitions for `BlipPatch`
+  - Type: infrastructure / authoring
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs` (or sibling `BlipPatchTypes.cs`)
+  - Spec: `ia/projects/TECH-112-blip-patch-structs-enums.md`
+  - Notes: Nested structs — `BlipOscillator` (no `pitchEnvCurve`), `BlipEnvelope` (no `shape` curve; per-stage `BlipEnvShape` + `sustainLevel`), `BlipFilter` (no `cutoffEnv`). Enums — `BlipId` (10 MVP rows + `None`), `BlipWaveform` (Sine/Triangle/Square/Pulse/NoiseWhite), `BlipFilterKind` (None/LowPass), `BlipEnvStage` (Idle/Attack/Hold/Decay/Sustain/Release), `BlipEnvShape` (Linear/Exponential). 10 `BlipId` row names per `docs/blip-procedural-sfx-exploration.md` §11 registry.
+  - Acceptance: 3 structs + 5 enums compile; no curve fields; `unity:compile-check` + `validate:all` green
+  - Depends on: none
+
+- [ ] **TECH-113** — `OnValidate` clamps on `BlipPatch` (anti-click + range guards)
+  - Type: infrastructure / authoring guard
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs`
+  - Spec: `ia/projects/TECH-113-blip-patch-on-validate-clamps.md`
+  - Notes: Clamp `envelope.attackMs` / `decayMs` / `releaseMs` ≥ 1 ms (≈48 samples @ 48 kHz — kills snap-onset click). Clamp `variantCount` 1..8, `voiceLimit` 1..16, `sustainLevel` 0..1, `cooldownMs` ≥ 0. Sustain-only case allowed via A=1ms / D=0 / R=1ms fallback.
+  - Acceptance: all 5 clamp ranges enforced in `OnValidate`; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-111**, **TECH-112**
+
+- [ ] **TECH-114** — `BlipPatchFlat` blittable readonly struct mirror
+  - Type: infrastructure / runtime data
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatchFlat.cs`
+  - Spec: `ia/projects/TECH-114-blip-patch-flat-blittable.md`
+  - Notes: Stage 1.2 Phase 2 opener. Mirrors `BlipPatch` scalars; readonly struct; no managed refs; no `AudioMixerGroup` ref (held by `BlipMixerRouter` parallel to catalog per Step 2). Nested `BlipOscillatorFlat` / `BlipEnvelopeFlat` / `BlipFilterFlat`. Single `mixerGroupIndex` int slot (default -1; populated Step 2). Flatten via ctor or `FromSO(BlipPatch)`. Consumed by Stage 1.3 `BlipVoice.Render` + Step 2 `BlipBaker`.
+  - Acceptance: `BlipPatchFlat` + 3 nested flats compile as readonly structs; zero managed refs; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-111**, **TECH-112**
+
+- [ ] **TECH-115** — `patchHash` content hash on `BlipPatch` + glossary rows
+  - Type: infrastructure / glossary
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs` (or `BlipPatchHash.cs` helper), `ia/specs/glossary.md`
+  - Spec: `ia/projects/TECH-115-blip-patch-hash.md`
+  - Notes: Closes Stage 1.2. FNV-1a (default) or xxhash64 digest over serialized scalars (osc freqs, env timings, env shapes, filter cutoff, jitter, cooldown). Stable across Unity GUID churn + version bumps. `[SerializeField] private int patchHash` persisted on `OnValidate` (after clamp). `Awake` / first flatten recomputes + asserts match; log warning on mismatch (no crash). Glossary rows — **Blip patch**, **Blip patch flat**, **patch hash** (Audio category, peers of **Blip bootstrap** / **Blip mixer group**).
+  - Acceptance: hash stable across sessions (identical scalars → identical int); `OnValidate` write + `Awake` assert wired; 3 glossary rows land; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-111**, **TECH-113**, **TECH-114**
 
 ## High Priority
 

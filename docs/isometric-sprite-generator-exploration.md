@@ -40,6 +40,7 @@ Current state: sprites hand-drawn at 64×64 (`diamond-tile-64.png`, `House1-64.p
 | 14 | Curation | Batch render → `tools/sprite-gen/out/` scratch dir → `--promote` CLI → `Assets/Sprites/Generated/` + auto `.meta` |
 | 15 | Materials | K-means cluster → auto 3-level ramp (bright/mid/dark) → manual name (`wall_brick_red`, `roof_tile`, …) |
 | 16 | Slope coverage | Full — 17 variants (flat + 4 cardinal + 4 diagonal + 4 up-diagonal + 4 bay). Water-facing deferred to v2. |
+| 17 | Editor integration | Aseprite v1.3.17 (licensed, Steam/dmg). Tier 1 `.gpl` palette exchange (lands in Stage 1.3). Tier 2 layered `.aseprite` emission + `promote --edit` round-trip (lands in Stage 1.4). Tier 3 Aseprite Lua YAML runner deferred — duplicates composer. |
 
 ---
 
@@ -165,6 +166,14 @@ Layer 2 picks material per primitive face:
 - East face (shadow side) → `dark`
 
 No anti-aliasing. Hard color boundaries.
+
+### Aseprite palette interop (Tier 1)
+
+`palette export {class}` writes `tools/sprite-gen/palettes/{class}.gpl` (GIMP palette format, 3 swatches per material: `{material}_bright`, `_mid`, `_dark`) — loadable in Aseprite via **Palette → Presets → Load**.
+
+`palette import {class} --gpl path.gpl` parses `.gpl`, matches swatch names back to materials by suffix, writes `palettes/{class}.json`. Bypasses K-means when human-curated palette preferred over extracted.
+
+Round-trip: K-means extract → `.json` → `.gpl` → hand-tune in Aseprite → save → `.gpl` → `.json` overwrite. JSON is authoritative at render time; `.gpl` is the editor-facing mirror.
 
 ---
 
@@ -295,9 +304,24 @@ python -m sprite_gen render building_residential_small --terrain N-up
 python -m sprite_gen palette extract residential \
   --sources "Assets/Sprites/House*.png,Assets/Sprites/Apartment*.png"
 
+# export palette JSON to .gpl for Aseprite editing (Tier 1)
+python -m sprite_gen palette export residential
+
+# import Aseprite-edited .gpl back to palette JSON (Tier 1)
+python -m sprite_gen palette import residential \
+  --gpl tools/sprite-gen/palettes/residential.gpl
+
+# render with layered .aseprite output (Tier 2) — top/south/east/foundation as named layers
+python -m sprite_gen render building_residential_small --layered
+
 # promote a rendered variant (copies PNG + writes .meta)
 python -m sprite_gen promote out/building_residential_small_v02.png \
   --as building_residential_small_01
+
+# promote with editor round-trip (Tier 2): opens .aseprite in Aseprite,
+# waits for save, flattens via CLI, writes PNG + .meta
+python -m sprite_gen promote out/building_residential_small_v02.aseprite \
+  --as building_residential_small_01 --edit
 
 # reject all variants of an archetype (cleans out/)
 python -m sprite_gen reject building_residential_small
@@ -306,7 +330,7 @@ python -m sprite_gen reject building_residential_small
 python -m sprite_gen render building_residential_small --diffusion
 ```
 
-Exit codes: 0 = success, 1 = spec invalid, 2 = palette missing, 3 = diffusion backend unavailable.
+Exit codes: 0 = success, 1 = spec invalid, 2 = palette missing, 3 = diffusion backend unavailable, 4 = Aseprite binary not found (Tier 2 commands only).
 
 ---
 
@@ -331,6 +355,18 @@ Exit codes: 0 = success, 1 = spec invalid, 2 = palette missing, 3 = diffusion ba
 6. Rejected variants: `reject {archetype}` nukes matching files from `out/`.
 
 No git-tracked `out/`. Rendered-but-not-promoted artifacts are ephemeral by design.
+
+### Editor round-trip (Tier 2)
+
+Alternate path when a variant is close but needs hand-polish before promote:
+
+1. `render --layered {archetype}` writes `out/{name}_vNN.aseprite` (named layers: `top`, `south`, `east`, `foundation` if present) alongside the flat PNG.
+2. Author opens `.aseprite` in Aseprite, edits pixels per layer, saves in place.
+3. `promote out/{name}_vNN.aseprite --as final_name --edit` invokes Aseprite CLI `--batch --save-as {tmp}.png` to flatten, then runs normal promote (copy PNG to `Assets/Sprites/Generated/`, write `.meta`).
+
+Aseprite binary discovered in this order: `$ASEPRITE_BIN` env var → `tools/sprite-gen/config.toml` `[aseprite] bin = ...` → platform default probe (macOS: `/Applications/Aseprite.app/Contents/MacOS/aseprite`, then Steam `~/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite`). Missing binary → exit code 4 with install hint.
+
+Layered `.aseprite` emission uses `py_aseprite` (or equivalent) writer in `src/aseprite_io.py`; flat PNG always co-emits so non-Aseprite users stay unblocked.
 
 ---
 
@@ -439,12 +475,53 @@ Non-blocking — answered in-flight.
 
 ---
 
-## 18. Next step
+## 18. Aseprite editor integration
 
-**Seed master plan.** This doc is ready. Invoke `master-plan-new` skill with this file as the design input to produce `ia/projects/sprite-gen-master-plan.md` carrying:
+### Rationale
 
-- Stage 1: Phase 1 Geometry MVP (weeks 1-2.5) → ~5 TECH- issues
-- Stage 2: Phase 2 Diffusion overlay (weeks 3-4) → ~3 TECH- issues
-- Stage 3: Phase 3 EA bulk render + curation (week 5) → ~2 TECH- / ART- issues
+Human-authored pixel art is part of the pipeline — generator produces mass, editor applies taste. Aseprite v1.3.17 (licensed via Steam/dmg) chosen over Libresprite: active Lua API (`Dialog`, `app.command`, `Tilemap`), richer CLI (`--filename-format`, `--sheet-data`), modern `.aseprite` chunk support (tilesets, external files) without round-trip loss. Libresprite's frozen 2016 fork would bite on layered emission + scripted curation UIs (see research log in conversation history).
 
-Then `/stage-file` each stage → `/kickoff` first issue → build.
+### Tier 1 — Palette exchange (Stage 1.3)
+
+**Scope:** `.gpl` ⇄ palette JSON round-trip. Human can hand-curate per-class palette in Aseprite instead of accepting K-means output.
+
+**Touch points:**
+- `src/palette.py` — add `export_gpl(cls)` + `import_gpl(cls, path)` functions.
+- `src/cli.py` — add `palette export {class}` + `palette import {class} --gpl`.
+- `tools/sprite-gen/palettes/{class}.gpl` — generated, gitignored by default (JSON is source of truth) or checked in when Aseprite is authoritative (per-class toggle in config).
+
+**Exit:** `palette export residential && palette import residential --gpl palettes/residential.gpl` round-trips without material-name loss.
+
+### Tier 2 — Layered `.aseprite` round-trip (Stage 1.4)
+
+**Scope:** Composer emits editable `.aseprite` alongside flat PNG. `promote --edit` opens in Aseprite, waits for save, flattens via Aseprite CLI, writes `.meta` on the PNG.
+
+**Touch points:**
+- `src/aseprite_io.py` — new module. `write_layered_aseprite(path, layers: dict[str, PIL.Image])` using `py_aseprite` (or equivalent `.aseprite` writer). Layer names: `top`, `south`, `east`, `foundation` (only when non-flat terrain).
+- `src/compose.py` — composer already paints per-face; split into per-layer buffers when `--layered` flag set, emit both flat PNG + `.aseprite`.
+- `src/curate.py` — `promote(..., edit=False)` branch: if input is `.aseprite` and `--edit` set, launch Aseprite subprocess `{bin} --batch {src}.aseprite --save-as {tmp}.png`, then normal promote pipeline on the flattened PNG.
+- `src/aseprite_bin.py` — binary discovery (`$ASEPRITE_BIN` → config.toml → macOS default probes). Exit code 4 on not-found with install hint.
+- `src/cli.py` — `render --layered` flag, `promote --edit` flag.
+
+**Exit:** `render --layered building_residential_small` emits `.aseprite` with 3-4 named layers; opening in Aseprite shows editable layers; `promote ... --edit` round-trips to `Assets/Sprites/Generated/` with correct `.meta`.
+
+### Deferred (Tier 3)
+
+Aseprite Lua script that reads sprite-gen YAML specs and draws primitives natively in-editor. Duplicates Python composer. Defer until EA ships and a clear authoring-in-editor use case emerges.
+
+### Not in scope
+
+- Aseprite Dialog UI for curation (approve/reject buttons inside editor) — curation stays CLI.
+- Aseprite tilemap mode for slope variants — slopes stay in `slopes.yaml`.
+- Auto-launch Aseprite on `render` — editor opens on demand via `promote --edit` only.
+
+---
+
+## 19. Next step
+
+**Master plan already seeded** (`ia/projects/sprite-gen-master-plan.md`, Step 1 / Stage 1.1 pending). Amend master plan to absorb §18 Tier 1 + Tier 2 touch points:
+
+- **Stage 1.3** gains Phase 2 / Phase 3 tasks for `.gpl` export/import + CLI wiring.
+- **Stage 1.4** gains Phase 3 tasks for layered `.aseprite` emission, binary discovery, `promote --edit` + exit code 4.
+
+Then `/stage-file sprite-gen-master-plan.md Stage 1.1` → `/kickoff` first issue → build.

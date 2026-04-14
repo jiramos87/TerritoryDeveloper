@@ -24,11 +24,15 @@ Scenario (pass at least one; same resolution as TestModeCommandLineBootstrap):
 Options:
   --simulation-ticks N      -> forwarded as -testSimulationTicks N (default: 0, max 10000 in C#)
   --golden-path PATH        -> forwarded as -testGoldenPath PATH (committed JSON; mismatch exits 8 — see scenarios README)
+  --new-game                -> forwarded as -testNewGame; skip LoadGame, call NewGame + scripted interstate build instead.
+                               Scenario id / path become optional labels only (no save file required).
+  --test-seed N             -> forwarded as -testSeed N; pins MapGenerationSeed for deterministic new-game smoke.
+                               Only meaningful with --new-game.
   --quit-editor-first       -> run tools/scripts/unity-quit-project.sh before launch
   --wait-quit-seconds N     -> passed to unity-quit-project.sh (default: 45)
   -h, --help                -> this message
 
-Default if neither --scenario-id nor --scenario-path is set:
+Default if neither --scenario-id nor --scenario-path is set (and --new-game not given):
   --scenario-id reference-flat-32x32
 
 Extra arguments after -- are appended to the Unity command line (e.g. more -test* flags).
@@ -75,6 +79,8 @@ SCENARIO_ID=""
 SCENARIO_PATH=""
 SIM_TICKS=""
 GOLDEN_PATH=""
+NEW_GAME=false
+TEST_SEED=""
 QUIT_FIRST=false
 WAIT_QUIT_SECS=45
 EXTRA=()
@@ -101,6 +107,14 @@ while [[ $# -gt 0 ]]; do
       GOLDEN_PATH="$2"
       shift 2
       ;;
+    --new-game)
+      NEW_GAME=true
+      shift
+      ;;
+    --test-seed)
+      TEST_SEED="$2"
+      shift 2
+      ;;
     --quit-editor-first)
       QUIT_FIRST=true
       shift
@@ -122,7 +136,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$SCENARIO_ID" && -z "$SCENARIO_PATH" ]]; then
+if [[ -z "$SCENARIO_ID" && -z "$SCENARIO_PATH" && "$NEW_GAME" != true ]]; then
   SCENARIO_ID="reference-flat-32x32"
 fi
 if [[ -n "$SCENARIO_ID" && -n "$SCENARIO_PATH" ]]; then
@@ -159,6 +173,14 @@ fi
 
 if [[ -n "$GOLDEN_PATH" ]]; then
   UNITY_ARGS+=(-testGoldenPath "$GOLDEN_PATH")
+fi
+
+if [[ "$NEW_GAME" == true ]]; then
+  UNITY_ARGS+=(-testNewGame)
+fi
+
+if [[ -n "$TEST_SEED" ]]; then
+  UNITY_ARGS+=(-testSeed "$TEST_SEED")
 fi
 
 if [[ ${#EXTRA[@]} -gt 0 ]]; then

@@ -66,6 +66,7 @@ Run in order. N/A → state why in chat.
 7. **Delete** `ia/projects/{ISSUE_ID}.md` — only after J1 succeeded/waived/skipped.
 8. **Cascade** — `npm run validate:dead-project-specs`; fix hits or advisory with reason.
 9. **BACKLOG + archive** — Remove row from BACKLOG. Append `[x]` row with date to BACKLOG-ARCHIVE; `Spec:` → removed-after-closure pattern; Notes cite where content migrated.
+9b. **Regenerate progress dashboard** — `npm run progress` (repo root). Reflects `Done (archived)` state in `docs/progress.html`. Deterministic — no diff when already current. Log exit code; failure does NOT block close (tooling-only).
 10. **Id purge** — Per section above for `{ISSUE_ID}`.
 11. **I1** — If glossary/spec bodies changed, `npm run generate:ia-indexes` + `--check`.
 

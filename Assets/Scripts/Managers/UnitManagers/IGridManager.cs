@@ -39,5 +39,10 @@ public interface IGridManager
     bool IsWithinDistanceOfRoad(int x, int y, int maxDistance);
     int CountGrassNeighbors(int gx, int gy);
     bool DemolishCellAt(Vector2 position, bool withAnimation = true);
+    /// <summary>
+    /// Return the first <see cref="NeighborCityStub"/> whose border side matches <paramref name="side"/>,
+    /// or <c>null</c> if none registered on that side. Null is a valid (non-error) result.
+    /// </summary>
+    NeighborCityStub? GetNeighborStub(BorderSide side);
 }
 }

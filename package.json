@@ -30,6 +30,7 @@
     "unity:build-scenario-from-descriptor": "bash tools/scripts/unity-build-scenario-from-descriptor.sh",
     "scenario:build-from-descriptor": "node tools/fixtures/scenarios/build-scenario-from-descriptor.mjs",
     "verify:local": "bash tools/scripts/verify-local.sh",
-    "verify:post-implementation": "npm run verify:local"
+    "verify:post-implementation": "npm run verify:local",
+    "progress": "node tools/progress-tracker/index.mjs"
   }
 }

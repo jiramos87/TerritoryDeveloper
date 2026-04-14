@@ -16,8 +16,14 @@
 > - Generation architecture: 5-layer composer (primitive → compose+shade → palette → diffusion → curation).
 > - Slope coverage: 17 land variants; water-facing deferred to v2.
 > - EA scope: ~15 archetypes, all 1×1 **building footprint**.
+> - Editor integration: Aseprite v1.3.17 (licensed). Tier 1 `.gpl` palette exchange in Stage 1.3. Tier 2 layered `.aseprite` emission + `promote --edit` round-trip in Stage 1.4. Tier 3 (Lua YAML runner) deferred.
 >
 > **Hierarchy rules:** `ia/rules/project-hierarchy.md` (step > stage > phase > task). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable).
+>
+> **Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**
+> - `ia/projects/multi-scale-master-plan.md` — adds `RegionCell` / `CountryCell` types + parent-scale stubs + save-schema bumps. Sprite-gen v1 renders only city-scale 1×1 buildings; region / country scale sprite needs (cell sprites, city-node-at-region-zoom, region-node-at-country-zoom) surface when multi-scale Step 4 opens — see Deferred decomposition below.
+> - `ia/projects/blip-master-plan.md` — audio subsystem. Disjoint surfaces (Python tool vs Unity C#); no sprite-gen collision.
+> - **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.
 >
 > **Read first if landing cold:**
 > - `docs/isometric-sprite-generator-exploration.md` — full design + architecture + examples. §2 Locked decisions + §3 Architecture + §13 Phase plan are ground truth.
@@ -73,7 +79,7 @@
 - `iso_prism(w, d, h, pitch, axis, material)` renders sloped top-faces + triangular end-faces with same shade logic
 - `canvas_size(fx, fy, extra_h)` returns `((fx+fy)*32, extra_h)` matching §4 Baseline formula
 - `pivot_uv(canvas_h)` returns `(0.5, 16/canvas_h)` matching §4 Unity import defaults
-- `tests/test_canvas.py` + `tests/test_primitives.py` pass with no errors
+- `pytest tools/sprite-gen/tests/` exits 0 — `test_canvas.py` + `test_primitives.py` pass with no errors. `npm run validate:all` does NOT yet cover Python; pytest stays a manual gate until CI integration lands (candidate fold-in point: Stage 1.3 palette tests, when test surface stabilizes)
 
 **Phases:**
 
@@ -132,7 +138,7 @@
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
-**Objectives:** Implement K-means palette extraction from existing sprites, per-class palette JSON files, and 3-level ramp enforcement at composition time. Wire palette into `compose.py` so each primitive face pulls correct ramp color from the loaded palette. Bootstrap `palettes/residential.json` from `Assets/Sprites/Residential/House1-64.png`.
+**Objectives:** Implement K-means palette extraction from existing sprites, per-class palette JSON files, and 3-level ramp enforcement at composition time. Wire palette into `compose.py` so each primitive face pulls correct ramp color from the loaded palette. Bootstrap `palettes/residential.json` from `Assets/Sprites/Residential/House1-64.png`. Add Aseprite `.gpl` round-trip (Tier 1 editor integration) so human-curated palettes can override K-means output per class.
 
 **Exit:**
 
@@ -142,12 +148,15 @@
 - `compose.py` uses `apply_ramp()` per primitive face instead of hardcoded color
 - `palettes/residential.json` checked in with materials: wall_brick_red, roof_tile_brown, window_glass, concrete
 - `tests/test_palette.py` passes; ramp HSV scaling verified (bright ×1.2, mid ×1.0, dark ×0.6, clamped)
+- `palette export residential` writes `palettes/residential.gpl` loadable in Aseprite **Palette → Presets → Load**; swatch names `{material}_bright/_mid/_dark`
+- `palette import residential --gpl path` parses `.gpl` back to JSON without material-name loss (round-trip equality on every material × face)
 
 **Phases:**
 
 - [ ] Phase 1 — K-means extract + palette JSON writer + CLI command.
 - [ ] Phase 2 — Palette apply at composition (integrate with compose.py).
 - [ ] Phase 3 — Palette tests + bootstrap residential palette JSON.
+- [ ] Phase 4 — Aseprite `.gpl` export / import (Tier 1 editor integration).
 
 **Tasks:**
 
@@ -159,6 +168,9 @@
 | T1.3.4 | 2 | _pending_ | _pending_ | Update `src/compose.py` to call `load_palette(spec['palette'])` once per sprite, pass palette to each primitive call; primitives accept `material: str` + `palette: dict` replacing stub color; `compose_sprite` now fully palette-driven |
 | T1.3.5 | 3 | _pending_ | _pending_ | `tests/test_palette.py` — mock K-means centroids (3 fixed RGB values), assert 3-level ramp values (bright = centroid HSV-V ×1.2 clamped, dark ×0.6); assert `apply_ramp(palette, 'wall_brick_red', 'top')` returns bright tuple; assert `apply_ramp(..., 'east')` returns dark tuple |
 | T1.3.6 | 3 | _pending_ | _pending_ | Run `palette extract residential --sources "Assets/Sprites/Residential/House1-64.png"` (or equivalent direct call); hand-name 8 clusters → produce `tools/sprite-gen/palettes/residential.json` with at minimum: wall_brick_red, roof_tile_brown, window_glass, concrete; check in JSON file |
+| T1.3.7 | 4 | _pending_ | _pending_ | `src/palette.py` — `export_gpl(cls, dest_path=None) → str`: read `palettes/{cls}.json`, emit GIMP palette format (`GIMP Palette` header + `Name:` + `Columns:` + `R G B name` rows); swatch naming `{material}_{level}` where level ∈ {bright,mid,dark}; 3N rows for N materials; `src/cli.py` — `palette export {class}` command writes `palettes/{class}.gpl`; add `.gpl` to `.gitignore` (JSON is source of truth) |
+| T1.3.8 | 4 | _pending_ | _pending_ | `src/palette.py` — `import_gpl(cls, gpl_path) → dict`: parse `.gpl` (skip header, read R G B name rows), group rows by material name (strip `_bright/_mid/_dark` suffix), emit JSON in Stage 1.3 schema; raise `GplParseError` on malformed rows; `src/cli.py` — `palette import {class} --gpl path` command writes/overwrites `palettes/{class}.json`, prints diff vs prior JSON |
+| T1.3.9 | 4 | _pending_ | _pending_ | `tests/test_palette_gpl.py` — round-trip test: start from fixture `palettes/residential.json` → `export_gpl` → parse back with `import_gpl` → assert deep-equal with original (every material × face RGB identical); assert `.gpl` output contains `GIMP Palette` header + 12 swatch rows for 4 materials; assert malformed `.gpl` raises `GplParseError` |
 
 ---
 
@@ -166,7 +178,7 @@
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
-**Objectives:** Implement `iso_stepped_foundation` primitive and `slopes.yaml` per-corner Z table. Wire auto-insert logic into the compose layer so any non-flat `terrain` spec field automatically prepends the foundation primitive and grows the canvas. Implement `promote` / `reject` CLI (Layer 5) with `.meta` generation so promoted sprites land in `Assets/Sprites/Generated/` Unity-ready.
+**Objectives:** Implement `iso_stepped_foundation` primitive and `slopes.yaml` per-corner Z table. Wire auto-insert logic into the compose layer so any non-flat `terrain` spec field automatically prepends the foundation primitive and grows the canvas. Implement `promote` / `reject` CLI (Layer 5) with `.meta` generation so promoted sprites land in `Assets/Sprites/Generated/` Unity-ready. Add layered `.aseprite` emission + `promote --edit` round-trip (Tier 2 editor integration) so hand-polished variants land in Unity without losing PNG/`.meta` correctness.
 
 **Exit:**
 
@@ -176,12 +188,15 @@
 - `promote out/X.png --as final_name` copies PNG to `Assets/Sprites/Generated/` + writes `.meta` (PPU=64, pivot=(0.5, 16/h), Point filter, no compression)
 - `reject {archetype}` deletes all `out/{archetype}_*.png` files
 - Slope regression: `render building_residential_small --terrain N` → output PNG canvas height > 64
+- `render --layered {archetype}` emits `.aseprite` alongside flat PNG with named layers `top`, `south`, `east`, `foundation` (only when non-flat); opening in Aseprite shows layers editable separately
+- `promote out/X.aseprite --as name --edit` launches Aseprite CLI to flatten, writes PNG + `.meta` to `Assets/Sprites/Generated/`; exits code 4 when Aseprite binary not found with install hint
 
 **Phases:**
 
 - [ ] Phase 1 — slopes.yaml + iso_stepped_foundation primitive.
 - [ ] Phase 2 — Composer slope auto-insert + canvas auto-grow.
 - [ ] Phase 3 — Curation CLI (promote / reject) + .meta writer.
+- [ ] Phase 4 — Layered `.aseprite` emission + `promote --edit` round-trip (Tier 2 editor integration).
 
 **Tasks:**
 
@@ -193,6 +208,9 @@
 | T1.4.4 | 2 | _pending_ | _pending_ | Slope regression test spec `specs/building_residential_small_N.yaml` (copy of small, terrain: N); run `python -m sprite_gen render building_residential_small_N`; assert output PNG height > 64 (canvas grew by max_corner_z=16); assert pivot_uv != (0.5, 0.25); render all 17 slope variants via `--terrain` CLI flag; assert no crash |
 | T1.4.5 | 3 | _pending_ | _pending_ | `src/unity_meta.py` — `write_meta(png_path, canvas_h) → str`: emit Unity `.meta` YAML string with guid (uuid4), textureImporter settings: PPU=64, spritePivot=(0.5, 16/canvas_h), filterMode=Point, textureCompression=None, spriteMode=Single; `src/curate.py` — `promote(src_png, dest_name)`: copy PNG to `Assets/Sprites/Generated/{dest_name}.png`, call `write_meta`, write `.meta` file alongside |
 | T1.4.6 | 3 | _pending_ | _pending_ | `src/cli.py` — `promote out/X.png --as name` command: call `curate.promote()`; assert dest file exists + `.meta` exists; `reject {archetype}` command: glob `out/{archetype}_*.png`, delete all; integration test: promote then reject the same file, assert `Assets/Sprites/Generated/` has promoted file, `out/` is clean after reject |
+| T1.4.7 | 4 | _pending_ | _pending_ | `src/aseprite_bin.py` — `find_aseprite_bin() → Path`: resolve in order `$ASEPRITE_BIN` env var → `tools/sprite-gen/config.toml` `[aseprite] bin` → platform default probes (macOS: `/Applications/Aseprite.app/Contents/MacOS/aseprite`, then `~/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite`); raise `AsepriteBinNotFoundError` on miss (caught by CLI, exit code 4 with install hint); unit test mocks filesystem + env var |
+| T1.4.8 | 4 | _pending_ | _pending_ | `src/aseprite_io.py` — `write_layered_aseprite(dest_path, layers: dict[str, PIL.Image], canvas_size)`: write `.aseprite` via `py_aseprite` (add to `requirements.txt`) with named layers in stacking order (`foundation`, `east`, `south`, `top`); transparent alpha preserved per layer; update `src/compose.py` to split per-face buffers when `layered=True` flag passed; add `--layered` flag to `cli.py render`; composer always co-emits flat PNG so non-Aseprite users stay unblocked |
+| T1.4.9 | 4 | _pending_ | _pending_ | `src/curate.py` — extend `promote(src, dest_name, edit=False)`: if `src.suffix == '.aseprite'` and `edit=True`, shell-out `{aseprite_bin} --batch {src} --save-as {tmp}.png` (subprocess, check returncode), then run existing PNG promote pipeline on `{tmp}.png`; cleanup tmp after; `src/cli.py` — `promote ... --edit` flag; integration test: render --layered → modify one layer pixel via PIL → promote --edit → assert flattened PNG + `.meta` exist in `Assets/Sprites/Generated/`, assert modified pixel present in output |
 
 ---
 
@@ -236,6 +254,7 @@ Materialize when the named step opens (per `ia/rules/project-hierarchy.md` lazy-
 
 - **Step 2 — Diffusion Overlay:** decompose after Step 1 closes. Candidate stages: SD backend setup + MPS validation; img2img pipeline wiring (diffusion.py Layer 4); post-diffusion re-quantize integration; quality eval + decision.
 - **Step 3 — EA Bulk Render + Curation:** decompose after Step 2 closes (or after Step 1 if diffusion stays opt-in). Candidate stages: archetype spec authoring (15 YAML files); batch render run + out/ triage; curation session (promote ~60–80); Unity import audit pass.
+- **Region / country scale sprite needs — scope open.** Sibling `multi-scale-master-plan.md` Steps 4–5 introduce `RegionCell` + `CountryCell` + city-node-at-region-zoom + region-node-at-country-zoom surfaces. Sprite-gen v1 locks to 1×1 **building footprint** on city scale — region / country cell sprites + node visuals NOT covered anywhere yet. Decide `sprite-gen` extension (new Step 4+) vs sibling art-pipeline orchestrator when multi-scale Step 4 opens. Do NOT silently expand sprite-gen v1 to cover parent scales.
 
 ---
 
@@ -245,6 +264,7 @@ Materialize when the named step opens (per `ia/rules/project-hierarchy.md` lazy-
 
 - Open one stage at a time. Next stage opens only after current stage's `project-stage-close` runs.
 - Run `/stage-file sprite-gen-master-plan.md Stage 1.1` to materialize pending tasks → BACKLOG rows + `ia/projects/{ISSUE_ID}.md` stubs.
+- File all sprite-gen BACKLOG rows under `§ Sprite gen lane` (new section in `BACKLOG.md`; first `stage-file` run adds the heading if absent). Matches sibling convention `§ Multi-scale simulation lane` + `§ Audio / Blip lane`.
 - Update stage / step `Status` + phase checkboxes as lifecycle skills flip them — do NOT edit by hand.
 - Preserve locked decisions (see header block). Changes require explicit re-decision + sync edit to exploration doc.
 - Slope variant naming must match `Assets/Sprites/Slopes/` filename stems exactly — `{CODE}-slope.png` per **Slope variant naming** glossary. Any new slope id in `slopes.yaml` needs a corresponding entry in that directory.

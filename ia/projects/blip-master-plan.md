@@ -8,6 +8,11 @@
 >
 > **Hierarchy rules:** `ia/rules/project-hierarchy.md` (step > stage > phase > task). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable).
 >
+> **Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**
+> - `ia/projects/multi-scale-master-plan.md` — mutates `GridManager.cs` + `GameSaveManager.cs` + save schema. Blip Step 3.3 World lane kickoff must re-read `GridManager` selection surface now that multi-scale Stage 1.3 is archived. `WorldCellSelected` stays scale-agnostic in MVP; per-scale variants tracked in `docs/blip-post-mvp-extensions.md` §4.
+> - `ia/projects/sprite-gen-master-plan.md` — Python tool + new `Assets/Sprites/Generated/` output. Disjoint C# surface; no blip collision on runtime code.
+> - **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.
+>
 > **Read first if landing cold:**
 > - `docs/blip-procedural-sfx-exploration.md` — full design + pseudo-code + 20 concrete examples. §13 (locked decisions) + §14 (MVP scope) are ground truth.
 > - `docs/blip-post-mvp-extensions.md` — scope boundary (what's OUT of MVP).
@@ -23,7 +28,7 @@
 
 ### Step 1 — DSP foundations + audio infra
 
-**Status:** In Progress — Stage 1.1
+**Status:** In Progress — Stage 1.2
 
 **Objectives:** Land scaffolding. Audio mixer asset + persistent bootstrap prefab. Authoring data model (`BlipPatch` ScriptableObject + `BlipPatchFlat` blittable mirror + content-hash). DSP kernel (`BlipVoice.Render`) w/ MVP oscillator set + AHDSR envelope + one-pole LP filter. EditMode tests gate kernel behavior + determinism. No playback wiring yet; no sounds heard in game.
 
@@ -75,7 +80,7 @@
 
 #### Stage 1.2 — Patch data model
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — tasks filed (TECH-111..TECH-115 Draft)
 
 **Objectives:** `BlipPatch` ScriptableObject authoring surface + `BlipPatchFlat` blittable mirror + content-hash. MVP skips all `AnimationCurve` fields (no pitch-env curve, no cutoff-env curve, no envelope shape curve) — AHDSR uses parametric ramps (linear or exp per `BlipEnvShape` enum, no curves), filter uses static cutoff Hz. Keeps Step 3 authoring simple + Step 1 scope tight. Curve / LUT infrastructure lands post-MVP per `docs/blip-post-mvp-extensions.md` §1. `BlipMode` enum omitted MVP (single implicit baked path) — added post-MVP when `BlipLiveHost` lands. `useLutOscillators` field reserved / unused MVP to prevent schema churn when post-MVP LUT osc lands.
 
@@ -97,11 +102,11 @@
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T1.2.1 | 1 | _pending_ | _pending_ | `BlipPatch : ScriptableObject` class + MVP fields + `CreateAssetMenu("Territory/Audio/Blip Patch")`. No `AnimationCurve` fields. No `mode` field (`BlipMode` enum deferred post-MVP). `useLutOscillators` bool present but unread (reserved slot). |
-| T1.2.2 | 1 | _pending_ | _pending_ | MVP struct + enum definitions — `BlipOscillator` (no `pitchEnvCurve`), `BlipEnvelope` (no `shape` curve; per-stage `BlipEnvShape` + `sustainLevel`), `BlipFilter` (no `cutoffEnv`) + `BlipId`, `BlipWaveform`, `BlipFilterKind`, `BlipEnvStage`, `BlipEnvShape` (`Linear`, `Exponential`). |
-| T1.2.3 | 1 | _pending_ | _pending_ | `OnValidate` guards on `BlipPatch` — clamp `attackMs`, `decayMs`, `releaseMs` to ≥ 1 ms (kills snap-onset click at default 48 kHz mix rate). Clamp `variantCount` to 1..8, `voiceLimit` to 1..16, `sustainLevel` to 0..1, `cooldownMs` to ≥ 0. |
-| T1.2.4 | 2 | _pending_ | _pending_ | `BlipPatchFlat` blittable readonly struct — mirrors SO scalars; no managed refs; no `AudioMixerGroup` ref (held in `BlipMixerRouter` parallel to catalog — Step 2). `BlipOscillatorFlat` / `BlipEnvelopeFlat` / `BlipFilterFlat` nested. Single `mixerGroupIndex` int slot. |
-| T1.2.5 | 2 | _pending_ | _pending_ | `patchHash` content hash — FNV-1a / xxhash64 digest over serialized scalar fields (osc freqs, env timings, env shapes, filter cutoff, jitter values, cooldown). Stable; ignores Unity GUID + version. `[SerializeField] private int patchHash` persisted on `OnValidate`; `Awake` (or first flatten) recomputes + asserts match. Glossary rows for **Blip patch**, **Blip patch flat**, **patch hash**. |
+| T1.2.1 | 1 | **TECH-111** | Draft | `BlipPatch : ScriptableObject` class + MVP fields + `CreateAssetMenu("Territory/Audio/Blip Patch")`. No `AnimationCurve` fields. No `mode` field (`BlipMode` enum deferred post-MVP). `useLutOscillators` bool present but unread (reserved slot). |
+| T1.2.2 | 1 | **TECH-112** | Draft | MVP struct + enum definitions — `BlipOscillator` (no `pitchEnvCurve`), `BlipEnvelope` (no `shape` curve; per-stage `BlipEnvShape` + `sustainLevel`), `BlipFilter` (no `cutoffEnv`) + `BlipId`, `BlipWaveform`, `BlipFilterKind`, `BlipEnvStage`, `BlipEnvShape` (`Linear`, `Exponential`). |
+| T1.2.3 | 1 | **TECH-113** | Draft | `OnValidate` guards on `BlipPatch` — clamp `attackMs`, `decayMs`, `releaseMs` to ≥ 1 ms (kills snap-onset click at default 48 kHz mix rate). Clamp `variantCount` to 1..8, `voiceLimit` to 1..16, `sustainLevel` to 0..1, `cooldownMs` to ≥ 0. |
+| T1.2.4 | 2 | **TECH-114** | Draft | `BlipPatchFlat` blittable readonly struct — mirrors SO scalars; no managed refs; no `AudioMixerGroup` ref (held in `BlipMixerRouter` parallel to catalog — Step 2). `BlipOscillatorFlat` / `BlipEnvelopeFlat` / `BlipFilterFlat` nested. Single `mixerGroupIndex` int slot. |
+| T1.2.5 | 2 | **TECH-115** | Draft | `patchHash` content hash — FNV-1a / xxhash64 digest over serialized scalar fields (osc freqs, env timings, env shapes, filter cutoff, jitter values, cooldown). Stable; ignores Unity GUID + version. `[SerializeField] private int patchHash` persisted on `OnValidate`; `Awake` (or first flatten) recomputes + asserts match. Glossary rows for **Blip patch**, **Blip patch flat**, **patch hash**. |
 
 #### Stage 1.3 — Voice DSP kernel
 

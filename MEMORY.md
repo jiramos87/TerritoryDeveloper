@@ -16,3 +16,5 @@ _(none indexed — promote entries here only when they exceed ~10 lines or need 
 - `git mv` on a Unity `.cs` file leaves the adjacent `.meta` at the original name; `git mv` the `.meta` separately to preserve the GUID (prefab / scene references survive).
 - Bridge `get_compilation_status` is a reliable compile gate when the Unity Editor holds the project lock and batchmode is blocked.
 - Before filing a follow-up TECH from a project-spec audit, grep `BACKLOG.md` for an existing matching scope — duplicates waste id space and split tracking (TECH-04 already covered the Stage 1.2 invariant #5 cleanup scope).
+- `InterstateManager.GenerateAndPlaceInterstate()` is the canonical single-call entry for scripted interstate builds; internally runs `RoadManager.PlaceInterstateFromPath` → `TryPrepareRoadPlacementPlan` → `PathTerraformPlan.Apply` → `InvalidateRoadCache()` → `NeighborCityBindingRecorder.RecordExits`. Satisfies invariants #2 + #10 — avoid direct `ComputePathPlan`.
+- `MapGenerationSeed.SetSessionMasterSeed(int)` pins deterministic new-game seeds for testmode (consumed by `AgentTestModeBatchRunner -testSeed N`).

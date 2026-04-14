@@ -192,6 +192,8 @@ public class GameSaveManager : MonoBehaviour
             neighborCityBindings = saveData.neighborCityBindings ?? new List<NeighborCityBinding>();
             // Hydrate GridManager surface before RestoreGrid so consumers see non-null ids from grid-ready.
             gridManager.HydrateParentIds(saveData.regionId, saveData.countryId);
+            // Hydrate neighbor stubs immediately after parent ids (one-shot pattern).
+            gridManager.HydrateNeighborStubs(_neighborStubs);
 
             // Use saved grid dimensions (or infer from gridData for old saves) before reset
             if (saveData.gridWidth > 0 && saveData.gridHeight > 0)
@@ -342,6 +344,8 @@ public class GameSaveManager : MonoBehaviour
             new GameSaveData { neighborStubs = _neighborStubs },
             interstateManagerForSeed,
             MapGenerationSeed.MasterSeed);
+        // Hydrate GridManager stub cache after seeding so accessor is ready before first Update.
+        gridManager.HydrateNeighborStubs(_neighborStubs);
 
         cityStats.ResetCityStats();
         if (regionalMapManager != null)

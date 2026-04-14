@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "neighborStubs": [
+    {
+      "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "displayName": "North Neighbor",
+      "borderSide": "North"
+    }
+  ],
+  "neighborCityBindings": [
+    {
+      "stubId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "exitCellX": 15,
+      "exitCellY": 31,
+      "borderSide": "North"
+    }
+  ]
+}

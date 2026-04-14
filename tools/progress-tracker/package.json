@@ -1,0 +1,13 @@
+{
+  "name": "@territory/progress-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Static HTML progress tracker for master-plan orchestrator documents.",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

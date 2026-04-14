@@ -1,6 +1,6 @@
 # Multi-Scale Simulation — Master Plan (MVP)
 
-> **Status:** In Progress — Step 1 / Stage 1.1 + Stage 1.2 done; Stage 1.3 filed (TECH-102 → TECH-109)
+> **Status:** In Progress — Step 1 / Stage 1.3 archived (testmode smoke closed — all Stage 1.3 tasks archived)
 >
 > **Scope:** Min load-bearing work to prove city ↔ region ↔ country game loop (dormant evolution + reconstruction). Rest → `multi-scale-post-mvp-expansion.md`.
 >
@@ -8,7 +8,14 @@
 >
 > **Hierarchy rules:** `ia/rules/project-hierarchy.md` (step > stage > phase > task). `ia/rules/orchestrator-vs-spec.md` (this doc = orchestrator, never closeable).
 >
+> **Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**
+>
+> - `ia/projects/blip-master-plan.md` — audio subsystem. Stage 1.1 archived (TECH-98..101); Stages 1.2–1.4 pending. Blip Step 3.3 (World lane call sites) wires into `GridManager.cs` cell-select + road/building tools + save hooks — coordinate so blip Step 3 kickoff lands after multi-scale `GridManager` mutations settle.
+> - `ia/projects/sprite-gen-master-plan.md` — Python sprite generator (`tools/sprite-gen/`) + `Assets/Sprites/Generated/` output. City-scale 1×1 building footprints only in v1; region / country scale sprite needs surface when this orchestrator's Step 4 opens — not yet scoped anywhere.
+> - **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.
+>
 > **Read first if landing cold:**
+>
 > - `ia/specs/game-overview.md` — vision + principles
 > - `ia/specs/simulation-system.md` — current single-scale tick loop (MCP `spec_section`)
 > - `ia/projects/multi-scale-post-mvp-expansion.md` — scope boundary (what's OUT of MVP)
@@ -55,21 +62,23 @@
 
 **Phases:**
 
-- [x] Phase 1 — Schema + migration (data shape, version bump, legacy load path).
-- [ ] Phase 2 — Runtime surface (`GridManager` properties + new-game placeholder allocation).
-- [ ] Phase 3 — Round-trip + migration tests (testmode batch).
+- Phase 1 — Schema + migration (data shape, version bump, legacy load path).
+- Phase 2 — Runtime surface (`GridManager` properties + new-game placeholder allocation).
+- Phase 3 — Round-trip + migration tests (testmode batch).
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T1.1.1 | 1 | **TECH-87** | Done | `GameSaveData` parent-id fields + save version bump + legacy migration + glossary rows. |
-| T1.1.2 | 2 | **TECH-88** | Done | `GridManager` `ParentRegionId` / `ParentCountryId` surface + new-game placeholder allocation. |
-| T1.1.3 | 3 | **TECH-89** | Done | Round-trip + legacy-migration tests (testmode batch scenario). |
+
+| Task   | Phase | Issue       | Status | Intent                                                                                        |
+| ------ | ----- | ----------- | ------ | --------------------------------------------------------------------------------------------- |
+| T1.1.1 | 1     | **TECH-87** | Done   | `GameSaveData` parent-id fields + save version bump + legacy migration + glossary rows.       |
+| T1.1.2 | 2     | **TECH-88** | Done   | `GridManager` `ParentRegionId` / `ParentCountryId` surface + new-game placeholder allocation. |
+| T1.1.3 | 3     | **TECH-89** | Done   | Round-trip + legacy-migration tests (testmode batch scenario).                                |
+
 
 #### Stage 1.2 — Cell-type split
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft (tasks *pending* — not yet filed)
 
 **Objectives:** `Cell` → `CityCell` / `RegionCell` / `CountryCell`. City sim unchanged in behavior. Invariants #1 (`HeightMap` ↔ `Cell.height` sync) and #5 (`GetCell` only) preserved.
 
@@ -84,23 +93,25 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Base type extraction + `Cell` → `CityCell` rename (compile-only refactor).
-- [ ] Phase 2 — `RegionCell` + `CountryCell` placeholder types + glossary rows.
-- [ ] Phase 3 — `GridManager` typed surface + back-compat default.
-- [ ] Phase 4 — Regression gate (`unity:compile-check` + testmode smoke + `HeightMap` integrity).
+- Phase 1 — Base type extraction + `Cell` → `CityCell` rename (compile-only refactor).
+- Phase 2 — `RegionCell` + `CountryCell` placeholder types + glossary rows.
+- Phase 3 — `GridManager` typed surface + back-compat default.
+- Phase 4 — Regression gate (`unity:compile-check` + testmode smoke + `HeightMap` integrity).
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T1.2.1 | 1 | **TECH-90** | Done | Extract `Cell` abstract base (coord, height, shared primitives). Compile-only; no rename yet. |
-| T1.2.2 | 1 | **TECH-91** | Done | Rename `Cell` → `CityCell` across all city sim files. Preserve `HeightMap` sync (invariant #1). |
-| T1.2.3 | 2 | **TECH-92** | Done | `RegionCell` placeholder type (coord + parent-region-id; no behavior). Glossary row. |
-| T1.2.4 | 2 | **TECH-93** | Done | `CountryCell` placeholder type (coord + parent-country-id; no behavior). Glossary rows for all 3 cell types. |
-| T1.2.5 | 3 | **TECH-94** | Done | Generic `GetCell<T>(x,y)` or scale-indexed overloads on `GridManager`. Compile gate. |
-| T1.2.6 | 3 | **TECH-95** | Done | Back-compat `GetCell(x,y)` defaults to `CityCell`. Update all callers. Invariant #5 preserved. |
-| T1.2.7 | 4 | **TECH-96** | Done | Testmode smoke — city load + sim tick, no regression. |
-| T1.2.8 | 4 | **TECH-97** | Done | Testmode assertion — `HeightMap` / `CityCell.height` integrity (invariant #1). |
+
+| Task   | Phase | Issue       | Status | Intent                                                                                                       |
+| ------ | ----- | ----------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| T1.2.1 | 1     | **TECH-90** | Done   | Extract `Cell` abstract base (coord, height, shared primitives). Compile-only; no rename yet.                |
+| T1.2.2 | 1     | **TECH-91** | Done   | Rename `Cell` → `CityCell` across all city sim files. Preserve `HeightMap` sync (invariant #1).              |
+| T1.2.3 | 2     | **TECH-92** | Done   | `RegionCell` placeholder type (coord + parent-region-id; no behavior). Glossary row.                         |
+| T1.2.4 | 2     | **TECH-93** | Done   | `CountryCell` placeholder type (coord + parent-country-id; no behavior). Glossary rows for all 3 cell types. |
+| T1.2.5 | 3     | **TECH-94** | Done   | Generic `GetCell<T>(x,y)` or scale-indexed overloads on `GridManager`. Compile gate.                         |
+| T1.2.6 | 3     | **TECH-95** | Done   | Back-compat `GetCell(x,y)` defaults to `CityCell`. Update all callers. Invariant #5 preserved.               |
+| T1.2.7 | 4     | **TECH-96** | Done   | Testmode smoke — city load + sim tick, no regression.                                                        |
+| T1.2.8 | 4     | **TECH-97** | Done   | Testmode assertion — `HeightMap` / `CityCell.height` integrity (invariant #1).                               |
+
 
 #### Stage 1.3 — Neighbor-city stub + interstate-border semantics
 
@@ -119,25 +130,27 @@
 
 **Phases:**
 
-- [x] Phase 1 — Stub schema + save wiring.
-- [x] Phase 2 — Interstate-border binding (new-game init + on-road-build at border).
-- [ ] Phase 3 — City-sim inert read surface + glossary rows.
-- [ ] Phase 4 — Round-trip + testmode smoke.
+- Phase 1 — Stub schema + save wiring.
+- Phase 2 — Interstate-border binding (new-game init + on-road-build at border).
+- Phase 3 — City-sim inert read surface + glossary rows.
+- Phase 4 — Round-trip + testmode smoke.
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T1.3.1 | 1 | **TECH-102** | Done | `NeighborCityStub` struct (id GUID, display name, border side enum) + serialize schema. |
-| T1.3.2 | 1 | **TECH-103** | Done | `GameSaveData.neighborStubs` list + save version bump. |
-| T1.3.3 | 2 | **TECH-104** | Done | New-game init: place ≥1 stub at random interstate border (seed-deterministic). |
-| T1.3.4 | 2 | **TECH-105** | Done | On-road-build: road exit at border binds to stub ref by border side. |
-| T1.3.5 | 3 | **TECH-106** | Draft | `GridManager.GetNeighborStub(side)` inert read contract (returns stub or null; no behavior). |
-| T1.3.6 | 3 | **TECH-107** | Draft | Glossary rows for `neighbor-city stub` + `interstate border`. |
-| T1.3.7 | 4 | **TECH-108** | Draft | Save/load round-trip test (stubs + bindings preserved). |
-| T1.3.8 | 4 | **TECH-109** | Draft | Testmode smoke — stub at border after new-game; binding intact after road build at border. |
 
-**Backlog state (Step 1):** Stage 1.1 filed + archived (TECH-87 / TECH-88 / TECH-89). Stage 1.2 filed + archived (TECH-90 → TECH-97). Stage 1.3 filed under `§ Multi-scale simulation lane` (TECH-102 → TECH-109).
+| Task   | Phase | Issue        | Status | Intent                                                                                       |
+| ------ | ----- | ------------ | ------ | -------------------------------------------------------------------------------------------- |
+| T1.3.1 | 1     | **TECH-102** | Done   | `NeighborCityStub` struct (id GUID, display name, border side enum) + serialize schema.      |
+| T1.3.2 | 1     | **TECH-103** | Done   | `GameSaveData.neighborStubs` list + save version bump.                                       |
+| T1.3.3 | 2     | **TECH-104** | Done   | New-game init: place ≥1 stub at random interstate border (seed-deterministic).               |
+| T1.3.4 | 2     | **TECH-105** | Done   | On-road-build: road exit at border binds to stub ref by border side.                         |
+| T1.3.5 | 3     | **TECH-106** | Done   | `GridManager.GetNeighborStub(side)` inert read contract (returns stub or null; no behavior). |
+| T1.3.6 | 3     | **TECH-107** | Done   | Glossary rows for `neighbor-city stub` + `interstate border`.                                |
+| T1.3.7 | 4     | **TECH-108** | Done   | Save/load round-trip test (stubs + bindings preserved).                                      |
+| T1.3.8 | 4     | **TECH-109** | Done (archived) | Testmode smoke — stub at border after new-game; binding intact after road build at border.   |
+
+
+**Backlog state (Step 1):** Stage 1.1 filed + archived (TECH-87 / TECH-88 / TECH-89). Stage 1.2 filed + archived (TECH-90 → TECH-97). Stage 1.3 filed + archived (TECH-102 → TECH-109) under `§ Multi-scale simulation lane`.
 
 ### Step 2 — City MVP close
 
@@ -246,3 +259,4 @@ Steps 2–5 stay at skeleton granularity (Objectives implicit in step blurb + Ex
 - Reintroduce climate, shaping events, defense structures, expropriation, agricultural zones, progressive loading, shared cross-scale dashboard, auto mode, scale unlock, or process-engineering gap closures into MVP stages. All post-MVP.
 - File BACKLOG rows for new FEAT ideas outside backlog triage pass.
 - Give time estimates.
+

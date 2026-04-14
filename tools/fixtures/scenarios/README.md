@@ -64,6 +64,8 @@ This runs **`tools/scripts/unity-testmode-batch.sh`**, which launches Unity with
 | `--scenario-path PATH` | `-testScenarioPath PATH` |
 | `--simulation-ticks N` | `-testSimulationTicks N` (default **0** in script; capped in C#) |
 | `--golden-path PATH` | `-testGoldenPath PATH` — committed JSON of integer **CityStats** fields (see **Golden CityStats** below); mismatch → Unity exit **8** |
+| `--new-game` | `-testNewGame` — skip **`LoadGame`**; call **`NewGame`** + scripted interstate build instead. Scenario id / path become optional labels only (no save file required). Report gains `"mode": "new-game"`. |
+| `--test-seed N` | `-testSeed N` — pins `MapGenerationSeed` before `NewGame` for deterministic smoke. Only meaningful with `--new-game`. |
 | `--quit-editor-first` | Runs **`tools/scripts/unity-quit-project.sh`** first (**`Temp/UnityLockfile`** + **`lsof`**, **SIGTERM** then **SIGKILL**) |
 | `--` … | Extra Unity CLI tokens |
 
@@ -115,6 +117,56 @@ npm run unity:testmode-batch -- \
   --scenario-id reference-flat-32x32 \
   --simulation-ticks 3 \
   --golden-path "$(pwd)/tools/fixtures/scenarios/reference-flat-32x32/agent-testmode-golden-ticks3.json"
+```
+
+## Golden **neighbor-stub** snapshots (**Agent test mode batch**)
+
+Committed sibling files with basename containing **`neighbor-stubs`** (e.g. **`neighbor-stub-roundtrip-32x32/agent-testmode-golden-neighbor-stubs.json`**) hold a stable projection of **`GameSaveManager.NeighborStubs`** + **`neighborCityBindings`** after **`LoadGame`**. Dispatched automatically when **`-testGoldenPath`** basename contains `neighbor-stubs`; city-stats compare is skipped for these.
+
+Shape (`schema_version` **1**):
+```json
+{
+  "schema_version": 1,
+  "neighborStubs": [ { "id": "<guid>", "displayName": "...", "borderSide": "North|South|East|West" } ],
+  "neighborCityBindings": [ { "stubId": "<guid>", "exitCellX": 0, "exitCellY": 0, "borderSide": "North|South|East|West" } ]
+}
+```
+
+- Entries are sorted before compare: stubs by `id`, bindings by `(stubId, exitCellX, exitCellY)`.
+- Mismatch → exit **8** (same as city-stats golden).
+- `borderSide` in the golden uses the enum name string (`"North"`, `"South"`, `"East"`, `"West"`); the `save.json` uses the Unity integer (0=North, 1=South, 2=East, 3=West).
+
+**Committed scenario:** `neighbor-stub-roundtrip-32x32` — schema 3 save with one stub (`North`) + one binding; golden at `agent-testmode-golden-neighbor-stubs.json`.
+
+### Neighbor-stub new-game smoke (`neighbor-stub-new-game-smoke-32x32`)
+
+Live-build smoke for the neighbor-city stub + interstate-border binding path. Uses `--new-game` flag instead of a committed save; no `save.json` is needed. Report carries a `neighbor_stub_smoke` block with `stub_count`, `binding_count`, and `resolver_matches`. All three assertions must pass (exit 0):
+
+```bash
+npm run unity:testmode-batch -- \
+  --new-game \
+  --scenario-id neighbor-stub-new-game-smoke-32x32 \
+  --simulation-ticks 1
+```
+
+For a deterministic run (same `MapGenerationSeed.MasterSeed`):
+
+```bash
+npm run unity:testmode-batch -- \
+  --new-game \
+  --test-seed 12345 \
+  --scenario-id neighbor-stub-new-game-smoke-32x32 \
+  --simulation-ticks 1
+```
+
+Assertions: `stub_count >= 1` post-`NewGame`; `binding_count >= 1` post-interstate build; `resolver_matches == binding_count` (each binding's `stubId` resolved via `GridManager.GetNeighborStub`); zero C# exceptions across ≥1 `ProcessSimulationTick`.
+
+**Example (neighbor-stub golden assert):**
+
+```bash
+npm run unity:testmode-batch -- \
+  --scenario-id neighbor-stub-roundtrip-32x32 \
+  --golden-path "$(pwd)/tools/fixtures/scenarios/neighbor-stub-roundtrip-32x32/agent-testmode-golden-neighbor-stubs.json"
 ```
 
 ## **CI** simulation tick bound and **RNG**
