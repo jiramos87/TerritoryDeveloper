@@ -1,0 +1,27 @@
+{
+  "raw": {
+    "black": "#0a0a0a",
+    "panel": "#1a1a1a",
+    "text": "#e8e8e8",
+    "red": "#d63838",
+    "amber": "#e8a33d",
+    "grey-500": "#6a6a6a",
+    "green": "#3a9b4a"
+  },
+  "semantic": {
+    "bg-canvas": "{raw.black}",
+    "bg-panel": "{raw.panel}",
+    "text-primary": "{raw.text}",
+    "text-accent-critical": "{raw.red}",
+    "text-accent-warn": "{raw.amber}",
+    "text-muted": "{raw.grey-500}",
+    "bg-status-done": "{raw.green}",
+    "text-status-done-fg": "{raw.black}",
+    "bg-status-progress": "{raw.amber}",
+    "text-status-progress-fg": "{raw.black}",
+    "bg-status-pending": "{raw.grey-500}",
+    "text-status-pending-fg": "{raw.text}",
+    "bg-status-blocked": "{raw.red}",
+    "text-status-blocked-fg": "{raw.text}"
+  }
+}

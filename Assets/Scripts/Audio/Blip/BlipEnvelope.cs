@@ -100,6 +100,92 @@ namespace Territory.Audio
         }
 
         // -----------------------------------------------------------------
+        // ComputeLevel — per-sample envelope level math (Linear + Exponential)
+        // -----------------------------------------------------------------
+
+        /// <summary>
+        /// Returns the envelope level in [0, 1] for the current stage and sample position.
+        /// Pure static, allocation-free, no Unity API.
+        /// Flat-level stages: Idle → 0, Hold → 1, Sustain → env.sustainLevel.
+        /// Ramping stages (Attack / Decay / Release): routed by per-stage shape selector
+        /// (Linear straight ramp; Exponential target+(start-target)*exp(-t/τ), τ=stageDur/4).
+        /// When <paramref name="stageDurationSamples"/> &lt;= 0, returns <c>target</c> instantly
+        /// (matches TECH-118 budget-0 skip semantics; prevents divide-by-zero).
+        /// </summary>
+        /// <param name="env">Immutable blittable envelope parameters (shapes, sustainLevel).</param>
+        /// <param name="stage">Current envelope stage.</param>
+        /// <param name="samplesElapsed">Samples elapsed within the current stage.</param>
+        /// <param name="stageDurationSamples">Total sample budget for the current stage.</param>
+        /// <param name="releaseStartLevel">
+        /// Envelope level at the moment Release was entered; caller (TECH-121 render driver)
+        /// snapshots <c>BlipVoiceState.envLevel</c> when transitioning to Release.
+        /// </param>
+        /// <returns>Envelope level in [0, 1].</returns>
+        public static float ComputeLevel(
+            in BlipEnvelopeFlat env,
+            BlipEnvStage        stage,
+            int                 samplesElapsed,
+            int                 stageDurationSamples,
+            float               releaseStartLevel)
+        {
+            // Phase 1 — Flat-level stages
+            switch (stage)
+            {
+                case BlipEnvStage.Idle:    return 0f;
+                case BlipEnvStage.Hold:    return 1f;
+                case BlipEnvStage.Sustain: return env.sustainLevel;
+            }
+
+            // Phase 2 + Phase 3 — Ramping stages (Attack, Decay, Release)
+            float start, target;
+            BlipEnvShape shape;
+
+            switch (stage)
+            {
+                case BlipEnvStage.Attack:
+                    start  = 0f;
+                    target = 1f;
+                    shape  = env.attackShape;
+                    break;
+                case BlipEnvStage.Decay:
+                    start  = 1f;
+                    target = env.sustainLevel;
+                    shape  = env.decayShape;
+                    break;
+                case BlipEnvStage.Release:
+                    start  = releaseStartLevel;
+                    target = 0f;
+                    shape  = env.releaseShape;
+                    break;
+                default:
+                    return 0f;
+            }
+
+            // Guard: zero-duration stage → instant settle
+            if (stageDurationSamples <= 0)
+                return target;
+
+            switch (shape)
+            {
+                case BlipEnvShape.Linear:
+                {
+                    float t = samplesElapsed / (float)stageDurationSamples;
+                    if (t < 0f) t = 0f;
+                    if (t > 1f) t = 1f;
+                    return start + (target - start) * t;
+                }
+                case BlipEnvShape.Exponential:
+                {
+                    float tau   = stageDurationSamples / 4f;
+                    float level = target + (start - target) * (float)Math.Exp(-samplesElapsed / tau);
+                    return level;
+                }
+                default:
+                    return target;
+            }
+        }
+
+        // -----------------------------------------------------------------
         // Phase 2 + Phase 3 — Advance
         // -----------------------------------------------------------------
 

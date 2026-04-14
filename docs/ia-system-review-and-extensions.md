@@ -259,7 +259,7 @@ CREATE TABLE grid_snapshots (
 **Integration point:** Periodic snapshots (every N ticks or on significant events) captured by the same MetricsRecorder service.
 
 **Gameplay value:**
-- BUG-52 (AUTO zoning gaps) becomes diagnosable: diff snapshots to see which cells never get zoned
+- AUTO zoning gap diagnosis (archived bug) becomes diagnosable: diff snapshots to see which cells never get zoned
 - FEAT-43 (growth ring tuning) gets empirical data: how does development actually spread over time?
 - Agent debugging: `debug_context_bundle` could include a "last 5 snapshots for this Moore neighborhood"
 
@@ -329,7 +329,7 @@ Prioritized by "impact on the player's experience of a living, responsive city":
 | 2 | ~~Dynamic happiness~~ (shipped) | Multi-factor happiness (employment, taxes, services, pollution) is the core loop of city-builders. Shipped with pollution model. |
 | 3 | ~~**Tax→demand feedback**~~ (shipped) | **Tax** rates feed **happiness** and **per-sector demand**; same-day refresh after daily **happiness** — **managers-reference** **Demand (R / C / I)**. |
 | 4 | **FEAT-43** (Growth ring tuning) | The AUTO simulation is the "life" of the city. Gradual center→edge gradient makes cities look organic vs artificial. |
-| 5 | **BUG-52** (AUTO zoning gaps) | Visible artifacts that break immersion. Gap cells between roads and zones look like bugs to the player. |
+| 5 | ~~AUTO zoning gaps~~ (shipped) | Visible artifacts that break immersion. Gap cells between roads and zones look like bugs to the player. |
 | 6 | **FEAT-08** (Zone density evolution) | Buildings upgrading over time is the hallmark visual feedback of city growth in the genre. |
 | 7 | **BUG-14** (FindObjectOfType in Update) | Performance tax on every frame. Fixing this improves the baseline experience for all players. |
 | 8 | **TECH-01** (GridManager decomposition) | Not player-facing directly, but unblocks faster development of everything else. 2070-line hub class slows every feature. |
@@ -356,7 +356,7 @@ Dynamic happiness (shipped: employment, taxes, services, pollution)
 
 ```
 FEAT-43 (growth ring tuning: center→edge gradient)
-  ├→ BUG-52 (fix AUTO zoning gaps — can be parallel)
+  ├→ AUTO zoning gap fix (shipped — can be parallel)
   └→ FEAT-08 (zone density evolution: buildings upgrade over time)
        → FEAT-47 (multipolar urban centroids — long-term)
 ```

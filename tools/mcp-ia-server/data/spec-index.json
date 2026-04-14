@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-14T17:13:57.205Z",
+  "last_generated": "2026-04-14T19:11:45.969Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -1055,25 +1055,25 @@
           "section_id": "auto-street-placement-rules",
           "title": "AUTO street placement rules",
           "depth": 2,
-          "line_start": 42
+          "line_start": 44
         },
         {
           "section_id": "obsolete-system-urbanizationproposal",
           "title": "Obsolete system — UrbanizationProposal",
           "depth": 2,
-          "line_start": 48
+          "line_start": 50
         },
         {
           "section_id": "key-files",
           "title": "Key files",
           "depth": 2,
-          "line_start": 54
+          "line_start": 56
         },
         {
           "section_id": "calendar-and-monthly-economy",
           "title": "Calendar and monthly economy",
           "depth": 2,
-          "line_start": 68
+          "line_start": 70
         }
       ]
     },

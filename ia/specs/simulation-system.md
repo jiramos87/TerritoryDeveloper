@@ -39,6 +39,8 @@ Each tick, `UrbanCentroidService.RecalculateFromGrid` updates the **urban centro
 
 Each tick, `AutoZoningManager` builds a set from `GridManager.GetRoadExtensionCells()` and `GetRoadAxialCorridorCells()` and does **not zone** those cells, so axial strips stay clear for `AutoRoadBuilder`. See geography spec §13.9.
 
+Segment-strip zoning covers perp strips at `k = 0` (origin end, true endpoints only — T-joint origins skipped) through `k = L - 1` (far end). Cells at segment endpoints that were skipped in prior builds, or cells previously inside the road reservation that later exit it as the city grows, are reconsidered by a post-tick frontier re-scan: `AutoZoningManager` iterates all road-edge positions and attempts `CanZoneCell` on each cardinal neighbor under the remaining tick budget. Reservation cells remain untouchable throughout.
+
 ## AUTO street placement rules
 
 - AUTO **streets** use the same **road validation pipeline** as manual **street** draw: `PathTerraformPlan` + Phase-1 + `Apply`.

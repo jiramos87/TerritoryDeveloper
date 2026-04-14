@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-14T17:13:57.286Z",
+  "last_generated": "2026-04-14T19:11:46.061Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -468,6 +468,11 @@
           "spec": "isometric-geography-system",
           "section_id": "14.5",
           "section_title": "14.5 Domain vocabulary — roads, grid, and spacing"
+        },
+        {
+          "spec": "simulation-system",
+          "section_id": "road-reservation-for-auto-zoning",
+          "section_title": "Road reservation for AUTO zoning"
         }
       ]
     },
@@ -3515,13 +3520,19 @@
     },
     "Road reservation": {
       "related": [
+        "Cardinal neighbor",
+        "Zone",
         "baseHeight (terraform)",
         "Bridge lip",
-        "Cardinal neighbor",
-        "Cell",
-        "Cliff"
+        "Cell"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "simulation-system",
+          "section_id": "road-reservation-for-auto-zoning",
+          "section_title": "Road reservation for AUTO zoning"
+        }
+      ]
     },
     "Road stroke": {
       "related": [

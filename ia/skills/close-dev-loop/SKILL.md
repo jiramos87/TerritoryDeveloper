@@ -25,7 +25,7 @@ Visual/terrain bug recipe. Before/after via `debug_context_bundle` (Moore export
 | Requirement | Notes |
 |---|---|
 | `DATABASE_URL` or `config/postgres-dev.json` | Editor export registry |
-| Migration `0008_agent_bridge_job.sql` | `npm run db:migrate` |
+| Migrations `0008_agent_bridge_job.sql` + `0010_agent_bridge_lease.sql` | `npm run db:migrate` |
 | Unity Editor on repo root | Missing → `npm run unity:ensure-editor` |
 | territory-ia MCP | Agent mode |
 
@@ -41,10 +41,12 @@ Visual/terrain bug recipe. Before/after via `debug_context_bundle` (Moore export
 
 1. **CONTEXT** — `backlog_issue` `issue_id: {ISSUE_ID}` → `router_for_task` / `spec_section` as needed.
 2. **REPRO CELLS** — From Notes / spec set `{SEED_CELLS}` (1–3 Moore centers).
+2b. **LEASE** — `unity_bridge_lease` `action: acquire`, `agent_id: {ISSUE_ID}`, `kind: play_mode` → store `lease_id`. On `lease_unavailable`: retry every 60 s up to 10 min; if still busy skip Play Mode steps and emit `play_mode_lease: skipped_busy` in verdict.
 3. **BASELINE**
    - `unity_bridge_command` `kind: enter_play_mode` → poll `get_play_mode_status` until `play_mode_ready` + `ready: true`.
    - Per cell: `unity_bridge_command` `kind: debug_context_bundle`, `seed_cell: "x,y"` — store `response.bundle` (`anomaly_count`, `anomalies`, `cell_export`, screenshot, console).
    - `unity_bridge_command` `kind: exit_play_mode`.
+   - `unity_bridge_lease` `action: release`, `lease_id: {lease_id}` — release after every baseline exit.
 4. **FIX** — Edit C# / assets. English comments + logs.
 5. **COMPILE GATE** — After C# edits, do NOT `enter_play_mode` until compile clean. Preference order:
    - **a.** `unity_bridge_command` `kind: get_compilation_status` or `unity_compile` (alias) when Editor holds the bridge — read `response.compilation_status` (`compiling`, `compilation_failed`, `last_error_excerpt`, `recent_error_messages`). If `compiling`, poll (5–8 attempts, ~2–3 s) up to `timeout_ms`.
@@ -52,7 +54,7 @@ Visual/terrain bug recipe. Before/after via `debug_context_bundle` (Moore export
    - **c.** `unity_bridge_command` `kind: get_console_logs` — scan `error CS` / compiler errors. Success cues heuristic.
    - **d.** Short wait (10–20 s), repeat **c** if ambiguous.
    - **e.** Confirmed errors → step 4.
-6. **POST-FIX** — Repeat step 3.
+6. **POST-FIX** — Re-acquire lease (step 2b), then repeat step 3.
 7. **DIFF** — Per cell: `anomaly_count` delta; added/removed `anomalies`; height/child-name hints from export JSON; screenshot paths.
 8. **VERDICT** — Structured summary (before/after counts, remaining anomalies, screenshot paths).
 9. **ITERATE** — Anomalies remain + cause clear → step 4. Stop after `{MAX_ITERATIONS}` (default 2), escalate.

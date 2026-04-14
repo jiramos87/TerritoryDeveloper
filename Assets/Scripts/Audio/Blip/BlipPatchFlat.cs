@@ -38,6 +38,22 @@ namespace Territory.Audio
             pulseDuty   = src.pulseDuty;
             gain        = src.gain;
         }
+
+        /// <summary>
+        /// Copy constructor — clones <paramref name="src"/> with an overridden
+        /// <paramref name="detuneCents"/> value. Used by <c>BlipVoice.Render</c>
+        /// for Option-B pitch-jitter fold: snapshots a local copy per osc slot
+        /// without modifying the canonical patch data.
+        /// Zero managed allocs (readonly struct on the stack).
+        /// </summary>
+        internal BlipOscillatorFlat(in BlipOscillatorFlat src, float detuneCents)
+        {
+            waveform    = src.waveform;
+            frequencyHz = src.frequencyHz;
+            this.detuneCents = detuneCents;
+            pulseDuty   = src.pulseDuty;
+            gain        = src.gain;
+        }
     }
 
     // =========================================================================

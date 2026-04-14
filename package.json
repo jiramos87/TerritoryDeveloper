@@ -1,10 +1,12 @@
 {
   "name": "territory-developer",
   "private": true,
+  "workspaces": ["web", "tools/*"],
   "description": "Unity project root scripts delegate to tools/mcp-ia-server (IA / JSON tooling). Local post-implementation checks: npm run verify:local (canonical) — validate:all (includes territory-compute-lib build) then Unity/Postgres bridge chain; npm run verify:post-implementation is an alias. Run npm ci in tools/compute-lib / tools/mcp-ia-server if build or test:ia fails. Bridge-only: npm run db:bridge-playmode-smoke. Local compile smoke: npm run unity:compile-check (loads repo-root .env/.env.local via tools/scripts/load-repo-env.inc.sh; macOS can fall back to Unity Hub path from ProjectSettings/ProjectVersion.txt — AI agents must not skip this because $UNITY_EDITOR_PATH is empty in the shell). Test mode batch load: npm run unity:testmode-batch (tools/scripts/unity-testmode-batch.sh). Scenario builder: npm run unity:build-scenario-from-descriptor, npm run scenario:build-from-descriptor.",
   "scripts": {
     "compute-lib:build": "npm --prefix tools/compute-lib run build",
-    "validate:all": "npm run validate:dead-project-specs && npm run compute-lib:build && npm run test:ia && npm run validate:fixtures && npm run generate:ia-indexes -- --check",
+    "validate:all": "npm run validate:dead-project-specs && npm run compute-lib:build && npm run test:ia && npm run validate:fixtures && npm run generate:ia-indexes -- --check && npm run validate:web",
+    "validate:web": "npm --prefix web run lint && npm --prefix web run typecheck && npm --prefix web run build",
     "validate:dead-project-specs": "node tools/validate-dead-project-spec-paths.mjs",
     "validate:frontmatter": "node tools/mcp-ia-server/scripts/check-frontmatter.mjs",
     "validate:fixtures": "npm --prefix tools/mcp-ia-server run validate:fixtures",

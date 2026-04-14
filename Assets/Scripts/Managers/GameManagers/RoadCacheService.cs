@@ -212,7 +212,11 @@ namespace Territory.Core
         }
 
         /// <summary>Return cells in axial corridor (extension of road segments). AutoZoningManager must not zone these (BUG-47).
-        /// Includes diagonal directions for elbow roads + corner extensions (cells beyond road end at turns).</summary>
+        /// Searches 8-directional for road neighbors but only emits corridor lines in cardinal directions
+        /// (|dirX|+|dirY|==1). Diagonal-direction corridors overcapture perpendicular-strip cells and cause zoning gaps.
+        /// Inner r2 elbow-projection loop removed: at T/Y/X junctions it emitted corridors in the perpendicular direction,
+        /// blocking the j=1 lateral zoning strip on cells adjacent to (but not at) the junction. The direct r-neighbor
+        /// scan is sufficient for all valid elbow/endpoint cases.</summary>
         public HashSet<Vector2Int> GetRoadAxialCorridorCells()
         {
             if (cachedRoadAxialCorridor != null && !roadCacheDirty)
@@ -230,17 +234,9 @@ namespace Territory.Core
                     if (!roadSet.Contains(rPos)) continue;
                     int extDirX = e.x - rx;
                     int extDirY = e.y - ry;
-                    AddCorridorLine(e.x, e.y, extDirX, extDirY, roadSet);
-                    for (int d2 = 0; d2 < 8; d2++)
-                    {
-                        int r2x = rx + Dx8[d2], r2y = ry + Dy8[d2];
-                        if (r2x < 0 || r2x >= grid.width || r2y < 0 || r2y >= grid.height) continue;
-                        if (r2x == e.x && r2y == e.y) continue;
-                        if (!roadSet.Contains(new Vector2Int(r2x, r2y))) continue;
-                        int cornerDirX = rx - r2x;
-                        int cornerDirY = ry - r2y;
-                        AddCorridorLine(e.x, e.y, cornerDirX, cornerDirY, roadSet);
-                    }
+                    // Only emit cardinal corridor lines; diagonal dirs overcapture perp-strip zoning cells.
+                    if (Mathf.Abs(extDirX) + Mathf.Abs(extDirY) == 1)
+                        AddCorridorLine(e.x, e.y, extDirX, extDirY, roadSet);
                 }
             }
             return cachedRoadAxialCorridor;

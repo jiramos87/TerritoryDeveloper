@@ -1,0 +1,4 @@
+id: broken
+class: residential
+footprint: [1, 1
+# deliberately unclosed bracket — YAML parse error

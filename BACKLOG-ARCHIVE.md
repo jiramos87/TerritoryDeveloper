@@ -4,7 +4,195 @@
 
 ---
 
+## Completed (moved from BACKLOG.md, 2026-04-14)
+
+- [x] **TECH-138** — Blip oscillator zero-crossing tests (2026-04-14)
+  - Type: test / DSP verification
+  - Files: `Assets/Tests/EditMode/Audio/BlipOscillatorTests.cs`
+  - Spec: (removed at closeout — journal persist attempted, db_error logged)
+  - Notes: Stage 1.4 T1.4.2. Four `[Test]` methods — sine / triangle / square / pulse duty=0.5 @ 440 Hz × 1 s @ 48 kHz ≈ 880 crossings (± 2). Patch built via `ScriptableObject.CreateInstance<BlipPatch>()` + reflection on serialized fields → `BlipPatchFlat.FromSO`; envelope `A=1 ms / H=2000 ms / D=0 / S=1 / R=1 ms` keeps render in hold for full 1 s; `BlipFilter.kind = None`; `deterministic = true`, `variantIndex = 0`. Decision Log — exclude noise osc (no deterministic crossing target); reflection route keeps `BlipPatchFlat` blittable surface read-only (no test-only ctor); hold ≫ render duration so 1-ms ramp stays negligible vs ± 2 tolerance. Satisfies Stage 1.4 Exit bullet 3.
+  - Acceptance: all four tests pass; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-137** (archived)
+
+- [x] **TECH-148** — YAML spec loader + validator (Stage 1.2 Phase 1) (2026-04-14)
+  - Type: infrastructure / YAML schema
+  - Files: `tools/sprite-gen/src/spec.py`, `tools/sprite-gen/tests/test_spec.py`, `tools/sprite-gen/tests/fixtures/spec_valid.yaml`, `tools/sprite-gen/tests/fixtures/spec_malformed.yaml`
+  - Spec: (removed at closeout — journal persist skipped, db_unconfigured)
+  - Notes: Stage 1.2 Phase 1 second task. `load_spec(path) → dict` — loads YAML via `yaml.safe_load`, validates required keys (`id`, `class`, `footprint`, `terrain`, `composition`, `palette`, `output`) via flat `REQUIRED_KEYS` table; `SpecValidationError(field=...)` raised on missing / wrong-typed key; `footprint` 2-int shape check; `composition` non-empty list-of-dicts-with-`type` check; optional fields (`levels`, `seed`, `variants`, `diffusion`) round-trip un-validated; `yaml.YAMLError` bubbles for parse failures (CLI maps both to exit 1). Decision Log — flat required-key table over Pydantic (minimal deps, small schema); pass-through optional fields (keeps loader stable while Stages 1.3 / 1.4 add palette/slope/diffusion semantics); distinct `SpecValidationError` vs `yaml.YAMLError` (preserves parse-line info). 22 pytest cases green.
+  - Acceptance: `load_spec(valid)` → dict; missing key → `SpecValidationError` w/ `field`; malformed YAML → `yaml.YAMLError`; `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-144** — Web primitives: StatBar + FilterChips (Stage 1.2 Phase 2) (2026-04-14)
+  - Type: IA / tooling (web workspace)
+  - Files: `web/components/StatBar.tsx`, `web/components/FilterChips.tsx`
+  - Spec: (removed at closeout — journal persist skipped, no output)
+  - Notes: SSR-only primitives — no `"use client"`. StatBar: `label` + `value` + `max` + optional `thresholds: { warn, critical }`; `TIER_FILL` dispatch → `bg-panel` (default) / `bg-[var(--color-text-accent-warn)]` (warn) / `bg-[var(--color-text-accent-critical)]` (critical); tier resolves off raw `value` (over-max still flags critical); `pct` clamped [0,100] guards divide-by-zero on `max ≤ 0`. FilterChips: `chips: { label, active }[]` row, no `onClick` (Step 3 wires query-param toggle), `active` → `bg-panel` + `text-primary` vs `bg-canvas` + `text-muted`. Decision Log: reuse `text-accent-*` hex via arbitrary `bg-[var(--color-…)]` utilities (no new `bg-accent-*` palette aliases until ≥2 consumers); SSR-only lock (no premature `"use client"` boundary); raw-value tier semantics (absolute thresholds, not normalized). Second pair of six Stage 1.2 primitives; consumed by Step 3 dashboard.
+  - Acceptance: both files present; no `"use client"`; `cd web && npm run build` green; `npm run validate:all` green.
+  - Depends on: tokens (archived — see this file Completed 2026-04-14)
+
+- [x] **TECH-147** — Compose layer `compose_sprite(spec)` (Stage 1.2 Phase 1) (2026-04-14)
+  - Type: infrastructure / rendering pipeline
+  - Files: `tools/sprite-gen/src/compose.py`, `tools/sprite-gen/src/primitives/__init__.py`, `tools/sprite-gen/tests/test_compose.py`
+  - Spec: (removed at closeout — journal persist attempted, db_error logged)
+  - Notes: Stage 1.2 Phase 1 opener. `compose_sprite(spec: dict) → PIL.Image` — canvas via `canvas_size(fx, fy, extra_h)` clamped min 64 px; iterates `composition:` list; dispatch dict `{'iso_cube','iso_prism'}` resolves `type:` key; `UnknownPrimitiveError` on unknown; `extra_h = max(h + offset_z)` over entries; origin = footprint SE corner (y-down) matching TECH-125/126 `_project` convention; material stays stub RGB until Stage 1.3 palette. Wires **TECH-125** / **TECH-126** into Layer 2 of the 5-layer composer per exploration §3. Decision Log — dispatch dict (extensible for Stage 1.4 foundation); `max(h+offset_z)` not sum (stacks); composer owns min-canvas-h clamp; SE-corner origin; stub material dict. Four pytest contracts in `test_compose.py` (canvas size, composition order, unknown primitive, min canvas clamp).
+  - Acceptance: `compose_sprite(sample_spec)` returns PIL.Image w/ canvas size matching `canvas_size(fx, fy, extra_h)`; primitives stacked in order; `npm run validate:all` green.
+  - Depends on: **TECH-125**, **TECH-126** (archived)
+
+- [x] **TECH-137** — Blip EditMode test asmdef + fixture helpers bootstrap (2026-04-14)
+  - Type: test / infrastructure
+  - Files: `Assets/Tests/EditMode/Audio/Blip.Tests.EditMode.asmdef`, `Assets/Tests/EditMode/Audio/BlipTestFixtures.cs`
+  - Spec: (removed at closeout — journal persist attempted)
+  - Notes: Opened Stage 1.4 Phase 1. Editor-only asmdef refs default `TerritoryDeveloper.Game` asmdef (Blip runtime `Territory.Audio` lives there) + `optionalUnityReferences: ["TestAssemblies"]` (auto-supplies `UnityEngine.TestRunner` + `nunit.framework.dll`). Helpers static class `BlipTestFixtures` — `RenderPatch`, `CountZeroCrossings` (skip-zero), `SampleEnvelopeLevels` (abs-value stride), `SumAbsHash`. Consolidated former T1.4.1 + T1.4.2 per stage compress. Decision Log — reference `TerritoryDeveloper.Game` by name (not GUID, not carve-out `Blip.asmdef`); rectified envelope stride sample for monotonicity; skip-zero crossings to hit deterministic ≈ 880 @ 440 Hz × 1 s × 48 kHz.
+  - Acceptance: asmdef present + compiles; four helpers exposed; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: none (Stage 1.3 runtime already closed)
+
+- [x] **TECH-143** — Web primitives: DataTable + BadgeChip (Stage 1.2 Phase 2) (2026-04-14)
+  - Type: IA / tooling (web workspace)
+  - Files: `web/components/DataTable.tsx`, `web/components/BadgeChip.tsx`, `web/lib/tokens/palette.json`, `web/app/globals.css`
+  - Spec: (removed at closeout — journal persist attempted)
+  - Notes: SSR-only primitives — no `"use client"`. DataTable typed generic `<T,>` w/ `Column<T>` + `statusCell?: (row: T) => ReactNode` slot; sortable header via `aria-sort` only (no onClick). BadgeChip 4-status enum → `bg-status-*` + `text-status-*-fg` semantic aliases (Phase 1 prereq extended palette JSON + `@theme` w/ new `raw.green`). Decision Log: SSR-only lock, aria-sort-only sortable contract, semantic-alias mandatory (never raw Tailwind colors), `<T,>` trailing-comma generic. First two of six Stage 1.2 primitives; consumed by Step 3 dashboard + Step 2 wiki.
+  - Acceptance: both files present; no `"use client"`; palette aliases present; `cd web && npm run build` green; `npm run validate:all` green.
+  - Depends on: tokens (archived — see above)
+
+- [x] **TECH-142** — Web design tokens (palette + type + spacing) + Tailwind wiring (Stage 1.2 Phase 1) (2026-04-14)
+  - Type: IA / tooling (web workspace)
+  - Files: `web/lib/tokens/palette.json`, `web/lib/tokens/type-scale.json`, `web/lib/tokens/spacing.json`, `web/lib/tokens/index.ts`, `web/app/globals.css` (Tailwind v4 `@theme` CSS custom properties replace `tailwind.config.ts`)
+  - Spec: (removed at closeout — journal persisted in `ia_project_spec_journal`)
+  - Notes: Merged T1.2.1 + T1.2.2 per web master-plan Decision Log 2026-04-14 — tokens + Tailwind wiring shipped together; throwaway `_smoke-tokens` page smoke-verified `bg-canvas` / `text-accent-critical` semantic aliases → expected hex then deleted pre-merge per spec Decision Log. Tailwind v4 realization: `@theme` in `web/app/globals.css` replaces JS config file per v4 migration. NYT-dark-choropleth palette locked; semantic aliases mandatory (consumers never reference raw hex). JSON schema stable for future Unity UI/UX plan. Decision Log migrated via `persist-project-spec-journal` (no Lessons Learned section — tooling-only issue).
+  - Acceptance: three JSON files under `web/lib/tokens/`; Tailwind wiring via v4 `@theme`; default create-next-app palette removed; `cd web && npm run build` green + `npm run validate:all` green.
+  - Depends on: **TECH-136** (archived — scaffold + validate:all chain)
+
+- [x] **TECH-128** — Primitive smoke tests (pytest + fixture PNGs, iso_cube + iso_prism NS/EW) (2026-04-14)
+  - Type: test / infrastructure
+  - Files: `tools/sprite-gen/tests/test_primitives.py`, `tools/sprite-gen/tests/fixtures/iso_cube_smoke.png`, `iso_prism_ns_smoke.png`, `iso_prism_ew_smoke.png`
+  - Spec: (removed at closeout — journal persisted in `ia_project_spec_journal`)
+  - Notes: Closes Stage 1.1. Smoke renders `iso_cube(1,1,32)` + `iso_prism` both axes (pitch=0.5) on `canvas_size(1,1,64)=(64,64)` (canvas-h bumped from 32 → 64 per §9 #1 — top face at h=32 projects above y=0 on 32-tall canvas). Alpha>0 bbox asserts per face; `ValueError` guard locked for bad axis. `iso_prism` re-exported from `src/primitives/__init__.py`. Fixtures tracked in git.
+  - Acceptance: `pytest tools/sprite-gen/tests/test_primitives.py` exits 0; 3 fixture PNGs emitted; `npm run validate:all` green.
+  - Depends on: **TECH-125**, **TECH-126**
+
+- [x] **TECH-127** — Canvas unit tests (pytest, §4 Examples table) (2026-04-14)
+  - Type: test / infrastructure
+  - Files: `tools/sprite-gen/tests/test_canvas.py`
+  - Spec: (removed at closeout — journal persisted in `ia_project_spec_journal`)
+  - Notes: Stage 1.1 Phase 3 opener. Six asserts covering exploration §4 Examples rows — `canvas_size(1,1)=(64,0)`, `canvas_size(1,1,32)=(64,32)`, `canvas_size(3,3,96)=(192,96)`, `pivot_uv(64)=(0.5,0.25)`, `pivot_uv(128)=(0.5,0.125)`, `pivot_uv(192)=(0.5,16/192)`. Plus `pivot_uv(0)` ValueError guard. Manual pytest gate — `npm run validate:all` does NOT yet cover Python (candidate CI fold-in: Stage 1.3 palette tests).
+  - Acceptance: `pytest tools/sprite-gen/tests/test_canvas.py` exits 0 (7 passed); all §4 Examples rows covered; `npm run validate:all` green.
+  - Depends on: **TECH-124**
+
+- [x] **TECH-126** — `iso_prism` primitive (sloped tops + triangular gables, axis NS/EW) (2026-04-14)
+  - Type: infrastructure / rendering primitive
+  - Files: `tools/sprite-gen/src/primitives/iso_prism.py`
+  - Spec: (removed at closeout — journal persisted in `ia_project_spec_journal`)
+  - Notes: Stage 1.1 Phase 2 second task. `iso_prism(canvas, x0, y0, w, d, h, pitch, axis, material)` — two sloped top faces + two triangular end-faces. `axis ∈ {'ns','ew'}` selects ridge direction; `pitch` (0..1) scales ridge height. Same NW-light ramp as **TECH-125**. Enables pitched-roof archetypes in Stage 1.2+ YAML specs.
+  - Acceptance: both axes + pitch variants render cleanly; shade ramp matches iso_cube; `npm run validate:all` green
+  - Depends on: **TECH-124**
+
+- [x] **TECH-136** — Scaffold `web/` Next.js 14+ workspace (Stage 1.1 consolidated) (2026-04-14)
+  - Type: tooling / scaffold / deploy / documentation
+  - Files: `package.json` (root — workspaces entry); `web/**` (new subtree — scaffold + README); `web/app/page.tsx`, `web/app/layout.tsx`, `web/tailwind.config.ts`, `web/tsconfig.json`, `web/components/`, `web/lib/`, `web/content/`; `package.json` (root scripts — validate:all extension); `web/package.json` (typecheck script); `.github/workflows/*` (CI verify); `CLAUDE.md` (§Web section); `AGENTS.md` (§Web section)
+  - Spec: (removed at closeout — journal persisted in `ia_project_spec_journal`)
+  - Notes: Stage 1.1 Phase 1 — whole stage collapses to one landable unit. Supersedes **TECH-129**..**TECH-134** (stage compress, 2026-04-14). Workspaces entry (`"web"` alongside `"tools/*"`); Next.js 14+ App Router w/ TS strict + Tailwind + ESLint via `create-next-app`; placeholder `<h1>Territory Developer</h1>`; stub `components/`, `lib/`, `content/` w/ `.gitkeep`; `npm --prefix web run lint/typecheck/build` folded into `validate:all`; `web/README.md` sections (overview, local dev, build, content conventions, caveman-exception boundary, Vercel URL); `§Web` appended to `CLAUDE.md` + `AGENTS.md`. Vercel link + throwaway-PR CI verify remain as human-action items tracked in `web-platform-master-plan.md` Stage 1.1 Phase 2 (dashboard-only steps; no CLI auth in agent env).
+  - Acceptance: `npm install` exits 0; `cd web && npm run build` exits 0; `npm run validate:all` green incl. web/ lint+typecheck+build; `web/README.md` + `CLAUDE.md §Web` + `AGENTS.md §Web` present. Vercel deploy green + URL reachable pending human action.
+  - Depends on: none
+
+- [x] **TECH-129** — Root npm **workspaces** add `web/` entry (2026-04-14, superseded)
+  - Type: tooling / monorepo wiring
+  - Files: `package.json` (root)
+  - Spec: (removed — superseded)
+  - Notes: superseded by **TECH-136** — stage compress (1.1). Over-granular 1-file task folded into consolidated Stage 1.1 unit; scope carried forward.
+  - Acceptance: superseded — see **TECH-136** Acceptance.
+  - Depends on: none
+
+- [x] **TECH-130** — Next.js 14+ App Router scaffold under `web/` (2026-04-14, superseded)
+  - Type: tooling / scaffold
+  - Files: `web/**` (new subtree)
+  - Spec: (removed — superseded)
+  - Notes: superseded by **TECH-136** — stage compress (1.1). Scaffold scope carried forward intact into consolidated issue.
+  - Acceptance: superseded — see **TECH-136** Acceptance.
+  - Depends on: **TECH-129**
+
+- [x] **TECH-131** — Vercel project link + deploy-on-`main` for `web/` (2026-04-14, superseded)
+  - Type: tooling / deploy
+  - Files: Vercel dashboard; optional `vercel.json`; `web/README.md` (URL capture)
+  - Spec: (removed — superseded)
+  - Notes: superseded by **TECH-136** — stage compress (1.1). Vercel link + URL capture scope folded into consolidated issue.
+  - Acceptance: superseded — see **TECH-136** Acceptance.
+  - Depends on: **TECH-130**
+
+- [x] **TECH-132** — Fold `web/` lint + typecheck + build into `validate:all` chain (2026-04-14, superseded)
+  - Type: tooling / CI
+  - Files: `package.json` (root scripts); `web/package.json`; `.github/workflows/*`
+  - Spec: (removed — superseded)
+  - Notes: superseded by **TECH-136** — stage compress (1.1). CI integration scope folded into consolidated issue.
+  - Acceptance: superseded — see **TECH-136** Acceptance.
+  - Depends on: **TECH-130**
+
+- [x] **TECH-133** — Author `web/README.md` (local dev, content conventions, caveman exception) (2026-04-14, superseded)
+  - Type: documentation
+  - Files: `web/README.md` (new)
+  - Spec: (removed — superseded)
+  - Notes: superseded by **TECH-136** — stage compress (1.1). README authoring scope folded into consolidated issue.
+  - Acceptance: superseded — see **TECH-136** Acceptance.
+  - Depends on: **TECH-130**, **TECH-131**
+
+- [x] **TECH-134** — Append `§Web` section to `CLAUDE.md` + `AGENTS.md` (2026-04-14, superseded)
+  - Type: documentation / discovery
+  - Files: `CLAUDE.md` (root); `AGENTS.md` (root)
+  - Spec: (removed — superseded)
+  - Notes: superseded by **TECH-136** — stage compress (1.1). Repo-docs append scope folded into consolidated issue.
+  - Acceptance: superseded — see **TECH-136** Acceptance.
+  - Depends on: **TECH-133**
+
+---
+
 ## Completed (moved from BACKLOG.md, 2026-04-13)
+
+- [x] **TECH-121** — `BlipVoice.Render` driver (per-sample integrator loop) (2026-04-14, superseded)
+  - Type: infrastructure / runtime
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`
+  - Spec: (removed — superseded)
+  - Notes: superseded by **TECH-135** — stage compress (1.3). Merged w/ TECH-122 per-invocation jitter into single consolidated Phase 3 closeout task. Scope folded forward — render driver loop + osc bank + envelope + filter multiply chain. Draft spec never kicked off individually.
+  - Acceptance: superseded — see **TECH-135** Acceptance.
+  - Depends on: **TECH-116**, **TECH-117**, **TECH-118**, **TECH-119**, **TECH-120**
+
+- [x] **TECH-122** — Per-invocation jitter (pitch cents / gain dB / pan) (2026-04-14, superseded)
+  - Type: infrastructure / DSP math
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`
+  - Spec: (removed — superseded)
+  - Notes: superseded by **TECH-135** — stage compress (1.3). Merged w/ TECH-121 render driver into single consolidated Phase 3 closeout task. Scope folded forward — pitch cents / gain dB / pan jitter w/ `deterministic` flag + xorshift32 seed from `variantIndex * 0x9E3779B9 ^ voiceId`. Draft spec never kicked off individually.
+  - Acceptance: superseded — see **TECH-135** Acceptance.
+  - Depends on: **TECH-116**, **TECH-121** (former) → now **TECH-135**
+
+- [x] **TECH-135** — `BlipVoice.Render` driver + per-invocation jitter (consolidated) (2026-04-14)
+  - Type: infrastructure / DSP math
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`, `Assets/Scripts/Audio/Blip/BlipVoiceState.cs`, `Assets/Scripts/Audio/Blip/BlipPatchFlat.cs`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.3 Phase 3 closeout. Consolidates former TECH-121 (render driver loop) + TECH-122 (per-invocation jitter) per stage compress. Lands `BlipVoice.Render` static kernel — per-sample loop (osc × envelope × LP filter → buffer mix-in) + pre-computed per-invocation jitter block (pitch cents → `pow(2, cents/1200)`, gain dB → `pow(10, dB/20)`, pan stashed on state). Honors `deterministic` flag → bypass jitter + fixed seed `(uint)(variantIndex + 1)`. Live path seed mix `(uint)(variantIndex * 0x9E3779B9) ^ state.rngState` w/ `0x9E3779B9` zero-guard (xorshift32 undefined at 0). **Decisions:** extended `BlipVoiceState` w/ `public float panOffset` (caller-scratch rejected — single-source-of-truth DSP state); caller-seeded `state.rngState` as voice-hash input (`patch.patchHash` deferred); pitch-fold Option B — added `BlipOscillatorFlat(in BlipOscillatorFlat src, float detuneCents)` copy constructor so TECH-117 `SampleOsc` signature stays frozen (churn confined to driver); `SampleJitter` helper short-circuits `range == 0f`. Zero managed allocs (all locals stack value types); no Unity API. Shared kernel — `BlipBaker` Step 2 + `BlipLiveHost` post-MVP. Determinism + zero-alloc assertions deferred to Stage 1.4 T1.4.6 / T1.4.7 EditMode tests.
+  - Acceptance: signature matches Stage 1.3 Exit; per-sample loop mixes osc × envelope × filter; jitter applied per invocation; no Unity API; `unity:compile-check` + `validate:all` green (141/141).
+  - Depends on: **TECH-116**, **TECH-117**, **TECH-118**, **TECH-119**, **TECH-120**
+
+- [x] **TECH-120** — One-pole LP filter inline in `BlipVoice.Render` (2026-04-14)
+  - Type: infrastructure / DSP math
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.3 Phase 3 opener landed inline in `BlipVoice.Render`. α pre-compute outside loop — `kind == LowPass` → `1 - (float)Math.Exp(-2π * cutoffHz / sampleRate)` clamped `[0,1]`; `kind == None` → `1f` literal (no `Math.Exp`). Per-sample recursion `state.filterZ1 += α * (x - state.filterZ1); buffer[i] = state.filterZ1;` — single kernel, branchless, 1 mul + 1 add + 1 store. `ref BlipVoiceState state` threaded via TECH-121 driver; zero per-sample allocs. **Decisions:** α clamp guards `cutoffHz ≥ sampleRate/2` w/o branching on input; passthrough via α = 1 (not `if kind == None`) keeps single kernel matching TECH-121 "no per-sample branches" invariant; narrow `Math.Exp` `double` → `float` once outside loop to avoid repeated widening (state is `float`). Master plan Stage 1.3 T1.3.5 flipped to Done.
+  - Acceptance: LP math inline in driver; `None` passthrough branchless; `npm run validate:all` green.
+  - Depends on: **TECH-116**
+
+- [x] **BUG-52** — **AUTO** zoning: persistent **grass cells** between **undeveloped light zoning** and new **AUTO** **street** segments (gaps not filled on later **simulation ticks**) (2026-04-14)
+  - Type: bug (behavior / regression suspicion)
+  - Files: `AutoZoningManager.cs` (`ZoneSegmentStrip`, `ScanRoadFrontierForZoneable`, `SelectZoneTypeForRing`), `ia/specs/simulation-system.md`
+  - Spec: (removed after closure)
+  - Notes: **Root cause:** segment-driven strip zoning in `AutoZoningManager.ZoneSegmentStrip` skipped endpoints (`k=0` / `k=L-1`); segments popped after single pass; no fallback rescan once **road reservation** (axial corridor + extension cells, geo §13.9 rule 4) relaxed. Ruled out stale **road cache**, `TerrainManager.RestoreTerrainForCell` regression, tick ordering. **Fix A:** extended `k` loop bound to `L-1`, guarded `k=0` for true endpoints (no T-joint double-zone). **Fix B:** added `ScanRoadFrontierForZoneable` post-tick pass iterating `GetRoadEdgePositions()` cardinal neighbors, applying `CanZoneCell` under `MaxZonedCellsPerTickSafetyCap` + **growth budget**. Refactored `SelectZoneTypeForSegment` → `SelectZoneTypeForRing(UrbanRing)` via `urbanCentroidService.GetUrbanRing`. Reservation cells still untouchable per §13.9 invariant. Simulation-system spec updated.
+  - Acceptance: endpoint cells covered; historical reservation cells rescanned once freed; `npm run unity:compile-check` exit 0; `npm run validate:all` clean (TECH-119 dead-spec failure pre-existing, unrelated).
+  - Depends on: none
+
+- [x] **TECH-125** — `iso_cube` primitive (top + south + east faces, NW-light shade ramp) (2026-04-14)
+  - Type: infrastructure / rendering primitive
+  - Files: `tools/sprite-gen/src/primitives/iso_cube.py`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.1 Phase 2 opener. `iso_cube(canvas, x0, y0, w, d, h, material)` draws top rhombus (bright) + south parallelogram (mid) + east parallelogram (dark) via Pillow polygons. NW-light hardcoded. Pixel coords from 2:1 iso projection per exploration §5. HSV ramp ×1.2/×1.0/×0.6 per §6.3; origin `(x0, y0)` = footprint SE corner (y-down) to align w/ Pillow + canvas pivot. Material stays stub RGB tuple MVP; palette integration lands Stage 1.3.
+  - Acceptance: three faces render w/ distinct bright/mid/dark ramp; signature matches Stage 1.1 Exit; `npm run validate:all` green
+  - Depends on: **TECH-124**
 
 - [x] **TECH-124** — `canvas.py` canvas sizing + Unity pivot math (2026-04-14)
   - Type: infrastructure / DSP (geometry)
@@ -485,6 +673,13 @@
 ---
 
 ## Recent archive (moved from BACKLOG.md, 2026-04-10)
+
+- [x] **TECH-119** — Envelope level math (Linear + Exponential per-stage shapes) (2026-04-14)
+  - Type: infrastructure / DSP math
+  - Files: `Assets/Scripts/Audio/Blip/BlipEnvelope.cs` (`BlipEnvelopeStepper.ComputeLevel`)
+  - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+  - Notes: **Completed (verified — `/project-spec-close`).** Pure static `ComputeLevel(in BlipEnvelopeFlat, BlipEnvStage, int samplesElapsed, int stageDurationSamples, float releaseStartLevel) → float` on `BlipEnvelopeStepper`. Stage × shape routing: Idle/Hold/Sustain flat constants (0f / 1f / `sustainLevel`); Attack/Decay/Release drive Linear or Exponential per `BlipEnvelopeFlat.{attack,decay,release}Shape`. Linear — `t = samplesElapsed / stageDurationSamples` clamped, `start + (target − start) * t`. Exponential — `τ = stageDurationSamples / 4f`, `target + (start − target) * (float)Math.Exp(−samplesElapsed / τ)` (≈98 % settled at 4 τ). Edge — `stageDurationSamples <= 0` → return `target`. Zero allocs, no Unity API. Exponential ≈98 % settled slope + flat-constant assertions deferred to Stage 1.4 T1.4.3.
+  - Depends on: **TECH-116**, **TECH-118**
 
 - [x] **TECH-88** — `GridManager` parent-id surface + new-game placeholder allocation (2026-04-13)
   - Type: infrastructure / runtime

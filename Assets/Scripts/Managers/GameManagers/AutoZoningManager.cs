@@ -91,6 +91,8 @@ public class AutoZoningManager : MonoBehaviour
 
         if (!cityStats.simulateGrowth)
             return;
+        if (cityStats.cityPowerOutput > 0 && !cityStats.GetCityPowerAvailability())
+            return;
 
         int budget = growthBudgetManager.GetAvailableBudget(GrowthCategory.Zoning);
         if (budget <= 0)
@@ -121,12 +123,70 @@ public class AutoZoningManager : MonoBehaviour
             int placed = ZoneSegmentStrip(ref seg, ref placedThisTick, ref budget, roadReservationCells);
             pendingSegments[i] = seg;
 
-            if (seg.zonedUpToIndex >= seg.segment.length - 2)
+            // Segment complete when zonedUpToIndex has reached last cell index (L-1) — updated from L-2 (Fix A).
+            if (seg.zonedUpToIndex >= seg.segment.length - 1)
                 toRemove.Add(i);
         }
 
         for (int r = toRemove.Count - 1; r >= 0; r--)
             pendingSegments.RemoveAt(toRemove[r]);
+
+        // Fix B — post-tick frontier re-scan: catch cells formerly in road reservation that have since
+        // been freed, plus cells beyond segment endpoints that the strip loop never reached.
+        // Cost bounded by |roadEdges| × 4 cardinal neighbors. Reuses CanZoneCell + existing budget gate.
+        if (placedThisTick < MaxZonedCellsPerTickSafetyCap && budget > 0)
+            ScanRoadFrontierForZoneable(ref placedThisTick, ref budget, roadReservationCells);
+    }
+
+    private static readonly int[] FrontierDx = { 1, -1, 0, 0 };
+    private static readonly int[] FrontierDy = { 0, 0, 1, -1 };
+
+    /// <summary>
+    /// Post-tick frontier re-scan (Fix B). For each road-edge cell, check its 4 cardinal neighbors.
+    /// Zone any neighbor that passes CanZoneCell and is not in roadReservationCells.
+    /// Picks zone type by UrbanRing at the edge position.
+    /// Bounded: iterates road edges × 4; respects MaxZonedCellsPerTickSafetyCap and growth budget.
+    /// </summary>
+    private void ScanRoadFrontierForZoneable(ref int placedThisTick, ref int budget, HashSet<Vector2Int> roadReservationCells)
+    {
+        var edges = gridManager.GetRoadEdgePositions();
+        if (edges == null || edges.Count == 0)
+            return;
+
+        foreach (Vector2Int edge in edges)
+        {
+            if (placedThisTick >= MaxZonedCellsPerTickSafetyCap || budget <= 0)
+                break;
+
+            UrbanRing ring = urbanCentroidService != null
+                ? urbanCentroidService.GetUrbanRing(new Vector2(edge.x, edge.y))
+                : UrbanRing.Mid;
+            Zone.ZoneType zoneBase = SelectZoneTypeForRing(ring);
+            Zone.ZoneType zoneType = UrbanMetrics.ApplyDensityByRing(zoneBase, ring);
+
+            var attrs = zoneManager.GetZoneAttributes(zoneType);
+            if (attrs == null)
+                continue;
+
+            for (int d = 0; d < 4; d++)
+            {
+                if (placedThisTick >= MaxZonedCellsPerTickSafetyCap || budget < attrs.ConstructionCost)
+                    break;
+
+                Vector2Int neighbor = new Vector2Int(edge.x + FrontierDx[d], edge.y + FrontierDy[d]);
+                if (!CanZoneCell(neighbor, roadReservationCells))
+                    continue;
+
+                if (zoneManager.PlaceZoneAt(new Vector2(neighbor.x, neighbor.y), zoneType))
+                {
+                    if (growthBudgetManager.TrySpend(GrowthCategory.Zoning, attrs.ConstructionCost))
+                    {
+                        placedThisTick++;
+                        budget -= attrs.ConstructionCost;
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>Zone strips along segment. Return cells placed this call.</summary>
@@ -148,8 +208,21 @@ public class AutoZoningManager : MonoBehaviour
         int placed = 0;
         int lastK = seg.zonedUpToIndex;
 
-        for (int k = seg.zonedUpToIndex + 1; k <= L - 2; k++)
+        // Check whether the origin end is a true endpoint (no road behind it → safe to zone k=0 perp strip).
+        // If origin-dir is a road cell, this segment joins an existing road (T-joint) → skip k=0 to avoid
+        // double-zoning the shared junction cell.
+        Vector2Int behindOrigin = new Vector2Int(origin.x - dir.x, origin.y - dir.y);
+        bool originIsEndpoint = behindOrigin.x < 0 || behindOrigin.x >= gridManager.width
+            || behindOrigin.y < 0 || behindOrigin.y >= gridManager.height
+            || gridManager.GetCell(behindOrigin.x, behindOrigin.y)?.zoneType != Zone.ZoneType.Road;
+
+        // Extend upper bound from L-2 to L-1 to include the far endpoint perp strip (Fix A).
+        for (int k = seg.zonedUpToIndex + 1; k <= L - 1; k++)
         {
+            // Skip k=0 when origin is a T-joint (not a true endpoint) to avoid double-zoning the junction.
+            if (k == 0 && !originIsEndpoint)
+                continue;
+
             if (placedThisTick >= MaxZonedCellsPerTickSafetyCap || budget < attrs.ConstructionCost)
                 break;
 
@@ -228,6 +301,32 @@ public class AutoZoningManager : MonoBehaviour
             return false;
 
         return true;
+    }
+
+    /// <summary>
+    /// Pick zone type (R, C, or I) for a given urban ring, based on current demand.
+    /// Extracted from <see cref="SelectZoneTypeForSegment"/> to allow callers that know only the ring
+    /// (e.g. post-tick frontier re-scan — Fix B).
+    /// Industrial excluded in Inner ring.
+    /// </summary>
+    private Zone.ZoneType SelectZoneTypeForRing(UrbanRing ring)
+    {
+        float r = demandManager != null ? demandManager.GetResidentialDemand().demandLevel : 0f;
+        float c = demandManager != null ? demandManager.GetCommercialDemand().demandLevel : 0f;
+        float i = demandManager != null ? demandManager.GetIndustrialDemand().demandLevel : 0f;
+
+        var candidates = new List<Zone.ZoneType>();
+        if (r > 0f) candidates.Add(Zone.ZoneType.ResidentialLightZoning);
+        if (c > 0f) candidates.Add(Zone.ZoneType.CommercialLightZoning);
+        if (i > 0f) candidates.Add(Zone.ZoneType.IndustrialLightZoning);
+
+        if (ring == UrbanRing.Inner)
+            candidates.RemoveAll(z => z == Zone.ZoneType.IndustrialLightZoning);
+
+        if (candidates.Count == 0)
+            return Zone.ZoneType.ResidentialLightZoning;
+
+        return candidates[Random.Range(0, candidates.Count)];
     }
 
     /// <summary>Pick zone type (R, C, or I) for segment based on demand. Equal prob among types with demand > 0. Industrial excluded in Inner ring.</summary>

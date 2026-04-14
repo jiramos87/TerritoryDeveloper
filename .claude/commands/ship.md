@@ -9,6 +9,25 @@ Orchestrate all four lifecycle stages for `$ARGUMENTS` in order. Run each stage 
 
 Follow `caveman:caveman` for all your own output and all dispatched subagents below. Standard exceptions: code, commits, security/auth, verbatim tool output, structured MCP payloads, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
 
+## Step 0 — Context resolution (before any dispatch)
+
+Before dispatching any subagent, resolve and display context for the human developer:
+
+1. Glob `ia/projects/$ARGUMENTS*.md` → confirm spec file exists; extract short description from filename.
+2. Glob `ia/projects/*-master-plan.md` → for each file, grep for `$ARGUMENTS`. Identify which master plan owns this issue (task row reference). Extract plan display name from filename (e.g. `blip-master-plan.md` → `Blip`).
+3. Grep `BACKLOG.md` for `$ARGUMENTS` → extract the one-line issue title.
+4. Print the context banner **before Stage 1 starts**:
+
+```
+SHIP $ARGUMENTS — {issue title}
+  master plan : {Plan Name} (ia/projects/{master-plan-filename})
+  spec        : ia/projects/{spec-filename}
+```
+
+If no master plan references the issue, print `master plan: (none — standalone issue)`.
+
+---
+
 ## Stage sequence
 
 ### Stage 1 — Kickoff (`spec-kickoff`)
@@ -143,6 +162,7 @@ After all four stages complete (or on stop), emit a single summary:
 
 ```
 SHIP {ISSUE_ID}: {PASSED|STOPPED}
+  master plan : {Plan Name} (ia/projects/{master-plan-filename})
   Stage 1 kickoff:    {done|failed}
   Stage 2 implement:  {done|failed|skipped}
   Stage 3 verify:     {done|failed|skipped} [verdict: {pass|fail|escalated}]

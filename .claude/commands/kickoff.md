@@ -7,6 +7,20 @@ argument-hint: "{ISSUE_ID} (e.g. TECH-11)"
 
 Use `spec-kickoff` subagent (`.claude/agents/spec-kickoff.md`) to review + enrich project spec for `$ARGUMENTS`.
 
+## Step 0 — Context banner (before dispatch)
+
+Before dispatching the subagent, resolve and print for the human developer:
+
+1. Glob `ia/projects/$ARGUMENTS*.md` → confirm spec file + extract short description from filename.
+2. Glob `ia/projects/*-master-plan.md` → grep each for `$ARGUMENTS` → identify owning master plan.
+3. Print:
+   ```
+   KICKOFF $ARGUMENTS — {issue title from BACKLOG.md}
+     master plan : {Plan Name} (ia/projects/{master-plan-filename})
+     spec        : ia/projects/{spec-filename}
+   ```
+   If no master plan found: `master plan: (none — standalone issue)`.
+
 ## Subagent prompt (forward verbatim)
 
 Forward via Agent tool with `subagent_type: "spec-kickoff"`:

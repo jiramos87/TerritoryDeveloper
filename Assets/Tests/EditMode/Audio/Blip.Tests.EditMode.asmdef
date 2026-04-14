@@ -1,0 +1,17 @@
+{
+    "name": "Blip.Tests.EditMode",
+    "rootNamespace": "Territory.Tests.EditMode.Audio",
+    "references": ["TerritoryDeveloper.Game"],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}

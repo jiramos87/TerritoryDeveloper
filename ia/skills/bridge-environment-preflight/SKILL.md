@@ -43,10 +43,10 @@ Not required: Unity Editor (bridge commands check separately).
 
 | Code | Meaning | Repair class |
 |---|---|---|
-| `0` | OK — Postgres reachable, `agent_bridge_job` present | — |
+| `0` | OK — Postgres reachable, `agent_bridge_job` + `agent_bridge_lease` present | — |
 | `1` | No URL — neither `DATABASE_URL` env nor `config/postgres-dev.json` `database_url` resolved | Config |
 | `2` | Connection refused / timeout — URL resolved, Postgres unreachable | Server down |
-| `3` | Table missing — connected but `agent_bridge_job` missing (migration 0008 not applied) | Migrations |
+| `3` | Table missing — connected but `agent_bridge_job` (migration 0008) or `agent_bridge_lease` (migration 0010) absent | Migrations |
 | `4` | Unexpected SQL error — connected, query failed otherwise | Manual |
 
 ## URL resolution note

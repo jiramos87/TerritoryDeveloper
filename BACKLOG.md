@@ -2,7 +2,7 @@
 
 > Single source of truth for project issues. Reference via `@BACKLOG.md` in agent conversation. Closed work → [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Use **`mcp__territory-ia__backlog_issue`** for slice access.
 >
-> **Lane order (highest first):** § Compute-lib program → § Agent ↔ Unity & MCP context lane → § IA evolution lane → § UI-as-code program → § Economic depth lane → § Gameplay & simulation lane → § Multi-scale simulation lane → § Blip audio program → § Sprite gen lane → § High / § Medium / § Code Health / § Low. **Gameplay blockers** in § High Priority stay **interrupt** work — stop play / corrupt saves.
+> **Lane order (highest first):** § Compute-lib program → § Agent ↔ Unity & MCP context lane → § IA evolution lane → § UI-as-code program → § Economic depth lane → § Gameplay & simulation lane → § Multi-scale simulation lane → § Blip audio program → § Sprite gen lane → § Web platform lane → § High / § Medium / § Code Health / § Low. **Gameplay blockers** in § High Priority stay **interrupt** work — stop play / corrupt saves.
 >
 > **Closed program charters** (trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) + glossary): **Spec-pipeline** (territory-ia spec-pipeline program; exploration [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md)) · **UI-as-code program** umbrella (UI-as-code program; **`ui-design-system.md`** Codebase inventory (uGUI)) · **TECH-39 computational MCP suite** (Computational MCP tools (TECH-39)).
 >
@@ -288,14 +288,6 @@ Transform economy from "money goes up forever" → genuine city-builder sim w/ t
 
 Player-facing **simulation**, **AUTO** growth, **urban growth rings** / **zone density** depth. **Economic** issues → **§ Economic depth lane** above. **§ High Priority** still holds map/render/save **interrupt** bugs.
 
-- [ ] **BUG-52** — **AUTO** zoning: persistent **grass cells** between **undeveloped light zoning** and new **AUTO** **street** segments (gaps not filled on later **simulation ticks**)
-  - Type: bug (behavior / regression suspicion)
-  - Files: `AutoZoningManager.cs`, `AutoRoadBuilder.cs`, `SimulationManager.cs` / `TimeManager.cs` (**tick execution order**, **AUTO systems**), `GrowthBudgetManager.cs` (**growth budget** vs eligibility), `RoadCacheService.cs` (**road cache** / zoneability neighbors), `GridManager.cs` if placement queries change; `TerrainManager.cs` (`RestoreTerrainForCell`) only if investigation ties gap cells to post–street-commit terrain refresh behavior
-  - Spec: `ia/specs/simulation-system.md` (**simulation tick**, **AUTO** pipeline), `ia/specs/managers-reference.md` (**Zones & Buildings**, **Demand**), `ia/specs/isometric-geography-system.md` §13.9 (**road reservation** / AUTO interaction) as needed
-  - Notes: **Observed:** After **AUTO** places **streets** (path and visuals OK), **AUTO** zoning creates **RCI** **undeveloped light zoning** patches of varying sizes (acceptable), but strips of **grass cells** often remain **Moore**-adjacent to the **road stroke** — typically a **one-cell** buffer between **zoning** and **street**. Those gap **cells** appear to stay unzoned across many later **simulation ticks**, as if permanently ineligible, not merely deferred by **growth budget**. **Expected:** Variable patch sizes are fine; any **grass cell** that remains valid for **AUTO** zoning (per design) should eventually be a candidate on a future **simulation tick** unless explicitly ruled out by documented rules (e.g. corridor reservation). **Regression suspicion:** surfaced after **TerrainManager** path-terraform refresh skipped **building**-occupied **cells**; verify no accidental exclusion of road-adjacent **grass cells** in zone candidate sets, **road cache invalidation**, or neighbor queries. **Related:** **FEAT-36** (AUTO zoning candidate expansion); **FEAT-43** (**growth rings** / weights); **AUTO** road/zoning coordination fixes in archive.
-  - Acceptance: Repro in **AUTO** simulation: document coordinates of gap **grass cells**; confirm whether they are excluded from `AutoZoningManager` (or equivalent) forever or until manual action; fix or document intended rule so gaps either fill over time or are explained in spec/backlog.
-  - Depends on: none
-
 - [ ] **FEAT-43** — **Urban growth rings**: tune **AUTO** road/zoning weights for a gradual center → edge gradient
   - Type: feature (simulation / balance)
   - Files: `UrbanCentroidService.cs` (**growth ring** boundaries, **urban centroid** distance), `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `SimulationManager.cs` (`ProcessSimulationTick` order), `GrowthBudgetManager.cs` if per-ring **growth budgets** apply; `GridManager.cs` / `DemandManager.cs` only if **desirability** or placement must align with **growth rings**
@@ -318,7 +310,7 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ## Blip audio program
 
-Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra. Stages 1.1–1.2 archived. Stage 1.3 = Voice DSP kernel — filed below. Stage 1.4 + Step 2 / Step 3 remain in master plan; file rows here when parent stage → `In Progress`.
+Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra. Stages 1.1–1.3 archived (see `BACKLOG-ARCHIVE.md`). Stage 1.4 = EditMode DSP tests — filed below. Step 2 / Step 3 remain in master plan; file rows here when parent stage → `In Progress`.
 
 ### Stage 1.1 — Audio infrastructure + persistent bootstrap
 
@@ -330,75 +322,93 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ### Stage 1.3 — Voice DSP kernel
 
-- [ ] **TECH-119** — Envelope level math (Linear + Exponential per-stage shapes)
-  - Type: infrastructure / DSP math
-  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs` (or sibling `BlipEnvelope.cs`)
-  - Spec: `ia/projects/TECH-119-blip-envelope-level-math.md`
-  - Notes: Stage 1.3 Phase 2 second task. Per-stage `BlipEnvShape` (TECH-112, closed) selector. `Linear` — straight ramp. `Exponential` — `target + (start - target) * exp(-t / τ)` w/ τ = stageDurSamples / 4 (≈98% settled at stage end; perceptually linear per loudness log curve). Hold holds at 1; Sustain holds at `sustainLevel`; Idle returns 0. `Math.Exp` OK MVP (LUT reserved post-MVP).
-  - Acceptance: Linear + Exponential shapes land; Exponential ≈98% settled at stage end (Stage 1.4 verification); `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-116**, **TECH-118**
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
-- [ ] **TECH-120** — One-pole LP filter inline in `BlipVoice.Render`
-  - Type: infrastructure / DSP math
-  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`
-  - Spec: `ia/projects/TECH-120-blip-lowpass-filter.md`
-  - Notes: Stage 1.3 Phase 3 opener. `y[n] = y[n-1] + α * (x[n] - y[n-1])` w/ `α = 1 - exp(-2π * cutoff / sampleRate)`. `z1` on `BlipVoiceState.filterZ1`. `filter.kind == None` → α = 1.0 (passthrough, single kernel, no branch). α pre-computed outside sample loop; per-sample cost = 1 mul + 1 add + 1 store.
-  - Acceptance: LP filter math lands inline; `None` kind passthrough branchless; `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-116**
+### Stage 1.4 — EditMode DSP tests
 
-- [ ] **TECH-121** — `BlipVoice.Render` driver (per-sample integrator loop)
-  - Type: infrastructure / runtime
-  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`
-  - Spec: `ia/projects/TECH-121-blip-render-driver.md`
-  - Notes: Stage 1.3 Phase 3 central task. Signature — `Render(Span<float> buffer, int offset, int count, int sampleRate, in BlipPatchFlat patch, int variantIndex, ref BlipVoiceState state)`. Per-sample loop — osc sum × envelope × filter → `buffer[offset + i]`. Pre-computes per-invocation scalars (α, freq increments, stage budgets) outside loop. Zero managed allocs inside (verified Stage 1.4 T1.4.7). No Unity API. Shared kernel — `BlipBaker` Step 2 + `BlipLiveHost` post-MVP.
-  - Acceptance: signature matches Stage 1.3 Exit; zero allocs verified; no Unity API; `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-116**, **TECH-117**, **TECH-118**, **TECH-119**, **TECH-120**
+- [ ] **TECH-139** — Blip envelope shape + silence tests
+  - Type: test / DSP verification
+  - Files: `Assets/Tests/EditMode/Audio/BlipEnvelopeTests.cs` (new)
+  - Spec: `ia/projects/TECH-139-blip-envelope-silence-tests.md`
+  - Notes: `Linear` + `Exponential` envelope monotonicity (A=50ms/H=0/D=50ms/S=0.5/R=50ms); Exponential attack slope first quarter > last quarter; silence case `gainMult=0` → all samples exactly 0. Consolidates former T1.4.4 + T1.4.5 per stage compress. Satisfies Stage 1.4 Exit bullets 4+5.
+  - Acceptance: shape monotonicity + exponential slope + silence exact-equality assertions pass; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-137**
 
-- [ ] **TECH-122** — Per-invocation jitter (pitch cents / gain dB / pan)
-  - Type: infrastructure / DSP math
-  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`
-  - Spec: `ia/projects/TECH-122-blip-per-invocation-jitter.md`
-  - Notes: Closes Stage 1.3 Phase 3. Pitch cents → `pow(2, cents/1200)` scales freq increments. Gain dB → `pow(10, dB/20)` scales output. Pan stashed on state for Step 2 mixer consumption (MVP mono kernel). Honors `BlipPatchFlat.deterministic` flag — bypass jitter + use `variantIndex` as RNG seed for reproducible bakes. Xorshift32 RNG seeded from `variantIndex * 0x9E3779B9 ^ voiceId`. Jitter computed once per `Render` invocation (not per sample).
-  - Acceptance: pitch/gain/pan jitter applied per invocation; `deterministic=true` → stable sum-of-abs hash (Stage 1.4 T1.4.5); zero added allocs (Stage 1.4 T1.4.7); `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-116**, **TECH-121**
+- [ ] **TECH-140** — Blip determinism test
+  - Type: test / DSP verification
+  - Files: `Assets/Tests/EditMode/Audio/BlipDeterminismTests.cs` (new)
+  - Spec: `ia/projects/TECH-140-blip-determinism-test.md`
+  - Notes: Render same patch + seed + variantIndex twice; assert `SumAbsHash` delta < 1e-6 + first 256 samples byte-equal. Validates voice-state + xorshift RNG reset. Satisfies Stage 1.4 Exit bullet 6.
+  - Acceptance: determinism test passes; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-137**
+
+- [ ] **TECH-141** — Blip no-alloc regression test
+  - Type: test / performance regression
+  - Files: `Assets/Tests/EditMode/Audio/BlipNoAllocTests.cs` (new)
+  - Spec: `ia/projects/TECH-141-blip-no-alloc-regression.md`
+  - Notes: Warm-up loop (3 renders) then measure `GC.GetAllocatedBytesForCurrentThread` delta across 10 steady-state renders; assert ≤ 0 bytes/call. Locks in Step 1 zero-alloc invariant. Satisfies Stage 1.4 Exit bullet 7.
+  - Acceptance: no-alloc test passes; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-137**
 
 ## Sprite gen lane
 
-Orchestrator: [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Geometry MVP. Stage 1.1 = Scaffolding + primitive renderer — filed below. Stages 1.2–1.4 + Steps 2–3 remain in master plan; file rows here when parent stage → `In Progress`.
+Orchestrator: [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Geometry MVP. Stage 1.1 archived (TECH-123..TECH-128 in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). Stage 1.2 opened 2026-04-14 — 6 tasks filed below (compose layer + YAML spec loader + CLI render / render --all + first archetype YAML + integration smoke). Stages 1.3–1.4 + Steps 2–3 remain in master plan; file rows when parent stage → `In Progress`.
+
+### Stage 1.2 — Composition + YAML Schema + CLI Skeleton (Layer 2)
+
+- [ ] **TECH-149** — `render {archetype}` CLI command (Stage 1.2 Phase 2)
+  - Type: infrastructure / CLI
+  - Files: `tools/sprite-gen/src/cli.py` (new or extended)
+  - Spec: `ia/projects/TECH-149-sprite-gen-render-cli.md`
+  - Notes: Stage 1.2 Phase 2 opener. `render {archetype}` — resolves `specs/{archetype}.yaml`, loads + validates spec via **TECH-148**, calls `compose_sprite` N times (variants count from spec), applies seed-based permutations (material swap within class, prism pitch ±20%), writes `out/{name}_v01.png` … `_v{N:02d}.png`. Entry via `python -m sprite_gen render …` per exploration §10 CLI interface.
+  - Acceptance: `python -m sprite_gen render building_residential_small` writes N variant PNGs to `out/`; exit code 0 on success, 1 on spec validation failure; `npm run validate:all` green
+  - Depends on: **TECH-147**, **TECH-148**
+
+- [ ] **TECH-150** — `render --all` + `--terrain` CLI flag (Stage 1.2 Phase 2)
+  - Type: infrastructure / CLI
+  - Files: `tools/sprite-gen/src/cli.py`
+  - Spec: `ia/projects/TECH-150-sprite-gen-render-all-cli.md`
+  - Notes: Stage 1.2 Phase 2 second task. `render --all` — globs `specs/*.yaml`, iterates, calls `render {archetype}` logic per spec; collects errors per spec (exit 0 only if all succeeded, else prints failed archetypes + exits 1). `--terrain {slope_id}` CLI flag overrides spec `terrain` field per exploration §10 CLI interface (slope_id resolves to `slopes.yaml` in Stage 1.4 — Stage 1.2 validates flag parses but `terrain != flat` path lands Stage 1.4).
+  - Acceptance: `render --all` iterates all `specs/*.yaml`; aggregate exit code reflects any failures; `--terrain flat` accepted; `npm run validate:all` green
+  - Depends on: **TECH-149**
+
+- [ ] **TECH-151** — First archetype YAML `building_residential_small.yaml` (Stage 1.2 Phase 3)
+  - Type: content / spec YAML
+  - Files: `tools/sprite-gen/specs/building_residential_small.yaml` (new)
+  - Spec: `ia/projects/TECH-151-sprite-gen-first-archetype-yaml.md`
+  - Notes: Stage 1.2 Phase 3 opener. First archetype YAML — `id: building_residential_small_v1`, `class: residential`, `footprint: [1,1]`, `terrain: flat`, `levels: 2`, `seed: 42`, `variants: 4`. Composition: `iso_cube × 2` (wall_brick_red) + `iso_prism` (roof_tile_brown, pitch=0.5, axis=ns). `palette: residential`. `diffusion.enabled: false`. First concrete YAML exercising Stage 1.2 loader + compose layer end-to-end. Palette key references Stage 1.3 `palettes/residential.json` (not yet authored — stub material names resolve to RGB fallback until Stage 1.3 bootstraps real palette).
+  - Acceptance: YAML validates via **TECH-148** loader; `render building_residential_small` produces 4 variant PNGs; `npm run validate:all` green
+  - Depends on: **TECH-147**, **TECH-148**
+
+- [ ] **TECH-152** — Stage 1.2 integration smoke test (Stage 1.2 Phase 3)
+  - Type: test / integration
+  - Files: `tools/sprite-gen/tests/test_render_integration.py` (new)
+  - Spec: `ia/projects/TECH-152-sprite-gen-integration-smoke-test.md`
+  - Notes: Stage 1.2 Phase 3 closeout task. Integration smoke — runs `python -m sprite_gen render building_residential_small` via `subprocess.run`; asserts `out/building_residential_small_v01.png` exists + PIL opens successfully + image size == `(64, 64)`; asserts 4 variant files written; no exception raised. Manual pytest gate (Python still outside `validate:all` chain per Stage 1.1 archive — CI fold-in deferred to Stage 1.3).
+  - Acceptance: `pytest tools/sprite-gen/tests/test_render_integration.py` exits 0; 4 variant PNGs verified; `npm run validate:all` green
+  - Depends on: **TECH-149**, **TECH-151**
 
 ### Stage 1.1 — Scaffolding + Primitive Renderer (Layer 1)
 
-- [ ] **TECH-125** — `iso_cube` primitive (top + south + east faces, NW-light shade ramp)
-  - Type: infrastructure / rendering primitive
-  - Files: `tools/sprite-gen/src/primitives/iso_cube.py`
-  - Spec: `ia/projects/TECH-125-sprite-gen-iso-cube-primitive.md`
-  - Notes: Stage 1.1 Phase 2 opener. `iso_cube(canvas, x0, y0, w, d, h, material)` draws top rhombus (bright) + south parallelogram (mid) + east parallelogram (dark) via Pillow polygons. NW-light hardcoded. Pixel coords from 2:1 iso projection per exploration §5. Material stays stub RGB tuple MVP; palette integration lands Stage 1.3.
-  - Acceptance: three faces render w/ distinct bright/mid/dark ramp; signature matches Stage 1.1 Exit; `npm run validate:all` green
-  - Depends on: **TECH-124**
+## Web platform lane
 
-- [ ] **TECH-126** — `iso_prism` primitive (sloped tops + triangular gables, axis NS/EW)
-  - Type: infrastructure / rendering primitive
-  - Files: `tools/sprite-gen/src/primitives/iso_prism.py`
-  - Spec: `ia/projects/TECH-126-sprite-gen-iso-prism-primitive.md`
-  - Notes: Stage 1.1 Phase 2 second task. `iso_prism(canvas, x0, y0, w, d, h, pitch, axis, material)` — two sloped top faces + two triangular end-faces. `axis ∈ {'ns','ew'}` selects ridge direction; `pitch` (0..1) scales ridge height. Same NW-light ramp as **TECH-125**. Enables pitched-roof archetypes in Stage 1.2+ YAML specs.
-  - Acceptance: both axes + pitch variants render cleanly; shade ramp matches iso_cube; `npm run validate:all` green
-  - Depends on: **TECH-124**
+Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Scaffold + design system foundation. Stage 1.1 closed (see BACKLOG-ARCHIVE.md). Stage 1.2 opened 2026-04-14 — tokens + Tailwind wiring task closed (see BACKLOG-ARCHIVE.md); 4 primitive/review tasks remain below.
 
-- [ ] **TECH-127** — Canvas unit tests (pytest, §4 Examples table)
-  - Type: test / infrastructure
-  - Files: `tools/sprite-gen/tests/test_canvas.py`
-  - Spec: `ia/projects/TECH-127-sprite-gen-canvas-unit-tests.md`
-  - Notes: Stage 1.1 Phase 3 opener. Six asserts covering exploration §4 Examples rows — `canvas_size(1,1)=(64,0)`, `canvas_size(1,1,32)=(64,32)`, `canvas_size(3,3,96)=(192,96)`, `pivot_uv(64)=(0.5,0.25)`, `pivot_uv(128)=(0.5,0.125)`, `pivot_uv(192)=(0.5,16/192)`. Manual pytest gate — `npm run validate:all` does NOT yet cover Python (candidate CI fold-in: Stage 1.3 palette tests).
-  - Acceptance: `pytest tools/sprite-gen/tests/test_canvas.py` exits 0; all 6 asserts pass; `npm run validate:all` green
-  - Depends on: **TECH-124**
+- [ ] **TECH-145** — Web primitives: HeatmapCell + AnnotatedMap (Stage 1.2 Phase 2)
+  - Type: IA / tooling (web workspace)
+  - Files: `web/components/HeatmapCell.tsx` (new), `web/components/AnnotatedMap.tsx` (new)
+  - Spec: `ia/projects/TECH-145-web-heatmapcell-annotatedmap.md`
+  - Notes: SSR-only. HeatmapCell intensity (0–1) → 5-bucket palette. AnnotatedMap SVG wrapper w/ `regions` + `annotations` props; NYT-style spaced-caps geo labels (letter-spacing + uppercase). No D3-geo / topojson — plain SVG path strings at MVP.
+  - Acceptance: both files present; no `"use client"`; `cd web && npm run build` green; `npm run validate:all` green.
+  - Depends on: tokens (archived — see BACKLOG-ARCHIVE.md)
 
-- [ ] **TECH-128** — Primitive smoke tests (pytest + fixture PNGs)
-  - Type: test / infrastructure
-  - Files: `tools/sprite-gen/tests/test_primitives.py`, `tools/sprite-gen/tests/fixtures/` (new fixture PNGs)
-  - Spec: `ia/projects/TECH-128-sprite-gen-primitive-smoke-tests.md`
-  - Notes: Closes Stage 1.1. Renders `iso_cube(w=2,d=2,h=32,stub_bright_red)` to 64×64 canvas + `iso_prism` both axes; asserts non-transparent pixel count > 0 per visible face region. Saves fixture PNGs to `tests/fixtures/` for eyeball visual-regression reference (tracked, not gitignored).
-  - Acceptance: pytest smoke asserts pass; fixture PNGs emitted; `npm run validate:all` green
-  - Depends on: **TECH-125**, **TECH-126**
+- [ ] **TECH-146** — `/design` review route + web README §Tokens (Stage 1.2 Phase 3)
+  - Type: IA / tooling (web workspace) / docs
+  - Files: `web/app/design/page.tsx` (new), `web/README.md`
+  - Spec: `ia/projects/TECH-146-web-design-route-tokens-readme.md`
+  - Notes: Closes Stage 1.2. Renders all six primitives (DataTable, BadgeChip, StatBar, FilterChips, HeatmapCell, AnnotatedMap) w/ 2–3 fixture variants each. Internal-review banner in page header (not linked from public nav; auth gate lands in Step 4). README §Tokens documents palette JSON export contract + Unity UI/UX consumption pattern stub. Glossary row candidate "Web design token set" flagged for post-stage close authoring.
+  - Acceptance: `/design` reachable on dev + deploy; all six primitives rendered; README §Tokens present; internal-review banner visible; `npm run validate:all` green.
+  - Depends on: DataTable + BadgeChip + StatBar + FilterChips (all archived — see BACKLOG-ARCHIVE.md), **TECH-145**
 
 ## High Priority
 
@@ -640,7 +650,7 @@ Orchestrator: [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-mast
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-*(Program history: [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Open lanes: **§ Compute-lib program**, **§ Agent ↔ Unity & MCP context lane**, **§ IA evolution lane**, **§ Economic depth lane**, **§ Gameplay & simulation lane**, **§ Multi-scale simulation lane**, **§ Blip audio program**, **§ Sprite gen lane**, then standard priority sections.)*
+*(Program history: [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Open lanes: **§ Compute-lib program**, **§ Agent ↔ Unity & MCP context lane**, **§ IA evolution lane**, **§ Economic depth lane**, **§ Gameplay & simulation lane**, **§ Multi-scale simulation lane**, **§ Blip audio program**, **§ Sprite gen lane**, **§ Web platform lane**, then standard priority sections.)*
 
 - [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects
   - Type: audio/feature
@@ -683,6 +693,7 @@ Orchestrator: [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-mast
 6. **Multi-scale simulation lane** (orchestrator [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md); file rows only when parent stage → `In Progress`)
 7. **Blip audio program** (orchestrator [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md); file rows only when parent stage → `In Progress`)
 8. **Sprite gen lane** (orchestrator [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-master-plan.md); file rows only when parent stage → `In Progress`)
+9. **Web platform lane** (orchestrator [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md); file rows only when parent stage → `In Progress`)
 9. Code Health (technical debt, refactors, performance)
 9. Low priority (new systems, polish, content)
 8. **Archive** — completed work lives only in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)

@@ -42,7 +42,21 @@ Hooks live in `.claude/settings.json` + `tools/scripts/claude-hooks/`. Bash deny
 
 Other commands (`validate:frontmatter`, `unity:testmode-batch`, `db:bridge-preflight`) live in `docs/agent-led-verification-policy.md` and the relevant skill bodies (`agent-test-mode-verify`, `bridge-environment-preflight`).
 
-## 6. Where to find more
+## 6. Web workspace (`web/`)
+
+Next.js 14+ App Router workspace at `web/`. Full onboarding: `web/README.md`.
+
+| Command | Purpose |
+|---|---|
+| `cd web && npm run dev` | Start dev server (http://localhost:3000) |
+| `cd web && npm run build` | Production build |
+| `npm run validate:web` | Lint + typecheck + build via root composition |
+
+**Caveman-exception boundary:** full English applies only to user-facing rendered text under `web/content/**` and page-body JSX strings in `web/app/**/page.tsx`. App shell code, identifiers, comments, commits, IA prose stay caveman. Authority: `ia/rules/agent-output-caveman.md` §exceptions.
+
+Orchestrator: `ia/projects/web-platform-master-plan.md` (permanent — never closeable via `/closeout`).
+
+## 7. Where to find more
 
 - Workflow + lifecycle: `AGENTS.md`
 - IA stack overview: `docs/information-architecture-overview.md`

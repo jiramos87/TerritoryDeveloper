@@ -109,6 +109,18 @@ territory_if_locked_save_quit_and_wait() {
   territory_wait_lock_cleared 30
 }
 
+# Preserve UserSettings/Layouts/default-2022.dwlt across a -batchmode Unity run.
+# Call once per script before invoking Unity. Restores on any exit (success, error, or signal).
+territory_preserve_editor_layout() {
+  local _layout_file="${REPO_ROOT}/UserSettings/Layouts/default-2022.dwlt"
+  local _backup="${REPO_ROOT}/UserSettings/Layouts/.default-2022.dwlt.batchbak"
+  if [[ ! -f "${_layout_file}" ]]; then return 0; fi
+  cp "${_layout_file}" "${_backup}"
+  # SC2064: intentional — expand paths now so the trap string captures concrete values.
+  # shellcheck disable=SC2064
+  trap "cp -f '${_backup}' '${_layout_file}' 2>/dev/null; rm -f '${_backup}'" EXIT
+}
+
 territory_launch_unity_editor() {
   local _prefix="${_TERRITORY_LOG_PREFIX:-territory}"
   if [[ "$(uname -s)" != "Darwin" ]]; then

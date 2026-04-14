@@ -1,6 +1,6 @@
 # Isometric Sprite Generator — Master Plan (Tools / Art Pipeline)
 
-> **Status:** In Progress — Stage 1.1 (6 tasks filed as TECH-123 … TECH-128)
+> **Status:** In Progress — Stage 1.2 (Stage 1.1 Final — 6 tasks archived; Stage 1.2 pending file)
 >
 > **Scope:** Build `tools/sprite-gen/` — a Python CLI + 5-layer hybrid composer that renders isometric pixel art building sprites from YAML archetype specs, with slope-aware foundations, per-class palette management, and a curation workflow that promotes approved PNGs to `Assets/Sprites/Generated/`. Diffusion overlay (Phase 2) and EA bulk render (Phase 3) follow once geometry MVP ships. Non-square footprints, animation frames, water-facing slopes, and additional primitives are out of scope for v1.
 >
@@ -41,9 +41,9 @@
 
 ### Step 1 — Geometry MVP
 
-**Status:** In Progress — Stage 1.1 (Stage 1.1 tasks filed; Stages 1.2–1.4 pending)
+**Status:** In Progress — Stage 1.2 (Stage 1.1 Final; Stages 1.2–1.4 pending file)
 
-**Backlog state (Step 1):** 6 filed (Stage 1.1 complete)
+**Backlog state (Step 1):** 6 archived (Stage 1.1 Final) / Stage 1.2 pending file
 
 **Objectives:** Build the full geometry-only sprite pipeline end-to-end: canvas math, `iso_cube` + `iso_prism` primitives with NW-light shade pass, YAML-driven compose layer, per-class K-means palette system, slope-aware `iso_stepped_foundation` auto-insert, and curation CLI (`promote` / `reject`) with `.meta` generation. Exits when `render --all` produces 5 archetypes × 17 slopes without errors and promoted sprites load in Unity with correct PPU/pivot. This is the prerequisite for all downstream steps.
 
@@ -68,7 +68,7 @@
 
 #### Stage 1.1 — Scaffolding + Primitive Renderer (Layer 1)
 
-**Status:** Draft (6 tasks filed as **TECH-123** through **TECH-128**; BACKLOG state: 6 filed / 6)
+**Status:** Final (6 tasks archived as **TECH-123** through **TECH-128**; BACKLOG state: 6 archived / 6)
 
 **Objectives:** Bootstrap `tools/sprite-gen/` folder structure and implement the two core primitives (`iso_cube`, `iso_prism`) with NW-light 3-level shade pass. Canvas sizing + Unity pivot math extracted to `canvas.py`. Unit tests validate pixel-perfect output against canonical canvas examples from the exploration doc.
 
@@ -83,9 +83,9 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Project bootstrap + canvas math module.
-- [ ] Phase 2 — iso_cube + iso_prism primitives with NW-light shade pass.
-- [ ] Phase 3 — Unit tests for canvas math + primitives.
+- [x] Phase 1 — Project bootstrap + canvas math module.
+- [x] Phase 2 — iso_cube + iso_prism primitives with NW-light shade pass.
+- [x] Phase 3 — Unit tests for canvas math + primitives.
 
 **Tasks:**
 
@@ -93,16 +93,16 @@
 |---|---|---|---|---|---|
 | T1.1.1 | Folder scaffold | 1 | **TECH-123** | Done | Create `tools/sprite-gen/` folder skeleton: `src/__init__.py`, `src/primitives/__init__.py`, `tests/fixtures/` dir, `out/` dir (add to `.gitignore`), `requirements.txt` (pillow, numpy, scipy, pyyaml), `README.md` stub |
 | T1.1.2 | Canvas math module | 1 | **TECH-124** | Done | `src/canvas.py` — implement `canvas_size(fx, fy, extra_h=0) → (w, h)` using `(fx+fy)*32` width formula; `pivot_uv(canvas_h) → (0.5, 16/canvas_h)`; docstring cites §4 Canvas math from exploration doc |
-| T1.1.3 | iso_cube primitive | 2 | **TECH-125** | Draft | `src/primitives/iso_cube.py` — `iso_cube(canvas, x0, y0, w, d, h, material)`: draw top rhombus (bright), south parallelogram (mid), east parallelogram (dark) using Pillow polygon fills; NW-light direction hardcoded; pixel coordinates computed from 2:1 isometric projection (tileWidth=1, tileHeight=0.5 per **Tile dimensions**) |
-| T1.1.4 | iso_prism primitive | 2 | **TECH-126** | Draft | `src/primitives/iso_prism.py` — `iso_prism(canvas, x0, y0, w, d, h, pitch, axis, material)`: two sloped top faces + two triangular end-faces; `axis ∈ {'ns','ew'}` selects ridge direction; same bright/mid/dark ramp as iso_cube |
-| T1.1.5 | Canvas unit tests | 3 | **TECH-127** | Draft | `tests/test_canvas.py` — assert `canvas_size(1,1)=(64,0)`, `canvas_size(1,1,32)=(64,32)`, `canvas_size(3,3,96)=(192,96)`; assert `pivot_uv(64)=(0.5,0.25)`, `pivot_uv(128)=(0.5,0.125)`, `pivot_uv(192)=(0.5, 16/192)` — matches §4 Examples table |
-| T1.1.6 | Primitive smoke tests | 3 | **TECH-128** | Draft | `tests/test_primitives.py` — render `iso_cube(w=2,d=2,h=32,material=stub_bright_red)` to 64×64 canvas; assert non-transparent pixel count > 0 on all 3 faces (top/south/east); same smoke test for `iso_prism`; save fixtures to `tests/fixtures/` for visual regression |
+| T1.1.3 | iso_cube primitive | 2 | **TECH-125** | Done | `src/primitives/iso_cube.py` — `iso_cube(canvas, x0, y0, w, d, h, material)`: draw top rhombus (bright), south parallelogram (mid), east parallelogram (dark) using Pillow polygon fills; NW-light direction hardcoded; pixel coordinates computed from 2:1 isometric projection (tileWidth=1, tileHeight=0.5 per **Tile dimensions**) |
+| T1.1.4 | iso_prism primitive | 2 | **TECH-126** | Done | `src/primitives/iso_prism.py` — `iso_prism(canvas, x0, y0, w, d, h, pitch, axis, material)`: two sloped top faces + two triangular end-faces; `axis ∈ {'ns','ew'}` selects ridge direction; same bright/mid/dark ramp as iso_cube |
+| T1.1.5 | Canvas unit tests | 3 | **TECH-127** | Done (archived) | `tests/test_canvas.py` — assert `canvas_size(1,1)=(64,0)`, `canvas_size(1,1,32)=(64,32)`, `canvas_size(3,3,96)=(192,96)`; assert `pivot_uv(64)=(0.5,0.25)`, `pivot_uv(128)=(0.5,0.125)`, `pivot_uv(192)=(0.5, 16/192)` — matches §4 Examples table |
+| T1.1.6 | Primitive smoke tests | 3 | **TECH-128** | Done (archived) | `tests/test_primitives.py` — render `iso_cube(w=1,d=1,h=32,material=STUB_RED)` on `canvas_size(1,1,32)=(64,32)` canvas; assert non-zero alpha per face bbox (top/south/east); same smoke for `iso_prism` both axes (pitch=0.5); save fixtures to `tests/fixtures/` tracked in git; re-export `iso_prism` from `primitives/__init__.py` |
 
 ---
 
 #### Stage 1.2 — Composition + YAML Schema + CLI Skeleton (Layer 2)
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft (6 tasks filed 2026-04-14 — **TECH-147** through **TECH-152**)
 
 **Objectives:** Wire primitives into a compose layer that reads YAML archetype specs and stacks primitives onto a canvas buffer. Implement CLI `render {archetype}` + `render --all` commands with seed-based variant permutation. Ship first archetype spec `building_residential_small.yaml` and validate round-trip to `out/`.
 
@@ -125,12 +125,12 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.2.1 | Compose layer | 1 | _pending_ | _pending_ | `src/compose.py` — `compose_sprite(spec: dict) → PIL.Image`: create canvas via `canvas_size(fx, fy, extra_h=0)`, iterate `composition:` list, dispatch each entry to matching primitive (iso_cube / iso_prism), return composited image; `extra_h` derived from tallest primitive stack |
-| T1.2.2 | YAML spec loader | 1 | _pending_ | _pending_ | `src/spec.py` — `load_spec(path) → dict`: load YAML + validate required keys (id, class, footprint, terrain, composition, palette, output); `SpecValidationError` raised on missing/malformed fields; CLI catches and exits with code 1 (per §10 exit codes) |
-| T1.2.3 | Render CLI command | 2 | _pending_ | _pending_ | `src/cli.py` — `render {archetype}` command: resolve `specs/{archetype}.yaml`, load + validate spec, call `compose_sprite` N times (variants count from spec), apply seed-based permutations (material swap within class, prism pitch ±20%), write `out/{name}_v01.png` … `_v{N:02d}.png` |
-| T1.2.4 | Render --all command | 2 | _pending_ | _pending_ | `src/cli.py` — `render --all` command: glob `specs/*.yaml`, iterate, call `render {archetype}` logic per spec; collect errors per spec (exit 0 only if all succeeded, else print failed archetypes + exit 1); `--terrain {slope_id}` CLI flag overrides spec `terrain` field (matches §10 CLI interface) |
-| T1.2.5 | First archetype YAML | 3 | _pending_ | _pending_ | `specs/building_residential_small.yaml` — first archetype: `id: building_residential_small_v1`, `class: residential`, `footprint: [1,1]`, `terrain: flat`, `levels: 2`, `seed: 42`, `variants: 4`; composition: iso_cube×2 (wall_brick_red) + iso_prism (roof_tile_brown, pitch=0.5, axis=ns); `palette: residential`; `diffusion.enabled: false` |
-| T1.2.6 | Integration smoke test | 3 | _pending_ | _pending_ | Integration smoke: run `python -m sprite_gen render building_residential_small` in CI-friendly subprocess; assert `out/building_residential_small_v01.png` exists + PIL open succeeds + image size == (64, 64); assert 4 variant files written; no exception raised |
+| T1.2.1 | Compose layer | 1 | **TECH-147** | Done (archived) | `src/compose.py` — `compose_sprite(spec: dict) → PIL.Image`: create canvas via `canvas_size(fx, fy, extra_h=0)`, iterate `composition:` list, dispatch each entry to matching primitive (iso_cube / iso_prism), return composited image; `extra_h` derived from tallest primitive stack |
+| T1.2.2 | YAML spec loader | 1 | **TECH-148** | Done (archived) | `src/spec.py` — `load_spec(path) → dict`: load YAML + validate required keys (id, class, footprint, terrain, composition, palette, output); `SpecValidationError` raised on missing/malformed fields; CLI catches and exits with code 1 (per §10 exit codes) |
+| T1.2.3 | Render CLI command | 2 | **TECH-149** | Draft | `src/cli.py` — `render {archetype}` command: resolve `specs/{archetype}.yaml`, load + validate spec, call `compose_sprite` N times (variants count from spec), apply seed-based permutations (material swap within class, prism pitch ±20%), write `out/{name}_v01.png` … `_v{N:02d}.png` |
+| T1.2.4 | Render --all command | 2 | **TECH-150** | Draft | `src/cli.py` — `render --all` command: glob `specs/*.yaml`, iterate, call `render {archetype}` logic per spec; collect errors per spec (exit 0 only if all succeeded, else print failed archetypes + exit 1); `--terrain {slope_id}` CLI flag overrides spec `terrain` field (matches §10 CLI interface) |
+| T1.2.5 | First archetype YAML | 3 | **TECH-151** | Draft | `specs/building_residential_small.yaml` — first archetype: `id: building_residential_small_v1`, `class: residential`, `footprint: [1,1]`, `terrain: flat`, `levels: 2`, `seed: 42`, `variants: 4`; composition: iso_cube×2 (wall_brick_red) + iso_prism (roof_tile_brown, pitch=0.5, axis=ns); `palette: residential`; `diffusion.enabled: false` |
+| T1.2.6 | Integration smoke test | 3 | **TECH-152** | Draft | Integration smoke: run `python -m sprite_gen render building_residential_small` in CI-friendly subprocess; assert `out/building_residential_small_v01.png` exists + PIL open succeeds + image size == (64, 64); assert 4 variant files written; no exception raised |
 
 ---
 

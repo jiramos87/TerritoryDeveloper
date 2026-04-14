@@ -152,7 +152,28 @@ New/changed concepts → update glossary **and** relevant spec section. No termi
 
 **Next-issue prompts.** User asks which is next → respond with it + **ask if they want an AI agent prompt** (analysis + development plan). Format prompt body in fenced ` ```markdown ` block, English unless user requests otherwise.
 
-## 8. Pre-commit checklist
+## 8. Web workspace (`web/`)
+
+Next.js 14+ App Router at `web/`. Full onboarding: [`web/README.md`](web/README.md).
+
+**Dev commands:**
+
+```bash
+cd web && npm run dev        # dev server at http://localhost:3000
+cd web && npm run build      # production build
+npm run validate:web         # lint + typecheck + build (repo root)
+npm run validate:all         # includes validate:web
+```
+
+**Caveman-exception boundary:** full English for user-facing rendered text in `web/content/**` and page-body JSX strings in `web/app/**/page.tsx`. App shell code, component identifiers, TypeScript comments, commits, IA prose stay caveman. Authority: `ia/rules/agent-output-caveman.md` §exceptions.
+
+**Surface rules:**
+- `web/` is tooling / docs-only surface. Invariants `#1–#12` (Unity / runtime C#) are NOT implicated.
+- Vercel deploy: push to `main` triggers production deploy. `*.vercel.app` URL in `web/README.md` §Deploy once linked.
+- Orchestrator: `ia/projects/web-platform-master-plan.md` — permanent, never closeable via `/closeout`.
+- No `vercel.json` at MVP — dashboard-linked project uses Next.js framework preset auto-detect.
+
+## 9. Pre-commit checklist
 
 - [ ] Code compiles (Unity Build or `npm run unity:compile-check`)
 - [ ] Class-level `/// <summary>` exists + accurate

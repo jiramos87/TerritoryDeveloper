@@ -1,5 +1,7 @@
 # Blip — Master Plan (MVP)
 
+> **Last updated:** 2026-04-14
+>
 > **Status:** In Progress — Step 1 / Stage 1.1 archived (TECH-98..TECH-101 closed; stage ready for rollup)
 >
 > **Scope:** Procedural SFX synthesis subsystem. Ten baked sounds, parameter-only patches, zero `.wav` / `.ogg` assets under `Assets/Audio/Sfx/`. Post-MVP extensions (Live DSP, FX chain, LFOs, editor window, 10 more sounds) → `docs/blip-post-mvp-extensions.md`.
@@ -28,7 +30,7 @@
 
 ### Step 1 — DSP foundations + audio infra
 
-**Status:** In Progress — Stage 1.3
+**Status:** In Progress — Stage 1.4
 
 **Objectives:** Land scaffolding. Audio mixer asset + persistent bootstrap prefab. Authoring data model (`BlipPatch` ScriptableObject + `BlipPatchFlat` blittable mirror + content-hash). DSP kernel (`BlipVoice.Render`) w/ MVP oscillator set + AHDSR envelope + one-pole LP filter. EditMode tests gate kernel behavior + determinism. No playback wiring yet; no sounds heard in game.
 
@@ -110,7 +112,7 @@
 
 #### Stage 1.3 — Voice DSP kernel
 
-**Status:** In Progress — tasks filed (TECH-116..122, Draft)
+**Status:** Final — all tasks complete (TECH-116..120 Done, TECH-135 Done; TECH-121 + TECH-122 compressed into TECH-135)
 
 **Objectives:** `BlipVoice.Render` kernel. Single static method, stateful via `ref BlipVoiceState`. MVP oscillator bank + AHDSR envelope (per-stage `Linear` or `Exponential` shape) + one-pole LP filter. Per-invocation pitch / gain / pan jitter. No allocs inside `Render`. No Unity API. Shared kernel — used by `BlipBaker` Step 2 + `BlipLiveHost` post-MVP.
 
@@ -121,14 +123,14 @@
 - AHDSR envelope state machine — `Idle → Attack → Hold → Decay → Sustain → Release → Idle`. Per-stage shape selectable via `BlipEnvShape` (`Linear` = straight ramp; `Exponential` = `1 - exp(-t/τ)` on attack, `exp(-t/τ)` on decay/release, τ = stage duration / 4 — reads "natural" to ear per perceptual loudness log curve).
 - One-pole LP filter — `z1` on `BlipVoiceState`; cutoff from patch scalar. `filter.kind == None` handled via alpha=1 passthrough (single kernel, no branch).
 - Jitter applied per-invocation — `pitchJitterCents`, `gainJitterDb`, `panJitter`. Honors `deterministic` flag (skip jitter + use fixed variant index).
-- Zero managed allocs inside `Render` (verified via test; see Stage 1.4 T1.4.7 for measurement method).
+- Zero managed allocs inside `Render` (verified via test; see Stage 1.4 T1.4.5 for measurement method).
 - No Unity API calls inside `Render` (no `Time.time`, no `Debug.Log`).
 
 **Phases:**
 
-- [ ] Phase 1 — Oscillator bank + voice state.
-- [ ] Phase 2 — AHDSR envelope state machine + per-stage shape.
-- [ ] Phase 3 — Render driver (LP filter + jitter + per-sample loop).
+- [x] Phase 1 — Oscillator bank + voice state.
+- [x] Phase 2 — AHDSR envelope state machine + per-stage shape.
+- [x] Phase 3 — Render driver (LP filter + jitter + per-sample loop).
 
 **Tasks:**
 
@@ -137,14 +139,13 @@
 | T1.3.1 | BlipVoiceState struct | 1 | **TECH-116** | Done | `BlipVoiceState` struct — `phaseA..phaseD` (double), `envLevel`, `envStage`, `filterZ1`, `rngState` (xorshift seed), `samplesElapsed`. Blittable; lives in caller. |
 | T1.3.2 | Oscillator bank | 1 | **TECH-117** | Done | Oscillator bank — sine (`Math.Sin` MVP), triangle, square, pulse (duty param), noise-white (xorshift on `rngState`). Phase-accumulator; frequency from patch osc + `pitchMult`. |
 | T1.3.3 | AHDSR state machine | 2 | **TECH-118** | Done | AHDSR stage machine — `Idle → Attack → Hold → Decay → Sustain → Release → Idle`. Transitions via `samplesElapsed` + per-stage duration from patch (durations already ≥ 1 ms by `BlipPatch.OnValidate` clamp — see T1.2.3). |
-| T1.3.4 | Envelope level math | 2 | **TECH-119** | Draft | Envelope level math — per-stage `BlipEnvShape` selector. Linear: straight ramp (attack 0→1, decay 1→sustain, release sustain→0). Exponential: `target + (start - target) * exp(-t/τ)` with τ = stageDuration/4 (≈98 % settled at stage end; perceptual linear). Multiplies output sample. |
-| T1.3.5 | One-pole LP filter | 3 | **TECH-120** | Draft | One-pole LP filter in-loop — `y[n] = y[n-1] + a * (x[n] - y[n-1])` where `a = 1 - exp(-2π * cutoff / sampleRate)`. `z1` on `BlipVoiceState`. `filter.kind == None` → `a = 1.0` (passthrough, single kernel, no branch). |
-| T1.3.6 | Render driver loop | 3 | **TECH-121** | Draft | `BlipVoice.Render` driver — per-sample loop: osc sum × envelope × filter → buffer. Uses `ref state`. Zero alloc verified. |
-| T1.3.7 | Per-invocation jitter | 3 | **TECH-122** | Draft | Per-invocation jitter — pitch cents ± jitter, gain dB ± jitter, pan ± jitter. Honors `deterministic` flag. RNG from `rngState` (xorshift, seeded deterministically per variant + voice). |
+| T1.3.4 | Envelope level math | 2 | **TECH-119** | Done | Envelope level math — per-stage `BlipEnvShape` selector. Linear: straight ramp (attack 0→1, decay 1→sustain, release sustain→0). Exponential: `target + (start - target) * exp(-t/τ)` with τ = stageDuration/4 (≈98 % settled at stage end; perceptual linear). Multiplies output sample. |
+| T1.3.5 | One-pole LP filter | 3 | _archived_ | Done | One-pole LP filter in-loop — `y[n] = y[n-1] + a * (x[n] - y[n-1])` where `a = 1 - exp(-2π * cutoff / sampleRate)`. `z1` on `BlipVoiceState`. `filter.kind == None` → `a = 1.0` (passthrough, single kernel, no branch). |
+| T1.3.6 | Render driver + jitter (consolidated) | 3 | **TECH-135** | Done | `BlipVoice.Render` driver w/ integrated per-invocation jitter — per-sample loop (osc × envelope × filter → buffer, `ref state`, zero alloc) + pitch cents / gain dB / pan ± jitter via xorshift `rngState`, honors `deterministic` flag. Consolidates former T1.3.6 (TECH-121) + T1.3.7 (TECH-122) per stage compress (2026-04-14). |
 
 #### Stage 1.4 — EditMode DSP tests
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress (tasks _pending_ — not yet filed; stage open as of 2026-04-14)
 
 **Objectives:** Unity Test Runner EditMode harness covering `BlipVoice.Render`. Owner has no prior game-audio testing experience — tasks scaffolded w/ explicit fixture helpers + assertion patterns. Tests run headless; no Unity audio system dependency (pure `float[]` math). Determinism test uses sum-of-abs tolerance hash (not byte equality — byte-equality within-run is brittle against JIT / `Math.Sin` LSB drift; bit-exact path lands post-MVP w/ LUT osc per `docs/blip-post-mvp-extensions.md` §1).
 
@@ -169,13 +170,11 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.4.1 | EditMode test asmdef | 1 | _pending_ | _pending_ | `Assets/Tests/EditMode/Audio/Blip.Tests.EditMode.asmdef` — refs `Blip` runtime + `UnityEngine.TestRunner` + `nunit.framework`. Platform: `Editor` only. |
-| T1.4.2 | Test fixture helpers | 1 | _pending_ | _pending_ | Test fixture helpers — `RenderPatch(in BlipPatchFlat, int sampleRate, int seconds) → float[]`, `CountZeroCrossings(float[]) → int`, `SampleEnvelopeLevels(float[], int stride) → float[]`, `SumAbsHash(float[]) → double`. |
-| T1.4.3 | Oscillator crossing tests | 2 | _pending_ | _pending_ | Oscillator zero-crossing tests — sine @ 440 Hz × 1 s @ 48 kHz ≈ 880 crossings (± 2). Repeat triangle / square / pulse duty=0.5. |
-| T1.4.4 | Envelope shape tests | 2 | _pending_ | _pending_ | Envelope shape tests — both `Linear` + `Exponential` shapes. A=50ms/H=0/D=50ms/S=0.5/R=50ms. Assert attack monotonic rising, decay monotonic falling to sustain, release monotonic falling to zero. Exponential-shape extra assert — attack slope in first quarter > slope in last quarter. |
-| T1.4.5 | Silence test | 2 | _pending_ | _pending_ | Silence test — `gainMult = 0` → all-zero buffer (exact equality, not tolerance). |
-| T1.4.6 | Determinism test | 3 | _pending_ | _pending_ | Determinism test — render same patch + seed + variant twice; assert `SumAbsHash` equal within 1e-6 + first 256 samples byte-equal. Validates voice-state reset + RNG determinism without depending on JIT stability of trailing samples. |
-| T1.4.7 | No-alloc regression | 3 | _pending_ | _pending_ | No-alloc regression — warm-up loop (3 renders, discard allocation), then measure `GC.GetAllocatedBytesForCurrentThread` delta across 10 steady-state renders; assert delta constant ≤ 0 bytes/call (tolerates NUnit infra alloc outside the measured window). |
+| T1.4.1 | asmdef + fixture helpers bootstrap | 1 | **TECH-137** | Done (archived) | `Assets/Tests/EditMode/Audio/Blip.Tests.EditMode.asmdef` (Editor-only; refs `Blip` runtime + `UnityEngine.TestRunner` + `nunit.framework`) + fixture helper utilities — `RenderPatch(in BlipPatchFlat, int sampleRate, int seconds) → float[]`, `CountZeroCrossings(float[]) → int`, `SampleEnvelopeLevels(float[], int stride) → float[]`, `SumAbsHash(float[]) → double`. Consolidates former T1.4.1 (asmdef) + T1.4.2 (helpers) per stage compress (2026-04-14). |
+| T1.4.2 | Oscillator crossing tests | 2 | **TECH-138** | Done (archived) | Oscillator zero-crossing tests — sine @ 440 Hz × 1 s @ 48 kHz ≈ 880 crossings (± 2). Repeat triangle / square / pulse duty=0.5. |
+| T1.4.3 | Envelope shape + silence tests | 2 | **TECH-139** | Draft | Envelope shape tests — both `Linear` + `Exponential` shapes. A=50ms/H=0/D=50ms/S=0.5/R=50ms. Assert attack monotonic rising, decay monotonic falling to sustain, release monotonic falling to zero. Exponential-shape extra assert — attack slope in first quarter > slope in last quarter. Silence case — `gainMult = 0` → all-zero buffer (exact equality, not tolerance). Consolidates former T1.4.4 (envelope) + T1.4.5 (silence) per stage compress (2026-04-14). |
+| T1.4.4 | Determinism test | 3 | **TECH-140** | Draft | Determinism test — render same patch + seed + variant twice; assert `SumAbsHash` equal within 1e-6 + first 256 samples byte-equal. Validates voice-state reset + RNG determinism without depending on JIT stability of trailing samples. |
+| T1.4.5 | No-alloc regression | 3 | **TECH-141** | Draft | No-alloc regression — warm-up loop (3 renders, discard allocation), then measure `GC.GetAllocatedBytesForCurrentThread` delta across 10 steady-state renders; assert delta constant ≤ 0 bytes/call (tolerates NUnit infra alloc outside the measured window). |
 
 **Backlog state (Step 1):** All Step 1 task rows stay in this doc as `_pending_`. File BACKLOG rows + project specs when parent stage → `In Progress` via `stage-file` skill. Stages 2.x + 3.x task decomposition deferred until Step 2 + Step 3 open.
 
@@ -286,10 +285,13 @@ Step 1 stages 1.1–1.4 already decomposed above w/ phases + tasks but rows not 
 - `2026-04-13 — IAudioGenerator not available (Unity 2022.3.62f3).` Unity 6.3 LTS introduces `IAudioGenerator` cleanup for live DSP; current project on Unity 2022.3 so bake-to-clip stays MVP path + `OnAudioFilterRead` remains post-MVP Live DSP path. Revisit on engine upgrade. Source: `ProjectSettings/ProjectVersion.txt` + Unity 6 research.
 - `2026-04-13 — AHDSR per-stage shape enum (Linear | Exponential).` Exponential shape (`1 - exp(-t/τ)` on attack; τ = stageDuration/4) reads perceptually linear per ear's log loudness response. Keeps scope tight (no curves) while giving natural-sounding envelopes. Source: audio perception literature.
 - `2026-04-13 — OnValidate clamps attack/decay/release ≥ 1 ms.` Prevents snap-onset click at default 48 kHz mix rate (≈48-sample ramp floor). Source: DSP best practice for step-free transitions.
+- `2026-04-14 — Stage 1.3 closed; TECH-121 + TECH-122 compressed into TECH-135.` Render-driver and per-invocation jitter were originally two separate tasks (T1.3.6 / T1.3.7); merged into single TECH-135 during implementation because jitter is computed inside the same per-sample loop — splitting produced no useful parallel track. Compression approved during stage execution; spec updated in-place. Source: Stage 1.3 project-stage-close.
 
 ## Lessons Learned
 
 > **Pattern:** append rows as stages close, migrate actionable ones to canonical IA (`ia/specs/`, `ia/rules/`, glossary) via `project-stage-close` or `/closeout`. Keep the lesson here if it's orchestrator-local (applies only inside Blip MVP); promote if it generalizes. Format: `{YYYY-MM-DD} — {short title}. {1–3 sentence summary}. {Action: where promoted, or "orchestrator-local"}.`
 
-_(Empty. First entries land when Stage 1.1 → `Final`.)_
+- `2026-04-14 — Compress co-located tasks before filing.` When two pending tasks share the same implementation surface (same file, same loop), merge them into one TECH issue at stage-file time rather than filing both then closing one early. Avoids orphan issues + simplifies history. Action: orchestrator-local (Blip MVP).
+- `2026-04-14 — BlipVoiceState carries all per-voice mutable DSP state.` `phaseA..D`, `envLevel`, `envStage`, `filterZ1`, `rngState`, `samplesElapsed` all live in a single blittable struct passed by ref — no statics, no heap alloc inside `Render`. Pattern validated by Stage 1.3; reuse for any future voice-type addition (e.g. `BlipLiveHost` post-MVP). Action: promote to `ia/specs/audio-blip.md` §DSP kernel when Step 3 spec-promotion runs.
+- `2026-04-14 — Exponential τ = stageDuration/4 gives ≈98 % settled at stage end.` Validated analytically (`exp(-4) ≈ 0.018`). No tuning pass required for MVP; perceptual loudness log curve satisfied. Action: orchestrator-local (Blip MVP).
 

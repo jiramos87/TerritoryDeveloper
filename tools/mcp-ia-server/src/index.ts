@@ -28,6 +28,7 @@ import {
   registerPathfindingCostPreview,
 } from "./tools/compute/index.js";
 import { registerUnityBridgeCommand } from "./tools/unity-bridge-command.js";
+import { registerUnityBridgeLease } from "./tools/unity-bridge-lease.js";
 import { registerBacklogSearch } from "./tools/backlog-search.js";
 import { registerInvariantPreflight } from "./tools/invariant-preflight.js";
 import { registerFindObjectOfTypeScan } from "./tools/findobjectoftype-scan.js";
@@ -67,6 +68,7 @@ registerPathfindingCostPreview(server);
 registerGeographyInitParamsValidate(server);
 registerDesirabilityTopCells(server);
 registerUnityBridgeCommand(server);
+registerUnityBridgeLease(server);
 registerBacklogSearch(server);
 registerInvariantPreflight(server, registry);
 registerFindObjectOfTypeScan(server);

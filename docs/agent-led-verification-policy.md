@@ -23,11 +23,22 @@ When reporting **Verification** after substantive implementation (especially whe
 | **Node / IA** | `npm run validate:all` — exit code (and note if skipped with reason). |
 | **Unity compile** | `npm run unity:compile-check` when **`Assets/`** **C#** changed — exit code; or **N/A** with reason. |
 | **Path A — Agent test mode batch** | `npm run unity:testmode-batch` — exit code; path to newest **`tools/reports/agent-testmode-batch-*.json`** and **`ok` / `exit_code`** (report **`schema_version`** **2** may include **`city_stats`** and golden fields). Use **`--quit-editor-first`** when an Editor might hold **`REPO_ROOT`** (see **Path A — project lock** above). Optional **`--golden-path`** (forwarded **`-testGoldenPath`**) asserts integer **CityStats** fields against a committed JSON — mismatch → exit **8**. Example: **`npm run unity:testmode-batch -- --quit-editor-first --scenario-id reference-flat-32x32`**. Full matrix, **CI** tick bounds, golden regeneration: [`tools/fixtures/scenarios/README.md`](../tools/fixtures/scenarios/README.md); stage **31c** trace: [`projects/TECH-31c-verification-pipeline.md`](../projects/TECH-31c-verification-pipeline.md). |
-| **Path B — IDE agent bridge** | After **`db:bridge-preflight`**: at least **`get_play_mode_status`** or full **`enter_play_mode`** → **`debug_context_bundle`** (optional) → **`exit_play_mode`** with **`timeout_ms`:** **`40000`** (initial; follow **timeout escalation protocol** on timeout) — **`ok`**, **`error`**, or **`timeout`** plus **`command_id`** if present. |
+| **Path B — IDE agent bridge** | After **`db:bridge-preflight`**: acquire play_mode lease via **`unity_bridge_lease(acquire)`** → at least **`get_play_mode_status`** or full **`enter_play_mode`** → **`debug_context_bundle`** (optional) → **`exit_play_mode`** → **`unity_bridge_lease(release)`** with **`timeout_ms`:** **`40000`** (initial; follow **timeout escalation protocol** on timeout) — **`ok`**, **`error`**, or **`timeout`** plus **`command_id`** if present. If lease returns **`lease_unavailable`**, retry every 60 s up to 10 min then report **`play_mode_lease: skipped_busy`**. |
 
 If **Path B** was not run, state **why** (e.g. no Editor, preflight non-zero) — do not omit the row.
 
 **Skills:** [`ia/skills/agent-test-mode-verify/SKILL.md`](../ia/skills/agent-test-mode-verify/SKILL.md), [`ia/skills/ide-bridge-evidence/SKILL.md`](../ia/skills/ide-bridge-evidence/SKILL.md), [`ia/skills/close-dev-loop/SKILL.md`](../ia/skills/close-dev-loop/SKILL.md).
+
+## Multi-agent concurrency (Play Mode lease)
+
+When multiple agent sessions share one Unity Editor and Postgres instance, use **`unity_bridge_lease`** (migration `0010_agent_bridge_lease.sql`) to serialize Play Mode access:
+
+1. **Before `enter_play_mode`** — call `unity_bridge_lease(action: acquire, agent_id: "{ISSUE_ID}", kind: play_mode)`. Store the returned `lease_id`.
+2. **After `exit_play_mode`** — call `unity_bridge_lease(action: release, lease_id: "{lease_id}")`.
+3. **On `lease_unavailable`** — wait 60 s, retry. After 10 min total, skip Play Mode evidence and report `play_mode_lease: skipped_busy` in the Verification block.
+4. **TTL safety** — leases expire after 8 min. A crashed agent's lease self-clears; call `unity_bridge_lease(action: status)` to confirm before waiting.
+
+Non-Play-Mode commands (`export_agent_context`, `get_compilation_status`, `get_console_logs`, `economy_balance_snapshot`, `prefab_manifest`) do **not** require a lease — the Postgres FIFO queue serializes them naturally. `npm run unity:compile-check` (batchmode) is fully independent and never requires a lease.
 
 ## Timeout escalation protocol
 

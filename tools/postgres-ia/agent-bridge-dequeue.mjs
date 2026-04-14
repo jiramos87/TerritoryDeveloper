@@ -31,6 +31,17 @@ const client = new pg.Client({ connectionString: databaseUrl });
 
 try {
   await client.connect();
+
+  // Sweep expired Play Mode leases (migration 0010). Non-fatal if table absent on older deploys.
+  try {
+    await client.query(
+      `UPDATE agent_bridge_lease SET status = 'expired'
+       WHERE status = 'active' AND expires_at < now()`,
+    );
+  } catch {
+    // Table absent (migration 0010 not yet applied) — safe to ignore.
+  }
+
   let rows;
   try {
     await client.query('BEGIN');

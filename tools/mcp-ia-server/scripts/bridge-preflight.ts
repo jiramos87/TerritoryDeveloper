@@ -50,15 +50,24 @@ async function main(): Promise<number> {
     return 2;
   }
 
-  // Step 3: Check agent_bridge_job table
+  // Step 3: Check required bridge tables (migrations 0008 + 0010).
   try {
-    const res = await client.query(
-      `SELECT 1 FROM information_schema.tables
-       WHERE table_schema = 'public' AND table_name = 'agent_bridge_job'`,
+    const res = await client.query<{ table_name: string }>(
+      `SELECT table_name FROM information_schema.tables
+       WHERE table_schema = 'public'
+         AND table_name IN ('agent_bridge_job', 'agent_bridge_lease')`,
     );
-    if (res.rowCount === 0) {
+    const found = new Set(res.rows.map((r) => r.table_name));
+
+    if (!found.has("agent_bridge_job")) {
       console.error("bridge-preflight: exit 3 — table agent_bridge_job not found.");
       console.error("  Run: npm run db:migrate (migration 0008_agent_bridge_job.sql)");
+      await client.end();
+      return 3;
+    }
+    if (!found.has("agent_bridge_lease")) {
+      console.error("bridge-preflight: exit 3 — table agent_bridge_lease not found.");
+      console.error("  Run: npm run db:migrate (migration 0010_agent_bridge_lease.sql)");
       await client.end();
       return 3;
     }

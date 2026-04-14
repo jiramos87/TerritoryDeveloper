@@ -9,6 +9,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/load-repo-env.inc.sh"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 territory_load_repo_dotenv_files "$REPO_ROOT"
+# shellcheck source=unity-editor-helpers.inc.sh
+source "${SCRIPT_DIR}/unity-editor-helpers.inc.sh"
 
 usage() {
   cat <<EOF
@@ -187,6 +189,7 @@ if [[ ${#EXTRA[@]} -gt 0 ]]; then
   UNITY_ARGS+=("${EXTRA[@]}")
 fi
 
+territory_preserve_editor_layout
 echo "unity-testmode-batch: project=$REPO_ROOT log=$LOG_FILE" >&2
 set +e
 "$UNITY_BIN" "${UNITY_ARGS[@]}"

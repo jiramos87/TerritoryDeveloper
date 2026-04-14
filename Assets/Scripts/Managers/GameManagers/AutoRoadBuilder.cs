@@ -185,6 +185,8 @@ public class AutoRoadBuilder : MonoBehaviour
             return;
         if (!cityStats.simulateGrowth)
             return;
+        if (cityStats.cityPowerOutput > 0 && !cityStats.GetCityPowerAvailability())
+            return;
 
         CompletedSegmentsThisTick.Clear();
         batchPlacedFromResolvedRoadCells.Clear();

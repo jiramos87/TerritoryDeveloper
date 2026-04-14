@@ -25,19 +25,34 @@ Optional, dev-machine-only `unity_bridge_command` / `unity_bridge_get` (glossary
 | Requirement | Notes |
 |---|---|
 | `DATABASE_URL` or `config/postgres-dev.json` | Same as Editor export registry |
-| Migration `0008_agent_bridge_job.sql` | `npm run db:migrate` |
+| Migrations `0008_agent_bridge_job.sql` + `0010_agent_bridge_lease.sql` | `npm run db:migrate` |
 | Unity Editor on repo root | `AgentBridgeCommandRunner` polls dequeue. Missing → `npm run unity:ensure-editor` |
 | Play Mode for `capture_screenshot` | Edit Mode → `ok: false` error |
+
+## Play Mode lease (multi-agent concurrency)
+
+When multiple agents or sessions may be active on the same machine, acquire the Play Mode lease before `enter_play_mode` and release it after `exit_play_mode`. Non-Play-Mode commands (`export_agent_context`, `get_compilation_status`, `get_console_logs`) do not require a lease.
+
+```
+unity_bridge_lease(action: acquire, agent_id: "{ISSUE_ID or session tag}", kind: play_mode)
+  → store lease_id
+  → [Play Mode commands]
+unity_bridge_lease(action: release, lease_id: "{lease_id}")
+```
+
+**On `lease_unavailable`:** retry with 60 s backoff up to 10 min total. If still busy, skip Play Mode evidence and emit `play_mode_lease: skipped_busy` in the Verification block. TTL is 8 min: a crashed agent's lease auto-expires; call `status` to confirm.
 
 ## Agent-led verification (Play Mode smoke)
 
 Agents run acceptance via bridge instead of asking human to click Play/Stop. Order:
 
+0b. `unity_bridge_lease(acquire)` — claim Play Mode lease (store `lease_id`).
 1. `get_play_mode_status` — baseline.
 2. `enter_play_mode` — expect `ok: true`, `ready: true`, `play_mode_state: play_mode_ready`, grid dimensions when `has_grid_dimensions`.
 3. `get_play_mode_status` — confirm active.
 4. Optional: `debug_context_bundle` with `seed_cell "x,y"` — `response.bundle` (cell export, screenshot, console, anomalies). Deferred completion for PNG.
 5. `exit_play_mode` — expect `play_mode_state: edit_mode`.
+6. `unity_bridge_lease(release, lease_id)` — release lease.
 
 Record `command_id` values in chat/spec. For Game view: `capture_screenshot` with `include_ui: true`, or `debug_context_bundle` (uses Game view `ScreenCapture` when `include_screenshot` true).
 

@@ -9,6 +9,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/load-repo-env.inc.sh"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 territory_load_repo_dotenv_files "$REPO_ROOT"
+# shellcheck source=unity-editor-helpers.inc.sh
+source "${SCRIPT_DIR}/unity-editor-helpers.inc.sh"
 
 UNITY_BIN="${UNITY_EDITOR_PATH:-}"
 if [[ -z "$UNITY_BIN" && "$(uname -s)" == "Darwin" ]]; then
@@ -32,6 +34,7 @@ fi
 LOG_DIR="$REPO_ROOT/tools/reports"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/unity-compile-check-$(date -u +%Y%m%d-%H%M%S).log"
+territory_preserve_editor_layout
 echo "unity-compile-check: project=$REPO_ROOT log=$LOG_FILE" >&2
 "$UNITY_BIN" -batchmode -nographics -quit -projectPath "$REPO_ROOT" -logFile "$LOG_FILE"
 echo "unity-compile-check: success log=$LOG_FILE" >&2

@@ -11,6 +11,18 @@ Use `verify-loop` subagent (`.claude/agents/verify-loop.md`) to orchestrate the 
 
 Distinct from `/verify`: `/verify` runs the lightweight `verifier` subagent (single pass, no code edits, policy-only reporting). `/verify-loop` runs the full closed-loop recipe with bounded fix iteration (Edit allowed narrowly for Step 6 fixes only).
 
+## Step 0 — Context banner (before dispatch, when ISSUE_ID present)
+
+If `$ARGUMENTS` contains a leading ISSUE_ID (`BUG-` / `FEAT-` / `TECH-` / `ART-` / `AUDIO-`), resolve and print before dispatching:
+
+1. Glob `ia/projects/*-master-plan.md` → grep each for the ISSUE_ID → identify owning master plan.
+2. Print:
+   ```
+   VERIFY-LOOP {ISSUE_ID} — {issue title from BACKLOG.md}
+     master plan : {Plan Name} (ia/projects/{master-plan-filename})
+   ```
+   If no master plan found: `master plan: (none — standalone issue)`. If no ISSUE_ID in args, skip banner.
+
 ## Subagent prompt (forward verbatim)
 
 Forward via Agent tool with `subagent_type: "verify-loop"`:

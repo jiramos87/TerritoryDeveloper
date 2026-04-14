@@ -53,13 +53,12 @@ tools/reports/**
 !tools/reports/.gitkeep
 !tools/reports/compute-utilities-inventory.md
 !tools/reports/compute-utilities-rng-derivation.md
-# MCP IA server (Node)
-tools/mcp-ia-server/node_modules/
+# Node — all workspaces (tools/*, web/, root)
+node_modules/
+
+# MCP IA server build artifacts
 tools/mcp-ia-server/dist/
 tools/mcp-ia-server/coverage/
-
-# Postgres IA tooling (TECH-44b)
-tools/postgres-ia/node_modules/
 
 # Local env (never commit secrets)
 .env

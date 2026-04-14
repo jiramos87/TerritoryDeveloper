@@ -7,6 +7,20 @@ argument-hint: "{ISSUE_ID} (e.g. BUG-14)"
 
 Use `closeout` subagent (`.claude/agents/closeout.md`) for umbrella close on `$ARGUMENTS`. All ops (destructive and non-destructive) run without human confirmation. Per-stage close inside multi-stage spec uses inline `project-stage-close` skill, not this command.
 
+## Step 0 — Context banner (before dispatch)
+
+Before dispatching the subagent, resolve and print for the human developer:
+
+1. Glob `ia/projects/$ARGUMENTS*.md` → confirm spec file + extract short description from filename.
+2. Glob `ia/projects/*-master-plan.md` → grep each for `$ARGUMENTS` → identify owning master plan.
+3. Print:
+   ```
+   CLOSEOUT $ARGUMENTS — {issue title from BACKLOG.md}
+     master plan : {Plan Name} (ia/projects/{master-plan-filename})
+     spec        : ia/projects/{spec-filename}
+   ```
+   If no master plan found: `master plan: (none — standalone issue)`.
+
 ## Subagent prompt (forward verbatim)
 
 Forward to subagent via Agent tool with `subagent_type: "closeout"`:

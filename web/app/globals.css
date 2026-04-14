@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palette — raw values */
+  --color-raw-black: #0a0a0a;
+  --color-raw-panel: #1a1a1a;
+  --color-raw-text: #e8e8e8;
+  --color-raw-red: #d63838;
+  --color-raw-amber: #e8a33d;
+  --color-raw-grey-500: #6a6a6a;
+  --color-raw-green: #3a9b4a;
+
+  /* Palette — semantic aliases */
+  --color-bg-canvas: #0a0a0a;
+  --color-bg-panel: #1a1a1a;
+  --color-text-primary: #e8e8e8;
+  --color-text-accent-critical: #d63838;
+  --color-text-accent-warn: #e8a33d;
+  --color-text-muted: #6a6a6a;
+
+  /* Palette — status semantic aliases */
+  --color-bg-status-done: #3a9b4a;
+  --color-text-status-done-fg: #0a0a0a;
+  --color-bg-status-progress: #e8a33d;
+  --color-text-status-progress-fg: #0a0a0a;
+  --color-bg-status-pending: #6a6a6a;
+  --color-text-status-pending-fg: #e8e8e8;
+  --color-bg-status-blocked: #d63838;
+  --color-text-status-blocked-fg: #e8e8e8;
+
+  /* Typography — font families */
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  /* Typography — font sizes (size / line-height) */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+
+  /* Spacing — 4px base, 8-step scale */
+  --spacing-0: 0rem;
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-12: 3rem;
+}

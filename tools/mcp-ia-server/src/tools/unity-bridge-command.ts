@@ -108,6 +108,12 @@ const unityBridgeCommandInputShape = {
     .describe(
       "debug_context_bundle only: when false, skip Moore neighborhood anomaly rules (bundle.anomaly_scan_skipped true). Default true.",
     ),
+  agent_id: z
+    .string()
+    .optional()
+    .describe(
+      "Caller identity for audit — use issue id (e.g. 'TECH-121') or session tag. Stored in agent_bridge_job.agent_id. Default 'anonymous'. For Play Mode commands, pair with unity_bridge_lease to prevent concurrent session conflicts.",
+    ),
 };
 
 /** Exported for unit tests (Zod validation of MCP arguments). */
@@ -263,6 +269,7 @@ function buildRequestEnvelope(
     command_id: commandId,
     requested_at_utc: new Date().toISOString(),
     kind: input.kind,
+    agent_id: input.agent_id ?? "anonymous",
   };
   if (input.kind === "export_agent_context") {
     const trimmed = input.seed_cell?.trim();
@@ -363,9 +370,9 @@ export async function runUnityBridgeCommand(
 
   try {
     await pool.query(
-      `INSERT INTO agent_bridge_job (command_id, kind, status, request)
-       VALUES ($1::uuid, $2, $3, $4::jsonb)`,
-      [commandId, input.kind, "pending", JSON.stringify(envelope)],
+      `INSERT INTO agent_bridge_job (command_id, kind, status, request, agent_id)
+       VALUES ($1::uuid, $2, $3, $4::jsonb, $5)`,
+      [commandId, input.kind, "pending", JSON.stringify(envelope), input.agent_id ?? "anonymous"],
     );
   } catch (e) {
     return {

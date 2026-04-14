@@ -43,7 +43,7 @@
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
-**Backlog state (Step 1):** 0 filed
+**Backlog state (Step 1):** 1 closed (Stage 1.1 — **TECH-136** archived 2026-04-14; supersedes **TECH-129**..**TECH-134** — stage compress 2026-04-14)
 
 **Objectives:** Bootstrap the `web/` workspace as a Next.js 14+ App Router app inside the existing monorepo, wire Vercel deploy on push to `main`, and fold the new workspace into `npm run validate:all` so CI catches lint / typecheck / build regressions. Land a design-system token layer (NYT dark palette, FUTBIN data density, JSON-exported palette for future Unity UI/UX reuse) plus the core data-dense primitives (`DataTable`, `StatBar`, `BadgeChip`, `FilterChips`, `HeatmapCell`, `AnnotatedMap`) needed by every downstream step. Scaffold layer must ship before any public page / wiki / dashboard work; design system must ship before public surface authoring starts so content is not later retrofit to tokens.
 
@@ -71,7 +71,7 @@
 
 #### Stage 1.1 — Scaffold + deploy + CI
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — TECH-136 done (archived); Phase 2 human-action items (Vercel link + throwaway PR CI verify) pending — 1 consolidated task closed (**TECH-136**; supersedes **TECH-129**..**TECH-134** — stage compress 2026-04-14)
 
 **Objectives:** Land the `web/` Next.js workspace inside the monorepo, wire Vercel deploy on push, and integrate the new workspace into `npm run validate:all` so lint / typecheck / build regressions trip CI. Document the new surface in `web/README.md` + `CLAUDE.md` + `AGENTS.md` so future agents discover it cold.
 
@@ -86,24 +86,19 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Workspace bootstrap (root workspaces + Next.js scaffold).
-- [ ] Phase 2 — Deploy + CI integration (Vercel link + `validate:all` entry).
-- [ ] Phase 3 — Documentation (web README + repo-level docs append).
+- [x] Phase 1 — Workspace bootstrap (root workspaces + Next.js scaffold).
+- [ ] Phase 2 — Deploy + CI integration (Vercel link + `validate:all` entry). _(validate:all wired + green; Vercel link + throwaway-PR CI verify pending — human action)_
+- [x] Phase 3 — Documentation (web README + repo-level docs append).
 
 **Tasks:**
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T1.1.1 | 1 | _pending_ | _pending_ | Edit root `package.json` to add `"workspaces": ["web", "tools/*"]` additively; verify existing `tools/*` installs still resolve via `npm install` at repo root. No behavior change to existing scripts. |
-| T1.1.2 | 1 | _pending_ | _pending_ | Run `npx create-next-app@latest web --ts --app --tailwind --eslint` with default App Router options; commit generated scaffold with stubbed `web/app/page.tsx`, `web/app/layout.tsx`, `tailwind.config.ts`, `tsconfig.json` (strict). Delete Next.js default marketing page content; leave placeholder `<h1>Territory Developer</h1>`. |
-| T1.1.3 | 2 | _pending_ | _pending_ | Link Vercel project to `territory-developer` repo via Vercel dashboard; set build root = `web/`, framework preset = Next.js, production branch = `main`. Trigger first deploy; capture `*.vercel.app` URL in `web/README.md`. |
-| T1.1.4 | 2 | _pending_ | _pending_ | Extend `npm run validate:all` (root `package.json` scripts) to invoke `cd web && npm run lint && npm run typecheck && npm run build` (or equivalent composite). Verify local chain + CI pipeline (`.github/workflows/*` if present) both run the new step. |
-| T1.1.5 | 3 | _pending_ | _pending_ | Author `web/README.md` covering: local dev (`cd web && npm run dev`), build (`npm run build`), content conventions (MDX tree planning, will firm up in later steps), and the caveman-exception rule for public copy (cite `ia/rules/agent-output-caveman.md` §exceptions, summary of allowed full-English surfaces under `web/content/**` + `web/app/**` user-facing pages). |
-| T1.1.6 | 3 | _pending_ | _pending_ | Append `§Web` section to `CLAUDE.md` (after §5 Key commands) and `AGENTS.md` (matching workflow section); each section points to `web/README.md`, lists dev commands, and flags caveman-exception boundary. Single PR carries both edits alongside Stage 1.1 scaffold. |
+| T1.1.1 | 1 | **TECH-136** | Done (archived) | Scaffold `web/` Next.js 14+ workspace — root workspaces entry, App Router scaffold w/ TS strict + Tailwind + ESLint, Vercel deploy link (prod branch `main`, capture `*.vercel.app` URL), extend root `validate:all` CI chain, author `web/README.md`, append `§Web` to `CLAUDE.md` + `AGENTS.md`. Supersedes T1.1.1..T1.1.6 (TECH-129..TECH-134) — stage compress 2026-04-14. |
 
 #### Stage 1.2 — Design system foundation
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — tokens + Tailwind wiring task + DataTable/BadgeChip + StatBar/FilterChips tasks closed (archived 2026-04-14); TECH-145..TECH-146 Draft (Phase 2 + 3)
 
 **Objectives:** Land the token layer (NYT dark palette, type scale, spacing) and the six core primitives (`DataTable`, `StatBar`, `BadgeChip`, `FilterChips`, `HeatmapCell`, `AnnotatedMap`) that every downstream public page / wiki / dashboard will consume. Export the palette as JSON under `web/lib/tokens/palette.json` so future Unity UI/UX master plan can consume the same design language (per Q15 cross-cutting note). Ship a `/design` route as a live visual-review surface covering all primitives against fixture data.
 
@@ -125,12 +120,12 @@
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T1.2.1 | 1 | _pending_ | _pending_ | Author `web/lib/tokens/palette.json` + `type-scale.json` + `spacing.json`. Palette: NYT-dark-choropleth base (near-black bg `#0a0a0a`, mid `#1a1a1a`, text `#e8e8e8`, red accent `#d63838`, amber `#e8a33d`, muted greys). Type: mono + sans stack with 6-step scale. Spacing: 4px base, 8-step scale. Include semantic aliases (`bg-canvas`, `bg-panel`, `text-accent-critical`, etc.) — consumers reference aliases, not raw hex. |
-| T1.2.2 | 1 | _pending_ | _pending_ | Wire `web/tailwind.config.ts` to import the three token JSON files and feed them into `theme.extend.colors` / `fontFamily` / `spacing`. Remove the create-next-app default Tailwind palette overrides. Verify a throwaway page using `bg-canvas text-accent-critical` renders the expected colors in dev. |
-| T1.2.3 | 2 | _pending_ | _pending_ | Author `web/components/DataTable.tsx` + `BadgeChip.tsx`. DataTable: typed `columns` + `rows` props, sortable column indicators (no client interactivity yet — just the aria/header shape), status-cell slot. BadgeChip: `status` enum (`done` / `in-progress` / `pending` / `blocked`) mapped to palette semantic aliases. Both SSR-only (no `"use client"`). |
-| T1.2.4 | 2 | _pending_ | _pending_ | Author `web/components/StatBar.tsx` + `FilterChips.tsx`. StatBar: horizontal bar with label + value + max; semantic color by threshold. FilterChips: list of chip labels with `active` prop; SSR-only at this stage (client interactivity added when dashboard consumes them in Step 3). |
-| T1.2.5 | 2 | _pending_ | _pending_ | Author `web/components/HeatmapCell.tsx` + `AnnotatedMap.tsx`. HeatmapCell: single grid cell with `intensity` (0–1) → palette bucket. AnnotatedMap: SVG wrapper with `regions` + `annotations` props; renders NYT-style spaced-caps geo labels. Both SSR-only. |
-| T1.2.6 | 3 | _pending_ | _pending_ | Author `web/app/design/page.tsx` rendering every primitive from T1.2.3–T1.2.5 against 2–3 fixture variants each. Add a brief header explaining the page is internal-review-only. Update `web/README.md` §Tokens documenting the palette JSON export contract (keys, semantic alias convention, Unity UI/UX consumption pattern stub). |
+| T1.2.1 | 1 | _(archived)_ | Done (archived) | Tokens + Tailwind wiring — see BACKLOG-ARCHIVE.md 2026-04-14. Authored `web/lib/tokens/{palette,type-scale,spacing}.json` + semantic aliases; wired via Tailwind v4 `@theme` CSS custom properties in `globals.css`. |
+| T1.2.2 | 1 | _(archived)_ | Done (archived) | _(merged into T1.2.1 — see archive)_ |
+| T1.2.3 | 2 | _(archived)_ | Done (archived) | DataTable + BadgeChip SSR-only primitives — see BACKLOG-ARCHIVE.md 2026-04-14. Authored `web/components/DataTable.tsx` (typed generic `<T,>` + `Column<T>` + `statusCell` slot + `aria-sort`-only sortable indicator) + `BadgeChip.tsx` (4-status enum → `bg-status-*` + `text-status-*-fg` semantic aliases). Phase 1 extended palette JSON + `@theme` w/ new `raw.green` + 8 status aliases before component authoring. |
+| T1.2.4 | 2 | _(archived)_ | Done (archived) | StatBar + FilterChips SSR-only primitives — see BACKLOG-ARCHIVE.md 2026-04-14. Authored `web/components/StatBar.tsx` (`TIER_FILL` dispatch → semantic `bg-[var(--color-text-accent-warn\|critical)]` arbitrary utilities; raw-value tier resolution; `pct` clamp guards `max ≤ 0`) + `FilterChips.tsx` (`chips[]` row, no `onClick`, `active` → `bg-panel`/`text-primary`). No new `bg-accent-*` palette aliases added (deferred until ≥2 bar-style consumers). |
+| T1.2.5 | 2 | **TECH-145** | Draft | Author `web/components/HeatmapCell.tsx` + `AnnotatedMap.tsx`. HeatmapCell: single grid cell with `intensity` (0–1) → palette bucket. AnnotatedMap: SVG wrapper with `regions` + `annotations` props; renders NYT-style spaced-caps geo labels. Both SSR-only. |
+| T1.2.6 | 3 | **TECH-146** | Draft | Author `web/app/design/page.tsx` rendering every primitive from T1.2.3–T1.2.5 against 2–3 fixture variants each. Add a brief header explaining the page is internal-review-only. Update `web/README.md` §Tokens documenting the palette JSON export contract (keys, semantic alias convention, Unity UI/UX consumption pattern stub). |
 
 ---
 
@@ -220,5 +215,17 @@ Materialize when the named step opens (per `ia/rules/project-hierarchy.md` lazy-
 - Insert BACKLOG rows directly into this doc — only `stage-file` materializes them.
 - Couple web platform work to game ship date (Q3 locked decision) — web investment proceeds independently.
 - Consume the MCP server (`territory-ia`) from the Next.js app — MCP stays stdio dev-only (Q7 lock).
+
+---
+
+## Orchestrator Decision Log
+
+| Date | Decision | Rationale | Alternatives considered |
+|------|----------|-----------|------------------------|
+| 2026-04-14 | Compress Stage 1.1 from 6 tasks (TECH-129..TECH-134) to 1 consolidated issue (TECH-136) | Each original task was ≤1 file or docs-only; no task had been kicked off; single orchestration unit reduces step overhead and handoff friction | Keep 6-task split — rejected, over-granular for units this small |
+| 2026-04-14 | `npm --prefix web` composition for `validate:all` (not `cd web && …`) | Cleaner exit-code propagation; no subshell state quirks | `cd web && …` — rejected |
+| 2026-04-14 | Caveman-exception scope narrowed to user-facing rendered text (`web/content/**` + page-body JSX strings in `web/app/**/page.tsx`) | Prevents drift in app shell code, identifiers, commits, comments, IA prose | Broader `web/app/**` scope — rejected, invites non-rendered prose to go full-English |
+| 2026-04-14 | Vercel link + first deploy flagged `[HUMAN ACTION]` upfront in future stage specs | Dashboard-only; no CLI auth in agent env; discovered mid-Phase-2 on TECH-136 | Attempt CLI automation — rejected, no creds surface |
+| 2026-04-14 | Stage 1.2: merge T1.2.1 + T1.2.2 → single tokens + Tailwind wiring task (archived) | Tokens + wiring ship together; smoke verify (`bg-canvas text-accent-critical`) needs both halves; each side ≤2 files | Keep split 6-task stage — rejected per task sizing heuristic (two ≤2-file tasks) |
 
 ---

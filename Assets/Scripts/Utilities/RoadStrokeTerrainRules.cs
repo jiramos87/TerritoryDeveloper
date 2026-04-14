@@ -5,13 +5,17 @@ using Territory.Terrain;
 namespace Territory.Utilities
 {
     /// <summary>
-    /// Land slope eligibility for road strokes (manual, AUTO, interstate). Diagonal + corner-up terrain
+    /// Land slope eligibility for road strokes (manual, AUTO, interstate). Outer-corner diagonal terrain
     /// disallowed → paths truncate or pathfinding must not step onto those cells.
+    /// Corner-up (concave inner-corner) cells ARE allowed — they appear at dual-slope band crossings.
     /// </summary>
     public static class RoadStrokeTerrainRules
     {
         /// <summary>
-        /// Allowed: <see cref="TerrainSlopeType.Flat"/> + cardinal ramps (N/S/E/W). All other land slope types disallowed.
+        /// Allowed: <see cref="TerrainSlopeType.Flat"/> + cardinal ramps (N/S/E/W) + corner-up concave cells
+        /// (NorthEastUp/NorthWestUp/SouthEastUp/SouthWestUp). Corner-up cells appear at the intersection of
+        /// two elevation-band transitions along a straight path (e.g. h=0→h=1→h=2); they are passable terrain
+        /// and must not truncate a multi-slope road preview. Diagonal/outer-corner slopes still disallowed.
         /// </summary>
         public static bool IsLandSlopeAllowedForRoadStroke(TerrainSlopeType slopeType)
         {
@@ -19,7 +23,11 @@ namespace Territory.Utilities
                 || slopeType == TerrainSlopeType.North
                 || slopeType == TerrainSlopeType.South
                 || slopeType == TerrainSlopeType.East
-                || slopeType == TerrainSlopeType.West;
+                || slopeType == TerrainSlopeType.West
+                || slopeType == TerrainSlopeType.NorthEastUp
+                || slopeType == TerrainSlopeType.NorthWestUp
+                || slopeType == TerrainSlopeType.SouthEastUp
+                || slopeType == TerrainSlopeType.SouthWestUp;
         }
 
         /// <summary>

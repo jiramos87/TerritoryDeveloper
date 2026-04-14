@@ -30,7 +30,7 @@ Follow `ia/skills/project-spec-close/SKILL.md` end-to-end. High-level:
 # Hard boundaries
 
 - Do NOT use `rm -rf`. Spec deletion is `rm <single-file>`. Denylist hook blocks `rm -rf` against `ia`, `MEMORY.md`, `.claude`, `.git`, `/`, `~` anyway.
-- Do NOT run `project-stage-close` automatically. After step 6 of `project-spec-close`, if the just-closed issue was the last task in a parent orchestrator stage, **surface a reminder** to the user to run `project-stage-close` on that orchestrator. Control stays with the user.
+- When the just-closed issue is the last task in a parent orchestrator stage (all tasks `Done` / `Done (archived)`), **automatically run `project-stage-close` inline** on that orchestrator before step 7. Do not surface a reminder and wait — execute the full 8-step `project-stage-close` procedure so the stage handoff is part of this same atomic closeout.
 - Do NOT delete spec before lessons migrated. Lessons recovered from spec body; gone → git history only.
 - Do NOT skip `validate:dead-project-specs` re-run after deletion. Closeout incomplete until validator confirms path gone.
 - Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard.
