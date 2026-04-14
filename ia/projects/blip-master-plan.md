@@ -134,9 +134,9 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.3.1 | BlipVoiceState struct | 1 | **TECH-116** | Draft | `BlipVoiceState` struct — `phaseA..phaseD` (double), `envLevel`, `envStage`, `filterZ1`, `rngState` (xorshift seed), `samplesElapsed`. Blittable; lives in caller. |
-| T1.3.2 | Oscillator bank | 1 | **TECH-117** | Draft | Oscillator bank — sine (`Math.Sin` MVP), triangle, square, pulse (duty param), noise-white (xorshift on `rngState`). Phase-accumulator; frequency from patch osc + `pitchMult`. |
-| T1.3.3 | AHDSR state machine | 2 | **TECH-118** | Draft | AHDSR stage machine — `Idle → Attack → Hold → Decay → Sustain → Release → Idle`. Transitions via `samplesElapsed` + per-stage duration from patch (durations already ≥ 1 ms by `BlipPatch.OnValidate` clamp — see T1.2.3). |
+| T1.3.1 | BlipVoiceState struct | 1 | **TECH-116** | Done | `BlipVoiceState` struct — `phaseA..phaseD` (double), `envLevel`, `envStage`, `filterZ1`, `rngState` (xorshift seed), `samplesElapsed`. Blittable; lives in caller. |
+| T1.3.2 | Oscillator bank | 1 | **TECH-117** | Done | Oscillator bank — sine (`Math.Sin` MVP), triangle, square, pulse (duty param), noise-white (xorshift on `rngState`). Phase-accumulator; frequency from patch osc + `pitchMult`. |
+| T1.3.3 | AHDSR state machine | 2 | **TECH-118** | Done | AHDSR stage machine — `Idle → Attack → Hold → Decay → Sustain → Release → Idle`. Transitions via `samplesElapsed` + per-stage duration from patch (durations already ≥ 1 ms by `BlipPatch.OnValidate` clamp — see T1.2.3). |
 | T1.3.4 | Envelope level math | 2 | **TECH-119** | Draft | Envelope level math — per-stage `BlipEnvShape` selector. Linear: straight ramp (attack 0→1, decay 1→sustain, release sustain→0). Exponential: `target + (start - target) * exp(-t/τ)` with τ = stageDuration/4 (≈98 % settled at stage end; perceptual linear). Multiplies output sample. |
 | T1.3.5 | One-pole LP filter | 3 | **TECH-120** | Draft | One-pole LP filter in-loop — `y[n] = y[n-1] + a * (x[n] - y[n-1])` where `a = 1 - exp(-2π * cutoff / sampleRate)`. `z1` on `BlipVoiceState`. `filter.kind == None` → `a = 1.0` (passthrough, single kernel, no branch). |
 | T1.3.6 | Render driver loop | 3 | **TECH-121** | Draft | `BlipVoice.Render` driver — per-sample loop: osc sum × envelope × filter → buffer. Uses `ref state`. Zero alloc verified. |

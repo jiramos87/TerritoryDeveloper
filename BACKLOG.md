@@ -2,7 +2,7 @@
 
 > Single source of truth for project issues. Reference via `@BACKLOG.md` in agent conversation. Closed work → [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Use **`mcp__territory-ia__backlog_issue`** for slice access.
 >
-> **Lane order (highest first):** § Compute-lib program → § Agent ↔ Unity & MCP context lane → § IA evolution lane → § UI-as-code program → § Economic depth lane → § Gameplay & simulation lane → § Multi-scale simulation lane → § Blip audio program → § High / § Medium / § Code Health / § Low. **Gameplay blockers** in § High Priority stay **interrupt** work — stop play / corrupt saves.
+> **Lane order (highest first):** § Compute-lib program → § Agent ↔ Unity & MCP context lane → § IA evolution lane → § UI-as-code program → § Economic depth lane → § Gameplay & simulation lane → § Multi-scale simulation lane → § Blip audio program → § Sprite gen lane → § High / § Medium / § Code Health / § Low. **Gameplay blockers** in § High Priority stay **interrupt** work — stop play / corrupt saves.
 >
 > **Closed program charters** (trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) + glossary): **Spec-pipeline** (territory-ia spec-pipeline program; exploration [`projects/spec-pipeline-exploration.md`](projects/spec-pipeline-exploration.md)) · **UI-as-code program** umbrella (UI-as-code program; **`ui-design-system.md`** Codebase inventory (uGUI)) · **TECH-39 computational MCP suite** (Computational MCP tools (TECH-39)).
 >
@@ -330,30 +330,6 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ### Stage 1.3 — Voice DSP kernel
 
-- [ ] **TECH-116** — `BlipVoiceState` blittable struct (per-voice DSP state)
-  - Type: infrastructure / runtime data
-  - Files: `Assets/Scripts/Audio/Blip/BlipVoiceState.cs`
-  - Spec: `ia/projects/TECH-116-blip-voice-state-struct.md`
-  - Notes: Stage 1.3 Phase 1 opener per [`blip-master-plan.md`](projects/blip-master-plan.md). Blittable struct — `phaseA..phaseD` (double phase accumulators), `envLevel` (float), `envStage` (`BlipEnvStage` enum: Idle, Attack, Hold, Decay, Sustain, Release), `filterZ1` (float LP memory), `rngState` (uint xorshift seed), `samplesElapsed` (int per-stage). Zero managed refs. Caller-owned; mutated via `ref` by `BlipVoice.Render`. Consumed by TECH-117..122.
-  - Acceptance: struct + `BlipEnvStage` enum compile; zero managed refs; `unity:compile-check` + `validate:all` green
-  - Depends on: none
-
-- [ ] **TECH-117** — `BlipVoice` oscillator bank (sine / triangle / square / pulse / noise)
-  - Type: infrastructure / DSP math
-  - Files: `Assets/Scripts/Audio/Blip/BlipOscillatorBank.cs` (or inlined in `BlipVoice.cs` per implementer)
-  - Spec: `ia/projects/TECH-117-blip-oscillator-bank.md`
-  - Notes: Stage 1.3 Phase 1 second task. Phase-accumulator osc family — sine (`Math.Sin` MVP; LUT reserved post-MVP per `docs/blip-post-mvp-extensions.md` §1), triangle (abs-ramp), square, pulse (duty 0..1), noise-white (xorshift on `BlipVoiceState.rngState`). Freq from `BlipOscillatorFlat.frequency * pitchMult`. Pure static per-kind helpers; zero allocs; no Unity API.
-  - Acceptance: five osc kinds emit expected shapes (verified Stage 1.4 T1.4.2); `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-116**
-
-- [ ] **TECH-118** — AHDSR envelope state machine (Idle → Attack → Hold → Decay → Sustain → Release)
-  - Type: infrastructure / DSP math
-  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs` (or sibling `BlipEnvelope.cs`)
-  - Spec: `ia/projects/TECH-118-blip-ahdsr-state-machine.md`
-  - Notes: Stage 1.3 Phase 2 opener. Per-sample state-machine step. Converts `attackMs` / `holdMs` / `decayMs` / `releaseMs` → sample counts via `sampleRate * ms / 1000`. Durations already ≥ 1 ms per TECH-113 clamp. `decayMs == 0` → Attack → Hold → Sustain shortcut (sustain-only fallback). MVP release triggered by `samplesElapsed` vs patch `durationSeconds` (one-shot). Stage entry resets `samplesElapsed`.
-  - Acceptance: six-stage FSM advances correctly; sustain-only case routes cleanly; `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-116**
-
 - [ ] **TECH-119** — Envelope level math (Linear + Exponential per-stage shapes)
   - Type: infrastructure / DSP math
   - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs` (or sibling `BlipEnvelope.cs`)
@@ -385,6 +361,44 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
   - Notes: Closes Stage 1.3 Phase 3. Pitch cents → `pow(2, cents/1200)` scales freq increments. Gain dB → `pow(10, dB/20)` scales output. Pan stashed on state for Step 2 mixer consumption (MVP mono kernel). Honors `BlipPatchFlat.deterministic` flag — bypass jitter + use `variantIndex` as RNG seed for reproducible bakes. Xorshift32 RNG seeded from `variantIndex * 0x9E3779B9 ^ voiceId`. Jitter computed once per `Render` invocation (not per sample).
   - Acceptance: pitch/gain/pan jitter applied per invocation; `deterministic=true` → stable sum-of-abs hash (Stage 1.4 T1.4.5); zero added allocs (Stage 1.4 T1.4.7); `unity:compile-check` + `validate:all` green
   - Depends on: **TECH-116**, **TECH-121**
+
+## Sprite gen lane
+
+Orchestrator: [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Geometry MVP. Stage 1.1 = Scaffolding + primitive renderer — filed below. Stages 1.2–1.4 + Steps 2–3 remain in master plan; file rows here when parent stage → `In Progress`.
+
+### Stage 1.1 — Scaffolding + Primitive Renderer (Layer 1)
+
+- [ ] **TECH-125** — `iso_cube` primitive (top + south + east faces, NW-light shade ramp)
+  - Type: infrastructure / rendering primitive
+  - Files: `tools/sprite-gen/src/primitives/iso_cube.py`
+  - Spec: `ia/projects/TECH-125-sprite-gen-iso-cube-primitive.md`
+  - Notes: Stage 1.1 Phase 2 opener. `iso_cube(canvas, x0, y0, w, d, h, material)` draws top rhombus (bright) + south parallelogram (mid) + east parallelogram (dark) via Pillow polygons. NW-light hardcoded. Pixel coords from 2:1 iso projection per exploration §5. Material stays stub RGB tuple MVP; palette integration lands Stage 1.3.
+  - Acceptance: three faces render w/ distinct bright/mid/dark ramp; signature matches Stage 1.1 Exit; `npm run validate:all` green
+  - Depends on: **TECH-124**
+
+- [ ] **TECH-126** — `iso_prism` primitive (sloped tops + triangular gables, axis NS/EW)
+  - Type: infrastructure / rendering primitive
+  - Files: `tools/sprite-gen/src/primitives/iso_prism.py`
+  - Spec: `ia/projects/TECH-126-sprite-gen-iso-prism-primitive.md`
+  - Notes: Stage 1.1 Phase 2 second task. `iso_prism(canvas, x0, y0, w, d, h, pitch, axis, material)` — two sloped top faces + two triangular end-faces. `axis ∈ {'ns','ew'}` selects ridge direction; `pitch` (0..1) scales ridge height. Same NW-light ramp as **TECH-125**. Enables pitched-roof archetypes in Stage 1.2+ YAML specs.
+  - Acceptance: both axes + pitch variants render cleanly; shade ramp matches iso_cube; `npm run validate:all` green
+  - Depends on: **TECH-124**
+
+- [ ] **TECH-127** — Canvas unit tests (pytest, §4 Examples table)
+  - Type: test / infrastructure
+  - Files: `tools/sprite-gen/tests/test_canvas.py`
+  - Spec: `ia/projects/TECH-127-sprite-gen-canvas-unit-tests.md`
+  - Notes: Stage 1.1 Phase 3 opener. Six asserts covering exploration §4 Examples rows — `canvas_size(1,1)=(64,0)`, `canvas_size(1,1,32)=(64,32)`, `canvas_size(3,3,96)=(192,96)`, `pivot_uv(64)=(0.5,0.25)`, `pivot_uv(128)=(0.5,0.125)`, `pivot_uv(192)=(0.5,16/192)`. Manual pytest gate — `npm run validate:all` does NOT yet cover Python (candidate CI fold-in: Stage 1.3 palette tests).
+  - Acceptance: `pytest tools/sprite-gen/tests/test_canvas.py` exits 0; all 6 asserts pass; `npm run validate:all` green
+  - Depends on: **TECH-124**
+
+- [ ] **TECH-128** — Primitive smoke tests (pytest + fixture PNGs)
+  - Type: test / infrastructure
+  - Files: `tools/sprite-gen/tests/test_primitives.py`, `tools/sprite-gen/tests/fixtures/` (new fixture PNGs)
+  - Spec: `ia/projects/TECH-128-sprite-gen-primitive-smoke-tests.md`
+  - Notes: Closes Stage 1.1. Renders `iso_cube(w=2,d=2,h=32,stub_bright_red)` to 64×64 canvas + `iso_prism` both axes; asserts non-transparent pixel count > 0 per visible face region. Saves fixture PNGs to `tests/fixtures/` for eyeball visual-regression reference (tracked, not gitignored).
+  - Acceptance: pytest smoke asserts pass; fixture PNGs emitted; `npm run validate:all` green
+  - Depends on: **TECH-125**, **TECH-126**
 
 ## High Priority
 
@@ -626,7 +640,7 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
   - Type: art/assets
   - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`
 
-*(Program history: [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Open lanes: **§ Compute-lib program**, **§ Agent ↔ Unity & MCP context lane**, **§ IA evolution lane**, **§ Economic depth lane**, **§ Gameplay & simulation lane**, **§ Multi-scale simulation lane**, **§ Blip audio program**, then standard priority sections.)*
+*(Program history: [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md). Open lanes: **§ Compute-lib program**, **§ Agent ↔ Unity & MCP context lane**, **§ IA evolution lane**, **§ Economic depth lane**, **§ Gameplay & simulation lane**, **§ Multi-scale simulation lane**, **§ Blip audio program**, **§ Sprite gen lane**, then standard priority sections.)*
 
 - [ ] **AUDIO-01** — Audio FX: demolition, placement, **zoning**, **forest (coverage)**, 3 music themes, ambient effects
   - Type: audio/feature
@@ -668,6 +682,7 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 5. Medium priority (important features, balance, improvements)
 6. **Multi-scale simulation lane** (orchestrator [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md); file rows only when parent stage → `In Progress`)
 7. **Blip audio program** (orchestrator [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md); file rows only when parent stage → `In Progress`)
-8. Code Health (technical debt, refactors, performance)
+8. **Sprite gen lane** (orchestrator [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-master-plan.md); file rows only when parent stage → `In Progress`)
+9. Code Health (technical debt, refactors, performance)
 9. Low priority (new systems, polish, content)
 8. **Archive** — completed work lives only in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)

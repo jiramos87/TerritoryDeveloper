@@ -69,3 +69,9 @@ tools/postgres-ia/node_modules/
 tools/fixtures/scenarios/.queued-test-scenario-id
 # Ad-hoc agent-written GameSaveData fixtures (run-scoped directories)
 tools/fixtures/scenarios/agent-generated/
+
+# sprite-gen scratch render dir — gitignored; promote flow copies to Assets/Sprites/Generated/
+tools/sprite-gen/out/
+# Python bytecode
+__pycache__/
+*.pyc

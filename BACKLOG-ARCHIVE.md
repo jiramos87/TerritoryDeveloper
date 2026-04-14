@@ -6,6 +6,46 @@
 
 ## Completed (moved from BACKLOG.md, 2026-04-13)
 
+- [x] **TECH-124** — `canvas.py` canvas sizing + Unity pivot math (2026-04-14)
+  - Type: infrastructure / DSP (geometry)
+  - Files: `tools/sprite-gen/src/canvas.py`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.1 Phase 1 second task. `canvas_size(fx, fy, extra_h=0) → (w, h)` per exploration §4 baseline `(fx+fy)*32`; `pivot_uv(canvas_h) → (0.5, 16/canvas_h)`. Pure functions, docstring cites §4. Must match **Tile dimensions** (tileWidth=1, tileHeight=0.5) so emitted PNGs align w/ Unity isometric diamond at PPU=64.
+  - Acceptance: both functions match §4 examples; docstrings cite source; `npm run validate:all` green
+  - Depends on: **TECH-123**
+
+- [x] **TECH-123** — `tools/sprite-gen/` folder scaffold + `requirements.txt` + README stub (2026-04-14)
+  - Type: infrastructure / tooling scaffold
+  - Files: `tools/sprite-gen/` (new: `src/__init__.py`, `src/primitives/__init__.py`, `tests/fixtures/`, `out/`, `requirements.txt`, `README.md`), `.gitignore`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.1 Phase 1 opener. Layout per exploration §9: `src/`, `src/primitives/`, `tests/`, `tests/fixtures/`, `specs/`, `palettes/`, `out/` (gitignored). `requirements.txt` pins pillow + numpy + scipy + pyyaml. README stub points at master plan + exploration doc. Python / Unity-isolated — no runtime **C#** touched.
+  - Acceptance: folder layout matches §9; `out/` gitignored; `requirements.txt` lists 4 deps; `npm run validate:all` green
+  - Depends on: none
+
+- [x] **TECH-118** — AHDSR envelope state machine (Idle → Attack → Hold → Decay → Sustain → Release) (2026-04-14)
+  - Type: infrastructure / DSP math
+  - Files: `Assets/Scripts/Audio/Blip/BlipEnvelope.cs` (static class `BlipEnvelopeStepper`)
+  - Spec: (removed after closure)
+  - Notes: Stage 1.3 Phase 2 opener. Per-sample state-machine step. Converts `attackMs` / `holdMs` / `decayMs` / `releaseMs` → sample counts via `sampleRate * ms / 1000`. Durations already ≥ 1 ms per TECH-113 clamp. `decayMs == 0` → Attack → Hold → Sustain shortcut (sustain-only fallback). MVP release triggered by `samplesElapsed` vs patch `durationSeconds` (one-shot). Stage entry resets `samplesElapsed`. Helper class named `BlipEnvelopeStepper` (not `BlipEnvelope`) to avoid CS0101 collision w/ patch-data struct in `BlipPatchTypes.cs`.
+  - Acceptance: six-stage FSM advances correctly; sustain-only case routes cleanly; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-116**
+
+- [x] **TECH-117** — `BlipVoice` oscillator bank (sine / triangle / square / pulse / noise) (2026-04-14)
+  - Type: infrastructure / DSP math
+  - Files: `Assets/Scripts/Audio/Blip/BlipOscillatorBank.cs` (or inlined in `BlipVoice.cs` per implementer)
+  - Spec: (removed after closure)
+  - Notes: Stage 1.3 Phase 1 second task. Phase-accumulator osc family — sine (`Math.Sin` MVP; LUT reserved post-MVP per `docs/blip-post-mvp-extensions.md` §1), triangle (abs-ramp), square, pulse (duty 0..1), noise-white (xorshift on `BlipVoiceState.rngState`). Freq from `BlipOscillatorFlat.frequency * pitchMult`. Pure static per-kind helpers; zero allocs; no Unity API.
+  - Acceptance: five osc kinds emit expected shapes (verified Stage 1.4 T1.4.2); `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-116**
+
+- [x] **TECH-116** — `BlipVoiceState` blittable struct (per-voice DSP state) (2026-04-14)
+  - Type: infrastructure / runtime data
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoiceState.cs`
+  - Spec: (removed after closure)
+  - Notes: Blip master-plan Stage 1.3 Phase 1 opener (task T1.3.1). `BlipVoiceState` blittable struct in `Territory.Audio` — 9 fields: `phaseA..phaseD` (double phase accumulators, 3 osc slots + LFO reserve), `envLevel` (float 0..1), `envStage` (`BlipEnvStage` reused from TECH-112 / `BlipPatchTypes.cs` — do NOT redeclare), `samplesElapsed` (int since stage entry), `filterZ1` (float one-pole LP memory), `rngState` (uint xorshift32 seed). Public fields, no ctor / properties — kernel mutates via `ref`. Zero managed refs. Default zero-init = Idle / silent. 4th phase slot (phaseD) reserved for LFO / post-MVP modulation (8 bytes padding; avoids struct churn when LFO lands). Caller-owned — lives outside static kernel; feeds TECH-117 (osc bank, writes phaseA..C + rngState) + TECH-118 (AHDSR, writes envStage + samplesElapsed) + TECH-119 (env level, writes envLevel) + TECH-120 (LP, writes filterZ1) + TECH-121 (render driver) + TECH-122 (jitter RNG). Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.3.
+  - Acceptance: struct + `BlipEnvStage` enum compile; zero managed refs; `unity:compile-check` + `validate:all` green
+  - Depends on: none
+
 - [x] **TECH-115** — `patchHash` content hash on `BlipPatch` + glossary rows (2026-04-14)
   - Type: infrastructure / glossary
   - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs`, `ia/specs/glossary.md`

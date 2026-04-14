@@ -1,6 +1,6 @@
 # Isometric Sprite Generator — Master Plan (Tools / Art Pipeline)
 
-> **Status:** Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)
+> **Status:** In Progress — Stage 1.1 (6 tasks filed as TECH-123 … TECH-128)
 >
 > **Scope:** Build `tools/sprite-gen/` — a Python CLI + 5-layer hybrid composer that renders isometric pixel art building sprites from YAML archetype specs, with slope-aware foundations, per-class palette management, and a curation workflow that promotes approved PNGs to `Assets/Sprites/Generated/`. Diffusion overlay (Phase 2) and EA bulk render (Phase 3) follow once geometry MVP ships. Non-square footprints, animation frames, water-facing slopes, and additional primitives are out of scope for v1.
 >
@@ -41,9 +41,9 @@
 
 ### Step 1 — Geometry MVP
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 1.1 (Stage 1.1 tasks filed; Stages 1.2–1.4 pending)
 
-**Backlog state (Step 1):** 0 filed
+**Backlog state (Step 1):** 6 filed (Stage 1.1 complete)
 
 **Objectives:** Build the full geometry-only sprite pipeline end-to-end: canvas math, `iso_cube` + `iso_prism` primitives with NW-light shade pass, YAML-driven compose layer, per-class K-means palette system, slope-aware `iso_stepped_foundation` auto-insert, and curation CLI (`promote` / `reject`) with `.meta` generation. Exits when `render --all` produces 5 archetypes × 17 slopes without errors and promoted sprites load in Unity with correct PPU/pivot. This is the prerequisite for all downstream steps.
 
@@ -68,7 +68,7 @@
 
 #### Stage 1.1 — Scaffolding + Primitive Renderer (Layer 1)
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft (6 tasks filed as **TECH-123** through **TECH-128**; BACKLOG state: 6 filed / 6)
 
 **Objectives:** Bootstrap `tools/sprite-gen/` folder structure and implement the two core primitives (`iso_cube`, `iso_prism`) with NW-light 3-level shade pass. Canvas sizing + Unity pivot math extracted to `canvas.py`. Unit tests validate pixel-perfect output against canonical canvas examples from the exploration doc.
 
@@ -91,12 +91,12 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.1.1 | Folder scaffold | 1 | _pending_ | _pending_ | Create `tools/sprite-gen/` folder skeleton: `src/__init__.py`, `src/primitives/__init__.py`, `tests/fixtures/` dir, `out/` dir (add to `.gitignore`), `requirements.txt` (pillow, numpy, scipy, pyyaml), `README.md` stub |
-| T1.1.2 | Canvas math module | 1 | _pending_ | _pending_ | `src/canvas.py` — implement `canvas_size(fx, fy, extra_h=0) → (w, h)` using `(fx+fy)*32` width formula; `pivot_uv(canvas_h) → (0.5, 16/canvas_h)`; docstring cites §4 Canvas math from exploration doc |
-| T1.1.3 | iso_cube primitive | 2 | _pending_ | _pending_ | `src/primitives/iso_cube.py` — `iso_cube(canvas, x0, y0, w, d, h, material)`: draw top rhombus (bright), south parallelogram (mid), east parallelogram (dark) using Pillow polygon fills; NW-light direction hardcoded; pixel coordinates computed from 2:1 isometric projection (tileWidth=1, tileHeight=0.5 per **Tile dimensions**) |
-| T1.1.4 | iso_prism primitive | 2 | _pending_ | _pending_ | `src/primitives/iso_prism.py` — `iso_prism(canvas, x0, y0, w, d, h, pitch, axis, material)`: two sloped top faces + two triangular end-faces; `axis ∈ {'ns','ew'}` selects ridge direction; same bright/mid/dark ramp as iso_cube |
-| T1.1.5 | Canvas unit tests | 3 | _pending_ | _pending_ | `tests/test_canvas.py` — assert `canvas_size(1,1)=(64,0)`, `canvas_size(1,1,32)=(64,32)`, `canvas_size(3,3,96)=(192,96)`; assert `pivot_uv(64)=(0.5,0.25)`, `pivot_uv(128)=(0.5,0.125)`, `pivot_uv(192)=(0.5, 16/192)` — matches §4 Examples table |
-| T1.1.6 | Primitive smoke tests | 3 | _pending_ | _pending_ | `tests/test_primitives.py` — render `iso_cube(w=2,d=2,h=32,material=stub_bright_red)` to 64×64 canvas; assert non-transparent pixel count > 0 on all 3 faces (top/south/east); same smoke test for `iso_prism`; save fixtures to `tests/fixtures/` for visual regression |
+| T1.1.1 | Folder scaffold | 1 | **TECH-123** | Done | Create `tools/sprite-gen/` folder skeleton: `src/__init__.py`, `src/primitives/__init__.py`, `tests/fixtures/` dir, `out/` dir (add to `.gitignore`), `requirements.txt` (pillow, numpy, scipy, pyyaml), `README.md` stub |
+| T1.1.2 | Canvas math module | 1 | **TECH-124** | Done | `src/canvas.py` — implement `canvas_size(fx, fy, extra_h=0) → (w, h)` using `(fx+fy)*32` width formula; `pivot_uv(canvas_h) → (0.5, 16/canvas_h)`; docstring cites §4 Canvas math from exploration doc |
+| T1.1.3 | iso_cube primitive | 2 | **TECH-125** | Draft | `src/primitives/iso_cube.py` — `iso_cube(canvas, x0, y0, w, d, h, material)`: draw top rhombus (bright), south parallelogram (mid), east parallelogram (dark) using Pillow polygon fills; NW-light direction hardcoded; pixel coordinates computed from 2:1 isometric projection (tileWidth=1, tileHeight=0.5 per **Tile dimensions**) |
+| T1.1.4 | iso_prism primitive | 2 | **TECH-126** | Draft | `src/primitives/iso_prism.py` — `iso_prism(canvas, x0, y0, w, d, h, pitch, axis, material)`: two sloped top faces + two triangular end-faces; `axis ∈ {'ns','ew'}` selects ridge direction; same bright/mid/dark ramp as iso_cube |
+| T1.1.5 | Canvas unit tests | 3 | **TECH-127** | Draft | `tests/test_canvas.py` — assert `canvas_size(1,1)=(64,0)`, `canvas_size(1,1,32)=(64,32)`, `canvas_size(3,3,96)=(192,96)`; assert `pivot_uv(64)=(0.5,0.25)`, `pivot_uv(128)=(0.5,0.125)`, `pivot_uv(192)=(0.5, 16/192)` — matches §4 Examples table |
+| T1.1.6 | Primitive smoke tests | 3 | **TECH-128** | Draft | `tests/test_primitives.py` — render `iso_cube(w=2,d=2,h=32,material=stub_bright_red)` to 64×64 canvas; assert non-transparent pixel count > 0 on all 3 faces (top/south/east); same smoke test for `iso_prism`; save fixtures to `tests/fixtures/` for visual regression |
 
 ---
 
