@@ -25,6 +25,7 @@ Forward to subagent via Agent tool with `subagent_type: "closeout"`:
 > 4. **Persist journal** (non-destructive) — `mcp__territory-ia__project_spec_journal_persist` with `issue_id`. Outcomes: `ok`, `db_unconfigured` (skip), `db_error` (log + continue unless user overrides).
 > 5. **Validate** — `npm run validate:dead-project-specs` + `npm run validate:all`. Stop on failure.
 > 6. **Destructive ops** — delete spec (`rm <single-file>`), remove BACKLOG row, append `[x] **$ARGUMENTS**` to `BACKLOG-ARCHIVE.md`, purge id from durable docs/code via targeted Edit (Grep first to enumerate).
+> 6b. **Regenerate progress dashboard** — `npm run progress` (repo root). Reflects `Done (archived)` state in `docs/progress.html`. Deterministic; failure does NOT block step 7 — log exit code and continue.
 > 7. **Re-validate** — `npm run validate:dead-project-specs` after deletion.
 >
 > ## Hard boundaries

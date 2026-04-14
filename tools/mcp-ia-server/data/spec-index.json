@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-14T13:27:38.139Z",
+  "last_generated": "2026-04-14T17:13:57.205Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -209,25 +209,25 @@
           "section_id": "prefabs-visual-layer",
           "title": "Prefabs & Visual Layer",
           "depth": 2,
-          "line_start": 210
+          "line_start": 213
         },
         {
           "section_id": "documentation",
           "title": "Documentation",
           "depth": 2,
-          "line_start": 224
+          "line_start": 227
         },
         {
           "section_id": "multi-scale-simulation",
           "title": "Multi-scale simulation",
           "depth": 2,
-          "line_start": 239
+          "line_start": 242
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 266
+          "line_start": 269
         }
       ]
     },
@@ -1286,16 +1286,46 @@
           "line_start": 290
         },
         {
+          "section_id": "7",
+          "title": "7. Target visual language (inferred — pending game UX/UI master plan)",
+          "depth": 2,
+          "line_start": 303
+        },
+        {
+          "section_id": "7.1",
+          "title": "7.1 Dark-first palette",
+          "depth": 3,
+          "line_start": 307
+        },
+        {
+          "section_id": "7.2",
+          "title": "7.2 Typography direction",
+          "depth": 3,
+          "line_start": 319
+        },
+        {
+          "section_id": "7.3",
+          "title": "7.3 Information density",
+          "depth": 3,
+          "line_start": 328
+        },
+        {
+          "section_id": "7.4",
+          "title": "7.4 Cross-surface note (game ↔ web)",
+          "depth": 3,
+          "line_start": 341
+        },
+        {
           "section_id": "6",
           "title": "6. Revision history",
           "depth": 2,
-          "line_start": 303
+          "line_start": 347
         },
         {
           "section_id": "machine-readable-traceability-ui-inventory-baseline",
           "title": "Machine-readable traceability (UI inventory baseline)",
           "depth": 3,
-          "line_start": 318
+          "line_start": 363
         }
       ]
     },
@@ -1452,6 +1482,174 @@
           "title": "Key files",
           "depth": 2,
           "line_start": 59
+        }
+      ]
+    },
+    {
+      "key": "web-ui-design-system",
+      "path": "ia/specs/web-ui-design-system.md",
+      "sections": [
+        {
+          "section_id": "web-ui-design-system-spec",
+          "title": "Web UI Design System — Spec",
+          "depth": 1,
+          "line_start": 7
+        },
+        {
+          "section_id": "overview",
+          "title": "Overview",
+          "depth": 2,
+          "line_start": 9
+        },
+        {
+          "section_id": "1",
+          "title": "1. Design principles",
+          "depth": 2,
+          "line_start": 21
+        },
+        {
+          "section_id": "2",
+          "title": "2. Color tokens",
+          "depth": 2,
+          "line_start": 34
+        },
+        {
+          "section_id": "2.1",
+          "title": "2.1 Base palette",
+          "depth": 3,
+          "line_start": 38
+        },
+        {
+          "section_id": "2.2",
+          "title": "2.2 Text",
+          "depth": 3,
+          "line_start": 49
+        },
+        {
+          "section_id": "2.3",
+          "title": "2.3 Semantic accents",
+          "depth": 3,
+          "line_start": 58
+        },
+        {
+          "section_id": "2.4",
+          "title": "2.4 Map / geographic layer colors",
+          "depth": 3,
+          "line_start": 71
+        },
+        {
+          "section_id": "3",
+          "title": "3. Typography",
+          "depth": 2,
+          "line_start": 84
+        },
+        {
+          "section_id": "4",
+          "title": "4. Components",
+          "depth": 2,
+          "line_start": 103
+        },
+        {
+          "section_id": "4.1",
+          "title": "4.1 StatBadge",
+          "depth": 3,
+          "line_start": 105
+        },
+        {
+          "section_id": "4.2",
+          "title": "4.2 StatBar",
+          "depth": 3,
+          "line_start": 119
+        },
+        {
+          "section_id": "4.3",
+          "title": "4.3 DataTable",
+          "depth": 3,
+          "line_start": 133
+        },
+        {
+          "section_id": "4.4",
+          "title": "4.4 FilterChip",
+          "depth": 3,
+          "line_start": 145
+        },
+        {
+          "section_id": "4.5",
+          "title": "4.5 EntityCard",
+          "depth": 3,
+          "line_start": 158
+        },
+        {
+          "section_id": "4.6",
+          "title": "4.6 PlanProgressCard",
+          "depth": 3,
+          "line_start": 177
+        },
+        {
+          "section_id": "4.7",
+          "title": "4.7 MapOverlay *(TBD)*",
+          "depth": 3,
+          "line_start": 188
+        },
+        {
+          "section_id": "4.8",
+          "title": "4.8 NavBar",
+          "depth": 3,
+          "line_start": 196
+        },
+        {
+          "section_id": "5",
+          "title": "5. Layout system",
+          "depth": 2,
+          "line_start": 212
+        },
+        {
+          "section_id": "5.1",
+          "title": "5.1 Grid and spacing",
+          "depth": 3,
+          "line_start": 214
+        },
+        {
+          "section_id": "5.2",
+          "title": "5.2 Page templates",
+          "depth": 3,
+          "line_start": 222
+        },
+        {
+          "section_id": "6",
+          "title": "6. Motion",
+          "depth": 2,
+          "line_start": 237
+        },
+        {
+          "section_id": "7",
+          "title": "7. Responsive strategy",
+          "depth": 2,
+          "line_start": 247
+        },
+        {
+          "section_id": "8",
+          "title": "8. Accessibility baseline",
+          "depth": 2,
+          "line_start": 257
+        },
+        {
+          "section_id": "9",
+          "title": "9. Tech stack (implementation)",
+          "depth": 2,
+          "line_start": 266
+        },
+        {
+          "section_id": "10",
+          "title": "10. Cross-surface alignment with game UI",
+          "depth": 2,
+          "line_start": 282
+        },
+        {
+          "section_id": "11",
+          "title": "11. Revision history",
+          "depth": 2,
+          "line_start": 297
         }
       ]
     }

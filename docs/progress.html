@@ -8,135 +8,363 @@
 *, *::before, *::after { box-sizing: border-box; }
 body {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  background: #0f0f0f;
-  color: #d4d4d4;
+  background: #0a0a0f;
+  color: #d0d0d8;
   margin: 0;
   padding: 1rem 2rem 3rem;
   line-height: 1.5;
 }
-h1 { margin: 0 0 0.5rem; font-size: 1.4rem; color: #e8e8e8; }
-h2.plan-title { margin: 0; font-size: 1.1rem; color: #e8e8e8; }
+
+/* ── Overall header ── */
 .overall-header {
-  background: #1a1a2e;
+  background: linear-gradient(135deg, #0d1a2e 0%, #1a1a2e 50%, #1a0d2e 100%);
   border: 1px solid #2a2a5a;
-  border-radius: 8px;
-  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  padding: 1.5rem 1.75rem 1.25rem;
   margin-bottom: 1.5rem;
 }
-.plan-card {
-  background: #181818;
-  border: 1px solid #2c2c2c;
+.overall-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.overall-left h1 {
+  margin: 0 0 0.1rem;
+  font-size: 1.5rem;
+  color: #e8e8f8;
+  letter-spacing: -0.01em;
+}
+.overall-subtitle {
+  font-size: 0.8rem;
+  color: #7070a0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.overall-right {
+  text-align: right;
+}
+.overall-pct {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #a0e0b0;
+  line-height: 1;
+}
+.overall-count {
+  font-size: 0.78rem;
+  color: #7070a0;
+}
+.overall-seg-bar {
+  height: 6px;
+  background: #1e1e3a;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.overall-seg-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2d8a4e, #40bf72);
+  border-radius: 3px;
+}
+.plan-minis {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.plan-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  flex: 1;
+  min-width: 160px;
+}
+.mini-icon { font-size: 1.2rem; }
+.mini-info { flex: 1; min-width: 0; }
+.mini-title {
+  display: block;
+  font-size: 0.76rem;
+  color: #b0b0c8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.2rem;
+}
+.mini-bar-wrap {
+  height: 4px;
+  background: #1e1e3a;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.15rem;
+}
+.mini-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2d8a4e, #40bf72);
+  border-radius: 2px;
+}
+.mini-pct {
+  font-size: 0.7rem;
+  color: #70a080;
+  font-weight: 600;
+}
+
+/* ── Plan cards ── */
+.plan-card {
+  background: #111118;
+  border: 1px solid #222230;
+  border-radius: 12px;
   padding: 1.25rem 1.5rem;
   margin-bottom: 1.25rem;
 }
+
+/* ── Plan header ── */
 .plan-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
   flex-wrap: wrap;
 }
+.plan-icon { font-size: 1.5rem; flex-shrink: 0; }
+.plan-title-group {
+  flex: 1;
+  min-width: 0;
+}
+h2.plan-title {
+  margin: 0;
+  font-size: 1.0rem;
+  color: #e8e8f8;
+  letter-spacing: -0.01em;
+}
+.plan-doc-link {
+  font-size: 0.72rem;
+  color: #5080c0;
+  text-decoration: none;
+  opacity: 0.8;
+}
+.plan-doc-link:hover { opacity: 1; text-decoration: underline; }
 .plan-status {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   padding: 0.2rem 0.55rem;
-  border-radius: 4px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.plan-pct-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  min-width: 4rem;
+}
+.plan-pct {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: right;
+  line-height: 1;
+}
+.plan-step-pct {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-align: right;
+  opacity: 0.75;
+  margin-top: 0.15rem;
   white-space: nowrap;
 }
-.progress-row {
+
+/* ── Segmented bar ── */
+.seg-row {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
 }
-.progress-bar-wrap {
+.seg-bar {
   flex: 1;
-  min-width: 120px;
-  max-width: 400px;
-  height: 14px;
-  background: #2a2a2a;
-  border-radius: 7px;
+  height: 10px;
+  background: #1e1e2e;
+  border-radius: 5px;
   overflow: hidden;
+  display: flex;
 }
-.progress-bar-fill {
+.seg {
   height: 100%;
-  background: linear-gradient(90deg, #2d8a4e, #40bf72);
-  border-radius: 7px;
   transition: width 0s;
 }
-.progress-label {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: #a0e0b0;
-  min-width: 3rem;
-}
-.task-counts { font-size: 0.82rem; color: #888; }
-.breakdown-row { margin-bottom: 0.85rem; }
-.badge {
-  display: inline-block;
-  font-size: 0.74rem;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
-  margin-right: 0.25rem;
-  font-weight: 500;
-}
-.info-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.84rem;
-  margin-bottom: 0.85rem;
-}
-.info-table th {
-  text-align: left;
-  color: #888;
-  font-weight: 500;
-  width: 130px;
-  padding: 0.25rem 0.5rem 0.25rem 0;
+.seg-done      { background: linear-gradient(90deg, #2d7a44, #40bf72); }
+.seg-inprogress{ background: linear-gradient(90deg, #1a4a80, #60a0e0); }
+.seg-inreview  { background: linear-gradient(90deg, #4a1a80, #b080e0); }
+.seg-draft     { background: linear-gradient(90deg, #5a5a10, #c0b060); }
+.seg-pending   { background: #2a2a3a; }
+.seg-empty     { flex: 1; background: #1e1e2e; }
+.seg-count {
+  font-size: 0.78rem;
+  color: #7070a0;
   white-space: nowrap;
 }
-.info-table td { padding: 0.25rem 0; color: #ccc; }
-.phase-section { margin-bottom: 0.85rem; font-size: 0.85rem; }
-.phase-list {
-  margin: 0.35rem 0 0 1rem;
-  padding: 0;
-  list-style: none;
-}
-.phase-list li { margin: 0.15rem 0; }
-.phase-done { color: #72c28a; }
-.phase-pending { color: #999; }
-.muted { color: #666; font-style: italic; }
-.sibling-box {
-  background: #1a1a0a;
-  border: 1px solid #4a4a00;
-  border-radius: 5px;
-  padding: 0.7rem 1rem;
-  font-size: 0.8rem;
-  color: #c0b870;
-}
-.sibling-box ul { margin: 0.3rem 0 0 1rem; padding: 0; }
-.sibling-box li { margin: 0.2rem 0; }
 
-/* Status colors */
+/* ── Stat chips ── */
+.stat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+.chip {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.chip-done      { background: #1a3a25; color: #72c28a; border: 1px solid #2d6a3a; }
+.chip-inprogress{ background: #1a2a40; color: #70a0e0; border: 1px solid #2a4a70; }
+.chip-inreview  { background: #2a1a40; color: #b080e0; border: 1px solid #4a2a70; }
+.chip-draft     { background: #2a2a1a; color: #c0b060; border: 1px solid #5a5a2a; }
+.chip-pending   { background: #1e1e2e; color: #6070a0; border: 1px solid #2a2a40; }
+.chip-total     { background: #1a1a2a; color: #8080b0; border: 1px solid #2a2a4a; }
+
+/* ── Context breadcrumb ── */
+.ctx-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.81rem;
+  background: #0d0d18;
+  border: 1px solid #1e1e30;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.7rem;
+}
+.ctx-label { color: #5060a0; font-size: 0.85rem; flex-shrink: 0; }
+.ctx-step  { color: #8080b0; }
+.ctx-stage { color: #9090c0; }
+.ctx-task  { color: #c0c8f0; font-weight: 500; }
+.ctx-arrow { color: #3a3a60; font-size: 0.75rem; }
+.task-id   { color: #6080c0; font-family: monospace; font-size: 0.78rem; }
+.task-name { color: #d0d8f8; }
+
+/* ── Phase pills ── */
+.phase-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  margin-bottom: 0.7rem;
+}
+.phase-row-label { color: #5060a0; font-size: 0.74rem; margin-right: 0.15rem; }
+.phase-pill {
+  padding: 0.15rem 0.55rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  cursor: default;
+}
+.phase-done    { background: #1a3a25; color: #72c28a; border: 1px solid #2d6a3a; }
+.phase-pending { background: #1a1a2a; color: #7080b0; border: 1px solid #2a2a40; }
+.phase-muted   { background: transparent; color: #4a4a6a; border: 1px solid #2a2a40; font-style: italic; }
+
+/* ── Sibling coordination ── */
+.sibling-details {
+  background: #0d0d0a;
+  border: 1px solid #2a2a10;
+  border-radius: 8px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.77rem;
+  color: #a0a060;
+  margin-top: 0.4rem;
+}
+.sibling-details summary {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+  color: #b0b060;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.sibling-details summary::-webkit-details-marker { display: none; }
+.sibling-count {
+  font-size: 0.68rem;
+  background: #2a2a10;
+  color: #909040;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-weight: 400;
+}
+.sibling-details ul {
+  margin: 0.4rem 0 0 0.75rem;
+  padding: 0;
+  list-style: disc;
+}
+.sibling-details li { margin: 0.2rem 0; line-height: 1.4; }
+
+/* ── Status badge colors ── */
 .status-done      { background: #1a3a25; color: #72c28a; border: 1px solid #2d6a3a; }
 .status-inprogress{ background: #1a2a40; color: #70a0e0; border: 1px solid #2a4a70; }
 .status-inreview  { background: #2a1a40; color: #b080e0; border: 1px solid #4a2a70; }
 .status-draft     { background: #2a2a1a; color: #c0b060; border: 1px solid #5a5a2a; }
-.status-pending   { background: #222; color: #888; border: 1px solid #444; }
-.status-other     { background: #222; color: #aaa; border: 1px solid #444; }
+.status-pending   { background: #1e1e2e; color: #6070a0; border: 1px solid #2a2a40; }
+.status-other     { background: #1e1e2e; color: #8080a0; border: 1px solid #2a2a40; }
 </style>
 </head>
 <body>
 
 <header class="overall-header">
-  <h1>Territory Developer — Master Plan Progress</h1>
-  <div class="overall-summary">
-    <div class="progress-row">
-      <div class="progress-bar-wrap" title="32% complete">
-      <div class="progress-bar-fill" style="width:32%"></div>
+  <div class="overall-top">
+    <div class="overall-left">
+      <h1>🏙️ Territory Developer</h1>
+      <div class="overall-subtitle">Master Plan Progress</div>
     </div>
-    <span class="progress-label">32%</span>
-      <span class="task-counts">23 / 72 tasks Done across 3 plans</span>
+    <div class="overall-right">
+      <div class="overall-pct">9%</div>
+      <div class="overall-count">28 / 84 tasks</div>
+    </div>
+  </div>
+  <div class="overall-seg-row">
+    <div class="overall-seg-bar">
+      <div class="overall-seg-fill" style="width:9%"></div>
+    </div>
+  </div>
+  <div class="plan-minis">
+    
+    <div class="plan-mini">
+      <span class="mini-icon">🎵</span>
+      <div class="mini-info">
+        <span class="mini-title">Blip</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:13%"></div></div>
+        <span class="mini-pct">13%</span>
+      </div>
+    </div>
+    <div class="plan-mini">
+      <span class="mini-icon">🗺️</span>
+      <div class="mini-info">
+        <span class="mini-title">Multi-Scale Simulation</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:20%"></div></div>
+        <span class="mini-pct">20%</span>
+      </div>
+    </div>
+    <div class="plan-mini">
+      <span class="mini-icon">🎨</span>
+      <div class="mini-info">
+        <span class="mini-title">Sprite Generator</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
+      </div>
+    </div>
+    <div class="plan-mini">
+      <span class="mini-icon">📋</span>
+      <div class="mini-info">
+        <span class="mini-title">Web Platform</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
+      </div>
     </div>
   </div>
 </header>
@@ -144,113 +372,181 @@ h2.plan-title { margin: 0; font-size: 1.1rem; color: #e8e8e8; }
 
 <div class="plan-card">
   <div class="plan-header">
-    <h2 class="plan-title">Blip — Master Plan (MVP)</h2>
-    <span class="plan-status status-inprogress">In Progress — Step 1 / Stage 1.1 archived (TECH-98..TECH-101 closed; stage ready for rollup)</span>
-  </div>
-
-  <div class="progress-row">
-    <div class="progress-bar-wrap" title="17% complete">
-      <div class="progress-bar-fill" style="width:17%"></div>
+    <span class="plan-icon">🎵</span>
+    <div class="plan-title-group">
+      <h2 class="plan-title">Blip — Master Plan (MVP)</h2>
+      <a class="plan-doc-link" href="../ia/projects/blip-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="progress-label">17%</span>
-    <span class="task-counts">4 / 23 tasks Done</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Step 1 / Stage 1.1 archived (TECH-98..TECH-101 closed; stage ready for rollup)</span>
+    <div class="plan-pct-group">
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">13%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 39%</div>
+    </div>
   </div>
 
-  <div class="breakdown-row">
-    <span class="badge status-done">Done: 4</span> <span class="badge status-pending">pending: 19</span> <span class="badge status-other">Total: 23</span>
+  <div class="seg-row">
+    <div class="seg-bar"><div class="seg seg-done" style="width:39%" title="9 Done"></div><div class="seg seg-draft" style="width:30%" title="7 Draft"></div><div class="seg seg-pending" style="width:31%" title="7 Pending"></div></div>
+    <span class="seg-count">9 / 23</span>
   </div>
 
-  <table class="info-table">
-    <tr><th>Active step</th><td>Step 1 — DSP foundations + audio infra</td></tr>
-    <tr><th>Active stage</th><td>Stage 1.2 — Patch data model</td></tr>
-    <tr><th>Active task</th><td>T1.2.1: `BlipPatch : ScriptableObject` class + MVP fields + `CreateAssetMenu(&quot;Territory/Audio/Blip Patch&quot;)`. No `AnimationCurve`…</td></tr>
-  </table>
+  <div class="stat-chips">
+    <span class="chip chip-done">✅ 9 Done</span><span class="chip chip-draft">📝 7 Draft</span><span class="chip chip-pending">⏳ 7 Pending</span><span class="chip chip-total">📋 23 Total</span>
+  </div>
 
-  <div class="phase-section">
-    <strong>Phase checklist (active stage):</strong>
-    <ul class="phase-list"><li class="phase-pending">&#x25A1; Phase 1 — `BlipPatch` SO authoring surface + MVP enums + `OnValidate` clamps.</li><li class="phase-pending">&#x25A1; Phase 2 — `BlipPatchFlat` flatten + content-hash persistence.</li></ul>
+  <div class="ctx-row">
+    <span class="ctx-label">📍</span>
+    <span class="ctx-step">Step 1 · DSP foundations + audio infra</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-stage">Stage 1.3 · Voice DSP kernel</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-task" title="`BlipVoiceState` struct — `phaseA..phaseD` (double), `envLevel`, `envStage`, `filterZ1`, `rngState` (xorshift seed), `samplesElapsed`. Blittable; lives in caller.">🎯 <span class="task-id">T1.3.1</span> <span class="task-name">BlipVoiceState struct</span></span>
+  </div>
+
+  <div class="phase-row">
+    <span class="phase-row-label">Phases:</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Oscillator bank + voice state.">☐ Oscillator bank + voice state.</span><span class="phase-pill phase-pending" title="Phase 2 — AHDSR envelope state machine + per-stage shape.">☐ AHDSR envelope state machine + per-stage shape.</span><span class="phase-pill phase-pending" title="Phase 3 — Render driver (LP filter + jitter + per-sample loop).">☐ Render driver (LP filter + jitter + per-sampl…</span>
   </div>
 
   
-  <div class="sibling-box">
-    <strong>Sibling / parallel-work coordination:</strong>
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">2 orchestrators in flight</span></summary>
     <ul><li>**Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**</li><li>- `ia/projects/multi-scale-master-plan.md` — mutates `GridManager.cs` + `GameSaveManager.cs` + save schema. Blip Step 3.3 World lane kickoff must re-read `GridManager` selection surface now that multi-scale Stage 1.3 is archived. `WorldCellSelected` stays scale-agnostic in MVP; per-scale variants tracked in `docs/blip-post-mvp-extensions.md` §4.</li><li>- `ia/projects/sprite-gen-master-plan.md` — Python tool + new `Assets/Sprites/Generated/` output. Disjoint C# surface; no blip collision on runtime code.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
-  </div>
+  </details>
 </div>
 
 <div class="plan-card">
   <div class="plan-header">
-    <h2 class="plan-title">Multi-Scale Simulation — Master Plan (MVP)</h2>
-    <span class="plan-status status-inprogress">In Progress — Step 1 / Stage 1.3 archived (testmode smoke closed — all Stage 1.3 tasks archived)</span>
-  </div>
-
-  <div class="progress-row">
-    <div class="progress-bar-wrap" title="100% complete">
-      <div class="progress-bar-fill" style="width:100%"></div>
+    <span class="plan-icon">🗺️</span>
+    <div class="plan-title-group">
+      <h2 class="plan-title">Multi-Scale Simulation — Master Plan (MVP)</h2>
+      <a class="plan-doc-link" href="../ia/projects/multi-scale-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="progress-label">100%</span>
-    <span class="task-counts">19 / 19 tasks Done</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Step 2 (Step 1 Final 2026-04-14; decomposition pending)</span>
+    <div class="plan-pct-group">
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">20%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 2: 0%</div>
+    </div>
   </div>
 
-  <div class="breakdown-row">
-    <span class="badge status-done">Done: 19</span> <span class="badge status-other">Total: 19</span>
+  <div class="seg-row">
+    <div class="seg-bar"><div class="seg seg-done" style="width:100%" title="19 Done"></div></div>
+    <span class="seg-count">19 / 19</span>
   </div>
 
-  <table class="info-table">
-    <tr><th>Active step</th><td>Step 2 — City MVP close</td></tr>
-    <tr><th>Active stage</th><td><em>—</em></td></tr>
-    <tr><th>Active task</th><td><em>All tasks done</em></td></tr>
-  </table>
+  <div class="stat-chips">
+    <span class="chip chip-done">✅ 19 Done</span><span class="chip chip-total">📋 19 Total</span>
+  </div>
 
-  <div class="phase-section">
-    <strong>Phase checklist (active stage):</strong>
-    <em class="muted">No active stage</em>
+  <div class="ctx-row">
+    <span class="ctx-label">📍</span>
+    <span class="ctx-step">Step 2 · City MVP close</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-stage">—</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-task" title="">🎯 <em>Decomposition pending</em></span>
+  </div>
+
+  <div class="phase-row">
+    <span class="phase-row-label">Phases:</span>
+    <span class="phase-pill phase-muted">No active stage</span>
   </div>
 
   
-  <div class="sibling-box">
-    <strong>Sibling / parallel-work coordination:</strong>
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">2 orchestrators in flight</span></summary>
     <ul><li>**Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**</li><li>- `ia/projects/blip-master-plan.md` — audio subsystem. Stage 1.1 archived (TECH-98..101); Stages 1.2–1.4 pending. Blip Step 3.3 (World lane call sites) wires into `GridManager.cs` cell-select + road/building tools + save hooks — coordinate so blip Step 3 kickoff lands after multi-scale `GridManager` mutations settle.</li><li>- `ia/projects/sprite-gen-master-plan.md` — Python sprite generator (`tools/sprite-gen/`) + `Assets/Sprites/Generated/` output. City-scale 1×1 building footprints only in v1; region / country scale sprite needs surface when this orchestrator's Step 4 opens — not yet scoped anywhere.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
-  </div>
+  </details>
 </div>
 
 <div class="plan-card">
   <div class="plan-header">
-    <h2 class="plan-title">Isometric Sprite Generator — Master Plan (Tools / Art Pipeline)</h2>
-    <span class="plan-status status-draft">Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)</span>
-  </div>
-
-  <div class="progress-row">
-    <div class="progress-bar-wrap" title="0% complete">
-      <div class="progress-bar-fill" style="width:0%"></div>
+    <span class="plan-icon">🎨</span>
+    <div class="plan-title-group">
+      <h2 class="plan-title">Isometric Sprite Generator — Master Plan (Tools / Art Pipeline)</h2>
+      <a class="plan-doc-link" href="../ia/projects/sprite-gen-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="progress-label">0%</span>
-    <span class="task-counts">0 / 30 tasks Done</span>
+    <span class="plan-status status-draft">📝 Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)</span>
+    <div class="plan-pct-group">
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 0%</div>
+    </div>
   </div>
 
-  <div class="breakdown-row">
-    <span class="badge status-pending">pending: 30</span> <span class="badge status-other">Total: 30</span>
+  <div class="seg-row">
+    <div class="seg-bar"><div class="seg seg-pending" style="width:100%" title="30 Pending"></div></div>
+    <span class="seg-count">0 / 30</span>
   </div>
 
-  <table class="info-table">
-    <tr><th>Active step</th><td>Step 1 — Geometry MVP</td></tr>
-    <tr><th>Active stage</th><td>Stage 1.1 — Scaffolding + Primitive Renderer (Layer 1)</td></tr>
-    <tr><th>Active task</th><td>T1.1.1: Create `tools/sprite-gen/` folder skeleton: `src/__init__.py`, `src/primitives/__init__.py`, `tests/fixtures/` dir, `out…</td></tr>
-  </table>
+  <div class="stat-chips">
+    <span class="chip chip-pending">⏳ 30 Pending</span><span class="chip chip-total">📋 30 Total</span>
+  </div>
 
-  <div class="phase-section">
-    <strong>Phase checklist (active stage):</strong>
-    <ul class="phase-list"><li class="phase-pending">&#x25A1; Phase 1 — Project bootstrap + canvas math module.</li><li class="phase-pending">&#x25A1; Phase 2 — iso_cube + iso_prism primitives with NW-light shade pass.</li><li class="phase-pending">&#x25A1; Phase 3 — Unit tests for canvas math + primitives.</li></ul>
+  <div class="ctx-row">
+    <span class="ctx-label">📍</span>
+    <span class="ctx-step">Step 1 · Geometry MVP</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-stage">Stage 1.1 · Scaffolding + Primitive Rend…</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-task" title="Create `tools/sprite-gen/` folder skeleton: `src/__init__.py`, `src/primitives/__init__.py`, `tests/fixtures/` dir, `out/` dir (add to `.gitignore`), `requirements.txt` (pillow, numpy, scipy, pyyaml),">🎯 <span class="task-id">T1.1.1</span> <span class="task-name">Folder scaffold</span></span>
+  </div>
+
+  <div class="phase-row">
+    <span class="phase-row-label">Phases:</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Project bootstrap + canvas math module.">☐ Project bootstrap + canvas math module.</span><span class="phase-pill phase-pending" title="Phase 2 — iso_cube + iso_prism primitives with NW-light shade pass.">☐ iso_cube + iso_prism primitives with NW-light…</span><span class="phase-pill phase-pending" title="Phase 3 — Unit tests for canvas math + primitives.">☐ Unit tests for canvas math + primitives.</span>
   </div>
 
   
-  <div class="sibling-box">
-    <strong>Sibling / parallel-work coordination:</strong>
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">2 orchestrators in flight</span></summary>
     <ul><li>**Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**</li><li>- `ia/projects/multi-scale-master-plan.md` — adds `RegionCell` / `CountryCell` types + parent-scale stubs + save-schema bumps. Sprite-gen v1 renders only city-scale 1×1 buildings; region / country scale sprite needs (cell sprites, city-node-at-region-zoom, region-node-at-country-zoom) surface when multi-scale Step 4 opens — see Deferred decomposition below.</li><li>- `ia/projects/blip-master-plan.md` — audio subsystem. Disjoint surfaces (Python tool vs Unity C#); no sprite-gen collision.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
+  </details>
+</div>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <span class="plan-icon">📋</span>
+    <div class="plan-title-group">
+      <h2 class="plan-title">Web Platform — Master Plan (MVP)</h2>
+      <a class="plan-doc-link" href="../ia/projects/web-platform-master-plan.md">📄 plan doc</a>
+    </div>
+    <span class="plan-status status-draft">📝 Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)</span>
+    <div class="plan-pct-group">
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 0%</div>
+    </div>
   </div>
+
+  <div class="seg-row">
+    <div class="seg-bar"><div class="seg seg-pending" style="width:100%" title="12 Pending"></div></div>
+    <span class="seg-count">0 / 12</span>
+  </div>
+
+  <div class="stat-chips">
+    <span class="chip chip-pending">⏳ 12 Pending</span><span class="chip chip-total">📋 12 Total</span>
+  </div>
+
+  <div class="ctx-row">
+    <span class="ctx-label">📍</span>
+    <span class="ctx-step">Step 1 · Scaffold + design system fou…</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-stage">Stage 1.1 · Scaffold + deploy + CI</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-task" title="Edit root `package.json` to add `&quot;workspaces&quot;: [&quot;web&quot;, &quot;tools/*&quot;]` additively; verify existing `tools/*` installs still resolve via `npm install` at repo root. No behavior change to existing scripts.">🎯 <span class="task-id">T1.1.1</span> <span class="task-name">Edit root `package.json` to add `&quot;workspaces&quot;: [&quot;w…</span></span>
+  </div>
+
+  <div class="phase-row">
+    <span class="phase-row-label">Phases:</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Workspace bootstrap (root workspaces + Next.js scaffold).">☐ Workspace bootstrap (root workspaces + Next.j…</span><span class="phase-pill phase-pending" title="Phase 2 — Deploy + CI integration (Vercel link + `validate:all` entry).">☐ Deploy + CI integration (Vercel link + `valid…</span><span class="phase-pill phase-pending" title="Phase 3 — Documentation (web README + repo-level docs append).">☐ Documentation (web README + repo-level docs a…</span>
+  </div>
+
+  
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">3 orchestrators in flight</span></summary>
+    <ul><li>**Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**</li><li>- `ia/projects/blip-master-plan.md` — runtime C# audio; disjoint surface. No collision.</li><li>- `ia/projects/multi-scale-master-plan.md` — runtime C# + save schema; disjoint surface. No collision.</li><li>- `ia/projects/sprite-gen-master-plan.md` — Python tool; disjoint surface. No collision.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
+  </details>
 </div>
 </main>
-<footer style="font-size:0.75rem;color:#555;margin-top:2rem;text-align:center">
+<footer style="font-size:0.72rem;color:#3a3a5a;margin-top:2rem;text-align:center;border-top:1px solid #1a1a2a;padding-top:1rem">
   Generated by <code>npm run progress</code> (tools/progress-tracker) — static snapshot, no live data.
 </footer>
 </body>

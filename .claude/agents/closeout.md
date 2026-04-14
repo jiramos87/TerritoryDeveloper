@@ -24,12 +24,13 @@ Follow `ia/skills/project-spec-close/SKILL.md` end-to-end. High-level:
    - Remove BACKLOG row (`Edit` `BACKLOG.md`).
    - Append `[x] **{ISSUE_ID}**` to `BACKLOG-ARCHIVE.md` Recent archive.
    - Purge id from durable docs/code via targeted `Edit` (`Grep` first to enumerate).
+5b. **Regenerate progress dashboard** — `npm run progress` (repo root). Reflects `Done (archived)` state flip in `docs/progress.html`. Deterministic; failure does NOT block close — log exit code and continue.
 6. **Re-validate** — `npm run validate:dead-project-specs` after deletion.
 
 # Hard boundaries
 
 - Do NOT use `rm -rf`. Spec deletion is `rm <single-file>`. Denylist hook blocks `rm -rf` against `ia`, `MEMORY.md`, `.claude`, `.git`, `/`, `~` anyway.
-- Do NOT run `project-stage-close` from here — that's the inline path used by `spec-implementer` mid-execution. This subagent runs umbrella `project-spec-close` only.
+- Do NOT run `project-stage-close` automatically. After step 6 of `project-spec-close`, if the just-closed issue was the last task in a parent orchestrator stage, **surface a reminder** to the user to run `project-stage-close` on that orchestrator. Control stays with the user.
 - Do NOT delete spec before lessons migrated. Lessons recovered from spec body; gone → git history only.
 - Do NOT skip `validate:dead-project-specs` re-run after deletion. Closeout incomplete until validator confirms path gone.
 - Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard.
@@ -46,3 +47,4 @@ Single closeout digest per `.claude/output-styles/closeout-digest.md`:
 6. BACKLOG row removed (id).
 7. BACKLOG-ARCHIVE entry appended (line).
 8. Id purges (file count + paths).
+9. Progress dashboard regen exit code (`npm run progress` — non-blocking).

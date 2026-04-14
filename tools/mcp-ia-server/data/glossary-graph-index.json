@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-14T13:27:38.212Z",
+  "last_generated": "2026-04-14T17:13:57.286Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -154,20 +154,40 @@
     "Blip bootstrap": {
       "related": [
         "Blip mixer group",
-        "Active scale",
-        "Agent test mode batch",
-        "Bay",
-        "Brink"
+        "Blip patch",
+        "Blip patch flat",
+        "patch hash",
+        "Active scale"
       ],
       "cited_in": []
     },
     "Blip mixer group": {
       "related": [
         "Blip bootstrap",
-        "Active scale",
-        "Agent test mode batch",
-        "Bay",
-        "Brink"
+        "Blip patch",
+        "Blip patch flat",
+        "patch hash",
+        "Active scale"
+      ],
+      "cited_in": []
+    },
+    "Blip patch": {
+      "related": [
+        "Blip bootstrap",
+        "Blip mixer group",
+        "Blip patch flat",
+        "patch hash",
+        "Active scale"
+      ],
+      "cited_in": []
+    },
+    "Blip patch flat": {
+      "related": [
+        "Blip bootstrap",
+        "Blip mixer group",
+        "Blip patch",
+        "patch hash",
+        "Active scale"
       ],
       "cited_in": []
     },
@@ -242,8 +262,8 @@
       "related": [
         "Cell",
         "Interstate",
-        "Zone",
         "RCI",
+        "Zone",
         "Happiness"
       ],
       "cited_in": [
@@ -376,6 +396,11 @@
           "spec": "unity-development-context",
           "section_id": "6",
           "section_title": "6. Script Execution Order and initialization"
+        },
+        {
+          "spec": "web-ui-design-system",
+          "section_id": "10",
+          "section_title": "10. Cross-surface alignment with game UI"
         }
       ]
     },
@@ -880,6 +905,16 @@
           "spec": "water-terrain-system",
           "section_id": "key-files",
           "section_title": "Key files"
+        },
+        {
+          "spec": "web-ui-design-system",
+          "section_id": "4",
+          "section_title": "4. Components"
+        },
+        {
+          "spec": "web-ui-design-system",
+          "section_id": "4.7",
+          "section_title": "4.7 MapOverlay *(TBD)*"
         }
       ]
     },
@@ -2910,6 +2945,16 @@
       ],
       "cited_in": []
     },
+    "patch hash": {
+      "related": [
+        "Blip bootstrap",
+        "Blip mixer group",
+        "Blip patch",
+        "Blip patch flat",
+        "Active scale"
+      ],
+      "cited_in": []
+    },
     "Pathfinding cost model": {
       "related": [
         "**A* search**",
@@ -3120,6 +3165,11 @@
           "spec": "ui-design-system",
           "section_id": "5.3",
           "section_title": "5.3 Shipped polish patterns (implementation reference)"
+        },
+        {
+          "spec": "web-ui-design-system",
+          "section_id": "10",
+          "section_title": "10. Cross-surface alignment with game UI"
         }
       ]
     },

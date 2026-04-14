@@ -318,7 +318,7 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ## Blip audio program
 
-Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra. Stage 1.1 = audio infrastructure + persistent bootstrap — filed below. Stages 1.2–1.4 + Step 2 / Step 3 remain in master plan; file rows here when parent stage → `In Progress`.
+Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra. Stages 1.1–1.2 archived. Stage 1.3 = Voice DSP kernel — filed below. Stage 1.4 + Step 2 / Step 3 remain in master plan; file rows here when parent stage → `In Progress`.
 
 ### Stage 1.1 — Audio infrastructure + persistent bootstrap
 
@@ -326,45 +326,65 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ### Stage 1.2 — Patch data model
 
-- [ ] **TECH-111** — `BlipPatch : ScriptableObject` authoring surface (MVP fields)
-  - Type: infrastructure / authoring
-  - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs`
-  - Spec: `ia/projects/TECH-111-blip-patch-scriptable-object.md`
-  - Notes: Stage 1.2 Phase 1 opener per [`blip-master-plan.md`](projects/blip-master-plan.md). MVP fields — `oscillators[0..3]`, `envelope`, `filter`, `variantCount`, jitter triplet, `voiceLimit`, `priority`, `cooldownMs`, `deterministic`, `mixerGroup` (authoring-only ref), `durationSeconds`, `useLutOscillators` (reserved), `patchHash`. `CreateAssetMenu("Territory/Audio/Blip Patch")`. No `AnimationCurve`. No `mode` field (`BlipMode` enum deferred post-MVP per `docs/blip-post-mvp-extensions.md` §1).
-  - Acceptance: `BlipPatch.cs` compiles + CreateAssetMenu reachable; `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-112** (nested structs + enums)
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
-- [ ] **TECH-112** — MVP struct + enum definitions for `BlipPatch`
-  - Type: infrastructure / authoring
-  - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs` (or sibling `BlipPatchTypes.cs`)
-  - Spec: `ia/projects/TECH-112-blip-patch-structs-enums.md`
-  - Notes: Nested structs — `BlipOscillator` (no `pitchEnvCurve`), `BlipEnvelope` (no `shape` curve; per-stage `BlipEnvShape` + `sustainLevel`), `BlipFilter` (no `cutoffEnv`). Enums — `BlipId` (10 MVP rows + `None`), `BlipWaveform` (Sine/Triangle/Square/Pulse/NoiseWhite), `BlipFilterKind` (None/LowPass), `BlipEnvStage` (Idle/Attack/Hold/Decay/Sustain/Release), `BlipEnvShape` (Linear/Exponential). 10 `BlipId` row names per `docs/blip-procedural-sfx-exploration.md` §11 registry.
-  - Acceptance: 3 structs + 5 enums compile; no curve fields; `unity:compile-check` + `validate:all` green
+### Stage 1.3 — Voice DSP kernel
+
+- [ ] **TECH-116** — `BlipVoiceState` blittable struct (per-voice DSP state)
+  - Type: infrastructure / runtime data
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoiceState.cs`
+  - Spec: `ia/projects/TECH-116-blip-voice-state-struct.md`
+  - Notes: Stage 1.3 Phase 1 opener per [`blip-master-plan.md`](projects/blip-master-plan.md). Blittable struct — `phaseA..phaseD` (double phase accumulators), `envLevel` (float), `envStage` (`BlipEnvStage` enum: Idle, Attack, Hold, Decay, Sustain, Release), `filterZ1` (float LP memory), `rngState` (uint xorshift seed), `samplesElapsed` (int per-stage). Zero managed refs. Caller-owned; mutated via `ref` by `BlipVoice.Render`. Consumed by TECH-117..122.
+  - Acceptance: struct + `BlipEnvStage` enum compile; zero managed refs; `unity:compile-check` + `validate:all` green
   - Depends on: none
 
-- [ ] **TECH-113** — `OnValidate` clamps on `BlipPatch` (anti-click + range guards)
-  - Type: infrastructure / authoring guard
-  - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs`
-  - Spec: `ia/projects/TECH-113-blip-patch-on-validate-clamps.md`
-  - Notes: Clamp `envelope.attackMs` / `decayMs` / `releaseMs` ≥ 1 ms (≈48 samples @ 48 kHz — kills snap-onset click). Clamp `variantCount` 1..8, `voiceLimit` 1..16, `sustainLevel` 0..1, `cooldownMs` ≥ 0. Sustain-only case allowed via A=1ms / D=0 / R=1ms fallback.
-  - Acceptance: all 5 clamp ranges enforced in `OnValidate`; `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-111**, **TECH-112**
+- [ ] **TECH-117** — `BlipVoice` oscillator bank (sine / triangle / square / pulse / noise)
+  - Type: infrastructure / DSP math
+  - Files: `Assets/Scripts/Audio/Blip/BlipOscillatorBank.cs` (or inlined in `BlipVoice.cs` per implementer)
+  - Spec: `ia/projects/TECH-117-blip-oscillator-bank.md`
+  - Notes: Stage 1.3 Phase 1 second task. Phase-accumulator osc family — sine (`Math.Sin` MVP; LUT reserved post-MVP per `docs/blip-post-mvp-extensions.md` §1), triangle (abs-ramp), square, pulse (duty 0..1), noise-white (xorshift on `BlipVoiceState.rngState`). Freq from `BlipOscillatorFlat.frequency * pitchMult`. Pure static per-kind helpers; zero allocs; no Unity API.
+  - Acceptance: five osc kinds emit expected shapes (verified Stage 1.4 T1.4.2); `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-116**
 
-- [ ] **TECH-114** — `BlipPatchFlat` blittable readonly struct mirror
-  - Type: infrastructure / runtime data
-  - Files: `Assets/Scripts/Audio/Blip/BlipPatchFlat.cs`
-  - Spec: `ia/projects/TECH-114-blip-patch-flat-blittable.md`
-  - Notes: Stage 1.2 Phase 2 opener. Mirrors `BlipPatch` scalars; readonly struct; no managed refs; no `AudioMixerGroup` ref (held by `BlipMixerRouter` parallel to catalog per Step 2). Nested `BlipOscillatorFlat` / `BlipEnvelopeFlat` / `BlipFilterFlat`. Single `mixerGroupIndex` int slot (default -1; populated Step 2). Flatten via ctor or `FromSO(BlipPatch)`. Consumed by Stage 1.3 `BlipVoice.Render` + Step 2 `BlipBaker`.
-  - Acceptance: `BlipPatchFlat` + 3 nested flats compile as readonly structs; zero managed refs; `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-111**, **TECH-112**
+- [ ] **TECH-118** — AHDSR envelope state machine (Idle → Attack → Hold → Decay → Sustain → Release)
+  - Type: infrastructure / DSP math
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs` (or sibling `BlipEnvelope.cs`)
+  - Spec: `ia/projects/TECH-118-blip-ahdsr-state-machine.md`
+  - Notes: Stage 1.3 Phase 2 opener. Per-sample state-machine step. Converts `attackMs` / `holdMs` / `decayMs` / `releaseMs` → sample counts via `sampleRate * ms / 1000`. Durations already ≥ 1 ms per TECH-113 clamp. `decayMs == 0` → Attack → Hold → Sustain shortcut (sustain-only fallback). MVP release triggered by `samplesElapsed` vs patch `durationSeconds` (one-shot). Stage entry resets `samplesElapsed`.
+  - Acceptance: six-stage FSM advances correctly; sustain-only case routes cleanly; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-116**
 
-- [ ] **TECH-115** — `patchHash` content hash on `BlipPatch` + glossary rows
-  - Type: infrastructure / glossary
-  - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs` (or `BlipPatchHash.cs` helper), `ia/specs/glossary.md`
-  - Spec: `ia/projects/TECH-115-blip-patch-hash.md`
-  - Notes: Closes Stage 1.2. FNV-1a (default) or xxhash64 digest over serialized scalars (osc freqs, env timings, env shapes, filter cutoff, jitter, cooldown). Stable across Unity GUID churn + version bumps. `[SerializeField] private int patchHash` persisted on `OnValidate` (after clamp). `Awake` / first flatten recomputes + asserts match; log warning on mismatch (no crash). Glossary rows — **Blip patch**, **Blip patch flat**, **patch hash** (Audio category, peers of **Blip bootstrap** / **Blip mixer group**).
-  - Acceptance: hash stable across sessions (identical scalars → identical int); `OnValidate` write + `Awake` assert wired; 3 glossary rows land; `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-111**, **TECH-113**, **TECH-114**
+- [ ] **TECH-119** — Envelope level math (Linear + Exponential per-stage shapes)
+  - Type: infrastructure / DSP math
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs` (or sibling `BlipEnvelope.cs`)
+  - Spec: `ia/projects/TECH-119-blip-envelope-level-math.md`
+  - Notes: Stage 1.3 Phase 2 second task. Per-stage `BlipEnvShape` (TECH-112, closed) selector. `Linear` — straight ramp. `Exponential` — `target + (start - target) * exp(-t / τ)` w/ τ = stageDurSamples / 4 (≈98% settled at stage end; perceptually linear per loudness log curve). Hold holds at 1; Sustain holds at `sustainLevel`; Idle returns 0. `Math.Exp` OK MVP (LUT reserved post-MVP).
+  - Acceptance: Linear + Exponential shapes land; Exponential ≈98% settled at stage end (Stage 1.4 verification); `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-116**, **TECH-118**
+
+- [ ] **TECH-120** — One-pole LP filter inline in `BlipVoice.Render`
+  - Type: infrastructure / DSP math
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`
+  - Spec: `ia/projects/TECH-120-blip-lowpass-filter.md`
+  - Notes: Stage 1.3 Phase 3 opener. `y[n] = y[n-1] + α * (x[n] - y[n-1])` w/ `α = 1 - exp(-2π * cutoff / sampleRate)`. `z1` on `BlipVoiceState.filterZ1`. `filter.kind == None` → α = 1.0 (passthrough, single kernel, no branch). α pre-computed outside sample loop; per-sample cost = 1 mul + 1 add + 1 store.
+  - Acceptance: LP filter math lands inline; `None` kind passthrough branchless; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-116**
+
+- [ ] **TECH-121** — `BlipVoice.Render` driver (per-sample integrator loop)
+  - Type: infrastructure / runtime
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`
+  - Spec: `ia/projects/TECH-121-blip-render-driver.md`
+  - Notes: Stage 1.3 Phase 3 central task. Signature — `Render(Span<float> buffer, int offset, int count, int sampleRate, in BlipPatchFlat patch, int variantIndex, ref BlipVoiceState state)`. Per-sample loop — osc sum × envelope × filter → `buffer[offset + i]`. Pre-computes per-invocation scalars (α, freq increments, stage budgets) outside loop. Zero managed allocs inside (verified Stage 1.4 T1.4.7). No Unity API. Shared kernel — `BlipBaker` Step 2 + `BlipLiveHost` post-MVP.
+  - Acceptance: signature matches Stage 1.3 Exit; zero allocs verified; no Unity API; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-116**, **TECH-117**, **TECH-118**, **TECH-119**, **TECH-120**
+
+- [ ] **TECH-122** — Per-invocation jitter (pitch cents / gain dB / pan)
+  - Type: infrastructure / DSP math
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`
+  - Spec: `ia/projects/TECH-122-blip-per-invocation-jitter.md`
+  - Notes: Closes Stage 1.3 Phase 3. Pitch cents → `pow(2, cents/1200)` scales freq increments. Gain dB → `pow(10, dB/20)` scales output. Pan stashed on state for Step 2 mixer consumption (MVP mono kernel). Honors `BlipPatchFlat.deterministic` flag — bypass jitter + use `variantIndex` as RNG seed for reproducible bakes. Xorshift32 RNG seeded from `variantIndex * 0x9E3779B9 ^ voiceId`. Jitter computed once per `Render` invocation (not per sample).
+  - Acceptance: pitch/gain/pan jitter applied per invocation; `deterministic=true` → stable sum-of-abs hash (Stage 1.4 T1.4.5); zero added allocs (Stage 1.4 T1.4.7); `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-116**, **TECH-121**
 
 ## High Priority
 

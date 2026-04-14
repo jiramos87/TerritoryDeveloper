@@ -25,6 +25,7 @@ Follow `ia/skills/master-plan-new/SKILL.md` end-to-end. Phase sequence (gated):
 6. **Cardinality gate** — Every phase in a stage task table must have **≥2 tasks AND ≤6 tasks**. Phase with 1 task → warn + pause for split-or-justify. Phase with 0 → strip empty phase OR add tasks. Phase with 7+ → warn + suggest split. Proceed only after user confirms or fixes.
 7. **Tracking legend** — Insert standard legend verbatim under `## Steps` (copy from `blip-master-plan.md` line 22). Do NOT paraphrase — downstream skills match exact enum values.
 8. **Persist** — Write `ia/projects/{SLUG}-master-plan.md`. Order: header → `---` → `## Steps` + legend → Step 1 (full) → stages → Steps 2+ (skeletons) → `---` → `## Deferred decomposition` → `---` → `## Orchestration guardrails` → final `---`.
+8b. **Regenerate progress dashboard** — `npm run progress` (repo root). Adds newly authored plan to `docs/progress.html` (0 tasks done, deterministic). Log exit code; failure does NOT block Phase 9.
 9. **Handoff** — Single concise caveman message: counts (`N steps · M stages · P phases · Q tasks`), deferred steps named, invariants flagged by number, cardinality splits resolved, scope-boundary doc referenced (OR stub recommendation), next step `/stage-file {SLUG}-master-plan.md Stage 1.1`.
 
 # Tool recipe (Phase 2 only)

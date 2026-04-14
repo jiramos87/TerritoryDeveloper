@@ -15,18 +15,16 @@ description: >
 
 # Master plan — author orchestrator doc from expanded exploration
 
-Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md). **Additional exceptions (orchestrator prose is human-consumed cold):** Objectives may run 2–4 sentences (caveman fragments, not one-liner). Exit criteria bullets carry code-identifier precision (type / method / file path — not vague "feature works"). Relevant surfaces lists stay explicit (paths + line refs survive). Mermaid / ASCII diagrams forwarded verbatim.
+Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md). Exceptions: Objectives 2–4 sentences (human-consumed cold); Exit criteria carry type/method/file precision; Relevant surfaces stay explicit (paths + line refs); Mermaid/ASCII verbatim.
 
-No MCP calls from skill body. Follow **Tool recipe** (Phase 2 only). All other phases derive from the exploration doc's expansion block (literal `## Design Expansion` from `/design-explore`, OR semantic equivalents per Phase 0 mapping table).
+No MCP from skill body. Tool recipe Phase 2 only. All other phases derive from expansion block (literal `## Design Expansion` or semantic equivalents per Phase 0 table).
 
-**Position in lifecycle:** fires AFTER [`design-explore`](../design-explore/SKILL.md), BEFORE [`stage-file`](../stage-file/SKILL.md).
-`design-explore` → `master-plan-new` → `stage-file {FIRST_STAGE}` → `project-new` (via stage-file) → `project-spec-kickoff` → `project-spec-implement` → `project-stage-close` (per non-final stage) → `project-spec-close` (umbrella).
+**Lifecycle:** AFTER [`design-explore`](../design-explore/SKILL.md), BEFORE [`stage-file`](../stage-file/SKILL.md).
+`design-explore` → `master-plan-new` → `stage-file` → `project-new` → `project-spec-kickoff` → `project-spec-implement` → `project-stage-close` (non-final) → `project-spec-close` (umbrella).
 
 **Related:** [`design-explore`](../design-explore/SKILL.md) · [`stage-file`](../stage-file/SKILL.md) · [`project-new`](../project-new/SKILL.md) · [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) · [`ia/rules/orchestrator-vs-spec.md`](../../rules/orchestrator-vs-spec.md) · [`ia/skills/README.md`](../README.md).
 
-**Shape references:**
-- [`ia/projects/blip-master-plan.md`](../../projects/blip-master-plan.md) — multi-step, Step-1-heavy (audio DSP; Steps 2–3 kept as skeletons until Step 1 lands).
-- [`ia/projects/multi-scale-master-plan.md`](../../projects/multi-scale-master-plan.md) — multi-step, mixed state (some tasks in progress).
+**Shape refs:** [`blip-master-plan.md`](../../projects/blip-master-plan.md) (Step-1-heavy, Steps 2–3 skeletons) · [`multi-scale-master-plan.md`](../../projects/multi-scale-master-plan.md) (mixed state).
 
 ---
 
@@ -44,7 +42,7 @@ No MCP calls from skill body. Follow **Tool recipe** (Phase 2 only). All other p
 
 ### Phase 0 — Load + validate
 
-Read `{DOC_PATH}`. Confirm doc carries an expansion block that covers the same ground as `/design-explore` output. Accept either literal heading OR semantic equivalents.
+Read `{DOC_PATH}`. Confirm expansion block present — literal or semantic equivalents (table below).
 
 **Required content (by intent, not literal heading):**
 
@@ -55,9 +53,9 @@ Read `{DOC_PATH}`. Confirm doc carries an expansion block that covers the same g
 | Touched subsystems + invariant risk | `### Subsystem Impact` | `### Related subsystems` / `### Integration points` |
 | Phased skeleton | `### Implementation Points` | `### Roadmap` / `### MVP feature list` / `### Shipping plan` |
 
-Missing any intent entirely → stop, instruct user to run `/design-explore {DOC_PATH}` first. Intent present under non-literal heading → continue; note mapping in working memory for Phase 3/4 ref prose.
+Missing intent → STOP. Run `/design-explore {DOC_PATH}` first. Non-literal heading → continue; note mapping in working memory for Phase 3/4 ref prose.
 
-Extract and hold in working memory:
+Hold in working memory:
 
 - **Problem statement** + **Approach rationale** — header Scope line.
 - **Architecture / Component map / Key types** — entry / exit points → §"Relevant surfaces".
@@ -69,25 +67,24 @@ Extract and hold in working memory:
 
 ### Phase 1 — Slug + overwrite gate
 
-Resolve `{SLUG}`. Target path: `ia/projects/{SLUG}-master-plan.md`. Exists already → stop, ask user to confirm overwrite OR pick new slug. Never silently overwrite an orchestrator doc. Fail fast here — no MCP calls yet, no prose authored.
+Resolve `{SLUG}`. Target: `ia/projects/{SLUG}-master-plan.md`. Exists → STOP, ask confirm overwrite or new slug. Fail fast — no MCP yet.
 
 ### Phase 2 — MCP context (Tool recipe) + surface-path pre-check
 
-Run **Tool recipe** (below). Skip `invariants_summary` + `router_for_task` + `spec_sections` for **greenfield** plans (new subsystem, no existing code paths touched); still run `glossary_discover` / `glossary_lookup` to lock canonical names. **Brownfield** plans (modifying existing subsystems) run full recipe.
+Run **Tool recipe** (below). **Greenfield** (new subsystem, no existing paths touched): skip `invariants_summary` / `router_for_task` / `spec_sections`; still run `glossary_discover` / `glossary_lookup`. **Brownfield** (modifying existing subsystems): full recipe.
 
-Capture outputs for use in Phase 3 (header) + Phase 4–5 (step / stage bodies):
+Capture for Phases 3–5:
 
 - Invariant numbers at risk → header "Read first" line + stage-level guardrails.
 - Router-matched spec sections → §"Relevant surfaces" lines per step / stage.
 - Glossary canonical terms → replace ad-hoc synonyms from exploration doc in all authored prose.
 
-**Surface-path pre-check** (Glob, per entry / exit point in Architecture / Component map):
+**Surface-path pre-check** (Glob, per entry/exit point in Architecture / Component map):
+- Existing path → note line refs.
+- New dir/file intent → mark `(new)`; never cite non-existent line numbers.
+- Ambiguous name → Grep for plausible type names; fall back to `(new)`.
 
-- Existing file path → note line refs for "Relevant surfaces".
-- New-directory / new-file intent → mark as `(new)` in surfaces; do NOT cite non-existent line numbers.
-- Ambiguous name (e.g. "the patch SO") → Grep for plausible type names; fall back to `(new)` if no hit.
-
-Miss the pre-check → downstream stages cite ghost line numbers + future-you wastes time hunting them.
+Skip pre-check → downstream stages cite ghost line numbers.
 
 ### Phase 3 — Scope header
 
@@ -116,14 +113,14 @@ Author header block (verbatim shape, fill placeholders; invariants + surfaces no
 
 ### Phase 4 — Step decomposition
 
-Group `Implementation Points` phases (from exploration doc) into **steps** — each step = major product milestone shippable as a coherent slice. Rules of thumb:
+Group Implementation Points into **steps** — each = major shippable milestone. Rules:
 
 - 1 step = ≥1 user-visible capability OR coherent scaffolding layer.
-- Hard dependency chain across phases → earlier phases = earlier step(s).
-- Purely horizontal expansion (more of same) → same step, additional stages.
-- Target 1–4 steps for most MVP plans; 5+ is a red flag for scope creep.
+- Hard dep chain → earlier phases = earlier steps.
+- Horizontal expansion → same step, additional stages.
+- Target 1–4 steps; 5+ = scope creep red flag.
 
-**Decomposition depth rule:** decompose **Step 1 fully** (every stage → phases → tasks). Steps 2+ stay as **skeletons** (name + Objectives + Exit criteria + "decomposition deferred until Step {N-1} closes" note). Lazy decomposition — downstream steps absorb learnings from earlier steps; pre-committing tasks for Step 3 before Step 1 ships is waste.
+**Depth rule:** Step 1 fully decomposed (stages → phases → tasks). Steps 2+ = **skeletons** (name + Objectives + Exit criteria + "deferred until Step N-1 closes" note). Lazy decomposition — downstream steps absorb learnings; pre-committing Step 3 tasks before Step 1 ships = waste.
 
 Per step, author:
 
@@ -170,20 +167,19 @@ Steps 2+ skeleton shape (skip stage / phase / task tables):
 
 ### Phase 5 — Stage decomposition
 
-Per step (Step 1 only at author time — Steps 2+ stay skeletons per Phase 4), subdivide into **stages** — each stage = sub-milestone with its own exit criteria. Rules:
-
-- Each stage must land on a green-bar boundary (compiles, tests pass, no partial state merged).
-- Stages within a step may have soft deps (order matters) but no stage should block its own step's close.
+Step 1 only (Steps 2+ stay skeletons). Subdivide into **stages** — each = sub-milestone with own exit criteria. Rules:
+- Each stage lands on green-bar boundary (compiles, tests pass, no partial state merged).
+- Soft deps within step OK; no stage blocks step's close.
 - Target 2–4 stages per step.
 
-**Stage-ordering heuristic** (within a step, earliest stage first):
+**Stage-ordering heuristic** (earliest first):
 
 1. **Scaffolding / infrastructure** — bootstrap, persistent bindings, project settings, AudioMixer groups, scene setup. No data model yet.
 2. **Data model** — ScriptableObject / blittable struct / serialized fields. Typed but inert.
 3. **Runtime logic** — DSP kernel / update loop / compute code. Consumes data model.
 4. **Integration + tests** — call sites, EditMode/PlayMode tests, golden fixtures. Lands last in the step.
 
-Follow the order unless the exploration doc's Implementation Points declare a different dep chain (then follow that and note the deviation in the step's Decision Log seed). Rationale: earlier stages inherit zero scaffolding debt; test stage validates everything already shipped.
+Follow order unless Implementation Points declare different dep chain (note deviation in Decision Log seed). Rationale: earlier stages inherit zero scaffolding debt; test stage validates everything shipped.
 
 Per stage, author the block shape:
 
@@ -219,12 +215,11 @@ Per stage, author the block shape:
 
 ### Phase 6 — Cardinality gate
 
-Per `ia/rules/project-hierarchy.md`: every phase in a stage task table must contain **≥2 tasks**. Upper bound: **≤6 tasks per phase** (soft). Before persisting:
-
-- Scan every `**Phases:**` list per stage + match to `Tasks:` table.
-- Phase with 1 task → **warn user**, pause, ask to split OR justify in step / stage Decision Log.
-- Phase with 0 tasks → strip the empty phase line OR add tasks; do not persist with empty phases.
-- Phase with **7+ tasks** → **warn user**, pause, suggest splitting into two phases (e.g. "Data model — declaration" + "Data model — validation / hash"). 7+ tasks in one phase = phase does too many things; stage becomes un-closeable without partial state.
+Cardinality rule (`ia/rules/project-hierarchy.md`): ≥2 tasks/phase, ≤6 soft. Before persist:
+- Scan every `**Phases:**` list + match to `Tasks:` table.
+- 1 task → **warn**, pause, ask split or justify in Decision Log.
+- 0 tasks → strip phase line or add tasks; never persist empty phases.
+- 7+ tasks → **warn**, suggest split (e.g. "declaration" + "validation/hash"); phase too large → stage un-closeable.
 
 Proceed only after user confirms or fixes.
 
@@ -276,6 +271,10 @@ Materialize when the named step opens (per `ia/rules/project-hierarchy.md` lazy-
 ```
 
 Never overwrite an existing master plan file (Phase 1 gate). Never insert BACKLOG rows (that's `stage-file` + `project-new`). Never reference unfiled issue ids in Depends on — tasks stay `_pending_` until stage-file materializes them.
+
+### Phase 8b — Regenerate progress dashboard
+
+Run `npm run progress` from repo root. Regenerates `docs/progress.html` to include the newly authored master plan (0 tasks done). Output is deterministic — no change if plan was already tracked. Log exit code; failure does NOT block Phase 9 (tooling-only, no IA impact), but report in handoff.
 
 ### Phase 9 — Handoff
 

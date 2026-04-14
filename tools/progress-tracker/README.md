@@ -37,10 +37,12 @@ The following lifecycle skills invoke `npm run progress` automatically so `docs/
 
 | Skill | When regen runs | Where in skill body |
 |-------|----------------|---------------------|
+| `master-plan-new` | After new orchestrator doc written | Phase 8b, before handoff |
+| `stage-file` | After orchestrator task table flipped `_pending_` → `Draft` | Post-loop step 1b, before validate:all |
 | `project-stage-close` | After stage status flipped to `Final` + sanity-check passes | Post-flip section, before handoff emit |
-| `project-spec-close` | After BACKLOG archive row written + spec file deleted | Post-archive section |
+| `project-spec-close` | After BACKLOG archive row written + spec file deleted | Post-archive section (step 9b) |
 
-After either skill completes, a `git status` will show `docs/progress.html` modified (or no change if master-plan state was already up to date with a prior regen).
+After any of these skills completes, a `git status` will show `docs/progress.html` modified (or no change if master-plan state was already up to date with a prior regen).
 
 The regen is a no-op side-effect-free operation when master-plan state has not changed since the last run.
 

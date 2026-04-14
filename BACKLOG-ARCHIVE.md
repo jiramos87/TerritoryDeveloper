@@ -6,6 +6,46 @@
 
 ## Completed (moved from BACKLOG.md, 2026-04-13)
 
+- [x] **TECH-115** — `patchHash` content hash on `BlipPatch` + glossary rows (2026-04-14)
+  - Type: infrastructure / glossary
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs`, `ia/specs/glossary.md`
+  - Spec: (removed after closure)
+  - Notes: Closes Stage 1.2. FNV-1a 32-bit (offset basis `0x811C9DC5`, prime `0x01000193`) digest over serialized scalars (osc freqs, env timings, env shapes, filter cutoff, jitter, cooldown) — xxhash64 rejected (adds runtime dep; FNV-1a stdlib-free + sufficient for `BlipBaker` LRU cache-key scope, ≪1000 patches lifetime). Stable across Unity GUID churn + version bumps. `[SerializeField] private int patchHash` persisted on `OnValidate` (after clamp + oscillator resize). `Awake` / `OnEnable` recompute-and-assert warn-only (no write — keeps SO non-dirty at runtime load; mismatch surfaces as `Debug.LogWarning` w/ `name` + stored hash + recomputed hash). Canonical field order frozen in helper (§5.2) — reorder invalidates `BlipBaker` cache; future fields append at tail + bump `HashVersion` const post-MVP. Hash scope excludes `mixerGroup` (`AudioMixerGroup` managed ref — routed by `BlipMixerRouter` Step 2; not in `BlipPatchFlat`) + `patchHash` self-field (circular). `BlipPatchHash` static helper co-located in `BlipPatch.cs` (small helper; mirrors `BlipPatchFlat.FromSO` colocation style). Glossary rows landed for **Blip patch** / **Blip patch flat** / **patch hash** (Audio category, peers of **Blip bootstrap** / **Blip mixer group**). Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.2.
+  - Acceptance: hash stable across sessions (identical scalars → identical int); `OnValidate` write + `Awake` assert wired; 3 glossary rows land; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-111**, **TECH-113**, **TECH-114**
+
+- [x] **TECH-114** — `BlipPatchFlat` blittable readonly struct mirror (2026-04-14)
+  - Type: infrastructure / runtime data
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatchFlat.cs`
+  - Spec: (removed after closure)
+  - Notes: Blip master-plan Stage 1.2 Phase 2 opener. `BlipPatchFlat` readonly struct mirrors `BlipPatch` scalars; zero managed refs (no class / string / `AnimationCurve` / `AudioMixerGroup`). `AudioMixerGroup` kept on SO + `BlipMixerRouter` parallel map (Step 2) — preserves blittable contract. Nested `BlipOscillatorFlat` / `BlipEnvelopeFlat` / `BlipFilterFlat` readonly structs under `BlipPatchFlat.cs`. Oscillator slots inline triplet (`osc0/osc1/osc2 + oscillatorCount`) — managed array rejected (heap ref breaks blittable); triplet matches `BlipPatch.OnValidate` cap of 3. `mixerGroupIndex` int sentinel defaults `-1` (router overrides post-flatten; avoids nullable). Flatten via ctor `BlipPatchFlat(BlipPatch so, int mixerGroupIndex = -1)` + static `FromSO(BlipPatch)` helper — runs main-thread only on `BlipCatalog.Awake`. `patchHash` slot deferred to TECH-115 (appended w/o layout churn). Consumed by Stage 1.3 `BlipVoice.Render(in BlipPatchFlat, …)` + Step 2 `BlipBaker.BakeOrGet(in BlipPatchFlat, …)`. Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.2.
+  - Acceptance: `BlipPatchFlat` + 3 nested flats compile as readonly structs; zero managed refs; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-111**, **TECH-112**
+
+- [x] **TECH-113** — `OnValidate` clamps on `BlipPatch` (anti-click + range guards) (2026-04-14)
+  - Type: infrastructure / authoring guard
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs`
+  - Spec: (removed after closure)
+  - Notes: Blip master-plan Stage 1.2 Phase 1 third task. `OnValidate` body on `BlipPatch` clamps AHDSR timings + range guards: `attackMs` / `releaseMs` ≥ 1 ms (≈48 samples @ 48 kHz mix rate — kills snap-onset click); `decayMs` ≥ 0 ms (allows instant Attack → Sustain transition — sustain-only patches via A=1 / D=0 / R=1); `sustainLevel` `Mathf.Clamp01`; `variantCount` 1..8; `voiceLimit` 1..16; `cooldownMs` ≥ 0. Oscillator array resize guard — `oscillators[]` length capped at 3 via `Array.Resize` (matches `BlipPatchFlat` MVP budget — TECH-114). Decision: `decayMs` clamp ≥ 0 (not ≥ 1 as Backlog Notes initially said) — contradiction w/ sustain-only fallback clause resolved in favor of fallback. Authoring-only pass; runtime flatten + `BlipVoice.Render` never re-clamp. TECH-115 later appends `patchHash = ComputeHash()` at bottom of same `OnValidate` body. Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.2.
+  - Acceptance: six clamp rules + oscillator resize enforced; sustain-only case authors cleanly; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-111**, **TECH-112**
+
+- [x] **TECH-112** — MVP struct + enum definitions for `BlipPatch` (2026-04-14)
+  - Type: infrastructure / authoring
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatchTypes.cs`
+  - Spec: (removed after closure)
+  - Notes: Blip master-plan Stage 1.2 Phase 1 — 3 `[Serializable]` structs (`BlipOscillator` no `pitchEnvCurve`; `BlipEnvelope` per-stage `BlipEnvShape` + `sustainLevel`, no top-level `shape` curve; `BlipFilter` `kind` + `cutoffHz`, no `cutoffEnv`) + 5 enums (`BlipId` 11 rows = `None` + 10 MVP matching `docs/blip-procedural-sfx-exploration.md` §11.4; `BlipWaveform` Sine/Triangle/Square/Pulse/NoiseWhite; `BlipFilterKind` None/LowPass; `BlipEnvStage` Idle/Attack/Hold/Decay/Sustain/Release; `BlipEnvShape` Linear/Exponential). All integer-backed w/ explicit values, `None`/`Idle = 0` sentinels, no `[Flags]`. Sibling file `BlipPatchTypes.cs` (not nested in `BlipPatch.cs`) — enums referenced by kernel + flat struct without SO dep. Code landed pre-kickoff under TECH-111; implement phase = audit + validators. No curve fields anywhere under `Assets/Scripts/Audio/Blip/`. Feeds `BlipPatchFlat` flatten (TECH-114) + kernel (Stage 1.3). Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.2.
+  - Acceptance: 3 structs + 5 enums compile; no curve fields; `unity:compile-check` + `validate:all` green
+  - Depends on: none
+
+- [x] **TECH-111** — `BlipPatch : ScriptableObject` authoring surface (MVP fields) (2026-04-14)
+  - Type: infrastructure / authoring
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs`
+  - Spec: (removed after closure)
+  - Notes: Blip master-plan Stage 1.2 Phase 1 opener. `BlipPatch : ScriptableObject` landed w/ 15 MVP scalar fields (`oscillators[0..3]`, `envelope`, `filter`, `variantCount`, jitter triplet, `voiceLimit`, `priority`, `cooldownMs`, `deterministic`, `mixerGroup` authoring-only ref, `durationSeconds`, `useLutOscillators` reserved, `patchHash` `[SerializeField] private int`). `CreateAssetMenu("Territory/Audio/Blip Patch")` attribute wired. No `AnimationCurve` fields. No `mode` field / `BlipMode` enum (deferred post-MVP per `docs/blip-post-mvp-extensions.md` §1). Decisions: `mixerGroup` stays on SO (authoring-only) — NOT flattened into `BlipPatchFlat` to keep struct blittable; `BlipMixerRouter` parallel to catalog holds `BlipId → AudioMixerGroup` map (Step 2). `patchHash` serialized on SO (persist across Editor reload; computed TECH-115). Feeds flatten (TECH-114) + hash persist (TECH-115) + DSP kernel (Stage 1.3). Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.2.
+  - Acceptance: `BlipPatch.cs` compiles + CreateAssetMenu reachable; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-112**
+
 - [x] **TECH-109** — Testmode smoke: stub at border after new-game + binding intact after interstate build (2026-04-14)
   - Type: verification
   - Files: `Assets/Scripts/Editor/AgentTestModeBatchRunner.cs`, `Assets/Scripts/Editor/Testing/NeighborStubSmokeDriver.cs`, `tools/fixtures/scenarios/README.md`

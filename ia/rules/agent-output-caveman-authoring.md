@@ -15,7 +15,7 @@ Runtime stub: [`ia/rules/agent-output-caveman.md`](agent-output-caveman.md). Fet
 
 - **Agent responses** in this working dir — main session + any subagent via Agent tool.
 - **Subagent bodies** `.claude/agents/{name}.md` — must contain explicit `caveman:caveman` directive so fresh-context window inherits style.
-- **Skill recipes** `ia/skills/{name}/SKILL.md` — must carry one-paragraph "Output style: caveman" preamble so direct skill invocations inherit style.
+- **Skill recipes** `ia/skills/{name}/SKILL.md` — preamble directive + body prose (phase descriptions, framing sentences, guardrail bullets) in caveman fragments. Preamble alone insufficient; compress article-heavy framing on every edit.
 - **Slash command bodies** `.claude/commands/*.md` — reassert caveman in forwarded prompt (belt-and-suspenders vs drift if subagent file loses directive).
 - **Handoff messages** from `project-stage-close` (+ future stage-handoff surfaces) — message itself caveman-shaped; include explicit "follow `caveman:caveman` skill rules" line forwarded verbatim to next stage's fresh agent.
 - **Project memory entries** (`MEMORY.md` or `.claude/memory/{slug}.md`) — caveman body.

@@ -18,18 +18,13 @@ description: >
 
 # Verify loop — integrated closed-loop verification
 
-Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md). **Additional exceptions:** structured Verification block (JSON header — must parse), MCP `unity_bridge_command` JSON inputs / outputs, batch report JSON contents (`tools/reports/agent-testmode-batch-*.json`), screenshot / log artifact paths.
+Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman.md). Exceptions: Verification block JSON (must parse), `unity_bridge_command` payloads, batch report JSON, screenshot/log artifact paths.
 
-**Single canonical Verification policy:** [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md). This skill is the operational recipe; the policy doc is the contract.
+**Policy:** [`docs/agent-led-verification-policy.md`](../../../docs/agent-led-verification-policy.md) — contract. This skill = operational recipe.
 
-**Composes:**
-- [`bridge-environment-preflight`](../bridge-environment-preflight/SKILL.md) — Step 0 Postgres + `agent_bridge_job` readiness.
-- [`project-implementation-validation`](../project-implementation-validation/SKILL.md) — Step 2 Node CI-parity (`validate:all` / `verify:local`).
-- [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) — Step 4a Path A batch + Step 4b Path B bridge hybrid.
-- [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) — Step 5 optional Play Mode logs / screenshots.
-- [`close-dev-loop`](../close-dev-loop/SKILL.md) — Step 6 fix iteration mechanics (before/after `debug_context_bundle`, compile gate ordering).
+**Composes:** [`bridge-environment-preflight`](../bridge-environment-preflight/SKILL.md) (Step 0) · [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (Step 2) · [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) (Steps 4a/4b) · [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) (Step 5) · [`close-dev-loop`](../close-dev-loop/SKILL.md) (Step 6).
 
-**Related lifecycle:** [`project-spec-implement`](../project-spec-implement/SKILL.md) (per-phase trigger) · [`project-stage-close`](../project-stage-close/SKILL.md) (per-stage gate) · [`project-spec-close`](../project-spec-close/SKILL.md) (umbrella close gate).
+**Related:** [`project-spec-implement`](../project-spec-implement/SKILL.md) · [`project-stage-close`](../project-stage-close/SKILL.md) · [`project-spec-close`](../project-spec-close/SKILL.md).
 
 ---
 
@@ -107,7 +102,7 @@ Exit code reference: [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.
 
 ### Step 4b — Path B IDE agent bridge hybrid (when gate fires)
 
-Use when batch CLI unavailable OR need `debug_context_bundle` / screenshots in open Editor.
+Use when batch CLI unavailable or need `debug_context_bundle`/screenshots.
 
 1. Write `{SCENARIO_ID}` (single line) to `tools/fixtures/scenarios/.queued-test-scenario-id` (gitignored). Path-based loads use `-testScenarioPath` instead.
 2. Step 0 must be green (Postgres + `agent_bridge_job`).

@@ -1,6 +1,6 @@
 # Multi-Scale Simulation — Master Plan (MVP)
 
-> **Status:** In Progress — Step 1 / Stage 1.3 archived (testmode smoke closed — all Stage 1.3 tasks archived)
+> **Status:** In Progress — Step 2 (Step 1 Final 2026-04-14; decomposition pending)
 >
 > **Scope:** Min load-bearing work to prove city ↔ region ↔ country game loop (dormant evolution + reconstruction). Rest → `multi-scale-post-mvp-expansion.md`.
 >
@@ -30,7 +30,7 @@
 
 ### Step 1 — Parent-scale conceptual stubs
 
-**Status:** In Progress — Stage 1.3
+**Status:** Final
 
 **Objectives:** surface parent region + country identity in city code + save. Land cell-type split as refactor base for parent scales. Plant neighbor-city stub + interstate-border read contract (inert). Zero behavior shift at city scale; no playable parent scales.
 
@@ -69,11 +69,11 @@
 **Tasks:**
 
 
-| Task   | Phase | Issue       | Status | Intent                                                                                        |
-| ------ | ----- | ----------- | ------ | --------------------------------------------------------------------------------------------- |
-| T1.1.1 | 1     | **TECH-87** | Done   | `GameSaveData` parent-id fields + save version bump + legacy migration + glossary rows.       |
-| T1.1.2 | 2     | **TECH-88** | Done   | `GridManager` `ParentRegionId` / `ParentCountryId` surface + new-game placeholder allocation. |
-| T1.1.3 | 3     | **TECH-89** | Done   | Round-trip + legacy-migration tests (testmode batch scenario).                                |
+| Task   | Name                    | Phase | Issue       | Status | Intent                                                                                        |
+| ------ | ----------------------- | ----- | ----------- | ------ | --------------------------------------------------------------------------------------------- |
+| T1.1.1 | Parent-id fields        | 1     | **TECH-87** | Done   | `GameSaveData` parent-id fields + save version bump + legacy migration + glossary rows.       |
+| T1.1.2 | GridManager parent-id   | 2     | **TECH-88** | Done   | `GridManager` `ParentRegionId` / `ParentCountryId` surface + new-game placeholder allocation. |
+| T1.1.3 | Round-trip migration    | 3     | **TECH-89** | Done   | Round-trip + legacy-migration tests (testmode batch scenario).                                |
 
 
 #### Stage 1.2 — Cell-type split
@@ -101,21 +101,21 @@
 **Tasks:**
 
 
-| Task   | Phase | Issue       | Status | Intent                                                                                                       |
-| ------ | ----- | ----------- | ------ | ------------------------------------------------------------------------------------------------------------ |
-| T1.2.1 | 1     | **TECH-90** | Done   | Extract `Cell` abstract base (coord, height, shared primitives). Compile-only; no rename yet.                |
-| T1.2.2 | 1     | **TECH-91** | Done   | Rename `Cell` → `CityCell` across all city sim files. Preserve `HeightMap` sync (invariant #1).              |
-| T1.2.3 | 2     | **TECH-92** | Done   | `RegionCell` placeholder type (coord + parent-region-id; no behavior). Glossary row.                         |
-| T1.2.4 | 2     | **TECH-93** | Done   | `CountryCell` placeholder type (coord + parent-country-id; no behavior). Glossary rows for all 3 cell types. |
-| T1.2.5 | 3     | **TECH-94** | Done   | Generic `GetCell<T>(x,y)` or scale-indexed overloads on `GridManager`. Compile gate.                         |
-| T1.2.6 | 3     | **TECH-95** | Done   | Back-compat `GetCell(x,y)` defaults to `CityCell`. Update all callers. Invariant #5 preserved.               |
-| T1.2.7 | 4     | **TECH-96** | Done   | Testmode smoke — city load + sim tick, no regression.                                                        |
-| T1.2.8 | 4     | **TECH-97** | Done   | Testmode assertion — `HeightMap` / `CityCell.height` integrity (invariant #1).                               |
+| Task   | Name                     | Phase | Issue       | Status | Intent                                                                                                       |
+| ------ | ------------------------ | ----- | ----------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| T1.2.1 | Extract Cell base        | 1     | **TECH-90** | Done   | Extract `Cell` abstract base (coord, height, shared primitives). Compile-only; no rename yet.                |
+| T1.2.2 | Cell → CityCell rename   | 1     | **TECH-91** | Done   | Rename `Cell` → `CityCell` across all city sim files. Preserve `HeightMap` sync (invariant #1).              |
+| T1.2.3 | RegionCell placeholder   | 2     | **TECH-92** | Done   | `RegionCell` placeholder type (coord + parent-region-id; no behavior). Glossary row.                         |
+| T1.2.4 | CountryCell placeholder  | 2     | **TECH-93** | Done   | `CountryCell` placeholder type (coord + parent-country-id; no behavior). Glossary rows for all 3 cell types. |
+| T1.2.5 | GetCell generic overloads| 3     | **TECH-94** | Done   | Generic `GetCell<T>(x,y)` or scale-indexed overloads on `GridManager`. Compile gate.                         |
+| T1.2.6 | GetCell back-compat      | 3     | **TECH-95** | Done   | Back-compat `GetCell(x,y)` defaults to `CityCell`. Update all callers. Invariant #5 preserved.               |
+| T1.2.7 | City load smoke test     | 4     | **TECH-96** | Done   | Testmode smoke — city load + sim tick, no regression.                                                        |
+| T1.2.8 | HeightMap integrity test | 4     | **TECH-97** | Done   | Testmode assertion — `HeightMap` / `CityCell.height` integrity (invariant #1).                               |
 
 
 #### Stage 1.3 — Neighbor-city stub + interstate-border semantics
 
-**Status:** Draft
+**Status:** Final (2026-04-14 — all tasks archived TECH-102→TECH-109)
 
 **Objectives:** ≥1 neighbor stub per city at interstate border. Inert read contract for future cross-scale flow.
 
@@ -138,16 +138,16 @@
 **Tasks:**
 
 
-| Task   | Phase | Issue        | Status | Intent                                                                                       |
-| ------ | ----- | ------------ | ------ | -------------------------------------------------------------------------------------------- |
-| T1.3.1 | 1     | **TECH-102** | Done   | `NeighborCityStub` struct (id GUID, display name, border side enum) + serialize schema.      |
-| T1.3.2 | 1     | **TECH-103** | Done   | `GameSaveData.neighborStubs` list + save version bump.                                       |
-| T1.3.3 | 2     | **TECH-104** | Done   | New-game init: place ≥1 stub at random interstate border (seed-deterministic).               |
-| T1.3.4 | 2     | **TECH-105** | Done   | On-road-build: road exit at border binds to stub ref by border side.                         |
-| T1.3.5 | 3     | **TECH-106** | Done   | `GridManager.GetNeighborStub(side)` inert read contract (returns stub or null; no behavior). |
-| T1.3.6 | 3     | **TECH-107** | Done   | Glossary rows for `neighbor-city stub` + `interstate border`.                                |
-| T1.3.7 | 4     | **TECH-108** | Done   | Save/load round-trip test (stubs + bindings preserved).                                      |
-| T1.3.8 | 4     | **TECH-109** | Done (archived) | Testmode smoke — stub at border after new-game; binding intact after road build at border.   |
+| Task   | Name                      | Phase | Issue        | Status          | Intent                                                                                       |
+| ------ | ------------------------- | ----- | ------------ | --------------- | -------------------------------------------------------------------------------------------- |
+| T1.3.1 | NeighborCityStub struct   | 1     | **TECH-102** | Done            | `NeighborCityStub` struct (id GUID, display name, border side enum) + serialize schema.      |
+| T1.3.2 | neighborStubs save field  | 1     | **TECH-103** | Done            | `GameSaveData.neighborStubs` list + save version bump.                                       |
+| T1.3.3 | New-game stub placement   | 2     | **TECH-104** | Done            | New-game init: place ≥1 stub at random interstate border (seed-deterministic).               |
+| T1.3.4 | Road exit border bind     | 2     | **TECH-105** | Done            | On-road-build: road exit at border binds to stub ref by border side.                         |
+| T1.3.5 | GetNeighborStub API       | 3     | **TECH-106** | Done            | `GridManager.GetNeighborStub(side)` inert read contract (returns stub or null; no behavior). |
+| T1.3.6 | Stub + border glossary    | 3     | **TECH-107** | Done            | Glossary rows for `neighbor-city stub` + `interstate border`.                                |
+| T1.3.7 | Save/load round-trip      | 4     | **TECH-108** | Done            | Save/load round-trip test (stubs + bindings preserved).                                      |
+| T1.3.8 | Border smoke test         | 4     | **TECH-109** | Done (archived) | Testmode smoke — stub at border after new-game; binding intact after road build at border.   |
 
 
 **Backlog state (Step 1):** Stage 1.1 filed + archived (TECH-87 / TECH-88 / TECH-89). Stage 1.2 filed + archived (TECH-90 → TECH-97). Stage 1.3 filed + archived (TECH-102 → TECH-109) under `§ Multi-scale simulation lane`.

@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-14T13:27:38.142Z",
+  "last_generated": "2026-04-14T17:13:57.209Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -430,6 +430,18 @@
     "Blip mixer group": {
       "spec_key": "ia",
       "anchor": "projects-blip-master-plan-md-stage-1-1"
+    },
+    "Blip patch": {
+      "spec_key": "ia",
+      "anchor": "projects-blip-master-plan-md-stage-1-2"
+    },
+    "Blip patch flat": {
+      "spec_key": "ia",
+      "anchor": "projects-blip-master-plan-md-stage-1-2"
+    },
+    "patch hash": {
+      "spec_key": "ia",
+      "anchor": "projects-blip-master-plan-md-stage-1-2"
     },
     "Land slope prefabs": {
       "spec_key": "isometric-geography-system",

@@ -163,12 +163,14 @@ function parseTaskTable(lines) {
 
     // Use flexible column detection
     const taskIdx = colMap['task'] ?? 0;
-    const phaseIdx = colMap['phase'] ?? 1;
-    const issueIdx = colMap['issue'] ?? 2;
-    const statusIdx = colMap['status'] ?? 3;
-    const intentIdx = colMap['intent'] ?? 4;
+    const nameIdx = colMap['name'] ?? -1;
+    const phaseIdx = colMap['phase'] ?? (nameIdx >= 0 ? 2 : 1);
+    const issueIdx = colMap['issue'] ?? (nameIdx >= 0 ? 3 : 2);
+    const statusIdx = colMap['status'] ?? (nameIdx >= 0 ? 4 : 3);
+    const intentIdx = colMap['intent'] ?? (nameIdx >= 0 ? 5 : 4);
 
     const id = cells[taskIdx] ?? '';
+    const name = nameIdx >= 0 ? (cells[nameIdx] ?? '') : '';
     const phase = cells[phaseIdx] ?? '';
     // Strip bold markers from issue cell: **TECH-87** → TECH-87
     const issueRaw = (cells[issueIdx] ?? '').replace(/\*\*/g, '').trim();
@@ -180,6 +182,7 @@ function parseTaskTable(lines) {
 
     tasks.push({
       id: id.replace(/\*\*/g, '').trim(),
+      name: name.trim(),
       phase: phase.trim(),
       issue: issueRaw,
       status: normalizeTaskStatus(statusRaw),
@@ -396,6 +399,7 @@ export function parseMasterPlan(markdown, filename = '') {
 
   return {
     title,
+    filename,
     overallStatus,
     overallStatusDetail,
     siblingWarnings,

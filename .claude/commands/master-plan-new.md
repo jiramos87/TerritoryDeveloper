@@ -30,6 +30,7 @@ Forward via Agent tool with `subagent_type: "master-plan-new"`:
 > 6. Cardinality gate — Every phase in a stage task table: **≥2 tasks AND ≤6 tasks**. Phase with 1 → warn + pause for split-or-justify. Phase with 0 → strip OR add tasks. Phase with 7+ → warn + suggest split. Proceed only after user confirms or fixes.
 > 7. Tracking legend — Insert standard legend verbatim under `## Steps` (copy from `blip-master-plan.md` line 22). Do NOT paraphrase.
 > 8. Persist — Write `ia/projects/{SLUG}-master-plan.md`. Order: header → `---` → `## Steps` + legend → Step 1 (full) → stages → Steps 2+ (skeletons) → `---` → `## Deferred decomposition` → `---` → `## Orchestration guardrails` → final `---`.
+> 8b. Regenerate progress dashboard — `npm run progress` (repo root). Adds new plan to `docs/progress.html` (0 tasks done). Deterministic; failure does NOT block Phase 9 — log exit code and continue.
 > 9. Handoff — Single caveman message with counts + invariants + gate results + next-step call (`/stage-file {SLUG}-master-plan.md Stage 1.1`).
 >
 > ## Tool recipe — Phase 2 only

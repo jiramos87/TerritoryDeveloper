@@ -28,7 +28,7 @@
 
 ### Step 1 — DSP foundations + audio infra
 
-**Status:** In Progress — Stage 1.2
+**Status:** In Progress — Stage 1.3
 
 **Objectives:** Land scaffolding. Audio mixer asset + persistent bootstrap prefab. Authoring data model (`BlipPatch` ScriptableObject + `BlipPatchFlat` blittable mirror + content-hash). DSP kernel (`BlipVoice.Render`) w/ MVP oscillator set + AHDSR envelope + one-pole LP filter. EditMode tests gate kernel behavior + determinism. No playback wiring yet; no sounds heard in game.
 
@@ -71,16 +71,16 @@
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T1.1.1 | 1 | **TECH-98** | Done | Create `Assets/Audio/BlipMixer.mixer` via Unity Editor (`Window → Audio → Audio Mixer` — binary YAML, not hand-written). Three groups (`Blip-UI`, `Blip-World`, `Blip-Ambient`), each routed through master. Expose master `SfxVolume` dB param (`Exposed Parameters` panel, default 0 dB). |
-| T1.1.2 | 1 | **TECH-99** | Done | Headless SFX volume binding — `BlipBootstrap.Awake` reads `PlayerPrefs.GetFloat("BlipSfxVolumeDb", 0f)` + calls `BlipMixer.SetFloat("SfxVolume", db)`. No Settings UI in MVP (visible slider + mute toggle deferred post-MVP per `docs/blip-post-mvp-extensions.md` §4). Key string constant on `BlipBootstrap`. |
-| T1.1.3 | 2 | **TECH-100** | Done | `BlipBootstrap` GameObject prefab + `DontDestroyOnLoad(transform.root.gameObject)` in `Awake` (pattern per `GameNotificationManager.cs`). Empty Catalog / Player / MixerRouter / CooldownRegistry child slots (populated Step 2). Placed at root of `MainMenu.unity` (boot scene; build index 0 per `MainMenuController.cs`). |
-| T1.1.4 | 2 | **TECH-101** | Done (archived) | Scene-load suppression policy — no Blip fires until `BlipCatalog.Awake` sets ready flag. Document in glossary rows for **Blip mixer group** + **Blip bootstrap**. |
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T1.1.1 | BlipMixer asset | 1 | **TECH-98** | Done | Create `Assets/Audio/BlipMixer.mixer` via Unity Editor (`Window → Audio → Audio Mixer` — binary YAML, not hand-written). Three groups (`Blip-UI`, `Blip-World`, `Blip-Ambient`), each routed through master. Expose master `SfxVolume` dB param (`Exposed Parameters` panel, default 0 dB). |
+| T1.1.2 | Headless volume binding | 1 | **TECH-99** | Done | Headless SFX volume binding — `BlipBootstrap.Awake` reads `PlayerPrefs.GetFloat("BlipSfxVolumeDb", 0f)` + calls `BlipMixer.SetFloat("SfxVolume", db)`. No Settings UI in MVP (visible slider + mute toggle deferred post-MVP per `docs/blip-post-mvp-extensions.md` §4). Key string constant on `BlipBootstrap`. |
+| T1.1.3 | BlipBootstrap prefab | 2 | **TECH-100** | Done | `BlipBootstrap` GameObject prefab + `DontDestroyOnLoad(transform.root.gameObject)` in `Awake` (pattern per `GameNotificationManager.cs`). Empty Catalog / Player / MixerRouter / CooldownRegistry child slots (populated Step 2). Placed at root of `MainMenu.unity` (boot scene; build index 0 per `MainMenuController.cs`). |
+| T1.1.4 | Scene-load suppression | 2 | **TECH-101** | Done (archived) | Scene-load suppression policy — no Blip fires until `BlipCatalog.Awake` sets ready flag. Document in glossary rows for **Blip mixer group** + **Blip bootstrap**. |
 
 #### Stage 1.2 — Patch data model
 
-**Status:** In Progress — tasks filed (TECH-111..TECH-115 Draft)
+**Status:** Done — TECH-111..TECH-115 Done
 
 **Objectives:** `BlipPatch` ScriptableObject authoring surface + `BlipPatchFlat` blittable mirror + content-hash. MVP skips all `AnimationCurve` fields (no pitch-env curve, no cutoff-env curve, no envelope shape curve) — AHDSR uses parametric ramps (linear or exp per `BlipEnvShape` enum, no curves), filter uses static cutoff Hz. Keeps Step 3 authoring simple + Step 1 scope tight. Curve / LUT infrastructure lands post-MVP per `docs/blip-post-mvp-extensions.md` §1. `BlipMode` enum omitted MVP (single implicit baked path) — added post-MVP when `BlipLiveHost` lands. `useLutOscillators` field reserved / unused MVP to prevent schema churn when post-MVP LUT osc lands.
 
@@ -100,17 +100,17 @@
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T1.2.1 | 1 | **TECH-111** | Draft | `BlipPatch : ScriptableObject` class + MVP fields + `CreateAssetMenu("Territory/Audio/Blip Patch")`. No `AnimationCurve` fields. No `mode` field (`BlipMode` enum deferred post-MVP). `useLutOscillators` bool present but unread (reserved slot). |
-| T1.2.2 | 1 | **TECH-112** | Draft | MVP struct + enum definitions — `BlipOscillator` (no `pitchEnvCurve`), `BlipEnvelope` (no `shape` curve; per-stage `BlipEnvShape` + `sustainLevel`), `BlipFilter` (no `cutoffEnv`) + `BlipId`, `BlipWaveform`, `BlipFilterKind`, `BlipEnvStage`, `BlipEnvShape` (`Linear`, `Exponential`). |
-| T1.2.3 | 1 | **TECH-113** | Draft | `OnValidate` guards on `BlipPatch` — clamp `attackMs`, `decayMs`, `releaseMs` to ≥ 1 ms (kills snap-onset click at default 48 kHz mix rate). Clamp `variantCount` to 1..8, `voiceLimit` to 1..16, `sustainLevel` to 0..1, `cooldownMs` to ≥ 0. |
-| T1.2.4 | 2 | **TECH-114** | Draft | `BlipPatchFlat` blittable readonly struct — mirrors SO scalars; no managed refs; no `AudioMixerGroup` ref (held in `BlipMixerRouter` parallel to catalog — Step 2). `BlipOscillatorFlat` / `BlipEnvelopeFlat` / `BlipFilterFlat` nested. Single `mixerGroupIndex` int slot. |
-| T1.2.5 | 2 | **TECH-115** | Draft | `patchHash` content hash — FNV-1a / xxhash64 digest over serialized scalar fields (osc freqs, env timings, env shapes, filter cutoff, jitter values, cooldown). Stable; ignores Unity GUID + version. `[SerializeField] private int patchHash` persisted on `OnValidate`; `Awake` (or first flatten) recomputes + asserts match. Glossary rows for **Blip patch**, **Blip patch flat**, **patch hash**. |
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T1.2.1 | BlipPatch SO scaffold | 1 | **TECH-111** | Done | `BlipPatch : ScriptableObject` class + MVP fields + `CreateAssetMenu("Territory/Audio/Blip Patch")`. No `AnimationCurve` fields. No `mode` field (`BlipMode` enum deferred post-MVP). `useLutOscillators` bool present but unread (reserved slot). |
+| T1.2.2 | MVP structs + enums | 1 | **TECH-112** | Done | MVP struct + enum definitions — `BlipOscillator` (no `pitchEnvCurve`), `BlipEnvelope` (no `shape` curve; per-stage `BlipEnvShape` + `sustainLevel`), `BlipFilter` (no `cutoffEnv`) + `BlipId`, `BlipWaveform`, `BlipFilterKind`, `BlipEnvStage`, `BlipEnvShape` (`Linear`, `Exponential`). |
+| T1.2.3 | OnValidate clamp guards | 1 | **TECH-113** | Done | `OnValidate` guards on `BlipPatch` — clamp `attackMs` / `releaseMs` to ≥ 1 ms (≈48 samples @ 48 kHz mix rate — kills snap-onset click); `decayMs` ≥ 0 ms (sustain-only A=1/D=0/R=1 allowed). Clamp `variantCount` 1..8, `voiceLimit` 1..16, `sustainLevel` 0..1, `cooldownMs` ≥ 0. Oscillator array resize guard caps `oscillators[]` at 3 (matches `BlipPatchFlat` MVP budget). |
+| T1.2.4 | BlipPatchFlat struct | 2 | **TECH-114** | Done | `BlipPatchFlat` blittable readonly struct — mirrors SO scalars; no managed refs; no `AudioMixerGroup` ref (held in `BlipMixerRouter` parallel to catalog — Step 2). `BlipOscillatorFlat` / `BlipEnvelopeFlat` / `BlipFilterFlat` nested. Single `mixerGroupIndex` int slot. |
+| T1.2.5 | patchHash content hash | 2 | **TECH-115** | Done | `patchHash` content hash — FNV-1a 32-bit digest over serialized scalar fields (osc freqs, env timings, env shapes, filter cutoff, jitter values, cooldown). Stable; ignores Unity GUID + version. `[SerializeField] private int patchHash` persisted on `OnValidate`; `Awake` / `OnEnable` recomputes + asserts match (warn-only). Glossary rows for **Blip patch**, **Blip patch flat**, **patch hash**. |
 
 #### Stage 1.3 — Voice DSP kernel
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — tasks filed (TECH-116..122, Draft)
 
 **Objectives:** `BlipVoice.Render` kernel. Single static method, stateful via `ref BlipVoiceState`. MVP oscillator bank + AHDSR envelope (per-stage `Linear` or `Exponential` shape) + one-pole LP filter. Per-invocation pitch / gain / pan jitter. No allocs inside `Render`. No Unity API. Shared kernel — used by `BlipBaker` Step 2 + `BlipLiveHost` post-MVP.
 
@@ -132,15 +132,15 @@
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T1.3.1 | 1 | _pending_ | _pending_ | `BlipVoiceState` struct — `phaseA..phaseD` (double), `envLevel`, `envStage`, `filterZ1`, `rngState` (xorshift seed), `samplesElapsed`. Blittable; lives in caller. |
-| T1.3.2 | 1 | _pending_ | _pending_ | Oscillator bank — sine (`Math.Sin` MVP), triangle, square, pulse (duty param), noise-white (xorshift on `rngState`). Phase-accumulator; frequency from patch osc + `pitchMult`. |
-| T1.3.3 | 2 | _pending_ | _pending_ | AHDSR stage machine — `Idle → Attack → Hold → Decay → Sustain → Release → Idle`. Transitions via `samplesElapsed` + per-stage duration from patch (durations already ≥ 1 ms by `BlipPatch.OnValidate` clamp — see T1.2.3). |
-| T1.3.4 | 2 | _pending_ | _pending_ | Envelope level math — per-stage `BlipEnvShape` selector. Linear: straight ramp (attack 0→1, decay 1→sustain, release sustain→0). Exponential: `target + (start - target) * exp(-t/τ)` with τ = stageDuration/4 (≈98 % settled at stage end; perceptual linear). Multiplies output sample. |
-| T1.3.5 | 3 | _pending_ | _pending_ | One-pole LP filter in-loop — `y[n] = y[n-1] + a * (x[n] - y[n-1])` where `a = 1 - exp(-2π * cutoff / sampleRate)`. `z1` on `BlipVoiceState`. `filter.kind == None` → `a = 1.0` (passthrough, single kernel, no branch). |
-| T1.3.6 | 3 | _pending_ | _pending_ | `BlipVoice.Render` driver — per-sample loop: osc sum × envelope × filter → buffer. Uses `ref state`. Zero alloc verified. |
-| T1.3.7 | 3 | _pending_ | _pending_ | Per-invocation jitter — pitch cents ± jitter, gain dB ± jitter, pan ± jitter. Honors `deterministic` flag. RNG from `rngState` (xorshift, seeded deterministically per variant + voice). |
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T1.3.1 | BlipVoiceState struct | 1 | **TECH-116** | Draft | `BlipVoiceState` struct — `phaseA..phaseD` (double), `envLevel`, `envStage`, `filterZ1`, `rngState` (xorshift seed), `samplesElapsed`. Blittable; lives in caller. |
+| T1.3.2 | Oscillator bank | 1 | **TECH-117** | Draft | Oscillator bank — sine (`Math.Sin` MVP), triangle, square, pulse (duty param), noise-white (xorshift on `rngState`). Phase-accumulator; frequency from patch osc + `pitchMult`. |
+| T1.3.3 | AHDSR state machine | 2 | **TECH-118** | Draft | AHDSR stage machine — `Idle → Attack → Hold → Decay → Sustain → Release → Idle`. Transitions via `samplesElapsed` + per-stage duration from patch (durations already ≥ 1 ms by `BlipPatch.OnValidate` clamp — see T1.2.3). |
+| T1.3.4 | Envelope level math | 2 | **TECH-119** | Draft | Envelope level math — per-stage `BlipEnvShape` selector. Linear: straight ramp (attack 0→1, decay 1→sustain, release sustain→0). Exponential: `target + (start - target) * exp(-t/τ)` with τ = stageDuration/4 (≈98 % settled at stage end; perceptual linear). Multiplies output sample. |
+| T1.3.5 | One-pole LP filter | 3 | **TECH-120** | Draft | One-pole LP filter in-loop — `y[n] = y[n-1] + a * (x[n] - y[n-1])` where `a = 1 - exp(-2π * cutoff / sampleRate)`. `z1` on `BlipVoiceState`. `filter.kind == None` → `a = 1.0` (passthrough, single kernel, no branch). |
+| T1.3.6 | Render driver loop | 3 | **TECH-121** | Draft | `BlipVoice.Render` driver — per-sample loop: osc sum × envelope × filter → buffer. Uses `ref state`. Zero alloc verified. |
+| T1.3.7 | Per-invocation jitter | 3 | **TECH-122** | Draft | Per-invocation jitter — pitch cents ± jitter, gain dB ± jitter, pan ± jitter. Honors `deterministic` flag. RNG from `rngState` (xorshift, seeded deterministically per variant + voice). |
 
 #### Stage 1.4 — EditMode DSP tests
 
@@ -167,15 +167,15 @@
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T1.4.1 | 1 | _pending_ | _pending_ | `Assets/Tests/EditMode/Audio/Blip.Tests.EditMode.asmdef` — refs `Blip` runtime + `UnityEngine.TestRunner` + `nunit.framework`. Platform: `Editor` only. |
-| T1.4.2 | 1 | _pending_ | _pending_ | Test fixture helpers — `RenderPatch(in BlipPatchFlat, int sampleRate, int seconds) → float[]`, `CountZeroCrossings(float[]) → int`, `SampleEnvelopeLevels(float[], int stride) → float[]`, `SumAbsHash(float[]) → double`. |
-| T1.4.3 | 2 | _pending_ | _pending_ | Oscillator zero-crossing tests — sine @ 440 Hz × 1 s @ 48 kHz ≈ 880 crossings (± 2). Repeat triangle / square / pulse duty=0.5. |
-| T1.4.4 | 2 | _pending_ | _pending_ | Envelope shape tests — both `Linear` + `Exponential` shapes. A=50ms/H=0/D=50ms/S=0.5/R=50ms. Assert attack monotonic rising, decay monotonic falling to sustain, release monotonic falling to zero. Exponential-shape extra assert — attack slope in first quarter > slope in last quarter. |
-| T1.4.5 | 2 | _pending_ | _pending_ | Silence test — `gainMult = 0` → all-zero buffer (exact equality, not tolerance). |
-| T1.4.6 | 3 | _pending_ | _pending_ | Determinism test — render same patch + seed + variant twice; assert `SumAbsHash` equal within 1e-6 + first 256 samples byte-equal. Validates voice-state reset + RNG determinism without depending on JIT stability of trailing samples. |
-| T1.4.7 | 3 | _pending_ | _pending_ | No-alloc regression — warm-up loop (3 renders, discard allocation), then measure `GC.GetAllocatedBytesForCurrentThread` delta across 10 steady-state renders; assert delta constant ≤ 0 bytes/call (tolerates NUnit infra alloc outside the measured window). |
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T1.4.1 | EditMode test asmdef | 1 | _pending_ | _pending_ | `Assets/Tests/EditMode/Audio/Blip.Tests.EditMode.asmdef` — refs `Blip` runtime + `UnityEngine.TestRunner` + `nunit.framework`. Platform: `Editor` only. |
+| T1.4.2 | Test fixture helpers | 1 | _pending_ | _pending_ | Test fixture helpers — `RenderPatch(in BlipPatchFlat, int sampleRate, int seconds) → float[]`, `CountZeroCrossings(float[]) → int`, `SampleEnvelopeLevels(float[], int stride) → float[]`, `SumAbsHash(float[]) → double`. |
+| T1.4.3 | Oscillator crossing tests | 2 | _pending_ | _pending_ | Oscillator zero-crossing tests — sine @ 440 Hz × 1 s @ 48 kHz ≈ 880 crossings (± 2). Repeat triangle / square / pulse duty=0.5. |
+| T1.4.4 | Envelope shape tests | 2 | _pending_ | _pending_ | Envelope shape tests — both `Linear` + `Exponential` shapes. A=50ms/H=0/D=50ms/S=0.5/R=50ms. Assert attack monotonic rising, decay monotonic falling to sustain, release monotonic falling to zero. Exponential-shape extra assert — attack slope in first quarter > slope in last quarter. |
+| T1.4.5 | Silence test | 2 | _pending_ | _pending_ | Silence test — `gainMult = 0` → all-zero buffer (exact equality, not tolerance). |
+| T1.4.6 | Determinism test | 3 | _pending_ | _pending_ | Determinism test — render same patch + seed + variant twice; assert `SumAbsHash` equal within 1e-6 + first 256 samples byte-equal. Validates voice-state reset + RNG determinism without depending on JIT stability of trailing samples. |
+| T1.4.7 | No-alloc regression | 3 | _pending_ | _pending_ | No-alloc regression — warm-up loop (3 renders, discard allocation), then measure `GC.GetAllocatedBytesForCurrentThread` delta across 10 steady-state renders; assert delta constant ≤ 0 bytes/call (tolerates NUnit infra alloc outside the measured window). |
 
 **Backlog state (Step 1):** All Step 1 task rows stay in this doc as `_pending_`. File BACKLOG rows + project specs when parent stage → `In Progress` via `stage-file` skill. Stages 2.x + 3.x task decomposition deferred until Step 2 + Step 3 open.
 

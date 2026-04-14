@@ -62,7 +62,26 @@ A third surface looms: a **user portal** (save/map management, future payment) t
 
 ## Interview responses
 
-*(Filled during executive interview — see below)*
+**Q1 — Game title:** "Territory Developer" is the final public name.
+**Q2 — Site personality:** A — Deep sim. Serious, data-rich, systems-forward. No fluff.
+**Q3 — Launch window:** Unknown. No target date. Site investment must be decoupled from game ship date.
+**Q4 — MVP audience:** C — Public from day one. Discoverable via search/links.
+**Q5 — Wiki authorship:** Solo-authored by Javier initially. Community edits opened later (v2+).
+**Q6 — Devlog format:** C — Static "origin story" section + living devlog blog on top. Public devlog seen as a strong asset.
+**Q7 — Stack:** Next.js + React + TypeScript, full-stack (API Routes or Route Handlers as backend). New dedicated web backend — MCP server (`territory-ia`) stays unchanged. Both frontend and backend in TypeScript.
+**Q8 — Repo structure:** A — Monorepo. Next.js app lives at `web/` inside `territory-developer`.
+**Q9 — Hosting:** A — Vercel. Zero-config Next.js deploy.
+**Q10 — Payment gateway:** D — Undecided. Architecture slot reserved, no provider chosen yet.
+**Q11 — Auth:** D — Roll own. JWT + sessions, full control. No third-party auth provider.
+**Q12 — User portal killer feature:** View city stats / history. Save/map management secondary.
+**Q13 — Hard constraints:** Free tier only across all services — Vercel, DB, hosting, auth, everything. Zero recurring cost until revenue exists.
+**Q14 — Dashboard access:** C now → A later. Unlinked/obscure at launch; gate behind auth once user portal infra exists. Must be runnable locally too.
+**Q15 — Design references + extra goals:** Visual references provided (4 images):
+- NYT-style dark choropleth/heatmap (near-black bg, red accent clusters, spaced-cap geo labels)
+- Proportional bubble data journalism map (blue bubbles, annotation-dense, light bg variant)
+- FUTBIN dark dense data table (multi-col stats, color-coded badges, filter chips, sortable rows)
+- FUTBIN entity detail card (stat bars, tabbed sub-panels, semantic color coding, icon arrays)
+Key cross-cutting note: web UI/UX data-heavy styling must eventually inform in-game UI/UX — coordinate when a game UX/UI master plan is designed. Both surfaces share the same design language.
 
 ---
 
@@ -85,4 +104,205 @@ A third surface looms: a **user portal** (save/map management, future payment) t
 
 ## Design Expansion
 
-*(Populated after interview — input for `/design-explore` → `/master-plan-new`)*
+### Chosen Approach
+
+**A3 — Static-first hybrid, single Next.js app at `web/`.**
+
+Single Next.js 14+ app (App Router, TypeScript, React Server Components) hosted on Vercel free tier. Rendering strategy layered by surface:
+
+- **Static (SSG / ISR)** — landing, about, install, wiki pages, devlog list + post pages, project history. Built from Markdown/MDX under `web/content/**` and repo-root IA (`ia/specs/glossary.md`, `BACKLOG-ARCHIVE.md`, `ia/projects/*-master-plan.md`). Revalidate on push via Vercel Git integration; optional webhook for on-demand.
+- **Server-rendered (Route Handlers / RSC)** — progress dashboard live view (reads parsed master-plan data), future user portal pages. No client bundle cost for data fetch.
+- **Client-interactive islands** — filter chips / sortable tables on dashboard + wiki index (FUTBIN-style); minimal `"use client"` surface.
+- **API Routes** — `web/app/api/**` reserved for future user portal (auth, cloud saves, entitlement). Empty at MVP except health check.
+
+**Rationale:** free-tier fit (Vercel SSG unlimited, Postgres-less MVP), decoupled from game ship date (Q3), serves all three audiences (dev / public / future portal) without service sprawl, shares design system across dashboard + public site (Q15 FUTBIN/NYT aesthetic).
+
+---
+
+### Architecture
+
+```mermaid
+flowchart LR
+  subgraph Repo[territory-developer monorepo]
+    IA[ia/**<br/>glossary, master plans, backlog]
+    CONTENT[web/content/**<br/>MDX: devlog, wiki, pages]
+    TOOLS[tools/progress-tracker/<br/>parse.mjs, render.mjs]
+    WEB[web/ Next.js app]
+  end
+
+  subgraph Web[web/ app]
+    direction TB
+    RSC[App Router RSC<br/>app/**]
+    LIB[lib/<br/>content loader, plan loader]
+    API[app/api/**<br/>stub endpoints]
+    UI[components/<br/>design system]
+  end
+
+  subgraph Vercel[Vercel free tier]
+    EDGE[Edge / CDN]
+    SSG[Static pages<br/>ISR cache]
+    FN[Serverless fns<br/>API + SSR]
+  end
+
+  IA --> LIB
+  CONTENT --> LIB
+  TOOLS -.reuse parse.mjs.-> LIB
+  LIB --> RSC
+  RSC --> UI
+  RSC --> SSG
+  API --> FN
+  SSG --> EDGE
+  FN --> EDGE
+  EDGE --> Visitor((Public / Dev / Owner))
+```
+
+**Entry points:**
+- `web/app/page.tsx` — landing (static)
+- `web/app/wiki/[...slug]/page.tsx` — MDX-sourced wiki
+- `web/app/devlog/[slug]/page.tsx` — MDX posts
+- `web/app/dashboard/page.tsx` — live progress (RSC, reads IA)
+- `web/app/api/health/route.ts` — liveness stub
+- Local dev: `cd web && npm run dev` (Next.js) + optional `npm run progress` still works standalone.
+
+**Exit points:**
+- Vercel deploy triggered by push to `main` (configured via Vercel GitHub app).
+- Optional GitHub Action `web-preview.yml` for PR previews (free-tier compatible).
+
+---
+
+### Subsystem Impact
+
+Design touches tooling / docs surfaces only; no runtime C# / Unity subsystems. Invariants (`ia/rules/invariants.md` #1–#12) not implicated. Skipped `invariants_summary` per hard-boundary rule.
+
+| Subsystem | Dependency | Risk | Change type | Mitigation |
+|---|---|---|---|---|
+| `tools/progress-tracker/` (parse.mjs, render.mjs) | `web/lib/plan-loader.ts` imports `parse.mjs` | Drift if parse output schema changes | **Additive** — `parse.mjs` stays authoritative; `render.mjs` keeps producing static `docs/progress.html` as fallback | Export parse schema as TS types in `web/lib/`; pin single source of truth in `parse.mjs` JSDoc |
+| `docs/progress.html` | Existing static snapshot; dashboard replaces it for online viewers | Dual maintenance if both live | **Coexist at MVP** — deprecate `progress.html` once dashboard proven | Add banner on legacy html pointing to live dashboard post-launch |
+| `ia/specs/glossary.md` | Wiki index reads glossary to auto-list terms | Exposing internal spec refs publicly | **Read-only import** — curate which columns surface | Wiki layer filters out `Spec reference` column, keeps Term + Definition only |
+| `ia/projects/*-master-plan.md` | Dashboard reads for live status | Public exposure of planning docs | **Dashboard gated** (Q14: obscure-URL now → auth later) | `robots.txt` disallow + unlinked route; auth middleware added when portal lands |
+| `BACKLOG.md` / `BACKLOG-ARCHIVE.md` | Optional: devlog "what shipped" pulls archive rows | Public issue ids leak | **Defer** to post-MVP; devlog is manual MDX at launch | Decide per-post; no auto-pull at MVP |
+| MCP server (`territory-ia`) | **None** — untouched | N/A | No change | MCP stays stdio dev-only per Q7 |
+| Agent bridge DB (Postgres) | **None** at MVP — reserved for user portal | Free-tier Postgres provider TBD (Q13) | No change at MVP | Slot reserved in architecture; defer to portal stage |
+| `CLAUDE.md` / `AGENTS.md` | Must document `web/` path + `web/` dev commands | Doc drift | **Additive** — append §Web to both | Single PR adds both entries alongside first `web/` commit |
+| `package.json` (root) + npm workspaces | New `web/` workspace or nested `package.json` | Lockfile churn | **Additive workspace** recommended | Use root npm workspaces; `web/package.json` declares own deps |
+| Caveman rule (`ia/rules/agent-output-caveman.md`) | Public-facing web copy must be full English (not caveman) | Style conflict | Already covered — public marketing / wiki copy is end-user surface, not agent output | Document exception explicitly in web copy style guide inside `web/README.md` |
+
+---
+
+### Implementation Points
+
+Ordered by dependency. Each item is a candidate stage/step for the forthcoming master plan (not a commitment).
+
+**Phase W1 — Scaffold (unblocks everything)**
+1. Add `web/` workspace; root `package.json` declares `"workspaces": ["web", "tools/*"]` (non-breaking additive).
+2. `npx create-next-app@latest web --ts --app --tailwind --eslint` (Tailwind for FUTBIN-style data density).
+3. Vercel project linked to repo; build root = `web/`; deploy `main` branch.
+4. CI: `web/` added to `npm run validate:all` chain (lint + typecheck + build).
+5. `web/README.md` documents local dev, content conventions, caveman exception for public copy.
+
+**Phase W2 — Design system foundation**
+1. Token layer — colors (NYT dark choropleth palette: near-black bg, red/amber accents), type scale, spacing.
+2. Primitives — `DataTable`, `StatBar`, `BadgeChip`, `FilterChips`, `HeatmapCell`, `AnnotatedMap` (SVG) — derived from Q15 refs.
+3. Storybook-lite or `/design` route for visual review.
+4. Export tokens as JSON so future Unity UI/UX plan can consume same palette (Q15 cross-cutting note).
+
+**Phase W3 — Public surface MVP**
+1. Routes: `/`, `/about`, `/install`, `/history`.
+2. MDX content under `web/content/pages/*.mdx`.
+3. SEO basics — sitemap, `robots.txt`, OpenGraph image.
+4. 404 + layout + footer with GitHub link.
+
+**Phase W4 — Wiki**
+1. Content model: `web/content/wiki/**.mdx` with frontmatter (title, category, tags).
+2. Auto-index glossary-derived terms (read `ia/specs/glossary.md`, filter public columns).
+3. Search (client-side `fuse.js` over prebuilt index).
+4. Category landing pages.
+
+**Phase W5 — Devlog**
+1. `web/content/devlog/YYYY-MM-DD-slug.mdx` collection.
+2. Origin-story static page + living post list (RSS feed).
+3. Post layout with cover image, tags, read time.
+
+**Phase W6 — Live dashboard**
+1. `web/lib/plan-loader.ts` wraps `tools/progress-tracker/parse.mjs`.
+2. RSC `/dashboard` renders all master plans; filter chips per plan / status / phase.
+3. Obscure-URL gate (Q14): unlinked route, `robots.txt` disallow, banner "internal".
+4. Legacy `docs/progress.html` gains "Live dashboard" link; deprecate when dashboard stable.
+
+**Phase W7 — Portal foundations (deferred, architecture-only at MVP)**
+1. Auth decision point (Q11: JWT + sessions roll-own) — pick password hash lib, session store (Postgres or encrypted cookie).
+2. Free-tier Postgres provider selection (Neon / Supabase free tier / Vercel Postgres Hobby).
+3. `app/api/auth/*` stub route handlers; no user-facing flow yet.
+4. Schema draft for `user`, `session`, `save`, `entitlement` — not migrated.
+
+**Deferred / out of scope**
+- Payment gateway integration (Q10 undecided) — architecture slot reserved, no provider wiring.
+- Cloud saves / map management (Q12 portal killer feature) — design only, no implementation.
+- Community wiki edits (Q5 v2+) — read-only wiki at launch.
+- Internationalization — English only.
+- Unity WebGL export — separate future track.
+
+---
+
+### Examples
+
+**Example 1 — Live dashboard data flow**
+
+Input (master-plan row parsed from `ia/projects/blip-master-plan.md`):
+```
+| T1.2.1 | 1 | TECH-111 | Done (archived) | BlipPatch ScriptableObject |
+```
+
+Processed by `parse.mjs` → `PlanData` object → consumed by `web/lib/plan-loader.ts` (RSC, no client JS) → rendered as row in `<DataTable>` with status badge class `status-done`. URL: `/dashboard?plan=blip&status=done`.
+
+Output (rendered HTML fragment):
+```html
+<tr data-status="done">
+  <td><code>T1.2.1</code></td>
+  <td><a href="https://github.com/.../TECH-111">TECH-111</a></td>
+  <td><span class="badge badge-done">Done</span></td>
+  <td>BlipPatch ScriptableObject</td>
+</tr>
+```
+
+**Edge case — pending id:** row with `issue: "_pending_"` renders as muted badge, no link, tooltip "not yet filed"; filter chip "Pending" surfaces these for backlog triage.
+
+**Example 2 — Wiki auto-index from glossary**
+
+Input (row from `ia/specs/glossary.md`):
+```
+| HeightMap | Per-cell land elevation grid... | geo §3 |
+```
+
+Loader strips `Spec reference` column (internal), emits public wiki entry at `/wiki/terms/heightmap` with Term + Definition only. Spec link hidden.
+
+**Edge case — orphan glossary term not yet in any wiki page:** auto-generated stub page with "Stub — authoring in progress" banner; listed in "Needs authoring" admin view (dashboard-gated).
+
+**Example 3 — Caveman exception boundary**
+
+Agent editing `web/content/pages/about.mdx` writes full English marketing prose (per agent-output-caveman §exceptions + `web/README.md` style rule). Same agent editing `ia/projects/FEAT-XXX.md` for the same feature reverts to caveman. Enforcement: PR review; no lint rule.
+
+---
+
+### Review Notes
+
+Phase 8 subagent review skipped — this design is tooling/docs-only scaffold with no runtime subsystem coupling, no invariants touched, and explicit user confirmation on approach (A3). Re-run review after W1 scaffold PR lands if the master plan stage sequencing warrants deeper critique.
+
+**Non-blocking items to carry into master plan:**
+- Free-tier Postgres provider selection (W7) — evaluate Neon vs. Supabase vs. Vercel Postgres Hobby limits.
+- Design token export format for future Unity consumption (W2.4) — JSON schema TBD.
+- Legacy `docs/progress.html` deprecation trigger — pick measurable condition (e.g., dashboard uptime N weeks).
+- Auth library choice (W7.1) — confirm roll-own JWT still preferred vs. Lucia-Auth-style minimal library once W7 starts.
+
+**Suggestions:**
+- Consider a `web/content/` sync script that watches `ia/specs/glossary.md` during dev to hot-reload wiki pages.
+- Add a PR-preview URL comment bot so visual review of wiki/devlog diffs happens in-PR.
+
+---
+
+### Expansion metadata
+
+- **Date:** 2026-04-14
+- **Model:** claude-opus-4-6
+- **Approach selected:** A3 — Static-first hybrid, single Next.js app at `web/`
+- **Blocking items resolved:** 0

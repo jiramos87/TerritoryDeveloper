@@ -34,7 +34,7 @@ Does not replace human issue verification per AGENTS.md.
 
 ## Gate — run vs skip
 
-If **none** of the following apply, **skip** this loop, state **why** in the handoff, and rely on **`validate:all`** / normal review only.
+None apply → **skip** loop, state why in handoff; rely on `validate:all` + normal review.
 
 | Run the loop when the diff or project spec **§7b** / **§8** touches… | Notes |
 |------------------------------------------------------------------------|--------|

@@ -300,6 +300,50 @@ Normative behavior stays in **§1–§3**; the following are **consistency** not
 
 ---
 
+## 7. Target visual language (inferred — pending game UX/UI master plan)
+
+These assertions are inferred from visual references provided by the developer (April 2026). They are **targets** — not yet enforced in as-built code. A future game UX/UI master plan will formalize them into backlog issues. Cross-reference: `ia/specs/web-ui-design-system.md` shares the same language for the web layer.
+
+### 7.1 Dark-first palette
+
+| Principle | Description |
+|-----------|-------------|
+| Base | Near-black canvas (`#0a0a0a`–`#181818`). No light-mode variant planned. |
+| Surface elevation | Subtle step-up in brightness for cards/panels (~`#1a1a1a` → `#222`). |
+| Text | Primary white (`#e8e8e8`), secondary muted (`rgba(255,255,255,0.55)`), de-emphasized (`rgba(255,255,255,0.35)`). |
+| Accent — positive | Green (`#2d8a4e` / `#40bf72`) — growth, surplus, healthy stats. |
+| Accent — negative | Red (`#bf4040` / `#e05555`) — deficit, damage, critical alerts. |
+| Accent — neutral | Muted blue-gray (`#3a5080`) — interactive chrome, selected state. |
+| Borders | Subtle `1px solid rgba(255,255,255,0.08)` — cards visible but not loud. |
+
+### 7.2 Typography direction
+
+| Principle | Description |
+|-----------|-------------|
+| Label keys | Small-caps or letter-spaced uppercase (`letter-spacing: 0.12em`) — sparse, precise. |
+| Metric values | Large numeric readouts, tabular figures (`font-variant-numeric: tabular-nums`). |
+| Body / annotations | Compact sans-serif (12–13px effective), tight line-height (1.3). |
+| No decorative fonts | System UI or clean geometric sans — data legibility over personality. |
+
+### 7.3 Information density
+
+| Pattern | Description |
+|---------|-------------|
+| **Data tables** | Dense multi-column grids. Color-coded badges for numeric stats (green/red circles or chips). Sortable columns. Sticky headers. |
+| **Filter chips** | Horizontal pill row above tables for category/metric filtering. |
+| **Stat bars** | Thin horizontal progress bars (`height: 4–8px`) — proportion of max, colored by threshold. |
+| **Entity cards** | Bordered dark cards: avatar/icon left, key stats right, tabbed sub-panels (Summary / Stats / History). |
+| **Heat overlays** | Spatial data layers on map views — red/blue graduated color over dark base tile. No heavy border chrome on map surface. |
+| **Proportional bubbles** | Circle size encodes magnitude on geographic/grid views. |
+| **Metric badges** | Rounded rectangle chips with number + semantic color — used for ratings, ranks, deltas. |
+| **Icon + value combos** | Small icon (16–20px) preceding or following a stat value — consistent pairing. |
+
+### 7.4 Cross-surface note (game ↔ web)
+
+These patterns apply to both the **in-game HUD** (Unity uGUI) and the **web platform** (`ia/specs/web-ui-design-system.md`). When a game UX/UI master plan is authored, it should reconcile the Unity token names in `UiTheme.cs` / `DefaultUiTheme.asset` with the target language above. The web layer has more freedom (CSS variables, Tailwind); the game layer must map through `UiTheme` tokens to maintain one-asset-update propagation.
+
+---
+
 ## 6. Revision history
 
 | Date | Change |
@@ -314,6 +358,7 @@ Normative behavior stays in **§1–§3**; the following are **consistency** not
 | 2026-04-04 | Serialized **`MainMenu`**, **`UiTheme`**, **§1.2** typography decision, **§4.3** resolution matrix, **§5.2** theme paths |
 | 2026-04-04 | **`UIManager` `partial`** split; **§3.2** modal **Esc** contract; **§3.5** scroll-zoom checklist; **§5.2** prefab scaffold menu; **v0** prefabs via **`UiPrefabLibraryScaffoldMenu`** |
 | 2026-04-11 | **§3.5** touch / **WASD** **UI** blocking note; **§5.3** shipped **UiTheme** / **HUD** polish implementation patterns (migrated from closed project spec) |
+| 2026-04-14 | **§7** Target visual language (inferred from reference images) — dark-first, data-dense, semantic color, stat bars, entity cards, heat/bubble overlays. Cross-linked to `web-ui-design-system.md`. |
 
 ### Machine-readable traceability (UI inventory baseline)
 

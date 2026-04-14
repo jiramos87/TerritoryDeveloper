@@ -24,6 +24,7 @@ Forward via Agent tool with `subagent_type: "stage-file"`:
 > 3. Load shared MCP context ONCE: `glossary_discover` → `glossary_lookup` → `router_for_task` → `invariants_summary` (if C# stage) → `spec_section` → `backlog_issue` (stage-level deps).
 > 4. Filing loop (task-table order): next id → BACKLOG row → spec stub from template → `validate:dead-project-specs`. Abort task on non-zero.
 > 5. Atomic update: after ALL tasks filed, one Edit pass updates orchestrator task table (issue ids + `Draft` status).
+> 5b. Regenerate progress dashboard — `npm run progress` (repo root). Reflects `Draft` status flip in `docs/progress.html`. Deterministic; failure does NOT block step 6 — log exit code and continue.
 > 6. `npm run validate:all` — stop on failure, root-cause.
 >
 > ## Hard boundaries
