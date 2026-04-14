@@ -310,7 +310,41 @@ Player-facing **simulation**, **AUTO** growth, **urban growth rings** / **zone d
 
 ## Multi-scale simulation lane
 
-Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = parent-scale conceptual stubs (code + save surfaces only; no playable parent scales). Stage 1.1 = parent-scale identity fields — archived. Stage 1.2 = cell-type split — archived. Stage 1.3 (neighbor-city stub) remains in master plan; file here when parent stage → `In Progress`.
+Orchestrator: [`ia/projects/multi-scale-master-plan.md`](projects/multi-scale-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = parent-scale conceptual stubs (code + save surfaces only; no playable parent scales). Stage 1.1 = parent-scale identity fields — archived. Stage 1.2 = cell-type split — archived. Stage 1.3 = neighbor-city stub + interstate-border semantics — filed below.
+
+### Stage 1.3 — Neighbor-city stub + interstate-border semantics
+
+- [ ] **TECH-106** — `GridManager.GetNeighborStub(BorderSide)` inert read contract
+  - Type: infrastructure / runtime
+  - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`, `Assets/Scripts/Managers/UnitManagers/IGridManager.cs`
+  - Spec: `ia/projects/TECH-106.md`
+  - Notes: Stage 1.3 Phase 3 opener. Read-only `GetNeighborStub(BorderSide side) → NeighborCityStub?` mirrors **TECH-88** `ParentRegionId` / `ParentCountryId` surface. Null when no stub on that side. Zero consumers yet; future cross-scale flow reads via this. Thin accessor under TECH-88 precedent (invariant #6 — no new responsibility added). Orchestrator: Stage 1.3.
+  - Acceptance: accessor present on `GridManager` + `IGridManager`; null on unmatched side; zero city-sim behavior change; `npm run unity:compile-check` + `npm run validate:all` green
+  - Depends on: **TECH-103**, **TECH-104**
+
+- [ ] **TECH-107** — Glossary rows: **neighbor-city stub** + **interstate border**
+  - Type: IA / glossary
+  - Files: `ia/specs/glossary.md`
+  - Spec: `ia/projects/TECH-107.md`
+  - Notes: Stage 1.3 Phase 3 closer (docs-only). Adds **neighbor-city stub** row under Multi-scale simulation (cites master plan + `NeighborCityStub.cs`) + **interstate border** row under Roads & Bridges (cites geo §13.5, cross-ref **Interstate** + **Map border**). Terminology consistency — no synonyms; existing rows untouched. Orchestrator: Stage 1.3.
+  - Acceptance: both rows present + alphabetized within category; canonical cross-refs; `npm run validate:all` green (chains `test:ia` + indexes)
+  - Depends on: **TECH-102**
+
+- [ ] **TECH-108** — Save/load round-trip test: stubs + bindings preserved
+  - Type: verification
+  - Files: testmode batch scenario (`tools/`, `AgentTestModeBatchRunner`)
+  - Spec: `ia/projects/TECH-108.md`
+  - Notes: Stage 1.3 Phase 4 opener. Mirrors **TECH-89** round-trip precedent. Scenario: new-game → build interstate to border → save → load → assert `neighborStubs` + bindings byte-equal pre/post. Exit 0, report under `tools/reports/`. Orchestrator: Stage 1.3.
+  - Acceptance: testmode batch exit 0; stub + binding fields equal pre vs post save; report attached; `npm run validate:all` green
+  - Depends on: **TECH-103**
+
+- [ ] **TECH-109** — Testmode smoke: stub at border after new-game + binding intact after interstate build
+  - Type: verification
+  - Files: testmode batch scenario (`tools/`, `AgentTestModeBatchRunner`)
+  - Spec: `ia/projects/TECH-109.md`
+  - Notes: Stage 1.3 Phase 4 closer — regression gate rolling up stage exit criteria. Assertions: `stub_count >= 1` post-new-game, binding present post-interstate-build, `GridManager.GetNeighborStub(boundSide) != null`, ≥1 sim tick zero exceptions. Closes Stage 1.3 exit (≥1 stub per city + inert read API verified live). Orchestrator: Stage 1.3.
+  - Acceptance: testmode batch exit 0; all assertions pass; zero C# exceptions; report attached; `npm run validate:all` green
+  - Depends on: **TECH-104**, **TECH-106**
 
 ## Blip audio program
 

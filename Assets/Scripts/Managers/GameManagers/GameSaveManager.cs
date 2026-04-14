@@ -30,6 +30,28 @@ public class GameSaveManager : MonoBehaviour
     [NonSerialized] public string regionId;
     /// <summary>Parent country id (GUID string) for the loaded / active city. Populated on load or first save.</summary>
     [NonSerialized] public string countryId;
+    /// <summary>
+    /// In-memory neighbor stubs for the active session. Seeded by <see cref="Territory.Core.NeighborStubSeeder"/>
+    /// in <see cref="NewGame"/>; restored from save in <see cref="LoadGame"/>.
+    /// <see cref="BuildCurrentGameSaveData"/> writes this list into <see cref="GameSaveData.neighborStubs"/>.
+    /// See <b>parent-scale stub</b> glossary term.
+    /// </summary>
+    [NonSerialized] private List<NeighborCityStub> _neighborStubs = new List<NeighborCityStub>();
+
+    /// <summary>
+    /// Read-only view of the in-memory neighbor stubs for the active session.
+    /// Used by <see cref="Territory.Core.NeighborCityBindingRecorder"/> to match exits to stubs
+    /// without exposing the backing list for mutation.
+    /// </summary>
+    public IReadOnlyList<NeighborCityStub> NeighborStubs => (_neighborStubs ?? new List<NeighborCityStub>()).AsReadOnly();
+
+    /// <summary>
+    /// In-memory interstate border exit bindings for the active session. Populated by
+    /// <see cref="Territory.Core.NeighborCityBindingRecorder"/> when an interstate is built.
+    /// Restored from save in <see cref="LoadGame"/>; written to save in <see cref="BuildCurrentGameSaveData"/>.
+    /// Exposed for recorder mutation.
+    /// </summary>
+    [NonSerialized] public List<NeighborCityBinding> neighborCityBindings = new List<NeighborCityBinding>();
 
     // public PlayerSettingsData playerSettings;
 
@@ -119,6 +141,14 @@ public class GameSaveManager : MonoBehaviour
         saveData.pendingProposals = new List<UrbanizationProposal>();
         if (miniMapController != null)
             saveData.minimapActiveLayers = (int)miniMapController.GetActiveLayers();
+        // Write in-memory stubs (seeded in NewGame / restored in LoadGame) into save payload.
+        saveData.neighborStubs = _neighborStubs != null
+            ? new List<NeighborCityStub>(_neighborStubs)
+            : new List<NeighborCityStub>();
+        // Write in-memory bindings (appended by NeighborCityBindingRecorder / restored in LoadGame).
+        saveData.neighborCityBindings = neighborCityBindings != null
+            ? new List<NeighborCityBinding>(neighborCityBindings)
+            : new List<NeighborCityBinding>();
         return saveData;
     }
 
@@ -154,9 +184,12 @@ public class GameSaveManager : MonoBehaviour
             string json = File.ReadAllText(saveFilePath);
             GameSaveData saveData = JsonUtility.FromJson<GameSaveData>(json);
             MigrateLoadedSaveData(saveData);
-            // Cache parent ids on manager so subsequent saves preserve them.
+            // Cache parent ids + neighbor stubs on manager so subsequent saves preserve them.
             regionId = saveData.regionId;
             countryId = saveData.countryId;
+            _neighborStubs = saveData.neighborStubs ?? new List<NeighborCityStub>();
+            // Restore bindings (schema 3; empty list for schema ≤ 2 saves after migration).
+            neighborCityBindings = saveData.neighborCityBindings ?? new List<NeighborCityBinding>();
             // Hydrate GridManager surface before RestoreGrid so consumers see non-null ids from grid-ready.
             gridManager.HydrateParentIds(saveData.regionId, saveData.countryId);
 
@@ -246,10 +279,21 @@ public class GameSaveManager : MonoBehaviour
             data.regionId = Guid.NewGuid().ToString();
         if (data.schemaVersion < 1 || string.IsNullOrEmpty(data.countryId))
             data.countryId = Guid.NewGuid().ToString();
+        // Schema 2: neighborStubs absent in legacy (schema ≤ 1) saves → initialize to empty list.
+        // Preserves any entries already deserialized from newer saves (forward-compat with placement).
+        if (data.neighborStubs == null)
+            data.neighborStubs = new List<NeighborCityStub>();
+        // Schema 3: neighborCityBindings absent in schema ≤ 2 saves → initialize to empty list.
+        if (data.neighborCityBindings == null)
+            data.neighborCityBindings = new List<NeighborCityBinding>();
         data.schemaVersion = GameSaveData.CurrentSchemaVersion;
 
         if (string.IsNullOrEmpty(data.regionId) || string.IsNullOrEmpty(data.countryId))
             throw new InvalidOperationException("[GameSaveManager] MigrateLoadedSaveData: parent ids still empty after migration — save data integrity error.");
+        if (data.neighborStubs == null)
+            throw new InvalidOperationException("[GameSaveManager] MigrateLoadedSaveData: neighborStubs null after migration — save data integrity error.");
+        if (data.neighborCityBindings == null)
+            throw new InvalidOperationException("[GameSaveManager] MigrateLoadedSaveData: neighborCityBindings null after migration — save data integrity error.");
     }
 
     /// <summary>Migrate old saves storing <c>totalGrowthBudget</c> (amount) → <c>growthBudgetPercent</c>.</summary>
@@ -284,6 +328,20 @@ public class GameSaveManager : MonoBehaviour
         GeographyManager geographyManager = FindObjectOfType<GeographyManager>();
         if (geographyManager != null)
             geographyManager.ReinitializeGeographyForNewGame();
+
+        // Seed neighbor stubs after geography (interstate endpoints must exist first).
+        // FindObjectOfType here is acceptable — NewGame is not a per-frame path (matches
+        // RegionalMapManager / GeographyManager pattern above).
+        _neighborStubs = new List<NeighborCityStub>();
+        // Reset bindings on new game (re-seeded when interstate is placed).
+        neighborCityBindings = new List<NeighborCityBinding>();
+        InterstateManager interstateManagerForSeed = interstateManager != null
+            ? interstateManager
+            : FindObjectOfType<InterstateManager>();
+        NeighborStubSeeder.SeedInitial(
+            new GameSaveData { neighborStubs = _neighborStubs },
+            interstateManagerForSeed,
+            MapGenerationSeed.MasterSeed);
 
         cityStats.ResetCityStats();
         if (regionalMapManager != null)
@@ -331,7 +389,26 @@ public class GameSaveData
     public List<UrbanizationProposal> pendingProposals;
     public int minimapActiveLayers;
 
-    /// <summary>Current save schema version. Bump when adding migration-required fields.</summary>
-    public const int CurrentSchemaVersion = 1;
+    /// <summary>
+    /// Current save schema version. Bump when adding migration-required fields.
+    /// Schema 2 adds <c>neighborStubs</c> (see <b>parent-scale stub</b> glossary term).
+    /// Schema 3 adds <c>neighborCityBindings</c> (interstate border exit bindings).
+    /// </summary>
+    public const int CurrentSchemaVersion = 3;
+
+    /// <summary>
+    /// Neighbor-city stubs at this city's interstate map borders.
+    /// Non-null post-load; empty list is a valid steady state (zero interstate exits).
+    /// See <b>parent-scale stub</b> glossary term.
+    /// </summary>
+    public List<NeighborCityStub> neighborStubs = new List<NeighborCityStub>();
+
+    /// <summary>
+    /// Interstate border exit bindings. Each entry records one exit cell's link to a
+    /// <see cref="NeighborCityStub"/> (stubId + grid coord). Non-null post-load (schema ≤ 2
+    /// saves migrate to empty list). Dedupe key: (stubId, exitCellX, exitCellY).
+    /// Added schema 3.
+    /// </summary>
+    public List<NeighborCityBinding> neighborCityBindings = new List<NeighborCityBinding>();
 }
 }

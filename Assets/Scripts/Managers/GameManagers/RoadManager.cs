@@ -5,6 +5,7 @@ using System;
 using Territory.Core;
 using Territory.Terrain;
 using Territory.Economy;
+using Territory.Persistence;
 using Territory.UI;
 using Territory.Zones;
 using Territory.Utilities;
@@ -36,6 +37,11 @@ public class RoadManager : MonoBehaviour, IRoadManager
     public ZoneManager zoneManager;
     public InterstateManager interstateManager;
     public TerraformingService terraformingService;
+    /// <summary>
+    /// Cached at Awake for post-interstate-build binding recorder.
+    /// Inspector-assigned preferred; fallback via FindObjectOfType in Awake (invariant #3).
+    /// </summary>
+    [SerializeField] private GameSaveManager gameSaveManager;
     #endregion
 
     #region Road Drawing State
@@ -108,6 +114,13 @@ public class RoadManager : MonoBehaviour, IRoadManager
             roadTilePrefabNorthSlope,
             roadTilePrefabSouthSlope
         };
+    }
+
+    void Awake()
+    {
+        // Cache GameSaveManager for post-interstate binding recorder (invariant #3: not per-frame).
+        if (gameSaveManager == null)
+            gameSaveManager = FindObjectOfType<GameSaveManager>();
     }
     #endregion
 
@@ -2990,6 +3003,24 @@ public class RoadManager : MonoBehaviour, IRoadManager
         for (int i = 0; i < resolved.Count; i++)
         {
             PlaceInterstateFromResolved(resolved[i]);
+        }
+
+        // Invariant #2: invalidate road cache after road modification.
+        gridManager.InvalidateRoadCache();
+
+        // Post-Apply binding hook: record interstate border exits into save data.
+        // gameSaveManager cached in Awake (invariant #3). interstateManager from Inspector field.
+        if (gameSaveManager != null && interstateManager != null)
+        {
+            NeighborCityBindingRecorder.RecordExits(
+                gameSaveManager.neighborCityBindings,
+                gameSaveManager.NeighborStubs,
+                interstateManager,
+                path);
+        }
+        else if (gameSaveManager == null)
+        {
+            Debug.LogWarning("[RoadManager] PlaceInterstateFromPath: gameSaveManager null — binding not recorded.");
         }
         return true;
     }

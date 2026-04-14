@@ -6,6 +6,38 @@
 
 ## Completed (moved from BACKLOG.md, 2026-04-13)
 
+- [x] **TECH-105** — On-road-build: **interstate** exit at **map border** binds to stub by `BorderSide` (2026-04-13)
+  - Type: infrastructure / roads
+  - Files: `Assets/Scripts/Managers/GameManagers/RoadManager.cs`, `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs`, `Assets/Scripts/Managers/UnitManagers/NeighborCityStub.cs`, `Assets/Scripts/Managers/UnitManagers/NeighborCityBindingRecorder.cs` (new)
+  - Spec: (removed after closure)
+  - Notes: Stage 1.3 Phase 2 closer. Added `NeighborCityBinding` struct under `Territory.Core` + `GameSaveData.neighborCityBindings` list; bumped `CurrentSchemaVersion` 2 → 3 w/ legacy-null → empty migration. Post-`Apply` recorder `NeighborCityBindingRecorder.RecordExits` hooked into `RoadManager` interstate commit after `InvalidateRoadCache` (invariant #2 preserved). Border resolver: `x==0→West`, `x==w-1→East`, `y==0→South`, `y==h-1→North`; corner tie-break via `InterstateManager.ExitBorder`/`EntryBorder`. Dedupe key `(stubId, exitCellX, exitCellY)`. Missing stub → warn + skip. Helper holds `GridManager grid` composition ref only where needed (invariant #6 untouched). Road preparation family (#10) untouched. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.3.
+  - Acceptance: binding recorded post-interstate-`Apply`; survives save/load (schema 3); legacy schema-2 saves load w/ empty list; dedupe prevents duplicates; invariants #2/#6/#10 preserved; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-104**
+
+- [x] **TECH-104** — New-game init: place ≥1 neighbor stub at random **interstate** **map border** (seed-deterministic side) (2026-04-13)
+  - Type: infrastructure / new-game
+  - Files: `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs`, `Assets/Scripts/Managers/UnitManagers/NeighborStubSeeder.cs` (new)
+  - Spec: (removed after closure)
+  - Notes: Stage 1.3 Phase 2 opener. `NewGame()` post-`ReinitializeGeographyForNewGame` invokes `NeighborStubSeeder.SeedInitial`. Candidate sides drawn from `InterstateManager.EntryBorder` ∪ `ExitBorder` (fallback to all 4 when both unset); pick via `new System.Random(MapGenerationSeed.MasterSeed)`. GUID id accepts non-determinism; display name `Neighbor-{GUID8}`. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.3.
+  - Acceptance: `neighborStubs.Count >= 1` post New Game; same seed → same `borderSide`; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-103**
+
+- [x] **TECH-103** — `GameSaveData.neighborStubs` list + save version bump + legacy migration (2026-04-13)
+  - Type: infrastructure / save
+  - Files: `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.3 Phase 1 closer. Wired `List<NeighborCityStub>` onto `GameSaveData`, bumped `CurrentSchemaVersion` 1 → 2, legacy-null → empty guard added in `MigrateLoadedSaveData` (mirrors **TECH-87** / **TECH-88** parent-id migration). `BuildCurrentGameSaveData` initializes non-null empty list. Placement deferred to **TECH-104**. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.3.
+  - Acceptance: `neighborStubs` non-null post-load; `CurrentSchemaVersion` = 2; legacy saves migrate w/ empty list + parent ids preserved; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-102**
+
+- [x] **TECH-102** — `NeighborCityStub` struct (id GUID, display name, `BorderSide` enum) + serialize schema (2026-04-13)
+  - Type: infrastructure / schema
+  - Files: `Assets/Scripts/Managers/UnitManagers/NeighborCityStub.cs`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.3 Phase 1 opener. Plain C# struct under `Territory.Core`; `[Serializable]`; three fields (`id`, `displayName`, `borderSide`) + `BorderSide { North, South, East, West }` enum. Compile-only schema feeding downstream save list / seeder / binding issues. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.3.
+  - Acceptance: struct + enum compile under `Territory.Core`; `[Serializable]`; three fields; `unity:compile-check` + `validate:all` green
+  - Depends on: none
+
 - [x] **TECH-101** — Scene-load suppression policy doc + glossary rows (Blip mixer group, Blip bootstrap) (2026-04-13)
   - Type: documentation / glossary
   - Files: `ia/specs/glossary.md`, `Assets/Scripts/Audio/Blip/BlipBootstrap.cs` (comment only)
