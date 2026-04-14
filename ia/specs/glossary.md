@@ -29,6 +29,7 @@ slices_via: glossary_lookup
 | **Simulation** | tick, AUTO, budget, centroid, rings |
 | **City** | demand, tax, desirability, happiness, pollution, forest, regional, utility, notification, monthly maintenance |
 | **Persistence** | save, CellData, water map data, visual restore, load order |
+| **Audio** | Blip bootstrap, Blip mixer group, scene-load suppression |
 | **Prefabs** | land/water slopes, sorting formula, type offsets |
 | **Documentation** | reference spec, project spec, orchestrator document, project hierarchy, interchange JSON, geography_init_params, scenario_descriptor_v1, City metrics history, Agent test mode batch, IDE agent bridge |
 | **Multi-scale simulation** | simulation scale, active scale, dormant scale, child-scale entity, evolution algorithm, evolution parameters, evolution-invariant, evolution-mutable, parity budget, reconstruction, procedural scale generation, scale switch, multi-scale save tree, city/region/country cell, parent-scale stub, event bubble-up, constraint push-down, player-authored dormant control |
@@ -197,6 +198,13 @@ slices_via: glossary_lookup
 | **Legacy save** | Older save file without `waterMapData` — load uses fallback path to reconstruct water from height/legacy flags; still supported. | persist §Load pipeline, persist §Visual restore details |
 | **Visual restore** | Reloading exactly what the player saw — no full regen of slopes/sort from scratch. Load applies saved prefabs and `sortingOrder`; building post-pass; geography spec §7.4 details. | persist §Visual restore details, geo §7.4 |
 | **Load pipeline order** | Mandatory restore sequence so references resolve. Heightmap → water map (or legacy) → grid cells → sync shore/body ids — do not reorder. | persist §Load pipeline |
+
+## Audio
+
+| Term | Definition | Spec |
+|------|-----------|------|
+| **Blip bootstrap** | Persistent GameObject at `MainMenu.unity` root; `DontDestroyOnLoad` on `Awake`. Hosts Catalog / Player / MixerRouter / Cooldown child slots. Scene-load suppression: `BlipEngine.Play` returns early until `BlipCatalog.Awake` sets ready flag (lands Step 2 / Stage 1.2). Prevents boot-race clicks during `MainMenu → Game.unity` transition. | `ia/projects/blip-master-plan.md` Stage 1.1 |
+| **Blip mixer group** | One of three routing groups (`Blip-UI`, `Blip-World`, `Blip-Ambient`) on `BlipMixer.mixer`. Master exposes `SfxVolume` dB param for global volume control. | `ia/projects/blip-master-plan.md` Stage 1.1 |
 
 ## Prefabs & Visual Layer
 

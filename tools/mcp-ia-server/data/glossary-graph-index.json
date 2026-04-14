@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-13T01:23:58.082Z",
+  "last_generated": "2026-04-14T01:11:12.734Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -150,6 +150,26 @@
           "section_title": "14.1 Glossary"
         }
       ]
+    },
+    "Blip bootstrap": {
+      "related": [
+        "Blip mixer group",
+        "Active scale",
+        "Agent test mode batch",
+        "Bay",
+        "Brink"
+      ],
+      "cited_in": []
+    },
+    "Blip mixer group": {
+      "related": [
+        "Blip bootstrap",
+        "Active scale",
+        "Agent test mode batch",
+        "Bay",
+        "Brink"
+      ],
+      "cited_in": []
     },
     "Bridge lip": {
       "related": [

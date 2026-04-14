@@ -6,6 +6,38 @@
 
 ## Completed (moved from BACKLOG.md, 2026-04-13)
 
+- [x] **TECH-101** — Scene-load suppression policy doc + glossary rows (Blip mixer group, Blip bootstrap) (2026-04-13)
+  - Type: documentation / glossary
+  - Files: `ia/specs/glossary.md`, `Assets/Scripts/Audio/Blip/BlipBootstrap.cs` (comment only)
+  - Spec: (removed after closure)
+  - Notes: Stage 1.1 Phase 2 of Blip audio program. Landed two glossary rows under new `## Audio` H2 — **Blip bootstrap** (persistent prefab, `DontDestroyOnLoad`, scene-load suppression policy summary) + **Blip mixer group** (three routing groups on `BlipMixer.mixer` + `SfxVolume` exposed param). Both cite `ia/projects/blip-master-plan.md` Stage 1.1. Index row added under `## Index (quick skim)`. Scene-load suppression `<remarks>` paragraph added to `BlipBootstrap` class XML doc stating no Blip fires until `BlipCatalog.Awake` sets ready flag (lands Step 2). Satisfies Stage 1.1 final Exit bullet. Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.1 Phase 2.
+  - Acceptance: glossary rows + code comment committed; `validate:all` green
+  - Depends on: none
+
+- [x] **TECH-100** — `BlipBootstrap` prefab + `DontDestroyOnLoad` + `MainMenu.unity` placement (2026-04-13)
+  - Type: infrastructure / prefab + scene
+  - Files: `Assets/Prefabs/Audio/BlipBootstrap.prefab`, `Assets/Scripts/Audio/Blip/BlipBootstrap.cs`, `Assets/Scenes/MainMenu.unity`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.1 Phase 2 of Blip audio program. Authored `Assets/Prefabs/Audio/BlipBootstrap.prefab` w/ four empty child slots (`BlipCatalog`, `BlipPlayer`, `BlipMixerRouter`, `BlipCooldownRegistry` — populated Step 2). Added four `[SerializeField] private Transform` slot fields to `BlipBootstrap.cs`. `Awake` calls `DontDestroyOnLoad(transform.root.gameObject)` per `GameNotificationManager.cs` pattern. `BlipMixer.mixer` asset wired to `blipMixer` field. Prefab instance placed at root of `MainMenu.unity` (build index 0 per `MainMenuController.cs`). Honors invariants #3 + #4. Satisfies Stage 1.1 exit criterion "`BlipBootstrap` GameObject prefab at `MainMenu.unity` root". Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.1 Phase 2.
+  - Acceptance: prefab + scene instance + `DontDestroyOnLoad` call committed; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-99**
+
+- [x] **TECH-99** — Headless SFX volume binding in `BlipBootstrap.Awake` via `PlayerPrefs` (2026-04-13)
+  - Type: infrastructure
+  - Files: `Assets/Scripts/Audio/Blip/BlipBootstrap.cs`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.1 Phase 1 of Blip audio program. `BlipBootstrap.Awake` reads `PlayerPrefs.GetFloat("BlipSfxVolumeDb", 0f)` + calls `BlipMixer.SetFloat("SfxVolume", db)` with null-guard + branch logs (success + missing-mixer warn + SetFloat-failure warn). Key + param + default exposed as `public const string` / `public const float` on `BlipBootstrap` (`SfxVolumeDbKey`, `SfxVolumeParam`, `SfxVolumeDbDefault = 0f`) so post-MVP Settings UI binds same keys w/o duplication. No Settings UI in MVP (visible slider + mute toggle deferred per `docs/blip-post-mvp-extensions.md` §4). Merged w/ TECH-100 `Awake` body — TECH-99 owns binding block + constants, TECH-100 owns `DontDestroyOnLoad` + slots. Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.1 Phase 1.
+  - Acceptance: `BlipBootstrap.cs` committed w/ binding; `unity:compile-check` + `validate:all` green
+  - Depends on: **TECH-98**
+
+- [x] **TECH-98** — `BlipMixer.mixer` asset + three groups + exposed `SfxVolume` param (2026-04-13)
+  - Type: infrastructure / asset
+  - Files: `Assets/Audio/BlipMixer.mixer`
+  - Spec: (removed after closure)
+  - Notes: Stage 1.1 Phase 1 of Blip audio program. Authored `Assets/Audio/BlipMixer.mixer` via Unity Editor (`Window → Audio → Audio Mixer` — binary YAML asset). Three child groups (`Blip-UI`, `Blip-World`, `Blip-Ambient`) routed through master. Master `SfxVolume` dB param exposed via `Exposed Parameters` panel (default 0 dB). Satisfies first Stage 1.1 exit criterion — mixer asset + routing surface ready for Step 2 player pool + router to consume. Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.1.
+  - Acceptance: asset + three groups + exposed param committed; `validate:all` green
+  - Depends on: none
+
 - [x] **TECH-97** — Testmode assertion: `HeightMap` / `CityCell.height` integrity (invariant #1) (2026-04-13)
   - Type: verification
   - Files: testmode batch scenario

@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-13T01:23:58.012Z",
+  "last_generated": "2026-04-14T01:11:12.645Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -131,97 +131,103 @@
           "section_id": "grid-coordinates",
           "title": "Grid & Coordinates",
           "depth": 2,
-          "line_start": 37
+          "line_start": 38
         },
         {
           "section_id": "height-system",
           "title": "Height System",
           "depth": 2,
-          "line_start": 52
+          "line_start": 53
         },
         {
           "section_id": "terrain-slopes",
           "title": "Terrain & Slopes",
           "depth": 2,
-          "line_start": 61
+          "line_start": 62
         },
         {
           "section_id": "water",
           "title": "Water",
           "depth": 2,
-          "line_start": 76
+          "line_start": 77
         },
         {
           "section_id": "rivers",
           "title": "Rivers",
           "depth": 2,
-          "line_start": 98
+          "line_start": 99
         },
         {
           "section_id": "world-generation",
           "title": "World generation",
           "depth": 2,
-          "line_start": 110
+          "line_start": 111
         },
         {
           "section_id": "roads-bridges",
           "title": "Roads & Bridges",
           "depth": 2,
-          "line_start": 116
+          "line_start": 117
         },
         {
           "section_id": "pathfinding",
           "title": "Pathfinding",
           "depth": 2,
-          "line_start": 142
+          "line_start": 143
         },
         {
           "section_id": "zones-buildings",
           "title": "Zones & Buildings",
           "depth": 2,
-          "line_start": 151
+          "line_start": 152
         },
         {
           "section_id": "simulation-growth",
           "title": "Simulation & Growth",
           "depth": 2,
-          "line_start": 163
+          "line_start": 164
         },
         {
           "section_id": "city-systems",
           "title": "City systems",
           "depth": 2,
-          "line_start": 175
+          "line_start": 176
         },
         {
           "section_id": "persistence",
           "title": "Persistence",
           "depth": 2,
-          "line_start": 190
+          "line_start": 191
+        },
+        {
+          "section_id": "audio",
+          "title": "Audio",
+          "depth": 2,
+          "line_start": 202
         },
         {
           "section_id": "prefabs-visual-layer",
           "title": "Prefabs & Visual Layer",
           "depth": 2,
-          "line_start": 201
+          "line_start": 209
         },
         {
           "section_id": "documentation",
           "title": "Documentation",
           "depth": 2,
-          "line_start": 215
+          "line_start": 223
         },
         {
           "section_id": "multi-scale-simulation",
           "title": "Multi-scale simulation",
           "depth": 2,
-          "line_start": 230
+          "line_start": 238
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 256
+          "line_start": 264
         }
       ]
     },

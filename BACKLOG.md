@@ -318,38 +318,6 @@ Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) 
 
 ### Stage 1.1 — Audio infrastructure + persistent bootstrap
 
-- [ ] **TECH-98** — `BlipMixer.mixer` asset + three groups + exposed `SfxVolume` param
-  - Type: infrastructure / asset
-  - Files: `Assets/Audio/BlipMixer.mixer` (new binary YAML asset)
-  - Spec: `ia/projects/TECH-98.md`
-  - Notes: Author via Unity Editor (`Window → Audio → Audio Mixer`). Three groups (`Blip-UI`, `Blip-World`, `Blip-Ambient`) routed through master. Expose master `SfxVolume` dB param (default 0 dB) via `Exposed Parameters` panel. Orchestrator: `blip-master-plan.md` Stage 1.1 Phase 1.
-  - Acceptance: asset + three groups + exposed param committed; `validate:all` green
-  - Depends on: none
-
-- [ ] **TECH-99** — Headless SFX volume binding in `BlipBootstrap.Awake` via `PlayerPrefs`
-  - Type: infrastructure
-  - Files: `Assets/Scripts/Audio/Blip/BlipBootstrap.cs` (new)
-  - Spec: `ia/projects/TECH-99.md`
-  - Notes: `Awake` reads `PlayerPrefs.GetFloat("BlipSfxVolumeDb", 0f)` + calls `BlipMixer.SetFloat("SfxVolume", db)`. Key string + param name as `public const string` on `BlipBootstrap`. No Settings UI MVP (deferred per `docs/blip-post-mvp-extensions.md` §4). Merge w/ TECH-100 `Awake` body. Orchestrator: `blip-master-plan.md` Stage 1.1 Phase 1.
-  - Acceptance: `BlipBootstrap.cs` committed w/ binding; `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-98**
-
-- [ ] **TECH-100** — `BlipBootstrap` prefab + `DontDestroyOnLoad` + `MainMenu.unity` placement
-  - Type: infrastructure / prefab + scene
-  - Files: `Assets/Prefabs/Audio/BlipBootstrap.prefab` (new), `Assets/Scripts/Audio/Blip/BlipBootstrap.cs`, `Assets/Scenes/MainMenu.unity`
-  - Spec: `ia/projects/TECH-100.md`
-  - Notes: Prefab w/ empty child slots (`BlipCatalog`, `BlipPlayer`, `BlipMixerRouter`, `BlipCooldownRegistry` — populated Step 2). `Awake` calls `DontDestroyOnLoad(transform.root.gameObject)` per `GameNotificationManager.cs` pattern. Instance at root of `MainMenu.unity` (build index 0 per `MainMenuController.cs`). Honors invariants #3 + #4. Orchestrator: `blip-master-plan.md` Stage 1.1 Phase 2.
-  - Acceptance: prefab + scene instance + `DontDestroyOnLoad` call committed; `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-99**
-
-- [ ] **TECH-101** — Scene-load suppression policy doc + glossary rows (Blip mixer group, Blip bootstrap)
-  - Type: documentation / glossary
-  - Files: `ia/specs/glossary.md`, `Assets/Scripts/Audio/Blip/BlipBootstrap.cs` (comment only)
-  - Spec: `ia/projects/TECH-101.md`
-  - Notes: No Blip fires until `BlipCatalog.Awake` sets ready flag (full flag lands Step 2; MVP ships policy doc + glossary rows + code comment). Two glossary rows — **Blip mixer group** + **Blip bootstrap** — cite `blip-master-plan.md` Stage 1.1. Orchestrator: `blip-master-plan.md` Stage 1.1 Phase 2.
-  - Acceptance: glossary rows + code comment committed; `validate:all` green
-  - Depends on: **TECH-100**
-
 ## High Priority
 
 - [x] **TECH-86** — Lifecycle skill refactor: project hierarchy rules + orchestrator-vs-spec distinction
