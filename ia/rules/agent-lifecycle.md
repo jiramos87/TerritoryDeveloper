@@ -14,7 +14,7 @@ Full canonical doc: [`docs/agent-lifecycle.md`](../../docs/agent-lifecycle.md) (
 ## Ordered flow (one issue end-to-end)
 
 ```
-/design-explore  →  master-plan-new (skill)  →  /stage-file  →  /project-new  →  /kickoff  →  /implement  →  /verify-loop  →  project-stage-close (skill, non-final stage)  →  /closeout
+/design-explore  →  /master-plan-new  →  /stage-file  →  /project-new  →  /kickoff  →  /implement  →  /verify-loop  →  project-stage-close (skill, non-final stage)  →  /closeout
 ```
 
 Single-issue path skips the first three stages: `/project-new → /kickoff → /implement → /verify-loop → /closeout`.
@@ -24,7 +24,7 @@ Single-issue path skips the first three stages: `/project-new → /kickoff → /
 | Stage | Slash command | Subagent | Skill |
 |-------|---------------|----------|-------|
 | Explore | `/design-explore` | `design-explore` | `design-explore` |
-| Orchestrate | *(none)* | *(none)* | `master-plan-new` |
+| Orchestrate | `/master-plan-new` | `master-plan-new` | `master-plan-new` |
 | Bulk-file stage | `/stage-file` | `stage-file` | `stage-file` |
 | Single issue | `/project-new` | `project-new` | `project-new` |
 | Refine | `/kickoff` | `spec-kickoff` | `project-spec-kickoff` |

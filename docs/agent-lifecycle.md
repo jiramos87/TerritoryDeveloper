@@ -13,7 +13,7 @@ Not every issue visits every stage. Small one-shot fixes skip exploration + orch
 ```
 exploration                orchestration                 execution                               close
 ───────────                ─────────────                 ─────────                               ─────
-/design-explore            master-plan-new (skill)       /stage-file                             project-stage-close (skill)
+/design-explore            /master-plan-new              /stage-file                             project-stage-close (skill)
   docs/{slug}.md     ───→    ia/projects/          ───→    bulk-file one stage's tasks     ──┐    (per non-final stage of
   + ## Design                {slug}-master-plan.md         → many BACKLOG rows + project    │    multi-stage spec)
   Expansion block            (orchestrator — permanent)    spec stubs                        │
@@ -45,7 +45,7 @@ Ad-hoc lanes (invoked outside the main flow, not ordered):
 | # | Lifecycle stage | Slash command | Subagent (`.claude/agents/`) | Skill (`ia/skills/`) | Primary output | Hands off to |
 |---|-----------------|---------------|------------------------------|----------------------|----------------|--------------|
 | 1 | Explore | `/design-explore {DOC_PATH}` | `design-explore.md` | `design-explore/` | `docs/{slug}.md` with `## Design Expansion` persisted | `/master-plan-new` (multi-step) or `/project-new` (single issue) |
-| 2 | Orchestrate | *(skill only — invoke via `Skill` tool)* | — | `master-plan-new/` | `ia/projects/{slug}-master-plan.md` orchestrator (permanent, NOT closeable) | `/stage-file {slug}-master-plan.md Stage 1.1` |
+| 2 | Orchestrate | `/master-plan-new {DOC_PATH} [SLUG] [SCOPE_BOUNDARY_DOC]` | `master-plan-new.md` | `master-plan-new/` | `ia/projects/{slug}-master-plan.md` orchestrator (permanent, NOT closeable) | `/stage-file {slug}-master-plan.md Stage 1.1` |
 | 3 | Bulk-file stage | `/stage-file {PATH} {STAGE}` | `stage-file.md` | `stage-file/` | N BACKLOG rows + N `ia/projects/{ISSUE_ID}.md` stubs (one per `_pending_` task) | `/kickoff {ISSUE_ID}` per filed task |
 | 4 | Single issue | `/project-new {intent} [--type ...]` | `project-new.md` | `project-new/` | One BACKLOG row + one `ia/projects/{ISSUE_ID}.md` stub | `/kickoff {ISSUE_ID}` |
 | 5 | Refine | `/kickoff {ISSUE_ID}` | `spec-kickoff.md` | `project-spec-kickoff/` | Enriched `ia/projects/{ISSUE_ID}.md` §1–§10 | `/implement {ISSUE_ID}` |
@@ -56,7 +56,7 @@ Ad-hoc lanes (invoked outside the main flow, not ordered):
 | 8 | Close stage | *(skill only)* | — | `project-stage-close/` | Stage §7 ticked, §6 / §9 / §10 appended, handoff prompt for next stage's fresh agent | next stage's `/stage-file` or the stage's `/implement` |
 | 9 | Close issue (umbrella) | `/closeout {ISSUE_ID}` | `closeout.md` | `project-spec-close/` | Lessons migrated to durable IA → spec deleted → BACKLOG row moved to `BACKLOG-ARCHIVE.md` → id purged | next issue |
 
-Skills without slash commands (`master-plan-new`, `project-stage-close`, plus the verification building blocks `bridge-environment-preflight`, `project-implementation-validation`, `agent-test-mode-verify`, `ide-bridge-evidence`, `close-dev-loop`) are invoked via the `Skill` tool or composed by a higher-level agent (e.g. `/verify-loop`).
+Skills without slash commands (`project-stage-close`, plus the verification building blocks `bridge-environment-preflight`, `project-implementation-validation`, `agent-test-mode-verify`, `ide-bridge-evidence`, `close-dev-loop`) are invoked via the `Skill` tool or composed by a higher-level agent (e.g. `/verify-loop`).
 
 ---
 
@@ -66,8 +66,8 @@ Every stage owes the next one a concrete artifact. Missing artifact = the next s
 
 | From | Owes | To | Refuses when missing |
 |------|------|----|----------------------|
-| `/design-explore` | `## Design Expansion` block persisted in `docs/{slug}.md` | `master-plan-new` skill | Skill refuses authoring if expansion block absent |
-| `master-plan-new` | `ia/projects/{slug}-master-plan.md` with `_pending_` task seeds + cardinality gate (≥2 tasks/phase) cleared | `/stage-file` | Stage-file refuses when tasks missing or cardinality unjustified |
+| `/design-explore` | `## Design Expansion` block persisted in `docs/{slug}.md` | `/master-plan-new` | Skill refuses authoring if expansion block absent |
+| `/master-plan-new` | `ia/projects/{slug}-master-plan.md` with `_pending_` task seeds + cardinality gate (≥2 tasks/phase) cleared | `/stage-file` | Stage-file refuses when tasks missing or cardinality unjustified |
 | `/stage-file` | BACKLOG rows + project spec stubs, orchestrator table rows updated from `_pending_` → issue id | `/kickoff` per filed issue | Kickoff refuses when spec stub missing |
 | `/project-new` | One BACKLOG row in correct priority section + one template-seeded `ia/projects/{ISSUE_ID}.md` + `validate:dead-project-specs` green | `/kickoff` | Kickoff refuses bare stub without §1 / §2 context |
 | `/kickoff` | §1–§10 enriched (Open Questions resolved or flagged, Implementation Plan concrete) | `/implement` | Implement refuses when Implementation Plan still `_pending_` |
@@ -87,7 +87,7 @@ Question                                                         → Command
 ────────                                                         ─────────
 Fuzzy idea, no doc yet?                                          → none — write docs/{slug}.md yourself first
 Exploration doc exists, needs to become a design?                → /design-explore
-Design persisted, multi-step work with step > stage > phase?     → master-plan-new (Skill tool)
+Design persisted, multi-step work with step > stage > phase?     → /master-plan-new
 Design persisted, single issue is enough?                        → /project-new
 Orchestrator exists, a stage is ready to materialize?            → /stage-file
 Bare BACKLOG row + stub spec, no §1–§10 yet?                     → /kickoff

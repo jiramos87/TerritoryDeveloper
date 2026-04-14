@@ -15,7 +15,7 @@
 Canonical flow (exploration → close). Full matrix, handoff contract, decision tree: [`docs/agent-lifecycle.md`](docs/agent-lifecycle.md). Always-loaded anchor: [`ia/rules/agent-lifecycle.md`](ia/rules/agent-lifecycle.md).
 
 ```
-/design-explore → master-plan-new (skill) → /stage-file → /project-new → /kickoff → /implement → /verify-loop → project-stage-close (skill) → /closeout
+/design-explore → /master-plan-new → /stage-file → /project-new → /kickoff → /implement → /verify-loop → project-stage-close (skill) → /closeout
 ```
 
 Single-issue path (skip first three stages): `/project-new → /kickoff → /implement → /verify-loop → /closeout`.
@@ -23,7 +23,7 @@ Single-issue path (skip first three stages): `/project-new → /kickoff → /imp
 | # | Stage | Slash command | Skill | Purpose |
 |---|-------|---------------|-------|---------|
 | 1 | Explore | [`/design-explore`](.claude/commands/design-explore.md) | [`design-explore`](ia/skills/design-explore/SKILL.md) | Exploration doc → reviewed design + `## Design Expansion` |
-| 2 | Orchestrate | *(skill only)* | [`master-plan-new`](ia/skills/master-plan-new/SKILL.md) | Design expansion → `ia/projects/{slug}-master-plan.md` (orchestrator, permanent) |
+| 2 | Orchestrate | [`/master-plan-new`](.claude/commands/master-plan-new.md) | [`master-plan-new`](ia/skills/master-plan-new/SKILL.md) | Design expansion → `ia/projects/{slug}-master-plan.md` (orchestrator, permanent) |
 | 3 | Bulk-file stage | [`/stage-file`](.claude/commands/stage-file.md) | [`stage-file`](ia/skills/stage-file/SKILL.md) | One orchestrator stage → N BACKLOG rows + spec stubs |
 | 4 | Single issue | [`/project-new`](.claude/commands/project-new.md) | [`project-new`](ia/skills/project-new/SKILL.md) | One BACKLOG row + one `ia/projects/{ISSUE_ID}.md` stub |
 | 5 | Refine | [`/kickoff`](.claude/commands/kickoff.md) | [`project-spec-kickoff`](ia/skills/project-spec-kickoff/SKILL.md) | Enrich spec §1–§10 before code |
