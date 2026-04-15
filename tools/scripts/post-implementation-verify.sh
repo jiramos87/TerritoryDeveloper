@@ -58,6 +58,7 @@ else
 fi
 
 run_step npm run unity:compile-check
+run_step npm run unity:test-editmode
 run_step npm run db:migrate
 run_step npm run db:bridge-preflight
 

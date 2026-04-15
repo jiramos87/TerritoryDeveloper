@@ -302,6 +302,23 @@ export function parseMasterPlan(markdown, filename = '') {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
+    // Detect ## heading (e.g. "## Orchestration guardrails", "## Decision Log")
+    // Signals end of steps/stages block — close any open stage/step so that
+    // non-task tables (e.g. Decision Log) are not parsed as task rows.
+    if (/^##\s+/.test(line)) {
+      if (currentStage && stageLines.length) {
+        finalizeStage(currentStage, stageLines);
+        stageLines = [];
+      }
+      if (currentStep) {
+        steps.push(currentStep);
+        currentStep = null;
+      }
+      currentStage = null;
+      inStageSection = false;
+      continue;
+    }
+
     // Detect ### Step heading
     const stepMatch = line.match(/^###\s+Step\s+(\S+)\s+—\s+(.+)/);
     if (stepMatch) {

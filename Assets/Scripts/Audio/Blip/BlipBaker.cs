@@ -184,6 +184,33 @@ public sealed class BlipBaker
     }
 
     /// <summary>
+    /// Enumerates all cached <see cref="AudioClip"/> instances whose cache key has a
+    /// <c>patchHash</c> matching <paramref name="patchHash"/>.
+    /// <para>
+    /// Used by <see cref="Territory.Audio.BlipEngine.StopAll"/> (Stage 2.3 Phase 2) to
+    /// collect the set of clips that must be stopped across the voice pool.
+    /// </para>
+    /// <para>
+    /// <b>Non-mutating</b> — does not touch <c>_lru</c> order or <c>_totalBytes</c>.
+    /// Gated by <c>InternalsVisibleTo</c>; <c>BlipEngine</c> is in the same
+    /// <c>Territory.Audio</c> namespace so <c>internal</c> access is sufficient.
+    /// </para>
+    /// </summary>
+    /// <param name="patchHash">The patch hash axis of the key to match.</param>
+    /// <returns>
+    /// Each <see cref="AudioClip"/> ref-equal to a cached entry whose
+    /// <c>key.patchHash == patchHash</c>. Order is undefined.
+    /// </returns>
+    internal System.Collections.Generic.IEnumerable<AudioClip> EnumerateClipsForPatchHash(int patchHash)
+    {
+        foreach (var node in _index)
+        {
+            if (node.Key.patchHash == patchHash)
+                yield return node.Value.Value.clip;
+        }
+    }
+
+    /// <summary>
     /// Evicts the oldest entry (LRU head): subtracts its <c>byteCount</c> from
     /// <c>_totalBytes</c>, removes from <c>_lru</c> and <c>_index</c>, then calls
     /// <see cref="UnityEngine.Object.Destroy"/> on the baked clip.
@@ -199,7 +226,14 @@ public sealed class BlipBaker
         _totalBytes -= head.Value.byteCount;
         _lru.RemoveFirst();
         _index.Remove(head.Value.key);
+#if UNITY_EDITOR
+        if (UnityEngine.Application.isPlaying)
+            UnityEngine.Object.Destroy(head.Value.clip);
+        else
+            UnityEngine.Object.DestroyImmediate(head.Value.clip);
+#else
         UnityEngine.Object.Destroy(head.Value.clip);
+#endif
         return true;
     }
 

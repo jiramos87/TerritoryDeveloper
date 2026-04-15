@@ -48,6 +48,7 @@
 
   /* Spacing — 4px base, 8-step scale */
   --spacing-0: 0rem;
+
   --spacing-1: 0.25rem;
   --spacing-2: 0.5rem;
   --spacing-3: 0.75rem;
@@ -55,4 +56,9 @@
   --spacing-6: 1.5rem;
   --spacing-8: 2rem;
   --spacing-12: 3rem;
+}
+
+body {
+  background-color: var(--color-bg-canvas);
+  color: var(--color-text-primary);
 }

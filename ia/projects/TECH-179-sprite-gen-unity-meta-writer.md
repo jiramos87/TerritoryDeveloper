@@ -25,7 +25,7 @@ Author `src/unity_meta.py` — `write_meta(png_path, canvas_h) → str` emits Un
 
 ### 2.2 Non-Goals
 
-1. CLI dispatch (TECH-174).
+1. CLI dispatch (TECH-180).
 2. Aseprite round-trip (TECH-176..177).
 
 ## 4. Current State

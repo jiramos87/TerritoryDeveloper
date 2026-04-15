@@ -785,6 +785,9 @@ ${CSS}
 </style>
 </head>
 <body>
+<div style="background:#1a1a2a;border-bottom:1px solid #2a2a4a;padding:0.5rem 1rem;text-align:center;font-size:0.85rem">
+  <a href="https://web-nine-wheat-35.vercel.app/dashboard" style="color:#9ab;text-decoration:none">Live dashboard →</a>
+</div>
 ${header}
 <main>
 ${cards}

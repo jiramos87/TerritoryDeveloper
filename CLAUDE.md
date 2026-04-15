@@ -48,7 +48,7 @@ Next.js 14+ App Router workspace at `web/`. Full onboarding: `web/README.md`.
 
 | Command | Purpose |
 |---|---|
-| `cd web && npm run dev` | Start dev server (http://localhost:3000) |
+| `cd web && npm run dev` | Start dev server (http://localhost:4000) |
 | `cd web && npm run build` | Production build |
 | `npm run validate:web` | Lint + typecheck + build via root composition |
 

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { loadGlossaryTerms } from '@/lib/glossary/import';
 import { listWikiSlugs } from '@/lib/wiki/slugs';
 import { DataTable, type Column } from '@/components/DataTable';
+import { WikiSearch } from '@/components/WikiSearch';
 import { tokens } from '@/lib/tokens';
 
 export const metadata: Metadata = {
@@ -140,6 +141,7 @@ export default async function WikiIndexPage() {
         >
           Index of canonical glossary terms and hand-authored pages.
         </p>
+        <WikiSearch />
       </header>
       <section>
         <DataTable<IndexRow>

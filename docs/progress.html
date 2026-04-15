@@ -315,6 +315,9 @@ h2.plan-title {
 </style>
 </head>
 <body>
+<div style="background:#1a1a2a;border-bottom:1px solid #2a2a4a;padding:0.5rem 1rem;text-align:center;font-size:0.85rem">
+  <a href="https://web-nine-wheat-35.vercel.app/dashboard" style="color:#9ab;text-decoration:none">Live dashboard →</a>
+</div>
 
 <header class="overall-header">
   <div class="overall-top">
@@ -323,13 +326,13 @@ h2.plan-title {
       <div class="overall-subtitle">Master Plan Progress</div>
     </div>
     <div class="overall-right">
-      <div class="overall-pct">32%</div>
-      <div class="overall-count">87 / 108 tasks</div>
+      <div class="overall-pct">30%</div>
+      <div class="overall-count">115 / 141 tasks</div>
     </div>
   </div>
   <div class="overall-seg-row">
     <div class="overall-seg-bar">
-      <div class="overall-seg-fill" style="width:32%"></div>
+      <div class="overall-seg-fill" style="width:30%"></div>
     </div>
   </div>
   <div class="plan-minis">
@@ -338,8 +341,8 @@ h2.plan-title {
       <span class="mini-icon">🎵</span>
       <div class="mini-info">
         <span class="mini-title">Blip</span>
-        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:50%"></div></div>
-        <span class="mini-pct">50%</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:67%"></div></div>
+        <span class="mini-pct">67%</span>
       </div>
     </div>
     <div class="plan-mini">
@@ -362,8 +365,8 @@ h2.plan-title {
       <span class="mini-icon">📋</span>
       <div class="mini-info">
         <span class="mini-title">Web Platform</span>
-        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:39%"></div></div>
-        <span class="mini-pct">39%</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:20%"></div></div>
+        <span class="mini-pct">20%</span>
       </div>
     </div>
   </div>
@@ -377,34 +380,34 @@ h2.plan-title {
       <h2 class="plan-title">Blip — Master Plan (MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/blip-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Step 1 Done; Step 2 opened — Stage 2.1 Done (TECH-159 / TECH-160 / TECH-161 / TECH-162 archived 2026-04-15); Stages 2.2 / 2.3 / 2.4 decomposed, tasks `_pending_` awaiting stage open</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Step 1 Done; Step 2 Final (closed 2026-04-15); Step 3 decomposed 2026-04-15 — 4 stages · 8 phases · 16 tasks (all `_pending_`)</span>
     <div class="plan-pct-group">
-      <div class="plan-pct" style="color:#70a0e0" title="Global plan progress (step-weighted)">50%</div>
-      <div class="plan-step-pct" style="color:#70a0e0" title="Active step task progress">Step 2: 50%</div>
+      <div class="plan-pct" style="color:#70a0e0" title="Global plan progress (step-weighted)">67%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 3: 25%</div>
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:76%" title="29 Done"></div><div class="seg seg-draft" style="width:3%" title="1 Draft"></div><div class="seg seg-pending" style="width:21%" title="8 Pending"></div></div>
-    <span class="seg-count">29 / 38</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:78%" title="42 Done"></div><div class="seg seg-pending" style="width:22%" title="12 Pending"></div></div>
+    <span class="seg-count">42 / 54</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 29 Done</span><span class="chip chip-draft">📝 1 Draft</span><span class="chip chip-pending">⏳ 8 Pending</span><span class="chip chip-total">📋 38 Total</span>
+    <span class="chip chip-done">✅ 42 Done</span><span class="chip chip-pending">⏳ 12 Pending</span><span class="chip chip-total">📋 54 Total</span>
   </div>
 
   <div class="ctx-row">
     <span class="ctx-label">📍</span>
-    <span class="ctx-step">Step 2 · Bake + facade + PlayMode smoke</span>
+    <span class="ctx-step">Step 3 · Patches + integration + gold…</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-stage">Stage 2.2 · Catalog + mixer router + coo…</span>
+    <span class="ctx-stage">Stage 3.2 · UI + Eco + Sys call sites</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="`BlipPlayer.PlayOneShot(AudioClip clip, float pitch, float gain, AudioMixerGroup group)` — selects `var source = _pool[_cursor]; _cursor = (_cursor + 1) % _pool.Length;`, stops prior clip if still pla">🎯 <span class="task-id">T2.2.6</span> <span class="task-name">BlipPlayer PlayOneShot dispatch</span></span>
+    <span class="ctx-task" title="`MainMenuController.cs` — add `BlipEngine.Play(BlipId.UiButtonClick)` as first statement in each of: `OnContinueClicked`, `OnNewGameClicked`, `OnLoadCityClicked`, `OnOptionsClicked`, `CloseLoadCityPan">🎯 <span class="task-id">T3.2.1</span> <span class="task-name">`MainMenuController.cs` — add `BlipEngine.Play(Bli…</span></span>
   </div>
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-pending" title="Phase 1 — `BlipPatchEntry` + `BlipCatalog` flatten + resolve + ready flag.">☐ `BlipPatchEntry` + `BlipCatalog` flatten + re…</span><span class="phase-pill phase-pending" title="Phase 2 — `BlipMixerRouter` + `BlipCooldownRegistry` plain-class services owned by catalog.">☐ `BlipMixerRouter` + `BlipCooldownRegistry` pl…</span><span class="phase-pill phase-pending" title="Phase 3 — `BlipPlayer` 16-source pool + round-robin `PlayOneShot`.">☐ `BlipPlayer` 16-source pool + round-robin `Pl…</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — UI lane: `MainMenuController` click + hover call sites.">☐ UI lane: `MainMenuController` click + hover c…</span><span class="phase-pill phase-pending" title="Phase 2 — Eco + Sys lane: `EconomyManager` earn/spend + `GameSaveManager` save-complete.">☐ Eco + Sys lane: `EconomyManager` earn/spend +…</span>
   </div>
 
   
@@ -509,34 +512,34 @@ h2.plan-title {
       <h2 class="plan-title">Web Platform — Master Plan (MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/web-platform-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-draft">📝 Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)</span>
+    <span class="plan-status status-draft">📝 Draft — Steps 1–2 Final; Step 3 decomposed (Stage 3.1 Done; Stage 3.2 filed — tasks Draft; Stage 3.3 _pending_)</span>
     <div class="plan-pct-group">
-      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">39%</div>
-      <div class="plan-step-pct" style="color:#70a0e0" title="Active step task progress">Step 2: 57%</div>
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">20%</div>
+      <div class="plan-step-pct" style="color:#40bf72" title="Active step task progress">Step 3: 90%</div>
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:71%" title="15 Done"></div><div class="seg seg-draft" style="width:10%" title="2 Draft"></div><div class="seg seg-pending" style="width:19%" title="4 Pending"></div></div>
-    <span class="seg-count">15 / 21</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:79%" title="30 Done"></div><div class="seg seg-inreview" style="width:3%" title="1 In Review"></div><div class="seg seg-pending" style="width:18%" title="7 Pending"></div></div>
+    <span class="seg-count">30 / 38</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 15 Done</span><span class="chip chip-draft">📝 2 Draft</span><span class="chip chip-pending">⏳ 4 Pending</span><span class="chip chip-total">📋 21 Total</span>
+    <span class="chip chip-done">✅ 30 Done</span><span class="chip chip-inreview">👁 1 Review</span><span class="chip chip-pending">⏳ 7 Pending</span><span class="chip chip-total">📋 38 Total</span>
   </div>
 
   <div class="ctx-row">
     <span class="ctx-label">📍</span>
-    <span class="ctx-step">Step 2 · Public surface + wiki + devlog</span>
+    <span class="ctx-step">Step 3 · Live dashboard</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-stage">Stage 2.2 · Wiki + glossary auto-index +…</span>
+    <span class="ctx-stage">Stage 3.3 · Legacy handoff + validation</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="Author `web/lib/search/build-index.ts` + `web/package.json` `prebuild` entry — script consumes `GlossaryTerm[]` + scans `web/content/wiki/**.mdx` frontmatter/body, emits `web/public/search-index.json`">🎯 <span class="task-id">T2.2.3</span> <span class="task-name">Author `web/lib/search/build-index.ts` + `web/pack…</span></span>
+    <span class="ctx-task" title="End-to-end smoke + deprecation decision log — manually confirm Vercel `/dashboard` returns 200, filter chips functional, &quot;internal&quot; banner visible, `robots.txt` disallows route; append §Decision Log s">🎯 <span class="task-id">T3.3.2</span> <span class="task-name">End-to-end smoke + deprecation decision log — manu…</span></span>
   </div>
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-pending" title="Phase 1 — Glossary import + wiki routing scaffold.">☐ Glossary import + wiki routing scaffold.</span><span class="phase-pill phase-pending" title="Phase 2 — Search index build + client search component.">☐ Search index build + client search component.</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Legacy link + E2E smoke + deprecation decision log.">☐ Legacy link + E2E smoke + deprecation decisio…</span>
   </div>
 
   

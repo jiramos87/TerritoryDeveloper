@@ -310,7 +310,11 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ## Blip audio program
 
-Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra (all four stages archived). Step 2 in progress — Stage 2.1 archived. Stage 2.2 opened 2026-04-15 — 6 tasks filed below (catalog + mixer router + cooldown registry + player pool). Stages 2.3 / 2.4 + Step 3 remain in master plan; file rows here when parent stage → `In Progress`.
+Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra (all four stages archived). Step 2 in progress — Stage 2.1 archived. Stage 2.2 archived 2026-04-15 (TECH-169..TECH-174). Stage 2.3 closed 2026-04-15 (TECH-188..TECH-191 all archived). Stage 2.4 closed 2026-04-15 (TECH-196..TECH-199 all archived). Step 3 opened 2026-04-15 — Stage 3.1 closed 2026-04-15 (TECH-209..TECH-212 all archived — 5 UI/Eco/Sys patches + 5 World patches + mixer/catalog wiring + PlayMode smoke). Stages 3.2–3.4 remain in master plan; file rows when parent stage → `In Progress`.
+
+### Stage 3.1 — Patch authoring + catalog wiring
+
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ### Stage 1.1 — Audio infrastructure + persistent bootstrap
 
@@ -334,13 +338,15 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ### Stage 2.2 — Catalog + mixer router + cooldown registry + player pool
 
-- [ ] **TECH-174** — `BlipPlayer.PlayOneShot` round-robin dispatch (Stage 2.2 Phase 3)
-  - Type: infrastructure / audio runtime
-  - Files: `Assets/Scripts/Audio/Blip/BlipPlayer.cs`
-  - Spec: `ia/projects/TECH-174-blip-player-playoneshot.md`
-  - Notes: `PlayOneShot(AudioClip clip, float pitch, float gain, AudioMixerGroup group)` — `var source = _pool[_cursor]; _cursor = (_cursor + 1) % _pool.Length;`, stops prior clip if still playing (voice-steal overwrite — no crossfade, post-MVP per orchestration guardrails), sets `source.clip = clip; source.pitch = pitch; source.volume = gain; source.outputAudioMixerGroup = group;` then `source.Play()`.
-  - Acceptance: 16 rapid calls wrap cursor once (wrap point `_cursor == 0`); voice-steal overwrites prior clip on wrap; no exception on mid-playback overwrite; `unity:compile-check` green.
-  - Depends on: **TECH-173**
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 2.3 — BlipEngine facade + main-thread gate
+
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 2.4 — PlayMode smoke test
+
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ## Sprite gen lane
 
@@ -402,25 +408,15 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ## Web platform lane
 
-Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Scaffold + design system foundation. Stage 1.1 closed (see BACKLOG-ARCHIVE.md). Stage 1.2 closed 2026-04-14 — tokens + Tailwind wiring task + DataTable/BadgeChip + StatBar/FilterChips + HeatmapCell/AnnotatedMap + `/design` review route + README §Tokens all archived (see BACKLOG-ARCHIVE.md). Step 2 `In Progress` — Stage 2.1 closed 2026-04-15 (MDX pipeline + public pages + SEO — TECH-163…TECH-168 all archived); Stage 2.2 `In Progress` (wiki + glossary auto-index + search — TECH-184…TECH-187 filed 2026-04-15).
+Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Scaffold + design system foundation. Stage 1.1 closed (see BACKLOG-ARCHIVE.md). Stage 1.2 closed 2026-04-14 — tokens + Tailwind wiring task + DataTable/BadgeChip + StatBar/FilterChips + HeatmapCell/AnnotatedMap + `/design` review route + README §Tokens all archived (see BACKLOG-ARCHIVE.md). Step 2 closed 2026-04-15 — Stage 2.1 (MDX pipeline + public pages + SEO — TECH-163…TECH-168), Stage 2.2 (wiki + glossary auto-index + search — TECH-184…TECH-187), Stage 2.3 (devlog + RSS + origin story — TECH-192…TECH-195) all archived. Step 3 Stage 3.1 closed 2026-04-15 — plan loader + typed schema (TECH-200…TECH-203 archived). Stage 3.2 closed 2026-04-15 — dashboard RSC + filters (T3.2.1 + T3.2.2 + T3.2.3 + T3.2.4 archived). Stage 3.3 filed 2026-04-15 — legacy handoff + validation (TECH-213 + TECH-214 Draft).
 
-### Stage 2.2 — Wiki + glossary auto-index + search
-
-- [ ] **TECH-186** — Build-time search index emitter (Stage 2.2 Phase 2)
-  - Type: infrastructure / web workspace
-  - Files: `web/lib/search/build-index.ts`, `web/package.json` (`prebuild` script)
-  - Spec: `ia/projects/TECH-186-web-search-index-build.md`
-  - Notes: Stage 2.2 Phase 2 opener. Node script consumes `GlossaryTerm[]` + scans `web/content/wiki/**.mdx` frontmatter+body; emits `web/public/search-index.json` (fuse.js records `{ slug, title, body, category, type: 'glossary' | 'wiki' }`). Deterministic output (stable sort by slug) for CI repeatability. Wired via `prebuild` script so `next build` auto-regenerates before each build.
-  - Acceptance: running `prebuild` emits `web/public/search-index.json`; records cover all glossary terms + all wiki MDX files; output deterministic (two successive runs produce identical bytes); `npm run validate:web` green
-  - Depends on: **TECH-184** (archived), **TECH-185** (archived)
-
-- [ ] **TECH-187** — Client-side wiki search component (Stage 2.2 Phase 2)
-  - Type: infrastructure / web workspace
-  - Files: `web/components/WikiSearch.tsx`, `web/app/wiki/page.tsx` (embed), `web/package.json` (`fuse.js` dep)
-  - Spec: `ia/projects/TECH-187-web-wiki-search.md`
-  - Notes: Stage 2.2 Phase 2 closer. Client component fetches `/search-index.json` on mount; constructs `Fuse` w/ `keys: ['title', 'body', 'category']`, threshold tuned for fuzzy match; renders input + result list linking `/wiki/{slug}`. Embedded in `/wiki` header. Installs `fuse.js` dep.
-  - Acceptance: `/wiki` header shows search input; typing produces fuzzy matches from both glossary + wiki records; each result links `/wiki/{slug}`; `fuse.js` pinned in `web/package.json`; `npm run validate:web` green
-  - Depends on: **TECH-186**
+- [ ] **TECH-214** — Dashboard E2E smoke + `progress.html` deprecation decision log
+  - Type: web (verification + docs)
+  - Files: `ia/projects/web-platform-master-plan.md`, `docs/progress.html`
+  - Spec: `ia/projects/TECH-214.md`
+  - Notes: Stage 3.3 Phase 1 / T3.3.2. Manual Vercel smoke — `/dashboard` returns 200, filter chips functional, internal banner visible, `robots.txt` disallows `/dashboard`. Append §Decision Log section to orchestrator below Orchestration guardrails documenting `docs/progress.html` deprecation trigger (proposed: ≥2 stable deploy cycles post Step 4 portal-auth gate lands).
+  - Acceptance: smoke checklist ticked in project spec; orchestrator §Decision Log row added w/ date + decision + rationale; `validate:all` green.
+  - Depends on: **TECH-213** (archived), **TECH-208** (archived)
 
 ## High Priority
 

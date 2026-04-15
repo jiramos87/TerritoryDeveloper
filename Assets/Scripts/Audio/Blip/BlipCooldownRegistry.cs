@@ -32,6 +32,13 @@ namespace Territory.Audio
         private readonly Dictionary<BlipId, double> _lastPlayDspTime = new();
 
         /// <summary>
+        /// PlayMode / EditMode test-only counter — cumulative number of
+        /// <see cref="TryConsume"/> calls that returned <c>false</c> (blocked).
+        /// Not reset between tests; tests capture a baseline and compute the delta.
+        /// </summary>
+        internal int BlockedCount { get; private set; }
+
+        /// <summary>
         /// Attempts to consume a cooldown slot for <paramref name="id"/>.
         /// </summary>
         /// <param name="id">The <see cref="BlipId"/> to gate.</param>
@@ -58,6 +65,7 @@ namespace Territory.Audio
                 return true;
             }
 
+            BlockedCount++;
             return false;
         }
     }

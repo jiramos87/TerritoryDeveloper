@@ -2,6 +2,182 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
+- [x] **TECH-212** — BlipCatalog PlayMode smoke (Stage 3.1 Phase 2) (2026-04-15)
+  - Type: infrastructure / tests
+  - Files: `Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs`
+  - Spec: (removed at closeout — journal skipped empty; Decision Log preserved in git history)
+  - Notes: added `[Test] Catalog_AllMvpIds_Resolve_WithMixerGroup()` to `BlipPlayModeSmokeTests`. Reuses TECH-196 `Blip.Tests.PlayMode.asmdef` + TECH-197 `[UnitySetUp]` (loads `MainMenu.unity`, caches `BlipCatalog`). Phase 1 asserts `_catalog.IsReady` + `MixerRouter != null`. Phase 2 iterates 10 MVP `BlipId` values (`UiButtonHover`, `UiButtonClick`, `ToolRoadTick`, `ToolRoadComplete`, `ToolBuildingPlace`, `ToolBuildingDenied`, `WorldCellSelected` + 3 Eco/Sys ids) and asserts `patch != null`, `patch.patchHash != 0`, `mixerRouter.Get(id) != null` with id-named failure messages. No new asmdef / scene / SetUp. Locks SO → catalog → mixer-router chain before Stage 3.2 / 3.3 call sites land. Closes Stage 3.1.
+  - Acceptance: `[Test]` green in PlayMode runner; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: **TECH-211** (archived)
+
+- [x] **TECH-211** — MixerGroup refs + BlipCatalog.entries[] wiring (Stage 3.1 Phase 2) (2026-04-15)
+  - Type: infrastructure / audio authoring
+  - Files: `Assets/Audio/Blip/Patches/*.asset`, `Assets/Prefabs/Audio/BlipBootstrap.prefab`
+  - Spec: (removed at closeout — journal captured Decision Log; Lessons skipped empty)
+  - Notes: assigned `mixerGroup` ref on all 10 **Blip patch** SOs per exploration §14 routing (UI pair → `Blip-UI`; Tool + World pair → `Blip-World`; Eco pair → `Blip-Eco`; Sys → `Blip-Sys`). Populated `BlipCatalog.entries[]` MonoBehaviour on `BlipBootstrap.prefab` catalog child — 10 `BlipPatchEntry` rows (`BlipId` + `BlipPatch` SO ref), no null refs, no duplicate ids. Confirmed `catalogSlot` + `playerSlot` `Transform` fields on root `BlipBootstrap` point to child GOs hosting `BlipCatalog` + `BlipPlayer` MonoBehaviours. Decision Log — catalog is MonoBehaviour on prefab child (not standalone SO) so wiring lives on prefab; patch SO canonical path `Assets/Audio/Blip/Patches/` (not `Assets/Audio/BlipPatches/`); slot typing is `Transform` so acceptance requires both Transform assignment + component presence on child GO.
+  - Acceptance: 10 SOs carry non-null `mixerGroup`; `entries[]` size == 10 w/ no null refs; prefab slots populated; `npm run unity:compile-check` green.
+  - Depends on: **TECH-209** (archived), **TECH-210** (archived)
+
+- [x] **TECH-210** — World BlipPatch SO authoring (Stage 3.1 Phase 1) (2026-04-15)
+  - Type: infrastructure / audio authoring
+  - Files: `Assets/Audio/Blip/Patches/BlipPatch_ToolRoadTick.asset`, `BlipPatch_ToolRoadComplete.asset`, `BlipPatch_ToolBuildingPlace.asset`, `BlipPatch_ToolBuildingDenied.asset`, `BlipPatch_WorldCellSelected.asset`
+  - Spec: (removed at closeout — journal captured Decision Log; Lessons skipped empty)
+  - Notes: filled 5 World-lane **Blip patch** SO skeletons (pre-existing from TECH-209 batch) per `docs/blip-procedural-sfx-exploration.md` §9 recipes 5/6/9/10/15. Canonical path `Assets/Audio/Blip/Patches/` w/ `BlipPatch_` filename prefix (not `Assets/Audio/BlipPatches/` as master-plan orig implied). `patchHash` recomputed non-zero via `OnValidate` + differs from skeleton hash `-1679074758`. Decision Log — skeleton reuse over delete-recreate (preserves GUID + `mixerGroup` wiring); multi-note recipes (ex 6 arpeggio, ex 9 two-note) reduced to fundamental + envelope since MVP kernel is single-shot; pitch jitter unit cents (±8 % ≈ ±138 cents). §9 Issue: `HighPass` filter missing from `BlipFilterKind` MVP enum (only `None=0` + `LowPass=1`) — ToolRoadTick noise transient encoded as `kind: 0` + `cutoffHz: 4000` placeholder; post-MVP adds `HighPass=2`.
+  - Acceptance: 5 `.asset` files populated; `cooldownMs` targets met (30 / 0 / 0 / 0 / 80); `patchHash` non-zero on each; `npm run unity:compile-check` green.
+  - Depends on: none
+
+- [x] **TECH-208** — Dashboard Q14 access gate (`robots.ts` disallow + nav/sitemap audit) (2026-04-15)
+  - Type: web (SEO + access gate)
+  - Files: `web/app/robots.ts`, `web/app/sitemap.ts`, `web/app/layout.tsx`
+  - Spec: (removed at closeout — journal captured Decision Log; Lessons skipped empty)
+  - Notes: Stage 3.2 Phase 2 / T3.2.4. Baseline already contained `/dashboard` in `robots.ts` disallow `['/design','/dashboard']` (landed alongside TECH-205); Phase 1 degraded to verification + contract lock. Sitemap audit confirmed no `/dashboard` entry — page lives under `web/app/dashboard/` not `web/content/pages/` so auto-scan skips. Layout footer + `web/content/**` grep clean. Build emitted `Disallow: /dashboard` in `.next/` robots artifact. Decision Log — gate layered as `unlinked + robots disallow + internal banner` until Step 4 portal auth (accepts obscure URL not true access control); `/dashboard` intentionally outside MDX content tree so sitemap scan never lists it (no opt-out flag needed).
+  - Acceptance: `robots.txt` build artifact emits `Disallow: /dashboard`; sitemap + nav audited clean; `validate:all` + `validate:web` green.
+  - Depends on: **TECH-205** (archived)
+
+- [x] **TECH-207** — Dashboard `FilterChips` wiring (plan / status / phase, SSR query params) (2026-04-15)
+  - Type: web (RSC filter)
+  - Files: `web/app/dashboard/page.tsx`, `web/components/FilterChips.tsx`, `web/lib/plan-loader-types.ts`
+  - Spec: (removed at closeout — journal captured Decision Log; Lessons skipped empty)
+  - Notes: Stage 3.2 Phase 2 / T3.2.3. Extended `Chip` type w/ optional `href` → `FilterChips` branches to `<a>` when present, `<span>` otherwise (back-compat preserved). `DashboardPage` signature now `async ({ searchParams: Promise<{ plan?, status?, phase? }> })` per Next 16 async API; `await searchParams` + first-of-array coercion; hierarchical prune (drop empty stages → steps → plans). Chip value sets computed from unfiltered plans so chips stable across filter changes. `buildHref(current, key, value)` preserves sibling params + toggles off on match. Decision Log — extend existing primitive vs. new component (keeps Stage 1.2 `FilterChips` authoritative); hierarchical prune over flat list; single-value params (multi-select deferred).
+  - Acceptance: `?plan=`/`?status=`/`?phase=` filter functional; active chip reflects `searchParams`; `validate:all` + `validate:web` green.
+  - Depends on: **TECH-205** (archived)
+
+- [x] **TECH-199** — Pool + cooldown assertions (Stage 2.4 Phase 2) (2026-04-15)
+  - Type: infrastructure / tests
+  - Files: `Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs`, `Assets/Scripts/Audio/Blip/BlipPlayer.cs`, `Assets/Scripts/Audio/Blip/BlipCooldownRegistry.cs`
+  - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+  - Notes: `[UnityTest] Play_RapidFire_ExhaustsPoolAndBlocksOnCooldown()` — rapid-fire leg: 16 `BlipEngine.Play(ToolRoadTick)` single frame, no yield; assert no exception + `BlipPlayer.DebugCursor == 0` post-wrap (new `internal int DebugCursor => _cursor` accessor). Cooldown leg: MVP patches all `cooldownMs: 0`, so called `BlipCooldownRegistry.TryConsume` directly w/ 5 000 ms window using identical DSP timestamp — baseline captured, delta asserted == 1 on `BlockedCount` (new `internal int BlockedCount` counter incremented on `TryConsume == false` branch). Single `yield return null` at method end. Decision Log — plain `internal` accessors (no `#if UNITY_EDITOR`): friend-assembly IVT already grants access, conditional compilation fragments XML-doc + trips analyzers, production cost = one int field + getter negligible; `BlockedCount` not reset between tests (tests compute deltas, matches clock-agnostic registry pattern); cooldown leg bypasses `BlipEngine.Play` because no MVP catalog id has `cooldownMs ≥ 100 ms` and test-time catalog mutation out-of-scope. PlayMode test runner pass deferred to manual trigger; CI batch wiring out-of-scope (covered by TECH-204 orthogonal runner).
+  - Acceptance: pool wraps w/o exception; `DebugCursor == 0` post-16 plays; cooldown block observed via `BlockedCount` delta == 1; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: **TECH-197** (archived)
+
+- [x] **TECH-204** — Unity **batchmode** **NUnit** runner scripts (**`unity:test-editmode`** / **`unity:test-playmode`**) (2026-04-15)
+  - Type: tooling / CI / agent verification
+  - Files: `tools/scripts/unity-run-tests.sh` (new), `tools/scripts/parse-nunit-xml.mjs` (new), `package.json` (root), `docs/agent-led-verification-policy.md`
+  - Spec: (removed at closeout — journal captured Decision Log; Lessons placeholder)
+  - Notes: `unity-run-tests.sh --platform {editmode|playmode}` wraps `Unity -batchmode -runTests`; Node XML parser (`parse-nunit-xml.mjs`) emits `Passed/Failed/Errors/Skipped` + `FAILED: <fullname>` list; exits non-zero on any failure. `--quit-editor-first` guard mirrors `unity:testmode-batch`. npm aliases `unity:test-editmode` / `unity:test-playmode` / `unity:test-all`. Hooked into `verify:local` (not `validate:all` — CI stays Unity-free). Two-tier NUnit strategy decision: Tier A batchmode shipped; Tier B bridge `run_nunit_tests` via `TestRunnerApi` deferred (Editor-open dev-machine path) — deferral note appended to `docs/agent-led-verification-policy.md`.
+  - Acceptance: runner script exec-bit + dotenv + editor-helpers wired; stdout contract `Passed: N  Failed: M  Errors: K  Skipped: S` + failed `fullname`s; `verify:local` includes **EditMode** step; `validate:all` unchanged.
+  - Depends on: none
+
+- [x] **TECH-205** — Dashboard RSC page skeleton + DataTable wiring (2026-04-15)
+  - Type: web (Next.js RSC)
+  - Files: `web/app/dashboard/page.tsx`, `web/app/dashboard/_status.ts` (new)
+  - Spec: (removed at closeout — journal captured Decision Log; Lessons skipped empty)
+  - Notes: Stage 3.2 Phase 1 / T3.2.1. RSC page imports `loadAllPlans()`; per-plan `<section>` renders `<h2>{plan.title}</h2>` + `BadgeChip` for `overallStatus` + `DataTable<TaskRow>` w/ columns `id | phase | issue | status | intent`. Top banner `<p>` flags page as internal / non-public (full-English caveman-exception). Status-mapping helper `_status.ts` strips `" — {detail}"` tail + maps `Done`/`Done (archived)`/`Final` → `'done'`, `In Progress` → `'in-progress'`, `Draft`/`In Review`/`_pending_` → `'pending'`, unknown → `'pending'`. Empty-plans guard emits banner + neutral note, no throw. Decision Log — status mapping at render site (loader stays wrapper-only invariant); overall chip strips trailing detail (detail belongs to later hierarchy stage).
+  - Acceptance: `/dashboard` renders every plan; task tables populated; internal banner visible; `validate:all` + `validate:web` lint + typecheck green (build step lock-blocked by running dev server — latest `.next` artifact from 14:15 confirms success).
+  - Depends on: **TECH-201** (archived), **TECH-202** (archived)
+
+- [x] **TECH-202** — Plan-loader RSC smoke (Stage 3.1 Phase 2) (2026-04-15)
+  - Type: infrastructure / web workspace
+  - Files: `web/app/dashboard/page.tsx` (new)
+  - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+  - Notes: async default export, no `"use client"`, imports `loadAllPlans` from `@/lib/plan-loader`, awaits + logs `[dashboard] plan count 4` server-side, renders `<main><h1>Dashboard (internal)</h1></main>`. `parse.mjs` inlined cleanly by Next.js server trace — no `next.config.ts` change needed. Decision Log — `serverExternalPackages` rejected (accepts npm package names only, not workspace-relative paths; correct escape hatch for trace misses would be `outputFileTracingIncludes`); RSC over Route Handler (server-rendered page simplest smoke surface); TSX return type inferred (no explicit `Promise<JSX.Element>` — `JSX` namespace dropped in Next 16 / React 19).
+  - Acceptance: `cd web && npm run build` green w/ `[dashboard] plan count 4`; `npm run validate:web` + `npm run validate:all` green (141 tests).
+  - Depends on: **TECH-201** (archived)
+
+- [x] **TECH-200** — Plan-loader type definitions (Stage 3.1 Phase 1) (2026-04-15)
+  - Type: infrastructure / web workspace
+  - Files: `web/lib/plan-loader-types.ts` (new)
+  - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+  - Notes: TypeScript interface file mirroring `tools/progress-tracker/parse.mjs` JSDoc schema verbatim. Exports `TaskStatus` + `HierarchyStatus` union literals, `TaskRow` + `PhaseEntry` + `Stage` + `Step` + `PlanData` interfaces. Zero runtime code — `export type` / `export interface` only. `parse.mjs` authoritative; file-header JSDoc documents cross-module contract for **RSC** consumers + drift-sync rule. Decision Log — types file separate from loader (TECH-201) per orchestrator Stage 3.1 phase split (allows TECH-202 RSC smoke to import types independently); zero runtime rules out `z.infer` / Zod (duplicating schema as runtime validator forks authority, orchestrator lock violation); include `'Done'` short form in `TaskStatus` union despite parse.mjs canonicalizing to `'Done (archived)'` (JSDoc documents both variants).
+  - Acceptance: 7 symbols exported, shapes match parse.mjs JSDoc 1-to-1; `npm run validate:web` + `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-198** — Resolution + routing assertions (Stage 2.4 Phase 2) (2026-04-15)
+  - Type: infrastructure / tests
+  - Files: `Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs`, `Assets/Scripts/AssemblyInfo.cs`, `Assets/Audio/Blip/Patches/BlipPatch_*.asset` (×10), `Assets/Audio/Blip/BlipBootstrap.prefab`
+  - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+  - Notes: `[UnityTest] Play_AllMvpIds_ResolvesAndRoutes()` iterates 10 MVP `BlipId`s (`UiButtonHover`, `UiButtonClick`, `ToolRoadTick`, `ToolRoadComplete`, `ToolBuildingPlace`, `ToolBuildingDenied`, `WorldCellSelected`, `EcoMoneyEarned`, `EcoMoneySpent`, `SysSaveGame`); asserts per-id `BlipCatalog.Resolve(id)` non-throw + `PatchHash(id) != 0`, `MixerRouter.Get(id) != null`, `BlipEngine.Play(id)` `DoesNotThrow`; single `yield return null` post-loop. `AssemblyInfo.cs` grants `InternalsVisibleTo("Blip.Tests.PlayMode")` (mirrors EditMode grant). 10 `BlipPatch_*.asset` authored under `Assets/Audio/Blip/Patches/` w/ pre-computed FNV-1a patchHash; `BlipBootstrap.prefab` patched w/ `BlipCatalog` component wiring all 10 entries. Blip-UI routes: UiButtonHover + UiButtonClick + SysSaveGame; Blip-World: remaining 7. Decision Log — IVT grant over public widening (catalog `MixerRouter` + `PatchHash` stay internal per invariant #4 ownership); single post-loop yield over per-id (drains `AudioSource.Play` side-effects once, avoids tangling w/ TECH-199 pool assertions). Green in Unity Test Runner (screenshot confirmed).
+  - Acceptance: all 10 MVP ids resolve patch + mixer group; `Play` does not throw; `npm run unity:compile-check` + `npm run validate:all` green; PlayMode test passes locally.
+  - Depends on: **TECH-197** (archived)
+
+- [x] **TECH-197** — Boot-scene fixture SetUp (Stage 2.4 Phase 1) (2026-04-15)
+  - Type: infrastructure / tests
+  - Files: `Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs`
+  - Spec: (removed at closeout — journal skipped empty sections)
+  - Notes: `[UnitySetUp]` loads `MainMenu` scene (build index 0) + `yield return null` × 2 (Awake cascade + catalog ready); asserts `BlipBootstrap.Instance` + `BlipCatalog.IsReady`; caches `_catalog` + `_player` refs. `[UnityTearDown]` unloads scene.
+  - Acceptance: SetUp boots MainMenu + catches ready flag; TearDown unloads clean; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: **TECH-196** (archived)
+
+- [x] **TECH-196** — PlayMode asmdef bootstrap (Stage 2.4 Phase 1) (2026-04-15)
+  - Type: infrastructure / tests
+  - Files: `Assets/Tests/PlayMode/Audio/Blip.Tests.PlayMode.asmdef`, `Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs`
+  - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+  - Notes: new `Assets/Tests/PlayMode/Audio/Blip.Tests.PlayMode.asmdef` — name `Blip.Tests.PlayMode`, `rootNamespace` `Territory.Tests.PlayMode.Audio`, `includePlatforms: ["Editor"]`, `optionalUnityReferences: ["TestAssemblies"]`, `autoReferenced: false`, references `["TerritoryDeveloper.Game"]` (Blip runtime lives in root game asmdef — no dedicated `Blip.asmdef` exists). Mirrors sibling `Blip.Tests.EditMode.asmdef` shape. Companion `BlipPlayModeSmokeTests.cs` declares empty `public sealed class BlipPlayModeSmokeTests` under `Territory.Tests.PlayMode.Audio` — anchors asmdef resolution, no test attributes. Decision Log — `optionalUnityReferences: ["TestAssemblies"]` over top-level `"testAssemblies": true` (matches sibling + Unity legacy schema); `autoReferenced: false` (test asmdef isolated from unrelated asmdefs); anchor class empty by design (fixture body lands in TECH-197..TECH-199).
+  - Acceptance: asmdef + `.meta` + anchor `.cs` land under `Assets/Tests/PlayMode/Audio/`; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-195** — Extend sitemap w/ devlog slugs + footer nav links (Stage 2.3 Phase 2) (2026-04-15)
+  - Type: infrastructure / web workspace
+  - Files: `web/app/sitemap.ts` (extend), `web/app/layout.tsx` (extend)
+  - Spec: (removed at closeout — journal persist `ok`, both sections empty)
+  - Notes: Extend `sitemap.ts` — `resolveDevlogDir()` helper mirrors `resolvePagesDir` (cwd = repo root or `web/`); scans `web/content/devlog/*.mdx`, parses `gray-matter` for frontmatter `date`, emits entries `${base}/devlog/${stem}` w/ `lastModified=new Date(date)`, `changeFrequency: 'weekly'`, `priority: 0.6`; `/devlog` index entry `priority: 0.7`, `lastModified=max(date)` across posts (fallback `new Date()`). Pages-section ordering untouched. `web/app/layout.tsx` — new `<footer>` sibling after `{children}` inside `<body>` (root layout `flex flex-col`); two `next/link` anchors `/devlog` ("Devlog") + `/feed.xml` ("RSS"), inline `@/lib/tokens` muted-text + top-border styling, no new component file. Decision Log — RSS autodiscovery `<link rel="alternate">` deferred (explicit Non-Goal per Stage 2.3 scoping); footer inlined in root layout vs separate `Footer.tsx` component (minimal diff, matches existing page-shell pattern); sitemap priorities 1.0 landing > 0.8 pages > 0.7 devlog index > 0.6 individual post (signals crawl weight).
+  - Acceptance: `/sitemap.xml` includes `/devlog` + each devlog slug w/ correct `lastModified`; footer renders `/devlog` + `/feed.xml` on every route; `npm run validate:web` + `npm run validate:all` green.
+  - Depends on: **TECH-192** (archived), **TECH-194** (archived)
+
+- [x] **TECH-194** — RSS 2.0 feed route for devlog (Stage 2.3 Phase 2) (2026-04-15)
+  - Type: infrastructure / web workspace
+  - Files: `web/app/feed.xml/route.ts` (new), `web/lib/mdx/loader.ts` (devlog scan helper)
+  - Spec: (removed at closeout — journal persist `ok`, decision_log inserted, lessons_learned empty)
+  - Notes: `GET` returns RSS 2.0 XML enumerating latest 20 devlog posts w/ `<item>` per post (`title`, `link`, `description` from `excerpt`, `pubDate` RFC-822 via `toUTCString()`, `guid` absolute link w/ `isPermaLink="true"`); `Content-Type: application/rss+xml; charset=utf-8`. Channel metadata: `title`, `link`, `description`, `language=en`, `lastBuildDate`. `export const dynamic = 'force-static'` — Next 16.2.3 prerender at build (fs scan deterministic). Inline 5-char XML-escape helper. Absolute URLs via `getBaseUrl()` (consistent w/ sitemap precedent). Autodiscovery `<link rel="alternate">` deferred to **TECH-195**.
+  - Acceptance: `/feed.xml` returns well-formed RSS 2.0 XML ≤20 items desc; correct `Content-Type`; `npm run validate:web` + `npm run validate:all` green.
+  - Depends on: **TECH-192** (archived)
+
+- [x] **TECH-191** — `BlipEngine.StopAll` dispatch body (Stage 2.3 Phase 2) (2026-04-15)
+  - Type: infrastructure / audio runtime
+  - Files: `Assets/Scripts/Audio/Blip/BlipEngine.cs`, `Assets/Scripts/Audio/Blip/BlipBaker.cs`, `Assets/Scripts/Audio/Blip/BlipPlayer.cs`
+  - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+  - Notes: `BlipEngine.StopAll(BlipId id)` body — `AssertMainThread()` → `ResolveCatalog()` / `ResolvePlayer()` null-silent mirrors `Play` gate; `!cat.IsReady` → silent return; `int patchHash = cat.PatchHash(id)` → `HashSet<AudioClip> hits = new(cat.Baker.EnumerateClipsForPatchHash(patchHash))` → iterate `player.Pool` → `src.Stop()` where `src.isPlaying && hits.Contains(src.clip)`. Added `internal IEnumerable<AudioClip> BlipBaker.EnumerateClipsForPatchHash(int)` — scans `_index` keys, yields `entry.clip` on `key.patchHash` match, no LRU mutation. Added `internal IReadOnlyList<AudioSource> BlipPlayer.Pool => _pool`. Decision Log — `internal Pool` accessor over `StopMatching(Predicate<AudioClip>)` callback (same-namespace trust, scales to future ops); `IEnumerable<AudioClip>` return avoids per-call allocation (caller materializes `HashSet`); hard `AudioSource.Stop()` no fade (master plan Stage 2.3 exit; fade requires voice-state tracker punted post-MVP). Non-destructive — LRU cache order + byte total untouched.
+  - Acceptance: `StopAll` halts matching voices via ref-equality on `source.clip`; non-matching voices untouched (isolation via `HashSet.Contains`); baker LRU unchanged; catalog/player null or `!IsReady` → silent no-op; `npm run unity:compile-check` green.
+  - Depends on: **TECH-190** (archived)
+
+- [x] **TECH-190** — `BlipEngine.Play` dispatch body (Stage 2.3 Phase 2) (2026-04-15)
+  - Type: infrastructure / audio runtime
+  - Files: `Assets/Scripts/Audio/Blip/BlipEngine.cs`, `Assets/Scripts/Audio/Blip/BlipCatalog.cs`
+  - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+  - Notes: `BlipEngine.Play(BlipId, float pitchMult, float gainMult)` chain — `AssertMainThread()` → `ResolveCatalog()` null/not-ready → silent return; `ResolvePlayer()` null → silent return; `cat.Resolve(id)` → `ref readonly BlipPatchFlat`; `cat.CooldownRegistry.TryConsume(id, AudioSettings.dspTime, patch.cooldownMs)` block → silent return **before** bake; `variantIndex = patch.deterministic ? 0 : cat.NextVariant(id, patch.variantCount)`; `cat.Baker.BakeOrGet(in patch, cat.PatchHash(id), variantIndex)` → clip; `cat.MixerRouter.Get(id)` → group; `player.PlayOneShot(clip, pitchMult, gainMult, group)`. `BlipCatalog` adds `_baker` field + `_patchHashes` parallel int array + `_rngState` xorshift32 dict + `internal` accessors `Baker` / `MixerRouter` / `CooldownRegistry` / `PatchHash(BlipId)` / `NextVariant(BlipId, int)`. Decision Log — `PatchHash` on catalog not flat (SO owns hash; `BlipPatchFlat` intentionally omits); Baker instantiation lands here (Stage 2.2 omitted); xorshift32 over `System.Random` (allocation-free, deterministic, Knuth-hash seed forced odd); player-null silent return mirrors non-ready catalog (boot race safety).
+  - Acceptance: play path lands clip on player pool when catalog ready; cooldown-blocked id returns silently without baking; non-ready catalog returns silently; deterministic patch always picks variant 0; `npm run unity:compile-check` green.
+  - Depends on: **TECH-189** (archived)
+
+- [x] **TECH-189** — Bind/Unbind + cached lazy resolution (Stage 2.3 Phase 1) (2026-04-15)
+  - Type: infrastructure / audio runtime
+  - Files: `Assets/Scripts/Audio/Blip/BlipEngine.cs`
+  - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+  - Notes: `BlipEngine` adds `static BlipCatalog _catalog; static BlipPlayer _player;`. `Bind(BlipCatalog c)` / `Bind(BlipPlayer p)` setters (null-safe overwrite via `if (c != null) _catalog = c;`). `Unbind(BlipCatalog)` / `Unbind(BlipPlayer)` identity-guarded nullers (`if (ReferenceEquals(_catalog, c)) _catalog = null;`) — prevents late `OnDestroy` from stale instance wiping freshly-bound reload. `internal static ResolveCatalog()` / `ResolvePlayer()` — return cached field when non-null, else `FindObjectOfType<T>()` + cache. Invariant #3 — one-shot bootstrap lookup, not per-frame. Invariant #4 — no new singleton; state lives on MonoBehaviour hosts. Decision Log — Unbind guarded by `ReferenceEquals` (additive-scene reload safety); `Bind(null)` = no-op not clear (callers use `Unbind` explicitly; off-path callers never explode); lazy `FindObjectOfType` allowed in `Resolve*` (one-time cached, not per-frame).
+  - Acceptance: Bind/Unbind overloads land + null-safe; `Resolve*` caches reference on first call; repeated calls do not re-enter `FindObjectOfType`; `npm run unity:compile-check` green.
+  - Depends on: **TECH-188** (archived)
+
+- [x] **TECH-188** — `BlipEngine` facade skeleton + main-thread gate (Stage 2.3 Phase 1) (2026-04-15)
+  - Type: infrastructure / audio runtime
+  - Files: `Assets/Scripts/Audio/Blip/BlipEngine.cs`, `Assets/Scripts/Audio/Blip/BlipBootstrap.cs`
+  - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+  - Notes: new `public static class BlipEngine` — declares `Play(BlipId id, float pitchMult = 1f, float gainMult = 1f)` + `StopAll(BlipId id)` w/ empty bodies. Private `AssertMainThread()` compares `Thread.CurrentThread.ManagedThreadId` to cached `BlipBootstrap.MainThreadId` (captured first line of `BlipBootstrap.Awake`, Stage 2.1 prereq). Throws `InvalidOperationException` w/ diagnostic on mismatch. Invoked first line of every entry point. Invariant #4 — stateless facade, no new singleton. Decision Log — Bind/Unbind stubs left untouched (TECH-189 fills bodies, keeps task surface narrow + honors master-plan T2.3.2 boundary); `MainThreadId` capture reused from Stage 2.1 `BlipBaker.AssertMainThread` (no duplicate capture); direct off-thread EditMode test deferred (Stage 2.4 PlayMode smoke gates happy path, Unity main-thread context implicit).
+  - Acceptance: facade file compiles, static methods present w/ correct signatures; `BlipBootstrap.MainThreadId` captured in `Awake`; `AssertMainThread` throws when invoked off main thread (EditMode test); `npm run unity:compile-check` green.
+  - Depends on: none
+
+- [x] **TECH-187** — Client-side wiki search component (Stage 2.2 Phase 2) (2026-04-15)
+  - Type: infrastructure / web workspace
+  - Files: `web/components/WikiSearch.tsx`, `web/app/wiki/page.tsx` (embed), `web/package.json` (`fuse.js` dep), `web/package-lock.json`
+  - Spec: (removed at closeout — journal db_error; Decision Log captured in Notes)
+  - Notes: Stage 2.2 Phase 2 closer. Client component `web/components/WikiSearch.tsx` (`'use client'`) fetches `/search-index.json` on mount (unmount-guarded `useEffect`), builds `Fuse` instance in `useMemo` w/ `keys: ['title','body','category']`, `threshold: 0.35`, `includeScore: false`. Controlled input; top 10 results link `/wiki/{slug}` via `next/link` w/ category badge. Imports `SearchRecord` from `@/lib/search/types` (no local redefinition). Token-driven styling via `@/lib/tokens`. Embedded in `web/app/wiki/page.tsx` header below description. `fuse.js` pinned exact version. Decision Log — static JSON + client Fuse (no server infra, 156 records trivially fits memory; alternatives: Route Handler streaming, Algolia — overkill); reuse `SearchRecord` (shape owned by TECH-186 emitter, duplication would drift); threshold `0.35` initial (balance typo tolerance + noise on small record set; `0.3` stricter / `0.4` looser revisit on feedback).
+  - Acceptance: `/wiki` header shows search input; fuzzy matches span glossary + wiki records linking `/wiki/{slug}`; `fuse.js` pinned exact in `web/package.json`; `web/package-lock.json` updated; `cd web && npm run lint && npm run typecheck && npm run build` green; `npm run validate:web` + `npm run validate:all` green.
+  - Depends on: **TECH-186** (archived)
+
+- [x] **TECH-186** — Build-time search index emitter (Stage 2.2 Phase 2) (2026-04-15)
+  - Type: infrastructure / web workspace
+  - Files: `web/lib/search/build-index.ts`, `web/lib/search/types.ts`, `web/package.json` (`prebuild` + `build:search-index` scripts, `tsx` devDep), `.gitignore` (`web/public/search-index.json`)
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: Stage 2.2 Phase 2 opener. Node CLI `tsx lib/search/build-index.ts` emits deterministic `web/public/search-index.json` (156 records) — glossary via `loadGlossaryTerms()` (TECH-184) + wiki MDX glob `web/content/wiki/**/*.mdx` parsed with `gray-matter`. Records shape `{ slug, title, body, category, type: 'glossary' | 'wiki' }`. Stable sort by `slug` ascending; `JSON.stringify(records, null, 2)` + trailing `\n`. Cwd-dual resolution mirrors `loader.ts` + `glossary/import.ts` (works under `web/` or repo root). `prebuild` script auto-fires before `next build`. Artifact git-ignored (regenerated each build). Decision Log — cwd-dual resolution (mirrors existing pattern); artifact ignored (build output, not source); `tsx` local devDep in web/ (avoids PATH surprises in prebuild hook); sort by `slug` not `title` (stable primary key, no unicode/casing issues); raw MDX body frontmatter-stripped (shape simple, Fuse.js threshold tunes match in TECH-187).
+  - Acceptance: `cd web && npm run build:search-index` → 156 records emitted; two runs byte-identical (sha256 match); `prebuild` auto-invokes before `next build`; `npm run validate:web` + `npm run validate:all` green.
+  - Depends on: **TECH-184** (archived), **TECH-185** (archived)
+
+- [x] **TECH-174** — `BlipPlayer.PlayOneShot` round-robin dispatch (Stage 2.2 Phase 3) (2026-04-15)
+  - Type: infrastructure / audio runtime
+  - Files: `Assets/Scripts/Audio/Blip/BlipPlayer.cs`
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: `PlayOneShot(AudioClip clip, float pitch, float gain, AudioMixerGroup group)` — `var source = _pool[_cursor]; _cursor = (_cursor + 1) % _pool.Length;` advances cursor before `Play()` so next caller lands on next voice even if current `Play()` throws. Stops prior clip if still playing (voice-steal hard overwrite — no crossfade, post-MVP per orchestration guardrails §390; MVP 10 sounds + 16-voice pool makes steal rare). Sets `source.clip`, `source.pitch`, `source.volume`, `source.outputAudioMixerGroup` then `source.Play()`. Decision Log — voice-steal = hard overwrite (Stop + reassign, no crossfade); cursor advances before Play (wrap math off playback path); per-call mixer group assignment (BlipMixerRouter.Get resolves upstream in BlipEngine.Play, voice stays group-agnostic).
+  - Acceptance: 16 rapid calls wrap cursor once (wrap point `_cursor == 0`); voice-steal overwrites prior clip on wrap; no exception on mid-playback overwrite; `unity:compile-check` green.
+  - Depends on: **TECH-173** (archived)
+
 - [x] **TECH-185** — Wiki catch-all route + auto-index + seed page (Stage 2.2 Phase 1) (2026-04-15)
   - Type: infrastructure / web workspace
   - Files: `web/app/wiki/[...slug]/page.tsx`, `web/app/wiki/page.tsx`, `web/content/wiki/README.mdx`, `web/lib/wiki/slugs.ts`, `web/components/GlossaryShell.tsx`
@@ -254,6 +430,46 @@
 ---
 
 ## Completed (moved from BACKLOG.md, 2026-04-15)
+
+- [x] **TECH-213** — Legacy `docs/progress.html` live dashboard banner link (2026-04-15)
+  - Type: web (docs / legacy handoff)
+  - Files: `tools/progress-tracker/render.mjs`, `docs/progress.html`
+  - Spec: (removed at closeout — journal persisted Decision Log; banner template edit in `render.mjs`)
+  - Notes: Stage 3.3 Phase 1 / T3.3.1. Inserted inline-styled banner `<div>` in `render.mjs` template immediately after `<body>` before `${header}`; regen via `npm run progress` wrote updated `docs/progress.html`. Href exact `https://web-nine-wheat-35.vercel.app/dashboard`. Decision Log — edited `render.mjs` template (not hand-patched HTML) to survive regen; banner stays passive link (no auto-redirect) pending TECH-214 deprecation trigger.
+  - Acceptance: banner visible at top of generated `docs/progress.html`; href exact; inline style only; deterministic regen; `validate:all` green.
+  - Depends on: **TECH-208** (archived — dashboard access gate)
+
+- [x] **TECH-206** — Dashboard step/stage visual hierarchy + statusDetail rendering (Stage 3.2 Phase 1 / T3.2.2) (2026-04-15)
+  - Type: web (RSC layout)
+  - Files: `web/app/dashboard/page.tsx`, `web/app/dashboard/_status.ts`
+  - Spec: (removed at closeout — journal persist skipped empty sections; decisions inline in Notes)
+  - Notes: Extended `/dashboard` RSC w/ project-hierarchy grouping — each plan section iterates `plan.steps` → step heading (`Step {id} — {title}` + `BadgeChip` via `toBadgeStatus`), then per-stage sub-heading (`Stage {id} — {title}` + badge), then `DataTable<TaskRow>` scoped to `stage.tasks`. `step.statusDetail` + `stage.statusDetail` rendered in `text-text-muted` when non-empty; omitted when empty string. No `"use client"`. Decision Log — per-stage `DataTable` vs single table w/ `groupHeader` slot: kept `DataTable` signature stable; reused `toBadgeStatus` (`HierarchyStatus` already covered); omit empty `statusDetail` span to avoid DOM whitespace.
+  - Acceptance: step + stage hierarchy scannable; `HierarchyStatus` badges rendered; `validate:all` + `validate:web` green.
+  - Depends on: **TECH-205** (archived)
+
+- [x] **TECH-201** — Plan-loader implementation (Stage 3.1 Phase 1) (2026-04-15)
+  - Type: infrastructure / web workspace
+  - Files: `web/lib/plan-loader.ts` (new)
+  - Spec: (removed at closeout — journal persist skipped empty sections; Decision Log captured in Notes)
+  - Notes: `loadAllPlans(): Promise<PlanData[]>` — globs `ia/projects/*-master-plan.md` from repo root via `fs.promises` (cwd-aware: repo root vs `web/`, mirror Stage 2.1/2.3 loader `resolveContentPath` idiom); reads files; dynamic `import('../../tools/progress-tracker/parse.mjs')` → `parseMasterPlan(content, filename)` passes basename (matches CLI `index.mjs` line 53); returns sorted `PlanData[]`. `parse.mjs` byte-identical — wrapper-only invariant. Decision Log — filter idiom `includes('master-plan') && endsWith('.md')` mirrors `index.mjs` lines 39–42 verbatim to stay drift-free w/ CLI; filename arg = basename (`PlanData` consumers key off basename for sibling-warning match); empty-dir returns `[]` (diverges from CLI exit-1 — RSC prefers graceful empty render, documented divergence); no caching in v1 (Node ESM module cache dedupes `parse.mjs`; file-content memo deferred until profiling justifies).
+  - Acceptance: `loadAllPlans()` exported + typed; `git diff tools/progress-tracker/parse.mjs` empty; `npm run validate:web` + `npm run validate:all` green.
+  - Depends on: **TECH-200** (archived)
+
+- [x] **TECH-193** — Devlog single-post RSC + origin-story MDX seed (Stage 2.3 Phase 1) (2026-04-15)
+  - Type: infrastructure / web workspace / content
+  - Files: `web/app/devlog/[slug]/page.tsx` (new), `web/content/devlog/2026-MM-DD-origin-story.mdx` (new)
+  - Spec: (removed at closeout — journal persist `ok`, both sections empty)
+  - Notes: Single-post RSC resolves slug via `loadDevlogPost(slug)` (new loader sibling — accepts `DevlogFrontmatter` w/o `PageFrontmatter` validator); renders title + tag chips + read-time + optional cover + compiled MDX body. `generateMetadata` returns `openGraph.images` from `cover` or `/og-default.png` fallback. `generateStaticParams` fs-scans `web/content/devlog/*.mdx`. Decision Log — used `@mdx-js/mdx` `evaluate()` over dynamic `import()` (webpack template-literal constraint + Turbopack SSG compat); `@mdx-js/mdx` hoisted via npm workspace; created 1x1 white PNG placeholder at `web/public/og-default.png` (real OG art deferred).
+  - Acceptance: `/devlog/2026-04-15-origin-story` renders cover (or fallback) + tags + read-time + MDX body; OG metadata valid; `npm run validate:web` + `npm run validate:all` green.
+  - Depends on: **TECH-192** (archived)
+
+- [x] **TECH-192** — Devlog list route + reading-time helper (Stage 2.3 Phase 1) (2026-04-15)
+  - Type: infrastructure / web workspace
+  - Files: `web/app/devlog/page.tsx` (new), `web/lib/mdx/reading-time.ts` (new), `web/lib/mdx/types.ts` (extend)
+  - Spec: (removed at closeout — journal persist `ok`, both sections empty)
+  - Notes: RSC scans `web/content/devlog/*.mdx`, parses frontmatter (`title`, `date`, `tags[]`, `cover?`, `excerpt`), sorts desc by `date`, renders card list w/ `BadgeChip` tags + read-time + excerpt. `computeReadingTime(body): number` helper — minutes rounded up from word count (~200 wpm baseline). Seeds devlog surface consumed by **TECH-193**/**TECH-194**/**TECH-195**. Decision Log — direct `gray-matter` over extending `loadMdxContent` (validator hard-codes `PageFrontmatter` fields); 200 wpm baseline + floor-1 minute; rich OG deferred to **TECH-193**/**TECH-195**.
+  - Acceptance: `/devlog` renders sorted card list w/ tag chips + read-time + excerpt; `DevlogFrontmatter` type exported; `npm run validate:web` + `npm run validate:all` green.
+  - Depends on: none
 
 - [x] **TECH-173** — `BlipPlayer` pool construction (Stage 2.2 Phase 3) (2026-04-15)
   - Type: infrastructure / audio runtime
@@ -950,6 +1166,20 @@
 ---
 
 ## Recent archive (moved from BACKLOG.md, 2026-04-10)
+
+- [x] **TECH-209** — UI/Eco/Sys BlipPatch SO authoring (Stage 3.1 Phase 1) (2026-04-15)
+  - Type: infrastructure / audio authoring
+  - Files: `Assets/Audio/Blip/Patches/UiButtonHover.asset`, `UiButtonClick.asset`, `EcoMoneyEarned.asset`, `EcoMoneySpent.asset`, `SysSaveGame.asset`
+  - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+  - Notes: **Completed (verified — `/project-spec-close`).** 5 UI/Eco/Sys **Blip patch** SOs authored via `CreateAssetMenu` `Territory/Audio/Blip Patch`. Dir landed as `Assets/Audio/Blip/Patches/` (Stage 1.4 path, not `Assets/Audio/BlipPatches/`). Params frozen to `docs/blip-procedural-sfx-exploration.md` §9 — `UiButtonHover` (ex 1, triangle 2000 Hz, `cooldownMs` 120), `UiButtonClick` (ex 2, square 1000 Hz), `EcoMoneyEarned` (ex 17, sine 1319 Hz), `EcoMoneySpent` (ex 18, triangle 200 Hz + noise), `SysSaveGame` (ex 20, 3× triangle 523/659/784 Hz, `cooldownMs` 2000). Post-MVP FX trimmed (pitch env, ring-mod, delay, BP filter, 4th note, stereo widen) — base carrier only for MVP smoke. `patchHash` non-zero (computed offline; Editor verify deferred to TECH-212). `npm run unity:compile-check` green (bridge `compilation_failed=false`). Decision Log — authoring-only so params stay frozen to exploration §9 (drift → amend doc first); `cooldownMs` defaults to 0 when §9 silent (UI click-rate = user input cadence, no spam); `mixerGroup` left null intentionally (TECH-211 wires all 10 atomic). Half of Stage 3.1 Phase 1 patch-set — sibling TECH-210 covers 5 World patches.
+  - Depends on: none
+
+- [x] **TECH-203** — Plan-loader README + JSDoc (Stage 3.1 Phase 2) (2026-04-15)
+  - Type: infrastructure / web workspace
+  - Files: `web/README.md` (extend), `web/lib/plan-loader.ts` (extend — JSDoc)
+  - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+  - Notes: **Completed (verified — `/project-spec-close`).** `web/README.md` gained §Dashboard between §MDX page pattern + §Tokens — documents `loadAllPlans(): Promise<PlanData[]>` contract, `PlanData` key fields (`title`, `overallStatus`, `steps[]`, `allTasks[]`), "parse.mjs authoritative — plan-loader read-only wrapper" invariant, glob pattern `ia/projects/*master-plan*.md` (code-accurate, NOT shorthand), RSC consumption snippet, empty-dir `[]` return behavior. `web/lib/plan-loader.ts` file-header JSDoc appended single line — `Requires Node 20+ — dynamic ESM import() of parse.mjs relies on Node ≥ 20 stable ESM resolver.` Additive only; existing header bullets untouched. Decision Log — glob wording code-accurate (not master-plan table shorthand) to prevent doc/runtime drift; JSDoc additive (no rewrite); §Dashboard placement between §MDX page pattern + §Tokens keeps narrative order (page patterns → RSC data → tokens → deploy). Closes Stage 3.1 exit criterion on docs.
+  - Depends on: **TECH-200** (archived), **TECH-201** (archived), **TECH-202** (archived)
 
 - [x] **TECH-145** — Web primitives: HeatmapCell + AnnotatedMap (Stage 1.2 Phase 2) (2026-04-14)
   - Type: IA / tooling (web workspace)

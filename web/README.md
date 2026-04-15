@@ -23,7 +23,7 @@ Next.js 14+ App Router workspace inside the Territory Developer monorepo. Serves
 
 ```bash
 cd web
-npm run dev          # dev server at http://localhost:3000
+npm run dev          # dev server at http://localhost:4000
 ```
 
 Dev server starts Next.js with Turbopack. Page auto-updates on edit.
@@ -78,6 +78,72 @@ export default async function Home() {
 - Body rendered via `@next/mdx` typed-component import — compiled at build, zero runtime cost.
 - Frontmatter (title/description/updated) read via `loadMdxPage(slug)` for validation + typed access — single-source.
 - Sibling pages (about/install/history) follow identical shape.
+
+## Dashboard
+
+The progress dashboard (`web/app/dashboard/`) reads all master-plan Markdown files from the IA projects directory and renders them as structured plan data.
+
+### Data loader
+
+```ts
+import { loadAllPlans } from '@/lib/plan-loader';
+
+// Returns PlanData[] — one entry per master-plan file found.
+const plans = await loadAllPlans();
+```
+
+**Contract:** `loadAllPlans(): Promise<PlanData[]>` — exported from `web/lib/plan-loader.ts`. Reads all `ia/projects/*master-plan*.md` files from repo root (substring match: `f.includes('master-plan') && f.endsWith('.md')`). Returns `[]` when no files match (does not throw).
+
+### PlanData shape
+
+Key fields (full schema: `web/lib/plan-loader-types.ts`):
+
+| Field | Type | Description |
+|---|---|---|
+| `title` | `string` | Plan title extracted from the Markdown `# H1`. |
+| `overallStatus` | `string` | Aggregate status label derived from stage statuses. |
+| `steps[]` | `Step[]` | Ordered list of high-level steps, each with stages and tasks. |
+| `allTasks[]` | `Task[]` | Flat list of every task across all steps — convenience for filtering. |
+
+### Wrapper invariant
+
+`tools/progress-tracker/parse.mjs` is the **authoritative parser**. `plan-loader.ts` is a read-only wrapper — it calls `parseMasterPlan()` via dynamic ESM `import()` but never modifies it. Schema drift between `plan-loader-types.ts` and `parse.mjs` JSDoc is a defect; fix `parse.mjs` first, then update `plan-loader-types.ts`.
+
+### Glob pattern
+
+Files matched: `ia/projects/*master-plan*.md` from repo root. This is a substring match (`includes('master-plan')`) so both `web-platform-master-plan.md` and `blip-master-plan.md` are included.
+
+### RSC consumption pattern
+
+`loadAllPlans()` is async and safe to call in React Server Components:
+
+```tsx
+// web/app/dashboard/page.tsx (server component — no 'use client' needed)
+import { loadAllPlans } from '@/lib/plan-loader';
+
+export default async function DashboardPage() {
+  const plans = await loadAllPlans();
+
+  if (plans.length === 0) {
+    return <p>No plans found.</p>;
+  }
+
+  return (
+    <main>
+      {plans.map(plan => (
+        <section key={plan.title}>
+          <h2>{plan.title}</h2>
+          <p>Status: {plan.overallStatus}</p>
+        </section>
+      ))}
+    </main>
+  );
+}
+```
+
+### Empty-dir behavior
+
+When `ia/projects/` contains no `*master-plan*.md` files, `loadAllPlans()` returns `[]`. This diverges intentionally from the CLI (`tools/progress-tracker/index.mjs` exits non-zero on empty); RSC callers should render an empty state rather than error.
 
 ## Tokens
 

@@ -14,6 +14,14 @@ using UnityEngine.Audio;
 /// </remarks>
 public class BlipBootstrap : MonoBehaviour
 {
+    /// <summary>
+    /// Singleton-style accessor for the persistent bootstrap root.
+    /// Set in <c>Awake</c> after <c>DontDestroyOnLoad</c>; cleared in <c>OnDestroy</c>.
+    /// PlayMode tests assert <c>BlipBootstrap.Instance != null</c> after scene load.
+    /// Not a true singleton — invariant #4: MonoBehaviour placed in scene, not created via <c>new</c>.
+    /// </summary>
+    public static BlipBootstrap Instance { get; private set; }
+
     // Main-thread id — captured in Awake; read by BlipBaker.AssertMainThread (Stage 2.1)
     // and later by BlipEngine entry-point asserts (Stage 2.3 T2.3.1).
     public static int MainThreadId { get; private set; }
@@ -39,6 +47,8 @@ public class BlipBootstrap : MonoBehaviour
         // DontDestroyOnLoad — persistent across scene loads from MainMenu onward (pattern per GameNotificationManager.cs).
         DontDestroyOnLoad(transform.root.gameObject);
 
+        Instance = this;
+
         float db = PlayerPrefs.GetFloat(SfxVolumeDbKey, SfxVolumeDbDefault);
 
         if (blipMixer == null)
@@ -55,5 +65,10 @@ public class BlipBootstrap : MonoBehaviour
         {
             Debug.LogWarning($"[Blip] BlipMixer.SetFloat('{SfxVolumeParam}', {db}) failed — param not exposed on mixer?");
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 }

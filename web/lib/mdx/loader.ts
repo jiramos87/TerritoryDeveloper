@@ -1,7 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
 import matter from 'gray-matter';
-import type { MdxLoadResult, PageFrontmatter } from './types';
+import { evaluate } from '@mdx-js/mdx';
+import * as runtime from 'react/jsx-runtime';
+import type { MDXContent } from 'mdx/types';
+import type { MdxLoadResult, PageFrontmatter, DevlogFrontmatter } from './types';
 
 /** Resolve absolute path to a content file.
  *  cwd may be repo root (validate:web) or web/ (Next dev/build). */
@@ -52,6 +55,46 @@ export async function loadMdxPage(slug: string): Promise<MdxLoadResult<PageFront
 }
 
 // ---------------------------------------------------------------------------
+// Devlog loader
+// ---------------------------------------------------------------------------
+
+/**
+ * Load + compile a devlog post from web/content/devlog/{slug}.mdx.
+ * Parses DevlogFrontmatter and returns a compiled MDX component.
+ */
+export interface DevlogLoadResult {
+  Component: MDXContent;
+  frontmatter: DevlogFrontmatter;
+  source: string;
+}
+
+export async function loadDevlogPost(slug: string): Promise<DevlogLoadResult> {
+  const filePath = await resolveContentPath('devlog', slug);
+
+  let raw: string;
+  try {
+    raw = await fs.readFile(filePath, 'utf8');
+  } catch (err) {
+    const e = err as NodeJS.ErrnoException;
+    if (e.code === 'ENOENT') {
+      throw new Error(`Devlog post not found: slug="${slug}" path="${filePath}"`);
+    }
+    throw err;
+  }
+
+  const parsed = matter(raw);
+  const frontmatter = parsed.data as DevlogFrontmatter;
+  validateDevlogFrontmatter(frontmatter, slug);
+
+  const { default: Component } = await evaluate(parsed.content, {
+    ...(runtime as { Fragment: unknown; jsx: unknown; jsxs: unknown }),
+    baseUrl: import.meta.url,
+  } as Parameters<typeof evaluate>[1]);
+
+  return { Component, frontmatter, source: parsed.content };
+}
+
+// ---------------------------------------------------------------------------
 // Internal validation (Phase 3)
 // ---------------------------------------------------------------------------
 
@@ -84,5 +127,26 @@ function validatePageFrontmatter(data: unknown, slug: string, dir: string): void
     throw new Error(
       `MDX frontmatter "updated" must be YYYY-MM-DD, got "${updated}" — dir="${dir}" slug="${slug}"`
     );
+  }
+}
+
+function validateDevlogFrontmatter(data: unknown, slug: string): void {
+  if (typeof data !== 'object' || data === null) {
+    throw new Error(`Devlog frontmatter missing or non-object: slug="${slug}"`);
+  }
+
+  const record = data as Record<string, unknown>;
+
+  if (typeof record['title'] !== 'string' || (record['title'] as string).trim() === '') {
+    throw new Error(`Devlog frontmatter "title" required: slug="${slug}"`);
+  }
+  if (typeof record['date'] !== 'string' || !ISO_DATE_RE.test(record['date'] as string)) {
+    throw new Error(`Devlog frontmatter "date" must be YYYY-MM-DD: slug="${slug}"`);
+  }
+  if (typeof record['excerpt'] !== 'string' || (record['excerpt'] as string).trim() === '') {
+    throw new Error(`Devlog frontmatter "excerpt" required: slug="${slug}"`);
+  }
+  if (!Array.isArray(record['tags'])) {
+    throw new Error(`Devlog frontmatter "tags" must be an array: slug="${slug}"`);
   }
 }

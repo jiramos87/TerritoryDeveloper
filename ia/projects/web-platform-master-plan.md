@@ -1,6 +1,6 @@
 # Web Platform — Master Plan (MVP)
 
-> **Status:** Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)
+> **Status:** Draft — Steps 1–2 Final; Step 3 decomposed (Stage 3.1 Done; Stage 3.2 filed — tasks Draft; Stage 3.3 _pending_)
 >
 > **Scope:** Unified Next.js 14+ app at `web/` (monorepo workspace) serving three audiences from one codebase — public game site (landing / wiki / devlog / about / install / history), live DevOps progress dashboard, and future user portal. Static-first hybrid on Vercel free tier; Postgres + auth deferred to portal step. Post-MVP extensions (payment gateway, cloud saves, community wiki edits, i18n, Unity WebGL export) tracked inline in exploration doc `### Implementation Points → Deferred / out of scope`; no separate scope-boundary doc yet.
 >
@@ -131,7 +131,7 @@
 
 ### Step 2 — Public surface + wiki + devlog
 
-**Status:** In Progress — Stage 2.1 active
+**Status:** Done (closed 2026-04-15 — Stages 2.1, 2.2, 2.3 all closed)
 
 **Backlog state (Step 2):** 0 filed
 
@@ -199,7 +199,7 @@
 
 #### Stage 2.2 — Wiki + glossary auto-index + search
 
-**Status:** In Progress (tasks filed 2026-04-15 — TECH-184…TECH-187)
+**Status:** Done (closed 2026-04-15 — TECH-184…TECH-187 all archived)
 
 **Objectives:** Ship the MDX-driven wiki at `/wiki/[...slug]` + auto-index landing at `/wiki` that merges hand-authored MDX pages w/ glossary-derived term rows imported from `ia/specs/glossary.md` (filtered to Term + Definition; `Spec reference` column stripped). Build-time fuse.js index feeds client-side search. No authoring of wiki content yet — scaffolding + 1 seed MDX page + full glossary import + search.
 
@@ -215,8 +215,8 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Glossary import + wiki routing scaffold.
-- [ ] Phase 2 — Search index build + client search component.
+- [x] Phase 1 — Glossary import + wiki routing scaffold.
+- [x] Phase 2 — Search index build + client search component.
 
 **Tasks:**
 
@@ -224,12 +224,12 @@
 |---|---|---|---|---|
 | T2.2.1 | 1 | **TECH-184** | Done | Author `web/lib/glossary/import.ts` — reads `ia/specs/glossary.md` from repo root (relative path via `path.resolve(process.cwd(), '../ia/specs/glossary.md')` or equivalent build-safe mechanism); parses markdown tables via `remark-parse` or regex split; emits `GlossaryTerm[]` w/ `Spec reference` column filtered out; includes slug derivation (kebab-case term). Typed export consumed by wiki routes. |
 | T2.2.2 | 1 | **TECH-185** | Done (archived) | Author `web/app/wiki/[...slug]/page.tsx` + `web/app/wiki/page.tsx` — catch-all route renders hand-authored MDX from `web/content/wiki/**.mdx` via `loadMdxContent('wiki', slug)` OR glossary-derived page (renders `GlossaryTerm.definition` in MDX-styled shell when slug matches imported term); `/wiki` index uses `DataTable` + groups by category; `generateStaticParams` unions MDX slugs + glossary slugs. Seed `web/content/wiki/README.mdx` with frontmatter + 1 paragraph. |
-| T2.2.3 | 2 | **TECH-186** | Draft | Author `web/lib/search/build-index.ts` + `web/package.json` `prebuild` entry — script consumes `GlossaryTerm[]` + scans `web/content/wiki/**.mdx` frontmatter/body, emits `web/public/search-index.json` (fuse.js records: `{ slug, title, body, category, type: 'glossary' | 'wiki' }`). Deterministic output for CI repeatability. |
-| T2.2.4 | 2 | **TECH-187** | Draft | Author `web/components/WikiSearch.tsx` client component — fetches `/search-index.json` on mount, constructs `Fuse` instance w/ `keys: ['title', 'body', 'category']`, threshold tuned for fuzzy match; renders input + result list linking to `/wiki/{slug}`. Embedded in `web/app/wiki/page.tsx` header. Install `fuse.js` into `web/package.json` deps. |
+| T2.2.3 | 2 | **TECH-186** | Done (archived) | Author `web/lib/search/build-index.ts` + `web/package.json` `prebuild` entry — script consumes `GlossaryTerm[]` + scans `web/content/wiki/**.mdx` frontmatter/body, emits `web/public/search-index.json` (fuse.js records: `{ slug, title, body, category, type: 'glossary' | 'wiki' }`). Deterministic output for CI repeatability. |
+| T2.2.4 | 2 | **TECH-187** | Done (archived) | Author `web/components/WikiSearch.tsx` client component — fetches `/search-index.json` on mount, constructs `Fuse` instance w/ `keys: ['title', 'body', 'category']`, threshold tuned for fuzzy match; renders input + result list linking to `/wiki/{slug}`. Embedded in `web/app/wiki/page.tsx` header. Install `fuse.js` into `web/package.json` deps. |
 
 #### Stage 2.3 — Devlog + RSS + origin story
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Done (closed 2026-04-15 — TECH-192…TECH-195 all archived)
 
 **Objectives:** Ship devlog list at `/devlog`, single-post route `/devlog/[slug]`, origin-story static page, and RSS feed at `/feed.xml`. All posts are manual MDX under `web/content/devlog/YYYY-MM-DD-slug.mdx` — no auto-pull from BACKLOG-ARCHIVE at MVP. Sitemap (Stage 2.1) regenerated to include devlog slugs.
 
@@ -245,23 +245,25 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Devlog routes + MDX content.
-- [ ] Phase 2 — RSS feed + sitemap integration.
+- [x] Phase 1 — Devlog routes + MDX content.
+- [x] Phase 2 — RSS feed + sitemap integration.
 
 **Tasks:**
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T2.3.1 | 1 | _pending_ | _pending_ | Author `web/app/devlog/page.tsx` + `web/lib/mdx/reading-time.ts` — list RSC scans `web/content/devlog/*.mdx` via filesystem read, parses frontmatter (`title`, `date`, `tags[]`, `cover?`, `excerpt`), sorts desc by `date`, renders card list w/ `BadgeChip` tags + read-time computed from MDX body. Extend `PageFrontmatter` or add `DevlogFrontmatter` type in `web/lib/mdx/types.ts`. |
-| T2.3.2 | 1 | _pending_ | _pending_ | Author `web/app/devlog/[slug]/page.tsx` + `web/content/devlog/2026-MM-DD-origin-story.mdx` — single-post RSC renders via `loadMdxContent('devlog', slug)`; cover image (frontmatter `cover` optional), tags row, read-time, `generateMetadata` returns OG image derived from cover or falling back to site default. Origin-story MDX seed authored in full English per caveman-exception. |
-| T2.3.3 | 2 | _pending_ | _pending_ | Author `web/app/feed.xml/route.ts` — Next.js route handler (`GET`) returns RSS 2.0 XML (`<rss version="2.0"><channel>…</channel></rss>`) enumerating latest 20 devlog posts w/ `<item>` per post (`title`, `link`, `description` from excerpt, `pubDate` RFC-822, `guid`); `Content-Type: application/rss+xml; charset=utf-8`. |
-| T2.3.4 | 2 | _pending_ | _pending_ | Extend `web/app/sitemap.ts` (from Stage 2.1) to enumerate devlog slugs via filesystem scan of `web/content/devlog/`; add footer nav link to `/feed.xml` + `/devlog` in `web/app/layout.tsx`. `validate:all` green. |
+| T2.3.1 | 1 | **TECH-192** | Done (archived) | Author `web/app/devlog/page.tsx` + `web/lib/mdx/reading-time.ts` — list RSC scans `web/content/devlog/*.mdx` via filesystem read, parses frontmatter (`title`, `date`, `tags[]`, `cover?`, `excerpt`), sorts desc by `date`, renders card list w/ `BadgeChip` tags + read-time computed from MDX body. Extend `PageFrontmatter` or add `DevlogFrontmatter` type in `web/lib/mdx/types.ts`. |
+| T2.3.2 | 1 | **TECH-193** | Done (archived) | Author `web/app/devlog/[slug]/page.tsx` + `web/content/devlog/2026-MM-DD-origin-story.mdx` — single-post RSC renders via `loadMdxContent('devlog', slug)`; cover image (frontmatter `cover` optional), tags row, read-time, `generateMetadata` returns OG image derived from cover or falling back to site default. Origin-story MDX seed authored in full English per caveman-exception. |
+| T2.3.3 | 2 | **TECH-194** | Done (archived) | Author `web/app/feed.xml/route.ts` — Next.js route handler (`GET`) returns RSS 2.0 XML (`<rss version="2.0"><channel>…</channel></rss>`) enumerating latest 20 devlog posts w/ `<item>` per post (`title`, `link`, `description` from excerpt, `pubDate` RFC-822, `guid`); `Content-Type: application/rss+xml; charset=utf-8`. |
+| T2.3.4 | 2 | **TECH-195** | Done (archived) | Extend `web/app/sitemap.ts` (from Stage 2.1) to enumerate devlog slugs via filesystem scan of `web/content/devlog/`; add footer nav link to `/feed.xml` + `/devlog` in `web/app/layout.tsx`. `validate:all` green. |
 
 ---
 
 ### Step 3 — Live dashboard
 
-**Status:** Draft — decomposition deferred until Step 2 closes.
+**Status:** Draft (Stage 3.1 Done; Stage 3.2 Done; Stage 3.3 _pending_)
+
+**Backlog state (Step 3):** Stage 3.1 — TECH-200…TECH-203 (archived); Stage 3.2 — TECH-205…TECH-208 (archived)
 
 **Objectives:** Replace the static `docs/progress.html` snapshot with a live React Server Component dashboard at `/dashboard` that reads every master plan under `ia/projects/*-master-plan.md` via a thin wrapper around `tools/progress-tracker/parse.mjs`. Filter chips (per-plan / per-status / per-phase) use the Stage 1.2 `FilterChips` primitive; table uses `DataTable`. Apply the Q14 obscure-URL gate — unlinked route, `robots.txt` disallow, "internal" banner — until Step 4 portal auth lands, at which point dashboard migrates behind auth middleware. Add "Live dashboard" link on the legacy `docs/progress.html`; deprecate the legacy page once dashboard has proven stable for a measurable duration (exact trigger tracked in Step 3 Decision Log).
 
@@ -273,7 +275,97 @@
 - `docs/progress.html` gains a "Live dashboard" link at top with the deploy URL.
 - `parse.mjs` remains unchanged — wrapper only; output schema pinned via JSDoc + TS types in `web/lib/`.
 
-**Stages:** _TBD — decompose after Step 2 lands + reveals surface area._
+**Art:** None. Dashboard is code/data surface — no illustrator assets.
+
+**Relevant surfaces (load when step opens):**
+- Step 2 outputs: `web/app/sitemap.ts`, `web/app/robots.ts`, `web/app/layout.tsx` — all consumed; `robots.ts` extended in Stage 3.2.
+- Step 1 outputs: `web/components/{DataTable,FilterChips,BadgeChip}.tsx`, `web/lib/tokens/*.json`, `web/tailwind.config.ts` — consumed, not modified.
+- `tools/progress-tracker/parse.mjs` — authoritative parser; exports `parseMasterPlan(markdown, filename)`. NOT modified.
+- `docs/web-platform-exploration.md` §Implementation Points W6 (dashboard).
+- `docs/progress.html` — legacy snapshot; amended in Stage 3.3 only.
+- `web/lib/plan-loader.ts` (new), `web/lib/plan-loader-types.ts` (new).
+- `web/app/dashboard/page.tsx` (new).
+- Invariants: `ia/rules/invariants.md` #1–#12 NOT implicated — web platform only.
+
+#### Stage 3.1 — Plan loader + typed schema
+
+**Status:** Done (archived 2026-04-15 — TECH-200 / TECH-201 / TECH-202 / TECH-203 closed; loader + types + RSC stub + README §Dashboard + JSDoc all landed)
+
+**Objectives:** Author `web/lib/plan-loader.ts` as a read-only wrapper around `tools/progress-tracker/parse.mjs`, exporting `loadAllPlans(): Promise<PlanData[]>` for RSC consumption. Pin the parse.mjs output schema as TypeScript interfaces so downstream consumers are type-safe and `parse.mjs` itself stays untouched.
+
+**Exit:**
+
+- `web/lib/plan-loader-types.ts` exports `TaskStatus`, `HierarchyStatus`, `TaskRow`, `PhaseEntry`, `Stage`, `Step`, `PlanData` TypeScript interfaces mirroring the parse.mjs JSDoc output schema exactly.
+- `web/lib/plan-loader.ts` exports `loadAllPlans(): Promise<PlanData[]>` — globs `ia/projects/*-master-plan.md` from repo root, reads each file, calls `parseMasterPlan(content, filename)` via dynamic ESM import, returns typed array.
+- `parse.mjs` has zero modifications — wrapper-only contract upheld.
+- `validate:all` green; `loadAllPlans()` resolves with ≥1 plan against current repo state (confirmed in T3.1.3).
+- `web/README.md` §Dashboard documents loader contract, `PlanData` shape, and "parse.mjs is authoritative" invariant.
+
+**Phases:**
+
+- [ ] Phase 1 — Types + loader implementation.
+- [ ] Phase 2 — Build integration + smoke + docs.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T3.1.1 | 1 | **TECH-200** | Done (archived) | Author `web/lib/plan-loader-types.ts` — TypeScript interfaces: `TaskStatus` (union literal), `HierarchyStatus` (union literal), `TaskRow { id, phase, issue, status, intent }`, `PhaseEntry { checked, label }`, `Stage { id, title, status, statusDetail, phases, tasks }`, `Step { id, title, status, statusDetail, stages }`, `PlanData { title, overallStatus, overallStatusDetail, siblingWarnings, steps, allTasks }` — mirroring parse.mjs JSDoc schema exactly. |
+| T3.1.2 | 1 | **TECH-201** | Done (archived) | Author `web/lib/plan-loader.ts` — `loadAllPlans(): Promise<PlanData[]>`: globs `ia/projects/*-master-plan.md` from repo root via `fs.promises` + path resolution; reads each file; calls `parseMasterPlan(content, filename)` via dynamic `import()` of `../../tools/progress-tracker/parse.mjs`; returns typed `PlanData[]`. `parse.mjs` untouched. |
+| T3.1.3 | 2 | **TECH-202** | Done (archived) | Verify Next.js RSC can call `loadAllPlans()` at build time without bundler errors — confirm dynamic `import()` of `parse.mjs` resolves in Node 20+ ESM context (server component, no `"use client"`); stub `web/app/dashboard/page.tsx` (bare RSC calling `loadAllPlans()` + logging plan count); `validate:all` green. |
+| T3.1.4 | 2 | **TECH-203** | Done (archived) | Extend `web/README.md` with §Dashboard section — documents `loadAllPlans()` contract, `PlanData` shape key fields, "parse.mjs is authoritative — plan-loader is read-only wrapper" invariant, and consumption pattern for RSC callers; add inline JSDoc to `plan-loader.ts` with glob-path note + invariant comment. |
+
+#### Stage 3.2 — Dashboard RSC + filters
+
+**Status:** Done (closed 2026-04-15 — TECH-205…TECH-208 archived)
+
+**Objectives:** Ship `/dashboard` RSC consuming `loadAllPlans()`, rendering per-plan task tables via `DataTable`, and wiring `FilterChips` for per-plan / per-status / per-phase filter via URL query params (SSR-only). Apply Q14 obscure-URL gate: route unlinked from public nav, `robots.txt` disallows, "internal" banner displayed.
+
+**Exit:**
+
+- `web/app/dashboard/page.tsx` RSC renders all plans from `loadAllPlans()`; each plan section: title + overall-status `BadgeChip` + `DataTable` with columns `id | phase | issue | status | intent` consuming `plan.allTasks`.
+- Step/stage grouping visible via plan heading + `statusDetail`; step heading rows show `HierarchyStatus` badge.
+- `FilterChips` for plan / status / phase wired; active state read from `searchParams`; filtering applied server-side before passing rows to `DataTable`.
+- "Internal" banner at top of `/dashboard` (full-English user-facing text per caveman-exception).
+- `web/app/robots.ts` disallow list extended to include `/dashboard`; route not linked from `web/app/layout.tsx` or any nav component; absent from `web/app/sitemap.ts`.
+- `validate:all` green.
+
+**Phases:**
+
+- [x] Phase 1 — RSC core (page + DataTable + plan-loader wiring).
+- [x] Phase 2 — Filter chips + access gate.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T3.2.1 | 1 | **TECH-205** | Done (archived) | Build out `web/app/dashboard/page.tsx` RSC — import `loadAllPlans()`, render per-plan sections; each section: plan title heading + `BadgeChip` for `overallStatus`; `DataTable` consuming `plan.allTasks` w/ typed columns `id | phase | issue | status | intent`; "internal" banner paragraph at page top (full-English caveman-exception text). |
+| T3.2.2 | 1 | **TECH-206** | Done (archived) | Add plan-grouped visual hierarchy — step heading rows (`Step {id} — {title}` + `HierarchyStatus` badge via `BadgeChip`) above per-stage task groups; `statusDetail` in muted text; task rows prefixed by `stage.id` so stage breakdown is scannable within each plan's `DataTable`. |
+| T3.2.3 | 2 | **TECH-207** | Done (archived) | Wire `FilterChips` for per-plan / per-status / per-phase — read `searchParams: { plan?, status?, phase? }` in RSC; filter `PlanData[]` + task rows server-side before render; chip `<a href>` links emit query-param URLs; active chip state derived from `searchParams` match against chip value; uses existing `FilterChips` `active` prop from Stage 1.2. |
+| T3.2.4 | 2 | **TECH-208** | Done (archived) | Apply Q14 access gate — extend `web/app/robots.ts` disallow array to include `/dashboard`; confirm `/dashboard` absent from `web/app/layout.tsx` nav and `web/app/sitemap.ts`; `validate:all` green. |
+
+#### Stage 3.3 — Legacy handoff + validation
+
+**Status:** In Review — TECH-213 closed 2026-04-15 (archived); TECH-214 filed 2026-04-15 (kicked off).
+
+**Objectives:** Wire the `docs/progress.html` "Live dashboard" link to the Vercel deploy URL, run end-to-end smoke confirming the dashboard works in production, and author the Decision Log entry for the `docs/progress.html` deprecation trigger.
+
+**Exit:**
+
+- `docs/progress.html` has a visible "Live dashboard →" banner at top linking to `https://web-nine-wheat-35.vercel.app/dashboard`.
+- End-to-end smoke: `/dashboard` returns 200 on Vercel deploy; filter chips modify URL params + re-render; "internal" banner visible; Vercel-served `robots.txt` disallows the route.
+- §Decision Log section added to this master plan below Orchestration guardrails, documenting the `docs/progress.html` deprecation trigger (proposed: ≥2 stable deploy cycles after Step 4 portal auth gate lands).
+
+**Phases:**
+
+- [ ] Phase 1 — Legacy link + E2E smoke + deprecation decision log.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T3.3.1 | 1 | **TECH-213** (archived) | Done | Edit `docs/progress.html` — insert "Live dashboard →" banner `<div>` at top of `<body>` linking to `https://web-nine-wheat-35.vercel.app/dashboard`; minimal inline style consistent with existing page aesthetic (no external CSS added). |
+| T3.3.2 | 1 | **TECH-214** | In Review | End-to-end smoke + deprecation decision log — manually confirm Vercel `/dashboard` returns 200, filter chips functional, "internal" banner visible, `robots.txt` disallows route; append §Decision Log section to this master plan below Orchestration guardrails documenting `docs/progress.html` deprecation trigger (proposed: ≥2 stable deploy cycles post Step 4 portal-auth gate). |
 
 ---
 
@@ -295,13 +387,111 @@
 
 ---
 
+### Step 5 — Playwright E2E harness
+
+**Status:** Draft — decomposition deferred until Step 4 closes.
+
+**Objectives:** Install and configure Playwright as the automated e2e layer for the `web/` workspace; integrate into `npm run validate:all` CI chain; land baseline route coverage for all existing public surfaces; then add dashboard-specific e2e for SSR query-param filter flows. Step 4 portal auth-flow tests extend this harness as a Stage 4.X — the harness ships here so portal work inherits it without bootstrapping from scratch.
+
+**Exit criteria:**
+
+- `web/playwright.config.ts` present; `npm run test:e2e` (in `web/`) runs the full suite headless; exit code propagates to root `validate:all` via `npm --prefix web run test:e2e` composition.
+- CI-ready: `PLAYWRIGHT_BASE_URL` env var injected per environment (local `localhost:4000`, Vercel preview URL via `VERCEL_URL`); `npx playwright install --with-deps chromium` in CI bootstrap step.
+- Baseline suite passes green on `main`: public routes (landing, `/about`, `/install`, `/history`, `/devlog`, `/wiki`) return 200; `robots.txt` disallows `/dashboard`; sitemap enumerates at least one devlog slug; RSS `Content-Type` header correct.
+- Dashboard e2e: filter chip `?plan=` / `?status=` / `?phase=` round-trip — URL param → server render → visible chip active state; multi-param combination; clear-filters link resets to unfiltered; empty-result message renders when no tasks match.
+- All tests authored in TypeScript via `@playwright/test`; no Puppeteer or Cypress deps added.
+- `web/README.md` §E2E documents local run, CI env var wiring, and how to add tests for new routes.
+
+**Art:** None.
+
+**Relevant surfaces (load when step opens):**
+- `web/playwright.config.ts` (new)
+- `web/tests/` (new — e2e suite directory)
+- `web/package.json` — add `test:e2e` + `test:e2e:ci` scripts
+- `package.json` (root) — extend `validate:all` chain
+- `web/app/dashboard/page.tsx` — filter param contract under test
+- `web/components/FilterChips.tsx` — active prop + href contract under test
+- `docs/agent-led-verification-policy.md` — determine whether `test:e2e` slots into Path A or remains a separate gate
+
+#### Stage 5.1 — Install + config + CI wiring
+
+**Status:** _pending_
+
+**Objectives:** Install `@playwright/test`; author `web/playwright.config.ts` (baseURL from env, headless Chromium, 1 worker in CI); add `test:e2e` + `test:e2e:ci` scripts to `web/package.json`; wire into root `validate:all` (opt-in flag or separate `validate:e2e` target to avoid mandatory browser install in non-e2e CI contexts); document env var contract in `web/README.md`.
+
+**Exit:**
+- `cd web && npm run test:e2e` runs (even with 0 test files) without error.
+- Root `npm run validate:e2e` composes `web/` e2e run; existing `validate:all` unchanged (no forced browser install).
+- `web/README.md` §E2E section present.
+
+**Phases:**
+- [ ] Phase 1 — Install `@playwright/test` + `playwright.config.ts`.
+- [ ] Phase 2 — npm scripts + root composition.
+- [ ] Phase 3 — README §E2E documentation.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T5.1.1 | 1 | _pending_ | _pending_ | Install `@playwright/test` into `web/package.json` devDeps; author `web/playwright.config.ts` — `baseURL` from `process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4000'`; headless Chromium project; `testDir: './tests'`; `outputDir: './playwright-report'`; add `web/tests/` dir stub (`.gitkeep`). |
+| T5.1.2 | 2 | _pending_ | _pending_ | Add `"test:e2e": "playwright test"` + `"test:e2e:ci": "playwright test --reporter=github"` to `web/package.json`; add `"validate:e2e": "npm --prefix web run test:e2e:ci"` to root `package.json`; add `web/playwright-report/` to `.gitignore`. `validate:all` unchanged — `validate:e2e` is a separate opt-in target. |
+| T5.1.3 | 3 | _pending_ | _pending_ | Extend `web/README.md` §E2E — document: local run (`npm run test:e2e`), `PLAYWRIGHT_BASE_URL` env contract, Vercel preview injection pattern (`PLAYWRIGHT_BASE_URL=https://$VERCEL_URL`), CI bootstrap (`npx playwright install --with-deps chromium`), and convention for adding tests per route under `web/tests/`. |
+
+---
+
+#### Stage 5.2 — Baseline route coverage
+
+**Status:** _pending_
+
+**Objectives:** Author e2e tests for all existing public surfaces. Validates that routes return 200, key content landmarks are present, `robots.txt` disallows `/dashboard`, sitemap enumerates slugs, RSS `Content-Type` correct. No auth-gated routes at this stage.
+
+**Exit:**
+- `npm run test:e2e` green against `localhost:4000` (dev server) + headless Chromium.
+- Tests cover: landing, `/about`, `/install`, `/history`, `/wiki`, `/devlog` (list + at least one slug), `robots.txt` body, `/sitemap.xml` slug presence, `/feed.xml` Content-Type.
+
+**Phases:**
+- [ ] Phase 1 — Static page smoke tests.
+- [ ] Phase 2 — robots / sitemap / RSS contract tests.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T5.2.1 | 1 | _pending_ | _pending_ | Author `web/tests/routes.spec.ts` — assert HTTP 200 + at least one visible heading for: `/`, `/about`, `/install`, `/history`, `/wiki`, `/devlog`; assert first devlog slug link navigates to a 200 page. |
+| T5.2.2 | 2 | _pending_ | _pending_ | Author `web/tests/meta.spec.ts` — assert `robots.txt` body contains `Disallow: /dashboard`; assert `/sitemap.xml` contains at least one devlog URL; assert `GET /feed.xml` response `Content-Type` header matches `application/rss+xml`. |
+
+---
+
+#### Stage 5.3 — Dashboard e2e (SSR filter flows)
+
+**Status:** _pending_
+
+**Objectives:** Author e2e tests for the dashboard's SSR query-param filter chip flows. Validates the full round-trip: URL param → server render → active chip state → filtered task rows → clear-filters reset. Covers combinations and empty-state.
+
+**Exit:**
+- Dashboard filter chip tests green headless; `?plan=` / `?status=` / `?phase=` each produce active chip + filtered rows; multi-param combination narrows correctly; clear-filters `<a>` resets to unfiltered state; unrecognised param value renders empty-state message.
+
+**Phases:**
+- [ ] Phase 1 — Single-param filter round-trip tests.
+- [ ] Phase 2 — Multi-param + clear-filters + empty-state tests.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T5.3.1 | 1 | _pending_ | _pending_ | Author `web/tests/dashboard-filters.spec.ts` — for each of `plan`, `status`, `phase` params: navigate to `/dashboard?{param}={value}` with a known value from the unfiltered render; assert chip with matching label has active visual state (class or aria); assert table rows visible count < unfiltered count. |
+| T5.3.2 | 2 | _pending_ | _pending_ | Extend `web/tests/dashboard-filters.spec.ts` — multi-param test (`?status=Done&phase=1`): assert rows satisfy both filters; clear-filters link test: assert `<a href="/dashboard">` present when any param active, clicking it returns unfiltered row count; unknown-value test: navigate to `/dashboard?status=nonexistent` and assert empty-state message text present. |
+
+---
+
 ## Deferred decomposition
 
 Materialize when the named step opens (per `ia/rules/project-hierarchy.md` lazy-materialization rule). Do NOT pre-decompose — surface area changes once Step {N-1} lands.
 
 - **Step 2 — Public surface + wiki + devlog:** decomposed 2026-04-15. Stages: `MDX pipeline + public pages + SEO`, `Wiki + glossary auto-index + search`, `Devlog + RSS + origin story`.
-- **Step 3 — Live dashboard:** decompose after Step 2 closes. Candidate stages: `Plan loader + typed schema`, `Dashboard RSC + filters`, `Legacy deprecation + access gate`.
+- **Step 3 — Live dashboard:** decomposed 2026-04-15. Stages: `Plan loader + typed schema`, `Dashboard RSC + filters`, `Legacy handoff + validation`.
 - **Step 4 — Portal foundations:** decompose after Step 3 closes. Candidate stages: `Postgres provider + auth library selection`, `Auth API stubs + schema draft`, `Dashboard auth migration`.
+- **Step 5 — Playwright E2E harness:** decomposed 2026-04-15. Stages: `Install + config + CI wiring`, `Baseline route coverage`, `Dashboard e2e (SSR filter flows)`. Decompose-after trigger deferred to Step 4 close; stage structure fully authored now.
 
 ---
 
@@ -338,5 +528,8 @@ Materialize when the named step opens (per `ia/rules/project-hierarchy.md` lazy-
 | 2026-04-14 | Caveman-exception scope narrowed to user-facing rendered text (`web/content/**` + page-body JSX strings in `web/app/**/page.tsx`) | Prevents drift in app shell code, identifiers, commits, comments, IA prose | Broader `web/app/**` scope — rejected, invites non-rendered prose to go full-English |
 | 2026-04-14 | Vercel link + first deploy flagged `[HUMAN ACTION]` upfront in future stage specs | Dashboard-only; no CLI auth in agent env; discovered mid-Phase-2 on TECH-136 | Attempt CLI automation — rejected, no creds surface |
 | 2026-04-14 | Stage 1.2: merge T1.2.1 + T1.2.2 → single tokens + Tailwind wiring task (archived) | Tokens + wiring ship together; smoke verify (`bg-canvas text-accent-critical`) needs both halves; each side ≤2 files | Keep split 6-task stage — rejected per task sizing heuristic (two ≤2-file tasks) |
+| 2026-04-15 | Playwright chosen as e2e framework (Step 5) over Cypress + Puppeteer | SSR/RSC filter flows require real request cycle — Playwright's browser context hits the server, validating what actually renders; TypeScript-first; built-in test runner; CI-friendly `--with-deps`; multi-browser (Chromium sufficient for CI) | Cypress — client-DOM bias, weaker RSC support, heavier CI image; Puppeteer — Chrome-only, no built-in runner, more glue code |
+| 2026-04-15 | `validate:e2e` is a separate root target, not merged into `validate:all` | Browser install (`playwright install`) is heavy; agent CI runs `validate:all` headlessly without browser deps; e2e runs in a dedicated CI step or manually | Merge into `validate:all` — rejected, breaks non-e2e agent shells |
+| 2026-04-15 | Deprecate `docs/progress.html` after Step 4 portal-auth gate lands ≥2 stable deploy cycles | Avoid premature removal while portal auth unresolved; live `/dashboard` stays obscure-URL-gated until auth middleware lands; ≥2 deploy cycles gives rollback window if dashboard regresses | Immediate delete — rejected, leaves no fallback if dashboard regresses; link-only banner (archived TECH-213) + no trigger — rejected, leaves legacy indefinitely without closure condition |
 
 ---

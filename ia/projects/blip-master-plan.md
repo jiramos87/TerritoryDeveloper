@@ -2,7 +2,7 @@
 
 > **Last updated:** 2026-04-15
 >
-> **Status:** In Progress — Step 1 Done; Step 2 opened — Stage 2.1 Done (TECH-159 / TECH-160 / TECH-161 / TECH-162 archived 2026-04-15); Stages 2.2 / 2.3 / 2.4 decomposed, tasks `_pending_` awaiting stage open
+> **Status:** In Progress — Step 1 Done; Step 2 Final (closed 2026-04-15); Step 3 decomposed 2026-04-15 — 4 stages · 8 phases · 16 tasks (all `_pending_`)
 >
 > **Scope:** Procedural SFX synthesis subsystem. Ten baked sounds, parameter-only patches, zero `.wav` / `.ogg` assets under `Assets/Audio/Sfx/`. Post-MVP extensions (Live DSP, FX chain, LFOs, editor window, 10 more sounds) → `docs/blip-post-mvp-extensions.md`.
 >
@@ -68,8 +68,8 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Mixer asset + three groups + exposed SFX volume param.
-- [ ] Phase 2 — Persistent bootstrap prefab + headless volume binding + scene-load suppression policy.
+- [x] Phase 1 — Mixer asset + three groups + exposed SFX volume param.
+- [x] Phase 2 — Persistent bootstrap prefab + headless volume binding + scene-load suppression policy.
 
 **Tasks:**
 
@@ -97,8 +97,8 @@
 
 **Phases:**
 
-- [ ] Phase 1 — `BlipPatch` SO authoring surface + MVP enums + `OnValidate` clamps.
-- [ ] Phase 2 — `BlipPatchFlat` flatten + content-hash persistence.
+- [x] Phase 1 — `BlipPatch` SO authoring surface + MVP enums + `OnValidate` clamps.
+- [x] Phase 2 — `BlipPatchFlat` flatten + content-hash persistence.
 
 **Tasks:**
 
@@ -180,7 +180,7 @@
 
 ### Step 2 — Bake + facade + PlayMode smoke
 
-**Status:** In Progress — Stage 2.1 Done (TECH-159 / TECH-160 / TECH-161 / TECH-162 archived 2026-04-15); Stages 2.2 / 2.3 / 2.4 tasks `_pending_`
+**Status:** Final — all stages archived (Stage 2.1: TECH-159..TECH-162; Stage 2.2: TECH-169..TECH-174; Stage 2.3: TECH-188..TECH-191; Stage 2.4: TECH-196..TECH-199). Closed 2026-04-15.
 
 **Backlog state (Step 2):** 4 filed (Stage 2.1)
 
@@ -221,8 +221,8 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Baker core + bake key + cache hit/miss dispatch.
-- [ ] Phase 2 — LRU eviction + memory budget accounting.
+- [x] Phase 1 — Baker core + bake key + cache hit/miss dispatch.
+- [x] Phase 2 — LRU eviction + memory budget accounting.
 
 **Tasks:**
 
@@ -237,7 +237,7 @@
 
 #### Stage 2.2 — Catalog + mixer router + cooldown registry + player pool
 
-**Status:** In Progress (6 tasks filed 2026-04-15 — **TECH-169**..**TECH-174**)
+**Status:** Done (6 tasks archived 2026-04-15 — **TECH-169**..**TECH-174**)
 
 **Objectives:** MonoBehaviour hosts + plain-class services wire together under `BlipBootstrap`. `BlipCatalog` flattens authoring SOs, owns `BlipBaker` + `BlipMixerRouter` + `BlipCooldownRegistry` as instance fields (invariant #4 — no new singletons). `BlipPlayer` exposes 16-source pool. No static facade yet; `BlipEngine.Bind` callbacks reserved for Stage 2.3.
 
@@ -251,9 +251,9 @@
 
 **Phases:**
 
-- [ ] Phase 1 — `BlipPatchEntry` + `BlipCatalog` flatten + resolve + ready flag.
-- [ ] Phase 2 — `BlipMixerRouter` + `BlipCooldownRegistry` plain-class services owned by catalog.
-- [ ] Phase 3 — `BlipPlayer` 16-source pool + round-robin `PlayOneShot`.
+- [x] Phase 1 — `BlipPatchEntry` + `BlipCatalog` flatten + resolve + ready flag.
+- [x] Phase 2 — `BlipMixerRouter` + `BlipCooldownRegistry` plain-class services owned by catalog.
+- [x] Phase 3 — `BlipPlayer` 16-source pool + round-robin `PlayOneShot`.
 
 **Tasks:**
 
@@ -264,13 +264,13 @@
 | T2.2.3 | BlipMixerRouter plain class | 2 | **TECH-171** | Done (archived) | New file `Assets/Scripts/Audio/Blip/BlipMixerRouter.cs`. `public sealed class BlipMixerRouter` plain class. Ctor takes `BlipPatchEntry[] entries` + builds `Dictionary<BlipId, AudioMixerGroup> _map` reading authoring-only `entry.patch.mixerGroup` ref (NOT in `BlipPatchFlat` — Stage 1.2 T1.2.4 Decision Log). `Get(BlipId) → AudioMixerGroup` lookup (throws on unknown id). Instantiated in `BlipCatalog.Awake` + held as instance field `_mixerRouter`. |
 | T2.2.4 | BlipCooldownRegistry plain class | 2 | **TECH-172** | Done (archived) | New file `Assets/Scripts/Audio/Blip/BlipCooldownRegistry.cs`. `public sealed class BlipCooldownRegistry` plain class. `Dictionary<BlipId, double> _lastPlayDspTime`. `TryConsume(BlipId id, double nowDspTime, double cooldownMs) → bool` — if `!_lastPlayDspTime.TryGetValue(id, out var last) || (nowDspTime - last) * 1000.0 >= cooldownMs` → write `_lastPlayDspTime[id] = nowDspTime` + return `true`; else return `false`. Instantiated in `BlipCatalog.Awake` + held as instance field `_cooldownRegistry`. |
 | T2.2.5 | BlipPlayer pool construction | 3 | **TECH-173** | Done (archived) | New file `Assets/Scripts/Audio/Blip/BlipPlayer.cs` (`: MonoBehaviour`). `[SerializeField] private int poolSize = 16`. `Awake` instantiates `poolSize` child GameObjects (`new GameObject("BlipVoice_0".."BlipVoice_15")`) parented under this transform, each with `AudioSource` component (`playOnAwake = false`, `loop = false`). Holds `AudioSource[] _pool` + `int _cursor = 0`. Placed as child of `BlipBootstrap` prefab. Calls `BlipEngine.Bind(this)` at end of `Awake`. |
-| T2.2.6 | BlipPlayer PlayOneShot dispatch | 3 | **TECH-174** | Draft | `BlipPlayer.PlayOneShot(AudioClip clip, float pitch, float gain, AudioMixerGroup group)` — selects `var source = _pool[_cursor]; _cursor = (_cursor + 1) % _pool.Length;`, stops prior clip if still playing (voice-steal overwrite — no crossfade, post-MVP per orchestration guardrails), sets `source.clip = clip; source.pitch = pitch; source.volume = gain; source.outputAudioMixerGroup = group;` then `source.Play()`. |
+| T2.2.6 | BlipPlayer PlayOneShot dispatch | 3 | **TECH-174** | Done (archived) | `BlipPlayer.PlayOneShot(AudioClip clip, float pitch, float gain, AudioMixerGroup group)` — selects `var source = _pool[_cursor]; _cursor = (_cursor + 1) % _pool.Length;`, stops prior clip if still playing (voice-steal overwrite — no crossfade, post-MVP per orchestration guardrails), sets `source.clip = clip; source.pitch = pitch; source.volume = gain; source.outputAudioMixerGroup = group;` then `source.Play()`. |
 
 ---
 
 #### Stage 2.3 — BlipEngine facade + main-thread gate
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Done — 4 tasks archived (TECH-188..TECH-191) 2026-04-15
 
 **Objectives:** Static `BlipEngine` facade lands. Stateless dispatch per invariant #4 — state lives on `BlipCatalog` / `BlipPlayer` MonoBehaviours; facade caches refs in static fields per invariant #3 (no `FindObjectOfType` on hot path). Main-thread assert gates all entry points. `Play` routes catalog → cooldown → baker → router → player.
 
@@ -283,23 +283,23 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Facade skeleton + main-thread assert + Bind/Unbind + cached lazy resolution.
-- [ ] Phase 2 — Play + StopAll dispatch bodies through catalog → cooldown → baker → router → player.
+- [x] Phase 1 — Facade skeleton + main-thread assert + Bind/Unbind + cached lazy resolution.
+- [x] Phase 2 — Play + StopAll dispatch bodies through catalog → cooldown → baker → router → player.
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T2.3.1 | Facade skeleton + main-thread gate | 1 | _pending_ | _pending_ | New file `Assets/Scripts/Audio/Blip/BlipEngine.cs` — `public static class BlipEngine`. Declares `Play(BlipId id, float pitchMult = 1f, float gainMult = 1f)` + `StopAll(BlipId id)` w/ empty bodies for now. Private `AssertMainThread()` helper compares `Thread.CurrentThread.ManagedThreadId` to cached `BlipBootstrap.MainThreadId` (new static read-only prop set in `BlipBootstrap.Awake` → `Thread.CurrentThread.ManagedThreadId`). Throws `InvalidOperationException` w/ diagnostic message on mismatch. Invoked first line of every entry point. |
-| T2.3.2 | Bind/Unbind + cached lazy resolution | 1 | _pending_ | _pending_ | In `BlipEngine`: `static BlipCatalog _catalog; static BlipPlayer _player;`. `Bind(BlipCatalog c)` / `Bind(BlipPlayer p)` setters (null-safe overwrite). `Unbind(BlipCatalog)` / `Unbind(BlipPlayer)` nullers. Private `ResolveCatalog() → BlipCatalog` / `ResolvePlayer() → BlipPlayer` — return cached field if non-null, else `FindObjectOfType<BlipCatalog>()` / `FindObjectOfType<BlipPlayer>()` fallback + cache (invariant #3 — one-time lookup, not per-frame). Consumed by `BlipCatalog.Awake` (T2.2.2) + `BlipPlayer.Awake` (T2.2.5). |
-| T2.3.3 | Play dispatch body | 2 | _pending_ | _pending_ | `BlipEngine.Play(BlipId id, float pitchMult, float gainMult)` body: `AssertMainThread()` → `var cat = ResolveCatalog(); if (cat == null \|\| !cat.IsReady) return;` → `var nowDsp = AudioSettings.dspTime; ref readonly var patch = ref cat.Resolve(id); if (!cat.CooldownRegistry.TryConsume(id, nowDsp, patch.cooldownMs)) return;` → variant index = deterministic (fixed 0) if `patch.deterministic` else xorshift on per-id RNG state held on catalog → `AudioClip clip = cat.Baker.BakeOrGet(in patch, variantIndex);` → `AudioMixerGroup group = cat.MixerRouter.Get(id);` → `ResolvePlayer().PlayOneShot(clip, pitchMult, gainMult, group);`. Expose `cat.IsReady`, `cat.CooldownRegistry`, `cat.Baker`, `cat.MixerRouter` internals via `internal` props on `BlipCatalog`. |
-| T2.3.4 | StopAll dispatch body | 2 | _pending_ | _pending_ | `BlipEngine.StopAll(BlipId id)` body: `AssertMainThread()` → resolve catalog + player → query `cat.Baker` for all cached `AudioClip` refs matching `(patchHash, *)` for this `id` (expose `BlipBaker.EnumerateClipsForPatchHash(int patchHash) → IEnumerable<AudioClip>` helper). Iterate `BlipPlayer._pool`; call `source.Stop()` where `source.clip` matches any enumerated clip. Non-destructive — does not evict baked clips from cache. |
+| T2.3.1 | Facade skeleton + main-thread gate | 1 | **TECH-188** | Done (archived) | New file `Assets/Scripts/Audio/Blip/BlipEngine.cs` — `public static class BlipEngine`. Declares `Play(BlipId id, float pitchMult = 1f, float gainMult = 1f)` + `StopAll(BlipId id)` w/ empty bodies for now. Private `AssertMainThread()` helper compares `Thread.CurrentThread.ManagedThreadId` to cached `BlipBootstrap.MainThreadId` (new static read-only prop set in `BlipBootstrap.Awake` → `Thread.CurrentThread.ManagedThreadId`). Throws `InvalidOperationException` w/ diagnostic message on mismatch. Invoked first line of every entry point. |
+| T2.3.2 | Bind/Unbind + cached lazy resolution | 1 | **TECH-189** | Done (archived) | In `BlipEngine`: `static BlipCatalog _catalog; static BlipPlayer _player;`. `Bind(BlipCatalog c)` / `Bind(BlipPlayer p)` setters (null-safe overwrite). `Unbind(BlipCatalog)` / `Unbind(BlipPlayer)` nullers. Private `ResolveCatalog() → BlipCatalog` / `ResolvePlayer() → BlipPlayer` — return cached field if non-null, else `FindObjectOfType<BlipCatalog>()` / `FindObjectOfType<BlipPlayer>()` fallback + cache (invariant #3 — one-time lookup, not per-frame). Consumed by `BlipCatalog.Awake` (T2.2.2) + `BlipPlayer.Awake` (T2.2.5). |
+| T2.3.3 | Play dispatch body | 2 | **TECH-190** | Done (archived) | `BlipEngine.Play(BlipId id, float pitchMult, float gainMult)` body: `AssertMainThread()` → `var cat = ResolveCatalog(); if (cat == null \|\| !cat.IsReady) return;` → `var nowDsp = AudioSettings.dspTime; ref readonly var patch = ref cat.Resolve(id); if (!cat.CooldownRegistry.TryConsume(id, nowDsp, patch.cooldownMs)) return;` → variant index = deterministic (fixed 0) if `patch.deterministic` else xorshift on per-id RNG state held on catalog → `AudioClip clip = cat.Baker.BakeOrGet(in patch, variantIndex);` → `AudioMixerGroup group = cat.MixerRouter.Get(id);` → `ResolvePlayer().PlayOneShot(clip, pitchMult, gainMult, group);`. Expose `cat.IsReady`, `cat.CooldownRegistry`, `cat.Baker`, `cat.MixerRouter` internals via `internal` props on `BlipCatalog`. |
+| T2.3.4 | StopAll dispatch body | 2 | **TECH-191** (archived) | Done (archived) | `BlipEngine.StopAll(BlipId id)` body: `AssertMainThread()` → resolve catalog + player → query `cat.Baker` for all cached `AudioClip` refs matching `(patchHash, *)` for this `id` (expose `BlipBaker.EnumerateClipsForPatchHash(int patchHash) → IEnumerable<AudioClip>` helper). Iterate `BlipPlayer._pool`; call `source.Stop()` where `source.clip` matches any enumerated clip. Non-destructive — does not evict baked clips from cache. |
 
 ---
 
 #### Stage 2.4 — PlayMode smoke test
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Done — TECH-196..TECH-199 all archived 2026-04-15.
 
 **Objectives:** New PlayMode test asmdef + smoke fixture exercises full boot path through `BlipEngine.Play` in-scene. Verifies: catalog ready flag, 10 MVP id resolution, mixer routing, 16-source pool non-exhaustion under rapid play, 17th-call cooldown block. Uses `[UnityTest]` + `yield return null` frame waits; no audio listener output assertions (headless-safe).
 
@@ -313,31 +313,25 @@
 
 **Phases:**
 
-- [ ] Phase 1 — PlayMode asmdef + boot-scene fixture setup.
-- [ ] Phase 2 — Resolution + routing + pool + cooldown assertions.
+- [x] Phase 1 — PlayMode asmdef + boot-scene fixture setup.
+- [x] Phase 2 — Resolution + routing + pool + cooldown assertions.
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T2.4.1 | PlayMode asmdef bootstrap | 1 | _pending_ | _pending_ | New file `Assets/Tests/PlayMode/Audio/Blip.Tests.PlayMode.asmdef` w/ `"testAssemblies": true`, `"includePlatforms": ["Editor"]` (PlayMode runs in Editor per Unity conv), references: `Blip` runtime asmdef (GUID) + `UnityEngine.TestRunner` + `UnityEditor.TestRunner` + `nunit.framework`. Create companion `.meta`. Empty placeholder `Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs` declaring `public sealed class BlipPlayModeSmokeTests` + namespace to anchor asmdef resolution. |
-| T2.4.2 | Boot-scene fixture SetUp | 1 | _pending_ | _pending_ | In `BlipPlayModeSmokeTests`: `[UnitySetUp] public IEnumerator SetUp()` → `SceneManager.LoadScene("MainMenu", LoadSceneMode.Single)` then `yield return null` × 2 (one frame for `Awake` cascade, one for ready flag). Assert `BlipBootstrap.Instance != null`, `Object.FindObjectOfType<BlipCatalog>().IsReady == true`. Hold catalog + player refs as private fields for per-test access. `[UnityTearDown]` unloads scene cleanly. |
-| T2.4.3 | Resolution + routing assertions | 2 | _pending_ | _pending_ | `[UnityTest] public IEnumerator Play_AllMvpIds_ResolvesAndRoutes()` — for each `BlipId` in `{UiButtonHover, UiButtonClick, ToolRoadTick, ToolRoadComplete, ToolBuildingPlace, ToolBuildingDenied, WorldCellSelected, EcoMoneyEarned, EcoMoneySpent, SysSaveGame}`: assert `catalog.Resolve(id)` returns non-null patch ref (patchHash != 0), `catalog.MixerRouter.Get(id) != null`, `Assert.DoesNotThrow(() => BlipEngine.Play(id))`. `yield return null` once after loop to drain AudioSource.Play side-effects. |
-| T2.4.4 | Pool + cooldown assertions | 2 | _pending_ | _pending_ | `[UnityTest] public IEnumerator Play_RapidFire_ExhaustsPoolAndBlocksOnCooldown()` — use a fixture `BlipId` w/ near-zero cooldown (e.g. `ToolRoadTick` 30 ms) plus one w/ long cooldown. Fire 16 rapid `BlipEngine.Play(tickId)` within one frame (no yield between) — assert no exception + `player._cursor == 0` after wrap (expose via `internal` accessor). For cooldown: fire `Play(longCooldownId)` once, immediately fire again; verify second call returns silently (track `catalog.CooldownRegistry` last-play dict didn't update, OR expose a debug counter `BlipCooldownRegistry.BlockedCount` incremented on block). |
+| T2.4.1 | PlayMode asmdef bootstrap | 1 | **TECH-196** | Done (archived) | New file `Assets/Tests/PlayMode/Audio/Blip.Tests.PlayMode.asmdef` w/ `"testAssemblies": true`, `"includePlatforms": ["Editor"]` (PlayMode runs in Editor per Unity conv), references: `Blip` runtime asmdef (GUID) + `UnityEngine.TestRunner` + `UnityEditor.TestRunner` + `nunit.framework`. Create companion `.meta`. Empty placeholder `Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs` declaring `public sealed class BlipPlayModeSmokeTests` + namespace to anchor asmdef resolution. |
+| T2.4.2 | Boot-scene fixture SetUp | 1 | **TECH-197** | Done (archived) | In `BlipPlayModeSmokeTests`: `[UnitySetUp] public IEnumerator SetUp()` → `SceneManager.LoadScene("MainMenu", LoadSceneMode.Single)` then `yield return null` × 2 (one frame for `Awake` cascade, one for ready flag). Assert `BlipBootstrap.Instance != null`, `Object.FindObjectOfType<BlipCatalog>().IsReady == true`. Hold catalog + player refs as private fields for per-test access. `[UnityTearDown]` unloads scene cleanly. |
+| T2.4.3 | Resolution + routing assertions | 2 | **TECH-198** (archived) | Done (archived) | `[UnityTest] public IEnumerator Play_AllMvpIds_ResolvesAndRoutes()` — for each `BlipId` in `{UiButtonHover, UiButtonClick, ToolRoadTick, ToolRoadComplete, ToolBuildingPlace, ToolBuildingDenied, WorldCellSelected, EcoMoneyEarned, EcoMoneySpent, SysSaveGame}`: assert `catalog.Resolve(id)` returns non-null patch ref (patchHash != 0), `catalog.MixerRouter.Get(id) != null`, `Assert.DoesNotThrow(() => BlipEngine.Play(id))`. `yield return null` once after loop to drain AudioSource.Play side-effects. |
+| T2.4.4 | Pool + cooldown assertions | 2 | **TECH-199** (archived) | Done (archived) | `[UnityTest] public IEnumerator Play_RapidFire_ExhaustsPoolAndBlocksOnCooldown()` — use a fixture `BlipId` w/ near-zero cooldown (e.g. `ToolRoadTick` 30 ms) plus one w/ long cooldown. Fire 16 rapid `BlipEngine.Play(tickId)` within one frame (no yield between) — assert no exception + `player._cursor == 0` after wrap (expose via `internal` accessor). For cooldown: fire `Play(longCooldownId)` once, immediately fire again; verify second call returns silently (track `catalog.CooldownRegistry` last-play dict didn't update, OR expose a debug counter `BlipCooldownRegistry.BlockedCount` incremented on block). |
 
 ### Step 3 — Patches + integration + golden fixtures + promotion
 
-**Status:** Draft (decomposition deferred until Step 2 → `Final`)
+**Status:** Draft (tasks _pending_ — not yet filed)
 
-Author 10 MVP patches + wire to call sites + golden fixture harness + glossary + spec promotion. After Step 3: player hears Blip in game, DSP output is regression-gated by hash fixtures, subsystem promoted from `docs/` exploration to `ia/specs/audio-blip.md`.
+**Backlog state (Step 3):** 0 filed
 
-**Stage skeleton (decomposed when Step 3 opens):**
-
-- **Stage 3.1 — Patch authoring + catalog wiring.** Ten `BlipPatch` SO assets under `Assets/Audio/BlipPatches/` per exploration §9 recipes. `BlipCatalog.entries` wired in Inspector. Each patch routes to correct mixer group per exploration §14.
-- **Stage 3.2 — UI lane call sites.** `BlipEngine.Play` at MainMenu button hover / click. No per-frame lookups (invariant #3). Uses existing `UiButtonHover` + `UiButtonClick` ids.
-- **Stage 3.3 — World lane call sites.** Road-draw tool per-tile commit + plan-apply (`ToolRoadTick` cooldown 30 ms; `ToolRoadComplete` on stroke end). Building placement confirm + denial. `GridManager` single-cell select (cooldown 80 ms). Honor invariant #3 (cache `BlipEngine` access path if per-frame; facade self-caches).
-- **Stage 3.4 — Eco + Sys call sites.** Money ledger earn + spend. Save-complete hook (`SysSaveGame`, 2 s cooldown on manual save — MVP has no autosave wiring, so no autosave-burst suppression needed).
-- **Stage 3.5 — Golden fixtures + spec promotion + glossary.** Fixture harness + regeneration script + exploration → spec promotion + glossary rows.
+**Objectives:** Author 10 MVP patches + wire to call sites + golden fixture harness + glossary + spec promotion. After Step 3: player hears Blip in game, DSP output is regression-gated by hash fixtures, subsystem promoted from `docs/` exploration to `ia/specs/audio-blip.md`.
 
 **Exit criteria:**
 
@@ -354,20 +348,130 @@ Author 10 MVP patches + wire to call sites + golden fixture harness + glossary +
 
 **Art:** None (SO parameter tuning is authoring, not art assets).
 
-**Relevant surfaces:**
-- Exploration doc §9 (20 concrete examples — MVP recipes match 1, 2, 5, 6, 9, 10, 15, 17, 18, 20).
-- Exploration doc §8 (related subsystems — call site map).
-- Call-site host files: `Assets/Scripts/UI/MainMenu/*`, `Assets/Scripts/Tools/RoadTool*`, building placement flow, `Assets/Scripts/GridManager.cs` (selection hook), money ledger, `Assets/Scripts/SaveSystem/*`.
-- `tools/fixtures/blip/` (new fixture dir) + `tools/scripts/` (new fixture-bake script).
-- `ia/specs/audio-blip.md` (new spec; promoted from exploration).
-- `ia/specs/glossary.md` (new rows).
+**Relevant surfaces (load when step opens):**
+- Step 2 outputs on disk: `Assets/Scripts/Audio/Blip/BlipBaker.cs`, `BlipCatalog.cs`, `BlipPlayer.cs`, `BlipMixerRouter.cs`, `BlipCooldownRegistry.cs`, `BlipEngine.cs`, `BlipBootstrap.cs` (all under `Assets/Scripts/Audio/Blip/`).
+- `docs/blip-procedural-sfx-exploration.md` §9 (20 concrete examples — MVP recipes match 1, 2, 5, 6, 9, 10, 15, 17, 18, 20), §8 (related subsystems — call site map), §14 (MVP scope + mixer group routing table).
+- Call-site host files: `Assets/Scripts/Managers/GameManagers/MainMenuController.cs` (515 lines; `OnContinueClicked` + `OnNewGameClicked` + `OnLoadCityClicked` + `OnOptionsClicked` + `CloseLoadCityPanel` + `CloseOptionsPanel`; button listener registration line ~133), `Assets/Scripts/Managers/GameManagers/RoadManager.cs` (3212 lines; `HandleRoadDrawing` line 141 for tick; `PlaceRoadTileFromResolved` line 2706; stroke-complete hook — grep `CommitStroke`/`ApplyRoadPlan`/`ConfirmStroke`), `Assets/Scripts/Managers/GameManagers/BuildingPlacementService.cs` (430 lines; `PlaceBuilding` line 234; `TryValidateBuildingPlacement` line 53 for deny), `Assets/Scripts/Managers/GameManagers/GridManager.cs` (`selectedPoint` assignment lines 391 + 399), `Assets/Scripts/Managers/GameManagers/EconomyManager.cs` (664 lines; `AddMoney` line 191; `SpendMoney` line 153), `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs` (418 lines; `SaveGame` line 64; `TryWriteGameSaveToPath` line 86).
+- `ia/rules/invariants.md` #3 (no `FindObjectOfType` in hot loops — `BlipEngine` self-caches after first lookup), #4 (static facade, no new singletons), #6 (don't add responsibilities to `GridManager` — one-liner `BlipEngine.Play` at select site is side-effect only, not new logic).
+- New paths: `Assets/Audio/BlipPatches/` (new dir, 10 SO assets), `tools/fixtures/blip/` (new dir), `tools/scripts/blip-bake-fixtures.ts` (new), `ia/specs/audio-blip.md` (new — promoted from exploration doc).
+
+#### Stage 3.1 — Patch authoring + catalog wiring
+
+**Status:** Done (all tasks archived 2026-04-15 — TECH-209..TECH-212)
+
+**Objectives:** Ten `BlipPatch` SO assets authored + `BlipCatalog.entries[]` wired in Inspector. After this stage all 10 MVP `BlipId` values resolve a non-null patch + non-null `AudioMixerGroup` from the catalog; `BlipEngine.Play` is unblocked but no call sites exist yet.
+
+**Exit:**
+
+- `Assets/Audio/BlipPatches/` dir + 10 `BlipPatch` SO asset files. Each SO: envelope/oscillator/filter params per exploration §9 recipes; `cooldownMs` per Exit criteria (ToolRoadTick 30 ms, WorldCellSelected 80 ms, SysSaveGame 2000 ms; others per §9); `patchHash` non-zero after `OnValidate`.
+- `mixerGroup` authoring ref set on each SO per exploration §14 routing table (`Blip-UI` for `UiButtonHover` + `UiButtonClick`; `Blip-World` for `ToolRoad*` + `ToolBuilding*` + `WorldCellSelected`; confirm §14 for Eco/Sys ids).
+- `BlipCatalog.entries[]` array populated in Inspector — 10 `BlipPatchEntry` rows (each: `BlipId` enum + `BlipPatch` asset ref). `BlipBootstrap` prefab Catalog + Player child slots confirmed wired.
+- PlayMode smoke: `BlipCatalog.IsReady == true`; all 10 ids resolve non-null patch + non-null `AudioMixerGroup` via `BlipMixerRouter`.
+- `npm run unity:compile-check` green.
+
+**Phases:**
+
+- [x] Phase 1 — Author 10 `BlipPatch` SO assets with envelope/oscillator params + cooldown from §9 recipes.
+- [x] Phase 2 — Assign `mixerGroup` refs + wire `BlipCatalog.entries[]` in Inspector + smoke verify.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T3.1.1 | 1 | **TECH-209** | Done (archived) | Create `Assets/Audio/BlipPatches/` dir + author 5 UI/Eco/Sys `BlipPatch` SOs via CreateAssetMenu (`Territory/Audio/Blip Patch`): `UiButtonHover` (§9 ex 1), `UiButtonClick` (§9 ex 2), `EcoMoneyEarned` (§9 ex 17), `EcoMoneySpent` (§9 ex 18), `SysSaveGame` (§9 ex 20). Fill all envelope/oscillator/filter/jitter params from §9 recipe table. `patchHash` recomputed on `OnValidate` — verify non-zero in Inspector after fill. |
+| T3.1.2 | 1 | **TECH-210** | Done (archived) | Author 5 World `BlipPatch` SOs: `ToolRoadTick` (§9 ex 5; `cooldownMs` 30), `ToolRoadComplete` (§9 ex 6), `ToolBuildingPlace` (§9 ex 9), `ToolBuildingDenied` (§9 ex 10), `WorldCellSelected` (§9 ex 15; `cooldownMs` 80). Set all envelope/oscillator/filter/jitter/variantCount/voiceLimit params per §9. `patchHash` non-zero after `OnValidate`. |
+| T3.1.3 | 2 | **TECH-211** | Done (archived) | Set `mixerGroup` authoring ref on all 10 SOs per exploration §14 routing table (open each SO in Inspector, assign `AudioMixerGroup` from `BlipMixer.mixer` asset). Wire `BlipCatalog.entries[]` in Inspector — 10 `BlipPatchEntry` rows (`BlipId` + `BlipPatch` asset ref). Open `BlipBootstrap` prefab; confirm Catalog + Player child slots populated. |
+| T3.1.4 | 2 | **TECH-212** | Done (archived) | PlayMode smoke: enter Play Mode, load `MainMenu.unity`, poll `BlipCatalog.IsReady`; for all 10 `BlipId` values assert `catalog.Resolve(id).patchHash != 0` + `catalog.MixerRouter.Get(id) != null`. `npm run unity:compile-check` green. Confirms SO → catalog → mixer-router chain complete before any call site lands. |
+
+#### Stage 3.2 — UI + Eco + Sys call sites
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** `BlipEngine.Play` wired at MainMenu button hover/click + money earn/spend + save-complete. Six `BlipId` values active in game: `UiButtonHover`, `UiButtonClick`, `EcoMoneyEarned`, `EcoMoneySpent`, `SysSaveGame`. No world-lane sounds yet.
+
+**Exit:**
+
+- `MainMenuController.cs` — `BlipEngine.Play(BlipId.UiButtonClick)` as first statement in each of `OnContinueClicked`, `OnNewGameClicked`, `OnLoadCityClicked`, `OnOptionsClicked`, `CloseLoadCityPanel`, `CloseOptionsPanel`. `EventTrigger` PointerEnter callbacks on each `Button` reference fire `BlipEngine.Play(BlipId.UiButtonHover)` — registered programmatically alongside `onClick.AddListener` calls (get-or-add `EventTrigger` component, add `EventTriggerType.PointerEnter` entry). No new singletons (invariant #4); `BlipEngine` static facade self-caches (invariant #3).
+- `EconomyManager.cs` — `BlipEngine.Play(BlipId.EcoMoneyEarned)` after `cityStats.AddMoney(amount)` (line ~205); `BlipEngine.Play(BlipId.EcoMoneySpent)` after `cityStats.RemoveMoney(amount)` in the success branch of `SpendMoney` (line ~169). Monthly-maintenance `SpendMoney` path excluded (non-interactive budget charge — guard by `notifyInsufficientFunds` param or call-context flag).
+- `GameSaveManager.cs` — `BlipEngine.Play(BlipId.SysSaveGame)` after `File.WriteAllText` in `SaveGame` (line ~69) and in `TryWriteGameSaveToPath` (line ~91). 2 s cooldown enforced by `BlipCooldownRegistry` via patch SO — no additional guard.
+- `npm run unity:compile-check` green.
+
+**Phases:**
+
+- [ ] Phase 1 — UI lane: `MainMenuController` click + hover call sites.
+- [ ] Phase 2 — Eco + Sys lane: `EconomyManager` earn/spend + `GameSaveManager` save-complete.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T3.2.1 | 1 | _pending_ | _pending_ | `MainMenuController.cs` — add `BlipEngine.Play(BlipId.UiButtonClick)` as first statement in each of: `OnContinueClicked`, `OnNewGameClicked`, `OnLoadCityClicked`, `OnOptionsClicked`, `CloseLoadCityPanel`, `CloseOptionsPanel`. No `FindObjectOfType` introduced — `BlipEngine` is static facade (invariant #3). |
+| T3.2.2 | 1 | _pending_ | _pending_ | `MainMenuController.cs` — in `RegisterButtonListeners` / `Start` (where `onClick.AddListener` calls live, line ~133): for each `Button` field (`continueButton`, `newGameButton`, `loadCityButton`, `optionsButton`, `loadCityBackButton`, `optionsBackButton`), call `GetOrAddComponent<EventTrigger>()` + add `EventTriggerType.PointerEnter` entry invoking `BlipEngine.Play(BlipId.UiButtonHover)`. No new fields; no new singletons (invariant #4). |
+| T3.2.3 | 2 | _pending_ | _pending_ | `EconomyManager.cs` — add `BlipEngine.Play(BlipId.EcoMoneyEarned)` after `cityStats.AddMoney(amount)` in `AddMoney` (line ~205). Add `BlipEngine.Play(BlipId.EcoMoneySpent)` after `cityStats.RemoveMoney(amount)` in success branch of `SpendMoney` (line ~169). Monthly-maintenance path (`ChargeMonthlyMaintenance` → `SpendMoney`) must NOT fire — guard with `notifyInsufficientFunds == true` condition or add private overload with `bool fireBlip = true`. |
+| T3.2.4 | 2 | _pending_ | _pending_ | `GameSaveManager.cs` — add `BlipEngine.Play(BlipId.SysSaveGame)` after `File.WriteAllText(path, ...)` in `SaveGame` (line ~69) and after equivalent write in `TryWriteGameSaveToPath` (line ~91). 2 s cooldown in patch SO `cooldownMs = 2000`; `BlipCooldownRegistry` gates rapid manual saves — no additional guard. `npm run unity:compile-check` green. |
+
+#### Stage 3.3 — World lane call sites
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** `BlipEngine.Play` wired at road per-tile tick + stroke complete + building place/denied + cell select. Five remaining `BlipId` values active: `ToolRoadTick`, `ToolRoadComplete`, `ToolBuildingPlace`, `ToolBuildingDenied`, `WorldCellSelected`.
+
+**Exit:**
+
+- `RoadManager.cs` — `BlipEngine.Play(BlipId.ToolRoadTick)` at per-tile road commit inside `HandleRoadDrawing` (line 141) or `PlaceRoadTileFromResolved` (line 2706). `BlipCooldownRegistry` at 30 ms gates rapid ticks — no additional guard. `BlipEngine.Play(BlipId.ToolRoadComplete)` at road-stroke-complete/apply site (grep `CommitStroke`/`ApplyRoadPlan`/`ConfirmStroke` or `PathTerraformPlan.Apply` call site in `HandleRoadDrawing`). `BlipEngine` self-caches — safe to call per tile (invariant #3).
+- `BuildingPlacementService.cs` — `BlipEngine.Play(BlipId.ToolBuildingPlace)` at end of success path in `PlaceBuilding` (line 234). `BlipEngine.Play(BlipId.ToolBuildingDenied)` at failure-notification site where `TryValidateBuildingPlacement` returns non-null reason (in `HandleBuildingPlacement`, `GridManager.cs` line 874 or equivalent caller).
+- `GridManager.cs` — `BlipEngine.Play(BlipId.WorldCellSelected)` immediately after each `selectedPoint = mouseGridPosition` assignment (lines 391, 399). One-liner side-effect — not new GridManager logic (invariant #6 carve-out). 80 ms cooldown enforced by `BlipCooldownRegistry`.
+- `npm run unity:compile-check` green.
+
+**Phases:**
+
+- [ ] Phase 1 — Road lane: per-tile tick + stroke complete in `RoadManager.cs`.
+- [ ] Phase 2 — Building + grid: place/denied in `BuildingPlacementService.cs` + cell-select in `GridManager.cs`.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T3.3.1 | 1 | _pending_ | _pending_ | `RoadManager.cs` — locate per-tile commit site: grep callers of `PlaceRoadTileFromResolved` (line 2706) inside `HandleRoadDrawing` (line 141). Add `BlipEngine.Play(BlipId.ToolRoadTick)` at the point each confirmed road tile is committed to the grid. Cooldown 30 ms enforced by `BlipCooldownRegistry` via patch SO — no additional rate-limit guard. |
+| T3.3.2 | 1 | _pending_ | _pending_ | `RoadManager.cs` — locate stroke-complete hook: grep `CommitStroke`, `ApplyRoadPlan`, `ConfirmStroke`, or `PathTerraformPlan.Apply` call in `HandleRoadDrawing` (line 141 area) or `GridManager.HandleBulldozerMode` vicinity. Add `BlipEngine.Play(BlipId.ToolRoadComplete)` at end of success path (after all tiles placed, before `InvalidateRoadCache()`). `npm run unity:compile-check` green after road edits. |
+| T3.3.3 | 2 | _pending_ | _pending_ | `BuildingPlacementService.cs` — add `BlipEngine.Play(BlipId.ToolBuildingPlace)` at end of success path in `PlaceBuilding` (line 234, after placement loop). Locate failure-notification site where `GetBuildingPlacementFailReason` returns non-null (in `GridManager.HandleBuildingPlacement` line 874 or caller); add `BlipEngine.Play(BlipId.ToolBuildingDenied)` at that point. |
+| T3.3.4 | 2 | _pending_ | _pending_ | `GridManager.cs` — add `BlipEngine.Play(BlipId.WorldCellSelected)` immediately after each `selectedPoint = mouseGridPosition` assignment (lines 391 + 399). Invariant #6 carve-out: one-liner side-effect, not new GridManager logic. Invariant #3: `BlipEngine` self-caches — no per-frame lookup added. 80 ms cooldown in patch SO. `npm run unity:compile-check` green. |
+
+#### Stage 3.4 — Golden fixtures + spec promotion + glossary
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Fixture harness gates DSP output regression. Exploration doc promoted to canonical spec. Glossary rows complete + cross-referenced to spec. After this stage Blip subsystem fully shipped + regression-gated.
+
+**Exit:**
+
+- `tools/fixtures/blip/` dir + 10 JSON fixture files (one per MVP `BlipId`, variant 0). Each: `{ "id": "<BlipId>", "variant": 0, "patchHash": <int>, "sampleRate": 44100, "sampleCount": <int>, "sumAbsHash": <double>, "zeroCrossings": <int> }`.
+- `tools/scripts/blip-bake-fixtures.ts` (dev-only) — bakes each patch via `BlipVoice.Render` logic (TS port or Unity batchmode shim) + writes fixture JSONs. CI does NOT run this script; CI runs regression test only.
+- `Assets/Tests/EditMode/Audio/BlipGoldenFixtureTests.cs` in `Blip.Tests.EditMode.asmdef` (Stage 1.4 asmdef — no new asmdef). One `[Test]` per `BlipId`: parse fixture JSON, re-render via `BlipVoice.Render`, assert `sumAbsHash` within 1e-6 + `zeroCrossings` within ±2 + `patchHash` equality (stale-fixture guard).
+- `ia/specs/audio-blip.md` exists — structure matches `ia/specs/*.md` conventions. `docs/blip-procedural-sfx-exploration.md` has "Superseded by `ia/specs/audio-blip.md`" banner.
+- `ia/specs/glossary.md` — new rows: **Blip variant**, **Blip cooldown**, **Bake-to-clip**, **Patch flatten**. All existing blip rows updated to cross-ref `ia/specs/audio-blip.md`.
+- `npm run validate:all` green.
+
+**Phases:**
+
+- [ ] Phase 1 — Fixture infrastructure: bake script + fixture JSON files.
+- [ ] Phase 2 — Fixture regression test + spec promotion + glossary.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T3.4.1 | 1 | _pending_ | _pending_ | Create `tools/fixtures/blip/` dir + author `tools/scripts/blip-bake-fixtures.ts` — pure TypeScript port of `BlipVoice.Render` scalar loop (oscillator bank + AHDSR + one-pole LP; float32 math matching C# kernel) or Node shim invoking Unity batchmode. Bakes variant 0 for each of 10 MVP patch param sets (hardcoded from exploration §9 recipes). Writes `tools/fixtures/blip/{id}-v0.json` per id. Run once: `npx ts-node tools/scripts/blip-bake-fixtures.ts`; verify 10 JSON files produced. |
+| T3.4.2 | 1 | _pending_ | _pending_ | `Assets/Tests/EditMode/Audio/BlipGoldenFixtureTests.cs` in existing `Blip.Tests.EditMode.asmdef` (Stage 1.4 — no new asmdef). `[TestFixture]` + one `[Test]` per `BlipId`: parse `tools/fixtures/blip/{id}-v0.json` via `System.IO.File.ReadAllText` + minimal JSON parse, re-render via `BlipVoice.Render` with same params, assert `SumAbsHash` within 1e-6 + zero-crossing count within ±2 + `patchHash` equality (fails if fixture is stale). |
+| T3.4.3 | 2 | _pending_ | _pending_ | Promote `docs/blip-procedural-sfx-exploration.md` → `ia/specs/audio-blip.md`. Restructure to match `ia/specs/*.md` conventions (section numbering, header format). Add "Superseded by `ia/specs/audio-blip.md`" banner at top of exploration doc. `npm run validate:all` — checks dead spec refs + frontmatter. |
+| T3.4.4 | 2 | _pending_ | _pending_ | `ia/specs/glossary.md` — add rows: **Blip variant** (per-patch randomized sound selection index 0..variantCount-1), **Blip cooldown** (minimum ms between same-id plays; enforced by `BlipCooldownRegistry`), **Bake-to-clip** (on-demand render of `BlipPatchFlat` to `AudioClip` via `BlipBaker.BakeOrGet`), **Patch flatten** (`BlipPatch` SO → `BlipPatchFlat` blittable mirror in `BlipCatalog.Awake`). Update all existing blip rows to cross-ref `ia/specs/audio-blip.md`. `npm run validate:all` green. |
 
 ---
 
 ## Deferred decomposition
 
 - **Step 2 — Bake + facade + PlayMode smoke:** decomposed 2026-04-15. Stages: Bake-to-clip pipeline, Catalog + mixer router + cooldown registry + player pool, BlipEngine facade + main-thread gate, PlayMode smoke test.
-- **Step 3 — Patches + integration + golden fixtures + promotion:** skeleton only (stage candidates inline in step block). Full decomposition deferred until Step 2 → `Final` via `/stage-decompose`.
+- **Step 3 — Patches + integration + golden fixtures + promotion:** decomposed 2026-04-15. Stages: Patch authoring + catalog wiring, UI + Eco + Sys call sites, World lane call sites, Golden fixtures + spec promotion + glossary.
 
 Do NOT pre-file Step 3 BACKLOG rows. Candidate-issue pointers live inline on each step's **Relevant surfaces** line; new-feature-row candidates surface during that step's decomposition pass, filed under `§ Audio / Blip lane` in `BACKLOG.md`.
 

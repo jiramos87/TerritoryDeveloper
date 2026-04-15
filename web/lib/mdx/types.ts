@@ -1,3 +1,17 @@
+/** Frontmatter shape for devlog posts under web/content/devlog/. */
+export interface DevlogFrontmatter {
+  /** Post title — required. */
+  title: string;
+  /** Publication date YYYY-MM-DD — required. */
+  date: string;
+  /** Tag list — required (may be empty array). */
+  tags: string[];
+  /** Short excerpt shown on list cards — required. */
+  excerpt: string;
+  /** Optional cover image path relative to /public. */
+  cover?: string;
+}
+
 /** Frontmatter shape for all top-level pages under web/content/pages/. */
 export interface PageFrontmatter {
   /** Page title — required. */

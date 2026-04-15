@@ -159,7 +159,7 @@ Next.js 14+ App Router at `web/`. Full onboarding: [`web/README.md`](web/README.
 **Dev commands:**
 
 ```bash
-cd web && npm run dev        # dev server at http://localhost:3000
+cd web && npm run dev        # dev server at http://localhost:4000 (3000 reserved for lims tg-api-v2)
 cd web && npm run build      # production build
 npm run validate:web         # lint + typecheck + build (repo root)
 npm run validate:all         # includes validate:web
