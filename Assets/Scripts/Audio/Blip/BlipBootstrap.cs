@@ -1,3 +1,4 @@
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -13,6 +14,10 @@ using UnityEngine.Audio;
 /// </remarks>
 public class BlipBootstrap : MonoBehaviour
 {
+    // Main-thread id — captured in Awake; read by BlipBaker.AssertMainThread (Stage 2.1)
+    // and later by BlipEngine entry-point asserts (Stage 2.3 T2.3.1).
+    public static int MainThreadId { get; private set; }
+
     // Public constants — future Settings UI binds same keys without duplication.
     public const string SfxVolumeDbKey = "BlipSfxVolumeDb";
     public const string SfxVolumeParam = "SfxVolume";
@@ -28,6 +33,9 @@ public class BlipBootstrap : MonoBehaviour
 
     private void Awake()
     {
+        // Capture main-thread id first — BlipBaker.AssertMainThread reads this.
+        MainThreadId = Thread.CurrentThread.ManagedThreadId;
+
         // DontDestroyOnLoad — persistent across scene loads from MainMenu onward (pattern per GameNotificationManager.cs).
         DontDestroyOnLoad(transform.root.gameObject);
 

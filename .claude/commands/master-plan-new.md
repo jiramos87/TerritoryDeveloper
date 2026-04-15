@@ -25,11 +25,11 @@ Forward via Agent tool with `subagent_type: "master-plan-new"`:
 > 1. Slug + overwrite gate — Resolve `SLUG`. `ia/projects/{SLUG}-master-plan.md` exists already → STOP, ask user confirm overwrite OR new slug. Never silently overwrite an orchestrator doc.
 > 2. MCP context + surface-path pre-check — Run **Tool recipe** (below). Greenfield (new subsystem, no existing code paths touched) skips `router_for_task` / `spec_sections` / `invariants_summary`. Tooling/pipeline-only plans skip `invariants_summary`. Glob every entry/exit point from Architecture; mark `(new)` for non-existent paths.
 > 3. Scope header — Author header block verbatim shape: Status, Scope, Exploration source + sections, Locked decisions, Hierarchy rules pointer, Read-first list (invariants by number from Phase 2, scope-boundary doc if provided).
-> 4. Step decomposition — Group Implementation Points phases into 1–4 steps. Step 1 decomposed in full; Steps 2+ stay as skeletons (Objectives + Exit + "decomposition deferred until Step {N-1} closes"). Lazy materialization.
-> 5. Stage decomposition — Per Step 1 only, 2–4 stages each landing on a green-bar boundary. Ordering heuristic: scaffolding → data model → runtime logic → integration + tests (unless exploration doc's declared dep chain overrides).
+> 4. Step decomposition — Group Implementation Points phases into 1–4 steps. All steps decomposed in full — no lazy materialization / skeletons.
+> 5. Stage decomposition — Per step (ALL steps), 2–4 stages each landing on a green-bar boundary. Reuse Phase 2 MCP output; apply `ia/skills/stage-decompose/SKILL.md` Phase 2 rules. Ordering heuristic: scaffolding → data model → runtime logic → integration + tests (unless exploration doc's declared dep chain overrides).
 > 6. Cardinality gate — Every phase in a stage task table: **≥2 tasks AND ≤6 tasks**. Phase with 1 → warn + pause for split-or-justify. Phase with 0 → strip OR add tasks. Phase with 7+ → warn + suggest split. Proceed only after user confirms or fixes.
 > 7. Tracking legend — Insert standard legend verbatim under `## Steps` (copy from `blip-master-plan.md` line 22). Do NOT paraphrase.
-> 8. Persist — Write `ia/projects/{SLUG}-master-plan.md`. Order: header → `---` → `## Steps` + legend → Step 1 (full) → stages → Steps 2+ (skeletons) → `---` → `## Deferred decomposition` → `---` → `## Orchestration guardrails` → final `---`.
+> 8. Persist — Write `ia/projects/{SLUG}-master-plan.md`. Order: header → `---` → `## Steps` + legend → Step 1 (full) → Step 2 (full) → ... → Step N (full) → `---` → `## Orchestration guardrails` → final `---`. No `## Deferred decomposition` section.
 > 8b. Regenerate progress dashboard — `npm run progress` (repo root). Adds new plan to `docs/progress.html` (0 tasks done). Deterministic; failure does NOT block Phase 9 — log exit code and continue.
 > 9. Handoff — Single caveman message with counts + invariants + gate results + next-step call (`/stage-file {SLUG}-master-plan.md Stage 1.1`).
 >
@@ -52,11 +52,10 @@ Forward via Agent tool with `subagent_type: "master-plan-new"`:
 > - Do NOT silently overwrite existing `ia/projects/{SLUG}-master-plan.md` — orchestrators are permanent.
 > - Do NOT persist with cardinality violations (<2 or >6 tasks/phase) unresolved.
 > - Do NOT insert BACKLOG rows. Do NOT create `ia/projects/{ISSUE_ID}.md` specs. Tasks stay `_pending_`.
-> - Do NOT pre-decompose Steps 2+ — skeletons only until Step 1 closes.
 > - Do NOT delete or rename exploration doc. Do NOT edit its expansion block.
 > - Do NOT create scope-boundary stub if missing — raise recommendation only.
 > - Do NOT commit — user decides.
 >
 > ## Output
 >
-> Single concise caveman message: `{SLUG}-master-plan.md` written with counts (`N steps · M stages · P phases · Q tasks`); deferred steps named; invariants flagged by number + gated stages; cardinality splits resolved; scope-boundary-doc outcome; next step `/stage-file {SLUG}-master-plan.md Stage 1.1`.
+> Single concise caveman message: `{SLUG}-master-plan.md` written with counts (`N steps · M stages · P phases · Q tasks`); invariants flagged by number + gated stages; cardinality splits resolved; scope-boundary-doc outcome; next step `/stage-file {SLUG}-master-plan.md Stage 1.1`.

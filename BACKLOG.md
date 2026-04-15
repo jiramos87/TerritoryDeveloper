@@ -310,7 +310,7 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ## Blip audio program
 
-Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra. Stages 1.1–1.3 archived (see `BACKLOG-ARCHIVE.md`). Stage 1.4 = EditMode DSP tests — filed below. Step 2 / Step 3 remain in master plan; file rows here when parent stage → `In Progress`.
+Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra (all four stages archived). Step 2 in progress — Stage 2.1 archived. Stage 2.2 opened 2026-04-15 — 6 tasks filed below (catalog + mixer router + cooldown registry + player pool). Stages 2.3 / 2.4 + Step 3 remain in master plan; file rows here when parent stage → `In Progress`.
 
 ### Stage 1.1 — Audio infrastructure + persistent bootstrap
 
@@ -326,89 +326,101 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ### Stage 1.4 — EditMode DSP tests
 
-- [ ] **TECH-139** — Blip envelope shape + silence tests
-  - Type: test / DSP verification
-  - Files: `Assets/Tests/EditMode/Audio/BlipEnvelopeTests.cs` (new)
-  - Spec: `ia/projects/TECH-139-blip-envelope-silence-tests.md`
-  - Notes: `Linear` + `Exponential` envelope monotonicity (A=50ms/H=0/D=50ms/S=0.5/R=50ms); Exponential attack slope first quarter > last quarter; silence case `gainMult=0` → all samples exactly 0. Consolidates former T1.4.4 + T1.4.5 per stage compress. Satisfies Stage 1.4 Exit bullets 4+5.
-  - Acceptance: shape monotonicity + exponential slope + silence exact-equality assertions pass; `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-137**
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
-- [ ] **TECH-140** — Blip determinism test
-  - Type: test / DSP verification
-  - Files: `Assets/Tests/EditMode/Audio/BlipDeterminismTests.cs` (new)
-  - Spec: `ia/projects/TECH-140-blip-determinism-test.md`
-  - Notes: Render same patch + seed + variantIndex twice; assert `SumAbsHash` delta < 1e-6 + first 256 samples byte-equal. Validates voice-state + xorshift RNG reset. Satisfies Stage 1.4 Exit bullet 6.
-  - Acceptance: determinism test passes; `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-137**
+### Stage 2.1 — Bake-to-clip pipeline
 
-- [ ] **TECH-141** — Blip no-alloc regression test
-  - Type: test / performance regression
-  - Files: `Assets/Tests/EditMode/Audio/BlipNoAllocTests.cs` (new)
-  - Spec: `ia/projects/TECH-141-blip-no-alloc-regression.md`
-  - Notes: Warm-up loop (3 renders) then measure `GC.GetAllocatedBytesForCurrentThread` delta across 10 steady-state renders; assert ≤ 0 bytes/call. Locks in Step 1 zero-alloc invariant. Satisfies Stage 1.4 Exit bullet 7.
-  - Acceptance: no-alloc test passes; `unity:compile-check` + `validate:all` green
-  - Depends on: **TECH-137**
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 2.2 — Catalog + mixer router + cooldown registry + player pool
+
+- [ ] **TECH-174** — `BlipPlayer.PlayOneShot` round-robin dispatch (Stage 2.2 Phase 3)
+  - Type: infrastructure / audio runtime
+  - Files: `Assets/Scripts/Audio/Blip/BlipPlayer.cs`
+  - Spec: `ia/projects/TECH-174-blip-player-playoneshot.md`
+  - Notes: `PlayOneShot(AudioClip clip, float pitch, float gain, AudioMixerGroup group)` — `var source = _pool[_cursor]; _cursor = (_cursor + 1) % _pool.Length;`, stops prior clip if still playing (voice-steal overwrite — no crossfade, post-MVP per orchestration guardrails), sets `source.clip = clip; source.pitch = pitch; source.volume = gain; source.outputAudioMixerGroup = group;` then `source.Play()`.
+  - Acceptance: 16 rapid calls wrap cursor once (wrap point `_cursor == 0`); voice-steal overwrites prior clip on wrap; no exception on mid-playback overwrite; `unity:compile-check` green.
+  - Depends on: **TECH-173**
 
 ## Sprite gen lane
 
-Orchestrator: [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Geometry MVP. Stage 1.1 archived (TECH-123..TECH-128 in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). Stage 1.2 opened 2026-04-14 — 6 tasks filed below (compose layer + YAML spec loader + CLI render / render --all + first archetype YAML + integration smoke). Stages 1.3–1.4 + Steps 2–3 remain in master plan; file rows when parent stage → `In Progress`.
-
-### Stage 1.2 — Composition + YAML Schema + CLI Skeleton (Layer 2)
-
-- [ ] **TECH-149** — `render {archetype}` CLI command (Stage 1.2 Phase 2)
-  - Type: infrastructure / CLI
-  - Files: `tools/sprite-gen/src/cli.py` (new or extended)
-  - Spec: `ia/projects/TECH-149-sprite-gen-render-cli.md`
-  - Notes: Stage 1.2 Phase 2 opener. `render {archetype}` — resolves `specs/{archetype}.yaml`, loads + validates spec via **TECH-148**, calls `compose_sprite` N times (variants count from spec), applies seed-based permutations (material swap within class, prism pitch ±20%), writes `out/{name}_v01.png` … `_v{N:02d}.png`. Entry via `python -m sprite_gen render …` per exploration §10 CLI interface.
-  - Acceptance: `python -m sprite_gen render building_residential_small` writes N variant PNGs to `out/`; exit code 0 on success, 1 on spec validation failure; `npm run validate:all` green
-  - Depends on: **TECH-147**, **TECH-148**
-
-- [ ] **TECH-150** — `render --all` + `--terrain` CLI flag (Stage 1.2 Phase 2)
-  - Type: infrastructure / CLI
-  - Files: `tools/sprite-gen/src/cli.py`
-  - Spec: `ia/projects/TECH-150-sprite-gen-render-all-cli.md`
-  - Notes: Stage 1.2 Phase 2 second task. `render --all` — globs `specs/*.yaml`, iterates, calls `render {archetype}` logic per spec; collects errors per spec (exit 0 only if all succeeded, else prints failed archetypes + exits 1). `--terrain {slope_id}` CLI flag overrides spec `terrain` field per exploration §10 CLI interface (slope_id resolves to `slopes.yaml` in Stage 1.4 — Stage 1.2 validates flag parses but `terrain != flat` path lands Stage 1.4).
-  - Acceptance: `render --all` iterates all `specs/*.yaml`; aggregate exit code reflects any failures; `--terrain flat` accepted; `npm run validate:all` green
-  - Depends on: **TECH-149**
-
-- [ ] **TECH-151** — First archetype YAML `building_residential_small.yaml` (Stage 1.2 Phase 3)
-  - Type: content / spec YAML
-  - Files: `tools/sprite-gen/specs/building_residential_small.yaml` (new)
-  - Spec: `ia/projects/TECH-151-sprite-gen-first-archetype-yaml.md`
-  - Notes: Stage 1.2 Phase 3 opener. First archetype YAML — `id: building_residential_small_v1`, `class: residential`, `footprint: [1,1]`, `terrain: flat`, `levels: 2`, `seed: 42`, `variants: 4`. Composition: `iso_cube × 2` (wall_brick_red) + `iso_prism` (roof_tile_brown, pitch=0.5, axis=ns). `palette: residential`. `diffusion.enabled: false`. First concrete YAML exercising Stage 1.2 loader + compose layer end-to-end. Palette key references Stage 1.3 `palettes/residential.json` (not yet authored — stub material names resolve to RGB fallback until Stage 1.3 bootstraps real palette).
-  - Acceptance: YAML validates via **TECH-148** loader; `render building_residential_small` produces 4 variant PNGs; `npm run validate:all` green
-  - Depends on: **TECH-147**, **TECH-148**
-
-- [ ] **TECH-152** — Stage 1.2 integration smoke test (Stage 1.2 Phase 3)
-  - Type: test / integration
-  - Files: `tools/sprite-gen/tests/test_render_integration.py` (new)
-  - Spec: `ia/projects/TECH-152-sprite-gen-integration-smoke-test.md`
-  - Notes: Stage 1.2 Phase 3 closeout task. Integration smoke — runs `python -m sprite_gen render building_residential_small` via `subprocess.run`; asserts `out/building_residential_small_v01.png` exists + PIL opens successfully + image size == `(64, 64)`; asserts 4 variant files written; no exception raised. Manual pytest gate (Python still outside `validate:all` chain per Stage 1.1 archive — CI fold-in deferred to Stage 1.3).
-  - Acceptance: `pytest tools/sprite-gen/tests/test_render_integration.py` exits 0; 4 variant PNGs verified; `npm run validate:all` green
-  - Depends on: **TECH-149**, **TECH-151**
+Orchestrator: [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Geometry MVP. Stages 1.1–1.2 archived (TECH-123..TECH-128, TECH-147..TECH-152 in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). Stage 1.3 opened 2026-04-15 — 6 tasks filed below (K-means extractor + palette CLI + apply_ramp + compose wiring + palette tests + bootstrap residential JSON + Tier 1 `.gpl` round-trip). T1.3.3+T1.3.4 merged into TECH-155 (apply_ramp API + compose wiring — tight coupling, single commit unit); T1.3.7+T1.3.8+T1.3.9 merged into TECH-158 (GPL export + import + round-trip test — must land atomic for symmetry). Stage 1.4 opened 2026-04-15 — 9 tasks filed below (slopes.yaml + iso_stepped_foundation + compose auto-insert + slope regression tests + Unity meta writer + promote/reject CLI + Aseprite bin resolver + layered .aseprite emit + promote --edit round-trip). Steps 2–3 remain in master plan; file rows when parent stage → `In Progress`.
 
 ### Stage 1.1 — Scaffolding + Primitive Renderer (Layer 1)
 
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 1.2 — Composition + YAML Schema + CLI Skeleton (Layer 2)
+
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 1.3 — Palette System (Layer 3)
+
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 1.4 — Slope-Aware Foundation + Curation CLI (Layer 5)
+
+- [ ] **TECH-179** — Unity `.meta` writer + `curate.promote` (Stage 1.4 Phase 3)
+  - Type: infrastructure / Unity import
+  - Files: `tools/sprite-gen/src/unity_meta.py`, `tools/sprite-gen/src/curate.py`
+  - Spec: `ia/projects/TECH-179-sprite-gen-unity-meta-writer.md`
+  - Notes: `write_meta(png_path, canvas_h)` emits Unity YAML w/ uuid4 guid, PPU=64, `spritePivot=(0.5, 16/canvas_h)`, filterMode=Point, textureCompression=None, spriteMode=Single. `curate.promote(src_png, dest_name)` copies to `Assets/Sprites/Generated/{dest_name}.png` + writes sibling `.meta`. Guards against Unity auto-import resetting PPU/pivot (sprite-gen master plan §Do not).
+  - Acceptance: promote lands PNG + valid `.meta` w/ correct PPU/pivot/filter/compression; `pytest tools/sprite-gen/tests/test_unity_meta.py` green; `npm run validate:all` green.
+  - Depends on: none
+
+- [ ] **TECH-180** — `promote` / `reject` CLI (Stage 1.4 Phase 3)
+  - Type: infrastructure / CLI
+  - Files: `tools/sprite-gen/src/cli.py`
+  - Spec: `ia/projects/TECH-180-sprite-gen-promote-reject-cli.md`
+  - Notes: `promote out/X.png --as name` → `curate.promote()`; `reject {archetype}` → glob + delete `out/{archetype}_*.png`. Integration test covers promote → reject round-trip: assert promoted file in `Assets/Sprites/Generated/`, `out/` clean after reject.
+  - Acceptance: `promote` + `reject` subcommands green; integration test passes; `npm run validate:all` green.
+  - Depends on: **TECH-179**
+
+- [ ] **TECH-181** — Aseprite binary resolver (Stage 1.4 Phase 4)
+  - Type: infrastructure / editor integration
+  - Files: `tools/sprite-gen/src/aseprite_bin.py`, `tools/sprite-gen/config.toml`, `tools/sprite-gen/src/cli.py`
+  - Spec: `ia/projects/TECH-181-sprite-gen-aseprite-bin-resolver.md`
+  - Notes: `find_aseprite_bin() → Path` probes: `$ASEPRITE_BIN` → `config.toml [aseprite] bin` → platform defaults (macOS: `/Applications/Aseprite.app/Contents/MacOS/aseprite`, Steam path fallback). `AsepriteBinNotFoundError` → CLI exit 4 w/ install hint. Unit test mocks env + filesystem; asserts probe order.
+  - Acceptance: resolver probes in correct order; missing binary → exit 4 w/ hint; `pytest tools/sprite-gen/tests/test_aseprite_bin.py` green; `npm run validate:all` green.
+  - Depends on: none
+
+- [ ] **TECH-182** — Layered `.aseprite` emission (Stage 1.4 Phase 4)
+  - Type: infrastructure / editor integration (Tier 2)
+  - Files: `tools/sprite-gen/src/aseprite_io.py`, `tools/sprite-gen/src/compose.py`, `tools/sprite-gen/src/cli.py`, `tools/sprite-gen/requirements.txt`
+  - Spec: `ia/projects/TECH-182-sprite-gen-layered-aseprite-emit.md`
+  - Notes: `write_layered_aseprite(dest, layers, canvas_size)` via `py_aseprite` (pin in requirements) — named layers stacked `foundation` (only when non-flat), `east`, `south`, `top`; transparent alpha per layer. `compose.py` keeps per-face buffers on `layered=True`. `cli.py render --layered` co-emits `.aseprite` + flat PNG (non-Aseprite users unblocked).
+  - Acceptance: `render --layered` emits `.aseprite` + flat PNG; layers present + named correctly; `pytest tools/sprite-gen/tests/test_aseprite_io.py` green; `npm run validate:all` green.
+  - Depends on: **TECH-181**
+
+- [ ] **TECH-183** — `promote --edit` round-trip (Stage 1.4 Phase 4)
+  - Type: infrastructure / editor integration (Tier 2)
+  - Files: `tools/sprite-gen/src/curate.py`, `tools/sprite-gen/src/cli.py`
+  - Spec: `ia/projects/TECH-183-sprite-gen-promote-edit-round-trip.md`
+  - Notes: `promote(src, dest_name, edit=False)` — when `.aseprite + edit`, shell-out `{aseprite_bin} --batch {src} --save-as {tmp}.png` (subprocess, check returncode), run existing PNG promote pipeline, cleanup tmp. `cli.py promote --edit` flag. Integration test: render --layered → mutate one layer pixel → promote --edit → assert flattened PNG + `.meta` exist + mutated pixel present.
+  - Acceptance: round-trip lands flattened PNG + `.meta` w/ preserved edits; missing Aseprite → exit 4 per TECH-181; `pytest tools/sprite-gen/tests/test_promote_edit.py` green (skip when bin absent); `npm run validate:all` green.
+  - Depends on: **TECH-181**, **TECH-182**
+
 ## Web platform lane
 
-Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Scaffold + design system foundation. Stage 1.1 closed (see BACKLOG-ARCHIVE.md). Stage 1.2 opened 2026-04-14 — tokens + Tailwind wiring task closed (see BACKLOG-ARCHIVE.md); 4 primitive/review tasks remain below.
+Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Scaffold + design system foundation. Stage 1.1 closed (see BACKLOG-ARCHIVE.md). Stage 1.2 closed 2026-04-14 — tokens + Tailwind wiring task + DataTable/BadgeChip + StatBar/FilterChips + HeatmapCell/AnnotatedMap + `/design` review route + README §Tokens all archived (see BACKLOG-ARCHIVE.md). Step 2 `In Progress` — Stage 2.1 closed 2026-04-15 (MDX pipeline + public pages + SEO — TECH-163…TECH-168 all archived); Stage 2.2 `In Progress` (wiki + glossary auto-index + search — TECH-184…TECH-187 filed 2026-04-15).
 
-- [ ] **TECH-145** — Web primitives: HeatmapCell + AnnotatedMap (Stage 1.2 Phase 2)
-  - Type: IA / tooling (web workspace)
-  - Files: `web/components/HeatmapCell.tsx` (new), `web/components/AnnotatedMap.tsx` (new)
-  - Spec: `ia/projects/TECH-145-web-heatmapcell-annotatedmap.md`
-  - Notes: SSR-only. HeatmapCell intensity (0–1) → 5-bucket palette. AnnotatedMap SVG wrapper w/ `regions` + `annotations` props; NYT-style spaced-caps geo labels (letter-spacing + uppercase). No D3-geo / topojson — plain SVG path strings at MVP.
-  - Acceptance: both files present; no `"use client"`; `cd web && npm run build` green; `npm run validate:all` green.
-  - Depends on: tokens (archived — see BACKLOG-ARCHIVE.md)
+### Stage 2.2 — Wiki + glossary auto-index + search
 
-- [ ] **TECH-146** — `/design` review route + web README §Tokens (Stage 1.2 Phase 3)
-  - Type: IA / tooling (web workspace) / docs
-  - Files: `web/app/design/page.tsx` (new), `web/README.md`
-  - Spec: `ia/projects/TECH-146-web-design-route-tokens-readme.md`
-  - Notes: Closes Stage 1.2. Renders all six primitives (DataTable, BadgeChip, StatBar, FilterChips, HeatmapCell, AnnotatedMap) w/ 2–3 fixture variants each. Internal-review banner in page header (not linked from public nav; auth gate lands in Step 4). README §Tokens documents palette JSON export contract + Unity UI/UX consumption pattern stub. Glossary row candidate "Web design token set" flagged for post-stage close authoring.
-  - Acceptance: `/design` reachable on dev + deploy; all six primitives rendered; README §Tokens present; internal-review banner visible; `npm run validate:all` green.
-  - Depends on: DataTable + BadgeChip + StatBar + FilterChips (all archived — see BACKLOG-ARCHIVE.md), **TECH-145**
+- [ ] **TECH-186** — Build-time search index emitter (Stage 2.2 Phase 2)
+  - Type: infrastructure / web workspace
+  - Files: `web/lib/search/build-index.ts`, `web/package.json` (`prebuild` script)
+  - Spec: `ia/projects/TECH-186-web-search-index-build.md`
+  - Notes: Stage 2.2 Phase 2 opener. Node script consumes `GlossaryTerm[]` + scans `web/content/wiki/**.mdx` frontmatter+body; emits `web/public/search-index.json` (fuse.js records `{ slug, title, body, category, type: 'glossary' | 'wiki' }`). Deterministic output (stable sort by slug) for CI repeatability. Wired via `prebuild` script so `next build` auto-regenerates before each build.
+  - Acceptance: running `prebuild` emits `web/public/search-index.json`; records cover all glossary terms + all wiki MDX files; output deterministic (two successive runs produce identical bytes); `npm run validate:web` green
+  - Depends on: **TECH-184** (archived), **TECH-185** (archived)
+
+- [ ] **TECH-187** — Client-side wiki search component (Stage 2.2 Phase 2)
+  - Type: infrastructure / web workspace
+  - Files: `web/components/WikiSearch.tsx`, `web/app/wiki/page.tsx` (embed), `web/package.json` (`fuse.js` dep)
+  - Spec: `ia/projects/TECH-187-web-wiki-search.md`
+  - Notes: Stage 2.2 Phase 2 closer. Client component fetches `/search-index.json` on mount; constructs `Fuse` w/ `keys: ['title', 'body', 'category']`, threshold tuned for fuzzy match; renders input + result list linking `/wiki/{slug}`. Embedded in `/wiki` header. Installs `fuse.js` dep.
+  - Acceptance: `/wiki` header shows search input; typing produces fuzzy matches from both glossary + wiki records; each result links `/wiki/{slug}`; `fuse.js` pinned in `web/package.json`; `npm run validate:web` green
+  - Depends on: **TECH-186**
 
 ## High Priority
 

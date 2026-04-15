@@ -3,7 +3,7 @@ iso_prism.py — Isometric pitched-roof prism primitive for sprite-gen.
 
 Draws a pitched-roof prism (two sloped quads + two triangular gables) onto
 a Pillow canvas using 2:1 isometric projection and NW-light 3-level shade.
-Ridge runs NS or EW per `axis` arg.  Same projection basis and shade ramp
+Ridge runs NS or EW per `axis` arg.  Same projection basis and palette ramp
 as iso_cube.
 
 Projection basis (§4 Canvas math):
@@ -11,15 +11,15 @@ Projection basis (§4 Canvas math):
     screen_y = y0 - (gx + gy) * 16 - gz          (y-down, gz in pixels)
 
 Polygon faces (§5 Primitives):
-    slope NW  — quad facing NW hemisphere → bright (top-ish, same as cube top)
-    slope SE  — quad facing SE hemisphere → mid    (shadowed side)
-    gable N/E — triangle end-cap         → dark    (treated as E-face equivalent)
-    gable S/W — triangle end-cap         → dark    (treated as E-face equivalent)
+    slope NW  — quad facing NW hemisphere → bright slot (top-ish, same as cube top)
+    slope SE  — quad facing SE hemisphere → mid slot    (shadowed side)
+    gable N/E — triangle end-cap         → dark slot    (treated as E-face equivalent)
+    gable S/W — triangle end-cap         → dark slot    (treated as E-face equivalent)
 
-Shade ramp (§6.3 Palette system):
-    bright = base_rgb * 1.2  (clamped 0–255, HSV value scaling)
-    mid    = base_rgb * 1.0
-    dark   = base_rgb * 0.6
+Face → ramp slot map (§6.3 Palette system):
+    bright-facing slope → top   → bright
+    mid slope           → south → mid
+    gables (both)       → east  → dark
 
 Draw order: gables first, mid (SE) slope, bright (NW) slope last to avoid
 overdraw — mirrors iso_cube face ordering convention.
@@ -38,21 +38,15 @@ Reference:
 
 from __future__ import annotations
 
-from typing import Tuple
-
 from PIL import Image, ImageDraw
 
-# ---------------------------------------------------------------------------
-# Type aliases
-# ---------------------------------------------------------------------------
-RGBTuple = Tuple[int, int, int]
+from ..palette import apply_ramp
 
 _PITCH_MIN = 1e-3  # clamp pitch below this to avoid degenerate geometry
 
 
 # ---------------------------------------------------------------------------
-# Internal helpers — inline copy from iso_cube.py (Decision Log 2026-04-14:
-# no shared module until a third primitive duplicates these helpers)
+# Internal helpers
 # ---------------------------------------------------------------------------
 
 def _project(gx: float, gy: float, gz: float, x0: int, y0: int) -> tuple[int, int]:
@@ -79,29 +73,6 @@ def _project(gx: float, gy: float, gz: float, x0: int, y0: int) -> tuple[int, in
     return px, py
 
 
-def _ramp(base_rgb: RGBTuple) -> tuple[RGBTuple, RGBTuple, RGBTuple]:
-    """Compute (bright, mid, dark) shade ramp from a base RGB tuple.
-
-    HSV value scaling per §6.3 (inline copy — iso_cube.py):
-        bright = base * 1.2  (clamped 0–255)
-        mid    = base * 1.0
-        dark   = base * 0.6  (clamped 0–255)
-
-    Args:
-        base_rgb: (R, G, B) tuple in range 0–255.
-
-    Returns:
-        Three RGB tuples: (bright, mid, dark).
-    """
-    def _scale(rgb: RGBTuple, factor: float) -> RGBTuple:
-        return tuple(min(255, max(0, int(c * factor))) for c in rgb)  # type: ignore[return-value]
-
-    bright = _scale(base_rgb, 1.2)
-    mid    = base_rgb
-    dark   = _scale(base_rgb, 0.6)
-    return bright, mid, dark
-
-
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -115,17 +86,21 @@ def iso_prism(
     h: float,
     pitch: float,
     axis: str,
-    material: RGBTuple,
+    material: str,
+    palette: dict,
 ) -> None:
     """Draw an isometric pitched-roof prism on *canvas* in-place.
 
-    Two sloped quads and two triangular gables are filled with a NW-light
-    shade ramp. Ridge runs along the NS or EW axis of the footprint.
+    Two sloped quads and two triangular gables are filled using palette-driven
+    ramp colours. Ridge runs along the NS or EW axis of the footprint.
 
     Projection: 2:1 isometric, 32 px per tile unit (§4 Canvas math).
     Origin (x0, y0) = footprint SE corner on canvas, y-down.
 
-    Shade ramp: HSV value ×1.2 / ×1.0 / ×0.6, clamped 0–255 (§6.3).
+    Ramp colours come from ``apply_ramp(palette, material, face)`` per §6.3 Palette system:
+        bright-facing slope → face ``"top"``   → bright slot
+        mid slope           → face ``"south"`` → mid slot
+        gables (both)       → face ``"east"``  → dark slot
 
     Vertex derivation table (grid-space; z in pixels; SE origin):
         Base corners (z=0):
@@ -166,11 +141,12 @@ def iso_prism(
         pitch:    Ridge height multiplier in range 0..1; ridge_z = h * pitch.
                   Values below 1e-3 clamped to 1e-3 to avoid degenerate geometry.
         axis:     Ridge direction: 'ns' (ridge runs N-S) or 'ew' (ridge runs E-W).
-        material: Base RGB tuple for the material; shade ramp derived internally.
-                  Palette lookup deferred to Stage 1.3.
+        material: Palette material key (e.g. ``"roof_tile_brown"``).
+        palette:  Loaded palette dict from ``load_palette``; supplies ramp colours.
 
     Raises:
-        ValueError: If `axis` is not 'ns' or 'ew'.
+        ValueError:       If ``axis`` is not ``'ns'`` or ``'ew'``.
+        PaletteKeyError:  If ``material`` is not in ``palette["materials"]``.
     """
     if axis not in ("ns", "ew"):
         raise ValueError(f"iso_prism: axis must be 'ns' or 'ew', got {axis!r}")
@@ -178,7 +154,9 @@ def iso_prism(
     pitch = max(_PITCH_MIN, pitch)
     ridge_z = h * pitch
 
-    bright, mid, dark = _ramp(material)
+    bright = apply_ramp(palette, material, "top")
+    mid    = apply_ramp(palette, material, "south")
+    dark   = apply_ramp(palette, material, "east")
     draw = ImageDraw.Draw(canvas)
 
     # --- Base corners (z = h; eave level — composer stacks iso_cube body below) ---

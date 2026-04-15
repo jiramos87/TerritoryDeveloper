@@ -14,10 +14,12 @@ Full canonical doc: [`docs/agent-lifecycle.md`](../../docs/agent-lifecycle.md) (
 ## Ordered flow (one issue end-to-end)
 
 ```
-/design-explore  →  /master-plan-new  →  /stage-file  →  /project-new  →  /kickoff  →  /implement  →  /verify-loop  →  project-stage-close (skill, non-final stage)  →  /closeout
+/design-explore  →  /master-plan-new  →  [/stage-decompose (re-decompose only)]  →  /stage-file  →  /project-new  →  /kickoff  →  /implement  →  /verify-loop  →  project-stage-close (skill, non-final stage)  →  /closeout
 ```
 
 Single-issue path skips the first three stages: `/project-new → /kickoff → /implement → /verify-loop → /closeout`.
+
+`/stage-decompose` is optional: run it when an already-decomposed step needs re-decomposition (scope change, design pivot). `master-plan-new` now fully decomposes ALL steps — no skeletons. Does NOT create BACKLOG rows.
 
 ## Surface map (one row per stage)
 
@@ -25,6 +27,7 @@ Single-issue path skips the first three stages: `/project-new → /kickoff → /
 |-------|---------------|----------|-------|
 | Explore | `/design-explore` | `design-explore` | `design-explore` |
 | Orchestrate | `/master-plan-new` | `master-plan-new` | `master-plan-new` |
+| Decompose step | `/stage-decompose` | `stage-decompose` | `stage-decompose` |
 | Bulk-file stage | `/stage-file` | `stage-file` | `stage-file` |
 | Single issue | `/project-new` | `project-new` | `project-new` |
 | Refine | `/kickoff` | `spec-kickoff` | `project-spec-kickoff` |

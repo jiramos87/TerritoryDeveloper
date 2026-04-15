@@ -10,15 +10,16 @@ Public API:
         Canvas sizing math (Stage 1.1).
     pivot_uv(canvas_h) -> (u, v)
         Unity sprite pivot in UV space (Stage 1.1).
-    iso_cube, iso_prism
-        Low-level primitive renderers (Stage 1.1).
+    iso_cube, iso_prism, iso_stepped_foundation
+        Low-level primitive renderers (Stage 1.1 / Stage 1.5).
 
 Reference: docs/isometric-sprite-generator-exploration.md
 """
 
 from .canvas import canvas_size, pivot_uv
 from .compose import UnknownPrimitiveError, compose_sprite
-from .primitives import iso_cube, iso_prism
+from .primitives import iso_cube, iso_prism, iso_stepped_foundation
+from .slopes import SlopeKeyError, get_corner_z, load_slopes
 
 __all__ = [
     "canvas_size",
@@ -27,4 +28,8 @@ __all__ = [
     "UnknownPrimitiveError",
     "iso_cube",
     "iso_prism",
+    "iso_stepped_foundation",
+    "load_slopes",
+    "get_corner_z",
+    "SlopeKeyError",
 ]

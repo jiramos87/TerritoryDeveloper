@@ -42,6 +42,7 @@ Run `ia/skills/stage-file/SKILL.md` end-to-end for the target stage. Bulk-file a
 
 # Hard boundaries
 
+- Do NOT gate filing on parent step Status — only task Status matters (`_pending_` = file; `Draft` / `In Review` / `In Progress` / `Done` = skip).
 - Do NOT update orchestrator task table mid-loop — atomic update after all tasks filed.
 - Do NOT run `validate:all` per task — once at end only.
 - Do NOT file tasks outside the target stage.

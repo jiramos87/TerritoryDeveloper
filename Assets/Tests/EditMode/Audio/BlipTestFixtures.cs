@@ -75,7 +75,7 @@ namespace Territory.Tests.EditMode.Audio
         /// Returns a sub-sampled abs-value envelope from <paramref name="buffer"/>.
         /// Element <c>i</c> of the result is <c>Math.Abs(buffer[i * stride])</c>.
         /// Rectified so that bipolar oscillator output yields a monotonic envelope
-        /// suitable for slope assertions (TECH-139).
+        /// suitable for slope assertions (Blip Stage 1.4 envelope tests).
         /// </summary>
         /// <param name="buffer">PCM float buffer to analyse.</param>
         /// <param name="stride">Sample step between envelope readings.</param>
@@ -95,7 +95,7 @@ namespace Territory.Tests.EditMode.Audio
 
         /// <summary>
         /// Returns the sum of absolute values of all samples in <paramref name="buffer"/>.
-        /// Used as a lightweight determinism fingerprint (TECH-140).
+        /// Used as a lightweight determinism fingerprint.
         /// </summary>
         /// <param name="buffer">PCM float buffer to hash.</param>
         /// <returns>Sum of absolute sample values (double precision accumulator).</returns>

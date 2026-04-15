@@ -18,7 +18,7 @@ Follow `ia/skills/project-spec-close/SKILL.md` end-to-end. High-level:
 1. **Parse** — `mcp__territory-ia__backlog_issue` for id; `mcp__territory-ia__project_spec_closeout_digest` extracts H2s (Summary, Lessons Learned, Decision Log) from `ia/projects/{ISSUE_ID}*.md`.
 2. **Migrate lessons** — each Lessons bullet → canonical surface: `docs/information-architecture-overview.md`, `AGENTS.md`, `ia/specs/glossary.md`, `ARCHITECTURE.md`, `ia/rules/*.md`, or `.claude/memory/{slug}.md` for entries >~10 lines (Q12). Non-destructive.
 3. **Persist journal** — `mcp__territory-ia__project_spec_journal_persist` with `issue_id` or `spec_path`. Outcomes: `ok`, `db_unconfigured` (skip), `db_error` (log + continue unless user overrides). Non-destructive.
-4. **Validate** — `npm run validate:dead-project-specs` + `npm run validate:all`. Stop on failure.
+4. **Validate** — `npm run validate:dead-project-specs` + `npm run validate:all`. Stop on failure. **If either exits non-zero: capture and print the full stdout/stderr before diagnosing the cause.** Do NOT attribute the failure to a guessed id — read the actual output to identify the offending path/row.
 5. **Destructive ops** — no confirmation required; execute immediately:
    - Delete spec (`rm` single file).
    - Remove BACKLOG row (`Edit` `BACKLOG.md`).

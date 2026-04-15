@@ -38,4 +38,4 @@ Forward via Agent tool with `subagent_type: "stage-file"`:
 >
 > ## Output
 >
-> Single caveman message: tasks filed (id + one-line intent each), cardinality warnings resolved, MCP slices loaded, validate:all exit code, orchestrator table updated, next step (`/kickoff {first_id}`).
+> Single caveman message: tasks filed (id + one-line intent each), cardinality warnings resolved, MCP slices loaded, validate:all exit code, orchestrator table updated, next step (`/ship {first_id}`).

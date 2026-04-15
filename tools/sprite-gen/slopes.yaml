@@ -1,0 +1,33 @@
+# Per-corner Z offset table (pixels) for iso_stepped_foundation geometry.
+# Keys: slope id matching Assets/Sprites/Slopes/{CODE}-slope.png stems + flat.
+# Values: {n, e, s, w} corner heights in pixels; each value 0 (ground) or 16 (raised).
+# Sorted: flat → cardinal → diagonal → up-diagonal → bay.
+# Authority: docs/isometric-sprite-generator-exploration.md §7.
+
+flat:     { n:  0, e:  0, s:  0, w:  0 }
+
+# Cardinals — one corner raised.
+N:        { n: 16, e:  0, s:  0, w:  0 }
+S:        { n:  0, e:  0, s: 16, w:  0 }
+E:        { n:  0, e: 16, s:  0, w:  0 }
+W:        { n:  0, e:  0, s:  0, w: 16 }
+
+# Diagonals — two adjacent corners raised.
+NE:       { n: 16, e: 16, s:  0, w:  0 }
+NW:       { n: 16, e:  0, s:  0, w: 16 }
+SE:       { n:  0, e: 16, s: 16, w:  0 }
+SW:       { n:  0, e:  0, s: 16, w: 16 }
+
+# Up-diagonals — three corners raised; opposite corner 0.
+NE-up:    { n: 16, e: 16, s: 16, w:  0 }  # w (west) is the low corner
+NW-up:    { n: 16, e:  0, s: 16, w: 16 }  # e (east) is the low corner
+SE-up:    { n:  0, e: 16, s: 16, w: 16 }  # n (north) is the low corner
+SW-up:    { n: 16, e: 16, s:  0, w: 16 }  # s (south) is the low corner
+
+# Bays — concave corner; two opposite-diagonal corners raised.
+# File NW-bay-slope-2.png uses irregular stem encoding (see §4.2 notes).
+NE-bay:   { n:  0, e:  0, s: 16, w: 16 }  # inverse of NE diagonal
+NW-bay:   { n:  0, e: 16, s: 16, w:  0 }  # inverse of NW diagonal
+NW-bay-2: { n: 16, e:  0, s:  0, w: 16 }  # second NW bay; mirrors NW diagonal elevation
+SE-bay:   { n: 16, e:  0, s:  0, w: 16 }  # inverse of SE diagonal
+SW-bay:   { n: 16, e: 16, s:  0, w:  0 }  # inverse of SW diagonal

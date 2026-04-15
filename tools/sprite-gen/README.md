@@ -5,6 +5,22 @@ Python offline tool for rendering isometric building sprites used in Territory D
 Takes YAML archetype specs from `specs/`, renders PNG variants to `out/` (gitignored),
 and promotes approved sprites to `Assets/Sprites/Generated/` with Unity `.meta` files.
 
+## Usage
+
+```bash
+# Render a single archetype
+python -m sprite_gen render <archetype>
+
+# Render all specs in specs/
+python -m sprite_gen render --all
+
+# Override terrain field (flat works end-to-end; other slope ids pending Stage 1.4)
+python -m sprite_gen render <archetype> --terrain flat
+python -m sprite_gen render --all --terrain flat
+```
+
+Exit codes: 0 = success, 1 = spec/render error, 2 = bad argument.
+
 ## Dependencies
 
 ```

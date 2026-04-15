@@ -323,13 +323,13 @@ h2.plan-title {
       <div class="overall-subtitle">Master Plan Progress</div>
     </div>
     <div class="overall-right">
-      <div class="overall-pct">14%</div>
-      <div class="overall-count">49 / 76 tasks</div>
+      <div class="overall-pct">32%</div>
+      <div class="overall-count">87 / 108 tasks</div>
     </div>
   </div>
   <div class="overall-seg-row">
     <div class="overall-seg-bar">
-      <div class="overall-seg-fill" style="width:14%"></div>
+      <div class="overall-seg-fill" style="width:32%"></div>
     </div>
   </div>
   <div class="plan-minis">
@@ -338,8 +338,8 @@ h2.plan-title {
       <span class="mini-icon">🎵</span>
       <div class="mini-info">
         <span class="mini-title">Blip</span>
-        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:28%"></div></div>
-        <span class="mini-pct">28%</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:50%"></div></div>
+        <span class="mini-pct">50%</span>
       </div>
     </div>
     <div class="plan-mini">
@@ -354,16 +354,16 @@ h2.plan-title {
       <span class="mini-icon">🎨</span>
       <div class="mini-info">
         <span class="mini-title">Sprite Generator</span>
-        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:9%"></div></div>
-        <span class="mini-pct">9%</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:27%"></div></div>
+        <span class="mini-pct">27%</span>
       </div>
     </div>
     <div class="plan-mini">
       <span class="mini-icon">📋</span>
       <div class="mini-info">
         <span class="mini-title">Web Platform</span>
-        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
-        <span class="mini-pct">0%</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:39%"></div></div>
+        <span class="mini-pct">39%</span>
       </div>
     </div>
   </div>
@@ -377,34 +377,34 @@ h2.plan-title {
       <h2 class="plan-title">Blip — Master Plan (MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/blip-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Step 1 / Stage 1.1 archived (TECH-98..TECH-101 closed; stage ready for rollup)</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Step 1 Done; Step 2 opened — Stage 2.1 Done (TECH-159 / TECH-160 / TECH-161 / TECH-162 archived 2026-04-15); Stages 2.2 / 2.3 / 2.4 decomposed, tasks `_pending_` awaiting stage open</span>
     <div class="plan-pct-group">
-      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">28%</div>
-      <div class="plan-step-pct" style="color:#40bf72" title="Active step task progress">Step 1: 85%</div>
+      <div class="plan-pct" style="color:#70a0e0" title="Global plan progress (step-weighted)">50%</div>
+      <div class="plan-step-pct" style="color:#70a0e0" title="Active step task progress">Step 2: 50%</div>
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:85%" title="17 Done"></div><div class="seg seg-draft" style="width:15%" title="3 Draft"></div></div>
-    <span class="seg-count">17 / 20</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:76%" title="29 Done"></div><div class="seg seg-draft" style="width:3%" title="1 Draft"></div><div class="seg seg-pending" style="width:21%" title="8 Pending"></div></div>
+    <span class="seg-count">29 / 38</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 17 Done</span><span class="chip chip-draft">📝 3 Draft</span><span class="chip chip-total">📋 20 Total</span>
+    <span class="chip chip-done">✅ 29 Done</span><span class="chip chip-draft">📝 1 Draft</span><span class="chip chip-pending">⏳ 8 Pending</span><span class="chip chip-total">📋 38 Total</span>
   </div>
 
   <div class="ctx-row">
     <span class="ctx-label">📍</span>
-    <span class="ctx-step">Step 1 · DSP foundations + audio infra</span>
+    <span class="ctx-step">Step 2 · Bake + facade + PlayMode smoke</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-stage">Stage 1.4 · EditMode DSP tests</span>
+    <span class="ctx-stage">Stage 2.2 · Catalog + mixer router + coo…</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="Envelope shape tests — both `Linear` + `Exponential` shapes. A=50ms/H=0/D=50ms/S=0.5/R=50ms. Assert attack monotonic rising, decay monotonic falling to sustain, release monotonic falling to zero. Expo">🎯 <span class="task-id">T1.4.3</span> <span class="task-name">Envelope shape + silence tests</span></span>
+    <span class="ctx-task" title="`BlipPlayer.PlayOneShot(AudioClip clip, float pitch, float gain, AudioMixerGroup group)` — selects `var source = _pool[_cursor]; _cursor = (_cursor + 1) % _pool.Length;`, stops prior clip if still pla">🎯 <span class="task-id">T2.2.6</span> <span class="task-name">BlipPlayer PlayOneShot dispatch</span></span>
   </div>
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-pending" title="Phase 1 — Test asmdef + fixture helpers.">☐ Test asmdef + fixture helpers.</span><span class="phase-pill phase-pending" title="Phase 2 — Oscillator + envelope + silence assertions.">☐ Oscillator + envelope + silence assertions.</span><span class="phase-pill phase-pending" title="Phase 3 — Determinism + no-alloc regression tests.">☐ Determinism + no-alloc regression tests.</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — `BlipPatchEntry` + `BlipCatalog` flatten + resolve + ready flag.">☐ `BlipPatchEntry` + `BlipCatalog` flatten + re…</span><span class="phase-pill phase-pending" title="Phase 2 — `BlipMixerRouter` + `BlipCooldownRegistry` plain-class services owned by catalog.">☐ `BlipMixerRouter` + `BlipCooldownRegistry` pl…</span><span class="phase-pill phase-pending" title="Phase 3 — `BlipPlayer` 16-source pool + round-robin `PlayOneShot`.">☐ `BlipPlayer` 16-source pool + round-robin `Pl…</span>
   </div>
 
   
@@ -465,34 +465,34 @@ h2.plan-title {
       <h2 class="plan-title">Isometric Sprite Generator — Master Plan (Tools / Art Pipeline)</h2>
       <a class="plan-doc-link" href="../ia/projects/sprite-gen-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Stage 1.2 (Stage 1.1 Final — 6 tasks archived; Stage 1.2 pending file)</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Stage 1.3 (Stages 1.1–1.2 Final — 12 tasks archived; Stage 1.3 filed 2026-04-15 — 6 tasks **TECH-153..158**)</span>
     <div class="plan-pct-group">
-      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">9%</div>
-      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 27%</div>
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">27%</div>
+      <div class="plan-step-pct" style="color:#40bf72" title="Active step task progress">Step 1: 80%</div>
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:27%" title="8 Done"></div><div class="seg seg-draft" style="width:13%" title="4 Draft"></div><div class="seg seg-pending" style="width:60%" title="18 Pending"></div></div>
-    <span class="seg-count">8 / 30</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:80%" title="24 Done"></div><div class="seg seg-inprogress" style="width:3%" title="1 In Progress"></div><div class="seg seg-draft" style="width:17%" title="5 Draft"></div></div>
+    <span class="seg-count">24 / 30</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 8 Done</span><span class="chip chip-draft">📝 4 Draft</span><span class="chip chip-pending">⏳ 18 Pending</span><span class="chip chip-total">📋 30 Total</span>
+    <span class="chip chip-done">✅ 24 Done</span><span class="chip chip-inprogress">🔄 1 Active</span><span class="chip chip-draft">📝 5 Draft</span><span class="chip chip-total">📋 30 Total</span>
   </div>
 
   <div class="ctx-row">
     <span class="ctx-label">📍</span>
     <span class="ctx-step">Step 1 · Geometry MVP</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-stage">Stage 1.2 · Composition + YAML Schema + …</span>
+    <span class="ctx-stage">Stage 1.3 · Palette System (Layer 3)</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="`src/cli.py` — `render {archetype}` command: resolve `specs/{archetype}.yaml`, load + validate spec, call `compose_sprite` N times (variants count from spec), apply seed-based permutations (material s">🎯 <span class="task-id">T1.2.3</span> <span class="task-name">Render CLI command</span></span>
+    <span class="ctx-task" title="`src/cli.py` — `palette extract {class} --sources &quot;glob_pattern&quot;` command: call `extract_palette`, print each cluster's color swatch (ANSI 24-bit color block), prompt stdin for material name per clust">🎯 <span class="task-id">T1.3.2</span> <span class="task-name">Palette extract CLI</span></span>
   </div>
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-pending" title="Phase 1 — compose.py (Layer 2) + YAML spec loader/validator.">☐ compose.py (Layer 2) + YAML spec loader/valid…</span><span class="phase-pill phase-pending" title="Phase 2 — CLI render + render --all commands.">☐ CLI render + render --all commands.</span><span class="phase-pill phase-pending" title="Phase 3 — First archetype spec + integration smoke test.">☐ First archetype spec + integration smoke test.</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — K-means extract + palette JSON writer + CLI command.">☐ K-means extract + palette JSON writer + CLI c…</span><span class="phase-pill phase-done" title="Phase 2 — Palette apply at composition (integrate with compose.py).">✅ Palette apply at composition (integrate with …</span><span class="phase-pill phase-pending" title="Phase 3 — Palette tests + bootstrap residential palette JSON.">☐ Palette tests + bootstrap residential palette…</span><span class="phase-pill phase-done" title="Phase 4 — Aseprite `.gpl` export / import (Tier 1 editor integration).">✅ Aseprite `.gpl` export / import (Tier 1 edito…</span>
   </div>
 
   
@@ -511,32 +511,32 @@ h2.plan-title {
     </div>
     <span class="plan-status status-draft">📝 Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)</span>
     <div class="plan-pct-group">
-      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
-      <div class="plan-step-pct" style="color:#70a0e0" title="Active step task progress">Step 1: 71%</div>
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">39%</div>
+      <div class="plan-step-pct" style="color:#70a0e0" title="Active step task progress">Step 2: 57%</div>
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:71%" title="5 Done"></div><div class="seg seg-draft" style="width:29%" title="2 Draft"></div></div>
-    <span class="seg-count">5 / 7</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:71%" title="15 Done"></div><div class="seg seg-draft" style="width:10%" title="2 Draft"></div><div class="seg seg-pending" style="width:19%" title="4 Pending"></div></div>
+    <span class="seg-count">15 / 21</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 5 Done</span><span class="chip chip-draft">📝 2 Draft</span><span class="chip chip-total">📋 7 Total</span>
+    <span class="chip chip-done">✅ 15 Done</span><span class="chip chip-draft">📝 2 Draft</span><span class="chip chip-pending">⏳ 4 Pending</span><span class="chip chip-total">📋 21 Total</span>
   </div>
 
   <div class="ctx-row">
     <span class="ctx-label">📍</span>
-    <span class="ctx-step">Step 1 · Scaffold + design system fou…</span>
+    <span class="ctx-step">Step 2 · Public surface + wiki + devlog</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-stage">Stage 1.2 · Design system foundation</span>
+    <span class="ctx-stage">Stage 2.2 · Wiki + glossary auto-index +…</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="Author `web/components/HeatmapCell.tsx` + `AnnotatedMap.tsx`. HeatmapCell: single grid cell with `intensity` (0–1) → palette bucket. AnnotatedMap: SVG wrapper with `regions` + `annotations` props; ren">🎯 <span class="task-id">T1.2.5</span> <span class="task-name">Author `web/components/HeatmapCell.tsx` + `Annotat…</span></span>
+    <span class="ctx-task" title="Author `web/lib/search/build-index.ts` + `web/package.json` `prebuild` entry — script consumes `GlossaryTerm[]` + scans `web/content/wiki/**.mdx` frontmatter/body, emits `web/public/search-index.json`">🎯 <span class="task-id">T2.2.3</span> <span class="task-name">Author `web/lib/search/build-index.ts` + `web/pack…</span></span>
   </div>
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-pending" title="Phase 1 — Token layer (palette + type + spacing JSON + Tailwind wiring).">☐ Token layer (palette + type + spacing JSON + …</span><span class="phase-pill phase-pending" title="Phase 2 — Data-dense primitives (the six components).">☐ Data-dense primitives (the six components).</span><span class="phase-pill phase-pending" title="Phase 3 — Review surface (`/design` route + docs).">☐ Review surface (`/design` route + docs).</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Glossary import + wiki routing scaffold.">☐ Glossary import + wiki routing scaffold.</span><span class="phase-pill phase-pending" title="Phase 2 — Search index build + client search component.">☐ Search index build + client search component.</span>
   </div>
 
   

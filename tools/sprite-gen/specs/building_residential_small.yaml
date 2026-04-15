@@ -1,0 +1,16 @@
+id: building_residential_small_v1
+class: residential
+footprint: [1, 1]
+terrain: flat
+levels: 2
+seed: 42
+palette: residential
+composition:
+  - { type: iso_cube,  w: 1, d: 1, h: 16, material: wall_brick_red }
+  - { type: iso_cube,  w: 1, d: 1, h: 16, material: wall_brick_red, offset_z: 16 }
+  - { type: iso_prism, w: 1, d: 1, h: 12, pitch: 0.5, axis: ns, material: roof_tile_brown, offset_z: 32 }
+output:
+  name: building_residential_small
+  variants: 4
+diffusion:
+  enabled: false

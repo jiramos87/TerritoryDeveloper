@@ -199,7 +199,7 @@ After all merge groups executed:
 
 1. **Regenerate progress dashboard** — `npm run progress`.
 2. **Run `npm run validate:all`**.
-3. **Offer next step** — `/kickoff {first_draft_id}`.
+3. **Offer next step** — `/ship {first_draft_id}`.
 
 ## Post-loop
 
@@ -208,11 +208,12 @@ After all tasks filed:
 1. **Update orchestrator task table** — for each task row: replace `_pending_` in Issue column with `**{ISSUE_ID}**`; replace `_pending_` in Status column with `Draft`.
 1b. **Regenerate progress dashboard** — `npm run progress` (repo root). Reflects `Draft` status flip in `docs/progress.html`. Deterministic; failure does NOT block step 2 — log exit code and continue.
 2. **Run `npm run validate:all`** — chains validate:dead-project-specs + test:ia + validate:fixtures + generate:ia-indexes --check.
-3. **Offer next step** — `/kickoff {first_issue_id}` to enrich and refine the first spec before implementation.
+3. **Offer next step** — `/ship {first_issue_id}` to run the full kickoff → implement → verify-loop → closeout pipeline on the first spec.
 
 ## Hard boundaries
 
 **File mode:**
+- Do NOT gate filing on parent step Status — only task Status matters (`_pending_` = file; `Draft` / `In Review` / `In Progress` / `Done` = skip).
 - Do NOT update orchestrator task table until ALL tasks are filed (atomic update).
 - Do NOT skip validate:dead-project-specs per task — catches broken spec paths immediately.
 - Do NOT run validate:all per task — runs once at end.

@@ -23,6 +23,9 @@ Face bbox notes (y-down, origin top-left):
     slope_bright (N-facing)  — upper-left region
     slope_mid    (S-facing)  — lower region
     gables       (dark)      — end-cap triangles at east and west
+
+Palette: tests use a minimal inline fixture palette so they do not depend
+on the real ``palettes/residential.json``.
 """
 
 from __future__ import annotations
@@ -39,7 +42,22 @@ from src.primitives import iso_cube, iso_prism
 # Shared constants
 # ---------------------------------------------------------------------------
 
-STUB_RED = (200, 40, 40)
+# Minimal inline fixture palette — provides bright/mid/dark for two materials.
+_FIXTURE_PALETTE: dict = {
+    "class": "test",
+    "materials": {
+        "stub_red": {
+            "bright": [240, 48, 48],
+            "mid":    [200, 40, 40],
+            "dark":   [120, 24, 24],
+        },
+        "stub_blue": {
+            "bright": [48, 48, 240],
+            "mid":    [40, 40, 200],
+            "dark":   [24, 24, 120],
+        },
+    },
+}
 
 # Canvas dimensions for 1×1 footprint with 32 px building height.
 # extra_h=64 gives a 64×64 canvas where all three iso_cube faces land
@@ -102,7 +120,7 @@ _BBOX_EAST_CUBE  = (48, 30, 64, 64)   # lower-right parallelogram (clipped)
 def test_iso_cube_draws_three_faces():
     """iso_cube produces non-transparent pixels in top, south, and east face regions."""
     canvas = _blank_canvas()
-    iso_cube(canvas, _X0, _Y0, 1, 1, 32, STUB_RED)
+    iso_cube(canvas, _X0, _Y0, 1, 1, 32, material="stub_red", palette=_FIXTURE_PALETTE)
 
     assert _alpha_count(canvas, _BBOX_TOP_CUBE)   > 0, "top face has no opaque pixels"
     assert _alpha_count(canvas, _BBOX_SOUTH_CUBE) > 0, "south face has no opaque pixels"
@@ -110,6 +128,34 @@ def test_iso_cube_draws_three_faces():
 
     _FIXTURE_DIR.mkdir(exist_ok=True)
     canvas.save(_FIXTURE_DIR / "iso_cube_smoke.png")
+
+
+def test_iso_cube_face_ramp_slots():
+    """iso_cube top pixel == bright, south pixel == mid, east pixel == dark from palette."""
+    canvas = _blank_canvas()
+    iso_cube(canvas, _X0, _Y0, 1, 1, 32, material="stub_red", palette=_FIXTURE_PALETTE)
+
+    bright = tuple(_FIXTURE_PALETTE["materials"]["stub_red"]["bright"])
+    mid    = tuple(_FIXTURE_PALETTE["materials"]["stub_red"]["mid"])
+    dark   = tuple(_FIXTURE_PALETTE["materials"]["stub_red"]["dark"])
+
+    # Sample a pixel known to be inside each face region and check RGB matches slot.
+    # Top face center ~(32, 16), south face ~(32, 48), east face ~(52, 48).
+    def _rgb(img, x, y):
+        px = img.getpixel((x, y))
+        return px[:3]
+
+    # top face: SE_t=(48,31), SW_t=(16,15) — sample (32, 22) should be bright
+    top_rgb = _rgb(canvas, 32, 22)
+    assert top_rgb == bright, f"top face RGB {top_rgb} != bright {bright}"
+
+    # south face: midpoint of SE_b(48,63)→SW_b(16,47)→SW_t(16,15)→SE_t(48,31) — sample (32,47)
+    south_rgb = _rgb(canvas, 32, 47)
+    assert south_rgb == mid, f"south face RGB {south_rgb} != mid {mid}"
+
+    # east face: SE_b(48,63), SE_t(48,31) — sample (50,48) should be dark
+    east_rgb = _rgb(canvas, 50, 48)
+    assert east_rgb == dark, f"east face RGB {east_rgb} != dark {dark}"
 
 
 # ---------------------------------------------------------------------------
@@ -134,7 +180,8 @@ _BBOX_GABLE_NS  = (15, 38, 49, 64)   # gables (south+north combined region)
 def test_iso_prism_ns_draws_slopes_and_gables():
     """iso_prism axis='ns' produces non-transparent pixels in slope and gable regions."""
     canvas = _blank_canvas()
-    iso_prism(canvas, _X0, _Y0, 1, 1, 32, pitch=0.5, axis="ns", material=STUB_RED)
+    iso_prism(canvas, _X0, _Y0, 1, 1, 32, pitch=0.5, axis="ns",
+              material="stub_red", palette=_FIXTURE_PALETTE)
 
     assert _alpha_count(canvas, _BBOX_BRIGHT_NS) > 0, "NS bright slope has no opaque pixels"
     assert _alpha_count(canvas, _BBOX_MID_NS)    > 0, "NS mid slope has no opaque pixels"
@@ -165,7 +212,8 @@ _BBOX_GABLE_EW  = (15, 22, 49, 48)   # gables (west gable region)
 def test_iso_prism_ew_draws_slopes_and_gables():
     """iso_prism axis='ew' produces non-transparent pixels in slope and gable regions."""
     canvas = _blank_canvas()
-    iso_prism(canvas, _X0, _Y0, 1, 1, 32, pitch=0.5, axis="ew", material=STUB_RED)
+    iso_prism(canvas, _X0, _Y0, 1, 1, 32, pitch=0.5, axis="ew",
+              material="stub_red", palette=_FIXTURE_PALETTE)
 
     assert _alpha_count(canvas, _BBOX_BRIGHT_EW) > 0, "EW bright slope has no opaque pixels"
     assert _alpha_count(canvas, _BBOX_MID_EW)    > 0, "EW mid slope has no opaque pixels"
@@ -183,4 +231,5 @@ def test_iso_prism_rejects_bad_axis():
     """iso_prism raises ValueError for axis not in {'ns', 'ew'}."""
     canvas = _blank_canvas()
     with pytest.raises(ValueError, match="axis"):
-        iso_prism(canvas, _X0, _Y0, 1, 1, 32, pitch=0.5, axis="diag", material=STUB_RED)
+        iso_prism(canvas, _X0, _Y0, 1, 1, 32, pitch=0.5, axis="diag",
+                  material="stub_red", palette=_FIXTURE_PALETTE)

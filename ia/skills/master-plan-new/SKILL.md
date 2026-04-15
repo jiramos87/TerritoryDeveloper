@@ -7,8 +7,9 @@ name: master-plan-new
 description: >
   Use when an exploration doc under `docs/` carries a persisted `## Design Expansion` block and the work
   needs a multi-step plan rather than a single BACKLOG issue. Produces `ia/projects/{slug}-master-plan.md`
-  — an orchestrator doc (NOT closeable, NEVER deleted by automation) with step > stage > phase > task
-  skeleton, tasks seeded as `_pending_` for later `stage-file`. Triggers: "/master-plan-new {path}",
+  — an orchestrator doc (NOT closeable, NEVER deleted by automation) with ALL steps fully decomposed into
+  stages → phases → tasks (no skeleton/lazy materialization), tasks seeded as `_pending_` for later
+  `stage-file`. Applies `stage-decompose` Phase 2 rules to every step. Triggers: "/master-plan-new {path}",
   "turn expanded design into master plan", "create orchestrator from exploration", "author master plan
   from design expansion", "new multi-step plan from docs/{slug}.md".
 ---
@@ -120,7 +121,7 @@ Group Implementation Points into **steps** — each = major shippable milestone.
 - Horizontal expansion → same step, additional stages.
 - Target 1–4 steps; 5+ = scope creep red flag.
 
-**Depth rule:** Step 1 fully decomposed (stages → phases → tasks). Steps 2+ = **skeletons** (name + Objectives + Exit criteria + "deferred until Step N-1 closes" note). Lazy decomposition — downstream steps absorb learnings; pre-committing Step 3 tasks before Step 1 ships = waste.
+**Depth rule:** All steps fully decomposed (stages → phases → tasks). Apply the same stage decomposition recipe (Phase 5) to every step. Reuse Phase 2 MCP output — no additional tool calls per step. Steps beyond Step 1 use the prior step's Exit criteria as their "prior step outputs" in Relevant surfaces.
 
 Per step, author:
 
@@ -145,29 +146,13 @@ Per step, author:
 - {exploration doc ref + sections}
 - {MCP-routed spec section refs (via Phase 2)}
 - {invariant numbers from Subsystem Impact}
+- {prior step outputs (Steps 2+) — surfaces shipped by Step {N-1}}
 - {code paths — entry/exit points from Design Expansion Architecture block; mark `(new)` for non-existent paths per Phase 2 pre-check}
-```
-
-Steps 2+ skeleton shape (skip stage / phase / task tables):
-
-```markdown
-### Step {N} — {Name}
-
-**Status:** Draft — decomposition deferred until Step {N-1} closes.
-
-**Objectives:** {2–4 sentences}.
-
-**Exit criteria:**
-
-- {outcome 1}
-- {outcome 2}
-
-**Stages:** _TBD — decompose after Step {N-1} lands + reveals surface area._
 ```
 
 ### Phase 5 — Stage decomposition
 
-Step 1 only (Steps 2+ stay skeletons). Subdivide into **stages** — each = sub-milestone with own exit criteria. Rules:
+All steps (Steps 1, 2, … N). Subdivide each step into **stages** — each = sub-milestone with own exit criteria. Apply the same recipe per step; reuse Phase 2 MCP output (no additional tool calls). Follow `ia/skills/stage-decompose/SKILL.md` Phase 2 rules for each step's stage/phase/task authoring. Rules:
 - Each stage lands on green-bar boundary (compiles, tests pass, no partial state merged).
 - Soft deps within step OK; no stage blocks step's close.
 - Target 2–4 stages per step.
@@ -247,18 +232,9 @@ Insert the standard tracking legend once under `## Steps` (copy verbatim from an
 
 ### Phase 8 — Persist
 
-Write `ia/projects/{SLUG}-master-plan.md`. Order: **header block** → `---` → `## Steps` + tracking legend → Step 1 (full decomp) → stages of Step 1 → Step 2 (skeleton) → ... → Step N (skeleton) → `---` → `## Deferred decomposition` → `---` → `## Orchestration guardrails` → final `---` separator.
+Write `ia/projects/{SLUG}-master-plan.md`. Order: **header block** → `---` → `## Steps` + tracking legend → Step 1 (full decomp) → stages of Step 1 → Step 2 (full decomp) → stages of Step 2 → ... → Step N (full decomp) → stages of Step N → `---` → `## Orchestration guardrails` → final `---` separator.
 
-**Deferred decomposition section** — seeds later step-open cycles. Template:
-
-```markdown
-## Deferred decomposition
-
-Materialize when the named step opens (per `ia/rules/project-hierarchy.md` lazy-materialization rule). Do NOT pre-decompose — surface area changes once Step {N-1} lands.
-
-- **Step 2 — {Name}:** decompose after Step 1 closes. Candidate stages: {2–4 stage name hints pulled from exploration Implementation Points phase labels}.
-- **Step 3 — {Name}:** decompose after Step 2 closes. Candidate stages: {...}.
-```
+No `## Deferred decomposition` section — all steps are fully decomposed at author time.
 
 **Orchestration guardrails section** — Do / Do not lists for agents landing cold. Template:
 
@@ -277,7 +253,6 @@ Materialize when the named step opens (per `ia/rules/project-hierarchy.md` lazy-
 
 - Close this orchestrator via `/closeout` — orchestrators are permanent (see `ia/rules/orchestrator-vs-spec.md`). Only the terminal step landing triggers a final `Status: Final`; the file stays.
 - Silently promote post-MVP items into MVP stages — they belong in the scope-boundary doc.
-- Pre-decompose Steps 2+ before Step 1 closes — surface area changes.
 - Merge partial stage state — every stage must land on a green bar.
 - Insert BACKLOG rows directly into this doc — only `stage-file` materializes them.
 ```
@@ -292,7 +267,7 @@ Run `npm run progress` from repo root. Regenerates `docs/progress.html` to inclu
 
 Single concise message (caveman) naming:
 
-- `{SLUG}-master-plan.md` written — step / stage / phase / task counts (e.g. `3 steps · 4 stages (Step 1 only) · 11 phases · 24 tasks`). Call out deferred steps explicitly.
+- `{SLUG}-master-plan.md` written — step / stage / phase / task counts (e.g. `3 steps · 9 stages · 22 phases · 48 tasks`). All steps fully decomposed.
 - Invariants flagged by number + which stages they gate.
 - Cardinality gate: resolved splits / justifications captured.
 - Non-scope list outcome: scope-boundary doc referenced in header, OR **recommend stub** if exploration carries explicit post-MVP items but no companion doc exists yet (propose path `docs/{SLUG}-post-mvp-extensions.md` — NOT this skill's job to create; user runs a separate task).
@@ -323,7 +298,6 @@ Run in order. **Greenfield** plans (new subsystem, no existing code paths modifi
 - IF any stage phase has 7+ tasks after Phase 6 → STOP, suggest split; persist only after user confirms or justifies.
 - IF router returns `no_matching_domain` for a subsystem → note the gap in "Relevant surfaces" as `{domain} — no router match; load by path: {file}`, continue.
 - IF exploration doc's Non-scope list carries explicit post-MVP items but no companion `docs/{SLUG}-post-mvp-extensions.md` exists → raise recommendation in Phase 9 handoff. Do NOT create the stub — that's a separate task.
-- IF Steps 2+ decompose to stages / phases / tasks pre-emptively → STOP, keep as skeletons per Phase 4 lazy-decomposition rule.
 - Do NOT insert BACKLOG rows. Do NOT create `ia/projects/{ISSUE_ID}.md` specs. Tasks stay `_pending_` — `stage-file` materializes them later.
 - Do NOT delete or rename exploration doc. Do NOT edit its expansion block.
 - Do NOT commit — user decides when to commit the new orchestrator.
@@ -349,5 +323,4 @@ Phase 2 Tool recipe uses territory-ia MCP slices (greenfield skips router / spec
 
 After persist: recommend first stage to file.
 
-- Single step, 2–3 stages → `/stage-file {SLUG}-master-plan.md Stage 1.1`.
-- Multi-step → file Stage 1.1 now; Step 1's later stages materialize as parent step / stage → `In Progress` per lazy-materialization rule (`ia/rules/project-hierarchy.md`). Steps 2+ decompose (stages → phases → tasks) only after Step 1 closes — do NOT `/stage-file` against a skeleton step.
+`/stage-file {SLUG}-master-plan.md Stage 1.1` — all steps are already fully decomposed; file stages in step order as each parent step closes.

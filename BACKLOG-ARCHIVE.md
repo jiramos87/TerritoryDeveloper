@@ -2,9 +2,286 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
+- [x] **TECH-185** — Wiki catch-all route + auto-index + seed page (Stage 2.2 Phase 1) (2026-04-15)
+  - Type: infrastructure / web workspace
+  - Files: `web/app/wiki/[...slug]/page.tsx`, `web/app/wiki/page.tsx`, `web/content/wiki/README.mdx`, `web/lib/wiki/slugs.ts`, `web/components/GlossaryShell.tsx`
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: Stage 2.2 Phase 1 closer. Catch-all `/wiki/[...slug]` RSC resolves MDX via `loadMdxContent('wiki', slug)` first, falls back to glossary-derived `<GlossaryShell>` when slug matches imported `GlossaryTerm`, else `notFound()`. `/wiki` auto-index uses `DataTable` w/ Category column (single-table pattern matches `/history`). `web/lib/wiki/slugs.ts` `listWikiSlugs()` centralizes MDX glob + glossary union (MDX wins on collision). `generateStaticParams` unions both sources — build prerenders 157 wiki routes (4 MDX + 153 glossary slugs) via Next 15 async params idiom. Seed `web/content/wiki/README.mdx` proves loader happy path. Decision Log — single `DataTable` w/ Category column (not table-per-category, matches `/history` TECH-166); MDX wins on slug collision (hand-authored overrides glossary shell, enables editorial enrichment path); extract `listWikiSlugs` helper (avoid double-loading glossary); `notFound()` over custom 404 render (Next.js idiom).
+  - Acceptance: `/wiki` index lists glossary + wiki MDX rows grouped by category; `/wiki/{glossary-term-slug}` renders definition shell; `/wiki/readme` renders seed MDX; `generateStaticParams` enumerates both sources; `npm run validate:web` + `npm run validate:all` green.
+  - Depends on: **TECH-184** (archived), **TECH-164** (archived), **TECH-162** (archived — DataTable primitive)
+
+- [x] **TECH-178** — Slope regression tests (17 variants) (Stage 1.4 Phase 2) (2026-04-15)
+  - Type: test / regression
+  - Files: `tools/sprite-gen/specs/building_residential_small_N.yaml`, `tools/sprite-gen/tests/test_slope_regression.py`, `tools/sprite-gen/src/cli.py`
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: N-slope spec fixture clones `building_residential_small.yaml` w/ `terrain: N`, `output.name: building_residential_small_N`, `variants: 1`. Pytest `test_slope_regression.py` — `test_n_slope_canvas_grows` invokes `cli.main(["render","building_residential_small_N"])` via monkeypatched `_OUT_DIR=tmp_path`, asserts `img.height > 64` + `canvas.pivot_uv(img.height) != (0.5, 0.25)`. `test_all_17_slope_ids_render` parametrizes over `cli._VALID_SLOPE_IDS - {"flat"}` via `--terrain` override on flat source spec, asserts `rc==0` + PNG exists. `test_flat_sentinel_byte_stable` pins TECH-177 no-op branch (`h==64`, `pivot_uv==(0.5,0.25)`). Decision Log — slope id source = `cli._VALID_SLOPE_IDS - {"flat"}` (single source of truth, matches glossary **Slope variant naming**); parametrize via `--terrain` override (production code path, not 17 YAML fixtures); dedicated N-slope YAML kept (exercises non-override `spec['terrain']` read); flat sentinel test added beyond original spec (pins TECH-177 byte-stable contract); no golden PNG snapshots (shape-level only per §2.2).
+  - Acceptance: 17 slope renders pass; N-slope canvas grown + pivot adjusted; `pytest tools/sprite-gen/tests/test_slope_regression.py` green; `npm run validate:all` green.
+  - Depends on: **TECH-176** (archived), **TECH-177** (archived)
+
+- [x] **TECH-172** — `BlipCooldownRegistry` plain class (Stage 2.2 Phase 2) (2026-04-15)
+  - Type: infrastructure / audio gating
+  - Files: `Assets/Scripts/Audio/Blip/BlipCooldownRegistry.cs`, `Assets/Scripts/Audio/Blip/BlipCatalog.cs`
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: `public sealed class BlipCooldownRegistry` plain class. `Dictionary<BlipId, double> _lastPlayDspTime`. `TryConsume(BlipId id, double nowDspTime, double cooldownMs) → bool` — if unseen OR `(nowDsp - last) * 1000 >= cooldownMs` → record + return `true`; else `false`. Instantiated in `BlipCatalog.Awake` between `_mixerRouter` alloc and `BlipEngine.Bind`; held as `_cooldownRegistry` instance field (invariant #4 — no singleton). Clock-agnostic — caller passes `nowDspTime` (pure-C# testable). Window anchored on first accepted timestamp (blocked attempts do NOT slide window — starvation-safe under rapid spam). No autosave wiring (MVP). Consumer wiring (`BlipEngine.Play` cooldown query + `internal` catalog accessor) deferred to Stage 2.3 T2.3.3. Decision Log — registry clock-agnostic (pure-C# testable w/o PlayMode harness); no `internal` catalog accessor in this spec (T2.3.3 adds when consumer lands — avoid dangling dead code); window anchors on first accepted timestamp (master-plan T2.2.4 pseudocode match); glossary row `Blip cooldown` deferred to Step 2 close (blip-master-plan §Glossary rows — Step 2 Blip-* terms batch-land on Step close).
+  - Acceptance: first call returns `true`; second within window returns `false`; after-window returns `true` + updates timestamp; catalog holds instance; `unity:compile-check` green.
+  - Depends on: **TECH-169** (archived)
+
+- [x] **TECH-184** — Glossary import helper (Stage 2.2 Phase 1) (2026-04-15)
+  - Type: infrastructure / web workspace
+  - Files: `web/lib/glossary/import.ts`, `web/lib/glossary/types.ts`
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: Stage 2.2 Phase 1 opener. `loadGlossaryTerms()` reads `ia/specs/glossary.md` via `resolveGlossaryPath()` (cwd duality — probe repo-root `ia/specs/glossary.md` via `fs.access`, fallback `../ia/specs/glossary.md` for `web/` cwd; mirrors `web/lib/mdx/loader.ts`). Splits by `^## ` headings, drops `Index (quick skim)` + `Planned terminology`; per section scans `|`-delimited rows, skips header + separator; strips `**` from term cell, keeps definition verbatim, discards Spec column (3rd). Slug derivation — lower-case, drop `[…]` bracketed suffix, replace non-alphanumeric runs w/ `-`, trim; deterministic `-2`/`-3` dedup preserves source order. Emits `GlossaryTerm[] = { term, definition, slug, category }` (category required, not optional — every row has a `## Heading` parent). Decision Log — `category` required in type (TECH-185 auto-index groups by it); skip `## Planned terminology` (glossary header flags non-authoritative); regex parse over `remark-parse` (zero deps, glossary format internally controlled); deterministic `-N` slug dedup preserves source order (avoid alphabetical reorder breaking wiki links on glossary edits).
+  - Acceptance: `loadGlossaryTerms()` returns typed `GlossaryTerm[]`; `Spec` column absent from output; slugs kebab-case `^[a-z0-9]+(-[a-z0-9]+)*$`; runs from repo-root + `web/` cwd; `Index (quick skim)` + `Planned terminology` skipped; `npm run validate:web` + `npm run validate:all` green.
+  - Depends on: **TECH-164** (archived — cwd duality guard pattern)
+
+- [x] **TECH-177** — Compose slope auto-insert + canvas auto-grow (Stage 1.4 Phase 2) (2026-04-15)
+  - Type: infrastructure / composition wiring
+  - Files: `tools/sprite-gen/src/compose.py`
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: `compose_sprite` reads `spec.get('terrain', 'flat')`; non-`'flat'` → prepends `iso_stepped_foundation(canvas, x0, y0, fx, fy, slope_id, material=spec.get('foundation_material','dirt'), palette)` before composition loop; folds `lip = max(corners.values()) + 2` from `slopes.get_corner_z(slope_id)` into `extra_h` so `canvas_size(fx, fy, extra_h)` grows vertically; registers `iso_stepped_foundation` in `_DISPATCH`; `SlopeKeyError` propagates to CLI exit 1. `spec.terrain` absent / `'flat'` = byte-stable no-op. Decision Log — `slope_id` source = `spec['terrain']` matches master-plan T1.4.3 + sibling TECH-178 CLI `--terrain` flag; `flat` branches explicitly (avoid zero-row foundation alloc + keep flat path byte-stable); lip formula mirrors TECH-176 primitive contract (+2 px above tallest corner); pivot recomputation deferred to TECH-179 `unity_meta.write_meta` (compose grows canvas → meta writer reads new `canvas_h` → pivot shifts naturally); `foundation_material` defaults `'dirt'` (palette-agnostic); reuse `src/slopes.py` single `@lru_cache` read point per TECH-176 (no duplicate loader).
+  - Acceptance: non-flat `terrain` spec auto-inserts foundation + grows canvas; `SlopeKeyError` → exit 1; `pytest tools/sprite-gen/tests/test_compose.py` green; `npm run validate:all` green.
+  - Depends on: **TECH-175** (archived), **TECH-176** (archived)
+
+- [x] **TECH-176** — `iso_stepped_foundation` primitive (Stage 1.4 Phase 1) (2026-04-15)
+  - Type: infrastructure / primitive
+  - Files: `tools/sprite-gen/src/primitives/iso_stepped_foundation.py`
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: `iso_stepped_foundation(canvas, x0, y0, fx, fy, slope_id, material, palette)` reads per-corner Z from `slopes.yaml`; builds stair/wedge bridging sloped ground → flat top at `max(n,e,s,w)+2` px lip; draws via `apply_ramp(material, 'south')` / `apply_ramp(material, 'east')` (invariant #9 — visible faces south + east only). `SlopeKeyError` on missing id. Decision Log — foundation ramp mapping reuses existing `apply_ramp` face slots (`top`/`south`/`east`); new `foundation_*` materials deferred to palette work, primitive accepts any material key. YAML loader → `src/slopes.py` with `@lru_cache`, not inline (TECH-177 compose auto-insert needs same read; single cache point). `_project` helper copied into primitive, not extracted (avoids refactor spillover; revisit if 3rd primitive needs same math).
+  - Acceptance: 17 slope ids render without crash; `SlopeKeyError` raised on unknown id; `pytest tools/sprite-gen/tests/test_iso_stepped_foundation.py` green; `npm run validate:all` green.
+  - Depends on: **TECH-175** (archived)
+
+- [x] **TECH-168** — OG image + per-route `generateMetadata` (Stage 2.1 Phase 3) (2026-04-15)
+  - Type: infrastructure / SEO / web workspace
+  - Files: `web/app/opengraph-image.tsx`, `web/app/page.tsx`, `web/app/about/page.tsx`, `web/app/install/page.tsx`, `web/app/history/page.tsx`, `web/app/layout.tsx`, `web/lib/site/metadata.ts`
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: Stage 2.1 Phase 3 closer. `web/app/opengraph-image.tsx` via `next/og` `ImageResponse` — 1200x630 PNG, palette-token bg (`bg-canvas`) + accent (`raw.green` 4px rule) + title (`text-primary` mono) + tagline (`text-muted` sans); named exports `alt`/`size`/`contentType`. `web/lib/site/metadata.ts` (new) centralizes `siteTitle` + `siteTagline`. `web/app/layout.tsx` `metadata` extended w/ `metadataBase: new URL(getBaseUrl())` + default `title`/`template` + `description` + `openGraph` base. Each public RSC (`/`, `/about`, `/install`, `/history`) exports async `generateMetadata` via `loadMdxPage(slug)` → `Metadata { title, description, openGraph(title/description/url/type:"article"), twitter(card:"summary_large_image") }`. Canonical URL from `getBaseUrl()` + slug. Decision Log — single site-level OG card (no per-slug dynamic OG at MVP); centralize site strings in `lib/site/metadata.ts` (single source for OG card + layout default); `metadataBase` pinned to `getBaseUrl()` for absolute OG URLs across envs. Open Question #1 resolved w/ proposed tagline `"A city builder where geography shapes every decision."`.
+  - Acceptance: `/opengraph-image` returns 1200x630 PNG; each page emits `<meta og:*>` + `<title>`; `npm run validate:web` green.
+  - Depends on: **TECH-166** (archived), **TECH-165** (archived)
+
+- [x] **TECH-171** — `BlipMixerRouter` plain class (Stage 2.2 Phase 2) (2026-04-15)
+  - Type: infrastructure / audio routing
+  - Files: `Assets/Scripts/Audio/Blip/BlipMixerRouter.cs`, `Assets/Scripts/Audio/Blip/BlipCatalog.cs`
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: `public sealed class BlipMixerRouter` plain class. Ctor takes `BlipPatchEntry[] entries`, builds `Dictionary<BlipId, AudioMixerGroup> _map` reading authoring-only `entry.patch.mixerGroup` ref (NOT in `BlipPatchFlat` — Stage 1.2 T1.2.4 Decision Log). `Get(BlipId) → AudioMixerGroup` (throws on unknown id via `ArgumentOutOfRangeException`). Duplicate-id throws `InvalidOperationException` (defense-in-depth; upstream `BlipCatalog` also traps). Instantiated in `BlipCatalog.Awake` + held as instance field `_mixerRouter` before `BlipEngine.Bind(this)` + ready flag. Invariant #4 — plain class, no singleton. Decision Log — router accepts null `patch.mixerGroup` silently (Stage 2.3 consumer falls back to mixer master); router mirrors `BlipCatalog` duplicate-id throw contract for symmetric API surface.
+  - Acceptance: router constructs w/o throw on valid entries; `Get` round-trips authored mixer group ref; catalog holds instance; `unity:compile-check` green.
+  - Depends on: **TECH-169** (archived)
+
+- [x] **TECH-170** — Catalog `Resolve` + ready flag + `BlipEngine` bind stubs (Stage 2.2 Phase 1) (2026-04-15)
+  - Type: infrastructure / audio authoring
+  - Files: `Assets/Scripts/Audio/Blip/BlipCatalog.cs`, `Assets/Scripts/Audio/Blip/BlipEngine.cs`
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: `Resolve(BlipId) → ref readonly BlipPatchFlat` via `_indexById` (throws on unknown id). `bool isReady` set `true` as last statement in `Awake` — scene-load suppression per Stage 1.1 T1.1.4. `BlipEngine.Bind(BlipCatalog)` + `Unbind(BlipCatalog)` stub signatures (empty bodies; full bodies land Stage 2.3 T2.3.2). Catalog `Awake` calls `BlipEngine.Bind(this)`; `OnDestroy` calls `Unbind`. Null-safe. Decision Log — Bind stub signatures land this task, bodies Stage 2.3 (decouple catalog lifecycle wiring from facade impl; sibling T171/T172 construct against stable surface); suppression boundary comment in `Awake` tail guards against drive-by edits breaking `_isReady = true` last-statement invariant.
+  - Acceptance: `Resolve` returns by ref w/ correct patch data; ready flag flips last; `BlipEngine` stub methods compile + no-op; `unity:compile-check` green.
+  - Depends on: **TECH-169** (archived)
+
+- [x] **TECH-175** — `slopes.yaml` per-corner Z table (Stage 1.4 Phase 1) (2026-04-15)
+  - Type: infrastructure / data table
+  - Files: `tools/sprite-gen/slopes.yaml`, `tools/sprite-gen/tests/test_slopes_yaml.py`
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: Stage 1.4 Phase 1 foundation data. `tools/sprite-gen/slopes.yaml` — 18 top-level keys (`flat` + 17 land slope variants matching `Assets/Sprites/Slopes/{CODE}-slope.png` stems: N, S, E, W, NE, NW, SE, SW, NE-up, NW-up, SE-up, SW-up, NE-bay, NW-bay, NW-bay-2, SE-bay, SW-bay). Each value = `{n,e,s,w}` int map (pixels, 0 or 16). `flat` included as zero-row so composer lookup is uniform (no special-case branch downstream). Authoritative source for TECH-176 `iso_stepped_foundation` + TECH-177 compose auto-insert. Decision Log — `flat` in yaml (avoid compose branch); land only (water slopes are sprites, not foundation geometry); filename stems as canonical id (lowercase-hyphen follows filesystem + master plan; geo §6.4 CamelCase is Unity-prefab-naming concern).
+  - Acceptance: yaml loads via `yaml.safe_load`; 18 keys present; codes match `Assets/Sprites/Slopes/` stems 1:1; `pytest tools/sprite-gen/tests/test_slopes_yaml.py` green; `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-169** — `BlipPatchEntry` + catalog flatten (Stage 2.2 Phase 1) (2026-04-15)
+  - Type: infrastructure / audio authoring
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatchEntry.cs`, `Assets/Scripts/Audio/Blip/BlipCatalog.cs`
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: Stage 2.2 Phase 1 entry. `[Serializable] public struct BlipPatchEntry { public BlipId id; public BlipPatch patch; }` under `Territory.Audio.Blip`. `public sealed class BlipCatalog : MonoBehaviour` w/ `[SerializeField] private BlipPatchEntry[] entries = System.Array.Empty<BlipPatchEntry>()`. `Awake` iterates entries, validates non-null `patch`, validates unique `id` via `_indexById.TryAdd`, calls `BlipPatchFlat.FromSO(entry.patch)` into parallel `_flat[i]`. `_indexById` pre-sized `entries.Length`. Null / duplicate → `InvalidOperationException` w/ index + id diagnostic. Invariant #4 — scene MonoBehaviour, no singleton. Decision Log — use existing `BlipPatchFlat.FromSO(BlipPatch)` static factory (not hypothetical `BlipPatch.ToFlat()` from backlog note); mixer index left `-1` (TECH-171 router overrides); empty entries array legal (no-op flatten); no ready flag here (deferred to TECH-170); `sealed` class (no subclass extension point).
+  - Acceptance: both files present + compile; `_flat.Length == entries.Length`; `_indexById` maps each id → flat slot; duplicate / null throws at `Awake`; `unity:compile-check` + `validate:all` green.
+  - Depends on: Stage 1.2 `BlipPatchFlat.FromSO` (archived), Stage 1.1 `BlipId` (archived)
+
+- [x] **TECH-167** — `sitemap.ts` + `robots.ts` (Stage 2.1 Phase 3) (2026-04-15)
+  - Type: infrastructure / SEO / web workspace
+  - Files: `web/app/sitemap.ts`, `web/app/robots.ts`, `web/lib/site/base-url.ts`
+  - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+  - Notes: Stage 2.1 Phase 3 closer. `web/app/sitemap.ts` default-exports async `sitemap()` → `MetadataRoute.Sitemap`; enumerates `web/content/pages/*.mdx` via `fs.readdir` (Node runtime); maps `landing` → `''`, others → slug; absolute URLs via shared `getBaseUrl()` (trims trailing slash; `NEXT_PUBLIC_SITE_URL` w/ `http://localhost:3000` dev fallback); per-entry `lastModified` from TECH-164 loader frontmatter `updated`. `web/app/robots.ts` default-exports `robots()` → `MetadataRoute.Robots` — `{ userAgent: '*', allow: '/', disallow: ['/design', '/dashboard'] }` + `sitemap: ${getBaseUrl()}/sitemap.xml`. `web/lib/site/base-url.ts` shared helper. Decision Log — App Router file-based convention over static `public/sitemap.xml` or custom route handler (native, build-time MDX scan); absolute URLs from env (SEO requirement + staging swappable); disallow `/design` + `/dashboard` at MVP per master-plan Dashboard obscure-URL gate.
+  - Acceptance: `/sitemap.xml` 200 w/ 4 `<url>` entries (landing, about, install, history) absolute; `/robots.txt` 200 w/ allow/disallow/Sitemap lines; `npm run validate:web` green.
+  - Depends on: **TECH-164** (archived)
+
+- [x] **TECH-166** — About + install + history pages (Stage 2.1 Phase 2) (2026-04-15)
+  - Type: feature / web workspace (public user-facing)
+  - Files: `web/app/about/page.tsx`, `web/app/install/page.tsx`, `web/app/history/page.tsx`, `web/content/pages/about.mdx`, `web/content/pages/install.mdx`, `web/content/pages/history.mdx`, `web/content/pages/history-timeline.ts`
+  - Spec: (removed at closeout — journal persist skipped; Decision Log captured in Notes)
+  - Notes: Stage 2.1 Phase 2 sibling to TECH-165. Three RSCs mirror landing pattern (`web/app/page.tsx`) — async fn, `loadMdxPage(slug)` → token-styled `<main>` + MDX body. `/history` renders timeline via `DataTable` (date/milestone/notes cols) w/ rows from typed `web/content/pages/history-timeline.ts`. `/install` renders platform availability via `BadgeChip` (Mac/Windows/Linux/Web → existing `Status` union, all `pending` seeded). Tokens-only styling; full-English MDX (caveman-exception). Decision Log — timeline data lives in `.ts` module (typed rows feed `DataTable`; MDX stays prose); reuse `BadgeChip` `Status` union verbatim for platforms (no union extension); RSC pattern mirrors landing (no shared layout refactor this stage). Open Questions deferred: final timeline milestones + platform `Status` mapping (product-owner input).
+  - Acceptance: three routes reachable on dev; `DataTable` + `BadgeChip` wired; tokens-only; `npm run validate:web` green.
+  - Depends on: **TECH-163** (archived), **TECH-165** (archived)
+
+- [x] **TECH-158** — GPL round-trip: export + import + test (Stage 1.3 Phase 4) (2026-04-15)
+  - Type: tooling / editor integration (Tier 1)
+  - Files: `tools/sprite-gen/src/palette.py`, `tools/sprite-gen/src/cli.py`, `tools/sprite-gen/tests/test_palette_gpl.py`, `tools/sprite-gen/.gitignore`
+  - Spec: (removed at closeout — journal skipped, Decision Log captured in Notes)
+  - Notes: Stage 1.3 Phase 4 closer. Merged T1.3.7 + T1.3.8 + T1.3.9 atomic (export/import symmetric; test gates both). **Export** `export_gpl(cls, dest_path=None) -> str` on `src/palette.py` — reads `palettes/{cls}.json`, emits GIMP header (`GIMP Palette\nName: {cls}\nColumns: 3\n#\n`) + per-material × level rows (`R G B\t{material}_{level}`). **Import** `import_gpl(cls, gpl_path) -> dict` — skips header through `#`, whitespace-split RGB+name, `rsplit('_', 1)` suffix, groups into materials dict; raises `GplParseError(ValueError)` w/ row-number context on non-int RGB / bad suffix / missing level triplet. **CLI** `palette export {class}` writes `palettes/{class}.gpl`; `palette import {class} --gpl {path}` diffs vs prior JSON + overwrites. Added `*.gpl` to `tools/sprite-gen/.gitignore`. Decision Log — merge 3 tasks (round-trip symmetry requires both sides); `.gpl` gitignored (JSON = source of truth); import tolerates tab **or** space separator (Aseprite emits `\t`, GIMP emits spaces); `rsplit('_', 1)` for suffix (material names may contain `_`); round-trip byte-exact (no HSV re-derive on import — human edits authoritative). Tests `test_palette_gpl.py` — round-trip `residential.json` deep-equal; 24 body rows (8 materials × 3 levels); negative cases for bad RGB / bad suffix / missing level.
+  - Acceptance: `palette export residential` writes loadable `.gpl` (owner verified Aseprite load); round-trip deep-equal; `pytest tools/sprite-gen/tests/test_palette_gpl.py` green; `.gpl` untracked; `npm run validate:all` green.
+  - Depends on: **TECH-157** (archived)
+
+- [x] **TECH-162** — Memory budget + eviction loop (Stage 2.1 Phase 2) (2026-04-15)
+  - Type: infrastructure / cache
+  - Files: `Assets/Scripts/Audio/Blip/BlipBaker.cs`, `Assets/Tests/EditMode/Audio/BlipBakerBudgetTests.cs`
+  - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+  - Notes: Stage 2.1 Phase 2 closer. Ctor extended to `BlipBaker(int sampleRate = 0, long budgetBytes = 4L * 1024 * 1024)` — 4 MB default per orchestrator Stage 2.1 Exit; throws `ArgumentOutOfRangeException` on `budgetBytes <= 0`. Folded `_totalBytes` accounting into `TryEvictHead` (single mutation site). Miss-insert loop: `while (_totalBytes + newByteCount > _budgetBytes && TryEvictHead()) { }` then `AddAtTail` + `_totalBytes += newByteCount`. Oversize single entry (`newByteCount > _budgetBytes`) → drains cache + post-loop `Debug.LogWarning` + inserts anyway so `BakeOrGet` never returns null. New `internal long DebugTotalBytes` test hook. Decision Log — fold accounting into `TryEvictHead` (not sibling wrapper) keeps invariant local, TECH-161 tests assert structural pop + `Destroy` only so stay green; ctor param order `(sampleRate, budgetBytes)` preserves TECH-161 default-arg call sites; oversize warn+insert beats throw/drop/null (never silently drops play requests). Tests — `BlipBakerBudgetTests.cs` EditMode coverage (budget ceiling, normal insert, oversize warning+non-null, evicted clip destroyed, invalid ctor throws).
+  - Acceptance: `_totalBytes ≤ _budgetBytes` after every normal insert; oversize case warns + still returns clip; evicted `AudioClip` instances destroyed; Stage 2.1 Exit bullets 3 + 4 satisfied; `unity:compile-check` + `validate:all` green.
+  - Depends on: **TECH-161** (archived)
+
+- [x] **TECH-165** — Landing page RSC + MDX content (Stage 2.1 Phase 2) (2026-04-15)
+  - Type: feature / web workspace (public user-facing)
+  - Files: `web/app/page.tsx`, `web/content/pages/landing.mdx`
+  - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+  - Notes: Stage 2.1 Phase 2 closer. Replaced Next.js boilerplate in `web/app/page.tsx` w/ async RSC — static-imports `Landing` from `@/content/pages/landing.mdx` (via `@next/mdx`) + awaits `loadMdxPage('landing')` for typed frontmatter. Tokens-only styling via `@/lib/tokens` (zero inline hex, zero hardcoded spacing outside scale). Authored `web/content/pages/landing.mdx` — full-English (caveman exception) w/ hero + tagline + what-this-is + CTA to `/install` + `/history`; frontmatter `title` / `description` / `updated`=`2026-04-15`. Decision Log — Path A (static `.mdx` import via `@next/mdx`) over Path B (`next-mdx-remote` runtime compile): landing slug hardcoded, pipeline already wired, zero new dep; frontmatter surfaced via `loadMdxPage` even though body uses static import (single-source validation + typed access); sibling pages under TECH-166 follow same shape. Pattern documented in `web/README.md` §MDX page pattern for future page authors.
+  - Acceptance: landing route reachable; MDX rendered via loader; tokens-only styling; `npm run validate:web` green.
+  - Depends on: **TECH-163** (archived)
+
+- [x] **TECH-157** — Bootstrap residential palette JSON (Stage 1.3 Phase 3) (2026-04-15)
+  - Type: content / palette data
+  - Files: `tools/sprite-gen/palettes/residential.json`
+  - Spec: (removed at closeout — journal persist empty; Decision Log captured in Notes)
+  - Notes: Stage 1.3 Phase 3 closer. Ran `palette extract residential --sources "Assets/Sprites/Residential/House1-64.png" --names "..."` (TECH-154 CLI); 8 K-means clusters hand-named. Final slot mapping (sorted HSV V bright→dark): 0=`window_glass` (40,63,206), 1=`wall_brick_red` (196,178,162), 2=`roof_tile_brown` (193,75,75), 3=`concrete` (106,190,48), 4=`wall_brick_grey` (132,120,110), 5=`roof_tile_grey` (128,47,47), 6=`trim` (59,108,25), 7=`mortar` (0,0,0). Decision Log — swapped `shadow` / `highlight` slots for grey-family wall + roof variants so `apply_variant` material-family swaps resolve without `PaletteKeyError`; `.gpl` export deferred to TECH-158; 4 rendered variants read as residential (beige+red v01, grey+red v02–v03, dark-grey+dark v04). Owner signoff.
+  - Acceptance: `palettes/residential.json` committed w/ 8 materials incl. required 4; `render building_residential_small` PNGs read as residential (owner signoff); `npm run validate:all` green.
+  - Depends on: **TECH-154** (archived), **TECH-155** (archived)
+
+- [x] **TECH-164** — MDX loader helper + typed frontmatter (Stage 2.1 Phase 1) (2026-04-15)
+  - Type: infrastructure / web workspace
+  - Files: `web/lib/mdx/loader.ts`, `web/lib/mdx/types.ts`
+  - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+  - Notes: Stage 2.1 Phase 1 closer. `web/lib/mdx/types.ts` exports `PageFrontmatter` (`title`, `description`, `updated` ISO `YYYY-MM-DD`, optional `hero`) + generic `MdxLoadResult<T>` (`{ source, frontmatter }`). `web/lib/mdx/loader.ts` exports `loadMdxContent<T>(dir, slug)` + thin `loadMdxPage(slug)` wrapper. `fs/promises` read → `matter(raw)` parse → required-field + ISO-date regex check → throw `Error` with `{slug, dir, missingFields}` context on bad input; `ENOENT` rethrown w/ slug/dir context. cwd duality guard — resolves both repo-root + `web/` cwd via `fs.access` probe. Seeded `web/content/pages/.gitkeep`. Decision Log — `gray-matter` over custom parser (already installed via TECH-163-archived, battle-tested); generic `loadMdxContent(dir, slug)` shipped now (wiki Stage 2.2 + devlog Stage 2.3 reuse without refactor); no caching Phase 1 (RSC request-level dedup sufficient; revisit if devlog glob hot); `source` returned raw not compiled (downstream RSCs pick `@next/mdx` route vs. `next-mdx-remote`); cwd duality guard (Next runs from `web/`, root `validate:web` may run from repo root).
+  - Acceptance: loader + types exported; required-field + ISO-date validation throws w/ slug context; `npm run validate:web` green; `npm run validate:all` green.
+  - Depends on: Stage 2.1 Phase 1 opener (archived)
+
+- [x] **TECH-163** — Install + wire MDX pipeline (Stage 2.1 Phase 1) (2026-04-15)
+  - Type: infrastructure / web workspace
+  - Files: `web/package.json`, `web/next.config.ts`, `web/mdx-components.tsx`
+  - Spec: (removed at closeout — journal persist ok, Decision Log captured in Notes)
+  - Notes: Stage 2.1 opener. Added `@next/mdx`, `@mdx-js/loader`, `@mdx-js/react`, `gray-matter` deps + `remark-frontmatter`, `remark-gfm`, `rehype-slug`, `rehype-autolink-headings`, `@types/mdx` devDeps to `web/package.json`. Wired `web/next.config.ts` via `createMDX` + plugin chain; `pageExtensions` extended w/ `"md"`, `"mdx"`. Added `web/mdx-components.tsx` at project root (App Router requirement, not mentioned in spec sketch — discovered via `node_modules/next/dist/docs/01-app/02-guides/mdx.md`). Decision Log — Next 16 `@next/mdx` API: `import createMDX from "@next/mdx"` + `options: { remarkPlugins, rehypePlugins }`; `mdx-components.tsx` mandatory at project root for App Router; npm workspaces hoisted `@next/mdx` to root `node_modules/` (resolves at build time).
+  - Acceptance: deps installed; `withMDX` wraps config; `npm run validate:web` green; `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-160** — Bake key + cache hit dispatch (Stage 2.1 Phase 1) (2026-04-15)
+  - Type: infrastructure / cache
+  - Files: `Assets/Scripts/Audio/Blip/BlipBakeKey.cs`, `Assets/Scripts/Audio/Blip/BlipBaker.cs`
+  - Spec: (removed at closeout — journal persist failed, Decision Log captured in Notes)
+  - Notes: Stage 2.1 Phase 1 closer. New file `BlipBakeKey.cs` — `public readonly struct BlipBakeKey(int patchHash, int variantIndex)` w/ `IEquatable<BlipBakeKey>` + deterministic hash combine (`patchHash * 397 ^ variantIndex`). In `BlipBaker`: `Dictionary<BlipBakeKey, LinkedListNode<BlipBakeEntry>> _index` + `LinkedList<BlipBakeEntry> _lru`. `BakeOrGet` probes `_index` first; hit → `_lru.Remove(node); _lru.AddLast(node)` (LRU tail promote) + return cached clip; miss → invokes Stage 2.1 Phase 1 opener render path, then hands to Phase 2 insertion + eviction. Reuses `patch.patchHash` from Stage 1.2. Decision Log — `LinkedList<LinkedListNode<Entry>>` indirection (O(1) access-order reorder + O(1) head pop) over `List<T>` (O(n) removal) / `OrderedDictionary` (boxes values); `patchHash * 397 ^ variantIndex` hash combine over `HashCode.Combine` (avoids per-call alloc on some runtimes); keep 3-arg `BakeOrGet(in patch, int patchHash, int variantIndex)` (`BlipPatchFlat` defers `patchHash` per Stage 1.2 — caller reads `BlipPatch.PatchHash`) over adding hash to flat struct (scope creep + breaks blittable-frozen-field contract); `BlipBakeEntry` ref class with `key` + `clip` only (additive byteCount lands next task) over mutable struct entry (`node.Value` copy traps) / full shape in one task (splits Phase 1 / 2 ownership).
+  - Acceptance: cache hit returns same `AudioClip` ref as prior bake (ref-equality); miss path produces fresh clip + inserts at LRU tail; node reordering on hit keeps newest at tail; `unity:compile-check` + `validate:all` green.
+  - Depends on: Stage 2.1 Phase 1 opener (archived)
+
+- [x] **TECH-156** — Palette unit tests (Stage 1.3 Phase 3) (2026-04-15)
+  - Type: test / palette verification
+  - Files: `tools/sprite-gen/tests/test_palette.py`
+  - Spec: (removed at closeout — journal persist ok, no Lessons/Decision body captured by heuristic)
+  - Notes: Stage 1.3 Phase 3 opener. Extended `test_palette.py` with ramp-math tests (low/mid/high-V centroids, clamp at V=1.0) using single-pixel PNG inputs into `extract_palette(..., n_clusters=1)` — deterministic since 1 cluster = input color. Face routing audit confirmed existing `top/south/east` + `PaletteKeyError` coverage; added unknown-face test locked to real `KeyError` (not spec-row prose `ValueError`). Final test count ≥17. Decision Log — unknown-face error type: test real `KeyError` behavior over patching source (face validation = programmer error, `KeyError` idiomatic; follow-up could tighten to `ValueError` w/ valid-faces list); ramp math via single-pixel PNG over monkey-patch `kmeans2` (deterministic 1-cluster path exercises real HSV pipeline, less brittle).
+  - Acceptance: `pytest tools/sprite-gen/tests/test_palette.py` exits 0 with ≥17 tests covering ramp math + `apply_ramp` face routing + error cases; `npm run validate:all` green.
+  - Depends on: **TECH-153** (archived), **TECH-155** (archived)
+
+- [x] **TECH-155** — `apply_ramp` API + compose wiring (Stage 1.3 Phase 2) (2026-04-15)
+  - Type: infrastructure / composition wiring
+  - Files: `tools/sprite-gen/src/palette.py`, `tools/sprite-gen/src/compose.py`, `tools/sprite-gen/src/primitives/iso_cube.py`, `tools/sprite-gen/src/primitives/iso_prism.py`
+  - Spec: (removed at closeout — journal persist failed, Decision Log captured in Notes)
+  - Notes: Stage 1.3 Phase 2 single task (T1.3.3 + T1.3.4 merged — API + sole consumer must land atomic). `load_palette(cls)` reads `palettes/{cls}.json`; `apply_ramp(palette, material_name, face)` maps face → bright/mid/dark; `PaletteKeyError(KeyError)` on missing material → CLI exit 2 per exploration §10. `compose_sprite` loads palette once per sprite, passes dict + raw material str into every primitive. Primitives `iso_cube` + `iso_prism` switch signature from `material: RGBTuple` → `material: str, palette: dict`; inline `_ramp` helpers dropped (palette stores pre-computed bright/mid/dark). Drops `_MATERIAL_STUB` / `_MATERIAL_FALLBACK` / `_resolve_material` from compose. Missing palette file propagates as `FileNotFoundError` → generic exit 1 (distinct from exit 2 missing-material). Decision Log — merge T1.3.3+T1.3.4 (dead-code hazard if split); `PaletteKeyError(KeyError)` subclass over custom base; programmer-error `KeyError` on bad face slot; CLI `_MATERIAL_FAMILIES` variant swap left in place (orthogonal to ramp).
+  - Acceptance: `render building_residential_small` produces PNGs using palette RGBs (no stub reds); missing material → exit 2 + stderr; `pytest tools/sprite-gen/tests/` green; `npm run validate:all` green.
+  - Depends on: **TECH-153** (archived), **TECH-154** (archived), **TECH-147** (archived)
+
+- [x] **TECH-159** — BlipBaker core + render path (Stage 2.1 Phase 1) (2026-04-15)
+  - Type: infrastructure / audio baking
+  - Files: `Assets/Scripts/Audio/Blip/BlipBaker.cs`
+  - Spec: (removed at closeout — journal persist skipped, db_unconfigured)
+  - Notes: Stage 2.1 Phase 1 opener. Plain class (not MonoBehaviour) at `Assets/Scripts/Audio/Blip/BlipBaker.cs`. `BakeOrGet(in BlipPatchFlat patch, int patchHash, int variantIndex) → AudioClip`. `sampleRate` is baker ctor param (default `AudioSettings.outputSampleRate`) — not a flat field. `patchHash` passed per-call (flat struct defers hash per Stage 1.2). Main-thread assert at entry via `BlipBootstrap.MainThreadId`; this task also lands the minimal static prop + `Awake` capture for Stage 2.3 T2.3.1 to reuse. Render path: `lengthSamples = (int)(patch.durationSeconds * _sampleRate)`, `float[]` alloc, default `BlipVoiceState`, `BlipVoice.Render(...)`, wrap via `AudioClip.Create(name, lengthSamples, 1, _sampleRate, stream: false)` + `clip.SetData(buffer, 0)`. Cache hit/miss dispatch deferred to follow-up (bake-key + LRU). Invariants #3 + #4 — no `FindObjectOfType`, no singleton; instance owned by `BlipCatalog` (Stage 2.2). Decision Log — plain class over MonoBehaviour (no scene state); non-streaming clip (<1 s buffer in memory); `sampleRate` ctor param over flat field (Stage 1.2 already archived) + over per-call param (keeps cache key `(patchHash, variantIndex)` only); `patchHash` explicit arg over flat-field read (flat defers hash; SO holds `.PatchHash`); `BlipBootstrap.MainThreadId` landed here vs Stage 2.3 T2.3.1 (baker needs the accessor first).
+  - Acceptance: `BlipBaker.BakeOrGet` returns non-null `AudioClip` w/ `.samples == lengthSamples`, `.channels == 1`, `.frequency == sampleRate`; clip name matches `Blip_{patchHash:X8}_v{variantIndex}`; main-thread assert throws `InvalidOperationException` on background-thread invocation; `unity:compile-check` + `validate:all` green.
+  - Depends on: Step 1 Stage 1.2 + 1.3 (archived — `BlipPatchFlat`, `BlipVoice.Render`, `BlipVoiceState`)
+
+- [x] **TECH-154** — Palette extract CLI command (Stage 1.3 Phase 1) (2026-04-15)
+  - Type: CLI / tooling
+  - Files: `tools/sprite-gen/src/cli.py`, `tools/sprite-gen/src/palette.py`
+  - Spec: (removed at closeout — journal persist skipped, no Lessons/Decision body captured by heuristic)
+  - Notes: Stage 1.3 Phase 1 closer. `palette extract {class} --sources "glob_pattern"` subcommand in existing argparse `cli.py`. Expand glob to `list[Path]`, call `extract_palette` (TECH-153, archived), print each cluster's swatch using ANSI 24-bit true-color block, prompt `stdin` for material name per cluster, write named result to `tools/sprite-gen/palettes/{class}.json`. JSON schema: `{"class": str, "materials": {name: {bright, mid, dark}}}` — `centroid` dropped (consumer needs ramp only). Non-TTY fallback: `--names "a,b,c,..."` comma list. Decision Log — drop `centroid` from persisted JSON (exploration §6 ramp-only contract); out dir under `_TOOL_ROOT/palettes/` (matches `_SPECS_DIR`/`_OUT_DIR` convention); hard error on name/cluster count mismatch (fail fast over silent truncate); non-TTY without `--names` → exit 1 (prevents CI hang on closed stdin).
+  - Acceptance: interactive run writes valid `palettes/{class}.json`; non-TTY `--names` path works without stdin; `cli.py palette extract residential --sources "Assets/Sprites/Residential/House1-64.png" --names "wall_brick_red,roof_tile_brown,window_glass,concrete,trim,shadow,highlight,mortar"` produces 8-material JSON; `npm run validate:all` green.
+  - Depends on: **TECH-153** (archived)
+
+- [x] **TECH-141** — Blip no-alloc regression test (2026-04-15)
+  - Type: test / performance regression
+  - Files: `Assets/Tests/EditMode/Audio/BlipNoAllocTests.cs`
+  - Spec: (removed at closeout — journal persist failed, db_error)
+  - Notes: Stage 1.4 T1.4.5 closeout — locks in Step 1 zero-alloc invariant. `Render_SteadyState_ZeroManagedAlloc` — warm-up 3 renders then measure `GC.GetAllocatedBytesForCurrentThread` delta across 10 steady-state `BlipVoice.Render` calls; assert delta ≤ 0 bytes (tolerates GC reclaim within window). Decision Log — `≤ 0` tolerance over `== 0` (Editor JIT inlining flips delta negative occasionally); warm-up = 3 renders (covers JIT + first-call lazy init + Editor instrumentation one-shots); measure window = 10 renders (amortizes noise, < 1 s runtime); `BuildPatch` helper inlined (extract to `BlipTestFixtures` when third sibling drifts — current three `Determinism/Envelope/NoAlloc` share recipe inline). Reuses `BlipTestFixtures.RenderPatch` (TECH-137). Satisfies Stage 1.4 Exit bullet 7.
+  - Acceptance: no-alloc test passes; `unity:compile-check` + `validate:all` green.
+  - Depends on: **TECH-137** (archived)
+
+- [x] **TECH-153** — K-means palette extractor library (Stage 1.3 Phase 1) (2026-04-15)
+  - Type: infrastructure / palette pipeline
+  - Files: `tools/sprite-gen/src/palette.py`, `tools/sprite-gen/requirements.txt`
+  - Spec: (removed at closeout — journal persist skipped, db_error)
+  - Notes: Stage 1.3 Phase 1 opener. `extract_palette(cls, source_paths, n_clusters=8, alpha_threshold=32, seed=42) -> dict` — Pillow RGBA load, alpha mask, `scipy.cluster.vq.kmeans2(minit='++', seed=seed)`, HSV ramp (V ×1.2 / ×1.0 / ×0.6 clamped [0,255]). Decision Log — sort centroids by HSV V descending for stable `cluster_idx` across runs (kmeans2 native ordering non-deterministic); pass `seed` as int (forward-compat older scipy); ramp math from exploration doc §6; raise `ValueError` on empty stack or `N < n_clusters`. Pure library — no filesystem writes, no stdin. Human naming lives in **TECH-154** CLI.
+  - Acceptance: `extract_palette('residential', [House1-64.png], 8)` returns 8 clusters w/ 3-level ramp; ramp clamp preserves 0–255; deterministic across two runs; alpha-0 ignored; `pytest tools/sprite-gen/tests/test_palette.py` green.
+  - Depends on: **TECH-124** (archived)
+
+- [x] **TECH-152** — Stage 1.2 integration smoke test (Stage 1.2 Phase 3) (2026-04-15)
+  - Type: test / integration
+  - Files: `tools/sprite-gen/tests/test_render_integration.py`
+  - Spec: (removed at closeout — journal persist skipped, db_unconfigured)
+  - Notes: Stage 1.2 Phase 3 closeout. End-to-end smoke — `subprocess.run([sys.executable, "-m", "src", "render", "building_residential_small"], cwd=tool_root)`; asserts `returncode == 0`, 4 variant PNGs `_v01`…`_v04` present under real `out/` dir, PIL opens each, `.size == (64, 64)`. Pre-clean fixture deletes only `building_residential_small_v*.png` glob (leaves neighbor archetype artifacts intact). Decision Log — subprocess over in-process (covers `__main__` + argparse entry; in-process `test_cli.py` misses CLI layer); real `out/` + targeted glob-clean over `tmp_path` (CLI `_OUT_DIR` constant is tool-root-anchored; subprocess cannot see pytest monkeypatch — `--out` flag would need CLI refactor, out of scope); module invoked as `-m src` (matches archived `test_cli.test_module_help` convention; `__main__.py` under `src/`); `sys.executable` over hardcoded `"python"` (venv portability); `pytest.importorskip("PIL")` + missing-spec skip guard (defensive — both deps already archived). Locks Layer 2 contract (CLI → loader → compose → PNG) before Stage 1.3 palette work.
+  - Acceptance: `pytest tools/sprite-gen/tests/test_render_integration.py` exits 0; 4 variant PNGs verified at `(64, 64)`; `npm run validate:all` green.
+  - Depends on: **TECH-149** (archived), **TECH-151** (archived)
+
+- [x] **TECH-151** — First archetype YAML `building_residential_small.yaml` (Stage 1.2 Phase 3) (2026-04-14)
+  - Type: content / spec YAML
+  - Files: `tools/sprite-gen/specs/building_residential_small.yaml`
+  - Spec: (removed at closeout — journal persist skipped, db_unconfigured)
+  - Notes: Stage 1.2 Phase 3 opener. First archetype YAML — `id: building_residential_small_v1`, `class: residential`, `footprint: [1,1]`, `terrain: flat`, `levels: 2`, `seed: 42`, `variants: 4`. Composition: `iso_cube × 2` (wall_brick_red, stacked via `offset_z`) + `iso_prism` (roof_tile_brown, pitch=0.5, axis=ns, `offset_z: 32`). `palette: residential` (stub material names → RGB fallback until Stage 1.3 palette JSON lands). `diffusion.enabled: false`. Canvas `(64, 64)` via `canvas_size(1, 1, extra_h=44)` + min-64 clamp in `compose.py`. Decision Log — 2 stacked cubes over single tall cube (exercises `offset_z` path); `offset_z:` key over `z:` (matches archived `compose.py` signature); `variants:` under `output:` block (matches exploration §8); drop `x0/y0` from composition entries (composer derives SE-corner anchor from footprint); `h` values sized for 64-px canvas (two 16-px half-levels + 12-px roof fits clamp).
+  - Acceptance: YAML validates via **TECH-148** loader; `render building_residential_small` produces 4 variant PNGs at `(64, 64)`; `npm run validate:all` green.
+  - Depends on: **TECH-147** (archived), **TECH-148** (archived)
+
+- [x] **TECH-140** — Blip determinism test (2026-04-14)
+  - Type: test / DSP verification
+  - Files: `Assets/Tests/EditMode/Audio/BlipDeterminismTests.cs`
+  - Spec: (removed at closeout — journal persist skipped, db_unconfigured)
+  - Notes: Stage 1.4 T1.4.4. One `[Test]` `RenderPatch_SameSeedVariant_ProducesDeterministicBuffer` — builds `BlipPatch` SO via `BuildPatch()` helper (sine osc, AHDSR 50/0/100/0.5/50 ms, `deterministic = true`, non-zero jitter params to prove deterministic path bypasses them, tracked in `_createdSo` + `TearDown` `DestroyImmediate`), `ToFlat()`, two `BlipTestFixtures.RenderPatch(in patch, 48000, 1, variantIndex: 0)` calls (fixture allocates fresh `BlipVoiceState` per call). Asserts `Math.Abs(SumAbsHash(bufA) - SumAbsHash(bufB)) < 1e-6` + indexed first-256-sample `Is.EqualTo` loop (no Linq alloc). Decision Log — hybrid sum-of-abs + first-256 sample equality (catches deep drift via hash + early state leak via prefix; avoids JIT-LSB brittleness of full-buffer byte-equal); pin `deterministic = true` path (jitter-free branch exercises canonical reset `rngState = variantIndex + 1` w/o seed-XOR confounders); single `variantIndex = 0` (non-goal §2.2 excludes cross-variant determinism). Satisfies Stage 1.4 Exit bullet 6.
+  - Acceptance: determinism test passes; `unity:compile-check` + `validate:all` green.
+  - Depends on: **TECH-137** (archived)
+
+- [x] **TECH-150** — `render --all` + `--terrain` CLI flag (Stage 1.2 Phase 2) (2026-04-14)
+  - Type: infrastructure / CLI
+  - Files: `tools/sprite-gen/src/cli.py`, `tools/sprite-gen/tests/test_cli.py`
+  - Spec: (removed at closeout — journal persist skipped, db_unconfigured)
+  - Notes: Stage 1.2 Phase 2 second task. Refactored `_cmd_render` body into `_render_one(archetype, terrain_override) → int` reusable helper; `_cmd_render` becomes thin dispatcher on `args.all` xor positional `args.archetype` (argparse mutually-exclusive group, required=True). `--all` globs `sorted(_SPECS_DIR.glob("*.yaml"))` (deterministic CI log order), iterates `_render_one`, collects failed stems, prints `failed: [name1, name2]` to stderr only when non-empty, returns 0 iff list empty else 1. `--terrain {slope_id}` flag w/ argparse `choices=sorted(_VALID_SLOPE_IDS)` (18 entries: `flat` + 17 land variants matching **Slope variant naming** glossary); when `terrain_override is not None` overrides `spec['terrain']` pre-compose. Stage 1.2 compose guard — when `spec['terrain'] != 'flat'` post-override raise `NotImplementedError("slope-aware foundation lands Stage 1.4")` caught in `_render_one` → stderr message → return 1. Decision Log — argparse `choices=` (exit 2 on bad enum) over custom `type=` callable (stdlib idiom); serial loop over `multiprocessing` (15-archetype scope trivial); `NotImplementedError` raise over silent flat fallthrough (hides bug). 5 new pytest cases (`test_render_all`, `test_render_all_aggregate`, `test_terrain_bad_enum`, `test_terrain_flat_override`, `test_terrain_non_flat_not_implemented`).
+  - Acceptance: `render --all` iterates all `specs/*.yaml`; aggregate exit code reflects any failures; `--terrain flat` accepted; `npm run validate:all` green.
+  - Depends on: **TECH-149** (archived)
+
+- [x] **TECH-139** — Blip envelope shape + silence tests (2026-04-14)
+- [x] **TECH-146** — `/design` review route + web README §Tokens (Stage 1.2 Phase 3) (2026-04-14)
+  - Type: IA / tooling (web workspace) / docs
+  - Files: `web/app/design/page.tsx`, `web/README.md`
+  - Spec: (removed at closeout — journal persist attempted, db_error logged)
+  - Notes: Closes Stage 1.2. `web/app/design/page.tsx` SSR-only renders all six primitives (DataTable, BadgeChip, StatBar, FilterChips, HeatmapCell, AnnotatedMap) w/ 2–3 fixture variants each; sections keyed `#datatable`/`#badgechip`/`#statbar`/`#filterchips`/`#heatmapcell`/`#annotatedmap`; inline fixtures at module scope (no client fetch). Internal-review banner in `<header>` (caveman prose — internal-facing, exception scope covers only public `web/content/**` + page-body strings). `web/README.md` §Tokens documents file layout (`palette.json` raw + semantic, `type-scale.json`, `spacing.json`), `{raw.<key>}` indirection resolved by `resolveAlias` in `web/lib/tokens/index.ts`, Unity UI/UX consumption stub (read JSON at build → map semantic keys to `UnityEngine.Color` / `Vector2`). Decision Log — SSR-only page (no client variant picker); banner stays caveman; alias contract documented as-is (no schema change); glossary row "Web design token set" deferred per orchestrator Exit bullet 5 until Step 3 dashboard stabilizes tokens.
+  - Acceptance: `/design` reachable on dev + deploy; all six primitives rendered; README §Tokens present; internal-review banner visible; `npm run validate:all` green.
+  - Depends on: tokens + DataTable + BadgeChip + StatBar + FilterChips + HeatmapCell + AnnotatedMap (all archived)
+
+---
+
+## Completed (moved from BACKLOG.md, 2026-04-15)
+
+- [x] **TECH-173** — `BlipPlayer` pool construction (Stage 2.2 Phase 3) (2026-04-15)
+  - Type: infrastructure / audio runtime
+  - Files: `Assets/Scripts/Audio/Blip/BlipPlayer.cs`, `Assets/Scripts/Audio/Blip/BlipEngine.cs`
+  - Spec: (removed at closeout — journal persist `ok`, both sections empty)
+  - Notes: New `BlipPlayer : MonoBehaviour` w/ `[SerializeField] private int poolSize = 16`. `Awake` spawns 16 child GameObjects (`BlipVoice_0..BlipVoice_15`) each carrying `AudioSource` (`playOnAwake = false`, `loop = false`). Holds `AudioSource[] _pool` + `int _cursor = 0`. Calls `BlipEngine.Bind(this)` at `Awake` end; `OnDestroy` → `Unbind(this)`. Added `Bind(BlipPlayer)` / `Unbind(BlipPlayer)` no-op stubs on `BlipEngine` (body fills Stage 2.3 T2.3.2). Placed as child of `BlipBootstrap` prefab. Invariant #3 + #4 satisfied. Decision Log — pool size as `[SerializeField]` not const (authoring knob); stubs land here (T2.2.2 only added Catalog pair); `OnDestroy` pairs `Bind`/`Unbind` mirrors Catalog contract.
+  - Acceptance: 16 child GameObjects spawn w/ configured `AudioSource`; `_pool` populated + `_cursor = 0`; `Bind` stub called; `unity:compile-check` + `validate:all` green.
+  - Depends on: **TECH-170** (archived)
+
+- [x] **TECH-161** — LRU ordering + access tracking (Stage 2.1 Phase 2) (2026-04-15)
+  - Type: infrastructure / cache
+  - Files: `Assets/Scripts/Audio/Blip/BlipBaker.cs`, `Assets/Tests/EditMode/Audio/BlipBakerCacheTests.cs`
+  - Spec: (removed at closeout — journal persist attempted, db_error logged)
+  - Notes: Stage 2.1 Phase 2 opener. Extended `BlipBakeEntry` with `long byteCount` (value writes deferred to **TECH-162**). Added private `AddAtTail(BlipBakeEntry) → LinkedListNode<BlipBakeEntry>` DRY wrapper; refactored `BakeOrGet` miss-path insert. Added `internal bool TryEvictHead()` — `RemoveFirst` + `_index.Remove` + `Object.Destroy(clip)` + return `true`; empty → `false`. Consumed by **TECH-162** budget loop. Decision Log — `bool` return (caller guard) over throw; `Object.Destroy` (Play Mode safe) over `DestroyImmediate`; add `byteCount` field here (struct-shape in one commit) over deferring to TECH-162; `AddAtTail` private (no test need) over internal. `InternalsVisibleTo("Blip.Tests.EditMode")` already wired in `Assets/Scripts/AssemblyInfo.cs`.
+  - Acceptance: insert / hit / evict-head sequence maintains head-oldest / tail-newest ordering; `TryEvictHead` on empty returns `false`; `unity:compile-check` + `validate:all` green.
+  - Depends on: **TECH-160** (archived)
+
 ---
 
 ## Completed (moved from BACKLOG.md, 2026-04-14)
+
+- [x] **TECH-149** — `render {archetype}` CLI command (Stage 1.2 Phase 2) (2026-04-14)
+  - Type: infrastructure / CLI
+  - Files: `tools/sprite-gen/src/cli.py`, `tools/sprite-gen/src/__main__.py`, `tools/sprite-gen/tests/test_cli.py`
+  - Spec: (removed at closeout — journal persist skipped, db_unconfigured)
+  - Notes: Stage 1.2 Phase 2 opener. `python -m sprite_gen render {archetype}` — resolves `specs/{archetype}.yaml` cwd-independent via `Path(__file__).resolve().parent.parent / "specs"`, loads + validates via `load_spec` (**TECH-148** archived), iterates `range(spec['output'].get('variants', 1))`, applies `apply_variant(spec, idx)` deepcopy + seeded `random.Random(spec.get('seed', 0) + idx)` permutation (material swap within inline family map, prism pitch × `rng.uniform(0.8, 1.2)` clamped `[0, 1]`), calls `compose_sprite` (**TECH-147** archived), writes `out/{spec['output']['name']}_v{idx+1:02d}.png`. `main(argv=None) → int` returns exit code; `__main__.py` two-liner wraps `SystemExit(main())` for fast pytest without subprocess. Decision Log — argparse over click (stdlib, no new dep); variant count reads `spec['output']['variants']` (not top-level) matching TECH-148 schema; output name from `spec['output']['name']` (not `id`, which carries `_v1` suffix); inline material-family swap map temporary until Stage 1.3 palette class metadata lands (**TECH-153**); `main()` returns int over `sys.exit` inside — enables direct-call pytest.
+  - Acceptance: `python -m sprite_gen render building_residential_small` writes N PNGs to `out/`; exit 0 success, 1 on missing archetype / `yaml.YAMLError` / `SpecValidationError`; deterministic bytes across same-seed runs; `npm run validate:all` green.
+  - Depends on: **TECH-147** (archived), **TECH-148** (archived)
 
 - [x] **TECH-138** — Blip oscillator zero-crossing tests (2026-04-14)
   - Type: test / DSP verification
@@ -673,6 +950,13 @@
 ---
 
 ## Recent archive (moved from BACKLOG.md, 2026-04-10)
+
+- [x] **TECH-145** — Web primitives: HeatmapCell + AnnotatedMap (Stage 1.2 Phase 2) (2026-04-14)
+  - Type: IA / tooling (web workspace)
+  - Files: `web/components/HeatmapCell.tsx`, `web/components/AnnotatedMap.tsx`
+  - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+  - Notes: **Completed (verified — `/project-spec-close`).** SSR-only primitives under `web/components/`. `HeatmapCell({ intensity })` clamps to `[0,1]` + 5-bucket `color-mix()` ramp anchored on existing semantic aliases (`bg-panel` → `text-accent-warn` → `text-accent-critical`); no new palette rows. `AnnotatedMap({ regions, annotations })` renders `<svg viewBox="0 0 1000 600" role="img">` root w/ per-region `<path>` (bucket helper shared w/ HeatmapCell) + per-annotation `<text>` using `letterSpacing: 0.15em` + `textTransform: uppercase` (NYT-style spaced-caps geo labels). No `"use client"`; no D3-geo / topojson. Last two of six Stage 1.2 primitives — satisfies Stage 1.2 Exit bullet 2. `/design` fixture wiring + visual review deferred to TECH-146.
+  - Depends on: tokens (archived)
 
 - [x] **TECH-119** — Envelope level math (Linear + Exponential per-stage shapes) (2026-04-14)
   - Type: infrastructure / DSP math

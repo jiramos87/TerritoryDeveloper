@@ -1,17 +1,18 @@
 """
-test_compose.py — pytest unit tests for compose_sprite (Stage 1.2).
+test_compose.py — pytest unit tests for compose_sprite (Stage 1.3 Phase 2).
 
-Four contracts:
+Contracts:
     test_canvas_size_match         — canvas image.size == canvas_size(fx, fy, extra_h_clamped)
     test_composition_order         — later entry paints over earlier (blue over red)
     test_unknown_primitive_raises  — bad type: raises UnknownPrimitiveError
     test_min_canvas_height_clamp   — flat primitive → canvas height == 64
+    test_compose_palette_rgb       — compose uses palette RGB (not stub colours)
 
 Canvas anchor used in compose.py:
     x0 = w_px // 2,  y0 = h_px  (SE corner, y-down)
 
 Reference:
-    sprite-gen-master-plan.md Stage 1.2 Phase 1 (T1.2.1)
+    sprite-gen-master-plan.md Stage 1.3 Phase 2
 """
 
 from __future__ import annotations
@@ -19,8 +20,61 @@ from __future__ import annotations
 import pytest
 from PIL import Image
 
+import src.compose as _compose_mod
 from src.canvas import canvas_size
 from src.compose import UnknownPrimitiveError, compose_sprite
+from src.palette import PaletteKeyError
+from src.slopes import SlopeKeyError
+
+
+# ---------------------------------------------------------------------------
+# Inline fixture palette (avoids dependency on real palettes/residential.json)
+# ---------------------------------------------------------------------------
+
+_FIXTURE_PALETTE_DATA = {
+    "class": "test",
+    "materials": {
+        "wall_brick_red": {
+            "bright": [240, 48, 48],
+            "mid":    [200, 40, 40],
+            "dark":   [120, 24, 24],
+        },
+        "glass": {
+            "bright": [48, 48, 240],
+            "mid":    [40, 40, 200],
+            "dark":   [24, 24, 120],
+        },
+        "wall_brick_grey": {
+            "bright": [200, 200, 200],
+            "mid":    [160, 160, 160],
+            "dark":   [96,  96,  96],
+        },
+        "roof_tile_brown": {
+            "bright": [180, 140, 90],
+            "mid":    [150, 110, 70],
+            "dark":   [90,  66,  42],
+        },
+        "dirt": {
+            "bright": [160, 120, 70],
+            "mid":    [130, 95,  55],
+            "dark":   [80,  58,  33],
+        },
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Autouse fixture: patch load_palette so tests do not need real palette files
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(autouse=True)
+def _patch_load_palette(monkeypatch):
+    """Replace load_palette in compose module with inline fixture data."""
+    monkeypatch.setattr(
+        _compose_mod,
+        "load_palette",
+        lambda cls, **_kw: _FIXTURE_PALETTE_DATA,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -48,10 +102,11 @@ def _sample_spec(
     fx: int = 1,
     fy: int = 1,
     composition: list | None = None,
+    palette: str = "test",
 ) -> dict:
     if composition is None:
         composition = [_cube_entry()]
-    return {"footprint": [fx, fy], "composition": composition}
+    return {"footprint": [fx, fy], "composition": composition, "palette": palette}
 
 
 # ---------------------------------------------------------------------------
@@ -204,3 +259,138 @@ def test_returns_rgba_image():
     img = compose_sprite(_sample_spec())
     assert isinstance(img, Image.Image)
     assert img.mode == "RGBA"
+
+
+# ---------------------------------------------------------------------------
+# test_compose_palette_rgb — palette wiring (Stage 1.3 Phase 2)
+# ---------------------------------------------------------------------------
+
+def test_compose_palette_rgb():
+    """compose_sprite uses palette RGB values, not stub/fallback colours."""
+    # wall_brick_red bright = [240, 48, 48] in the fixture palette.
+    # Use a small cube so the top face (bright slot) is rendered near canvas top.
+    spec = _sample_spec(
+        fx=1, fy=1,
+        composition=[_cube_entry(material="wall_brick_red", h=32)],
+    )
+    img = compose_sprite(spec)
+
+    expected_bright = tuple(_FIXTURE_PALETTE_DATA["materials"]["wall_brick_red"]["bright"])
+
+    # Find any opaque pixel that matches the bright palette value.
+    found = False
+    for y in range(img.size[1]):
+        for x in range(img.size[0]):
+            px = img.getpixel((x, y))
+            if px[3] > 0 and px[:3] == expected_bright:
+                found = True
+                break
+        if found:
+            break
+    assert found, (
+        f"No pixel matching palette bright {expected_bright} found — "
+        "compose may still be using stub fallback colours."
+    )
+
+
+def test_compose_palette_key_error():
+    """Missing material key → PaletteKeyError propagates from compose_sprite."""
+    spec = _sample_spec(
+        composition=[_cube_entry(material="totally_unknown_material")],
+    )
+    with pytest.raises(PaletteKeyError):
+        compose_sprite(spec)
+
+
+# ---------------------------------------------------------------------------
+# Slope auto-insert tests (TECH-177)
+# ---------------------------------------------------------------------------
+
+def _slope_spec(
+    slope_id: str,
+    fx: int = 1,
+    fy: int = 1,
+    composition: list | None = None,
+    foundation_material: str = "dirt",
+) -> dict:
+    """Build a spec dict with a terrain key."""
+    spec = _sample_spec(fx=fx, fy=fy, composition=composition)
+    spec["terrain"] = slope_id
+    spec["foundation_material"] = foundation_material
+    return spec
+
+
+def test_flat_unchanged_no_terrain_key():
+    """No terrain key → canvas identical to pre-patch flat baseline."""
+    flat_spec = _sample_spec(fx=1, fy=1, composition=[_cube_entry(h=32)])
+    img_flat = compose_sprite(flat_spec)
+    # Sanity: extra_h=32 clamped to 64; no foundation call.
+    w_px, h_px = canvas_size(1, 1, 32)
+    h_px = max(h_px, 64)
+    assert img_flat.size == (w_px, h_px)
+
+
+def test_flat_terrain_key_unchanged():
+    """terrain: flat → same canvas size + no foundation auto-insert."""
+    spec = _sample_spec(fx=1, fy=1, composition=[_cube_entry(h=32)])
+    spec["terrain"] = "flat"
+    img = compose_sprite(spec)
+    w_px, h_px = canvas_size(1, 1, 32)
+    h_px = max(h_px, 64)
+    assert img.size == (w_px, h_px)
+
+
+def test_slope_grows_canvas():
+    """terrain: N → canvas_h includes lip (max_corner_z + 2).
+
+    N slope: {n:16, e:0, s:0, w:0} → max=16 → lip=18.
+    stack_extra_h = 32 (single cube h=32, offset_z=0).
+    extra_h = max(32, 18) = 32 → same canvas height as flat with h=32.
+
+    Use a slope where lip > stack to prove canvas grows:
+    Use empty composition so stack_extra_h=0 and lip=18 > 0.
+    extra_h = 18 → canvas_h = canvas_size(1,1,18) with clamp ≥ 64.
+    """
+    spec: dict = {
+        "footprint": [1, 1],
+        "palette": "test",
+        "composition": [],
+        "terrain": "N",
+        "foundation_material": "dirt",
+    }
+    img = compose_sprite(spec)
+    # N slope: max corner = 16, lip = 18; extra_h = max(0, 18) = 18.
+    w_px, h_px = canvas_size(1, 1, 18)
+    h_px = max(h_px, 64)
+    assert img.size == (w_px, h_px)
+
+
+def test_foundation_drawn_before_stack():
+    """Foundation pixels exist; non-transparent pixels present after slope auto-insert."""
+    spec: dict = {
+        "footprint": [1, 1],
+        "palette": "test",
+        "composition": [],  # no stack — only foundation
+        "terrain": "N",
+        "foundation_material": "dirt",
+    }
+    img = compose_sprite(spec)
+    # At least one opaque pixel must exist (foundation drew something).
+    has_opaque = any(
+        img.getpixel((x, y))[3] > 0
+        for y in range(img.size[1])
+        for x in range(img.size[0])
+    )
+    assert has_opaque, "Expected foundation pixels but canvas is fully transparent."
+
+
+def test_unknown_slope_raises():
+    """terrain: bogus → SlopeKeyError propagates from compose_sprite."""
+    spec: dict = {
+        "footprint": [1, 1],
+        "palette": "test",
+        "composition": [],
+        "terrain": "bogus_slope_id_that_does_not_exist",
+    }
+    with pytest.raises(SlopeKeyError):
+        compose_sprite(spec)

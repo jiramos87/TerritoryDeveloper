@@ -14,10 +14,10 @@ Polygon faces (§5 Primitives):
     south   — parallelogram (4 verts, mid shade)
     east    — parallelogram (4 verts, darkest)
 
-Shade ramp (§6.3 Palette system):
-    bright = base_rgb * 1.2  (clamped 0–255, HSV value scaling)
-    mid    = base_rgb * 1.0
-    dark   = base_rgb * 0.6
+Face → ramp slot map (§6.3 Palette system):
+    top   → bright
+    south → mid
+    east  → dark
 
 Reference:
     docs/isometric-sprite-generator-exploration.md §4 Canvas math
@@ -27,14 +27,9 @@ Reference:
 
 from __future__ import annotations
 
-from typing import Tuple
-
 from PIL import Image, ImageDraw
 
-# ---------------------------------------------------------------------------
-# Type aliases
-# ---------------------------------------------------------------------------
-RGBTuple = Tuple[int, int, int]
+from ..palette import apply_ramp
 
 
 # ---------------------------------------------------------------------------
@@ -65,29 +60,6 @@ def _project(gx: float, gy: float, gz: float, x0: int, y0: int) -> tuple[int, in
     return px, py
 
 
-def _ramp(base_rgb: RGBTuple) -> tuple[RGBTuple, RGBTuple, RGBTuple]:
-    """Compute (bright, mid, dark) shade ramp from a base RGB tuple.
-
-    HSV value scaling per §6.3:
-        bright = base * 1.2  (clamped 0–255)
-        mid    = base * 1.0
-        dark   = base * 0.6  (clamped 0–255)
-
-    Args:
-        base_rgb: (R, G, B) tuple in range 0–255.
-
-    Returns:
-        Three RGB tuples: (bright, mid, dark).
-    """
-    def _scale(rgb: RGBTuple, factor: float) -> RGBTuple:
-        return tuple(min(255, max(0, int(c * factor))) for c in rgb)  # type: ignore[return-value]
-
-    bright = _scale(base_rgb, 1.2)
-    mid    = base_rgb
-    dark   = _scale(base_rgb, 0.6)
-    return bright, mid, dark
-
-
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -99,19 +71,20 @@ def iso_cube(
     w: float,
     d: float,
     h: float,
-    material: RGBTuple,
+    material: str,
+    palette: dict,
 ) -> None:
     """Draw an isometric rectangular box on *canvas* in-place.
 
-    Three faces are filled with a NW-light shade ramp:
-        - Top face   (rhombus)         → bright
-        - South face (parallelogram)   → mid
-        - East face  (parallelogram)   → dark
+    Three faces are filled using palette-driven ramp colours:
+        - Top face   (rhombus)         → bright slot
+        - South face (parallelogram)   → mid slot
+        - East face  (parallelogram)   → dark slot
 
     Projection: 2:1 isometric, 32 px per tile unit (§4 Canvas math).
     Origin (x0, y0) = footprint SE corner on canvas, y-down (§6 Decision Log).
 
-    Shade ramp: HSV value ×1.2 / ×1.0 / ×0.6, clamped 0–255 (§6.3).
+    Ramp colours come from ``apply_ramp(palette, material, face)`` per §6.3 Palette system.
     NW-light direction hardcoded for v1 (§5 Primitives, Decision Log 2026-04-14).
 
     Vertex derivation from 8 cube corners (grid-space, z in pixels):
@@ -132,10 +105,15 @@ def iso_cube(
         w:        Cube width in tile units (extends along grid-X / SE diagonal).
         d:        Cube depth in tile units (extends along grid-Y / SW diagonal).
         h:        Cube height in pixels (vertical extrusion).
-        material: Base RGB tuple for the material; shade ramp derived internally.
-                  Palette lookup deferred to Stage 1.3.
+        material: Palette material key (e.g. ``"wall_brick_red"``).
+        palette:  Loaded palette dict from ``load_palette``; supplies ramp colours.
+
+    Raises:
+        PaletteKeyError: If ``material`` is not in ``palette["materials"]``.
     """
-    bright, mid, dark = _ramp(material)
+    bright = apply_ramp(palette, material, "top")
+    mid    = apply_ramp(palette, material, "south")
+    dark   = apply_ramp(palette, material, "east")
     draw = ImageDraw.Draw(canvas)
 
     # --- 8 cube corners projected to canvas pixels ---
