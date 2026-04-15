@@ -21,25 +21,24 @@ import type { PlanData } from './plan-loader-types';
  * Next.js build runs with cwd = web/; validate:web may run from repo root.
  * Mirrors resolveContentPath existence-check idiom from web/lib/mdx/loader.ts.
  */
-async function resolveRepoRoot(): Promise<string> {
+async function resolveRepoRoot(): Promise<string | null> {
   const cwd = process.cwd();
   if (path.basename(cwd) === 'web') {
     const candidate = path.resolve(cwd, '..');
-    // Verify ia/projects/ exists at candidate to catch mis-parented repos.
-    await fs.access(path.join(candidate, 'ia', 'projects'));
-    return candidate;
+    try {
+      await fs.access(path.join(candidate, 'ia', 'projects'));
+      return candidate;
+    } catch {
+      return null;
+    }
   }
-  // Assume cwd is already repo root; verify presence of ia/projects/.
   const iaDir = path.join(cwd, 'ia', 'projects');
   try {
     await fs.access(iaDir);
+    return cwd;
   } catch {
-    throw new Error(
-      `[plan-loader] Could not locate ia/projects/ from cwd="${cwd}". ` +
-        `Run from repo root or web/ subdirectory.`
-    );
+    return null;
   }
-  return cwd;
 }
 
 /**
@@ -53,6 +52,7 @@ async function resolveRepoRoot(): Promise<string> {
  */
 export async function loadAllPlans(): Promise<PlanData[]> {
   const repoRoot = await resolveRepoRoot();
+  if (!repoRoot) return [];
   const plansDir = path.join(repoRoot, 'ia', 'projects');
 
   let allFiles: string[];
