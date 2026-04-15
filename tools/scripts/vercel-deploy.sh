@@ -72,11 +72,11 @@ if [[ -z "$TO_DELETE" ]]; then
 fi
 
 COUNT=0
-while IFS= read -r UID; do
-  [[ -z "$UID" ]] && continue
+while IFS= read -r DEP_ID; do
+  [[ -z "$DEP_ID" ]] && continue
   curl -s -X DELETE -H "Authorization: Bearer $TOKEN" \
-    "https://api.vercel.com/v13/deployments/$UID?teamId=$ORG_ID" > /dev/null
-  echo "  deleted $UID"
+    "https://api.vercel.com/v13/deployments/$DEP_ID?teamId=$ORG_ID" > /dev/null
+  echo "  deleted $DEP_ID"
   COUNT=$((COUNT + 1))
 done <<< "$TO_DELETE"
 
