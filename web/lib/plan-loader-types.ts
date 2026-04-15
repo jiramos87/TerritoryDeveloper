@@ -23,9 +23,10 @@ export type HierarchyStatus =
   | 'Final';
 
 export interface TaskRow {
-  id: string;      // e.g. "T1.1.1"
-  phase: string;   // e.g. "1"
-  issue: string;   // e.g. "TECH-87" or "_pending_"
+  id: string;       // e.g. "T1.1.1"
+  name?: string;    // optional name column (some plans omit it)
+  phase: string;    // e.g. "1"
+  issue: string;    // e.g. "TECH-87" or "_pending_"
   status: TaskStatus;
   intent: string;
 }
@@ -54,6 +55,7 @@ export interface Step {
 
 export interface PlanData {
   title: string;               // first # heading
+  filename: string;            // basename of the source file
   overallStatus: string;       // raw status line from opening blockquote
   overallStatusDetail: string; // text after " — " in overall status, if any
   siblingWarnings: string[];   // blockquote lines mentioning sibling orchestrators

@@ -13,6 +13,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
+import { parseMasterPlan } from './plan-parser';
 import type { PlanData } from './plan-loader-types';
 
 /**
@@ -69,11 +70,6 @@ export async function loadAllPlans(): Promise<PlanData[]> {
   if (planFiles.length === 0) {
     return [];
   }
-
-  // Dynamic ESM import — module cache dedupes repeat calls.
-  const { parseMasterPlan } = await import(
-    '../../tools/progress-tracker/parse.mjs'
-  ) as { parseMasterPlan: (md: string, filename: string) => PlanData };
 
   return Promise.all(
     planFiles.map(async f => {
