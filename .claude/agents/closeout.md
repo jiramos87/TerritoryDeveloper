@@ -24,8 +24,7 @@ Follow `ia/skills/project-spec-close/SKILL.md` end-to-end. High-level:
    - Remove BACKLOG row (`Edit` `BACKLOG.md`).
    - Append `[x] **{ISSUE_ID}**` to `BACKLOG-ARCHIVE.md` Recent archive.
    - Purge id from durable docs/code via targeted `Edit` (`Grep` first to enumerate).
-5b. **Regenerate progress dashboard** — `npm run progress` (repo root). Reflects `Done (archived)` state flip in `docs/progress.html`. Deterministic; failure does NOT block close — log exit code and continue.
-5c. **Deploy web dashboard** — `npm run deploy:web` (repo root). Pushes current master-plan state to https://web-nine-wheat-35.vercel.app/dashboard. Script auto-prunes deployments older than newest 3. Failure does NOT block close — log exit code and continue (retry manually later).
+5b. **Regenerate progress dashboard** — `npm run progress` (repo root). Reflects `Done (archived)` state flip in `docs/progress.html`. Deterministic; failure does NOT block close — log exit code and continue. Web dashboard (https://web-nine-wheat-35.vercel.app/dashboard) auto-refreshes via ISR within ~5 min from the deployed branch once changes land on `main` — no Vercel deploy required here. Instant refresh available via `npm run deploy:web` (see CLAUDE.md §6).
 6. **Re-validate** — `npm run validate:dead-project-specs` after deletion.
 
 # Hard boundaries
@@ -49,4 +48,3 @@ Single closeout digest per `.claude/output-styles/closeout-digest.md`:
 7. BACKLOG-ARCHIVE entry appended (line).
 8. Id purges (file count + paths).
 9. Progress dashboard regen exit code (`npm run progress` — non-blocking).
-10. Web deploy exit code (`npm run deploy:web` — non-blocking; includes prune count).

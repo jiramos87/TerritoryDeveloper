@@ -51,6 +51,10 @@ Next.js 14+ App Router workspace at `web/`. Full onboarding: `web/README.md`.
 | `cd web && npm run dev` | Start dev server (http://localhost:4000) |
 | `cd web && npm run build` | Production build |
 | `npm run validate:web` | Lint + typecheck + build via root composition |
+| `npm run deploy:web` | Deploy production to https://web-nine-wheat-35.vercel.app (auto-prunes newest 3). Manual only — closeout / stage-close no longer auto-deploy. |
+| `npm run deploy:web:preview` | Deploy preview (non-prod) to a unique Vercel URL. |
+
+**Live dashboard freshness:** `/dashboard` fetches `ia/projects/*master-plan*.md` from GitHub raw via Next.js ISR (5-min revalidate) on Vercel. Push to deployed branch → visible within ~5 min without redeploy. Run `npm run deploy:web` only when instant refresh or code change required.
 
 **Caveman-exception boundary:** full English applies only to user-facing rendered text under `web/content/**` and page-body JSX strings in `web/app/**/page.tsx`. App shell code, identifiers, comments, commits, IA prose stay caveman. Authority: `ia/rules/agent-output-caveman.md` §exceptions.
 

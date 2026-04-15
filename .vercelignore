@@ -7,11 +7,8 @@ ProjectSettings/
 UserSettings/
 Temp/
 
-# IA/tools — not needed for web build (ia/projects/ IS needed)
-ia/specs/
-ia/rules/
-ia/skills/
-ia/templates/
+# IA/tools — not needed for web build (runtime fetches master plans from GitHub raw via ISR)
+ia/
 tools/
 docs/
 
