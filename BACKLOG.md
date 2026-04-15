@@ -310,11 +310,45 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ## Blip audio program
 
-Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra (all four stages archived). Step 2 in progress — Stage 2.1 archived. Stage 2.2 archived 2026-04-15 (TECH-169..TECH-174). Stage 2.3 closed 2026-04-15 (TECH-188..TECH-191 all archived). Stage 2.4 closed 2026-04-15 (TECH-196..TECH-199 all archived). Step 3 opened 2026-04-15 — Stage 3.1 closed 2026-04-15 (TECH-209..TECH-212 all archived — 5 UI/Eco/Sys patches + 5 World patches + mixer/catalog wiring + PlayMode smoke). Stages 3.2–3.4 remain in master plan; file rows when parent stage → `In Progress`.
+Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra (all four stages archived). Step 2 in progress — Stage 2.1 archived. Stage 2.2 archived 2026-04-15 (TECH-169..TECH-174). Stage 2.3 closed 2026-04-15 (TECH-188..TECH-191 all archived). Stage 2.4 closed 2026-04-15 (TECH-196..TECH-199 all archived). Step 3 opened 2026-04-15 — Stage 3.1 closed 2026-04-15 (TECH-209..TECH-212 all archived — 5 UI/Eco/Sys patches + 5 World patches + mixer/catalog wiring + PlayMode smoke). Stage 3.2 opened 2026-04-15 — 4 tasks filed below (MainMenu click + hover + economy earn/spend + save-complete call sites). Stages 3.3–3.4 remain in master plan; file rows when parent stage → `In Progress`.
 
 ### Stage 3.1 — Patch authoring + catalog wiring
 
 _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 3.2 — UI + Eco + Sys call sites
+
+- [ ] **TECH-215** — MainMenuController UiButtonClick call sites (Stage 3.2 Phase 1)
+  - Type: feature wiring / audio integration
+  - Files: `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`
+  - Spec: `ia/projects/TECH-215.md`
+  - Notes: Add `BlipEngine.Play(BlipId.UiButtonClick)` as first statement in `OnContinueClicked`, `OnNewGameClicked`, `OnLoadCityClicked`, `OnOptionsClicked`, `CloseLoadCityPanel`, `CloseOptionsPanel`. Static facade — no new fields; no `FindObjectOfType` on hot path (invariants #3, #4). Patch + mixer routing live from Stage 3.1 (TECH-209 / TECH-211).
+  - Acceptance: all 6 click handlers fire click SFX; `npm run unity:compile-check` green; `npm run validate:all` green.
+  - Depends on: none
+
+- [ ] **TECH-216** — MainMenuController UiButtonHover call sites (Stage 3.2 Phase 1)
+  - Type: feature wiring / audio integration
+  - Files: `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`
+  - Spec: `ia/projects/TECH-216.md`
+  - Notes: Programmatic `EventTrigger` add per Button field in `RegisterButtonListeners` / `Start` (line ~133). Helper `AddHoverBlip(Button)` — `GetOrAddComponent<EventTrigger>` + `PointerEnter` entry firing `BlipEngine.Play(BlipId.UiButtonHover)`. No new fields; keeps diff code-only (no prefab churn).
+  - Acceptance: hover SFX fires on each of 6 MainMenu buttons; `npm run unity:compile-check` green; `npm run validate:all` green.
+  - Depends on: **TECH-215** (soft — same file, land in order)
+
+- [ ] **TECH-217** — EconomyManager money earn/spend Blip call sites (Stage 3.2 Phase 2)
+  - Type: feature wiring / audio integration
+  - Files: `Assets/Scripts/Managers/GameManagers/EconomyManager.cs`
+  - Spec: `ia/projects/TECH-217.md`
+  - Notes: `AddMoney` line ~205 → `BlipEngine.Play(BlipId.EcoMoneyEarned)` after `cityStats.AddMoney`. `SpendMoney` success branch line ~169 → `if (notifyInsufficientFunds) BlipEngine.Play(BlipId.EcoMoneySpent);` — reuses existing interactive-call flag so `ChargeMonthlyMaintenance` (passes `notifyInsufficientFunds: false` line ~101) stays silent.
+  - Acceptance: interactive earn + spend fire SFX; monthly maintenance silent; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: none
+
+- [ ] **TECH-218** — GameSaveManager save-complete Blip call site (Stage 3.2 Phase 2)
+  - Type: feature wiring / audio integration
+  - Files: `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs`
+  - Spec: `ia/projects/TECH-218.md`
+  - Notes: Add `BlipEngine.Play(BlipId.SysSaveGame)` after `File.WriteAllText` in `SaveGame` (line ~69) + `TryWriteGameSaveToPath` (line ~91). Patch SO cooldown 2 s via `BlipCooldownRegistry` gates hotkey burst — no additional guard. Failure path (exception) stays silent — Blip call not reached.
+  - Acceptance: save-success fires SFX; save failure silent; cooldown prevents burst; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: none
 
 ### Stage 1.1 — Audio infrastructure + persistent bootstrap
 

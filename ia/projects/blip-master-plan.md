@@ -385,7 +385,7 @@
 
 #### Stage 3.2 — UI + Eco + Sys call sites
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — tasks filed 2026-04-15 (TECH-215..TECH-218 Draft)
 
 **Objectives:** `BlipEngine.Play` wired at MainMenu button hover/click + money earn/spend + save-complete. Six `BlipId` values active in game: `UiButtonHover`, `UiButtonClick`, `EcoMoneyEarned`, `EcoMoneySpent`, `SysSaveGame`. No world-lane sounds yet.
 
@@ -405,10 +405,10 @@
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T3.2.1 | 1 | _pending_ | _pending_ | `MainMenuController.cs` — add `BlipEngine.Play(BlipId.UiButtonClick)` as first statement in each of: `OnContinueClicked`, `OnNewGameClicked`, `OnLoadCityClicked`, `OnOptionsClicked`, `CloseLoadCityPanel`, `CloseOptionsPanel`. No `FindObjectOfType` introduced — `BlipEngine` is static facade (invariant #3). |
-| T3.2.2 | 1 | _pending_ | _pending_ | `MainMenuController.cs` — in `RegisterButtonListeners` / `Start` (where `onClick.AddListener` calls live, line ~133): for each `Button` field (`continueButton`, `newGameButton`, `loadCityButton`, `optionsButton`, `loadCityBackButton`, `optionsBackButton`), call `GetOrAddComponent<EventTrigger>()` + add `EventTriggerType.PointerEnter` entry invoking `BlipEngine.Play(BlipId.UiButtonHover)`. No new fields; no new singletons (invariant #4). |
-| T3.2.3 | 2 | _pending_ | _pending_ | `EconomyManager.cs` — add `BlipEngine.Play(BlipId.EcoMoneyEarned)` after `cityStats.AddMoney(amount)` in `AddMoney` (line ~205). Add `BlipEngine.Play(BlipId.EcoMoneySpent)` after `cityStats.RemoveMoney(amount)` in success branch of `SpendMoney` (line ~169). Monthly-maintenance path (`ChargeMonthlyMaintenance` → `SpendMoney`) must NOT fire — guard with `notifyInsufficientFunds == true` condition or add private overload with `bool fireBlip = true`. |
-| T3.2.4 | 2 | _pending_ | _pending_ | `GameSaveManager.cs` — add `BlipEngine.Play(BlipId.SysSaveGame)` after `File.WriteAllText(path, ...)` in `SaveGame` (line ~69) and after equivalent write in `TryWriteGameSaveToPath` (line ~91). 2 s cooldown in patch SO `cooldownMs = 2000`; `BlipCooldownRegistry` gates rapid manual saves — no additional guard. `npm run unity:compile-check` green. |
+| T3.2.1 | 1 | **TECH-215** | Draft | `MainMenuController.cs` — add `BlipEngine.Play(BlipId.UiButtonClick)` as first statement in each of: `OnContinueClicked`, `OnNewGameClicked`, `OnLoadCityClicked`, `OnOptionsClicked`, `CloseLoadCityPanel`, `CloseOptionsPanel`. No `FindObjectOfType` introduced — `BlipEngine` is static facade (invariant #3). |
+| T3.2.2 | 1 | **TECH-216** | Draft | `MainMenuController.cs` — in `RegisterButtonListeners` / `Start` (where `onClick.AddListener` calls live, line ~133): for each `Button` field (`continueButton`, `newGameButton`, `loadCityButton`, `optionsButton`, `loadCityBackButton`, `optionsBackButton`), call `GetOrAddComponent<EventTrigger>()` + add `EventTriggerType.PointerEnter` entry invoking `BlipEngine.Play(BlipId.UiButtonHover)`. No new fields; no new singletons (invariant #4). |
+| T3.2.3 | 2 | **TECH-217** | Draft | `EconomyManager.cs` — add `BlipEngine.Play(BlipId.EcoMoneyEarned)` after `cityStats.AddMoney(amount)` in `AddMoney` (line ~205). Add `BlipEngine.Play(BlipId.EcoMoneySpent)` after `cityStats.RemoveMoney(amount)` in success branch of `SpendMoney` (line ~169). Monthly-maintenance path (`ChargeMonthlyMaintenance` → `SpendMoney`) must NOT fire — guard with `notifyInsufficientFunds == true` condition or add private overload with `bool fireBlip = true`. |
+| T3.2.4 | 2 | **TECH-218** | Draft | `GameSaveManager.cs` — add `BlipEngine.Play(BlipId.SysSaveGame)` after `File.WriteAllText(path, ...)` in `SaveGame` (line ~69) and after equivalent write in `TryWriteGameSaveToPath` (line ~91). 2 s cooldown in patch SO `cooldownMs = 2000`; `BlipCooldownRegistry` gates rapid manual saves — no additional guard. `npm run unity:compile-check` green. |
 
 #### Stage 3.3 — World lane call sites
 
