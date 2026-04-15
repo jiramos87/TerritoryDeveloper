@@ -318,22 +318,6 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ### Stage 3.2 — UI + Eco + Sys call sites
 
-- [ ] **TECH-215** — MainMenuController UiButtonClick call sites (Stage 3.2 Phase 1)
-  - Type: feature wiring / audio integration
-  - Files: `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`
-  - Spec: `ia/projects/TECH-215.md`
-  - Notes: Add `BlipEngine.Play(BlipId.UiButtonClick)` as first statement in `OnContinueClicked`, `OnNewGameClicked`, `OnLoadCityClicked`, `OnOptionsClicked`, `CloseLoadCityPanel`, `CloseOptionsPanel`. Static facade — no new fields; no `FindObjectOfType` on hot path (invariants #3, #4). Patch + mixer routing live from Stage 3.1 (TECH-209 / TECH-211).
-  - Acceptance: all 6 click handlers fire click SFX; `npm run unity:compile-check` green; `npm run validate:all` green.
-  - Depends on: none
-
-- [ ] **TECH-216** — MainMenuController UiButtonHover call sites (Stage 3.2 Phase 1)
-  - Type: feature wiring / audio integration
-  - Files: `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`
-  - Spec: `ia/projects/TECH-216.md`
-  - Notes: Programmatic `EventTrigger` add per Button field in `RegisterButtonListeners` / `Start` (line ~133). Helper `AddHoverBlip(Button)` — `GetOrAddComponent<EventTrigger>` + `PointerEnter` entry firing `BlipEngine.Play(BlipId.UiButtonHover)`. No new fields; keeps diff code-only (no prefab churn).
-  - Acceptance: hover SFX fires on each of 6 MainMenu buttons; `npm run unity:compile-check` green; `npm run validate:all` green.
-  - Depends on: **TECH-215** (soft — same file, land in order)
-
 - [ ] **TECH-217** — EconomyManager money earn/spend Blip call sites (Stage 3.2 Phase 2)
   - Type: feature wiring / audio integration
   - Files: `Assets/Scripts/Managers/GameManagers/EconomyManager.cs`

@@ -4,6 +4,8 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
+using Territory.Audio;
 using Territory.Persistence;
 
 namespace Territory.UI
@@ -48,6 +50,7 @@ public class MainMenuController : MonoBehaviour
         ApplyMenuThemeIfAny();
         ApplyMenuOverlayPanelsFromTheme();
         UpdateContinueButtonState();
+        WireHoverBlips();
     }
 
     /// <summary>
@@ -359,6 +362,7 @@ public class MainMenuController : MonoBehaviour
 
     public void OnContinueClicked()
     {
+        BlipEngine.Play(BlipId.UiButtonClick);
         string path = GetMostRecentSavePath();
         if (string.IsNullOrEmpty(path))
             return;
@@ -368,12 +372,14 @@ public class MainMenuController : MonoBehaviour
 
     public void OnNewGameClicked()
     {
+        BlipEngine.Play(BlipId.UiButtonClick);
         GameStartInfo.SetStartModeNewGame();
         SceneManager.LoadScene(MainSceneBuildIndex);
     }
 
     public void OnLoadCityClicked()
     {
+        BlipEngine.Play(BlipId.UiButtonClick);
         if (loadCityPanel != null)
         {
             loadCityPanel.SetActive(true);
@@ -496,20 +502,47 @@ public class MainMenuController : MonoBehaviour
 
     private void CloseLoadCityPanel()
     {
+        BlipEngine.Play(BlipId.UiButtonClick);
         if (loadCityPanel != null)
             loadCityPanel.SetActive(false);
     }
 
     public void OnOptionsClicked()
     {
+        BlipEngine.Play(BlipId.UiButtonClick);
         if (optionsPanel != null)
             optionsPanel.SetActive(true);
     }
 
     private void CloseOptionsPanel()
     {
+        BlipEngine.Play(BlipId.UiButtonClick);
         if (optionsPanel != null)
             optionsPanel.SetActive(false);
+    }
+
+    // -------------------------------------------------------------------------
+    // Hover blip wiring — programmatic EventTrigger, no new fields.
+    // Called once in Start() after BuildUI/WireExistingUI populates all buttons.
+    // -------------------------------------------------------------------------
+
+    private void AddHoverBlip(Button btn)
+    {
+        if (btn == null) return;
+        var trig = btn.GetComponent<EventTrigger>() ?? btn.gameObject.AddComponent<EventTrigger>();
+        var entry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        entry.callback.AddListener(_ => BlipEngine.Play(BlipId.UiButtonHover));
+        trig.triggers.Add(entry);
+    }
+
+    private void WireHoverBlips()
+    {
+        AddHoverBlip(continueButton);
+        AddHoverBlip(newGameButton);
+        AddHoverBlip(loadCityButton);
+        AddHoverBlip(optionsButton);
+        AddHoverBlip(loadCityBackButton);
+        AddHoverBlip(optionsBackButton);
     }
 }
 }

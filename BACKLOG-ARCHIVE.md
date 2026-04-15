@@ -2,6 +2,14 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
+- [x] **TECH-215** — MainMenuController UiButtonClick call sites (Stage 3.2 Phase 1) (2026-04-15)
+  - Type: feature wiring / audio integration
+  - Files: `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`
+  - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+  - Notes: Added `using Territory.Audio;` + inserted `BlipEngine.Play(BlipId.UiButtonClick)` as first statement in 6 click handlers (`OnContinueClicked`, `OnNewGameClicked`, `OnLoadCityClicked`, `OnOptionsClicked`, `CloseLoadCityPanel`, `CloseOptionsPanel`). Static facade — no new fields, no `FindObjectOfType` (invariants #3, #4). First audible Blip call site. Decision Log — per-handler explicit `Play` over EventSystem listener interception (preserves per-button granularity).
+  - Acceptance: all 6 handlers fire click SFX; `npm run unity:compile-check` green; `npm run validate:all` green.
+  - Depends on: none
+
 - [x] **TECH-212** — BlipCatalog PlayMode smoke (Stage 3.1 Phase 2) (2026-04-15)
   - Type: infrastructure / tests
   - Files: `Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs`
@@ -430,6 +438,14 @@
 ---
 
 ## Completed (moved from BACKLOG.md, 2026-04-15)
+
+- [x] **TECH-216** — MainMenuController UiButtonHover call sites (Stage 3.2 Phase 1) (2026-04-15)
+  - Type: feature wiring / audio integration
+  - Files: `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`
+  - Spec: (removed at closeout — journal persisted Decision Log)
+  - Notes: Added `AddHoverBlip(Button)` + `WireHoverBlips()` private helpers; programmatic `EventTrigger` `PointerEnter` entry fires `BlipEngine.Play(BlipId.UiButtonHover)` on each of 6 MainMenu buttons. Single call site in `Start()` post-branch covers both `BuildUI()` + `WireExistingUI()` paths. No new fields; cooldown owned by `BlipCooldownRegistry` via patch SO.
+  - Acceptance: 6 buttons wired; `npm run unity:compile-check` green; `npm run validate:all` green.
+  - Depends on: **TECH-215** (archived — soft, same file)
 
 - [x] **TECH-213** — Legacy `docs/progress.html` live dashboard banner link (2026-04-15)
   - Type: web (docs / legacy handoff)
