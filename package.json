@@ -36,6 +36,8 @@
     "scenario:build-from-descriptor": "node tools/fixtures/scenarios/build-scenario-from-descriptor.mjs",
     "verify:local": "bash tools/scripts/verify-local.sh",
     "verify:post-implementation": "npm run verify:local",
-    "progress": "node tools/progress-tracker/index.mjs"
+    "progress": "node tools/progress-tracker/index.mjs",
+    "deploy:web": "bash tools/scripts/vercel-deploy.sh",
+    "deploy:web:preview": "bash tools/scripts/vercel-deploy.sh --preview"
   }
 }

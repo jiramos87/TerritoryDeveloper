@@ -68,6 +68,7 @@ Run in order. N/A → state why in chat.
 8. **Cascade** — `npm run validate:dead-project-specs`; fix hits or advisory with reason.
 9. **BACKLOG + archive** — Remove row from BACKLOG. Append `[x]` row with date to BACKLOG-ARCHIVE; `Spec:` → removed-after-closure pattern; Notes cite where content migrated.
 9b. **Regenerate progress dashboard** — `npm run progress` (repo root). Reflects `Done (archived)` state in `docs/progress.html`. Deterministic — no diff when already current. Log exit code; failure does NOT block close (tooling-only).
+9c. **Deploy web dashboard** — `npm run deploy:web` (repo root). Pushes current master-plan state to https://web-nine-wheat-35.vercel.app/dashboard. Script auto-prunes deployments older than newest 3. Log exit code; failure does NOT block close (network/Vercel issue — retry manually with `npm run deploy:web`).
 10. **Id purge** — Per section above for `{ISSUE_ID}`.
 11. **I1** — If glossary/spec bodies changed, `npm run generate:ia-indexes` + `--check`.
 

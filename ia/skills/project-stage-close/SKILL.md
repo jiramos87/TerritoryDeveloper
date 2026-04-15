@@ -86,6 +86,10 @@ Reusable insights as bullets. Accumulate across stages — umbrella close migrat
 
 Run `npm run progress` from repo root. This regenerates `docs/progress.html` to reflect the stage-status flip. Output is deterministic — no change when master-plan state was already current. Log the exit code; failure does NOT block handoff (tooling-only, no IA impact), but report in handoff message.
 
+### 7c. Deploy web dashboard
+
+Run `npm run deploy:web` from repo root. Refreshes https://web-nine-wheat-35.vercel.app/dashboard so the next stage can visually confirm current master-plan state. Script auto-prunes deployments older than newest 3. Log exit code; failure does NOT block handoff (network/Vercel issue, not IA), but report in handoff message.
+
 ### 8. Emit handoff message
 
 Fenced markdown block for verbatim paste into fresh agent session. Must include: issue id + closed stage, branch state, verification summary (exit codes), spec pointer ("read §5.3, §6, §9, §10, and next-stage §7 phases first"), inherited blockers/decisions, hard boundaries ("do NOT" list), final instruction ("execute {NEXT_STAGE_ID} phases in order, then `project-stage-close`").

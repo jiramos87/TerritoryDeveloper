@@ -21,3 +21,6 @@ docs/
 *.asset
 node_modules/
 .git/
+*.csproj
+*.sln
+Bury_*.json

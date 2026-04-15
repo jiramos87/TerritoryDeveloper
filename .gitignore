@@ -75,3 +75,4 @@ tools/sprite-gen/out/
 # Python bytecode
 __pycache__/
 *.pyc
+.vercel
