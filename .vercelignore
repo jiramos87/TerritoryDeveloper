@@ -1,0 +1,23 @@
+# Unity project files — never needed for web build
+Assets/
+Library/
+Logs/
+Packages/
+ProjectSettings/
+UserSettings/
+Temp/
+
+# IA/tools — not needed for web build (ia/projects/ IS needed)
+ia/specs/
+ia/rules/
+ia/skills/
+ia/templates/
+tools/
+docs/
+
+# Misc
+*.meta
+*.unity
+*.asset
+node_modules/
+.git/
