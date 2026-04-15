@@ -158,7 +158,7 @@ export async function loadGlossaryTerms(): Promise<GlossaryTerm[]> {
   } catch (err) {
     const e = err as NodeJS.ErrnoException;
     if (e.code === 'ENOENT') {
-      throw new Error(`Glossary file not found at: ${filePath}`);
+      return [];
     }
     throw err;
   }
