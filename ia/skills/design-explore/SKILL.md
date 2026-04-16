@@ -205,5 +205,5 @@ Run in order. Skip `invariants_summary` for tooling/pipeline-only designs that t
 
 After persist: if expansion validates, propose one of:
 
-- **Master plan** — create `ia/projects/{slug}-master-plan.md` for multi-stage work (most expansions)
-- **Single issue** — invoke [`project-new`](../project-new/SKILL.md) for designs narrow enough to fit one backlog issue
+- **Master plan** — `claude-personal "/master-plan-new {DOC_PATH}"` for multi-stage work (most expansions)
+- **Single issue** — `claude-personal "/project-new ..."` for designs narrow enough to fit one backlog issue

@@ -37,4 +37,4 @@ Forward via Agent tool with `subagent_type: "stage-decompose"`:
 >
 > ## Output
 >
-> Single caveman message: orchestrator edited, step N decomposed (N stages · M phases · K tasks, all `_pending_`), cardinality gate outcome, deferred section updated, next step (`/stage-file {spec} Stage {STEP_ID}.1` when Step {STEP_ID-1} closes).
+> Single caveman message: orchestrator edited, step N decomposed (N stages · M phases · K tasks, all `_pending_`), cardinality gate outcome, deferred section updated, next step (`claude-personal "/stage-file {spec} Stage {STEP_ID}.1"` when Step {STEP_ID-1} closes).

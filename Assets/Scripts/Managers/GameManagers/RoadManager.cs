@@ -9,6 +9,7 @@ using Territory.Persistence;
 using Territory.UI;
 using Territory.Zones;
 using Territory.Utilities;
+using Territory.Audio;
 
 namespace Territory.Roads
 {
@@ -246,6 +247,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
         for (int i = 0; i < resolved.Count; i++)
         {
             PlaceRoadTileFromResolved(resolved[i]);
+            BlipEngine.Play(BlipId.ToolRoadTick);
             UpdateAdjacentRoadPrefabsAt(new Vector2(resolved[i].gridPos.x, resolved[i].gridPos.y));
         }
         RefreshAllAdjacentRoadsOutsidePath();
@@ -257,6 +259,7 @@ public class RoadManager : MonoBehaviour, IRoadManager
             RefreshRoadPrefabAt(new Vector2(resolved[i].gridPos.x, resolved[i].gridPos.y));
         }
         cityStats.AddPowerConsumption(resolved.Count * ZoneAttributes.Road.PowerConsumption);
+        BlipEngine.Play(BlipId.ToolRoadComplete);
         return true;
     }
 

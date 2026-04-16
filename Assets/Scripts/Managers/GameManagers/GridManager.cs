@@ -12,6 +12,7 @@ using Territory.Buildings;
 using Territory.Roads;
 using Territory.Timing;
 using Territory.Utilities.Compute;
+using Territory.Audio;
 
 namespace Territory.Core
 {
@@ -389,6 +390,7 @@ public class GridManager : MonoBehaviour, IGridManager
             if (Input.GetMouseButtonDown(0))
             {
                 selectedPoint = mouseGridPosition;
+                BlipEngine.Play(BlipId.WorldCellSelected);
             }
             else if (Input.GetMouseButtonDown(1))
             {
@@ -397,6 +399,7 @@ public class GridManager : MonoBehaviour, IGridManager
             else if (Input.GetMouseButtonUp(1) && cameraController != null && !cameraController.WasLastRightClickAPan && IsValidGridPosition(pendingRightClickGridPosition))
             {
                 selectedPoint = pendingRightClickGridPosition;
+                BlipEngine.Play(BlipId.WorldCellSelected);
             }
 
             if (uiManager.isBulldozeMode())

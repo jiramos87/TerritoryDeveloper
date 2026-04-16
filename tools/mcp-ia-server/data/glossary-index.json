@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-14T19:11:45.972Z",
+  "last_generated": "2026-04-16T11:03:59.004Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -423,25 +423,41 @@
       "spec_key": "persistence-system",
       "anchor": "load-pipeline"
     },
+    "Bake-to-clip": {
+      "spec_key": "ia",
+      "anchor": "specs-audio-blip-md-5-1"
+    },
     "Blip bootstrap": {
       "spec_key": "ia",
-      "anchor": "projects-blip-master-plan-md-stage-1-1"
+      "anchor": "specs-audio-blip-md-5-1"
+    },
+    "Blip cooldown": {
+      "spec_key": "ia",
+      "anchor": "specs-audio-blip-md-5-5"
     },
     "Blip mixer group": {
       "spec_key": "ia",
-      "anchor": "projects-blip-master-plan-md-stage-1-1"
+      "anchor": "specs-audio-blip-md-5-4"
     },
     "Blip patch": {
       "spec_key": "ia",
-      "anchor": "projects-blip-master-plan-md-stage-1-2"
+      "anchor": "specs-audio-blip-md-4-1"
     },
     "Blip patch flat": {
       "spec_key": "ia",
-      "anchor": "projects-blip-master-plan-md-stage-1-2"
+      "anchor": "specs-audio-blip-md-2"
+    },
+    "Blip variant": {
+      "spec_key": "ia",
+      "anchor": "specs-audio-blip-md-4-1"
+    },
+    "Patch flatten": {
+      "spec_key": "ia",
+      "anchor": "specs-audio-blip-md-2"
     },
     "patch hash": {
       "spec_key": "ia",
-      "anchor": "projects-blip-master-plan-md-stage-1-2"
+      "anchor": "specs-audio-blip-md-4-3"
     },
     "Land slope prefabs": {
       "spec_key": "isometric-geography-system",

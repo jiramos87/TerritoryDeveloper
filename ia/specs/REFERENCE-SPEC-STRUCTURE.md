@@ -35,6 +35,7 @@ Permanent **reference specs** live here as `*.md` files. They are the long-lived
 5. **Reusable IA pattern** — Domain-agnostic guide to file-backed specs + MCP tools: [`docs/mcp-markdown-ia-pattern.md`](../../docs/mcp-markdown-ia-pattern.md).
 6. **agent-router task domains** — When adding rows to [`ia/rules/agent-router.md`](../rules/agent-router.md) (**Task → Spec routing**), phrase **Task domain** cells so MCP **`router_for_task`** does not mis-route: matching uses substring overlap and tokens (length ≥ 3). For example, wording such as “not isometric **math**” can match a user query **“grid math”** (token `math`) and return the wrong spec before the geography quick-reference table. Prefer distinct wording (e.g. “stacking rules” when contrasting with isometric **Sorting order**).
 7. **IA index manifests (I1 / I2)** — After material edits to `ia/specs/*.md` or `glossary.md`, run `npm run generate:ia-indexes` from the repository root and commit `tools/mcp-ia-server/data/spec-index.json` and `glossary-index.json` so **CI** stays green (`generate:ia-indexes -- --check`). See [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) and glossary **IA index manifest**.
+8. **Registry-count gate** — Adding or removing an `ia/specs/*.md` flips the hardcoded expected entry count in [`tools/mcp-ia-server/tests/tools/build-registry.test.ts`](../../tools/mcp-ia-server/tests/tools/build-registry.test.ts). Bump the `assert.equal(r.length, N)` value (and `rules.length` if a rule file moved) in the same diff — the test is a CI gate for registry completeness, `npm run validate:all` fails otherwise.
 
 ## Terminology
 
@@ -47,7 +48,8 @@ Permanent **reference specs** live here as `*.md` files. They are the long-lived
 1. Add a row to the `ia/specs/` inventory table in [`AGENTS.md`](../../AGENTS.md) (scope column).
 2. Use the **minimal template** below as a starting point.
 3. If agents should call it by a short MCP key, add `SPEC_KEY_ALIASES` entries in [`tools/mcp-ia-server/src/config.ts`](../../tools/mcp-ia-server/src/config.ts) and update [`docs/mcp-ia-server.md`](../../docs/mcp-ia-server.md) / [`tools/mcp-ia-server/README.md`](../../tools/mcp-ia-server/README.md) if those docs list aliases.
-4. Do not place active issue narratives here — use [`BACKLOG.md`](../../BACKLOG.md) and `ia/projects/{ISSUE_ID}.md`.
+4. Bump the expected entry count in [`tools/mcp-ia-server/tests/tools/build-registry.test.ts`](../../tools/mcp-ia-server/tests/tools/build-registry.test.ts) (`assert.equal(r.length, N)`) in the same diff — CI registry-completeness gate.
+5. Do not place active issue narratives here — use [`BACKLOG.md`](../../BACKLOG.md) and `ia/projects/{ISSUE_ID}.md`.
 
 ## Minimal template (copy for a new `*.md`)
 

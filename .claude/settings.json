@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "tools/scripts/claude-hooks/session-start-prewarm.sh"
+            "command": "/Users/javier/bacayo-studio/territory-developer/tools/scripts/claude-hooks/session-start-prewarm.sh"
           }
         ]
       }
@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "tools/scripts/claude-hooks/bash-denylist.sh"
+            "command": "/Users/javier/bacayo-studio/territory-developer/tools/scripts/claude-hooks/bash-denylist.sh"
           }
         ]
       }
@@ -62,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "tools/scripts/claude-hooks/cs-edit-reminder.sh"
+            "command": "/Users/javier/bacayo-studio/territory-developer/tools/scripts/claude-hooks/cs-edit-reminder.sh"
           }
         ]
       }
@@ -72,7 +72,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "tools/scripts/claude-hooks/verification-reminder.sh"
+            "command": "/Users/javier/bacayo-studio/territory-developer/tools/scripts/claude-hooks/verification-reminder.sh"
           }
         ]
       }

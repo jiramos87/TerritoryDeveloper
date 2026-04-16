@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-14T19:11:45.969Z",
+  "last_generated": "2026-04-16T11:03:59.001Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -35,43 +35,229 @@
           "section_id": "terminology",
           "title": "Terminology",
           "depth": 2,
-          "line_start": 39
+          "line_start": 40
         },
         {
           "section_id": "new-reference-spec-checklist",
           "title": "New reference spec checklist",
           "depth": 2,
-          "line_start": 45
+          "line_start": 46
         },
         {
           "section_id": "minimal-template-copy-for-a-new-md",
           "title": "Minimal template (copy for a new `*.md`)",
           "depth": 2,
-          "line_start": 52
+          "line_start": 54
         },
         {
           "section_id": "title-territory-developer",
           "title": "{Title} — Territory Developer",
           "depth": 1,
-          "line_start": 55
+          "line_start": 57
         },
         {
           "section_id": "1",
           "title": "1. …",
           "depth": 2,
-          "line_start": 59
+          "line_start": 61
         },
         {
           "section_id": "glossary-alignment",
           "title": "Glossary alignment",
           "depth": 2,
-          "line_start": 63
+          "line_start": 65
         },
         {
           "section_id": "deprecated-prose-canonical-terms-authoring",
           "title": "Deprecated prose → canonical terms (authoring)",
           "depth": 2,
-          "line_start": 68
+          "line_start": 70
+        }
+      ]
+    },
+    {
+      "key": "audio-blip",
+      "path": "ia/specs/audio-blip.md",
+      "sections": [
+        {
+          "section_id": "blip-audio-sfx-reference-spec",
+          "title": "Blip — Audio SFX Reference Spec",
+          "depth": 1,
+          "line_start": 7
+        },
+        {
+          "section_id": "1",
+          "title": "1. Purpose",
+          "depth": 2,
+          "line_start": 11
+        },
+        {
+          "section_id": "2",
+          "title": "2. Domain vocabulary",
+          "depth": 2,
+          "line_start": 23
+        },
+        {
+          "section_id": "3",
+          "title": "3. DSP kernel",
+          "depth": 2,
+          "line_start": 42
+        },
+        {
+          "section_id": "3.1",
+          "title": "3.1 Render signature",
+          "depth": 3,
+          "line_start": 44
+        },
+        {
+          "section_id": "3.2",
+          "title": "3.2 BlipVoiceState fields",
+          "depth": 3,
+          "line_start": 55
+        },
+        {
+          "section_id": "3.3",
+          "title": "3.3 Oscillator bank (MVP)",
+          "depth": 3,
+          "line_start": 70
+        },
+        {
+          "section_id": "3.4",
+          "title": "3.4 AHDSR envelope",
+          "depth": 3,
+          "line_start": 84
+        },
+        {
+          "section_id": "3.5",
+          "title": "3.5 One-pole low-pass filter (MVP)",
+          "depth": 3,
+          "line_start": 99
+        },
+        {
+          "section_id": "3.6",
+          "title": "3.6 Jitter",
+          "depth": 3,
+          "line_start": 105
+        },
+        {
+          "section_id": "4",
+          "title": "4. Authoring",
+          "depth": 2,
+          "line_start": 109
+        },
+        {
+          "section_id": "4.1",
+          "title": "4.1 BlipPatch SO fields",
+          "depth": 3,
+          "line_start": 111
+        },
+        {
+          "section_id": "4.2",
+          "title": "4.2 OnValidate clamps",
+          "depth": 3,
+          "line_start": 134
+        },
+        {
+          "section_id": "4.3",
+          "title": "4.3 patchHash policy",
+          "depth": 3,
+          "line_start": 138
+        },
+        {
+          "section_id": "4.4",
+          "title": "4.4 Inspector-only workflow (MVP)",
+          "depth": 3,
+          "line_start": 142
+        },
+        {
+          "section_id": "5",
+          "title": "5. Runtime architecture",
+          "depth": 2,
+          "line_start": 148
+        },
+        {
+          "section_id": "5.1",
+          "title": "5.1 Component map",
+          "depth": 3,
+          "line_start": 150
+        },
+        {
+          "section_id": "5.2",
+          "title": "5.2 Init order and lifecycle",
+          "depth": 3,
+          "line_start": 173
+        },
+        {
+          "section_id": "5.3",
+          "title": "5.3 Thread rules",
+          "depth": 3,
+          "line_start": 180
+        },
+        {
+          "section_id": "5.4",
+          "title": "5.4 BlipMixerRouter placement rationale",
+          "depth": 3,
+          "line_start": 188
+        },
+        {
+          "section_id": "5.5",
+          "title": "5.5 BlipCooldownRegistry placement",
+          "depth": 3,
+          "line_start": 192
+        },
+        {
+          "section_id": "6",
+          "title": "6. Call-site integration",
+          "depth": 2,
+          "line_start": 196
+        },
+        {
+          "section_id": "7",
+          "title": "7. Fixture + regression gate",
+          "depth": 2,
+          "line_start": 214
+        },
+        {
+          "section_id": "7.1",
+          "title": "7.1 Fixture schema",
+          "depth": 3,
+          "line_start": 216
+        },
+        {
+          "section_id": "7.2",
+          "title": "7.2 Tolerance",
+          "depth": 3,
+          "line_start": 228
+        },
+        {
+          "section_id": "7.3",
+          "title": "7.3 Bake script",
+          "depth": 3,
+          "line_start": 236
+        },
+        {
+          "section_id": "7.4",
+          "title": "7.4 EditMode test",
+          "depth": 3,
+          "line_start": 240
+        },
+        {
+          "section_id": "8",
+          "title": "8. Post-MVP extensions pointer",
+          "depth": 2,
+          "line_start": 244
+        },
+        {
+          "section_id": "9",
+          "title": "9. Invariants + guardrails",
+          "depth": 2,
+          "line_start": 255
+        },
+        {
+          "section_id": "10",
+          "title": "10. Cross-refs",
+          "depth": 2,
+          "line_start": 266
         }
       ]
     },
@@ -209,25 +395,25 @@
           "section_id": "prefabs-visual-layer",
           "title": "Prefabs & Visual Layer",
           "depth": 2,
-          "line_start": 213
+          "line_start": 217
         },
         {
           "section_id": "documentation",
           "title": "Documentation",
           "depth": 2,
-          "line_start": 227
+          "line_start": 231
         },
         {
           "section_id": "multi-scale-simulation",
           "title": "Multi-scale simulation",
           "depth": 2,
-          "line_start": 242
+          "line_start": 246
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 269
+          "line_start": 273
         }
       ]
     },

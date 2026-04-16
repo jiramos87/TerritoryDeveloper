@@ -32,6 +32,8 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Button loadCityBackButton;
     [SerializeField] private GameObject optionsPanel;
     [SerializeField] private Button optionsBackButton;
+    private BlipVolumeController _volumeController;
+    private GameObject _menuStripRoot;
 
     private string saveFolderPath;
 
@@ -124,6 +126,14 @@ public class MainMenuController : MonoBehaviour
         if (optionsPanel == null)
             optionsPanel = CreateOptionsPanel(canvasTransform);
 
+        // Detect the menu strip container — parent of the buttons unless it is the Canvas itself.
+        if (continueButton != null)
+        {
+            var parent = continueButton.transform.parent?.gameObject;
+            if (parent != null && parent.GetComponent<Canvas>() == null)
+                _menuStripRoot = parent;
+        }
+
         if (loadCityPanel != null)
             loadCityPanel.SetActive(false);
         if (optionsPanel != null)
@@ -164,6 +174,7 @@ public class MainMenuController : MonoBehaviour
 
         var root = new GameObject("MainMenuRoot");
         root.transform.SetParent(canvasObj.transform, false);
+        _menuStripRoot = root;
         var rootRect = root.AddComponent<RectTransform>();
         rootRect.anchorMin = Vector2.zero;
         rootRect.anchorMax = Vector2.one;
@@ -307,40 +318,213 @@ public class MainMenuController : MonoBehaviour
 
     private GameObject CreateOptionsPanel(Transform canvasTransform)
     {
+        // Full-screen transparent wrapper — navigate approach, no dimmer needed.
         var panel = new GameObject("OptionsPanel");
         panel.transform.SetParent(canvasTransform, false);
         var panelRect = panel.AddComponent<RectTransform>();
         panelRect.anchorMin = Vector2.zero;
         panelRect.anchorMax = Vector2.one;
         panelRect.offsetMin = panelRect.offsetMax = Vector2.zero;
-        panel.AddComponent<Image>().color = new Color(0, 0, 0, 0.7f);
 
-        var content = new GameObject("Content");
-        content.transform.SetParent(panel.transform, false);
-        var contentRect = content.AddComponent<RectTransform>();
-        contentRect.anchorMin = contentRect.anchorMax = new Vector2(0.5f, 0.5f);
-        contentRect.sizeDelta = new Vector2(300, 200);
-        contentRect.anchoredPosition = Vector2.zero;
+        // Card: 1/3 screen width via anchors, vertically centered, 220px tall.
+        var card = new GameObject("Card");
+        card.transform.SetParent(panel.transform, false);
+        var cardRect = card.AddComponent<RectTransform>();
+        cardRect.anchorMin = new Vector2(1f / 3f, 0.5f);
+        cardRect.anchorMax = new Vector2(2f / 3f, 0.5f);
+        cardRect.pivot = new Vector2(0.5f, 0.5f);
+        cardRect.offsetMin = new Vector2(0f, -110f);
+        cardRect.offsetMax = new Vector2(0f, 110f);
+        var cardImg = card.AddComponent<Image>();
+        cardImg.color = menuTheme != null ? menuTheme.SurfaceCardHud : new Color(0.12f, 0.16f, 0.24f, 0.97f);
+        cardImg.sprite = CreateRoundedRectSprite(64, 64, 10);
+        cardImg.type = Image.Type.Sliced;
 
-        var title = new GameObject("Title");
-        title.transform.SetParent(content.transform, false);
-        var titleRect = title.AddComponent<RectTransform>();
-        titleRect.anchorMin = new Vector2(0.5f, 1f);
-        titleRect.anchorMax = new Vector2(0.5f, 1f);
-        titleRect.anchoredPosition = new Vector2(0, -25);
-        titleRect.sizeDelta = new Vector2(200, 30);
-        var titleText = title.AddComponent<Text>();
+        // Title
+        var titleGo = new GameObject("Title");
+        titleGo.transform.SetParent(card.transform, false);
+        var titleRect = titleGo.AddComponent<RectTransform>();
+        titleRect.anchorMin = titleRect.anchorMax = new Vector2(0.5f, 0.5f);
+        titleRect.anchoredPosition = new Vector2(0f, 72f);
+        titleRect.sizeDelta = new Vector2(180f, 30f);
+        var titleText = titleGo.AddComponent<Text>();
         titleText.text = "Options";
         titleText.alignment = TextAnchor.MiddleCenter;
         titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        titleText.fontSize = 24;
+        titleText.fontSize = 22;
         titleText.color = Color.white;
 
-        optionsBackButton = CreateButton(content.transform, "Back", new Vector2(0, -80), 120, 35);
+        // SFX Volume row
+        CreateRowLabel(card.transform, "SFX Volume", posX: -68f, posY: 25f);
+        var sfxSlider = CreateSliderWithVisuals(card.transform, posX: 42f, posY: 25f);
+
+        // Mute SFX row
+        CreateRowLabel(card.transform, "Mute SFX", posX: -68f, posY: -18f);
+        var sfxToggle = CreateToggleWithVisuals(card.transform, posX: 2f, posY: -18f);
+
+        // Back button — same factory as main menu buttons so style matches.
+        optionsBackButton = CreateButton(card.transform, "Back", new Vector2(0f, -70f), 110f, 34f);
         optionsBackButton.onClick.AddListener(CloseOptionsPanel);
+
+        var controller = panel.AddComponent<BlipVolumeController>();
+        controller.Bind(sfxSlider, sfxToggle);
+        controller.InitListeners();
+        _volumeController = controller;
 
         panel.SetActive(false);
         return panel;
+    }
+
+    // -------------------------------------------------------------------------
+    // Options panel helpers
+    // -------------------------------------------------------------------------
+
+    private void CreateRowLabel(Transform parent, string text, float posX, float posY)
+    {
+        var go = new GameObject(text.Replace(" ", "") + "Label");
+        go.transform.SetParent(parent, false);
+        var rect = go.AddComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2(posX, posY);
+        rect.sizeDelta = new Vector2(100f, 24f);
+        var txt = go.AddComponent<Text>();
+        txt.text = text;
+        txt.alignment = TextAnchor.MiddleRight;
+        txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        txt.fontSize = 14;
+        txt.color = new Color(0.85f, 0.85f, 0.85f, 1f);
+    }
+
+    private Slider CreateSliderWithVisuals(Transform parent, float posX, float posY)
+    {
+        var go = new GameObject("SfxVolumeSlider");
+        go.transform.SetParent(parent, false);
+        var rect = go.AddComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2(posX, posY);
+        rect.sizeDelta = new Vector2(130f, 20f);
+
+        var slider = go.AddComponent<Slider>();
+        slider.minValue = 0f;
+        slider.maxValue = 1f;
+        slider.value = 1f;
+
+        // Track
+        var bg = new GameObject("Background");
+        bg.transform.SetParent(go.transform, false);
+        var bgRect = bg.AddComponent<RectTransform>();
+        bgRect.anchorMin = new Vector2(0f, 0.25f);
+        bgRect.anchorMax = new Vector2(1f, 0.75f);
+        bgRect.offsetMin = bgRect.offsetMax = Vector2.zero;
+        bg.AddComponent<Image>().color = new Color(0.22f, 0.22f, 0.32f, 1f);
+
+        // Fill area + fill
+        var fillArea = new GameObject("Fill Area");
+        fillArea.transform.SetParent(go.transform, false);
+        var faRect = fillArea.AddComponent<RectTransform>();
+        faRect.anchorMin = new Vector2(0f, 0.25f);
+        faRect.anchorMax = new Vector2(1f, 0.75f);
+        faRect.offsetMin = new Vector2(5f, 0f);
+        faRect.offsetMax = new Vector2(-5f, 0f);
+        var fill = new GameObject("Fill");
+        fill.transform.SetParent(fillArea.transform, false);
+        var fillRect = fill.AddComponent<RectTransform>();
+        fillRect.anchorMin = Vector2.zero;
+        fillRect.anchorMax = Vector2.one;
+        fillRect.offsetMin = fillRect.offsetMax = Vector2.zero;
+        fill.AddComponent<Image>().color = new Color(0.35f, 0.55f, 0.95f, 1f);
+        slider.fillRect = fillRect;
+
+        // Handle area + handle
+        var handleArea = new GameObject("Handle Slide Area");
+        handleArea.transform.SetParent(go.transform, false);
+        var haRect = handleArea.AddComponent<RectTransform>();
+        haRect.anchorMin = Vector2.zero;
+        haRect.anchorMax = Vector2.one;
+        haRect.offsetMin = new Vector2(10f, 0f);
+        haRect.offsetMax = new Vector2(-10f, 0f);
+        var handle = new GameObject("Handle");
+        handle.transform.SetParent(handleArea.transform, false);
+        var handleRect = handle.AddComponent<RectTransform>();
+        handleRect.anchorMin = handleRect.anchorMax = new Vector2(0f, 0.5f);
+        handleRect.sizeDelta = new Vector2(20f, 20f);
+        var handleImg = handle.AddComponent<Image>();
+        handleImg.color = Color.white;
+        slider.handleRect = handleRect;
+        slider.targetGraphic = handleImg;
+
+        // Blip on drag start
+        var et = go.AddComponent<EventTrigger>();
+        var entry = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
+        entry.callback.AddListener(_ => BlipEngine.Play(BlipId.UiButtonHover));
+        et.triggers.Add(entry);
+
+        return slider;
+    }
+
+    private Toggle CreateToggleWithVisuals(Transform parent, float posX, float posY)
+    {
+        var go = new GameObject("SfxMuteToggle");
+        go.transform.SetParent(parent, false);
+        var rect = go.AddComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2(posX, posY);
+        rect.sizeDelta = new Vector2(24f, 24f);
+
+        var toggle = go.AddComponent<Toggle>();
+
+        // Box background
+        var bg = new GameObject("Background");
+        bg.transform.SetParent(go.transform, false);
+        var bgRect = bg.AddComponent<RectTransform>();
+        bgRect.anchorMin = Vector2.zero;
+        bgRect.anchorMax = Vector2.one;
+        bgRect.offsetMin = bgRect.offsetMax = Vector2.zero;
+        var bgImg = bg.AddComponent<Image>();
+        bgImg.color = new Color(0.22f, 0.22f, 0.32f, 1f);
+        toggle.targetGraphic = bgImg;
+
+        // Checkmark
+        var check = new GameObject("Checkmark");
+        check.transform.SetParent(bg.transform, false);
+        var checkRect = check.AddComponent<RectTransform>();
+        checkRect.anchorMin = new Vector2(0.15f, 0.15f);
+        checkRect.anchorMax = new Vector2(0.85f, 0.85f);
+        checkRect.offsetMin = checkRect.offsetMax = Vector2.zero;
+        var checkImg = check.AddComponent<Image>();
+        checkImg.color = new Color(0.35f, 0.55f, 0.95f, 1f);
+        toggle.graphic = checkImg;
+
+        // Blip on click
+        toggle.onValueChanged.AddListener(_ => BlipEngine.Play(BlipId.UiButtonClick));
+
+        return toggle;
+    }
+
+    /// <summary>Generates a small 9-sliceable rounded-rectangle sprite at runtime.</summary>
+    private static Sprite CreateRoundedRectSprite(int w, int h, int radius)
+    {
+        var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Bilinear;
+        var pixels = new Color32[w * h];
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                float px = x + 0.5f;
+                float py = y + 0.5f;
+                float cx = Mathf.Clamp(px, radius, w - radius);
+                float cy = Mathf.Clamp(py, radius, h - radius);
+                float dx = px - cx, dy = py - cy;
+                byte a = (dx * dx + dy * dy) <= (float)(radius * radius) ? (byte)255 : (byte)0;
+                pixels[y * w + x] = new Color32(255, 255, 255, a);
+            }
+        }
+        tex.SetPixels32(pixels);
+        tex.Apply();
+        float r = radius;
+        return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f),
+            100f, 0, SpriteMeshType.FullRect, new Vector4(r, r, r, r));
     }
 
     private void UpdateContinueButtonState()
@@ -510,6 +694,7 @@ public class MainMenuController : MonoBehaviour
     public void OnOptionsClicked()
     {
         BlipEngine.Play(BlipId.UiButtonClick);
+        ShowMenuStrip(false);
         if (optionsPanel != null)
             optionsPanel.SetActive(true);
     }
@@ -519,6 +704,18 @@ public class MainMenuController : MonoBehaviour
         BlipEngine.Play(BlipId.UiButtonClick);
         if (optionsPanel != null)
             optionsPanel.SetActive(false);
+        ShowMenuStrip(true);
+    }
+
+    private void ShowMenuStrip(bool show)
+    {
+        if (_menuStripRoot != null)
+        {
+            _menuStripRoot.SetActive(show);
+            return;
+        }
+        foreach (var b in new Button[] { continueButton, newGameButton, loadCityButton, optionsButton })
+            if (b != null) b.gameObject.SetActive(show);
     }
 
     // -------------------------------------------------------------------------

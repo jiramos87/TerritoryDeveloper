@@ -200,7 +200,7 @@ Single concise caveman message:
 - Invariant numbers flagged (if any).
 - Cardinality gate: violations resolved / justified.
 - Deferred decomposition section updated.
-- Next step: `/stage-file {ORCHESTRATOR_SPEC} Stage {STEP_ID}.1` when Step {STEP_ID-1} closes.
+- Next step: `claude-personal "/stage-file {ORCHESTRATOR_SPEC} Stage {STEP_ID}.1"` when Step {STEP_ID-1} closes.
 
 ---
 
@@ -251,4 +251,4 @@ Only the target STEP_ID is decomposed; all other deferred steps remain as skelet
 
 ## Next step
 
-After persist: `/stage-file {ORCHESTRATOR_SPEC} Stage {STEP_ID}.1` — but ONLY after Step {STEP_ID-1} reaches `Final`. Do NOT stage-file against a step whose predecessor is still open.
+After persist: `claude-personal "/stage-file {ORCHESTRATOR_SPEC} Stage {STEP_ID}.1"` — but ONLY after Step {STEP_ID-1} reaches `Final`. Do NOT stage-file against a step whose predecessor is still open.

@@ -53,4 +53,4 @@ Forward via Agent tool with `subagent_type: "project-new"`:
 >
 > ## Output
 >
-> Single concise caveman message: issue id + prefix + priority section, spec stub path, glossary terms anchored, router domains matched, Depends on `depends_on_status` summary, `validate:dead-project-specs` exit code, next step (`/kickoff {ISSUE_ID}`).
+> Single concise caveman message: issue id + prefix + priority section, spec stub path, glossary terms anchored, router domains matched, Depends on `depends_on_status` summary, `validate:dead-project-specs` exit code, next step (`claude-personal "/ship {ISSUE_ID}"`).

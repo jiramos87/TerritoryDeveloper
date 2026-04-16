@@ -4,6 +4,7 @@ using Territory.Zones;
 using Territory.Terrain;
 using Territory.Buildings;
 using Territory.UI;
+using Territory.Audio;
 
 namespace Territory.Core
 {
@@ -249,6 +250,7 @@ namespace Territory.Core
                 GameNotificationManager.Instance.PostBuildingConstructed(
                     iBuilding.Prefab.name
                 );
+                BlipEngine.Play(BlipId.ToolBuildingPlace);
             }
             else
             {
@@ -256,6 +258,7 @@ namespace Territory.Core
                 GameNotificationManager.Instance.PostBuildingPlacementError(
                     string.IsNullOrEmpty(reason) ? "Cannot place building here, area is not available." : reason
                 );
+                BlipEngine.Play(BlipId.ToolBuildingDenied);
             }
         }
 

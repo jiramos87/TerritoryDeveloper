@@ -1,4 +1,5 @@
 using UnityEngine;
+using Territory.Audio;
 using Territory.Zones;
 using Territory.UI;
 using Territory.Timing;
@@ -167,6 +168,7 @@ public class EconomyManager : MonoBehaviour
         if (GetCurrentMoney() >= amount)
         {
             cityStats.RemoveMoney(amount);
+            if (notifyInsufficientFunds) BlipEngine.Play(BlipId.EcoMoneySpent);
             return true;
         }
 
@@ -203,6 +205,7 @@ public class EconomyManager : MonoBehaviour
         }
 
         cityStats.AddMoney(amount);
+        if (amount > 0) BlipEngine.Play(BlipId.EcoMoneyEarned);
     }
 
     /// <summary>

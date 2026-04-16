@@ -30,6 +30,12 @@ public class BlipBootstrap : MonoBehaviour
     public const string SfxVolumeDbKey = "BlipSfxVolumeDb";
     public const string SfxVolumeParam = "SfxVolume";
     public const float SfxVolumeDbDefault = 0f;
+    public const string SfxMutedKey = "BlipSfxMuted";
+
+    /// <summary>
+    /// Returns the serialized BlipMixer ref. Stage 4.2 consumer caches this once in Awake (invariant #3).
+    /// </summary>
+    public AudioMixer BlipMixer => blipMixer;
 
     [SerializeField] private AudioMixer blipMixer;
 

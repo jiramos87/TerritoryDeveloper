@@ -20,7 +20,7 @@ Forward via Agent tool with `subagent_type: "design-explore"`:
 > Run `design-explore` skill (`ia/skills/design-explore/SKILL.md`) end-to-end on the exploration doc given in `$ARGUMENTS`. Parse args: first token = `DOC_PATH`, optional second token = `APPROACH_HINT`. Resolve `DOC_PATH` via Read — if unreadable, stop and report path error.
 >
 > ## Phase sequence (gated)
->
+> First welcome the user, briefly explain process and mention exact LLM model being used (with version number)
 > 0. Load doc — extract problem statement, approaches list, existing recommendation, open questions.
 > 1. Compare — criteria matrix (constraint fit, effort, output control, maintainability, dependencies/risk) as Markdown table.
 > 2. Select — if recommendation unambiguous AND no `APPROACH_HINT` → proceed. Else → present table + leading candidate, PAUSE, ask user confirm/override.
@@ -53,4 +53,4 @@ Forward via Agent tool with `subagent_type: "design-explore"`:
 >
 > ## Output
 >
-> Single concise caveman message: doc path + approach selected, phases completed (skipped + reason), subsystem impact summary (count + invariants flagged by number), review results (BLOCKING resolved, NON-BLOCKING carried), persist diff summary (sections written / updated), next step (master plan vs `project-new`).
+> Single concise caveman message: doc path + approach selected, phases completed (skipped + reason), subsystem impact summary (count + invariants flagged by number), review results (BLOCKING resolved, NON-BLOCKING carried), persist diff summary (sections written / updated), next step (`claude-personal "/master-plan-new {DOC_PATH}"` for multi-stage work, or `claude-personal "/project-new ..."` for single issue).

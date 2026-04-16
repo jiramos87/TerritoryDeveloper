@@ -2,6 +2,238 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
+- [x] **TECH-250** — Clear-filters `Button` control + multi-select smoke + README §Components update (Stage 4.4 Phase 2) (2026-04-16)
+  - Type: web / dashboard / docs
+  - Files: `web/app/dashboard/page.tsx`, `web/README.md`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Swapped underline `<a>Clear filters</a>` for `<Button variant="ghost" size="sm" href="/dashboard">Clear filters</Button>` (TECH-231 polymorphic `href` path) at `web/app/dashboard/page.tsx`. Visibility gated by existing `anyFilter = multi.plan.length + multi.status.length + multi.phase.length > 0` predicate (landed in TECH-249; no logic change). Full-English "Clear filters" label (caveman-exception — user-facing rendered UI per `agent-output-caveman.md`). Smoke 4-scenario matrix confirmed on dev server (port 4000): two-status multi + combined status+phase + toggle-off round-trip + Clear → bare URL. Appended `web/README.md §Components` Dashboard multi-select paragraph (helpers location `web/lib/dashboard/filter-params.ts`, canonical comma-delimited URL form, Clear control, `anyFilter` predicate shape). Satisfies Stage 4.4 Exit bullet 4.
+  - Acceptance: Button replaces `<a>`; ghost variant + sm size; visible iff `anyFilter`; smoke matrix manually confirmed; README §Components updated; `npm run validate:all` exit 0.
+  - Depends on: **TECH-247** (archived), **TECH-248** (archived), **TECH-249** (archived)
+
+- [x] **TECH-249** — Dashboard page multi-select wiring (Stage 4.4 Phase 2) (2026-04-16)
+  - Type: web / dashboard
+  - Files: `web/app/dashboard/page.tsx`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Rewired `web/app/dashboard/page.tsx` to consume `parseFilterValues` + `toggleFilterParam` from `@/lib/dashboard/filter-params` (TECH-248). Replaced `firstParam` single-value coercion + local `buildHref` w/ `MultiParams = { plan: string[]; status: string[]; phase: string[] }` shape. `filterPlans` now uses `.includes` predicate w/ empty-array = no-filter semantics — OR within dimension (status=Draft,In+Progress matches either) + AND across dimensions (status AND phase must hold). Hierarchical prune on tasks → stages → steps → plans preserved. Per-chip `href` via local `chipHref(key, value)` — single `toggleFilterParam(currentSearch, key, value)` call per chip, prefixed `/dashboard?${qs}` or bare `/dashboard` when empty. `currentSearch` built from `rawParams` preserving sibling dimensions. Chip `active = multi[key].includes(chipValue)` (dropped single-value equality). `anyFilter = multi.plan.length + multi.status.length + multi.phase.length > 0`. Deleted unused `firstParam` + local `buildHref` helpers. Satisfies Stage 4.4 Exit bullet 3.
+  - Acceptance: page imports both helpers; filter logic OR-within / AND-across; chip hrefs via toggle helper; multi-select smoke `?status=Draft,In+Progress` narrows rows; `npm run validate:all` exit 0.
+  - Depends on: **TECH-247** (archived), **TECH-248** (archived)
+
+- [x] **TECH-248** — `web/lib/dashboard/filter-params.ts` URL helpers (Stage 4.4 Phase 1) (2026-04-16)
+  - Type: web / utility module
+  - Files: `web/lib/dashboard/filter-params.ts`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Authored `web/lib/dashboard/filter-params.ts` — three named exports: `parseFilterValues(params, key): string[]` (accepts comma-delimited + repeated params, dedupes, returns sorted array; duck-typed `{ getAll }` second arm avoids `ReadonlyURLSearchParams` import to preserve RSC purity), `toggleFilterParam(currentSearch, key, value): string` (add/remove value, re-emits canonical comma-delimited single-param form, returns new query string w/o leading `?`), `clearFiltersHref = '/dashboard'` constant. Empty / whitespace tokens stripped during parse. Zero `fs` / `React` / `fetch` imports — RSC + client safe. Verified via throwaway tsx smoke (not committed — `web/` has no test runner) + `cd web && npm run lint && npm run typecheck && npm run build` green + `npm run validate:all` exit 0.
+  - Acceptance: three named exports present; helpers handle both comma + repeated forms; canonical output comma-delimited; module pure (zero disallowed imports); `npm run validate:all` exit 0.
+  - Depends on: none
+
+- [x] **TECH-247** — `FilterChips` `Chip` interface confirmation for multi-select (Stage 4.4 Phase 1) (2026-04-16)
+  - Type: web / UI primitive
+  - Files: `web/components/FilterChips.tsx`, `web/README.md`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Audited `web/components/FilterChips.tsx` — `Chip = { label: string; active: boolean; href?: string }` already per-chip independent (`chips.map` + `chipClass(c.active)`; zero shared / derived single-active state). Added JSDoc block above `Chip` export documenting multi-select semantics + `href?` fallback + RSC compatibility. Added `### FilterChips` subsection under `web/README.md §Components` (alphabetical between `DataTable` and later primitives). Doc-only PR — zero runtime change. Satisfies Stage 4.4 Exit bullet 1.
+  - Acceptance: `Chip` shape confirmed; render path per-chip `active` independent; JSDoc + README note landed; `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-244** — `OnSliderChanged` + `OnToggleChanged` bodies (Stage 4.2 Phase 1) (2026-04-16)
+  - Type: audio settings
+  - Files: `Assets/Scripts/Audio/Blip/BlipVolumeController.cs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Filled `BlipVolumeController.OnSliderChanged(float v)` — `db = v > 0.0001f ? 20f * Mathf.Log10(v) : -80f`; `PlayerPrefs.SetFloat(BlipBootstrap.SfxVolumeDbKey, db)`; guarded `_mixer.SetFloat(BlipBootstrap.SfxVolumeParam, db)` only when `!_sfxToggle.isOn && _mixer != null` (mute dominates). Filled `OnToggleChanged(bool mute)` — `PlayerPrefs.SetInt(BlipBootstrap.SfxMutedKey, mute ? 1 : 0)`; `_mixer == null` early-return guard; mute → `_mixer.SetFloat(SfxVolumeParam, -80f)`; unmute → re-read `PlayerPrefs.GetFloat(SfxVolumeDbKey, 0f)` + apply. `0.0001f` threshold guards `Log10(0)` singularity. Single-source-of-truth on `PlayerPrefs` (no cached `_lastDb` field — drift-safe). Consumes `BlipBootstrap.SfxMutedKey` constant from sibling TECH-245 (landed same commit / ahead to avoid `CS0117`).
+  - Acceptance: slider callback applies `20·log10` w/ `-80` floor + writes `SfxVolumeDbKey` + guards mixer write on mute/null; toggle callback writes `SfxMutedKey` + clamps `-80f` on mute + restores stored dB on unmute + null-guards `_mixer`; `npm run unity:compile-check` exit 0; `npm run validate:all` exit 0.
+  - Depends on: **TECH-243** (archived)
+
+- [x] **TECH-242** — SSR build smoke + README §Components PlanChart entry (Stage 4.3 Phase 2) (2026-04-16)
+  - Type: web / validation / docs
+  - Files: `web/README.md`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Ran `cd web && npm run build` — exit 0, zero `ReferenceError` / `window is not defined` / `document is not defined` / `navigator is not defined` matches. `npm run validate:all` green (full chain: dead-spec + compute-lib + mcp-ia tests + fixtures + index check + web lint/typecheck/build, 176 pages prerendered). Authored `web/README.md §Components` `### PlanChart` subsection between `### DataTable` and `### Sidebar` — documents two-file split (`PlanChart.tsx` D3 client + `PlanChartClient.tsx` `next/dynamic({ ssr: false })` wrapper), Next 16 App Router RSC restriction + D3 DOM mutation rationale, `PlanChartDatum` shape (typed), props table, fill CSS var names (`--color-bg-status-pending` / `--color-bg-status-progress` / `--color-bg-status-done` real `@theme` aliases + `--color-text-muted` axis/legend), loading skeleton, empty-state behavior, dashboard aggregation example. No phantom tokens. No code changes — docs + smoke only. Closes Stage 4.3 Exit.
+  - Acceptance: `cd web && npm run build` exit 0 zero SSR ref errors; `npm run validate:all` green; README PlanChart subsection present w/ all 5 doc bullets; Stage 4.3 Exit satisfied.
+  - Depends on: **TECH-239** (archived), **TECH-240** (archived), **TECH-241** (archived)
+
+- [x] **TECH-243** — `BlipVolumeController` Awake mixer cache + OnEnable prime (Stage 4.2 Phase 1) (2026-04-16)
+  - Type: audio settings
+  - Files: `Assets/Scripts/Audio/Blip/BlipVolumeController.cs`, `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Filled `BlipVolumeController.Awake` — caches `_mixer = BlipBootstrap.Instance?.BlipMixer`; null-guard logs warning + `enabled = false` + early `return` (invariant #3 one-time lookup). Added `OnEnable` override — reads `BlipBootstrap.SfxVolumeDbKey` via `PlayerPrefs.GetFloat(..., 0f)`, converts dB → linear (`Mathf.Pow(10f, db/20f)` clamped `0..1`, floor 0 at `db ≤ -79f`), calls `_sfxSlider.SetValueWithoutNotify(linear)`; reads `BlipBootstrap.SfxMutedKey` via `PlayerPrefs.GetInt(..., 0)`, calls `_sfxToggle.SetValueWithoutNotify(muted)` — `SetValueWithoutNotify` blocks callback loop during prime. Removed `public void OnPanelOpen() { }` stub from `BlipVolumeController.cs`; removed matching `_volumeController?.OnPanelOpen();` call from `MainMenuController.OnOptionsClicked` (Unity `OnEnable` fires on `SetActive(true)` — redundant hook). Cross-phase compile dep: TECH-245 `SfxMutedKey` constant landed same-commit or ahead per Decision Log row 2 to avoid `CS0117`.
+  - Acceptance: `Awake` mixer cache present w/ null-guard; `OnEnable` primes slider (linear) + toggle (muted) from `PlayerPrefs`; `OnPanelOpen` stub + call site deleted; `npm run unity:compile-check` green.
+  - Depends on: **TECH-235** (archived), **TECH-238** (archived)
+
+- [x] **TECH-238** — `OnOptionsClicked` pre-open hook `_volumeController?.OnPanelOpen()` (Stage 4.1 Phase 2) (2026-04-16)
+  - Type: audio / UI lifecycle
+  - Files: `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`
+  - Spec: (removed at closeout — Decision Log + Lessons sections skipped_empty by journal persist; full prose in git history only)
+  - Notes: `OnOptionsClicked` (line 569) — inserted `_volumeController?.OnPanelOpen();` immediately before `optionsPanel.SetActive(true)` (line 573), inside the existing `if (optionsPanel != null)` guard (single-statement `if` converted to block). Null-conditional `?.` covers fallback / first-frame edge cases (invariant #4 / manager-wiring posture). `CloseOptionsPanel` (line 576) unchanged — Unity `OnDisable` on the `BlipVolumeController` (mounted on `OptionsPanel`, deactivates w/ parent) covers cleanup. Stub fires no-op until Stage 4.2 T4.2.1 swaps to `OnEnable`-based prime + deletes both call site + stub. Ordering inside block: blip → prime → activate. Closes Stage 4.1 Exit.
+  - Acceptance: Hook line precedes `SetActive(true)`; `CloseOptionsPanel` untouched; Stage 4.1 Exit bullets 1–5 satisfied; `npm run unity:compile-check` green; `npm run validate:all` green.
+  - Depends on: **TECH-237** (archived)
+
+- [x] **TECH-241** — Dashboard `dynamic({ ssr: false })` PlanChart integration (Stage 4.3 Phase 2) (2026-04-16)
+  - Type: web / dashboard / chart wiring
+  - Files: `web/app/dashboard/page.tsx`, `web/components/PlanChartClient.tsx` (new)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Wired `PlanChart` into `web/app/dashboard/page.tsx` via `next/dynamic` + `ssr: false`. Next.js 16 App Router RSC forbids `ssr: false` in RSC scope — extracted dynamic call to new `'use client'` wrapper `web/components/PlanChartClient.tsx` and imported wrapper from RSC (canonical pattern per `node_modules/next/dist/docs/01-app/02-guides/lazy-loading.md`). Loading skeleton `<div className="h-[220px] bg-bg-panel animate-pulse rounded" />` — real `@theme` aliases. Status buckets set-based (Option B locked at kickoff, mirrors TECH-233): `PENDING_STATUSES = {'_pending_', 'Draft'}`, `IN_PROGRESS_STATUSES = {'In Progress', 'In Review'}`, reuse existing `DONE_STATUSES = {'Done (archived)', 'Done'}` — covers full `TaskStatus` union. Per-plan aggregate via `plan.allTasks.filter(t => t.id.startsWith('T' + step.id + '.'))`; one `<PlanChart>` per plan below its `<DataTable>`. `plan-loader.ts` + `plan-loader-types.ts` + `parse.mjs` byte-identical. MEMORY tip added for RSC `ssr: false` wrapper pattern.
+  - Acceptance: `dynamic(() => import('@/components/PlanChart'), { ssr: false, loading })` wired (via `PlanChartClient.tsx` wrapper); skeleton uses real token classes; per-plan chart renders below `DataTable`; plan-loader byte-identical; `npm run validate:all` green.
+  - Depends on: **TECH-239** (archived), **TECH-240** (archived)
+
+- [x] **TECH-240** — PlanChart axes + legend + empty-state refinement (Stage 4.3 Phase 1) (2026-04-16)
+  - Type: web / dashboard / chart
+  - Files: `web/components/PlanChart.tsx`
+  - Spec: (removed at closeout — Decision Log + Lessons sections skipped_empty by journal persist; full prose in git history only)
+  - Notes: Extended TECH-239 skeleton. `axisBottom` — step labels w/ `> 12` char ellipsis truncate (`d.slice(0,11) + '…'`). `axisLeft` — integer ticks via `tickFormat(d3.format('d'))` + `.ticks(Math.min(5, Math.max(1, yMax)))` — 1-tick guard for all-pending plans. Inline legend — `<g>` top-right of main chart `<g>` at `translate(innerW - legendWidth, -MARGIN.top + 2)`; 3 swatch rects + text labels `Pending` / `In Progress` / `Done`. Axis + legend text fills via `var(--color-text-muted)` — no inline hex. Empty-state `<p>` switched from inline-style fallback hex to `className="text-text-muted text-sm"` (Tailwind v4 double-prefix per `web/README.md` §189).
+  - Acceptance: `axisBottom` + `axisLeft` present w/ truncate + integer ticks; legend renders 3 swatches + labels; axis + legend text via CSS vars; empty-state uses real `@theme` aliases; `npm run validate:all` green.
+  - Depends on: **TECH-239** (archived)
+
+- [x] **TECH-239** — D3 install + PlanChart grouped-bar skeleton (Stage 4.3 Phase 1) (2026-04-16)
+  - Type: web / dashboard / chart
+  - Files: `web/package.json`, `web/components/PlanChart.tsx`, `web/app/globals.css` (token ref only)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Installed `d3` + `@types/d3` in `web/package.json`. Authored `web/components/PlanChart.tsx` — `'use client'` SVG chart, default export `PlanChart` + named exports `PlanChartProps` + `PlanChartDatum`. `useRef<SVGSVGElement>` + `useEffect(..., [data])` D3 draw. `scaleBand` outer (step labels) + inner (`pending` / `inProgress` / `done`) + `scaleLinear` y. Rect fills via `var(--color-bg-status-pending)` / `--color-bg-status-progress` / `--color-bg-status-done` real `@theme` aliases. Static `480×220` viewport. Empty `data` → early return `<p>` placeholder, no SVG mount. No axes / legend — TECH-240 adds. D3 namespace import (`import * as d3 from 'd3'`) — sibling tiers extend w/ `d3-axis` / `d3-format`.
+  - Acceptance: `d3` + `@types/d3` pinned; component exports present; grouped bars render for non-empty data; empty renders `<p>` placeholder w/ no SVG; `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-237** — Instantiate `BlipVolumeController` + `Bind` + `InitListeners` in `CreateOptionsPanel` (Stage 4.1 Phase 2) (2026-04-16)
+  - Type: audio / UI wiring
+  - Files: `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`
+  - Spec: (removed at closeout — Decision Log persisted to journal; Lessons empty; full prose in git history only)
+  - Notes: `CreateOptionsPanel` lines 393–394 placeholder discards `_ = sfxSlider; _ = sfxToggle;` replaced with `var controller = panel.AddComponent<BlipVolumeController>(); controller.Bind(sfxSlider, sfxToggle); controller.InitListeners(); _volumeController = controller;`. Added `private BlipVolumeController _volumeController;` field after `optionsBackButton` decl (line 34) — runtime-only, no `[SerializeField]`. Controller mounts on `OptionsPanel` GameObject (invariant #4 — no new singletons). Call order load-bearing: `AddComponent` → `Bind` → `InitListeners` → field-assign.
+  - Acceptance: `_volumeController` field present; chain wired before `SetActive(false)`; back button + `SetActive(false)` unchanged; `npm run unity:compile-check` green; `npm run validate:all` green.
+  - Depends on: **TECH-235** (archived), **TECH-236** (archived)
+
+- [x] **TECH-236** — OptionsPanel Slider + Toggle UI construction (Stage 4.1 Phase 1) (2026-04-16)
+  - Type: audio / UI
+  - Files: `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`
+  - Spec: (removed at closeout — Decision Log + Lessons sections empty; journal persist skipped both; full prose in git history only)
+  - Notes: `CreateOptionsPanel` (line 308) — `contentRect.sizeDelta` `(300,200)` → `(300,260)`. Added `Slider` child `"SfxVolumeSlider"` at `(40,-65)`, `sizeDelta (120,20)`, `min=0 max=1 value=1 wholeNumbers=false`. Label `"SFX Volume"` at `(-55,-65)`, `LegacyRuntime.ttf` size 14 white. Toggle `"SfxMuteToggle"` at `(10,-100)`, `sizeDelta (60,20)`, `isOn=false`. Label `"Mute SFX"` at `(-45,-100)` same style. Back button relocated y=-80 → y=-135 to clear Toggle span (Decision D-1). `sfxSlider` + `sfxToggle` held as method locals (Decision D-2) for TECH-237 chaining. Pure UI construction — zero runtime behavior.
+  - Acceptance: Content rect `(300,260)`; Slider + Toggle + labels render; back button at y=-135 unchanged listener; `npm run unity:compile-check` green; `npm run validate:all` green.
+  - Depends on: none (soft: **TECH-235** (archived) for TECH-237 chaining)
+
+- [x] **TECH-235** — `BlipVolumeController` stub + `BlipBootstrap.BlipMixer` accessor (Stage 4.1 Phase 1) (2026-04-16)
+  - Type: audio / UI
+  - Files: `Assets/Scripts/Audio/Blip/BlipVolumeController.cs`, `Assets/Scripts/Audio/Blip/BlipBootstrap.cs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: New file `BlipVolumeController.cs` — `public sealed class : MonoBehaviour` w/ `Slider _sfxSlider` + `Toggle _sfxToggle` + `AudioMixer _mixer` fields; `Bind(Slider, Toggle)` assigns refs; `InitListeners()` wires `onValueChanged` → empty stubs `OnSliderChanged(float)` / `OnToggleChanged(bool)` + stub `OnPanelOpen()`. `BlipBootstrap.cs` — added `public AudioMixer BlipMixer => blipMixer;` after `SfxVolumeDbDefault` (line ~34). Stub scaffolding — Stage 4.2 fills bodies. Zero runtime behavior.
+  - Acceptance: `BlipVolumeController.cs` compiles w/ fields + stubs; `BlipMixer` accessor returns serialized ref; `npm run unity:compile-check` green; `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-234** — Per-step completion stats + README Button/DataTable docs (Stage 4.2 Phase 2) (2026-04-16)
+  - Type: web / dashboard + docs
+  - Files: `web/app/dashboard/page.tsx`, `web/README.md`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Extended `web/app/dashboard/page.tsx` `plan.steps.map((step) => ...)` block — derived `stepTasks = plan.allTasks.filter(t => t.id.startsWith(\`T${step.id}.\`))`, `stepDone = stepTasks.filter(t => DONE_STATUSES.has(t.status)).length`, `stepTotal = stepTasks.length` reusing top-of-file `DONE_STATUSES = new Set(['Done (archived)', 'Done'])` constant (no duplication — drift risk). Rendered `<StatBar label={\`${stepDone} / ${stepTotal} done\`} value={stepDone} max={stepTotal} />` in step heading flex row next to `<BadgeChip>`; guarded `stepTotal === 0` → skip render (no `0/0` placeholder — keeps heading clean, mirrors `filterPlans` empty-prune pattern). Task→step filter stays consumer-side — `plan-loader.ts` + `parse.mjs` byte-identical. Appended `web/README.md §Components` `DataTable` subsection documenting `pctColumn?: { dataKey; label?; max? }` contract + minimal snippet; confirmed existing `Button` subsection matches shipped `web/components/Button.tsx` API (variant / size / href / disabled). Closes Stage 4.2 Exit bullets (Button shipped, DataTable `pctColumn` shipped, per-plan + per-step StatBar rendering, README entries present).
+  - Acceptance: Per-step `StatBar` row visible below each step heading on `/dashboard`; `web/README.md §Components` has Button + DataTable `pctColumn` entries; `npm run validate:all` green; Stage 4.2 Exit bullets all satisfied.
+  - Depends on: **TECH-231** (archived), **TECH-232** (archived), **TECH-233** (archived — soft)
+
+- [x] **TECH-233** — Per-plan completion `StatBar` on dashboard (Stage 4.2 Phase 2) (2026-04-16)
+  - Type: web / dashboard
+  - Files: `web/app/dashboard/page.tsx`, `web/components/StatBar.tsx`
+  - Spec: (removed at closeout — journal persist skipped both sections empty; Decision Log + Lessons live in git history only)
+  - Notes: Extended `web/app/dashboard/page.tsx` plan render loop — added module-local `DONE_STATUSES: ReadonlySet<TaskStatus> = new Set(['Done (archived)', 'Done'])` (both terminal forms — single-string compare under-counts unarchived plans); per plan derived `totalCount = plan.allTasks.length` + `completedCount = plan.allTasks.filter(t => DONE_STATUSES.has(t.status)).length` + `statBarLabel = \`${completedCount} / ${totalCount} done\``; rendered `<StatBar label value max />` in plan `<h2>` heading `<div>` next to `BadgeChip` wrapped in `flex-1 min-w-[12rem] max-w-[24rem]`. Passes raw `value` + `max` (not pre-divided pct) — StatBar owns `[0,100]` clamp + `max ≤ 0 → 0` + `(v/m)*100` per TECH-232 contract. Counts from unfiltered `plan.allTasks` — `filterPlans` prunes `plan.steps[*].stages[*].tasks` only, so status/phase chips do not skew plan-level ratio. `plan-loader.ts` + `plan-loader-types.ts` + `parse.mjs` byte-identical. Feeds Stage 4.2 Phase 2; TECH-234 adds per-step row + README §Components docs.
+  - Acceptance: Per-plan `StatBar` visible every plan section; label `"{done} / {total} done"`; raw `value` + `max` passed; `totalCount === 0` renders without NaN; filter chips leave plan ratio unchanged; plan-loader files untouched; `npm run validate:all` green.
+  - Depends on: **TECH-232** (archived — soft)
+
+- [x] **TECH-232** — Extend `DataTable` with optional `pctColumn` (StatBar inline) (Stage 4.2 Phase 1) (2026-04-16)
+  - Type: web / component primitive
+  - Files: `web/components/DataTable.tsx`, `web/components/StatBar.tsx`
+  - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+  - Notes: Added optional `pctColumn?: PctColumnConfig<T>` prop + exported `PctColumnConfig<T>` type (`{ dataKey: keyof T; label?: string; max?: number }`). Prop set → trailing `<th>` (`label ?? 'Progress'`, no `aria-sort` per §2.2) + trailing `<td>` rendering `<StatBar label value max />` w/ fallbacks `label='Progress'` + `max=100`. Module-local `toFiniteNumber(raw)` coerces non-numeric / `NaN` / `undefined` → `0` at boundary (guards `Math.max/min` `NaN` propagation in StatBar). DataTable passes raw `value` + `max` (not pre-computed pct) — StatBar owns `[0,100]` clamp + `max ≤ 0 → 0` + `(value/max)*100` as single source of truth; backlog snippet (`value={raw/max*100}`) reconciled in Decision Log. Prop absent → zero DOM change; existing `Column<T>` / generic / `statusCell` / `getRowKey` contract preserved. Import `StatBar` from `./StatBar`. Feeds Stage 4.2 dashboard pct rendering (TECH-233 + TECH-234).
+  - Acceptance: `pctColumn` typed + optional; `PctColumnConfig<T>` exported; existing call sites compile unchanged; trailing header + StatBar render gated on prop; `NaN` guard holds; `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-230** — Blip glossary rows + cross-refs to `ia/specs/audio-blip.md` (Stage 3.4 Phase 2) (2026-04-16)
+  - Type: docs / glossary
+  - Files: `ia/specs/glossary.md`
+  - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+  - Notes: Appended 4 new rows alphabetical in Audio block — **Bake-to-clip** (on-demand `BlipPatchFlat` → `AudioClip` via `BlipBaker.BakeOrGet`; LRU 4 MB), **Blip cooldown** (min ms between same-id plays; `BlipCooldownRegistry`), **Blip variant** (per-patch index 0..`variantCount-1`; round-robin or fixed 0 when `deterministic`), **Patch flatten** (`BlipPatch` SO → `BlipPatchFlat` blittable in `BlipCatalog.Awake`; strips managed refs). Rewrote Spec col on 5 existing blip rows (**Blip bootstrap**, **Blip mixer group**, **Blip patch**, **Blip patch flat**, **patch hash**) from `ia/projects/blip-master-plan.md` Stage 1.x → `ia/specs/audio-blip.md §N`. Refreshed Index row line 32 to list all 9 Audio terms + `scene-load suppression`. Kickoff fixed over-claim (5 existing rows, not 13) + 3-col format (was 4-col) + bundled Index refresh. Closes Stage 3.4 + Step 3 Blip lane.
+  - Acceptance: 4 new rows present; all existing blip rows cross-ref spec; `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-231** — Author `Button` primitive (variant + size + polymorphic) (Stage 4.2 Phase 1) (2026-04-16)
+  - Type: web / component primitive
+  - Files: `web/components/Button.tsx` (new)
+  - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty; token verification + Tailwind v4 double-prefix + no-clsx conventions migrated to `web/README.md §Components §Button`)
+  - Notes: Named-export `Button` + `ButtonProps` (match `BadgeChip` / `FilterChips` / `DataTable` sibling convention — no default export). Polymorphic: `<button>` default, `<a>` when `href` present. `variant` maps to real `@theme` alias classes — `primary` → `bg-bg-status-progress text-text-status-progress-fg` (amber CTA, phantom `accent-info` from spec v1 replaced); `secondary` → `bg-bg-panel text-text-primary border border-text-muted/40`; `ghost` → `bg-transparent text-text-muted hover:text-text-primary`. `size` scale `sm|md|lg` → `px-/py-/text-`. `disabled` → `opacity-50 cursor-not-allowed pointer-events-none` + native attr on `<button>`. No `clsx` dep; template-literal concat. Closes Stage 4.2 Phase 1 Button slot; feeds Stage 4.4 "Clear filters" + future CTAs.
+  - Acceptance: Named exports present; variant/size/href/disabled functional on corrected tokens; no inline hex / inline style / new dep; `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-229** — Promote blip exploration doc to `ia/specs/audio-blip.md` (Stage 3.4 Phase 2) (2026-04-16)
+  - Type: docs / spec promotion
+  - Files: `ia/specs/audio-blip.md` (new), `docs/blip-procedural-sfx-exploration.md`, `docs/blip-post-mvp-extensions.md`, `ia/projects/blip-master-plan.md`
+  - Spec: (removed at closeout — Decision Log + Lessons persisted to journal; registry-count gate lesson migrated to `ia/specs/REFERENCE-SPEC-STRUCTURE.md` §Conventions #8 + New reference spec checklist #4)
+  - Notes: Authored canonical reference spec `ia/specs/audio-blip.md` §1–§10 w/ frontmatter (`purpose` / `audience: agent` / `loaded_by: ondemand` / `slices_via: spec_section`). Exploration doc `docs/blip-procedural-sfx-exploration.md` gained "Superseded by" banner + stays in-tree for recipe tables + post-MVP sketches. Post-MVP extensions doc gained spec cross-ref line. Orchestrator Lessons row for `BlipVoiceState` rewritten to `promoted to ia/specs/audio-blip.md §3 (TECH-229)`; Decision Log row appended. Bumped `build-registry.test.ts` expected entry count 33 → 34. Ran `generate:ia-indexes` + committed `spec-index.json` + `glossary-index.json`.
+  - Acceptance: `ia/specs/audio-blip.md` shipped w/ §1–§10; banner on exploration doc; post-MVP extensions cross-refs spec; orchestrator Decision Log row appended; `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-228** — Blip golden fixture regression test (EditMode) (Stage 3.4 Phase 1) (2026-04-16)
+  - Type: test / regression gate
+  - Files: `Assets/Tests/EditMode/Audio/BlipGoldenFixtureTests.cs` (new)
+  - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+  - Notes: New `BlipGoldenFixtureTests.cs` under existing `Blip.Tests.EditMode.asmdef` (Stage 1.4 — no new asmdef; namespace `Territory.Tests.EditMode.Audio`). Parameterized `[TestCase(BlipId.*)]` × 10: parses `tools/fixtures/blip/{id}-v0.json` via `JsonUtility.FromJson<BlipFixtureDto>`, loads SO via `AssetDatabase.LoadAssetAtPath<BlipPatch>("Assets/Audio/Blip/Patches/BlipPatch_{id}.asset")`, re-renders via `BlipTestFixtures.RenderPatch(in flat, fx.sampleRate, seconds=sampleCount/sampleRate, fx.variant)` — reuses Stage 1.4 TECH-137 helpers. Asserts `sumAbsHash` within 1e-6 + zero-crossings within ±2 + `patchHash` exact equality (stale-fixture guard points reviewer at `npx ts-node tools/scripts/blip-bake-fixtures.ts`). Kickoff alignments: sample rate 44100→48000, ns `Blip.*`→`Territory.*`, helper `BlipTestHelpers`→`BlipTestFixtures`, asset path `Assets/Audio/BlipPatches/`→`Assets/Audio/Blip/Patches/`, `RenderPatch` 3rd arg sampleCount→seconds w/ divisibility assert. Closes Stage 3.4 Phase 1.
+  - Acceptance: EditMode tests compile green; stale-fixture guard trips on `patchHash` mismatch; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: TECH-227 (archived)
+
+- [x] **TECH-227** — Blip golden fixture bake script + fixture JSONs (Stage 3.4 Phase 1) (2026-04-16)
+  - Type: infrastructure / test tooling
+  - Files: `tools/scripts/blip-bake-fixtures.ts` (new), `tools/fixtures/blip/` (new dir, 10 JSONs)
+  - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+  - Notes: Pure TS port of `BlipVoice.Render` scalar loop (osc bank + AHDSR + one-pole LP; `Math.fround` at arithmetic boundaries keeps float32 rail w/ C# kernel). 10 MVP **Blip patch** recipes hardcoded from `docs/blip-procedural-sfx-exploration.md` §9 — variant 0 per id, `patchHash` FNV-1a 32-bit (Stage 1.2 T1.2.5 field-walk). Writes `tools/fixtures/blip/{id}-v0.json` w/ schema `{ id, variant, patchHash, sampleRate:48000, sampleCount, sumAbsHash, zeroCrossings }`. xorshift seed 0 + guard → `0x9E3779B9` for reproducible bake. Manual run only — `npx ts-node tools/scripts/blip-bake-fixtures.ts`; CI never regens. Dev notes: Node ≥22 TS strip drops `const enum` (→ `as const`); `__dirname` ESM quirk → one `..` from `tools/scripts/`. Satisfies Stage 3.4 exit first half.
+  - Acceptance: 10 fixture JSONs emitted; schema complete; bake reproducible; `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-223** — Sidebar base markup + icons + static link list (Stage 4.1 Phase 1) (2026-04-16)
+  - Type: infrastructure / web workspace / component
+  - Files: `web/package.json`, `web/components/Sidebar.tsx` (new)
+  - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+  - Notes: Installed `lucide-react` into `web/package.json` deps. Authored `web/components/Sidebar.tsx` as SSR-compatible vertical `<nav>` w/ four `<Link>` entries (`/` → `Home`, `/wiki` → `BookOpen`, `/devlog` → `Newspaper`, `/dashboard` → `LayoutDashboard`). Each link: 24px icon + label text. Design token classes exclusively (`bg-canvas`, `text-primary`, `text-muted`, hover `text-primary`). No active state, no `'use client'`, no `useState` — static markup only (interactive state lands in TECH-224). Named imports preserve tree-shake. Completes Stage 4.1 Phase 1 first half.
+  - Acceptance: `lucide-react` installed w/ tree-shake intact; `Sidebar.tsx` renders static list; zero TS errors from lucide imports; `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-222** — GridManager cell-select Blip call site (Stage 3.3 Phase 2) (2026-04-16)
+  - Type: feature wiring / audio integration
+  - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`
+  - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+  - Notes: Added `using Territory.Audio;` import + `BlipEngine.Play(BlipId.WorldCellSelected)` after each `selectedPoint` assignment in `GridManager.cs` — line 391 (left-click-down) + line 399 (right-click-up non-pan). Invariant #6 carve-out — one-liner side-effect, not new GridManager logic. Invariant #3 — `BlipEngine` static facade self-caches, no per-frame `FindObjectOfType`. 80 ms cooldown enforced by `BlipCooldownRegistry` via patch SO — left-then-right within window collapses to single play. Closes Stage 3.3 Phase 2 + full Stage 3.3 World lane.
+  - Acceptance: cell-select fires `WorldCellSelected` SFX; 80 ms cooldown blocks rapid re-selects; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: **TECH-221** (archived, soft — both touch `GridManager.cs`)
+
+- [x] **TECH-221** — BuildingPlacementService place + denied Blip call sites (Stage 3.3 Phase 2) (2026-04-16)
+  - Type: feature wiring / audio integration
+  - Files: `Assets/Scripts/Managers/GameManagers/BuildingPlacementService.cs`
+  - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+  - Notes: Inserted `using Territory.Audio;` import + `BlipEngine.Play(BlipId.ToolBuildingPlace)` in `PlaceBuilding` success branch (after `PostBuildingConstructed`) + `BlipEngine.Play(BlipId.ToolBuildingDenied)` in `else` branch (after `PostBuildingPlacementError`). Kickoff audit 2026-04-16 relocated denied call from `GridManager` caller — `HandleBuildingPlacement` line 874 is a 4-line delegate with no fail-reason branch. Insufficient-funds early-return stays silent (owned by `ShowInsufficientFundsTooltip`). `GridManager.cs` untouched. Static `BlipEngine` self-caches (invariants #3, #4). Scope narrowed to 1 file.
+  - Acceptance: successful placement fires `ToolBuildingPlace`; denied placement fires `ToolBuildingDenied`; insufficient-funds stays silent; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-220** — RoadManager stroke-complete Blip call site (Stage 3.3 Phase 1) (2026-04-15)
+  - Type: feature wiring / audio integration
+  - Files: `Assets/Scripts/Managers/GameManagers/RoadManager.cs`
+  - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+  - Notes: Inserted `BlipEngine.Play(BlipId.ToolRoadComplete)` in `TryFinalizeManualRoadPlacement` success tail between `cityStats.AddPowerConsumption(...)` and `return true;`. Static facade (invariants #3, #4). Scenario batch path (`TryCommitStreetStrokeForScenarioBuild`) + interstate path stay silent. Decision Log — Blip fires before any future `InvalidateRoadCache()` placement at success tail per invariant #2 ordering convention. Open Question #1 deferred: success path currently lacks `InvalidateRoadCache()` call (invariant #2 drift vs sibling paths) — belongs to separate road-cache audit issue.
+  - Acceptance: stroke completion fires `ToolRoadComplete` SFX once per stroke; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: **TECH-219** (archived, soft — same file)
+
+- [x] **TECH-219** — RoadManager per-tile tick Blip call site (Stage 3.3 Phase 1) (2026-04-15)
+  - Type: feature wiring / audio integration
+  - Files: `Assets/Scripts/Managers/GameManagers/RoadManager.cs`
+  - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+  - Notes: Inserted `BlipEngine.Play(BlipId.ToolRoadTick)` inside per-tile loop in `TryFinalizeManualRoadPlacement` after `PlaceRoadTileFromResolved(resolved[i])`. Manual-drag path only — scenario batch (`TryCommitStreetStrokeForScenarioBuild`) stays silent per Decision Log. 30 ms cooldown owned by patch SO via `BlipCooldownRegistry`; no per-call guard. Static `BlipEngine` self-caches (invariants #3, #4). Opens Stage 3.3 Phase 1.
+  - Acceptance: per-tile road commit fires `ToolRoadTick` SFX; 30 ms cooldown observed via registry; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-218** — GameSaveManager save-complete Blip call site (Stage 3.2 Phase 2) (2026-04-15)
+  - Type: feature wiring / audio integration
+  - Files: `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs`
+  - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+  - Notes: Inserted `BlipEngine.Play(BlipId.SysSaveGame)` after `File.WriteAllText` in `SaveGame` (line ~69) + `TryWriteGameSaveToPath` (line ~91). Patch SO cooldown 2 s via `BlipCooldownRegistry` gates hotkey burst — no additional guard. Failure path (exception) stays silent — Blip call not reached. Closes Stage 3.2 Phase 2 + full Stage 3.2.
+  - Acceptance: save-success fires SFX; save failure silent; cooldown prevents burst; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: none
+
+- [x] **TECH-214** — Dashboard E2E smoke + `progress.html` deprecation decision log (2026-04-15)
+  - Type: web (verification + docs)
+  - Files: `ia/projects/web-platform-master-plan.md`, `docs/progress.html`
+  - Spec: (removed at closeout — Decision Log + Lessons persisted to journal)
+  - Notes: Stage 3.3 Phase 1 / T3.3.2. Phase 0 added post-kickoff — confirmed web stack tracked + deployed before smoke. Vercel `/dashboard` → HTTP/2 200; `robots.txt` disallows route; `?plan=` / `?status=` / `?phase=` chips render + compose AND; internal banner in HTML. Appended row to `## Orchestrator Decision Log` documenting `docs/progress.html` deprecation trigger (≥2 stable deploy cycles post Step 4 portal-auth). Closes Stage 3.3 + Step 3.
+  - Acceptance: smoke checklist ticked; orchestrator Decision Log row added; `validate:all` green.
+  - Depends on: **TECH-213** (archived), **TECH-208** (archived)
+
 - [x] **TECH-215** — MainMenuController UiButtonClick call sites (Stage 3.2 Phase 1) (2026-04-15)
   - Type: feature wiring / audio integration
   - Files: `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`
@@ -438,6 +670,14 @@
 ---
 
 ## Completed (moved from BACKLOG.md, 2026-04-15)
+
+- [x] **TECH-217** — EconomyManager money earn/spend Blip call sites (Stage 3.2 Phase 2) (2026-04-15)
+  - Type: feature wiring / audio integration
+  - Files: `Assets/Scripts/Managers/GameManagers/EconomyManager.cs`
+  - Spec: (removed at closeout — journal persisted Decision Log)
+  - Notes: `AddMoney` fires `BlipId.EcoMoneyEarned` after `cityStats.AddMoney(amount)` gated on `amount > 0`. `SpendMoney` success branch fires `BlipId.EcoMoneySpent` after `cityStats.RemoveMoney(amount)` gated on existing `notifyInsufficientFunds` flag — `ChargeMonthlyMaintenance` (passes `false`) stays silent. No new fields / no new singletons (invariant #4).
+  - Acceptance: interactive earn + spend fire SFX; monthly maintenance silent; `npm run unity:compile-check` + `npm run validate:all` green.
+  - Depends on: none
 
 - [x] **TECH-216** — MainMenuController UiButtonHover call sites (Stage 3.2 Phase 1) (2026-04-15)
   - Type: feature wiring / audio integration
@@ -1182,6 +1422,27 @@
 ---
 
 ## Recent archive (moved from BACKLOG.md, 2026-04-10)
+
+- [x] **TECH-226** — README §Components Sidebar entry + validation closeout (Stage 4.1 Phase 2) (2026-04-16)
+  - Type: docs / web workspace
+  - Files: `web/README.md`
+  - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+  - Notes: **Completed (verified — `/project-spec-close`).** `web/README.md` gained new `## Components` section (sibling of `## Tokens`) with `### Sidebar` subsection — six bullets: lucide-react named-import dependency (tree-shake via `Home` / `BookOpen` / `Newspaper` / `LayoutDashboard` / `Menu` / `X`, no barrel); `'use client'` rationale (`usePathname()` + `useState` both need browser runtime); active-route styling via inline `style` + `tokens.colors['text-accent-warn']` + `tokens.colors['bg-panel']` (NOT bare `text-accent` — palette only exposes amber-warn + critical-red); mobile overlay pattern (hamburger `md:hidden fixed top-4 left-4 z-50`, nav wrapper `fixed inset-y-0 left-0 w-48 z-40 transform transition-transform`, open/closed `translate-x-0` / `-translate-x-full`); desktop same-element responsive `md:static md:translate-x-0` (NOT `hidden md:flex` wrapper — Sidebar owns own responsive classes, wrapper would break TECH-224 mobile overlay); token-consumption inline-`style` map via `@/lib/tokens` (JSON keys resolved at build, NOT Tailwind utilities). Decision Log — separate `## Components` section over inline under `## Tokens` (components ≠ tokens; future Button / PlanChart share this bucket); `text-accent-warn` over bare `text-accent` (palette audit); inline-`style` over class-string (matches ship source); same-element responsive over wrapper (matches TECH-225 layout). Validate — `npm run validate:all` green (lint + typecheck + next build + IA validators); zero `lucide-react` TS2307 / TS2305 diagnostics. Final Stage 4.1 exit gate satisfied; sibling TECH-223 + TECH-224 + TECH-225 all archived. Master-plan row T4.1.4 already flipped `Done` pre-closeout.
+  - Depends on: **TECH-225** (archived)
+
+- [x] **TECH-225** — Root layout integration for Sidebar (Stage 4.1 Phase 2) (2026-04-16)
+  - Type: infrastructure / web workspace / layout
+  - Files: `web/app/layout.tsx`
+  - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+  - Notes: **Completed (verified — `/project-spec-close`).** `web/app/layout.tsx` restructured to horizontal shell. Outer `<body className="min-h-full flex flex-col">` preserved; inner row `<div className="flex flex-1 min-h-0">` wraps `<Sidebar />` + `<main className="flex-1 min-w-0 overflow-auto">{children}</main>`; existing footer (Devlog + RSS) stays below row. `<html>` classes (`${geistSans.variable} ${geistMono.variable} h-full antialiased`) + metadata export + all lib imports (`getBaseUrl`, `siteTitle`, `siteTagline`, `tokens`) preserved. `<Sidebar />` rendered directly — no `hidden md:flex` wrapper (Sidebar root `<nav>` owns `fixed ... md:static md:translate-x-0 w-48`, wrapping would break TECH-224 mobile overlay). Decision Log — keep outer `<body>` shell + footer (replacing wholesale deletes Devlog/RSS links); render `<Sidebar />` directly (wrapper slot breaks mobile); inner row uses `flex flex-1 min-h-0` not `flex min-h-screen` (min-h-screen double-counts vs outer `min-h-full` → footer pushed off-screen); `min-w-0` on `<main>` prevents flexbox child overflow from long tables / pre blocks. Validate: `cd web && npm run typecheck` + `npm run lint` + `npm run validate:web` + `npm run validate:all` all green. Phase 2 of Stage 4.1; sibling TECH-226 (README §Components) still open.
+  - Depends on: **TECH-224** (archived)
+
+- [x] **TECH-224** — Sidebar active-route highlight + mobile overlay toggle (Stage 4.1 Phase 1) (2026-04-16)
+  - Type: infrastructure / web workspace / component
+  - Files: `web/components/Sidebar.tsx`
+  - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+  - Notes: **Completed (verified — `/project-spec-close`).** `web/components/Sidebar.tsx` flipped to `'use client'`. `usePathname()` drives per-link `active = pathname === href` → `text-accent-warn bg-panel rounded` (token corrected at kickoff — palette has only `text-accent-warn` amber + `text-accent-critical` red, no plain `text-accent`; warn-amber chosen so red stays destructive-only semantics). Mobile overlay: `useState(false)` `open` bool + lucide `Menu` / `X` toggle button (`md:hidden fixed top-4 left-4 z-50`); `<nav>` keeps `fixed inset-y-0 left-0 w-48 z-40 transform transition-transform md:static md:translate-x-0` and toggles `translate-x-0` / `-translate-x-full` on `open` (DOM-resident for slide anim, NOT `hidden`). Each `<Link>` calls `setOpen(false)` → overlay auto-dismisses on mobile nav. Phase 0 preflight confirmed `usePathname` + lucide `Menu` / `X` resolve under `next@16.2.3` + `lucide-react@^1.8.0`. Stack reality: workspace runs Tailwind v4 CSS-first config in `web/app/globals.css` `@theme` (no `tailwind.config.ts`); `--color-text-accent-warn` already declared. Validate: `cd web && npm run lint && npm run typecheck && npm run build` green; `npm run validate:all` green. Decision Log — `fixed inset-y-0` + `md:static` single-component pattern over CSS `@media` + dual components; auto-close overlay on link tap (UX convention); amber over critical-red for active highlight (semantics); `-translate-x-full` over `hidden` (preserve slide). Issues Found — Next 16 `usePathname()` returns non-nullable `string` (Next 13/14 was `string | null`); no null-guard needed (lesson migrated to MEMORY.md). Phase 1 of Stage 4.1; siblings TECH-225 (root layout wiring) + TECH-226 (README §Components) still open.
+  - Depends on: **TECH-223** (archived)
 
 - [x] **TECH-209** — UI/Eco/Sys BlipPatch SO authoring (Stage 3.1 Phase 1) (2026-04-15)
   - Type: infrastructure / audio authoring

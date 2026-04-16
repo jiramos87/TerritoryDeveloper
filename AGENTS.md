@@ -81,6 +81,7 @@ MEMORY.md                                 → project-level architectural memory
 | [`managers-reference.md`](ia/specs/managers-reference.md) | Managers + helper services: responsibilities, deps |
 | [`glossary.md`](ia/specs/glossary.md) | Domain term definitions (English only) |
 | [`unity-development-context.md`](ia/specs/unity-development-context.md) | Unity patterns: MonoBehaviour lifecycle, Inspector / `SerializeField`, `FindObjectOfType`, Script Execution Order |
+| [`audio-blip.md`](ia/specs/audio-blip.md) | Blip procedural SFX subsystem: DSP kernel, authoring, runtime architecture, fixtures, invariants |
 | [`REFERENCE-SPEC-STRUCTURE.md`](ia/specs/REFERENCE-SPEC-STRUCTURE.md) | Meta: author + extend reference specs |
 
 Do NOT add bug write-ups, agent prompts, one-off specs under `ia/specs/`. Use `BACKLOG.md` while open; delete temp markdown after completion.

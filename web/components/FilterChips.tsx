@@ -1,3 +1,14 @@
+/**
+ * A single filter chip descriptor.
+ *
+ * Each chip's `active` state is independent — supports multi-select callers
+ * (any number of chips may be active simultaneously; no single-active invariant).
+ *
+ * `href` is optional: when present the chip renders as an `<a>` (navigable link);
+ * when absent it renders as a `<span>` (non-navigable static state indicator).
+ *
+ * RSC-compatible — no client hooks; safe for use inside Server Components.
+ */
 export type Chip = { label: string; active: boolean; href?: string }
 export type FilterChipsProps = { chips: Chip[] }
 

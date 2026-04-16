@@ -10,6 +10,7 @@ using Territory.Geography;
 using Territory.Simulation;
 using Territory.Terrain;
 using Territory.UI;
+using Territory.Audio;
 
 namespace Territory.Persistence
 {
@@ -67,6 +68,7 @@ public class GameSaveManager : MonoBehaviour
 
         string path = Path.Combine(Application.persistentDataPath, saveData.saveName + ".json");
         File.WriteAllText(path, JsonUtility.ToJson(saveData));
+        BlipEngine.Play(BlipId.SysSaveGame);
 
         PlayerPrefs.SetString("LastSavePath", path);
         PlayerPrefs.Save();
@@ -93,6 +95,7 @@ public class GameSaveManager : MonoBehaviour
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
             File.WriteAllText(absolutePath, JsonUtility.ToJson(saveData));
+            BlipEngine.Play(BlipId.SysSaveGame);
             return true;
         }
         catch (Exception ex)

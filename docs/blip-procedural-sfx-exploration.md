@@ -1,5 +1,7 @@
 # Blip — Procedural SFX Exploration
 
+> **Superseded by [`ia/specs/audio-blip.md`](../ia/specs/audio-blip.md)** for canonical architecture, DSP kernel, invariants. This doc retains §9 recipe tables + §10–§12 live-DSP sketches + §13 locked decisions + §15 post-MVP extensions as historical / implementer reference.
+
 Status: exploration / pre-spec
 Owner: Javier
 Date: 2026-04-13

@@ -1,6 +1,6 @@
 # Web Platform — Master Plan (MVP)
 
-> **Status:** Draft — Steps 1–2 Final; Step 3 decomposed (Stage 3.1 Done; Stage 3.2 filed — tasks Draft; Stage 3.3 _pending_)
+> **Status:** Draft — Steps 1–3 Final; Step 4 active (dashboard improvements — decomposed 2026-04-16, ready to stage-file); Steps 5–6 paused (portal auth + E2E deferred until future instruction)
 >
 > **Scope:** Unified Next.js 14+ app at `web/` (monorepo workspace) serving three audiences from one codebase — public game site (landing / wiki / devlog / about / install / history), live DevOps progress dashboard, and future user portal. Static-first hybrid on Vercel free tier; Postgres + auth deferred to portal step. Post-MVP extensions (payment gateway, cloud saves, community wiki edits, i18n, Unity WebGL export) tracked inline in exploration doc `### Implementation Points → Deferred / out of scope`; no separate scope-boundary doc yet.
 >
@@ -265,7 +265,7 @@
 
 **Backlog state (Step 3):** Stage 3.1 — TECH-200…TECH-203 (archived); Stage 3.2 — TECH-205…TECH-208 (archived)
 
-**Objectives:** Replace the static `docs/progress.html` snapshot with a live React Server Component dashboard at `/dashboard` that reads every master plan under `ia/projects/*-master-plan.md` via a thin wrapper around `tools/progress-tracker/parse.mjs`. Filter chips (per-plan / per-status / per-phase) use the Stage 1.2 `FilterChips` primitive; table uses `DataTable`. Apply the Q14 obscure-URL gate — unlinked route, `robots.txt` disallow, "internal" banner — until Step 4 portal auth lands, at which point dashboard migrates behind auth middleware. Add "Live dashboard" link on the legacy `docs/progress.html`; deprecate the legacy page once dashboard has proven stable for a measurable duration (exact trigger tracked in Step 3 Decision Log).
+**Objectives:** Replace the static `docs/progress.html` snapshot with a live React Server Component dashboard at `/dashboard` that reads every master plan under `ia/projects/*-master-plan.md` via a thin wrapper around `tools/progress-tracker/parse.mjs`. Filter chips (per-plan / per-status / per-phase) use the Stage 1.2 `FilterChips` primitive; table uses `DataTable`. Apply the Q14 obscure-URL gate — unlinked route, `robots.txt` disallow, "internal" banner — until Step 5 portal auth lands, at which point dashboard migrates behind auth middleware. Add "Live dashboard" link on the legacy `docs/progress.html`; deprecate the legacy page once dashboard has proven stable for a measurable duration (exact trigger tracked in Step 3 Decision Log).
 
 **Exit criteria:**
 
@@ -346,7 +346,7 @@
 
 #### Stage 3.3 — Legacy handoff + validation
 
-**Status:** In Review — TECH-213 closed 2026-04-15 (archived); TECH-214 filed 2026-04-15 (kicked off).
+**Status:** Done — TECH-213 closed 2026-04-15 (archived); TECH-214 closed 2026-04-15 (archived). Stage 3.3 exit criteria met; Step 3 closed.
 
 **Objectives:** Wire the `docs/progress.html` "Live dashboard" link to the Vercel deploy URL, run end-to-end smoke confirming the dashboard works in production, and author the Decision Log entry for the `docs/progress.html` deprecation trigger.
 
@@ -354,24 +354,165 @@
 
 - `docs/progress.html` has a visible "Live dashboard →" banner at top linking to `https://web-nine-wheat-35.vercel.app/dashboard`.
 - End-to-end smoke: `/dashboard` returns 200 on Vercel deploy; filter chips modify URL params + re-render; "internal" banner visible; Vercel-served `robots.txt` disallows the route.
-- §Decision Log section added to this master plan below Orchestration guardrails, documenting the `docs/progress.html` deprecation trigger (proposed: ≥2 stable deploy cycles after Step 4 portal auth gate lands).
+- §Decision Log section added to this master plan below Orchestration guardrails, documenting the `docs/progress.html` deprecation trigger (proposed: ≥2 stable deploy cycles after Step 5 portal auth gate lands).
 
 **Phases:**
 
-- [ ] Phase 1 — Legacy link + E2E smoke + deprecation decision log.
+- [x] Phase 1 — Legacy link + E2E smoke + deprecation decision log.
 
 **Tasks:**
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
 | T3.3.1 | 1 | **TECH-213** (archived) | Done | Edit `docs/progress.html` — insert "Live dashboard →" banner `<div>` at top of `<body>` linking to `https://web-nine-wheat-35.vercel.app/dashboard`; minimal inline style consistent with existing page aesthetic (no external CSS added). |
-| T3.3.2 | 1 | **TECH-214** | In Review | End-to-end smoke + deprecation decision log — manually confirm Vercel `/dashboard` returns 200, filter chips functional, "internal" banner visible, `robots.txt` disallows route; append §Decision Log section to this master plan below Orchestration guardrails documenting `docs/progress.html` deprecation trigger (proposed: ≥2 stable deploy cycles post Step 4 portal-auth gate). |
+| T3.3.2 | 1 | **TECH-214** (archived) | Done | End-to-end smoke + deprecation decision log — manually confirm Vercel `/dashboard` returns 200, filter chips functional, "internal" banner visible, `robots.txt` disallows route; append §Decision Log section to this master plan below Orchestration guardrails documenting `docs/progress.html` deprecation trigger (proposed: ≥2 stable deploy cycles post Step 5 portal-auth gate). |
 
 ---
 
-### Step 4 — Portal foundations (architecture-only at this tier)
+### Step 4 — Dashboard improvements + UI polish
 
-**Status:** Draft — decomposition deferred until Step 3 closes.
+**Status:** Done (Stages 4.1 + 4.2 + 4.3 + 4.4 all closed 2026-04-16)
+
+**Backlog state (Step 4):** 16 filed + archived (TECH-223…TECH-226, TECH-231…TECH-234, TECH-239…TECH-242, TECH-247…TECH-250)
+
+**Objectives:** Improve `/dashboard` and the overall web app experience with richer navigation, standardized UI primitives, data visualization, and multi-select filtering. Ship an app-wide collapsible sidebar wired into the root layout; integrate an icon library; add a `Button` primitive aligned to design tokens; extend `DataTable` with percentage-column support and show per-plan completion stats on the dashboard; land D3.js-driven charts (status breakdown) as client components; upgrade `FilterChips` + dashboard filter logic to support multiple choices per dimension simultaneously. No production deploy during development — each stage closeout triggers deploy.
+
+**Exit criteria:**
+
+- `web/components/Sidebar.tsx` (new) — collapsible sidebar with icon + label links to `/ | /wiki | /devlog | /dashboard`; wired into `web/app/layout.tsx`; responsive (collapsed on mobile, expanded on ≥md); uses icon library per route.
+- Icon library installed (`lucide-react` preferred — tree-shakeable, MIT); icons used across sidebar, button, badge; no raw emoji icons in components.
+- `web/components/Button.tsx` (new) — `variant: 'primary' | 'secondary' | 'ghost'`; `size: 'sm' | 'md' | 'lg'`; design tokens (`bg-accent-*`, `text-*`) — no inline hex; replaces ad-hoc `<button>` elements in existing pages where present.
+- Dashboard shows per-plan completion percentage (tasks with `status === 'Done (archived)'` / total tasks) and per-step completion percentage; both derived from `PlanData` — `parse.mjs` + `plan-loader.ts` untouched.
+- `web/components/PlanChart.tsx` (new) — D3.js client component; renders at minimum a status-breakdown bar chart per plan (grouped bars: pending / in-progress / done counts by step or stage); design tokens for fills; exported via `dynamic()` with `{ ssr: false }` to avoid hydration errors.
+- Dashboard filter chips support multi-select per dimension: query string accepts repeated params (`?status=Draft&status=In+Progress`) or comma-delimited (`?status=Draft,In+Progress`); active state per-value; de-select one value → only that value removed; "clear all filters" control resets to bare `/dashboard`.
+- `validate:all` green at each stage close; production deploy on stage closeout (not mid-stage).
+
+**Art:** None. Charts use design-token palette; no illustrator assets required.
+
+**Relevant surfaces (load when step opens):**
+- Step 3 outputs: `web/app/dashboard/page.tsx`, `web/lib/plan-loader.ts`, `web/lib/plan-loader-types.ts` — modified or extended in Stages 4.2, 4.3, 4.4.
+- Step 1 outputs: `web/components/{DataTable,FilterChips,BadgeChip,StatBar}.tsx`, `web/lib/tokens/*.json`, `web/tailwind.config.ts` — `DataTable` + `FilterChips` extended; tokens consumed.
+- `web/app/layout.tsx` — `Sidebar` wired here (Stage 4.1).
+- `web/package.json` — `lucide-react`, `d3`, `@types/d3` added.
+- `docs/web-platform-exploration.md` §Implementation Points — UI density, navigation context.
+- D3.js pattern in Next.js: `'use client'` component + `dynamic()` with `{ ssr: false }` wrapper; no SSR DOM manipulation.
+- Invariants: `ia/rules/invariants.md` #1–#12 NOT implicated — web platform only.
+
+#### Stage 4.1 — Navigation sidebar + icon system
+
+**Status:** Done (TECH-223…TECH-226 all closed 2026-04-16)
+
+**Objectives:** Install `lucide-react`; author `Sidebar` client component with icon + label links to all top-level routes; add active route highlighting via `usePathname`; implement responsive behavior (collapsed on mobile via slide/overlay, always expanded on ≥md); wire into root layout.
+
+**Exit:**
+
+- `lucide-react` added to `web/package.json` deps; `web/components/Sidebar.tsx` (new) renders vertical nav list with icon + label per route (`Home`, `BookOpen`, `Newspaper`, `LayoutDashboard` icons); design token classes only (no inline hex).
+- Active route link styled with `text-accent`/`bg-panel` via `usePathname()`; mobile hamburger toggle (`Menu`/`X`) collapses/expands sidebar via `useState`; `'use client'` component.
+- `web/app/layout.tsx` restructured as `flex min-h-screen` row; `<Sidebar />` in left slot; `<main className="flex-1 min-w-0">` wraps `{children}`; sidebar `hidden md:flex` on desktop, overlay on mobile.
+- `validate:all` green; `web/README.md §Components` Sidebar entry added (lucide dep, `'use client'` rationale, active state pattern).
+
+**Phases:**
+
+- [x] Phase 1 — Sidebar component (markup + icons + active state + mobile toggle).
+- [x] Phase 2 — Layout integration + docs + validation.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T4.1.1 | 1 | **TECH-223** | Done (archived) | Install `lucide-react` into `web/package.json`; author `web/components/Sidebar.tsx` base — `<nav>` with vertical `<Link>` list per route (`/` → `Home`, `/wiki` → `BookOpen`, `/devlog` → `Newspaper`, `/dashboard` → `LayoutDashboard`); each link: icon (24px) + label text; design token classes (`bg-canvas`, `text-primary`, `text-muted`, hover `text-primary`); SSR-compatible static markup; no active state yet. |
+| T4.1.2 | 1 | **TECH-224** | Done (archived) | Convert `web/components/Sidebar.tsx` to `'use client'`; add `usePathname()` active highlight (`text-accent-warn bg-panel rounded` on matching href — token corrected during kickoff, no plain `text-accent` alias exists in palette); add mobile collapse toggle — `useState(false)` `open` bool; `Menu`/`X` icon button visible on `<md`; collapsed: sidebar `-translate-x-full` (kept in DOM for transition); expanded: fixed overlay with `z-50 bg-canvas` on mobile; transitions via Tailwind `transition-transform`. |
+| T4.1.3 | 2 | **TECH-225** | Done (archived) | Wire `<Sidebar />` into `web/app/layout.tsx` — preserve existing `<html>` Geist font vars + `h-full antialiased`, `<body className="min-h-full flex flex-col">`, footer (Devlog + RSS), metadata export; insert inner horizontal row `<div className="flex flex-1 min-h-0"><Sidebar /><main className="flex-1 min-w-0 overflow-auto">{children}</main></div>` as first `<body>` child; render `<Sidebar />` directly (no `hidden md:flex` wrapper — Sidebar root `<nav>` already owns `fixed ... md:static md:translate-x-0 w-48`); smoke `/`, `/wiki`, `/devlog`, `/dashboard`, `/design`, `/about`, `/install`, `/history` for no horizontal scroll, footer pinned below row, TECH-224 mobile overlay intact. |
+| T4.1.4 | 2 | **TECH-226** | Done (archived) | Add `web/README.md §Components` Sidebar entry — documents lucide-react dependency, `'use client'` rationale (`usePathname` + `useState`), mobile overlay pattern, and desktop `md:static md:translate-x-0` strategy (same-element, not `hidden md:flex` wrapper); active-route token = `text-accent-warn`; token consumption via inline `style` + `tokens.colors[...]` JS map (not Tailwind utility classes); `validate:all` green; confirm no TypeScript errors from lucide-react imports. |
+
+#### Stage 4.2 — UI primitives polish + dashboard percentages
+
+**Status:** Done (TECH-231 + TECH-232 + TECH-233 + TECH-234 archived 2026-04-16)
+
+**Objectives:** Author `Button` primitive with variant + size props consuming design tokens; extend `DataTable` with optional `pctColumn` prop rendering `StatBar` inline; compute and display per-plan and per-step completion percentages on the dashboard derived from `PlanData`; `plan-loader.ts` + `plan-loader-types.ts` untouched.
+
+**Exit:**
+
+- `web/components/Button.tsx` (new) — `variant: 'primary' | 'secondary' | 'ghost'`; `size: 'sm' | 'md' | 'lg'`; polymorphic (`<button>` default, `<a>` when `href` present); design token classes; `disabled` state; exports `ButtonProps`.
+- `web/components/DataTable.tsx` extended — optional `pctColumn?: { dataKey: keyof T; label?: string; max?: number }` prop; renders `StatBar` inline for named key; existing column contract unchanged.
+- Dashboard renders per-plan `StatBar` (done / total tasks) in plan section heading and per-step compact `StatBar` rows below each step heading; both computed from `PlanData.allTasks` — `plan-loader.ts` untouched.
+- `web/README.md §Components` Button + DataTable `pctColumn` entries added; `validate:all` green.
+
+**Phases:**
+
+- [x] Phase 1 — Button + DataTable pctColumn primitives.
+- [x] Phase 2 — Dashboard percentage rendering + docs.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T4.2.1 | 1 | **TECH-231** | Done (archived) | Author `web/components/Button.tsx` (new) — polymorphic: renders `<button>` (default) or `<a>` when `href` prop present; `variant: 'primary' \| 'secondary' \| 'ghost'` mapped to corrected token utility classes (`bg-bg-status-progress text-text-status-progress-fg` / `bg-bg-panel text-text-primary border border-text-muted/40` / `bg-transparent text-text-muted hover:text-text-primary` — phantom `accent-info` / `border-border` names from spec draft replaced during kickoff with real `globals.css @theme` aliases); `size: 'sm' \| 'md' \| 'lg'` mapped to `px-/py-/text-` scale; `disabled` → `opacity-50 cursor-not-allowed pointer-events-none`; named-exports `Button` + `ButtonProps`. |
+| T4.2.2 | 1 | **TECH-232** | Done (archived) | Extend `web/components/DataTable.tsx` — add optional `pctColumn?: { dataKey: keyof T; label?: string; max?: number }` prop; when provided, appends an extra column rendering `<StatBar value={(row[dataKey] as number) / (pctColumn.max ?? 100) * 100} />` with `label ?? 'Progress'` header; all existing column definitions, generic types, and sort contract unchanged; import `StatBar` from `./StatBar`. |
+| T4.2.3 | 2 | **TECH-233** | Done (archived) | Add per-plan completion `StatBar` to `web/app/dashboard/page.tsx` — for each plan, compute `completedCount` (`allTasks.filter(t => DONE_STATUSES.has(t.status)).length`, `DONE_STATUSES = {'Done (archived)', 'Done'}`) + `totalCount`; render `<StatBar label="{completedCount} / {totalCount} done" value={completedCount} max={totalCount} />` in plan section heading row next to `BadgeChip`; `plan-loader.ts` + `plan-loader-types.ts` untouched. |
+| T4.2.4 | 2 | **TECH-234** | Done (archived) | Add per-step completion stats to dashboard — for each `step` in `plan.steps`, derive step tasks from `plan.allTasks.filter(t => t.id.startsWith('T' + step.id + '.'))` (done / total); render compact `<StatBar>` row below each step heading; add `web/README.md §Components` Button + DataTable `pctColumn` entries; `validate:all` green. |
+
+#### Stage 4.3 — D3.js data visualization
+
+**Status:** Done — TECH-239 + TECH-240 + TECH-241 + TECH-242 all closed 2026-04-16 (archived)
+
+**Objectives:** Install `d3` + `@types/d3`; author `PlanChart` `'use client'` component with grouped-bar status-breakdown chart per plan; wire `dynamic()` with `{ ssr: false }` to avoid hydration errors; integrate into dashboard page with data aggregation from `PlanData`; validate no SSR build errors.
+
+**Exit:**
+
+- `d3` + `@types/d3` added to `web/package.json`.
+- `web/components/PlanChart.tsx` (new) — `'use client'` SVG chart; D3 `scaleBand` + `scaleLinear` + `axisBottom` + `axisLeft`; grouped bars (pending / in-progress / done per step); fills via `var(--color-*)` CSS vars; axis labels + color legend; empty-state `<p>` when 0 tasks.
+- Dashboard page imports `PlanChart` via `next/dynamic({ ssr: false })`; one chart per plan with loading skeleton; no SSR / hydration errors in `next build` output.
+- `web/README.md §Components` PlanChart entry added; `validate:all` green.
+
+**Phases:**
+
+- [x] Phase 1 — D3 install + PlanChart component (chart + axes + legend).
+- [x] Phase 2 — Dashboard integration + ssr-bypass + validation.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T4.3.1 | 1 | **TECH-239** | Done (archived) | Install `d3` + `@types/d3` into `web/package.json`; author `web/components/PlanChart.tsx` (new) — `'use client'`; props `{ data: { label: string; pending: number; inProgress: number; done: number }[] }`; `useRef<SVGSVGElement>` + `useEffect` for D3 draw; `scaleBand` (step labels) + `scaleLinear` (count); 3 grouped bars per step using nested `scaleBand`; fills via `var(--color-bg-status-pending)` / `var(--color-bg-status-progress)` / `var(--color-bg-status-done)` real `@theme` aliases; static `480×220` SVG; empty-state `<p>` when `data.length === 0`. |
+| T4.3.2 | 1 | **TECH-240** | Done (archived) | Extend `PlanChart.tsx` — add `axisBottom` (step label ticks, truncated at 12 chars via `.text(d => d.length > 12 ? d.slice(0,11) + '…' : d)`); `axisLeft` (count integer ticks, `tickFormat(d3.format('d'))`); inline SVG `<text>` legend (3 color swatches + "Pending / In Progress / Done" labels); handle 0-task plan (data array empty → render placeholder `<p className="text-text-muted text-sm">No tasks</p>` instead of SVG). |
+| T4.3.3 | 2 | **TECH-241** | Done (archived) | Integrate `PlanChart` into `web/app/dashboard/page.tsx` — `const PlanChart = dynamic(() => import('@/components/PlanChart'), { ssr: false, loading: () => <div className="h-[220px] bg-bg-panel animate-pulse rounded" /> })`; for each plan derive chart data: `plan.steps.map(step => ({ label: step.title, pending: plan.allTasks.filter(t => t.id.startsWith('T' + step.id + '.') && t.status === '_pending_').length, inProgress: …'In Progress'…, done: …'Done (archived)'… }))`; render one `<PlanChart data={chartData} />` per plan below its `DataTable`. |
+| T4.3.4 | 2 | **TECH-242** | Done (archived) | Smoke chart in dev + build — run `cd web && npm run build`; confirm zero `ReferenceError: window is not defined` or `document` SSR errors in build output; `validate:all` green; add `web/README.md §Components` PlanChart entry (dynamic import pattern, `ssr: false` rationale, data aggregation shape, fill CSS var names). |
+
+#### Stage 4.4 — Multi-select dashboard filtering
+
+**Status:** Done (TECH-247 + TECH-248 + TECH-249 + TECH-250 archived 2026-04-16)
+
+**Objectives:** Upgrade `FilterChips` with per-chip `href` override for multi-select callers; author `web/lib/dashboard/filter-params.ts` URL helpers (`toggleFilterParam`, `parseFilterValues`); update dashboard `searchParams` parsing to multi-value arrays (OR within dimension, AND across); add per-value de-select and "clear all filters" ghost `Button` control.
+
+**Exit:**
+
+- `web/components/FilterChips.tsx` extended — `Chip` interface gains optional `href?: string` (explicit URL override); `active?: boolean` per-chip; backward-compatible (chips without `href` unchanged).
+- `web/lib/dashboard/filter-params.ts` (new) — exports `toggleFilterParam(search, key, value): string`; `parseFilterValues(params, key): string[]` (handles comma-delimited + repeated params); `clearFiltersHref` constant `'/dashboard'`.
+- Dashboard `searchParams` parsed via `parseFilterValues`; `PlanData[]` + `TaskRow[]` filtered server-side (OR within dimension, AND across); each chip `href` from `toggleFilterParam`.
+- "Clear filters" ghost `Button` visible when `searchParams` non-empty; full-English "Clear filters" text (caveman-exception); `validate:all` green.
+
+**Phases:**
+
+- [x] Phase 1 — FilterChips extension + URL helper module.
+- [x] Phase 2 — Dashboard wiring + clear-filters control + validation.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T4.4.1 | 1 | **TECH-247** | Done (archived) | Extend `web/components/FilterChips.tsx` — update `Chip` interface: add `href?: string` (when present, chip renders `<a href={href}>` directly instead of computing href internally); `active?: boolean` stays per-chip; remove any assumption of exactly one active chip; existing single-select callers (no `href` in chips) fall back to `href="#"` — backward-compatible; no `'use client'` conversion needed (chips are purely declarative). |
+| T4.4.2 | 1 | **TECH-248** | Done (archived) | Author `web/lib/dashboard/filter-params.ts` (new) — exports: `parseFilterValues(params: URLSearchParams \| ReadonlyURLSearchParams, key: string): string[]` — splits comma-delimited value + collects repeated params, deduplicates, returns sorted array; `toggleFilterParam(currentSearch: string, key: string, value: string): string` — parses `currentSearch` into `URLSearchParams`, adds `value` if absent or removes if present (comma-delimited representation), returns new query string; `clearFiltersHref = '/dashboard'` constant. |
+| T4.4.3 | 2 | **TECH-249** | Done (archived) | Update `web/app/dashboard/page.tsx` `searchParams` parsing — replace single-value reads with `parseFilterValues(new URLSearchParams(searchParams as Record<string, string>), 'plan')` etc. for each dimension; filter `PlanData[]` (OR within dimension, AND across): `plan` filter on `plan.title`, `status` filter on `task.status`, `phase` filter on `task.phase`; pass per-chip `href` from `toggleFilterParam(new URLSearchParams(searchParams as Record<string, string>).toString(), key, chipValue)` to `FilterChips` chips array. |
+| T4.4.4 | 2 | **TECH-250** | Done (archived) | Add "clear all filters" control to dashboard page — conditionally render `<Button variant="ghost" href="/dashboard">Clear filters</Button>` (full-English caveman-exception) when `Object.values(searchParams ?? {}).some(Boolean)`; smoke multi-select: `?status=Draft,In+Progress` narrows rows; each chip individually de-selectable; single-chip round-trip `toggleFilterParam` adds then removes cleanly; `validate:all` green. |
+
+---
+
+### Step 5 — Portal foundations (architecture-only at this tier)
+
+**Status:** Draft — paused until future instruction (tasks _pending_ — not yet filed)
+
+**Backlog state (Step 5):** 0 filed
 
 **Objectives:** Land the user-portal foundations — free-tier Postgres provider selected (Neon / Supabase free / Vercel Postgres Hobby — evaluate limits against expected volume); auth stack picked (roll-own JWT + sessions per Q11; confirm vs. Lucia-Auth-style minimal library before committing); stub `app/api/auth/*` route handlers with no user-facing flow; schema drafted for `user` / `session` / `save` / `entitlement` tables but NOT yet migrated. Dashboard migrates from obscure-URL gate to auth middleware once session handling works end-to-end. Payment gateway remains deferred (Q10 undecided) — architecture slot reserved, no provider wiring at this tier. This step intentionally stays architecture-only; user-facing portal UX ships in a follow-up master plan after this step's foundations lock.
 
@@ -383,15 +524,107 @@
 - Dashboard `/dashboard` now behind an auth middleware check (obscure-URL gate removed); unauthenticated users get redirect to a stub login page; stub login returns a canned error at this tier.
 - Payment gateway architecture slot documented in `web/README.md` §Portal as a placeholder, no provider chosen.
 
-**Stages:** _TBD — decompose after Step 3 lands + reveals surface area._
+**Art:** None. Architecture-only step — no illustrator assets.
+
+**Relevant surfaces (load when step opens):**
+- Step 3 outputs: `web/app/dashboard/page.tsx` (internal banner + obscure-URL gate — both removed in Stage 5.3), `web/app/robots.ts` (disallow extended — modified in Stage 5.3), `web/lib/plan-loader.ts`, `web/app/sitemap.ts` — consumed, not modified except where noted.
+- `docs/web-platform-exploration.md` §Implementation Points W7 (portal auth + DB).
+- `web/lib/db/client.ts` (new), `web/lib/db/schema.ts` (new), `drizzle.config.ts` (new).
+- `web/app/api/auth/{login,register,session,logout}/route.ts` (new).
+- `web/app/auth/login/page.tsx` (new), `web/middleware.ts` (new).
+- Invariants: `ia/rules/invariants.md` #1–#12 NOT implicated — web platform only.
+
+#### Stage 5.1 — Postgres provider + auth library selection
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Evaluate and select free-tier Postgres provider (Neon / Supabase free / Vercel Postgres Hobby) against MVP volume; lock auth library decision (Lucia Auth v3 vs. roll-own JWT vs. Auth.js — confirm Q11). Lock both decisions in Decision Log. Scaffold `web/lib/db/client.ts` connection pool wrapper + wire `DATABASE_URL` into Vercel env vars. Document in `web/README.md §Portal`.
+
+**Exit:**
+
+- Free-tier Postgres provider locked in Decision Log: provider name, connection/storage limits, region, rationale vs. alternatives.
+- Auth library locked in Decision Log: confirm or update Q11 "roll-own JWT + sessions"; Lucia Auth v3 evaluated as minimal alternative before committing to pure roll-own.
+- `web/lib/db/client.ts` (new) exports connection pool via `DATABASE_URL`; lazy-connects (no open at build time).
+- `DATABASE_URL` env var wired into Vercel project (production + preview + development environments).
+- `web/README.md §Portal` documents provider choice, connection pool pattern, `DATABASE_URL` contract, payment gateway placeholder.
+
+**Phases:**
+
+- [ ] Phase 1 — Provider + auth library evaluation + Decision Log entries.
+- [ ] Phase 2 — Connection pool scaffold + env wiring + README §Portal.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T5.1.1 | 1 | _pending_ | _pending_ | Evaluate Neon free / Supabase free / Vercel Postgres Hobby — compare connection limits, storage caps, regions, Next.js/Node driver compatibility; lock chosen provider in Decision Log with limits table + rationale vs. alternatives. No code — Decision Log entry only. |
+| T5.1.2 | 1 | _pending_ | _pending_ | Evaluate + lock auth library — compare Lucia Auth v3 (minimal, session-first) / pure roll-own JWT / Auth.js (heavy); confirm or update Q11 "roll-own JWT + sessions" decision; lock in Decision Log with API surface note + rationale. No code — Decision Log entry only. |
+| T5.1.3 | 2 | _pending_ | _pending_ | Install chosen Postgres driver into `web/package.json`; author `web/lib/db/client.ts` (new) — exports `db` or `sql` connection pool via `DATABASE_URL` (lazy-connect, no open at build time); wire `DATABASE_URL` into Vercel project env vars (production + preview + development) via Vercel dashboard or `vercel env add`. |
+| T5.1.4 | 2 | _pending_ | _pending_ | Extend `web/README.md` with `§Portal` section — documents provider choice, connection pool pattern, `DATABASE_URL` env contract, payment gateway architecture placeholder (no provider chosen), and "Step 5 is architecture-only — no migrations run" boundary note; `validate:all` green. |
+
+#### Stage 5.2 — Auth API stubs + schema draft
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Draft `web/lib/db/schema.ts` covering `user`, `session`, `save`, `entitlement` tables using drizzle-kit (preferred). Install + configure migration tooling; confirm `db:generate` script works. Author stub `web/app/api/auth/{login,register,session,logout}/route.ts` handlers returning 501 Not Implemented. No migrations run.
+
+**Exit:**
+
+- `web/lib/db/schema.ts` (new) defines typed drizzle `pgTable` definitions for `user`, `session`, `save`, `entitlement` tables with column types matching auth library data contract from Stage 5.1.
+- `drizzle.config.ts` (new) at `web/` root; `web/package.json` has `db:generate` script; `npm run db:generate` produces artifacts in `web/drizzle/`; migrations NOT run.
+- `web/app/api/auth/login/route.ts`, `register/route.ts` (new) — `POST` handlers each return `Response.json({ error: 'Not Implemented' }, { status: 501 })`.
+- `web/app/api/auth/session/route.ts` (`GET`), `logout/route.ts` (`POST`) (new) — each returns 501; all four routes absent from `web/app/sitemap.ts`.
+- `validate:all` green; no TypeScript errors from schema imports.
+
+**Phases:**
+
+- [ ] Phase 1 — Schema + migration tool setup.
+- [ ] Phase 2 — Auth API stub handlers.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T5.2.1 | 1 | _pending_ | _pending_ | Install `drizzle-orm` + `drizzle-kit` into `web/package.json`; author `web/lib/db/schema.ts` (new) — drizzle `pgTable` for: `user` (id uuid PK, email text unique, passwordHash text, createdAt timestamp), `session` (id uuid PK, userId uuid FK→user.id, expiresAt timestamp, token text), `save` (id uuid PK, userId uuid FK→user.id, data jsonb, updatedAt timestamp), `entitlement` (id uuid PK, userId uuid FK→user.id, tier text, grantedAt timestamp). |
+| T5.2.2 | 1 | _pending_ | _pending_ | Author `web/drizzle.config.ts` (new) — `schema: './lib/db/schema.ts'`, `out: './drizzle/'`, driver from `DATABASE_URL`; add `"db:generate": "drizzle-kit generate"` to `web/package.json` scripts; confirm `npm run db:generate` produces SQL artifacts in `web/drizzle/` without live DB; decide + document whether `web/drizzle/` is gitignored or committed; `validate:all` green. |
+| T5.2.3 | 2 | _pending_ | _pending_ | Author `web/app/api/auth/login/route.ts` + `web/app/api/auth/register/route.ts` (new) — each exports `export async function POST(_req: Request)` returning `Response.json({ error: 'Not Implemented' }, { status: 501 })`; TypeScript typed; no DB imports yet. |
+| T5.2.4 | 2 | _pending_ | _pending_ | Author `web/app/api/auth/session/route.ts` (`GET`) + `web/app/api/auth/logout/route.ts` (`POST`) (new) — each returns 501 Not Implemented; confirm all four `/api/auth/*` routes absent from `web/app/sitemap.ts` (API routes not enumerated); `validate:all` green. |
+
+#### Stage 5.3 — Dashboard auth middleware migration
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Replace obscure-URL gate on `/dashboard` with Next.js Middleware auth check. Unauthenticated requests → redirect to stub `/auth/login`. Author stub login page (full-English UI, caveman-exception). Remove "internal" banner from dashboard. Update `robots.ts`.
+
+**Exit:**
+
+- `web/middleware.ts` (new) — matcher `['/dashboard']`; reads session cookie; absent/invalid → `NextResponse.redirect(new URL('/auth/login', request.url))`; present → `NextResponse.next()`.
+- `web/app/auth/login/page.tsx` (new) — stub RSC; full-English copy (caveman-exception): "Sign in" heading, email + password placeholder inputs, disabled submit, canned banner "Authentication not yet available — coming soon."; design token classes (no inline hex).
+- `web/app/robots.ts` updated — `/dashboard` removed from disallow; `/auth` added to disallow.
+- "Internal" banner removed from `web/app/dashboard/page.tsx`; manual smoke: `/dashboard` without session cookie → 302 to `/auth/login`.
+- `validate:all` green.
+
+**Phases:**
+
+- [ ] Phase 1 — Middleware + stub login page.
+- [ ] Phase 2 — robots.ts update + banner removal + smoke.
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T5.3.1 | 1 | _pending_ | _pending_ | Author `web/middleware.ts` (new) — `config = { matcher: ['/dashboard'] }`; reads session cookie by name from `request.cookies.get(SESSION_COOKIE_NAME)`; if missing/empty → `NextResponse.redirect(new URL('/auth/login', request.url))`; if present → `NextResponse.next()`. Cookie name constant matches auth library decision from Stage 5.1. No DB lookup at this tier. |
+| T5.3.2 | 1 | _pending_ | _pending_ | Author `web/app/auth/login/page.tsx` (new) — RSC stub login page; full-English user-facing copy (caveman-exception): "Sign in" heading, email + password `<input>` placeholders, disabled `<button>` submit, canned error `<p>` "Authentication not yet available — coming soon."; consumes design token classes (`bg-canvas`, `text-primary`, etc. — no inline hex). |
+| T5.3.3 | 2 | _pending_ | _pending_ | Update `web/app/robots.ts` — remove `/dashboard` from disallow array; add `/auth` to disallow (login page not publicly indexed); confirm `/auth/login` absent from `web/app/sitemap.ts`; `validate:all` green. |
+| T5.3.4 | 2 | _pending_ | _pending_ | Remove "Internal" banner `<p>` from `web/app/dashboard/page.tsx`; smoke note: `localhost:4000/dashboard` without session cookie → middleware should 302 to `/auth/login`; confirm middleware matcher fires in Next.js dev server; `validate:all` green. |
 
 ---
 
-### Step 5 — Playwright E2E harness
+### Step 6 — Playwright E2E harness
 
-**Status:** Draft — decomposition deferred until Step 4 closes.
+**Status:** Draft — fully decomposed; tasks _pending_ — paused until future instruction (decompose-after trigger deferred to Step 5 close).
 
-**Objectives:** Install and configure Playwright as the automated e2e layer for the `web/` workspace; integrate into `npm run validate:all` CI chain; land baseline route coverage for all existing public surfaces; then add dashboard-specific e2e for SSR query-param filter flows. Step 4 portal auth-flow tests extend this harness as a Stage 4.X — the harness ships here so portal work inherits it without bootstrapping from scratch.
+**Objectives:** Install and configure Playwright as the automated e2e layer for the `web/` workspace; integrate into `npm run validate:all` CI chain; land baseline route coverage for all existing public surfaces; then add dashboard-specific e2e for SSR query-param filter flows. Step 5 portal auth-flow tests extend this harness as a Stage 5.X — the harness ships here so portal work inherits it without bootstrapping from scratch.
 
 **Exit criteria:**
 
@@ -413,7 +646,7 @@
 - `web/components/FilterChips.tsx` — active prop + href contract under test
 - `docs/agent-led-verification-policy.md` — determine whether `test:e2e` slots into Path A or remains a separate gate
 
-#### Stage 5.1 — Install + config + CI wiring
+#### Stage 6.1 — Install + config + CI wiring
 
 **Status:** _pending_
 
@@ -433,13 +666,13 @@
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T5.1.1 | 1 | _pending_ | _pending_ | Install `@playwright/test` into `web/package.json` devDeps; author `web/playwright.config.ts` — `baseURL` from `process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4000'`; headless Chromium project; `testDir: './tests'`; `outputDir: './playwright-report'`; add `web/tests/` dir stub (`.gitkeep`). |
-| T5.1.2 | 2 | _pending_ | _pending_ | Add `"test:e2e": "playwright test"` + `"test:e2e:ci": "playwright test --reporter=github"` to `web/package.json`; add `"validate:e2e": "npm --prefix web run test:e2e:ci"` to root `package.json`; add `web/playwright-report/` to `.gitignore`. `validate:all` unchanged — `validate:e2e` is a separate opt-in target. |
-| T5.1.3 | 3 | _pending_ | _pending_ | Extend `web/README.md` §E2E — document: local run (`npm run test:e2e`), `PLAYWRIGHT_BASE_URL` env contract, Vercel preview injection pattern (`PLAYWRIGHT_BASE_URL=https://$VERCEL_URL`), CI bootstrap (`npx playwright install --with-deps chromium`), and convention for adding tests per route under `web/tests/`. |
+| T6.1.1 | 1 | _pending_ | _pending_ | Install `@playwright/test` into `web/package.json` devDeps; author `web/playwright.config.ts` — `baseURL` from `process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4000'`; headless Chromium project; `testDir: './tests'`; `outputDir: './playwright-report'`; add `web/tests/` dir stub (`.gitkeep`). |
+| T6.1.2 | 2 | _pending_ | _pending_ | Add `"test:e2e": "playwright test"` + `"test:e2e:ci": "playwright test --reporter=github"` to `web/package.json`; add `"validate:e2e": "npm --prefix web run test:e2e:ci"` to root `package.json`; add `web/playwright-report/` to `.gitignore`. `validate:all` unchanged — `validate:e2e` is a separate opt-in target. |
+| T6.1.3 | 3 | _pending_ | _pending_ | Extend `web/README.md` §E2E — document: local run (`npm run test:e2e`), `PLAYWRIGHT_BASE_URL` env contract, Vercel preview injection pattern (`PLAYWRIGHT_BASE_URL=https://$VERCEL_URL`), CI bootstrap (`npx playwright install --with-deps chromium`), and convention for adding tests per route under `web/tests/`. |
 
 ---
 
-#### Stage 5.2 — Baseline route coverage
+#### Stage 6.2 — Baseline route coverage
 
 **Status:** _pending_
 
@@ -457,12 +690,12 @@
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T5.2.1 | 1 | _pending_ | _pending_ | Author `web/tests/routes.spec.ts` — assert HTTP 200 + at least one visible heading for: `/`, `/about`, `/install`, `/history`, `/wiki`, `/devlog`; assert first devlog slug link navigates to a 200 page. |
-| T5.2.2 | 2 | _pending_ | _pending_ | Author `web/tests/meta.spec.ts` — assert `robots.txt` body contains `Disallow: /dashboard`; assert `/sitemap.xml` contains at least one devlog URL; assert `GET /feed.xml` response `Content-Type` header matches `application/rss+xml`. |
+| T6.2.1 | 1 | _pending_ | _pending_ | Author `web/tests/routes.spec.ts` — assert HTTP 200 + at least one visible heading for: `/`, `/about`, `/install`, `/history`, `/wiki`, `/devlog`; assert first devlog slug link navigates to a 200 page. |
+| T6.2.2 | 2 | _pending_ | _pending_ | Author `web/tests/meta.spec.ts` — assert `robots.txt` body contains `Disallow: /dashboard`; assert `/sitemap.xml` contains at least one devlog URL; assert `GET /feed.xml` response `Content-Type` header matches `application/rss+xml`. |
 
 ---
 
-#### Stage 5.3 — Dashboard e2e (SSR filter flows)
+#### Stage 6.3 — Dashboard e2e (SSR filter flows)
 
 **Status:** _pending_
 
@@ -479,8 +712,8 @@
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T5.3.1 | 1 | _pending_ | _pending_ | Author `web/tests/dashboard-filters.spec.ts` — for each of `plan`, `status`, `phase` params: navigate to `/dashboard?{param}={value}` with a known value from the unfiltered render; assert chip with matching label has active visual state (class or aria); assert table rows visible count < unfiltered count. |
-| T5.3.2 | 2 | _pending_ | _pending_ | Extend `web/tests/dashboard-filters.spec.ts` — multi-param test (`?status=Done&phase=1`): assert rows satisfy both filters; clear-filters link test: assert `<a href="/dashboard">` present when any param active, clicking it returns unfiltered row count; unknown-value test: navigate to `/dashboard?status=nonexistent` and assert empty-state message text present. |
+| T6.3.1 | 1 | _pending_ | _pending_ | Author `web/tests/dashboard-filters.spec.ts` — for each of `plan`, `status`, `phase` params: navigate to `/dashboard?{param}={value}` with a known value from the unfiltered render; assert chip with matching label has active visual state (class or aria); assert table rows visible count < unfiltered count. |
+| T6.3.2 | 2 | _pending_ | _pending_ | Extend `web/tests/dashboard-filters.spec.ts` — multi-param test (`?status=Done&phase=1`): assert rows satisfy both filters; clear-filters link test: assert `<a href="/dashboard">` present when any param active, clicking it returns unfiltered row count; unknown-value test: navigate to `/dashboard?status=nonexistent` and assert empty-state message text present. |
 
 ---
 
@@ -490,8 +723,9 @@ Materialize when the named step opens (per `ia/rules/project-hierarchy.md` lazy-
 
 - **Step 2 — Public surface + wiki + devlog:** decomposed 2026-04-15. Stages: `MDX pipeline + public pages + SEO`, `Wiki + glossary auto-index + search`, `Devlog + RSS + origin story`.
 - **Step 3 — Live dashboard:** decomposed 2026-04-15. Stages: `Plan loader + typed schema`, `Dashboard RSC + filters`, `Legacy handoff + validation`.
-- **Step 4 — Portal foundations:** decompose after Step 3 closes. Candidate stages: `Postgres provider + auth library selection`, `Auth API stubs + schema draft`, `Dashboard auth migration`.
-- **Step 5 — Playwright E2E harness:** decomposed 2026-04-15. Stages: `Install + config + CI wiring`, `Baseline route coverage`, `Dashboard e2e (SSR filter flows)`. Decompose-after trigger deferred to Step 4 close; stage structure fully authored now.
+- **Step 4 — Dashboard improvements + UI polish:** decomposed 2026-04-16. Stages: `Navigation sidebar + icon system`, `UI primitives polish + dashboard percentages`, `D3.js data visualization`, `Multi-select dashboard filtering`.
+- **Step 5 — Portal foundations:** decomposed 2026-04-15. Stages: `Postgres provider + auth library selection`, `Auth API stubs + schema draft`, `Dashboard auth middleware migration`. Paused until future instruction.
+- **Step 6 — Playwright E2E harness:** decomposed 2026-04-15. Stages: `Install + config + CI wiring`, `Baseline route coverage`, `Dashboard e2e (SSR filter flows)`. Decompose-after trigger deferred to Step 5 close; paused until future instruction.
 
 ---
 
@@ -505,7 +739,7 @@ Materialize when the named step opens (per `ia/rules/project-hierarchy.md` lazy-
 - Preserve locked decisions (see header block). Changes require explicit re-decision + sync edit to `docs/web-platform-exploration.md`.
 - Keep public-facing copy under `web/content/**` + `web/app/**` user-surface routes in full English (caveman exception — `agent-output-caveman.md` §exceptions). Agent-authored IA prose (specs, skills, handoffs) stays caveman.
 - Pin `tools/progress-tracker/parse.mjs` as authoritative — `web/lib/plan-loader.ts` (Step 3) is a read-only wrapper; do NOT fork parser logic.
-- When Step 4 portal stage opens, raise recommendation to create `docs/web-platform-post-mvp-extensions.md` scope-boundary doc; exploration doc's Deferred / out of scope list currently carries post-MVP items inline but no companion doc exists yet.
+- When Step 5 portal stage opens, raise recommendation to create `docs/web-platform-post-mvp-extensions.md` scope-boundary doc; exploration doc's Deferred / out of scope list currently carries post-MVP items inline but no companion doc exists yet.
 
 **Do not:**
 
@@ -528,8 +762,7 @@ Materialize when the named step opens (per `ia/rules/project-hierarchy.md` lazy-
 | 2026-04-14 | Caveman-exception scope narrowed to user-facing rendered text (`web/content/**` + page-body JSX strings in `web/app/**/page.tsx`) | Prevents drift in app shell code, identifiers, commits, comments, IA prose | Broader `web/app/**` scope — rejected, invites non-rendered prose to go full-English |
 | 2026-04-14 | Vercel link + first deploy flagged `[HUMAN ACTION]` upfront in future stage specs | Dashboard-only; no CLI auth in agent env; discovered mid-Phase-2 on TECH-136 | Attempt CLI automation — rejected, no creds surface |
 | 2026-04-14 | Stage 1.2: merge T1.2.1 + T1.2.2 → single tokens + Tailwind wiring task (archived) | Tokens + wiring ship together; smoke verify (`bg-canvas text-accent-critical`) needs both halves; each side ≤2 files | Keep split 6-task stage — rejected per task sizing heuristic (two ≤2-file tasks) |
-| 2026-04-15 | Playwright chosen as e2e framework (Step 5) over Cypress + Puppeteer | SSR/RSC filter flows require real request cycle — Playwright's browser context hits the server, validating what actually renders; TypeScript-first; built-in test runner; CI-friendly `--with-deps`; multi-browser (Chromium sufficient for CI) | Cypress — client-DOM bias, weaker RSC support, heavier CI image; Puppeteer — Chrome-only, no built-in runner, more glue code |
+| 2026-04-15 | Playwright chosen as e2e framework (Step 6) over Cypress + Puppeteer | SSR/RSC filter flows require real request cycle — Playwright's browser context hits the server, validating what actually renders; TypeScript-first; built-in test runner; CI-friendly `--with-deps`; multi-browser (Chromium sufficient for CI) | Cypress — client-DOM bias, weaker RSC support, heavier CI image; Puppeteer — Chrome-only, no built-in runner, more glue code |
 | 2026-04-15 | `validate:e2e` is a separate root target, not merged into `validate:all` | Browser install (`playwright install`) is heavy; agent CI runs `validate:all` headlessly without browser deps; e2e runs in a dedicated CI step or manually | Merge into `validate:all` — rejected, breaks non-e2e agent shells |
-| 2026-04-15 | Deprecate `docs/progress.html` after Step 4 portal-auth gate lands ≥2 stable deploy cycles | Avoid premature removal while portal auth unresolved; live `/dashboard` stays obscure-URL-gated until auth middleware lands; ≥2 deploy cycles gives rollback window if dashboard regresses | Immediate delete — rejected, leaves no fallback if dashboard regresses; link-only banner (archived TECH-213) + no trigger — rejected, leaves legacy indefinitely without closure condition |
-
----
+| 2026-04-15 | Deprecate `docs/progress.html` after Step 5 portal-auth gate lands ≥2 stable deploy cycles | Avoid premature removal while portal auth unresolved; live `/dashboard` stays obscure-URL-gated until auth middleware lands; ≥2 deploy cycles gives rollback window if dashboard regresses | Immediate delete — rejected, leaves no fallback if dashboard regresses; link-only banner (archived TECH-213) + no trigger — rejected, leaves legacy indefinitely without closure condition |
+| 2026-04-15 | Insert Step 4 (Dashboard improvements + UI polish) before portal/E2E; shift former Steps 4→5, 5→6 | Portal auth (now Step 5) and Playwright E2E (now Step 6) paused until future instruction; dashboard UI improvements (sidebar, icons, D3 charts, multi-select filters) prioritized as next active work; no task filings affected — all deferred tasks were _pending_ | Append as Step 7 — rejected, sequential numbering should reflect implementation order; keeping old numbering — rejected, misleads about active next step |

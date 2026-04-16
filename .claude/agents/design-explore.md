@@ -3,7 +3,7 @@ name: design-explore
 description: Use to move an exploration doc (under `docs/`) from fuzzy survey to defined, detailed, reviewed design ready to seed a master plan or BACKLOG issue. Triggers — "/design-explore {path}", "expand exploration", "design review {doc}", "turn this exploration into a design", "compare and select approach", "take this exploration doc to a master plan". Runs skill phases: compare approaches → select (user gate) → expand → architecture → subsystem impact → implementation points → examples → subagent review → persist back to same doc. Fires BEFORE master plan / `project-new`. Does NOT create BACKLOG rows or master plans — next-step handoff only.
 tools: Read, Edit, Write, Grep, Glob, Agent, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__list_specs, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariants_summary, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup
 model: opus
-reasoning_effort: high
+reasoning_effort: xhigh
 ---
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, Mermaid / diagram blocks persisted to the doc. Anchor: `ia/rules/agent-output-caveman.md`.

@@ -172,7 +172,7 @@ SHIP {ISSUE_ID}: {PASSED|STOPPED}
 If `PASSED` and a master plan owns this issue: open that master plan file (resolved in Step 0) and find the next task row whose status is **not** `Done` / `archived` / `skipped` — reading task rows in document order after the closed issue's row. Use the issue id from that row as `NEXT_ISSUE_ID`. If found, append:
 
 ```
-Next: /ship {NEXT_ISSUE_ID}
+Next: claude-personal "/ship {NEXT_ISSUE_ID}"
 ```
 
 If the issue is standalone (no master plan), or no eligible next task exists in the plan, omit the line. Do NOT scan `BACKLOG.md` by numeric adjacency — next task must come from the owning master plan.

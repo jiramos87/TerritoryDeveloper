@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { StatBar } from './StatBar'
 
 export type Column<T> = {
   key: keyof T | string
@@ -8,11 +9,22 @@ export type Column<T> = {
   render?: (row: T) => ReactNode
 }
 
+export type PctColumnConfig<T> = {
+  dataKey: keyof T
+  label?: string
+  max?: number
+}
+
+function toFiniteNumber(raw: unknown): number {
+  return typeof raw === 'number' && Number.isFinite(raw) ? raw : 0
+}
+
 interface Props<T> {
   columns: Column<T>[]
   rows: T[]
   statusCell?: (row: T) => ReactNode
   getRowKey?: (row: T, index: number) => string | number
+  pctColumn?: PctColumnConfig<T>
 }
 
 export function DataTable<T,>({
@@ -20,6 +32,7 @@ export function DataTable<T,>({
   rows,
   statusCell,
   getRowKey,
+  pctColumn,
 }: Props<T>): ReactNode {
   return (
     <div className="w-full overflow-x-auto">
@@ -59,6 +72,14 @@ export function DataTable<T,>({
                 </span>
               </th>
             ))}
+            {pctColumn && (
+              <th
+                scope="col"
+                className="px-3 py-2 text-left font-mono text-xs text-text-muted uppercase tracking-wider"
+              >
+                {pctColumn.label ?? 'Progress'}
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -84,6 +105,15 @@ export function DataTable<T,>({
                       : String((row as Record<string, unknown>)[col.key as string] ?? '')}
                   </td>
                 ))}
+                {pctColumn && (
+                  <td className="px-3 py-2 align-middle">
+                    <StatBar
+                      label={pctColumn.label ?? 'Progress'}
+                      value={toFiniteNumber(row[pctColumn.dataKey])}
+                      max={pctColumn.max ?? 100}
+                    />
+                  </td>
+                )}
               </tr>
             )
           })}

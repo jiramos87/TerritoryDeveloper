@@ -244,7 +244,7 @@ No `## Deferred decomposition` section — all steps are fully decomposed at aut
 **Do:**
 
 - Open one stage at a time. Next stage opens only after current stage's `project-stage-close` runs.
-- Run `/stage-file {this-doc} Stage {N}.{M}` to materialize pending tasks → BACKLOG rows + `ia/projects/{ISSUE_ID}.md` stubs.
+- Run `claude-personal "/stage-file {this-doc} Stage {N}.{M}"` to materialize pending tasks → BACKLOG rows + `ia/projects/{ISSUE_ID}.md` stubs.
 - Update stage / step `Status` + phase checkboxes as lifecycle skills flip them — do NOT edit by hand.
 - Preserve locked decisions (see header block). Changes require explicit re-decision + sync edit to exploration doc + scope-boundary doc.
 - Keep this orchestrator synced with umbrella issue (if one exists) — per `project-spec-close` / `closeout` skill umbrella-sync rule.
@@ -271,7 +271,7 @@ Single concise message (caveman) naming:
 - Invariants flagged by number + which stages they gate.
 - Cardinality gate: resolved splits / justifications captured.
 - Non-scope list outcome: scope-boundary doc referenced in header, OR **recommend stub** if exploration carries explicit post-MVP items but no companion doc exists yet (propose path `docs/{SLUG}-post-mvp-extensions.md` — NOT this skill's job to create; user runs a separate task).
-- Next step: `/stage-file {SLUG}-master-plan.md Stage 1.1` (or named first stage) to file its pending tasks as BACKLOG rows + project-spec stubs.
+- Next step: `claude-personal "/stage-file {SLUG}-master-plan.md Stage 1.1"` (or named first stage) to file its pending tasks as BACKLOG rows + project-spec stubs.
 
 ---
 
@@ -323,4 +323,4 @@ Phase 2 Tool recipe uses territory-ia MCP slices (greenfield skips router / spec
 
 After persist: recommend first stage to file.
 
-`/stage-file {SLUG}-master-plan.md Stage 1.1` — all steps are already fully decomposed; file stages in step order as each parent step closes.
+`claude-personal "/stage-file {SLUG}-master-plan.md Stage 1.1"` — all steps are already fully decomposed; file stages in step order as each parent step closes.

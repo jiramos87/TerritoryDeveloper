@@ -31,7 +31,7 @@ Forward via Agent tool with `subagent_type: "master-plan-new"`:
 > 7. Tracking legend — Insert standard legend verbatim under `## Steps` (copy from `blip-master-plan.md` line 22). Do NOT paraphrase.
 > 8. Persist — Write `ia/projects/{SLUG}-master-plan.md`. Order: header → `---` → `## Steps` + legend → Step 1 (full) → Step 2 (full) → ... → Step N (full) → `---` → `## Orchestration guardrails` → final `---`. No `## Deferred decomposition` section.
 > 8b. Regenerate progress dashboard — `npm run progress` (repo root). Adds new plan to `docs/progress.html` (0 tasks done). Deterministic; failure does NOT block Phase 9 — log exit code and continue.
-> 9. Handoff — Single caveman message with counts + invariants + gate results + next-step call (`/stage-file {SLUG}-master-plan.md Stage 1.1`).
+> 9. Handoff — Single caveman message with counts + invariants + gate results + next-step call (`claude-personal "/stage-file {SLUG}-master-plan.md Stage 1.1"`).
 >
 > ## Tool recipe — Phase 2 only
 >
@@ -58,4 +58,4 @@ Forward via Agent tool with `subagent_type: "master-plan-new"`:
 >
 > ## Output
 >
-> Single concise caveman message: `{SLUG}-master-plan.md` written with counts (`N steps · M stages · P phases · Q tasks`); invariants flagged by number + gated stages; cardinality splits resolved; scope-boundary-doc outcome; next step `/stage-file {SLUG}-master-plan.md Stage 1.1`.
+> Single concise caveman message: `{SLUG}-master-plan.md` written with counts (`N steps · M stages · P phases · Q tasks`); invariants flagged by number + gated stages; cardinality splits resolved; scope-boundary-doc outcome; next step `claude-personal "/stage-file {SLUG}-master-plan.md Stage 1.1"`.

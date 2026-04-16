@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import Sidebar from "@/components/Sidebar";
 import "./globals.css";
 import { getBaseUrl } from "@/lib/site/base-url";
 import { siteTitle, siteTagline } from "@/lib/site/metadata";
@@ -41,7 +42,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        <div className="flex flex-1 min-h-0">
+          <Sidebar />
+          <main className="flex-1 min-w-0 overflow-auto">{children}</main>
+        </div>
         <footer
           style={{
             borderTop: `1px solid ${tokens.colors['bg-panel']}`,

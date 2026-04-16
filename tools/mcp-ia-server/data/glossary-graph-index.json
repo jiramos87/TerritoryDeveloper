@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-14T19:11:46.061Z",
+  "last_generated": "2026-04-16T11:03:59.085Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -67,6 +67,22 @@
           "spec": "unity-development-context",
           "section_id": "9",
           "section_title": "9. Glossary alignment"
+        }
+      ]
+    },
+    "Bake-to-clip": {
+      "related": [
+        "Blip bootstrap",
+        "Blip cooldown",
+        "Blip mixer group",
+        "Blip patch",
+        "Blip patch flat"
+      ],
+      "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "10",
+          "section_title": "10. Cross-refs"
         }
       ]
     },
@@ -157,9 +173,36 @@
         "Blip patch",
         "Blip patch flat",
         "patch hash",
-        "Active scale"
+        "Bake-to-clip"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "2",
+          "section_title": "2. Domain vocabulary"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "10",
+          "section_title": "10. Cross-refs"
+        }
+      ]
+    },
+    "Blip cooldown": {
+      "related": [
+        "Bake-to-clip",
+        "Blip bootstrap",
+        "Blip mixer group",
+        "Blip patch",
+        "Blip patch flat"
+      ],
+      "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "10",
+          "section_title": "10. Cross-refs"
+        }
+      ]
     },
     "Blip mixer group": {
       "related": [
@@ -167,9 +210,20 @@
         "Blip patch",
         "Blip patch flat",
         "patch hash",
-        "Active scale"
+        "Bake-to-clip"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "2",
+          "section_title": "2. Domain vocabulary"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "10",
+          "section_title": "10. Cross-refs"
+        }
+      ]
     },
     "Blip patch": {
       "related": [
@@ -177,9 +231,20 @@
         "Blip mixer group",
         "Blip patch flat",
         "patch hash",
-        "Active scale"
+        "Bake-to-clip"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "2",
+          "section_title": "2. Domain vocabulary"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "10",
+          "section_title": "10. Cross-refs"
+        }
+      ]
     },
     "Blip patch flat": {
       "related": [
@@ -187,9 +252,36 @@
         "Blip mixer group",
         "Blip patch",
         "patch hash",
-        "Active scale"
+        "Bake-to-clip"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "2",
+          "section_title": "2. Domain vocabulary"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "10",
+          "section_title": "10. Cross-refs"
+        }
+      ]
+    },
+    "Blip variant": {
+      "related": [
+        "Bake-to-clip",
+        "Blip bootstrap",
+        "Blip cooldown",
+        "Blip mixer group",
+        "Blip patch"
+      ],
+      "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "10",
+          "section_title": "10. Cross-refs"
+        }
+      ]
     },
     "Bridge lip": {
       "related": [
@@ -267,6 +359,11 @@
         "Happiness"
       ],
       "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "6",
+          "section_title": "6. Call-site integration"
+        },
         {
           "spec": "isometric-geography-system",
           "section_id": "5",
@@ -580,6 +677,11 @@
           "spec": "reference-spec-structure",
           "section_id": "deprecated-prose-canonical-terms-authoring",
           "section_title": "Deprecated prose → canonical terms (authoring)"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "6",
+          "section_title": "6. Call-site integration"
         },
         {
           "spec": "isometric-geography-system",
@@ -2950,15 +3052,42 @@
       ],
       "cited_in": []
     },
+    "Patch flatten": {
+      "related": [
+        "Bake-to-clip",
+        "Blip bootstrap",
+        "Blip cooldown",
+        "Blip mixer group",
+        "Blip patch"
+      ],
+      "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "10",
+          "section_title": "10. Cross-refs"
+        }
+      ]
+    },
     "patch hash": {
       "related": [
         "Blip bootstrap",
         "Blip mixer group",
         "Blip patch",
         "Blip patch flat",
-        "Active scale"
+        "Bake-to-clip"
       ],
-      "cited_in": []
+      "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "2",
+          "section_title": "2. Domain vocabulary"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "10",
+          "section_title": "10. Cross-refs"
+        }
+      ]
     },
     "Pathfinding cost model": {
       "related": [

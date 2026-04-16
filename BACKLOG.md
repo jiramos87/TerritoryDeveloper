@@ -310,7 +310,7 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ## Blip audio program
 
-Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra (all four stages archived). Step 2 in progress — Stage 2.1 archived. Stage 2.2 archived 2026-04-15 (TECH-169..TECH-174). Stage 2.3 closed 2026-04-15 (TECH-188..TECH-191 all archived). Stage 2.4 closed 2026-04-15 (TECH-196..TECH-199 all archived). Step 3 opened 2026-04-15 — Stage 3.1 closed 2026-04-15 (TECH-209..TECH-212 all archived — 5 UI/Eco/Sys patches + 5 World patches + mixer/catalog wiring + PlayMode smoke). Stage 3.2 opened 2026-04-15 — 4 tasks filed below (MainMenu click + hover + economy earn/spend + save-complete call sites). Stages 3.3–3.4 remain in master plan; file rows when parent stage → `In Progress`.
+Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra (all four stages archived). Step 2 in progress — Stage 2.1 archived. Stage 2.2 archived 2026-04-15 (TECH-169..TECH-174). Stage 2.3 closed 2026-04-15 (TECH-188..TECH-191 all archived). Stage 2.4 closed 2026-04-15 (TECH-196..TECH-199 all archived). Step 3 opened 2026-04-15 — Stage 3.1 closed 2026-04-15 (TECH-209..TECH-212 all archived). Stage 3.2 closed 2026-04-15 (TECH-215..TECH-218 all archived). Stage 3.3 closed 2026-04-16 (TECH-219..TECH-222 all archived). Stage 3.4 closed 2026-04-16 (TECH-227..TECH-230 archived). Step 4 opened 2026-04-16 — Stage 4.1 closed 2026-04-16 (TECH-235..TECH-238 all archived). Stage 4.2 opened 2026-04-16 — 4 tasks filed below (TECH-243..TECH-246: `BlipVolumeController` logic bodies + `SfxMutedKey` boot-time restore + glossary update).
 
 ### Stage 3.1 — Patch authoring + catalog wiring
 
@@ -318,21 +318,16 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ### Stage 3.2 — UI + Eco + Sys call sites
 
-- [ ] **TECH-217** — EconomyManager money earn/spend Blip call sites (Stage 3.2 Phase 2)
-  - Type: feature wiring / audio integration
-  - Files: `Assets/Scripts/Managers/GameManagers/EconomyManager.cs`
-  - Spec: `ia/projects/TECH-217.md`
-  - Notes: `AddMoney` line ~205 → `BlipEngine.Play(BlipId.EcoMoneyEarned)` after `cityStats.AddMoney`. `SpendMoney` success branch line ~169 → `if (notifyInsufficientFunds) BlipEngine.Play(BlipId.EcoMoneySpent);` — reuses existing interactive-call flag so `ChargeMonthlyMaintenance` (passes `notifyInsufficientFunds: false` line ~101) stays silent.
-  - Acceptance: interactive earn + spend fire SFX; monthly maintenance silent; `npm run unity:compile-check` + `npm run validate:all` green.
-  - Depends on: none
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
-- [ ] **TECH-218** — GameSaveManager save-complete Blip call site (Stage 3.2 Phase 2)
-  - Type: feature wiring / audio integration
-  - Files: `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs`
-  - Spec: `ia/projects/TECH-218.md`
-  - Notes: Add `BlipEngine.Play(BlipId.SysSaveGame)` after `File.WriteAllText` in `SaveGame` (line ~69) + `TryWriteGameSaveToPath` (line ~91). Patch SO cooldown 2 s via `BlipCooldownRegistry` gates hotkey burst — no additional guard. Failure path (exception) stays silent — Blip call not reached.
-  - Acceptance: save-success fires SFX; save failure silent; cooldown prevents burst; `npm run unity:compile-check` + `npm run validate:all` green.
-  - Depends on: none
+### Stage 3.3 — World lane call sites
+
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 3.4 — Golden fixtures + spec promotion + glossary
+
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
 
 ### Stage 1.1 — Audio infrastructure + persistent bootstrap
 
@@ -365,6 +360,27 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 ### Stage 2.4 — PlayMode smoke test
 
 _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 4.1 — Options panel UI (slider + mute toggle + controller stub)
+
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 4.2 — Settings controller + persistence + mute semantics
+
+- [ ] **TECH-245** — `BlipBootstrap.SfxMutedKey` + boot-time mute restore (Stage 4.2 Phase 2)
+  - Type: audio settings / persistence
+  - Files: `Assets/Scripts/Audio/Blip/BlipBootstrap.cs`
+  - Spec: `ia/projects/TECH-245.md`
+  - Notes: Add `public const string SfxMutedKey = "BlipSfxMuted";` after `SfxVolumeDbDefault` (line ~32). In `Awake` after `float db = PlayerPrefs.GetFloat(SfxVolumeDbKey, SfxVolumeDbDefault)` (line ~57): insert `int muted = PlayerPrefs.GetInt(SfxMutedKey, 0); if (muted != 0) db = -80f;` before `blipMixer.SetFloat(SfxVolumeParam, db)`. Mute state persists across app launches even before `BlipVolumeController.OnEnable` fires (cold-start guarantee).
+  - Depends on: TECH-243 (archived — consumer reads `SfxMutedKey` via `BlipBootstrap` constant).
+  - Acceptance: `SfxMutedKey` constant exists; cold-start with `BlipSfxMuted = 1` clamps mixer to `-80 dB` before any UI opens; `npm run unity:compile-check` green.
+- [ ] **TECH-246** — Glossary `Blip bootstrap` row update — visible-UI path + `SfxMutedKey` (Stage 4.2 Phase 2)
+  - Type: doc / glossary
+  - Files: `ia/specs/glossary.md`
+  - Spec: `ia/projects/TECH-246.md`
+  - Notes: **Blip bootstrap** row definition — append "Boot-time: also reads `SfxMutedKey` (`PlayerPrefs.GetInt`) and clamps dB to −80 if muted, ahead of mixer apply. Visible-volume-UI path: `BlipVolumeController` (mounted on `OptionsPanel`) primes slider/toggle from `PlayerPrefs` on `OnEnable` and writes back on change." Spec ref stays `ia/specs/audio-blip.md §5.1`, `§5.2` — no change. `npm run validate:all` green.
+  - Depends on: TECH-243 (archived), TECH-244 (archived), TECH-245 (behaviors glossary row describes).
+  - Acceptance: **Blip bootstrap** row reflects visible-UI path + `SfxMutedKey` semantics; `npm run validate:all` green (dead spec refs + frontmatter + IA indexes).
 
 ## Sprite gen lane
 
@@ -426,15 +442,7 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ## Web platform lane
 
-Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Scaffold + design system foundation. Stage 1.1 closed (see BACKLOG-ARCHIVE.md). Stage 1.2 closed 2026-04-14 — tokens + Tailwind wiring task + DataTable/BadgeChip + StatBar/FilterChips + HeatmapCell/AnnotatedMap + `/design` review route + README §Tokens all archived (see BACKLOG-ARCHIVE.md). Step 2 closed 2026-04-15 — Stage 2.1 (MDX pipeline + public pages + SEO — TECH-163…TECH-168), Stage 2.2 (wiki + glossary auto-index + search — TECH-184…TECH-187), Stage 2.3 (devlog + RSS + origin story — TECH-192…TECH-195) all archived. Step 3 Stage 3.1 closed 2026-04-15 — plan loader + typed schema (TECH-200…TECH-203 archived). Stage 3.2 closed 2026-04-15 — dashboard RSC + filters (T3.2.1 + T3.2.2 + T3.2.3 + T3.2.4 archived). Stage 3.3 filed 2026-04-15 — legacy handoff + validation (TECH-213 + TECH-214 Draft).
-
-- [ ] **TECH-214** — Dashboard E2E smoke + `progress.html` deprecation decision log
-  - Type: web (verification + docs)
-  - Files: `ia/projects/web-platform-master-plan.md`, `docs/progress.html`
-  - Spec: `ia/projects/TECH-214.md`
-  - Notes: Stage 3.3 Phase 1 / T3.3.2. Manual Vercel smoke — `/dashboard` returns 200, filter chips functional, internal banner visible, `robots.txt` disallows `/dashboard`. Append §Decision Log section to orchestrator below Orchestration guardrails documenting `docs/progress.html` deprecation trigger (proposed: ≥2 stable deploy cycles post Step 4 portal-auth gate lands).
-  - Acceptance: smoke checklist ticked in project spec; orchestrator §Decision Log row added w/ date + decision + rationale; `validate:all` green.
-  - Depends on: **TECH-213** (archived), **TECH-208** (archived)
+Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Scaffold + design system foundation. Stage 1.1 closed (see BACKLOG-ARCHIVE.md). Stage 1.2 closed 2026-04-14 — tokens + Tailwind wiring task + DataTable/BadgeChip + StatBar/FilterChips + HeatmapCell/AnnotatedMap + `/design` review route + README §Tokens all archived (see BACKLOG-ARCHIVE.md). Step 2 closed 2026-04-15 — Stage 2.1 (MDX pipeline + public pages + SEO — TECH-163…TECH-168), Stage 2.2 (wiki + glossary auto-index + search — TECH-184…TECH-187), Stage 2.3 (devlog + RSS + origin story — TECH-192…TECH-195) all archived. Step 3 Stage 3.1 closed 2026-04-15 — plan loader + typed schema (TECH-200…TECH-203 archived). Stage 3.2 closed 2026-04-15 — dashboard RSC + filters (T3.2.1 + T3.2.2 + T3.2.3 + T3.2.4 archived). Stage 3.3 closed 2026-04-15 — legacy handoff + E2E smoke + deprecation log (TECH-213 + TECH-214 archived). Step 4 Stage 4.1 closed 2026-04-16 — nav sidebar + icon system (TECH-223 + TECH-224 + TECH-225 + TECH-226 all archived). Stage 4.2 closed 2026-04-16 — UI primitives polish + dashboard percentages (TECH-231 + TECH-232 + TECH-233 + TECH-234 all archived 2026-04-16). Stage 4.3 closed 2026-04-16 — D3 PlanChart grouped-bar chart (TECH-239 + TECH-240 + TECH-241 + TECH-242 all archived 2026-04-16). Stage 4.4 closed 2026-04-16 — multi-select dashboard filtering (TECH-247 + TECH-248 + TECH-249 + TECH-250 all archived 2026-04-16).
 
 ## High Priority
 
@@ -533,6 +541,14 @@ Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-
   - Type: feature
   - Files: `ForestManager.cs`, `ForestMap.cs`, `SimulationManager.cs`
   - Notes: **Forest (coverage)** maturation system over **simulation ticks**.
+
+- [ ] **TECH-251** — Adopt Claude Opus 4.7 across agent lifecycle
+  - Type: tech (agent tooling / IA)
+  - Files: `.claude/agents/*.md` (11 subagents), `.claude/commands/*.md`, `.claude/output-styles/{verification-report,closeout-digest}.md`, `ia/skills/{master-plan-new,stage-decompose,project-spec-implement,project-spec-kickoff,verify-loop,close-dev-loop,ide-bridge-evidence}/SKILL.md`, `CLAUDE.md` §1 + §3, `docs/agent-led-verification-policy.md`, `ia/rules/agent-lifecycle.md`
+  - Spec: `ia/projects/TECH-251.md`
+  - Notes: Opus 4.7 released 2026-04-16. Pricing flat ($5/$25 per 1M). Gains: +13% coding bench, 3× Rakuten-SWE-Bench prod task resolution, +10% review recall, -21% OfficeQA Pro errors, vision up to 2576px, loop resistance + tool-failure recovery + output self-verification. New `xhigh` effort level + `/ultrareview` slash cmd. Stricter literal instruction following — prompts may need retune. Tokenizer produces 1.0–1.35× more tokens. Model id `claude-opus-4-7`. **Scope:** smoke-test gate on one low-blast flow; doc drift fixes (`CLAUDE.md` §3 says verify-loop = Sonnet but frontmatter = Opus; "10 native subagents" vs 11 actual); wire `/ultrareview` into `/verify-loop` terminal step; adopt `xhigh` for `closeout` + `master-plan-new`; prompt retune pass on skill bodies with soft instructions; `spec-implementer` Opus 4.7 opt-in behind effort flag (default Sonnet); vision evidence extension in `ide-bridge-evidence`; 2-week cost monitoring window. **Out of scope:** global bulk frontmatter bump (alias `model: opus` auto-upgrades); 4.7 file-system memory API wiring; task budgets GA. Alias resolution at dispatch makes blanket version pin unnecessary — only pin versioned `claude-opus-4-7` where early lock-in required.
+  - Acceptance: Smoke-test gate passes on pilot flow w/ caveman preamble + cardinality hints intact; `CLAUDE.md` §3 model column matches `.claude/agents/*.md` frontmatter + subagent count (11 not 10); `/ultrareview` terminal step wired into `/verify-loop`; `xhigh` effort applied to `closeout` + `master-plan-new`; skill body retune pass landed for `master-plan-new` + `stage-decompose` + `project-spec-implement`; `spec-implementer` 4.7 opt-in flag documented + default Sonnet preserved; `ide-bridge-evidence` SKILL captures 2576px evidence; 2-week cost log surfaces per-agent token deltas
+  - Depends on: none
 
 ## Code Health (technical debt)
 

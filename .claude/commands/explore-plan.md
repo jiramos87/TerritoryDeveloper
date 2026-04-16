@@ -114,7 +114,7 @@ Dispatch Agent with `subagent_type: "master-plan-new"`:
 >
 > ## Output
 >
-> Single concise caveman message: `{SLUG}-master-plan.md` written, counts (N steps · M stages · P phases · Q tasks), deferred steps named, invariants flagged, cardinality splits resolved, next step `/stage-file {SLUG}-master-plan.md Stage 1.1`.
+> Single concise caveman message: `{SLUG}-master-plan.md` written, counts (N steps · M stages · P phases · Q tasks), deferred steps named, invariants flagged, cardinality splits resolved, next step `claude-personal "/stage-file {SLUG}-master-plan.md Stage 1.1"`.
 
 ---
 
@@ -126,5 +126,5 @@ After both stages complete (or on stop), emit a single summary:
 EXPLORE-PLAN {DOC_PATH}: {PASSED|STOPPED}
   Stage 1 design-explore:  {done|failed}
   Stage 2 master-plan-new: {done|failed|skipped}
-  Next: /stage-file {SLUG}-master-plan.md Stage 1.1
+  Next: claude-personal "/stage-file {SLUG}-master-plan.md Stage 1.1"
 ```

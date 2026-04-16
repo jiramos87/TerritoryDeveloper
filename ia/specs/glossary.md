@@ -29,7 +29,7 @@ slices_via: glossary_lookup
 | **Simulation** | tick, AUTO, budget, centroid, rings |
 | **City** | demand, tax, desirability, happiness, pollution, forest, regional, utility, notification, monthly maintenance |
 | **Persistence** | save, CellData, water map data, visual restore, load order |
-| **Audio** | Blip bootstrap, Blip mixer group, Blip patch, Blip patch flat, patch hash, scene-load suppression |
+| **Audio** | Bake-to-clip, Blip bootstrap, Blip cooldown, Blip mixer group, Blip patch, Blip patch flat, Blip variant, Patch flatten, patch hash, scene-load suppression |
 | **Prefabs** | land/water slopes, sorting formula, type offsets |
 | **Documentation** | reference spec, project spec, orchestrator document, project hierarchy, interchange JSON, geography_init_params, scenario_descriptor_v1, City metrics history, Agent test mode batch, IDE agent bridge |
 | **Multi-scale simulation** | simulation scale, active scale, dormant scale, child-scale entity, evolution algorithm, evolution parameters, evolution-invariant, evolution-mutable, parity budget, reconstruction, procedural scale generation, scale switch, multi-scale save tree, city/region/country cell, parent-scale stub, event bubble-up, constraint push-down, player-authored dormant control |
@@ -204,11 +204,15 @@ slices_via: glossary_lookup
 
 | Term | Definition | Spec |
 |------|-----------|------|
-| **Blip bootstrap** | Persistent GameObject at `MainMenu.unity` root; `DontDestroyOnLoad` on `Awake`. Hosts Catalog / Player / MixerRouter / Cooldown child slots. Scene-load suppression: `BlipEngine.Play` returns early until `BlipCatalog.Awake` sets ready flag (lands Step 2 / Stage 1.2). Prevents boot-race clicks during `MainMenu → Game.unity` transition. | `ia/projects/blip-master-plan.md` Stage 1.1 |
-| **Blip mixer group** | One of three routing groups (`Blip-UI`, `Blip-World`, `Blip-Ambient`) on `BlipMixer.mixer`. Master exposes `SfxVolume` dB param for global volume control. | `ia/projects/blip-master-plan.md` Stage 1.1 |
-| **Blip patch** | `BlipPatch` ScriptableObject holding all MVP scalar fields for one Blip sound: oscillators (0..3), AHDSR envelope, one-pole filter, jitter triplet, voice management, bake params. Authored in the Inspector; flattened to `BlipPatchFlat` for runtime DSP. | `ia/projects/blip-master-plan.md` Stage 1.2 |
-| **Blip patch flat** | `BlipPatchFlat` blittable struct; copy of `BlipPatch` scalars with no managed refs. Produced by `BlipPatchFlat.FromSO`. Used as the DSP input fed to `BlipBaker` and voice kernels. `mixerGroup` excluded (routed separately by `BlipMixerRouter`). | `ia/projects/blip-master-plan.md` Stage 1.2 |
-| **patch hash** | FNV-1a 32-bit content hash (`BlipPatchHash.Compute`) over the canonical scalar fields of a `BlipPatch` in frozen field order. Persisted as `[SerializeField] private int patchHash`; recomputed on `OnValidate` (author-time) and verified on `Awake`/`OnEnable` (runtime warn-only). Used as `BlipBaker` LRU cache key. | `ia/projects/blip-master-plan.md` Stage 1.2 |
+| **Bake-to-clip** | On-demand render of `BlipPatchFlat` to `AudioClip` via `BlipBaker.BakeOrGet`; LRU-cached keyed by `(patchHash, variantIndex)` under 4 MB memory budget. | `ia/specs/audio-blip.md §5.1`, `§7` |
+| **Blip bootstrap** | Persistent GameObject at `MainMenu.unity` root; `DontDestroyOnLoad` on `Awake`. Hosts Catalog / Player / MixerRouter / Cooldown child slots. Scene-load suppression: `BlipEngine.Play` returns early until `BlipCatalog.Awake` sets ready flag (lands Step 2 / Stage 1.2). Prevents boot-race clicks during `MainMenu → Game.unity` transition. | `ia/specs/audio-blip.md §5.1`, `§5.2` |
+| **Blip cooldown** | Minimum ms between same-`BlipId` plays; per-patch `cooldownMs` enforced by `BlipCooldownRegistry` queried from `BlipEngine` before dispatch. | `ia/specs/audio-blip.md §5.5` |
+| **Blip mixer group** | One of three routing groups (`Blip-UI`, `Blip-World`, `Blip-Ambient`) on `BlipMixer.mixer`. Master exposes `SfxVolume` dB param for global volume control. | `ia/specs/audio-blip.md §5.4` |
+| **Blip patch** | `BlipPatch` ScriptableObject holding all MVP scalar fields for one Blip sound: oscillators (0..3), AHDSR envelope, one-pole filter, jitter triplet, voice management, bake params. Authored in the Inspector; flattened to `BlipPatchFlat` for runtime DSP. | `ia/specs/audio-blip.md §4.1` |
+| **Blip patch flat** | `BlipPatchFlat` blittable struct; copy of `BlipPatch` scalars with no managed refs. Produced by `BlipPatchFlat.FromSO`. Used as the DSP input fed to `BlipBaker` and voice kernels. `mixerGroup` excluded (routed separately by `BlipMixerRouter`). | `ia/specs/audio-blip.md §2`, `§3.1` |
+| **Blip variant** | Per-patch randomized sound selection index `0..variantCount-1`; round-robin or jitter on `BlipEngine.Play` (fixed 0 when patch `deterministic == true`). | `ia/specs/audio-blip.md §4.1` |
+| **Patch flatten** | `BlipPatch` SO → `BlipPatchFlat` blittable struct conversion on `BlipCatalog.Awake`; strips managed refs (e.g. `AudioMixerGroup`, `AnimationCurve`) for audio-thread safety. | `ia/specs/audio-blip.md §2`, `§4.1` |
+| **patch hash** | FNV-1a 32-bit content hash (`BlipPatchHash.Compute`) over the canonical scalar fields of a `BlipPatch` in frozen field order. Persisted as `[SerializeField] private int patchHash`; recomputed on `OnValidate` (author-time) and verified on `Awake`/`OnEnable` (runtime warn-only). Used as `BlipBaker` LRU cache key. | `ia/specs/audio-blip.md §4.3` |
 
 ## Prefabs & Visual Layer
 

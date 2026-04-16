@@ -1,5 +1,7 @@
 # Blip — Post-MVP extensions
 
+> **Canonical spec:** [`ia/specs/audio-blip.md`](../ia/specs/audio-blip.md). This doc tracks deferred work beyond MVP scope.
+
 > Companion to `ia/projects/blip-master-plan.md` (MVP orchestrator).
 > Exploration source: `docs/blip-procedural-sfx-exploration.md` §15.
 >
