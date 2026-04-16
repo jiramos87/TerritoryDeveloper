@@ -175,4 +175,10 @@ If `PASSED` and a master plan owns this issue: open that master plan file (resol
 Next: claude-personal "/ship {NEXT_ISSUE_ID}"
 ```
 
-If the issue is standalone (no master plan), or no eligible next task exists in the plan, omit the line. Do NOT scan `BACKLOG.md` by numeric adjacency — next task must come from the owning master plan.
+If no filed task row exists but the master plan has unstarted Steps (status `Draft`, `_pending_`, or skeleton — tasks not yet decomposed/filed), identify the next such Step and append:
+
+```
+Next: claude-personal "/stage-decompose ia/projects/{master-plan-filename} Step {N}"
+```
+
+If the issue is standalone (no master plan), or the master plan has no remaining steps at all, omit the line. Do NOT scan `BACKLOG.md` by numeric adjacency — next task must come from the owning master plan.

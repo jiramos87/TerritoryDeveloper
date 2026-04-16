@@ -2,6 +2,38 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
+- [x] **TECH-253** — Auth library evaluation + Decision Log entry (Stage 5.1 Phase 1) (2026-04-16)
+  - Type: web / decision log
+  - Files: `ia/projects/web-platform-master-plan.md` (Decision Log row appended), `docs/web-platform-exploration.md` (§Phase W7 locked constants migrated)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Locked **roll-own JWT + sessions** (Q11 confirmed) — row appended to orchestrator `§Orchestrator Decision Log` (2026-04-16). Stack: `jose` (`SignJWT` / `jwtVerify`, Edge-safe Web Crypto) for token sign/verify; `@node-rs/argon2` (argon2id) password hash confined to Node-runtime route handlers — never Edge middleware; stateful `session` row (`id UUID PK, user_id UUID FK, expires_at TIMESTAMPTZ, token TEXT`) enables revocation per Q11 "no third-party auth provider". Three locked downstream constants: `SESSION_COOKIE_NAME=portal_session` (consumed TECH-5.3.1 middleware), `SESSION_LIFETIME_DAYS=30` (consumed TECH-5.2.1 schema), password hash lib `@node-rs/argon2` (consumed TECH-5.2.3 stub `/api/auth/register`). Lucia Auth v3 rejected — officially sunsetted/archived by author (pilcrow) late 2025; maintenance risk unacceptable for a session-first library owning cookie + session lifecycle. Auth.js v5 (NextAuth) rejected — full OAuth/PKCE/CSRF machinery ships even with Credentials-only config (~50 kB server bundle overhead); Credentials provider + DB session requires Node runtime split anyway (same as roll-own); overkill for email+password MVP with no social login planned. Durable rationale + constants migrated to `docs/web-platform-exploration.md §Phase W7` so TECH-254 / TECH-5.2.x / TECH-5.3.x readers find them without re-reading deleted spec. No code — Decision Log authoring only.
+  - Acceptance: Decision Log row appended w/ locked library + API surface note + rationale; Q11 confirm/update entry visible in orchestrator header; `npm run validate:all` exit 0.
+  - Depends on: none
+
+- [x] **TECH-252** — Postgres free-tier provider evaluation + Decision Log entry (Stage 5.1 Phase 1) (2026-04-16)
+  - Type: web / decision log
+  - Files: `ia/projects/web-platform-master-plan.md` (Decision Log row appended)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Locked **Neon free (Launch tier)** as web platform Postgres provider — row appended to orchestrator `§Orchestrator Decision Log` (2026-04-16). Rationale quoted in row: pooled connections 100 >> expected ≤ 20 serverless; storage 0.5 GB vs ≤ 0.1 GB Stage 5.2 stub (monitor at 0.4 GB); egress 5 GB/month; us-east-1 matches Vercel default; `@neondatabase/serverless` HTTP driver sidesteps TCP leak on serverless cold-start; branch preview-DB enables per-PR isolated DBs at TECH-254+. Supabase free rejected — 7-day inactivity pause risks dashboard latency + bundled auth/storage/edge adds scope (auth owned by TECH-253). Vercel Postgres Hobby rejected — 256 MB storage + 1 GB/mo egress near Stage 5.2 ceiling; single-region lock; Neon-backed so no reliability diff vs. Neon direct. No code — Decision Log authoring only per Stage 5.1 design (web platform orchestrator §34 disjoint from Unity runtime invariants #1–#12). Feeds TECH-254 (driver install + pool wiring) + TECH-255 (README §Portal doc).
+  - Acceptance: Decision Log row appended w/ provider name + limits table + rationale + two alternatives rejected per-alt reason; `npm run validate:all` exit 0.
+  - Depends on: none
+
+- [x] **TECH-246** — Glossary `Blip bootstrap` row update — visible-UI path + `SfxMutedKey` (Stage 4.2 Phase 2) (2026-04-16)
+  - Type: doc / glossary
+  - Files: `ia/specs/glossary.md`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: **Blip bootstrap** row (line 208) definition extended — append "Boot-time: also reads `SfxMutedKey` (`PlayerPrefs.GetInt`) and clamps dB to −80 if muted, ahead of mixer apply. Visible-volume-UI path: `BlipVolumeController` (mounted on `OptionsPanel`) primes slider/toggle from `PlayerPrefs` on `OnEnable` and writes back on change." Spec-ref column unchanged (`ia/specs/audio-blip.md §5.1`, `§5.2` — bootstrap runtime sections only; settings-UI lifecycle lives in `blip-master-plan.md` Step 4 not authoritative spec). Index row (line 32) unchanged — term name stable. No new rows for `SfxMutedKey` / `BlipVolumeController` — impl-detail identifiers, `glossary_discover` returned no hits. Closes Stage 4.2 Exit bullet "`ia/specs/glossary.md` **Blip bootstrap** row updated with `SfxMutedKey` boot-time restore + `BlipVolumeController` visible-UI path".
+  - Acceptance: **Blip bootstrap** row reflects visible-UI path + `SfxMutedKey` semantics; spec-ref + Index rows byte-identical; `npm run validate:all` exit 0 (dead-spec-refs + frontmatter + IA indexes).
+  - Depends on: **TECH-243**, **TECH-244**, **TECH-245** (all archived — the three behaviors the extended glossary row describes).
+
+- [x] **TECH-245** — `BlipBootstrap.SfxMutedKey` + boot-time mute restore (Stage 4.2 Phase 2) (2026-04-16)
+  - Type: audio settings / persistence
+  - Files: `Assets/Scripts/Audio/Blip/BlipBootstrap.cs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: `public const string SfxMutedKey = "BlipSfxMuted";` already landed at `BlipBootstrap.cs` line 33 alongside TECH-243 consumer — Phase 1 verify-only (no re-declare to avoid double-definition + compile break). Inserted 2-line mute-restore block into `BlipBootstrap.Awake` after `float db = PlayerPrefs.GetFloat(SfxVolumeDbKey, SfxVolumeDbDefault)` (current line 58) and before `if (blipMixer == null)` null guard — `int muted = PlayerPrefs.GetInt(SfxMutedKey, 0); if (muted != 0) db = -80f;` clamps to -80 dB ahead of `blipMixer.SetFloat(SfxVolumeParam, db)` apply. Cold-start guarantee: player who muted in prior session hears silence from first Blip play; no unmuted click burst before Options opens + `BlipVolumeController.OnEnable` primes toggle. Existing `Debug.Log($"[Blip] SfxVolume bound headless: {db} dB")` naturally reflects -80 on mute — no extra log. Invariants #3 (`Awake`-only, no per-frame read) + #4 (no new singleton — static const on existing MonoBehaviour) preserved. Satisfies Stage 4.2 Exit bullet "`BlipBootstrap.cs` — new `public const string SfxMutedKey` constant; `Awake` reads `PlayerPrefs.GetInt(SfxMutedKey, 0)` after volume read; if muted, overrides `db = -80f` before `blipMixer.SetFloat`".
+  - Acceptance: `SfxMutedKey` constant single-declaration; `Awake` reads mute key after dB read; muted path clamps db = -80f before mixer apply; `npm run unity:compile-check` exit 0; `npm run validate:all` exit 0.
+  - Depends on: **TECH-243** (archived — consumer reads `SfxMutedKey` via `BlipBootstrap` constant).
+
 - [x] **TECH-250** — Clear-filters `Button` control + multi-select smoke + README §Components update (Stage 4.4 Phase 2) (2026-04-16)
   - Type: web / dashboard / docs
   - Files: `web/app/dashboard/page.tsx`, `web/README.md`

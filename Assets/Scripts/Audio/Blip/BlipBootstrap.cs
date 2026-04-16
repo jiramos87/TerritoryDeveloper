@@ -57,6 +57,11 @@ public class BlipBootstrap : MonoBehaviour
 
         float db = PlayerPrefs.GetFloat(SfxVolumeDbKey, SfxVolumeDbDefault);
 
+        // Boot-time mute restore — clamps dB ahead of mixer apply if persisted mute = 1.
+        // Cold-start guarantee: muted state honored from first Blip play, not only after Options opens.
+        int muted = PlayerPrefs.GetInt(SfxMutedKey, 0);
+        if (muted != 0) db = -80f;
+
         if (blipMixer == null)
         {
             Debug.LogWarning("[Blip] BlipBootstrap: blipMixer ref missing — SfxVolume not bound");

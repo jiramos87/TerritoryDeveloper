@@ -326,13 +326,13 @@ h2.plan-title {
       <div class="overall-subtitle">Master Plan Progress</div>
     </div>
     <div class="overall-right">
-      <div class="overall-pct">24%</div>
-      <div class="overall-count">144 / 210 tasks</div>
+      <div class="overall-pct">25%</div>
+      <div class="overall-count">146 / 210 tasks</div>
     </div>
   </div>
   <div class="overall-seg-row">
     <div class="overall-seg-bar">
-      <div class="overall-seg-fill" style="width:24%"></div>
+      <div class="overall-seg-fill" style="width:25%"></div>
     </div>
   </div>
   <div class="plan-minis">
@@ -343,6 +343,14 @@ h2.plan-title {
         <span class="mini-title">Blip</span>
         <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:67%"></div></div>
         <span class="mini-pct">67%</span>
+      </div>
+    </div>
+    <div class="plan-mini">
+      <span class="mini-icon">📋</span>
+      <div class="mini-info">
+        <span class="mini-title">Full-Game MVP — Umbrella Master Plan</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
       </div>
     </div>
     <div class="plan-mini">
@@ -373,8 +381,8 @@ h2.plan-title {
       <span class="mini-icon">📋</span>
       <div class="mini-info">
         <span class="mini-title">Web Platform</span>
-        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:17%"></div></div>
-        <span class="mini-pct">17%</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:19%"></div></div>
+        <span class="mini-pct">19%</span>
       </div>
     </div>
   </div>
@@ -388,7 +396,7 @@ h2.plan-title {
       <h2 class="plan-title">Blip — Master Plan (MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/blip-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-inprogress">🔄 In Progress — Step 1 Done; Step 2 Final (closed 2026-04-15); Step 3 Final (fully shipped 2026-04-16); Step 4 decomposed (tasks _pending_, ready to file when Step 3 Final confirmed); Steps 5–7 skeleton (stages named, tasks _pending_)</span>
+    <span class="plan-status status-inprogress">🔄 In Progress — Step 1 Done; Step 2 Final (closed 2026-04-15); Step 3 Final (fully shipped 2026-04-16); Step 4 Final (closed 2026-04-16); Step 5 decomposed (tasks _pending_, ready to file when Step 4 Final confirmed); Steps 6–7 skeleton (stages named, tasks _pending_)</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#70a0e0" title="Global plan progress (step-weighted)">67%</div>
       <div class="plan-step-pct" style="color:#40bf72" title="Active step task progress">Step 3: 100%</div>
@@ -422,6 +430,50 @@ h2.plan-title {
   <details class="sibling-details">
     <summary>🔗 Sibling coordination <span class="sibling-count">2 orchestrators in flight</span></summary>
     <ul><li>**Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**</li><li>- `ia/projects/multi-scale-master-plan.md` — mutates `GridManager.cs` + `GameSaveManager.cs` + save schema. Blip Step 3.3 World lane kickoff must re-read `GridManager` selection surface now that multi-scale Stage 1.3 is archived. `WorldCellSelected` stays scale-agnostic in MVP; per-scale variants tracked in `docs/blip-post-mvp-extensions.md` §4.</li><li>- `ia/projects/sprite-gen-master-plan.md` — Python tool + new `Assets/Sprites/Generated/` output. Disjoint C# surface; no blip collision on runtime code.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
+  </details>
+</div>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <span class="plan-icon">📋</span>
+    <div class="plan-title-group">
+      <h2 class="plan-title">Full-Game MVP — Umbrella Master Plan</h2>
+      <a class="plan-doc-link" href="../ia/projects/full-game-mvp-master-plan.md">📄 plan doc</a>
+    </div>
+    <span class="plan-status status-draft">📝 Draft — umbrella orchestrator pointing at 11 child orchestrators (5 existing + 6 new). Permanent artifact; NEVER closeable via `/closeout` (per `ia/rules/orchestrator-vs-spec.md`).</span>
+    <div class="plan-pct-group">
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      
+    </div>
+  </div>
+
+  <div class="seg-row">
+    <div class="seg-bar"><div class="seg-empty"></div></div>
+    <span class="seg-count">0 / 0</span>
+  </div>
+
+  <div class="stat-chips">
+    <span class="chip chip-total">📋 0 Total</span>
+  </div>
+
+  <div class="ctx-row">
+    <span class="ctx-label">📍</span>
+    <span class="ctx-step">—</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-stage">—</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-task" title="">🎯 <em>All tasks done</em></span>
+  </div>
+
+  <div class="phase-row">
+    <span class="phase-row-label">Phases:</span>
+    <span class="phase-pill phase-muted">No active stage</span>
+  </div>
+
+  
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">2 orchestrators in flight</span></summary>
+    <ul><li>- Music = single shared track across all scales. No adaptive music. No per-scale variation. Delivered via sibling `music-player-master-plan.md` subsystem (Bucket 7 seeds one track onto playlist).</li><li>- Canonical terminology: **country** (NOT &quot;nation&quot;) per `multi-scale-master-plan.md` + glossary. `CountryCell` / `parent_country_id`. Bucket labels use **country** everywhere; exploration doc prose polished to match.</li><li>**Parallel-work rule:** NEVER run `/stage-file` or `/closeout` against two sibling bucket orchestrators concurrently on the same branch — glossary + MCP index regens must sequence. Umbrella coordinates tier lanes; each tier lane may have multiple buckets IN PROGRESS but only one filing / closing at a time.</li></ul>
   </details>
 </div>
 
@@ -564,20 +616,20 @@ h2.plan-title {
       <h2 class="plan-title">Web Platform — Master Plan (MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/web-platform-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-draft">📝 Draft — Steps 1–3 Final; Step 4 active (dashboard improvements — decomposed 2026-04-16, ready to stage-file); Steps 5–6 paused (portal auth + E2E deferred until future instruction)</span>
+    <span class="plan-status status-draft">📝 Draft — Steps 1–4 Final; Step 5 active (Stage 5.1 in progress — TECH-252 + TECH-253 Done (archived); TECH-254 + TECH-255 Draft); Step 6 paused (E2E deferred until future instruction)</span>
     <div class="plan-pct-group">
-      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">17%</div>
-      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 5: 0%</div>
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">19%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 5: 17%</div>
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:71%" title="47 Done"></div><div class="seg seg-pending" style="width:29%" title="19 Pending"></div></div>
-    <span class="seg-count">47 / 66</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:74%" title="49 Done"></div><div class="seg seg-draft" style="width:3%" title="2 Draft"></div><div class="seg seg-pending" style="width:23%" title="15 Pending"></div></div>
+    <span class="seg-count">49 / 66</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 47 Done</span><span class="chip chip-pending">⏳ 19 Pending</span><span class="chip chip-total">📋 66 Total</span>
+    <span class="chip chip-done">✅ 49 Done</span><span class="chip chip-draft">📝 2 Draft</span><span class="chip chip-pending">⏳ 15 Pending</span><span class="chip chip-total">📋 66 Total</span>
   </div>
 
   <div class="ctx-row">
@@ -586,7 +638,7 @@ h2.plan-title {
     <span class="ctx-arrow">›</span>
     <span class="ctx-stage">Stage 5.1 · Postgres provider + auth lib…</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="Evaluate Neon free / Supabase free / Vercel Postgres Hobby — compare connection limits, storage caps, regions, Next.js/Node driver compatibility; lock chosen provider in Decision Log with limits table">🎯 <span class="task-id">T5.1.1</span> <span class="task-name">Evaluate Neon free / Supabase free / Vercel Postgr…</span></span>
+    <span class="ctx-task" title="Install chosen Postgres driver into `web/package.json`; author `web/lib/db/client.ts` (new) — exports `db` or `sql` connection pool via `DATABASE_URL` (lazy-connect, no open at build time); wire `DATA">🎯 <span class="task-id">T5.1.3</span> <span class="task-name">Install chosen Postgres driver into `web/package.j…</span></span>
   </div>
 
   <div class="phase-row">

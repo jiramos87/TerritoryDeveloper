@@ -2,7 +2,7 @@
 
 > **Last updated:** 2026-04-16
 >
-> **Status:** In Progress — Step 1 Done; Step 2 Final (closed 2026-04-15); Step 3 Final (fully shipped 2026-04-16); Step 4 decomposed (tasks _pending_, ready to file when Step 3 Final confirmed); Steps 5–7 skeleton (stages named, tasks _pending_)
+> **Status:** In Progress — Step 1 Done; Step 2 Final (closed 2026-04-15); Step 3 Final (fully shipped 2026-04-16); Step 4 Final (closed 2026-04-16); Step 5 decomposed (tasks _pending_, ready to file when Step 4 Final confirmed); Steps 6–7 skeleton (stages named, tasks _pending_)
 >
 > **Scope:** Procedural SFX synthesis subsystem. Ten baked sounds, parameter-only patches, zero `.wav` / `.ogg` assets under `Assets/Audio/Sfx/`. Post-MVP extensions (Live DSP, FX chain, LFOs, editor window, 10 more sounds) → `docs/blip-post-mvp-extensions.md`.
 >
@@ -459,20 +459,20 @@
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T3.4.1 | 1 | **TECH-227** | Done (archived) | Create `tools/fixtures/blip/` dir + author `tools/scripts/blip-bake-fixtures.ts` — pure TypeScript port of `BlipVoice.Render` scalar loop (oscillator bank + AHDSR + one-pole LP; float32 math matching C# kernel) or Node shim invoking Unity batchmode. Bakes variant 0 for each of 10 MVP patch param sets (hardcoded from exploration §9 recipes). Writes `tools/fixtures/blip/{id}-v0.json` per id. Run once: `npx ts-node tools/scripts/blip-bake-fixtures.ts`; verify 10 JSON files produced. |
-| T3.4.2 | 1 | **TECH-228** | Done (archived) | `Assets/Tests/EditMode/Audio/BlipGoldenFixtureTests.cs` in existing `Blip.Tests.EditMode.asmdef` (Stage 1.4 — no new asmdef; namespace `Territory.Tests.EditMode.Audio`). Parameterized `[TestCase(BlipId.*)]` × 10: parse `tools/fixtures/blip/{id}-v0.json` via `JsonUtility.FromJson<BlipFixtureDto>`, load SO via `AssetDatabase.LoadAssetAtPath<BlipPatch>("Assets/Audio/Blip/Patches/BlipPatch_{id}.asset")`, re-render via existing `BlipTestFixtures.RenderPatch(in flat, sampleRate=48000, seconds=sampleCount/sampleRate, variant)`, assert `SumAbsHash` within 1e-6 + zero-crossing count within ±2 + `patch.PatchHash == fx.patchHash` (fails if fixture stale — msg points at TECH-227 bake script). Kickoff 2026-04-16: aligned spec sample-rate 44100→48000, namespace `Blip.*`→`Territory.*`, helper class `BlipTestHelpers`→`BlipTestFixtures`, asset path `Assets/Audio/BlipPatches/`→`Assets/Audio/Blip/Patches/`, `RenderPatch` 3rd arg sampleCount→seconds. |
-| T3.4.3 | 2 | **TECH-229** | Done (archived) | Promote `docs/blip-procedural-sfx-exploration.md` → `ia/specs/audio-blip.md`. Restructure to match `ia/specs/*.md` conventions (section numbering, header format). Add "Superseded by `ia/specs/audio-blip.md`" banner at top of exploration doc. `npm run validate:all` — checks dead spec refs + frontmatter. |
-| T3.4.4 | 2 | **TECH-230** | Done (archived) | `ia/specs/glossary.md` — add rows: **Blip variant** (per-patch randomized sound selection index 0..variantCount-1), **Blip cooldown** (minimum ms between same-id plays; enforced by `BlipCooldownRegistry`), **Bake-to-clip** (on-demand render of `BlipPatchFlat` to `AudioClip` via `BlipBaker.BakeOrGet`), **Patch flatten** (`BlipPatch` SO → `BlipPatchFlat` blittable mirror in `BlipCatalog.Awake`). Rewrite Spec col on 5 existing Audio rows from `ia/projects/blip-master-plan.md` Stage 1.x → `ia/specs/audio-blip.md §N` per kickoff §5.2 mapping. Refresh Index row line 32 to list all 9 Audio terms. `npm run validate:all` green. Kickoff 2026-04-16: corrected over-claim (spec listed 13 existing rows; only 5 exist) + glossary 3-col format (was 4-col) + bundled Index refresh. |
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T3.4.1 | Fixtures dir + bake script | 1 | **TECH-227** | Done (archived) | Create `tools/fixtures/blip/` dir + author `tools/scripts/blip-bake-fixtures.ts` — pure TypeScript port of `BlipVoice.Render` scalar loop (oscillator bank + AHDSR + one-pole LP; float32 math matching C# kernel) or Node shim invoking Unity batchmode. Bakes variant 0 for each of 10 MVP patch param sets (hardcoded from exploration §9 recipes). Writes `tools/fixtures/blip/{id}-v0.json` per id. Run once: `npx ts-node tools/scripts/blip-bake-fixtures.ts`; verify 10 JSON files produced. |
+| T3.4.2 | Golden fixture regression test | 1 | **TECH-228** | Done (archived) | `Assets/Tests/EditMode/Audio/BlipGoldenFixtureTests.cs` in existing `Blip.Tests.EditMode.asmdef` (Stage 1.4 — no new asmdef; namespace `Territory.Tests.EditMode.Audio`). Parameterized `[TestCase(BlipId.*)]` × 10: parse `tools/fixtures/blip/{id}-v0.json` via `JsonUtility.FromJson<BlipFixtureDto>`, load SO via `AssetDatabase.LoadAssetAtPath<BlipPatch>("Assets/Audio/Blip/Patches/BlipPatch_{id}.asset")`, re-render via existing `BlipTestFixtures.RenderPatch(in flat, sampleRate=48000, seconds=sampleCount/sampleRate, variant)`, assert `SumAbsHash` within 1e-6 + zero-crossing count within ±2 + `patch.PatchHash == fx.patchHash` (fails if fixture stale — msg points at TECH-227 bake script). Kickoff 2026-04-16: aligned spec sample-rate 44100→48000, namespace `Blip.*`→`Territory.*`, helper class `BlipTestHelpers`→`BlipTestFixtures`, asset path `Assets/Audio/BlipPatches/`→`Assets/Audio/Blip/Patches/`, `RenderPatch` 3rd arg sampleCount→seconds. |
+| T3.4.3 | Exploration → spec promotion | 2 | **TECH-229** | Done (archived) | Promote `docs/blip-procedural-sfx-exploration.md` → `ia/specs/audio-blip.md`. Restructure to match `ia/specs/*.md` conventions (section numbering, header format). Add "Superseded by `ia/specs/audio-blip.md`" banner at top of exploration doc. `npm run validate:all` — checks dead spec refs + frontmatter. |
+| T3.4.4 | Glossary rows + cross-refs | 2 | **TECH-230** | Done (archived) | `ia/specs/glossary.md` — add rows: **Blip variant** (per-patch randomized sound selection index 0..variantCount-1), **Blip cooldown** (minimum ms between same-id plays; enforced by `BlipCooldownRegistry`), **Bake-to-clip** (on-demand render of `BlipPatchFlat` to `AudioClip` via `BlipBaker.BakeOrGet`), **Patch flatten** (`BlipPatch` SO → `BlipPatchFlat` blittable mirror in `BlipCatalog.Awake`). Rewrite Spec col on 5 existing Audio rows from `ia/projects/blip-master-plan.md` Stage 1.x → `ia/specs/audio-blip.md §N` per kickoff §5.2 mapping. Refresh Index row line 32 to list all 9 Audio terms. `npm run validate:all` green. Kickoff 2026-04-16: corrected over-claim (spec listed 13 existing rows; only 5 exist) + glossary 3-col format (was 4-col) + bundled Index refresh. |
 
 ---
 
 ## Step 4 — Settings UI + volume controls (post-MVP)
 
-**Status:** In Progress (Stage 4.1 closed 2026-04-16 — TECH-235..TECH-238 all archived; Stage 4.2 opened 2026-04-16 — TECH-243..TECH-244 archived; TECH-245..TECH-246 Draft)
+**Status:** Done (Stage 4.1 closed 2026-04-16 — TECH-235..TECH-238 all archived; Stage 4.2 closed 2026-04-16 — TECH-243..TECH-246 all archived)
 
-**Backlog state (Step 4):** 6 archived (Stage 4.1 — TECH-235, TECH-236, TECH-237, TECH-238; Stage 4.2 — TECH-243, TECH-244)
+**Backlog state (Step 4):** 8 archived (Stage 4.1 — TECH-235, TECH-236, TECH-237, TECH-238; Stage 4.2 — TECH-243, TECH-244, TECH-245, TECH-246)
 
 **Objectives:** Surface SFX volume + mute to player. MVP binds `BlipSfxVolumeDb` headless via `PlayerPrefs` (Stage 1.1 T1.1.2) — no visible control today. Options-menu slider (normalized 0..1) + mute toggle write `PlayerPrefs` + `AudioMixer.SetFloat("SfxVolume")` live; persist across runs. Small isolated Step — ships independent of Steps 5–7.
 
@@ -516,16 +516,16 @@
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T4.1.1 | 1 | **TECH-235** | Done (archived) | New file `Assets/Scripts/Audio/Blip/BlipVolumeController.cs` — `public sealed class BlipVolumeController : MonoBehaviour`. Fields: `private Slider _sfxSlider; private Toggle _sfxToggle; private AudioMixer _mixer;`. Methods: `public void Bind(Slider s, Toggle t)` assigns `_sfxSlider = s; _sfxToggle = t;`; `public void InitListeners()` calls `_sfxSlider.onValueChanged.AddListener(OnSliderChanged)` + `_sfxToggle.onValueChanged.AddListener(OnToggleChanged)`; empty stubs `private void OnSliderChanged(float v) {}` + `private void OnToggleChanged(bool mute) {}` + `public void OnPanelOpen() {}`. Also add `public AudioMixer BlipMixer => blipMixer;` to `BlipBootstrap.cs` after `SfxVolumeDbDefault` constant (line ~34). `npm run unity:compile-check` green. |
-| T4.1.2 | 1 | **TECH-236** | Done (archived) | In `MainMenuController.CreateOptionsPanel` (line 308): expand `contentRect.sizeDelta` from `(300, 200)` to `(300, 260)` (line ~323). Add `Slider` child `new GameObject("SfxVolumeSlider")` parented to content; `RectTransform anchoredPosition = (40, -65)`, `sizeDelta = (120, 20)`; `var sfxSlider = go.AddComponent<Slider>(); sfxSlider.minValue = 0; sfxSlider.maxValue = 1; sfxSlider.value = 1; sfxSlider.wholeNumbers = false`. Add `Text` label `"SfxVolumeLabel"` at `(-55, -65)`, `sizeDelta = (90, 20)`, `text = "SFX Volume"`, `fontSize = 14`, `color = Color.white`, same `Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")`. Add `Toggle` child `"SfxMuteToggle"` at `(10, -100)`, `sizeDelta = (60, 20)`, `isOn = false`. Add label `"SfxMuteLabel"` at `(-45, -100)`, `text = "Mute SFX"`, same font style. Hold `sfxSlider` + `sfxToggle` as locals for Phase 2. |
-| T4.1.3 | 2 | **TECH-237** | Done (archived) | In `MainMenuController.CreateOptionsPanel` replace placeholder discards `_ = sfxSlider; _ = sfxToggle;` (lines 393–394) with: `var controller = panel.AddComponent<BlipVolumeController>(); controller.Bind(sfxSlider, sfxToggle); controller.InitListeners(); _volumeController = controller;`. Add `private BlipVolumeController _volumeController;` (no `[SerializeField]`, runtime-only) after `optionsBackButton` decl (line 34). Back button (lines 396–397) and `panel.SetActive(false)` (line 399) unchanged. `npm run unity:compile-check` green. Kickoff 2026-04-16: real line numbers (back button 396 not 339, SetActive 399 not 342); insertion site is TECH-236 placeholder discards, not generic "before SetActive"; call-order rationale locked in spec Decision Log. |
-| T4.1.4 | 2 | **TECH-238** | Done (archived) | In `MainMenuController.OnOptionsClicked` (line 569): insert `_volumeController?.OnPanelOpen();` immediately before `optionsPanel.SetActive(true)` (line 573), inside the existing `if (optionsPanel != null)` guard (single-statement `if` becomes a block). Guard is null-safe — `CreateOptionsPanel` standard path sets `_volumeController`; `?.` covers fallback / first-frame edge cases. Stub body fires lifecycle (Stage 4.2 T4.2.1 replaces with real `OnEnable` — `SetActive(true)` triggers `OnEnable` automatically so this call becomes a pre-open prime before show). Confirm `CloseOptionsPanel` (line 576) requires no symmetrical hook (`OnDisable` lifecycle covers cleanup). Kickoff 2026-04-16: real line numbers (569 / 576 not ~511 / ~517); insertion site is inside the null guard block, not before; Decision Log locks ordering (blip → prime → activate). |
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T4.1.1 | BlipVolumeController stub + mixer accessor | 1 | **TECH-235** | Done (archived) | New file `Assets/Scripts/Audio/Blip/BlipVolumeController.cs` — `public sealed class BlipVolumeController : MonoBehaviour`. Fields: `private Slider _sfxSlider; private Toggle _sfxToggle; private AudioMixer _mixer;`. Methods: `public void Bind(Slider s, Toggle t)` assigns `_sfxSlider = s; _sfxToggle = t;`; `public void InitListeners()` calls `_sfxSlider.onValueChanged.AddListener(OnSliderChanged)` + `_sfxToggle.onValueChanged.AddListener(OnToggleChanged)`; empty stubs `private void OnSliderChanged(float v) {}` + `private void OnToggleChanged(bool mute) {}` + `public void OnPanelOpen() {}`. Also add `public AudioMixer BlipMixer => blipMixer;` to `BlipBootstrap.cs` after `SfxVolumeDbDefault` constant (line ~34). `npm run unity:compile-check` green. |
+| T4.1.2 | OptionsPanel slider + toggle | 1 | **TECH-236** | Done (archived) | In `MainMenuController.CreateOptionsPanel` (line 308): expand `contentRect.sizeDelta` from `(300, 200)` to `(300, 260)` (line ~323). Add `Slider` child `new GameObject("SfxVolumeSlider")` parented to content; `RectTransform anchoredPosition = (40, -65)`, `sizeDelta = (120, 20)`; `var sfxSlider = go.AddComponent<Slider>(); sfxSlider.minValue = 0; sfxSlider.maxValue = 1; sfxSlider.value = 1; sfxSlider.wholeNumbers = false`. Add `Text` label `"SfxVolumeLabel"` at `(-55, -65)`, `sizeDelta = (90, 20)`, `text = "SFX Volume"`, `fontSize = 14`, `color = Color.white`, same `Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")`. Add `Toggle` child `"SfxMuteToggle"` at `(10, -100)`, `sizeDelta = (60, 20)`, `isOn = false`. Add label `"SfxMuteLabel"` at `(-45, -100)`, `text = "Mute SFX"`, same font style. Hold `sfxSlider` + `sfxToggle` as locals for Phase 2. |
+| T4.1.3 | Bind + InitListeners wire-up | 2 | **TECH-237** | Done (archived) | In `MainMenuController.CreateOptionsPanel` replace placeholder discards `_ = sfxSlider; _ = sfxToggle;` (lines 393–394) with: `var controller = panel.AddComponent<BlipVolumeController>(); controller.Bind(sfxSlider, sfxToggle); controller.InitListeners(); _volumeController = controller;`. Add `private BlipVolumeController _volumeController;` (no `[SerializeField]`, runtime-only) after `optionsBackButton` decl (line 34). Back button (lines 396–397) and `panel.SetActive(false)` (line 399) unchanged. `npm run unity:compile-check` green. Kickoff 2026-04-16: real line numbers (back button 396 not 339, SetActive 399 not 342); insertion site is TECH-236 placeholder discards, not generic "before SetActive"; call-order rationale locked in spec Decision Log. |
+| T4.1.4 | OnPanelOpen lifecycle hook | 2 | **TECH-238** | Done (archived) | In `MainMenuController.OnOptionsClicked` (line 569): insert `_volumeController?.OnPanelOpen();` immediately before `optionsPanel.SetActive(true)` (line 573), inside the existing `if (optionsPanel != null)` guard (single-statement `if` becomes a block). Guard is null-safe — `CreateOptionsPanel` standard path sets `_volumeController`; `?.` covers fallback / first-frame edge cases. Stub body fires lifecycle (Stage 4.2 T4.2.1 replaces with real `OnEnable` — `SetActive(true)` triggers `OnEnable` automatically so this call becomes a pre-open prime before show). Confirm `CloseOptionsPanel` (line 576) requires no symmetrical hook (`OnDisable` lifecycle covers cleanup). Kickoff 2026-04-16: real line numbers (569 / 576 not ~511 / ~517); insertion site is inside the null guard block, not before; Decision Log locks ordering (blip → prime → activate). |
 
 #### Stage 4.2 — Settings controller + persistence + mute semantics
 
-**Status:** In Progress (TECH-243..TECH-244 archived 2026-04-16; TECH-245..TECH-246 Draft)
+**Status:** Done (TECH-243..TECH-246 all archived 2026-04-16)
 
 **Objectives:** Fill `BlipVolumeController` logic bodies. `Awake` caches mixer via `BlipBootstrap.Instance.BlipMixer` (invariant #3). `OnEnable` primes slider/toggle from `PlayerPrefs`. `OnSliderChanged` applies dB conversion + writes `PlayerPrefs` + calls `_mixer.SetFloat`. `OnToggleChanged` clamps/restores mixer + writes mute key. Boot-time mute restore in `BlipBootstrap.Awake`. Glossary row updated.
 
@@ -545,12 +545,12 @@
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T4.2.1 | 1 | **TECH-243** | Done (archived) | Fill `BlipVolumeController.Awake` — `_mixer = BlipBootstrap.Instance?.BlipMixer; if (_mixer == null) { Debug.LogWarning("[Blip] BlipVolumeController: BlipBootstrap.BlipMixer null — volume UI disabled"); enabled = false; return; }`. Fill `OnEnable` — `float db = PlayerPrefs.GetFloat(BlipBootstrap.SfxVolumeDbKey, 0f); float linear = db <= -79f ? 0f : Mathf.Clamp01(Mathf.Pow(10f, db / 20f)); _sfxSlider.SetValueWithoutNotify(linear); bool muted = PlayerPrefs.GetInt(BlipBootstrap.SfxMutedKey, 0) != 0; _sfxToggle.SetValueWithoutNotify(muted);`. Remove `OnPanelOpen` stub from `BlipVolumeController` + remove its call from `MainMenuController.OnOptionsClicked` (Unity `OnEnable` fires automatically on `SetActive(true)`). |
-| T4.2.2 | 1 | **TECH-244** | Done (archived) | Fill `OnSliderChanged(float v)` — `float db = v > 0.0001f ? 20f * Mathf.Log10(v) : -80f; PlayerPrefs.SetFloat(BlipBootstrap.SfxVolumeDbKey, db); if (!_sfxToggle.isOn && _mixer != null) _mixer.SetFloat(BlipBootstrap.SfxVolumeParam, db);`. Fill `OnToggleChanged(bool mute)` — `PlayerPrefs.SetInt(BlipBootstrap.SfxMutedKey, mute ? 1 : 0); if (_mixer == null) return; if (mute) { _mixer.SetFloat(BlipBootstrap.SfxVolumeParam, -80f); } else { float db = PlayerPrefs.GetFloat(BlipBootstrap.SfxVolumeDbKey, 0f); _mixer.SetFloat(BlipBootstrap.SfxVolumeParam, db); }`. `npm run unity:compile-check` green. |
-| T4.2.3 | 2 | **TECH-245** | Draft | `BlipBootstrap.cs` — add `public const string SfxMutedKey = "BlipSfxMuted";` after `SfxVolumeDbDefault` (line ~32). In `Awake` after `float db = PlayerPrefs.GetFloat(SfxVolumeDbKey, SfxVolumeDbDefault)` (line ~52): insert `int muted = PlayerPrefs.GetInt(SfxMutedKey, 0); if (muted != 0) db = -80f;` before `blipMixer.SetFloat(SfxVolumeParam, db)`. Adds boot-time mute restore so muted state persists across app launches even before `BlipVolumeController.OnEnable` fires. `npm run unity:compile-check` green. |
-| T4.2.4 | 2 | **TECH-246** | Draft | `ia/specs/glossary.md` — **Blip bootstrap** row: append to definition "Boot-time: also reads `SfxMutedKey` (`PlayerPrefs.GetInt`) and clamps dB to −80 if muted, ahead of mixer apply. Visible-volume-UI path: `BlipVolumeController` (mounted on `OptionsPanel`) primes slider/toggle from `PlayerPrefs` on `OnEnable` and writes back on change." Spec cross-ref already points `ia/specs/audio-blip.md §5.1`, `§5.2` — confirm no change needed. `npm run validate:all` green. |
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T4.2.1 | Awake mixer cache + OnEnable prime | 1 | **TECH-243** | Done (archived) | Fill `BlipVolumeController.Awake` — `_mixer = BlipBootstrap.Instance?.BlipMixer; if (_mixer == null) { Debug.LogWarning("[Blip] BlipVolumeController: BlipBootstrap.BlipMixer null — volume UI disabled"); enabled = false; return; }`. Fill `OnEnable` — `float db = PlayerPrefs.GetFloat(BlipBootstrap.SfxVolumeDbKey, 0f); float linear = db <= -79f ? 0f : Mathf.Clamp01(Mathf.Pow(10f, db / 20f)); _sfxSlider.SetValueWithoutNotify(linear); bool muted = PlayerPrefs.GetInt(BlipBootstrap.SfxMutedKey, 0) != 0; _sfxToggle.SetValueWithoutNotify(muted);`. Remove `OnPanelOpen` stub from `BlipVolumeController` + remove its call from `MainMenuController.OnOptionsClicked` (Unity `OnEnable` fires automatically on `SetActive(true)`). |
+| T4.2.2 | Slider + Toggle handler bodies | 1 | **TECH-244** | Done (archived) | Fill `OnSliderChanged(float v)` — `float db = v > 0.0001f ? 20f * Mathf.Log10(v) : -80f; PlayerPrefs.SetFloat(BlipBootstrap.SfxVolumeDbKey, db); if (!_sfxToggle.isOn && _mixer != null) _mixer.SetFloat(BlipBootstrap.SfxVolumeParam, db);`. Fill `OnToggleChanged(bool mute)` — `PlayerPrefs.SetInt(BlipBootstrap.SfxMutedKey, mute ? 1 : 0); if (_mixer == null) return; if (mute) { _mixer.SetFloat(BlipBootstrap.SfxVolumeParam, -80f); } else { float db = PlayerPrefs.GetFloat(BlipBootstrap.SfxVolumeDbKey, 0f); _mixer.SetFloat(BlipBootstrap.SfxVolumeParam, db); }`. `npm run unity:compile-check` green. |
+| T4.2.3 | Bootstrap mute-key + boot restore | 2 | **TECH-245** | Done (archived) | `BlipBootstrap.cs` — const `public const string SfxMutedKey = "BlipSfxMuted";` already landed at line 33 with TECH-243. Remaining: in `Awake` after `float db = PlayerPrefs.GetFloat(SfxVolumeDbKey, SfxVolumeDbDefault)` (current line 58): insert `int muted = PlayerPrefs.GetInt(SfxMutedKey, 0); if (muted != 0) db = -80f;` before `blipMixer.SetFloat(SfxVolumeParam, db)`. Adds boot-time mute restore so muted state persists across app launches even before `BlipVolumeController.OnEnable` fires. `npm run unity:compile-check` green. |
+| T4.2.4 | Glossary bootstrap row update | 2 | **TECH-246** | Done (archived) | `ia/specs/glossary.md` — **Blip bootstrap** row: append to definition "Boot-time: also reads `SfxMutedKey` (`PlayerPrefs.GetInt`) and clamps dB to −80 if muted, ahead of mixer apply. Visible-volume-UI path: `BlipVolumeController` (mounted on `OptionsPanel`) primes slider/toggle from `PlayerPrefs` on `OnEnable` and writes back on change." Spec cross-ref already points `ia/specs/audio-blip.md §5.1`, `§5.2` — confirm no change needed. `npm run validate:all` green. |
 
 **Dependencies:** None. Step 4 independent of Steps 5–7.
 
@@ -558,7 +558,9 @@
 
 ## Step 5 — DSP kernel v2 — FX chain + LFOs + biquad BP + param smoothing (post-MVP)
 
-**Status:** Draft (tasks _pending_ — not yet filed).
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Backlog state (Step 5):** 0 filed
 
 **Objectives:** Extend `BlipVoice.Render` + `BlipPatchFlat` + SO schema. Ordered FX chain (bit-crush / ring-mod / comb / allpass / chorus / flanger / soft-clip / DC blocker). Up to 2 LFOs per patch routed to pitch / gain / cutoff / pan. Biquad BP w/ Q. 1-pole 20 ms param smoothing. Unlocks Step 6 post-MVP patches — cliff thud bit-crush, terrain scrape ring-mod, tooltip LFO tremolo.
 
@@ -576,14 +578,140 @@
 
 **Art:** None — pure DSP.
 
-**Relevant surfaces:** `Assets/Scripts/Audio/Blip/BlipVoice.cs`, `BlipPatch.cs`, `BlipPatchFlat.cs`, `BlipVoiceState.cs`, `BlipCatalog.cs`, `Assets/Tests/EditMode/Audio/Blip*Tests.cs`, `docs/blip-post-mvp-extensions.md` §1.
+**Relevant surfaces (load when step opens):**
+- Step 4 outputs on disk: `Assets/Scripts/Audio/Blip/BlipBootstrap.cs` (lines 29–32: volume constants; `SfxMutedKey` added in Stage 4.2), `Assets/Scripts/Audio/Blip/BlipVolumeController.cs`.
+- Step 1 DSP foundations: `Assets/Scripts/Audio/Blip/BlipVoice.cs`, `BlipPatchTypes.cs`, `BlipVoiceState.cs`, `BlipPatchFlat.cs`, `BlipPatch.cs`, `BlipEnvelope.cs`, `BlipOscillatorBank.cs`.
+- Step 2/3 pipeline: `Assets/Scripts/Audio/Blip/BlipCatalog.cs`, `BlipBaker.cs`.
+- Test suite: `Assets/Tests/EditMode/Audio/BlipNoAllocTests.cs`, `BlipGoldenFixtureTests.cs`, `BlipDeterminismTests.cs`.
+- Design: `docs/blip-post-mvp-extensions.md` §1 (FX chain, LFOs, biquad BP, param smoothing, pool infrastructure).
+- `ia/specs/audio-blip.md §4.1` (patch data model), `§4.2` (filter section — biquad BandPass lands here).
+- `ia/rules/invariants.md` #4 (no new singletons — `BlipDelayPool` + `BlipLutPool` owned by `BlipCatalog`).
+- New files (Step 5 output): `Assets/Scripts/Audio/Blip/BlipFxChain.cs` (new), `BlipDelayPool.cs` (new), `BlipLutPool.cs` (new).
 
-**Stages (skeleton — decompose via `/stage-decompose` when Step → `In Progress`):**
+#### Stage 5.1 — FX data model + memoryless cores
 
-- Stage 5.1 — FX scaffolding + memoryless cores (bit-crush, ring-mod, soft-clip, DC blocker).
-- Stage 5.2 — Delay-line FX + `BlipDelayPool` (comb, allpass, chorus, flanger).
-- Stage 5.3 — LFOs + routing matrix + param smoothing (1-pole 20 ms coef helper).
-- Stage 5.4 — Biquad BP + integration + golden-fixture regression gate.
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** New `BlipFxKind` enum + `BlipFxSlot` / `BlipFxSlotFlat` structs establish the per-patch FX chain data model. `BlipPatch.fxChain` + `BlipPatchFlat` inline FX fields added. `BlipVoiceState` gains per-slot FX state. New `BlipFxChain.cs` implements 4 no-delay-buffer processors (bit-crush, ring-mod, soft-clip, DC blocker); Comb/Allpass/Chorus/Flanger return passthrough stubs until Stage 5.2. `BlipVoice.Render` FX loop wired post-envelope — empty chain = passthrough, MVP golden fixtures unaffected.
+
+**Exit:**
+
+- `BlipFxKind` enum in `BlipPatchTypes.cs`: None=0/BitCrush=1/RingMod=2/SoftClip=3/DcBlocker=4/Comb=5/Allpass=6/Chorus=7/Flanger=8 (full set; delay-line kinds implemented in Stage 5.2).
+- `BlipFxSlot [Serializable] struct` (BlipFxKind kind; float param0, param1, param2) + `BlipFxSlotFlat readonly struct` (mirrors scalars, blittable) — both in `BlipPatchTypes.cs`.
+- `BlipPatch` gains `[SerializeField] private BlipFxSlot[] fxChain` (max 4, truncated in `OnValidate`); `BlipPatchFlat` gains `BlipFxSlotFlat fx0,fx1,fx2,fx3` + `int fxSlotCount` inline (matching oscillator inline-triplet pattern at lines 170–181 of `BlipPatchFlat.cs`) + ctor extension.
+- `BlipVoiceState` gains `float dcZ1_0..3` (DC blocker per-slot input z-1), `float dcY1_0..3` (DC blocker output z-1), `float ringModPhase_0..3` (ring-mod carrier phase 0..2π). All blittable.
+- `Assets/Scripts/Audio/Blip/BlipFxChain.cs` (new): `internal static class BlipFxChain` with `ProcessFx(ref float x, BlipFxKind kind, float p0, float p1, ref float dcZ1, ref float dcY1, ref float ringPhase, int sampleRate)`: BitCrush/RingMod/SoftClip/DcBlocker implemented; Comb/Allpass/Chorus/Flanger return passthrough. Zero allocs; no Unity API.
+- `BlipVoice.Render` post-envelope FX loop: unrolled 4-slot dispatch; `BlipNoAllocTests` still green.
+
+**Phases:**
+
+- [ ] Phase 1 — Types + data model: `BlipFxKind` / `BlipFxSlot` / `BlipFxSlotFlat` in `BlipPatchTypes.cs`; `BlipPatch.fxChain` + `BlipPatchFlat` FX inline fields; `BlipVoiceState` FX state extension.
+- [ ] Phase 2 — FX kernel + render wire: `BlipFxChain.cs` memoryless cores + `BlipVoice.Render` FX loop + `BlipNoAllocTests` FX variant.
+
+**Tasks:**
+
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T5.1.1 | FX types | 1 | _pending_ | _pending_ | `BlipFxKind` enum (None=0/BitCrush=1/RingMod=2/SoftClip=3/DcBlocker=4/Comb=5/Allpass=6/Chorus=7/Flanger=8) + `BlipFxSlot [Serializable] struct` (BlipFxKind kind; float param0, param1, param2) + `BlipFxSlotFlat readonly struct` (mirrors scalars, blittable copy ctor) — all added to `BlipPatchTypes.cs`. |
+| T5.1.2 | BlipPatch fxChain + BlipPatchFlat FX inline | 1 | _pending_ | _pending_ | `BlipPatch` gains `[SerializeField] private BlipFxSlot[] fxChain`; `OnValidate` truncates to max 4 slots. `BlipPatchFlat` gains `BlipFxSlotFlat fx0,fx1,fx2,fx3` + `int fxSlotCount` inline (matching oscillator inline-triplet at lines 170–181 of `BlipPatchFlat.cs`). `BlipPatchFlat(BlipPatch so, …)` ctor extended to flatten `fxChain`. |
+| T5.1.3 | BlipVoiceState FX state fields | 1 | _pending_ | _pending_ | `BlipVoiceState` extended: `float dcZ1_0, dcZ1_1, dcZ1_2, dcZ1_3` (DC blocker input z-1 per slot) + `float dcY1_0, dcY1_1, dcY1_2, dcY1_3` (DC blocker output z-1) + `float ringModPhase_0, ringModPhase_1, ringModPhase_2, ringModPhase_3` (ring-mod carrier phase). All blittable. Delay write-heads (`delayWritePos_N`) land in Stage 5.2 T5.2.1; LFO phases in Stage 5.3 T5.3.2. |
+| T5.1.4 | BlipFxChain.cs memoryless cores | 2 | _pending_ | _pending_ | New `Assets/Scripts/Audio/Blip/BlipFxChain.cs`: `internal static class BlipFxChain`. `static void ProcessFx(ref float x, BlipFxKind kind, float p0, float p1, ref float dcZ1, ref float dcY1, ref float ringPhase, int sampleRate)`: BitCrush `x=Mathf.Round(x*steps)/steps, steps=1<<(int)p0`; RingMod `ringPhase+=2π*p0/sampleRate; x*=Mathf.Sin(ringPhase)`; SoftClip `x=x/(1f+Mathf.Abs(x))`; DcBlocker `float y=x-dcZ1+0.9995f*dcY1; dcZ1=x; dcY1=y; x=y`; Comb/Allpass/Chorus/Flanger → passthrough (stubs). Zero allocs; no Unity API. |
+| T5.1.5 | BlipVoice.Render FX loop + NoAlloc extension | 2 | _pending_ | _pending_ | Post-envelope FX dispatch in `BlipVoice.Render`: unrolled `if (patch.fxSlotCount >= 1) BlipFxChain.ProcessFx(ref sample, patch.fx0.kind, patch.fx0.param0, patch.fx0.param1, ref state.dcZ1_0, ref state.dcY1_0, ref state.ringModPhase_0, sampleRate)` … (4 slots, no array alloc). Empty chain (`fxSlotCount=0`) fast-exits. `BlipNoAllocTests` gains `Render_WithFxChain_ZeroManagedAlloc` — 2-slot BitCrush+DcBlocker patch; assert delta/call ≤ 0. |
+
+#### Stage 5.2 — Delay-line FX + BlipDelayPool
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** `BlipDelayPool` plain-class service (owned by `BlipCatalog`) allocates float[] delay-line buffers outside `Render` — zero alloc in hot path. Implement comb, allpass, chorus, flanger in `BlipFxChain.ProcessFx` replacing Stage 5.1 stubs. `BlipVoice.Render` gains nullable delay buffer params via new overload.
+
+**Exit:**
+
+- `Assets/Scripts/Audio/Blip/BlipDelayPool.cs` (new): `internal sealed class BlipDelayPool` — `float[] Lease(int sampleRate, float maxDelayMs)` + `void Return(float[])` via `ArrayPool<float>.Shared`. `BlipCatalog` gains `private BlipDelayPool _delayPool = new BlipDelayPool()` (init in `Awake`; invariant #4 compliant).
+- `BlipVoiceState` gains `int delayWritePos_0, delayWritePos_1, delayWritePos_2, delayWritePos_3` (circular write-head per FX slot, blittable).
+- `BlipVoice` gains new `Render` overload with `float[]? d0, float[]? d1, float[]? d2, float[]? d3` nullable delay params; existing 7-param signature delegates with all-null. `BlipFxChain.ProcessFx` signature extended with `float[]? delayBuf, int bufLen, ref int writePos`.
+- `BlipBaker.BakeOrGet` pre-leases delay buffers before `Render`; returns in `finally`.
+- Comb: `y=x+g*d[(wp-D+len)%len]; d[wp]=x; wp=(wp+1)%len`; `g=p1` clamped 0..0.97, `D=(int)(p0/1000f*sampleRate)`. Allpass: Schroeder `v=d[(wp-D+len)%len]; d[wp]=x+g*v; y=v-g*d[wp]; wp=(wp+1)%len`.
+- Chorus: 2-tap LFO-modulated delay (rate `p0` Hz, depth `p1` ms, mix `p2`). Flanger: same structure, depth 1–10 ms.
+- `BlipNoAllocTests` gains chorus patch variant; buffers pre-leased outside measurement window; assert delta/call ≤ 0.
+
+**Phases:**
+
+- [ ] Phase 1 — `BlipDelayPool` service + `BlipVoiceState` write-heads + `BlipCatalog` ownership + `BlipVoice.Render` overload + `BlipBaker` call-site.
+- [ ] Phase 2 — Comb + allpass kernels in `BlipFxChain.ProcessFx`.
+- [ ] Phase 3 — Chorus + flanger kernels + `BlipNoAllocTests` delay-FX variant.
+
+**Tasks:**
+
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T5.2.1 | BlipDelayPool + catalog wiring + VoiceState write-heads | 1 | _pending_ | _pending_ | New `Assets/Scripts/Audio/Blip/BlipDelayPool.cs`: `internal sealed class BlipDelayPool` with `float[] Lease(int sampleRate, float maxDelayMs)` (sizes to `(int)Math.Ceiling(maxDelayMs/1000f*sampleRate)+1`; delegates to `ArrayPool<float>.Shared.Rent`) + `void Return(float[])`. `BlipCatalog` gains `private BlipDelayPool _delayPool = new BlipDelayPool()`. `BlipVoiceState` gains `int delayWritePos_0, delayWritePos_1, delayWritePos_2, delayWritePos_3`. |
+| T5.2.2 | BlipVoice.Render delay overload + BlipBaker lease | 1 | _pending_ | _pending_ | `BlipVoice` gains `Render` overload with `float[]? d0, float[]? d1, float[]? d2, float[]? d3`; existing 7-param overload delegates with all-null (backward compat shim). `BlipFxChain.ProcessFx` extended: `float[]? delayBuf, int bufLen, ref int writePos` params (null = skip delay op). `BlipBaker.BakeOrGet` pre-leases up to 4 buffers from `_catalog._delayPool`; passes to `Render`; returns in `finally`. |
+| T5.2.3 | Comb filter kernel | 2 | _pending_ | _pending_ | `BlipFxChain.ProcessFx` Comb case: feedback comb `y=x+g*d[(wp-D+len)%len]; d[wp]=x; wp=(wp+1)%len`; `D=(int)(p0/1000f*sampleRate)`, `g=p1` clamped 0..0.97 (enforce in `BlipPatch.OnValidate` for Comb slots). EditMode test `BlipFxChainTests.Comb_FeedbackAttenuation`: impulse, 10 ms delay, g=0.5 — 2nd echo amplitude ≈ 0.5 ± 0.05 relative to 1st. |
+| T5.2.4 | Allpass filter kernel | 2 | _pending_ | _pending_ | `BlipFxChain.ProcessFx` Allpass case: Schroeder `v=d[(wp-D+len)%len]; d[wp]=x+g*v; y=v-g*d[wp]; wp=(wp+1)%len`. EditMode test `BlipFxChainTests.Allpass_FlatMagnitude`: 1024 samples pink noise through allpass, assert RMS output ≈ RMS input ± 15% (flat magnitude response of ideal allpass). |
+| T5.2.5 | Chorus + flanger kernels | 3 | _pending_ | _pending_ | Chorus (`BlipFxChain.ProcessFx` Chorus case): 2-tap read at `offset±(p1_samples*sin(ringModPhase_N))`; write input; output `=(1-p2)*x+p2*0.5*(tap0+tap1)`; `ringModPhase_N+=2π*p0/sampleRate` (ring-mod phase repurposed for LFO — ring-mod and chorus/flanger are mutually exclusive per slot; enforced in `BlipPatch.OnValidate`). Flanger: same, depth clamped 1..10 ms. |
+| T5.2.6 | NoAlloc delay-FX test + Render overload clean-up | 3 | _pending_ | _pending_ | `BlipNoAllocTests.Render_WithChorus_ZeroManagedAlloc`: pre-lease 1 chorus delay buf outside `GC.GetAllocatedBytesForCurrentThread` window; 10 renders; assert delta/call ≤ 0. Confirm 7-param `BlipVoice.Render` overload still compiles; `BlipBakerTests` + `BlipDeterminismTests` suites still green after overload addition. |
+
+#### Stage 5.3 — LFOs + routing matrix + param smoothing
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Up to 2 LFOs per patch (Off/Sine/Triangle/Square/SampleAndHold) routed to pitch/gain/cutoff/pan. `SmoothOnePole` 1-pole 20 ms helper. LFO phases advance per-sample inside `BlipVoice.Render`. `BlipLutPool` plain-class stub wired to `BlipCatalog`.
+
+**Exit:**
+
+- `BlipLfoKind` enum (Off/Sine/Triangle/Square/SampleAndHold) + `BlipLfoRoute` enum (Pitch/Gain/FilterCutoff/Pan) + `BlipLfo [Serializable] struct` (kind, rateHz, depth, route) + `BlipLfoFlat readonly struct` — all in `BlipPatchTypes.cs`.
+- `BlipPatch` gains `[SerializeField] public BlipLfo lfo0, lfo1`; `BlipPatchFlat` gains `BlipLfoFlat lfo0Flat, lfo1Flat` + ctor extension.
+- `BlipVoiceState.phaseD` renamed `lfoPhase0`; `double lfoPhase1` added. Both blittable.
+- `static float SmoothOnePole(ref float z, float target, float coef)` on `BlipVoice.cs`: `z += coef * (target - z); return z`. `lfoSmCoef = 1f - (float)Math.Exp(-TwoPi * 50.0 / sampleRate)` pre-computed per invocation.
+- LFO per-sample phase advance + waveform sample in `BlipVoice.Render`; routed to target param before FX stage with `SmoothOnePole` applied.
+- `Assets/Scripts/Audio/Blip/BlipLutPool.cs` (new): `internal sealed class BlipLutPool` stub — `float[] Lease(int size)` + `void Return(float[])` via `ArrayPool<float>.Shared`. `BlipCatalog` gains `private BlipLutPool _lutPool = new BlipLutPool()`.
+- Glossary rows: **Blip LFO**, **Param smoothing**, **Blip LUT pool** added to `ia/specs/glossary.md` + cross-refs to `ia/specs/audio-blip.md`.
+- `npm run validate:all` green.
+
+**Phases:**
+
+- [ ] Phase 1 — LFO types + data model + `BlipPatch`/`BlipPatchFlat` extension + `BlipVoiceState` LFO phases + `BlipLutPool` stub.
+- [ ] Phase 2 — `SmoothOnePole` helper + LFO per-sample advance + routing matrix + EditMode LFO test + glossary.
+
+**Tasks:**
+
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T5.3.1 | LFO types + BlipPatch/BlipPatchFlat extension | 1 | _pending_ | _pending_ | `BlipLfoKind` enum (Off=0/Sine=1/Triangle=2/Square=3/SampleAndHold=4) + `BlipLfoRoute` enum (Pitch=0/Gain=1/FilterCutoff=2/Pan=3) + `BlipLfo [Serializable] struct` (BlipLfoKind kind; float rateHz, depth; BlipLfoRoute route) + `BlipLfoFlat readonly struct` — all in `BlipPatchTypes.cs`. `BlipPatch` gains `[SerializeField] public BlipLfo lfo0, lfo1`; `OnValidate` clamps `rateHz ≥ 0`. `BlipPatchFlat` gains `BlipLfoFlat lfo0Flat, lfo1Flat`; ctor copies both. |
+| T5.3.2 | BlipLutPool stub + BlipVoiceState LFO phase fields | 1 | _pending_ | _pending_ | New `Assets/Scripts/Audio/Blip/BlipLutPool.cs`: `internal sealed class BlipLutPool` stub with `float[] Lease(int size)` + `void Return(float[])` (via `ArrayPool<float>.Shared`). `BlipCatalog` gains `private BlipLutPool _lutPool = new BlipLutPool()`. `BlipVoiceState.phaseD` renamed → `lfoPhase0` (field rename; update all refs in `BlipVoice.cs` + test files); `double lfoPhase1` added. |
+| T5.3.3 | SmoothOnePole helper + LFO per-sample advance | 2 | _pending_ | _pending_ | `public static float SmoothOnePole(ref float z, float target, float coef)` added to `BlipVoice.cs`: `z += coef * (target - z); return z`. Pre-compute `float lfoSmCoef = 1f - (float)Math.Exp(-TwoPi * 50.0 / sampleRate)` outside sample loop. Per-sample phase advance: `state.lfoPhase0 += TwoPi * patch.lfo0Flat.rateHz / sampleRate; if (state.lfoPhase0 >= TwoPi) state.lfoPhase0 -= TwoPi` (same for `lfoPhase1`). |
+| T5.3.4 | LFO routing matrix + EditMode test + glossary | 2 | _pending_ | _pending_ | LFO output dispatch in `BlipVoice.Render`: sample waveform per `BlipLfoKind` (Sine `Math.Sin(phase)`, Triangle `2/π*Math.Asin(Math.Sin(phase))`, Square `Math.Sign(Math.Sin(phase))`, S&H on zero-crossing) → scale by `depth` → route: Pitch adds to `pitchCents` applied in jitter block, Gain multiplies `gainMult`, FilterCutoff offsets `cutoffHz` before α compute, Pan offsets `panOffset`. Apply `SmoothOnePole` on each. `BlipLfoTests.cs` (new): sine LFO zero-crossing count + monotonic rise/fall asserts. Glossary rows: **Blip LFO**, **Param smoothing**, **Blip LUT pool** to `ia/specs/glossary.md`. |
+
+#### Stage 5.4 — Biquad BP + integration + golden-fixture regression gate
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** `BlipFilterKind.BandPass` 2nd-order biquad selectable via `resonanceQ`. Integration smoke: all 10 MVP golden fixture hashes pass (passthrough invariant with empty FX + zero LFOs). All 6 Step 5 glossary rows landed and spec updated.
+
+**Exit:**
+
+- `BlipFilterKind.BandPass = 2` in `BlipPatchTypes.cs`; `BlipFilter` + `BlipFilterFlat` gain `float resonanceQ` (clamped 0.1..20 in `OnValidate`).
+- `BlipVoiceState` gains `float biquadZ1, biquadZ2` (DF-II transposed delay elements, blittable).
+- Biquad BP coefficients pre-computed once per `Render` invocation (1 `Math.Sin` + 1 `Math.Cos`; zero per-sample trig): `w0=2π*cutoffHz/sr; α=sin(w0)/(2Q); b0n=sin(w0)/2/(1+α); a1n=-2cos(w0)/(1+α); a2n=(1-α)/(1+α)`.
+- `BlipVoice.Render` BandPass per-sample: DF-II transposed `v=x-a1n*z1-a2n*z2; y=b0n*v-b0n*z2; z2=z1; z1=v` (b1n=0 for bandpass). LP + None unchanged.
+- All 10 MVP golden fixture hashes pass (`BlipGoldenFixtureTests` green — empty FX + zero LFOs + LowPass/None = passthrough bit-exact vs Step 3 baselines).
+- `BlipNoAllocTests` gains `Render_WithBiquadBP_ZeroManagedAlloc`; assert delta/call ≤ 0.
+- 6 glossary rows: **Blip FX chain**, **Blip LFO**, **Biquad band-pass**, **Param smoothing**, **Blip delay pool**, **Blip LUT pool** to `ia/specs/glossary.md` + cross-refs to `ia/specs/audio-blip.md`. `ia/specs/audio-blip.md §4.2` filter section updated: BandPass enum value + `resonanceQ` noted.
+- `npm run unity:compile-check` + `npm run validate:all` green.
+
+**Phases:**
+
+- [ ] Phase 1 — Biquad data model: `BlipFilterKind.BandPass` enum value + `resonanceQ` field + `BlipVoiceState` delay elements + coefficient pre-compute block.
+- [ ] Phase 2 — Biquad kernel in `Render` + `BlipNoAllocTests` BP variant + golden fixture regression + spec + all 6 glossary rows.
+
+**Tasks:**
+
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T5.4.1 | Biquad data model + BlipVoiceState delay elements | 1 | _pending_ | _pending_ | `BlipFilterKind.BandPass = 2` in `BlipPatchTypes.cs`. `BlipFilter` gains `public float resonanceQ` (clamped 0.1..20 in `BlipPatch.OnValidate`). `BlipFilterFlat` gains `public readonly float resonanceQ`; `BlipFilterFlat(BlipFilter src)` ctor copies it. `BlipVoiceState` gains `float biquadZ1, biquadZ2`. `BlipPatchFlat(BlipPatch so, …)` ctor copies `resonanceQ` through the new `BlipFilterFlat` field. |
+| T5.4.2 | Biquad coefficient pre-compute block | 1 | _pending_ | _pending_ | Biquad BP pre-compute in `BlipVoice.Render` (outside sample loop, alongside existing `alpha` LP block at lines 59–71 of `BlipVoice.cs`): `double w0=TwoPi*cutoffHz/sampleRate; float sinW=(float)Math.Sin(w0); float cosW=(float)Math.Cos(w0); float alp=sinW/(2f*Q); float b0n=sinW*0.5f/(1f+alp); float a1n=-2f*cosW/(1f+alp); float a2n=(1f-alp)/(1f+alp)`. Computed only when `filter.kind == BandPass`; LP/None branches unchanged. |
+| T5.4.3 | Biquad kernel in Render + NoAlloc BP test | 2 | _pending_ | _pending_ | `BlipVoice.Render` per-sample BandPass dispatch: `float v=x-a1n*state.biquadZ1-a2n*state.biquadZ2; float y=b0n*v-b0n*state.biquadZ2; state.biquadZ2=state.biquadZ1; state.biquadZ1=v; sample=y`. `BlipNoAllocTests.Render_WithBiquadBP_ZeroManagedAlloc`: BP patch (cutoffHz=1000, Q=2, deterministic) — 3 warm-up + 10 measured renders; assert delta/call ≤ 0. |
+| T5.4.4 | Golden fixture regression + spec + all 6 glossary rows | 2 | _pending_ | _pending_ | Confirm `BlipGoldenFixtureTests` all 10 MVP hashes pass (empty FX chain + zero LFOs + None/LowPass filter = passthrough). 6 glossary rows to `ia/specs/glossary.md`: **Blip FX chain** (`BlipFxChain.ProcessFx` ordered per-patch FX processors), **Blip LFO** (`BlipLfo`/`BlipLfoFlat` per-sample modulator), **Biquad band-pass** (`BlipFilterKind.BandPass` DF-II transposed 2nd-order BP), **Param smoothing** (`BlipVoice.SmoothOnePole` 20 ms 1-pole), **Blip delay pool** (`BlipDelayPool` float[] lease service), **Blip LUT pool** (`BlipLutPool` stub). `ia/specs/audio-blip.md §4.2`: BandPass enum value + `resonanceQ`. `npm run validate:all` green. |
 
 **Dependencies:** Step 1 Done. Ships BEFORE Step 6 (patches depend on FX / LFO / biquad surfaces).
 
@@ -658,7 +786,7 @@
 - **Step 2 — Bake + facade + PlayMode smoke:** decomposed 2026-04-15. Stages: Bake-to-clip pipeline, Catalog + mixer router + cooldown registry + player pool, BlipEngine facade + main-thread gate, PlayMode smoke test.
 - **Step 3 — Patches + integration + golden fixtures + promotion:** decomposed 2026-04-15. Stages: Patch authoring + catalog wiring, UI + Eco + Sys call sites, World lane call sites, Golden fixtures + spec promotion + glossary.
 - **Step 4 — Settings UI + volume controls:** decomposed 2026-04-16. Stages: Options panel UI (slider + mute toggle + controller stub), Settings controller + persistence + mute semantics.
-- **Step 5 — DSP kernel v2 — FX chain + LFOs + biquad BP + param smoothing:** skeleton only (2026-04-16). Stages named (FX scaffolding + memoryless cores; Delay-line FX + BlipDelayPool; LFOs + routing + param smoothing; Biquad BP + integration + golden-fixture regression gate); decompose via `/stage-decompose` when Step → `In Progress`.
+- **Step 5 — DSP kernel v2 — FX chain + LFOs + biquad BP + param smoothing:** decomposed 2026-04-16. Stages: FX data model + memoryless cores, Delay-line FX + BlipDelayPool, LFOs + routing matrix + param smoothing, Biquad BP + integration + golden-fixture regression gate.
 - **Step 6 — 10 post-MVP sound patches + call sites:** skeleton only (2026-04-16). Stages named (UI lane; Tool lane; World lane; Sys lane + golden-fixture + catalog + glossary closeout); decompose via `/stage-decompose` when Step → `In Progress` AND Step 5 closed.
 - **Step 7 — BlipPatchEditorWindow:** skeleton only (2026-04-16). Stages named (Editor asmdef + window shell + preview + auto-rebake; Waveform + spectrum + LUFS; A/B compare + polish); decompose via `/stage-decompose` when Step → `In Progress` AND Step 6 closed.
 

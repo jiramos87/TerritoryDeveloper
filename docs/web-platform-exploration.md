@@ -230,8 +230,8 @@ Ordered by dependency. Each item is a candidate stage/step for the forthcoming m
 4. Legacy `docs/progress.html` gains "Live dashboard" link; deprecate when dashboard stable.
 
 **Phase W7 — Portal foundations (deferred, architecture-only at MVP)**
-1. Auth decision point (Q11: JWT + sessions roll-own) — pick password hash lib, session store (Postgres or encrypted cookie).
-2. Free-tier Postgres provider selection (Neon / Supabase free tier / Vercel Postgres Hobby).
+1. Auth decision point (Q11 **confirmed**: roll-own JWT + sessions). Locked: `jose` (Edge-safe `SignJWT` / `jwtVerify`) for token sign/verify; `@node-rs/argon2` (argon2id) password hash — Node runtime route handlers only, never Edge middleware; stateful `session` row (`id UUID PK, user_id UUID FK, expires_at TIMESTAMPTZ, token TEXT`) enables revocation; `SESSION_COOKIE_NAME=portal_session`, `SESSION_LIFETIME_DAYS=30`. Lucia Auth v3 rejected (sunsetted/archived by author late 2025); Auth.js v5 rejected (~50 kB OAuth machinery for email+password MVP — overkill). Full rubric + alt reasons: master plan §Orchestrator Decision Log (2026-04-16).
+2. Free-tier Postgres provider: **Neon free (Launch tier)** — locked (master plan Decision Log 2026-04-16). `@neondatabase/serverless` HTTP driver avoids TCP socket leak on serverless cold-start.
 3. `app/api/auth/*` stub route handlers; no user-facing flow yet.
 4. Schema draft for `user`, `session`, `save`, `entitlement` — not migrated.
 
@@ -289,10 +289,10 @@ Agent editing `web/content/pages/about.mdx` writes full English marketing prose 
 Phase 8 subagent review skipped — this design is tooling/docs-only scaffold with no runtime subsystem coupling, no invariants touched, and explicit user confirmation on approach (A3). Re-run review after W1 scaffold PR lands if the master plan stage sequencing warrants deeper critique.
 
 **Non-blocking items to carry into master plan:**
-- Free-tier Postgres provider selection (W7) — evaluate Neon vs. Supabase vs. Vercel Postgres Hobby limits.
+- Free-tier Postgres provider selection (W7) — **resolved:** Neon free (master plan Decision Log 2026-04-16).
 - Design token export format for future Unity consumption (W2.4) — JSON schema TBD.
 - Legacy `docs/progress.html` deprecation trigger — pick measurable condition (e.g., dashboard uptime N weeks).
-- Auth library choice (W7.1) — confirm roll-own JWT still preferred vs. Lucia-Auth-style minimal library once W7 starts.
+- Auth library choice (W7.1) — **resolved:** roll-own JWT + sessions (`jose` + `@node-rs/argon2`); Q11 confirmed; see W7 bullet 1 for locked constants.
 
 **Suggestions:**
 - Consider a `web/content/` sync script that watches `ia/specs/glossary.md` during dev to hot-reload wiki pages.

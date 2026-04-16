@@ -1,6 +1,8 @@
 # Full-Game MVP — Exploration
 
-> Orchestration-level exploration defining what the Territory Developer beta MVP looks like, which master plans it spawns, and which canonical scope stays IN vs OUT. Not a single master plan — a directory of master plans. Output of this doc: seed for up to ~10 downstream `*-master-plan.md` creations + 1 pre-plan exploration (`citystats-overhaul-exploration.md`).
+> Orchestration-level exploration defining what the Territory Developer beta MVP looks like, which master plans it spawns, and which canonical scope stays IN vs OUT. Not a single master plan — a directory of master plans coordinated by the umbrella orchestrator. Output of this doc: seed for 10 downstream `*-master-plan.md` artifacts + 1 pre-plan exploration (`citystats-overhaul-exploration.md`) + 1 umbrella orchestrator ([`ia/projects/full-game-mvp-master-plan.md`](../ia/projects/full-game-mvp-master-plan.md) — created 2026-04-16 to coordinate tier lanes, cross-bucket dependencies, save-schema bump, stabilization policy, distribution gating).
+>
+> **Canonical terminology note.** This doc uses **country** / `CountryCell` / `parent_country_id` (per `ia/projects/multi-scale-master-plan.md` + glossary) as the third simulation scale. Earlier drafts used "nation" as synonym — all prose below normalised to country. Treat "nation" in quoted review text as legacy wording.
 
 ---
 
@@ -32,7 +34,7 @@ Framing survey (A–F) compared MVP ambition levels. Summary:
 | C | Minimum + multi-scale stub | A + existing multi-scale Step 1 stubs + one polished city scale. |
 | D | Balanced MVP | B + C + services v1 + basic UI polish. Mid-ambition. |
 | E | Rich MVP | D + density evolution + pollution + crime + districts + overlays + full web platform. |
-| F | **Polished Ambitious MVP (selected — richer than E)** | E + full multi-scale play (city + region + nation auto-sim + scale transitions) + Zone S state-owned budget arm + utilities v1 framed as national resources + landmarks progression + construction evolution + full animation pipeline (agent-driven + dedicated tool) + CityStats full overhaul + all overlays + multi-tier roads (tiers + bridges + tunnels + elevated) + international hooks via border-sign UX. Locks beta against `macOS + Windows` native builds with a polished web signup/feedback site. |
+| F | **Polished Ambitious MVP (selected — richer than E)** | E + full multi-scale play (city + region + country auto-sim + scale transitions) + Zone S state-owned budget arm + utilities v1 framed as country-level resources + landmarks progression + construction evolution + full animation pipeline (agent-driven + dedicated tool) + CityStats full overhaul + all overlays + multi-tier roads (tiers + bridges + tunnels + elevated) + international hooks via border-sign UX. Locks beta against `macOS + Windows` native builds with a polished web signup/feedback site. |
 
 ## Recommendation
 
@@ -52,7 +54,7 @@ Carried into master-plan authoring (not re-opened here):
 1. **Stabilization surface** — does `stabilization-master-plan` become an orchestrator, a priority-driven BACKLOG sweep, or an implicit gate on other master plans? Design Expansion proposes a judgment call + recommends the sweep route with spec-kickoff gating.
 2. **Animation pipeline cross-cutting surface** — does the "animation pipeline" bucket absorb construction anims, road traffic anims, fire / smoke, and protest / violence under one surface, or does each consumer (city-sim-depth, utility-sim, events) own its animation contracts? Design Expansion proposes a single pipeline bucket (extending sprite-gen) with per-consumer animation-descriptor YAMLs.
 3. **CityStats parity with web dashboard** — the "data parity target" between in-game CityStats and the web-app content surface needs its own exploration doc before a master plan. Design Expansion flags this as the one pre-plan exploration seed.
-4. **International multi-nation play** — locked as "hooks only" for MVP, but contract shape (border-sign UX extension, data model for second-nation stub) is sketched in the multi-scale bucket; full play deferred post-MVP.
+4. **International multi-country play** — locked as "hooks only" for MVP, but contract shape (border-sign UX extension, data model for second-country stub) is sketched in the multi-scale bucket; full play deferred post-MVP.
 
 ---
 
@@ -68,7 +70,7 @@ Current Territory Developer state (mid-April 2026):
   - `sprite-gen-master-plan.md` — Step 1 (Geometry MVP) In Progress, Stage 1.4 (Aseprite integration) filed. Python tool emitting isometric buildings on 17 slope variants. City-scale 1×1 only in v1.
   - `blip-master-plan.md` — Steps 1–3 Final; Step 4 decomposed + pending file; Steps 5–7 skeleton. Procedural SFX (10 baked sounds). MainMenu wiring just shipped.
   - `music-player-master-plan.md` — Step 1 Stage 1.1 pending; Steps 2–3 decomposed. Authored-jazz streaming subsystem (`.ogg` shuffle, `NowPlayingWidget` HUD row, Credits sub-screen). Sibling to Blip, shares `BlipMixer`. Kept **separate** from the MVP single-track music bucket (Bucket 7) — see bucket 7 note.
-  - `web-platform-master-plan.md` — Steps 1–3 Final; Step 4 (dashboard improvements) active. Next.js app at `web/` on Vercel, live dashboard fetching GitHub raw every 5 min.
+  - `web-platform-master-plan.md` — Steps 1–4 Final (Step 4 "dashboard improvements" closed 2026-04-16); Steps 5–6 paused pending beta scope. Next.js app at `web/` on Vercel, live dashboard fetches GitHub raw every 5 min (ISR revalidate=300).
 - **Critical interrupts still open:** BUG-55 (10-fix audit), BUG-31 (interstate border prefabs), BUG-28 (slope vs interstate sorting), BUG-20 (utility building visual restore on LoadGame), BUG-49 (street preview animation), BUG-48 (minimap stale), BUG-14 (per-frame FindObjectOfType), TECH-15 (geography init perf), TECH-16 (tick perf v2).
 - **Shipped canonical terminology:** HeightMap, wet run, road stroke, road preparation family, scale switch, urban centroid, urban growth rings, desirability, tax base, monthly maintenance, happiness, pollution, utility building, interstate, neighbor-city stub, scenario descriptor v1, city metrics history.
 
@@ -95,35 +97,35 @@ Grouped by surface so the bucket map downstream is legible.
 
 **Core gameplay and simulation depth.**
 
-- Zones R / C / I / **S** (state-owned). S is a fourth parallel zone type — spawns public housing (vivienda pública), bureaucratic offices (sector público), and public services. S buildings COST money to the owning scale's budget (city / region / nation). S is fully integrated with the finance + budgeting views + tax controls + per-service budget allocation.
+- Zones R / C / I / **S** (state-owned). S is a fourth parallel zone type — spawns public housing (vivienda pública), bureaucratic offices (sector público), and public services. S buildings COST money to the owning scale's budget (city / region / country). S is fully integrated with the finance + budgeting views + tax controls + per-service budget allocation.
 - **FEAT-08 density evolution** — buildings upgrade / decay over simulation time based on desirability + tax + demand pressure.
 - **Construction evolution (new)** — buildings animate through per-type construction stages. Speed driven by desirability, land value (plusvalía), and a per-building-type construction-time curve. Each stage is a sprite variant (drives the animation pipeline requirement).
 - **FEAT-43 urban growth rings** — organic center-to-edge gradient shaping AUTO road + zoning.
 - **FEAT-52 city services** — police, fire, education, healthcare, parks. Each is an S-type building footprint with a coverage radius + per-service budget + happiness contribution + desirability contribution.
 - **FEAT-53 districts / neighborhoods** — aggregation layer on top of cells; districts carry per-district demographics + policy hooks.
 - **Road tiers** — ordinary street → avenue → arterial → interstate. Tier drives stroke sprite + capacity + cost. Improved bridges. Tunnels (height-negative stroke variant). Elevated roads (height-positive stroke with support columns).
-- **Multi-scale route hierarchy** — city interstates hand off to regional inter-regional roads hand off to national international routes. International routes in MVP = design hooks + border-sign UX only; the second-nation play is deferred to post-beta.
-- **Public transport** — buses at city scale, trains / subway at city scale, regional rail at region scale, national rail at nation scale. Scale-integrated route network.
+- **Multi-scale route hierarchy** — city interstates hand off to regional inter-regional roads hand off to country-scale international routes. International routes in MVP = design hooks + border-sign UX only; the second-country play is deferred to post-beta.
+- **Public transport** — buses at city scale, trains / subway at city scale, regional rail at region scale, country-scale rail at country scale. Scale-integrated route network.
 - **Parks / leisure zones** — S-type sub-category with happiness + pollution-sink effect.
-- **Utilities v1** — water / power / sewage framed as nation-level resources derived from natural wealth (forest, water body, mineral placeholder) plus savings / assets. Local utility buildings contribute to regional and national pools. Deep design of utilities mechanics deferred to its own master plan (see bucket map).
+- **Utilities v1** — water / power / sewage framed as country-level resources derived from natural wealth (forest, water body, mineral placeholder) plus savings / assets. Local utility buildings contribute to regional and country-level pools. Deep design of utilities mechanics deferred to its own master plan (see bucket map).
 - **Waste management** — tied to land value + desirability + the 3-type pollution model.
 - **Pollution simulation** — 3 types: air, land, water. Each propagates via a separate diffusion kernel; each has distinct sources (I buildings for air, waste for land, I + sewage for water) and sinks (forest for air, parks for land, wetlands / buffer for water).
 - **Crime simulation** — 0–100 per-cell score; sources = low happiness + low desirability + low policing; sink = police service coverage radius. Feeds happiness and desirability negatively. Drives protest / violence animations on hotspots.
 - **Traffic flow abstraction** — SimCity 2000 style. Road-density-dependent animations on road strokes, not per-vehicle pathing. Each road cell picks a "traffic level" (low / medium / high / jammed) from a neighborhood-sum heuristic and swaps the animated variant.
 - **Industrial specialisation** — agriculture, manufacturing, tech, tourism. Each I sub-type carries different pollution weights + desirability requirements + tax yield.
 - **Landmarks (gated progression)** — two parallel progression paths:
-  1. **Scale-unlock rewards.** Reach a city threshold → unlock region scale + earn a placeable city landmark. Same city→region→nation.
+  1. **Scale-unlock rewards.** Reach a city threshold → unlock region scale + earn a placeable city landmark. Same city→region→country.
   2. **Saved-for projects.** 1–2 very expensive commissioned public buildings per scale. Player saves budget, commits budget to a months-long build, receives the landmark as a placeable.
 
 **Multi-scale (full play — all IN).**
 
 - Region auto-sim (tick rate slower than city; per-region aggregates).
-- Nation auto-sim (tick rate slower than region; per-nation aggregates).
+- Country auto-sim (tick rate slower than region; per-country aggregates).
 - Scale transitions via `scale switch` — semantic zoom + procedural fog + per-scale `ScaleToolProvider`.
-- Inter-scale influence — nation decisions (tax policy, utility pool) propagate to regions, which propagate to cities. Bubble-up: city metrics aggregate to region, region to nation.
+- Inter-scale influence — country decisions (tax policy, utility pool) propagate to regions, which propagate to cities. Bubble-up: city metrics aggregate to region, region to country.
 - Interstate / highway network at region scale (BUG-31 relevance — border prefab correctness).
-- Border + customs at nation scale.
-- International hooks — data model contracts + border-sign UX. No second-nation play in MVP.
+- Border + customs at country scale.
+- International hooks — data model contracts + border-sign UX. No second-country play in MVP.
 
 **Simulation systems (all IN, some deeper).**
 
@@ -151,7 +153,7 @@ Grouped by surface so the bucket map downstream is legible.
 - **Blip SFX finish** — Steps 4–7 of the existing blip master plan.
 - **Music** — single shared track across all scales. No per-scale variation, no adaptive ramping. Delivered via the existing `music-player-master-plan.md` subsystem (sibling orchestrator; `.ogg` streaming + mixer group + volume slider already in flight); Bucket 7 seeds exactly one looped track onto the music-player playlist for MVP. The full jazz-library shuffle + `NowPlayingWidget` HUD + Credits screen surface stays behind music-player and is **not** MVP-gating — ships whenever that orchestrator lands.
 - **UI sound effects** — clicks, hovers, confirms, errors.
-- **Ambient sounds per scale** — city ambient bed, region ambient bed, nation ambient bed. Cross-fade on scale switch.
+- **Ambient sounds per scale** — city ambient bed, region ambient bed, country ambient bed. Cross-fade on scale switch.
 
 **UI polish (all IN).**
 
@@ -228,7 +230,7 @@ Explicit pushbacks. Each bucket's master plan must cite by name.
 - WebGL build.
 - Vehicle sprite variants, decoration / prop sprites, seasonal variants.
 - Adaptive music.
-- Second-nation playable (international hooks only; second-nation play deferred).
+- Second-country playable (international hooks only; second-country play deferred).
 
 ### Candidate master-plan buckets (final — 9 buckets)
 
@@ -238,17 +240,17 @@ Refinement from the prior sketch of 13. Consolidations explained below each buck
 
 **Bucket 1 — `multi-scale-master-plan.md` (EXTEND existing).**
 
-_Mission._ Complete the city ↔ region ↔ nation game loop. Extend from the current Step 1 (parent-scale stubs) through region auto-sim, nation auto-sim, scale transitions, inter-scale influence, border / customs, and international hooks via the border-sign UX pattern. Land the multi-tier route hierarchy so city interstates hand off to regional inter-regional roads hand off to national international routes.
+_Mission._ Complete the city ↔ region ↔ country game loop. Extend from the current Step 1 (parent-scale stubs) through region auto-sim, country auto-sim, scale transitions, inter-scale influence, border / customs, and international hooks via the border-sign UX pattern. Land the multi-tier route hierarchy so city interstates hand off to regional inter-regional roads hand off to country-scale international routes.
 
-_Subsystems touched._ Unity runtime C#: `GridManager` / `CityCell` / `RegionCell` / `CountryCell`, `InterstateManager`, `SimulationManager`, `TimeManager`, `GameSaveManager`, `RegionalMapManager`, new `RegionSimulationService` + `NationSimulationService` + `ScaleTransitionController`. IA docs: `simulation-system.md` (tick order extensions), `persistence-system.md` (multi-scale save tree), `managers-reference.md` (new managers), glossary (new terms for nation scale + international stub).
+_Subsystems touched._ Unity runtime C#: `GridManager` / `CityCell` / `RegionCell` / `CountryCell`, `InterstateManager`, `SimulationManager`, `TimeManager`, `GameSaveManager`, `RegionalMapManager`, new `RegionSimulationService` + `CountrySimulationService` + `ScaleTransitionController`. IA docs: `simulation-system.md` (tick order extensions), `persistence-system.md` (multi-scale save tree), `managers-reference.md` (new managers), glossary (new terms for country scale + international stub).
 
 _Estimated size._ 4–5 steps × 2–3 stages each (≈10–12 stages). Absorbs existing Steps 2+ on the orchestrator.
 
-_Dependencies._ Existing Step 1 (done). No new bucket blocks it. Feeds every other bucket that needs region / nation aggregates (economy, utilities, landmarks).
+_Dependencies._ Existing Step 1 (done). No new bucket blocks it. Feeds every other bucket that needs region / country aggregates (economy, utilities, landmarks).
 
 _Absorbed BACKLOG rows._ FEAT-10 (regional map monthly bonus), FEAT-47 (multipolar urban centroid — region scale), BUG-31 (interstate entry / exit prefabs — scale boundary bug), BUG-28 (sorting order slope vs interstate).
 
-_Hard deferrals._ Second-nation playable (hooks only); procedural events per scale; weather / day-night / seasons; dynamic terrain (erosion); population individuality.
+_Hard deferrals._ Second-country playable (hooks only); procedural events per scale; weather / day-night / seasons; dynamic terrain (erosion); population individuality.
 
 ---
 
@@ -260,7 +262,7 @@ _Subsystems touched._ Runtime C#: `DemandManager`, `CityStats`, `ZoneManager`, `
 
 _Estimated size._ 5–6 steps × 2–3 stages each (≈12–15 stages). Largest bucket by stage count. Decompose aggressively via `/stage-decompose`.
 
-_Dependencies._ Bucket 1 (needs region + nation aggregates for pollution / crime propagation upscale). Bucket 5 (needs animation pipeline for construction anims, traffic anims, fire / smoke).
+_Dependencies._ Bucket 1 (needs region + country aggregates for pollution / crime propagation upscale). Bucket 5 (needs animation pipeline for construction anims, traffic anims, fire / smoke).
 
 _Absorbed BACKLOG rows._ FEAT-08, FEAT-43, FEAT-52, FEAT-53, FEAT-11 (education / schools), FEAT-12 (security / police), FEAT-13 (fire / firefighters), FEAT-14 (vehicle traffic / traffic animations — absorbed as traffic flow abstraction, per-vehicle pathing deferred). FEAT-09 (trade / production / salaries — partial; advanced economy deferred).
 
@@ -276,7 +278,7 @@ _Subsystems touched._ Runtime C#: `EconomyManager`, `CityStats`, `ZoneManager` (
 
 _Estimated size._ 3 steps × 2–3 stages each (≈7–9 stages).
 
-_Dependencies._ Bucket 2 (services coverage model is the primary consumer of S spawn). Bucket 1 (budget flows across scales — nation budget → region → city for deficit / transfer). Can partially run in parallel with Bucket 2 if the S contract is defined first.
+_Dependencies._ Bucket 2 (services coverage model is the primary consumer of S spawn). Bucket 1 (budget flows across scales — country budget → region → city for deficit / transfer). Can partially run in parallel with Bucket 2 if the S contract is defined first.
 
 _Absorbed BACKLOG rows._ Part of FEAT-09 (economy depth — specifically tax / budget / bond pathway; advanced economy deferred).
 
@@ -288,19 +290,19 @@ _Why merged with Zone S._ Zone S is meaningless without the budget surface fundi
 
 **Bucket 4 — `utilities-and-landmarks-master-plan.md` (NEW — merges utilities v1 + landmarks).**
 
-_Mission._ Land utilities v1 (water / power / sewage) as nation-level resources derived from natural wealth + savings, with local contributors feeding regional / national pools. Land the landmarks progression — scale-unlock rewards + saved-for big projects (1–2 per scale).
+_Mission._ Land utilities v1 (water / power / sewage) as country-level resources derived from natural wealth + savings, with local contributors feeding regional / country-level pools. Land the landmarks progression — scale-unlock rewards + saved-for big projects (1–2 per scale).
 
 _Subsystems touched._ Runtime C#: new `UtilityPoolService` (per-scale), new `UtilityContributorService` (per-building), extension of `CityStats` (utility deficit → happiness penalty), new `LandmarkProgressionService`, new `ScaleUnlockService`, new `BigProjectService` (commission + months-long build). IA docs: `managers-reference.md` (Utility building extension), glossary (utility pool, utility contributor, natural wealth, landmark, scale-unlock, big project).
 
 _Estimated size._ 2–3 steps × 2 stages each (≈5–7 stages).
 
-_Dependencies._ Bucket 1 (nation scale is where utility pools sum). Bucket 3 (big projects commission against budget — needs per-service budget + bond surface).
+_Dependencies._ Bucket 1 (country scale is where utility pools sum). Bucket 3 (big projects commission against budget — needs per-service budget + bond surface).
 
 _Absorbed BACKLOG rows._ None directly — new surface.
 
 _Hard deferrals._ Climate / geographic base utility variation (deferred per locked scope); renewable vs fossil granular mechanics beyond pollution contribution; private utility operators.
 
-_Why merged._ Both touch the nation aggregate surface; both gate progression; landmarks give testers visible "unlock moments" tied to utility / budget thresholds. Splitting would produce two thin plans that share the same scale-aggregate surface.
+_Why merged._ Both touch the country aggregate surface; both gate progression; landmarks give testers visible "unlock moments" tied to utility / budget thresholds. Splitting would produce two thin plans that share the same scale-aggregate surface.
 
 ---
 
@@ -340,7 +342,7 @@ _Why separate from CityStats overhaul._ CityStats is a focused, deep redesign wi
 
 **Bucket 7 — `audio-polish-and-blip-master-plan.md` (EXTEND existing `blip-master-plan.md`).**
 
-_Mission._ Finish the Blip Steps 4–7 (existing plan). Add the shared music track, UI SFX, per-scale ambient beds (city / region / nation) with cross-fade on scale switch.
+_Mission._ Finish the Blip Steps 4–7 (existing plan). Add the shared music track, UI SFX, per-scale ambient beds (city / region / country) with cross-fade on scale switch.
 
 _Subsystems touched._ Runtime C#: existing Blip subsystem, new `MusicPlayerController`, new `AmbientBedController` per scale, `ScaleTransitionController` (hook for ambient cross-fade). IA docs: `audio-blip.md` extension, glossary (shared music track, ambient bed, UI SFX, ambient cross-fade).
 
@@ -376,7 +378,7 @@ _Why a pre-plan exploration is required._ CityStats carries the largest conceptu
 
 **Bucket 9 — `web-platform-master-plan.md` (EXTEND existing).**
 
-_Mission._ Extend from the current dashboard focus (Steps 1–3 Final, Step 4 active) to the full beta web surface. Add landing page, hero + pitch + screenshots + trailer, beta signup form, devlog / blog feed, private gated download page, primary feedback form / survey, Discord link, About / credits, FAQ, press kit.
+_Mission._ Extend from current dashboard focus (Steps 1–4 Final, Steps 5–6 paused) to full beta web surface. Add landing page, hero + pitch + screenshots + trailer, beta signup form, devlog / blog feed, private gated download page, primary feedback form / survey, Discord link, About / credits, FAQ, press kit.
 
 _Subsystems touched._ Next.js app at `web/`. New pages: landing, signup, devlog, download, feedback, about, FAQ, press-kit. Feedback form backend (Vercel function + Postgres or Vercel KV). Signup form backend (same pattern). IA docs: `web-ui-design-system.md`, glossary (beta signup, feedback form, devlog, press kit).
 
@@ -456,7 +458,7 @@ graph TD
 
 Reading the graph: arrows = "blocks / informs". Bucket 1 (multi-scale) feeds most of the gameplay buckets. Bucket 5 (sprite-gen + animation) is the widest producer — feeds every visual consumer. Bucket 8 (CityStats) is the deepest analytical surface — consumes city-sim-depth outputs, feeds UI + web dashboard. Bucket 10 (distribution) is the final gate.
 
-**Data flow — sim state upscale (city → region → nation).**
+**Data flow — sim state upscale (city → region → country).**
 
 ```mermaid
 flowchart LR
@@ -475,10 +477,10 @@ flowchart LR
         R_UTIL[Regional utility pool]
     end
 
-    subgraph Nation["Nation scale (slowest tick)"]
-        N_AGG[Nation aggregates]
-        N_BUDG[Nation budget<br/>+ deficit / bonds]
-        N_UTIL[National utility pool<br/>from natural wealth]
+    subgraph Country["Country scale (slowest tick)"]
+        N_AGG[Country aggregates]
+        N_BUDG[Country budget<br/>+ deficit / bonds]
+        N_UTIL[Country utility pool<br/>from natural wealth]
         N_BORDER[Border / customs]
     end
 
@@ -502,7 +504,7 @@ flowchart LR
     N_BORDER -->|international hook<br/>border-sign UX| N_AGG
 ```
 
-Dashed arrows = downward influence (nation → region → city). Solid arrows = upward aggregation (city → region → nation). The international hook enters at nation scale via border-sign UX.
+Dashed arrows = downward influence (country → region → city). Solid arrows = upward aggregation (city → region → country). International hook enters at country scale via border-sign UX.
 
 **Data flow — budget.**
 
@@ -518,7 +520,7 @@ flowchart TD
     BOND[Bond issuance] --> CITYBUDG
 
     REGBUDG[Region budget] -.->|transfer| CITYBUDG
-    NATBUDG[Nation budget] -.->|transfer| REGBUDG
+    NATBUDG[Country budget] -.->|transfer| REGBUDG
 ```
 
 **Data flow — feedback funnel (tester → repo).**
@@ -603,7 +605,7 @@ Invariant risk by bucket (from `ia/rules/invariants.md` #1–#12):
 
 | Bucket | Invariants at risk | Breaking vs additive | Mitigation |
 |--------|--------------------|-----------------------|-------------|
-| Bucket 1 multi-scale | #1 (HeightMap sync — per-scale height surfaces must mirror city rules), #2 (road cache invalidation — interstate hand-offs at scale boundaries), #5 (no direct `gridArray` — per-scale managers follow helper-service carve-out), #6 (GridManager extraction — new `ScaleTransitionController` + `RegionSimulationService` + `NationSimulationService` stay outside GridManager), #10 (road prep family — regional road creation reuses PathTerraformPlan), #12 (project spec location — sub-specs under `ia/projects/`, not `ia/specs/`) | Additive (parent scales were stubbed). Region + nation play is new. | Each scale's GridManager-equivalent inherits the same contract. New managers MonoBehaviour + `[SerializeField]` refs per guardrails. |
+| Bucket 1 multi-scale | #1 (HeightMap sync — per-scale height surfaces must mirror city rules), #2 (road cache invalidation — interstate hand-offs at scale boundaries), #5 (no direct `gridArray` — per-scale managers follow helper-service carve-out), #6 (GridManager extraction — new `ScaleTransitionController` + `RegionSimulationService` + `CountrySimulationService` stay outside GridManager), #10 (road prep family — regional road creation reuses PathTerraformPlan), #12 (project spec location — sub-specs under `ia/projects/`, not `ia/specs/`) | Additive (parent scales were stubbed). Region + country play is new. | Each scale's GridManager-equivalent inherits the same contract. New managers MonoBehaviour + `[SerializeField]` refs per guardrails. |
 | Bucket 2 city-sim-depth | #1 (pollution sources may mutate cell data), #3 (no FindObjectOfType in Update — new PollutionService + CrimeService + TrafficFlowService cache in Awake), #4 (no new singletons), #6 (GridManager extraction), #11 (UrbanizationProposal NEVER re-enable — growth evolution uses FEAT-08 + FEAT-43 path, not the obsolete proposal system) | Additive (new services, new kernels) with behaviour changes to DemandManager / CityStats happiness formula (breaking for existing save compatibility — save schema bump required) | Schema bump + migration path; Evolution-invariant vs Evolution-mutable classification per new field (per multi-scale glossary); preserve UrbanizationProposal obsolete callout |
 | Bucket 3 zone-s-economy | #3, #4, #6 — new managers follow pattern. Budget flow across scales implicates #1 (per-scale budget data sync). | Breaking (RCI → RCIS — fourth zone type added. Existing save + code assumes 3-channel RCI in several places: DemandManager, ZoneManager tile picker, tax rate UI.) | Phased rollout: Step 1 introduces S as runtime-only (invisible to save); Step 2 extends save + migration. |
 | Bucket 4 utilities-and-landmarks | #1 (utility building multi-cell footprints must sync heights on placement), #2 (utility buildings near roads → cache invalidation), #6 (extract pool services) | Additive — new surface, no existing semantics broken. | Standard manager wiring pattern. |
@@ -622,17 +624,17 @@ Execution order for the 10 buckets — overall plan sketch. Multiple buckets can
 
 **Bucket 1 — `multi-scale-master-plan.md` (EXTEND).**
 
-_Scope._ City ↔ region ↔ nation game loop + multi-tier route hierarchy + international hooks.
+_Scope._ City ↔ region ↔ country game loop + multi-tier route hierarchy + international hooks.
 
 _Stage outline (rough)._
 
 - Step 2 — Region auto-sim core (per-region aggregates, region tick, region save).
-- Step 3 — Nation auto-sim core (per-nation aggregates, nation tick, nation save, utility pool hook).
+- Step 3 — Country auto-sim core (per-country aggregates, country tick, country save, utility pool hook).
 - Step 4 — Scale transitions (scale-switch polished, per-scale `ScaleToolProvider`, procedural fog).
 - Step 5 — Inter-scale influence (bubble-up aggregates, push-down policy + budget transfer).
 - Step 6 — Multi-tier route hierarchy + border / customs + international hooks via border-sign UX.
 
-_Hard deferrals._ Second-nation playable; procedural events per scale; weather / day-night / seasons.
+_Hard deferrals._ Second-country playable; procedural events per scale; weather / day-night / seasons.
 
 _Prerequisite buckets._ None (Step 1 already Final).
 
@@ -654,7 +656,7 @@ _Stage outline (rough)._
 
 _Hard deferrals._ Per-vehicle pathing; named sims; advanced economy; disasters; research tree.
 
-_Prerequisite buckets._ Bucket 1 (region + nation aggregates for pollution / crime upscale). Bucket 5 (anim pipeline). Can start in parallel if Bucket 1 Step 2 defines the aggregate contract first.
+_Prerequisite buckets._ Bucket 1 (region + country aggregates for pollution / crime upscale). Bucket 5 (anim pipeline). Can start in parallel if Bucket 1 Step 2 defines the aggregate contract first.
 
 ---
 
@@ -664,13 +666,15 @@ _Scope._ Zone S + per-service budgets + deficit spending + bonds + extended mont
 
 _Stage outline (rough)._
 
-- Step 1 — Zone S runtime + budget integration + save schema bump.
+- Step 1 — Zone S runtime + budget integration + **save schema v2→v3 bump (owns envelope for umbrella coordination)**.
 - Step 2 — Per-service budget allocation UI + budget allocation service.
 - Step 3 — Deficit spending + bond service.
 
 _Hard deferrals._ Stock market; import / export; advanced bond market dynamics; private operator finance.
 
 _Prerequisite buckets._ Bucket 2 (services coverage is S's primary use). Bucket 1 (budget across scales).
+
+_Schema note._ Step 1 owns the v2→v3 bump. Buckets 1 / 2 / 4 add fields against v3 envelope only **after** Bucket 3 Step 1 lands migration code. See umbrella `full-game-mvp-master-plan.md` §Save-schema coordination.
 
 ---
 
@@ -686,7 +690,7 @@ _Stage outline (rough)._
 
 _Hard deferrals._ Climate / geographic base utility variation; renewable / fossil granular mechanics; private operators.
 
-_Prerequisite buckets._ Bucket 1 (nation scale). Bucket 3 (big-project budget commitment).
+_Prerequisite buckets._ Bucket 1 (country scale). Bucket 3 (big-project budget commitment).
 
 ---
 
@@ -777,31 +781,39 @@ _Prerequisite buckets._ Bucket 5 (visual assets for screenshots / trailer). Buck
 
 **Bucket 10 — `distribution-master-plan.md` (NEW or fold).**
 
-_Scope._ macOS + Windows native pipelines + versioning + private distribution.
+_Scope._ macOS + Windows native pipelines + versioning + private **unsigned** distribution.
 
 _Stage outline (rough)._
 
 - Step 1 — Unity build pipeline + CI trigger + versioning manifest.
-- Step 2 — Signing (macOS codesigning, Windows SmartScreen path) + private URL publication + patch channel.
+- Step 2 — Unsigned packaging (macOS `.app` in optional `.dmg`; Windows `.exe` + installer or portable zip) + download-page README with Gatekeeper + SmartScreen bypass instructions + per-OS warning screenshots + private URL publication + patch channel.
 
-_Hard deferrals._ Steam / itch public store; auto-update; Linux; WebGL.
+_Hard deferrals._ Steam / itch public store; auto-update; Linux; WebGL; cert-based signing (reserved post-beta upgrade trigger).
 
 _Prerequisite buckets._ Every other bucket must be buildable first.
+
+_Signing tier decision._ **Free (unsigned)** selected for MVP. Trust model = 20–50 dev-savvy curated friends; first-launch warnings acceptable. Cost = $0/yr. Tier menu + escalation triggers owned by umbrella `full-game-mvp-master-plan.md` §Distribution gating (Apple-only $99 / Apple + Azure Trusted Signing ~$220 / Full polish $400–700). Escalate only if tester feedback flags first-launch friction as adoption-blocking.
 
 ---
 
 **Overall execution order.**
 
+Umbrella orchestrator `ia/projects/full-game-mvp-master-plan.md` owns the canonical tier lanes, bucket table, cross-bucket dependency Mermaid, save-schema coordination, distribution gating, and progress roll-up. Tier sketch below matches umbrella — update umbrella on any tier shift, not this doc.
+
 Tiered view (ordinal within tier = parallelisable):
 
 1. **Tier A — start immediately, in parallel.** Bucket 1 (Step 2+), Bucket 5 (Step 1 continuation + Step 2 animation architecture), Bucket 7 (Steps 4–7 continuation).
 2. **Tier B — once Tier A contracts land.** Bucket 2 (needs Bucket 1 aggregate contract + Bucket 5 anim architecture), Bucket 9 (needs Bucket 5 visual assets).
-3. **Tier B' — pre-plan spawn.** `docs/citystats-overhaul-exploration.md` authored in parallel; Bucket 8 master plan waits for the exploration to resolve.
-4. **Tier C — once Tier B opens.** Bucket 3 (needs Bucket 2 services + Bucket 1 budget flow), Bucket 4 (needs Bucket 3 budget + Bucket 1 nation scale), Bucket 6 (needs Bucket 5 icons + Bucket 7 SFX hooks).
+3. **Tier B' — pre-plan spawn.** `docs/citystats-overhaul-exploration.md` authored in parallel; Bucket 8 master plan waits for exploration to resolve.
+4. **Tier C — once Tier B opens.** Bucket 3 (needs Bucket 2 services + Bucket 1 budget flow + Bucket 5 sprite-gen Step 3 RCIS tile assets), Bucket 4 (needs Bucket 3 budget + Bucket 1 country scale + Bucket 5 landmark / utility sprite variants), Bucket 6 (needs Bucket 5 icons + Bucket 7 SFX hooks).
 5. **Tier D — once Tier C lands.** Bucket 8 (needs Bucket 2 outputs + Bucket 1 aggregates + Bucket 9 dashboard schema).
 6. **Tier E — last.** Bucket 10 (needs everything buildable).
 
-**Stabilization sweep runs transversally.** Each bucket opens with a stabilization pass on its touched subsystem — e.g. Bucket 1 opens with BUG-31 + BUG-28, Bucket 6 opens with BUG-14 + BUG-48, Bucket 2 opens with TECH-16 tick perf. TECH-15 geography init perf stands alone; ship as a single-issue `/project-new` when signal warrants.
+**Explicit sprite-gen gate (B1).** Buckets 2 + 3 + 4 all pull new tile / building / landmark variants from Bucket 5. Bucket 2 needs pollution / crime / density anim variants (Step 3). Bucket 3 needs RCIS S-building archetypes (Step 5 archetype expansion). Bucket 4 needs utility + landmark archetypes (Step 5). If Bucket 5 Step 2 animation descriptor YAML contract slips, Tier B+C gameplay buckets still start coding against **stub sprite placeholders** — final art swap at descriptor-contract land. Do not block gameplay wiring on sprite polish.
+
+**Save-schema v3 coordination (B3).** Buckets 1 + 2 + 3 + 4 all mutate `GameSaveManager` envelope. Bucket 3 Step 1 (Zone S runtime + save) owns the v2→v3 bump. Buckets 1 / 2 / 4 stage field additions against the v3 envelope **after** Bucket 3 Step 1 lands the migration. Full coordination matrix in umbrella §Save-schema coordination.
+
+**Stabilization sweep runs transversally.** Each bucket opens with a stabilization pass scoped to its touched subsystem only — not a generic cross-bucket triage. Examples: Bucket 1 opens with BUG-31 + BUG-28 (interstate / slope visuals on region boundary), Bucket 6 opens with BUG-14 + BUG-48 (HUD perf + minimap stale), Bucket 2 opens with TECH-16 (tick perf v2). TECH-15 (geography init perf) stands alone — ship via ad-hoc `/project-new` when signal warrants, no orchestrator. Stabilization escalation trigger: >2 compounding bugs on a touched subsystem during bucket work → halt bucket + open dedicated stabilization sprint via `/project-new` per-issue.
 
 ### Examples
 
@@ -832,36 +844,36 @@ Primary web form (text box + rating scalars):
 - Bug / feature tag: "bug"? "feedback"? "question"?
 - Severity: low / medium / high / blocks-play.
 - Reproduction: scenario description.
-- Scale context: city / region / nation.
+- Scale context: city / region / country.
 - Save-file attachment (optional) — the tester uploads a save from their current session.
 - Expected vs actual.
 
 User (Javier) reviews via personal triage pass (weekly), filters out noise, promotes actionable items to BACKLOG rows with proper id + lane assignment. The feedback form is a funnel, not an issue tracker.
 
-**Edge case — Zone S overspend on Region scale drains Nation budget.**
+**Edge case — Zone S overspend on Region scale drains Country budget.**
 
 > A tester reaches the Region-unlock landmark threshold, switches to region scale, and starts placing S-type service buildings (regional hospital footprint — 4×4 utility-scale). Each placement debits the region budget. They keep placing.
 >
-> Region budget goes negative. **Deficit spending kicks in**: the region requests a transfer from the nation budget. Nation budget honors the transfer (there's slack from other regions). Nation budget drops.
+> Region budget goes negative. **Deficit spending kicks in**: the region requests a transfer from the country budget. Country budget honors the transfer (there's slack from other regions). Country budget drops.
 >
-> The tester, unaware of the transfer chain, keeps placing regional S buildings. Eventually **nation budget also goes negative**.
+> The tester, unaware of the transfer chain, keeps placing regional S buildings. Eventually **country budget also goes negative**.
 >
 > **Expected behaviour (cascade):**
 >
-> 1. Nation issues bonds automatically up to a cap (tunable; per-nation bond ceiling).
-> 2. If bond cap is hit, nation sends a **deficit notification** to every child region: "Region X budget frozen until nation recovers."
+> 1. Country issues bonds automatically up to a cap (tunable; per-country bond ceiling).
+> 2. If bond cap is hit, country sends a **deficit notification** to every child region: "Region X budget frozen until country recovers."
 > 3. Child regions propagate to child cities: per-service budget allocation drops to maintenance-only; no new S spawn.
 > 4. Existing S buildings **keep operating** (no demolition cascade) but their happiness contribution decays over time until budget recovers.
-> 5. Game notification fires at every scale: "Nation in fiscal crisis. Raise taxes or wait for recovery."
+> 5. Game notification fires at every scale: "Country in fiscal crisis. Raise taxes or wait for recovery."
 > 6. If the tester ignores notifications for > 3 in-game months, **unrest events trigger** (protest / violence animations on highest-crime cells, feeding the crime system further).
 >
 > **Expected tester report:**
 >
-> - "I went broke. Is this recoverable? The notification said 'raise taxes or wait' but I couldn't figure out where the tax slider was for the nation scale — only saw city tax sliders."
+> - "I went broke. Is this recoverable? The notification said 'raise taxes or wait' but I couldn't figure out where the tax slider was for the country scale — only saw city tax sliders."
 > - "Do I lose the game? Or can I sit in deficit forever?"
 > - "The unrest animations are a nice touch but the feedback loop took 2 minutes — should the notification say 'unrest starting in X months'?"
 
-Expected handling: feature gap surfaced (nation-scale tax control UI incomplete — Bucket 3 Step 2 work); tuning question surfaced (unrest feedback timing — Bucket 2 Step 2 crime simulation tuning); UX clarity surfaced (notification content — Bucket 6 Step 2 notifications work).
+Expected handling: feature gap surfaced (country-scale tax control UI incomplete — Bucket 3 Step 2 work); tuning question surfaced (unrest feedback timing — Bucket 2 Step 2 crime simulation tuning); UX clarity surfaced (notification content — Bucket 6 Step 2 notifications work).
 
 ### Non-scope pointers
 
@@ -875,7 +887,7 @@ Every MVP bucket must explicitly cite the OUT list above. When new scope creep a
 - No achievements → Bucket 4 landmarks are progression gates, NOT cross-session achievements.
 - No i18n → all UI + web surface stays English.
 - No controller / touch → Bucket 6 stays mouse + keyboard only.
-- No weather / day-night / seasons → Bucket 1 multi-scale sim ticks are chronological but visual sky stays static.
+- No weather / day-night / seasons → Bucket 1 multi-scale sim ticks chronological but visual sky stays static.
 - No political / policy system beyond zoning + tax + budget → Bucket 3 stops at per-service budget; no elections, no parties.
 - No research tree → Bucket 4 landmarks unlock by scale threshold only.
 - No procedural events / quests / storylets → Bucket 2 crime + pollution + unrest are deterministic simulation; no scripted stories.
@@ -888,7 +900,7 @@ Every MVP bucket must explicitly cite the OUT list above. When new scope creep a
 - No WebGL → Bucket 10 skips web build entirely.
 - No vehicle variants / decorations / seasonal sprites → Bucket 5 scope capped at ~300 variants.
 - No adaptive music → Bucket 7 stays on single shared track + per-scale ambient.
-- No second-nation playable → Bucket 1 international hooks only.
+- No second-country playable → Bucket 1 international hooks only.
 
 ### Next-release ideas (post-MVP)
 
@@ -914,7 +926,7 @@ Organised by theme. All items from the OUT list are candidate future releases. U
 
 **Platform and distribution.**
 
-- Second-nation playable — full international play. Requires extending Bucket 1's international hooks into a playable second nation.
+- Second-country playable — full international play. Requires extending Bucket 1's international hooks into a playable second country.
 - WebGL build — alternate distribution surface.
 - Steam / itch public store presence — moving from private distribution to public.
 - Mobile / touch — iOS / Android ports.
@@ -988,8 +1000,9 @@ Proposed invocation sequence. User to run at their pace.
 
 ### Expansion metadata
 
-- Date: 2026-04-16 (third pass — continuation to finalize scaffolding)
-- Model: claude-opus-4-7, high reasoning effort (third pass — continuation run finalizing master-plan separation + scope boundary resolution; prior passes on claude-opus-4-7 + claude-opus-4-6 same date)
+- Date: 2026-04-16 (fourth pass — umbrella orchestrator landed + terminology + gap closures)
+- Model: claude-opus-4-7, high reasoning effort (fourth pass — prior passes same date on claude-opus-4-7 + claude-opus-4-6)
 - Approach selected: F (Polished Ambitious MVP, richer than originally-offered A–E)
-- Blocking items resolved: 0 across 3 passes (subagent review + re-validations returned only non-blocking + suggestions; invariants #1–#12 cross-checked clean; pending-glossary rows consistent with current `glossary_discover` scoring)
+- Blocking items resolved: 0 across 4 passes (subagent review + re-validations returned only non-blocking + suggestions; invariants #1–#12 cross-checked clean; pending-glossary rows consistent with current `glossary_discover` scoring)
 - Third-pass deltas — (1) Active master plans corrected from 4 → 5 (adds `music-player-master-plan.md`); (2) music-player vs Bucket 7 boundary resolved from open question to explicit "keep separate — Bucket 7 seeds one track onto music-player playlist, full jazz library stays behind music-player orchestrator"; (3) IN-list Music row updated to cite music-player delivery vehicle; (4) Bucket 7 dependency line corrected (was mis-labelled "Bucket 9" for the music-player reference); (5) Next-steps §2 authoring sequence reflects coordinate-not-fold decision.
+- Fourth-pass deltas — (1) Umbrella orchestrator `ia/projects/full-game-mvp-master-plan.md` authored (permanent artifact, owns tier lanes + bucket table + cross-bucket Mermaid + save-schema coordination + distribution gating + progress roll-up); (2) Terminology normalised `nation` → `country` across prose + Mermaid labels + Tier C + Bucket 1/4/edge-case scenario (matches `CountryCell` / `parent_country_id` in multi-scale plan); (3) A3 fix — web-platform status updated Steps 1–3 Final + Step 4 active → Steps 1–4 Final + Steps 5–6 paused (Step 4 closed same day 2026-04-16); (4) B1 sprite-gen gate — Tier C explicit `Bucket 5 → Buckets 2/3/4` dependency (RCIS + landmark + utility archetypes) with stub-placeholder fallback rule; (5) B2 distribution — **Free (unsigned) signing tier selected** for MVP (20–50 curated testers, $0/yr, Gatekeeper + SmartScreen bypass documented on download page); tier menu (Apple $99 / Apple + Azure Trusted Signing ~$220 / Full polish $400–700) reserved for post-beta upgrade triggers; (6) B3 save-schema — Bucket 3 Step 1 annotated as v3 envelope owner + cross-ref to umbrella §Save-schema coordination; (7) B4 stabilization — scope clarified to per-bucket subsystem only (not cross-bucket triage) + >2 compounding bugs escalation trigger.
