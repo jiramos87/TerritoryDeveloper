@@ -23,23 +23,26 @@ Single-issue path skips the first three stages: `/project-new → /kickoff → /
 
 `/master-plan-extend` is the append-only companion to `/master-plan-new`: run it when an existing orchestrator needs new Steps sourced from a fresh exploration doc or an extensions doc (`{slug}-post-mvp-extensions.md`). Never rewrites existing Steps. Full decomposition of every new Step at author time (same cardinality gate as `/master-plan-new`). **Pre-condition:** source doc must have a `## Design Expansion` block (or semantic equivalent). Missing block → `master-plan-extend` Phase 0 stops and routes to `/design-explore {SOURCE_DOC}` — if the source doc is a locked design, add `--against {UMBRELLA_DOC}` to run gap-analysis mode first.
 
+`/release-rollout` is an umbrella-level driver ABOVE the single-issue flow: run it when a multi-bucket umbrella master-plan (e.g. `full-game-mvp-master-plan.md`) has a sibling rollout tracker (`ia/projects/{umbrella-slug}-rollout-tracker.md`) and needs to advance one row through the 7-column lifecycle (a)–(g) toward step (f) ≥1-task-filed. Dispatches to the same single-issue commands (`/design-explore`, `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, `/stage-file`) per target cell. Does NOT close issues (= `/closeout`). Tracker is seeded by `release-rollout-enumerate` helper (one-shot per umbrella).
+
 ## Surface map (one row per stage)
 
-| Stage | Slash command | Subagent | Skill |
-|-------|---------------|----------|-------|
-| Explore | `/design-explore` | `design-explore` | `design-explore` |
-| Orchestrate | `/master-plan-new` | `master-plan-new` | `master-plan-new` |
-| Extend orchestrator | `/master-plan-extend` | `master-plan-extend` | `master-plan-extend` |
-| Decompose step | `/stage-decompose` | `stage-decompose` | `stage-decompose` |
-| Bulk-file stage | `/stage-file` | `stage-file` | `stage-file` |
-| Single issue | `/project-new` | `project-new` | `project-new` |
-| Refine | `/kickoff` | `spec-kickoff` | `project-spec-kickoff` |
-| Implement | `/implement` | `spec-implementer` | `project-spec-implement` |
-| Verify (single-pass) | `/verify` | `verifier` | composed |
-| Verify (closed-loop) | `/verify-loop` | `verify-loop` | `verify-loop` |
-| Test-mode ad-hoc | `/testmode` | `test-mode-loop` | `agent-test-mode-verify` |
-| Close stage | *(none)* | *(none)* | `project-stage-close` |
-| Close issue | `/closeout` | `closeout` | `project-spec-close` |
+| Stage | Slash command | Subagent | Skill | Model |
+|-------|---------------|----------|-------|-------|
+| Explore | `/design-explore` | `design-explore` | `design-explore` | Opus |
+| Orchestrate | `/master-plan-new` | `master-plan-new` | `master-plan-new` | Opus |
+| Extend orchestrator | `/master-plan-extend` | `master-plan-extend` | `master-plan-extend` | Opus |
+| Decompose step | `/stage-decompose` | `stage-decompose` | `stage-decompose` | Opus |
+| Bulk-file stage | `/stage-file` | `stage-file` | `stage-file` | Opus |
+| Single issue | `/project-new` | `project-new` | `project-new` | Opus |
+| Refine | `/kickoff` | `spec-kickoff` | `project-spec-kickoff` | Opus |
+| Implement | `/implement` | `spec-implementer` | `project-spec-implement` | Sonnet |
+| Verify (single-pass) | `/verify` | `verifier` | composed | Sonnet |
+| Verify (closed-loop) | `/verify-loop` | `verify-loop` | `verify-loop` | Sonnet |
+| Test-mode ad-hoc | `/testmode` | `test-mode-loop` | `agent-test-mode-verify` | Sonnet |
+| Rollout umbrella | `/release-rollout` | `release-rollout` | `release-rollout` (+ `-enumerate`, `-track`, `-skill-bug-log` helpers) | Opus |
+| Close stage | *(none)* | *(none)* | `project-stage-close` | — |
+| Close issue | `/closeout` | `closeout` | `project-spec-close` | Opus |
 
 ## Hard rules
 

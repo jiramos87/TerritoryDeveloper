@@ -349,3 +349,49 @@ Phase 0 validates orchestrator shape; inserts missing Last-updated / Locked-deci
 After persist: recommend first new stage to file.
 
 `claude-personal "/stage-file {ORCHESTRATOR_SPEC} Stage {START}.1"` — new steps are already fully decomposed; file stages in step order as each parent step closes.
+
+---
+
+## Changelog
+
+### 2026-04-17 — 6-gap audit patches (release-rollout bootstrap)
+
+**Status:** applied — `9822c08`
+
+**Scope:** Gaps surfaced during `full-game-mvp` rollout dry-run by prior audit agent. Fixes landed in-place; this entry documents the audit trail + dual-writes to tracker `## Skill Iteration Log`.
+
+**Fix #1 — First-run guardrail (header-repair without STOP).**
+- Symptom: Phase 0 stopped on older orchestrators missing `**Last updated:**` / `**Locked decisions:**` header fields — blocked legitimate extends.
+- Fix: Phase 0 "Insert-if-missing" sub-step injects absent header fields BEFORE continuing validation; STOP reserved for hard-required shape (Steps / legend / Orchestration guardrails).
+- Location: §Phase 0 — "Insert-if-missing (header-repair — do NOT STOP; inject BEFORE continuing validation)".
+
+**Fix #2 — Phase 7a header sync idempotence.**
+- Symptom: Re-running extend on same source doc duplicated `**Exploration source:**` entries + Locked-decisions bullets.
+- Fix: Per-field Grep → Edit-if-exists else inject. Entries only appended when not already present. Today-dated `**Last updated:**` skipped if already set.
+- Location: §Phase 7 step 1 — "Header sync (idempotent — for each field: Grep → Edit if exists, else inject)".
+
+**Fix #3 — Partial section load for multi-bucket source docs.**
+- Symptom: `full-game-mvp-exploration.md` (1008 lines, 10 buckets) blew token budget + caused cross-bucket bleed when extending a single child plan.
+- Fix: Added `SOURCE_SECTION` input. Phase 0 loads only the named bucket subsection + its Implementation Points / Roadmap block; remaining sections ignored for Phase 2 scoping.
+- Location: §Inputs `SOURCE_SECTION` + §Phase 0 first paragraph.
+
+**Fix #4 — Phase 3 re-fire protection (subagent single-shot).**
+- Symptom: Phase 3 "pause for user confirm" stalled subagent dispatch — subagents run single-shot + cannot hold interactive state across caller boundary.
+- Fix: Phase 3 emits planned-steps digest in return message. Does NOT pause. Proceeds directly to Phase 4. Caller re-fires with updated scope if unhappy.
+- Location: §Phase 3 — "Emit the planned-steps digest in the return message. Do NOT pause".
+
+**Fix #5 — Umbrella row-flip on child extend.**
+- Symptom: Extending a child orchestrator (e.g. `blip-master-plan.md`) did not flip the umbrella's bucket-table row from `Planned` to `In Progress`.
+- Fix: Phase 8 detects umbrella parentage (bucket table reference OR user-supplied umbrella path). Flips child row status + appends umbrella `## Change log` entry. Handoff message confirms flip.
+- Location: §Phase 8 — "Umbrella flip (if applicable)".
+
+**Fix #6 — Duplication gate resolution playbook.**
+- Symptom: Original duplication gate stopped outright on any name collision — blocked legitimate stage-level extension of a Draft step.
+- Fix: Three-branch playbook: (a) Draft existing step → merge new scope as additional Stage inside it; (b) Final existing step → STOP (immutable); (c) near-overlap with verifiably distinct scope → proceed + note in handoff.
+- Location: §Phase 1 — "Duplication gate: resolution playbook (a) / (b) / (c)" + §Guardrails matching bullet.
+
+**Rollout row:** (setup) — applied pre-rollout; unblocks every subsequent EXTEND call against full-game-mvp children.
+
+**Tracker aggregator:** [`ia/projects/full-game-mvp-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/full-game-mvp-rollout-tracker.md).
+
+---

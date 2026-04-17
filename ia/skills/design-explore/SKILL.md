@@ -58,7 +58,15 @@ Read `{DOC_PATH}`. Extract and hold in working memory:
 
 ### Phase 0.5 — Interview (user gate)
 
-Before building the criteria matrix, run a short interview to surface hidden constraints and disambiguate open questions.
+**Skip this phase entirely** if the doc already has a `## Design Expansion` block with a completed Select section. Proceed directly to Phase 1 (compare) or Phase 3 (expand) as appropriate.
+
+If the doc is a stub (no Design Expansion), run a short interview to surface hidden constraints and disambiguate open questions before building the criteria matrix.
+
+**Language rules (strict — game design vocabulary only):**
+- Questions MUST use player/designer language: player experience, game rules, economic mechanics, UI interactions, design goals, balance choices.
+- NEVER mention class names, method signatures, file paths, C# types, or Unity-specific internals in questions. Those are implementation details the agent resolves independently.
+- Good: "When the player's police budget runs out this month, should they be blocked from building new police stations entirely, or just warned?"
+- Bad: "Should `BudgetAllocationService.TryDraw()` check the treasury floor before drawing from the envelope?"
 
 **Interview rules (strict):**
 - Ask **ONE question per turn. Stop. Wait for the user's answer** before asking the next.

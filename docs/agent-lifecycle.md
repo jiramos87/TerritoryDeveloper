@@ -38,6 +38,10 @@ Ad-hoc lanes (invoked outside the main flow, not ordered):
 - `/verify` — lightweight single-pass Verification block (no fix iteration). Use between phases when `/verify-loop` is overkill.
 - `/testmode` — standalone test-mode batch / bridge hybrid loop. Called ad-hoc or composed by `/verify-loop`.
 
+Umbrella-level driver (sits ABOVE the single-issue flow, dispatches INTO it):
+
+- `/release-rollout {UMBRELLA_SPEC} {ROW_SLUG} [OPERATION]` — advances one row of an umbrella rollout tracker (e.g. `ia/projects/full-game-mvp-rollout-tracker.md`) through the 7-column lifecycle (a) enumerate → (b) explore → (c) plan → (d) stage-present → (e) stage-decomposed → (f) task-filed → (g) align. Target column (f) (≥1 task filed) gates handoff to the single-issue flow. Dispatches to the same lifecycle commands above (`/design-explore`, `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, `/stage-file`) per target cell — never reimplements decomposition / filing logic. Tracker is seeded once by `release-rollout-enumerate` helper. Does NOT close issues (= `/closeout`).
+
 ---
 
 ## 2. Stage → surface matrix
@@ -56,6 +60,7 @@ Ad-hoc lanes (invoked outside the main flow, not ordered):
 | 7b | Test-mode ad-hoc | `/testmode {SCENARIO_ID}` | `test-mode-loop.md` | `agent-test-mode-verify/` | `tools/reports/agent-testmode-batch-*.json` | any verify stage |
 | 8 | Close stage | *(skill only)* | — | `project-stage-close/` | Stage §7 ticked, §6 / §9 / §10 appended, handoff prompt for next stage's fresh agent | next stage's `/stage-file` or the stage's `/implement` |
 | 9 | Close issue (umbrella) | `/closeout {ISSUE_ID}` | `closeout.md` | `project-spec-close/` | Lessons migrated to durable IA → spec deleted → BACKLOG row moved to `BACKLOG-ARCHIVE.md` → id purged | next issue |
+| U | Rollout umbrella | `/release-rollout {UMBRELLA_SPEC} {ROW_SLUG} [OPERATION]` | `release-rollout.md` | `release-rollout/` (+ `release-rollout-enumerate/`, `release-rollout-track/`, `release-rollout-skill-bug-log/` helpers) | Tracker cell flipped (one column advance) + ticket + Change log row + next-row recommendation | Dispatches into stages 1 / 2 / 2a / 3 per target cell |
 
 Skills without slash commands (`project-stage-close`, plus the verification building blocks `bridge-environment-preflight`, `project-implementation-validation`, `agent-test-mode-verify`, `ide-bridge-evidence`, `close-dev-loop`) are invoked via the `Skill` tool or composed by a higher-level agent (e.g. `/verify-loop`).
 
@@ -100,6 +105,7 @@ Phase / stage / spec done, need full closed-loop + fix iter?     → /verify-loo
 Bridge / batch evidence needed in isolation?                     → /testmode
 Multi-stage spec, current stage done, next stage pending?        → project-stage-close (Skill tool)
 Issue verified pass, ready to migrate lessons + delete spec?     → /closeout
+Umbrella master-plan with rollout tracker, advance one row?      → /release-rollout {UMBRELLA_SPEC} {ROW_SLUG}
 ```
 
 ---
