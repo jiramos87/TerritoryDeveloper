@@ -326,13 +326,13 @@ h2.plan-title {
       <div class="overall-subtitle">Master Plan Progress</div>
     </div>
     <div class="overall-right">
-      <div class="overall-pct">21%</div>
-      <div class="overall-count">158 / 307 tasks</div>
+      <div class="overall-pct">19%</div>
+      <div class="overall-count">165 / 360 tasks</div>
     </div>
   </div>
   <div class="overall-seg-row">
     <div class="overall-seg-bar">
-      <div class="overall-seg-fill" style="width:21%"></div>
+      <div class="overall-seg-fill" style="width:19%"></div>
     </div>
   </div>
   <div class="plan-minis">
@@ -399,6 +399,14 @@ h2.plan-title {
         <span class="mini-title">Web Platform</span>
         <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:33%"></div></div>
         <span class="mini-pct">33%</span>
+      </div>
+    </div>
+    <div class="plan-mini">
+      <span class="mini-icon">📋</span>
+      <div class="mini-info">
+        <span class="mini-title">Zone S + Economy</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
       </div>
     </div>
   </div>
@@ -536,7 +544,7 @@ h2.plan-title {
       <h2 class="plan-title">Full-Game MVP — Umbrella Master Plan</h2>
       <a class="plan-doc-link" href="../ia/projects/full-game-mvp-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-draft">📝 Draft — umbrella orchestrator pointing at 11 child orchestrators (5 existing + 6 new). Permanent artifact; NEVER closeable via `/closeout` (per `ia/rules/orchestrator-vs-spec.md`).</span>
+    <span class="plan-status status-draft">📝 Draft — umbrella orchestrator pointing at 12 child orchestrators (5 existing + 7 new). Permanent artifact; NEVER closeable via `/closeout` (per `ia/rules/orchestrator-vs-spec.md`).</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
       
@@ -583,31 +591,31 @@ h2.plan-title {
     <span class="plan-status status-inprogress">🔄 In Progress — Step 2 (Step 1 Final 2026-04-14; Step 2 decomposed 2026-04-16, tasks _pending_)</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">20%</div>
-      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 2: 0%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 2: 25%</div>
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:54%" title="19 Done"></div><div class="seg seg-draft" style="width:17%" title="6 Draft"></div><div class="seg seg-pending" style="width:29%" title="10 Pending"></div></div>
-    <span class="seg-count">19 / 35</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:66%" title="23 Done"></div><div class="seg seg-draft" style="width:6%" title="2 Draft"></div><div class="seg seg-pending" style="width:28%" title="10 Pending"></div></div>
+    <span class="seg-count">23 / 35</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 19 Done</span><span class="chip chip-draft">📝 6 Draft</span><span class="chip chip-pending">⏳ 10 Pending</span><span class="chip chip-total">📋 35 Total</span>
+    <span class="chip chip-done">✅ 23 Done</span><span class="chip chip-draft">📝 2 Draft</span><span class="chip chip-pending">⏳ 10 Pending</span><span class="chip chip-total">📋 35 Total</span>
   </div>
 
   <div class="ctx-row">
     <span class="ctx-label">📍</span>
     <span class="ctx-step">Step 2 · City MVP close</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-stage">Stage 2.1 · Bug stabilization</span>
+    <span class="ctx-stage">Stage 2.2 · Tick performance + metrics f…</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="All 10 fixes per `ia/projects/BUG-55.md`: `EmploymentManager` div/0; `Cell` Enum.Parse crash; `AutoZoningManager` budget refund; `CellData` height-0 corruption; `GrowthBudgetManager` min inversion; `B">🎯 <span class="task-id">T2.1.1</span> <span class="task-name">BUG-55 10 fixes</span></span>
+    <span class="ctx-task" title="Unity Profiler run on `SimulationManager` tick path post Stage 2.1; document top-5 hotspots + GC allocs + baseline ms/tick in `docs/city-tick-perf-notes.md` (new).">🎯 <span class="task-id">T2.2.1</span> <span class="task-name">Tick profiler baseline</span></span>
   </div>
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-pending" title="Phase 1 — Crashers + data integrity (BUG-55 + BUG-14).">☐ Crashers + data integrity (BUG-55 + BUG-14).</span><span class="phase-pill phase-pending" title="Phase 2 — Init races + null refs (BUG-16 + BUG-17).">☐ Init races + null refs (BUG-16 + BUG-17).</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Profiler run + alloc audit.">☐ Profiler run + alloc audit.</span><span class="phase-pill phase-pending" title="Phase 2 — MetricsRecorder + tick budget test.">☐ MetricsRecorder + tick budget test.</span>
   </div>
 
   
@@ -715,37 +723,81 @@ h2.plan-title {
     <span class="plan-status status-draft">📝 Draft — Steps 1–4 Final; Step 5 active (Stage 5.1 Done — TECH-252 + TECH-253 + TECH-254 + TECH-255 all archived; Stage 5.2 Done — TECH-261 + TECH-262 + TECH-263 + TECH-264 all archived 2026-04-17; Stage 5.3 Done 2026-04-17); Step 6 paused (E2E deferred until future instruction)</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">33%</div>
-      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 6: 20%</div>
+      <div class="plan-step-pct" style="color:#40bf72" title="Active step task progress">Step 6: 100%</div>
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:94%" title="61 Done"></div><div class="seg seg-pending" style="width:6%" title="4 Pending"></div></div>
-    <span class="seg-count">61 / 65</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:100%" title="64 Done"></div></div>
+    <span class="seg-count">64 / 64</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 61 Done</span><span class="chip chip-pending">⏳ 4 Pending</span><span class="chip chip-total">📋 65 Total</span>
+    <span class="chip chip-done">✅ 64 Done</span><span class="chip chip-total">📋 64 Total</span>
   </div>
 
   <div class="ctx-row">
     <span class="ctx-label">📍</span>
     <span class="ctx-step">Step 6 · Playwright E2E harness</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-stage">Stage 6.2 · Baseline route coverage</span>
+    <span class="ctx-stage">Stage 6.3 · Dashboard e2e (SSR filter fl…</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="Author `web/tests/routes.spec.ts` — assert HTTP 200 + at least one visible heading for: `/`, `/about`, `/install`, `/history`, `/wiki`, `/devlog`; assert first devlog slug link navigates to a 200 page">🎯 <span class="task-id">T6.2.1</span> <span class="task-name">Author `web/tests/routes.spec.ts` — assert HTTP 20…</span></span>
+    <span class="ctx-task" title="">🎯 <em>All tasks done</em></span>
   </div>
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-pending" title="Phase 1 — Static page smoke tests.">☐ Static page smoke tests.</span><span class="phase-pill phase-pending" title="Phase 2 — robots / sitemap / RSS contract tests.">☐ robots / sitemap / RSS contract tests.</span>
+    <span class="phase-pill phase-done" title="Phase 1 — Full dashboard filter spec (single-param + multi-param + clear-filters + empty-state).">✅ Full dashboard filter spec (single-param + mu…</span>
   </div>
 
   
   <details class="sibling-details">
     <summary>🔗 Sibling coordination <span class="sibling-count">3 orchestrators in flight</span></summary>
     <ul><li>**Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**</li><li>- `ia/projects/blip-master-plan.md` — runtime C# audio; disjoint surface. No collision.</li><li>- `ia/projects/multi-scale-master-plan.md` — runtime C# + save schema; disjoint surface. No collision.</li><li>- `ia/projects/sprite-gen-master-plan.md` — Python tool; disjoint surface. No collision.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
+  </details>
+</div>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <span class="plan-icon">📋</span>
+    <div class="plan-title-group">
+      <h2 class="plan-title">Zone S + Economy — Master Plan (MVP)</h2>
+      <a class="plan-doc-link" href="../ia/projects/zone-s-economy-master-plan.md">📄 plan doc</a>
+    </div>
+    <span class="plan-status status-draft">📝 Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)</span>
+    <div class="plan-pct-group">
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 0%</div>
+    </div>
+  </div>
+
+  <div class="seg-row">
+    <div class="seg-bar"><div class="seg seg-draft" style="width:11%" title="6 Draft"></div><div class="seg seg-pending" style="width:89%" title="48 Pending"></div></div>
+    <span class="seg-count">0 / 54</span>
+  </div>
+
+  <div class="stat-chips">
+    <span class="chip chip-draft">📝 6 Draft</span><span class="chip chip-pending">⏳ 48 Pending</span><span class="chip chip-total">📋 54 Total</span>
+  </div>
+
+  <div class="ctx-row">
+    <span class="ctx-label">📍</span>
+    <span class="ctx-step">Step 1 · Foundation: enum extension +…</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-stage">Stage 1.1 · ZoneType enum extension + su…</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-task" title="Add `StateServiceLightBuilding`, `StateServiceMediumBuilding`, `StateServiceHeavyBuilding`, `StateServiceLightZoning`, `StateServiceMediumZoning`, `StateServiceHeavyZoning` to `Zone.ZoneType` enum in ">🎯 <span class="task-id">T1.1.1</span> <span class="task-name">Extend `ZoneType` enum + predicates</span></span>
+  </div>
+
+  <div class="phase-row">
+    <span class="phase-row-label">Phases:</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — `ZoneType` enum + predicates + `Zone.subTypeId` sidecar.">☐ `ZoneType` enum + predicates + `Zone.subTypeI…</span><span class="phase-pill phase-pending" title="Phase 2 — `ZoneSubTypeRegistry` ScriptableObject + 7 seeded entries.">☐ `ZoneSubTypeRegistry` ScriptableObject + 7 se…</span><span class="phase-pill phase-pending" title="Phase 3 — Glossary + spec-index refresh.">☐ Glossary + spec-index refresh.</span>
+  </div>
+
+  
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">2 orchestrators in flight</span></summary>
+    <ul><li>**Scope:** Zone S (state-owned 4th zone channel, 7 sub-types) + economy depth — per-sub-type envelope budget allocator, floor-clamped treasury (hard cap, no negative balance), single-bond-per-scale-tier ledger, extended monthly-maintenance contract via `IMaintenanceContributor` registry, save schema bump. Bucket 3 of full-game MVP umbrella (`ia/projects/full-game-mvp-master-plan.md`).</li><li>- `ia/projects/full-game-mvp-master-plan.md` — umbrella orchestrator (Bucket 3 owner).</li></ul>
   </details>
 </div>
 </main>
