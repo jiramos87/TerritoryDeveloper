@@ -24,6 +24,7 @@ Single-issue path (skip first three stages): `/project-new → /kickoff → /imp
 |---|-------|---------------|-------|---------|
 | 1 | Explore | [`/design-explore`](.claude/commands/design-explore.md) | [`design-explore`](ia/skills/design-explore/SKILL.md) | Exploration doc → reviewed design + `## Design Expansion` |
 | 2 | Orchestrate | [`/master-plan-new`](.claude/commands/master-plan-new.md) | [`master-plan-new`](ia/skills/master-plan-new/SKILL.md) | Design expansion → `ia/projects/{slug}-master-plan.md` (orchestrator, permanent) |
+| 2a | Extend orchestrator | [`/master-plan-extend`](.claude/commands/master-plan-extend.md) | [`master-plan-extend`](ia/skills/master-plan-extend/SKILL.md) | Existing orchestrator + new exploration / extensions doc → appended `### Step {START}..{END}` blocks (fully decomposed) + header metadata synced |
 | 3 | Bulk-file stage | [`/stage-file`](.claude/commands/stage-file.md) | [`stage-file`](ia/skills/stage-file/SKILL.md) | One orchestrator stage → N BACKLOG rows + spec stubs |
 | 4 | Single issue | [`/project-new`](.claude/commands/project-new.md) | [`project-new`](ia/skills/project-new/SKILL.md) | One BACKLOG row + one `ia/projects/{ISSUE_ID}.md` stub |
 | 5 | Refine | [`/kickoff`](.claude/commands/kickoff.md) | [`project-spec-kickoff`](ia/skills/project-spec-kickoff/SKILL.md) | Enrich spec §1–§10 before code |

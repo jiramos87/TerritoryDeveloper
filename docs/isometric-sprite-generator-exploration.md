@@ -525,3 +525,191 @@ Aseprite Lua script that reads sprite-gen YAML specs and draws primitives native
 - **Stage 1.4** gains Phase 3 tasks for layered `.aseprite` emission, binary discovery, `promote --edit` + exit code 4.
 
 Then `/stage-file sprite-gen-master-plan.md Stage 1.1` → `/kickoff` first issue → build.
+
+---
+
+## Design Expansion — MVP Alignment
+
+> **Purpose:** Closes three gaps between the sprite-gen master plan (3 steps) and the full-game MVP umbrella (Bucket 5 = 5 steps, exit gate requires animation descriptor YAML locked + archetype coverage for Zone S + utilities + landmarks). Source: `ia/projects/full-game-mvp-master-plan.md` bucket table + `docs/full-game-mvp-exploration.md` Bucket 5 step outline. Does NOT overwrite prior sections — appends only.
+
+---
+
+### A. Animation descriptor YAML contract
+
+#### What city-sim-depth needs from Bucket 5
+
+Bucket 2 (city-sim-depth) is gated on the animation descriptor YAML being locked. Specifically, Bucket 2 consumes:
+
+- **Construction evolution** — buildings progress through `N` construction stages per building type × density tier. Each stage = a distinct sprite (or sprite row in a sheet). Bucket 2's `ConstructionStageController` must know: how many stages exist, which sprite asset corresponds to each stage, and what triggers the switch (sim tick + desirability threshold).
+- **Traffic flow anim swap** — road strokes render different sprites per traffic level. Bucket 2 Step 3 locks the state machine: `low / medium / high / jammed`. `SignalOverlayRenderer` reads descriptor to know which sprite row to display.
+- **Crime / protest / violence events** — hotspot event emitter triggers a short animation overlay on the building tile. Descriptor must declare: which buildings have a crime event variant, what the sprite sheet layout is, how many frames.
+
+Bucket 2 does NOT need actual finished animation frames to start — it needs the **descriptor schema locked** so C# consumer stubs can be written against a stable contract. Sprites can be placeholder stubs (even single-frame PNGs) as long as the descriptor fields are final.
+
+#### Schema design — `tools/sprite-gen/anim-descriptors/{archetype}.anim.yaml`
+
+```yaml
+id: building_residential_small             # matches specs/{archetype}.yaml id prefix
+class: residential                          # asset class — drives palette + consumer routing
+static_sprite: building_residential_small  # base promoted sprite id (Assets/Sprites/Generated/)
+
+construction_stages:                        # list ordered 0..N-1; 0 = ground-cleared / foundation
+  - stage: 0
+    label: foundation
+    sprite: building_residential_small_construction_00
+    duration_ticks: 2                       # game-months at default speed; tunable
+  - stage: 1
+    label: framing
+    sprite: building_residential_small_construction_01
+    duration_ticks: 3
+  - stage: 2
+    label: complete
+    sprite: building_residential_small     # final = static_sprite reference (no separate asset needed)
+
+traffic_anim:                              # optional; only present on road-stroke archetypes
+  enabled: false
+
+event_anims:                               # per-event overlay sheet descriptors
+  - event: crime_protest
+    enabled: true
+    sheet: building_residential_small_crime_sheet
+    frame_count: 4
+    frame_w: 64                            # px; must match static sprite canvas width
+    frame_h: 64
+    fps: 6
+    loop: false
+    trigger: crime_hotspot_threshold       # C# enum value — wired by SignalOverlayRenderer
+
+diffusion_prompt_hint: >                   # optional; fed to Step 3 agent-driven path
+  isometric pixel art small brick house under construction, scaffolding visible, clean edges
+```
+
+Road-stroke archetype variant (for traffic):
+
+```yaml
+id: road_stroke_2lane
+class: road
+static_sprite: road_stroke_2lane_flat
+traffic_anim:
+  enabled: true
+  states:
+    low:    { sprite: road_stroke_2lane_traffic_low }
+    medium: { sprite: road_stroke_2lane_traffic_med }
+    high:   { sprite: road_stroke_2lane_traffic_high }
+    jammed: { sprite: road_stroke_2lane_traffic_jam }
+```
+
+#### Who produces the descriptor
+
+**Sprite-gen CLI generates a stub descriptor** alongside every promoted sprite, with all fields present but construction stages defaulting to a single `complete` stage pointing to the static sprite, and `event_anims[*].enabled: false`. Human (or agent-driven Step 3 pass) enriches the descriptor with actual construction stage sprites and event sheet references as those assets land.
+
+CLI addition: `python -m sprite_gen promote out/X.png --as name` → also writes `tools/sprite-gen/anim-descriptors/{archetype}.anim.yaml` stub if not present. If present, leaves untouched (human-curated takes precedence).
+
+#### When descriptor schema locks (unlock condition)
+
+Schema locked at **Step 2 close** (animation architecture step). C# consumer stubs in Bucket 2 (`ConstructionStageController`, `SignalOverlayRenderer`, event emitter) can be authored against the locked schema from that point. Sprite assets filling the descriptors land progressively in Steps 3–4. Step 5 (archetype expansion) extends coverage to S + utility + landmark descriptors using the same schema — no breaking change.
+
+**Bucket 2 Tier B entry condition:** Step 2 must be `Final` (not just the schema draft — actual stub descriptors checked in for all Step 3 EA archetypes so C# consumer wiring can be smoke-tested).
+
+#### Unity C# consumer contract
+
+Consumer reads `tools/sprite-gen/anim-descriptors/*.anim.yaml` at build time (or runtime via Resources/Addressables — decision deferred to Step 2 kickoff). Key access patterns:
+
+- `AnimDescriptor.GetConstructionSprite(archetype, stage)` → `Sprite`
+- `AnimDescriptor.GetTrafficSprite(archetype, trafficLevel)` → `Sprite`
+- `AnimDescriptor.GetEventSheet(archetype, eventType)` → `SpriteSheet`
+
+No new C# classes authored in sprite-gen steps — consumer stubs are Bucket 2 scope. Sprite-gen Step 2 owns the schema; Bucket 2 Step 6 (`ConstructionStageController`) wires the stubs.
+
+---
+
+### B. Zone S + utilities + landmarks archetype scope
+
+#### Class inventory (new classes beyond R/C/I)
+
+| Class slug | Zone/source | Examples | Notes |
+|---|---|---|---|
+| `service` | Zone S (Bucket 3) | police station, fire station, school, hospital, park entrance | 5 service sub-types per Bucket 2 Step 4 (FEAT-52). One primary archetype + 1–2 density variants per sub-type |
+| `utility` | Bucket 4 utility pools | water tower, power plant (small), sewage treatment, water pump | Multi-cell footprints likely (2×2 or 3×3); confirm at Bucket 4 spec time |
+| `landmark` | Bucket 4 progression | city hall (scale-unlock city), regional parliament (scale-unlock region), country monument (scale-unlock country), big-project civic building | Scale-unlock and saved-for project types; 1–2 per scale |
+
+#### Archetype count estimate
+
+| Class | Sub-types | Archetypes per sub-type | Total archetypes | Variants per archetype | Estimated sprite total (×17 slopes) |
+|---|---|---|---|---|---|
+| `service` | 5 (police / fire / school / hospital / park) | 2 (small + medium) | 10 | 2 | 340 |
+| `utility` | 3 (water / power / sewage) | 2 (small + large) | 6 | 2 | 204 |
+| `landmark` | 3 per scale × 3 scales + 1 big-project | ~4 (scale-unlock × 3 + 1 civic) | 4 | 1 (landmarks = unique) | 68 |
+| **Total new** | | | **~20** | | **~612** |
+| **Existing R/C/I (Step 3)** | | | 15 | 4 | 1020 |
+| **Grand total** | | | **~35** | | **~1630 rendered → ~140–180 promoted** |
+
+Sprite library target = ~300 variants (umbrella locked). 140–180 promoted from ~1630 rendered is achievable with 4:1+ curation ratio. Non-1×1 footprints (utility buildings) need the footprint system deferred from v1 — this is the first hard dependency: utility archetypes require the non-square footprint feature (currently deferred to v2, §16).
+
+#### Footprint dependency flag
+
+Utility buildings (water tower 2×2, sewage plant 3×3) need non-square footprint support (`fx ≠ 1` or `fy ≠ 1`). Currently listed under §16 Deferred to v2. **This is a constraint:** either (a) Step 5 (archetype expansion) must wait for non-square footprint to land in a Step 2/3/4 side-stage, or (b) utility archetypes are authored as 1×1 approximations for MVP and upgraded post-beta. Decision deferred to Step 5 kickoff — flag as open question D.1 below.
+
+#### When do they land in the step sequence
+
+Archetype specs for S / utility / landmark classes **cannot be fully authored until Bucket 3/4 define the exact building inventory** (sub-types, footprints, upgrade paths). However, **palette files and class-level scaffolding** can be authored speculatively in Step 3 (after R/C/I bulk render):
+
+- Step 3 exit: `palettes/service.json`, `palettes/utility.json`, `palettes/landmark.json` checked in (K-means from any placeholder sprites or hand-authored).
+- Step 5 opens when Bucket 3 Step 1 provides Zone S building inventory + Bucket 4 Step 1 provides utility building inventory. Step 5 authors the actual archetype YAML specs, renders, curates, and locks descriptors for all new classes.
+
+**Step 5 entry gate (hard dependency):** Bucket 3 Step 1 Final + Bucket 4 Step 1 Final. Otherwise archetype spec authoring is blind (field counts, footprints, visual design language unknown).
+
+---
+
+### C. Revised 5-step spine
+
+The existing 3-step spine maps to Steps 1, 3 (closest), and 5. Steps 2 and 4 are insertions.
+
+| Step | Name | Objectives | Exit criteria | Cross-bucket dependencies | Timing note |
+|---|---|---|---|---|---|
+| **1** | Geometry MVP | Canvas math, `iso_cube`/`iso_prism`, palette system, slope-aware foundation, curation CLI, Aseprite Tier 1+2. | `render --all` ≥5 archetypes × 17 slopes; promoted sprites Unity-correct; `palette extract` round-trip; `promote --edit` functional. | None (Tier A — can start immediately) | In progress — Stage 1.4 active |
+| **2** | Animation architecture + descriptor schema lock | Author `anim-descriptors/` schema. CLI stub-emit on promote. Bootstrap stub descriptors for all Step 3 archetypes. Define C# consumer interface (authored in Bucket 2, but interface locked here). Pilot construction stage sprites for 2 archetypes. | `*.anim.yaml` schema published + stable. Stub descriptors checked in for all Step 3 archetypes. C# consumer interface documented (not implemented — Bucket 2 scope). Pilot construction PNGs promoted for ≥2 archetypes. | Feeds Bucket 2 Tier B entry. No inbound blocker beyond Step 1 Final. | Opens immediately after Step 1 Final |
+| **3** | EA bulk render + agent-driven anim path | Author all 15 R/C/I archetype specs. Batch render ≈1000 sprites. Curation session → promote ~60–80 to `Assets/Sprites/Generated/`. Agent-driven prompt-to-animated-sprite path for construction stages. Traffic anim sprite variants for road archetypes. | All 15 R/C/I archetype specs checked in. ~60–80 sprites promoted. Anim descriptors filled for construction stages (≥5 archetypes). Traffic anim sprites exist for road stroke variants (low/med/high/jammed). Unity import audit passes. | Feeds Bucket 3 (RCIS tile assets needed at Bucket 3 Step 1 kickoff). Bucket 2 Step 3 (traffic anim) needs traffic sprite variants. | Opens after Step 2 Final; parallel with Bucket 2 in Tier B |
+| **4** | Dedicated animation-generator tool + anim finalization | Build `tools/anim-gen/` (or sub-module) for deterministic frame-by-frame animation generation. Cover: fire, smoke, crime/protest/violence event overlays, water wave. Finalize anim descriptors for all Step 3 archetypes. | `anim-gen` CLI produces ≥4-frame sheets for fire + smoke + crime event overlays. All Step 3 archetype anim descriptors complete (all `event_anims` fields filled). Anim sheet `.meta` correct. | Feeds Bucket 2 Step 6 (ConstructionStageController + CrimeSystem event trigger) — must land before Bucket 2 Step 6 kickoff. | Opens after Step 3 Final; can overlap with Bucket 2 Steps 1–5 |
+| **5** | Archetype library expansion (S + utilities + landmarks) | Author ~20 new archetype YAML specs (service × 10, utility × 6, landmark × 4). Extract palettes for new classes. Batch render + curate. Bootstrap anim descriptors for all new classes. Verify ~300-variant target reachable. | All ~20 new archetype specs checked in + renderable. Palette JSON files for `service`, `utility`, `landmark` classes present. ~70–100 new sprites promoted (cumulative library ~140–180). Anim descriptor stubs for all new archetypes checked in. Footprint scope decision documented (1×1 MVP vs non-square). | Hard entry gate: Bucket 3 Step 1 Final + Bucket 4 Step 1 Final (building inventory defined). Feeds Bucket 4 (landmark/utility sprite variants), Bucket 6 (icons/splash assets). | Opens in Tier C — after Bucket 3 Step 1 + Bucket 4 Step 1 Final |
+
+**Mapping to umbrella exit gate ("Geometry MVP Final; animation descriptor YAML locked; archetype coverage S + utilities + landmarks"):**
+
+- "Geometry MVP Final" → Step 1 Final.
+- "Animation descriptor YAML locked" → Step 2 Final (schema + stubs).
+- "Archetype coverage (S + utilities + landmarks)" → Step 5 Final.
+- Steps 3 + 4 = intermediate deliverables (EA bulk render + anim pipeline) required before Step 5 can close cleanly.
+
+**Step count: 5. Matches umbrella "In progress — Step 1 of 5".**
+
+---
+
+### D. Open questions
+
+| # | Question | Blocks | Earliest resolution |
+|---|---|---|---|
+| D.1 | **Non-square footprints for utility archetypes.** Utility buildings (water tower 2×2, sewage plant 3×3) need `fx ≠ 1 / fy ≠ 1`. Currently deferred to v2. Option A: land non-square support in Step 2 or Step 3 side-stage. Option B: utility archetypes render as 1×1 approximations for MVP; non-square post-beta. | Step 5 archetype spec authoring for utility class | Step 5 kickoff (need inventory from Bucket 4 Step 1 first) |
+| D.2 | **C# consumer loading path.** Anim descriptors loaded at build time (Resources/Addressables) or runtime YAML parse? Determines where schema-version management lives. | Step 2 (consumer interface doc needs this locked) | Step 2 kickoff |
+| D.3 | **Construction stage count per building type.** Bucket 2 Step 6 owns the C# side; sprite-gen Step 3 authors the sprites. Need agreed default (3 stages = foundation / framing / complete?) before Step 3 archetype spec authoring. Otherwise descriptors are placeholders. | Step 3 archetype spec authoring completeness | Bucket 2 Step 6 kickoff (should precede Step 3 close, or at minimum agree contract at Step 2) |
+| D.4 | **Landmark visual design language.** Scale-unlock landmarks + big-project buildings need a distinct visual vocabulary to signal "special" vs ordinary R/C/I. No palette/primitive guidance exists yet. | Step 5 landmark archetype specs | Bucket 4 Step 3 kickoff (landmarks progression step) |
+| D.5 | **~300-variant target achievable with 1×1-only footprints?** Umbrella locks ~300 variants. Gap analysis: 15 R/C/I × ~4 promoted variants = ~60; 20 new classes × ~4 variants = ~80; total = ~140. To reach 300, need either slope variants counted, non-square multi-cell footprints, or higher variant-per-archetype curation. Clarify counting convention (does each slope terrain variant count as a separate "variant" toward the ~300 target?). | Curation target-setting for Steps 3 + 5 | Before Step 3 decomposes |
+
+---
+
+### Review Notes
+
+> **Subagent Plan review result (blocking items + non-blocking carried verbatim).**
+
+**BLOCKING items reviewed (all resolved):**
+
+1. **Schema fields missing `frame_h` default.** Event sheet `frame_h` field added to schema (§A, `event_anims` block now includes `frame_w: 64`, `frame_h: 64`). ✓ Resolved in-place.
+
+2. **Step 2 exit criteria gap — C# interface "documented" is too weak.** Clarified: Step 2 exit requires "C# consumer interface documented (not implemented — Bucket 2 scope)" — explicit parenthetical distinguishes Bucket 2 implementation scope from sprite-gen doc scope. ✓ Resolved in-place.
+
+3. **Step 5 entry gate ambiguity — "Bucket 3 Step 1 + Bucket 4 Step 1 Final" leaves utility palette extraction orphaned.** Added explicit guidance: palette JSON for `service`/`utility`/`landmark` classes authored speculatively in Step 3 (no inventory needed for palette skeleton); Step 5 authors the full archetype YAML specs against confirmed Bucket 3/4 inventories. ✓ Resolved in-place.
+
+**NON-BLOCKING items (carried verbatim):**
+
+- "D.5 variant count ambiguity re: slope terrain — the ~300 target counting convention (does each of the 17 slope variants of the same archetype count as a separate variant?) should be answered before Step 3 curation guidance is written. Currently carried as open question D.5. Recommend confirming with umbrella author before Step 3 decompose."
+- "The `diffusion_prompt_hint` field in the anim descriptor is useful but optional. Risk: if the field is omitted on most archetypes, Step 3's agent-driven path has no per-archetype context. Consider making it required (even if value is a class-level fallback string) to avoid blank-prompt diffusion passes."
+- "Step 4 'dedicated anim-gen tool' scope is under-specified (no CLI sketch, no primitive type, no frame-interpolation strategy). Sufficient for master-plan-extend input but will need a design-explore sub-pass before Step 4 decomposes."

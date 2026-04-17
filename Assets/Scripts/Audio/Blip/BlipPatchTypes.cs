@@ -24,6 +24,25 @@ namespace Territory.Audio
     }
 
     // -------------------------------------------------------------------------
+    // BlipFxKind — FX chain effect type selector
+    // Values pinned for switch-dispatch stability (BlipFxChain.ProcessFx).
+    // Comb/Allpass/Chorus/Flanger kernels land Stage 5.2; slots using those values
+    // return passthrough until then.
+    // -------------------------------------------------------------------------
+    public enum BlipFxKind
+    {
+        None      = 0,
+        BitCrush  = 1,
+        RingMod   = 2,
+        SoftClip  = 3,
+        DcBlocker = 4,
+        Comb      = 5,
+        Allpass   = 6,
+        Chorus    = 7,
+        Flanger   = 8,
+    }
+
+    // -------------------------------------------------------------------------
     // BlipEnvStage — AHDSR state machine stage identifiers
     // -------------------------------------------------------------------------
     public enum BlipEnvStage
@@ -138,5 +157,57 @@ namespace Territory.Audio
 
         /// <summary>Static cutoff frequency in Hz.</summary>
         public float cutoffHz;
+    }
+
+    // -------------------------------------------------------------------------
+    // BlipFxSlot — authoring-side FX chain slot (Inspector-serializable)
+    // Max 4 slots per patch; enforced by BlipPatch.OnValidate.
+    // param0/param1/param2 semantics are kind-specific — see BlipFxChain.ProcessFx
+    // for per-kind interpretations.
+    // -------------------------------------------------------------------------
+    [Serializable]
+    public struct BlipFxSlot
+    {
+        /// <summary>Effect type. None = slot inactive (passthrough).</summary>
+        public BlipFxKind kind;
+
+        /// <summary>Effect parameter 0. Semantics depend on kind (e.g. bit-depth for BitCrush).</summary>
+        public float param0;
+
+        /// <summary>Effect parameter 1. Semantics depend on kind (e.g. carrier Hz for RingMod).</summary>
+        public float param1;
+
+        /// <summary>Effect parameter 2. Reserved; currently unused by all Stage 5.1 kernels.</summary>
+        public float param2;
+    }
+
+    // -------------------------------------------------------------------------
+    // BlipFxSlotFlat — blittable runtime mirror of BlipFxSlot
+    // readonly struct + scalar-only fields → qualifies as unmanaged (blittable).
+    // Mirrors BlipPatchFlat blittable discipline (ia/specs/audio-blip.md §2).
+    // No managed refs, no heap allocation.
+    // -------------------------------------------------------------------------
+    public readonly struct BlipFxSlotFlat
+    {
+        /// <summary>Effect type. None = slot inactive (passthrough).</summary>
+        public readonly BlipFxKind kind;
+
+        /// <summary>Effect parameter 0 (kind-specific).</summary>
+        public readonly float param0;
+
+        /// <summary>Effect parameter 1 (kind-specific).</summary>
+        public readonly float param1;
+
+        /// <summary>Effect parameter 2 (reserved).</summary>
+        public readonly float param2;
+
+        /// <summary>Copy constructor from authoring BlipFxSlot. No managed refs copied.</summary>
+        public BlipFxSlotFlat(in BlipFxSlot s)
+        {
+            kind   = s.kind;
+            param0 = s.param0;
+            param1 = s.param1;
+            param2 = s.param2;
+        }
     }
 }

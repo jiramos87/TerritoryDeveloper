@@ -187,6 +187,7 @@ Session maps to `{ISSUE_ID}` → `mcp__territory-ia__backlog_issue` for Files / 
 - IF Step 4b times out → run escalation protocol (`unity:ensure-editor` → 60 s retry, ceiling 120 s); do NOT raise `timeout_ms` blindly.
 - Do NOT skip Path A/B for convenience — verification policy requires attempting both when tools allow.
 - Do NOT replace human normal-game QA — agent verification supplements, never substitutes (per `AGENTS.md`).
+- IF attributing a failure to a named issue id (e.g. "TECH-227 territory") → FIRST verify that id appears as open (`- [ ]`) in `BACKLOG.md`. If not found (closed or never filed), report the failure as "pre-existing / unowned" and do NOT name an issue id.
 - Do NOT commit verification artifact paths in spec prose — keep paths in Verification block / handoff only.
 
 ---

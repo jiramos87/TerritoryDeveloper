@@ -145,6 +145,72 @@ export default async function DashboardPage() {
 
 When `ia/projects/` contains no `*master-plan*.md` files, `loadAllPlans()` returns `[]`. This diverges intentionally from the CLI (`tools/progress-tracker/index.mjs` exits non-zero on empty); RSC callers should render an empty state rather than error.
 
+## Portal
+
+App-infra surface — Neon DB provider wired at Step 5 (TECH-252 / TECH-254). Architecture-only tier: no migrations, no live queries, no auth flow yet.
+
+### Database provider
+
+Postgres provider: **Neon free (Launch tier)** — pooled connections 100, storage 0.5 GB, region us-east-1 (matches Vercel default). Driver pin: `@neondatabase/serverless@^1.0.2` (HTTP/WebSocket, edge-safe, no native bindings).
+
+Full rationale + alternatives rejected: `ia/projects/web-platform-master-plan.md` §Orchestrator Decision Log (2026-04-16).
+
+### Connection pool pattern
+
+Lazy singleton via `getSql()` — connection not opened at import time; opened on first call. `sql` tagged-template Proxy delegates to `getSql()` on first use.
+
+```ts
+import { sql } from '@/lib/db/client'
+
+// Lazy — no connection until this line executes:
+const rows = await sql`SELECT 1 AS ping`
+
+// Or explicit accessor (same pool):
+import { getSql } from '@/lib/db/client'
+const db = getSql()
+const rows = await db`SELECT 1 AS ping`
+```
+
+Build-time safety: `next build` succeeds without `DATABASE_URL` set — client module imports cleanly; error thrown only on first query invocation at runtime.
+
+Source: `web/lib/db/client.ts`.
+
+### DATABASE_URL env contract
+
+Required format: Neon pooled connection string (includes `?pgbouncer=true&connect_timeout=10` or equivalent pool params).
+
+| Vercel scope | Status | Action |
+|---|---|---|
+| Production | `[HUMAN ACTION]` | Set in Vercel dashboard → Project Settings → Environment Variables → Production |
+| Preview | `[HUMAN ACTION]` | Set for Preview scope in same panel |
+| Development | `[HUMAN ACTION]` | Set for Development scope or wire locally |
+
+Local contributors: create `web/.env.local` (not shipped — gitignored) with:
+
+```
+DATABASE_URL=<your-neon-pooled-connection-string>
+```
+
+`.env.example` not shipped at this tier — contributors source their own Neon free project.
+
+### Payment gateway (deferred)
+
+Architecture slot reserved. No provider chosen. Decision deferred to Q10 (no timeline). No code at this tier — Stage 5.2+ scope.
+
+### Migration tooling
+
+`npm run db:generate` (drizzle-kit) reads `web/lib/db/schema.ts` and writes SQL artifacts to `web/drizzle/`. Offline-safe — no live `DATABASE_URL` required; drizzle-kit generates from schema only.
+
+Output artifacts: timestamped `.sql` migration file + `meta/_journal.json` (diff state) + `meta/0000_snapshot.json` (typed schema snapshot).
+
+**Commit stance:** `web/drizzle/` is committed to the repo (NOT gitignored). Migration files = source-controlled DB state per drizzle convention; PR review needs SQL diffs visible.
+
+Step 5 architecture-only — no `db:migrate` script yet. Migration runner lands in post-Step-5 portal-launch work.
+
+---
+
+**Step 5 boundary:** architecture-only — no migrations run, no live queries in production, no auth flow. Stage 5.2 files schema + migrations; Stage 5.3 files middleware + auth.
+
 ## Tokens
 
 Design token files live under `web/lib/tokens/`. All three files are consumed by `web/lib/tokens/index.ts` which exports the resolved `tokens` map.
@@ -331,6 +397,14 @@ App-wide nav at `web/components/Sidebar.tsx`. Wired into `web/app/layout.tsx` in
 - **Desktop (≥md):** same `<nav>` element — responsive overrides `md:static md:translate-x-0` promote it out of fixed positioning. No `hidden md:flex` wrapper in `layout.tsx` — Sidebar owns its own responsive classes.
 - **Token consumption:** inline `style={{ backgroundColor: tokens.colors['bg-canvas'], color: tokens.colors['text-primary'] }}` via `@/lib/tokens` map. Keys like `bg-canvas` / `bg-panel` / `text-primary` / `text-muted` / `text-accent-warn` are JSON semantic aliases resolved at build, NOT Tailwind utility classes. No inline hex.
 
+## Local development auth bypass
+
+- Knob: `DASHBOARD_AUTH_SKIP=1` in `web/.env.local` (gitignored — local only).
+- Effect: `web/middleware.ts` short-circuits on env-var truthy → `/dashboard` reachable without a `portal_session` cookie → no cookie ritual each browser session.
+- Setup: copy `web/.env.local.example` → `web/.env.local`; set `DASHBOARD_AUTH_SKIP=1`.
+- Prod warning: **NEVER** set `DASHBOARD_AUTH_SKIP` on Vercel — prod must stay gated; env var absent on Vercel (`undefined`) → bypass never fires.
+- Surface: `web/middleware.ts` reads env var before cookie lookup.
+
 ## Caveman exception boundary
 
 Full English (marketing-style prose) applies **only** to:
@@ -349,6 +423,72 @@ Vercel project linked via dashboard. Build root: `web/`. Framework preset: Next.
 > **Note:** Vercel URL to be embedded here after first production deploy.
 
 CI: `npm run validate:all` at repo root includes `validate:web` (lint + typecheck + build). Push to `main` triggers Vercel production deploy.
+
+## E2E Testing (Playwright)
+
+Playwright scaffold is wired at `web/` — no tests authored yet (Stage 6.2 owns route coverage; Stage 6.3 owns dashboard filter suites).
+
+### Local run
+
+```bash
+# 1. Install Chromium binary (one-time, local dev machine only — NOT in validate:all):
+npx playwright install chromium
+
+# 2. Start dev server in one terminal:
+cd web && npm run dev
+
+# 3. Run tests in another terminal (empty tests/ dir exits 0):
+cd web && npm run test:e2e
+```
+
+Note: `test:e2e` + `test:e2e:ci` both pass `--pass-with-no-tests` so an empty `tests/` dir does not break CI before Stage 6.2 authors the first spec. Playwright defaults to exit 1 on "no tests found" — keep the flag until at least one route spec lands.
+
+### `PLAYWRIGHT_BASE_URL` contract
+
+`playwright.config.ts` resolves the base URL from the environment:
+
+| Context | Value |
+|---|---|
+| Local dev (default) | `http://localhost:4000` |
+| Vercel preview | `https://$VERCEL_URL` (inject via CI env) |
+| Production smoke | `https://web-nine-wheat-35.vercel.app` (or custom domain) |
+
+Set before running:
+
+```bash
+PLAYWRIGHT_BASE_URL=https://$VERCEL_URL npm run test:e2e
+```
+
+### Vercel preview injection
+
+In a Vercel-integrated CI step, inject the deployment URL before running e2e:
+
+```bash
+PLAYWRIGHT_BASE_URL=https://$VERCEL_URL npx playwright test --reporter=github
+```
+
+`$VERCEL_URL` is set automatically by Vercel for preview deployments.
+
+### CI bootstrap
+
+Playwright browsers are NOT included in `node_modules`. Run once per CI environment before executing tests:
+
+```bash
+npx playwright install --with-deps chromium
+```
+
+This downloads Chromium + system deps (~200 MB). Reason it is opt-in and NOT wired into `validate:all` — keeps the default chain fast and Chromium-free for contributors who do not need e2e.
+
+### Per-route test-file convention
+
+- One test file per route under `web/tests/`.
+- File naming: `{route-slug}.spec.ts` (e.g., `dashboard.spec.ts`, `home.spec.ts`).
+- Import `test`, `expect` from `@playwright/test` — no global setup file needed for scaffold-level tests.
+- Use `page.goto('/')` (relative) — `baseURL` from `playwright.config.ts` resolves the full URL.
+
+### Root-level script (repo)
+
+`npm run validate:e2e` at repo root composes `npm --prefix web run test:e2e:ci`. Does NOT run as part of `validate:all` (Chromium opt-in boundary).
 
 ## Links
 

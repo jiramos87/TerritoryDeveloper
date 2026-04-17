@@ -46,6 +46,62 @@ namespace Territory.Audio
             int               variantIndex,
             ref BlipVoiceState state)
         {
+            // Back-compat shim: delegates to full overload with all-null delay buffers.
+            // All-null + zero lens → delay-line kinds skip-op (passthrough).
+            // Four throwaway writePos locals satisfy the ref requirement.
+            int wp0 = 0, wp1 = 0, wp2 = 0, wp3 = 0;
+            Render(buffer, offset, count, sampleRate, in patch, variantIndex, ref state,
+                null, null, null, null, 0, 0, 0, 0,
+                ref wp0, ref wp1, ref wp2, ref wp3);
+        }
+
+        /// <summary>
+        /// Renders <paramref name="count"/> samples of a blip voice into
+        /// <paramref name="buffer"/>[<paramref name="offset"/> .. offset+count).
+        /// Samples are ADDED to the existing buffer contents (mix-in semantics).
+        /// Accepts pre-leased delay-line buffers for FX slots 0..3; pass null per slot
+        /// to keep that slot in passthrough mode (safe skip-op — no kernel yet).
+        /// </summary>
+        /// <param name="buffer">Target sample buffer (float PCM, any sample rate).</param>
+        /// <param name="offset">First sample index to write within <paramref name="buffer"/>.</param>
+        /// <param name="count">Number of samples to render. Must be &gt;= 0.</param>
+        /// <param name="sampleRate">Audio sample rate in Hz. Must be &gt; 0.</param>
+        /// <param name="patch">Immutable blittable patch parameters.</param>
+        /// <param name="variantIndex">Round-robin variant selector (0-based).</param>
+        /// <param name="state">Per-voice DSP state, mutated in place.</param>
+        /// <param name="d0">Pre-leased delay buffer for FX slot 0, or null for passthrough.</param>
+        /// <param name="d1">Pre-leased delay buffer for FX slot 1, or null for passthrough.</param>
+        /// <param name="d2">Pre-leased delay buffer for FX slot 2, or null for passthrough.</param>
+        /// <param name="d3">Pre-leased delay buffer for FX slot 3, or null for passthrough.</param>
+        /// <param name="len0">Usable sample count in <paramref name="d0"/>.</param>
+        /// <param name="len1">Usable sample count in <paramref name="d1"/>.</param>
+        /// <param name="len2">Usable sample count in <paramref name="d2"/>.</param>
+        /// <param name="len3">Usable sample count in <paramref name="d3"/>.</param>
+        /// <param name="writePos0">Write-head position for <paramref name="d0"/> (read/write).</param>
+        /// <param name="writePos1">Write-head position for <paramref name="d1"/> (read/write).</param>
+        /// <param name="writePos2">Write-head position for <paramref name="d2"/> (read/write).</param>
+        /// <param name="writePos3">Write-head position for <paramref name="d3"/> (read/write).</param>
+        public static void Render(
+            Span<float>        buffer,
+            int                offset,
+            int                count,
+            int                sampleRate,
+            in BlipPatchFlat   patch,
+            int                variantIndex,
+            ref BlipVoiceState state,
+            float[]?           d0,
+            float[]?           d1,
+            float[]?           d2,
+            float[]?           d3,
+            int                len0,
+            int                len1,
+            int                len2,
+            int                len3,
+            ref int            writePos0,
+            ref int            writePos1,
+            ref int            writePos2,
+            ref int            writePos3)
+        {
             if (count <= 0 || sampleRate <= 0)
                 return;
 
@@ -158,6 +214,26 @@ namespace Territory.Audio
 
                     // gainMult == 1f in deterministic path — multiply is identity.
                     float x = oscSum * state.envLevel * gainMult;
+
+                    // Post-envelope FX dispatch (unrolled 4-slot cascade).
+                    // Empty chain (fxSlotCount == 0) fast-exits through all guards — bit-exact with pre-FX path.
+                    if (patch.fxSlotCount >= 1)
+                        BlipFxChain.ProcessFx(ref x, patch.fx0.kind, patch.fx0.param0, patch.fx0.param1, patch.fx0.param2,
+                            ref state.dcZ1_0, ref state.dcY1_0, ref state.ringModPhase_0, sampleRate,
+                            d0, len0, ref writePos0);
+                    if (patch.fxSlotCount >= 2)
+                        BlipFxChain.ProcessFx(ref x, patch.fx1.kind, patch.fx1.param0, patch.fx1.param1, patch.fx1.param2,
+                            ref state.dcZ1_1, ref state.dcY1_1, ref state.ringModPhase_1, sampleRate,
+                            d1, len1, ref writePos1);
+                    if (patch.fxSlotCount >= 3)
+                        BlipFxChain.ProcessFx(ref x, patch.fx2.kind, patch.fx2.param0, patch.fx2.param1, patch.fx2.param2,
+                            ref state.dcZ1_2, ref state.dcY1_2, ref state.ringModPhase_2, sampleRate,
+                            d2, len2, ref writePos2);
+                    if (patch.fxSlotCount >= 4)
+                        BlipFxChain.ProcessFx(ref x, patch.fx3.kind, patch.fx3.param0, patch.fx3.param1, patch.fx3.param2,
+                            ref state.dcZ1_3, ref state.dcY1_3, ref state.ringModPhase_3, sampleRate,
+                            d3, len3, ref writePos3);
+
                     state.filterZ1 += alpha * (x - state.filterZ1);
                     buffer[offset + i] += state.filterZ1;
                 }
@@ -234,6 +310,26 @@ namespace Territory.Audio
 
                     // Apply gain jitter multiplier to pre-filter sample.
                     float x = oscSum * state.envLevel * gainMult;
+
+                    // Post-envelope FX dispatch (unrolled 4-slot cascade).
+                    // Empty chain (fxSlotCount == 0) fast-exits through all guards — bit-exact with pre-FX path.
+                    if (patch.fxSlotCount >= 1)
+                        BlipFxChain.ProcessFx(ref x, patch.fx0.kind, patch.fx0.param0, patch.fx0.param1, patch.fx0.param2,
+                            ref state.dcZ1_0, ref state.dcY1_0, ref state.ringModPhase_0, sampleRate,
+                            d0, len0, ref writePos0);
+                    if (patch.fxSlotCount >= 2)
+                        BlipFxChain.ProcessFx(ref x, patch.fx1.kind, patch.fx1.param0, patch.fx1.param1, patch.fx1.param2,
+                            ref state.dcZ1_1, ref state.dcY1_1, ref state.ringModPhase_1, sampleRate,
+                            d1, len1, ref writePos1);
+                    if (patch.fxSlotCount >= 3)
+                        BlipFxChain.ProcessFx(ref x, patch.fx2.kind, patch.fx2.param0, patch.fx2.param1, patch.fx2.param2,
+                            ref state.dcZ1_2, ref state.dcY1_2, ref state.ringModPhase_2, sampleRate,
+                            d2, len2, ref writePos2);
+                    if (patch.fxSlotCount >= 4)
+                        BlipFxChain.ProcessFx(ref x, patch.fx3.kind, patch.fx3.param0, patch.fx3.param1, patch.fx3.param2,
+                            ref state.dcZ1_3, ref state.dcY1_3, ref state.ringModPhase_3, sampleRate,
+                            d3, len3, ref writePos3);
+
                     state.filterZ1 += alpha * (x - state.filterZ1);
                     buffer[offset + i] += state.filterZ1;
                 }

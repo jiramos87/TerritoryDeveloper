@@ -154,6 +154,12 @@ namespace Territory.Audio
     /// Unused slots are zero-initialized.
     /// </para>
     /// <para>
+    /// FX chain slots are stored as four inline slots (<see cref="fx0"/>,
+    /// <see cref="fx1"/>, <see cref="fx2"/>, <see cref="fx3"/>) plus
+    /// <see cref="fxSlotCount"/> rather than a managed array, preserving blittability.
+    /// Unused slots are zero-initialized (default).
+    /// </para>
+    /// <para>
     /// <see cref="mixerGroupIndex"/> is an int sentinel (default <c>-1</c>).
     /// <c>BlipMixerRouter</c> (Step 2) populates this after catalog bootstrap;
     /// <c>-1</c> means "no mixer group bound yet".
@@ -179,6 +185,25 @@ namespace Territory.Audio
 
         /// <summary>Number of active oscillator layers (0..3). Matches <see cref="BlipPatch.Oscillators"/> length at flatten time.</summary>
         public readonly int oscillatorCount;
+
+        // -----------------------------------------------------------------
+        // FX chain inline quad
+        // -----------------------------------------------------------------
+
+        /// <summary>First FX chain slot (zero-init when unused).</summary>
+        public readonly BlipFxSlotFlat fx0;
+
+        /// <summary>Second FX chain slot (zero-init when unused).</summary>
+        public readonly BlipFxSlotFlat fx1;
+
+        /// <summary>Third FX chain slot (zero-init when unused).</summary>
+        public readonly BlipFxSlotFlat fx2;
+
+        /// <summary>Fourth FX chain slot (zero-init when unused).</summary>
+        public readonly BlipFxSlotFlat fx3;
+
+        /// <summary>Number of active FX chain slots (0..4). Matches <see cref="BlipPatch.FxChain"/> length at flatten time (capped at 4).</summary>
+        public readonly int fxSlotCount;
 
         // -----------------------------------------------------------------
         // Envelope + Filter
@@ -270,6 +295,14 @@ namespace Territory.Audio
             osc0               = count > 0 ? new BlipOscillatorFlat(oscs[0]) : default;
             osc1               = count > 1 ? new BlipOscillatorFlat(oscs[1]) : default;
             osc2               = count > 2 ? new BlipOscillatorFlat(oscs[2]) : default;
+
+            var fx     = so.FxChain;
+            int fxCount = fx != null ? UnityEngine.Mathf.Min(fx.Length, 4) : 0;
+            fxSlotCount = fxCount;
+            fx0         = fxCount > 0 ? new BlipFxSlotFlat(in fx[0]) : default;
+            fx1         = fxCount > 1 ? new BlipFxSlotFlat(in fx[1]) : default;
+            fx2         = fxCount > 2 ? new BlipFxSlotFlat(in fx[2]) : default;
+            fx3         = fxCount > 3 ? new BlipFxSlotFlat(in fx[3]) : default;
 
             envelope           = new BlipEnvelopeFlat(so.Envelope);
             filter             = new BlipFilterFlat(so.Filter);

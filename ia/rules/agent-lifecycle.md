@@ -21,12 +21,15 @@ Single-issue path skips the first three stages: `/project-new → /kickoff → /
 
 `/stage-decompose` is optional: run it when an already-decomposed step needs re-decomposition (scope change, design pivot). `master-plan-new` now fully decomposes ALL steps — no skeletons. Does NOT create BACKLOG rows.
 
+`/master-plan-extend` is the append-only companion to `/master-plan-new`: run it when an existing orchestrator needs new Steps sourced from a fresh exploration doc or an extensions doc (`{slug}-post-mvp-extensions.md`). Never rewrites existing Steps. Full decomposition of every new Step at author time (same cardinality gate as `/master-plan-new`). **Pre-condition:** source doc must have a `## Design Expansion` block (or semantic equivalent). Missing block → `master-plan-extend` Phase 0 stops and routes to `/design-explore {SOURCE_DOC}` — if the source doc is a locked design, add `--against {UMBRELLA_DOC}` to run gap-analysis mode first.
+
 ## Surface map (one row per stage)
 
 | Stage | Slash command | Subagent | Skill |
 |-------|---------------|----------|-------|
 | Explore | `/design-explore` | `design-explore` | `design-explore` |
 | Orchestrate | `/master-plan-new` | `master-plan-new` | `master-plan-new` |
+| Extend orchestrator | `/master-plan-extend` | `master-plan-extend` | `master-plan-extend` |
 | Decompose step | `/stage-decompose` | `stage-decompose` | `stage-decompose` |
 | Bulk-file stage | `/stage-file` | `stage-file` | `stage-file` |
 | Single issue | `/project-new` | `project-new` | `project-new` |
@@ -40,6 +43,7 @@ Single-issue path skips the first three stages: `/project-new → /kickoff → /
 
 ## Hard rules
 
+- **`design-explore --against` for locked docs** — when `/design-explore` is called on a doc that has locked decisions but no Approaches list, pass `--against {REFERENCE_DOC}` (path to umbrella orchestrator or master plan) to activate gap-analysis mode. Without it the skill stops and asks. Useful when a child orchestrator's exploration doc needs alignment-checking against the full-game MVP or any umbrella before `/master-plan-extend`.
 - **`/verify` vs `/verify-loop`** — `/verify` = single pass, read-only, no fix iteration. `/verify-loop` = 7-step closed loop with bounded fix iteration (`MAX_ITERATIONS` default 2).
 - **Orchestrator docs are permanent.** `master-plan-new` output (`ia/projects/{slug}-master-plan.md`) is NEVER closeable via `/closeout`. See [`ia/rules/orchestrator-vs-spec.md`](orchestrator-vs-spec.md).
 - **Stage close ≠ umbrella close.** `project-stage-close` skill ticks one stage inside a multi-stage spec (no BACKLOG or spec-file changes). `/closeout` is the umbrella close (deletes spec, archives row, purges id).

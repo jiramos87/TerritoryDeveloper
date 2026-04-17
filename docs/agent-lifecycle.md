@@ -46,6 +46,7 @@ Ad-hoc lanes (invoked outside the main flow, not ordered):
 |---|-----------------|---------------|------------------------------|----------------------|----------------|--------------|
 | 1 | Explore | `/design-explore {DOC_PATH}` | `design-explore.md` | `design-explore/` | `docs/{slug}.md` with `## Design Expansion` persisted | `/master-plan-new` (multi-step) or `/project-new` (single issue) |
 | 2 | Orchestrate | `/master-plan-new {DOC_PATH} [SLUG] [SCOPE_BOUNDARY_DOC]` | `master-plan-new.md` | `master-plan-new/` | `ia/projects/{slug}-master-plan.md` orchestrator (permanent, NOT closeable) | `/stage-file {slug}-master-plan.md Stage 1.1` |
+| 2a | Extend orchestrator | `/master-plan-extend {ORCHESTRATOR_SPEC} {SOURCE_DOC} [START_STEP_NUMBER] [SCOPE_BOUNDARY_DOC]` | `master-plan-extend.md` | `master-plan-extend/` | Appended `### Step {START}..{END}` blocks in existing orchestrator + header sync (Last updated / Exploration source / Locked decisions / invariants) | `/stage-file {ORCHESTRATOR_SPEC} Stage {START}.1` |
 | 3 | Bulk-file stage | `/stage-file {PATH} {STAGE}` | `stage-file.md` | `stage-file/` | N BACKLOG rows + N `ia/projects/{ISSUE_ID}.md` stubs (one per `_pending_` task) | `/kickoff {ISSUE_ID}` per filed task |
 | 4 | Single issue | `/project-new {intent} [--type ...]` | `project-new.md` | `project-new/` | One BACKLOG row + one `ia/projects/{ISSUE_ID}.md` stub | `/kickoff {ISSUE_ID}` |
 | 5 | Refine | `/kickoff {ISSUE_ID}` | `spec-kickoff.md` | `project-spec-kickoff/` | Enriched `ia/projects/{ISSUE_ID}.md` §1–§10 | `/implement {ISSUE_ID}` |
@@ -68,6 +69,7 @@ Every stage owes the next one a concrete artifact. Missing artifact = the next s
 |------|------|----|----------------------|
 | `/design-explore` | `## Design Expansion` block persisted in `docs/{slug}.md` | `/master-plan-new` | Skill refuses authoring if expansion block absent |
 | `/master-plan-new` | `ia/projects/{slug}-master-plan.md` with `_pending_` task seeds + cardinality gate (≥2 tasks/phase) cleared | `/stage-file` | Stage-file refuses when tasks missing or cardinality unjustified |
+| `/master-plan-extend` | Existing `ia/projects/{slug}-master-plan.md` extended with new `### Step {START}..{END}` blocks (fully decomposed) + header metadata synced + cardinality gate cleared on new stages only | `/stage-file {ORCHESTRATOR_SPEC} Stage {START}.1` | Stage-file refuses when new stage tasks missing or duplication gate trips |
 | `/stage-file` | BACKLOG rows + project spec stubs, orchestrator table rows updated from `_pending_` → issue id | `/kickoff` per filed issue | Kickoff refuses when spec stub missing |
 | `/project-new` | One BACKLOG row in correct priority section + one template-seeded `ia/projects/{ISSUE_ID}.md` + `validate:dead-project-specs` green | `/kickoff` | Kickoff refuses bare stub without §1 / §2 context |
 | `/kickoff` | §1–§10 enriched (Open Questions resolved or flagged, Implementation Plan concrete) | `/implement` | Implement refuses when Implementation Plan still `_pending_` |
@@ -89,6 +91,7 @@ Fuzzy idea, no doc yet?                                          → none — wr
 Exploration doc exists, needs to become a design?                → /design-explore
 Design persisted, multi-step work with step > stage > phase?     → /master-plan-new
 Design persisted, single issue is enough?                        → /project-new
+Orchestrator exists, new exploration / extensions doc adds Steps? → /master-plan-extend
 Orchestrator exists, a stage is ready to materialize?            → /stage-file
 Bare BACKLOG row + stub spec, no §1–§10 yet?                     → /kickoff
 Spec fully enriched, ready to ship?                              → /implement

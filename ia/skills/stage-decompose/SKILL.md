@@ -114,11 +114,11 @@ Per stage, author the block (verbatim shape):
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T{STEP_ID}.{M}.1 | 1 | _pending_ | _pending_ | {≤2 sentences — concrete deliverable: types, methods, file paths. Reference existing patterns where applicable.} |
-| T{STEP_ID}.{M}.2 | 1 | _pending_ | _pending_ | {...} |
-| T{STEP_ID}.{M}.3 | 2 | _pending_ | _pending_ | {...} |
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T{STEP_ID}.{M}.1 | {short name ≤6 words} | 1 | _pending_ | _pending_ | {≤2 sentences — concrete deliverable: types, methods, file paths. Reference existing patterns where applicable.} |
+| T{STEP_ID}.{M}.2 | {short name} | 1 | _pending_ | _pending_ | {...} |
+| T{STEP_ID}.{M}.3 | {short name} | 2 | _pending_ | _pending_ | {...} |
 ```
 
 **Task intent concreteness bar:** cite the thing being shipped — type names, method signatures, file paths, field names. Vague verbs ("add support for X") degrade into useless `stage-file` stubs. Match the bar set in `master-plan-new` Phase 5.

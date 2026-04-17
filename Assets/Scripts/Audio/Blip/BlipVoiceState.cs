@@ -54,5 +54,52 @@ namespace Territory.Audio
         /// Consumed by Step 2 <c>BlipBaker</c> mixer for stereo placement (MVP: mono kernel, pan applied externally).
         /// </summary>
         public float panOffset;
+
+        // Per-slot FX state — slot N triplet; consumed by BlipFxChain kernel + BlipVoice dispatch.
+        // Blittable discipline: all floats, default(BlipVoiceState) yields silent voice.
+        // dcZ1_N   — DC blocker input z-1 for FX slot N.   Read+written by BlipFxChain.ProcessFx.
+        // dcY1_N   — DC blocker output z-1 for FX slot N.  Read+written by BlipFxChain.ProcessFx.
+        // ringModPhase_N — ring-mod carrier phase (0..2π) for FX slot N. Read+written by BlipFxChain.ProcessFx.
+
+        /// <summary>DC blocker input z-1 for FX slot 0. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public float dcZ1_0;
+        /// <summary>DC blocker output z-1 for FX slot 0. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public float dcY1_0;
+        /// <summary>Ring-mod carrier phase (0..2π) for FX slot 0. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public float ringModPhase_0;
+
+        /// <summary>DC blocker input z-1 for FX slot 1. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public float dcZ1_1;
+        /// <summary>DC blocker output z-1 for FX slot 1. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public float dcY1_1;
+        /// <summary>Ring-mod carrier phase (0..2π) for FX slot 1. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public float ringModPhase_1;
+
+        /// <summary>DC blocker input z-1 for FX slot 2. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public float dcZ1_2;
+        /// <summary>DC blocker output z-1 for FX slot 2. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public float dcY1_2;
+        /// <summary>Ring-mod carrier phase (0..2π) for FX slot 2. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public float ringModPhase_2;
+
+        /// <summary>DC blocker input z-1 for FX slot 3. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public float dcZ1_3;
+        /// <summary>DC blocker output z-1 for FX slot 3. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public float dcY1_3;
+        /// <summary>Ring-mod carrier phase (0..2π) for FX slot 3. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public float ringModPhase_3;
+
+        // Delay-line write-heads — circular buffer index (sample offset) per FX slot.
+        // Driven by Stage 5.2 delay-line kernels (Comb / Allpass / Chorus / Flanger).
+        // Blittable int; default(BlipVoiceState) = 0 is a valid circular-buffer start.
+
+        /// <summary>Circular write-head (sample index) for delay-line FX in slot 0. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public int delayWritePos_0;
+        /// <summary>Circular write-head (sample index) for delay-line FX in slot 1. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public int delayWritePos_1;
+        /// <summary>Circular write-head (sample index) for delay-line FX in slot 2. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public int delayWritePos_2;
+        /// <summary>Circular write-head (sample index) for delay-line FX in slot 3. Read+written by <c>BlipFxChain.ProcessFx</c> via <c>ref</c>.</summary>
+        public int delayWritePos_3;
     }
 }

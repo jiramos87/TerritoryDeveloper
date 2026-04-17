@@ -32,6 +32,7 @@ No MCP calls from skill body. Follow **Tool recipe** below (Phase 5 only) — al
 |-----------|--------|-------|
 | `DOC_PATH` | User prompt | Path to exploration `.md` — required |
 | `APPROACH_HINT` | User prompt | Override recommendation (e.g. `"C"`) — skips Phase 2 gate |
+| `AGAINST_DOC` | User prompt | Path to reference orchestrator / umbrella doc — activates **gap-analysis mode** when `DOC_PATH` is a locked design with no Approaches list |
 
 ---
 
@@ -45,6 +46,28 @@ Read `{DOC_PATH}`. Extract and hold in working memory:
 - **Approaches list** — id, name, pros/cons/effort for each
 - **Existing recommendation** — if present
 - **Open questions** — if present
+
+**Locked-doc detection (end of Phase 0):**
+
+| Doc state | `AGAINST_DOC` set? | Action |
+|---|---|---|
+| Has Approaches list | Either | Standard mode — continue to Phase 1 |
+| Locked design (no Approaches list) | Yes | **Gap-analysis mode** — skip to [§ Gap-analysis mode](#gap-analysis-mode) |
+| Locked design (no Approaches list) | No | STOP — present user three options: (A) add an Approaches section and re-run, (B) pass `--against {UMBRELLA_DOC}` to run gap analysis, (C) skip to `/master-plan-extend` if no alignment gaps expected |
+| `DOC_PATH` unreadable | Either | STOP — report path error |
+
+### Phase 0.5 — Interview (user gate)
+
+Before building the criteria matrix, run a short interview to surface hidden constraints and disambiguate open questions.
+
+**Interview rules (strict):**
+- Ask **ONE question per turn. Stop. Wait for the user's answer** before asking the next.
+- Do NOT present a numbered list. Do NOT say "here are my questions".
+- Pull from: (1) open questions already listed in the doc, (2) up to 3 inferred questions about scope boundaries, blocking constraints, or priority trade-offs not covered by existing answers.
+- Max 5 questions total. Stop early if earlier answers already cover remaining questions.
+- After the last answer: emit a one-paragraph summary of what you learned, then proceed to Phase 1 without another confirmation prompt.
+
+Start with the single most important unknown — typically a scope boundary, blocking constraint the approaches don't address, or a stakeholder priority the doc leaves ambiguous.
 
 ### Phase 1 — Compare
 
@@ -179,6 +202,59 @@ Never overwrite the original **Problem**, **Approaches surveyed**, **Recommendat
 
 ---
 
+## Gap-analysis mode
+
+Activated when Phase 0 detects a locked design AND `AGAINST_DOC` is set. Replaces Phases 1–2 with gap-specific equivalents; Phases 3–9 run shared.
+
+### Phase 0b — Load reference doc
+
+Read `{AGAINST_DOC}`. Extract every cross-reference to the system described in `DOC_PATH`:
+
+- Step/bucket exit gates that name the system
+- Tier entry conditions gated on the system's deliverables
+- Interface contracts the system must produce (YAML schemas, descriptor formats, archetype counts)
+- Locked decisions in the umbrella that constrain the system's design
+
+Assign each extracted requirement an id (`R1`, `R2`, …). Hold as **requirements list**.
+
+### Phase 1g — Gap inventory (replaces Phase 1)
+
+Compare each requirement against the current design in `DOC_PATH`. Build gap table:
+
+| Req | Source (section + quote) | Current coverage | Gap severity |
+|---|---|---|---|
+| R1 | … | Present / Partial / Absent | Blocking / Additive / Deferred |
+
+Emit as Markdown table. Hold in working memory; not yet persisted.
+
+### Phase 2g — Confirm gate (replaces Phase 2)
+
+Present gap table + short summary of confirmed new requirements. **Pause — ask user to confirm gaps, trim scope, or mark any as already-resolved before expanding.** Do NOT continue until confirmed.
+
+After confirmation: treat confirmed gaps as the design scope for Phases 3–8.
+
+### Phases 3–8 — Standard (gap-scoped)
+
+Run Phases 3–8 as defined in standard mode, but scoped to the confirmed gaps:
+
+- **Phase 3 Expand** — components = what's missing; interfaces = new contracts required; non-scope = what's already covered in existing design.
+- **Phase 4 Architecture** — only if gaps introduce new components or change data flow. Skip if gaps are schema corrections or count changes.
+- **Phase 5 Subsystem impact** — same tool recipe.
+- **Phase 6 Implementation points** — one phase block per confirmed gap.
+- **Phase 7 Examples** — schema examples for new contracts; step tables for structural gaps.
+- **Phase 8 Subagent review** — same prompt template.
+
+### Phase 9g — Persist (gap-analysis variant)
+
+Derive a context title from `AGAINST_DOC` filename slug (e.g. `full-game-mvp-master-plan.md` → `## Design Expansion — MVP Alignment`).
+
+- If an existing `## Design Expansion` block is present → append the new named section **after** it, separated by `---`. Do NOT overwrite the existing block.
+- If no `## Design Expansion` block exists → append after `---` following the last existing section.
+
+Never overwrite Problem / Approaches surveyed / Recommendation / Open questions / any prior Design Expansion block.
+
+---
+
 ## Tool recipe (territory-ia) — Phase 5 only
 
 Run in order. Skip `invariants_summary` for tooling/pipeline-only designs that touch no runtime C#.
@@ -205,5 +281,5 @@ Run in order. Skip `invariants_summary` for tooling/pipeline-only designs that t
 
 After persist: if expansion validates, propose one of:
 
-- **Master plan** — `claude-personal "/master-plan-new {DOC_PATH}"` for multi-stage work (most expansions)
-- **Single issue** — `claude-personal "/project-new ..."` for designs narrow enough to fit one backlog issue
+- **Standard mode** — `claude-personal "/master-plan-new {DOC_PATH}"` (multi-stage) or `claude-personal "/project-new ..."` (single issue)
+- **Gap-analysis mode** — `claude-personal "/master-plan-extend {ORCHESTRATOR_SPEC} {DOC_PATH}"` to absorb the filled gaps into the existing plan

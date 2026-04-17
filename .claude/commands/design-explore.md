@@ -1,13 +1,13 @@
 ---
 description: Expand an exploration doc into a reviewed, persisted design (pre-master-plan). Dispatches the `design-explore` subagent against `{DOC_PATH}` in isolated context.
-argument-hint: "{DOC_PATH} [APPROACH_HINT]  (e.g. docs/explorations/foo.md C)"
+argument-hint: "{DOC_PATH} [APPROACH_HINT] [--against REFERENCE_DOC]  (e.g. docs/foo.md C  OR  docs/foo.md --against ia/projects/full-game-mvp-master-plan.md)"
 ---
 
 # /design-explore — dispatch `design-explore` subagent
 
 Use `design-explore` subagent (`.claude/agents/design-explore.md`) to run `ia/skills/design-explore/SKILL.md` end-to-end on `$ARGUMENTS`.
 
-`$ARGUMENTS` = `{DOC_PATH} [APPROACH_HINT]`. First token = path to exploration `.md`. Optional second token = approach id (e.g. `C`) to skip Phase 2 gate.
+`$ARGUMENTS` = `{DOC_PATH} [APPROACH_HINT] [--against {REFERENCE_DOC}]`. First token = path to exploration `.md`. Optional second token = approach id (e.g. `C`) to skip Phase 2 gate. Optional `--against {REFERENCE_DOC}` = path to an umbrella orchestrator or master plan — activates **gap-analysis mode** when `DOC_PATH` is a locked design with no Approaches list (detects alignment gaps, persists them as `## Design Expansion — {context}`, feeds `/master-plan-extend`).
 
 ## Subagent prompt (forward verbatim)
 
@@ -17,11 +17,22 @@ Forward via Agent tool with `subagent_type: "design-explore"`:
 >
 > ## Mission
 >
-> Run `design-explore` skill (`ia/skills/design-explore/SKILL.md`) end-to-end on the exploration doc given in `$ARGUMENTS`. Parse args: first token = `DOC_PATH`, optional second token = `APPROACH_HINT`. Resolve `DOC_PATH` via Read — if unreadable, stop and report path error.
+> Run `design-explore` skill (`ia/skills/design-explore/SKILL.md`) end-to-end on the exploration doc given in `$ARGUMENTS`. Parse args: first token = `DOC_PATH`, optional second token = `APPROACH_HINT` (if not `--against`), optional `--against {AGAINST_DOC}`. Resolve `DOC_PATH` via Read — if unreadable, stop and report path error.
 >
 > ## Phase sequence (gated)
-> First welcome the user, briefly explain process and mention exact LLM model being used (with version number)
+> First welcome the user, briefly explain process and mention exact LLM model being used (with version number).
+>
+> ### Locked-doc detection (end of Phase 0)
+>
+> After loading `DOC_PATH`, evaluate doc structure:
+> - Has Approaches list → **standard mode**, continue Phase 1.
+> - No Approaches list + `--against {AGAINST_DOC}` set → **gap-analysis mode** (see below).
+> - No Approaches list + no `--against` → STOP, offer: (A) add Approaches section + re-run, (B) re-run with `--against {UMBRELLA_DOC}`, (C) skip to `/master-plan-extend` if no gaps expected.
+>
+> ### Standard mode (doc has Approaches list)
+>
 > 0. Load doc — extract problem statement, approaches list, existing recommendation, open questions.
+> 0.5. Interview (user gate) — Before Phase 1, run a short interview. Ask **ONE question per turn, stop, wait for the user's answer** before asking the next. Do NOT list questions. Pull from: (1) open questions in the doc, (2) up to 3 inferred questions about scope boundaries, blocking constraints, or priority trade-offs. Max 5 questions; stop early if answers already cover remaining ones. After the last answer emit a one-paragraph summary, then proceed without another confirmation prompt.
 > 1. Compare — criteria matrix (constraint fit, effort, output control, maintainability, dependencies/risk) as Markdown table.
 > 2. Select — if recommendation unambiguous AND no `APPROACH_HINT` → proceed. Else → present table + leading candidate, PAUSE, ask user confirm/override.
 > 3. Expand — components (one-line responsibility each), data flow, interfaces/contracts, non-scope.
@@ -31,6 +42,15 @@ Forward via Agent tool with `subagent_type: "design-explore"`:
 > 7. Examples — ≥1 input + ≥1 output + ≥1 edge case for most non-obvious piece.
 > 8. Subagent review — spawn `Plan` subagent via Agent tool per SKILL.md prompt. Resolve BLOCKING before persist. Copy NON-BLOCKING + SUGGESTIONS verbatim into Review Notes.
 > 9. Persist — detect existing `## Design Expansion` in `DOC_PATH` → update in place between header and next `---`. Else → append after `---` following last section. Never overwrite Problem / Approaches surveyed / Recommendation / Open questions.
+>
+> ### Gap-analysis mode (`--against` set, locked doc)
+>
+> 0b. Load `AGAINST_DOC` — extract all cross-references to the system in `DOC_PATH`: exit gates, tier conditions, interface contracts, locked decisions. Assign requirement ids (R1, R2, …).
+> 1g. Gap inventory — compare requirements vs current design. Gap table: `Req | Source | Current coverage | Gap severity (Blocking/Additive/Deferred)`.
+> 2g. Confirm gate — present gap table. PAUSE — ask user to confirm/trim gaps before expanding.
+> 3–7. Expand gaps — same as standard Phases 3–7, scoped to confirmed gaps. Skip Phase 4 if no new components introduced.
+> 8. Subagent review — same prompt template.
+> 9g. Persist — derive context title from `AGAINST_DOC` filename (e.g. `full-game-mvp-master-plan.md` → `## Design Expansion — MVP Alignment`). Append as new named section after any existing `## Design Expansion` block; never overwrite it or original sections.
 >
 > ## Tool recipe — Phase 5 only
 >
@@ -45,12 +65,13 @@ Forward via Agent tool with `subagent_type: "design-explore"`:
 > ## Hard boundaries
 >
 > - Do NOT guess approach when Phase 2 gate open — ask user.
+> - Do NOT proceed past Phase 2g (gap-analysis) without user confirming gap list.
 > - Do NOT persist with unresolved BLOCKING review items — re-run Phase 8.
-> - Do NOT overwrite Problem / Approaches surveyed / Recommendation / Open questions sections.
+> - Do NOT overwrite Problem / Approaches surveyed / Recommendation / Open questions / any prior Design Expansion block.
 > - Do NOT create master plan, BACKLOG row, or invoke `project-new` — propose as next step only.
 > - Do NOT commit — user decides.
 > - Do NOT load whole reference specs when slices suffice.
 >
 > ## Output
 >
-> Single concise caveman message: doc path + approach selected, phases completed (skipped + reason), subsystem impact summary (count + invariants flagged by number), review results (BLOCKING resolved, NON-BLOCKING carried), persist diff summary (sections written / updated), next step (`claude-personal "/master-plan-new {DOC_PATH}"` for multi-stage work, or `claude-personal "/project-new ..."` for single issue).
+> Single concise caveman message: doc path + mode (standard: approach id; gap-analysis: gap count confirmed), phases completed (skipped + reason), subsystem impact summary (count + invariants flagged by number), review results (BLOCKING resolved, NON-BLOCKING carried), persist diff summary (sections written / updated), next step (standard: `claude-personal "/master-plan-new {DOC_PATH}"` or `"/project-new ..."`; gap-analysis: `claude-personal "/master-plan-extend {ORCHESTRATOR_SPEC} {DOC_PATH}"`).

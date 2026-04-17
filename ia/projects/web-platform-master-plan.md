@@ -1,6 +1,6 @@
 # Web Platform — Master Plan (MVP)
 
-> **Status:** Draft — Steps 1–4 Final; Step 5 active (Stage 5.1 in progress — TECH-252 + TECH-253 Done (archived); TECH-254 + TECH-255 Draft); Step 6 paused (E2E deferred until future instruction)
+> **Status:** Draft — Steps 1–4 Final; Step 5 active (Stage 5.1 Done — TECH-252 + TECH-253 + TECH-254 + TECH-255 all archived; Stage 5.2 Done — TECH-261 + TECH-262 + TECH-263 + TECH-264 all archived 2026-04-17; Stage 5.3 Done 2026-04-17); Step 6 paused (E2E deferred until future instruction)
 >
 > **Scope:** Unified Next.js 14+ app at `web/` (monorepo workspace) serving three audiences from one codebase — public game site (landing / wiki / devlog / about / install / history), live DevOps progress dashboard, and future user portal. Static-first hybrid on Vercel free tier; Postgres + auth deferred to portal step. Post-MVP extensions (payment gateway, cloud saves, community wiki edits, i18n, Unity WebGL export) tracked inline in exploration doc `### Implementation Points → Deferred / out of scope`; no separate scope-boundary doc yet.
 >
@@ -510,9 +510,9 @@
 
 ### Step 5 — Portal foundations (architecture-only at this tier)
 
-**Status:** In Progress — Stage 5.1 (TECH-252 + TECH-253 Done (archived); TECH-254 + TECH-255 Draft, filed 2026-04-16)
+**Status:** In Progress — Stage 5.1 Done (TECH-252 + TECH-253 + TECH-254 + TECH-255 all archived 2026-04-16); Stage 5.2 Done 2026-04-17 (TECH-261 + TECH-262 + TECH-263 + TECH-264 all archived); Stage 5.3 Done 2026-04-17 (TECH-269 + TECH-265 + TECH-266 + TECH-267 + TECH-268 all archived)
 
-**Backlog state (Step 5):** Stage 5.1 — TECH-252 + TECH-253 Done (archived); TECH-254 + TECH-255 Draft (filed 2026-04-16); Stages 5.2 + 5.3 _pending_
+**Backlog state (Step 5):** Stage 5.1 closed 2026-04-16 — TECH-252 + TECH-253 + TECH-254 + TECH-255 all archived; Stage 5.2 closed 2026-04-17 — TECH-261 + TECH-262 + TECH-263 + TECH-264 all archived; Stage 5.3 closed 2026-04-17 — TECH-269 + TECH-265 + TECH-266 + TECH-267 + TECH-268 all archived
 
 **Objectives:** Land the user-portal foundations — free-tier Postgres provider selected (Neon / Supabase free / Vercel Postgres Hobby — evaluate limits against expected volume); auth stack picked (roll-own JWT + sessions per Q11; confirm vs. Lucia-Auth-style minimal library before committing); stub `app/api/auth/*` route handlers with no user-facing flow; schema drafted for `user` / `session` / `save` / `entitlement` tables but NOT yet migrated. Dashboard migrates from obscure-URL gate to auth middleware once session handling works end-to-end. Payment gateway remains deferred (Q10 undecided) — architecture slot reserved, no provider wiring at this tier. This step intentionally stays architecture-only; user-facing portal UX ships in a follow-up master plan after this step's foundations lock.
 
@@ -536,7 +536,7 @@
 
 #### Stage 5.1 — Postgres provider + auth library selection
 
-**Status:** In Progress (TECH-252 + TECH-253 Done (archived); TECH-254 + TECH-255 Draft, filed 2026-04-16)
+**Status:** Done (TECH-252 + TECH-253 + TECH-254 + TECH-255 all archived 2026-04-16)
 
 **Objectives:** Evaluate and select free-tier Postgres provider (Neon / Supabase free / Vercel Postgres Hobby) against MVP volume; lock auth library decision (Lucia Auth v3 vs. roll-own JWT vs. Auth.js — confirm Q11). Lock both decisions in Decision Log. Scaffold `web/lib/db/client.ts` connection pool wrapper + wire `DATABASE_URL` into Vercel env vars. Document in `web/README.md §Portal`.
 
@@ -550,8 +550,8 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Provider + auth library evaluation + Decision Log entries.
-- [ ] Phase 2 — Connection pool scaffold + env wiring + README §Portal.
+- [x] Phase 1 — Provider + auth library evaluation + Decision Log entries.
+- [x] Phase 2 — Connection pool scaffold + env wiring + README §Portal.
 
 **Tasks:**
 
@@ -559,12 +559,12 @@
 |---|---|---|---|---|
 | T5.1.1 | 1 | **TECH-252** | Done (archived) | Evaluate Neon free / Supabase free / Vercel Postgres Hobby — compare connection limits, storage caps, regions, Next.js/Node driver compatibility; lock chosen provider in Decision Log with limits table + rationale vs. alternatives. No code — Decision Log entry only. |
 | T5.1.2 | 1 | **TECH-253** | Done (archived) | Evaluate + lock auth library — compare Lucia Auth v3 (minimal, session-first) / pure roll-own JWT / Auth.js (heavy); confirm or update Q11 "roll-own JWT + sessions" decision; lock in Decision Log with API surface note + rationale. No code — Decision Log entry only. |
-| T5.1.3 | 2 | **TECH-254** | Draft | Install chosen Postgres driver into `web/package.json`; author `web/lib/db/client.ts` (new) — exports `db` or `sql` connection pool via `DATABASE_URL` (lazy-connect, no open at build time); wire `DATABASE_URL` into Vercel project env vars (production + preview + development) via Vercel dashboard or `vercel env add`. |
-| T5.1.4 | 2 | **TECH-255** | Draft | Extend `web/README.md` with `§Portal` section — documents provider choice, connection pool pattern, `DATABASE_URL` env contract, payment gateway architecture placeholder (no provider chosen), and "Step 5 is architecture-only — no migrations run" boundary note; `validate:all` green. |
+| T5.1.3 | 2 | **TECH-254** | Done (archived) | Install chosen Postgres driver into `web/package.json`; author `web/lib/db/client.ts` (new) — exports `db` or `sql` connection pool via `DATABASE_URL` (lazy-connect, no open at build time); wire `DATABASE_URL` into Vercel project env vars (production + preview + development) via Vercel dashboard or `vercel env add`. |
+| T5.1.4 | 2 | **TECH-255** | Done (archived) | Extend `web/README.md` with `§Portal` section — documents provider choice, connection pool pattern, `DATABASE_URL` env contract, payment gateway architecture placeholder (no provider chosen), and "Step 5 is architecture-only — no migrations run" boundary note; `validate:all` green. |
 
 #### Stage 5.2 — Auth API stubs + schema draft
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Done — TECH-261 + TECH-262 + TECH-263 + TECH-264 all archived 2026-04-17.
 
 **Objectives:** Draft `web/lib/db/schema.ts` covering `user`, `session`, `save`, `entitlement` tables using drizzle-kit (preferred). Install + configure migration tooling; confirm `db:generate` script works. Author stub `web/app/api/auth/{login,register,session,logout}/route.ts` handlers returning 501 Not Implemented. No migrations run.
 
@@ -585,14 +585,14 @@
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T5.2.1 | 1 | _pending_ | _pending_ | Install `drizzle-orm` + `drizzle-kit` into `web/package.json`; author `web/lib/db/schema.ts` (new) — drizzle `pgTable` for: `user` (id uuid PK, email text unique, passwordHash text, createdAt timestamp), `session` (id uuid PK, userId uuid FK→user.id, expiresAt timestamp, token text), `save` (id uuid PK, userId uuid FK→user.id, data jsonb, updatedAt timestamp), `entitlement` (id uuid PK, userId uuid FK→user.id, tier text, grantedAt timestamp). |
-| T5.2.2 | 1 | _pending_ | _pending_ | Author `web/drizzle.config.ts` (new) — `schema: './lib/db/schema.ts'`, `out: './drizzle/'`, driver from `DATABASE_URL`; add `"db:generate": "drizzle-kit generate"` to `web/package.json` scripts; confirm `npm run db:generate` produces SQL artifacts in `web/drizzle/` without live DB; decide + document whether `web/drizzle/` is gitignored or committed; `validate:all` green. |
-| T5.2.3 | 2 | _pending_ | _pending_ | Author `web/app/api/auth/login/route.ts` + `web/app/api/auth/register/route.ts` (new) — each exports `export async function POST(_req: Request)` returning `Response.json({ error: 'Not Implemented' }, { status: 501 })`; TypeScript typed; no DB imports yet. |
-| T5.2.4 | 2 | _pending_ | _pending_ | Author `web/app/api/auth/session/route.ts` (`GET`) + `web/app/api/auth/logout/route.ts` (`POST`) (new) — each returns 501 Not Implemented; confirm all four `/api/auth/*` routes absent from `web/app/sitemap.ts` (API routes not enumerated); `validate:all` green. |
+| T5.2.1 | 1 | **TECH-261** | Done (archived) | Install `drizzle-orm` + `drizzle-kit` into `web/package.json`; author `web/lib/db/schema.ts` (new) — drizzle `pgTable` for: `user` (id uuid PK, email text unique, passwordHash text, createdAt timestamp), `session` (id uuid PK, userId uuid FK→user.id, expiresAt timestamp, token text), `save` (id uuid PK, userId uuid FK→user.id, data jsonb, updatedAt timestamp), `entitlement` (id uuid PK, userId uuid FK→user.id, tier text, grantedAt timestamp). |
+| T5.2.2 | 1 | **TECH-262** | Done (archived) | Author `web/drizzle.config.ts` (new) — `schema: './lib/db/schema.ts'`, `out: './drizzle/'`, driver from `DATABASE_URL`; add `"db:generate": "drizzle-kit generate"` to `web/package.json` scripts; confirm `npm run db:generate` produces SQL artifacts in `web/drizzle/` without live DB; decide + document whether `web/drizzle/` is gitignored or committed; `validate:all` green. |
+| T5.2.3 | 2 | **TECH-263** | Done (archived) | Author `web/app/api/auth/login/route.ts` + `web/app/api/auth/register/route.ts` (new) — each exports `export async function POST(_req: Request)` returning `Response.json({ error: 'Not Implemented' }, { status: 501 })`; TypeScript typed; no DB imports yet. |
+| T5.2.4 | 2 | **TECH-264** | Done (archived) | Author `web/app/api/auth/session/route.ts` (`GET`) + `web/app/api/auth/logout/route.ts` (`POST`) (new) — each returns 501 Not Implemented; confirm all four `/api/auth/*` routes absent from `web/app/sitemap.ts` (API routes not enumerated); `validate:all` green. |
 
 #### Stage 5.3 — Dashboard auth middleware migration
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Done — Stage 5.3 closed 2026-04-17. Phase 0 (TECH-269), Phase 1 (TECH-265 + TECH-266), Phase 2 (TECH-267 + TECH-268) all archived. Next.js 16 migration note: `web/middleware.ts` → `web/proxy.ts` (rename surfaced during TECH-268 smoke; see Issues Found).
 
 **Objectives:** Replace obscure-URL gate on `/dashboard` with Next.js Middleware auth check. Unauthenticated requests → redirect to stub `/auth/login`. Author stub login page (full-English UI, caveman-exception). Remove "internal" banner from dashboard. Update `robots.ts`.
 
@@ -606,17 +606,19 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Middleware + stub login page.
-- [ ] Phase 2 — robots.ts update + banner removal + smoke.
+- [x] Phase 0 — Dev-bypass env scaffolding (prerequisite to Phase 1 middleware gate).
+- [x] Phase 1 — Middleware + stub login page.
+- [x] Phase 2 — robots.ts update + banner removal + smoke.
 
 **Tasks:**
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T5.3.1 | 1 | _pending_ | _pending_ | Author `web/middleware.ts` (new) — `config = { matcher: ['/dashboard'] }`; reads session cookie by name from `request.cookies.get(SESSION_COOKIE_NAME)`; if missing/empty → `NextResponse.redirect(new URL('/auth/login', request.url))`; if present → `NextResponse.next()`. Cookie name constant matches auth library decision from Stage 5.1. No DB lookup at this tier. |
-| T5.3.2 | 1 | _pending_ | _pending_ | Author `web/app/auth/login/page.tsx` (new) — RSC stub login page; full-English user-facing copy (caveman-exception): "Sign in" heading, email + password `<input>` placeholders, disabled `<button>` submit, canned error `<p>` "Authentication not yet available — coming soon."; consumes design token classes (`bg-canvas`, `text-primary`, etc. — no inline hex). |
-| T5.3.3 | 2 | _pending_ | _pending_ | Update `web/app/robots.ts` — remove `/dashboard` from disallow array; add `/auth` to disallow (login page not publicly indexed); confirm `/auth/login` absent from `web/app/sitemap.ts`; `validate:all` green. |
-| T5.3.4 | 2 | _pending_ | _pending_ | Remove "Internal" banner `<p>` from `web/app/dashboard/page.tsx`; smoke note: `localhost:4000/dashboard` without session cookie → middleware should 302 to `/auth/login`; confirm middleware matcher fires in Next.js dev server; `validate:all` green. |
+| T5.3.0 | 0 | **TECH-269** | Done (archived) | Prerequisite to **TECH-265**. Create `web/.env.local` (gitignored) containing `DASHBOARD_AUTH_SKIP=1` + `web/.env.local.example` (committed) w/ comment documenting bypass knob + prod-warning. Amend `web/README.md` — new `## Local development auth bypass` section. Amend TECH-265 spec (archived) §2.1 Goals + §5.3 algorithm notes — middleware reads `process.env.DASHBOARD_AUTH_SKIP` before cookie; `=== '1'` → `NextResponse.next()` immediately. Ensures local devs not locked out of `/dashboard` once cookie gate lands. Vercel env vars MUST NOT set `DASHBOARD_AUTH_SKIP` — prod stays gated. |
+| T5.3.1 | 1 | **TECH-265** | Done (archived) | Author `web/middleware.ts` (new) — `config = { matcher: ['/dashboard'] }`; reads session cookie by name from `request.cookies.get(SESSION_COOKIE_NAME)`; if missing/empty → `NextResponse.redirect(new URL('/auth/login', request.url))`; if present → `NextResponse.next()`. Cookie name constant matches auth library decision from Stage 5.1. No DB lookup at this tier. Middleware now also short-circuits on `process.env.DASHBOARD_AUTH_SKIP === '1'` (**TECH-269** bypass knob) — local dev only. |
+| T5.3.2 | 1 | **TECH-266** | Done (archived) | Author `web/app/auth/login/page.tsx` (new) — RSC stub login page; full-English user-facing copy (caveman-exception): "Sign in" heading, email + password `<input>` placeholders, disabled `<button>` submit, canned error `<p>` "Authentication not yet available — coming soon."; consumes design token classes (`bg-canvas`, `text-primary`, etc. — no inline hex). |
+| T5.3.3 | 2 | **TECH-267** | Done (archived) | Update `web/app/robots.ts` — remove `/dashboard` from disallow array; add `/auth` to disallow (login page not publicly indexed); confirm `/auth/login` absent from `web/app/sitemap.ts`; `validate:all` green. |
+| T5.3.4 | 2 | **TECH-268** | Done (archived) | Remove "Internal" banner `<p>` from `web/app/dashboard/page.tsx`; smoke note: `localhost:4000/dashboard` without session cookie → middleware should 302 to `/auth/login`; confirm middleware matcher fires in Next.js dev server; `validate:all` green. |
 
 ---
 
@@ -648,7 +650,7 @@
 
 #### Stage 6.1 — Install + config + CI wiring
 
-**Status:** _pending_
+**Status:** Done (closed 2026-04-17 — TECH-276 archived)
 
 **Objectives:** Install `@playwright/test`; author `web/playwright.config.ts` (baseURL from env, headless Chromium, 1 worker in CI); add `test:e2e` + `test:e2e:ci` scripts to `web/package.json`; wire into root `validate:all` (opt-in flag or separate `validate:e2e` target to avoid mandatory browser install in non-e2e CI contexts); document env var contract in `web/README.md`.
 
@@ -657,18 +659,14 @@
 - Root `npm run validate:e2e` composes `web/` e2e run; existing `validate:all` unchanged (no forced browser install).
 - `web/README.md` §E2E section present.
 
-**Phases:**
-- [ ] Phase 1 — Install `@playwright/test` + `playwright.config.ts`.
-- [ ] Phase 2 — npm scripts + root composition.
-- [ ] Phase 3 — README §E2E documentation.
+**Phases:** Merged into single task per 2026-04-17 Decision Log (pure setup boilerplate, ≤5 files, single verify gate).
+- [x] Phase 1 — Install + config + scripts + README §E2E (TECH-276).
 
 **Tasks:**
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T6.1.1 | 1 | _pending_ | _pending_ | Install `@playwright/test` into `web/package.json` devDeps; author `web/playwright.config.ts` — `baseURL` from `process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4000'`; headless Chromium project; `testDir: './tests'`; `outputDir: './playwright-report'`; add `web/tests/` dir stub (`.gitkeep`). |
-| T6.1.2 | 2 | _pending_ | _pending_ | Add `"test:e2e": "playwright test"` + `"test:e2e:ci": "playwright test --reporter=github"` to `web/package.json`; add `"validate:e2e": "npm --prefix web run test:e2e:ci"` to root `package.json`; add `web/playwright-report/` to `.gitignore`. `validate:all` unchanged — `validate:e2e` is a separate opt-in target. |
-| T6.1.3 | 3 | _pending_ | _pending_ | Extend `web/README.md` §E2E — document: local run (`npm run test:e2e`), `PLAYWRIGHT_BASE_URL` env contract, Vercel preview injection pattern (`PLAYWRIGHT_BASE_URL=https://$VERCEL_URL`), CI bootstrap (`npx playwright install --with-deps chromium`), and convention for adding tests per route under `web/tests/`. |
+| T6.1.1 | 1 | **TECH-276** | Done (archived) | Install `@playwright/test` + author `web/playwright.config.ts` (baseURL from env, headless Chromium, `testDir: './tests'`, `outputDir: './playwright-report'`); stub `web/tests/.gitkeep`; add `test:e2e` + `test:e2e:ci` scripts to `web/package.json`; add `validate:e2e` to root `package.json`; add `web/playwright-report/` to `.gitignore`; author `web/README.md` §E2E (local run, `PLAYWRIGHT_BASE_URL` contract, Vercel preview injection, CI bootstrap `npx playwright install --with-deps chromium`, per-route convention). `validate:all` unchanged. |
 
 ---
 
@@ -767,4 +765,5 @@ Materialize when the named step opens (per `ia/rules/project-hierarchy.md` lazy-
 | 2026-04-15 | Deprecate `docs/progress.html` after Step 5 portal-auth gate lands ≥2 stable deploy cycles | Avoid premature removal while portal auth unresolved; live `/dashboard` stays obscure-URL-gated until auth middleware lands; ≥2 deploy cycles gives rollback window if dashboard regresses | Immediate delete — rejected, leaves no fallback if dashboard regresses; link-only banner (archived TECH-213) + no trigger — rejected, leaves legacy indefinitely without closure condition |
 | 2026-04-15 | Insert Step 4 (Dashboard improvements + UI polish) before portal/E2E; shift former Steps 4→5, 5→6 | Portal auth (now Step 5) and Playwright E2E (now Step 6) paused until future instruction; dashboard UI improvements (sidebar, icons, D3 charts, multi-select filters) prioritized as next active work; no task filings affected — all deferred tasks were _pending_ | Append as Step 7 — rejected, sequential numbering should reflect implementation order; keeping old numbering — rejected, misleads about active next step |
 | 2026-04-16 | Free-tier Postgres provider: **Neon free (Launch tier)** | Pooled connections: 100 > expected ≤ 20 concurrent serverless functions; storage: 0.5 GB vs ≤ 0.1 GB at Stage 5.2 stub (flag monitoring at 0.4 GB); egress: 5 GB/month >> dev traffic; region us-east-1 matches Vercel project default; `@neondatabase/serverless` HTTP driver avoids TCP socket leak on serverless cold-start — no persistent connection held across Next.js function invocations; branch preview-DB feature (up to 10 branches) enables per-PR isolated DBs at TECH-254+ stage; auto-suspend threshold 5 min acceptable for dev workload | **Supabase free** — rejected: 7-day inactivity pause risks portal dashboard latency on low-traffic days; bundled auth/storage/edge surface adds unneeded scope (auth owned by TECH-253); **Vercel Postgres Hobby** — rejected: tightest caps (storage 256 MB, egress 1 GB/month) already near Stage 5.2 stub ceiling; single-region lock at project creation inflexible; Neon-backed underneath so no reliability differentiation vs. Neon direct — no net advantage to justify tighter caps |
+| 2026-04-17 | Stage 6.1: merge T6.1.1 + T6.1.2 + T6.1.3 → single TECH-276 | Pure setup boilerplate — install + config + scripts + README docs ship together; ≤5 files total (`web/package.json`, `web/playwright.config.ts`, `web/tests/.gitkeep`, `web/README.md`, root `package.json`, `.gitignore`); smoke verify (`cd web && npm run test:e2e` exit 0 w/ empty `tests/`) needs all halves; single orchestration unit reduces handoff friction. Precedent: 2026-04-14 Stage 1.1 + Stage 1.2 merges. | Keep 3-task split — rejected, each phase ≤2 files w/ no independent verify gate. |
 | 2026-04-16 | Auth library: **roll-own JWT + sessions** (Q11 confirmed). Constants: `SESSION_COOKIE_NAME=portal_session`, `SESSION_LIFETIME_DAYS=30`, password hash lib `@node-rs/argon2` (argon2id, Node runtime only — route handlers only, not middleware). API surface: `jose` (`SignJWT` / `jwtVerify`, Edge-safe Web Crypto) for token sign/verify; stateful `session` DB row (`id UUID PK, user_id UUID FK, expires_at TIMESTAMPTZ, token TEXT`) for revocation; cookie set via `cookies()` from `next/headers` in server actions, read via `request.cookies.get(SESSION_COOKIE_NAME)` in Edge middleware. | Q11 exactly matches this pattern (stateful row, no third-party provider); `jose` covers middleware JWT verify on Edge runtime without Node-only deps; argon2id hash ops confined to Node-runtime route handlers — clean runtime split; zero external auth framework lock-in; drizzle types map directly to session row columns. | **Lucia Auth v3** — rejected: officially sunsetted/archived by author (pilcrow) in late 2025; no active maintainers; maintenance risk unacceptable for a session-first library that owns cookie + session lifecycle. **Auth.js v5 (NextAuth)** — rejected: full OAuth/PKCE/CSRF machinery ships even with Credentials-only config (~50 kB server bundle overhead); Credentials provider + DB session requires Node runtime split anyway (same as roll-own); overkill for email+password MVP with no social login planned. |

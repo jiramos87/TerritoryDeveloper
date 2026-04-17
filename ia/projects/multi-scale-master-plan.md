@@ -1,6 +1,6 @@
 # Multi-Scale Simulation — Master Plan (MVP)
 
-> **Status:** In Progress — Step 2 (Step 1 Final 2026-04-14; decomposition pending)
+> **Status:** In Progress — Step 2 (Step 1 Final 2026-04-14; Step 2 decomposed 2026-04-16, tasks _pending_)
 >
 > **Scope:** Min load-bearing work to prove city ↔ region ↔ country game loop (dormant evolution + reconstruction). Rest → `multi-scale-post-mvp-expansion.md`.
 >
@@ -154,9 +154,11 @@
 
 ### Step 2 — City MVP close
 
-**Status:** Draft (decomposition deferred until Step 1 → `Final`)
+**Status:** Draft (tasks _pending_ — not yet filed)
 
-City scale **stable + readable enough** to serve as aggregation source + reconstruction target. Not a finished city-builder loop.
+**Backlog state (Step 2):** 0 filed
+
+**Objectives:** City scale stable + readable enough to serve as aggregation source + reconstruction target. Not a finished city-builder loop.
 
 **Exit criteria:**
 
@@ -167,7 +169,126 @@ City scale **stable + readable enough** to serve as aggregation source + reconst
 
 **Art:** None.
 
-**Relevant surfaces:** `backlog_issue BUG-55` / `BUG-16` / `BUG-17` / `BUG-14` / `FEAT-51` / `TECH-82`; `ia/specs/simulation-system.md`.
+**Relevant surfaces (load when step opens):**
+- Step 1 outputs: `Assets/Scripts/Grid/CityCell.cs`, `Assets/Scripts/SaveSystem/GameSaveData.cs` (region_id / country_id), `Assets/Scripts/GridManager.cs` (ParentRegionId / ParentCountryId / GetNeighborStub)
+- BUG-55 files: `Assets/Scripts/Managers/GameManagers/EmploymentManager.cs`, `Assets/Scripts/Managers/GameManagers/AutoZoningManager.cs`, `Assets/Scripts/Grid/CellData.cs`, `Assets/Scripts/Managers/GameManagers/GrowthBudgetManager.cs`, `Assets/Scripts/Managers/AutoRoadBuilder.cs`, `Assets/Scripts/Managers/GameManagers/DemandManager.cs`, `Assets/Scripts/UI/GrowthBudgetSlidersController.cs`, `Assets/Scripts/UI/CityStatsUIController.cs`
+- BUG-16/17 files: `Assets/Scripts/Managers/GeographyManager.cs`, `Assets/Scripts/TimeManagement/TimeManager.cs`
+- BUG-14 file: `Assets/Scripts/UI/UIManager.cs`
+- `ia/projects/BUG-55.md`, `ia/projects/FEAT-51.md`, `ia/projects/TECH-82.md`
+- `ia/specs/simulation-system.md` (§tick-loop), `ia/specs/ui-design-system.md` (§tokens, §patterns)
+- Invariants: #3 (no FindObjectOfType per-frame), #5 (GetCell only), #6 (extract to helper)
+
+#### Stage 2.1 — Bug stabilization
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** All open crasher, data-corruption, initialization-race, and per-frame-cache bugs at city scale fixed. Invariants #3 and #5 clean.
+
+**Exit:**
+
+- BUG-55 (10 fixes): no crash on New Game or Load Game; growth budget and demand stabilize; `OnDestroy` listener leaks closed in `SimulateGrowthToggle`, `GrowthBudgetSlidersController`, `CityStatsUIController`.
+- BUG-14: `UIManager.UpdateUI()` caches `EmploymentManager`, `DemandManager`, `StatisticsManager` in `Awake`/`Start`; zero per-frame `FindObjectOfType` violations (invariant #3).
+- BUG-16: `GeographyManager` init race fixed — `isInitialized` gate or Script Execution Order prevents `TimeManager.Update()` reading uninit data.
+- BUG-17: `cachedCamera` assigned in `GridManager.Awake()` / `Start()` before `InitializeGrid()` constructs `ChunkCullingSystem`.
+- `unity:compile-check` passes; testmode smoke — New Game + Load Game no crash.
+
+**Phases:**
+
+- [ ] Phase 1 — Crashers + data integrity (BUG-55 + BUG-14).
+- [ ] Phase 2 — Init races + null refs (BUG-16 + BUG-17).
+
+**Tasks:**
+
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T2.1.1 | BUG-55 10 fixes | 1 | **BUG-55** | Draft | All 10 fixes per `ia/projects/BUG-55.md`: `EmploymentManager` div/0; `Cell` Enum.Parse crash; `AutoZoningManager` budget refund; `CellData` height-0 corruption; `GrowthBudgetManager` min inversion; `BuildingTracker` empty-zone count; road cache stale-in-tick; water height misclass; demand asymmetry; 3 `OnDestroy` leaks. |
+| T2.1.2 | BUG-14 per-frame cache | 1 | **BUG-14** | Draft | `UIManager.UpdateUI()` caches `EmploymentManager`, `DemandManager`, `StatisticsManager` in `Awake`; removes all per-frame `FindObjectOfType` calls per `ia/projects/BUG-14.md`. Invariant #3. |
+| T2.1.3 | BUG-16 init race | 2 | **BUG-16** | Draft | Add `isInitialized` flag to `GeographyManager`; gate `TimeManager.Update()` reads until flag is set. Files: `GeographyManager.cs`, `TimeManager.cs`. |
+| T2.1.4 | BUG-17 cachedCamera null | 2 | **BUG-17** | Draft | Assign `cachedCamera` (`Camera.main` or `[SerializeField]`) in `GridManager.Awake()` / `Start()` before `InitializeGrid()` constructs `ChunkCullingSystem`. File: `GridManager.cs`. |
+
+
+#### Stage 2.2 — Tick performance + metrics foundation
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** City tick profiled; egregious non-BUG-55 allocators patched; `MetricsRecorder` Phase 1 integrated (game remains playable without Postgres); EditMode tick budget test establishes Step 3 parity baseline.
+
+**Exit:**
+
+- `docs/city-tick-perf-notes.md` (new): top-5 hotspots + GC allocs + baseline ms/tick after Stage 2.1 fixes.
+- Top allocator(s) beyond BUG-55/BUG-14 scope patched (or confirmed acceptable with note).
+- TECH-82 Phase 1: `MetricsRecorder.cs` fires per-tick in `SimulationManager`; `city_metrics_history` migration applied; `mcp__territory-ia__city_metrics_query` tool returns time-series; game playable without Postgres.
+- EditMode test `TickBudgetTests.cs` (new): isolated tick completes within configured budget threshold; baseline recorded for Step 3 parity harness.
+
+**Phases:**
+
+- [ ] Phase 1 — Profiler run + alloc audit.
+- [ ] Phase 2 — MetricsRecorder + tick budget test.
+
+**Tasks:**
+
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T2.2.1 | Tick profiler baseline | 1 | _pending_ | _pending_ | Unity Profiler run on `SimulationManager` tick path post Stage 2.1; document top-5 hotspots + GC allocs + baseline ms/tick in `docs/city-tick-perf-notes.md` (new). |
+| T2.2.2 | Tick alloc audit + patch | 1 | _pending_ | _pending_ | Scan `SimulationManager` + tick-path managers for avoidable GC alloc (LINQ, boxing, list recreation per-tick); patch top-2 allocators found; annotate `SimulationManager.Update()` with budget note. |
+| T2.2.3 | TECH-82 Phase 1 | 2 | **TECH-82** | Draft | `MetricsRecorder.cs` (new) fires fire-and-forget per `SimulationManager` tick; `db/migrations/` `city_metrics_history` schema + bridge scripts; `mcp__territory-ia__city_metrics_query` tool per `ia/projects/TECH-82.md` Phase 1 acceptance. |
+| T2.2.4 | Tick budget EditMode test | 2 | _pending_ | _pending_ | `Assets/Tests/EditMode/Simulation/TickBudgetTests.cs` (new): isolated tick invocation completes within configured threshold (ms read from profiler notes); threshold field documents Step 3 parity target. |
+
+
+#### Stage 2.3 — City readability dashboard
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Player reads city state at-a-glance: minimal HUD + ≥3 time-series charts. Delivers FEAT-51 §2.1–§2.5. Chart library decision recorded.
+
+**Exit:**
+
+- `UiTheme.cs` carries `chartLineColor`, `chartAxisColor`, `chartLabelFont`, `chartBackground` fields; `ia/specs/ui-design-system.md` §tokens chart subsection added.
+- Chart library decision (XCharts or equivalent) recorded in `ia/projects/FEAT-51.md` Decision Log.
+- FEAT-51 acceptance (§8): history ringbuffer + derived metrics + chart engine + HUD card layout; ≥3 charts (population trend, employment rate, treasury balance) visible; no per-frame `FindObjectOfType`; `UiTheme` tokens applied throughout.
+- Testmode smoke: ≥3 charts render after New Game tick.
+
+**Phases:**
+
+- [ ] Phase 1 — UiTheme chart tokens + chart library spike.
+- [ ] Phase 2 — Full dashboard delivery + acceptance gate.
+
+**Tasks:**
+
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T2.3.1 | UiTheme chart tokens | 1 | _pending_ | _pending_ | Add `chartLineColor`, `chartAxisColor`, `chartLabelFont`, `chartBackground` fields to `UiTheme.cs`; add chart-tokens subsection to `ia/specs/ui-design-system.md` §tokens. |
+| T2.3.2 | Chart library spike | 1 | _pending_ | _pending_ | Evaluate XCharts vs alternatives in Unity; create `ChartDemo` prefab (new) with `LineChart` wired to dummy data; validate `UiTheme` token bind; record library decision in `ia/projects/FEAT-51.md` Decision Log. |
+| T2.3.3 | FEAT-51 dashboard delivery | 2 | **FEAT-51** | Draft | Full game data dashboard per `ia/projects/FEAT-51.md` §8: history ringbuffer + derived metrics + chart engine + HUD card layout; ≥3 charts; UiTheme tokens applied; no per-frame `FindObjectOfType`. |
+| T2.3.4 | Dashboard acceptance gate | 2 | _pending_ | _pending_ | Testmode smoke: ≥3 charts render after New Game tick; token audit — all chart colors sourced from `UiTheme`; `unity:compile-check`; confirm FEAT-51 §8 acceptance met; Decision Log entry verified complete. |
+
+
+#### Stage 2.4 — Parent-stub consumption
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** ≥1 city UI panel + ≥1 sim system actively consume Step 1 stubs (ParentRegionId / ParentCountryId / GetNeighborStub). Establishes consumer pattern for Step 3 to flesh out.
+
+**Exit:**
+
+- `ParentContextPanel.cs` (new) in city HUD: reads `GridManager.ParentRegionId` + `ParentCountryId`; displays region + country placeholder names.
+- `NeighborCityStubPanel.cs` (new) in city HUD sidebar: reads `GridManager.GetNeighborStub(side)` for all border sides; renders ≥1 stub card (display name + border direction); inert.
+- `DemandManager.GetExternalDemandModifier()` (new method): reads `GetNeighborStub()` list; returns `1.0f + 0.05f * stubCount` as placeholder; called in demand calculation; `GridManager` cached in `Awake` (invariant #3). Establishes consumption pattern for Step 3.
+- Testmode smoke: after New Game, `ParentContextPanel` shows non-null values; `GetNeighborStub()` returns ≥1 stub; `GetExternalDemandModifier()` returns > 1.0f.
+
+**Phases:**
+
+- [ ] Phase 1 — Parent context + neighbor stub UI panels.
+- [ ] Phase 2 — Sim consumer + integration smoke.
+
+**Tasks:**
+
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T2.4.1 | Parent context panel | 1 | _pending_ | _pending_ | `ParentContextPanel.cs` (new) MonoBehaviour in city HUD: reads `GridManager.ParentRegionId` + `ParentCountryId`; displays region + country placeholder name; binds on scene load. Follows `ia/specs/ui-design-system.md` §HUD patterns. |
+| T2.4.2 | Neighbor stub panel | 1 | _pending_ | _pending_ | `NeighborCityStubPanel.cs` (new): iterates border sides via `GridManager.GetNeighborStub(side)`; renders ≥1 HUD stub card (display name, border direction enum); inert — no behavior, no data mutation. |
+| T2.4.3 | DemandManager parent modifier | 2 | _pending_ | _pending_ | `DemandManager.GetExternalDemandModifier()` (new): reads neighbor stub list; returns `1.0f + 0.05f * stubCount`; wired into demand calculation. Cache `GridManager` in `Awake` (invariant #3). Pattern seeded for Step 3 expansion. |
+| T2.4.4 | Parent-stub integration smoke | 2 | _pending_ | _pending_ | Testmode smoke scenario: New Game → assert `ParentContextPanel` non-null display; assert `GetNeighborStub()` count ≥ 1; assert `GetExternalDemandModifier()` > 1.0f. Confirms Step 1 stubs consumed end-to-end. |
 
 ### Step 3 — Multi-scale infrastructure
 
@@ -238,7 +359,8 @@ Country **playable as active scale**. After Step 5: three-scale MVP complete.
 
 ## Deferred decomposition
 
-Steps 2–5 stay at skeleton granularity (Objectives implicit in step blurb + Exit criteria + Relevant surfaces). Full Stage / Phase / Task decomposition lands when parent step → `In Progress`. Candidate-issue pointers live inline on each step's **Relevant surfaces** line; new-feature-row candidates surface during that step's decomposition pass, filed under `§ Multi-scale simulation lane` in `BACKLOG.md`. Do NOT pre-file Step 2–5 rows.
+- **Step 2 — City MVP close:** decomposed 2026-04-16. Stages: Bug stabilization, Tick performance + metrics foundation, City readability dashboard, Parent-stub consumption.
+- **Steps 3–5:** remain at skeleton granularity (Objectives implicit in step blurb + Exit criteria + Relevant surfaces). Full Stage / Phase / Task decomposition lands when parent step → `In Progress`. Candidate-issue pointers live inline on each step's **Relevant surfaces** line; new-feature-row candidates surface during that step's decomposition pass, filed under `§ Multi-scale simulation lane` in `BACKLOG.md`. Do NOT pre-file Step 3–5 rows.
 
 ---
 

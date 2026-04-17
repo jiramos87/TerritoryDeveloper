@@ -2,6 +2,166 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
+- [x] **TECH-276** — Playwright e2e harness — install + config + scripts + README docs (Stage 6.1) (2026-04-17)
+  - Type: tooling / scaffold
+  - Files: `web/package.json`, `web/playwright.config.ts` (new), `web/tests/.gitkeep` (new), `web/README.md` (§E2E append), `package.json` (root — `validate:e2e`), `.gitignore`
+  - Spec: (removed at closeout — Decision Log + Lessons persisted to `ia_project_spec_journal`; full prose in git history only)
+  - Notes: Stage 6.1 single-pass scaffold. Installed `@playwright/test`; authored `web/playwright.config.ts` (baseURL from `PLAYWRIGHT_BASE_URL` env w/ `http://localhost:4000` fallback, headless Chromium, `testDir: './tests'`, `outputDir: './playwright-report'`, `workers: CI ? 1 : undefined`); stubbed `web/tests/.gitkeep`; added `test:e2e` + `test:e2e:ci` scripts (both pass `--pass-with-no-tests` so empty dir does not fail CI before first spec); root `validate:e2e` composes `npm --prefix web run test:e2e:ci` (NOT chained into `validate:all` — browser binary install opt-in). README §E2E documents local run, env contract, Vercel preview injection, CI bootstrap. Merges orig Phase 1+2+3 per 2026-04-17 Decision Log.
+  - Acceptance: `cd web && npm run test:e2e` exits 0 w/ empty `tests/`; `npm run validate:all` green; README §E2E present; `validate:e2e` composes web workspace run.
+
+- [x] **BUG-56** — **Blip** **comb-filter** feedback path broken — `BlipFxChainTests.Comb_FeedbackAttenuation` failing (2026-04-17)
+  - Type: fix (audio DSP regression)
+  - Files: `Assets/Scripts/Audio/Blip/BlipFxChain.cs`, `Assets/Tests/EditMode/Audio/BlipFxChainTests.cs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Comb kernel wrote dry `x` into delay buffer — degraded to single-tap delay. One-line fix in `BlipFxChain.ProcessFx` comb case: `delayBuf[writePos] = y` (wet write). Invariant `out[2D]/out[D] ≈ g` restored; distinguishes feedback comb from chorus/flanger (wet-from-dry taps) and Schroeder allpass (writes `x + g·v`). Captured in `MEMORY.md`.
+  - Depends on: none (Stage 5.2 Done)
+  - Related: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) Stage 5.2
+
+- [x] **TECH-264** — `/api/auth/session` GET + `/api/auth/logout` POST stub handlers (501) + sitemap audit (Stage 5.2 Phase 2) (2026-04-17)
+  - Type: web platform / API stub
+  - Files: `web/app/api/auth/session/route.ts` (new), `web/app/api/auth/logout/route.ts` (new), `web/app/sitemap.ts` (audit only — no edit)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: `session` route exports `GET` (idempotent session probe per REST convention); `logout` route exports `POST` (state-mutating). Both return 501 + `{"error":"Not Implemented"}` JSON body matching sibling login + register stubs. Sitemap audit: `web/app/sitemap.ts` enumerates MDX pages + devlog posts only — all 4 `/api/auth/*` routes absent (Next.js sitemap convention + repo precedent). `Promise<Response>` return annotation matches sibling stubs verbatim.
+  - Acceptance: Both routes return HTTP 501 + JSON body; sitemap audit confirms 4 `/api/auth/*` URLs absent; `cd web && npm run typecheck` green; `npm run validate:all` exit 0.
+- [x] **TECH-263** — `/api/auth/login` + `/api/auth/register` POST stub handlers (501) (Stage 5.2 Phase 2) (2026-04-17)
+  - Type: web platform / API stub
+  - Files: `web/app/api/auth/login/route.ts` (new), `web/app/api/auth/register/route.ts` (new)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Each handler exports `export async function POST(_req: Request): Promise<Response>` returning `Response.json({ error: 'Not Implemented' }, { status: 501 })`. TS-typed; zero non-Web imports; no DB / drizzle / auth-lib deps. `Response.json()` (Web standard) over `NextResponse.json()` — no Next-specific cookie / header handling at stub stage. HTTP 501 status semantically signals "endpoint exists but unimplemented" — distinguishes from 404 / 405 for middleware smoke.
+  - Acceptance: Both routes return HTTP 501 + `{"error":"Not Implemented"}` JSON; `cd web && npm run typecheck` green; `npm run validate:all` exit 0.
+- [x] **TECH-275** — NoAlloc delay-FX test + `Render` overload verification (Stage 5.2 Phase 3) (2026-04-17)
+  - Type: audio / test gate
+  - Files: `Assets/Tests/EditMode/Audio/BlipNoAllocTests.cs`, `Assets/Tests/EditMode/Audio/BlipBakerTests.cs` (regression — no edit), `Assets/Tests/EditMode/Audio/BlipDeterminismTests.cs` (regression — no edit)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Stage 5.2 closing gate. New EditMode test `BlipNoAllocTests.Render_WithChorus_ZeroManagedAlloc`: chorus patch (rateHz=1, depthMs=5, mix=0.4); pre-lease 1 delay buf via `BlipDelayPool.Lease(48000, 50f)` OUTSIDE `GC.GetAllocatedBytesForCurrentThread` window; 3 warm-up + 10 measured renders; assert delta/call ≤ 0. Delay-aware `BlipVoice.Render` overload (base 8 + 4 buf + 4 len + 4 ref writePos) + back-compat 8-param shim both compile. `BlipBakerTests` + `BlipDeterminismTests` suites green. Stage 5.2 Exit satisfied.
+  - Acceptance: `Render_WithChorus_ZeroManagedAlloc` green (delta/call ≤ 0); delay-aware + base `Render` overloads compile; regression suites green; `npm run unity:compile-check` + `npm run validate:all` exit 0.
+- [x] **TECH-268** — Remove "Internal" banner from `/dashboard` + middleware redirect smoke (Stage 5.3 Phase 2) (2026-04-17)
+- [x] **TECH-274** — Chorus + flanger kernels in `BlipFxChain.ProcessFx` (Stage 5.2 Phase 3) (2026-04-17)
+  - Type: audio / DSP kernel
+  - Files: `Assets/Scripts/Audio/Blip/BlipFxChain.cs`, `Assets/Scripts/Audio/Blip/BlipPatch.cs`, `Assets/Scripts/Audio/Blip/BlipVoice.cs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Replace Stage 5.1 Chorus + Flanger passthrough stubs w/ 2-tap LFO-modulated delay kernels. Chorus rate `p0` Hz, depth `p1` ms, mix `p2`; symmetric taps `(writePos - center ± lfoOffset) mod bufLen`; `x = (1 - p2) * x + p2 * 0.5 * (tap0 + tap1)`. Flanger identical body, depth clamped `[1f, 10f]` ms via `OnValidate`. Per-slot LFO phase reuses `ringModPhase_N` (slot-private — no cross-slot conflict; warn loop dropped per DL). `ProcessFx` signature gained `float p2`; 8 call sites in `BlipVoice.Render` (4 deterministic + 4 live) updated to forward `param2`. Nearest-neighbour taps; linear interp deferred to Stage 5.3+.
+  - Acceptance: Chorus + Flanger kernels per spec §5.2; Flanger depth clamp 1..10 ms; `BlipFxChainTests.Chorus_WetMixNonZero` + `Flanger_DepthClampedTo10ms` green; `npm run unity:compile-check` + `npm run validate:all` exit 0.
+- [x] **TECH-273** — Allpass filter kernel in `BlipFxChain.ProcessFx` (Stage 5.2 Phase 2) (2026-04-17)
+  - Type: audio / DSP kernel
+  - Files: `Assets/Scripts/Audio/Blip/BlipFxChain.cs`, `Assets/Tests/EditMode/Audio/BlipFxChainTests.cs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Replace Stage 5.1 Allpass-case passthrough w/ Schroeder form `float v = delayBuf[(writePos - D + bufLen) % bufLen]; delayBuf[writePos] = x + p1 * v; float y = v - p1 * delayBuf[writePos]; writePos = (writePos + 1) % bufLen; x = y`. No `p1` clamp — Schroeder stable for `|g| < 1` (unlike Comb). EditMode test `BlipFxChainTests.Allpass_FlatMagnitude`: 1024 samples pink noise through allpass, assert `RMS_out ≈ RMS_in ± 15%` (ideal allpass = flat magnitude response; phase-only modification). Zero managed alloc.
+  - Acceptance: Allpass kernel present; RMS-flat test passes within ±15%; `npm run unity:compile-check` + `npm run validate:all` exit 0.
+  - Depends on: **TECH-271**.
+
+- [x] **TECH-272** — Comb filter kernel in `BlipFxChain.ProcessFx` (Stage 5.2 Phase 2) (2026-04-17)
+  - Type: audio / DSP kernel
+  - Files: `Assets/Scripts/Audio/Blip/BlipFxChain.cs`, `Assets/Scripts/Audio/Blip/BlipPatch.cs`, `Assets/Tests/EditMode/Audio/BlipFxChainTests.cs` (new or append)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Replace Stage 5.1 Comb-case passthrough stub w/ feedback comb `int D = (int)(p0 / 1000f * sampleRate); float delayed = delayBuf[(writePos - D + bufLen) % bufLen]; float y = x + p1 * delayed; delayBuf[writePos] = x; writePos = (writePos + 1) % bufLen; x = y`. Guard `D >= 1 && D < bufLen` else break (passthrough). `BlipPatch.OnValidate` clamps `p1` (feedback gain) to `[0f, 0.97f]` for Comb FX slots — BIBO stability margin. New EditMode test `BlipFxChainTests.Comb_FeedbackAttenuation`: impulse, 10 ms delay, g=0.5 → second-echo amplitude ≈ 0.5 ± 0.05 relative to first echo. Zero managed alloc; no Unity API.
+  - Acceptance: Comb kernel present per §5.2; `p1` clamp in `OnValidate`; impulse-response test green (0.5 ± 0.05); `npm run unity:compile-check` + `npm run validate:all` exit 0.
+  - Depends on: **TECH-271**.
+
+- [x] **TECH-271** — `BlipVoice.Render` delay-buffer overload + `BlipBaker` pre-lease (Stage 5.2 Phase 1) (2026-04-17)
+  - Type: audio / DSP plumbing
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`, `Assets/Scripts/Audio/Blip/BlipFxChain.cs`, `Assets/Scripts/Audio/Blip/BlipBaker.cs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: `BlipVoice.Render` gains 11-param overload — existing 7-param signature + `float[]? d0, float[]? d1, float[]? d2, float[]? d3` appended. Existing 7-param delegates w/ all-null (back-compat shim; `BlipNoAllocTests` + `BlipDeterminismTests` untouched callers stay green). `BlipFxChain.ProcessFx` signature extended w/ `float[]? delayBuf, int bufLen, ref int writePos` per-call params; null-guard in every FX case (memoryless kinds ignore). `BlipBaker.BakeOrGet` pre-leases up to 4 buffers from `_catalog._delayPool.Lease(sampleRate, 50f)` (50 ms ceiling covers comb+chorus+flanger range); passes to Render; `finally { pool.Return(buf) }` unconditionally. Delay-line kernel bodies still passthrough — behavior change lands in **TECH-272..274**. Zero managed alloc inside Render.
+  - Acceptance: 11-param Render overload present; 7-param shim delegates; `ProcessFx` signature extended w/ null-guards; `BlipBaker.BakeOrGet` lease+return via `finally`; `BlipNoAllocTests` + `BlipDeterminismTests` + `BlipBakerTests` green; `npm run unity:compile-check` + `npm run validate:all` exit 0.
+  - Depends on: **TECH-270**.
+
+- [x] **TECH-267** — `web/app/robots.ts` update — remove `/dashboard`, add `/auth` to disallow (Stage 5.3 Phase 2) (2026-04-17)
+  - Type: web platform / SEO
+  - Files: `web/app/robots.ts`, `web/app/sitemap.ts` (audit only)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Update `disallow` array in `web/app/robots.ts` — drop `/dashboard` (auth middleware from TECH-265 now gates access; SEO crawlers hitting `/dashboard` unauthenticated get 302 → `/auth/login` which is itself disallowed); add `/auth` (covers `/auth/login` + future `/auth/register`). Final disallow: `['/design', '/auth']`. Sitemap audit: `web/app/sitemap.ts` emits only MDX pages + devlog — `/auth/login` + `/dashboard` absent (neither enumerated). No sitemap edit. Decision Log: drop `/dashboard` (middleware provides structural 302 gate; robots duplicate signal); prefix `/auth` not `/auth/login` (post-Step-5 portal `/auth/register` inherits w/o robots churn); no `X-Robots-Tag` header (robots.txt sufficient at stub tier).
+  - Acceptance: `web/app/robots.ts` disallow array = `['/design', '/auth']`; `/auth/login` + `/dashboard` absent from `web/app/sitemap.ts` output (audit only); `cd web && npm run typecheck` green; `cd web && npm run build` green; `npm run validate:all` exit 0.
+  - Depends on: **TECH-265**, **TECH-266**
+
+- [x] **TECH-266** — `web/app/auth/login/page.tsx` stub login RSC (Stage 5.3 Phase 1) (2026-04-16)
+  - Type: web platform / UI stub
+  - Files: `web/app/auth/login/page.tsx` (new)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Author `web/app/auth/login/page.tsx` (new) — RSC (no `'use client'`); full-English user-facing copy per caveman-exception (`ia/rules/agent-output-caveman.md` §exceptions — user-facing rendered text under `web/app/**/page.tsx`): "Sign in" `<h1>`, email + password placeholder `<input>` pair, disabled `<button>` submit, canned banner `<p>` "Authentication not yet available — coming soon.". Consumes design token classes (`bg-canvas`, `text-text-primary`, `border-border-subtle`, etc. — NO inline hex, NO raw tailwind colors). No form action — inputs are placeholders only; TECH-263 archived `/api/auth/login` stub returns 501 anyway. No `<Link>` to `/auth/register` at this tier — register UI deferred to post-Step-5 portal plan. Decision Log: RSC over client component (zero interactivity at stub tier; minimal bundle); disabled inputs + submit (honest UX signal matching canned banner; users still see expected form affordance); design-token classes only, no inline hex (Stage 1.2 TECH-116 convention; post-Step-5 portal plan can restyle via token updates w/o page edits).
+  - Acceptance: `web/app/auth/login/page.tsx` renders at `http://localhost:4000/auth/login`; heading + canned error banner + disabled submit present; only design-token CSS classes used (grep confirms no inline hex); `cd web && npm run typecheck` green; `cd web && npm run build` green; `npm run validate:all` exit 0.
+  - Depends on: none
+
+- [x] **TECH-270** — `BlipDelayPool` + `BlipCatalog` wiring + `BlipVoiceState` write-heads (Stage 5.2 Phase 1) (2026-04-16)
+  - Type: audio / infrastructure
+  - Files: `Assets/Scripts/Audio/Blip/BlipDelayPool.cs` (new), `Assets/Scripts/Audio/Blip/BlipCatalog.cs`, `Assets/Scripts/Audio/Blip/BlipVoiceState.cs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: New `internal sealed class BlipDelayPool` — `float[] Lease(int sampleRate, float maxDelayMs)` sized to `(int)Math.Ceiling(maxDelayMs/1000f*sampleRate)+1` via `ArrayPool<float>.Shared.Rent`; `void Return(float[])` w/ `clearArray: true` (prevents stale-sample leak). `BlipCatalog` gains `private BlipDelayPool _delayPool = new BlipDelayPool()` (plain-ref field-init; invariant #4 compliant — no new singleton). `BlipVoiceState` appends 4 blittable ints `delayWritePos_0..3` (circular write-head per FX slot). Zero kernel logic — foundation for Stage 5.2 Phase 2/3 comb/allpass/chorus/flanger kernels + Render overload. Decision Log: plain `internal sealed class` (not MonoBehaviour) — data-only infra, owner Catalog already MB; `clearArray: true` on Return prevents stale-sample bleed across leases; buffer len `+1` guard avoids wrap-boundary click transient; pool owned by Catalog (not Baker) — single pool survives bake cycles, Catalog `DontDestroyOnLoad` lifetime matches Blip bootstrap.
+  - Acceptance: `BlipDelayPool` class present w/ `Lease`/`Return`; `BlipCatalog._delayPool` field initialized; 4 write-head ints added; `BlipVoiceState` stays blittable + `default = 0`; `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+  - Depends on: none (Stage 5.1 closed).
+
+- [x] **TECH-265** — `web/middleware.ts` session-cookie gate on `/dashboard` (Stage 5.3 Phase 1) (2026-04-16)
+  - Type: web platform / middleware
+  - Files: `web/middleware.ts` (new)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Author `web/middleware.ts` (new) — `export const config = { matcher: ['/dashboard'] }`; `export function middleware(request: NextRequest)` reads `request.cookies.get('portal_session')` (Stage 5.1 archived constant — `SESSION_COOKIE_NAME=portal_session`); missing / empty value → `NextResponse.redirect(new URL('/auth/login', request.url))`; present → `NextResponse.next()`. Presence-only check at stub tier; cookie-signature verification deferred to post-Step-5 portal-launch master plan. Edge-runtime compatible (no `@node-rs/argon2`, no `jose` verify). `DASHBOARD_AUTH_SKIP=1` local-dev bypass short-circuits before cookie read. Decision Log: presence-only (no JWT verify — no tokens exist yet); matcher exact `['/dashboard']` (no sub-path wildcard); inline `SESSION_COOKIE_NAME` const (no shared constants file yet at Stage 5.3).
+  - Acceptance: `web/middleware.ts` exports `middleware` + `config` w/ matcher `['/dashboard']`; `/dashboard` without `portal_session` cookie → 302 to `/auth/login`; `/dashboard` with any non-empty cookie value → 200 (stub-tier presence-only check); `cd web && npm run typecheck` green; `npm run validate:all` exit 0.
+  - Depends on: **TECH-266** (redirect target `/auth/login` must exist to avoid 404 loop).
+
+- [x] **TECH-269** — `web/.env.local` dev bypass — `DASHBOARD_AUTH_SKIP=1` + middleware env-var check (Stage 5.3 Phase 0) (2026-04-16)
+  - Type: web platform / dev ergonomics
+  - Files: `web/.env.local` (new, gitignored), `web/.env.local.example` (new, committed), `web/README.md`, `ia/projects/TECH-265.md`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Prerequisite to **TECH-265**. `web/.env.local` holds `DASHBOARD_AUTH_SKIP=1` (local-only); `web/.env.local.example` committed w/ inline prod-warning comment; `web/README.md` gains "Local development auth bypass" section; **TECH-265** §2.1 Goals + §5.3 pseudo-code amended — middleware short-circuits on `process.env.DASHBOARD_AUTH_SKIP === '1'` before cookie check. Vercel env vars never set the knob — prod stays gated. Decision Log: single-knob bypass over per-dev cookie stub; committed `.env.local.example` for discoverability; bypass check BEFORE cookie read; never set on Vercel.
+  - Acceptance: `web/.env.local` gitignored + populated; `.env.local.example` committed; README section landed; TECH-265 spec amended; `npm run validate:all` exit 0.
+  - Depends on: none (unblocked TECH-265).
+
+- [x] **TECH-260** — `BlipVoice.Render` FX loop + `BlipNoAllocTests` FX variant (Stage 5.1 Phase 2) (2026-04-16)
+  - Type: audio / DSP
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`, `Assets/Tests/EditMode/Audio/BlipNoAllocTests.cs`
+  - Spec: (removed at closeout — Decision Log empty per journal parser; full prose in git history only)
+  - Notes: Post-envelope FX dispatch in `BlipVoice.Render` — unrolled 4-slot `if (patch.fxSlotCount >= N) BlipFxChain.ProcessFx(ref x, patch.fxN.kind, patch.fxN.param0, patch.fxN.param1, ref state.dcZ1_N, ref state.dcY1_N, ref state.ringModPhase_N, sampleRate)` for N in 1..4. Mirror block wired into both deterministic (lines ~162) and live (lines ~254) per-sample loops. Empty chain (`fxSlotCount == 0`) fast-exits through all four `if` guards — MVP golden fixtures stay bit-exact (no fixture regeneration). `BlipNoAllocTests.Render_WithFxChain_ZeroManagedAlloc` — 2-slot BitCrush+DcBlocker patch; 3 warm-up + 10 measure w/ `GC.GetAllocatedBytesForCurrentThread`; delta/call ≤ 0. Decision Log: POST-envelope PRE-filter placement (matches Stage 5.1 Exit; alt POST-filter rejected — would bypass LP for DcBlocker's HP action); unrolled `if` cascade vs `for` loop (blittable + zero-alloc matches oscillator inline-triplet precedent); mirror into both branches vs shared helper (existing per-sample cores already duplicated — extract outside Stage 5.1 scope); new test lives alongside `Render_SteadyState_ZeroManagedAlloc` (tight isolation on failure). Closes Stage 5.1 T5.1.5 Exit bullet "BlipVoice.Render FX loop + BlipNoAllocTests still green" + Stage 5.1 as a whole.
+  - Acceptance: FX loop wired post-envelope in both deterministic + live branches; empty chain passthrough (MVP goldens green); new NoAlloc test green; existing `BlipNoAllocTests` + `BlipGoldenFixtureTests` + `BlipDeterminismTests` still green; `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+  - Depends on: **TECH-257** (archived), **TECH-259** (archived).
+
+- [x] **TECH-259** — `BlipFxChain.cs` memoryless cores — BitCrush / RingMod / SoftClip / DcBlocker (Stage 5.1 Phase 2) (2026-04-16)
+  - Type: audio / DSP
+  - Files: `Assets/Scripts/Audio/Blip/BlipFxChain.cs` (new)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: New `internal static class BlipFxChain` with `static void ProcessFx(ref float x, BlipFxKind kind, float p0, float p1, ref float dcZ1, ref float dcY1, ref float ringPhase, int sampleRate)`. Cores: BitCrush `x = Mathf.Round(x*steps)/steps, steps = 1<<(int)p0`; RingMod `ringPhase += 2π*p0/sampleRate; x *= Mathf.Sin(ringPhase)` w/ guard `sampleRate > 0` + wrap `if (ringPhase > TwoPi) ringPhase -= TwoPi`; SoftClip `x = x/(1f + Mathf.Abs(x))`; DcBlocker `float y = x - dcZ1 + 0.9995f*dcY1; dcZ1 = x; dcY1 = y; x = y`. Comb/Allpass/Chorus/Flanger cases → passthrough stubs (kernels land Stage 5.2). Zero allocs; only `Mathf.Round`/`Mathf.Sin`/`Mathf.Abs`/`Mathf.PI` Unity API. Decision Log: BitCrush clamp at caller not core (hot-path branch); single `if`-subtract phase wrap (no `fmod`); `0.9995f` pole pinned (not param); `Mathf.Sin` direct (LUT → Stage 5.3); `None` + delay-line kinds share `default` arm. Closes Stage 5.1 T5.1.4 Exit bullet "BitCrush/RingMod/SoftClip/DcBlocker implemented; Comb/Allpass/Chorus/Flanger return passthrough". Consumer is TECH-260 (`BlipVoice.Render` unrolled 4-slot dispatch).
+  - Acceptance: `BlipFxChain.cs` present; 4 memoryless cores implemented; delay-line kinds return input unchanged; zero managed allocs (verified via NoAlloc test in TECH-260); `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+  - Depends on: **TECH-256** (archived), **TECH-258** (archived).
+
+- [x] **TECH-258** — `BlipVoiceState` FX state fields (Stage 5.1 Phase 1) (2026-04-16)
+  - Type: audio / data model
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoiceState.cs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Appended 12 blittable `float` fields at struct tail of `BlipVoiceState` — slot-grouped triplets `(dcZ1_N, dcY1_N, ringModPhase_N)` for slots 0..3 (DC blocker input/output z-1 + ring-mod carrier phase). Grouped by slot (not by kind) for cache locality — TECH-260 unrolled dispatch reads all three per-slot fields per `BlipFxChain.ProcessFx` call. Flat-field pattern (not nested `BlipFxVoiceSlot` struct) matches existing `phaseA..D` precedent + avoids `ref state.fxSlot0.dcZ1` indirection against TECH-259 `ref float` kernel params. No `readonly` modifier — `ref`-writable required by TECH-259. No explicit `ResetFxState()` — relies on caller zero-init + `default(BlipVoiceState) = 0f` (per `ia/specs/audio-blip.md §3.2`). Each field carries `<summary>` XML pointing to TECH-259 consumer; inline comment block documents slot-triplet layout. Zero behavior change — `BlipVoice.Render` untouched; MVP golden fixtures stay bit-exact (FX wire lands in TECH-260). Closes Stage 5.1 Phase 1 Exit bullet "`BlipVoiceState` extended w/ FX state". Feeds **TECH-259** + **TECH-260**.
+  - Acceptance: 12 new float fields present w/ exact names; `BlipVoiceState` still blittable (unmanaged-struct compile); `default(BlipVoiceState) = 0f` contract preserved; `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+  - Depends on: none.
+
+- [x] **TECH-257** — `BlipPatch.fxChain` + `BlipPatchFlat` FX inline fields + ctor extension (Stage 5.1 Phase 1) (2026-04-16)
+  - Type: audio / data model
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs`, `Assets/Scripts/Audio/Blip/BlipPatchFlat.cs`, `Assets/Scripts/Audio/Blip/BlipPatchTypes.cs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: `BlipPatch` gained `[SerializeField] private BlipFxSlot[] fxChain = new BlipFxSlot[0]` + `BlipFxSlot[] FxChain => fxChain` getter mirroring oscillator public surface. `OnValidate` truncates `fxChain` to max 4 entries via `Array.Resize(ref fxChain, 4)` after existing oscillator cap-at-3 resize (silent truncate precedent). `BlipPatchFlat` gained 4 inline `readonly BlipFxSlotFlat fx0, fx1, fx2, fx3` + `readonly int fxSlotCount` between oscillator triplet and envelope — blittable discipline preserved (no array allocations). Ctor extended after oscillator flatten: `fxSlotCount = fx != null ? Mathf.Min(fx.Length, 4) : 0`; unused slots default. `BlipPatchHash.Compute` append-only section 9 — feeds `fxSlotCount` + per-active-slot `kind`/`param0`/`param1`/`param2`; sections 1–8 unchanged. Decision Log: FX cap=4 vs oscillator cap=3 (composition depth); silent truncate (author ergonomics precedent); `patchHash` feeds FX unconditionally (one-time shift at land — fixtures gate on PCM tolerance per `ia/specs/audio-blip.md §7.2`, not hash equality; LRU re-bakes on miss); append-only section order frozen (FX delay state + LFO state append as sections 10+ in Stage 5.2/5.3). MVP golden fixtures stayed bit-exact (empty-chain passthrough). Closes Stage 5.1 Phase 1 Exit bullets on `BlipPatch` + `BlipPatchFlat` extension. Feeds **TECH-258** (`BlipVoiceState` FX state), **TECH-259** (`BlipFxChain.ProcessFx` kernel), **TECH-260** (`BlipVoice.Render` FX dispatch).
+  - Acceptance: `BlipPatch.fxChain` + `OnValidate` truncation present; `BlipPatchFlat` has 4 inline fx slots + `fxSlotCount`; existing MVP golden fixtures pass (empty chain = passthrough); `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+  - Depends on: **TECH-256** (archived — `BlipFxKind` / `BlipFxSlot` / `BlipFxSlotFlat` types).
+
+- [x] **TECH-255** — `web/README.md` §Portal documentation (Stage 5.1 Phase 2) (2026-04-16)
+  - Type: web / docs
+  - Files: `web/README.md`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+  - Notes: Inserted `## Portal` section between `## Dashboard` and `## Tokens` in `web/README.md` — four subsections: Database provider (Neon free Launch tier cited per TECH-252 lock, orchestrator Decision Log cross-link for full limits table, no duplication), Connection pool pattern (lazy singleton via `getSql()` + `sql` tagged-template Proxy per TECH-254 `web/lib/db/client.ts` shape, build-time safety note — `next build` green w/o `DATABASE_URL`), `DATABASE_URL` env contract (Vercel tri-scope production + preview + development flagged `[HUMAN ACTION]` pending dashboard wiring, contributor `.env.local` guidance — not shipped), Payment gateway placeholder (architecture slot reserved, no provider, Q10 deferred). Closing boundary paragraph — "Step 5 architecture-only — no migrations, no live queries, no auth flow; Stage 5.2 files schema, Stage 5.3 files middleware." `§Links` block unchanged — orchestrator cross-link already present pre-TECH-255. Caveman prose throughout — caveman-exception boundary does NOT apply to contributor-facing README per `agent-output-caveman.md` §exceptions (exception surface is `web/content/**` + `web/app/**/page.tsx` only). Closes Stage 5.1 Phase 2 Exit bullet. Zero code edits — pure markdown surface. Invariants #1–#12 not implicated (web platform scaffold only).
+  - Acceptance: `## Portal` section present between `## Dashboard` and `## Tokens`; four subsections + boundary paragraph; `npm run validate:all` exit 0.
+  - Depends on: **TECH-252** (archived — Neon provider lock), **TECH-254** (archived — `web/lib/db/client.ts` lazy driver wiring).
+
+- [x] **TECH-256** — `BlipFxKind` + `BlipFxSlot` + `BlipFxSlotFlat` in `BlipPatchTypes.cs` (Stage 5.1 Phase 1) (2026-04-16)
+  - Type: audio / types
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatchTypes.cs`
+  - Spec: (removed at closeout — pure data-type scaffolding; Decision Log + Lessons sections empty; full prose in git history only)
+  - Notes: Landed 3 new types in `Assets/Scripts/Audio/Blip/BlipPatchTypes.cs` — `BlipFxKind` enum (None=0/BitCrush=1/RingMod=2/SoftClip=3/DcBlocker=4/Comb=5/Allpass=6/Chorus=7/Flanger=8, explicit ints pinned for stable `switch`-dispatch in TECH-259 `BlipFxChain.ProcessFx`), `BlipFxSlot [Serializable] struct` (authoring row: `BlipFxKind kind; float param0, param1, param2`), `BlipFxSlotFlat readonly struct` (blittable runtime mirror, copy ctor from `BlipFxSlot`, scalar-only fields so unmanaged-struct compile verifies blittability — mirrors `BlipPatchFlat` discipline per **Blip patch flat** glossary row). Full 9-value enum up front even though Comb/Allpass/Chorus/Flanger kernels land Stage 5.2 — prevents enum-value churn mid-step. No glossary row added (per Step 1 precedent, terms land at Stage 5.1 close, not per-task). Feeds TECH-257 (`BlipPatch.fxChain` + `BlipPatchFlat` inline flatten), TECH-258 (`BlipVoiceState` FX fields), TECH-259 (`BlipFxChain.ProcessFx` kernel dispatch), TECH-260 (`BlipVoice.Render` FX loop).
+  - Acceptance: 3 new types present; `BlipFxSlotFlat` passes blittable check (unmanaged-struct compile); `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+  - Depends on: none
+
+- [x] **TECH-254** — Postgres driver install + `web/lib/db/client.ts` + Vercel `DATABASE_URL` wiring (Stage 5.1 Phase 2) (2026-04-16)
+  - Type: web / scaffold
+  - Files: `web/package.json`, `web/package-lock.json`, `web/lib/db/client.ts` (new), Vercel project env (production + preview + development — `[HUMAN ACTION]` pending dashboard wiring)
+  - Spec: (removed at closeout — Decision Log + Lessons Learned persisted to `ia_project_spec_journal`; full prose in git history only)
+  - Notes: Installed `@neondatabase/serverless@^1.0.2` (resolved `1.0.2` — spec draft cited `^0.9.x`, v1 reached stable; Decision Log updated w/ actual pin). Authored `web/lib/db/client.ts` — lazy singleton via `getSql()` getter + `new Proxy({} as NeonQueryFunction<false, false>, { get, apply })` tagged-template handle; first `sql` invocation reads `process.env.DATABASE_URL` and throws clear error if missing; repeat imports return same singleton (no per-request reconnection); `next build` w/o env set stays green (build-time safe). Shape satisfies Stage 5.2 `drizzle-orm/neon-http` adapter — one-line wrap `drizzle(getSql(), { schema })`. Vercel `DATABASE_URL` wiring across production + preview + development scopes flagged `[HUMAN ACTION]` — agent shell has no Vercel CLI auth per Stage 1.2 Decision Log precedent (2026-04-14); human completes via dashboard. No migrations, no live queries, no auth handlers at this tier (deferred to Stage 5.2 TECH-5.2.x). No local `.env` shipped — contributors wire own value post-TECH-255 README §Portal. Invariants #1–#12 not implicated (web platform scaffold only). Feeds TECH-255 (README §Portal doc) + Stage 5.2 schema/auth tasks.
+  - Acceptance: `@neondatabase/serverless` under `dependencies` (not `devDependencies`); `web/lib/db/client.ts` exports `sql` + `getSql`; `npm --prefix web run typecheck` exit 0; `npm --prefix web run build` exit 0 in shell w/o `DATABASE_URL`; `npm run validate:all` exit 0; `DATABASE_URL` present in Vercel env for all three scopes (`[HUMAN ACTION]` — human-verified).
+  - Depends on: **TECH-252** (archived — Neon provider lock).
+
 - [x] **TECH-253** — Auth library evaluation + Decision Log entry (Stage 5.1 Phase 1) (2026-04-16)
   - Type: web / decision log
   - Files: `ia/projects/web-platform-master-plan.md` (Decision Log row appended), `docs/web-platform-exploration.md` (§Phase W7 locked constants migrated)
@@ -1454,6 +1614,20 @@
 ---
 
 ## Recent archive (moved from BACKLOG.md, 2026-04-10)
+
+- [x] **TECH-262** — `web/drizzle.config.ts` + `db:generate` script (Stage 5.2 Phase 1) (2026-04-17)
+  - Type: web platform / tooling
+  - Files: `web/drizzle.config.ts` (new), `web/package.json`, `web/README.md`, `web/drizzle/` (new dir)
+  - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+  - Notes: **Completed (verified — `/project-spec-close`).** `web/drizzle.config.ts` (new) exports `defineConfig({ schema: './lib/db/schema.ts', out: './drizzle', dialect: 'postgresql', dbCredentials: { url: process.env.DATABASE_URL ?? 'postgresql://placeholder' } })` — drizzle-kit v0.20+ `dialect` key; placeholder fallback prevents `db:generate` crash offline (generate is schema-only, no DB hit). `web/package.json` `scripts.db:generate` = `"drizzle-kit generate"` (no `--config` flag — drizzle-kit picks `drizzle.config.ts` at `cwd`). `cd web && npm run db:generate` offline produces `web/drizzle/0000_*.sql` + `web/drizzle/meta/{_journal,0000_snapshot}.json` (CREATE TABLE statements for user/session/save/entitlement w/ FK cascade). `web/README.md §Portal` extended w/ "Migration tooling" subsection — documents `db:generate` purpose + output dir + commit stance + "Step 5 architecture-only — no `db:migrate` script" boundary. Decision Log — commit `web/drizzle/` (not gitignore) per drizzle convention + PR-reviewable schema diffs; `dialect: 'postgresql'` + `DATABASE_URL` placeholder fallback (contributor first-run DX); NO `db:migrate` script in Stage 5.2 (Step 5 architecture-only; migrations in post-Step-5 portal-launch plan). Validate: `npm run validate:all` exit 0. Stage 5.2 Phase 1 second Exit bullet satisfied.
+  - Depends on: **TECH-261** (archived — drizzle-orm + schema.ts)
+
+- [x] **TECH-261** — `drizzle-orm` install + `web/lib/db/schema.ts` (user/session/save/entitlement) (Stage 5.2 Phase 1) (2026-04-17)
+  - Type: web platform / data model
+  - Files: `web/package.json`, `web/lib/db/schema.ts` (new)
+  - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+  - Notes: **Completed (verified — `/project-spec-close`).** `drizzle-orm` + `drizzle-kit` pinned in `web/package.json` (`dependencies` + `devDependencies`); `web/lib/db/schema.ts` (new) exports 4 typed `pgTable` consts — `user` (uuid PK `defaultRandom()` + `email text unique not null` + `passwordHash text not null` (argon2id digest) + `createdAt timestamptz defaultNow()`), `session` (uuid PK + `userId uuid FK→user.id onDelete cascade` + `expiresAt timestamptz not null` + `token text not null`), `save` (uuid PK + `userId FK cascade` + `data jsonb $type<unknown>() not null` + `updatedAt timestamptz defaultNow()`), `entitlement` (uuid PK + `userId FK cascade` + `tier text not null` + `grantedAt timestamptz defaultNow()`) + 8 inferred types via `$inferSelect` / `$inferInsert`. Column shape matches Stage 5.1 auth-lib lock (TECH-253 Decision Log: roll-own JWT + sessions, `SESSION_COOKIE_NAME=portal_session`, `SESSION_LIFETIME_DAYS=30`, `@node-rs/argon2`). Decision Log — UUID PKs over bigserial (enumeration leak + Stage 5.1 contract); TIMESTAMPTZ over plain timestamp (Vercel UTC vs Neon session-tz drift); `onDelete: 'cascade'` over restrict (GDPR account-delete intent, saves app-level cascade scripts later); `$type<unknown>()` over `Record<string, unknown>` on `save.data` (refined by TECH-263+ when save shape locks). No migrations run; `drizzle` adapter wrap deferred to TECH-262. Validate: `cd web && npm run typecheck` green; `npm run validate:all` green; `npm run validate:web` green. Stage 5.2 Phase 1 first Exit bullet satisfied.
+  - Depends on: **TECH-254** (archived — `web/lib/db/client.ts` lazy singleton)
 
 - [x] **TECH-226** — README §Components Sidebar entry + validation closeout (Stage 4.1 Phase 2) (2026-04-16)
   - Type: docs / web workspace

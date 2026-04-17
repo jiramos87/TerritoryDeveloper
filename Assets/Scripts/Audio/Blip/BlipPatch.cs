@@ -22,6 +22,14 @@ namespace Territory.Audio
         public BlipOscillator[] Oscillators => oscillators;
 
         // -----------------------------------------------------------------------
+        // FX chain (0..4 slots; array size capped in OnValidate)
+        // -----------------------------------------------------------------------
+        [SerializeField] private BlipFxSlot[] fxChain = new BlipFxSlot[0];
+
+        /// <summary>FX chain slots for this patch (0..4).</summary>
+        public BlipFxSlot[] FxChain => fxChain;
+
+        // -----------------------------------------------------------------------
         // Envelope — AHDSR, per-stage shape; no AnimationCurve
         // -----------------------------------------------------------------------
         [SerializeField] private BlipEnvelope envelope;
@@ -163,6 +171,23 @@ namespace Territory.Audio
             if (oscillators != null && oscillators.Length > 3)
                 Array.Resize(ref oscillators, 3);
 
+            if (fxChain != null && fxChain.Length > 4)
+                Array.Resize(ref fxChain, 4);
+
+            // Clamp per-kind params — inserted after length cap, before patchHash recompute.
+            // Comb param1 (feedback gain) clamped [0, 0.97] — BIBO stability margin.
+            // Flanger param1 (depth ms) clamped [1, 10] — classic flange-sweep range.
+            if (fxChain != null)
+            {
+                for (int i = 0; i < fxChain.Length; i++)
+                {
+                    if (fxChain[i].kind == BlipFxKind.Comb)
+                        fxChain[i].param1 = Mathf.Clamp(fxChain[i].param1, 0f, 0.97f);
+                    else if (fxChain[i].kind == BlipFxKind.Flanger)
+                        fxChain[i].param1 = Mathf.Clamp(fxChain[i].param1, 1f, 10f);
+                }
+            }
+
             patchHash = BlipPatchHash.Compute(this);
         }
 
@@ -256,6 +281,19 @@ namespace Territory.Audio
             FeedBool(ref h, so.Deterministic);
             FeedFloat(ref h, so.DurationSeconds);
             FeedBool(ref h, so.UseLutOscillators);
+
+            // 9. FX chain (append-only; never reorder preceding sections)
+            var fxArr = so.FxChain;
+            int fxN = fxArr != null ? Mathf.Min(fxArr.Length, 4) : 0;
+            FeedInt(ref h, fxN);
+            for (int i = 0; i < fxN; i++)
+            {
+                BlipFxSlot s = fxArr[i];
+                FeedEnum(ref h, s.kind);
+                FeedFloat(ref h, s.param0);
+                FeedFloat(ref h, s.param1);
+                FeedFloat(ref h, s.param2);
+            }
 
             return (int)h;
         }

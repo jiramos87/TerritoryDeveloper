@@ -30,6 +30,7 @@ namespace Territory.Audio
         private BlipMixerRouter _mixerRouter;
         private BlipCooldownRegistry _cooldownRegistry;
         private BlipBaker _baker;
+        private readonly BlipDelayPool _delayPool = new BlipDelayPool();
         private bool _isReady;
 
         /// <summary>
@@ -140,8 +141,8 @@ namespace Territory.Audio
 
             _mixerRouter       = new BlipMixerRouter(entries);
             _cooldownRegistry  = new BlipCooldownRegistry();
-            // default ctor: AudioSettings.outputSampleRate + 4 MiB budget — BlipBaker.cs:97
-            _baker             = new BlipBaker();
+            // Inject _delayPool so baker pre-leases buffers from catalog-owned pool.
+            _baker             = new BlipBaker(_delayPool);
 
             // scene-load suppression boundary — Stage 1.1 T1.1.4
             BlipEngine.Bind(this);

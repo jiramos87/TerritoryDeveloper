@@ -154,11 +154,6 @@ export default async function DashboardPage({
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 space-y-10">
-      <p className="rounded border border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        This page is internal and non-public. It is not linked from the site navigation or sitemap.
-        It tracks development plan progress for the Territory Developer project.
-      </p>
-
       {/* Filter chip groups */}
       <div className="space-y-2">
         {planChips.length > 0 && (

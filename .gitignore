@@ -76,3 +76,6 @@ tools/sprite-gen/out/
 __pycache__/
 *.pyc
 .vercel
+
+# Playwright output (opt-in; not part of validate:all)
+web/playwright-report/

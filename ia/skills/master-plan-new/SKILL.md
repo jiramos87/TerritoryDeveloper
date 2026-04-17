@@ -189,11 +189,11 @@ Per stage, author the block shape:
 
 **Tasks:**
 
-| Task | Phase | Issue | Status | Intent |
-|---|---|---|---|---|
-| T{N}.{M}.1 | 1 | _pending_ | _pending_ | {≤2 sentences — reference concrete deliverable names: types, methods, file paths. Point at existing patterns if applicable (e.g. `GameNotificationManager.cs` as DontDestroyOnLoad ref, `OnValidate` clamps)} |
-| T{N}.{M}.2 | 1 | _pending_ | _pending_ | {...} |
-| T{N}.{M}.3 | 2 | _pending_ | _pending_ | {...} |
+| Task | Name | Phase | Issue | Status | Intent |
+|---|---|---|---|---|---|
+| T{N}.{M}.1 | {short name ≤6 words} | 1 | _pending_ | _pending_ | {≤2 sentences — reference concrete deliverable names: types, methods, file paths. Point at existing patterns if applicable (e.g. `GameNotificationManager.cs` as DontDestroyOnLoad ref, `OnValidate` clamps)} |
+| T{N}.{M}.2 | {short name} | 1 | _pending_ | _pending_ | {...} |
+| T{N}.{M}.3 | {short name} | 2 | _pending_ | _pending_ | {...} |
 ```
 
 **Task intent concreteness bar:** avoid vague verbs ("add support for X", "handle Y"). Instead cite the thing being shipped — `BlipPatch` SO with `envelope` / `filter` / `oscillator` sub-objects; `OnValidate` clamps on `attackMs` / `decayMs`; `PlayerPrefs.GetFloat("BlipSfxVolumeDb", 0f)` → `AudioMixer.SetFloat("SfxVolume", db)` headless binding in `BlipEngine.Awake`. Concrete intent survives the wait between authoring + `stage-file` materialization.

@@ -310,7 +310,7 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ## Blip audio program
 
-Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra (all four stages archived). Step 2 in progress — Stage 2.1 archived. Stage 2.2 archived 2026-04-15 (TECH-169..TECH-174). Stage 2.3 closed 2026-04-15 (TECH-188..TECH-191 all archived). Stage 2.4 closed 2026-04-15 (TECH-196..TECH-199 all archived). Step 3 opened 2026-04-15 — Stage 3.1 closed 2026-04-15 (TECH-209..TECH-212 all archived). Stage 3.2 closed 2026-04-15 (TECH-215..TECH-218 all archived). Stage 3.3 closed 2026-04-16 (TECH-219..TECH-222 all archived). Stage 3.4 closed 2026-04-16 (TECH-227..TECH-230 archived). Step 4 opened 2026-04-16 — Stage 4.1 closed 2026-04-16 (TECH-235..TECH-238 all archived). Stage 4.2 closed 2026-04-16 (TECH-243..TECH-246 all archived — `BlipVolumeController` logic bodies + `SfxMutedKey` boot-time restore + glossary update).
+Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra (all four stages archived). Step 2 in progress — Stage 2.1 archived. Stage 2.2 archived 2026-04-15 (TECH-169..TECH-174). Stage 2.3 closed 2026-04-15 (TECH-188..TECH-191 all archived). Stage 2.4 closed 2026-04-15 (TECH-196..TECH-199 all archived). Step 3 opened 2026-04-15 — Stage 3.1 closed 2026-04-15 (TECH-209..TECH-212 all archived). Stage 3.2 closed 2026-04-15 (TECH-215..TECH-218 all archived). Stage 3.3 closed 2026-04-16 (TECH-219..TECH-222 all archived). Stage 3.4 closed 2026-04-16 (TECH-227..TECH-230 archived). Step 4 opened 2026-04-16 — Stage 4.1 closed 2026-04-16 (TECH-235..TECH-238 all archived). Stage 4.2 closed 2026-04-16 (TECH-243..TECH-246 all archived — `BlipVolumeController` logic bodies + `SfxMutedKey` boot-time restore + glossary update). Step 5 = DSP kernel v2 (post-MVP FX chain + LFOs + biquad BP + param smoothing). Stage 5.1 opened 2026-04-16 — 5 tasks filed below (FX data model + memoryless cores: BitCrush / RingMod / SoftClip / DcBlocker; delay-line kinds stubbed to passthrough until Stage 5.2). Stage 5.2 opened 2026-04-16 — 6 tasks filed below (TECH-270..TECH-275: `BlipDelayPool` service + `Render` delay-buffer overload + `BlipBaker` lease-on-bake + comb / allpass / chorus / flanger kernels + NoAlloc chorus gate).
 
 ### Stage 3.1 — Patch authoring + catalog wiring
 
@@ -368,6 +368,12 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 ### Stage 4.2 — Settings controller + persistence + mute semantics
 
 _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 5.1 — FX data model + memoryless cores
+
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 5.2 — Delay-line FX + BlipDelayPool
 
 ## Sprite gen lane
 
@@ -429,23 +435,13 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ## Web platform lane
 
-Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Scaffold + design system foundation. Stage 1.1 closed (see BACKLOG-ARCHIVE.md). Stage 1.2 closed 2026-04-14 — tokens + Tailwind wiring task + DataTable/BadgeChip + StatBar/FilterChips + HeatmapCell/AnnotatedMap + `/design` review route + README §Tokens all archived (see BACKLOG-ARCHIVE.md). Step 2 closed 2026-04-15 — Stage 2.1 (MDX pipeline + public pages + SEO — TECH-163…TECH-168), Stage 2.2 (wiki + glossary auto-index + search — TECH-184…TECH-187), Stage 2.3 (devlog + RSS + origin story — TECH-192…TECH-195) all archived. Step 3 Stage 3.1 closed 2026-04-15 — plan loader + typed schema (TECH-200…TECH-203 archived). Stage 3.2 closed 2026-04-15 — dashboard RSC + filters (T3.2.1 + T3.2.2 + T3.2.3 + T3.2.4 archived). Stage 3.3 closed 2026-04-15 — legacy handoff + E2E smoke + deprecation log (TECH-213 + TECH-214 archived). Step 4 Stage 4.1 closed 2026-04-16 — nav sidebar + icon system (TECH-223 + TECH-224 + TECH-225 + TECH-226 all archived). Stage 4.2 closed 2026-04-16 — UI primitives polish + dashboard percentages (TECH-231 + TECH-232 + TECH-233 + TECH-234 all archived 2026-04-16). Stage 4.3 closed 2026-04-16 — D3 PlanChart grouped-bar chart (TECH-239 + TECH-240 + TECH-241 + TECH-242 all archived 2026-04-16). Stage 4.4 closed 2026-04-16 — multi-select dashboard filtering (TECH-247 + TECH-248 + TECH-249 + TECH-250 all archived 2026-04-16). Stage 5.1 filed 2026-04-16 — Postgres provider + auth library selection. TECH-252 + TECH-253 archived 2026-04-16 (Neon free + roll-own JWT + sessions locked in orchestrator Decision Log); TECH-254 + TECH-255 Draft.
+Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Scaffold + design system foundation. Stage 1.1 closed (see BACKLOG-ARCHIVE.md). Stage 1.2 closed 2026-04-14 — tokens + Tailwind wiring task + DataTable/BadgeChip + StatBar/FilterChips + HeatmapCell/AnnotatedMap + `/design` review route + README §Tokens all archived (see BACKLOG-ARCHIVE.md). Step 2 closed 2026-04-15 — Stage 2.1 (MDX pipeline + public pages + SEO — TECH-163…TECH-168), Stage 2.2 (wiki + glossary auto-index + search — TECH-184…TECH-187), Stage 2.3 (devlog + RSS + origin story — TECH-192…TECH-195) all archived. Step 3 Stage 3.1 closed 2026-04-15 — plan loader + typed schema (TECH-200…TECH-203 archived). Stage 3.2 closed 2026-04-15 — dashboard RSC + filters (T3.2.1 + T3.2.2 + T3.2.3 + T3.2.4 archived). Stage 3.3 closed 2026-04-15 — legacy handoff + E2E smoke + deprecation log (TECH-213 + TECH-214 archived). Step 4 Stage 4.1 closed 2026-04-16 — nav sidebar + icon system (TECH-223 + TECH-224 + TECH-225 + TECH-226 all archived). Stage 4.2 closed 2026-04-16 — UI primitives polish + dashboard percentages (TECH-231 + TECH-232 + TECH-233 + TECH-234 all archived 2026-04-16). Stage 4.3 closed 2026-04-16 — D3 PlanChart grouped-bar chart (TECH-239 + TECH-240 + TECH-241 + TECH-242 all archived 2026-04-16). Stage 4.4 closed 2026-04-16 — multi-select dashboard filtering (TECH-247 + TECH-248 + TECH-249 + TECH-250 all archived 2026-04-16). Stage 5.1 closed 2026-04-16 — Postgres provider + auth library selection. TECH-252 + TECH-253 + TECH-254 + TECH-255 all archived 2026-04-16 (Neon free + roll-own JWT + sessions + `web/lib/db/client.ts` lazy driver wiring + `web/README.md §Portal` contributor doc landed). Stage 5.2 opened 2026-04-16 — 4 tasks filed (drizzle schema + `db:generate` script + 4 stub auth route handlers; no migrations run, no real auth flow — architecture-only per orchestrator §Step 5). Stage 5.3 closed 2026-04-17 — Phase 0 (TECH-269), Phase 1 (TECH-265 + TECH-266), Phase 2 (TECH-267 + TECH-268) all archived; presence-only cookie check w/ `DASHBOARD_AUTH_SKIP=1` local-dev bypass, no signature verify — architecture-only per orchestrator §Step 5. Next.js 16 middleware → proxy rename absorbed during TECH-268 smoke (see `ia/projects/web-platform-master-plan.md` §Step 5 Status).
 
-- [ ] **TECH-254** — Postgres driver install + `web/lib/db/client.ts` + Vercel `DATABASE_URL` wiring (Stage 5.1 Phase 2)
-  - Type: web / scaffold
-  - Files: `web/package.json`, `web/lib/db/client.ts` (new), Vercel project env (production + preview + development)
-  - Spec: `ia/projects/TECH-254.md`
-  - Notes: Install driver matching TECH-252 provider choice; author connection pool wrapper — lazy-connect, no open at build time; exports typed `db` / `sql` handle for future Stage 5.2 schema consumers. Wire `DATABASE_URL` into Vercel env (dashboard or `vercel env add`). No migrations run at this tier.
-  - Acceptance: `web/lib/db/client.ts` exports pool; `npm --prefix web run build` green w/ no open DB connection at build; `DATABASE_URL` present in Vercel env for all three environments; `npm run validate:all` exit 0.
-  - Depends on: **TECH-252**
+### Stage 5.2 — Auth API stubs + schema draft
 
-- [ ] **TECH-255** — `web/README.md` §Portal documentation (Stage 5.1 Phase 2)
-  - Type: web / docs
-  - Files: `web/README.md`
-  - Spec: `ia/projects/TECH-255.md`
-  - Notes: Extend README with §Portal — provider choice (from TECH-252), connection pool pattern + lazy-connect rationale, `DATABASE_URL` env contract (prod/preview/dev), payment gateway architecture placeholder (no provider chosen), and "Step 5 is architecture-only — no migrations run" boundary note.
-  - Acceptance: §Portal section present in `web/README.md` covering all four bullets; `npm run validate:all` exit 0.
-  - Depends on: **TECH-252**, **TECH-254**
+### Stage 5.3 — Dashboard auth middleware migration
+
+### Stage 6.1 — Playwright e2e harness: install + config + CI wiring
 
 ## High Priority
 
@@ -504,6 +500,7 @@ Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-
 - [ ] **BUG-16** — Possible race condition in GeographyManager vs TimeManager initialization (**geography initialization**)
   - Type: fix
   - Files: `GeographyManager.cs`, `TimeManager.cs`, `GridManager.cs`
+  - Spec: `ia/projects/BUG-16.md`
   - Notes: Unity does not guarantee Start() order. If TimeManager.Update() runs before GeographyManager completes **geography initialization**, it may access non-existent data. Use Script Execution Order or gate with `isInitialized`.
 
 - [ ] **BUG-17** — `cachedCamera` is null when creating `ChunkCullingSystem`

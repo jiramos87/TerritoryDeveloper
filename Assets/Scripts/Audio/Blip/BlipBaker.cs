@@ -78,9 +78,17 @@ public sealed class BlipBaker
     // Fields
     // -----------------------------------------------------------------------
 
-    private readonly int  _sampleRate;
-    private readonly long _budgetBytes;
-    private          long _totalBytes;
+    /// <summary>
+    /// Maximum delay-line ceiling in milliseconds used when pre-leasing pool buffers.
+    /// 50 ms covers Comb (30 ms) + Chorus/Flanger LFO-sweep ranges.
+    /// Revisit if per-slot tighter sizing is beneficial.
+    /// </summary>
+    private const float MaxDelayMs = 50f;
+
+    private readonly int           _sampleRate;
+    private readonly long          _budgetBytes;
+    private          long          _totalBytes;
+    private readonly BlipDelayPool _delayPool;
 
     /// <summary>
     /// Creates a baker bound to <paramref name="sampleRate"/> and a memory
@@ -94,11 +102,34 @@ public sealed class BlipBaker
     /// Maximum byte footprint of all cached <see cref="AudioClip"/> PCM data (mono float32).
     /// Defaults to 4 MiB. Must be greater than zero; throws <see cref="ArgumentOutOfRangeException"/> otherwise.
     /// </param>
+    /// <remarks>
+    /// Test back-compat ctor: creates a private <see cref="BlipDelayPool"/> internally.
+    /// Callers in production should prefer <see cref="BlipBaker(BlipDelayPool,int,long)"/>
+    /// so <see cref="BlipCatalog"/> owns the pool lifetime.
+    /// </remarks>
     public BlipBaker(int sampleRate = 0, long budgetBytes = 4L * 1024 * 1024)
+        : this(new BlipDelayPool(), sampleRate, budgetBytes) { }
+
+    /// <summary>
+    /// Creates a baker bound to <paramref name="sampleRate"/>, a memory
+    /// <paramref name="budgetBytes"/> ceiling, and an externally-owned
+    /// <paramref name="delayPool"/> for pre-leasing delay-line buffers.
+    /// </summary>
+    /// <param name="delayPool">
+    /// Pool to lease delay-line buffers from. Must not be null; if null a private instance is created.
+    /// Owned by the caller (e.g. <see cref="Territory.Audio.BlipCatalog"/>).
+    /// </param>
+    /// <param name="sampleRate">Sample rate in Hz; pass 0 to use <see cref="AudioSettings.outputSampleRate"/>.</param>
+    /// <param name="budgetBytes">
+    /// Maximum byte footprint of all cached <see cref="AudioClip"/> PCM data (mono float32).
+    /// Defaults to 4 MiB. Must be greater than zero; throws <see cref="ArgumentOutOfRangeException"/> otherwise.
+    /// </param>
+    internal BlipBaker(BlipDelayPool delayPool, int sampleRate = 0, long budgetBytes = 4L * 1024 * 1024)
     {
         if (budgetBytes <= 0)
             throw new ArgumentOutOfRangeException(nameof(budgetBytes),
                 "budgetBytes must be greater than zero.");
+        _delayPool   = delayPool ?? new BlipDelayPool();
         _sampleRate  = sampleRate > 0 ? sampleRate : AudioSettings.outputSampleRate;
         _budgetBytes = budgetBytes;
     }
@@ -142,7 +173,31 @@ public sealed class BlipBaker
         int lengthSamples = (int)(patch.durationSeconds * _sampleRate);
         float[] buffer = new float[lengthSamples];
         BlipVoiceState state = default;
-        BlipVoice.Render(buffer, 0, lengthSamples, _sampleRate, in patch, variantIndex, ref state);
+
+        // Pre-lease 4 delay-line buffers outside the Render call so no managed alloc
+        // occurs inside Render (Stage 5.2 no-alloc contract).
+        // All four slots get the same 50 ms ceiling; delay-line kernels live in BlipFxChain.
+        float[]? d0 = null, d1 = null, d2 = null, d3 = null;
+        int wp0 = 0, wp1 = 0, wp2 = 0, wp3 = 0;
+        int len = (int)Math.Ceiling(MaxDelayMs / 1000f * _sampleRate) + 1;
+        try
+        {
+            d0 = _delayPool.Lease(_sampleRate, MaxDelayMs);
+            d1 = _delayPool.Lease(_sampleRate, MaxDelayMs);
+            d2 = _delayPool.Lease(_sampleRate, MaxDelayMs);
+            d3 = _delayPool.Lease(_sampleRate, MaxDelayMs);
+            BlipVoice.Render(buffer, 0, lengthSamples, _sampleRate, in patch, variantIndex, ref state,
+                d0, d1, d2, d3, len, len, len, len,
+                ref wp0, ref wp1, ref wp2, ref wp3);
+        }
+        finally
+        {
+            // Return non-null leases unconditionally; BlipDelayPool.Return clears (clearArray: true).
+            if (d0 != null) _delayPool.Return(d0);
+            if (d1 != null) _delayPool.Return(d1);
+            if (d2 != null) _delayPool.Return(d2);
+            if (d3 != null) _delayPool.Return(d3);
+        }
 
         string clipName = $"Blip_{patchHash:X8}_v{variantIndex}";
         var clip = AudioClip.Create(clipName, lengthSamples, channels: 1, _sampleRate, stream: false);
