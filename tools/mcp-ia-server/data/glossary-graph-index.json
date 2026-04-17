@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-16T11:03:59.085Z",
+  "last_generated": "2026-04-17T15:27:52.776Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -35,11 +35,11 @@
     },
     "Agent test mode batch": {
       "related": [
+        "Cell",
         "geography_init_params",
         "IDE agent bridge",
-        "Cell",
-        "City metrics history",
-        "Geography initialization"
+        "Alignment gate",
+        "City metrics history"
       ],
       "cited_in": [
         {
@@ -48,6 +48,16 @@
           "section_title": "10. Editor agent diagnostics (machine-readable exports)"
         }
       ]
+    },
+    "Alignment gate": {
+      "related": [
+        "Agent test mode batch",
+        "Cell",
+        "City metrics history",
+        "geography_init_params",
+        "Happiness"
+      ],
+      "cited_in": []
     },
     "AUTO systems": {
       "related": [
@@ -1104,11 +1114,11 @@
     },
     "City metrics history": {
       "related": [
-        "Agent test mode batch",
         "Cell",
+        "Agent test mode batch",
+        "Alignment gate",
         "Cut-through",
-        "geography_init_params",
-        "Happiness"
+        "geography_init_params"
       ],
       "cited_in": [
         {
@@ -1795,10 +1805,10 @@
     "geography_init_params": {
       "related": [
         "Agent test mode batch",
-        "IDE agent bridge",
         "Cell",
-        "City metrics history",
-        "Geography initialization"
+        "IDE agent bridge",
+        "Alignment gate",
+        "City metrics history"
       ],
       "cited_in": [
         {
@@ -2171,10 +2181,10 @@
     "IDE agent bridge": {
       "related": [
         "Agent test mode batch",
-        "geography_init_params",
         "Cell",
-        "City metrics history",
-        "Geography initialization"
+        "geography_init_params",
+        "Alignment gate",
+        "City metrics history"
       ],
       "cited_in": [
         {
@@ -2203,10 +2213,10 @@
     "Interchange JSON (artifact)": {
       "related": [
         "Agent test mode batch",
+        "Alignment gate",
+        "Cell",
         "City metrics history",
-        "Geography initialization",
-        "geography_init_params",
-        "Happiness"
+        "Geography initialization"
       ],
       "cited_in": []
     },
@@ -2973,10 +2983,10 @@
     "Orchestrator document": {
       "related": [
         "Agent test mode batch",
+        "Alignment gate",
+        "Cell",
         "City metrics history",
-        "geography_init_params",
-        "Happiness",
-        "IDE agent bridge"
+        "geography_init_params"
       ],
       "cited_in": []
     },
@@ -3098,6 +3108,16 @@
       ],
       "cited_in": []
     },
+    "Per-skill Changelog": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Cell",
+        "City metrics history",
+        "geography_init_params"
+      ],
+      "cited_in": []
+    },
     "Phase-1 validation": {
       "related": [
         "baseHeight (terraform)",
@@ -3188,10 +3208,10 @@
     "Project hierarchy": {
       "related": [
         "Agent test mode batch",
+        "Alignment gate",
+        "Cell",
         "City metrics history",
-        "geography_init_params",
-        "Happiness",
-        "IDE agent bridge"
+        "geography_init_params"
       ],
       "cited_in": []
     },
@@ -3199,9 +3219,9 @@
       "related": [
         "Reference spec",
         "Agent test mode batch",
-        "City metrics history",
-        "geography_init_params",
-        "Happiness"
+        "Alignment gate",
+        "Cell",
+        "City metrics history"
       ],
       "cited_in": [
         {
@@ -3322,8 +3342,8 @@
         "Game notification",
         "Happiness",
         "Interstate",
-        "Project spec",
-        "Agent test mode batch"
+        "Cell",
+        "Project spec"
       ],
       "cited_in": [
         {
@@ -3790,6 +3810,26 @@
         }
       ]
     },
+    "Rollout lifecycle": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Cell",
+        "City metrics history",
+        "geography_init_params"
+      ],
+      "cited_in": []
+    },
+    "Rollout tracker": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Cell",
+        "City metrics history",
+        "geography_init_params"
+      ],
+      "cited_in": []
+    },
     "Save data": {
       "related": [
         "Cell",
@@ -3875,10 +3915,10 @@
     "scenario_descriptor_v1": {
       "related": [
         "Agent test mode batch",
+        "Alignment gate",
+        "Cell",
         "City metrics history",
-        "geography_init_params",
-        "Happiness",
-        "IDE agent bridge"
+        "geography_init_params"
       ],
       "cited_in": []
     },
@@ -4003,10 +4043,10 @@
     "Simulation tick": {
       "related": [
         "Agent test mode batch",
+        "Alignment gate",
         "AUTO systems",
-        "City metrics history",
-        "Geography initialization",
-        "geography_init_params"
+        "Cell",
+        "City metrics history"
       ],
       "cited_in": [
         {
@@ -4015,6 +4055,16 @@
           "section_title": "Scales"
         }
       ]
+    },
+    "Skill Iteration Log": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Cell",
+        "City metrics history",
+        "geography_init_params"
+      ],
+      "cited_in": []
     },
     "Slope categories": {
       "related": [
