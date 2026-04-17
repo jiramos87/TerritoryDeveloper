@@ -82,6 +82,13 @@ public class GeographyManager : MonoBehaviour
     private GeographyData currentGeographyData;
 
     private MiniMapController miniMapController;
+
+    /// <summary>
+    /// True after <see cref="InitializeGeography"/> completes its full pipeline (terrain → water → rivers →
+    /// interstate → forests → desirability → sorting). Time-driven systems must wait for this flag before
+    /// reading grid data (init-race guard — see `ia/specs/unity-development-context.md` §6).
+    /// </summary>
+    public bool IsInitialized { get; private set; }
     #endregion
 
     #region Initialization
@@ -190,6 +197,9 @@ public class GeographyManager : MonoBehaviour
         }
 
         NotifyMiniMapAfterGeographyReady();
+
+        // Signal geography ready so TimeManager daily-tick gate can pass.
+        IsInitialized = true;
     }
 
     private bool GetEffectiveProceduralRiversOnInit()

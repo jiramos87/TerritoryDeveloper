@@ -5,6 +5,7 @@ using Territory.Core;
 using Territory.Zones;
 using Territory.Roads;
 using Territory.Simulation;
+using Territory.Geography;
 
 namespace Territory.Timing
 {
@@ -15,6 +16,9 @@ namespace Territory.Timing
 /// </summary>
 public class TimeManager : MonoBehaviour
 {
+    [Header("Geography Gate")]
+    [SerializeField] private GeographyManager geographyManager;
+
     [Header("UI References")]
     public UIManager uiManager;
     public SpeedButtonsController speedButtonsController; // Add this field
@@ -33,6 +37,14 @@ public class TimeManager : MonoBehaviour
     private float timeElapsed = 0f;
     private System.DateTime currentDate;
 
+    void Awake()
+    {
+        // Cache GeographyManager in Awake (invariant #3 — never FindObjectOfType in Update).
+        // Inspector wire is preferred; FindObjectOfType is safety-net only.
+        if (geographyManager == null)
+            geographyManager = FindObjectOfType<GeographyManager>();
+    }
+
     void Start()
     {
         currentDate = new System.DateTime(2024, 8, 27);
@@ -46,7 +58,10 @@ public class TimeManager : MonoBehaviour
 
         timeElapsed += UnityEngine.Time.deltaTime * timeMultiplier;
 
-        if (timeElapsed >= 1f)
+        // Geography-init gate: block sim-state reads until geography pipeline complete.
+        // HandleOnKeyInput + timeElapsed accumulator above remain active so UI stays responsive during load.
+        if (timeElapsed >= 1f &&
+            geographyManager != null && geographyManager.IsInitialized)
         {
             currentDate = currentDate.AddDays(1);
             timeElapsed = 0f;

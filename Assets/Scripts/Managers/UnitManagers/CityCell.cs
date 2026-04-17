@@ -435,7 +435,7 @@ public class CityCell : CellBase
         prefab = cellData.prefab;
         prefabName = cellData.prefabName;
         secondaryPrefabName = cellData.secondaryPrefabName ?? "";
-        zoneType = (Zone.ZoneType)System.Enum.Parse(typeof(Zone.ZoneType), cellData.zoneType);
+        zoneType = System.Enum.TryParse(cellData.zoneType, out Zone.ZoneType parsedZoneType) ? parsedZoneType : Zone.ZoneType.Grass;
         waterBodyType = cellData.GetWaterBodyType();
         waterBodyId = cellData.waterBodyId;
         occupiedBuildingName = cellData.occupiedBuildingName;

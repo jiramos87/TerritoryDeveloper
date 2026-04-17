@@ -153,7 +153,7 @@ public class GridManager : MonoBehaviour, IGridManager
     private GameObject[,] chunkObjects;
     private bool[,] chunkActiveState;
     private int chunksX, chunksY;
-    private Camera cachedCamera;
+    [SerializeField] private Camera cachedCamera;
     /// <summary>&gt; 0 → skip UpdateVisibility. Avoids mis-culling chunks right after Load.</summary>
     private int skipChunkCullingFramesRemaining = 0;
     #endregion
@@ -329,6 +329,12 @@ public class GridManager : MonoBehaviour, IGridManager
     #endregion
 
     #region Unity Lifecycle
+    void Awake()
+    {
+        if (cachedCamera == null)
+            cachedCamera = Camera.main;
+    }
+
     void Update()
     {
         try
@@ -363,7 +369,6 @@ public class GridManager : MonoBehaviour, IGridManager
                 buildingSelectorMenuController.DeselectAndUnpressAllButtons();
             }
 
-            if (cachedCamera == null) cachedCamera = Camera.main;
             Vector2 worldPoint = ScreenPointToWorldOnGridPlane(cachedCamera, Input.mousePosition);
 
             // USE: Height-aware grid position calculation
@@ -1291,7 +1296,6 @@ public class GridManager : MonoBehaviour, IGridManager
     /// <returns>CityCell whose base tile contains mouse, or null if none.</returns>
     public CityCell GetCellFromWorldPoint(Vector2 worldPoint, Vector2 gridPos)
     {
-        if (cachedCamera == null) cachedCamera = Camera.main;
         Camera cam = cachedCamera;
         if (cam == null) return null;
 
