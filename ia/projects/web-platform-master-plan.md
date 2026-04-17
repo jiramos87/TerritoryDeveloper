@@ -672,7 +672,7 @@
 
 #### Stage 6.2 — Baseline route coverage
 
-**Status:** _pending_
+**Status:** Done (closed 2026-04-17 — TECH-277 archived)
 
 **Objectives:** Author e2e tests for all existing public surfaces. Validates that routes return 200, key content landmarks are present, `robots.txt` disallows `/dashboard`, sitemap enumerates slugs, RSS `Content-Type` correct. No auth-gated routes at this stage.
 
@@ -680,22 +680,21 @@
 - `npm run test:e2e` green against `localhost:4000` (dev server) + headless Chromium.
 - Tests cover: landing, `/about`, `/install`, `/history`, `/wiki`, `/devlog` (list + at least one slug), `robots.txt` body, `/sitemap.xml` slug presence, `/feed.xml` Content-Type.
 
-**Phases:**
-- [ ] Phase 1 — Static page smoke tests.
-- [ ] Phase 2 — robots / sitemap / RSS contract tests.
+**Phases:** Merged into single task per 2026-04-17 Decision Log (2 test-only spec files, no prod code changes, single verify gate — Stage 6.1 merge precedent).
+- [x] Phase 1 — Both specs authored + e2e green (TECH-277).
 
 **Tasks:**
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T6.2.1 | 1 | _pending_ | _pending_ | Author `web/tests/routes.spec.ts` — assert HTTP 200 + at least one visible heading for: `/`, `/about`, `/install`, `/history`, `/wiki`, `/devlog`; assert first devlog slug link navigates to a 200 page. |
-| T6.2.2 | 2 | _pending_ | _pending_ | Author `web/tests/meta.spec.ts` — assert `robots.txt` body contains `Disallow: /dashboard`; assert `/sitemap.xml` contains at least one devlog URL; assert `GET /feed.xml` response `Content-Type` header matches `application/rss+xml`. |
+| T6.2.1 | 1 | **TECH-277** | Done (archived) | Author `web/tests/routes.spec.ts` — assert HTTP 200 + at least one visible heading for: `/`, `/about`, `/install`, `/history`, `/wiki`, `/devlog`; assert first devlog slug link navigates to a 200 page. |
+| T6.2.2 | 1 | **TECH-277** | Done (archived) | Author `web/tests/meta.spec.ts` — assert `robots.txt` body contains `Disallow: /dashboard`; assert `/sitemap.xml` contains at least one devlog URL; assert `GET /feed.xml` response `Content-Type` header matches `application/rss+xml`. |
 
 ---
 
 #### Stage 6.3 — Dashboard e2e (SSR filter flows)
 
-**Status:** _pending_
+**Status:** Done (closed 2026-04-17 — TECH-284 archived)
 
 **Objectives:** Author e2e tests for the dashboard's SSR query-param filter chip flows. Validates the full round-trip: URL param → server render → active chip state → filtered task rows → clear-filters reset. Covers combinations and empty-state.
 
@@ -703,15 +702,13 @@
 - Dashboard filter chip tests green headless; `?plan=` / `?status=` / `?phase=` each produce active chip + filtered rows; multi-param combination narrows correctly; clear-filters `<a>` resets to unfiltered state; unrecognised param value renders empty-state message.
 
 **Phases:**
-- [ ] Phase 1 — Single-param filter round-trip tests.
-- [ ] Phase 2 — Multi-param + clear-filters + empty-state tests.
+- [x] Phase 1 — Full dashboard filter spec (single-param + multi-param + clear-filters + empty-state).
 
 **Tasks:**
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T6.3.1 | 1 | _pending_ | _pending_ | Author `web/tests/dashboard-filters.spec.ts` — for each of `plan`, `status`, `phase` params: navigate to `/dashboard?{param}={value}` with a known value from the unfiltered render; assert chip with matching label has active visual state (class or aria); assert table rows visible count < unfiltered count. |
-| T6.3.2 | 2 | _pending_ | _pending_ | Extend `web/tests/dashboard-filters.spec.ts` — multi-param test (`?status=Done&phase=1`): assert rows satisfy both filters; clear-filters link test: assert `<a href="/dashboard">` present when any param active, clicking it returns unfiltered row count; unknown-value test: navigate to `/dashboard?status=nonexistent` and assert empty-state message text present. |
+| T6.3.1 | 1 | **TECH-284** | Done (archived) | Author `web/tests/dashboard-filters.spec.ts` — (a) for each of `plan`, `status`, `phase` params: navigate to `/dashboard?{param}={value}` w/ known value from unfiltered render; assert chip w/ matching label has active visual state (class or aria); assert visible row count < unfiltered. (b) multi-param (`?status=Done&phase=1`): assert rows satisfy both filters. (c) clear-filters: assert `<a href="/dashboard">` present when any param active; following it returns unfiltered row count. (d) unknown-value (`?status=nonexistent`): assert empty-state message text present. |
 
 ---
 
@@ -766,4 +763,5 @@ Materialize when the named step opens (per `ia/rules/project-hierarchy.md` lazy-
 | 2026-04-15 | Insert Step 4 (Dashboard improvements + UI polish) before portal/E2E; shift former Steps 4→5, 5→6 | Portal auth (now Step 5) and Playwright E2E (now Step 6) paused until future instruction; dashboard UI improvements (sidebar, icons, D3 charts, multi-select filters) prioritized as next active work; no task filings affected — all deferred tasks were _pending_ | Append as Step 7 — rejected, sequential numbering should reflect implementation order; keeping old numbering — rejected, misleads about active next step |
 | 2026-04-16 | Free-tier Postgres provider: **Neon free (Launch tier)** | Pooled connections: 100 > expected ≤ 20 concurrent serverless functions; storage: 0.5 GB vs ≤ 0.1 GB at Stage 5.2 stub (flag monitoring at 0.4 GB); egress: 5 GB/month >> dev traffic; region us-east-1 matches Vercel project default; `@neondatabase/serverless` HTTP driver avoids TCP socket leak on serverless cold-start — no persistent connection held across Next.js function invocations; branch preview-DB feature (up to 10 branches) enables per-PR isolated DBs at TECH-254+ stage; auto-suspend threshold 5 min acceptable for dev workload | **Supabase free** — rejected: 7-day inactivity pause risks portal dashboard latency on low-traffic days; bundled auth/storage/edge surface adds unneeded scope (auth owned by TECH-253); **Vercel Postgres Hobby** — rejected: tightest caps (storage 256 MB, egress 1 GB/month) already near Stage 5.2 stub ceiling; single-region lock at project creation inflexible; Neon-backed underneath so no reliability differentiation vs. Neon direct — no net advantage to justify tighter caps |
 | 2026-04-17 | Stage 6.1: merge T6.1.1 + T6.1.2 + T6.1.3 → single TECH-276 | Pure setup boilerplate — install + config + scripts + README docs ship together; ≤5 files total (`web/package.json`, `web/playwright.config.ts`, `web/tests/.gitkeep`, `web/README.md`, root `package.json`, `.gitignore`); smoke verify (`cd web && npm run test:e2e` exit 0 w/ empty `tests/`) needs all halves; single orchestration unit reduces handoff friction. Precedent: 2026-04-14 Stage 1.1 + Stage 1.2 merges. | Keep 3-task split — rejected, each phase ≤2 files w/ no independent verify gate. |
+| 2026-04-17 | Stage 6.3: collapse T6.3.1 + T6.3.2 → single TECH-284 | Test-only, single file (`web/tests/dashboard-filters.spec.ts`), single verify gate (`cd web && npm run test:e2e` green); single-param + multi-param + clear-filters + empty-state scenarios share one spec file + fixtures — splitting forces redundant imports + duplicated setup. Precedent: 2026-04-17 Stage 6.2 pattern (TECH-277 authored routes.spec.ts + meta.spec.ts under one issue). | Keep 2-task split — rejected, no independent verify gate per phase; phases only differ in test case coverage w/in same file. |
 | 2026-04-16 | Auth library: **roll-own JWT + sessions** (Q11 confirmed). Constants: `SESSION_COOKIE_NAME=portal_session`, `SESSION_LIFETIME_DAYS=30`, password hash lib `@node-rs/argon2` (argon2id, Node runtime only — route handlers only, not middleware). API surface: `jose` (`SignJWT` / `jwtVerify`, Edge-safe Web Crypto) for token sign/verify; stateful `session` DB row (`id UUID PK, user_id UUID FK, expires_at TIMESTAMPTZ, token TEXT`) for revocation; cookie set via `cookies()` from `next/headers` in server actions, read via `request.cookies.get(SESSION_COOKIE_NAME)` in Edge middleware. | Q11 exactly matches this pattern (stateful row, no third-party provider); `jose` covers middleware JWT verify on Edge runtime without Node-only deps; argon2id hash ops confined to Node-runtime route handlers — clean runtime split; zero external auth framework lock-in; drizzle types map directly to session row columns. | **Lucia Auth v3** — rejected: officially sunsetted/archived by author (pilcrow) in late 2025; no active maintainers; maintenance risk unacceptable for a session-first library that owns cookie + session lifecycle. **Auth.js v5 (NextAuth)** — rejected: full OAuth/PKCE/CSRF machinery ships even with Credentials-only config (~50 kB server bundle overhead); Credentials provider + DB session requires Node runtime split anyway (same as roll-own); overkill for email+password MVP with no social login planned. |

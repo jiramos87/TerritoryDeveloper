@@ -2,6 +2,54 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
+- [x] **TECH-284** — Dashboard filter e2e spec (Stage 6.3) (2026-04-17)
+  - Type: tooling / e2e tests
+  - Files: `web/tests/dashboard-filters.spec.ts` (new)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; full prose in git history only)
+  - Notes: Authored `web/tests/dashboard-filters.spec.ts` covering single-param (`plan` / `status` / `phase`), multi-param intersection (`?status={v}&phase={n}`), clear-filters link reset, empty-state (`?status=nonexistent`). Baseline fixture extracts live values from unfiltered `/dashboard` render. Active-chip hook = class token `bg-panel text-primary`. Clear-filters locator = `role=link` named `Clear filters`. Row count = `page.locator('tbody tr').count()` summed across all `DataTable` instances.
+  - Acceptance: `cd web && npm run test:e2e` exit 0 headless; `npm run validate:all` green; Stage 6.3 Exit criteria satisfied.
+  - Related: **TECH-277** (baseline Playwright harness), `ia/projects/web-platform-master-plan.md` Stage 6.3
+
+- [x] **BUG-17** — `cachedCamera` is null when creating `ChunkCullingSystem` (2026-04-17)
+  - Type: fix
+  - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; canonical init-race guard pattern covered in `ia/specs/unity-development-context.md` §6; full prose in git history only)
+  - Notes: Promoted `cachedCamera` → `[SerializeField] private Camera cachedCamera;` + added minimal `Awake()` resolving via `Camera.main` fallback so `ChunkCullingSystem` constructor (called from `InitializeGrid`) receives non-null reference. Removed redundant lazy null-checks at `GridManager.cs:366` + `:1294` (Awake now guarantees resolution). `ChunkCullingSystem.UpdateVisibility` self-heal retained as belt-and-braces (non-MonoBehaviour). Compile clean; no visual regression on chunk culling. Matches canonical init-race guard pattern in `unity-development-context §6` + guardrail "IF adding a manager reference → `[SerializeField] private` + `FindObjectOfType` fallback in `Awake`".
+  - Acceptance: `cachedCamera` non-null at `InitializeGrid` entry; zero NRE from culling init on New Game / Load; chunk visibility unchanged.
+  - Related: **BUG-16** (init ordering sibling), `ia/specs/unity-development-context.md` §6
+
+- [x] **BUG-16** — Possible race condition in GeographyManager vs TimeManager initialization (**geography initialization**) (2026-04-17)
+  - Type: fix
+  - Files: `Assets/Scripts/Managers/GameManagers/GeographyManager.cs`, `Assets/Scripts/Managers/GameManagers/TimeManager.cs`
+  - Spec: (removed at closeout — Decision Log + Lessons persisted to `ia_project_spec_journal`; canonical init-race guard pattern captured in `ia/specs/unity-development-context.md` §6; full prose in git history only)
+  - Notes: `GeographyManager.IsInitialized` flips true at tail of `InitializeGeography()` (post desirability/sorting). `TimeManager` caches ref via `[SerializeField]` + `FindObjectOfType` fallback in new `Awake` (invariant #3); daily-tick block (`if timeElapsed >= 1f`) early-returns when flag false — `HandleOnKeyInput` + accumulator stay unguarded so pause/speed UI responsive during load. Bridge `get_console_logs` fresh-scene smoke: 0 NRE tagged `TimeManager`; compile clean. Grep sweep: `GridManager.Update`/`UIManager.Update` already self-guard — fix self-contained. Edit-mode `testmode-batch` skipped (Editor project lock); bridge compile gate covers.
+  - Acceptance: `IsInitialized` flips post-pipeline; `TimeManager.Update` tick early-returns pre-init; no fresh-scene NRE; compile clean.
+  - Related: **BUG-17** (init ordering sibling), `ia/specs/unity-development-context.md` §6
+
+- [x] **BUG-14** — `FindObjectOfType` in Update/per-frame degrades performance (2026-04-17)
+  - Type: fix (performance)
+  - Files: `Assets/Scripts/Managers/GameManagers/UIManager.cs`, `Assets/Scripts/Managers/GameManagers/UIManager.Hud.cs`
+  - Spec: (removed at closeout — Decision Log + Lessons persisted to `ia_project_spec_journal`; full prose in git history only)
+  - Notes: `UIManager.UpdateUI()` caches `EmploymentManager` + `DemandManager` in `Start` via `[SerializeField] private` + null-safe `FindObjectOfType` fallback (sibling pattern to existing `cityStats` / `waterManager` resolution); dead `StatisticsManager` per-frame lookup removed (was assigned, never read). `UpdateGridCoordinatesDebugText` (`LateUpdate` path) drops lazy `FindObjectOfType<GameDebugInfoBuilder>` + `FindObjectOfType<WaterManager>` branches — both fields resolved once in `Start`. Zero per-frame `FindObjectOfType` in `UIManager.Hud.cs` (verified). `CursorManager.Update` already cached (unchanged). Bridge smoke 2026-04-17: compile clean, HUD + debug coord text render, zero console errors. Invariant #3 satisfied. **Prevention:** **TECH-26** CI scanner.
+  - Acceptance: zero `FindObjectOfType` matches in `UIManager.Hud.cs`; Unity compile clean; Play Mode HUD smoke clean.
+  - Related: **TECH-26**, **TECH-05**
+
+- [x] **BUG-55** — Codebase audit: critical simulation, data integrity, and controller bugs (10 fixes) (2026-04-17)
+  - Type: fix (crasher + data corruption + simulation logic + memory leak)
+  - Files: `EmploymentManager.cs`, `AutoZoningManager.cs`, `CellData.cs`, `GrowthBudgetManager.cs`, `AutoRoadBuilder.cs`, `DemandManager.cs`, `CityCell.cs`, `RoadStrokeTerrainRules.cs`, `GridPathfinder.cs`, `SimulateGrowthToggle.cs`, `GrowthBudgetSlidersController.cs`, `CityStatsUIController.cs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons captured in `MEMORY.md`; full prose in git history only)
+  - Notes: All 10 audit fixes landed across 6 phases. **Crashers:** EmploymentManager div/0 already guarded (`if totalRatio > 0`); `CityCell` ctor `Enum.Parse` → `TryParse` w/ fallback. **Data corruption:** AutoZoningManager placement-first ordering (`PlaceZoneAt` then `TrySpend`); `CellData.ValidateData()` height floor `Mathf.Max(1,…)` → `Mathf.Max(0,…)`. **Sim logic:** `GrowthBudgetManager.ReturnAvailable` returns `minAvailablePerCategory` (not `Mathf.Min`); `AutoRoadBuilder` adds `InvalidateRoadCache()` + edges/roadSet re-fetch post street-project loop (satisfies invariant #2); `DemandManager` subtracts building counts from zone counts w/ `Mathf.Max(0,…)`. **Terrain / balance:** water height `<= 0` → `< 0` strict in `RoadStrokeTerrainRules` + `GridPathfinder`; `unemploymentResidentialPenalty` 1.5 → 1.2 (symmetric w/ jobBoost). **Memory leaks:** `OnDestroy()` listener cleanup in `SimulateGrowthToggle`, `GrowthBudgetSlidersController`, `CityStatsUIController`. Kickoff caught Fix 7 spec-vs-code path drift (`Cell.cs` → `CityCell.cs`) — lesson archived.
+  - Related: **BUG-14**, **TECH-05**, **TECH-16**
+
+- [x] **TECH-277** — Playwright e2e baseline route + meta contract tests (Stage 6.2) (2026-04-17)
+  - Type: tooling / e2e tests
+  - Files: `web/tests/routes.spec.ts` (new), `web/tests/meta.spec.ts` (new), `web/tests/.gitkeep` (removed), `web/app/robots.ts` (minimal prod fix — added `/dashboard` to disallow)
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons captured in `MEMORY.md`; full prose in git history only)
+  - Notes: Authored 2 Playwright spec files per Stage 6.2 Exit. `routes.spec.ts` array-driven smoke for `/`, `/about`, `/install`, `/history`, `/wiki`, `/devlog` (200 + visible heading) + first devlog slug nav via `page.waitForURL(/\/devlog\/.+/)`. `meta.spec.ts` robots `Disallow: /dashboard`, sitemap `/devlog/` substring, RSS `application/rss+xml` `Content-Type`. Issues Found §9 surfaced 3 runtime pitfalls (missing `/dashboard` in robots.ts → 1-line prod fix; `npx playwright install chromium` needed; `waitForResponse` unreliable for SPA nav → `waitForURL`). 10/10 tests green against `localhost:4000` headless Chromium.
+  - Acceptance: `cd web && npm run test:e2e` exit 0; `npm run validate:all` green; Stage 6.2 Exit criteria satisfied.
+  - Depends on: TECH-276 (Done)
+  - Related: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-master-plan.md) Stage 6.2
+
 - [x] **TECH-276** — Playwright e2e harness — install + config + scripts + README docs (Stage 6.1) (2026-04-17)
   - Type: tooling / scaffold
   - Files: `web/package.json`, `web/playwright.config.ts` (new), `web/tests/.gitkeep` (new), `web/README.md` (§E2E append), `package.json` (root — `validate:e2e`), `.gitignore`

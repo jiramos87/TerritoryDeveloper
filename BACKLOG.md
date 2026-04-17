@@ -245,8 +245,8 @@ Evolve **Information Architecture** from doc retrieval → learning, bidirection
   - Spec sections: `ia/specs/ui-design-system.md` — **§1** **Foundations**, **§3** patterns, **§5.3** polish patterns; `ia/specs/simulation-system.md`; `ia/specs/persistence-system.md` (optional persistence); [`docs/ui-data-dashboard-exploration.md`](docs/ui-data-dashboard-exploration.md)
   - Notes: Delivers **exploration** **§2.1–§2.5** (history → derived metrics → chart engine → **dashboard** layout). Reuse **UI-as-code** **tokens** (**`ui-design-system.md`**); **map** **info view** (**§2.6**) is **out of scope** — separate **FEAT-** when prioritized. **Spike** chart library (**XCharts** or equivalent) per **Decision Log**. Add chart-specific **`UiTheme`** fields in this issue or a follow-up **TECH-** row when scoped.
   - Acceptance: per `ia/projects/FEAT-51.md` **§8**; chart choice and persistence stance recorded in spec **Decision Log**
-  - Depends on: none (soft: **BUG-14** — no per-frame **`FindObjectOfType`** in dashboard UI)
-  - Related: **BUG-14**
+  - Depends on: none (soft constraint: no per-frame **`FindObjectOfType`** in dashboard UI — see `BACKLOG-ARCHIVE.md` BUG-14)
+  - Related: see `BACKLOG-ARCHIVE.md` BUG-14
 
 - [ ] **TECH-72** — **HUD** / **uGUI** scene hygiene for agents (**UI** inventory alignment)
   - Type: code health / **UI**-as-code enablement
@@ -375,6 +375,42 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ### Stage 5.2 — Delay-line FX + BlipDelayPool
 
+_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
+
+### Stage 5.3 — LFOs + routing matrix + param smoothing
+
+- [ ] **TECH-285** — LFO types + `BlipPatch`/`BlipPatchFlat` extension (Stage 5.3 Phase 1)
+  - Type: audio / data model
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatchTypes.cs`, `Assets/Scripts/Audio/Blip/BlipPatch.cs`, `Assets/Scripts/Audio/Blip/BlipPatchFlat.cs`
+  - Spec: `ia/projects/TECH-285.md`
+  - Notes: `BlipLfoKind` enum (Off=0 / Sine=1 / Triangle=2 / Square=3 / SampleAndHold=4) + `BlipLfoRoute` enum (Pitch=0 / Gain=1 / FilterCutoff=2 / Pan=3) + `BlipLfo [Serializable] struct` (BlipLfoKind kind; float rateHz, depth; BlipLfoRoute route) + `BlipLfoFlat readonly struct` — all in `BlipPatchTypes.cs`. `BlipPatch` gains `[SerializeField] public BlipLfo lfo0, lfo1`; `OnValidate` clamps `rateHz ≥ 0`. `BlipPatchFlat` gains `BlipLfoFlat lfo0Flat, lfo1Flat`; ctor copies both. Pure data-model scaffold — no kernel logic (advance TECH-287, routing TECH-288).
+  - Acceptance: enums + structs present; `BlipPatch.lfo0/lfo1` serialized + clamp; `BlipPatchFlat` blittable w/ new fields; `npm run unity:compile-check` green; `npm run validate:all` exit 0; existing `BlipGoldenFixtureTests` + `BlipNoAllocTests` still green.
+  - Depends on: none (Stage 5.2 closed).
+
+- [ ] **TECH-286** — `BlipLutPool` stub + `BlipVoiceState` LFO phase fields (Stage 5.3 Phase 1)
+  - Type: audio / infrastructure
+  - Files: `Assets/Scripts/Audio/Blip/BlipLutPool.cs` (new), `Assets/Scripts/Audio/Blip/BlipCatalog.cs`, `Assets/Scripts/Audio/Blip/BlipVoiceState.cs`, `Assets/Scripts/Audio/Blip/BlipVoice.cs`
+  - Spec: `ia/projects/TECH-286.md`
+  - Notes: New `internal sealed class BlipLutPool` w/ `float[] Lease(int size)` + `void Return(float[])` via `ArrayPool<float>.Shared` (clearArray: true). `BlipCatalog` gains `private BlipLutPool _lutPool = new BlipLutPool()` (field-init; matches Stage 5.2 `_delayPool` precedent; invariant #4 — no new singleton). `BlipVoiceState.phaseD` renamed → `lfoPhase0` (mechanical rename; `phaseD` was dead 4th-osc slot — keeps struct size stable, blittability preserved); `double lfoPhase1` appended. All `state.phaseD` refs migrated in `BlipVoice.cs` + tests.
+  - Acceptance: `BlipLutPool.cs` present; `BlipCatalog._lutPool` field-init; `BlipVoiceState.lfoPhase0/lfoPhase1` present + blittable + `default = 0.0`; no singleton; invariant #4 held; `npm run unity:compile-check` green; `npm run validate:all` exit 0; existing golden + NoAlloc tests green.
+  - Depends on: none (Stage 5.2 closed).
+
+- [ ] **TECH-287** — `SmoothOnePole` helper + LFO per-sample advance (Stage 5.3 Phase 2)
+  - Type: audio / DSP
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`
+  - Spec: `ia/projects/TECH-287.md`
+  - Notes: `public static float SmoothOnePole(ref float z, float target, float coef)` on `BlipVoice`: `z += coef * (target - z); return z`. Pre-compute `float lfoSmCoef = 1f - (float)Math.Exp(-TwoPi * 50.0 / sampleRate)` outside sample loop (20 ms param-smoothing τ). Pre-compute `double lfoPhaseInc0/1 = TwoPi * rateHz / sampleRate` (avoid per-sample div). Per-sample advance + wrap in both deterministic + live branches: `state.lfoPhase0 += lfoPhaseInc0; if (state.lfoPhase0 >= TwoPi) state.lfoPhase0 -= TwoPi;` — mirror for slot 1. Phases spin unrouted here — waveform dispatch + routing land TECH-288.
+  - Acceptance: `SmoothOnePole` static present; coef + phase-inc pre-compute outside loop; per-sample advance mirrored into both branches; MVP goldens bit-exact (phase advance alone inert); zero-alloc preserved; `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+  - Depends on: **TECH-285**, **TECH-286**.
+
+- [ ] **TECH-288** — LFO routing matrix + EditMode test + glossary (Stage 5.3 Phase 2)
+  - Type: audio / DSP + IA
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`, `Assets/Tests/EditMode/Audio/BlipLfoTests.cs` (new), `ia/specs/glossary.md`, `ia/specs/audio-blip.md`
+  - Spec: `ia/projects/TECH-288.md`
+  - Notes: LFO output dispatch in `BlipVoice.Render` — per-sample `switch` on `BlipLfoKind` (Sine `Math.Sin(phase)`; Triangle `2/π·Math.Asin(Math.Sin(phase))`; Square `Math.Sign(Math.Sin(phase))`; S&H re-sample on phase wrap). Scale by `depth`; `SmoothOnePole` on routed target. Routes: Pitch adds cents before jitter; Gain multiplies `gainMult`; FilterCutoff offsets `cutoffHz` before α compute; Pan offsets stereo pre-split. Mirror into deterministic + live branches (Stage 5.1 precedent). New `BlipLfoTests`: sine 1 s @ 48 kHz rate 5 Hz → zero-crossing count matches ±1; monotonic rise (0..π/2) + fall (π/2..π). 3 glossary rows: **Blip LFO** (§4.1), **Param smoothing** (§3.2), **Blip LUT pool** (§5.1) + `ia/specs/audio-blip.md §4.1` cross-ref for `lfo0/lfo1` authoring fields. Closes Stage 5.3.
+  - Acceptance: routing + waveform dispatch wired in both branches; `SmoothOnePole` applied per route target; `BlipLfoTests` green; MVP `BlipGoldenFixtureTests` still bit-exact (empty-LFO unaffected); `BlipNoAllocTests` still green; 3 glossary rows present; `audio-blip.md §4.1` updated; `npm run unity:compile-check` green; `npm run validate:all` exit 0; `npm run unity:testmode-batch` green.
+  - Depends on: **TECH-285**, **TECH-286**, **TECH-287**.
+
 ## Sprite gen lane
 
 Orchestrator: [`ia/projects/sprite-gen-master-plan.md`](projects/sprite-gen-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = Geometry MVP. Stages 1.1–1.2 archived (TECH-123..TECH-128, TECH-147..TECH-152 in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md)). Stage 1.3 opened 2026-04-15 — 6 tasks filed below (K-means extractor + palette CLI + apply_ramp + compose wiring + palette tests + bootstrap residential JSON + Tier 1 `.gpl` round-trip). T1.3.3+T1.3.4 merged into TECH-155 (apply_ramp API + compose wiring — tight coupling, single commit unit); T1.3.7+T1.3.8+T1.3.9 merged into TECH-158 (GPL export + import + round-trip test — must land atomic for symmetry). Stage 1.4 opened 2026-04-15 — 9 tasks filed below (slopes.yaml + iso_stepped_foundation + compose auto-insert + slope regression tests + Unity meta writer + promote/reject CLI + Aseprite bin resolver + layered .aseprite emit + promote --edit round-trip). Steps 2–3 remain in master plan; file rows when parent stage → `In Progress`.
@@ -443,6 +479,10 @@ Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-
 
 ### Stage 6.1 — Playwright e2e harness: install + config + CI wiring
 
+### Stage 6.2 — Baseline route coverage
+
+### Stage 6.3 — Dashboard e2e (SSR filter flows)
+
 ## High Priority
 
 - [x] **TECH-86** — Lifecycle skill refactor: project hierarchy rules + orchestrator-vs-spec distinction
@@ -453,14 +493,31 @@ Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-
   - Acceptance: two new rules loaded always; lifecycle skills refuse to close orchestrators; template status enum updated; glossary process terms added
   - Depends on: none
 
-- [ ] **BUG-55** — Codebase audit: critical simulation, data integrity, and controller bugs (10 fixes)
-  - Type: fix (crasher + data corruption + simulation logic + memory leak)
-  - Files: `EmploymentManager.cs`, `AutoZoningManager.cs`, `CellData.cs`, `GrowthBudgetManager.cs`, `AutoRoadBuilder.cs`, `DemandManager.cs`, `Cell.cs`, `RoadStrokeTerrainRules.cs`, `GridPathfinder.cs`, `SimulateGrowthToggle.cs`, `GrowthBudgetSlidersController.cs`, `CityStatsUIController.cs`
-  - Spec: `ia/projects/BUG-55.md`
-  - Notes: Full audit ([`docs/audit-codebase-2026-04-07.md`](docs/audit-codebase-2026-04-07.md)). **Crashers:** EmploymentManager div/0 when no jobs exist; Cell `Enum.Parse` crash on corrupt saves. **Data corruption:** AutoZoningManager spends budget without placing zone (no refund); CellData forces height=1 on valid height-0 border cells (progressive terrain corruption on save/load). **Sim logic:** GrowthBudgetManager minimum never enforced (`Mathf.Min` inverted); BuildingTracker counts all zones instead of empty ones; road cache stale within tick; water height `<= 0` misclassifies valid terrain; demand asymmetry (1.5 penalty vs 1.2 boost). **Memory leaks:** 3 controllers missing `OnDestroy()` listener cleanup.
-  - Acceptance: all 10 fixes landed; Unity compiles; no crash on New Game or Load Game; growth budget and demand stabilize
+<!-- zone-s-economy master plan — Stage 1.1 (orchestrator: `ia/projects/zone-s-economy-master-plan.md`; Bucket 3 of full-game MVP umbrella) -->
+
+- [ ] **TECH-278** — Extend `ZoneType` enum + predicates for **Zone S** (Stage 1.1 Phase 1)
+  - Type: tech (scaffolding / enum extension)
+  - Files: `Assets/Scripts/Managers/UnitManagers/Zone.cs`, `Assets/Scripts/Managers/GameManagers/EconomyManager.cs`
+  - Spec: `ia/projects/TECH-278.md`
+  - Notes: Append 6 values to `ZoneType` enum — `StateServiceLightBuilding`, `StateServiceMediumBuilding`, `StateServiceHeavyBuilding`, `StateServiceLightZoning`, `StateServiceMediumZoning`, `StateServiceHeavyZoning`. Extend `IsBuildingZone` + `IsZoningType`. Add `IsStateServiceZone(ZoneType)` predicate on `EconomyManager`. Append-only ordering preserves v3 save int compat. No caller consumes values yet.
+  - Acceptance: 6 new enum values land; `IsStateServiceZone` true for 6 S, false for RCI; `unity:compile-check` green
   - Depends on: none
-  - Related: **BUG-14**, **TECH-05**, **TECH-16**
+
+- [ ] **TECH-279** — Add `Zone.subTypeId` sidecar field (Stage 1.1 Phase 1)
+  - Type: tech (scaffolding / field)
+  - Files: `Assets/Scripts/Managers/UnitManagers/Zone.cs`
+  - Spec: `ia/projects/TECH-279.md`
+  - Notes: `[SerializeField] private int subTypeId = -1;` + public getter/setter on `Zone`. Default `-1` = "RCI, no sub-type". Sidecar int vs enum expansion — keeps `ZoneType` lean (7 sub-types × 3 tiers would bloat enum to 21 entries). No save plumbing yet — v3→v4 bump lands Stage 1.3.
+  - Acceptance: field + getter/setter land; default `-1` on all RCI zones; `unity:compile-check` green
+  - Depends on: none
+
+- [ ] **TECH-280** — `ZoneSubTypeRegistry` ScriptableObject class (Stage 1.1 Phase 2)
+  - Type: tech (ScriptableObject / catalog)
+  - Files: `Assets/Scripts/Managers/GameManagers/ZoneSubTypeRegistry.cs` *(new)*
+  - Spec: `ia/projects/TECH-280.md`
+  - Notes: SO class cataloging 7 **Zone S** sub-types (police, fire, education, health, parks, public housing, public offices). Nested `ZoneSubTypeEntry` struct — `int id`, `string displayName`, `GameObject prefab`, `int baseCost`, `int monthlyUpkeep`, `Sprite icon`. `GetById(int)` linear scan. `[CreateAssetMenu]`. Class only — seeding lands TECH-281.
+  - Acceptance: SO class compiles; menu entry registered; `GetById` stub resolves; `unity:compile-check` green
+  - Depends on: none
 
 - [ ] **BUG-31** — Wrong prefabs at interstate entry/exit (border)
   - Type: fix
@@ -482,13 +539,42 @@ Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-
   - Files: `GridManager.cs` (~2070 lines), `TerrainManager.cs` (~3500), `CityStats.cs` (~1200), `ZoneManager.cs` (~1360), `UIManager.cs` (~1240), `RoadManager.cs` (~1730)
   - Notes: Helpers already extracted (`GridPathfinder`, `GridSortingOrderService`, `ChunkCullingSystem`, `RoadCacheService`, `BuildingPlacementService`, etc.). **Next candidates from GridManager:** `BulldozeHandler` (~200 lines), `GridInputHandler` (~130 lines), `CoordinateConversionService` (~230 lines). Prioritize this workstream; see `ARCHITECTURE.md` (GridManager hub trade-off).
 
-- [ ] **BUG-14** — `FindObjectOfType` in Update/per-frame degrades performance
-  - Type: fix (performance)
-  - Files: `CursorManager.cs` (Update), `UIManager.cs` (UpdateUI)
-  - Spec: `ia/projects/BUG-14.md`
-  - Notes: `CursorManager` caches `UIManager` in `Start()`; **`UIManager.UpdateUI()`** still calls `FindObjectOfType` for **EmploymentManager**, **DemandManager**, and **StatisticsManager** each frame — cache in `Awake`/`Start`. **`UpdateGridCoordinatesDebugText`** may also call `FindObjectOfType` from `LateUpdate`; remove per-frame lookups per **invariants**. See project spec for current code pointers. **Prevention:** **TECH-26** CI/script scanner flags new per-frame **`FindObjectOfType`** use.
-
 ## Medium Priority
+
+- [ ] **TECH-289** — Split BACKLOG into per-issue YAML — parallel-safe stage-file / closeout
+  - Type: tech (infra / agent orchestration concurrency)
+  - Files: `BACKLOG.md`, `BACKLOG-ARCHIVE.md`, `ia/backlog/**` *(new)*, `ia/backlog-archive/**` *(new)*, `ia/state/id-counter.json` *(new)*, `tools/scripts/reserve-id.sh` *(new)*, `tools/scripts/materialize-backlog.sh` *(new)*, `tools/scripts/migrate-backlog-to-yaml.mjs` *(new)*, `tools/mcp-ia-server/src/parser/backlog-parser.ts`, `tools/mcp-ia-server/src/tools/{backlog-issue,backlog-search,invariant-preflight,router-for-task}.ts`, `tools/mcp-ia-server/src/parser/project-spec-closeout-parse.ts`, `tools/validate-dead-project-spec-paths.mjs`, `tools/mcp-ia-server/scripts/project-spec-dependents.ts`, `ia/skills/{project-new,stage-file,project-spec-close,project-stage-close,master-plan-new,master-plan-extend,stage-decompose,release-rollout-enumerate,release-rollout-track,release-rollout}/SKILL.md`, `CLAUDE.md` §3, `AGENTS.md`, `docs/agent-lifecycle.md`, `ia/rules/invariants.md`, `ia/rules/terminology-consistency.md`, `ia/specs/glossary.md`, `ia/projects/full-game-mvp-rollout-tracker.md`
+  - Spec: `ia/projects/TECH-289.md`
+  - Notes: **Problem:** `BACKLOG.md` + `BACKLOG-ARCHIVE.md` = single shared mutable files. Every mutator skill (**`project-new`**, **`stage-file`**, **`project-spec-close`**, **`project-stage-close`**, **`release-rollout-enumerate`**, **`release-rollout-track`**) scans both for max id then row-inserts / row-removes. Parallel agents → duplicate ids, insert-conflict, validator FS races, orphan **project spec** ↔ row pairs. Closeout purge pass (ripgrep + edit across `ia/specs/**`, `docs/**`, `ia/rules/**`, code comments) = worst blast radius. **Approach:** per-issue yaml under `ia/backlog/{id}.yaml` + `ia/backlog-archive/{id}.yaml`; monotonic id counter `ia/state/id-counter.json` under `flock`; `materialize-backlog.sh` regens `BACKLOG.md` + `BACKLOG-ARCHIVE.md` as artifact (round-trip-gated). **Safety rails:** **rollout lifecycle** (tracker link resolution + enumerate + track signal); MCP reader back-compat (`backlog_issue`, `backlog_search` response shapes preserved); dashboard `/dashboard` still renders master plans. **Migration:** one-shot `migrate-backlog-to-yaml.mjs` + round-trip diff gate (whitespace-only). **Concurrency model:** parallel **`project-new`** safe via flock; parallel closeout safe if purge-sets disjoint (orchestrator gate). **Glossary:** add **backlog record** + **backlog view** rows. **Out of scope:** distributed / cross-repo lock; deleting generated md from git (recommendation = keep for GitHub + dashboard back-compat). Full context + phased plan in `ia/projects/TECH-289.md`.
+  - Acceptance: all writer skills + MCP readers migrated; `npm run validate:all` green; round-trip `migrate → materialize → diff` = empty; parallel soak (3 **`project-new`** worktrees + 2 closeouts disjoint purge) zero dup ids / zero orphans / zero git conflicts; **rollout tracker** end-to-end smoke advances 1 row through (f) ≥1-task-filed; dashboard renders; glossary rows + indexes regen; `npm run validate:backlog-yaml` exists + green; public MCP tool response shapes unchanged
+  - Depends on: none (soft: coordinate merge window w/ any in-flight **`stage-file`** / closeout work)
+
+<!-- zone-s-economy master plan — Stage 1.1 (orchestrator: `ia/projects/zone-s-economy-master-plan.md`; Bucket 3 of full-game MVP umbrella) -->
+
+- [ ] **TECH-281** — Seed 7 `ZoneSubTypeRegistry` entries + asset (Stage 1.1 Phase 2)
+  - Type: tech (content / asset seed)
+  - Files: `Assets/ScriptableObjects/Economy/ZoneSubTypeRegistry.asset` *(new)*, `Assets/ScriptableObjects/Economy/` *(new dir)*
+  - Spec: `ia/projects/TECH-281.md`
+  - Notes: Create registry asset via Editor menu (TECH-280 registers it). 7 entries w/ stable ids 0..6 — police(500/50), fire(600/60), education(800/80), health(1000/100), parks(300/30), public housing(700/70), public offices(900/90) — baseCost + monthlyUpkeep tuned so exploration Example 2 (envelope=200, fire block) reproduces. Placeholder prefabs + icons OK per Bucket 3 scope; real art deferred post-MVP.
+  - Acceptance: `.asset` + `.meta` land w/ 7 entries; ids 0..6 stable; `unity:compile-check` green
+  - Depends on: **TECH-280**
+
+- [ ] **TECH-282** — Glossary rows + spec-index refresh (Stage 1.1 Phase 3)
+  - Type: IA (glossary + MCP indexes)
+  - Files: `ia/specs/glossary.md`, `tools/mcp-ia-server/data/glossary-index.json`, `tools/mcp-ia-server/data/glossary-graph-index.json`
+  - Spec: `ia/projects/TECH-282.md`
+  - Notes: 3 new rows — **Zone S** (4th zone channel, state-owned, 7 sub-types × 3 tiers, manual placement + envelope-gated), **ZoneSubTypeRegistry** (SO catalog; 7 entries), **envelope (budget sense)** (per-sub-type monthly allowance; sum-locked 100%; `TryDraw` blocks when remaining < amount even if treasury has funds). Forward-ref `ia/specs/economy-system.md` (lands Stage 3.3) + fallback exploration doc. Regen indexes via `npm run mcp-ia-index`.
+  - Acceptance: 3 rows land alphabetically; glossary indexes regenerated; `npm run validate:all` green; `glossary_lookup "Zone S"` resolves
+  - Depends on: none (TECH-280 / TECH-281 land the runtime type names referenced, but glossary can cite forward-ref)
+
+- [ ] **TECH-283** — EditMode tests for `ZoneType` + `ZoneSubTypeRegistry` (Stage 1.1 Phase 3)
+  - Type: tests (EditMode / NUnit)
+  - Files: `Assets/Tests/EditMode/Economy/Tests.EditMode.Economy.asmdef` *(new)*, `Assets/Tests/EditMode/Economy/ZoneSubTypeRegistryTests.cs` *(new)*
+  - Spec: `ia/projects/TECH-283.md`
+  - Notes: 6 `[Test]` methods — `GetById(0..6)` round-trip, `GetById(-1)` null, `IsStateServiceZone` true for 6 S values, `IsStateServiceZone` false for RCI, `Zone.subTypeId` default `-1`, subTypeId serialization round-trip. Loads real `ZoneSubTypeRegistry.asset` via `AssetDatabase.LoadAssetAtPath`. Locks Stage 1.1 scaffolding against regression.
+  - Acceptance: new asmdef + test class compile; `npm run unity:testmode-batch` green; `npm run validate:all` green
+  - Depends on: **TECH-278**, **TECH-279**, **TECH-280**, **TECH-281**
+
 - [ ] **BUG-49** — Manual **street** drawing: preview builds the **road stroke** cell-by-cell (animated); should show full path at once
   - Type: bug (UX / preview)
   - Files: `RoadManager.cs` (`HandleRoadDrawing`, preview placement / ghost or temp prefab updates per frame), `GridManager.cs` if road mode input drives incremental preview; any coroutine or per-tick preview extension of the **road stroke**
@@ -496,18 +582,6 @@ Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-
   - Notes: **Observed:** While drawing a **street**, **preview mode** visually **extends the road stroke one cell at a time**, like an animation, instead of updating the full proposed **road stroke** in one step. **Expected:** **No** step-by-step or staggered preview animation. The game should **compute the full valid road stroke** (same rules as commit / **road validation pipeline** / `TryPrepareRoadPlacementPlan` or equivalent) for the current **stroke**, **then** instantiate or refresh **preview** prefabs for that complete **road stroke** in a single update — or batch updates without visible per-cell delay. **Related:** street commit vs terrain refresh fixes in archive — keep preview/commit paths consistent.
   - Acceptance: **Street** preview shows the full computed **road stroke** in one visual update; no visible cell-by-cell animation during drag
   - Depends on: none
-
-- [ ] **BUG-16** — Possible race condition in GeographyManager vs TimeManager initialization (**geography initialization**)
-  - Type: fix
-  - Files: `GeographyManager.cs`, `TimeManager.cs`, `GridManager.cs`
-  - Spec: `ia/projects/BUG-16.md`
-  - Notes: Unity does not guarantee Start() order. If TimeManager.Update() runs before GeographyManager completes **geography initialization**, it may access non-existent data. Use Script Execution Order or gate with `isInitialized`.
-
-- [ ] **BUG-17** — `cachedCamera` is null when creating `ChunkCullingSystem`
-  - Type: fix
-  - Files: `GridManager.cs`
-  - Spec: `ia/projects/BUG-17.md`
-  - Notes: In InitializeGrid() ChunkCullingSystem is created with `cachedCamera`, but it is only assigned in Update(). May cause NullReferenceException.
 
 - [ ] **BUG-48** — Minimap stays stale until toggling a layer (e.g. data-visualization / **desirability** / **urban centroid**)
   - Type: bug

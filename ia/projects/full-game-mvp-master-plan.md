@@ -1,8 +1,8 @@
 # Full-Game MVP — Umbrella Master Plan
 
-> **Status:** Draft — umbrella orchestrator pointing at 11 child orchestrators (5 existing + 6 new). Permanent artifact; NEVER closeable via `/closeout` (per `ia/rules/orchestrator-vs-spec.md`).
+> **Status:** Draft — umbrella orchestrator pointing at 12 child orchestrators (5 existing + 7 new). Permanent artifact; NEVER closeable via `/closeout` (per `ia/rules/orchestrator-vs-spec.md`).
 >
-> **Scope:** Coordinates the polished ambitious MVP (Approach F from `docs/full-game-mvp-exploration.md`). Defines tier lanes, cross-bucket dependencies, save-schema coordination, stabilization policy, distribution gating. Does NOT decompose bucket steps — each child orchestrator owns its own step/stage/phase/task tree per `ia/rules/project-hierarchy.md`.
+> **Scope:** Coordinates the polished ambitious MVP (Approach F from `docs/full-game-mvp-exploration.md`). Defines tier lanes, cross-bucket dependencies, save-schema coordination, stabilization policy, distribution gating, cost-catalog cross-cutting rule. Does NOT decompose bucket steps — each child orchestrator owns its own step/stage/phase/task tree per `ia/rules/project-hierarchy.md`.
 >
 > **Exploration source:** [`docs/full-game-mvp-exploration.md`](../../docs/full-game-mvp-exploration.md) — ground-truth Design Expansion. Every bucket summary below defers to that doc for Mission / Subsystems / Hard deferrals detail.
 >
@@ -63,10 +63,13 @@ Status rolls up from child orchestrators. Human updates row when child bucket st
 | 8 | citystats-overhaul | NEW | [`citystats-overhaul-master-plan.md`](citystats-overhaul-master-plan.md) | D | Planned, waiting Tier D trigger | Bucket 2 outputs; Bucket 1 per-scale aggregates; Bucket 9 dashboard schema | CityStats redesign + per-metric services + web dashboard data parity |
 | 9 | web-platform | EXTEND | [`web-platform-master-plan.md`](web-platform-master-plan.md) | A → E | In progress — Steps 1–4 Final; Steps 5–6 Paused | Bucket 5 screenshots/trailer; Bucket 8 dashboard schema; Bucket 10 build artifact URL | Landing + signup + devlog + download + feedback form + FAQ + press kit live |
 | 10 | distribution | NEW (or fold) | `distribution-master-plan.md` | E | Not started | All other buckets buildable (compile-clean + assets packed) | Signed macOS + Windows builds; private URL live; versioning + patch channel |
+| 11 | cost-catalog | NEW (infra) | `cost-catalog-master-plan.md` | A → B | Not started | None upstream; pre-plan exploration `docs/cost-catalog-exploration.md` must land first | Centralized `CostTable` ScriptableObject + `ICostCatalog` read API + editor UI; every cost consumer (Buckets 2/3/4/6) reads via `ICostCatalog.Get(row)` — no hardcoded constants remain |
 
-**Count check:** 10 buckets mapped to 10 target orchestrators + 1 sibling (music-player). 5 existing (multi-scale, sprite-gen, blip, web-platform, music-player) + 6 new (city-sim-depth, zone-s-economy, utilities-and-landmarks, ui-polish, citystats-overhaul, distribution).
+**Count check:** 11 buckets mapped to 11 target orchestrators + 1 sibling (music-player). 5 existing (multi-scale, sprite-gen, blip, web-platform, music-player) + 7 new (city-sim-depth, zone-s-economy, utilities-and-landmarks, ui-polish, citystats-overhaul, distribution, cost-catalog).
 
-**Pre-plan:** `docs/citystats-overhaul-exploration.md` = the single pre-plan exploration seed (per exploration doc §Open questions #3). Must land before Bucket 8 `/master-plan-new` invocation. Locks (a) data parity schema vs web dashboard, (b) metric taxonomy per scale, (c) visual style parity.
+**Pre-plans:**
+- `docs/citystats-overhaul-exploration.md` = pre-plan seed for Bucket 8 (per exploration doc §Open questions #3). Must land before Bucket 8 `/master-plan-new` invocation. Locks (a) data parity schema vs web dashboard, (b) metric taxonomy per scale, (c) visual style parity.
+- `docs/cost-catalog-exploration.md` = pre-plan seed for Bucket 11. Must land before Bucket 11 `/master-plan-new` invocation. Locks (a) `CostTable` schema shape (row taxonomy per consumer type), (b) read API surface (`ICostCatalog` vs direct asset access), (c) editor UI form (custom property drawer vs dedicated `CostTableWindow`), (d) migration inventory policy (`// TODO(bucket-11)` grep gate).
 
 ---
 
@@ -82,8 +85,9 @@ No inter-bucket blockers. Already in progress across 3 orchestrators.
 - **Bucket 5 Step 1** — sprite-gen Geometry MVP close. Feeds every visual consumer (Buckets 2 / 4 / 6 / 9).
 - **Bucket 7 Steps 4–7** — Blip settings UI + DSP v2 + patches + editor window (post-MVP in Blip plan; MVP-gating via umbrella rollup). Runs on Blip existing skeleton.
 - **Music-player Step 1** — sibling; lands MusicPlayer + playlist pipeline. Unblocks Bucket 7 Step 8 mixer handoff.
+- **Bucket 11 Step 1** — cost-catalog schema + asset + `ICostCatalog` read API + zones / utilities baseline migration. No upstream block. Must reach Step 1 Final before Tier B gameplay buckets migrate consumers.
 
-**Tier A exit:** Bucket 1 Step 2 Final + Bucket 5 Step 1 Final + music-player Step 1 Final. Blip Steps 4–7 can trail into Tier B.
+**Tier A exit:** Bucket 1 Step 2 Final + Bucket 5 Step 1 Final + music-player Step 1 Final + Bucket 11 Step 1 Final. Blip Steps 4–7 can trail into Tier B.
 
 ### Tier B — city-sim depth (gated by Tier A)
 
@@ -99,6 +103,7 @@ No Tier B block.
 
 - **Bucket 6 Steps 1–3** — UiTheme + HUD + info panels + save / load slots. Only Step 4 (overlays) needs Bucket 2 overlay data signals. Open Steps 1–3 in parallel with Tier B.
 - **Bucket 9 Step 5** — landing + signup form + backend storage. No Tier B block.
+- **Bucket 11 Steps 2–3** — landmark / big-project / bond / tax migration + editor UI + matrix export. Runs after Step 1 Final; parallels Tier B gameplay bucket work as those buckets introduce new cost rows.
 
 ### Tier C — multi-scale spine + S + utilities + UI overlays
 
@@ -144,6 +149,7 @@ graph TD
         B5S1[Bucket 5 Step 1<br/>sprite-gen Geometry MVP]
         B7S4[Bucket 7 Steps 4-7<br/>Blip settings+DSP+patches]
         MP1[music-player Step 1<br/>sibling — MusicPlayer runtime]
+        B11S1[Bucket 11 Step 1<br/>cost-catalog schema + read API]
     end
 
     subgraph TierB["Tier B — city-sim depth"]
@@ -153,6 +159,7 @@ graph TD
     subgraph TierBPrime["Tier B' — parallel polish"]
         B6S1[Bucket 6 Steps 1-3<br/>ui-polish HUD / panels / save]
         B9S5[Bucket 9 Step 5<br/>web landing + signup]
+        B11S2[Bucket 11 Steps 2-3<br/>landmark/bond/tax migration + editor UI]
     end
 
     subgraph TierC["Tier C — spine + S + utilities"]
@@ -180,6 +187,11 @@ graph TD
     B5S1 --> B6S1
     B5S1 --> B9S5
     MP1 --> B7S8
+    B11S1 --> B2
+    B11S1 --> B3
+    B11S1 --> B4
+    B11S1 --> B6S1
+    B11S1 --> B11S2
     B2 --> B1S3
     B2 --> B3
     B2 --> B6S4
@@ -200,13 +212,31 @@ graph TD
     classDef extend fill:#e0f0ff,stroke:#2060a0,color:#000
     classDef new fill:#fff0d0,stroke:#c06000,color:#000
     classDef preplan fill:#ffd0d0,stroke:#a02020,color:#000
+    classDef infra fill:#e0ffe0,stroke:#208020,color:#000
 
     class B1S2,B1S3,B5S1,B7S4,B7S8,B7S9,MP1,B9S5,B9S6,B9S7 extend
     class B2,B3,B4,B6S1,B6S4,B10 new
     class B8PP,B8 preplan
+    class B11S1,B11S2 infra
 ```
 
-Reading: solid arrows = "blocks / informs". Tier boundary = enter-gate. Blue = EXTEND existing orchestrator. Orange = NEW orchestrator. Red = pre-plan exploration required.
+Reading: solid arrows = "blocks / informs". Tier boundary = enter-gate. Blue = EXTEND existing orchestrator. Orange = NEW orchestrator. Red = pre-plan exploration required. Green = infra orchestrator (feeds many consumers, no gameplay surface of its own).
+
+---
+
+## Cost-catalog cross-cutting rule (Bucket 11)
+
+Bucket 11 is infra — it feeds every gameplay bucket that spawns cost values (Buckets 2 / 3 / 4 / 6) but owns no gameplay surface. All bucket authors MUST observe the following cross-cutting rule from first stage on:
+
+1. **Read cost values via `ICostCatalog.Get(row)`** — never hardcode `const int RESIDENTIAL_SPAWN_COST = 500;` inside per-entity files. Row keys live in `CostTable.asset`.
+2. **Before Bucket 11 Step 1 Final:** inline constants are permitted ONLY with a `// TODO(bucket-11): migrate to CostTable` comment at the touch site. Bucket 11 Step 1 Stage 1.1 runs a migration inventory scan on this marker + triages into Step 1 / Step 2 per consumer category.
+3. **After Bucket 11 Step 1 Final:** new cost fields MUST land as catalog rows; PR reviews reject new hardcoded cost constants in consumer files.
+4. **Test parity:** Bucket 11 ships EditMode tests that assert post-migration `ICostCatalog.Get(row)` returns identical values to pre-migration constants. Catalog change = explicit balance decision, not a silent regression.
+5. **No runtime mutation.** `CostTable` is ScriptableObject, read-only at runtime. Dynamic / economy-reactive pricing is hard-deferred post-MVP (per exploration doc).
+
+**Migration inventory ownership:** Bucket 11 Step 1 Stage 1.1 scans repo for `// TODO(bucket-11)` markers + authored-inline cost constants in consumer files. Result feeds Step 1 vs Step 2 assignment (zones + utilities → Step 1; landmarks / big projects / bonds / tax / maintenance → Step 2).
+
+**Coordination with save-schema v3 bump:** None. `CostTable` is asset-only, immutable at runtime; cost values never persist to save. Save-schema coordination (above) and cost-catalog cross-cutting rule are independent.
 
 ---
 
@@ -251,6 +281,7 @@ Exploration doc §Stabilization recommends BACKLOG sweep + per-bucket kickoff pa
 | 8 | TECH-82 follow-ups (per-scale metrics extensions) |
 | 9 | — |
 | 10 | — |
+| 11 | — (infra; no interrupts) |
 
 **Global interrupts (standalone `/project-new` when signal warrants):** TECH-15 (geography init perf — global), TECH-16 (tick perf v2 — also Bucket 2 kickoff), BUG-55 (10-fix audit — cross-subsystem).
 
@@ -313,8 +344,10 @@ Ordered invocations per bucket — user runs at pace. Parallel-work rule constra
 4. **Music-player Step 1 Stage 1.1 file** — `/stage-file ia/projects/music-player-master-plan.md Stage 1.1`.
 5. **Bucket 2 (city-sim-depth) new master plan** — once Bucket 1 Step 2 aggregate contract lands + Bucket 5 anim descriptor locked. `/master-plan-new docs/full-game-mvp-exploration.md` with `city-sim-depth-master-plan` slug.
 6. **Bucket 8 pre-plan exploration** — `/design-explore docs/citystats-overhaul-exploration.md` (create stub first if file does not exist).
-7. **Buckets 3 / 4 / 6 / 9 / 10 new master plans** — order per tier lanes. Each uses `/master-plan-new docs/full-game-mvp-exploration.md` with bucket slug.
-8. **Bucket 8 master plan** — `/master-plan-new docs/citystats-overhaul-exploration.md` once pre-plan Final.
+7. **Bucket 11 pre-plan exploration** — `/design-explore docs/cost-catalog-exploration.md` (stub committed with umbrella edit; user answers poll).
+8. **Bucket 11 master plan** — `/master-plan-new docs/cost-catalog-exploration.md` once pre-plan Final. Runs in parallel with Tier A gameplay buckets (no upstream block); Step 1 Final is the Tier B gameplay migration gate.
+9. **Buckets 3 / 4 / 6 / 9 / 10 new master plans** — order per tier lanes. Each uses `/master-plan-new docs/full-game-mvp-exploration.md` with bucket slug.
+10. **Bucket 8 master plan** — `/master-plan-new docs/citystats-overhaul-exploration.md` once pre-plan Final.
 
 **Coordination note:** music-player is sibling (not a bucket). Ships whenever its orchestrator lands — does NOT gate MVP beyond Bucket 7 Step 8 mixer handoff.
 
@@ -335,3 +368,4 @@ Ordered invocations per bucket — user runs at pace. Parallel-work rule constra
 |------|-------|
 | 2026-04-16 | Initial authoring — umbrella orchestrator created to coordinate 10 buckets post exploration doc third-pass review. Fixes step-number collisions (Buckets 1/5/9), country vs nation terminology, save-schema coordination, stabilization policy, distribution gating. |
 | 2026-04-16 | Distribution gating — signing tier selected = Free (unsigned). macOS + Windows ship unsigned; download-page README covers Gatekeeper + SmartScreen bypass for 20–50 curated testers. Cert-based signing deferred to post-beta upgrade trigger. Tier menu added (Free / Apple-only $99 / Apple + Azure Trusted Signing ~$220 / Full polish $400–700). Bucket 10 Step 2 scope reduced to unsigned packaging + bypass docs. |
+| 2026-04-17 | Bucket 11 `cost-catalog-master-plan.md` added (NEW + infra). Centralizes hardcoded cost + footprint constants across Buckets 2/3/4/6 into a single `CostTable` ScriptableObject + `ICostCatalog` read API + editor UI. Tier A/B lane (Step 1 in Tier A as gate for Tier B gameplay migration; Steps 2–3 in Tier B'). Cross-cutting rule added (read via `ICostCatalog.Get(row)`; `// TODO(bucket-11)` marker on inline constants pre-bucket-11). Pre-plan exploration `docs/cost-catalog-exploration.md` committed as stub. Count check updated to 11 buckets + 1 sibling = 12 child orchestrators. Dynamic pricing / runtime mutation / modder overrides hard-deferred post-MVP. |

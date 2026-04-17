@@ -410,6 +410,26 @@ _Why not merged with web-platform._ Distribution pipeline is a Unity-side concer
 
 ---
 
+**Bucket 11 — `cost-catalog-master-plan.md` (NEW — cross-entity static cost catalog).**
+
+_Mission._ Land a centralized `CostTable` ScriptableObject asset holding every hardcoded cost + footprint constant consumed across gameplay buckets (zones, utilities, landmarks, big projects, bonds, tax floors, maintenance rates). Replace scattered per-row hardcoded numbers with a single reviewable + tunable matrix. Ship editor UI for matrix review (Inspector custom drawer OR dedicated Editor window). NO dynamic pricing, NO formula scaling — values stay design-time constants; only the storage location changes. Enforces a cross-cutting rule: every new cost field goes through the catalog, never back into per-entity files.
+
+_Subsystems touched._ New `CostTable.asset` ScriptableObject under `Assets/ScriptableObjects/Balance/`. New `ICostCatalog` read interface + `CostCatalogService` (MonoBehaviour, Inspector-wired). Migration shims on every existing consumer (BuildingPlacer, ZoneManager, UtilityPoolService, LandmarkPlacementService, BondIssuer, TaxController). Editor-side: custom property drawer or `CostTableWindow` for matrix review. IA docs: new `ia/specs/cost-catalog.md` reference spec; glossary (cost catalog, CostTable, cost row, footprint constant); `managers-reference.md` (CostCatalogService section). NO runtime save impact — catalog is asset-only, immutable at runtime.
+
+_Estimated size._ 3 steps × 2 stages each (≈6 stages). Step 1 — schema + asset + read API + consumer migration (zones, utilities baseline). Step 2 — landmarks + big projects + bonds + tax migration. Step 3 — editor UI + matrix export (CSV / markdown for balance review). Long tail expected as later features add cost rows — bucket stays permanent, new rows append via `/project-new` after MVP.
+
+_Dependencies._ None upstream. Consumers = Buckets 2 (city-sim-depth — construction cost), 3 (zone-s-economy — S-building cost + bond ceiling + tax floor), 4 (utilities-and-landmarks — utility + landmark cost + footprint), 6 (ui-polish — tooltip reads cost from catalog). Runs in parallel with Tier B — zero design input needed from gameplay buckets; catalog schema is infra.
+
+_Absorbed BACKLOG rows._ None (new infra surface).
+
+_Hard deferrals._ Dynamic pricing (population-scaled / tier-scaled costs); economy-reactive pricing; modder-authored cost overrides; in-game balance editor; runtime cost mutation via events. All post-MVP.
+
+_Why a dedicated bucket._ User intent = "long effort, tracking advised". Centralizing N cost consumers (zones / utilities / landmarks / big projects / bonds / tax / maintenance) touches N existing subsystems. Folding into Bucket 3 or Bucket 4 would dilute both and hide the cross-cutting migration from the rollup. A dedicated bucket surfaces progress per migrated consumer + owns the editor UI surface (non-trivial Unity custom editor work).
+
+_Cross-cutting rule (umbrella-level).__ All MVP bucket authors (2 / 3 / 4 / 6) consume cost values via `ICostCatalog.Get(row)` — never hardcode numbers in per-entity source. Placeholder constants authored inline BEFORE Bucket 11 lands are flagged `// TODO(bucket-11): migrate to CostTable` + tracked in Bucket 11 Step 1 Stage 1.1 migration inventory.
+
+---
+
 **Stabilization — recommended as BACKLOG sweep, NOT a master plan.**
 
 Rationale: BUG-55 (10-fix audit), BUG-31, BUG-28, BUG-20, BUG-49, BUG-48, BUG-14, TECH-15, TECH-16 are interrupts that predate the MVP scope. They must ship alongside the MVP, but decomposing them as a master plan adds orchestrator overhead for a set of largely independent fixes. Recommend: assign a "Stabilization" tag in BACKLOG, enforce a rule that every MVP bucket opens with a stabilization pass on its touched subsystem (e.g. Bucket 1 opens with BUG-31 + BUG-28 fix; Bucket 6 opens with BUG-14 + BUG-48 fix; Bucket 2 opens with TECH-16 tick perf). TECH-15 (geography init perf) + TECH-16 (tick perf v2) are global concerns — can be their own micro-plan or single-issue `/project-new` runs as needed.
@@ -430,6 +450,7 @@ graph TD
     CSO[Bucket 8<br/>citystats-overhaul<br/>NEW + pre-plan]
     WP[Bucket 9<br/>web-platform<br/>EXTEND]
     DIST[Bucket 10<br/>distribution<br/>NEW or fold]
+    CC[Bucket 11<br/>cost-catalog<br/>NEW + infra]
 
     MS --> CSD
     MS --> ZSE
@@ -446,14 +467,20 @@ graph TD
     APB --> UIP
     CSO --> WP
     WP --> DIST
+    CC --> CSD
+    CC --> ZSE
+    CC --> UL
+    CC --> UIP
 
     classDef extend fill:#e0f0ff,stroke:#2060a0,color:#000
     classDef new fill:#fff0d0,stroke:#c06000,color:#000
     classDef preplan fill:#ffd0d0,stroke:#a02020,color:#000
+    classDef infra fill:#e0ffe0,stroke:#208020,color:#000
 
     class MS,SGA,APB,WP extend
     class CSD,ZSE,UL,UIP,DIST new
     class CSO preplan
+    class CC infra
 ```
 
 Reading the graph: arrows = "blocks / informs". Bucket 1 (multi-scale) feeds most of the gameplay buckets. Bucket 5 (sprite-gen + animation) is the widest producer — feeds every visual consumer. Bucket 8 (CityStats) is the deepest analytical surface — consumes city-sim-depth outputs, feeds UI + web dashboard. Bucket 10 (distribution) is the final gate.
@@ -615,6 +642,7 @@ Invariant risk by bucket (from `ia/rules/invariants.md` #1–#12):
 | Bucket 8 citystats-overhaul | #3, #4, #6 — decompose CityStats into per-metric services. | **Breaking** — CityStats is the largest consumer surface; rewrite invalidates every consumer signature. | Full pre-plan exploration BEFORE stages; define new interface contract first, then wire consumers (UI + web dashboard) in parallel. |
 | Bucket 9 web-platform | None (no runtime C#; ia/rules/invariants.md not implicated per existing web-platform plan callout). | Additive. | N/A. |
 | Bucket 10 distribution | None (build pipeline, Unity-side tooling). | Additive. | N/A. |
+| Bucket 11 cost-catalog | #3 (no FindObjectOfType per-frame — `CostCatalogService` consumers cache `ICostCatalog` ref in Awake), #4 (no new singletons — CostCatalogService MonoBehaviour + `[SerializeField]` refs), #6 (GridManager extraction — cost logic never folded into GridManager) | Additive at storage boundary; touches N existing consumers (BuildingPlacer, ZoneManager, UtilityPoolService, LandmarkPlacementService, BondIssuer, TaxController) via mechanical migration (read value from catalog vs hardcoded constant). No runtime behaviour change — same numbers, new source. | Phased migration: Step 1 migrates zones + utilities; Step 2 migrates landmarks + big projects + bonds + tax; Step 3 ships editor UI. Catalog asset ships with identical numbers to pre-migration constants — test parity via runtime asserts in EditMode tests. |
 
 ### Implementation points
 
@@ -796,15 +824,33 @@ _Signing tier decision._ **Free (unsigned)** selected for MVP. Trust model = 20�
 
 ---
 
+**Bucket 11 — `cost-catalog-master-plan.md` (NEW — infra).**
+
+_Scope._ Centralize every hardcoded cost / footprint constant across gameplay buckets into one reviewable `CostTable` ScriptableObject + ship editor UI for balance review. Values stay design-time constants — only storage moves.
+
+_Stage outline (rough)._
+
+- Step 1 — Schema + asset + read API (`ICostCatalog` / `CostCatalogService`) + migrate zones (Bucket 2 / Bucket 3 RCIS cost) + utilities (Bucket 4 baseline). Migration inventory of all `// TODO(bucket-11): migrate to CostTable` placeholders scanned + triaged.
+- Step 2 — Migrate landmarks (Bucket 4) + big projects + bonds (Bucket 3) + tax floors + maintenance rates. Parity asserts (EditMode tests) verify pre- vs post-migration cost lookups return identical values.
+- Step 3 — Editor UI (custom property drawer OR `CostTableWindow`) + matrix export (CSV / markdown for balance review). IA docs: `ia/specs/cost-catalog.md` + glossary rows + `managers-reference.md` CostCatalogService section.
+
+_Hard deferrals._ Dynamic pricing; economy-reactive pricing; modder cost overrides; in-game balance editor; runtime cost mutation.
+
+_Prerequisite buckets._ None upstream — infra runs in parallel with Tier B gameplay buckets. Consumers = Buckets 2 / 3 / 4 / 6.
+
+_Cross-cutting rule._ Every new cost field consumed via `ICostCatalog.Get(row)`. Inline constants authored pre-bucket-11 flagged `// TODO(bucket-11): migrate to CostTable` + tracked in Step 1 Stage 1.1 migration inventory.
+
+---
+
 **Overall execution order.**
 
 Umbrella orchestrator `ia/projects/full-game-mvp-master-plan.md` owns the canonical tier lanes, bucket table, cross-bucket dependency Mermaid, save-schema coordination, distribution gating, and progress roll-up. Tier sketch below matches umbrella — update umbrella on any tier shift, not this doc.
 
 Tiered view (ordinal within tier = parallelisable):
 
-1. **Tier A — start immediately, in parallel.** Bucket 1 (Step 2+), Bucket 5 (Step 1 continuation + Step 2 animation architecture), Bucket 7 (Steps 4–7 continuation).
-2. **Tier B — once Tier A contracts land.** Bucket 2 (needs Bucket 1 aggregate contract + Bucket 5 anim architecture), Bucket 9 (needs Bucket 5 visual assets).
-3. **Tier B' — pre-plan spawn.** `docs/citystats-overhaul-exploration.md` authored in parallel; Bucket 8 master plan waits for exploration to resolve.
+1. **Tier A — start immediately, in parallel.** Bucket 1 (Step 2+), Bucket 5 (Step 1 continuation + Step 2 animation architecture), Bucket 7 (Steps 4–7 continuation), Bucket 11 (infra — no upstream dep; land Step 1 schema + read API before Tier B gameplay buckets start migrating).
+2. **Tier B — once Tier A contracts land.** Bucket 2 (needs Bucket 1 aggregate contract + Bucket 5 anim architecture + Bucket 11 cost read API), Bucket 9 (needs Bucket 5 visual assets).
+3. **Tier B' — pre-plan spawn.** `docs/citystats-overhaul-exploration.md` authored in parallel; Bucket 8 master plan waits for exploration to resolve. `docs/cost-catalog-exploration.md` authored in parallel; Bucket 11 master plan waits for exploration to resolve.
 4. **Tier C — once Tier B opens.** Bucket 3 (needs Bucket 2 services + Bucket 1 budget flow + Bucket 5 sprite-gen Step 3 RCIS tile assets), Bucket 4 (needs Bucket 3 budget + Bucket 1 country scale + Bucket 5 landmark / utility sprite variants), Bucket 6 (needs Bucket 5 icons + Bucket 7 SFX hooks).
 5. **Tier D — once Tier C lands.** Bucket 8 (needs Bucket 2 outputs + Bucket 1 aggregates + Bucket 9 dashboard schema).
 6. **Tier E — last.** Bucket 10 (needs everything buildable).

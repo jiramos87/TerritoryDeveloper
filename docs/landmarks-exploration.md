@@ -53,3 +53,264 @@ _TBD — `/design-explore` Phase 2 gate decides._ Author's prior lean: **Approac
 ---
 
 _Next step._ Run `/design-explore docs/landmarks-exploration.md` to expand Approaches → Architecture → Subsystem impact → Implementation points → subagent review. Then `/master-plan-new` to author `ia/projects/landmarks-master-plan.md`.
+
+---
+
+## Design Expansion
+
+### Chosen Approach
+
+**Approach D — Hybrid two-track, both pop-driven.** Locked-decisions block already commits cadence model; Phase 1 comparison matrix confirms D dominates on constraint fit + output control vs A/B/C.
+
+| Criterion | A Registry | B Scale-unlock only | C Commission only | **D Hybrid two-track** |
+|---|---|---|---|---|
+| Constraint fit (tier-defining + intra-tier both required) | Fail (no progression) | Partial (drops intra-tier) | Partial (drops tier-defining) | **Full** |
+| Effort | Low | Medium | Medium-high | **Medium-high** |
+| Output control (designer-tuned milestones + commission pacing) | None | Low | Medium | **High** |
+| Maintainability (catalog-driven) | High | Medium | Medium | **Medium** |
+| Dependencies / risk (Bucket 1 scale ladder + Bucket 3 budget) | Low | Medium (B1 only) | Medium (B3 only) | **Medium (B1 + B3)** |
+
+Rationale — D is the only approach satisfying the "unlock moment + sustained growth reward" pair. A fails progression outright. B drops designer-tuned intra-tier pacing. C drops the genre-signature tier-transition reward. D's extra coupling cost (both Bucket 1 scale ladder + Bucket 3 budget) accepted — umbrella already locks both buckets upstream in Tier C.
+
+### Architecture
+
+```mermaid
+flowchart LR
+    subgraph Authoring["Authoring (StreamingAssets)"]
+        CAT[landmark-catalog.yaml<br/>rows: id / name / tier / popGate /<br/>sprite / commissionCost / buildMonths /<br/>utilityContributorRef? + scalingFactor?]
+    end
+
+    subgraph Runtime["Runtime services (MonoBehaviour scene components)"]
+        LPS[LandmarkProgressionService<br/>watches pop + scale tier<br/>flips unlock flags]
+        BPS[BigProjectService<br/>owns commission ledger<br/>monthly principal + progress tick]
+        LPM[LandmarkPlacementManager<br/>places sprite tile<br/>writes cell tag]
+        LCS[LandmarkCatalogStore<br/>loads YAML at Awake]
+    end
+
+    subgraph Upstream["Upstream (read)"]
+        SCALE[ScaleTierController<br/>Bucket 1]
+        POP[PopulationAggregator<br/>Bucket 2]
+        BUDGET[ServiceBudgetService<br/>Bucket 3]
+    end
+
+    subgraph Downstream["Downstream (consumers)"]
+        UTIL[UtilityContributorRegistry<br/>Bucket 4-a sibling]
+        HUD[LandmarkProgressPanel<br/>Bucket 6 UI]
+        CS[CityStats feed<br/>Bucket 8]
+        DASH[Web dashboard<br/>Bucket 9]
+    end
+
+    subgraph Persist["Persistence"]
+        SIDE[landmarks.json sidecar<br/>authoritative state]
+        MAIN[GameSaveData v3<br/>per-scale cell tag map<br/>denormalized index]
+    end
+
+    CAT --> LCS
+    LCS --> LPS
+    LCS --> BPS
+    SCALE --> LPS
+    POP --> LPS
+    BUDGET --> BPS
+    LPS -- unlock event --> BPS
+    BPS -- build complete --> LPM
+    LPM --> UTIL
+    LPM --> SIDE
+    LPM --> MAIN
+    LPS --> HUD
+    BPS --> HUD
+    LPM --> CS
+    LPM --> DASH
+    SIDE -- load --> LPS
+    MAIN -- cell tag reconcile --> LPM
+```
+
+**Entry points.**
+
+- `LandmarkProgressionService.Tick()` — called per simulation tick by existing tick bus. Reads scale-tier state + pop aggregate; raises `LandmarkUnlocked` event.
+- `BigProjectService.TryCommission(landmarkId)` — player UI action; validates budget, opens bond, starts build ledger row.
+- `BigProjectService.Tick()` — monthly advance; on `progress >= buildMonths` raises `LandmarkBuildCompleted` → `LandmarkPlacementManager.Place()`.
+
+**Exit points.**
+
+- `LandmarkUnlocked(id)` → HUD panel + CityStats feed.
+- `LandmarkBuildCompleted(id, cell)` → placement manager writes sprite tile, cell tag, sidecar row, utility-contributor registration (if `utilityContributorRef != null`).
+- `GetLandmarkAtCell(x,y,scale)` → CityStats / HUD / dashboard query surface (reads main-save cell tag).
+
+### Subsystem Impact
+
+| Subsystem | Nature | Invariant risk | Breaking? | Mitigation |
+|---|---|---|---|---|
+| **Save system** (`GameSaveManager` / `GameSaveData` / `persistence-system.md`) | Writes (sidecar + main-save cell tag map) + reads on load | #1 HeightMap sync — placement does NOT mutate height (tile-sprite only) | Additive under v3 envelope | Sidecar reconciliation on load: sidecar = truth, cell tags = rebuilt index if divergent |
+| **Multi-scale** (Bucket 1 `ScaleTierController`) | Reads scale-tier transition events | none | Additive (event listener) | — |
+| **City-sim** (Bucket 2 `PopulationAggregator`) | Reads population per scale | none | Additive | — |
+| **Zone S + budgets** (Bucket 3 `ServiceBudgetService`) | Reads budget floor + opens bond row | none | Additive (bond-backed commission = new bond consumer) | Bond consumer contract locked in Bucket 3 kickoff |
+| **Utilities sibling** (Bucket 4-a `UtilityContributorRegistry`) | Writes (register + unregister) via narrow catalog interface | none | Additive (new registrant source) | Catalog row `utilityContributorRef` nullable — sibling unaware when null |
+| **GridManager** | No direct mutation (reads `GetCell` via `LandmarkPlacementManager`) | #5 cellArray access, #6 GridManager responsibility creep | None if placement manager extracted as `*Service.cs` helper | Place under `Assets/Scripts/Managers/GameManagers/LandmarkPlacementService.cs` per invariant #6 carve-out |
+| **Tick bus** | Registers `LandmarkProgressionService` + `BigProjectService` as tick consumers | #3 no per-frame FindObjectOfType | Additive | Inspector-wire references in `Awake` |
+| **CityStats (Bucket 8)** | Reads landmark inventory per scale | none | Additive (new metric rows) | Data-parity contract negotiated at Bucket 8 pre-plan |
+| **Web dashboard (Bucket 9)** | Reads landmark inventory via existing ISR fetch | none | Additive | — |
+
+Invariants flagged by number: **#1** (no), **#3** (cache refs in `Awake`), **#4** (no new singletons — MonoBehaviour + Inspector), **#5 + #6** (placement routed through `*Service.cs` extraction). No invariant violated.
+
+### Implementation Points
+
+```
+Phase A — Catalog + data model (no runtime coupling yet)
+  - [ ] Define `LandmarkCatalogRow` schema (id, name, tier, popGate, sprite, commissionCost, buildMonths, utilityContributorRef?, contributorScalingFactor?)
+  - [ ] Ship `StreamingAssets/landmark-catalog.yaml` with 6 rows (2 tier-defining + 4 intra-tier, placeholder costs)
+  - [ ] `LandmarkCatalogStore.cs` — MonoBehaviour, loads YAML at `Awake`, `GetById(id)` / `GetAll()` surface
+  - [ ] EditMode test — load catalog, assert 6 rows, assert schema fields round-trip
+  Risk: cost constants are placeholder — flag "migrate to cost-catalog bucket 11" at every commission cost touch site
+
+Phase B — Progression service (unlock only, no commission yet)
+  - [ ] `LandmarkProgressionService.cs` (MonoBehaviour, `[SerializeField]` refs to ScaleTierController + PopulationAggregator + LandmarkCatalogStore)
+  - [ ] `Tick()` — evaluate each catalog row's gate, flip in-memory unlock flag on first satisfaction
+  - [ ] Raise `LandmarkUnlocked(id)` event (UnityEvent or Action)
+  - [ ] EditMode test — fake pop + scale-tier inputs, assert unlock order (tier-defining + intra-tier)
+  Risk: tier-defining unlocks must fire AFTER `ScaleTierController` emits tier-transition — establish tick ordering in `GameManager` bootstrap
+
+Phase C — Placement + sidecar save (tier-defining track only)
+  - [ ] `LandmarkPlacementService.cs` under `Assets/Scripts/Managers/GameManagers/` (carve-out per invariant #6)
+  - [ ] `Place(landmarkId, cell, scale)` — writes sprite tile via existing tile-placement API, writes cell tag on target scale cell-map, appends sidecar row
+  - [ ] `landmarks.json` sidecar writer/reader bundled with main save via `GameSaveManager` hook
+  - [ ] Load reconciliation — sidecar = truth, missing cell tags rebuilt from sidecar on load
+  - [ ] `GameSaveData.schemaVersion = 3` (under Bucket 3 v3 envelope — no mid-tier bump)
+  - [ ] PlayMode test — place tier-defining landmark on region-scale-crossed state, save, reload, assert sidecar + cell tag restored
+  Risk: schema version bump coordinates with Bucket 3 (zone-s-economy Step 1 owns the bump)
+
+Phase D — Commissioning (intra-tier track)
+  - [ ] `BigProjectService.cs` (MonoBehaviour, refs to BudgetService + LandmarkCatalogStore + LandmarkPlacementService)
+  - [ ] `TryCommission(landmarkId)` — checks unlock flag, opens bond row against Bucket 3 budget, writes ledger row (principal + progress + ETA)
+  - [ ] `Tick()` — monthly advance, on `progress >= buildMonths` fires `LandmarkBuildCompleted` → PlacementService
+  - [ ] Pause/resume — player action flips `paused` flag on ledger row; ticks skip on pause
+  - [ ] Deficit commission allowed (bond underwrites — no floor check beyond bond ceiling)
+  - [ ] EditMode test — commission → N tick advance → complete; pause mid-build → no progress
+  Risk: bond contract stability — Bucket 3 kickoff must ship `IBondConsumer` interface before this phase
+
+Phase E — Super-utility contributor bridge
+  - [ ] On `LandmarkBuildCompleted`, if catalog row has `utilityContributorRef != null`, call `UtilityContributorRegistry.Register(landmarkId, contributorRef, scalingFactor)`
+  - [ ] On landmark destroyed (save flag flip) — call `Unregister(landmarkId)` (v1 no in-game destruction but load-path must re-register)
+  - [ ] EditMode test — commission super-power-plant landmark, assert utility pool production bumped by 10× scalingFactor
+  Risk: sibling Bucket 4-a interface must land before this phase — hard sequencing dep
+
+Phase F — UI surface (Bucket 6 coordination)
+  - [ ] `LandmarkProgressPanel.cs` — lists unlocked / in-progress / available-to-commission rows, reads from services (no per-frame FindObjectOfType — cache in `Awake`)
+  - [ ] Commission dialog — confirm cost + build duration; invokes `BigProjectService.TryCommission`
+  - [ ] Minimum viable — no tooltip / glossary polish, no onboarding hook (Bucket 6 owns those)
+  Risk: Bucket 6 UiTheme must land first (Tier B' exit)
+
+Deferred / out of scope
+- **Cost catalog migration** → future bucket 11 `cost-catalog-master-plan.md` (user to add to full-game-mvp umbrella separately). Landmark costs stay placeholder constants until migrated.
+- **Landmark destruction / decay** — v1 no removal after placement; hard deferral.
+- **Heritage / cultural landmarks, landmark-specific tourism effects** — confirmed OUT at bucket level.
+- **Mid-build cancellation + partial refund** — v1 ships pause-only. Cancel post-MVP if requested.
+- **Multi-cell landmark footprints** — v1 ships 1-cell sprite placement. Multi-cell deferred (couples to pivot-cell contract).
+- **In-game landmark info panel / tooltip / glossary row polish** — Bucket 6 scope.
+```
+
+### Examples
+
+**Catalog YAML (sample 3 of 6 rows):**
+
+```yaml
+- id: regional_plocks
+  name: Regional Plocks
+  tier: region
+  popGate: scale_transition_city_to_region
+  sprite: landmarks/regional_plocks
+  commissionCost: 0     # tier-defining = free gift
+  buildMonths: 0        # tier-defining = instant placement
+  utilityContributorRef: null
+  contributorScalingFactor: 1.0
+
+- id: big_power_plant
+  name: Giant Coal Plant
+  tier: region
+  popGate: { kind: intra_tier, pop: 150000 }
+  sprite: landmarks/big_power_plant
+  commissionCost: 2500000   # placeholder — cost-catalog bucket 11 owns later
+  buildMonths: 18
+  utilityContributorRef: contributors/coal_plant
+  contributorScalingFactor: 10.0
+
+- id: state_university
+  name: State University
+  tier: region
+  popGate: { kind: intra_tier, pop: 250000 }
+  sprite: landmarks/state_university
+  commissionCost: 1800000
+  buildMonths: 24
+  utilityContributorRef: null
+  contributorScalingFactor: 1.0
+```
+
+**Sidecar `landmarks.json` after 2 placements:**
+
+```json
+{
+  "schemaVersion": 1,
+  "landmarks": [
+    {
+      "id": "regional_plocks",
+      "cell": { "x": 42, "y": 88, "scale": "REGION" },
+      "footprint": { "w": 1, "h": 1 },
+      "placedTick": 12400,
+      "active": true,
+      "counters": { "tourismVisits": 0, "upkeepDebt": 0 }
+    },
+    {
+      "id": "big_power_plant",
+      "cell": { "x": 17, "y": 33, "scale": "REGION" },
+      "footprint": { "w": 1, "h": 1 },
+      "placedTick": 21840,
+      "active": true,
+      "counters": { "tourismVisits": 0, "upkeepDebt": 0 }
+    }
+  ]
+}
+```
+
+**Main-save cell tag extract (denormalized index, per-scale):**
+
+```json
+{
+  "schemaVersion": 3,
+  "regionCells": [
+    { "x": 42, "y": 88, "landmarkId": "regional_plocks" },
+    { "x": 17, "y": 33, "landmarkId": "big_power_plant" }
+  ]
+}
+```
+
+**Edge case — sidecar / cell tag divergence on load:**
+
+Sidecar has `big_power_plant @ (17,33)`, main-save cell tag absent at `(17,33)`. Load reconciliation:
+1. Load sidecar first — sidecar = truth.
+2. Walk sidecar rows; for each row, write cell tag on target scale cell-map (idempotent — overwrites whatever was there).
+3. Walk main-save cell tags; for each tag without a matching sidecar row — clear tag (dangling).
+4. Log reconciliation delta to diagnostics channel for regression visibility.
+
+Result — `(17,33)` cell tag restored from sidecar; no data loss.
+
+### Review Notes
+
+Subagent review run on Phases 3–7 (Plan subagent prompt per SKILL.md §Phase 8). BLOCKING items = 0. NON-BLOCKING + SUGGESTIONS captured below:
+
+**NON-BLOCKING**
+
+- *Phase B tick ordering* — `LandmarkProgressionService.Tick()` reads scale-tier state; if it runs before `ScaleTierController.Tick()` on transition ticks, unlock fires one tick late. Mitigation: explicit tick order registration in `GameManager` bootstrap (same pattern as existing services). Call out in Phase B task list at master-plan-new time.
+- *Phase C sidecar bundling* — `landmarks.json` must share atomic write path with main save to prevent torn state on crash mid-save. Mitigation: `GameSaveManager` writes both files to temp + atomic rename as a pair. Existing save path already does this for main save; extend to sidecar.
+- *Phase D bond ceiling* — "deficit commission allowed" assumes Bucket 3 `IBondConsumer` exposes a ceiling query. If bucket 3 v1 ships without a ceiling concept, commission fails-open (unbounded debt). Mitigation: coordinate at Bucket 3 kickoff — negotiate ceiling-query contract.
+
+**SUGGESTIONS**
+
+- *Catalog source-of-truth* — YAML hand-authored. Validator (`npm run validate:all`) should assert id uniqueness + `utilityContributorRef` resolves when non-null + `popGate` enum covers all tiers. Add validator rule at Phase A close.
+- *UI progress panel MVP* — consider showing "next landmark unlocks at pop 200k" affordance even before any landmark unlocks; hides progression opacity. Out of bucket but worth Bucket 6 ticket.
+- *Dashboard parity schema* — Bucket 8 pre-plan should include `landmarks[]` array in dashboard ISR contract. Flag at Bucket 8 kickoff.
+
+### Expansion metadata
+
+- Date: 2026-04-17
+- Model: claude-opus-4-7
+- Approach selected: D (hybrid two-track, both pop-driven)
+- Blocking items resolved: 0

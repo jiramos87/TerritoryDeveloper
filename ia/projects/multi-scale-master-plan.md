@@ -174,13 +174,13 @@
 - BUG-55 files: `Assets/Scripts/Managers/GameManagers/EmploymentManager.cs`, `Assets/Scripts/Managers/GameManagers/AutoZoningManager.cs`, `Assets/Scripts/Grid/CellData.cs`, `Assets/Scripts/Managers/GameManagers/GrowthBudgetManager.cs`, `Assets/Scripts/Managers/AutoRoadBuilder.cs`, `Assets/Scripts/Managers/GameManagers/DemandManager.cs`, `Assets/Scripts/UI/GrowthBudgetSlidersController.cs`, `Assets/Scripts/UI/CityStatsUIController.cs`
 - BUG-16/17 files: `Assets/Scripts/Managers/GeographyManager.cs`, `Assets/Scripts/TimeManagement/TimeManager.cs`
 - BUG-14 file: `Assets/Scripts/UI/UIManager.cs`
-- `ia/projects/BUG-55.md`, `ia/projects/FEAT-51.md`, `ia/projects/TECH-82.md`
+- `ia/projects/FEAT-51.md`, `ia/projects/TECH-82.md` (BUG-55 archived — see `BACKLOG-ARCHIVE.md`)
 - `ia/specs/simulation-system.md` (§tick-loop), `ia/specs/ui-design-system.md` (§tokens, §patterns)
 - Invariants: #3 (no FindObjectOfType per-frame), #5 (GetCell only), #6 (extract to helper)
 
 #### Stage 2.1 — Bug stabilization
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Done (2026-04-17 — all 4 tasks archived)
 
 **Objectives:** All open crasher, data-corruption, initialization-race, and per-frame-cache bugs at city scale fixed. Invariants #3 and #5 clean.
 
@@ -194,17 +194,17 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Crashers + data integrity (BUG-55 + BUG-14).
-- [ ] Phase 2 — Init races + null refs (BUG-16 + BUG-17).
+- [x] Phase 1 — Crashers + data integrity (BUG-55 + BUG-14).
+- [x] Phase 2 — Init races + null refs (BUG-16 + BUG-17).
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T2.1.1 | BUG-55 10 fixes | 1 | **BUG-55** | Draft | All 10 fixes per `ia/projects/BUG-55.md`: `EmploymentManager` div/0; `Cell` Enum.Parse crash; `AutoZoningManager` budget refund; `CellData` height-0 corruption; `GrowthBudgetManager` min inversion; `BuildingTracker` empty-zone count; road cache stale-in-tick; water height misclass; demand asymmetry; 3 `OnDestroy` leaks. |
-| T2.1.2 | BUG-14 per-frame cache | 1 | **BUG-14** | Draft | `UIManager.UpdateUI()` caches `EmploymentManager`, `DemandManager`, `StatisticsManager` in `Awake`; removes all per-frame `FindObjectOfType` calls per `ia/projects/BUG-14.md`. Invariant #3. |
-| T2.1.3 | BUG-16 init race | 2 | **BUG-16** | Draft | Add `isInitialized` flag to `GeographyManager`; gate `TimeManager.Update()` reads until flag is set. Files: `GeographyManager.cs`, `TimeManager.cs`. |
-| T2.1.4 | BUG-17 cachedCamera null | 2 | **BUG-17** | Draft | Assign `cachedCamera` (`Camera.main` or `[SerializeField]`) in `GridManager.Awake()` / `Start()` before `InitializeGrid()` constructs `ChunkCullingSystem`. File: `GridManager.cs`. |
+| T2.1.1 | BUG-55 10 fixes | 1 | **BUG-55** | Done (archived) | All 10 fixes landed per `BACKLOG-ARCHIVE.md` BUG-55 row: `EmploymentManager` div/0 already guarded; `CityCell` `TryParse` fallback; `AutoZoningManager` placement-first ordering; `CellData` height-0 floor; `GrowthBudgetManager` min enforced; `DemandManager` empty-zone subtraction; `AutoRoadBuilder` cache invalidation + re-fetch; water height `< 0` strict; demand symmetry 1.2; `OnDestroy` cleanup in 3 controllers. |
+| T2.1.2 | BUG-14 per-frame cache | 1 | **BUG-14** | Done (archived) | `UIManager.UpdateUI()` caches `EmploymentManager`, `DemandManager` in `Start` (`StatisticsManager` lookup was dead — removed); `UpdateGridCoordinatesDebugText` uses cached `gameDebugInfoBuilder` + `waterManager`. Zero per-frame `FindObjectOfType` in `UIManager.Hud.cs` (verified). Invariant #3. |
+| T2.1.3 | BUG-16 init race | 2 | **BUG-16** | Done (archived) | `GeographyManager.IsInitialized` flips true at tail of `InitializeGeography()`; `TimeManager` caches ref via `[SerializeField]` + `FindObjectOfType` fallback in `Awake` (invariant #3); daily-tick block early-returns pre-init. UI/input responsive during load. Bridge smoke: 0 NRE, compile clean. |
+| T2.1.4 | BUG-17 cachedCamera null | 2 | **BUG-17** | Done (archived) | `cachedCamera` promoted to `[SerializeField] private Camera`; new `GridManager.Awake()` resolves via `Camera.main` fallback before `InitializeGrid()` constructs `ChunkCullingSystem`; redundant lazy null-checks removed at `GridManager.cs:366` + `:1294`. Matches canonical init-race guard per `unity-development-context §6`. Compile clean; chunk visibility unchanged. |
 
 
 #### Stage 2.2 — Tick performance + metrics foundation
