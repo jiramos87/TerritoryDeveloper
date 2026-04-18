@@ -41,6 +41,23 @@ When multiple agent sessions share one Unity Editor and Postgres instance, use *
 
 Non-Play-Mode commands (`export_agent_context`, `get_compilation_status`, `get_console_logs`, `economy_balance_snapshot`, `prefab_manifest`) do **not** require a lease — the Postgres FIFO queue serializes them naturally. `npm run unity:compile-check` (batchmode) is fully independent and never requires a lease.
 
+## Escalation taxonomy — `gap_reason` for `verdict: escalated`
+
+Closed-loop agent verify is the default. When an agent cannot close a verification gap, the Verification block MUST include an `escalation` object with a typed `gap_reason`:
+
+| `gap_reason` | Meaning | Required fields | Next action |
+|--------------|---------|-----------------|-------------|
+| `unity_api_limit` | Genuine Unity / `UnityEditor` API gap — no tooling task can close the loop. Rare. | `detail` (which API surface falls short) | Human handles; note limit in issue / spec. |
+| `bridge_kind_missing` | Unity API supports the op but `unity_bridge_command` has no matching `kind`. | `missing_kind` (e.g. `refresh_asset_database`), `tooling_issue_id` (open BACKLOG id tracking the bridge expansion), `detail` | File / cite tooling issue; human performs one-shot Editor action to unblock while the bridge kind is implemented. |
+| `human_judgment_required` | True human-only gate — design review, visual QA, cross-feature tradeoff. | `detail` (judgment class) | Human reviews; agent resumes after sign-off. |
+
+**Rules:**
+
+1. Agents MUST NOT escalate as `human_judgment_required` when a missing bridge kind could close the loop. Before picking a `gap_reason`, cross-check the current kind enum in [`Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`](../Assets/Scripts/Editor/AgentBridgeCommandRunner.cs). If a mutation kind is missing, `gap_reason = bridge_kind_missing` with `missing_kind` + `tooling_issue_id`. **TECH-412 landed** 20 mutation kinds (Edit Mode only) covering component, GameObject, scene, prefab, and asset lifecycle plus a `execute_menu_item` catch-all — before escalating, verify the needed kind is not already in `AgentBridgeCommandRunner.Mutations.cs` (full list: `attach_component`, `remove_component`, `assign_serialized_field`, `create_gameobject`, `delete_gameobject`, `find_gameobject`, `set_transform`, `set_gameobject_active`, `set_gameobject_parent`, `save_scene`, `open_scene`, `new_scene`, `instantiate_prefab`, `apply_prefab_overrides`, `create_scriptable_object`, `modify_scriptable_object`, `refresh_asset_database`, `move_asset`, `delete_asset`, `execute_menu_item`).
+2. `bridge_kind_missing` escalations MUST cite an open BACKLOG issue (or file one) so the gap is tracked. File a new TECH when a genuinely missing kind is identified; TECH-412 is now closed (landed).
+3. Human-in-loop messages MUST name the concrete reason. Do NOT write generic "Human review required" — write "Escalated: `bridge_kind_missing` — `<missing_kind>` — tracked in <TECH-id>" (or equivalent).
+4. Full JSON shape: [`ia/skills/verify-loop/SKILL.md`](../ia/skills/verify-loop/SKILL.md) § Step 7.
+
 ## Timeout escalation protocol
 
 When a **`unity_bridge_command`** call returns **`timeout`**, follow this ordered recovery before concluding "human needed":

@@ -45,8 +45,36 @@ public class BlipBootstrap : MonoBehaviour
     [SerializeField] private Transform mixerRouterSlot;   // BlipMixerRouter Step 2
     [SerializeField] private Transform cooldownSlot;      // BlipCooldownRegistry Step 2
 
+    /// <summary>
+    /// Fires once per play session before any scene Awake (Editor + Build).
+    /// Loads BlipBootstrap prefab from Resources/ and instantiates it so every
+    /// scene gets the persistent audio root without per-scene prefab drops.
+    /// Invariant #3: one-shot at load time, never per-frame.
+    /// Invariant #4: reuses existing Instance guard — no new singleton type.
+    /// </summary>
+    [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void EnsureInstance()
+    {
+        if (Instance != null) return;
+        var prefab = Resources.Load<GameObject>("BlipBootstrap");
+        if (prefab == null)
+        {
+            Debug.LogWarning("[Blip] BlipBootstrap prefab missing under Resources/ — audio will be silent");
+            return;
+        }
+        Object.Instantiate(prefab);
+    }
+
     private void Awake()
     {
+        // Dedup guard — if a legacy scene-drop (e.g. MainMenu.unity) spawns a second instance,
+        // the first one wins and the second destroys itself.
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         // Capture main-thread id first — BlipBaker.AssertMainThread reads this.
         MainThreadId = Thread.CurrentThread.ManagedThreadId;
 

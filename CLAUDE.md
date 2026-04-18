@@ -12,7 +12,7 @@ Unity 2D isometric city builder with a Markdown-backed Information Architecture 
 
 ## 2. MCP first
 
-Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files. Suggested order: `backlog_issue` (when you have a `BUG-/FEAT-/TECH-/ART-/AUDIO-` id) → `router_for_task` → `glossary_discover` / `glossary_lookup` (English only — translate from the conversation) → `spec_outline` / `spec_section` / `spec_sections` → `invariants_summary` / `list_rules` / `rule_content`. For closing a project spec: `project_spec_closeout_digest` after `backlog_issue`. The MCP server caches the schema in memory at session start; restart Claude Code (or use the matching CLI script via tsx) after editing tool descriptors. If MCP is unavailable, fall back to `ia/rules/agent-router.md` + targeted file reads.
+Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files. Suggested order: `backlog_issue` (when you have a `BUG-/FEAT-/TECH-/ART-/AUDIO-` id) → `router_for_task` → `glossary_discover` / `glossary_lookup` (English only — translate from the conversation) → `spec_outline` / `spec_section` / `spec_sections` → `invariants_summary` / `list_rules` / `rule_content`. Issue-creation flow: `reserve_backlog_ids` (reserve id before writing yaml) → `backlog_record_validate` (validate yaml before materialize). Structured list queries: `backlog_list`. For closing a project spec: `project_spec_closeout_digest` after `backlog_issue`. The MCP server caches the schema in memory at session start; restart Claude Code (or use the matching CLI script via tsx) after editing tool descriptors. If MCP is unavailable, fall back to `ia/rules/agent-router.md` + targeted file reads.
 
 ## 3. Key files
 
@@ -21,8 +21,8 @@ Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files
 | `MEMORY.md` (root) | Repo-scoped project memory. One-line entries; promote to `.claude/memory/{slug}.md` when an entry exceeds ~10 lines. Distinct from user auto-memory under `~/.claude-personal/projects/.../memory/` (cross-project, per-user). |
 | `.claude/settings.json` | Hooks + permissions. **Do not strip `defaultMode: "acceptEdits"`** and **do not split the `mcp__territory-ia__*` wildcard** — both regress per-call approval friction. |
 | `.claude/skills/{name}` | Directory-level symlinks → `ia/skills/{name}/`. |
-| `.claude/agents/*.md` | 12 native subagents — `design-explore`, `master-plan-new`, `master-plan-extend`, `stage-file`, `project-new`, `spec-kickoff`, `spec-implementer`, `verifier`, `verify-loop`, `test-mode-loop`, `closeout`, `release-rollout`. Opus orchestrators (`design-explore`, `master-plan-new`, `master-plan-extend`, `stage-file`, `project-new`, `spec-kickoff`, `closeout`, `release-rollout`); Sonnet executors (`spec-implementer`, `verifier`, `verify-loop`, `test-mode-loop`). Each body carries a `caveman:caveman` directive (subagents run in fresh context and do not inherit the parent SessionStart hook). `release-rollout` dispatches ABOVE the single-issue flow — routes per-cell to `design-explore` / `master-plan-new` / `master-plan-extend` / `stage-decompose` / `stage-file` subagents, backed by 3 Sonnet / Opus helper skills (`release-rollout-enumerate`, `release-rollout-track`, `release-rollout-skill-bug-log`). |
-| `.claude/commands/*.md` | Slash command dispatchers → subagents under `.claude/agents/{name}.md` (`/design-explore`, `/master-plan-new`, `/master-plan-extend`, `/stage-file`, `/project-new`, `/kickoff`, `/implement`, `/verify`, `/verify-loop`, `/testmode`, `/closeout`, `/release-rollout`). Each forwards a caveman-asserting prompt. `/closeout` confirmation prompts stay full English. |
+| `.claude/agents/*.md` | 13 native subagents — `design-explore`, `master-plan-new`, `master-plan-extend`, `stage-file`, `project-new`, `spec-kickoff`, `spec-implementer`, `verifier`, `verify-loop`, `test-mode-loop`, `ship-stage`, `closeout`, `release-rollout`. Opus orchestrators (`design-explore`, `master-plan-new`, `master-plan-extend`, `stage-file`, `project-new`, `spec-kickoff`, `ship-stage`, `closeout`, `release-rollout`); Sonnet executors (`spec-implementer`, `verifier`, `verify-loop`, `test-mode-loop`). Each body carries a `caveman:caveman` directive (subagents run in fresh context and do not inherit the parent SessionStart hook). `release-rollout` dispatches ABOVE the single-issue flow — routes per-cell to `design-explore` / `master-plan-new` / `master-plan-extend` / `stage-decompose` / `stage-file` subagents, backed by 3 Sonnet / Opus helper skills (`release-rollout-enumerate`, `release-rollout-track`, `release-rollout-skill-bug-log`). `ship-stage` dispatches BETWEEN single-issue `/ship` and `/release-rollout` — drives all non-Done tasks of one Stage X.Y through kickoff → implement → verify-loop → closeout with cached MCP context + batched Path B at stage end. |
+| `.claude/commands/*.md` | Slash command dispatchers → subagents under `.claude/agents/{name}.md` (`/design-explore`, `/master-plan-new`, `/master-plan-extend`, `/stage-file`, `/project-new`, `/kickoff`, `/implement`, `/verify`, `/verify-loop`, `/testmode`, `/ship-stage`, `/closeout`, `/release-rollout`). Each forwards a caveman-asserting prompt. `/closeout` confirmation prompts stay full English. |
 | `.claude/output-styles/*.md` | 2 output styles — `verification-report` (JSON header + caveman summary, used by `/verify`) and `closeout-digest` (JSON header + caveman summary, used by `/closeout`). |
 | `ia/skills/*/SKILL.md` | Workflow recipes — open the matching `SKILL.md` when the task triggers. Index: `ia/skills/README.md`. The 6 lifecycle recipes (`project-spec-kickoff`, `project-spec-implement`, `project-implementation-validation`, `agent-test-mode-verify`, `project-spec-close`, `project-stage-close`) carry a caveman preamble so direct (non-subagent) invocations inherit the same default. |
 | `ia/rules/{invariants,terminology-consistency,mcp-ia-default,agent-output-caveman}.md` | Always-loaded guardrails (imported above). |
@@ -31,6 +31,7 @@ Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files
 | `ia/backlog-archive/{id}.yaml` | Per-issue **backlog record** (closed issues). Moved from `ia/backlog/` on closeout. |
 | `ia/state/id-counter.json` | Monotonic per-prefix id counter (TECH, FEAT, BUG, ART, AUDIO). Written exclusively via `tools/scripts/reserve-id.sh` under `flock`. Never hand-edit. |
 | `BACKLOG.md`, `BACKLOG-ARCHIVE.md` | Generated **backlog view** — materialized by `bash tools/scripts/materialize-backlog.sh` from yaml records. Read-only for humans + dashboard; never edited directly by skills or agents. |
+| `ia/skills/skill-train/SKILL.md` | On-demand skill retrospective. Reads target skill's Per-skill Changelog; aggregates recurring friction (≥2 occurrences); proposes unified-diff patch against Phase sequence / Guardrails / Seed prompt sections. User-gated; never auto-applies. Sibling producer: `release-rollout-skill-bug-log` (user-logged channel). |
 
 ## 4. Hooks
 
@@ -57,6 +58,14 @@ Next.js 14+ App Router workspace at `web/`. Full onboarding: `web/README.md`.
 | `npm run validate:web` | Lint + typecheck + build via root composition |
 | `npm run deploy:web` | Deploy production to https://web-nine-wheat-35.vercel.app (auto-prunes newest 3). Manual only — closeout / stage-close no longer auto-deploy. |
 | `npm run deploy:web:preview` | Deploy preview (non-prod) to a unique Vercel URL. |
+
+| Route | Purpose | Auth | Render |
+|-------|---------|------|--------|
+| `/dashboard` | Master-plan progress dashboard | gated (bypass via `DASHBOARD_AUTH_SKIP=1`) | RSC |
+| `/dashboard/releases` | Release picker | gated (TECH-358 matcher) | RSC |
+| `/dashboard/releases/:releaseId/progress` | Release progress tree | gated (TECH-358 matcher) | RSC + `PlanTree` Client island |
+
+Auth gate for `/dashboard*` inherits from `web/proxy.ts` matcher (TECH-358).
 
 **Live dashboard freshness:** `/dashboard` fetches `ia/projects/*master-plan*.md` from GitHub raw via Next.js ISR (5-min revalidate) on Vercel. Push to deployed branch → visible within ~5 min without redeploy. Run `npm run deploy:web` only when instant refresh or code change required.
 

@@ -17,6 +17,18 @@ public class EconomyManager : MonoBehaviour
     public CityStats cityStats;
     public TimeManager timeManager;
     public GameNotificationManager gameNotificationManager;
+    /// <summary>
+    /// Enforces non-negative treasury clamp on spend operations.
+    /// EconomyManager owns balance state via <see cref="cityStats"/>;
+    /// TreasuryFloorClampService is a composition helper (same GO) that
+    /// encapsulates the floor-clamp policy so SpendMoney can delegate balance mutation.
+    /// </summary>
+    [SerializeField] private TreasuryFloorClampService treasuryFloorClamp;
+    /// <summary>
+    /// Allocates tax revenue across budget categories (R/C/I multipliers).
+    /// Composition helper on same GO — consumed by this manager once Phase 2 wires call sites.
+    /// </summary>
+    [SerializeField] private BudgetAllocationService budgetAllocation;
 
     [Header("Monthly maintenance")]
     [Tooltip("Upkeep charged per road cell (ZoneType.Road) on the first day of each month, after tax collection.")]
@@ -32,6 +44,18 @@ public class EconomyManager : MonoBehaviour
     [Header("Tax Rate Limits")]
     public int minTaxRate = 0;
     public int maxTaxRate = 50;
+
+    void Awake()
+    {
+        if (treasuryFloorClamp == null)
+            treasuryFloorClamp = FindObjectOfType<TreasuryFloorClampService>();
+        if (treasuryFloorClamp == null)
+            Debug.LogWarning("EconomyManager: TreasuryFloorClampService not found. Attach it to the EconomyManager GameObject in the scene.");
+        if (budgetAllocation == null)
+            budgetAllocation = FindObjectOfType<BudgetAllocationService>();
+        if (budgetAllocation == null)
+            Debug.LogWarning("EconomyManager: BudgetAllocationService not found. Attach it to the EconomyManager GameObject in the scene.");
+    }
 
     void Start()
     {
@@ -65,6 +89,7 @@ public class EconomyManager : MonoBehaviour
 
         ApplyMonthlyTaxCollection();
         ProcessMonthlyMaintenance();
+        if (budgetAllocation != null) budgetAllocation.MonthlyReset();
     }
 
     /// <summary>
@@ -165,25 +190,33 @@ public class EconomyManager : MonoBehaviour
             return false;
         }
 
-        if (GetCurrentMoney() >= amount)
+        if (treasuryFloorClamp == null)
         {
-            cityStats.RemoveMoney(amount);
-            if (notifyInsufficientFunds) BlipEngine.Play(BlipId.EcoMoneySpent);
-            return true;
+            Debug.LogError("EconomyManager: TreasuryFloorClampService reference is null!");
+            return false;
         }
 
-        if (notifyInsufficientFunds && gameNotificationManager != null)
+        // Pre-gate on CanAfford so we own the failure-notification path.
+        // TrySpend unconditionally posts PostError on insufficient funds;
+        // callers with notifyInsufficientFunds=false (e.g. ProcessMonthlyMaintenance)
+        // need notification suppressed. Pre-gating preserves parity without touching the
+        // archived TrySpend API.
+        if (!treasuryFloorClamp.CanAfford(amount))
         {
-            string prefix = string.IsNullOrEmpty(contextForInsufficientFunds)
-                ? ""
-                : contextForInsufficientFunds + "\n";
-            gameNotificationManager.PostError(
-                "Insufficient Funds\n" +
-                prefix +
-                $"Cannot spend ${amount}. Current balance is ${GetCurrentMoney()}."
-            );
+            if (notifyInsufficientFunds && gameNotificationManager != null)
+            {
+                string prefix = string.IsNullOrEmpty(contextForInsufficientFunds) ? "" : contextForInsufficientFunds + "\n";
+                gameNotificationManager.PostError(
+                    "Insufficient Funds\n" + prefix +
+                    $"Cannot spend ${amount}. Current balance is ${GetCurrentMoney()}."
+                );
+            }
+            return false;
         }
-        return false;
+
+        bool ok = treasuryFloorClamp.TrySpend(amount, contextForInsufficientFunds ?? string.Empty);
+        if (ok && notifyInsufficientFunds) BlipEngine.Play(BlipId.EcoMoneySpent);
+        return ok;
     }
 
     /// <summary>
@@ -527,7 +560,10 @@ public class EconomyManager : MonoBehaviour
                zoneType == Zone.ZoneType.IndustrialLightBuilding ||
                zoneType == Zone.ZoneType.IndustrialMediumBuilding ||
                zoneType == Zone.ZoneType.IndustrialHeavyBuilding ||
-               zoneType == Zone.ZoneType.Building;
+               zoneType == Zone.ZoneType.Building ||
+               zoneType == Zone.ZoneType.StateServiceLightBuilding ||
+               zoneType == Zone.ZoneType.StateServiceMediumBuilding ||
+               zoneType == Zone.ZoneType.StateServiceHeavyBuilding;
     }
 
     /// <summary>
@@ -545,7 +581,25 @@ public class EconomyManager : MonoBehaviour
                zoneType == Zone.ZoneType.CommercialHeavyZoning ||
                zoneType == Zone.ZoneType.IndustrialLightZoning ||
                zoneType == Zone.ZoneType.IndustrialMediumZoning ||
-               zoneType == Zone.ZoneType.IndustrialHeavyZoning;
+               zoneType == Zone.ZoneType.IndustrialHeavyZoning ||
+               zoneType == Zone.ZoneType.StateServiceLightZoning ||
+               zoneType == Zone.ZoneType.StateServiceMediumZoning ||
+               zoneType == Zone.ZoneType.StateServiceHeavyZoning;
+    }
+
+    /// <summary>
+    /// Check if zone type is Zone S (State Service).
+    /// </summary>
+    /// <param name="zoneType">Zone type to check.</param>
+    /// <returns>True if any of the 6 State Service sub-types.</returns>
+    public bool IsStateServiceZone(Zone.ZoneType zoneType)
+    {
+        return zoneType == Zone.ZoneType.StateServiceLightBuilding ||
+               zoneType == Zone.ZoneType.StateServiceMediumBuilding ||
+               zoneType == Zone.ZoneType.StateServiceHeavyBuilding ||
+               zoneType == Zone.ZoneType.StateServiceLightZoning ||
+               zoneType == Zone.ZoneType.StateServiceMediumZoning ||
+               zoneType == Zone.ZoneType.StateServiceHeavyZoning;
     }
 
     /// <summary>

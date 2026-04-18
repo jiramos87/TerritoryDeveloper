@@ -13,7 +13,7 @@ using UnityEngine;
 /// Play Mode bridge kinds use <see cref="SessionState"/> → completion survives domain reload on Play Mode enter/exit.
 /// <c>get_compilation_status</c> completes synchronously; compile snapshot for IDE agents.
 /// </summary>
-public static class AgentBridgeCommandRunner
+public static partial class AgentBridgeCommandRunner
 {
     const int PollEveryNFrames = 30;
 
@@ -129,44 +129,49 @@ public static class AgentBridgeCommandRunner
 
         switch (dq.kind)
         {
-            case "export_agent_context":
+            // OBSERVATION kinds (11) — do not modify; regression gate TECH-412
+            case "export_agent_context": // OBSERVATION — do not modify
                 RunExportAgentContext(repoRoot, commandId, dq.request_json);
                 break;
-            case "get_console_logs":
+            case "get_console_logs": // OBSERVATION — do not modify
                 RunGetConsoleLogs(repoRoot, commandId, dq.request_json);
                 break;
-            case "capture_screenshot":
+            case "capture_screenshot": // OBSERVATION — do not modify
                 RunCaptureScreenshot(repoRoot, commandId, dq.request_json);
                 break;
-            case "enter_play_mode":
+            case "enter_play_mode": // OBSERVATION — do not modify
                 RunEnterPlayMode(repoRoot, commandId);
                 break;
-            case "exit_play_mode":
+            case "exit_play_mode": // OBSERVATION — do not modify
                 RunExitPlayMode(repoRoot, commandId);
                 break;
-            case "get_play_mode_status":
+            case "get_play_mode_status": // OBSERVATION — do not modify
                 RunGetPlayModeStatus(repoRoot, commandId);
                 break;
-            case "debug_context_bundle":
+            case "debug_context_bundle": // OBSERVATION — do not modify
                 RunDebugContextBundle(repoRoot, commandId, dq.request_json);
                 break;
-            case "get_compilation_status":
+            case "get_compilation_status": // OBSERVATION — do not modify
                 RunGetCompilationStatus(repoRoot, commandId, dq.request_json);
                 break;
-            case "economy_balance_snapshot":
+            case "economy_balance_snapshot": // OBSERVATION — do not modify
                 RunEconomyBalanceSnapshot(repoRoot, commandId, dq.request_json);
                 break;
-            case "prefab_manifest":
+            case "prefab_manifest": // OBSERVATION — do not modify
                 RunPrefabManifest(repoRoot, commandId, dq.request_json);
                 break;
-            case "sorting_order_debug":
+            case "sorting_order_debug": // OBSERVATION — do not modify
                 RunSortingOrderDebug(repoRoot, commandId, dq.request_json);
                 break;
             default:
-                TryFinalizeFailed(
-                    repoRoot,
-                    commandId,
-                    $"Unknown kind '{dq.kind}'. Supported: export_agent_context, get_console_logs, capture_screenshot, enter_play_mode, exit_play_mode, get_play_mode_status, debug_context_bundle, get_compilation_status, economy_balance_snapshot, prefab_manifest, sorting_order_debug.");
+                // Try mutation kinds (Phases 1-3)
+                if (!TryDispatchMutationKind(dq.kind, repoRoot, commandId, dq.request_json))
+                {
+                    TryFinalizeFailed(
+                        repoRoot,
+                        commandId,
+                        $"Unknown kind '{dq.kind}'. Observation kinds: export_agent_context, get_console_logs, capture_screenshot, enter_play_mode, exit_play_mode, get_play_mode_status, debug_context_bundle, get_compilation_status, economy_balance_snapshot, prefab_manifest, sorting_order_debug. Mutation kinds (Edit Mode): attach_component, remove_component, assign_serialized_field, create_gameobject, delete_gameobject, find_gameobject, set_transform, set_gameobject_active, set_gameobject_parent, save_scene, open_scene, new_scene, instantiate_prefab, apply_prefab_overrides, create_scriptable_object, modify_scriptable_object, refresh_asset_database, move_asset, delete_asset, execute_menu_item.");
+                }
                 break;
         }
     }
@@ -1463,6 +1468,16 @@ class AgentBridgeResponseFileDto
 
     /// <summary>Populated for <c>sorting_order_debug</c>.</summary>
     public AgentBridgeSortingOrderDebugDto sorting_order_debug;
+
+    /// <summary>
+    /// Populated for mutation kinds (attach_component, remove_component, assign_serialized_field,
+    /// create_gameobject, delete_gameobject, find_gameobject, set_transform, set_gameobject_active,
+    /// set_gameobject_parent, save_scene, open_scene, new_scene, instantiate_prefab,
+    /// apply_prefab_overrides, create_scriptable_object, modify_scriptable_object,
+    /// refresh_asset_database, move_asset, delete_asset, execute_menu_item).
+    /// JSON string carrying kind-specific result fields.
+    /// </summary>
+    public string mutation_result;
 
     /// <summary>Factory → response with all default fields pre-filled.</summary>
     public static AgentBridgeResponseFileDto CreateOk(string commandId, string storage)

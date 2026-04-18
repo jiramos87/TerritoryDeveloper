@@ -141,6 +141,20 @@ namespace Territory.Audio
             float releaseStartLevel = state.envLevel;
 
             // -----------------------------------------------------------------
+            // Stage 5.3 Phase 2 — LFO pre-computes (outside sample loop)
+            // -----------------------------------------------------------------
+            // lfoSmCoef: 1-pole coefficient for ~20 ms param smoothing (fc = 50 Hz).
+            // lfoPhaseInc0/1: phase advance per sample — pre-computed to avoid
+            // per-sample divide (hot path at 48 kHz × N voices).
+            float  lfoSmCoef    = 1f - (float)Math.Exp(-TwoPi * 50.0 / sampleRate);
+            double lfoPhaseInc0 = TwoPi * patch.lfo0Flat.rateHz / sampleRate;
+            double lfoPhaseInc1 = TwoPi * patch.lfo1Flat.rateHz / sampleRate;
+
+            // Short-circuit flags: skip entire slot when kind == Off.
+            bool lfo0Active = patch.lfo0Flat.kind != BlipLfoKind.Off;
+            bool lfo1Active = patch.lfo1Flat.kind != BlipLfoKind.Off;
+
+            // -----------------------------------------------------------------
             // Per-invocation jitter pre-compute (outside loop)
             // -----------------------------------------------------------------
             // Computed once per Render call — NOT per sample.
@@ -173,16 +187,136 @@ namespace Territory.Audio
                 // -----------------------------------------------------------------
                 for (int i = 0; i < count; i++)
                 {
+                    // ---------------------------------------------------------
+                    // TECH-288 — LFO routing matrix (deterministic branch)
+                    // Applies PRE-oscillator (pitch) and PRE-filter (cutoff, gain, pan).
+                    // Short-circuit: kind == Off → skip entire slot (preserves golden bit-exactness).
+                    // ---------------------------------------------------------
+                    float pitchModCents = 0f;
+                    float gainModMult   = 1f;
+                    float cutoffModHz   = 0f;
+                    float panModOffset  = 0f;
+
+                    if (lfo0Active)
+                    {
+                        // Phase-wrap edge detect for S&H (before advance).
+                        double phaseBefore0 = state.lfoPhase0;
+                        state.lfoPhase0 += lfoPhaseInc0;
+                        bool wrapped0 = state.lfoPhase0 >= TwoPi;
+                        if (wrapped0) state.lfoPhase0 -= TwoPi;
+
+                        float lfo0Raw;
+                        switch (patch.lfo0Flat.kind)
+                        {
+                            case BlipLfoKind.Sine:
+                                lfo0Raw = (float)Math.Sin(phaseBefore0);
+                                break;
+                            case BlipLfoKind.Triangle:
+                                lfo0Raw = (float)(2.0 / Math.PI * Math.Asin(Math.Sin(phaseBefore0)));
+                                break;
+                            case BlipLfoKind.Square:
+                                lfo0Raw = (float)Math.Sign(Math.Sin(phaseBefore0));
+                                break;
+                            case BlipLfoKind.SampleAndHold:
+                                if (wrapped0) state.lfoShVal0 = SampleJitterUniform(ref state.rngState);
+                                lfo0Raw = state.lfoShVal0;
+                                break;
+                            default:
+                                lfo0Raw = 0f;
+                                break;
+                        }
+                        lfo0Raw *= patch.lfo0Flat.depth;
+
+                        switch (patch.lfo0Flat.route)
+                        {
+                            case BlipLfoRoute.Pitch:
+                                pitchModCents += SmoothOnePole(ref state.lfoSm0Pitch, lfo0Raw, lfoSmCoef);
+                                break;
+                            case BlipLfoRoute.Gain:
+                                gainModMult *= 1f + SmoothOnePole(ref state.lfoSm0Gain, lfo0Raw, lfoSmCoef);
+                                break;
+                            case BlipLfoRoute.FilterCutoff:
+                                cutoffModHz += SmoothOnePole(ref state.lfoSm0Cutoff, lfo0Raw, lfoSmCoef);
+                                break;
+                            case BlipLfoRoute.Pan:
+                                panModOffset += SmoothOnePole(ref state.lfoSm0Pan, lfo0Raw, lfoSmCoef);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        // Off — advance phase only (no routing).
+                        state.lfoPhase0 += lfoPhaseInc0;
+                        if (state.lfoPhase0 >= TwoPi) state.lfoPhase0 -= TwoPi;
+                    }
+
+                    if (lfo1Active)
+                    {
+                        double phaseBefore1 = state.lfoPhase1;
+                        state.lfoPhase1 += lfoPhaseInc1;
+                        bool wrapped1 = state.lfoPhase1 >= TwoPi;
+                        if (wrapped1) state.lfoPhase1 -= TwoPi;
+
+                        float lfo1Raw;
+                        switch (patch.lfo1Flat.kind)
+                        {
+                            case BlipLfoKind.Sine:
+                                lfo1Raw = (float)Math.Sin(phaseBefore1);
+                                break;
+                            case BlipLfoKind.Triangle:
+                                lfo1Raw = (float)(2.0 / Math.PI * Math.Asin(Math.Sin(phaseBefore1)));
+                                break;
+                            case BlipLfoKind.Square:
+                                lfo1Raw = (float)Math.Sign(Math.Sin(phaseBefore1));
+                                break;
+                            case BlipLfoKind.SampleAndHold:
+                                if (wrapped1) state.lfoShVal1 = SampleJitterUniform(ref state.rngState);
+                                lfo1Raw = state.lfoShVal1;
+                                break;
+                            default:
+                                lfo1Raw = 0f;
+                                break;
+                        }
+                        lfo1Raw *= patch.lfo1Flat.depth;
+
+                        switch (patch.lfo1Flat.route)
+                        {
+                            case BlipLfoRoute.Pitch:
+                                pitchModCents += SmoothOnePole(ref state.lfoSm1Pitch, lfo1Raw, lfoSmCoef);
+                                break;
+                            case BlipLfoRoute.Gain:
+                                gainModMult *= 1f + SmoothOnePole(ref state.lfoSm1Gain, lfo1Raw, lfoSmCoef);
+                                break;
+                            case BlipLfoRoute.FilterCutoff:
+                                cutoffModHz += SmoothOnePole(ref state.lfoSm1Cutoff, lfo1Raw, lfoSmCoef);
+                                break;
+                            case BlipLfoRoute.Pan:
+                                panModOffset += SmoothOnePole(ref state.lfoSm1Pan, lfo1Raw, lfoSmCoef);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        state.lfoPhase1 += lfoPhaseInc1;
+                        if (state.lfoPhase1 >= TwoPi) state.lfoPhase1 -= TwoPi;
+                    }
+
+                    // Apply LFO pitch mod: re-tune local osc copies for this sample.
+                    // BlipOscillatorFlat is a readonly struct — stack copy, zero heap alloc.
+                    BlipOscillatorFlat s0 = pitchModCents == 0f ? loc0 : new BlipOscillatorFlat(loc0, loc0.detuneCents + pitchModCents);
+                    BlipOscillatorFlat s1 = pitchModCents == 0f ? loc1 : new BlipOscillatorFlat(loc1, loc1.detuneCents + pitchModCents);
+                    BlipOscillatorFlat s2 = pitchModCents == 0f ? loc2 : new BlipOscillatorFlat(loc2, loc2.detuneCents + pitchModCents);
+
                     float oscSum = 0f;
                     if (patch.oscillatorCount > 0)
-                        oscSum += loc0.gain * BlipOscillatorBank.SampleOsc(
-                            loc0, sampleRate, ref state.phaseA, ref state.rngState);
+                        oscSum += s0.gain * BlipOscillatorBank.SampleOsc(
+                            s0, sampleRate, ref state.phaseA, ref state.rngState);
                     if (patch.oscillatorCount > 1)
-                        oscSum += loc1.gain * BlipOscillatorBank.SampleOsc(
-                            loc1, sampleRate, ref state.phaseB, ref state.rngState);
+                        oscSum += s1.gain * BlipOscillatorBank.SampleOsc(
+                            s1, sampleRate, ref state.phaseB, ref state.rngState);
                     if (patch.oscillatorCount > 2)
-                        oscSum += loc2.gain * BlipOscillatorBank.SampleOsc(
-                            loc2, sampleRate, ref state.phaseC, ref state.rngState);
+                        oscSum += s2.gain * BlipOscillatorBank.SampleOsc(
+                            s2, sampleRate, ref state.phaseC, ref state.rngState);
 
                     BlipEnvStage stageBefore = state.envStage;
                     BlipEnvelopeStepper.Advance(
@@ -212,8 +346,8 @@ namespace Territory.Audio
                         stageBudget,
                         releaseStartLevel);
 
-                    // gainMult == 1f in deterministic path — multiply is identity.
-                    float x = oscSum * state.envLevel * gainMult;
+                    // gainMult == 1f in deterministic path; gainModMult applies LFO Gain route.
+                    float x = oscSum * state.envLevel * gainMult * gainModMult;
 
                     // Post-envelope FX dispatch (unrolled 4-slot cascade).
                     // Empty chain (fxSlotCount == 0) fast-exits through all guards — bit-exact with pre-FX path.
@@ -234,7 +368,21 @@ namespace Territory.Audio
                             ref state.dcZ1_3, ref state.dcY1_3, ref state.ringModPhase_3, sampleRate,
                             d3, len3, ref writePos3);
 
-                    state.filterZ1 += alpha * (x - state.filterZ1);
+                    // Apply LFO FilterCutoff mod: compute per-sample α when active.
+                    float alphaThis = alpha;
+                    if (cutoffModHz != 0f && patch.filter.kind == BlipFilterKind.LowPass)
+                    {
+                        float modCutoff = patch.filter.cutoffHz + cutoffModHz;
+                        if (modCutoff < 1f) modCutoff = 1f;
+                        alphaThis = 1f - (float)Math.Exp(-TwoPi * modCutoff / sampleRate);
+                        if (alphaThis < 0f) alphaThis = 0f;
+                        if (alphaThis > 1f) alphaThis = 1f;
+                    }
+
+                    // Update pan offset on state (consumed by BlipBaker mixer).
+                    state.panOffset = panOffset + panModOffset;
+
+                    state.filterZ1 += alphaThis * (x - state.filterZ1);
                     buffer[offset + i] += state.filterZ1;
                 }
             }
@@ -269,16 +417,132 @@ namespace Territory.Audio
                 // -----------------------------------------------------------------
                 for (int i = 0; i < count; i++)
                 {
+                    // ---------------------------------------------------------
+                    // TECH-288 — LFO routing matrix (live branch)
+                    // Structural mirror of deterministic branch above.
+                    // ---------------------------------------------------------
+                    float pitchModCents = 0f;
+                    float gainModMult   = 1f;
+                    float cutoffModHz   = 0f;
+                    float panModOffset  = 0f;
+
+                    if (lfo0Active)
+                    {
+                        double phaseBefore0 = state.lfoPhase0;
+                        state.lfoPhase0 += lfoPhaseInc0;
+                        bool wrapped0 = state.lfoPhase0 >= TwoPi;
+                        if (wrapped0) state.lfoPhase0 -= TwoPi;
+
+                        float lfo0Raw;
+                        switch (patch.lfo0Flat.kind)
+                        {
+                            case BlipLfoKind.Sine:
+                                lfo0Raw = (float)Math.Sin(phaseBefore0);
+                                break;
+                            case BlipLfoKind.Triangle:
+                                lfo0Raw = (float)(2.0 / Math.PI * Math.Asin(Math.Sin(phaseBefore0)));
+                                break;
+                            case BlipLfoKind.Square:
+                                lfo0Raw = (float)Math.Sign(Math.Sin(phaseBefore0));
+                                break;
+                            case BlipLfoKind.SampleAndHold:
+                                if (wrapped0) state.lfoShVal0 = SampleJitterUniform(ref state.rngState);
+                                lfo0Raw = state.lfoShVal0;
+                                break;
+                            default:
+                                lfo0Raw = 0f;
+                                break;
+                        }
+                        lfo0Raw *= patch.lfo0Flat.depth;
+
+                        switch (patch.lfo0Flat.route)
+                        {
+                            case BlipLfoRoute.Pitch:
+                                pitchModCents += SmoothOnePole(ref state.lfoSm0Pitch, lfo0Raw, lfoSmCoef);
+                                break;
+                            case BlipLfoRoute.Gain:
+                                gainModMult *= 1f + SmoothOnePole(ref state.lfoSm0Gain, lfo0Raw, lfoSmCoef);
+                                break;
+                            case BlipLfoRoute.FilterCutoff:
+                                cutoffModHz += SmoothOnePole(ref state.lfoSm0Cutoff, lfo0Raw, lfoSmCoef);
+                                break;
+                            case BlipLfoRoute.Pan:
+                                panModOffset += SmoothOnePole(ref state.lfoSm0Pan, lfo0Raw, lfoSmCoef);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        state.lfoPhase0 += lfoPhaseInc0;
+                        if (state.lfoPhase0 >= TwoPi) state.lfoPhase0 -= TwoPi;
+                    }
+
+                    if (lfo1Active)
+                    {
+                        double phaseBefore1 = state.lfoPhase1;
+                        state.lfoPhase1 += lfoPhaseInc1;
+                        bool wrapped1 = state.lfoPhase1 >= TwoPi;
+                        if (wrapped1) state.lfoPhase1 -= TwoPi;
+
+                        float lfo1Raw;
+                        switch (patch.lfo1Flat.kind)
+                        {
+                            case BlipLfoKind.Sine:
+                                lfo1Raw = (float)Math.Sin(phaseBefore1);
+                                break;
+                            case BlipLfoKind.Triangle:
+                                lfo1Raw = (float)(2.0 / Math.PI * Math.Asin(Math.Sin(phaseBefore1)));
+                                break;
+                            case BlipLfoKind.Square:
+                                lfo1Raw = (float)Math.Sign(Math.Sin(phaseBefore1));
+                                break;
+                            case BlipLfoKind.SampleAndHold:
+                                if (wrapped1) state.lfoShVal1 = SampleJitterUniform(ref state.rngState);
+                                lfo1Raw = state.lfoShVal1;
+                                break;
+                            default:
+                                lfo1Raw = 0f;
+                                break;
+                        }
+                        lfo1Raw *= patch.lfo1Flat.depth;
+
+                        switch (patch.lfo1Flat.route)
+                        {
+                            case BlipLfoRoute.Pitch:
+                                pitchModCents += SmoothOnePole(ref state.lfoSm1Pitch, lfo1Raw, lfoSmCoef);
+                                break;
+                            case BlipLfoRoute.Gain:
+                                gainModMult *= 1f + SmoothOnePole(ref state.lfoSm1Gain, lfo1Raw, lfoSmCoef);
+                                break;
+                            case BlipLfoRoute.FilterCutoff:
+                                cutoffModHz += SmoothOnePole(ref state.lfoSm1Cutoff, lfo1Raw, lfoSmCoef);
+                                break;
+                            case BlipLfoRoute.Pan:
+                                panModOffset += SmoothOnePole(ref state.lfoSm1Pan, lfo1Raw, lfoSmCoef);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        state.lfoPhase1 += lfoPhaseInc1;
+                        if (state.lfoPhase1 >= TwoPi) state.lfoPhase1 -= TwoPi;
+                    }
+
+                    // Apply LFO pitch mod: re-tune local osc copies for this sample.
+                    BlipOscillatorFlat s0 = pitchModCents == 0f ? loc0 : new BlipOscillatorFlat(loc0, loc0.detuneCents + pitchModCents);
+                    BlipOscillatorFlat s1 = pitchModCents == 0f ? loc1 : new BlipOscillatorFlat(loc1, loc1.detuneCents + pitchModCents);
+                    BlipOscillatorFlat s2 = pitchModCents == 0f ? loc2 : new BlipOscillatorFlat(loc2, loc2.detuneCents + pitchModCents);
+
                     float oscSum = 0f;
                     if (patch.oscillatorCount > 0)
-                        oscSum += loc0.gain * BlipOscillatorBank.SampleOsc(
-                            loc0, sampleRate, ref state.phaseA, ref state.rngState);
+                        oscSum += s0.gain * BlipOscillatorBank.SampleOsc(
+                            s0, sampleRate, ref state.phaseA, ref state.rngState);
                     if (patch.oscillatorCount > 1)
-                        oscSum += loc1.gain * BlipOscillatorBank.SampleOsc(
-                            loc1, sampleRate, ref state.phaseB, ref state.rngState);
+                        oscSum += s1.gain * BlipOscillatorBank.SampleOsc(
+                            s1, sampleRate, ref state.phaseB, ref state.rngState);
                     if (patch.oscillatorCount > 2)
-                        oscSum += loc2.gain * BlipOscillatorBank.SampleOsc(
-                            loc2, sampleRate, ref state.phaseC, ref state.rngState);
+                        oscSum += s2.gain * BlipOscillatorBank.SampleOsc(
+                            s2, sampleRate, ref state.phaseC, ref state.rngState);
 
                     BlipEnvStage stageBefore = state.envStage;
                     BlipEnvelopeStepper.Advance(
@@ -308,8 +572,8 @@ namespace Territory.Audio
                         stageBudget,
                         releaseStartLevel);
 
-                    // Apply gain jitter multiplier to pre-filter sample.
-                    float x = oscSum * state.envLevel * gainMult;
+                    // Apply gain jitter multiplier + LFO gain mod to pre-filter sample.
+                    float x = oscSum * state.envLevel * gainMult * gainModMult;
 
                     // Post-envelope FX dispatch (unrolled 4-slot cascade).
                     // Empty chain (fxSlotCount == 0) fast-exits through all guards — bit-exact with pre-FX path.
@@ -330,15 +594,60 @@ namespace Territory.Audio
                             ref state.dcZ1_3, ref state.dcY1_3, ref state.ringModPhase_3, sampleRate,
                             d3, len3, ref writePos3);
 
-                    state.filterZ1 += alpha * (x - state.filterZ1);
+                    // Apply LFO FilterCutoff mod: compute per-sample α when active.
+                    float alphaThis = alpha;
+                    if (cutoffModHz != 0f && patch.filter.kind == BlipFilterKind.LowPass)
+                    {
+                        float modCutoff = patch.filter.cutoffHz + cutoffModHz;
+                        if (modCutoff < 1f) modCutoff = 1f;
+                        alphaThis = 1f - (float)Math.Exp(-TwoPi * modCutoff / sampleRate);
+                        if (alphaThis < 0f) alphaThis = 0f;
+                        if (alphaThis > 1f) alphaThis = 1f;
+                    }
+
+                    // Update pan offset on state (consumed by BlipBaker mixer).
+                    state.panOffset = panOffset + panModOffset;
+
+                    state.filterZ1 += alphaThis * (x - state.filterZ1);
                     buffer[offset + i] += state.filterZ1;
                 }
             }
         }
 
         // -----------------------------------------------------------------------
+        // SmoothOnePole — 1-pole param-smoothing helper (Stage 5.3)
+        // -----------------------------------------------------------------------
+
+        /// <summary>
+        /// Advances a one-pole smoothing filter one step toward <paramref name="target"/>.
+        /// <paramref name="coef"/> = 1 - exp(-2π * fc / sampleRate); fc ≈ 50 Hz → ~20 ms τ.
+        /// Pass <paramref name="z"/> by ref; returns the updated state for convenience.
+        /// Zero allocs; pure static — callable from Render + future FX code.
+        /// </summary>
+        public static float SmoothOnePole(ref float z, float target, float coef)
+        {
+            z += coef * (target - z);
+            return z;
+        }
+
+        // -----------------------------------------------------------------------
         // Jitter sampling helpers (private, static, zero alloc)
         // -----------------------------------------------------------------------
+
+        /// <summary>
+        /// Samples a uniform value in [-1, 1) via one xorshift32 step.
+        /// Used by S&amp;H LFO waveform for held-value resampling (TECH-288).
+        /// </summary>
+        private static float SampleJitterUniform(ref uint rngState)
+        {
+            // xorshift32 step (Marsaglia 2003).
+            rngState ^= rngState << 13;
+            rngState ^= rngState >> 17;
+            rngState ^= rngState << 5;
+
+            float t = (rngState & 0x7FFFFFFFu) * (1f / 0x80000000u); // [0, 1)
+            return t * 2f - 1f;                                        // [-1, 1)
+        }
 
         /// <summary>
         /// Samples a uniform ± jitter value in [-<paramref name="range"/>, <paramref name="range"/>).

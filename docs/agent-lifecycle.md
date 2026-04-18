@@ -58,11 +58,27 @@ Umbrella-level driver (sits ABOVE the single-issue flow, dispatches INTO it):
 | 7 | Verify (closed-loop) | `/verify-loop {ISSUE_ID}` | `verify-loop.md` | `verify-loop/` | JSON Verification block + caveman summary; bounded fix iteration (`MAX_ITERATIONS=2`) | human QA or `/project-stage-close` / `/closeout` |
 | 7a | Verify (single-pass) | `/verify` | `verifier.md` | *(composes `project-implementation-validation`, `agent-test-mode-verify`, `ide-bridge-evidence`)* | JSON Verification block (no fix iteration) | same handoff shape as `/verify-loop` |
 | 7b | Test-mode ad-hoc | `/testmode {SCENARIO_ID}` | `test-mode-loop.md` | `agent-test-mode-verify/` | `tools/reports/agent-testmode-batch-*.json` | any verify stage |
+| 7c | Stage-scoped chain ship | `/ship-stage {MASTER_PLAN_PATH} {STAGE_ID}` | `ship-stage.md` | `ship-stage/` | Chains spec-kickoff → spec-implementer → verify-loop (--skip-path-b) → closeout per non-Done task; one batched Path B at stage end; chain-level stage digest (JSON + caveman + `chain:` block); `Next:` handoff auto-resolved for all 4 cases | `/ship-stage` next filed stage, `/stage-file` next pending, `/stage-decompose` next skeleton, `/closeout` umbrella done |
 | 8 | Close stage | *(skill only)* | — | `project-stage-close/` | Stage §7 ticked, §6 / §9 / §10 appended, handoff prompt for next stage's fresh agent | next stage's `/stage-file` or the stage's `/implement` |
 | 9 | Close issue (umbrella) | `/closeout {ISSUE_ID}` | `closeout.md` | `project-spec-close/` | Lessons migrated to durable IA → spec deleted → BACKLOG row moved to `BACKLOG-ARCHIVE.md` → id purged | next issue |
 | U | Rollout umbrella | `/release-rollout {UMBRELLA_SPEC} {ROW_SLUG} [OPERATION]` | `release-rollout.md` | `release-rollout/` (+ `release-rollout-enumerate/`, `release-rollout-track/`, `release-rollout-skill-bug-log/` helpers) | Tracker cell flipped (one column advance) + ticket + Change log row + next-row recommendation | Dispatches into stages 1 / 2 / 2a / 3 per target cell |
+| R | Retrospective (skill training) | `/skill-train {SKILL_NAME} [--since DATE] [--threshold N] [--all]` | `skill-train.md` | `skill-train/` | `ia/skills/{SKILL_NAME}/train-proposal-{YYYY-MM-DD}.md` — unified-diff patch proposal against SKILL.md Phase sequence / Guardrails / Seed prompt; §Changelog pointer entry `source: train-proposed` | — (retrospective only — outside main lifecycle flow; no auto-apply, user review + manual apply) |
 
 Skills without slash commands (`project-stage-close`, plus the verification building blocks `bridge-environment-preflight`, `project-implementation-validation`, `agent-test-mode-verify`, `ide-bridge-evidence`, `close-dev-loop`) are invoked via the `Skill` tool or composed by a higher-level agent (e.g. `/verify-loop`).
+
+### 2a. Orchestrator Status flip owners (R1–R7)
+
+Full enum + rules in `ia/rules/orchestrator-vs-spec.md`. Quick reference:
+
+| Rule | Trigger | Skill | Flip |
+|------|---------|-------|------|
+| R1 | First task ever filed on plan | `stage-file` post-loop 1b | Plan top `Draft → In Progress — Step {N} / Stage {N.M}` |
+| R2 | First task filed in a stage | `stage-file` post-loop 1b | Stage header `Draft/Planned → In Progress` |
+| R3 | All tasks in stage archived | `project-stage-close` step 1 | Stage `In Progress → Final` |
+| R4 | All stages in step Final | `project-stage-close` / `project-spec-close` step 1 / 6c | Step `In Progress → Final` |
+| R5 | All Steps Final | `project-stage-close` step 1 / `project-spec-close` step 6c | Plan top `In Progress → Final` |
+| R6 | New Steps appended to Final plan | `master-plan-extend` Phase 7c | Plan top `Final → In Progress — Step {N_new} / Stage {N_new}.1` |
+| R7 | Step decomposed from skeleton | `stage-decompose` Phase 4c | Step `Skeleton → Draft (tasks _pending_)` |
 
 ---
 

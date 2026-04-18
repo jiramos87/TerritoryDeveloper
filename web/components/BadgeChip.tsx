@@ -1,13 +1,8 @@
 import type { ReactNode } from 'react'
+import type { Status } from './status-tokens'
+import { STATUS_TOKEN_CLASS } from './status-tokens'
 
-export type Status = 'done' | 'in-progress' | 'pending' | 'blocked'
-
-const STATUS_CLASS: Record<Status, string> = {
-  done:          'bg-bg-status-done text-text-status-done-fg',
-  'in-progress': 'bg-bg-status-progress text-text-status-progress-fg',
-  pending:       'bg-bg-status-pending text-text-status-pending-fg',
-  blocked:       'bg-bg-status-blocked text-text-status-blocked-fg',
-}
+export type { Status } from './status-tokens'
 
 const STATUS_LABEL: Record<Status, string> = {
   done:          'Done',
@@ -23,7 +18,7 @@ interface BadgeChipProps {
 export function BadgeChip({ status }: BadgeChipProps): ReactNode {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-mono ${STATUS_CLASS[status]}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-mono ${STATUS_TOKEN_CLASS[status]}`}
     >
       {STATUS_LABEL[status]}
     </span>

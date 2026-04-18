@@ -303,8 +303,9 @@ public sealed class BlipBaker
     /// </summary>
     private static void AssertMainThread()
     {
-        int current  = Thread.CurrentThread.ManagedThreadId;
         int expected = BlipBootstrap.MainThreadId;
+        if (expected == 0) return;
+        int current = Thread.CurrentThread.ManagedThreadId;
         if (current != expected)
             throw new InvalidOperationException(
                 $"BlipBaker.BakeOrGet must run on main thread " +

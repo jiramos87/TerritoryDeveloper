@@ -41,6 +41,7 @@ export interface Stage {
   title: string;
   status: HierarchyStatus;
   statusDetail: string; // text after " — " in status line, if any
+  objective?: string;   // **Objectives:** paragraph text
   phases: PhaseEntry[];
   tasks: TaskRow[];
 }
@@ -50,6 +51,7 @@ export interface Step {
   title: string;
   status: HierarchyStatus;
   statusDetail: string;
+  objective?: string;   // **Objectives:** paragraph text
   stages: Stage[];
 }
 

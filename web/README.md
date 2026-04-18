@@ -53,6 +53,21 @@ npm run validate:web   # lint + typecheck + build
 
 Root-level alias: `npm run validate:web` runs lint + typecheck + build via `npm --prefix web` composition.
 
+## Routes
+
+Canonical route-list for the `web/` workspace.
+
+| Route | Purpose | Auth | Render |
+|---|---|---|---|
+| `/` + `/about` + `/install` + `/history` | Public static pages | none | MDX (static import) |
+| `/wiki/[...slug]` | Glossary-backed wiki | none | MDX dynamic |
+| `/devlog` + `/devlog/[slug]` | Devlog index + post | none | MDX dynamic |
+| `/dashboard` | Master-plan progress dashboard | gated (bypass via `DASHBOARD_AUTH_SKIP=1`) | RSC |
+| `/dashboard/releases` | Release picker | gated (TECH-358 matcher) | RSC |
+| `/dashboard/releases/:releaseId/progress` | Release progress tree | gated (TECH-358 matcher) | RSC + `PlanTree` Client island |
+
+Auth gate for `/dashboard*` inherits from proxy matcher widened in TECH-358.
+
 ## Content conventions (stub)
 
 - Public page copy lives under `web/content/**` and page-body JSX strings in `web/app/**/page.tsx`.

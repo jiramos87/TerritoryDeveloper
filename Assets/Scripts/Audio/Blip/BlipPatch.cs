@@ -46,6 +46,19 @@ namespace Territory.Audio
         public BlipFilter Filter => filter;
 
         // -----------------------------------------------------------------------
+        // LFO slots (2 fixed slots; blittable-friendly — TECH-285)
+        // -----------------------------------------------------------------------
+        [SerializeField] private BlipLfo lfo0;
+
+        /// <summary>First LFO slot. kind=Off disables modulation.</summary>
+        public BlipLfo Lfo0 => lfo0;
+
+        [SerializeField] private BlipLfo lfo1;
+
+        /// <summary>Second LFO slot. kind=Off disables modulation.</summary>
+        public BlipLfo Lfo1 => lfo1;
+
+        // -----------------------------------------------------------------------
         // Variation
         // -----------------------------------------------------------------------
         [SerializeField] private int variantCount = 1;
@@ -188,6 +201,10 @@ namespace Territory.Audio
                 }
             }
 
+            // LFO rate clamp (TECH-285). Inserted before patchHash recompute.
+            lfo0.rateHz = Mathf.Max(0f, lfo0.rateHz);
+            lfo1.rateHz = Mathf.Max(0f, lfo1.rateHz);
+
             patchHash = BlipPatchHash.Compute(this);
         }
 
@@ -294,6 +311,19 @@ namespace Territory.Audio
                 FeedFloat(ref h, s.param1);
                 FeedFloat(ref h, s.param2);
             }
+
+            // 10. LFO slots (append-only, TECH-285). Existing assets: one-time stale patchHash
+            //     → Awake/OnEnable warning; re-save in Inspector fixes. Never re-order §1-9.
+            BlipLfo l0 = so.Lfo0;
+            FeedEnum(ref h, l0.kind);
+            FeedFloat(ref h, l0.rateHz);
+            FeedFloat(ref h, l0.depth);
+            FeedEnum(ref h, l0.route);
+            BlipLfo l1 = so.Lfo1;
+            FeedEnum(ref h, l1.kind);
+            FeedFloat(ref h, l1.rateHz);
+            FeedFloat(ref h, l1.depth);
+            FeedEnum(ref h, l1.route);
 
             return (int)h;
         }

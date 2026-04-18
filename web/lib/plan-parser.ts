@@ -111,6 +111,14 @@ function parsePhaseChecklist(lines: string[]): PhaseEntry[] {
   return phases;
 }
 
+function extractObjective(lines: string[]): string | undefined {
+  for (const line of lines) {
+    const m = line.match(/\*\*Objectives?:\*\*\s+(.+)/);
+    if (m) return m[1].trim();
+  }
+  return undefined;
+}
+
 function extractSiblingWarnings(lines: string[]): string[] {
   const warnings: string[] = [];
   for (const line of lines) {
@@ -162,6 +170,7 @@ export function parseMasterPlan(markdown: string, filename = ''): PlanData {
   function finalizeStage(stage: Stage, accLines: string[]): void {
     stage.phases = parsePhaseChecklist(accLines);
     stage.tasks = parseTaskTable(accLines);
+    stage.objective = extractObjective(accLines);
   }
 
   for (let i = 0; i < lines.length; i++) {
@@ -178,7 +187,10 @@ export function parseMasterPlan(markdown: string, filename = ''): PlanData {
     const stepMatch = line.match(/^###\s+Step\s+(\S+)\s+—\s+(.+)/);
     if (stepMatch) {
       if (currentStage && stageLines.length) { finalizeStage(currentStage, stageLines); stageLines = []; }
-      if (currentStep) steps.push(currentStep);
+      if (currentStep) {
+        currentStep.objective = extractObjective(stepLines);
+        steps.push(currentStep);
+      }
       currentStep = {
         id: stepMatch[1].replace(/[^0-9]/g, '') || stepMatch[1],
         title: stepMatch[2].trim(),
@@ -235,7 +247,10 @@ export function parseMasterPlan(markdown: string, filename = ''): PlanData {
   }
 
   if (currentStage && stageLines.length) finalizeStage(currentStage, stageLines);
-  if (currentStep) steps.push(currentStep);
+  if (currentStep) {
+    currentStep.objective = extractObjective(stepLines);
+    steps.push(currentStep);
+  }
 
   const allTasks: TaskRow[] = [];
   for (const step of steps) {

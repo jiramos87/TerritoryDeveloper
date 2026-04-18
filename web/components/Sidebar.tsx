@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, Newspaper, LayoutDashboard, Menu, X } from 'lucide-react';
+import { Home, BookOpen, Newspaper, LayoutDashboard, Layers3, Menu, X } from 'lucide-react';
 import { tokens } from '@/lib/tokens';
 
 const LINKS = [
@@ -11,6 +11,7 @@ const LINKS = [
   { href: '/wiki', label: 'Wiki', Icon: BookOpen },
   { href: '/devlog', label: 'Devlog', Icon: Newspaper },
   { href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+  { href: '/dashboard/releases', label: 'Releases', Icon: Layers3 },
 ];
 
 export default function Sidebar() {

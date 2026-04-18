@@ -1,0 +1,11 @@
+{
+  "entries": [
+    { "id": 0, "displayName": "Police",         "prefabPath": "", "iconPath": "", "baseCost": 500,  "monthlyUpkeep": 50  },
+    { "id": 1, "displayName": "Fire",            "prefabPath": "", "iconPath": "", "baseCost": 600,  "monthlyUpkeep": 60  },
+    { "id": 2, "displayName": "Education",       "prefabPath": "", "iconPath": "", "baseCost": 800,  "monthlyUpkeep": 80  },
+    { "id": 3, "displayName": "Health",          "prefabPath": "", "iconPath": "", "baseCost": 1000, "monthlyUpkeep": 100 },
+    { "id": 4, "displayName": "Parks",           "prefabPath": "", "iconPath": "", "baseCost": 300,  "monthlyUpkeep": 30  },
+    { "id": 5, "displayName": "Public Housing",  "prefabPath": "", "iconPath": "", "baseCost": 700,  "monthlyUpkeep": 70  },
+    { "id": 6, "displayName": "Public Offices",  "prefabPath": "", "iconPath": "", "baseCost": 900,  "monthlyUpkeep": 90  }
+  ]
+}

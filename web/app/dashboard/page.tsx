@@ -2,13 +2,12 @@ import { loadAllPlans } from '@/lib/plan-loader'
 import { computePlanMetrics } from '@/lib/plan-parser'
 import type { PlanData, TaskRow } from '@/lib/plan-loader-types'
 import { BadgeChip } from '@/components/BadgeChip'
-import { DataTable } from '@/components/DataTable'
-import type { Column } from '@/components/DataTable'
 import { FilterChips } from '@/components/FilterChips'
 import type { Chip } from '@/components/FilterChips'
 import { CollapsibleFilterRow } from '@/components/CollapsibleFilterRow'
 import { StatBar } from '@/components/StatBar'
 import PlanChartClient from '@/components/PlanChartClient'
+import { CollapsiblePlanStep } from '@/components/CollapsiblePlanStep'
 import { toBadgeStatus } from './_status'
 import { parseFilterValues, toggleFilterParam } from '@/lib/dashboard/filter-params'
 import { Button } from '@/components/Button'
@@ -25,8 +24,7 @@ type MultiParams = { plan: string[]; status: string[]; phase: string[] }
  * Hierarchical prune: apply plan / status / phase filters to plan list.
  * OR within dimension, AND across dimensions.
  * Empty array per dimension = no filter for that dimension.
- * Drop stages with zero tasks post-filter; drop steps with zero stages;
- * drop plans with zero steps.
+ * Pending-decompose steps (no stages) and stages (no tasks) always pass through.
  */
 function filterPlans(plans: PlanData[], params: MultiParams): PlanData[] {
   let result = plans
@@ -36,25 +34,26 @@ function filterPlans(plans: PlanData[], params: MultiParams): PlanData[] {
     result = result.filter((p) => params.plan.includes(toSlug(p.title)))
   }
 
-  // Task-level filters (AND across dimensions, OR within each)
+  // Task-level filters (AND across dimensions, OR within each).
+  // flatMap: return [] to drop, [item] to keep — avoids ambiguity between
+  // "originally no tasks" (pending-decompose) and "all tasks filtered out".
   if (params.status.length > 0 || params.phase.length > 0) {
+    const matchesTask = (t: TaskRow) => {
+      const statusOk = params.status.length === 0 || params.status.includes(t.status)
+      const phaseOk  = params.phase.length  === 0 || params.phase.includes(t.phase)
+      return statusOk && phaseOk
+    }
     result = result
       .map((plan) => {
-        const steps = plan.steps
-          .map((step) => {
-            const stages = step.stages
-              .map((stage) => {
-                const tasks = stage.tasks.filter((t) => {
-                  const statusOk = params.status.length === 0 || params.status.includes(t.status)
-                  const phaseOk  = params.phase.length  === 0 || params.phase.includes(t.phase)
-                  return statusOk && phaseOk
-                })
-                return { ...stage, tasks }
-              })
-              .filter((s) => s.tasks.length > 0)
-            return { ...step, stages }
+        const steps = plan.steps.flatMap((step) => {
+          if (step.stages.length === 0) return [step]
+          const stages = step.stages.flatMap((stage) => {
+            if (stage.tasks.length === 0) return [stage]
+            const tasks = stage.tasks.filter(matchesTask)
+            return tasks.length > 0 ? [{ ...stage, tasks }] : []
           })
-          .filter((s) => s.stages.length > 0)
+          return stages.length > 0 ? [{ ...step, stages }] : []
+        })
         return { ...plan, steps }
       })
       .filter((p) => p.steps.length > 0)
@@ -70,19 +69,6 @@ function filterPlans(plans: PlanData[], params: MultiParams): PlanData[] {
  * step/stage hierarchy with per-stage DataTable.
  * Banner flags page as internal / non-public.
  */
-
-const TASK_COLUMNS: Column<TaskRow>[] = [
-  { key: 'id',     header: 'ID' },
-  { key: 'phase',  header: 'Phase' },
-  { key: 'issue',  header: 'Issue' },
-  {
-    key: 'status',
-    header: 'Status',
-    render: (r) => <BadgeChip status={toBadgeStatus(r.status)} />,
-  },
-  { key: 'intent', header: 'Intent' },
-]
-
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -197,53 +183,9 @@ export default async function DashboardPage({
             {plan.steps.map((step) => {
               const { done: stepDone, total: stepTotal } = stepCounts[step.id] ?? { done: 0, total: 0 }
               return (
-              <div key={step.id} className="space-y-4 pl-2 border-l-2 border-border-subtle">
-                {/* Step heading */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-base font-semibold text-text-primary">
-                    Step {step.id} — {step.title}
-                  </h3>
-                  <BadgeChip status={toBadgeStatus(step.status)} />
-                  {step.statusDetail !== '' && (
-                    <span className="text-text-muted text-sm">{step.statusDetail}</span>
-                  )}
-                  {stepTotal > 0 && (
-                    <div className="flex-1 min-w-[10rem] max-w-[20rem]">
-                      <StatBar label={`${stepDone} / ${stepTotal} done`} value={stepDone} max={stepTotal} />
-                    </div>
-                  )}
-                </div>
-
-                {step.stages.length === 0 ? (
-                  <p className="text-text-muted text-sm pl-4">No stages.</p>
-                ) : (
-                  step.stages.map((stage) => (
-                    <div key={stage.id} className="space-y-2 pl-4">
-                      {/* Stage sub-heading */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-sm font-medium text-text-primary">
-                          Stage {stage.id} — {stage.title}
-                        </h4>
-                        <BadgeChip status={toBadgeStatus(stage.status)} />
-                        {stage.statusDetail !== '' && (
-                          <span className="text-text-muted text-sm">{stage.statusDetail}</span>
-                        )}
-                      </div>
-
-                      {stage.tasks.length === 0 ? (
-                        <p className="text-text-muted text-sm pl-2">No tasks.</p>
-                      ) : (
-                        <DataTable<TaskRow>
-                          columns={TASK_COLUMNS}
-                          rows={stage.tasks}
-                          getRowKey={(r) => r.id}
-                        />
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            )})}
+                <CollapsiblePlanStep key={step.id} step={step} stepDone={stepDone} stepTotal={stepTotal} />
+              )
+            })}
             {/* Per-plan grouped-bar chart — step breakdown by status */}
             <PlanChartClient data={chartData} />
           </section>

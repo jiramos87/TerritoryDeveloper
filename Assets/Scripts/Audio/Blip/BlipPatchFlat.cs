@@ -262,6 +262,16 @@ namespace Territory.Audio
         public readonly bool useLutOscillators;
 
         // -----------------------------------------------------------------
+        // LFO slots (2 fixed; blittable — TECH-285)
+        // -----------------------------------------------------------------
+
+        /// <summary>First LFO slot flat mirror. Source: <see cref="BlipPatch.Lfo0"/>.</summary>
+        public readonly BlipLfoFlat lfo0Flat;
+
+        /// <summary>Second LFO slot flat mirror. Source: <see cref="BlipPatch.Lfo1"/>.</summary>
+        public readonly BlipLfoFlat lfo1Flat;
+
+        // -----------------------------------------------------------------
         // Mixer routing index (blittable replacement for AudioMixerGroup ref)
         // -----------------------------------------------------------------
 
@@ -317,6 +327,9 @@ namespace Territory.Audio
             deterministic      = so.Deterministic;
             durationSeconds    = so.DurationSeconds;
             useLutOscillators  = so.UseLutOscillators;
+
+            lfo0Flat = new BlipLfoFlat(so.Lfo0);
+            lfo1Flat = new BlipLfoFlat(so.Lfo1);
 
             this.mixerGroupIndex = mixerGroupIndex;
         }

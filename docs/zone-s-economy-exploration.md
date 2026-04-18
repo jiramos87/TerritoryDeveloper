@@ -90,9 +90,11 @@ ZoneManager (existing)
         └─ StateServiceLightBuilding / StateServiceMediumBuilding / StateServiceHeavyBuilding
         └─ StateServiceLightZoning / StateServiceMediumZoning / StateServiceHeavyZoning
         └─ (sub-type carried in ZoneMeta sidecar, NOT enum)
-  └─ ZoneSubTypeRegistry (new, ScriptableObject catalogue)
+  └─ ZoneSubTypeRegistry (new, MonoBehaviour — loads from JSON config)
+        └─ config: Assets/Resources/Economy/zone-sub-types.json (plain text, human/agent editable)
         └─ 7 entries: police, fire, education, health, parks, public housing, public offices
-        └─ fields: id, displayName, prefab, baseCost, monthlyUpkeep, icon
+        └─ fields: id, displayName, prefabPath, iconPath, baseCost, monthlyUpkeep
+        └─ costs/upkeep edited directly in JSON; no Unity Editor required
 
 EconomyManager (existing)
   └─ BudgetAllocationService (new, helper under Managers/GameManagers/BudgetAllocationService.cs)
@@ -146,7 +148,7 @@ Eight subsystems touched. Invariant tags in brackets refer to numbered invariant
 
 ### Implementation Points (Phase 6)
 
-**Implementation Point IP-1 — ZoneType enum extension.** Add `StateServiceLightBuilding` / `StateServiceMediumBuilding` / `StateServiceHeavyBuilding` / `StateServiceLightZoning` / `StateServiceMediumZoning` / `StateServiceHeavyZoning` to `Assets/Scripts/Managers/UnitManagers/Zone.cs`. Extend `EconomyManager.IsBuildingZone`, `IsZoningType`, and add `IsStateServiceZone(Zone.ZoneType)`. Add `ZoneSubTypeRegistry` ScriptableObject under `Assets/ScriptableObjects/` with 7 entries. Sub-type id stored on `Zone` component as new `subTypeId` int field (default -1 for RCI).
+**Implementation Point IP-1 — ZoneType enum extension.** Add `StateServiceLightBuilding` / `StateServiceMediumBuilding` / `StateServiceHeavyBuilding` / `StateServiceLightZoning` / `StateServiceMediumZoning` / `StateServiceHeavyZoning` to `Assets/Scripts/Managers/UnitManagers/Zone.cs`. Extend `EconomyManager.IsBuildingZone`, `IsZoningType`, and add `IsStateServiceZone(Zone.ZoneType)`. Add `ZoneSubTypeRegistry` MonoBehaviour (JSON-loading) at `Assets/Scripts/Managers/GameManagers/ZoneSubTypeRegistry.cs` — reads `Assets/Resources/Economy/zone-sub-types.json` at startup; human/agent edits costs in plain JSON, no Unity Editor required. 7 entries seeded (police=0…public offices=6). Sub-type id stored on `Zone` component as new `subTypeId` int field (default -1 for RCI).
 
 **Implementation Point IP-2 — BudgetAllocationService.** New helper under `Assets/Scripts/Managers/GameManagers/BudgetAllocationService.cs`. MonoBehaviour, Inspector-wired on `EconomyManager` GameObject. Public API: `TryDraw(int subTypeId, int amount) → bool`, `GetMonthlyEnvelope(int subTypeId) → int`, `SetEnvelopePct(int subTypeId, float pct)` (auto-normalizes so sum == 1), `MonthlyReset()`. Internal state: `float[7] envelopePct`, `int globalMonthlyCap`, `int[7] currentMonthRemaining`. `TryDraw` checks `currentMonthRemaining[subTypeId] >= amount && TreasuryFloorClampService.CanAfford(amount)` BEFORE mutation (Q4 hard cap).
 

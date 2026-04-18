@@ -189,20 +189,20 @@ Not part of this audit's primary scope, but surfaced while reading the dispatche
 
 ## 7. Proposed action plan
 
-### Stage 1 — No-risk extractions (pure Sonnet mechanical)
+### Stage 1 — No-risk extractions (pure Sonnet mechanical) — shipped 2026-04-18
 1. Author `ia/skills/progress-regen/SKILL.md` (Sonnet-grade, Bash wrapper). Update 6 callers to invoke it.
 2. Author `ia/skills/cardinality-gate-check/SKILL.md`. Update 4 callers.
 3. Author `ia/skills/surface-path-precheck/SKILL.md`. Update 3 callers.
 
-### Stage 2 — Shared MCP recipe
+### Stage 2 — Shared MCP recipe — shipped 2026-04-18
 4. Author `ia/skills/domain-context-load/SKILL.md` (Sonnet). Update 8 callers — biggest maintenance win.
 5. Author `ia/skills/term-anchor-verify/SKILL.md` (Sonnet). Update 3+ callers (rollout Phase 3, track Phase 1, etc.).
 
-### Stage 3 — Rollout-specific splits
+### Stage 3 — Rollout-specific splits — shipped 2026-04-18
 6. Author `ia/skills/release-rollout-repo-sweep/SKILL.md` (Sonnet). Wire into `release-rollout-enumerate` Phase 1.
 7. Author `ia/skills/rollout-row-state/SKILL.md` (Sonnet). Wire into `release-rollout` Phase 1.
 
-### Stage 4 — Helper → subagent promotions
+### Stage 4 — Helper → subagent promotions — shipped 2026-04-18
 8. Create `.claude/agents/release-rollout-track.md` (Sonnet). Update `release-rollout` Phase 5 to dispatch via Agent tool.
 9. Create `.claude/agents/release-rollout-skill-bug-log.md` (Sonnet). Same.
 

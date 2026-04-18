@@ -780,9 +780,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 541471062}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 72.822, y: -8.97}
   m_SizeDelta: {x: 20.8064, y: 17.94}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &58450742
@@ -1055,6 +1055,7 @@ MonoBehaviour:
   population: 0
   money: 0
   happiness: 0
+  pollution: 0
   residentialZoneCount: 0
   residentialBuildingCount: 0
   commercialZoneCount: 0
@@ -1090,6 +1091,9 @@ MonoBehaviour:
   forestCoveragePercentage: 0
   simulateGrowth: 0
   communes: []
+  happinessWeightTax: 27
+  happinessWeightDevelopment: 12
+  happinessServiceCoverageStub: 0.4
 --- !u!1 &76646277
 GameObject:
   m_ObjectHideFlags: 0
@@ -1434,10 +1438,10 @@ RectTransform:
   - {fileID: 138217344}
   m_Father: {fileID: 2067597087}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 66.887566, y: -12}
+  m_SizeDelta: {x: 25.955027, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &101811179
 MonoBehaviour:
@@ -3915,6 +3919,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bb1840e0103845a98a245fe73546977, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _metricsRecorder: {fileID: 396756361}
   cityStats: {fileID: 72477285}
   growthBudgetManager: {fileID: 439753650}
   autoRoadBuilder: {fileID: 913510114}
@@ -3922,7 +3927,6 @@ MonoBehaviour:
   autoResourcePlanner: {fileID: 586497354}
   urbanizationProposalManager: {fileID: 1038576157}
   urbanCentroidService: {fileID: 1144256721}
-  _metricsRecorder: {fileID: 396756361}
 --- !u!114 &396756360
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5322,6 +5326,8 @@ MonoBehaviour:
   terrainManager: {fileID: 1097666053}
   buildingSelectorMenuController: {fileID: 1975260509}
   cityStats: {fileID: 72477285}
+  employmentManager: {fileID: 0}
+  demandManager: {fileID: 0}
   miniMapController: {fileID: 1604661285}
   bulldozeMode: 0
   detailsMode: 0
@@ -6786,6 +6792,9 @@ GameObject:
   m_Component:
   - component: {fileID: 678270591}
   - component: {fileID: 678270592}
+  - component: {fileID: 678270593}
+  - component: {fileID: 678270594}
+  - component: {fileID: 678270595}
   m_Layer: 0
   m_Name: EconomyManager
   m_TagString: Untagged
@@ -6823,11 +6832,56 @@ MonoBehaviour:
   cityStats: {fileID: 72477285}
   timeManager: {fileID: 1231479808}
   gameNotificationManager: {fileID: 524023767}
+  treasuryFloorClamp: {fileID: 678270593}
+  budgetAllocation: {fileID: 678270594}
+  maintenanceCostPerRoadCell: 8
+  maintenanceCostPerPowerPlant: 350
   residentialIncomeTax: 10
   commercialIncomeTax: 10
   industrialIncomeTax: 10
   minTaxRate: 0
   maxTaxRate: 50
+--- !u!114 &678270593
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 678270589}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c279f7b0519ef48e0bd5591c506a940a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  economy: {fileID: 0}
+--- !u!114 &678270594
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 678270589}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a410b6d39a3634f3f9a39a24a06a7af1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  economy: {fileID: 0}
+  treasuryFloor: {fileID: 0}
+  subTypeRegistry: {fileID: 0}
+--- !u!114 &678270595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 678270589}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4f68c791896f4eb789d38dd4981bef6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  configResourcePath: Economy/zone-sub-types
 --- !u!1 &686057057
 GameObject:
   m_ObjectHideFlags: 0
@@ -7010,7 +7064,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -0.00005888939, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: -385.7915, y: -76.2589}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &709582277
 MonoBehaviour:
@@ -7165,10 +7219,10 @@ RectTransform:
   - {fileID: 140931011}
   m_Father: {fileID: 2067597087}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 39.93254, y: -12}
+  m_SizeDelta: {x: 25.955027, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &721180688
 MonoBehaviour:
@@ -8648,9 +8702,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 541471062}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 31.209301, y: -8.97}
   m_SizeDelta: {x: 20.8062, y: 17.94}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &854348732
@@ -10785,10 +10839,10 @@ RectTransform:
   - {fileID: 1251652818}
   m_Father: {fileID: 2067597087}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 12.977513, y: -12}
+  m_SizeDelta: {x: 25.955027, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1075734690
 MonoBehaviour:
@@ -11480,9 +11534,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 541471062}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 10.4031, y: -8.97}
   m_SizeDelta: {x: 20.8062, y: 17.94}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1125915286
@@ -12784,6 +12838,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e39aec02f972c48dfbba486ab3f06ffd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  geographyManager: {fileID: 0}
   uiManager: {fileID: 515320935}
   speedButtonsController: {fileID: 1367649255}
   cityStats: {fileID: 72477285}
@@ -13133,6 +13188,7 @@ MonoBehaviour:
   population: 0
   money: 0
   happiness: 0
+  pollution: 0
   residentialZoneCount: 0
   residentialBuildingCount: 0
   commercialZoneCount: 0
@@ -13168,6 +13224,9 @@ MonoBehaviour:
   forestCoveragePercentage: 0
   simulateGrowth: 0
   communes: []
+  happinessWeightTax: 27
+  happinessWeightDevelopment: 12
+  happinessServiceCoverageStub: 0.4
 --- !u!114 &1253988709
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13553,6 +13612,7 @@ MonoBehaviour:
   zoneManager: {fileID: 955926521}
   interstateManager: {fileID: 251169277}
   terraformingService: {fileID: 1624889129}
+  gameSaveManager: {fileID: 0}
   roadTilePrefabs: []
   roadTilePrefab1: {fileID: 985362822682053019, guid: f352b1a1987d5475fb6ca00d317d21da, type: 3}
   roadTilePrefab2: {fileID: 6344670689893122505, guid: 720adb93575224a59a2e816ea22172de, type: 3}
@@ -13684,10 +13744,10 @@ RectTransform:
   - {fileID: 477379713}
   m_Father: {fileID: 2067597087}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 120.79762, y: -12}
+  m_SizeDelta: {x: 25.955027, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1315855105
 MonoBehaviour:
@@ -14261,10 +14321,10 @@ RectTransform:
   - {fileID: 500331901}
   m_Father: {fileID: 2067597087}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 93.8426, y: -12}
+  m_SizeDelta: {x: 25.955027, y: 24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1372487376
 MonoBehaviour:
@@ -15435,9 +15495,9 @@ RectTransform:
   m_Father: {fileID: 527006394}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: -4.7381}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1560773294
 MonoBehaviour:
@@ -18258,9 +18318,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 541471062}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 52.015602, y: -8.97}
   m_SizeDelta: {x: 20.8064, y: 17.94}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1769093473
@@ -19495,6 +19555,7 @@ MonoBehaviour:
   mouseGridSortingOrder: 0
   isInitialized: 0
   chunkSize: 16
+  cachedCamera: {fileID: 0}
 --- !u!1 &1888940540
 GameObject:
   m_ObjectHideFlags: 0
@@ -20414,9 +20475,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 541471062}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 93.6284, y: -8.97}
   m_SizeDelta: {x: 20.8064, y: 17.94}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1996036785
@@ -21483,6 +21544,9 @@ MonoBehaviour:
     newIndustrialBuildings: 0
   autoGrowthEnabled: 1
   growthThreshold: 5
+  comfortableTaxRateForDemand: 10
+  maxTaxRateForDemandScale: 50
+  taxDemandPenaltyAtMax: 0.35
 --- !u!1 &2067597086
 GameObject:
   m_ObjectHideFlags: 0

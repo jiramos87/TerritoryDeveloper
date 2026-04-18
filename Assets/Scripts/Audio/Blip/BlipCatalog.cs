@@ -31,6 +31,7 @@ namespace Territory.Audio
         private BlipCooldownRegistry _cooldownRegistry;
         private BlipBaker _baker;
         private readonly BlipDelayPool _delayPool = new BlipDelayPool();
+        private readonly BlipLutPool _lutPool = new BlipLutPool();
         private bool _isReady;
 
         /// <summary>

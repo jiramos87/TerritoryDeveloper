@@ -33,7 +33,14 @@ public class Zone : MonoBehaviour
         Water,
         Forest, // New forest type for tree placement
         None,
-        Building
+        Building,
+        // Zone S — State Service sub-types (ints 24–29); append-only for save-file compatibility
+        StateServiceLightBuilding,
+        StateServiceMediumBuilding,
+        StateServiceHeavyBuilding,
+        StateServiceLightZoning,
+        StateServiceMediumZoning,
+        StateServiceHeavyZoning
     }
 
     public enum ZoneCategory
@@ -48,6 +55,10 @@ public class Zone : MonoBehaviour
 
     public ZoneType zoneType;
     public ZoneCategory zoneCategory;
+
+    /// <summary>Zone S sub-type index. -1 = "RCI, no sub-type" (all legacy zones). Indexes a ZoneSubTypeRegistry row (TECH-280).</summary>
+    [SerializeField] private int subTypeId = -1;
+    public int SubTypeId { get => subTypeId; set => subTypeId = value; }
 
     void Awake()
     {

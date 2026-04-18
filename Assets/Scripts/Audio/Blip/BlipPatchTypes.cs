@@ -182,6 +182,79 @@ namespace Territory.Audio
     }
 
     // -------------------------------------------------------------------------
+    // BlipLfoKind — LFO waveform selector
+    // Values pinned for fixture stability across enum reorders (TECH-285).
+    // -------------------------------------------------------------------------
+    public enum BlipLfoKind
+    {
+        Off           = 0,
+        Sine          = 1,
+        Triangle      = 2,
+        Square        = 3,
+        SampleAndHold = 4,
+    }
+
+    // -------------------------------------------------------------------------
+    // BlipLfoRoute — LFO modulation target
+    // Values pinned for fixture stability across enum reorders (TECH-285).
+    // -------------------------------------------------------------------------
+    public enum BlipLfoRoute
+    {
+        Pitch        = 0,
+        Gain         = 1,
+        FilterCutoff = 2,
+        Pan          = 3,
+    }
+
+    // -------------------------------------------------------------------------
+    // BlipLfo — authoring LFO slot; Inspector-serializable
+    // -------------------------------------------------------------------------
+    [Serializable]
+    public struct BlipLfo
+    {
+        /// <summary>LFO waveform shape (Off disables modulation).</summary>
+        public BlipLfoKind kind;
+
+        /// <summary>LFO rate in Hz (clamped >= 0 by BlipPatch.OnValidate).</summary>
+        public float rateHz;
+
+        /// <summary>Modulation depth (semantics depend on route target).</summary>
+        public float depth;
+
+        /// <summary>Modulation target parameter.</summary>
+        public BlipLfoRoute route;
+    }
+
+    // -------------------------------------------------------------------------
+    // BlipLfoFlat — blittable runtime mirror of BlipLfo
+    // readonly struct + scalar-only fields → qualifies as unmanaged (blittable).
+    // Mirrors BlipPatchFlat blittable discipline (ia/specs/audio-blip.md §2).
+    // -------------------------------------------------------------------------
+    public readonly struct BlipLfoFlat
+    {
+        /// <summary>LFO waveform shape.</summary>
+        public readonly BlipLfoKind kind;
+
+        /// <summary>LFO rate in Hz.</summary>
+        public readonly float rateHz;
+
+        /// <summary>Modulation depth.</summary>
+        public readonly float depth;
+
+        /// <summary>Modulation target parameter.</summary>
+        public readonly BlipLfoRoute route;
+
+        /// <summary>Copy constructor from authoring <see cref="BlipLfo"/>. No managed refs copied.</summary>
+        public BlipLfoFlat(in BlipLfo src)
+        {
+            kind   = src.kind;
+            rateHz = src.rateHz;
+            depth  = src.depth;
+            route  = src.route;
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // BlipFxSlotFlat — blittable runtime mirror of BlipFxSlot
     // readonly struct + scalar-only fields → qualifies as unmanaged (blittable).
     // Mirrors BlipPatchFlat blittable discipline (ia/specs/audio-blip.md §2).

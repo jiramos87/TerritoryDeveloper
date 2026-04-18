@@ -567,3 +567,81 @@ The `caller_agent` allowlist (§3.8) is an **advisory policy boundary**, not a c
 - **Blocking items resolved:** 4 (composite partial semantics, rollback plan, journal `content_hash` backfill, allowlist source-of-truth)
 - **Exclusion cross-refs:** `backlog-yaml-mcp-alignment-master-plan.md`, `TECH-302.md`
 - **Next step:** `/master-plan-new docs/mcp-lifecycle-tools-opus-4-7-audit-exploration.md`
+
+---
+
+## Design Expansion — post-plan addendum
+
+**Expansion date:** 2026-04-18 · **Model:** Opus 4.7 · **Origin:** post-plan conversational review — three critical gaps identified after Step 4 scope lock · **Approach:** additive (Step 5 of master plan, no re-decision on Approach B phased sequencing)
+
+### Trigger
+
+Review of `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` Step 4 scope surfaced three gaps not covered by the original 11-item scope. Extension follows existing patterns (§3.6 mutation, §3.7 authorship, §3.8 caller-allowlist) — no contradiction with locked decisions. Mirrored here for traceability symmetric to the primary Design Expansion block.
+
+### Critical miss 1 — Master-plan authoring parity
+
+**Gap:** §3.7 guards glossary/spec/rule authorship behind `caller_agent`, and §3.6 mutates orchestrator cells (`orchestrator_task_update`), but NO tool authors new master plans, appends steps, or decomposes stages. Skills `master-plan-new`, `master-plan-extend`, `stage-decompose` all author via raw `Write`/`Edit` on the highest-churn IA surface in the repo. Asymmetric — guards the smaller surface (glossary rows) but leaves 500-line orchestrator decomposition unguarded.
+
+**Tools:**
+
+- `master_plan_create({ slug, metadata, steps, caller_agent: "master-plan-new" })` — serializes master plan via new orchestrator-parser `serialize()` inverse; rejects if file exists.
+- `master_plan_step_append({ slug, step, caller_agent: "master-plan-extend" })` — appends new Step to existing orchestrator; preserves existing Steps byte-identical.
+- `stage_decompose_apply({ slug, step_id, decomposition, caller_agent: "stage-decompose" })` — expands skeleton step into stages → phases → tasks in-place.
+
+**Guards:**
+
+- `caller_agent` allowlist (add `master-plan-new`, `master-plan-extend`, `stage-decompose` to per-tool map).
+- Invariant #12 path guard (target under `ia/projects/`).
+- Cardinality validator — enforces `project-hierarchy` rules (≥2 phases/stage, ≥2 tasks/phase with `justification?` override, unique stage + task ids).
+
+### Critical miss 2 — Transactional batch / atomicity
+
+**Gap:** §3.4 partial-result schema is *read-side* only; write tools are blind-apply per-tool. Skills `stage-file` + `closeout` + `release-rollout` perform multi-step mutations (N × issue create + N × spec stub + BACKLOG regen + orchestrator task-table update). If step 3 fails mid-batch, half-filed state is a recovery pain today.
+
+**Tool:**
+
+- `mutation_batch({ ops: [{ tool, args }, ...], mode: "all_or_nothing" | "best_effort", caller_agent, dry_run? })` — wraps N mutation / authorship calls atomically.
+
+**Mechanism:**
+
+- In-memory snapshot-based rollback: `snapshotFiles(paths)` reads current content per affected file; execute ops sequentially; on any failure + `all_or_nothing` → `restoreSnapshots` + `batch_aborted` envelope; on failure + `best_effort` → append to `errors`, continue.
+- Static per-tool dispatch map collects affected paths before snapshotting.
+- `flock` guard on dedicated `tools/.mutation-batch.lock` (distinct lockfile per invariants guardrail — separate from `.id-counter.lock` / `.closeout.lock` / `.materialize-backlog.lock`).
+- Callers adopt: `stage-file` wraps per-stage file-batch in `all_or_nothing`; `closeout` wraps yaml-archive + BACKLOG regen + spec-delete in `all_or_nothing`.
+
+### Critical miss 3 — Dry-run preview mode
+
+**Gap:** §3.6 mutations + §3.7 authorship tools are blind-apply. No `dry_run` param returning the diff without writing. Given the breaking P2 cut (§3.2, §3.3), agents are already re-learning the surface — bake dry-run in at P4 / Step 5 rather than retrofit.
+
+**Mechanism:**
+
+- Add `dry_run?: boolean` (default `false`) to every mutation + authorship tool (§3.6, §3.7, plus critical-miss-1 authoring tools + critical-miss-2 batch).
+- Dry-run response: `{ ok: true, payload: { diff: string, affected_paths: string[], would_write: true } }` — unified diff format, no file write, no index regen spawn.
+- `mutation_batch({ dry_run: true })` propagates to each nested op; aggregates per-op diffs into `payload.diffs: { [op_index]: { diff, affected_paths } }`.
+- `caller_agent` gate runs BEFORE dry-run branch — unauthorized caller rejects without computing diff. Prevents info leak through diff output.
+- Multi-file ops (e.g. glossary row + index regen) return primary-file diff + full `affected_paths` list + `meta.side_effects: ["glossary_index_regen"]`.
+
+### Non-scope (addendum)
+
+- Retroactive dry-run on Stage 1.1 / 1.2 quick wins — those are read-side extensions, no mutation surface.
+- Cryptographic tamper-proof batch signatures — consistent with §3.8 "defence-in-depth only" policy.
+- Web dashboard "preview before apply" UI — agent-only tooling at this layer.
+
+### Master plan mapping
+
+Mirrored into `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` Step 5 (post-plan review addendum):
+
+- Stage 5.1 — Master-plan Authoring Tools (T5.1.1–T5.1.4)
+- Stage 5.2 — Transactional Batch (T5.2.1–T5.2.4)
+- Stage 5.3 — Dry-run Preview (T5.3.1–T5.3.4)
+
+Ships additive `v1.1.0` after Step 4 breaking + guarded surface lands.
+
+### Addendum metadata
+
+- **Date:** 2026-04-18 (ISO)
+- **Model:** Opus 4.7
+- **Approach:** additive (no re-decision on Approach B)
+- **Blocking items resolved:** none (additive extension; rollback trivial — drop Step 5 tools)
+- **Master plan cross-ref:** `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` Step 5
+- **Next step:** land Steps 1–4 first; Step 5 opens after `v1.0.0` ships

@@ -199,8 +199,9 @@ namespace Territory.Audio
         /// </summary>
         private static void AssertMainThread()
         {
+            int main = BlipBootstrap.MainThreadId;
+            if (main == 0) return;
             int actual = Thread.CurrentThread.ManagedThreadId;
-            int main   = BlipBootstrap.MainThreadId;
             if (actual != main)
                 throw new System.InvalidOperationException(
                     $"BlipEngine entry point invoked off main thread (expected {main}, got {actual})");

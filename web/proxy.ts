@@ -16,4 +16,5 @@ export function proxy(request: NextRequest): NextResponse {
   return NextResponse.next();
 }
 
-export const config = { matcher: ['/dashboard'] };
+// /dashboard/releases/:releaseId/rollout — reserved; no filesystem stub (404s via Next default).
+export const config = { matcher: ['/dashboard', '/dashboard/:path*'] };

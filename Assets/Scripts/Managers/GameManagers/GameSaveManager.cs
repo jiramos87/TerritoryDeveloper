@@ -400,8 +400,9 @@ public class GameSaveData
     /// Current save schema version. Bump when adding migration-required fields.
     /// Schema 2 adds <c>neighborStubs</c> (see <b>parent-scale stub</b> glossary term).
     /// Schema 3 adds <c>neighborCityBindings</c> (interstate border exit bindings).
+    /// Schema 4 adds <c>budgetAllocation</c> + <c>stateServiceZones</c> (envelope budget + state-service zone registry — Stage 1.3 Phase 3).
     /// </summary>
-    public const int CurrentSchemaVersion = 3;
+    public const int CurrentSchemaVersion = 4;
 
     /// <summary>
     /// Neighbor-city stubs at this city's interstate map borders.
@@ -417,5 +418,19 @@ public class GameSaveData
     /// Added schema 3.
     /// </summary>
     public List<NeighborCityBinding> neighborCityBindings = new List<NeighborCityBinding>();
+
+    /// <summary>
+    /// Envelope budget snapshot (pct shares + cap + current-month remaining).
+    /// Null on legacy v3 saves — TECH-423 seeds via <see cref="BudgetAllocationData.Default"/>.
+    /// Added schema 4.
+    /// </summary>
+    public BudgetAllocationData budgetAllocation;
+
+    /// <summary>
+    /// State-service zone placement registry.
+    /// Empty list on fresh games; populated in Step 2 placement task.
+    /// Added schema 4.
+    /// </summary>
+    public List<StateServiceZoneData> stateServiceZones = new List<StateServiceZoneData>();
 }
 }
