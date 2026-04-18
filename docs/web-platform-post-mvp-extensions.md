@@ -777,6 +777,99 @@ SUGGESTIONS:
 
 ---
 
+### CD Pilot Bundle — 2026-04-18
+
+**Pilot issue:** TECH-411 (Claude Design pilot: web Step 8 reset + validation).
+
+**Capture date:** 2026-04-18.
+
+**Source tool:** Claude Design (claude.ai/design), Research Preview by Anthropic Labs. Manual invocation; no `/design-explore --visual` flag wiring.
+
+**Bundle location:**
+
+- Full source: [`web/design-refs/step-8-console/`](../web/design-refs/step-8-console/) — 13 files, 1.7 MB (HTML + CSS + JSX + Geist fonts + HANDOFF.md + archived flat version).
+- Self-contained preview: [`docs/cd-pilot-step8-export.html`](./cd-pilot-step8-export.html) — 1.5 MB standalone HTML (all JS/CSS/fonts inlined).
+- Share URL: not captured (CD session-bound; treat local files as source of truth).
+
+**Input manifest fed to CD:**
+
+| Surface | Path | Role |
+|---------|------|------|
+| Locked palette | `web/lib/tokens/palette.json` | 7 raw hexes + semantic aliases; B1 guard (no mutation) |
+| Normative spec | `ia/specs/web-ui-design-system.md` | 6-primitive contract + type scale + spacing scale + motion vocab |
+| Extensions | `docs/web-platform-post-mvp-extensions.md` §8 (this section) | Design-system-first direction, Approach A locked |
+| Primitives | `web/components/{Button,BadgeChip,StatBar,DataTable,FilterChips,HeatmapCell}.tsx` | 6 .tsx files — source-of-truth components |
+| Baselines | none | Step 8 pre-implementation — no rendered screens to compare against |
+
+**Brief amendment history (Decision Log delta budget):**
+
+- 2026-04-18 round 1 — added `--raw-blue: #4a7bc8` as Signal / info role (not a status). Within Decision Log ≤30% palette delta budget (1 new entry / 7 locked = 14%).
+- 2026-04-18 round 2 — aesthetic pivot flat → hardware audio-console. Removed "no marketing illustrations", "Lucide-only", "no custom SVG", "no imagery" locks. Kept Geist + Geist Mono base stack (CD self-restrained on display face). Added imagery + custom tactile icon family + full logo suite as in-scope deliverables.
+
+**Bundle contents (delivered):**
+
+| Artifact | CD file | Role |
+|----------|---------|------|
+| Console chrome | `src/console-primitives.jsx` | Rack, Bezel, Screen, LED, TapeReel, VuStrip, TransportStrip |
+| Reskinned primitives | same file | Button, StatusChip/IdChip, StatBar, FilterChip, HeatCell (+ DataTable via `.table` class in `console.css`) |
+| Helpers | same file | Legend, DensityToggle, EmptyState, LoadingSkeleton, ErrorState, StaleDataBanner |
+| 5 screens | `src/console-screens.jsx` | ScreenLanding `/`, ScreenDashboard `/dashboard`, ScreenReleases `/dashboard/releases`, ScreenDetail `/dashboard/releases/:id`, ScreenDesign `/design` |
+| Logo suite | `src/console-assets.jsx` | Logomark, Wordmark, Lettermark, StraplineLockup |
+| Media icon family | same file | `TIcon.{Play,Pause,Stop,Record,Rewind,FastForward,RewindEnd,FastForwardEnd,Eject,Loop,Shuffle,Mute,Solo}` (13 tactile glyphs) |
+| Hero + pillar art | same file | `HeroArt` (800×900), `HeroCrop` (16:8), `PillarPlanet`, `PillarSignal`, `PillarMixer`, `PillarRadar`, `PillarTape` (5 feature scenes) |
+| Tokens + fonts | `ds/colors_and_type.css` + `ds/fonts/` | 7 raws + blue, spacing, radii, motion (4 duration stops), focus ring, `@font-face` Geist variable |
+| Data fixture | `src/data.js` | `rollup()` + `flattenTasks()` helpers; shape-compatible with real data fetchers |
+
+**Token delta vs `palette.json`:**
+
+| Kind | Entry | Action | Note |
+|------|-------|--------|------|
+| Added raw | `--raw-blue: #4a7bc8` | NEW | Signal / info role; echoes Territory HUD chrome. Not a status color. |
+| Kept | 7 locked raws (black, panel, text, red, amber, grey-500, green) | unchanged | Verbatim hex match. |
+| Added semantic | `--text-accent-info`, `--overlay-panel`, `--border-subtle`, `--border-strong` | NEW | Derived via alpha from existing tokens only — no new raws introduced. |
+| Added type | None | — | Base stack preserved (Geist + Geist Mono). CD self-restrained on display face despite amendment permission. |
+
+Delta count: 1 raw added / 7 locked = **14%** (under 30% threshold from pilot Decision Log).
+
+**Motion vocab coverage:** 4/4 duration stops present (`--dur-fast: 80ms`, `--dur-base: 160ms`, `--dur-slow: 280ms`, `--dur-reveal: 480ms`) + 2 easing curves + `prefers-reduced-motion` collapse — exceeds ≥3/4 threshold.
+
+**Primitive fidelity:** 6/6 reskinned + rendering (Button, BadgeChip/StatusChip, StatBar, DataTable, FilterChips, HeatmapCell) — exceeds ≥3/6 threshold.
+
+**Fidelity gate verdict:** PASS (6/6 primitives + 14% token delta + 4/4 motion stops). Pilot proceeds past Phase 5 timebox gate without abort.
+
+**Delta summary vs existing Implementation Points (Phases A–E):**
+
+| Phase | Original scope | CD bundle impact |
+|-------|---------------|------------------|
+| A — Author `web/lib/design-system.md` spec | Hand-author 10-level type scale, 9-stop spacing, motion vocab, semantic namespaces | CD delivered working token set in `ds/colors_and_type.css`; design-system.md extraction becomes transcription task, not authorship |
+| B — Derive `design-tokens.ts` + extend Tailwind | Write TS wrapper + Tailwind theme.extend | CD token names map ~1:1 to existing `palette.json`; `ds-*` prefix strategy still applies unchanged |
+| C — Build Heading / Prose / Surface primitives | Three new RSC-friendly primitives with motion props | CD extends scope — delivers Rack/Bezel/Screen/LED console chrome as additional primitives; Heading/Prose/Surface still needed for content pages |
+| D — Landing hero + `/dashboard` re-skin | Re-skin landing + dashboard against locked palette | CD delivered full re-skins for all 5 routes (Landing, Dashboard, Releases, Detail, Design kit); scope expands beyond original 2 surfaces |
+| E — Broad token-alias migration | Sweep `tokens.*` inline styles across `web/app/**` + `web/components/**` | Unchanged — still required post-port |
+
+**New follow-up surfaces introduced by CD bundle (candidates for re-decomposition):**
+
+1. Console aesthetic adoption decision — apply site-wide, landing-only, or reject (Phase 5 call).
+2. Asset pipeline — how to integrate SVG logo suite + icon family + pillar scenes (inline React components vs. public/ SVG files vs. sprite sheet).
+3. Media transport strip component — not in original Phases A–E scope; warrants its own phase if adopted.
+4. Azeret Mono licensing — N/A (CD did NOT introduce Azeret Mono; kept Geist Mono). Decision Log note retired.
+
+**Known drifts from amended brief (CD self-flagged or detected on audit):**
+
+- CD did not add a third display face despite amendment permission. Bundle reads uniformly in Geist variable. Revisit at Phase 5 if LCD readout needs a dedicated seven-segment face.
+- Hero art (8a), pillar scenes (8c), and logo suite (8d) delivered as inline React SVG components (vector), not raster imagery. Pro: zero external asset dependency, scales clean, palette-locked. Con: matte-painting photorealism not achievable in pure SVG — "concept-art feel" landed as geometric illustration. Evaluate at Phase 5 whether stylized SVG is sufficient or raster art via external tool (Midjourney/Firefly) is needed for hero.
+- Media icon family (8b) delivered as outline-only SVG; amended brief asked for solid + outline variants. Minor drift — outline set functional; solid variants can be added at port time.
+
+**Handoff pain points (for Phase 8 measurement):**
+
+- CD initial response pushed back on amended brief, citing original locks. Required explicit "brief amendment" override prompt to unblock. Time cost: ~1 interactive round.
+- CD assumed master-plan nesting architecture that conflicts with repo's ongoing flattening (plan → step → task). User corrected; CD accepted in single prompt. Time cost: ~1 interactive round.
+- Bundle shipped as React UMD + Babel standalone, not native Next.js App Router. Port work (Phase 5) must convert `.jsx` → `.tsx`, replace `localStorage`-backed routing with Next router, replace `data.js` fixture with real fetchers.
+
+**Retirement note for Phase 5 re-decompose:** Stage 8.1 Phase 1 swap from "hand-author §1–§6" to "extract + validate CD bundle" is supportable. Stages 8.2–8.4 scope reduction candidates: 8.2 primitive authorship largely pre-done in CD; 8.3–8.4 broader-surface adoption still required.
+
+---
+
 ## 9. Candidate additions (unclaimed; add here as they surface)
 
 Items raised in future conversations, not yet assigned a section number. Promote to own § when priority lands.

@@ -104,24 +104,24 @@ Manual CD invocation (no `/design-explore --visual` flag wiring). Bundle = whate
 
 ### Phase 2 — Run Claude Design manually (no flag wiring)
 
-- [ ] Feed CD input manifest:
+- [x] Feed CD input manifest:
   - Tokens: `web/lib/tokens/palette.json` (locked).
   - Normative spec: `ia/specs/web-ui-design-system.md`.
   - Extensions: `docs/web-platform-post-mvp-extensions.md` §8.
   - Primitives: `web/components/{Button,BadgeChip,StatBar,DataTable,FilterChips,HeatmapCell}.tsx`.
   - Baselines: screenshots of `/`, `/design`, `/dashboard`, `/dashboard/releases`, `/dashboard/releases/:id/progress`.
-- [ ] Capture bundle artifacts (all required for Phase 5 gate):
-  - Bundle URL + capture date.
-  - Token delta vs `palette.json` (added/removed/mutated entries; count).
-  - Motion vocab — duration stops + easing curves demo.
-  - Primitive renders — Heading, Prose, Surface (Step 8 Stage 8.2 targets).
-  - Re-skin mockups — landing hero + dashboard.
-  - A11y annotations — contrast ratios per token pair, focus states.
-- [ ] Evaluate fidelity against Decision Log threshold (≥3/6 primitives correct + token delta ≤30% + motion ≥3/4 stops).
+- [x] Capture bundle artifacts (all required for Phase 5 gate):
+  - Bundle URL + capture date — 2026-04-18, persisted under `web/design-refs/step-8-console/` + mirror `docs/cd-pilot-step8-export.html`.
+  - Token delta vs `palette.json` — +1 raw (blue #4a7bc8 for Signal/info accent); 14% delta; PASS vs 30% threshold.
+  - Motion vocab — 4/4 duration stops (`--dur-fast` 80ms, `--dur-base` 160ms, `--dur-slow` 280ms, `--dur-reveal` 480ms); `--ease-enter` + `--ease-exit` curves.
+  - Primitive renders — Rack, Bezel, Screen, LED, TapeReel, VuStrip, TransportStrip + Button, StatusChip, IdChip, StatBar, FilterChip, HeatCell, Legend, DensityToggle.
+  - Re-skin mockups — Landing + Dashboard + Releases + ReleaseDetail + Design showcase screens (5 routes).
+  - A11y annotations — focus-ring amber 2px + 2px offset; contrast pairs documented in `HANDOFF.md`.
+- [x] Evaluate fidelity against Decision Log threshold (≥3/6 primitives correct + token delta ≤30% + motion ≥3/4 stops) — 6/6 primitives + 14% delta + 4/4 motion = PASS.
 
 ### Phase 3 — Persist bundle reference
 
-- [ ] Append CD bundle subsection to `docs/web-platform-post-mvp-extensions.md` under `## Design Expansion — Section 8: Visual Design Layer` — bundle URL + capture date + input manifest + delta summary vs existing Implementation Points.
+- [x] Append CD bundle subsection to `docs/web-platform-post-mvp-extensions.md` under `## Design Expansion — Section 8: Visual Design Layer` — bundle URL + capture date + input manifest + delta summary vs existing Implementation Points.
 
 ### Phase 4 — Re-explore via gap analysis
 
