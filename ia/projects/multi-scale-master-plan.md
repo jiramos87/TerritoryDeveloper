@@ -156,7 +156,7 @@
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
-**Backlog state (Step 2):** 0 filed
+**Backlog state (Step 2):** Stage 2.1 archived (BUG-55 / BUG-14 / BUG-16 / BUG-17). Stage 2.2 filed 2026-04-17 (TECH-290..TECH-293).
 
 **Objectives:** City scale stable + readable enough to serve as aggregation source + reconstruction target. Not a finished city-builder loop.
 
@@ -209,7 +209,7 @@
 
 #### Stage 2.2 — Tick performance + metrics foundation
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft (tasks filed 2026-04-17 — TECH-290..TECH-293)
 
 **Objectives:** City tick profiled; egregious non-BUG-55 allocators patched; `MetricsRecorder` Phase 1 integrated (game remains playable without Postgres); EditMode tick budget test establishes Step 3 parity baseline.
 
@@ -229,10 +229,10 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T2.2.1 | Tick profiler baseline | 1 | _pending_ | _pending_ | Unity Profiler run on `SimulationManager` tick path post Stage 2.1; document top-5 hotspots + GC allocs + baseline ms/tick in `docs/city-tick-perf-notes.md` (new). |
-| T2.2.2 | Tick alloc audit + patch | 1 | _pending_ | _pending_ | Scan `SimulationManager` + tick-path managers for avoidable GC alloc (LINQ, boxing, list recreation per-tick); patch top-2 allocators found; annotate `SimulationManager.Update()` with budget note. |
-| T2.2.3 | TECH-82 Phase 1 | 2 | **TECH-82** | Draft | `MetricsRecorder.cs` (new) fires fire-and-forget per `SimulationManager` tick; `db/migrations/` `city_metrics_history` schema + bridge scripts; `mcp__territory-ia__city_metrics_query` tool per `ia/projects/TECH-82.md` Phase 1 acceptance. |
-| T2.2.4 | Tick budget EditMode test | 2 | _pending_ | _pending_ | `Assets/Tests/EditMode/Simulation/TickBudgetTests.cs` (new): isolated tick invocation completes within configured threshold (ms read from profiler notes); threshold field documents Step 3 parity target. |
+| T2.2.1 | Tick profiler baseline | 1 | **TECH-290** | Draft | Unity Profiler run on `SimulationManager` tick path post Stage 2.1; document top-5 hotspots + GC allocs + baseline ms/tick in `docs/city-tick-perf-notes.md` (new). |
+| T2.2.2 | Tick alloc audit + patch | 1 | **TECH-291** | Draft | Scan `SimulationManager` + tick-path managers for avoidable GC alloc (LINQ, boxing, list recreation per-tick); patch top-2 allocators found; annotate `SimulationManager.Update()` with budget note. |
+| T2.2.3 | TECH-82 Phase 1 integration | 2 | **TECH-292** | Draft | `MetricsRecorder.cs` (new) fires fire-and-forget per `SimulationManager` tick; `db/migrations/` `city_metrics_history` schema + bridge scripts; `mcp__territory-ia__city_metrics_query` tool per `ia/projects/TECH-82.md` Phase 1 acceptance. Scope-slice of **TECH-82** — does NOT subsume TECH-82 Phases 2–4. |
+| T2.2.4 | Tick budget EditMode test | 2 | **TECH-293** | Draft | `Assets/Tests/EditMode/Simulation/TickBudgetTests.cs` (new): isolated tick invocation completes within configured threshold (ms read from profiler notes); threshold field documents Step 3 parity target. |
 
 
 #### Stage 2.3 — City readability dashboard

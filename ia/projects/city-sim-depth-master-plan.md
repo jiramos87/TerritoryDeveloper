@@ -1,6 +1,6 @@
 # City-Sim Depth — Master Plan (Bucket 2 MVP)
 
-> **Status:** Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)
+> **Status:** Draft — Step 1 / Stage 1.1 filed 2026-04-17 (TECH-305..TECH-308)
 >
 > **Scope:** Shared simulation-signal contract (12 signals) + district aggregation layer + migration of existing happiness/pollution scalar to `HappinessComposer` + 7 new simulation sub-surfaces (pollution split, crime, services, traffic, waste, construction evolution, density evolution + industrial sub-types) + signal overlays + HUD/district panel parity. Excludes Zone S / economy (Bucket 3), utilities (Bucket 4), CityStats UI overhaul (Bucket 8), per-vehicle pathing, animation pipeline (Bucket 5), region/country feedback consumers.
 >
@@ -38,9 +38,9 @@
 
 ### Step 1 — Signal Layer Foundation
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 1.1
 
-**Backlog state (Step 1):** 0 filed
+**Backlog state (Step 1):** 4 filed (TECH-305..TECH-308)
 
 **Objectives:** Bootstrap the shared simulation-signal contract that all subsequent sub-surfaces depend on. Ships `SimulationSignal` enum (12 entries), `SignalField`/`SignalFieldRegistry` primitives, `ISignalProducer`/`ISignalConsumer` interfaces, `DiffusionKernel`, `SignalTickScheduler` wired into `SimulationManager.ProcessSimulationTick`, and the district aggregation layer (`DistrictMap`, `DistrictAggregator`, `DistrictSignalCache`, `DistrictManager`). No gameplay-visible effects — foundation only. Also closes the spec gap by authoring `ia/specs/simulation-signals.md`.
 
@@ -68,7 +68,7 @@
 
 #### Stage 1.1 — Signal Contract Primitives
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft (4 tasks filed 2026-04-17 — TECH-305..TECH-308)
 
 **Objectives:** Author core type surface — `SimulationSignal` enum, `SignalField`, `SignalMetadataRegistry` ScriptableObject, `ISignalProducer`/`ISignalConsumer` interfaces, `SignalFieldRegistry` MonoBehaviour — and the canonical `ia/specs/simulation-signals.md` reference spec that closes the spec gap flagged in the exploration review.
 
@@ -89,10 +89,10 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.1.1 | SimulationSignal enum + interfaces | 1 | _pending_ | _pending_ | Author `SimulationSignal` enum (12 entries: `PollutionAir`, `PollutionLand`, `PollutionWater`, `Crime`, `ServicePolice`, `ServiceFire`, `ServiceEducation`, `ServiceHealth`, `ServiceParks`, `TrafficLevel`, `WastePressure`, `LandValue`) in new `Assets/Scripts/Simulation/Signals/`. Author `ISignalProducer` (`void EmitSignals(SignalFieldRegistry)`) + `ISignalConsumer` (`void ConsumeSignals(SignalFieldRegistry, DistrictSignalCache)`) interfaces in same dir. |
-| T1.1.2 | SignalField + SignalMetadataRegistry | 1 | _pending_ | _pending_ | `SignalField` — `float[,]` backing store; `Get(x,y)`, `Set(x,y,v)`, `Add(x,y,v)`, `Snapshot()` (returns new `float[,]` copy); clamp floor 0 on all writes. `SignalMetadataRegistry` ScriptableObject — per `SimulationSignal` entry: `diffusionRadius`, `decayPerStep`, `anisotropy (Vector2)`, `rollupRule (Mean/P90 enum)`. |
-| T1.1.3 | SignalFieldRegistry MonoBehaviour | 2 | _pending_ | _pending_ | `SignalFieldRegistry` MonoBehaviour — allocates one `SignalField` per `SimulationSignal` in `Awake` sized from `GridManager.gridWidth`/`gridHeight`; `GetField(SimulationSignal)` accessor; `[SerializeField] GridManager grid` + `FindObjectOfType` fallback (invariant #4); resize method for map reload. |
-| T1.1.4 | simulation-signals.md reference spec | 2 | _pending_ | _pending_ | Author `ia/specs/simulation-signals.md` — signal inventory table (12 entries: source types, sink types, rollup rule, update cadence per entry), diffusion physics contract (separable Gaussian, anisotropy, decay, clamp-floor-0 rule), `ISignalProducer`/`ISignalConsumer` interface contract, rollup rule table (P90 for `Crime`+`TrafficLevel`; mean for rest), spec-gap closure note. Link new spec from `ia/specs/simulation-system.md` §Tick execution order addendum. |
+| T1.1.1 | SimulationSignal enum + interfaces | 1 | **TECH-305** | Draft | Author `SimulationSignal` enum (12 entries: `PollutionAir`, `PollutionLand`, `PollutionWater`, `Crime`, `ServicePolice`, `ServiceFire`, `ServiceEducation`, `ServiceHealth`, `ServiceParks`, `TrafficLevel`, `WastePressure`, `LandValue`) in new `Assets/Scripts/Simulation/Signals/`. Author `ISignalProducer` (`void EmitSignals(SignalFieldRegistry)`) + `ISignalConsumer` (`void ConsumeSignals(SignalFieldRegistry, DistrictSignalCache)`) interfaces in same dir. |
+| T1.1.2 | SignalField + SignalMetadataRegistry | 1 | **TECH-306** | Draft | `SignalField` — `float[,]` backing store; `Get(x,y)`, `Set(x,y,v)`, `Add(x,y,v)`, `Snapshot()` (returns new `float[,]` copy); clamp floor 0 on all writes. `SignalMetadataRegistry` ScriptableObject — per `SimulationSignal` entry: `diffusionRadius`, `decayPerStep`, `anisotropy (Vector2)`, `rollupRule (Mean/P90 enum)`. |
+| T1.1.3 | SignalFieldRegistry MonoBehaviour | 2 | **TECH-307** | Draft | `SignalFieldRegistry` MonoBehaviour — allocates one `SignalField` per `SimulationSignal` in `Awake` sized from `GridManager.gridWidth`/`gridHeight`; `GetField(SimulationSignal)` accessor; `[SerializeField] GridManager grid` + `FindObjectOfType` fallback (invariant #4); resize method for map reload. |
+| T1.1.4 | simulation-signals.md reference spec | 2 | **TECH-308** | Draft | Author `ia/specs/simulation-signals.md` — signal inventory table (12 entries: source types, sink types, rollup rule, update cadence per entry), diffusion physics contract (separable Gaussian, anisotropy, decay, clamp-floor-0 rule), `ISignalProducer`/`ISignalConsumer` interface contract, rollup rule table (P90 for `Crime`+`TrafficLevel`; mean for rest), spec-gap closure note. Link new spec from `ia/specs/simulation-system.md` §Tick execution order addendum. |
 
 ---
 
