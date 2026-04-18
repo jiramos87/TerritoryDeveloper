@@ -1,0 +1,30 @@
+id: TECH-128
+type: test / infrastructure
+title: Primitive smoke tests (pytest + fixture PNGs, iso_cube + iso_prism NS/EW) (2026-04-14)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-14)
+spec: (removed at closeout — journal persisted in `ia_project_spec_journal`)
+files: 
+  - tools/sprite-gen/tests/test_primitives.py
+  - tools/sprite-gen/tests/fixtures/iso_cube_smoke.png
+  - iso_prism_ns_smoke.png
+  - iso_prism_ew_smoke.png
+notes: |
+  Closes Stage 1.1. Smoke renders `iso_cube(1,1,32)` + `iso_prism` both axes (pitch=0.5) on `canvas_size(1,1,64)=(64,64)` (canvas-h bumped from 32 → 64 per §9 #1 — top face at h=32 projects above y=0 on 32-tall canvas). Alpha>0 bbox asserts per face; `ValueError` guard locked for bad axis. `iso_prism` re-exported from `src/primitives/__init__.py`. Fixtures tracked in git.
+acceptance: |
+  `pytest tools/sprite-gen/tests/test_primitives.py` exits 0; 3 fixture PNGs emitted; `npm run validate:all` green.
+depends_on: 
+  - TECH-125
+  - TECH-126
+depends_on_raw: "**TECH-125**, **TECH-126**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-128** — Primitive smoke tests (pytest + fixture PNGs, iso_cube + iso_prism NS/EW) (2026-04-14)
+    - Type: test / infrastructure
+    - Files: `tools/sprite-gen/tests/test_primitives.py`, `tools/sprite-gen/tests/fixtures/iso_cube_smoke.png`, `iso_prism_ns_smoke.png`, `iso_prism_ew_smoke.png`
+    - Spec: (removed at closeout — journal persisted in `ia_project_spec_journal`)
+    - Notes: Closes Stage 1.1. Smoke renders `iso_cube(1,1,32)` + `iso_prism` both axes (pitch=0.5) on `canvas_size(1,1,64)=(64,64)` (canvas-h bumped from 32 → 64 per §9 #1 — top face at h=32 projects above y=0 on 32-tall canvas). Alpha>0 bbox asserts per face; `ValueError` guard locked for bad axis. `iso_prism` re-exported from `src/primitives/__init__.py`. Fixtures tracked in git.
+    - Acceptance: `pytest tools/sprite-gen/tests/test_primitives.py` exits 0; 3 fixture PNGs emitted; `npm run validate:all` green.
+    - Depends on: **TECH-125**, **TECH-126**

@@ -1,0 +1,27 @@
+id: TECH-117
+type: infrastructure / DSP math
+title: "`BlipVoice` oscillator bank (sine / triangle / square / pulse / noise) (2026-04-14)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-13)
+spec: (removed after closure)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipOscillatorBank.cs
+  - BlipVoice.cs
+notes: |
+  Stage 1.3 Phase 1 second task. Phase-accumulator osc family — sine (`Math.Sin` MVP; LUT reserved post-MVP per `docs/blip-post-mvp-extensions.md` §1), triangle (abs-ramp), square, pulse (duty 0..1), noise-white (xorshift on `BlipVoiceState.rngState`). Freq from `BlipOscillatorFlat.frequency * pitchMult`. Pure static per-kind helpers; zero allocs; no Unity API.
+acceptance: |
+  five osc kinds emit expected shapes (verified Stage 1.4 T1.4.2); `unity:compile-check` + `validate:all` green
+depends_on: 
+  - TECH-116
+depends_on_raw: "**TECH-116**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-117** — `BlipVoice` oscillator bank (sine / triangle / square / pulse / noise) (2026-04-14)
+    - Type: infrastructure / DSP math
+    - Files: `Assets/Scripts/Audio/Blip/BlipOscillatorBank.cs` (or inlined in `BlipVoice.cs` per implementer)
+    - Spec: (removed after closure)
+    - Notes: Stage 1.3 Phase 1 second task. Phase-accumulator osc family — sine (`Math.Sin` MVP; LUT reserved post-MVP per `docs/blip-post-mvp-extensions.md` §1), triangle (abs-ramp), square, pulse (duty 0..1), noise-white (xorshift on `BlipVoiceState.rngState`). Freq from `BlipOscillatorFlat.frequency * pitchMult`. Pure static per-kind helpers; zero allocs; no Unity API.
+    - Acceptance: five osc kinds emit expected shapes (verified Stage 1.4 T1.4.2); `unity:compile-check` + `validate:all` green
+    - Depends on: **TECH-116**

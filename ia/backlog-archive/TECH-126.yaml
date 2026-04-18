@@ -1,0 +1,26 @@
+id: TECH-126
+type: infrastructure / rendering primitive
+title: "`iso_prism` primitive (sloped tops + triangular gables, axis NS/EW) (2026-04-14)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-14)
+spec: (removed at closeout — journal persisted in `ia_project_spec_journal`)
+files: 
+  - tools/sprite-gen/src/primitives/iso_prism.py
+notes: |
+  Stage 1.1 Phase 2 second task. `iso_prism(canvas, x0, y0, w, d, h, pitch, axis, material)` — two sloped top faces + two triangular end-faces. `axis ∈ {'ns','ew'}` selects ridge direction; `pitch` (0..1) scales ridge height. Same NW-light ramp as **TECH-125**. Enables pitched-roof archetypes in Stage 1.2+ YAML specs.
+acceptance: |
+  both axes + pitch variants render cleanly; shade ramp matches iso_cube; `npm run validate:all` green
+depends_on: 
+  - TECH-124
+depends_on_raw: "**TECH-124**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-126** — `iso_prism` primitive (sloped tops + triangular gables, axis NS/EW) (2026-04-14)
+    - Type: infrastructure / rendering primitive
+    - Files: `tools/sprite-gen/src/primitives/iso_prism.py`
+    - Spec: (removed at closeout — journal persisted in `ia_project_spec_journal`)
+    - Notes: Stage 1.1 Phase 2 second task. `iso_prism(canvas, x0, y0, w, d, h, pitch, axis, material)` — two sloped top faces + two triangular end-faces. `axis ∈ {'ns','ew'}` selects ridge direction; `pitch` (0..1) scales ridge height. Same NW-light ramp as **TECH-125**. Enables pitched-roof archetypes in Stage 1.2+ YAML specs.
+    - Acceptance: both axes + pitch variants render cleanly; shade ramp matches iso_cube; `npm run validate:all` green
+    - Depends on: **TECH-124**

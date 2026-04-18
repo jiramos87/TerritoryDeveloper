@@ -1,0 +1,30 @@
+id: FEAT-52
+type: feature (new system)
+title: "**City services coverage** model (fire, police, education, health)"
+priority: medium
+status: open
+section: Economic depth lane
+spec: ia/projects/FEAT-52.md
+files: 
+  - ServiceCoverageManager.cs
+  - CityStats.cs
+  - DemandManager.cs
+  - GridManager.cs
+  - GridPathfinder.cs
+  - MiniMapController.cs
+notes: |
+  Generic **service coverage** system: each service **building** has a coverage **radius** computed from the **road network**. **Cells** within coverage receive **happiness** and **desirability** bonuses; **cells** outside suffer penalties. Coverage gaps visible on **minimap** as danger zones. Framework for FEAT-11 (education), FEAT-12 (police), FEAT-13 (fire). Ships with at least one concrete service type (fire station).
+acceptance: |
+  per `ia/projects/FEAT-52.md` §8; coverage affects happiness and desirability; minimap layer shows coverage heatmap
+depends_on: []
+depends_on_raw: none (happiness system shipped — see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **FEAT-52** — **City services coverage** model (fire, police, education, health)
+    - Type: feature (new system)
+    - Files: new `ServiceCoverageManager.cs`; `CityStats.cs`; `DemandManager.cs`; `GridManager.cs`; `GridPathfinder.cs`; `MiniMapController.cs`
+    - Spec: `ia/projects/FEAT-52.md`
+    - Notes: Generic **service coverage** system: each service **building** has a coverage **radius** computed from the **road network**. **Cells** within coverage receive **happiness** and **desirability** bonuses; **cells** outside suffer penalties. Coverage gaps visible on **minimap** as danger zones. Framework for FEAT-11 (education), FEAT-12 (police), FEAT-13 (fire). Ships with at least one concrete service type (fire station).
+    - Acceptance: per `ia/projects/FEAT-52.md` §8; coverage affects happiness and desirability; minimap layer shows coverage heatmap
+    - Depends on: none (happiness system shipped — see [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))

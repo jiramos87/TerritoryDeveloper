@@ -1,0 +1,30 @@
+id: TECH-295
+type: infrastructure / MCP tooling
+title: Extend `ParsedBacklogIssue` shape (Stage 1.1 Phase 1)
+priority: high
+status: closed
+section: Stage 1.1 — Types + yaml loader (IP1 + IP2)
+spec: null
+closed: 2026-04-17
+files:
+  - tools/mcp-ia-server/src/parser/backlog-parser.ts
+  - tools/mcp-ia-server/src/parser/types.ts
+notes: |
+  Add `priority: string | null`, `related: string[]`, `created: string | null` to `ParsedBacklogIssue`. Update dependent type exports. No behavior change — loader mapping lands in TECH-296. Stage-shared context: IP1 field extension + soft-dep marker preservation bug fix; MCP tool surface must expose priority/related/created downstream. Spec removed at closeout — Decision Log in git history only; tooling-only type extension, no lessons requiring canonical migration.
+acceptance: |
+  Type gains three new fields; all dependent exports compile; no loader / MCP payload change yet; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related:
+  - TECH-296
+  - TECH-297
+  - TECH-300
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-295** — Extend `ParsedBacklogIssue` shape (Stage 1.1 Phase 1) (2026-04-17)
+    - Type: infrastructure / MCP tooling
+    - Files: `tools/mcp-ia-server/src/parser/backlog-parser.ts`, `tools/mcp-ia-server/src/parser/types.ts`
+    - Spec: (removed at closeout — tooling-only type extension; Decision Log in git history only)
+    - Notes: Add `priority: string | null`, `related: string[]`, `created: string | null` to `ParsedBacklogIssue`. Update dependent type exports. No behavior change — loader mapping lands in TECH-296. Stage-shared context: IP1 field extension + soft-dep marker preservation bug fix; MCP tool surface must expose priority/related/created downstream.
+    - Acceptance: Type gains three new fields; all dependent exports compile; no loader / MCP payload change yet; `npm run validate:all` green.
+    - Related: TECH-296, TECH-297, TECH-300

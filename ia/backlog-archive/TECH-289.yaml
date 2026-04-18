@@ -1,0 +1,45 @@
+id: TECH-289
+type: tech (infra / agent orchestration concurrency)
+title: Split BACKLOG into per-issue YAML — parallel-safe stage-file / closeout
+priority: medium
+status: closed
+section: Recent archive
+spec: ""
+files: 
+  - BACKLOG.md
+  - BACKLOG-ARCHIVE.md
+  - ia/backlog/**
+  - ia/backlog-archive/**
+  - ia/state/id-counter.json
+  - tools/scripts/reserve-id.sh
+  - tools/scripts/materialize-backlog.sh
+  - tools/scripts/migrate-backlog-to-yaml.mjs
+  - tools/mcp-ia-server/src/parser/backlog-parser.ts
+  - tools/mcp-ia-server/src/tools/{backlog-issue,backlog-search,invariant-preflight,router-for-task}.ts
+  - tools/mcp-ia-server/src/parser/project-spec-closeout-parse.ts
+  - tools/validate-dead-project-spec-paths.mjs
+  - tools/mcp-ia-server/scripts/project-spec-dependents.ts
+  - ia/skills/{project-new,stage-file,project-spec-close,project-stage-close,master-plan-new,master-plan-extend,stage-decompose,release-rollout-enumerate,release-rollout-track,release-rollout}/SKILL.md
+  - CLAUDE.md
+  - AGENTS.md
+  - docs/agent-lifecycle.md
+  - ia/rules/invariants.md
+  - ia/rules/terminology-consistency.md
+  - ia/specs/glossary.md
+  - ia/projects/full-game-mvp-rollout-tracker.md
+notes: |
+  **Problem:** `BACKLOG.md` + `BACKLOG-ARCHIVE.md` = single shared mutable files. Every mutator skill (**`project-new`**, **`stage-file`**, **`project-spec-close`**, **`project-stage-close`**, **`release-rollout-enumerate`**, **`release-rollout-track`**) scans both for max id then row-inserts / row-removes. Parallel agents → duplicate ids, insert-conflict, validator FS races, orphan **project spec** ↔ row pairs. Closeout purge pass (ripgrep + edit across `ia/specs/**`, `docs/**`, `ia/rules/**`, code comments) = worst blast radius. **Approach:** per-issue yaml under `ia/backlog/{id}.yaml` + `ia/backlog-archive/{id}.yaml`; monotonic id counter `ia/state/id-counter.json` under `flock`; `materialize-backlog.sh` regens `BACKLOG.md` + `BACKLOG-ARCHIVE.md` as artifact (round-trip-gated). **Safety rails:** **rollout lifecycle** (tracker link resolution + enumerate + track signal); MCP reader back-compat (`backlog_issue`, `backlog_search` response shapes preserved); dashboard `/dashboard` still renders master plans. **Migration:** one-shot `migrate-backlog-to-yaml.mjs` + round-trip diff gate (whitespace-only). **Concurrency model:** parallel **`project-new`** safe via flock; parallel closeout safe if purge-sets disjoint (orchestrator gate). **Glossary:** add **backlog record** + **backlog view** rows. **Out of scope:** distributed / cross-repo lock; deleting generated md from git (recommendation = keep for GitHub + dashboard back-compat). Full context + phased plan in `ia/projects/TECH-289.md`.
+acceptance: |
+  all writer skills + MCP readers migrated; `npm run validate:all` green; round-trip `migrate → materialize → diff` = empty; parallel soak (3 **`project-new`** worktrees + 2 closeouts disjoint purge) zero dup ids / zero orphans / zero git conflicts; **rollout tracker** end-to-end smoke advances 1 row through (f) ≥1-task-filed; dashboard renders; glossary rows + indexes regen; `npm run validate:backlog-yaml` exists + green; public MCP tool response shapes unchanged
+depends_on: []
+depends_on_raw: "none (soft: coordinate merge window w/ any in-flight **`stage-file`** / closeout work)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-289** — Split BACKLOG into per-issue YAML — parallel-safe stage-file / closeout (2026-04-17)
+    - Type: tech (infra / agent orchestration concurrency)
+    - Files: `BACKLOG.md`, `BACKLOG-ARCHIVE.md`, `ia/backlog/**`, `ia/backlog-archive/**`, `ia/state/id-counter.json`, `tools/scripts/reserve-id.sh`, `tools/scripts/materialize-backlog.sh`, `tools/scripts/migrate-backlog-to-yaml.mjs`, `tools/mcp-ia-server/src/parser/backlog-parser.ts`, `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/validate-backlog-yaml.mjs`, `ia/skills/{project-new,stage-file,project-spec-close,project-stage-close,master-plan-new,master-plan-extend,stage-decompose,release-rollout-enumerate,release-rollout-track,release-rollout}/SKILL.md`, `CLAUDE.md`, `AGENTS.md`, `docs/agent-lifecycle.md`, `ia/rules/invariants.md`, `ia/rules/terminology-consistency.md`, `ia/specs/glossary.md`
+    - Spec: (removed at closeout — Decision Log + Lessons persisted to `ia_project_spec_journal`; yaml backlog model + materializer + reserve-id lock documented in `CLAUDE.md` §3, `AGENTS.md`, `docs/agent-lifecycle.md`, `ia/rules/invariants.md`, `ia/rules/terminology-consistency.md`, `ia/specs/glossary.md` (Backlog record / Backlog view rows); tooling lessons in `MEMORY.md`; full prose in git history only)
+    - Notes: Shipped per-issue yaml backlog (`ia/backlog/*.yaml` open, `ia/backlog-archive/*.yaml` closed) w/ monotonic id counter `ia/state/id-counter.json` under `flock` via `tools/scripts/reserve-id.sh` (env-var overrides `IA_COUNTER_FILE` / `IA_COUNTER_LOCK` for test isolation). `tools/scripts/materialize-backlog.sh` regenerates `BACKLOG.md` + `BACKLOG-ARCHIVE.md` as read-only **backlog view** artifact (round-trip diff gate). All writer skills (`project-new`, `stage-file`, `project-spec-close`, `project-stage-close`, `master-plan-new`, `master-plan-extend`, `stage-decompose`, `release-rollout-enumerate`, `release-rollout-track`) + MCP readers migrated; public response shapes (`backlog_issue`, `backlog_search`) unchanged. Glossary rows **Backlog record** + **Backlog view** added. Skipped `flock` on read-only validators (no corruption risk). Dashboard `/dashboard` renders via ISR.
+    - Acceptance: all writer skills + MCP readers migrated; `npm run validate:all` green; round-trip `migrate → materialize → diff` = empty; reserve-id 8-way concurrency smoke 8 distinct ids; glossary rows + indexes regen; `npm run validate:backlog-yaml` exists + green; public MCP response shapes unchanged.
+    - Related: `ia/specs/glossary.md` **Backlog record** / **Backlog view**

@@ -1,0 +1,29 @@
+id: TECH-56
+type: documentation / agent enablement (**Cursor Skill** + **BACKLOG** / `ia/projects/` hygiene)
+title: "**Cursor Skill:** **`/project-new`** — new **BACKLOG** row + initial **project spec** + cross-links (**territory-ia** + optional web) (2026-04-06)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-04)
+spec: (removed after closure — [`ia/skills/project-new/SKILL.md`](ia/skills/project-new/SKILL.md); **glossary** **project-new**; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`BACKLOG.md`](BACKLOG.md) **§ Completed**; this row)
+files: 
+  - ia/skills/project-new/SKILL.md
+  - ia/skills/README.md
+  - AGENTS.md
+  - ia/specs/glossary.md
+  - docs/mcp-ia-server.md
+notes: |
+  **Completed (verified — `/project-spec-close`):** **create-first** **Tool recipe (territory-ia)**; **`backlog_issue`** resolves **`BACKLOG.md`** then [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) ([`docs/mcp-ia-server.md`](docs/mcp-ia-server.md)); optional **`web_search`** external-only; **`npm run validate:dead-project-specs`** after new **`Spec:`** paths. **Decision Log:** skill folder **`project-new`**; revisit recipe when **TECH-48** ships. Complements **kickoff** / **implement** / **close** / **project-implementation-validation**.
+acceptance: ""
+depends_on: 
+  - TECH-49
+  - TECH-52
+depends_on_raw: "none (soft: [ia/skills/README.md](ia/skills/README.md); **TECH-49**–**TECH-52** **§ Completed** for sibling patterns)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-56** — **Cursor Skill:** **`/project-new`** — new **BACKLOG** row + initial **project spec** + cross-links (**territory-ia** + optional web) (2026-04-06)
+    - Type: documentation / agent enablement (**Cursor Skill** + **BACKLOG** / `ia/projects/` hygiene)
+    - Files: `ia/skills/project-new/SKILL.md`; [`ia/skills/README.md`](ia/skills/README.md); `AGENTS.md` item 5; `ia/specs/glossary.md` — **project-new**; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) **Project spec workflows**
+    - Spec: (removed after closure — [`ia/skills/project-new/SKILL.md`](ia/skills/project-new/SKILL.md); **glossary** **project-new**; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`BACKLOG.md`](BACKLOG.md) **§ Completed**; this row)
+    - Notes: **Completed (verified — `/project-spec-close`):** **create-first** **Tool recipe (territory-ia)**; **`backlog_issue`** resolves **`BACKLOG.md`** then [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) ([`docs/mcp-ia-server.md`](docs/mcp-ia-server.md)); optional **`web_search`** external-only; **`npm run validate:dead-project-specs`** after new **`Spec:`** paths. **Decision Log:** skill folder **`project-new`**; revisit recipe when **TECH-48** ships. Complements **kickoff** / **implement** / **close** / **project-implementation-validation**.
+    - Depends on: none (soft: [ia/skills/README.md](ia/skills/README.md); **TECH-49**–**TECH-52** **§ Completed** for sibling patterns)

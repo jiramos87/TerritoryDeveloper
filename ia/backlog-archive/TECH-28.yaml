@@ -1,0 +1,25 @@
+id: TECH-28
+type: tooling / agent workflow
+title: "Unity Editor: **agent diagnostics** (context JSON + sorting debug export) (2026-04-02)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (project spec removed after closure)
+files: 
+  - Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs
+  - tools/reports/
+  - .gitignore
+notes: |
+  **Completed (verified per user):** **Territory Developer → Reports → Export Agent Context** writes `tools/reports/agent-context-{timestamp}.json` (`schema_version`, `exported_at_utc`, scene, selection, bounded **Cell** / **HeightMap** / **WaterMap** sample via **`GridManager.GetCell`** only). **Export Sorting Debug (Markdown)** writes `sorting-debug-{timestamp}.md` in **Play Mode** using **`TerrainManager`** sorting APIs and capped **`SpriteRenderer`** `sortingOrder` listing. **Agents:** reference `@tools/reports/agent-context-….json` or `@tools/reports/sorting-debug-….md` in Cursor prompts (paths under repo root). `docs/agent-tooling-verification-priority-tasks.md` tasks 2, 23. **Canonical expected behavior** and troubleshooting: `ia/specs/unity-development-context.md` §10; if menus or **Sorting** export regress, file a new **open** row on [`BACKLOG.md`](BACKLOG.md) (attach **Console** output and sample exports per §10 **Verification**).
+acceptance: ""
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-28** — Unity Editor: **agent diagnostics** (context JSON + sorting debug export) (2026-04-02)
+    - Type: tooling / agent workflow
+    - Files: `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs`, `tools/reports/` (generated output; see `.gitignore`), `.gitignore`
+    - Spec: (project spec removed after closure)
+    - Notes: **Completed (verified per user):** **Territory Developer → Reports → Export Agent Context** writes `tools/reports/agent-context-{timestamp}.json` (`schema_version`, `exported_at_utc`, scene, selection, bounded **Cell** / **HeightMap** / **WaterMap** sample via **`GridManager.GetCell`** only). **Export Sorting Debug (Markdown)** writes `sorting-debug-{timestamp}.md` in **Play Mode** using **`TerrainManager`** sorting APIs and capped **`SpriteRenderer`** `sortingOrder` listing. **Agents:** reference `@tools/reports/agent-context-….json` or `@tools/reports/sorting-debug-….md` in Cursor prompts (paths under repo root). `docs/agent-tooling-verification-priority-tasks.md` tasks 2, 23. **Canonical expected behavior** and troubleshooting: `ia/specs/unity-development-context.md` §10; if menus or **Sorting** export regress, file a new **open** row on [`BACKLOG.md`](BACKLOG.md) (attach **Console** output and sample exports per §10 **Verification**).
+    - Depends on: none

@@ -1,0 +1,25 @@
+id: TECH-310
+type: technical / UI infrastructure
+title: "**MotionBlock schema + curves** — extend UiTheme w/ semantic motion block"
+priority: medium
+status: open
+section: UI-as-code program (exploration)
+spec: ia/projects/TECH-310.md
+files:
+  - Assets/Scripts/Managers/GameManagers/UiTheme.cs
+notes: |
+  Add `[Serializable] class MotionBlock` to `UiTheme.cs` w/ semantic motion fields: `moneyTick`, `alertPulse`, `needleAttack`, `needleRelease`, `sparkleDuration`, `panelElevate`. Each a `[Serializable] struct MotionEntry { float durationSeconds; AnimationCurve easing; }`. Expose via `public MotionBlock motion` on `UiTheme`. Additive only. Consumer rings (primitives Step 2, studio controls Step 3, juice Step 4) read duration + easing from these entries — no hard-coded values downstream. Stage 1.1 T1.1.2 of `ia/projects/ui-polish-master-plan.md`.
+acceptance: |
+  `MotionBlock` + `MotionEntry` types present; `UiTheme.motion` exposed w/ 6 semantic entries; existing fields untouched; `npm run unity:compile-check` green; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: "none (stage-internal: TECH-311 consumes these entries as asset defaults)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-310** — **MotionBlock schema + curves** — extend UiTheme w/ semantic motion block
+    - Type: technical / UI infrastructure
+    - Files: `Assets/Scripts/Managers/GameManagers/UiTheme.cs`
+    - Spec: `ia/projects/TECH-310.md`
+    - Notes: Add `[Serializable] class MotionBlock` to `UiTheme.cs` w/ semantic motion fields: `moneyTick`, `alertPulse`, `needleAttack`, `needleRelease`, `sparkleDuration`, `panelElevate`. Each a `[Serializable] struct MotionEntry { float durationSeconds; AnimationCurve easing; }`. Expose via `public MotionBlock motion` on `UiTheme`. Additive only. Consumer rings (primitives Step 2, studio controls Step 3, juice Step 4) read duration + easing from these entries — no hard-coded values downstream. Stage 1.1 T1.1.2 of `ia/projects/ui-polish-master-plan.md`.
+    - Acceptance: `MotionBlock` + `MotionEntry` types present; `UiTheme.motion` exposed w/ 6 semantic entries; existing fields untouched; `npm run unity:compile-check` green; `npm run validate:all` green.
+    - Depends on: none (stage-internal: TECH-311 consumes these entries as asset defaults)

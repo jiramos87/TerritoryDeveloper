@@ -1,0 +1,28 @@
+id: TECH-94
+type: infrastructure / refactor
+title: Generic `GetCell<T>(x,y)` typed accessor on `GridManager` + `IGridManager` (compile gate) (2026-04-13)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-13)
+spec: (removed after closure)
+files: 
+  - Assets/Scripts/Managers/GameManagers/GridManager.cs
+  - Assets/Scripts/Managers/UnitManagers/IGridManager.cs
+notes: |
+  Stage 1.2 Phase 3 (T1.2.5) of cell-type split. Generic `public T GetCell<T>(int x, int y) where T : CellBase` added to `GridManager` + `IGridManager`; bounds check + `as T` cast; null on out-of-range or type mismatch. Existing untyped `CityCell GetCell(int x, int y)` byte-identical. `RegionCell` / `CountryCell` intentionally unreachable (plain classes outside `CellBase`, not in `cellArray`). Diff ≤ ~10 lines → no helper extracted (invariant #6 untouched). Caller migration = TECH-95. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+acceptance: |
+  generic accessor present on both surfaces; untyped overload unchanged; null on OOB + type mismatch; `npm run unity:compile-check` + `npm run validate:all` green
+depends_on: 
+  - TECH-92
+  - TECH-93
+depends_on_raw: "**TECH-92**, **TECH-93**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-94** — Generic `GetCell<T>(x,y)` typed accessor on `GridManager` + `IGridManager` (compile gate) (2026-04-13)
+    - Type: infrastructure / refactor
+    - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`, `Assets/Scripts/Managers/UnitManagers/IGridManager.cs`
+    - Spec: (removed after closure)
+    - Notes: Stage 1.2 Phase 3 (T1.2.5) of cell-type split. Generic `public T GetCell<T>(int x, int y) where T : CellBase` added to `GridManager` + `IGridManager`; bounds check + `as T` cast; null on out-of-range or type mismatch. Existing untyped `CityCell GetCell(int x, int y)` byte-identical. `RegionCell` / `CountryCell` intentionally unreachable (plain classes outside `CellBase`, not in `cellArray`). Diff ≤ ~10 lines → no helper extracted (invariant #6 untouched). Caller migration = TECH-95. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+    - Acceptance: generic accessor present on both surfaces; untyped overload unchanged; null on OOB + type mismatch; `npm run unity:compile-check` + `npm run validate:all` green
+    - Depends on: **TECH-92**, **TECH-93**

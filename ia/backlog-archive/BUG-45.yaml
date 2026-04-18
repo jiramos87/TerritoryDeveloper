@@ -1,0 +1,36 @@
+id: BUG-45
+type: bug / polish
+title: "Adjacent water bodies at different surface heights: merge, prefab refresh at intersections, straight slope/cliff transitions (2026-03-27)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: ia/specs/isometric-geography-system.md` — **§5.6.2**, **§12.7**
+files: 
+  - WaterManager.cs
+  - UpdateWaterVisuals
+  - ApplyLakeHighToRiverLowContactFallback
+  - WaterMap.cs
+  - ApplyMultiBodySurfaceBoundaryNormalization
+  - ApplyWaterSurfaceJunctionMerge
+  - IsLakeSurfaceStepContactForbidden
+  - TerrainManager.cs
+  - DetermineWaterShorePrefabs
+  - SelectPerpendicularWaterCornerPrefabs
+  - RefreshWaterCascadeCliffs
+  - RefreshShoreTerrainAfterWaterUpdate
+  - ProceduralRiverGenerator.cs
+  - TestRiverGenerator.cs
+  - docs/water-junction-merge-implementation-plan.md
+notes: |
+  **Completed (verified):** Pass A/B multi-body surface handling; lake-at-step exclusions; full-cardinal **`RefreshWaterCascadeCliffs`** (incl. mirror N/W lower pool); perpendicular multi-surface shore corner preference; lake-high vs river-low rim fallback. **Assign** `cliffWaterSouthPrefab` / **`cliffWaterEastPrefab`** on `TerrainManager` for visible cascades (west→east steps use **East**). **Map border** water × brown **cliff** seal: **geo** §5.7 / **Recent archive** **BUG-44**; bridges × cliff-water **BUG-43**; optional N/W cascade art (camera).
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-45** — Adjacent water bodies at different surface heights: merge, prefab refresh at intersections, straight slope/cliff transitions (2026-03-27)
+    - Type: bug / polish
+    - Files: `WaterManager.cs` (`UpdateWaterVisuals` — Pass A/B, `ApplyLakeHighToRiverLowContactFallback`), `WaterMap.cs` (`ApplyMultiBodySurfaceBoundaryNormalization`, `ApplyWaterSurfaceJunctionMerge`, `IsLakeSurfaceStepContactForbidden`, lake–river fallback), `TerrainManager.cs` (`DetermineWaterShorePrefabs`, `SelectPerpendicularWaterCornerPrefabs`, `RefreshWaterCascadeCliffs`, `RefreshShoreTerrainAfterWaterUpdate`), `ProceduralRiverGenerator.cs` / `TestRiverGenerator.cs` as applicable; `docs/water-junction-merge-implementation-plan.md`
+    - Spec: `ia/specs/isometric-geography-system.md` — **§5.6.2**, **§12.7**
+    - Notes: **Completed (verified):** Pass A/B multi-body surface handling; lake-at-step exclusions; full-cardinal **`RefreshWaterCascadeCliffs`** (incl. mirror N/W lower pool); perpendicular multi-surface shore corner preference; lake-high vs river-low rim fallback. **Assign** `cliffWaterSouthPrefab` / **`cliffWaterEastPrefab`** on `TerrainManager` for visible cascades (west→east steps use **East**). **Map border** water × brown **cliff** seal: **geo** §5.7 / **Recent archive** **BUG-44**; bridges × cliff-water **BUG-43**; optional N/W cascade art (camera).

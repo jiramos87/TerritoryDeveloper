@@ -1,0 +1,26 @@
+id: BUG-14
+type: fix (performance)
+title: "`FindObjectOfType` in Update/per-frame degrades performance (2026-04-17)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log + Lessons persisted to `ia_project_spec_journal`; full prose in git history only)
+files: 
+  - Assets/Scripts/Managers/GameManagers/UIManager.cs
+  - Assets/Scripts/Managers/GameManagers/UIManager.Hud.cs
+notes: |
+  `UIManager.UpdateUI()` caches `EmploymentManager` + `DemandManager` in `Start` via `[SerializeField] private` + null-safe `FindObjectOfType` fallback (sibling pattern to existing `cityStats` / `waterManager` resolution); dead `StatisticsManager` per-frame lookup removed (was assigned, never read). `UpdateGridCoordinatesDebugText` (`LateUpdate` path) drops lazy `FindObjectOfType<GameDebugInfoBuilder>` + `FindObjectOfType<WaterManager>` branches — both fields resolved once in `Start`. Zero per-frame `FindObjectOfType` in `UIManager.Hud.cs` (verified). `CursorManager.Update` already cached (unchanged). Bridge smoke 2026-04-17: compile clean, HUD + debug coord text render, zero console errors. Invariant #3 satisfied. **Prevention:** **TECH-26** CI scanner.
+acceptance: |
+  zero `FindObjectOfType` matches in `UIManager.Hud.cs`; Unity compile clean; Play Mode HUD smoke clean.
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-14** — `FindObjectOfType` in Update/per-frame degrades performance (2026-04-17)
+    - Type: fix (performance)
+    - Files: `Assets/Scripts/Managers/GameManagers/UIManager.cs`, `Assets/Scripts/Managers/GameManagers/UIManager.Hud.cs`
+    - Spec: (removed at closeout — Decision Log + Lessons persisted to `ia_project_spec_journal`; full prose in git history only)
+    - Notes: `UIManager.UpdateUI()` caches `EmploymentManager` + `DemandManager` in `Start` via `[SerializeField] private` + null-safe `FindObjectOfType` fallback (sibling pattern to existing `cityStats` / `waterManager` resolution); dead `StatisticsManager` per-frame lookup removed (was assigned, never read). `UpdateGridCoordinatesDebugText` (`LateUpdate` path) drops lazy `FindObjectOfType<GameDebugInfoBuilder>` + `FindObjectOfType<WaterManager>` branches — both fields resolved once in `Start`. Zero per-frame `FindObjectOfType` in `UIManager.Hud.cs` (verified). `CursorManager.Update` already cached (unchanged). Bridge smoke 2026-04-17: compile clean, HUD + debug coord text render, zero console errors. Invariant #3 satisfied. **Prevention:** **TECH-26** CI scanner.
+    - Acceptance: zero `FindObjectOfType` matches in `UIManager.Hud.cs`; Unity compile clean; Play Mode HUD smoke clean.
+    - Related: **TECH-26**, **TECH-05**

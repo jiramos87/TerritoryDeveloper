@@ -1,0 +1,34 @@
+id: TECH-300
+type: infrastructure / MCP tooling
+title: Surface new fields in `backlog_issue` + `backlog_search` payloads (Stage 1.1 Phase 3)
+priority: high
+status: closed
+completed: 2026-04-17
+section: Recent archive
+spec: (removed at closeout — tooling-only issue; Decision Log in git history; no Lessons Learned)
+files:
+  - tools/mcp-ia-server/src/tools/backlog-issue.ts
+  - tools/mcp-ia-server/src/tools/backlog-search.ts
+  - tools/mcp-ia-server/tests/tools/backlog-issue.test.ts
+  - tools/mcp-ia-server/tests/tools/backlog-search.test.ts
+notes: |
+  Extended `backlog_search` `results[]` projection w/ `priority`, `related`, `created` (null / empty-array defaults for legacy rows). `backlog_issue` already forwarded fields via `...parsed` spread; covered w/ new test file `backlog-issue.test.ts`. Extended `backlog-search.test.ts` + `build-registry.test.ts` snapshot for new shape. `npm run validate:all` green.
+acceptance: |
+  Payloads expose three new fields; snapshot tests updated; `npm run validate:all` green.
+depends_on:
+  - TECH-295
+  - TECH-296
+depends_on_raw: TECH-295, TECH-296
+related:
+  - TECH-295
+  - TECH-296
+  - TECH-301
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-300** — Surface new fields in `backlog_issue` + `backlog_search` payloads (Stage 1.1 Phase 3) (2026-04-17)
+    - Type: infrastructure / MCP tooling
+    - Files: `tools/mcp-ia-server/src/tools/backlog-issue.ts`, `tools/mcp-ia-server/src/tools/backlog-search.ts`, `tools/mcp-ia-server/tests/tools/backlog-issue.test.ts`, `tools/mcp-ia-server/tests/tools/backlog-search.test.ts`
+    - Spec: (removed at closeout — tooling-only issue; Decision Log in git history; no Lessons Learned)
+    - Notes: Extended `backlog_search` results projection w/ `priority`/`related`/`created`; `backlog_issue` already spread fields via `...parsed`. New `backlog-issue.test.ts` + extended `backlog-search.test.ts` + `build-registry.test.ts` snapshot. `npm run validate:all` green.
+    - Acceptance: Payloads expose three new fields; snapshot tests updated; `npm run validate:all` green.
+    - Depends on: TECH-295, TECH-296

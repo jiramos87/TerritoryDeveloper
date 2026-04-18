@@ -1,0 +1,27 @@
+id: TECH-53
+type: technical / CI / data
+title: "**Schema validation history** (Postgres extension **E2** track)"
+priority: medium
+status: open
+section: Agent ↔ Unity & MCP context lane
+spec: none (backlog-only — no `ia/projects/` spec)
+files: 
+  - .github/workflows/
+  - docs/schemas/
+  - docs/schemas/fixtures/
+notes: |
+  Persist per-CI-run outcomes of **`npm run validate:fixtures`** / **JSON Schema** checks so regressions on **Interchange JSON** and fixtures are visible over time. Align row shape with [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md) **B1** if stored in **Postgres**. Program pointer: same doc **Program extension mapping (E1–E3)**; Postgres umbrella trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
+acceptance: |
+  agreed storage (artifact file, DB rows, or workflow summary) + documented query or review path; English **Notes** updated when implementation choice is fixed
+depends_on: []
+depends_on_raw: "none (soft: IA **Postgres** milestone + JSON infra in archive)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-53** — **Schema validation history** (Postgres extension **E2** track)
+    - Type: technical / CI / data
+    - Files: `.github/workflows/` (e.g. extend **ia-tools**), `docs/schemas/`, `docs/schemas/fixtures/`; optional **Postgres** table (IA schema milestone in archive)
+    - Spec: none (backlog-only — no `ia/projects/` spec)
+    - Notes: Persist per-CI-run outcomes of **`npm run validate:fixtures`** / **JSON Schema** checks so regressions on **Interchange JSON** and fixtures are visible over time. Align row shape with [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md) **B1** if stored in **Postgres**. Program pointer: same doc **Program extension mapping (E1–E3)**; Postgres umbrella trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
+    - Acceptance: agreed storage (artifact file, DB rows, or workflow summary) + documented query or review path; English **Notes** updated when implementation choice is fixed
+    - Depends on: none (soft: IA **Postgres** milestone + JSON infra in archive)

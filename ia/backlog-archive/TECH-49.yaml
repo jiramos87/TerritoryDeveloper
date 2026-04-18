@@ -1,0 +1,30 @@
+id: TECH-49
+type: documentation / agent enablement (**Cursor Skill** only)
+title: "**Cursor Skill:** **implement** a **project spec** (execution workflow after kickoff) (2026-04-03)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-04)
+spec: (removed after closure — workflow in **`ia/skills/project-spec-implement/SKILL.md`**; closure record in this row)
+files: 
+  - ia/skills/project-spec-implement/SKILL.md
+  - ia/skills/README.md
+  - ia/skills/project-spec-kickoff/SKILL.md
+  - AGENTS.md
+  - docs/cursor-agents-skills-mcp-study.md
+  - docs/mcp-ia-server.md
+  - ia/templates/project-spec-review-prompt.md
+notes: |
+  **Completed (verified per user request to implement):** **project-spec-implement** **`SKILL.md`** with **Tool recipe (territory-ia)** (per-phase loop, **Branching**, **Seed prompt**, **unity-development-context** §10 pointer); README index row; **AGENTS.md** project-spec bullets + doc hierarchy; study doc **§4.4**; **`docs/mcp-ia-server.md`** “Project spec workflows”; paste template “After review: implement”. **Dry-run:** Meta — authoring followed the recipe while implementing this issue.
+acceptance: ""
+depends_on: 
+  - TECH-57
+depends_on_raw: "none (soft: **TECH-57**)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-49** — **Cursor Skill:** **implement** a **project spec** (execution workflow after kickoff) (2026-04-03)
+    - Type: documentation / agent enablement (**Cursor Skill** only)
+    - Files: `ia/skills/project-spec-implement/SKILL.md`; `ia/skills/README.md`; `ia/skills/project-spec-kickoff/SKILL.md` (cross-link); `AGENTS.md`; `docs/cursor-agents-skills-mcp-study.md`; `docs/mcp-ia-server.md`; `ia/templates/project-spec-review-prompt.md`
+    - Spec: (removed after closure — workflow in **`ia/skills/project-spec-implement/SKILL.md`**; closure record in this row)
+    - Notes: **Completed (verified per user request to implement):** **project-spec-implement** **`SKILL.md`** with **Tool recipe (territory-ia)** (per-phase loop, **Branching**, **Seed prompt**, **unity-development-context** §10 pointer); README index row; **AGENTS.md** project-spec bullets + doc hierarchy; study doc **§4.4**; **`docs/mcp-ia-server.md`** “Project spec workflows”; paste template “After review: implement”. **Dry-run:** Meta — authoring followed the recipe while implementing this issue.
+    - Depends on: none (soft: **TECH-57**)

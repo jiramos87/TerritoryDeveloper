@@ -1,0 +1,26 @@
+id: TECH-265
+type: web platform / middleware
+title: "`web/middleware.ts` session-cookie gate on `/dashboard` (Stage 5.3 Phase 1) (2026-04-16)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - web/middleware.ts
+notes: |
+  Author `web/middleware.ts` (new) — `export const config = { matcher: ['/dashboard'] }`; `export function middleware(request: NextRequest)` reads `request.cookies.get('portal_session')` (Stage 5.1 archived constant — `SESSION_COOKIE_NAME=portal_session`); missing / empty value → `NextResponse.redirect(new URL('/auth/login', request.url))`; present → `NextResponse.next()`. Presence-only check at stub tier; cookie-signature verification deferred to post-Step-5 portal-launch master plan. Edge-runtime compatible (no `@node-rs/argon2`, no `jose` verify). `DASHBOARD_AUTH_SKIP=1` local-dev bypass short-circuits before cookie read. Decision Log: presence-only (no JWT verify — no tokens exist yet); matcher exact `['/dashboard']` (no sub-path wildcard); inline `SESSION_COOKIE_NAME` const (no shared constants file yet at Stage 5.3).
+acceptance: |
+  `web/middleware.ts` exports `middleware` + `config` w/ matcher `['/dashboard']`; `/dashboard` without `portal_session` cookie → 302 to `/auth/login`; `/dashboard` with any non-empty cookie value → 200 (stub-tier presence-only check); `cd web && npm run typecheck` green; `npm run validate:all` exit 0.
+depends_on: 
+  - TECH-266
+depends_on_raw: "**TECH-266** (redirect target `/auth/login` must exist to avoid 404 loop)."
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-265** — `web/middleware.ts` session-cookie gate on `/dashboard` (Stage 5.3 Phase 1) (2026-04-16)
+    - Type: web platform / middleware
+    - Files: `web/middleware.ts` (new)
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: Author `web/middleware.ts` (new) — `export const config = { matcher: ['/dashboard'] }`; `export function middleware(request: NextRequest)` reads `request.cookies.get('portal_session')` (Stage 5.1 archived constant — `SESSION_COOKIE_NAME=portal_session`); missing / empty value → `NextResponse.redirect(new URL('/auth/login', request.url))`; present → `NextResponse.next()`. Presence-only check at stub tier; cookie-signature verification deferred to post-Step-5 portal-launch master plan. Edge-runtime compatible (no `@node-rs/argon2`, no `jose` verify). `DASHBOARD_AUTH_SKIP=1` local-dev bypass short-circuits before cookie read. Decision Log: presence-only (no JWT verify — no tokens exist yet); matcher exact `['/dashboard']` (no sub-path wildcard); inline `SESSION_COOKIE_NAME` const (no shared constants file yet at Stage 5.3).
+    - Acceptance: `web/middleware.ts` exports `middleware` + `config` w/ matcher `['/dashboard']`; `/dashboard` without `portal_session` cookie → 302 to `/auth/login`; `/dashboard` with any non-empty cookie value → 200 (stub-tier presence-only check); `cd web && npm run typecheck` green; `npm run validate:all` exit 0.
+    - Depends on: **TECH-266** (redirect target `/auth/login` must exist to avoid 404 loop).

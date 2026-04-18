@@ -1,0 +1,25 @@
+id: TECH-129
+type: tooling / monorepo wiring
+title: Root npm **workspaces** add `web/` entry (2026-04-14, superseded)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-14)
+spec: (removed — superseded)
+files: 
+  - package.json
+notes: |
+  superseded by **TECH-136** — stage compress (1.1). Over-granular 1-file task folded into consolidated Stage 1.1 unit; scope carried forward.
+acceptance: |
+  superseded — see **TECH-136** Acceptance.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-129** — Root npm **workspaces** add `web/` entry (2026-04-14, superseded)
+    - Type: tooling / monorepo wiring
+    - Files: `package.json` (root)
+    - Spec: (removed — superseded)
+    - Notes: superseded by **TECH-136** — stage compress (1.1). Over-granular 1-file task folded into consolidated Stage 1.1 unit; scope carried forward.
+    - Acceptance: superseded — see **TECH-136** Acceptance.
+    - Depends on: none

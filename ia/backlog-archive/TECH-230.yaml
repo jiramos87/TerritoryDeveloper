@@ -1,0 +1,25 @@
+id: TECH-230
+type: docs / glossary
+title: Blip glossary rows + cross-refs to `ia/specs/audio-blip.md` (Stage 3.4 Phase 2) (2026-04-16)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+files: 
+  - ia/specs/glossary.md
+notes: |
+  Appended 4 new rows alphabetical in Audio block — **Bake-to-clip** (on-demand `BlipPatchFlat` → `AudioClip` via `BlipBaker.BakeOrGet`; LRU 4 MB), **Blip cooldown** (min ms between same-id plays; `BlipCooldownRegistry`), **Blip variant** (per-patch index 0..`variantCount-1`; round-robin or fixed 0 when `deterministic`), **Patch flatten** (`BlipPatch` SO → `BlipPatchFlat` blittable in `BlipCatalog.Awake`; strips managed refs). Rewrote Spec col on 5 existing blip rows (**Blip bootstrap**, **Blip mixer group**, **Blip patch**, **Blip patch flat**, **patch hash**) from `ia/projects/blip-master-plan.md` Stage 1.x → `ia/specs/audio-blip.md §N`. Refreshed Index row line 32 to list all 9 Audio terms + `scene-load suppression`. Kickoff fixed over-claim (5 existing rows, not 13) + 3-col format (was 4-col) + bundled Index refresh. Closes Stage 3.4 + Step 3 Blip lane.
+acceptance: |
+  4 new rows present; all existing blip rows cross-ref spec; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-230** — Blip glossary rows + cross-refs to `ia/specs/audio-blip.md` (Stage 3.4 Phase 2) (2026-04-16)
+    - Type: docs / glossary
+    - Files: `ia/specs/glossary.md`
+    - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+    - Notes: Appended 4 new rows alphabetical in Audio block — **Bake-to-clip** (on-demand `BlipPatchFlat` → `AudioClip` via `BlipBaker.BakeOrGet`; LRU 4 MB), **Blip cooldown** (min ms between same-id plays; `BlipCooldownRegistry`), **Blip variant** (per-patch index 0..`variantCount-1`; round-robin or fixed 0 when `deterministic`), **Patch flatten** (`BlipPatch` SO → `BlipPatchFlat` blittable in `BlipCatalog.Awake`; strips managed refs). Rewrote Spec col on 5 existing blip rows (**Blip bootstrap**, **Blip mixer group**, **Blip patch**, **Blip patch flat**, **patch hash**) from `ia/projects/blip-master-plan.md` Stage 1.x → `ia/specs/audio-blip.md §N`. Refreshed Index row line 32 to list all 9 Audio terms + `scene-load suppression`. Kickoff fixed over-claim (5 existing rows, not 13) + 3-col format (was 4-col) + bundled Index refresh. Closes Stage 3.4 + Step 3 Blip lane.
+    - Acceptance: 4 new rows present; all existing blip rows cross-ref spec; `npm run validate:all` green.
+    - Depends on: none

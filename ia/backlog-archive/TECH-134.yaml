@@ -1,0 +1,27 @@
+id: TECH-134
+type: documentation / discovery
+title: Append `§Web` section to `CLAUDE.md` + `AGENTS.md` (2026-04-14, superseded)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-14)
+spec: (removed — superseded)
+files: 
+  - CLAUDE.md
+  - AGENTS.md
+notes: |
+  superseded by **TECH-136** — stage compress (1.1). Repo-docs append scope folded into consolidated issue.
+acceptance: |
+  superseded — see **TECH-136** Acceptance.
+depends_on: 
+  - TECH-133
+depends_on_raw: "**TECH-133**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-134** — Append `§Web` section to `CLAUDE.md` + `AGENTS.md` (2026-04-14, superseded)
+    - Type: documentation / discovery
+    - Files: `CLAUDE.md` (root); `AGENTS.md` (root)
+    - Spec: (removed — superseded)
+    - Notes: superseded by **TECH-136** — stage compress (1.1). Repo-docs append scope folded into consolidated issue.
+    - Acceptance: superseded — see **TECH-136** Acceptance.
+    - Depends on: **TECH-133**

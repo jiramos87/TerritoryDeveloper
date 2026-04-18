@@ -1,0 +1,27 @@
+id: TECH-163
+type: infrastructure / web workspace
+title: Install + wire MDX pipeline (Stage 2.1 Phase 1) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal persist ok, Decision Log captured in Notes)
+files: 
+  - web/package.json
+  - web/next.config.ts
+  - web/mdx-components.tsx
+notes: |
+  Stage 2.1 opener. Added `@next/mdx`, `@mdx-js/loader`, `@mdx-js/react`, `gray-matter` deps + `remark-frontmatter`, `remark-gfm`, `rehype-slug`, `rehype-autolink-headings`, `@types/mdx` devDeps to `web/package.json`. Wired `web/next.config.ts` via `createMDX` + plugin chain; `pageExtensions` extended w/ `"md"`, `"mdx"`. Added `web/mdx-components.tsx` at project root (App Router requirement, not mentioned in spec sketch — discovered via `node_modules/next/dist/docs/01-app/02-guides/mdx.md`). Decision Log — Next 16 `@next/mdx` API: `import createMDX from "@next/mdx"` + `options: { remarkPlugins, rehypePlugins }`; `mdx-components.tsx` mandatory at project root for App Router; npm workspaces hoisted `@next/mdx` to root `node_modules/` (resolves at build time).
+acceptance: |
+  deps installed; `withMDX` wraps config; `npm run validate:web` green; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-163** — Install + wire MDX pipeline (Stage 2.1 Phase 1) (2026-04-15)
+    - Type: infrastructure / web workspace
+    - Files: `web/package.json`, `web/next.config.ts`, `web/mdx-components.tsx`
+    - Spec: (removed at closeout — journal persist ok, Decision Log captured in Notes)
+    - Notes: Stage 2.1 opener. Added `@next/mdx`, `@mdx-js/loader`, `@mdx-js/react`, `gray-matter` deps + `remark-frontmatter`, `remark-gfm`, `rehype-slug`, `rehype-autolink-headings`, `@types/mdx` devDeps to `web/package.json`. Wired `web/next.config.ts` via `createMDX` + plugin chain; `pageExtensions` extended w/ `"md"`, `"mdx"`. Added `web/mdx-components.tsx` at project root (App Router requirement, not mentioned in spec sketch — discovered via `node_modules/next/dist/docs/01-app/02-guides/mdx.md`). Decision Log — Next 16 `@next/mdx` API: `import createMDX from "@next/mdx"` + `options: { remarkPlugins, rehypePlugins }`; `mdx-components.tsx` mandatory at project root for App Router; npm workspaces hoisted `@next/mdx` to root `node_modules/` (resolves at build time).
+    - Acceptance: deps installed; `withMDX` wraps config; `npm run validate:web` green; `npm run validate:all` green.
+    - Depends on: none

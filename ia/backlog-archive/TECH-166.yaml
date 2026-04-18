@@ -1,0 +1,33 @@
+id: TECH-166
+type: feature / web workspace (public user-facing)
+title: About + install + history pages (Stage 2.1 Phase 2) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal persist skipped; Decision Log captured in Notes)
+files: 
+  - web/app/about/page.tsx
+  - web/app/install/page.tsx
+  - web/app/history/page.tsx
+  - web/content/pages/about.mdx
+  - web/content/pages/install.mdx
+  - web/content/pages/history.mdx
+  - web/content/pages/history-timeline.ts
+notes: |
+  Stage 2.1 Phase 2 sibling to TECH-165. Three RSCs mirror landing pattern (`web/app/page.tsx`) — async fn, `loadMdxPage(slug)` → token-styled `<main>` + MDX body. `/history` renders timeline via `DataTable` (date/milestone/notes cols) w/ rows from typed `web/content/pages/history-timeline.ts`. `/install` renders platform availability via `BadgeChip` (Mac/Windows/Linux/Web → existing `Status` union, all `pending` seeded). Tokens-only styling; full-English MDX (caveman-exception). Decision Log — timeline data lives in `.ts` module (typed rows feed `DataTable`; MDX stays prose); reuse `BadgeChip` `Status` union verbatim for platforms (no union extension); RSC pattern mirrors landing (no shared layout refactor this stage). Open Questions deferred: final timeline milestones + platform `Status` mapping (product-owner input).
+acceptance: |
+  three routes reachable on dev; `DataTable` + `BadgeChip` wired; tokens-only; `npm run validate:web` green.
+depends_on: 
+  - TECH-163
+  - TECH-165
+depends_on_raw: "**TECH-163** (archived), **TECH-165** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-166** — About + install + history pages (Stage 2.1 Phase 2) (2026-04-15)
+    - Type: feature / web workspace (public user-facing)
+    - Files: `web/app/about/page.tsx`, `web/app/install/page.tsx`, `web/app/history/page.tsx`, `web/content/pages/about.mdx`, `web/content/pages/install.mdx`, `web/content/pages/history.mdx`, `web/content/pages/history-timeline.ts`
+    - Spec: (removed at closeout — journal persist skipped; Decision Log captured in Notes)
+    - Notes: Stage 2.1 Phase 2 sibling to TECH-165. Three RSCs mirror landing pattern (`web/app/page.tsx`) — async fn, `loadMdxPage(slug)` → token-styled `<main>` + MDX body. `/history` renders timeline via `DataTable` (date/milestone/notes cols) w/ rows from typed `web/content/pages/history-timeline.ts`. `/install` renders platform availability via `BadgeChip` (Mac/Windows/Linux/Web → existing `Status` union, all `pending` seeded). Tokens-only styling; full-English MDX (caveman-exception). Decision Log — timeline data lives in `.ts` module (typed rows feed `DataTable`; MDX stays prose); reuse `BadgeChip` `Status` union verbatim for platforms (no union extension); RSC pattern mirrors landing (no shared layout refactor this stage). Open Questions deferred: final timeline milestones + platform `Status` mapping (product-owner input).
+    - Acceptance: three routes reachable on dev; `DataTable` + `BadgeChip` wired; tokens-only; `npm run validate:web` green.
+    - Depends on: **TECH-163** (archived), **TECH-165** (archived)

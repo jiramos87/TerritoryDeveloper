@@ -1,0 +1,33 @@
+id: TECH-168
+type: infrastructure / SEO / web workspace
+title: OG image + per-route `generateMetadata` (Stage 2.1 Phase 3) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+files: 
+  - web/app/opengraph-image.tsx
+  - web/app/page.tsx
+  - web/app/about/page.tsx
+  - web/app/install/page.tsx
+  - web/app/history/page.tsx
+  - web/app/layout.tsx
+  - web/lib/site/metadata.ts
+notes: |
+  Stage 2.1 Phase 3 closer. `web/app/opengraph-image.tsx` via `next/og` `ImageResponse` — 1200x630 PNG, palette-token bg (`bg-canvas`) + accent (`raw.green` 4px rule) + title (`text-primary` mono) + tagline (`text-muted` sans); named exports `alt`/`size`/`contentType`. `web/lib/site/metadata.ts` (new) centralizes `siteTitle` + `siteTagline`. `web/app/layout.tsx` `metadata` extended w/ `metadataBase: new URL(getBaseUrl())` + default `title`/`template` + `description` + `openGraph` base. Each public RSC (`/`, `/about`, `/install`, `/history`) exports async `generateMetadata` via `loadMdxPage(slug)` → `Metadata { title, description, openGraph(title/description/url/type:"article"), twitter(card:"summary_large_image") }`. Canonical URL from `getBaseUrl()` + slug. Decision Log — single site-level OG card (no per-slug dynamic OG at MVP); centralize site strings in `lib/site/metadata.ts` (single source for OG card + layout default); `metadataBase` pinned to `getBaseUrl()` for absolute OG URLs across envs. Open Question #1 resolved w/ proposed tagline `"A city builder where geography shapes every decision."`.
+acceptance: |
+  `/opengraph-image` returns 1200x630 PNG; each page emits `<meta og:*>` + `<title>`; `npm run validate:web` green.
+depends_on: 
+  - TECH-166
+  - TECH-165
+depends_on_raw: "**TECH-166** (archived), **TECH-165** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-168** — OG image + per-route `generateMetadata` (Stage 2.1 Phase 3) (2026-04-15)
+    - Type: infrastructure / SEO / web workspace
+    - Files: `web/app/opengraph-image.tsx`, `web/app/page.tsx`, `web/app/about/page.tsx`, `web/app/install/page.tsx`, `web/app/history/page.tsx`, `web/app/layout.tsx`, `web/lib/site/metadata.ts`
+    - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+    - Notes: Stage 2.1 Phase 3 closer. `web/app/opengraph-image.tsx` via `next/og` `ImageResponse` — 1200x630 PNG, palette-token bg (`bg-canvas`) + accent (`raw.green` 4px rule) + title (`text-primary` mono) + tagline (`text-muted` sans); named exports `alt`/`size`/`contentType`. `web/lib/site/metadata.ts` (new) centralizes `siteTitle` + `siteTagline`. `web/app/layout.tsx` `metadata` extended w/ `metadataBase: new URL(getBaseUrl())` + default `title`/`template` + `description` + `openGraph` base. Each public RSC (`/`, `/about`, `/install`, `/history`) exports async `generateMetadata` via `loadMdxPage(slug)` → `Metadata { title, description, openGraph(title/description/url/type:"article"), twitter(card:"summary_large_image") }`. Canonical URL from `getBaseUrl()` + slug. Decision Log — single site-level OG card (no per-slug dynamic OG at MVP); centralize site strings in `lib/site/metadata.ts` (single source for OG card + layout default); `metadataBase` pinned to `getBaseUrl()` for absolute OG URLs across envs. Open Question #1 resolved w/ proposed tagline `"A city builder where geography shapes every decision."`.
+    - Acceptance: `/opengraph-image` returns 1200x630 PNG; each page emits `<meta og:*>` + `<title>`; `npm run validate:web` green.
+    - Depends on: **TECH-166** (archived), **TECH-165** (archived)

@@ -1,0 +1,26 @@
+id: TECH-174
+type: infrastructure / audio runtime
+title: "`BlipPlayer.PlayOneShot` round-robin dispatch (Stage 2.2 Phase 3) (2026-04-15)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipPlayer.cs
+notes: |
+  `PlayOneShot(AudioClip clip, float pitch, float gain, AudioMixerGroup group)` — `var source = _pool[_cursor]; _cursor = (_cursor + 1) % _pool.Length;` advances cursor before `Play()` so next caller lands on next voice even if current `Play()` throws. Stops prior clip if still playing (voice-steal hard overwrite — no crossfade, post-MVP per orchestration guardrails §390; MVP 10 sounds + 16-voice pool makes steal rare). Sets `source.clip`, `source.pitch`, `source.volume`, `source.outputAudioMixerGroup` then `source.Play()`. Decision Log — voice-steal = hard overwrite (Stop + reassign, no crossfade); cursor advances before Play (wrap math off playback path); per-call mixer group assignment (BlipMixerRouter.Get resolves upstream in BlipEngine.Play, voice stays group-agnostic).
+acceptance: |
+  16 rapid calls wrap cursor once (wrap point `_cursor == 0`); voice-steal overwrites prior clip on wrap; no exception on mid-playback overwrite; `unity:compile-check` green.
+depends_on: 
+  - TECH-173
+depends_on_raw: "**TECH-173** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-174** — `BlipPlayer.PlayOneShot` round-robin dispatch (Stage 2.2 Phase 3) (2026-04-15)
+    - Type: infrastructure / audio runtime
+    - Files: `Assets/Scripts/Audio/Blip/BlipPlayer.cs`
+    - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+    - Notes: `PlayOneShot(AudioClip clip, float pitch, float gain, AudioMixerGroup group)` — `var source = _pool[_cursor]; _cursor = (_cursor + 1) % _pool.Length;` advances cursor before `Play()` so next caller lands on next voice even if current `Play()` throws. Stops prior clip if still playing (voice-steal hard overwrite — no crossfade, post-MVP per orchestration guardrails §390; MVP 10 sounds + 16-voice pool makes steal rare). Sets `source.clip`, `source.pitch`, `source.volume`, `source.outputAudioMixerGroup` then `source.Play()`. Decision Log — voice-steal = hard overwrite (Stop + reassign, no crossfade); cursor advances before Play (wrap math off playback path); per-call mixer group assignment (BlipMixerRouter.Get resolves upstream in BlipEngine.Play, voice stays group-agnostic).
+    - Acceptance: 16 rapid calls wrap cursor once (wrap point `_cursor == 0`); voice-steal overwrites prior clip on wrap; no exception on mid-playback overwrite; `unity:compile-check` green.
+    - Depends on: **TECH-173** (archived)

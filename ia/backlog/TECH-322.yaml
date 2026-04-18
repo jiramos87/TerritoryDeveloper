@@ -1,0 +1,36 @@
+id: TECH-322
+type: tech (IA infrastructure / lifecycle tooling)
+title: "Ship-stage chain shipper — stateful subagent + skill + command (Approach B)"
+priority: medium
+status: open
+section: IA evolution lane
+spec: ia/projects/TECH-322.md
+files:
+  - .claude/commands/ship-stage.md
+  - .claude/agents/ship-stage.md
+  - ia/skills/ship-stage/SKILL.md
+  - .claude/agents/verify-loop.md
+  - ia/skills/verify-loop/SKILL.md
+  - docs/agent-lifecycle.md
+  - ia/rules/agent-lifecycle.md
+  - CLAUDE.md
+  - AGENTS.md
+  - ia/specs/glossary.md
+  - docs/ship-stage-exploration.md
+notes: |
+  New `/ship-stage {MASTER_PLAN_PATH} {STAGE_ID}` dispatcher — chains `spec-kickoff → spec-implementer → verify-loop → closeout` across every filed task row of one Stage X.Y in a master plan, end-to-end and autonomously. **Approach B** selected per `/design-explore` interview (Q1=B stateful chain subagent w/ cached MCP context, Q2=A resolved-as-none-needed, Q3=A full auto-resolve next-stage, Q4=C hybrid verify — per-task Path A fail-fast + batched Path B at stage end via `--skip-path-b` flag, Q5=C hybrid parser — narrow regex v1 + follow-up issue for MCP `spec_stage_table` slice). Hard-depends on **TECH-302** Stage 2 (`domain-context-load` + `term-anchor-verify` shared subskills) — do not start Phase 4 authoring until TECH-302 Phase 2 lands. Scope v1: `/ship-stage` only — `/ship-step` + `/ship-plan` deferred. Tooling/pipeline only — no runtime C# invariants. Design source: `docs/ship-stage-exploration.md` `## Design Expansion` block.
+acceptance: |
+  `/ship-stage {master-plan-path} Stage X.Y` runs every non-Done filed task row sequentially through kickoff → implement → verify-loop → closeout; stops on first per-task gate failure w/ `STOPPED at {ISSUE_ID}` digest; emits chain-level stage digest aggregating cross-task lessons + decisions (distinct from per-spec `project-stage-close` which fires normally inside each inner `spec-implementer`); `Next:` handoff line auto-resolves for all 4 cases (next filed stage → `/ship-stage`, next `_pending_` stage → `/stage-file`, next skeleton step → `/stage-decompose`, umbrella done → `/closeout`); hybrid verify — per-task Path A compile gate fail-fast, batched Path B smoke run once at stage end on cumulative delta; `verify-loop` grows `--skip-path-b` flag w/ JSON verdict `path_b: skipped_batched`; regex parser fails loud on master-plan task-table schema mismatch; parser test fixtures cover 2-3 master plans (header-depth `##` / `###` variance); smoke run on a real stage w/ ≥2 open tasks passes; follow-up issue filed for `spec_stage_table` MCP slice migration (`depends_on` MCP lifecycle audit); `CLAUDE.md` §3 + `AGENTS.md` §2 + `docs/agent-lifecycle.md` §2 + `ia/rules/agent-lifecycle.md` all list `/ship-stage`; glossary rows added for `ship-stage dispatcher` + `chain-level stage digest`; `npm run validate:all` clean.
+depends_on: [TECH-302]
+depends_on_raw: "TECH-302 (Stage 2 `domain-context-load` + `term-anchor-verify` subskills — hard gate)"
+related:
+  - docs/ship-stage-exploration.md
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-322** — Ship-stage chain shipper — stateful subagent + skill + command (Approach B)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Files: `.claude/commands/ship-stage.md` (new), `.claude/agents/ship-stage.md` (new), `ia/skills/ship-stage/SKILL.md` (new), `.claude/agents/verify-loop.md`, `ia/skills/verify-loop/SKILL.md`, `docs/agent-lifecycle.md`, `ia/rules/agent-lifecycle.md`, `CLAUDE.md`, `AGENTS.md`, `ia/specs/glossary.md`; design source `docs/ship-stage-exploration.md`
+    - Spec: `ia/projects/TECH-322.md`
+    - Notes: New `/ship-stage {MASTER_PLAN_PATH} {STAGE_ID}` dispatcher — chains `spec-kickoff → spec-implementer → verify-loop → closeout` across every filed task row of one Stage X.Y in a master plan. **Approach B** per `/design-explore` interview (Q1=B stateful chain w/ cached MCP context; Q2=A resolved-as-none-needed — per-spec `project-stage-close` unchanged + chain-level stage digest NEW; Q3=A auto-resolve next-stage across 4 cases; Q4=C hybrid verify — per-task Path A fail-fast, batched Path B at stage end via `--skip-path-b`; Q5=C hybrid parser — narrow regex v1 + follow-up MCP `spec_stage_table` slice). Hard-depends on TECH-302 Stage 2 (`domain-context-load` + `term-anchor-verify` shared subskills). `/ship-step` + `/ship-plan` deferred. Tooling only — no runtime C# invariants.
+    - Acceptance: `/ship-stage` chains all stage tasks sequentially; stops on first per-task failure w/ structured digest; chain-level stage digest distinct from per-spec `project-stage-close`; `Next:` auto-resolves 4 cases (filed / pending / skeleton / umbrella-done); hybrid verify — Path A per-task, Path B batched via `--skip-path-b`; regex parser fails loud on schema drift w/ fixtures for 2-3 master plans; smoke run on real stage w/ ≥2 open tasks passes; follow-up issue filed for `spec_stage_table` MCP slice; docs + glossary updated; `npm run validate:all` clean.
+    - Depends on: TECH-302 (Stage 2 `domain-context-load` + `term-anchor-verify` — hard gate)

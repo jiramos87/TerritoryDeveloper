@@ -1,0 +1,23 @@
+id: TECH-59
+type: tooling / agent enablement
+title: "**territory-ia** MCP: stage **Editor** export registry payload — **absorbed into Close Dev Loop** (2026-04-07)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (deleted — `ia/projects/TECH-59.md` removed; concept superseded by **Close Dev Loop** orchestration archived (this file **Recent archive**))
+files: []
+notes: |
+  **Absorbed (not implemented):** Original goal was MCP staging for **Editor export registry** payload (**`backlog_issue_id`** + JSON documents) with a Unity menu to apply. Superseded because the **Close Dev Loop** program (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived) lets the agent enter Play Mode and collect evidence directly, eliminating the need to pre-stage registry parameters. Registry staging may reappear as a sub-task if needed, but is no longer a standalone issue.
+acceptance: ""
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-59** — **territory-ia** MCP: stage **Editor** export registry payload — **absorbed into Close Dev Loop** (2026-04-07)
+    - Type: tooling / agent enablement
+    - Files: (no implementation shipped — scope absorbed into **Close Dev Loop** (**TECH-75**))
+    - Spec: (deleted — `ia/projects/TECH-59.md` removed; concept superseded by **Close Dev Loop** orchestration archived (this file **Recent archive**))
+    - Notes: **Absorbed (not implemented):** Original goal was MCP staging for **Editor export registry** payload (**`backlog_issue_id`** + JSON documents) with a Unity menu to apply. Superseded because the **Close Dev Loop** program (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived) lets the agent enter Play Mode and collect evidence directly, eliminating the need to pre-stage registry parameters. Registry staging may reappear as a sub-task if needed, but is no longer a standalone issue.
+    - Depends on: none
+    - Related: **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived), **TECH-55b** **§ Completed**, **TECH-48**

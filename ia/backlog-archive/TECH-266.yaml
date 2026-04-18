@@ -1,0 +1,25 @@
+id: TECH-266
+type: web platform / UI stub
+title: "`web/app/auth/login/page.tsx` stub login RSC (Stage 5.3 Phase 1) (2026-04-16)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - web/app/auth/login/page.tsx
+notes: |
+  Author `web/app/auth/login/page.tsx` (new) — RSC (no `'use client'`); full-English user-facing copy per caveman-exception (`ia/rules/agent-output-caveman.md` §exceptions — user-facing rendered text under `web/app/**/page.tsx`): "Sign in" `<h1>`, email + password placeholder `<input>` pair, disabled `<button>` submit, canned banner `<p>` "Authentication not yet available — coming soon.". Consumes design token classes (`bg-canvas`, `text-text-primary`, `border-border-subtle`, etc. — NO inline hex, NO raw tailwind colors). No form action — inputs are placeholders only; TECH-263 archived `/api/auth/login` stub returns 501 anyway. No `<Link>` to `/auth/register` at this tier — register UI deferred to post-Step-5 portal plan. Decision Log: RSC over client component (zero interactivity at stub tier; minimal bundle); disabled inputs + submit (honest UX signal matching canned banner; users still see expected form affordance); design-token classes only, no inline hex (Stage 1.2 TECH-116 convention; post-Step-5 portal plan can restyle via token updates w/o page edits).
+acceptance: |
+  `web/app/auth/login/page.tsx` renders at `http://localhost:4000/auth/login`; heading + canned error banner + disabled submit present; only design-token CSS classes used (grep confirms no inline hex); `cd web && npm run typecheck` green; `cd web && npm run build` green; `npm run validate:all` exit 0.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-266** — `web/app/auth/login/page.tsx` stub login RSC (Stage 5.3 Phase 1) (2026-04-16)
+    - Type: web platform / UI stub
+    - Files: `web/app/auth/login/page.tsx` (new)
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: Author `web/app/auth/login/page.tsx` (new) — RSC (no `'use client'`); full-English user-facing copy per caveman-exception (`ia/rules/agent-output-caveman.md` §exceptions — user-facing rendered text under `web/app/**/page.tsx`): "Sign in" `<h1>`, email + password placeholder `<input>` pair, disabled `<button>` submit, canned banner `<p>` "Authentication not yet available — coming soon.". Consumes design token classes (`bg-canvas`, `text-text-primary`, `border-border-subtle`, etc. — NO inline hex, NO raw tailwind colors). No form action — inputs are placeholders only; TECH-263 archived `/api/auth/login` stub returns 501 anyway. No `<Link>` to `/auth/register` at this tier — register UI deferred to post-Step-5 portal plan. Decision Log: RSC over client component (zero interactivity at stub tier; minimal bundle); disabled inputs + submit (honest UX signal matching canned banner; users still see expected form affordance); design-token classes only, no inline hex (Stage 1.2 TECH-116 convention; post-Step-5 portal plan can restyle via token updates w/o page edits).
+    - Acceptance: `web/app/auth/login/page.tsx` renders at `http://localhost:4000/auth/login`; heading + canned error banner + disabled submit present; only design-token CSS classes used (grep confirms no inline hex); `cd web && npm run typecheck` green; `cd web && npm run build` green; `npm run validate:all` exit 0.
+    - Depends on: none

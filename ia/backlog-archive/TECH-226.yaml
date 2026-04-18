@@ -1,0 +1,24 @@
+id: TECH-226
+type: docs / web workspace
+title: README §Components Sidebar entry + validation closeout (Stage 4.1 Phase 2) (2026-04-16)
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — Decision Log persisted to Postgres journal)
+files: 
+  - web/README.md
+notes: |
+  **Completed (verified — `/project-spec-close`).** `web/README.md` gained new `## Components` section (sibling of `## Tokens`) with `### Sidebar` subsection — six bullets: lucide-react named-import dependency (tree-shake via `Home` / `BookOpen` / `Newspaper` / `LayoutDashboard` / `Menu` / `X`, no barrel); `'use client'` rationale (`usePathname()` + `useState` both need browser runtime); active-route styling via inline `style` + `tokens.colors['text-accent-warn']` + `tokens.colors['bg-panel']` (NOT bare `text-accent` — palette only exposes amber-warn + critical-red); mobile overlay pattern (hamburger `md:hidden fixed top-4 left-4 z-50`, nav wrapper `fixed inset-y-0 left-0 w-48 z-40 transform transition-transform`, open/closed `translate-x-0` / `-translate-x-full`); desktop same-element responsive `md:static md:translate-x-0` (NOT `hidden md:flex` wrapper — Sidebar owns own responsive classes, wrapper would break TECH-224 mobile overlay); token-consumption inline-`style` map via `@/lib/tokens` (JSON keys resolved at build, NOT Tailwind utilities). Decision Log — separate `## Components` section over inline under `## Tokens` (components ≠ tokens; future Button / PlanChart share this bucket); `text-accent-warn` over bare `text-accent` (palette audit); inline-`style` over class-string (matches ship source); same-element responsive over wrapper (matches TECH-225 layout). Validate — `npm run validate:all` green (lint + typecheck + next build + IA validators); zero `lucide-react` TS2307 / TS2305 diagnostics. Final Stage 4.1 exit gate satisfied; sibling TECH-223 + TECH-224 + TECH-225 all archived. Master-plan row T4.1.4 already flipped `Done` pre-closeout.
+acceptance: ""
+depends_on: 
+  - TECH-225
+depends_on_raw: "**TECH-225** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-226** — README §Components Sidebar entry + validation closeout (Stage 4.1 Phase 2) (2026-04-16)
+    - Type: docs / web workspace
+    - Files: `web/README.md`
+    - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+    - Notes: **Completed (verified — `/project-spec-close`).** `web/README.md` gained new `## Components` section (sibling of `## Tokens`) with `### Sidebar` subsection — six bullets: lucide-react named-import dependency (tree-shake via `Home` / `BookOpen` / `Newspaper` / `LayoutDashboard` / `Menu` / `X`, no barrel); `'use client'` rationale (`usePathname()` + `useState` both need browser runtime); active-route styling via inline `style` + `tokens.colors['text-accent-warn']` + `tokens.colors['bg-panel']` (NOT bare `text-accent` — palette only exposes amber-warn + critical-red); mobile overlay pattern (hamburger `md:hidden fixed top-4 left-4 z-50`, nav wrapper `fixed inset-y-0 left-0 w-48 z-40 transform transition-transform`, open/closed `translate-x-0` / `-translate-x-full`); desktop same-element responsive `md:static md:translate-x-0` (NOT `hidden md:flex` wrapper — Sidebar owns own responsive classes, wrapper would break TECH-224 mobile overlay); token-consumption inline-`style` map via `@/lib/tokens` (JSON keys resolved at build, NOT Tailwind utilities). Decision Log — separate `## Components` section over inline under `## Tokens` (components ≠ tokens; future Button / PlanChart share this bucket); `text-accent-warn` over bare `text-accent` (palette audit); inline-`style` over class-string (matches ship source); same-element responsive over wrapper (matches TECH-225 layout). Validate — `npm run validate:all` green (lint + typecheck + next build + IA validators); zero `lucide-react` TS2307 / TS2305 diagnostics. Final Stage 4.1 exit gate satisfied; sibling TECH-223 + TECH-224 + TECH-225 all archived. Master-plan row T4.1.4 already flipped `Done` pre-closeout.
+    - Depends on: **TECH-225** (archived)

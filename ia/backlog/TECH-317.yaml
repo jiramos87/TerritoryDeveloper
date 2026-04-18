@@ -1,0 +1,31 @@
+id: TECH-317
+type: audio / mixer asset
+title: "**Music** — Expose MusicVolume + MasterVolume params"
+priority: medium
+status: open
+section: Stage 1.1 — Mixer extension + persistent bootstrap
+spec: ia/projects/TECH-317.md
+files:
+  - Assets/Audio/BlipMixer.mixer
+notes: |
+  Expose `MusicVolume` dB param bound to `Blip-Music` group volume slider. Expose `MasterVolume` dB param bound to Master group volume slider. Defaults 0 dB. `SfxVolume` stays as-is (Blip-owned). Verify exposed params panel shows 3 entries: `MasterVolume`, `MusicVolume`, `SfxVolume`. Stage 1.1 Phase 1 T1.1.2 of `ia/projects/music-player-master-plan.md`.
+acceptance: |
+  Audio Mixer Exposed Parameters panel lists `MasterVolume` + `MusicVolume` + `SfxVolume` (3 entries). `MasterVolume` binds Master group volume; `MusicVolume` binds `Blip-Music` group volume. Defaults 0 dB. `SfxVolume` untouched.
+depends_on:
+  - TECH-316
+depends_on_raw: "TECH-316 (Blip-Music group must exist before exposing MusicVolume param)"
+related:
+  - TECH-316
+  - TECH-318
+  - TECH-319
+  - TECH-320
+  - TECH-321
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-317** — **Music** — Expose MusicVolume + MasterVolume params (Stage 1.1 Phase 1)
+    - Type: audio / mixer asset
+    - Files: `Assets/Audio/BlipMixer.mixer`
+    - Spec: `ia/projects/TECH-317.md`
+    - Notes: Stage 1.1 Phase 1 T1.1.2 of music-player orchestrator. Expose `MusicVolume` (→ Blip-Music) + `MasterVolume` (→ Master) dB params. Defaults 0 dB. `SfxVolume` untouched.
+    - Acceptance: Exposed Parameters panel shows 3 entries: `MasterVolume`, `MusicVolume`, `SfxVolume`. Bindings correct.
+    - Depends on: TECH-316 (Blip-Music group must exist before exposing MusicVolume param)

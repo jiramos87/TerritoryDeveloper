@@ -1,0 +1,37 @@
+id: TECH-85
+type: tooling / IA infrastructure / agent enablement
+title: IA migration to neutral `ia/` namespace + native Claude Code layer (2026-04-11)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-11)
+spec: (removed after closure — glossary rows **Code intelligence MCP tools**, **Glossary graph**, extended **IA index manifest** to I3)
+files: 
+  - ia/{specs,rules,skills,projects,templates}
+  - tools/mcp-ia-server/src/config.ts
+  - tools/mcp-ia-server/src/tools/{router-for-task,project-spec-journal,project-spec-closeout-digest,glossary-lookup,unity-callers-of,unity-subscribers-of,csharp-class-summary}.ts
+  - tools/mcp-ia-server/src/parser/project-spec-closeout-parse.ts
+  - tools/mcp-ia-server/scripts/generate-ia-indexes.ts
+  - tools/validate-dead-project-spec-paths.mjs
+  - .claude/{settings.json,skills/,agents/,output-styles/,commands/,memory/}
+  - tools/scripts/claude-hooks/
+  - MEMORY.md
+  - docs/
+  - AGENTS.md
+  - CLAUDE.md
+  - ARCHITECTURE.md
+notes: |
+  Five stages shipped by fresh agents against a stage/phase execution model. Stage 1 — bootstrap Claude Code layer (`.claude/settings.json` with `acceptEdits` + `mcp__territory-ia__*` wildcard, 4 hooks, 5 slash command stubs, `MEMORY.md` seed, `project-stage-close` skill). Stage 2 — structural move `.cursor/{specs,rules,skills,projects,templates}` → `ia/...`, cross-extension `.md → .md` symlinks for back-compat, MCP server path constants, validator symlink-awareness. Stage 3 — four-field IA frontmatter on 74 files, `validate:frontmatter` validator, verification policy consolidated to `docs/agent-led-verification-policy.md` (single canonical source), `AGENTS.md` / `BACKLOG.md` / `CLAUDE.md` / `docs/information-architecture-overview.md` densified. Stage 4 — 5 native subagents (`spec-kickoff`, `spec-implementer`, `verifier`, `test-mode-loop`, `closeout`; Opus orchestrators + Sonnet executors), 5 real slash commands, 2 output styles (`verification-report`, `closeout-digest` — JSON header + caveman summary), caveman directive enforced at 4 layers (16 path grep gate). Stage 5 — 3 new code-intelligence MCP tools (`unity_callers_of`, `unity_subscribers_of`, `csharp_class_summary`) + `glossary_lookup` extended to graph shape (`related`, `cited_in`, `appears_in_code`), precomputed `glossary-graph-index.json` (I3 companion to I1 / I2). Cursor remains a first-class consumer throughout via back-compat symlinks. Canonical stances locked: `permissions.defaultMode: "acceptEdits"` (discovered after in-vivo chicken-and-egg friction with default mode), `mcp__territory-ia__*` wildcard (vs per-tool list), 4-layer caveman directive (subagent body + skill preamble + slash command body + stage-close handoff template), subagent `tools` field as explicit per-subagent allow-list (not wildcard).
+acceptance: |
+  `ia/` populated with frontmatter (76 files); back-compat symlinks resolve via cross-extension `.md → .md`; MCP server reads from `ia/`; `npm run validate:all` + `npm run verify:local` green end-to-end; 5 subagents + 5 slash commands + 4 hooks + 2 output styles operative under `.claude/`; 3 new MCP tools (`unity_callers_of`, `unity_subscribers_of`, `csharp_class_summary`) registered; `glossary_lookup` returns `{term, definition, related, cited_in, appears_in_code}`; verification policy consolidated; caveman directive present on 16 paths
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-85** — IA migration to neutral `ia/` namespace + native Claude Code layer (2026-04-11)
+    - Type: tooling / IA infrastructure / agent enablement
+    - Files: `ia/{specs,rules,skills,projects,templates}`; `tools/mcp-ia-server/src/config.ts`; `tools/mcp-ia-server/src/tools/{router-for-task,project-spec-journal,project-spec-closeout-digest,glossary-lookup,unity-callers-of,unity-subscribers-of,csharp-class-summary}.ts`; `tools/mcp-ia-server/src/parser/project-spec-closeout-parse.ts`; `tools/mcp-ia-server/scripts/generate-ia-indexes.ts`; `tools/validate-dead-project-spec-paths.mjs`; `.claude/{settings.json,skills/,agents/,output-styles/,commands/,memory/}`; `tools/scripts/claude-hooks/`; `MEMORY.md`; densification pass over `docs/`, `AGENTS.md`, `CLAUDE.md`, `ARCHITECTURE.md`
+    - Spec: (removed after closure — glossary rows **Code intelligence MCP tools**, **Glossary graph**, extended **IA index manifest** to I3)
+    - Notes: Five stages shipped by fresh agents against a stage/phase execution model. Stage 1 — bootstrap Claude Code layer (`.claude/settings.json` with `acceptEdits` + `mcp__territory-ia__*` wildcard, 4 hooks, 5 slash command stubs, `MEMORY.md` seed, `project-stage-close` skill). Stage 2 — structural move `.cursor/{specs,rules,skills,projects,templates}` → `ia/...`, cross-extension `.md → .md` symlinks for back-compat, MCP server path constants, validator symlink-awareness. Stage 3 — four-field IA frontmatter on 74 files, `validate:frontmatter` validator, verification policy consolidated to `docs/agent-led-verification-policy.md` (single canonical source), `AGENTS.md` / `BACKLOG.md` / `CLAUDE.md` / `docs/information-architecture-overview.md` densified. Stage 4 — 5 native subagents (`spec-kickoff`, `spec-implementer`, `verifier`, `test-mode-loop`, `closeout`; Opus orchestrators + Sonnet executors), 5 real slash commands, 2 output styles (`verification-report`, `closeout-digest` — JSON header + caveman summary), caveman directive enforced at 4 layers (16 path grep gate). Stage 5 — 3 new code-intelligence MCP tools (`unity_callers_of`, `unity_subscribers_of`, `csharp_class_summary`) + `glossary_lookup` extended to graph shape (`related`, `cited_in`, `appears_in_code`), precomputed `glossary-graph-index.json` (I3 companion to I1 / I2). Cursor remains a first-class consumer throughout via back-compat symlinks. Canonical stances locked: `permissions.defaultMode: "acceptEdits"` (discovered after in-vivo chicken-and-egg friction with default mode), `mcp__territory-ia__*` wildcard (vs per-tool list), 4-layer caveman directive (subagent body + skill preamble + slash command body + stage-close handoff template), subagent `tools` field as explicit per-subagent allow-list (not wildcard).
+    - Acceptance: `ia/` populated with frontmatter (76 files); back-compat symlinks resolve via cross-extension `.md → .md`; MCP server reads from `ia/`; `npm run validate:all` + `npm run verify:local` green end-to-end; 5 subagents + 5 slash commands + 4 hooks + 2 output styles operative under `.claude/`; 3 new MCP tools (`unity_callers_of`, `unity_subscribers_of`, `csharp_class_summary`) registered; `glossary_lookup` returns `{term, definition, related, cited_in, appears_in_code}`; verification policy consolidated; caveman directive present on 16 paths
+    - Depends on: none

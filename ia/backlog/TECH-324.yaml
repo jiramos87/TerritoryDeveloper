@@ -1,0 +1,29 @@
+id: TECH-324
+type: infrastructure / MCP tooling
+title: Implement `backlog_record_validate` MCP tool (Stage 1.2 Phase 1)
+priority: high
+status: open
+section: Backlog YAML ↔ MCP alignment program
+spec: ia/projects/TECH-324.md
+files:
+  - tools/mcp-ia-server/src/tools/backlog-record-validate.ts
+  - tools/mcp-ia-server/src/index.ts
+notes: |
+  MCP tool `backlog_record_validate` — input `{ yaml_body: string }`, output `{ ok, errors, warnings }`. Delegates to shared core from TECH-323. Register in `tools/mcp-ia-server/src/index.ts`. Consumed by `stage-file` / `project-new` skills before disk write (IP5). Stage-shared context: Stage 1.2 ships three MCP tools (reserve / list / validate) + shared lint core; this row is the validate tool itself.
+acceptance: |
+  Tool descriptor registered; good record returns `ok: true`; bad records return structured errors matching shared core output; tests green under `tools/mcp-ia-server/tests/tools/`.
+depends_on: [TECH-323]
+depends_on_raw: "TECH-323 (shared lint core must land first — hard gate)"
+related:
+  - TECH-323
+  - TECH-325
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-324** — Implement `backlog_record_validate` MCP tool (Stage 1.2 Phase 1)
+    - Type: infrastructure / MCP tooling
+    - Files: `tools/mcp-ia-server/src/tools/backlog-record-validate.ts` (new), `tools/mcp-ia-server/src/index.ts`
+    - Spec: `ia/projects/TECH-324.md`
+    - Notes: New MCP tool — input `{ yaml_body }`, output `{ ok, errors, warnings }`. Delegates to shared core (TECH-323). Register in tool registry.
+    - Acceptance: tool registered; good record passes; bad record returns structured errors; tests green.
+    - Depends on: TECH-323 (shared lint core — hard gate)
+    - Related: TECH-323, TECH-325

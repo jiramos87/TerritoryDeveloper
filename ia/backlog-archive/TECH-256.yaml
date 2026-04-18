@@ -1,0 +1,25 @@
+id: TECH-256
+type: audio / types
+title: "`BlipFxKind` + `BlipFxSlot` + `BlipFxSlotFlat` in `BlipPatchTypes.cs` (Stage 5.1 Phase 1) (2026-04-16)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — pure data-type scaffolding; Decision Log + Lessons sections empty; full prose in git history only)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipPatchTypes.cs
+notes: |
+  Landed 3 new types in `Assets/Scripts/Audio/Blip/BlipPatchTypes.cs` — `BlipFxKind` enum (None=0/BitCrush=1/RingMod=2/SoftClip=3/DcBlocker=4/Comb=5/Allpass=6/Chorus=7/Flanger=8, explicit ints pinned for stable `switch`-dispatch in TECH-259 `BlipFxChain.ProcessFx`), `BlipFxSlot [Serializable] struct` (authoring row: `BlipFxKind kind; float param0, param1, param2`), `BlipFxSlotFlat readonly struct` (blittable runtime mirror, copy ctor from `BlipFxSlot`, scalar-only fields so unmanaged-struct compile verifies blittability — mirrors `BlipPatchFlat` discipline per **Blip patch flat** glossary row). Full 9-value enum up front even though Comb/Allpass/Chorus/Flanger kernels land Stage 5.2 — prevents enum-value churn mid-step. No glossary row added (per Step 1 precedent, terms land at Stage 5.1 close, not per-task). Feeds TECH-257 (`BlipPatch.fxChain` + `BlipPatchFlat` inline flatten), TECH-258 (`BlipVoiceState` FX fields), TECH-259 (`BlipFxChain.ProcessFx` kernel dispatch), TECH-260 (`BlipVoice.Render` FX loop).
+acceptance: |
+  3 new types present; `BlipFxSlotFlat` passes blittable check (unmanaged-struct compile); `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-256** — `BlipFxKind` + `BlipFxSlot` + `BlipFxSlotFlat` in `BlipPatchTypes.cs` (Stage 5.1 Phase 1) (2026-04-16)
+    - Type: audio / types
+    - Files: `Assets/Scripts/Audio/Blip/BlipPatchTypes.cs`
+    - Spec: (removed at closeout — pure data-type scaffolding; Decision Log + Lessons sections empty; full prose in git history only)
+    - Notes: Landed 3 new types in `Assets/Scripts/Audio/Blip/BlipPatchTypes.cs` — `BlipFxKind` enum (None=0/BitCrush=1/RingMod=2/SoftClip=3/DcBlocker=4/Comb=5/Allpass=6/Chorus=7/Flanger=8, explicit ints pinned for stable `switch`-dispatch in TECH-259 `BlipFxChain.ProcessFx`), `BlipFxSlot [Serializable] struct` (authoring row: `BlipFxKind kind; float param0, param1, param2`), `BlipFxSlotFlat readonly struct` (blittable runtime mirror, copy ctor from `BlipFxSlot`, scalar-only fields so unmanaged-struct compile verifies blittability — mirrors `BlipPatchFlat` discipline per **Blip patch flat** glossary row). Full 9-value enum up front even though Comb/Allpass/Chorus/Flanger kernels land Stage 5.2 — prevents enum-value churn mid-step. No glossary row added (per Step 1 precedent, terms land at Stage 5.1 close, not per-task). Feeds TECH-257 (`BlipPatch.fxChain` + `BlipPatchFlat` inline flatten), TECH-258 (`BlipVoiceState` FX fields), TECH-259 (`BlipFxChain.ProcessFx` kernel dispatch), TECH-260 (`BlipVoice.Render` FX loop).
+    - Acceptance: 3 new types present; `BlipFxSlotFlat` passes blittable check (unmanaged-struct compile); `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+    - Depends on: none

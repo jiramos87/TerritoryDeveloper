@@ -1,0 +1,28 @@
+id: TECH-204
+type: tooling / CI / agent verification
+title: Unity **batchmode** **NUnit** runner scripts (**`unity:test-editmode`** / **`unity:test-playmode`**) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal captured Decision Log; Lessons placeholder)
+files: 
+  - tools/scripts/unity-run-tests.sh
+  - tools/scripts/parse-nunit-xml.mjs
+  - package.json
+  - docs/agent-led-verification-policy.md
+notes: |
+  `unity-run-tests.sh --platform {editmode|playmode}` wraps `Unity -batchmode -runTests`; Node XML parser (`parse-nunit-xml.mjs`) emits `Passed/Failed/Errors/Skipped` + `FAILED: <fullname>` list; exits non-zero on any failure. `--quit-editor-first` guard mirrors `unity:testmode-batch`. npm aliases `unity:test-editmode` / `unity:test-playmode` / `unity:test-all`. Hooked into `verify:local` (not `validate:all` — CI stays Unity-free). Two-tier NUnit strategy decision: Tier A batchmode shipped; Tier B bridge `run_nunit_tests` via `TestRunnerApi` deferred (Editor-open dev-machine path) — deferral note appended to `docs/agent-led-verification-policy.md`.
+acceptance: |
+  runner script exec-bit + dotenv + editor-helpers wired; stdout contract `Passed: N  Failed: M  Errors: K  Skipped: S` + failed `fullname`s; `verify:local` includes **EditMode** step; `validate:all` unchanged.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-204** — Unity **batchmode** **NUnit** runner scripts (**`unity:test-editmode`** / **`unity:test-playmode`**) (2026-04-15)
+    - Type: tooling / CI / agent verification
+    - Files: `tools/scripts/unity-run-tests.sh` (new), `tools/scripts/parse-nunit-xml.mjs` (new), `package.json` (root), `docs/agent-led-verification-policy.md`
+    - Spec: (removed at closeout — journal captured Decision Log; Lessons placeholder)
+    - Notes: `unity-run-tests.sh --platform {editmode|playmode}` wraps `Unity -batchmode -runTests`; Node XML parser (`parse-nunit-xml.mjs`) emits `Passed/Failed/Errors/Skipped` + `FAILED: <fullname>` list; exits non-zero on any failure. `--quit-editor-first` guard mirrors `unity:testmode-batch`. npm aliases `unity:test-editmode` / `unity:test-playmode` / `unity:test-all`. Hooked into `verify:local` (not `validate:all` — CI stays Unity-free). Two-tier NUnit strategy decision: Tier A batchmode shipped; Tier B bridge `run_nunit_tests` via `TestRunnerApi` deferred (Editor-open dev-machine path) — deferral note appended to `docs/agent-led-verification-policy.md`.
+    - Acceptance: runner script exec-bit + dotenv + editor-helpers wired; stdout contract `Passed: N  Failed: M  Errors: K  Skipped: S` + failed `fullname`s; `verify:local` includes **EditMode** step; `validate:all` unchanged.
+    - Depends on: none

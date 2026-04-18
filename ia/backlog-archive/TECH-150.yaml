@@ -1,0 +1,27 @@
+id: TECH-150
+type: infrastructure / CLI
+title: "`render --all` + `--terrain` CLI flag (Stage 1.2 Phase 2) (2026-04-14)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal persist skipped, db_unconfigured)
+files: 
+  - tools/sprite-gen/src/cli.py
+  - tools/sprite-gen/tests/test_cli.py
+notes: |
+  Stage 1.2 Phase 2 second task. Refactored `_cmd_render` body into `_render_one(archetype, terrain_override) → int` reusable helper; `_cmd_render` becomes thin dispatcher on `args.all` xor positional `args.archetype` (argparse mutually-exclusive group, required=True). `--all` globs `sorted(_SPECS_DIR.glob("*.yaml"))` (deterministic CI log order), iterates `_render_one`, collects failed stems, prints `failed: [name1, name2]` to stderr only when non-empty, returns 0 iff list empty else 1. `--terrain {slope_id}` flag w/ argparse `choices=sorted(_VALID_SLOPE_IDS)` (18 entries: `flat` + 17 land variants matching **Slope variant naming** glossary); when `terrain_override is not None` overrides `spec['terrain']` pre-compose. Stage 1.2 compose guard — when `spec['terrain'] != 'flat'` post-override raise `NotImplementedError("slope-aware foundation lands Stage 1.4")` caught in `_render_one` → stderr message → return 1. Decision Log — argparse `choices=` (exit 2 on bad enum) over custom `type=` callable (stdlib idiom); serial loop over `multiprocessing` (15-archetype scope trivial); `NotImplementedError` raise over silent flat fallthrough (hides bug). 5 new pytest cases (`test_render_all`, `test_render_all_aggregate`, `test_terrain_bad_enum`, `test_terrain_flat_override`, `test_terrain_non_flat_not_implemented`).
+acceptance: |
+  `render --all` iterates all `specs/*.yaml`; aggregate exit code reflects any failures; `--terrain flat` accepted; `npm run validate:all` green.
+depends_on: 
+  - TECH-149
+depends_on_raw: "**TECH-149** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-150** — `render --all` + `--terrain` CLI flag (Stage 1.2 Phase 2) (2026-04-14)
+    - Type: infrastructure / CLI
+    - Files: `tools/sprite-gen/src/cli.py`, `tools/sprite-gen/tests/test_cli.py`
+    - Spec: (removed at closeout — journal persist skipped, db_unconfigured)
+    - Notes: Stage 1.2 Phase 2 second task. Refactored `_cmd_render` body into `_render_one(archetype, terrain_override) → int` reusable helper; `_cmd_render` becomes thin dispatcher on `args.all` xor positional `args.archetype` (argparse mutually-exclusive group, required=True). `--all` globs `sorted(_SPECS_DIR.glob("*.yaml"))` (deterministic CI log order), iterates `_render_one`, collects failed stems, prints `failed: [name1, name2]` to stderr only when non-empty, returns 0 iff list empty else 1. `--terrain {slope_id}` flag w/ argparse `choices=sorted(_VALID_SLOPE_IDS)` (18 entries: `flat` + 17 land variants matching **Slope variant naming** glossary); when `terrain_override is not None` overrides `spec['terrain']` pre-compose. Stage 1.2 compose guard — when `spec['terrain'] != 'flat'` post-override raise `NotImplementedError("slope-aware foundation lands Stage 1.4")` caught in `_render_one` → stderr message → return 1. Decision Log — argparse `choices=` (exit 2 on bad enum) over custom `type=` callable (stdlib idiom); serial loop over `multiprocessing` (15-archetype scope trivial); `NotImplementedError` raise over silent flat fallthrough (hides bug). 5 new pytest cases (`test_render_all`, `test_render_all_aggregate`, `test_terrain_bad_enum`, `test_terrain_flat_override`, `test_terrain_non_flat_not_implemented`).
+    - Acceptance: `render --all` iterates all `specs/*.yaml`; aggregate exit code reflects any failures; `--terrain flat` accepted; `npm run validate:all` green.
+    - Depends on: **TECH-149** (archived)

@@ -1,0 +1,30 @@
+id: BUG-35
+type: fix
+title: "Load Game: multi-cell buildings — grass on footprint (non-pivot) could draw above building; 1×1 grass + building under one cell (2026-03-22)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: ""
+files: 
+  - GridManager.cs
+  - DestroyCellChildren
+  - ZoneManager.cs
+  - PlaceZoneBuilding
+  - PlaceZoneBuildingTile
+  - BuildingPlacementService.cs
+  - UpdateBuildingTilesAttributes
+  - GridSortingOrderService.cs
+  - SetZoneBuildingSortingOrder
+  - SyncCellTerrainLayersBelowBuilding
+notes: |
+  `DestroyCellChildren(..., destroyFlatGrass: true)` when placing/restoring **RCI and utility** buildings so flat grass prefabs are not kept alongside the building (runtime + load). Multi-cell `SetZoneBuildingSortingOrder` still calls **grass-only** `SyncCellTerrainLayersBelowBuilding` for each footprint cell. **BUG-20** may be re-verified against this. Spec: [`ia/specs/isometric-geography-system.md`](ia/specs/isometric-geography-system.md) §7.4.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-35** — Load Game: multi-cell buildings — grass on footprint (non-pivot) could draw above building; 1×1 grass + building under one cell (2026-03-22)
+    - Type: fix
+    - Files: `GridManager.cs` (`DestroyCellChildren`), `ZoneManager.cs` (`PlaceZoneBuilding`, `PlaceZoneBuildingTile`), `BuildingPlacementService.cs` (`UpdateBuildingTilesAttributes`), `GridSortingOrderService.cs` (`SetZoneBuildingSortingOrder`, `SyncCellTerrainLayersBelowBuilding`)
+    - Notes: `DestroyCellChildren(..., destroyFlatGrass: true)` when placing/restoring **RCI and utility** buildings so flat grass prefabs are not kept alongside the building (runtime + load). Multi-cell `SetZoneBuildingSortingOrder` still calls **grass-only** `SyncCellTerrainLayersBelowBuilding` for each footprint cell. **BUG-20** may be re-verified against this. Spec: [`ia/specs/isometric-geography-system.md`](ia/specs/isometric-geography-system.md) §7.4.

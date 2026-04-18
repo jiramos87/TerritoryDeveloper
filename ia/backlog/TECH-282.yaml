@@ -1,0 +1,29 @@
+id: TECH-282
+type: IA (glossary + MCP indexes)
+title: Glossary rows + spec-index refresh (Stage 1.1 Phase 3)
+priority: medium
+status: open
+section: Medium Priority
+spec: ia/projects/TECH-282.md
+files: 
+  - ia/specs/glossary.md
+  - tools/mcp-ia-server/data/glossary-index.json
+  - tools/mcp-ia-server/data/glossary-graph-index.json
+notes: |
+  3 new rows — **Zone S** (4th zone channel, state-owned, 7 sub-types × 3 tiers, manual placement + envelope-gated), **ZoneSubTypeRegistry** (SO catalog; 7 entries), **envelope (budget sense)** (per-sub-type monthly allowance; sum-locked 100%; `TryDraw` blocks when remaining < amount even if treasury has funds). Forward-ref `ia/specs/economy-system.md` (lands Stage 3.3) + fallback exploration doc. Regen indexes via `npm run mcp-ia-index`.
+acceptance: |
+  3 rows land alphabetically; glossary indexes regenerated; `npm run validate:all` green; `glossary_lookup "Zone S"` resolves
+depends_on: 
+  - TECH-280
+  - TECH-281
+depends_on_raw: none (TECH-280 / TECH-281 land the runtime type names referenced, but glossary can cite forward-ref)
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-282** — Glossary rows + spec-index refresh (Stage 1.1 Phase 3)
+    - Type: IA (glossary + MCP indexes)
+    - Files: `ia/specs/glossary.md`, `tools/mcp-ia-server/data/glossary-index.json`, `tools/mcp-ia-server/data/glossary-graph-index.json`
+    - Spec: `ia/projects/TECH-282.md`
+    - Notes: 3 new rows — **Zone S** (4th zone channel, state-owned, 7 sub-types × 3 tiers, manual placement + envelope-gated), **ZoneSubTypeRegistry** (SO catalog; 7 entries), **envelope (budget sense)** (per-sub-type monthly allowance; sum-locked 100%; `TryDraw` blocks when remaining < amount even if treasury has funds). Forward-ref `ia/specs/economy-system.md` (lands Stage 3.3) + fallback exploration doc. Regen indexes via `npm run mcp-ia-index`.
+    - Acceptance: 3 rows land alphabetically; glossary indexes regenerated; `npm run validate:all` green; `glossary_lookup "Zone S"` resolves
+    - Depends on: none (TECH-280 / TECH-281 land the runtime type names referenced, but glossary can cite forward-ref)

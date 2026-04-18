@@ -1,0 +1,25 @@
+id: TECH-76
+type: documentation
+title: "**Information Architecture** system overview document (2026-04-07)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — this row)
+files: 
+  - docs/information-architecture-overview.md
+  - AGENTS.md
+  - ARCHITECTURE.md
+notes: |
+  **Completed (verified).** Single ~220-line document at [`docs/information-architecture-overview.md`](docs/information-architecture-overview.md) describing the IA system as a coherent design: philosophy (slice don't load, one vocabulary, knowledge flows back), layer diagram (ASCII), 6-stage knowledge lifecycle, semantic model axes (vocabulary/routing/invariants), consistency mechanisms table, MCP tool ecosystem, skill system lifecycle table, optional Postgres layer, and 6 extension checklists (reference spec, MCP tool, skill, glossary term, rule, Postgres table). Cross-linked from `AGENTS.md` documentation hierarchy and `ARCHITECTURE.md` § Agent IA. **IA evolution lane** context: [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md).
+acceptance: ""
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-76** — **Information Architecture** system overview document (2026-04-07)
+    - Type: documentation
+    - Files: `docs/information-architecture-overview.md` (new); `AGENTS.md` (cross-link); `ARCHITECTURE.md` (cross-link)
+    - Spec: (removed after closure — this row)
+    - Notes: **Completed (verified).** Single ~220-line document at [`docs/information-architecture-overview.md`](docs/information-architecture-overview.md) describing the IA system as a coherent design: philosophy (slice don't load, one vocabulary, knowledge flows back), layer diagram (ASCII), 6-stage knowledge lifecycle, semantic model axes (vocabulary/routing/invariants), consistency mechanisms table, MCP tool ecosystem, skill system lifecycle table, optional Postgres layer, and 6 extension checklists (reference spec, MCP tool, skill, glossary term, rule, Postgres table). Cross-linked from `AGENTS.md` documentation hierarchy and `ARCHITECTURE.md` § Agent IA. **IA evolution lane** context: [`docs/ia-system-review-and-extensions.md`](docs/ia-system-review-and-extensions.md).
+    - Depends on: none

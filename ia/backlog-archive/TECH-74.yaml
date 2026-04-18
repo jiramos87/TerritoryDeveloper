@@ -1,0 +1,42 @@
+id: TECH-74
+type: tooling / agent enablement
+title: "**territory-ia** MCP + **IDE agent bridge**: **`get_console_logs`** and **`capture_screenshot`** (2026-04-07)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — **glossary** **IDE agent bridge**; **unity-development-context** §10; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md) §4.3 **Shipped**; **TECH-73** **§ Completed** **Phase 1** sibling; **this row**)
+files: 
+  - tools/mcp-ia-server/src/tools/unity-bridge-command.ts
+  - tools/mcp-ia-server/tests/tools/unity-bridge-command.test.ts
+  - tools/mcp-ia-server/scripts/verify-mcp.ts
+  - tools/mcp-ia-server/src/index.ts
+  - tools/mcp-ia-server/package.json
+  - tools/mcp-ia-server/README.md
+  - docs/mcp-ia-server.md
+  - Assets/Scripts/Editor/AgentBridgeCommandRunner.cs
+  - Assets/Scripts/Editor/AgentBridgeConsoleBuffer.cs
+  - Assets/Scripts/Editor/AgentBridgeScreenshotCapture.cs
+  - .gitignore
+  - tools/reports/bridge-screenshots/
+  - docs/unity-ide-agent-bridge-analysis.md
+  - ia/specs/unity-development-context.md
+  - ia/specs/glossary.md
+  - ia/skills/ide-bridge-evidence/SKILL.md
+  - AGENTS.md
+  - ia/templates/project-spec-template.md
+notes: |
+  **Completed (verified — `/project-spec-close` + user):** **`unity_bridge_command`** **`kind`** **`get_console_logs`** / **`capture_screenshot`**; **`response.log_lines`**; **Play Mode** PNG under **`tools/reports/bridge-screenshots/`**; **`params.include_ui`** uses **Game view** **`ScreenCapture`** (**Overlay** UI); **`runUnityBridgeCommand`** **`timeout_ms`** default/clamp; **`@territory/mcp-ia-server`** **0.4.13**. **Node:** **`npm run verify`** / **`npm run test:ia`** green. **Skills:** optional **Play** evidence workflow **`ide-bridge-evidence`**. Charter §5.1 sugar tool names remain aliases only.
+acceptance: ""
+depends_on: 
+  - TECH-24
+depends_on_raw: "none (soft: **TECH-24** when parser / **Zod** shapes for bridge tools change)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-74** — **territory-ia** MCP + **IDE agent bridge**: **`get_console_logs`** and **`capture_screenshot`** (2026-04-07)
+    - Type: tooling / agent enablement
+    - Files: `tools/mcp-ia-server/src/tools/unity-bridge-command.ts`; `tools/mcp-ia-server/tests/tools/unity-bridge-command.test.ts`; `tools/mcp-ia-server/scripts/verify-mcp.ts`; `tools/mcp-ia-server/src/index.ts`; `tools/mcp-ia-server/package.json`; `tools/mcp-ia-server/README.md`; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`; `Assets/Scripts/Editor/AgentBridgeConsoleBuffer.cs`; `Assets/Scripts/Editor/AgentBridgeScreenshotCapture.cs`; [`.gitignore`](.gitignore) **`tools/reports/bridge-screenshots/`**; [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md) §4.3; [`ia/specs/unity-development-context.md`](ia/specs/unity-development-context.md) §10; [`ia/specs/glossary.md`](ia/specs/glossary.md) **IDE agent bridge**; [`ia/skills/ide-bridge-evidence/SKILL.md`](ia/skills/ide-bridge-evidence/SKILL.md); [`AGENTS.md`](AGENTS.md); [`ia/templates/project-spec-template.md`](ia/templates/project-spec-template.md) §7b example
+    - Spec: (removed after closure — **glossary** **IDE agent bridge**; **unity-development-context** §10; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md) §4.3 **Shipped**; **TECH-73** **§ Completed** **Phase 1** sibling; **this row**)
+    - Notes: **Completed (verified — `/project-spec-close` + user):** **`unity_bridge_command`** **`kind`** **`get_console_logs`** / **`capture_screenshot`**; **`response.log_lines`**; **Play Mode** PNG under **`tools/reports/bridge-screenshots/`**; **`params.include_ui`** uses **Game view** **`ScreenCapture`** (**Overlay** UI); **`runUnityBridgeCommand`** **`timeout_ms`** default/clamp; **`@territory/mcp-ia-server`** **0.4.13**. **Node:** **`npm run verify`** / **`npm run test:ia`** green. **Skills:** optional **Play** evidence workflow **`ide-bridge-evidence`**. Charter §5.1 sugar tool names remain aliases only.
+    - Depends on: none (soft: **TECH-24** when parser / **Zod** shapes for bridge tools change)
+    - Related: **TECH-73**, **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived), **TECH-48**, **TECH-24**

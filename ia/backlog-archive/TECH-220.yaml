@@ -1,0 +1,26 @@
+id: TECH-220
+type: feature wiring / audio integration
+title: RoadManager stroke-complete Blip call site (Stage 3.3 Phase 1) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+files: 
+  - Assets/Scripts/Managers/GameManagers/RoadManager.cs
+notes: |
+  Inserted `BlipEngine.Play(BlipId.ToolRoadComplete)` in `TryFinalizeManualRoadPlacement` success tail between `cityStats.AddPowerConsumption(...)` and `return true;`. Static facade (invariants #3, #4). Scenario batch path (`TryCommitStreetStrokeForScenarioBuild`) + interstate path stay silent. Decision Log — Blip fires before any future `InvalidateRoadCache()` placement at success tail per invariant #2 ordering convention. Open Question #1 deferred: success path currently lacks `InvalidateRoadCache()` call (invariant #2 drift vs sibling paths) — belongs to separate road-cache audit issue.
+acceptance: |
+  stroke completion fires `ToolRoadComplete` SFX once per stroke; `npm run unity:compile-check` + `npm run validate:all` green.
+depends_on: 
+  - TECH-219
+depends_on_raw: "**TECH-219** (archived, soft — same file)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-220** — RoadManager stroke-complete Blip call site (Stage 3.3 Phase 1) (2026-04-15)
+    - Type: feature wiring / audio integration
+    - Files: `Assets/Scripts/Managers/GameManagers/RoadManager.cs`
+    - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+    - Notes: Inserted `BlipEngine.Play(BlipId.ToolRoadComplete)` in `TryFinalizeManualRoadPlacement` success tail between `cityStats.AddPowerConsumption(...)` and `return true;`. Static facade (invariants #3, #4). Scenario batch path (`TryCommitStreetStrokeForScenarioBuild`) + interstate path stay silent. Decision Log — Blip fires before any future `InvalidateRoadCache()` placement at success tail per invariant #2 ordering convention. Open Question #1 deferred: success path currently lacks `InvalidateRoadCache()` call (invariant #2 drift vs sibling paths) — belongs to separate road-cache audit issue.
+    - Acceptance: stroke completion fires `ToolRoadComplete` SFX once per stroke; `npm run unity:compile-check` + `npm run validate:all` green.
+    - Depends on: **TECH-219** (archived, soft — same file)

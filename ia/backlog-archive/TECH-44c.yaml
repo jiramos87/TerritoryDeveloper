@@ -1,0 +1,33 @@
+id: TECH-44c
+type: tooling / agent enablement
+title: "**Dev repro bundle registry** (**E1**) (2026-04-04)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-04)
+spec: (removed after closure — [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md); glossary **Dev repro bundle**; **unity-development-context** §10; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-44**; this row)
+files: 
+  - db/migrations/0003_dev_repro_bundle.sql
+  - tools/postgres-ia/register-dev-repro.mjs
+  - docs/postgres-ia-dev-setup.md
+  - docs/postgres-interchange-patterns.md
+  - package.json
+  - db:register-repro
+  - ARCHITECTURE.md
+  - BACKLOG.md
+  - ia/specs/unity-development-context.md
+  - ia/specs/glossary.md
+notes: |
+  **Completed (verified — `/project-spec-close`):** **`dev_repro_bundle`** **B1** table + **`dev_repro_list_by_issue`**; **`register-dev-repro.mjs`** with **`normalizeIssueId`** parity to **`backlog-parser.ts`** (keep in sync — lesson in glossary). **Save data** / **Load pipeline** unchanged. Per-export **Unity** automation → **TECH-55** **§ Completed** (glossary **Editor export registry**).
+acceptance: ""
+depends_on: 
+  - TECH-44b
+depends_on_raw: "**TECH-44b** **§ Completed**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-44c** — **Dev repro bundle registry** (**E1**) (2026-04-04)
+    - Type: tooling / agent enablement
+    - Files: `db/migrations/0003_dev_repro_bundle.sql`; `tools/postgres-ia/register-dev-repro.mjs`; [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md) (**Dev repro bundle registry**); [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md) (Related pointer); repo root `package.json` (`db:register-repro`); [`ARCHITECTURE.md`](ARCHITECTURE.md); [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-44**; `ia/specs/unity-development-context.md` §10 (**Postgres registry** blurb); `ia/specs/glossary.md` — **Dev repro bundle**
+    - Spec: (removed after closure — [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md); glossary **Dev repro bundle**; **unity-development-context** §10; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-44**; this row)
+    - Notes: **Completed (verified — `/project-spec-close`):** **`dev_repro_bundle`** **B1** table + **`dev_repro_list_by_issue`**; **`register-dev-repro.mjs`** with **`normalizeIssueId`** parity to **`backlog-parser.ts`** (keep in sync — lesson in glossary). **Save data** / **Load pipeline** unchanged. Per-export **Unity** automation → **TECH-55** **§ Completed** (glossary **Editor export registry**).
+    - Depends on: **TECH-44b** **§ Completed**

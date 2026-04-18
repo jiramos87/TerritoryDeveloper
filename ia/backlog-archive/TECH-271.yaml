@@ -1,0 +1,28 @@
+id: TECH-271
+type: audio / DSP plumbing
+title: "`BlipVoice.Render` delay-buffer overload + `BlipBaker` pre-lease (Stage 5.2 Phase 1) (2026-04-17)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipVoice.cs
+  - Assets/Scripts/Audio/Blip/BlipFxChain.cs
+  - Assets/Scripts/Audio/Blip/BlipBaker.cs
+notes: |
+  `BlipVoice.Render` gains 11-param overload — existing 7-param signature + `float[]? d0, float[]? d1, float[]? d2, float[]? d3` appended. Existing 7-param delegates w/ all-null (back-compat shim; `BlipNoAllocTests` + `BlipDeterminismTests` untouched callers stay green). `BlipFxChain.ProcessFx` signature extended w/ `float[]? delayBuf, int bufLen, ref int writePos` per-call params; null-guard in every FX case (memoryless kinds ignore). `BlipBaker.BakeOrGet` pre-leases up to 4 buffers from `_catalog._delayPool.Lease(sampleRate, 50f)` (50 ms ceiling covers comb+chorus+flanger range); passes to Render; `finally { pool.Return(buf) }` unconditionally. Delay-line kernel bodies still passthrough — behavior change lands in **TECH-272..274**. Zero managed alloc inside Render.
+acceptance: |
+  11-param Render overload present; 7-param shim delegates; `ProcessFx` signature extended w/ null-guards; `BlipBaker.BakeOrGet` lease+return via `finally`; `BlipNoAllocTests` + `BlipDeterminismTests` + `BlipBakerTests` green; `npm run unity:compile-check` + `npm run validate:all` exit 0.
+depends_on: 
+  - TECH-270
+depends_on_raw: "**TECH-270**."
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-271** — `BlipVoice.Render` delay-buffer overload + `BlipBaker` pre-lease (Stage 5.2 Phase 1) (2026-04-17)
+    - Type: audio / DSP plumbing
+    - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`, `Assets/Scripts/Audio/Blip/BlipFxChain.cs`, `Assets/Scripts/Audio/Blip/BlipBaker.cs`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: `BlipVoice.Render` gains 11-param overload — existing 7-param signature + `float[]? d0, float[]? d1, float[]? d2, float[]? d3` appended. Existing 7-param delegates w/ all-null (back-compat shim; `BlipNoAllocTests` + `BlipDeterminismTests` untouched callers stay green). `BlipFxChain.ProcessFx` signature extended w/ `float[]? delayBuf, int bufLen, ref int writePos` per-call params; null-guard in every FX case (memoryless kinds ignore). `BlipBaker.BakeOrGet` pre-leases up to 4 buffers from `_catalog._delayPool.Lease(sampleRate, 50f)` (50 ms ceiling covers comb+chorus+flanger range); passes to Render; `finally { pool.Return(buf) }` unconditionally. Delay-line kernel bodies still passthrough — behavior change lands in **TECH-272..274**. Zero managed alloc inside Render.
+    - Acceptance: 11-param Render overload present; 7-param shim delegates; `ProcessFx` signature extended w/ null-guards; `BlipBaker.BakeOrGet` lease+return via `finally`; `BlipNoAllocTests` + `BlipDeterminismTests` + `BlipBakerTests` green; `npm run unity:compile-check` + `npm run validate:all` exit 0.
+    - Depends on: **TECH-270**.

@@ -1,0 +1,27 @@
+id: TECH-95
+type: refactor / infrastructure
+title: Back-compat `GetCell(x,y)` defaults to `CityCell`; update all callers; invariant #5 preserved (2026-04-13)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-13)
+spec: (removed after closure)
+files: 
+  - Assets/Scripts/Managers/GameManagers/GridManager.cs
+  - Assets/Scripts/Managers/UnitManagers/IGridManager.cs
+notes: |
+  Stage 1.2 Phase 3 (T1.2.6) closer of cell-type split — audit-only gate. Verified `GridManager.GetCell(int x, int y)` returns `CityCell` (post-TECH-91) + `IGridManager` mirror; zero `Cell`-typed locals across `Assets/Scripts/`. Classified 25 `gridArray`/`cellArray` direct-access hits: 19 helper-service touches (`BuildingPlacementService`, `GridSortingOrderService`) allowed under invariant #6 carve-out (composition reference shares trust boundary with owning class — clarification added to `ia/rules/invariants.md` #5); 6 external-manager touches (`WaterManager` lines 353, 464; `GeographyManager` lines 585, 736, 954, 995) deferred to pre-existing **TECH-04**. No code change. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+acceptance: |
+  return type `CityCell` on both surfaces; zero `Cell`-typed locals; every direct-access site classified; pre-existing violations linked to TECH-04; `npm run unity:compile-check` + `npm run validate:all` green
+depends_on: 
+  - TECH-94
+depends_on_raw: "**TECH-94**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-95** — Back-compat `GetCell(x,y)` defaults to `CityCell`; update all callers; invariant #5 preserved (2026-04-13)
+    - Type: refactor / infrastructure
+    - Files: `Assets/Scripts/Managers/GameManagers/GridManager.cs`, `Assets/Scripts/Managers/UnitManagers/IGridManager.cs`
+    - Spec: (removed after closure)
+    - Notes: Stage 1.2 Phase 3 (T1.2.6) closer of cell-type split — audit-only gate. Verified `GridManager.GetCell(int x, int y)` returns `CityCell` (post-TECH-91) + `IGridManager` mirror; zero `Cell`-typed locals across `Assets/Scripts/`. Classified 25 `gridArray`/`cellArray` direct-access hits: 19 helper-service touches (`BuildingPlacementService`, `GridSortingOrderService`) allowed under invariant #6 carve-out (composition reference shares trust boundary with owning class — clarification added to `ia/rules/invariants.md` #5); 6 external-manager touches (`WaterManager` lines 353, 464; `GeographyManager` lines 585, 736, 954, 995) deferred to pre-existing **TECH-04**. No code change. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+    - Acceptance: return type `CityCell` on both surfaces; zero `Cell`-typed locals; every direct-access site classified; pre-existing violations linked to TECH-04; `npm run unity:compile-check` + `npm run validate:all` green
+    - Depends on: **TECH-94**

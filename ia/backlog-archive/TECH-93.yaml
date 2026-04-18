@@ -1,0 +1,27 @@
+id: TECH-93
+type: infrastructure / IA
+title: "`CountryCell` placeholder type (coord + parent-country-id; no behavior) + complete cell-type glossary (2026-04-13)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-13)
+spec: (removed after closure)
+files: 
+  - Assets/Scripts/Managers/UnitManagers/CountryCell.cs
+  - ia/specs/glossary.md
+notes: |
+  Stage 1.2 Phase 2 (T1.2.4) of cell-type split. Mirrors TECH-92 `RegionCell`. Plain C# class under `Territory.Core` (no MonoBehaviour, no `CellBase` inheritance — `CellBase : MonoBehaviour` is city-grid infra; country scale data-only in MVP). Carries read-only `X`, `Y` (int) + `ParentCountryId` (string GUID matching `GameSaveData.countryId`); single constructor; zero methods. NOT inserted into `GridManager.gridArray` (invariant #5 untouched). No save wiring; country scale dormant. Combined glossary row "City cell / Region cell / Country cell" at `glossary.md:247` covers all three — no split. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+acceptance: |
+  `CountryCell` compiles under `Territory.Core`; plain C# only; not in grid/save paths; city sim + invariants #1/#5 untouched; `npm run unity:compile-check` + `npm run validate:all` green
+depends_on: 
+  - TECH-91
+depends_on_raw: "**TECH-91**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-93** — `CountryCell` placeholder type (coord + parent-country-id; no behavior) + complete cell-type glossary (2026-04-13)
+    - Type: infrastructure / IA
+    - Files: `Assets/Scripts/Managers/UnitManagers/CountryCell.cs` (new), `ia/specs/glossary.md`
+    - Spec: (removed after closure)
+    - Notes: Stage 1.2 Phase 2 (T1.2.4) of cell-type split. Mirrors TECH-92 `RegionCell`. Plain C# class under `Territory.Core` (no MonoBehaviour, no `CellBase` inheritance — `CellBase : MonoBehaviour` is city-grid infra; country scale data-only in MVP). Carries read-only `X`, `Y` (int) + `ParentCountryId` (string GUID matching `GameSaveData.countryId`); single constructor; zero methods. NOT inserted into `GridManager.gridArray` (invariant #5 untouched). No save wiring; country scale dormant. Combined glossary row "City cell / Region cell / Country cell" at `glossary.md:247` covers all three — no split. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.2.
+    - Acceptance: `CountryCell` compiles under `Territory.Core`; plain C# only; not in grid/save paths; city sim + invariants #1/#5 untouched; `npm run unity:compile-check` + `npm run validate:all` green
+    - Depends on: **TECH-91**

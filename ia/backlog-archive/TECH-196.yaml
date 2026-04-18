@@ -1,0 +1,26 @@
+id: TECH-196
+type: infrastructure / tests
+title: PlayMode asmdef bootstrap (Stage 2.4 Phase 1) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+files: 
+  - Assets/Tests/PlayMode/Audio/Blip.Tests.PlayMode.asmdef
+  - Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs
+notes: |
+  new `Assets/Tests/PlayMode/Audio/Blip.Tests.PlayMode.asmdef` — name `Blip.Tests.PlayMode`, `rootNamespace` `Territory.Tests.PlayMode.Audio`, `includePlatforms: ["Editor"]`, `optionalUnityReferences: ["TestAssemblies"]`, `autoReferenced: false`, references `["TerritoryDeveloper.Game"]` (Blip runtime lives in root game asmdef — no dedicated `Blip.asmdef` exists). Mirrors sibling `Blip.Tests.EditMode.asmdef` shape. Companion `BlipPlayModeSmokeTests.cs` declares empty `public sealed class BlipPlayModeSmokeTests` under `Territory.Tests.PlayMode.Audio` — anchors asmdef resolution, no test attributes. Decision Log — `optionalUnityReferences: ["TestAssemblies"]` over top-level `"testAssemblies": true` (matches sibling + Unity legacy schema); `autoReferenced: false` (test asmdef isolated from unrelated asmdefs); anchor class empty by design (fixture body lands in TECH-197..TECH-199).
+acceptance: |
+  asmdef + `.meta` + anchor `.cs` land under `Assets/Tests/PlayMode/Audio/`; `npm run unity:compile-check` + `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-196** — PlayMode asmdef bootstrap (Stage 2.4 Phase 1) (2026-04-15)
+    - Type: infrastructure / tests
+    - Files: `Assets/Tests/PlayMode/Audio/Blip.Tests.PlayMode.asmdef`, `Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs`
+    - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+    - Notes: new `Assets/Tests/PlayMode/Audio/Blip.Tests.PlayMode.asmdef` — name `Blip.Tests.PlayMode`, `rootNamespace` `Territory.Tests.PlayMode.Audio`, `includePlatforms: ["Editor"]`, `optionalUnityReferences: ["TestAssemblies"]`, `autoReferenced: false`, references `["TerritoryDeveloper.Game"]` (Blip runtime lives in root game asmdef — no dedicated `Blip.asmdef` exists). Mirrors sibling `Blip.Tests.EditMode.asmdef` shape. Companion `BlipPlayModeSmokeTests.cs` declares empty `public sealed class BlipPlayModeSmokeTests` under `Territory.Tests.PlayMode.Audio` — anchors asmdef resolution, no test attributes. Decision Log — `optionalUnityReferences: ["TestAssemblies"]` over top-level `"testAssemblies": true` (matches sibling + Unity legacy schema); `autoReferenced: false` (test asmdef isolated from unrelated asmdefs); anchor class empty by design (fixture body lands in TECH-197..TECH-199).
+    - Acceptance: asmdef + `.meta` + anchor `.cs` land under `Assets/Tests/PlayMode/Audio/`; `npm run unity:compile-check` + `npm run validate:all` green.
+    - Depends on: none

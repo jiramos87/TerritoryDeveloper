@@ -1,0 +1,27 @@
+id: TECH-170
+type: infrastructure / audio authoring
+title: Catalog `Resolve` + ready flag + `BlipEngine` bind stubs (Stage 2.2 Phase 1) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipCatalog.cs
+  - Assets/Scripts/Audio/Blip/BlipEngine.cs
+notes: |
+  `Resolve(BlipId) → ref readonly BlipPatchFlat` via `_indexById` (throws on unknown id). `bool isReady` set `true` as last statement in `Awake` — scene-load suppression per Stage 1.1 T1.1.4. `BlipEngine.Bind(BlipCatalog)` + `Unbind(BlipCatalog)` stub signatures (empty bodies; full bodies land Stage 2.3 T2.3.2). Catalog `Awake` calls `BlipEngine.Bind(this)`; `OnDestroy` calls `Unbind`. Null-safe. Decision Log — Bind stub signatures land this task, bodies Stage 2.3 (decouple catalog lifecycle wiring from facade impl; sibling T171/T172 construct against stable surface); suppression boundary comment in `Awake` tail guards against drive-by edits breaking `_isReady = true` last-statement invariant.
+acceptance: |
+  `Resolve` returns by ref w/ correct patch data; ready flag flips last; `BlipEngine` stub methods compile + no-op; `unity:compile-check` green.
+depends_on: 
+  - TECH-169
+depends_on_raw: "**TECH-169** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-170** — Catalog `Resolve` + ready flag + `BlipEngine` bind stubs (Stage 2.2 Phase 1) (2026-04-15)
+    - Type: infrastructure / audio authoring
+    - Files: `Assets/Scripts/Audio/Blip/BlipCatalog.cs`, `Assets/Scripts/Audio/Blip/BlipEngine.cs`
+    - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+    - Notes: `Resolve(BlipId) → ref readonly BlipPatchFlat` via `_indexById` (throws on unknown id). `bool isReady` set `true` as last statement in `Awake` — scene-load suppression per Stage 1.1 T1.1.4. `BlipEngine.Bind(BlipCatalog)` + `Unbind(BlipCatalog)` stub signatures (empty bodies; full bodies land Stage 2.3 T2.3.2). Catalog `Awake` calls `BlipEngine.Bind(this)`; `OnDestroy` calls `Unbind`. Null-safe. Decision Log — Bind stub signatures land this task, bodies Stage 2.3 (decouple catalog lifecycle wiring from facade impl; sibling T171/T172 construct against stable surface); suppression boundary comment in `Awake` tail guards against drive-by edits breaking `_isReady = true` last-statement invariant.
+    - Acceptance: `Resolve` returns by ref w/ correct patch data; ready flag flips last; `BlipEngine` stub methods compile + no-op; `unity:compile-check` green.
+    - Depends on: **TECH-169** (archived)

@@ -1,0 +1,27 @@
+id: TECH-312
+type: documentation / reference spec
+title: "**ui-design-system §1 + §1.5 token catalog** — normative studio-rack + motion rows"
+priority: medium
+status: open
+section: UI-as-code program (exploration)
+spec: ia/projects/TECH-312.md
+files:
+  - ia/specs/ui-design-system.md
+notes: |
+  Extend `ia/specs/ui-design-system.md` §1 (palette / spacing) w/ studio-rack token names + role. Extend §1.5 (motion) w/ motion token catalog. Every field in `StudioRackBlock` + `MotionBlock` cited normatively. Normative token names match `UiTheme` field names exactly (consumer rings read these by name). Link from §2 to anchor primitives-to-tokens mapping. Stage 1.1 T1.1.4 of `ia/projects/ui-polish-master-plan.md`. Source of record = `docs/ui-polish-exploration.md` §Design Expansion.
+acceptance: |
+  §1 extended w/ studio-rack token catalog subsection; §1.5 extended w/ motion token catalog; every `StudioRackBlock` + `MotionBlock` field present normatively; §2 anchor link added; `npm run validate:all` green.
+depends_on:
+  - TECH-309
+  - TECH-310
+depends_on_raw: "TECH-309 (StudioRackBlock schema — spec rows match field names); TECH-310 (MotionBlock schema)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-312** — **ui-design-system §1 + §1.5 token catalog** — normative studio-rack + motion rows
+    - Type: documentation / reference spec
+    - Files: `ia/specs/ui-design-system.md`
+    - Spec: `ia/projects/TECH-312.md`
+    - Notes: Extend `ia/specs/ui-design-system.md` §1 (palette / spacing) w/ studio-rack token names + role. Extend §1.5 (motion) w/ motion token catalog. Every field in `StudioRackBlock` + `MotionBlock` cited normatively. Normative token names match `UiTheme` field names exactly (consumer rings read these by name). Link from §2 to anchor primitives-to-tokens mapping. Stage 1.1 T1.1.4 of `ia/projects/ui-polish-master-plan.md`. Source of record = `docs/ui-polish-exploration.md` §Design Expansion.
+    - Acceptance: §1 extended w/ studio-rack token catalog subsection; §1.5 extended w/ motion token catalog; every `StudioRackBlock` + `MotionBlock` field present normatively; §2 anchor link added; `npm run validate:all` green.
+    - Depends on: TECH-309 (StudioRackBlock schema — spec rows match field names); TECH-310 (MotionBlock schema)

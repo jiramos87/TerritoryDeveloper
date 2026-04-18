@@ -1,0 +1,25 @@
+id: TECH-32
+type: tooling / research
+title: "**Urban growth rings** / centroid recompute what-if (research tooling)"
+priority: medium
+status: open
+section: Compute-lib program
+spec: ia/projects/TECH-32.md
+files: 
+  - tools/
+notes: |
+  Compare full **UrbanCentroidService** recompute every tick vs throttled/approximate strategies; report desync or behavior risk vs glossary **sim §Rings**. Non-player-facing evidence for tuning. `docs/agent-tooling-verification-priority-tasks.md` task 24. **Order:** Prefer running against **TECH-38** **UrbanGrowthRingMath** / harness **JSON** once **Phase B** exists; until then, baseline against current **MonoBehaviour** code.
+acceptance: ""
+depends_on: 
+  - FEAT-43
+  - TECH-38
+depends_on_raw: "none (coordinates with **FEAT-43**; soft: **TECH-38** for **pure** module parity)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-32** — **Urban growth rings** / centroid recompute what-if (research tooling)
+    - Type: tooling / research
+    - Files: `tools/` or Unity Editor batch; parameters from **FEAT-43** / **FEAT-36** notes as inputs
+    - Spec: `ia/projects/TECH-32.md`
+    - Notes: Compare full **UrbanCentroidService** recompute every tick vs throttled/approximate strategies; report desync or behavior risk vs glossary **sim §Rings**. Non-player-facing evidence for tuning. `docs/agent-tooling-verification-priority-tasks.md` task 24. **Order:** Prefer running against **TECH-38** **UrbanGrowthRingMath** / harness **JSON** once **Phase B** exists; until then, baseline against current **MonoBehaviour** code.
+    - Depends on: none (coordinates with **FEAT-43**; soft: **TECH-38** for **pure** module parity)

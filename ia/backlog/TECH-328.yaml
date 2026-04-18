@@ -1,0 +1,27 @@
+id: TECH-328
+type: infrastructure / MCP tooling
+title: Implement `backlog_list` MCP tool (Stage 1.2 Phase 3)
+priority: high
+status: open
+section: Backlog YAML ↔ MCP alignment program
+spec: ia/projects/TECH-328.md
+files:
+  - tools/mcp-ia-server/src/tools/backlog-list.ts
+  - tools/mcp-ia-server/src/index.ts
+notes: |
+  MCP tool `backlog_list` — input `{ section?, priority?, type?, status?, scope? (default "open") }`, load via `parseAllBacklogIssues`, apply filters in-memory, return `{ issues, total }` ordered by id desc. Replaces ad-hoc Grep patterns agents use today. Stage-shared context: closes Phase 3 of Stage 1.2 alongside TECH-329 tests. Consumes `priority` field added to `ParsedBacklogIssue` in Stage 1.1 (TECH-295).
+acceptance: |
+  Tool registered; each filter dim works standalone + combined; scope switch (open / archive / all) returns correct sets; empty-result case returns `{ issues: [], total: 0 }`; id-desc ordering stable.
+depends_on: []
+depends_on_raw: none
+related:
+  - TECH-329
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-328** — Implement `backlog_list` MCP tool (Stage 1.2 Phase 3)
+    - Type: infrastructure / MCP tooling
+    - Files: `tools/mcp-ia-server/src/tools/backlog-list.ts` (new), `tools/mcp-ia-server/src/index.ts`
+    - Spec: `ia/projects/TECH-328.md`
+    - Notes: Input `{ section?, priority?, type?, status?, scope? }`; load via `parseAllBacklogIssues`; filter in-memory; return `{ issues, total }` ordered id desc. Consumes `priority` from Stage 1.1.
+    - Acceptance: tool registered; filters standalone + combined; scope switch works; empty-result case; id-desc ordering stable.
+    - Related: TECH-329

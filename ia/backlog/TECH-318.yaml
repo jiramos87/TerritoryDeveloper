@@ -1,0 +1,29 @@
+id: TECH-318
+type: audio / C#
+title: "**Music** — Author MusicBootstrap constants"
+priority: medium
+status: open
+section: Stage 1.1 — Mixer extension + persistent bootstrap
+spec: ia/projects/TECH-318.md
+files:
+  - Assets/Scripts/Audio/Music/MusicBootstrap.cs
+notes: |
+  Author `public const string` fields on `MusicBootstrap`: `MasterVolumeDbKey = "MasterVolumeDb"`, `MasterVolumeParam = "MasterVolume"`, `MusicVolumeDbKey = "MusicVolumeDb"`, `MusicVolumeParam = "MusicVolume"`, `MusicLastTrackIdKey = "MusicLastTrackId"`, `MusicEnabledKey = "MusicEnabled"`, `MusicFirstRunDoneKey = "MusicFirstRunDone"`. Default float constants (`MasterVolumeDbDefault = 0f`, `MusicVolumeDbDefault = 0f`). No re-declaration of Blip's `SfxVolumeDbKey` / `SfxVolumeParam` — consumed from `BlipBootstrap` when Settings panel lands Step 3. Stage 1.1 Phase 2 T1.1.3 of `ia/projects/music-player-master-plan.md`.
+acceptance: |
+  `MusicBootstrap.cs` compiles w/ all 7 string + 2 float const fields. No re-declaration of Blip keys. `npm run unity:compile-check` green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-316
+  - TECH-317
+  - TECH-319
+  - TECH-320
+  - TECH-321
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-318** — **Music** — Author MusicBootstrap constants (Stage 1.1 Phase 2)
+    - Type: audio / C#
+    - Files: `Assets/Scripts/Audio/Music/MusicBootstrap.cs`
+    - Spec: `ia/projects/TECH-318.md`
+    - Notes: Stage 1.1 Phase 2 T1.1.3 of music-player orchestrator. 7 string consts (Master/Music volume params + keys; last-track id key; enabled key; first-run done key) + 2 default floats. No re-declaration of Blip `SfxVolume*` keys.
+    - Acceptance: Consts compile; no key collision w/ Blip; `npm run unity:compile-check` green.

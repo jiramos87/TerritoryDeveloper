@@ -204,6 +204,14 @@ function main() {
     const d = path.join(REPO_ROOT, sub);
     if (fs.existsSync(d)) collectTextFiles(d, REPO_ROOT, files);
   }
+  // Exclude per-issue yaml records — they are mined from BACKLOG.md / BACKLOG-ARCHIVE.md
+  // and carry "promote to" spec paths that are not yet created. Proper yaml validation
+  // happens in validate:backlog-yaml.
+  const YAML_DIRS = new Set([
+    path.normalize(path.join(REPO_ROOT, "ia/backlog")),
+    path.normalize(path.join(REPO_ROOT, "ia/backlog-archive")),
+    path.normalize(path.join(REPO_ROOT, "ia/state")),
+  ]);
 
   const seen = new Set();
   const uniqueFiles = [];
@@ -218,6 +226,10 @@ function main() {
     const rel = path.relative(REPO_ROOT, abs);
     if (rel === "BACKLOG.md") continue;
     if (rel === "BACKLOG-ARCHIVE.md") continue;
+    // Skip per-issue yaml dirs (validated separately by validate:backlog-yaml)
+    const absNorm = path.normalize(abs);
+    const dirNorm = path.normalize(path.dirname(abs));
+    if (YAML_DIRS.has(dirNorm)) continue;
     scanNonBacklogFile(abs, REPO_ROOT, hits);
   }
 

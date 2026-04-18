@@ -1,0 +1,24 @@
+id: FEAT-42
+type: feature (UI)
+title: "Minimap: optional **HeightMap** / relief shading layer"
+priority: low
+status: open
+section: Low Priority
+spec: ""
+files: 
+  - MiniMapController.cs
+  - HeightMap
+  - GridManager
+notes: |
+  Visualize terrain elevation (**HeightMap**) on the minimap (distinct from **zones**/**streets**/**open water** layers). Does not replace logical **water map** / **zone** data; base layer reliability follows prior minimap / water layer work (archive).
+acceptance: ""
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **FEAT-42** — Minimap: optional **HeightMap** / relief shading layer
+    - Type: feature (UI)
+    - Files: `MiniMapController.cs`, `HeightMap` / `GridManager` read access as needed
+    - Notes: Visualize terrain elevation (**HeightMap**) on the minimap (distinct from **zones**/**streets**/**open water** layers). Does not replace logical **water map** / **zone** data; base layer reliability follows prior minimap / water layer work (archive).
+    - Depends on: none

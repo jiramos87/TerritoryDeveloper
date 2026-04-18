@@ -1,0 +1,40 @@
+id: TECH-73
+type: tooling / agent enablement (program umbrella — Phase 1 shipped)
+title: "**Unity** ↔ **IDE** **agent bridge** program (**Phase 1** — **Postgres** **`agent_bridge_job`**) (2026-04-06)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — **glossary** **IDE agent bridge**; **unity-development-context** §10; [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); **this row**)
+files: 
+  - docs/unity-ide-agent-bridge-analysis.md
+  - docs/mcp-ia-server.md
+  - docs/postgres-ia-dev-setup.md
+  - db/migrations/0008_agent_bridge_job.sql
+  - tools/postgres-ia/agent-bridge-dequeue.mjs
+  - tools/postgres-ia/agent-bridge-complete.mjs
+  - tools/mcp-ia-server/src/tools/unity-bridge-command.ts
+  - tools/mcp-ia-server/scripts/run-unity-bridge-once.ts
+  - npm run db:bridge-agent-context
+  - Assets/Scripts/Editor/AgentBridgeCommandRunner.cs
+  - Assets/Scripts/Editor/EditorPostgresBridgeJobs.cs
+  - Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs
+  - Assets/Scripts/Editor/EditorPostgresExportRegistrar.cs
+  - ia/specs/unity-development-context.md
+  - ia/specs/glossary.md
+notes: |
+  **Completed (verified — `/project-spec-close` + user):** **territory-ia** **`unity_bridge_command`** / **`unity_bridge_get`** + **Unity** **Node** dequeue/complete; **`TryPersistReport`** **Postgres-only** (no **`tools/reports/`** fallback for registry exports). **Optional later phases** (HTTP): charter doc + open **BACKLOG** when scoped. **Console** / **screenshot** bridge kinds shipped — **TECH-74** **§ Completed** (this file). **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived) supersedes **TECH-59** staging concept — agent drives Play Mode directly.
+acceptance: ""
+depends_on: 
+  - TECH-55
+  - TECH-55b
+depends_on_raw: "none (soft: glossary **Editor export registry** — **TECH-55**/**TECH-55b** archived; **unity-development-context** §10 **Reports** menus)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-73** — **Unity** ↔ **IDE** **agent bridge** program (**Phase 1** — **Postgres** **`agent_bridge_job`**) (2026-04-06)
+    - Type: tooling / agent enablement (program umbrella — Phase 1 shipped)
+    - Files: [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md) (charter / optional later phases); [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md); `db/migrations/0008_agent_bridge_job.sql`; `tools/postgres-ia/agent-bridge-dequeue.mjs`; `tools/postgres-ia/agent-bridge-complete.mjs`; `tools/mcp-ia-server/src/tools/unity-bridge-command.ts`; `tools/mcp-ia-server/scripts/run-unity-bridge-once.ts`; root **`npm run db:bridge-agent-context`**; `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`; `Assets/Scripts/Editor/EditorPostgresBridgeJobs.cs`; `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs` (**ExportAgentContextForAgentBridge**); `Assets/Scripts/Editor/EditorPostgresExportRegistrar.cs`; [`ia/specs/unity-development-context.md`](ia/specs/unity-development-context.md) §10; [`ia/specs/glossary.md`](ia/specs/glossary.md) **IDE agent bridge**, **Editor export registry**
+    - Spec: (removed after closure — **glossary** **IDE agent bridge**; **unity-development-context** §10; [`docs/unity-ide-agent-bridge-analysis.md`](docs/unity-ide-agent-bridge-analysis.md); **this row**)
+    - Notes: **Completed (verified — `/project-spec-close` + user):** **territory-ia** **`unity_bridge_command`** / **`unity_bridge_get`** + **Unity** **Node** dequeue/complete; **`TryPersistReport`** **Postgres-only** (no **`tools/reports/`** fallback for registry exports). **Optional later phases** (HTTP): charter doc + open **BACKLOG** when scoped. **Console** / **screenshot** bridge kinds shipped — **TECH-74** **§ Completed** (this file). **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived) supersedes **TECH-59** staging concept — agent drives Play Mode directly.
+    - Depends on: none (soft: glossary **Editor export registry** — **TECH-55**/**TECH-55b** archived; **unity-development-context** §10 **Reports** menus)
+    - Related: **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived), **TECH-48**, **TECH-33**, **TECH-38**, **TECH-18**, **BUG-53**, **TECH-74**

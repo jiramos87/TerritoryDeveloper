@@ -1,0 +1,25 @@
+id: TECH-30
+type: tooling / doc hygiene
+title: Validate **BACKLOG** issue IDs referenced in `ia/projects/*.md`
+priority: medium
+status: open
+section: Agent ↔ Unity & MCP context lane
+spec: ia/projects/TECH-30.md
+files: 
+  - tools/
+  - package.json
+  - npm run
+notes: |
+  Every `[BUG-XX]` / `[TECH-XX]` / etc. front matter or link in active project specs must exist in `BACKLOG.md` (open rows) or `BACKLOG-ARCHIVE.md` when cited as historical. `docs/agent-tooling-verification-priority-tasks.md` task 9. **Related:** `npm run validate:dead-project-specs` (repo-wide missing `ia/projects/*.md` paths) — shipped; coordinate shared **Node** helpers when implementing **TECH-30**.
+acceptance: ""
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-30** — Validate **BACKLOG** issue IDs referenced in `ia/projects/*.md`
+    - Type: tooling / doc hygiene
+    - Files: `tools/` (Node script), optional `package.json` `npm run` at repo root or under `tools/`
+    - Spec: `ia/projects/TECH-30.md`
+    - Notes: Every `[BUG-XX]` / `[TECH-XX]` / etc. front matter or link in active project specs must exist in `BACKLOG.md` (open rows) or `BACKLOG-ARCHIVE.md` when cited as historical. `docs/agent-tooling-verification-priority-tasks.md` task 9. **Related:** `npm run validate:dead-project-specs` (repo-wide missing `ia/projects/*.md` paths) — shipped; coordinate shared **Node** helpers when implementing **TECH-30**.
+    - Depends on: none

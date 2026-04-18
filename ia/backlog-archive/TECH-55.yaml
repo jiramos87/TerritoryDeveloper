@@ -1,0 +1,38 @@
+id: TECH-55
+type: tooling / agent enablement
+title: "**Automated Editor report registry** (Postgres, per **Reports** export type) (2026-04-04)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-04)
+spec: (removed after closure — glossary **Editor export registry**; **unity-development-context** §10; **postgres-ia-dev-setup**; **postgres-interchange-patterns** **Program extension mapping**; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-55b**; this row)
+files: 
+  - Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs
+  - Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs
+  - Assets/Scripts/Editor/EditorPostgresExportRegistrar.cs
+  - db/migrations/0004_editor_export_tables.sql
+  - db/migrations/0005_editor_export_document.sql
+  - tools/postgres-ia/register-editor-export.mjs
+  - package.json
+  - docs/postgres-ia-dev-setup.md
+  - docs/postgres-interchange-patterns.md
+  - ia/specs/unity-development-context.md
+  - ia/specs/glossary.md
+  - ARCHITECTURE.md
+  - BACKLOG.md
+notes: |
+  **Completed (verified — `/project-spec-close` + user):** Per-export **`editor_export_*`** **B1** tables, **`register-editor-export.mjs`**, **`EditorPostgresExportRegistrar`**; **`normalizeIssueId`** parity with **`backlog-parser.ts`**. **TECH-55b** superseded persistence to **DB-first** full body + filesystem fallback (same closure batch). Does not replace **`dev_repro_bundle`** (**TECH-44c**).
+acceptance: ""
+depends_on: 
+  - TECH-44b
+  - TECH-44c
+depends_on_raw: "**TECH-44b** **§ Completed** (soft: **TECH-44c** **§ Completed**)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-55** — **Automated Editor report registry** (Postgres, per **Reports** export type) (2026-04-04)
+    - Type: tooling / agent enablement
+    - Files: `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs`; `Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs`; `Assets/Scripts/Editor/EditorPostgresExportRegistrar.cs`; `db/migrations/0004_editor_export_tables.sql`; `db/migrations/0005_editor_export_document.sql`; `tools/postgres-ia/register-editor-export.mjs`; root `package.json`; [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md); [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md); [`ia/specs/unity-development-context.md`](ia/specs/unity-development-context.md) §10; [`ia/specs/glossary.md`](ia/specs/glossary.md) — **Editor export registry**; [`ARCHITECTURE.md`](ARCHITECTURE.md); [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-44**
+    - Spec: (removed after closure — glossary **Editor export registry**; **unity-development-context** §10; **postgres-ia-dev-setup**; **postgres-interchange-patterns** **Program extension mapping**; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-55b**; this row)
+    - Notes: **Completed (verified — `/project-spec-close` + user):** Per-export **`editor_export_*`** **B1** tables, **`register-editor-export.mjs`**, **`EditorPostgresExportRegistrar`**; **`normalizeIssueId`** parity with **`backlog-parser.ts`**. **TECH-55b** superseded persistence to **DB-first** full body + filesystem fallback (same closure batch). Does not replace **`dev_repro_bundle`** (**TECH-44c**).
+    - Depends on: **TECH-44b** **§ Completed** (soft: **TECH-44c** **§ Completed**)
+    - Related: **TECH-55b** **§ Completed**, **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived)

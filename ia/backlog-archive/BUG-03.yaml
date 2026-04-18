@@ -1,0 +1,16 @@
+id: BUG-03
+type: unknown
+title: Growth % sets amount instead of percentage of total budget (2026-03-09)
+priority: medium
+status: closed
+section: Pre-2026-03-22 archive
+spec: ""
+files: []
+notes: ""
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-03** — Growth % sets amount instead of percentage of total budget (2026-03-09)

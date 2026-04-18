@@ -1,0 +1,23 @@
+id: BUG-28
+type: fix
+title: "**Sorting order** between **slope** cell and **interstate** cell"
+priority: high
+status: open
+section: High Priority
+spec: ""
+files: 
+  - GridManager.cs
+  - TerrainManager.cs
+  - RoadManager.cs
+notes: |
+  **Slope** cells and **interstate** cells render in wrong **sorting order**; one draws over the other incorrectly.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **BUG-28** — **Sorting order** between **slope** cell and **interstate** cell
+    - Type: fix
+    - Files: `GridManager.cs` (**Sorting order** region), `TerrainManager.cs`, `RoadManager.cs`
+    - Notes: **Slope** cells and **interstate** cells render in wrong **sorting order**; one draws over the other incorrectly.

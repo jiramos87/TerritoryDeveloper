@@ -1,0 +1,28 @@
+id: TECH-325
+type: infrastructure / MCP tooling
+title: Test `backlog_record_validate` against fixtures (Stage 1.2 Phase 1)
+priority: high
+status: open
+section: Backlog YAML ↔ MCP alignment program
+spec: ia/projects/TECH-325.md
+files:
+  - tools/mcp-ia-server/tests/tools/backlog-record-validate.test.ts
+notes: |
+  Test harness for `backlog_record_validate` MCP tool — good record passes; each bad-record fixture (missing required field, bad id format, invalid status, empty `depends_on_raw` w/ non-empty `depends_on`) returns expected error. Locks the lint contract before downstream consumers (IP6 `backlog_record_create`) wire in. Stage-shared context: completes Phase 1 of Stage 1.2; unblocks Phase 2 (reserve ids) + Phase 3 (list).
+acceptance: |
+  Test file passes w/ ≥4 bad-record fixtures + ≥1 good-record fixture; error text snapshot-stable; `npm run validate:all` green.
+depends_on: [TECH-324]
+depends_on_raw: "TECH-324 (validate tool must exist to test — hard gate)"
+related:
+  - TECH-323
+  - TECH-324
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-325** — Test `backlog_record_validate` against fixtures (Stage 1.2 Phase 1)
+    - Type: infrastructure / MCP tooling
+    - Files: `tools/mcp-ia-server/tests/tools/backlog-record-validate.test.ts` (new)
+    - Spec: `ia/projects/TECH-325.md`
+    - Notes: Good record passes; each bad-record fixture (missing required field, bad id format, invalid status, empty `depends_on_raw` w/ non-empty `depends_on`) returns expected error. Locks lint contract before IP6 wires in.
+    - Acceptance: ≥4 bad-record + ≥1 good fixture; error text snapshot-stable; `validate:all` green.
+    - Depends on: TECH-324 (validate tool — hard gate)
+    - Related: TECH-323, TECH-324

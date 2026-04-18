@@ -1,0 +1,36 @@
+id: TECH-330
+type: code health / IA remediation
+title: Remediate critical + major findings from `feature/master-plans-1` self-review
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-17)
+spec: (removed after closure)
+files:
+  - docs/backlog-yaml-mcp-alignment-exploration.md
+  - docs/mcp-lifecycle-tools-opus-4-7-audit-exploration.md
+  - docs/ship-stage-exploration.md
+  - docs/web-platform-post-mvp-extensions.md
+  - docs/release-rollout-model-audit.md
+  - ia/skills/stage-file/SKILL.md
+  - ia/skills/project-new/SKILL.md
+  - ia/skills/release-rollout-enumerate/SKILL.md
+  - ia/skills/release-rollout-track/SKILL.md
+  - ia/skills/project-spec-close/SKILL.md
+  - tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts
+  - tools/scripts/materialize-backlog.sh
+  - .claude/agents/stage-decompose.md
+  - ia/projects/full-game-mvp-rollout-tracker.md
+notes: |
+  Closed all 5 critical + 10 major findings from `feature/master-plans-1` self-review (2026-04-17). C1 owner pick = `docs/mcp-lifecycle-tools-opus-4-7-audit-exploration.md` owns MCP mutation surface; alignment doc = appendix. C2 id-reservation = `stage-file` batch-reserves + forwards `--reserved-id {ID}` to `project-new`; `project-new` skips `reserve-id.sh` when arg set (invariant #13 preserved — one writer per chain). C3 (f)-signal collapsed — both `release-rollout-enumerate` + `release-rollout-track` use paired-record check (yaml + spec both present → ✓). C4 yaml-loader now logs stderr + surfaces `parseErrorCount` metadata. C5 closeout lock scope separated — `ia/state/.closeout.lock` + `in-flight-closeouts.schema.json` + 24h TTL purge. M1–M10 + Q1 all landed per §6 decision rows. Sibling TECH filed for Sonnet promotion of release-rollout helpers (M9 decision).
+acceptance: |
+  All 5 critical + 10 major findings resolved with §6 decision rows; Q1 executed (`validate-backlog-yaml.ts` canonical, `.mjs` deleted); `npm run validate:all` green post-implementation.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-330** — Remediate **critical** + **major** findings from `feature/master-plans-1` self-review
+    - Type: code health / IA remediation
+    - Files: `docs/backlog-yaml-mcp-alignment-exploration.md`, `docs/mcp-lifecycle-tools-opus-4-7-audit-exploration.md`, `docs/ship-stage-exploration.md`, `docs/web-platform-post-mvp-extensions.md`, `docs/release-rollout-model-audit.md`, `ia/skills/stage-file/SKILL.md`, `ia/skills/project-new/SKILL.md`, `ia/skills/release-rollout-enumerate/SKILL.md`, `ia/skills/release-rollout-track/SKILL.md`, `ia/skills/project-spec-close/SKILL.md`, `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/scripts/materialize-backlog.sh`, `.claude/agents/stage-decompose.md`, `ia/projects/full-game-mvp-rollout-tracker.md`
+    - Notes: Closed 5 critical (C1–C5) + 10 major (M1–M10) + Q1. C1 lifecycle-tools-audit owns MCP mutation; C2 `--reserved-id` flag; C3 paired-record (f)-signal; C4 stderr + `parseErrorCount`; C5 `.closeout.lock` + TTL. Invariant #13 intact. Sibling TECH filed for Sonnet promotion (M9).
+    - Acceptance: criticals + majors landed per §6; Q1 executed; `validate:all` green.

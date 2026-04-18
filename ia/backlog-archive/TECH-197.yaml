@@ -1,0 +1,26 @@
+id: TECH-197
+type: infrastructure / tests
+title: Boot-scene fixture SetUp (Stage 2.4 Phase 1) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped empty sections)
+files: 
+  - Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs
+notes: |
+  `[UnitySetUp]` loads `MainMenu` scene (build index 0) + `yield return null` × 2 (Awake cascade + catalog ready); asserts `BlipBootstrap.Instance` + `BlipCatalog.IsReady`; caches `_catalog` + `_player` refs. `[UnityTearDown]` unloads scene.
+acceptance: |
+  SetUp boots MainMenu + catches ready flag; TearDown unloads clean; `npm run unity:compile-check` + `npm run validate:all` green.
+depends_on: 
+  - TECH-196
+depends_on_raw: "**TECH-196** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-197** — Boot-scene fixture SetUp (Stage 2.4 Phase 1) (2026-04-15)
+    - Type: infrastructure / tests
+    - Files: `Assets/Tests/PlayMode/Audio/BlipPlayModeSmokeTests.cs`
+    - Spec: (removed at closeout — journal skipped empty sections)
+    - Notes: `[UnitySetUp]` loads `MainMenu` scene (build index 0) + `yield return null` × 2 (Awake cascade + catalog ready); asserts `BlipBootstrap.Instance` + `BlipCatalog.IsReady`; caches `_catalog` + `_player` refs. `[UnityTearDown]` unloads scene.
+    - Acceptance: SetUp boots MainMenu + catches ready flag; TearDown unloads clean; `npm run unity:compile-check` + `npm run validate:all` green.
+    - Depends on: **TECH-196** (archived)

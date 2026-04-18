@@ -1,0 +1,26 @@
+id: TECH-313
+type: documentation / glossary
+title: "**Glossary rows** — UiTheme token ring / Studio-rack token / Motion token"
+priority: medium
+status: open
+section: UI-as-code program (exploration)
+spec: ia/projects/TECH-313.md
+files:
+  - ia/specs/glossary.md
+notes: |
+  Add three rows to `ia/specs/glossary.md`: `UiTheme token ring` (extended token catalog under `UiTheme` SO covering surface / accent / studio-rack / motion blocks), `Studio-rack token` (LED / VU / knob / fader / oscilloscope visual params), `Motion token` (semantic named duration + easing curve entry under `UiTheme.motion`). Each row cites `ia/specs/ui-design-system.md` §1 / §1.5 per terminology-consistency rule. Stage 1.1 T1.1.5 of `ia/projects/ui-polish-master-plan.md`. Locks vocabulary downstream steps reference.
+acceptance: |
+  Three glossary rows present + spec-referenced; terminology-consistency rule satisfied (glossary + authoritative spec section both carry term); `npm run validate:all` green; `npm run test:ia` green (glossary-index regenerate).
+depends_on:
+  - TECH-312
+depends_on_raw: "TECH-312 (ui-design-system §1 + §1.5 catalog — glossary rows cite those sections)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-313** — **Glossary rows** — UiTheme token ring / Studio-rack token / Motion token
+    - Type: documentation / glossary
+    - Files: `ia/specs/glossary.md`
+    - Spec: `ia/projects/TECH-313.md`
+    - Notes: Add three rows to `ia/specs/glossary.md`: `UiTheme token ring` (extended token catalog under `UiTheme` SO covering surface / accent / studio-rack / motion blocks), `Studio-rack token` (LED / VU / knob / fader / oscilloscope visual params), `Motion token` (semantic named duration + easing curve entry under `UiTheme.motion`). Each row cites `ia/specs/ui-design-system.md` §1 / §1.5 per terminology-consistency rule. Stage 1.1 T1.1.5 of `ia/projects/ui-polish-master-plan.md`. Locks vocabulary downstream steps reference.
+    - Acceptance: Three glossary rows present + spec-referenced; terminology-consistency rule satisfied (glossary + authoritative spec section both carry term); `npm run validate:all` green; `npm run test:ia` green (glossary-index regenerate).
+    - Depends on: TECH-312 (ui-design-system §1 + §1.5 catalog — glossary rows cite those sections)

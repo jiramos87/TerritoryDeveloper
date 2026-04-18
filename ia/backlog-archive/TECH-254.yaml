@@ -1,0 +1,29 @@
+id: TECH-254
+type: web / scaffold
+title: Postgres driver install + `web/lib/db/client.ts` + Vercel `DATABASE_URL` wiring (Stage 5.1 Phase 2) (2026-04-16)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log + Lessons Learned persisted to `ia_project_spec_journal`; full prose in git history only)
+files: 
+  - web/package.json
+  - web/package-lock.json
+  - web/lib/db/client.ts
+  - "[HUMAN ACTION]"
+notes: |
+  Installed `@neondatabase/serverless@^1.0.2` (resolved `1.0.2` — spec draft cited `^0.9.x`, v1 reached stable; Decision Log updated w/ actual pin). Authored `web/lib/db/client.ts` — lazy singleton via `getSql()` getter + `new Proxy({} as NeonQueryFunction<false, false>, { get, apply })` tagged-template handle; first `sql` invocation reads `process.env.DATABASE_URL` and throws clear error if missing; repeat imports return same singleton (no per-request reconnection); `next build` w/o env set stays green (build-time safe). Shape satisfies Stage 5.2 `drizzle-orm/neon-http` adapter — one-line wrap `drizzle(getSql(), { schema })`. Vercel `DATABASE_URL` wiring across production + preview + development scopes flagged `[HUMAN ACTION]` — agent shell has no Vercel CLI auth per Stage 1.2 Decision Log precedent (2026-04-14); human completes via dashboard. No migrations, no live queries, no auth handlers at this tier (deferred to Stage 5.2 TECH-5.2.x). No local `.env` shipped — contributors wire own value post-TECH-255 README §Portal. Invariants #1–#12 not implicated (web platform scaffold only). Feeds TECH-255 (README §Portal doc) + Stage 5.2 schema/auth tasks.
+acceptance: |
+  `@neondatabase/serverless` under `dependencies` (not `devDependencies`); `web/lib/db/client.ts` exports `sql` + `getSql`; `npm --prefix web run typecheck` exit 0; `npm --prefix web run build` exit 0 in shell w/o `DATABASE_URL`; `npm run validate:all` exit 0; `DATABASE_URL` present in Vercel env for all three scopes (`[HUMAN ACTION]` — human-verified).
+depends_on: 
+  - TECH-252
+depends_on_raw: "**TECH-252** (archived — Neon provider lock)."
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-254** — Postgres driver install + `web/lib/db/client.ts` + Vercel `DATABASE_URL` wiring (Stage 5.1 Phase 2) (2026-04-16)
+    - Type: web / scaffold
+    - Files: `web/package.json`, `web/package-lock.json`, `web/lib/db/client.ts` (new), Vercel project env (production + preview + development — `[HUMAN ACTION]` pending dashboard wiring)
+    - Spec: (removed at closeout — Decision Log + Lessons Learned persisted to `ia_project_spec_journal`; full prose in git history only)
+    - Notes: Installed `@neondatabase/serverless@^1.0.2` (resolved `1.0.2` — spec draft cited `^0.9.x`, v1 reached stable; Decision Log updated w/ actual pin). Authored `web/lib/db/client.ts` — lazy singleton via `getSql()` getter + `new Proxy({} as NeonQueryFunction<false, false>, { get, apply })` tagged-template handle; first `sql` invocation reads `process.env.DATABASE_URL` and throws clear error if missing; repeat imports return same singleton (no per-request reconnection); `next build` w/o env set stays green (build-time safe). Shape satisfies Stage 5.2 `drizzle-orm/neon-http` adapter — one-line wrap `drizzle(getSql(), { schema })`. Vercel `DATABASE_URL` wiring across production + preview + development scopes flagged `[HUMAN ACTION]` — agent shell has no Vercel CLI auth per Stage 1.2 Decision Log precedent (2026-04-14); human completes via dashboard. No migrations, no live queries, no auth handlers at this tier (deferred to Stage 5.2 TECH-5.2.x). No local `.env` shipped — contributors wire own value post-TECH-255 README §Portal. Invariants #1–#12 not implicated (web platform scaffold only). Feeds TECH-255 (README §Portal doc) + Stage 5.2 schema/auth tasks.
+    - Acceptance: `@neondatabase/serverless` under `dependencies` (not `devDependencies`); `web/lib/db/client.ts` exports `sql` + `getSql`; `npm --prefix web run typecheck` exit 0; `npm --prefix web run build` exit 0 in shell w/o `DATABASE_URL`; `npm run validate:all` exit 0; `DATABASE_URL` present in Vercel env for all three scopes (`[HUMAN ACTION]` — human-verified).
+    - Depends on: **TECH-252** (archived — Neon provider lock).

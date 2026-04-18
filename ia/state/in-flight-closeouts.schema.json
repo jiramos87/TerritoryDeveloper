@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "in-flight-closeouts",
+  "title": "In-flight closeouts registry",
+  "description": "Runtime registry for concurrent-closeout collision detection. Written and read under flock ia/state/.closeout.lock. Entries older than 24 h are TTL-purged on next closeout start. Do NOT use ia/state/.id-counter.lock for this file — that lock is reserved for id-counter mutations only (invariant #13).",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["issue_id", "started_at", "pid", "hit_files"],
+    "additionalProperties": false,
+    "properties": {
+      "issue_id": {
+        "type": "string",
+        "description": "Backlog issue id being closed (e.g. TECH-XXX).",
+        "pattern": "^(BUG|FEAT|TECH|ART|AUDIO)-[0-9]+$"
+      },
+      "started_at": {
+        "type": "string",
+        "format": "date-time",
+        "description": "ISO-8601 UTC timestamp when the closeout step 0 registered this entry."
+      },
+      "pid": {
+        "type": "integer",
+        "description": "Process id of the agent shell running the closeout (best-effort; 0 when unknown)."
+      },
+      "hit_files": {
+        "type": "array",
+        "description": "Repo-relative file paths that contain the issue id (collected by rg in step 0). Used for disjoint-purge collision detection.",
+        "items": { "type": "string" }
+      }
+    }
+  }
+}

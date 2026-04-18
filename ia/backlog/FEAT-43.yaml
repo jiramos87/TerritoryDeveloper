@@ -1,0 +1,29 @@
+id: FEAT-43
+type: feature (simulation / balance)
+title: "**Urban growth rings**: tune **AUTO** road/zoning weights for a gradual center → edge gradient"
+priority: medium
+status: open
+section: Gameplay & simulation lane
+spec: ""
+files: 
+  - UrbanCentroidService.cs
+  - AutoRoadBuilder.cs
+  - AutoZoningManager.cs
+  - SimulationManager.cs
+  - ProcessSimulationTick
+  - GrowthBudgetManager.cs
+  - GridManager.cs
+  - DemandManager.cs
+notes: |
+  **Observed:** In **AUTO** simulation, cities tend toward a **dense core**, **under-developed middle growth rings**, and **outer rings that are more zoned than the middle** — not a smooth radial gradient. **Expected:** Development should fall off **gradually from the urban centroid**: **highest** **street** density and **AUTO** zoning pressure **near the centroid**, **moderate** in **mid growth rings**, and **lowest** in **outer growth rings**. Revisit **growth ring** radii/thresholds, per-ring weights for **AUTO** road growth vs zoning, and any caps or priorities that invert mid vs outer activity. **Related:** earlier **AUTO** road/**desirability**/**zone density** features and perpendicular-stub fixes — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
+acceptance: ""
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **FEAT-43** — **Urban growth rings**: tune **AUTO** road/zoning weights for a gradual center → edge gradient
+    - Type: feature (simulation / balance)
+    - Files: `UrbanCentroidService.cs` (**growth ring** boundaries, **urban centroid** distance), `AutoRoadBuilder.cs`, `AutoZoningManager.cs`, `SimulationManager.cs` (`ProcessSimulationTick` order), `GrowthBudgetManager.cs` if per-ring **growth budgets** apply; `GridManager.cs` / `DemandManager.cs` only if **desirability** or placement must align with **growth rings**
+    - Notes: **Observed:** In **AUTO** simulation, cities tend toward a **dense core**, **under-developed middle growth rings**, and **outer rings that are more zoned than the middle** — not a smooth radial gradient. **Expected:** Development should fall off **gradually from the urban centroid**: **highest** **street** density and **AUTO** zoning pressure **near the centroid**, **moderate** in **mid growth rings**, and **lowest** in **outer growth rings**. Revisit **growth ring** radii/thresholds, per-ring weights for **AUTO** road growth vs zoning, and any caps or priorities that invert mid vs outer activity. **Related:** earlier **AUTO** road/**desirability**/**zone density** features and perpendicular-stub fixes — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
+    - Depends on: none
