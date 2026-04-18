@@ -1,7 +1,7 @@
 {
   "artifact": "spec_index",
   "schema_version": 1,
-  "last_generated": "2026-04-17T18:08:53.028Z",
+  "last_generated": "2026-04-18T20:34:16.148Z",
   "specs": [
     {
       "key": "reference-spec-structure",
@@ -155,109 +155,109 @@
           "section_id": "4.2",
           "title": "4.2 OnValidate clamps",
           "depth": 3,
-          "line_start": 134
+          "line_start": 138
         },
         {
           "section_id": "4.3",
           "title": "4.3 patchHash policy",
           "depth": 3,
-          "line_start": 138
+          "line_start": 142
         },
         {
           "section_id": "4.4",
           "title": "4.4 Inspector-only workflow (MVP)",
           "depth": 3,
-          "line_start": 142
+          "line_start": 146
         },
         {
           "section_id": "5",
           "title": "5. Runtime architecture",
           "depth": 2,
-          "line_start": 148
+          "line_start": 152
         },
         {
           "section_id": "5.1",
           "title": "5.1 Component map",
           "depth": 3,
-          "line_start": 150
+          "line_start": 154
         },
         {
           "section_id": "5.2",
           "title": "5.2 Init order and lifecycle",
           "depth": 3,
-          "line_start": 173
+          "line_start": 177
         },
         {
           "section_id": "5.3",
           "title": "5.3 Thread rules",
           "depth": 3,
-          "line_start": 180
+          "line_start": 184
         },
         {
           "section_id": "5.4",
           "title": "5.4 BlipMixerRouter placement rationale",
           "depth": 3,
-          "line_start": 188
+          "line_start": 192
         },
         {
           "section_id": "5.5",
           "title": "5.5 BlipCooldownRegistry placement",
           "depth": 3,
-          "line_start": 192
+          "line_start": 196
         },
         {
           "section_id": "6",
           "title": "6. Call-site integration",
           "depth": 2,
-          "line_start": 196
+          "line_start": 200
         },
         {
           "section_id": "7",
           "title": "7. Fixture + regression gate",
           "depth": 2,
-          "line_start": 214
+          "line_start": 218
         },
         {
           "section_id": "7.1",
           "title": "7.1 Fixture schema",
           "depth": 3,
-          "line_start": 216
+          "line_start": 220
         },
         {
           "section_id": "7.2",
           "title": "7.2 Tolerance",
           "depth": 3,
-          "line_start": 228
+          "line_start": 232
         },
         {
           "section_id": "7.3",
           "title": "7.3 Bake script",
           "depth": 3,
-          "line_start": 236
+          "line_start": 240
         },
         {
           "section_id": "7.4",
           "title": "7.4 EditMode test",
           "depth": 3,
-          "line_start": 240
+          "line_start": 244
         },
         {
           "section_id": "8",
           "title": "8. Post-MVP extensions pointer",
           "depth": 2,
-          "line_start": 244
+          "line_start": 248
         },
         {
           "section_id": "9",
           "title": "9. Invariants + guardrails",
           "depth": 2,
-          "line_start": 255
+          "line_start": 259
         },
         {
           "section_id": "10",
           "title": "10. Cross-refs",
           "depth": 2,
-          "line_start": 266
+          "line_start": 270
         }
       ]
     },
@@ -371,49 +371,49 @@
           "section_id": "simulation-growth",
           "title": "Simulation & Growth",
           "depth": 2,
-          "line_start": 165
+          "line_start": 167
         },
         {
           "section_id": "city-systems",
           "title": "City systems",
           "depth": 2,
-          "line_start": 177
+          "line_start": 179
         },
         {
           "section_id": "persistence",
           "title": "Persistence",
           "depth": 2,
-          "line_start": 192
+          "line_start": 196
         },
         {
           "section_id": "audio",
           "title": "Audio",
           "depth": 2,
-          "line_start": 203
+          "line_start": 207
         },
         {
           "section_id": "prefabs-visual-layer",
           "title": "Prefabs & Visual Layer",
           "depth": 2,
-          "line_start": 217
+          "line_start": 224
         },
         {
           "section_id": "documentation",
           "title": "Documentation",
           "depth": 2,
-          "line_start": 231
+          "line_start": 238
         },
         {
           "section_id": "multi-scale-simulation",
           "title": "Multi-scale simulation",
           "depth": 2,
-          "line_start": 253
+          "line_start": 266
         },
         {
           "section_id": "planned-terminology-backlog-backed-non-authoritative",
           "title": "Planned terminology (backlog-backed, non-authoritative)",
           "depth": 2,
-          "line_start": 280
+          "line_start": 293
         }
       ]
     },

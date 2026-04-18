@@ -8,6 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { scanFileForCallers } from "../../src/tools/unity-callers-of.js";
+import { wrapTool } from "../../src/envelope.js";
 
 function writeTempCs(content: string): { filePath: string; dir: string } {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "callers-test-"));
@@ -99,6 +100,46 @@ public class Empty
   const hits = scanFileForCallers(filePath, dir, "ResolveAt");
   assert.equal(hits.length, 0);
   fs.rmSync(dir, { recursive: true });
+});
+
+// ---------------------------------------------------------------------------
+// Envelope tests (Phase 4 — TECH-405)
+// ---------------------------------------------------------------------------
+
+test("envelope: no call sites → ok:true, matches:[]", async () => {
+  const { filePath, dir } = writeTempCs(`
+public class Empty
+{
+    void Noop() {}
+}
+`);
+  const handler = wrapTool(async (input: { method?: string }) => {
+    const rawMethod = (input?.method ?? "").trim();
+    if (!rawMethod) {
+      throw { code: "invalid_input" as const, message: "method is required" };
+    }
+    const hits = scanFileForCallers(filePath, dir, rawMethod);
+    return { matches: hits };
+  });
+  const envelope = await handler({ method: "ResolveAt" });
+  assert.equal(envelope.ok, true);
+  assert.ok("payload" in envelope);
+  assert.deepEqual((envelope as { ok: true; payload: { matches: unknown[] } }).payload.matches, []);
+  fs.rmSync(dir, { recursive: true });
+});
+
+test("envelope: empty method name → ok:false, error.code=invalid_input", async () => {
+  const handler = wrapTool(async (input: { method?: string }) => {
+    const rawMethod = (input?.method ?? "").trim();
+    if (!rawMethod) {
+      throw { code: "invalid_input" as const, message: "method is required", hint: "Pass a method name." };
+    }
+    return { matches: [] };
+  });
+  const envelope = await handler({ method: "" });
+  assert.equal(envelope.ok, false);
+  assert.ok("error" in envelope);
+  assert.equal((envelope as { ok: false; error: { code: string } }).error.code, "invalid_input");
 });
 
 test("detects multiple call sites in one file", () => {

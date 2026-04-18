@@ -11,6 +11,7 @@ import {
   buildProjectSpecCloseoutDigest,
   resolveProjectSpecFile,
 } from "../parser/project-spec-closeout-parse.js";
+import { wrapTool } from "../envelope.js";
 
 const inputShape = {
   issue_id: z
@@ -51,38 +52,37 @@ export function registerProjectSpecCloseoutDigest(server: McpServer): void {
     },
     async (args) =>
       runWithToolTiming("project_spec_closeout_digest", async () => {
-        const a = args as { issue_id?: string; spec_path?: string };
-        const repoRoot = resolveRepoRoot();
-        const resolved = resolveProjectSpecFile(repoRoot, {
-          issue_id: a.issue_id,
-          spec_path: a.spec_path,
-        });
-        if (!resolved.ok) {
-          return jsonResult({
-            error: resolved.error,
-            message: resolved.message,
-          });
-        }
+        const envelope = await wrapTool(
+          async (input: { issue_id?: string; spec_path?: string }) => {
+            const repoRoot = resolveRepoRoot();
+            const resolved = resolveProjectSpecFile(repoRoot, {
+              issue_id: input.issue_id,
+              spec_path: input.spec_path,
+            });
+            if (!resolved.ok) {
+              throw { code: "invalid_input" as const, message: resolved.message };
+            }
 
-        let markdown: string;
-        try {
-          markdown = fs.readFileSync(resolved.absPath, "utf8");
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : String(e);
-          return jsonResult({
-            error: "read_failed",
-            message: `Could not read project spec: ${msg}`,
-            spec_path: resolved.relPosix,
-          });
-        }
+            let markdown: string;
+            try {
+              markdown = fs.readFileSync(resolved.absPath, "utf8");
+            } catch (e) {
+              const msg = e instanceof Error ? e.message : String(e);
+              throw {
+                code: "internal_error" as const,
+                message: `Could not read project spec: ${msg}`,
+                details: { spec_path: resolved.relPosix },
+              };
+            }
 
-        const digest = buildProjectSpecCloseoutDigest(
-          markdown,
-          resolved.relPosix,
-          resolved.issue_id,
-        );
-
-        return jsonResult(digest);
+            return buildProjectSpecCloseoutDigest(
+              markdown,
+              resolved.relPosix,
+              resolved.issue_id,
+            );
+          },
+        )(args as { issue_id?: string; spec_path?: string });
+        return jsonResult(envelope);
       }),
   );
 }

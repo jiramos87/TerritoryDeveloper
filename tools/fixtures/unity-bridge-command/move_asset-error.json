@@ -1,0 +1,12 @@
+{
+  "request": {
+    "kind": "move_asset",
+    "asset_path": "Assets/Data/NonExistent.asset",
+    "new_path": "Assets/Data/Renamed.asset"
+  },
+  "response": {
+    "ok": false,
+    "response": null,
+    "error": "asset_not_found:Assets/Data/NonExistent.asset"
+  }
+}

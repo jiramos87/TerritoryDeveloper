@@ -1,0 +1,23 @@
+id: TECH-998
+type: infrastructure / MCP tooling
+title: Schema v2 minimal fixture — only 2 required locator fields
+priority: medium
+status: open
+section: Backlog YAML and MCP alignment program
+spec: ia/projects/TECH-998.md
+files:
+  - tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts
+notes: |
+  Fixture with only the 2 required schema-v2 locator fields (parent_plan + task_key). All 7 optional fields absent — writer must omit them entirely (no empty-array / null lines).
+acceptance: |
+  Round-trip emits exactly 2 locator lines — parent_plan + task_key — no optional fields.
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-998** — Schema v2 minimal fixture — only 2 required locator fields
+    - Type: infrastructure / MCP tooling
+    - Notes: fixture for round-trip harness.
+parent_plan: ia/projects/backlog-yaml-mcp-alignment-master-plan.md
+task_key: T3.1.4

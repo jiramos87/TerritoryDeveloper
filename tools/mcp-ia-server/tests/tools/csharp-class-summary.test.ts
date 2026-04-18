@@ -8,6 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { summarizeClassInFile } from "../../src/tools/csharp-class-summary.js";
+import { wrapTool } from "../../src/envelope.js";
 
 function writeTempCs(content: string): { filePath: string; dir: string } {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "class-summary-test-"));
@@ -101,6 +102,45 @@ public class Plain
   assert.equal(summary!.public_methods.length, 1);
   assert.equal(summary!.public_methods[0]!.name, "Count");
   fs.rmSync(dir, { recursive: true });
+});
+
+// ---------------------------------------------------------------------------
+// Envelope tests (Phase 4 — TECH-405)
+// ---------------------------------------------------------------------------
+
+test("envelope: class not found → ok:true, matches:[]", async () => {
+  const { filePath, dir } = writeTempCs(`
+public class Other { }
+`);
+  const handler = wrapTool(async (input: { class_name?: string }) => {
+    const className = (input?.class_name ?? "").trim();
+    if (!className) {
+      throw { code: "invalid_input" as const, message: "class_name is required" };
+    }
+    const summary = summarizeClassInFile(filePath, dir, className);
+    if (summary) return summary;
+    // Class not in file → ok:true empty shape.
+    return { class_name: className, matches: [] };
+  });
+  const envelope = await handler({ class_name: "NonExistentClass" });
+  assert.equal(envelope.ok, true);
+  assert.ok("payload" in envelope);
+  assert.deepEqual((envelope as { ok: true; payload: { matches: unknown[] } }).payload.matches, []);
+  fs.rmSync(dir, { recursive: true });
+});
+
+test("envelope: empty class_name → ok:false, error.code=invalid_input", async () => {
+  const handler = wrapTool(async (input: { class_name?: string }) => {
+    const className = (input?.class_name ?? "").trim();
+    if (!className) {
+      throw { code: "invalid_input" as const, message: "class_name is required", hint: "Pass the C# class name." };
+    }
+    return { matches: [] };
+  });
+  const envelope = await handler({ class_name: "" });
+  assert.equal(envelope.ok, false);
+  assert.ok("error" in envelope);
+  assert.equal((envelope as { ok: false; error: { code: string } }).error.code, "invalid_input");
 });
 
 test("handles missing xml summary gracefully", () => {

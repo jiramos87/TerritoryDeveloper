@@ -1,0 +1,18 @@
+{
+  "request": {
+    "kind": "modify_scriptable_object",
+    "asset_path": "Assets/Data/EconomyConfig.asset",
+    "field_writes": [
+      { "field_name": "taxRate", "value_kind": "float", "value": "0.15" },
+      { "field_name": "maxPopulation", "value_kind": "int", "value": "5000" }
+    ]
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "fields_written": 2,
+      "message": "2 field(s) written on Assets/Data/EconomyConfig.asset"
+    },
+    "error": null
+  }
+}

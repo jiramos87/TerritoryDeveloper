@@ -1,0 +1,12 @@
+{
+  "request": {
+    "kind": "attach_component",
+    "target_path": "Managers/EconomyManager",
+    "component_type_name": "Manager"
+  },
+  "response": {
+    "ok": false,
+    "response": null,
+    "error": "type_ambiguous:Manager;candidates=EconomyManager,RoadManager,ZoneManager"
+  }
+}

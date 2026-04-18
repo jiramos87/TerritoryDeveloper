@@ -1,0 +1,12 @@
+{
+  "request": {
+    "kind": "refresh_asset_database"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "message": "AssetDatabase.Refresh() called"
+    },
+    "error": null
+  }
+}

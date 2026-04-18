@@ -1,0 +1,3 @@
+SKIP plan-missing  TECH-999  (no task-table row in any master-plan)
+
+Summary: resolved=0  already-populated=0  skipped-plan-missing=1  collisions=0

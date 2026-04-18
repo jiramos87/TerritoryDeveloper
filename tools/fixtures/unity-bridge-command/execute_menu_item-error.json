@@ -1,0 +1,11 @@
+{
+  "request": {
+    "kind": "execute_menu_item",
+    "menu_path": "Edit/NonExistentMenuOption"
+  },
+  "response": {
+    "ok": false,
+    "response": null,
+    "error": "menu_not_found:Edit/NonExistentMenuOption"
+  }
+}

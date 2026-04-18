@@ -8,6 +8,7 @@ import path from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { resolveRepoRoot } from "../config.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool } from "../envelope.js";
 
 const inputShape = {
   method: z
@@ -160,54 +161,62 @@ export function registerUnityCallersOf(server: McpServer): void {
     },
     async (args) =>
       runWithToolTiming("unity_callers_of", async () => {
-        const repoRoot = resolveRepoRoot();
-        const rawMethod = (args?.method ?? "").trim();
-        if (!rawMethod) {
-          return jsonResult({
-            error: "invalid_input",
-            message: "method is required",
-          });
-        }
+        const envelope = await wrapTool(
+          async (input: { method?: string; class?: string; path?: string }) => {
+            const repoRoot = resolveRepoRoot();
+            const rawMethod = (input?.method ?? "").trim();
+            if (!rawMethod) {
+              throw {
+                code: "invalid_input" as const,
+                message: "method is required",
+                hint: "Pass a method name such as 'ResolveAt' or 'RoadResolver.ResolveAt'.",
+              };
+            }
 
-        let method = rawMethod;
-        let classFilter = (args?.class ?? "").trim() || undefined;
-        // Dotted form: 'RoadResolver.ResolveAt' → class='RoadResolver', method='ResolveAt'.
-        const dotIdx = rawMethod.lastIndexOf(".");
-        if (dotIdx > 0 && dotIdx < rawMethod.length - 1) {
-          const left = rawMethod.slice(0, dotIdx).trim();
-          const right = rawMethod.slice(dotIdx + 1).trim();
-          if (left && right) {
-            method = right;
-            classFilter = classFilter ?? left;
-          }
-        }
+            let method = rawMethod;
+            let classFilter = (input?.class ?? "").trim() || undefined;
+            // Dotted form: 'RoadResolver.ResolveAt' → class='RoadResolver', method='ResolveAt'.
+            const dotIdx = rawMethod.lastIndexOf(".");
+            if (dotIdx > 0 && dotIdx < rawMethod.length - 1) {
+              const left = rawMethod.slice(0, dotIdx).trim();
+              const right = rawMethod.slice(dotIdx + 1).trim();
+              if (left && right) {
+                method = right;
+                classFilter = classFilter ?? left;
+              }
+            }
 
-        const scanPath = (args?.path ?? "Assets/Scripts/").trim();
-        const absPath = path.isAbsolute(scanPath)
-          ? scanPath
-          : path.join(repoRoot, scanPath);
+            const scanPath = (input?.path ?? "Assets/Scripts/").trim();
+            const absPath = path.isAbsolute(scanPath)
+              ? scanPath
+              : path.join(repoRoot, scanPath);
 
-        if (!fs.existsSync(absPath)) {
-          return jsonResult({
-            error: "path_not_found",
-            message: `Directory not found: ${scanPath}`,
-          });
-        }
+            if (!fs.existsSync(absPath)) {
+              throw {
+                code: "invalid_input" as const,
+                message: `Directory not found: ${scanPath}`,
+                hint: "Provide a repo-relative path that exists (e.g. 'Assets/Scripts/').",
+              };
+            }
 
-        const csFiles = globCsFiles(absPath);
-        const hits: CallerHit[] = [];
-        for (const file of csFiles) {
-          hits.push(...scanFileForCallers(file, repoRoot, method, classFilter));
-        }
+            const csFiles = globCsFiles(absPath);
+            const hits: CallerHit[] = [];
+            for (const file of csFiles) {
+              hits.push(...scanFileForCallers(file, repoRoot, method, classFilter));
+            }
 
-        return jsonResult({
-          method,
-          class: classFilter ?? null,
-          scanned_path: scanPath,
-          files_scanned: csFiles.length,
-          caller_count: hits.length,
-          callers: hits,
-        });
+            return {
+              method,
+              class: classFilter ?? null,
+              scanned_path: scanPath,
+              files_scanned: csFiles.length,
+              caller_count: hits.length,
+              matches: hits,
+            };
+          },
+        )(args as { method?: string; class?: string; path?: string });
+
+        return jsonResult(envelope);
       }),
   );
 }

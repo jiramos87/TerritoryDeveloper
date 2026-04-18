@@ -1,0 +1,15 @@
+{
+  "request": {
+    "kind": "set_gameobject_parent",
+    "target_path": "FloatingObject",
+    "new_parent_path": "Managers",
+    "world_position_stays": true
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "message": "reparented FloatingObject → Managers"
+    },
+    "error": null
+  }
+}

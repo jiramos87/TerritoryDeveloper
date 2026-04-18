@@ -1,0 +1,8 @@
+id: TECH-999
+type: tech
+title: Fixture — task-key-drift-warn (parent-plan-validate test)
+status: open
+section: Test fixtures
+parent_plan: ia/projects/sample-master-plan.md
+task_key: T9.9.9
+created: 2026-01-01

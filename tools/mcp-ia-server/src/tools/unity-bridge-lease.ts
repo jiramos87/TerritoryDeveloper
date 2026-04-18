@@ -14,6 +14,7 @@ import type { Pool } from "pg";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getIaDatabasePool } from "../ia-db/pool.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool, dbUnconfiguredError } from "../envelope.js";
 
 /** Play Mode lease TTL in seconds. Must exceed longest expected Play Mode session (~4 min). */
 const LEASE_TTL_SECONDS = 8 * 60;
@@ -217,32 +218,15 @@ export function registerUnityBridgeLease(server: McpServer): void {
     },
     async (args) =>
       runWithToolTiming("unity_bridge_lease", async () => {
-        const parsed = unityBridgeLeaseInputSchema.safeParse(args ?? {});
-        if (!parsed.success) {
-          return jsonResult({
-            error: "invalid_input",
-            message: parsed.error.flatten().fieldErrors,
-          });
-        }
-        const pool = getIaDatabasePool();
-        if (!pool) {
-          return jsonResult({
-            ok: false,
-            error: "db_unconfigured",
-            message:
-              "No database URL: set DATABASE_URL or add config/postgres-dev.json. See docs/postgres-ia-dev-setup.md.",
-          });
-        }
-        try {
-          const result = await runUnityBridgeLease(parsed.data, pool);
-          return jsonResult(result);
-        } catch (e: unknown) {
-          return jsonResult({
-            ok: false,
-            error: "db_error",
-            message: e instanceof Error ? e.message : String(e),
-          });
-        }
+        const envelope = await wrapTool(async (input: UnityBridgeLeaseInput) => {
+          const pool = getIaDatabasePool();
+          if (!pool) throw dbUnconfiguredError();
+
+          const result = await runUnityBridgeLease(input, pool);
+          // runUnityBridgeLease returns ok/error shapes; pass through as-is (wrapTool detects ok field).
+          return result;
+        })(unityBridgeLeaseInputSchema.parse(args ?? {}));
+        return jsonResult(envelope);
       }),
   );
 }

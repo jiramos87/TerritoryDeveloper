@@ -11,6 +11,7 @@ import { splitLines } from "../parser/markdown-parser.js";
 import { parseMarkdownTables } from "../parser/table-parser.js";
 import { findEntryByKey } from "../config.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool } from "../envelope.js";
 
 const GEO_SPEC_REF =
   "ia/specs/isometric-geography-system.md (see Read sections column)";
@@ -32,17 +33,6 @@ const inputShape = {
       "Optional repo-relative paths or basenames (e.g. GridManager.cs, Assets/Scripts/.../WaterMap.cs). Heuristic domain hints; combine with `domain` when both are set.",
     ),
 };
-
-function jsonResult(payload: unknown) {
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: JSON.stringify(payload, null, 2),
-      },
-    ],
-  };
-}
 
 const MIN_TOKEN = 3;
 
@@ -215,70 +205,85 @@ export function registerRouterForTask(
     },
     async (args) =>
       runWithToolTiming("router_for_task", async () => {
-        const domain = (args?.domain ?? "").trim();
-        const files = Array.isArray(args?.files) ? args!.files! : [];
-        if (!domain && files.length === 0) {
-          return jsonResult({
-            error: "invalid_input",
-            message: "Provide `domain` and/or a non-empty `files` array.",
-          });
-        }
-        if (files.length > MAX_FILES) {
-          return jsonResult({
-            error: "invalid_input",
-            message: `At most ${MAX_FILES} paths in files.`,
-          });
-        }
+        const envelope = await wrapTool(
+          async (input: typeof args) => {
+            const domain = (input?.domain ?? "").trim();
+            const files = Array.isArray(input?.files) ? input!.files! : [];
+            if (!domain && files.length === 0) {
+              throw {
+                code: "invalid_input" as const,
+                message: "Provide `domain` and/or a non-empty `files` array.",
+              };
+            }
+            if (files.length > MAX_FILES) {
+              throw {
+                code: "invalid_input" as const,
+                message: `At most ${MAX_FILES} paths in files.`,
+              };
+            }
 
-        const entry = findEntryByKey(registry, "agent-router");
-        if (!entry) {
-          return jsonResult({
-            error: "no_matching_domain",
-            message: "agent-router.mdc is not registered.",
-            available_domains: [] as string[],
-          });
-        }
+            const entry = findEntryByKey(registry, "agent-router");
+            if (!entry) {
+              throw {
+                code: "invalid_input" as const,
+                message: "agent-router.mdc is not registered.",
+                details: { available_domains: [] as string[] },
+              };
+            }
 
-        const raw = fs.readFileSync(entry.filePath, "utf8");
-        const { content } = matter(raw);
-        const bodyLines = splitLines(content);
-        const { matchesForDomain, allDomainLabels } =
-          collectRouterData(bodyLines);
+            const raw = fs.readFileSync(entry.filePath, "utf8");
+            const { content } = matter(raw);
+            const bodyLines = splitLines(content);
+            const { matchesForDomain, allDomainLabels } =
+              collectRouterData(bodyLines);
 
-        const fromDomain = domain ? matchesForDomain(domain) : [];
-        const hintSet = new Set<string>();
-        for (const f of files) {
-          for (const h of inferDomainHintsFromPath(String(f))) {
-            hintSet.add(h);
-          }
-        }
-        const file_domain_hints = [...hintSet];
-        const fromFiles: RouterMatchRow[] = [];
-        for (const hint of file_domain_hints) {
-          fromFiles.push(...matchesForDomain(hint));
-        }
+            const fromDomain = domain ? matchesForDomain(domain) : [];
+            const hintSet = new Set<string>();
+            for (const f of files) {
+              for (const h of inferDomainHintsFromPath(String(f))) {
+                hintSet.add(h);
+              }
+            }
+            const file_domain_hints = [...hintSet];
+            const fromFiles: RouterMatchRow[] = [];
+            for (const hint of file_domain_hints) {
+              fromFiles.push(...matchesForDomain(hint));
+            }
 
-        const matches = mergeUniqueMatches([...fromDomain, ...fromFiles]);
+            const matches = mergeUniqueMatches([...fromDomain, ...fromFiles]);
 
-        if (matches.length === 0) {
-          const available_domains = [...new Set(allDomainLabels)].sort();
-          return jsonResult({
-            error: "no_matching_domain",
-            message: domain
-              ? `No router row matches domain '${domain}'${file_domain_hints.length ? ` or file heuristics (${file_domain_hints.join("; ")})` : ""}.`
-              : `No router row matches file path heuristics (${file_domain_hints.join("; ") || "none"}).`,
-            available_domains,
-            ...(file_domain_hints.length ? { file_domain_hints } : {}),
-          });
-        }
+            if (matches.length === 0) {
+              const available_domains = [...new Set(allDomainLabels)].sort();
+              throw {
+                code: "invalid_input" as const,
+                message: domain
+                  ? `No router row matches domain '${domain}'${file_domain_hints.length ? ` or file heuristics (${file_domain_hints.join("; ")})` : ""}.`
+                  : `No router row matches file path heuristics (${file_domain_hints.join("; ") || "none"}).`,
+                details: {
+                  available_domains,
+                  ...(file_domain_hints.length ? { file_domain_hints } : {}),
+                },
+              };
+            }
 
-        const payload: Record<string, unknown> = { matches };
-        if (domain) payload.domain = domain;
-        if (files.length) {
-          payload.files = files;
-          payload.file_domain_hints = file_domain_hints;
-        }
-        return jsonResult(payload);
+            const payload: Record<string, unknown> = { matches };
+            if (domain) payload.domain = domain;
+            if (files.length) {
+              payload.files = files;
+              payload.file_domain_hints = file_domain_hints;
+            }
+            return payload;
+          },
+        )(args);
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(envelope, null, 2),
+            },
+          ],
+        };
       }),
   );
 }

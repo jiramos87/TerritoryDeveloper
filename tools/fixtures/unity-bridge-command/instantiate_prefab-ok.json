@@ -1,0 +1,17 @@
+{
+  "request": {
+    "kind": "instantiate_prefab",
+    "prefab_path": "Assets/Prefabs/Buildings/House.prefab",
+    "parent_path": "Grid",
+    "position": "3,0,5"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "instance_id": 9876543,
+      "path": "Grid/House",
+      "message": "prefab instantiated at Grid/House"
+    },
+    "error": null
+  }
+}

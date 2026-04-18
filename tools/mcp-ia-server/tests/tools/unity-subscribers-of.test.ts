@@ -8,6 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { scanFileForSubscribers } from "../../src/tools/unity-subscribers-of.js";
+import { wrapTool } from "../../src/envelope.js";
 
 function writeTempCs(content: string): { filePath: string; dir: string } {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "subs-test-"));
@@ -83,6 +84,46 @@ public class None
   const hits = scanFileForSubscribers(filePath, dir, "onGridRestored");
   assert.equal(hits.length, 0);
   fs.rmSync(dir, { recursive: true });
+});
+
+// ---------------------------------------------------------------------------
+// Envelope tests (Phase 4 — TECH-405)
+// ---------------------------------------------------------------------------
+
+test("envelope: no subscription sites → ok:true, matches:[]", async () => {
+  const { filePath, dir } = writeTempCs(`
+public class None
+{
+    void Y() {}
+}
+`);
+  const handler = wrapTool(async (input: { event?: string }) => {
+    const rawEvent = (input?.event ?? "").trim();
+    if (!rawEvent) {
+      throw { code: "invalid_input" as const, message: "event is required" };
+    }
+    const hits = scanFileForSubscribers(filePath, dir, rawEvent);
+    return { matches: hits };
+  });
+  const envelope = await handler({ event: "onGridRestored" });
+  assert.equal(envelope.ok, true);
+  assert.ok("payload" in envelope);
+  assert.deepEqual((envelope as { ok: true; payload: { matches: unknown[] } }).payload.matches, []);
+  fs.rmSync(dir, { recursive: true });
+});
+
+test("envelope: empty event name → ok:false, error.code=invalid_input", async () => {
+  const handler = wrapTool(async (input: { event?: string }) => {
+    const rawEvent = (input?.event ?? "").trim();
+    if (!rawEvent) {
+      throw { code: "invalid_input" as const, message: "event is required", hint: "Pass an event name." };
+    }
+    return { matches: [] };
+  });
+  const envelope = await handler({ event: "" });
+  assert.equal(envelope.ok, false);
+  assert.ok("error" in envelope);
+  assert.equal((envelope as { ok: false; error: { code: string } }).error.code, "invalid_input");
 });
 
 test("detects multiple subscribers across methods", () => {

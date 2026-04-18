@@ -8,6 +8,7 @@ import path from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { resolveRepoRoot } from "../config.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool } from "../envelope.js";
 
 const inputShape = {
   class_name: z
@@ -301,40 +302,50 @@ export function registerCsharpClassSummary(server: McpServer): void {
     },
     async (args) =>
       runWithToolTiming("csharp_class_summary", async () => {
-        const repoRoot = resolveRepoRoot();
-        const className = (args?.class_name ?? "").trim();
-        if (!className) {
-          return jsonResult({
-            error: "invalid_input",
-            message: "class_name is required",
-          });
-        }
+        const envelope = await wrapTool(
+          async (input: { class_name?: string; path?: string }) => {
+            const repoRoot = resolveRepoRoot();
+            const className = (input?.class_name ?? "").trim();
+            if (!className) {
+              throw {
+                code: "invalid_input" as const,
+                message: "class_name is required",
+                hint: "Pass the C# class name (e.g. 'RoadManager').",
+              };
+            }
 
-        const scanPath = (args?.path ?? "Assets/Scripts/").trim();
-        const absPath = path.isAbsolute(scanPath)
-          ? scanPath
-          : path.join(repoRoot, scanPath);
+            const scanPath = (input?.path ?? "Assets/Scripts/").trim();
+            const absPath = path.isAbsolute(scanPath)
+              ? scanPath
+              : path.join(repoRoot, scanPath);
 
-        if (!fs.existsSync(absPath)) {
-          return jsonResult({
-            error: "path_not_found",
-            message: `Directory not found: ${scanPath}`,
-          });
-        }
+            if (!fs.existsSync(absPath)) {
+              throw {
+                code: "invalid_input" as const,
+                message: `Directory not found: ${scanPath}`,
+                hint: "Provide a repo-relative path that exists (e.g. 'Assets/Scripts/').",
+              };
+            }
 
-        const csFiles = globCsFiles(absPath);
-        for (const file of csFiles) {
-          const summary = summarizeClassInFile(file, repoRoot, className);
-          if (summary) {
-            return jsonResult(summary);
-          }
-        }
+            const csFiles = globCsFiles(absPath);
+            for (const file of csFiles) {
+              const summary = summarizeClassInFile(file, repoRoot, className);
+              if (summary) {
+                return summary;
+              }
+            }
 
-        return jsonResult({
-          error: "class_not_found",
-          message: `No file under ${scanPath} declares class ${className}`,
-          files_scanned: csFiles.length,
-        });
+            // Class not found → ok:true with empty methods shape (spec §2 Phase 2).
+            return {
+              class_name: className,
+              scanned_path: scanPath,
+              files_scanned: csFiles.length,
+              matches: [],
+            };
+          },
+        )(args as { class_name?: string; path?: string });
+
+        return jsonResult(envelope);
       }),
   );
 }

@@ -1,0 +1,108 @@
+{
+  "invariants": [
+    {
+      "number": 1,
+      "subsystem_tags": ["HeightMap", "Cell", "grid", "sync"]
+    },
+    {
+      "number": 2,
+      "subsystem_tags": ["roads", "cache", "InvalidateRoadCache"]
+    },
+    {
+      "number": 3,
+      "subsystem_tags": ["FindObjectOfType", "performance", "Update"]
+    },
+    {
+      "number": 4,
+      "subsystem_tags": ["singleton", "manager"]
+    },
+    {
+      "number": 5,
+      "subsystem_tags": ["GridManager", "grid", "cellArray"]
+    },
+    {
+      "number": 6,
+      "subsystem_tags": ["GridManager", "manager", "architecture"]
+    },
+    {
+      "number": 7,
+      "subsystem_tags": ["water", "shore", "height", "terrain"]
+    },
+    {
+      "number": 8,
+      "subsystem_tags": ["water", "rivers", "height"]
+    },
+    {
+      "number": 9,
+      "subsystem_tags": ["cliff", "rendering", "isometric"]
+    },
+    {
+      "number": 10,
+      "subsystem_tags": ["roads", "PathTerraformPlan", "placement"]
+    },
+    {
+      "number": 11,
+      "subsystem_tags": ["urbanization", "obsolete"]
+    },
+    {
+      "number": 12,
+      "subsystem_tags": ["ia", "specs", "projects"]
+    },
+    {
+      "number": 13,
+      "subsystem_tags": ["id-counter", "backlog", "monotonic"]
+    }
+  ],
+  "guardrails": [
+    {
+      "index": 0,
+      "if": "adding a manager reference",
+      "subsystem_tags": ["manager", "SerializeField", "Awake"]
+    },
+    {
+      "index": 1,
+      "if": "modifying roads",
+      "subsystem_tags": ["roads", "cache", "InvalidateRoadCache"]
+    },
+    {
+      "index": 2,
+      "if": "placing a road",
+      "subsystem_tags": ["roads", "placement", "PathTerraformPlan"]
+    },
+    {
+      "index": 3,
+      "if": "touching GridManager",
+      "subsystem_tags": ["GridManager", "architecture", "refactor"]
+    },
+    {
+      "index": 4,
+      "if": "creating a new manager",
+      "subsystem_tags": ["manager", "MonoBehaviour", "instantiation"]
+    },
+    {
+      "index": 5,
+      "if": "modifying HeightMap",
+      "subsystem_tags": ["HeightMap", "Cell", "sync"]
+    },
+    {
+      "index": 6,
+      "if": "placing or removing water",
+      "subsystem_tags": ["water", "shore", "terrain"]
+    },
+    {
+      "index": 7,
+      "if": "closing a project spec",
+      "subsystem_tags": ["ia", "projects", "spec-lifecycle"]
+    },
+    {
+      "index": 8,
+      "if": "creating a project spec",
+      "subsystem_tags": ["ia", "projects", "templates"]
+    },
+    {
+      "index": 9,
+      "if": "adding a flock guard on a mutation path",
+      "subsystem_tags": ["flock", "concurrency", "lockfile"]
+    }
+  ]
+}

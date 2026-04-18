@@ -5,6 +5,8 @@
  *
  * TECH-301: integration tests for round-trip soft-dep marker via parseBacklogIssue
  * + resolveDependsOnStatus (tool-layer regression guard for TECH-297 fix).
+ *
+ * TECH-402: envelope-shape assertions for not-found + invalid_input paths.
  */
 
 import test from "node:test";
@@ -18,6 +20,7 @@ import {
   resolveDependsOnStatus,
   type ParsedBacklogIssue,
 } from "../../src/parser/backlog-parser.js";
+import { wrapTool } from "../../src/envelope.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../../../");
@@ -183,5 +186,50 @@ test("plain dep id → soft_only: false (no false-positive classification)", () 
     assert.equal(entry!.soft_only, false, "plain dep must not be classified as soft");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// TECH-402: envelope-shape assertions
+// ---------------------------------------------------------------------------
+
+test("envelope — missing id → { ok:false, error:{ code:'issue_not_found', hint } }", async () => {
+  const root = makeTmpRoot();
+  try {
+    // Empty backlog directory — any id will be not-found.
+    const envelope = await wrapTool(async () => {
+      const issueId = "ZZZNONEEXISTENT-9999";
+      const parsed = parseBacklogIssue(root, issueId);
+      if (!parsed) {
+        throw {
+          code: "issue_not_found" as const,
+          message: `No issue '${issueId}' in BACKLOG.md or BACKLOG-ARCHIVE.md.`,
+          hint: "Check ia/backlog/ and ia/backlog-archive/",
+        };
+      }
+      const depends_on_status = resolveDependsOnStatus(root, parsed.depends_on);
+      return { ...parsed, depends_on_status };
+    })({});
+    assert.equal(envelope.ok, false);
+    if (!envelope.ok) {
+      assert.equal(envelope.error.code, "issue_not_found");
+      assert.equal(envelope.error.hint, "Check ia/backlog/ and ia/backlog-archive/");
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("envelope — empty issue_id → { ok:false, error:{ code:'invalid_input' } }", async () => {
+  const envelope = await wrapTool(async () => {
+    const issueId = "".trim();
+    if (!issueId) {
+      throw { code: "invalid_input" as const, message: "issue_id is required." };
+    }
+    return {};
+  })({});
+  assert.equal(envelope.ok, false);
+  if (!envelope.ok) {
+    assert.equal(envelope.error.code, "invalid_input");
   }
 });

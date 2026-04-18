@@ -14,6 +14,7 @@ import {
 import { fuzzyFind, normalizeGlossaryQuery } from "../parser/fuzzy.js";
 import { rankGlossaryDiscover } from "../parser/glossary-discover-rank.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool } from "../envelope.js";
 
 const DEFAULT_MAX_RESULTS = 10;
 const HARD_CAP_MAX_RESULTS = 25;
@@ -158,82 +159,88 @@ export function registerGlossaryDiscover(
     },
     async (args) =>
       runWithToolTiming("glossary_discover", async () => {
-        const a = args as Record<string, unknown>;
-        const normalized = normalizeDiscoverArgs({
-          query: typeof a.query === "string" ? a.query : undefined,
-          keywords: Array.isArray(a.keywords) ? (a.keywords as string[]) : undefined,
-          q: typeof a.q === "string" ? a.q : undefined,
-          search: typeof a.search === "string" ? a.search : undefined,
-          terms: Array.isArray(a.terms) ? (a.terms as string[]) : undefined,
-          max_results: typeof a.max_results === "number" ? a.max_results : undefined,
-          maxResults: typeof a.maxResults === "number" ? a.maxResults : undefined,
-        });
-
-        if ("error" in normalized) {
-          return jsonResult({ error: "invalid_input", message: normalized.error });
-        }
-
-        const { queryText, maxResults } = normalized;
-
-        const entry = findEntryByKey(registry, "glossary");
-        if (!entry) {
-          return jsonResult({
-            error: "glossary_missing",
-            message: "Glossary file is not registered.",
-            matches: [],
+        const envelope = await wrapTool(async (input: Record<string, unknown>) => {
+          const a = input;
+          const normalized = normalizeDiscoverArgs({
+            query: typeof a.query === "string" ? a.query : undefined,
+            keywords: Array.isArray(a.keywords) ? (a.keywords as string[]) : undefined,
+            q: typeof a.q === "string" ? a.q : undefined,
+            search: typeof a.search === "string" ? a.search : undefined,
+            terms: Array.isArray(a.terms) ? (a.terms as string[]) : undefined,
+            max_results: typeof a.max_results === "number" ? a.max_results : undefined,
+            maxResults: typeof a.maxResults === "number" ? a.maxResults : undefined,
           });
-        }
 
-        const entries = parseGlossary(entry.filePath);
-        const ranked = rankGlossaryDiscover(entries, queryText, {
-          maxResults,
-        });
+          if ("error" in normalized) {
+            throw {
+              code: "invalid_input" as const,
+              message: normalized.error,
+            };
+          }
 
-        if (ranked.length === 0) {
-          const collapse = (s: string) =>
-            normalizeGlossaryQuery(s).toLowerCase().replace(/\s+/g, "");
-          const cq = collapse(queryText);
-          const fuzzyRows =
-            cq.length > 0
-              ? fuzzyFind(cq, entries, (e) => collapse(e.term), {
-                  threshold: 0.45,
-                  maxResults: 5,
-                })
-              : [];
-          const suggestions = fuzzyRows.map((r) => r.item.term);
-          return jsonResult({
-            matches: [] as unknown[],
+          const { queryText, maxResults } = normalized;
+
+          const entry = findEntryByKey(registry, "glossary");
+          if (!entry) {
+            throw {
+              code: "internal_error" as const,
+              message: "Glossary file is not registered.",
+            };
+          }
+
+          const entries = parseGlossary(entry.filePath);
+          const ranked = rankGlossaryDiscover(entries, queryText, {
+            maxResults,
+          });
+
+          if (ranked.length === 0) {
+            const collapse = (s: string) =>
+              normalizeGlossaryQuery(s).toLowerCase().replace(/\s+/g, "");
+            const cq = collapse(queryText);
+            const fuzzyRows =
+              cq.length > 0
+                ? fuzzyFind(cq, entries, (e) => collapse(e.term), {
+                    threshold: 0.45,
+                    maxResults: 5,
+                  })
+                : [];
+            const suggestions = fuzzyRows.map((r) => r.item.term);
+            return {
+              matches: [] as unknown[],
+              query_normalized: queryText,
+              hint_next_tools: HINT_NEXT_TOOLS,
+              message:
+                "No glossary rows matched these keywords in term/definition/spec/category. " +
+                "Try different words, router_for_task, or spec_outline.",
+              suggestions,
+            };
+          }
+
+          const matches = ranked.map((r) => {
+            const specKeys = resolveSpecKeyFromReference(
+              r.entry.specReference,
+              registry,
+            );
+            return {
+              term: r.entry.term,
+              specReference: r.entry.specReference,
+              category: r.entry.category,
+              score: Math.round(r.score * 1000) / 1000,
+              matchReasons: r.matchReasons,
+              ...(specKeys
+                ? { spec: specKeys.spec, registryKey: specKeys.registryKey }
+                : {}),
+            };
+          });
+
+          return {
+            matches,
             query_normalized: queryText,
             hint_next_tools: HINT_NEXT_TOOLS,
-            message:
-              "No glossary rows matched these keywords in term/definition/spec/category. " +
-              "Try different words, router_for_task, or spec_outline.",
-            suggestions,
-          });
-        }
-
-        const matches = ranked.map((r) => {
-          const specKeys = resolveSpecKeyFromReference(
-            r.entry.specReference,
-            registry,
-          );
-          return {
-            term: r.entry.term,
-            specReference: r.entry.specReference,
-            category: r.entry.category,
-            score: Math.round(r.score * 1000) / 1000,
-            matchReasons: r.matchReasons,
-            ...(specKeys
-              ? { spec: specKeys.spec, registryKey: specKeys.registryKey }
-              : {}),
           };
-        });
+        })(args as Record<string, unknown>);
 
-        return jsonResult({
-          matches,
-          query_normalized: queryText,
-          hint_next_tools: HINT_NEXT_TOOLS,
-        });
+        return jsonResult(envelope);
       }),
   );
 }

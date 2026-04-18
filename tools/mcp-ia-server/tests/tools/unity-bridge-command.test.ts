@@ -11,6 +11,7 @@ import {
   runUnityBridgeCommand,
   runUnityBridgeGet,
   UNITY_BRIDGE_TIMEOUT_MS_MAX,
+  BRIDGE_OUTPUT_PREVIEW_MAX,
   unityBridgeCommandInputSchema,
   unityBridgeGetInputSchema,
   unityCompileInputSchema,
@@ -434,5 +435,84 @@ describe("runUnityBridgeGet", () => {
     );
     assert.equal(r.ok, false);
     if (!r.ok) assert.equal(r.error, "not_found");
+  });
+});
+
+describe("BRIDGE_OUTPUT_PREVIEW_MAX + timeout last_output_preview", () => {
+  it("BRIDGE_OUTPUT_PREVIEW_MAX is 512", () => {
+    assert.equal(BRIDGE_OUTPUT_PREVIEW_MAX, 512);
+  });
+
+  it("timeout result includes last_output_preview capped at 512 chars", async () => {
+    const longError = "x".repeat(1000);
+    const pool = mockPool({
+      selectSequence: Array.from({ length: 40 }, () => ({
+        status: "pending",
+        response: null,
+        error: longError,
+        kind: "export_agent_context",
+      })),
+    });
+    const r = await runUnityBridgeCommand(
+      { kind: "export_agent_context", timeout_ms: 800 },
+      { pool },
+    );
+    assert.equal(r.ok, false);
+    if (!r.ok) {
+      assert.equal(r.error, "timeout");
+      assert.ok(typeof r.last_output_preview === "string");
+      assert.ok((r.last_output_preview?.length ?? 0) <= BRIDGE_OUTPUT_PREVIEW_MAX);
+      assert.equal(r.last_output_preview, longError.slice(0, BRIDGE_OUTPUT_PREVIEW_MAX));
+    }
+  });
+
+  it("timeout last_output_preview uses error text over response json", async () => {
+    const pool = mockPool({
+      selectSequence: Array.from({ length: 40 }, () => ({
+        status: "pending",
+        response: null,
+        error: "stub error text",
+        kind: "export_agent_context",
+      })),
+    });
+    const r = await runUnityBridgeCommand(
+      { kind: "export_agent_context", timeout_ms: 800 },
+      { pool },
+    );
+    assert.equal(r.ok, false);
+    if (!r.ok) {
+      assert.equal(r.last_output_preview, "stub error text");
+    }
+  });
+
+  it("timeout last_output_preview falls back to JSON.stringify(response) when error is null", async () => {
+    const fakeResponse: UnityBridgeResponsePayload = {
+      schema_version: 1,
+      artifact: "x",
+      command_id: "x",
+      ok: false,
+      completed_at_utc: "",
+      storage: "",
+      artifact_paths: [],
+      postgres_only: false,
+      error: null,
+    };
+    const pool = mockPool({
+      selectSequence: Array.from({ length: 40 }, () => ({
+        status: "pending",
+        response: fakeResponse,
+        error: null,
+        kind: "export_agent_context",
+      })),
+    });
+    const r = await runUnityBridgeCommand(
+      { kind: "export_agent_context", timeout_ms: 800 },
+      { pool },
+    );
+    assert.equal(r.ok, false);
+    if (!r.ok) {
+      assert.ok(typeof r.last_output_preview === "string");
+      assert.ok(r.last_output_preview!.includes("schema_version"));
+    }
   });
 });

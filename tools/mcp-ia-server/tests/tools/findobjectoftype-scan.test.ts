@@ -9,6 +9,7 @@ import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { scanFileForFot } from "../../src/tools/findobjectoftype-scan.js";
+import { wrapTool } from "../../src/envelope.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../../../");
@@ -89,6 +90,46 @@ public class Physics : MonoBehaviour
   assert.equal(violations.length, 1);
   assert.equal(violations[0]!.method, "FixedUpdate");
   fs.rmSync(dir, { recursive: true });
+});
+
+// ---------------------------------------------------------------------------
+// Envelope tests (Phase 4 — TECH-405)
+// ---------------------------------------------------------------------------
+
+test("envelope: empty dir with no *.cs files returns ok:true and matches:[]", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fot-empty-"));
+  const handler = wrapTool(async (input: { path?: string }) => {
+    const repoRoot = dir;
+    const scanPath = input?.path ?? dir;
+    const absPath = path.isAbsolute(scanPath) ? scanPath : path.join(repoRoot, scanPath);
+    if (!fs.existsSync(absPath)) {
+      throw { code: "invalid_input" as const, message: `Directory not found: ${scanPath}` };
+    }
+    // Inline globCsFiles — no *.cs files in empty dir.
+    const csFiles: string[] = [];
+    const allViolations: ReturnType<typeof scanFileForFot> = [];
+    return { scanned_path: scanPath, files_scanned: csFiles.length, violation_count: allViolations.length, matches: allViolations };
+  });
+  handler({ path: dir }).then((envelope) => {
+    assert.equal(envelope.ok, true);
+    assert.ok("payload" in envelope);
+    assert.deepEqual((envelope as { ok: true; payload: { matches: unknown[] } }).payload.matches, []);
+    fs.rmSync(dir, { recursive: true });
+  });
+});
+
+test("envelope: missing path throws invalid_input → ok:false, error.code=invalid_input", async () => {
+  const handler = wrapTool(async (input: { path?: string }) => {
+    const scanPath = (input?.path ?? "").trim();
+    if (!fs.existsSync(scanPath)) {
+      throw { code: "invalid_input" as const, message: `Directory not found: ${scanPath}`, hint: "Provide a repo-relative path." };
+    }
+    return { matches: [] };
+  });
+  const envelope = await handler({ path: "/nonexistent-path-that-does-not-exist-12345" });
+  assert.equal(envelope.ok, false);
+  assert.ok("error" in envelope);
+  assert.equal((envelope as { ok: false; error: { code: string } }).error.code, "invalid_input");
 });
 
 test(

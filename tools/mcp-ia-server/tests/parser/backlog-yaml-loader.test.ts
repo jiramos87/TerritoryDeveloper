@@ -211,6 +211,124 @@ test("yamlToIssue: explicit empty related: [] returns []", () => {
 });
 
 // ---------------------------------------------------------------------------
+// TECH-364 Phase 3 — locator field mapping
+// ---------------------------------------------------------------------------
+
+test("yamlToIssue: all 9 locator fields populated from yaml", () => {
+  const root = makeTmpRoot();
+  try {
+    writeTmpYaml(
+      path.join(root, "ia", "backlog"),
+      "TECH-990",
+      [
+        "id: TECH-990",
+        "type: tech",
+        "title: Locator full",
+        "status: open",
+        "section: High Priority",
+        "parent_plan: ia/projects/foo-master-plan.md",
+        "task_key: T3.1.2",
+        "step: 3",
+        "stage: 3.1",
+        "phase: 2",
+        "router_domain: backlog-yaml",
+        "surfaces:",
+        "  - backlog-yaml-loader.ts",
+        "mcp_slices:",
+        "  - backlog-yaml-mcp-alignment-master-plan::Stage 3.1",
+        "skill_hints:",
+        "  - project-spec-implement",
+        "raw_markdown: ''",
+      ].join("\n") + "\n",
+    );
+
+    const issue = loadYamlIssue(root, "TECH-990");
+    assert.ok(issue, "loadYamlIssue returned null");
+    assert.equal(issue!.parent_plan, "ia/projects/foo-master-plan.md");
+    assert.equal(issue!.task_key, "T3.1.2");
+    assert.equal(issue!.step, 3);
+    assert.equal(issue!.stage, "3.1");
+    assert.equal(issue!.phase, 2);
+    assert.equal(issue!.router_domain, "backlog-yaml");
+    assert.deepEqual(issue!.surfaces, ["backlog-yaml-loader.ts"]);
+    assert.deepEqual(issue!.mcp_slices, ["backlog-yaml-mcp-alignment-master-plan::Stage 3.1"]);
+    assert.deepEqual(issue!.skill_hints, ["project-spec-implement"]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("yamlToIssue: minimal locator (only parent_plan + task_key) — other fields default", () => {
+  const root = makeTmpRoot();
+  try {
+    writeTmpYaml(
+      path.join(root, "ia", "backlog"),
+      "TECH-989",
+      [
+        "id: TECH-989",
+        "type: tech",
+        "title: Locator minimal",
+        "status: open",
+        "section: High Priority",
+        "parent_plan: ia/projects/bar-master-plan.md",
+        "task_key: T1.2",
+        "raw_markdown: ''",
+      ].join("\n") + "\n",
+    );
+
+    const issue = loadYamlIssue(root, "TECH-989");
+    assert.ok(issue, "loadYamlIssue returned null");
+    assert.equal(issue!.parent_plan, "ia/projects/bar-master-plan.md");
+    assert.equal(issue!.task_key, "T1.2");
+    assert.equal(issue!.step, null);
+    assert.equal(issue!.stage, null);
+    assert.equal(issue!.phase, null);
+    assert.equal(issue!.router_domain, null);
+    assert.deepEqual(issue!.surfaces, []);
+    assert.deepEqual(issue!.mcp_slices, []);
+    assert.deepEqual(issue!.skill_hints, []);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("yamlToIssue: v1 yaml (zero locator fields) — all locator members default to null / []", () => {
+  const root = makeTmpRoot();
+  try {
+    writeTmpYaml(
+      path.join(root, "ia", "backlog"),
+      "TECH-988",
+      [
+        "id: TECH-988",
+        "type: tech",
+        "title: V1 legacy issue",
+        "status: open",
+        "section: High Priority",
+        "priority: low",
+        "raw_markdown: ''",
+      ].join("\n") + "\n",
+    );
+
+    const issue = loadYamlIssue(root, "TECH-988");
+    assert.ok(issue, "loadYamlIssue returned null");
+    // Pre-existing fields still work
+    assert.equal(issue!.priority, "low");
+    // Locator fields absent → defaults
+    assert.equal(issue!.parent_plan, null);
+    assert.equal(issue!.task_key, null);
+    assert.equal(issue!.step, null);
+    assert.equal(issue!.stage, null);
+    assert.equal(issue!.phase, null);
+    assert.equal(issue!.router_domain, null);
+    assert.deepEqual(issue!.surfaces, []);
+    assert.deepEqual(issue!.mcp_slices, []);
+    assert.deepEqual(issue!.skill_hints, []);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Phase 3 — chain-through: fixture D depends_on feeds isSoftDependencyMention
 // ---------------------------------------------------------------------------
 

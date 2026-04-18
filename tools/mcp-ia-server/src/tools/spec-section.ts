@@ -15,6 +15,7 @@ import {
 import { fuzzyFindByHeadingTitle } from "../parser/fuzzy.js";
 import { findEntryForSpecDoc } from "../config.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool, type EnvelopeMeta } from "../envelope.js";
 
 const DEFAULT_MAX_CHARS = 3000;
 const FUZZY_STRONG_THRESHOLD = 0.3;
@@ -39,13 +40,11 @@ export type SpecSectionRawArgs = {
 
 /**
  * Maps alternate parameter names and numeric section ids to canonical `spec` + `section` strings.
- * Returns an error message if both document key and section cannot be resolved.
+ * Throws `{ code: "invalid_input", message, hint }` (caught by `wrapTool`) if args are missing.
  */
 export function normalizeSpecSectionInput(
   args: SpecSectionRawArgs | undefined,
-):
-  | { spec: string; section: string; max_chars: number }
-  | { error: string } {
+): { spec: string; section: string; max_chars: number } {
   const a = args ?? {};
   const toStr = (v: unknown): string =>
     v === undefined || v === null ? "" : String(v).trim();
@@ -64,11 +63,13 @@ export function normalizeSpecSectionInput(
       : DEFAULT_MAX_CHARS;
 
   if (!spec || !section) {
-    return {
-      error:
+    throw {
+      code: "invalid_input" as const,
+      message:
         "Provide `spec` (document key or alias, e.g. geo) and `section` (e.g. \"14\" or \"14.5\"). " +
         "Aliases accepted: `key`/`document_key`/`doc` for spec; `section_heading`/`section_id`/`heading` for section. " +
         "Numeric `section` values are coerced to strings.",
+      hint: "Both `spec` and `section` are required.",
     };
   }
 
@@ -141,12 +142,29 @@ function topLevelSectionHints(
   return roots.map((h) => ({ sectionId: h.sectionId, title: h.title }));
 }
 
-/** Payload shape returned as JSON from `spec_section` / `spec_sections` (success or error). */
+/** Success payload shape for `spec_section` (inner content fields). */
+export type SpecSectionSuccessPayload = {
+  key: string;
+  sectionId: string;
+  title: string;
+  lineStart: number;
+  lineEnd: number;
+  content: string;
+  matchType?: "fuzzy";
+  suggestion?: string;
+};
+
+/** Legacy catch-all for `spec_sections` batch inner results (still Record-shaped). */
 export type SpecSectionPayload = Record<string, unknown>;
 
 /**
  * Extract one spec section (same resolution rules as the `spec_section` MCP tool).
  * Shared by `spec_section` and `spec_sections` batch tool (TECH-58).
+ *
+ * Phase 1 (TECH-398): throws typed `{ code: ErrorCode, ... }` on not-found paths so
+ * callers using `wrapTool` receive structured `{ ok: false, error: { code } }` envelopes.
+ * Phase 2 (TECH-398): returns `{ ok: true, payload, meta }` envelope on success so
+ * `spec_section` meta fields flow through `EnvelopeMeta`.
  */
 export function runSpecSectionExtract(
   registry: SpecRegistryEntry[],
@@ -157,10 +175,11 @@ export function runSpecSectionExtract(
   const entry = findEntryForSpecDoc(registry, specKey);
   if (!entry) {
     const available_keys = registry.map((e) => e.key).sort();
-    return {
-      error: "unknown_spec",
+    throw {
+      code: "spec_not_found" as const,
       message: `No document found for key '${specKey}'. Use list_specs to see available documents.`,
-      available_keys,
+      hint: "Call list_specs to retrieve available keys.",
+      details: { available_keys },
     };
   }
 
@@ -184,35 +203,45 @@ export function runSpecSectionExtract(
       match = buildExtractMatch(doc.filePath, heading);
       fuzzySuggestion = `Matched to '${heading.title}' (fuzzy).`;
     } else {
-      return {
-        error: "unknown_section",
+      throw {
+        code: "section_not_found" as const,
         message: `No section found for '${sectionQ}' in '${entry.key}'. Use spec_outline to list sections.`,
-        available_sections: topLevelSectionHints(entry, 20),
-        suggestions: fuzzy.map((f) => f.item.title),
+        hint: "Call spec_outline to see available sections, or try a shorter title substring.",
+        details: {
+          available_sections: topLevelSectionHints(entry, 20),
+          suggestions: fuzzy.map((f) => f.item.title),
+        },
       };
     }
   }
 
   if (match !== null && "kind" in match) {
-    return {
-      error: "unknown_section",
+    throw {
+      code: "section_not_found" as const,
       message: `Multiple sections match '${sectionQ}'. Narrow the section id or title.`,
-      available_sections: match.candidates.slice(0, 20),
+      details: { available_sections: match.candidates.slice(0, 20) },
     };
   }
 
   const { heading, content, lineStart, lineEnd } = match as ExtractSectionMatch;
   const { text, truncated, totalChars } = truncateContent(content, maxChars);
 
-  return {
+  // Phase 2 (TECH-398): return envelope shape so wrapTool passes meta through EnvelopeMeta.
+  // EnvelopeMeta extended with section_id / line_range / truncated / total_chars (Decision Log 2026-04-18).
+  const meta: EnvelopeMeta = {
+    section_id: heading.sectionId,
+    line_range: [lineStart, lineEnd],
+    truncated,
+    total_chars: totalChars,
+  };
+
+  const payload: SpecSectionSuccessPayload = {
     key: entry.key,
     sectionId: heading.sectionId,
     title: heading.title,
     lineStart,
     lineEnd,
     content: text,
-    truncated,
-    totalChars,
     ...(fuzzySuggestion
       ? {
           matchType: "fuzzy" as const,
@@ -220,6 +249,9 @@ export function runSpecSectionExtract(
         }
       : {}),
   };
+
+  // Return pre-shaped envelope so wrapTool passes it through unchanged.
+  return { ok: true, payload, meta } as unknown as SpecSectionPayload;
 }
 
 /**
@@ -238,20 +270,18 @@ export function registerSpecSection(
     },
     async (args) =>
       runWithToolTiming("spec_section", async () => {
-        const normalized = normalizeSpecSectionInput(
-          args as SpecSectionRawArgs | undefined,
-        );
-        if ("error" in normalized) {
-          return jsonResult({
-            error: "invalid_arguments",
-            message: normalized.error,
-          });
-        }
-        const { spec: specKey, section: sectionQ, max_chars: maxChars } =
-          normalized;
-        return jsonResult(
-          runSpecSectionExtract(registry, specKey, sectionQ, maxChars),
-        );
+        // wrapTool catches throws from normalizeSpecSectionInput (invalid_input) and
+        // runSpecSectionExtract (spec_not_found / section_not_found) → { ok: false, error }.
+        const envelope = await wrapTool(
+          async (input: SpecSectionRawArgs | undefined) => {
+            const normalized = normalizeSpecSectionInput(input);
+            const { spec: specKey, section: sectionQ, max_chars: maxChars } =
+              normalized;
+            return runSpecSectionExtract(registry, specKey, sectionQ, maxChars);
+          },
+        )(args as SpecSectionRawArgs | undefined);
+
+        return jsonResult(envelope);
       }),
   );
 }

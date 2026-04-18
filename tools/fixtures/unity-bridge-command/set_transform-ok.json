@@ -1,0 +1,16 @@
+{
+  "request": {
+    "kind": "set_transform",
+    "target_path": "Managers/EconomyManager",
+    "position": "1,2,3",
+    "rotation": "0,0,0",
+    "scale": "1,1,1"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "message": "transform updated on Managers/EconomyManager"
+    },
+    "error": null
+  }
+}

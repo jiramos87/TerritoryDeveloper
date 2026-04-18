@@ -1,0 +1,14 @@
+{
+  "request": {
+    "kind": "save_scene",
+    "scene_path": "Assets/Scenes/MainScene.unity"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "scene_path": "Assets/Scenes/MainScene.unity",
+      "message": "scene saved"
+    },
+    "error": null
+  }
+}

@@ -1,0 +1,5 @@
+
+Summary: resolved=0  already-populated=0  skipped-plan-missing=0  collisions=0
+
+[ERROR] 1 unresolvable record(s) (no plan row found). Pass --skip-unresolvable to continue:
+  TECH-999

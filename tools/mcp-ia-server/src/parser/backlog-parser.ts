@@ -45,6 +45,24 @@ export interface ParsedBacklogIssue {
   related?: string[];
   /** ISO date string (YYYY-MM-DD). Populated by yaml loader (TECH-296). Undefined for markdown-only path. */
   created?: string | null;
+  /** Path to owning master plan (`ia/projects/{slug}-master-plan.md`). Populated by yaml loader (TECH-364). Null when absent. */
+  parent_plan?: string | null;
+  /** Task key in master plan format `^T\d+\.\d+(\.\d+)?$`. Populated by yaml loader (TECH-364). Null when absent. */
+  task_key?: string | null;
+  /** Step number derived from task_key; persisted for index speed. Populated by yaml loader (TECH-364). Null when absent. */
+  step?: number | null;
+  /** Stage identifier e.g. `"3.1"`. Populated by yaml loader (TECH-364). Null when absent. */
+  stage?: string | null;
+  /** Phase number derived from task_key trailing segment. Populated by yaml loader (TECH-364). Null when absent. */
+  phase?: number | null;
+  /** MCP router hint for this issue. Populated by yaml loader (TECH-364). Null when absent. */
+  router_domain?: string | null;
+  /** Relevant-surfaces list from plan task row. Populated by yaml loader (TECH-364). Empty array when absent. */
+  surfaces?: string[];
+  /** Pre-resolved `spec_section` slice ids. Populated by yaml loader (TECH-364). Empty array when absent. */
+  mcp_slices?: string[];
+  /** Advisory routing hints (`stage-file` / `project-new` write; kickoff reads). Populated by yaml loader (TECH-364). Empty array when absent. */
+  skill_hints?: string[];
   raw_markdown: string;
 }
 

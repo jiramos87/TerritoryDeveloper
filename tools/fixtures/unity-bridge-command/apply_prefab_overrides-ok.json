@@ -1,0 +1,14 @@
+{
+  "request": {
+    "kind": "apply_prefab_overrides",
+    "target_path": "Grid/House",
+    "interaction_mode": "AutomatedAction"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "message": "prefab overrides applied on Grid/House"
+    },
+    "error": null
+  }
+}

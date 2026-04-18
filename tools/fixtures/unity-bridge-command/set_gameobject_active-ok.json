@@ -1,0 +1,15 @@
+{
+  "request": {
+    "kind": "set_gameobject_active",
+    "target_path": "UI/DebugOverlay",
+    "active": false
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "active": false,
+      "message": "set UI/DebugOverlay active=false"
+    },
+    "error": null
+  }
+}

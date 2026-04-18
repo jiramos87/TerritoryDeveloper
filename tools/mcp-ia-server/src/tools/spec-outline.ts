@@ -8,6 +8,7 @@ import type { SpecRegistryEntry } from "../parser/types.js";
 import { parseDocument } from "../parser/markdown-parser.js";
 import { findEntryForSpecDoc } from "../config.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool } from "../envelope.js";
 
 const specOutlineInputShape = {
   spec: z
@@ -44,26 +45,30 @@ export function registerSpecOutline(
     },
     async (args) =>
       runWithToolTiming("spec_outline", async () => {
-        const spec = args?.spec ?? "";
-        const entry = findEntryForSpecDoc(registry, spec);
+        const envelope = await wrapTool(async (input: { spec?: string }) => {
+          const spec = input?.spec ?? "";
+          const entry = findEntryForSpecDoc(registry, spec);
 
-        if (!entry) {
-          const available_keys = registry.map((e) => e.key).sort();
-          return jsonResult({
-            error: "unknown_spec",
-            message: `No document found for key '${spec}'. Use list_specs to see available documents.`,
-            available_keys,
-          });
-        }
+          if (!entry) {
+            const available_keys = registry.map((e) => e.key).sort();
+            throw {
+              code: "spec_not_found" as const,
+              message: `No document found for key '${spec}'. Use list_specs to see available documents.`,
+              details: { available_keys },
+            };
+          }
 
-        const doc = parseDocument(entry.filePath);
-        return jsonResult({
-          key: entry.key,
-          fileName: entry.fileName,
-          description: entry.description,
-          frontmatter: doc.frontmatter,
-          outline: doc.headings,
-        });
+          const doc = parseDocument(entry.filePath);
+          return {
+            key: entry.key,
+            fileName: entry.fileName,
+            description: entry.description,
+            frontmatter: doc.frontmatter,
+            outline: doc.headings,
+          };
+        })(args ?? {});
+
+        return jsonResult(envelope);
       }),
   );
 }

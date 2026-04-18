@@ -1,0 +1,14 @@
+{
+  "request": {
+    "kind": "execute_menu_item",
+    "menu_path": "Edit/Clear All PlayerPrefs"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "menu_path": "Edit/Clear All PlayerPrefs",
+      "message": "menu item executed"
+    },
+    "error": null
+  }
+}

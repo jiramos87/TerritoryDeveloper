@@ -1,0 +1,8 @@
+id: TECH-999
+type: tech
+title: Fixture — task-key-bad-regex-fail (parent-plan-validate test)
+status: open
+section: Test fixtures
+parent_plan: ia/projects/sample-master-plan.md
+task_key: Stage-3
+created: 2026-01-01

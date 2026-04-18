@@ -1,0 +1,37 @@
+id: TECH-999
+type: infrastructure / MCP tooling
+title: Schema v2 full fixture — all 9 locator fields populated
+priority: medium
+status: open
+section: Backlog YAML and MCP alignment program
+spec: ia/projects/TECH-999.md
+files:
+  - tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts
+  - tools/scripts/test-fixtures/schema-v2-full.yaml
+notes: |
+  Fixture with every schema-v2 locator field populated — used by round-trip harness to prove byte-identical emit across load → rebuild cycle.
+acceptance: |
+  Round-trip emit matches fixture bytes after created-line normalization.
+depends_on:
+  - TECH-365
+depends_on_raw: TECH-365 (writer path — hard gate)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-999** — Schema v2 full fixture — all 9 locator fields populated
+    - Type: infrastructure / MCP tooling
+    - Notes: fixture for round-trip harness.
+parent_plan: ia/projects/backlog-yaml-mcp-alignment-master-plan.md
+task_key: T3.1.4
+step: 3
+stage: "3.1"
+phase: 2
+router_domain: backlog-yaml
+surfaces:
+  - tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts
+  - tools/scripts/migrate-backlog-to-yaml.mjs
+mcp_slices:
+  - backlog_issue
+  - backlog_record_validate
+skill_hints:
+  - project-spec-implement

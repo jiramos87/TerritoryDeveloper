@@ -84,6 +84,55 @@ test("loadAllYamlIssues: malformed yaml increments parseErrorCount + good record
   }
 });
 
+// ---------------------------------------------------------------------------
+// TECH-364 — malformed task_key regex guard
+// ---------------------------------------------------------------------------
+
+test("loadAllYamlIssues: malformed task_key increments parseErrorCount + good records still load", () => {
+  const root = makeTmpRoot();
+  try {
+    const openDir = path.join(root, "ia", "backlog");
+    writeTmpYaml(openDir, "TECH-003.yaml", GOOD_YAML.replace("TECH-001", "TECH-003"));
+    writeTmpYaml(
+      openDir,
+      "TECH-BAD-TASKKEY.yaml",
+      [
+        "id: TECH-BAD-TASKKEY",
+        "type: tech",
+        "title: Bad task_key",
+        "status: open",
+        "section: High Priority",
+        "task_key: invalid-key",
+        "raw_markdown: ''",
+      ].join("\n") + "\n",
+    );
+
+    const stderrLines: string[] = [];
+    const origStderr = process.stderr.write.bind(process.stderr);
+    process.stderr.write = (chunk: string | Uint8Array, ...rest: unknown[]) => {
+      if (typeof chunk === "string") stderrLines.push(chunk);
+      return (origStderr as (...a: unknown[]) => boolean)(chunk, ...rest);
+    };
+
+    let result;
+    try {
+      result = loadAllYamlIssues(root, "open");
+    } finally {
+      process.stderr.write = origStderr;
+    }
+
+    assert.equal(result.parseErrorCount, 1, "parseErrorCount should be 1");
+    assert.equal(result.records.length, 1, "only good record loaded");
+    assert.equal(result.records[0]!.issue_id, "TECH-003");
+
+    const errorLine = stderrLines.find((l) => l.includes("[backlog-yaml] parse error"));
+    assert.ok(errorLine, "stderr should contain [backlog-yaml] parse error");
+    assert.ok(errorLine!.includes("invalid task_key"), "error message must mention invalid task_key");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("loadAllYamlIssues: no errors when all records are valid", () => {
   const root = makeTmpRoot();
   try {

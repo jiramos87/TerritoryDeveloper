@@ -1,0 +1,17 @@
+{
+  "request": {
+    "kind": "find_gameobject",
+    "target_path": "Managers/GhostObject"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "path": "Managers/GhostObject",
+      "exists": false,
+      "instance_id": 0,
+      "components": [],
+      "children_count": 0
+    },
+    "error": null
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "request": {
+    "kind": "assign_serialized_field",
+    "target_path": "Managers/EconomyManager",
+    "component_type_name": "TreasuryFloorClampService",
+    "field_name": "nonExistentField",
+    "value_kind": "int",
+    "value": "42"
+  },
+  "response": {
+    "ok": false,
+    "response": null,
+    "error": "property_not_found:nonExistentField on TreasuryFloorClampService"
+  }
+}

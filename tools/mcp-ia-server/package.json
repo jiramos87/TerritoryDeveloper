@@ -1,6 +1,6 @@
 {
   "name": "@territory/mcp-ia-server",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
   "description": "MCP server exposing Territory Developer IA docs (specs, rules, root markdown).",
@@ -12,9 +12,9 @@
     "validate:fixtures": "tsx scripts/validate-fixtures.ts",
     "generate:ia-indexes": "tsx scripts/generate-ia-indexes.ts",
     "bridge-playmode-smoke": "tsx scripts/bridge-playmode-smoke.ts",
-    "test": "node --import tsx --test tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts tests/schemas/*.test.ts tests/ia-db/*.test.ts",
-    "test:watch": "node --import tsx --test --watch tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts tests/schemas/*.test.ts tests/ia-db/*.test.ts",
-    "test:coverage": "c8 --src src --include 'src/parser/**/*.ts' --include 'src/ia-index/**/*.ts' --exclude '**/*.test.ts' --check-coverage --lines 90 --reporter text node --import tsx --test tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts tests/schemas/*.test.ts tests/ia-db/*.test.ts",
+    "test": "node --import tsx --test tests/*.test.ts tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts tests/schemas/*.test.ts tests/ia-db/*.test.ts",
+    "test:watch": "node --import tsx --test --watch tests/*.test.ts tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts tests/schemas/*.test.ts tests/ia-db/*.test.ts",
+    "test:coverage": "c8 --src src --include 'src/parser/**/*.ts' --include 'src/ia-index/**/*.ts' --exclude '**/*.test.ts' --check-coverage --lines 90 --reporter text node --import tsx --test tests/*.test.ts tests/parser/*.test.ts tests/tools/*.test.ts tests/ia-index/*.test.ts tests/schemas/*.test.ts tests/ia-db/*.test.ts",
     "postinstall": "patch-package"
   },
   "engines": {

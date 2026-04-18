@@ -1,0 +1,15 @@
+{
+  "request": {
+    "kind": "attach_component",
+    "target_path": "Managers/EconomyManager",
+    "component_type_name": "TreasuryFloorClampService"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "component_instance_id": 1234567,
+      "message": "attached TreasuryFloorClampService to Managers/EconomyManager"
+    },
+    "error": null
+  }
+}

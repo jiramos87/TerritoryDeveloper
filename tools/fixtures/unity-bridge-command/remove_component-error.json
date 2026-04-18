@@ -1,0 +1,12 @@
+{
+  "request": {
+    "kind": "remove_component",
+    "target_path": "Managers/EconomyManager",
+    "component_type_name": "NonExistentService"
+  },
+  "response": {
+    "ok": false,
+    "response": null,
+    "error": "component_not_found:NonExistentService on Managers/EconomyManager"
+  }
+}

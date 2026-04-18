@@ -1,0 +1,13 @@
+{
+  "_comment": "Generic error envelope returned by ANY mutation kind when called during Play Mode. Edit Mode only constraint.",
+  "request": {
+    "kind": "attach_component",
+    "target_path": "Managers/EconomyManager",
+    "component_type_name": "TreasuryFloorClampService"
+  },
+  "response": {
+    "ok": false,
+    "response": null,
+    "error": "edit_mode_required: mutation kinds are not available in Play Mode"
+  }
+}

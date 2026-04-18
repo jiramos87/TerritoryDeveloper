@@ -1,0 +1,12 @@
+{
+  "request": {
+    "kind": "attach_component",
+    "target_path": "Managers/MissingObject",
+    "component_type_name": "TreasuryFloorClampService"
+  },
+  "response": {
+    "ok": false,
+    "response": null,
+    "error": "target_not_found:Managers/MissingObject"
+  }
+}

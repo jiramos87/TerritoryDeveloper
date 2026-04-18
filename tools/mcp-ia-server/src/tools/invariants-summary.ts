@@ -1,13 +1,58 @@
 /**
  * MCP tool: invariants_summary — numbered invariants + bulleted guardrails from invariants.mdc.
+ * Supports optional domain filter (substring match against subsystem_tags).
+ * Returns structured { description, invariants, guardrails, markdown }.
  */
 
 import matter from "gray-matter";
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SpecRegistryEntry } from "../parser/types.js";
 import { findEntryByKey } from "../config.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool } from "../envelope.js";
+
+// ---------------------------------------------------------------------------
+// Sidecar types
+// ---------------------------------------------------------------------------
+
+interface InvariantTag {
+  number: number;
+  subsystem_tags: string[];
+}
+
+interface GuardrailTag {
+  index: number;
+  subsystem_tags: string[];
+}
+
+interface InvariantsTagsSidecar {
+  invariants: InvariantTag[];
+  guardrails: GuardrailTag[];
+}
+
+// ---------------------------------------------------------------------------
+// Structured return types
+// ---------------------------------------------------------------------------
+
+interface InvariantEntry {
+  number: number;
+  title: string;
+  subsystem_tags: string[];
+}
+
+interface GuardrailEntry {
+  index: number;
+  title: string;
+  subsystem_tags: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function jsonResult(payload: unknown) {
   return {
@@ -50,44 +95,169 @@ export function parseInvariantsBody(body: string): {
   return { invariants, guardrails };
 }
 
+function tagsMatch(tags: string[], domain: string): boolean {
+  const d = domain.toLowerCase();
+  return tags.some((t) => t.toLowerCase().includes(d));
+}
+
+function buildMarkdown(
+  invariants: InvariantEntry[],
+  guardrails: GuardrailEntry[],
+): string {
+  if (invariants.length === 0 && guardrails.length === 0) return "";
+  const parts: string[] = [];
+  if (invariants.length > 0) {
+    parts.push("# System Invariants (NEVER violate)");
+    for (const inv of invariants) {
+      parts.push(`${inv.number}. ${inv.title}`);
+    }
+  }
+  if (guardrails.length > 0) {
+    parts.push("");
+    parts.push("# Guardrails (IF → THEN)");
+    for (const gr of guardrails) {
+      parts.push(`- ${gr.title}`);
+    }
+  }
+  return parts.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Register
+// ---------------------------------------------------------------------------
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SIDECAR_PATH = path.resolve(
+  __dirname,
+  "../../data/invariants-tags.json",
+);
+
 /**
- * Register the invariants_summary tool (no inputs).
+ * Load the invariants-tags sidecar. Missing / malformed file → empty sidecar
+ * (non-fatal; subsystem_tags become empty arrays).
+ */
+export function loadInvariantsTagsSidecar(
+  sidecarPath: string = SIDECAR_PATH,
+): InvariantsTagsSidecar {
+  try {
+    const raw = fs.readFileSync(sidecarPath, "utf8");
+    return JSON.parse(raw) as InvariantsTagsSidecar;
+  } catch {
+    return { invariants: [], guardrails: [] };
+  }
+}
+
+export interface InvariantsPayload {
+  description: string;
+  invariants: InvariantEntry[];
+  guardrails: GuardrailEntry[];
+  markdown: string;
+}
+
+/**
+ * Build the structured invariants payload from the live registry + sidecar.
+ * Pure/testable: no MCP server dependency.
+ *
+ * Returns `null` when the invariants entry is not registered.
+ */
+export function buildInvariantsPayload(
+  registry: SpecRegistryEntry[],
+  domain?: string,
+  sidecar?: InvariantsTagsSidecar,
+): InvariantsPayload | null {
+  const entry = findEntryByKey(registry, "invariants");
+  if (!entry) return null;
+
+  const tags = sidecar ?? loadInvariantsTagsSidecar();
+
+  const raw = fs.readFileSync(entry.filePath, "utf8");
+  const { data, content } = matter(raw);
+  const d = data as Record<string, unknown>;
+  const description =
+    typeof d.description === "string"
+      ? d.description
+      : "System invariants and guardrails";
+
+  const { invariants: invTitles, guardrails: grTitles } =
+    parseInvariantsBody(content);
+
+  const allInvariants: InvariantEntry[] = invTitles.map((title, i) => {
+    const tag = tags.invariants.find((t) => t.number === i + 1);
+    return {
+      number: i + 1,
+      title,
+      subsystem_tags: tag?.subsystem_tags ?? [],
+    };
+  });
+
+  const allGuardrails: GuardrailEntry[] = grTitles.map((title, i) => {
+    const tag = tags.guardrails.find((t) => t.index === i);
+    return {
+      index: i,
+      title,
+      subsystem_tags: tag?.subsystem_tags ?? [],
+    };
+  });
+
+  const filteredInvariants = domain
+    ? allInvariants.filter((inv) => tagsMatch(inv.subsystem_tags, domain))
+    : allInvariants;
+
+  const filteredGuardrails = domain
+    ? allGuardrails.filter((gr) => tagsMatch(gr.subsystem_tags, domain))
+    : allGuardrails;
+
+  const markdown = buildMarkdown(filteredInvariants, filteredGuardrails);
+
+  return {
+    description,
+    invariants: filteredInvariants,
+    guardrails: filteredGuardrails,
+    markdown,
+  };
+}
+
+/**
+ * Register the invariants_summary tool.
+ * Accepts optional domain filter; returns structured { description, invariants, guardrails, markdown }.
  */
 export function registerInvariantsSummary(
   server: McpServer,
   registry: SpecRegistryEntry[],
 ): void {
+  // Load sidecar once at register time, cache in closure.
+  const sidecar = loadInvariantsTagsSidecar();
+
   server.registerTool(
     "invariants_summary",
     {
       description:
         "Return the full system invariants and guardrails. These must NEVER be violated when making changes.",
+      inputSchema: {
+        domain: z
+          .string()
+          .optional()
+          .describe(
+            "Optional subsystem filter. Substring match against subsystem_tags (case-insensitive). Omit to return all.",
+          ),
+      },
     },
-    async () =>
+    async (args) =>
       runWithToolTiming("invariants_summary", async () => {
-        const entry = findEntryByKey(registry, "invariants");
-        if (!entry) {
-          return jsonResult({
-            error: "not_found",
-            message: "invariants.mdc is not registered.",
-          });
-        }
+        const envelope = await wrapTool(
+          async ({ domain }: { domain?: string }) => {
+            const payload = buildInvariantsPayload(registry, domain, sidecar);
+            if (!payload) {
+              throw {
+                code: "spec_not_found" as const,
+                message: "invariants.mdc is not registered.",
+              };
+            }
+            return payload;
+          },
+        )(args as { domain?: string });
 
-        const raw = fs.readFileSync(entry.filePath, "utf8");
-        const { data, content } = matter(raw);
-        const d = data as Record<string, unknown>;
-        const description =
-          typeof d.description === "string"
-            ? d.description
-            : "System invariants and guardrails";
-
-        const { invariants, guardrails } = parseInvariantsBody(content);
-
-        return jsonResult({
-          description,
-          invariants,
-          guardrails,
-        });
+        return jsonResult(envelope);
       }),
   );
 }

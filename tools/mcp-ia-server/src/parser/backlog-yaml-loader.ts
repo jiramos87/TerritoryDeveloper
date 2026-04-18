@@ -53,6 +53,16 @@ interface YamlRecord {
   related?: string[];
   created?: string;
   raw_markdown?: string;
+  // Locator fields (TECH-364 / schema v2) — all optional; absent in v1 records
+  parent_plan?: string;
+  task_key?: string;
+  step?: string;   // scalar from yaml; coerced to number in yamlToIssue
+  stage?: string;
+  phase?: string;  // scalar from yaml; coerced to number in yamlToIssue
+  router_domain?: string;
+  surfaces?: string[];
+  mcp_slices?: string[];
+  skill_hints?: string[];
 }
 
 function parseYamlRecord(content: string): YamlRecord {
@@ -145,7 +155,18 @@ function validateYamlRecord(rec: YamlRecord, file: string): void {
 // Convert yaml record → ParsedBacklogIssue
 // ---------------------------------------------------------------------------
 
-function yamlToIssue(rec: YamlRecord): ParsedBacklogIssue {
+const TASK_KEY_RE = /^T\d+\.\d+(\.\d+)?$/;
+
+function validateTaskKey(value: string, fileHint?: string): void {
+  if (!TASK_KEY_RE.test(value)) {
+    const loc = fileHint ? ` in ${fileHint}` : "";
+    throw new Error(
+      `invalid task_key '${value}'${loc}: must match ^T\\d+\\.\\d+(\\.\\d+)?$`,
+    );
+  }
+}
+
+function yamlToIssue(rec: YamlRecord, fileHint?: string): ParsedBacklogIssue {
   const status: BacklogIssueStatus = rec.status === "closed" ? "completed" : "open";
   // depends_on: use raw prose (preserves soft markers for resolveDependsOnStatus)
   // Fall back to joined ids if raw not present (older yaml without depends_on_raw field)
@@ -175,6 +196,19 @@ function yamlToIssue(rec: YamlRecord): ParsedBacklogIssue {
     related: Array.isArray(rec.related) ? rec.related : undefined,
     created: rec.created ?? null,
     raw_markdown: rec.raw_markdown ?? "",
+    // Locator fields (TECH-364 / schema v2)
+    parent_plan: rec.parent_plan ?? null,
+    task_key: (() => {
+      if (rec.task_key != null) validateTaskKey(rec.task_key, fileHint);
+      return rec.task_key ?? null;
+    })(),
+    step: (() => { const n = Number(rec.step); return rec.step != null && !isNaN(n) ? n : null; })(),
+    stage: rec.stage ?? null,
+    phase: (() => { const n = Number(rec.phase); return rec.phase != null && !isNaN(n) ? n : null; })(),
+    router_domain: rec.router_domain ?? null,
+    surfaces: Array.isArray(rec.surfaces) ? rec.surfaces : [],
+    mcp_slices: Array.isArray(rec.mcp_slices) ? rec.mcp_slices : [],
+    skill_hints: Array.isArray(rec.skill_hints) ? rec.skill_hints : [],
   };
 }
 
@@ -194,7 +228,7 @@ export function loadYamlIssue(
     const p = path.join(repoRoot, dir, `${issueId}.yaml`);
     if (fs.existsSync(p)) {
       const rec = parseYamlRecord(fs.readFileSync(p, "utf8"));
-      return yamlToIssue(rec);
+      return yamlToIssue(rec, p);
     }
   }
   return null;
@@ -246,7 +280,7 @@ export function loadAllYamlIssues(
       try {
         const rec = parseYamlRecord(fs.readFileSync(filePath, "utf8"));
         validateYamlRecord(rec, filePath);
-        records.push(yamlToIssue(rec));
+        records.push(yamlToIssue(rec, filePath));
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         console.error(`[backlog-yaml] parse error ${filePath}: ${msg}`);

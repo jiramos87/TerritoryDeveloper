@@ -20,6 +20,9 @@ import {
   E_BAD_ID_FORMAT,
   E_BAD_STATUS,
   E_EMPTY_DEPENDS_ON_RAW,
+  E_BAD_TASK_KEY_FORMAT,
+  E_BAD_LOCATOR_ARRAY_TYPE,
+  E_EMPTY_PARENT_PLAN,
 } from "../../src/parser/backlog-record-schema.js";
 
 // ---------------------------------------------------------------------------
@@ -129,5 +132,71 @@ test("B4: depends_on non-empty with empty depends_on_raw → E_EMPTY_DEPENDS_ON_
   assert.ok(
     result.errors.some((e) => e.startsWith(E_EMPTY_DEPENDS_ON_RAW)),
     `expected an error starting with '${E_EMPTY_DEPENDS_ON_RAW}', got: ${JSON.stringify(result.errors)}`,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// B5 — bad task_key → E_BAD_TASK_KEY_FORMAT surfaces via shared core
+// ---------------------------------------------------------------------------
+
+test("B5: bad task_key (missing T prefix) → E_BAD_TASK_KEY_FORMAT surfaces via shared import", () => {
+  const yaml = [
+    "id: TECH-325",
+    "type: tech",
+    "title: Bad task_key via MCP wrapper",
+    "status: open",
+    "section: Backlog YAML and MCP alignment program",
+    "task_key: 3.3.4",
+  ].join("\n");
+
+  const result = validateBacklogRecord(yaml);
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.errors.some((e) => e.startsWith(E_BAD_TASK_KEY_FORMAT)),
+    `expected ${E_BAD_TASK_KEY_FORMAT}, got: ${JSON.stringify(result.errors)}`,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// B6 — non-string locator array → E_BAD_LOCATOR_ARRAY_TYPE surfaces
+// ---------------------------------------------------------------------------
+
+test("B6: surfaces is plain string → E_BAD_LOCATOR_ARRAY_TYPE surfaces via shared import", () => {
+  const yaml = [
+    "id: TECH-325",
+    "type: tech",
+    "title: Bad surfaces type",
+    "status: open",
+    "section: Backlog YAML and MCP alignment program",
+    "surfaces: not-an-array",
+  ].join("\n");
+
+  const result = validateBacklogRecord(yaml);
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.errors.some((e) => e.startsWith(E_BAD_LOCATOR_ARRAY_TYPE)),
+    `expected ${E_BAD_LOCATOR_ARRAY_TYPE}, got: ${JSON.stringify(result.errors)}`,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// B7 — empty parent_plan → E_EMPTY_PARENT_PLAN surfaces
+// ---------------------------------------------------------------------------
+
+test("B7: empty parent_plan → E_EMPTY_PARENT_PLAN surfaces via shared import", () => {
+  const yaml = [
+    "id: TECH-325",
+    "type: tech",
+    "title: Empty parent_plan",
+    "status: open",
+    "section: Backlog YAML and MCP alignment program",
+    'parent_plan: ""',
+  ].join("\n");
+
+  const result = validateBacklogRecord(yaml);
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.errors.some((e) => e.startsWith(E_EMPTY_PARENT_PLAN)),
+    `expected ${E_EMPTY_PARENT_PLAN}, got: ${JSON.stringify(result.errors)}`,
   );
 });

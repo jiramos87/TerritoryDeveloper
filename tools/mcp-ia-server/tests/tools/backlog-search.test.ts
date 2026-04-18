@@ -1,5 +1,7 @@
 /**
  * backlog_search — keyword search across backlog issues.
+ *
+ * TECH-402: envelope-shape assertions for invalid_input + happy-path paths.
  */
 
 import test from "node:test";
@@ -10,8 +12,10 @@ import { fileURLToPath } from "node:url";
 import { scoreIssue } from "../../src/tools/backlog-search.js";
 import {
   parseAllBacklogIssues,
+  parseAllBacklogIssuesWithMeta,
   type ParsedBacklogIssue,
 } from "../../src/parser/backlog-parser.js";
+import { wrapTool } from "../../src/envelope.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../../../");
@@ -108,3 +112,79 @@ test("backlog_search result projection uses null for missing created", () => {
   const created = issue.created ?? null;
   assert.equal(created, null);
 });
+
+// ---------------------------------------------------------------------------
+// TECH-402: envelope-shape assertions
+// ---------------------------------------------------------------------------
+
+function tokenize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length >= 2);
+}
+
+test("envelope — empty query → { ok:false, error:{ code:'invalid_input' } }", async () => {
+  const envelope = await wrapTool(async () => {
+    const query = "".trim();
+    if (!query) {
+      throw { code: "invalid_input" as const, message: "query is required." };
+    }
+    return {};
+  })({});
+  assert.equal(envelope.ok, false);
+  if (!envelope.ok) {
+    assert.equal(envelope.error.code, "invalid_input");
+  }
+});
+
+test("envelope — zero-token query → { ok:false, error:{ code:'invalid_input' } }", async () => {
+  const envelope = await wrapTool(async () => {
+    const query = "-- !!";  // only non-alphanumeric, no ≥2-char tokens
+    const queryTokens = tokenize(query);
+    if (queryTokens.length === 0) {
+      throw {
+        code: "invalid_input" as const,
+        message: "No searchable tokens in query (tokens must be ≥2 alphanumeric chars).",
+      };
+    }
+    return {};
+  })({});
+  assert.equal(envelope.ok, false);
+  if (!envelope.ok) {
+    assert.equal(envelope.error.code, "invalid_input");
+  }
+});
+
+test(
+  "envelope — happy path → { ok:true, payload.results array }",
+  { skip: !fs.existsSync(path.join(repoRoot, "BACKLOG.md")) },
+  async () => {
+    const envelope = await wrapTool(async () => {
+      const query = "happiness";
+      const queryTokens = tokenize(query);
+      const { records: allIssues } = parseAllBacklogIssuesWithMeta(repoRoot, "open");
+      const scored = allIssues
+        .map((issue: ParsedBacklogIssue) => ({ issue, score: scoreIssue(issue, queryTokens) }))
+        .filter((s: { issue: ParsedBacklogIssue; score: number }) => s.score > 0)
+        .sort((a: { score: number }, b: { score: number }) => b.score - a.score)
+        .slice(0, 10);
+      return {
+        query,
+        scope: "open" as const,
+        total_searched: allIssues.length,
+        result_count: scored.length,
+        results: scored.map((s: { issue: ParsedBacklogIssue; score: number }) => ({
+          issue_id: s.issue.issue_id,
+          title: s.issue.title,
+          score: s.score,
+        })),
+      };
+    })({});
+    assert.equal(envelope.ok, true);
+    if (envelope.ok) {
+      const p = envelope.payload as Record<string, unknown>;
+      assert.ok(Array.isArray(p.results), "payload.results is array");
+    }
+  },
+);

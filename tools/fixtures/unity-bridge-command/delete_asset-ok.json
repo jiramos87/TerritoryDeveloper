@@ -1,0 +1,13 @@
+{
+  "request": {
+    "kind": "delete_asset",
+    "asset_path": "Assets/Data/Obsolete.asset"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "message": "asset deleted: Assets/Data/Obsolete.asset"
+    },
+    "error": null
+  }
+}

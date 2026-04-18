@@ -76,7 +76,7 @@ function numericId(issueId: string): number {
  * Prefix-alphabetic then numeric id descending comparator.
  * E.g. AUDIO < BUG < FEAT < TECH; within TECH: 340 > 328.
  */
-function compareIssues(a: ParsedBacklogIssue, b: ParsedBacklogIssue): number {
+export function compareIssues(a: ParsedBacklogIssue, b: ParsedBacklogIssue): number {
   const prefixA = a.issue_id.replace(/-\d+$/, "");
   const prefixB = b.issue_id.replace(/-\d+$/, "");
   if (prefixA < prefixB) return -1;
@@ -88,7 +88,7 @@ function compareIssues(a: ParsedBacklogIssue, b: ParsedBacklogIssue): number {
 /**
  * Apply AND filters to a list of issues.
  */
-function applyFilters(
+export function applyFilters(
   issues: ParsedBacklogIssue[],
   filters: {
     section?: string;

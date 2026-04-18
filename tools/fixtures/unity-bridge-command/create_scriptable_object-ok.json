@@ -1,0 +1,15 @@
+{
+  "request": {
+    "kind": "create_scriptable_object",
+    "type_name": "EconomyConfig",
+    "asset_path": "Assets/Data/EconomyConfig.asset"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "asset_path": "Assets/Data/EconomyConfig.asset",
+      "message": "ScriptableObject created at Assets/Data/EconomyConfig.asset"
+    },
+    "error": null
+  }
+}

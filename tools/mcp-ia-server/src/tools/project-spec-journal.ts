@@ -18,6 +18,7 @@ import {
 import { getIaDatabasePool } from "../ia-db/pool.js";
 import { runWithToolTiming } from "../instrumentation.js";
 import { resolveProjectSpecFile } from "../parser/project-spec-closeout-parse.js";
+import { wrapTool, dbUnconfiguredError } from "../envelope.js";
 
 function jsonResult(payload: unknown) {
   return {
@@ -59,48 +60,42 @@ export function registerProjectSpecJournalTools(server: McpServer): void {
     },
     async (args) =>
       runWithToolTiming("project_spec_journal_persist", async () => {
-        const pool = getIaDatabasePool();
-        if (!pool) {
-          return jsonResult({
-            error: "db_unconfigured",
-            message:
-              "No database URL: set DATABASE_URL, add config/postgres-dev.json, or see docs/postgres-ia-dev-setup.md.",
+        const envelope = await wrapTool(async (input: typeof args) => {
+          const pool = getIaDatabasePool();
+          if (!pool) throw dbUnconfiguredError();
+          const a = input as {
+            issue_id?: string;
+            spec_path?: string;
+            git_sha?: string;
+          };
+          const repoRoot = resolveRepoRoot();
+          const resolved = resolveProjectSpecFile(repoRoot, {
+            issue_id: a.issue_id,
+            spec_path: a.spec_path,
           });
-        }
-        const a = args as {
-          issue_id?: string;
-          spec_path?: string;
-          git_sha?: string;
-        };
-        const repoRoot = resolveRepoRoot();
-        const resolved = resolveProjectSpecFile(repoRoot, {
-          issue_id: a.issue_id,
-          spec_path: a.spec_path,
-        });
-        if (!resolved.ok) {
-          return jsonResult({
-            error: resolved.error,
-            message: resolved.message,
+          if (!resolved.ok) {
+            throw { code: "invalid_input" as const, message: resolved.message };
+          }
+          let markdown: string;
+          try {
+            markdown = fs.readFileSync(resolved.absPath, "utf8");
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            throw {
+              code: "internal_error" as const,
+              message: msg,
+              details: { spec_path: resolved.relPosix },
+            };
+          }
+          const result = await persistProjectSpecJournal(pool, {
+            markdown,
+            specPathPosix: resolved.relPosix,
+            issueId: resolved.issue_id,
+            gitSha: a.git_sha ?? null,
           });
-        }
-        let markdown: string;
-        try {
-          markdown = fs.readFileSync(resolved.absPath, "utf8");
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : String(e);
-          return jsonResult({
-            error: "read_failed",
-            message: msg,
-            spec_path: resolved.relPosix,
-          });
-        }
-        const result = await persistProjectSpecJournal(pool, {
-          markdown,
-          specPathPosix: resolved.relPosix,
-          issueId: resolved.issue_id,
-          gitSha: a.git_sha ?? null,
-        });
-        return jsonResult(result);
+          return result;
+        })(args);
+        return jsonResult(envelope);
       }),
   );
 
@@ -147,76 +142,72 @@ export function registerProjectSpecJournalTools(server: McpServer): void {
     },
     async (args) =>
       runWithToolTiming("project_spec_journal_search", async () => {
-        const pool = getIaDatabasePool();
-        if (!pool) {
-          return jsonResult({
-            error: "db_unconfigured",
-            message:
-              "No database URL: set DATABASE_URL or use config/postgres-dev.json (skipped in CI).",
-          });
-        }
-        const a = args as {
-          query?: string;
-          keyword_tokens?: string[];
-          max_results?: number;
-          kinds?: JournalEntryKind[];
-          backlog_issue_id?: string;
-          raw_text_for_tokens?: string;
-        };
-        const max = a.max_results ?? 8;
-        const kinds = a.kinds;
+        const envelope = await wrapTool(async (input: typeof args) => {
+          const pool = getIaDatabasePool();
+          if (!pool) throw dbUnconfiguredError();
+          const a = input as {
+            query?: string;
+            keyword_tokens?: string[];
+            max_results?: number;
+            kinds?: JournalEntryKind[];
+            backlog_issue_id?: string;
+            raw_text_for_tokens?: string;
+          };
+          const max = a.max_results ?? 8;
+          const kinds = a.kinds;
 
-        let tokens = [...(a.keyword_tokens ?? [])];
-        if (a.raw_text_for_tokens?.trim()) {
-          tokens = [...tokens, ...tokenizeForJournalSearch(a.raw_text_for_tokens)];
-        }
-        tokens = [...new Set(tokens.map((t) => t.trim().toLowerCase()))];
-
-        const q = (a.query ?? "").trim();
-        const out: {
-          full_text_hits?: unknown;
-          keyword_hits?: unknown;
-          note?: string;
-        } = {};
-
-        if (q) {
-          const ft = await searchProjectSpecJournal(pool, {
-            query: q,
-            limit: max,
-            kinds,
-            issueId: a.backlog_issue_id,
-          });
-          if ("error" in ft && ft.error) {
-            return jsonResult(ft);
+          let tokens = [...(a.keyword_tokens ?? [])];
+          if (a.raw_text_for_tokens?.trim()) {
+            tokens = [...tokens, ...tokenizeForJournalSearch(a.raw_text_for_tokens)];
           }
-          out.full_text_hits = ft;
-        }
+          tokens = [...new Set(tokens.map((t) => t.trim().toLowerCase()))];
 
-        if (tokens.length > 0) {
-          const kw = await searchProjectSpecJournalByKeywords(pool, {
-            tokens,
-            limit: max,
-          });
-          if ("error" in kw && kw.error) {
-            return jsonResult(kw);
+          const q = (a.query ?? "").trim();
+          const out: {
+            full_text_hits?: unknown;
+            keyword_hits?: unknown;
+            note?: string;
+          } = {};
+
+          if (!q && tokens.length === 0) {
+            throw {
+              code: "invalid_input" as const,
+              message: "Provide `query`, `keyword_tokens`, and/or `raw_text_for_tokens`.",
+            };
           }
-          out.keyword_hits = kw;
-        }
 
-        if (!q && tokens.length === 0) {
-          return jsonResult({
-            error: "invalid_arguments",
-            message:
-              "Provide `query`, `keyword_tokens`, and/or `raw_text_for_tokens`.",
-          });
-        }
+          if (q) {
+            const ft = await searchProjectSpecJournal(pool, {
+              query: q,
+              limit: max,
+              kinds,
+              issueId: a.backlog_issue_id,
+            });
+            if ("error" in ft && ft.error) {
+              throw { code: "db_error" as const, message: String(ft.error) };
+            }
+            out.full_text_hits = ft;
+          }
 
-        if (!q && tokens.length > 0) {
-          out.note =
-            "Keyword overlap only; add `query` for full-text when you have a short English phrase.";
-        }
+          if (tokens.length > 0) {
+            const kw = await searchProjectSpecJournalByKeywords(pool, {
+              tokens,
+              limit: max,
+            });
+            if ("error" in kw && kw.error) {
+              throw { code: "db_error" as const, message: String(kw.error) };
+            }
+            out.keyword_hits = kw;
+          }
 
-        return jsonResult(out);
+          if (!q && tokens.length > 0) {
+            out.note =
+              "Keyword overlap only; add `query` for full-text when you have a short English phrase.";
+          }
+
+          return out;
+        })(args);
+        return jsonResult(envelope);
       }),
   );
 
@@ -231,16 +222,14 @@ export function registerProjectSpecJournalTools(server: McpServer): void {
     },
     async (args) =>
       runWithToolTiming("project_spec_journal_get", async () => {
-        const pool = getIaDatabasePool();
-        if (!pool) {
-          return jsonResult({
-            error: "db_unconfigured",
-            message: "No database URL (env or config/postgres-dev.json).",
-          });
-        }
-        const id = (args as { id: number }).id;
-        const row = await getProjectSpecJournalEntry(pool, id);
-        return jsonResult(row);
+        const envelope = await wrapTool(async (input: typeof args) => {
+          const pool = getIaDatabasePool();
+          if (!pool) throw dbUnconfiguredError();
+          const id = (input as { id: number }).id;
+          const row = await getProjectSpecJournalEntry(pool, id);
+          return row;
+        })(args);
+        return jsonResult(envelope);
       }),
   );
 
@@ -257,24 +246,22 @@ export function registerProjectSpecJournalTools(server: McpServer): void {
     },
     async (args) =>
       runWithToolTiming("project_spec_journal_update", async () => {
-        const pool = getIaDatabasePool();
-        if (!pool) {
-          return jsonResult({
-            error: "db_unconfigured",
-            message: "No database URL (env or config/postgres-dev.json).",
+        const envelope = await wrapTool(async (input: typeof args) => {
+          const pool = getIaDatabasePool();
+          if (!pool) throw dbUnconfiguredError();
+          const a = input as {
+            id: number;
+            body_markdown: string;
+            keywords?: string[];
+          };
+          const row = await updateProjectSpecJournalEntry(pool, {
+            id: a.id,
+            body_markdown: a.body_markdown,
+            keywords: a.keywords,
           });
-        }
-        const a = args as {
-          id: number;
-          body_markdown: string;
-          keywords?: string[];
-        };
-        const row = await updateProjectSpecJournalEntry(pool, {
-          id: a.id,
-          body_markdown: a.body_markdown,
-          keywords: a.keywords,
-        });
-        return jsonResult(row);
+          return row;
+        })(args);
+        return jsonResult(envelope);
       }),
   );
 }

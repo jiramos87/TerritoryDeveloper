@@ -10,6 +10,7 @@ import {
   type ParsedBacklogIssue,
 } from "../parser/backlog-parser.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool } from "../envelope.js";
 
 const MAX_RESULTS_CAP = 50;
 const NOTES_TRUNCATE = 200;
@@ -89,6 +90,12 @@ function truncate(text: string, maxLen: number): string {
   return text.slice(0, maxLen) + "…";
 }
 
+type BacklogSearchArgs = {
+  query?: string;
+  scope?: "open" | "archive" | "all";
+  max_results?: number;
+};
+
 /**
  * Register the backlog_search tool.
  */
@@ -102,59 +109,62 @@ export function registerBacklogSearch(server: McpServer): void {
     },
     async (args) =>
       runWithToolTiming("backlog_search", async () => {
-        const query = (args?.query ?? "").trim();
-        if (!query) {
-          return jsonResult({
-            error: "invalid_input",
-            message: "query is required.",
-          });
-        }
+        const envelope = await wrapTool(
+          async (input: BacklogSearchArgs | undefined) => {
+            const query = (input?.query ?? "").trim();
+            if (!query) {
+              throw { code: "invalid_input", message: "query is required." };
+            }
 
-        const scope = (args?.scope as "open" | "archive" | "all") ?? "open";
-        const maxResults = args?.max_results ?? 10;
+            const scope = (input?.scope as "open" | "archive" | "all") ?? "open";
+            const maxResults = input?.max_results ?? 10;
 
-        const repoRoot = resolveRepoRoot();
-        const { records: allIssues, parseErrorCount } = parseAllBacklogIssuesWithMeta(repoRoot, scope);
-        const queryTokens = tokenize(query);
+            const repoRoot = resolveRepoRoot();
+            const { records: allIssues, parseErrorCount } = parseAllBacklogIssuesWithMeta(repoRoot, scope);
+            const queryTokens = tokenize(query);
 
-        if (queryTokens.length === 0) {
-          return jsonResult({
-            error: "invalid_input",
-            message:
-              "No searchable tokens in query (tokens must be ≥2 alphanumeric chars).",
-          });
-        }
+            if (queryTokens.length === 0) {
+              throw {
+                code: "invalid_input",
+                message:
+                  "No searchable tokens in query (tokens must be ≥2 alphanumeric chars).",
+              };
+            }
 
-        const scored = allIssues
-          .map((issue) => ({
-            issue,
-            score: scoreIssue(issue, queryTokens),
-          }))
-          .filter((s) => s.score > 0)
-          .sort((a, b) => b.score - a.score)
-          .slice(0, maxResults);
+            const scored = allIssues
+              .map((issue) => ({
+                issue,
+                score: scoreIssue(issue, queryTokens),
+              }))
+              .filter((s) => s.score > 0)
+              .sort((a, b) => b.score - a.score)
+              .slice(0, maxResults);
 
-        const results = scored.map((s) => ({
-          issue_id: s.issue.issue_id,
-          title: s.issue.title,
-          type: s.issue.type ?? null,
-          status: s.issue.status,
-          section: s.issue.backlog_section,
-          score: s.score,
-          notes: s.issue.notes ? truncate(s.issue.notes, NOTES_TRUNCATE) : null,
-          priority: s.issue.priority ?? null,
-          related: s.issue.related ?? [],
-          created: s.issue.created ?? null,
-        }));
+            const results = scored.map((s) => ({
+              issue_id: s.issue.issue_id,
+              title: s.issue.title,
+              type: s.issue.type ?? null,
+              status: s.issue.status,
+              section: s.issue.backlog_section,
+              score: s.score,
+              notes: s.issue.notes ? truncate(s.issue.notes, NOTES_TRUNCATE) : null,
+              priority: s.issue.priority ?? null,
+              related: s.issue.related ?? [],
+              created: s.issue.created ?? null,
+            }));
 
-        return jsonResult({
-          query,
-          scope,
-          total_searched: allIssues.length,
-          result_count: results.length,
-          results,
-          ...(parseErrorCount > 0 ? { parseErrorCount } : {}),
-        });
+            return {
+              query,
+              scope,
+              total_searched: allIssues.length,
+              result_count: results.length,
+              results,
+              ...(parseErrorCount > 0 ? { parseErrorCount } : {}),
+            };
+          },
+        )(args as BacklogSearchArgs | undefined);
+
+        return jsonResult(envelope);
       }),
   );
 }

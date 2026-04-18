@@ -1,0 +1,14 @@
+{
+  "request": {
+    "kind": "new_scene",
+    "setup_mode": "default",
+    "scene_mode": "single"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "message": "new scene created (setup_mode=default)"
+    },
+    "error": null
+  }
+}

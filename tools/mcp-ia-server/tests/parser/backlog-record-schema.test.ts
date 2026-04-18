@@ -7,6 +7,9 @@ import {
   E_BAD_ID_FORMAT,
   E_BAD_STATUS,
   E_EMPTY_DEPENDS_ON_RAW,
+  E_BAD_TASK_KEY_FORMAT,
+  E_BAD_LOCATOR_ARRAY_TYPE,
+  E_EMPTY_PARENT_PLAN,
 } from "../../src/parser/backlog-record-schema.js";
 
 // ---------------------------------------------------------------------------
@@ -247,4 +250,183 @@ test("parseYamlScalars: parses list fields correctly", () => {
   assert.ok(Array.isArray(scalars["depends_on"]));
   assert.deepEqual(scalars["depends_on"], ["TECH-100"]);
   assert.equal(scalars["depends_on_raw"], "TECH-100");
+});
+
+// ---------------------------------------------------------------------------
+// Schema-v2 locator fields — positive cases
+// ---------------------------------------------------------------------------
+
+const GOOD_V2_FULL = `
+id: TECH-409
+type: tech
+title: Schema v2 full
+status: open
+section: Backlog YAML
+parent_plan: ia/projects/backlog-yaml-mcp-alignment-master-plan.md
+task_key: T3.3.4
+surfaces:
+  - tools/mcp-ia-server/src/parser/backlog-record-schema.ts
+mcp_slices:
+  - backlog_record_validate
+skill_hints:
+  - project-spec-implement
+`.trim();
+
+const GOOD_V2_MINIMAL = `
+id: TECH-409
+type: tech
+title: Schema v2 minimal
+status: open
+section: Backlog YAML
+parent_plan: ia/projects/backlog-yaml-mcp-alignment-master-plan.md
+task_key: T3.3.4
+`.trim();
+
+const GOOD_V1_LEGACY = `
+id: TECH-409
+type: tech
+title: Schema v1 legacy — no locator fields
+status: open
+section: Backlog YAML
+`.trim();
+
+test("schema-v2 full record (all locator fields) → ok: true", () => {
+  const result = validateBacklogRecord(GOOD_V2_FULL);
+  assert.equal(result.ok, true, `errors: ${JSON.stringify(result.errors)}`);
+  assert.deepEqual(result.errors, []);
+});
+
+test("schema-v2 minimal record (parent_plan + task_key only) → ok: true", () => {
+  const result = validateBacklogRecord(GOOD_V2_MINIMAL);
+  assert.equal(result.ok, true, `errors: ${JSON.stringify(result.errors)}`);
+  assert.deepEqual(result.errors, []);
+});
+
+test("schema-v1 legacy record (zero locator fields) → ok: true (back-compat)", () => {
+  const result = validateBacklogRecord(GOOD_V1_LEGACY);
+  assert.equal(result.ok, true, `errors: ${JSON.stringify(result.errors)}`);
+  assert.deepEqual(result.errors, []);
+});
+
+// ---------------------------------------------------------------------------
+// E_BAD_TASK_KEY_FORMAT
+// ---------------------------------------------------------------------------
+
+test("task_key missing T prefix → E_BAD_TASK_KEY_FORMAT", () => {
+  const yaml = `
+id: TECH-409
+type: tech
+title: Bad task_key
+status: open
+section: Backlog YAML
+task_key: 3.3.4
+`.trim();
+  const result = validateBacklogRecord(yaml);
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.errors.some((e) => e.startsWith(E_BAD_TASK_KEY_FORMAT)),
+    `expected ${E_BAD_TASK_KEY_FORMAT}, got: ${JSON.stringify(result.errors)}`,
+  );
+});
+
+test("task_key with extra text suffix → E_BAD_TASK_KEY_FORMAT", () => {
+  const yaml = `
+id: TECH-409
+type: tech
+title: Bad task_key suffix
+status: open
+section: Backlog YAML
+task_key: T3.3.4-extra
+`.trim();
+  const result = validateBacklogRecord(yaml);
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.startsWith(E_BAD_TASK_KEY_FORMAT)));
+});
+
+test("task_key valid 3-segment format T1.2.3 → ok: true", () => {
+  const yaml = `
+id: TECH-409
+type: tech
+title: 3-segment task_key
+status: open
+section: Backlog YAML
+task_key: T1.2.3
+`.trim();
+  const result = validateBacklogRecord(yaml);
+  assert.ok(!result.errors.some((e) => e.startsWith(E_BAD_TASK_KEY_FORMAT)));
+});
+
+// ---------------------------------------------------------------------------
+// E_BAD_LOCATOR_ARRAY_TYPE
+// ---------------------------------------------------------------------------
+
+test("surfaces is a plain string (not array) → E_BAD_LOCATOR_ARRAY_TYPE", () => {
+  const yaml = `
+id: TECH-409
+type: tech
+title: Surfaces string
+status: open
+section: Backlog YAML
+surfaces: string-not-array
+`.trim();
+  const result = validateBacklogRecord(yaml);
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.errors.some((e) => e.startsWith(E_BAD_LOCATOR_ARRAY_TYPE) && e.includes("surfaces")),
+    `expected ${E_BAD_LOCATOR_ARRAY_TYPE} for surfaces, got: ${JSON.stringify(result.errors)}`,
+  );
+});
+
+test("mcp_slices is a plain string → E_BAD_LOCATOR_ARRAY_TYPE", () => {
+  const yaml = `
+id: TECH-409
+type: tech
+title: mcp_slices string
+status: open
+section: Backlog YAML
+mcp_slices: backlog_record_validate
+`.trim();
+  const result = validateBacklogRecord(yaml);
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.startsWith(E_BAD_LOCATOR_ARRAY_TYPE) && e.includes("mcp_slices")));
+});
+
+test("skill_hints is a plain string → E_BAD_LOCATOR_ARRAY_TYPE", () => {
+  const yaml = `
+id: TECH-409
+type: tech
+title: skill_hints string
+status: open
+section: Backlog YAML
+skill_hints: project-spec-implement
+`.trim();
+  const result = validateBacklogRecord(yaml);
+  assert.equal(result.ok, false);
+  assert.ok(result.errors.some((e) => e.startsWith(E_BAD_LOCATOR_ARRAY_TYPE) && e.includes("skill_hints")));
+});
+
+// ---------------------------------------------------------------------------
+// E_EMPTY_PARENT_PLAN
+// ---------------------------------------------------------------------------
+
+test("parent_plan present but empty string → E_EMPTY_PARENT_PLAN", () => {
+  const yaml = `
+id: TECH-409
+type: tech
+title: Empty parent_plan
+status: open
+section: Backlog YAML
+parent_plan: ""
+`.trim();
+  const result = validateBacklogRecord(yaml);
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.errors.some((e) => e.startsWith(E_EMPTY_PARENT_PLAN)),
+    `expected ${E_EMPTY_PARENT_PLAN}, got: ${JSON.stringify(result.errors)}`,
+  );
+});
+
+test("parent_plan absent entirely → no E_EMPTY_PARENT_PLAN (back-compat)", () => {
+  const result = validateBacklogRecord(GOOD_V1_LEGACY);
+  assert.ok(!result.errors.some((e) => e.startsWith(E_EMPTY_PARENT_PLAN)));
 });

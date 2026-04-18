@@ -10,6 +10,7 @@ import {
   resolveDependsOnStatus,
 } from "../parser/backlog-parser.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool } from "../envelope.js";
 
 const inputShape = {
   issue_id: z
@@ -30,6 +31,8 @@ function jsonResult(payload: unknown) {
   };
 }
 
+type BacklogIssueArgs = { issue_id?: string };
+
 /**
  * Register the backlog_issue tool.
  */
@@ -43,30 +46,33 @@ export function registerBacklogIssue(server: McpServer): void {
     },
     async (args) =>
       runWithToolTiming("backlog_issue", async () => {
-        const issueId = (args?.issue_id ?? "").trim();
-        if (!issueId) {
-          return jsonResult({
-            error: "invalid_input",
-            message: "issue_id is required.",
-          });
-        }
+        const envelope = await wrapTool(
+          async (input: BacklogIssueArgs | undefined) => {
+            const issueId = (input?.issue_id ?? "").trim();
+            if (!issueId) {
+              throw { code: "invalid_input", message: "issue_id is required." };
+            }
 
-        const repoRoot = resolveRepoRoot();
-        const parsed = parseBacklogIssue(repoRoot, issueId);
-        if (!parsed) {
-          return jsonResult({
-            error: "unknown_issue",
-            message: `No issue '${issueId}' in BACKLOG.md or BACKLOG-ARCHIVE.md. Check spelling, id format (e.g. BUG-37), or confirm the row exists in the archive.`,
-            hint: "backlog_issue searches BACKLOG.md first, then BACKLOG-ARCHIVE.md.",
-          });
-        }
+            const repoRoot = resolveRepoRoot();
+            const parsed = parseBacklogIssue(repoRoot, issueId);
+            if (!parsed) {
+              throw {
+                code: "issue_not_found",
+                message: `No issue '${issueId}' in BACKLOG.md or BACKLOG-ARCHIVE.md.`,
+                hint: "Check ia/backlog/ and ia/backlog-archive/",
+              };
+            }
 
-        const depends_on_status = resolveDependsOnStatus(
-          repoRoot,
-          parsed.depends_on,
-        );
+            const depends_on_status = resolveDependsOnStatus(
+              repoRoot,
+              parsed.depends_on,
+            );
 
-        return jsonResult({ ...parsed, depends_on_status });
+            return { ...parsed, depends_on_status };
+          },
+        )(args as BacklogIssueArgs | undefined);
+
+        return jsonResult(envelope);
       }),
   );
 }

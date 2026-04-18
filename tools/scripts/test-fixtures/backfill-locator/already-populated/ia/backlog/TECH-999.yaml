@@ -1,0 +1,18 @@
+id: TECH-999
+type: infrastructure / scripts
+title: Fixture record for already-populated backfill case
+priority: medium
+status: open
+section: Test Fixtures
+spec: ""
+files: []
+notes: ""
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-999** — Fixture record for already-populated backfill case
+parent_plan: ia/projects/fake-master-plan.md
+task_key: T9.1.1

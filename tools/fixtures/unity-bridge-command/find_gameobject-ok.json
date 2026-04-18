@@ -1,0 +1,17 @@
+{
+  "request": {
+    "kind": "find_gameobject",
+    "target_path": "Managers/EconomyManager"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "path": "Managers/EconomyManager",
+      "exists": true,
+      "instance_id": 1000010,
+      "components": ["Transform", "EconomyManager", "TreasuryFloorClampService"],
+      "children_count": 0
+    },
+    "error": null
+  }
+}

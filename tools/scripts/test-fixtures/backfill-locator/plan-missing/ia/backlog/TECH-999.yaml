@@ -1,0 +1,16 @@
+id: TECH-999
+type: infrastructure / scripts
+title: Fixture record for plan-missing backfill case
+priority: medium
+status: open
+section: Test Fixtures
+spec: ""
+files: []
+notes: ""
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-999** — Fixture record for plan-missing backfill case

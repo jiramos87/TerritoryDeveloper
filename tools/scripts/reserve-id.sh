@@ -14,6 +14,12 @@
 
 set -euo pipefail
 
+# macOS: Homebrew util-linux flock may not be on $PATH in minimal agent shells.
+# Prepend well-known location so `command -v flock` resolves without manual PATH export.
+if [[ "$(uname)" == "Darwin" ]]; then
+  export PATH="/opt/homebrew/opt/util-linux/bin:${PATH}"
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 # Allow test overrides via env vars (e.g. reserve-id-concurrent.sh uses temp copies).

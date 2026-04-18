@@ -8,6 +8,7 @@ import path from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { resolveRepoRoot } from "../config.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool } from "../envelope.js";
 
 const inputShape = {
   event: z
@@ -168,48 +169,56 @@ export function registerUnitySubscribersOf(server: McpServer): void {
     },
     async (args) =>
       runWithToolTiming("unity_subscribers_of", async () => {
-        const repoRoot = resolveRepoRoot();
-        const rawEvent = (args?.event ?? "").trim();
-        if (!rawEvent) {
-          return jsonResult({
-            error: "invalid_input",
-            message: "event is required",
-          });
-        }
+        const envelope = await wrapTool(
+          async (input: { event?: string; path?: string }) => {
+            const repoRoot = resolveRepoRoot();
+            const rawEvent = (input?.event ?? "").trim();
+            if (!rawEvent) {
+              throw {
+                code: "invalid_input" as const,
+                message: "event is required",
+                hint: "Pass an event / delegate field name such as 'onGridRestored'.",
+              };
+            }
 
-        // Support dotted form: 'EditorApplication.update' → last segment is the event leaf.
-        const dotIdx = rawEvent.lastIndexOf(".");
-        const eventLeaf =
-          dotIdx > 0 && dotIdx < rawEvent.length - 1
-            ? rawEvent.slice(dotIdx + 1)
-            : rawEvent;
+            // Support dotted form: 'EditorApplication.update' → last segment is the event leaf.
+            const dotIdx = rawEvent.lastIndexOf(".");
+            const eventLeaf =
+              dotIdx > 0 && dotIdx < rawEvent.length - 1
+                ? rawEvent.slice(dotIdx + 1)
+                : rawEvent;
 
-        const scanPath = (args?.path ?? "Assets/Scripts/").trim();
-        const absPath = path.isAbsolute(scanPath)
-          ? scanPath
-          : path.join(repoRoot, scanPath);
+            const scanPath = (input?.path ?? "Assets/Scripts/").trim();
+            const absPath = path.isAbsolute(scanPath)
+              ? scanPath
+              : path.join(repoRoot, scanPath);
 
-        if (!fs.existsSync(absPath)) {
-          return jsonResult({
-            error: "path_not_found",
-            message: `Directory not found: ${scanPath}`,
-          });
-        }
+            if (!fs.existsSync(absPath)) {
+              throw {
+                code: "invalid_input" as const,
+                message: `Directory not found: ${scanPath}`,
+                hint: "Provide a repo-relative path that exists (e.g. 'Assets/Scripts/').",
+              };
+            }
 
-        const csFiles = globCsFiles(absPath);
-        const hits: SubscriberHit[] = [];
-        for (const file of csFiles) {
-          hits.push(...scanFileForSubscribers(file, repoRoot, eventLeaf));
-        }
+            const csFiles = globCsFiles(absPath);
+            const hits: SubscriberHit[] = [];
+            for (const file of csFiles) {
+              hits.push(...scanFileForSubscribers(file, repoRoot, eventLeaf));
+            }
 
-        return jsonResult({
-          event: rawEvent,
-          event_leaf: eventLeaf,
-          scanned_path: scanPath,
-          files_scanned: csFiles.length,
-          subscriber_count: hits.length,
-          subscribers: hits,
-        });
+            return {
+              event: rawEvent,
+              event_leaf: eventLeaf,
+              scanned_path: scanPath,
+              files_scanned: csFiles.length,
+              subscriber_count: hits.length,
+              matches: hits,
+            };
+          },
+        )(args as { event?: string; path?: string });
+
+        return jsonResult(envelope);
       }),
   );
 }

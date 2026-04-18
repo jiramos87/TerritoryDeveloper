@@ -8,6 +8,7 @@ import path from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { resolveRepoRoot } from "../config.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool } from "../envelope.js";
 
 const inputShape = {
   path: z
@@ -142,32 +143,39 @@ export function registerFindObjectOfTypeScan(server: McpServer): void {
     },
     async (args) =>
       runWithToolTiming("findobjectoftype_scan", async () => {
-        const repoRoot = resolveRepoRoot();
-        const scanPath = (args?.path ?? "Assets/Scripts/").trim();
-        const absPath = path.isAbsolute(scanPath)
-          ? scanPath
-          : path.join(repoRoot, scanPath);
+        const envelope = await wrapTool(
+          async (input: { path?: string }) => {
+            const repoRoot = resolveRepoRoot();
+            const scanPath = (input?.path ?? "Assets/Scripts/").trim();
+            const absPath = path.isAbsolute(scanPath)
+              ? scanPath
+              : path.join(repoRoot, scanPath);
 
-        if (!fs.existsSync(absPath)) {
-          return jsonResult({
-            error: "path_not_found",
-            message: `Directory not found: ${scanPath}`,
-          });
-        }
+            if (!fs.existsSync(absPath)) {
+              throw {
+                code: "invalid_input" as const,
+                message: `Directory not found: ${scanPath}`,
+                hint: "Provide a repo-relative path that exists (e.g. 'Assets/Scripts/').",
+              };
+            }
 
-        const csFiles = globCsFiles(absPath);
-        const allViolations: FotViolation[] = [];
+            const csFiles = globCsFiles(absPath);
+            const allViolations: FotViolation[] = [];
 
-        for (const file of csFiles) {
-          allViolations.push(...scanFileForFot(file, repoRoot));
-        }
+            for (const file of csFiles) {
+              allViolations.push(...scanFileForFot(file, repoRoot));
+            }
 
-        return jsonResult({
-          scanned_path: scanPath,
-          files_scanned: csFiles.length,
-          violation_count: allViolations.length,
-          violations: allViolations,
-        });
+            return {
+              scanned_path: scanPath,
+              files_scanned: csFiles.length,
+              violation_count: allViolations.length,
+              matches: allViolations,
+            };
+          },
+        )(args as { path?: string });
+
+        return jsonResult(envelope);
       }),
   );
 }

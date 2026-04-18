@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-17T18:08:53.120Z",
+  "last_generated": "2026-04-18T20:34:16.269Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -39,7 +39,7 @@
         "geography_init_params",
         "IDE agent bridge",
         "Alignment gate",
-        "City metrics history"
+        "Chain-level stage digest"
       ],
       "cited_in": [
         {
@@ -53,9 +53,9 @@
       "related": [
         "Agent test mode batch",
         "Cell",
+        "Chain-level stage digest",
         "City metrics history",
-        "geography_init_params",
-        "Happiness"
+        "geography_init_params"
       ],
       "cited_in": []
     },
@@ -86,7 +86,7 @@
         "Alignment gate",
         "Backlog view",
         "Cell",
-        "City metrics history"
+        "Chain-level stage digest"
       ],
       "cited_in": []
     },
@@ -96,7 +96,7 @@
         "Alignment gate",
         "Backlog record",
         "Cell",
-        "City metrics history"
+        "Chain-level stage digest"
       ],
       "cited_in": []
     },
@@ -233,6 +233,37 @@
           "section_title": "10. Cross-refs"
         }
       ]
+    },
+    "Blip LFO": {
+      "related": [
+        "Param smoothing",
+        "Bake-to-clip",
+        "Blip bootstrap",
+        "Blip cooldown",
+        "Blip LUT pool"
+      ],
+      "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "4",
+          "section_title": "4. Authoring"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "4.1",
+          "section_title": "4.1 BlipPatch SO fields"
+        }
+      ]
+    },
+    "Blip LUT pool": {
+      "related": [
+        "Bake-to-clip",
+        "Blip bootstrap",
+        "Blip cooldown",
+        "Blip LFO",
+        "Blip mixer group"
+      ],
+      "cited_in": []
     },
     "Blip mixer group": {
       "related": [
@@ -1086,6 +1117,16 @@
         }
       ]
     },
+    "Chain-level stage digest": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Cell",
+        "City metrics history",
+        "geography_init_params"
+      ],
+      "cited_in": []
+    },
     "Chebyshev distance": {
       "related": [
         "Bridge lip",
@@ -1137,8 +1178,8 @@
         "Cell",
         "Agent test mode batch",
         "Alignment gate",
-        "Cut-through",
-        "geography_init_params"
+        "Chain-level stage digest",
+        "Cut-through"
       ],
       "cited_in": [
         {
@@ -1654,6 +1695,16 @@
       ],
       "cited_in": []
     },
+    "envelope (budget sense)": {
+      "related": [
+        "Building",
+        "Cell",
+        "RCI",
+        "Tax base",
+        "Zone"
+      ],
+      "cited_in": []
+    },
     "Evolution algorithm": {
       "related": [
         "Active scale",
@@ -1721,7 +1772,7 @@
         "Cell",
         "Demand (R / C / I)",
         "Desirability",
-        "Game notification"
+        "envelope (budget sense)"
       ],
       "cited_in": []
     },
@@ -1828,7 +1879,7 @@
         "Cell",
         "IDE agent bridge",
         "Alignment gate",
-        "City metrics history"
+        "Chain-level stage digest"
       ],
       "cited_in": [
         {
@@ -2204,7 +2255,7 @@
         "Cell",
         "geography_init_params",
         "Alignment gate",
-        "City metrics history"
+        "Chain-level stage digest"
       ],
       "cited_in": [
         {
@@ -3005,10 +3056,36 @@
         "Agent test mode batch",
         "Alignment gate",
         "Cell",
-        "City metrics history",
-        "geography_init_params"
+        "Chain-level stage digest",
+        "City metrics history"
       ],
       "cited_in": []
+    },
+    "Param smoothing": {
+      "related": [
+        "Blip LFO",
+        "Bake-to-clip",
+        "Blip bootstrap",
+        "Blip cooldown",
+        "Blip LUT pool"
+      ],
+      "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "4",
+          "section_title": "4. Authoring"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "4.1",
+          "section_title": "4.1 BlipPatch SO fields"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "8",
+          "section_title": "8. Post-MVP extensions pointer"
+        }
+      ]
     },
     "Parent country id": {
       "related": [
@@ -3119,6 +3196,16 @@
         }
       ]
     },
+    "patch proposal (skill)": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view",
+        "Cell"
+      ],
+      "cited_in": []
+    },
     "Pathfinding cost model": {
       "related": [
         "**A* search**",
@@ -3133,8 +3220,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "Cell",
-        "City metrics history",
-        "geography_init_params"
+        "Chain-level stage digest",
+        "City metrics history"
       ],
       "cited_in": []
     },
@@ -3230,8 +3317,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "Cell",
-        "City metrics history",
-        "geography_init_params"
+        "Chain-level stage digest",
+        "City metrics history"
       ],
       "cited_in": []
     },
@@ -3241,7 +3328,7 @@
         "Agent test mode batch",
         "Alignment gate",
         "Cell",
-        "City metrics history"
+        "Chain-level stage digest"
       ],
       "cited_in": [
         {
@@ -3835,8 +3922,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "Cell",
-        "City metrics history",
-        "geography_init_params"
+        "Chain-level stage digest",
+        "City metrics history"
       ],
       "cited_in": []
     },
@@ -3845,8 +3932,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "Cell",
-        "City metrics history",
-        "geography_init_params"
+        "Chain-level stage digest",
+        "City metrics history"
       ],
       "cited_in": []
     },
@@ -3937,8 +4024,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "Cell",
-        "City metrics history",
-        "geography_init_params"
+        "Chain-level stage digest",
+        "City metrics history"
       ],
       "cited_in": []
     },
@@ -3967,6 +4054,16 @@
           "section_title": "5. Geographic Elements"
         }
       ]
+    },
+    "Ship-stage dispatcher": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Cell",
+        "Chain-level stage digest",
+        "City metrics history"
+      ],
+      "cited_in": []
     },
     "Shore band": {
       "related": [
@@ -4081,8 +4178,38 @@
         "Agent test mode batch",
         "Alignment gate",
         "Cell",
-        "City metrics history",
-        "geography_init_params"
+        "Chain-level stage digest",
+        "City metrics history"
+      ],
+      "cited_in": []
+    },
+    "skill self-report": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view",
+        "Cell"
+      ],
+      "cited_in": []
+    },
+    "skill training": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view",
+        "Cell"
+      ],
+      "cited_in": []
+    },
+    "skill-train": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view",
+        "Cell"
       ],
       "cited_in": []
     },
@@ -4454,6 +4581,16 @@
         "Cell",
         "Direction convention",
         "Grass cell"
+      ],
+      "cited_in": []
+    },
+    "TreasuryFloorClampService": {
+      "related": [
+        "Building",
+        "Cell",
+        "Demand (R / C / I)",
+        "Desirability",
+        "envelope (budget sense)"
       ],
       "cited_in": []
     },
@@ -4947,6 +5084,26 @@
           "section_title": "Zones & Buildings"
         }
       ]
+    },
+    "Zone S": {
+      "related": [
+        "Building",
+        "Cell",
+        "envelope (budget sense)",
+        "RCI",
+        "Tax base"
+      ],
+      "cited_in": []
+    },
+    "ZoneSubTypeRegistry": {
+      "related": [
+        "Building",
+        "Building footprint",
+        "Cell",
+        "envelope (budget sense)",
+        "Pivot cell"
+      ],
+      "cited_in": []
     }
   }
 }

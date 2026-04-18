@@ -17,6 +17,9 @@ export const E_MISSING_FIELD = "missing_required_field";
 export const E_BAD_ID_FORMAT = "bad_id_format";
 export const E_BAD_STATUS = "bad_status";
 export const E_EMPTY_DEPENDS_ON_RAW = "empty_depends_on_raw";
+export const E_BAD_TASK_KEY_FORMAT = "bad_task_key_format";
+export const E_BAD_LOCATOR_ARRAY_TYPE = "bad_locator_array_type";
+export const E_EMPTY_PARENT_PLAN = "empty_parent_plan";
 
 // ---------------------------------------------------------------------------
 // Minimal YAML scalar parser (schema-aware; matches emitter in
@@ -52,6 +55,12 @@ export interface ParsedYamlScalars {
   depends_on_raw?: string;
   related?: string[];
   created?: string;
+  // Schema-v2 locator fields
+  parent_plan?: string;
+  task_key?: string;
+  surfaces?: string[];
+  mcp_slices?: string[];
+  skill_hints?: string[];
   [key: string]: unknown;
 }
 
@@ -137,6 +146,8 @@ export function parseYamlScalars(content: string): ParsedYamlScalars {
 
 const VALID_STATUS = new Set(["open", "closed"]);
 const ID_RE = /^(TECH|FEAT|BUG|ART|AUDIO)-\d+[a-z]?$/;
+const TASK_KEY_RE = /^T\d+\.\d+(\.\d+)?$/;
+const LOCATOR_ARRAY_FIELDS = ["surfaces", "mcp_slices", "skill_hints"] as const;
 
 /** Fields required in every record (open + closed). */
 const REQUIRED_ALL = ["id", "type", "title", "status"] as const;
@@ -195,6 +206,43 @@ export function validateBacklogRecord(yamlBody: string): ValidateResult {
   if (dependsOnArr.length > 0 && !s.depends_on_raw) {
     errors.push(
       `${E_EMPTY_DEPENDS_ON_RAW}: depends_on has entries but depends_on_raw is absent or empty`,
+    );
+  }
+
+  // 5. Schema-v2 locator checks (each gated on field presence — v1 back-compat)
+
+  // 5a. task_key format
+  if (s.task_key !== undefined && s.task_key !== null && s.task_key !== "") {
+    if (typeof s.task_key !== "string" || !TASK_KEY_RE.test(s.task_key as string)) {
+      errors.push(
+        `${E_BAD_TASK_KEY_FORMAT}: task_key '${s.task_key}' does not match ^T\\d+\\.\\d+(\\.\\d+)?$`,
+      );
+    }
+  }
+
+  // 5b. locator array fields must be string[] when present
+  for (const field of LOCATOR_ARRAY_FIELDS) {
+    const val = s[field];
+    if (val !== undefined && val !== null) {
+      if (!Array.isArray(val)) {
+        errors.push(
+          `${E_BAD_LOCATOR_ARRAY_TYPE}: '${field}' must be a string array but got ${typeof val}`,
+        );
+      } else {
+        const badIdx = (val as unknown[]).findIndex((el) => typeof el !== "string");
+        if (badIdx >= 0) {
+          errors.push(
+            `${E_BAD_LOCATOR_ARRAY_TYPE}: '${field}[${badIdx}]' is not a string`,
+          );
+        }
+      }
+    }
+  }
+
+  // 5c. parent_plan non-empty when key present
+  if ("parent_plan" in s && (s.parent_plan === "" || s.parent_plan === null || s.parent_plan === undefined)) {
+    errors.push(
+      `${E_EMPTY_PARENT_PLAN}: parent_plan key is present but value is empty`,
     );
   }
 

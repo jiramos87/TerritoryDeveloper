@@ -1,0 +1,19 @@
+{
+  "request": {
+    "kind": "assign_serialized_field",
+    "target_path": "Managers/EconomyManager",
+    "component_type_name": "TreasuryFloorClampService",
+    "field_name": "gridManager",
+    "value_kind": "object_ref",
+    "value_object_path": "Managers/GridManager"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "field": "gridManager",
+      "value_kind": "object_ref",
+      "message": "field assigned and scene marked dirty"
+    },
+    "error": null
+  }
+}

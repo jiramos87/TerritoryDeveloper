@@ -1,0 +1,17 @@
+{
+  "request": {
+    "kind": "create_gameobject",
+    "go_name": "NewServiceObject",
+    "parent_path": "Managers",
+    "position": "0,0,0"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "instance_id": 7654321,
+      "path": "Managers/NewServiceObject",
+      "message": "created NewServiceObject under Managers"
+    },
+    "error": null
+  }
+}

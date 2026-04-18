@@ -1,0 +1,11 @@
+{
+  "request": {
+    "kind": "instantiate_prefab",
+    "prefab_path": "Assets/Prefabs/Missing.prefab"
+  },
+  "response": {
+    "ok": false,
+    "response": null,
+    "error": "prefab_not_found:Assets/Prefabs/Missing.prefab"
+  }
+}

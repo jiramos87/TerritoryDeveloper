@@ -1,0 +1,16 @@
+{
+  "request": {
+    "kind": "move_asset",
+    "asset_path": "Assets/Data/Old/EconomyConfig.asset",
+    "new_path": "Assets/Data/EconomyConfig.asset"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "old_path": "Assets/Data/Old/EconomyConfig.asset",
+      "new_path": "Assets/Data/EconomyConfig.asset",
+      "message": "asset moved"
+    },
+    "error": null
+  }
+}

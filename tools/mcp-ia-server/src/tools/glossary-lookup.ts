@@ -12,6 +12,7 @@ import { parseGlossary } from "../parser/glossary-parser.js";
 import { findEntryByKey, resolveRepoRoot } from "../config.js";
 import { fuzzyFind, normalizeGlossaryQuery } from "../parser/fuzzy.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool } from "../envelope.js";
 
 const FUZZY_STRONG_THRESHOLD = 0.3;
 
@@ -155,8 +156,15 @@ function graphDataFor(term: string): {
 const inputShape = {
   term: z
     .string()
+    .optional()
     .describe(
-      "English glossary term to look up (e.g. 'wet run', 'HeightMap', 'hight map'). Translate from the user’s language when needed. Case-insensitive; bracket text like [x,y] is ignored for matching.",
+      "English glossary term to look up (e.g. 'wet run', 'HeightMap', 'hight map'). Translate from the user’s language when needed. Case-insensitive; bracket text like [x,y] is ignored for matching. Mutually exclusive with `terms`.",
+    ),
+  terms: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Bulk variant: array of English glossary terms. Returns partial-result shape `{ results, errors, meta.partial }` — found terms under `results`, not-found under `errors`, counts under `meta.partial`. Empty array `[]` returns empty results without error. Mutually exclusive with `term`.",
     ),
 };
 
@@ -168,6 +176,90 @@ function jsonResult(payload: unknown) {
         text: JSON.stringify(payload, null, 2),
       },
     ],
+  };
+}
+
+/**
+ * Per-term lookup result discriminator: caller aggregates into `results` vs
+ * `errors` buckets for the bulk path.
+ */
+type LookupOutcome =
+  | { kind: "hit"; payload: Record<string, unknown> }
+  | { kind: "miss"; error: { code: string; message: string } };
+
+/**
+ * Core per-term lookup — shared by single-term and bulk paths. Uses already-
+ * parsed `entries` + resolved `repoRoot` so bulk calls do not re-parse the
+ * glossary file per term. Exported for unit testing.
+ */
+export function lookupOneTerm(
+  rawTerm: string,
+  entries: ReturnType<typeof parseGlossary>,
+  repoRoot: string,
+): LookupOutcome {
+  const normQ = normalizeGlossaryQuery(rawTerm);
+  const lowerRaw = rawTerm.toLowerCase();
+  const lowerNorm = normQ.toLowerCase();
+
+  const hit = entries.find(
+    (e) =>
+      e.term.toLowerCase() === lowerRaw ||
+      e.term.toLowerCase() === lowerNorm,
+  );
+
+  if (hit) {
+    const { related, cited_in } = graphDataFor(hit.term);
+    return {
+      kind: "hit",
+      payload: {
+        term: hit.term,
+        definition: hit.definition,
+        specReference: hit.specReference,
+        category: hit.category,
+        matchType: "exact" as const,
+        related,
+        cited_in,
+        appears_in_code: scanCodeAppearances(hit.term, repoRoot),
+      },
+    };
+  }
+
+  const fuzzyQuery = normQ || rawTerm;
+  const collapse = (s: string) => s.toLowerCase().replace(/\s+/g, "");
+  const cq = collapse(fuzzyQuery);
+  const ranked =
+    cq.length > 0
+      ? fuzzyFind(cq, entries, (e) => collapse(e.term), {
+          threshold: 0.4,
+          maxResults: 5,
+        })
+      : [];
+
+  if (ranked[0] && ranked[0].score < FUZZY_STRONG_THRESHOLD) {
+    const best = ranked[0].item;
+    const { related, cited_in } = graphDataFor(best.term);
+    return {
+      kind: "hit",
+      payload: {
+        term: best.term,
+        definition: best.definition,
+        specReference: best.specReference,
+        category: best.category,
+        matchType: "fuzzy" as const,
+        suggestion: `Did you mean '${best.term}'?`,
+        related,
+        cited_in,
+        appears_in_code: scanCodeAppearances(best.term, repoRoot),
+      },
+    };
+  }
+
+  return {
+    kind: "miss",
+    error: {
+      code: "term_not_found",
+      message: `No glossary entry for '${rawTerm}'.`,
+    },
   };
 }
 
@@ -184,82 +276,96 @@ export function registerGlossaryLookup(
       description:
         "Look up a domain term in the glossary (exact match, then fuzzy suggestions for typos). " +
         "Pass the term in English (glossary language); translate from the conversation if the user did not use English. " +
+        "Single `term` returns the existing per-entry shape. Bulk variant `terms: string[]` returns partial-result shape `{ results, errors, meta.partial }`. " +
         "Returns graph fields when available: `related` (top co-occurring glossary terms), `cited_in` (spec sections where the term appears), and `appears_in_code` (C# file/line mentions under Assets/Scripts/, cached per process).",
       inputSchema: inputShape,
     },
     async (args) =>
       runWithToolTiming("glossary_lookup", async () => {
-        const rawTerm = (args?.term ?? "").trim();
-        const entry = findEntryByKey(registry, "glossary");
-        if (!entry) {
-          return jsonResult({
-            error: "term_not_found",
-            message: "Glossary file is not registered.",
-            available_terms: [] as string[],
-          });
-        }
+        const envelope = await wrapTool(
+          async (input: typeof args) => {
+            const singleTerm = input?.term;
+            const bulkTerms = input?.terms;
+            const bulkRequested = Array.isArray(bulkTerms);
+            const singleRequested =
+              typeof singleTerm === "string" && singleTerm.trim().length > 0;
 
-        const entries = parseGlossary(entry.filePath);
-        const normQ = normalizeGlossaryQuery(rawTerm);
-        const lowerRaw = rawTerm.toLowerCase();
-        const lowerNorm = normQ.toLowerCase();
+            if (bulkRequested && singleRequested) {
+              throw {
+                code: "invalid_input" as const,
+                message:
+                  "Pass exactly one of `term` or `terms`; they are mutually exclusive.",
+              };
+            }
 
-        const hit = entries.find(
-          (e) =>
-            e.term.toLowerCase() === lowerRaw ||
-            e.term.toLowerCase() === lowerNorm,
-        );
+            const entry = findEntryByKey(registry, "glossary");
+            if (!entry) {
+              throw {
+                code: "internal_error" as const,
+                message: "Glossary file is not registered.",
+              };
+            }
 
-        const repoRoot = resolveRepoRoot();
+            const entries = parseGlossary(entry.filePath);
+            const repoRoot = resolveRepoRoot();
 
-        if (hit) {
-          const { related, cited_in } = graphDataFor(hit.term);
-          return jsonResult({
-            term: hit.term,
-            definition: hit.definition,
-            specReference: hit.specReference,
-            category: hit.category,
-            matchType: "exact" as const,
-            related,
-            cited_in,
-            appears_in_code: scanCodeAppearances(hit.term, repoRoot),
-          });
-        }
+            // Bulk path — fan out + aggregate partial-result shape.
+            // Returns pre-shaped envelope so wrapTool passes it through unchanged.
+            if (bulkRequested) {
+              const results: Record<string, Record<string, unknown>> = {};
+              const errors: Record<string, { code: string; message: string }> = {};
+              for (const rawBulk of bulkTerms!) {
+                const trimmed = rawBulk.trim();
+                const outcome = lookupOneTerm(trimmed, entries, repoRoot);
+                if (outcome.kind === "hit") {
+                  results[rawBulk] = outcome.payload;
+                } else {
+                  errors[rawBulk] = outcome.error;
+                }
+              }
+              const succeeded = Object.keys(results).length;
+              const failed = Object.keys(errors).length;
+              // Pre-shaped envelope — wrapTool detects `ok` key and passes through.
+              return {
+                ok: true as const,
+                payload: { results, errors },
+                meta: { partial: { succeeded, failed } },
+              };
+            }
 
-        const fuzzyQuery = normQ || rawTerm;
-        const collapse = (s: string) => s.toLowerCase().replace(/\s+/g, "");
-        const cq = collapse(fuzzyQuery);
-        const ranked =
-          cq.length > 0
-            ? fuzzyFind(cq, entries, (e) => collapse(e.term), {
-                threshold: 0.4,
-                maxResults: 5,
-              })
-            : [];
+            // Single-term path — hit returns payload (auto-wrapped by wrapTool).
+            const rawTerm = (singleTerm ?? "").trim();
+            const outcome = lookupOneTerm(rawTerm, entries, repoRoot);
+            if (outcome.kind === "hit") {
+              return outcome.payload;
+            }
 
-        if (ranked[0] && ranked[0].score < FUZZY_STRONG_THRESHOLD) {
-          const best = ranked[0].item;
-          const { related, cited_in } = graphDataFor(best.term);
-          return jsonResult({
-            term: best.term,
-            definition: best.definition,
-            specReference: best.specReference,
-            category: best.category,
-            matchType: "fuzzy" as const,
-            suggestion: `Did you mean '${best.term}'?`,
-            related,
-            cited_in,
-            appears_in_code: scanCodeAppearances(best.term, repoRoot),
-          });
-        }
+            // Miss on single path → throw so wrapTool yields { ok:false, error }.
+            // details preserves `available_terms` + `suggestions` (backward compat).
+            const collapse = (s: string) => s.toLowerCase().replace(/\s+/g, "");
+            const normQ = normalizeGlossaryQuery(rawTerm);
+            const fuzzyQuery = normQ || rawTerm;
+            const cq = collapse(fuzzyQuery);
+            const ranked =
+              cq.length > 0
+                ? fuzzyFind(cq, entries, (e) => collapse(e.term), {
+                    threshold: 0.4,
+                    maxResults: 5,
+                  })
+                : [];
+            const available_terms = [...new Set(entries.map((e) => e.term))].sort();
+            throw {
+              code: "term_not_found" as const,
+              message: `No glossary entry for '${rawTerm}'.`,
+              details: {
+                available_terms,
+                suggestions: ranked.slice(0, 3).map((r) => r.item.term),
+              },
+            };
+          },
+        )(args);
 
-        const available_terms = [...new Set(entries.map((e) => e.term))].sort();
-        return jsonResult({
-          error: "term_not_found",
-          message: `No glossary entry for '${rawTerm}'.`,
-          available_terms,
-          suggestions: ranked.slice(0, 3).map((r) => r.item.term),
-        });
+        return jsonResult(envelope);
       }),
   );
 }

@@ -180,7 +180,7 @@ const archiveManifest = loadManifest(
 // Reconstruct md content from interleaved manifest
 // ---------------------------------------------------------------------------
 
-function reconstruct(manifest) {
+function reconstruct(manifest, issueMap) {
   const lines = [];
 
   // Preamble
@@ -197,7 +197,7 @@ function reconstruct(manifest) {
           lines.push(l);
         }
       } else if (item.type === "issue") {
-        const record = allIssuesMap.get(item.id);
+        const record = issueMap.get(item.id);
         if (!record) {
           console.error(`[materialize] WARNING: no yaml record for ${item.id} — skipping`);
           continue;
@@ -225,8 +225,11 @@ function reconstruct(manifest) {
   return lines.join("\n");
 }
 
-const generatedBacklog = reconstruct(backlogManifest);
-const generatedArchive = reconstruct(archiveManifest);
+// backlog manifest → open issues only; archive manifest → closed issues only.
+// Keeping them separate prevents archived issues bleeding into BACKLOG.md when
+// the closeout skill leaves a stale manifest entry.
+const generatedBacklog = reconstruct(backlogManifest, openMap);
+const generatedArchive = reconstruct(archiveManifest, closedMap);
 
 // ---------------------------------------------------------------------------
 // Check or write

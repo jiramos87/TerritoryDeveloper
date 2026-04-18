@@ -1,0 +1,21 @@
+id: TECH-997
+type: infrastructure / MCP tooling
+title: Schema v1 legacy fixture — zero locator fields, proves back-compat
+priority: medium
+status: open
+section: Backlog YAML and MCP alignment program
+spec: ia/projects/TECH-997.md
+files:
+  - tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts
+notes: |
+  Pre-schema-v2 legacy fixture — no locator fields at all. Writer must emit zero locator lines (byte-identical v1 round-trip).
+acceptance: |
+  Round-trip emits zero locator lines.
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-997** — Schema v1 legacy fixture — zero locator fields, proves back-compat
+    - Type: infrastructure / MCP tooling
+    - Notes: fixture for round-trip harness.

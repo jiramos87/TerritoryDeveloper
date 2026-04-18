@@ -6,6 +6,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SpecRegistryEntry } from "../parser/types.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool } from "../envelope.js";
 import {
   normalizeSpecSectionInput,
   type SpecSectionRawArgs,
@@ -74,70 +75,100 @@ export function registerSpecSections(
     },
     async (args) =>
       runWithToolTiming("spec_sections", async () => {
-        const raw = args as {
-          sections?: unknown[];
-          max_requests?: number;
-        };
-        const list = Array.isArray(raw.sections) ? raw.sections : [];
-        const cap =
-          typeof raw.max_requests === "number" &&
-          Number.isFinite(raw.max_requests) &&
-          raw.max_requests > 0
-            ? Math.min(Math.floor(raw.max_requests), 50)
-            : MAX_BATCH_DEFAULT;
+        // Outer wrapTool catches top-level throws (invalid_input when sections empty).
+        const envelope = await wrapTool(
+          async (input: { sections?: unknown[]; max_requests?: number }) => {
+            const list = Array.isArray(input.sections) ? input.sections : [];
+            const cap =
+              typeof input.max_requests === "number" &&
+              Number.isFinite(input.max_requests) &&
+              input.max_requests > 0
+                ? Math.min(Math.floor(input.max_requests), 50)
+                : MAX_BATCH_DEFAULT;
 
-        if (list.length === 0) {
-          return jsonResult({
-            error: "invalid_arguments",
-            message:
-              "Provide non-empty `sections` array of { spec, section, max_chars? } objects.",
-          });
-        }
+            if (list.length === 0) {
+              throw {
+                code: "invalid_input" as const,
+                message:
+                  "Provide non-empty `sections` array of { spec, section, max_chars? } objects.",
+              };
+            }
 
-        const results: Record<string, Record<string, unknown>> = {};
-        const errors: Record<string, unknown>[] = [];
+            const results: Record<string, Record<string, unknown>> = {};
+            const batch_warnings: Record<string, unknown>[] = [];
 
-        const slice = list.slice(0, cap);
-        if (list.length > cap) {
-          errors.push({
-            error: "batch_truncated",
-            message: `Only first ${cap} requests processed; pass max_requests up to 50 or split the batch.`,
-            omitted_count: list.length - cap,
-          });
-        }
+            const slice = list.slice(0, cap);
+            if (list.length > cap) {
+              batch_warnings.push({
+                error: "batch_truncated",
+                message: `Only first ${cap} requests processed; pass max_requests up to 50 or split the batch.`,
+                omitted_count: list.length - cap,
+              });
+            }
 
-        for (let i = 0; i < slice.length; i++) {
-          const normalized = normalizeSpecSectionInput(
-            slice[i] as SpecSectionRawArgs | undefined,
-          );
-          if ("error" in normalized) {
-            const key = `__invalid__::${i}`;
-            results[key] = {
-              error: "invalid_arguments",
-              message: normalized.error,
+            for (let i = 0; i < slice.length; i++) {
+              // normalizeSpecSectionInput throws { code: "invalid_input" } on bad args —
+              // catch per-item so a single bad entry doesn't abort the batch.
+              let spec: string;
+              let section: string;
+              let max_chars: number;
+              try {
+                const normalized = normalizeSpecSectionInput(
+                  slice[i] as SpecSectionRawArgs | undefined,
+                );
+                ({ spec, section, max_chars } = normalized);
+              } catch (e) {
+                const key = `__invalid__::${i}`;
+                const err = e as { code?: string; message?: string };
+                results[key] = {
+                  ok: false,
+                  error: { code: err.code ?? "invalid_input", message: err.message ?? String(e) },
+                };
+                continue;
+              }
+              const rk = resultKey(spec, section);
+              // runSpecSectionExtract throws { code: "spec_not_found" | "section_not_found" } —
+              // catch per-item so one missing section doesn't abort the batch (Stage 2.3 territory
+              // for per-result envelope; for Stage 2.2 wrap outer call only per spec §7 Phase 2).
+              try {
+                const payload = runSpecSectionExtract(
+                  registry,
+                  spec,
+                  section,
+                  max_chars,
+                );
+                if (results[rk] !== undefined) {
+                  results[`${rk}::__${i}`] = payload as Record<string, unknown>;
+                } else {
+                  results[rk] = payload as Record<string, unknown>;
+                }
+              } catch (e) {
+                const err = e as { code?: string; message?: string; details?: unknown };
+                const errEntry: Record<string, unknown> = {
+                  ok: false,
+                  error: {
+                    code: err.code ?? "internal_error",
+                    message: err.message ?? String(e),
+                    ...(err.details !== undefined ? { details: err.details } : {}),
+                  },
+                };
+                if (results[rk] !== undefined) {
+                  results[`${rk}::__${i}`] = errEntry;
+                } else {
+                  results[rk] = errEntry;
+                }
+              }
+            }
+
+            return {
+              count: slice.length,
+              results,
+              ...(batch_warnings.length ? { batch_warnings } : {}),
             };
-            continue;
-          }
-          const { spec, section, max_chars } = normalized;
-          const rk = resultKey(spec, section);
-          const payload = runSpecSectionExtract(
-            registry,
-            spec,
-            section,
-            max_chars,
-          );
-          if (results[rk] !== undefined) {
-            results[`${rk}::__${i}`] = payload as Record<string, unknown>;
-          } else {
-            results[rk] = payload as Record<string, unknown>;
-          }
-        }
+          },
+        )(args as { sections?: unknown[]; max_requests?: number });
 
-        return jsonResult({
-          count: slice.length,
-          results,
-          ...(errors.length ? { batch_warnings: errors } : {}),
-        });
+        return jsonResult(envelope);
       }),
   );
 }

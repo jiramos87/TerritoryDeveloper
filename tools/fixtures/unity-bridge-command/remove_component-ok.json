@@ -1,0 +1,14 @@
+{
+  "request": {
+    "kind": "remove_component",
+    "target_path": "Managers/EconomyManager",
+    "component_type_name": "TreasuryFloorClampService"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "message": "removed TreasuryFloorClampService from Managers/EconomyManager"
+    },
+    "error": null
+  }
+}

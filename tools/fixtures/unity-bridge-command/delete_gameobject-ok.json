@@ -1,0 +1,13 @@
+{
+  "request": {
+    "kind": "delete_gameobject",
+    "target_path": "Managers/ObsoleteObject"
+  },
+  "response": {
+    "ok": true,
+    "response": {
+      "message": "deleted Managers/ObsoleteObject"
+    },
+    "error": null
+  }
+}

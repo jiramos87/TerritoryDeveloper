@@ -6,6 +6,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getIaDatabasePool } from "../ia-db/pool.js";
 import { runWithToolTiming } from "../instrumentation.js";
+import { wrapTool, dbUnconfiguredError } from "../envelope.js";
 
 function jsonResult(payload: unknown) {
   return {
@@ -42,71 +43,61 @@ export function registerCityMetricsQuery(server: McpServer): void {
     },
     async (args) =>
       runWithToolTiming("city_metrics_query", async () => {
-        const pool = getIaDatabasePool();
-        if (!pool) {
-          return jsonResult({
-            error: "db_unconfigured",
-            message:
-              "No database URL: set DATABASE_URL, add config/postgres-dev.json, or see docs/postgres-ia-dev-setup.md.",
-          });
-        }
+        const envelope = await wrapTool(
+          async (input: { scenario_id?: string; last_n_rows?: number }) => {
+            const pool = getIaDatabasePool();
+            if (!pool) throw dbUnconfiguredError();
 
-        const a = args as {
-          scenario_id?: string;
-          last_n_rows?: number;
-        };
+            const limit = input.last_n_rows ?? 50;
+            const scenario = input.scenario_id?.trim();
 
-        const limit = a.last_n_rows ?? 50;
-        const scenario = a.scenario_id?.trim();
+            try {
+              let rows: Record<string, unknown>[];
+              if (scenario) {
+                const r = await pool.query(
+                  `SELECT id, recorded_at, simulation_tick_index, game_date, population, money, happiness,
+                          demand_r, demand_c, demand_i, employment_rate, forest_coverage, scenario_id, metadata
+                   FROM city_metrics_history
+                   WHERE scenario_id = $1
+                   ORDER BY id DESC
+                   LIMIT $2`,
+                  [scenario, limit],
+                );
+                rows = r.rows as Record<string, unknown>[];
+              } else {
+                const r = await pool.query(
+                  `SELECT id, recorded_at, simulation_tick_index, game_date, population, money, happiness,
+                          demand_r, demand_c, demand_i, employment_rate, forest_coverage, scenario_id, metadata
+                   FROM city_metrics_history
+                   ORDER BY id DESC
+                   LIMIT $1`,
+                  [limit],
+                );
+                rows = r.rows as Record<string, unknown>[];
+              }
 
-        try {
-          let rows: Record<string, unknown>[];
-          if (scenario) {
-            const r = await pool.query(
-              `SELECT id, recorded_at, simulation_tick_index, game_date, population, money, happiness,
-                      demand_r, demand_c, demand_i, employment_rate, forest_coverage, scenario_id, metadata
-               FROM city_metrics_history
-               WHERE scenario_id = $1
-               ORDER BY id DESC
-               LIMIT $2`,
-              [scenario, limit],
-            );
-            rows = r.rows as Record<string, unknown>[];
-          } else {
-            const r = await pool.query(
-              `SELECT id, recorded_at, simulation_tick_index, game_date, population, money, happiness,
-                      demand_r, demand_c, demand_i, employment_rate, forest_coverage, scenario_id, metadata
-               FROM city_metrics_history
-               ORDER BY id DESC
-               LIMIT $1`,
-              [limit],
-            );
-            rows = r.rows as Record<string, unknown>[];
-          }
-
-          return jsonResult({
-            ok: true,
-            row_count: rows.length,
-            rows,
-          });
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : String(e);
-          const code =
-            e && typeof e === "object" && "code" in e
-              ? String((e as { code?: string }).code)
-              : "";
-          if (code === "42P01") {
-            return jsonResult({
-              error: "table_missing",
-              message:
-                "city_metrics_history not found. Run `npm run db:migrate` from the repository root.",
-            });
-          }
-          return jsonResult({
-            error: "query_failed",
-            message: msg,
-          });
-        }
+              return { row_count: rows.length, rows };
+            } catch (e) {
+              const msg = e instanceof Error ? e.message : String(e);
+              const code =
+                e && typeof e === "object" && "code" in e
+                  ? String((e as { code?: string }).code)
+                  : "";
+              // table_missing (Postgres 42P01) → db_error with migration hint.
+              // Decision Log 2026-04-18: distinct from db_unconfigured; not a separate ErrorCode.
+              if (code === "42P01") {
+                throw {
+                  code: "db_error" as const,
+                  message:
+                    "city_metrics_history not found. Run `npm run db:migrate` from the repository root.",
+                  hint: "Run `npm run db:migrate`",
+                };
+              }
+              throw { code: "db_error" as const, message: msg };
+            }
+          },
+        )(args as { scenario_id?: string; last_n_rows?: number });
+        return jsonResult(envelope);
       }),
   );
 }

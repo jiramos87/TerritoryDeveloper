@@ -7,17 +7,7 @@ import matter from "gray-matter";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SpecRegistryEntry } from "../parser/types.js";
 import { runWithToolTiming } from "../instrumentation.js";
-
-function jsonResult(payload: unknown) {
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: JSON.stringify(payload, null, 2),
-      },
-    ],
-  };
-}
+import { wrapTool } from "../envelope.js";
 
 /**
  * Normalize `globs` from YAML (string, array, or absent) for JSON output.
@@ -44,23 +34,33 @@ export function registerListRules(
     },
     async () =>
       runWithToolTiming("list_rules", async () => {
-        const rules = registry.filter((e) => e.category === "rule");
-        const rows = rules.map((e) => {
-          const raw = fs.readFileSync(e.filePath, "utf8");
-          const { data } = matter(raw);
-          const d = data as Record<string, unknown>;
-          const alwaysApply =
-            typeof d.alwaysApply === "boolean" ? d.alwaysApply : false;
-          const globs = formatRuleGlobs(d.globs);
-          return {
-            key: e.key,
-            fileName: e.fileName,
-            description: e.description,
-            alwaysApply,
-            globs,
-          };
-        });
-        return jsonResult({ rules: rows });
+        const envelope = await wrapTool(async () => {
+          const rules = registry.filter((e) => e.category === "rule");
+          const rows = rules.map((e) => {
+            const raw = fs.readFileSync(e.filePath, "utf8");
+            const { data } = matter(raw);
+            const d = data as Record<string, unknown>;
+            const alwaysApply =
+              typeof d.alwaysApply === "boolean" ? d.alwaysApply : false;
+            const globs = formatRuleGlobs(d.globs);
+            return {
+              key: e.key,
+              fileName: e.fileName,
+              description: e.description,
+              alwaysApply,
+              globs,
+            };
+          });
+          return { rules: rows };
+        })(undefined);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(envelope, null, 2),
+            },
+          ],
+        };
       }),
   );
 }
