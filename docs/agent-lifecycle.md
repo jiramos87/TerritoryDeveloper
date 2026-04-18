@@ -75,8 +75,8 @@ Every stage owes the next one a concrete artifact. Missing artifact = the next s
 | `/design-explore` | `## Design Expansion` block persisted in `docs/{slug}.md` | `/master-plan-new` | Skill refuses authoring if expansion block absent |
 | `/master-plan-new` | `ia/projects/{slug}-master-plan.md` with `_pending_` task seeds + cardinality gate (≥2 tasks/phase) cleared | `/stage-file` | Stage-file refuses when tasks missing or cardinality unjustified |
 | `/master-plan-extend` | Existing `ia/projects/{slug}-master-plan.md` extended with new `### Step {START}..{END}` blocks (fully decomposed) + header metadata synced + cardinality gate cleared on new stages only | `/stage-file {ORCHESTRATOR_SPEC} Stage {START}.1` | Stage-file refuses when new stage tasks missing or duplication gate trips |
-| `/stage-file` | BACKLOG rows + project spec stubs, orchestrator table rows updated from `_pending_` → issue id | `/kickoff` per filed issue | Kickoff refuses when spec stub missing |
-| `/project-new` | One BACKLOG row in correct priority section + one template-seeded `ia/projects/{ISSUE_ID}.md` + `validate:dead-project-specs` green | `/kickoff` | Kickoff refuses bare stub without §1 / §2 context |
+| `/stage-file` | `ia/backlog/{id}.yaml` records + project spec stubs + `BACKLOG.md` regenerated, orchestrator table rows updated from `_pending_` → issue id | `/kickoff` per filed issue | Kickoff refuses when spec stub missing |
+| `/project-new` | `ia/backlog/{ISSUE_ID}.yaml` record + one template-seeded `ia/projects/{ISSUE_ID}.md` + `BACKLOG.md` regenerated + `validate:dead-project-specs` green | `/kickoff` | Kickoff refuses bare stub without §1 / §2 context |
 | `/kickoff` | §1–§10 enriched (Open Questions resolved or flagged, Implementation Plan concrete) | `/implement` | Implement refuses when Implementation Plan still `_pending_` |
 | `/implement` | Phase code committed, compile clean, spec §6 / §9 / §10 appended per phase | `/verify-loop` | Verify-loop refuses when compile gate fails (Step 1) |
 | `/verify-loop` | JSON Verification block with `verdict: pass` + `human_ask` filled | `/project-stage-close` or `/closeout` | Close refuses without a `pass` verdict |
@@ -130,9 +130,9 @@ Both defer to the single canonical policy [`docs/agent-led-verification-policy.m
 | Aspect | `project-stage-close` (skill) | `/closeout` (umbrella) |
 |--------|-------------------------------|------------------------|
 | Fires | End of each non-final stage of a multi-stage spec | Issue verified pass, ready to archive |
-| Touches | Stage's §7 checklist, §6 / §9 / §10 append, optional Postgres journal, handoff prompt | Full spec lifecycle: lessons migration → spec deletion → BACKLOG row move → id purge |
+| Touches | Stage's §7 checklist, §6 / §9 / §10 append, optional Postgres journal, handoff prompt | Full spec lifecycle: lessons migration → spec deletion → yaml record moved to archive → `BACKLOG.md` regenerated → id purged |
 | Deletes spec? | No — spec lives on for next stage | Yes — spec file deleted after lessons migrated |
-| Touches BACKLOG? | No | Yes — row moved to `BACKLOG-ARCHIVE.md` |
+| Touches BACKLOG? | No | Yes — `ia/backlog/{id}.yaml` → `ia/backlog-archive/{id}.yaml`; `materialize-backlog.sh` regenerates `BACKLOG.md` |
 | Confirmation gate? | No | No (gate removed per TECH-88) |
 
 Stage close is orchestrator-driven; umbrella close is BACKLOG-id-driven. They never fire against the same target in the same session.
@@ -145,7 +145,15 @@ Each stage is idempotent against its own output: running `/kickoff` twice on an 
 
 Resume rule: on returning to a paused issue, run `/verify` first to re-establish branch state, then pick up at the stage after the last green handoff artifact.
 
-Never reuse retired ids. The monotonic-per-prefix rule ([`AGENTS.md` §7](../AGENTS.md)) holds across BACKLOG + BACKLOG-ARCHIVE.
+Never reuse retired ids. The monotonic-per-prefix rule ([`AGENTS.md` §7](../AGENTS.md)) holds across `ia/backlog/` + `ia/backlog-archive/` (and their generated views `BACKLOG.md` + `BACKLOG-ARCHIVE.md`). Id reservation: `bash tools/scripts/reserve-id.sh {PREFIX}` — never scan markdown views for max id.
+
+### Crashed-closeout recovery
+
+If `/closeout` crashes mid-run, the in-flight entry it registered in `ia/state/in-flight-closeouts.json` may remain stale. Recovery:
+
+- **Automatic (default):** the next `/closeout` call (any issue) acquires `flock ia/state/.closeout.lock`, reads the registry, and drops all entries with `started_at` older than 24 h. The stale entry clears itself.
+- **Manual override:** open `ia/state/in-flight-closeouts.json` and delete the matching row (the entry whose `issue_id` matches the crashed closeout). Save; no regeneration required.
+- The id-counter lock (`ia/state/.id-counter.lock`) is unaffected — closeout uses a separate `ia/state/.closeout.lock` (invariant #13 preserved).
 
 ---
 
