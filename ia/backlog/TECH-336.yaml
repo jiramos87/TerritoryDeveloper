@@ -1,7 +1,7 @@
 id: TECH-336
 type: infrastructure / data model
 title: Add LandmarkPopGate discriminator (Stage 1.1 T1.1.2)
-priority: high
+priority: medium
 status: open
 section: Multi-scale simulation lane
 spec: ia/projects/TECH-336.md
@@ -13,12 +13,9 @@ acceptance: |
   File compiles clean; base + 2 subclasses present; YAML tag discriminator field `kind` wired; `npm run unity:compile-check` green; `npm run validate:all` green.
 depends_on:
   - TECH-335
-depends_on_raw: "TECH-335 (LandmarkTier enum — hard gate, `ScaleTransitionGate.fromTier` consumes the enum)"
-related:
-  - TECH-335
-  - TECH-337
-  - TECH-338
-created: 2026-04-17
+depends_on_raw: TECH-335 (LandmarkTier enum — hard gate, `ScaleTransitionGate.fromTier` consumes the enum)
+related: []
+created: 2026-04-18
 raw_markdown: |
   - [ ] **TECH-336** — Add LandmarkPopGate discriminator (Stage 1.1 T1.1.2)
     - Type: infrastructure / data model
@@ -28,3 +25,5 @@ raw_markdown: |
     - Acceptance: compiles clean; 2 subclasses; `validate:all` green.
     - Depends on: TECH-335 (LandmarkTier enum — hard gate)
     - Related: TECH-335, TECH-337, TECH-338
+parent_plan: ia/projects/landmarks-master-plan.md
+task_key: T1.1.2

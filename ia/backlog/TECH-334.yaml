@@ -1,7 +1,7 @@
 id: TECH-334
 type: infrastructure / build
 title: Utilities assembly + compile-check green (Stage 1.1 Phase 2)
-priority: high
+priority: medium
 status: open
 section: Multi-scale simulation lane
 spec: ia/projects/TECH-334.md
@@ -15,12 +15,9 @@ depends_on:
   - TECH-331
   - TECH-332
   - TECH-333
-depends_on_raw: "TECH-331, TECH-332, TECH-333 (all types must exist — hard gate)"
-related:
-  - TECH-331
-  - TECH-332
-  - TECH-333
-created: 2026-04-17
+depends_on_raw: TECH-331, TECH-332, TECH-333 (all types must exist — hard gate)
+related: []
+created: 2026-04-18
 raw_markdown: |
   - [ ] **TECH-334** — Utilities assembly + compile-check green (Stage 1.1 Phase 2)
     - Type: infrastructure / build
@@ -30,3 +27,5 @@ raw_markdown: |
     - Acceptance: `unity:compile-check` green; types visible to consumers; `validate:all` green.
     - Depends on: TECH-331, TECH-332, TECH-333 (all types exist — hard gate)
     - Related: TECH-331, TECH-332, TECH-333
+parent_plan: ia/projects/utilities-master-plan.md
+task_key: T1.1.4

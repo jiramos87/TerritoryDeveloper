@@ -1,6 +1,6 @@
 id: TECH-305
 type: infrastructure / simulation signal types
-title: "Add `SimulationSignal` enum + `ISignalProducer`/`ISignalConsumer` interfaces (Stage 1.1 T1.1.1)"
+title: Add `SimulationSignal` enum + `ISignalProducer`/`ISignalConsumer` interfaces (Stage 1.1 T1.1.1)
 priority: medium
 status: open
 section: Stage 1.1 — Signal Contract Primitives
@@ -16,7 +16,7 @@ acceptance: |
 depends_on: []
 depends_on_raw: none
 related: []
-created: 2026-04-17
+created: 2026-04-18
 raw_markdown: |
   - [ ] **TECH-305** — Add `SimulationSignal` enum + `ISignalProducer`/`ISignalConsumer` interfaces (Stage 1.1 T1.1.1)
     - Type: infrastructure / simulation signal types
@@ -25,3 +25,5 @@ raw_markdown: |
     - Notes: `SimulationSignal` enum w/ exactly 12 locked entries — `PollutionAir`, `PollutionLand`, `PollutionWater`, `Crime`, `ServicePolice`, `ServiceFire`, `ServiceEducation`, `ServiceHealth`, `ServiceParks`, `TrafficLevel`, `WastePressure`, `LandValue`. `ISignalProducer.EmitSignals(SignalFieldRegistry)` + `ISignalConsumer.ConsumeSignals(SignalFieldRegistry, DistrictSignalCache)` interfaces. Type surface only — no runtime wiring. City-sim depth Bucket 2 foundation.
     - Acceptance: All 3 files compile; enum has exactly 12 entries; interfaces match spec; `npm run unity:compile-check` clean; `npm run validate:all` clean.
     - Depends on: none
+parent_plan: ia/projects/city-sim-depth-master-plan.md
+task_key: T1.1.1

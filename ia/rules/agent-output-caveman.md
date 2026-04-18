@@ -20,5 +20,6 @@ Exceptions (write normal English):
 5. Structured output — JSON Verification blocks, MCP tool payloads.
 6. Destructive-op confirmations — `/closeout` deletes, force-push warnings.
 7. When the user says "normal" / "stop caveman" / "in Spanish" — overrides for that turn.
+8. Human-polling surfaces — user-gate questions and option labels use product/domain wording (game/feature semantics), not IA/tooling jargon. Caveman terseness still applies; jargon density does not. See [`ia/rules/agent-human-polling.md`](agent-human-polling.md) — fetch via `rule_content agent-human-polling`.
 
 Authoring surfaces (caveman applies): subagent / skill (preamble + body prose, not just preamble) / slash command / handoff files, new `ia/projects/{ISSUE_ID}*.md` specs (§1–§10 prose), new or modified **BACKLOG.md** / **BACKLOG-ARCHIVE.md** rows (Notes / Acceptance prose; row structure + bolded glossary terms + id cross-refs + path links stay verbatim). Full where-to-apply checklist: [`ia/rules/agent-output-caveman-authoring.md`](agent-output-caveman-authoring.md) — fetch via `rule_content agent-output-caveman-authoring`.

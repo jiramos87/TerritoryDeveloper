@@ -1,0 +1,33 @@
+id: TECH-427
+type: mcp / infrastructure
+title: "**MCP** — structured `rule_content` payload + markdown side-channel (Stage 2.3 T2.3.2)"
+priority: medium
+status: open
+section: IA infrastructure
+spec: ia/projects/TECH-427-rule-content-structured.md
+files:
+  - tools/mcp-ia-server/src/tools/rule-content.ts
+notes: |
+  Convert `rule-content.ts` response to `{ rule_key, title, sections: [{id, heading, body}], markdown?: string }`. Parse headings from rule markdown file; build section slices keyed by stable id. `markdown` side-channel = raw file text for agents still preferring prose. Structured base lets `rule_section` tool (TECH-399 T2.2.2) slice by section id symmetric to `spec_section`. Stage 2.3 Phase 1 T2.3.2 of `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`.
+acceptance: |
+  `rule_content({ rule: "invariants" })` returns `{ rule_key, title, sections: [...], markdown }` under envelope. Each section has `id`, `heading`, `body` fields. `markdown` raw file text preserved. `rule_section` slices match structured `sections[].body`. Unit tests cover empty rule, multi-heading rule, flat rule. `validate:all` green.
+depends_on:
+  - TECH-388
+  - TECH-399
+depends_on_raw: "TECH-388 (envelope — hard dep); TECH-399 (rule tools wrapped + `rule_section` shipped — hard dep)"
+related:
+  - TECH-426
+  - TECH-428
+  - TECH-429
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-427** — **MCP** — structured `rule_content` payload + markdown side-channel (Stage 2.3 T2.3.2)
+    - Type: mcp / infrastructure
+    - Files: `tools/mcp-ia-server/src/tools/rule-content.ts`
+    - Spec: `ia/projects/TECH-427-rule-content-structured.md`
+    - Notes: Response shape → `{ rule_key, title, sections: [{id, heading, body}], markdown? }`; parse headings; `markdown` side-channel = raw text; base for `rule_section` slice.
+    - Acceptance: structured sections + markdown both present; `rule_section` aligns w/ sections[].body; unit tests green; `validate:all` green.
+    - Depends on: TECH-388, TECH-399
+    - Related: TECH-426, TECH-428, TECH-429
+parent_plan: ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md
+task_key: T2.3.2

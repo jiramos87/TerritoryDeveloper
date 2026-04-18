@@ -38,7 +38,7 @@
 
 ### Step 1 — Pool core + contributor registry
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 1.1
 
 **Backlog state (Step 1):** 0 filed
 
@@ -448,7 +448,7 @@
 
 ### Step 4 — Save/load + landmarks hook + glossary/spec closeout
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 4.2
 
 **Backlog state (Step 4):** 0 filed
 
@@ -508,7 +508,7 @@
 
 #### Stage 4.2 — Canonical spec + glossary closeout + landmarks contract freeze
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress (BUG-20 filed)
 
 **Objectives:** Author `ia/specs/utility-system.md` per invariant #12 (utilities = permanent domain). Link glossary rows from Step 1 to this spec. Freeze landmarks registry contract documentation. Note BUG-20 orthogonal status.
 

@@ -1,0 +1,35 @@
+id: TECH-425
+type: tests (EditMode / NUnit) + glossary
+title: "EditMode tests + glossary rows for `BudgetAllocationService` (Stage 1.3 Phase 3 — stage close)"
+priority: medium
+status: open
+section: Medium Priority
+spec: ia/projects/TECH-425-budget-allocation-tests-glossary.md
+files:
+  - Assets/Tests/EditMode/Economy/BudgetAllocationServiceTests.cs
+  - Assets/Tests/EditMode/Economy/SaveMigrationV3ToV4Tests.cs
+  - ia/specs/glossary.md
+  - tools/mcp-ia-server/data/glossary-index.json
+  - tools/mcp-ia-server/data/glossary-graph-index.json
+notes: |
+  `BudgetAllocationServiceTests` cases: (a) `TryDraw` blocks when envelope exhausted (no mutation), (b) `TryDraw` blocks when treasury empty even if envelope fat (no mutation), (c) `TryDraw` succeeds when both OK + BOTH envelope + treasury decrement, (d) `MonthlyReset` restores `currentMonthRemaining[i] == cap × pct[i]`, (e) `SetEnvelopePct` normalizes sum to 1.0 within 1e-6, (f) all-zero input rejected. `SaveMigrationV3ToV4Tests`: legacy v3 save loads into v4 w/ equal envelope + empty S list + existing data preserved. Add glossary rows: `BudgetAllocationService`, `IBudgetAllocator` — forward-ref `ia/specs/economy-system.md#budget-envelope` (Stage 3.3) + fallback `docs/zone-s-economy-exploration.md §IP-2`. Run `npm run generate:ia-indexes` to regenerate `glossary-index.json` + `glossary-graph-index.json`. Run `npm run validate:all`.
+acceptance: |
+  6 `BudgetAllocationServiceTests` + v3→v4 migration test compile + pass via `npm run unity:testmode-batch`. Both glossary rows present. Indexes regenerated. `npm run validate:all` green. Closes Stage 1.3 → Step 1 fully landed.
+depends_on:
+  - TECH-420
+  - TECH-421
+  - TECH-423
+  - TECH-424
+depends_on_raw: "**TECH-420** (TryDraw + MonthlyReset), **TECH-421** (SetEnvelopePct normalize), **TECH-423** (migration branch), **TECH-424** (save/load wiring)"
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-425** — EditMode tests + glossary rows for `BudgetAllocationService` (Stage 1.3 Phase 3 — stage close)
+    - Type: tests (EditMode / NUnit) + glossary
+    - Files: `Assets/Tests/EditMode/Economy/BudgetAllocationServiceTests.cs`, `Assets/Tests/EditMode/Economy/SaveMigrationV3ToV4Tests.cs`, `ia/specs/glossary.md`, `tools/mcp-ia-server/data/glossary-index.json`, `tools/mcp-ia-server/data/glossary-graph-index.json`
+    - Spec: `ia/projects/TECH-425-budget-allocation-tests-glossary.md`
+    - Notes: 6 tests cover `TryDraw` envelope/treasury short-circuits, `MonthlyReset`, `SetEnvelopePct` normalize + all-zero guard; separate migration test covers v3→v4 round-trip. Glossary rows: `BudgetAllocationService`, `IBudgetAllocator` forward-ref `economy-system.md` (Stage 3.3) + fallback exploration doc.
+    - Acceptance: tests green via `unity:testmode-batch`; glossary rows present; indexes regenerated; `validate:all` green.
+    - Depends on: **TECH-420**, **TECH-421**, **TECH-423**, **TECH-424**
+parent_plan: ia/projects/zone-s-economy-master-plan.md
+task_key: T1.3.8

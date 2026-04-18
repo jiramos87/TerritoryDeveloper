@@ -1,6 +1,6 @@
 # City-Sim Depth — Master Plan (Bucket 2 MVP)
 
-> **Status:** Draft — Step 1 / Stage 1.1 filed 2026-04-17 (TECH-305..TECH-308)
+> **Status:** In Progress — Step 1 / Stage 1.1
 >
 > **Scope:** Shared simulation-signal contract (12 signals) + district aggregation layer + migration of existing happiness/pollution scalar to `HappinessComposer` + 7 new simulation sub-surfaces (pollution split, crime, services, traffic, waste, construction evolution, density evolution + industrial sub-types) + signal overlays + HUD/district panel parity. Excludes Zone S / economy (Bucket 3), utilities (Bucket 4), CityStats UI overhaul (Bucket 8), per-vehicle pathing, animation pipeline (Bucket 5), region/country feedback consumers.
 >
@@ -68,7 +68,7 @@
 
 #### Stage 1.1 — Signal Contract Primitives
 
-**Status:** Draft (4 tasks filed 2026-04-17 — TECH-305..TECH-308)
+**Status:** In Progress (4 tasks filed 2026-04-17 — TECH-305..TECH-308)
 
 **Objectives:** Author core type surface — `SimulationSignal` enum, `SignalField`, `SignalMetadataRegistry` ScriptableObject, `ISignalProducer`/`ISignalConsumer` interfaces, `SignalFieldRegistry` MonoBehaviour — and the canonical `ia/specs/simulation-signals.md` reference spec that closes the spec gap flagged in the exploration review.
 

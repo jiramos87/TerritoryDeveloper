@@ -30,7 +30,7 @@
 
 ### Step 1 — DSP foundations + audio infra
 
-**Status:** In Progress — Stage 1.4
+**Status:** Final
 
 **Objectives:** Land scaffolding. Audio mixer asset + persistent bootstrap prefab. Authoring data model (`BlipPatch` ScriptableObject + `BlipPatchFlat` blittable mirror + content-hash). DSP kernel (`BlipVoice.Render`) w/ MVP oscillator set + AHDSR envelope + one-pole LP filter. EditMode tests gate kernel behavior + determinism. No playback wiring yet; no sounds heard in game.
 
@@ -54,7 +54,7 @@
 
 #### Stage 1.1 — Audio infrastructure + persistent bootstrap
 
-**Status:** In Progress — all tasks archived (TECH-98..TECH-101 Done)
+**Status:** Final
 
 **Objectives:** Mixer asset + three routing groups wired. `BlipBootstrap` prefab instantiated in `MainMenu.unity` boot scene, survives scene loads. Headless SFX volume binding via `PlayerPrefs` → `AudioMixer.SetFloat` at `BlipBootstrap.Awake` (no Settings UI in MVP — visible slider + mute toggle post-MVP per `docs/blip-post-mvp-extensions.md` §4). Scene-load suppression policy documented so Blip stays silent until `BlipCatalog.Awake` completes.
 
@@ -327,7 +327,7 @@
 
 ### Step 3 — Patches + integration + golden fixtures + promotion
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final
 
 **Backlog state (Step 3):** 16 filed + all archived (Stages 3.1 + 3.2 + 3.3 + 3.4 — TECH-219..TECH-222 + TECH-227..TECH-230)
 
@@ -558,7 +558,7 @@
 
 ## Step 5 — DSP kernel v2 — FX chain + LFOs + biquad BP + param smoothing (post-MVP)
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 5.3
 
 **Backlog state (Step 5):** 0 filed
 
@@ -653,7 +653,7 @@
 
 #### Stage 5.3 — LFOs + routing matrix + param smoothing
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final
 
 **Objectives:** Up to 2 LFOs per patch (Off/Sine/Triangle/Square/SampleAndHold) routed to pitch/gain/cutoff/pan. `SmoothOnePole` 1-pole 20 ms helper. LFO phases advance per-sample inside `BlipVoice.Render`. `BlipLutPool` plain-class stub wired to `BlipCatalog`.
 
@@ -677,10 +677,10 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T5.3.1 | LFO types + BlipPatch/BlipPatchFlat extension | 1 | **TECH-285** | Draft | `BlipLfoKind` enum (Off=0/Sine=1/Triangle=2/Square=3/SampleAndHold=4) + `BlipLfoRoute` enum (Pitch=0/Gain=1/FilterCutoff=2/Pan=3) + `BlipLfo [Serializable] struct` (BlipLfoKind kind; float rateHz, depth; BlipLfoRoute route) + `BlipLfoFlat readonly struct` — all in `BlipPatchTypes.cs`. `BlipPatch` gains `[SerializeField] public BlipLfo lfo0, lfo1`; `OnValidate` clamps `rateHz ≥ 0`. `BlipPatchFlat` gains `BlipLfoFlat lfo0Flat, lfo1Flat`; ctor copies both. |
-| T5.3.2 | BlipLutPool stub + BlipVoiceState LFO phase fields | 1 | **TECH-286** | Draft | New `Assets/Scripts/Audio/Blip/BlipLutPool.cs`: `internal sealed class BlipLutPool` stub with `float[] Lease(int size)` + `void Return(float[])` (via `ArrayPool<float>.Shared`). `BlipCatalog` gains `private BlipLutPool _lutPool = new BlipLutPool()`. `BlipVoiceState.phaseD` renamed → `lfoPhase0` (field rename; update all refs in `BlipVoice.cs` + test files); `double lfoPhase1` added. |
-| T5.3.3 | SmoothOnePole helper + LFO per-sample advance | 2 | **TECH-287** | Draft | `public static float SmoothOnePole(ref float z, float target, float coef)` added to `BlipVoice.cs`: `z += coef * (target - z); return z`. Pre-compute `float lfoSmCoef = 1f - (float)Math.Exp(-TwoPi * 50.0 / sampleRate)` outside sample loop. Per-sample phase advance: `state.lfoPhase0 += TwoPi * patch.lfo0Flat.rateHz / sampleRate; if (state.lfoPhase0 >= TwoPi) state.lfoPhase0 -= TwoPi` (same for `lfoPhase1`). |
-| T5.3.4 | LFO routing matrix + EditMode test + glossary | 2 | **TECH-288** | Draft | LFO output dispatch in `BlipVoice.Render`: sample waveform per `BlipLfoKind` (Sine `Math.Sin(phase)`, Triangle `2/π*Math.Asin(Math.Sin(phase))`, Square `Math.Sign(Math.Sin(phase))`, S&H on zero-crossing) → scale by `depth` → route: Pitch adds to `pitchCents` applied in jitter block, Gain multiplies `gainMult`, FilterCutoff offsets `cutoffHz` before α compute, Pan offsets `panOffset`. Apply `SmoothOnePole` on each. `BlipLfoTests.cs` (new): sine LFO zero-crossing count + monotonic rise/fall asserts. Glossary rows: **Blip LFO**, **Param smoothing**, **Blip LUT pool** to `ia/specs/glossary.md`. |
+| T5.3.1 | LFO types + BlipPatch/BlipPatchFlat extension | 1 | **TECH-285** | Done (archived) | `BlipLfoKind` enum (Off=0/Sine=1/Triangle=2/Square=3/SampleAndHold=4) + `BlipLfoRoute` enum (Pitch=0/Gain=1/FilterCutoff=2/Pan=3) + `BlipLfo [Serializable] struct` (BlipLfoKind kind; float rateHz, depth; BlipLfoRoute route) + `BlipLfoFlat readonly struct` — all in `BlipPatchTypes.cs`. `BlipPatch` gains `[SerializeField] public BlipLfo lfo0, lfo1`; `OnValidate` clamps `rateHz ≥ 0`. `BlipPatchFlat` gains `BlipLfoFlat lfo0Flat, lfo1Flat`; ctor copies both. |
+| T5.3.2 | BlipLutPool stub + BlipVoiceState LFO phase fields | 1 | **TECH-286** | Done (archived) | New `Assets/Scripts/Audio/Blip/BlipLutPool.cs`: `internal sealed class BlipLutPool` stub with `float[] Lease(int size)` + `void Return(float[])` (via `ArrayPool<float>.Shared`). `BlipCatalog` gains `private BlipLutPool _lutPool = new BlipLutPool()`. `BlipVoiceState.phaseD` renamed → `lfoPhase0` (field rename; update all refs in `BlipVoice.cs` + test files); `double lfoPhase1` added. |
+| T5.3.3 | SmoothOnePole helper + LFO per-sample advance | 2 | **TECH-287** | Done (archived) | `public static float SmoothOnePole(ref float z, float target, float coef)` added to `BlipVoice.cs`: `z += coef * (target - z); return z`. Pre-compute `float lfoSmCoef = 1f - (float)Math.Exp(-TwoPi * 50.0 / sampleRate)` outside sample loop. Per-sample phase advance: `state.lfoPhase0 += TwoPi * patch.lfo0Flat.rateHz / sampleRate; if (state.lfoPhase0 >= TwoPi) state.lfoPhase0 -= TwoPi` (same for `lfoPhase1`). |
+| T5.3.4 | LFO routing matrix + EditMode test + glossary | 2 | **TECH-288** | Done (archived) | LFO output dispatch in `BlipVoice.Render`: sample waveform per `BlipLfoKind` (Sine `Math.Sin(phase)`, Triangle `2/π*Math.Asin(Math.Sin(phase))`, Square `Math.Sign(Math.Sin(phase))`, S&H on zero-crossing) → scale by `depth` → route: Pitch adds to `pitchCents` applied in jitter block, Gain multiplies `gainMult`, FilterCutoff offsets `cutoffHz` before α compute, Pan offsets `panOffset`. Apply `SmoothOnePole` on each. `BlipLfoTests.cs` (new): sine LFO zero-crossing count + monotonic rise/fall asserts. Glossary rows: **Blip LFO**, **Param smoothing**, **Blip LUT pool** to `ia/specs/glossary.md`. |
 
 #### Stage 5.4 — Biquad BP + integration + golden-fixture regression gate
 

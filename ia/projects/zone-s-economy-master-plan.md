@@ -2,7 +2,7 @@
 
 > **Last updated:** 2026-04-17
 >
-> **Status:** Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)
+> **Status:** In Progress — Step 1 / Stage 1.3
 >
 > **Scope:** Zone S (state-owned 4th zone channel, 7 sub-types) + economy depth — per-sub-type envelope budget allocator, floor-clamped treasury (hard cap, no negative balance), single-bond-per-scale-tier ledger, extended monthly-maintenance contract via `IMaintenanceContributor` registry, save schema bump. Bucket 3 of full-game MVP umbrella (`ia/projects/full-game-mvp-master-plan.md`).
 >
@@ -39,16 +39,16 @@
 
 ### Step 1 — Foundation: enum extension + floor-clamp treasury + envelope budget + save schema
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 1.3 (TECH-418..421 Done (archived); TECH-422..425 Draft)
 
-**Backlog state (Step 1):** 0 filed
+**Backlog state (Step 1):** 19 filed (Stage 1.1 — TECH-278..283 Done (archived); Stage 1.2 — TECH-379..383 Done (archived); Stage 1.3 — TECH-418..421 Done (archived); TECH-422..425 Draft)
 
 **Objectives:** Land the structural primitives Zone S depends on. Extend `ZoneType` enum + add `ZoneSubTypeRegistry` SO catalogue. Introduce `TreasuryFloorClampService` so balance NEVER goes negative across ALL spend call sites (systemic, not opt-in). Stand up `BudgetAllocationService` with 7-envelope + global cap + `TryDraw` that checks BOTH envelope remaining AND treasury floor before deducting. Bump save schema v3→v4 with default-equal envelope migration. Nothing player-visible yet; foundations only.
 
 **Exit criteria:**
 
 - 6 new `ZoneType` enum values (`StateServiceLight/Medium/Heavy` × `Building`/`Zoning`) in `Assets/Scripts/Managers/UnitManagers/Zone.cs` + `IsStateServiceZone` helper on `EconomyManager`.
-- `ZoneSubTypeRegistry` ScriptableObject under `Assets/ScriptableObjects/` with 7 entries (police, fire, education, health, parks, public housing, public offices) — fields: `id`, `displayName`, `prefab`, `baseCost`, `monthlyUpkeep`, `icon`.
+- `ZoneSubTypeRegistry` MonoBehaviour (JSON-loading) + `Assets/Resources/Economy/zone-sub-types.json` with 7 entries (police, fire, education, health, parks, public housing, public offices) — fields: `id`, `displayName`, `prefabPath`, `baseCost`, `monthlyUpkeep`, `iconPath`. Human/agent edits costs directly in the JSON; no Unity Editor required.
 - `Zone` component carries `subTypeId` int field (default -1 for RCI).
 - `TreasuryFloorClampService` under `Assets/Scripts/Managers/GameManagers/TreasuryFloorClampService.cs` — MonoBehaviour, Inspector-wired on `EconomyManager` GO. `TrySpend(int, string) → bool` floor-clamps at 0; existing `SpendMoney` delegates through it.
 - `BudgetAllocationService` under `Assets/Scripts/Managers/GameManagers/BudgetAllocationService.cs` implementing `IBudgetAllocator`. `TryDraw`, `GetMonthlyEnvelope`, `SetEnvelopePct` (auto-normalize), `MonthlyReset`.
@@ -64,7 +64,7 @@
 - `Assets/Scripts/Managers/UnitManagers/Zone.cs` — `ZoneType` enum extension site.
 - `Assets/Scripts/Managers/GameManagers/EconomyManager.cs` — helper wiring + delegation.
 - `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs` — `GameSaveData` class + `MigrateLoadedSaveData` (§277+, `CurrentSchemaVersion` line 404).
-- `Assets/ScriptableObjects/` (new catalogue dir for `ZoneSubTypeRegistry`).
+- `Assets/Resources/Economy/zone-sub-types.json` (new config file for `ZoneSubTypeRegistry`).
 - `Assets/Scripts/Managers/GameManagers/BudgetAllocationService.cs` *(new)*.
 - `Assets/Scripts/Managers/GameManagers/TreasuryFloorClampService.cs` *(new)*.
 - `Assets/Tests/EditMode/Economy/` *(new test asmdef dir)*.
@@ -74,7 +74,9 @@
 
 #### Stage 1.1 — ZoneType enum extension + sub-type registry
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final
+
+**Backlog state (Stage 1.1):** 6 filed (TECH-278..283 all Done (archived))
 
 **Objectives:** Extend `ZoneType` with 6 new enum values (3 densities × Building/Zoning). Author `ZoneSubTypeRegistry` SO with 7 entries. Add `subTypeId` sidecar to `Zone` component. Land glossary rows for the new domain vocabulary (Zone S, ZoneSubTypeRegistry, envelope). Scaffolding only — no runtime logic consumes the new values yet.
 
@@ -82,30 +84,30 @@
 
 - 6 new `ZoneType` enum values added + existing consumers (`IsBuildingZone`, `IsZoningType`) updated + new `IsStateServiceZone` predicate on `EconomyManager`.
 - `Zone.subTypeId` field (default -1) + serializable.
-- `ZoneSubTypeRegistry` SO under `Assets/ScriptableObjects/Economy/ZoneSubTypeRegistry.asset` (new dir) with 7 seeded entries.
+- `ZoneSubTypeRegistry` MonoBehaviour + `Assets/Resources/Economy/zone-sub-types.json` with 7 seeded entries.
 - Glossary rows added: `Zone S`, `ZoneSubTypeRegistry`, `envelope (budget sense)`.
 - `npm run unity:compile-check` green.
 
 **Phases:**
 
 - [ ] Phase 1 — `ZoneType` enum + predicates + `Zone.subTypeId` sidecar.
-- [ ] Phase 2 — `ZoneSubTypeRegistry` ScriptableObject + 7 seeded entries.
+- [ ] Phase 2 — `ZoneSubTypeRegistry` MonoBehaviour (JSON-loading) + `zone-sub-types.json` config.
 - [ ] Phase 3 — Glossary + spec-index refresh.
 
 **Tasks:**
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.1.1 | Extend `ZoneType` enum + predicates | 1 | **TECH-278** | Draft | Add `StateServiceLightBuilding`, `StateServiceMediumBuilding`, `StateServiceHeavyBuilding`, `StateServiceLightZoning`, `StateServiceMediumZoning`, `StateServiceHeavyZoning` to `Zone.ZoneType` enum in `Assets/Scripts/Managers/UnitManagers/Zone.cs`. Extend `EconomyManager.IsBuildingZone` + `IsZoningType` to include the new values. Add `IsStateServiceZone(Zone.ZoneType)` predicate on `EconomyManager`. No caller change yet. |
-| T1.1.2 | Add `Zone.subTypeId` sidecar field | 1 | **TECH-279** | Draft | Add `[SerializeField] private int subTypeId = -1;` to `Zone.cs` + public getter/setter. Default -1 means "RCI, no sub-type". Persists via existing Unity serialization — no save plumbing yet (save bump lands in Stage 1.3). |
-| T1.1.3 | Author `ZoneSubTypeRegistry` ScriptableObject | 2 | **TECH-280** | Draft | New SO class `ZoneSubTypeRegistry` under `Assets/Scripts/Managers/GameManagers/ZoneSubTypeRegistry.cs` (or ScriptableObjects dir) with `ZoneSubTypeEntry[] entries` field. Entry fields: `int id`, `string displayName`, `GameObject prefab`, `int baseCost`, `int monthlyUpkeep`, `Sprite icon`. `GetById(int)` lookup method. `[CreateAssetMenu]` attribute. |
-| T1.1.4 | Seed 7 registry entries + asset | 2 | **TECH-281** | Draft | Create `Assets/ScriptableObjects/Economy/ZoneSubTypeRegistry.asset` with 7 entries (police, fire, education, health, parks, public housing, public offices). Placeholder prefabs + icons allowed — real art lands post-MVP. Seed baseCost + monthlyUpkeep per exploration §IP-1 (balancing numbers chosen during implementation). |
-| T1.1.5 | Glossary + spec-index refresh | 3 | **TECH-282** | Draft | Add rows to `ia/specs/glossary.md` — `Zone S`, `ZoneSubTypeRegistry`, `envelope (budget sense)` — each with definition + authoritative spec link (points at forthcoming `ia/specs/economy-system.md`, cross-refs exploration doc for now). Run `npm run mcp-ia-index` to regenerate `tools/mcp-ia-server/data/glossary-index.json` + `glossary-graph-index.json`. |
-| T1.1.6 | EditMode tests for enum + registry | 3 | **TECH-283** | Draft | New test class `ZoneSubTypeRegistryTests` under `Assets/Tests/EditMode/Economy/` (new asmdef if needed). Cover: `GetById` returns correct entry for each of 7 ids, `GetById(-1)` returns null/throws, `IsStateServiceZone` true for 6 new enum values + false for R/C/I, `Zone.subTypeId` default -1 persists via serialization round-trip. |
+| T1.1.1 | Extend `ZoneType` enum + predicates | 1 | **TECH-278** | Done (archived) | Add `StateServiceLightBuilding`, `StateServiceMediumBuilding`, `StateServiceHeavyBuilding`, `StateServiceLightZoning`, `StateServiceMediumZoning`, `StateServiceHeavyZoning` to `Zone.ZoneType` enum in `Assets/Scripts/Managers/UnitManagers/Zone.cs`. Extend `EconomyManager.IsBuildingZone` + `IsZoningType` to include the new values. Add `IsStateServiceZone(Zone.ZoneType)` predicate on `EconomyManager`. No caller change yet. |
+| T1.1.2 | Add `Zone.subTypeId` sidecar field | 1 | **TECH-279** | Done (archived) | Add `[SerializeField] private int subTypeId = -1;` to `Zone.cs` + public getter/setter. Default -1 means "RCI, no sub-type". Persists via existing Unity serialization — no save plumbing yet (save bump lands in Stage 1.3). |
+| T1.1.3 | Author `ZoneSubTypeRegistry` MonoBehaviour (JSON-loading) | 2 | **TECH-280** | Done (archived) | `ZoneSubTypeRegistry : MonoBehaviour` at `Assets/Scripts/Managers/GameManagers/ZoneSubTypeRegistry.cs`. Loads `Assets/Resources/Economy/zone-sub-types.json` in `Awake` via `Resources.Load<TextAsset>` + `JsonUtility`. Entry fields: `int id`, `string displayName`, `string prefabPath`, `string iconPath`, `int baseCost`, `int monthlyUpkeep`. `GetById(int)` lookup. `LoadFromJson()` public for tests. |
+| T1.1.4 | Seed `zone-sub-types.json` config file | 2 | **TECH-281** | Done (archived) | Author `Assets/Resources/Economy/zone-sub-types.json` with 7 entries (police=0…public offices=6). `prefabPath` + `iconPath` empty strings (art deferred). `baseCost` + `monthlyUpkeep` per exploration §IP-1. Human/agent edits costs directly in JSON; no Unity Editor required. |
+| T1.1.5 | Glossary + spec-index refresh | 3 | **TECH-282** | Done (archived) | Add rows to `ia/specs/glossary.md` — `Zone S`, `ZoneSubTypeRegistry`, `envelope (budget sense)` — each with definition + authoritative spec link (points at forthcoming `ia/specs/economy-system.md`, cross-refs exploration doc for now). Run `npm run mcp-ia-index` to regenerate `tools/mcp-ia-server/data/glossary-index.json` + `glossary-graph-index.json`. |
+| T1.1.6 | EditMode tests for enum + registry | 3 | **TECH-283** | Done (archived) | New test class `ZoneSubTypeRegistryTests` under `Assets/Tests/EditMode/Economy/` (new asmdef if needed). Cover: `GetById` returns correct entry for each of 7 ids, `GetById(-1)` returns null/throws, `IsStateServiceZone` true for 6 new enum values + false for R/C/I, `Zone.subTypeId` default -1 persists via serialization round-trip. |
 
 #### Stage 1.2 — `TreasuryFloorClampService` + systemic spend delegation
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final
 
 **Objectives:** Land hard-cap treasury (Q4 locked decision). Wrap ALL `EconomyManager` spend call sites so balance NEVER goes negative. Existing `SpendMoney(int, string, bool)` keeps signature for backward compat but delegates to new `TrySpend`. This stage is the single riskiest refactor — touches every current money-out path in `EconomyManager`.
 
@@ -127,15 +129,15 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.2.1 | `TreasuryFloorClampService` skeleton | 1 | _pending_ | _pending_ | New MonoBehaviour at `Assets/Scripts/Managers/GameManagers/TreasuryFloorClampService.cs`. `[SerializeField] private EconomyManager economy;` with `FindObjectOfType<EconomyManager>()` fallback in `Awake`. Public API: `CanAfford(int) → bool`, `TrySpend(int, string) → bool`, `CurrentBalance` property reading `economy.currentMoney`. `TrySpend` checks `amount <= currentMoney` BEFORE mutation; returns false + emits `GameNotificationManager` event on failure. |
-| T1.2.2 | Wire service on `EconomyManager` GO | 1 | _pending_ | _pending_ | Add `[SerializeField] private TreasuryFloorClampService treasuryFloorClamp;` field + `FindObjectOfType` fallback in `EconomyManager.Awake` (guardrail #1, invariant #4). Attach component to the `EconomyManager` GameObject in the main scene prefab. Document composition relationship in XML doc on the field. |
-| T1.2.3 | Re-route `SpendMoney` through `TrySpend` | 2 | _pending_ | _pending_ | Existing `EconomyManager.SpendMoney(int amount, string context, bool logToConsole)` keeps signature but body delegates to `treasuryFloorClamp.TrySpend(amount, context)`. On `false` return, log + emit notification; do NOT subtract `currentMoney` (previously allowed negative). Audit all internal call sites inside `EconomyManager.cs` that touch `currentMoney -= X` directly — rewrite via `TrySpend`. |
-| T1.2.4 | Audit cross-file `SpendMoney` call sites | 2 | _pending_ | _pending_ | Grep for `SpendMoney(` + `currentMoney -=` across `Assets/Scripts/**`. For each non-EconomyManager caller, confirm path now routes through `TrySpend`; update any direct `currentMoney` mutation to `TrySpend`. Document audit result in Decision Log section of spec stub. Zero remaining direct `currentMoney -=` outside `TreasuryFloorClampService`. |
-| T1.2.5 | EditMode tests + glossary row | 2 | _pending_ | _pending_ | `TreasuryFloorClampServiceTests` under `Assets/Tests/EditMode/Economy/`. Cases: (a) `TrySpend(100)` when balance=200 succeeds + balance=100, (b) `TrySpend(300)` when balance=200 returns false + balance UNCHANGED + notification emitted, (c) `CanAfford(200)` true at balance=200, false at balance=199. Add `TreasuryFloorClampService` glossary row linking exploration + forthcoming economy-system spec. Regenerate MCP indexes. |
+| T1.2.1 | `TreasuryFloorClampService` skeleton | 1 | **TECH-379** | Done (archived) | New MonoBehaviour at `Assets/Scripts/Managers/GameManagers/TreasuryFloorClampService.cs`. `[SerializeField] private EconomyManager economy;` with `FindObjectOfType<EconomyManager>()` fallback in `Awake`. Public API: `CanAfford(int) → bool`, `TrySpend(int, string) → bool`, `CurrentBalance` property reading `economy.GetCurrentMoney()`. `TrySpend` checks `amount <= CurrentBalance` BEFORE mutation; success path calls `economy.cityStats.RemoveMoney(amount)`; failure path emits `GameNotificationManager.PostError`. |
+| T1.2.2 | Wire service on `EconomyManager` GO | 1 | **TECH-380** | Done (archived) | Add `[SerializeField] private TreasuryFloorClampService treasuryFloorClamp;` field + `FindObjectOfType` fallback in `EconomyManager.Awake` (guardrail #1, invariant #4). Attach component to the `EconomyManager` GameObject in the main scene prefab. Document composition relationship in XML doc on the field. |
+| T1.2.3 | Re-route `SpendMoney` through `TrySpend` | 2 | **TECH-381** | Done (archived) | Existing `EconomyManager.SpendMoney(int amount, string context, bool logToConsole)` keeps signature but body delegates to `treasuryFloorClamp.TrySpend(amount, context)`. On `false` return, log + emit notification; do NOT subtract `currentMoney` (previously allowed negative). Audit all internal call sites inside `EconomyManager.cs` that touch `currentMoney -= X` directly — rewrite via `TrySpend`. |
+| T1.2.4 | Audit cross-file `SpendMoney` call sites | 2 | **TECH-382** | Done (archived) | Grep for `SpendMoney(` + `currentMoney -=` across `Assets/Scripts/**`. For each non-EconomyManager caller, confirm path now routes through `TrySpend`; update any direct `currentMoney` mutation to `TrySpend`. Document audit result in Decision Log section of spec stub. Zero remaining direct `currentMoney -=` outside `TreasuryFloorClampService`. |
+| T1.2.5 | EditMode tests + glossary row | 2 | **TECH-383** | Done (archived) | `TreasuryFloorClampServiceTests` under `Assets/Tests/EditMode/Economy/`. Cases: (a) `TrySpend(100)` when balance=200 succeeds + balance=100, (b) `TrySpend(300)` when balance=200 returns false + balance UNCHANGED + notification emitted, (c) `CanAfford(200)` true at balance=200, false at balance=199. Add `TreasuryFloorClampService` glossary row linking exploration + forthcoming economy-system spec. Regenerate MCP indexes. |
 
 #### Stage 1.3 — `BudgetAllocationService` + save-schema v3→v4 migration
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Phase 2 (TECH-418..421 Done (archived); TECH-422..425 Draft)
 
 **Objectives:** Land the envelope allocator (Q3 locked decision) + save-schema bump so fresh games persist state + legacy v3 saves migrate cleanly with default-equal envelope. `TryDraw` enforces Q4 block-before-deduct by checking BOTH envelope remaining AND `TreasuryFloorClampService.CanAfford` before mutation. This stage completes Step 1 — all structural primitives ready for Step 2 consumers.
 
@@ -161,14 +163,14 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.3.1 | `IBudgetAllocator` interface + `BudgetAllocationService` skeleton | 1 | _pending_ | _pending_ | Author `IBudgetAllocator.cs` with `TryDraw(int, int) → bool`, `GetMonthlyEnvelope(int) → int`, `SetEnvelopePct(int, float)`, `MonthlyReset()`. Author `BudgetAllocationService.cs` MonoBehaviour implementing the interface; `[SerializeField]` refs to `EconomyManager` + `TreasuryFloorClampService` + `ZoneSubTypeRegistry` with `FindObjectOfType` fallbacks in `Awake`. Fields inert in this task. |
-| T1.3.2 | Wire service on `EconomyManager` GO | 1 | _pending_ | _pending_ | Add `[SerializeField] private BudgetAllocationService budgetAllocation;` to `EconomyManager` + `FindObjectOfType` fallback. Attach component to same GO as `TreasuryFloorClampService`. Does not call it yet — consumer wiring lands in Step 2. |
-| T1.3.3 | `TryDraw` + monthly reset logic | 2 | _pending_ | _pending_ | Implement `TryDraw(subTypeId, amount)`: returns false if `subTypeId < 0 || subTypeId > 6`; returns false if `currentMonthRemaining[subTypeId] < amount`; returns false if `!treasuryFloorClamp.CanAfford(amount)`; otherwise `currentMonthRemaining[subTypeId] -= amount`, `treasuryFloorClamp.TrySpend(amount, "S envelope draw")` and return true. Implement `MonthlyReset`: for each i, `currentMonthRemaining[i] = (int)(globalMonthlyCap * envelopePct[i])`. |
-| T1.3.4 | `SetEnvelopePct` auto-normalize | 2 | _pending_ | _pending_ | Implement `SetEnvelopePct(int subTypeId, float pct)`: store raw value then normalize entire array so `sum == 1.0` (scale every entry by `1.0 / currentSum`). Handles N1 rounding residue from 14.28% × 7. Guard division-by-zero on all-zero envelope (reject + keep prior state). Also expose `SetEnvelopePctsBatch(float[7])` for player slider commits. |
-| T1.3.5 | Save-schema v3→v4 bump | 3 | _pending_ | _pending_ | Bump `GameSaveData.CurrentSchemaVersion` from 3 to 4 in `GameSaveManager.cs`. Add `[Serializable] public class BudgetAllocationData { public float[] envelopePct; public int globalMonthlyCap; public int[] currentMonthRemaining; public static BudgetAllocationData Default(int cap); }`. Add `public BudgetAllocationData budgetAllocation` + `public List<StateServiceZoneData> stateServiceZones` fields on `GameSaveData`. Add `[Serializable] public class StateServiceZoneData { public int cellX, cellY; public int subTypeId; public int densityTier; }`. |
-| T1.3.6 | `MigrateLoadedSaveData` v3→v4 branch | 3 | _pending_ | _pending_ | Add `if (data.schemaVersion < 4)` branch in `MigrateLoadedSaveData`: `data.stateServiceZones = new List<StateServiceZoneData>(); data.budgetAllocation = BudgetAllocationData.Default(cap: derive from treasury snapshot); data.schemaVersion = 4;`. `Default(cap)` seeds `envelopePct = new float[]{0.1428f, ...×7}` then normalizes sum to 1.0. Seed `currentMonthRemaining[i] = cap * envelopePct[i]`. |
-| T1.3.7 | Save/load round-trip wiring | 3 | _pending_ | _pending_ | Wire `BudgetAllocationService.CaptureSaveData()` + `RestoreFromSaveData(BudgetAllocationData)` methods. `GameSaveManager.SaveGame` calls capture; `GameSaveManager.LoadGame` calls restore post-migration. Verify envelope + remaining + cap survive save → load → verify identity. No S zones restored yet (placement lands in Step 2). |
-| T1.3.8 | EditMode tests + glossary + MCP reindex | 3 | _pending_ | _pending_ | `BudgetAllocationServiceTests` under `Assets/Tests/EditMode/Economy/`. Cases: (a) `TryDraw` blocks when envelope exhausted, (b) `TryDraw` blocks when treasury empty (envelope fat), (c) `TryDraw` succeeds when both OK + both decrement, (d) `MonthlyReset` restores `currentMonthRemaining` to `cap × pct`, (e) `SetEnvelopePct` normalizes sum to 1.0 within 1e-6, (f) legacy v3 save loads into v4 with equal envelope + empty S list. Add `BudgetAllocationService` + `IBudgetAllocator` glossary rows. Run `npm run validate:all`. |
+| T1.3.1 | `IBudgetAllocator` interface + `BudgetAllocationService` skeleton | 1 | **TECH-418** | Done (archived) | Author `IBudgetAllocator.cs` with `TryDraw(int, int) → bool`, `GetMonthlyEnvelope(int) → int`, `SetEnvelopePct(int, float)`, `MonthlyReset()`. Author `BudgetAllocationService.cs` MonoBehaviour implementing the interface; `[SerializeField]` refs to `EconomyManager` + `TreasuryFloorClampService` + `ZoneSubTypeRegistry` with `FindObjectOfType` fallbacks in `Awake`. Fields inert in this task. |
+| T1.3.2 | Wire service on `EconomyManager` GO | 1 | **TECH-419** | Done (archived) | Add `[SerializeField] private BudgetAllocationService budgetAllocation;` to `EconomyManager` + `FindObjectOfType` fallback. Attach `BudgetAllocationService` + `ZoneSubTypeRegistry` MonoBehaviours to the `EconomyManager` GO (same GO as `TreasuryFloorClampService`). Does not call them yet — consumer wiring lands in Step 2. |
+| T1.3.3 | `TryDraw` + monthly reset logic | 2 | **TECH-420** | Done (archived) | Implement `TryDraw(subTypeId, amount)`: returns false if `subTypeId < 0 || subTypeId > 6`; returns false if `currentMonthRemaining[subTypeId] < amount`; returns false if `!treasuryFloorClamp.CanAfford(amount)`; otherwise `currentMonthRemaining[subTypeId] -= amount`, `treasuryFloorClamp.TrySpend(amount, "S envelope draw")` and return true. Implement `MonthlyReset`: for each i, `currentMonthRemaining[i] = (int)(globalMonthlyCap * envelopePct[i])`. |
+| T1.3.4 | `SetEnvelopePct` auto-normalize | 2 | **TECH-421** | Done (archived) | Implement `SetEnvelopePct(int subTypeId, float pct)`: store raw value then normalize entire array so `sum == 1.0` (scale every entry by `1.0 / currentSum`). Handles N1 rounding residue from 14.28% × 7. Guard division-by-zero on all-zero envelope (reject + keep prior state). Also expose `SetEnvelopePctsBatch(float[7])` for player slider commits. |
+| T1.3.5 | Save-schema v3→v4 bump | 3 | **TECH-422** | In Review | Bump `GameSaveData.CurrentSchemaVersion` from 3 to 4 in `GameSaveManager.cs`. Add `[Serializable] public class BudgetAllocationData { public float[] envelopePct; public int globalMonthlyCap; public int[] currentMonthRemaining; public static BudgetAllocationData Default(int cap); }`. Add `public BudgetAllocationData budgetAllocation` + `public List<StateServiceZoneData> stateServiceZones` fields on `GameSaveData`. Add `[Serializable] public class StateServiceZoneData { public int cellX, cellY; public int subTypeId; public int densityTier; }`. |
+| T1.3.6 | `MigrateLoadedSaveData` v3→v4 branch | 3 | **TECH-423** | Draft | Add `if (data.schemaVersion < 4)` branch in `MigrateLoadedSaveData`: `data.stateServiceZones = new List<StateServiceZoneData>(); data.budgetAllocation = BudgetAllocationData.Default(cap: derive from treasury snapshot); data.schemaVersion = 4;`. `Default(cap)` seeds `envelopePct = new float[]{0.1428f, ...×7}` then normalizes sum to 1.0. Seed `currentMonthRemaining[i] = cap * envelopePct[i]`. |
+| T1.3.7 | Save/load round-trip wiring | 3 | **TECH-424** | Draft | Wire `BudgetAllocationService.CaptureSaveData()` + `RestoreFromSaveData(BudgetAllocationData)` methods. `GameSaveManager.SaveGame` calls capture; `GameSaveManager.LoadGame` calls restore post-migration. Verify envelope + remaining + cap survive save → load → verify identity. No S zones restored yet (placement lands in Step 2). |
+| T1.3.8 | EditMode tests + glossary + MCP reindex | 3 | **TECH-425** | Draft | `BudgetAllocationServiceTests` under `Assets/Tests/EditMode/Economy/`. Cases: (a) `TryDraw` blocks when envelope exhausted, (b) `TryDraw` blocks when treasury empty (envelope fat), (c) `TryDraw` succeeds when both OK + both decrement, (d) `MonthlyReset` restores `currentMonthRemaining` to `cap × pct`, (e) `SetEnvelopePct` normalizes sum to 1.0 within 1e-6, (f) legacy v3 save loads into v4 with equal envelope + empty S list. Add `BudgetAllocationService` + `IBudgetAllocator` glossary rows. Run `npm run validate:all`. |
 
 ---
 

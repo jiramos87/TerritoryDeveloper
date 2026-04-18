@@ -48,7 +48,7 @@
 
 #### Stage 1.1 — Parent-scale identity fields
 
-**Status:** Draft
+**Status:** Final
 
 **Objectives:** city save + `GridManager` carry non-null `region_id` + `country_id` (placeholder GUIDs). Legacy saves migrate cleanly.
 
@@ -78,7 +78,7 @@
 
 #### Stage 1.2 — Cell-type split
 
-**Status:** Draft (tasks *pending* — not yet filed)
+**Status:** Final
 
 **Objectives:** `Cell` → `CityCell` / `RegionCell` / `CountryCell`. City sim unchanged in behavior. Invariants #1 (`HeightMap` ↔ `Cell.height` sync) and #5 (`GetCell` only) preserved.
 
@@ -154,7 +154,7 @@
 
 ### Step 2 — City MVP close
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 2.2
 
 **Backlog state (Step 2):** Stage 2.1 archived (BUG-55 / BUG-14 / BUG-16 / BUG-17). Stage 2.2 filed 2026-04-17 (TECH-290..TECH-293).
 
@@ -209,7 +209,7 @@
 
 #### Stage 2.2 — Tick performance + metrics foundation
 
-**Status:** Draft (tasks filed 2026-04-17 — TECH-290..TECH-293)
+**Status:** In Progress (tasks filed 2026-04-17 — TECH-290..TECH-293)
 
 **Objectives:** City tick profiled; egregious non-BUG-55 allocators patched; `MetricsRecorder` Phase 1 integrated (game remains playable without Postgres); EditMode tick budget test establishes Step 3 parity baseline.
 
@@ -237,7 +237,7 @@
 
 #### Stage 2.3 — City readability dashboard
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress (FEAT-51 filed)
 
 **Objectives:** Player reads city state at-a-glance: minimal HUD + ≥3 time-series charts. Delivers FEAT-51 §2.1–§2.5. Chart library decision recorded.
 

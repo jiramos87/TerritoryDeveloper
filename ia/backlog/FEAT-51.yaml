@@ -5,7 +5,7 @@ priority: medium
 status: open
 section: UI-as-code program (exploration)
 spec: ia/projects/FEAT-51.md
-files: 
+files:
   - docs/ui-data-dashboard-exploration.md
   - ia/projects/FEAT-51.md
   - ia/specs/ui-design-system.md
@@ -16,11 +16,11 @@ notes: |
   Delivers **exploration** **§2.1–§2.5** (history → derived metrics → chart engine → **dashboard** layout). Reuse **UI-as-code** **tokens** (**`ui-design-system.md`**); **map** **info view** (**§2.6**) is **out of scope** — separate **FEAT-** when prioritized. **Spike** chart library (**XCharts** or equivalent) per **Decision Log**. Add chart-specific **`UiTheme`** fields in this issue or a follow-up **TECH-** row when scoped.
 acceptance: |
   per `ia/projects/FEAT-51.md` **§8**; chart choice and persistence stance recorded in spec **Decision Log**
-depends_on: 
+depends_on:
   - BUG-14
 depends_on_raw: "none (soft constraint: no per-frame **`FindObjectOfType`** in dashboard UI — see `BACKLOG-ARCHIVE.md` BUG-14)"
 related: []
-created: 2026-04-17
+created: 2026-04-18
 raw_markdown: |
   - [ ] **FEAT-51** — **Game data dashboard**: **time-series** **simulation** metrics, charts, dense **HUD**-style **cards** (**uGUI**)
     - Type: feature / UX + **simulation** observability
@@ -31,3 +31,5 @@ raw_markdown: |
     - Acceptance: per `ia/projects/FEAT-51.md` **§8**; chart choice and persistence stance recorded in spec **Decision Log**
     - Depends on: none (soft constraint: no per-frame **`FindObjectOfType`** in dashboard UI — see `BACKLOG-ARCHIVE.md` BUG-14)
     - Related: see `BACKLOG-ARCHIVE.md` BUG-14
+parent_plan: ia/projects/multi-scale-master-plan.md
+task_key: T2.3.3

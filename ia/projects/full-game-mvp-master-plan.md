@@ -1,6 +1,6 @@
 # Full-Game MVP — Umbrella Master Plan
 
-> **Status:** Draft — umbrella orchestrator pointing at 12 child orchestrators (5 existing + 7 new). Permanent artifact; NEVER closeable via `/closeout` (per `ia/rules/orchestrator-vs-spec.md`).
+> **Status:** In Progress — multiple buckets active (Bucket 1 multi-scale, Bucket 2 city-sim-depth, Bucket 3 zone-s-economy, Bucket 4 utilities+landmarks, Bucket 8 citystats-overhaul, Bucket 10 distribution — see child orchestrators). Permanent artifact; NEVER closeable via `/closeout` (per `ia/rules/orchestrator-vs-spec.md`).
 >
 > **Scope:** Coordinates the polished ambitious MVP (Approach F from `docs/full-game-mvp-exploration.md`). Defines tier lanes, cross-bucket dependencies, save-schema coordination, stabilization policy, distribution gating, cost-catalog cross-cutting rule. Does NOT decompose bucket steps — each child orchestrator owns its own step/stage/phase/task tree per `ia/rules/project-hierarchy.md`.
 >

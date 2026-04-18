@@ -176,7 +176,7 @@
 
 #### Stage 1.4 — Slope-Aware Foundation + Curation CLI (Layer 5)
 
-**Status:** Draft (9 tasks filed as **TECH-175..183**)
+**Status:** In Progress (TECH-175, TECH-176, TECH-177, TECH-178, TECH-179, TECH-180, TECH-181, TECH-182, TECH-183 filed)
 
 **Objectives:** Implement `iso_stepped_foundation` primitive and `slopes.yaml` per-corner Z table. Wire auto-insert logic into the compose layer so any non-flat `terrain` spec field automatically prepends the foundation primitive and grows the canvas. Implement `promote` / `reject` CLI (Layer 5) with `.meta` generation so promoted sprites land in `Assets/Sprites/Generated/` Unity-ready. Add layered `.aseprite` emission + `promote --edit` round-trip (Tier 2 editor integration) so hand-polished variants land in Unity without losing PNG/`.meta` correctness.
 

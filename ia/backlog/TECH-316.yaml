@@ -13,13 +13,8 @@ acceptance: |
   `BlipMixer.mixer` shows new `Blip-Music` group under Master in Audio Mixer window. Existing groups untouched. `npm run unity:compile-check` green (asset-only — no code).
 depends_on: []
 depends_on_raw: ""
-related:
-  - TECH-317
-  - TECH-318
-  - TECH-319
-  - TECH-320
-  - TECH-321
-created: 2026-04-17
+related: []
+created: 2026-04-18
 raw_markdown: |
   - [ ] **TECH-316** — **Music** — Add Blip-Music mixer group (Stage 1.1 Phase 1)
     - Type: audio / mixer asset
@@ -27,3 +22,5 @@ raw_markdown: |
     - Spec: `ia/projects/TECH-316.md`
     - Notes: Stage 1.1 Phase 1 T1.1.1 of music-player orchestrator. Extend `BlipMixer.mixer` — add `Blip-Music` group under Master. Do NOT touch existing Blip-UI/World/Ambient groups.
     - Acceptance: New `Blip-Music` group visible under Master in Audio Mixer window; existing groups untouched.
+parent_plan: ia/projects/music-player-master-plan.md
+task_key: T1.1.1

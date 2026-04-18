@@ -1,0 +1,47 @@
+id: TECH-413
+type: mcp / tooling
+title: "Implement `master_plan_locate` MCP tool (Stage 4.1 Phase 1)"
+priority: medium
+status: closed
+section: Backlog YAML ↔ MCP alignment program
+spec: ""
+files:
+  - tools/mcp-ia-server/src/tools/master-plan-locate.ts
+  - tools/mcp-ia-server/src/index.ts
+  - tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts
+  - tools/mcp-ia-server/src/parser/backlog-parser.ts
+notes: |
+  Ship `master_plan_locate` MCP tool — input `{ issue_id: string }`; load yaml via `parseBacklogIssue`; read `parent_plan` + `task_key`; read plan file; regex-match `^\| ${task_key} \|` to find row line; return `{ plan, step, stage, phase, task_key, row_line, row_raw }`. Errors when yaml missing required v2 locator fields, plan path not on disk, or task_key not found in plan. Register in `tools/mcp-ia-server/src/index.ts` registry. Schema-cache restart required after add (N4). Depends on Step 3 schema-v2 yaml loader (TECH-363..366) being live so loader yields `parent_plan` + `task_key`.
+acceptance: |
+  Tool registered + responds w/ `{ plan, step, stage, phase, task_key, row_line, row_raw }` for fixture v2 yaml; errors on missing-fields / plan-path-absent / task_key-drift cases; typecheck + `validate:all` green.
+depends_on:
+  - TECH-364
+  - TECH-365
+depends_on_raw: TECH-364 (yaml read path), TECH-365 (writer path) — schema-v2 fields must round-trip
+related:
+  - TECH-414
+  - TECH-415
+created: 2026-04-18
+parent_plan: ia/projects/backlog-yaml-mcp-alignment-master-plan.md
+task_key: T4.1.1
+step: 4
+stage: "4.1"
+phase: 1
+router_domain: Backlog / issues
+surfaces:
+  - tools/mcp-ia-server/src/tools/master-plan-locate.ts
+  - tools/mcp-ia-server/src/index.ts
+  - tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts
+  - tools/mcp-ia-server/src/parser/backlog-parser.ts
+  - docs/parent-plan-locator-fields-exploration.md
+mcp_slices: []
+skill_hints: []
+raw_markdown: |
+  - [ ] **TECH-413** — Implement `master_plan_locate` MCP tool (Stage 4.1 Phase 1)
+    - Type: mcp / tooling
+    - Files: `tools/mcp-ia-server/src/tools/master-plan-locate.ts`, `tools/mcp-ia-server/src/index.ts`, `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/mcp-ia-server/src/parser/backlog-parser.ts`
+    - Spec: `ia/projects/TECH-413.md`
+    - Notes: New MCP tool. Input `{ issue_id }`. Load yaml; read `parent_plan` + `task_key`; grep plan for `^\| ${task_key} \|` row. Returns `{ plan, step, stage, phase, task_key, row_line, row_raw }`. Errors on missing-fields / plan-path-absent / task_key-drift. Register in `index.ts`. Schema-cache restart after add.
+    - Acceptance: tool registered + responds for fixture v2 yaml; error cases handled; typecheck + `validate:all` green.
+    - Depends on: **TECH-364** (yaml read path), **TECH-365** (writer path)
+    - Related: TECH-414, TECH-415

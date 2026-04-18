@@ -2,6 +2,391 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
+- [x] **TECH-286** — `BlipLutPool` stub + `BlipVoiceState` LFO phase fields (Stage 5.3 Phase 1) (2026-04-18)
+  - Type: audio / infrastructure
+  - Files: `Assets/Scripts/Audio/Blip/BlipLutPool.cs`, `Assets/Scripts/Audio/Blip/BlipCatalog.cs`, `Assets/Scripts/Audio/Blip/BlipVoiceState.cs`, `Assets/Scripts/Audio/Blip/BlipVoice.cs`
+  - Spec: (removed after closure)
+  - Notes: New `internal sealed class BlipLutPool` w/ `float[] Lease(int size)` + `void Return(float[])` via `ArrayPool<float>.Shared` (clearArray: true). `BlipCatalog` gains `private readonly BlipLutPool _lutPool = new BlipLutPool()` (field-init; mirrors Stage 5.2 `_delayPool`; invariant #4 — no new singleton). `BlipVoiceState.phaseD` renamed → `lfoPhase0` (mechanical rename; `phaseD` was dead 4th-osc slot — keeps struct size + blittability stable); `double lfoPhase1` appended. Phase fields consumed by TECH-287/288. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: `BlipLutPool.cs` present; `BlipCatalog._lutPool` field-init; `BlipVoiceState.lfoPhase0/lfoPhase1` present + blittable + default 0.0; invariant #4 held; `unity:compile-check` green; existing golden + NoAlloc tests green.
+
+- [x] **TECH-405** — **MCP** — wrap Unity analysis tools (Stage 2.2 T2.2.8) (2026-04-18)
+  - Type: mcp / infrastructure
+  - Files: `tools/mcp-ia-server/src/tools/findobjectoftype-scan.ts`, `tools/mcp-ia-server/src/tools/unity-callers-of.ts`, `tools/mcp-ia-server/src/tools/unity-subscribers-of.ts`, `tools/mcp-ia-server/src/tools/csharp-class-summary.ts`
+  - Spec: (removed after closure)
+  - Notes: Wrap `findobjectoftype-scan.ts`, `unity-callers-of.ts`, `unity-subscribers-of.ts`, `csharp-class-summary.ts` in `wrapTool`. Empty-result path returns `{ ok: true, payload: { matches: [] } }` (not error). Parse failure → `{ ok: false, error: { code: "invalid_input" } }`. Closes Stage 2.2 Phase 4 T2.2.8 — final 4 of 32-handler envelope rewrite. Pattern siblings: TECH-401/402/403/404.
+  - Acceptance: all 4 return via `wrapTool`; empty-result → `ok: true, matches: []`; parse failure → `invalid_input`; typecheck + `validate:all` green.
+  - Depends on: **TECH-388** (archived — envelope + wrapTool)
+  - Related: TECH-398, TECH-399, TECH-400, TECH-401, TECH-402, TECH-403, TECH-404
+
+- [x] **TECH-404** — **MCP** — wrap bridge tools + timeout details (Stage 2.2 T2.2.7) (2026-04-18)
+  - Type: mcp / infrastructure
+  - Files: `tools/mcp-ia-server/src/tools/unity-bridge-command.ts`, `tools/mcp-ia-server/src/tools/unity-bridge-lease.ts`, `tools/mcp-ia-server/src/tools/unity-bridge-get.ts`, `tools/mcp-ia-server/src/tools/unity-compile.ts`
+  - Spec: (removed after closure)
+  - Notes: Wrap `unity-bridge-command.ts`, `unity-bridge-lease.ts`, `unity-bridge-get.ts` (via `unity_bridge_get` / `unity_compile` kinds), `unity-compile.ts` in `wrapTool`. Timeout path: inject `error.details = { command_id, last_output_preview }` before envelope wrap (preview = `row.error ?? JSON.stringify(row.response ?? "")` capped 512 chars, constant `BRIDGE_OUTPUT_PREVIEW_MAX`). Timeout error code = `bridge_timeout`. `db_unconfigured` → shared `dbUnconfiguredError()` helper (matches TECH-403 T2.2.6 shape).
+  - Acceptance: 4 bridge tools return via `wrapTool`; timeout envelope carries `details.command_id` + `details.last_output_preview`; `db_unconfigured` uniform; `validate:all` green.
+  - Depends on: **TECH-388** (archived — envelope + wrapTool)
+  - Related: TECH-398, TECH-399, TECH-400, TECH-401, TECH-402, TECH-403, TECH-405
+
+- [x] **TECH-403** — **MCP** — wrap DB-coupled tools + db_unconfigured shape (Stage 2.2 T2.2.6) (2026-04-18)
+  - Type: mcp / infrastructure
+  - Files: `tools/mcp-ia-server/src/tools/city-metrics-query.ts`, `tools/mcp-ia-server/src/tools/project-spec-closeout-digest.ts`, `tools/mcp-ia-server/src/tools/project-spec-journal.ts`
+  - Spec: (removed after closure)
+  - Notes: Wrap `city-metrics-query.ts`, `project-spec-closeout-digest.ts`, `project-spec-journal.ts` (all 4 journal ops — search / persist / get / list) in `wrapTool`. Unified `db_unconfigured` envelope across all DB-gated handlers via shared `dbUnconfiguredError()` factory in `envelope.ts` w/ hint "Start Postgres on :5434". `table_missing` (42P01) mapped to `db_error` w/ hint "Run `npm run db:migrate`". No DB branch in `project_spec_closeout_digest` (file parser only); still wrapped for envelope uniformity.
+  - Acceptance: 6 registrations return via `wrapTool`; `db_unconfigured` shape identical across 5 DB-coupled sites; no residual `jsonResult({error:'db_unconfigured'})` sites; typecheck + `validate:all` green.
+  - Depends on: **TECH-388** (archived — envelope + wrapTool)
+  - Related: TECH-398, TECH-399, TECH-400, TECH-401, TECH-402, TECH-404, TECH-405
+
+- [x] **TECH-402** — **MCP** — wrap backlog tools in envelope (Stage 2.2 T2.2.5) (2026-04-18)
+  - Type: mcp / infrastructure
+  - Files: `tools/mcp-ia-server/src/tools/backlog-issue.ts`, `tools/mcp-ia-server/src/tools/backlog-search.ts`
+  - Spec: (removed after closure)
+  - Notes: Wrap `backlog_issue` + `backlog_search` handlers in `wrapTool` (TECH-388 envelope). Convert legacy `jsonResult({error:'unknown_issue'})` to typed throw `{ code: 'issue_not_found', hint: 'Check ia/backlog/ and ia/backlog-archive/' }`; align `invalid_input` branches (empty `issue_id` / empty `query` / zero-token query) as typed throws. Pattern matches sibling TECH-398/399/400/401.
+  - Acceptance: both tools return via `wrapTool`; `issue_not_found` carries hint; envelope-shape tests green; typecheck + `validate:all` green.
+  - Depends on: **TECH-388** (archived — envelope + wrapTool)
+  - Related: TECH-398, TECH-399, TECH-400, TECH-401, TECH-403, TECH-404, TECH-405
+
+- [x] **TECH-401** — **MCP** — wrap invariant tools + env caps (Stage 2.2 T2.2.4) (2026-04-18)
+  - Type: mcp / infrastructure
+  - Files: `tools/mcp-ia-server/src/tools/invariants-summary.ts`, `tools/mcp-ia-server/src/tools/invariant-preflight.ts`
+  - Spec: (removed after closure)
+  - Notes: Wrap `invariants_summary` + `invariant_preflight` in `wrapTool` (TECH-388 envelope). Convert hardcoded caps in `invariant-preflight.ts` to env vars `INVARIANT_PREFLIGHT_MAX_SECTIONS` (default 6) / `INVARIANT_PREFLIGHT_MAX_CHARS` (default 800); per-call env read so tests can mutate `process.env`. Unit tests assert envelope shape + default preservation + env override truncation.
+  - Acceptance: both tools return via envelope; env overrides respected; defaults preserved; typecheck + `validate:all` green (292 tests / 288 pass / 4 skip / 0 fail).
+  - Depends on: **TECH-388** (archived — envelope + wrapTool), **TECH-372** (archived — Stage 1.2 structured invariants)
+  - Related: TECH-398, TECH-399, TECH-400, TECH-402, TECH-403, TECH-404, TECH-405
+
+- [x] **TECH-406** — Author shared validator core (Stage 3.3 Phase 1) (2026-04-18)
+  - Type: infrastructure / MCP tooling
+  - Files: `tools/mcp-ia-server/src/parser/parent-plan-validator.ts`, `backlog-yaml-loader.ts`, `backlog-parser.ts`
+  - Spec: (removed after closure)
+  - Notes: Pure `validateParentPlanLocator({ yamlDirs, planGlob, strict })` — 4 checks shipped (path resolve / task_key regex / task_key-in-plan / back-ref). Pure function; no process exit. Consumed by TECH-407 (CLI) + TECH-408 (MCP tool).
+  - Acceptance: pure fn on disk w/ 4 checks wired; typecheck green; `validate:all` green.
+  - Depends on: **TECH-366** (archived — schema-v2 round-trip)
+  - Related: TECH-407, TECH-408, TECH-409, TECH-410
+
+- [x] **TECH-409** — Extend backlog-record-schema with schema-v2 lint (Stage 3.3 Phase 2) (2026-04-18)
+  - Type: infrastructure / MCP tooling
+  - Files: `tools/mcp-ia-server/src/parser/backlog-record-schema.ts`, `tools/validate-backlog-yaml.ts`, `tools/mcp-ia-server/src/tools/backlog-record-validate.ts`
+  - Spec: (removed after closure)
+  - Notes: Shared lint core extended w/ schema-v2 awareness — `task_key` regex `^T\d+\.\d+(\.\d+)?$` (emits `E_BAD_TASK_KEY_FORMAT`), array-of-string guards on `surfaces` / `mcp_slices` / `skill_hints` (emits `E_BAD_LOCATOR_ARRAY_TYPE`), `parent_plan` non-empty-string check (emits `E_EMPTY_PARENT_PLAN`). Gated on presence — v1 back-compat preserved. Existence-on-disk deferred to TECH-408 (`parent_plan_validate`). CLI + MCP tool inherit via shared import — no direct edits.
+  - Acceptance: core validates new fields per spec; CLI + MCP inherit; fixture harness green; v1 back-compat preserved; `validate:all` green.
+  - Depends on: **TECH-366** (archived — schema-v2 writer)
+  - Related: TECH-406, TECH-407, TECH-408, TECH-410
+
+- [x] **TECH-410** — Fixtures for parent-plan-validate (Stage 3.3 Phase 2) (2026-04-18)
+  - Type: infrastructure / fixtures
+  - Files: `tools/scripts/test-fixtures/parent-plan-validate/`, `tools/mcp-ia-server/tests/tools/parent-plan-validate.test.ts`
+  - Spec: (removed after closure)
+  - Notes: 5 fixture dirs under `tools/scripts/test-fixtures/parent-plan-validate/` (`plan-exists-pass`, `plan-missing-fail`, `task-key-bad-regex-fail`, `task-key-drift-warn`, `issue-back-ref-missing-warn`) each shaped as mini-repo (yaml dir + plan dir). Harness `tools/mcp-ia-server/tests/tools/parent-plan-validate.test.ts` calls shared core `validateParentPlanLocator` directly per fixture, asserting advisory (`strict: false`) + strict (`strict: true`) outputs. Behavior gap noted — `task-key-bad-regex-fail` surfaces via loader-side parse-error skip (empty records → exit 0) rather than validator-side TASK_KEY_RE branch.
+  - Acceptance: 5 fixtures on disk; harness asserts advisory + strict output per fixture; warn-vs-error classification matches core; MCP tests + `validate:all` green.
+  - Depends on: **TECH-406** (archived — shared core), **TECH-408** (archived — MCP tool)
+  - Related: TECH-407, TECH-409
+
+- [x] **TECH-397** — Master-plan status lifecycle drift — fix 9 drifting plans + encode status-flip rules in skills (2026-04-18)
+  - Type: tech (IA infrastructure / lifecycle tooling)
+  - Files: 9 `ia/projects/*master-plan*.md` headers; 6 SKILL.md bodies (`stage-file`, `stage-decompose`, `master-plan-extend`, `project-spec-close`, `project-stage-close`, `master-plan-new`); `ia/rules/orchestrator-vs-spec.md`; `docs/agent-lifecycle.md`; `tools/scripts/validate-master-plan-status.mjs`; `package.json`
+  - Spec: (removed after closure)
+  - Notes: Audit found 9 of 16 master plans drift between declared Status (top / Step / Stage) and task-row ground truth. Patched 9 plan headers to match content; encoded R1–R7 status-flip rules into 6 lifecycle skills; synced `orchestrator-vs-spec.md` status enum to include `Skeleton | Planned`; updated `docs/agent-lifecycle.md` surface matrix with flip-owner column; authored `tools/scripts/validate-master-plan-status.mjs` (linter over 16 plans) wired into `validate:all`. Decision Log + Lessons persisted to `ia_project_spec_journal`.
+  - Acceptance: 9 plan headers synced w/ task-row truth; 6 SKILL.md bodies patched to encode missing flips; validator script + CI gate green (16 plans, 0 drift); `npm run validate:all` clean.
+  - Related: TECH-302, TECH-322
+
+- [x] **TECH-400** — **MCP** — wrap glossary tools in envelope (Stage 2.2 T2.2.3) (2026-04-18)
+  - Type: mcp / infrastructure
+  - Files: `tools/mcp-ia-server/src/tools/glossary-discover.ts`, `glossary-lookup.ts`, `envelope.ts`
+  - Spec: (removed after closure)
+  - Notes: Wrap `glossary-discover` + `glossary-lookup` (incl. Stage 1.1 bulk-`terms` path) in `wrapTool`; plumb placeholder `meta.graph_generated_at?` / `meta.graph_stale?` through handlers (real values land Stage 3.3 T3.3.1). Added `term_not_found` to `ErrorCode` union — glossary miss → `{ ok:false, error:{ code:"term_not_found", details:{ available_terms, suggestions } } }`. Bulk path pre-shaped envelope `{ ok:true, payload:{ results, errors }, meta:{ partial } }` passes through unchanged.
+  - Acceptance: envelope wrap on both tools; bulk `terms` partial-result preserved; `term_not_found` domain code; unit tests on hit / miss / bulk shapes; typecheck + `validate:all` green.
+  - Depends on: **TECH-388** (archived — envelope + wrapTool), **TECH-314** (archived — bulk-terms extension)
+  - Related: TECH-398, TECH-399, TECH-401, TECH-402, TECH-403, TECH-404, TECH-405
+
+- [x] **TECH-399** — **MCP** — wrap rule + router tools + add rule_section (Stage 2.2 T2.2.2) (2026-04-18)
+  - Type: mcp / infrastructure
+  - Files: `tools/mcp-ia-server/src/tools/list-rules.ts`, `rule-content.ts`, `router-for-task.ts`
+  - Spec: (removed after closure)
+  - Notes: Wrap 3 tools in `wrapTool`; add `rule_section` tool (canonical `{ rule, section, max_chars }`) in `rule-content.ts`; register in MCP server index. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: envelope wrap; `rule_section` registered + callable; typecheck + snapshot + `validate:all` green.
+  - Depends on: **TECH-388** (archived — envelope + wrapTool), **TECH-398** (archived — spec-section template)
+
+- [x] **TECH-398** — **MCP** — wrap spec tools in envelope (Stage 2.2 T2.2.1) (2026-04-18)
+  - Type: mcp / infrastructure
+  - Files: `tools/mcp-ia-server/src/tools/list-specs.ts`, `spec-outline.ts`, `spec-section.ts`, `spec-sections.ts`
+  - Spec: (removed after closure)
+  - Notes: Wrap 4 spec tools in `wrapTool`; add `payload.meta: { section_id, line_range, truncated, total_chars }` to `spec-section`; typed ErrorCode on `spec_not_found` / `section_not_found`. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: all 4 return via envelope; meta present on spec-section success; tests pass post-snapshot regen; `validate:all` green.
+  - Depends on: **TECH-388** (archived — envelope + wrapTool)
+  - Related: TECH-399, TECH-400, TECH-401, TECH-402, TECH-403, TECH-404, TECH-405
+
+- [x] **TECH-387** — Shell wrapper + backfill fixtures (Stage 3.2 Phase 2) (2026-04-18)
+  - Type: infrastructure / scripts
+  - Files: `tools/scripts/backfill-parent-plan-locator.sh`, `tools/scripts/test-fixtures/backfill-locator/`, `tools/scripts/test/backfill-locator-fixtures.sh`, `tools/scripts/backfill-parent-plan-locator.mjs`
+  - Spec: (removed after closure)
+  - Notes: Completed (verified — `/project-spec-close`): thin shell wrapper `tools/scripts/backfill-parent-plan-locator.sh` — `exec node …` exit-code passthrough; caveman header documents `--dry-run` + `--skip-unresolvable` + `--archive` (no-op). Driver patched with `IA_REPO_ROOT` env override for sandbox isolation (one-line, backward compatible). Fixture set `tools/scripts/test-fixtures/backfill-locator/` — 3 dirs (resolved / already-populated / plan-missing); `plan-missing/` exercised both modes (no-flag exit 1 + `--skip-unresolvable` exit 0). Harness `tools/scripts/test/backfill-locator-fixtures.sh` diffs actual-vs-expected per case. `validate:backfill-fixtures` npm script registered + appended to `validate:all`.
+  - Acceptance: shell wrapper executes the mjs driver + passes exit code; header comment documents flags; 3 fixture cases present + `plan-missing` both modes; harness diffs stdout + exit; `validate:backfill-fixtures` in `validate:all`; green.
+  - Depends on: **TECH-386** (archived — backfill driver — hard gate)
+  - Related: TECH-384, TECH-385, TECH-386
+
+- [x] **TECH-396** — Universal **Blip bootstrap** self-instantiation via `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]` + `Resources/` prefab (2026-04-18)
+  - Type: tech (audio infra / dev workflow)
+  - Files: `Assets/Scripts/Audio/Blip/BlipBootstrap.cs`, `Assets/Resources/BlipBootstrap.prefab` (new location), PlayMode smoke under `Assets/Scripts/Audio/Blip/PlayModeTests`
+  - Spec: (removed after closure)
+  - Notes: Direct-load `MainScene.unity` / future `CityScene` → zero audio today — **BlipBootstrap** / **BlipCatalog** / **BlipPlayer** scene-only in `MainMenu.unity`, so `BlipEngine.Play` silent. Move prefab to `Assets/Resources/BlipBootstrap.prefab`; add static `EnsureInstance` w/ `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]` attr that `Resources.Load<GameObject>("BlipBootstrap")` + `Instantiate` when `Instance == null`. Existing `Instance` + `DontDestroyOnLoad` guards dedup legacy MainMenu scene instance (keep or drop MainMenu copy — both tolerated). Complement to prior branch fix (`BlipEngine.AssertMainThread` / `BlipBaker.AssertMainThread` short-circuit on `MainThreadId == 0`). Invariant #3 + #4 respected — load-time one-shot, existing singleton reused. Standalone infra fix; NOT Step 5 or Step 6 child of **blip master plan** (no new `BlipId`). Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: direct-load `MainScene.unity` → `BlipEngine.Play(BlipId.UiButtonClick)` emits audio (pool source active); `MainMenu.unity` → New Game no regression; PlayMode smoke green in `unity:testmode-batch`; `npm run unity:compile-check` + `npm run validate:all` exit 0.
+  - Related: none (but touches **Blip bootstrap** — `ia/specs/audio-blip.md §5.1`, `§5.2`)
+
+- [x] **TECH-418** — `IBudgetAllocator` interface + `BudgetAllocationService` skeleton (Stage 1.3 Phase 1) (2026-04-18)
+  - Type: tech / service scaffold
+  - Files: `Assets/Scripts/Managers/GameManagers/IBudgetAllocator.cs`, `Assets/Scripts/Managers/GameManagers/BudgetAllocationService.cs`, `Assets/Scripts/Managers/GameManagers/EconomyManager.cs`
+  - Spec: (removed after closure)
+  - Notes: `IBudgetAllocator` contract + `BudgetAllocationService` MonoBehaviour skeleton under `Territory.Economy`. 4 signatures — `TryDraw(int, int) → bool`, `GetMonthlyEnvelope(int) → int`, `SetEnvelopePct(int, float)`, `MonthlyReset()` — all inert defaults. `[SerializeField]` refs to `EconomyManager` + `TreasuryFloorClampService` + `ZoneSubTypeRegistry` w/ `FindObjectOfType` fallback in `Awake` (guardrail #1, invariant #3). Backing fields `envelopePct` / `globalMonthlyCap` / `currentMonthRemaining` declared but untouched — Phase 2 (TECH-420) owns init + body logic. Helper-service carve-out (invariant #6); same shape as `TreasuryFloorClampService`. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: `IBudgetAllocator.cs` + `BudgetAllocationService.cs` compile; Awake fallback wires each ref; `unity:compile-check` green.
+  - Depends on: **TECH-280** (archived — `ZoneSubTypeRegistry`), **TECH-379** (archived — `TreasuryFloorClampService`)
+
+- [x] **TECH-379** — `TreasuryFloorClampService` skeleton (Stage 1.2 Phase 1) (2026-04-18)
+  - Type: tech (helper service skeleton)
+  - Files: `Assets/Scripts/Managers/GameManagers/TreasuryFloorClampService.cs`
+  - Spec: (removed after closure)
+  - Notes: New MonoBehaviour helper service under `Territory.Economy` namespace. Owns hard-cap treasury rule (Zone S locked decision — balance NEVER negative) per invariant #6 carve-out. `[SerializeField] private EconomyManager economy;` + `FindObjectOfType<EconomyManager>()` fallback in `Awake` (guardrail #1). Public API: `CanAfford(int) → bool`, `TrySpend(int, string) → bool`, `int CurrentBalance`. `TrySpend` negative-amount guard → false; `CanAfford` check BEFORE mutation; success path `economy.cityStats.RemoveMoney(amount)`; failure path `economy.gameNotificationManager.PostError` + return false. Skeleton — no callers re-routed (TECH-381). Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: file compiles; `TrySpend(amount > balance)` returns false + balance unchanged; `TrySpend(amount <= balance)` subtracts + returns true; `CurrentBalance` mirrors `economy.GetCurrentMoney()`; `unity:compile-check` green.
+  - Depends on: **TECH-283** (archived)
+  - Related: TECH-380, TECH-381
+
+- [x] **TECH-381** — Re-route `EconomyManager.SpendMoney` through `TrySpend` (Stage 1.2 Phase 2) (2026-04-18)
+  - Type: tech (refactor — spend delegation)
+  - Files: `Assets/Scripts/Managers/GameManagers/EconomyManager.cs`
+  - Spec: (removed after closure)
+  - Notes: Completed (verified — `/project-spec-close`): `EconomyManager.SpendMoney(int, string, bool)` body rewritten — pre-gate on `treasuryFloorClamp.CanAfford(amount)`, delegate deduction to `treasuryFloorClamp.TrySpend(amount, context ?? "")`, preserve `notifyInsufficientFunds` suppression for callers like `ProcessMonthlyMaintenance` (line 117). Zero direct `cityStats.RemoveMoney` calls inside `EconomyManager.cs`. Signature preserved. Success-path `BlipEngine.Play(BlipId.EcoMoneySpent)` only when `notifyInsufficientFunds=true`. Closes Zone S hard-cap locked decision at top-level manager. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: `SpendMoney(amount > balance)` leaves `cityStats.money` unchanged + returns false; `SpendMoney(amount <= balance)` subtracts exactly `amount` via `TrySpend` + returns true; zero `cityStats.RemoveMoney` inside `EconomyManager.cs`; `unity:compile-check` green; `validate:all` green.
+  - Depends on: **TECH-379** (archived), **TECH-380** (archived)
+  - Related: TECH-382, TECH-383
+
+- [x] **TECH-386** — Implement backfill driver (Stage 3.2 Phase 2) (2026-04-18)
+  - Type: infrastructure / scripts
+  - Files: `tools/scripts/backfill-parent-plan-locator.mjs`, `ia/backlog/`, `ia/projects/`
+  - Spec: (removed after closure)
+  - Notes: Authored `tools/scripts/backfill-parent-plan-locator.mjs` — one-shot idempotent driver scanning `ia/backlog/*.yaml` + walking `ia/projects/*master-plan*.md` task tables via regex for forward `parent_plan` + `task_key` resolution. Writes v2 fields via schema-v2 writer (`tools/scripts/backlog-yaml-writer.mjs`, TECH-365 output) — hand-constructed yaml forbidden. Supports `--dry-run` / `--skip-unresolvable` / `--archive` (no-op hook for TECH-387). Exit codes `0` / `1` / `2` mirror `reserve-id.sh`. Collision policy = warn + keep first. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: driver all 4 flags + summary log; idempotent on open yaml; schema-v2 writer path; `validate:all` green.
+  - Depends on: **TECH-365** (archived — schema-v2 writer — hard), **TECH-384** (archived — template mirror — soft)
+  - Related: TECH-384, TECH-385, TECH-387
+
+- [x] **TECH-385** — Extend frontmatter schema doc (Stage 3.2 Phase 1) (2026-04-18)
+  - Type: infrastructure / docs
+  - Files: `ia/templates/frontmatter-schema.md`
+  - Spec: (removed after closure)
+  - Notes: Extended `ia/templates/frontmatter-schema.md` — documented `parent_plan` + `task_key` as optional-until-Step-6 frontmatter fields w/ regex `^T\d+\.\d+(\.\d+)?$`; ref exploration source `docs/parent-plan-locator-fields-exploration.md`; cross-ref sibling TECH-384 template edit.
+  - Acceptance: schema doc field table carries both rows + regex + optional-until-Step-6 status; `validate:all` green (pre-existing TECH-396 failure unowned).
+  - Depends on: **TECH-384** (archived — template mirror — soft)
+  - Related: TECH-384, TECH-386, TECH-387
+
+- [x] **TECH-384** — Add 2-field mirror to spec template (Stage 3.2 Phase 1) (2026-04-18)
+  - Type: infrastructure / template
+  - Files: `ia/templates/project-spec-template.md`
+  - Spec: (removed after closure)
+  - Notes: Template frontmatter extended w/ 2 placeholder rows (`parent_plan: {{PARENT_PLAN_PATH}}` + `task_key: {{T_KEY}}`) + block comment naming the 2-field mirror rule (only `parent_plan` + `task_key` live in frontmatter; step/stage/phase derived at read time via `task_key` parser regex `^T\d+\.\d+(\.\d+)?$`). Lazy rollout — populated on next `/kickoff`, never retroactive. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: template carries both placeholder rows + rule comment; existing specs unaffected; `validate:all` pre-existing-only failures (no new ones from this edit).
+  - Depends on: **TECH-365** (archived — writer path)
+  - Related: TECH-385, TECH-386, TECH-387
+
+- [x] **TECH-367** — Glossary rows × 4 — skill-training foundation (Stage 1.1 T1.1.1) (2026-04-18)
+  - Type: documentation
+  - Files: `ia/specs/glossary.md`
+  - Spec: (removed after closure)
+  - Notes: 4 rows appended to `ia/specs/glossary.md` Documentation table (shipping-order) — **skill self-report**, **skill training**, **patch proposal (skill)**, **skill-train**. Cross-refs form producer/consumer/artifact triangle. Spec-ref column uses `ia/projects/skill-training-master-plan.md` placeholder (SKILL.md lands Stage 1.2). Satisfies invariant #12 (glossary rows before Stage 1.2 cross-refs). Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: 4 rows present; `glossary_discover "skill self-report"` hits; cross-refs present; `validate:all` green.
+  - Related: TECH-368, TECH-369, TECH-370
+
+- [x] **TECH-371** — **MCP** — invariants-tags sidecar JSON (Stage 1.2 T1.2.1) (2026-04-18)
+  - Type: mcp / data
+  - Files: `tools/mcp-ia-server/data/invariants-tags.json`
+  - Spec: (removed after closure)
+  - Notes: Authored sidecar `tools/mcp-ia-server/data/invariants-tags.json` — Option B split object `{ invariants: [...13], guardrails: [...] }`. Each invariant carries `{ number, subsystem_tags[] }`; guardrails carry `{ index, subsystem_tags[] }`. Tags derived from `ia/rules/invariants.md` prose (lowercase nouns + PascalCase type names like `HeightMap`, `Cell`, `GridManager`). Feeds Stage 1.2 T1.2.2 structured handler (`domain` filter substring-match). Pure data file — no code change. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: 13 invariant entries + guardrails block; valid JSON; `validate:all` green.
+  - Related: TECH-372, TECH-373, TECH-374
+
+- [x] **TECH-364** — Map v2 locator fields in yaml read path (Stage 3.1 Phase 1) (2026-04-18)
+  - Type: infrastructure / MCP tooling
+  - Files: `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`
+  - Spec: (removed at closeout)
+  - Notes: `yamlToIssue` populates 9 locator fields from yaml (`parent_plan`, `task_key`, `step`, `stage`, `phase`, `router_domain`, `surfaces`, `mcp_slices`, `skill_hints`); arrays default `[]`, scalars default `null`; numeric coercion via `Number(...)` with `NaN` → `null`. Regex guard on `task_key` `^T\d+\.\d+(\.\d+)?$` throws on mismatch (counted as `parseErrorCount` in `loadAllYamlIssues`). v1 records load unchanged. Stage 3.1 Phase 1 of `backlog-yaml-mcp-alignment-master-plan.md`.
+  - Acceptance: read-path populates 9 fields; bad `task_key` rejected; v1 fixture compat preserved; `validate:all` green.
+  - Depends on: **TECH-363** (archived — type surface)
+  - Related: **TECH-363**, **TECH-365**, **TECH-366**
+
+- [x] **TECH-363** — Extend `ParsedBacklogIssue` v2 shape (Stage 3.1 Phase 1) (2026-04-18)
+  - Type: infrastructure / MCP tooling
+  - Files: `tools/mcp-ia-server/src/parser/types.ts`, `tools/mcp-ia-server/src/parser/backlog-parser.ts`
+  - Spec: (removed at closeout)
+  - Notes: Added 9 locator members to `ParsedBacklogIssue` (`parent_plan`, `task_key`, `step`, `stage`, `phase`, `router_domain`, `surfaces`, `mcp_slices`, `skill_hints`). Scalars nullable via `| null`; arrays non-nullable default `[]`. Pure type-surface extension — loader mapping lands in TECH-364, writer path in TECH-365, fixtures in TECH-366. Stage 3.1 Phase 1 of `backlog-yaml-mcp-alignment-master-plan.md`.
+  - Acceptance: 9 members present + typed per §5.1 contract; `tsc --noEmit` green; `validate:all` green.
+  - Related: **TECH-364**, **TECH-365**, **TECH-366**
+
+- [x] **TECH-361** — Add `/dashboard/releases` rows to `CLAUDE.md §6` route table + final `validate:web` gate (Stage 7.3 T7.3.4) (2026-04-18)
+  - Type: docs (CLAUDE.md route table)
+  - Files: `CLAUDE.md`
+  - Spec: (removed at closeout — journal persisted Decision Log)
+  - Notes: Added new route table to `CLAUDE.md §6` (3 rows: `/dashboard`, `/dashboard/releases`, `/dashboard/releases/:releaseId/progress`) mirroring `web/README.md` schema (Route / Purpose / Auth / Render). Auth-inheritance pointer cites TECH-358 matcher widen. `npm run validate:web` exit 0 — final green gate for Step 7. `DASHBOARD_AUTH_SKIP=1` Stage 5.3 bypass unaffected (docs-only edit; no proxy/middleware touched). Stage 7.3 Phase 2 of `web-platform-master-plan.md`.
+  - Acceptance: route table present in `CLAUDE.md §6`; `validate:web` green; bypass unaffected; Step 7 final green gate satisfied.
+  - Depends on: **TECH-358** (archived), **TECH-359** (archived), **TECH-360** (archived)
+  - Related: **TECH-358**, **TECH-359**, **TECH-360**
+
+- [x] **TECH-360** — Add `/dashboard/releases` route-list rows to `web/README.md` (Stage 7.3 T7.3.3) (2026-04-18)
+  - Type: docs (web route-list)
+  - Files: `web/README.md`
+  - Spec: (removed at closeout — journal persisted Decision Log)
+  - Notes: Inserted new `## Routes` section after `## Scripts` in `web/README.md` seeded with 6 rows (4 existing + 2 new): (5) `/dashboard/releases` — Release picker, auth-gated (TECH-358 matcher), RSC; (6) `/dashboard/releases/:releaseId/progress` — Release progress tree, auth-gated, RSC + `PlanTree` Client island. Auth-inheritance note cites TECH-358 widen. Stage 7.3 Phase 2 of `web-platform-master-plan.md`. Zero behavior change.
+  - Acceptance: both rows present + accurate; `PlanTree` Client island called out on progress row; auth-gate inheritance noted; `validate:web` green.
+  - Depends on: **TECH-358** (archived — auth matcher widen)
+  - Related: **TECH-358**, **TECH-359**, **TECH-361**
+
+- [x] **TECH-354** — Author `/dashboard/releases/[releaseId]/progress` RSC progress tree page (Stage 7.2 T7.2.4) (2026-04-18)
+  - Type: tech (web RSC page)
+  - Files: `web/app/dashboard/releases/[releaseId]/progress/page.tsx`
+  - Spec: (removed at closeout — journal persisted Decision Log)
+  - Notes: RSC. `resolveRelease(params.releaseId)` → `notFound()` on null. `loadAllPlans()` + `getReleasePlans` + per-plan `computePlanMetrics` + `buildPlanTree` + `deriveDefaultExpandedStepId`. Renders `Breadcrumb` (Dashboard › Releases › {release.label} › Progress) + `<PlanTree>` per plan. Reserved `/rollout` comment (B1 guard — URL 404s by default, no filesystem stub). Full-English headings (caveman exception). Stage 7.2 Phase 2 of `web-platform-master-plan.md`.
+  - Acceptance: RSC resolves release or 404s; `<PlanTree>` per plan; default-expand via metrics; reserved `/rollout` comment present; `validate:web` green.
+  - Depends on: **TECH-340**..**TECH-342** (archived — Stage 7.1 shapers), **TECH-352** (archived — PlanTree Client island)
+  - Related: **TECH-351**, **TECH-352**, **TECH-353**
+
+- [x] **TECH-302** — **Release-rollout skill family** — model-fit + componentization refactor (Sonnet extractions + shared subskills) (2026-04-18)
+  - Type: skill / IA infrastructure refactor
+  - Files: `ia/skills/release-rollout/SKILL.md`, `ia/skills/release-rollout-enumerate/SKILL.md`, `ia/skills/release-rollout-track/SKILL.md`, `ia/skills/release-rollout-skill-bug-log/SKILL.md`, `.claude/agents/release-rollout.md`, `.claude/agents/release-rollout-track.md` (Sonnet), `.claude/agents/release-rollout-skill-bug-log.md` (Sonnet), `ia/skills/progress-regen/SKILL.md`, `ia/skills/cardinality-gate-check/SKILL.md`, `ia/skills/surface-path-precheck/SKILL.md`, `ia/skills/domain-context-load/SKILL.md`, `ia/skills/term-anchor-verify/SKILL.md`, `ia/skills/release-rollout-repo-sweep/SKILL.md`, `ia/skills/rollout-row-state/SKILL.md`; audit source `docs/release-rollout-model-audit.md`
+  - Spec: (removed after closure)
+  - Notes: Refactored rollout skill family — moved mechanical Edit / Glob / MCP-fetch work from Opus host to Sonnet surfaces; shipped 5 shared subskills killing ~8 copies of the MCP recipe across lifecycle skills. Stage 1 (`progress-regen`, `cardinality-gate-check`, `surface-path-precheck`), Stage 2 (`domain-context-load`, `term-anchor-verify`), Stage 3 (`release-rollout-repo-sweep`, `rollout-row-state`), Stage 4 (Sonnet subagents `release-rollout-track` + `release-rollout-skill-bug-log`). Phase 5 also fixed `tools/scripts/reserve-id.sh` flock PATH on macOS. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: all 5 Stage 1–3 shared subskills land; 2 Stage 4 Sonnet subagents live; every caller body invokes new subskill / subagent; `validate:all` green; rollout tracker advance-one-row smoke unregressed; audit doc §7 stages 1–4 ticked.
+
+- [x] **TECH-278** — Extend `ZoneType` enum + predicates for **Zone S** (Stage 1.1 Phase 1) (2026-04-18)
+  - Type: tech (scaffolding / enum extension)
+  - Files: `Assets/Scripts/Managers/UnitManagers/Zone.cs`, `Assets/Scripts/Managers/GameManagers/EconomyManager.cs`
+  - Spec: (removed after closure)
+  - Notes: 6 new `ZoneType` values appended (ints 24–29) — `StateServiceLight/Medium/Heavy` × `Building`/`Zoning`. `IsBuildingZone` + `IsZoningType` extended; new `IsStateServiceZone(Zone.ZoneType)` predicate on `EconomyManager`. Instance-method shape mirrors siblings (invariant #4). Append-only ordering preserves v3 save int compat. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: 6 enum values land; `IsStateServiceZone` true for 6 S, false for RCI; `unity:compile-check` green.
+
+- [x] **TECH-279** — Add `Zone.subTypeId` sidecar field (Stage 1.1 Phase 1) (2026-04-18)
+  - Type: tech (scaffolding / field)
+  - Files: `Assets/Scripts/Managers/UnitManagers/Zone.cs`
+  - Spec: (removed after closure)
+  - Notes: `[SerializeField] private int subTypeId = -1;` + public getter/setter on `Zone`. Default `-1` = "RCI, no sub-type". Sidecar int vs enum expansion — keeps `ZoneType` lean (7 sub-types × 3 tiers would bloat enum to 21 entries). No save plumbing yet — v3→v4 bump lands Stage 1.3. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: field + getter/setter land; default `-1` on all RCI zones; `unity:compile-check` green.
+
+- [x] **TECH-281** — Seed `zone-sub-types.json` config file (Stage 1.1 Phase 2) (2026-04-18)
+  - Type: tech (content / asset seed)
+  - Files: `Assets/Resources/Economy/zone-sub-types.json`
+  - Spec: (removed after closure)
+  - Notes: JSON config landed at `Assets/Resources/Economy/zone-sub-types.json` w/ 7 entries (police=0, fire=1, education=2, health=3, parks=4, public housing=5, public offices=6). `baseCost` + `monthlyUpkeep` per exploration §IP-1 (500/50…900/90). `prefabPath` + `iconPath` empty strings — art deferred post-MVP. Pivot from ScriptableObject `.asset` to JSON: human + agent edits costs by editing file directly; no Unity Editor required. `ZoneSubTypeRegistry.LoadFromJson()` resolves via `Resources.Load<TextAsset>("Economy/zone-sub-types")`. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: JSON file lands w/ 7 entries; ids 0..6 stable; `unity:compile-check` green.
+
+- [x] **TECH-282** — Glossary rows + spec-index refresh (Stage 1.1 Phase 3) (2026-04-18)
+  - Type: IA (glossary + MCP indexes)
+  - Files: `ia/specs/glossary.md`, `tools/mcp-ia-server/data/glossary-index.json`, `tools/mcp-ia-server/data/glossary-graph-index.json`
+  - Spec: (removed after closure)
+  - Notes: 3 new rows landed — **Zone S** (4th zone channel, state-owned, 7 sub-types × 3 tiers, manual placement + envelope-gated), **ZoneSubTypeRegistry** (SO catalog; 7 entries), **envelope (budget sense)** (per-sub-type monthly allowance; sum-locked 100%; `TryDraw` blocks when remaining < amount even if treasury has funds). Forward-ref `ia/specs/economy-system.md` (lands Stage 3.3) + fallback `docs/zone-s-economy-exploration.md`. Indexes regenerated via `npm run mcp-ia-index`. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: 3 rows alphabetical; indexes regenerated; `validate:all` green; `glossary_lookup "Zone S"` resolves.
+
+- [x] **TECH-346** — Update `CLAUDE.md` §2 MCP-first ordering (Stage 1.3 Phase 2) (2026-04-18)
+  - Type: documentation
+  - Files: `CLAUDE.md`
+  - Spec: (removed after closure)
+  - Notes: Additive edit landed on §2 "MCP first" — `reserve_backlog_ids` + `backlog_record_validate` named in issue-creation flow; `backlog_list` named for structured list queries. Existing ordering chain intact. Closes Stage 1.3 Phase 2 (Exit bullet 5).
+  - Acceptance: three tools named; additive only; `validate:all` green.
+  - Related: TECH-343, TECH-345
+
+- [x] **TECH-345** — Document new tools in `docs/mcp-ia-server.md` (Stage 1.3 Phase 2) (2026-04-18)
+  - Type: documentation
+  - Files: `docs/mcp-ia-server.md`
+  - Spec: (removed after closure)
+  - Notes: Three catalog entries landed — `reserve_backlog_ids`, `backlog_list`, `backlog_record_validate` — input schema + output shape + canonical use case per shipped descriptors. Tool-count header bumped 32 → 35. Ordering preserved (grouped near `backlog_issue` / `backlog_search`). Closes Stage 1.3 Phase 2.
+  - Acceptance: three entries land; ordering preserved; tool-count header synced; `validate:all` green.
+  - Related: TECH-343, TECH-346
+
+- [x] **TECH-344** — Note `backlog_record_validate` use in close skill (Stage 1.3 Phase 1) (2026-04-18)
+  - Type: IA / skill docs
+  - Files: `ia/skills/project-spec-close/SKILL.md`
+  - Spec: (removed after closure)
+  - Notes: Optional `backlog_record_validate` note landed near archive-move step; defensive lint, no gate; no required step change.
+  - Acceptance: optional note present; no required step change; `validate:all` green.
+  - Related: TECH-343
+
+- [x] **TECH-343** — Wire MCP tools into `stage-file` + `project-new` skills (Stage 1.3 Phase 1) (2026-04-18)
+  - Type: IA / skill docs
+  - Files: `ia/skills/stage-file/SKILL.md`, `ia/skills/project-new/SKILL.md`
+  - Spec: (removed after closure)
+  - Notes: Shipped MCP-first reserve-id + pre-write yaml lint wording in both skills — `reserve_backlog_ids` named first (batch in `stage-file`, single in `project-new`); `backlog_record_validate` inserted between yaml authoring and disk write; bash fallback preserved. Caveman prose. Closes Stage 1.3 Phase 1.
+  - Acceptance: both skills cite MCP tools first; fallback preserved; `validate:all` green.
+  - Related: TECH-344, TECH-345, TECH-346
+
+- [x] **TECH-351** — Author `web/components/TreeNode.tsx` — recursive render primitive (Stage 7.2 T7.2.1) (2026-04-18)
+  - Type: tech (web client component)
+  - Files: `web/components/TreeNode.tsx`
+  - Spec: (removed after closure)
+  - Notes: Recursive `TreeNodeData` render. Status glyph (chevron for branches, `●` for task leaves) + label + `{done}/{total}` count. `<button aria-expanded aria-controls>` on non-leaf toggles (a11y). Leaf issue id shown only when not `_pending_`. Consumes `BadgeChip` status token CSS classes via extracted `STATUS_TOKEN_CLASS` map (Phase 1 token extraction). Server-safe (no `'use client'`, no hooks) — `PlanTree` (TECH-352) owns the client boundary. Props: `{ node, expanded: Set<string>, onToggle }`.
+  - Acceptance: recursive render ships; a11y attrs on branches; leaf issue id conditional on `_pending_`; Server-safe; `validate:web` green.
+  - Related: TECH-352, TECH-353, TECH-354
+
+- [x] **TECH-341** — Author `web/lib/releases/default-expand.ts` + unit tests (Stage 7.1 T7.1.3) (2026-04-18)
+  - Type: tech (web data layer)
+  - Files: `web/lib/releases/default-expand.ts`, `web/lib/__tests__/default-expand.test.ts`
+  - Spec: (removed after closure)
+  - Notes: Pure predicate `deriveDefaultExpandedStepId(plan, metrics)` — first step where `done < total`, else `null`. Drives initial expanded state in Stage 7.2 `PlanTree` Client component. Tasks ground truth — stale step-header Status prose ignored; `'blocked'` unreachable per JSDoc. 5 unit tests (first-non-done, all-done null, all-pending returns first, stale-header ignored, empty-steps null). Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: predicate compiles; JSDoc cites ground-truth rule + blocked-unreachable note; 5 tests green; `validate:web` green; `validate:all` green.
+  - Related: TECH-339, TECH-340, TECH-342
+
+- [x] **TECH-340** — Author `web/lib/releases/resolve.ts` + unit tests (Stage 7.1 T7.1.2) (2026-04-18)
+  - Type: tech (web data layer)
+  - Files: `web/lib/releases/resolve.ts`, `web/lib/__tests__/releases.test.ts`
+  - Spec: (removed after closure)
+  - Notes: Pure filter shaper. `getReleasePlans(release, allPlans): PlanData[]` — basename match vs `release.children`, preserves registry order, silent drop of missing-on-disk entries. Unit tests cover 5 cases (`resolveRelease` found/not-found + `getReleasePlans` filter/missing-child/umbrella self). Vitest wired in `web/` as Phase 0 prerequisite. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: filter compiles; 5 tests green; `validate:web` green; `validate:all` green.
+  - Related: TECH-339, TECH-341, TECH-342
+
+- [x] **TECH-339** — Author `web/lib/releases.ts` — Release registry + resolver (Stage 7.1 T7.1.1) (2026-04-18)
+  - Type: tech (web data layer)
+  - Files: `web/lib/releases.ts`
+  - Spec: (removed after closure)
+  - Notes: Hand-maintained release registry. `Release` interface (`id`, `label`, `umbrellaMasterPlan`, `children: string[]`) + `resolveRelease(id) → Release | null` + seeded `full-game-mvp` row (9 children verbatim from `docs/web-platform-post-mvp-extensions.md` §1 Examples; utilities/landmarks/distribution absent per tracker rows 8/9/11). Header cites `ia/projects/full-game-mvp-rollout-tracker.md` + drift warning. Pure data layer. Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: registry compiles; `resolveRelease` returns seeded row + null on miss; `validate:web` green; `validate:all` green.
+- [x] **TECH-375** — **Web** — author `web/lib/design-system.md` spec §1–§6 (Stage 8.1 T8.1.1) (2026-04-18)
+  - Type: web / docs
+  - Files: `web/lib/design-system.md`
+  - Spec: (removed — unfiled via TECH-411 Phase 1 reset)
+  - Notes: §1 type scale (10 levels, 1.25 ratio) + §2 spacing (9 stops, 4px grid) + §3 motion (4 durations + reduced-motion) + §4 aliases (text/surface/accent) + §5 component map + §6 a11y (WCAG AA, focus-visible). Cite Dribbble + Shopify refs from extensions doc §8.
+  - Acceptance: §1–§6 complete; refs cited; ≤ ~10 pages; `validate:all` green.
+  - Related: TECH-376, TECH-377, TECH-378
+
+- [x] **TECH-376** — **Web** — game-accent palette derivation + WCAG AA verification (Stage 8.1 T8.1.2) (2026-04-18)
+  - Type: web / docs
+  - Files: `web/lib/design-system.md`, `web/lib/tokens/palette.json`
+  - Spec: (removed — unfiled via TECH-411 Phase 1 reset)
+  - Notes: Pick `terrainGreen` + `waterBlue` + 1 warm hue from palette; verify WCAG AA on `surface.canvas` (#0a0a0a); record ratios in §4 `accent.*` subsection.
+  - Acceptance: 3 candidates + ratios documented in §4; `validate:all` green.
+  - Depends on: TECH-375 (host §4 — hard)
+  - Related: TECH-375, TECH-377, TECH-378
+
+- [x] **TECH-377** — **Web** — `design-tokens.ts` + unit tests (Stage 8.1 T8.1.3) (2026-04-18)
+  - Type: web / code + tests
+  - Files: `web/lib/design-tokens.ts`, `web/lib/__tests__/design-tokens.test.ts`
+  - Spec: (removed — unfiled via TECH-411 Phase 1 reset)
+  - Notes: `const as const` TS exports for `typeScale` (10) + `spacing` (9) + `motion` (4 + reducedMotion) + `text/surface/accent` aliases; imports `palette.json`; zero mutation. Tests: monotonic typeScale rem, 9 spacing stops, motion keys complete, `reducedMotion.duration === 0`, alias hex resolves to palette.
+  - Acceptance: exports + tests green; `validate:web` + `validate:all` green.
+  - Depends on: TECH-375, TECH-376 (spec source-of-truth — hard)
+  - Related: TECH-375, TECH-376, TECH-378
+
+- [x] **TECH-378** — **Web** — `globals.css` `@theme` `--ds-*` extension + reduced-motion media (Stage 8.1 T8.1.4) (2026-04-18)
+  - Type: web / code
+  - Files: `web/app/globals.css`
+  - Spec: (removed — unfiled via TECH-411 Phase 1 reset)
+  - Notes: Append `--ds-font-size-*` + `--ds-spacing-*` + `--ds-duration-*` + `--ds-text/surface/accent-*` to `@theme`; B1 guard (no collision w/ existing `--color-*` / `--spacing-*` / `--text-*`); `@media (prefers-reduced-motion: reduce)` collapses durations to `0ms`.
+  - Acceptance: all `--ds-*` present; existing untouched; reduced-motion collapse active; `validate:web` + `validate:all` green.
+  - Depends on: TECH-377 (TS const mirror — hard)
+  - Related: TECH-375, TECH-376, TECH-377
+
+  - Related: TECH-340, TECH-341, TECH-342
+
+- [x] **TECH-329** — Test `backlog_list` filter combinations (Stage 1.2 Phase 3) (2026-04-18)
+  - Type: infrastructure / MCP tooling
+  - Files: `tools/mcp-ia-server/tests/tools/backlog-list.test.ts`
+  - Spec: (removed after closure)
+  - Notes: Shipped `backlog_list` test coverage — unit tier (pure `applyFilters` + `compareIssues`) + integration tier (tmpdir yaml fixtures via `REPO_ROOT`). U1–U8 filter matrix + ordering; I1–I3 scope switch. Locks filter semantics before Stage 2.3 `backlog_search` extensions. Closes Phase 3 of Stage 1.2.
+  - Acceptance: each filter dim + combos + scope + empty + ordering covered; `validate:all` green.
+  - Related: TECH-328
+
 - [x] **TECH-330** — Remediate **critical** + **major** findings from `feature/master-plans-1` self-review (2026-04-17)
   - Type: code health / IA remediation
   - Files: `docs/backlog-yaml-mcp-alignment-exploration.md`, `docs/mcp-lifecycle-tools-opus-4-7-audit-exploration.md`, `docs/ship-stage-exploration.md`, `docs/web-platform-post-mvp-extensions.md`, `docs/release-rollout-model-audit.md`, `ia/skills/stage-file/SKILL.md`, `ia/skills/project-new/SKILL.md`, `ia/skills/release-rollout-enumerate/SKILL.md`, `ia/skills/release-rollout-track/SKILL.md`, `ia/skills/project-spec-close/SKILL.md`, `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/scripts/materialize-backlog.sh`, `.claude/agents/stage-decompose.md`, `ia/projects/full-game-mvp-rollout-tracker.md`
@@ -1788,6 +2173,46 @@
 ---
 
 ## Recent archive (moved from BACKLOG.md, 2026-04-10)
+
+- [x] **TECH-288** — LFO routing matrix + EditMode test + glossary (Stage 5.3 Phase 2) (2026-04-18)
+  - Type: audio / DSP + IA
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`, `Assets/Tests/EditMode/Audio/BlipLfoTests.cs` (new), `ia/specs/glossary.md`, `ia/specs/audio-blip.md`
+  - Spec: `ia/projects/TECH-288.md`
+  - Notes: LFO output dispatch in `BlipVoice.Render` — per-sample `switch` on `BlipLfoKind` (Sine `Math.Sin(phase)`; Triangle `2/π·Math.Asin(Math.Sin(phase))`; Square `Math.Sign(Math.Sin(phase))`; S&H re-sample on phase wrap). Scale by `depth`; `SmoothOnePole` on routed target. Routes: Pitch adds cents before jitter; Gain multiplies `gainMult`; FilterCutoff offsets `cutoffHz` before α compute; Pan offsets stereo pre-split. Mirror into deterministic + live branches (Stage 5.1 precedent). New `BlipLfoTests`: sine 1 s @ 48 kHz rate 5 Hz → zero-crossing count matches ±1; monotonic rise (0..π/2) + fall (π/2..π). 3 glossary rows: **Blip LFO** (§4.1), **Param smoothing** (§3.2), **Blip LUT pool** (§5.1) + `ia/specs/audio-blip.md §4.1` cross-ref for `lfo0/lfo1` authoring fields. Closes Stage 5.3.
+  - Acceptance: routing + waveform dispatch wired in both branches; `SmoothOnePole` applied per route target; `BlipLfoTests` green; MVP `BlipGoldenFixtureTests` still bit-exact (empty-LFO unaffected); `BlipNoAllocTests` still green; 3 glossary rows present; `audio-blip.md §4.1` updated; `npm run unity:compile-check` green; `npm run validate:all` exit 0; `npm run unity:testmode-batch` green.
+  - Depends on: **TECH-285**, **TECH-286**, **TECH-287**.
+
+- [x] **TECH-287** — `SmoothOnePole` helper + LFO per-sample advance (Stage 5.3 Phase 2) (2026-04-18)
+  - Type: audio / DSP
+  - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`
+  - Spec: `ia/projects/TECH-287.md`
+  - Notes: `public static float SmoothOnePole(ref float z, float target, float coef)` on `BlipVoice`: `z += coef * (target - z); return z`. Pre-compute `float lfoSmCoef = 1f - (float)Math.Exp(-TwoPi * 50.0 / sampleRate)` outside sample loop (20 ms param-smoothing τ). Pre-compute `double lfoPhaseInc0/1 = TwoPi * rateHz / sampleRate` (avoid per-sample div). Per-sample advance + wrap in both deterministic + live branches: `state.lfoPhase0 += lfoPhaseInc0; if (state.lfoPhase0 >= TwoPi) state.lfoPhase0 -= TwoPi;` — mirror for slot 1. Phases spin unrouted here — waveform dispatch + routing land TECH-288.
+  - Acceptance: `SmoothOnePole` static present; coef + phase-inc pre-compute outside loop; per-sample advance mirrored into both branches; MVP goldens bit-exact (phase advance alone inert); zero-alloc preserved; `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+  - Depends on: **TECH-285**, **TECH-286**.
+
+- [x] **TECH-285** — LFO types + `BlipPatch`/`BlipPatchFlat` extension (Stage 5.3 Phase 1) (2026-04-18)
+  - Type: audio / data model
+  - Files: `Assets/Scripts/Audio/Blip/BlipPatchTypes.cs`, `Assets/Scripts/Audio/Blip/BlipPatch.cs`, `Assets/Scripts/Audio/Blip/BlipPatchFlat.cs`
+  - Spec: `ia/projects/TECH-285.md`
+  - Notes: `BlipLfoKind` enum (Off=0 / Sine=1 / Triangle=2 / Square=3 / SampleAndHold=4) + `BlipLfoRoute` enum (Pitch=0 / Gain=1 / FilterCutoff=2 / Pan=3) + `BlipLfo [Serializable] struct` (BlipLfoKind kind; float rateHz, depth; BlipLfoRoute route) + `BlipLfoFlat readonly struct` — all in `BlipPatchTypes.cs`. `BlipPatch` gains `[SerializeField] public BlipLfo lfo0, lfo1`; `OnValidate` clamps `rateHz ≥ 0`. `BlipPatchFlat` gains `BlipLfoFlat lfo0Flat, lfo1Flat`; ctor copies both. Pure data-model scaffold — no kernel logic (advance TECH-287, routing TECH-288).
+  - Acceptance: enums + structs present; `BlipPatch.lfo0/lfo1` serialized + clamp; `BlipPatchFlat` blittable w/ new fields; `npm run unity:compile-check` green; `npm run validate:all` exit 0; existing `BlipGoldenFixtureTests` + `BlipNoAllocTests` still green.
+  - Depends on: none (Stage 5.2 closed).
+
+- [x] **TECH-413** — Implement `master_plan_locate` MCP tool (Stage 4.1 Phase 1) (2026-04-18)
+  - Type: mcp / tooling
+  - Files: `tools/mcp-ia-server/src/tools/master-plan-locate.ts`, `tools/mcp-ia-server/src/index.ts`, `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/mcp-ia-server/src/parser/backlog-parser.ts`
+  - Spec: `ia/projects/TECH-413.md`
+  - Notes: New MCP tool. Input `{ issue_id }`. Load yaml; read `parent_plan` + `task_key`; grep plan for `^\| ${task_key} \|` row. Returns `{ plan, step, stage, phase, task_key, row_line, row_raw }`. Errors on missing-fields / plan-path-absent / task_key-drift. Register in `index.ts`. Schema-cache restart after add.
+  - Acceptance: tool registered + responds for fixture v2 yaml; error cases handled; typecheck + `validate:all` green.
+  - Depends on: **TECH-364** (yaml read path), **TECH-365** (writer path)
+  - Related: TECH-414, TECH-415
+
+- [x] **TECH-412** — unity_bridge_command scene-mutation kinds — agentic closed-loop verify gap closure (2026-04-18)
+  - Type: tech / agent tooling
+  - Files: `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`, `tools/mcp-ia-server/src/tools/unity-bridge-command.ts`, `docs/mcp-ia-server.md`, `docs/agent-led-verification-policy.md`, `tools/fixtures/`
+  - Notes: Closed. 20 mutation kinds landed in `AgentBridgeCommandRunner.Mutations.cs`; MCP schema mirrored; docs updated; `verify-loop` Step 6 routes `bridge_kind_missing` through new kinds before `human_judgment_required`.
+  - Acceptance: met — ≥12 kinds (20 landed); typed DTOs; MCP mirrored; Postgres round-trip green; dirty/save correct; regression clean; `validate:all` + `unity:compile-check` green.
+  - Related: TECH-383 (Stage 1.2 escalation source); `ia/projects/zone-s-economy-master-plan.md` Stage 1.2
 
 - [x] **TECH-262** — `web/drizzle.config.ts` + `db:generate` script (Stage 5.2 Phase 1) (2026-04-17)
   - Type: web platform / tooling

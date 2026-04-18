@@ -186,25 +186,38 @@
             "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
             "",
             "### Stage 1.2 — MCP tools batch 1 (IP3 + IP4 + IP5)",
+            "",
+            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "",
+            "### Stage 3.2 — Template frontmatter + backfill script",
+            "",
+            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "header": "## MCP lifecycle tools — Opus 4.7 audit program",
+      "items": [
+        {
+          "type": "prose",
+          "lines": [
+            "",
+            "Orchestrator: [`ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`](projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Reshapes 32-tool MCP surface from 4.6-era sequential-call shape to 4.7-era composite-bundle + structured-envelope architecture. Step 1 closed — Stage 1.1 + Stage 1.2 archived (glossary bulk-`terms`, structured `invariants_summary`, v0.6.0 release). Step 2 In Progress — Stage 2.1 archived (TECH-388..TECH-391: envelope + caller allowlist + unit tests). Stage 2.2 opened 2026-04-18 — 8 tasks filed below (TECH-398..TECH-405: wrap all 32 handlers in `wrapTool` by family — spec / rule+router / glossary / invariant / backlog / DB-coupled / bridge / Unity analysis). Step 2 exit ships as breaking release v1.0.0.",
+            "",
+            "### Stage 2.1 — Envelope Infrastructure + Auth",
+            "",
+            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
+            "",
+            "### Stage 2.2 — Rewrite 32 Tool Handlers",
             ""
           ]
         },
         {
           "type": "issue",
-          "id": "TECH-325",
-          "checklist_line": "- [ ] **TECH-325** — Test `backlog_record_validate` against fixtures (Stage 1.2 Phase 1)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-328",
-          "checklist_line": "- [ ] **TECH-328** — Implement `backlog_list` MCP tool (Stage 1.2 Phase 3)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-329",
-          "checklist_line": "- [ ] **TECH-329** — Test `backlog_list` filter combinations (Stage 1.2 Phase 3)",
+          "id": "TECH-400",
+          "checklist_line": "- [ ] **TECH-400** — **MCP** — wrap glossary tools in envelope (Stage 2.2 T2.2.3)",
           "trailing_blanks": 1
         }
       ]
@@ -260,24 +273,6 @@
           "type": "issue",
           "id": "TECH-83",
           "checklist_line": "- [ ] **TECH-83** — **Agent-driven simulation parameter tuning**",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-302",
-          "checklist_line": "- [ ] **TECH-302** — **Release-rollout skill family** — model-fit + componentization refactor (Sonnet extractions + shared subskills)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-314",
-          "checklist_line": "- [ ] **TECH-314** — **MCP** — glossary_lookup bulk `terms` handler",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-315",
-          "checklist_line": "- [ ] **TECH-315** — **MCP** — glossary_lookup bulk-terms unit tests",
           "trailing_blanks": 1
         },
         {
@@ -417,6 +412,45 @@
       ]
     },
     {
+      "header": "## Distribution program — Full-Game MVP Bucket 10",
+      "items": [
+        {
+          "type": "prose",
+          "lines": [
+            "",
+            "Orchestrator: [`ia/projects/distribution-master-plan.md`](projects/distribution-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 10 of full-game-mvp umbrella (Tier E — unsigned installer tier for curated 20–50 testers; signing / Linux / WebGL / patch deltas / Steam / public itch deferred). Exploration: [`docs/distribution-exploration.md`](docs/distribution-exploration.md) §Design Expansion. Step 1 = Unity build pipeline + versioning manifest. Step 2 = unsigned packaging + `/download` publication + in-game notifier. Stage 1.1 opened 2026-04-18 — 4 tasks filed below (TECH-347..TECH-350: BuildInfo SO type + asset + SemverCompare helper + distribution glossary rows).",
+            "",
+            "### Stage 1.1 — BuildInfo SO + semver compare helper",
+            ""
+          ]
+        },
+        {
+          "type": "issue",
+          "id": "TECH-347",
+          "checklist_line": "- [ ] **TECH-347** — BuildInfo ScriptableObject type (Stage 1.1 T1.1.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-348",
+          "checklist_line": "- [ ] **TECH-348** — BuildInfo asset instance under Assets/Resources (Stage 1.1 T1.1.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-349",
+          "checklist_line": "- [ ] **TECH-349** — SemverCompare helper + EditMode truth-table tests (Stage 1.1 T1.1.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-350",
+          "checklist_line": "- [ ] **TECH-350** — Distribution glossary rows in ia/specs/glossary.md (Stage 1.1 T1.1.4)",
+          "trailing_blanks": 1
+        }
+      ]
+    },
+    {
       "header": "## CityStats overhaul program",
       "items": [
         {
@@ -522,6 +556,39 @@
       ]
     },
     {
+      "header": "## Skill training program",
+      "items": [
+        {
+          "type": "prose",
+          "lines": [
+            "",
+            "Orchestrator: [`ia/projects/skill-training-master-plan.md`](projects/skill-training-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Approach A two-skill split — structured JSON self-report emitter at Phase-N-tail of 13 lifecycle skills + `skill-train` consumer subagent (Opus, on-demand) that synthesizes recurring friction into patch proposals for SKILL.md bodies, gated by user review. Exploration: [`docs/skill-training-exploration.md`](docs/skill-training-exploration.md) §Design Expansion. Stage 1.1 opened 2026-04-18 — 4 tasks filed below (TECH-367..TECH-370: glossary rows × 4 + agent-lifecycle surface-map row + CLAUDE.md §3 pointer + AGENTS.md retrospective paragraph). Satisfies invariant #12 — terminology lands before Stage 1.2 or Step 2 authors cross-refs.",
+            "",
+            "### Stage 1.1 — Glossary + Docs Foundation",
+            ""
+          ]
+        },
+        {
+          "type": "issue",
+          "id": "TECH-368",
+          "checklist_line": "- [ ] **TECH-368** — agent-lifecycle.md surface-map row for /skill-train (Stage 1.1 T1.1.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-369",
+          "checklist_line": "- [ ] **TECH-369** — CLAUDE.md §3 pointer for skill-train SKILL (Stage 1.1 T1.1.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-370",
+          "checklist_line": "- [ ] **TECH-370** — AGENTS.md pointer for skill-train retrospective (Stage 1.1 T1.1.4)",
+          "trailing_blanks": 1
+        }
+      ]
+    },
+    {
       "header": "## Blip audio program",
       "items": [
         {
@@ -596,32 +663,10 @@
             "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
             "",
             "### Stage 5.3 — LFOs + routing matrix + param smoothing",
+            "",
+            "_(all tasks archived — see `BACKLOG-ARCHIVE.md`)_",
             ""
           ]
-        },
-        {
-          "type": "issue",
-          "id": "TECH-285",
-          "checklist_line": "- [ ] **TECH-285** — LFO types + `BlipPatch`/`BlipPatchFlat` extension (Stage 5.3 Phase 1)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-286",
-          "checklist_line": "- [ ] **TECH-286** — `BlipLutPool` stub + `BlipVoiceState` LFO phase fields (Stage 5.3 Phase 1)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-287",
-          "checklist_line": "- [ ] **TECH-287** — `SmoothOnePole` helper + LFO per-sample advance (Stage 5.3 Phase 2)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-288",
-          "checklist_line": "- [ ] **TECH-288** — LFO routing matrix + EditMode test + glossary (Stage 5.3 Phase 2)",
-          "trailing_blanks": 1
         }
       ]
     },
@@ -755,30 +800,6 @@
             "### Stage 7.1 — Registry + pure shapers",
             ""
           ]
-        },
-        {
-          "type": "issue",
-          "id": "TECH-339",
-          "checklist_line": "- [ ] **TECH-339** — Author `web/lib/releases.ts` — Release registry + resolver (Stage 7.1 T7.1.1)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-340",
-          "checklist_line": "- [ ] **TECH-340** — Author `web/lib/releases/resolve.ts` + unit tests (Stage 7.1 T7.1.2)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-341",
-          "checklist_line": "- [ ] **TECH-341** — Author `web/lib/releases/default-expand.ts` + unit tests (Stage 7.1 T7.1.3)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-342",
-          "checklist_line": "- [ ] **TECH-342** — Author `web/lib/plan-tree.ts` — builder + TreeNodeData union + unit tests (Stage 7.1 T7.1.4)",
-          "trailing_blanks": 1
         }
       ]
     },
@@ -792,35 +813,11 @@
           ]
         },
         {
-          "type": "issue",
-          "id": "TECH-86",
-          "checklist_line": "- [x] **TECH-86** — Lifecycle skill refactor: project hierarchy rules + orchestrator-vs-spec distinction",
-          "trailing_blanks": 1
-        },
-        {
           "type": "prose",
           "lines": [
             "<!-- zone-s-economy master plan — Stage 1.1 (orchestrator: `ia/projects/zone-s-economy-master-plan.md`; Bucket 3 of full-game MVP umbrella) -->",
             ""
           ]
-        },
-        {
-          "type": "issue",
-          "id": "TECH-278",
-          "checklist_line": "- [ ] **TECH-278** — Extend `ZoneType` enum + predicates for **Zone S** (Stage 1.1 Phase 1)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-279",
-          "checklist_line": "- [ ] **TECH-279** — Add `Zone.subTypeId` sidecar field (Stage 1.1 Phase 1)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-280",
-          "checklist_line": "- [ ] **TECH-280** — `ZoneSubTypeRegistry` ScriptableObject class (Stage 1.1 Phase 2)",
-          "trailing_blanks": 1
         },
         {
           "type": "issue",
@@ -857,24 +854,6 @@
             "<!-- zone-s-economy master plan — Stage 1.1 (orchestrator: `ia/projects/zone-s-economy-master-plan.md`; Bucket 3 of full-game MVP umbrella) -->",
             ""
           ]
-        },
-        {
-          "type": "issue",
-          "id": "TECH-281",
-          "checklist_line": "- [ ] **TECH-281** — Seed 7 `ZoneSubTypeRegistry` entries + asset (Stage 1.1 Phase 2)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-282",
-          "checklist_line": "- [ ] **TECH-282** — Glossary rows + spec-index refresh (Stage 1.1 Phase 3)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-283",
-          "checklist_line": "- [ ] **TECH-283** — EditMode tests for `ZoneType` + `ZoneSubTypeRegistry` (Stage 1.1 Phase 3)",
-          "trailing_blanks": 1
         },
         {
           "type": "issue",
@@ -1005,6 +984,12 @@
           "type": "issue",
           "id": "TECH-14",
           "checklist_line": "- [ ] **TECH-14** — Remove residual placeholder / test scripts",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-411",
+          "checklist_line": "- [ ] **TECH-411** — Claude Design pilot: web Step 8 reset + validation",
           "trailing_blanks": 1
         },
         {

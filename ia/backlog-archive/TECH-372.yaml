@@ -1,0 +1,28 @@
+id: TECH-372
+type: mcp / tooling
+title: "**MCP** — invariants_summary structured handler + domain filter (Stage 1.2 T1.2.2)"
+priority: medium
+status: closed
+section: IA infrastructure
+spec: ia/projects/TECH-372.md
+files:
+  - tools/mcp-ia-server/src/tools/invariants-summary.ts
+notes: |
+  Extend `tools/mcp-ia-server/src/tools/invariants-summary.ts` — load `invariants-tags.json` sidecar (TECH-371); accept `domain?: string` filter param (substring match against `subsystem_tags`); return structured `{ invariants: [{number, title, body, subsystem_tags, code_touches}], markdown?: string }`. `markdown` side-channel preserves existing prose for back-compat. Empty `domain` filter match → `{ invariants: [], markdown: "" }` (not error). Stage 1.2 T1.2.2 of `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`. Prereq for Stage 2.2 envelope wrap (T2.2.4).
+acceptance: |
+  `invariants_summary({ domain: "roads" })` returns only road-tagged invariants structured; `invariants_summary({})` returns all 13 + `markdown` side-channel; back-compat callers still parse; `npm run validate:all` green.
+depends_on:
+  - TECH-371
+depends_on_raw: TECH-371 (sidecar JSON loaded by handler — hard gate)
+related: []
+created: 2026-04-18
+closed: 2026-04-18
+raw_markdown: |
+  - [x] **TECH-372** — **MCP** — invariants_summary structured handler + domain filter (Stage 1.2 T1.2.2)
+    - Type: mcp / tooling
+    - Files: `tools/mcp-ia-server/src/tools/invariants-summary.ts`
+    - Spec: `ia/projects/TECH-372.md`
+    - Notes: Load TECH-371 sidecar; add `domain?: string` filter; return `{ invariants: [...], markdown? }` structured payload + side-channel.
+    - Acceptance: `domain` filter works; no `domain` returns all 13 + `markdown`; back-compat preserved; `validate:all` green.
+    - Depends on: TECH-371 (sidecar — hard)
+    - Related: TECH-371, TECH-373, TECH-374

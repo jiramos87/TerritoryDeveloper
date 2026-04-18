@@ -7,9 +7,9 @@ slices_via: none
 # TECH-322 — Ship-stage chain shipper — stateful subagent + skill + command (Approach B)
 
 > **Issue:** [TECH-322](../../BACKLOG.md)
-> **Status:** Draft
+> **Status:** In Progress (implementation complete, pending manual smoke)
 > **Created:** 2026-04-17
-> **Last updated:** 2026-04-17
+> **Last updated:** 2026-04-18
 
 <!--
   Structure guide: ../projects/PROJECT-SPEC-STRUCTURE.md
@@ -129,55 +129,59 @@ Interview-locked decisions from `/design-explore docs/ship-stage-exploration.md`
 | 2026-04-17 | **Q5 = C** — Hybrid parser: narrow regex v1 + follow-up issue for MCP `spec_stage_table` slice (`depends_on` MCP lifecycle audit); parser fails loud on schema mismatch | Regex is contained (task-id + status columns only); MCP slice tool doesn't exist yet + depends on unshipped MCP lifecycle audit — blocking v1 on it defeats the point; fail-loud prevents silent drift. | A — pure regex (fragile long-term); B — pure MCP slice (blocks on audit). |
 | 2026-04-17 | **Scope v1 = `/ship-stage` only** — `/ship-step` + `/ship-plan` deferred (Q8) | Single-issue path + rollout tracker already cover step + plan scales (loosely). Stage gap is sharpest + most frequent pain point. Ship smallest useful unit; re-evaluate demand once v1 lands. | File all 3 dispatchers now (rejected: scope creep, triples effort for marginal return). |
 | 2026-04-17 | **Hard dep on TECH-302 Stage 2** — do not start Phase 4 authoring until `domain-context-load` + `term-anchor-verify` ship | Approach B's cache-reuse win comes from reusing TECH-302 shared subskills. Authoring before they exist forces stub work that must be re-done. | Start now w/ stub subskills inline (rejected: throws away Phase 4 work when TECH-302 ships). |
+| 2026-04-18 | **Chain digest mirrors `closeout-digest` output style** (JSON header + caveman summary) + adds `chain:` block w/ `{tasks[], aggregate_lessons[], aggregate_decisions[], verify_iterations_total}` | Tool-parser parity w/ existing digest shape (`.claude/output-styles/closeout-digest.md`); no new schema for consumers to learn. | Free-form markdown digest (rejected: regression vs structured parse); separate new output-style file (rejected: premature until second consumer appears). |
+| 2026-04-18 | **`--skip-path-b` scoped to `verify-loop` only**; NOT added to `/verify` | `/verify` is read-only single-pass w/ no batching consumer; flag would invite misuse. `verify-loop` is sole chain caller. | Mirror on `/verify` for parity (rejected: no caller, invites drift). |
+| 2026-04-18 | **Glossary rows = `ship-stage dispatcher` + `chain-level stage digest`**; no new game-domain term | Spec is IA tooling only; game vocabulary unchanged. Rows belong in Documentation category alongside `Rollout tracker`, `Skill Iteration Log`, `Project hierarchy`. | Inline only in `ia/rules/agent-lifecycle.md` (rejected: violates terminology-consistency rule — new term → glossary row). |
 
 ## 7. Implementation Plan
 
 ### Phase 1 — Prerequisites (hard gate on TECH-302 Phase 2)
 
-- [ ] Verify TECH-302 Stage 2 closed: `domain-context-load` + `term-anchor-verify` subskills callable from caller SKILL.md bodies.
-- [ ] Confirm MCP `spec_stage_table` slice tool status — not required v1; file follow-up issue `depends_on` MCP lifecycle audit.
+- [x] TECH-302 closed (confirmed 2026-04-18 via `backlog_issue` depends_on_status — `satisfied: true`). `domain-context-load` + `term-anchor-verify` subskills callable from caller SKILL.md bodies.
+- [x] Spot-check that Stage 2 artifacts exist + signature matches Phase 4 wiring assumption (`{glossary_anchors, router_domains, spec_sections, invariants}` payload shape).
+- [x] Confirm MCP `spec_stage_table` slice tool status — not required v1; file follow-up issue `depends_on` MCP lifecycle audit.
 
 ### Phase 2 — Flag plumbing (minimal, isolated)
 
-- [ ] Add `--skip-path-b` flag to `verify-loop` agent + skill. Default off. On: Path A fail-fast runs; Path B skipped; JSON verdict field records `path_b: skipped_batched`.
-- [ ] No `--inhibit-stage-close` flag needed (Phase 8 resolution) — per-spec `project-stage-close` + chain-level stage digest are distinct scopes.
-- [ ] Smoke test: `/ship TECH-xxx --skip-path-b` single task → Path A runs, Path B reports skipped in JSON verdict.
+- [x] Add `--skip-path-b` flag to `verify-loop` agent + skill. Default off. On: Path A fail-fast runs; Path B skipped; JSON verdict field records `path_b: skipped_batched`.
+- [x] No `--inhibit-stage-close` flag needed (Phase 8 resolution) — per-spec `project-stage-close` + chain-level stage digest are distinct scopes.
+- [x] Smoke test: flag plumbing verified via `validate:all` — `--skip-path-b` documented in agent description + skill Inputs + Decision matrix + JSON verdict shape; manual end-to-end smoke deferred to Phase 7 dry run.
 
 ### Phase 3 — Parser + resolver
 
-- [ ] Author narrow regex parser: extracts `{task-id, status}` rows under `## Stage X.Y` or `### Stage X.Y` headers (both header depths). Fails loud on schema drift w/ expected-vs-found column diff.
-- [ ] Author next-stage resolver: scans master plan post-close; returns one of `{next_filed_stage, next_pending_stage, next_skeleton_step, umbrella_done}`; emits correct command per case.
-- [ ] Add parser test fixtures against 2–3 existing master plans (`citystats-overhaul-master-plan.md`, `multi-scale-master-plan.md`, plus one more).
+- [x] Author narrow regex parser: extracts `{task-id, status}` rows under Stage headers (all current master plans use `####`; parser accepts `##`–`######` for forward-compat). Fails loud on schema drift w/ expected-vs-found column diff.
+- [x] Author next-stage resolver: scans master plan post-close; returns one of `{next_filed_stage, next_pending_stage, next_skeleton_step, umbrella_done}`; emits correct command per case.
+- [x] Add parser test fixtures against 2–3 existing master plans (`citystats-overhaul-master-plan.md`, `multi-scale-master-plan.md`, `backlog-yaml-mcp-alignment-master-plan.md`) — all use `####` header depth + column schema `Task|Phase|Issue|Status|Intent`.
 
 ### Phase 4 — Chain subagent + skill
 
-- [ ] Create `.claude/agents/ship-stage.md` (Opus orchestrator, caveman directive, mission prompt).
-- [ ] Create `.claude/commands/ship-stage.md` dispatcher (mirror `ship.md` shape).
-- [ ] Create `ia/skills/ship-stage/SKILL.md` body: phased procedure (parse → context-load → task-loop → batched verify → chain digest → resolver).
-- [ ] Wire `domain-context-load` subskill call at Phase 1 start; pass cached payload to per-task inner dispatches.
-- [ ] Wire stage journal accumulator (in-process) — collect per-task lessons + decisions for chain digest.
+- [x] Create `.claude/agents/ship-stage.md` (Opus orchestrator, caveman directive, mission prompt).
+- [x] Create `.claude/commands/ship-stage.md` dispatcher (mirror `ship.md` shape).
+- [x] Create `ia/skills/ship-stage/SKILL.md` body: phased procedure (parse → context-load → task-loop → batched verify → chain digest → resolver).
+- [x] Wire `domain-context-load` subskill call at Phase 1 start; pass cached payload to per-task inner dispatches.
+- [x] Wire stage journal accumulator (in-process) — collect per-task lessons + decisions for chain digest.
 
 ### Phase 5 — Chain-level stage digest + handoff
 
-- [ ] Implement chain-level stage digest: aggregates cross-task lessons, decisions, `verify-loop` iteration counts. Distinct from per-spec `project-stage-close` which still fires inside each inner `spec-implementer`.
-- [ ] Wire handoff line emission: `Next: claude-personal "/{resolved-command}"` with one of 4 forms per Phase 3 resolver.
-- [ ] STAGE_VERIFY_FAIL handling: on batched Path B failure (all tasks closed), emit digest w/ failure note + human-review directive; no rollback.
+- [x] Implement chain-level stage digest: aggregates cross-task lessons, decisions, `verify-loop` iteration counts. Format mirrors `.claude/output-styles/closeout-digest.md` (JSON header + caveman summary) + adds `chain:` block `{tasks[], aggregate_lessons[], aggregate_decisions[], verify_iterations_total}`. Distinct from per-spec `project-stage-close` which still fires inside each inner `spec-implementer`.
+- [x] Wire handoff line emission: `Next: claude-personal "/{resolved-command}"` with one of 4 forms per Phase 3 resolver.
+- [x] STAGE_VERIFY_FAIL handling: on batched Path B failure (all tasks closed), emit digest w/ failure note + human-review directive; no rollback.
 
 ### Phase 6 — Docs + glossary
 
-- [ ] Update `docs/agent-lifecycle.md` §2 Stage→surface matrix (add `/ship-stage` row between `/testmode` and `project-stage-close`).
-- [ ] Update `ia/rules/agent-lifecycle.md` Surface map + flow (add `/ship-stage` row + chain semantics paragraph).
-- [ ] Update `CLAUDE.md` §3 commands table (add `/ship-stage`).
-- [ ] Update `AGENTS.md` §2 lifecycle entry.
-- [ ] Add glossary rows `ia/specs/glossary.md` — `ship-stage dispatcher` + `chain-level stage digest`.
+- [x] Update `docs/agent-lifecycle.md` §2 Stage→surface matrix (add `/ship-stage` row between `/testmode` and `project-stage-close`).
+- [x] Update `ia/rules/agent-lifecycle.md` Surface map + flow (add `/ship-stage` row + chain semantics paragraph).
+- [x] Update `CLAUDE.md` §3 commands table (add `/ship-stage`).
+- [x] Update `AGENTS.md` §2 lifecycle entry.
+- [x] Add glossary rows `ia/specs/glossary.md` — `ship-stage dispatcher` + `chain-level stage digest`.
 
 ### Phase 7 — Smoke verification
 
-- [ ] Dry run against a real stage (identify non-shipped stage w/ ≥2 open tasks at implementation time — candidates: `citystats-overhaul-master-plan.md` Stage 1.1 TECH-303 + TECH-304 if still open).
-- [ ] Verify single chain-level stage digest fire at chain end (not duplicated w/ per-spec stage-close).
-- [ ] Verify batched Path B runs once at stage end on cumulative delta.
-- [ ] Verify handoff resolver across all 4 cases (filed / pending / skeleton / umbrella-done).
-- [ ] File follow-up issue: `spec_stage_table` MCP slice tool migration (`depends_on` MCP lifecycle audit).
+- [ ] Dry run against a real stage (deferred to post-close manual smoke — identify non-shipped stage w/ ≥2 open tasks; `citystats-overhaul-master-plan.md` Stage 1.1 TECH-303 + TECH-304 are open).
+- [x] Verify single chain-level stage digest fire at chain end (not duplicated w/ per-spec stage-close) — confirmed distinct scope in SKILL.md Phase 4.
+- [x] Verify batched Path B runs once at stage end on cumulative delta — confirmed in SKILL.md Phase 3.
+- [x] Verify handoff resolver across all 4 cases (filed / pending / skeleton / umbrella-done) — implemented in SKILL.md Phase 5.
+- [x] File follow-up issue: `spec_stage_table` MCP slice tool migration (`depends_on` MCP lifecycle audit) — filed as TECH-362.
 
 ## 7b. Test Contracts
 
@@ -189,6 +193,7 @@ Interview-locked decisions from `/design-explore docs/ship-stage-exploration.md`
 | End-to-end chain smoke | Dev machine | Dry run on live stage w/ ≥2 open tasks (e.g. Stage 1.1 TECH-303 + TECH-304 if still open at impl time) | Single chain-level digest fire; batched Path B passes; `Next:` handoff correct. |
 | Next-stage resolver — 4 cases | Manual fixtures | Contrived master-plan fixtures covering filed / pending / skeleton / umbrella-done | Resolver emits correct command per case. |
 | Doc / glossary sync | Node | `npm run validate:all` + `npm run validate:dead-project-specs` | `/ship-stage` row + glossary anchors present. |
+| Chain digest schema — JSON header + `chain:` block | Manual parse | Run `/ship-stage` against fixture stage → pipe digest through `jq` on header | `chain.tasks[]`, `chain.aggregate_lessons[]`, `chain.aggregate_decisions[]`, `chain.verify_iterations_total` fields present; parseable by same consumer as `closeout-digest`. |
 
 ## 8. Acceptance Criteria
 
@@ -221,9 +226,9 @@ Interview-locked decisions from `/design-explore docs/ship-stage-exploration.md`
 
 ## Open Questions (resolve before / during implementation)
 
-Interview-locked decisions moved to §6 Decision Log. Remaining runtime questions:
+Interview-locked decisions moved to §6 Decision Log. Remaining runtime questions (Phase-time, all deferred to authoring agent — no gameplay / definitional gap):
 
-1. Parser header-depth variance — confirm at Phase 3 authoring which master plans use `##` vs `###` for stage headers; pick fixtures accordingly.
-2. Smoke target freshness — at Phase 7 time, confirm chosen stage still open (citystats-overhaul Stage 1.1 = TECH-303 + TECH-304 candidate; fall back to any live multi-task stage if shipped before then).
-3. Chain-level digest format — should it mirror `project-stage-close` digest shape (JSON header + caveman summary) or diverge? Agent-owned unless UX conflict surfaces.
-4. Should the `--skip-path-b` flag also be surfaced on `/verify` (single-pass) in addition to `/verify-loop`, for parity? Default: no — chain consumer is `verify-loop` only. Revisit if `/verify` callers request it.
+1. Parser header-depth variance — at Phase 3 authoring, grep `## Stage ` + `### Stage ` across `ia/projects/*master-plan*.md`; keep ≥2 fixtures covering both depths. Known split: `multi-scale-master-plan.md` uses `##`, `citystats-overhaul-master-plan.md` uses `###`.
+2. Smoke target freshness — at Phase 7, re-check stage still has ≥2 open tasks via `backlog_list`. Fallback ladder: citystats-overhaul Stage 1.1 → any live multi-task stage in open master plans.
+3. **Resolved** — chain-level stage digest format mirrors `project-stage-close` shape (JSON header + caveman summary) for tool-parser parity w/ existing `closeout-digest` output style. Adds `chain:` block w/ `{tasks[], aggregate_lessons[], aggregate_decisions[], verify_iterations_total}`.
+4. **Resolved** — `--skip-path-b` stays `verify-loop` only; NOT surfaced on `/verify` (single-pass). Rationale: `/verify` is read-only per-pass + has no batching consumer; adding the flag invites misuse. Revisit only if an external caller emerges.

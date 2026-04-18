@@ -1,7 +1,7 @@
 id: TECH-331
 type: infrastructure / data model
 title: Utility enums — UtilityKind / ScaleTag / PoolStatus (Stage 1.1 Phase 1)
-priority: high
+priority: medium
 status: open
 section: Multi-scale simulation lane
 spec: ia/projects/TECH-331.md
@@ -15,11 +15,8 @@ acceptance: |
   Three enum files compile clean via `npm run unity:compile-check`; XML doc on each value; no runtime refs yet; `npm run validate:all` green.
 depends_on: []
 depends_on_raw: ""
-related:
-  - TECH-332
-  - TECH-333
-  - TECH-334
-created: 2026-04-17
+related: []
+created: 2026-04-18
 raw_markdown: |
   - [ ] **TECH-331** — Utility enums — UtilityKind / ScaleTag / PoolStatus (Stage 1.1 Phase 1)
     - Type: infrastructure / data model
@@ -28,3 +25,5 @@ raw_markdown: |
     - Notes: Three plain enums w/ XML doc per value. No runtime refs yet. Stage 1.1 Phase 1 of utilities-master-plan.
     - Acceptance: files compile clean via `unity:compile-check`; `validate:all` green.
     - Related: TECH-332, TECH-333, TECH-334
+parent_plan: ia/projects/utilities-master-plan.md
+task_key: T1.1.1

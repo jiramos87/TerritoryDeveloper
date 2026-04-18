@@ -1,7 +1,7 @@
 id: TECH-338
 type: infrastructure / build
 title: Landmarks assembly + compile-check green (Stage 1.1 T1.1.4)
-priority: high
+priority: medium
 status: open
 section: Multi-scale simulation lane
 spec: ia/projects/TECH-338.md
@@ -15,12 +15,9 @@ depends_on:
   - TECH-335
   - TECH-336
   - TECH-337
-depends_on_raw: "TECH-335, TECH-336, TECH-337 (all types must exist — hard gate)"
-related:
-  - TECH-335
-  - TECH-336
-  - TECH-337
-created: 2026-04-17
+depends_on_raw: TECH-335, TECH-336, TECH-337 (all types must exist — hard gate)
+related: []
+created: 2026-04-18
 raw_markdown: |
   - [ ] **TECH-338** — Landmarks assembly + compile-check green (Stage 1.1 T1.1.4)
     - Type: infrastructure / build
@@ -30,3 +27,5 @@ raw_markdown: |
     - Acceptance: `unity:compile-check` green; types visible to consumers; `validate:all` green.
     - Depends on: TECH-335, TECH-336, TECH-337 (all types exist — hard gate)
     - Related: TECH-335, TECH-336, TECH-337
+parent_plan: ia/projects/landmarks-master-plan.md
+task_key: T1.1.4

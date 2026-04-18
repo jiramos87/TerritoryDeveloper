@@ -5,7 +5,7 @@ priority: medium
 status: open
 section: Stage 1.4 — Slope-Aware Foundation + Curation CLI (Layer 5)
 spec: ia/projects/TECH-181-sprite-gen-aseprite-bin-resolver.md
-files: 
+files:
   - tools/sprite-gen/src/aseprite_bin.py
   - tools/sprite-gen/config.toml
   - tools/sprite-gen/src/cli.py
@@ -16,7 +16,7 @@ acceptance: |
 depends_on: []
 depends_on_raw: none
 related: []
-created: 2026-04-17
+created: 2026-04-18
 raw_markdown: |
   - [ ] **TECH-181** — Aseprite binary resolver (Stage 1.4 Phase 4)
     - Type: infrastructure / editor integration
@@ -25,3 +25,5 @@ raw_markdown: |
     - Notes: `find_aseprite_bin() → Path` probes: `$ASEPRITE_BIN` → `config.toml [aseprite] bin` → platform defaults (macOS: `/Applications/Aseprite.app/Contents/MacOS/aseprite`, Steam path fallback). `AsepriteBinNotFoundError` → CLI exit 4 w/ install hint. Unit test mocks env + filesystem; asserts probe order.
     - Acceptance: resolver probes in correct order; missing binary → exit 4 w/ hint; `pytest tools/sprite-gen/tests/test_aseprite_bin.py` green; `npm run validate:all` green.
     - Depends on: none
+parent_plan: ia/projects/sprite-gen-master-plan.md
+task_key: T1.4.7

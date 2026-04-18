@@ -1,7 +1,7 @@
 id: TECH-333
 type: infrastructure / data model
 title: IUtilityContributor + IUtilityConsumer interfaces (Stage 1.1 Phase 2)
-priority: high
+priority: medium
 status: open
 section: Multi-scale simulation lane
 spec: ia/projects/TECH-333.md
@@ -14,12 +14,9 @@ acceptance: |
   Two interface files compile clean via `npm run unity:compile-check`; XML doc on each property; no concrete implementations yet; `npm run validate:all` green.
 depends_on:
   - TECH-331
-depends_on_raw: "TECH-331 (UtilityKind + ScaleTag enums — hard gate)"
-related:
-  - TECH-331
-  - TECH-332
-  - TECH-334
-created: 2026-04-17
+depends_on_raw: TECH-331 (UtilityKind + ScaleTag enums — hard gate)
+related: []
+created: 2026-04-18
 raw_markdown: |
   - [ ] **TECH-333** — IUtilityContributor + IUtilityConsumer interfaces (Stage 1.1 Phase 2)
     - Type: infrastructure / data model
@@ -29,3 +26,5 @@ raw_markdown: |
     - Acceptance: compile clean; XML doc; `validate:all` green.
     - Depends on: TECH-331 (enums — hard gate)
     - Related: TECH-331, TECH-332, TECH-334
+parent_plan: ia/projects/utilities-master-plan.md
+task_key: T1.1.3

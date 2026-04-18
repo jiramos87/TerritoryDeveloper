@@ -1,0 +1,30 @@
+id: TECH-374
+type: release / docs
+title: "**MCP** — release prep v0.6.0 (Stage 1.2 T1.2.4)"
+priority: medium
+status: closed
+section: IA infrastructure
+spec: ia/projects/TECH-374.md
+files: 
+  - tools/mcp-ia-server/package.json
+  - tools/mcp-ia-server/CHANGELOG.md
+notes: |
+  Bump `tools/mcp-ia-server/package.json` `version` to `0.6.0`; add `tools/mcp-ia-server/CHANGELOG.md` entry: `v0.6.0 — Quick wins: glossary bulk-terms (TECH-314/315) + structured invariants (TECH-371/372/373)`. Advisory note in CHANGELOG: "tag this commit `mcp-pre-envelope-v0.5.0` for Step 2 (P2 envelope cut) rollback target". Stage 1.2 T1.2.4 of `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md` — closes Step 1 Quick Wins band.
+acceptance: |
+  `package.json` at `0.6.0`; CHANGELOG entry present w/ rollback-tag advisory; closes Stage 1.2 exit; `npm run validate:all` green.
+depends_on: 
+  - TECH-371
+  - TECH-372
+  - TECH-373
+depends_on_raw: TECH-371 + TECH-372 + TECH-373 (release ships their work — hard gate; rollback tag covers entire v0.6.0 surface)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-374** — **MCP** — release prep v0.6.0 (Stage 1.2 T1.2.4)
+    - Type: release / docs
+    - Files: `tools/mcp-ia-server/package.json`, `tools/mcp-ia-server/CHANGELOG.md`
+    - Spec: `ia/projects/TECH-374.md`
+    - Notes: Bump to `0.6.0`; CHANGELOG entry `Quick wins: glossary bulk-terms + structured invariants`; rollback-tag advisory.
+    - Acceptance: version bumped; CHANGELOG present; rollback advisory; `validate:all` green.
+    - Depends on: TECH-371, TECH-372, TECH-373 (full v0.6.0 surface — hard)
+    - Related: TECH-371, TECH-372, TECH-373

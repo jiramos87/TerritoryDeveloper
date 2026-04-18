@@ -1,0 +1,29 @@
+id: TECH-396
+type: tech (audio infra / dev workflow)
+title: Universal BlipBootstrap self-instantiation via RuntimeInitializeOnLoadMethod + Resources/ prefab
+priority: medium
+status: closed
+section: Blip audio program
+spec: (removed after closure)
+closed: 2026-04-18
+files:
+  - Assets/Scripts/Audio/Blip/BlipBootstrap.cs
+  - Assets/Resources/BlipBootstrap.prefab
+  - Assets/Scripts/Audio/Blip/PlayModeTests
+notes: |
+  Direct-loading `MainScene.unity` (or any non-boot scene) in Editor = zero audio. **BlipBootstrap** + **BlipCatalog** + **BlipPlayer** live only in `MainMenu.unity`, so `BlipEngine.ResolveCatalog` / `ResolvePlayer` return null + `Play` silent. Blocks direct-scene testing for humans + agents (2-click MainMenu → New Game path per audio check). Fix: move prefab to `Assets/Resources/BlipBootstrap.prefab` + add `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]` static method on **BlipBootstrap** that loads prefab + instantiates if `Instance == null`. Existing `Instance` guard + `DontDestroyOnLoad` handle dedup w/ legacy MainMenu scene instance. Complements prior branch fix (`AssertMainThread` short-circuit when `MainThreadId == 0`) — that made direct-scene safe, this makes it audible. Standalone infra fix, NOT Step 5 / Step 6 child (no new `BlipId`, no FX / LFO surface touched).
+acceptance: |
+  Direct-load `MainScene.unity` in Editor → `BlipEngine.Play(BlipId.UiButtonClick)` emits audio (pool `AudioSource.isPlaying == true` or voice audible). `MainMenu.unity` → New Game flow no regression (Instance-guard dedup verified). PlayMode smoke direct-loads non-boot scene + asserts `Play` emits voice — green in `unity:testmode-batch`. `npm run unity:compile-check` + `npm run validate:all` exit 0. Invariant #3 + #4 respected (load-time one-shot, not per-frame; no new singleton type — reuses existing `BlipBootstrap.Instance`).
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [x] **TECH-396** — Universal **Blip bootstrap** self-instantiation via `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]` + `Resources/` prefab (2026-04-18)
+    - Type: tech (audio infra / dev workflow)
+    - Files: `Assets/Scripts/Audio/Blip/BlipBootstrap.cs`, `Assets/Resources/BlipBootstrap.prefab` (new location), PlayMode smoke under `Assets/Scripts/Audio/Blip/PlayModeTests`
+    - Spec: (removed after closure)
+    - Notes: Direct-load `MainScene.unity` / future `CityScene` → zero audio today — **BlipBootstrap** / **BlipCatalog** / **BlipPlayer** scene-only in `MainMenu.unity`, so `BlipEngine.Play` silent. Move prefab to `Assets/Resources/BlipBootstrap.prefab`; add static `EnsureInstance` w/ `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]` attr that `Resources.Load<GameObject>("BlipBootstrap")` + `Instantiate` when `Instance == null`. Existing `Instance` + `DontDestroyOnLoad` guards dedup legacy MainMenu scene instance (keep or drop MainMenu copy — both tolerated). Complement to prior branch fix (`BlipEngine.AssertMainThread` / `BlipBaker.AssertMainThread` short-circuit on `MainThreadId == 0`). Invariant #3 + #4 respected — load-time one-shot, existing singleton reused. Standalone infra fix; NOT Step 5 or Step 6 child of **blip master plan** (no new `BlipId`).
+    - Acceptance: direct-load `MainScene.unity` → `BlipEngine.Play(BlipId.UiButtonClick)` emits audio (pool source active); `MainMenu.unity` → New Game no regression; PlayMode smoke green in `unity:testmode-batch`; `npm run unity:compile-check` + `npm run validate:all` exit 0.
+    - Depends on: none
+    - Related: none (but touches **Blip bootstrap** — `ia/specs/audio-blip.md §5.1`, `§5.2`)

@@ -1,0 +1,29 @@
+id: TECH-361
+type: docs (CLAUDE.md route table)
+title: Add `/dashboard/releases` rows to `CLAUDE.md §6` route table + final `validate:web` gate (Stage 7.3 T7.3.4)
+priority: medium
+status: open
+section: Web platform lane
+spec: ia/projects/TECH-361.md
+files:
+  - CLAUDE.md
+notes: |
+  Add route table rows to `CLAUDE.md §6 Web workspace` for `/dashboard/releases` (Release picker) + `/dashboard/releases/:releaseId/progress` (Release progress tree). Final green gate for Step 7 — run `npm run validate:web` (lint + typecheck + build) after edit; confirm exit 0. Confirm `DASHBOARD_AUTH_SKIP=1` dev bypass still functions (no regression on Stage 5.3 bypass knob). Zero runtime code change; docs-only row.
+acceptance: |
+  `CLAUDE.md §6` route table contains both new rows; `npm run validate:web` exits 0; `DASHBOARD_AUTH_SKIP=1` dev bypass still routes correctly (manual or documented check); Step 7 final green gate satisfied.
+depends_on: [TECH-358, TECH-359, TECH-360]
+depends_on_raw: "TECH-358 (auth matcher widen), TECH-359 (sidebar link), TECH-360 (README route-list) — final step doc closes the set"
+related:
+  - TECH-358
+  - TECH-359
+  - TECH-360
+created: 2026-04-18
+raw_markdown: |
+  - [x] **TECH-361** — Add `/dashboard/releases` rows to `CLAUDE.md §6` route table + final `validate:web` gate (Stage 7.3 T7.3.4) (2026-04-18)
+    - Type: docs (CLAUDE.md route table)
+    - Files: `CLAUDE.md`
+    - Spec: (removed at closeout — journal persisted Decision Log)
+    - Notes: Added new route table to `CLAUDE.md §6` (3 rows: `/dashboard`, `/dashboard/releases`, `/dashboard/releases/:releaseId/progress`) mirroring `web/README.md` schema (Route / Purpose / Auth / Render). Auth-inheritance pointer cites TECH-358 matcher widen. `npm run validate:web` exit 0 — final green gate for Step 7. `DASHBOARD_AUTH_SKIP=1` Stage 5.3 bypass unaffected (docs-only edit; no proxy/middleware touched). Stage 7.3 Phase 2 of `web-platform-master-plan.md`.
+    - Acceptance: route table present in `CLAUDE.md §6`; `validate:web` green; bypass unaffected; Step 7 final green gate satisfied.
+    - Depends on: **TECH-358** (archived), **TECH-359** (archived), **TECH-360** (archived)
+    - Related: **TECH-358**, **TECH-359**, **TECH-360**

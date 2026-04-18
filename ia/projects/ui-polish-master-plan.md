@@ -1,6 +1,6 @@
 # UI Polish — Master Plan (Flagship polish for Main HUD + Toolbar + Overlays)
 
-> **Status:** Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)
+> **Status:** In Progress — Step 1 / Stage 1.1
 >
 > **Scope:** Bucket 6 of polished-ambitious MVP. Three concentric rings (token / primitive / juice) + flagship studio-rack polish on Main HUD + Toolbar + overlay toggles + CityStats handoff. Info panels / settings / save-load / pause / onboarding / glossary / tooltips stay functional-tier (consume primitives only; no juice). Web dashboard OUT. Accessibility / localisation / gamepad / touch OUT (bucket-level hard-deferral).
 >
@@ -34,7 +34,7 @@
 
 ### Step 1 — Token ring extension
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 1.1
 
 **Backlog state (Step 1):** 0 filed
 
@@ -60,7 +60,7 @@
 
 #### Stage 1.1 — Token schema extension + default asset defaults
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress (TECH-309, TECH-310, TECH-311, TECH-312, TECH-313 filed)
 
 **Objectives:** Extend `UiTheme.cs` fields + update `DefaultUiTheme.asset` defaults. Spec + glossary land in same stage so terminology + asset ship together.
 

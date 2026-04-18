@@ -1,0 +1,27 @@
+id: TECH-344
+type: IA / skill docs
+title: Note `backlog_record_validate` use in close skill (Stage 1.3 Phase 1)
+priority: medium
+status: closed
+section: Backlog YAML ↔ MCP alignment program
+spec: ""
+files: 
+  - ia/skills/project-spec-close/SKILL.md
+notes: |
+  Added single-line caveman note to `ia/skills/project-spec-close/SKILL.md` — `backlog_record_validate` MCP tool may lint archive-destination yaml before the `ia/backlog/{id}.yaml` → `ia/backlog-archive/{id}.yaml` move (defensive; optional). No behavior change; no new required step. Closes Stage 1.3 Phase 1 of `backlog-yaml-mcp-alignment-master-plan.md`.
+acceptance: |
+  `project-spec-close/SKILL.md` carries optional `backlog_record_validate` note; no required step change; `npm run validate:all` green.
+depends_on: 
+  - TECH-324
+depends_on_raw: TECH-324 (validate tool must exist to cite — hard gate; archived)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [x] **TECH-344** — Note `backlog_record_validate` use in close skill (Stage 1.3 Phase 1) (2026-04-18)
+    - Type: IA / skill docs
+    - Files: `ia/skills/project-spec-close/SKILL.md`
+    - Spec: (removed after closure)
+    - Notes: Optional `backlog_record_validate` note landed near archive-move step; defensive lint, no gate; no required step change.
+    - Acceptance: optional note present; no required step change; `validate:all` green.
+    - Depends on: TECH-324 (archived)
+    - Related: TECH-343

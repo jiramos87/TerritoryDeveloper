@@ -1,0 +1,26 @@
+id: TECH-341
+type: tech (web data layer)
+title: Author `web/lib/releases/default-expand.ts` + unit tests (Stage 7.1 T7.1.3)
+priority: medium
+status: closed
+section: Web platform lane
+spec: ia/projects/TECH-341.md
+files: 
+  - web/lib/releases/default-expand.ts
+  - web/lib/__tests__/default-expand.test.ts
+notes: |
+  `deriveDefaultExpandedStepId(plan: PlanData, metrics: PlanMetrics): string | null` predicate. Iterates `plan.steps` in order; returns first step id where `metrics.stepCounts[step.id]?.done < metrics.stepCounts[step.id]?.total`. Returns `null` when all done or steps empty. JSDoc: "tasks are ground truth; stale step-header Status prose ignored" + `'blocked'` status unreachable note. Unit tests: first-non-done, all-done null, all-pending returns first, stale-header ignored, empty-steps null. Stage 7.1 Phase 2 of web-platform-master-plan.
+acceptance: |
+  Predicate compiles; JSDoc cites ground-truth rule + blocked-unreachable note; 5 unit test cases green; `npm run validate:web` green.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [x] **TECH-341** — Author `web/lib/releases/default-expand.ts` + unit tests (Stage 7.1 T7.1.3)
+    - Type: tech (web data layer)
+    - Files: `web/lib/releases/default-expand.ts` (new), `web/lib/__tests__/default-expand.test.ts` (new)
+    - Spec: `ia/projects/TECH-341.md`
+    - Notes: `deriveDefaultExpandedStepId` — first non-done step by tasks ground truth. JSDoc NB: stale step-header ignored; `'blocked'` unreachable. 5 test cases. Stage 7.1 Phase 2.
+    - Acceptance: predicate + JSDoc land; tests green; `validate:web` green.
+    - Related: TECH-339, TECH-340, TECH-342

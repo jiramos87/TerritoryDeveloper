@@ -2,7 +2,7 @@
 
 > **Last updated:** 2026-04-17
 >
-> **Status:** Draft (all steps decomposed — 0 tasks filed)
+> **Status:** In Progress — Step 1 / Stage 1.1
 >
 > **Scope:** Landmarks v1 — two parallel progression tracks. **Tier-defining landmarks** (free gift on scale-tier transition — Bucket 1 coupling) + **intra-tier reward landmarks** (designer-tuned pop milestones → commissioned "super-building" via bond-backed multi-month build). Catalog-driven (`StreamingAssets/landmark-catalog.yaml`). Sidecar `landmarks.json` = authoritative state; main-save cell-tag map = denormalized index. Super-utility buildings register into sibling Bucket 4-a `UtilityContributorRegistry` via narrow catalog interface. **OUT of scope:** utilities sim (sibling `docs/utilities-exploration.md`), Zone S + per-service budgets (Bucket 3 — consumed only as `IBondConsumer`), city-sim signals (Bucket 2), CityStats overhaul (Bucket 8), multi-scale core (Bucket 1 — consumed as scale-transition event source), heritage / cultural landmarks, landmark-specific tourism effects, destructible landmarks, mid-build cancellation, multi-cell footprints.
 >
@@ -43,11 +43,11 @@
 
 ### Step 1 — Catalog + data model + glossary/spec seed
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 1.1
 
 **Backlog state (Step 1):** 0 filed
 
-**Objectives:** Land the catalog-driven data foundation. Ship `LandmarkCatalogRow` schema + YAML authoring pipeline + `LandmarkCatalogStore` MonoBehaviour loading rows at `Awake`. Seed glossary rows + author `ia/specs/landmarks-system.md` stub (populated further in Stage 4.2) to unblock Step 2+ references per invariant #12 (permanent domain). Same pattern as `zone-s-economy` TECH-282 + utilities Stage 4.2 — vocabulary lands early, prose expands at closeout. No runtime coupling yet — just typed data + the store that Steps 2–4 read.
+**Objectives:** Land the catalog-driven data foundation. Ship `LandmarkCatalogRow` schema + YAML authoring pipeline + `LandmarkCatalogStore` MonoBehaviour loading rows at `Awake`. Seed glossary rows + author `ia/specs/landmarks-system.md` stub (populated further in Stage 4.2) to unblock Step 2+ references per invariant #12 (permanent domain). Same pattern as `zone-s-economy` Stage 1.1 Phase 3 + utilities Stage 4.2 — vocabulary lands early, prose expands at closeout. No runtime coupling yet — just typed data + the store that Steps 2–4 read.
 
 **Exit criteria:**
 
@@ -73,7 +73,7 @@
 
 #### Stage 1.1 — Data contracts + enums
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress (TECH-335, TECH-336, TECH-337, TECH-338 filed)
 
 **Objectives:** Define the row type + gate discriminator + tier enum. No runtime logic — typed scaffolding that Steps 2–4 consume. Same Stage 1.1 shape as utilities — data lands before services.
 

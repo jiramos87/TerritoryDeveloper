@@ -14,14 +14,9 @@ acceptance: |
 depends_on:
   - TECH-317
   - TECH-318
-depends_on_raw: "TECH-317 (mixer params must exist before SetFloat calls bind); TECH-318 (consts authored first)"
-related:
-  - TECH-316
-  - TECH-317
-  - TECH-318
-  - TECH-320
-  - TECH-321
-created: 2026-04-17
+depends_on_raw: TECH-317 (mixer params must exist before SetFloat calls bind); TECH-318 (consts authored first)
+related: []
+created: 2026-04-18
 raw_markdown: |
   - [ ] **TECH-319** — **Music** — MusicBootstrap.Awake shape (Stage 1.1 Phase 2)
     - Type: audio / C#
@@ -30,3 +25,5 @@ raw_markdown: |
     - Notes: Stage 1.1 Phase 2 T1.1.4 of music-player orchestrator. MB scaffold mirror of `BlipBootstrap.cs`. `Instance` accessor, `DontDestroyOnLoad` Awake, PlayerPrefs → mixer SetFloat binding for Master + Music params. Invariant #4 — Inspector-placed.
     - Acceptance: Compiles; Awake binds 2 mixer params headless; null-mixer warn present; OnDestroy clears Instance.
     - Depends on: TECH-317 (mixer params must exist before SetFloat calls bind); TECH-318 (consts authored first)
+parent_plan: ia/projects/music-player-master-plan.md
+task_key: T1.1.4

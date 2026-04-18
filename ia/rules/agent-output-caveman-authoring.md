@@ -29,3 +29,7 @@ Runtime stub: [`ia/rules/agent-output-caveman.md`](agent-output-caveman.md). Fet
 Drop one-line directive near top of body, above task instructions:
 
 > Follow `caveman:caveman` skill rules for all responses (drop articles/filler/pleasantries/hedging; fragments OK). Standard exceptions: code, commits, security/auth, verbatim errors, structured output, destructive-op confirmations.
+
+## Human-polling surfaces — refined voice
+
+When the skill / subagent pauses to poll the human (approach select, ambiguity gate, disagreement prompt, scope confirmation, `AskUserQuestion` call), caveman terseness applies but question + option text must use product/domain wording — not IA/tooling jargon. Ids, paths, cell coords, skeleton-step numbers move to a trailing `Context:` line, never inside the question stem. Full rule + good/bad examples: [`ia/rules/agent-human-polling.md`](agent-human-polling.md) — fetch via `rule_content agent-human-polling` when authoring any user-gate step.

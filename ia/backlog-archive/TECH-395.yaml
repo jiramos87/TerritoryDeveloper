@@ -1,0 +1,29 @@
+id: TECH-395
+type: documentation
+title: /skill-train slash command dispatcher (Stage 1.2 T1.2.4)
+priority: medium
+status: closed
+section: Skill training program
+spec: ia/projects/TECH-395.md
+files:
+  - .claude/commands/skill-train.md
+notes: |
+  Create `.claude/commands/skill-train.md` — thin dispatcher. Caveman preamble. Forwards `{SKILL_NAME}` (required), `--since`, `--all`, `--threshold` args to `skill-train` subagent via Agent tool call. One-paragraph body. No business logic; dispatcher only.
+acceptance: |
+  `.claude/commands/skill-train.md` exists; caveman preamble present; forwards SKILL_NAME + optional flags to `skill-train` subagent; one-paragraph body; `npm run validate:all` exits 0.
+depends_on:
+  - TECH-394
+depends_on_raw: TECH-394 (dispatcher forwards to subagent — hard gate; subagent must exist)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-395** — /skill-train slash command dispatcher (Stage 1.2 T1.2.4)
+    - Type: documentation
+    - Files: `.claude/commands/skill-train.md`
+    - Spec: `ia/projects/TECH-395.md`
+    - Notes: Thin dispatcher. Caveman preamble. Forwards SKILL_NAME + `--since`/`--all`/`--threshold` to `skill-train` subagent via Agent tool call. No business logic.
+    - Acceptance: command file present; caveman preamble; forwards args to subagent; one-paragraph body; `validate:all` green.
+    - Depends on: TECH-394
+    - Related: TECH-392, TECH-393, TECH-394
+parent_plan: ia/projects/skill-training-master-plan.md
+task_key: T1.2.4

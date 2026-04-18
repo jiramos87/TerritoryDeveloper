@@ -265,7 +265,7 @@
 
 ### Step 3 — Live dashboard
 
-**Status:** Draft (Stage 3.1 Done; Stage 3.2 Done; Stage 3.3 _pending_)
+**Status:** Final
 
 **Backlog state (Step 3):** Stage 3.1 — TECH-200…TECH-203 (archived); Stage 3.2 — TECH-205…TECH-208 (archived)
 
@@ -514,7 +514,7 @@
 
 ### Step 5 — Portal foundations (architecture-only at this tier)
 
-**Status:** In Progress — Stage 5.1 Done (TECH-252 + TECH-253 + TECH-254 + TECH-255 all archived 2026-04-16); Stage 5.2 Done 2026-04-17 (TECH-261 + TECH-262 + TECH-263 + TECH-264 all archived); Stage 5.3 Done 2026-04-17 (TECH-269 + TECH-265 + TECH-266 + TECH-267 + TECH-268 all archived)
+**Status:** Final
 
 **Backlog state (Step 5):** Stage 5.1 closed 2026-04-16 — TECH-252 + TECH-253 + TECH-254 + TECH-255 all archived; Stage 5.2 closed 2026-04-17 — TECH-261 + TECH-262 + TECH-263 + TECH-264 all archived; Stage 5.3 closed 2026-04-17 — TECH-269 + TECH-265 + TECH-266 + TECH-267 + TECH-268 all archived
 
@@ -628,7 +628,7 @@
 
 ### Step 6 — Playwright E2E harness
 
-**Status:** Draft — fully decomposed; tasks _pending_ — paused until future instruction (decompose-after trigger deferred to Step 5 close).
+**Status:** Final
 
 **Objectives:** Install and configure Playwright as the automated e2e layer for the `web/` workspace; integrate into `npm run validate:all` CI chain; land baseline route coverage for all existing public surfaces; then add dashboard-specific e2e for SSR query-param filter flows. Step 5 portal auth-flow tests extend this harness as a Stage 5.X — the harness ships here so portal work inherits it without bootstrapping from scratch.
 
@@ -718,9 +718,9 @@
 
 ### Step 7 — Release-scoped progress view
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final — Stage 7.1 Final (TECH-339..TECH-342 archived 2026-04-18); Stage 7.2 Final (TECH-351..TECH-354 archived 2026-04-18); Stage 7.3 Final (TECH-358..TECH-361 archived 2026-04-18)
 
-**Backlog state (Step 7):** 0 filed
+**Backlog state (Step 7):** 0 filed, 8 closed
 
 **Objectives:** Ship `/dashboard/releases` release picker and `/dashboard/releases/:releaseId/progress` SSR expandable plan tree with chevron-toggle expand/collapse; hand-maintained release registry (`web/lib/releases.ts`) seeded with `full-game-mvp` row; backend-derived default-expand predicate (first non-done step by task counts); `PlanTree` Client component as the only hydration island on this surface. Extends `web/proxy.ts` auth matcher to cover `/dashboard/:path*` and adds a "Releases" nav link to `Sidebar.tsx`. Reuses existing `PlanData` / `PlanMetrics` types, `loadAllPlans`, `computePlanMetrics`, and `BadgeChip` status tokens — zero new parser logic, zero new paid services.
 
@@ -756,7 +756,9 @@
 
 #### Stage 7.1 — Registry + pure shapers
 
-**Status:** In Progress (4 tasks filed 2026-04-17 — TECH-339..TECH-342)
+**Status:** Final (4 tasks filed 2026-04-17 — TECH-339..TECH-342; all archived 2026-04-18)
+
+**Backlog state (2026-04-18):** 4 / 4 tasks filed; all closed.
 
 **Objectives:** Author the hand-maintained release registry, pure filtering shaper, default-expand predicate, and plan-tree builder. No routes, no UI, no auth changes. Self-contained data layer consumed by Stage 7.2 pages.
 
@@ -777,16 +779,16 @@
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T7.1.1 | 1 | **TECH-339** | Draft | Author `web/lib/releases.ts` — `Release` interface (`id`, `label`, `umbrellaMasterPlan`, `children: string[]`) + `resolveRelease(id: string): Release | null` + seeded `releases` const array with `full-game-mvp` row (9 children from extensions doc Examples block); header comment cites `ia/projects/full-game-mvp-rollout-tracker.md` as source of truth for `children[]` drift warning. |
-| T7.1.2 | 1 | **TECH-340** | Draft | Author `web/lib/releases/resolve.ts` — `getReleasePlans(release: Release, allPlans: PlanData[]): PlanData[]` pure filter; matches `plan.filename` basename against `release.children`; silently drops missing-on-disk entries. Author `web/lib/__tests__/releases.test.ts` — unit tests: `resolveRelease` found/not-found, `getReleasePlans` filter + missing-child drop + umbrella self-inclusion edge case. |
-| T7.1.3 | 2 | **TECH-341** | Draft | Author `web/lib/releases/default-expand.ts` — `deriveDefaultExpandedStepId(plan: PlanData, metrics: PlanMetrics): string | null`; iterates `plan.steps` in order; returns first step id where `metrics.stepCounts[step.id]?.done < metrics.stepCounts[step.id]?.total`; returns `null` if all done or steps empty; JSDoc: "tasks are ground truth; stale step-header Status prose ignored" + `'blocked'` unreachable note. Author `web/lib/__tests__/default-expand.test.ts` — unit tests: first-non-done, all-done null, all-pending returns first, stale-header ignored, empty-steps null. |
-| T7.1.4 | 2 | **TECH-342** | Draft | Author `web/lib/plan-tree.ts` — `TreeNodeData` discriminated union (kind: `step | stage | phase | task`; id, label, status, counts, children); `buildPlanTree(plan: PlanData, metrics: PlanMetrics): TreeNodeData[]`; synthesizes phase nodes by `groupBy(task.phase)` within each stage (NOT conflated with `Stage.phases` checklist; JSDoc NB1); per-node status from `BadgeChip` Status union (`done | in-progress | pending | blocked`). Author `web/lib/__tests__/plan-tree.test.ts` — unit tests: stage-node counts, phase synthesis from tasks, status derivation, all-done propagation. |
+| T7.1.1 | 1 | **TECH-339** | Done (archived) | Author `web/lib/releases.ts` — `Release` interface (`id`, `label`, `umbrellaMasterPlan`, `children: string[]`) + `resolveRelease(id: string): Release | null` + seeded `releases` const array with `full-game-mvp` row (9 children from extensions doc Examples block); header comment cites `ia/projects/full-game-mvp-rollout-tracker.md` as source of truth for `children[]` drift warning. |
+| T7.1.2 | 1 | **TECH-340** | Done (archived) | Author `web/lib/releases/resolve.ts` — `getReleasePlans(release: Release, allPlans: PlanData[]): PlanData[]` pure filter; matches `plan.filename` basename against `release.children`; silently drops missing-on-disk entries. Author `web/lib/__tests__/releases.test.ts` — unit tests: `resolveRelease` found/not-found, `getReleasePlans` filter + missing-child drop + umbrella self-inclusion edge case. |
+| T7.1.3 | 2 | **TECH-341** | Done (archived) | Author `web/lib/releases/default-expand.ts` — `deriveDefaultExpandedStepId(plan: PlanData, metrics: PlanMetrics): string | null`; iterates `plan.steps` in order; returns first step id where `metrics.stepCounts[step.id]?.done < metrics.stepCounts[step.id]?.total`; returns `null` if all done or steps empty; JSDoc: "tasks are ground truth; stale step-header Status prose ignored" + `'blocked'` unreachable note. Author `web/lib/__tests__/default-expand.test.ts` — unit tests: first-non-done, all-done null, all-pending returns first, stale-header ignored, empty-steps null. |
+| T7.1.4 | 2 | **TECH-342** | Done (archived) | Author `web/lib/plan-tree.ts` — `TreeNodeData` discriminated union (kind: `step | stage | phase | task`; id, label, status, counts, children); `buildPlanTree(plan: PlanData, metrics: PlanMetrics): TreeNodeData[]`; synthesizes phase nodes by `groupBy(task.phase)` within each stage (NOT conflated with `Stage.phases` checklist; JSDoc NB1); per-node status from `BadgeChip` Status union (`done | in-progress | pending | blocked`). Author `web/lib/__tests__/plan-tree.test.ts` — unit tests: stage-node counts, phase synthesis from tasks, status derivation, all-done propagation. |
 
 ---
 
 #### Stage 7.2 — Routes + progress tree surface
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final — TECH-351, TECH-352, TECH-353, TECH-354 archived 2026-04-18
 
 **Objectives:** Author `TreeNode` + `PlanTree` Client components; ship the release picker RSC page (`/dashboard/releases`) and progress tree RSC page (`/dashboard/releases/[releaseId]/progress`). Relies on Stage 7.1 shapers.
 
@@ -800,23 +802,25 @@
 
 **Phases:**
 
-- [ ] Phase 1 — Client components (`TreeNode.tsx` + `PlanTree.tsx`).
-- [ ] Phase 2 — RSC pages (picker + progress page).
+- [x] Phase 1 — Client components (`TreeNode.tsx` + `PlanTree.tsx`).
+- [x] Phase 2 — RSC pages (picker + progress page).
 
 **Tasks:**
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T7.2.1 | 1 | _pending_ | _pending_ | Author `web/components/TreeNode.tsx` — recursive render of `TreeNodeData`; status-colored glyph (chevron for branches, `●` for task leaves); label + `{done}/{total}` count; `<button aria-expanded={isExpanded} aria-controls={childListId}>` for non-leaf toggles (a11y); leaf tasks show Issue id when present (not `_pending_`); consumes existing `BadgeChip` status token CSS classes; props: `node: TreeNodeData, expanded: Set<string>, onToggle: (id: string) => void`. |
-| T7.2.2 | 1 | _pending_ | _pending_ | Author `web/components/PlanTree.tsx` — `'use client'`; `useState<Set<string>>(new Set(props.initialExpanded))`; renders root `TreeNodeData[]` list; `onToggle = id => setExpanded(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; })`; passes `expanded` + `onToggle` to each `<TreeNode>`; props: `{ nodes: TreeNodeData[], initialExpanded: Set<string> }`. ONLY Client island on this surface — progress `page.tsx` stays RSC. |
-| T7.2.3 | 2 | _pending_ | _pending_ | Author `web/app/dashboard/releases/page.tsx` (RSC) — imports `releases` registry from `web/lib/releases.ts`; renders `Breadcrumb` (Dashboard › Releases) + list/`DataTable` of release rows, each linking to `/dashboard/releases/{release.id}/progress`; full-English user-facing labels (caveman exception — CLAUDE.md §6); `npm run validate:web` green. |
-| T7.2.4 | 2 | _pending_ | _pending_ | Author `web/app/dashboard/releases/[releaseId]/progress/page.tsx` (RSC) — `resolveRelease(params.releaseId)` → `notFound()` on null; `loadAllPlans()` + `getReleasePlans` + per-plan `computePlanMetrics` + `buildPlanTree` + `deriveDefaultExpandedStepId`; render `Breadcrumb` (Dashboard › Releases › {release.label} › Progress) + `<PlanTree nodes={tree} initialExpanded={new Set(defaultId ? [defaultId] : [])} />` per plan; reserved comment `// /dashboard/releases/:releaseId/rollout — reserved; URL 404s by default; no filesystem stub (B1)`; full-English headings. |
+| T7.2.1 | 1 | **TECH-351** | Done (archived) | Author `web/components/TreeNode.tsx` — recursive render of `TreeNodeData`; status-colored glyph (chevron for branches, `●` for task leaves); label + `{done}/{total}` count; `<button aria-expanded={isExpanded} aria-controls={childListId}>` for non-leaf toggles (a11y); leaf tasks show Issue id when present (not `_pending_`); consumes existing `BadgeChip` status token CSS classes; props: `node: TreeNodeData, expanded: Set<string>, onToggle: (id: string) => void`. |
+| T7.2.2 | 1 | **TECH-352** | Done (archived) | Author `web/components/PlanTree.tsx` — `'use client'`; `useState<Set<string>>(new Set(props.initialExpanded))`; renders root `TreeNodeData[]` list; `onToggle = id => setExpanded(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; })`; passes `expanded` + `onToggle` to each `<TreeNode>`; props: `{ nodes: TreeNodeData[], initialExpanded: Set<string> }`. ONLY Client island on this surface — progress `page.tsx` stays RSC. |
+| T7.2.3 | 2 | **TECH-353** | Done (archived) | Author `web/app/dashboard/releases/page.tsx` (RSC) — imports `releases` registry from `web/lib/releases.ts`; renders `Breadcrumb` (Dashboard › Releases) + list/`DataTable` of release rows, each linking to `/dashboard/releases/{release.id}/progress`; full-English user-facing labels (caveman exception — CLAUDE.md §6); `npm run validate:web` green. |
+| T7.2.4 | 2 | **TECH-354** | Done (archived) | Author `web/app/dashboard/releases/[releaseId]/progress/page.tsx` (RSC) — `resolveRelease(params.releaseId)` → `notFound()` on null; `loadAllPlans()` + `getReleasePlans` + per-plan `computePlanMetrics` + `buildPlanTree` + `deriveDefaultExpandedStepId`; render `Breadcrumb` (Dashboard › Releases › {release.label} › Progress) + `<PlanTree nodes={tree} initialExpanded={new Set(defaultId ? [defaultId] : [])} />` per plan; reserved comment `// /dashboard/releases/:releaseId/rollout — reserved; URL 404s by default; no filesystem stub (B1)`; full-English headings. |
 
 ---
 
 #### Stage 7.3 — Auth wiring, nav link + docs
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final — TECH-358..TECH-361 archived 2026-04-18
+
+**Backlog state (2026-04-18):** 4 / 4 tasks filed; all closed.
 
 **Objectives:** Widen `web/proxy.ts` matcher to cover `/dashboard/:path*`; add "Releases" nav link to `Sidebar.tsx`; update route docs in `web/README.md` + `CLAUDE.md §6`. Final green gate for Step 7.
 
@@ -837,10 +841,10 @@
 
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
-| T7.3.1 | 1 | _pending_ | _pending_ | Edit `web/proxy.ts` — update `matcher` config to `['/dashboard', '/dashboard/:path*']`; both entries required (B2: single `:path*` breaks bare `/dashboard`); confirm no `/api/dashboard` path inadvertently gated; add reserved comment: `// /dashboard/releases/:releaseId/rollout — reserved; no filesystem stub`. |
-| T7.3.2 | 1 | _pending_ | _pending_ | Edit `web/components/Sidebar.tsx` — append `{ href: '/dashboard/releases', label: 'Releases', Icon: Layers3 }` to `LINKS` array after Dashboard entry; add `import { Layers3 } from 'lucide-react'` (or `ListTree` per S4 — pick by visual fit at implementation time); confirm mobile-collapsed behavior unaffected; `npm run validate:web` green. |
-| T7.3.3 | 2 | _pending_ | _pending_ | Update `web/README.md` — add route-list rows for `/dashboard/releases` (Release picker, auth-gated, RSC) + `/dashboard/releases/:releaseId/progress` (Release progress tree, auth-gated, RSC + `PlanTree` Client island); note auth gate inherits from Stage 7.3 proxy matcher widen. |
-| T7.3.4 | 2 | _pending_ | _pending_ | Update `CLAUDE.md §6` route table — add rows for `/dashboard/releases` + `/dashboard/releases/:releaseId/progress`; run `npm run validate:web` (lint + typecheck + build); confirm exit 0; confirm `DASHBOARD_AUTH_SKIP=1` dev bypass still functions (no regression on Stage 5.3 bypass knob). |
+| T7.3.1 | 1 | **TECH-358** | Done (archived) | Edit `web/proxy.ts` — update `matcher` config to `['/dashboard', '/dashboard/:path*']`; both entries required (B2: single `:path*` breaks bare `/dashboard`); confirm no `/api/dashboard` path inadvertently gated; add reserved comment: `// /dashboard/releases/:releaseId/rollout — reserved; no filesystem stub`. |
+| T7.3.2 | 1 | **TECH-359** | Done (archived) | Edit `web/components/Sidebar.tsx` — append `{ href: '/dashboard/releases', label: 'Releases', Icon: Layers3 }` to `LINKS` array after Dashboard entry; add `import { Layers3 } from 'lucide-react'` (or `ListTree` per S4 — pick by visual fit at implementation time); confirm mobile-collapsed behavior unaffected; `npm run validate:web` green. |
+| T7.3.3 | 2 | **TECH-360** | Done (archived) | Update `web/README.md` — add route-list rows for `/dashboard/releases` (Release picker, auth-gated, RSC) + `/dashboard/releases/:releaseId/progress` (Release progress tree, auth-gated, RSC + `PlanTree` Client island); note auth gate inherits from Stage 7.3 proxy matcher widen. |
+| T7.3.4 | 2 | **TECH-361** | Done (archived) | Update `CLAUDE.md §6` route table — add rows for `/dashboard/releases` + `/dashboard/releases/:releaseId/progress`; run `npm run validate:web` (lint + typecheck + build); confirm exit 0; confirm `DASHBOARD_AUTH_SKIP=1` dev bypass still functions (no regression on Stage 5.3 bypass knob). |
 
 ---
 
@@ -878,7 +882,7 @@
 
 #### Stage 8.1 — Design system spec + token pipeline
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Draft (tasks _pending_ — reset via TECH-411 Phase 1)
 
 **Objectives:** Author `web/lib/design-system.md` spec; derive `web/lib/design-tokens.ts` (TS const); extend `globals.css` `@theme` with `ds-*` CSS custom properties; unit-test scale monotonicity + alias resolution + reduced-motion.
 

@@ -1,6 +1,6 @@
 # CityStats Overhaul — Master Plan (MVP)
 
-> **Status:** Draft — Step 1 / Stage 1.1 filed 2026-04-17 (TECH-303, TECH-304)
+> **Status:** In Progress — Step 1 / Stage 1.1
 >
 > **Scope:** Replace the `CityStats` god-class with a typed read-model facade (`CityStatsFacade`) backed by a columnar ring-buffer store (`ColumnarStatsStore`), migrate all consumers to the facade, add region/country scale rollup facades, and surface city metrics in a new `web/app/stats` route. Overlays, per-cell drill-down, history persistence in save files, and region/country Postgres tables are out of scope (see Deferred section of `docs/citystats-overhaul-exploration.md`).
 >
@@ -33,7 +33,7 @@
 
 ### Step 1 — Facade + Store Infra (additive, no consumer migration)
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 1.1
 
 **Backlog state (Step 1):** 2 filed (Stage 1.1)
 
@@ -66,7 +66,7 @@
 
 #### Stage 1.1 — Core types (IStatsReadModel, StatKey, ColumnarStatsStore)
 
-**Status:** Draft (tasks filed: TECH-303, TECH-304)
+**Status:** In Progress (tasks filed: TECH-303, TECH-304)
 
 **Objectives:** Define the typed contract and ring-buffer store before any MonoBehaviour is touched. No Unity scene changes.
 

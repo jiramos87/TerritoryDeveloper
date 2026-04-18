@@ -11,10 +11,11 @@ notes: |
   Add `[Serializable] class MotionBlock` to `UiTheme.cs` w/ semantic motion fields: `moneyTick`, `alertPulse`, `needleAttack`, `needleRelease`, `sparkleDuration`, `panelElevate`. Each a `[Serializable] struct MotionEntry { float durationSeconds; AnimationCurve easing; }`. Expose via `public MotionBlock motion` on `UiTheme`. Additive only. Consumer rings (primitives Step 2, studio controls Step 3, juice Step 4) read duration + easing from these entries — no hard-coded values downstream. Stage 1.1 T1.1.2 of `ia/projects/ui-polish-master-plan.md`.
 acceptance: |
   `MotionBlock` + `MotionEntry` types present; `UiTheme.motion` exposed w/ 6 semantic entries; existing fields untouched; `npm run unity:compile-check` green; `npm run validate:all` green.
-depends_on: []
+depends_on:
+  - TECH-311
 depends_on_raw: "none (stage-internal: TECH-311 consumes these entries as asset defaults)"
 related: []
-created: 2026-04-17
+created: 2026-04-18
 raw_markdown: |
   - [ ] **TECH-310** — **MotionBlock schema + curves** — extend UiTheme w/ semantic motion block
     - Type: technical / UI infrastructure
@@ -23,3 +24,5 @@ raw_markdown: |
     - Notes: Add `[Serializable] class MotionBlock` to `UiTheme.cs` w/ semantic motion fields: `moneyTick`, `alertPulse`, `needleAttack`, `needleRelease`, `sparkleDuration`, `panelElevate`. Each a `[Serializable] struct MotionEntry { float durationSeconds; AnimationCurve easing; }`. Expose via `public MotionBlock motion` on `UiTheme`. Additive only. Consumer rings (primitives Step 2, studio controls Step 3, juice Step 4) read duration + easing from these entries — no hard-coded values downstream. Stage 1.1 T1.1.2 of `ia/projects/ui-polish-master-plan.md`.
     - Acceptance: `MotionBlock` + `MotionEntry` types present; `UiTheme.motion` exposed w/ 6 semantic entries; existing fields untouched; `npm run unity:compile-check` green; `npm run validate:all` green.
     - Depends on: none (stage-internal: TECH-311 consumes these entries as asset defaults)
+parent_plan: ia/projects/ui-polish-master-plan.md
+task_key: T1.1.2

@@ -128,6 +128,10 @@ Per-invocation: pitch ± `pitchJitterCents` (cents), gain ± `gainJitterDb` (dB)
 | `useLutOscillators` | bool | Bit-exact mode (post-MVP) |
 | `mixerGroup` | ref | Target `AudioMixerGroup` |
 | `patchHash` | int | Content hash of serialized fields + LUTs |
+| `lfo0` | struct | LFO slot 0 — waveform kind, rateHz, depth, route (`BlipLfoRoute`); see glossary **Blip LFO** |
+| `lfo1` | struct | LFO slot 1 — mirror of `lfo0`; kind `Off` disables (zero output, no smoothing write) |
+
+`lfo0`/`lfo1` are authoring-side `BlipLfo` structs; flattened to `BlipPatchFlat.lfo0Flat`/`lfo1Flat` (`BlipLfoFlat` readonly struct). Routing dispatch (Pitch/Gain/FilterCutoff/Pan) + 50 Hz param smoothing wired in `BlipVoice.Render` Stage 5.3. See glossary **Param smoothing**.
 
 Full field list + `AnimationCurve` details: [`docs/blip-procedural-sfx-exploration.md §11.5`](../../docs/blip-procedural-sfx-exploration.md#115-variables--fields-blippatch-authoring-surface).
 

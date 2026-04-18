@@ -1,0 +1,29 @@
+id: TECH-391
+type: mcp / tests
+title: "**MCP** — caller allowlist unit tests (Stage 2.1 T2.1.4)"
+priority: medium
+status: closed
+closed: 2026-04-18
+section: IA infrastructure
+spec: ia/projects/TECH-391.md
+files:
+  - tools/mcp-ia-server/tests/auth/caller-allowlist.test.ts
+notes: |
+  Tests for `checkCaller`: authorized caller → no throw; unauthorized caller → `unauthorized_caller`; `caller_agent` undefined → `unauthorized_caller`; tool absent from allowlist map (read-only path) → no throw (gate only fires when tool explicitly registered w/ caller list). Covers TECH-389 surface. Stage 2.1 T2.1.4 of `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`.
+acceptance: |
+  Test file covers 4 cases (authorized, unauthorized, undefined caller, read-only bypass); `npm run validate:all` green.
+depends_on:
+  - TECH-389
+depends_on_raw: TECH-389 (caller-allowlist.ts surface)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-391** — **MCP** — caller allowlist unit tests (Stage 2.1 T2.1.4)
+    - Type: mcp / tests
+    - Files: `tools/mcp-ia-server/tests/auth/caller-allowlist.test.ts`
+    - Notes: authorized / unauthorized / undefined / read-only bypass cases.
+    - Acceptance: 4 cases covered; `validate:all` green.
+    - Depends on: TECH-389
+    - Related: TECH-388
+parent_plan: ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md
+task_key: T2.1.4
