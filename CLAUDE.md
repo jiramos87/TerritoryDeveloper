@@ -27,6 +27,10 @@ Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files
 | `ia/skills/*/SKILL.md` | Workflow recipes — open the matching `SKILL.md` when the task triggers. Index: `ia/skills/README.md`. The 6 lifecycle recipes (`project-spec-kickoff`, `project-spec-implement`, `project-implementation-validation`, `agent-test-mode-verify`, `project-spec-close`, `project-stage-close`) carry a caveman preamble so direct (non-subagent) invocations inherit the same default. |
 | `ia/rules/{invariants,terminology-consistency,mcp-ia-default,agent-output-caveman}.md` | Always-loaded guardrails (imported above). |
 | `docs/agent-led-verification-policy.md` | Single canonical Verification policy. |
+| `ia/backlog/{id}.yaml` | Per-issue **backlog record** (open issues). Source of truth for MCP + mutator skills. Written via `project-new` / `stage-file` / closeout; read by `backlog-parser.ts`. |
+| `ia/backlog-archive/{id}.yaml` | Per-issue **backlog record** (closed issues). Moved from `ia/backlog/` on closeout. |
+| `ia/state/id-counter.json` | Monotonic per-prefix id counter (TECH, FEAT, BUG, ART, AUDIO). Written exclusively via `tools/scripts/reserve-id.sh` under `flock`. Never hand-edit. |
+| `BACKLOG.md`, `BACKLOG-ARCHIVE.md` | Generated **backlog view** — materialized by `bash tools/scripts/materialize-backlog.sh` from yaml records. Read-only for humans + dashboard; never edited directly by skills or agents. |
 
 ## 4. Hooks
 

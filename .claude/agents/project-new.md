@@ -33,6 +33,8 @@ Follow `ia/skills/project-new/SKILL.md` end-to-end. Tool sequence:
 
 When invoked from `stage-file`, seed prompt carries `STAGE_CONTEXT` + `TASK_INTENT` + pre-loaded glossary / router / invariants. Skip steps 2–6 (re-running discover / lookup / router / invariants) UNLESS task intent diverges clearly. Run step 12 only (validate:dead-project-specs). Do NOT touch the orchestrator task table — `stage-file` updates rows after batch.
 
+**`--reserved-id {ID}` arg:** when `stage-file` appends this to the seed prompt, skip `reserve-id.sh` and use the forwarded id verbatim for `ia/backlog/{ISSUE_ID}.yaml` + `ia/projects/{ISSUE_ID}.md`. `stage-file` batch-reserved the id already; calling `reserve-id.sh` again would burn an extra id and violate invariant #13.
+
 # Hard boundaries
 
 - Do NOT bulk-file multiple issues — that is `stage-file` (one orchestrator stage at a time).

@@ -130,25 +130,27 @@ New/changed concepts → update glossary **and** relevant spec section. No termi
 
 ## 7. Backlog workflow
 
-[`BACKLOG.md`](BACKLOG.md) = single source of truth for project issues. Id prefixes: `BUG-`, `FEAT-`, `TECH-`, `ART-`, `AUDIO-`. **`backlog_issue` MCP** resolves ids from `BACKLOG.md` first, then `BACKLOG-ARCHIVE.md`.
+**Backlog record** = per-issue yaml under `ia/backlog/{id}.yaml` (open) or `ia/backlog-archive/{id}.yaml` (closed). Source of truth for MCP + mutator skills. **Backlog view** = generated `BACKLOG.md` + `BACKLOG-ARCHIVE.md` — materialized from yaml by `bash tools/scripts/materialize-backlog.sh`. Read-only for humans + dashboard; never edited directly. Id prefixes: `BUG-`, `FEAT-`, `TECH-`, `ART-`, `AUDIO-`. **`backlog_issue` MCP** loads from yaml records (prefers yaml when `ia/backlog/` exists, falls back to BACKLOG.md).
 
 **Working on issue.**
 
-1. Prefer `backlog_issue` (territory-ia) for id; else `BACKLOG.md`.
+1. Prefer `backlog_issue` (territory-ia) for id; else `BACKLOG.md` (generated view).
 2. Read files in issue **Files** field.
 3. Plan mode: analyze + propose plan.
 4. Agent mode: implement, move issue → **In progress**.
 
 **After implementing.** Keep issue **In progress** until user confirms verification.
 
-**Closing issue with project spec.** Follow [`project-spec-close`](ia/skills/project-spec-close/SKILL.md): persist lessons → glossary, reference specs, `ARCHITECTURE.md`, `ia/rules/`, `docs/` (+ MCP docs if tools changed) **before** deleting spec; `npm run validate:dead-project-specs`; remove row from `BACKLOG.md`; append `[x]` to `BACKLOG-ARCHIVE.md`; purge closed id from durable IA + code.
+**Closing issue with project spec.** Follow [`project-spec-close`](ia/skills/project-spec-close/SKILL.md): persist lessons → glossary, reference specs, `ARCHITECTURE.md`, `ia/rules/`, `docs/` (+ MCP docs if tools changed) **before** deleting spec; `npm run validate:dead-project-specs`; move `ia/backlog/{id}.yaml` → `ia/backlog-archive/{id}.yaml` (status: closed); run `bash tools/scripts/materialize-backlog.sh`; purge closed id from durable IA + code.
 
 **Adding issues.**
 
-- **Id (per prefix):** scan `BACKLOG.md` + `BACKLOG-ARCHIVE.md` for highest number w/ chosen prefix; assign **max + 1**. No reuse — archived rows keep ids for traceability.
+- **Id (per prefix):** run `bash tools/scripts/reserve-id.sh {PREFIX}` (atomic flock on `ia/state/id-counter.json`). Never scan BACKLOG.md or BACKLOG-ARCHIVE.md for max id; never hand-edit the counter. No reuse — archived records keep ids for traceability.
+- Write `ia/backlog/{ISSUE_ID}.yaml` with: id, type, title, priority, status: open, section, spec, files, notes, acceptance, depends_on, depends_on_raw, related, created, raw_markdown.
+- Run `bash tools/scripts/materialize-backlog.sh` after yaml write to regenerate BACKLOG.md.
 - Include: Type, Files, Notes, Depends on (if applicable).
 - **Caveman prose** in Notes / Acceptance per [`ia/rules/agent-output-caveman.md`](ia/rules/agent-output-caveman.md). Row structure + bolded glossary terms + id cross-refs + path links verbatim.
-- Prefer `BACKLOG.md` + `ia/specs/` for durable rules.
+- Prefer `ia/backlog/` yaml records + `ia/specs/` for durable rules.
 
 **Priority order:** In progress → High priority → Medium priority → Code Health → Low priority.
 

@@ -3,6 +3,7 @@ name: stage-decompose
 description: Use to expand one deferred skeleton step (Steps 2+ in an existing orchestrator master plan) into stages → phases → tasks in-place. Triggers — "/stage-decompose {path} Step 2", "decompose step 2", "expand step skeleton", "materialize deferred step", "decompose before stage-file". Reads Exit criteria + Deferred decomposition hints, runs MCP context (glossary / router / invariants / spec_sections), applies cardinality + task-sizing rules, edits the master plan in-place. Does NOT create BACKLOG rows — that is stage-file.
 tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__list_specs, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__invariants_summary, mcp__territory-ia__glossary_discover, mcp__territory-ia__glossary_lookup
 model: opus
+reasoning_effort: high
 ---
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.

@@ -1,13 +1,13 @@
 ---
 description: Create one BACKLOG.md issue + bootstrap `ia/projects/{ISSUE_ID}.md` from a user prompt. Dispatches the `project-new` subagent in isolated context. NOT for bulk stage filing (= `/stage-file` once it ships) or spec enrichment (= `/kickoff`).
-argument-hint: "{free-text intent} [--type BUG|FEAT|TECH|ART|AUDIO]"
+argument-hint: "{free-text intent} [--type BUG|FEAT|TECH|ART|AUDIO] [--reserved-id {ISSUE_ID}]"
 ---
 
 # /project-new — dispatch `project-new` subagent
 
 Use `project-new` subagent (`.claude/agents/project-new.md`) to create a single BACKLOG row + project spec stub from `$ARGUMENTS`.
 
-`$ARGUMENTS` carries the free-text intent (title + product prompt). Optional trailing `--type {prefix}` overrides prefix inference (`BUG` / `FEAT` / `TECH` / `ART` / `AUDIO`); subagent asks the user when ambiguous.
+`$ARGUMENTS` carries the free-text intent (title + product prompt). Optional trailing `--type {prefix}` overrides prefix inference (`BUG` / `FEAT` / `TECH` / `ART` / `AUDIO`); subagent asks the user when ambiguous. Optional trailing `--reserved-id {ISSUE_ID}` (used by `stage-file`) passes a pre-reserved id to the subagent so it skips `reserve-id.sh`.
 
 ## Subagent prompt (forward verbatim)
 
@@ -23,7 +23,7 @@ Forward via Agent tool with `subagent_type: "project-new"`:
 > $ARGUMENTS
 > ```
 >
-> Infer issue prefix (`BUG-` / `FEAT-` / `TECH-` / `ART-` / `AUDIO-`) from the prompt; if ambiguous, ask the user before assigning the next id. Honor any `--type {prefix}` override token in the prompt.
+> Infer issue prefix (`BUG-` / `FEAT-` / `TECH-` / `ART-` / `AUDIO-`) from the prompt; if ambiguous, ask the user before assigning the next id. Honor any `--type {prefix}` override token in the prompt. If `--reserved-id {ISSUE_ID}` is present, use that id verbatim and skip `reserve-id.sh` (invariant #13 — `stage-file` already reserved it via batch call).
 >
 > ## MCP first
 >
