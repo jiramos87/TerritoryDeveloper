@@ -2,9 +2,10 @@ id: TECH-328
 type: infrastructure / MCP tooling
 title: Implement `backlog_list` MCP tool (Stage 1.2 Phase 3)
 priority: high
-status: open
+status: closed
+completed: 2026-04-17
 section: Backlog YAML ↔ MCP alignment program
-spec: ia/projects/TECH-328.md
+spec: (removed after closure)
 files:
   - tools/mcp-ia-server/src/tools/backlog-list.ts
   - tools/mcp-ia-server/src/index.ts
@@ -18,10 +19,10 @@ related:
   - TECH-329
 created: 2026-04-17
 raw_markdown: |
-  - [ ] **TECH-328** — Implement `backlog_list` MCP tool (Stage 1.2 Phase 3)
+  - [x] **TECH-328** — Implement `backlog_list` MCP tool (Stage 1.2 Phase 3) (2026-04-17)
     - Type: infrastructure / MCP tooling
-    - Files: `tools/mcp-ia-server/src/tools/backlog-list.ts` (new), `tools/mcp-ia-server/src/index.ts`
-    - Spec: `ia/projects/TECH-328.md`
-    - Notes: Input `{ section?, priority?, type?, status?, scope? }`; load via `parseAllBacklogIssues`; filter in-memory; return `{ issues, total }` ordered id desc. Consumes `priority` from Stage 1.1.
-    - Acceptance: tool registered; filters standalone + combined; scope switch works; empty-result case; id-desc ordering stable.
+    - Files: `tools/mcp-ia-server/src/tools/backlog-list.ts`, `tools/mcp-ia-server/src/index.ts`
+    - Spec: (removed after closure)
+    - Notes: Shipped `backlog_list` MCP tool (IP4). Handler loads records via `parseAllBacklogIssuesWithMeta(repoRoot, scope)`; applies AND filters (section substring + priority/type/status exact case-insensitive); sorts prefix-alphabetic then numeric id desc; returns `{ scope, total_searched, result_count, issues, parseErrorCount? }`. Issue row mirrors `backlog_search` shape (id, title, type, status, section, priority, related, created, notes-200). Wrapped in `runWithToolTiming`. Registered via `registerBacklogList` in `index.ts`. Replaces ad-hoc Grep enumeration. Unblocks TECH-329 fixture tests.
+    - Acceptance: tool registered; filters standalone + combined; scope switch works; empty-result case; id-desc ordering stable; `validate:all` green.
     - Related: TECH-329

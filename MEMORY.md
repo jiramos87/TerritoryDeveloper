@@ -15,8 +15,10 @@ Format: `- [Title](path-or-anchor) — one-line hook`
 ## CLI / tooling tips
 
 - macOS `sed` does not support `\b` word boundaries; use `perl -pi -e 's/\bFoo\b/Bar/g'` for symbol renames from CLI agents.
+- Bash `${VAR:+value}` expands on **non-empty** — `"0"` is non-empty, so boolean-like `CHECK_MODE=0` still triggers expansion. Use value-equality guard `[ "$VAR" = "1" ] && EXTRA_ARGS+=(--flag)` + array expansion for boolean flags (BUG-58 fix on `tools/scripts/materialize-backlog.sh`).
 - `git mv` on a Unity `.cs` file leaves the adjacent `.meta` at the original name; `git mv` the `.meta` separately to preserve the GUID (prefab / scene references survive).
 - Bridge `get_compilation_status` is a reliable compile gate when the Unity Editor holds the project lock and batchmode is blocked.
+- macOS `flock` (Homebrew util-linux) installs to `/opt/homebrew/Cellar/util-linux/*/bin/` — not on npm test shell PATH by default. Tools spawning `reserve-id.sh` (or any flock-using script) from Node must patch `PATH` via a `buildScriptEnv()` / `scriptEnv()` helper mirroring `tools/scripts/reserve-id-concurrent.sh`, else tests + MCP handlers fail ENOENT on flock. Pattern applied in `tools/mcp-ia-server/src/tools/reserve-backlog-ids.ts`.
 - Before filing a follow-up TECH from a project-spec audit, grep `BACKLOG.md` for an existing matching scope — duplicates waste id space and split tracking (TECH-04 already covered the Stage 1.2 invariant #5 cleanup scope).
 - `InterstateManager.GenerateAndPlaceInterstate()` is the canonical single-call entry for scripted interstate builds; internally runs `RoadManager.PlaceInterstateFromPath` → `TryPrepareRoadPlacementPlan` → `PathTerraformPlan.Apply` → `InvalidateRoadCache()` → `NeighborCityBindingRecorder.RecordExits`. Satisfies invariants #2 + #10 — avoid direct `ComputePathPlan`.
 - `MapGenerationSeed.SetSessionMasterSeed(int)` pins deterministic new-game seeds for testmode (consumed by `AgentTestModeBatchRunner -testSeed N`).

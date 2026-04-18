@@ -191,26 +191,8 @@
         },
         {
           "type": "issue",
-          "id": "TECH-324",
-          "checklist_line": "- [ ] **TECH-324** — Implement `backlog_record_validate` MCP tool (Stage 1.2 Phase 1)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
           "id": "TECH-325",
           "checklist_line": "- [ ] **TECH-325** — Test `backlog_record_validate` against fixtures (Stage 1.2 Phase 1)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-326",
-          "checklist_line": "- [ ] **TECH-326** — Implement `reserve_backlog_ids` MCP tool (Stage 1.2 Phase 2)",
-          "trailing_blanks": 1
-        },
-        {
-          "type": "issue",
-          "id": "TECH-327",
-          "checklist_line": "- [ ] **TECH-327** — Concurrency test for `reserve_backlog_ids` (Stage 1.2 Phase 2)",
           "trailing_blanks": 1
         },
         {
@@ -501,6 +483,45 @@
       ]
     },
     {
+      "header": "## Utilities program",
+      "items": [
+        {
+          "type": "prose",
+          "lines": [
+            "",
+            "Orchestrator: [`ia/projects/utilities-master-plan.md`](projects/utilities-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 4a of full-game-mvp umbrella. Country-pool-first water / power / sewage w/ local contributor buildings feeding per-scale pools (city / region / country). EMA soft warning → cliff-edge deficit (freeze + happiness decay + desirability decay). Stage 1.1 opened 2026-04-17 — 4 tasks filed below (TECH-331..TECH-334: `UtilityKind` / `ScaleTag` / `PoolStatus` enums + `PoolState` struct + `IUtilityContributor` / `IUtilityConsumer` interfaces + assembly compile-check).",
+            "",
+            "### Stage 1.1 — Data contracts + enums",
+            ""
+          ]
+        },
+        {
+          "type": "issue",
+          "id": "TECH-331",
+          "checklist_line": "- [ ] **TECH-331** — Add `UtilityKind` / `ScaleTag` / `PoolStatus` enums (Stage 1.1 T1.1.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-332",
+          "checklist_line": "- [ ] **TECH-332** — Add `PoolState` struct (Stage 1.1 T1.1.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-333",
+          "checklist_line": "- [ ] **TECH-333** — Add `IUtilityContributor` + `IUtilityConsumer` interfaces (Stage 1.1 T1.1.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-334",
+          "checklist_line": "- [ ] **TECH-334** — Utilities assembly + compile-check green (Stage 1.1 T1.1.4)",
+          "trailing_blanks": 1
+        }
+      ]
+    },
+    {
       "header": "## Blip audio program",
       "items": [
         {
@@ -730,8 +751,34 @@
             "### Stage 6.2 — Baseline route coverage",
             "",
             "### Stage 6.3 — Dashboard e2e (SSR filter flows)",
+            "",
+            "### Stage 7.1 — Registry + pure shapers",
             ""
           ]
+        },
+        {
+          "type": "issue",
+          "id": "TECH-339",
+          "checklist_line": "- [ ] **TECH-339** — Author `web/lib/releases.ts` — Release registry + resolver (Stage 7.1 T7.1.1)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-340",
+          "checklist_line": "- [ ] **TECH-340** — Author `web/lib/releases/resolve.ts` + unit tests (Stage 7.1 T7.1.2)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-341",
+          "checklist_line": "- [ ] **TECH-341** — Author `web/lib/releases/default-expand.ts` + unit tests (Stage 7.1 T7.1.3)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
+          "id": "TECH-342",
+          "checklist_line": "- [ ] **TECH-342** — Author `web/lib/plan-tree.ts` — builder + TreeNodeData union + unit tests (Stage 7.1 T7.1.4)",
+          "trailing_blanks": 1
         }
       ]
     },

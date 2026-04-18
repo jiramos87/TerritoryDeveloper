@@ -1,10 +1,14 @@
 # Web Platform — Master Plan (MVP)
 
+> **Last updated:** 2026-04-17
+>
 > **Status:** MVP Done 2026-04-17 — Steps 1–6 all Final (Step 5 portal stages 5.1 + 5.2 + 5.3 all Done 2026-04-17; Step 6 all three stages Done 2026-04-17). Post-MVP extensions now tracked in companion doc `docs/web-platform-post-mvp-extensions.md` — ready for `/design-explore` poll-based expansion + `/master-plan-extend` Step 7+.
 >
 > **Scope:** Unified Next.js 14+ app at `web/` (monorepo workspace) serving three audiences from one codebase — public game site (landing / wiki / devlog / about / install / history), live DevOps progress dashboard, and future user portal. Static-first hybrid on Vercel free tier; Postgres + auth deferred to portal step. Post-MVP extensions companion doc: `docs/web-platform-post-mvp-extensions.md` (seeded §1 rollout completion view + §§2–7 deferred stubs).
 >
-> **Exploration source:** `docs/web-platform-exploration.md` (§Design Expansion → Chosen Approach, Architecture, Subsystem Impact, Implementation Points, Examples).
+> **Exploration source:**
+> - `docs/web-platform-exploration.md` (§Design Expansion → Chosen Approach, Architecture, Subsystem Impact, Implementation Points, Examples) — MVP Steps 1..6.
+> - `docs/web-platform-post-mvp-extensions.md` (§Design Expansion — §1 Release-scoped progress view + §8 Visual Design Layer) — extension source for Steps 7..8.
 >
 > **Locked decisions (do not reopen in this plan):**
 > - Stack: Next.js 14+ App Router, TypeScript, React Server Components, Tailwind CSS. MCP server (`territory-ia`) stays stdio dev-only; NOT consumed by web app.
@@ -709,6 +713,286 @@
 | Task | Phase | Issue | Status | Intent |
 |---|---|---|---|---|
 | T6.3.1 | 1 | **TECH-284** | Done (archived) | Author `web/tests/dashboard-filters.spec.ts` — (a) for each of `plan`, `status`, `phase` params: navigate to `/dashboard?{param}={value}` w/ known value from unfiltered render; assert chip w/ matching label has active visual state (class or aria); assert visible row count < unfiltered. (b) multi-param (`?status=Done&phase=1`): assert rows satisfy both filters. (c) clear-filters: assert `<a href="/dashboard">` present when any param active; following it returns unfiltered row count. (d) unknown-value (`?status=nonexistent`): assert empty-state message text present. |
+
+---
+
+### Step 7 — Release-scoped progress view
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Backlog state (Step 7):** 0 filed
+
+**Objectives:** Ship `/dashboard/releases` release picker and `/dashboard/releases/:releaseId/progress` SSR expandable plan tree with chevron-toggle expand/collapse; hand-maintained release registry (`web/lib/releases.ts`) seeded with `full-game-mvp` row; backend-derived default-expand predicate (first non-done step by task counts); `PlanTree` Client component as the only hydration island on this surface. Extends `web/proxy.ts` auth matcher to cover `/dashboard/:path*` and adds a "Releases" nav link to `Sidebar.tsx`. Reuses existing `PlanData` / `PlanMetrics` types, `loadAllPlans`, `computePlanMetrics`, and `BadgeChip` status tokens — zero new parser logic, zero new paid services.
+
+**Exit criteria:**
+
+- `web/lib/releases.ts` exports `Release` interface + `resolveRelease(id)` + seeded `full-game-mvp` row; header comment cites `ia/projects/full-game-mvp-rollout-tracker.md` as source of truth for `children[]` drift.
+- `web/lib/releases/resolve.ts`: `getReleasePlans(release, allPlans)` pure filter; silently drops missing-on-disk children.
+- `web/lib/releases/default-expand.ts`: `deriveDefaultExpandedStepId(plan, metrics)` returns first non-done step id or `null` if all done; ignores step.status prose (tasks are ground truth); JSDoc documents this.
+- `web/lib/plan-tree.ts`: `buildPlanTree(plan, metrics)` synthesizes `TreeNodeData` tree; phase nodes derived from `task.phase` groupBy (NOT conflated with `Stage.phases` checklist); JSDoc NB1.
+- Unit tests for all four pure shapers pass; `npm run validate:web` green.
+- `/dashboard/releases` RSC picker renders release list with links to progress pages; auth-gated via middleware.
+- `/dashboard/releases/:releaseId/progress` RSC renders `Breadcrumb` + `<PlanTree>` per plan; unknown `releaseId` → `notFound()`; default-expanded step derived from metrics.
+- `web/components/PlanTree.tsx` is the ONLY `'use client'` island on this surface.
+- `web/proxy.ts` matcher: `['/dashboard', '/dashboard/:path*']` — both entries present (B2: single `:path*` alone breaks bare `/dashboard` coverage).
+- `web/components/Sidebar.tsx` gains "Releases" link after Dashboard entry.
+- `web/README.md` + `CLAUDE.md §6` route table updated.
+- `npm run validate:web` green.
+
+**Art:** None.
+
+**Relevant surfaces (load when step opens):**
+
+- `docs/web-platform-post-mvp-extensions.md` `## Design Expansion — §1 Release-scoped progress view` — Chosen Approach + Architecture mermaid + Subsystem Impact + Implementation Points + Examples (canonical source for this step).
+- `web/lib/plan-loader.ts` + `web/lib/plan-loader-types.ts` (existing) — `PlanData`, `PlanMetrics`, `Step`, `Stage`, `TaskRow` types; read-only, no parser changes.
+- `web/proxy.ts` (existing) — matcher widening target; retains `SESSION_COOKIE_NAME` / `portal_session` cookie gate from Stage 5.3.
+- `web/components/Sidebar.tsx` (existing) — `LINKS` array append target.
+- `web/components/BadgeChip.tsx` (existing) — status token classes (`bg-bg-status-done` etc.) reused in `TreeNode`.
+- `web/components/Breadcrumb.tsx` (existing) — used in picker + progress RSC pages.
+- `web/components/DataTable.tsx` (existing) — optional reuse in picker page.
+- `web/app/dashboard/page.tsx` (existing) — zero edit; verify unaffected by proxy matcher change.
+- Prior step outputs: Steps 3–5 shipped `loadAllPlans`, `computePlanMetrics`, `PlanMetrics`, auth middleware — consumed as-is.
+- Glossary: **Rollout tracker** + **Rollout lifecycle** (canonical terms; `ia/specs/glossary.md`).
+
+#### Stage 7.1 — Registry + pure shapers
+
+**Status:** In Progress (4 tasks filed 2026-04-17 — TECH-339..TECH-342)
+
+**Objectives:** Author the hand-maintained release registry, pure filtering shaper, default-expand predicate, and plan-tree builder. No routes, no UI, no auth changes. Self-contained data layer consumed by Stage 7.2 pages.
+
+**Exit:**
+
+- `web/lib/releases.ts`: `Release` interface + `resolveRelease()` + seeded `full-game-mvp` row; header comment cites **Rollout tracker** doc as source of truth.
+- `web/lib/releases/resolve.ts`: `getReleasePlans()` pure filter; silently drops missing-on-disk children; imports `PlanData` from `web/lib/plan-loader-types.ts`.
+- `web/lib/releases/default-expand.ts`: `deriveDefaultExpandedStepId()` predicate; JSDoc "tasks are ground truth; stale step-header Status prose ignored" + `'blocked'` unreachable note.
+- `web/lib/plan-tree.ts`: `buildPlanTree()` + `TreeNodeData` union; phase nodes from `task.phase` groupBy, NOT `Stage.phases` checklist; JSDoc NB1.
+- Unit tests for all four modules under `web/lib/**/__tests__/`; `npm run validate:web` green.
+
+**Phases:**
+
+- [ ] Phase 1 — Registry + resolve shaper (`releases.ts` + `releases/resolve.ts` + tests).
+- [ ] Phase 2 — Default-expand + plan-tree shapers (`releases/default-expand.ts` + `plan-tree.ts` + tests).
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T7.1.1 | 1 | **TECH-339** | Draft | Author `web/lib/releases.ts` — `Release` interface (`id`, `label`, `umbrellaMasterPlan`, `children: string[]`) + `resolveRelease(id: string): Release | null` + seeded `releases` const array with `full-game-mvp` row (9 children from extensions doc Examples block); header comment cites `ia/projects/full-game-mvp-rollout-tracker.md` as source of truth for `children[]` drift warning. |
+| T7.1.2 | 1 | **TECH-340** | Draft | Author `web/lib/releases/resolve.ts` — `getReleasePlans(release: Release, allPlans: PlanData[]): PlanData[]` pure filter; matches `plan.filename` basename against `release.children`; silently drops missing-on-disk entries. Author `web/lib/__tests__/releases.test.ts` — unit tests: `resolveRelease` found/not-found, `getReleasePlans` filter + missing-child drop + umbrella self-inclusion edge case. |
+| T7.1.3 | 2 | **TECH-341** | Draft | Author `web/lib/releases/default-expand.ts` — `deriveDefaultExpandedStepId(plan: PlanData, metrics: PlanMetrics): string | null`; iterates `plan.steps` in order; returns first step id where `metrics.stepCounts[step.id]?.done < metrics.stepCounts[step.id]?.total`; returns `null` if all done or steps empty; JSDoc: "tasks are ground truth; stale step-header Status prose ignored" + `'blocked'` unreachable note. Author `web/lib/__tests__/default-expand.test.ts` — unit tests: first-non-done, all-done null, all-pending returns first, stale-header ignored, empty-steps null. |
+| T7.1.4 | 2 | **TECH-342** | Draft | Author `web/lib/plan-tree.ts` — `TreeNodeData` discriminated union (kind: `step | stage | phase | task`; id, label, status, counts, children); `buildPlanTree(plan: PlanData, metrics: PlanMetrics): TreeNodeData[]`; synthesizes phase nodes by `groupBy(task.phase)` within each stage (NOT conflated with `Stage.phases` checklist; JSDoc NB1); per-node status from `BadgeChip` Status union (`done | in-progress | pending | blocked`). Author `web/lib/__tests__/plan-tree.test.ts` — unit tests: stage-node counts, phase synthesis from tasks, status derivation, all-done propagation. |
+
+---
+
+#### Stage 7.2 — Routes + progress tree surface
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Author `TreeNode` + `PlanTree` Client components; ship the release picker RSC page (`/dashboard/releases`) and progress tree RSC page (`/dashboard/releases/[releaseId]/progress`). Relies on Stage 7.1 shapers.
+
+**Exit:**
+
+- `web/components/TreeNode.tsx`: recursive render; status glyph + label + count summary; `<button aria-expanded aria-controls>` for non-leaf (a11y); leaf tasks show Issue id when not `_pending_`.
+- `web/components/PlanTree.tsx` (`'use client'`): `useState<Set<string>>` expanded ids seeded from `props.initialExpanded`; chevron toggle; ONLY Client island on this surface.
+- `web/app/dashboard/releases/page.tsx` RSC: registry list with links; `Breadcrumb`; existing primitives only.
+- `web/app/dashboard/releases/[releaseId]/progress/page.tsx` RSC: `resolveRelease` → `notFound()` on null; calls `loadAllPlans` + `getReleasePlans` + per-plan `computePlanMetrics` + `buildPlanTree` + `deriveDefaultExpandedStepId`; renders `<PlanTree>` per plan; reserved comment for future `/rollout` sibling (no filesystem stub per B1).
+- `npm run validate:web` green.
+
+**Phases:**
+
+- [ ] Phase 1 — Client components (`TreeNode.tsx` + `PlanTree.tsx`).
+- [ ] Phase 2 — RSC pages (picker + progress page).
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T7.2.1 | 1 | _pending_ | _pending_ | Author `web/components/TreeNode.tsx` — recursive render of `TreeNodeData`; status-colored glyph (chevron for branches, `●` for task leaves); label + `{done}/{total}` count; `<button aria-expanded={isExpanded} aria-controls={childListId}>` for non-leaf toggles (a11y); leaf tasks show Issue id when present (not `_pending_`); consumes existing `BadgeChip` status token CSS classes; props: `node: TreeNodeData, expanded: Set<string>, onToggle: (id: string) => void`. |
+| T7.2.2 | 1 | _pending_ | _pending_ | Author `web/components/PlanTree.tsx` — `'use client'`; `useState<Set<string>>(new Set(props.initialExpanded))`; renders root `TreeNodeData[]` list; `onToggle = id => setExpanded(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; })`; passes `expanded` + `onToggle` to each `<TreeNode>`; props: `{ nodes: TreeNodeData[], initialExpanded: Set<string> }`. ONLY Client island on this surface — progress `page.tsx` stays RSC. |
+| T7.2.3 | 2 | _pending_ | _pending_ | Author `web/app/dashboard/releases/page.tsx` (RSC) — imports `releases` registry from `web/lib/releases.ts`; renders `Breadcrumb` (Dashboard › Releases) + list/`DataTable` of release rows, each linking to `/dashboard/releases/{release.id}/progress`; full-English user-facing labels (caveman exception — CLAUDE.md §6); `npm run validate:web` green. |
+| T7.2.4 | 2 | _pending_ | _pending_ | Author `web/app/dashboard/releases/[releaseId]/progress/page.tsx` (RSC) — `resolveRelease(params.releaseId)` → `notFound()` on null; `loadAllPlans()` + `getReleasePlans` + per-plan `computePlanMetrics` + `buildPlanTree` + `deriveDefaultExpandedStepId`; render `Breadcrumb` (Dashboard › Releases › {release.label} › Progress) + `<PlanTree nodes={tree} initialExpanded={new Set(defaultId ? [defaultId] : [])} />` per plan; reserved comment `// /dashboard/releases/:releaseId/rollout — reserved; URL 404s by default; no filesystem stub (B1)`; full-English headings. |
+
+---
+
+#### Stage 7.3 — Auth wiring, nav link + docs
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Widen `web/proxy.ts` matcher to cover `/dashboard/:path*`; add "Releases" nav link to `Sidebar.tsx`; update route docs in `web/README.md` + `CLAUDE.md §6`. Final green gate for Step 7.
+
+**Exit:**
+
+- `web/proxy.ts` matcher: `['/dashboard', '/dashboard/:path*']`; both entries present (B2 guard); `/api/*` unaffected; unauthenticated request to `/dashboard/releases/**` → 302 to `/auth/login`.
+- `web/components/Sidebar.tsx` `LINKS` array: `{ href: '/dashboard/releases', label: 'Releases', Icon: Layers3 }` after Dashboard entry.
+- `web/README.md` route-list rows added for `/dashboard/releases` + `/dashboard/releases/:releaseId/progress`.
+- `CLAUDE.md §6` route table row added.
+- `npm run validate:web` green; bare `/dashboard` without session cookie still → 302 to `/auth/login` (regression guard).
+
+**Phases:**
+
+- [ ] Phase 1 — Auth matcher + nav link (`proxy.ts` + `Sidebar.tsx`).
+- [ ] Phase 2 — Docs + validation (`web/README.md` + `CLAUDE.md §6` + `validate:web`).
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T7.3.1 | 1 | _pending_ | _pending_ | Edit `web/proxy.ts` — update `matcher` config to `['/dashboard', '/dashboard/:path*']`; both entries required (B2: single `:path*` breaks bare `/dashboard`); confirm no `/api/dashboard` path inadvertently gated; add reserved comment: `// /dashboard/releases/:releaseId/rollout — reserved; no filesystem stub`. |
+| T7.3.2 | 1 | _pending_ | _pending_ | Edit `web/components/Sidebar.tsx` — append `{ href: '/dashboard/releases', label: 'Releases', Icon: Layers3 }` to `LINKS` array after Dashboard entry; add `import { Layers3 } from 'lucide-react'` (or `ListTree` per S4 — pick by visual fit at implementation time); confirm mobile-collapsed behavior unaffected; `npm run validate:web` green. |
+| T7.3.3 | 2 | _pending_ | _pending_ | Update `web/README.md` — add route-list rows for `/dashboard/releases` (Release picker, auth-gated, RSC) + `/dashboard/releases/:releaseId/progress` (Release progress tree, auth-gated, RSC + `PlanTree` Client island); note auth gate inherits from Stage 7.3 proxy matcher widen. |
+| T7.3.4 | 2 | _pending_ | _pending_ | Update `CLAUDE.md §6` route table — add rows for `/dashboard/releases` + `/dashboard/releases/:releaseId/progress`; run `npm run validate:web` (lint + typecheck + build); confirm exit 0; confirm `DASHBOARD_AUTH_SKIP=1` dev bypass still functions (no regression on Stage 5.3 bypass knob). |
+
+---
+
+### Step 8 — Visual design layer
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Backlog state (Step 8):** 0 filed
+
+**Objectives:** Author `web/lib/design-system.md` spec (type scale, spacing, motion vocab, semantic aliases, component map, a11y); derive `web/lib/design-tokens.ts` (TS const exports); extend `web/app/globals.css` `@theme` block with `ds-*` CSS custom properties (Tailwind v4 CSS-based config — no `tailwind.config.ts` exists in this project); ship `Heading` + `Prose` + `Surface` primitives; re-skin landing hero + dashboard (priority surfaces per Q1 interview); broad `tokens.*` → `ds-*` alias migration across components + wiki/devlog. Locked `palette.json` unchanged; game-accent additive only.
+
+**Exit criteria:**
+
+- `web/lib/design-system.md`: §1 type scale (10 levels, 1.25 minor-third ratio) + §2 spacing (4px grid, 9 stops) + §3 motion vocab (4 durations, reduced-motion first) + §4 semantic aliases (`text.*`/`surface.*`/`accent.*`) + §5 component map + §6 a11y notes; cites Dribbble + Shopify references; ≤ ~10 pages.
+- `web/lib/design-tokens.ts`: exports `typeScale`, `spacing`, `motion`, `text`, `surface`, `accent`; imports `palette.json`; zero palette mutation; game-accent subset promoted (`terrainGreen` + `waterBlue` + one warm → `accent.*`).
+- `web/app/globals.css` `@theme` block: new `--ds-*` CSS custom properties appended (type/spacing/motion/semantic-alias layers); all prefixed `ds-*`; existing `--color-*` / `--spacing-*` / `--text-*` entries untouched (B1 guard).
+- `web/components/type/Heading.tsx` + `Prose.tsx` + `web/components/surface/Surface.tsx` ship; `Surface` default `motion="none"` is RSC-compatible; non-none triggers `'use client'` island (B2 guard).
+- `web/app/_design-system/page.tsx`: dev-only showcase; `noindex`; `NODE_ENV !== 'production'` guard; unlinked from `Sidebar.tsx` (NB2).
+- Landing hero + dashboard re-skinned; `tokens.*` migration complete on `Breadcrumb`, `Sidebar`, `BadgeChip`, `DataTable`, `FilterChips`; wiki + devlog MDX wrapped in `<Prose>`.
+- Lighthouse baseline captured BEFORE Phase D re-skin; post-skin LCP ≤ baseline × 1.1, CLS < 0.1.
+- `npm run validate:web` green.
+
+**Art:** None.
+
+**Relevant surfaces (load when step opens):**
+
+- `docs/web-platform-post-mvp-extensions.md` `## Design Expansion — Section 8: Visual Design Layer` — Chosen Approach + Architecture mermaid + Subsystem Impact + Implementation Points A–F + Examples 1–3 (canonical source for this step).
+- `web/app/globals.css` (existing) — Tailwind v4 `@theme` block; new `ds-*` CSS custom properties appended here. No `tailwind.config.ts` in this project — Tailwind v4 CSS-based config only.
+- `web/lib/tokens/index.ts` + `web/lib/tokens/palette.json` + `web/lib/tokens/type-scale.json` + `web/lib/tokens/spacing.json` (existing) — locked palette + existing scale definitions; `design-tokens.ts` derives from / is consistent with these.
+- `web/components/BadgeChip.tsx` + `Breadcrumb.tsx` + `Sidebar.tsx` + `DataTable.tsx` + `FilterChips.tsx` (existing) — token-alias migration targets in Stage 8.3.
+- `web/app/page.tsx` (existing) — landing hero re-skin target.
+- `web/app/dashboard/page.tsx` (existing) — dashboard re-skin target; verify `/dashboard/releases/**` (Step 7) unaffected.
+- `web/app/wiki/**` + `web/app/devlog/**` (existing) — `<Prose>` wrapper targets; no layout rework.
+- Prior step output: Step 7 ships `/dashboard/releases/**`; Stage 8.3 Phase 1 re-skin must not regress those routes.
+
+#### Stage 8.1 — Design system spec + token pipeline
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Author `web/lib/design-system.md` spec; derive `web/lib/design-tokens.ts` (TS const); extend `globals.css` `@theme` with `ds-*` CSS custom properties; unit-test scale monotonicity + alias resolution + reduced-motion.
+
+**Exit:**
+
+- `web/lib/design-system.md`: §1–§6 complete; cites Dribbble + Shopify refs from extensions doc §8; game-accent subset identified from `palette.json` with WCAG AA verification; ≤ ~10 pages.
+- `web/lib/design-tokens.ts`: `typeScale` (10 levels) + `spacing` (9 stops) + `motion` (4 durations + `reducedMotion: { duration: 0 }`) + `text` + `surface` + `accent` exports; imports `palette.json`; zero mutation.
+- `web/app/globals.css` `@theme` block: `--ds-font-size-*`, `--ds-spacing-*`, `--ds-duration-*`, `--ds-text-*`, `--ds-surface-*`, `--ds-accent-*` CSS custom properties appended; existing entries untouched.
+- `web/lib/__tests__/design-tokens.test.ts`: typeScale monotonically decreasing rem values, 9 spacing stops, motion keys complete, `reducedMotion.duration === 0`, alias hex values match palette.
+- `npm run validate:web` green.
+
+**Phases:**
+
+- [ ] Phase 1 — Spec authorship + game-accent derivation (`design-system.md` only; no code).
+- [ ] Phase 2 — Token pipeline (`design-tokens.ts` + `globals.css` `@theme` extension + tests).
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T8.1.1 | 1 | _pending_ | _pending_ | Author `web/lib/design-system.md` — §1 type scale (10 levels, 1.25 minor-third ratio: `display` 3.815rem → `mono-meta`; weight + letter-spacing per level per extensions doc Example 1) + §2 spacing (4px grid, 9 stops: `2xs` 4px → `layout` 128px) + §3 motion vocab (4 durations: `instant` 0ms / `subtle` 120ms / `gentle` 200ms / `deliberate` 320ms; `prefers-reduced-motion: reduce` collapses all to `instant`; CSS transitions only) + §4 semantic aliases (`text.primary/secondary/meta/disabled`, `surface.canvas/raised/sunken/inset`, `accent.terrain/water/warm`) + §5 component map (per-component scale + spacing + motion bindings) + §6 a11y (WCAG AA on all aliases, `focus-visible` ring spec, keyboard nav); cites Dribbble + Shopify design references (extensions doc §8 source screenshots; NB5); cap ~10 pages. |
+| T8.1.2 | 1 | _pending_ | _pending_ | Read `web/lib/tokens/palette.json` raw values; identify `terrainGreen` + `waterBlue` + one warm candidate (amber or closest warm hue); verify WCAG AA contrast ratio on `surface.canvas` (#0a0a0a) for each candidate (NB1 — designer taste call at implementation time); document selection + contrast ratios in `design-system.md` §4 `accent.*` subsection. |
+| T8.1.3 | 2 | _pending_ | _pending_ | Author `web/lib/design-tokens.ts` — nested TS `const as const`: `typeScale` (10 entries), `spacing` (9 entries), `motion` (4 durations + `reducedMotion: { duration: 0 }`), `text` + `surface` + `accent` semantic alias maps; imports `./tokens/palette.json`; zero palette mutation; JSDoc on `motion.reducedMotion`: "`prefers-reduced-motion: reduce` collapses all durations to 0 via CSS media query in `globals.css`". Author `web/lib/__tests__/design-tokens.test.ts` — assert typeScale monotonically decreasing rem, 9 spacing stops, motion keys complete, `reducedMotion.duration === 0`, alias hex values resolve to palette raw entries. |
+| T8.1.4 | 2 | _pending_ | _pending_ | Extend `web/app/globals.css` `@theme` block — append `--ds-*` CSS custom properties: `--ds-font-size-display` … `--ds-font-size-mono-meta` (type scale), `--ds-spacing-2xs` … `--ds-spacing-layout` (spacing), `--ds-duration-instant` … `--ds-duration-deliberate` + `--ds-duration-reduced-motion: 0ms` (motion), `--ds-text-*` / `--ds-surface-*` / `--ds-accent-*` semantic aliases; all prefixed `ds-*` (B1 guard — no collision with existing `--color-*` / `--spacing-*` / `--text-*`); add `@media (prefers-reduced-motion: reduce)` rule setting all `--ds-duration-*` to `0ms`; `npm run validate:web` green. |
+
+---
+
+#### Stage 8.2 — Prose + surface primitives
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Author `Heading` + `Prose` (type primitives) + `Surface` (panel with optional motion Client island) + dev-only `_design-system/page.tsx` showcase. Additive — no page adoption yet; zero existing component changes.
+
+**Exit:**
+
+- `web/components/type/Heading.tsx`: `level` prop (10 levels); maps to `--ds-font-size-{level}` via Tailwind v4 arbitrary value; HTML element derived from level; pure RSC.
+- `web/components/type/Prose.tsx`: RSC wrapper; vertical rhythm via `[&>*+*]:mt-[var(--ds-spacing-md)]`; pure RSC; accepts `className?`.
+- `web/components/surface/Surface.tsx`: `tone` + `padding` + `motion` props; default `motion="none"` → RSC-compat div; non-none → `'use client'` island + `useEffect` `data-mounted` + CSS transition rules in `globals.css` per extensions-doc Example 2 (including `prefers-reduced-motion` collapse); B2 guard: default `motion="none"`.
+- `web/app/_design-system/page.tsx`: `notFound()` in production; renders all primitives + alias swatches + motion demo; `noindex` meta; unlinked from Sidebar (NB2).
+- `npm run validate:web` green.
+
+**Phases:**
+
+- [ ] Phase 1 — Type primitives (`Heading.tsx` + `Prose.tsx`).
+- [ ] Phase 2 — Surface primitive + showcase (`Surface.tsx` + `_design-system/page.tsx`).
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T8.2.1 | 1 | _pending_ | _pending_ | Author `web/components/type/Heading.tsx` — `level: 'display' | 'h1' | 'h2' | 'h3' | 'body-lg' | 'body' | 'body-sm' | 'caption' | 'mono-code' | 'mono-meta'`; maps level → HTML element (`display/h1` → `<h1>`, `h2` → `<h2>`, `h3` → `<h3>`, `body-*` → `<p>`, `caption/mono-*` → `<span>`); applies `text-[var(--ds-font-size-{level})]` Tailwind v4 arbitrary value; optional `weight?` override class; optional `className?` passthrough; pure RSC. |
+| T8.2.2 | 1 | _pending_ | _pending_ | Author `web/components/type/Prose.tsx` — RSC wrapper; accepts `children` + optional `className`; applies Tailwind v4 CSS vertical rhythm: `[&>*+*]:mt-[var(--ds-spacing-md)]`; cite `design-system.md` §5 component map in JSDoc; zero inline styles; pure RSC. |
+| T8.2.3 | 2 | _pending_ | _pending_ | Author `web/components/surface/Surface.tsx` — `tone: 'raised' | 'sunken' | 'inset'` → `bg-[var(--ds-surface-{tone})]`; `padding: 'sm' | 'md' | 'lg' | 'section'` → `p-[var(--ds-spacing-{padding})]`; `motion?: 'none' | 'subtle' | 'gentle' | 'deliberate'` default `'none'`; `motion="none"` → pure RSC div; non-none → `'use client'` + `useEffect(() => setMounted(true), [])` + `data-mounted="true"`; append CSS transition rules + `prefers-reduced-motion: reduce` collapse to `globals.css` per extensions-doc Example 2; B2 guard enforced via prop default. |
+| T8.2.4 | 2 | _pending_ | _pending_ | Author `web/app/_design-system/page.tsx` — `if (process.env.NODE_ENV === 'production') { notFound() }` guard (NB2); renders: all 10 `Heading` levels, `Prose` block with sample body text, `Surface` matrix (all tones × paddings), motion demo per duration, `BadgeChip` status token swatches, `--ds-*` CSS var reference table; `export const metadata = { robots: { index: false } }`; NOT added to `Sidebar.tsx` `LINKS`. |
+
+---
+
+#### Stage 8.3 — Priority surfaces adoption + broad token migration
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Re-skin landing hero + dashboard with new primitives (priority surfaces per Q1); broad `tokens.*` → `ds-*` alias migration across remaining components + wiki/devlog Prose wrap. Lighthouse baseline captured before Phase 1 re-skin.
+
+**Exit:**
+
+- Lighthouse baseline (LCP / CLS / TBT) captured on `localhost:4000` + `/dashboard` BEFORE any re-skin (NB3).
+- `web/app/page.tsx` landing hero: `<Heading level="display">` + `<Surface tone="raised" motion="subtle">` + `--ds-accent-terrain` on CTA; full-English user-facing copy unchanged (B3 / CLAUDE.md §6).
+- `web/app/dashboard/page.tsx` re-skinned; stat blocks in `<Surface>`; headings via `<Heading>`; `BadgeChip` uses `ds-*` aliases; `/dashboard/releases/**` (Step 7) unaffected (regression guard).
+- `grep "tokens\."` surfaces enumerated; `Breadcrumb`, `Sidebar`, `BadgeChip`, `DataTable`, `FilterChips` migrated to `ds-*` CSS var classes; alias-neutral (palette unchanged — NB4 / Example 3 from extensions doc).
+- `web/app/wiki/**` + `web/app/devlog/**` MDX output wrapped in `<Prose>`; no layout rework.
+- `npm run validate:web` green; manual visual diff noted in PR body.
+
+**Phases:**
+
+- [ ] Phase 1 — Priority surfaces adoption (landing hero + dashboard re-skin).
+- [ ] Phase 2 — Broad token-alias migration (components + wiki/devlog Prose wrap).
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T8.3.1 | 1 | _pending_ | _pending_ | Capture Lighthouse baseline (LCP / CLS / TBT) on `localhost:4000` BEFORE any edit; store scores in PR body (NB3). Re-skin `web/app/page.tsx` landing hero: `<Heading level="display">` on main title; `<Surface tone="raised" motion="subtle" padding="section">` on hero panel; `bg-[var(--ds-accent-terrain)]` on CTA button; full-English user-facing copy unchanged (CLAUDE.md §6 / B3). `npm run validate:web` green. |
+| T8.3.2 | 1 | _pending_ | _pending_ | Re-skin `web/app/dashboard/page.tsx`: wrap stat blocks in `<Surface tone="raised" padding="md">`; replace raw `<h1>`/`<h2>` with `<Heading level="h1">` / `<Heading level="h2">`; update `BadgeChip` usages to `ds-*` alias classes; verify `/dashboard/releases/**` (Stage 7.2) still renders correctly; `npm run validate:web` green. |
+| T8.3.3 | 2 | _pending_ | _pending_ | Grep `tokens\.` across `web/app/**/*.tsx` + `web/components/**/*.tsx`; enumerate surfaces; migrate `web/components/Breadcrumb.tsx` + `web/components/Sidebar.tsx` inline `tokens.*` → `bg-[var(--ds-*)]` / `text-[var(--ds-*)]` Tailwind v4 arbitrary value classes; confirm alias-neutral (zero visual diff — same hex values per Example 3); `npm run validate:web` green. |
+| T8.3.4 | 2 | _pending_ | _pending_ | Migrate `web/components/BadgeChip.tsx` + `web/components/DataTable.tsx` + `web/components/FilterChips.tsx` inline `tokens.*` → `ds-*` CSS var classes; wrap MDX output in `web/app/wiki/**` + `web/app/devlog/**` pages in `<Prose>` component (vertical rhythm only; no layout rework); `npm run validate:web` green; manual visual diff on `localhost:4000/wiki` + `/devlog` noted in PR body. |
+
+---
+
+#### Stage 8.4 — Docs + validation
+
+**Status:** Draft (tasks _pending_ — not yet filed)
+
+**Objectives:** Update `web/README.md` (Design System section) + `CLAUDE.md §6` (spec path row); final `validate:web` green gate; post-skin Lighthouse check against Stage 8.3 baseline (NB3 regression guard).
+
+**Exit:**
+
+- `web/README.md` has `## Design System` section: spec path, primitive one-liners, showcase route note, `ds-*` class convention (Tailwind v4 CSS custom properties, not `tailwind.config.ts`).
+- `CLAUDE.md §6` has row for `web/lib/design-system.md`.
+- `npm run validate:web` green.
+- Lighthouse post-check on `/`: LCP ≤ Stage 8.3 T8.3.1 baseline × 1.1; CLS < 0.1; if CLS regressed → set all `Surface motion="none"` in landing + dashboard as fallback.
+
+**Phases:**
+
+- [ ] Phase 1 — Docs (`web/README.md` + `CLAUDE.md §6`).
+- [ ] Phase 2 — Final validation (`validate:web` + Lighthouse post-check).
+
+**Tasks:**
+
+| Task | Phase | Issue | Status | Intent |
+|---|---|---|---|---|
+| T8.4.1 | 1 | _pending_ | _pending_ | Update `web/README.md` — add `## Design System` section: cite `web/lib/design-system.md` as authoritative spec; one-liner per primitive (`Heading` — level-bound RSC typography; `Prose` — MDX vertical-rhythm wrapper; `Surface` — tone/padding/motion panel); showcase route (`web/app/_design-system/page.tsx`, dev-only, unlinked); `ds-*` class convention note (Tailwind v4 CSS vars via `--ds-*` in `globals.css`, not `tailwind.config.ts`). |
+| T8.4.2 | 1 | _pending_ | _pending_ | Update `CLAUDE.md §6` web workspace section — add row for design-system spec: `web/lib/design-system.md — Design system spec: type/spacing/motion/alias tables; derivation source for web/lib/design-tokens.ts + globals.css @theme ds-* block`; add caveman carve-out reminder: page-body JSX strings in `web/app/**/page.tsx` stay full English (CLAUDE.md §6 authority). |
+| T8.4.3 | 2 | _pending_ | _pending_ | Run `npm run validate:web` (lint + typecheck + build) from repo root; fix any type or lint regressions introduced in Stages 8.1–8.3; confirm exit 0; report exit code + any fixes in PR body. |
+| T8.4.4 | 2 | _pending_ | _pending_ | Run Lighthouse on `localhost:4000` (landing); record LCP / CLS / TBT; compare against Stage 8.3 T8.3.1 baseline (cap: LCP ≤ baseline × 1.1, CLS < 0.1); if CLS regressed → set `Surface motion="none"` in landing + dashboard and re-run Lighthouse; document result + any remediation in PR body (NB3). |
 
 ---
 

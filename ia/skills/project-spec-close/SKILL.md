@@ -65,6 +65,15 @@ Run in order. N/A → state why in chat.
 5. **`invariants_summary`** — When closure touches runtime C#, scene behavior, or guardrail docs.
 6. **Multi-issue** — Patch umbrella/sibling `ia/projects/*.md`. **Mandatory for umbrella/master-plan orchestrators** (`*master-plan*.md`, `step-*-*.md`, `stage-*-*.md`): tick matching Phase checkbox(es), flip task-table Status column `Draft` → `Done` for the closing issue, update top-of-file `> **Status:**` pointer to next in-progress task. Optional: `npm run closeout:dependents -- --issue {ISSUE_ID}`.
 6b. **Orchestrator stage-complete check** — After flipping task → `Done`, scan the parent stage's task table. If **all** tasks in that stage are now `Done` or `Done (archived)`, **automatically run `project-stage-close` inline on the orchestrator** before continuing to step 7. Do not surface a reminder and wait — execute the 8-step `project-stage-close` procedure immediately so the stage handoff is part of the same atomic closeout.
+6c. **Header-sync step/stage Status + Backlog state** — After task-row flip (and after any inline `project-stage-close` in 6b), rewrite every `**Status:**` paragraph and `**Backlog state (...):**` line under `### Step N — Title` (h3) and `#### Stage N.N — Title` (h4) headers in the touched master plan from task-table ground truth. Rules:
+  - All task rows in block `Done (archived)` → `**Status:** Final`
+  - Mix of `Done (archived)` + open → `**Status:** In Progress — {first-open-task-id}`
+  - All `_pending_` → `**Status:** Draft (tasks _pending_ — not yet filed)`
+  - `**Backlog state (Label):** k filed` where k = count of rows with a non-`_pending_` **Issue** cell.
+  - Stage depth = `####` (h4); step depth = `###` (h3). Regex must anchor on both.
+  - After all stage rewrites: if every sibling stage under a step reads `Final`, force the step `**Status:** Final`.
+  - Rewrite idempotent — re-running on already-synced doc produces zero diff.
+  - Helper: `tools/mcp-ia-server/src/parser/master-plan-header-sync.ts` exports `syncMasterPlanHeaders(markdown)` implementing the above contract. Use when running Node-capable agent; otherwise apply the same logic inline via targeted `Edit` calls.
 7. **Delete** `ia/projects/{ISSUE_ID}.md` — only after J1 succeeded/waived/skipped.
 8. **Cascade** — `npm run validate:dead-project-specs`; fix hits or advisory with reason.
 9. **BACKLOG + archive** — Move `ia/backlog/{ISSUE_ID}.yaml` to `ia/backlog-archive/{ISSUE_ID}.yaml`; set `status: closed` and update Notes to cite where content migrated; set `spec: ""` (removed-after-closure). Run `bash tools/scripts/materialize-backlog.sh` to regenerate `BACKLOG.md` + `BACKLOG-ARCHIVE.md`. **Do NOT** edit `BACKLOG.md` or `BACKLOG-ARCHIVE.md` directly.

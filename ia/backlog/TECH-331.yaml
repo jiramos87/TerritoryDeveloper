@@ -1,0 +1,30 @@
+id: TECH-331
+type: infrastructure / data model
+title: Utility enums — UtilityKind / ScaleTag / PoolStatus (Stage 1.1 Phase 1)
+priority: high
+status: open
+section: Multi-scale simulation lane
+spec: ia/projects/TECH-331.md
+files:
+  - Assets/Scripts/Data/Utilities/UtilityKind.cs
+  - Assets/Scripts/Data/Utilities/ScaleTag.cs
+  - Assets/Scripts/Data/Utilities/PoolStatus.cs
+notes: |
+  Land three plain enums under new `Assets/Scripts/Data/Utilities/` folder: `UtilityKind` (Water / Power / Sewage), `ScaleTag` (City / Region / Country), `PoolStatus` (Healthy / Warning / Deficit). XML doc every value (e.g. `Water` → "potable supply pool"). No behavior, no references from runtime code yet — just typed scaffolding for Stage 1.2+ services. Stage-shared context: Stage 1.1 Data contracts + enums, Bucket 4a utilities v1, country-pool-first per locked decision.
+acceptance: |
+  Three enum files compile clean via `npm run unity:compile-check`; XML doc on each value; no runtime refs yet; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: ""
+related:
+  - TECH-332
+  - TECH-333
+  - TECH-334
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-331** — Utility enums — UtilityKind / ScaleTag / PoolStatus (Stage 1.1 Phase 1)
+    - Type: infrastructure / data model
+    - Files: `Assets/Scripts/Data/Utilities/UtilityKind.cs` (new), `ScaleTag.cs` (new), `PoolStatus.cs` (new)
+    - Spec: `ia/projects/TECH-331.md`
+    - Notes: Three plain enums w/ XML doc per value. No runtime refs yet. Stage 1.1 Phase 1 of utilities-master-plan.
+    - Acceptance: files compile clean via `unity:compile-check`; `validate:all` green.
+    - Related: TECH-332, TECH-333, TECH-334

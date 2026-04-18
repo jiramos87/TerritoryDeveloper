@@ -184,47 +184,20 @@ _(all tasks archived — see `BACKLOG-ARCHIVE.md`)_
 
 ### Stage 1.2 — MCP tools batch 1 (IP3 + IP4 + IP5)
 
-- [ ] **TECH-324** — Implement `backlog_record_validate` MCP tool (Stage 1.2 Phase 1)
-  - Type: infrastructure / MCP tooling
-  - Files: `tools/mcp-ia-server/src/tools/backlog-record-validate.ts` (new), `tools/mcp-ia-server/src/index.ts`
-  - Spec: `ia/projects/TECH-324.md`
-  - Notes: New MCP tool — input `{ yaml_body }`, output `{ ok, errors, warnings }`. Delegates to shared core (TECH-323). Register in tool registry.
-  - Acceptance: tool registered; good record passes; bad record returns structured errors; tests green.
-  - Depends on: TECH-323 (shared lint core — hard gate)
-  - Related: TECH-323, TECH-325
-
 - [ ] **TECH-325** — Test `backlog_record_validate` against fixtures (Stage 1.2 Phase 1)
   - Type: infrastructure / MCP tooling
-  - Files: `tools/mcp-ia-server/tests/tools/backlog-record-validate.test.ts` (new)
-  - Spec: `ia/projects/TECH-325.md`
-  - Notes: Good record passes; each bad-record fixture (missing required field, bad id format, invalid status, empty `depends_on_raw` w/ non-empty `depends_on`) returns expected error. Locks lint contract before IP6 wires in.
-  - Acceptance: ≥4 bad-record + ≥1 good fixture; error text snapshot-stable; `validate:all` green.
+  - Files: `tools/mcp-ia-server/tests/tools/backlog-record-validate.test.ts`
+  - Notes: 1 good-record fixture + 4 bad-record fixtures assert against exported rule-id constants; `node:test` + `node:assert/strict`. Closes Phase 1 of Stage 1.2.
+  - Acceptance: ≥4 bad + ≥1 good fixture; error text snapshot-stable; `validate:all` green.
   - Depends on: TECH-324 (validate tool — hard gate)
   - Related: TECH-323, TECH-324
 
-- [ ] **TECH-326** — Implement `reserve_backlog_ids` MCP tool (Stage 1.2 Phase 2)
-  - Type: infrastructure / MCP tooling
-  - Files: `tools/mcp-ia-server/src/tools/reserve-backlog-ids.ts` (new), `tools/mcp-ia-server/src/index.ts`
-  - Spec: `ia/projects/TECH-326.md`
-  - Notes: Spawn `tools/scripts/reserve-id.sh {prefix} {count}` via `child_process`; parse stdout; return `{ ids: string[] }`. Invariant #13 — script-backed, no direct counter edits.
-  - Acceptance: tool registered; single + batch work; counter advances; input validation; happy-path test green.
-  - Related: TECH-327, TECH-324
-
-- [ ] **TECH-327** — Concurrency test for `reserve_backlog_ids` (Stage 1.2 Phase 2)
-  - Type: infrastructure / MCP tooling
-  - Files: `tools/mcp-ia-server/tests/tools/reserve-backlog-ids.test.ts` (new)
-  - Spec: `ia/projects/TECH-327.md`
-  - Notes: Spawn N=8 parallel MCP invocations (count 2 each); assert 16 unique ids + counter advanced correctly. Mirrors `reserve-id-concurrent.sh` at MCP layer.
-  - Acceptance: 16 distinct ids; counter +16; no dup across runs; `validate:all` green.
-  - Depends on: TECH-326 (reserve tool — hard gate)
-  - Related: TECH-326
-
 - [ ] **TECH-328** — Implement `backlog_list` MCP tool (Stage 1.2 Phase 3)
   - Type: infrastructure / MCP tooling
-  - Files: `tools/mcp-ia-server/src/tools/backlog-list.ts` (new), `tools/mcp-ia-server/src/index.ts`
-  - Spec: `ia/projects/TECH-328.md`
-  - Notes: Input `{ section?, priority?, type?, status?, scope? }`; load via `parseAllBacklogIssues`; filter in-memory; return `{ issues, total }` ordered id desc. Consumes `priority` from Stage 1.1.
-  - Acceptance: tool registered; filters standalone + combined; scope switch works; empty-result case; id-desc ordering stable.
+  - Files: `tools/mcp-ia-server/src/tools/backlog-list.ts`, `tools/mcp-ia-server/src/index.ts`
+  - Spec: (removed after closure)
+  - Notes: Shipped `backlog_list` MCP tool (IP4). Handler loads records via `parseAllBacklogIssuesWithMeta(repoRoot, scope)`; applies AND filters (section substring + priority/type/status exact case-insensitive); sorts prefix-alphabetic then numeric id desc; returns `{ scope, total_searched, result_count, issues, parseErrorCount? }`. Issue row mirrors `backlog_search` shape (id, title, type, status, section, priority, related, created, notes-200). Wrapped in `runWithToolTiming`. Registered via `registerBacklogList` in `index.ts`. Replaces ad-hoc Grep enumeration. Unblocks TECH-329 fixture tests.
+  - Acceptance: tool registered; filters standalone + combined; scope switch works; empty-result case; id-desc ordering stable; `validate:all` green.
   - Related: TECH-329
 
 - [ ] **TECH-329** — Test `backlog_list` filter combinations (Stage 1.2 Phase 3)
@@ -501,6 +474,47 @@ Orchestrator: [`ia/projects/city-sim-depth-master-plan.md`](projects/city-sim-de
   - Acceptance: New spec present w/ 5 sections; 12 signal rows; rollup table correct; cross-link added; glossary updated; `npm run validate:all` clean.
   - Depends on: TECH-305 (enum), TECH-306 (SignalField + registry types)
 
+## Utilities program
+
+Orchestrator: [`ia/projects/utilities-master-plan.md`](projects/utilities-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Bucket 4a of full-game-mvp umbrella. Country-pool-first water / power / sewage w/ local contributor buildings feeding per-scale pools (city / region / country). EMA soft warning → cliff-edge deficit (freeze + happiness decay + desirability decay). Stage 1.1 opened 2026-04-17 — 4 tasks filed below (TECH-331..TECH-334: `UtilityKind` / `ScaleTag` / `PoolStatus` enums + `PoolState` struct + `IUtilityContributor` / `IUtilityConsumer` interfaces + assembly compile-check).
+
+### Stage 1.1 — Data contracts + enums
+
+- [ ] **TECH-331** — Add `UtilityKind` / `ScaleTag` / `PoolStatus` enums (Stage 1.1 T1.1.1)
+  - Type: infrastructure / data model
+  - Files: `Assets/Scripts/Data/Utilities/UtilityKind.cs` (new), `ScaleTag.cs` (new), `PoolStatus.cs` (new)
+  - Spec: `ia/projects/TECH-331.md`
+  - Notes: Three plain enums w/ XML doc per value. No runtime refs yet. Stage 1.1 Phase 1 of utilities-master-plan.
+  - Acceptance: files compile clean via `unity:compile-check`; `validate:all` green.
+  - Related: TECH-332, TECH-333, TECH-334
+
+- [ ] **TECH-332** — Add `PoolState` struct (Stage 1.1 T1.1.2)
+  - Type: infrastructure / data model
+  - Files: `Assets/Scripts/Data/Utilities/PoolState.cs` (new)
+  - Spec: `ia/projects/TECH-332.md`
+  - Notes: Blittable struct (`net`, `ema`, `status`, two hysteresis counters). Default → Healthy + zeros. Stage 1.1 Phase 1.
+  - Acceptance: compiles clean; blittable; `validate:all` green.
+  - Depends on: TECH-331 (PoolStatus enum — hard gate)
+  - Related: TECH-331, TECH-333, TECH-334
+
+- [ ] **TECH-333** — Add `IUtilityContributor` + `IUtilityConsumer` interfaces (Stage 1.1 T1.1.3)
+  - Type: infrastructure / data model
+  - Files: `Assets/Scripts/Data/Utilities/IUtilityContributor.cs` (new), `IUtilityConsumer.cs` (new)
+  - Spec: `ia/projects/TECH-333.md`
+  - Notes: Two read-only interfaces — Kind, rate, Scale. Consumed by service + registry in later stages. Stage 1.1 Phase 2.
+  - Acceptance: compile clean; XML doc; `validate:all` green.
+  - Depends on: TECH-331 (enums — hard gate)
+  - Related: TECH-331, TECH-332, TECH-334
+
+- [ ] **TECH-334** — Utilities assembly + compile-check green (Stage 1.1 T1.1.4)
+  - Type: infrastructure / build
+  - Files: `Assets/Scripts/Data/Utilities/Utilities.asmdef` (new, if used)
+  - Spec: `ia/projects/TECH-334.md`
+  - Notes: Asmdef wiring OR confirm main-asm inclusion. Closes Stage 1.1 exit criteria. Stage 1.1 Phase 2.
+  - Acceptance: `unity:compile-check` green; types visible to consumers; `validate:all` green.
+  - Depends on: TECH-331, TECH-332, TECH-333 (all types exist — hard gate)
+  - Related: TECH-331, TECH-332, TECH-333
+
 ## Blip audio program
 
 Orchestrator: [`ia/projects/blip-master-plan.md`](projects/blip-master-plan.md) (permanent, never closeable — step > stage > phase > task per `ia/rules/project-hierarchy.md`). Step 1 = DSP foundations + audio infra (all four stages archived). Step 2 in progress — Stage 2.1 archived. Stage 2.2 archived 2026-04-15 (TECH-169..TECH-174). Stage 2.3 closed 2026-04-15 (TECH-188..TECH-191 all archived). Stage 2.4 closed 2026-04-15 (TECH-196..TECH-199 all archived). Step 3 opened 2026-04-15 — Stage 3.1 closed 2026-04-15 (TECH-209..TECH-212 all archived). Stage 3.2 closed 2026-04-15 (TECH-215..TECH-218 all archived). Stage 3.3 closed 2026-04-16 (TECH-219..TECH-222 all archived). Stage 3.4 closed 2026-04-16 (TECH-227..TECH-230 archived). Step 4 opened 2026-04-16 — Stage 4.1 closed 2026-04-16 (TECH-235..TECH-238 all archived). Stage 4.2 closed 2026-04-16 (TECH-243..TECH-246 all archived — `BlipVolumeController` logic bodies + `SfxMutedKey` boot-time restore + glossary update). Step 5 = DSP kernel v2 (post-MVP FX chain + LFOs + biquad BP + param smoothing). Stage 5.1 opened 2026-04-16 — 5 tasks filed below (FX data model + memoryless cores: BitCrush / RingMod / SoftClip / DcBlocker; delay-line kinds stubbed to passthrough until Stage 5.2). Stage 5.2 opened 2026-04-16 — 6 tasks filed below (TECH-270..TECH-275: `BlipDelayPool` service + `Render` delay-buffer overload + `BlipBaker` lease-on-bake + comb / allpass / chorus / flanger kernels + NoAlloc chorus gate).
@@ -727,6 +741,41 @@ Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-
 ### Stage 6.2 — Baseline route coverage
 
 ### Stage 6.3 — Dashboard e2e (SSR filter flows)
+
+### Stage 7.1 — Registry + pure shapers
+
+- [ ] **TECH-339** — Author `web/lib/releases.ts` — Release registry + resolver (Stage 7.1 T7.1.1)
+  - Type: tech (web data layer)
+  - Files: `web/lib/releases.ts` (new)
+  - Spec: `ia/projects/TECH-339.md`
+  - Notes: `Release` interface + `resolveRelease()` + seeded `full-game-mvp` row (9 children). Header cites `full-game-mvp-rollout-tracker.md`. Stage 7.1 Phase 1 of web-platform-master-plan.
+  - Acceptance: registry compiles; `resolveRelease` returns seeded row + null on miss; `validate:web` green.
+  - Related: TECH-340, TECH-341, TECH-342
+
+- [ ] **TECH-340** — Author `web/lib/releases/resolve.ts` + unit tests (Stage 7.1 T7.1.2)
+  - Type: tech (web data layer)
+  - Files: `web/lib/releases/resolve.ts` (new), `web/lib/__tests__/releases.test.ts` (new)
+  - Spec: `ia/projects/TECH-340.md`
+  - Notes: `getReleasePlans` pure filter + silent drop of missing-on-disk children. 5 unit test cases. Stage 7.1 Phase 1.
+  - Acceptance: filter compiles; tests green; `validate:web` green.
+  - Depends on: TECH-339
+  - Related: TECH-339, TECH-341, TECH-342
+
+- [ ] **TECH-341** — Author `web/lib/releases/default-expand.ts` + unit tests (Stage 7.1 T7.1.3)
+  - Type: tech (web data layer)
+  - Files: `web/lib/releases/default-expand.ts` (new), `web/lib/__tests__/default-expand.test.ts` (new)
+  - Spec: `ia/projects/TECH-341.md`
+  - Notes: `deriveDefaultExpandedStepId` — first non-done step by tasks ground truth. JSDoc NB: stale step-header ignored; `'blocked'` unreachable. 5 test cases. Stage 7.1 Phase 2.
+  - Acceptance: predicate + JSDoc land; tests green; `validate:web` green.
+  - Related: TECH-339, TECH-340, TECH-342
+
+- [ ] **TECH-342** — Author `web/lib/plan-tree.ts` — builder + TreeNodeData union + unit tests (Stage 7.1 T7.1.4)
+  - Type: tech (web data layer)
+  - Files: `web/lib/plan-tree.ts` (new), `web/lib/__tests__/plan-tree.test.ts` (new)
+  - Spec: `ia/projects/TECH-342.md`
+  - Notes: `TreeNodeData` discriminated union + `buildPlanTree`. Phase nodes from `groupBy(task.phase)` (NOT `Stage.phases`; JSDoc NB1). Status union from `BadgeChip`. 4 test cases. Stage 7.1 Phase 2.
+  - Acceptance: builder + union compile; JSDoc NB1 land; tests green; `validate:web` green.
+  - Related: TECH-339, TECH-340, TECH-341
 
 ## High Priority
 

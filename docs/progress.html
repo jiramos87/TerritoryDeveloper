@@ -326,13 +326,13 @@ h2.plan-title {
       <div class="overall-subtitle">Master Plan Progress</div>
     </div>
     <div class="overall-right">
-      <div class="overall-pct">13%</div>
-      <div class="overall-count">173 / 507 tasks</div>
+      <div class="overall-pct">11%</div>
+      <div class="overall-count">178 / 664 tasks</div>
     </div>
   </div>
   <div class="overall-seg-row">
     <div class="overall-seg-bar">
-      <div class="overall-seg-fill" style="width:13%"></div>
+      <div class="overall-seg-fill" style="width:11%"></div>
     </div>
   </div>
   <div class="plan-minis">
@@ -380,6 +380,14 @@ h2.plan-title {
     <div class="plan-mini">
       <span class="mini-icon">📋</span>
       <div class="mini-info">
+        <span class="mini-title">Landmarks</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
+      </div>
+    </div>
+    <div class="plan-mini">
+      <span class="mini-icon">📋</span>
+      <div class="mini-info">
         <span class="mini-title">MCP Lifecycle Tools — Opus 4.7 Audit</span>
         <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
         <span class="mini-pct">0%</span>
@@ -420,9 +428,17 @@ h2.plan-title {
     <div class="plan-mini">
       <span class="mini-icon">📋</span>
       <div class="mini-info">
+        <span class="mini-title">Utilities</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
+      </div>
+    </div>
+    <div class="plan-mini">
+      <span class="mini-icon">📋</span>
+      <div class="mini-info">
         <span class="mini-title">Web Platform</span>
-        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:33%"></div></div>
-        <span class="mini-pct">33%</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:25%"></div></div>
+        <span class="mini-pct">25%</span>
       </div>
     </div>
     <div class="plan-mini">
@@ -447,17 +463,17 @@ h2.plan-title {
     <span class="plan-status status-draft">📝 Draft — Steps 1 + 2 fully decomposed; all tasks `_pending_` (not filed). Ready for `/stage-file` in a follow-up agent session.</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
-      <div class="plan-step-pct" style="color:#70a0e0" title="Active step task progress">Step 1: 44%</div>
+      <div class="plan-step-pct" style="color:#70a0e0" title="Active step task progress">Step 1: 72%</div>
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:26%" title="8 Done"></div><div class="seg seg-draft" style="width:19%" title="6 Draft"></div><div class="seg seg-pending" style="width:55%" title="17 Pending"></div></div>
-    <span class="seg-count">8 / 31</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:42%" title="13 Done"></div><div class="seg seg-draft" style="width:3%" title="1 Draft"></div><div class="seg seg-pending" style="width:55%" title="17 Pending"></div></div>
+    <span class="seg-count">13 / 31</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 8 Done</span><span class="chip chip-draft">📝 6 Draft</span><span class="chip chip-pending">⏳ 17 Pending</span><span class="chip chip-total">📋 31 Total</span>
+    <span class="chip chip-done">✅ 13 Done</span><span class="chip chip-draft">📝 1 Draft</span><span class="chip chip-pending">⏳ 17 Pending</span><span class="chip chip-total">📋 31 Total</span>
   </div>
 
   <div class="ctx-row">
@@ -466,7 +482,7 @@ h2.plan-title {
     <span class="ctx-arrow">›</span>
     <span class="ctx-stage">Stage 1.2 · MCP tools batch 1 (IP3 + IP4…</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="`tools/mcp-ia-server/src/tools/backlog-record-validate.ts` — input schema `{ yaml_body: string }`, output `{ ok, errors, warnings }`. Delegate to shared core from T1.2.1. Register in `tools/mcp-ia-ser">🎯 <span class="task-id">T1.2.2</span> <span class="task-name">Implement `backlog_record_validate` MCP tool</span></span>
+    <span class="ctx-task" title="Add `tools/mcp-ia-server/tests/tools/backlog-list.test.ts` — fixture set covering ≥2 sections, ≥2 priorities, ≥2 types, open + archive. Assert: scope switch, single-filter cases, multi-filter intersec">🎯 <span class="task-id">T1.2.7</span> <span class="task-name">Test `backlog_list` filter combinations</span></span>
   </div>
 
   <div class="phase-row">
@@ -646,6 +662,50 @@ h2.plan-title {
   <details class="sibling-details">
     <summary>🔗 Sibling coordination <span class="sibling-count">2 orchestrators in flight</span></summary>
     <ul><li>- Music = single shared track across all scales. No adaptive music. No per-scale variation. Delivered via sibling `music-player-master-plan.md` subsystem (Bucket 7 seeds one track onto playlist).</li><li>- Canonical terminology: **country** (NOT &quot;nation&quot;) per `multi-scale-master-plan.md` + glossary. `CountryCell` / `parent_country_id`. Bucket labels use **country** everywhere; exploration doc prose polished to match.</li><li>**Parallel-work rule:** NEVER run `/stage-file` or `/closeout` against two sibling bucket orchestrators concurrently on the same branch — glossary + MCP index regens must sequence. Umbrella coordinates tier lanes; each tier lane may have multiple buckets IN PROGRESS but only one filing / closing at a time.</li></ul>
+  </details>
+</div>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <span class="plan-icon">📋</span>
+    <div class="plan-title-group">
+      <h2 class="plan-title">Landmarks — Master Plan (Bucket 4-b MVP)</h2>
+      <a class="plan-doc-link" href="../ia/projects/landmarks-master-plan.md">📄 plan doc</a>
+    </div>
+    <span class="plan-status status-other">⏳ Draft (all steps decomposed — 0 tasks filed)</span>
+    <div class="plan-pct-group">
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 0%</div>
+    </div>
+  </div>
+
+  <div class="seg-row">
+    <div class="seg-bar"><div class="seg seg-draft" style="width:6%" title="4 Draft"></div><div class="seg seg-pending" style="width:94%" title="65 Pending"></div></div>
+    <span class="seg-count">0 / 69</span>
+  </div>
+
+  <div class="stat-chips">
+    <span class="chip chip-draft">📝 4 Draft</span><span class="chip chip-pending">⏳ 65 Pending</span><span class="chip chip-total">📋 69 Total</span>
+  </div>
+
+  <div class="ctx-row">
+    <span class="ctx-label">📍</span>
+    <span class="ctx-step">Step 1 · Catalog + data model + gloss…</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-stage">Stage 1.1 · Data contracts + enums</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-task" title="Add `Assets/Scripts/Data/Landmarks/LandmarkTier.cs` — `City`, `Region`, `Country` enum values. XML doc each value explaining scale coupling (region = unlocked on city→region scale transition). No beha">🎯 <span class="task-id">T1.1.1</span> <span class="task-name">LandmarkTier enum</span></span>
+  </div>
+
+  <div class="phase-row">
+    <span class="phase-row-label">Phases:</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Tier enum + gate discriminator.">☐ Tier enum + gate discriminator.</span><span class="phase-pill phase-pending" title="Phase 2 — Catalog row class + compile check.">☐ Catalog row class + compile check.</span>
+  </div>
+
+  
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">4 orchestrators in flight</span></summary>
+    <ul><li>**Umbrella:** `ia/projects/full-game-mvp-master-plan.md` Bucket 4-b row. Sibling orchestrator `ia/projects/utilities-master-plan.md` (Bucket 4-a). Schema bump piggybacks on Bucket 3 v3 envelope (same rule as utilities — no mid-tier v2.x bump owned here).</li><li>- `ia/projects/utilities-master-plan.md` — sibling orchestrator; `UtilityContributorRegistry.Register` contract consumed by Step 4 of this plan.</li><li>- `ia/projects/full-game-mvp-master-plan.md` — umbrella Bucket 4-b row + Bucket 3 v3 schema envelope rule.</li><li>- **Umbrella parallel-work rule:** sequential filing only. No concurrent `/stage-file` run with sibling `ia/projects/utilities-master-plan.md` on same branch.</li></ul>
   </details>
 </div>
 
@@ -869,37 +929,81 @@ h2.plan-title {
   <div class="plan-header">
     <span class="plan-icon">📋</span>
     <div class="plan-title-group">
+      <h2 class="plan-title">Utilities — Master Plan (Bucket 4-a MVP)</h2>
+      <a class="plan-doc-link" href="../ia/projects/utilities-master-plan.md">📄 plan doc</a>
+    </div>
+    <span class="plan-status status-inprogress">🔄 In Progress — Step 1 / Stage 1.1 (4 tasks filed: TECH-331..TECH-334, all Draft)</span>
+    <div class="plan-pct-group">
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 0%</div>
+    </div>
+  </div>
+
+  <div class="seg-row">
+    <div class="seg-bar"><div class="seg seg-draft" style="width:7%" title="4 Draft"></div><div class="seg seg-pending" style="width:93%" title="56 Pending"></div></div>
+    <span class="seg-count">0 / 60</span>
+  </div>
+
+  <div class="stat-chips">
+    <span class="chip chip-draft">📝 4 Draft</span><span class="chip chip-pending">⏳ 56 Pending</span><span class="chip chip-total">📋 60 Total</span>
+  </div>
+
+  <div class="ctx-row">
+    <span class="ctx-label">📍</span>
+    <span class="ctx-step">Step 1 · Pool core + contributor regi…</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-stage">Stage 1.1 · Data contracts + enums</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-task" title="Add `Assets/Scripts/Data/Utilities/UtilityKind.cs`, `ScaleTag.cs`, `PoolStatus.cs` — plain enums, no behavior. XML doc each value (e.g. `Water` → &quot;potable supply pool&quot;).">🎯 <span class="task-id">T1.1.1</span> <span class="task-name">Utility enums</span></span>
+  </div>
+
+  <div class="phase-row">
+    <span class="phase-row-label">Phases:</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Enum + struct scaffolding.">☐ Enum + struct scaffolding.</span><span class="phase-pill phase-pending" title="Phase 2 — Interface contracts + assembly wiring.">☐ Interface contracts + assembly wiring.</span>
+  </div>
+
+  
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">3 orchestrators in flight</span></summary>
+    <ul><li>**Scope:** Utilities v1 — water / power / sewage as country-pool-first resources with local contributor buildings feeding per-scale pools (city / region / country). EMA soft warning → cliff-edge deficit (freeze + happiness decay + desirability decay). Infrastructure category with 2–3 capacity-based upgrade tiers. Natural wealth seeds water pool via adjacency; forests / mountains ambient-only; sea → port/commerce. Landmarks contributor-registry contract owned here; landmark catalog plugs in via `RegisterWithMultiplier`. **OUT of scope:** landmarks proper (sibling `docs/landmarks-exploration.md` + future `landmarks-master-plan.md`), Zone S economy (Bucket 3), signal integration (Bucket 2), CityStats overhaul (Bucket 8), multi-scale core (Bucket 1), energy storage, rolling blackouts, grid-loss transfer, private operators, climate modifiers.</li><li>**Umbrella:** `ia/projects/full-game-mvp-master-plan.md` Bucket 4 row. Schema bump coordinates with Bucket 3 (`zone-s-economy`) — Bucket 3 owns the v3 schema jump; this plan stages additions against the v3 envelope (no mid-tier v2.x bump).</li><li>- `ia/projects/full-game-mvp-master-plan.md` — umbrella Bucket 4 row + schema-bump coordination rule (§Gap B3).</li></ul>
+  </details>
+</div>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <span class="plan-icon">📋</span>
+    <div class="plan-title-group">
       <h2 class="plan-title">Web Platform — Master Plan (MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/web-platform-master-plan.md">📄 plan doc</a>
     </div>
     <span class="plan-status status-other">⏳ MVP Done 2026-04-17 — Steps 1–6 all Final (Step 5 portal stages 5.1 + 5.2 + 5.3 all Done 2026-04-17; Step 6 all three stages Done 2026-04-17). Post-MVP extensions now tracked in companion doc `docs/web-platform-post-mvp-extensions.md` — ready for `/design-explore` poll-based expansion + `/master-plan-extend` Step 7+.</span>
     <div class="plan-pct-group">
-      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">33%</div>
-      <div class="plan-step-pct" style="color:#40bf72" title="Active step task progress">Step 6: 100%</div>
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">25%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 7: 0%</div>
     </div>
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:100%" title="64 Done"></div></div>
-    <span class="seg-count">64 / 64</span>
+    <div class="seg-bar"><div class="seg seg-done" style="width:70%" title="64 Done"></div><div class="seg seg-draft" style="width:4%" title="4 Draft"></div><div class="seg seg-pending" style="width:26%" title="24 Pending"></div></div>
+    <span class="seg-count">64 / 92</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 64 Done</span><span class="chip chip-total">📋 64 Total</span>
+    <span class="chip chip-done">✅ 64 Done</span><span class="chip chip-draft">📝 4 Draft</span><span class="chip chip-pending">⏳ 24 Pending</span><span class="chip chip-total">📋 92 Total</span>
   </div>
 
   <div class="ctx-row">
     <span class="ctx-label">📍</span>
-    <span class="ctx-step">Step 6 · Playwright E2E harness</span>
+    <span class="ctx-step">Step 7 · Release-scoped progress view</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-stage">Stage 6.3 · Dashboard e2e (SSR filter fl…</span>
+    <span class="ctx-stage">Stage 7.1 · Registry + pure shapers</span>
     <span class="ctx-arrow">›</span>
-    <span class="ctx-task" title="">🎯 <em>All tasks done</em></span>
+    <span class="ctx-task" title="Author `web/lib/releases.ts` — `Release` interface (`id`, `label`, `umbrellaMasterPlan`, `children: string[]`) + `resolveRelease(id: string): Release">🎯 <span class="task-id">T7.1.1</span> <span class="task-name">Author `web/lib/releases.ts` — `Release` interface…</span></span>
   </div>
 
   <div class="phase-row">
     <span class="phase-row-label">Phases:</span>
-    <span class="phase-pill phase-done" title="Phase 1 — Full dashboard filter spec (single-param + multi-param + clear-filters + empty-state).">✅ Full dashboard filter spec (single-param + mu…</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Registry + resolve shaper (`releases.ts` + `releases/resolve.ts` + tests).">☐ Registry + resolve shaper (`releases.ts` + `r…</span><span class="phase-pill phase-pending" title="Phase 2 — Default-expand + plan-tree shapers (`releases/default-expand.ts` + `plan-tree.ts` + tests).">☐ Default-expand + plan-tree shapers (`releases…</span>
   </div>
 
   

@@ -58,6 +58,8 @@ Run in order. Skip only when genuinely N/A (state why).
 ### 1. Mark phase checklists in §7
 Tick every `- [ ]` under `### {STAGE_ID} — {STAGE_TITLE}` that completed. Deferred tasks: leave unticked + note in §9.
 
+After ticking, run header-sync on the owning stage block: rewrite `**Status:**` + `**Backlog state (Stage N.N):**` under the closing `#### Stage N.N — Title` heading from task-table ground truth (same rules as `project-spec-close` step 6c). Then propagate up: if every sibling stage block under the parent `### Step N` now reads `**Status:** Final`, rewrite the step's `**Status:**` to `Final` as well. Rewrite is idempotent. Helper: `tools/mcp-ia-server/src/parser/master-plan-header-sync.ts` → `syncMasterPlanHeaders(markdown)`.
+
 ### 2. Update Last updated
 Replace `> **Last updated:** YYYY-MM-DD` with today's date from `currentDate` context. Never invent date.
 

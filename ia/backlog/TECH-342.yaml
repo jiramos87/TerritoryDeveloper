@@ -1,0 +1,29 @@
+id: TECH-342
+type: tech (web data layer)
+title: Author `web/lib/plan-tree.ts` — builder + TreeNodeData union + unit tests (Stage 7.1 T7.1.4)
+priority: medium
+status: open
+section: Web platform lane
+spec: ia/projects/TECH-342.md
+files:
+  - web/lib/plan-tree.ts
+  - web/lib/__tests__/plan-tree.test.ts
+notes: |
+  `TreeNodeData` discriminated union — kind: `step | stage | phase | task`; fields: id, label, status, counts, children. `buildPlanTree(plan: PlanData, metrics: PlanMetrics): TreeNodeData[]`. Phase nodes synthesized by `groupBy(task.phase)` within each stage — NOT conflated w/ `Stage.phases` checklist. JSDoc NB1 flags that distinction. Per-node status from `BadgeChip` Status union (`done | in-progress | pending | blocked`); all-done propagation up stage/step level. Unit tests: stage-node counts, phase synthesis from tasks, status derivation, all-done propagation. Stage 7.1 Phase 2 of web-platform-master-plan.
+acceptance: |
+  Builder + discriminated union compile; phase synthesis by `task.phase` groupBy (not `Stage.phases`); JSDoc NB1 present; 4 unit test cases green; `npm run validate:web` green.
+depends_on: []
+depends_on_raw: none
+related:
+  - TECH-339
+  - TECH-340
+  - TECH-341
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-342** — Author `web/lib/plan-tree.ts` — builder + TreeNodeData union + unit tests (Stage 7.1 T7.1.4)
+    - Type: tech (web data layer)
+    - Files: `web/lib/plan-tree.ts` (new), `web/lib/__tests__/plan-tree.test.ts` (new)
+    - Spec: `ia/projects/TECH-342.md`
+    - Notes: `TreeNodeData` discriminated union + `buildPlanTree`. Phase nodes from `groupBy(task.phase)` (NOT `Stage.phases`; JSDoc NB1). Status union from `BadgeChip`. 4 test cases. Stage 7.1 Phase 2.
+    - Acceptance: builder + union compile; JSDoc NB1 land; tests green; `validate:web` green.
+    - Related: TECH-339, TECH-340, TECH-341

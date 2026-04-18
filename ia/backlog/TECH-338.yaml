@@ -1,0 +1,32 @@
+id: TECH-338
+type: infrastructure / build
+title: Landmarks assembly + compile-check green (Stage 1.1 T1.1.4)
+priority: high
+status: open
+section: Multi-scale simulation lane
+spec: ia/projects/TECH-338.md
+files:
+  - Assets/Scripts/Data/Landmarks/Landmarks.asmdef
+notes: |
+  Add `Landmarks.asmdef` under `Assets/Scripts/Data/Landmarks/` if repo uses asmdef-per-folder convention; otherwise ensure types live in the main game assembly. Verify `npm run unity:compile-check` green after all three types (enum + discriminator + row class) land. Gatekeeper task — closes Stage 1.1 exit criteria "Files compile clean". Pattern mirrors utilities TECH-334.
+acceptance: |
+  Asmdef present (or explicit confirmation types live in main asm w/ Decision Log entry); `npm run unity:compile-check` green; types visible to intended consumer assemblies (Managers + Tests); `npm run validate:all` green.
+depends_on:
+  - TECH-335
+  - TECH-336
+  - TECH-337
+depends_on_raw: "TECH-335, TECH-336, TECH-337 (all types must exist — hard gate)"
+related:
+  - TECH-335
+  - TECH-336
+  - TECH-337
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-338** — Landmarks assembly + compile-check green (Stage 1.1 T1.1.4)
+    - Type: infrastructure / build
+    - Files: `Assets/Scripts/Data/Landmarks/Landmarks.asmdef` (new, if used)
+    - Spec: `ia/projects/TECH-338.md`
+    - Notes: Asmdef wiring OR confirm main-asm inclusion. Closes Stage 1.1 exit criteria. Stage 1.1 Phase 2.
+    - Acceptance: `unity:compile-check` green; types visible to consumers; `validate:all` green.
+    - Depends on: TECH-335, TECH-336, TECH-337 (all types exist — hard gate)
+    - Related: TECH-335, TECH-336, TECH-337

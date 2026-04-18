@@ -1,0 +1,31 @@
+id: TECH-337
+type: infrastructure / data model
+title: Add LandmarkCatalogRow class (Stage 1.1 T1.1.3)
+priority: high
+status: open
+section: Multi-scale simulation lane
+spec: ia/projects/TECH-337.md
+files:
+  - Assets/Scripts/Data/Landmarks/LandmarkCatalogRow.cs
+notes: |
+  Add `Assets/Scripts/Data/Landmarks/LandmarkCatalogRow.cs` — serializable class w/ 9 fields: `string id`, `string displayName`, `LandmarkTier tier`, `LandmarkPopGate popGate`, `string spritePath`, `int commissionCost`, `int buildMonths`, `string utilityContributorRef` (nullable), `float contributorScalingFactor` (default 1.0). XML doc per field; cost fields carry `// cost-catalog bucket 11 placeholder` marker. Stage 1.1 Phase 2.
+acceptance: |
+  File compiles clean; 9 fields wired w/ XML doc; placeholder marker on `commissionCost`; consumes TECH-335 + TECH-336 types; `npm run validate:all` green.
+depends_on:
+  - TECH-335
+  - TECH-336
+depends_on_raw: "TECH-335 (LandmarkTier enum) + TECH-336 (LandmarkPopGate) — hard gate (row fields reference both)"
+related:
+  - TECH-335
+  - TECH-336
+  - TECH-338
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-337** — Add LandmarkCatalogRow class (Stage 1.1 T1.1.3)
+    - Type: infrastructure / data model
+    - Files: `Assets/Scripts/Data/Landmarks/LandmarkCatalogRow.cs` (new)
+    - Spec: `ia/projects/TECH-337.md`
+    - Notes: Serializable class w/ 9 fields (id, displayName, tier, popGate, spritePath, commissionCost, buildMonths, utilityContributorRef nullable, contributorScalingFactor default 1.0). XML doc per field. Stage 1.1 Phase 2.
+    - Acceptance: compiles clean; XML doc; `validate:all` green.
+    - Depends on: TECH-335, TECH-336 (types referenced — hard gate)
+    - Related: TECH-335, TECH-336, TECH-338

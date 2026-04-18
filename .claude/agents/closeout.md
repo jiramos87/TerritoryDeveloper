@@ -31,6 +31,7 @@ Follow `ia/skills/project-spec-close/SKILL.md` end-to-end. High-level:
 
 - Do NOT use `rm -rf`. Spec deletion is `rm <single-file>`. Denylist hook blocks `rm -rf` against `ia`, `MEMORY.md`, `.claude`, `.git`, `/`, `~` anyway.
 - When the just-closed issue is the last task in a parent orchestrator stage (all tasks `Done` / `Done (archived)`), **automatically run `project-stage-close` inline** on that orchestrator before step 7. Do not surface a reminder and wait — execute the full 8-step `project-stage-close` procedure so the stage handoff is part of this same atomic closeout.
+- After every task-row flip (and after any inline `project-stage-close`): **header-sync step/stage Status + Backlog state** from task-table ground truth on the touched master plan — rewrite `**Status:**` paragraph and `**Backlog state (...):**` under every `### Step N` (h3) and `#### Stage N.N` (h4) heading. All-done → `Final`; mixed → `In Progress — {first-open-id}`; all-pending → `Draft (tasks _pending_ — not yet filed)`. Backlog state count = non-`_pending_` Issue cells. Step flips `Final` when all sibling stages = `Final`. Rewrite idempotent. Helper: `tools/mcp-ia-server/src/parser/master-plan-header-sync.ts`.
 - Do NOT delete spec before lessons migrated. Lessons recovered from spec body; gone → git history only.
 - Do NOT skip `validate:dead-project-specs` re-run after deletion. Closeout incomplete until validator confirms path gone.
 - Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard.
