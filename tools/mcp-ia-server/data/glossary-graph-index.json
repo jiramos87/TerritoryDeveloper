@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-18T20:34:16.269Z",
+  "last_generated": "2026-04-18T21:17:36.756Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -410,6 +410,16 @@
           "section_title": "11.8.1 Shore neighbor topology vs junction diagonal prefabs"
         }
       ]
+    },
+    "BudgetAllocationService": {
+      "related": [
+        "Building",
+        "Cell",
+        "Demand (R / C / I)",
+        "Desirability",
+        "envelope (budget sense)"
+      ],
+      "cited_in": []
     },
     "Building": {
       "related": [
@@ -1768,11 +1778,11 @@
     },
     "Forest (coverage)": {
       "related": [
+        "BudgetAllocationService",
         "Building",
         "Cell",
         "Demand (R / C / I)",
-        "Desirability",
-        "envelope (budget sense)"
+        "Desirability"
       ],
       "cited_in": []
     },
@@ -2248,6 +2258,16 @@
           "section_title": "Key files"
         }
       ]
+    },
+    "IBudgetAllocator": {
+      "related": [
+        "BudgetAllocationService",
+        "Building",
+        "Cell",
+        "Demand (R / C / I)",
+        "Desirability"
+      ],
+      "cited_in": []
     },
     "IDE agent bridge": {
       "related": [
@@ -4586,11 +4606,11 @@
     },
     "TreasuryFloorClampService": {
       "related": [
+        "BudgetAllocationService",
         "Building",
         "Cell",
         "Demand (R / C / I)",
-        "Desirability",
-        "envelope (budget sense)"
+        "Desirability"
       ],
       "cited_in": []
     },

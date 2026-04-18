@@ -2174,6 +2174,14 @@
 
 ## Recent archive (moved from BACKLOG.md, 2026-04-10)
 
+- [x] **TECH-422** — Save-schema v3→v4 bump + `BudgetAllocationData` + `StateServiceZoneData` (Stage 1.3 Phase 3) (2026-04-18)
+  - Type: tech / save schema
+  - Files: `Assets/Scripts/Managers/GameManagers/BudgetAllocationData.cs`, `Assets/Scripts/Managers/GameManagers/StateServiceZoneData.cs`, `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs`
+  - Spec: (removed after closure)
+  - Notes: Bumped `GameSaveData.CurrentSchemaVersion` 3 → 4. New POCOs `BudgetAllocationData` (envelope pct + cap + remaining + `Default(cap)` factory — normalizes `float[7] = 1f/7f` to sum 1.0, seeds `currentMonthRemaining[i] = (int)(cap * envelopePct[i])`) and `StateServiceZoneData` (cellX/cellY/subTypeId/densityTier) under `namespace Territory.Economy`, split to sibling files (matches `BudgetAllocationService.cs` / `IBudgetAllocator.cs` layout — invariant #6 carve-out). `GameSaveData` carries `public BudgetAllocationData budgetAllocation` (nullable — TECH-423 seeds via `Default(cap)` in migration branch) + `public List<StateServiceZoneData> stateServiceZones = new List<StateServiceZoneData>();`. No migration branch (TECH-423) + no round-trip wiring (TECH-424) + no tests (TECH-425) this task.
+  - Acceptance: types compile; `CurrentSchemaVersion = 4`; fields serializable; `unity:compile-check` green.
+  - Depends on: **TECH-420** (archived)
+
 - [x] **TECH-288** — LFO routing matrix + EditMode test + glossary (Stage 5.3 Phase 2) (2026-04-18)
   - Type: audio / DSP + IA
   - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`, `Assets/Tests/EditMode/Audio/BlipLfoTests.cs` (new), `ia/specs/glossary.md`, `ia/specs/audio-blip.md`

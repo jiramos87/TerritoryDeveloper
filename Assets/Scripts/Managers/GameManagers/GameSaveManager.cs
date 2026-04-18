@@ -56,6 +56,9 @@ public class GameSaveManager : MonoBehaviour
 
     // public PlayerSettingsData playerSettings;
 
+    /// <summary>Default spending-cap (§) seeded into <see cref="BudgetAllocationData"/> during v3→v4 migration. MVP deterministic value.</summary>
+    private const int DEFAULT_S_CAP = 10_000;
+
     public GridManager gridManager;
     public CityStats cityStats;
     public TimeManager timeManager;
@@ -141,6 +144,10 @@ public class GameSaveManager : MonoBehaviour
         GrowthBudgetManager growthBudgetManager = FindObjectOfType<GrowthBudgetManager>();
         if (growthBudgetManager != null)
             saveData.growthBudget = growthBudgetManager.data.Clone();
+        BudgetAllocationService budgetAllocationSvc = FindObjectOfType<BudgetAllocationService>();
+        saveData.budgetAllocation = budgetAllocationSvc != null
+            ? budgetAllocationSvc.CaptureSaveData()
+            : BudgetAllocationData.Default(DEFAULT_S_CAP);
         saveData.pendingProposals = new List<UrbanizationProposal>();
         if (miniMapController != null)
             saveData.minimapActiveLayers = (int)miniMapController.GetActiveLayers();
@@ -258,6 +265,9 @@ public class GameSaveManager : MonoBehaviour
                 growthBudgetManager.data = saveData.growthBudget.Clone();
                 MigrateGrowthBudgetFromLegacy(growthBudgetManager);
             }
+            BudgetAllocationService budgetAllocationSvc = FindObjectOfType<BudgetAllocationService>();
+            if (budgetAllocationSvc != null)
+                budgetAllocationSvc.RestoreFromSaveData(saveData.budgetAllocation);
             // Proposal flow disabled: clear any pending proposals on load
             UrbanizationProposalManager proposalManager = FindObjectOfType<UrbanizationProposalManager>();
             if (proposalManager != null)
@@ -277,6 +287,7 @@ public class GameSaveManager : MonoBehaviour
     /// Migrate <paramref name="data"/> to <see cref="GameSaveData.CurrentSchemaVersion"/>.
     /// Run post-deserialize, pre-restore. Idempotent — safe to call on already-migrated data.
     /// Schema 0 → 1: allocate placeholder GUIDs for missing <c>regionId</c> / <c>countryId</c>.
+    /// Schema 3 → 4: seed <c>stateServiceZones</c> empty + <c>budgetAllocation</c> equal-envelope default.
     /// </summary>
     static void MigrateLoadedSaveData(GameSaveData data)
     {
@@ -291,6 +302,12 @@ public class GameSaveManager : MonoBehaviour
         // Schema 3: neighborCityBindings absent in schema ≤ 2 saves → initialize to empty list.
         if (data.neighborCityBindings == null)
             data.neighborCityBindings = new List<NeighborCityBinding>();
+        // Schema 4: stateServiceZones + budgetAllocation absent in schema ≤ 3 saves → seed defaults.
+        // Null-coalesce style: non-null fields (already-v4 saves) are preserved byte-identical.
+        if (data.stateServiceZones == null)
+            data.stateServiceZones = new List<StateServiceZoneData>();
+        if (data.budgetAllocation == null)
+            data.budgetAllocation = BudgetAllocationData.Default(DEFAULT_S_CAP);
         data.schemaVersion = GameSaveData.CurrentSchemaVersion;
 
         if (string.IsNullOrEmpty(data.regionId) || string.IsNullOrEmpty(data.countryId))
@@ -299,6 +316,10 @@ public class GameSaveManager : MonoBehaviour
             throw new InvalidOperationException("[GameSaveManager] MigrateLoadedSaveData: neighborStubs null after migration — save data integrity error.");
         if (data.neighborCityBindings == null)
             throw new InvalidOperationException("[GameSaveManager] MigrateLoadedSaveData: neighborCityBindings null after migration — save data integrity error.");
+        if (data.stateServiceZones == null)
+            throw new InvalidOperationException("[GameSaveManager] MigrateLoadedSaveData: stateServiceZones null after migration — save data integrity error.");
+        if (data.budgetAllocation == null)
+            throw new InvalidOperationException("[GameSaveManager] MigrateLoadedSaveData: budgetAllocation null after migration — save data integrity error.");
     }
 
     /// <summary>Migrate old saves storing <c>totalGrowthBudget</c> (amount) → <c>growthBudgetPercent</c>.</summary>
@@ -421,7 +442,7 @@ public class GameSaveData
 
     /// <summary>
     /// Envelope budget snapshot (pct shares + cap + current-month remaining).
-    /// Null on legacy v3 saves — TECH-423 seeds via <see cref="BudgetAllocationData.Default"/>.
+    /// Null on legacy v3 saves — migration branch seeds via <see cref="BudgetAllocationData.Default"/>.
     /// Added schema 4.
     /// </summary>
     public BudgetAllocationData budgetAllocation;

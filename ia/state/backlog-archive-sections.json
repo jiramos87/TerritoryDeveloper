@@ -2126,6 +2126,12 @@
         },
         {
           "type": "issue",
+          "id": "TECH-422",
+          "checklist_line": "- [x] **TECH-422** — Save-schema v3→v4 bump + `BudgetAllocationData` + `StateServiceZoneData` (Stage 1.3 Phase 3) (2026-04-18)",
+          "trailing_blanks": 1
+        },
+        {
+          "type": "issue",
           "id": "TECH-288",
           "checklist_line": "- [x] **TECH-288** — LFO routing matrix + EditMode test + glossary (Stage 5.3 Phase 2) (2026-04-18)",
           "trailing_blanks": 1

@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-18T20:34:16.156Z",
+  "last_generated": "2026-04-18T21:17:36.664Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -386,6 +386,14 @@
     "TreasuryFloorClampService": {
       "spec_key": "docs",
       "anchor": "zone-s-economy-exploration-md-ip-3-forward-ref-ia-specs-economy-system-md-treasury-floor-clamp"
+    },
+    "BudgetAllocationService": {
+      "spec_key": "docs",
+      "anchor": "zone-s-economy-exploration-md-ip-2-forward-ref-ia-specs-economy-system-md-budget-envelope"
+    },
+    "IBudgetAllocator": {
+      "spec_key": "docs",
+      "anchor": "zone-s-economy-exploration-md-ip-2-forward-ref-ia-specs-economy-system-md-budget-envelope"
     },
     "Desirability": {
       "spec_key": "managers-reference",

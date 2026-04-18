@@ -4,7 +4,7 @@ namespace Territory.Economy
 {
     /// <summary>
     /// Persisted snapshot of <see cref="BudgetAllocationService"/> state (envelope pct + cap + remaining).
-    /// Added schema 4. See <c>ia/projects/TECH-422-save-schema-v3-v4-bump.md</c>.
+    /// Added schema 4 (Stage 1.3 Phase 3 — see <c>BACKLOG-ARCHIVE.md</c> TECH-422).
     /// </summary>
     [Serializable]
     public class BudgetAllocationData

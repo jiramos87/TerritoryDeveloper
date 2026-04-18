@@ -176,5 +176,61 @@ namespace Territory.Economy
             for (int i = 0; i < 7; i++)
                 currentMonthRemaining[i] = (int)(globalMonthlyCap * envelopePct[i]);
         }
+
+        // ── Save / load round-trip (TECH-424 — save-schema v4) ──────────────────────────────
+
+        /// <summary>
+        /// Deep-copies runtime state into a new <see cref="BudgetAllocationData"/> for serialisation.
+        /// Mutating the returned payload does NOT alias live arrays.
+        /// Called by <see cref="Territory.Persistence.GameSaveManager"/> pre-write (save-schema v4).
+        /// </summary>
+        public BudgetAllocationData CaptureSaveData()
+        {
+            var d = new BudgetAllocationData();
+            d.globalMonthlyCap = globalMonthlyCap;
+            d.envelopePct = new float[7];
+            System.Array.Copy(envelopePct, d.envelopePct, 7);
+            d.currentMonthRemaining = new int[7];
+            System.Array.Copy(currentMonthRemaining, d.currentMonthRemaining, 7);
+            return d;
+        }
+
+        /// <summary>
+        /// Deep-copies <paramref name="data"/> into backing fields, then normalises <see cref="envelopePct"/>.
+        /// Null or length-mismatched arrays → log warning and fall back to
+        /// <see cref="BudgetAllocationData.Default"/>(<paramref name="data"/>.<see cref="BudgetAllocationData.globalMonthlyCap"/>).
+        /// Trusts persisted <c>currentMonthRemaining</c> (no re-derivation — preserves mid-month state).
+        /// Called by <see cref="Territory.Persistence.GameSaveManager"/> post-migration (save-schema v4).
+        /// </summary>
+        public void RestoreFromSaveData(BudgetAllocationData data)
+        {
+            if (data == null)
+            {
+                Debug.LogWarning("BudgetAllocationService.RestoreFromSaveData: data is null; restore skipped.");
+                return;
+            }
+
+            bool lengthOk = data.envelopePct != null && data.envelopePct.Length == 7
+                         && data.currentMonthRemaining != null && data.currentMonthRemaining.Length == 7;
+
+            if (!lengthOk)
+            {
+                Debug.LogWarning($"BudgetAllocationService.RestoreFromSaveData: array length mismatch (envelopePct={data.envelopePct?.Length}, currentMonthRemaining={data.currentMonthRemaining?.Length}); falling back to Default.");
+                data = BudgetAllocationData.Default(data.globalMonthlyCap);
+            }
+
+            globalMonthlyCap = data.globalMonthlyCap;
+            System.Array.Copy(data.envelopePct, envelopePct, 7);
+            System.Array.Copy(data.currentMonthRemaining, currentMonthRemaining, 7);
+
+            // Defensive normalise — payload may have drifted; snapshot-rollback on all-zero sum.
+            float[] snapshot = new float[7];
+            System.Array.Copy(envelopePct, snapshot, 7);
+            if (!NormalizeInPlace())
+            {
+                System.Array.Copy(snapshot, envelopePct, 7);
+                Debug.LogWarning("BudgetAllocationService.RestoreFromSaveData: envelopePct all-zero after restore; prior (payload) values kept un-normalised.");
+            }
+        }
     }
 }
