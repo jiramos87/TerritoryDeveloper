@@ -326,17 +326,25 @@ h2.plan-title {
       <div class="overall-subtitle">Master Plan Progress</div>
     </div>
     <div class="overall-right">
-      <div class="overall-pct">19%</div>
-      <div class="overall-count">165 / 360 tasks</div>
+      <div class="overall-pct">13%</div>
+      <div class="overall-count">173 / 507 tasks</div>
     </div>
   </div>
   <div class="overall-seg-row">
     <div class="overall-seg-bar">
-      <div class="overall-seg-fill" style="width:19%"></div>
+      <div class="overall-seg-fill" style="width:13%"></div>
     </div>
   </div>
   <div class="plan-minis">
     
+    <div class="plan-mini">
+      <span class="mini-icon">📋</span>
+      <div class="mini-info">
+        <span class="mini-title">Backlog YAML ↔ MCP alignment</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
+      </div>
+    </div>
     <div class="plan-mini">
       <span class="mini-icon">🎵</span>
       <div class="mini-info">
@@ -370,6 +378,14 @@ h2.plan-title {
       </div>
     </div>
     <div class="plan-mini">
+      <span class="mini-icon">📋</span>
+      <div class="mini-info">
+        <span class="mini-title">MCP Lifecycle Tools — Opus 4.7 Audit</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
+      </div>
+    </div>
+    <div class="plan-mini">
       <span class="mini-icon">🗺️</span>
       <div class="mini-info">
         <span class="mini-title">Multi-Scale Simulation</span>
@@ -396,6 +412,14 @@ h2.plan-title {
     <div class="plan-mini">
       <span class="mini-icon">📋</span>
       <div class="mini-info">
+        <span class="mini-title">UI Polish</span>
+        <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:0%"></div></div>
+        <span class="mini-pct">0%</span>
+      </div>
+    </div>
+    <div class="plan-mini">
+      <span class="mini-icon">📋</span>
+      <div class="mini-info">
         <span class="mini-title">Web Platform</span>
         <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:33%"></div></div>
         <span class="mini-pct">33%</span>
@@ -412,6 +436,50 @@ h2.plan-title {
   </div>
 </header>
 <main>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <span class="plan-icon">📋</span>
+    <div class="plan-title-group">
+      <h2 class="plan-title">Backlog YAML ↔ MCP alignment — Master Plan</h2>
+      <a class="plan-doc-link" href="../ia/projects/backlog-yaml-mcp-alignment-master-plan.md">📄 plan doc</a>
+    </div>
+    <span class="plan-status status-draft">📝 Draft — Steps 1 + 2 fully decomposed; all tasks `_pending_` (not filed). Ready for `/stage-file` in a follow-up agent session.</span>
+    <div class="plan-pct-group">
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      <div class="plan-step-pct" style="color:#70a0e0" title="Active step task progress">Step 1: 44%</div>
+    </div>
+  </div>
+
+  <div class="seg-row">
+    <div class="seg-bar"><div class="seg seg-done" style="width:26%" title="8 Done"></div><div class="seg seg-draft" style="width:19%" title="6 Draft"></div><div class="seg seg-pending" style="width:55%" title="17 Pending"></div></div>
+    <span class="seg-count">8 / 31</span>
+  </div>
+
+  <div class="stat-chips">
+    <span class="chip chip-done">✅ 8 Done</span><span class="chip chip-draft">📝 6 Draft</span><span class="chip chip-pending">⏳ 17 Pending</span><span class="chip chip-total">📋 31 Total</span>
+  </div>
+
+  <div class="ctx-row">
+    <span class="ctx-label">📍</span>
+    <span class="ctx-step">Step 1 · HIGH band (IP1–IP5)</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-stage">Stage 1.2 · MCP tools batch 1 (IP3 + IP4…</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-task" title="`tools/mcp-ia-server/src/tools/backlog-record-validate.ts` — input schema `{ yaml_body: string }`, output `{ ok, errors, warnings }`. Delegate to shared core from T1.2.1. Register in `tools/mcp-ia-ser">🎯 <span class="task-id">T1.2.2</span> <span class="task-name">Implement `backlog_record_validate` MCP tool</span></span>
+  </div>
+
+  <div class="phase-row">
+    <span class="phase-row-label">Phases:</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Shared lint core extraction + `backlog_record_validate`.">☐ Shared lint core extraction + `backlog_record…</span><span class="phase-pill phase-pending" title="Phase 2 — `reserve_backlog_ids` tool + concurrency test.">☐ `reserve_backlog_ids` tool + concurrency test.</span><span class="phase-pill phase-pending" title="Phase 3 — `backlog_list` tool + filter combinations.">☐ `backlog_list` tool + filter combinations.</span>
+  </div>
+
+  
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">3 orchestrators in flight</span></summary>
+    <ul><li>**Sibling orchestrators in flight:**</li><li>- `ia/projects/multi-scale-master-plan.md` — Unity runtime C# + save schema. Disjoint surface (no `tools/mcp-ia-server/**` touches). No collision.</li><li>- `ia/projects/web-platform-master-plan.md` — Next.js at `web/`. Disjoint surface. No collision.</li><li>- `ia/projects/blip-master-plan.md` — runtime C# audio. Disjoint. No collision.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently on the same branch — MCP index regens (`npm run mcp:regen-index`) must sequence.</li></ul>
+  </details>
+</div>
 
 <div class="plan-card">
   <div class="plan-header">
@@ -464,7 +532,7 @@ h2.plan-title {
       <h2 class="plan-title">City-Sim Depth — Master Plan (Bucket 2 MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/city-sim-depth-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-draft">📝 Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)</span>
+    <span class="plan-status status-draft">📝 Draft — Step 1 / Stage 1.1 filed 2026-04-17 (TECH-305..TECH-308)</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
       <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 0%</div>
@@ -472,12 +540,12 @@ h2.plan-title {
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-pending" style="width:100%" title="52 Pending"></div></div>
+    <div class="seg-bar"><div class="seg seg-draft" style="width:8%" title="4 Draft"></div><div class="seg seg-pending" style="width:92%" title="48 Pending"></div></div>
     <span class="seg-count">0 / 52</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-pending">⏳ 52 Pending</span><span class="chip chip-total">📋 52 Total</span>
+    <span class="chip chip-draft">📝 4 Draft</span><span class="chip chip-pending">⏳ 48 Pending</span><span class="chip chip-total">📋 52 Total</span>
   </div>
 
   <div class="ctx-row">
@@ -504,7 +572,7 @@ h2.plan-title {
       <h2 class="plan-title">CityStats Overhaul — Master Plan (MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/citystats-overhaul-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-draft">📝 Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)</span>
+    <span class="plan-status status-draft">📝 Draft — Step 1 / Stage 1.1 filed 2026-04-17 (TECH-303, TECH-304)</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
       <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 0%</div>
@@ -512,12 +580,12 @@ h2.plan-title {
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-pending" style="width:100%" title="30 Pending"></div></div>
+    <div class="seg-bar"><div class="seg seg-draft" style="width:7%" title="2 Draft"></div><div class="seg seg-pending" style="width:93%" title="28 Pending"></div></div>
     <span class="seg-count">0 / 30</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-pending">⏳ 30 Pending</span><span class="chip chip-total">📋 30 Total</span>
+    <span class="chip chip-draft">📝 2 Draft</span><span class="chip chip-pending">⏳ 28 Pending</span><span class="chip chip-total">📋 30 Total</span>
   </div>
 
   <div class="ctx-row">
@@ -583,6 +651,46 @@ h2.plan-title {
 
 <div class="plan-card">
   <div class="plan-header">
+    <span class="plan-icon">📋</span>
+    <div class="plan-title-group">
+      <h2 class="plan-title">MCP Lifecycle Tools — Opus 4.7 Audit — Master Plan (IA Infrastructure)</h2>
+      <a class="plan-doc-link" href="../ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md">📄 plan doc</a>
+    </div>
+    <span class="plan-status status-draft">📝 Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)</span>
+    <div class="plan-pct-group">
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 0%</div>
+    </div>
+  </div>
+
+  <div class="seg-row">
+    <div class="seg-bar"><div class="seg seg-draft" style="width:4%" title="2 Draft"></div><div class="seg seg-pending" style="width:96%" title="52 Pending"></div></div>
+    <span class="seg-count">0 / 54</span>
+  </div>
+
+  <div class="stat-chips">
+    <span class="chip chip-draft">📝 2 Draft</span><span class="chip chip-pending">⏳ 52 Pending</span><span class="chip chip-total">📋 54 Total</span>
+  </div>
+
+  <div class="ctx-row">
+    <span class="ctx-label">📍</span>
+    <span class="ctx-step">Step 1 · Quick Wins</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-stage">Stage 1.1 · Glossary Bulk-Terms Extension</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-task" title="Extend `tools/mcp-ia-server/src/tools/glossary-lookup.ts` to accept `terms?: string[]` alongside `term?: string`. When `terms` present, fan out to per-term lookup, aggregate into `{ results: {[term]: ">🎯 <span class="task-id">T1.1.1</span> <span class="task-name">Bulk terms handler</span></span>
+  </div>
+
+  <div class="phase-row">
+    <span class="phase-row-label">Phases:</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Bulk-terms handler + tests.">☐ Bulk-terms handler + tests.</span>
+  </div>
+
+  
+</div>
+
+<div class="plan-card">
+  <div class="plan-header">
     <span class="plan-icon">🗺️</span>
     <div class="plan-title-group">
       <h2 class="plan-title">Multi-Scale Simulation — Master Plan (MVP)</h2>
@@ -596,12 +704,12 @@ h2.plan-title {
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-done" style="width:66%" title="23 Done"></div><div class="seg seg-draft" style="width:6%" title="2 Draft"></div><div class="seg seg-pending" style="width:28%" title="10 Pending"></div></div>
+    <div class="seg-bar"><div class="seg seg-done" style="width:66%" title="23 Done"></div><div class="seg seg-draft" style="width:14%" title="5 Draft"></div><div class="seg seg-pending" style="width:20%" title="7 Pending"></div></div>
     <span class="seg-count">23 / 35</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-done">✅ 23 Done</span><span class="chip chip-draft">📝 2 Draft</span><span class="chip chip-pending">⏳ 10 Pending</span><span class="chip chip-total">📋 35 Total</span>
+    <span class="chip chip-done">✅ 23 Done</span><span class="chip chip-draft">📝 5 Draft</span><span class="chip chip-pending">⏳ 7 Pending</span><span class="chip chip-total">📋 35 Total</span>
   </div>
 
   <div class="ctx-row">
@@ -640,12 +748,12 @@ h2.plan-title {
   </div>
 
   <div class="seg-row">
-    <div class="seg-bar"><div class="seg seg-pending" style="width:100%" title="41 Pending"></div></div>
+    <div class="seg-bar"><div class="seg seg-draft" style="width:15%" title="6 Draft"></div><div class="seg seg-pending" style="width:85%" title="35 Pending"></div></div>
     <span class="seg-count">0 / 41</span>
   </div>
 
   <div class="stat-chips">
-    <span class="chip chip-pending">⏳ 41 Pending</span><span class="chip chip-total">📋 41 Total</span>
+    <span class="chip chip-draft">📝 6 Draft</span><span class="chip chip-pending">⏳ 35 Pending</span><span class="chip chip-total">📋 41 Total</span>
   </div>
 
   <div class="ctx-row">
@@ -717,10 +825,54 @@ h2.plan-title {
   <div class="plan-header">
     <span class="plan-icon">📋</span>
     <div class="plan-title-group">
+      <h2 class="plan-title">UI Polish — Master Plan (Flagship polish for Main HUD + Toolbar + Overlays)</h2>
+      <a class="plan-doc-link" href="../ia/projects/ui-polish-master-plan.md">📄 plan doc</a>
+    </div>
+    <span class="plan-status status-draft">📝 Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)</span>
+    <div class="plan-pct-group">
+      <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">0%</div>
+      <div class="plan-step-pct" style="color:#c0b060" title="Active step task progress">Step 1: 0%</div>
+    </div>
+  </div>
+
+  <div class="seg-row">
+    <div class="seg-bar"><div class="seg seg-draft" style="width:8%" title="5 Draft"></div><div class="seg seg-pending" style="width:92%" title="57 Pending"></div></div>
+    <span class="seg-count">0 / 62</span>
+  </div>
+
+  <div class="stat-chips">
+    <span class="chip chip-draft">📝 5 Draft</span><span class="chip chip-pending">⏳ 57 Pending</span><span class="chip chip-total">📋 62 Total</span>
+  </div>
+
+  <div class="ctx-row">
+    <span class="ctx-label">📍</span>
+    <span class="ctx-step">Step 1 · Token ring extension</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-stage">Stage 1.1 · Token schema extension + def…</span>
+    <span class="ctx-arrow">›</span>
+    <span class="ctx-task" title="Add `[Serializable] class StudioRackBlock` to `UiTheme.cs` with fields: `ledHues` (`Color[]`), `vuGradientStops` (`Gradient`), `knobDetentColor` (`Color`), `faderTrackGradient` (`Gradient`), `oscillos">🎯 <span class="task-id">T1.1.1</span> <span class="task-name">StudioRackBlock schema</span></span>
+  </div>
+
+  <div class="phase-row">
+    <span class="phase-row-label">Phases:</span>
+    <span class="phase-pill phase-pending" title="Phase 1 — Schema field expansion + asset defaults.">☐ Schema field expansion + asset defaults.</span><span class="phase-pill phase-pending" title="Phase 2 — Spec + glossary updates.">☐ Spec + glossary updates.</span>
+  </div>
+
+  
+  <details class="sibling-details">
+    <summary>🔗 Sibling coordination <span class="sibling-count">2 orchestrators in flight</span></summary>
+    <ul><li>- CityStats dashboard layout / charts / data wiring owned by CityStats bucket (`ia/projects/citystats-overhaul-master-plan.md`). This plan owns primitives + tokens + juice helpers only.</li><li>- `ia/projects/citystats-overhaul-master-plan.md` — downstream consumer of token + primitive + juice handoff (FEAT-51).</li></ul>
+  </details>
+</div>
+
+<div class="plan-card">
+  <div class="plan-header">
+    <span class="plan-icon">📋</span>
+    <div class="plan-title-group">
       <h2 class="plan-title">Web Platform — Master Plan (MVP)</h2>
       <a class="plan-doc-link" href="../ia/projects/web-platform-master-plan.md">📄 plan doc</a>
     </div>
-    <span class="plan-status status-draft">📝 Draft — Steps 1–4 Final; Step 5 active (Stage 5.1 Done — TECH-252 + TECH-253 + TECH-254 + TECH-255 all archived; Stage 5.2 Done — TECH-261 + TECH-262 + TECH-263 + TECH-264 all archived 2026-04-17; Stage 5.3 Done 2026-04-17); Step 6 paused (E2E deferred until future instruction)</span>
+    <span class="plan-status status-other">⏳ MVP Done 2026-04-17 — Steps 1–6 all Final (Step 5 portal stages 5.1 + 5.2 + 5.3 all Done 2026-04-17; Step 6 all three stages Done 2026-04-17). Post-MVP extensions now tracked in companion doc `docs/web-platform-post-mvp-extensions.md` — ready for `/design-explore` poll-based expansion + `/master-plan-extend` Step 7+.</span>
     <div class="plan-pct-group">
       <div class="plan-pct" style="color:#c0b060" title="Global plan progress (step-weighted)">33%</div>
       <div class="plan-step-pct" style="color:#40bf72" title="Active step task progress">Step 6: 100%</div>
@@ -753,7 +905,7 @@ h2.plan-title {
   
   <details class="sibling-details">
     <summary>🔗 Sibling coordination <span class="sibling-count">3 orchestrators in flight</span></summary>
-    <ul><li>**Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**</li><li>- `ia/projects/blip-master-plan.md` — runtime C# audio; disjoint surface. No collision.</li><li>- `ia/projects/multi-scale-master-plan.md` — runtime C# + save schema; disjoint surface. No collision.</li><li>- `ia/projects/sprite-gen-master-plan.md` — Python tool; disjoint surface. No collision.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
+    <ul><li>**Status:** MVP Done 2026-04-17 — Steps 1–6 all Final (Step 5 portal stages 5.1 + 5.2 + 5.3 all Done 2026-04-17; Step 6 all three stages Done 2026-04-17). Post-MVP extensions now tracked in companion doc `docs/web-platform-post-mvp-extensions.md` — ready for `/design-explore` poll-based expansion + `/master-plan-extend` Step 7+.</li><li>**Sibling orchestrators in flight (shared `feature/multi-scale-plan` branch):**</li><li>- `ia/projects/blip-master-plan.md` — runtime C# audio; disjoint surface. No collision.</li><li>- `ia/projects/multi-scale-master-plan.md` — runtime C# + save schema; disjoint surface. No collision.</li><li>- `ia/projects/sprite-gen-master-plan.md` — Python tool; disjoint surface. No collision.</li><li>- **Parallel-work rule:** do NOT run `/stage-file` or `/closeout` against two sibling orchestrators concurrently — glossary + MCP index regens must sequence on a single branch.</li></ul>
   </details>
 </div>
 
