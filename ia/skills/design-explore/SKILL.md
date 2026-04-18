@@ -67,6 +67,7 @@ If the doc is a stub (no Design Expansion), run a short interview to surface hid
 - NEVER mention class names, method signatures, file paths, C# types, or Unity-specific internals in questions. Those are implementation details the agent resolves independently.
 - Good: "When the player's police budget runs out this month, should they be blocked from building new police stations entirely, or just warned?"
 - Bad: "Should `BudgetAllocationService.TryDraw()` check the treasury floor before drawing from the envelope?"
+- Full rule + exceptions: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md). Fetch via `rule_content agent-human-polling` when drafting interview questions.
 
 **Interview rules (strict):**
 - Ask **ONE question per turn. Stop. Wait for the user's answer** before asking the next.
@@ -96,6 +97,8 @@ If existing recommendation is unambiguous **and** `APPROACH_HINT` is not set:
 proceed with it, state choice explicitly.
 
 Otherwise: present comparison table + leading candidate → **pause, ask user to confirm or override before continuing**.
+
+**Polling wording** (strict): question stem + each option label describe player/designer-visible outcome, not approach codenames or stage numbers. Ids and doc paths go on a trailing `Context:` line, not inside the question. Full rule: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md).
 
 ### Phase 3 — Expand
 
@@ -265,13 +268,7 @@ Never overwrite Problem / Approaches surveyed / Recommendation / Open questions 
 
 ## Tool recipe (territory-ia) — Phase 5 only
 
-Run in order. Skip `invariants_summary` for tooling/pipeline-only designs that touch no runtime C#.
-
-1. **`glossary_discover`** — `keywords` JSON array: English tokens from selected approach components + Phase 3 interface names.
-2. **`glossary_lookup`** — high-confidence terms from discover.
-3. **`router_for_task`** — 1–3 domains matching agent-router table vocabulary; derive from component responsibilities.
-4. **`spec_sections`** — sections implied by touched subsystems; set `max_chars`. No full spec reads.
-5. **`invariants_summary`** — if approach touches runtime C# / Unity game subsystems.
+Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs: `keywords` = English tokens from selected approach components + Phase 3 interface names; `brownfield_flag = false` for designs touching existing subsystems; `tooling_only_flag = true` for tooling/pipeline-only designs. Use returned `glossary_anchors`, `router_domains`, `spec_sections`, `invariants` for Phase 5 subsystem impact table.
 
 ---
 

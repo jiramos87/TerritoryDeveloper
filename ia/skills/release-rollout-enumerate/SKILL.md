@@ -46,17 +46,22 @@ Read `{UMBRELLA_SPEC}`. Extract:
 
 Missing bucket table → STOP, route to `/master-plan-new` or ask user to add bucket table section manually.
 
+**MCP context** — run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs: `keywords` = English tokens from umbrella bucket table domain names; `brownfield_flag = false`; `tooling_only_flag = true` (tracker authoring, no runtime C#). Use returned `glossary_anchors` for tracker matrix prose canonical names.
+
 ### Phase 1 — Repo reality sweep
 
-Per bucket + sibling row:
+Per bucket + sibling row, run `release-rollout-repo-sweep` subskill ([`ia/skills/release-rollout-repo-sweep/SKILL.md`](../release-rollout-repo-sweep/SKILL.md)). Inputs: `ROW_SLUG` = bucket slug; `REPO_ROOT` = repo root path.
 
-1. **Glob** `docs/{slug}-exploration.md` → column (b) pre-fill. Present + has `## Design Expansion` (or semantic equivalent) → `✓`. Present + stub (no expansion) → `—` with note. Absent → `—`.
-2. **Glob** `ia/projects/{slug}-master-plan.md` → column (c) pre-fill. Present → `✓`. Absent → `—`.
-3. **Grep** child master-plan for `### Step` count → column (d) pre-fill. ≥1 step with ≥1 stage → `✓`. Steps present but no stages → `—`.
-4. **Grep** child master-plan for `#### Stage` + `**Tasks:**` tables → column (e) pre-fill. ≥1 stage has `Tasks:` table → `◐`; all stages decomposed → `✓`; none → `—`.
-5. **Paired-record check** (same predicate as `release-rollout-track` Phase 1b) → column (f) pre-fill. For each `ia/backlog/{id}.yaml` whose `notes` or `raw_markdown` references this slug: check whether `ia/projects/{id}*.md` also exists. **Both present** → counts as filed. Rule: all filed pairs present → `✓`; ≥1 yaml with no matching spec (`◐` tier) → `◐`; zero yaml records found for slug → `—`.
-6. Column (g) pre-fill → `❓` for every row with (e) `◐` or `✓` (verify-required by rollout skill). `—` for rows at (d) or earlier.
-7. Column (a) → always `✓` once row exists in tracker.
+Subskill returns `{glyph_map: {(a)–(g)}, disagreement_flags: [...]}`. Use the returned glyph map directly as column pre-fills for the row. Accumulate `disagreement_flags` entries across all rows for Phase 2 disagreement detection.
+
+**Glyph semantics (for reference — enforced inside subskill):**
+1. Column (a) → `✓` always.
+2. Column (b) → exploration doc present + Design Expansion block found = `✓`; stub or absent = `—`.
+3. Column (c) → master plan present = `✓`; absent = `—`.
+4. Column (d) → ≥1 step with ≥1 stage = `✓`; steps but no stages = `—`.
+5. Column (e) → ≥1 stage with task rows = `◐`; all stages with task rows = `✓`; none = `—`.
+6. Column (f) → all yaml+spec pairs present = `✓`; partial = `◐`; none = `—`.
+7. Column (g) → `❓` when (e) = `◐` or `✓`; `—` otherwise.
 
 ### Phase 2 — Disagreement detection
 

@@ -55,27 +55,21 @@ Scan the target stage's task table **before any other action**. Classify by task
 
 ## Cardinality gate
 
-Before filing, count tasks per phase in the target stage.
-- Phase with 1 task → **warn user** and pause. Ask: split the task, or confirm single-task phase with justification for Decision Log.
-- Phase with 0 tasks → skip silently (nothing to file).
+Run `cardinality-gate-check` subskill ([`ia/skills/cardinality-gate-check/SKILL.md`](../cardinality-gate-check/SKILL.md)): pass phase → tasks map for the target stage's `_pending_` tasks. Cardinality rule: ≥2 tasks/phase (hard), ≤6 soft. Phase with 0 tasks → skip silently (nothing to file).
 
-**Task scope check (last-chance sizing pass before project-new runs):**
-- Task covers only 1 file, 1 function, or 1 struct with no logic → **warn user** and pause. Suggest merge with adjacent same-phase task. Rationale: each filed task = 5 orchestration steps (project-new → kickoff → implement → verify-loop → closeout); single-function tasks multiply that overhead without reducing risk.
-- Task spans >3 unrelated subsystems → **warn user** and pause. Suggest split at the subsystem seam.
-- Reference: `ia/skills/master-plan-new/SKILL.md` Phase 5 "Task sizing heuristic" for the merge/split decision guide.
+Subskill returns `{phases_lt_2, phases_gt_6, single_file_tasks, oversized_tasks, verdict}`:
+- `verdict = pause` → surface violations to user; ask split, merge, or justify. Each filed task = 5 orchestration steps — single-function tasks multiply overhead without reducing risk. Proceed only after user confirms, merges, or splits. Phrase split/merge question in player/designer-visible outcomes (releasable slices, user-visible checkpoints), not task ids or phase numbers. Ids / phase numbers go on a trailing `Context:` line. Full rule: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md).
+- `verdict = proceed` → continue to filing loop.
 
-Proceed only after user confirms, merges, or splits.
+Reference: `ia/skills/master-plan-new/SKILL.md` Phase 5 "Task sizing heuristic" for merge/split guide.
 
 ## Tool recipe (territory-ia) — run ONCE for the whole stage
 
 Load shared context before iterating tasks. All tasks in a stage share domain, subsystems, and invariants.
 
-1. **`glossary_discover`** — `keywords` JSON array from stage Objectives + Exit criteria text (English tokens).
-2. **`glossary_lookup`** — high-confidence terms from discover.
-3. **`router_for_task`** — 1–3 domains matching agent-router table vocabulary, derived from stage Objectives.
-4. **`invariants_summary`** — if stage touches runtime C# / game subsystems. Skip for doc/IA-only stages.
-5. **`spec_section`** — relevant spec sections implied by stage Objectives (set `max_chars`).
-6. **`backlog_issue`** — for any Depends-on ids listed in stage or step Exit criteria.
+Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs: `keywords` = English tokens from stage Objectives + Exit criteria text; `brownfield_flag = false` for stages touching existing subsystems; `tooling_only_flag = true` for doc/IA-only stages. Use returned `glossary_anchors`, `router_domains`, `spec_sections`, `invariants` as shared context block for all per-task `project-new` seed prompts.
+
+Also run **`backlog_issue`** for any Depends-on ids listed in stage or step Exit criteria.
 
 ## Seed prompt construction (per task)
 
@@ -113,10 +107,10 @@ Run in task-table order (T{stage}.1, T{stage}.2, …).
 
 For each `_pending_` task:
 
-1. **Batch-reserve ids first.** Run `bash tools/scripts/reserve-id.sh {ISSUE_PREFIX}` once per `_pending_` task (N calls total) **before filing any task**. Collect all N reserved ids. Invariant #13: `reserve-id.sh` is the only writer; no hand-editing the counter.
+1. **Batch-reserve ids first.** Call `mcp__territory-ia__reserve_backlog_ids(prefix: "{ISSUE_PREFIX}", count: N)` once to reserve all N ids in a single MCP call **before filing any task**. Collect the returned id array. **MCP unavailable fallback:** run `bash tools/scripts/reserve-id.sh {ISSUE_PREFIX}` once per `_pending_` task (N separate calls) and collect ids. Invariant #13: `reserve-id.sh` is the atomic `flock` writer; MCP tool wraps it — no hand-editing the counter.
 2. Construct seed prompt (above) with task-specific fields + shared context block. **Append `--reserved-id {ID}` at the end** using the pre-reserved id for this task. `project-new` will use the forwarded id verbatim and skip calling `reserve-id.sh` itself.
 3. Follow `project-new` **File and backlog checklist** (steps 1–7 minus validate:all):
-   - Write `ia/backlog/{ISSUE_ID}.yaml` from the yaml schema (id, type, title, priority, status: open, section, spec, files, notes, acceptance, depends_on, depends_on_raw, related, created, raw_markdown). Every cited Depends-on id must exist in `ia/backlog/` or `ia/backlog-archive/`. **Do NOT** edit `BACKLOG.md` directly — the materialize post-hook regenerates it.
+   - Author the yaml body for `ia/backlog/{ISSUE_ID}.yaml` (id, type, title, priority, status: open, section, spec, files, notes, acceptance, depends_on, depends_on_raw, related, created, raw_markdown). Every cited Depends-on id must exist in `ia/backlog/` or `ia/backlog-archive/`. Before writing to disk, call `mcp__territory-ia__backlog_record_validate(record: {yaml body})` and fix any reported schema errors. **MCP unavailable fallback:** skip the validate call; end-of-stage `validate:all` catches schema drift. Write the validated yaml to `ia/backlog/{ISSUE_ID}.yaml`. **Do NOT** edit `BACKLOG.md` directly — the materialize post-hook regenerates it.
    - Bootstrap `ia/projects/{ISSUE_ID}.md` from `ia/templates/project-spec-template.md`.
    - Fill §1 Summary + §2.1 Goals from task intent + stage context.
    - Fill §4.2 Systems map from router domains + pre-loaded spec sections.
@@ -133,7 +127,7 @@ Merges over-granular `Draft` tasks into consolidated issues before kickoff. Oper
 
 ### Step 1 — Load tool recipe
 
-Same as File mode: `glossary_discover` → `glossary_lookup` → `router_for_task` → `invariants_summary` → `spec_section`. Shared context applies to all candidate merges in the stage.
+Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs: `keywords` = English tokens from stage Objectives + Exit criteria text; `brownfield_flag = false`; `tooling_only_flag = false`. Shared context applies to all candidate merges in the stage.
 
 ### Step 2 — Scope audit
 
@@ -199,18 +193,22 @@ For each confirmed merge group:
 
 After all merge groups executed:
 
-1. **Regenerate progress dashboard** — `npm run progress`.
+1. **Regenerate progress dashboard** — run `progress-regen` subskill ([`ia/skills/progress-regen/SKILL.md`](../progress-regen/SKILL.md)).
 2. **Run `npm run validate:all`**.
-3. **Offer next step** — `claude-personal "/ship {first_draft_id}"`.
+3. **Offer next step** — if ≥2 tasks compressed into this stage: `claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"` (chains all tasks kickoff → implement → verify-loop → closeout with batched Path B at stage end). Single task: `claude-personal "/ship {first_draft_id}"`.
 
 ## Post-loop
 
 After all tasks filed:
 
 1. **Update orchestrator task table** — for each task row: replace `_pending_` in Issue column with `**{ISSUE_ID}**`; replace `_pending_` in Status column with `Draft`.
-1b. **Regenerate progress dashboard** — `npm run progress` (repo root). Reflects `Draft` status flip in `docs/progress.html`. Deterministic; failure does NOT block step 2 — log exit code and continue.
+1b. **Flip header Status lines** (R1 + R2 — encode status lifecycle rules): edit `{ORCHESTRATOR_SPEC}` in place.
+   - **R2 — Stage header:** find the `#### Stage {STAGE_ID} — {Title}` block; rewrite its `**Status:**` line from `Draft` or `Planned` → `In Progress`.
+   - **R1 — Plan top Status:** read the top-of-file `> **Status:**` line. If it equals `Draft` (any variant, e.g. `Draft — Step 1 / Stage 1.1 pending`), rewrite it to `In Progress — Step {STEP_N} / Stage {STAGE_ID}` where `STEP_N` = the parent step number of the target stage. This flip applies on the **first ever task filed** for the plan; if top Status already contains `In Progress`, leave it unchanged.
+   - Both flips are idempotent — re-running when Status is already `In Progress` produces zero diff.
+1c. **Regenerate progress dashboard** — run `progress-regen` subskill ([`ia/skills/progress-regen/SKILL.md`](../progress-regen/SKILL.md)): `npm run progress` from repo root. Non-blocking — failure does NOT block step 2; log exit code and continue.
 2. **Run `npm run validate:all`** — chains validate:dead-project-specs + test:ia + validate:fixtures + generate:ia-indexes --check.
-3. **Offer next step** — `claude-personal "/ship {first_issue_id}"` to run the full kickoff → implement → verify-loop → closeout pipeline on the first spec.
+3. **Offer next step** — if ≥2 tasks were filed in this stage: `claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"` (chains all tasks kickoff → implement → verify-loop → closeout; batched Path B at stage end). Single-task stage or standalone: `claude-personal "/ship {first_issue_id}"`.
 
 ## Hard boundaries
 

@@ -37,6 +37,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 | `SCENARIO_ID` | Spec §7b OR user | Default `reference-flat-32x32` for Path A. `_pending_` if no test-mode gate fires |
 | `SEED_CELLS` | Spec §7b OR repro | 1–3 `"x,y"` for Path B `debug_context_bundle` + `close-dev-loop` |
 | `MAX_ITERATIONS` | Default 2 | Fix→verify cycles before escalation |
+| `--skip-path-b` | Flag (default off) | When set: Path A compile gate runs; Path B (IDE bridge hybrid, Step 4b) is skipped; JSON verdict records `path_b: skipped_batched`. Used by `/ship-stage` chain for batched stage-boundary Path B. NOT surfaced on `/verify` (single-pass, no batching consumer). |
 
 ---
 
@@ -51,7 +52,7 @@ Inspect git diff + spec §7b / §8 against this table. Skip steps with **all row
 | 2 — Node validate:all | MCP / fixtures / IA index / glossary / spec body changes | Pure runtime C# only (rely on Step 1) |
 | 3 — `verify:local` (full chain) | Pre-PR / pre-stage-close on dev machine | Per-phase iteration (too slow); CI-only environment |
 | 4a — Path A test-mode batch | Save / load pipeline; `GameSaveManager`; scenario JSON; `GridManager` init; sim tick; spec §7b row asks for batch | Pure UI / authoring / docs |
-| 4b — Path B bridge hybrid | Spec §7b row asks for Play Mode assertion; Path A unavailable; need `debug_context_bundle` | No Play Mode evidence required |
+| 4b — Path B bridge hybrid | Spec §7b row asks for Play Mode assertion; Path A unavailable; need `debug_context_bundle` | No Play Mode evidence required; OR `--skip-path-b` flag set (batched by caller — record `path_b: skipped_batched` in JSON verdict) |
 | 5 — Bridge evidence | Spec §7b / §8 explicitly asks for screenshots or Console capture | Acceptance covered by 4a JSON or batch golden |
 | 6 — Fix iteration | Step 4 / Step 5 surface anomalies AND root cause clear | All previous steps green; OR cause unclear → escalate |
 
@@ -152,12 +153,29 @@ Emit single Verification block per [`docs/agent-led-verification-policy.md`](../
   "bridge_hybrid": {"preflight_exit": 0, "play_mode_state": "edit_mode", "bundle_paths": ["..."], "anomaly_count_after": 0},
   "evidence": {"screenshots": ["..."], "logs": ["..."]},
   "fix_iterations": 0,
+  "path_b": "ran|skipped_batched|skipped_not_required",
   "verdict": "pass|fail|skipped|escalated",
+  "escalation": {
+    "gap_reason": "unity_api_limit|bridge_kind_missing|human_judgment_required",
+    "missing_kind": "attach_component",
+    "tooling_issue_id": "TECH-412",
+    "detail": "short caveman phrase explaining the concrete gap"
+  },
   "human_ask": "confirm in normal game (no test mode flags)"
 }
 ```
 
-Markdown summary (caveman): verdict, paths run (A / B / both / none), artifact paths, anomalies cleared, iterations consumed, escalation note (if any), next step (human QA / next phase / stage close / umbrella close).
+`path_b` values: `"ran"` (Path B executed), `"skipped_batched"` (`--skip-path-b` flag set by chain caller — batched at stage end), `"skipped_not_required"` (decision matrix skipped, not batched).
+
+`escalation` present only when `verdict == "escalated"`. `gap_reason` enum — MUST be one of:
+
+- `unity_api_limit` — genuine Unity / `UnityEditor` API does not expose the capability; no tooling task can close the gap. Rare. `missing_kind` + `tooling_issue_id` MAY be null; `detail` MUST cite the API surface that falls short.
+- `bridge_kind_missing` — Unity API supports the operation but `unity_bridge_command` has no matching `kind`. `missing_kind` REQUIRED (e.g. `attach_component`, `assign_serialized_field`, `save_scene`). `tooling_issue_id` REQUIRED — cite the open BACKLOG issue tracking the bridge-kind expansion (TECH-412 landed the initial 20 mutation kinds; file a new TECH if a genuinely missing kind is still needed). Never file a new human-review ask without also citing or filing that issue.
+- `human_judgment_required` — true human-only gate (design review, visual QA, cross-feature judgment call). `detail` MUST name the judgment class.
+
+Agent MUST NOT escalate as `human_judgment_required` when a missing bridge kind could close the loop. Before escalating, cross-check the current kind enum in `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` (incl. `AgentBridgeCommandRunner.Mutations.cs`) against the operation needed — TECH-412 landed 20 mutation kinds; if a kind is still missing, escalate as `bridge_kind_missing` and cite an open successor tooling issue as `tooling_issue_id`.
+
+Markdown summary (caveman): verdict, paths run (A / B / both / none), artifact paths, anomalies cleared, iterations consumed, escalation note (if any; include `gap_reason` + `missing_kind` / `tooling_issue_id` when applicable), next step (human QA / next phase / stage close / umbrella close / file new bridge kind).
 
 ---
 
@@ -189,6 +207,8 @@ Session maps to `{ISSUE_ID}` → `mcp__territory-ia__backlog_issue` for Files / 
 - Do NOT replace human normal-game QA — agent verification supplements, never substitutes (per `AGENTS.md`).
 - IF attributing a failure to a named issue id (e.g. "TECH-227 territory") → FIRST verify that id appears as open (`- [ ]`) in `BACKLOG.md`. If not found (closed or never filed), report the failure as "pre-existing / unowned" and do NOT name an issue id.
 - Do NOT commit verification artifact paths in spec prose — keep paths in Verification block / handoff only.
+- IF verdict is `escalated` → `gap_reason` field REQUIRED. Use `bridge_kind_missing` (not `human_judgment_required`) whenever a missing `unity_bridge_command` kind could close the loop — cite the exact missing kind + an open tooling issue id (TECH-412 landed the initial 20 mutation kinds; file a new TECH for genuinely missing kinds). Closed-loop agent verify is the default; human-in-loop is the exception reserved for true Unity API limits or design/visual judgment.
+- IF escalating with `gap_reason: bridge_kind_missing` → verify the kind is actually absent by reading `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` switch branches; do NOT claim a gap that already has a kind implemented.
 
 ---
 

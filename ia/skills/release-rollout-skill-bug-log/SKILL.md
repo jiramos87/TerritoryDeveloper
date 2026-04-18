@@ -20,6 +20,8 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Lifecycle:** Runs FROM umbrella `release-rollout` Phase 5 when a dispatched subagent reported a skill bug / gap in its handoff message. Also runs standalone when user spots a skill gap outside rollout flow.
 
+**Dispatch mode:** Canonical path = dispatched as Agent `release-rollout-skill-bug-log` subagent (Sonnet pin) from `release-rollout` Phase 5 skill-bug branch. Inline fallback (SKILL.md-only invocation) available when subagent dispatch is unavailable — behavior identical, but runs in caller's model context.
+
 **Related:** [`release-rollout`](../release-rollout/SKILL.md) · [`release-rollout-track`](../release-rollout-track/SKILL.md).
 
 ---

@@ -21,7 +21,7 @@ Follow `ia/skills/release-rollout/SKILL.md` end-to-end. Phase sequence (gated):
 2. **MCP context** — Run Tool recipe (below). Scope = ROW_SLUG child orchestrator + target column action. Skip on `OPERATION = status`.
 3. **Align gate check (only when target = (e))** — Per new domain entity: `glossary_lookup` + `router_for_task` + `spec_section` must all return anchor. Fail → (g) = `—` + skill-bug-log entry. Does NOT block (a)–(d) or (f).
 4. **Handoff dispatch (autonomous chain)** — See dispatch matrix below. When (b) ✓, call Agent tool for (c)→(f) sequentially without pausing. Each step waits for prior subagent to return success before dispatching next. After master-plan-new (c) succeeds → read authored plan to find first Stage (Stage 1.1 or equivalent) → immediately dispatch stage-file for that Stage (→ (f)). Parallel-work rule: NEVER two sibling rows at `/stage-file` concurrently on same branch.
-5. **Tracker update** — AFTER each subagent returns success, invoke `release-rollout-track` (cell flip) + `release-rollout-skill-bug-log` (if skill bug surfaced). Append `## Change log` row.
+5. **Tracker update** — AFTER each subagent returns success, dispatch via Agent tool: call `release-rollout-track` subagent (Sonnet) with inputs `TRACKER_SPEC`, `ROW_SLUG`, `TARGET_COL`, `NEW_MARKER`, `TICKET`, `CHANGELOG_NOTE`. Subagent flips cell + appends Change log row. If skill bug surfaced in handoff → call `release-rollout-skill-bug-log` subagent (Sonnet) with `SKILL_NAME`, `TRACKER_SPEC`, `ROW_SLUG`, `BUG_SUMMARY`, `BUG_DETAIL`, `FIX_STATUS`.
 6. **Next-row recommendation** — Tier-ordered pick (A → B/B' → C → D → E). Parallel-safety enforced.
 
 # Tool recipe (Phase 2 only)

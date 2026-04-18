@@ -58,7 +58,12 @@ Run in order. Skip only when genuinely N/A (state why).
 ### 1. Mark phase checklists in §7
 Tick every `- [ ]` under `### {STAGE_ID} — {STAGE_TITLE}` that completed. Deferred tasks: leave unticked + note in §9.
 
-After ticking, run header-sync on the owning stage block: rewrite `**Status:**` + `**Backlog state (Stage N.N):**` under the closing `#### Stage N.N — Title` heading from task-table ground truth (same rules as `project-spec-close` step 6c). Then propagate up: if every sibling stage block under the parent `### Step N` now reads `**Status:** Final`, rewrite the step's `**Status:**` to `Final` as well. Rewrite is idempotent. Helper: `tools/mcp-ia-server/src/parser/master-plan-header-sync.ts` → `syncMasterPlanHeaders(markdown)`.
+After ticking, run header-sync on the owning stage block: rewrite `**Status:**` + `**Backlog state (Stage N.N):**` under the closing `#### Stage N.N — Title` heading from task-table ground truth (same rules as `project-spec-close` step 6c). Then propagate up:
+
+1. If every sibling stage block under the parent `### Step N` now reads `**Status:** Final`, rewrite the step's `**Status:**` to `Final` as well.
+2. **R5 — Top-Status rollup to Final:** after the Step rewrite, check every `### Step N` block in the plan. If ALL Steps now read `**Status:** Final`, rewrite the plan top-of-file `> **Status:**` line to `Final`. If any Step is not Final, leave top Status unchanged.
+
+Rewrite is idempotent — re-running on already-synced doc produces zero diff. Helper: `tools/mcp-ia-server/src/parser/master-plan-header-sync.ts` → `syncMasterPlanHeaders(markdown)`.
 
 ### 2. Update Last updated
 Replace `> **Last updated:** YYYY-MM-DD` with today's date from `currentDate` context. Never invent date.
@@ -86,9 +91,7 @@ Reusable insights as bullets. Accumulate across stages — umbrella close migrat
 
 ### 7b. Regenerate progress dashboard
 
-Run `npm run progress` from repo root. This regenerates `docs/progress.html` to reflect the stage-status flip. Output is deterministic — no change when master-plan state was already current. Log the exit code; failure does NOT block handoff (tooling-only, no IA impact), but report in handoff message.
-
-> Web dashboard (https://web-nine-wheat-35.vercel.app/dashboard) auto-refreshes within ~5 min from the deployed branch via ISR — no deploy needed per stage-close. For instant refresh, run `npm run deploy:web` manually.
+Run `progress-regen` subskill ([`ia/skills/progress-regen/SKILL.md`](../progress-regen/SKILL.md)): `npm run progress` from repo root. Non-blocking — failure does NOT block handoff; log exit code and report in handoff message. Web dashboard auto-refreshes within ~5 min via ISR — no deploy needed. For instant refresh, run `npm run deploy:web` manually.
 
 ### 8. Emit handoff message
 

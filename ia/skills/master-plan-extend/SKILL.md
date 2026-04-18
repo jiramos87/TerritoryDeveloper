@@ -98,23 +98,15 @@ Fail fast — no MCP yet.
 
 ### Phase 2 — MCP context (Tool recipe) + surface-path pre-check
 
-Run **Tool recipe** (below). Same branching as `master-plan-new` Phase 2:
+Run **Tool recipe** (below) via `domain-context-load` subskill. **Greenfield**: `brownfield_flag = true`. **Brownfield**: `brownfield_flag = false`. **Tooling-only**: `tooling_only_flag = true`. If source-doc references any `Assets/**` path (even future target), treat as brownfield for invariants.
 
-- **Greenfield** (new subsystem, no existing code paths touched, AND no `Assets/**` surface paths detected in source-doc Architecture / Component map): skip `invariants_summary` / `router_for_task` / `spec_sections`; still run `glossary_discover` / `glossary_lookup`. If source-doc references any `Assets/**` path (even as a future target), treat as brownfield for `invariants_summary`.
-- **Brownfield** (modifying existing subsystems): full recipe.
-- **Tooling / pipeline-only** (no runtime C#): skip `invariants_summary` regardless.
+Capture for Phases 4–5:
 
-Capture for Phases 3–5:
+- `glossary_anchors` → canonical names replace ad-hoc synonyms in authored prose.
+- `spec_sections` → §"Relevant surfaces" per new step / stage.
+- `invariants` → per-new-stage guardrails + append to orchestrator header "Read first" if not already listed (Phase 7 header-sync).
 
-- Invariant numbers at risk → per-new-stage guardrails + append to orchestrator header "Read first" line if not already listed (Phase 7 header-sync sub-step).
-- Router-matched spec sections → §"Relevant surfaces" per new step / stage.
-- Glossary canonical terms → replace ad-hoc synonyms from source doc in authored prose.
-
-**Surface-path pre-check** (Glob, per entry/exit point in source-doc Architecture / Component map):
-
-- Existing path → note line refs.
-- New dir/file intent → mark `(new)`; never cite non-existent line numbers.
-- Ambiguous name → Grep for plausible type names; fall back to `(new)`.
+**Surface-path pre-check** — run `surface-path-precheck` subskill ([`ia/skills/surface-path-precheck/SKILL.md`](../surface-path-precheck/SKILL.md)): pass paths from source-doc Architecture / Component map. Use returned `line_hint` in surfaces; mark `(new)` for `exists: false`.
 
 Skip pre-check → downstream stages cite ghost line numbers.
 
@@ -234,19 +226,13 @@ Per stage, author the block shape (6-column task table — matches `ia/templates
 
 ### Phase 6 — Cardinality gate
 
-Cardinality rule (`ia/rules/project-hierarchy.md`): ≥2 tasks/phase, ≤6 soft. Scope: **new stages only** — do NOT re-gate existing stages. Before persist:
+Run `cardinality-gate-check` subskill ([`ia/skills/cardinality-gate-check/SKILL.md`](../cardinality-gate-check/SKILL.md)): pass phase → tasks map for each **new** stage from Phase 5. Scope: **new stages only** — do NOT re-gate existing stages. Cardinality rule (`ia/rules/project-hierarchy.md`): ≥2 tasks/phase (hard), ≤6 soft.
 
-- Scan every new stage's `**Phases:**` list + match to `Tasks:` table.
-- 1 task → **warn**, pause, ask split or justify in Decision Log seed.
-- 0 tasks → strip phase line or add tasks; never persist empty phases.
-- 7+ tasks → **warn**, suggest split.
+Subskill returns `{phases_lt_2, phases_gt_6, single_file_tasks, oversized_tasks, verdict}`:
+- `verdict = pause` → surface violations to user; ask split, merge, or justify. Proceed only after user confirms or fixes. Phrase split/merge question in player/designer-visible outcomes (releasable slices, user-visible checkpoints), not stage numbers or task-count math. Ids / stage numbers go on a trailing `Context:` line. Full rule: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md).
+- `verdict = proceed` → continue to Phase 7.
 
-**Also apply Phase 5 task sizing heuristic:**
-
-- Any task covering only 1 file / 1 function / 1 struct with no logic → **warn**, pause, suggest merge.
-- Any task spanning >3 unrelated subsystems → **warn**, pause, suggest split at subsystem seam.
-
-Proceed only after user confirms or fixes.
+Also covers Phase 5 task sizing: single-file/function/struct tasks → `single_file_tasks`; >3 unrelated subsystems → `oversized_tasks`.
 
 ### Phase 7 — Persist in place
 
@@ -272,7 +258,16 @@ Edit `{ORCHESTRATOR_SPEC}`. Operations (in order, atomic — single Write or seq
 
 ### Phase 7b — Regenerate progress dashboard
 
-Run `npm run progress` from repo root. Regenerates `docs/progress.html` to reflect new step / stage / task counts (new tasks show 0 done). Output is deterministic. Log exit code; failure does NOT block Phase 8 (tooling-only, no IA impact), but report in handoff.
+Run `progress-regen` subskill ([`ia/skills/progress-regen/SKILL.md`](../progress-regen/SKILL.md)): `npm run progress` from repo root. Non-blocking — failure does NOT block Phase 7c; log exit code and continue.
+
+### Phase 7c — Demote top Status if currently Final (R6)
+
+After persisting new Step blocks, check the plan top-of-file `> **Status:**` line:
+
+- If top Status reads `Final` AND `appended_steps ≥ 1` (i.e. at least one new Step was added in Phase 7): rewrite top Status to `In Progress — Step {N_first_new} / Stage {N_first_new}.1` where `N_first_new` = `START_STEP_NUMBER`.
+- If top Status is NOT `Final` (e.g. already `In Progress`, `Draft`): leave unchanged.
+- Rationale: a `Final` plan that gains new Steps is no longer complete — the top Status must reflect that active work remains.
+- This flip is idempotent: re-running when Status already reflects the new step produces zero diff.
 
 ### Phase 8 — Handoff
 
@@ -296,16 +291,17 @@ Single concise message (caveman) naming:
 
 ## Tool recipe (territory-ia) — Phase 2 only
 
-Run in order. Same branching as `master-plan-new` Phase 2.
+Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs:
 
-1. **`glossary_discover`** — `keywords` JSON array: English tokens from source-doc Chosen Approach + Subsystem Impact + Architecture component names. **Greenfield + brownfield.**
-2. **`glossary_lookup`** — high-confidence terms from discover. Hold canonical names for prose in Phases 4–5. **Greenfield + brownfield.**
-3. **`router_for_task`** — 1–3 domains matching `ia/rules/agent-router.md` table vocabulary; derive from source-doc Subsystem Impact entries. **Brownfield only.**
-4. **`spec_sections`** — sections implied by routed subsystems; set `max_chars`. No full spec reads. Use to fill each new step / stage "Relevant surfaces" list. **Brownfield only.**
-5. **`invariants_summary`** — when source-doc Subsystem Impact flags runtime C# / Unity subsystems. Capture invariant numbers for header sync + per-new-stage guardrails. **Brownfield (runtime C#) only.**
-6. **`list_specs`** / **`spec_outline`** — only if a routed domain references a spec whose sections weren't pre-known. **Brownfield fallback.**
+- `keywords`: English tokens from source-doc Chosen Approach + Subsystem Impact + Architecture component names.
+- `brownfield_flag`: `true` for greenfield (new subsystem, no existing code paths touched AND no `Assets/**` paths detected); `false` for brownfield (full recipe). If source-doc references any `Assets/**` path (even as a future target), treat as brownfield.
+- `tooling_only_flag`: `true` for tooling/pipeline-only plans.
 
-**Surface-path pre-check (Glob, Phase 2 sub-step — greenfield + brownfield):** per entry / exit point in source-doc Architecture / Component map, Glob existing paths. Existing → note line refs. New directory / file intent → mark `(new)` in surfaces. Ambiguous → Grep for plausible type names; fall back to `(new)` if no hit.
+Use returned `glossary_anchors` for canonical names in Phases 4–5; `router_domains` + `spec_sections` for Relevant surfaces; `invariants` for header sync + per-new-stage guardrails.
+
+Also run **`list_specs`** / **`spec_outline`** only if a routed domain references a spec whose sections weren't returned by `domain-context-load`. **Brownfield fallback.**
+
+**Surface-path pre-check (Phase 2 sub-step — greenfield + brownfield):** run `surface-path-precheck` subskill on paths from source-doc Architecture / Component map. Use returned `line_hint` in surfaces; mark `(new)` for `exists: false`.
 
 ---
 

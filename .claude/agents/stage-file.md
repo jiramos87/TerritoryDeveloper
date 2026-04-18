@@ -38,7 +38,7 @@ Run `ia/skills/stage-file/SKILL.md` end-to-end for the target stage. Bulk-file a
 6. **Atomic table update** — After ALL tasks filed: update orchestrator task table in one Edit pass — replace each `_pending_` Issue cell with `**{ISSUE_ID}**`, each `_pending_` Status cell with `Draft`.
 6b. **Regenerate progress dashboard** — `npm run progress` (repo root). Reflects `Draft` status flip in `docs/progress.html`. Deterministic; failure does NOT block step 7 — log exit code and continue.
 7. **Final validate** — `npm run validate:all`. Stop on failure; root-cause before proceeding.
-8. **Offer next** — Surface first issue id; offer `/kickoff {ISSUE_ID}` to enrich before implementation.
+8. **Offer next** — If ≥2 tasks filed in this stage: `claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"` (chains all tasks kickoff → implement → verify-loop → closeout; batched Path B at stage end). Single task: `claude-personal "/ship {first_id}"`.
 
 # Hard boundaries
 

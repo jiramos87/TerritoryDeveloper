@@ -63,21 +63,11 @@ Hold in working memory:
 
 ### Phase 1 — MCP context (Tool recipe)
 
-**Greenfield step** (no existing C# paths in Exit criteria / Relevant surfaces): skip `router_for_task` / `spec_sections` / `invariants_summary`; still run `glossary_discover` / `glossary_lookup`.
+Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs: `keywords` = English tokens from step Exit criteria + Relevant surfaces + Stage hints (translate any non-English before passing); `brownfield_flag = true` for greenfield steps (no existing C# paths); `brownfield_flag = false` for brownfield; `tooling_only_flag = true` for doc/IA/tooling-only steps.
 
-**Brownfield step** (modifies existing subsystems): full recipe.
+Use returned `glossary_anchors` for canonical names in phase/task prose; `router_domains` + `spec_sections` for Relevant surfaces; `invariants` for guardrail flags.
 
-Run in order:
-
-1. **`glossary_discover`** — `keywords` JSON array: English tokens from step Exit criteria text + Relevant surfaces + Stage hints. Translate any Spanish terms before passing.
-2. **`glossary_lookup`** — high-confidence terms from discover. Hold canonical names; replace ad-hoc synonyms when authoring phase/task prose.
-3. **`router_for_task`** — 1–3 domains matching `ia/rules/agent-router.md` table vocabulary; derive from Exit criteria subsystem references. **Brownfield only.**
-4. **`spec_sections`** — sections implied by routed domains; set `max_chars`. No full spec reads. **Brownfield only.**
-5. **`invariants_summary`** — when Exit criteria reference runtime C# / Unity subsystems. Skip for doc/IA/tooling-only steps.
-
-**Surface-path pre-check** (after tool recipe, both greenfield + brownfield):
-- For each path mentioned in Exit criteria + Stage hints: Glob → exists → note line refs. New dir/file intent → mark `(new)`. Ambiguous name → Grep for plausible type; fall back to `(new)`.
-- Skip → downstream stages cite ghost line numbers.
+**Surface-path pre-check** (after tool recipe, both greenfield + brownfield): run `surface-path-precheck` subskill ([`ia/skills/surface-path-precheck/SKILL.md`](../surface-path-precheck/SKILL.md)) on paths from Exit criteria + Stage hints. Use returned `line_hint` in stage surfaces; mark `(new)` for `exists: false`. Skip → ghost line numbers downstream.
 
 ### Phase 2 — Stage decomposition
 
@@ -130,16 +120,13 @@ Per stage, author the block (verbatim shape):
 
 ### Phase 3 — Cardinality gate
 
-Before persisting:
+Run `cardinality-gate-check` subskill ([`ia/skills/cardinality-gate-check/SKILL.md`](../cardinality-gate-check/SKILL.md)): pass phase → tasks map from Phase 2 stage decomposition. Cardinality rule (`ia/rules/project-hierarchy.md`): ≥2 tasks/phase (hard), ≤6 soft.
 
-- Scan every `**Phases:**` list + match to `Tasks:` table.
-- **1 task in a phase** → warn, pause. Ask: split, or justify in Decision Log.
-- **0 tasks in a phase** → strip the phase line or add tasks; never persist empty phases.
-- **7+ tasks in a phase** → warn, suggest split into "declaration" + "validation/hash" sub-phases; persist only after user confirms.
-- **Any task covering only 1 file / 1 function / 1 struct with no logic** → warn, suggest merge.
-- **Any task spanning >3 unrelated subsystems** → warn, suggest split.
+Subskill returns `{phases_lt_2, phases_gt_6, single_file_tasks, oversized_tasks, verdict}`:
+- `verdict = pause` → surface violations to user; ask split, merge, or justify in Decision Log. Proceed only after user confirms or fixes. Phrase the split/merge question in terms of what the player/designer sees change (user-visible checkpoints, releasable slices) — not stage numbers or task-count math. Ids / stage numbers go on a trailing `Context:` line. Full rule: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md).
+- `verdict = proceed` → continue to Phase 4.
 
-Proceed only after user confirms or fixes.
+Covers task sizing: single-file/function/struct tasks → `single_file_tasks`; >3 unrelated subsystems → `oversized_tasks`.
 
 ### Phase 4 — Persist (in-place edit)
 
@@ -185,12 +172,18 @@ Find the bullet for `Step {STEP_ID}` under `## Deferred decomposition`. Replace 
 
 If the section has no remaining `_TBD_` bullets (all steps decomposed), add a note line: `All steps decomposed.`
 
-**4c — Update step Status in master plan header (if present):**
-If the header `> **Status:**` line references the overall plan step state, update accordingly (e.g. still Draft — Step 1 open; Step {STEP_ID} ready to file when Step {STEP_ID-1} closes).
+**4c — Flip Step header Skeleton → Planned (R7):**
+Find the `### Step {STEP_ID}` block's `**Status:**` line. If it reads `Skeleton` (or `Draft (decomposition deferred…)` or any Skeleton variant), rewrite it to:
+
+```markdown
+**Status:** Draft (tasks _pending_ — not yet filed)
+```
+
+This flip signals that the step is now decomposed and ready for `stage-file` but no tasks are filed yet (`_pending_`). Do NOT flip to `In Progress` — that is `stage-file`'s responsibility (R2). Do NOT touch the plan top-of-file `> **Status:**` from here — `stage-file` owns that flip (R1). Flip is idempotent: if Status is already `Draft (tasks _pending_…)`, no change needed.
 
 ### Phase 5 — Progress regen
 
-Run `npm run progress` from repo root. Deterministic; failure does NOT block Phase 6 — log exit code and continue.
+Run `progress-regen` subskill ([`ia/skills/progress-regen/SKILL.md`](../progress-regen/SKILL.md)): `npm run progress` from repo root. Non-blocking — failure does NOT block Phase 6; log exit code and continue.
 
 ### Phase 6 — Handoff
 
@@ -206,14 +199,15 @@ Single concise caveman message:
 
 ## Tool recipe (territory-ia) — Phase 1 only
 
-Run once per skill invocation. Same greenfield / brownfield split as `master-plan-new`.
+Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs:
 
-1. **`glossary_discover`** — `keywords` JSON array from step Exit criteria + Stage hints + Relevant surfaces text (English tokens). **Both.**
-2. **`glossary_lookup`** — high-confidence terms from discover. **Both.**
-3. **`router_for_task`** — 1–3 domains from `ia/rules/agent-router.md` table; derived from Exit criteria subsystem references. **Brownfield only.**
-4. **`spec_sections`** — sections implied by routed domains; `max_chars` set. No full spec reads. **Brownfield only.**
-5. **`invariants_summary`** — when Exit criteria reference runtime C# / Unity. **Brownfield (runtime C#) only.**
-6. **`list_specs`** / **`spec_outline`** — only if routed domain references a spec whose sections weren't pre-known. **Brownfield fallback.**
+- `keywords`: English tokens from step Exit criteria + Stage hints + Relevant surfaces text.
+- `brownfield_flag`: `true` for greenfield steps (no existing C# paths in Exit criteria / Relevant surfaces); `false` for brownfield (full recipe).
+- `tooling_only_flag`: `true` for doc/IA/tooling-only steps.
+
+Use returned `glossary_anchors` for canonical names; `router_domains` + `spec_sections` for Relevant surfaces; `invariants` for guardrail flags.
+
+Also run **`list_specs`** / **`spec_outline`** only if a routed domain references a spec whose sections weren't returned by `domain-context-load`. **Brownfield fallback.**
 
 ---
 

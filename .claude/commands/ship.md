@@ -169,7 +169,15 @@ SHIP {ISSUE_ID}: {PASSED|STOPPED}
   Stage 4 closeout:   {done|failed|skipped}
 ```
 
-If `PASSED` and a master plan owns this issue: open that master plan file (resolved in Step 0) and find the next task row whose status is **not** `Done` / `archived` / `skipped` — reading task rows in document order after the closed issue's row. Use the issue id from that row as `NEXT_ISSUE_ID`. If found, append:
+If `PASSED` and a master plan owns this issue: open that master plan file (resolved in Step 0) and find the next task row whose status is **not** `Done` / `archived` / `skipped` — reading task rows in document order after the closed issue's row.
+
+**Before emitting the handoff:** count all non-Done filed task rows in the same Stage X.Y as the closed issue. If ≥2 remain unfiled or non-Done in that stage, prefer the stage chain:
+
+```
+Next: claude-personal "/ship-stage ia/projects/{master-plan-filename} Stage {X.Y}"
+```
+
+Otherwise (single remaining task, or all remaining tasks belong to a different stage), emit the single-issue handoff:
 
 ```
 Next: claude-personal "/ship {NEXT_ISSUE_ID}"

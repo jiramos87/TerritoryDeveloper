@@ -72,20 +72,15 @@ Resolve `{SLUG}`. Target: `ia/projects/{SLUG}-master-plan.md`. Exists → STOP, 
 
 ### Phase 2 — MCP context (Tool recipe) + surface-path pre-check
 
-Run **Tool recipe** (below). **Greenfield** (new subsystem, no existing paths touched): skip `invariants_summary` / `router_for_task` / `spec_sections`; still run `glossary_discover` / `glossary_lookup`. **Brownfield** (modifying existing subsystems): full recipe.
+Run **Tool recipe** (below) via `domain-context-load` subskill. **Greenfield** (new subsystem): `brownfield_flag = true` — only glossary loaded. **Brownfield**: `brownfield_flag = false` — full recipe. **Tooling-only**: `tooling_only_flag = true`.
 
 Capture for Phases 3–5:
 
-- Invariant numbers at risk → header "Read first" line + stage-level guardrails.
-- Router-matched spec sections → §"Relevant surfaces" lines per step / stage.
-- Glossary canonical terms → replace ad-hoc synonyms from exploration doc in all authored prose.
+- `glossary_anchors` → canonical names replace ad-hoc synonyms in all authored prose.
+- `spec_sections` → §"Relevant surfaces" lines per step / stage.
+- `invariants` → header "Read first" line + stage-level guardrails.
 
-**Surface-path pre-check** (Glob, per entry/exit point in Architecture / Component map):
-- Existing path → note line refs.
-- New dir/file intent → mark `(new)`; never cite non-existent line numbers.
-- Ambiguous name → Grep for plausible type names; fall back to `(new)`.
-
-Skip pre-check → downstream stages cite ghost line numbers.
+**Surface-path pre-check** — run `surface-path-precheck` subskill ([`ia/skills/surface-path-precheck/SKILL.md`](../surface-path-precheck/SKILL.md)): pass paths from Architecture / Component map block. Use returned `line_hint` values in stage Relevant surfaces; mark `(new)` for `exists: false` entries. Skip → ghost line numbers downstream.
 
 ### Phase 3 — Scope header
 
@@ -208,17 +203,13 @@ Apply this check in Phase 6 (cardinality gate) alongside the ≥2 / ≤6 count r
 
 ### Phase 6 — Cardinality gate
 
-Cardinality rule (`ia/rules/project-hierarchy.md`): ≥2 tasks/phase, ≤6 soft. Before persist:
-- Scan every `**Phases:**` list + match to `Tasks:` table.
-- 1 task → **warn**, pause, ask split or justify in Decision Log.
-- 0 tasks → strip phase line or add tasks; never persist empty phases.
-- 7+ tasks → **warn**, suggest split (e.g. "declaration" + "validation/hash"); phase too large → stage un-closeable.
+Run `cardinality-gate-check` subskill ([`ia/skills/cardinality-gate-check/SKILL.md`](../cardinality-gate-check/SKILL.md)): pass phase → tasks map for each stage authored in Phase 5. Cardinality rule (`ia/rules/project-hierarchy.md`): ≥2 tasks/phase (hard), ≤6 soft.
 
-**Also apply Phase 5 task sizing heuristic:**
-- Any task covering only 1 file / 1 function / 1 struct with no logic → **warn**, pause, suggest merge with adjacent same-domain task in the same phase.
-- Any task spanning >3 unrelated subsystems → **warn**, pause, suggest split at subsystem seam.
+Subskill returns `{phases_lt_2, phases_gt_6, single_file_tasks, oversized_tasks, verdict}`:
+- `verdict = pause` → surface violations to user; ask split, merge, or justify in Decision Log. Proceed only after user confirms or fixes. Phrase split/merge question in player/designer-visible outcomes (releasable slices, user-visible checkpoints), not stage numbers or task-count math. Ids / stage numbers go on a trailing `Context:` line. Full rule: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md).
+- `verdict = proceed` → continue to Phase 7.
 
-Proceed only after user confirms or fixes.
+Also covers Phase 5 task sizing: single-file/function/struct tasks → `single_file_tasks`; >3 unrelated subsystems → `oversized_tasks`.
 
 ### Phase 7 — Tracking legend
 
@@ -227,7 +218,7 @@ Insert the standard tracking legend once under `## Steps` (copy verbatim from an
 ```markdown
 ## Steps
 
-> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level rollup.
+> **Tracking legend:** Step / Stage `Status:` uses enum `Draft | Skeleton | Planned | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`; `Skeleton` + `Planned` authored by `master-plan-new` / `stage-decompose`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `stage-file` also flips Stage header `Draft/Planned → In Progress` (R2) and plan top Status `Draft → In Progress — Step {N} / Stage {N.M}` on first task ever filed (R1); `stage-decompose` → Step header `Skeleton → Draft (tasks _pending_)` (R7); `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level step rollup; `project-stage-close` / `project-spec-close` → plan top Status `→ Final` when all Steps read `Final` (R5); `master-plan-extend` → plan top Status `Final → In Progress — Step {N_new} / Stage {N_new}.1` when new Steps appended to a Final plan (R6).
 ```
 
 ### Phase 8 — Persist
@@ -261,7 +252,7 @@ Never overwrite an existing master plan file (Phase 1 gate). Never insert BACKLO
 
 ### Phase 8b — Regenerate progress dashboard
 
-Run `npm run progress` from repo root. Regenerates `docs/progress.html` to include the newly authored master plan (0 tasks done). Output is deterministic — no change if plan was already tracked. Log exit code; failure does NOT block Phase 9 (tooling-only, no IA impact), but report in handoff.
+Run `progress-regen` subskill ([`ia/skills/progress-regen/SKILL.md`](../progress-regen/SKILL.md)): `npm run progress` from repo root. Non-blocking — failure does NOT block Phase 9; log exit code and continue.
 
 ### Phase 9 — Handoff
 
@@ -277,16 +268,17 @@ Single concise message (caveman) naming:
 
 ## Tool recipe (territory-ia) — Phase 2 only
 
-Run in order. **Greenfield** plans (new subsystem, no existing code paths modified) skip `router_for_task` / `spec_sections` / `invariants_summary` — no prior surface to route to. **Brownfield** plans (modifying existing subsystems) run full recipe. Tooling / pipeline-only plans (no runtime C#) skip `invariants_summary` regardless.
+Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs:
 
-1. **`glossary_discover`** — `keywords` JSON array: English tokens from Chosen Approach + Subsystem Impact + Architecture block component names. **Greenfield + brownfield.**
-2. **`glossary_lookup`** — high-confidence terms from discover. Hold canonical names for use when authoring prose in Phases 3–5. **Greenfield + brownfield.**
-3. **`router_for_task`** — 1–3 domains matching `ia/rules/agent-router.md` table vocabulary; derive from Subsystem Impact entries. **Brownfield only.**
-4. **`spec_sections`** — sections implied by routed subsystems; set `max_chars`. No full spec reads. Use to fill each step / stage "Relevant surfaces" list. **Brownfield only.**
-5. **`invariants_summary`** — when Subsystem Impact flags runtime C# / Unity subsystems. Capture invariant numbers for header "Read first" line + per-stage guardrails. **Brownfield (runtime C#) only.**
-6. **`list_specs`** / **`spec_outline`** — only if a routed domain references a spec whose sections weren't pre-known. **Brownfield fallback.**
+- `keywords`: English tokens from Chosen Approach + Subsystem Impact + Architecture block component names.
+- `brownfield_flag`: `true` for greenfield (new subsystem, no existing code paths modified) — skips `router_for_task` / `spec_sections` / `invariants_summary`. `false` for brownfield (full recipe).
+- `tooling_only_flag`: `true` for tooling/pipeline-only plans (skips `invariants_summary` regardless of brownfield flag).
 
-**Surface-path pre-check (Glob, Phase 2 sub-step — greenfield + brownfield):** per entry / exit point in Architecture / Component map, Glob existing paths. Existing → note line refs. New directory / file intent → mark `(new)` in surfaces. Ambiguous → Grep for plausible type names; fall back to `(new)` if no hit. Skips = ghost line numbers downstream.
+Use returned `glossary_anchors` for canonical names in Phases 3–5; `router_domains` + `spec_sections` for Relevant surfaces; `invariants` for header "Read first" + per-stage guardrails.
+
+Also run **`list_specs`** / **`spec_outline`** only if a routed domain references a spec whose sections weren't returned by `domain-context-load`. **Brownfield fallback.**
+
+**Surface-path pre-check (Phase 2 sub-step — greenfield + brownfield):** run `surface-path-precheck` subskill on paths from Architecture / Component map. Use returned `line_hint` in surfaces; mark `(new)` for `exists: false`. Skip → ghost line numbers downstream.
 
 ---
 

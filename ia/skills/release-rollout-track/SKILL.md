@@ -20,6 +20,8 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 **Lifecycle:** Runs FROM umbrella `release-rollout` Phase 5 AFTER a dispatched subagent returns success. Never runs standalone (outside umbrella skill) except for manual cell fixes.
 
+**Dispatch mode:** Canonical path = dispatched as Agent `release-rollout-track` subagent (Sonnet pin) from `release-rollout` Phase 5. Inline fallback (SKILL.md-only invocation) available when subagent dispatch is unavailable — behavior identical, but runs in caller's model context.
+
 **Related:** [`release-rollout`](../release-rollout/SKILL.md) · [`release-rollout-enumerate`](../release-rollout-enumerate/SKILL.md) · [`release-rollout-skill-bug-log`](../release-rollout-skill-bug-log/SKILL.md).
 
 ---
@@ -47,13 +49,9 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 ### Phase 1 — Column (g) align verify (only when `TARGET_COL = (g)` OR `TARGET_COL = (e)` with `(g)` gate)
 
-Per NEW domain entity introduced by this row (read from child master-plan Objectives / Exit criteria):
+Run `term-anchor-verify` subskill ([`ia/skills/term-anchor-verify/SKILL.md`](../term-anchor-verify/SKILL.md)) for every NEW domain entity introduced by this row (read from child master-plan Objectives / Exit criteria). Inputs: `terms` = English entity names.
 
-1. `glossary_lookup` for canonical term → must return row.
-2. `router_for_task` on domain → must return spec section.
-3. `spec_section` on returned section → must anchor the term.
-
-All pass → (g) `✓`. Any fail → (g) `—` with Skill Iteration Log note naming unresolved terms (route to `release-rollout-skill-bug-log` helper).
+`all_anchored = true` → (g) `✓`. `all_anchored = false` → (g) `—` with Skill Iteration Log note naming `unresolved_terms` (route to `release-rollout-skill-bug-log` helper).
 
 ### Phase 1b — Column (f) filed-signal verify (only when `TARGET_COL = (f)` AND `NEW_MARKER = ✓` or `◐`)
 

@@ -15,7 +15,7 @@
 Canonical flow (exploration → close). Full matrix, handoff contract, decision tree: [`docs/agent-lifecycle.md`](docs/agent-lifecycle.md). Always-loaded anchor: [`ia/rules/agent-lifecycle.md`](ia/rules/agent-lifecycle.md).
 
 ```
-/design-explore → /master-plan-new → /stage-file → /project-new → /kickoff → /implement → /verify-loop → project-stage-close (skill) → /closeout
+/design-explore → /master-plan-new → /stage-file → /ship-stage (≥2 tasks) | /project-new → /kickoff → /implement → /verify-loop → project-stage-close (skill) → /closeout
 ```
 
 Single-issue path (skip first three stages): `/project-new → /kickoff → /implement → /verify-loop → /closeout`.
@@ -32,6 +32,7 @@ Single-issue path (skip first three stages): `/project-new → /kickoff → /imp
 | 7 | Verify (single-pass) | [`/verify`](.claude/commands/verify.md) | composed | Lightweight Verification block, read-only |
 | 7 | Verify (closed-loop) | [`/verify-loop`](.claude/commands/verify-loop.md) | [`verify-loop`](ia/skills/verify-loop/SKILL.md) | 7-step closed loop + bounded fix iteration |
 | 7 | Test-mode ad-hoc | [`/testmode`](.claude/commands/testmode.md) | [`agent-test-mode-verify`](ia/skills/agent-test-mode-verify/SKILL.md) | Path A batch / Path B bridge hybrid in isolation |
+| 7s | Stage-scoped chain ship | [`/ship-stage`](.claude/commands/ship-stage.md) | [`ship-stage`](ia/skills/ship-stage/SKILL.md) | Chain kickoff → implement → verify-loop (--skip-path-b) → closeout per non-Done task in a Stage X.Y; batched Path B at stage end; chain-level stage digest; next-stage handoff auto-resolved |
 | 8 | Close stage | *(skill only)* | [`project-stage-close`](ia/skills/project-stage-close/SKILL.md) | Tick one stage of a multi-stage spec + handoff |
 | 9 | Close issue (umbrella) | [`/closeout`](.claude/commands/closeout.md) | [`project-spec-close`](ia/skills/project-spec-close/SKILL.md) | Migrate lessons → delete spec → archive row → purge id |
 
@@ -45,6 +46,10 @@ Hard rules (enforced at handoff):
 - Missing handoff artifact → next stage refuses to start. Full contract: [`docs/agent-lifecycle.md`](docs/agent-lifecycle.md) §3.
 
 Skill index + conventions: [`ia/skills/README.md`](ia/skills/README.md). Claude Code host surface (hooks, agent bodies, command dispatchers): [`CLAUDE.md`](CLAUDE.md) §3.
+
+### 2a. Skill-lifecycle retrospective (skill-train)
+
+**skill-train** sits outside main lifecycle flow — retrospective meta-surface, never closeable, never auto-applied. On demand (`/skill-train {SKILL_NAME}`), Opus subagent reads target skill's Per-skill Changelog entries since last `source: train-proposed` marker, aggregates recurring friction (≥2 occurrences threshold; configurable via `--threshold N`), writes **patch proposal (skill)** as `ia/skills/{SKILL_NAME}/train-proposal-{YYYY-MM-DD}.md` sibling file — unified-diff against Phase sequence / Guardrails / Seed prompt sections. User-gated review + manual apply only. Sibling producer `release-rollout-skill-bug-log` feeds a separate channel (`source: user-logged`, not self-reported friction) — do NOT merge channels. See glossary terms `skill self-report`, `skill training`, `patch proposal (skill)`, `skill-train`.
 
 ## 3. Verification policy (canonical)
 

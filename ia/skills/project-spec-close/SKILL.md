@@ -72,12 +72,13 @@ Run in order. N/A → state why in chat.
   - `**Backlog state (Label):** k filed` where k = count of rows with a non-`_pending_` **Issue** cell.
   - Stage depth = `####` (h4); step depth = `###` (h3). Regex must anchor on both.
   - After all stage rewrites: if every sibling stage under a step reads `Final`, force the step `**Status:** Final`.
+  - **R5 — Top-Status rollup to Final:** after all Step rewrites, check every `### Step N` block. If ALL Steps now read `**Status:** Final`, rewrite the plan top-of-file `> **Status:**` line to `Final`. If any Step is not Final, leave top Status unchanged. This check runs after every Step rewrite — one pass is sufficient.
   - Rewrite idempotent — re-running on already-synced doc produces zero diff.
   - Helper: `tools/mcp-ia-server/src/parser/master-plan-header-sync.ts` exports `syncMasterPlanHeaders(markdown)` implementing the above contract. Use when running Node-capable agent; otherwise apply the same logic inline via targeted `Edit` calls.
 7. **Delete** `ia/projects/{ISSUE_ID}.md` — only after J1 succeeded/waived/skipped.
 8. **Cascade** — `npm run validate:dead-project-specs`; fix hits or advisory with reason.
-9. **BACKLOG + archive** — Move `ia/backlog/{ISSUE_ID}.yaml` to `ia/backlog-archive/{ISSUE_ID}.yaml`; set `status: closed` and update Notes to cite where content migrated; set `spec: ""` (removed-after-closure). Run `bash tools/scripts/materialize-backlog.sh` to regenerate `BACKLOG.md` + `BACKLOG-ARCHIVE.md`. **Do NOT** edit `BACKLOG.md` or `BACKLOG-ARCHIVE.md` directly.
-9b. **Regenerate progress dashboard** — `npm run progress` (repo root). Reflects `Done (archived)` state in `docs/progress.html`. Deterministic — no diff when already current. Log exit code; failure does NOT block close (tooling-only). Web dashboard (https://web-nine-wheat-35.vercel.app/dashboard) auto-refreshes within ~5 min from the deployed branch via ISR — no Vercel deploy required on close. For instant refresh, run `npm run deploy:web` manually.
+9. **BACKLOG + archive** — Optional: run `backlog_record_validate` on destination yaml before move; defensive lint, no gate. Write `ia/backlog-archive/{ISSUE_ID}.yaml` with `status: closed`, Notes citing where content migrated, `spec: ""` (removed-after-closure). **Then delete `ia/backlog/{ISSUE_ID}.yaml`** — use `rm ia/backlog/{ISSUE_ID}.yaml` and verify the file no longer exists before continuing (never leave both copies on disk). Also remove the issue entry from `ia/state/backlog-sections.json` (the open-backlog manifest) if present — failure to do so causes the archived yaml to bleed into a regenerated BACKLOG.md. Run `node tools/scripts/materialize-backlog.mjs` (or `bash tools/scripts/materialize-backlog.sh` on Linux) to regenerate `BACKLOG.md` + `BACKLOG-ARCHIVE.md`. **Do NOT** edit `BACKLOG.md` or `BACKLOG-ARCHIVE.md` directly.
+9b. **Regenerate progress dashboard** — run `progress-regen` subskill ([`ia/skills/progress-regen/SKILL.md`](../progress-regen/SKILL.md)): `npm run progress` from repo root. Non-blocking — failure does NOT block close. Web dashboard auto-refreshes within ~5 min via ISR — no deploy needed. For instant refresh, run `npm run deploy:web` manually.
 10. **Id purge** — Per section above for `{ISSUE_ID}`.
 11. **I1** — If glossary/spec bodies changed, `npm run generate:ia-indexes` + `--check`.
 
@@ -115,6 +116,45 @@ Replace `{SPEC_PATH}` and `{ISSUE_ID}` (and optional umbrella id in **Multi-issu
 ```markdown
 Close @{SPEC_PATH} (issue **{ISSUE_ID}**) following **project-spec-close**’s **IA persistence checklist**, **Tool recipe**, and **Id purge** in order.
 **Before** deleting the project spec: migrate content into [glossary](../../../ia/specs/glossary.md), [`ia/specs/`](../../../ia/specs/), [`ARCHITECTURE.md`](../../../ARCHITECTURE.md), [`ia/rules/`](../../../ia/rules/), [`docs/`](../../../docs/), and **MCP** docs if tools changed — per [terminology-consistency](../../../ia/rules/terminology-consistency.md) (no backlog ids in durable IA).
-Reconcile umbrella/sibling `ia/projects/*.md` if applicable. **Then** delete the project spec, run `npm run validate:dead-project-specs`, **move `ia/backlog/{ISSUE_ID}.yaml` → `ia/backlog-archive/{ISSUE_ID}.yaml`** (status: closed), run `bash tools/scripts/materialize-backlog.sh`, and **strip `{ISSUE_ID}`** from the rest of the repo (except open BACKLOG rows and archive).
+Reconcile umbrella/sibling `ia/projects/*.md` if applicable. **Then** delete the project spec, run `npm run validate:dead-project-specs`, **write `ia/backlog-archive/{ISSUE_ID}.yaml`** (status: closed, spec: ""), **`rm ia/backlog/{ISSUE_ID}.yaml`** (verify deleted), **remove `{ISSUE_ID}` from `ia/state/backlog-sections.json`**, run `node tools/scripts/materialize-backlog.mjs`, and **strip `{ISSUE_ID}`** from the rest of the repo (except open BACKLOG rows and archive).
 Use **territory-ia**: `backlog_issue` → `project_spec_closeout_digest` → `router_for_task` / `spec_section` / `spec_sections` / `glossary_*` / `list_rules` as needed → **`project_spec_journal_persist`** when **`DATABASE_URL`** is set → `invariants_summary` if runtime or guardrails touched. Optional: `npm run closeout:dependents -- --issue {ISSUE_ID}` before umbrella/sibling edits.
 ```
+
+## Changelog
+
+### 2026-04-18 — step 9 left stale yaml in ia/backlog/ after archival
+
+**Status:** fixed
+
+**Symptom:** After closeout, `ia/backlog/{ISSUE_ID}.yaml` remained on disk (never deleted), while `ia/backlog-archive/{ISSUE_ID}.yaml` was correctly written. Next `materialize-backlog.mjs` run picked up the open-status yaml → rendered issue in BACKLOG.md with a `Spec:` path pointing to the now-deleted spec file → `validate:dead-project-specs` error. Additionally, `backlog-sections.json` manifest was not updated, so archived issues also bled in via the `allIssuesMap` merge even after open yaml was removed.
+
+**Root cause:** Step 9 said "Move" but agents interpreted it as "copy to archive + update archive yaml" without deleting the source. The manifest was never cleaned on closeout. `materialize-backlog.mjs` used `allIssuesMap` (open ∪ closed) for both backlog and archive manifest reconstruction, so archived yaml was visible to open-backlog rendering.
+
+**Fix:**
+1. Step 9 rewritten with explicit `rm ia/backlog/{ISSUE_ID}.yaml` + verify deleted + remove from `ia/state/backlog-sections.json`.
+2. `materialize-backlog.mjs` `reconstruct()` now takes an `issueMap` param: backlog manifest → `openMap`, archive manifest → `closedMap` (no cross-bleed).
+
+**Rollout row:** standalone
+
+**Tracker aggregator:** standalone
+
+---
+
+### 2026-04-18 — flock missing on macOS blocks materialize-backlog.sh during closeout
+
+**Status:** pending
+
+**Symptom:**
+`tools/scripts/materialize-backlog.sh` exits non-zero with `flock: command not found` on macOS; closeout step 9 fails, requires manual intervention on every macOS dev machine run — compounds in `/ship-stage` (N closeouts per stage) and `/release-rollout` (many per umbrella).
+
+**Root cause:**
+`materialize-backlog.sh` hard-requires `flock(1)` (util-linux, absent from default BSD/macOS userland) for its `.materialize-backlog.lock` concurrency guard with no portability check or macOS fallback path (`shlock`, `mkdir`-based lock, or node-only `proper-lockfile`).
+
+**Fix:**
+pending — add macOS portability guard to `materialize-backlog.sh`; workaround applied per-task during first `/ship-stage` production run: run `node tools/scripts/materialize-backlog.mjs` directly (no concurrency guard; acceptable in single-user local dev).
+
+**Rollout row:** standalone
+
+**Tracker aggregator:** standalone
+
+---

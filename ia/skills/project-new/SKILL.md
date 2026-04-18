@@ -57,13 +57,9 @@ Only for external facts (vendor APIs, third-party packages, standards) not in re
 
 Run in order. Pure meta (no domain terms) → skip steps marked optional.
 
-1. **`glossary_discover`** — `keywords` as JSON array, English tokens from prompt. Avoid generic-only arrays.
-2. **`glossary_lookup`** — High-confidence terms from discover or known rows.
-3. **`router_for_task`** — 1–3 domains; `domain` must match agent-router table vocabulary. Ad-hoc phrases → `no_matching_domain`.
-4. **`spec_section`** — Only sections prompt implies; set `max_chars`. Editor Reports → include unity-development-context §10.
-5. **`invariants_summary`** — If issue touches runtime C# / game subsystems. Skip for doc/IA-only.
-6. **`backlog_issue`** — For each related id in Depends on / Related / Notes. Hard dep unsatisfied → align or wait. Searches BACKLOG then BACKLOG-ARCHIVE.
-7. **`list_specs`** / **`spec_outline`** — Only if `spec` key unknown.
+1. Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs: `keywords` = English tokens from prompt (avoid generic-only arrays); `brownfield_flag = false` for most issues (full recipe); `tooling_only_flag = true` for doc/IA-only issues. Use returned `glossary_anchors`, `router_domains`, `spec_sections`, `invariants` for spec authoring. Editor Reports → include unity-development-context §10 via `spec_section` inside the subskill.
+2. **`backlog_issue`** — For each related id in Depends on / Related / Notes. Hard dep unsatisfied → align or wait. Searches BACKLOG then BACKLOG-ARCHIVE.
+3. **`list_specs`** / **`spec_outline`** — Only if `spec` key unknown.
 
 ### Optional: journal (Postgres)
 
@@ -78,11 +74,12 @@ Only when prompt ambiguous/cross-cutting or user requests exploration context. `
 ## File and backlog checklist
 
 1. **Prefix** — `BUG-`/`FEAT-`/`TECH-`/`ART-`/`AUDIO-` per [`AGENTS.md`](../../../AGENTS.md).
-2. **Next id** — Two paths (never hand-edit the counter):
-   - **Normal path:** Run `bash tools/scripts/reserve-id.sh {PREFIX}` (atomic flock on `ia/state/id-counter.json`). Use the returned id.
-   - **`--reserved-id {ID}` path (called from `stage-file`):** When the seed prompt carries `--reserved-id {ID}`, use that id verbatim. Skip `reserve-id.sh` entirely — `stage-file` already reserved the id via a batch call. Invariant #13 preserved (one writer per call chain).
+2. **Next id** — Three paths (never hand-edit the counter):
+   - **Normal path (MCP available):** Call `mcp__territory-ia__reserve_backlog_ids(prefix: "{PREFIX}", count: 1)` to get the next id. Use the returned id.
+   - **Normal path (MCP unavailable):** Run `bash tools/scripts/reserve-id.sh {PREFIX}` (atomic flock on `ia/state/id-counter.json`). Use the returned id.
+   - **`--reserved-id {ID}` path (called from `stage-file`):** When the seed prompt carries `--reserved-id {ID}`, use that id verbatim. Skip both `reserve_backlog_ids` and `reserve-id.sh` entirely — `stage-file` already reserved the id via a batch call. Invariant #13 preserved (one writer per call chain).
 3. **Priority section** — Match severity + existing BACKLOG structure. Follow Priority order in AGENTS.md.
-4. **Backlog record** — Write `ia/backlog/{ISSUE_ID}.yaml` from the yaml schema (id, type, title, priority, status: open, section, spec, files, notes, acceptance, depends_on, depends_on_raw, related, created, raw_markdown). Every cited id in Depends on must exist in `ia/backlog/` or `ia/backlog-archive/`. Post-hook: `bash tools/scripts/materialize-backlog.sh` to regenerate `BACKLOG.md`.
+4. **Backlog record** — Author the yaml body (id, type, title, priority, status: open, section, spec, files, notes, acceptance, depends_on, depends_on_raw, related, created, raw_markdown). Every cited id in Depends on must exist in `ia/backlog/` or `ia/backlog-archive/`. Before writing to disk, call `mcp__territory-ia__backlog_record_validate(record: {yaml body})` and fix any reported schema errors. **MCP unavailable fallback:** skip the validate call; `validate:all` at end catches schema drift. Write the validated yaml to `ia/backlog/{ISSUE_ID}.yaml`. Post-hook: `bash tools/scripts/materialize-backlog.sh` to regenerate `BACKLOG.md`.
 5. **Project spec** — Copy [`project-spec-template.md`](../../templates/project-spec-template.md) → `ia/projects/{ISSUE_ID}.md`. Fill header, Summary, Goals, stub Implementation Plan, Open Questions per [`PROJECT-SPEC-STRUCTURE.md`](../../projects/PROJECT-SPEC-STRUCTURE.md).
 6. **Validate** — `npm run validate:dead-project-specs`.
 7. **Next** — Offer [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md) to refine before implementation.

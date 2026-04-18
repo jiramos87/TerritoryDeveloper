@@ -55,13 +55,17 @@ No MCP from skill body beyond the Tool recipe below.
 
 ### Phase 1 — Row state read
 
-Read row cells (a)–(g) for `ROW_SLUG`. Determine next-cell-to-tick via rightmost non-`✓` column. Apply hard gates:
+Run `rollout-row-state` subskill ([`ia/skills/rollout-row-state/SKILL.md`](../rollout-row-state/SKILL.md)). Inputs: `TRACKER_SPEC`, `ROW_SLUG`.
 
-- Column (g) blocks column (e). If (e) candidate but (g) = `—` or `❓` → route to align-gate sub-step (Phase 3).
-- Column (b) `❓` (disagreement gate) → STOP. Surface matching Disagreements appendix entry. Route to user for pick.
-- Column marker `⚠️` (active disagreement) anywhere → STOP. Same as above.
+Subskill returns `{cells, target_col, hard_gate, chain_ready, next_action}`.
 
-Output: target column + action (e.g. `ROW_SLUG = city-sim-depth; next cell = (d); action = /stage-decompose ia/projects/city-sim-depth-master-plan.md Step 1`).
+Apply hard gates from returned result:
+- `hard_gate = "DISAGREEMENT"` → STOP. Surface matching Disagreements appendix entry. Route to user for pick.
+- `hard_gate = "EQUIVALENCE_GATE"` → STOP. Surface equivalence question. Route to user for pick.
+- `target_col = "(g)"` → route to Phase 3 (align-gate sub-step) before (e) can be ticked.
+- `target_col = "terminal"` → row done. Skip to Phase 6 (next-row recommendation).
+
+Output from subskill: target column + next action (e.g. `target_col = (d); next_action = stage-decompose ia/projects/city-sim-depth-master-plan.md Step 1`).
 
 ### Phase 2 — MCP context (Tool recipe)
 
@@ -76,13 +80,9 @@ Skip Tool recipe if `OPERATION = status` (read-only).
 
 ### Phase 3 — Align gate check (column (g) — only when target cell = (e))
 
-Verify for every NEW domain entity introduced by this row:
+Run `term-anchor-verify` subskill ([`ia/skills/term-anchor-verify/SKILL.md`](../term-anchor-verify/SKILL.md)) for every NEW domain entity introduced by this row. Inputs: `terms` = English entity names from child orchestrator Objectives.
 
-1. `glossary_lookup` returns canonical row.
-2. `router_for_task` on the entity domain returns matching spec section.
-3. `spec_section` returns the anchor prose.
-
-All three pass → column (g) `✓`. Any fail → column (g) stays `—` with Skill Iteration Log note naming unresolved terms. STOP; route user to: author glossary row + spec section anchor before re-fire. Does NOT block columns (a)–(d) or (f) — only (e).
+`all_anchored = true` → column (g) `✓`. `all_anchored = false` → column (g) stays `—` with Skill Iteration Log note naming `unresolved_terms`. STOP; route user to: author glossary row + spec section anchor for each unresolved term before re-fire. Does NOT block columns (a)–(d) or (f) — only (e).
 
 ### Phase 4 — Handoff dispatch (autonomous chain)
 
@@ -123,12 +123,15 @@ After (f) ✓ row terminal, emit summary:
 
 ### Phase 5 — Tracker update
 
-After dispatched subagent returns (success signal in its handoff message), invoke `release-rollout-track` skill to:
+After dispatched subagent returns (success signal in its handoff message), dispatch tracker update via Agent tool:
 
-1. Flip target cell marker (`—` → `◐` or `◐` → `✓` based on completion evidence).
-2. Append ticket (commit SHA, doc path, issue id) to cell.
-3. If skill bug surfaced → invoke `release-rollout-skill-bug-log` (separate helper).
-4. Append `## Change log` row to tracker with date + delta + author.
+**Cell flip:** call Agent `release-rollout-track` subagent. Inputs: `TRACKER_SPEC`, `ROW_SLUG`, `TARGET_COL`, `NEW_MARKER` (derived from completion evidence), `TICKET` (commit SHA / doc path / issue id), `CHANGELOG_NOTE` (one-line delta).
+
+Subagent flips the target cell, runs column (g) align verify when relevant, appends Change log row, returns handoff line.
+
+**Skill bug branch:** if dispatched subagent reported a skill bug/gap in its handoff message → call Agent `release-rollout-skill-bug-log` subagent. Inputs: `SKILL_NAME`, `TRACKER_SPEC`, `ROW_SLUG`, `BUG_SUMMARY`, `BUG_DETAIL`, `FIX_STATUS`.
+
+Read-only `OPERATION = status` → emit tracker snapshot without edits. Return: row count, rows at each column, disagreements count, open blockers.
 
 Read-only `OPERATION = status` → emit tracker snapshot without edits. Return: row count, rows at each column, disagreements count, open blockers.
 
@@ -152,12 +155,9 @@ Parallel-work rule: NEVER emit two sibling rows at same Tier with both targeting
 Run in order:
 
 1. **`list_specs`** — enumerate existing specs for align-gate reference.
-2. **`glossary_discover`** — `keywords` JSON array: English tokens from ROW_SLUG scope (domain entities from umbrella bucket row + child orchestrator Objectives).
-3. **`glossary_lookup`** — high-confidence terms from discover. Flag missing canonical rows (column (g) gate signal).
-4. **`router_for_task`** — 1 domain matching ROW_SLUG's primary subsystem.
-5. **`spec_sections`** — sections implied by routed domain; `max_chars` small. No full spec reads.
-6. **`backlog_search`** — `ROW_SLUG` as search term. Capture open BACKLOG ids tied to this row.
-7. **`backlog_issue`** — only if specific id needs full context.
+2. Run `domain-context-load` subskill ([`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md)). Inputs: `keywords` = English tokens from ROW_SLUG scope (domain entities from umbrella bucket row + child orchestrator Objectives); `brownfield_flag = false`; `tooling_only_flag = false`. Use returned `glossary_anchors` (flag missing rows as column (g) gate signal), `router_domains`, `spec_sections`, `invariants` for Phase 3–5 context.
+3. **`backlog_search`** — `ROW_SLUG` as search term. Capture open BACKLOG ids tied to this row.
+4. **`backlog_issue`** — only if specific id needs full context.
 
 Skip recipe entirely if `OPERATION = status`.
 
@@ -168,13 +168,13 @@ Skip recipe entirely if `OPERATION = status`.
 - IF `{TRACKER_SPEC}` does not exist → STOP. Route to `release-rollout-enumerate {UMBRELLA_SPEC}`.
 - IF `{UMBRELLA_SPEC}` does not exist → STOP. Route to `/master-plan-new` against the umbrella exploration doc.
 - IF `ROW_SLUG` not found in tracker → STOP. Ask user to pick from tracker OR seed via enumerate.
-- IF row marker = `⚠️` (active disagreement) → STOP. Surface Disagreements appendix entry; route to user pick.
-- IF column (b) = `❓` on a row (design-expansion equivalence gate) → STOP. Surface equivalence question; route to user pick.
+- IF row marker = `⚠️` (active disagreement) → STOP. Surface Disagreements appendix entry; route to user pick. Question stem + option labels use product/domain wording (game/feature semantics), not row slugs or cell coords — Ids and tracker cells go on a trailing `Context:` line. Full rule: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md).
+- IF column (b) = `❓` on a row (design-expansion equivalence gate) → STOP. Surface equivalence question; route to user pick. Same polling-wording rule applies.
 - IF column (g) = `—` or `❓` AND target cell = (e) → STOP. Route to Phase 3 align-gate authoring (glossary row + spec section).
 - IF align gate (Phase 3) fails → write Skill Iteration Log entry naming unresolved terms; do NOT flip (e) cell.
 - IF parallel-work rule would be violated (two sibling rows at `/stage-file` or `/closeout` concurrently on same branch) → STOP. Emit Tier-ordered next-row pick excluding the conflict.
 - IF subagent returns failure/blocker at any chain step → STOP. Surface to user; do NOT continue chain.
-- IF (b) incomplete (no Design Expansion) → PAUSE. Interview user in product/game-design language ONLY (player experience, game rules, mechanics, UI — no class names, file paths, C# signatures). Max 5 questions one-at-a-time. Then dispatch design-explore.
+- IF (b) incomplete (no Design Expansion) → PAUSE. Interview user in product/game-design language ONLY (player experience, game rules, mechanics, UI — no class names, file paths, C# signatures). Max 5 questions one-at-a-time. Then dispatch design-explore. Full polling rule: [`ia/rules/agent-human-polling.md`](../../rules/agent-human-polling.md).
 - Do NOT pause between (c)→(f) when (b) ✓ — chain autonomously via Agent tool.
 - Do NOT close issues — that is `/closeout`.
 - Do NOT directly author child master-plan Steps — delegate to `master-plan-new` / `master-plan-extend` subagents.
