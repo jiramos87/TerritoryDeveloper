@@ -6,7 +6,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { resolveRepoRoot } from "../config.js";
 import {
-  parseAllBacklogIssues,
+  parseAllBacklogIssuesWithMeta,
   type ParsedBacklogIssue,
 } from "../parser/backlog-parser.js";
 import { runWithToolTiming } from "../instrumentation.js";
@@ -114,7 +114,7 @@ export function registerBacklogSearch(server: McpServer): void {
         const maxResults = args?.max_results ?? 10;
 
         const repoRoot = resolveRepoRoot();
-        const allIssues = parseAllBacklogIssues(repoRoot, scope);
+        const { records: allIssues, parseErrorCount } = parseAllBacklogIssuesWithMeta(repoRoot, scope);
         const queryTokens = tokenize(query);
 
         if (queryTokens.length === 0) {
@@ -142,6 +142,9 @@ export function registerBacklogSearch(server: McpServer): void {
           section: s.issue.backlog_section,
           score: s.score,
           notes: s.issue.notes ? truncate(s.issue.notes, NOTES_TRUNCATE) : null,
+          priority: s.issue.priority ?? null,
+          related: s.issue.related ?? [],
+          created: s.issue.created ?? null,
         }));
 
         return jsonResult({
@@ -150,6 +153,7 @@ export function registerBacklogSearch(server: McpServer): void {
           total_searched: allIssues.length,
           result_count: results.length,
           results,
+          ...(parseErrorCount > 0 ? { parseErrorCount } : {}),
         });
       }),
   );

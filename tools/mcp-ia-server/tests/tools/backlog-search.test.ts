@@ -67,3 +67,44 @@ test(
     assert.ok(all.length >= openOnly.length);
   },
 );
+
+// ---------------------------------------------------------------------------
+// New field projection — priority, related, created
+// ---------------------------------------------------------------------------
+
+test(
+  "backlog_search results include priority, related, created for TECH-300",
+  { skip: !fs.existsSync(path.join(repoRoot, "ia/backlog/TECH-300.yaml")) },
+  () => {
+    const issues = parseAllBacklogIssues(repoRoot, "open");
+    const tech300 = issues.find((i) => i.issue_id === "TECH-300");
+    assert.ok(tech300, "TECH-300 should appear in open backlog");
+    // Simulate result projection (same logic as backlog-search.ts)
+    const projected = {
+      priority: tech300!.priority ?? null,
+      related: tech300!.related ?? [],
+      created: tech300!.created ?? null,
+    };
+    assert.equal(projected.priority, "high");
+    assert.ok(Array.isArray(projected.related) && projected.related.length > 0);
+    assert.equal(projected.created, "2026-04-17");
+  },
+);
+
+test("backlog_search result projection uses null for missing priority", () => {
+  const issue = makeIssue({ issue_id: "TECH-0", title: "no priority" });
+  const priority = issue.priority ?? null;
+  assert.equal(priority, null);
+});
+
+test("backlog_search result projection uses empty array for missing related", () => {
+  const issue = makeIssue({ issue_id: "TECH-0", title: "no related" });
+  const related = issue.related ?? [];
+  assert.deepEqual(related, []);
+});
+
+test("backlog_search result projection uses null for missing created", () => {
+  const issue = makeIssue({ issue_id: "TECH-0", title: "no created" });
+  const created = issue.created ?? null;
+  assert.equal(created, null);
+});

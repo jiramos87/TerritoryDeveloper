@@ -133,6 +133,25 @@ test("scrapeIssueFields first line per key", () => {
   assert.equal(f.notes, "line one");
 });
 
+test("scrapeIssueFields ignores Proposed solution — field dropped (TECH-299)", () => {
+  const lines = [
+    "- [ ] **X-2** — T",
+    "  - Type: bug",
+    "  - Proposed solution: do the thing",
+    "  - Notes: keep this",
+  ];
+  const f = scrapeIssueFields(lines);
+  // proposed_solution must not appear on the result at all
+  assert.ok(!("proposed_solution" in f), "proposed_solution must not exist on result");
+  // prose must not bleed into any other field
+  assert.equal(f.notes, "keep this");
+  assert.equal(f.type, "bug");
+  // compile-time shape check: ParsedBacklogIssue must not declare proposed_solution
+  type NoProposedSolution = "proposed_solution" extends keyof typeof f ? "bad" : "ok";
+  const _typeCheck: NoProposedSolution = "ok";
+  void _typeCheck;
+});
+
 test("findIssueHeaderLine returns null for missing id", () => {
   const lines = FIXTURE.split("\n");
   assert.equal(findIssueHeaderLine(lines, "BUG-99"), null);

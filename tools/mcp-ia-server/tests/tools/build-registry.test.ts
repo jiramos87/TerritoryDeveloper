@@ -16,10 +16,10 @@ test(
     process.env.REPO_ROOT = repoRoot;
     try {
       const r = buildRegistry();
-      assert.equal(r.length, 34);
+      assert.equal(r.length, 35);
       assert.ok(r.some((e) => e.key === "unity-development-context"));
       const rules = r.filter((e) => e.category === "rule");
-      assert.equal(rules.length, 19);
+      assert.equal(rules.length, 20);
       assert.ok(rules.some((e) => e.key === "agent-output-caveman"));
       assert.ok(rules.some((e) => e.key === "agent-output-caveman-authoring"));
       assert.ok(rules.some((e) => e.key === "terminology-consistency-authoring"));

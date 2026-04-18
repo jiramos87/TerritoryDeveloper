@@ -1,10 +1,20 @@
 /**
  * Parse BACKLOG.md for a single issue block (supports nested checklist items).
+ *
+ * When ia/backlog/ yaml dirs are present, prefer yaml loader for
+ * parseBacklogIssue + parseAllBacklogIssues. All other exports (normalizeIssueId,
+ * resolveDependsOnStatus, etc.) are unchanged.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import { splitLines } from "./markdown-parser.js";
+import {
+  loadYamlIssue,
+  loadAllYamlIssues,
+  yamlBacklogExists,
+  type LoadAllYamlResult,
+} from "./backlog-yaml-loader.js";
 
 const BACKLOG_FILE = "BACKLOG.md";
 const BACKLOG_ARCHIVE_FILE = "BACKLOG-ARCHIVE.md";
@@ -14,7 +24,7 @@ const CHECKLIST_HEADER =
   /^(\s*)-\s+\[([ x])\]\s+\*\*([A-Z]+-\d+[a-z]*)\*\*\s*(.*)$/;
 
 const FIELD_LINE =
-  /^\s+-\s+(Type|Files|Spec|Notes|Acceptance|Depends on|Proposed solution):\s*(.*)$/i;
+  /^\s+-\s+(Type|Files|Spec|Notes|Acceptance|Depends on):\s*(.*)$/i;
 
 export type BacklogIssueStatus = "open" | "completed";
 
@@ -29,7 +39,12 @@ export interface ParsedBacklogIssue {
   notes?: string;
   acceptance?: string;
   depends_on?: string;
-  proposed_solution?: string;
+  /** Populated by yaml loader (TECH-296). Undefined for markdown-only path. */
+  priority?: string | null;
+  /** Populated by yaml loader (TECH-296). Undefined for markdown-only path. */
+  related?: string[];
+  /** ISO date string (YYYY-MM-DD). Populated by yaml loader (TECH-296). Undefined for markdown-only path. */
+  created?: string | null;
   raw_markdown: string;
 }
 
@@ -122,19 +137,13 @@ export function scrapeIssueFields(blockLines: string[]): Omit<
   notes?: string;
   acceptance?: string;
   depends_on?: string;
-  proposed_solution?: string;
 } {
   const fields: Record<string, string> = {};
   for (const line of blockLines.slice(1)) {
     const fm = line.match(FIELD_LINE);
     if (!fm) continue;
     const key = fm[1]!.toLowerCase();
-    const mapKey =
-      key === "depends on"
-        ? "depends_on"
-        : key === "proposed solution"
-          ? "proposed_solution"
-          : key;
+    const mapKey = key === "depends on" ? "depends_on" : key;
     if (fields[mapKey] !== undefined) continue;
     fields[mapKey] = fm[2]!.trim();
   }
@@ -145,7 +154,6 @@ export function scrapeIssueFields(blockLines: string[]): Omit<
     notes: fields.notes,
     acceptance: fields.acceptance,
     depends_on: fields.depends_on,
-    proposed_solution: fields.proposed_solution,
   };
 }
 
@@ -304,6 +312,11 @@ export function parseBacklogIssue(
   repoRoot: string,
   issueId: string,
 ): ParsedBacklogIssue | null {
+  // Prefer yaml loader when yaml dirs are present
+  if (yamlBacklogExists(repoRoot)) {
+    const fromYaml = loadYamlIssue(repoRoot, normalizeIssueId(issueId));
+    if (fromYaml !== null) return fromYaml;
+  }
   return (
     parseBacklogIssueFromFile(repoRoot, issueId, BACKLOG_FILE) ??
     parseBacklogIssueFromFile(repoRoot, issueId, BACKLOG_ARCHIVE_FILE)
@@ -355,17 +368,36 @@ function parseAllIssuesFromFile(
 
 /**
  * Parse all issues from BACKLOG.md and/or BACKLOG-ARCHIVE.md.
+ * Prefers yaml dirs when present.
+ * Returns ParsedBacklogIssue[] (drops parseErrorCount for backward compat).
+ * Use parseAllBacklogIssuesWithMeta for the full result including parseErrorCount.
  */
 export function parseAllBacklogIssues(
   repoRoot: string,
   scope: "open" | "archive" | "all" = "all",
 ): ParsedBacklogIssue[] {
-  const issues: ParsedBacklogIssue[] = [];
+  return parseAllBacklogIssuesWithMeta(repoRoot, scope).records;
+}
+
+/**
+ * Parse all issues from BACKLOG.md and/or BACKLOG-ARCHIVE.md.
+ * Prefers yaml dirs when present.
+ * Returns { records, parseErrorCount } — parseErrorCount is 0 on markdown-fallback path.
+ */
+export function parseAllBacklogIssuesWithMeta(
+  repoRoot: string,
+  scope: "open" | "archive" | "all" = "all",
+): LoadAllYamlResult {
+  // Prefer yaml loader when yaml dirs are present
+  if (yamlBacklogExists(repoRoot)) {
+    return loadAllYamlIssues(repoRoot, scope);
+  }
+  const records: ParsedBacklogIssue[] = [];
   if (scope === "open" || scope === "all") {
-    issues.push(...parseAllIssuesFromFile(repoRoot, BACKLOG_FILE));
+    records.push(...parseAllIssuesFromFile(repoRoot, BACKLOG_FILE));
   }
   if (scope === "archive" || scope === "all") {
-    issues.push(...parseAllIssuesFromFile(repoRoot, BACKLOG_ARCHIVE_FILE));
+    records.push(...parseAllIssuesFromFile(repoRoot, BACKLOG_ARCHIVE_FILE));
   }
-  return issues;
+  return { records, parseErrorCount: 0 };
 }

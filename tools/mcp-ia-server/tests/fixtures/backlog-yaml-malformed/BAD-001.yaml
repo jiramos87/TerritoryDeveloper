@@ -1,0 +1,9 @@
+# Intentionally malformed — missing required 'id' field
+title: "Bad record with no id"
+status: open
+section: High Priority
+priority: high
+notes: |
+  This fixture is intentionally missing the 'id:' field.
+  Used by backlog-yaml-loader-malformed.test.ts to verify
+  that loadAllYamlIssues logs to stderr and increments parseErrorCount.

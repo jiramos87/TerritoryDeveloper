@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_index",
   "schema_version": 1,
-  "last_generated": "2026-04-17T15:27:52.692Z",
+  "last_generated": "2026-04-17T18:08:53.033Z",
   "terms": {
     "Cell": {
       "spec_key": "isometric-geography-system",
@@ -494,6 +494,14 @@
     "Type offsets": {
       "spec_key": "isometric-geography-system",
       "anchor": "7.2"
+    },
+    "Backlog record": {
+      "spec_key": "agents",
+      "anchor": "7"
+    },
+    "Backlog view": {
+      "spec_key": "agents",
+      "anchor": "7"
     },
     "Interchange JSON (artifact)": {
       "spec_key": "architecture",

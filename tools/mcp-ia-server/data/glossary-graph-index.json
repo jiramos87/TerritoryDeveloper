@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-17T15:27:52.776Z",
+  "last_generated": "2026-04-17T18:08:53.120Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -79,6 +79,26 @@
           "section_title": "9. Glossary alignment"
         }
       ]
+    },
+    "Backlog record": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog view",
+        "Cell",
+        "City metrics history"
+      ],
+      "cited_in": []
+    },
+    "Backlog view": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Cell",
+        "City metrics history"
+      ],
+      "cited_in": []
     },
     "Bake-to-clip": {
       "related": [
@@ -2214,9 +2234,9 @@
       "related": [
         "Agent test mode batch",
         "Alignment gate",
-        "Cell",
-        "City metrics history",
-        "Geography initialization"
+        "Backlog record",
+        "Backlog view",
+        "Cell"
       ],
       "cited_in": []
     },
@@ -4045,8 +4065,8 @@
         "Agent test mode batch",
         "Alignment gate",
         "AUTO systems",
-        "Cell",
-        "City metrics history"
+        "Backlog record",
+        "Backlog view"
       ],
       "cited_in": [
         {
