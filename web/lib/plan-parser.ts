@@ -8,7 +8,7 @@
  * Keep logic in sync; this file owns the TypeScript types.
  */
 
-import type { PlanData, TaskRow, TaskStatus, PhaseEntry, Stage, Step } from './plan-loader-types';
+import type { PlanData, TaskRow, TaskStatus, PhaseEntry, Stage, Step, PlanMetrics, StepChartBar, StepTaskCounts } from './plan-loader-types';
 
 const TASK_STATUS_CANON: Record<string, TaskStatus> = {
   '_pending_': '_pending_',
@@ -182,7 +182,7 @@ export function parseMasterPlan(markdown: string, filename = ''): PlanData {
       currentStep = {
         id: stepMatch[1].replace(/[^0-9]/g, '') || stepMatch[1],
         title: stepMatch[2].trim(),
-        status: 'Draft',
+        status: '' as Step['status'],
         statusDetail: '',
         stages: [],
       };
@@ -199,7 +199,7 @@ export function parseMasterPlan(markdown: string, filename = ''): PlanData {
       currentStage = {
         id: stageMatch[1],
         title: stageMatch[2].trim(),
-        status: 'Draft',
+        status: '' as Stage['status'],
         statusDetail: '',
         phases: [],
         tasks: [],
@@ -246,5 +246,105 @@ export function parseMasterPlan(markdown: string, filename = ''): PlanData {
     }
   }
 
+  deriveHierarchyStatus(steps);
+
   return { title, filename, overallStatus, overallStatusDetail, siblingWarnings, steps, allTasks };
+}
+
+// Task state considered "terminal done" for derivation purposes.
+export function isTaskDone(s: TaskStatus): boolean {
+  return s === 'Done' || s === 'Done (archived)';
+}
+
+// Task state considered "active" (work in flight, not pending, not done).
+export function isTaskActive(s: TaskStatus): boolean {
+  return s === 'In Progress' || s === 'In Review';
+}
+
+// Task state considered "not yet filed / pending".
+export function isTaskPending(s: TaskStatus): boolean {
+  return s === '_pending_' || s === 'Draft';
+}
+
+/**
+ * Pre-compute dashboard metrics for a single plan.
+ *
+ * Returns completion counts, StatBar label, per-step chart breakdown, and
+ * per-step done/total counts. Call in server components / loaders; pass result
+ * to render-only components as props.
+ */
+export function computePlanMetrics(plan: PlanData): PlanMetrics {
+  const totalCount = plan.allTasks.length;
+  const completedCount = plan.allTasks.filter(t => isTaskDone(t.status)).length;
+  const statBarLabel = `${completedCount} / ${totalCount} done`;
+
+  const chartData: StepChartBar[] = plan.steps.map(step => {
+    const stepTasks = plan.allTasks.filter(t => t.id.startsWith('T' + step.id + '.'));
+    return {
+      label:      step.title,
+      pending:    stepTasks.filter(t => isTaskPending(t.status)).length,
+      inProgress: stepTasks.filter(t => isTaskActive(t.status)).length,
+      done:       stepTasks.filter(t => isTaskDone(t.status)).length,
+    };
+  });
+
+  const stepCounts: Record<string, StepTaskCounts> = {};
+  for (const step of plan.steps) {
+    const stepTasks = plan.allTasks.filter(t => t.id.startsWith('T' + step.id + '.'));
+    stepCounts[step.id] = {
+      done:  stepTasks.filter(t => isTaskDone(t.status)).length,
+      total: stepTasks.length,
+    };
+  }
+
+  return { completedCount, totalCount, statBarLabel, chartData, stepCounts };
+}
+
+/**
+ * Overwrite step/stage `status` with a value derived from task completion.
+ *
+ * Hand-written Status lines in master-plan markdown drift — stages whose tasks
+ * are all archived still read "Draft" or old free-form prose. Dashboard status
+ * badges should reflect the actual task table, not stale prose.
+ *
+ * Stage rules (with tasks):
+ *   - all tasks Done → 'Final'
+ *   - any task active or any task Done mixed with pending → 'In Progress'
+ *   - all tasks pending → 'Draft'
+ *
+ * Stage with no tasks (skeleton): keep parsed status.
+ *
+ * Step rules (aggregate over stages): same tri-state over stage.status.
+ */
+function deriveHierarchyStatus(steps: Step[]): void {
+  for (const step of steps) {
+    for (const stage of step.stages) {
+      if (!stage.tasks.length) continue;
+      const statuses = stage.tasks.map(t => t.status);
+      const allDone = statuses.every(isTaskDone);
+      const anyActive = statuses.some(isTaskActive);
+      const anyDone = statuses.some(isTaskDone);
+      const allPending = statuses.every(isTaskPending);
+      if (allDone) {
+        stage.status = 'Final';
+      } else if (anyActive || (anyDone && !allDone)) {
+        stage.status = 'In Progress';
+      } else if (allPending) {
+        stage.status = 'Draft';
+      }
+    }
+
+    if (!step.stages.length) continue;
+    const stageStatuses = step.stages.map(s => s.status);
+    const allStagesFinal = stageStatuses.every(s => s === 'Final');
+    const anyStageActive = stageStatuses.some(s => s === 'In Progress' || s === 'In Review' || s === 'Final');
+    const allStagesDraft = stageStatuses.every(s => s === 'Draft' || (s as string) === '');
+    if (allStagesFinal) {
+      step.status = 'Final';
+    } else if (anyStageActive) {
+      step.status = 'In Progress';
+    } else if (allStagesDraft) {
+      step.status = 'Draft';
+    }
+  }
 }

@@ -5,6 +5,7 @@ import { listWikiSlugs } from '@/lib/wiki/slugs';
 import { DataTable, type Column } from '@/components/DataTable';
 import { WikiSearch } from '@/components/WikiSearch';
 import { tokens } from '@/lib/tokens';
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 export const metadata: Metadata = {
   title: 'Wiki',
@@ -112,6 +113,7 @@ export default async function WikiIndexPage() {
         margin: '0 auto',
       }}
     >
+      <Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Wiki' }]} />
       <header
         style={{
           marginBottom: tokens.spacing[8],

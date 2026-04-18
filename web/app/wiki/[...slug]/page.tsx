@@ -5,6 +5,7 @@ import { loadGlossaryTerms } from '@/lib/glossary/import';
 import { listWikiSlugs } from '@/lib/wiki/slugs';
 import { GlossaryShell } from '@/components/GlossaryShell';
 import { tokens } from '@/lib/tokens';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import type { PageFrontmatter } from '@/lib/mdx/types';
 import type { GlossaryTerm } from '@/lib/glossary/types';
 
@@ -96,8 +97,10 @@ export default async function WikiPage({
     notFound();
   }
 
+  const wikiCrumbs = [{ label: 'Home', href: '/' }, { label: 'Wiki', href: '/wiki' }]
+
   if (content.kind === 'glossary') {
-    return <GlossaryShell term={content.term} />;
+    return <GlossaryShell term={content.term} crumbs={[...wikiCrumbs, { label: content.term.term }]} />;
   }
 
   // MDX path
@@ -114,6 +117,7 @@ export default async function WikiPage({
         margin: '0 auto',
       }}
     >
+      <Breadcrumb crumbs={[...wikiCrumbs, { label: frontmatter.title }]} />
       <header
         style={{
           marginBottom: tokens.spacing[8],

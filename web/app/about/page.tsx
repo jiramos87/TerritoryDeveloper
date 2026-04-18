@@ -3,6 +3,7 @@ import About from '@/content/pages/about.mdx';
 import { loadMdxPage } from '@/lib/mdx/loader';
 import { tokens } from '@/lib/tokens';
 import { buildPageMetadata } from '@/lib/site/metadata';
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('about');
@@ -23,6 +24,7 @@ export default async function AboutPage() {
         margin: '0 auto',
       }}
     >
+      <Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'About' }]} />
       <header
         style={{
           marginBottom: tokens.spacing[8],

@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { loadDevlogPost } from '@/lib/mdx/loader';
 import { computeReadingTime } from '@/lib/mdx/reading-time';
 import { tokens } from '@/lib/tokens';
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 // ---------------------------------------------------------------------------
 // Static params
@@ -93,6 +94,7 @@ export default async function DevlogPostPage({
         margin: '0 auto',
       }}
     >
+      <Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Devlog', href: '/devlog' }, { label: frontmatter.title }]} />
       <header
         style={{
           marginBottom: tokens.spacing[8],

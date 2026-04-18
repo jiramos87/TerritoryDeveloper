@@ -1,22 +1,18 @@
 import { loadAllPlans } from '@/lib/plan-loader'
-import type { PlanData, TaskRow, TaskStatus } from '@/lib/plan-loader-types'
+import { computePlanMetrics } from '@/lib/plan-parser'
+import type { PlanData, TaskRow } from '@/lib/plan-loader-types'
 import { BadgeChip } from '@/components/BadgeChip'
 import { DataTable } from '@/components/DataTable'
 import type { Column } from '@/components/DataTable'
 import { FilterChips } from '@/components/FilterChips'
 import type { Chip } from '@/components/FilterChips'
+import { CollapsibleFilterRow } from '@/components/CollapsibleFilterRow'
 import { StatBar } from '@/components/StatBar'
 import PlanChartClient from '@/components/PlanChartClient'
 import { toBadgeStatus } from './_status'
 import { parseFilterValues, toggleFilterParam } from '@/lib/dashboard/filter-params'
 import { Button } from '@/components/Button'
-
-/** Terminal task statuses counted as "done" for plan completion ratio. */
-const DONE_STATUSES: ReadonlySet<TaskStatus> = new Set(['Done (archived)', 'Done'])
-/** Task statuses counted as "pending" for chart aggregation. */
-const PENDING_STATUSES: ReadonlySet<TaskStatus> = new Set(['_pending_', 'Draft'])
-/** Task statuses counted as "in progress" for chart aggregation. */
-const IN_PROGRESS_STATUSES: ReadonlySet<TaskStatus> = new Set(['In Progress', 'In Review'])
+import { Breadcrumb } from '@/components/Breadcrumb'
 
 /** Derive a URL slug from a plan title (lowercase, hyphens). */
 function toSlug(title: string): string {
@@ -154,13 +150,13 @@ export default async function DashboardPage({
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 space-y-10">
+      <Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Dashboard' }]} />
       {/* Filter chip groups */}
       <div className="space-y-2">
         {planChips.length > 0 && (
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-xs text-text-muted font-mono w-14 shrink-0">Plan</span>
+          <CollapsibleFilterRow label="Plan" activeCount={multi.plan.length}>
             <FilterChips chips={planChips} />
-          </div>
+          </CollapsibleFilterRow>
         )}
         {statusChips.length > 0 && (
           <div className="flex items-center gap-3 flex-wrap">
@@ -185,20 +181,7 @@ export default async function DashboardPage({
         <p className="text-text-muted text-sm">No plans match the current filters.</p>
       ) : (
         plans.map((plan) => {
-          const totalCount = plan.allTasks.length
-          const completedCount = plan.allTasks.filter((t) => DONE_STATUSES.has(t.status)).length
-          const statBarLabel = `${completedCount} / ${totalCount} done`
-          const chartData = plan.steps.map((step) => {
-            const stepTasks = plan.allTasks.filter((t) =>
-              t.id.startsWith('T' + step.id + '.')
-            )
-            return {
-              label:      step.title,
-              pending:    stepTasks.filter((t) => PENDING_STATUSES.has(t.status)).length,
-              inProgress: stepTasks.filter((t) => IN_PROGRESS_STATUSES.has(t.status)).length,
-              done:       stepTasks.filter((t) => DONE_STATUSES.has(t.status)).length,
-            }
-          })
+          const { completedCount, totalCount, statBarLabel, chartData, stepCounts } = computePlanMetrics(plan)
           return (
           <section key={plan.title} className="space-y-6">
             {/* Plan heading */}
@@ -212,9 +195,7 @@ export default async function DashboardPage({
 
             {/* Step / Stage hierarchy */}
             {plan.steps.map((step) => {
-              const stepTasks = plan.allTasks.filter((t) => t.id.startsWith('T' + step.id + '.'))
-              const stepDone  = stepTasks.filter((t) => DONE_STATUSES.has(t.status)).length
-              const stepTotal = stepTasks.length
+              const { done: stepDone, total: stepTotal } = stepCounts[step.id] ?? { done: 0, total: 0 }
               return (
               <div key={step.id} className="space-y-4 pl-2 border-l-2 border-border-subtle">
                 {/* Step heading */}

@@ -1,16 +1,18 @@
 import type { ReactNode } from 'react';
 import type { GlossaryTerm } from '@/lib/glossary/types';
 import { tokens } from '@/lib/tokens';
+import { Breadcrumb, type Crumb } from '@/components/Breadcrumb';
 
 interface Props {
   term: GlossaryTerm;
+  crumbs?: Crumb[];
 }
 
 /**
  * Renders a minimal wiki shell for a glossary-derived term.
  * Used by /wiki/[...slug] when no hand-authored MDX exists for the slug.
  */
-export function GlossaryShell({ term }: Props): ReactNode {
+export function GlossaryShell({ term, crumbs }: Props): ReactNode {
   return (
     <main
       style={{
@@ -23,6 +25,7 @@ export function GlossaryShell({ term }: Props): ReactNode {
         margin: '0 auto',
       }}
     >
+      {crumbs && <Breadcrumb crumbs={crumbs} />}
       <header
         style={{
           marginBottom: tokens.spacing[8],

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import type { DevlogFrontmatter } from '@/lib/mdx/types';
 import { computeReadingTime } from '@/lib/mdx/reading-time';
 import { tokens } from '@/lib/tokens';
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 export const metadata: Metadata = {
   title: 'Devlog — Territory',
@@ -89,6 +90,7 @@ export default async function DevlogListPage() {
         margin: '0 auto',
       }}
     >
+      <Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Devlog' }]} />
       <header
         style={{
           marginBottom: tokens.spacing[8],

@@ -5,6 +5,7 @@ import { tokens } from '@/lib/tokens';
 import { BadgeChip } from '@/components/BadgeChip';
 import type { Status } from '@/components/BadgeChip';
 import { buildPageMetadata } from '@/lib/site/metadata';
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('install');
@@ -37,6 +38,7 @@ export default async function InstallPage() {
         margin: '0 auto',
       }}
     >
+      <Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Install' }]} />
       <header
         style={{
           marginBottom: tokens.spacing[8],

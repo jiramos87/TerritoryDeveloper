@@ -7,6 +7,7 @@ import { TIMELINE_ROWS } from '@/content/pages/history-timeline';
 import type { TimelineRow } from '@/content/pages/history-timeline';
 import type { Column } from '@/components/DataTable';
 import { buildPageMetadata } from '@/lib/site/metadata';
+import { Breadcrumb } from '@/components/Breadcrumb';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('history');
@@ -33,6 +34,7 @@ export default async function HistoryPage() {
         margin: '0 auto',
       }}
     >
+      <Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'History' }]} />
       <header
         style={{
           marginBottom: tokens.spacing[8],

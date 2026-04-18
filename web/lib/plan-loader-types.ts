@@ -62,3 +62,29 @@ export interface PlanData {
   steps: Step[];
   allTasks: TaskRow[];         // flat list across all steps/stages (convenience)
 }
+
+/** Per-step task-count breakdown for chart rendering. */
+export interface StepChartBar {
+  label: string;      // step title
+  pending: number;
+  inProgress: number;
+  done: number;
+}
+
+/** Per-step done / total counts. */
+export interface StepTaskCounts {
+  done: number;
+  total: number;
+}
+
+/** Pre-computed dashboard metrics for one PlanData. Derived by computePlanMetrics(). */
+export interface PlanMetrics {
+  completedCount: number;
+  totalCount: number;
+  /** Formatted "X / Y done" label for StatBar. */
+  statBarLabel: string;
+  /** Per-step chart breakdown (parallel to plan.steps). */
+  chartData: StepChartBar[];
+  /** Per-step done/total counts, keyed by step.id. */
+  stepCounts: Record<string, StepTaskCounts>;
+}

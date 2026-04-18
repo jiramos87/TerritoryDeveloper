@@ -405,6 +405,26 @@ App-wide nav at `web/components/Sidebar.tsx`. Wired into `web/app/layout.tsx` in
 - Prod warning: **NEVER** set `DASHBOARD_AUTH_SKIP` on Vercel — prod must stay gated; env var absent on Vercel (`undefined`) → bypass never fires.
 - Surface: `web/middleware.ts` reads env var before cookie lookup.
 
+## Backend logic / frontend render boundary
+
+Rule authority: [`ia/rules/web-backend-logic.md`](../ia/rules/web-backend-logic.md).
+
+**Derivation, aggregation, parsing, status-inference, and any non-trivial transformation live in backend modules** — `web/lib/**`, route handlers, server components' data-loading paths. Frontend / client components consume already-shaped props and render only.
+
+Practical contract:
+
+- Status badges, progress counts, rollup percentages, "done / total" figures → computed in loader/parser, passed as props.
+- If a component needs data the loader does not yet expose: **add a field to the loader's return type**; do not compute it in-component.
+- Client-side reactive state (form inputs, expand/collapse, modal open) is fine in client components — that is UI state, not business logic.
+
+Entry points for pre-computed metrics:
+
+| Lib function | Returns | Used by |
+|---|---|---|
+| `computePlanMetrics(plan)` | `PlanMetrics` — completedCount, totalCount, statBarLabel, chartData, stepCounts | `web/app/dashboard/page.tsx` |
+
+Source: `web/lib/plan-parser.ts`. Types: `web/lib/plan-loader-types.ts`.
+
 ## Caveman exception boundary
 
 Full English (marketing-style prose) applies **only** to:
