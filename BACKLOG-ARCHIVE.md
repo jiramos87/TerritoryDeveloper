@@ -2,6 +2,93 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
+- [x] **TECH-330** — Remediate **critical** + **major** findings from `feature/master-plans-1` self-review (2026-04-17)
+  - Type: code health / IA remediation
+  - Files: `docs/backlog-yaml-mcp-alignment-exploration.md`, `docs/mcp-lifecycle-tools-opus-4-7-audit-exploration.md`, `docs/ship-stage-exploration.md`, `docs/web-platform-post-mvp-extensions.md`, `docs/release-rollout-model-audit.md`, `ia/skills/stage-file/SKILL.md`, `ia/skills/project-new/SKILL.md`, `ia/skills/release-rollout-enumerate/SKILL.md`, `ia/skills/release-rollout-track/SKILL.md`, `ia/skills/project-spec-close/SKILL.md`, `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/scripts/materialize-backlog.sh`, `.claude/agents/stage-decompose.md`, `ia/projects/full-game-mvp-rollout-tracker.md`
+  - Spec: (removed after closure)
+  - Notes: Closed 5 critical (C1–C5) + 10 major (M1–M10) + Q1. C1 lifecycle-tools-audit owns MCP mutation surface, alignment doc = appendix. C2 `stage-file` batch-reserves + forwards `--reserved-id {ID}` to `project-new` (invariant #13 preserved). C3 (f)-signal collapsed — both `release-rollout-enumerate` + `release-rollout-track` use paired-record check. C4 yaml-loader logs stderr + surfaces `parseErrorCount` metadata. C5 closeout lock scope separated — `.closeout.lock` + `in-flight-closeouts.schema.json` + 24h TTL purge. M5 dead post-migration fallbacks swept. M6 `materialize-backlog.sh` flocked. Q1 `validate-backlog-yaml.ts` canonical, `.mjs` deleted. Sibling TECH filed for Sonnet promotion of release-rollout helpers (M9 decision). Decision Log persisted to `ia_project_spec_journal`.
+  - Acceptance: criticals + majors landed per §6; Q1 executed; `validate:all` green; lessons migrated (MEMORY.md + invariants guardrail).
+
+- [x] **TECH-323** — Extract shared lint core `backlog-record-schema.ts` (Stage 1.2 Phase 1) (2026-04-17)
+  - Type: infrastructure / MCP tooling
+  - Files: `tools/mcp-ia-server/src/parser/backlog-record-schema.ts`, `tools/validate-backlog-yaml.ts`
+  - Spec: (removed after closure)
+  - Notes: Extracted pure `validateBacklogRecord(yamlBody) → { ok, errors, warnings }` + rule-id constants (`E_MISSING_FIELD`, `E_BAD_ID_FORMAT`, `E_BAD_STATUS`, `E_EMPTY_DEPENDS_ON_RAW`). Single canonical yaml parser (`parseYamlScalars`). Validator renamed `.mjs` → `.ts` + run via `npx tsx` (zero-config — `validate:backlog-yaml` runs before `compute-lib:build` in `validate:all`). Unblocks TECH-324.
+  - Acceptance: shared core pure; validator delegates; lint byte-stable vs baseline; `npm run validate:all` green.
+  - Related: TECH-324, TECH-325
+
+- [x] **TECH-301** — Round-trip soft-dep marker integration test (Stage 1.1 Phase 3) (2026-04-17)
+  - Type: test / regression
+  - Files: `tools/mcp-ia-server/tests/tools/backlog-issue.test.ts`
+  - Spec: (removed at closeout — test-regression issue; no Lessons Learned; Decision Log in git history)
+  - Notes: Integration test at MCP-tool layer — tmp-root yaml fixtures (`soft: FEAT-12` + plain), asserts `soft_only` classifies correctly. `[optional]` deferred. Regression guard for TECH-297. `npm run validate:all` green.
+  - Acceptance: Two tests cover soft + plain; guards lossy `array.join` revert; validate green.
+  - Depends on: TECH-297
+
+- [x] **TECH-300** — Surface new fields in `backlog_issue` + `backlog_search` payloads (Stage 1.1 Phase 3) (2026-04-17)
+  - Type: infrastructure / MCP tooling
+  - Files: `tools/mcp-ia-server/src/tools/backlog-issue.ts`, `tools/mcp-ia-server/src/tools/backlog-search.ts`, `tools/mcp-ia-server/tests/tools/backlog-issue.test.ts`, `tools/mcp-ia-server/tests/tools/backlog-search.test.ts`
+  - Spec: (removed at closeout — tooling-only issue; Decision Log in git history; no Lessons Learned)
+  - Notes: Extended `backlog_search` results projection w/ `priority`/`related`/`created`; `backlog_issue` already spread fields via `...parsed`. New `backlog-issue.test.ts` + extended `backlog-search.test.ts` + `build-registry.test.ts` snapshot. `npm run validate:all` green.
+  - Acceptance: Payloads expose three new fields; snapshot tests updated; `npm run validate:all` green.
+  - Depends on: TECH-295, TECH-296
+
+- [x] **TECH-299** — Execute `proposed_solution` decision (Stage 1.1 Phase 2) (2026-04-17)
+  - Type: infrastructure / MCP tooling
+  - Files: `tools/mcp-ia-server/src/parser/backlog-parser.ts`, `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/scripts/migrate-backlog-to-yaml.mjs`, `tools/validate-backlog-yaml.mjs`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; tooling-only issue; full prose in git history only)
+  - Notes: Executed Option A (drop) per TECH-298 decision. Removed `proposed_solution?: string` from `ParsedBacklogIssue` + `scrapeIssueFields`, dropped `"proposed solution"` header remap, removed field assignment. No yaml schema / loader / validator / fixture change. Regression test added.
+  - Acceptance: `proposed_solution` removed end-to-end; regression test lands; `npm run validate:all` green.
+  - Depends on: TECH-298
+
+- [x] **TECH-298** — Grep-audit `proposed_solution` consumers (Stage 1.1 Phase 2) (2026-04-17)
+  - Type: audit / decision
+  - Files: `tools/mcp-ia-server/src/parser/backlog-parser.ts`, `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; audit-only issue; full prose in git history only)
+  - Notes: Audit confirmed 4 producer-only hits in `backlog-parser.ts` (lines 41, 140, 151, 163); zero downstream readers across tools/, ia/backlog*/, tests, migrate script. Decision locked Option A (drop field). Unblocks TECH-299 execution scope = remove 4 parser lines + `"proposed solution"` header remap; no yaml schema change.
+  - Acceptance: Consumer list enumerated; decision (Option A) + rationale recorded; TECH-299 unblocked; no code change.
+  - Related: TECH-299
+
+- [x] **TECH-297** — Fix `depends_on_raw` soft-marker fallback (Stage 1.1 Phase 1) (2026-04-17)
+  - Type: infrastructure / MCP tooling (correctness fix)
+  - Files: `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/mcp-ia-server/tests/parser/backlog-yaml-loader.test.ts`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; tooling-only regression fixture + dead-sentinel cleanup; full prose in git history only)
+  - Notes: Loader precedence already raw-first — delivery was (a) regression fixtures D/E/F in `backlog-yaml-loader.test.ts` locking soft-marker survival (`"FEAT-12 (soft)"` preserved verbatim), fallback synthesis when raw absent (lossy, documented), empty-raw string falls back to array; (b) dropped dead `rec.depends_on_raw !== '""'` sentinel (unreachable post-`unquote`); (c) chain-through assertion on `resolveDependsOnStatus` classifying `(soft)` kind. Upstream emitter always writes `depends_on_raw` — lossy path only hit on malformed hand-edits. Validator schema enforcement deferred to Stage 2.2 / IP8.
+  - Acceptance: Fallback prefers yaml source; soft markers survive loader; fixtures D/E/F green; `npm run validate:all` green.
+  - Related: TECH-295, TECH-296, TECH-301
+
+- [x] **TECH-296** — Map new fields in yaml loader (Stage 1.1 Phase 1) (2026-04-17)
+  - Type: infrastructure / MCP tooling
+  - Files: `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/mcp-ia-server/tests/parser/backlog-yaml-loader.test.ts`
+  - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; tooling-local loader mapping; full prose in git history only)
+  - Notes: `yamlToIssue` sets `priority`, `related`, `created` from yaml record. Markdown-path callers default to `null` / `[]` when yaml absent. Cover existing fixtures + at least one new fixture with all three fields populated. Depends on TECH-295 type shape.
+  - Acceptance: Loader maps all three fields; markdown fallback defaults safe; new fixture covers populated + absent cases; `npm run validate:all` green.
+  - Related: TECH-295, TECH-297, TECH-300
+
+- [x] **TECH-295** — Extend `ParsedBacklogIssue` shape (Stage 1.1 Phase 1) (2026-04-17)
+  - Type: infrastructure / MCP tooling
+  - Files: `tools/mcp-ia-server/src/parser/backlog-parser.ts`, `tools/mcp-ia-server/src/parser/types.ts`
+  - Spec: (removed at closeout — tooling-only type extension; Decision Log in git history only)
+  - Notes: Add `priority: string | null`, `related: string[]`, `created: string | null` to `ParsedBacklogIssue`. Update dependent type exports. No behavior change — loader mapping lands in TECH-296. Stage-shared context: IP1 field extension + soft-dep marker preservation bug fix; MCP tool surface must expose priority/related/created downstream.
+  - Acceptance: Type gains three new fields; all dependent exports compile; no loader / MCP payload change yet; `npm run validate:all` green.
+  - Related: TECH-296, TECH-297, TECH-300
+
+- [x] **TECH-294** — Web workspace — audit + refactor components to move business logic into backend loaders/parsers (2026-04-17)
+  - Type: tech (web / refactor)
+  - Files: `web/app/**`, `web/components/**`, `web/lib/**`, `web/README.md`, `ia/rules/web-backend-logic.md`, `ia/projects/web-platform-master-plan.md`
+  - Spec: (removed at closeout — Decision Log + Lessons persisted to `ia_project_spec_journal`; canonical rule `ia/rules/web-backend-logic.md` already authoritative; full prose in git history only)
+  - Notes: Audit + migration of business logic out of `web/app/**` + `web/components/**` into `web/lib/**` per rule `ia/rules/web-backend-logic.md`. Phase 2 audit surfaced 3 status sets + 4 inline derivations in `dashboard/page.tsx` (`DONE_STATUSES`, `PENDING_STATUSES`, `IN_PROGRESS_STATUSES`, `completedCount`, `statBarLabel`, `chartData`, `stepDone/stepTotal`). Phase 3 moved all hits to `computePlanMetrics()` in `plan-parser.ts`; new types `PlanMetrics`, `StepChartBar`, `StepTaskCounts` in `plan-loader-types.ts`; page destructures pre-computed fields. `new Date()` hits in `feed.xml/route.ts` + `sitemap.ts` classified server-route utility (not a violation). Boundary note landed in `web/README.md`. `npm run validate:web` green.
+  - Acceptance: audit report landed (7 hits); each migrated to `web/lib/**` w/ typed return extended; no component embeds status inference / aggregation / markdown re-parsing / business-rule rollups; `npm run validate:web` exit 0; dashboard + feed + wiki visual parity confirmed; boundary note landed in `web/README.md`; rule `ia/rules/web-backend-logic.md` cited.
+  - Related: `ia/rules/web-backend-logic.md`; `ia/projects/web-platform-master-plan.md`; `web/lib/plan-parser.ts` (`deriveHierarchyStatus`, `computePlanMetrics`)
+
+- [x] **TECH-289** — Split BACKLOG into per-issue YAML — parallel-safe stage-file / closeout (2026-04-17)
+  - Type: tech (infra / agent orchestration concurrency)
+  - Files: `BACKLOG.md`, `BACKLOG-ARCHIVE.md`, `ia/backlog/**`, `ia/backlog-archive/**`, `ia/state/id-counter.json`, `tools/scripts/reserve-id.sh`, `tools/scripts/materialize-backlog.sh`, `tools/scripts/migrate-backlog-to-yaml.mjs`, `tools/mcp-ia-server/src/parser/backlog-parser.ts`, `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`, `tools/validate-backlog-yaml.mjs`, `ia/skills/{project-new,stage-file,project-spec-close,project-stage-close,master-plan-new,master-plan-extend,stage-decompose,release-rollout-enumerate,release-rollout-track,release-rollout}/SKILL.md`, `CLAUDE.md`, `AGENTS.md`, `docs/agent-lifecycle.md`, `ia/rules/invariants.md`, `ia/rules/terminology-consistency.md`, `ia/specs/glossary.md`
+  - Spec: (removed at closeout — Decision Log + Lessons persisted to `ia_project_spec_journal`; yaml backlog model + materializer + reserve-id lock documented in `CLAUDE.md` §3, `AGENTS.md`, `docs/agent-lifecycle.md`, `ia/rules/invariants.md`, `ia/rules/terminology-consistency.md`, `ia/specs/glossary.md` (Backlog record / Backlog view rows); tooling lessons in `MEMORY.md`; full prose in git history only)
+  - Notes: Shipped per-issue yaml backlog (`ia/backlog/*.yaml` open, `ia/backlog-archive/*.yaml` closed) w/ monotonic id counter `ia/state/id-counter.json` under `flock` via `tools/scripts/reserve-id.sh` (env-var overrides `IA_COUNTER_FILE` / `IA_COUNTER_LOCK` for test isolation). `tools/scripts/materialize-backlog.sh` regenerates `BACKLOG.md` + `BACKLOG-ARCHIVE.md` as read-only **backlog view** artifact (round-trip diff gate). All writer skills (`project-new`, `stage-file`, `project-spec-close`, `project-stage-close`, `master-plan-new`, `master-plan-extend`, `stage-decompose`, `release-rollout-enumerate`, `release-rollout-track`) + MCP readers migrated; public response shapes (`backlog_issue`, `backlog_search`) unchanged. Glossary rows **Backlog record** + **Backlog view** added. Skipped `flock` on read-only validators (no corruption risk). Dashboard `/dashboard` renders via ISR.
+  - Acceptance: all writer skills + MCP readers migrated; `npm run validate:all` green; round-trip `migrate → materialize → diff` = empty; reserve-id 8-way concurrency smoke 8 distinct ids; glossary rows + indexes regen; `npm run validate:backlog-yaml` exists + green; public MCP response shapes unchanged.
+  - Related: `ia/specs/glossary.md` **Backlog record** / **Backlog view**
+
 - [x] **TECH-284** — Dashboard filter e2e spec (Stage 6.3) (2026-04-17)
   - Type: tooling / e2e tests
   - Files: `web/tests/dashboard-filters.spec.ts` (new)
