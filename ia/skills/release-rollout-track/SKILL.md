@@ -55,6 +55,10 @@ Per NEW domain entity introduced by this row (read from child master-plan Object
 
 All pass → (g) `✓`. Any fail → (g) `—` with Skill Iteration Log note naming unresolved terms (route to `release-rollout-skill-bug-log` helper).
 
+### Phase 1b — Column (f) filed-signal verify (only when `TARGET_COL = (f)` AND `NEW_MARKER = ✓` or `◐`)
+
+**Filed signal:** `ia/backlog/{ISSUE_ID}.yaml` exists AND `ia/projects/{ISSUE_ID}*.md` exists — both sides required to count (f). Check via `Glob ia/backlog/*.yaml` + `Glob ia/projects/{slug}*.md`. Any `ia/backlog/{id}.yaml` present for slug with no matching `ia/projects/{id}*.md` → (f) = `◐` (partially filed); zero yaml records found → `—`.
+
 ### Phase 2 — Cell flip
 
 Edit `{TRACKER_SPEC}`. Find row line `| {ROW_SLUG} |`. Replace target column cell with `{NEW_MARKER} ({TICKET})`. Preserve other columns verbatim.

@@ -113,18 +113,19 @@ Run in task-table order (T{stage}.1, T{stage}.2, …).
 
 For each `_pending_` task:
 
-1. Scan `BACKLOG.md` + `BACKLOG-ARCHIVE.md` for highest id in `ISSUE_PREFIX` → assign `max+1`.
-2. Construct seed prompt (above) with task-specific fields + shared context block.
+1. **Batch-reserve ids first.** Run `bash tools/scripts/reserve-id.sh {ISSUE_PREFIX}` once per `_pending_` task (N calls total) **before filing any task**. Collect all N reserved ids. Invariant #13: `reserve-id.sh` is the only writer; no hand-editing the counter.
+2. Construct seed prompt (above) with task-specific fields + shared context block. **Append `--reserved-id {ID}` at the end** using the pre-reserved id for this task. `project-new` will use the forwarded id verbatim and skip calling `reserve-id.sh` itself.
 3. Follow `project-new` **File and backlog checklist** (steps 1–7 minus validate:all):
-   - Add BACKLOG row under correct lane (match orchestrator's lane — `§ Multi-scale simulation lane` for multi-scale orchestrator tasks).
+   - Write `ia/backlog/{ISSUE_ID}.yaml` from the yaml schema (id, type, title, priority, status: open, section, spec, files, notes, acceptance, depends_on, depends_on_raw, related, created, raw_markdown). Every cited Depends-on id must exist in `ia/backlog/` or `ia/backlog-archive/`. **Do NOT** edit `BACKLOG.md` directly — the materialize post-hook regenerates it.
    - Bootstrap `ia/projects/{ISSUE_ID}.md` from `ia/templates/project-spec-template.md`.
    - Fill §1 Summary + §2.1 Goals from task intent + stage context.
    - Fill §4.2 Systems map from router domains + pre-loaded spec sections.
    - Fill §7 Implementation Plan sketch from task intent (single phase is fine at stub level).
-   - Set `Spec: ia/projects/{ISSUE_ID}.md` on backlog row.
+   - Set `spec` field on `ia/backlog/{ISSUE_ID}.yaml` to `ia/projects/{ISSUE_ID}.md`.
    - Verify any Depends-on ids via `backlog_issue` (stage-level deps apply to all tasks).
    - Run `npm run validate:dead-project-specs` per task.
-4. Record assigned issue id + file path for task table update.
+4. After all yaml records written, run `bash tools/scripts/materialize-backlog.sh` once to regenerate `BACKLOG.md`.
+5. Record assigned issue id + file path for task table update.
 
 ## Compress mode
 
@@ -182,8 +183,9 @@ For each confirmed merge group:
 
 2. **Close source specs:** for each task in the group:
    - Delete `ia/projects/{ISSUE_ID}.md`.
-   - Move BACKLOG row to `BACKLOG-ARCHIVE.md` with note: `superseded by {new-id} — stage compress ({STAGE_ID})`.
+   - Move `ia/backlog/{ISSUE_ID}.yaml` → `ia/backlog-archive/{ISSUE_ID}.yaml`; set `status: closed`; update Notes: `superseded by {new-id} — stage compress ({STAGE_ID})`.
    - Run `npm run validate:dead-project-specs` after each deletion.
+   After all source specs closed, run `bash tools/scripts/materialize-backlog.sh` once to regenerate `BACKLOG.md`.
 
 3. **Create merged issue:** run `project-new` workflow with the confirmed merged intent + stage context block + harvested spec content (from step 1). Merged spec absorbs the combined scope of all source tasks.
 

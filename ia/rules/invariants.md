@@ -21,6 +21,7 @@ alwaysApply: true
 10. Road placement: always through the **road preparation family** ending in `PathTerraformPlan` + Phase-1 + `Apply` — never `ComputePathPlan` alone
 11. `UrbanizationProposal`: NEVER re-enable — obsolete (see **glossary** **Urbanization proposal**)
 12. Specs under `ia/specs/` for permanent domains only; use `ia/projects/` for issue-specific specs
+13. Monotonic id source = `ia/state/id-counter.json` via `tools/scripts/reserve-id.sh`; never hand-edit the counter file or the `id:` field of an existing yaml record
 
 # Guardrails (IF → THEN)
 
@@ -33,3 +34,4 @@ alwaysApply: true
 - IF placing or removing water → THEN call `RefreshShoreTerrainAfterWaterUpdate`
 - IF closing a project spec → THEN migrate lessons learned to canonical docs before deleting
 - IF creating a project spec → THEN use `ia/templates/project-spec-template.md`, name `{ISSUE_ID}.md` under `ia/projects/`
+- IF adding a `flock` guard on a mutation path → THEN dedicate a distinct lockfile per concurrency domain (id-counter → `.id-counter.lock`; closeout → `.closeout.lock`; materialize-backlog → `.materialize-backlog.lock`); read-only validators skip `flock` entirely

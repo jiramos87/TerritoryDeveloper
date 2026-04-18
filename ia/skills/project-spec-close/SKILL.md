@@ -55,6 +55,7 @@ After archiving, search repo for closed issue id — remove/rewrite every hit **
 
 Run in order. N/A → state why in chat.
 
+0. **Disjoint-purge pre-flight** — before any destructive op: `rg --fixed-strings "{ISSUE_ID}" ia/ docs/ Assets/ ARCHITECTURE.md tools/ | grep -v "ia/backlog\|ia/backlog-archive\|ia/projects/{ISSUE_ID}"` → collect hit-file set. Acquire `flock ia/state/.closeout.lock` (separate from the id-counter lock — do NOT use `.id-counter.lock` for closeout concurrency). Under that lock: (a) read `ia/state/in-flight-closeouts.json` (create empty `[]` if absent); (b) drop entries with `started_at` older than 24 h (TTL purge); (c) check if any remaining entry's `hit_files` overlaps your hit-file set → STOP if overlap; (d) append `{ "issue_id": "{ISSUE_ID}", "started_at": "{ISO-8601-now}", "pid": <PID>, "hit_files": [...] }`; (e) rewrite file; (f) release lock. De-register entry in `in-flight-closeouts.json` (under `.closeout.lock`) on step 10 complete. Schema: `ia/state/in-flight-closeouts.schema.json`.
 1. **Verify precondition** — confirm implementation phases ticked in spec (read spec; stop if unticked phases found).
 2. **`backlog_issue`** — refresh Files, Notes, Depends on, Acceptance, `depends_on_status`. Hard dep unsatisfied → resolve or user override.
 3. **`project_spec_closeout_digest`** — structured extract. Unavailable → `read_file` fallback.
@@ -66,7 +67,7 @@ Run in order. N/A → state why in chat.
 6b. **Orchestrator stage-complete check** — After flipping task → `Done`, scan the parent stage's task table. If **all** tasks in that stage are now `Done` or `Done (archived)`, **automatically run `project-stage-close` inline on the orchestrator** before continuing to step 7. Do not surface a reminder and wait — execute the 8-step `project-stage-close` procedure immediately so the stage handoff is part of the same atomic closeout.
 7. **Delete** `ia/projects/{ISSUE_ID}.md` — only after J1 succeeded/waived/skipped.
 8. **Cascade** — `npm run validate:dead-project-specs`; fix hits or advisory with reason.
-9. **BACKLOG + archive** — Remove row from BACKLOG. Append `[x]` row with date to BACKLOG-ARCHIVE; `Spec:` → removed-after-closure pattern; Notes cite where content migrated.
+9. **BACKLOG + archive** — Move `ia/backlog/{ISSUE_ID}.yaml` to `ia/backlog-archive/{ISSUE_ID}.yaml`; set `status: closed` and update Notes to cite where content migrated; set `spec: ""` (removed-after-closure). Run `bash tools/scripts/materialize-backlog.sh` to regenerate `BACKLOG.md` + `BACKLOG-ARCHIVE.md`. **Do NOT** edit `BACKLOG.md` or `BACKLOG-ARCHIVE.md` directly.
 9b. **Regenerate progress dashboard** — `npm run progress` (repo root). Reflects `Done (archived)` state in `docs/progress.html`. Deterministic — no diff when already current. Log exit code; failure does NOT block close (tooling-only). Web dashboard (https://web-nine-wheat-35.vercel.app/dashboard) auto-refreshes within ~5 min from the deployed branch via ISR — no Vercel deploy required on close. For instant refresh, run `npm run deploy:web` manually.
 10. **Id purge** — Per section above for `{ISSUE_ID}`.
 11. **I1** — If glossary/spec bodies changed, `npm run generate:ia-indexes` + `--check`.
@@ -105,6 +106,6 @@ Replace `{SPEC_PATH}` and `{ISSUE_ID}` (and optional umbrella id in **Multi-issu
 ```markdown
 Close @{SPEC_PATH} (issue **{ISSUE_ID}**) following **project-spec-close**’s **IA persistence checklist**, **Tool recipe**, and **Id purge** in order.
 **Before** deleting the project spec: migrate content into [glossary](../../../ia/specs/glossary.md), [`ia/specs/`](../../../ia/specs/), [`ARCHITECTURE.md`](../../../ARCHITECTURE.md), [`ia/rules/`](../../../ia/rules/), [`docs/`](../../../docs/), and **MCP** docs if tools changed — per [terminology-consistency](../../../ia/rules/terminology-consistency.md) (no backlog ids in durable IA).
-Reconcile umbrella/sibling `ia/projects/*.md` if applicable. **Then** delete the project spec, run `npm run validate:dead-project-specs`, **remove the row from BACKLOG.md**, **append to BACKLOG-ARCHIVE.md**, and **strip `{ISSUE_ID}`** from the rest of the repo (except open BACKLOG rows and archive).
+Reconcile umbrella/sibling `ia/projects/*.md` if applicable. **Then** delete the project spec, run `npm run validate:dead-project-specs`, **move `ia/backlog/{ISSUE_ID}.yaml` → `ia/backlog-archive/{ISSUE_ID}.yaml`** (status: closed), run `bash tools/scripts/materialize-backlog.sh`, and **strip `{ISSUE_ID}`** from the rest of the repo (except open BACKLOG rows and archive).
 Use **territory-ia**: `backlog_issue` → `project_spec_closeout_digest` → `router_for_task` / `spec_section` / `spec_sections` / `glossary_*` / `list_rules` as needed → **`project_spec_journal_persist`** when **`DATABASE_URL`** is set → `invariants_summary` if runtime or guardrails touched. Optional: `npm run closeout:dependents -- --issue {ISSUE_ID}` before umbrella/sibling edits.
 ```

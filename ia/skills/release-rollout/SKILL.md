@@ -136,11 +136,12 @@ Read-only `OPERATION = status` → emit tracker snapshot without edits. Return: 
 
 After tracker update (or on `OPERATION = next`), emit Tier-ordered next-row pick. Heuristic:
 
-1. Tier A (foundations — save-schema v2→v3 owned by Bucket 3 zone-s-economy) first if (c) `—`.
-2. Tier B/B' (parallel polish — city-sim-depth, ui-polish, sprite-gen, blip) — pick row closest to column (f) without parallel-work conflict.
-3. Tier C (spine — utilities + landmarks + zone-s-economy spine integration) only AFTER Tier A (c).
-4. Tier D (CityStats + web-platform parity) — after column (d) on all Tier B rows.
-5. Tier E (distribution) — last.
+1. **Skip `sibling` rows.** Tracker rows whose Tier column = `sibling` are side-quest features — NOT part of the MVP critical path. Skip them unless the user explicitly asks to advance a sibling row (e.g. by passing `ROW_SLUG = music-player` directly). Never surface a sibling row as the next recommended MVP action.
+2. Tier A (foundations — save-schema v2→v3 owned by Bucket 3 zone-s-economy) first if (c) `—`.
+3. Tier B/B' (parallel polish — city-sim-depth, ui-polish, sprite-gen, blip) — pick row closest to column (f) without parallel-work conflict.
+4. Tier C (spine — utilities + landmarks + zone-s-economy spine integration) only AFTER Tier A (c).
+5. Tier D (CityStats + web-platform parity) — after column (d) on all Tier B rows.
+6. Tier E (distribution) — last.
 
 Parallel-work rule: NEVER emit two sibling rows at same Tier with both targeting `/stage-file` or `/closeout` concurrently. Sequence instead.
 

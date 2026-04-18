@@ -33,7 +33,7 @@ Create a new backlog issue and initial project spec from this description:
 
 {USER_PROMPT}
 
-Follow `ia/skills/project-new/SKILL.md`: run the Tool recipe (territory-ia), then add the row to `BACKLOG.md`, create `ia/projects/{ISSUE_ID}.md` from `ia/templates/project-spec-template.md`, set `Spec:` on the backlog row, and link Depends on / Related with verified ids only. Run `npm run validate:dead-project-specs` before finishing the PR.
+Follow `ia/skills/project-new/SKILL.md`: run the Tool recipe (territory-ia), then write `ia/backlog/{ISSUE_ID}.yaml`, create `ia/projects/{ISSUE_ID}.md` from `ia/templates/project-spec-template.md`, run `bash tools/scripts/materialize-backlog.sh`, and link Depends on / Related with verified ids only. Run `npm run validate:dead-project-specs` before finishing the PR.
 ```
 
 ## Stage context injection (called from `stage-file`)
@@ -78,9 +78,11 @@ Only when prompt ambiguous/cross-cutting or user requests exploration context. `
 ## File and backlog checklist
 
 1. **Prefix** — `BUG-`/`FEAT-`/`TECH-`/`ART-`/`AUDIO-` per [`AGENTS.md`](../../../AGENTS.md).
-2. **Next id** — Scan BACKLOG + BACKLOG-ARCHIVE for highest number in prefix; assign max + 1. Never reuse (monotonic per prefix).
+2. **Next id** — Two paths (never hand-edit the counter):
+   - **Normal path:** Run `bash tools/scripts/reserve-id.sh {PREFIX}` (atomic flock on `ia/state/id-counter.json`). Use the returned id.
+   - **`--reserved-id {ID}` path (called from `stage-file`):** When the seed prompt carries `--reserved-id {ID}`, use that id verbatim. Skip `reserve-id.sh` entirely — `stage-file` already reserved the id via a batch call. Invariant #13 preserved (one writer per call chain).
 3. **Priority section** — Match severity + existing BACKLOG structure. Follow Priority order in AGENTS.md.
-4. **Backlog row** — Type, Files, Notes, `Spec: ia/projects/{ISSUE_ID}.md`, Depends on / Acceptance. Every cited id must exist in BACKLOG (or same edit batch).
+4. **Backlog record** — Write `ia/backlog/{ISSUE_ID}.yaml` from the yaml schema (id, type, title, priority, status: open, section, spec, files, notes, acceptance, depends_on, depends_on_raw, related, created, raw_markdown). Every cited id in Depends on must exist in `ia/backlog/` or `ia/backlog-archive/`. Post-hook: `bash tools/scripts/materialize-backlog.sh` to regenerate `BACKLOG.md`.
 5. **Project spec** — Copy [`project-spec-template.md`](../../templates/project-spec-template.md) → `ia/projects/{ISSUE_ID}.md`. Fill header, Summary, Goals, stub Implementation Plan, Open Questions per [`PROJECT-SPEC-STRUCTURE.md`](../../projects/PROJECT-SPEC-STRUCTURE.md).
 6. **Validate** — `npm run validate:dead-project-specs`.
 7. **Next** — Offer [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md) to refine before implementation.

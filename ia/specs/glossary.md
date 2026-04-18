@@ -232,6 +232,8 @@ slices_via: glossary_lookup
 
 | Term | Definition | Spec |
 |------|-----------|------|
+| **Backlog record** | Canonical per-issue YAML file under `ia/backlog/{ISSUE_ID}.yaml` (open) or `ia/backlog-archive/{ISSUE_ID}.yaml` (closed). Single source of truth for id, type, title, status, section, and spec path. Never hand-edited after reservation; mutated only by `reserve-id.sh`, `stage-file`, `project-new`, and `project-spec-close` skills. | `AGENTS.md` §7, `tools/scripts/reserve-id.sh`, `tools/scripts/materialize-backlog.sh` |
+| **Backlog view** | Generated Markdown `BACKLOG.md` (open rows) and `BACKLOG-ARCHIVE.md` (closed rows) produced by `tools/scripts/materialize-backlog.sh` from **backlog records**. Never hand-edited; always regenerated after yaml writes. | `AGENTS.md` §7, `tools/scripts/materialize-backlog.sh` |
 | **Reference spec** | Permanent Markdown under `ia/specs/` defining domain behavior and vocabulary. Contrasts with **project spec** (temporary, issue-scoped). | [REFERENCE-SPEC-STRUCTURE.md](REFERENCE-SPEC-STRUCTURE.md), `AGENTS.md` §4 |
 | **Project spec** | Temporary Markdown under `ia/projects/{ISSUE_ID}.md` for an active backlog item. Deleted after verified completion once normative content migrates to **reference specs** / **glossary** / `docs/`. | [PROJECT-SPEC-STRUCTURE.md](../projects/PROJECT-SPEC-STRUCTURE.md), `AGENTS.md` §4 |
 | **Interchange JSON (artifact)** | Tooling and config JSON distinct from player **Save data**. Payloads carry `artifact` id and optional `schema_version`. Not part of **Load pipeline**. | `ARCHITECTURE.md` §Interchange JSON, [`docs/schemas/README.md`](../../docs/schemas/README.md), persist |

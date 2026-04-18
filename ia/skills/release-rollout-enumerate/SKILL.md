@@ -54,7 +54,7 @@ Per bucket + sibling row:
 2. **Glob** `ia/projects/{slug}-master-plan.md` → column (c) pre-fill. Present → `✓`. Absent → `—`.
 3. **Grep** child master-plan for `### Step` count → column (d) pre-fill. ≥1 step with ≥1 stage → `✓`. Steps present but no stages → `—`.
 4. **Grep** child master-plan for `#### Stage` + `**Tasks:**` tables → column (e) pre-fill. ≥1 stage has `Tasks:` table → `◐`; all stages decomposed → `✓`; none → `—`.
-5. **Grep** `BACKLOG.md` + `BACKLOG-ARCHIVE.md` for slug → column (f) pre-fill. ≥1 BACKLOG id → `◐`; many filed / all Stage 1 filed → `✓`; zero → `—`.
+5. **Paired-record check** (same predicate as `release-rollout-track` Phase 1b) → column (f) pre-fill. For each `ia/backlog/{id}.yaml` whose `notes` or `raw_markdown` references this slug: check whether `ia/projects/{id}*.md` also exists. **Both present** → counts as filed. Rule: all filed pairs present → `✓`; ≥1 yaml with no matching spec (`◐` tier) → `◐`; zero yaml records found for slug → `—`.
 6. Column (g) pre-fill → `❓` for every row with (e) `◐` or `✓` (verify-required by rollout skill). `—` for rows at (d) or earlier.
 7. Column (a) → always `✓` once row exists in tracker.
 
