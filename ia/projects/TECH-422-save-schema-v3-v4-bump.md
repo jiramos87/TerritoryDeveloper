@@ -57,29 +57,29 @@ Stage 1.3 Phase 3. Bump `GameSaveData.CurrentSchemaVersion` 3 → 4. Introduce t
 
 ### Phase 1 — Create `BudgetAllocationData` POCO
 
-- [ ] Create `Assets/Scripts/Managers/GameManagers/BudgetAllocationData.cs` under `namespace Territory.Economy`.
-- [ ] `[System.Serializable] public class BudgetAllocationData` with three fields: `public float[] envelopePct;`, `public int globalMonthlyCap;`, `public int[] currentMonthRemaining;`.
-- [ ] Static factory `public static BudgetAllocationData Default(int cap)`: allocate `envelopePct = new float[7]` each slot `1f/7f`; normalize in-place so `sum == 1.0` (guard `sum < 1e-9` → log + return uniform anyway); set `globalMonthlyCap = cap`; allocate `currentMonthRemaining = new int[7]` with `(int)(cap * envelopePct[i])`.
-- [ ] XML doc on class: "Persisted snapshot of `BudgetAllocationService` state (envelope pct + cap + remaining). Added schema 4. See `ia/projects/TECH-422-save-schema-v3-v4-bump.md`."
+- [x] Create `Assets/Scripts/Managers/GameManagers/BudgetAllocationData.cs` under `namespace Territory.Economy`.
+- [x] `[System.Serializable] public class BudgetAllocationData` with three fields: `public float[] envelopePct;`, `public int globalMonthlyCap;`, `public int[] currentMonthRemaining;`.
+- [x] Static factory `public static BudgetAllocationData Default(int cap)`: allocate `envelopePct = new float[7]` each slot `1f/7f`; normalize in-place so `sum == 1.0` (guard `sum < 1e-9` → log + return uniform anyway); set `globalMonthlyCap = cap`; allocate `currentMonthRemaining = new int[7]` with `(int)(cap * envelopePct[i])`.
+- [x] XML doc on class: "Persisted snapshot of `BudgetAllocationService` state (envelope pct + cap + remaining). Added schema 4. See `ia/projects/TECH-422-save-schema-v3-v4-bump.md`."
 
 ### Phase 2 — Create `StateServiceZoneData` POCO
 
-- [ ] Create `Assets/Scripts/Managers/GameManagers/StateServiceZoneData.cs` under `namespace Territory.Economy`.
-- [ ] `[System.Serializable] public class StateServiceZoneData { public int cellX; public int cellY; public int subTypeId; public int densityTier; }`.
-- [ ] XML doc: fields + "Placement / restore lands in Step 2; field carried forward this task as empty list on fresh games."
+- [x] Create `Assets/Scripts/Managers/GameManagers/StateServiceZoneData.cs` under `namespace Territory.Economy`.
+- [x] `[System.Serializable] public class StateServiceZoneData { public int cellX; public int cellY; public int subTypeId; public int densityTier; }`.
+- [x] XML doc: fields + "Placement / restore lands in Step 2; field carried forward this task as empty list on fresh games."
 
 ### Phase 3 — `GameSaveData` fields + schema bump
 
-- [ ] Add `using Territory.Economy;` to `GameSaveManager.cs` if missing.
-- [ ] Add `public BudgetAllocationData budgetAllocation;` on `GameSaveData` (nullable — legacy v3 saves deserialize to null; TECH-423 seeds via `Default(cap)`).
-- [ ] Add `public List<StateServiceZoneData> stateServiceZones = new List<StateServiceZoneData>();` on `GameSaveData` (matches `neighborStubs` / `neighborCityBindings` list-init pattern).
-- [ ] Flip `CurrentSchemaVersion = 3` → `= 4` at `GameSaveManager.cs:404`.
-- [ ] Append to `CurrentSchemaVersion` XML doc: "Schema 4 adds `budgetAllocation` + `stateServiceZones` (envelope budget + state-service zone registry — Stage 1.3 Phase 3)."
+- [x] Add `using Territory.Economy;` to `GameSaveManager.cs` if missing.
+- [x] Add `public BudgetAllocationData budgetAllocation;` on `GameSaveData` (nullable — legacy v3 saves deserialize to null; TECH-423 seeds via `Default(cap)`).
+- [x] Add `public List<StateServiceZoneData> stateServiceZones = new List<StateServiceZoneData>();` on `GameSaveData` (matches `neighborStubs` / `neighborCityBindings` list-init pattern).
+- [x] Flip `CurrentSchemaVersion = 3` → `= 4` at `GameSaveManager.cs:404`.
+- [x] Append to `CurrentSchemaVersion` XML doc: "Schema 4 adds `budgetAllocation` + `stateServiceZones` (envelope budget + state-service zone registry — Stage 1.3 Phase 3)."
 
 ### Phase 4 — Verify
 
-- [ ] `npm run unity:compile-check` green.
-- [ ] No migration branch added to `MigrateLoadedSaveData` this task (TECH-423 owns v3→v4 branch).
+- [x] `npm run unity:compile-check` green (bridge path — Editor open; `compilation_failed: false`, no errors).
+- [x] No migration branch added to `MigrateLoadedSaveData` this task (TECH-423 owns v3→v4 branch).
 
 ## 7b. Test Contracts
 
