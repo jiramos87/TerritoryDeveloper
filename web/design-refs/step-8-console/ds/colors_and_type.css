@@ -1,0 +1,179 @@
+/* ==========================================================================
+   Territory Developer — Colors & Type
+   Locked palette (ref: palette.json). Every semantic alias resolves to a
+   raw entry. Do NOT invent new hues.
+   ========================================================================== */
+
+/* Fonts — Geist + Geist Mono, both self-hosted variable fonts (weight axis 100–900).
+   Mirrors production's next/font/google wiring, fully offline. */
+@font-face {
+  font-family: "Geist";
+  src: url("./fonts/Geist_wght_.woff2") format("woff2-variations"),
+       url("./fonts/Geist_wght_.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("./fonts/GeistMono_wght_.woff2") format("woff2-variations"),
+       url("./fonts/GeistMono_wght_.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* --- Raw palette (LOCKED) --------------------------------------------- */
+  --raw-black:    #0a0a0a;
+  --raw-panel:    #1a1a1a;
+  --raw-text:     #e8e8e8;
+  --raw-red:      #d63838;
+  --raw-amber:    #e8a33d;
+  --raw-grey-500: #6a6a6a;
+  --raw-green:    #3a9b4a;
+  --raw-blue:     #4a7bc8;  /* echoes Territory HUD chrome; info role */
+
+  /* --- Semantic aliases (resolved from raw) ----------------------------- */
+  --bg-canvas:                 var(--raw-black);
+  --bg-panel:                  var(--raw-panel);
+  --text-primary:              var(--raw-text);
+  --text-muted:                var(--raw-grey-500);
+  --text-accent-warn:          var(--raw-amber);
+  --text-accent-critical:      var(--raw-red);
+  --text-accent-info:          var(--raw-blue);
+
+  /* Status roles — the four and only four (info is NOT a status, it's a meta accent) */
+  --bg-status-done:            var(--raw-green);
+  --text-status-done-fg:       var(--raw-black);
+  --bg-status-progress:        var(--raw-amber);
+  --text-status-progress-fg:   var(--raw-black);
+  --bg-status-pending:         var(--raw-grey-500);
+  --text-status-pending-fg:    var(--raw-text);
+  --bg-status-blocked:         var(--raw-red);
+  --text-status-blocked-fg:    var(--raw-text);
+
+  /* Hairlines, dividers — derived via alpha from existing tokens only */
+  --border-subtle:   rgba(232, 232, 232, 0.12);   /* raw-text @ 12% */
+  --border-strong:   rgba(232, 232, 232, 0.24);   /* raw-text @ 24% */
+  --overlay-panel:   rgba(26, 26, 26, 0.80);      /* raw-panel @ 80% */
+
+  /* --- Type families ---------------------------------------------------- */
+  --font-sans: "Geist", system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* --- Type scale (matches web/lib/tokens/type-scale.json) -------------- */
+  --text-xs:    0.75rem;   --lh-xs:   1rem;
+  --text-sm:    0.875rem;  --lh-sm:   1.25rem;
+  --text-base:  1rem;      --lh-base: 1.5rem;
+  --text-lg:    1.125rem;  --lh-lg:   1.75rem;
+  --text-xl:    1.25rem;   --lh-xl:   1.75rem;
+  --text-2xl:   1.5rem;    --lh-2xl:  2rem;
+
+  /* --- Spacing (4px base, 8-step scale) --------------------------------- */
+  --sp-0:  0;
+  --sp-1:  0.25rem;
+  --sp-2:  0.5rem;
+  --sp-3:  0.75rem;
+  --sp-4:  1rem;
+  --sp-6:  1.5rem;
+  --sp-8:  2rem;
+  --sp-12: 3rem;
+
+  /* --- Radii (NEVER > 8px per spec) ------------------------------------- */
+  --radius-none: 0;
+  --radius-sm:   2px;
+  --radius-md:   4px;
+  --radius-lg:   8px;
+  --radius-pill: 9999px;   /* badges only */
+
+  /* --- Elevation (shadows ≤ 4px blur per spec) -------------------------- */
+  --shadow-0: none;
+  --shadow-1: 0 1px 0 rgba(0,0,0,0.4);
+  --shadow-2: 0 2px 4px rgba(0,0,0,0.5);
+
+  /* --- Motion (4 duration stops + enter/exit easing) -------------------- */
+  --dur-fast:   80ms;   /* hover tint, chip toggle            */
+  --dur-base:   160ms;  /* collapse, tab switch               */
+  --dur-slow:   280ms;  /* panel slide, list reorder          */
+  --dur-reveal: 480ms;  /* first paint, loader-to-content     */
+  --ease-enter: cubic-bezier(0.2, 0.0, 0.0, 1.0);  /* material-ish   */
+  --ease-exit:  cubic-bezier(0.4, 0.0, 1.0, 1.0);  /* fast out, linear in */
+
+  /* --- Focus ring ------------------------------------------------------- */
+  --focus-ring: 2px solid var(--text-accent-warn);
+  --focus-ring-offset: 2px;
+}
+
+/* Reduced motion fallback */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast:   0ms;
+    --dur-base:   0ms;
+    --dur-slow:   0ms;
+    --dur-reveal: 0ms;
+  }
+}
+
+/* ==========================================================================
+   Element defaults
+   ========================================================================== */
+
+html, body {
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--lh-base);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: var(--text-2xl); line-height: var(--lh-2xl); }
+h2 { font-size: var(--text-xl);  line-height: var(--lh-xl);  }
+h3 { font-size: var(--text-lg);  line-height: var(--lh-lg);  }
+h4 { font-size: var(--text-base); line-height: var(--lh-base); }
+
+p  { margin: 0; color: var(--text-primary); }
+
+code, kbd, pre, samp, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+}
+
+/* Numbers & IDs lean mono per spec */
+.num, .id { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+a { color: var(--text-primary); text-decoration: underline; text-underline-offset: 2px; }
+a:hover { color: var(--text-accent-warn); }
+
+hr { border: 0; border-top: 1px solid var(--border-subtle); margin: var(--sp-6) 0; }
+
+*:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ==========================================================================
+   Utility primitives (for preview cards / UI kit)
+   ========================================================================== */
+
+.surface         { background: var(--bg-panel);  border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
+.surface-canvas  { background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--lh-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}

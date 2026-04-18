@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Territory Developer — Console</title>
+<link rel="stylesheet" href="ds/colors_and_type.css">
+<link rel="stylesheet" href="console.css">
+</head>
+<body>
+<template id="__bundler_thumbnail" data-bg-color="#0a0a0a">
+  <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+    <rect width="64" height="64" rx="8" fill="#0a0a0a"/>
+    <g stroke="#e8a33d" stroke-width="0.6" fill="none" opacity="0.4">
+      <circle cx="32" cy="32" r="26"/><circle cx="32" cy="32" r="19"/><circle cx="32" cy="32" r="12"/>
+      <line x1="6" y1="32" x2="58" y2="32"/><line x1="32" y1="6" x2="32" y2="58"/>
+    </g>
+    <g fill="#e8a33d">
+      <path d="M14 22 h16 v4 h-6 v16 h-4 v-16 h-6z"/>
+      <path d="M33 22 h8 a9 10 0 0 1 9 10 a9 10 0 0 1 -9 10 h-8 z M37 26 v12 h4 a5 6 0 0 0 5 -6 a5 6 0 0 0 -5 -6 z"/>
+    </g>
+    <circle cx="50" cy="14" r="2" fill="#e8a33d"/>
+  </svg>
+</template>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="./src/data.js"></script>
+<script type="text/babel" src="./src/console-assets.jsx"></script>
+<script type="text/babel" src="./src/console-primitives.jsx"></script>
+<script type="text/babel" src="./src/console-screens.jsx"></script>
+<script type="text/babel" src="./src/console-app.jsx"></script>
+</body>
+</html>
