@@ -168,13 +168,29 @@
       }
     },
     "M8": {
-      "status": "in-progress",
+      "status": "done",
+      "completed": "2026-04-19",
       "name": "Sign-off + merge",
       "gate": {
         "sign_off_text": "LGTM, merge to that branch",
         "sign_off_timestamp": "2026-04-19T00:00:00.000Z",
         "merge_target": "feature/master-plans-1",
         "note": "User corrected merge target: feature/lifecycle-collapse-cognitive-split → feature/master-plans-1 (parent branch), not main."
+      },
+      "merge": {
+        "source_branch": "feature/lifecycle-collapse-cognitive-split",
+        "target_branch": "feature/master-plans-1",
+        "merge_commit_sha": "70d8ce2",
+        "strategy": "--no-ff (standard merge commit; history preserved)",
+        "conflicts_resolved": "none (BACKLOG.md / BACKLOG-ARCHIVE.md re-materialized post-merge, no diff)",
+        "merged_at": "2026-04-19T00:00:00.000Z"
+      },
+      "mcp_restart": {
+        "lifecycle_stage_enum_test": "router_for_task {lifecycle_stage: 'plan_review'} accepted — no invalid_enum_value (only domain rejection, which is unrelated)",
+        "plan_apply_validate_tool_on_disk": "tools/mcp-ia-server/src/tools/plan-apply-validate.ts present post-merge",
+        "stage_closeout_digest_tool_on_disk": "tools/mcp-ia-server/src/tools/stage-closeout-digest.ts present post-merge (replaces retired project-spec-closeout-digest)",
+        "restart_note": "Working-tree MCP process serves post-collapse schema from current files; user-level `territory-ia` respawn deferred to next Claude Code session boot (standard `.mcp.json` reload path). Schema liveness confirmed by in-session tool calls.",
+        "verified_at": "2026-04-19T00:00:00.000Z"
       }
     }
   },

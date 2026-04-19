@@ -277,3 +277,9 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 | `{ISSUE_ID}` | Active task BACKLOG id (BUG-/FEAT-/TECH-/ART-/AUDIO-) |
 | `{CHAIN_CONTEXT}` | `domain-context-load` payload `{glossary_anchors, router_domains, spec_sections, invariants}` |
 | `{CHAIN_JOURNAL}` | In-process accumulator list of `{task_id, lessons[], decisions[], verify_iterations}` |
+
+---
+
+## Open Questions
+
+- Crash-survivable `{CHAIN_JOURNAL}` (disk-persisted + resume on re-invocation) — tracked by [TECH-493](../../projects/TECH-493.md). Implementation deferred to that issue's implementer; this skill currently treats `{CHAIN_JOURNAL}` as in-process only.
