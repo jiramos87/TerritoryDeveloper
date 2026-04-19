@@ -2,7 +2,7 @@ id: TECH-470
 type: tech (IA infrastructure / lifecycle tooling)
 title: "Project-new-apply slim skill + retire project-new-plan + drop §Project-New Plan template section (Stage 7 T7.3)"
 priority: medium
-status: open
+status: closed
 section: IA evolution lane
 spec: ia/projects/TECH-470.md
 files:

@@ -2,9 +2,10 @@ id: TECH-468
 type: tech (IA infrastructure / lifecycle tooling)
 title: "Plan-review + plan-fix-apply pair skills (Stage 7 T7.1)"
 priority: medium
-status: open
+status: closed
 section: IA evolution lane
-spec: ia/projects/TECH-468.md
+spec: (removed after closure)
+closed: 2026-04-19
 files:
   - ia/skills/plan-review/SKILL.md
   - ia/skills/plan-fix-apply/SKILL.md

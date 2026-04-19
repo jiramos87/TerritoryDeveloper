@@ -47,7 +47,7 @@ cat <<EOF
 [territory-developer · prewarm]
 branch: $branch   tree: $dirty_count dirty
 verify:local: $last_verify   bridge-preflight: $last_bridge
-memory: MEMORY.md + ~/.claude-personal/.../memory/
+memory: MEMORY.md + ~/.claude-personal/projects/-Users-javier-bacayo-studio-territory-developer/memory/MEMORY.md
 EOF
 
 exit 0

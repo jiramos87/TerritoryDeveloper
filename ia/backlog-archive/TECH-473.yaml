@@ -2,7 +2,8 @@ id: TECH-473
 type: tech (IA infrastructure / lifecycle tooling)
 title: "Update remaining lifecycle skills — drop Phase layer + Stage MCP bundle contract (Stage 7 T7.6)"
 priority: medium
-status: open
+status: closed
+completed: 2026-04-19
 section: IA evolution lane
 spec: ia/projects/TECH-473.md
 files:

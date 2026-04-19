@@ -34,7 +34,13 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 ---
 
-## Phase 0 — Parse stage task table
+## Stage MCP bundle contract
+
+Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once; returned payload `{glossary_anchors, router_domains, spec_sections, invariants}` kept in Stage scope. All Sonnet pair-tail invocations within the Stage read from that payload — no re-query of `glossary_discover`, `glossary_lookup`, `router_for_task`, `spec_sections`, or `invariants_summary` inside a Stage. The 5-tool recipe (`glossary_discover → glossary_lookup → router_for_task → spec_sections → invariants_summary`) is encapsulated entirely in `domain-context-load`; callers never inline it.
+
+---
+
+## Step 0 — Parse stage task table
 
 **Algorithm (narrow regex, fails loud on schema drift):**
 
@@ -45,7 +51,7 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 5. **Schema drift guard:** only `Issue` + `Status` are required columns. Canonical master-plan schema is the 6-column superset `Task | Name | Phase | Issue | Status | Intent` — all other columns are advisory. If `Issue` OR `Status` column not found within the stage block → emit `SHIP_STAGE {STAGE_ID}: STOPPED at parser — schema mismatch` + diff showing required columns `[Issue, Status]` (canonical superset `[Task, Name, Phase, Issue, Status, Intent]`) vs found column headers. Stop.
 6. Extract rows: for each data row, parse `Issue` column (must match `/\*\*?(TECH|BUG|FEAT|ART|AUDIO)-\d+\*\*?/` or bare id) and `Status` column.
 7. Filter: keep rows where `Status` is NOT `Done` / `archived` / `skipped` (case-insensitive). These are the **pending tasks**.
-8. If zero pending tasks → emit `SHIP_STAGE {STAGE_ID}: all tasks already Done. No work needed.` + next-stage resolver (Phase 5).
+8. If zero pending tasks → emit `SHIP_STAGE {STAGE_ID}: all tasks already Done. No work needed.` + next-stage resolver (Step 5).
 
 **Parser fixtures (verify at authoring, not runtime):**
 
@@ -58,7 +64,7 @@ All current master plans use `####` headers and the 6-col schema. Parser accepts
 
 ---
 
-## Phase 1 — Context load (once per chain)
+## Step 1 — Context load (once per chain)
 
 Run [`domain-context-load`](../domain-context-load/SKILL.md) subskill once for the stage domain:
 
@@ -82,7 +88,7 @@ Store returned payload `{glossary_anchors, router_domains, spec_sections, invari
 
 ---
 
-## Phase 2 — Task loop (sequential, fail-fast)
+## Step 2 — Task loop (sequential, fail-fast)
 
 For each pending task row in order (index `i`, total `N`):
 
@@ -103,13 +109,13 @@ Dispatch `spec-kickoff` subagent (Opus):
 SHIP_STAGE {STAGE_ID}: STOPPED at {ISSUE_ID} — kickoff: {reason}
 ```
 
-Then emit chain digest (Phase 4) for tasks already closed + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
+Then emit chain digest (Step 4) for tasks already closed + `Next: claude-personal "/ship {ISSUE_ID}"` after fix.
 
 ### Step 2.2 — Implement
 
 Dispatch `spec-implementer` subagent (Sonnet):
 
-> Mission: Execute `ia/projects/{ISSUE_ID}*.md` §7 Implementation Plan end-to-end, phase by phase. Pre-loaded context: {CHAIN_CONTEXT}. End with `IMPLEMENT_DONE` or `IMPLEMENT_FAILED: {reason}`.
+> Mission: Execute `ia/projects/{ISSUE_ID}*.md` §7 Implementation Plan end-to-end, task by task. Pre-loaded context: {CHAIN_CONTEXT}. End with `IMPLEMENT_DONE` or `IMPLEMENT_FAILED: {reason}`.
 
 **Gate:** final output must contain `IMPLEMENT_DONE`. `IMPLEMENT_FAILED` → stop, same STOPPED digest pattern.
 
@@ -156,7 +162,7 @@ After closeout, re-read `{MASTER_PLAN_PATH}` to get latest task status (closeout
 
 ---
 
-## Phase 3 — Batched Path B verify (stage end)
+## Step 3 — Batched Path B verify (stage end)
 
 After all tasks closed successfully:
 
@@ -173,7 +179,7 @@ Run `verify-loop` subagent (Sonnet) **without** `--skip-path-b` (normal mode) on
 
 ---
 
-## Phase 4 — Chain-level stage digest
+## Step 4 — Chain-level stage digest
 
 Emit one chain-level stage digest at chain end (success or STAGE_VERIFY_FAIL). Distinct from per-spec `project-stage-close` which already fired inside each `spec-implementer`.
 
@@ -209,13 +215,13 @@ Emit one chain-level stage digest at chain end (success or STAGE_VERIFY_FAIL). D
 }
 ```
 
-`next_handoff.case` mirrors Phase 5 resolver cases exactly — downstream drivers (`release-rollout`, dashboards) pick up the structured field without re-parsing caveman prose. On STOPPED / STAGE_VERIFY_FAIL, `next_handoff.case` is `"stopped"` or `"stage_verify_fail"` respectively and `command` / `args` reference the fix path (`/ship {ISSUE_ID}` or human-review directive).
+`next_handoff.case` mirrors Step 5 resolver cases exactly — downstream drivers (`release-rollout`, dashboards) pick up the structured field without re-parsing caveman prose. On STOPPED / STAGE_VERIFY_FAIL, `next_handoff.case` is `"stopped"` or `"stage_verify_fail"` respectively and `command` / `args` reference the fix path (`/ship {ISSUE_ID}` or human-review directive).
 
 Caveman summary follows JSON: tasks shipped, any stopped/failed, stage-level verify outcome, aggregate lesson count, next step.
 
 ---
 
-## Phase 5 — Next-stage resolver
+## Step 5 — Next-stage resolver
 
 Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 
@@ -250,7 +256,7 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 - Stop on first per-task gate failure; do NOT continue to next task.
 - Do NOT rollback closed tasks on STAGE_VERIFY_FAIL — destructive ops already committed; emit digest + human directive only.
 - Per-spec `project-stage-close` fires inside each inner `spec-implementer` normally — do NOT inhibit it. Chain-level stage digest is a NEW separate scope.
-- `domain-context-load` fires ONCE at chain start (Phase 1); do NOT re-call per task.
+- `domain-context-load` fires ONCE at chain start (Step 1); do NOT re-call per task.
 - Do NOT exceed `/ship` single-task dispatch shape for inner stages — each dispatches the canonical subagent.
 
 ---

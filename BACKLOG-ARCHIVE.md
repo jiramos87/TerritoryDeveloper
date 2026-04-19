@@ -2,6 +2,33 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
+- [x] **TECH-471** — Opus-audit (Stage-scoped bulk) + code-review + code-fix-apply skills (Stage 7 T7.4) (2026-04-19)
+  - Type: tech (IA infrastructure / lifecycle tooling)
+  - Files: `ia/skills/opus-audit/SKILL.md`, `ia/skills/opus-code-review/SKILL.md`, `ia/skills/code-fix-apply/SKILL.md`
+  - Spec: (removed after closure)
+  - Notes: Authored 3 audit-chain skills. opus-audit = Stage-scoped bulk (Phase 0 §Findings guardrail; one Opus pass writes N §Audit paragraphs from shared Stage MCP bundle; does NOT write §Closeout Plan — deferred T7.13). opus-code-review = Opus per-Task pair-head (3 verdict branches: PASS / minor / critical → §Code Fix Plan). code-fix-apply = Sonnet per-Task pair-tail (applies tuples verbatim; re-enters /verify-loop; 1-retry bound → escalate on second fail). Pair-contract seam #4 row intact (no edit); seam #5 row untouched (T7.11 drop). `phases:` frontmatter on all 3. `validate:all` exit 0.
+  - Acceptance: 3 SKILL.md present; `phases:` frontmatter + Phase 0 guardrail + 3 verdict branches + 1-retry escalation; pair-contract seam #4 intact; `validate:all` green.
+  - Depends on: **TECH-448** (archived), **TECH-449** (archived)
+  - Related: TECH-480, TECH-481
+
+- [x] **TECH-468** — Plan-review + plan-fix-apply pair skills (Stage 7 T7.1) (2026-04-19)
+  - Type: tech (IA infrastructure / lifecycle tooling)
+  - Files: `ia/skills/plan-review/SKILL.md`, `ia/skills/plan-fix-apply/SKILL.md`, `ia/rules/plan-apply-pair-contract.md`
+  - Spec: (removed after closure)
+  - Notes: Authored `ia/skills/plan-review/SKILL.md` (Opus pair-head; 4-phase: Load Stage context, Drift scan, Write §Plan Fix tuples, Hand-off) + `ia/skills/plan-fix-apply/SKILL.md` (Sonnet pair-tail; 5-phase: Read §Plan Fix, Resolve anchors, Apply tuples, Validate, Return). Both carry `phases:` frontmatter for T7.12 validator. Seam row #1 already present in `ia/rules/plan-apply-pair-contract.md` from TECH-448. 5→4 seam reconciliation deferred to TECH-472. `validate:all` exit 0.
+  - Acceptance: Both SKILL.md files present; `phases:` frontmatter present; pair-contract seam entry confirmed; `validate:all` green.
+  - Depends on: **TECH-448** (archived), **TECH-449** (archived)
+  - Related: TECH-469, TECH-470, TECH-471, TECH-472
+
+- [x] **TECH-484** — Convert bash-denylist.sh + cs-edit-reminder.sh JSON parsing to pure-shell (jq primary, sed fallback) — audit D3 (2026-04-19)
+  - Type: tooling / hook perf
+  - Files: `tools/scripts/claude-hooks/bash-denylist.sh`, `tools/scripts/claude-hooks/cs-edit-reminder.sh`, `CLAUDE.md`
+  - Spec: (removed after closure)
+  - Notes: dropped python3 fork per tool call; `jq` primary + sed fallback active; test fixture `bash-denylist.test.sh` (14/14 pass); `jq` documented prereq in `CLAUDE.md §4`; bench ~6 ms saved / call (50 iters: 1.773s → 1.468s); security boundary unchanged; FREEZE-safe.
+  - Acceptance: python3 branch removed; jq primary + sed fallback active; fixture green; `validate:all` green.
+  - Depends on: none
+  - Related: TECH-483
+
 - [x] **TECH-465** — Preview deploy + visual confirm + M5 flip (Stage 6 T6.4) (2026-04-19)
   - Type: tech (IA infrastructure / lifecycle tooling / web)
   - Files: `web/package.json`, `ia/state/lifecycle-refactor-migration.json`

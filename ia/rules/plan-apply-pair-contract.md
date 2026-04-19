@@ -34,6 +34,22 @@ Tuples execute in declared order. Sonnet pair-tail does NOT reorder, merge, or i
 | 4 | `code-review` | `§Code Fix Plan` (in `ia/projects/{ISSUE_ID}.md`) | `code-fix-apply` | Post-implementation review seam — diff vs spec + invariants + glossary; emit fix tuples; re-enter `/verify-loop` after. |
 | 5 | `audit` | `§Closeout Plan` (in `ia/projects/{ISSUE_ID}.md`) | `closeout-apply` | Closeout seam — migrate canonical knowledge to glossary / specs / rules / docs; archive backlog row; delete spec; persist journal. |
 
+## Seam #2 — `§Stage File Plan` tuple shape (extended)
+
+Seam #2 tuples carry a domain-specific shape instead of the generic 4-key shape. The `stage-file-apply` pair-tail reads these fields directly; the generic `operation` / `target_path` / `target_anchor` / `payload` keys are NOT used for seam #2.
+
+| Key | Type | Rules |
+|-----|------|-------|
+| `reserved_id` | string | Always blank — pair-tail fills atomically via `reserve-id.sh`. Planner MUST leave blank. |
+| `title` | string | Verbatim Task Intent from master-plan task table. |
+| `priority` | string | From task Priority column. Default `medium`. |
+| `notes` | string | 1–3 sentence scope note; caveman prose; references key files/subsystems. |
+| `depends_on` | string[] | Verified dep ids from planner Phase 2 `backlog_list` call. Applier reads verbatim — no re-query. |
+| `related` | string[] | Sibling task ids within same Stage. May be empty. |
+| `stub_body` | object | Sub-fields: `summary` (§1), `goals` (§2.1), `systems_map` (§4.2), `impl_plan_sketch` (§7). Applier writes these into spec stub verbatim. |
+
+Pair skills: [`stage-file-plan/SKILL.md`](../skills/stage-file-plan/SKILL.md) (head) · [`stage-file-apply/SKILL.md`](../skills/stage-file-apply/SKILL.md) (tail) · [`stage-compress/SKILL.md`](../skills/stage-compress/SKILL.md) (Compress mode cold path).
+
 ## Validation gate
 
 After applying all tuples, Sonnet pair-tail MUST run the validator appropriate to the seam:

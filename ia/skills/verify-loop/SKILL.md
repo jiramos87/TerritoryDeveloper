@@ -5,14 +5,14 @@ loaded_by: skill:verify-loop
 slices_via: invariants_summary, router_for_task
 name: verify-loop
 description: >
-  Use after substantive implementation (per phase or per stage / spec close-out) when one canonical
+  Use after substantive implementation (per task or per stage / spec close-out) when one canonical
   closed-loop verification pass is needed. Orchestrates: bridge preflight → Node validate:all →
   compile gate → test-mode batch (Path A) and / or IDE agent bridge (Path B) → optional Play Mode
   evidence → diff anomalies → bounded fix→verify iteration → structured Verification block. Defers
   to the 5 underlying skills (bridge-environment-preflight, project-implementation-validation,
   agent-test-mode-verify, ide-bridge-evidence, close-dev-loop) for atomic mechanics — this skill
   is the one place that wires them together. Triggers: "/verify-loop", "closed-loop verification",
-  "post-phase verification", "integrated verification", "fix-verify iteration", "run the full
+  "post-task verification", "integrated verification", "fix-verify iteration", "run the full
   verify chain", "agent-led verification end-to-end".
 ---
 
@@ -25,6 +25,12 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 **Composes:** [`bridge-environment-preflight`](../bridge-environment-preflight/SKILL.md) (Step 0) · [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (Step 2) · [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) (Steps 4a/4b) · [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md) (Step 5) · [`close-dev-loop`](../close-dev-loop/SKILL.md) (Step 6).
 
 **Related:** [`project-spec-implement`](../project-spec-implement/SKILL.md) · [`project-stage-close`](../project-stage-close/SKILL.md) · [`project-spec-close`](../project-spec-close/SKILL.md).
+
+---
+
+## Stage MCP bundle contract
+
+Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once; returned payload `{glossary_anchors, router_domains, spec_sections, invariants}` kept in Stage scope. All Sonnet pair-tail invocations within the Stage read from that payload — no re-query of `glossary_discover`, `glossary_lookup`, `router_for_task`, `spec_sections`, or `invariants_summary` inside a Stage. The 5-tool recipe (`glossary_discover → glossary_lookup → router_for_task → spec_sections → invariants_summary`) is encapsulated entirely in `domain-context-load`; callers never inline it.
 
 ---
 
@@ -64,7 +70,7 @@ Inspect git diff + spec §7b / §8 against this table. Skip steps with **all row
 | 0 — Bridge preflight | Step 4b Path B will run; OR Step 5 evidence will run | No bridge / Postgres operations needed |
 | 1 — Compile gate | Any C# / Unity asset edits | IA / docs / fixture-only edits |
 | 2 — Node validate:all | MCP / fixtures / IA index / glossary / spec body changes | Pure runtime C# only (rely on Step 1) |
-| 3 — `verify:local` (full chain) | Pre-PR / pre-stage-close on dev machine | Per-phase iteration (too slow); CI-only environment |
+| 3 — `verify:local` (full chain) | Pre-PR / pre-stage-close on dev machine | Per-task iteration (too slow); CI-only environment |
 | 4a — Path A test-mode batch | Save / load pipeline; `GameSaveManager`; scenario JSON; `GridManager` init; sim tick; spec §7b row asks for batch | Pure UI / authoring / docs |
 | 4b — Path B bridge hybrid | Spec §7b row asks for Play Mode assertion; Path A unavailable; need `debug_context_bundle` | No Play Mode evidence required; OR `--skip-path-b` flag set (batched by caller — record `path_b: skipped_batched` in JSON verdict) |
 | 5 — Bridge evidence | Spec §7b / §8 explicitly asks for screenshots or Console capture | Acceptance covered by 4a JSON or batch golden |
@@ -99,7 +105,7 @@ Full skip table: [`project-implementation-validation`](../project-implementation
 
 ### Step 3 — Full local chain (pre-PR / pre-close, dev machine only)
 
-`npm run verify:local` (alias `verify:post-implementation`) — `validate:all` → Lockfile check → save/quit Editor → `unity:compile-check` → `db:migrate` → `db:bridge-preflight` → reopen Editor → `db:bridge-playmode-smoke`. Skip during per-phase iteration (too slow); run before submitting PR or closing a stage / spec.
+`npm run verify:local` (alias `verify:post-implementation`) — `validate:all` → Lockfile check → save/quit Editor → `unity:compile-check` → `db:migrate` → `db:bridge-preflight` → reopen Editor → `db:bridge-playmode-smoke`. Skip during per-task iteration (too slow); run before submitting PR or closing a stage / spec.
 
 ### Step 4a — Path A test mode batch (when gate fires)
 
@@ -190,7 +196,7 @@ Emit single Verification block per [`docs/agent-led-verification-policy.md`](../
 
 Agent MUST NOT escalate as `human_judgment_required` when a missing bridge kind could close the loop. Before escalating, cross-check the current kind enum in `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` (incl. `AgentBridgeCommandRunner.Mutations.cs`) against the operation needed — TECH-412 landed 20 mutation kinds; if a kind is still missing, escalate as `bridge_kind_missing` and cite an open successor tooling issue as `tooling_issue_id`.
 
-Markdown summary (caveman): verdict, paths run (A / B / both / none), artifact paths, anomalies cleared, iterations consumed, escalation note (if any; include `gap_reason` + `missing_kind` / `tooling_issue_id` when applicable), next step (human QA / next phase / stage close / umbrella close / file new bridge kind).
+Markdown summary (caveman): verdict, paths run (A / B / both / none), artifact paths, anomalies cleared, iterations consumed, escalation note (if any; include `gap_reason` + `missing_kind` / `tooling_issue_id` when applicable), next step (human QA / next task / stage close / umbrella close / file new bridge kind).
 
 ---
 

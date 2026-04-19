@@ -161,12 +161,6 @@ task_key: "{{T_KEY}}"
   later anchor lookups succeed.
 -->
 
-## §Project-New Plan
-
-<!-- Pair-head: `project-new-plan` Opus stage. Pair-tail: `project-new-apply` Sonnet. -->
-
-_pending — populated by `/project-new` planner pass. Tuples drive id reservation + yaml + spec stub materialization._
-
 ## §Audit
 
 <!-- Pair-head: `opus-audit` Opus stage (post-verify). Pair-tail: `closeout-apply` consumes via `§Closeout Plan`. -->

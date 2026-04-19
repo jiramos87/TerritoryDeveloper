@@ -2,7 +2,7 @@ id: TECH-471
 type: tech (IA infrastructure / lifecycle tooling)
 title: "Opus-audit (Stage-scoped bulk) + code-review + code-fix-apply skills (Stage 7 T7.4)"
 priority: medium
-status: open
+status: closed
 section: IA evolution lane
 spec: ia/projects/TECH-471.md
 files:

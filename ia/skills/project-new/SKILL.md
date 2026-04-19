@@ -20,6 +20,10 @@ No MCP calls from skill body. Follow **Tool recipe** below before editing BACKLO
 
 **Related:** [`project-implementation-validation`](../project-implementation-validation/SKILL.md) · [`BACKLOG.md`](../../../BACKLOG.md) · [`ia/skills/README.md`](../README.md).
 
+## Stage MCP bundle contract
+
+Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once; returned payload `{glossary_anchors, router_domains, spec_sections, invariants}` kept in Stage scope. All Sonnet pair-tail invocations within the Stage read from that payload — no re-query of `glossary_discover`, `glossary_lookup`, `router_for_task`, `spec_sections`, or `invariants_summary` inside a Stage. The 5-tool recipe (`glossary_discover → glossary_lookup → router_for_task → spec_sections → invariants_summary`) is encapsulated entirely in `domain-context-load`; callers never inline it.
+
 ## Seed prompt (parameterize)
 
 Replace placeholders before sending.

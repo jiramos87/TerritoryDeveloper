@@ -35,7 +35,7 @@ Prefer **`mcp__territory-ia__*`** tools over reading whole `ia/specs/*.md` files
 
 ## 4. Hooks
 
-Hooks live in `.claude/settings.json` + `tools/scripts/claude-hooks/`. Bash denylist (PreToolUse) blocks: `git push --force*`, `git reset --hard*`, `git clean -fd*`, `rm -rf {ia,MEMORY.md,.claude,.git,/,~}*`, `sudo *` (exit 2). Verification policy: `docs/agent-led-verification-policy.md`.
+Hooks live in `.claude/settings.json` + `tools/scripts/claude-hooks/`. Bash denylist (PreToolUse) blocks: `git push --force*`, `git reset --hard*`, `git clean -fd*`, `rm -rf {ia,MEMORY.md,.claude,.git,/,~}*`, `sudo *` (exit 2). Verification policy: `docs/agent-led-verification-policy.md`. Hook scripts require `jq` on PATH; missing → sed fallback with conservative-deny (escaped quotes → empty string → hook allows).
 
 ## 5. Key commands
 

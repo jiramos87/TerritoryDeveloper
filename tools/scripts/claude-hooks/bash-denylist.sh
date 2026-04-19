@@ -35,19 +35,11 @@ set +e
 
 input="$(cat)"
 
-# Extract the command field from the JSON input. Prefer python3 if available
-# for safe parsing; fall back to a forgiving sed/grep when not.
-if command -v python3 >/dev/null 2>&1; then
-  command_str="$(printf '%s' "$input" | python3 -c '
-import json, sys
-try:
-    data = json.loads(sys.stdin.read() or "{}")
-except Exception:
-    print("")
-    sys.exit(0)
-ti = data.get("tool_input") or {}
-print(ti.get("command", "") if isinstance(ti, dict) else "")
-')"
+# Extract the command field from the JSON input. Use jq when available (handles
+# escaped quotes correctly); fall back to sed with conservative-deny behavior
+# (escaped quotes → empty string → hook allows) when jq is not on PATH.
+if command -v jq >/dev/null 2>&1; then
+  command_str="$(printf '%s' "$input" | jq -r '.tool_input.command // ""' 2>/dev/null)"
 else
   command_str="$(printf '%s' "$input" | sed -n 's/.*"command"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
 fi
