@@ -79,3 +79,7 @@ __pycache__/
 
 # Playwright output (opt-in; not part of validate:all)
 web/playwright-report/
+
+# Agent audit blobs — session-token-latency Theme 0
+Bury_*.json
+mono_crash.*

@@ -4,7 +4,8 @@
       "command": "tools/mcp-ia-server/node_modules/.bin/tsx",
       "args": ["tools/mcp-ia-server/src/index.ts"],
       "env": {
-        "REPO_ROOT": "."
+        "REPO_ROOT": ".",
+        "DEBUG_MCP_COMPUTE": "1"
       }
     }
   }
