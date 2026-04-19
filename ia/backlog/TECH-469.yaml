@@ -1,0 +1,44 @@
+id: TECH-469
+type: tech (IA infrastructure / lifecycle tooling)
+title: "Stage-file pair skills — planner + applier split (Stage 7 T7.2)"
+priority: medium
+status: open
+section: IA evolution lane
+spec: ia/projects/TECH-469.md
+files:
+  - ia/skills/stage-file-plan/SKILL.md
+  - ia/skills/stage-file-apply/SKILL.md
+  - ia/skills/stage-compress/SKILL.md
+  - ia/skills/stage-file/SKILL.md
+notes: |
+  Split current `ia/skills/stage-file/SKILL.md` into pair: `ia/skills/stage-file-plan/SKILL.md` (Opus pair-head — authors `§Stage File Plan` structured list: one entry per Task with `{reserved_id, title, priority, notes, depends_on, related, stub_body}`; resolves anchors; loads shared Stage MCP bundle once via `domain-context-load`; batches Stage-wide Depends-on verification via single `backlog_list` filter call vs per-task `backlog_issue`) + `ia/skills/stage-file-apply/SKILL.md` (Sonnet pair-tail — reads `§Stage File Plan` entries; per entry runs `reserve-id.sh`, writes `ia/backlog/{id}.yaml`, writes `ia/projects/{id}.md` stub, updates master-plan task table, runs `materialize-backlog.sh`, validates dead specs; skips Depends-on re-query — planner already verified; escalates on id-counter lock failure). Compress mode relocates to sibling `ia/skills/stage-compress/SKILL.md` (cold path; ~80 lines of audit / merge-plan / harvest-and-close logic out of File-mode hot path). File-vs-Compress mode detection moves to command-layer dispatch in `/stage-file`.
+acceptance: |
+  Planner + applier SKILL.md files present; canonical `§Stage File Plan` tuple shape documented; pair-contract rule lists stage-file-plan→stage-file-apply seam; `phases:` frontmatter present (T7.12); `ia/skills/stage-compress/SKILL.md` sibling present; File-mode hot path no longer loads Compress prose; planner emits one `backlog_list` filter call per Stage; applier tuple body omits redundant dep metadata; legacy `ia/skills/stage-file/SKILL.md` repurposed as dispatcher or tombstoned; `validate:all` green.
+depends_on:
+  - TECH-468
+depends_on_raw: "TECH-468 (pair-contract pattern established in plan-review pair)"
+related:
+  - TECH-470
+  - TECH-474
+  - TECH-475
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T7.2
+router_domain: Tooling / IA / lifecycle
+surfaces:
+  - ia/skills/stage-file-plan/SKILL.md
+  - ia/skills/stage-file-apply/SKILL.md
+  - ia/skills/stage-compress/SKILL.md
+  - ia/skills/stage-file/SKILL.md
+  - ia/rules/plan-apply-pair-contract.md
+mcp_slices: []
+skill_hints: []
+raw_markdown: |
+  - [ ] **TECH-469** — Stage-file pair skills — planner + applier split (Stage 7 T7.2)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Files: `ia/skills/stage-file-plan/SKILL.md`, `ia/skills/stage-file-apply/SKILL.md`, `ia/skills/stage-compress/SKILL.md`, `ia/skills/stage-file/SKILL.md`
+    - Spec: `ia/projects/TECH-469.md`
+    - Notes: Opus planner emits `§Stage File Plan` tuples (one per Task) + single `backlog_list` dep batch; Sonnet applier reserves id + writes yaml + writes spec stub + materializes + validates per entry (skips dep re-query). Compress mode relocates to `ia/skills/stage-compress/` sibling. Shared Stage MCP bundle loaded once.
+    - Acceptance: both SKILL.md files + stage-compress sibling present; pair seam in contract; `phases:` frontmatter; batch dep verify; `validate:all` green.
+    - Depends on: **TECH-468**
+    - Related: TECH-470, TECH-474, TECH-475

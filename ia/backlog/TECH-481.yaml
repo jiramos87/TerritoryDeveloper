@@ -1,0 +1,54 @@
+id: TECH-481
+type: tech (IA infrastructure / lifecycle tooling)
+title: "Stage-closeout-apply skill + applier agent + /closeout rewire + template drop + MCP rename + project-stage-close retire + M6 Phase 8 flip (Stage 7 T7.14)"
+priority: medium
+status: open
+section: IA evolution lane
+spec: ia/projects/TECH-481.md
+files:
+  - ia/skills/stage-closeout-apply/SKILL.md
+  - .claude/agents/stage-closeout-applier.md
+  - .claude/commands/closeout.md
+  - ia/templates/project-spec-template.md
+  - tools/mcp-ia-server/src/
+  - ia/skills/_retired/project-stage-close/SKILL.md
+  - ia/rules/agent-lifecycle.md
+  - ia/state/lifecycle-refactor-migration.json
+notes: |
+  Author `ia/skills/stage-closeout-apply/SKILL.md`: Sonnet pair-tail invoked once per Stage after `stage-closeout-plan`; reads `§Stage Closeout Plan` tuples; executes unified bulk — (a) shared glossary/rule/doc migration edits once; (b) loops N Tasks: `ia/backlog/{id}.yaml` → `ia/backlog-archive/{id}.yaml`, deletes `ia/projects/{id}.md`, flips task-row Status → `Done (archived)`, purges id refs across durable docs; (c) runs `materialize-backlog.sh` + `validate:dead-project-specs` once at end; (d) emits one Stage closeout digest (chain-level); (e) flips Stage header `Status → Final` + rolls up to Step/Plan-level Final via R5 gate; escalates to Opus on anchor ambiguity or validator failure (1 retry bound on transient). Author `.claude/agents/stage-closeout-applier.md`: Sonnet; caveman preamble + `@`-loads SKILL.md; MCP allowlist (`backlog_issue`, `stage_closeout_digest` renamed, materialize-backlog equivalent); `phases:` frontmatter. Rewire `.claude/commands/closeout.md`: Stage-scoped dispatcher (stage-closeout-planner → stage-closeout-applier; single pass per Stage — no per-Task closeout path); accepts `{MASTER_PLAN_PATH} {STAGE_ID}`. Drop `§Closeout Plan` section from `ia/templates/project-spec-template.md` (closeout plan now Stage-level in master-plan `§Stage Closeout Plan` per T7.13). Rename MCP tool `project_spec_closeout_digest` → `stage_closeout_digest` in `tools/mcp-ia-server/`: handler reads per-task `§Audit` + Stage `§Stage Closeout Plan` + emits one Stage-level digest (not per-Task); restart schema cache; update all call sites. Retire `ia/skills/project-stage-close/SKILL.md` → `ia/skills/_retired/project-stage-close/` with tombstone header ("Retired — use stage-closeout-apply"). Rewrite `ia/rules/agent-lifecycle.md`: drop per-Task `/closeout` + `/kickoff` + `/enrich` surface rows; add Stage-scoped `/closeout` row + `/author` row + `/audit` row; update ordered flow end-segment from legacy per-Task closeout to rev 3 `stage-file-apply → plan-author (Stage 1×N) → plan-review → [per-Task loop: implement → verify-loop → opus-code-review → code-fix-apply?] → opus-audit (Stage 1×N) → /closeout (Stage-scoped: stage-closeout-plan → stage-closeout-apply)`; single-task path: `project-new-apply → plan-author (N=1) → implement → verify-loop → opus-code-review → opus-audit (N=1) → /closeout (N=1)`; note stage-end batching (no `spec-enrich` anywhere). Run `npm run validate:all`; flip migration JSON M6 Phase 8 `done`. Extension: exploration doc §Design Expansion — stage-end bulk closeout (rev 2) + bulk plan-author + audit + spec-enrich fold (rev 3).
+acceptance: |
+  Applier SKILL.md + agent + rewired `/closeout` command + template section drop + MCP tool rename + per-Task closeout retired + agent-lifecycle rule rewritten; `validate:all` green; M6 Phase 8 done in migration JSON.
+depends_on:
+  - TECH-480
+  - TECH-471
+  - TECH-445
+  - TECH-458
+depends_on_raw: "TECH-480 (planner pair-head precedes applier), TECH-471 (opus-audit §Audit output feeds closeout), TECH-445 (template base), TECH-458 (MCP tool surface base)"
+related:
+  - TECH-472
+  - TECH-474
+  - TECH-475
+  - TECH-477
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T7.14
+router_domain: Tooling / IA / lifecycle
+surfaces:
+  - ia/skills/stage-closeout-apply/SKILL.md
+  - .claude/agents/stage-closeout-applier.md
+  - .claude/commands/closeout.md
+  - ia/templates/project-spec-template.md
+  - tools/mcp-ia-server/src/
+  - ia/skills/_retired/project-stage-close/
+  - ia/rules/agent-lifecycle.md
+mcp_slices: []
+skill_hints: []
+raw_markdown: |
+  - [ ] **TECH-481** — Stage-closeout-apply skill + applier agent + /closeout rewire + template drop + MCP rename + project-stage-close retire + M6 Phase 8 flip (Stage 7 T7.14)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Files: `ia/skills/stage-closeout-apply/SKILL.md`, `.claude/agents/stage-closeout-applier.md`, `.claude/commands/closeout.md`, `ia/templates/project-spec-template.md`, `tools/mcp-ia-server/src/`, `ia/skills/_retired/project-stage-close/`, `ia/rules/agent-lifecycle.md`, `ia/state/lifecycle-refactor-migration.json`
+    - Spec: `ia/projects/TECH-481.md`
+    - Notes: Sonnet Stage-scoped pair-tail; unified bulk closeout (glossary/rule/doc edits once + loop N archive/delete/flip/purge + one validate pass + one digest + Stage→Final rollup); `/closeout` rewired Stage-scoped; per-Task §Closeout Plan dropped from template; MCP tool renamed; project-stage-close retired; agent-lifecycle rule rewritten; M6 P8 flip.
+    - Acceptance: full file set; `validate:all` green; M6 P8 done.
+    - Depends on: **TECH-480**, **TECH-471**, **TECH-445**, **TECH-458**
+    - Related: TECH-472, TECH-474, TECH-475, TECH-477

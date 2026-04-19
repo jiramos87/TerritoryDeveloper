@@ -1,0 +1,42 @@
+id: TECH-471
+type: tech (IA infrastructure / lifecycle tooling)
+title: "Opus-audit (Stage-scoped bulk) + code-review + code-fix-apply skills (Stage 7 T7.4)"
+priority: medium
+status: open
+section: IA evolution lane
+spec: ia/projects/TECH-471.md
+files:
+  - ia/skills/opus-audit/SKILL.md
+  - ia/skills/opus-code-review/SKILL.md
+  - ia/skills/code-fix-apply/SKILL.md
+notes: |
+  Author `ia/skills/opus-audit/SKILL.md` (Opus **Stage-scoped bulk** stage; one pass per Stage after all Tasks reach post-verify Green; reads ALL N Task specs §Implementation + §Findings + §Verification + Stage header + invariants + glossary from shared Stage MCP bundle; writes ALL N `§Audit` paragraphs in one synthesis round; does NOT write `§Closeout Plan` — that work moved to Stage-level in T7.13 `stage-closeout-plan`; N `§Audit` feeds stage-closeout-plan as raw material; Phase 0 guardrail: every Task has non-empty §Findings else escalate). Author `ia/skills/opus-code-review/SKILL.md` (Opus pair-head — reads diff vs spec + invariants + glossary; PASS / minor / critical; critical writes `§Code Fix Plan`). Author `ia/skills/code-fix-apply/SKILL.md` (Sonnet pair-tail — reads `§Code Fix Plan`; applies; re-enters `/verify-loop`; 1 retry bound then escalates). Per-task `closeout-apply` skill NOT authored (stage-level replacement in T7.14).
+acceptance: |
+  3 SKILL.md files present; opus-audit Phase 0 guardrail present; code-review ↔ code-fix-apply seam in pair-contract rule; all 3 carry `phases:` frontmatter; `validate:all` green.
+depends_on:
+  - TECH-448
+  - TECH-449
+depends_on_raw: "TECH-448 (pair-contract), TECH-449 (glossary rows for opus audit / opus code review / code-fix apply)"
+related:
+  - TECH-480
+  - TECH-481
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T7.4
+router_domain: Tooling / IA / lifecycle
+surfaces:
+  - ia/skills/opus-audit/SKILL.md
+  - ia/skills/opus-code-review/SKILL.md
+  - ia/skills/code-fix-apply/SKILL.md
+  - ia/rules/plan-apply-pair-contract.md
+mcp_slices: []
+skill_hints: []
+raw_markdown: |
+  - [ ] **TECH-471** — Opus-audit (Stage bulk) + code-review + code-fix-apply skills (Stage 7 T7.4)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Files: `ia/skills/opus-audit/SKILL.md`, `ia/skills/opus-code-review/SKILL.md`, `ia/skills/code-fix-apply/SKILL.md`
+    - Spec: `ia/projects/TECH-471.md`
+    - Notes: opus-audit = Stage-scoped bulk (one Opus pass writes N §Audit paragraphs; no §Closeout Plan — moved to T7.13). code-review + code-fix-apply stay per-Task. Phase 0 §Findings guardrail.
+    - Acceptance: 3 SKILL.md + frontmatter + pair-contract seam updates; `validate:all` green.
+    - Depends on: **TECH-448**, **TECH-449**
+    - Related: TECH-480, TECH-481

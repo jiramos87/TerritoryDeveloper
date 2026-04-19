@@ -1,0 +1,42 @@
+id: TECH-480
+type: tech (IA infrastructure / lifecycle tooling)
+title: "Stage-closeout-plan skill + planner agent + master-plan template §Stage Closeout Plan (Stage 7 T7.13)"
+priority: medium
+status: open
+section: IA evolution lane
+spec: ia/projects/TECH-480.md
+files:
+  - ia/skills/stage-closeout-plan/SKILL.md
+  - .claude/agents/stage-closeout-planner.md
+  - ia/templates/master-plan-template.md
+  - ia/rules/plan-apply-pair-contract.md
+notes: |
+  Author `ia/skills/stage-closeout-plan/SKILL.md`: Opus pair-head invoked once per Stage when all Tasks reach `Done` post-verify (replaces per-Task `closeout-apply`); reads master-plan Stage header + all Task `§Audit` paragraphs (from T7.4 narrowed opus-audit) + all Task §Implementation + §Findings + §Verification + invariants + glossary; writes `§Stage Closeout Plan` section in master plan (unified tuple list: shared glossary rows, rule section edits, doc paragraph edits, plus N BACKLOG archive ops + N id purges + N spec deletes + N master-plan task-row status flips + N per-task digest emissions); resolves all anchors to exact line/heading/glossary-row-id before handing to applier; idempotent on re-run. Author `.claude/agents/stage-closeout-planner.md`: Opus; caveman preamble + `@`-loads SKILL.md; MCP allowlist (`backlog_issue`, `spec_section`, `spec_sections`, `glossary_discover`, `glossary_lookup`, `invariants_summary`, `list_rules`, `rule_content`, `master_plan_locate`); `phases:` frontmatter. Update `ia/templates/master-plan-template.md` to include `§Stage Closeout Plan` section stub (one per Stage heading). Update `ia/rules/plan-apply-pair-contract.md` pair seams list to include stage-closeout-plan→stage-closeout-apply (Stage-scoped — fires once per Stage, not per Task). Extension: exploration doc §Design Expansion — stage-end bulk closeout (rev 2).
+acceptance: |
+  SKILL.md + planner agent + template section stub + pair-contract seam present; `phases:` frontmatter; `validate:all` green.
+depends_on:
+  - TECH-448
+  - TECH-444
+depends_on_raw: "TECH-448 (pair-contract), TECH-444 (master-plan template base)"
+related:
+  - TECH-481
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T7.13
+router_domain: Tooling / IA / lifecycle
+surfaces:
+  - ia/skills/stage-closeout-plan/SKILL.md
+  - .claude/agents/stage-closeout-planner.md
+  - ia/templates/master-plan-template.md
+  - ia/rules/plan-apply-pair-contract.md
+mcp_slices: []
+skill_hints: []
+raw_markdown: |
+  - [ ] **TECH-480** — Stage-closeout-plan skill + planner agent + master-plan template §Stage Closeout Plan (Stage 7 T7.13)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Files: `ia/skills/stage-closeout-plan/SKILL.md`, `.claude/agents/stage-closeout-planner.md`, `ia/templates/master-plan-template.md`, `ia/rules/plan-apply-pair-contract.md`
+    - Spec: `ia/projects/TECH-480.md`
+    - Notes: Opus Stage-scoped pair-head; writes unified §Stage Closeout Plan tuple list; master-plan template gains section stub; pair-contract seam added.
+    - Acceptance: SKILL + planner agent + template stub + seam; `validate:all` green.
+    - Depends on: **TECH-448**, **TECH-444**
+    - Related: TECH-481

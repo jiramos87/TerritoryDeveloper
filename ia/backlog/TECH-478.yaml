@@ -1,0 +1,50 @@
+id: TECH-478
+type: tech (IA infrastructure / lifecycle tooling)
+title: "Plan-author skill + agent + /author command — Stage-scoped bulk; canonical-term fold (Stage 7 T7.11)"
+priority: medium
+status: open
+section: IA evolution lane
+spec: ia/projects/TECH-478.md
+files:
+  - ia/skills/plan-author/SKILL.md
+  - .claude/agents/plan-author.md
+  - .claude/commands/author.md
+  - ia/templates/project-spec-template.md
+  - ia/rules/plan-apply-pair-contract.md
+  - ia/rules/agent-lifecycle.md
+notes: |
+  Author `ia/skills/plan-author/SKILL.md`: Opus **Stage-scoped bulk** spec-body authoring stage (non-pair; no Sonnet tail); invoked once per Stage after `stage-file-apply` writes all N stubs (multi-task path) or once at N=1 after `project-new-apply` (single-task path); reads ALL N specs + Stage header + shared Stage MCP bundle + invariants + pre-loaded glossary in one bulk pass; writes ALL N `§Plan Author` sections in one Opus round — each 4 sub-sections: `§Audit Notes` (upfront conceptual audit), `§Examples` (inputs/outputs + edge cases + legacy shapes), `§Test Blueprint` (structured `{test_name, inputs, expected, harness}` tuples), `§Acceptance` (refined per-Task acceptance). **Canonical-term fold (absorbs retired spec-enrich)**: same pass enforces canonical glossary terms across `§Objective` / `§Background` / `§Implementation Plan` — no ad-hoc synonyms; Opus authors canonical at write time. Does NOT write code, run verify, flip status. Phase 0 guardrail: if total tokens (N specs + Stage context) exceed Opus threshold → split into ⌈N/2⌉ bulk sub-passes; never per-Task regression. Author `.claude/agents/plan-author.md` (Opus; caveman preamble; MCP allowlist: `router_for_task`, `glossary_discover`, `glossary_lookup`, `invariants_summary`, `spec_section`, `spec_sections`, `backlog_issue`, `master_plan_locate`; top-level `phases:` frontmatter). Author `.claude/commands/author.md`: `/author {MASTER_PLAN_PATH} {STAGE_ID}` Stage-scoped dispatcher (bulk across all N Tasks); `--task {ISSUE_ID}` escape hatch for single-spec re-author; auto-invoked inside `/stage-file` post-apply + `/project-new` N=1; caveman-asserting prompt citing SKILL.md. Revise `ia/templates/project-spec-template.md`: add `§Plan Author` section + 4 sub-section stubs (`§Audit Notes` → `§Examples` → `§Test Blueprint` → `§Acceptance`) between `§Verification` and `§Audit`. Update `ia/rules/plan-apply-pair-contract.md`: mark plan-author as Opus **Stage-scoped bulk non-pair** (no Sonnet tail); 4 pair seams remain (plan-review→fix-apply, stage-file-plan→apply, code-review→code-fix-apply, stage-closeout-plan→stage-closeout-apply); drop project-new-plan→project-new-apply seam entry; drop audit→closeout-apply seam entry (replaced Stage-level in T7.13 / T7.14). Update `ia/rules/agent-lifecycle.md` ordered flow: insert `plan-author (Stage 1×N)` between `stage-file-apply` + `plan-review` (multi-task); insert `plan-author (N=1)` between `project-new-apply` + `implement` (single-task path; skip plan-review at N=1). Resolves Open Q7 + S7 (exploration doc §Design Expansion — plan-author + progress-emit + rev 3 stage-end bulk fold).
+acceptance: |
+  plan-author SKILL.md + agent + `/author` command present; template has `§Plan Author` section + 4 sub-sections; pair-contract + agent-lifecycle updated; `phases:` frontmatter present; `validate:all` green.
+depends_on:
+  - TECH-448
+  - TECH-449
+  - TECH-445
+depends_on_raw: "TECH-448 (pair-contract rule), TECH-449 (glossary rows), TECH-445 (project-spec template)"
+related:
+  - TECH-470
+  - TECH-472
+  - TECH-475
+  - TECH-479
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T7.11
+router_domain: Tooling / IA / lifecycle
+surfaces:
+  - ia/skills/plan-author/SKILL.md
+  - .claude/agents/plan-author.md
+  - .claude/commands/author.md
+  - ia/templates/project-spec-template.md
+  - ia/rules/plan-apply-pair-contract.md
+  - ia/rules/agent-lifecycle.md
+mcp_slices: []
+skill_hints: []
+raw_markdown: |
+  - [ ] **TECH-478** — Plan-author skill + agent + /author command — Stage-scoped bulk; canonical-term fold (Stage 7 T7.11)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Files: `ia/skills/plan-author/SKILL.md`, `.claude/agents/plan-author.md`, `.claude/commands/author.md`, `ia/templates/project-spec-template.md`, `ia/rules/plan-apply-pair-contract.md`, `ia/rules/agent-lifecycle.md`
+    - Spec: `ia/projects/TECH-478.md`
+    - Notes: Opus Stage-scoped bulk non-pair spec-body author; absorbs spec-enrich canonical-term enforcement; 4-sub-section output; Phase 0 token-split guardrail; template + pair-contract + agent-lifecycle updated.
+    - Acceptance: SKILL + agent + command + template + rules updates; `phases:` frontmatter; `validate:all` green.
+    - Depends on: **TECH-448**, **TECH-449**, **TECH-445**
+    - Related: TECH-470, TECH-472, TECH-475, TECH-479
