@@ -1,6 +1,6 @@
 # Lifecycle Refactor — Opus Planner / Sonnet Executor + Hierarchy Collapse — Master Plan (Umbrella)
 
-> **Status:** In Progress — Stage 7
+> **Status:** In Progress — Stage 8
 >
 > **Scope:** Big-bang collapse of Step/Stage/Phase/Task hierarchy to Stage/Task. Introduce Plan-Apply pair pattern (5 seams) with Opus pair-heads and Sonnet pair-tails. Sonnet-ify spec enrichment. Add Opus audit + code-review inline stages. Migrate all 16 open master plans + open project specs + backlog yaml in place. Tooling surface only — zero Unity runtime C# touch.
 >
@@ -275,7 +275,7 @@
 
 ### Stage 8 — Validation + Merge / Dry-Run + Full Validation
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** Final (closed 2026-04-19)
 
 **Objectives:** Execute one Task end-to-end through the new chain to catch integration issues before merge. Regenerate all view files. Run full local verification chain.
 
@@ -292,16 +292,207 @@
 
 | Task | Name | Issue | Status | Intent |
 | --- | --- | --- | --- | --- |
-| T8.1 | Dry-run new chain end-to-end | _pending_ | _pending_ | Select a small pending Task from any open master plan (prefer a Task in _pending_ state, not one currently In Progress); run the new chain: `/plan-review` on its Stage → `/enrich` → `/implement` (no actual code ship; stop after plan-review + enrich to validate dispatch wiring) → simulate audit + code-review outputs → verify closeout-apply reads `§Closeout Plan` stub correctly; document each pair's handoff in migration JSON M7.dry-run section; no commit of dry-run artifacts. |
-| T8.2 | Regen BACKLOG + progress.html | _pending_ | _pending_ | Run `bash tools/scripts/materialize-backlog.sh` → verify `BACKLOG.md` + `BACKLOG-ARCHIVE.md` consistent with yaml state post-M3; run `npm run progress` → verify `docs/progress.html` renders Stage/Task 2-level tree correctly (no Phase rows). |
-| T8.3 | Full verify:local | _pending_ | _pending_ | Run `npm run verify:local` (validate:all + unity:compile-check + db:bridge-preflight); triage any failures by subsystem: web failures → Stage 3.2 patch; MCP failures → Stage 3.1 patch; skill/agent failures → Stage 3.3 patch; yaml failures → Stage 2.2 patch. |
-| T8.4 | Fix remaining failures + M7 flip | _pending_ | _pending_ | Apply minimal targeted fixes for any failures from T4.1.3; re-run `npm run verify:local` until green; flip migration JSON M7 `done`. |
+| T8.1 | Dry-run new chain end-to-end | **TECH-485** | Done | Select a small pending Task from any open master plan (prefer a Task in _pending_ state, not one currently In Progress); run the new chain: `/plan-review` on its Stage → `/author --task {ISSUE_ID}` → `/implement` (no actual code ship; stop after plan-review + author to validate dispatch wiring) → simulate audit + code-review outputs → verify closeout-apply reads `§Stage Closeout Plan` stub correctly; document each pair's handoff in migration JSON M7.dry-run section; no commit of dry-run artifacts. |
+| T8.2 | Regen BACKLOG + progress.html | **TECH-486** | Done | Run `bash tools/scripts/materialize-backlog.sh` → verify `BACKLOG.md` + `BACKLOG-ARCHIVE.md` consistent with yaml state post-M3; run `npm run progress` → verify `docs/progress.html` renders Stage/Task 2-level tree correctly (no Phase rows). |
+| T8.3 | Full verify:local | **TECH-487** | Done | Run `npm run verify:local` (validate:all + unity:compile-check + db:bridge-preflight); triage any failures by subsystem: web failures → Stage 3.2 patch; MCP failures → Stage 3.1 patch; skill/agent failures → Stage 3.3 patch; yaml failures → Stage 2.2 patch. |
+| T8.4 | Fix remaining failures + M7 flip | **TECH-488** | Done | Apply minimal targeted fixes for any failures from T8.3; re-run `npm run verify:local` until green; flip migration JSON M7 `done`. |
 
+#### §Stage File Plan
+
+<!-- stage-file-plan output — do not hand-edit; apply via stage-file-apply -->
+
+```yaml
+- operation: file_task
+  target_anchor: "task_key:T8.1"
+  reserved_id: ""
+  issue_type: "TECH"
+  title: "Dry-run new chain end-to-end"
+  priority: "high"
+  notes: |
+    Pick small pending Task from any open master plan (not In Progress). Run new chain partial: /plan-review on its Stage then /enrich then /implement stub
+    (no code ship — stop after wiring validation). Simulate audit + code-review outputs. Verify closeout-apply reads §Closeout Plan anchor correctly.
+    Document each pair handoff in migration JSON M7.dry-run. No artifact commit. Exercises Plan-Apply pair seams end-to-end pre-merge.
+  depends_on: []
+  related:
+    - "T8.2"
+    - "T8.3"
+    - "T8.4"
+  stub_body:
+    summary: |
+      Dry-run exercise of new lifecycle chain on one small pending Task. Validates dispatch wiring across plan-review → enrich → implement → simulated
+      audit → closeout-apply seam. Stops short of real code ship. Captures handoff artifacts to migration JSON for merge gate review.
+    goals: |
+      - Confirm each pair seam (plan-review → fix-apply, stage-closeout-plan → apply) hands off without anchor ambiguity.
+      - Capture migration JSON M7.dry-run entries per seam.
+      - Surface integration bugs before Stage 8 T8.3 full verify:local.
+      - No state mutation persisted (no BACKLOG archive, no spec delete).
+    systems_map: |
+      - `.claude/commands/{plan-review,implement,closeout}.md` — dispatchers under test.
+      - `.claude/agents/plan-reviewer.md`, `plan-fix-applier.md`, `stage-closeout-planner.md`, `stage-closeout-applier.md` — pair seams exercised.
+      - `ia/skills/plan-review/`, `plan-fix-apply/`, `stage-closeout-plan/`, `stage-closeout-apply/` — skill bodies.
+      - `ia/state/lifecycle-refactor-migration.json` — M7.dry-run section (new subtree).
+      - `ia/rules/plan-apply-pair-contract.md` — contract under verification.
+    impl_plan_sketch: |
+      Phase 1 — Select candidate pending Task + run chain partial + record handoffs:
+      scan open master plans for _pending_ Task in non-active Stage; invoke /plan-review on owning Stage; dispatch /enrich; dry-run /implement
+      (stop pre-commit); simulate §Audit + §Code Review outputs inline; invoke stage-closeout-plan then stage-closeout-apply against simulated
+      Stage-end state; write migration JSON M7.dry-run with per-seam {seam, handoff_anchor, tuple_count, verdict}; revert any accidental mutation.
+```
+
+```yaml
+- operation: file_task
+  target_anchor: "task_key:T8.2"
+  reserved_id: ""
+  issue_type: "TECH"
+  title: "Regen BACKLOG + progress.html"
+  priority: "medium"
+  notes: |
+    Run `bash tools/scripts/materialize-backlog.sh` — verify BACKLOG.md + BACKLOG-ARCHIVE.md consistent with yaml state post-M3 Phase-drop. Run
+    `npm run progress` — verify docs/progress.html renders Stage/Task 2-level tree (no Phase rows). Flags any regen drift from Stage 4 yaml edits.
+  depends_on: []
+  related:
+    - "T8.1"
+    - "T8.3"
+  stub_body:
+    summary: |
+      Regenerate Backlog view + progress dashboard from post-M3 yaml state. Confirms materialize-backlog.sh + progress script both honor the
+      dropped Phase column / parent_phase frontmatter fold without manual patching.
+    goals: |
+      - Backlog view (BACKLOG.md + BACKLOG-ARCHIVE.md) regenerates cleanly from current yaml records.
+      - docs/progress.html emits Stage → Task 2-level tree; zero Phase rows.
+      - No stale Phase artifact leaks through either generator.
+    systems_map: |
+      - `tools/scripts/materialize-backlog.sh` — Backlog view generator (flock-guarded).
+      - `ia/backlog/*.yaml`, `ia/backlog-archive/*.yaml` — source records (post-Stage 4 schema).
+      - `BACKLOG.md`, `BACKLOG-ARCHIVE.md` — regenerated views (read-only).
+      - `npm run progress` → `docs/progress.html` — dashboard renderer; parses master plans.
+      - `tools/mcp-ia-server/src/parser/` — backlog-schema expectation (Stage 4 no-phase allowlist).
+    impl_plan_sketch: |
+      Phase 1 — Regen + diff:
+      run materialize-backlog.sh; diff BACKLOG.md head vs last committed version (expect only legit Stage 4 row changes); run npm run progress;
+      open docs/progress.html in browser or static diff; confirm tree depth = 2 (Stage → Task) across all 16 master plans; flag any Phase-row
+      regression to migration JSON T8.2.findings; no commit unless green.
+```
+
+```yaml
+- operation: file_task
+  target_anchor: "task_key:T8.3"
+  reserved_id: ""
+  issue_type: "TECH"
+  title: "Full verify:local"
+  priority: "high"
+  notes: |
+    Run `npm run verify:local` — full chain (validate:all + unity:compile-check + db:bridge-preflight + Editor save/quit + db:bridge-playmode-smoke).
+    Triage failures by subsystem: web → Stage 6 patch; MCP → Stage 5 patch; skill/agent → Stage 7 patch; yaml → Stage 4 patch. Escalate
+    rather than guess cause. This is the merge-gate acceptance run.
+  depends_on: []
+  related:
+    - "T8.1"
+    - "T8.2"
+    - "T8.4"
+  stub_body:
+    summary: |
+      Full local verification chain as merge-gate acceptance. Single invocation of npm run verify:local covers validate:all, Unity compile,
+      Postgres bridge preflight, Editor save/quit, bridge playmode smoke. Failures triaged by owning Stage.
+    goals: |
+      - verify:local green end-to-end on current branch.
+      - Every failure routed to correct Stage patch lane (no cross-lane fixes).
+      - Acceptance artifact recorded for Stage 9 sign-off gate.
+    systems_map: |
+      - `package.json` — `verify:local` / `verify:post-implementation` composition (see `ARCHITECTURE.md` §Local verification).
+      - `tools/scripts/unity-*.sh` + `$UNITY_EDITOR_PATH` from `.env.local`.
+      - `tools/scripts/db-bridge-*.ts` + Postgres :5434 (brew native).
+      - `docs/agent-led-verification-policy.md` — canonical verification policy.
+      - Triage targets: Stage 4 (yaml), Stage 5 (MCP), Stage 6 (web), Stage 7 (skills/agents).
+    impl_plan_sketch: |
+      Phase 1 — Run full chain + triage:
+      confirm `.env.local` sets UNITY_EDITOR_PATH + Postgres creds; run npm run verify:local; on first non-zero exit, capture full stdout + stderr
+      into migration JSON T8.3.failures[]; classify each failure by subsystem; hand off to T8.4 for targeted fix; do NOT self-patch inside T8.3 —
+      T8.3 is a read-only observation task.
+```
+
+```yaml
+- operation: file_task
+  target_anchor: "task_key:T8.4"
+  reserved_id: ""
+  issue_type: "TECH"
+  title: "Fix remaining failures + M7 flip"
+  priority: "high"
+  notes: |
+    Apply minimal targeted fixes for failures surfaced by T8.3 (issue id refs currently say "T4.1.3" — stale pre-migration id; canonical source =
+    T8.3 findings). Re-run `npm run verify:local` until green. Flip migration JSON M7 `done`. Bounded — if fix scope exceeds one touch per
+    failure, escalate + split rather than pile on.
+  depends_on: []
+  related:
+    - "T8.1"
+    - "T8.2"
+    - "T8.3"
+  stub_body:
+    summary: |
+      Close-out task for Stage 8. Applies minimal fixes against T8.3-surfaced failures, re-runs verify:local to green, and flips migration JSON
+      M7 done. Gate before Stage 9 user sign-off.
+    goals: |
+      - Every T8.3 failure gets a minimal targeted fix in its owning Stage's lane.
+      - verify:local green on final re-run.
+      - migration JSON M7 flipped done; Stage 8 exit criteria satisfied.
+      - No scope creep — escalate if a fix needs cross-stage work.
+    systems_map: |
+      - `ia/state/lifecycle-refactor-migration.json` — M7 entry flip target.
+      - Fix targets per T8.3 triage: `ia/backlog/*.yaml` (Stage 4), `tools/mcp-ia-server/` (Stage 5), `web/lib/` (Stage 6), `ia/skills/` + `.claude/agents/` (Stage 7).
+      - `npm run verify:local` — acceptance gate.
+    impl_plan_sketch: |
+      Phase 1 — Iterate fix + re-verify:
+      read T8.3.failures[] from migration JSON; for each failure apply minimal patch in owning Stage lane; after each patch run verify:local
+      again; on persistent failure after 1 retry, escalate to user with diagnosis (no deeper auto-patching); on green, flip M7 done in migration
+      JSON + close T8.4.
+```
+
+#### §Plan Fix
+
+> plan-review — 5 tuples. Spawn `plan-fix-apply ia/projects/lifecycle-refactor-master-plan.md 8`.
+
+```yaml
+- operation: replace_section
+  target_path: ia/projects/lifecycle-refactor-master-plan.md
+  target_anchor: "task_key:T8.1"
+  payload: |
+    | T8.1 | Dry-run new chain end-to-end | **TECH-485** | Draft | Select a small pending Task from any open master plan (prefer a Task in _pending_ state, not one currently In Progress); run the new chain: `/plan-review` on its Stage → `/author --task {ISSUE_ID}` → `/implement` (no actual code ship; stop after plan-review + author to validate dispatch wiring) → simulate audit + code-review outputs → verify closeout-apply reads `§Stage Closeout Plan` stub correctly; document each pair's handoff in migration JSON M7.dry-run section; no commit of dry-run artifacts. |
+
+- operation: replace_section
+  target_path: ia/projects/lifecycle-refactor-master-plan.md
+  target_anchor: "task_key:T8.4"
+  payload: |
+    | T8.4 | Fix remaining failures + M7 flip | **TECH-488** | Draft | Apply minimal targeted fixes for any failures from T8.3; re-run `npm run verify:local` until green; flip migration JSON M7 `done`. |
+
+- operation: replace_section
+  target_path: ia/backlog/TECH-485.yaml
+  target_anchor: "notes"
+  payload: |
+    notes: |
+      Pick small pending Task from any open master plan (not In Progress). Run new chain partial: /plan-review on its Stage then /author --task {ISSUE_ID} then /implement stub
+      (no code ship — stop after wiring validation). Simulate audit + code-review outputs. Verify closeout-apply reads §Stage Closeout Plan anchor correctly.
+      Document each pair handoff in migration JSON M7.dry-run. No artifact commit. Exercises Plan-Apply pair seams end-to-end pre-merge.
+
+- operation: replace_section
+  target_path: ia/backlog/TECH-488.yaml
+  target_anchor: "notes"
+  payload: |
+    notes: |
+      Apply minimal targeted fixes for failures surfaced by T8.3. Re-run `npm run verify:local` until green. Flip migration JSON M7 `done`.
+      Bounded — if fix scope exceeds one touch per failure, escalate + split rather than pile on.
+
+- operation: replace_section
+  target_path: ia/backlog/TECH-485.yaml
+  target_anchor: "raw_markdown"
+  payload: |
+    raw_markdown: |
+      Dry-run new chain end-to-end — Pick small pending Task from any open master plan (not In Progress). Run new chain partial using /author (no /enrich — retired).
+```
 ---
 
 ### Stage 9 — Validation + Merge / Sign-Off + Merge
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress
 
 **Objectives:** Present dry-run artifacts to user. Collect sign-off. Merge branch, restart MCP, and close freeze window. File token-cost telemetry follow-up. File ship-stage chain-journal persistence follow-up.
 
@@ -321,11 +512,219 @@
 
 | Task | Name | Issue | Status | Intent |
 | --- | --- | --- | --- | --- |
-| T9.1 | User sign-off gate | _pending_ | _pending_ | Present dry-run artifacts (migration JSON M7.dry-run, `BACKLOG.md` diff, `docs/progress.html` screenshot) to user; wait for explicit sign-off ("LGTM" / "merge"); record sign-off + timestamp in migration JSON M8.gate; do not proceed to T4.2.3 without gate. |
-| T9.2 | MCP restart + schema verify | _pending_ | _pending_ | Kill and respawn `territory-ia` MCP process on the post-merge main branch; send a test `router_for_task` call with `plan_review` stage name; confirm enum accepted; confirm `plan_apply_validate` tool responds; record restart success in migration JSON. |
-| T9.3 | Merge branch | _pending_ | _pending_ | Merge `feature/lifecycle-collapse-cognitive-split` into main (standard merge commit, no squash — preserve migration history); resolve any conflicts in `BACKLOG.md` / `BACKLOG-ARCHIVE.md` from concurrent activity during freeze window by re-running `materialize-backlog.sh` post-merge; flip migration JSON M8 `done`. |
-| T9.4 | Freeze close + token-cost issue + Q9 baseline instrumentation | _pending_ | _pending_ | Remove freeze note from `CLAUDE.md` §Key commands; file a token-cost telemetry tracker TECH issue in `ia/backlog/` (title: "Token-cost telemetry baseline — pre/post lifecycle refactor + Q9 pair-head read-count"; priority: Low). Issue MUST require per-Stage instrumentation that captures (a) total prompt tokens per Stage, (b) **pair-head read count per Stage** (distinct from total tokens — each cache-hit read counted separately; precondition for Stage 10 P1 savings validation per `docs/prompt-caching-mechanics.md` §4 R5), (c) cache-write / cache-read / cache-miss token counts from `usage.cache_creation_input_tokens` + `usage.cache_read_input_tokens`, (d) per-Stage bundle byte + token size (validates F2 sizing gate per rev 4 C1/R2). Data feeds Stage 10 T10.1 precondition gate. Run final `npm run validate:all` on main post-merge to confirm clean state. |
-| T9.5 | Ship-stage chain-journal persistence follow-up | _pending_ | _pending_ | File a TECH issue in `ia/backlog/` via `/project-new` (title: "Ship-stage chain-journal persistence — crash-survivable stage digest + resume UX"; priority: Medium). Issue MUST scope: (a) `ia/skills/ship-stage/SKILL.md` Step 2.5 writes `ia/state/ship-stage-{master-plan-slug}-{stage-id}.json` after each closeout (append `{task_id, lessons[], decisions[], verify_iterations}` accumulator entry), (b) Phase 0 reads existing journal on re-invocation + emits `Resuming at task K/N (skipped: T1..Tk-1 already Done)` line before continuing, (c) Phase 4 final digest reads journal as authoritative source for `chain.tasks[]` aggregation, (d) Phase 4 deletes journal file on `SHIP_STAGE PASSED` exit (preserve on STOPPED / STAGE_VERIFY_FAIL for next-run resume), (e) lockfile `ia/state/.ship-stage-{master-plan-slug}-{stage-id}.lock` per concurrency-domain rule (invariants Guardrails §IF flock guard); read-only Phase 0 inspection skips flock. Out of scope: spec-implementer mid-phase transactional markers (separate concern; covered today by `subagent-progress-emit` stderr markers + Edit-tool `old_string` idempotency floor + Test Blueprint atomic phases — no runtime spec-frontmatter mutation pathway needed). Acceptance: kill `/ship-stage` mid-Stage at task 2/3, re-invoke same args, observe resume line + only T3 dispatched + final digest contains all 3 tasks' lessons/decisions. |
+| T9.1 | User sign-off gate | **TECH-489** | Draft | Present dry-run artifacts (migration JSON M7.dry-run, `BACKLOG.md` diff, `docs/progress.html` screenshot) to user; wait for explicit sign-off ("LGTM" / "merge"); record sign-off + timestamp in migration JSON M8.gate; do not proceed to T4.2.3 without gate. |
+| T9.2 | MCP restart + schema verify | **TECH-490** | Draft | Kill and respawn `territory-ia` MCP process on the post-merge main branch; send a test `router_for_task` call with `plan_review` stage name; confirm enum accepted; confirm `plan_apply_validate` tool responds; record restart success in migration JSON. |
+| T9.3 | Merge branch | **TECH-491** | Draft | Merge `feature/lifecycle-collapse-cognitive-split` into main (standard merge commit, no squash — preserve migration history); resolve any conflicts in `BACKLOG.md` / `BACKLOG-ARCHIVE.md` from concurrent activity during freeze window by re-running `materialize-backlog.sh` post-merge; flip migration JSON M8 `done`. |
+| T9.4 | Freeze close + token-cost issue + Q9 baseline instrumentation | **TECH-492** | Draft | Remove freeze note from `CLAUDE.md` §Key commands; file a token-cost telemetry tracker TECH issue in `ia/backlog/` (title: "Token-cost telemetry baseline — pre/post lifecycle refactor + Q9 pair-head read-count"; priority: Low). Issue MUST require per-Stage instrumentation that captures (a) total prompt tokens per Stage, (b) **pair-head read count per Stage** (distinct from total tokens — each cache-hit read counted separately; precondition for Stage 10 P1 savings validation per `docs/prompt-caching-mechanics.md` §4 R5), (c) cache-write / cache-read / cache-miss token counts from `usage.cache_creation_input_tokens` + `usage.cache_read_input_tokens`, (d) per-Stage bundle byte + token size (validates F2 sizing gate per rev 4 C1/R2). Data feeds Stage 10 T10.1 precondition gate. Run final `npm run validate:all` on main post-merge to confirm clean state. |
+| T9.5 | Ship-stage chain-journal persistence follow-up | **TECH-493** | Draft | File a TECH issue in `ia/backlog/` via `/project-new` (title: "Ship-stage chain-journal persistence — crash-survivable stage digest + resume UX"; priority: Medium). Issue MUST scope: (a) `ia/skills/ship-stage/SKILL.md` Step 2.5 writes `ia/state/ship-stage-{master-plan-slug}-{stage-id}.json` after each closeout (append `{task_id, lessons[], decisions[], verify_iterations}` accumulator entry), (b) Phase 0 reads existing journal on re-invocation + emits `Resuming at task K/N (skipped: T1..Tk-1 already Done)` line before continuing, (c) Phase 4 final digest reads journal as authoritative source for `chain.tasks[]` aggregation, (d) Phase 4 deletes journal file on `SHIP_STAGE PASSED` exit (preserve on STOPPED / STAGE_VERIFY_FAIL for next-run resume), (e) lockfile `ia/state/.ship-stage-{master-plan-slug}-{stage-id}.lock` per concurrency-domain rule (invariants Guardrails §IF flock guard); read-only Phase 0 inspection skips flock. Out of scope: spec-implementer mid-phase transactional markers (separate concern; covered today by `subagent-progress-emit` stderr markers + Edit-tool `old_string` idempotency floor + Test Blueprint atomic phases — no runtime spec-frontmatter mutation pathway needed). Acceptance: kill `/ship-stage` mid-Stage at task 2/3, re-invoke same args, observe resume line + only T3 dispatched + final digest contains all 3 tasks' lessons/decisions. |
+
+#### §Stage File Plan
+
+<!-- Emitted by stage-file-plan (Opus). Pair-tail stage-file-apply (Sonnet) reads tuples verbatim, writes yaml + spec stub, flips row Issue cell, then materializes BACKLOG. -->
+
+```yaml
+tuples:
+  - operation: file_task
+    reserved_id: TECH-489
+    task_key: T9.1
+    title: "User sign-off gate"
+    priority: high
+    issue_type: TECH
+    section: "Validation + Merge / Sign-Off + Merge"
+    target_path: ia/projects/lifecycle-refactor-master-plan.md
+    target_anchor: "| T9.1 | User sign-off gate | _pending_ |"
+    depends_on: []
+    related: ["TECH-490", "TECH-491", "TECH-492", "TECH-493"]
+    notes: |
+      Present dry-run artifacts (migration JSON M7.dry-run, `BACKLOG.md` diff, `docs/progress.html` screenshot) to user. Wait for explicit sign-off ("LGTM" / "merge"). Record sign-off + timestamp in migration JSON M8.gate. Do not proceed to merge without gate.
+    acceptance: |
+      - [ ] Dry-run artifacts surfaced to user (migration JSON M7.dry-run row + BACKLOG diff + progress.html screenshot).
+      - [ ] Explicit user sign-off captured verbatim ("LGTM" / "merge" / equivalent).
+      - [ ] Migration JSON M8.gate entry written with sign-off text + ISO8601 timestamp.
+      - [ ] No merge (T9.3) dispatch until gate row present.
+    stub_body: |
+      ## 1. Summary
+      Human sign-off gate before merging `feature/lifecycle-collapse-cognitive-split`. Collect artifacts, poll user, record gate row.
+
+      ## 2. Goals and Non-Goals
+      ### 2.1 Goals
+      1. Surface dry-run artifacts (M7.dry-run + BACKLOG diff + progress.html).
+      2. Capture explicit sign-off string + timestamp in migration JSON M8.gate.
+      ### 2.2 Non-Goals
+      1. Running the merge itself (T9.3 scope).
+      2. Restarting MCP (T9.2 scope).
+
+      ## 4. Current State
+      ### 4.2 Systems map
+      - `ia/state/lifecycle-refactor-migration.json` — M8.gate row target.
+      - `docs/progress.html` — dry-run screenshot source.
+      - `BACKLOG.md` — diff source.
+
+      ## Open Questions
+      - None.
+
+  - operation: file_task
+    reserved_id: TECH-490
+    task_key: T9.2
+    title: "MCP restart + schema verify"
+    priority: high
+    issue_type: TECH
+    section: "Validation + Merge / Sign-Off + Merge"
+    target_path: ia/projects/lifecycle-refactor-master-plan.md
+    target_anchor: "| T9.2 | MCP restart + schema verify | _pending_ |"
+    depends_on: ["TECH-491"]
+    related: ["TECH-489", "TECH-492", "TECH-493"]
+    notes: |
+      Kill + respawn `territory-ia` MCP process on post-merge main. Send test `router_for_task` call with `plan_review` stage name; confirm enum accepted. Confirm `plan_apply_validate` tool responds. Record restart success in migration JSON.
+    acceptance: |
+      - [ ] MCP process respawned on post-merge main (PID logged).
+      - [ ] `router_for_task` with `lifecycle_stage: plan_review` returns ok.
+      - [ ] `plan_apply_validate` tool discoverable + responsive.
+      - [ ] Migration JSON entry records restart success + timestamp.
+    stub_body: |
+      ## 1. Summary
+      Restart `territory-ia` MCP server post-merge so new schema (plan-apply-pair-contract enums, retired tools) is live.
+
+      ## 2. Goals and Non-Goals
+      ### 2.1 Goals
+      1. Fresh MCP process on merged main branch.
+      2. Confirm schema includes plan_review enum + plan_apply_validate tool.
+      ### 2.2 Non-Goals
+      1. Schema edits (frozen post-merge).
+      2. Tool catalog rewrite.
+
+      ## 4. Current State
+      ### 4.2 Systems map
+      - `.mcp.json` — MCP registration.
+      - `tools/mcp-ia-server/src/index.ts` — entrypoint.
+      - `ia/state/lifecycle-refactor-migration.json` — restart log target.
+
+      ## Open Questions
+      - None.
+
+  - operation: file_task
+    reserved_id: TECH-491
+    task_key: T9.3
+    title: "Merge branch"
+    priority: high
+    issue_type: TECH
+    section: "Validation + Merge / Sign-Off + Merge"
+    target_path: ia/projects/lifecycle-refactor-master-plan.md
+    target_anchor: "| T9.3 | Merge branch | _pending_ |"
+    depends_on: ["TECH-489"]
+    related: ["TECH-490", "TECH-492", "TECH-493"]
+    notes: |
+      Merge `feature/lifecycle-collapse-cognitive-split` into main (standard merge commit, no squash — preserve migration history). Resolve any `BACKLOG.md` / `BACKLOG-ARCHIVE.md` conflicts from concurrent activity by re-running `materialize-backlog.sh` post-merge. Flip migration JSON M8 `done`.
+    acceptance: |
+      - [ ] Branch merged to main with merge commit (no squash).
+      - [ ] BACKLOG.md + BACKLOG-ARCHIVE.md re-materialized post-merge if conflicts surfaced.
+      - [ ] Migration JSON M8 flipped to `done` with timestamp.
+      - [ ] `npm run validate:all` green on main post-merge.
+    stub_body: |
+      ## 1. Summary
+      Land lifecycle-refactor branch on main. Preserve migration history. Re-materialize BACKLOG views if needed.
+
+      ## 2. Goals and Non-Goals
+      ### 2.1 Goals
+      1. Merge commit on main (no squash).
+      2. M8 flip to done.
+      ### 2.2 Non-Goals
+      1. MCP restart (T9.2 scope).
+      2. Freeze-note removal (T9.4 scope).
+
+      ## 4. Current State
+      ### 4.2 Systems map
+      - `BACKLOG.md` / `BACKLOG-ARCHIVE.md` — generated views, may conflict.
+      - `tools/scripts/materialize-backlog.sh` — regen tool.
+      - `ia/state/lifecycle-refactor-migration.json` — M8 row.
+
+      ## Open Questions
+      - None.
+
+  - operation: file_task
+    reserved_id: TECH-492
+    task_key: T9.4
+    title: "Freeze close + token-cost telemetry tracker + Q9 baseline instrumentation"
+    priority: medium
+    issue_type: TECH
+    section: "Validation + Merge / Sign-Off + Merge"
+    target_path: ia/projects/lifecycle-refactor-master-plan.md
+    target_anchor: "| T9.4 | Freeze close + token-cost issue + Q9 baseline instrumentation | _pending_ |"
+    depends_on: ["TECH-491"]
+    related: ["TECH-489", "TECH-490", "TECH-493"]
+    notes: |
+      Remove freeze note from `CLAUDE.md` §Key commands. File token-cost telemetry tracker TECH issue (title: "Token-cost telemetry baseline — pre/post lifecycle refactor + Q9 pair-head read-count"; priority: Low). Issue MUST scope per-Stage instrumentation: (a) total prompt tokens per Stage; (b) **pair-head read count per Stage** (distinct from total tokens; each cache-hit read counted separately; precondition for Stage 10 P1 savings validation per `docs/prompt-caching-mechanics.md` §4 R5); (c) cache-write / cache-read / cache-miss token counts from `usage.cache_creation_input_tokens` + `usage.cache_read_input_tokens`; (d) per-Stage bundle byte + token size (validates F2 sizing gate per rev 4 C1/R2). Data feeds Stage 10 T10.1 precondition gate. Run final `npm run validate:all` on main to confirm clean state.
+    acceptance: |
+      - [ ] Freeze note removed from `CLAUDE.md` §Key commands.
+      - [ ] Q9 baseline tracker TECH issue filed in `ia/backlog/` with scope (a)–(d) verbatim.
+      - [ ] `npm run validate:all` green on main post-merge.
+      - [ ] Filed issue id cross-referenced from Stage 10 T10.1 precondition note (read-only reference, no edit required here).
+    stub_body: |
+      ## 1. Summary
+      Retire freeze window + file Q9 baseline telemetry tracker. Gate feed for Stage 10 cache-layer activation.
+
+      ## 2. Goals and Non-Goals
+      ### 2.1 Goals
+      1. Remove freeze prose from `CLAUDE.md` §Key commands.
+      2. File telemetry tracker with read-count + cache-usage scope.
+      3. Baseline ready for Stage 10 T10.1 precondition.
+      ### 2.2 Non-Goals
+      1. Implementing the telemetry collector (tracker scope, separate issue).
+      2. Landing any Stage 10 cache wiring.
+
+      ## 4. Current State
+      ### 4.2 Systems map
+      - `CLAUDE.md` §Key commands — freeze note target.
+      - `ia/backlog/` — tracker yaml destination.
+      - `docs/prompt-caching-mechanics.md` §4 R5 — read-count semantics source.
+
+      ## Open Questions
+      - None.
+
+  - operation: file_task
+    reserved_id: TECH-493
+    task_key: T9.5
+    title: "Ship-stage chain-journal persistence follow-up"
+    priority: medium
+    issue_type: TECH
+    section: "Validation + Merge / Sign-Off + Merge"
+    target_path: ia/projects/lifecycle-refactor-master-plan.md
+    target_anchor: "| T9.5 | Ship-stage chain-journal persistence follow-up | _pending_ |"
+    depends_on: ["TECH-491"]
+    related: ["TECH-489", "TECH-490", "TECH-492"]
+    notes: |
+      File a TECH issue in `ia/backlog/` via `/project-new` (title: "Ship-stage chain-journal persistence — crash-survivable stage digest + resume UX"; priority: Medium). Issue MUST scope: (a) `ia/skills/ship-stage/SKILL.md` Step 2.5 writes `ia/state/ship-stage-{master-plan-slug}-{stage-id}.json` after each closeout (append `{task_id, lessons[], decisions[], verify_iterations}` accumulator entry); (b) Phase 0 reads existing journal on re-invocation + emits `Resuming at task K/N (skipped: T1..Tk-1 already Done)` line before continuing; (c) Phase 4 final digest reads journal as authoritative source for `chain.tasks[]` aggregation; (d) Phase 4 deletes journal on `SHIP_STAGE PASSED` exit (preserve on STOPPED / STAGE_VERIFY_FAIL for next-run resume); (e) lockfile `ia/state/.ship-stage-{master-plan-slug}-{stage-id}.lock` per concurrency-domain rule (invariants Guardrails §IF flock guard); read-only Phase 0 inspection skips flock. Out of scope: spec-implementer mid-phase transactional markers.
+    acceptance: |
+      - [ ] TECH issue filed with scope (a)–(e) verbatim.
+      - [ ] Acceptance in filed issue includes: kill `/ship-stage` mid-Stage at task 2/3, re-invoke same args, observe resume line + only T3 dispatched + final digest contains all 3 tasks' lessons/decisions.
+      - [ ] Issue priority = Medium.
+      - [ ] Issue id cross-referenced from `ia/skills/ship-stage/SKILL.md` §Open Questions (read-only reference; edit deferred to filed issue's implementer).
+    stub_body: |
+      ## 1. Summary
+      File crash-survivable ship-stage journal tracker. Resume semantics + lockfile + Phase 4 digest-source swap.
+
+      ## 2. Goals and Non-Goals
+      ### 2.1 Goals
+      1. Journal file accumulator post-closeout.
+      2. Phase 0 resume line + skip-completed behavior.
+      3. Phase 4 journal-as-source + conditional delete.
+      ### 2.2 Non-Goals
+      1. Spec-implementer mid-phase transactional markers (separate concern).
+      2. Refactoring `subagent-progress-emit` stderr channel.
+
+      ## 4. Current State
+      ### 4.2 Systems map
+      - `ia/skills/ship-stage/SKILL.md` — Step 2.5 + Phase 0 + Phase 4 edit targets.
+      - `ia/state/` — journal + lockfile destination.
+      - `ia/rules/invariants.md` §Guardrails — flock rule anchor.
+
+      ## Open Questions
+      - None.
+```
+
+#### §Plan Fix — PASS (no drift)
+
+> plan-review exit 0 — all Task specs (TECH-489, TECH-490, TECH-491, TECH-492, TECH-493) aligned. No tuples emitted. Downstream pipeline continue.
 
 ---
 

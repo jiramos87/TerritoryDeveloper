@@ -1,0 +1,24 @@
+id: "TECH-486"
+type: "TECH"
+title: "Regen BACKLOG + progress.html"
+priority: "medium"
+status: closed
+section: "Validation + Merge / Dry-Run + Full Validation"
+spec: ""
+closed: "2026-04-19"
+files: []
+notes: |
+  Run `bash tools/scripts/materialize-backlog.sh` — verify BACKLOG.md + BACKLOG-ARCHIVE.md consistent with yaml state post-M3 Phase-drop. Run
+  `npm run progress` — verify docs/progress.html renders Stage/Task 2-level tree (no Phase rows). Flags any regen drift from Stage 4 yaml edits.
+acceptance: |
+  - [ ] Backlog view (BACKLOG.md + BACKLOG-ARCHIVE.md) regenerates cleanly from current yaml records.
+  - [ ] docs/progress.html emits Stage → Task 2-level tree; zero Phase rows.
+  - [ ] No stale Phase artifact leaks through either generator.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-485"
+  - "TECH-487"
+created: "2026-04-19"
+raw_markdown: |
+  Regen BACKLOG + progress.html — Run materialize-backlog.sh and verify BACKLOG.md + BACKLOG-ARCHIVE.md consistent with yaml state post-M3.
