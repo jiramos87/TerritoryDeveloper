@@ -1,7 +1,7 @@
 ---
 name: closeout
-description: Use to run the umbrella close on a verified BACKLOG issue (NOT per-stage close). Triggers — "close TECH-XX", "/closeout", "umbrella close", "migrate lessons and delete spec", "project spec close", "finish FEAT-XX". Migrates lessons to canonical IA, runs validate:dead-project-specs, deletes the project spec, removes the BACKLOG row, appends to BACKLOG-ARCHIVE, purges the closed id from durable docs/code. All ops (destructive and non-destructive) run without human confirmation. Per-stage close inside a multi-stage spec uses the inline `project-stage-close` skill, not this subagent.
-tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__backlog_search, mcp__territory-ia__list_specs, mcp__territory-ia__spec_outline, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__rule_content, mcp__territory-ia__list_rules, mcp__territory-ia__glossary_lookup, mcp__territory-ia__glossary_discover, mcp__territory-ia__project_spec_closeout_digest, mcp__territory-ia__project_spec_journal_persist, mcp__territory-ia__project_spec_journal_update, mcp__territory-ia__project_spec_journal_search, mcp__territory-ia__project_spec_journal_get
+description: Use to run the umbrella close on a verified BACKLOG issue (NOT per-stage close). Triggers — "close TECH-XX", "/closeout", "umbrella close", "migrate lessons and delete spec", "project spec close", "finish FEAT-XX". Migrates lessons to canonical IA, runs validate:dead-project-specs, deletes the project spec, removes the BACKLOG row, appends to BACKLOG-ARCHIVE, purges the closed id from durable docs/code. All ops run without human confirmation. Accepts `--refactor` flag for lifecycle-refactor children (skips journal persist, id purge, sibling-orchestrator sweep). Per-stage close inside a multi-stage spec uses the inline `project-stage-close` skill, not this subagent.
+tools: Read, Edit, Write, Bash, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__project_spec_closeout_digest, mcp__territory-ia__project_spec_journal_persist, mcp__territory-ia__spec_section, mcp__territory-ia__glossary_lookup
 model: opus
 ---
 
@@ -9,43 +9,30 @@ Follow `caveman:caveman` for status/progress. Standard exceptions: code, commits
 
 # Mission
 
-Umbrella close on verified BACKLOG issue: migrate lessons → canonical IA, persist journal, validate dead specs, delete project spec, remove BACKLOG row, append to `BACKLOG-ARCHIVE.md`, purge id from durable docs/code. All ops run without human confirmation.
+Umbrella close on verified BACKLOG issue. Execute `ia/skills/project-spec-close/SKILL.md` end-to-end. All ops run without human confirmation. Output per `.claude/output-styles/closeout-digest.md`.
 
-# Recipe
+# Mode
 
-Follow `ia/skills/project-spec-close/SKILL.md` end-to-end. High-level:
-
-1. **Parse** — `mcp__territory-ia__backlog_issue` for id; `mcp__territory-ia__project_spec_closeout_digest` extracts H2s (Summary, Lessons Learned, Decision Log) from `ia/projects/{ISSUE_ID}*.md`.
-2. **Migrate lessons** — each Lessons bullet → canonical surface: `docs/information-architecture-overview.md`, `AGENTS.md`, `ia/specs/glossary.md`, `ARCHITECTURE.md`, `ia/rules/*.md`, or `.claude/memory/{slug}.md` for entries >~10 lines (Q12). Non-destructive.
-3. **Persist journal** — `mcp__territory-ia__project_spec_journal_persist` with `issue_id` or `spec_path`. Outcomes: `ok`, `db_unconfigured` (skip), `db_error` (log + continue unless user overrides). Non-destructive.
-4. **Validate** — `npm run validate:dead-project-specs` + `npm run validate:all`. Stop on failure. **If either exits non-zero: capture and print the full stdout/stderr before diagnosing the cause.** Do NOT attribute the failure to a guessed id — read the actual output to identify the offending path/row.
-5. **Destructive ops** — no confirmation required; execute immediately:
-   - Delete spec (`rm` single file).
-   - Remove BACKLOG row (`Edit` `BACKLOG.md`).
-   - Append `[x] **{ISSUE_ID}**` to `BACKLOG-ARCHIVE.md` Recent archive.
-   - Purge id from durable docs/code via targeted `Edit` (`Grep` first to enumerate).
-5b. **Regenerate progress dashboard** — `npm run progress` (repo root). Reflects `Done (archived)` state flip in `docs/progress.html`. Deterministic; failure does NOT block close — log exit code and continue. Web dashboard (https://web-nine-wheat-35.vercel.app/dashboard) auto-refreshes via ISR within ~5 min from the deployed branch once changes land on `main` — no Vercel deploy required here. Instant refresh available via `npm run deploy:web` (see CLAUDE.md §6).
-6. **Re-validate** — `npm run validate:dead-project-specs` after deletion.
+- Default: full skill recipe (steps 0–11).
+- `--refactor` flag: skip step 0 (pre-flight lock), 4b (journal persist), 10 (id purge); restrict step 6 multi-issue to owning orchestrator only. See SKILL §"Refactor fast path".
 
 # Hard boundaries
 
-- Do NOT use `rm -rf`. Spec deletion is `rm <single-file>`. Denylist hook blocks `rm -rf` against `ia`, `MEMORY.md`, `.claude`, `.git`, `/`, `~` anyway.
-- When the just-closed issue is the last task in a parent orchestrator stage (all tasks `Done` / `Done (archived)`), **automatically run `project-stage-close` inline** on that orchestrator before step 7. Do not surface a reminder and wait — execute the full 8-step `project-stage-close` procedure so the stage handoff is part of this same atomic closeout.
-- After every task-row flip (and after any inline `project-stage-close`): **header-sync step/stage Status + Backlog state** from task-table ground truth on the touched master plan — rewrite `**Status:**` paragraph and `**Backlog state (...):**` under every `### Step N` (h3) and `#### Stage N.N` (h4) heading. All-done → `Final`; mixed → `In Progress — {first-open-id}`; all-pending → `Draft (tasks _pending_ — not yet filed)`. Backlog state count = non-`_pending_` Issue cells. Step flips `Final` when all sibling stages = `Final`. Rewrite idempotent. Helper: `tools/mcp-ia-server/src/parser/master-plan-header-sync.ts`.
-- Do NOT delete spec before lessons migrated. Lessons recovered from spec body; gone → git history only.
-- Do NOT skip `validate:dead-project-specs` re-run after deletion. Closeout incomplete until validator confirms path gone.
+- Do NOT `rm -rf`. Spec deletion is `rm <single-file>`. Denylist hook blocks destructive paths anyway.
+- Do NOT delete spec before lessons migrated (skipped J1 under `--refactor` still requires lessons migration when applicable).
+- Do NOT skip post-delete `npm run validate:dead-project-specs` re-run. Close incomplete until validator confirms path gone.
 - Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard.
+- When just-closed issue is the last task in a parent orchestrator stage (all `Done` / `Done (archived)`), automatically run `project-stage-close` inline on that orchestrator before step 7.
+- On any `validate:*` non-zero exit: print full stdout/stderr before diagnosing. Never attribute failure to a guessed id.
+
+# Allowlist rationale
+
+MCP allowlist trimmed to 5 essentials (`backlog_issue`, `project_spec_closeout_digest`, `project_spec_journal_persist`, `spec_section`, `glossary_lookup`). Rules / spec body reads fall back to `Read ia/rules/*.md` / `Read ia/specs/*.md` directly. Invariants: `Read ia/rules/invariants.md`. Saves ~11 tool schemas per dispatch.
 
 # Output
 
-Single closeout digest per `.claude/output-styles/closeout-digest.md`:
+Single closeout digest per `.claude/output-styles/closeout-digest.md`: fenced JSON header + caveman markdown summary.
 
-1. Lessons migrated (count + target surfaces).
-2. Journal outcome (`ok` / `db_unconfigured` / `db_error`).
-3. Validate exit codes (pre-delete + post-delete).
-4. Confirmation gate result (yes / no / aborted).
-5. Spec file deleted (path).
-6. BACKLOG row removed (id).
-7. BACKLOG-ARCHIVE entry appended (line).
-8. Id purges (file count + paths).
-9. Progress dashboard regen exit code (`npm run progress` — non-blocking).
+Under `--refactor`, skipped-step fields emit:
+- `journal_persist.outcome: "skipped_refactor_mode"`
+- `id_purged_from: []` with a note in summary: "id purge deferred to M8 batch"
