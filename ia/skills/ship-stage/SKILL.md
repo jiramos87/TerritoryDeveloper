@@ -283,3 +283,83 @@ Re-read `{MASTER_PLAN_PATH}` post-close. Scan for next stage after `{STAGE_ID}`:
 ## Open Questions
 
 - Crash-survivable `{CHAIN_JOURNAL}` (disk-persisted + resume on re-invocation) — tracked by [TECH-493](../../projects/TECH-493.md). Implementation deferred to that issue's implementer; this skill currently treats `{CHAIN_JOURNAL}` as in-process only.
+
+---
+
+## Changelog
+
+### 2026-04-19 — Self-referential dry-run scope diverged from T8.1 intent (F7 finding)
+
+**Status:** pending (deferred — T8.1b external-plan re-run row 9)
+
+**Symptom:**
+T8.1 verbatim asked for "small _pending_ Task from any open master plan". M8 dry-run actually exercised Stage 8 of `lifecycle-refactor-master-plan.md` itself (filed TECH-485..488 into the plan-under-refactor). Self-referential. Stress-test broader (5 surfaces vs 3) but no isolation from refactor-churn — F4 sampling bias amplified.
+
+**Root cause:**
+Process gap, not skill code bug — T8.1 dispatch did not enforce external-plan target.
+
+**Fix:**
+pending — re-run T8.1b against external open master plan with _pending_ Task for steady-state yield sample. Locks F4/F5 re-measurement.
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---
+
+### 2026-04-19 — Clean end-to-end Stage chain ship (F9 positive signal)
+
+**Status:** observed (no fix required — validates rev-3 collapse)
+
+**Symptom:**
+Single `/ship-stage ia/projects/lifecycle-refactor-master-plan.md 8` invocation: 68 tool uses, ~103.1k tokens, 8m 37s wall. 4 tasks (TECH-485–488) shipped through author → implement → verify-loop → code-review → audit → closeout. Stage verify passed (`validate:all` + `unity:compile-check` + `db:bridge-preflight`). All yamls archived; project specs deleted. M7 flipped `done` in migration JSON. No pair-contract escalations.
+
+**Root cause:**
+Positive signal — rev-3 Stage-scoped chain works end-to-end. Validates lifecycle-refactor M6 collapse (Stage-scoped bulk pair shape for author/audit/closeout).
+
+**Fix:**
+none required.
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---
+
+### 2026-04-19 — Migration-JSON polling via ad-hoc python3 awkward (F11 finding)
+
+**Status:** pending (deferred — Fix #11 optional)
+
+**Symptom:**
+M8 dry-run agent ran 4 trial-and-error `python3 -c "...json..."` Bash calls to inspect `ia/state/lifecycle-refactor-migration.json` phases section before yielding usable output.
+
+**Root cause:**
+No typed surface for migration-JSON status query. Agent fell back to ad-hoc python.
+
+**Fix:**
+pending — candidate MCP tool `lifecycle_migration_status {phase?}` returning `{phase_id, status, flipped_at, notes}` OR documented `jq '.phases | to_entries | map(...)'` pattern in `ship-stage` SKILL §evidence gathering. Low priority.
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---
+
+### 2026-04-19 — STAGE_ID argument syntax drift (F12 finding)
+
+**Status:** pending (deferred — Fix #10)
+
+**Symptom:**
+Original user invocation: `/ship-stage ia/projects/... 8` (bare numeric). Agent suggestion drifted to `/ship-stage ia/projects/... Stage 9` (word + number). `/ship-stage` subagent description = `{MASTER_PLAN_PATH} {STAGE_ID}` — `STAGE_ID` format spec ambiguous (`8` vs `8.1` vs `Stage 8` vs `Stage 8.1`).
+
+**Root cause:**
+`STAGE_ID` accepted-format spec underdefined; subagent suggestion prose drifted across surfaces.
+
+**Fix:**
+pending — lock `STAGE_ID` format in `.claude/agents/ship-stage.md` frontmatter description (pick one canonical form; reject ambiguous); align all subagent suggestion prose. Low priority.
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---

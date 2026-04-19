@@ -116,9 +116,13 @@ For each Task spec in the bulk input, write one `§Plan Author` section containi
 
 ---
 
-## Phase 4 — Canonical-term fold
+## Phase 4 — Canonical-term fold + drift scan
 
-Second pass of the same bulk Opus call (or immediately after Phase 3 in same context). For each Task spec, enforce canonical glossary terms across:
+Second pass of the same bulk Opus call (or immediately after Phase 3 in same context). Four sub-checks (all four MUST run per Task; emit per-Task counts in hand-off summary).
+
+### 4a. Canonical-term fold (glossary)
+
+For each Task spec, enforce canonical glossary terms across:
 
 - §1 Summary
 - §4 Current State (§4.1 Domain behavior paragraph)
@@ -131,7 +135,79 @@ Rules:
 - If a term is not in glossary → add it to `§Open Questions` as candidate glossary row (do NOT edit glossary from this skill).
 - Opus authors canonical at write time. No post-hoc Sonnet mechanical transform (retired spec-enrich behavior).
 
-Emit per-Task count `{ISSUE_ID → n_term_replacements}` in hand-off summary.
+Per-Task counter: `n_term_replacements`.
+
+### 4b. Retired-surface tombstone scan
+
+Load tombstone list from disk (one-shot per Stage):
+
+```bash
+ls -1 ia/skills/_retired/
+ls -1 .claude/agents/_retired/
+ls -1 .claude/commands/_retired/
+```
+
+Build retired-name set: skill basenames (e.g. `project-spec-kickoff`, `project-spec-close`, `project-stage-close`, `project-new-plan`, `stage-file-monolith`), agent basenames (e.g. `spec-kickoff`, `closeout`, `project-new`, `stage-file`), command basenames (e.g. `kickoff`).
+
+Plus hard-coded retired slash refs: `/enrich`, `/kickoff` (any case).
+
+For each Task spec, scan §1 / §4 / §5 / §7 / §8 / §10 prose AND §Plan Author sub-sections for any retired surface name. Match must be replaced with the live successor:
+
+| Retired | Live successor | Notes |
+|---------|---------------|-------|
+| `/enrich {id}` / `spec-enrich` | `/author --task {ISSUE_ID}` | T7.11 fold |
+| `/kickoff` / `spec-kickoff` / `project-spec-kickoff` | `/author` (Stage 1×N) | M6 collapse |
+| `project-spec-close` / `project-stage-close` | `/closeout` (Stage-scoped pair) | T7.14 fold |
+| `stage-file-monolith` | `stage-file-plan` + `stage-file-apply` | T7.7 split |
+| `project-new-plan` | `/project-new` args-only pair | T7.10 fold |
+
+Per-Task counter: `n_retired_refs_replaced`.
+
+### 4c. Template-section allowlist
+
+Read `ia/templates/project-spec-template.md` once per Stage. Extract every `## ` and `### ` heading line — call this the **canonical-section-set**.
+
+For each Task spec, scan `## ` / `### ` headings. Any heading NOT in the canonical-section-set = drift. Common drifts:
+
+| Drifted heading | Canonical replacement |
+|----------------|----------------------|
+| `§Closeout Plan` (per-Task) | `§Stage Closeout Plan` (master-plan Stage block — NOT spec) |
+| `§Audit Plan` | `§Audit` |
+| `§Review` / `§Code Review Plan` | `§Code Review` |
+
+Do NOT delete unknown headings — emit warning in per-Task hand-off entry. If a known retired-pair-section appears in a Task spec (e.g. `## §Closeout Plan`), replace with link to Stage-scoped location: rewrite to a single comment line `<!-- Closeout tuples live under Stage block §Stage Closeout Plan in {MASTER_PLAN_PATH} per T7.14 fold. -->` and remove subordinate content.
+
+Per-Task counter: `n_section_drift_fixed`.
+
+### 4d. Cross-ref task-id resolver
+
+For each Task spec, scan all prose for two id classes:
+
+1. **BACKLOG ids**: pattern `\b(BUG|FEAT|TECH|ART|AUDIO)-\d+\b`. Resolve via:
+   - `ia/backlog/{id}.yaml` (open) OR `ia/backlog-archive/{id}.yaml` (closed) — file must exist.
+   - Bash: `[ -f ia/backlog/{id}.yaml ] || [ -f ia/backlog-archive/{id}.yaml ]`.
+   - Unresolved → add to per-Task warning list `unresolved_backlog_refs[]`. Do NOT auto-rewrite (could be a valid forward-ref or typo — Opus must judge).
+2. **Task-key refs**: pattern `\bT\d+\.\d+(\.\d+)?\b` (e.g. `T8.3`, `T4.1.3`). Resolve via the owning master plan task-table only (read once per Stage from `MASTER_PLAN_PATH`):
+   - Match must appear as `task_key` value in the Stage Tasks tables of the current master plan.
+   - Pre-Step/Stage-collapse legacy format `T{step}.{stage}.{task}` may have been renumbered post-M6 — explicitly flag if length ≠ current scheme.
+   - Unresolved → emit drift entry in per-Task hand-off + add comment `<!-- WARN: stale task-ref {T_REF} — verify against {MASTER_PLAN_PATH} -->` next to the offending line. Auto-rewrite ONLY when the ref clearly maps to a single live task (Opus judgment).
+
+Per-Task counters: `n_unresolved_backlog_refs`, `n_stale_task_refs`.
+
+### 4e. Stage-level summary
+
+Aggregate counters into per-Task hand-off entries (Phase 5):
+
+```
+{ISSUE_ID}:
+  glossary_replacements: {n_term_replacements}
+  retired_refs_replaced: {n_retired_refs_replaced}
+  section_drift_fixed:   {n_section_drift_fixed}
+  unresolved_backlog_refs: [{id}, ...]   # warnings — not auto-fixed
+  stale_task_refs:         [{T_REF}, ...] # warnings + inline <!-- WARN --> comments
+```
+
+Sub-pass exit gate: if `unresolved_backlog_refs` OR `stale_task_refs` non-empty for ANY Task → tag Stage hand-off summary with `drift_warnings: true` so downstream `/plan-review` knows which Tasks need cross-ref re-check.
 
 ---
 
@@ -164,3 +240,22 @@ Does NOT flip Task Status — `plan-review` (multi-task) or `/implement` (single
 - Glossary: `ia/specs/glossary.md` — canonical-term fold source of truth.
 
 ## Changelog
+
+### 2026-04-19 — Phase 4 canonical-term fold expanded (retired-surface tombstone scan + template-section allowlist + cross-ref task-id resolver)
+
+**Status:** applied (uncommitted on `feature/master-plans-1`)
+
+**Symptom:**
+M8 dry-run (Stage 8 lifecycle-refactor self-referential filing) — `/plan-review` flagged 5 drift tuples that Phase 4 should have caught: retired `/enrich` surface name in spec body; `§Closeout Plan` section header (template now uses `§Stage Closeout Plan`); stale `T4.1.3` cross-ref (pre-Step/Stage-collapse numbering); 2 cross-ref yaml errors in `ia/backlog/TECH-485.yaml` + `ia/backlog/TECH-488.yaml`.
+
+**Root cause:**
+Phase 4 fold loaded glossary canonical terms only — did not scan retired-surface tombstones (`ia/skills/_retired/**`, `.claude/commands/_retired/**`, `.claude/agents/_retired/**`), did not validate §-headers against current `ia/templates/project-spec-template.md`, did not resolve `TECH-XXX` / `T-X.Y.Z` cross-refs against owning master plan + BACKLOG.
+
+**Fix:**
+Phase 4 expanded into 4a (glossary fold — pre-existing) + 4b (retired-surface tombstone scan with replacement table) + 4c (template-section allowlist) + 4d (cross-ref task-id resolver) + 4e (Stage-level summary). Counters: `n_term_replacements`, `n_retired_refs_replaced`, `n_section_drift_fixed`, `unresolved_backlog_refs[]`, `stale_task_refs[]`.
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---

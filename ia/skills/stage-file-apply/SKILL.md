@@ -185,7 +185,9 @@ Validators: exit 0.
 Next: claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"
 ```
 
-Single-task stage: suggest `/ship {ISSUE_ID}` instead.
+Single-task stage (N=1): suggest `claude-personal "/ship {ISSUE_ID}"` instead.
+
+**Hard rule (T8 Row 2 / dry-run findings):** N≥2 → ALWAYS `/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}`; NEVER `/ship {ISSUE_ID}` for multi-task stages (chain dispatcher = `/ship-stage`). N=1 → ALWAYS `/ship {ISSUE_ID}`. NEVER `/author` standalone — folded into ship chain. Anchor: `feedback_stage_file_next_step.md` user memory.
 
 ---
 
@@ -234,3 +236,60 @@ Re-running fully-applied state = exit 0 + zero diff.
 ## §Changelog emitter
 
 ## Changelog
+
+### 2026-04-19 — Auto-chain boundary locked at applier tail (F1 dry-run finding)
+
+**Status:** applied (uncommitted on `feature/master-plans-1` — Row 3 Option B)
+
+**Symptom:**
+M8 dry-run (Stage 8 lifecycle-refactor) — `/stage-file` auto-chained through `/author` then stopped. User opened fresh CLI to run `/plan-review` separately. Half-chained UX = user cannot predict where chain stops; extra context-setup cost on re-entry.
+
+**Root cause:**
+Pre-fix `/stage-file` dispatcher invoked `plan-author` after applier tail but did NOT continue to `plan-review`. Two competing auto-chain semantics (here vs `/ship-stage`) created divergent behaviour.
+
+**Fix:**
+`/stage-file` STOPS at applier tail. Does NOT auto-chain `/author`. Applier handoff suggests `/ship-stage {plan} Stage {ID}` (N≥2) or `/ship {ID}` (N=1) — chain dispatcher owns author → implement → verify-loop → code-review → audit → closeout. Documented in `ia/rules/agent-lifecycle.md` + `CLAUDE.md` §3 + `.claude/commands/stage-file.md` Step 3.
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---
+
+### 2026-04-19 — N≥2 hard rule for /ship-stage suggestion (F2 dry-run finding)
+
+**Status:** applied (uncommitted on `feature/master-plans-1` — Row 2)
+
+**Symptom:**
+M8 dry-run sessions emitted `/ship TECH-485` after filing 4 tasks in Stage 8. Multi-task Stage requires `/ship-stage {plan} {STAGE_ID}`. Wrong suggestion = user has to catch every multi-task Stage; silent miss = single-issue flow runs on Stage-scope work → per-Task Path B thrash + duplicate closeout attempts.
+
+**Root cause:**
+Subagent exit hand-off prose did not branch on filed-task count. User-memory `feedback_stage_file_next_step.md` flagged the rule; implementation lagged in skill body + applier subagent prose.
+
+**Fix:**
+Phase 6 + Output line N-conditional handoff: N≥2 → `/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}`; N=1 → `/ship {ISSUE_ID}`. Hard rule paragraph added: NEVER `/ship` for N≥2, NEVER `/author` standalone. Subagent body `.claude/agents/stage-file-applier.md` aligned same.
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---
+
+### 2026-04-19 — Stage-entry friction: 3 commands across 2 CLI sessions (F6 dry-run finding)
+
+**Status:** pending (deferred — Fix #6 scope discussion required)
+
+**Symptom:**
+M8 dry-run user typed: (1) `/stage-file ... Stage 8` (auto-chain to /author); (2) fresh CLI `claude-personal "/plan-review ... Stage 8"`; (3) corrected `claude-personal "/ship-stage ... 8"`. Three commands across 2 CLI sessions for Stage entry.
+
+**Root cause:**
+No single Stage-entry surface. `/stage-file` ends at filing; `/plan-review` separate; `/ship-stage` runs per-Task chain after entry.
+
+**Fix:**
+pending — candidate `/stage-start {plan} {stage}` orchestrator OR `/ship-stage` front-end extension covering `stage-file → author → plan-review` before per-Task chain. Keeps human gates at author PASS + plan-review PASS. Scope discussion first.
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---

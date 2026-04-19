@@ -273,3 +273,26 @@ Emit Verification block per docs/agent-led-verification-policy.md (JSON header +
 - **Artifacts:** newest `agent-testmode-batch-*.json`; bridge `bundle` + screenshot paths; `validate:all` log if failure.
 - **Iterations:** consumed / max (e.g. `1 / 2`).
 - **Human ask:** confirm in normal game (no test-mode flags); approve PR / next stage / umbrella close.
+
+---
+
+## Changelog
+
+### 2026-04-19 — Out-of-scope test-failure attribution worked correctly (F10 positive signal)
+
+**Status:** observed (no fix required)
+
+**Symptom:**
+M8 dry-run verify surfaced 10× `BlipGoldenFixtureTests` + 3× `TreasuryFloorClampServiceTests` failures during lifecycle-refactor Stage 8 ship. Agent correctly attributed Blip failures → `ia/projects/blip-master-plan.md`; Zone-S failures → `ia/projects/zone-s-economy-master-plan.md`; escalated per T8.4 bounded-fix rule instead of attempting remediation.
+
+**Root cause:**
+Positive signal — issue-attribution discipline (anchor `feedback_issue_attribution_verify.md` user memory) held under load. Bounded-fix escalation rule fired correctly.
+
+**Fix:**
+none required.
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---

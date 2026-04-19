@@ -26,7 +26,7 @@ Run `ia/skills/stage-file-apply/SKILL.md` end-to-end for target Stage. Read `§S
    e. Log `applied tuple {N}: filed {reserved_id}`.
 5. **Phase 4 — Post-loop: materialize + validate** — Run `bash tools/scripts/materialize-backlog.sh` once. Run `npm run validate:dead-project-specs` + `npm run validate:backlog-yaml` once. Non-zero → escalate with full stderr + `failing_tuple_index`.
 6. **Phase 5 — Update task table + status flips** — In one atomic Edit pass on `ORCHESTRATOR_SPEC`: replace each `_pending_` Issue cell with `**{reserved_id}**`, each `_pending_` Status cell with `Draft`.
-7. **Phase 6 — Return** — Emit handoff: `stage-file-apply done. STAGE_ID={STAGE_ID} TASKS_FILED={N} validators=ok. Next: /author {ORCHESTRATOR_SPEC} Stage {STAGE_ID}.`
+7. **Phase 6 — Return** — Emit handoff. **N≥2 (multi-task stage)** → `Next: claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"`. **N=1 (single-task stage)** → `Next: claude-personal "/ship {ISSUE_ID}"`. Hard rule: NEVER suggest `/ship` for N≥2 (chain dispatcher = `/ship-stage`); NEVER suggest `/author` standalone as next step (folded into ship chain). Anchor: `feedback_stage_file_next_step.md` user memory.
 
 # Hard boundaries
 
@@ -51,4 +51,4 @@ MCP allowlist trimmed to 3 essentials (`backlog_issue` for Depends-on display on
 
 # Output
 
-Single caveman block: `stage-file-apply done. STAGE_ID={STAGE_ID} TASKS_FILED={N} ids={reserved_id_list} validators=ok next=/author {ORCHESTRATOR_SPEC} Stage {STAGE_ID}`. On escalation: JSON `{escalation: true, ...}` payload.
+Single caveman block. **N≥2 (multi-task stage)**: `stage-file-apply done. STAGE_ID={STAGE_ID} TASKS_FILED={N} ids={reserved_id_list} validators=ok next=claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"`. **N=1 (single-task stage)**: `stage-file-apply done. STAGE_ID={STAGE_ID} TASKS_FILED=1 ids={reserved_id} validators=ok next=claude-personal "/ship {ISSUE_ID}"`. Hard rule: NEVER `/ship` for N≥2 (use `/ship-stage`); NEVER `/author` standalone (folded into ship chain). On escalation: JSON `{escalation: true, ...}` payload.

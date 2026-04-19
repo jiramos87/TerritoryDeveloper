@@ -137,8 +137,10 @@ Idempotency: overwrite if file exists.
    project-new-apply done. ISSUE_ID={ISSUE_ID}
    Filed: {ISSUE_ID} — {TITLE}
    Validators: exit 0.
-   Next: /author --task {ISSUE_ID}
+   Next: claude-personal "/ship {ISSUE_ID}"
    ```
+
+   Hard rule: single-issue path always suggests `/ship {ISSUE_ID}` (chain dispatcher = author → implement → verify-loop → code-review → audit → closeout). NEVER suggest `/author --task` standalone — folded into ship chain. Anchor: `feedback_stage_file_next_step.md` user memory.
 
 ---
 
@@ -180,3 +182,22 @@ Re-running fully-applied state = exit 0 + zero diff.
 ## §Changelog emitter
 
 ## Changelog
+
+### 2026-04-19 — N=1 hard rule for /ship suggestion (F2 dry-run finding sibling)
+
+**Status:** applied (uncommitted on `feature/master-plans-1` — Row 2)
+
+**Symptom:**
+M8 dry-run flagged sibling problem in `stage-file-apply`: post-filing handoff suggested wrong dispatcher. Single-issue path needed equivalent rule lock.
+
+**Root cause:**
+Pre-fix Phase 5 emitted `/author --task {ISSUE_ID}` standalone. Now folded into `/ship` chain dispatcher (author → implement → verify-loop → code-review → audit → closeout).
+
+**Fix:**
+Phase 5 hand-off: `Next: claude-personal "/ship {ISSUE_ID}"`. Hard rule: single-issue path always `/ship` chain; NEVER `/author --task` standalone. Subagent body `.claude/agents/project-new-applier.md` aligned same.
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---

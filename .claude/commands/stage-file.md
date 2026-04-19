@@ -1,11 +1,11 @@
 ---
-description: Bulk-file all pending tasks of one orchestrator Stage as BACKLOG issues + project spec stubs. Dispatches `stage-file-planner` (Opus pair-head seam #2) → `stage-file-applier` (Sonnet pair-tail) → chains `/author` Stage-scoped. Seam #2 pair split per T7.7 / TECH-474.
+description: Bulk-file all pending tasks of one orchestrator Stage as BACKLOG issues + project spec stubs. Dispatches `stage-file-planner` (Opus pair-head seam #2) → `stage-file-applier` (Sonnet pair-tail). STOPS at applier tail — no auto-chain to `/author`. Applier suggests `/ship-stage {MASTER_PLAN_PATH} Stage {STAGE_ID}` for N≥2 or `/ship {ISSUE_ID}` for N=1; user invokes the chain dispatcher next. Seam #2 pair split per T7.7 / TECH-474; chain boundary per T8 dry-run F1 / Row 3 (Option B).
 argument-hint: "{master-plan-path} Stage {X.Y}"
 ---
 
-# /stage-file — dispatch seam #2 pair then chain `/author`
+# /stage-file — dispatch seam #2 pair (planner → applier)
 
-Use `stage-file-planner` subagent (`.claude/agents/stage-file-planner.md`) → `stage-file-applier` subagent (`.claude/agents/stage-file-applier.md`) to bulk-file all `_pending_` tasks for `$ARGUMENTS`, then chain `/author {MASTER_PLAN_PATH} Stage {STAGE_ID}` to bulk-author `§Plan Author` sections across filed specs.
+Use `stage-file-planner` subagent (`.claude/agents/stage-file-planner.md`) → `stage-file-applier` subagent (`.claude/agents/stage-file-applier.md`) to bulk-file all `_pending_` tasks for `$ARGUMENTS`. Chain STOPS at applier tail; user invokes `/ship-stage` (or `/ship` N=1) next — `/ship-stage` is THE chain dispatcher that internally runs author → implement → verify-loop → code-review → audit → closeout.
 
 ## Argument parsing
 
@@ -54,10 +54,17 @@ Forward via Agent tool with `subagent_type: "stage-file-applier"`:
 > - Do NOT update task table mid-loop — atomic pass after all writes.
 > - Do NOT commit — user decides.
 
-## Step 3 — Auto-chain `/author` (Stage-scoped bulk)
+## Step 3 — Boundary stop (NO auto-chain)
 
-On applier success: auto-invoke `/author {MASTER_PLAN_PATH} Stage {STAGE_ID}` (Stage-scoped bulk `plan-author` per T7.11 / TECH-478) to fill `§Plan Author` + canonical-term fold across all N filed specs in one Opus pass.
+Per T8 dry-run F1 / Row 3 decision (Option B): `/stage-file` STOPS at applier tail. Do NOT auto-invoke `/author`. The chain dispatcher `/ship-stage` (recommended by applier handoff) owns the author → implement → verify-loop → code-review → audit → closeout chain.
+
+Rationale: avoids two competing auto-chains (here vs `/ship-stage`); user gets one clear handoff per the applier's suggestion; user can intervene between filing and shipping if needed (e.g. inspect specs first).
 
 ## Output
 
-Chain summary: tasks filed ids + bulk `/author` summary + next-step proposal. `validate:all` NOT run in seam #2 gate — full chain runs at Stage closeout. Next step after author: `claude-personal "/plan-review {MASTER_PLAN_PATH} Stage {STAGE_ID}"` (seam #1 drift scan) → per-Task `/ship {ISSUE_ID}` loop → Stage-end `/audit` + `/closeout`.
+Applier handoff summary: tasks filed ids + validators ok + next-step proposal. `validate:all` NOT run in seam #2 gate — full chain runs at Stage closeout. Applier emits exactly:
+
+- **N≥2:** `Next: claude-personal "/ship-stage {MASTER_PLAN_PATH} Stage {STAGE_ID}"` (chain dispatcher = author + implement + verify-loop + code-review + audit + closeout).
+- **N=1:** `Next: claude-personal "/ship {ISSUE_ID}"` (single-task chain dispatcher, same surfaces).
+
+Hard rule: NEVER suggest `/author` standalone after `/stage-file` — folded into ship chain.

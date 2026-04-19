@@ -19,7 +19,7 @@ Run `ia/skills/project-new-apply/SKILL.md` end-to-end for one new single-issue B
 2. **Phase 2 — Reserve id** — `bash tools/scripts/reserve-id.sh {PREFIX}` → capture stdout as `ISSUE_ID`. Non-zero exit or `flock` timeout → escalate. Idempotency: existing `ia/backlog/{ISSUE_ID}.yaml` with matching `title:` → reuse.
 3. **Phase 3 — Write `ia/backlog/{ISSUE_ID}.yaml`** — Compose yaml body (id, type, title, priority, status=open, section, spec, files, notes, acceptance, depends_on, depends_on_raw, related, created, raw_markdown). Call `mcp__territory-ia__backlog_record_validate` pre-write; fix schema errors. Write to disk. Do NOT edit `BACKLOG.md` directly.
 4. **Phase 4 — Write `ia/projects/{ISSUE_ID}.md` stub** — Bootstrap from `ia/templates/project-spec-template.md`. Frontmatter: `purpose` (1-line summary), `audience: both`, `loaded_by: ondemand`, `slices_via: none`. `> **Status:** Draft`, `> **Created:** {TODAY}`, `> **Last updated:** {TODAY}`. §1 Summary skeleton (`{TITLE} — implementation TBD. Spec body authored by plan-author at N=1.`). §7 placeholder (`_pending — plan-author writes phases at N=1._`). Leave §Plan Author subsections empty. Do NOT run validator here.
-5. **Phase 5 — Post-write: materialize + validate + handoff** — `bash tools/scripts/materialize-backlog.sh` (non-zero → escalate); `npm run validate:dead-project-specs` (non-zero → escalate with exit code + stderr). Emit handoff: `project-new-apply done. ISSUE_ID={ISSUE_ID} Filed: {ISSUE_ID} — {TITLE} Validators: exit 0. Next: /author --task {ISSUE_ID}`.
+5. **Phase 5 — Post-write: materialize + validate + handoff** — `bash tools/scripts/materialize-backlog.sh` (non-zero → escalate); `npm run validate:dead-project-specs` (non-zero → escalate with exit code + stderr). Emit handoff: `project-new-apply done. ISSUE_ID={ISSUE_ID} Filed: {ISSUE_ID} — {TITLE} Validators: exit 0. Next: claude-personal "/ship {ISSUE_ID}"`. Hard rule: single-issue path always suggests `/ship {ISSUE_ID}` (chain dispatcher), NEVER `/author --task` standalone (folded into ship chain). Anchor: `feedback_stage_file_next_step.md` user memory.
 
 # Hard boundaries
 
@@ -41,4 +41,4 @@ MCP allowlist trimmed to 2 essentials (`backlog_issue` for Depends-on cross-chec
 
 # Output
 
-Single caveman block: `project-new-apply done. ISSUE_ID={ISSUE_ID} priority={PRIORITY} validators=ok next=/author --task {ISSUE_ID}`. On escalation: JSON `{escalation: true, ...}` payload.
+Single caveman block: `project-new-apply done. ISSUE_ID={ISSUE_ID} priority={PRIORITY} validators=ok next=claude-personal "/ship {ISSUE_ID}"`. Hard rule: single-issue path = `/ship` chain dispatcher; NEVER suggest `/author --task` standalone. On escalation: JSON `{escalation: true, ...}` payload.

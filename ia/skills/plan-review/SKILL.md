@@ -136,3 +136,45 @@ Caller (agent or `/plan-review` dispatcher) reads §Plan Fix result and routes:
 - [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) — shared Stage MCP bundle recipe.
 - Glossary term **plan review** (`ia/specs/glossary.md`).
 - [`ia/rules/project-hierarchy.md`](../../rules/project-hierarchy.md) — Stage/Task lifecycle.
+
+---
+
+## Changelog
+
+### 2026-04-19 — Refactor-in-flight sampling bias logged (F4 dry-run finding)
+
+**Status:** pending (open question — re-measure required)
+
+**Symptom:**
+M8 dry-run on lifecycle-refactor Stage 8 — 3 of 5 fix tuples were lifecycle-refactor churn artifacts (retired commands, renumbered Stages, renamed sections). Steady-state yield on non-refactor work unknown.
+
+**Root cause:**
+Self-referential dry-run scope (filing lifecycle-refactor's own Tasks) inflates `plan-review` apparent yield. Cannot generalize "caught real bugs" → "load-bearing at steady state".
+
+**Fix:**
+pending — re-run T8.1 against external open master plan with _pending_ Task (T8.1b row 9 deferred). Locks Sonnet-downgrade decision (Fix #4) + conditional-gate decision (Fix #5).
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---
+
+### 2026-04-19 — Token cost ≈30% of Stage-entry pipeline (F5 dry-run finding)
+
+**Status:** pending (Sonnet-downgrade candidate deferred — Fix #4)
+
+**Symptom:**
+M8 dry-run plan-review = 66.7k Opus + 36.2k Sonnet ≈ 103k tokens (30% of 345k Stage-entry total). Most checks = rule-book lookups (retired-term scan, section-name match, cross-ref id resolve), not synthesis.
+
+**Root cause:**
+Opus overkill for mechanical checks. Cross-sub-pass coherence role (when plan-author splits) load-bearing — but only that subset.
+
+**Fix:**
+pending — Sonnet-downgrade for mechanical checks; Opus retained only for cross-sub-pass coherence path. Conditional-gate (skip when plan-author single-pass; auto-PASS sentinel) deferred to Fix #5. Re-measure first per F4.
+
+**Rollout row:** m8-retrospective
+
+**Tracker aggregator:** [`ia/projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator`](../../projects/lifecycle-refactor-rollout-tracker.md#skill-iteration-log-aggregator)
+
+---
