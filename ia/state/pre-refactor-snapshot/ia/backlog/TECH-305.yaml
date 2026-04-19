@@ -1,0 +1,29 @@
+id: TECH-305
+type: infrastructure / simulation signal types
+title: Add `SimulationSignal` enum + `ISignalProducer`/`ISignalConsumer` interfaces (Stage 1.1 T1.1.1)
+priority: medium
+status: open
+section: Stage 1.1 — Signal Contract Primitives
+spec: ia/projects/TECH-305.md
+files:
+  - Assets/Scripts/Simulation/Signals/SimulationSignal.cs
+  - Assets/Scripts/Simulation/Signals/ISignalProducer.cs
+  - Assets/Scripts/Simulation/Signals/ISignalConsumer.cs
+notes: |
+  Author `SimulationSignal` enum w/ exactly 12 locked entries — `PollutionAir`, `PollutionLand`, `PollutionWater`, `Crime`, `ServicePolice`, `ServiceFire`, `ServiceEducation`, `ServiceHealth`, `ServiceParks`, `TrafficLevel`, `WastePressure`, `LandValue` — in new `Assets/Scripts/Simulation/Signals/` dir. Author `ISignalProducer` (`void EmitSignals(SignalFieldRegistry)`) + `ISignalConsumer` (`void ConsumeSignals(SignalFieldRegistry, DistrictSignalCache)`) interfaces same dir. No runtime wiring — type surface only. Downstream tasks (T1.1.2 `SignalField`, T1.1.3 registry MonoBehaviour, Stage 1.2 diffusion + scheduler) consume these types. Respects invariants #3 #4 #6 (no singletons, no FindObjectOfType hot-path, no `GridManager` bloat). City-sim depth Bucket 2 — foundation of 12-signal contract.
+acceptance: |
+  `SimulationSignal.cs` + `ISignalProducer.cs` + `ISignalConsumer.cs` compile; enum has exactly 12 entries matching locked signal inventory; interface method signatures match stage spec; no runtime references yet; `npm run unity:compile-check` clean; `npm run validate:all` clean.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-305** — Add `SimulationSignal` enum + `ISignalProducer`/`ISignalConsumer` interfaces (Stage 1.1 T1.1.1)
+    - Type: infrastructure / simulation signal types
+    - Files: `Assets/Scripts/Simulation/Signals/SimulationSignal.cs` (new), `Assets/Scripts/Simulation/Signals/ISignalProducer.cs` (new), `Assets/Scripts/Simulation/Signals/ISignalConsumer.cs` (new)
+    - Spec: `ia/projects/TECH-305.md`
+    - Notes: `SimulationSignal` enum w/ exactly 12 locked entries — `PollutionAir`, `PollutionLand`, `PollutionWater`, `Crime`, `ServicePolice`, `ServiceFire`, `ServiceEducation`, `ServiceHealth`, `ServiceParks`, `TrafficLevel`, `WastePressure`, `LandValue`. `ISignalProducer.EmitSignals(SignalFieldRegistry)` + `ISignalConsumer.ConsumeSignals(SignalFieldRegistry, DistrictSignalCache)` interfaces. Type surface only — no runtime wiring. City-sim depth Bucket 2 foundation.
+    - Acceptance: All 3 files compile; enum has exactly 12 entries; interfaces match spec; `npm run unity:compile-check` clean; `npm run validate:all` clean.
+    - Depends on: none
+parent_plan: ia/projects/city-sim-depth-master-plan.md
+task_key: T1.1.1

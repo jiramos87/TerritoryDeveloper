@@ -1,0 +1,24 @@
+id: TECH-35
+type: research / test harness
+title: "Research spike: property-based / random mutation **invariant** fuzzing (optional)"
+priority: medium
+status: open
+section: Compute-lib program
+spec: ia/projects/TECH-35.md
+files: 
+  - tools/
+notes: |
+  High setup cost; only if geometric / ordering bugs justify. Predicates from **invariants** (HeightMap/**cell** sync, **road cache**, **shore band**, etc.). `docs/agent-tooling-verification-priority-tasks.md` task 38. **Non-goals:** production fuzz in player builds. **Order:** Easiest once **TECH-38** exposes stable **pure** surfaces + documented **RNG** derivation.
+acceptance: ""
+depends_on: 
+  - TECH-38
+depends_on_raw: "none (soft: **TECH-38**)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-35** — Research spike: property-based / random mutation **invariant** fuzzing (optional)
+    - Type: research / test harness
+    - Files: TBD test assembly or `tools/` prototype
+    - Spec: `ia/projects/TECH-35.md`
+    - Notes: High setup cost; only if geometric / ordering bugs justify. Predicates from **invariants** (HeightMap/**cell** sync, **road cache**, **shore band**, etc.). `docs/agent-tooling-verification-priority-tasks.md` task 38. **Non-goals:** production fuzz in player builds. **Order:** Easiest once **TECH-38** exposes stable **pure** surfaces + documented **RNG** derivation.
+    - Depends on: none (soft: **TECH-38**)

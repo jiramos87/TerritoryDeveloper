@@ -1,0 +1,21 @@
+id: FEAT-16
+type: feature (new system)
+title: Train system / train animations
+priority: low
+status: open
+section: Low Priority
+spec: ""
+files: 
+  - GridManager.cs
+notes: |
+  Railway network and animations.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **FEAT-16** — Train system / train animations
+    - Type: feature (new system)
+    - Files: new manager + `GridManager.cs`
+    - Notes: Railway network and animations.

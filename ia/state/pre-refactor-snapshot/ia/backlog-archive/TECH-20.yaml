@@ -1,0 +1,36 @@
+id: TECH-20
+type: documentation / agent tooling
+title: In-repo Unity development context for agents (spec + concept index) (2026-04-02)
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: "[`ia/specs/unity-development-context.md`](ia/specs/unity-development-context.md) (authoritative); project spec removed after closure"
+files: 
+  - ia/specs/unity-development-context.md
+  - AGENTS.md
+  - ia/rules/agent-router.md
+  - tools/mcp-ia-server/src/config.ts
+  - unity
+  - unityctx
+  - unity-development-context
+  - docs/mcp-ia-server.md
+  - tools/mcp-ia-server/README.md
+  - tools/mcp-ia-server/scripts/verify-mcp.ts
+  - tools/mcp-ia-server/tests/parser/backlog-parser.test.ts
+  - tools/mcp-ia-server/tests/tools/build-registry.test.ts
+  - tools/mcp-ia-server/tests/tools/config-aliases.test.ts
+  - ia/specs/REFERENCE-SPEC-STRUCTURE.md
+notes: |
+  **Completed (verified per user):** First-party **Unity** reference for **MonoBehaviour** / **Inspector** / **`FindObjectOfType`** / execution order; **territory-ia** `list_specs` key `unity-development-context`; **agent-router** row avoids **`router_for_task`** token collisions with geography queries (see **REFERENCE-SPEC-STRUCTURE**). Unblocks **TECH-18** `unity_context_section`; follow-up polish shipped in **TECH-25** (completed).
+acceptance: ""
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-20** — In-repo Unity development context for agents (spec + concept index) (2026-04-02)
+    - Type: documentation / agent tooling
+    - Files: `ia/specs/unity-development-context.md`; `AGENTS.md`; `ia/rules/agent-router.md`; `tools/mcp-ia-server/src/config.ts` (`unity` / `unityctx` → `unity-development-context`); `docs/mcp-ia-server.md`; `tools/mcp-ia-server/README.md`; `tools/mcp-ia-server/scripts/verify-mcp.ts`; `tools/mcp-ia-server/tests/parser/backlog-parser.test.ts`; `tools/mcp-ia-server/tests/tools/build-registry.test.ts`; `tools/mcp-ia-server/tests/tools/config-aliases.test.ts`; [`ia/specs/REFERENCE-SPEC-STRUCTURE.md`](ia/specs/REFERENCE-SPEC-STRUCTURE.md) (router authoring note)
+    - Spec: [`ia/specs/unity-development-context.md`](ia/specs/unity-development-context.md) (authoritative); project spec removed after closure
+    - Notes: **Completed (verified per user):** First-party **Unity** reference for **MonoBehaviour** / **Inspector** / **`FindObjectOfType`** / execution order; **territory-ia** `list_specs` key `unity-development-context`; **agent-router** row avoids **`router_for_task`** token collisions with geography queries (see **REFERENCE-SPEC-STRUCTURE**). Unblocks **TECH-18** `unity_context_section`; follow-up polish shipped in **TECH-25** (completed).
+    - Depends on: none

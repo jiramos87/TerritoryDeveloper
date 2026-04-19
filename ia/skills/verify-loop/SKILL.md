@@ -5,15 +5,25 @@ loaded_by: skill:verify-loop
 slices_via: invariants_summary, router_for_task
 name: verify-loop
 description: >
-  Use after substantive implementation (per phase or per stage / spec close-out) when one canonical
+  Use after substantive implementation (per task or per stage / spec close-out) when one canonical
   closed-loop verification pass is needed. Orchestrates: bridge preflight → Node validate:all →
   compile gate → test-mode batch (Path A) and / or IDE agent bridge (Path B) → optional Play Mode
   evidence → diff anomalies → bounded fix→verify iteration → structured Verification block. Defers
   to the 5 underlying skills (bridge-environment-preflight, project-implementation-validation,
   agent-test-mode-verify, ide-bridge-evidence, close-dev-loop) for atomic mechanics — this skill
   is the one place that wires them together. Triggers: "/verify-loop", "closed-loop verification",
-  "post-phase verification", "integrated verification", "fix-verify iteration", "run the full
+  "post-task verification", "integrated verification", "fix-verify iteration", "run the full
   verify chain", "agent-led verification end-to-end".
+phases:
+  - "Bridge preflight"
+  - "Compile gate"
+  - "Node CI-parity checks"
+  - "Full local chain"
+  - "Path A test mode"
+  - "Path B bridge hybrid"
+  - "Play Mode evidence"
+  - "Fix iteration"
+  - "Verification block"
 ---
 
 # Verify loop — integrated closed-loop verification
@@ -28,6 +38,12 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 
 ---
 
+## Stage MCP bundle contract
+
+Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once; returned payload `{glossary_anchors, router_domains, spec_sections, invariants}` kept in Stage scope. All Sonnet pair-tail invocations within the Stage read from that payload — no re-query of `glossary_discover`, `glossary_lookup`, `router_for_task`, `spec_sections`, or `invariants_summary` inside a Stage. The 5-tool recipe (`glossary_discover → glossary_lookup → router_for_task → spec_sections → invariants_summary`) is encapsulated entirely in `domain-context-load`; callers never inline it.
+
+---
+
 ## Inputs
 
 | Parameter | Source | Notes |
@@ -38,6 +54,20 @@ Caveman default — [`agent-output-caveman.md`](../../rules/agent-output-caveman
 | `SEED_CELLS` | Spec §7b OR repro | 1–3 `"x,y"` for Path B `debug_context_bundle` + `close-dev-loop` |
 | `MAX_ITERATIONS` | Default 2 | Fix→verify cycles before escalation |
 | `--skip-path-b` | Flag (default off) | When set: Path A compile gate runs; Path B (IDE bridge hybrid, Step 4b) is skipped; JSON verdict records `path_b: skipped_batched`. Used by `/ship-stage` chain for batched stage-boundary Path B. NOT surfaced on `/verify` (single-pass, no batching consumer). |
+| `--tooling-only` | Flag (default off) | When set: Decision matrix bypassed; Steps 0, 1, 3, 4a, 4b, 5, 6 all skipped up-front; only Step 2 (Node CI-parity) + Step 7 (Verification block) run. JSON verdict records `mode: "tooling_only"` + `path_b: "skipped_not_required"`. Use ONLY when current git diff is pure tooling surface (MCP TypeScript under `tools/mcp-ia-server/`, web Next.js under `web/`, skills / agents / commands markdown under `ia/skills/` + `.claude/`, docs under `docs/` + `ia/rules/` + `ia/specs/`, scripts under `tools/scripts/`) — never when `Assets/**`, `Packages/**`, or `ProjectSettings/**` are dirty. Precondition guard: skill asserts no Unity-surface paths in `git status` before bypass; fails loud if asserted. Designed for lifecycle-refactor work (orchestrator: `ia/projects/lifecycle-refactor-master-plan.md`) and similar tooling-only umbrellas. |
+
+---
+
+## Pre-matrix mode gate
+
+IF `--tooling-only` flag set:
+
+1. Run `git status --porcelain` + `git diff --name-only` against branch base — assert zero matches for regex `^(Assets|Packages|ProjectSettings)/`. If any match → emit `verdict: "fail"` with `detail: "--tooling-only flag set but Unity surface paths dirty: {paths}"` + abort; do NOT proceed to Step 2. Never silently relax the assertion.
+2. Bypass Decision matrix entirely. Record `mode: "tooling_only"` in JSON header (new key). `path_b` → `"skipped_not_required"`. `skipped` list MUST enumerate Steps 0, 1, 3, 4a, 4b, 5, 6 with reason `"tooling_only_flag"`.
+3. Run Step 2 (Node CI-parity `npm run validate:all`) + Step 7 (Verification block emit) only. Nothing else.
+4. Step 6 fix iteration is UNREACHABLE under `--tooling-only` — if Step 2 fails, escalate with `verdict: "fail"` immediately (no Unity-bridge diff loop applies to tooling surface; fix requires human or separate `/implement` pass).
+
+IF `--tooling-only` NOT set: Decision matrix (below) gates each step as usual.
 
 ---
 
@@ -50,7 +80,7 @@ Inspect git diff + spec §7b / §8 against this table. Skip steps with **all row
 | 0 — Bridge preflight | Step 4b Path B will run; OR Step 5 evidence will run | No bridge / Postgres operations needed |
 | 1 — Compile gate | Any C# / Unity asset edits | IA / docs / fixture-only edits |
 | 2 — Node validate:all | MCP / fixtures / IA index / glossary / spec body changes | Pure runtime C# only (rely on Step 1) |
-| 3 — `verify:local` (full chain) | Pre-PR / pre-stage-close on dev machine | Per-phase iteration (too slow); CI-only environment |
+| 3 — `verify:local` (full chain) | Pre-PR / pre-stage-close on dev machine | Per-task iteration (too slow); CI-only environment |
 | 4a — Path A test-mode batch | Save / load pipeline; `GameSaveManager`; scenario JSON; `GridManager` init; sim tick; spec §7b row asks for batch | Pure UI / authoring / docs |
 | 4b — Path B bridge hybrid | Spec §7b row asks for Play Mode assertion; Path A unavailable; need `debug_context_bundle` | No Play Mode evidence required; OR `--skip-path-b` flag set (batched by caller — record `path_b: skipped_batched` in JSON verdict) |
 | 5 — Bridge evidence | Spec §7b / §8 explicitly asks for screenshots or Console capture | Acceptance covered by 4a JSON or batch golden |
@@ -85,7 +115,7 @@ Full skip table: [`project-implementation-validation`](../project-implementation
 
 ### Step 3 — Full local chain (pre-PR / pre-close, dev machine only)
 
-`npm run verify:local` (alias `verify:post-implementation`) — `validate:all` → Lockfile check → save/quit Editor → `unity:compile-check` → `db:migrate` → `db:bridge-preflight` → reopen Editor → `db:bridge-playmode-smoke`. Skip during per-phase iteration (too slow); run before submitting PR or closing a stage / spec.
+`npm run verify:local` (alias `verify:post-implementation`) — `validate:all` → Lockfile check → save/quit Editor → `unity:compile-check` → `db:migrate` → `db:bridge-preflight` → reopen Editor → `db:bridge-playmode-smoke`. Skip during per-task iteration (too slow); run before submitting PR or closing a stage / spec.
 
 ### Step 4a — Path A test mode batch (when gate fires)
 
@@ -154,6 +184,7 @@ Emit single Verification block per [`docs/agent-led-verification-policy.md`](../
   "evidence": {"screenshots": ["..."], "logs": ["..."]},
   "fix_iterations": 0,
   "path_b": "ran|skipped_batched|skipped_not_required",
+  "mode": "full|tooling_only",
   "verdict": "pass|fail|skipped|escalated",
   "escalation": {
     "gap_reason": "unity_api_limit|bridge_kind_missing|human_judgment_required",
@@ -175,7 +206,7 @@ Emit single Verification block per [`docs/agent-led-verification-policy.md`](../
 
 Agent MUST NOT escalate as `human_judgment_required` when a missing bridge kind could close the loop. Before escalating, cross-check the current kind enum in `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` (incl. `AgentBridgeCommandRunner.Mutations.cs`) against the operation needed — TECH-412 landed 20 mutation kinds; if a kind is still missing, escalate as `bridge_kind_missing` and cite an open successor tooling issue as `tooling_issue_id`.
 
-Markdown summary (caveman): verdict, paths run (A / B / both / none), artifact paths, anomalies cleared, iterations consumed, escalation note (if any; include `gap_reason` + `missing_kind` / `tooling_issue_id` when applicable), next step (human QA / next phase / stage close / umbrella close / file new bridge kind).
+Markdown summary (caveman): verdict, paths run (A / B / both / none), artifact paths, anomalies cleared, iterations consumed, escalation note (if any; include `gap_reason` + `missing_kind` / `tooling_issue_id` when applicable), next step (human QA / next task / stage close / umbrella close / file new bridge kind).
 
 ---
 
@@ -209,6 +240,9 @@ Session maps to `{ISSUE_ID}` → `mcp__territory-ia__backlog_issue` for Files / 
 - Do NOT commit verification artifact paths in spec prose — keep paths in Verification block / handoff only.
 - IF verdict is `escalated` → `gap_reason` field REQUIRED. Use `bridge_kind_missing` (not `human_judgment_required`) whenever a missing `unity_bridge_command` kind could close the loop — cite the exact missing kind + an open tooling issue id (TECH-412 landed the initial 20 mutation kinds; file a new TECH for genuinely missing kinds). Closed-loop agent verify is the default; human-in-loop is the exception reserved for true Unity API limits or design/visual judgment.
 - IF escalating with `gap_reason: bridge_kind_missing` → verify the kind is actually absent by reading `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs` switch branches; do NOT claim a gap that already has a kind implemented.
+- IF `--tooling-only` flag set AND `git status --porcelain` matches `^(Assets|Packages|ProjectSettings)/` → REFUSE fast-path; emit `verdict: "fail"` citing dirty Unity paths. Never silently drop the assertion to let the bypass through.
+- IF `--tooling-only` flag set → Steps 0, 1, 3, 4a, 4b, 5, 6 MUST appear in `skipped` array with reason `"tooling_only_flag"`; running any of them violates the flag contract.
+- Do NOT pass `--tooling-only` on mixed diffs (tooling + Unity). Split the commit or run full `/verify-loop`; the flag is for surface-pure refactors only.
 
 ---
 
@@ -223,8 +257,11 @@ Follow ia/skills/verify-loop/SKILL.md end-to-end. Inputs:
   SCENARIO_ID: {kebab-case id or _pending_}
   SEED_CELLS: {"x,y" list or _pending_}
   MAX_ITERATIONS: {default 2}
+  TOOLING_ONLY: {default false — set true only when diff is pure tooling surface (tools/, web/, ia/skills, ia/rules, ia/specs markdown, docs/, .claude/) and no Assets|Packages|ProjectSettings paths are dirty}
 
-Apply Decision matrix to gate Steps 0–6; emit Verification block per docs/agent-led-verification-policy.md (JSON header + caveman summary). Stop on first failure; bounded repair only — escalate rather than loop.
+IF TOOLING_ONLY true: apply Pre-matrix mode gate (§Pre-matrix mode gate) — assert clean Unity surface; skip Steps 0, 1, 3, 4a, 4b, 5, 6; run Step 2 + Step 7 only; verdict fail on asserted fail or Step 2 red.
+ELSE: apply Decision matrix to gate Steps 0–6 as usual.
+Emit Verification block per docs/agent-led-verification-policy.md (JSON header + caveman summary). Stop on first failure; bounded repair only — escalate rather than loop.
 ```
 
 ---

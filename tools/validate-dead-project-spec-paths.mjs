@@ -41,6 +41,9 @@ const IGNORE_DIR_NAMES = new Set([
   "obj",
   "Build",
   "Logs",
+  // Lifecycle refactor (TECH-443): frozen pre-refactor snapshot may cite specs
+  // already deleted on closeout; skip to avoid false positives.
+  "pre-refactor-snapshot",
 ]);
 
 const TEXT_EXTENSIONS = new Set([

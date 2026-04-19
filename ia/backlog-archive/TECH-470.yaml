@@ -1,0 +1,41 @@
+id: TECH-470
+type: tech (IA infrastructure / lifecycle tooling)
+title: "Project-new-apply slim skill + retire project-new-plan + drop §Project-New Plan template section (Stage 7 T7.3)"
+priority: medium
+status: closed
+section: IA evolution lane
+spec: ia/projects/TECH-470.md
+files:
+  - ia/skills/project-new-apply/SKILL.md
+  - ia/skills/_retired/project-new-plan/SKILL.md
+  - ia/templates/project-spec-template.md
+notes: |
+  Author `ia/skills/project-new-apply/SKILL.md` (Sonnet slim materialization — reads args from `/project-new` command directly, no `§Project-New Plan` read; runs `reserve-id.sh` + writes `ia/backlog/{id}.yaml` + writes `ia/projects/{id}.md` stub + `materialize-backlog.sh` + `validate:dead-project-specs`; hands off to `plan-author` at N=1). Retire `ia/skills/project-new-plan/` → move under `ia/skills/_retired/project-new-plan/` with tombstone header ("Retired — use plan-author"). Drop `§Project-New Plan` section stub from `ia/templates/project-spec-template.md`.
+acceptance: |
+  `project-new-apply/SKILL.md` present w/ slim body + `phases:` frontmatter; retired skill tombstone in place; `§Project-New Plan` section absent from template; `validate:all` green.
+depends_on:
+  - TECH-469
+  - TECH-478
+depends_on_raw: "TECH-469 (applier pattern precedent), TECH-478 (plan-author skill — handoff target at N=1)"
+related:
+  - TECH-472
+  - TECH-478
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T7.3
+router_domain: Tooling / IA / lifecycle
+surfaces:
+  - ia/skills/project-new-apply/SKILL.md
+  - ia/skills/_retired/project-new-plan/
+  - ia/templates/project-spec-template.md
+mcp_slices: []
+skill_hints: []
+raw_markdown: |
+  - [ ] **TECH-470** — Project-new-apply slim skill + retire project-new-plan + drop §Project-New Plan template section (Stage 7 T7.3)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Files: `ia/skills/project-new-apply/SKILL.md`, `ia/skills/_retired/project-new-plan/`, `ia/templates/project-spec-template.md`
+    - Spec: `ia/projects/TECH-470.md`
+    - Notes: Slim Sonnet applier; no pair head; hands off to plan-author at N=1. Template section anchor dropped.
+    - Acceptance: slim SKILL.md + frontmatter + tombstone + template section gone; `validate:all` green.
+    - Depends on: **TECH-469**, **TECH-478**
+    - Related: TECH-472, TECH-478

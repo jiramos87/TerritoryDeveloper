@@ -1,0 +1,32 @@
+id: TECH-443
+type: tech (IA infrastructure / lifecycle tooling)
+title: Pre-refactor snapshot + manifest (Stage 1.1 Phase 2)
+priority: medium
+status: closed
+section: IA evolution lane
+spec: ia/projects/TECH-443.md
+files:
+  - ia/state/pre-refactor-snapshot/
+  - ia/state/lifecycle-refactor-migration.json
+notes: |
+  Copy all `ia/projects/*master-plan*.md`, `ia/backlog/*.yaml`, `ia/backlog-archive/*.yaml`, and open `ia/projects/{ISSUE_ID}.md` into `ia/state/pre-refactor-snapshot/` (preserve relative paths). Write `ia/state/pre-refactor-snapshot/manifest.json`: file list + counts + git SHA at snapshot time. Update migration JSON referencing snapshot path; M0 already done — no flip needed (M0 was set in TECH-442; spec text in master plan says "flip M0 done" but TECH-442 already covers it; this task confirms snapshot manifest validates against migration JSON M2/M3 per-file arrays).
+acceptance: |
+  `ia/state/pre-refactor-snapshot/` directory exists; file count matches `ia/projects/*master-plan*.md` + `ia/backlog/*.yaml` + `ia/backlog-archive/*.yaml` + open `ia/projects/{ISSUE_ID}.md` counts at snapshot time; `manifest.json` parses + lists every snapshot file + records git SHA; migration JSON references snapshot path; `npm run validate:all` exit 0.
+depends_on:
+  - TECH-442
+depends_on_raw: TECH-442 (initial migration JSON must exist before snapshot reconciles its per-file arrays).
+related:
+  - TECH-442
+created: 2026-04-18
+closed: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-443** — Pre-refactor snapshot + manifest (Stage 1.1 Phase 2)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Files: `ia/state/pre-refactor-snapshot/`, `ia/state/lifecycle-refactor-migration.json`
+    - Spec: `ia/projects/TECH-443.md`
+    - Notes: Copy all master plans + backlog yaml + open project specs into `ia/state/pre-refactor-snapshot/`; write `manifest.json` (files + counts + git SHA); update migration JSON referencing snapshot path.
+    - Acceptance: snapshot dir exists; counts match source; `manifest.json` parses; migration JSON references snapshot; `validate:all` exit 0.
+    - Depends on: TECH-442 (migration JSON must exist).
+    - Related: TECH-442
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T1.1.2

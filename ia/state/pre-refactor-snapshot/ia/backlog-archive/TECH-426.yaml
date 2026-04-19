@@ -1,0 +1,37 @@
+id: TECH-426
+type: mcp / infrastructure
+title: "**MCP** — drop legacy param aliases from `spec_section` / `spec_sections` / `project_spec_journal_*` (Stage 2.3 T2.3.1)"
+priority: medium
+status: closed
+section: IA infrastructure
+spec: (removed after closure)
+files:
+  - tools/mcp-ia-server/src/tools/spec-section.ts
+  - tools/mcp-ia-server/src/tools/spec-sections.ts
+  - tools/mcp-ia-server/src/tools/project-spec-journal.ts
+notes: |
+  Remove alias params from Zod schemas. `spec-section.ts`: reject `key` / `doc` / `document_key` w/ `invalid_input` (hint: "Use 'spec'"); reject `section_heading` / `section_id` / `heading` w/ hint "Use 'section'"; reject `maxChars` w/ hint "Use 'max_chars'". Mirror cleanup in `spec-sections.ts` (per-request element shapes) + `project-spec-journal.ts` journal-search params. Errors flow through Stage 2.1 envelope. Stage 2.3 Phase 1 T2.3.1 of `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`. Implementation: `normalizeSpecSectionInput` in `spec-section.ts` rejects 7 legacy aliases with `{code: "invalid_input"}` + canonical-name hints; tests in `tools/mcp-ia-server/tests/tools/spec-section-args.test.ts` (361 pass).
+acceptance: |
+  `spec_section({ section_heading: "..." })` → `{ ok: false, error: { code: "invalid_input", message: "Unknown param 'section_heading'. Canonical: 'section'." } }`. Same for `key` / `doc` / `document_key` / `section_id` / `heading` / `maxChars`. Unit tests cover each rejected alias per tool. `validate:all` green.
+depends_on:
+  - TECH-388
+  - TECH-398
+  - TECH-403
+depends_on_raw: "TECH-388 (envelope — hard dep); TECH-398 (spec tools wrapped — hard dep); TECH-403 (journal tools wrapped — hard dep)"
+related:
+  - TECH-427
+  - TECH-428
+  - TECH-429
+created: 2026-04-18
+completed: 2026-04-18
+raw_markdown: |
+  - [x] **TECH-426** — **MCP** — drop legacy param aliases from `spec_section` / `spec_sections` / `project_spec_journal_*` (Stage 2.3 T2.3.1) (2026-04-18)
+    - Type: mcp / infrastructure
+    - Files: `tools/mcp-ia-server/src/tools/spec-section.ts`, `spec-sections.ts`, `project-spec-journal.ts`
+    - Spec: (removed after closure)
+    - Notes: Hard-reject aliases `key` / `doc` / `document_key` / `section_heading` / `section_id` / `heading` / `maxChars` w/ typed `invalid_input` + canonical-name hints. Implementation via `normalizeSpecSectionInput` in `spec-section.ts`; 361 tests pass.
+    - Acceptance: each alias → `invalid_input` w/ hint; unit tests per alias; `validate:all` green.
+    - Depends on: **TECH-388** (archived), **TECH-398** (archived), **TECH-403** (archived)
+    - Related: TECH-427, TECH-428, TECH-429
+parent_plan: ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md
+task_key: T2.3.1

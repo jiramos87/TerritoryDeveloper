@@ -1,0 +1,30 @@
+id: TECH-44
+type: technical / infrastructure + architecture (program umbrella)
+title: "**Postgres + interchange patterns** (merged program umbrella; charter closed) (2026-04-05)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-04)
+spec: (removed after closure — [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md) **Program extension mapping**; **glossary** **Postgres interchange patterns**; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-44a**/**b**/**c**; this row)
+files: 
+  - docs/postgres-interchange-patterns.md
+  - projects/ia-driven-dev-backend-database-value.md
+  - ARCHITECTURE.md
+  - BACKLOG.md
+  - AGENTS.md
+  - ia/specs/glossary.md
+notes: |
+  **Completed (verified — `/project-spec-close`):** Charter **§4** satisfied (**TECH-44a**/**b**/**c** **§ Completed**). **E2**/**E3** remain **TECH-53**/**TECH-54** (open); **Editor export registry** **TECH-55**/**TECH-55b** **§ Completed**. **Decision Log** entries migrated into [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md) and **glossary**. **ID hygiene:** former erroneous **TECH-44** id on **project-spec-kickoff** completion → **TECH-57** (see below).
+acceptance: ""
+depends_on: 
+  - TECH-41
+  - TECH-40
+depends_on_raw: "**TECH-41** **§ Completed** (soft: **TECH-40** **§ Completed**)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-44** — **Postgres + interchange patterns** (merged program umbrella; charter closed) (2026-04-05)
+    - Type: technical / infrastructure + architecture (program umbrella)
+    - Files: [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md) (**Program extension mapping (E1–E3)**); **TECH-44a**/**b**/**c** **§ Completed** rows (same section); [`projects/ia-driven-dev-backend-database-value.md`](projects/ia-driven-dev-backend-database-value.md); [`ARCHITECTURE.md`](ARCHITECTURE.md); [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-21**; `AGENTS.md` (umbrella programs); `ia/specs/glossary.md` — **Postgres interchange patterns**, **JSON program (TECH-21)**
+    - Spec: (removed after closure — [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md) **Program extension mapping**; **glossary** **Postgres interchange patterns**; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-44a**/**b**/**c**; this row)
+    - Notes: **Completed (verified — `/project-spec-close`):** Charter **§4** satisfied (**TECH-44a**/**b**/**c** **§ Completed**). **E2**/**E3** remain **TECH-53**/**TECH-54** (open); **Editor export registry** **TECH-55**/**TECH-55b** **§ Completed**. **Decision Log** entries migrated into [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md) and **glossary**. **ID hygiene:** former erroneous **TECH-44** id on **project-spec-kickoff** completion → **TECH-57** (see below).
+    - Depends on: **TECH-41** **§ Completed** (soft: **TECH-40** **§ Completed**)

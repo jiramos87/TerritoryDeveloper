@@ -83,10 +83,13 @@ async function loadAllPlansFromGitHub(): Promise<PlanData[]> {
   const ref = githubRef();
   const listUrl = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/ia/projects?ref=${encodeURIComponent(ref)}`;
 
+  const ghHeaders: Record<string, string> = { Accept: 'application/vnd.github+json' };
+  if (process.env.GITHUB_TOKEN) ghHeaders['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
+
   let entries: GhDirEntry[];
   try {
     const res = await fetch(listUrl, {
-      headers: { Accept: 'application/vnd.github+json' },
+      headers: ghHeaders,
       next: { revalidate: REVALIDATE_SECONDS },
     });
     if (!res.ok) {
@@ -107,7 +110,7 @@ async function loadAllPlansFromGitHub(): Promise<PlanData[]> {
 
   return Promise.all(
     planEntries.map(async e => {
-      const res = await fetch(e.download_url!, { next: { revalidate: REVALIDATE_SECONDS } });
+      const res = await fetch(e.download_url!, { headers: ghHeaders, next: { revalidate: REVALIDATE_SECONDS } });
       const content = await res.text();
       return parseMasterPlan(content, e.name);
     })

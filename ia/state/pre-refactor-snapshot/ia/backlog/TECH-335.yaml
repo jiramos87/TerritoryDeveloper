@@ -1,0 +1,27 @@
+id: TECH-335
+type: infrastructure / data model
+title: Add LandmarkTier enum (Stage 1.1 T1.1.1)
+priority: medium
+status: open
+section: Multi-scale simulation lane
+spec: ia/projects/TECH-335.md
+files:
+  - Assets/Scripts/Data/Landmarks/LandmarkTier.cs
+notes: |
+  Add `Assets/Scripts/Data/Landmarks/LandmarkTier.cs` — `City`, `Region`, `Country` enum values. XML doc per value cites scale-coupling (region = unlocked on city→region transition, country = region→country). No behavior, no runtime refs. Stage 1.1 Phase 1 of landmarks-master-plan (Bucket 4-b).
+acceptance: |
+  File compiles via `unity:compile-check`; enum carries 3 values w/ XML doc each; no runtime references yet; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-335** — Add LandmarkTier enum (Stage 1.1 T1.1.1)
+    - Type: infrastructure / data model
+    - Files: `Assets/Scripts/Data/Landmarks/LandmarkTier.cs` (new)
+    - Spec: `ia/projects/TECH-335.md`
+    - Notes: Plain enum w/ 3 values (`City`, `Region`, `Country`) + XML doc each cite scale coupling. No runtime refs. Stage 1.1 Phase 1 of landmarks-master-plan.
+    - Acceptance: compiles clean via `unity:compile-check`; `validate:all` green.
+    - Related: TECH-336, TECH-337, TECH-338
+parent_plan: ia/projects/landmarks-master-plan.md
+task_key: T1.1.1

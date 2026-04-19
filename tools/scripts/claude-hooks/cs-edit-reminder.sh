@@ -13,17 +13,8 @@ set +e
 
 input="$(cat)"
 
-if command -v python3 >/dev/null 2>&1; then
-  file_path="$(printf '%s' "$input" | python3 -c '
-import json, sys
-try:
-    data = json.loads(sys.stdin.read() or "{}")
-except Exception:
-    print("")
-    sys.exit(0)
-ti = data.get("tool_input") or {}
-print(ti.get("file_path", "") if isinstance(ti, dict) else "")
-')"
+if command -v jq >/dev/null 2>&1; then
+  file_path="$(printf '%s' "$input" | jq -r '.tool_input.file_path // ""' 2>/dev/null)"
 else
   file_path="$(printf '%s' "$input" | sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
 fi

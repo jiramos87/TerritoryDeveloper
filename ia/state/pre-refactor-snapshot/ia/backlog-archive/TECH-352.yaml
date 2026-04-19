@@ -1,0 +1,27 @@
+id: TECH-352
+type: tech (web client component)
+title: Author `web/components/PlanTree.tsx` — Client island w/ expand state (Stage 7.2 T7.2.2)
+priority: medium
+status: closed
+section: Web platform lane
+spec: ia/projects/TECH-352.md
+files: 
+  - web/components/PlanTree.tsx
+notes: |
+  `'use client'`. `useState<Set<string>>(new Set(props.initialExpanded))`. Renders root `TreeNodeData[]` list. `onToggle = id => setExpanded(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; })`. Passes `expanded` + `onToggle` down to each `<TreeNode>`. Props: `{ nodes: TreeNodeData[], initialExpanded: Set<string> }`. ONLY Client island on this surface — progress `page.tsx` stays RSC. Stage 7.2 Phase 1 of `web-platform-master-plan.md`.
+acceptance: |
+  `web/components/PlanTree.tsx` is `'use client'` w/ `Set<string>` expand state seeded from `initialExpanded`; toggle flips membership; passes `expanded` + `onToggle` to `<TreeNode>`; `npm run validate:web` green.
+depends_on: 
+  - TECH-351
+depends_on_raw: TECH-351 (TreeNode primitive — hard gate; PlanTree passes props to it)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-352** — Author `web/components/PlanTree.tsx` — Client island w/ expand state (Stage 7.2 T7.2.2)
+    - Type: tech (web client component)
+    - Files: `web/components/PlanTree.tsx`
+    - Spec: `ia/projects/TECH-352.md`
+    - Notes: `'use client'`. `useState<Set<string>>` seeded from `props.initialExpanded`. `onToggle` flips id membership via new Set. Renders root `TreeNodeData[]`; passes `expanded` + `onToggle` to each `<TreeNode>`. ONLY Client island — progress page stays RSC.
+    - Acceptance: Client island; Set state seeded; toggle flips; `validate:web` green.
+    - Depends on: TECH-351 (TreeNode primitive)
+    - Related: TECH-351, TECH-353, TECH-354

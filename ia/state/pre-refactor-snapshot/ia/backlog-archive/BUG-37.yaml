@@ -1,0 +1,28 @@
+id: BUG-37
+type: bug
+title: Manual **street** drawing clears **buildings** and **zones** on cells adjacent to the **road stroke** (2026-04-02)
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: ia/projects/BUG-37.md`; `ia/specs/isometric-geography-system.md` §14 (manual **streets**)
+files: 
+  - TerrainManager.cs
+  - RestoreTerrainForCell
+  - PlaceFlatTerrain
+  - GridManager.IsCellOccupiedByBuilding
+  - RoadManager.cs
+  - PathTerraformPlan.cs
+notes: |
+  **Completed (verified per user):** Commit/AUTO `PathTerraformPlan.Apply` Phase 2/3 was refreshing **Moore** neighbors and stacking **grass** under **RCI** **buildings** / footprint **cells** (preview skipped **Apply**, so only commit showed the bug). **Fix:** preserve development by returning after height/sync when the **cell** is **building**-occupied. **Follow-up:** **BUG-52** if **AUTO** zoning shows persistent **grass** buffers beside new **streets** (investigate correlation).
+acceptance: ""
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-37** — Manual **street** drawing clears **buildings** and **zones** on cells adjacent to the **road stroke** (2026-04-02)
+    - Type: bug
+    - Files: `TerrainManager.cs` (`RestoreTerrainForCell` — **BUG-37**: skip `PlaceFlatTerrain` / slope rebuild when `GridManager.IsCellOccupiedByBuilding`; sync **HeightMap** / **cell** height + transform first); `RoadManager.cs`, `PathTerraformPlan.cs` (call path unchanged)
+    - Spec: `ia/projects/BUG-37.md`; `ia/specs/isometric-geography-system.md` §14 (manual **streets**)
+    - Notes: **Completed (verified per user):** Commit/AUTO `PathTerraformPlan.Apply` Phase 2/3 was refreshing **Moore** neighbors and stacking **grass** under **RCI** **buildings** / footprint **cells** (preview skipped **Apply**, so only commit showed the bug). **Fix:** preserve development by returning after height/sync when the **cell** is **building**-occupied. **Follow-up:** **BUG-52** if **AUTO** zoning shows persistent **grass** buffers beside new **streets** (investigate correlation).
+    - Depends on: none

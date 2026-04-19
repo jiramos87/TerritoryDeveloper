@@ -1,0 +1,26 @@
+id: BUG-25
+type: fix
+title: Fix bugs in manual street segment drawing (2026-03-19)
+priority: medium
+status: closed
+section: Pre-2026-03-22 archive
+spec: ""
+files: 
+  - RoadManager.cs
+  - RoadPrefabResolver.cs
+  - GridManager.cs
+  - TerraformingService.cs
+  - PathTerraformPlan.cs
+  - GridPathfinder.cs
+notes: |
+  Junction/T/cross prefabs: `HashSet` path membership + `SelectFromConnectivity` for 3+ cardinal neighbors in `RoadPrefabResolver`; post-placement `RefreshRoadPrefabAt` pass on placed cells in `TryFinalizeManualRoadPlacement`. Spec: `ia/specs/isometric-geography-system.md` §14. Optional follow-up: `postTerraformSlopeType` on refresh, crossroads prefab audit.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-25** — Fix bugs in manual street segment drawing (2026-03-19)
+    - Type: fix
+    - Files: `RoadManager.cs`, `RoadPrefabResolver.cs` (also: `GridManager.cs`, `TerraformingService.cs`, `PathTerraformPlan.cs`, `GridPathfinder.cs` for prior spec work)
+    - Notes: Junction/T/cross prefabs: `HashSet` path membership + `SelectFromConnectivity` for 3+ cardinal neighbors in `RoadPrefabResolver`; post-placement `RefreshRoadPrefabAt` pass on placed cells in `TryFinalizeManualRoadPlacement`. Spec: `ia/specs/isometric-geography-system.md` §14. Optional follow-up: `postTerraformSlopeType` on refresh, crossroads prefab audit.

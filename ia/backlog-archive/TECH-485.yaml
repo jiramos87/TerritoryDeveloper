@@ -1,0 +1,27 @@
+id: "TECH-485"
+type: "TECH"
+title: "Dry-run new chain end-to-end"
+priority: "high"
+status: closed
+section: "Validation + Merge / Dry-Run + Full Validation"
+spec: ""
+closed: "2026-04-19"
+files: []
+notes: |
+  Pick small pending Task from any open master plan (not In Progress). Run new chain partial: /plan-review on its Stage then /author --task {ISSUE_ID} then /implement stub
+  (no code ship — stop after wiring validation). Simulate audit + code-review outputs. Verify closeout-apply reads §Stage Closeout Plan anchor correctly.
+  Document each pair handoff in migration JSON M7.dry-run. No artifact commit. Exercises Plan-Apply pair seams end-to-end pre-merge.
+acceptance: |
+  - [ ] Confirm each pair seam (plan-review → fix-apply, stage-closeout-plan → apply) hands off without anchor ambiguity.
+  - [ ] Capture migration JSON M7.dry-run entries per seam.
+  - [ ] Surface integration bugs before Stage 8 T8.3 full verify:local.
+  - [ ] No state mutation persisted (no BACKLOG archive, no spec delete).
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-486"
+  - "TECH-487"
+  - "TECH-488"
+created: "2026-04-19"
+raw_markdown: |
+  Dry-run new chain end-to-end — Pick small pending Task from any open master plan (not In Progress). Run new chain partial using /author (no /enrich — retired).

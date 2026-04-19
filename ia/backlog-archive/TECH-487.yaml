@@ -1,0 +1,26 @@
+id: "TECH-487"
+type: "TECH"
+title: "Full verify:local"
+priority: "high"
+status: closed
+section: "Validation + Merge / Dry-Run + Full Validation"
+spec: ""
+closed: "2026-04-19"
+files: []
+notes: |
+  Run `npm run verify:local` — full chain (validate:all + unity:compile-check + db:bridge-preflight + Editor save/quit + db:bridge-playmode-smoke).
+  Triage failures by subsystem: web → Stage 6 patch; MCP → Stage 5 patch; skill/agent → Stage 7 patch; yaml → Stage 4 patch. Escalate
+  rather than guess cause. This is the merge-gate acceptance run.
+acceptance: |
+  - [ ] verify:local green end-to-end on current branch.
+  - [ ] Every failure routed to correct Stage patch lane (no cross-lane fixes).
+  - [ ] Acceptance artifact recorded for Stage 9 sign-off gate.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-485"
+  - "TECH-486"
+  - "TECH-488"
+created: "2026-04-19"
+raw_markdown: |
+  Full verify:local — Run npm run verify:local full chain as merge-gate acceptance run.

@@ -1,0 +1,16 @@
+id: BUG-06
+type: unknown
+title: Streets should not cost so much energy (2026-03-12)
+priority: medium
+status: closed
+section: Pre-2026-03-22 archive
+spec: ""
+files: []
+notes: ""
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-06** — Streets should not cost so much energy (2026-03-12)

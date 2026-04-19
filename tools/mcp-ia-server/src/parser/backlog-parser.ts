@@ -53,7 +53,7 @@ export interface ParsedBacklogIssue {
   step?: number | null;
   /** Stage identifier e.g. `"3.1"`. Populated by yaml loader (TECH-364). Null when absent. */
   stage?: string | null;
-  /** Phase number derived from task_key trailing segment. Populated by yaml loader (TECH-364). Null when absent. */
+  /** Phase number — removed from yaml schema (Stage 4 fold); always null. Retained for tool-handler compat until Stage 5 drop. */
   phase?: number | null;
   /** MCP router hint for this issue. Populated by yaml loader (TECH-364). Null when absent. */
   router_domain?: string | null;

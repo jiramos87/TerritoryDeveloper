@@ -1,0 +1,26 @@
+id: TECH-111
+type: infrastructure / authoring
+title: "`BlipPatch : ScriptableObject` authoring surface (MVP fields) (2026-04-14)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-13)
+spec: (removed after closure)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipPatch.cs
+notes: |
+  Blip master-plan Stage 1.2 Phase 1 opener. `BlipPatch : ScriptableObject` landed w/ 15 MVP scalar fields (`oscillators[0..3]`, `envelope`, `filter`, `variantCount`, jitter triplet, `voiceLimit`, `priority`, `cooldownMs`, `deterministic`, `mixerGroup` authoring-only ref, `durationSeconds`, `useLutOscillators` reserved, `patchHash` `[SerializeField] private int`). `CreateAssetMenu("Territory/Audio/Blip Patch")` attribute wired. No `AnimationCurve` fields. No `mode` field / `BlipMode` enum (deferred post-MVP per `docs/blip-post-mvp-extensions.md` §1). Decisions: `mixerGroup` stays on SO (authoring-only) — NOT flattened into `BlipPatchFlat` to keep struct blittable; `BlipMixerRouter` parallel to catalog holds `BlipId → AudioMixerGroup` map (Step 2). `patchHash` serialized on SO (persist across Editor reload; computed TECH-115). Feeds flatten (TECH-114) + hash persist (TECH-115) + DSP kernel (Stage 1.3). Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.2.
+acceptance: |
+  `BlipPatch.cs` compiles + CreateAssetMenu reachable; `unity:compile-check` + `validate:all` green
+depends_on: 
+  - TECH-112
+depends_on_raw: "**TECH-112**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-111** — `BlipPatch : ScriptableObject` authoring surface (MVP fields) (2026-04-14)
+    - Type: infrastructure / authoring
+    - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs`
+    - Spec: (removed after closure)
+    - Notes: Blip master-plan Stage 1.2 Phase 1 opener. `BlipPatch : ScriptableObject` landed w/ 15 MVP scalar fields (`oscillators[0..3]`, `envelope`, `filter`, `variantCount`, jitter triplet, `voiceLimit`, `priority`, `cooldownMs`, `deterministic`, `mixerGroup` authoring-only ref, `durationSeconds`, `useLutOscillators` reserved, `patchHash` `[SerializeField] private int`). `CreateAssetMenu("Territory/Audio/Blip Patch")` attribute wired. No `AnimationCurve` fields. No `mode` field / `BlipMode` enum (deferred post-MVP per `docs/blip-post-mvp-extensions.md` §1). Decisions: `mixerGroup` stays on SO (authoring-only) — NOT flattened into `BlipPatchFlat` to keep struct blittable; `BlipMixerRouter` parallel to catalog holds `BlipId → AudioMixerGroup` map (Step 2). `patchHash` serialized on SO (persist across Editor reload; computed TECH-115). Feeds flatten (TECH-114) + hash persist (TECH-115) + DSP kernel (Stage 1.3). Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.2.
+    - Acceptance: `BlipPatch.cs` compiles + CreateAssetMenu reachable; `unity:compile-check` + `validate:all` green
+    - Depends on: **TECH-112**

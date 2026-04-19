@@ -1,0 +1,24 @@
+id: TECH-225
+type: infrastructure / web workspace / layout
+title: Root layout integration for Sidebar (Stage 4.1 Phase 2) (2026-04-16)
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — Decision Log persisted to Postgres journal)
+files: 
+  - web/app/layout.tsx
+notes: |
+  **Completed (verified — `/project-spec-close`).** `web/app/layout.tsx` restructured to horizontal shell. Outer `<body className="min-h-full flex flex-col">` preserved; inner row `<div className="flex flex-1 min-h-0">` wraps `<Sidebar />` + `<main className="flex-1 min-w-0 overflow-auto">{children}</main>`; existing footer (Devlog + RSS) stays below row. `<html>` classes (`${geistSans.variable} ${geistMono.variable} h-full antialiased`) + metadata export + all lib imports (`getBaseUrl`, `siteTitle`, `siteTagline`, `tokens`) preserved. `<Sidebar />` rendered directly — no `hidden md:flex` wrapper (Sidebar root `<nav>` owns `fixed ... md:static md:translate-x-0 w-48`, wrapping would break TECH-224 mobile overlay). Decision Log — keep outer `<body>` shell + footer (replacing wholesale deletes Devlog/RSS links); render `<Sidebar />` directly (wrapper slot breaks mobile); inner row uses `flex flex-1 min-h-0` not `flex min-h-screen` (min-h-screen double-counts vs outer `min-h-full` → footer pushed off-screen); `min-w-0` on `<main>` prevents flexbox child overflow from long tables / pre blocks. Validate: `cd web && npm run typecheck` + `npm run lint` + `npm run validate:web` + `npm run validate:all` all green. Phase 2 of Stage 4.1; sibling TECH-226 (README §Components) still open.
+acceptance: ""
+depends_on: 
+  - TECH-224
+depends_on_raw: "**TECH-224** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-225** — Root layout integration for Sidebar (Stage 4.1 Phase 2) (2026-04-16)
+    - Type: infrastructure / web workspace / layout
+    - Files: `web/app/layout.tsx`
+    - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+    - Notes: **Completed (verified — `/project-spec-close`).** `web/app/layout.tsx` restructured to horizontal shell. Outer `<body className="min-h-full flex flex-col">` preserved; inner row `<div className="flex flex-1 min-h-0">` wraps `<Sidebar />` + `<main className="flex-1 min-w-0 overflow-auto">{children}</main>`; existing footer (Devlog + RSS) stays below row. `<html>` classes (`${geistSans.variable} ${geistMono.variable} h-full antialiased`) + metadata export + all lib imports (`getBaseUrl`, `siteTitle`, `siteTagline`, `tokens`) preserved. `<Sidebar />` rendered directly — no `hidden md:flex` wrapper (Sidebar root `<nav>` owns `fixed ... md:static md:translate-x-0 w-48`, wrapping would break TECH-224 mobile overlay). Decision Log — keep outer `<body>` shell + footer (replacing wholesale deletes Devlog/RSS links); render `<Sidebar />` directly (wrapper slot breaks mobile); inner row uses `flex flex-1 min-h-0` not `flex min-h-screen` (min-h-screen double-counts vs outer `min-h-full` → footer pushed off-screen); `min-w-0` on `<main>` prevents flexbox child overflow from long tables / pre blocks. Validate: `cd web && npm run typecheck` + `npm run lint` + `npm run validate:web` + `npm run validate:all` all green. Phase 2 of Stage 4.1; sibling TECH-226 (README §Components) still open.
+    - Depends on: **TECH-224** (archived)

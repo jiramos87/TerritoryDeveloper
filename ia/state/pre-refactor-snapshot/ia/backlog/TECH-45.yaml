@@ -1,0 +1,26 @@
+id: TECH-45
+type: documentation / agent enablement (**Cursor Skill** only)
+title: "**Cursor Skill:** **road** modification guardrails (**road stroke**, **road preparation family**, cache)"
+priority: medium
+status: open
+section: Agent ↔ Unity & MCP context lane
+spec: ""
+files: 
+  - ia/skills/
+  - SKILL.md
+  - AGENTS.md
+notes: |
+  **Deliverable type:** **Cursor Skill**. Checklist: **road placement** only through **road preparation family** ending in **`PathTerraformPlan`** + Phase-1 + **`Apply`** — never **`ComputePathPlan`** alone; call **`InvalidateRoadCache()`** after **road** changes; pull normative detail via **territory-ia** (`router_for_task` → **roads** / **geo**) — do not duplicate **`roads-system`** in the skill body. **Pattern:** [ia/skills/README.md](ia/skills/README.md) (thin skill + **Tool recipe** + MCP pointers).
+acceptance: |
+  **Skill** file committed; **`description`** names **road stroke**, **wet run**, **interstate**/**bridge** touchpoints where relevant
+depends_on: []
+depends_on_raw: "none (soft: [ia/skills/README.md](ia/skills/README.md) conventions)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-45** — **Cursor Skill:** **road** modification guardrails (**road stroke**, **road preparation family**, cache)
+    - Type: documentation / agent enablement (**Cursor Skill** only)
+    - Files: `ia/skills/` (TBD subfolder + `SKILL.md`); optional one-line pointer in `AGENTS.md`
+    - Notes: **Deliverable type:** **Cursor Skill**. Checklist: **road placement** only through **road preparation family** ending in **`PathTerraformPlan`** + Phase-1 + **`Apply`** — never **`ComputePathPlan`** alone; call **`InvalidateRoadCache()`** after **road** changes; pull normative detail via **territory-ia** (`router_for_task` → **roads** / **geo**) — do not duplicate **`roads-system`** in the skill body. **Pattern:** [ia/skills/README.md](ia/skills/README.md) (thin skill + **Tool recipe** + MCP pointers).
+    - Acceptance: **Skill** file committed; **`description`** names **road stroke**, **wet run**, **interstate**/**bridge** touchpoints where relevant
+    - Depends on: none (soft: [ia/skills/README.md](ia/skills/README.md) conventions)

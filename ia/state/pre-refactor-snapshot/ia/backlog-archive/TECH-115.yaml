@@ -1,0 +1,29 @@
+id: TECH-115
+type: infrastructure / glossary
+title: "`patchHash` content hash on `BlipPatch` + glossary rows (2026-04-14)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-13)
+spec: (removed after closure)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipPatch.cs
+  - ia/specs/glossary.md
+notes: |
+  Closes Stage 1.2. FNV-1a 32-bit (offset basis `0x811C9DC5`, prime `0x01000193`) digest over serialized scalars (osc freqs, env timings, env shapes, filter cutoff, jitter, cooldown) — xxhash64 rejected (adds runtime dep; FNV-1a stdlib-free + sufficient for `BlipBaker` LRU cache-key scope, ≪1000 patches lifetime). Stable across Unity GUID churn + version bumps. `[SerializeField] private int patchHash` persisted on `OnValidate` (after clamp + oscillator resize). `Awake` / `OnEnable` recompute-and-assert warn-only (no write — keeps SO non-dirty at runtime load; mismatch surfaces as `Debug.LogWarning` w/ `name` + stored hash + recomputed hash). Canonical field order frozen in helper (§5.2) — reorder invalidates `BlipBaker` cache; future fields append at tail + bump `HashVersion` const post-MVP. Hash scope excludes `mixerGroup` (`AudioMixerGroup` managed ref — routed by `BlipMixerRouter` Step 2; not in `BlipPatchFlat`) + `patchHash` self-field (circular). `BlipPatchHash` static helper co-located in `BlipPatch.cs` (small helper; mirrors `BlipPatchFlat.FromSO` colocation style). Glossary rows landed for **Blip patch** / **Blip patch flat** / **patch hash** (Audio category, peers of **Blip bootstrap** / **Blip mixer group**). Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.2.
+acceptance: |
+  hash stable across sessions (identical scalars → identical int); `OnValidate` write + `Awake` assert wired; 3 glossary rows land; `unity:compile-check` + `validate:all` green
+depends_on: 
+  - TECH-111
+  - TECH-113
+  - TECH-114
+depends_on_raw: "**TECH-111**, **TECH-113**, **TECH-114**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-115** — `patchHash` content hash on `BlipPatch` + glossary rows (2026-04-14)
+    - Type: infrastructure / glossary
+    - Files: `Assets/Scripts/Audio/Blip/BlipPatch.cs`, `ia/specs/glossary.md`
+    - Spec: (removed after closure)
+    - Notes: Closes Stage 1.2. FNV-1a 32-bit (offset basis `0x811C9DC5`, prime `0x01000193`) digest over serialized scalars (osc freqs, env timings, env shapes, filter cutoff, jitter, cooldown) — xxhash64 rejected (adds runtime dep; FNV-1a stdlib-free + sufficient for `BlipBaker` LRU cache-key scope, ≪1000 patches lifetime). Stable across Unity GUID churn + version bumps. `[SerializeField] private int patchHash` persisted on `OnValidate` (after clamp + oscillator resize). `Awake` / `OnEnable` recompute-and-assert warn-only (no write — keeps SO non-dirty at runtime load; mismatch surfaces as `Debug.LogWarning` w/ `name` + stored hash + recomputed hash). Canonical field order frozen in helper (§5.2) — reorder invalidates `BlipBaker` cache; future fields append at tail + bump `HashVersion` const post-MVP. Hash scope excludes `mixerGroup` (`AudioMixerGroup` managed ref — routed by `BlipMixerRouter` Step 2; not in `BlipPatchFlat`) + `patchHash` self-field (circular). `BlipPatchHash` static helper co-located in `BlipPatch.cs` (small helper; mirrors `BlipPatchFlat.FromSO` colocation style). Glossary rows landed for **Blip patch** / **Blip patch flat** / **patch hash** (Audio category, peers of **Blip bootstrap** / **Blip mixer group**). Orchestrator: [`projects/blip-master-plan.md`](../ia/projects/blip-master-plan.md) Stage 1.2.
+    - Acceptance: hash stable across sessions (identical scalars → identical int); `OnValidate` write + `Awake` assert wired; 3 glossary rows land; `unity:compile-check` + `validate:all` green
+    - Depends on: **TECH-111**, **TECH-113**, **TECH-114**

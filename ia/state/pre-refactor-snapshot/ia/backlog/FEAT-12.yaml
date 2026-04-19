@@ -1,0 +1,21 @@
+id: FEAT-12
+type: feature (new system)
+title: Security / Order / Police
+priority: low
+status: open
+section: Low Priority
+spec: ""
+files: 
+  - CityStats.cs
+notes: |
+  Public security system.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **FEAT-12** — Security / Order / Police
+    - Type: feature (new system)
+    - Files: new managers + `CityStats.cs`
+    - Notes: Public security system.

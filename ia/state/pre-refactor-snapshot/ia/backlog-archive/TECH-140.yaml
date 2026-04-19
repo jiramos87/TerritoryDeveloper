@@ -1,0 +1,26 @@
+id: TECH-140
+type: test / DSP verification
+title: Blip determinism test (2026-04-14)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal persist skipped, db_unconfigured)
+files: 
+  - Assets/Tests/EditMode/Audio/BlipDeterminismTests.cs
+notes: |
+  Stage 1.4 T1.4.4. One `[Test]` `RenderPatch_SameSeedVariant_ProducesDeterministicBuffer` — builds `BlipPatch` SO via `BuildPatch()` helper (sine osc, AHDSR 50/0/100/0.5/50 ms, `deterministic = true`, non-zero jitter params to prove deterministic path bypasses them, tracked in `_createdSo` + `TearDown` `DestroyImmediate`), `ToFlat()`, two `BlipTestFixtures.RenderPatch(in patch, 48000, 1, variantIndex: 0)` calls (fixture allocates fresh `BlipVoiceState` per call). Asserts `Math.Abs(SumAbsHash(bufA) - SumAbsHash(bufB)) < 1e-6` + indexed first-256-sample `Is.EqualTo` loop (no Linq alloc). Decision Log — hybrid sum-of-abs + first-256 sample equality (catches deep drift via hash + early state leak via prefix; avoids JIT-LSB brittleness of full-buffer byte-equal); pin `deterministic = true` path (jitter-free branch exercises canonical reset `rngState = variantIndex + 1` w/o seed-XOR confounders); single `variantIndex = 0` (non-goal §2.2 excludes cross-variant determinism). Satisfies Stage 1.4 Exit bullet 6.
+acceptance: |
+  determinism test passes; `unity:compile-check` + `validate:all` green.
+depends_on: 
+  - TECH-137
+depends_on_raw: "**TECH-137** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-140** — Blip determinism test (2026-04-14)
+    - Type: test / DSP verification
+    - Files: `Assets/Tests/EditMode/Audio/BlipDeterminismTests.cs`
+    - Spec: (removed at closeout — journal persist skipped, db_unconfigured)
+    - Notes: Stage 1.4 T1.4.4. One `[Test]` `RenderPatch_SameSeedVariant_ProducesDeterministicBuffer` — builds `BlipPatch` SO via `BuildPatch()` helper (sine osc, AHDSR 50/0/100/0.5/50 ms, `deterministic = true`, non-zero jitter params to prove deterministic path bypasses them, tracked in `_createdSo` + `TearDown` `DestroyImmediate`), `ToFlat()`, two `BlipTestFixtures.RenderPatch(in patch, 48000, 1, variantIndex: 0)` calls (fixture allocates fresh `BlipVoiceState` per call). Asserts `Math.Abs(SumAbsHash(bufA) - SumAbsHash(bufB)) < 1e-6` + indexed first-256-sample `Is.EqualTo` loop (no Linq alloc). Decision Log — hybrid sum-of-abs + first-256 sample equality (catches deep drift via hash + early state leak via prefix; avoids JIT-LSB brittleness of full-buffer byte-equal); pin `deterministic = true` path (jitter-free branch exercises canonical reset `rngState = variantIndex + 1` w/o seed-XOR confounders); single `variantIndex = 0` (non-goal §2.2 excludes cross-variant determinism). Satisfies Stage 1.4 Exit bullet 6.
+    - Acceptance: determinism test passes; `unity:compile-check` + `validate:all` green.
+    - Depends on: **TECH-137** (archived)

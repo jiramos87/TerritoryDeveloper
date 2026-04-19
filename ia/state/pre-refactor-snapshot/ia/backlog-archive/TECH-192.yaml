@@ -1,0 +1,27 @@
+id: TECH-192
+type: infrastructure / web workspace
+title: Devlog list route + reading-time helper (Stage 2.3 Phase 1) (2026-04-15)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-15)
+spec: (removed at closeout — journal persist `ok`, both sections empty)
+files: 
+  - web/app/devlog/page.tsx
+  - web/lib/mdx/reading-time.ts
+  - web/lib/mdx/types.ts
+notes: |
+  RSC scans `web/content/devlog/*.mdx`, parses frontmatter (`title`, `date`, `tags[]`, `cover?`, `excerpt`), sorts desc by `date`, renders card list w/ `BadgeChip` tags + read-time + excerpt. `computeReadingTime(body): number` helper — minutes rounded up from word count (~200 wpm baseline). Seeds devlog surface consumed by **TECH-193**/**TECH-194**/**TECH-195**. Decision Log — direct `gray-matter` over extending `loadMdxContent` (validator hard-codes `PageFrontmatter` fields); 200 wpm baseline + floor-1 minute; rich OG deferred to **TECH-193**/**TECH-195**.
+acceptance: |
+  `/devlog` renders sorted card list w/ tag chips + read-time + excerpt; `DevlogFrontmatter` type exported; `npm run validate:web` + `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-192** — Devlog list route + reading-time helper (Stage 2.3 Phase 1) (2026-04-15)
+    - Type: infrastructure / web workspace
+    - Files: `web/app/devlog/page.tsx` (new), `web/lib/mdx/reading-time.ts` (new), `web/lib/mdx/types.ts` (extend)
+    - Spec: (removed at closeout — journal persist `ok`, both sections empty)
+    - Notes: RSC scans `web/content/devlog/*.mdx`, parses frontmatter (`title`, `date`, `tags[]`, `cover?`, `excerpt`), sorts desc by `date`, renders card list w/ `BadgeChip` tags + read-time + excerpt. `computeReadingTime(body): number` helper — minutes rounded up from word count (~200 wpm baseline). Seeds devlog surface consumed by **TECH-193**/**TECH-194**/**TECH-195**. Decision Log — direct `gray-matter` over extending `loadMdxContent` (validator hard-codes `PageFrontmatter` fields); 200 wpm baseline + floor-1 minute; rich OG deferred to **TECH-193**/**TECH-195**.
+    - Acceptance: `/devlog` renders sorted card list w/ tag chips + read-time + excerpt; `DevlogFrontmatter` type exported; `npm run validate:web` + `npm run validate:all` green.
+    - Depends on: none

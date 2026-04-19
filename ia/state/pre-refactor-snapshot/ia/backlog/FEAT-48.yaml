@@ -1,0 +1,27 @@
+id: FEAT-48
+type: feature (**water** / **terraform**)
+title: "**Water body** volume budget: **basin** expand → **surface height (S)** adjusts; **Moore**-adjacent **dig** **fill**"
+priority: low
+status: open
+section: Low Priority
+spec: ""
+files: 
+  - WaterMap.cs
+  - WaterManager.cs
+  - TerrainManager.cs
+  - TerraformingService.cs
+notes: |
+  **Not** full 3D **fluid** simulation. **Gameplay:** excavating a **cell** **Moore**-adjacent to **open water** fills the **depression**; **basin** volume conservation lowers or raises **surface height (S)**; **render** water prefabs at new **S** (may expose or cover **terrain** / **islands**). Optional **isometric** directional **fill** **animation**; **S** step changes not animated. Expands across **terraform** / **water** interactions per product plan. Coordinates **FEAT-40**, **FEAT-41**, **FEAT-39**. **Spec:** **isometric-geography-system** / **water-terrain** amendments when implemented (no project spec until scheduled).
+acceptance: ""
+depends_on: 
+  - FEAT-41
+  - TECH-38
+depends_on_raw: "none (soft: **FEAT-41**, **glossary** **C# compute utilities (TECH-38)** for **pure** **volume** helpers; **water map** persist — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **FEAT-48** — **Water body** volume budget: **basin** expand → **surface height (S)** adjusts; **Moore**-adjacent **dig** **fill**
+    - Type: feature (**water** / **terraform**)
+    - Files: `WaterMap.cs`, `WaterManager.cs`, `TerrainManager.cs`, `TerraformingService.cs`, water prefabs / **sorting order** (per **geo** §7, **water-terrain**)
+    - Notes: **Not** full 3D **fluid** simulation. **Gameplay:** excavating a **cell** **Moore**-adjacent to **open water** fills the **depression**; **basin** volume conservation lowers or raises **surface height (S)**; **render** water prefabs at new **S** (may expose or cover **terrain** / **islands**). Optional **isometric** directional **fill** **animation**; **S** step changes not animated. Expands across **terraform** / **water** interactions per product plan. Coordinates **FEAT-40**, **FEAT-41**, **FEAT-39**. **Spec:** **isometric-geography-system** / **water-terrain** amendments when implemented (no project spec until scheduled).
+    - Depends on: none (soft: **FEAT-41**, **glossary** **C# compute utilities (TECH-38)** for **pure** **volume** helpers; **water map** persist — [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))

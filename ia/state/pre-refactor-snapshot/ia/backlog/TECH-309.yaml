@@ -1,0 +1,28 @@
+id: TECH-309
+type: technical / UI infrastructure
+title: "**StudioRackBlock schema** — extend UiTheme token ring w/ studio-rack block"
+priority: medium
+status: open
+section: UI-as-code program (exploration)
+spec: ia/projects/TECH-309.md
+files:
+  - Assets/Scripts/Managers/GameManagers/UiTheme.cs
+notes: |
+  Add `[Serializable] class StudioRackBlock` to `UiTheme.cs` w/ studio-rack fields: `ledHues` (`Color[]`), `vuGradientStops` (`Gradient`), `knobDetentColor` (`Color`), `faderTrackGradient` (`Gradient`), `oscilloscopeTrace` (`Color`), `oscilloscopeGlowColor` (`Color`), `shadowDepthStops` (`float[3]`), `glowRadius` (`float`), `glowColor` (`Color`), `sparklePalette` (`Color[]`). Expose via `public StudioRackBlock studioRack` on `UiTheme`. Additive only — existing fields untouched. Serializable defaults inert (asset defaults land in TECH-311). Stage 1.1 T1.1.1 of `ia/projects/ui-polish-master-plan.md`. Foundation for all downstream rings.
+acceptance: |
+  `StudioRackBlock` nested class present w/ all 10 named fields; `UiTheme.studioRack` exposed; existing fields untouched; `npm run unity:compile-check` green; `npm run validate:all` green.
+depends_on:
+  - TECH-311
+depends_on_raw: "none (stage-internal: TECH-311 consumes these fields as asset defaults)"
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-309** — **StudioRackBlock schema** — extend UiTheme token ring w/ studio-rack block
+    - Type: technical / UI infrastructure
+    - Files: `Assets/Scripts/Managers/GameManagers/UiTheme.cs`
+    - Spec: `ia/projects/TECH-309.md`
+    - Notes: Add `[Serializable] class StudioRackBlock` to `UiTheme.cs` w/ studio-rack fields: `ledHues` (`Color[]`), `vuGradientStops` (`Gradient`), `knobDetentColor` (`Color`), `faderTrackGradient` (`Gradient`), `oscilloscopeTrace` (`Color`), `oscilloscopeGlowColor` (`Color`), `shadowDepthStops` (`float[3]`), `glowRadius` (`float`), `glowColor` (`Color`), `sparklePalette` (`Color[]`). Expose via `public StudioRackBlock studioRack` on `UiTheme`. Additive only — existing fields untouched. Serializable defaults inert (asset defaults land in TECH-311). Stage 1.1 T1.1.1 of `ia/projects/ui-polish-master-plan.md`. Foundation for all downstream rings.
+    - Acceptance: `StudioRackBlock` nested class present w/ all 10 named fields; `UiTheme.studioRack` exposed; existing fields untouched; `npm run unity:compile-check` green; `npm run validate:all` green.
+    - Depends on: none (stage-internal: TECH-311 consumes these fields as asset defaults)
+parent_plan: ia/projects/ui-polish-master-plan.md
+task_key: T1.1.1

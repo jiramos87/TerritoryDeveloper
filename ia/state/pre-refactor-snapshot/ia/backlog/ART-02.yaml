@@ -1,0 +1,20 @@
+id: ART-02
+type: art/assets
+title: "Missing prefabs: residential **buildings** (2 heavy 1×1/2×2, light 2×2, medium 1×1 per **zone density**)"
+priority: low
+status: open
+section: Low Priority
+spec: ""
+files: 
+  - Assets/Prefabs/
+  - ZoneManager.cs
+notes: ""
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **ART-02** — Missing prefabs: residential **buildings** (2 heavy 1×1/2×2, light 2×2, medium 1×1 per **zone density**)
+    - Type: art/assets
+    - Files: prefabs in `Assets/Prefabs/`, `ZoneManager.cs`

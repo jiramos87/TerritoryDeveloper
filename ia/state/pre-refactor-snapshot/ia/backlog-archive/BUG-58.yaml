@@ -1,0 +1,26 @@
+id: BUG-58
+type: bug (lifecycle tooling / backlog materialization)
+title: "`materialize-backlog.sh` always runs in check mode — `${CHECK_MODE:+--check}` expands for `CHECK_MODE=0`"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-17)
+spec: (removed after closure)
+files:
+  - tools/scripts/materialize-backlog.sh
+  - tools/scripts/tests/materialize-backlog-mode.test.sh
+notes: |
+  Swapped `${CHECK_MODE:+--check}` for value-equality guard — `EXTRA_ARGS=(); [ "$CHECK_MODE" = "1" ] && EXTRA_ARGS=(--check)` + array expansion into node call. `CHECK_MODE=0` (default) → no flag → write mode; `CHECK_MODE=1` or `--check` CLI arg → check mode. Root cause: bash `:+` expands on non-empty (string `"0"` counts as non-empty). Added regression test `tools/scripts/tests/materialize-backlog-mode.test.sh` exercising three modes via temp yaml copy + snapshot/restore. Lesson migrated to `MEMORY.md` (CLI / tooling tips).
+acceptance: |
+  Default `bash tools/scripts/materialize-backlog.sh` writes BACKLOG files (no `--check` reaches node); `--check` CLI arg + `CHECK_MODE=1` preserve check mode; `CHECK_MODE=0` passes no flag; regression test covers three modes; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: "none"
+related: []
+created: 2026-04-17
+closed: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-58** — `materialize-backlog.sh` always runs in check mode — `${CHECK_MODE:+--check}` expands for `CHECK_MODE=0` (2026-04-17)
+    - Type: bug (lifecycle tooling / backlog materialization)
+    - Files: `tools/scripts/materialize-backlog.sh`, `tools/scripts/tests/materialize-backlog-mode.test.sh`
+    - Spec: (removed after closure)
+    - Notes: Swapped `${CHECK_MODE:+--check}` for value-equality guard — `EXTRA_ARGS=(); [ "$CHECK_MODE" = "1" ] && EXTRA_ARGS=(--check)` + array expansion. `CHECK_MODE=0` → write; `CHECK_MODE=1` / `--check` arg → check. Bash `:+` expands on non-empty (`"0"` non-empty) — root cause. Regression test covers three modes via temp yaml copy + snapshot/restore. Lesson → `MEMORY.md` CLI tips.
+    - Acceptance: default call writes BACKLOG files; `--check` + `CHECK_MODE=1` preserve check mode; regression test green; `validate:all` green.

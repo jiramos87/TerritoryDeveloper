@@ -18,6 +18,24 @@ const GEO_SPEC_REF =
 
 const MAX_FILES = 40;
 
+/**
+ * Plan-Apply pair / enrichment stage names.
+ * Canonical value semantics: ia/rules/plan-apply-pair-contract.md
+ */
+export const LifecycleStage = z.enum([
+  "plan_review",
+  "plan_fix_apply",
+  "stage_file_plan",
+  "stage_file_apply",
+  "project_new_plan",
+  "project_new_apply",
+  "spec_enrich",
+  "opus_audit",
+  "opus_code_review",
+  "code_fix_apply",
+  "closeout_apply",
+]);
+
 const inputShape = {
   domain: z
     .string()
@@ -32,6 +50,9 @@ const inputShape = {
     .describe(
       "Optional repo-relative paths or basenames (e.g. GridManager.cs, Assets/Scripts/.../WaterMap.cs). Heuristic domain hints; combine with `domain` when both are set.",
     ),
+  lifecycle_stage: LifecycleStage.optional().describe(
+    "Optional Plan-Apply pair / enrichment stage name (11 values). Canonical semantics: ia/rules/plan-apply-pair-contract.md. Accepted values: plan_review, plan_fix_apply, stage_file_plan, stage_file_apply, project_new_plan, project_new_apply, spec_enrich, opus_audit, opus_code_review, code_fix_apply, closeout_apply. Invalid strings are rejected with Zod invalid_enum_value. Reserved for routing-logic use in T5.2+; passthrough only in this version.",
+  ),
 };
 
 const MIN_TOKEN = 3;
@@ -200,7 +221,7 @@ export function registerRouterForTask(
     "router_for_task",
     {
       description:
-        "Query the agent-router to find which specs and sections to read. Pass `domain` (keyword), optional `files` (paths for heuristic domains), or both; merges matches. Searches task→spec and geography quick-reference tables.",
+        "Query the agent-router to find which specs and sections to read. Pass `domain` (keyword), optional `files` (paths for heuristic domains), or both; merges matches. Searches task→spec and geography quick-reference tables. Optional `lifecycle_stage` enum (11 Plan-Apply pair / enrichment stage names per ia/rules/plan-apply-pair-contract.md) is accepted and validated; routing-logic use deferred to T5.2+.",
       inputSchema: inputShape,
     },
     async (args) =>

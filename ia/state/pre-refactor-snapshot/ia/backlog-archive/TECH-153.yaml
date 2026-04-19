@@ -1,0 +1,27 @@
+id: TECH-153
+type: infrastructure / palette pipeline
+title: K-means palette extractor library (Stage 1.3 Phase 1) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal persist skipped, db_error)
+files: 
+  - tools/sprite-gen/src/palette.py
+  - tools/sprite-gen/requirements.txt
+notes: |
+  Stage 1.3 Phase 1 opener. `extract_palette(cls, source_paths, n_clusters=8, alpha_threshold=32, seed=42) -> dict` — Pillow RGBA load, alpha mask, `scipy.cluster.vq.kmeans2(minit='++', seed=seed)`, HSV ramp (V ×1.2 / ×1.0 / ×0.6 clamped [0,255]). Decision Log — sort centroids by HSV V descending for stable `cluster_idx` across runs (kmeans2 native ordering non-deterministic); pass `seed` as int (forward-compat older scipy); ramp math from exploration doc §6; raise `ValueError` on empty stack or `N < n_clusters`. Pure library — no filesystem writes, no stdin. Human naming lives in **TECH-154** CLI.
+acceptance: |
+  `extract_palette('residential', [House1-64.png], 8)` returns 8 clusters w/ 3-level ramp; ramp clamp preserves 0–255; deterministic across two runs; alpha-0 ignored; `pytest tools/sprite-gen/tests/test_palette.py` green.
+depends_on: 
+  - TECH-124
+depends_on_raw: "**TECH-124** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-153** — K-means palette extractor library (Stage 1.3 Phase 1) (2026-04-15)
+    - Type: infrastructure / palette pipeline
+    - Files: `tools/sprite-gen/src/palette.py`, `tools/sprite-gen/requirements.txt`
+    - Spec: (removed at closeout — journal persist skipped, db_error)
+    - Notes: Stage 1.3 Phase 1 opener. `extract_palette(cls, source_paths, n_clusters=8, alpha_threshold=32, seed=42) -> dict` — Pillow RGBA load, alpha mask, `scipy.cluster.vq.kmeans2(minit='++', seed=seed)`, HSV ramp (V ×1.2 / ×1.0 / ×0.6 clamped [0,255]). Decision Log — sort centroids by HSV V descending for stable `cluster_idx` across runs (kmeans2 native ordering non-deterministic); pass `seed` as int (forward-compat older scipy); ramp math from exploration doc §6; raise `ValueError` on empty stack or `N < n_clusters`. Pure library — no filesystem writes, no stdin. Human naming lives in **TECH-154** CLI.
+    - Acceptance: `extract_palette('residential', [House1-64.png], 8)` returns 8 clusters w/ 3-level ramp; ramp clamp preserves 0–255; deterministic across two runs; alpha-0 ignored; `pytest tools/sprite-gen/tests/test_palette.py` green.
+    - Depends on: **TECH-124** (archived)

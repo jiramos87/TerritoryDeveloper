@@ -1,0 +1,35 @@
+id: TECH-75a
+type: tooling / agent enablement
+title: "**Close Dev Loop**: Play Mode bridge commands + readiness signal (2026-04-08)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — **glossary** **IDE agent bridge**; **unity-development-context** §10; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) **Play Mode bridge smoke (MCP, agent-led)**; orchestration archived (this file **Recent archive**) §7 phase 1; **this row**)
+files: 
+  - Assets/Scripts/Editor/AgentBridgeCommandRunner.cs
+  - tools/mcp-ia-server/src/tools/unity-bridge-command.ts
+  - tools/mcp-ia-server/tests/tools/unity-bridge-command.test.ts
+  - docs/mcp-ia-server.md
+  - tools/mcp-ia-server/README.md
+  - ia/specs/unity-development-context.md
+  - ia/specs/glossary.md
+  - ia/skills/ide-bridge-evidence/SKILL.md
+  - AGENTS.md
+  - ARCHITECTURE.md
+notes: |
+  **Completed (verified — `/project-spec-close` + user):** Bridge **`kind`** **`enter_play_mode`**, **`exit_play_mode`**, **`get_play_mode_status`**; readiness via **`GridManager.isInitialized`**; **`UnityEditor.SessionState`** for enter/exit wait across domain reload; **`GameView`** focus via reflection before **`EnterPlaymode`**; concurrent same-type jobs rejected; deferred screenshot pump unified in **`OnEditorUpdate`**. **MCP** smoke + optional **Play Mode** sequence documented in **`AGENTS.md`** / **`docs/mcp-ia-server.md`**. **Subsequent Close Dev Loop:** context bundle **TECH-75b** (this file); **`close-dev-loop`** Skill **TECH-75c** (this file **Recent archive**); **TECH-75d** dev preflight on [`BACKLOG.md`](BACKLOG.md).
+acceptance: ""
+depends_on: 
+  - TECH-73
+  - TECH-74
+depends_on_raw: none (extends **TECH-73**/**TECH-74** Phase 1 bridge)
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-75a** — **Close Dev Loop**: Play Mode bridge commands + readiness signal (2026-04-08)
+    - Type: tooling / agent enablement
+    - Files: `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`; `tools/mcp-ia-server/src/tools/unity-bridge-command.ts`; `tools/mcp-ia-server/tests/tools/unity-bridge-command.test.ts`; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); `tools/mcp-ia-server/README.md`; [`ia/specs/unity-development-context.md`](ia/specs/unity-development-context.md) §10; [`ia/specs/glossary.md`](ia/specs/glossary.md) **IDE agent bridge**; [`ia/skills/ide-bridge-evidence/SKILL.md`](ia/skills/ide-bridge-evidence/SKILL.md); [`AGENTS.md`](AGENTS.md); [`ARCHITECTURE.md`](ARCHITECTURE.md) (**IDE agent bridge** bullet)
+    - Spec: (removed after closure — **glossary** **IDE agent bridge**; **unity-development-context** §10; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md) **Play Mode bridge smoke (MCP, agent-led)**; orchestration archived (this file **Recent archive**) §7 phase 1; **this row**)
+    - Notes: **Completed (verified — `/project-spec-close` + user):** Bridge **`kind`** **`enter_play_mode`**, **`exit_play_mode`**, **`get_play_mode_status`**; readiness via **`GridManager.isInitialized`**; **`UnityEditor.SessionState`** for enter/exit wait across domain reload; **`GameView`** focus via reflection before **`EnterPlaymode`**; concurrent same-type jobs rejected; deferred screenshot pump unified in **`OnEditorUpdate`**. **MCP** smoke + optional **Play Mode** sequence documented in **`AGENTS.md`** / **`docs/mcp-ia-server.md`**. **Subsequent Close Dev Loop:** context bundle **TECH-75b** (this file); **`close-dev-loop`** Skill **TECH-75c** (this file **Recent archive**); **TECH-75d** dev preflight on [`BACKLOG.md`](BACKLOG.md).
+    - Depends on: none (extends **TECH-73**/**TECH-74** Phase 1 bridge)
+    - Related: **TECH-75** orchestration, **TECH-75b** (archived this file), **TECH-75c**, **TECH-73**, **TECH-74**, **TECH-59** (absorbed)

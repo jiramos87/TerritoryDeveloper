@@ -1,0 +1,34 @@
+id: TECH-186
+type: infrastructure / web workspace
+title: Build-time search index emitter (Stage 2.2 Phase 2) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+files: 
+  - web/lib/search/build-index.ts
+  - web/lib/search/types.ts
+  - web/package.json
+  - prebuild
+  - build:search-index
+  - tsx
+  - .gitignore
+  - web/public/search-index.json
+notes: |
+  Stage 2.2 Phase 2 opener. Node CLI `tsx lib/search/build-index.ts` emits deterministic `web/public/search-index.json` (156 records) — glossary via `loadGlossaryTerms()` (TECH-184) + wiki MDX glob `web/content/wiki/**/*.mdx` parsed with `gray-matter`. Records shape `{ slug, title, body, category, type: 'glossary' | 'wiki' }`. Stable sort by `slug` ascending; `JSON.stringify(records, null, 2)` + trailing `\n`. Cwd-dual resolution mirrors `loader.ts` + `glossary/import.ts` (works under `web/` or repo root). `prebuild` script auto-fires before `next build`. Artifact git-ignored (regenerated each build). Decision Log — cwd-dual resolution (mirrors existing pattern); artifact ignored (build output, not source); `tsx` local devDep in web/ (avoids PATH surprises in prebuild hook); sort by `slug` not `title` (stable primary key, no unicode/casing issues); raw MDX body frontmatter-stripped (shape simple, Fuse.js threshold tunes match in TECH-187).
+acceptance: |
+  `cd web && npm run build:search-index` → 156 records emitted; two runs byte-identical (sha256 match); `prebuild` auto-invokes before `next build`; `npm run validate:web` + `npm run validate:all` green.
+depends_on: 
+  - TECH-184
+  - TECH-185
+depends_on_raw: "**TECH-184** (archived), **TECH-185** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-186** — Build-time search index emitter (Stage 2.2 Phase 2) (2026-04-15)
+    - Type: infrastructure / web workspace
+    - Files: `web/lib/search/build-index.ts`, `web/lib/search/types.ts`, `web/package.json` (`prebuild` + `build:search-index` scripts, `tsx` devDep), `.gitignore` (`web/public/search-index.json`)
+    - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+    - Notes: Stage 2.2 Phase 2 opener. Node CLI `tsx lib/search/build-index.ts` emits deterministic `web/public/search-index.json` (156 records) — glossary via `loadGlossaryTerms()` (TECH-184) + wiki MDX glob `web/content/wiki/**/*.mdx` parsed with `gray-matter`. Records shape `{ slug, title, body, category, type: 'glossary' | 'wiki' }`. Stable sort by `slug` ascending; `JSON.stringify(records, null, 2)` + trailing `\n`. Cwd-dual resolution mirrors `loader.ts` + `glossary/import.ts` (works under `web/` or repo root). `prebuild` script auto-fires before `next build`. Artifact git-ignored (regenerated each build). Decision Log — cwd-dual resolution (mirrors existing pattern); artifact ignored (build output, not source); `tsx` local devDep in web/ (avoids PATH surprises in prebuild hook); sort by `slug` not `title` (stable primary key, no unicode/casing issues); raw MDX body frontmatter-stripped (shape simple, Fuse.js threshold tunes match in TECH-187).
+    - Acceptance: `cd web && npm run build:search-index` → 156 records emitted; two runs byte-identical (sha256 match); `prebuild` auto-invokes before `next build`; `npm run validate:web` + `npm run validate:all` green.
+    - Depends on: **TECH-184** (archived), **TECH-185** (archived)

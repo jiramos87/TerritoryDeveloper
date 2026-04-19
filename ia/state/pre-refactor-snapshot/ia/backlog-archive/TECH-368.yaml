@@ -1,0 +1,27 @@
+id: TECH-368
+type: documentation
+title: agent-lifecycle.md surface-map row for /skill-train (Stage 1.1 T1.1.2)
+priority: medium
+status: closed
+section: Skill training program
+spec: ia/projects/TECH-368.md
+files: 
+  - docs/agent-lifecycle.md
+notes: |
+  Add `/skill-train` row to `docs/agent-lifecycle.md §Surface map` table — Stage: Retrospective; Slash command: `/skill-train`; Subagent: `skill-train`; Skill: `skill-train`; Model: Opus. Inline note "retrospective only — outside main lifecycle flow". Placement: outside the ordered canonical flow block; companion row under surface map with footnote marker.
+acceptance: |
+  `/skill-train` surface-map row present in `docs/agent-lifecycle.md`; retrospective-only note attached; `npm run validate:all` exits 0.
+depends_on: 
+  - TECH-367
+depends_on_raw: TECH-367 (glossary rows land before cross-ref per invariant #12 — soft gate; row cites `skill-train` term)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-368** — agent-lifecycle.md surface-map row for /skill-train (Stage 1.1 T1.1.2)
+    - Type: documentation
+    - Files: `docs/agent-lifecycle.md`
+    - Spec: `ia/projects/TECH-368.md`
+    - Notes: Add `/skill-train` row to §Surface map — Retrospective stage, Opus, "outside main lifecycle flow".
+    - Acceptance: row present; retrospective-only note; `validate:all` green.
+    - Depends on: TECH-367
+    - Related: TECH-367, TECH-369, TECH-370

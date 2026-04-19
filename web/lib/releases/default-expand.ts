@@ -1,26 +1,22 @@
 import type { PlanData, PlanMetrics } from '../plan-loader-types';
 
 /**
- * Returns the id of the first step where task counts indicate incomplete work,
- * or `null` when all steps are done or when no steps exist.
+ * Returns the id of the first stage where task counts indicate incomplete work,
+ * or `null` when all stages are done or when no stages exist.
  *
- * Ground-truth rule: task counts (`metrics.stepCounts`) are the source of
- * truth. Step-header Status prose (e.g. `step.status`) is intentionally
+ * Ground-truth rule: task counts (`metrics.stageCounts`) are the source of
+ * truth. Stage-header Status prose (e.g. `stage.status`) is intentionally
  * ignored — it drifts and may be stale.
  *
- * Missing-entry rule: if `metrics.stepCounts[step.id]` is absent the step is
+ * Missing-entry rule: if `metrics.stageCounts[stage.id]` is absent the stage is
  * treated as 0/0 and skipped (not a match).
- *
- * Blocked-unreachable note: `'blocked'` is part of the HierarchyStatus union
- * but no step emits it at MVP. The predicate has no special handling for it;
- * a blocked step is simply evaluated by its task counts like any other step.
  */
-export function deriveDefaultExpandedStepId(
+export function deriveDefaultExpandedStageId(
   plan: PlanData,
   metrics: PlanMetrics,
 ): string | null {
-  for (const s of plan.steps) {
-    const c = metrics.stepCounts[s.id];
+  for (const s of plan.stages) {
+    const c = metrics.stageCounts[s.id];
     if (c && c.done < c.total) return s.id;
   }
   return null;

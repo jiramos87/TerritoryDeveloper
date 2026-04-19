@@ -1,0 +1,30 @@
+id: TECH-366
+type: infrastructure / MCP tooling
+title: Round-trip fixtures for schema v2 (Stage 3.1 Phase 2)
+priority: medium
+status: closed
+section: Backlog YAML ↔ MCP alignment program
+spec: ia/projects/TECH-366.md
+files: 
+  - tools/scripts/test-fixtures/schema-v2-full.yaml
+  - tools/scripts/test-fixtures/schema-v2-minimal.yaml
+  - tools/scripts/test-fixtures/schema-v1-legacy.yaml
+  - tools/mcp-ia-server/tests/tools/
+notes: |
+  Three fixtures: `schema-v2-full.yaml` (all 9 locator fields), `schema-v2-minimal.yaml` (only 2 required — `parent_plan` + `task_key`), `schema-v1-legacy.yaml` (zero locator fields, proves back-compat). Round-trip test loads + re-emits each fixture and asserts byte-identical output. Hook into MCP test suite under `tools/mcp-ia-server/tests/tools/`. Source: Step 3 Stage 3.1 Phase 2.
+acceptance: |
+  Three fixtures on disk; round-trip test asserts byte-identical output per fixture; v1 back-compat proven; `validate:all` + MCP tests green.
+depends_on: 
+  - TECH-365
+depends_on_raw: TECH-365 (writer path — hard gate)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-366** — Round-trip fixtures for schema v2 (Stage 3.1 Phase 2)
+    - Type: infrastructure / MCP tooling
+    - Files: `tools/scripts/test-fixtures/schema-v2-full.yaml`, `schema-v2-minimal.yaml`, `schema-v1-legacy.yaml`, `tools/mcp-ia-server/tests/tools/`
+    - Spec: `ia/projects/TECH-366.md`
+    - Notes: 3 fixtures (v2-full / v2-minimal / v1-legacy); round-trip test asserts byte-identical output; proves v1 back-compat.
+    - Acceptance: fixtures present; round-trip byte-identical per fixture; MCP tests + `validate:all` green.
+    - Depends on: TECH-365 (writer — hard gate)
+    - Related: TECH-363, TECH-364, TECH-365

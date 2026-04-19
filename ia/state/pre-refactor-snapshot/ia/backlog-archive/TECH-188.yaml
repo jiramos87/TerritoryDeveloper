@@ -1,0 +1,26 @@
+id: TECH-188
+type: infrastructure / audio runtime
+title: "`BlipEngine` facade skeleton + main-thread gate (Stage 2.3 Phase 1) (2026-04-15)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipEngine.cs
+  - Assets/Scripts/Audio/Blip/BlipBootstrap.cs
+notes: |
+  new `public static class BlipEngine` — declares `Play(BlipId id, float pitchMult = 1f, float gainMult = 1f)` + `StopAll(BlipId id)` w/ empty bodies. Private `AssertMainThread()` compares `Thread.CurrentThread.ManagedThreadId` to cached `BlipBootstrap.MainThreadId` (captured first line of `BlipBootstrap.Awake`, Stage 2.1 prereq). Throws `InvalidOperationException` w/ diagnostic on mismatch. Invoked first line of every entry point. Invariant #4 — stateless facade, no new singleton. Decision Log — Bind/Unbind stubs left untouched (TECH-189 fills bodies, keeps task surface narrow + honors master-plan T2.3.2 boundary); `MainThreadId` capture reused from Stage 2.1 `BlipBaker.AssertMainThread` (no duplicate capture); direct off-thread EditMode test deferred (Stage 2.4 PlayMode smoke gates happy path, Unity main-thread context implicit).
+acceptance: |
+  facade file compiles, static methods present w/ correct signatures; `BlipBootstrap.MainThreadId` captured in `Awake`; `AssertMainThread` throws when invoked off main thread (EditMode test); `npm run unity:compile-check` green.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-188** — `BlipEngine` facade skeleton + main-thread gate (Stage 2.3 Phase 1) (2026-04-15)
+    - Type: infrastructure / audio runtime
+    - Files: `Assets/Scripts/Audio/Blip/BlipEngine.cs`, `Assets/Scripts/Audio/Blip/BlipBootstrap.cs`
+    - Spec: (removed at closeout — journal skipped empty sections; Decision Log captured in Notes)
+    - Notes: new `public static class BlipEngine` — declares `Play(BlipId id, float pitchMult = 1f, float gainMult = 1f)` + `StopAll(BlipId id)` w/ empty bodies. Private `AssertMainThread()` compares `Thread.CurrentThread.ManagedThreadId` to cached `BlipBootstrap.MainThreadId` (captured first line of `BlipBootstrap.Awake`, Stage 2.1 prereq). Throws `InvalidOperationException` w/ diagnostic on mismatch. Invoked first line of every entry point. Invariant #4 — stateless facade, no new singleton. Decision Log — Bind/Unbind stubs left untouched (TECH-189 fills bodies, keeps task surface narrow + honors master-plan T2.3.2 boundary); `MainThreadId` capture reused from Stage 2.1 `BlipBaker.AssertMainThread` (no duplicate capture); direct off-thread EditMode test deferred (Stage 2.4 PlayMode smoke gates happy path, Unity main-thread context implicit).
+    - Acceptance: facade file compiles, static methods present w/ correct signatures; `BlipBootstrap.MainThreadId` captured in `Awake`; `AssertMainThread` throws when invoked off main thread (EditMode test); `npm run unity:compile-check` green.
+    - Depends on: none

@@ -1,0 +1,27 @@
+id: TECH-325
+type: infrastructure / MCP tooling
+title: Test `backlog_record_validate` against fixtures (Stage 1.2 Phase 1)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-17)
+spec: (removed after closure)
+files:
+  - tools/mcp-ia-server/tests/tools/backlog-record-validate.test.ts
+notes: |
+  Shipped fixture coverage for `backlog_record_validate` MCP tool (TECH-324). 1 good-record fixture (G1) + 4 bad-record fixtures (B1 missing title, B2 bad id format, B3 invalid status enum, B4 non-empty `depends_on` w/ empty `depends_on_raw`). Assertions against exported rule-id constants (`E_MISSING_FIELD`, `E_BAD_ID_FORMAT`, `E_BAD_STATUS`, `E_EMPTY_DEPENDS_ON_RAW`) — rename = compile error, not snapshot drift. `node:test` + `node:assert/strict`, matches 19 sibling suites under `tests/tools/`. Closes Phase 1 of Stage 1.2; unblocks Phase 2 (reserve ids) + Phase 3 (list).
+acceptance: |
+  Test file passes w/ ≥4 bad-record fixtures + ≥1 good-record fixture; error text snapshot-stable; `npm run validate:all` green.
+depends_on: [TECH-324]
+depends_on_raw: "TECH-324 (validate tool must exist to test — hard gate)"
+related:
+  - TECH-323
+  - TECH-324
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-325** — Test `backlog_record_validate` against fixtures (Stage 1.2 Phase 1)
+    - Type: infrastructure / MCP tooling
+    - Files: `tools/mcp-ia-server/tests/tools/backlog-record-validate.test.ts`
+    - Notes: 1 good-record fixture + 4 bad-record fixtures assert against exported rule-id constants; `node:test` + `node:assert/strict`. Closes Phase 1 of Stage 1.2.
+    - Acceptance: ≥4 bad + ≥1 good fixture; error text snapshot-stable; `validate:all` green.
+    - Depends on: TECH-324 (validate tool — hard gate)
+    - Related: TECH-323, TECH-324

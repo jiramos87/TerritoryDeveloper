@@ -1,14 +1,23 @@
 /**
- * plan-parser.ts — Master-plan Markdown parser (TypeScript port of tools/progress-tracker/parse.mjs).
+ * plan-parser.ts — Master-plan Markdown parser (2-level Stage → Task).
  *
  * Pure function: master-plan *.md bytes → typed PlanData object.
  * No wall clock, no git, no filesystem I/O — caller provides raw Markdown string.
  *
- * tools/progress-tracker/parse.mjs is the authoritative reference implementation.
- * Keep logic in sync; this file owns the TypeScript types.
+ * Post lifecycle-refactor Stage 6: Step + Phase layers dropped. Master plans
+ * now emit `### Stage N — {title}` directly under `## {section}` headings.
  */
 
-import type { PlanData, TaskRow, TaskStatus, PhaseEntry, Stage, Step, PlanMetrics, StepChartBar, StepTaskCounts } from './plan-loader-types';
+import type {
+  PlanData,
+  TaskRow,
+  TaskStatus,
+  Stage,
+  HierarchyStatus,
+  PlanMetrics,
+  StageChartBar,
+  StageTaskCounts,
+} from './plan-loader-types';
 
 const TASK_STATUS_CANON: Record<string, TaskStatus> = {
   '_pending_': '_pending_',
@@ -74,14 +83,12 @@ function parseTaskTable(lines: string[]): TaskRow[] {
 
     const taskIdx = colMap['task'] ?? 0;
     const nameIdx = colMap['name'] ?? -1;
-    const phaseIdx = colMap['phase'] ?? (nameIdx >= 0 ? 2 : 1);
-    const issueIdx = colMap['issue'] ?? (nameIdx >= 0 ? 3 : 2);
-    const statusIdx = colMap['status'] ?? (nameIdx >= 0 ? 4 : 3);
-    const intentIdx = colMap['intent'] ?? (nameIdx >= 0 ? 5 : 4);
+    const issueIdx = colMap['issue'] ?? (nameIdx >= 0 ? 2 : 1);
+    const statusIdx = colMap['status'] ?? (nameIdx >= 0 ? 3 : 2);
+    const intentIdx = colMap['intent'] ?? (nameIdx >= 0 ? 4 : 3);
 
     const id = cells[taskIdx] ?? '';
     const name = nameIdx >= 0 ? (cells[nameIdx] ?? '') : '';
-    const phase = cells[phaseIdx] ?? '';
     const issueRaw = (cells[issueIdx] ?? '').replace(/\*\*/g, '').trim();
     const statusRaw = cells[statusIdx] ?? '';
     const intent = cells[intentIdx] ?? '';
@@ -91,7 +98,6 @@ function parseTaskTable(lines: string[]): TaskRow[] {
     tasks.push({
       id: id.replace(/\*\*/g, '').trim(),
       ...(name ? { name: name.trim() } : {}),
-      phase: phase.trim(),
       issue: issueRaw,
       status: normalizeTaskStatus(statusRaw),
       intent,
@@ -99,16 +105,6 @@ function parseTaskTable(lines: string[]): TaskRow[] {
   }
 
   return tasks;
-}
-
-function parsePhaseChecklist(lines: string[]): PhaseEntry[] {
-  const phases: PhaseEntry[] = [];
-  for (const line of lines) {
-    const m = line.match(/^\s*-\s*\[([ xX])\]\s+(.+)/);
-    if (!m) continue;
-    phases.push({ checked: m[1].toLowerCase() === 'x', label: m[2].trim() });
-  }
-  return phases;
 }
 
 function extractObjective(lines: string[]): string | undefined {
@@ -160,15 +156,11 @@ export function parseMasterPlan(markdown: string, filename = ''): PlanData {
 
   const siblingWarnings = extractSiblingWarnings(lines);
 
-  const steps: Step[] = [];
-  let currentStep: Step | null = null;
+  const stages: Stage[] = [];
   let currentStage: Stage | null = null;
-  let inStageSection = false;
   let stageLines: string[] = [];
-  let stepLines: string[] = [];
 
   function finalizeStage(stage: Stage, accLines: string[]): void {
-    stage.phases = parsePhaseChecklist(accLines);
     stage.tasks = parseTaskTable(accLines);
     stage.objective = extractObjective(accLines);
   }
@@ -177,93 +169,50 @@ export function parseMasterPlan(markdown: string, filename = ''): PlanData {
     const line = lines[i];
 
     if (/^##\s+/.test(line)) {
-      if (currentStage && stageLines.length) { finalizeStage(currentStage, stageLines); stageLines = []; }
-      if (currentStep) { steps.push(currentStep); currentStep = null; }
+      if (currentStage && stageLines.length) { finalizeStage(currentStage, stageLines); stages.push(currentStage); stageLines = []; }
       currentStage = null;
-      inStageSection = false;
       continue;
     }
 
-    const stepMatch = line.match(/^###\s+Step\s+(\S+)\s+—\s+(.+)/);
-    if (stepMatch) {
-      if (currentStage && stageLines.length) { finalizeStage(currentStage, stageLines); stageLines = []; }
-      if (currentStep) {
-        currentStep.objective = extractObjective(stepLines);
-        steps.push(currentStep);
-      }
-      currentStep = {
-        id: stepMatch[1].replace(/[^0-9]/g, '') || stepMatch[1],
-        title: stepMatch[2].trim(),
-        status: '' as Step['status'],
-        statusDetail: '',
-        stages: [],
-      };
-      currentStage = null;
-      stepLines = [];
-      inStageSection = false;
-      continue;
-    }
-
-    const stageMatch = line.match(/^####\s+Stage\s+([0-9.]+)\s+—\s+(.+)/);
+    const stageMatch = line.match(/^###\s+Stage\s+([0-9.]+)\s+—\s+(.+)/);
     if (stageMatch) {
-      if (currentStage && stageLines.length) finalizeStage(currentStage, stageLines);
+      if (currentStage && stageLines.length) { finalizeStage(currentStage, stageLines); stages.push(currentStage); }
       stageLines = [];
       currentStage = {
         id: stageMatch[1],
         title: stageMatch[2].trim(),
-        status: '' as Stage['status'],
+        status: '' as HierarchyStatus,
         statusDetail: '',
-        phases: [],
         tasks: [],
       };
-      if (currentStep) currentStep.stages.push(currentStage);
-      inStageSection = true;
       continue;
     }
 
-    if (currentStep && !inStageSection) {
-      stepLines.push(line);
-      const trimmed = line.trim();
-      if (trimmed.startsWith('**Status:**') || trimmed.match(/^\*?\*?Status:\*?\*?\s/)) {
-        const parsed = parseStatusLine(trimmed);
-        if (parsed && !currentStep.status) {
-          currentStep.status = parsed.status as Step['status'];
-          currentStep.statusDetail = parsed.detail;
-        }
-      }
-    }
-
-    if (currentStage && inStageSection) {
+    if (currentStage) {
       stageLines.push(line);
       const trimmed = line.trim();
       if (trimmed.startsWith('**Status:**') || trimmed.match(/^\*?\*?Status:\*?\*?\s/)) {
         const parsed = parseStatusLine(trimmed);
         if (parsed && !currentStage.status) {
-          currentStage.status = parsed.status as Stage['status'];
+          currentStage.status = parsed.status as HierarchyStatus;
           currentStage.statusDetail = parsed.detail;
         }
       }
     }
   }
 
-  if (currentStage && stageLines.length) finalizeStage(currentStage, stageLines);
-  if (currentStep) {
-    currentStep.objective = extractObjective(stepLines);
-    steps.push(currentStep);
-  }
+  if (currentStage && stageLines.length) { finalizeStage(currentStage, stageLines); stages.push(currentStage); }
 
   const allTasks: TaskRow[] = [];
-  for (const step of steps) {
-    for (const stage of step.stages) {
-      for (const task of stage.tasks) {
-        allTasks.push(task);
-      }
+  for (const stage of stages) {
+    for (const task of stage.tasks) {
+      allTasks.push(task);
     }
   }
 
-  deriveHierarchyStatus(steps);
+  deriveHierarchyStatus(stages);
 
-  return { title, filename, overallStatus, overallStatusDetail, siblingWarnings, steps, allTasks };
+  return { title, filename, overallStatus, overallStatusDetail, siblingWarnings, stages, allTasks };
 }
 
 // Task state considered "terminal done" for derivation purposes.
@@ -284,8 +233,8 @@ export function isTaskPending(s: TaskStatus): boolean {
 /**
  * Pre-compute dashboard metrics for a single plan.
  *
- * Returns completion counts, StatBar label, per-step chart breakdown, and
- * per-step done/total counts. Call in server components / loaders; pass result
+ * Returns completion counts, StatBar label, per-stage chart breakdown, and
+ * per-stage done/total counts. Call in server components / loaders; pass result
  * to render-only components as props.
  */
 export function computePlanMetrics(plan: PlanData): PlanMetrics {
@@ -293,30 +242,26 @@ export function computePlanMetrics(plan: PlanData): PlanMetrics {
   const completedCount = plan.allTasks.filter(t => isTaskDone(t.status)).length;
   const statBarLabel = `${completedCount} / ${totalCount} done`;
 
-  const chartData: StepChartBar[] = plan.steps.map(step => {
-    const stepTasks = plan.allTasks.filter(t => t.id.startsWith('T' + step.id + '.'));
-    return {
-      label:      step.title,
-      pending:    stepTasks.filter(t => isTaskPending(t.status)).length,
-      inProgress: stepTasks.filter(t => isTaskActive(t.status)).length,
-      done:       stepTasks.filter(t => isTaskDone(t.status)).length,
-    };
-  });
+  const chartData: StageChartBar[] = plan.stages.map(stage => ({
+    label:      stage.title,
+    pending:    stage.tasks.filter(t => isTaskPending(t.status)).length,
+    inProgress: stage.tasks.filter(t => isTaskActive(t.status)).length,
+    done:       stage.tasks.filter(t => isTaskDone(t.status)).length,
+  }));
 
-  const stepCounts: Record<string, StepTaskCounts> = {};
-  for (const step of plan.steps) {
-    const stepTasks = plan.allTasks.filter(t => t.id.startsWith('T' + step.id + '.'));
-    stepCounts[step.id] = {
-      done:  stepTasks.filter(t => isTaskDone(t.status)).length,
-      total: stepTasks.length,
+  const stageCounts: Record<string, StageTaskCounts> = {};
+  for (const stage of plan.stages) {
+    stageCounts[stage.id] = {
+      done:  stage.tasks.filter(t => isTaskDone(t.status)).length,
+      total: stage.tasks.length,
     };
   }
 
-  return { completedCount, totalCount, statBarLabel, chartData, stepCounts };
+  return { completedCount, totalCount, statBarLabel, chartData, stageCounts };
 }
 
 /**
- * Overwrite step/stage `status` with a value derived from task completion.
+ * Overwrite stage `status` with a value derived from task completion.
  *
  * Hand-written Status lines in master-plan markdown drift — stages whose tasks
  * are all archived still read "Draft" or old free-form prose. Dashboard status
@@ -328,38 +273,21 @@ export function computePlanMetrics(plan: PlanData): PlanMetrics {
  *   - all tasks pending → 'Draft'
  *
  * Stage with no tasks (skeleton): keep parsed status.
- *
- * Step rules (aggregate over stages): same tri-state over stage.status.
  */
-function deriveHierarchyStatus(steps: Step[]): void {
-  for (const step of steps) {
-    for (const stage of step.stages) {
-      if (!stage.tasks.length) continue;
-      const statuses = stage.tasks.map(t => t.status);
-      const allDone = statuses.every(isTaskDone);
-      const anyActive = statuses.some(isTaskActive);
-      const anyDone = statuses.some(isTaskDone);
-      const allPending = statuses.every(isTaskPending);
-      if (allDone) {
-        stage.status = 'Final';
-      } else if (anyActive || (anyDone && !allDone)) {
-        stage.status = 'In Progress';
-      } else if (allPending) {
-        stage.status = 'Draft';
-      }
-    }
-
-    if (!step.stages.length) continue;
-    const stageStatuses = step.stages.map(s => s.status);
-    const allStagesFinal = stageStatuses.every(s => s === 'Final');
-    const anyStageActive = stageStatuses.some(s => s === 'In Progress' || s === 'In Review' || s === 'Final');
-    const allStagesDraft = stageStatuses.every(s => s === 'Draft' || (s as string) === '');
-    if (allStagesFinal) {
-      step.status = 'Final';
-    } else if (anyStageActive) {
-      step.status = 'In Progress';
-    } else if (allStagesDraft) {
-      step.status = 'Draft';
+function deriveHierarchyStatus(stages: Stage[]): void {
+  for (const stage of stages) {
+    if (!stage.tasks.length) continue;
+    const statuses = stage.tasks.map(t => t.status);
+    const allDone = statuses.every(isTaskDone);
+    const anyActive = statuses.some(isTaskActive);
+    const anyDone = statuses.some(isTaskDone);
+    const allPending = statuses.every(isTaskPending);
+    if (allDone) {
+      stage.status = 'Final';
+    } else if (anyActive || (anyDone && !allDone)) {
+      stage.status = 'In Progress';
+    } else if (allPending) {
+      stage.status = 'Draft';
     }
   }
 }

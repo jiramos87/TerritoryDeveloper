@@ -22,7 +22,6 @@ parent_plan: ia/projects/backlog-yaml-mcp-alignment-master-plan.md
 task_key: T4.1.4
 step: 4
 stage: "4.1"
-phase: 2
 router_domain: Backlog / issues
 surfaces:
   - tools/mcp-ia-server/tests/tools/master-plan-next-pending.test.ts

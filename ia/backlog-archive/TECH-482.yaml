@@ -1,0 +1,36 @@
+id: TECH-482
+type: tech (repo hygiene / gitignore)
+title: "Gitignore + untrack Bury_*.json + mono_crash.* repo-root blobs (session-token-latency Theme 0 — E1)"
+priority: medium
+status: closed
+section: IA evolution lane
+spec: ""
+files:
+  - .gitignore
+  - Bury_20260307_131752.json
+  - mono_crash.137d23b7a4.0.json
+  - mono_crash.mem.67585.1.blob
+notes: |
+  Appended `Bury_*.json` + `mono_crash.*` to `.gitignore` (under "# Agent audit blobs — session-token-latency Theme 0"); `git rm --cached` 3 tracked matches at repo root (working tree retained). Shortens agent orientation `ls` by dozens of lines; zero runtime impact. FREEZE-safe standalone. Source: `docs/session-token-latency-audit-exploration.md` §E1 (spec removed after closure).
+acceptance: |
+  `.gitignore` contains `Bury_*.json` + `mono_crash.*`; `git ls-files | grep -E '^(Bury_|mono_crash)'` zero matches; working-tree retained; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: "none — standalone FREEZE-safe repo hygiene"
+related: []
+created: 2026-04-19
+closed: 2026-04-19
+router_domain: no_matching_domain (repo hygiene)
+surfaces:
+  - .gitignore
+  - repo root tracked blobs (Bury_*.json + mono_crash.*)
+mcp_slices: []
+skill_hints: []
+raw_markdown: |
+  - [x] **TECH-482** — Gitignore + untrack Bury_*.json + mono_crash.* repo-root blobs (session-token-latency Theme 0 — E1) (2026-04-19)
+    - Type: tech (repo hygiene / gitignore)
+    - Files: `.gitignore`, `Bury_20260307_131752.json`, `mono_crash.137d23b7a4.0.json`, `mono_crash.mem.67585.1.blob`
+    - Spec: (removed after closure)
+    - Notes: Appended `Bury_*.json` + `mono_crash.*` to `.gitignore`; `git rm --cached` 3 tracked matches (working tree retained). FREEZE-safe standalone. Source: `docs/session-token-latency-audit-exploration.md` §E1.
+    - Acceptance: gitignore patterns in; `git ls-files` zero matches; working tree retained; `validate:all` green.
+    - Depends on: none
+    - Related: —

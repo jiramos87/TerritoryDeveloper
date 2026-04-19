@@ -1,0 +1,28 @@
+id: TECH-246
+type: doc / glossary
+title: Glossary `Blip bootstrap` row update — visible-UI path + `SfxMutedKey` (Stage 4.2 Phase 2) (2026-04-16)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - ia/specs/glossary.md
+notes: |
+  **Blip bootstrap** row (line 208) definition extended — append "Boot-time: also reads `SfxMutedKey` (`PlayerPrefs.GetInt`) and clamps dB to −80 if muted, ahead of mixer apply. Visible-volume-UI path: `BlipVolumeController` (mounted on `OptionsPanel`) primes slider/toggle from `PlayerPrefs` on `OnEnable` and writes back on change." Spec-ref column unchanged (`ia/specs/audio-blip.md §5.1`, `§5.2` — bootstrap runtime sections only; settings-UI lifecycle lives in `blip-master-plan.md` Step 4 not authoritative spec). Index row (line 32) unchanged — term name stable. No new rows for `SfxMutedKey` / `BlipVolumeController` — impl-detail identifiers, `glossary_discover` returned no hits. Closes Stage 4.2 Exit bullet "`ia/specs/glossary.md` **Blip bootstrap** row updated with `SfxMutedKey` boot-time restore + `BlipVolumeController` visible-UI path".
+acceptance: |
+  **Blip bootstrap** row reflects visible-UI path + `SfxMutedKey` semantics; spec-ref + Index rows byte-identical; `npm run validate:all` exit 0 (dead-spec-refs + frontmatter + IA indexes).
+depends_on: 
+  - TECH-243
+  - TECH-244
+  - TECH-245
+depends_on_raw: "**TECH-243**, **TECH-244**, **TECH-245** (all archived — the three behaviors the extended glossary row describes)."
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-246** — Glossary `Blip bootstrap` row update — visible-UI path + `SfxMutedKey` (Stage 4.2 Phase 2) (2026-04-16)
+    - Type: doc / glossary
+    - Files: `ia/specs/glossary.md`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: **Blip bootstrap** row (line 208) definition extended — append "Boot-time: also reads `SfxMutedKey` (`PlayerPrefs.GetInt`) and clamps dB to −80 if muted, ahead of mixer apply. Visible-volume-UI path: `BlipVolumeController` (mounted on `OptionsPanel`) primes slider/toggle from `PlayerPrefs` on `OnEnable` and writes back on change." Spec-ref column unchanged (`ia/specs/audio-blip.md §5.1`, `§5.2` — bootstrap runtime sections only; settings-UI lifecycle lives in `blip-master-plan.md` Step 4 not authoritative spec). Index row (line 32) unchanged — term name stable. No new rows for `SfxMutedKey` / `BlipVolumeController` — impl-detail identifiers, `glossary_discover` returned no hits. Closes Stage 4.2 Exit bullet "`ia/specs/glossary.md` **Blip bootstrap** row updated with `SfxMutedKey` boot-time restore + `BlipVolumeController` visible-UI path".
+    - Acceptance: **Blip bootstrap** row reflects visible-UI path + `SfxMutedKey` semantics; spec-ref + Index rows byte-identical; `npm run validate:all` exit 0 (dead-spec-refs + frontmatter + IA indexes).
+    - Depends on: **TECH-243**, **TECH-244**, **TECH-245** (all archived — the three behaviors the extended glossary row describes).

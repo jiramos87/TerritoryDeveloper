@@ -1,0 +1,25 @@
+id: TECH-483
+type: tooling / hook fix
+title: "**Fix SessionStart banner memory-path string (audit E2)**"
+priority: medium
+status: open
+section: IA evolution lane
+spec: ia/projects/TECH-483-session-banner-memory-path.md
+files:
+  - tools/scripts/claude-hooks/session-start-prewarm.sh
+notes: |
+  SessionStart banner emit misleading memory-path literal — shows `memory: MEMORY.md + ~/.claude-personal/.../memory/` with bare ellipsis. Agent read banner verbatim, tries path, misses real per-project memory dir. Correct to literal project-slug path `~/.claude-personal/projects/-Users-javier-bacayo-studio-territory-developer/memory/MEMORY.md`. Audit item E2 from docs/session-token-latency-audit-exploration.md §E. FREEZE-safe (no master-plan authorship, no lifecycle-refactor surface).
+acceptance: |
+  session-start-prewarm.sh banner emits real expanded per-project memory path; fresh-session stdout matches actual on-disk path under ~/.claude-personal/projects/-Users-javier-bacayo-studio-territory-developer/memory/; no regression in other banner fields (branch / dirty / verify / bridge); validate:all green
+depends_on: []
+depends_on_raw: "none"
+related: []
+created: 2026-04-19
+raw_markdown: |
+  - [ ] **TECH-483** — **Fix SessionStart banner memory-path string (audit E2)**
+    - Type: tooling / hook fix
+    - Files: `tools/scripts/claude-hooks/session-start-prewarm.sh`
+    - Spec: `ia/projects/TECH-483-session-banner-memory-path.md`
+    - Notes: banner emit literal `memory: MEMORY.md + ~/.claude-personal/.../memory/` — bare ellipsis misleads agent path lookup. Correct to real per-project memory dir `~/.claude-personal/projects/-Users-javier-bacayo-studio-territory-developer/memory/MEMORY.md`. Audit item E2, `docs/session-token-latency-audit-exploration.md` §Theme E. FREEZE-safe; zero runtime C# / lifecycle-refactor surface touched.
+    - Acceptance: banner emit real expanded path; fresh-session stdout match on-disk path; other banner fields unchanged; `validate:all` green
+    - Depends on: none

@@ -8,6 +8,8 @@ reasoning_effort: high
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, tracker prose + disagreements appendix entries (human-consumed cold — may run 2–4 sentences). Anchor: `ia/rules/agent-output-caveman.md`.
 
+Progress emission: `/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
+
 # Mission
 
 Drive ONE row of `{TRACKER_SPEC}` (sibling to `{UMBRELLA_SPEC}`) through its next lifecycle cell (a)–(g). When (b) ✓ (exploration done): chain (c)→(d)→(e)→(f) autonomously via Agent tool calls without pausing for user. Human pause only for: (b) incomplete exploration → product-language interview; `⚠️` disagreement; `❓` equivalence gate; subagent failure/blocker. After (f) ✓: invoke `release-rollout-track`, emit next-row recommendation. Does NOT close issues (= `/closeout`). Does NOT author child master-plans directly.

@@ -1,0 +1,27 @@
+id: BUG-49
+type: bug (UX / preview)
+title: "Manual **street** drawing: preview builds the **road stroke** cell-by-cell (animated); should show full path at once"
+priority: medium
+status: open
+section: Medium Priority
+spec: ia/specs/isometric-geography-system.md` §14 (manual **streets** — preview behavior)
+files: 
+  - RoadManager.cs
+  - HandleRoadDrawing
+  - GridManager.cs
+notes: |
+  **Observed:** While drawing a **street**, **preview mode** visually **extends the road stroke one cell at a time**, like an animation, instead of updating the full proposed **road stroke** in one step. **Expected:** **No** step-by-step or staggered preview animation. The game should **compute the full valid road stroke** (same rules as commit / **road validation pipeline** / `TryPrepareRoadPlacementPlan` or equivalent) for the current **stroke**, **then** instantiate or refresh **preview** prefabs for that complete **road stroke** in a single update — or batch updates without visible per-cell delay. **Related:** street commit vs terrain refresh fixes in archive — keep preview/commit paths consistent.
+acceptance: |
+  **Street** preview shows the full computed **road stroke** in one visual update; no visible cell-by-cell animation during drag
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **BUG-49** — Manual **street** drawing: preview builds the **road stroke** cell-by-cell (animated); should show full path at once
+    - Type: bug (UX / preview)
+    - Files: `RoadManager.cs` (`HandleRoadDrawing`, preview placement / ghost or temp prefab updates per frame), `GridManager.cs` if road mode input drives incremental preview; any coroutine or per-tick preview extension of the **road stroke**
+    - Spec: `ia/specs/isometric-geography-system.md` §14 (manual **streets** — preview behavior)
+    - Notes: **Observed:** While drawing a **street**, **preview mode** visually **extends the road stroke one cell at a time**, like an animation, instead of updating the full proposed **road stroke** in one step. **Expected:** **No** step-by-step or staggered preview animation. The game should **compute the full valid road stroke** (same rules as commit / **road validation pipeline** / `TryPrepareRoadPlacementPlan` or equivalent) for the current **stroke**, **then** instantiate or refresh **preview** prefabs for that complete **road stroke** in a single update — or batch updates without visible per-cell delay. **Related:** street commit vs terrain refresh fixes in archive — keep preview/commit paths consistent.
+    - Acceptance: **Street** preview shows the full computed **road stroke** in one visual update; no visible cell-by-cell animation during drag
+    - Depends on: none

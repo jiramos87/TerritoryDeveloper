@@ -1,0 +1,27 @@
+id: TECH-346
+type: documentation
+title: Update `CLAUDE.md` §2 MCP-first ordering (Stage 1.3 Phase 2)
+priority: medium
+status: closed
+section: Backlog YAML ↔ MCP alignment program
+spec: ia/projects/TECH-346.md
+files: 
+  - CLAUDE.md
+notes: |
+  Edit `CLAUDE.md` §2 "MCP first" — insert `reserve_backlog_ids` + `backlog_record_validate` into the suggested order for issue-creation flows; `backlog_list` for structured list queries. Additive edits only — do NOT rewrite the full ordering block. Caveman prose. Stage 1.3 Phase 2 of `backlog-yaml-mcp-alignment-master-plan.md`.
+acceptance: |
+  §2 ordering names three new tools; additive only (existing order intact); `npm run validate:all` green.
+depends_on: 
+  - TECH-345
+depends_on_raw: TECH-345 (catalog should document tools before CLAUDE.md §2 points at them — soft sequencing)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-346** — Update `CLAUDE.md` §2 MCP-first ordering (Stage 1.3 Phase 2)
+    - Type: documentation
+    - Files: `CLAUDE.md`
+    - Spec: `ia/projects/TECH-346.md`
+    - Notes: Additive edits only — insert `reserve_backlog_ids` + `backlog_record_validate` into issue-creation ordering; `backlog_list` for list queries. Do NOT rewrite §2.
+    - Acceptance: three tools named in §2; additive only; `validate:all` green.
+    - Depends on: TECH-345
+    - Related: TECH-343, TECH-345

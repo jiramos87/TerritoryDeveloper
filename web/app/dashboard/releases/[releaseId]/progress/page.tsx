@@ -3,7 +3,7 @@
 import { notFound } from 'next/navigation';
 import { resolveRelease } from '@/lib/releases';
 import { getReleasePlans } from '@/lib/releases/resolve';
-import { deriveDefaultExpandedStepId } from '@/lib/releases/default-expand';
+import { deriveDefaultExpandedStageId } from '@/lib/releases/default-expand';
 import { buildPlanTree } from '@/lib/plan-tree';
 import { loadAllPlans } from '@/lib/plan-loader';
 import { computePlanMetrics } from '@/lib/plan-parser';
@@ -36,7 +36,7 @@ export default async function ProgressPage({
       {plans.map((plan) => {
         const metrics = computePlanMetrics(plan);
         const tree = buildPlanTree(plan, metrics);
-        const defaultId = deriveDefaultExpandedStepId(plan, metrics);
+        const defaultId = deriveDefaultExpandedStageId(plan, metrics);
         return (
           <section key={plan.filename} className="mb-10">
             <h2 className="text-lg font-semibold mb-4">{plan.title}</h2>

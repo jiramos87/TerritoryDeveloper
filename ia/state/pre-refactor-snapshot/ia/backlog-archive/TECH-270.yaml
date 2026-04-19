@@ -1,0 +1,27 @@
+id: TECH-270
+type: audio / infrastructure
+title: "`BlipDelayPool` + `BlipCatalog` wiring + `BlipVoiceState` write-heads (Stage 5.2 Phase 1) (2026-04-16)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipDelayPool.cs
+  - Assets/Scripts/Audio/Blip/BlipCatalog.cs
+  - Assets/Scripts/Audio/Blip/BlipVoiceState.cs
+notes: |
+  New `internal sealed class BlipDelayPool` — `float[] Lease(int sampleRate, float maxDelayMs)` sized to `(int)Math.Ceiling(maxDelayMs/1000f*sampleRate)+1` via `ArrayPool<float>.Shared.Rent`; `void Return(float[])` w/ `clearArray: true` (prevents stale-sample leak). `BlipCatalog` gains `private BlipDelayPool _delayPool = new BlipDelayPool()` (plain-ref field-init; invariant #4 compliant — no new singleton). `BlipVoiceState` appends 4 blittable ints `delayWritePos_0..3` (circular write-head per FX slot). Zero kernel logic — foundation for Stage 5.2 Phase 2/3 comb/allpass/chorus/flanger kernels + Render overload. Decision Log: plain `internal sealed class` (not MonoBehaviour) — data-only infra, owner Catalog already MB; `clearArray: true` on Return prevents stale-sample bleed across leases; buffer len `+1` guard avoids wrap-boundary click transient; pool owned by Catalog (not Baker) — single pool survives bake cycles, Catalog `DontDestroyOnLoad` lifetime matches Blip bootstrap.
+acceptance: |
+  `BlipDelayPool` class present w/ `Lease`/`Return`; `BlipCatalog._delayPool` field initialized; 4 write-head ints added; `BlipVoiceState` stays blittable + `default = 0`; `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+depends_on: []
+depends_on_raw: none (Stage 5.1 closed).
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-270** — `BlipDelayPool` + `BlipCatalog` wiring + `BlipVoiceState` write-heads (Stage 5.2 Phase 1) (2026-04-16)
+    - Type: audio / infrastructure
+    - Files: `Assets/Scripts/Audio/Blip/BlipDelayPool.cs` (new), `Assets/Scripts/Audio/Blip/BlipCatalog.cs`, `Assets/Scripts/Audio/Blip/BlipVoiceState.cs`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: New `internal sealed class BlipDelayPool` — `float[] Lease(int sampleRate, float maxDelayMs)` sized to `(int)Math.Ceiling(maxDelayMs/1000f*sampleRate)+1` via `ArrayPool<float>.Shared.Rent`; `void Return(float[])` w/ `clearArray: true` (prevents stale-sample leak). `BlipCatalog` gains `private BlipDelayPool _delayPool = new BlipDelayPool()` (plain-ref field-init; invariant #4 compliant — no new singleton). `BlipVoiceState` appends 4 blittable ints `delayWritePos_0..3` (circular write-head per FX slot). Zero kernel logic — foundation for Stage 5.2 Phase 2/3 comb/allpass/chorus/flanger kernels + Render overload. Decision Log: plain `internal sealed class` (not MonoBehaviour) — data-only infra, owner Catalog already MB; `clearArray: true` on Return prevents stale-sample bleed across leases; buffer len `+1` guard avoids wrap-boundary click transient; pool owned by Catalog (not Baker) — single pool survives bake cycles, Catalog `DontDestroyOnLoad` lifetime matches Blip bootstrap.
+    - Acceptance: `BlipDelayPool` class present w/ `Lease`/`Return`; `BlipCatalog._delayPool` field initialized; 4 write-head ints added; `BlipVoiceState` stays blittable + `default = 0`; `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+    - Depends on: none (Stage 5.1 closed).

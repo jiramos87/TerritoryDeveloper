@@ -1,0 +1,22 @@
+id: FEAT-14
+type: feature (new system)
+title: Vehicle traffic system / traffic animations
+priority: low
+status: open
+section: Low Priority
+spec: ""
+files: 
+  - RoadManager.cs
+  - GridManager.cs
+notes: |
+  Vehicles circulating on **streets** and **interstate**.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **FEAT-14** — Vehicle traffic system / traffic animations
+    - Type: feature (new system)
+    - Files: new manager + `RoadManager.cs`, `GridManager.cs`
+    - Notes: Vehicles circulating on **streets** and **interstate**.

@@ -1,0 +1,28 @@
+id: TECH-243
+type: audio settings
+title: "`BlipVolumeController` Awake mixer cache + OnEnable prime (Stage 4.2 Phase 1) (2026-04-16)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipVolumeController.cs
+  - Assets/Scripts/Managers/GameManagers/MainMenuController.cs
+notes: |
+  Filled `BlipVolumeController.Awake` — caches `_mixer = BlipBootstrap.Instance?.BlipMixer`; null-guard logs warning + `enabled = false` + early `return` (invariant #3 one-time lookup). Added `OnEnable` override — reads `BlipBootstrap.SfxVolumeDbKey` via `PlayerPrefs.GetFloat(..., 0f)`, converts dB → linear (`Mathf.Pow(10f, db/20f)` clamped `0..1`, floor 0 at `db ≤ -79f`), calls `_sfxSlider.SetValueWithoutNotify(linear)`; reads `BlipBootstrap.SfxMutedKey` via `PlayerPrefs.GetInt(..., 0)`, calls `_sfxToggle.SetValueWithoutNotify(muted)` — `SetValueWithoutNotify` blocks callback loop during prime. Removed `public void OnPanelOpen() { }` stub from `BlipVolumeController.cs`; removed matching `_volumeController?.OnPanelOpen();` call from `MainMenuController.OnOptionsClicked` (Unity `OnEnable` fires on `SetActive(true)` — redundant hook). Cross-phase compile dep: TECH-245 `SfxMutedKey` constant landed same-commit or ahead per Decision Log row 2 to avoid `CS0117`.
+acceptance: |
+  `Awake` mixer cache present w/ null-guard; `OnEnable` primes slider (linear) + toggle (muted) from `PlayerPrefs`; `OnPanelOpen` stub + call site deleted; `npm run unity:compile-check` green.
+depends_on: 
+  - TECH-235
+  - TECH-238
+depends_on_raw: "**TECH-235** (archived), **TECH-238** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-243** — `BlipVolumeController` Awake mixer cache + OnEnable prime (Stage 4.2 Phase 1) (2026-04-16)
+    - Type: audio settings
+    - Files: `Assets/Scripts/Audio/Blip/BlipVolumeController.cs`, `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: Filled `BlipVolumeController.Awake` — caches `_mixer = BlipBootstrap.Instance?.BlipMixer`; null-guard logs warning + `enabled = false` + early `return` (invariant #3 one-time lookup). Added `OnEnable` override — reads `BlipBootstrap.SfxVolumeDbKey` via `PlayerPrefs.GetFloat(..., 0f)`, converts dB → linear (`Mathf.Pow(10f, db/20f)` clamped `0..1`, floor 0 at `db ≤ -79f`), calls `_sfxSlider.SetValueWithoutNotify(linear)`; reads `BlipBootstrap.SfxMutedKey` via `PlayerPrefs.GetInt(..., 0)`, calls `_sfxToggle.SetValueWithoutNotify(muted)` — `SetValueWithoutNotify` blocks callback loop during prime. Removed `public void OnPanelOpen() { }` stub from `BlipVolumeController.cs`; removed matching `_volumeController?.OnPanelOpen();` call from `MainMenuController.OnOptionsClicked` (Unity `OnEnable` fires on `SetActive(true)` — redundant hook). Cross-phase compile dep: TECH-245 `SfxMutedKey` constant landed same-commit or ahead per Decision Log row 2 to avoid `CS0117`.
+    - Acceptance: `Awake` mixer cache present w/ null-guard; `OnEnable` primes slider (linear) + toggle (muted) from `PlayerPrefs`; `OnPanelOpen` stub + call site deleted; `npm run unity:compile-check` green.
+    - Depends on: **TECH-235** (archived), **TECH-238** (archived)

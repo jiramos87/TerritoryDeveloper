@@ -1,0 +1,26 @@
+id: TECH-244
+type: audio settings
+title: "`OnSliderChanged` + `OnToggleChanged` bodies (Stage 4.2 Phase 1) (2026-04-16)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipVolumeController.cs
+notes: |
+  Filled `BlipVolumeController.OnSliderChanged(float v)` — `db = v > 0.0001f ? 20f * Mathf.Log10(v) : -80f`; `PlayerPrefs.SetFloat(BlipBootstrap.SfxVolumeDbKey, db)`; guarded `_mixer.SetFloat(BlipBootstrap.SfxVolumeParam, db)` only when `!_sfxToggle.isOn && _mixer != null` (mute dominates). Filled `OnToggleChanged(bool mute)` — `PlayerPrefs.SetInt(BlipBootstrap.SfxMutedKey, mute ? 1 : 0)`; `_mixer == null` early-return guard; mute → `_mixer.SetFloat(SfxVolumeParam, -80f)`; unmute → re-read `PlayerPrefs.GetFloat(SfxVolumeDbKey, 0f)` + apply. `0.0001f` threshold guards `Log10(0)` singularity. Single-source-of-truth on `PlayerPrefs` (no cached `_lastDb` field — drift-safe). Consumes `BlipBootstrap.SfxMutedKey` constant from sibling TECH-245 (landed same commit / ahead to avoid `CS0117`).
+acceptance: |
+  slider callback applies `20·log10` w/ `-80` floor + writes `SfxVolumeDbKey` + guards mixer write on mute/null; toggle callback writes `SfxMutedKey` + clamps `-80f` on mute + restores stored dB on unmute + null-guards `_mixer`; `npm run unity:compile-check` exit 0; `npm run validate:all` exit 0.
+depends_on: 
+  - TECH-243
+depends_on_raw: "**TECH-243** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-244** — `OnSliderChanged` + `OnToggleChanged` bodies (Stage 4.2 Phase 1) (2026-04-16)
+    - Type: audio settings
+    - Files: `Assets/Scripts/Audio/Blip/BlipVolumeController.cs`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: Filled `BlipVolumeController.OnSliderChanged(float v)` — `db = v > 0.0001f ? 20f * Mathf.Log10(v) : -80f`; `PlayerPrefs.SetFloat(BlipBootstrap.SfxVolumeDbKey, db)`; guarded `_mixer.SetFloat(BlipBootstrap.SfxVolumeParam, db)` only when `!_sfxToggle.isOn && _mixer != null` (mute dominates). Filled `OnToggleChanged(bool mute)` — `PlayerPrefs.SetInt(BlipBootstrap.SfxMutedKey, mute ? 1 : 0)`; `_mixer == null` early-return guard; mute → `_mixer.SetFloat(SfxVolumeParam, -80f)`; unmute → re-read `PlayerPrefs.GetFloat(SfxVolumeDbKey, 0f)` + apply. `0.0001f` threshold guards `Log10(0)` singularity. Single-source-of-truth on `PlayerPrefs` (no cached `_lastDb` field — drift-safe). Consumes `BlipBootstrap.SfxMutedKey` constant from sibling TECH-245 (landed same commit / ahead to avoid `CS0117`).
+    - Acceptance: slider callback applies `20·log10` w/ `-80` floor + writes `SfxVolumeDbKey` + guards mixer write on mute/null; toggle callback writes `SfxMutedKey` + clamps `-80f` on mute + restores stored dB on unmute + null-guards `_mixer`; `npm run unity:compile-check` exit 0; `npm run validate:all` exit 0.
+    - Depends on: **TECH-243** (archived)

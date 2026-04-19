@@ -1,0 +1,27 @@
+id: TECH-237
+type: audio / UI wiring
+title: Instantiate `BlipVolumeController` + `Bind` + `InitListeners` in `CreateOptionsPanel` (Stage 4.1 Phase 2) (2026-04-16)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to journal; Lessons empty; full prose in git history only)
+files: 
+  - Assets/Scripts/Managers/GameManagers/MainMenuController.cs
+notes: |
+  `CreateOptionsPanel` lines 393–394 placeholder discards `_ = sfxSlider; _ = sfxToggle;` replaced with `var controller = panel.AddComponent<BlipVolumeController>(); controller.Bind(sfxSlider, sfxToggle); controller.InitListeners(); _volumeController = controller;`. Added `private BlipVolumeController _volumeController;` field after `optionsBackButton` decl (line 34) — runtime-only, no `[SerializeField]`. Controller mounts on `OptionsPanel` GameObject (invariant #4 — no new singletons). Call order load-bearing: `AddComponent` → `Bind` → `InitListeners` → field-assign.
+acceptance: |
+  `_volumeController` field present; chain wired before `SetActive(false)`; back button + `SetActive(false)` unchanged; `npm run unity:compile-check` green; `npm run validate:all` green.
+depends_on: 
+  - TECH-235
+  - TECH-236
+depends_on_raw: "**TECH-235** (archived), **TECH-236** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-237** — Instantiate `BlipVolumeController` + `Bind` + `InitListeners` in `CreateOptionsPanel` (Stage 4.1 Phase 2) (2026-04-16)
+    - Type: audio / UI wiring
+    - Files: `Assets/Scripts/Managers/GameManagers/MainMenuController.cs`
+    - Spec: (removed at closeout — Decision Log persisted to journal; Lessons empty; full prose in git history only)
+    - Notes: `CreateOptionsPanel` lines 393–394 placeholder discards `_ = sfxSlider; _ = sfxToggle;` replaced with `var controller = panel.AddComponent<BlipVolumeController>(); controller.Bind(sfxSlider, sfxToggle); controller.InitListeners(); _volumeController = controller;`. Added `private BlipVolumeController _volumeController;` field after `optionsBackButton` decl (line 34) — runtime-only, no `[SerializeField]`. Controller mounts on `OptionsPanel` GameObject (invariant #4 — no new singletons). Call order load-bearing: `AddComponent` → `Bind` → `InitListeners` → field-assign.
+    - Acceptance: `_volumeController` field present; chain wired before `SetActive(false)`; back button + `SetActive(false)` unchanged; `npm run unity:compile-check` green; `npm run validate:all` green.
+    - Depends on: **TECH-235** (archived), **TECH-236** (archived)

@@ -1,0 +1,27 @@
+id: TECH-173
+type: infrastructure / audio runtime
+title: "`BlipPlayer` pool construction (Stage 2.2 Phase 3) (2026-04-15)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-15)
+spec: (removed at closeout — journal persist `ok`, both sections empty)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipPlayer.cs
+  - Assets/Scripts/Audio/Blip/BlipEngine.cs
+notes: |
+  New `BlipPlayer : MonoBehaviour` w/ `[SerializeField] private int poolSize = 16`. `Awake` spawns 16 child GameObjects (`BlipVoice_0..BlipVoice_15`) each carrying `AudioSource` (`playOnAwake = false`, `loop = false`). Holds `AudioSource[] _pool` + `int _cursor = 0`. Calls `BlipEngine.Bind(this)` at `Awake` end; `OnDestroy` → `Unbind(this)`. Added `Bind(BlipPlayer)` / `Unbind(BlipPlayer)` no-op stubs on `BlipEngine` (body fills Stage 2.3 T2.3.2). Placed as child of `BlipBootstrap` prefab. Invariant #3 + #4 satisfied. Decision Log — pool size as `[SerializeField]` not const (authoring knob); stubs land here (T2.2.2 only added Catalog pair); `OnDestroy` pairs `Bind`/`Unbind` mirrors Catalog contract.
+acceptance: |
+  16 child GameObjects spawn w/ configured `AudioSource`; `_pool` populated + `_cursor = 0`; `Bind` stub called; `unity:compile-check` + `validate:all` green.
+depends_on: 
+  - TECH-170
+depends_on_raw: "**TECH-170** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-173** — `BlipPlayer` pool construction (Stage 2.2 Phase 3) (2026-04-15)
+    - Type: infrastructure / audio runtime
+    - Files: `Assets/Scripts/Audio/Blip/BlipPlayer.cs`, `Assets/Scripts/Audio/Blip/BlipEngine.cs`
+    - Spec: (removed at closeout — journal persist `ok`, both sections empty)
+    - Notes: New `BlipPlayer : MonoBehaviour` w/ `[SerializeField] private int poolSize = 16`. `Awake` spawns 16 child GameObjects (`BlipVoice_0..BlipVoice_15`) each carrying `AudioSource` (`playOnAwake = false`, `loop = false`). Holds `AudioSource[] _pool` + `int _cursor = 0`. Calls `BlipEngine.Bind(this)` at `Awake` end; `OnDestroy` → `Unbind(this)`. Added `Bind(BlipPlayer)` / `Unbind(BlipPlayer)` no-op stubs on `BlipEngine` (body fills Stage 2.3 T2.3.2). Placed as child of `BlipBootstrap` prefab. Invariant #3 + #4 satisfied. Decision Log — pool size as `[SerializeField]` not const (authoring knob); stubs land here (T2.2.2 only added Catalog pair); `OnDestroy` pairs `Bind`/`Unbind` mirrors Catalog contract.
+    - Acceptance: 16 child GameObjects spawn w/ configured `AudioSource`; `_pool` populated + `_cursor = 0`; `Bind` stub called; `unity:compile-check` + `validate:all` green.
+    - Depends on: **TECH-170** (archived)

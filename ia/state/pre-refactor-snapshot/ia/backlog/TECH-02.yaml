@@ -1,0 +1,29 @@
+id: TECH-02
+type: refactor
+title: Change public fields to `[SerializeField] private` in managers
+priority: medium
+status: open
+section: Code Health (technical debt)
+spec: ia/projects/TECH-02.md
+files: 
+  - ZoneManager.cs
+  - RoadManager.cs
+  - GridManager.cs
+  - CityStats.cs
+  - AutoZoningManager.cs
+  - AutoRoadBuilder.cs
+  - UIManager.cs
+  - WaterManager.cs
+notes: |
+  Dependencies and prefabs exposed as `public` allow accidental access from any class. Use `[SerializeField] private` to encapsulate.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-02** — Change public fields to `[SerializeField] private` in managers
+    - Type: refactor
+    - Files: `ZoneManager.cs`, `RoadManager.cs`, `GridManager.cs`, `CityStats.cs`, `AutoZoningManager.cs`, `AutoRoadBuilder.cs`, `UIManager.cs`, `WaterManager.cs`
+    - Spec: `ia/projects/TECH-02.md`
+    - Notes: Dependencies and prefabs exposed as `public` allow accidental access from any class. Use `[SerializeField] private` to encapsulate.

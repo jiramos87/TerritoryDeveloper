@@ -1,0 +1,28 @@
+id: TECH-298
+type: audit / decision
+title: Grep-audit `proposed_solution` consumers (Stage 1.1 Phase 2)
+priority: high
+status: closed
+completed: 2026-04-17
+section: Recent archive
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; audit-only issue; full prose in git history only)
+files:
+  - tools/mcp-ia-server/src/parser/backlog-parser.ts
+  - tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts
+notes: |
+  Audit: 4 hits in `backlog-parser.ts` lines 41, 140, 151, 163 — all producer-only. Zero downstream readers across tools/, ia/backlog*/, tests, migrate script. Decision locked Option A (drop field) — see Decision Log in `ia_project_spec_journal` (TECH-298). Unblocks TECH-299 execution scope = remove 4 parser lines + `"proposed solution"` header remap; no yaml schema change.
+acceptance: |
+  Consumer list enumerated; decision (Option A) + rationale recorded; TECH-299 unblocked; no code change.
+depends_on: []
+depends_on_raw: none
+related:
+  - TECH-299
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-298** — Grep-audit `proposed_solution` consumers (Stage 1.1 Phase 2) (2026-04-17)
+    - Type: audit / decision
+    - Files: `tools/mcp-ia-server/src/parser/backlog-parser.ts`, `tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; audit-only issue; full prose in git history only)
+    - Notes: Audit confirmed 4 producer-only hits in `backlog-parser.ts` (lines 41, 140, 151, 163); zero downstream readers. Decision locked Option A (drop field). Unblocks TECH-299 execution scope = remove 4 parser lines + `"proposed solution"` header remap; no yaml schema change.
+    - Acceptance: Consumer list enumerated; decision + rationale recorded; TECH-299 unblocked; no code change.
+    - Related: TECH-299

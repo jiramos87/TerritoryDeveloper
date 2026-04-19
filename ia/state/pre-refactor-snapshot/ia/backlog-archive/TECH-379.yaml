@@ -1,0 +1,28 @@
+id: TECH-379
+type: tech (helper service skeleton)
+title: "`TreasuryFloorClampService` skeleton (Stage 1.2 Phase 1)"
+priority: high
+status: open
+section: High Priority
+spec: ia/projects/TECH-379.md
+files:
+  - Assets/Scripts/Managers/GameManagers/TreasuryFloorClampService.cs
+notes: |
+  New MonoBehaviour at `Assets/Scripts/Managers/GameManagers/TreasuryFloorClampService.cs` per invariant #6 helper carve-out. `[SerializeField] private EconomyManager economy;` with `FindObjectOfType<EconomyManager>()` fallback in `Awake` (guardrail #1). Public API: `CanAfford(int) → bool`, `TrySpend(int, string) → bool`, `CurrentBalance` property reading `economy.currentMoney`. `TrySpend` checks `amount <= currentMoney` BEFORE mutation; returns false + emits `GameNotificationManager` event on failure. No callers yet — skeleton only.
+acceptance: |
+  new file compiles; `TrySpend(amount > balance)` returns false without mutation; `TrySpend(amount <= balance)` subtracts + returns true; `CurrentBalance` reflects `economy.currentMoney`; `unity:compile-check` green
+depends_on:
+  - TECH-283
+depends_on_raw: "**TECH-283**"
+related:
+  - TECH-380
+  - TECH-381
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-379** — `TreasuryFloorClampService` skeleton (Stage 1.2 Phase 1)
+    - Type: tech (helper service skeleton)
+    - Files: `Assets/Scripts/Managers/GameManagers/TreasuryFloorClampService.cs` *(new)*
+    - Spec: `ia/projects/TECH-379.md`
+    - Notes: New MonoBehaviour at `Assets/Scripts/Managers/GameManagers/TreasuryFloorClampService.cs` per invariant #6 helper carve-out. `[SerializeField] private EconomyManager economy;` with `FindObjectOfType<EconomyManager>()` fallback in `Awake` (guardrail #1). Public API: `CanAfford(int) → bool`, `TrySpend(int, string) → bool`, `CurrentBalance` property reading `economy.currentMoney`. `TrySpend` checks `amount <= currentMoney` BEFORE mutation; returns false + emits `GameNotificationManager` event on failure. No callers yet — skeleton only.
+    - Acceptance: new file compiles; `TrySpend(amount > balance)` returns false without mutation; `TrySpend(amount <= balance)` subtracts + returns true; `CurrentBalance` reflects `economy.currentMoney`; `unity:compile-check` green
+    - Depends on: **TECH-283**

@@ -1,0 +1,25 @@
+id: TECH-447
+type: tech (IA infrastructure / lifecycle tooling)
+title: Update orchestrator-vs-spec rule — drop Phase rows, rewrite Step/Stage/Phase prose (Stage 1.2 Phase 2)
+priority: medium
+status: closed
+section: IA evolution lane
+spec: ""
+files:
+  - ia/rules/orchestrator-vs-spec.md
+notes: |
+  Rewrote `ia/rules/orchestrator-vs-spec.md` for 2-level Stage/Task hierarchy. Status flip matrix collapsed from R1–R7 to R1+R2+R5+R6 (Phase-flip rows R3 phase + skeleton-flip R7 dropped — R3 stage rollup re-attributed to project-stage-close). Status enum simplified to `Draft | In Review | In Progress — Stage N.M / TECH-XX | Final` (Skeleton + Planned removed). Guards section refreshed: `closeout-apply` replaces `project-spec-close`; `spec-enricher` replaces `project-spec-kickoff`; `spec-implementer` Stage navigation prose updated.
+acceptance: |
+  R1–R7 matrix Phase-flip rows absent; R2 + R5 + R6 retained; Step/Stage/Phase prose rewritten Stage/Task; orchestrator-vs-spec distinction prose consistent w/ TECH-446 hierarchy rewrite; IA-only validators green.
+depends_on:
+  - TECH-446
+depends_on_raw: TECH-446 (project-hierarchy rule rewritten first so this rule can reference correct hierarchy shape).
+related:
+  - TECH-444
+  - TECH-445
+  - TECH-448
+  - TECH-449
+created: 2026-04-19
+closed: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T1.2.4

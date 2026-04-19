@@ -1,0 +1,26 @@
+id: TECH-235
+type: audio / UI
+title: "`BlipVolumeController` stub + `BlipBootstrap.BlipMixer` accessor (Stage 4.1 Phase 1) (2026-04-16)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipVolumeController.cs
+  - Assets/Scripts/Audio/Blip/BlipBootstrap.cs
+notes: |
+  New file `BlipVolumeController.cs` — `public sealed class : MonoBehaviour` w/ `Slider _sfxSlider` + `Toggle _sfxToggle` + `AudioMixer _mixer` fields; `Bind(Slider, Toggle)` assigns refs; `InitListeners()` wires `onValueChanged` → empty stubs `OnSliderChanged(float)` / `OnToggleChanged(bool)` + stub `OnPanelOpen()`. `BlipBootstrap.cs` — added `public AudioMixer BlipMixer => blipMixer;` after `SfxVolumeDbDefault` (line ~34). Stub scaffolding — Stage 4.2 fills bodies. Zero runtime behavior.
+acceptance: |
+  `BlipVolumeController.cs` compiles w/ fields + stubs; `BlipMixer` accessor returns serialized ref; `npm run unity:compile-check` green; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-235** — `BlipVolumeController` stub + `BlipBootstrap.BlipMixer` accessor (Stage 4.1 Phase 1) (2026-04-16)
+    - Type: audio / UI
+    - Files: `Assets/Scripts/Audio/Blip/BlipVolumeController.cs`, `Assets/Scripts/Audio/Blip/BlipBootstrap.cs`
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: New file `BlipVolumeController.cs` — `public sealed class : MonoBehaviour` w/ `Slider _sfxSlider` + `Toggle _sfxToggle` + `AudioMixer _mixer` fields; `Bind(Slider, Toggle)` assigns refs; `InitListeners()` wires `onValueChanged` → empty stubs `OnSliderChanged(float)` / `OnToggleChanged(bool)` + stub `OnPanelOpen()`. `BlipBootstrap.cs` — added `public AudioMixer BlipMixer => blipMixer;` after `SfxVolumeDbDefault` (line ~34). Stub scaffolding — Stage 4.2 fills bodies. Zero runtime behavior.
+    - Acceptance: `BlipVolumeController.cs` compiles w/ fields + stubs; `BlipMixer` accessor returns serialized ref; `npm run unity:compile-check` green; `npm run validate:all` green.
+    - Depends on: none

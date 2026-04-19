@@ -10,6 +10,13 @@ description: >
   and Depends on / Related with verified ids (territory-ia MCP + optional web_search). Triggers:
   "/project-new", "new backlog issue", "create TECH-xx from prompt", "bootstrap project spec",
   "add issue to backlog from description".
+phases:
+  - "Context load"
+  - "Backlog dep check"
+  - "Spec outline"
+  - "Reserve id"
+  - "Write yaml + spec"
+  - "Materialize backlog"
 ---
 
 # New backlog issue and project spec bootstrap
@@ -19,6 +26,10 @@ No MCP calls from skill body. Follow **Tool recipe** below before editing BACKLO
 **vs kickoff:** kickoff starts from existing spec. This skill creates backlog row + spec stub from user prompt. After stub → [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md) → [`project-spec-implement`](../project-spec-implement/SKILL.md) → [`project-spec-close`](../project-spec-close/SKILL.md).
 
 **Related:** [`project-implementation-validation`](../project-implementation-validation/SKILL.md) · [`BACKLOG.md`](../../../BACKLOG.md) · [`ia/skills/README.md`](../README.md).
+
+## Stage MCP bundle contract
+
+Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once; returned payload `{glossary_anchors, router_domains, spec_sections, invariants}` kept in Stage scope. All Sonnet pair-tail invocations within the Stage read from that payload — no re-query of `glossary_discover`, `glossary_lookup`, `router_for_task`, `spec_sections`, or `invariants_summary` inside a Stage. The 5-tool recipe (`glossary_discover → glossary_lookup → router_for_task → spec_sections → invariants_summary`) is encapsulated entirely in `domain-context-load`; callers never inline it.
 
 ## Seed prompt (parameterize)
 
@@ -83,47 +94,6 @@ Only when prompt ambiguous/cross-cutting or user requests exploration context. `
 5. **Project spec** — Copy [`project-spec-template.md`](../../templates/project-spec-template.md) → `ia/projects/{ISSUE_ID}.md`. Fill header, Summary, Goals, stub Implementation Plan, Open Questions per [`PROJECT-SPEC-STRUCTURE.md`](../../projects/PROJECT-SPEC-STRUCTURE.md).
 6. **Validate** — `npm run validate:dead-project-specs`.
 7. **Next** — Offer [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md) to refine before implementation.
-
-**Step 1 — Friction-condition check**
-
-Evaluate:
-
-```
-friction_fires = (guardrail_hits.length > 0) OR (phase_deviations.length > 0) OR (missing_inputs.length > 0)
-```
-
-Clean-run rule: if all conditions are false → skip Steps 2–3; no-op. §Changelog untouched.
-
-**Step 2 — Construct `skill_self_report` JSON**
-
-Build JSON per §Schema. Set `skill: project-new`, `run_date: {YYYY-MM-DD}` (today), `schema_version: 2026-04-18` (date of this emitter stanza template). Populate `friction_types[]`, `guardrail_hits[]`, `phase_deviations[]`, `missing_inputs[]`, `severity` from phase execution data.
-
-**Step 3 — Append §Changelog entry**
-
-Append to `## Changelog` section of `ia/skills/project-new/SKILL.md`:
-
-```markdown
-### {YYYY-MM-DD} — self-report
-
-**source:** self-report
-
-**schema_version:** 2026-04-18
-
-```json
-{
-  "skill": "project-new",
-  "run_date": "{YYYY-MM-DD}",
-  "schema_version": "2026-04-18",
-  "friction_types": [],
-  "guardrail_hits": [],
-  "phase_deviations": [],
-  "missing_inputs": [],
-  "severity": "low"
-}
-```
-
----
-```
 
 ## Follow-up
 

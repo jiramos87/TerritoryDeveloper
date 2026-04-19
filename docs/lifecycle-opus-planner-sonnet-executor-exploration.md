@@ -432,3 +432,582 @@ Plan-subagent review (simulated inline — dedicated `Plan` subagent unavailable
 - **Model:** claude-opus-4-7
 - **Approach selected:** B — Full hierarchy collapse + cognitive split
 - **Blocking items resolved:** 0 (none raised)
+
+---
+
+## Design Expansion — plan-author + progress-emit extension (2026-04-19)
+
+### Context
+
+Design Expansion (2026-04-18) locked Plan-Apply pair seams (stage-file, project-new, plan-review, code-review, closeout). Open Q7 (planner authoring test blueprints + examples + acceptance refinement) remained unresolved — no dedicated surface. Downstream authoring collapsed into `spec-enrich` (Sonnet mechanical) + `/kickoff` legacy shape — no Opus pass for conceptual audit + concrete example filling + test blueprints + acceptance refinement.
+
+Parallel concern: ship-stage chain runs long (N-task × kickoff→implement→verify-loop→closeout). Parent agent terminal goes dark during subagent phases. No structured phase-boundary markers → user loses progress visibility mid-chain.
+
+### Chain update — plan-author per-task sequential stage
+
+Chain rewrites as:
+
+```
+# multi-task (/stage-file)
+stage-file-plan → stage-file-apply
+  → plan-author ×N sequential        # NEW — per-task Opus, spec-body authoring
+  → plan-review (bulk)               # reads all N specs together
+  → plan-fix-apply (if §Plan Fix)
+  → per-task: enrich → implement → verify-loop → audit → code-review → closeout-apply
+
+# single-task (/project-new)
+project-new-apply                    # Sonnet, slim — id reserve + yaml + stub + materialize
+  → plan-author                      # NEW — single Opus pass, same §Plan Author authoring
+  → enrich → implement → verify-loop → audit → code-review → closeout-apply
+  (skip plan-review at N=1)
+```
+
+**Retires project-new-plan.** Opus plan-head for single-issue creation collapses into `plan-author` (same contract as multi-task path, N=1). `project-new-apply` slims to pure Sonnet materialization (id + yaml + stub + backlog view regen). One surface — `plan-author` — authors conceptual content for both multi-task and single-task entry paths.
+
+### Plan-author contract
+
+- **Model:** Opus. **Invocation:** per-task sequential (N sequential Opus passes for multi-task; 1 pass for single-task).
+- **Reads:** spec stub (post stage-file-apply / project-new-apply), Stage header, shared Stage MCP bundle (`domain-context-load` result), invariants, glossary anchors.
+- **Writes:** `§Plan Author` section in spec, with sub-sections:
+  - `§Audit Notes` — upfront conceptual audit (what's known, risks, ambiguity, invariant touches).
+  - `§Examples` — concrete inputs/outputs, edge cases, legacy shapes.
+  - `§Test Blueprint` — structured list: `{test_name, inputs, expected, harness}` tuples; Sonnet `spec-enrich` → `implement` consumes verbatim.
+  - `§Acceptance` — refined acceptance criteria (narrower than Stage Exit; per-task).
+- **Does NOT:** write code, run verify, flip task status. Pure authoring stage — spec body enrichment only.
+- **Handoff artifact:** `§Plan Author` section present + non-empty → `spec-enrich` proceeds. Absent → `enrich` refuses to start.
+
+### Subagent-progress-emit skill
+
+New cross-cutting skill addressing progress-visibility gap in long-running composed subagents. Generalized — not bound to ship-stage.
+
+- **Shape:** markdown skill `ia/skills/subagent-progress-emit/SKILL.md` + frontmatter convention for every lifecycle skill.
+- **Frontmatter:** each lifecycle `SKILL.md` gains top-level `phases:` array listing phase names in order (e.g. `phases: [Phase 0 — Parse, Phase 1 — Context load, Phase 2 — Loop, Phase 3 — Validate]`).
+- **Contract:** subagent prints one-line progress marker to stderr at each phase boundary — shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. Parent agent stderr stream surfaces marker line verbatim to user terminal (no log-file polling, no MCP round-trip).
+- **Zero per-skill boilerplate:** subagent body reads own frontmatter `phases:` + emits marker on phase entry. Skill authors update `phases:` array when skill phases change; emission logic lives in common preamble (one `@`-load line).
+- **Generalized:** applies to every Sonnet + Opus subagent skill that runs >1 phase. Non-lifecycle one-shots (e.g. glossary patchers) exempt.
+
+### Architecture (updated)
+
+```mermaid
+flowchart TD
+    subgraph Plan["Plan surfaces (Opus)"]
+        DE[/design-explore/]
+        MP[/master-plan-new
+ /master-plan-extend/]
+        SD[/stage-decompose/]
+        SFP[stage-file-plan]
+        PA[plan-author]
+        PR[plan-review]
+        OA[opus-audit]
+        OCR[opus-code-review]
+    end
+
+    subgraph Apply["Apply surfaces (Sonnet)"]
+        SFA[stage-file-apply]
+        PNA[project-new-apply]
+        PFA[plan-fix-apply]
+        SE[spec-enrich]
+        IMP[/implement/]
+        VL[/verify-loop/]
+        CFA[code-fix-apply]
+        CLA[closeout-apply]
+    end
+
+    DE --> MP --> SD
+    MP --> SFP
+    SFP --> SFA --> PA
+    PNA --> PA
+    PA -->|N>=2| PR
+    PA -->|N==1| SE
+    PR -->|PASS| SE
+    PR -->|§Plan Fix| PFA --> PR
+    SE --> IMP --> VL --> OA
+    OA --> OCR
+    OCR -->|PASS or minor| CLA
+    OCR -->|§Code Fix Plan| CFA --> VL
+    CLA --> Done((Done archived))
+
+    subgraph Cross["Cross-cutting"]
+        PE[subagent-progress-emit]
+    end
+    PE -.emits phase markers.-> Apply
+    PE -.emits phase markers.-> Plan
+```
+
+### Subsystem Impact — delta
+
+| Subsystem | Change | Severity |
+|---|---|---|
+| `ia/skills/plan-author/SKILL.md` | **New.** Opus per-task spec-body authoring (§Audit Notes + §Examples + §Test Blueprint + §Acceptance). Invoked after `stage-file-apply` or `project-new-apply`; before `plan-review` (multi-task) or `spec-enrich` (single-task). | High |
+| `ia/skills/project-new-plan/SKILL.md` | **Retired** — replaced by `plan-author`. Archive under `ia/skills/_retired/project-new-plan/`. | Medium |
+| `ia/skills/project-new-apply/SKILL.md` | **Slimmed** — Sonnet-only materialization (id reserve + yaml + stub + backlog regen). No longer reads `§Project-New Plan` section; consumes stub arguments directly from `/project-new` command. | Medium |
+| `.claude/agents/plan-author.md` | **New.** Opus pair-head-like agent (no direct Sonnet tail — hands off to `plan-review` or `spec-enrich`). Caveman preamble + MCP bundle + `phases:` frontmatter. | High |
+| `.claude/commands/author.md` | **New.** `/author {ISSUE_ID}` dispatches `plan-author` for a single filed issue (standalone re-invocation supported; auto-invoked inside `/stage-file` + `/project-new` chains). | Medium |
+| `ia/templates/project-spec-template.md` | **Revise** — add `§Plan Author` section with 4 sub-sections (§Audit Notes / §Examples / §Test Blueprint / §Acceptance); drop `§Project-New Plan` section (retired with skill). | Medium |
+| `ia/skills/subagent-progress-emit/SKILL.md` | **New.** Cross-cutting progress-marker contract — `phases:` frontmatter + stderr emitter convention. Zero per-skill boilerplate; one `@`-load in common preamble. | High |
+| All lifecycle `ia/skills/*/SKILL.md` | **Audit** — every lifecycle skill gains top-level `phases:` frontmatter array. 11 new pair skills + `plan-author` + `spec-enrich` + existing `project-spec-implement` / `verify-loop` / `ship-stage` / `stage-file` / `project-new`. | Medium |
+| `ia/rules/plan-apply-pair-contract.md` | **Revise** — drop project-new-plan→apply seam (4 pair seams remain: plan-review→fix-apply, stage-file-plan→apply, code-review→code-fix-apply, audit→closeout-apply); add note that `plan-author` is a **non-pair Opus stage** (no Sonnet tail). | Low |
+| `ia/rules/agent-lifecycle.md` + `docs/agent-lifecycle.md` | **Revise** — new ordered flow shows `plan-author` per-task sequential; surface map adds `plan-author` + `subagent-progress-emit` rows. | Medium |
+| Glossary | **Add:** **plan author** (Opus spec-body authoring stage), **progress marker** (stderr emission shape). **Retire:** **project-new plan** (tombstone → use plan author). | Low |
+
+### Implementation Points — delta (M6)
+
+**M6 — Skills + agents + commands rewrite (extended scope — +1 skill + 1 cross-cutting audit)**
+
+Additional items folded into M6 (no new migration phase; all tool-surface changes):
+
+- [ ] Author `ia/skills/plan-author/SKILL.md` — Opus per-task pair-head-like skill; reads Stage MCP bundle; writes `§Plan Author` section with 4 sub-sections.
+- [ ] Author `.claude/agents/plan-author.md` — Opus agent; caveman preamble; `phases:` frontmatter; MCP tool allowlist.
+- [ ] Author `.claude/commands/author.md` — `/author {ISSUE_ID}` dispatcher; supports standalone invocation + auto-chain from `/stage-file` + `/project-new`.
+- [ ] Retire `ia/skills/project-new-plan/SKILL.md` → `ia/skills/_retired/project-new-plan/` with tombstone redirect.
+- [ ] Slim `ia/skills/project-new-apply/SKILL.md` — drop `§Project-New Plan` read; Sonnet materialization only.
+- [ ] Revise `ia/templates/project-spec-template.md` — add `§Plan Author` section + 4 sub-sections; drop `§Project-New Plan`.
+- [ ] Author `ia/skills/subagent-progress-emit/SKILL.md` — stderr marker contract + `phases:` frontmatter convention.
+- [ ] Audit every lifecycle skill — add top-level `phases:` frontmatter array ordered by actual phase sequence in skill body. Affects ~14 skills (11 new pair + plan-author + spec-enrich + existing lifecycle skills being rewritten).
+- [ ] Update `.claude/agents/*.md` common preamble to `@`-load `ia/skills/subagent-progress-emit/SKILL.md` — one-line include; zero per-agent boilerplate.
+- [ ] Update `ia/rules/plan-apply-pair-contract.md` — drop project-new seam; note plan-author is Opus non-pair stage.
+- [ ] Update `ia/rules/agent-lifecycle.md` + `docs/agent-lifecycle.md` — new ordered flow + surface map rows.
+
+Delta cost: +1 day on top of M6 base (3–5 days) → M6 total 4–6 days.
+
+### Resolution of Open Q7
+
+**Q7 (verify-loop scope change — who authors test blueprints + examples + acceptance refinement).**
+
+**Resolved:** `plan-author` Opus stage authors `§Test Blueprint` (structured `{test_name, inputs, expected, harness}` tuples) + `§Examples` + `§Audit Notes` + `§Acceptance` before Sonnet `spec-enrich`. Downstream `/verify-loop` reads `§Test Blueprint` via `spec-enrich` → `/implement` (Sonnet creates tests from blueprint). Verify-loop itself retains current scope — runs + reports, no test authorship.
+
+### Review Notes — delta
+
+Plan-subagent review (simulated inline):
+
+- **BLOCKING:** none.
+- **NON-BLOCKING carried:**
+  - *R4 (plan-author N sequential cost)* — N × Opus passes per Stage is expensive. Mitigation: Stage MCP bundle cached once via `domain-context-load`; plan-author reads bundle + spec stub only (no re-query). Cost bounded by spec-stub length, not Stage-level context.
+  - *R5 (plan-author re-entry on enrich failure)* — if Sonnet `spec-enrich` escalates back (ambiguous canonical term, missing glossary anchor), control returns to plan-author (not plan-review). plan-author rewrites spec body + re-hands-off.
+  - *R6 (progress-marker stderr parsing fragility)* — marker shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}` must be regex-stable. Reserve Unicode brackets `⟦ ⟧` as canonical delimiter; forbid in skill body prose.
+- **SUGGESTIONS:**
+  - *S4* — `/author {ISSUE_ID}` standalone command lets users re-run plan-author on an existing spec (e.g. after spec-body drift). Keeps surface symmetric with `/kickoff` → `/enrich` rename.
+  - *S5* — `phases:` frontmatter validator — add `validate:frontmatter` rule that parses `phases:` array + checks one `### Phase N —` heading per entry in skill body. Prevents drift between metadata + body.
+
+### Expansion metadata (extension)
+
+- **Date:** 2026-04-19
+- **Model:** claude-opus-4-7
+- **Extends:** original 2026-04-18 expansion (same Chosen Approach B).
+- **New seams:** `plan-author` (non-pair Opus per-task), `subagent-progress-emit` (cross-cutting).
+- **Retired seams:** `project-new-plan` → folded into `plan-author`.
+- **Blocking items resolved:** Open Q7.
+- **Open questions remaining:** Q8 (Phase-semantics audit pre-collapse — still applies to M3), Q9 (token-cost baseline — deferred post-merge), Q10 (rollout surface — resolved into this master plan), Q12 (solo /project-new without prior /stage-file plan — resolved: plan-author handles both), Q13 (plan-review re-entry on applier failure — still open; independent of plan-author).
+
+---
+
+## Design Expansion — stage-end bulk closeout (2026-04-19 rev 2)
+
+### Context
+
+Prior expansions lock per-task closeout pair (`opus-audit` writes §Audit + §Closeout Plan → `closeout-apply` Sonnet executes). Product review (2026-04-19) flags the per-task pair as misaligned with two umbrella objectives:
+
+1. **Opus plans, Sonnet executes — both in bulk.** Per-task closeout runs N × (§Closeout Plan authoring + Sonnet applier + validate + digest) per Stage. Same IA surface — glossary rows, rule sections, doc paragraphs, Status flips — re-opened N times, once per Task.
+2. **Stage-wide IA persistence in one planned execution, not issue-by-issue.** One `materialize-backlog` + one `validate:dead-project-specs` + one stage-level digest replaces N of each; wall-time + token cost drops with N.
+
+Aligned target: per-task `§Audit` paragraph retained as merge-quality signal; stage-wide IA persistence collapses to **one Opus planner + one Sonnet applier pass** at Stage end.
+
+### Chain update — stage-end closeout pair
+
+```
+# per task (unchanged except §Closeout Plan authoring dropped from opus-audit)
+spec-enrich → implement → verify-loop → opus-audit (§Audit paragraph only)
+                                      → opus-code-review
+                                        ├─ PASS / minor → (wait for stage end)
+                                        └─ critical → code-fix-apply → verify-loop
+
+# stage end (NEW — single Plan-Apply pair for all N Tasks)
+stage-closeout-plan (Opus, pair head)
+  reads: all N §Audit paragraphs + §Verification blocks + Stage exit criteria +
+         master-plan Stage header + glossary + invariants + rules
+  writes: §Stage Closeout Plan in master plan — unified structured tuple list:
+    • glossary row adds / edits (de-duplicated across N)
+    • rule-section patches (de-duplicated)
+    • doc-paragraph patches (de-duplicated)
+    • BACKLOG archive ops (N entries)
+    • id purge list (N entries)
+    • spec deletion list (N entries)
+    • master-plan task-table Status flips (N entries)
+    • Stage Status → Final flip (1 entry)
+
+stage-closeout-apply (Sonnet, pair tail)
+  reads: §Stage Closeout Plan
+  executes: each tuple literally
+  runs: materialize-backlog (×1) + validate:dead-project-specs (×1) +
+        stage-level closeout-digest (×1)
+  escalates: ambiguous anchor → return to Opus with failing tuple
+```
+
+### Retirements
+
+- `closeout-apply` (per-task Sonnet skill + agent + `§Closeout Plan` per-task template section) — **retired** (preempted; never shipped to main). Authoring collapses into stage-end pair.
+- `project-stage-close` skill — **folded** into `stage-closeout-apply` (Stage Status rollup + stage-level lessons concatenation become tuples inside unified plan; no separate stage-close surface).
+- `opus-audit` scope narrowed — writes `§Audit` paragraph only (~100-word synthesis); no longer authors `§Closeout Plan`.
+
+### Plan-Apply pair seams (count unchanged: 4)
+
+| # | Plan head (Opus) | §Section | Apply tail (Sonnet) |
+|---|---|---|---|
+| 1 | plan-review | §Plan Fix | plan-fix-apply |
+| 2 | stage-file-plan | §Stage File Plan (in master plan) | stage-file-apply |
+| 3 | opus-code-review | §Code Fix Plan (in spec) | code-fix-apply |
+| 4 | **stage-closeout-plan** | **§Stage Closeout Plan (in master plan)** | **stage-closeout-apply** |
+
+Seam #4 replaces prior `audit → closeout-apply`. Non-pair Opus stages: `plan-author` (per-task), `opus-audit` (per-task, §Audit paragraph only).
+
+### Architecture (updated)
+
+```mermaid
+flowchart TD
+    subgraph Plan["Plan surfaces (Opus)"]
+        SFP[stage-file-plan]
+        PA[plan-author xN]
+        PR[plan-review]
+        OA[opus-audit xN — §Audit only]
+        OCR[opus-code-review xN]
+        SCP[stage-closeout-plan — stage end]
+    end
+    subgraph Apply["Apply surfaces (Sonnet)"]
+        SFA[stage-file-apply]
+        PNA[project-new-apply]
+        PFA[plan-fix-apply]
+        SE[spec-enrich xN]
+        IMP[/implement/ xN]
+        VL[/verify-loop/ xN]
+        CFA[code-fix-apply]
+        SCA[stage-closeout-apply — stage end]
+    end
+
+    SFP --> SFA --> PA
+    PNA --> PA
+    PA -->|N>=2| PR
+    PA -->|N==1| SE
+    PR -->|PASS| SE
+    PR -->|§Plan Fix| PFA --> PR
+    SE --> IMP --> VL --> OA --> OCR
+    OCR -->|PASS or minor| Wait((wait for stage end))
+    OCR -->|§Code Fix Plan| CFA --> VL
+    Wait --> SCP --> SCA --> Done((Stage Final + archived))
+```
+
+### Subsystem impact — delta
+
+| Subsystem | Change | Severity |
+|---|---|---|
+| `ia/skills/stage-closeout-plan/SKILL.md` | **New.** Opus pair-head; reads all N §Audit + §Verification + Stage exit + glossary/rules/invariants; writes unified `§Stage Closeout Plan`; de-duplicates glossary/rule/doc edits across tasks; raises `§Conflict` block on contradictory definitions (human gate). | High |
+| `ia/skills/stage-closeout-apply/SKILL.md` | **New.** Sonnet pair-tail; executes §Stage Closeout Plan tuples; single materialize + single validate + single digest + Stage Final flip. | High |
+| `ia/skills/closeout-apply/SKILL.md` | **Retired (preempted).** Never authored into main; Stage 7 task list swaps to stage-closeout pair. | Low |
+| `ia/skills/opus-audit/SKILL.md` | **Narrow.** §Audit paragraph only (~100-word synthesis); no §Closeout Plan section authored. Paragraph becomes raw material for `stage-closeout-plan`. | Low |
+| `ia/skills/project-stage-close/SKILL.md` | **Retired (folded).** Archive → `ia/skills/_retired/project-stage-close/`. | Low |
+| `ia/templates/project-spec-template.md` | **Revise** — drop `§Closeout Plan` section. Keep `§Audit`. | Low |
+| `ia/templates/master-plan-template.md` | **Revise** — add `§Stage Closeout Plan` section stub per Stage. | Medium |
+| `.claude/agents/stage-closeout-planner.md` | **New.** Opus. | Medium |
+| `.claude/agents/stage-closeout-applier.md` | **New.** Sonnet. | Medium |
+| `.claude/agents/closeout-applier.md` | **Skip.** Never authored — preempted. | Low |
+| `.claude/commands/closeout.md` | **Rewire** — `/closeout {STAGE_ID}` dispatches stage-closeout-planner → stage-closeout-applier (once per Stage); per-task dispatch removed. Escape hatch: `/closeout --task {ISSUE_ID}` runs a 1-task stage-closeout pair for mid-Stage abandonment. | Medium |
+| `ia/rules/plan-apply-pair-contract.md` | **Revise** — seam #4 swap (audit→closeout-apply → stage-closeout-plan→stage-closeout-apply); 4 seams total preserved. | Low |
+| `ia/rules/agent-lifecycle.md` + `docs/agent-lifecycle.md` | **Revise** — ordered flow + surface map; drop stage-close row; swap per-task closeout-apply for stage-closeout pair. | Medium |
+| `tools/mcp-ia-server/` — `project_spec_closeout_digest` | **Rename** → `stage_closeout_digest`; reads §Stage Closeout Plan; emits one digest covering N tasks. | Medium |
+| `/ship-stage` chain | **Revise** — stage-end batched Path B followed by stage-closeout pair; chain emits one digest (not N). | Medium |
+
+### Implementation delta (Stage 7 / M6)
+
+Folds as Phase 8. Appends 2 new tasks (T7.13 stage-closeout-plan skill + agent; T7.14 stage-closeout-apply skill + agent + /closeout rewire + template edits + retirements). Amends T7.4 (drop closeout-apply; narrow opus-audit) + T7.11 (pair-seam enumeration swap).
+
+### Open question — resolution
+
+- **Q5 (closeout pair seam)** — fully resolved: stage-level pair. `§Audit` paragraphs per-task become raw material for one unified stage-wide lesson migration inside `§Stage Closeout Plan`.
+
+### Review notes
+
+- **BLOCKING:** none.
+- **NON-BLOCKING:**
+  - *R7 (de-duplication correctness)* — stage-closeout-plan must arbitrate (not silently merge) if two tasks propose conflicting glossary definitions. Raise as `§Conflict` block → human gate.
+  - *R8 (mid-Stage task abandonment)* — escape hatch `/closeout --task {ISSUE_ID}` runs a 1-task stage-closeout pair. Preserves single-task close capability for out-of-cycle cases.
+  - *R9 (digest shape change)* — `project_spec_closeout_digest` → `stage_closeout_digest`; output shape covers N tasks per emission; `closeout-digest` output style updates.
+- **SUGGESTIONS:**
+  - *S6* — emit stage-level lessons block concatenating all N `§Audit` paragraphs as raw material inside `§Stage Closeout Plan` (instead of re-synthesizing).
+  - *S7* — bulk `plan-author` (one Opus pass writes §Plan Author for all N specs; subsumes `plan-review` — same Opus already holds full-Stage context). Candidate for separate expansion; not in rev 2 scope.
+
+### Expansion metadata
+
+- **Date:** 2026-04-19 (rev 2)
+- **Model:** claude-opus-4-7
+- **Extends:** 2026-04-18 + 2026-04-19 (plan-author + progress-emit). Same Chosen Approach B.
+- **New seams:** stage-closeout pair (stage-closeout-plan → stage-closeout-apply).
+- **Retired seams:** audit→closeout-apply per-task; project-stage-close skill folded.
+- **Blocking items resolved:** Q5 (closeout seam) fully.
+- **Open questions remaining:** Q8, Q9, Q13; plus S7 (bulk plan-author) candidate.
+
+---
+
+## Design Expansion — stage-end bulk plan-author + audit + spec-enrich fold (2026-04-19 rev 3)
+
+### Context
+
+Rev 2 resolved stage-end bulk closeout. Per-task Sonnet tail (`closeout-apply`) replaced by one Stage-level pair. Three additional per-Task Opus / Sonnet stages still fire N times per Stage:
+
+- `plan-author` — Opus writes `§Plan Author` (4 sub-sections: §Audit Notes, §Examples, §Test Blueprint, §Acceptance) per Task. N Opus calls.
+- `opus-audit` — Opus writes `§Audit` paragraph per Task. N Opus calls.
+- `spec-enrich` — Sonnet canonical-term tightening per spec. N Sonnet calls.
+
+Each stage shares the Stage-level MCP bundle (glossary / router / invariants / spec snapshots) already loaded by `stage-file-plan` / `plan-review`. Paying N× retrieval + prompt framing for logically-unified work wastes tokens + wall time.
+
+Product objective re-statement (user, 2026-04-19):
+1. Opus = detailed planner for all chain phases.
+2. Sonnet = executor of those plans.
+3. **Bulk work whenever possible** ← rev 3 lever.
+
+### Chosen approach — bulk rev 3
+
+Collapse three per-Task stages to Stage-scoped bulk:
+
+- **Bulk plan-author (Opus, 1×N per Stage).** Single pass reads all N spec stubs + master-plan Stage header + shared Stage MCP bundle + invariants + glossary once; writes all N `§Plan Author` sections in one author round. Dispatched post `stage-file-apply`, pre per-Task loop. `/author` becomes Stage-scoped dispatcher (`{MASTER_PLAN_PATH} {STAGE_ID}`). Standalone re-invocation on a single spec is an escape hatch (`/author --task {ISSUE_ID}`) — not the default.
+- **Fold spec-enrich into plan-author.** Plan-author already holds glossary context during the bulk pass; absorb canonical-term enforcement for `§Objective`, `§Background`, `§Implementation Plan` directly. Retires: `spec-enrich` skill, `spec-enricher` agent, `/enrich` command, `/kickoff` command (legacy alias). Tombstones on retired `project-spec-kickoff/SKILL.md` redirect to `plan-author`. No mechanical Sonnet pass needed — Opus enforces canonical terms at authoring time.
+- **Bulk opus-audit (Opus, 1×N per Stage).** Single pass reads all N §Implementation + §Findings + §Verification outputs + diff summaries; writes all N `§Audit` paragraphs in one synthesis round. Fires after per-Task implement + verify-loop + opus-code-review (+ code-fix-apply loop) all Green for every Task. Feeds directly into `stage-closeout-plan` (which already consumes §Audit paragraphs per rev 2).
+- **Per-Task stages unchanged:** implement + verify-loop + opus-code-review + code-fix-apply stay per-Task. Code diffs are per-Task by nature; review / fix loops coupled to /verify-loop per Task cannot batch without regressing defect-detection latency.
+- **Path B already batched** in ship-stage (rev 2 carryover). No change.
+
+### Ordered flow — rev 3
+
+Multi-task Stage:
+```
+stage-file-plan → stage-file-apply
+  → plan-author (Stage, 1×N)            ← rev 3 bulk
+  → plan-review → [plan-fix-apply if §Plan Fix]
+  → per-Task loop:
+      implement → verify-loop → opus-code-review → [code-fix-apply if §Code Fix Plan]
+  → opus-audit (Stage, 1×N)             ← rev 3 bulk
+  → stage-closeout-plan → stage-closeout-apply
+```
+
+Single-Task Stage (N=1):
+```
+project-new-apply → plan-author (N=1) → implement → verify-loop → opus-code-review → [code-fix-apply] → opus-audit (N=1) → stage-closeout-plan → stage-closeout-apply
+```
+
+### Retirements — rev 3
+
+| Surface | State | Redirect |
+| --- | --- | --- |
+| `ia/skills/spec-enrich/` | Not authored (never existed) | `plan-author` (canonical-term enforcement absorbed) |
+| `ia/skills/_retired/project-spec-kickoff/` | Tombstone | `plan-author` (not `spec-enrich`) |
+| `.claude/agents/spec-enricher.md` | Not authored | — |
+| `.claude/commands/enrich.md` | Not authored | — |
+| `.claude/commands/kickoff.md` | Retired → `.claude/commands/_retired/kickoff.md` | `/author` |
+
+### Skill count — rev 3 delta vs rev 2
+
+| Metric | Rev 2 | Rev 3 | Delta |
+| --- | --- | --- | --- |
+| New skills | 13 | 12 | −1 (drop spec-enrich) |
+| New agents | 12 | 11 | −1 (drop spec-enricher) |
+| Commands touched | 9 (5 new + 4 repointed) | 7 (4 new + 3 repointed) + 2 retired | −2 active (drop /enrich; retire /kickoff) |
+| Stages with ≥N→1 bulk | 1 (stage-closeout) | 3 (stage-closeout + plan-author + opus-audit) | +2 |
+
+### Token / time math (per Stage, N=4 typical)
+
+Rev 2 cost:
+- N × Opus plan-author ≈ 4 Opus calls with 4× full Stage-context framing.
+- N × Opus opus-audit ≈ 4 Opus calls with 4× per-spec §Impl / §Verify reads.
+- N × Sonnet spec-enrich ≈ 4 Sonnet calls with 4× glossary re-query.
+
+Rev 3 cost:
+- 1 × Opus bulk plan-author (single Stage-context framing; all N specs authored + canonical terms enforced).
+- 1 × Opus bulk opus-audit (single read round; all N §Audit paragraphs).
+- 0 × Sonnet spec-enrich (retired).
+
+Net: (N+N+N) agent invocations collapse to (1+1). At N=4: 12 calls → 2 calls. Dominant saving = amortized context framing + amortized glossary retrieval + amortized invariant summary. Estimated wall-time reduction per Stage ≈ 60–70% on these three stages combined; total Stage reduction ≈ 25–35% when combined with rev 2 stage-closeout pair.
+
+### Architecture impact — mermaid (delta from rev 2)
+
+```mermaid
+flowchart TD
+  SFP[stage-file-plan] --> SFA[stage-file-apply]
+  SFA --> PA[plan-author Stage 1×N]
+  PA --> PR[plan-review]
+  PR -->|§Plan Fix| PFA[plan-fix-apply]
+  PFA --> PR
+  PR --> LOOP((per-Task loop))
+  LOOP --> IMP[implement]
+  IMP --> VL[verify-loop]
+  VL --> OCR[opus-code-review]
+  OCR -->|§Code Fix Plan| CFA[code-fix-apply]
+  CFA --> VL
+  OCR --> LOOP
+  LOOP -->|all Tasks Green| OA[opus-audit Stage 1×N]
+  OA --> SCP[stage-closeout-plan]
+  SCP --> SCA[stage-closeout-apply]
+  SCA --> F((Stage Final))
+```
+
+### Subsystem impact delta (vs rev 2)
+
+| Surface | Rev 2 | Rev 3 |
+| --- | --- | --- |
+| `ia/skills/plan-author/` | Per-Task Opus (N calls) | Stage-scoped bulk Opus (1 call per Stage); canonical-term enforcement absorbed |
+| `ia/skills/opus-audit/` | Per-Task Opus (N calls) | Stage-scoped bulk Opus (1 call per Stage) |
+| `ia/skills/spec-enrich/` | Authored (Sonnet, N calls) | Not authored (folded) |
+| `.claude/agents/plan-author.md` | Per-Task invocation | Stage-scoped invocation; `--task {ISSUE_ID}` escape hatch |
+| `.claude/agents/opus-auditor.md` | Per-Task invocation | Stage-scoped invocation |
+| `.claude/agents/spec-enricher.md` | Authored | Not authored |
+| `.claude/commands/author.md` | Per-Task `/author {ISSUE_ID}` | Stage-scoped `/author {MASTER_PLAN_PATH} {STAGE_ID}` + `--task {ISSUE_ID}` hatch |
+| `.claude/commands/audit.md` | Per-Task `/audit {ISSUE_ID}` | Stage-scoped `/audit {MASTER_PLAN_PATH} {STAGE_ID}` |
+| `.claude/commands/enrich.md` | Authored | Not authored |
+| `.claude/commands/kickoff.md` | Repointed → spec-enricher | Retired → `.claude/commands/_retired/` |
+| `ia/rules/plan-apply-pair-contract.md` | plan-author + opus-audit = Opus non-pair | Unchanged in pair-seam count; note Stage-scoped invocation for both non-pair stages |
+| `ia/rules/agent-lifecycle.md` ordered flow | Per-Task plan-author + enrich + audit | Stage-scoped bulk plan-author + no enrich + Stage-scoped bulk audit |
+| `ia/templates/project-spec-template.md` §Plan Author | Authored per-Task | Authored by bulk pass; section shape unchanged; canonical terminology enforced at author time |
+
+### Implementation delta
+
+Folds into existing Stage 7 (no new Phase). Amendments:
+- **T7.4** — opus-audit → Stage-scoped bulk (single pass, all N §Audit paragraphs).
+- **T7.5** — spec-enrich dropped entirely; tombstones on retired kickoff / close skills redirect to `plan-author` / `stage-closeout-apply`.
+- **T7.7** — drop `spec-enricher.md` from agent authoring list.
+- **T7.8** — drop `/enrich.md`; retire `/kickoff.md` to `_retired/`; `/author` + `/audit` become Stage-scoped dispatchers.
+- **T7.11** — plan-author → Stage-scoped bulk + canonical-term enforcement absorbed; `/author` Stage-scoped dispatcher + `--task {ISSUE_ID}` escape hatch.
+- **T7.12** — skill count 16 → 15 (drop spec-enrich from phases-frontmatter audit).
+- **T7.14** — ordered-flow rewrite reflects rev 3 sequence (bulk plan-author post stage-file-apply; bulk opus-audit post all-Tasks-Green).
+
+### Open question — resolution
+
+- **S7 (bulk plan-author)** — fully resolved: Stage-scoped bulk plus canonical-term fold.
+
+### Review notes
+
+- **BLOCKING:** none.
+- **NON-BLOCKING:**
+  - *R10 (bulk plan-author context budget)* — N large specs + shared Stage context may exceed Opus context window at high N (e.g. 8+ Tasks). Guardrail: plan-author skill checks input token estimate; if > threshold, splits into 2 bulk sub-passes of size ⌈N/2⌉ (not N per-Task reversion). Threshold + split policy authored in skill Phase 0.
+  - *R11 (bulk opus-audit §Findings dependency)* — bulk audit reads per-Task §Findings; requires all Tasks' §Findings to exist before bulk pass. Gate: `opus-audit` Phase 0 asserts every Task in Stage has non-empty §Findings; escalates to user if any Task is missing (indicates incomplete per-Task verify).
+  - *R12 (canonical-term audit inside plan-author)* — fold adds work to Opus plan-author; mitigate by pre-loading glossary snippets for Stage-relevant terms into shared MCP bundle (same bundle loaded once by stage-file-plan); plan-author reads snippets, does not re-query per spec.
+- **SUGGESTIONS:**
+  - *S8* — consider bulk opus-code-review (one Opus pass reads all N diffs post-per-Task-verify). Gated by defect-detection-latency concern: moves critical-fix discovery from per-Task to Stage-end. Flagged as rev 4 candidate; not in rev 3 scope.
+
+### Expansion metadata
+
+- **Date:** 2026-04-19 (rev 3)
+- **Model:** claude-opus-4-7
+- **Extends:** 2026-04-18 + 2026-04-19 (plan-author + progress-emit) + 2026-04-19 rev 2 (stage-end bulk closeout). Same Chosen Approach B.
+- **New seams:** none (non-pair stages re-scoped to Stage-level bulk).
+- **Retired seams:** spec-enrich (skill + agent + /enrich command); /kickoff command legacy alias.
+- **Bulk-work levers added:** bulk plan-author, bulk opus-audit, canonical-term fold.
+- **Blocking items resolved:** S7 (bulk plan-author) fully.
+- **Open questions remaining:** Q8, Q9, Q13; plus S8 (bulk opus-code-review) rev 4 candidate.
+
+## Design Expansion — rev 4 candidates + cache-mechanics amendments (2026-04-19 rev 4)
+
+### Purpose
+
+Candidate pool exploring prompt-caching optimization levers on top of rev 3. Status: **commit-ready text pending Q9 baseline** — no Task rows authored against `ia/projects/lifecycle-refactor-master-plan.md`. Fold into Stage 10 deferred until instrumented-Stage measurement records per-Stage pair-head read count. Extends (does not replace) rev 1–3 locks + seams.
+
+### Rev 4 candidate pool
+
+Thirteen proposals across four tiers. Verdict column: **keep** / **modify** / **reject** after rev 1–3 lock compatibility check.
+
+**Tier A — bundle / cache mechanics**
+
+| Id | Proposal | Verdict | Notes |
+|----|----------|---------|-------|
+| A1 | Single concatenated stable block with `cache_control: {"type":"ephemeral","ttl":"1h"}` covering rules + glossary + router + invariants preamble | keep | Lands in `messages` block (not `system`) per Claude Code subagent host; F6 assembly = option (a) single block. |
+| A2 | Bulk plan-author dispatcher staggers Opus calls (sequential, not concurrent) to avoid F3 cache-hit collision | modify | Add F3 stagger note to A2 contract; same-Stage concurrent Opus calls do not share cache hits. |
+| A3 | Two-tier cache — stable cross-Stage (A1) + ephemeral per-Stage bundle (Stage-scoped glossary subset + spec_sections) | keep | Per-Stage tier: ephemeral 1h TTL; covers domain-context-load Phase N output. |
+| A4 | Reuse stable block across pair seams 1–4 within one Stage | keep | Plan-author / plan-review / plan-fix-apply / code-review / code-fix-apply / stage-closeout-plan / stage-closeout-apply all inherit same A1 prefix. |
+| A5 | Cache-warm preflight — stage-file-plan first call primes cache; later seams hit | modify | Only economical if ≥3 subsequent pair-head reads per Stage (see R5); drop preflight if baseline shows <3 reads/Stage. |
+
+**Tier B — flow / skill**
+
+| Id | Proposal | Verdict | Notes |
+|----|----------|---------|-------|
+| B1 | Merge plan-author + opus-audit into one pre-Stage Opus pass that emits both §Plan and §Findings | reject | Breaks rev 3 R11 §Findings gate; audit must read per-Task §Findings post-Task-verify, not pre-Task. |
+| B2 | Retire rev 3 R11 gate — move §Findings emission into plan-author output | keep | Shifts §Findings to plan-author Phase N; opus-audit reads plan-author output directly. Commit ordering: B2 lands before any opus-audit refactor. |
+| B3 | Default TTL `1h` for A1 stable block; `5m` for per-Stage bundle | modify | Lock both tiers to 1h (Q14 resolution); 5m regressed default means 5m tier would expire mid-Stage under N=4. |
+| B4 | Unified `plan-applier` Sonnet skill replaces per-pair applier skills (plan-review-fix-apply, code-fix-apply, stage-closeout-apply) | keep | Resolves open Q11. One Sonnet literal-applier reads §Plan, writes diff, escalates on mismatch. |
+
+**Tier C — telemetry / gates**
+
+| Id | Proposal | Verdict | Notes |
+|----|----------|---------|-------|
+| C1 | Sizing gate — reject A1 bundle if estimated tokens < F2 floor (4096 for Opus 4.7) | keep | Silent no-cache below 4096; measured rules-only = ~5,192 tok (clears ×1.27); full-glossary = ~20,029 tok (clears ×5). glossary-discover anchors alone = ~500–2,000 tok (FAILS). |
+| C2 | Runtime warning on cache-hit-rate < 50% over rolling 10-call window | modify | Promote to CI-gate (R2): block merge if sizing check fails; runtime warning is too late. |
+| C3 | SSE event gate for cache-write commit confirmation | modify | R1: use `message_start` event (carries `usage.cache_creation_input_tokens`) as conservative commit gate; `content_block_delta` as safe fallback. Filed Q17 for Anthropic clarification on exact post-commit guarantee. |
+| C4 | Emit `⟦PROGRESS⟧` R6 delimiter after each cache-write with token count | keep | Additive to rev 2 progress-emit locks; no conflict. |
+
+**Tier D — docs / guardrails**
+
+| Id | Proposal | Verdict | Notes |
+|----|----------|---------|-------|
+| D1 | Authoritative cache-mechanics reference doc under `docs/prompt-caching-mechanics.md` citing F1–F6 + amendments | keep | Single source for skill authors; replaces inline restates. |
+| D2 | Invalidation cascade note — `tools:` changes cascade to `system` + `messages` (F5) | keep | Trigger: MCP tool registration edits invalidate entire cached prefix. Warn in `docs/mcp-ia-server.md`. |
+| D3 | 20-block lookback ceiling note (F6) — forbid multi-block emission for stable prefix | keep | Reinforces A1 option (a) single concatenated block; option (b) multi-`@`-load separate blocks forbidden. |
+
+### Verified Anthropic prompt-caching facts (F1–F6)
+
+- **F1** — cache read = 0.1× base input cost; cache write = 1.25× (5m TTL) or 2× (1h TTL). Break-even at 1 read (5m) / 2 reads (1h) on written tokens.
+- **F2** — Opus 4.7 minimum cacheable block = 4,096 tokens. Below floor: silent no-cache (no error, no warning).
+- **F3** — concurrent requests do not share cache hits. Sequential dispatch required for cache reuse across fan-out.
+- **F4** — default TTL regressed 1h → 5m on 2026-03-06. Explicit opt-in required for 1h via `cache_control: {"type":"ephemeral","ttl":"1h"}`.
+- **F5** — invalidation cascades: `tools:` change invalidates `system` + `messages`; `system` change invalidates `messages`. Not bidirectional.
+- **F6** — 20 content-block lookback per `cache_control` breakpoint. Applies to API content-block count, not `@`-include file count (concatenation eliminates).
+
+### Amendments 1–5 (folded into candidate pool above)
+
+1. **Tighten P1 delta + F2 gate** — P1 savings band conditional on F2 clearance (sizing gate C1/R2) + bundle ≥ 40% of Stage prefix + ≥3 pair-head reads per Stage (R5).
+2. **A2 dispatcher F3 fix** — bulk plan-author must stagger Opus calls sequentially; concurrent dispatch breaks cache hits.
+3. **B2 + R11 commit ordering** — B2 retires R11 §Findings gate; commit B2 before any opus-audit refactor to avoid mid-flight ordering breakage.
+4. **F5 tool-allowlist uniformity** — all pair seams share identical `tools:` frontmatter to prevent cascade-induced invalidation across seams within one Stage.
+5. **Q14a / Q14b reframe** — Q14a (TTL choice) resolved: lock 1h both tiers. Q14b (5m feasibility under N=4) closed as unrealistic — 5m expires between plan-author and executor fan-out.
+
+### Refinements R1–R5 (folded)
+
+- **R1** — SSE event gate for cache-write commit: `message_start` (carries `usage.cache_creation_input_tokens`) is conservative commit signal; `content_block_delta` (first output token) is safe fallback. Not ms-latency heuristic. Open Q17 for Anthropic clarification on exact post-commit guarantee.
+- **R2** — CI-gate sizing check (promoted from runtime warning C2). Fail CI if A1 block token estimate < F2 floor; never ship silent no-cache.
+- **R3** — Q14 TTL resolution: lock 1h both tiers. Walkthrough under 5m default at N=4: plan-author write → plan-review hit → plan-fix-apply + re-entry (5m expires) → executor fan-out (5m fully expired). 1h covers full Stage lifecycle with margin.
+- **R4** — F6 assembly mode quantification: option (a) single concatenated block eliminates F6 block-count risk; option (b) multi-block emission forbidden for stable prefix. Both tiers use option (a): system preamble via `@`-concat pre-assembly; messages Stage bundle via domain-context-load Phase N concatenation.
+- **R5** — P1 savings band recalibration under 1h TTL economics:
+  - 2 reads → 2.2× cost vs 2.0× baseline → **net loss ~10%**
+  - 3 reads → 2.3× cost vs 3.0× baseline → **~23% savings**
+  - 5 reads → 2.5× cost vs 5.0× baseline → **~50% savings**
+  - 6 reads (N=4 typical: plan-author write + plan-review + fix re-entry + 4 executors) → 2.6× cost vs 6.0× baseline → **~57% savings**
+  - Precondition shift: ≥3 pair-head reads per Stage (not "any cache use").
+
+### Priority table (rev 4)
+
+| Priority | Candidates | Per-Stage token delta (N=4) | Wall-time delta | Risk |
+|----------|------------|------------------------------|-----------------|------|
+| P1 | A1+C1 | −30 to −45% (if F2 clears + bundle ≥40% + ≥3 reads/Stage) / net-neutral at 2 reads / 0 if F2 fails | −10 to −20% | Medium |
+| P2 | A3 (per-Stage tier) | −10 to −20% additional on top of P1 | −5 to −10% | Low |
+| P3 | B2 + B4 | 0 (flow refactor; token impact neutral) | −5% (fewer seams) | Low |
+| P4 | A2 stagger + A5 preflight | Conditional; captured in P1 precondition | 0 | Low |
+| P5 | C3/R1 SSE gate + R2 CI-gate + D1–D3 docs | 0 (observability + guardrail) | 0 | Low |
+
+### Open questions (rev 4)
+
+- **Q9 (baseline)** — instrumented-Stage measurement must record **pair-head read count per Stage** (not just total tokens) to validate R5's ≥3 read floor. Applies to N=1 single-task path too (where only 1–2 reads may fire → P1 net loss).
+- **Q14a** — resolved (1h both tiers). **Q14b** — closed as unrealistic.
+- **Q17 (new)** — exact SSE event for cache-write commit guarantee. Anthropic docs silent. Current gate: `message_start` conservative; `content_block_delta` safe fallback.
+
+### Review notes
+
+- **BLOCKING:** Q9 baseline measurement required before Stage 10 fold. Without read-count data, P1 savings band is unvalidated.
+- **NON-BLOCKING:**
+  - *B1 rejection* — merge of plan-author + opus-audit breaks R11 §Findings gate; do not revisit until B2 lands.
+  - *FREEZE scope* — rev 4 fold into `ia/projects/lifecycle-refactor-master-plan.md` Stage 10 Task rows gated by FREEZE until M8 sign-off (T4.2.1). Exploration doc persistence (this block) is allowed under FREEZE.
+- **SUGGESTIONS:** none new. S8 (bulk opus-code-review) moved from rev 3 suggestions to rev 5 candidate (out of rev 4 scope).
+
+### Expansion metadata
+
+- **Date:** 2026-04-19 (rev 4)
+- **Model:** claude-opus-4-7
+- **Extends:** 2026-04-18 + 2026-04-19 rev 1–3. Same Chosen Approach B.
+- **New seams:** none (optimization layer on existing 4 pair seams).
+- **Retired mechanisms:** R11 §Findings gate (via B2 when landed).
+- **Cache-mechanics levers added:** A1 concatenated stable block, A3 two-tier cache, C1/R2 sizing gate, R1 SSE commit gate.
+- **Blocking items resolved:** none (Q9 baseline still pending).
+- **Open questions remaining:** Q8, Q9, Q13, Q17; plus S8 (bulk opus-code-review) rev 5 candidate.
+- **Status:** commit-ready text pending Q9 baseline; Stage 10 fold deferred until instrumented-Stage read-count measurement lands.

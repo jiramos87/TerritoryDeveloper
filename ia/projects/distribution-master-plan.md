@@ -30,40 +30,11 @@
 
 ---
 
-## Steps
+## Stages
 
 > **Tracking legend:** Step / Stage `Status:` uses enum `Draft | In Review | In Progress — {active child} | Final` (per `ia/rules/project-hierarchy.md`). Phase bullets use `- [ ]` / `- [x]`. Task tables carry a **Status** column: `_pending_` (not filed) → `Draft` → `In Review` → `In Progress` → `Done (archived)`. Markers flipped by lifecycle skills: `stage-file` → task rows gain `Issue` id + `Draft` status; `/kickoff` → `In Review`; `/implement` → `In Progress`; `/closeout` → `Done (archived)` + phase box when last task of phase closes; `project-stage-close` → stage `Final` + stage-level rollup.
 
-### Step 1 — Unity build pipeline + versioning manifest
-
-**Status:** In Progress — Stage 1.1
-
-**Backlog state (Step 1):** 4 filed (Stage 1.1: TECH-347, TECH-348, TECH-349, TECH-350 — all Draft)
-
-**Objectives:** Land the Unity-side mechanics that turn a semver arg into reproducible mac `.app` + win `.exe` binaries with embedded version metadata. This step ships the data model (`BuildInfo` ScriptableObject + semver helper), the editor-driven build script, and a shell orchestration entry that wires semver + git SHA + timestamp env vars into Unity batch mode. Credits screen consumes `BuildInfo` so testers see the exact version they are running. No packaging, no web surface, no notifier yet — those belong to Step 2.
-
-**Exit criteria:**
-
-- `Assets/Scripts/Runtime/Distribution/BuildInfo.cs` ScriptableObject with `version` / `gitSha` / `buildTimestamp` fields + editor-only `WriteFields` writer, accompanying `Assets/Resources/BuildInfo.asset` instance loadable via `Resources.Load<BuildInfo>("BuildInfo")`.
-- `Assets/Scripts/Runtime/Distribution/SemverCompare.cs` pure static `Compare(string, string)` helper, EditMode-tested against a known truth table.
-- `Assets/Editor/ReleaseBuilder.cs` exposes public static `BuildMac()` + `BuildWindows()` methods callable via Unity `-executeMethod`; stamps `BuildInfo.asset` + `PlayerSettings.bundleVersion` from env vars; invokes `BuildPipeline.BuildPlayer` with correct platform target; fails Unity with non-zero exit on any error.
-- `tools/scripts/build-release.sh` (new) validates semver regex, exports `BUILD_VERSION` / `BUILD_SHA` / `BUILD_TIMESTAMP`, runs Unity batch-mode against `BuildMac` on macOS, prints Windows sub-invocation hint for the Windows machine.
-- Credits screen displays `{version} ({gitSha})` from `BuildInfo`; confirmed on local build invocation.
-- `npm run unity:compile-check` green; EditMode test run green.
-
-**Art:** None.
-
-**Relevant surfaces (load when step opens):**
-- `docs/distribution-exploration.md` §Design Expansion — Architecture component 1–2, IP-1, IP-2, IP-3, IP-8, Example A.
-- `Assets/Scripts/Runtime/Distribution/` `(new)` — BuildInfo + SemverCompare land here.
-- `Assets/Resources/BuildInfo.asset` `(new)` — generated instance (committed or regenerated on build).
-- `Assets/Editor/ReleaseBuilder.cs` `(new)` — editor-only build script.
-- `tools/scripts/build-release.sh` `(new)` — shell entry point; mirrors conventions in `tools/scripts/unity-compile-check.sh` + `tools/scripts/load-repo-env.inc.sh` for `$UNITY_EDITOR_PATH`.
-- `Assets/Scripts/UI/` existing Credits screen component — consumer of `BuildInfo` (exact path resolves at Stage 1.3 kickoff).
-- `ia/rules/invariants.md` — editor-only C# outside runtime invariant scope; runtime `BuildInfo` SO + `SemverCompare` are pure data / pure function — no invariant touch.
-- `package.json` `unity:compile-check` script — precedent for `$UNITY_EDITOR_PATH` usage.
-
-#### Stage 1.1 — BuildInfo SO + semver compare helper
+### Stage 1 — Unity build pipeline + versioning manifest / BuildInfo SO + semver compare helper
 
 **Status:** In Progress (TECH-347, TECH-348, TECH-349, TECH-350 filed)
 
@@ -77,23 +48,20 @@
 - EditMode test `Assets/Tests/EditMode/Distribution/SemverCompareTests.cs` exercises ≥6 truth-table cases (equal, greater major, greater minor, greater patch, prerelease ordering, malformed input fallback).
 - Glossary rows added to `ia/specs/glossary.md` — **BuildInfo ScriptableObject**, **Unsigned installer tier**, **Release manifest (`latest.json`)**, **Update notifier** (forward-ref the latter two to Stage 2.2 / 2.3).
 - `npm run unity:compile-check` + EditMode tests green.
-
-**Phases:**
-
-- [ ] Phase 1 — Author BuildInfo ScriptableObject + committed asset instance.
-- [ ] Phase 2 — Author SemverCompare helper + EditMode test coverage.
-- [ ] Phase 3 — Register distribution glossary rows in `ia/specs/glossary.md`.
+- Phase 1 — Author BuildInfo ScriptableObject + committed asset instance.
+- Phase 2 — Author SemverCompare helper + EditMode test coverage.
+- Phase 3 — Register distribution glossary rows in `ia/specs/glossary.md`.
 
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T1.1.1 | BuildInfo SO type | 1 | **TECH-347** | Draft | Author `Assets/Scripts/Runtime/Distribution/BuildInfo.cs` matching Design Expansion IP-3 verbatim — `[CreateAssetMenu(fileName = "BuildInfo", menuName = "Territory/BuildInfo")]`, private serialized `version` / `gitSha` / `buildTimestamp` fields with default `"0.0.0-dev"` / `"unknown"` / `"unknown"`, public getters, editor-gated `WriteFields(string, string, string)` under `#if UNITY_EDITOR`. |
-| T1.1.2 | BuildInfo asset instance | 1 | **TECH-348** | Draft | Create `Assets/Resources/BuildInfo.asset` via the Territory/BuildInfo menu command; commit both `.asset` + `.asset.meta`. Verify `Resources.Load<BuildInfo>("BuildInfo")` returns non-null in an EditMode fixture. |
-| T1.1.3 | SemverCompare helper + tests | 2 | **TECH-349** | Draft | Author `Assets/Scripts/Runtime/Distribution/SemverCompare.cs` static `Compare(string, string) → int` per IP-8 (subset: MAJOR.MINOR.PATCH + optional `-PRERELEASE`). Author `Assets/Tests/EditMode/Distribution/SemverCompareTests.cs` with truth table (equal, major >, minor >, patch >, prerelease ordering, malformed input → 0 fallback). No external semver library. |
-| T1.1.4 | Glossary rows for distribution terms | 3 | **TECH-350** | Draft | Append rows to `ia/specs/glossary.md` for **BuildInfo ScriptableObject** (ref `Assets/Scripts/Runtime/Distribution/BuildInfo.cs`), **Release manifest (`latest.json`)** (forward-ref Stage 2.2), **Update notifier** (forward-ref Stage 2.3), **Unsigned installer tier** (forward-ref Stage 2.1). Follow glossary authoring rules in `ia/rules/terminology-consistency-authoring.md`. |
+| Task | Name | Issue | Status | Intent |
+| --- | --- | --- | --- | --- |
+| T1.1 | BuildInfo SO type | **TECH-347** | Draft | Author `Assets/Scripts/Runtime/Distribution/BuildInfo.cs` matching Design Expansion IP-3 verbatim — `[CreateAssetMenu(fileName = "BuildInfo", menuName = "Territory/BuildInfo")]`, private serialized `version` / `gitSha` / `buildTimestamp` fields with default `"0.0.0-dev"` / `"unknown"` / `"unknown"`, public getters, editor-gated `WriteFields(string, string, string)` under `#if UNITY_EDITOR`. |
+| T1.2 | BuildInfo asset instance | **TECH-348** | Draft | Create `Assets/Resources/BuildInfo.asset` via the Territory/BuildInfo menu command; commit both `.asset` + `.asset.meta`. Verify `Resources.Load<BuildInfo>("BuildInfo")` returns non-null in an EditMode fixture. |
+| T1.3 | SemverCompare helper + tests | **TECH-349** | Draft | Author `Assets/Scripts/Runtime/Distribution/SemverCompare.cs` static `Compare(string, string) → int` per IP-8 (subset: MAJOR.MINOR.PATCH + optional `-PRERELEASE`). Author `Assets/Tests/EditMode/Distribution/SemverCompareTests.cs` with truth table (equal, major >, minor >, patch >, prerelease ordering, malformed input → 0 fallback). No external semver library. |
+| T1.4 | Glossary rows for distribution terms | **TECH-350** | Draft | Append rows to `ia/specs/glossary.md` for **BuildInfo ScriptableObject** (ref `Assets/Scripts/Runtime/Distribution/BuildInfo.cs`), **Release manifest (`latest.json`)** (forward-ref Stage 2.2), **Update notifier** (forward-ref Stage 2.3), **Unsigned installer tier** (forward-ref Stage 2.1). Follow glossary authoring rules in `ia/rules/terminology-consistency-authoring.md`. |
 
-#### Stage 1.2 — Unity editor build script
+### Stage 2 — Unity build pipeline + versioning manifest / Unity editor build script
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -107,23 +75,20 @@
 - Writes `PlayerSettings.bundleVersion = version` before BuildPlayer invocation.
 - Calls `BuildPipeline.BuildPlayer` with `BuildTarget.StandaloneOSX` (BuildMac) / `BuildTarget.StandaloneWindows64` (BuildWindows), output paths `Builds/mac/Territory.app` / `Builds/win/Territory.exe`.
 - Local dry-run (manual invocation from Unity editor on a test semver) produces a `BuildInfo.asset` with correct fields + a built binary in `Builds/`.
-
-**Phases:**
-
-- [ ] Phase 1 — Author ReleaseBuilder skeleton + env var reader + BuildInfo writer helper.
-- [ ] Phase 2 — Wire platform-specific BuildPipeline invocations.
-- [ ] Phase 3 — Local dry-run validation on both targets (mac in-repo; win documented).
+- Phase 1 — Author ReleaseBuilder skeleton + env var reader + BuildInfo writer helper.
+- Phase 2 — Wire platform-specific BuildPipeline invocations.
+- Phase 3 — Local dry-run validation on both targets (mac in-repo; win documented).
 
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T1.2.1 | ReleaseBuilder skeleton + env reader | 1 | _pending_ | _pending_ | Author `Assets/Editor/ReleaseBuilder.cs` with `ReadEnv(string key)` helper that throws a descriptive exception when var missing, and top-level try/catch that `EditorApplication.Exit(1)` on any error so the shell script in Stage 1.3 propagates failure. |
-| T1.2.2 | UpdateBuildInfoAsset helper | 1 | _pending_ | _pending_ | Add `UpdateBuildInfoAsset(string version, string sha, string timestamp)` in `ReleaseBuilder.cs` — `AssetDatabase.LoadAssetAtPath<BuildInfo>("Assets/Resources/BuildInfo.asset")`, call editor-gated `WriteFields`, `EditorUtility.SetDirty(asset)`, `AssetDatabase.SaveAssets()`, `AssetDatabase.Refresh()`. Fail loudly if asset missing (points the user at T1.1.2). |
-| T1.2.3 | BuildMac + BuildWindows entry methods | 2 | _pending_ | _pending_ | Implement `public static void BuildMac()` + `public static void BuildWindows()` in `ReleaseBuilder.cs` — read env vars, call `UpdateBuildInfoAsset`, set `PlayerSettings.bundleVersion`, invoke `BuildPipeline.BuildPlayer` with the right `BuildPlayerOptions` (target, locationPathName `Builds/mac/Territory.app` / `Builds/win/Territory.exe`, `BuildOptions.None`, explicit scene list from `EditorBuildSettings.scenes`). Check `BuildReport.summary.result` and exit non-zero on failure. |
-| T1.2.4 | Local dry-run validation | 3 | _pending_ | _pending_ | Run `BuildMac` once from the Unity editor menu with hand-set env vars (`BUILD_VERSION=0.0.0-dev-test`, `BUILD_SHA=abc1234`, `BUILD_TIMESTAMP=...`); confirm `Assets/Resources/BuildInfo.asset` updated + `Builds/mac/Territory.app` produced. Capture command + output in a scratch note (eventually lands in Stage 2.3 trainable skill). Document the Windows machine invocation (cannot run locally) as a placeholder for Stage 2.1. |
+| Task | Name | Issue | Status | Intent |
+| --- | --- | --- | --- | --- |
+| T2.1 | ReleaseBuilder skeleton + env reader | _pending_ | _pending_ | Author `Assets/Editor/ReleaseBuilder.cs` with `ReadEnv(string key)` helper that throws a descriptive exception when var missing, and top-level try/catch that `EditorApplication.Exit(1)` on any error so the shell script in Stage 1.3 propagates failure. |
+| T2.2 | UpdateBuildInfoAsset helper | _pending_ | _pending_ | Add `UpdateBuildInfoAsset(string version, string sha, string timestamp)` in `ReleaseBuilder.cs` — `AssetDatabase.LoadAssetAtPath<BuildInfo>("Assets/Resources/BuildInfo.asset")`, call editor-gated `WriteFields`, `EditorUtility.SetDirty(asset)`, `AssetDatabase.SaveAssets()`, `AssetDatabase.Refresh()`. Fail loudly if asset missing (points the user at T1.1.2). |
+| T2.3 | BuildMac + BuildWindows entry methods | _pending_ | _pending_ | Implement `public static void BuildMac()` + `public static void BuildWindows()` in `ReleaseBuilder.cs` — read env vars, call `UpdateBuildInfoAsset`, set `PlayerSettings.bundleVersion`, invoke `BuildPipeline.BuildPlayer` with the right `BuildPlayerOptions` (target, locationPathName `Builds/mac/Territory.app` / `Builds/win/Territory.exe`, `BuildOptions.None`, explicit scene list from `EditorBuildSettings.scenes`). Check `BuildReport.summary.result` and exit non-zero on failure. |
+| T2.4 | Local dry-run validation | _pending_ | _pending_ | Run `BuildMac` once from the Unity editor menu with hand-set env vars (`BUILD_VERSION=0.0.0-dev-test`, `BUILD_SHA=abc1234`, `BUILD_TIMESTAMP=...`); confirm `Assets/Resources/BuildInfo.asset` updated + `Builds/mac/Territory.app` produced. Capture command + output in a scratch note (eventually lands in Stage 2.3 trainable skill). Document the Windows machine invocation (cannot run locally) as a placeholder for Stage 2.1. |
 
-#### Stage 1.3 — Build orchestration shell + Credits integration
+### Stage 3 — Unity build pipeline + versioning manifest / Build orchestration shell + Credits integration
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -138,59 +103,22 @@
 - `--platform {mac|win|all}` flag wired; `mac` runs Unity locally; `win` prints the Windows-machine command.
 - Credits screen displays `{version} ({gitSha})` via `Resources.Load<BuildInfo>("BuildInfo")` on screen open.
 - End-to-end dry-run: `tools/scripts/build-release.sh --version 0.0.0-dev-test --platform mac` produces an updated `BuildInfo.asset` + `Builds/mac/Territory.app`, and launching the built app shows the version string on Credits.
-
-**Phases:**
-
-- [ ] Phase 1 — Author `build-release.sh` entry with semver validation + env var export.
-- [ ] Phase 2 — Wire Credits screen consumer of `BuildInfo`.
-- [ ] Phase 3 — End-to-end dry-run + doc-string capture.
+- Phase 1 — Author `build-release.sh` entry with semver validation + env var export.
+- Phase 2 — Wire Credits screen consumer of `BuildInfo`.
+- Phase 3 — End-to-end dry-run + doc-string capture.
 
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T1.3.1 | build-release.sh entry + semver gate | 1 | _pending_ | _pending_ | Author `tools/scripts/build-release.sh` (chmod +x) per Example A: `set -euo pipefail`, semver regex `^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$` validation, `git rev-parse --short HEAD` for SHA, UTC ISO8601 timestamp, source `tools/scripts/load-repo-env.inc.sh` for `$UNITY_EDITOR_PATH`. Fail fast on missing Unity path. |
-| T1.3.2 | Platform dispatch (mac/win/all) | 1 | _pending_ | _pending_ | Add `build_mac` shell function that invokes `$UNITY -batchmode -nographics -quit -projectPath $(pwd) -executeMethod ReleaseBuilder.BuildMac -logFile Logs/build-mac-$VERSION.log` and checks exit code. Add `build_win` that prints the Windows-machine command block (since cross-compile to Win from Mac is the Windows-box responsibility per exploration §Cons). Wire `case "$PLATFORM"` dispatch for `mac`/`win`/`all`. |
-| T1.3.3 | Credits screen BuildInfo wire-up | 2 | _pending_ | _pending_ | Locate existing Credits screen component under `Assets/Scripts/UI/` (path resolves at kickoff). Add `[SerializeField] private BuildInfo buildInfo;` + `Awake` fallback `buildInfo ??= Resources.Load<BuildInfo>("BuildInfo")`. Render `$"v{buildInfo.Version} ({buildInfo.GitSha})"` in the version label. Invariant #4 — Inspector-wire pattern, no singleton. |
-| T1.3.4 | End-to-end mac dry-run + handoff note | 3 | _pending_ | _pending_ | Run `tools/scripts/build-release.sh --version 0.0.0-dev-test --platform mac` on the dev Mac. Verify `Assets/Resources/BuildInfo.asset` stamped, `Builds/mac/Territory.app` built, launching the app shows the version string on Credits. Capture command + output into a working note that seeds the trainable skill in Stage 2.3 (`ia/skills/distribution-release/SKILL.md`). |
+| Task | Name | Issue | Status | Intent |
+| --- | --- | --- | --- | --- |
+| T3.1 | build-release.sh entry + semver gate | _pending_ | _pending_ | Author `tools/scripts/build-release.sh` (chmod +x) per Example A: `set -euo pipefail`, semver regex `^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$` validation, `git rev-parse --short HEAD` for SHA, UTC ISO8601 timestamp, source `tools/scripts/load-repo-env.inc.sh` for `$UNITY_EDITOR_PATH`. Fail fast on missing Unity path. |
+| T3.2 | Platform dispatch (mac/win/all) | _pending_ | _pending_ | Add `build_mac` shell function that invokes `$UNITY -batchmode -nographics -quit -projectPath $(pwd) -executeMethod ReleaseBuilder.BuildMac -logFile Logs/build-mac-$VERSION.log` and checks exit code. Add `build_win` that prints the Windows-machine command block (since cross-compile to Win from Mac is the Windows-box responsibility per exploration §Cons). Wire `case "$PLATFORM"` dispatch for `mac`/`win`/`all`. |
+| T3.3 | Credits screen BuildInfo wire-up | _pending_ | _pending_ | Locate existing Credits screen component under `Assets/Scripts/UI/` (path resolves at kickoff). Add `[SerializeField] private BuildInfo buildInfo;` + `Awake` fallback `buildInfo ??= Resources.Load<BuildInfo>("BuildInfo")`. Render `$"v{buildInfo.Version} ({buildInfo.GitSha})"` in the version label. Invariant #4 — Inspector-wire pattern, no singleton. |
+| T3.4 | End-to-end mac dry-run + handoff note | _pending_ | _pending_ | Run `tools/scripts/build-release.sh --version 0.0.0-dev-test --platform mac` on the dev Mac. Verify `Assets/Resources/BuildInfo.asset` stamped, `Builds/mac/Territory.app` built, launching the app shows the version string on Credits. Capture command + output into a working note that seeds the trainable skill in Stage 2.3 (`ia/skills/distribution-release/SKILL.md`). |
 
 ---
 
-### Step 2 — Unsigned packaging + `/download` publication + in-game notifier
-
-**Status:** Draft (tasks _pending_ — not yet filed)
-
-**Backlog state (Step 2):** 0 filed
-
-**Objectives:** Turn Step 1's raw Unity binaries into platform-native installers (`.pkg` + `.exe`), publish them via a private `/download` web page with a `latest.json` manifest, and land the in-game `UpdateNotifier` that nudges testers on launch when a newer version exists. Close the loop with a trainable skill that encodes the full release flow so any agent can run it cold. This step ships the first tester-visible distribution path end-to-end.
-
-**Exit criteria:**
-
-- `tools/scripts/package-mac.sh` produces `Dist/TerritoryDeveloper-{version}.pkg` via `pkgbuild` + `productbuild` (unsigned).
-- `tools/scripts/package-win.ps1` produces `Dist/TerritoryDeveloper-Setup-{version}.exe` via Inno Setup (`iscc.exe`) against `tools/dist/win/territory.iss` (unsigned).
-- `tools/dist/mac/distribution.xml.template` + `tools/dist/win/territory.iss` committed with `$VERSION` / `MyAppVersion` placeholders.
-- `web/app/download/page.tsx` RSC renders artifact table + Gatekeeper/SmartScreen bypass copy (MDX under `web/content/pages/download.mdx` — full English per caveman-exception).
-- `web/public/download/latest.json` committed; schema matches Design Expansion Example B; `/download/latest.json` served statically with `Cache-Control: no-cache` (via `vercel.json` headers).
-- `web/app/robots.ts` disallows `/download` until MVP public flip.
-- `Assets/Scripts/UI/Distribution/UpdateNotifier.cs` MonoBehaviour: `Start`-triggered coroutine fetches `/download/latest.json`, compares via `SemverCompare`, enqueues toast on newer remote, silent fail on network error. Invariants #3 + #4 respected.
-- `ia/skills/distribution-release/SKILL.md` authored per IP-10 — preflight, build, package, upload, publish, notify, feedback-collect.
-- Full dry-run: Javier runs the skill against a fake semver, produces both artifacts, deploys to a Vercel preview, installs on mac + win, launches a prior-version build on the same machines, sees the update toast.
-
-**Art:** None (Gatekeeper + SmartScreen bypass screenshots captured during Stage 2.2 QA — stock OS screenshots, not game assets).
-
-**Relevant surfaces (load when step opens):**
-- `docs/distribution-exploration.md` §Design Expansion — IP-4 (mac package), IP-5 (win package), IP-6 (latest.json), IP-7 (notifier), IP-9 (/download), IP-10 (skill), Examples B + C.
-- Step 1 outputs — `Assets/Scripts/Runtime/Distribution/BuildInfo.cs`, `Assets/Scripts/Runtime/Distribution/SemverCompare.cs`, `Assets/Editor/ReleaseBuilder.cs`, `tools/scripts/build-release.sh`.
-- `tools/scripts/package-mac.sh` `(new)`, `tools/scripts/package-win.ps1` `(new)`, `tools/dist/mac/distribution.xml.template` `(new)`, `tools/dist/win/territory.iss` `(new)`.
-- `web/app/download/page.tsx` `(new)`, `web/content/pages/download.mdx` `(new)`, `web/public/download/latest.json` `(new)`, `web/app/robots.ts` (may exist — verify at kickoff; Glob shows no current file, treat as `(new)`).
-- `web/vercel.json` existing config — add `/download/latest.json` no-cache header.
-- `Assets/Scripts/UI/Distribution/UpdateNotifier.cs` `(new)`.
-- `ia/skills/distribution-release/SKILL.md` `(new)` — follows `ia/skills/README.md` conventions.
-- `ia/rules/invariants.md` — #3 (notifier fires once in `Start()`, coroutine not per-frame) + #4 (Inspector-wired scene component + `FindObjectOfType` fallback in `Awake`).
-- `ia/rules/agent-output-caveman.md` §exceptions — `/download` MDX prose is user-facing full English.
-- `ia/skills/README.md` + existing skill shape refs (`ia/skills/release-rollout-enumerate/SKILL.md`, `ia/skills/master-plan-new/SKILL.md`) — skill authoring pattern.
-
-#### Stage 2.1 — Platform packaging scripts
+### Stage 4 — Unsigned packaging + `/download` publication + in-game notifier / Platform packaging scripts
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -204,23 +132,20 @@
 - `tools/dist/win/territory.iss` committed with `{#MyAppVersion}` + `{#MyAppPath}` Inno directives.
 - `build-release.sh` `build_mac` invokes `tools/scripts/package-mac.sh` after successful Unity build.
 - Smoke dry-run: mac pkg installs on a clean user account (double-click → Gatekeeper right-click-Open workflow); Windows `.exe` installer runs on a Win machine (SmartScreen "More info → Run anyway" workflow).
-
-**Phases:**
-
-- [ ] Phase 1 — macOS packaging script + distribution.xml template.
-- [ ] Phase 2 — Windows packaging script + Inno Setup `.iss`.
-- [ ] Phase 3 — Wire packagers into `build-release.sh` + smoke installs.
+- Phase 1 — macOS packaging script + distribution.xml template.
+- Phase 2 — Windows packaging script + Inno Setup `.iss`.
+- Phase 3 — Wire packagers into `build-release.sh` + smoke installs.
 
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T2.1.1 | package-mac.sh + distribution.xml | 1 | _pending_ | _pending_ | Author `tools/scripts/package-mac.sh` (chmod +x) per IP-4: `pkgbuild --root` (dirname of `.app`) `--identifier studio.bacayo.territorydeveloper --version $VERSION --install-location /Applications` → component pkg, then `envsubst < tools/dist/mac/distribution.xml.template > /tmp/distribution.xml` + `productbuild --distribution /tmp/distribution.xml --package-path Dist` → `Dist/TerritoryDeveloper-$VERSION.pkg`. Commit `distribution.xml.template` alongside with `$VERSION` placeholder. |
-| T2.1.2 | package-win.ps1 + Inno .iss | 2 | _pending_ | _pending_ | Author `tools/scripts/package-win.ps1` per IP-5 — calls `iscc.exe /DMyAppVersion=$Version /DMyAppPath=$BuildPath tools\dist\win\territory.iss`. Author `tools/dist/win/territory.iss` with `[Setup]` (`AppName=Territory Developer`, `AppVersion={#MyAppVersion}`, `DefaultDirName={autopf}\Territory Developer`, `OutputDir=..\..\..\Dist`, `OutputBaseFilename=TerritoryDeveloper-Setup-{#MyAppVersion}`, unsigned), `[Files]` section globbing `{#MyAppPath}\*`, default Inno wizard pages. |
-| T2.1.3 | Wire packagers into build-release.sh | 3 | _pending_ | _pending_ | Edit `tools/scripts/build-release.sh` `build_mac` function — after Unity build succeeds, invoke `tools/scripts/package-mac.sh "Builds/mac/Territory.app" "$VERSION"`. Update the `build_win` command-hint block to show the powershell + package-win invocation. Add `--skip-package` debug flag per IP-1. |
-| T2.1.4 | Smoke install dry-run on both OSes | 3 | _pending_ | _pending_ | Run `tools/scripts/build-release.sh --version 0.0.0-smoke-1 --platform mac` end-to-end; double-click the produced `.pkg` on a clean macOS test user + run through Gatekeeper right-click-Open. On the Windows machine, run the powershell packager + double-click the `.exe`; capture the SmartScreen "More info → Run anyway" path. Capture both flows + screenshots as inputs for the `/download` bypass copy (Stage 2.2) + skill (Stage 2.3). |
+| Task | Name | Issue | Status | Intent |
+| --- | --- | --- | --- | --- |
+| T4.1 | package-mac.sh + distribution.xml | _pending_ | _pending_ | Author `tools/scripts/package-mac.sh` (chmod +x) per IP-4: `pkgbuild --root` (dirname of `.app`) `--identifier studio.bacayo.territorydeveloper --version $VERSION --install-location /Applications` → component pkg, then `envsubst < tools/dist/mac/distribution.xml.template > /tmp/distribution.xml` + `productbuild --distribution /tmp/distribution.xml --package-path Dist` → `Dist/TerritoryDeveloper-$VERSION.pkg`. Commit `distribution.xml.template` alongside with `$VERSION` placeholder. |
+| T4.2 | package-win.ps1 + Inno .iss | _pending_ | _pending_ | Author `tools/scripts/package-win.ps1` per IP-5 — calls `iscc.exe /DMyAppVersion=$Version /DMyAppPath=$BuildPath tools\dist\win\territory.iss`. Author `tools/dist/win/territory.iss` with `[Setup]` (`AppName=Territory Developer`, `AppVersion={#MyAppVersion}`, `DefaultDirName={autopf}\Territory Developer`, `OutputDir=..\..\..\Dist`, `OutputBaseFilename=TerritoryDeveloper-Setup-{#MyAppVersion}`, unsigned), `[Files]` section globbing `{#MyAppPath}\*`, default Inno wizard pages. |
+| T4.3 | Wire packagers into build-release.sh | _pending_ | _pending_ | Edit `tools/scripts/build-release.sh` `build_mac` function — after Unity build succeeds, invoke `tools/scripts/package-mac.sh "Builds/mac/Territory.app" "$VERSION"`. Update the `build_win` command-hint block to show the powershell + package-win invocation. Add `--skip-package` debug flag per IP-1. |
+| T4.4 | Smoke install dry-run on both OSes | _pending_ | _pending_ | Run `tools/scripts/build-release.sh --version 0.0.0-smoke-1 --platform mac` end-to-end; double-click the produced `.pkg` on a clean macOS test user + run through Gatekeeper right-click-Open. On the Windows machine, run the powershell packager + double-click the `.exe`; capture the SmartScreen "More info → Run anyway" path. Capture both flows + screenshots as inputs for the `/download` bypass copy (Stage 2.2) + skill (Stage 2.3). |
 
-#### Stage 2.2 — `/download` web surface + latest.json
+### Stage 5 — Unsigned packaging + `/download` publication + in-game notifier / `/download` web surface + latest.json
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -234,23 +159,20 @@
 - `web/app/robots.ts` disallows `/download` — covered by an `if (private)` gate wired to a single env var or const so the MVP-ship flip is a one-liner.
 - `web/vercel.json` `headers` config sets `Cache-Control: no-cache, must-revalidate` for `/download/latest.json`.
 - `npm run validate:web` green; Vercel preview deploy via `npm run deploy:web:preview` loads `/download` correctly (with a placeholder `latest.json`).
-
-**Phases:**
-
-- [ ] Phase 1 — Author latest.json schema + placeholder manifest committed.
-- [ ] Phase 2 — Author `/download` page + MDX bypass copy + robots + cache header.
-- [ ] Phase 3 — Preview-deploy validation.
+- Phase 1 — Author latest.json schema + placeholder manifest committed.
+- Phase 2 — Author `/download` page + MDX bypass copy + robots + cache header.
+- Phase 3 — Preview-deploy validation.
 
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T2.2.1 | latest.json schema + placeholder | 1 | _pending_ | _pending_ | Author `web/public/download/latest.json` matching Design Expansion Example B verbatim. Seed with `version: "0.0.0-dev-placeholder"`, `releasedAt` = current UTC, `notes` = "Placeholder — not a shipped build.", `downloads.mac.url` + `downloads.win.url` pointing at `/download/` paths that will exist post-first-release, placeholder zeroed `size` + `sha256: "pending"`. Schema is the contract `UpdateNotifier` reads at Stage 2.3. |
-| T2.2.2 | /download page RSC + artifact table | 2 | _pending_ | _pending_ | Author `web/app/download/page.tsx` Next.js Server Component: `const manifest = JSON.parse(await fs.readFile("web/public/download/latest.json", "utf8"))`, render version + releasedAt + notes heading, render a `<table>` row per platform (mac / win) with filename, size (formatted via existing `web/lib/` helper if present, else inline KB formatter), SHA256 (truncated 8+8), download link. Anchor links to `#gatekeeper` + `#smartscreen` bypass sections imported from `web/content/pages/download.mdx`. Backend-derives/frontend-renders pattern per `ia/rules/web-backend-logic.md`. |
-| T2.2.3 | download.mdx bypass copy + robots + cache | 2 | _pending_ | _pending_ | Author `web/content/pages/download.mdx` with two sections: `## Gatekeeper (macOS)` step-by-step right-click-Open flow with screenshot placeholders, `## SmartScreen (Windows)` More-info-Run-anyway flow with screenshot placeholders — full English per caveman-exception. Edit `web/app/robots.ts` (create if missing) to `disallow: ["/download", "/download/*"]` gated on a `DOWNLOAD_PUBLIC` const default `false`. Edit `web/vercel.json` to add `{ "source": "/download/latest.json", "headers": [{ "key": "Cache-Control", "value": "no-cache, must-revalidate" }] }`. |
-| T2.2.4 | Preview deploy + /download smoke | 3 | _pending_ | _pending_ | Run `npm run validate:web` + `npm run deploy:web:preview`. Load the preview `/download` URL — confirm artifact table renders from the placeholder manifest, bypass MDX renders, `curl -I {preview}/download/latest.json` shows `Cache-Control: no-cache`. Confirm Google prod site does NOT show `/download` (robots disallow). Note preview URL in the handoff for Stage 2.3 kickoff — the notifier fetches this URL during dev. |
+| Task | Name | Issue | Status | Intent |
+| --- | --- | --- | --- | --- |
+| T5.1 | latest.json schema + placeholder | _pending_ | _pending_ | Author `web/public/download/latest.json` matching Design Expansion Example B verbatim. Seed with `version: "0.0.0-dev-placeholder"`, `releasedAt` = current UTC, `notes` = "Placeholder — not a shipped build.", `downloads.mac.url` + `downloads.win.url` pointing at `/download/` paths that will exist post-first-release, placeholder zeroed `size` + `sha256: "pending"`. Schema is the contract `UpdateNotifier` reads at Stage 2.3. |
+| T5.2 | /download page RSC + artifact table | _pending_ | _pending_ | Author `web/app/download/page.tsx` Next.js Server Component: `const manifest = JSON.parse(await fs.readFile("web/public/download/latest.json", "utf8"))`, render version + releasedAt + notes heading, render a `<table>` row per platform (mac / win) with filename, size (formatted via existing `web/lib/` helper if present, else inline KB formatter), SHA256 (truncated 8+8), download link. Anchor links to `#gatekeeper` + `#smartscreen` bypass sections imported from `web/content/pages/download.mdx`. Backend-derives/frontend-renders pattern per `ia/rules/web-backend-logic.md`. |
+| T5.3 | download.mdx bypass copy + robots + cache | _pending_ | _pending_ | Author `web/content/pages/download.mdx` with two sections: `## Gatekeeper (macOS)` step-by-step right-click-Open flow with screenshot placeholders, `## SmartScreen (Windows)` More-info-Run-anyway flow with screenshot placeholders — full English per caveman-exception. Edit `web/app/robots.ts` (create if missing) to `disallow: ["/download", "/download/*"]` gated on a `DOWNLOAD_PUBLIC` const default `false`. Edit `web/vercel.json` to add `{ "source": "/download/latest.json", "headers": [{ "key": "Cache-Control", "value": "no-cache, must-revalidate" }] }`. |
+| T5.4 | Preview deploy + /download smoke | _pending_ | _pending_ | Run `npm run validate:web` + `npm run deploy:web:preview`. Load the preview `/download` URL — confirm artifact table renders from the placeholder manifest, bypass MDX renders, `curl -I {preview}/download/latest.json` shows `Cache-Control: no-cache`. Confirm Google prod site does NOT show `/download` (robots disallow). Note preview URL in the handoff for Stage 2.3 kickoff — the notifier fetches this URL during dev. |
 
-#### Stage 2.3 — In-game UpdateNotifier + trainable release skill
+### Stage 6 — Unsigned packaging + `/download` publication + in-game notifier / In-game UpdateNotifier + trainable release skill
 
 **Status:** Draft (tasks _pending_ — not yet filed)
 
@@ -265,23 +187,20 @@
 - `ia/skills/distribution-release/SKILL.md` authored per IP-10 — preflight checklist, version-bump, build, package, artifact verification (smoke-install on clean users), upload, deploy, news-post coordination, feedback-window; follows `ia/skills/README.md` authoring conventions + existing skill shape refs.
 - Full end-to-end dry-run — author bumps to `0.0.0-dry-2`, runs the skill cold, produces artifacts, deploys to a preview, launches a `0.0.0-dry-1`-built local app, sees the update toast + lands on the `/download` page.
 - `npm run unity:compile-check` green; `npm run validate:all` green.
-
-**Phases:**
-
-- [ ] Phase 1 — Author UpdateNotifier + ReleaseManifest DTO + scene wire-up.
-- [ ] Phase 2 — Author trainable release skill.
-- [ ] Phase 3 — End-to-end dry-run + skill-iteration loop.
+- Phase 1 — Author UpdateNotifier + ReleaseManifest DTO + scene wire-up.
+- Phase 2 — Author trainable release skill.
+- Phase 3 — End-to-end dry-run + skill-iteration loop.
 
 **Tasks:**
 
-| Task | Name | Phase | Issue | Status | Intent |
-|---|---|---|---|---|---|
-| T2.3.1 | UpdateNotifier MonoBehaviour + DTO | 1 | _pending_ | _pending_ | Author `Assets/Scripts/UI/Distribution/UpdateNotifier.cs` matching Example C verbatim — private `const string ManifestUrl`, Inspector-wired `BuildInfo localBuildInfo` + `ToastService toast` with `Awake` fallbacks (`Resources.Load<BuildInfo>("BuildInfo")` + `FindObjectOfType<ToastService>()`, invariant #4), `Start()` → `StartCoroutine(CheckForUpdate())`, coroutine using `UnityWebRequest.Get` w/ `timeout = 5`, silent-fail on non-Success result, `JsonUtility.FromJson<ReleaseManifest>`, `SemverCompare.Compare` gate, `toast?.Show(...)` with `Application.OpenURL` action. Author `Assets/Scripts/UI/Distribution/ReleaseManifest.cs` `[System.Serializable]` DTO. Invariant #3 — coroutine fires once in `Start`, no per-frame work. |
-| T2.3.2 | Scene wire-up + ToastService fallback | 1 | _pending_ | _pending_ | Drop `UpdateNotifier` onto the main-scene root UI canvas. Inspector-wire `localBuildInfo` → `Assets/Resources/BuildInfo.asset`. If Bucket 6 `ToastService` already exists in repo, wire directly; else leave `toast` null + rely on `Awake` `FindObjectOfType` fallback (harmless when ToastService lands later). Document fallback path in task Notes (revisit when Bucket 6 ships per Review notes). |
-| T2.3.3 | ia/skills/distribution-release skill | 2 | _pending_ | _pending_ | Author `ia/skills/distribution-release/SKILL.md` per IP-10 — YAML frontmatter (purpose, audience agent, triggers "ship a release", "cut a tester build"), sections: Preflight checklist (clean git tree, Unity license, `$UNITY_EDITOR_PATH` set, Windows machine reachable), Version bump, `tools/scripts/build-release.sh` invocation, packaging, artifact verification (smoke-install on clean mac user + Windows VM), upload (copy artifacts + updated `latest.json` into `web/public/download/`, commit), deploy (`npm run deploy:web`), news-post coordination, feedback window. Follow `ia/skills/README.md` conventions. Cite Windows-VM fallback per Review notes. |
-| T2.3.4 | Skill self-review + worked example | 2 | _pending_ | _pending_ | Add a "Worked example" section to `ia/skills/distribution-release/SKILL.md` that walks through shipping semver `0.1.0-beta.1` step-by-step with real command lines + expected output snippets (referencing T1.3.4 + T2.1.4 + T2.2.4 dry-run captures). Cross-link the skill from `ia/skills/README.md` index + from the umbrella Bucket 10 row. Validate frontmatter against existing skill conventions (`npm run validate:frontmatter`). |
-| T2.3.5 | End-to-end release dry-run | 3 | _pending_ | _pending_ | Execute the distribution-release skill cold against semver `0.0.0-dry-2` — full build + package (mac side; win side via Windows machine if available, else documented fallback), deploy to Vercel preview, launch an older `0.0.0-dry-1` build locally, observe the UpdateNotifier toast firing, click through → lands on `/download` preview page. Capture timing + any skill-step friction. |
-| T2.3.6 | Fold dry-run friction back into skill | 3 | _pending_ | _pending_ | Edit `ia/skills/distribution-release/SKILL.md` based on T2.3.5 friction log — tighten unclear steps, add missing preflight checks, update command snippets with observed variants. Run `npm run validate:all` + `npm run unity:compile-check` final gate. Handoff note for Bucket 10 close rollup into umbrella `full-game-mvp-master-plan.md`. |
+| Task | Name | Issue | Status | Intent |
+| --- | --- | --- | --- | --- |
+| T6.1 | UpdateNotifier MonoBehaviour + DTO | _pending_ | _pending_ | Author `Assets/Scripts/UI/Distribution/UpdateNotifier.cs` matching Example C verbatim — private `const string ManifestUrl`, Inspector-wired `BuildInfo localBuildInfo` + `ToastService toast` with `Awake` fallbacks (`Resources.Load<BuildInfo>("BuildInfo")` + `FindObjectOfType<ToastService>()`, invariant #4), `Start()` → `StartCoroutine(CheckForUpdate())`, coroutine using `UnityWebRequest.Get` w/ `timeout = 5`, silent-fail on non-Success result, `JsonUtility.FromJson<ReleaseManifest>`, `SemverCompare.Compare` gate, `toast?.Show(...)` with `Application.OpenURL` action. Author `Assets/Scripts/UI/Distribution/ReleaseManifest.cs` `[System.Serializable]` DTO. Invariant #3 — coroutine fires once in `Start`, no per-frame work. |
+| T6.2 | Scene wire-up + ToastService fallback | _pending_ | _pending_ | Drop `UpdateNotifier` onto the main-scene root UI canvas. Inspector-wire `localBuildInfo` → `Assets/Resources/BuildInfo.asset`. If Bucket 6 `ToastService` already exists in repo, wire directly; else leave `toast` null + rely on `Awake` `FindObjectOfType` fallback (harmless when ToastService lands later). Document fallback path in task Notes (revisit when Bucket 6 ships per Review notes). |
+| T6.3 | ia/skills/distribution-release skill | _pending_ | _pending_ | Author `ia/skills/distribution-release/SKILL.md` per IP-10 — YAML frontmatter (purpose, audience agent, triggers "ship a release", "cut a tester build"), sections: Preflight checklist (clean git tree, Unity license, `$UNITY_EDITOR_PATH` set, Windows machine reachable), Version bump, `tools/scripts/build-release.sh` invocation, packaging, artifact verification (smoke-install on clean mac user + Windows VM), upload (copy artifacts + updated `latest.json` into `web/public/download/`, commit), deploy (`npm run deploy:web`), news-post coordination, feedback window. Follow `ia/skills/README.md` conventions. Cite Windows-VM fallback per Review notes. |
+| T6.4 | Skill self-review + worked example | _pending_ | _pending_ | Add a "Worked example" section to `ia/skills/distribution-release/SKILL.md` that walks through shipping semver `0.1.0-beta.1` step-by-step with real command lines + expected output snippets (referencing T1.3.4 + T2.1.4 + T2.2.4 dry-run captures). Cross-link the skill from `ia/skills/README.md` index + from the umbrella Bucket 10 row. Validate frontmatter against existing skill conventions (`npm run validate:frontmatter`). |
+| T6.5 | End-to-end release dry-run | _pending_ | _pending_ | Execute the distribution-release skill cold against semver `0.0.0-dry-2` — full build + package (mac side; win side via Windows machine if available, else documented fallback), deploy to Vercel preview, launch an older `0.0.0-dry-1` build locally, observe the UpdateNotifier toast firing, click through → lands on `/download` preview page. Capture timing + any skill-step friction. |
+| T6.6 | Fold dry-run friction back into skill | _pending_ | _pending_ | Edit `ia/skills/distribution-release/SKILL.md` based on T2.3.5 friction log — tighten unclear steps, add missing preflight checks, update command snippets with observed variants. Run `npm run validate:all` + `npm run unity:compile-check` final gate. Handoff note for Bucket 10 close rollup into umbrella `full-game-mvp-master-plan.md`. |
 
 ---
 

@@ -89,7 +89,11 @@ export type ProjectSpecSectionKey =
   | "acceptance"
   | "issues_found"
   | "lessons_learned"
-  | "open_questions";
+  | "open_questions"
+  | "audit"
+  | "code_review"
+  | "code_fix_plan"
+  | "closeout_plan";
 
 export type ChecklistHints = Partial<
   Record<"G1" | "R1" | "A1" | "U1" | "D1" | "M1" | "I1", string[]>
@@ -126,6 +130,10 @@ export function sectionKeyFromH2Title(title: string): ProjectSpecSectionKey | nu
   if (/^10\.\s*lessons/i.test(t) || lower.startsWith("lessons learned"))
     return "lessons_learned";
   if (/^open questions/i.test(t)) return "open_questions";
+  if (/^audit$/i.test(t)) return "audit";
+  if (/^code review$/i.test(t)) return "code_review";
+  if (/^code fix plan$/i.test(t)) return "code_fix_plan";
+  if (/^closeout plan$/i.test(t)) return "closeout_plan";
   return null;
 }
 

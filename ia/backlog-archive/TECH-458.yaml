@@ -1,0 +1,38 @@
+id: TECH-458
+type: tech (IA infrastructure / lifecycle tooling / MCP)
+title: "Drop Phase params from MCP handlers + update lifecycle_stage enum + closeout-digest new sections (Stage 5 T5.1)"
+priority: high
+status: closed
+section: IA evolution lane
+spec: ia/projects/TECH-458.md
+files:
+  - tools/mcp-ia-server/src/
+  - tools/mcp-ia-server/src/tools/router-for-task.ts
+  - tools/mcp-ia-server/src/tools/spec-section.ts
+  - tools/mcp-ia-server/src/tools/backlog-issue.ts
+  - tools/mcp-ia-server/src/tools/project-spec-closeout-digest.ts
+notes: |
+  In `tools/mcp-ia-server/src/`: grep `phase` / `parent_phase` across `tools/` + `schemas/`; drop Phase-aware params from `router_for_task`, `spec_section`, `backlog_issue`, `project_spec_closeout_digest` handlers. Update `router_for_task` `lifecycle_stage` enum — remove Phase-era values; add 11 pair/enrich values: `plan_review`, `plan_fix_apply`, `stage_file_plan`, `stage_file_apply`, `project_new_plan`, `project_new_apply`, `spec_enrich`, `opus_audit`, `opus_code_review`, `code_fix_apply`, `closeout_apply`. Update `project_spec_closeout_digest` to read 4 new spec sections (§Audit, §Code Review, §Code Fix Plan, §Closeout Plan) alongside existing reads. No cache restart in this task — T5.2 handles it.
+acceptance: |
+  No `phase` / `parent_phase` param on `router_for_task`, `spec_section`, `backlog_issue`, `project_spec_closeout_digest` handlers; `router_for_task` `lifecycle_stage` enum contains 11 new values + no Phase-era values; `project_spec_closeout_digest` reads §Audit / §Code Review / §Code Fix Plan / §Closeout Plan; `npm run validate:all` green (handler unit tests pass).
+depends_on:
+  - TECH-457
+depends_on_raw: "TECH-457 (Stage 4 M3 flip — BACKLOG regen without Phase column)."
+related:
+  - TECH-459
+  - TECH-460
+  - TECH-461
+created: 2026-04-19
+completed: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T5.1
+raw_markdown: |
+  - [x] **TECH-458** — Drop Phase params from MCP handlers + update `lifecycle_stage` enum + closeout-digest new sections (Stage 5 T5.1)
+    - Type: tech (IA infrastructure / lifecycle tooling / MCP)
+    - Priority: high
+    - Files: `tools/mcp-ia-server/src/`, `tools/mcp-ia-server/src/tools/router-for-task.ts`, `spec-section.ts`, `backlog-issue.ts`, `project-spec-closeout-digest.ts`
+    - Spec: [ia/projects/TECH-458.md](ia/projects/TECH-458.md)
+    - Parent plan: [lifecycle-refactor-master-plan.md](ia/projects/lifecycle-refactor-master-plan.md) (T5.1)
+    - Notes: Drop Phase-aware params; update `router_for_task` `lifecycle_stage` enum w/ 11 new pair/enrich values; update `project_spec_closeout_digest` to read 4 new spec sections.
+    - Acceptance: No Phase params; enum contains 11 new values; closeout-digest reads 4 new sections; `validate:all` green.
+    - Depends on: **TECH-457**

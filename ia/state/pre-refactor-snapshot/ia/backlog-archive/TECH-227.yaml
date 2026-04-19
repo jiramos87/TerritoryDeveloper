@@ -1,0 +1,26 @@
+id: TECH-227
+type: infrastructure / test tooling
+title: Blip golden fixture bake script + fixture JSONs (Stage 3.4 Phase 1) (2026-04-16)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+files: 
+  - tools/scripts/blip-bake-fixtures.ts
+  - tools/fixtures/blip/
+notes: |
+  Pure TS port of `BlipVoice.Render` scalar loop (osc bank + AHDSR + one-pole LP; `Math.fround` at arithmetic boundaries keeps float32 rail w/ C# kernel). 10 MVP **Blip patch** recipes hardcoded from `docs/blip-procedural-sfx-exploration.md` §9 — variant 0 per id, `patchHash` FNV-1a 32-bit (Stage 1.2 T1.2.5 field-walk). Writes `tools/fixtures/blip/{id}-v0.json` w/ schema `{ id, variant, patchHash, sampleRate:48000, sampleCount, sumAbsHash, zeroCrossings }`. xorshift seed 0 + guard → `0x9E3779B9` for reproducible bake. Manual run only — `npx ts-node tools/scripts/blip-bake-fixtures.ts`; CI never regens. Dev notes: Node ≥22 TS strip drops `const enum` (→ `as const`); `__dirname` ESM quirk → one `..` from `tools/scripts/`. Satisfies Stage 3.4 exit first half.
+acceptance: |
+  10 fixture JSONs emitted; schema complete; bake reproducible; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-227** — Blip golden fixture bake script + fixture JSONs (Stage 3.4 Phase 1) (2026-04-16)
+    - Type: infrastructure / test tooling
+    - Files: `tools/scripts/blip-bake-fixtures.ts` (new), `tools/fixtures/blip/` (new dir, 10 JSONs)
+    - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+    - Notes: Pure TS port of `BlipVoice.Render` scalar loop (osc bank + AHDSR + one-pole LP; `Math.fround` at arithmetic boundaries keeps float32 rail w/ C# kernel). 10 MVP **Blip patch** recipes hardcoded from `docs/blip-procedural-sfx-exploration.md` §9 — variant 0 per id, `patchHash` FNV-1a 32-bit (Stage 1.2 T1.2.5 field-walk). Writes `tools/fixtures/blip/{id}-v0.json` w/ schema `{ id, variant, patchHash, sampleRate:48000, sampleCount, sumAbsHash, zeroCrossings }`. xorshift seed 0 + guard → `0x9E3779B9` for reproducible bake. Manual run only — `npx ts-node tools/scripts/blip-bake-fixtures.ts`; CI never regens. Dev notes: Node ≥22 TS strip drops `const enum` (→ `as const`); `__dirname` ESM quirk → one `..` from `tools/scripts/`. Satisfies Stage 3.4 exit first half.
+    - Acceptance: 10 fixture JSONs emitted; schema complete; bake reproducible; `npm run validate:all` green.
+    - Depends on: none

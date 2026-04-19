@@ -1,0 +1,31 @@
+id: TECH-442
+type: tech (IA infrastructure / lifecycle tooling)
+title: Branch + freeze setup + initial migration JSON (Stage 1.1 Phase 1)
+priority: medium
+status: closed
+section: IA evolution lane
+spec: ia/projects/TECH-442.md
+files:
+  - CLAUDE.md
+  - ia/state/lifecycle-refactor-migration.json
+notes: |
+  `git checkout -b feature/lifecycle-collapse-cognitive-split`. Append freeze note to `CLAUDE.md` §Key commands warning against `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, `/stage-file` until M8 sign-off. Write initial `ia/state/lifecycle-refactor-migration.json`: M0 done, M1–M8 pending; M2 per-file array seeded with all `ia/projects/*master-plan*.md` paths (each `pending`); M3 per-file array seeded with all `ia/backlog/*.yaml` + open `ia/projects/{ISSUE_ID}.md` paths. Pure tooling op — no Unity runtime touch.
+acceptance: |
+  Branch `feature/lifecycle-collapse-cognitive-split` exists; freeze note appears in `CLAUDE.md`; `ia/state/lifecycle-refactor-migration.json` parses as JSON, M0 status `done`, M1–M8 status `pending`, M2 + M3 per-file arrays non-empty + all entries `pending`; `npm run validate:all` exit 0.
+depends_on: []
+depends_on_raw: none.
+related:
+  - TECH-443
+created: 2026-04-18
+closed: 2026-04-18
+raw_markdown: |
+  - [x] **TECH-442** — Branch + freeze setup + initial migration JSON (Stage 1.1 Phase 1)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Files: `CLAUDE.md`, `ia/state/lifecycle-refactor-migration.json`
+    - Spec: `ia/projects/TECH-442.md`
+    - Notes: `git checkout -b feature/lifecycle-collapse-cognitive-split`; freeze note in `CLAUDE.md`; initial migration JSON M0 done + M1–M8 pending + M2/M3 per-file arrays seeded.
+    - Acceptance: branch exists; freeze note in `CLAUDE.md`; migration JSON parses + M0 done + M1–M8 pending + per-file arrays non-empty; `validate:all` exit 0.
+    - Depends on: none.
+    - Related: TECH-443
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T1.1.1

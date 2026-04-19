@@ -56,7 +56,7 @@ async function main(): Promise<void> {
     "list_rules",
     "rule_content",
     "backlog_issue",
-    "project_spec_closeout_digest",
+    "stage_closeout_digest",
     "project_spec_journal_persist",
     "project_spec_journal_search",
     "project_spec_journal_get",
@@ -527,19 +527,19 @@ async function main(): Promise<void> {
 
   const digest = parseJsonFromToolResult(
     await client.callTool({
-      name: "project_spec_closeout_digest",
+      name: "stage_closeout_digest",
       arguments: { issue_id: "FEAT-49" },
     }),
   ) as { schema_version?: number; spec_path?: string; error?: string };
   if (digest.error) {
     throw new Error(
-      `project_spec_closeout_digest: ${(digest as { message?: string }).message ?? digest.error}`,
+      `stage_closeout_digest: ${(digest as { message?: string }).message ?? digest.error}`,
     );
   }
-  if (digest.schema_version !== 1) throw new Error("project_spec_closeout_digest schema_version 1 expected");
+  if (digest.schema_version !== 1) throw new Error("stage_closeout_digest schema_version 1 expected");
   if (digest.spec_path !== "ia/projects/FEAT-49.md") {
     throw new Error(
-      `project_spec_closeout_digest spec_path mismatch: expected ia/projects/FEAT-49.md, got ${digest.spec_path}`,
+      `stage_closeout_digest spec_path mismatch: expected ia/projects/FEAT-49.md, got ${digest.spec_path}`,
     );
   }
 

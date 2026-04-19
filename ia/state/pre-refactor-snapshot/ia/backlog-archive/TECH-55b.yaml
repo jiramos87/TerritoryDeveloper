@@ -1,0 +1,39 @@
+id: TECH-55b
+type: tooling / agent enablement
+title: "**Editor Reports: DB-first document storage + filesystem fallback** (2026-04-04)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-04)
+spec: (removed after closure — glossary **Editor export registry**; **unity-development-context** §10; **postgres-ia-dev-setup** **Editor export registry** + **Node**/**PATH** troubleshooting; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-55**; this row)
+files: 
+  - Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs
+  - Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs
+  - Assets/Scripts/Editor/EditorPostgresExportRegistrar.cs
+  - db/migrations/0005_editor_export_document.sql
+  - .gitignore
+  - tools/reports/.staging/
+  - tools/postgres-ia/register-editor-export.mjs
+  - package.json
+  - .env.example
+  - docs/postgres-ia-dev-setup.md
+  - ia/specs/unity-development-context.md
+  - ia/specs/glossary.md
+  - docs/postgres-interchange-patterns.md
+  - ARCHITECTURE.md
+  - AGENTS.md
+notes: |
+  **Completed (verified — `/project-spec-close` + user):** **DB-first** **`document jsonb`**; **`tools/reports/`** fallback; quiet success **`Debug.Log`** (optional verbose **EditorPrefs**); **`DATABASE_URL`** via **EditorPrefs** / **`.env.local`**; **`node`** resolution for GUI-launched **Unity** (**Volta**/Homebrew/**EditorPrefs**/**`NODE_BINARY`**); optional **`backlog_issue_id`** (**NULL** when unset); no backlog id as **Editor** product branding. **Operational:** run **`npm run db:migrate`** (**`0004`**/**`0005`**) before **`editor_export_*`** exist; **Postgres** user in **`DATABASE_URL`** must match local roles (e.g. Homebrew vs `postgres`).
+acceptance: ""
+depends_on: 
+  - TECH-55
+depends_on_raw: "**TECH-55** **§ Completed**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-55b** — **Editor Reports: DB-first document storage + filesystem fallback** (2026-04-04)
+    - Type: tooling / agent enablement
+    - Files: `Assets/Scripts/Editor/AgentDiagnosticsReportsMenu.cs`; `Assets/Scripts/Editor/InterchangeJsonReportsMenu.cs`; `Assets/Scripts/Editor/EditorPostgresExportRegistrar.cs`; `db/migrations/0005_editor_export_document.sql`; `.gitignore` (`tools/reports/.staging/`); `tools/postgres-ia/register-editor-export.mjs`; root `package.json`; `.env.example`; [`docs/postgres-ia-dev-setup.md`](docs/postgres-ia-dev-setup.md); [`ia/specs/unity-development-context.md`](ia/specs/unity-development-context.md) §10; [`ia/specs/glossary.md`](ia/specs/glossary.md) — **Editor export registry**; [`docs/postgres-interchange-patterns.md`](docs/postgres-interchange-patterns.md); [`ARCHITECTURE.md`](ARCHITECTURE.md); [`AGENTS.md`](AGENTS.md)
+    - Spec: (removed after closure — glossary **Editor export registry**; **unity-development-context** §10; **postgres-ia-dev-setup** **Editor export registry** + **Node**/**PATH** troubleshooting; [`BACKLOG.md`](BACKLOG.md) **§ Completed** **TECH-55**; this row)
+    - Notes: **Completed (verified — `/project-spec-close` + user):** **DB-first** **`document jsonb`**; **`tools/reports/`** fallback; quiet success **`Debug.Log`** (optional verbose **EditorPrefs**); **`DATABASE_URL`** via **EditorPrefs** / **`.env.local`**; **`node`** resolution for GUI-launched **Unity** (**Volta**/Homebrew/**EditorPrefs**/**`NODE_BINARY`**); optional **`backlog_issue_id`** (**NULL** when unset); no backlog id as **Editor** product branding. **Operational:** run **`npm run db:migrate`** (**`0004`**/**`0005`**) before **`editor_export_*`** exist; **Postgres** user in **`DATABASE_URL`** must match local roles (e.g. Homebrew vs `postgres`).
+    - Depends on: **TECH-55** **§ Completed**
+    - Related: **TECH-44b**/**c** **§ Completed**, **Close Dev Loop** (**TECH-75** — **TECH-75c** **§ Completed** (this file **Recent archive**); **TECH-75d** archived; **TECH-75b** archived; absorbed former **TECH-59**)

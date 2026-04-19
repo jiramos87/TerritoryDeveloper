@@ -1,0 +1,37 @@
+id: TECH-457
+type: tech (IA infrastructure / lifecycle tooling)
+title: BACKLOG regen + validate:all + flip M3 done (Stage 4 T4.4)
+priority: high
+status: closed
+section: IA evolution lane
+spec: ia/projects/TECH-457.md
+files:
+  - BACKLOG.md
+  - BACKLOG-ARCHIVE.md
+  - tools/scripts/materialize-backlog.sh
+  - ia/state/lifecycle-refactor-migration.json
+notes: |
+  Run `bash tools/scripts/materialize-backlog.sh`; verify `BACKLOG.md` + `BACKLOG-ARCHIVE.md` emit without Phase column (regen is deterministic from yaml). Run `npm run validate:all` on full repo. Flip migration JSON `M3` `done` (root phase flag), not just per-file arrays.
+acceptance: |
+  `BACKLOG.md` + `BACKLOG-ARCHIVE.md` regenerated; no Phase column in view; `npm run validate:all` exits 0; migration JSON `M3.status` == `done`; ready for Stage 5 (MCP server drop-phase).
+depends_on:
+  - TECH-456
+depends_on_raw: TECH-456 (yaml schema must be clean before materialize-backlog consumes it).
+related:
+  - TECH-454
+  - TECH-455
+  - TECH-456
+created: 2026-04-19
+completed: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T4.4
+raw_markdown: |
+  - [x] **TECH-457** — BACKLOG regen + `validate:all` + flip M3 done (Stage 4 T4.4)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Priority: high
+    - Files: `BACKLOG.md`, `BACKLOG-ARCHIVE.md`, `tools/scripts/materialize-backlog.sh`, `ia/state/lifecycle-refactor-migration.json`
+    - Spec: [ia/projects/TECH-457.md](ia/projects/TECH-457.md)
+    - Parent plan: [lifecycle-refactor-master-plan.md](ia/projects/lifecycle-refactor-master-plan.md) (T4.4)
+    - Notes: Run `bash tools/scripts/materialize-backlog.sh`; verify no Phase column; run `npm run validate:all`; flip `M3.status` root flag.
+    - Acceptance: Views regenerated; `validate:all` exits 0; `M3.status` == `done`.
+    - Depends on: **TECH-456**

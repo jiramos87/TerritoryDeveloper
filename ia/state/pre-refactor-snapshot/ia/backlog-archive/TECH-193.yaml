@@ -1,0 +1,27 @@
+id: TECH-193
+type: infrastructure / web workspace / content
+title: Devlog single-post RSC + origin-story MDX seed (Stage 2.3 Phase 1) (2026-04-15)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-15)
+spec: (removed at closeout — journal persist `ok`, both sections empty)
+files: 
+  - web/app/devlog/[slug]/page.tsx
+  - web/content/devlog/2026-MM-DD-origin-story.mdx
+notes: |
+  Single-post RSC resolves slug via `loadDevlogPost(slug)` (new loader sibling — accepts `DevlogFrontmatter` w/o `PageFrontmatter` validator); renders title + tag chips + read-time + optional cover + compiled MDX body. `generateMetadata` returns `openGraph.images` from `cover` or `/og-default.png` fallback. `generateStaticParams` fs-scans `web/content/devlog/*.mdx`. Decision Log — used `@mdx-js/mdx` `evaluate()` over dynamic `import()` (webpack template-literal constraint + Turbopack SSG compat); `@mdx-js/mdx` hoisted via npm workspace; created 1x1 white PNG placeholder at `web/public/og-default.png` (real OG art deferred).
+acceptance: |
+  `/devlog/2026-04-15-origin-story` renders cover (or fallback) + tags + read-time + MDX body; OG metadata valid; `npm run validate:web` + `npm run validate:all` green.
+depends_on: 
+  - TECH-192
+depends_on_raw: "**TECH-192** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-193** — Devlog single-post RSC + origin-story MDX seed (Stage 2.3 Phase 1) (2026-04-15)
+    - Type: infrastructure / web workspace / content
+    - Files: `web/app/devlog/[slug]/page.tsx` (new), `web/content/devlog/2026-MM-DD-origin-story.mdx` (new)
+    - Spec: (removed at closeout — journal persist `ok`, both sections empty)
+    - Notes: Single-post RSC resolves slug via `loadDevlogPost(slug)` (new loader sibling — accepts `DevlogFrontmatter` w/o `PageFrontmatter` validator); renders title + tag chips + read-time + optional cover + compiled MDX body. `generateMetadata` returns `openGraph.images` from `cover` or `/og-default.png` fallback. `generateStaticParams` fs-scans `web/content/devlog/*.mdx`. Decision Log — used `@mdx-js/mdx` `evaluate()` over dynamic `import()` (webpack template-literal constraint + Turbopack SSG compat); `@mdx-js/mdx` hoisted via npm workspace; created 1x1 white PNG placeholder at `web/public/og-default.png` (real OG art deferred).
+    - Acceptance: `/devlog/2026-04-15-origin-story` renders cover (or fallback) + tags + read-time + MDX body; OG metadata valid; `npm run validate:web` + `npm run validate:all` green.
+    - Depends on: **TECH-192** (archived)

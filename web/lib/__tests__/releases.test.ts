@@ -11,7 +11,7 @@ function makePlan(filename: string): PlanData {
     overallStatus: '',
     overallStatusDetail: '',
     siblingWarnings: [],
-    steps: [],
+    stages: [],
     allTasks: [],
   };
 }

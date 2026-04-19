@@ -1,13 +1,13 @@
 ---
 description: Run the full integrated closed-loop verification on current branch — bridge preflight → `validate:all` → compile gate → Path A test-mode batch and / or Path B IDE bridge hybrid → optional Play Mode evidence → bounded fix→verify iteration (`MAX_ITERATIONS` default 2) → extended JSON Verification block + caveman summary. Dispatches the `verify-loop` subagent. Distinct from `/verify` (lightweight single-pass `verifier`, no fix iteration).
-argument-hint: "[ISSUE_ID] [--scenario {id}] [--seed-cells x,y[,x,y...]] [--max-iterations N]"
+argument-hint: "[ISSUE_ID] [--scenario {id}] [--seed-cells x,y[,x,y...]] [--max-iterations N] [--tooling-only]"
 ---
 
 # /verify-loop — dispatch `verify-loop` subagent
 
 Use `verify-loop` subagent (`.claude/agents/verify-loop.md`) to orchestrate the integrated closed-loop verification recipe in `ia/skills/verify-loop/SKILL.md`. Composes 5 underlying skills (`bridge-environment-preflight`, `project-implementation-validation`, `agent-test-mode-verify`, `ide-bridge-evidence`, `close-dev-loop`).
 
-`$ARGUMENTS` carries optional inputs: leading `ISSUE_ID` (active BACKLOG id), `--scenario {SCENARIO_ID}` (Path A / Path B gate; default `reference-flat-32x32`), `--seed-cells x,y[,x,y...]` (Path B `debug_context_bundle` seeds), `--max-iterations N` (fix loop cap; default 2). All optional — subagent infers from git diff + active spec §7b / §8 when omitted.
+`$ARGUMENTS` carries optional inputs: leading `ISSUE_ID` (active BACKLOG id), `--scenario {SCENARIO_ID}` (Path A / Path B gate; default `reference-flat-32x32`), `--seed-cells x,y[,x,y...]` (Path B `debug_context_bundle` seeds), `--max-iterations N` (fix loop cap; default 2), `--tooling-only` (pre-matrix bypass for pure tooling refactors — skill §"Pre-matrix mode gate" asserts no `Assets|Packages|ProjectSettings` dirty paths then runs Step 2 + Step 7 only). All optional — subagent infers from git diff + active spec §7b / §8 when omitted.
 
 Distinct from `/verify`: `/verify` runs the lightweight `verifier` subagent (single pass, no code edits, policy-only reporting). `/verify-loop` runs the full closed-loop recipe with bounded fix iteration (Edit allowed narrowly for Step 6 fixes only).
 
@@ -45,8 +45,11 @@ Forward via Agent tool with `subagent_type: "verify-loop"`:
 > - `SCENARIO_ID` — kebab-case id under `tools/fixtures/scenarios/`; default `reference-flat-32x32`.
 > - `SEED_CELLS` — 1–3 `"x,y"` for Path B `debug_context_bundle`; infer from spec §7b if omitted.
 > - `MAX_ITERATIONS` — default 2.
+> - `TOOLING_ONLY` — flag (default false). When present as `--tooling-only` in `$ARGUMENTS`: apply skill §"Pre-matrix mode gate" — assert no `Assets|Packages|ProjectSettings` dirty paths, bypass Decision matrix, run Step 2 + Step 7 only. Use only for pure tooling surface refactors (MCP TypeScript / web Next.js / skills-agents-commands markdown / docs / scripts). Never on mixed diffs.
 >
-> ## Execution sequence (decision matrix gates each step)
+> ## Execution sequence (IF `--tooling-only` → pre-matrix bypass; ELSE decision matrix gates each step)
+>
+> **Pre-matrix mode gate** (fires only when `--tooling-only` set): run `git status --porcelain` + `git diff --name-only` against branch base; assert zero matches for regex `^(Assets|Packages|ProjectSettings)/`. Miss → emit `verdict: "fail"` citing dirty Unity paths + abort. Hit → skip Steps 0, 1, 3, 4a, 4b, 5, 6 (record each in `skipped` array with reason `"tooling_only_flag"`); run Step 2 + Step 7 only; JSON header records `mode: "tooling_only"` + `path_b: "skipped_not_required"`.
 >
 > 1. **Step 0 — Bridge preflight** (conditional on Step 4b / Step 5) — `npm run db:bridge-preflight`. Bounded repair: one attempt per failure class; still failing → escalate.
 > 2. **Step 1 — Compile gate** (any C# touched) — preference order: `unity_bridge_command get_compilation_status` → `npm run unity:compile-check` → `unity_bridge_command get_console_logs` scan. Never `enter_play_mode` against broken build.
@@ -72,6 +75,7 @@ Forward via Agent tool with `subagent_type: "verify-loop"`:
 > - Do NOT skip Verification block JSON header — structured machine-readable, exempt from caveman.
 > - Do NOT replace human normal-game QA — agent verification supplements, never substitutes (per `AGENTS.md`).
 > - Do NOT touch BACKLOG row state, archive, spec deletion — closeout territory.
+> - Do NOT pass `--tooling-only` on mixed diffs. Skill Pre-matrix mode gate fails loud when `Assets|Packages|ProjectSettings` dirty. Full `/verify-loop` is required whenever Unity surface is touched.
 >
 > ## Output
 >
@@ -89,6 +93,8 @@ Forward via Agent tool with `subagent_type: "verify-loop"`:
 >   "bridge_hybrid": {"preflight_exit": 0, "play_mode_state": "edit_mode", "bundle_paths": ["..."], "anomaly_count_after": 0},
 >   "evidence": {"screenshots": ["..."], "logs": ["..."]},
 >   "fix_iterations": 0,
+>   "path_b": "ran|skipped_batched|skipped_not_required",
+>   "mode": "full|tooling_only",
 >   "verdict": "pass|fail|skipped|escalated",
 >   "human_ask": "confirm in normal game (no test mode flags)"
 > }

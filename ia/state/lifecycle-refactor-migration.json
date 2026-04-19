@@ -1,0 +1,1123 @@
+{
+  "schema_version": 1,
+  "created": "2026-04-18",
+  "branch": "feature/lifecycle-collapse-cognitive-split",
+  "snapshot_path": "ia/state/pre-refactor-snapshot/",
+  "phases": {
+    "M0": {
+      "status": "done",
+      "name": "Branch + freeze + initial migration JSON"
+    },
+    "M1": {
+      "status": "done",
+      "name": "Templates + rules + glossary + plan-apply contract"
+    },
+    "M2": {
+      "status": "done",
+      "name": "Master-plan in-place migration"
+    },
+    "M3": {
+      "status": "done",
+      "name": "Phase-layer fold: specs + yaml schema"
+    },
+    "M4": {
+      "status": "done",
+      "name": "MCP server: drop Phase + plan_apply_validate"
+    },
+    "M5": {
+      "status": "done",
+      "name": "Web dashboard: parser + PlanTree collapse"
+    },
+    "M6": {
+      "status": "done",
+      "name": "Skills + agents + commands rewrite",
+      "tasks": {
+        "T7.1": "done",
+        "T7.2": "done",
+        "T7.3": "done",
+        "T7.4": "done",
+        "T7.5": "done",
+        "T7.6": "done",
+        "T7.11": "done",
+        "T7.12": "done",
+        "T7.13": "done",
+        "T7.14": "done",
+        "T7.7": "done",
+        "T7.8": "done",
+        "T7.9": "done",
+        "T7.10": "done"
+      }
+    },
+    "M7": {
+      "status": "done",
+      "completed": "2026-04-19",
+      "T8.4": {
+        "refactor_scope_fixes": [],
+        "refactor_scope_fixes_note": "zero refactor-scope fixes required — all T8.3 failures live on Unity/C# runtime surfaces outside lifecycle-refactor scope (Blip audio + Zone-S economy). Per T8.4 bounded rule ('escalate if cross-stage work'), no pile-on in lifecycle-refactor lane.",
+        "escalations": [
+          {
+            "area": "Blip audio golden fixtures",
+            "owning_orchestrator": "ia/projects/blip-master-plan.md",
+            "action": "refresh golden fixtures or diagnose audio renderer drift; owner = Blip master-plan owner"
+          },
+          {
+            "area": "Economy Treasury floor clamp",
+            "owning_orchestrator": "ia/projects/zone-s-economy-master-plan.md",
+            "action": "triage Treasury floor-clamp service regression; owner = Zone-S master-plan owner"
+          }
+        ],
+        "verify_local_reverify_status": "skipped — no refactor-lane patches applied; re-running would reproduce identical pre-existing failures with no signal delta",
+        "m7_flip_rationale": "Stage 8 exit criteria met for refactor scope: dry-run wiring validated (T8.1), view regen clean (T8.2), verify:local full chain executed with failures fully triaged + attributed outside refactor (T8.3), cross-lane escalations handed to owning orchestrators (T8.4)."
+      },
+      "name": "Dry-run + full validation",
+      "dry-run": {
+        "candidate": {
+          "master_plan": "ia/projects/landmarks-master-plan.md",
+          "stage": "Stage 2.1",
+          "task_key": "T2.1",
+          "task_title": "Author 6 catalog rows",
+          "state": "_pending_",
+          "rationale": "Pending task in non-active Stage (Step 2 not yet opened for filing). Avoids collision with in-progress work."
+        },
+        "seams": [
+          {
+            "seam": "plan-review-fix-apply",
+            "handoff_anchor": "§Plan Fix",
+            "tuple_count": 0,
+            "verdict": "PASS",
+            "note": "Dry-run simulation — no real plan-review dispatched; anchor resolution confirmed against lifecycle-refactor-master-plan.md §Plan Fix block (Stage 8)."
+          },
+          {
+            "seam": "opus-audit",
+            "simulated": true,
+            "n_paragraphs": 1,
+            "note": "Mock §Audit paragraph: 'Landmark catalog authoring exercises YAML schema + validator wiring. No runtime surface touched; risk low. Watch: popGate enum drift vs validator allowlist.'"
+          },
+          {
+            "seam": "opus-code-review",
+            "simulated": true,
+            "verdict": "PASS",
+            "note": "Mock §Code Review verdict inline; no spec mutation."
+          },
+          {
+            "seam": "stage-closeout-plan-apply",
+            "handoff_anchor": "§Stage Closeout Plan",
+            "tuple_count": 0,
+            "verdict": "plan-only",
+            "note": "stage-closeout-apply dispatch simulated — NOT executed. Anchor §Stage Closeout Plan resolves on lifecycle-refactor-master-plan.md Stage 8 block (absent in landmarks-master-plan.md Stage 2.1 — expected, Stage 2.1 not yet filed)."
+          }
+        ],
+        "anchor_resolution": "all target_anchor values verified against owning-Stage headings; no regex ambiguity",
+        "state_mutation_check": "no spec file or yaml mutation; only migration JSON M7.dry-run subtree written",
+        "validate_all_status": "green — npm run validate:all exit 0 (5 warnings only) at T8.1 closeout"
+      },
+      "T8.2": {
+        "materialize_backlog_status": "green — BACKLOG.md + BACKLOG-ARCHIVE.md regen clean from yaml post-M3",
+        "progress_html_status": "green — Stage/Task 2-level tree confirmed; Phases: pills are Stage-milestone summary (not per-Task Phase rows); no stale Phase artifact",
+        "note": "4 benign missing-yaml warnings pre-existing (TECH-400/368/369/370)"
+      },
+      "T8.3": {
+        "verify_local_status": "partial — Node gates + Unity compile green; 13 EditMode test failures pre-existing and unrelated to lifecycle refactor surfaces",
+        "gates_green": [
+          "validate:dead-project-specs",
+          "validate:master-plan-status",
+          "validate:backlog-yaml (1 advisory warn only)",
+          "compute-lib:build",
+          "test:ia (MCP unit tests)",
+          "validate:fixtures",
+          "validate:backfill-fixtures",
+          "generate:ia-indexes --check",
+          "validate:parent-plan-locator",
+          "validate:web (lint + typecheck + Next build)",
+          "unity:compile-check"
+        ],
+        "failures": [
+          {
+            "area": "Blip audio golden fixtures",
+            "count": 10,
+            "tests": [
+              "Territory.Tests.EditMode.Audio.BlipGoldenFixtureTests.RenderMatchesFixture(UiButtonHover)",
+              "Territory.Tests.EditMode.Audio.BlipGoldenFixtureTests.RenderMatchesFixture(UiButtonClick)",
+              "Territory.Tests.EditMode.Audio.BlipGoldenFixtureTests.RenderMatchesFixture(ToolRoadTick)",
+              "Territory.Tests.EditMode.Audio.BlipGoldenFixtureTests.RenderMatchesFixture(ToolRoadComplete)",
+              "Territory.Tests.EditMode.Audio.BlipGoldenFixtureTests.RenderMatchesFixture(ToolBuildingPlace)",
+              "Territory.Tests.EditMode.Audio.BlipGoldenFixtureTests.RenderMatchesFixture(ToolBuildingDenied)",
+              "Territory.Tests.EditMode.Audio.BlipGoldenFixtureTests.RenderMatchesFixture(WorldCellSelected)",
+              "Territory.Tests.EditMode.Audio.BlipGoldenFixtureTests.RenderMatchesFixture(EcoMoneyEarned)",
+              "Territory.Tests.EditMode.Audio.BlipGoldenFixtureTests.RenderMatchesFixture(EcoMoneySpent)",
+              "Territory.Tests.EditMode.Audio.BlipGoldenFixtureTests.RenderMatchesFixture(SysSaveGame)"
+            ],
+            "owning_orchestrator": "ia/projects/blip-master-plan.md",
+            "attribution": "pre-existing — Assets/Scripts/Audio/ unchanged on this branch since 41e3cf5 (pre-refactor snapshot base 48656d2); golden fixture drift is Blip lane, not lifecycle-refactor surface",
+            "triage_lane": "Blip Step 3 / Step 4 fixture refresh — escalate to Blip orchestrator owner"
+          },
+          {
+            "area": "Economy Treasury floor clamp",
+            "count": 3,
+            "tests": [
+              "Territory.Tests.EditMode.Economy.TreasuryFloorClampServiceTests.CanAfford_BoundaryExact",
+              "Territory.Tests.EditMode.Economy.TreasuryFloorClampServiceTests.TrySpend_Blocks_WhenAmountGreaterThanBalance",
+              "Territory.Tests.EditMode.Economy.TreasuryFloorClampServiceTests.TrySpend_Succeeds_WhenAmountLessThanBalance"
+            ],
+            "owning_orchestrator": "ia/projects/zone-s-economy-master-plan.md",
+            "attribution": "pre-existing — Assets/Scripts/Economy/ unchanged on this branch; Zone-S economy lane",
+            "triage_lane": "Zone-S economy orchestrator — escalate to Zone-S owner"
+          }
+        ],
+        "refactor_attribution": "zero — every failure lives on Unity/C# runtime surfaces that lifecycle-refactor never touched (refactor scope = IA skills/agents/commands + MCP server + web dashboard + yaml schema)"
+      }
+    },
+    "M8": {
+      "status": "in-progress",
+      "name": "Sign-off + merge",
+      "gate": {
+        "sign_off_text": "LGTM, merge to that branch",
+        "sign_off_timestamp": "2026-04-19T00:00:00.000Z",
+        "merge_target": "feature/master-plans-1",
+        "note": "User corrected merge target: feature/lifecycle-collapse-cognitive-split → feature/master-plans-1 (parent branch), not main."
+      }
+    }
+  },
+  "files": {
+    "M2": [
+      {
+        "path": "ia/projects/backlog-yaml-mcp-alignment-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/blip-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/city-sim-depth-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/citystats-overhaul-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/distribution-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/full-game-mvp-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/landmarks-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/lifecycle-refactor-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/multi-scale-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/music-player-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/skill-training-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/sprite-gen-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/ui-polish-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/utilities-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/web-platform-master-plan.md",
+        "status": "done"
+      },
+      {
+        "path": "ia/projects/zone-s-economy-master-plan.md",
+        "status": "done"
+      }
+    ],
+    "M3": {
+      "specs": [
+        {
+          "path": "ia/projects/BUG-48.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/FEAT-03.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/FEAT-49.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/FEAT-51.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/FEAT-52.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/FEAT-53.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-02.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-03.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-05.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-13.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-14.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-15.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-16.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-179-sprite-gen-unity-meta-writer.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-18.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-180-sprite-gen-promote-reject-cli.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-181-sprite-gen-aseprite-bin-resolver.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-182-sprite-gen-layered-aseprite-emit.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-183-sprite-gen-promote-edit-round-trip.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-251.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-26.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-27.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-29.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-290.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-291.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-292.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-293.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-30.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-303.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-304.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-305.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-306.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-307.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-308.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-309.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-31.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-310.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-311.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-312.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-313.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-316.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-317.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-318.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-319.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-32.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-320.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-321.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-322.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-33.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-331.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-332.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-333.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-334.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-335.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-336.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-337.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-338.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-34.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-347.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-348.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-349.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-35.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-350.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-355.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-356.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-357.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-362.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-411-claude-design-pilot-web-step-8-reset.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-433.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-434.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-435.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-436.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-437.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-438.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-439.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-440.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-441.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-442.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-443.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-64.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-72.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-77.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-78.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-79.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-80.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-81.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-82.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-83.md",
+          "status": "done"
+        },
+        {
+          "path": "ia/projects/TECH-86.md",
+          "status": "done"
+        }
+      ],
+      "yaml": [
+        {
+          "path": "ia/backlog/ART-01.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/ART-02.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/ART-03.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/ART-04.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/AUDIO-01.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/BUG-20.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/BUG-28.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/BUG-31.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/BUG-48.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/BUG-49.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-03.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-04.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-06.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-08.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-09.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-10.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-11.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-12.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-13.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-14.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-15.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-16.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-18.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-19.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-35.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-36.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-39.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-40.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-41.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-42.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-43.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-46.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-47.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-48.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-51.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-52.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/FEAT-53.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-01.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-02.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-03.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-04.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-05.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-13.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-14.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-15.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-16.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-179.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-18.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-180.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-181.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-182.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-183.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-23.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-24.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-251.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-26.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-27.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-29.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-30.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-303.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-304.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-305.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-306.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-307.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-308.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-309.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-31.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-310.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-311.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-312.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-313.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-316.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-317.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-318.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-319.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-32.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-320.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-321.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-322.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-33.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-331.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-332.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-333.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-334.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-335.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-336.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-337.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-338.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-34.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-347.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-348.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-349.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-35.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-350.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-355.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-356.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-357.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-362.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-38.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-411.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-43.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-433.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-434.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-435.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-436.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-437.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-438.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-439.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-440.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-441.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-442.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-443.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-45.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-46.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-47.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-48.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-53.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-54.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-72.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-77.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-78.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-79.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-80.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-81.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-82.yaml",
+          "status": "done"
+        },
+        {
+          "path": "ia/backlog/TECH-83.yaml",
+          "status": "done"
+        }
+      ]
+    }
+  },
+  "snapshot_root": "ia/state/pre-refactor-snapshot/",
+  "snapshot_manifest": "ia/state/pre-refactor-snapshot/manifest.json",
+  "snapshot_git_sha": "48656d2f1ed4b8088cda5a64e4274846b8e34877",
+  "snapshot_at": "2026-04-19T04:55:10.150Z"
+}

@@ -1,0 +1,28 @@
+id: TECH-214
+type: web (verification + docs)
+title: Dashboard E2E smoke + `progress.html` deprecation decision log (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log + Lessons persisted to journal)
+files: 
+  - ia/projects/web-platform-master-plan.md
+  - docs/progress.html
+notes: |
+  Stage 3.3 Phase 1 / T3.3.2. Phase 0 added post-kickoff — confirmed web stack tracked + deployed before smoke. Vercel `/dashboard` → HTTP/2 200; `robots.txt` disallows route; `?plan=` / `?status=` / `?phase=` chips render + compose AND; internal banner in HTML. Appended row to `## Orchestrator Decision Log` documenting `docs/progress.html` deprecation trigger (≥2 stable deploy cycles post Step 4 portal-auth). Closes Stage 3.3 + Step 3.
+acceptance: |
+  smoke checklist ticked; orchestrator Decision Log row added; `validate:all` green.
+depends_on: 
+  - TECH-213
+  - TECH-208
+depends_on_raw: "**TECH-213** (archived), **TECH-208** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-214** — Dashboard E2E smoke + `progress.html` deprecation decision log (2026-04-15)
+    - Type: web (verification + docs)
+    - Files: `ia/projects/web-platform-master-plan.md`, `docs/progress.html`
+    - Spec: (removed at closeout — Decision Log + Lessons persisted to journal)
+    - Notes: Stage 3.3 Phase 1 / T3.3.2. Phase 0 added post-kickoff — confirmed web stack tracked + deployed before smoke. Vercel `/dashboard` → HTTP/2 200; `robots.txt` disallows route; `?plan=` / `?status=` / `?phase=` chips render + compose AND; internal banner in HTML. Appended row to `## Orchestrator Decision Log` documenting `docs/progress.html` deprecation trigger (≥2 stable deploy cycles post Step 4 portal-auth). Closes Stage 3.3 + Step 3.
+    - Acceptance: smoke checklist ticked; orchestrator Decision Log row added; `validate:all` green.
+    - Depends on: **TECH-213** (archived), **TECH-208** (archived)

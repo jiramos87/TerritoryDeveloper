@@ -1,0 +1,24 @@
+id: BUG-30
+type: fix
+title: Incorrect road prefabs when interstate climbs slopes (2026-03-20)
+priority: medium
+status: closed
+section: Pre-2026-03-22 archive
+spec: ""
+files: 
+  - TerraformingService.cs
+  - RoadPrefabResolver.cs
+  - PathTerraformPlan.cs
+  - RoadManager.cs
+notes: |
+  Segment-based Δh for scale-with-slopes; corner/upslope cells use `GetPostTerraformSlopeTypeAlongExit` (aligned with travel); live-terrain fallback + `RestoreTerrainForCell` force orthogonal ramp when `action == None` and cardinal `postTerraformSlopeType`. Spec: `ia/specs/isometric-geography-system.md` §14.7. Verified in Unity.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-30** — Incorrect road prefabs when interstate climbs slopes (2026-03-20)
+    - Type: fix
+    - Files: `TerraformingService.cs`, `RoadPrefabResolver.cs`, `PathTerraformPlan.cs`, `RoadManager.cs` (shared pipeline)
+    - Notes: Segment-based Δh for scale-with-slopes; corner/upslope cells use `GetPostTerraformSlopeTypeAlongExit` (aligned with travel); live-terrain fallback + `RestoreTerrainForCell` force orthogonal ramp when `action == None` and cardinal `postTerraformSlopeType`. Spec: `ia/specs/isometric-geography-system.md` §14.7. Verified in Unity.

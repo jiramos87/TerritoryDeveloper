@@ -1,0 +1,29 @@
+id: TECH-105
+type: infrastructure / roads
+title: "On-road-build: **interstate** exit at **map border** binds to stub by `BorderSide` (2026-04-13)"
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-13)
+spec: (removed after closure)
+files: 
+  - Assets/Scripts/Managers/GameManagers/RoadManager.cs
+  - Assets/Scripts/Managers/GameManagers/GameSaveManager.cs
+  - Assets/Scripts/Managers/UnitManagers/NeighborCityStub.cs
+  - Assets/Scripts/Managers/UnitManagers/NeighborCityBindingRecorder.cs
+notes: |
+  Stage 1.3 Phase 2 closer. Added `NeighborCityBinding` struct under `Territory.Core` + `GameSaveData.neighborCityBindings` list; bumped `CurrentSchemaVersion` 2 → 3 w/ legacy-null → empty migration. Post-`Apply` recorder `NeighborCityBindingRecorder.RecordExits` hooked into `RoadManager` interstate commit after `InvalidateRoadCache` (invariant #2 preserved). Border resolver: `x==0→West`, `x==w-1→East`, `y==0→South`, `y==h-1→North`; corner tie-break via `InterstateManager.ExitBorder`/`EntryBorder`. Dedupe key `(stubId, exitCellX, exitCellY)`. Missing stub → warn + skip. Helper holds `GridManager grid` composition ref only where needed (invariant #6 untouched). Road preparation family (#10) untouched. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.3.
+acceptance: |
+  binding recorded post-interstate-`Apply`; survives save/load (schema 3); legacy schema-2 saves load w/ empty list; dedupe prevents duplicates; invariants #2/#6/#10 preserved; `unity:compile-check` + `validate:all` green
+depends_on: 
+  - TECH-104
+depends_on_raw: "**TECH-104**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-105** — On-road-build: **interstate** exit at **map border** binds to stub by `BorderSide` (2026-04-13)
+    - Type: infrastructure / roads
+    - Files: `Assets/Scripts/Managers/GameManagers/RoadManager.cs`, `Assets/Scripts/Managers/GameManagers/GameSaveManager.cs`, `Assets/Scripts/Managers/UnitManagers/NeighborCityStub.cs`, `Assets/Scripts/Managers/UnitManagers/NeighborCityBindingRecorder.cs` (new)
+    - Spec: (removed after closure)
+    - Notes: Stage 1.3 Phase 2 closer. Added `NeighborCityBinding` struct under `Territory.Core` + `GameSaveData.neighborCityBindings` list; bumped `CurrentSchemaVersion` 2 → 3 w/ legacy-null → empty migration. Post-`Apply` recorder `NeighborCityBindingRecorder.RecordExits` hooked into `RoadManager` interstate commit after `InvalidateRoadCache` (invariant #2 preserved). Border resolver: `x==0→West`, `x==w-1→East`, `y==0→South`, `y==h-1→North`; corner tie-break via `InterstateManager.ExitBorder`/`EntryBorder`. Dedupe key `(stubId, exitCellX, exitCellY)`. Missing stub → warn + skip. Helper holds `GridManager grid` composition ref only where needed (invariant #6 untouched). Road preparation family (#10) untouched. Orchestrator: [`projects/multi-scale-master-plan.md`](../ia/projects/multi-scale-master-plan.md) Stage 1.3.
+    - Acceptance: binding recorded post-interstate-`Apply`; survives save/load (schema 3); legacy schema-2 saves load w/ empty list; dedupe prevents duplicates; invariants #2/#6/#10 preserved; `unity:compile-check` + `validate:all` green
+    - Depends on: **TECH-104**

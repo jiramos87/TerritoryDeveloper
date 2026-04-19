@@ -1,0 +1,29 @@
+id: TECH-158
+type: tooling / editor integration (Tier 1)
+title: "GPL round-trip: export + import + test (Stage 1.3 Phase 4) (2026-04-15)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped, Decision Log captured in Notes)
+files: 
+  - tools/sprite-gen/src/palette.py
+  - tools/sprite-gen/src/cli.py
+  - tools/sprite-gen/tests/test_palette_gpl.py
+  - tools/sprite-gen/.gitignore
+notes: |
+  Stage 1.3 Phase 4 closer. Merged T1.3.7 + T1.3.8 + T1.3.9 atomic (export/import symmetric; test gates both). **Export** `export_gpl(cls, dest_path=None) -> str` on `src/palette.py` — reads `palettes/{cls}.json`, emits GIMP header (`GIMP Palette\nName: {cls}\nColumns: 3\n#\n`) + per-material × level rows (`R G B\t{material}_{level}`). **Import** `import_gpl(cls, gpl_path) -> dict` — skips header through `#`, whitespace-split RGB+name, `rsplit('_', 1)` suffix, groups into materials dict; raises `GplParseError(ValueError)` w/ row-number context on non-int RGB / bad suffix / missing level triplet. **CLI** `palette export {class}` writes `palettes/{class}.gpl`; `palette import {class} --gpl {path}` diffs vs prior JSON + overwrites. Added `*.gpl` to `tools/sprite-gen/.gitignore`. Decision Log — merge 3 tasks (round-trip symmetry requires both sides); `.gpl` gitignored (JSON = source of truth); import tolerates tab **or** space separator (Aseprite emits `\t`, GIMP emits spaces); `rsplit('_', 1)` for suffix (material names may contain `_`); round-trip byte-exact (no HSV re-derive on import — human edits authoritative). Tests `test_palette_gpl.py` — round-trip `residential.json` deep-equal; 24 body rows (8 materials × 3 levels); negative cases for bad RGB / bad suffix / missing level.
+acceptance: |
+  `palette export residential` writes loadable `.gpl` (owner verified Aseprite load); round-trip deep-equal; `pytest tools/sprite-gen/tests/test_palette_gpl.py` green; `.gpl` untracked; `npm run validate:all` green.
+depends_on: 
+  - TECH-157
+depends_on_raw: "**TECH-157** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-158** — GPL round-trip: export + import + test (Stage 1.3 Phase 4) (2026-04-15)
+    - Type: tooling / editor integration (Tier 1)
+    - Files: `tools/sprite-gen/src/palette.py`, `tools/sprite-gen/src/cli.py`, `tools/sprite-gen/tests/test_palette_gpl.py`, `tools/sprite-gen/.gitignore`
+    - Spec: (removed at closeout — journal skipped, Decision Log captured in Notes)
+    - Notes: Stage 1.3 Phase 4 closer. Merged T1.3.7 + T1.3.8 + T1.3.9 atomic (export/import symmetric; test gates both). **Export** `export_gpl(cls, dest_path=None) -> str` on `src/palette.py` — reads `palettes/{cls}.json`, emits GIMP header (`GIMP Palette\nName: {cls}\nColumns: 3\n#\n`) + per-material × level rows (`R G B\t{material}_{level}`). **Import** `import_gpl(cls, gpl_path) -> dict` — skips header through `#`, whitespace-split RGB+name, `rsplit('_', 1)` suffix, groups into materials dict; raises `GplParseError(ValueError)` w/ row-number context on non-int RGB / bad suffix / missing level triplet. **CLI** `palette export {class}` writes `palettes/{class}.gpl`; `palette import {class} --gpl {path}` diffs vs prior JSON + overwrites. Added `*.gpl` to `tools/sprite-gen/.gitignore`. Decision Log — merge 3 tasks (round-trip symmetry requires both sides); `.gpl` gitignored (JSON = source of truth); import tolerates tab **or** space separator (Aseprite emits `\t`, GIMP emits spaces); `rsplit('_', 1)` for suffix (material names may contain `_`); round-trip byte-exact (no HSV re-derive on import — human edits authoritative). Tests `test_palette_gpl.py` — round-trip `residential.json` deep-equal; 24 body rows (8 materials × 3 levels); negative cases for bad RGB / bad suffix / missing level.
+    - Acceptance: `palette export residential` writes loadable `.gpl` (owner verified Aseprite load); round-trip deep-equal; `pytest tools/sprite-gen/tests/test_palette_gpl.py` green; `.gpl` untracked; `npm run validate:all` green.
+    - Depends on: **TECH-157** (archived)

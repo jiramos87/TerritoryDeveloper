@@ -1,7 +1,7 @@
 {
   "artifact": "glossary_graph_index",
   "schema_version": 1,
-  "last_generated": "2026-04-18T21:17:36.756Z",
+  "last_generated": "2026-04-19T05:23:37.236Z",
   "graph": {
     "**A* search**": {
       "related": [
@@ -55,7 +55,7 @@
         "Cell",
         "Chain-level stage digest",
         "City metrics history",
-        "geography_init_params"
+        "Gate"
       ],
       "cited_in": []
     },
@@ -131,8 +131,8 @@
         "Cell",
         "Cliff",
         "Rim",
-        "Junction",
-        "Cascade"
+        "Gate",
+        "Junction"
       ],
       "cited_in": [
         {
@@ -237,10 +237,10 @@
     "Blip LFO": {
       "related": [
         "Param smoothing",
+        "Stage",
         "Bake-to-clip",
         "Blip bootstrap",
-        "Blip cooldown",
-        "Blip LUT pool"
+        "Blip cooldown"
       ],
       "cited_in": [
         {
@@ -594,7 +594,7 @@
         "Interstate",
         "Map border",
         "Cliff",
-        "Cut-through"
+        "Gate"
       ],
       "cited_in": [
         {
@@ -741,7 +741,7 @@
         "HeightMap",
         "Cliff",
         "Building",
-        "River"
+        "Gate"
       ],
       "cited_in": [
         {
@@ -1133,7 +1133,7 @@
         "Alignment gate",
         "Cell",
         "City metrics history",
-        "geography_init_params"
+        "Gate"
       ],
       "cited_in": []
     },
@@ -1202,10 +1202,10 @@
     "Cliff": {
       "related": [
         "Cell",
+        "Gate",
         "HeightMap",
         "Rim",
-        "Cascade",
-        "Interstate"
+        "Cascade"
       ],
       "cited_in": [
         {
@@ -1380,8 +1380,8 @@
         "Bay",
         "Cell",
         "Cliff",
-        "Map border",
-        "Rim"
+        "Gate",
+        "Map border"
       ],
       "cited_in": [
         {
@@ -1395,6 +1395,26 @@
           "section_title": "4.2 Water Shore Slope Selection (`DetermineWaterShorePrefabs`)"
         }
       ]
+    },
+    "closeout apply": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view",
+        "Cell"
+      ],
+      "cited_in": []
+    },
+    "code-fix apply": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view",
+        "Cell"
+      ],
+      "cited_in": []
     },
     "Connurbation": {
       "related": [
@@ -1437,8 +1457,8 @@
         "Interstate",
         "Cell",
         "Cliff",
-        "Map border",
-        "Road validation pipeline"
+        "Gate",
+        "Map border"
       ],
       "cited_in": [
         {
@@ -1538,8 +1558,8 @@
         "Cell",
         "Cliff",
         "Cut-through",
-        "Interstate",
-        "Longest valid prefix"
+        "Gate",
+        "Interstate"
       ],
       "cited_in": [
         {
@@ -1710,8 +1730,8 @@
         "Building",
         "Cell",
         "RCI",
-        "Tax base",
-        "Zone"
+        "Stage",
+        "Tax base"
       ],
       "cited_in": []
     },
@@ -1839,6 +1859,137 @@
           "spec": "ui-design-system",
           "section_id": "3.4",
           "section_title": "3.4 Feedback and errors"
+        }
+      ]
+    },
+    "Gate": {
+      "related": [
+        "Cell",
+        "Cliff",
+        "Rim",
+        "Map border",
+        "HeightMap"
+      ],
+      "cited_in": [
+        {
+          "spec": "reference-spec-structure",
+          "section_id": "conventions",
+          "section_title": "Conventions"
+        },
+        {
+          "spec": "reference-spec-structure",
+          "section_id": "new-reference-spec-checklist",
+          "section_title": "New reference spec checklist"
+        },
+        {
+          "spec": "reference-spec-structure",
+          "section_id": "deprecated-prose-canonical-terms-authoring",
+          "section_title": "Deprecated prose → canonical terms (authoring)"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "6",
+          "section_title": "6. Call-site integration"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "7",
+          "section_title": "7. Fixture + regression gate"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "7.2",
+          "section_title": "7.2 Tolerance"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "2",
+          "section_title": "2. Height System"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "2.4",
+          "section_title": "2.4 Height authority and procedural water"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "2.4.1",
+          "section_title": "2.4.1 Shore band height coherence"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "4",
+          "section_title": "4. Slope Determination Algorithm"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "4.2",
+          "section_title": "4.2 Water Shore Slope Selection (`DetermineWaterShorePrefabs`)"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "5",
+          "section_title": "5. Geographic Elements"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "5.6.1",
+          "section_title": "5.6.1 Lake edges: layered model (water + shore + cliffs)"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "5.7",
+          "section_title": "5.7 Cliffs"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "5.8",
+          "section_title": "5.8 Coastal Transitions (Water Slopes)"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "13",
+          "section_title": "13. Streets, interstates, bridges, shared validation"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "13.1",
+          "section_title": "13.1 Road validation pipeline; two plan constructors"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "14",
+          "section_title": "14. Lake / cliff / shore — engineering notes"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "14.1",
+          "section_title": "14.1 Glossary"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "related-files-code-and-assets",
+          "section_title": "Related files (code and assets)"
+        },
+        {
+          "spec": "ui-design-system",
+          "section_id": "codebase-inventory-ugui",
+          "section_title": "Codebase inventory (uGUI)"
+        },
+        {
+          "spec": "unity-development-context",
+          "section_id": "6",
+          "section_title": "6. Script Execution Order and initialization"
+        },
+        {
+          "spec": "web-ui-design-system",
+          "section_id": "5",
+          "section_title": "5. Layout system"
+        },
+        {
+          "spec": "web-ui-design-system",
+          "section_id": "5.2",
+          "section_title": "5.2 Page templates"
         }
       ]
     },
@@ -2706,10 +2857,10 @@
     "Land slope eligibility": {
       "related": [
         "Interstate",
+        "Phase",
         "Road validation pipeline",
         "Building",
-        "Cell",
-        "Cliff"
+        "Cell"
       ],
       "cited_in": [
         {
@@ -2792,7 +2943,7 @@
         "Cliff",
         "Cut-through",
         "Deck span",
-        "Interstate"
+        "Gate"
       ],
       "cited_in": [
         {
@@ -2817,8 +2968,8 @@
         "Cell",
         "Interstate",
         "Cliff",
-        "HeightMap",
-        "Road validation pipeline"
+        "Gate",
+        "HeightMap"
       ],
       "cited_in": [
         {
@@ -3071,6 +3222,26 @@
         }
       ]
     },
+    "Opus audit": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view",
+        "Cell"
+      ],
+      "cited_in": []
+    },
+    "Opus code review": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view",
+        "Cell"
+      ],
+      "cited_in": []
+    },
     "Orchestrator document": {
       "related": [
         "Agent test mode batch",
@@ -3084,10 +3255,10 @@
     "Param smoothing": {
       "related": [
         "Blip LFO",
+        "Stage",
         "Bake-to-clip",
         "Blip bootstrap",
-        "Blip cooldown",
-        "Blip LUT pool"
+        "Blip cooldown"
       ],
       "cited_in": [
         {
@@ -3245,6 +3416,107 @@
       ],
       "cited_in": []
     },
+    "Phase": {
+      "related": [
+        "Cell",
+        "Interstate",
+        "Building",
+        "Road validation pipeline",
+        "Gate"
+      ],
+      "cited_in": [
+        {
+          "spec": "reference-spec-structure",
+          "section_id": "deprecated-prose-canonical-terms-authoring",
+          "section_title": "Deprecated prose → canonical terms (authoring)"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "3",
+          "section_title": "3. DSP kernel"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "3.2",
+          "section_title": "3.2 BlipVoiceState fields"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "3.3",
+          "section_title": "3.3 Oscillator bank (MVP)"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "7",
+          "section_title": "7. Sorting Order System"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "7.4",
+          "section_title": "7.4 Save / Load — cell visuals and building sorting"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "13",
+          "section_title": "13. Streets, interstates, bridges, shared validation"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "13.1",
+          "section_title": "13.1 Road validation pipeline; two plan constructors"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "13.3",
+          "section_title": "13.3 Slope climb vs carve"
+        },
+        {
+          "spec": "isometric-geography-system",
+          "section_id": "13.6",
+          "section_title": "13.6 Cut-through robustness"
+        },
+        {
+          "spec": "persistence-system",
+          "section_id": "visual-restore-details",
+          "section_title": "Visual restore details"
+        },
+        {
+          "spec": "roads-system",
+          "section_id": "road-validation-pipeline-geography-spec-13-1",
+          "section_title": "Road validation pipeline (geography spec §13.1)"
+        },
+        {
+          "spec": "roads-system",
+          "section_id": "auto-simulation-pathfinding-spec-13-9",
+          "section_title": "AUTO simulation pathfinding (spec §13.9)"
+        },
+        {
+          "spec": "simulation-system",
+          "section_id": "auto-street-placement-rules",
+          "section_title": "AUTO street placement rules"
+        },
+        {
+          "spec": "unity-development-context",
+          "section_id": "6",
+          "section_title": "6. Script Execution Order and initialization"
+        },
+        {
+          "spec": "unity-development-context",
+          "section_id": "7",
+          "section_title": "7. Anti-patterns and project guardrails"
+        },
+        {
+          "spec": "web-ui-design-system",
+          "section_id": "4",
+          "section_title": "4. Components"
+        },
+        {
+          "spec": "web-ui-design-system",
+          "section_id": "4.6",
+          "section_title": "4.6 PlanProgressCard"
+        }
+      ]
+    },
     "Phase-1 validation": {
       "related": [
         "baseHeight (terraform)",
@@ -3280,6 +3552,36 @@
           "section_title": "Building footprint"
         }
       ]
+    },
+    "plan review": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view",
+        "Cell"
+      ],
+      "cited_in": []
+    },
+    "Plan-Apply pair": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view",
+        "Cell"
+      ],
+      "cited_in": []
+    },
+    "plan-fix apply": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view",
+        "Cell"
+      ],
+      "cited_in": []
     },
     "Player-authored dormant control": {
       "related": [
@@ -3467,10 +3769,10 @@
     "Reference spec": {
       "related": [
         "Game notification",
+        "Gate",
         "Happiness",
         "Interstate",
-        "Cell",
-        "Project spec"
+        "Cell"
       ],
       "cited_in": [
         {
@@ -3550,10 +3852,10 @@
     "Rim": {
       "related": [
         "Cell",
+        "Gate",
         "Cliff",
         "Bay",
-        "HeightMap",
-        "Cascade"
+        "HeightMap"
       ],
       "cited_in": [
         {
@@ -3815,8 +4117,8 @@
         "Interstate",
         "Cell",
         "Map border",
-        "Road validation pipeline",
-        "Wet run"
+        "Gate",
+        "Road validation pipeline"
       ],
       "cited_in": [
         {
@@ -3861,8 +4163,8 @@
         "Interstate",
         "Cell",
         "Map border",
-        "Cliff",
-        "Cut-through"
+        "Phase",
+        "Cliff"
       ],
       "cited_in": [
         {
@@ -4053,9 +4355,9 @@
       "related": [
         "Cell",
         "HeightMap",
+        "Gate",
         "Rim",
-        "River",
-        "Bay"
+        "River"
       ],
       "cited_in": [
         {
@@ -4255,7 +4557,7 @@
         "Cell",
         "Interstate",
         "Cut-through",
-        "Map border"
+        "Gate"
       ],
       "cited_in": [
         {
@@ -4408,6 +4710,16 @@
         }
       ]
     },
+    "spec enrichment": {
+      "related": [
+        "Agent test mode batch",
+        "Alignment gate",
+        "Backlog record",
+        "Backlog view",
+        "Cell"
+      ],
+      "cited_in": []
+    },
     "Spill height": {
       "related": [
         "Depression-fill",
@@ -4426,6 +4738,72 @@
           "spec": "isometric-geography-system",
           "section_id": "11.3",
           "section_title": "11.3 Lake generation"
+        }
+      ]
+    },
+    "Stage": {
+      "related": [
+        "Phase",
+        "Cell",
+        "Blip LFO",
+        "Param smoothing",
+        "Bake-to-clip"
+      ],
+      "cited_in": [
+        {
+          "spec": "audio-blip",
+          "section_id": "1",
+          "section_title": "1. Purpose"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "3",
+          "section_title": "3. DSP kernel"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "3.2",
+          "section_title": "3.2 BlipVoiceState fields"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "3.4",
+          "section_title": "3.4 AHDSR envelope"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "4",
+          "section_title": "4. Authoring"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "4.1",
+          "section_title": "4.1 BlipPatch SO fields"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "4.2",
+          "section_title": "4.2 OnValidate clamps"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "9",
+          "section_title": "9. Invariants + guardrails"
+        },
+        {
+          "spec": "audio-blip",
+          "section_id": "10",
+          "section_title": "10. Cross-refs"
+        },
+        {
+          "spec": "web-ui-design-system",
+          "section_id": "4",
+          "section_title": "4. Components"
+        },
+        {
+          "spec": "web-ui-design-system",
+          "section_id": "4.6",
+          "section_title": "4.6 PlanProgressCard"
         }
       ]
     },
@@ -4459,9 +4837,9 @@
       "related": [
         "Cardinal neighbor",
         "Cell",
+        "Gate",
         "Interstate",
-        "Map border",
-        "Road stroke"
+        "Map border"
       ],
       "cited_in": [
         {
@@ -4484,10 +4862,10 @@
     "Surface-height gate": {
       "related": [
         "Cell",
+        "Gate",
         "Rim",
         "Cliff",
-        "Bay",
-        "Map border"
+        "Bay"
       ],
       "cited_in": [
         {
@@ -5111,7 +5489,7 @@
         "Cell",
         "envelope (budget sense)",
         "RCI",
-        "Tax base"
+        "Stage"
       ],
       "cited_in": []
     },

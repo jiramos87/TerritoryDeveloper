@@ -1,0 +1,40 @@
+id: TECH-416
+type: mcp / tests
+title: "Fixture + tests for `master_plan_next_pending` (Stage 4.1 Phase 2)"
+priority: medium
+status: closed
+section: Backlog YAML ↔ MCP alignment program
+spec: ia/projects/TECH-416.md
+files:
+  - tools/mcp-ia-server/tests/tools/master-plan-next-pending.test.ts
+  - tools/scripts/test-fixtures/master-plan-next-pending/
+notes: |
+  Author tests for `master_plan_next_pending` (TECH-415). Fixture plan w/ mixed Status column values (mix of `_pending_` / `Draft` / `In Review` / `Done`). Assert: first `_pending_` wins; `Draft` wins over later `_pending_` only when top-of-table; stage filter respected; fully-`Done` stage returns `null`; deterministic ordering per S3 (rerun yields same row). Mirror existing fixture conventions.
+acceptance: |
+  Test file present + covers ≥5 scenarios (first-pending, Draft-priority, stage-filter, fully-Done-null, determinism); MCP tests + `validate:all` green.
+depends_on:
+  - TECH-415
+depends_on_raw: TECH-415 (tool implementation) — hard gate
+related:
+  - TECH-415
+created: 2026-04-18
+parent_plan: ia/projects/backlog-yaml-mcp-alignment-master-plan.md
+task_key: T4.1.4
+step: 4
+stage: "4.1"
+phase: 2
+router_domain: Backlog / issues
+surfaces:
+  - tools/mcp-ia-server/tests/tools/master-plan-next-pending.test.ts
+  - tools/scripts/test-fixtures/master-plan-next-pending/
+mcp_slices: []
+skill_hints: []
+raw_markdown: |
+  - [ ] **TECH-416** — Fixture + tests for `master_plan_next_pending` (Stage 4.1 Phase 2)
+    - Type: mcp / tests
+    - Files: `tools/mcp-ia-server/tests/tools/master-plan-next-pending.test.ts`, `tools/scripts/test-fixtures/master-plan-next-pending/`
+    - Spec: `ia/projects/TECH-416.md`
+    - Notes: Fixture plan w/ mixed Status values. Assertions: first `_pending_` wins; Draft wins top-of-table; stage filter respected; fully-Done returns null; determinism rerun.
+    - Acceptance: test file covers ≥5 scenarios; MCP tests + `validate:all` green.
+    - Depends on: **TECH-415** (tool implementation)
+    - Related: TECH-415

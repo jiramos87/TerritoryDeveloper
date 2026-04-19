@@ -1,0 +1,24 @@
+id: BUG-32
+type: fix (UX / consistency)
+title: Lakes / `WaterMap` water not shown on minimap (desync with main map) (2026-03-23)
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: ""
+files: 
+  - MiniMapController.cs
+  - GeographyManager.cs
+  - WaterManager.cs
+  - WaterMap.cs
+notes: |
+  Minimap water layer aligned with `WaterManager` / `WaterMap` (rebuild timing, `GetCellColor`, layer toggles). Verified in Unity.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-32** — Lakes / `WaterMap` water not shown on minimap (desync with main map) (2026-03-23)
+    - Type: fix (UX / consistency)
+    - Files: `MiniMapController.cs`, `GeographyManager.cs`, `WaterManager.cs`, `WaterMap.cs`
+    - Notes: Minimap water layer aligned with `WaterManager` / `WaterMap` (rebuild timing, `GetCellColor`, layer toggles). Verified in Unity.

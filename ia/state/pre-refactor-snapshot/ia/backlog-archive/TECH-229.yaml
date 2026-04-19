@@ -1,0 +1,28 @@
+id: TECH-229
+type: docs / spec promotion
+title: Promote blip exploration doc to `ia/specs/audio-blip.md` (Stage 3.4 Phase 2) (2026-04-16)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log + Lessons persisted to journal; registry-count gate lesson migrated to `ia/specs/REFERENCE-SPEC-STRUCTURE.md` §Conventions #8 + New reference spec checklist #4)
+files: 
+  - ia/specs/audio-blip.md
+  - docs/blip-procedural-sfx-exploration.md
+  - docs/blip-post-mvp-extensions.md
+  - ia/projects/blip-master-plan.md
+notes: |
+  Authored canonical reference spec `ia/specs/audio-blip.md` §1–§10 w/ frontmatter (`purpose` / `audience: agent` / `loaded_by: ondemand` / `slices_via: spec_section`). Exploration doc `docs/blip-procedural-sfx-exploration.md` gained "Superseded by" banner + stays in-tree for recipe tables + post-MVP sketches. Post-MVP extensions doc gained spec cross-ref line. Orchestrator Lessons row for `BlipVoiceState` rewritten to `promoted to ia/specs/audio-blip.md §3 (TECH-229)`; Decision Log row appended. Bumped `build-registry.test.ts` expected entry count 33 → 34. Ran `generate:ia-indexes` + committed `spec-index.json` + `glossary-index.json`.
+acceptance: |
+  `ia/specs/audio-blip.md` shipped w/ §1–§10; banner on exploration doc; post-MVP extensions cross-refs spec; orchestrator Decision Log row appended; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-229** — Promote blip exploration doc to `ia/specs/audio-blip.md` (Stage 3.4 Phase 2) (2026-04-16)
+    - Type: docs / spec promotion
+    - Files: `ia/specs/audio-blip.md` (new), `docs/blip-procedural-sfx-exploration.md`, `docs/blip-post-mvp-extensions.md`, `ia/projects/blip-master-plan.md`
+    - Spec: (removed at closeout — Decision Log + Lessons persisted to journal; registry-count gate lesson migrated to `ia/specs/REFERENCE-SPEC-STRUCTURE.md` §Conventions #8 + New reference spec checklist #4)
+    - Notes: Authored canonical reference spec `ia/specs/audio-blip.md` §1–§10 w/ frontmatter (`purpose` / `audience: agent` / `loaded_by: ondemand` / `slices_via: spec_section`). Exploration doc `docs/blip-procedural-sfx-exploration.md` gained "Superseded by" banner + stays in-tree for recipe tables + post-MVP sketches. Post-MVP extensions doc gained spec cross-ref line. Orchestrator Lessons row for `BlipVoiceState` rewritten to `promoted to ia/specs/audio-blip.md §3 (TECH-229)`; Decision Log row appended. Bumped `build-registry.test.ts` expected entry count 33 → 34. Ran `generate:ia-indexes` + committed `spec-index.json` + `glossary-index.json`.
+    - Acceptance: `ia/specs/audio-blip.md` shipped w/ §1–§10; banner on exploration doc; post-MVP extensions cross-refs spec; orchestrator Decision Log row appended; `npm run validate:all` green.
+    - Depends on: none

@@ -1,0 +1,26 @@
+id: "TECH-488"
+type: "TECH"
+title: "Fix remaining failures + M7 flip"
+priority: "high"
+status: closed
+section: "Validation + Merge / Dry-Run + Full Validation"
+spec: ""
+closed: "2026-04-19"
+files: []
+notes: |
+  Apply minimal targeted fixes for failures surfaced by T8.3. Re-run `npm run verify:local` until green. Flip migration JSON M7 `done`.
+  Bounded — if fix scope exceeds one touch per failure, escalate + split rather than pile on.
+acceptance: |
+  - [ ] Every T8.3 failure gets a minimal targeted fix in its owning Stage's lane.
+  - [ ] verify:local green on final re-run.
+  - [ ] migration JSON M7 flipped done; Stage 8 exit criteria satisfied.
+  - [ ] No scope creep — escalate if a fix needs cross-stage work.
+depends_on: []
+depends_on_raw: ""
+related:
+  - "TECH-485"
+  - "TECH-486"
+  - "TECH-487"
+created: "2026-04-19"
+raw_markdown: |
+  Fix remaining failures + M7 flip — Apply minimal targeted fixes from T8.3, re-run verify:local to green, flip M7 done.

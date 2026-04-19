@@ -1,0 +1,27 @@
+id: TECH-421
+type: tech / service logic
+title: "`SetEnvelopePct` auto-normalize + batch commit (Stage 1.3 Phase 2)"
+priority: medium
+status: closed
+section: Medium Priority
+files:
+  - Assets/Scripts/Managers/GameManagers/BudgetAllocationService.cs
+notes: |
+  Implement `SetEnvelopePct(subTypeId, pct)`: store raw value, then normalize entire array so `sum == 1.0` (scale every entry by `1.0 / currentSum`). Handles N1 rounding residue from 14.28% × 7. Guard all-zero envelope → reject (keep prior state, log warning). Also expose `SetEnvelopePctsBatch(float[7])` for player slider commit path — same normalize semantics over 7 values.
+acceptance: |
+  Post-commit `sum(envelopePct) == 1.0` within 1e-6 tolerance. All-zero input rejected, state unchanged. Batch variant normalizes full 7-slot array. `unity:compile-check` green. Test coverage lands in TECH-425.
+depends_on:
+  - TECH-418
+depends_on_raw: "**TECH-418** (Phase 1 interface + skeleton)"
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-421** — `SetEnvelopePct` auto-normalize + batch commit (Stage 1.3 Phase 2)
+    - Type: tech / service logic
+    - Files: `Assets/Scripts/Managers/GameManagers/BudgetAllocationService.cs`
+    - Spec: `ia/projects/TECH-421-envelope-pct-auto-normalize.md`
+    - Notes: Normalize sum to 1.0 on every set; reject all-zero input; batch setter for slider commit.
+    - Acceptance: sum invariant holds; all-zero rejected; batch variant normalizes; `unity:compile-check` green.
+    - Depends on: **TECH-418**
+parent_plan: ia/projects/zone-s-economy-master-plan.md
+task_key: T1.3.4

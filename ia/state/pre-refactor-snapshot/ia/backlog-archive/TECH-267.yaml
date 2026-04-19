@@ -1,0 +1,28 @@
+id: TECH-267
+type: web platform / SEO
+title: "`web/app/robots.ts` update — remove `/dashboard`, add `/auth` to disallow (Stage 5.3 Phase 2) (2026-04-17)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+files: 
+  - web/app/robots.ts
+  - web/app/sitemap.ts
+notes: |
+  Update `disallow` array in `web/app/robots.ts` — drop `/dashboard` (auth middleware from TECH-265 now gates access; SEO crawlers hitting `/dashboard` unauthenticated get 302 → `/auth/login` which is itself disallowed); add `/auth` (covers `/auth/login` + future `/auth/register`). Final disallow: `['/design', '/auth']`. Sitemap audit: `web/app/sitemap.ts` emits only MDX pages + devlog — `/auth/login` + `/dashboard` absent (neither enumerated). No sitemap edit. Decision Log: drop `/dashboard` (middleware provides structural 302 gate; robots duplicate signal); prefix `/auth` not `/auth/login` (post-Step-5 portal `/auth/register` inherits w/o robots churn); no `X-Robots-Tag` header (robots.txt sufficient at stub tier).
+acceptance: |
+  `web/app/robots.ts` disallow array = `['/design', '/auth']`; `/auth/login` + `/dashboard` absent from `web/app/sitemap.ts` output (audit only); `cd web && npm run typecheck` green; `cd web && npm run build` green; `npm run validate:all` exit 0.
+depends_on: 
+  - TECH-265
+  - TECH-266
+depends_on_raw: "**TECH-265**, **TECH-266**"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-267** — `web/app/robots.ts` update — remove `/dashboard`, add `/auth` to disallow (Stage 5.3 Phase 2) (2026-04-17)
+    - Type: web platform / SEO
+    - Files: `web/app/robots.ts`, `web/app/sitemap.ts` (audit only)
+    - Spec: (removed at closeout — Decision Log persisted to `ia_project_spec_journal`; Lessons section empty; full prose in git history only)
+    - Notes: Update `disallow` array in `web/app/robots.ts` — drop `/dashboard` (auth middleware from TECH-265 now gates access; SEO crawlers hitting `/dashboard` unauthenticated get 302 → `/auth/login` which is itself disallowed); add `/auth` (covers `/auth/login` + future `/auth/register`). Final disallow: `['/design', '/auth']`. Sitemap audit: `web/app/sitemap.ts` emits only MDX pages + devlog — `/auth/login` + `/dashboard` absent (neither enumerated). No sitemap edit. Decision Log: drop `/dashboard` (middleware provides structural 302 gate; robots duplicate signal); prefix `/auth` not `/auth/login` (post-Step-5 portal `/auth/register` inherits w/o robots churn); no `X-Robots-Tag` header (robots.txt sufficient at stub tier).
+    - Acceptance: `web/app/robots.ts` disallow array = `['/design', '/auth']`; `/auth/login` + `/dashboard` absent from `web/app/sitemap.ts` output (audit only); `cd web && npm run typecheck` green; `cd web && npm run build` green; `npm run validate:all` exit 0.
+    - Depends on: **TECH-265**, **TECH-266**

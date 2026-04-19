@@ -1,0 +1,33 @@
+id: TECH-86
+type: IA / process / tooling
+title: "Lifecycle skill refactor: project hierarchy rules + orchestrator-vs-spec distinction"
+priority: high
+status: closed
+section: High Priority
+spec: ia/projects/TECH-86.md
+files: 
+  - ia/rules/project-hierarchy.md
+  - ia/rules/orchestrator-vs-spec.md
+  - ia/skills/project-spec-close/SKILL.md
+  - ia/skills/project-spec-kickoff/SKILL.md
+  - ia/skills/project-spec-implement/SKILL.md
+  - ia/skills/project-stage-close/SKILL.md
+  - ia/templates/project-spec-template.md
+  - AGENTS.md
+  - ia/specs/glossary.md
+notes: |
+  Prerequisite for multi-scale master plan going to `In Progress`. Extracts step/stage/phase/task hierarchy from master plan into global rules. Teaches lifecycle skills the orchestrator-vs-spec distinction. Expands status enum to `Draft | In Review | In Progress | Final`.
+acceptance: |
+  two new rules loaded always; lifecycle skills refuse to close orchestrators; template status enum updated; glossary process terms added
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-86** — Lifecycle skill refactor: project hierarchy rules + orchestrator-vs-spec distinction
+    - Type: IA / process / tooling
+    - Files: `ia/rules/project-hierarchy.md` (new), `ia/rules/orchestrator-vs-spec.md` (new), `ia/skills/project-spec-close/SKILL.md`, `ia/skills/project-spec-kickoff/SKILL.md`, `ia/skills/project-spec-implement/SKILL.md`, `ia/skills/project-stage-close/SKILL.md`, `ia/templates/project-spec-template.md`, `AGENTS.md`, `ia/specs/glossary.md`
+    - Spec: `ia/projects/TECH-86.md`
+    - Notes: Prerequisite for multi-scale master plan going to `In Progress`. Extracts step/stage/phase/task hierarchy from master plan into global rules. Teaches lifecycle skills the orchestrator-vs-spec distinction. Expands status enum to `Draft | In Review | In Progress | Final`.
+    - Acceptance: two new rules loaded always; lifecycle skills refuse to close orchestrators; template status enum updated; glossary process terms added
+    - Depends on: none

@@ -1,0 +1,32 @@
+id: TECH-307
+type: infrastructure / simulation signal MonoBehaviour
+title: Add `SignalFieldRegistry` MonoBehaviour (Stage 1.1 T1.1.3)
+priority: medium
+status: open
+section: Stage 1.1 — Signal Contract Primitives
+spec: ia/projects/TECH-307.md
+files:
+  - Assets/Scripts/Simulation/Signals/SignalFieldRegistry.cs
+  - Assets/Scripts/Simulation/Signals/SignalField.cs
+  - Assets/Scripts/Simulation/Signals/SimulationSignal.cs
+  - Assets/Scripts/Managers/GameManagers/GridManager.cs
+notes: |
+  `SignalFieldRegistry` MonoBehaviour — allocates one `SignalField` per `SimulationSignal` entry in `Awake`; fields sized from `GridManager.gridWidth` + `gridHeight`; `GetField(SimulationSignal)` accessor returns per-signal `SignalField`; `[SerializeField] private GridManager grid` Inspector ref + `FindObjectOfType<GridManager>()` fallback in `Awake` (invariant #4); resize method (`ResizeForMap(int w, int h)`) reallocates all 12 fields when map reloads. No per-frame `FindObjectOfType` (invariant #3 — resolved once in `Awake`). Consumes TECH-305 enum + TECH-306 `SignalField`. Registry injected into Stage 1.2 `SignalTickScheduler` + composers via Inspector refs. Invariant #6 — new MonoBehaviour, not added to `GridManager`.
+acceptance: |
+  `SignalFieldRegistry.cs` compiles; `Awake` allocates 12 `SignalField` instances sized from `GridManager`; `GetField(SimulationSignal)` returns corresponding field; `[SerializeField] GridManager grid` + `FindObjectOfType` fallback present; no `FindObjectOfType` in `Update` or per-frame loops; `ResizeForMap` reallocates fields; `npm run unity:compile-check` clean; `npm run validate:all` clean.
+depends_on:
+  - TECH-305
+  - TECH-306
+depends_on_raw: TECH-305, TECH-306
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-307** — Add `SignalFieldRegistry` MonoBehaviour (Stage 1.1 T1.1.3)
+    - Type: infrastructure / simulation signal MonoBehaviour
+    - Files: `Assets/Scripts/Simulation/Signals/SignalFieldRegistry.cs` (new); consumes `SignalField.cs`, `SimulationSignal.cs`, `Assets/Scripts/Managers/GameManagers/GridManager.cs`
+    - Spec: `ia/projects/TECH-307.md`
+    - Notes: MonoBehaviour; allocates one `SignalField` per `SimulationSignal` in `Awake` sized from `GridManager.gridWidth`/`gridHeight`; `GetField(SimulationSignal)` accessor; `[SerializeField] GridManager grid` + `FindObjectOfType` fallback (invariant #4); resize method for map reload. Invariant #3 (no hot-path `FindObjectOfType`) + #6 (new MonoBehaviour, not added to `GridManager`).
+    - Acceptance: Compiles; 12 fields allocated in Awake; `GetField` works; fallback present; no hot-path `FindObjectOfType`; `npm run unity:compile-check` + `validate:all` clean.
+    - Depends on: TECH-305 (enum), TECH-306 (SignalField + SignalMetadataRegistry)
+parent_plan: ia/projects/city-sim-depth-master-plan.md
+task_key: T1.1.3

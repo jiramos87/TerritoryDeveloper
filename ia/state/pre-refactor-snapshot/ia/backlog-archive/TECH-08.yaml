@@ -1,0 +1,27 @@
+id: TECH-08
+type: documentation
+title: "UI design system docs: TECH-07 (ControlPanel sidebar) ticketed and wired (2026-03-20)"
+priority: medium
+status: closed
+section: Pre-2026-03-22 archive
+spec: ""
+files: 
+  - BACKLOG.md
+  - docs/ui-design-system-project.md
+  - docs/ui-design-system-context.md
+  - ia/specs/ui-design-system.md
+  - ARCHITECTURE.md
+  - AGENTS.md
+  - ia/rules/managers-guide.md
+notes: |
+  This issue records the documentation and cross-links only. **TECH-07** (executable **ControlPanel** layout) was later completed manually in **`MainScene.unity`** and archived (**Recent archive**, **2026-04-04**).
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-08** — UI design system docs: TECH-07 (ControlPanel sidebar) ticketed and wired (2026-03-20)
+    - Type: documentation
+    - Files: `BACKLOG.md` (TECH-07), `docs/ui-design-system-project.md` (Backlog bridge), `docs/ui-design-system-context.md` (Toolbar — ControlPanel), `ia/specs/ui-design-system.md` (§3.3 layout variants), `ARCHITECTURE.md`, `AGENTS.md`, `ia/rules/managers-guide.md`
+    - Notes: This issue records the documentation and cross-links only. **TECH-07** (executable **ControlPanel** layout) was later completed manually in **`MainScene.unity`** and archived (**Recent archive**, **2026-04-04**).

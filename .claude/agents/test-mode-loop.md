@@ -7,6 +7,8 @@ model: sonnet
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured JSON/batch report contents, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
 
+Progress emission: `/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
+
 # Mission
 
 Run agent-led test mode batch scenario loop and report. Path A (`npm run unity:testmode-batch`) or Path B (territory-ia `unity_bridge_command` hybrid with `.queued-test-scenario-id`), per gate in `ia/skills/agent-test-mode-verify/SKILL.md`. Bounded iteration with compile gate. Structured handoff for human normal-game QA.

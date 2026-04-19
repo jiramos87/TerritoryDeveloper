@@ -1,0 +1,28 @@
+id: TECH-260
+type: audio / DSP
+title: "`BlipVoice.Render` FX loop + `BlipNoAllocTests` FX variant (Stage 5.1 Phase 2) (2026-04-16)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log empty per journal parser; full prose in git history only)
+files: 
+  - Assets/Scripts/Audio/Blip/BlipVoice.cs
+  - Assets/Tests/EditMode/Audio/BlipNoAllocTests.cs
+notes: |
+  Post-envelope FX dispatch in `BlipVoice.Render` — unrolled 4-slot `if (patch.fxSlotCount >= N) BlipFxChain.ProcessFx(ref x, patch.fxN.kind, patch.fxN.param0, patch.fxN.param1, ref state.dcZ1_N, ref state.dcY1_N, ref state.ringModPhase_N, sampleRate)` for N in 1..4. Mirror block wired into both deterministic (lines ~162) and live (lines ~254) per-sample loops. Empty chain (`fxSlotCount == 0`) fast-exits through all four `if` guards — MVP golden fixtures stay bit-exact (no fixture regeneration). `BlipNoAllocTests.Render_WithFxChain_ZeroManagedAlloc` — 2-slot BitCrush+DcBlocker patch; 3 warm-up + 10 measure w/ `GC.GetAllocatedBytesForCurrentThread`; delta/call ≤ 0. Decision Log: POST-envelope PRE-filter placement (matches Stage 5.1 Exit; alt POST-filter rejected — would bypass LP for DcBlocker's HP action); unrolled `if` cascade vs `for` loop (blittable + zero-alloc matches oscillator inline-triplet precedent); mirror into both branches vs shared helper (existing per-sample cores already duplicated — extract outside Stage 5.1 scope); new test lives alongside `Render_SteadyState_ZeroManagedAlloc` (tight isolation on failure). Closes Stage 5.1 T5.1.5 Exit bullet "BlipVoice.Render FX loop + BlipNoAllocTests still green" + Stage 5.1 as a whole.
+acceptance: |
+  FX loop wired post-envelope in both deterministic + live branches; empty chain passthrough (MVP goldens green); new NoAlloc test green; existing `BlipNoAllocTests` + `BlipGoldenFixtureTests` + `BlipDeterminismTests` still green; `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+depends_on: 
+  - TECH-257
+  - TECH-259
+depends_on_raw: "**TECH-257** (archived), **TECH-259** (archived)."
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-260** — `BlipVoice.Render` FX loop + `BlipNoAllocTests` FX variant (Stage 5.1 Phase 2) (2026-04-16)
+    - Type: audio / DSP
+    - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`, `Assets/Tests/EditMode/Audio/BlipNoAllocTests.cs`
+    - Spec: (removed at closeout — Decision Log empty per journal parser; full prose in git history only)
+    - Notes: Post-envelope FX dispatch in `BlipVoice.Render` — unrolled 4-slot `if (patch.fxSlotCount >= N) BlipFxChain.ProcessFx(ref x, patch.fxN.kind, patch.fxN.param0, patch.fxN.param1, ref state.dcZ1_N, ref state.dcY1_N, ref state.ringModPhase_N, sampleRate)` for N in 1..4. Mirror block wired into both deterministic (lines ~162) and live (lines ~254) per-sample loops. Empty chain (`fxSlotCount == 0`) fast-exits through all four `if` guards — MVP golden fixtures stay bit-exact (no fixture regeneration). `BlipNoAllocTests.Render_WithFxChain_ZeroManagedAlloc` — 2-slot BitCrush+DcBlocker patch; 3 warm-up + 10 measure w/ `GC.GetAllocatedBytesForCurrentThread`; delta/call ≤ 0. Decision Log: POST-envelope PRE-filter placement (matches Stage 5.1 Exit; alt POST-filter rejected — would bypass LP for DcBlocker's HP action); unrolled `if` cascade vs `for` loop (blittable + zero-alloc matches oscillator inline-triplet precedent); mirror into both branches vs shared helper (existing per-sample cores already duplicated — extract outside Stage 5.1 scope); new test lives alongside `Render_SteadyState_ZeroManagedAlloc` (tight isolation on failure). Closes Stage 5.1 T5.1.5 Exit bullet "BlipVoice.Render FX loop + BlipNoAllocTests still green" + Stage 5.1 as a whole.
+    - Acceptance: FX loop wired post-envelope in both deterministic + live branches; empty chain passthrough (MVP goldens green); new NoAlloc test green; existing `BlipNoAllocTests` + `BlipGoldenFixtureTests` + `BlipDeterminismTests` still green; `npm run unity:compile-check` green; `npm run validate:all` exit 0.
+    - Depends on: **TECH-257** (archived), **TECH-259** (archived).

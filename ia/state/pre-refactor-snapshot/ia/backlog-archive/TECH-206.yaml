@@ -1,0 +1,27 @@
+id: TECH-206
+type: web (RSC layout)
+title: Dashboard step/stage visual hierarchy + statusDetail rendering (Stage 3.2 Phase 1 / T3.2.2) (2026-04-15)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-15)
+spec: (removed at closeout — journal persist skipped empty sections; decisions inline in Notes)
+files: 
+  - web/app/dashboard/page.tsx
+  - web/app/dashboard/_status.ts
+notes: |
+  Extended `/dashboard` RSC w/ project-hierarchy grouping — each plan section iterates `plan.steps` → step heading (`Step {id} — {title}` + `BadgeChip` via `toBadgeStatus`), then per-stage sub-heading (`Stage {id} — {title}` + badge), then `DataTable<TaskRow>` scoped to `stage.tasks`. `step.statusDetail` + `stage.statusDetail` rendered in `text-text-muted` when non-empty; omitted when empty string. No `"use client"`. Decision Log — per-stage `DataTable` vs single table w/ `groupHeader` slot: kept `DataTable` signature stable; reused `toBadgeStatus` (`HierarchyStatus` already covered); omit empty `statusDetail` span to avoid DOM whitespace.
+acceptance: |
+  step + stage hierarchy scannable; `HierarchyStatus` badges rendered; `validate:all` + `validate:web` green.
+depends_on: 
+  - TECH-205
+depends_on_raw: "**TECH-205** (archived)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-206** — Dashboard step/stage visual hierarchy + statusDetail rendering (Stage 3.2 Phase 1 / T3.2.2) (2026-04-15)
+    - Type: web (RSC layout)
+    - Files: `web/app/dashboard/page.tsx`, `web/app/dashboard/_status.ts`
+    - Spec: (removed at closeout — journal persist skipped empty sections; decisions inline in Notes)
+    - Notes: Extended `/dashboard` RSC w/ project-hierarchy grouping — each plan section iterates `plan.steps` → step heading (`Step {id} — {title}` + `BadgeChip` via `toBadgeStatus`), then per-stage sub-heading (`Stage {id} — {title}` + badge), then `DataTable<TaskRow>` scoped to `stage.tasks`. `step.statusDetail` + `stage.statusDetail` rendered in `text-text-muted` when non-empty; omitted when empty string. No `"use client"`. Decision Log — per-stage `DataTable` vs single table w/ `groupHeader` slot: kept `DataTable` signature stable; reused `toBadgeStatus` (`HierarchyStatus` already covered); omit empty `statusDetail` span to avoid DOM whitespace.
+    - Acceptance: step + stage hierarchy scannable; `HierarchyStatus` badges rendered; `validate:all` + `validate:web` green.
+    - Depends on: **TECH-205** (archived)

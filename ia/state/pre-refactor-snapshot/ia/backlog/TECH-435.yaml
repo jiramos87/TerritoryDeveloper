@@ -1,0 +1,32 @@
+id: TECH-435
+type: audio / DSP
+title: Biquad coefficient pre-compute block (Stage 5.4 Phase 1)
+priority: medium
+status: open
+section: Stage 5.4 — Biquad BP + integration + golden-fixture regression gate
+spec: ia/projects/TECH-435.md
+files:
+  - Assets/Scripts/Audio/Blip/BlipVoice.cs
+notes: |
+  Biquad BP pre-compute in `BlipVoice.Render` (outside sample loop, alongside existing `alpha` LP block at lines 59–71 of `BlipVoice.cs`): `double w0 = TwoPi * cutoffHz / sampleRate; float sinW = (float)Math.Sin(w0); float cosW = (float)Math.Cos(w0); float alp = sinW / (2f * Q); float b0n = sinW * 0.5f / (1f + alp); float a1n = -2f * cosW / (1f + alp); float a2n = (1f - alp) / (1f + alp)`. Computed only when `filter.kind == BandPass`; LP + None branches unchanged. Zero per-sample trig — 1 `Math.Sin` + 1 `Math.Cos` per `Render` invocation. No per-sample dispatch yet (TECH-436).
+acceptance: |
+  Pre-compute block present + gated on `filter.kind == BandPass`; LP + None branches unchanged; `npm run unity:compile-check` green; existing golden-fixture + NoAlloc tests still green; `npm run validate:all` exit 0.
+depends_on:
+  - TECH-434
+depends_on_raw: TECH-434 (enum value + `resonanceQ` field must exist before pre-compute block reads them).
+related:
+  - TECH-434
+  - TECH-436
+  - TECH-437
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-435** — Biquad coefficient pre-compute block (Stage 5.4 Phase 1)
+    - Type: audio / DSP
+    - Files: `Assets/Scripts/Audio/Blip/BlipVoice.cs`
+    - Spec: `ia/projects/TECH-435.md`
+    - Notes: `w0 / sinW / cosW / alp / b0n / a1n / a2n` pre-compute block outside sample loop; gated on `filter.kind == BandPass`; LP + None branches unchanged. 1 `Math.Sin` + 1 `Math.Cos` per `Render`.
+    - Acceptance: pre-compute present + kind-gated; LP/None unchanged; `unity:compile-check` + `validate:all` exit 0; golden fixtures + NoAlloc green.
+    - Depends on: TECH-434 (enum + field prerequisite).
+    - Related: TECH-434, TECH-436, TECH-437
+parent_plan: ia/projects/blip-master-plan.md
+task_key: T5.4.2

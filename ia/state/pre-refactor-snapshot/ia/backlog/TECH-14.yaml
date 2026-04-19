@@ -1,0 +1,23 @@
+id: TECH-14
+type: refactor (cleanup)
+title: Remove residual placeholder / test scripts
+priority: low
+status: open
+section: Low Priority
+spec: ia/projects/TECH-14.md
+files: 
+  - CityManager.cs
+  - TestScript.cs
+notes: |
+  Delete or replace with real content only if nothing references them; verify no scene/Inspector references.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-14** — Remove residual placeholder / test scripts
+    - Type: refactor (cleanup)
+    - Files: `CityManager.cs` (namespace-only stub), `TestScript.cs` (compile smoke test)
+    - Spec: `ia/projects/TECH-14.md`
+    - Notes: Delete or replace with real content only if nothing references them; verify no scene/Inspector references.

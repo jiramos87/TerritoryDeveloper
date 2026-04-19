@@ -56,7 +56,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 | **`spec_outline`** | Nested heading outline with line ranges. `spec` accepts key, filename, or alias (`geo` → `isometric-geography-system`, `roads` → `roads-system`, `unity` / `unityctx` → `unity-development-context`, `refspec` / `specstructure` → `reference-spec-structure`, …). |
 | **`spec_section`** | Body for one section: canonical `spec` + `section` (id `13.4`, slug, title substring, or fuzzy typo). Aliases: `key` / `doc` → spec; `section_heading` / `heading` → section; numeric `section` coerced to string. `max_chars` or `maxChars` (default 3000) with `truncated` / `totalChars`. |
 | **`spec_sections`** | Batch: `sections` array; each element uses the same shape as **`spec_section`**. Response `results` map keyed by `spec::section`. Optional `max_requests` (default 20, max 50). |
-| **`project_spec_closeout_digest`** | Exactly one of `issue_id` or `spec_path` (`ia/projects/{ISSUE_ID}.md`). Returns structured closeout prep JSON (`schema_version` 1, section bodies, `cited_issue_ids`, keywords, heuristic `checklist_hints`). Read-only. |
+| **`stage_closeout_digest`** | Exactly one of `issue_id` or `spec_path` (`ia/projects/{ISSUE_ID}.md`). Returns structured closeout prep JSON (`schema_version` 1, section bodies, `cited_issue_ids`, keywords, heuristic `checklist_hints`). Read-only. Called N times per closing Stage by `stage-closeout-apply` (Sonnet pair-tail, seam #4). Renamed from `project_spec_closeout_digest` in lifecycle-refactor T7.14. |
 | **`project_spec_journal_persist`** | Append **Decision Log** + **Lessons learned** from the project spec into **`ia_project_spec_journal`** (`DATABASE_URL` required). Optional `git_sha`. |
 | **`project_spec_journal_search`** | Full-text / keyword overlap search over the journal; optional `raw_text_for_tokens`. |
 | **`project_spec_journal_get`** | Full row by numeric `id`. |
@@ -88,7 +88,7 @@ If your MCP host uses a different working directory, set `REPO_ROOT` to the **ab
 - `spec_outline` → `{ "spec": "geo" }`
 - `spec_section` → `{ "spec": "geo", "section": "13.4", "max_chars": 8000 }` (or `{ "key": "geo", "section_heading": 14 }`)
 - `spec_sections` → `{ "sections": [ { "spec": "geo", "section": "1" }, { "spec": "roads", "section": "validation" } ] }`
-- `project_spec_closeout_digest` → `{ "issue_id": "FEAT-49" }` or `{ "spec_path": "ia/projects/FEAT-49.md" }`
+- `stage_closeout_digest` → `{ "issue_id": "FEAT-49" }` or `{ "spec_path": "ia/projects/FEAT-49.md" }`
 - `project_spec_journal_persist` → `{ "issue_id": "FEAT-49", "git_sha": "abc123…" }`
 - `project_spec_journal_search` → `{ "query": "road stroke decision", "max_results": 8 }`
 - `glossary_discover` → `{ "query": "manual street trace neighbors", "max_results": 8 }`
@@ -138,7 +138,7 @@ flowchart LR
     SO[spec-outline.ts]
     SS[spec-section.ts]
     SSB[spec-sections.ts]
-    PSD[project-spec-closeout-digest.ts]
+    PSD[stage-closeout-digest.ts]
     GL[glossary-lookup.ts]
     GD[glossary-discover.ts]
     RF[router-for-task.ts]

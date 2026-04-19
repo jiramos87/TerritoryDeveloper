@@ -1,0 +1,25 @@
+id: TECH-219
+type: feature wiring / audio integration
+title: RoadManager per-tile tick Blip call site (Stage 3.3 Phase 1) (2026-04-15)
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+files: 
+  - Assets/Scripts/Managers/GameManagers/RoadManager.cs
+notes: |
+  Inserted `BlipEngine.Play(BlipId.ToolRoadTick)` inside per-tile loop in `TryFinalizeManualRoadPlacement` after `PlaceRoadTileFromResolved(resolved[i])`. Manual-drag path only — scenario batch (`TryCommitStreetStrokeForScenarioBuild`) stays silent per Decision Log. 30 ms cooldown owned by patch SO via `BlipCooldownRegistry`; no per-call guard. Static `BlipEngine` self-caches (invariants #3, #4). Opens Stage 3.3 Phase 1.
+acceptance: |
+  per-tile road commit fires `ToolRoadTick` SFX; 30 ms cooldown observed via registry; `npm run unity:compile-check` + `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-219** — RoadManager per-tile tick Blip call site (Stage 3.3 Phase 1) (2026-04-15)
+    - Type: feature wiring / audio integration
+    - Files: `Assets/Scripts/Managers/GameManagers/RoadManager.cs`
+    - Spec: (removed at closeout — Decision Log persisted to journal; Lessons skipped empty)
+    - Notes: Inserted `BlipEngine.Play(BlipId.ToolRoadTick)` inside per-tile loop in `TryFinalizeManualRoadPlacement` after `PlaceRoadTileFromResolved(resolved[i])`. Manual-drag path only — scenario batch (`TryCommitStreetStrokeForScenarioBuild`) stays silent per Decision Log. 30 ms cooldown owned by patch SO via `BlipCooldownRegistry`; no per-call guard. Static `BlipEngine` self-caches (invariants #3, #4). Opens Stage 3.3 Phase 1.
+    - Acceptance: per-tile road commit fires `ToolRoadTick` SFX; 30 ms cooldown observed via registry; `npm run unity:compile-check` + `npm run validate:all` green.
+    - Depends on: none

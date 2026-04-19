@@ -1,0 +1,25 @@
+id: BUG-19
+type: fix (UX)
+title: Mouse scroll wheel in Load Game scrollable menu also triggers camera zoom (2026-04-07)
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed — fix shipped as part of **TECH-69** UI-as-code capstone; normative **`ui-design-system.md`** **§3.5** scroll-zoom checklist)
+files: 
+  - CameraController.cs
+  - IsPointerOverBlockingUi
+notes: |
+  **Closed (resolved by other issue):** The `IsPointerOverGameObject` guard in `CameraController.HandleScrollZoom` was implemented during **TECH-69**. Scroll over UI panels (Load Game, Building Selector) no longer triggers camera zoom.
+acceptance: ""
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **BUG-19** — Mouse scroll wheel in Load Game scrollable menu also triggers camera zoom (2026-04-07)
+    - Type: fix (UX)
+    - Files: `CameraController.cs` (HandleScrollZoom — `IsPointerOverBlockingUi` guard)
+    - Spec: (removed — fix shipped as part of **TECH-69** UI-as-code capstone; normative **`ui-design-system.md`** **§3.5** scroll-zoom checklist)
+    - Notes: **Closed (resolved by other issue):** The `IsPointerOverGameObject` guard in `CameraController.HandleScrollZoom` was implemented during **TECH-69**. Scroll over UI panels (Load Game, Building Selector) no longer triggers camera zoom.
+    - Depends on: none
+    - Related: **TECH-69**, **TECH-67**

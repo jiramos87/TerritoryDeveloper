@@ -1,0 +1,26 @@
+id: TECH-316
+type: audio / mixer asset
+title: "**Music** — Add Blip-Music mixer group"
+priority: medium
+status: open
+section: Stage 1.1 — Mixer extension + persistent bootstrap
+spec: ia/projects/TECH-316.md
+files:
+  - Assets/Audio/BlipMixer.mixer
+notes: |
+  Extend `Assets/Audio/BlipMixer.mixer` via Unity Editor (`Window → Audio → Audio Mixer`). Add new group `Blip-Music` under Master, routed through Master. Do NOT touch existing `Blip-UI` / `Blip-World` / `Blip-Ambient` groups. Binary YAML asset — commit edit. Stage 1.1 Phase 1 T1.1.1 of `ia/projects/music-player-master-plan.md`. Parallel-work rule: Blip master plan mixer work must be at stable stage boundary (Blip Step 2/3 Final confirmed at plan landing).
+acceptance: |
+  `BlipMixer.mixer` shows new `Blip-Music` group under Master in Audio Mixer window. Existing groups untouched. `npm run unity:compile-check` green (asset-only — no code).
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-316** — **Music** — Add Blip-Music mixer group (Stage 1.1 Phase 1)
+    - Type: audio / mixer asset
+    - Files: `Assets/Audio/BlipMixer.mixer`
+    - Spec: `ia/projects/TECH-316.md`
+    - Notes: Stage 1.1 Phase 1 T1.1.1 of music-player orchestrator. Extend `BlipMixer.mixer` — add `Blip-Music` group under Master. Do NOT touch existing Blip-UI/World/Ambient groups.
+    - Acceptance: New `Blip-Music` group visible under Master in Audio Mixer window; existing groups untouched.
+parent_plan: ia/projects/music-player-master-plan.md
+task_key: T1.1.1

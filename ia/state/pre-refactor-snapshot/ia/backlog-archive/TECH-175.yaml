@@ -1,0 +1,26 @@
+id: TECH-175
+type: infrastructure / data table
+title: "`slopes.yaml` per-corner Z table (Stage 1.4 Phase 1) (2026-04-15)"
+priority: medium
+status: closed
+section: ""
+spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+files: 
+  - tools/sprite-gen/slopes.yaml
+  - tools/sprite-gen/tests/test_slopes_yaml.py
+notes: |
+  Stage 1.4 Phase 1 foundation data. `tools/sprite-gen/slopes.yaml` — 18 top-level keys (`flat` + 17 land slope variants matching `Assets/Sprites/Slopes/{CODE}-slope.png` stems: N, S, E, W, NE, NW, SE, SW, NE-up, NW-up, SE-up, SW-up, NE-bay, NW-bay, NW-bay-2, SE-bay, SW-bay). Each value = `{n,e,s,w}` int map (pixels, 0 or 16). `flat` included as zero-row so composer lookup is uniform (no special-case branch downstream). Authoritative source for TECH-176 `iso_stepped_foundation` + TECH-177 compose auto-insert. Decision Log — `flat` in yaml (avoid compose branch); land only (water slopes are sprites, not foundation geometry); filename stems as canonical id (lowercase-hyphen follows filesystem + master plan; geo §6.4 CamelCase is Unity-prefab-naming concern).
+acceptance: |
+  yaml loads via `yaml.safe_load`; 18 keys present; codes match `Assets/Sprites/Slopes/` stems 1:1; `pytest tools/sprite-gen/tests/test_slopes_yaml.py` green; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-175** — `slopes.yaml` per-corner Z table (Stage 1.4 Phase 1) (2026-04-15)
+    - Type: infrastructure / data table
+    - Files: `tools/sprite-gen/slopes.yaml`, `tools/sprite-gen/tests/test_slopes_yaml.py`
+    - Spec: (removed at closeout — journal skipped empty Lessons; Decision Log captured in Notes)
+    - Notes: Stage 1.4 Phase 1 foundation data. `tools/sprite-gen/slopes.yaml` — 18 top-level keys (`flat` + 17 land slope variants matching `Assets/Sprites/Slopes/{CODE}-slope.png` stems: N, S, E, W, NE, NW, SE, SW, NE-up, NW-up, SE-up, SW-up, NE-bay, NW-bay, NW-bay-2, SE-bay, SW-bay). Each value = `{n,e,s,w}` int map (pixels, 0 or 16). `flat` included as zero-row so composer lookup is uniform (no special-case branch downstream). Authoritative source for TECH-176 `iso_stepped_foundation` + TECH-177 compose auto-insert. Decision Log — `flat` in yaml (avoid compose branch); land only (water slopes are sprites, not foundation geometry); filename stems as canonical id (lowercase-hyphen follows filesystem + master plan; geo §6.4 CamelCase is Unity-prefab-naming concern).
+    - Acceptance: yaml loads via `yaml.safe_load`; 18 keys present; codes match `Assets/Sprites/Slopes/` stems 1:1; `pytest tools/sprite-gen/tests/test_slopes_yaml.py` green; `npm run validate:all` green.
+    - Depends on: none

@@ -1,0 +1,32 @@
+id: TECH-294
+type: tech (web / refactor)
+title: "Web workspace — audit + refactor components to move business logic into backend loaders/parsers"
+priority: medium
+status: closed
+section: Medium Priority
+spec: null
+closed: 2026-04-17
+files:
+  - web/app/**
+  - web/components/**
+  - web/lib/**
+  - web/README.md
+  - ia/rules/web-backend-logic.md
+  - ia/projects/web-platform-master-plan.md
+notes: |
+  **Rule:** `ia/rules/web-backend-logic.md` — web business logic in backend (`web/lib/**`, route handlers, server components' data-loading paths); client / presentational components render pre-shaped props only. **Trigger (2026-04-17):** dashboard stage/step badges showed **Pending** despite all tasks **Done**. Root cause = status derivation split across `web/lib/plan-parser.ts` (read hand-written `Status` line only) + `web/app/dashboard/_status.ts` (badge mapper). Stale markdown Status silently overrode task-state truth. Fix: `deriveHierarchyStatus(steps)` inside parser — backend emits authoritative status, frontend maps only. **Scope:** audit `web/app/**` + `web/components/**` for status inference, aggregation (counts / totals / percentages), markdown re-parsing, task/stage/step rollups, business-rule date formatting. Each hit → relevant `web/lib/*-parser.ts` / `*-loader.ts` (or new lib module); extend typed return so component reads pre-computed field. **Deliverables:** ADR-style note (or `web/README.md` section) summarizing boundary; optional regex-based detector stretch goal (defer if expensive). **Verify:** `npm run validate:web` green + dashboard / feed / wiki visual parity vs baseline. **Out of scope:** rewriting client-reactive UI state (form inputs, expand/collapse, modals — that is UI state not business logic); deep refactor of Next.js data-loading architecture.
+acceptance: |
+  audit report landed (count of component hits, per-file move list); each hit migrated to `web/lib/**` w/ typed return extended; no component embeds status inference / aggregation / markdown re-parsing / business-rule rollups; `npm run validate:web` exit 0; dashboard + feed + wiki visual parity confirmed (manual diff vs baseline); boundary note landed in `web/README.md` or ADR; rule `ia/rules/web-backend-logic.md` cited as authority.
+depends_on: []
+depends_on_raw: "none (rule already landed)"
+related: []
+related_raw: "`ia/rules/web-backend-logic.md`; `ia/projects/web-platform-master-plan.md`; parser `deriveHierarchyStatus` addition in `web/lib/plan-parser.ts`"
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-294** — Web workspace — audit + refactor components to move business logic into backend loaders/parsers
+    - Type: tech (web / refactor)
+    - Files: `web/app/**`, `web/components/**`, `web/lib/**`, `web/README.md`, `ia/rules/web-backend-logic.md`, `ia/projects/web-platform-master-plan.md`
+    - Notes: **Rule:** `ia/rules/web-backend-logic.md` — web business logic in backend (`web/lib/**`, route handlers, server components' data-loading paths); client / presentational components render pre-shaped props only. **Trigger (2026-04-17):** dashboard stage/step badges showed **Pending** despite all tasks **Done**. Root cause = status derivation split across `web/lib/plan-parser.ts` (read hand-written `Status` line only) + `web/app/dashboard/_status.ts` (badge mapper). Stale markdown Status silently overrode task-state truth. Fix: `deriveHierarchyStatus(steps)` inside parser — backend emits authoritative status, frontend maps only. **Scope:** audit `web/app/**` + `web/components/**` for status inference, aggregation (counts / totals / percentages), markdown re-parsing, task/stage/step rollups, business-rule date formatting. Each hit → relevant `web/lib/*-parser.ts` / `*-loader.ts` (or new lib module); extend typed return so component reads pre-computed field. **Deliverables:** ADR-style note (or `web/README.md` section) summarizing boundary; optional regex-based detector stretch goal (defer if expensive). **Verify:** `npm run validate:web` green + dashboard / feed / wiki visual parity vs baseline. **Out of scope:** rewriting client-reactive UI state (form inputs, expand/collapse, modals — that is UI state not business logic); deep refactor of Next.js data-loading architecture.
+    - Acceptance: audit report landed (count of component hits, per-file move list); each hit migrated to `web/lib/**` w/ typed return extended; no component embeds status inference / aggregation / markdown re-parsing / business-rule rollups; `npm run validate:web` exit 0; dashboard + feed + wiki visual parity confirmed (manual diff vs baseline); boundary note landed in `web/README.md` or ADR; rule `ia/rules/web-backend-logic.md` cited as authority.
+    - Depends on: none (rule already landed)
+    - Related: `ia/rules/web-backend-logic.md`; `ia/projects/web-platform-master-plan.md`; parser `deriveHierarchyStatus` addition in `web/lib/plan-parser.ts`

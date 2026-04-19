@@ -1,0 +1,33 @@
+id: TECH-383
+type: tests (EditMode / NUnit) + glossary
+title: EditMode tests for `TreasuryFloorClampService` + glossary row (Stage 1.2 Phase 2)
+priority: medium
+status: closed
+section: Recent archive
+spec: (removed after closure)
+files:
+  - Assets/Tests/EditMode/Economy/TreasuryFloorClampServiceTests.cs
+  - ia/specs/glossary.md
+  - tools/mcp-ia-server/data/glossary-index.json
+  - tools/mcp-ia-server/data/glossary-graph-index.json
+notes: |
+  Completed (verified — `/project-spec-close`): 4 `[Test]` methods land under `Assets/Tests/EditMode/Economy/TreasuryFloorClampServiceTests.cs` — (a) `TrySpend_Succeeds_WhenAmountLessThanBalance`, (b) `TrySpend_Blocks_WhenAmountGreaterThanBalance` (asserts return value + balance unchanged; `GameNotificationManager` omitted from fixture — `Awake` NPEs on null `notificationPanel`), (c) `CanAfford_BoundaryExact`, (d) `SpendMoney_Regression_BlocksNegative` (locks TECH-381 delegation). `TreasuryFloorClampService` glossary row added — forward-ref `ia/specs/economy-system.md#treasury-floor-clamp` (Stage 3.3) + fallback `docs/zone-s-economy-exploration.md §IP-3`. `glossary-index.json` + `glossary-graph-index.json` regenerated via `npm run generate:ia-indexes`. Decision Log persisted to `ia_project_spec_journal`. Closes Stage 1.2.
+acceptance: |
+  4 `[Test]` methods compile + pass via `npm run unity:testmode-batch`; `TreasuryFloorClampService` glossary row present; `glossary-index.json` + `glossary-graph-index.json` regenerated; `npm run validate:all` green (pre-existing master-plan-status drift unrelated).
+depends_on:
+  - TECH-379
+  - TECH-381
+depends_on_raw: "**TECH-379** (archived), **TECH-381** (archived)"
+related: []
+created: 2026-04-18
+closed: 2026-04-18
+raw_markdown: |
+  - [x] **TECH-383** — EditMode tests for `TreasuryFloorClampService` + glossary row (Stage 1.2 Phase 2) (2026-04-18)
+    - Type: tests (EditMode / NUnit) + glossary
+    - Files: `Assets/Tests/EditMode/Economy/TreasuryFloorClampServiceTests.cs`, `ia/specs/glossary.md`, `tools/mcp-ia-server/data/glossary-index.json`, `tools/mcp-ia-server/data/glossary-graph-index.json`
+    - Spec: (removed after closure)
+    - Notes: Completed (verified — `/project-spec-close`): 4 `[Test]` methods land under `Assets/Tests/EditMode/Economy/TreasuryFloorClampServiceTests.cs` — (a) `TrySpend_Succeeds_WhenAmountLessThanBalance`, (b) `TrySpend_Blocks_WhenAmountGreaterThanBalance` (asserts return value + balance unchanged; `GameNotificationManager` omitted from fixture — `Awake` NPEs on null `notificationPanel`), (c) `CanAfford_BoundaryExact`, (d) `SpendMoney_Regression_BlocksNegative` (locks TECH-381 delegation). `TreasuryFloorClampService` glossary row added — forward-ref `ia/specs/economy-system.md#treasury-floor-clamp` (Stage 3.3) + fallback `docs/zone-s-economy-exploration.md §IP-3`. `glossary-index.json` + `glossary-graph-index.json` regenerated via `npm run generate:ia-indexes`. Decision Log persisted to `ia_project_spec_journal`. Closes Stage 1.2.
+    - Acceptance: 4 `[Test]` methods compile + pass via `npm run unity:testmode-batch`; `TreasuryFloorClampService` glossary row present; `glossary-index.json` + `glossary-graph-index.json` regenerated; `npm run validate:all` green (pre-existing master-plan-status drift unrelated).
+    - Depends on: **TECH-379** (archived), **TECH-381** (archived)
+parent_plan: ia/projects/zone-s-economy-master-plan.md
+task_key: T1.2.5

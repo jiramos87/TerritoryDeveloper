@@ -21,6 +21,19 @@
 
 set -euo pipefail
 
+# macOS: Homebrew util-linux flock may not be on $PATH in minimal agent shells.
+# Prepend well-known location so `flock` resolves without manual PATH export.
+if [[ "$(uname)" == "Darwin" ]]; then
+  export PATH="/opt/homebrew/opt/util-linux/bin:${PATH}"
+fi
+
+# Ensure flock is available (matches reserve-id.sh contract).
+if ! command -v flock >/dev/null 2>&1; then
+  echo "ERROR: flock not found. Install via: brew install util-linux" >&2
+  echo "  (macOS ships without flock; util-linux provides it)" >&2
+  exit 1
+fi
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CHECK_MODE="${CHECK_MODE:-0}"
 for arg in "$@"; do

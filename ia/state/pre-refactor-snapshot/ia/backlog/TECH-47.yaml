@@ -1,0 +1,27 @@
+id: TECH-47
+type: documentation / agent enablement (**Cursor Skill** only)
+title: "**Cursor Skill:** new **`MonoBehaviour`** **manager** wiring pattern"
+priority: medium
+status: open
+section: Agent ↔ Unity & MCP context lane
+spec: ""
+files: 
+  - ia/skills/
+  - SKILL.md
+  - AGENTS.md
+  - ia/specs/unity-development-context.md
+notes: |
+  **Deliverable type:** **Cursor Skill**. Checklist: scene **component**, never `new`; **`[SerializeField] private`** refs + **`FindObjectOfType`** fallback in **`Awake`**; **no new singletons**; do not add responsibilities to **`GridManager`** — extract helpers; align with **`ia/specs/unity-development-context.md`** via MCP slice when needed. **Pattern:** [ia/skills/README.md](ia/skills/README.md).
+acceptance: |
+  **Skill** file committed; **`description`** states “new manager / **MonoBehaviour** service” triggers
+depends_on: []
+depends_on_raw: "none (soft: [ia/skills/README.md](ia/skills/README.md))"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-47** — **Cursor Skill:** new **`MonoBehaviour`** **manager** wiring pattern
+    - Type: documentation / agent enablement (**Cursor Skill** only)
+    - Files: `ia/skills/` (TBD subfolder + `SKILL.md`); optional pointer in `AGENTS.md` or `ia/specs/unity-development-context.md` **Decision Log**
+    - Notes: **Deliverable type:** **Cursor Skill**. Checklist: scene **component**, never `new`; **`[SerializeField] private`** refs + **`FindObjectOfType`** fallback in **`Awake`**; **no new singletons**; do not add responsibilities to **`GridManager`** — extract helpers; align with **`ia/specs/unity-development-context.md`** via MCP slice when needed. **Pattern:** [ia/skills/README.md](ia/skills/README.md).
+    - Acceptance: **Skill** file committed; **`description`** states “new manager / **MonoBehaviour** service” triggers
+    - Depends on: none (soft: [ia/skills/README.md](ia/skills/README.md))

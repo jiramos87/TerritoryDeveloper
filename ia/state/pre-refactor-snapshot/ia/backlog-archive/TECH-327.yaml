@@ -1,0 +1,25 @@
+id: TECH-327
+type: infrastructure / MCP tooling
+title: Concurrency test for `reserve_backlog_ids` (Stage 1.2 Phase 2)
+priority: closed
+status: closed
+section: Completed (moved from BACKLOG.md, 2026-04-17)
+spec: (removed after closure)
+files:
+  - tools/mcp-ia-server/tests/tools/reserve-backlog-ids.test.ts
+notes: |
+  Concurrency harness at MCP layer for `reserve_backlog_ids` (TECH-326). New `C1` test block in `tools/mcp-ia-server/tests/tools/reserve-backlog-ids.test.ts` reuses `makeTempCounter` + `runScript` + `readCounter`; spawns 8 parallel `reserve-id.sh TECH 2` via `Promise.all` against shared tmp counter + lockfile; asserts 16 ids, all unique, monotonic `[1..16]`, counter === 16. Skip-with-warn guard when `flock` not on PATH (mirrors script-layer DX; race-safety assertion meaningless without flock anyway). Locks flock-guarded correctness end-to-end (script flock + Node spawn interaction). Closes Phase 2 of Stage 1.2.
+acceptance: |
+  Test spawns 8 parallel calls; 16 distinct ids; counter advances exactly 16 (no gap, no dup); tmpdir + env override isolates from real counter; `npm run validate:all` green.
+depends_on: []
+depends_on_raw: none
+related:
+  - TECH-326
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-327** — Concurrency test for `reserve_backlog_ids` (Stage 1.2 Phase 2)
+    - Type: infrastructure / MCP tooling
+    - Files: `tools/mcp-ia-server/tests/tools/reserve-backlog-ids.test.ts`
+    - Notes: `C1` block — 8 parallel `reserve-id.sh TECH 2` via `Promise.all` against shared tmp counter + lockfile; reuses `makeTempCounter` + `runScript` + `readCounter`; skip-with-warn when `flock` missing.
+    - Acceptance: 16 distinct ids; counter advances exactly 16; tmpdir + env override isolates from real counter; `validate:all` green.
+    - Related: TECH-326

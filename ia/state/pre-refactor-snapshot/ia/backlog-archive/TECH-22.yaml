@@ -1,0 +1,34 @@
+id: TECH-22
+type: documentation / refactor (IA)
+title: Canonical terminology pass on **reference specs** (`ia/specs`) (2026-04-02)
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: "[`ia/specs/glossary.md`](ia/specs/glossary.md); [`ia/specs/REFERENCE-SPEC-STRUCTURE.md`](ia/specs/REFERENCE-SPEC-STRUCTURE.md) (deprecated → canonical table + MCP **`glossary_discover`** hint)"
+files: 
+  - ia/specs/glossary.md
+  - isometric-geography-system.md
+  - roads-system.md
+  - water-terrain-system.md
+  - simulation-system.md
+  - persistence-system.md
+  - managers-reference.md
+  - ui-design-system.md
+  - REFERENCE-SPEC-STRUCTURE.md
+  - BACKLOG.md
+  - tools/mcp-ia-server/tests/parser/fuzzy.test.ts
+  - ia/projects/TECH-22.md
+notes: |
+  **Completed (verified per user):** Glossary/spec alignment — **map border** vs local **cell** edges; umbrella **street or interstate**; **road validation pipeline** wording; §13 retitled in geo; authoring table in `REFERENCE-SPEC-STRUCTURE.md`. `AGENTS.md` / MCP `config.ts` unchanged (no spec key changes).
+acceptance: ""
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-22** — Canonical terminology pass on **reference specs** (`ia/specs`) (2026-04-02)
+    - Type: documentation / refactor (IA)
+    - Files: `ia/specs/glossary.md`, `isometric-geography-system.md`, `roads-system.md`, `water-terrain-system.md`, `simulation-system.md`, `persistence-system.md`, `managers-reference.md`, `ui-design-system.md`, `REFERENCE-SPEC-STRUCTURE.md`; `BACKLOG.md` (one **map border** wording fix); `tools/mcp-ia-server/tests/parser/fuzzy.test.ts` (§13 heading fixture); [`ia/projects/TECH-22.md`](ia/projects/TECH-22.md)
+    - Spec: [`ia/specs/glossary.md`](ia/specs/glossary.md); [`ia/specs/REFERENCE-SPEC-STRUCTURE.md`](ia/specs/REFERENCE-SPEC-STRUCTURE.md) (deprecated → canonical table + MCP **`glossary_discover`** hint)
+    - Notes: **Completed (verified per user):** Glossary/spec alignment — **map border** vs local **cell** edges; umbrella **street or interstate**; **road validation pipeline** wording; §13 retitled in geo; authoring table in `REFERENCE-SPEC-STRUCTURE.md`. `AGENTS.md` / MCP `config.ts` unchanged (no spec key changes).
+    - Depends on: none

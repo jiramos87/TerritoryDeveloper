@@ -1,0 +1,34 @@
+id: TECH-429
+type: mcp / infrastructure
+title: "**MCP** — wire `glossary_lookup` bulk-terms partial-result through envelope (Stage 2.3 T2.3.4)"
+priority: medium
+status: closed
+closed: 2026-04-18
+section: IA infrastructure
+spec: ia/projects/TECH-429-glossary-lookup-partial-batch.md
+files:
+  - tools/mcp-ia-server/src/tools/glossary-lookup.ts
+notes: |
+  Wire partial-result shape for `glossary_lookup({ terms: [...] })` (handler extended in Stage 1.1 TECH-314 / TECH-315) through Stage 2.2 TECH-400 envelope wrapper. Ensure `meta.partial: {succeeded, failed}` propagates into `EnvelopeMeta`. Single-`term` path still returns unwrapped `GlossaryEntry` in `payload` (back-compat preserved). Bulk path returns `{ results: {[term]: GlossaryEntry}, errors: {[term]: {code, message}} }`. Stage 2.3 Phase 2 T2.3.4 of `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`.
+acceptance: |
+  `glossary_lookup({ terms: ["HeightMap", "wet run", "nonexistent"] })` → `ok: true`, `payload.results` for found, `payload.errors` for not-found, `meta.partial: {succeeded: 2, failed: 1}`. Single `term` path returns unwrapped entry unchanged. Empty `terms: []` → `ok: true`, results `{}`, errors `{}`, `meta.partial: {0,0}`. Unit tests cover bulk + single + empty. `validate:all` green.
+depends_on:
+  - TECH-388
+  - TECH-400
+  - TECH-426
+depends_on_raw: "TECH-388 (envelope — hard dep); TECH-400 (glossary tools wrapped — hard dep); TECH-426 (alias-drop + canonical-param enforcement lands first — hard dep)"
+related:
+  - TECH-427
+  - TECH-428
+created: 2026-04-18
+raw_markdown: |
+  - [x] **TECH-429** — **MCP** — wire `glossary_lookup` bulk-terms partial-result through envelope (Stage 2.3 T2.3.4)
+    - Type: mcp / infrastructure
+    - Files: `tools/mcp-ia-server/src/tools/glossary-lookup.ts`
+    - Spec: `ia/projects/TECH-429-glossary-lookup-partial-batch.md`
+    - Notes: Bulk `terms` → `{ results, errors, meta.partial }` via envelope; single `term` unwrapped; empty array returns empty maps + zero counts.
+    - Acceptance: bulk / single / empty cases covered; `meta.partial` propagates; unit tests green; `validate:all` green.
+    - Depends on: TECH-388, TECH-400, TECH-426
+    - Related: TECH-427, TECH-428
+parent_plan: ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md
+task_key: T2.3.4

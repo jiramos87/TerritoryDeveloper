@@ -1,0 +1,23 @@
+id: FEAT-18
+type: feature
+title: "**Height generation** (improved terrain generator)"
+priority: low
+status: open
+section: Low Priority
+spec: ""
+files: 
+  - TerrainManager.cs
+  - GeographyManager.cs
+  - HeightMap.cs
+notes: |
+  Improved **height generation** with more control and variety over the **HeightMap**.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **FEAT-18** — **Height generation** (improved terrain generator)
+    - Type: feature
+    - Files: `TerrainManager.cs`, `GeographyManager.cs`, `HeightMap.cs`
+    - Notes: Improved **height generation** with more control and variety over the **HeightMap**.

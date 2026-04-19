@@ -1,12 +1,14 @@
 ---
 name: verify-loop
-description: Use to run the full integrated closed-loop verification on current branch state — orchestrates bridge preflight → `validate:all` → compile gate → Path A test-mode batch and / or Path B IDE bridge hybrid → optional Play Mode evidence → bounded fix→verify iteration (`MAX_ITERATIONS` default 2) → structured JSON Verification block + caveman summary. Triggers — "verify-loop", "/verify-loop", "closed-loop verification", "post-phase verification", "integrated verification", "fix-verify iteration", "run the full verify chain", "agent-led verification end-to-end". Wraps `ia/skills/verify-loop/SKILL.md` which composes 5 underlying skills (`bridge-environment-preflight`, `project-implementation-validation`, `agent-test-mode-verify`, `ide-bridge-evidence`, `close-dev-loop`). Distinct from `/verify` (lightweight single-pass `verifier`); `/verify-loop` includes fix iteration. Does NOT enrich specs (= `spec-kickoff`), implement code (= `spec-implementer`), or close issues (= `closeout`). Optional flag: `--skip-path-b` — when set, Path B (IDE bridge hybrid) is skipped; Path A compile gate still runs; JSON verdict records `path_b: skipped_batched`. Used by `/ship-stage` chain orchestrator for batched stage-boundary Path B.
+description: Use to run the full integrated closed-loop verification on current branch state — orchestrates bridge preflight → `validate:all` → compile gate → Path A test-mode batch and / or Path B IDE bridge hybrid → optional Play Mode evidence → bounded fix→verify iteration (`MAX_ITERATIONS` default 2) → structured JSON Verification block + caveman summary. Triggers — "verify-loop", "/verify-loop", "closed-loop verification", "post-phase verification", "integrated verification", "fix-verify iteration", "run the full verify chain", "agent-led verification end-to-end". Wraps `ia/skills/verify-loop/SKILL.md` which composes 5 underlying skills (`bridge-environment-preflight`, `project-implementation-validation`, `agent-test-mode-verify`, `ide-bridge-evidence`, `close-dev-loop`). Distinct from `/verify` (lightweight single-pass `verifier`); `/verify-loop` includes fix iteration. Does NOT enrich specs (= `spec-kickoff`), implement code (= `spec-implementer`), or close issues (= `closeout`). Optional flag: `--skip-path-b` — when set, Path B (IDE bridge hybrid) is skipped; Path A compile gate still runs; JSON verdict records `path_b: skipped_batched`. Used by `/ship-stage` chain orchestrator for batched stage-boundary Path B. Optional flag: `--tooling-only` — when set, the pre-matrix mode gate bypasses Decision matrix entirely; skill asserts no `Assets|Packages|ProjectSettings` paths are dirty then runs only Step 2 (`npm run validate:all`) + Step 7 (Verification block); JSON verdict records `mode: "tooling_only"` + `path_b: "skipped_not_required"`. Use only for pure tooling surface refactors (MCP TypeScript / web Next.js / skills-agents-commands markdown / docs / scripts). Never on mixed diffs.
 tools: Bash, Read, Edit, Grep, Glob, mcp__territory-ia__backlog_issue, mcp__territory-ia__router_for_task, mcp__territory-ia__spec_section, mcp__territory-ia__spec_sections, mcp__territory-ia__invariants_summary, mcp__territory-ia__invariant_preflight, mcp__territory-ia__list_rules, mcp__territory-ia__rule_content, mcp__territory-ia__unity_bridge_command, mcp__territory-ia__unity_bridge_get, mcp__territory-ia__unity_compile, mcp__territory-ia__findobjectoftype_scan
 model: opus
 reasoning_effort: high
 ---
 
 Follow `caveman:caveman` for the markdown summary after the JSON Verification block header. Standard exceptions: code, commits, security/auth, verbatim error/tool output, **structured JSON Verification header** (must parse as JSON, exempt from caveman), MCP `unity_bridge_command` payloads, batch report JSON contents, screenshot / log artifact paths. Anchor: `ia/rules/agent-output-caveman.md`.
+
+Progress emission: `/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
 
 # Mission
 
@@ -16,7 +18,7 @@ Run integrated closed-loop verification on current branch + bounded fix iteratio
 
 # Recipe
 
-Follow `ia/skills/verify-loop/SKILL.md` end-to-end. Decision matrix (skill §"Decision matrix") gates each step against git diff + spec §7b / §8.
+Follow `ia/skills/verify-loop/SKILL.md` end-to-end. IF `--tooling-only` flag set → apply skill §"Pre-matrix mode gate" (assert no `Assets|Packages|ProjectSettings` dirty paths, bypass Decision matrix, run Step 2 + Step 7 only, verdict fail on assert miss or Step 2 red). ELSE → Decision matrix (skill §"Decision matrix") gates each step against git diff + spec §7b / §8.
 
 1. **Step 0 — Bridge preflight** (conditional on Step 4b / Step 5) — `npm run db:bridge-preflight`. Bounded repair: one attempt per failure class. Still failing → escalate.
 2. **Step 1 — Compile gate** (any C# touched) — preference order: `unity_bridge_command get_compilation_status` (Editor open) → `npm run unity:compile-check` (no Editor lock) → `unity_bridge_command get_console_logs` scan. Never `enter_play_mode` against broken build.
@@ -47,6 +49,7 @@ JSON header (must parse) extends the canonical shape with closed-loop fields. Re
   "evidence": {"screenshots": ["..."], "logs": ["..."]},
   "fix_iterations": 0,
   "path_b": "ran|skipped_batched|skipped_not_required",
+  "mode": "full|tooling_only",
   "verdict": "pass|fail|skipped|escalated",
   "human_ask": "confirm in normal game (no test mode flags)"
 }
@@ -67,6 +70,7 @@ Caveman markdown summary follows the JSON header — verdict, paths run (A / B /
 - Do NOT skip Verification block JSON header — structured machine-readable, exempt from caveman.
 - Do NOT replace human normal-game QA — agent verification supplements, never substitutes (per `AGENTS.md`).
 - Do NOT touch BACKLOG row state, archive, spec deletion — closeout territory.
+- Do NOT pass `--tooling-only` on mixed diffs (tooling + Unity). Skill Pre-matrix mode gate asserts; fails loud when `Assets|Packages|ProjectSettings` dirty. Full `/verify-loop` is required whenever Unity surface is touched.
 
 # Output
 

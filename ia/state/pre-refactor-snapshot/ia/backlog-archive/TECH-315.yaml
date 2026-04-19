@@ -1,0 +1,26 @@
+id: TECH-315
+type: mcp / tests
+title: "**MCP** — glossary_lookup bulk-terms unit tests"
+priority: medium
+status: closed
+section: IA infrastructure
+spec: ""
+files: 
+  - tools/mcp-ia-server/tests/tools/glossary-lookup.test.ts
+notes: |
+  Unit tests in `tools/mcp-ia-server/tests/tools/glossary-lookup.test.ts` for TECH-314 bulk-terms handler: bulk happy path (all terms found → `results` populated, `errors` empty); partial failure (one term not found → in `errors`, rest in `results`); single-`term` back-compat returns existing shape via `lookupOneTerm` helper; empty `terms: []` → `{ results: {}, errors: {}, meta.partial: { succeeded: 0, failed: 0 } }`. 4 new tests landed; total `test:ia` passes 228 (was 224). Stage 1.1 T1.1.2 of `ia/projects/mcp-lifecycle-tools-opus-4-7-audit-master-plan.md`.
+acceptance: |
+  Four test cases green (bulk happy, partial, single-term back-compat, empty terms); `npm run test:ia` green; `npm run validate:all` green.
+depends_on: 
+  - TECH-314
+depends_on_raw: TECH-314 (bulk-terms handler under test)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [x] **TECH-315** — **MCP** — glossary_lookup bulk-terms unit tests (2026-04-18)
+    - Type: mcp / tests
+    - Files: `tools/mcp-ia-server/tests/tools/glossary-lookup.test.ts`
+    - Spec: (removed after closure)
+    - Notes: Tests for TECH-314 bulk path — bulk happy, partial failure, single-term back-compat via `lookupOneTerm` helper, empty `terms: []`. Stage 1.1 T1.1.2 of mcp-lifecycle-tools-opus-4-7-audit orchestrator.
+    - Acceptance: Four test cases green; `npm run test:ia` green; `npm run validate:all` green.
+    - Depends on: TECH-314 (bulk-terms handler under test)

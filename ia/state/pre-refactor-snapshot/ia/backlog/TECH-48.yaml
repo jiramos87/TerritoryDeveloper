@@ -1,0 +1,30 @@
+id: TECH-48
+type: tooling / agent enablement
+title: "**territory-ia** MCP: discovery from **project specs** (terms, domains, spec slices)"
+priority: medium
+status: open
+section: Agent ↔ Unity & MCP context lane
+spec: none (promote to `ia/projects/TECH-48.md` when design stabilizes)
+files: 
+  - tools/mcp-ia-server/src/
+  - tools/mcp-ia-server/README.md
+  - docs/mcp-ia-server.md
+  - tools/mcp-ia-server/
+  - ia/projects/TECH-18.md
+notes: |
+  **Goal:** Make **project-spec-kickoff** and similar workflows cheaper and safer by improving how MCP turns **implementation**-oriented text (project **spec** body, backlog **Files**) into **glossary** matches and **`spec_section`** targets. **Candidate directions:** (1) Path-based tool: input `ia/projects/{ISSUE}.md` → ranked **glossary** candidates + suggested **`router_for_task`** **domain** strings + ordered **`spec_section`** queue with **max_chars** budget. (2) Improve **`glossary_discover`** ranking using tokens extracted from **`backlog_issue`** **Files**/**Notes** when `issue_id` is bundled in the same turn. (3) Optional composite read helper (defer if **TECH-18** `search_specs` / bundles subsume). **Does not** replace **`ia/skills/project-spec-kickoff/SKILL.md`** prose until tools are **shipped** and **`npm run verify`** green. **Related:** closeout helpers shipped (**`project_spec_closeout_digest`**, **`spec_sections`**, **`closeout:*`**, **`project-spec-closeout-parse.ts`**) — trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
+acceptance: |
+  ≥1 **measurable** improvement merged (new tool **or** clear ranking/UX win on existing tools) + docs updated; **`npm run verify`** green
+depends_on: 
+  - TECH-18
+depends_on_raw: "none (soft: dogfood with **project-spec-kickoff**; **TECH-18** for long-term search architecture)"
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-48** — **territory-ia** MCP: discovery from **project specs** (terms, domains, spec slices)
+    - Type: tooling / agent enablement
+    - Files: `tools/mcp-ia-server/src/` (new or extended handlers, parsers); `tools/mcp-ia-server/README.md`; `docs/mcp-ia-server.md`; optional fixtures under `tools/mcp-ia-server/`; align notes with `ia/projects/TECH-18.md` when **search**/**bundle** tools land
+    - Spec: none (promote to `ia/projects/TECH-48.md` when design stabilizes)
+    - Notes: **Goal:** Make **project-spec-kickoff** and similar workflows cheaper and safer by improving how MCP turns **implementation**-oriented text (project **spec** body, backlog **Files**) into **glossary** matches and **`spec_section`** targets. **Candidate directions:** (1) Path-based tool: input `ia/projects/{ISSUE}.md` → ranked **glossary** candidates + suggested **`router_for_task`** **domain** strings + ordered **`spec_section`** queue with **max_chars** budget. (2) Improve **`glossary_discover`** ranking using tokens extracted from **`backlog_issue`** **Files**/**Notes** when `issue_id` is bundled in the same turn. (3) Optional composite read helper (defer if **TECH-18** `search_specs` / bundles subsume). **Does not** replace **`ia/skills/project-spec-kickoff/SKILL.md`** prose until tools are **shipped** and **`npm run verify`** green. **Related:** closeout helpers shipped (**`project_spec_closeout_digest`**, **`spec_sections`**, **`closeout:*`**, **`project-spec-closeout-parse.ts`**) — trace in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md).
+    - Acceptance: ≥1 **measurable** improvement merged (new tool **or** clear ranking/UX win on existing tools) + docs updated; **`npm run verify`** green
+    - Depends on: none (soft: dogfood with **project-spec-kickoff**; **TECH-18** for long-term search architecture)

@@ -1,0 +1,26 @@
+id: TECH-33
+type: tooling
+title: "Asset introspection: **prefab** manifest + scene **MonoBehaviour** listing"
+priority: medium
+status: open
+section: Agent ↔ Unity & MCP context lane
+spec: ia/projects/TECH-33.md
+files: 
+  - tools/
+  - -batchmode
+  - Assets/Prefabs/
+  - MainScene.unity
+notes: |
+  List prefabs with missing script references; list MonoBehaviour types/paths in scene for **toolbar** layout work. `docs/agent-tooling-verification-priority-tasks.md` tasks 26, 27.
+acceptance: ""
+depends_on: []
+depends_on_raw: none
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-33** — Asset introspection: **prefab** manifest + scene **MonoBehaviour** listing
+    - Type: tooling
+    - Files: `tools/` (Unity `-batchmode` or Editor script), `Assets/Prefabs/`, agreed scene path (e.g. `MainScene.unity`)
+    - Spec: `ia/projects/TECH-33.md`
+    - Notes: List prefabs with missing script references; list MonoBehaviour types/paths in scene for **toolbar** layout work. `docs/agent-tooling-verification-priority-tasks.md` tasks 26, 27.
+    - Depends on: none

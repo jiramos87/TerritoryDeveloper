@@ -1,0 +1,30 @@
+id: TECH-348
+type: feature
+title: BuildInfo asset instance under Assets/Resources (Stage 1.1 T1.1.2)
+priority: medium
+status: open
+section: Distribution program — Full-Game MVP Bucket 10
+spec: ia/projects/TECH-348.md
+files:
+  - Assets/Resources/BuildInfo.asset
+  - Assets/Resources/BuildInfo.asset.meta
+notes: |
+  Create `Assets/Resources/BuildInfo.asset` via the Territory/BuildInfo menu command (from T1.1.1 `[CreateAssetMenu]`); commit both `.asset` + `.asset.meta`. Verify `Resources.Load<BuildInfo>("BuildInfo")` returns non-null in an EditMode fixture. Default values land as `"0.0.0-dev"` / `"unknown"` / `"unknown"` until Stage 1.2 ReleaseBuilder stamps them from env vars.
+acceptance: |
+  `Assets/Resources/BuildInfo.asset` + `.meta` committed; `Resources.Load<BuildInfo>("BuildInfo")` non-null; defaults match `0.0.0-dev` / `unknown` / `unknown`; `npm run unity:compile-check` green.
+depends_on:
+  - TECH-347
+depends_on_raw: TECH-347 (BuildInfo type must exist before instance — hard gate)
+related: []
+created: 2026-04-18
+raw_markdown: |
+  - [ ] **TECH-348** — BuildInfo asset instance under Assets/Resources (Stage 1.1 T1.1.2)
+    - Type: feature
+    - Files: `Assets/Resources/BuildInfo.asset`, `Assets/Resources/BuildInfo.asset.meta`
+    - Spec: `ia/projects/TECH-348.md`
+    - Notes: Create `.asset` via Territory/BuildInfo menu (from T1.1.1 `[CreateAssetMenu]`); commit `.asset` + `.meta`; verify `Resources.Load<BuildInfo>("BuildInfo")` non-null. Defaults stay until Stage 1.2 writer stamps.
+    - Acceptance: asset + meta committed; `Resources.Load` non-null; defaults match; `unity:compile-check` green.
+    - Depends on: TECH-347
+    - Related: TECH-347, TECH-349, TECH-350
+parent_plan: ia/projects/distribution-master-plan.md
+task_key: T1.1.2

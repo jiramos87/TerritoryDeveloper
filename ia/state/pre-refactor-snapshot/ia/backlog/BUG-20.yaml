@@ -1,0 +1,23 @@
+id: BUG-20
+type: fix
+title: "**Utility buildings** (power plant, 3×3/2×2 multi-cell **buildings**) load incorrectly in LoadGame: end up under **grass cells** (**visual restore**)"
+priority: high
+status: open
+section: High Priority
+spec: ""
+files: 
+  - GeographyManager.cs
+  - BuildingPlacementService.cs
+  - GridManager.cs
+notes: |
+  Load-game **grass**/**sorting** fixes landed in archive (2026-03). Re-verify in Unity whether multi-cell **utility buildings** still sort under terrain after those fixes; close if resolved.
+acceptance: ""
+depends_on: []
+depends_on_raw: ""
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **BUG-20** — **Utility buildings** (power plant, 3×3/2×2 multi-cell **buildings**) load incorrectly in LoadGame: end up under **grass cells** (**visual restore**)
+    - Type: fix
+    - Files: `GeographyManager.cs` (GetMultiCellBuildingMaxSortingOrder, ReCalculateSortingOrderBasedOnHeight), `BuildingPlacementService.cs` (LoadBuildingTile, RestoreBuildingTile), `GridManager.cs` (RestoreGridCellVisuals)
+    - Notes: Load-game **grass**/**sorting** fixes landed in archive (2026-03). Re-verify in Unity whether multi-cell **utility buildings** still sort under terrain after those fixes; close if resolved.

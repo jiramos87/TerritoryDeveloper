@@ -1,16 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { buildPlanTree } from '../plan-tree';
-import type { PlanData, PlanMetrics, Stage, Step, TaskRow } from '../plan-loader-types';
+import type { PlanData, PlanMetrics, Stage, TaskRow } from '../plan-loader-types';
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Helpers (2-level Stage → Task)
 // ---------------------------------------------------------------------------
 
 function makeTask(overrides: Partial<TaskRow> & { id: string }): TaskRow {
   return {
     id: overrides.id,
     name: overrides.name,
-    phase: overrides.phase ?? '1',
     issue: overrides.issue ?? 'TECH-1',
     status: overrides.status ?? 'In Progress',
     intent: overrides.intent ?? 'some task',
@@ -23,30 +22,19 @@ function makeStage(id: string, tasks: TaskRow[]): Stage {
     title: `Stage ${id}`,
     status: 'In Progress',
     statusDetail: '',
-    phases: [],
     tasks,
   };
 }
 
-function makeStep(id: string, stages: Stage[]): Step {
-  return {
-    id,
-    title: `Step ${id}`,
-    status: 'In Progress',
-    statusDetail: '',
-    stages,
-  };
-}
-
-function makePlan(steps: Step[]): PlanData {
+function makePlan(stages: Stage[]): PlanData {
   return {
     title: 'Test Plan',
     filename: 'test-plan.md',
     overallStatus: 'In Progress',
     overallStatusDetail: '',
     siblingWarnings: [],
-    steps,
-    allTasks: steps.flatMap((s) => s.stages.flatMap((st) => st.tasks)),
+    stages,
+    allTasks: stages.flatMap((st) => st.tasks),
   };
 }
 
@@ -56,81 +44,60 @@ function makeMetrics(): PlanMetrics {
     totalCount: 0,
     statBarLabel: '0 / 0 done',
     chartData: [],
-    stepCounts: {},
+    stageCounts: {},
   };
 }
 
 // ---------------------------------------------------------------------------
-// Case 1 — Stage-node counts sum across phases + tasks
+// Case 1 — Stage-node counts sum across tasks
 // ---------------------------------------------------------------------------
 
 describe('buildPlanTree — Case 1: stage-node counts', () => {
-  it('sums counts across all phases within a stage', () => {
+  it('sums counts across all tasks within a stage', () => {
     const tasks = [
-      makeTask({ id: 'T1.1.1', phase: '1', status: 'Done' }),
-      makeTask({ id: 'T1.1.2', phase: '1', status: 'Done' }),
-      makeTask({ id: 'T1.1.3', phase: '2', status: 'In Progress' }),
+      makeTask({ id: 'T1.1.1', status: 'Done' }),
+      makeTask({ id: 'T1.1.2', status: 'Done' }),
+      makeTask({ id: 'T1.1.3', status: 'In Progress' }),
     ];
-    const plan = makePlan([makeStep('1', [makeStage('1.1', tasks)])]);
+    const plan = makePlan([makeStage('1.1', tasks)]);
     const tree = buildPlanTree(plan, makeMetrics());
 
-    const stepNode = tree[0];
-    expect(stepNode.counts).toEqual({ done: 2, total: 3 });
-
-    const stageNode = stepNode.children[0];
+    const stageNode = tree[0];
+    expect(stageNode.kind).toBe('stage');
     expect(stageNode.counts).toEqual({ done: 2, total: 3 });
+    expect(stageNode.children).toHaveLength(3);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Case 2 — Phase synthesis from groupBy(task.phase)
+// Case 2 — Direct Stage → Task nesting (no Phase layer)
 // ---------------------------------------------------------------------------
 
-describe('buildPlanTree — Case 2: phase synthesis from task groupBy', () => {
-  it('creates phase nodes from task.phase, not Stage.phases checklist', () => {
+describe('buildPlanTree — Case 2: direct task children', () => {
+  it('renders tasks directly under stage (no phase grouping)', () => {
     const tasks = [
-      makeTask({ id: 'T1', phase: '1', status: 'Done' }),
-      makeTask({ id: 'T2', phase: '2', status: 'In Progress' }),
-      makeTask({ id: 'T3', phase: '2', status: 'Draft' }),
+      makeTask({ id: 'T1', status: 'Done' }),
+      makeTask({ id: 'T2', status: 'In Progress' }),
+      makeTask({ id: 'T3', status: 'Draft' }),
     ];
-    // Stage.phases intentionally set differently (diverged checklist)
-    const stage: Stage = {
-      ...makeStage('1.1', tasks),
-      phases: [
-        { checked: false, label: 'Phase A (unrelated checklist entry)' },
-      ],
-    };
-    const plan = makePlan([makeStep('1', [stage])]);
+    const plan = makePlan([makeStage('1.1', tasks)]);
     const tree = buildPlanTree(plan, makeMetrics());
 
-    const stageNode = tree[0].children[0];
-    // Must produce 2 phase nodes from task groupBy, not 1 from Stage.phases
-    expect(stageNode.children).toHaveLength(2);
-    expect(stageNode.children[0].label).toBe('Phase 1');
-    expect(stageNode.children[1].label).toBe('Phase 2');
+    const stageNode = tree[0];
+    expect(stageNode.children).toHaveLength(3);
+    expect(stageNode.children.map((c) => c.kind)).toEqual(['task', 'task', 'task']);
+    expect(stageNode.children.map((c) => c.id)).toEqual(['T1', 'T2', 'T3']);
   });
 
-  it('sorts phase nodes lexicographically by task.phase key', () => {
-    const tasks = [
-      makeTask({ id: 'T3', phase: '3', status: 'Done' }),
-      makeTask({ id: 'T1', phase: '1', status: 'Done' }),
-      makeTask({ id: 'T2', phase: '2', status: 'Done' }),
-    ];
-    const plan = makePlan([makeStep('1', [makeStage('1.1', tasks)])]);
+  it('empty stage produces stage node with no children and zero counts', () => {
+    const plan = makePlan([makeStage('1.1', [])]);
     const tree = buildPlanTree(plan, makeMetrics());
 
-    const phaseLabels = tree[0].children[0].children.map((p) => p.label);
-    expect(phaseLabels).toEqual(['Phase 1', 'Phase 2', 'Phase 3']);
-  });
-
-  it('empty stage produces stage node with no phase children and zero counts', () => {
-    const plan = makePlan([makeStep('1', [makeStage('1.1', [])])]);
-    const tree = buildPlanTree(plan, makeMetrics());
-
-    const stageNode = tree[0].children[0];
+    const stageNode = tree[0];
     expect(stageNode.children).toHaveLength(0);
     expect(stageNode.counts).toEqual({ done: 0, total: 0 });
     expect(stageNode.status).toBe('pending');
+    expect(stageNode.kind === 'stage' && stageNode.pendingDecompose).toBe(true);
   });
 });
 
@@ -150,59 +117,53 @@ describe('buildPlanTree — Case 3: status derivation', () => {
 
   for (const [taskStatus, expectedStatus] of cases) {
     it(`maps TaskStatus "${taskStatus}" → "${expectedStatus}"`, () => {
-      const task = makeTask({ id: 'T1', phase: '1', status: taskStatus });
-      const plan = makePlan([makeStep('1', [makeStage('1.1', [task])])]);
+      const task = makeTask({ id: 'T1', status: taskStatus });
+      const plan = makePlan([makeStage('1.1', [task])]);
       const tree = buildPlanTree(plan, makeMetrics());
 
-      const taskNode = tree[0].children[0].children[0].children[0];
+      const stageNode = tree[0];
+      const taskNode = stageNode.children[0];
       expect(taskNode.status).toBe(expectedStatus);
     });
   }
 });
 
 // ---------------------------------------------------------------------------
-// Case 4 — All-done propagation up phase → stage → step
+// Case 4 — All-done propagation up task → stage
 // ---------------------------------------------------------------------------
 
 describe('buildPlanTree — Case 4: all-done propagation', () => {
-  it('propagates done up through phase → stage → step when all tasks done', () => {
+  it('propagates done up through stage when all tasks done', () => {
     const tasks = [
-      makeTask({ id: 'T1', phase: '1', status: 'Done' }),
-      makeTask({ id: 'T2', phase: '1', status: 'Done (archived)' }),
-      makeTask({ id: 'T3', phase: '2', status: 'Done' }),
+      makeTask({ id: 'T1', status: 'Done' }),
+      makeTask({ id: 'T2', status: 'Done (archived)' }),
+      makeTask({ id: 'T3', status: 'Done' }),
     ];
-    const plan = makePlan([makeStep('1', [makeStage('1.1', tasks)])]);
+    const plan = makePlan([makeStage('1.1', tasks)]);
     const tree = buildPlanTree(plan, makeMetrics());
 
-    const stepNode = tree[0];
-    const stageNode = stepNode.children[0];
-    const phase1 = stageNode.children[0];
-    const phase2 = stageNode.children[1];
-
-    expect(phase1.status).toBe('done');
-    expect(phase2.status).toBe('done');
+    const stageNode = tree[0];
     expect(stageNode.status).toBe('done');
-    expect(stepNode.status).toBe('done');
+    expect(stageNode.counts).toEqual({ done: 3, total: 3 });
   });
 
   it('in-progress if any child in-progress (mixed)', () => {
     const tasks = [
-      makeTask({ id: 'T1', phase: '1', status: 'Done' }),
-      makeTask({ id: 'T2', phase: '1', status: 'In Progress' }),
+      makeTask({ id: 'T1', status: 'Done' }),
+      makeTask({ id: 'T2', status: 'In Progress' }),
     ];
-    const plan = makePlan([makeStep('1', [makeStage('1.1', tasks)])]);
+    const plan = makePlan([makeStage('1.1', tasks)]);
     const tree = buildPlanTree(plan, makeMetrics());
 
     expect(tree[0].status).toBe('in-progress');
-    expect(tree[0].children[0].status).toBe('in-progress');
   });
 
   it('pending propagates when all tasks pending', () => {
     const tasks = [
-      makeTask({ id: 'T1', phase: '1', status: 'Draft' }),
-      makeTask({ id: 'T2', phase: '2', status: '_pending_' }),
+      makeTask({ id: 'T1', status: 'Draft' }),
+      makeTask({ id: 'T2', status: '_pending_' }),
     ];
-    const plan = makePlan([makeStep('1', [makeStage('1.1', tasks)])]);
+    const plan = makePlan([makeStage('1.1', tasks)]);
     const tree = buildPlanTree(plan, makeMetrics());
 
     expect(tree[0].status).toBe('pending');

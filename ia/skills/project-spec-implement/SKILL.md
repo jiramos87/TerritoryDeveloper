@@ -8,6 +8,13 @@ description: >
   Use when executing a ia/projects/{ISSUE_ID}.md Implementation Plan (shipping checklist phases),
   after the spec is ready—not for spec review. Triggers: "implement project spec", "execute project spec",
   "follow Implementation Plan", "ship spec phases", implement BUG-/FEAT-/TECH- project spec.
+phases:
+  - "Parse target"
+  - "Pull backlog issue"
+  - "Orchestrator sync"
+  - "Context load"
+  - "Implement"
+  - "Task exit"
 ---
 
 # Project spec implementation (execution)
@@ -36,32 +43,33 @@ Replace `{SPEC_PATH}` with the project spec path from the backlog **Spec:** line
 
 ```markdown
 Implement @{SPEC_PATH} following its ## 7. Implementation Plan in order.
-Use **territory-ia** in the sequence defined in **project-spec-implement**’s "Tool recipe (territory-ia)" (backlog_issue → invariants_summary when code → per-phase router_for_task → spec_section → glossary_*).
-Honor **invariants** and **AGENTS.md** **Pre-commit Checklist**. If a phase touches **roads**, **water / HeightMap**, or **new managers**, follow the domain handoff to any shipped domain skills on [`BACKLOG.md`](../../../BACKLOG.md).
+Use **territory-ia** in the sequence defined in **project-spec-implement**’s "Tool recipe (territory-ia)" (backlog_issue → domain-context-load once at Stage open → spec_section as needed per task).
+Honor **invariants** and **AGENTS.md** **Pre-commit Checklist**. If a task touches **roads**, **water / HeightMap**, or **new managers**, follow the domain handoff to any shipped domain skills on [`BACKLOG.md`](../../../BACKLOG.md).
 Update the project spec **Decision Log** / **Issues Found** when you discover gaps; do not change agreed game behavior without spec owner alignment.
 ```
 
+## Stage MCP bundle contract
+
+Stage opener calls [`domain-context-load`](../domain-context-load/SKILL.md) once; returned payload `{glossary_anchors, router_domains, spec_sections, invariants}` kept in Stage scope. All Sonnet pair-tail invocations within the Stage read from that payload — no re-query of `glossary_discover`, `glossary_lookup`, `router_for_task`, `spec_sections`, or `invariants_summary` inside a Stage. The 5-tool recipe (`glossary_discover → glossary_lookup → router_for_task → spec_sections → invariants_summary`) is encapsulated entirely in `domain-context-load`; callers never inline it.
+
 ## Tool recipe (territory-ia)
 
-Run in order. Repeat steps 5–12 per Implementation Plan phase.
+Run in order (once per Stage, not per task).
 
 1. **Parse target** — Load `{SPEC_PATH}`. Extract `ISSUE_ID` from `> **Issue:**`.
 2. **`backlog_issue`** — Pull Files, Notes, Depends on, Acceptance, `depends_on_status`. Hard dep unsatisfied (`satisfied: false`, `soft_only: false`) → **stop** unless user overrides.
 2b. **Orchestrator sync** — `Glob ia/projects/*master-plan*.md` + `ia/projects/stage-*.md`; `Grep` for `{ISSUE_ID}` in task table. If row found: flip `In Review → In Progress` (or `Draft → In Progress` if kickoff was skipped). Update top-of-file `> **Status:**` pointer to reflect active task. No orchestrator found → log one-line note; continue.
-3. **`invariants_summary`** — Once per session if any phase touches runtime C# or scene behavior. Skip for pure doc/IA.
-4. **Phase intent** — State which checkboxes in scope; list files/classes from plan + backlog Files.
-5. **Domain routing** — 1–3 domains from phase text + Files. **`router_for_task`** with `domain` matching `ia/rules/agent-router.md` labels. On `no_matching_domain`: retry with `files` (repo-relative paths).
-6. **`spec_section`** — Only sections phase needs; set `max_chars`. No full `ia/specs/*.md` unless `spec_outline` forces it.
-7. **`glossary_discover`** — Ambiguous terms; `keywords` as JSON array; English only.
-8. **`glossary_lookup`** — Exact term strings from discover or glossary table.
-9. **`spec_outline`** / **`list_specs`** — Only if `spec` key unknown.
-10. **Implement** — Minimal diff. Obey invariants/guardrails: road preparation family, `InvalidateRoadCache()`, HeightMap↔`Cell.height`, no GridManager bloat.
-11. **Optional deep guardrails** — `list_rules` / `rule_content` if `invariants_summary` insufficient.
-12. **Phase exit** — Re-read §8 Acceptance + §7b Test Contracts. Run AGENTS.md Pre-commit Checklist. If §7b lists bridge checks + session has territory-ia + Postgres + Unity on REPO_ROOT → optionally `unity_bridge_command` per [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md). If phase touched `tools/mcp-ia-server`, `docs/schemas`, glossary, reference spec bodies feeding indexes, or committed index JSON → run [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (`validate:all` / `verify:local`). When spec/user calls for agent-led test mode → optionally [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) after validate:all/compile gates. Record surprises in §9 Issues Found.
+3. **`domain-context-load`** — Run [`ia/skills/domain-context-load/SKILL.md`](../domain-context-load/SKILL.md) once at Stage open. Inputs: `keywords` from spec domain + Files; `tooling_only_flag = true` for pure doc/IA stages; `brownfield_flag = false` for runtime C# stages. Use returned payload for all steps below — do NOT re-query within Stage.
+4. **Task intent** — State which checkboxes in scope; list files/classes from plan + backlog Files.
+5. **Domain routing** — Use `router_domains` from `domain-context-load` payload. If additional ad-hoc lookup needed: `router_for_task` once, then cache; do NOT repeat per task.
+6. **`spec_section`** — Only sections the task needs; set `max_chars`. Use `spec_sections` from payload first. No full `ia/specs/*.md` unless `spec_outline` forces it.
+7. **Implement** — Minimal diff. Obey invariants/guardrails: road preparation family, `InvalidateRoadCache()`, HeightMap↔`Cell.height`, no GridManager bloat.
+8. **Optional deep guardrails** — `list_rules` / `rule_content` if payload `invariants` insufficient.
+9. **Task exit** — Re-read §8 Acceptance + §7b Test Contracts. Run AGENTS.md Pre-commit Checklist. If §7b lists bridge checks + session has territory-ia + Postgres + Unity on REPO_ROOT → optionally `unity_bridge_command` per [`ide-bridge-evidence`](../ide-bridge-evidence/SKILL.md). If task touched `tools/mcp-ia-server`, `docs/schemas`, glossary, reference spec bodies feeding indexes, or committed index JSON → run [`project-implementation-validation`](../project-implementation-validation/SKILL.md) (`validate:all` / `verify:local`). When spec/user calls for agent-led test mode → optionally [`agent-test-mode-verify`](../agent-test-mode-verify/SKILL.md) after validate:all/compile gates. Record surprises in §9 Issues Found.
 
-### Phase rollback
+### Stage rollback
 
-Verification fails → revert phase commits (`git revert`/`git stash`), document in §9, re-run after root cause fix.
+Verification fails → revert task commits (`git revert`/`git stash`), document in §9, re-run after root cause fix.
 
 ### Editor / agent diagnostics
 

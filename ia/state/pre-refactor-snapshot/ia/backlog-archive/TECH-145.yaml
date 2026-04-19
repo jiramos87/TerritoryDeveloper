@@ -1,0 +1,24 @@
+id: TECH-145
+type: IA / tooling (web workspace)
+title: "Web primitives: HeatmapCell + AnnotatedMap (Stage 1.2 Phase 2) (2026-04-14)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — Decision Log persisted to Postgres journal)
+files: 
+  - web/components/HeatmapCell.tsx
+  - web/components/AnnotatedMap.tsx
+notes: |
+  **Completed (verified — `/project-spec-close`).** SSR-only primitives under `web/components/`. `HeatmapCell({ intensity })` clamps to `[0,1]` + 5-bucket `color-mix()` ramp anchored on existing semantic aliases (`bg-panel` → `text-accent-warn` → `text-accent-critical`); no new palette rows. `AnnotatedMap({ regions, annotations })` renders `<svg viewBox="0 0 1000 600" role="img">` root w/ per-region `<path>` (bucket helper shared w/ HeatmapCell) + per-annotation `<text>` using `letterSpacing: 0.15em` + `textTransform: uppercase` (NYT-style spaced-caps geo labels). No `"use client"`; no D3-geo / topojson. Last two of six Stage 1.2 primitives — satisfies Stage 1.2 Exit bullet 2. `/design` fixture wiring + visual review deferred to TECH-146.
+acceptance: ""
+depends_on: []
+depends_on_raw: tokens (archived)
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-145** — Web primitives: HeatmapCell + AnnotatedMap (Stage 1.2 Phase 2) (2026-04-14)
+    - Type: IA / tooling (web workspace)
+    - Files: `web/components/HeatmapCell.tsx`, `web/components/AnnotatedMap.tsx`
+    - Spec: (removed after closure — Decision Log persisted to Postgres journal)
+    - Notes: **Completed (verified — `/project-spec-close`).** SSR-only primitives under `web/components/`. `HeatmapCell({ intensity })` clamps to `[0,1]` + 5-bucket `color-mix()` ramp anchored on existing semantic aliases (`bg-panel` → `text-accent-warn` → `text-accent-critical`); no new palette rows. `AnnotatedMap({ regions, annotations })` renders `<svg viewBox="0 0 1000 600" role="img">` root w/ per-region `<path>` (bucket helper shared w/ HeatmapCell) + per-annotation `<text>` using `letterSpacing: 0.15em` + `textTransform: uppercase` (NYT-style spaced-caps geo labels). No `"use client"`; no D3-geo / topojson. Last two of six Stage 1.2 primitives — satisfies Stage 1.2 Exit bullet 2. `/design` fixture wiring + visual review deferred to TECH-146.
+    - Depends on: tokens (archived)

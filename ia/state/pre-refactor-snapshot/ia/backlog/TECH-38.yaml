@@ -1,0 +1,34 @@
+id: TECH-38
+type: code health / performance enablement
+title: "**Core** **computational** modules (Unity **utilities** + **`tools/`** harnesses)"
+priority: medium
+status: open
+section: Compute-lib program
+spec: none — unity-development-context §11; `tools/reports/compute-utilities-inventory.md`, `tools/reports/compute-utilities-rng-derivation.md
+files: 
+  - Assets/Scripts/Utilities/Compute/
+  - GridManager.cs
+  - GridPathfinder.cs
+  - UrbanCentroidService.cs
+  - ProceduralRiverGenerator.cs
+  - TerrainManager.cs
+  - WaterManager.cs
+  - DemandManager.cs
+  - CityStats.cs
+  - tools/reports/
+notes: |
+  **Behavior-preserving** extractions; **UrbanGrowthRingMath** **multipolar**-ready for **FEAT-47**; **stochastic** **geography initialization** documentation; **no** second **pathfinding** authority. Prepare **batchmode** hooks for **TECH-66** follow-ups. **Context:** [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) (TECH-37/TECH-39 archived).
+acceptance: |
+  inventory doc + **≥ 3** **pure** modules with tests or **golden** **JSON**; **RNG** derivation doc; **invariants** respected — see `tools/reports/compute-utilities-inventory.md` and bullets above
+depends_on: []
+depends_on_raw: none (pilot milestone in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [ ] **TECH-38** — **Core** **computational** modules (Unity **utilities** + **`tools/`** harnesses)
+    - Type: code health / performance enablement
+    - Files: `Assets/Scripts/Utilities/Compute/`; `GridManager.cs` (**CoordinateConversionService**), `GridPathfinder.cs`, `UrbanCentroidService.cs`, `ProceduralRiverGenerator.cs`, `TerrainManager.cs`, `WaterManager.cs`, `DemandManager.cs` / `CityStats.cs` (as extractions land); `tools/reports/`; **UTF** tests
+    - Spec: none — unity-development-context §11; `tools/reports/compute-utilities-inventory.md`, `tools/reports/compute-utilities-rng-derivation.md`
+    - Notes: **Behavior-preserving** extractions; **UrbanGrowthRingMath** **multipolar**-ready for **FEAT-47**; **stochastic** **geography initialization** documentation; **no** second **pathfinding** authority. Prepare **batchmode** hooks for **TECH-66** follow-ups. **Context:** [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) (TECH-37/TECH-39 archived).
+    - Acceptance: inventory doc + **≥ 3** **pure** modules with tests or **golden** **JSON**; **RNG** derivation doc; **invariants** respected — see `tools/reports/compute-utilities-inventory.md` and bullets above
+    - Depends on: none (pilot milestone in [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md))

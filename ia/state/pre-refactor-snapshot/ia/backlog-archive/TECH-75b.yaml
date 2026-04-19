@@ -1,0 +1,34 @@
+id: TECH-75b
+type: tooling / agent enablement
+title: "**Close Dev Loop**: context bundle + anomaly detection (2026-04-09)"
+priority: medium
+status: closed
+section: Recent archive (moved from BACKLOG.md, 2026-04-10)
+spec: (removed after closure — **glossary** **IDE agent bridge**; **unity-development-context** §10; **ide-bridge-evidence**; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); **IA project spec journal**; **this row**)
+files: 
+  - Assets/Scripts/Editor/AgentBridgeCommandRunner.cs
+  - Assets/Scripts/Editor/AgentBridgeAnomalyScanner.cs
+  - tools/mcp-ia-server/src/tools/unity-bridge-command.ts
+  - tools/mcp-ia-server/scripts/bridge-playmode-smoke.ts
+  - tools/mcp-ia-server/tests/tools/unity-bridge-command.test.ts
+  - docs/mcp-ia-server.md
+  - tools/mcp-ia-server/README.md
+  - ia/specs/glossary.md
+  - ia/specs/unity-development-context.md
+  - ia/skills/ide-bridge-evidence/SKILL.md
+notes: |
+  **Completed (verified — `/project-spec-close` + user):** Bridge **`kind`** **`debug_context_bundle`** — Moore **Agent context** export + deferred **Game view** screenshot + console snapshot + **`AgentBridgeAnomalyScanner`** rules (`missing_border_cliff`, `heightmap_cell_desync`, `redundant_shore_cliff`). CLI **`npm run db:bridge-playmode-smoke`** uses **`runUnityBridgeCommand`** (same path as MCP **`unity_bridge_command`**). Optional **`unity_debug_bundle`** MCP sugar still deferred (open **BACKLOG** follow-up if scoped).
+acceptance: ""
+depends_on: 
+  - TECH-75a
+depends_on_raw: none (Play Mode bridge **`kind`** values — this file **TECH-75a**)
+related: []
+created: 2026-04-17
+raw_markdown: |
+  - [x] **TECH-75b** — **Close Dev Loop**: context bundle + anomaly detection (2026-04-09)
+    - Type: tooling / agent enablement
+    - Files: `Assets/Scripts/Editor/AgentBridgeCommandRunner.cs`; `Assets/Scripts/Editor/AgentBridgeAnomalyScanner.cs`; `tools/mcp-ia-server/src/tools/unity-bridge-command.ts`; `tools/mcp-ia-server/scripts/bridge-playmode-smoke.ts`; `tools/mcp-ia-server/tests/tools/unity-bridge-command.test.ts`; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); `tools/mcp-ia-server/README.md`; [`ia/specs/glossary.md`](ia/specs/glossary.md) **IDE agent bridge**; [`ia/specs/unity-development-context.md`](ia/specs/unity-development-context.md) §10; [`ia/skills/ide-bridge-evidence/SKILL.md`](ia/skills/ide-bridge-evidence/SKILL.md); orchestration archived (this file **Recent archive**) §7
+    - Spec: (removed after closure — **glossary** **IDE agent bridge**; **unity-development-context** §10; **ide-bridge-evidence**; [`docs/mcp-ia-server.md`](docs/mcp-ia-server.md); **IA project spec journal**; **this row**)
+    - Notes: **Completed (verified — `/project-spec-close` + user):** Bridge **`kind`** **`debug_context_bundle`** — Moore **Agent context** export + deferred **Game view** screenshot + console snapshot + **`AgentBridgeAnomalyScanner`** rules (`missing_border_cliff`, `heightmap_cell_desync`, `redundant_shore_cliff`). CLI **`npm run db:bridge-playmode-smoke`** uses **`runUnityBridgeCommand`** (same path as MCP **`unity_bridge_command`**). Optional **`unity_debug_bundle`** MCP sugar still deferred (open **BACKLOG** follow-up if scoped).
+    - Depends on: none (Play Mode bridge **`kind`** values — this file **TECH-75a**)
+    - Related: **TECH-75** orchestration, **TECH-75c** (**§ Completed** — this file **Recent archive**), **TECH-75a**
