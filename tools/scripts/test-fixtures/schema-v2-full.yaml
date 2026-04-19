@@ -25,7 +25,6 @@ parent_plan: ia/projects/backlog-yaml-mcp-alignment-master-plan.md
 task_key: T3.1.4
 step: 3
 stage: "3.1"
-phase: 2
 router_domain: backlog-yaml
 surfaces:
   - tools/mcp-ia-server/src/parser/backlog-yaml-loader.ts

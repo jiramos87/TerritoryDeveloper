@@ -7,5 +7,4 @@ parent_plan: ia/projects/sample-master-plan.md
 task_key: T3.3.1
 step: 3
 stage: "3.3"
-phase: 1
 created: 2026-01-01

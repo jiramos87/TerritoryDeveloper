@@ -248,7 +248,7 @@ test("yamlToIssue: all 9 locator fields populated from yaml", () => {
     assert.equal(issue!.task_key, "T3.1.2");
     assert.equal(issue!.step, 3);
     assert.equal(issue!.stage, "3.1");
-    assert.equal(issue!.phase, 2);
+    assert.equal(issue!.phase, null); // phase field dropped from yaml schema (Stage 4 fold)
     assert.equal(issue!.router_domain, "backlog-yaml");
     assert.deepEqual(issue!.surfaces, ["backlog-yaml-loader.ts"]);
     assert.deepEqual(issue!.mcp_slices, ["backlog-yaml-mcp-alignment-master-plan::Stage 3.1"]);

@@ -58,7 +58,6 @@ interface YamlRecord {
   task_key?: string;
   step?: string;   // scalar from yaml; coerced to number in yamlToIssue
   stage?: string;
-  phase?: string;  // scalar from yaml; coerced to number in yamlToIssue
   router_domain?: string;
   surfaces?: string[];
   mcp_slices?: string[];
@@ -204,7 +203,7 @@ function yamlToIssue(rec: YamlRecord, fileHint?: string): ParsedBacklogIssue {
     })(),
     step: (() => { const n = Number(rec.step); return rec.step != null && !isNaN(n) ? n : null; })(),
     stage: rec.stage ?? null,
-    phase: (() => { const n = Number(rec.phase); return rec.phase != null && !isNaN(n) ? n : null; })(),
+    phase: null,
     router_domain: rec.router_domain ?? null,
     surfaces: Array.isArray(rec.surfaces) ? rec.surfaces : [],
     mcp_slices: Array.isArray(rec.mcp_slices) ? rec.mcp_slices : [],

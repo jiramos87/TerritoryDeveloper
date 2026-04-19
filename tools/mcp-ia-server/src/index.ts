@@ -42,6 +42,7 @@ import { registerUnitySubscribersOf } from "./tools/unity-subscribers-of.js";
 import { registerCsharpClassSummary } from "./tools/csharp-class-summary.js";
 import { registerMasterPlanLocate } from "./tools/master-plan-locate.js";
 import { registerMasterPlanNextPending } from "./tools/master-plan-next-pending.js";
+import { registerPlanApplyValidate } from "./tools/plan-apply-validate.js";
 
 loadRepoDotenvIfNotCi(resolveRepoRoot());
 
@@ -89,6 +90,7 @@ registerUnitySubscribersOf(server);
 registerCsharpClassSummary(server);
 registerMasterPlanLocate(server);
 registerMasterPlanNextPending(server);
+registerPlanApplyValidate(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

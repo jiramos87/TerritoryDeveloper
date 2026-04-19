@@ -135,11 +135,16 @@ export function locateMasterPlanRow(
     };
   }
 
+  // Derive phase from task_key third segment (T{step}.{stage}.{phase?}).
+  // yaml phase field dropped (Stage 4 fold); task_key is the single source.
+  const tkParts = parsed.task_key.replace(/^T/, "").split(".");
+  const derivedPhase = tkParts.length >= 3 ? Number(tkParts[2]) : null;
+
   return {
     plan: parsed.parent_plan,
     step: parsed.step ?? null,
     stage: parsed.stage ?? null,
-    phase: parsed.phase ?? null,
+    phase: Number.isNaN(derivedPhase) ? null : derivedPhase,
     task_key: parsed.task_key,
     row_line: rowLine,
     row_raw: rowRaw,
