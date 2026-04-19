@@ -11,6 +11,13 @@ description: >
   MCP context loaded once via domain-context-load subskill; cached payload passed
   to per-task inner dispatches. Emits SHIP_STAGE {STAGE_ID}: PASSED or STOPPED.
   Triggers: "/ship-stage", "ship stage", "chain stage tasks", "ship all stage tasks".
+phases:
+  - "Parse stage"
+  - "Context load"
+  - "Task loop"
+  - "Batched Path B"
+  - "Chain digest"
+  - "Next-stage resolver"
 ---
 
 # Ship-stage — chain dispatcher skill

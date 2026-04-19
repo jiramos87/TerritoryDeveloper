@@ -233,43 +233,4 @@ Re-running fully-applied state = exit 0 + zero diff.
 
 ## §Changelog emitter
 
-**Step 1 — Friction-condition check**
-
-```
-friction_fires = (guardrail_hits.length > 0) OR (phase_deviations.length > 0) OR (missing_inputs.length > 0)
-```
-
-Clean-run rule: if all false → skip Steps 2–3; no-op.
-
-**Step 2 — Construct `skill_self_report` JSON**
-
-Build per §Schema. Set `skill: stage-file-apply`, `run_date: {YYYY-MM-DD}`, `schema_version: 2026-04-18`.
-
-**Step 3 — Append §Changelog entry**
-
-Append to `## Changelog` section of `ia/skills/stage-file-apply/SKILL.md`:
-
-```markdown
-### {YYYY-MM-DD} — self-report
-
-**source:** self-report
-
-**schema_version:** 2026-04-18
-
-```json
-{
-  "skill": "stage-file-apply",
-  "run_date": "{YYYY-MM-DD}",
-  "schema_version": "2026-04-18",
-  "friction_types": [],
-  "guardrail_hits": [],
-  "phase_deviations": [],
-  "missing_inputs": [],
-  "severity": "low"
-}
-```
-
----
-```
-
 ## Changelog

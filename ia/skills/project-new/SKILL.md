@@ -10,6 +10,13 @@ description: >
   and Depends on / Related with verified ids (territory-ia MCP + optional web_search). Triggers:
   "/project-new", "new backlog issue", "create TECH-xx from prompt", "bootstrap project spec",
   "add issue to backlog from description".
+phases:
+  - "Context load"
+  - "Backlog dep check"
+  - "Spec outline"
+  - "Reserve id"
+  - "Write yaml + spec"
+  - "Materialize backlog"
 ---
 
 # New backlog issue and project spec bootstrap
@@ -87,47 +94,6 @@ Only when prompt ambiguous/cross-cutting or user requests exploration context. `
 5. **Project spec** — Copy [`project-spec-template.md`](../../templates/project-spec-template.md) → `ia/projects/{ISSUE_ID}.md`. Fill header, Summary, Goals, stub Implementation Plan, Open Questions per [`PROJECT-SPEC-STRUCTURE.md`](../../projects/PROJECT-SPEC-STRUCTURE.md).
 6. **Validate** — `npm run validate:dead-project-specs`.
 7. **Next** — Offer [`project-spec-kickoff`](../project-spec-kickoff/SKILL.md) to refine before implementation.
-
-**Step 1 — Friction-condition check**
-
-Evaluate:
-
-```
-friction_fires = (guardrail_hits.length > 0) OR (phase_deviations.length > 0) OR (missing_inputs.length > 0)
-```
-
-Clean-run rule: if all conditions are false → skip Steps 2–3; no-op. §Changelog untouched.
-
-**Step 2 — Construct `skill_self_report` JSON**
-
-Build JSON per §Schema. Set `skill: project-new`, `run_date: {YYYY-MM-DD}` (today), `schema_version: 2026-04-18` (date of this emitter stanza template). Populate `friction_types[]`, `guardrail_hits[]`, `phase_deviations[]`, `missing_inputs[]`, `severity` from phase execution data.
-
-**Step 3 — Append §Changelog entry**
-
-Append to `## Changelog` section of `ia/skills/project-new/SKILL.md`:
-
-```markdown
-### {YYYY-MM-DD} — self-report
-
-**source:** self-report
-
-**schema_version:** 2026-04-18
-
-```json
-{
-  "skill": "project-new",
-  "run_date": "{YYYY-MM-DD}",
-  "schema_version": "2026-04-18",
-  "friction_types": [],
-  "guardrail_hits": [],
-  "phase_deviations": [],
-  "missing_inputs": [],
-  "severity": "low"
-}
-```
-
----
-```
 
 ## Follow-up
 

@@ -102,6 +102,12 @@ _pending — populated by `/stage-file` planner pass._
 
 _pending — populated by `/plan-review` when fixes are needed._
 
+#### §Stage Closeout Plan
+
+> Opus `stage-closeout-plan` writes unified tuple list here ONCE per Stage when all Task rows reach `Done` post-verify (replaces per-Task closeout). Shared migration ops deduped across Tasks (glossary rows / rule edits / doc paragraph edits) + N per-Task ops (`archive_record`, `delete_file`, `replace_section` status flip, `id_purge`, `digest_emit`). Sonnet `stage-closeout-apply` reads tuples and applies verbatim. Contract: `ia/rules/plan-apply-pair-contract.md` seam #4.
+
+_pending — populated by `/closeout {{this-doc}} Stage {{N}}.{{M}}` planner pass when all Tasks reach `Done`._
+
 <!--
   Repeat `### Stage {{N}}.{{M}}` block per stage. Stages are flat siblings — no Step grouping.
 

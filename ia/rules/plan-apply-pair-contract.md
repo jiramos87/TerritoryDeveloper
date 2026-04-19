@@ -24,15 +24,23 @@ A `§Plan` payload = ordered list of tuples. One tuple = one atomic edit. Keys:
 
 Tuples execute in declared order. Sonnet pair-tail does NOT reorder, merge, or interpret — applies verbatim.
 
-## Pair seams (5)
+## Pair seams (4)
 
 | # | Pair-head (Opus) | §Plan section | Pair-tail (Sonnet) | Scope |
 |---|------------------|---------------|--------------------|-------|
 | 1 | `plan-review` | `§Plan Fix` (under Stage block in master plan) | `plan-fix-apply` | Stage planning seam — review all Tasks of a Stage + master-plan header + invariants; emit fix tuples. |
 | 2 | `stage-file-plan` | `§Stage File Plan` (under Stage block in master plan) | `stage-file-apply` | Stage materialization seam — reserve ids + author backlog yaml + project-spec stubs for all Tasks of one Stage. |
-| 3 | `project-new-plan` | `§Project-New Plan` (in `ia/projects/{ISSUE_ID}.md`) | `project-new-apply` | Single-issue spec authoring seam — fill spec sections §1–§10 from kickoff context. |
-| 4 | `code-review` | `§Code Fix Plan` (in `ia/projects/{ISSUE_ID}.md`) | `code-fix-apply` | Post-implementation review seam — diff vs spec + invariants + glossary; emit fix tuples; re-enter `/verify-loop` after. |
-| 5 | `audit` | `§Closeout Plan` (in `ia/projects/{ISSUE_ID}.md`) | `closeout-apply` | Closeout seam — migrate canonical knowledge to glossary / specs / rules / docs; archive backlog row; delete spec; persist journal. |
+| 3 | `code-review` | `§Code Fix Plan` (in `ia/projects/{ISSUE_ID}.md`) | `code-fix-apply` | Post-implementation review seam — diff vs spec + invariants + glossary; emit fix tuples; re-enter `/verify-loop` after. |
+| 4 | `stage-closeout-plan` | `§Stage Closeout Plan` (under Stage block in master plan) | `stage-closeout-apply` | Stage closeout seam — shared migration tuples + N BACKLOG archive ops + N spec deletes + N status flips; Stage-scoped, fires once per Stage (not per Task). Rolls up Stage Status → Final via R5. |
+
+## Stage-scoped non-pair stages
+
+Some Opus Stage-scoped stages have no Sonnet pair-tail — one Opus bulk call writes final state directly. These are NOT pair seams but DO use the `§Plan` tuple shape where applicable.
+
+| Stage | Opus output | Scope | Notes |
+|-------|-------------|-------|-------|
+| `plan-author` | `§Plan Author` section (4 sub-sections) per Task spec | Bulk authoring across N Task specs of a Stage in one Opus pass | Non-pair. Absorbs retired `spec-enrich` canonical-term fold. Fires after `stage-file-apply` (multi-task) or `project-new-apply` (N=1). Token-split guardrail: ⌈N/2⌉ sub-passes if N specs + Stage context exceed threshold; never regress to per-Task mode. |
+| `opus-audit` | `§Audit` paragraph per Task spec | Bulk post-verify audit across N Task specs of a Stage in one Opus pass | Non-pair. Feeds `stage-closeout-plan` (seam #4 head) at Stage end. |
 
 ## Seam #2 — `§Stage File Plan` tuple shape (extended)
 
@@ -57,9 +65,8 @@ After applying all tuples, Sonnet pair-tail MUST run the validator appropriate t
 | Seam | Validator |
 |------|-----------|
 | 1, 2 | `npm run validate:master-plan-status` + `npm run validate:backlog-yaml` |
-| 3 | `npm run validate:dead-project-specs` + `npm run validate:backlog-yaml` |
-| 4 | `npm run verify:local` (or stage-appropriate Path A) |
-| 5 | `npm run validate:all` |
+| 3 | `npm run verify:local` (or stage-appropriate Path A) |
+| 4 | `npm run validate:all` |
 
 On non-zero exit: pair-tail STOPS, returns control to Opus pair-head with `{exit_code, stderr, failing_tuple_index}`. Opus revises the `§Plan`; Sonnet re-applies from scratch (idempotency clause guarantees safety).
 
@@ -90,5 +97,6 @@ Re-running an applied `§Plan` from scratch = exit 0 + zero diff. This unblocks 
 
 - `ia/rules/project-hierarchy.md` — Stage/Task lifecycle the pair seams operate on.
 - `ia/rules/orchestrator-vs-spec.md` — status flip matrix; pair-tails (esp. seam 2) flip status per R1/R2.
-- `ia/templates/project-spec-template.md` — defines §Project-New Plan / §Audit / §Code Review / §Code Fix Plan / §Closeout Plan section anchors.
-- `ia/templates/master-plan-template.md` — defines §Stage File Plan / §Plan Fix section anchors.
+- `ia/templates/project-spec-template.md` — defines §Plan Author / §Audit / §Code Review / §Code Fix Plan section anchors.
+- `ia/templates/master-plan-template.md` — defines §Stage File Plan / §Plan Fix / §Stage Closeout Plan section anchors.
+- `ia/skills/plan-author/SKILL.md` — Stage-scoped bulk non-pair (fold of retired spec-enrich).

@@ -26,6 +26,31 @@ const REPO_ROOT = path.resolve(__dirname, "..", "..", "..");
 const REQUIRED = ["purpose", "audience", "loaded_by", "slices_via"];
 const ALLOWED_AUDIENCE = new Set(["human", "agent", "both"]);
 const ALLOWED_SLICES_VIA = new Set(["spec_section", "glossary_lookup", "none"]);
+
+// Lifecycle skills that MUST declare a non-empty `phases:` YAML array in
+// frontmatter. Parity against body `### Phase N —` headings is deferred (spec:
+// `ia/skills/subagent-progress-emit/SKILL.md` — validator exemption clause).
+// Authors of new lifecycle skills must append here; helpers / one-shots stay
+// exempt (may omit `phases:` entirely or declare `phases: []`).
+const LIFECYCLE_SKILLS = new Set([
+  "plan-review",
+  "plan-fix-apply",
+  "stage-file-plan",
+  "stage-file-apply",
+  "project-new-apply",
+  "opus-audit",
+  "opus-code-review",
+  "code-fix-apply",
+  "project-spec-implement",
+  "verify-loop",
+  "ship-stage",
+  "stage-file",
+  "project-new",
+  "stage-compress",
+  "plan-author",
+  "stage-closeout-plan",
+  "stage-closeout-apply",
+]);
 // `loaded_by` accepts: always | router | ondemand | skill:{name}
 function isLoadedByValid(value) {
   if (typeof value !== "string") return false;
@@ -81,6 +106,29 @@ function parseFrontmatter(text) {
       out[key] = buf.join(" ").trim();
       continue;
     }
+    // YAML list: empty value followed by indented `- item` lines.
+    if (rawValue === "" && i + 1 < lines.length && /^\s+- /.test(lines[i + 1])) {
+      const items = [];
+      i++;
+      while (i < lines.length && /^\s+- /.test(lines[i])) {
+        const item = lines[i].replace(/^\s+- /, "").trim().replace(/^["']|["']$/g, "");
+        items.push(item);
+        i++;
+      }
+      out[key] = items;
+      continue;
+    }
+    // Inline flow list: `phases: []` or `phases: ["a", "b"]`.
+    if (/^\[.*\]$/.test(rawValue.trim())) {
+      const inner = rawValue.trim().slice(1, -1).trim();
+      if (inner === "") {
+        out[key] = [];
+      } else {
+        out[key] = inner.split(",").map((s) => s.trim().replace(/^["']|["']$/g, ""));
+      }
+      i++;
+      continue;
+    }
     out[key] = rawValue.replace(/^["']|["']$/g, "").trim();
     i++;
   }
@@ -106,6 +154,18 @@ function validateFile(rel, fm) {
   }
   if (fm.slices_via && !ALLOWED_SLICES_VIA.has(fm.slices_via)) {
     errors.push(`invalid slices_via: ${fm.slices_via} (allowed: ${[...ALLOWED_SLICES_VIA].join("|")})`);
+  }
+  // Lifecycle skill: `phases:` must be a non-empty array. Contract:
+  // `ia/skills/subagent-progress-emit/SKILL.md` §Frontmatter convention.
+  const m = rel.match(/^ia\/skills\/([^/]+)\/SKILL\.md$/);
+  if (m && LIFECYCLE_SKILLS.has(m[1])) {
+    if (fm.phases == null) {
+      errors.push("missing field: phases (lifecycle skill — required YAML array)");
+    } else if (!Array.isArray(fm.phases)) {
+      errors.push(`invalid phases: expected YAML array, got ${typeof fm.phases}`);
+    } else if (fm.phases.length === 0) {
+      errors.push("invalid phases: lifecycle skill must declare ≥1 phase");
+    }
   }
   return errors;
 }

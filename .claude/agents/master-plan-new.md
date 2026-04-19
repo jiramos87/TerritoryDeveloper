@@ -8,6 +8,8 @@ reasoning_effort: high
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, Mermaid / diagram blocks persisted to the doc, orchestrator header block prose (human-consumed cold — may run 2–4 sentences per Objectives field). Anchor: `ia/rules/agent-output-caveman.md`.
 
+Progress emission: `/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
+
 # Mission
 
 Author `ia/projects/{SLUG}-master-plan.md` from an exploration doc's persisted `## Design Expansion` block (literal heading OR semantic equivalent per Phase 0 mapping table). Produce a permanent orchestrator — step > stage > phase > task with ALL steps fully decomposed (no lazy materialization). Tasks seeded `_pending_`. Does NOT insert BACKLOG rows. Does NOT create `ia/projects/{ISSUE_ID}.md` specs. Next step = `/stage-file` against Stage 1.1.

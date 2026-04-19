@@ -14,6 +14,16 @@ description: >
   is the one place that wires them together. Triggers: "/verify-loop", "closed-loop verification",
   "post-task verification", "integrated verification", "fix-verify iteration", "run the full
   verify chain", "agent-led verification end-to-end".
+phases:
+  - "Bridge preflight"
+  - "Compile gate"
+  - "Node CI-parity checks"
+  - "Full local chain"
+  - "Path A test mode"
+  - "Path B bridge hybrid"
+  - "Play Mode evidence"
+  - "Fix iteration"
+  - "Verification block"
 ---
 
 # Verify loop — integrated closed-loop verification

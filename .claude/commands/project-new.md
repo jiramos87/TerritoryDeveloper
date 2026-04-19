@@ -1,56 +1,69 @@
 ---
-description: Create one BACKLOG.md issue + bootstrap `ia/projects/{ISSUE_ID}.md` from a user prompt. Dispatches the `project-new` subagent in isolated context. NOT for bulk stage filing (= `/stage-file` once it ships) or spec enrichment (= `/kickoff`).
-argument-hint: "{free-text intent} [--type BUG|FEAT|TECH|ART|AUDIO] [--reserved-id {ISSUE_ID}]"
+description: Create one BACKLOG issue + bootstrap `ia/projects/{ISSUE_ID}.md` stub from user prompt. Dispatches `project-new-planner` (Opus pair-head seam #3) → `project-new-applier` (Sonnet pair-tail) → chains `/author --task {ISSUE_ID}` at N=1. Args-only pair (no tuple list). NOT for bulk stage filing (= `/stage-file`).
+argument-hint: "{free-text intent} [--type BUG|FEAT|TECH|ART|AUDIO] [--priority P1|P2|P3|P4]"
 ---
 
-# /project-new — dispatch `project-new` subagent
+# /project-new — dispatch seam #3 pair then chain `/author --task`
 
-Use `project-new` subagent (`.claude/agents/project-new.md`) to create a single BACKLOG row + project spec stub from `$ARGUMENTS`.
+Use `project-new-planner` subagent (`.claude/agents/project-new-planner.md`) → `project-new-applier` subagent (`.claude/agents/project-new-applier.md`) to create one BACKLOG row + project spec stub from `$ARGUMENTS`, then chain `/author --task {ISSUE_ID}` (N=1) to fill `§Plan Author` + canonical-term fold.
 
-`$ARGUMENTS` carries the free-text intent (title + product prompt). Optional trailing `--type {prefix}` overrides prefix inference (`BUG` / `FEAT` / `TECH` / `ART` / `AUDIO`); subagent asks the user when ambiguous. Optional trailing `--reserved-id {ISSUE_ID}` (used by `stage-file`) passes a pre-reserved id to the subagent so it skips `reserve-id.sh`.
+`$ARGUMENTS` carries free-text intent (title + product prompt). Optional `--type {prefix}` overrides prefix inference (`BUG` / `FEAT` / `TECH` / `ART` / `AUDIO`); planner asks when ambiguous. Optional `--priority {P1|P2|P3|P4}` overrides inference.
 
-## Subagent prompt (forward verbatim)
+## Step 1 — Dispatch `project-new-planner` (Opus pair-head)
 
-Forward via Agent tool with `subagent_type: "project-new"`:
+Forward via Agent tool with `subagent_type: "project-new-planner"`:
 
-> Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, BACKLOG row text + project-spec stub prose. Anchor: `ia/rules/agent-output-caveman.md`.
+> Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, BACKLOG row text + spec stub prose. Anchor: `ia/rules/agent-output-caveman.md`.
 >
 > ## Mission
 >
-> Run `project-new` skill (`ia/skills/project-new/SKILL.md`) end-to-end against the user prompt:
+> Run `ia/skills/project-new/SKILL.md` research + arg-resolution phases against the user prompt:
 >
 > ```
 > $ARGUMENTS
 > ```
 >
-> Infer issue prefix (`BUG-` / `FEAT-` / `TECH-` / `ART-` / `AUDIO-`) from the prompt; if ambiguous, ask the user before assigning the next id. Honor any `--type {prefix}` override token in the prompt. If `--reserved-id {ISSUE_ID}` is present, use that id verbatim and skip `reserve-id.sh` (invariant #13 — `stage-file` already reserved it via batch call).
->
-> ## MCP first
->
-> 1. `mcp__territory-ia__glossary_discover` — `keywords` JSON array, English tokens from prompt.
-> 2. `mcp__territory-ia__glossary_lookup` — high-confidence terms.
-> 3. `mcp__territory-ia__router_for_task` — 1–3 domains matching `ia/rules/agent-router.md` table vocabulary.
-> 4. `mcp__territory-ia__spec_section` — only sections prompt implies; set `max_chars`.
-> 5. `mcp__territory-ia__invariants_summary` — if runtime C# / game subsystem touched.
-> 6. `mcp__territory-ia__backlog_issue` — every Depends on / Related id surfaced. Hard dep unsatisfied → align or wait.
->
-> ## File + backlog checklist
->
-> - Next id = max(prefix) across BACKLOG + BACKLOG-ARCHIVE + 1 (monotonic; never reuse).
-> - Insert BACKLOG row in correct Priority section per `AGENTS.md`. Row: Type / Files / Notes / `Spec: ia/projects/{ISSUE_ID}.md` / Depends on / Acceptance.
-> - Copy `ia/templates/project-spec-template.md` → `ia/projects/{ISSUE_ID}.md`. Fill header, §1 Summary, §2 Goals, §7 stub Implementation Plan, Open Questions per `ia/projects/PROJECT-SPEC-STRUCTURE.md`.
-> - Run `npm run validate:dead-project-specs` — must exit 0.
+> Phase 1 Context load: `glossary_discover` / `glossary_lookup` (English tokens) + `router_for_task` (1–3 domains) + `invariants_summary` (if runtime C# touched) + `spec_section` (only sections prompt implies).
+> Phase 2 Backlog dep check: `backlog_issue` for every Depends-on / Related id (fabricated ids silently break `validate:dead-project-specs`).
+> Phase 3 Spec outline: `list_specs` / `spec_outline` only if `spec:` key unknown.
+> Phase 4 Resolve args: extract `TITLE`, `ISSUE_TYPE`, `PRIORITY`, optional `NOTES` + compose stub-body hints.
+> Phase 5 Hand-off: emit resolved args payload for pair-tail (args-only seam #3 — no tuple list).
 >
 > ## Hard boundaries
 >
-> - Do NOT bulk-file multiple issues. One issue per invocation; bulk is `stage-file`.
-> - Do NOT enrich spec body beyond template stub — that is `/kickoff`.
-> - Do NOT implement — that is `/implement`.
-> - Do NOT close / delete spec — that is `/closeout`.
+> - Do NOT reserve id — applier reserves via `reserve-id.sh`.
+> - Do NOT write yaml / spec stubs — applier writes.
+> - Do NOT run `materialize-backlog.sh` / validators — applier runs gate.
+> - Do NOT bulk-file multiple issues — that is `stage-file-planner`.
+> - Do NOT enrich spec body beyond stub seeds — `plan-author` writes spec body at N=1 post-apply.
+> - Do NOT fabricate Depends-on / Related ids — `backlog_issue` must verify.
+> - Do NOT commit — user decides.
+
+Planner must return resolved args before Step 2. Escalation → abort chain.
+
+## Step 2 — Dispatch `project-new-applier` (Sonnet pair-tail)
+
+Forward via Agent tool with `subagent_type: "project-new-applier"`:
+
+> Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, BACKLOG row text + spec stub prose. Anchor: `ia/rules/agent-output-caveman.md`.
+>
+> ## Mission
+>
+> Run `ia/skills/project-new-apply/SKILL.md` end-to-end. Reads planner-resolved args verbatim (`TITLE`, `ISSUE_TYPE`, `PRIORITY`, optional `NOTES`, `depends_on`, `related`). Phase 1 normalize prefix + validate enum. Phase 2 reserve id via `bash tools/scripts/reserve-id.sh {PREFIX}`. Phase 3 compose yaml body, `backlog_record_validate`, write `ia/backlog/{ISSUE_ID}.yaml`. Phase 4 bootstrap `ia/projects/{ISSUE_ID}.md` stub from `ia/templates/project-spec-template.md`. Phase 5 `bash tools/scripts/materialize-backlog.sh` + `npm run validate:dead-project-specs` once. Idempotent.
+>
+> ## Hard boundaries
+>
+> - Do NOT author §1/§2/§4/§5/§7 beyond skeleton — `plan-author` writes spec body at N=1.
+> - Do NOT run `validate:all` — only `validate:dead-project-specs` in Phase 5.
+> - Do NOT edit `BACKLOG.md` directly — `materialize-backlog.sh` regenerates it.
+> - Do NOT chain to `plan-author` — command dispatcher (Step 3 below) does that.
 > - Do NOT reuse retired ids.
-> - Do NOT cite Depends on / Related ids that fail `backlog_issue` lookup.
-> - Do NOT skip `validate:dead-project-specs`.
->
-> ## Output
->
-> Single concise caveman message: issue id + prefix + priority section, spec stub path, glossary terms anchored, router domains matched, Depends on `depends_on_status` summary, `validate:dead-project-specs` exit code, next step (`claude-personal "/ship {ISSUE_ID}"`).
+> - Do NOT commit — user decides.
+
+## Step 3 — Auto-chain `/author --task {ISSUE_ID}` (N=1 bulk)
+
+On applier success: auto-invoke `/author --task {ISSUE_ID}` (Stage-scoped bulk `plan-author` at N=1 per T7.11 / TECH-478) to fill `§Plan Author` + canonical-term fold on the one filed spec. Rev 3 single-task path skips `plan-review` at N=1 — next step is `/implement {ISSUE_ID}` directly.
+
+## Output
+
+Chain summary: ISSUE_ID + priority + validators exit + bulk `/author` summary. Next step: `claude-personal "/ship {ISSUE_ID}"` (implement → verify-loop → code-review → audit → closeout at N=1).

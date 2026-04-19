@@ -1,41 +1,63 @@
 ---
-description: Bulk-file all pending tasks of an orchestrator stage as BACKLOG issues + project spec stubs. Dispatches the `stage-file` subagent with shared stage context and phase/task cardinality enforcement.
-argument-hint: "{orchestrator-spec-path} Stage {X.Y} [prefix TECH-|FEAT-|BUG-]"
+description: Bulk-file all pending tasks of one orchestrator Stage as BACKLOG issues + project spec stubs. Dispatches `stage-file-planner` (Opus pair-head seam #2) → `stage-file-applier` (Sonnet pair-tail) → chains `/author` Stage-scoped. Seam #2 pair split per T7.7 / TECH-474.
+argument-hint: "{master-plan-path} Stage {X.Y}"
 ---
 
-# /stage-file — dispatch `stage-file` subagent
+# /stage-file — dispatch seam #2 pair then chain `/author`
 
-Use `stage-file` subagent (`.claude/agents/stage-file.md`) to bulk-file all `_pending_` tasks for `$ARGUMENTS`.
+Use `stage-file-planner` subagent (`.claude/agents/stage-file-planner.md`) → `stage-file-applier` subagent (`.claude/agents/stage-file-applier.md`) to bulk-file all `_pending_` tasks for `$ARGUMENTS`, then chain `/author {MASTER_PLAN_PATH} Stage {STAGE_ID}` to bulk-author `§Plan Author` sections across filed specs.
 
-## Subagent prompt (forward verbatim)
+## Argument parsing
 
-Forward via Agent tool with `subagent_type: "stage-file"`:
+Split `$ARGUMENTS` on whitespace. First token = `{MASTER_PLAN_PATH}` (repo-relative, `ia/projects/*-master-plan.md`). Second token = `{STAGE_ID}` (e.g. `Stage 7.2` → `7.2`). Missing either → print usage + abort.
 
-> Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads. Anchor: `ia/rules/agent-output-caveman.md`.
+## Step 1 — Dispatch `stage-file-planner` (Opus pair-head)
+
+Forward via Agent tool with `subagent_type: "stage-file-planner"`:
+
+> Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, BACKLOG row text + spec stub prose. Anchor: `ia/rules/agent-output-caveman.md`.
 >
 > ## Mission
 >
-> Run `ia/skills/stage-file/SKILL.md` end-to-end for `$ARGUMENTS`. **Argument order:** first token (or path segment) is the orchestrator spec path (`ORCHESTRATOR_SPEC`); second token is the stage id (`STAGE_ID`, e.g. `Stage 1.2` → `1.2`). Glob-resolve as fallback only when path is omitted and exactly one `*-master-plan.md` exists under `ia/projects/`. Default issue prefix `TECH-` unless user specifies.
->
-> ## Phase loop
->
-> 1. Read orchestrator spec → extract target stage (Objectives, Exit, Phases, task table).
-> 2. Cardinality gate — phase with 1 task → warn + pause for user confirmation before proceeding.
-> 3. Load shared MCP context ONCE: `glossary_discover` → `glossary_lookup` → `router_for_task` → `invariants_summary` (if C# stage) → `spec_section` → `backlog_issue` (stage-level deps).
-> 4. Filing loop (task-table order): next id → BACKLOG row → spec stub from template → `validate:dead-project-specs`. Abort task on non-zero.
-> 5. Atomic update: after ALL tasks filed, one Edit pass updates orchestrator task table (issue ids + `Draft` status).
-> 5b. Regenerate progress dashboard — `npm run progress` (repo root). Reflects `Draft` status flip in `docs/progress.html`. Deterministic; failure does NOT block step 6 — log exit code and continue.
-> 6. `npm run validate:all` — stop on failure, root-cause.
+> Run `ia/skills/stage-file-plan/SKILL.md` end-to-end on Stage `{STAGE_ID}` of `{MASTER_PLAN_PATH}`. Load shared Stage MCP bundle once (`domain-context-load`). Read Stage block + cardinality gate (≥2 tasks per phase — single-task phase → warn + pause). Batch-verify every Depends-on / Related id via `backlog_issue`. Batch-reserve ids via `reserve_backlog_ids` (monotonic per prefix). Emit `§Stage File Plan` tuple list under Stage block (one tuple per task: `{operation: file_task, reserved_id, title, priority, issue_type, notes, depends_on, related, stub_body}`). Resolve every anchor to single match before emitting. Hand off to Sonnet pair-tail.
 >
 > ## Hard boundaries
 >
-> - Do NOT update orchestrator task table mid-loop.
-> - Do NOT run `validate:all` per task — once at end.
-> - Do NOT file tasks outside target stage.
-> - Do NOT pre-file for stages whose parent step is not `In Progress`.
-> - Do NOT kickoff or implement any filed issue.
-> - Do NOT touch `.claude/settings.json` `permissions.defaultMode` or `mcp__territory-ia__*` wildcard.
+> - Do NOT reserve ids per-task — batch via `reserve_backlog_ids` only.
+> - Do NOT write yaml / spec stubs / edit master plan — that is pair-tail.
+> - Do NOT run validators — applier runs gate.
+> - Do NOT file tasks outside target Stage.
+> - Do NOT pre-file for Steps whose Status is not `In Progress`.
+> - Do NOT guess ambiguous anchors — escalate per `ia/rules/plan-apply-pair-contract.md`.
+> - Do NOT commit — user decides.
+
+Planner must return success + `§Stage File Plan` written before Step 2. Escalation → abort chain.
+
+## Step 2 — Dispatch `stage-file-applier` (Sonnet pair-tail)
+
+Forward via Agent tool with `subagent_type: "stage-file-applier"`:
+
+> Follow `caveman:caveman`. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, BACKLOG row text + spec stub prose. Anchor: `ia/rules/agent-output-caveman.md`.
 >
-> ## Output
+> ## Mission
 >
-> Single caveman message: tasks filed (id + one-line intent each), cardinality warnings resolved, MCP slices loaded, validate:all exit code, orchestrator table updated. Next step: if ≥2 tasks filed → `claude-personal "/ship-stage {ORCHESTRATOR_SPEC} Stage {STAGE_ID}"`; single task → `claude-personal "/ship {first_id}"`.
+> Run `ia/skills/stage-file-apply/SKILL.md` end-to-end on `{MASTER_PLAN_PATH}` `{STAGE_ID}`. Read `§Stage File Plan` tuples verbatim. Loop tuples in declared order: compose yaml, `backlog_record_validate`, write `ia/backlog/{reserved_id}.yaml`, bootstrap `ia/projects/{reserved_id}.md` from template. Post-loop: `bash tools/scripts/materialize-backlog.sh` + `npm run validate:dead-project-specs` + `npm run validate:backlog-yaml` once. Atomic Edit pass on orchestrator task table flips `_pending_` → `{reserved_id}` + `Draft`. Idempotent.
+>
+> ## Hard boundaries
+>
+> - Do NOT re-query MCP for Depends-on — planner batch-verified.
+> - Do NOT re-reserve ids — planner reserved via `reserve_backlog_ids`.
+> - Do NOT re-order tuples — declared order only.
+> - Do NOT write normative spec prose beyond stub — `plan-author` writes spec body at Stage N×1.
+> - Do NOT edit `BACKLOG.md` directly — `materialize-backlog.sh` regenerates it.
+> - Do NOT run `validate:all` — seam #2 gate is `validate:dead-project-specs` + `validate:backlog-yaml` only.
+> - Do NOT update task table mid-loop — atomic pass after all writes.
+> - Do NOT commit — user decides.
+
+## Step 3 — Auto-chain `/author` (Stage-scoped bulk)
+
+On applier success: auto-invoke `/author {MASTER_PLAN_PATH} Stage {STAGE_ID}` (Stage-scoped bulk `plan-author` per T7.11 / TECH-478) to fill `§Plan Author` + canonical-term fold across all N filed specs in one Opus pass.
+
+## Output
+
+Chain summary: tasks filed ids + bulk `/author` summary + next-step proposal. `validate:all` NOT run in seam #2 gate — full chain runs at Stage closeout. Next step after author: `claude-personal "/plan-review {MASTER_PLAN_PATH} Stage {STAGE_ID}"` (seam #1 drift scan) → per-Task `/ship {ISSUE_ID}` loop → Stage-end `/audit` + `/closeout`.

@@ -1,6 +1,6 @@
 # AI Agent Guide — Territory Developer
 
-> **TL;DR.** `territory-ia` MCP first (`backlog_issue` → `router_for_task` → `glossary_*` → `spec_section`). Ship via project-spec lifecycle (create → kickoff → implement → validate → close). Emit **Verification** block per [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md) at completion. Hard guardrails: [`ia/rules/invariants.md`](ia/rules/invariants.md). Native host surface (Claude Code hooks, slash commands, subagents): [`CLAUDE.md`](CLAUDE.md).
+> **TL;DR.** `territory-ia` MCP first (`backlog_issue` → `router_for_task` → `glossary_*` → `spec_section`). Ship via project-spec lifecycle (create → author → implement → verify → review → audit → close Stage-scoped). Emit **Verification** block per [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md) at completion. Hard guardrails: [`ia/rules/invariants.md`](ia/rules/invariants.md). Native host surface (Claude Code hooks, slash commands, subagents): [`CLAUDE.md`](CLAUDE.md).
 
 ## 1. Before you start
 
@@ -15,26 +15,35 @@
 Canonical flow (exploration → close). Full matrix, handoff contract, decision tree: [`docs/agent-lifecycle.md`](docs/agent-lifecycle.md). Always-loaded anchor: [`ia/rules/agent-lifecycle.md`](ia/rules/agent-lifecycle.md).
 
 ```
-/design-explore → /master-plan-new → /stage-file → /ship-stage (≥2 tasks) | /project-new → /kickoff → /implement → /verify-loop → project-stage-close (skill) → /closeout
+/design-explore → /master-plan-new → [/stage-decompose (re-decompose only)] → /stage-file (→ /author Stage 1×N) → /plan-review (→ plan-fix-apply when critical) → [per-Task loop: /implement → /verify-loop → /code-review (→ code-fix-apply when critical)] → /audit (Stage 1×N) → /closeout (Stage-scoped: stage-closeout-plan → stage-closeout-apply)
 ```
 
-Single-issue path (skip first three stages): `/project-new → /kickoff → /implement → /verify-loop → /closeout`.
+Single-task path (N=1): `/project-new (→ project-new-apply) → /author (N=1) → /implement → /verify-loop → /code-review → /audit (N=1) → /closeout (N=1)`.
 
-| # | Stage | Slash command | Skill | Purpose |
-|---|-------|---------------|-------|---------|
-| 1 | Explore | [`/design-explore`](.claude/commands/design-explore.md) | [`design-explore`](ia/skills/design-explore/SKILL.md) | Exploration doc → reviewed design + `## Design Expansion` |
-| 2 | Orchestrate | [`/master-plan-new`](.claude/commands/master-plan-new.md) | [`master-plan-new`](ia/skills/master-plan-new/SKILL.md) | Design expansion → `ia/projects/{slug}-master-plan.md` (orchestrator, permanent) |
-| 2a | Extend orchestrator | [`/master-plan-extend`](.claude/commands/master-plan-extend.md) | [`master-plan-extend`](ia/skills/master-plan-extend/SKILL.md) | Existing orchestrator + new exploration / extensions doc → appended `### Step {START}..{END}` blocks (fully decomposed) + header metadata synced |
-| 3 | Bulk-file stage | [`/stage-file`](.claude/commands/stage-file.md) | [`stage-file`](ia/skills/stage-file/SKILL.md) | One orchestrator stage → N BACKLOG rows + spec stubs |
-| 4 | Single issue | [`/project-new`](.claude/commands/project-new.md) | [`project-new`](ia/skills/project-new/SKILL.md) | One BACKLOG row + one `ia/projects/{ISSUE_ID}.md` stub |
-| 5 | Refine | [`/kickoff`](.claude/commands/kickoff.md) | [`project-spec-kickoff`](ia/skills/project-spec-kickoff/SKILL.md) | Enrich spec §1–§10 before code |
-| 6 | Implement | [`/implement`](.claude/commands/implement.md) | [`project-spec-implement`](ia/skills/project-spec-implement/SKILL.md) | Execute Implementation Plan phase by phase |
-| 7 | Verify (single-pass) | [`/verify`](.claude/commands/verify.md) | composed | Lightweight Verification block, read-only |
-| 7 | Verify (closed-loop) | [`/verify-loop`](.claude/commands/verify-loop.md) | [`verify-loop`](ia/skills/verify-loop/SKILL.md) | 7-step closed loop + bounded fix iteration |
-| 7 | Test-mode ad-hoc | [`/testmode`](.claude/commands/testmode.md) | [`agent-test-mode-verify`](ia/skills/agent-test-mode-verify/SKILL.md) | Path A batch / Path B bridge hybrid in isolation |
-| 7s | Stage-scoped chain ship | [`/ship-stage`](.claude/commands/ship-stage.md) | [`ship-stage`](ia/skills/ship-stage/SKILL.md) | Chain kickoff → implement → verify-loop (--skip-path-b) → closeout per non-Done task in a Stage X.Y; batched Path B at stage end; chain-level stage digest; next-stage handoff auto-resolved |
-| 8 | Close stage | *(skill only)* | [`project-stage-close`](ia/skills/project-stage-close/SKILL.md) | Tick one stage of a multi-stage spec + handoff |
-| 9 | Close issue (umbrella) | [`/closeout`](.claude/commands/closeout.md) | [`project-spec-close`](ia/skills/project-spec-close/SKILL.md) | Migrate lessons → delete spec → archive row → purge id |
+Stage-end batching: `/author`, `/audit`, `/closeout` all fire ONCE per Stage (bulk Stage 1×N). Per-Task seams = `/implement`, `/verify-loop`, `/code-review`. No `/kickoff`, no `/enrich`, no per-Task close — all absorbed into Stage-scoped bulk pair shape (M6 collapse).
+
+| # | Seam | Slash command | Subagent(s) | Skill | Purpose |
+|---|------|---------------|-------------|-------|---------|
+| 1 | Explore | [`/design-explore`](.claude/commands/design-explore.md) | `design-explore` | [`design-explore`](ia/skills/design-explore/SKILL.md) | Exploration doc → reviewed design + `## Design Expansion` |
+| 2 | Orchestrate | [`/master-plan-new`](.claude/commands/master-plan-new.md) | `master-plan-new` | [`master-plan-new`](ia/skills/master-plan-new/SKILL.md) | Design expansion → `ia/projects/{slug}-master-plan.md` (orchestrator, permanent) |
+| 2a | Extend orchestrator | [`/master-plan-extend`](.claude/commands/master-plan-extend.md) | `master-plan-extend` | [`master-plan-extend`](ia/skills/master-plan-extend/SKILL.md) | Append new Steps (fully decomposed) to existing orchestrator |
+| 2b | Decompose step | [`/stage-decompose`](.claude/commands/stage-decompose.md) | `stage-decompose` | [`stage-decompose`](ia/skills/stage-decompose/SKILL.md) | Re-decompose one Step when scope pivots |
+| 3 | Bulk-file stage (pair) | [`/stage-file`](.claude/commands/stage-file.md) | `stage-file-planner` → `stage-file-applier` | [`stage-file-plan`](ia/skills/stage-file-plan/SKILL.md) → [`stage-file-apply`](ia/skills/stage-file-apply/SKILL.md) | Stage → N yaml + spec stubs; auto-chains `/author` |
+| 4 | Single issue (pair) | [`/project-new`](.claude/commands/project-new.md) | `project-new-planner` → `project-new-applier` | [`project-new`](ia/skills/project-new/SKILL.md) → [`project-new-apply`](ia/skills/project-new-apply/SKILL.md) | One yaml + one spec stub; auto-chains `/author --task` |
+| 5 | Bulk author (Stage 1×N) | [`/author`](.claude/commands/author.md) | `plan-author` | [`plan-author`](ia/skills/plan-author/SKILL.md) | Write ALL N `§Plan Author` sections (audit notes + examples + test blueprint + acceptance) in one Opus pass; canonical-term fold absorbed (no `/enrich`) |
+| 6 | Plan review (pair) | [`/plan-review`](.claude/commands/plan-review.md) | `plan-reviewer` → `plan-fix-applier` | [`plan-review`](ia/skills/plan-review/SKILL.md) → [`plan-fix-apply`](ia/skills/plan-fix-apply/SKILL.md) | Review Stage plan quality; fix tuples on critical |
+| 7 | Implement | [`/implement`](.claude/commands/implement.md) | `spec-implementer` | [`project-spec-implement`](ia/skills/project-spec-implement/SKILL.md) | Execute Implementation Plan phase by phase (per-Task) |
+| 8 | Verify (single-pass) | [`/verify`](.claude/commands/verify.md) | `verifier` | composed | Lightweight Verification block, read-only |
+| 8 | Verify (closed-loop) | [`/verify-loop`](.claude/commands/verify-loop.md) | `verify-loop` | [`verify-loop`](ia/skills/verify-loop/SKILL.md) | 7-step closed loop + bounded fix iteration |
+| 8 | Test-mode ad-hoc | [`/testmode`](.claude/commands/testmode.md) | `test-mode-loop` | [`agent-test-mode-verify`](ia/skills/agent-test-mode-verify/SKILL.md) | Path A batch / Path B bridge hybrid in isolation |
+| 9 | Code review (pair) | [`/code-review`](.claude/commands/code-review.md) | `opus-code-reviewer` → `code-fix-applier` | [`opus-code-review`](ia/skills/opus-code-review/SKILL.md) → [`code-fix-apply`](ia/skills/code-fix-apply/SKILL.md) | Per-Task diff review against spec + invariants; fix tuples on critical |
+| 10 | Audit (Stage 1×N) | [`/audit`](.claude/commands/audit.md) | `opus-auditor` | [`opus-audit`](ia/skills/opus-audit/SKILL.md) | Synthesize N per-Task `§Audit` paragraphs in one Opus pass post all per-Task loops; R11 `§Findings` gate |
+| 11 | Stage-scoped chain ship | [`/ship-stage`](.claude/commands/ship-stage.md) | `ship-stage` | [`ship-stage`](ia/skills/ship-stage/SKILL.md) | Chain author → implement → verify-loop (`--skip-path-b`) → code-review → audit → closeout per non-Done task in a Stage X.Y; batched Path B at stage end; chain-level stage digest |
+| 12 | Close Stage (pair) | [`/closeout`](.claude/commands/closeout.md) | `stage-closeout-planner` → `stage-closeout-applier` | [`stage-closeout-plan`](ia/skills/stage-closeout-plan/SKILL.md) → [`stage-closeout-apply`](ia/skills/stage-closeout-apply/SKILL.md) | Stage-scoped: one invocation closes ALL Task rows of one Stage X.Y in bulk (archive N yaml + delete N specs + flip N rows + unified migration + chain-level digest) |
+| 13 | Rollout umbrella | [`/release-rollout`](.claude/commands/release-rollout.md) | `release-rollout` | [`release-rollout`](ia/skills/release-rollout/SKILL.md) (+ `-enumerate`, `-track`, `-skill-bug-log` helpers) | Advance one umbrella rollout-tracker row through 7-column lifecycle (a)–(g) toward (f) ≥1-task-filed |
+| — | Progress emit (preamble) | *(none)* | *(all agents, `@`-load)* | [`subagent-progress-emit`](ia/skills/subagent-progress-emit/SKILL.md) | Cross-cutting `⟦PROGRESS⟧` stderr marker shape + `phases:` frontmatter contract |
+
+Retired surfaces (post-M6 — do not reference in new skills / agents / commands): `/kickoff` + `spec-kickoff` + `project-spec-kickoff` (folded into `plan-author`); `project-stage-close` + `project-spec-close` (folded into Stage-scoped `/closeout` pair). Tombstones under `ia/skills/_retired/`, `.claude/agents/_retired/`, `.claude/commands/_retired/`.
 
 Domain-skill (not in main flow): [`ui-hud-row-theme`](ia/skills/ui-hud-row-theme/SKILL.md) for HUD/menu rows with `UiTheme`. Verification building blocks (composed by `/verify-loop`, invokable standalone via `Skill` tool): [`bridge-environment-preflight`](ia/skills/bridge-environment-preflight/SKILL.md), [`project-implementation-validation`](ia/skills/project-implementation-validation/SKILL.md), [`ide-bridge-evidence`](ia/skills/ide-bridge-evidence/SKILL.md), [`close-dev-loop`](ia/skills/close-dev-loop/SKILL.md).
 
@@ -42,7 +51,8 @@ Hard rules (enforced at handoff):
 
 - Orchestrator docs (`*master-plan*`) are permanent — NEVER closeable via `/closeout`. See [`ia/rules/orchestrator-vs-spec.md`](ia/rules/orchestrator-vs-spec.md).
 - `/verify` = single pass, read-only. `/verify-loop` = bounded fix iteration (`MAX_ITERATIONS=2`). Both defer to [`docs/agent-led-verification-policy.md`](docs/agent-led-verification-policy.md); never restate the policy.
-- Stage close ≠ umbrella close. Per-stage = `project-stage-close` skill (no spec deletion). Umbrella = `/closeout` (deletes spec + archives row).
+- `/closeout` is Stage-scoped. One invocation closes ALL Task rows of one Stage X.Y in bulk (planner → applier pair). Per-Task closeout surface retired.
+- Pair contract. All Plan-Apply pair seams (`stage-file`, `project-new`, `plan-review`, `code-review`, `closeout`) obey [`ia/rules/plan-apply-pair-contract.md`](ia/rules/plan-apply-pair-contract.md): Opus pair-head writes `{operation, target_path, target_anchor, payload}` tuples; Sonnet pair-tail reads verbatim and applies.
 - Missing handoff artifact → next stage refuses to start. Full contract: [`docs/agent-lifecycle.md`](docs/agent-lifecycle.md) §3.
 
 Skill index + conventions: [`ia/skills/README.md`](ia/skills/README.md). Claude Code host surface (hooks, agent bodies, command dispatchers): [`CLAUDE.md`](CLAUDE.md) §3.
@@ -101,8 +111,8 @@ Project-specific specs for features or complex bugs **in active development** �
 | Template | [`ia/templates/project-spec-template.md`](ia/templates/project-spec-template.md) |
 | Structure | [`ia/projects/PROJECT-SPEC-STRUCTURE.md`](ia/projects/PROJECT-SPEC-STRUCTURE.md) |
 | Naming | `{ISSUE_ID}-{description}.md` (e.g. `BUG-37-zone-cleanup.md`); legacy bare `{ISSUE_ID}.md` still accepted |
-| Lifecycle | Create → refine → implement → verify → close |
-| On completion | Migrate lessons learned to canonical docs **before** deleting (`project-spec-close`) |
+| Lifecycle | Create → author → implement → verify → code-review → audit → close (Stage-scoped) |
+| On completion | Lessons-learned migration + spec deletion handled by Stage-scoped `/closeout` pair (`stage-closeout-plan` → `stage-closeout-apply`) |
 | Dead-path check | `npm run validate:dead-project-specs` (advisory: `--advisory` or `CI_DEAD_SPEC_ADVISORY=1`) |
 | Frontmatter | 4-field IA header (`purpose`, `audience`, `loaded_by`, `slices_via`); validator: `npm run validate:frontmatter` |
 
@@ -110,7 +120,7 @@ Project-specific specs for features or complex bugs **in active development** �
 
 **Open Questions.** Every collaborative project spec SHOULD include `## Open Questions (resolve before / during implementation)`. Phrase in canonical domain vocabulary; target definitions + intended game logic only — implementation choices → **Implementation Plan** / **Implementation investigation notes**.
 
-**Multi-stage specs.** Large rewrites declare top-level **stages** with internal **phases**, executed by one fresh agent per stage; [`project-stage-close`](ia/skills/project-stage-close/SKILL.md) closes each non-final stage; umbrella `project-spec-close` closes last.
+**Multi-stage specs.** Large rewrites declare top-level **stages** with internal **phases**, executed by one fresh agent per stage; Stage-scoped `/closeout` pair (`stage-closeout-plan` → `stage-closeout-apply`) closes ALL Task rows of one Stage X.Y in bulk (archive N yaml + delete N specs + flip N rows + chain-level digest in one pass).
 
 ### Project docs outside `ia/specs/`
 
@@ -146,7 +156,7 @@ New/changed concepts → update glossary **and** relevant spec section. No termi
 
 **After implementing.** Keep issue **In progress** until user confirms verification.
 
-**Closing issue with project spec.** Follow [`project-spec-close`](ia/skills/project-spec-close/SKILL.md): persist lessons → glossary, reference specs, `ARCHITECTURE.md`, `ia/rules/`, `docs/` (+ MCP docs if tools changed) **before** deleting spec; `npm run validate:dead-project-specs`; move `ia/backlog/{id}.yaml` → `ia/backlog-archive/{id}.yaml` (status: closed); run `bash tools/scripts/materialize-backlog.sh`; purge closed id from durable IA + code.
+**Closing issue with project spec.** Run Stage-scoped `/closeout {MASTER_PLAN_PATH} {STAGE_ID}` (pair seam: `stage-closeout-planner` Opus → `stage-closeout-applier` Sonnet). Pair writes `§Stage Closeout Plan` tuples in master plan (unified shared migrations + N archive/delete/flip/purge ops), applies once, runs `materialize-backlog.sh` + `validate:dead-project-specs` once at end, emits one chain-level Stage closeout digest. Per-Task closeout surface retired — no per-spec lessons-migration pass.
 
 **Adding issues.**
 

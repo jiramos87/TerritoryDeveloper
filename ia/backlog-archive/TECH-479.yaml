@@ -1,0 +1,47 @@
+id: TECH-479
+type: tech (IA infrastructure / lifecycle tooling)
+title: "Subagent-progress-emit skill + phases frontmatter audit + self-report emitter retirement across 15 lifecycle skills (Stage 7 T7.12)"
+priority: medium
+status: closed
+completed: 2026-04-19
+section: IA evolution lane
+spec: ia/projects/TECH-479.md
+files:
+  - ia/skills/subagent-progress-emit/SKILL.md
+  - .claude/agents/_preamble.md
+notes: |
+  Author `ia/skills/subagent-progress-emit/SKILL.md`: cross-cutting progress-marker skill; stderr emission shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}` (Unicode brackets `⟦ ⟧` reserved as regex-stable canonical delimiter; forbid in skill body prose); frontmatter convention — every lifecycle `SKILL.md` gains top-level `phases:` YAML array listing phase names in order; subagent body reads own frontmatter `phases:` + emits marker to stderr on phase entry; parent agent stderr surfaces marker line verbatim; zero per-skill emission boilerplate — common preamble handles; non-lifecycle one-shots exempt. Update every lifecycle skill to add top-level `phases:` frontmatter (15 skills: plan-review, plan-fix-apply, stage-file-plan, stage-file-apply, project-new-apply, opus-audit, opus-code-review, code-fix-apply, stage-closeout-plan, stage-closeout-apply, plan-author + existing project-spec-implement, verify-loop, ship-stage, stage-file, project-new — spec-enrich NOT authored per T7.5); each `phases:` array maps 1:1 to `### Phase N —` body headings in order. Update `.claude/agents/*.md` common preamble to `@`-load `ia/skills/subagent-progress-emit/SKILL.md` — one-line include. Add `validate:frontmatter` rule parsing `phases:` array + asserting matching `### Phase N —` headings in body (prevents drift); run validator on all 15 skills; fix mismatches. Update `ia/rules/agent-lifecycle.md` surface map: add `subagent-progress-emit` row (cross-cutting). **Piggyback — retire per-skill self-report emitter stanza** across same 15 lifecycle skills (~50 lines × 15 = ~750 lines boilerplate). Decision during implement: drop outright (preferred — `skill-train` already aggregates friction via `§Changelog` scan; clean-run rule skips stanza in most runs) OR relocate to single `@`-loaded `ia/skills/_common/self-report-emitter.md` preamble. Assert `grep -rn "skill_self_report" ia/skills/ → 0 matches in lifecycle skill bodies` post-retirement. Update `ia/skills/skill-train/SKILL.md` reader only if relocation path chosen — point at new preamble location.
+acceptance: |
+  progress-emit SKILL.md present; all 15 lifecycle skills have `phases:` frontmatter matching body phase headings 1:1; common preamble `@`-loads progress-emit; validate:frontmatter asserts drift-free; per-skill self-report emitter stanza retired across 15 skills (drop or `@`-preamble — decided during implement); `grep "skill_self_report" ia/skills/*/SKILL.md` returns 0 matches in lifecycle bodies; `skill-train` reader updated if relocation; `validate:all` green.
+depends_on:
+  - TECH-468
+  - TECH-469
+  - TECH-470
+  - TECH-471
+  - TECH-473
+  - TECH-478
+  - TECH-480
+  - TECH-481
+depends_on_raw: "All pair skills + plan-author + updated lifecycle skills must exist before frontmatter + self-report audit"
+related:
+  - TECH-474
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T7.12
+router_domain: Tooling / IA / lifecycle
+surfaces:
+  - ia/skills/subagent-progress-emit/SKILL.md
+  - .claude/agents/
+  - ia/rules/agent-lifecycle.md
+  - ia/skills/skill-train/SKILL.md
+mcp_slices: []
+skill_hints: []
+raw_markdown: |
+  - [ ] **TECH-479** — Subagent-progress-emit skill + phases frontmatter audit + self-report emitter retirement across 15 lifecycle skills (Stage 7 T7.12)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Files: `ia/skills/subagent-progress-emit/SKILL.md`, `.claude/agents/_preamble.md`
+    - Spec: `ia/projects/TECH-479.md`
+    - Notes: Stderr `⟦PROGRESS⟧` marker contract + `phases:` frontmatter audit across 15 lifecycle skills; common preamble @-load; validator asserts drift-free; surface map row. Piggyback — retire per-skill self-report emitter stanza (~750 lines boilerplate); drop or `@`-preamble (decided during implement); update `skill-train` reader if relocation.
+    - Acceptance: skill + preamble + frontmatter + validator + self-report retirement all in place; `validate:all` green.
+    - Depends on: **TECH-468**, **TECH-469**, **TECH-470**, **TECH-471**, **TECH-473**, **TECH-478**, **TECH-480**, **TECH-481**
+    - Related: TECH-474

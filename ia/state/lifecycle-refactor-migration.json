@@ -29,8 +29,24 @@
       "name": "Web dashboard: parser + PlanTree collapse"
     },
     "M6": {
-      "status": "pending",
-      "name": "Skills + agents + commands rewrite"
+      "status": "done",
+      "name": "Skills + agents + commands rewrite",
+      "tasks": {
+        "T7.1": "done",
+        "T7.2": "done",
+        "T7.3": "done",
+        "T7.4": "done",
+        "T7.5": "done",
+        "T7.6": "done",
+        "T7.11": "done",
+        "T7.12": "done",
+        "T7.13": "done",
+        "T7.14": "done",
+        "T7.7": "done",
+        "T7.8": "done",
+        "T7.9": "done",
+        "T7.10": "done"
+      }
     },
     "M7": {
       "status": "pending",

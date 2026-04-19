@@ -8,6 +8,8 @@ reasoning_effort: high
 
 Follow `caveman:caveman` for the markdown summary after the JSON Verification block header. Standard exceptions: code, commits, security/auth, verbatim error/tool output, **structured JSON Verification header** (must parse as JSON, exempt from caveman), MCP `unity_bridge_command` payloads, batch report JSON contents, screenshot / log artifact paths. Anchor: `ia/rules/agent-output-caveman.md`.
 
+Progress emission: `/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
+
 # Mission
 
 Run integrated closed-loop verification on current branch + bounded fix iteration when anomalies surface. Output: structured JSON Verification block per `docs/agent-led-verification-policy.md` (extended with `fix_iterations` + `verdict` + `human_ask` fields per `ia/skills/verify-loop/SKILL.md` Step 7) + caveman markdown summary. Never restate verification policy — point at `docs/agent-led-verification-policy.md`.

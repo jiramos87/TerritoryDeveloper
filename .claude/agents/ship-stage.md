@@ -8,6 +8,8 @@ reasoning_effort: high
 
 Follow `caveman:caveman` for all responses. Standard exceptions: code, commits, security/auth, verbatim error/tool output, structured MCP payloads, chain-level digest JSON, destructive-op confirmations. Anchor: `ia/rules/agent-output-caveman.md`.
 
+Progress emission: `/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
+
 # Mission
 
 Drive every non-Done filed task row of `{STAGE_ID}` in `{MASTER_PLAN_PATH}` through the full lifecycle chain (`spec-kickoff → spec-implementer → verify-loop --skip-path-b → closeout`), then run one batched Path B at stage end and emit a chain-level stage digest.

@@ -1,0 +1,41 @@
+id: TECH-477
+type: tech (IA infrastructure / lifecycle tooling)
+title: "Stage 7 validate + memory update + M6 flip (Stage 7 T7.10)"
+priority: medium
+status: closed
+completed: 2026-04-19
+section: IA evolution lane
+spec: ia/projects/TECH-477.md
+files:
+  - AGENTS.md
+  - MEMORY.md
+  - ia/state/lifecycle-refactor-migration.json
+notes: |
+  Run `npm run validate:all`; fix any failures from command/agent dispatch references to retired agents/skills/commands. Update `AGENTS.md` lifecycle section to match new surface map (filed in T7.9). Update MEMORY entries in `MEMORY.md` referencing Phase or legacy kickoff/closeout dispatch patterns. Flip migration JSON M6 `done`.
+acceptance: |
+  `validate:all` green; `AGENTS.md` lifecycle section consistent w/ new flow; MEMORY entries updated; migration JSON M6 `done`.
+depends_on:
+  - TECH-476
+  - TECH-481
+  - TECH-479
+depends_on_raw: "TECH-476 (rule docs rewrite precedes validate), TECH-481 (stage-closeout-apply final piece), TECH-479 (progress-emit + frontmatter audit)"
+related: []
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T7.10
+router_domain: Tooling / IA / lifecycle
+surfaces:
+  - AGENTS.md
+  - MEMORY.md
+  - ia/state/lifecycle-refactor-migration.json
+mcp_slices: []
+skill_hints: []
+raw_markdown: |
+  - [ ] **TECH-477** — Stage 7 validate + memory update + M6 flip (Stage 7 T7.10)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Files: `AGENTS.md`, `MEMORY.md`, `ia/state/lifecycle-refactor-migration.json`
+    - Spec: `ia/projects/TECH-477.md`
+    - Notes: Final Stage 7 closeout — validate green + AGENTS + MEMORY sync + M6 flip.
+    - Acceptance: validate green; docs + MEMORY updated; M6 done.
+    - Depends on: **TECH-476**, **TECH-481**, **TECH-479**
+    - Related: none

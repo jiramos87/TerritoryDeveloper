@@ -138,6 +138,28 @@ task_key: "{{T_KEY}}"
 
 - …
 
+## §Plan Author
+
+<!-- Pair-head: `plan-author` Opus Stage-scoped bulk non-pair (no Sonnet tail). Populated once per Stage after `stage-file-apply` (multi-task) or `project-new-apply` (N=1). 4 sub-sections in strict order. -->
+
+_pending — populated by `/author {MASTER_PLAN_PATH} {STAGE_ID}`. 4 sub-sections: §Audit Notes / §Examples / §Test Blueprint / §Acceptance._
+
+### §Audit Notes
+
+<!-- Upfront conceptual audit — risks, ambiguity, invariant touches. 2–5 bullets. -->
+
+### §Examples
+
+<!-- Concrete inputs/outputs + edge cases + legacy shapes. Tables or code blocks. -->
+
+### §Test Blueprint
+
+<!-- Structured tuples consumed by `/implement` + `/verify-loop`. One row per test: `{test_name, inputs, expected, harness}`. -->
+
+### §Acceptance
+
+<!-- Refined per-Task acceptance criteria — narrower than Stage Exit. Checkbox list. -->
+
 ## Open Questions (resolve before / during implementation)
 
 <!--
@@ -163,7 +185,7 @@ task_key: "{{T_KEY}}"
 
 ## §Audit
 
-<!-- Pair-head: `opus-audit` Opus stage (post-verify). Pair-tail: `closeout-apply` consumes via `§Closeout Plan`. -->
+<!-- Pair-head: `opus-audit` Opus stage (post-verify). Upstream of `stage-closeout-plan` → `stage-closeout-apply` Stage-scoped seam #4 (T7.14). Per-Task `§Closeout Plan` section retired — closeout tuples now live under Stage block `§Stage Closeout Plan` in the master plan. -->
 
 _pending — populated by `/audit` after `/verify-loop` passes. One paragraph: what shipped, what worked, what to watch._
 
@@ -178,9 +200,3 @@ _pending — populated by `/code-review`. Verdict: PASS | minor (fix-in-place / 
 <!-- Pair-head: `opus-code-review` writes here only when verdict = critical. Pair-tail: `code-fix-apply` Sonnet. -->
 
 _pending — populated by `/code-review` only when fixes needed. Sonnet `code-fix-apply` reads tuples + applies + re-enters `/verify-loop`._
-
-## §Closeout Plan
-
-<!-- Pair-head: `opus-audit` Opus stage. Pair-tail: `closeout-apply` Sonnet. -->
-
-_pending — populated by `/audit`. Structured migration anchors: glossary rows, rule sections, doc paragraphs, BACKLOG archive op, id purge list._

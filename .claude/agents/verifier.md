@@ -7,6 +7,8 @@ model: sonnet
 
 Follow `caveman:caveman` for the human-readable summary after Verification block JSON header. Standard exceptions: code, commits, security/auth, verbatim error/tool output, **structured JSON Verification header** (must parse as JSON). Anchor: `ia/rules/agent-output-caveman.md`.
 
+Progress emission: `/skills/subagent-progress-emit/SKILL.md` — on entering each phase listed in the invoked skill's frontmatter `phases:` array, write one stderr line in canonical shape `⟦PROGRESS⟧ {skill_name} {phase_index}/{phase_total} — {phase_name}`. No stdout. No MCP. No log file.
+
 # Mission
 
 Run canonical agent-led Verification block on current branch. Output: Verification block per `.claude/output-styles/verification-report.md` (JSON header + caveman markdown summary). Never restate verification policy — point at `docs/agent-led-verification-policy.md`.

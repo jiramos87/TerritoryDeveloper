@@ -21,7 +21,7 @@ import { registerBacklogRecordValidate } from "./tools/backlog-record-validate.j
 import { registerParentPlanValidate } from "./tools/parent-plan-validate.js";
 import { registerReserveBacklogIds } from "./tools/reserve-backlog-ids.js";
 import { registerSpecSections } from "./tools/spec-sections.js";
-import { registerProjectSpecCloseoutDigest } from "./tools/project-spec-closeout-digest.js";
+import { registerStageCloseoutDigest } from "./tools/stage-closeout-digest.js";
 import { registerProjectSpecJournalTools } from "./tools/project-spec-journal.js";
 import {
   registerDesirabilityTopCells,
@@ -70,7 +70,7 @@ registerBacklogRecordValidate(server);
 registerParentPlanValidate(server);
 registerReserveBacklogIds(server);
 registerSpecSections(server, registry);
-registerProjectSpecCloseoutDigest(server);
+registerStageCloseoutDigest(server);
 registerProjectSpecJournalTools(server);
 registerIsometricWorldToGrid(server);
 registerGrowthRingClassify(server);
