@@ -1,0 +1,32 @@
+id: TECH-459
+type: tech (IA infrastructure / lifecycle tooling / MCP)
+title: "Schema cache restart + smoke tests post Phase-param drop (Stage 5 T5.2)"
+priority: high
+status: closed
+section: IA evolution lane
+spec: null
+files:
+  - tools/mcp-ia-server/
+notes: |
+  Restart `territory-ia` MCP process (kill PID / project npm script); verify Claude Code reconnects to updated schema; run `npm run validate:mcp` (or targeted handler unit tests in `tools/mcp-ia-server/`); confirm `router_for_task` responds with new enum values when queried with `plan_review` stage name. Cache-eviction matters — MCP server caches schema in memory at session start; without restart, new enum invisible to clients.
+acceptance: |
+  MCP process restarted cleanly; schema cache reflects TECH-458 handler changes; smoke test calling `router_for_task` w/ `plan_review` returns non-error response; handler unit tests green.
+depends_on:
+  - TECH-458
+depends_on_raw: "TECH-458 (handler changes must land before restart)."
+related:
+  - TECH-460
+  - TECH-461
+created: 2026-04-19
+completed: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T5.2
+raw_markdown: |
+  - [x] **TECH-459** — Schema cache restart + smoke tests post Phase-param drop (Stage 5 T5.2)
+    - Type: tech (IA infrastructure / lifecycle tooling / MCP)
+    - Priority: high
+    - Files: `tools/mcp-ia-server/`
+    - Parent plan: [lifecycle-refactor-master-plan.md](ia/projects/lifecycle-refactor-master-plan.md) (T5.2)
+    - Notes: Restart MCP process; smoke-test `router_for_task` w/ `plan_review` enum value; run handler unit tests.
+    - Acceptance: Cache refreshed; new enum values visible; smoke green.
+    - Depends on: **TECH-458**

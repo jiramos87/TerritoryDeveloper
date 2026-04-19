@@ -1,0 +1,34 @@
+id: TECH-465
+type: tech (IA infrastructure / lifecycle tooling / web)
+title: "Preview deploy + visual confirm + M5 flip (Stage 6 T6.4)"
+priority: high
+status: closed
+section: IA evolution lane
+spec: ia/projects/TECH-465.md
+files:
+  - web/package.json
+  - ia/state/lifecycle-refactor-migration.json
+notes: |
+  Run `npm run deploy:web:preview`; open `/dashboard` on preview URL; visually confirm Stage→Task tree renders without Phase rows; confirm all migrated master plans (from Stage 3 output) display correctly. Flip migration JSON `M5.status` → `done`.
+acceptance: |
+  Preview deploy URL reachable; `/dashboard` + `/dashboard/releases/*/progress` render Stage→Task 2-level tree; no Phase rows visually; sampled ≥2 migrated master plans display correctly; `ia/state/lifecycle-refactor-migration.json` `M5.status == "done"`.
+depends_on:
+  - TECH-464
+depends_on_raw: "TECH-464 (full web validate must be green before preview deploy worth running)."
+related:
+  - TECH-462
+  - TECH-463
+  - TECH-464
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T6.4
+raw_markdown: |
+  - [ ] **TECH-465** — Preview deploy + visual confirm + M5 flip (Stage 6 T6.4)
+    - Type: tech (IA infrastructure / lifecycle tooling / web)
+    - Priority: high
+    - Files: `web/package.json`, `ia/state/lifecycle-refactor-migration.json`
+    - Spec: [ia/projects/TECH-465.md](ia/projects/TECH-465.md)
+    - Parent plan: [lifecycle-refactor-master-plan.md](ia/projects/lifecycle-refactor-master-plan.md) (T6.4)
+    - Notes: Preview deploy; visual confirm 2-level tree; flip `M5.status` done.
+    - Acceptance: Preview reachable; 2-level render; `M5.status == "done"`.
+    - Depends on: **TECH-464**

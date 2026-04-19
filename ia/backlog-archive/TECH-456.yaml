@@ -1,0 +1,37 @@
+id: TECH-456
+type: tech (IA infrastructure / lifecycle tooling)
+title: Drop phase field from all backlog yaml records (Stage 4 T4.3)
+priority: high
+status: closed
+section: IA evolution lane
+spec: ia/projects/TECH-456.md
+files:
+  - ia/backlog/
+  - ia/backlog-archive/
+  - tools/mcp-ia-server/src/parser/
+  - ia/templates/frontmatter-schema.md
+  - ia/state/lifecycle-refactor-migration.json
+notes: |
+  For each `ia/backlog/*.yaml` + `ia/backlog-archive/*.yaml` (read list from migration JSON `M3.yaml` array): remove `phase:` field; set `parent_stage:` to correct stage id. Update `tools/mcp-ia-server/src/parser/` backlog-schema expectation to not require `phase` field (check `ia/templates/frontmatter-schema.md` + any schema validation in parser for field allowlist). Preserve `id:` + counter untouched. Update migration JSON `M3.yaml` per-file to `done` immediately after each yaml edit.
+acceptance: |
+  No `phase:` field in any `ia/backlog/*.yaml` or `ia/backlog-archive/*.yaml`; `parent_stage:` populated with correct stage id; parser + frontmatter-schema allowlist updated; `id:` values byte-identical (counter untouched); migration JSON `M3.yaml` entries all flipped to `done`.
+depends_on:
+  - TECH-455
+depends_on_raw: TECH-455 (spec-side fold must validate clean before yaml schema drift lands).
+related:
+  - TECH-454
+  - TECH-455
+  - TECH-457
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T4.3
+raw_markdown: |
+  - [ ] **TECH-456** — Drop `phase` field from all backlog yaml records (Stage 4 T4.3)
+    - Type: tech (IA infrastructure / lifecycle tooling)
+    - Priority: high
+    - Files: `ia/backlog/`, `ia/backlog-archive/`, `tools/mcp-ia-server/src/parser/`, `ia/templates/frontmatter-schema.md`
+    - Spec: [ia/projects/TECH-456.md](ia/projects/TECH-456.md)
+    - Parent plan: [lifecycle-refactor-master-plan.md](ia/projects/lifecycle-refactor-master-plan.md) (T4.3)
+    - Notes: Strip `phase:` from every yaml (open + archive); set `parent_stage:` correct; update MCP parser + frontmatter-schema allowlist; preserve `id:` + counter.
+    - Acceptance: No `phase:` in any yaml; parser + schema doc allowlist updated; `id:` byte-identical; `M3.yaml` per-file all `done`.
+    - Depends on: **TECH-455**

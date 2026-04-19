@@ -1,0 +1,34 @@
+id: TECH-461
+type: tech (IA infrastructure / lifecycle tooling / MCP)
+title: "Register plan_apply_validate + schema-cache restart + M4 flip (Stage 5 T5.4)"
+priority: high
+status: closed
+completed: 2026-04-19
+section: IA evolution lane
+spec: ia/projects/TECH-461.md
+files:
+  - tools/mcp-ia-server/src/index.ts
+  - ia/state/lifecycle-refactor-migration.json
+notes: |
+  Register `plan_apply_validate` in MCP tool index (`tools/mcp-ia-server/src/index.ts` or equivalent entry point); restart schema cache again post-registration; run smoke test calling `plan_apply_validate` w/ a valid spec path + known section header. Flip migration JSON M4 `done`.
+acceptance: |
+  `plan_apply_validate` reachable via MCP client smoke call; returns `{ok: true, found: true, tuple_count: N}` on known §Plan section path; `ia/state/lifecycle-refactor-migration.json` M4 flipped `done`; `validate:all` green.
+depends_on:
+  - TECH-460
+depends_on_raw: "TECH-460 (handler must exist before registration + smoke)."
+related:
+  - TECH-458
+  - TECH-459
+created: 2026-04-19
+parent_plan: ia/projects/lifecycle-refactor-master-plan.md
+task_key: T5.4
+raw_markdown: |
+  - [x] **TECH-461** — Register `plan_apply_validate` + schema-cache restart + M4 flip (Stage 5 T5.4)
+    - Type: tech (IA infrastructure / lifecycle tooling / MCP)
+    - Priority: high
+    - Files: `tools/mcp-ia-server/src/index.ts`, `ia/state/lifecycle-refactor-migration.json`
+    - Spec: [ia/projects/TECH-461.md](ia/projects/TECH-461.md)
+    - Parent plan: [lifecycle-refactor-master-plan.md](ia/projects/lifecycle-refactor-master-plan.md) (T5.4)
+    - Notes: Register tool; restart cache; smoke call; flip M4 `done`.
+    - Acceptance: Smoke-call returns ok; M4 `done`; `validate:all` green.
+    - Depends on: **TECH-460**
