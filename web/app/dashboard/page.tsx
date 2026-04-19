@@ -7,7 +7,7 @@ import type { Chip } from '@/components/FilterChips'
 import { CollapsibleFilterRow } from '@/components/CollapsibleFilterRow'
 import { StatBar } from '@/components/StatBar'
 import PlanChartClient from '@/components/PlanChartClient'
-import { CollapsiblePlanStep } from '@/components/CollapsiblePlanStep'
+import { CollapsiblePlanStage } from '@/components/CollapsiblePlanStage'
 import { toBadgeStatus } from './_status'
 import { parseFilterValues, toggleFilterParam } from '@/lib/dashboard/filter-params'
 import { Button } from '@/components/Button'
@@ -18,13 +18,13 @@ function toSlug(title: string): string {
   return title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 }
 
-type MultiParams = { plan: string[]; status: string[]; phase: string[] }
+type MultiParams = { plan: string[]; status: string[] }
 
 /**
- * Hierarchical prune: apply plan / status / phase filters to plan list.
+ * Hierarchical prune: apply plan / status filters to plan list.
  * OR within dimension, AND across dimensions.
  * Empty array per dimension = no filter for that dimension.
- * Pending-decompose steps (no stages) and stages (no tasks) always pass through.
+ * Pending-decompose stages (no tasks) always pass through.
  */
 function filterPlans(plans: PlanData[], params: MultiParams): PlanData[] {
   let result = plans
@@ -34,29 +34,19 @@ function filterPlans(plans: PlanData[], params: MultiParams): PlanData[] {
     result = result.filter((p) => params.plan.includes(toSlug(p.title)))
   }
 
-  // Task-level filters (AND across dimensions, OR within each).
-  // flatMap: return [] to drop, [item] to keep — avoids ambiguity between
-  // "originally no tasks" (pending-decompose) and "all tasks filtered out".
-  if (params.status.length > 0 || params.phase.length > 0) {
-    const matchesTask = (t: TaskRow) => {
-      const statusOk = params.status.length === 0 || params.status.includes(t.status)
-      const phaseOk  = params.phase.length  === 0 || params.phase.includes(t.phase)
-      return statusOk && phaseOk
-    }
+  // Task-level filter (status).
+  if (params.status.length > 0) {
+    const matchesTask = (t: TaskRow) => params.status.includes(t.status)
     result = result
       .map((plan) => {
-        const steps = plan.steps.flatMap((step) => {
-          if (step.stages.length === 0) return [step]
-          const stages = step.stages.flatMap((stage) => {
-            if (stage.tasks.length === 0) return [stage]
-            const tasks = stage.tasks.filter(matchesTask)
-            return tasks.length > 0 ? [{ ...stage, tasks }] : []
-          })
-          return stages.length > 0 ? [{ ...step, stages }] : []
+        const stages = plan.stages.flatMap((stage) => {
+          if (stage.tasks.length === 0) return [stage]
+          const tasks = stage.tasks.filter(matchesTask)
+          return tasks.length > 0 ? [{ ...stage, tasks }] : []
         })
-        return { ...plan, steps }
+        return { ...plan, stages }
       })
-      .filter((p) => p.steps.length > 0)
+      .filter((p) => p.stages.length > 0)
   }
 
   return result
@@ -66,7 +56,7 @@ function filterPlans(plans: PlanData[], params: MultiParams): PlanData[] {
  * DashboardPage — RSC. No "use client".
  *
  * Renders per-plan sections: title heading + overall-status badge +
- * step/stage hierarchy with per-stage DataTable.
+ * stage hierarchy with per-stage DataTable.
  * Banner flags page as internal / non-public.
  */
 export default async function DashboardPage({
@@ -86,7 +76,6 @@ export default async function DashboardPage({
   const multi: MultiParams = {
     plan:   parseFilterValues(search, 'plan'),
     status: parseFilterValues(search, 'status'),
-    phase:  parseFilterValues(search, 'phase'),
   }
 
   const currentSearch = search.toString()
@@ -107,14 +96,6 @@ export default async function DashboardPage({
   const statusValues = Array.from(
     new Set(allPlans.flatMap((p) => p.allTasks.map((t) => t.status)))
   )
-  const phaseValues = Array.from(
-    new Set(allPlans.flatMap((p) => p.allTasks.map((t) => t.phase)))
-  ).sort((a, b) => {
-    const na = parseInt(a, 10)
-    const nb = parseInt(b, 10)
-    if (!isNaN(na) && !isNaN(nb)) return na - nb
-    return a.localeCompare(b)
-  })
 
   const planChips: Chip[] = planSlugs.map((slug) => ({
     label:  slug,
@@ -126,13 +107,8 @@ export default async function DashboardPage({
     active: multi.status.includes(s),
     href:   chipHref('status', s),
   }))
-  const phaseChips: Chip[] = phaseValues.map((ph) => ({
-    label:  `Phase ${ph}`,
-    active: multi.phase.includes(ph),
-    href:   chipHref('phase', ph),
-  }))
 
-  const anyFilter = multi.plan.length + multi.status.length + multi.phase.length > 0
+  const anyFilter = multi.plan.length + multi.status.length > 0
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 space-y-10">
@@ -150,12 +126,6 @@ export default async function DashboardPage({
             <FilterChips chips={statusChips} />
           </div>
         )}
-        {phaseChips.length > 0 && (
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-xs text-text-muted font-mono w-14 shrink-0">Phase</span>
-            <FilterChips chips={phaseChips} />
-          </div>
-        )}
         {anyFilter && (
           <div className="pt-1">
             <Button variant="ghost" size="sm" href="/dashboard">Clear filters</Button>
@@ -167,7 +137,7 @@ export default async function DashboardPage({
         <p className="text-text-muted text-sm">No plans match the current filters.</p>
       ) : (
         plans.map((plan) => {
-          const { completedCount, totalCount, statBarLabel, chartData, stepCounts } = computePlanMetrics(plan)
+          const { completedCount, totalCount, statBarLabel, chartData, stageCounts } = computePlanMetrics(plan)
           return (
           <section key={plan.title} className="space-y-6">
             {/* Plan heading */}
@@ -179,14 +149,14 @@ export default async function DashboardPage({
               </div>
             </div>
 
-            {/* Step / Stage hierarchy */}
-            {plan.steps.map((step) => {
-              const { done: stepDone, total: stepTotal } = stepCounts[step.id] ?? { done: 0, total: 0 }
+            {/* Stage hierarchy */}
+            {plan.stages.map((stage) => {
+              const { done: stageDone, total: stageTotal } = stageCounts[stage.id] ?? { done: 0, total: 0 }
               return (
-                <CollapsiblePlanStep key={step.id} step={step} stepDone={stepDone} stepTotal={stepTotal} />
+                <CollapsiblePlanStage key={stage.id} stage={stage} stageDone={stageDone} stageTotal={stageTotal} />
               )
             })}
-            {/* Per-plan grouped-bar chart — step breakdown by status */}
+            {/* Per-plan grouped-bar chart — stage breakdown by status */}
             <PlanChartClient data={chartData} />
           </section>
           )

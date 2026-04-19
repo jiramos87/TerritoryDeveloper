@@ -1,9 +1,8 @@
 /**
  * Plan-loader type definitions.
  *
- * Mirrors `tools/progress-tracker/parse.mjs` JSDoc schema verbatim.
- * parse.mjs is authoritative — edit field names / union members there first,
- * then sync this file. Drift between here and parse.mjs lines 9–60 is a defect.
+ * Post lifecycle-refactor Stage 6: hierarchy collapsed to Stage → Task (2-level).
+ * Legacy Step + Phase layers removed per `ia/rules/project-hierarchy.md`.
  *
  * Zero runtime code: export type / export interface only.
  */
@@ -23,36 +22,20 @@ export type HierarchyStatus =
   | 'Final';
 
 export interface TaskRow {
-  id: string;       // e.g. "T1.1.1"
+  id: string;       // e.g. "T1.1"
   name?: string;    // optional name column (some plans omit it)
-  phase: string;    // e.g. "1"
   issue: string;    // e.g. "TECH-87" or "_pending_"
   status: TaskStatus;
   intent: string;
 }
 
-export interface PhaseEntry {
-  checked: boolean; // true = [x], false = [ ]
-  label: string;    // phase label text
-}
-
 export interface Stage {
-  id: string;           // e.g. "1.1"
+  id: string;           // e.g. "1" or "1.1"
   title: string;
   status: HierarchyStatus;
   statusDetail: string; // text after " — " in status line, if any
   objective?: string;   // **Objectives:** paragraph text
-  phases: PhaseEntry[];
   tasks: TaskRow[];
-}
-
-export interface Step {
-  id: string;           // e.g. "1"
-  title: string;
-  status: HierarchyStatus;
-  statusDetail: string;
-  objective?: string;   // **Objectives:** paragraph text
-  stages: Stage[];
 }
 
 export interface PlanData {
@@ -61,20 +44,20 @@ export interface PlanData {
   overallStatus: string;       // raw status line from opening blockquote
   overallStatusDetail: string; // text after " — " in overall status, if any
   siblingWarnings: string[];   // blockquote lines mentioning sibling orchestrators
-  steps: Step[];
-  allTasks: TaskRow[];         // flat list across all steps/stages (convenience)
+  stages: Stage[];
+  allTasks: TaskRow[];         // flat list across all stages (convenience)
 }
 
-/** Per-step task-count breakdown for chart rendering. */
-export interface StepChartBar {
-  label: string;      // step title
+/** Per-stage task-count breakdown for chart rendering. */
+export interface StageChartBar {
+  label: string;      // stage title
   pending: number;
   inProgress: number;
   done: number;
 }
 
-/** Per-step done / total counts. */
-export interface StepTaskCounts {
+/** Per-stage done / total counts. */
+export interface StageTaskCounts {
   done: number;
   total: number;
 }
@@ -85,8 +68,8 @@ export interface PlanMetrics {
   totalCount: number;
   /** Formatted "X / Y done" label for StatBar. */
   statBarLabel: string;
-  /** Per-step chart breakdown (parallel to plan.steps). */
-  chartData: StepChartBar[];
-  /** Per-step done/total counts, keyed by step.id. */
-  stepCounts: Record<string, StepTaskCounts>;
+  /** Per-stage chart breakdown (parallel to plan.stages). */
+  chartData: StageChartBar[];
+  /** Per-stage done/total counts, keyed by stage.id. */
+  stageCounts: Record<string, StageTaskCounts>;
 }

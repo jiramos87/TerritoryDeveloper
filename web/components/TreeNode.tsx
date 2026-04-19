@@ -5,7 +5,7 @@
  * parent PlanTree component (TECH-352), which owns the Client boundary.
  *
  * Props:
- *   node      — TreeNodeData node to render (step | stage | phase | task)
+ *   node      — TreeNodeData node to render (stage | task)
  *   expanded  — Set of node ids currently expanded
  *   onToggle  — Called with node.id when a branch toggle is clicked
  */
@@ -44,10 +44,9 @@ export function TreeNode({ node, expanded, onToggle }: TreeNodeProps): ReactNode
     );
   }
 
-  // Branch node (step | stage | phase) — toggle button + optional children list
+  // Branch node (stage) — toggle button + optional children list
   const branchNode = node;
-  const hasObjective = (branchNode.kind === 'step' || branchNode.kind === 'stage') && branchNode.objective;
-  const isPendingDecompose = (branchNode.kind === 'step' || branchNode.kind === 'stage') && branchNode.pendingDecompose;
+  const isPendingDecompose = branchNode.kind === 'stage' && branchNode.pendingDecompose;
   return (
     <li className="py-0.5">
       <button
@@ -67,7 +66,7 @@ export function TreeNode({ node, expanded, onToggle }: TreeNodeProps): ReactNode
           </span>
         )}
       </button>
-      {(node.kind === 'step' || node.kind === 'stage') && node.objective && (
+      {node.kind === 'stage' && node.objective && (
         <p className="ml-4 mt-0.5 text-xs opacity-60 leading-relaxed">{node.objective}</p>
       )}
       {isExpanded && (
