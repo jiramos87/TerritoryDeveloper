@@ -1,6 +1,6 @@
 # Lifecycle Refactor — Opus Planner / Sonnet Executor + Hierarchy Collapse — Master Plan (Umbrella)
 
-> **Status:** Draft — Step 1 / Stage 1.1 pending (no BACKLOG rows filed yet)
+> **Status:** In Progress — Step 1 / Stage 1.1
 >
 > **Scope:** Big-bang collapse of Step/Stage/Phase/Task hierarchy to Stage/Task. Introduce Plan-Apply pair pattern (5 seams) with Opus pair-heads and Sonnet pair-tails. Sonnet-ify spec enrichment. Add Opus audit + code-review inline stages. Migrate all 16 open master plans + open project specs + backlog yaml in place. Tooling surface only — zero Unity runtime C# touch.
 >
@@ -34,9 +34,9 @@
 
 ### Step 1 — Foundation: Freeze, Templates & Rules
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress — Stage 1.1
 
-**Backlog state (Step 1):** 0 filed
+**Backlog state (Step 1):** 2 filed (TECH-442, TECH-443)
 
 **Objectives:** Establish migration branch and snapshot pre-refactor state so rollback is safe. Rewrite all foundational authoring surfaces — templates (master-plan + project-spec), hierarchy rules, orchestrator rules, Plan-Apply pair contract, glossary new terms + tombstones. Downstream steps depend on these rewritten surfaces; Step 2 must not start until Stage 1.2 is Final.
 
@@ -70,7 +70,7 @@
 
 #### Stage 1.1 — Branch + Snapshot + Migration State
 
-**Status:** Draft (tasks _pending_ — not yet filed)
+**Status:** In Progress (2 / 2 tasks filed)
 
 **Objectives:** Create migration branch. Snapshot current master plans + open specs + backlog yaml so M2/M3 can always re-read from clean state. Write migration JSON with resumability keys.
 
@@ -90,8 +90,8 @@
 
 | Task | Name | Phase | Issue | Status | Intent |
 |---|---|---|---|---|---|
-| T1.1.1 | Branch + freeze setup | 1 | _pending_ | _pending_ | Create `feature/lifecycle-collapse-cognitive-split` via `git checkout -b`; add freeze note to `CLAUDE.md` §Key commands warning against running `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, `/stage-file` until M8 sign-off; write initial `ia/state/lifecycle-refactor-migration.json` (M0 done, M1–M8 pending; per-file arrays for M2: list of all `*master-plan*.md` paths, each `pending`; per-file array for M3: list of all `ia/backlog/*.yaml` + open `ia/projects/{ISSUE_ID}.md` paths). |
-| T1.1.2 | Pre-refactor snapshot | 2 | _pending_ | _pending_ | Copy all `ia/projects/*master-plan*.md`, `ia/backlog/*.yaml`, `ia/backlog-archive/*.yaml`, and open `ia/projects/{ISSUE_ID}.md` into `ia/state/pre-refactor-snapshot/` (preserve relative paths); write `ia/state/pre-refactor-snapshot/manifest.json` with file list + counts + git SHA; update migration JSON referencing snapshot path; flip M0 `done` in JSON. |
+| T1.1.1 | Branch + freeze setup | 1 | **TECH-442** | In Review | Create `feature/lifecycle-collapse-cognitive-split` via `git checkout -b`; add freeze note to `CLAUDE.md` §Key commands warning against running `/master-plan-new`, `/master-plan-extend`, `/stage-decompose`, `/stage-file` until M8 sign-off; write initial `ia/state/lifecycle-refactor-migration.json` (M0 done, M1–M8 pending; per-file arrays for M2: list of all `*master-plan*.md` paths, each `pending`; per-file array for M3: list of all `ia/backlog/*.yaml` + open `ia/projects/{ISSUE_ID}.md` paths). |
+| T1.1.2 | Pre-refactor snapshot | 2 | **TECH-443** | Draft | Copy all `ia/projects/*master-plan*.md`, `ia/backlog/*.yaml`, `ia/backlog-archive/*.yaml`, and open `ia/projects/{ISSUE_ID}.md` into `ia/state/pre-refactor-snapshot/` (preserve relative paths); write `ia/state/pre-refactor-snapshot/manifest.json` with file list + counts + git SHA; update migration JSON referencing snapshot path; flip M0 `done` in JSON. |
 
 ---
 

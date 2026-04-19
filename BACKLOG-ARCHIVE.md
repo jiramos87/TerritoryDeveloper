@@ -2,15 +2,6 @@
 
 > Completed issues archived from `BACKLOG.md`. A **2026-04-04** batch holds the former **Completed** slice from `BACKLOG.md`; the **Recent archive** block holds items moved on **2026-04-10**. Older completions follow under **Pre-2026-03-22 archive**.
 
-- [x] **TECH-432** — Cross-read stanza consistency across 6 wired skills (Stage 2.1 T2.1.3) (2026-04-18)
-  - Type: documentation
-  - Files: `ia/skills/design-explore/SKILL.md`, `ia/skills/master-plan-new/SKILL.md`, `ia/skills/master-plan-extend/SKILL.md`, `ia/skills/stage-decompose/SKILL.md`, `ia/skills/stage-file/SKILL.md`, `ia/skills/project-new/SKILL.md`
-  - Spec: (removed after closure)
-  - Notes: Byte-for-byte audit of Phase-N-tail stanza across 6 wired SKILL.md (output of TECH-430 + TECH-431). Verified verbatim template match, identical `schema_version: 2026-04-18`, `## Changelog` present on all 6. One deviation fixed: `master-plan-new` had `## Next step` after `## Changelog` — moved before, logged `source: wiring-review` §Changelog entry. Decision Log persisted to `ia_project_spec_journal`.
-  - Acceptance: 6 SKILL.md files stanza byte-match canonical; `schema_version` identical; §Changelog present; `source: wiring-review` entry logged on corrected file.
-  - Depends on: **TECH-430** (archived), **TECH-431** (archived)
-  - Related: TECH-430, TECH-431, TECH-433
-
 - [x] **TECH-286** — `BlipLutPool` stub + `BlipVoiceState` LFO phase fields (Stage 5.3 Phase 1) (2026-04-18)
   - Type: audio / infrastructure
   - Files: `Assets/Scripts/Audio/Blip/BlipLutPool.cs`, `Assets/Scripts/Audio/Blip/BlipCatalog.cs`, `Assets/Scripts/Audio/Blip/BlipVoiceState.cs`, `Assets/Scripts/Audio/Blip/BlipVoice.cs`
