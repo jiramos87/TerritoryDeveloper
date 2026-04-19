@@ -2,7 +2,7 @@ id: TECH-443
 type: tech (IA infrastructure / lifecycle tooling)
 title: Pre-refactor snapshot + manifest (Stage 1.1 Phase 2)
 priority: medium
-status: open
+status: closed
 section: IA evolution lane
 spec: ia/projects/TECH-443.md
 files:
@@ -18,6 +18,7 @@ depends_on_raw: TECH-442 (initial migration JSON must exist before snapshot reco
 related:
   - TECH-442
 created: 2026-04-18
+closed: 2026-04-18
 raw_markdown: |
   - [ ] **TECH-443** — Pre-refactor snapshot + manifest (Stage 1.1 Phase 2)
     - Type: tech (IA infrastructure / lifecycle tooling)
