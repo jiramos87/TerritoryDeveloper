@@ -837,7 +837,6 @@ Orchestrator: [`ia/projects/web-platform-master-plan.md`](projects/web-platform-
   - Spec: `ia/projects/TECH-05.md`
   - Notes: Consider helper method, base class, or extension method to reduce duplication of Inspector + FindObjectOfType fallback pattern.
 
-
 *(Umbrella programs (**spec-pipeline**, **JSON**/**Postgres** interchange, **compute-lib**, **Cursor Skills**) and **Editor export registry** are archived under [`BACKLOG-ARCHIVE.md`](BACKLOG-ARCHIVE.md) with **glossary** pointers. **§ IA evolution lane** holds **TECH-77**–**TECH-83** (FTS, skill chaining, agent memory, bidirectional IA, knowledge graph, gameplay entity model, sim parameter tuning). **§ Economic depth lane** holds **monthly maintenance** (shipped — **glossary**) → **tax→demand feedback** (shipped — **managers-reference** **Demand**) → **FEAT-52** → **FEAT-53** → **FEAT-09** (happiness + pollution shipped). **§ Gameplay & simulation lane** lists **BUG-52**, **FEAT-43**, **FEAT-08**. **§ Compute-lib program** above holds **TECH-38** + **TECH-32**/**TECH-35**; **TECH-39** **MCP** suite is archived.)*
 
 ## Low Priority

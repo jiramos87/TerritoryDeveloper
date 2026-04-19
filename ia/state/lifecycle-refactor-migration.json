@@ -17,15 +17,15 @@
       "name": "Master-plan in-place migration"
     },
     "M3": {
-      "status": "pending",
+      "status": "done",
       "name": "Phase-layer fold: specs + yaml schema"
     },
     "M4": {
-      "status": "pending",
+      "status": "done",
       "name": "MCP server: drop Phase + plan_apply_validate"
     },
     "M5": {
-      "status": "pending",
+      "status": "done",
       "name": "Web dashboard: parser + PlanTree collapse"
     },
     "M6": {
@@ -116,865 +116,865 @@
       "specs": [
         {
           "path": "ia/projects/BUG-48.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/FEAT-03.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/FEAT-49.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/FEAT-51.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/FEAT-52.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/FEAT-53.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-02.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-03.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-05.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-13.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-14.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-15.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-16.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-179-sprite-gen-unity-meta-writer.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-18.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-180-sprite-gen-promote-reject-cli.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-181-sprite-gen-aseprite-bin-resolver.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-182-sprite-gen-layered-aseprite-emit.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-183-sprite-gen-promote-edit-round-trip.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-251.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-26.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-27.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-29.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-290.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-291.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-292.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-293.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-30.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-303.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-304.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-305.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-306.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-307.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-308.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-309.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-31.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-310.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-311.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-312.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-313.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-316.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-317.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-318.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-319.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-32.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-320.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-321.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-322.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-33.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-331.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-332.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-333.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-334.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-335.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-336.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-337.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-338.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-34.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-347.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-348.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-349.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-35.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-350.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-355.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-356.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-357.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-362.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-411-claude-design-pilot-web-step-8-reset.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-433.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-434.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-435.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-436.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-437.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-438.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-439.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-440.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-441.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-442.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-443.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-64.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-72.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-77.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-78.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-79.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-80.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-81.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-82.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-83.md",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/projects/TECH-86.md",
-          "status": "pending"
+          "status": "done"
         }
       ],
       "yaml": [
         {
           "path": "ia/backlog/ART-01.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/ART-02.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/ART-03.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/ART-04.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/AUDIO-01.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/BUG-20.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/BUG-28.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/BUG-31.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/BUG-48.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/BUG-49.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-03.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-04.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-06.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-08.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-09.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-10.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-11.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-12.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-13.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-14.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-15.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-16.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-18.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-19.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-35.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-36.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-39.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-40.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-41.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-42.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-43.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-46.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-47.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-48.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-51.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-52.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/FEAT-53.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-01.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-02.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-03.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-04.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-05.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-13.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-14.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-15.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-16.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-179.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-18.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-180.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-181.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-182.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-183.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-23.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-24.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-251.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-26.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-27.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-29.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-30.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-303.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-304.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-305.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-306.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-307.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-308.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-309.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-31.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-310.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-311.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-312.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-313.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-316.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-317.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-318.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-319.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-32.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-320.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-321.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-322.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-33.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-331.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-332.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-333.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-334.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-335.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-336.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-337.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-338.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-34.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-347.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-348.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-349.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-35.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-350.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-355.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-356.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-357.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-362.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-38.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-411.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-43.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-433.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-434.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-435.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-436.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-437.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-438.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-439.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-440.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-441.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-442.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-443.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-45.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-46.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-47.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-48.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-53.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-54.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-72.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-77.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-78.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-79.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-80.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-81.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-82.yaml",
-          "status": "pending"
+          "status": "done"
         },
         {
           "path": "ia/backlog/TECH-83.yaml",
-          "status": "pending"
+          "status": "done"
         }
       ]
     }
